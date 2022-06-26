@@ -1,0 +1,8 @@
+.vscode/
+.DS_Store
+build/
+_build/
+_static/
+_templates/
+public/
+firebase*.yml
