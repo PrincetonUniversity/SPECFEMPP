@@ -2,17 +2,17 @@
 #define GLL_LIBRARY_H
 
 namespace gll_library {
-    float pnleg(const float z, const int n);
-    float pnglj(const float z, const int n);
-    float pndleg(const float z, const int n);
-    float pndglj(const float z, const int n);
+    double pnleg(const double z, const int n);
+    double pnglj(const double z, const int n);
+    double pndleg(const double z, const int n);
+    double pndglj(const double z, const int n);
     class gll{
         public:
             gll();
             gll(const double alpha, const double beta, const int ngll);
         
         private:
-            float alpha, beta;
+            double alpha, beta;
             int ngll;
     };
 }
