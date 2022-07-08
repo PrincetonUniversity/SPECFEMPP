@@ -1,8 +1,11 @@
 #ifndef GLL_UTILS_H
 #define GLL_UTILS_H
 
+#include <Kokkos_Core.hpp>
 #include <tuple>
-#include <vector>
+
+template <typename T>
+using HostArray = Kokkos::View<T *, Kokkos::LayoutRight, Kokkos::HostSpace>;
 
 namespace gll_utils {
 /**
@@ -24,10 +27,11 @@ std::tuple<double, double> jacobf(const int n, const double alpha,
  * @param np degree of the Jacobi polynomial
  * @param alpha alpha value of Jacobi polynomial
  * @param beta beta value of Jacobi polynomial
- * @return std::vector<double>& Gauss points as a std::vector (vector.size() ==
- * np)
+ * @param xjac reference to a HostArray where Jacobi polynomials will be stored
+ * xjac.extent(0) == np, xjac.rank == 1
  */
-std::vector<double> &jacg(const int np, const double alpha, const double beta);
+void jacg(HostArray<double> &xjac, const int np, const double alpha,
+          const double beta);
 } // namespace gll_utils
 
 #endif // GLL_UTILS_H

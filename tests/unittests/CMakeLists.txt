@@ -14,14 +14,28 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
+add_library(
+  kokkos_environment
+  Kokkos_Environment.hpp
+  Kokkos_Environment.cpp
+)
+
+target_link_libraries(
+  kokkos_environment
+  Kokkos::kokkos
+  gtest_main
+)
+
 add_executable(
   gll_tests
   gll_tests.cpp
 )
 target_link_libraries(
-  gll_tests PUBLIC
+  gll_tests
   gtest_main
   gll_library
+  gll_utils
+  kokkos_environment
 )
 
 include(GoogleTest)
