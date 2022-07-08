@@ -1,5 +1,7 @@
 #include "../../include/gll_library.h"
 #include "../../include/gll_utils.h"
+#include "Kokkos_Environment.hpp"
+#include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
 #include <stdexcept>
@@ -72,20 +74,28 @@ TEST(GLL_tests, JACOBF) {
 TEST(GLL_tests, JACG) {
 
   double tol = 1e-6;
-  std::vector<double> r1;
   const auto &jacg = gll_utils::jacg;
 
-  r1 = jacg(5, 0.0, 0.0);
+  HostArray<double> r3("r3", 3);
+  ASSERT_DEATH(jacg(r3, 2, 0.0, 0.0), "");
 
-  EXPECT_NEAR(r1[0], -0.538469310, tol);
-  EXPECT_NEAR(r1[1], -0.9061798459, tol);
-  EXPECT_NEAR(r1[2], 0, tol);
-  EXPECT_NEAR(r1[3], 0.538469310, tol);
-  EXPECT_NEAR(r1[4], 0.9061798459, tol);
+  HostArray<double> r1("r1", 5);
+  jacg(r1, 5, 0.0, 0.0);
+  EXPECT_NEAR(r1(0), -0.9061798459, tol);
+  EXPECT_NEAR(r1(1), -0.538469310, tol);
+  EXPECT_NEAR(r1(2), 0, tol);
+  EXPECT_NEAR(r1(3), 0.538469310, tol);
+  EXPECT_NEAR(r1(4), 0.9061798459, tol);
 
-  std::vector<double> r2;
-  r2 = jacg(3, 0.0, 0.0);
-  EXPECT_NEAR(r2[0], -0.77459666924, tol);
-  EXPECT_NEAR(r2[1], 0, tol);
-  EXPECT_NEAR(r2[2], 0.77459666924, tol);
+  HostArray<double> r2("r2", 3);
+  jacg(r2, 3, 0.0, 0.0);
+  EXPECT_NEAR(r2(0), -0.77459666924, tol);
+  EXPECT_NEAR(r2(1), 0, tol);
+  EXPECT_NEAR(r2(2), 0.77459666924, tol);
+}
+
+int main(int argc, char *argv[]) {
+  ::testing::InitGoogleTest(&argc, argv);
+  ::testing::AddGlobalTestEnvironment(new KokkosEnvironment);
+  return RUN_ALL_TESTS();
 }

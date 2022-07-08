@@ -2,17 +2,29 @@ cmake_minimum_required(VERSION 3.17.5)
 
 project(specfem2d_kokkos VERSION 0.1.0)
 
-# GoogleTest requires at least C++11
 set(CMAKE_CXX_STANDARD 17)
 
-# Source and header dir
-set(PROJECT_SOURCE_DIR "src")
-set(PROJECT_INCLUDE_DIR "include")
+# Install Kokkos as a dependency
+## TODO: Add options for on utilizing in house builds
+include(FetchContent)
+FetchContent_Declare(
+  kokkos
+  URL https://github.com/kokkos/kokkos/archive/refs/tags/3.6.01.zip
+)
+FetchContent_MakeAvailable(kokkos)
 
+
+# Build specfem2d libraries
+## TODO: Reorgnanize into separate directories
 add_library(
         gll_utils
         src/gll_utils.cpp
         include/gll_utils.h
+)
+
+target_link_libraries(
+        gll_utils PUBLIC
+        Kokkos::kokkos
 )
 
 add_library(
@@ -26,11 +38,8 @@ target_link_libraries(
         gll_utils
 )
 
+# Include tests
 add_subdirectory(tests/unittests)
-
-# set(CPACK_PROJECT_NAME ${PROJECT_NAME})
-# set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
-# include(CPack)
 
 # Doxygen
 
