@@ -59,8 +59,8 @@ void jacw(HostArray<double> z, HostArray<double> w, const int np,
  * open interval (-1,1)
  * @warning The weights are not normalized by the this function w(i) =
  * w(i)*(1-z(i)**2)
- * @note This function uses gll_utils::jacg and gll_utils:jacw for calculate the
- * GLL points and weights
+ * @note This function uses gll_utils::jacg and gll_utils::jacw for calculate
+ * the GLL points and weights
  * @param z HostArray where GLL points will be stored
  * @param w HostArray where GLL weights will be stored
  * @param np Degree of the Jacobi polynomial
