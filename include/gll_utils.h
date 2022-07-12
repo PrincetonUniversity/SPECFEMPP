@@ -7,7 +7,7 @@
 template <typename T>
 using HostArray = Kokkos::View<T *, Kokkos::LayoutRight, Kokkos::HostSpace>;
 /**
- * @note These routines are primarily called within GLL library module.
+ * @warning These routines are primarily called within GLL library module.
  * If you require any of the routines here then check if your task can be
  * achieved using GLL Library module
  *
@@ -57,7 +57,7 @@ void jacw(HostArray<double> z, HostArray<double> w, const int np,
 /**
  * @brief Compute the GLL points and weights of jacobi polynomials inside the
  * open interval (-1,1)
- * @note The weights are not normalized by the this function w(i) =
+ * @warning The weights are not normalized by the this function w(i) =
  * w(i)*(1-z(i)**2)
  * @note This function uses gll_utils::jacg and gll_utils:jacw for calculate the
  * GLL points and weights
