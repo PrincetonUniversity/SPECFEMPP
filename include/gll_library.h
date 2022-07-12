@@ -1,6 +1,7 @@
 #ifndef GLL_LIBRARY_H
 #define GLL_LIBRARY_H
 
+#include "gll_utils.h"
 #include <array>
 
 namespace gll_library {
@@ -37,11 +38,22 @@ double pndleg(const double z, const int n);
  * @return double value of derivative of Gauss-Labatto-Jacobi polynomial
  */
 double pndglj(const double z, const int n);
-
 /**
- * @brief
+ * @brief Generate np Gauss-Lobatto-Jacobi points and the weights associated
+ * with Jacobi polynomials of degree n = np-1.
+ * @note alpha and beta coefficients must be greater than -1. Legendre
+ * polynomials are special case of Jacobi polynomials just by setting alpha and
+ * beta to 0.
  *
+ * @param z HostArray where GLL points will be stored
+ * @param w HostArray where GLL weights will be stored
+ * @param np Number of GLL points
+ * @param alpha Alpha value of the Jacobi polynomial
+ * @param beta Beta value of the Jacobi polynomial
  */
+void zwgljd(HostArray<double> z, HostArray<double> w, const int np,
+            const double alpha, const double beta);
+
 class gll {
 public:
   gll();
