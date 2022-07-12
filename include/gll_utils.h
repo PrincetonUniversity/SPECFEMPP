@@ -8,8 +8,8 @@ template <typename T>
 using HostArray = Kokkos::View<T *, Kokkos::LayoutRight, Kokkos::HostSpace>;
 /**
  * @note These routines are primarily called within GLL library module.
- * If you require any routines here then check if it can be achieved using GLL
- * Library module
+ * If you require any of the routines here then check if your task can be
+ * achieved using GLL Library module
  *
  */
 namespace gll_utils {
