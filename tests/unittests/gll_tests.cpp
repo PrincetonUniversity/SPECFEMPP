@@ -76,10 +76,10 @@ TEST(GLL_tests, JACG) {
   double tol = 1e-6;
   const auto &jacg = gll_utils::jacg;
 
-  HostArray<double> r3("r3", 3);
+  Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> r3("r3", 3);
   ASSERT_DEATH(jacg(r3, 2, 0.0, 0.0), "");
 
-  HostArray<double> r1("r1", 5);
+  Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> r1("r1", 5);
   jacg(r1, 5, 0.0, 0.0);
   EXPECT_NEAR(r1(0), -0.9061798459, tol);
   EXPECT_NEAR(r1(1), -0.538469310, tol);
@@ -87,7 +87,7 @@ TEST(GLL_tests, JACG) {
   EXPECT_NEAR(r1(3), 0.538469310, tol);
   EXPECT_NEAR(r1(4), 0.9061798459, tol);
 
-  HostArray<double> r2("r2", 3);
+  Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> r2("r2", 3);
   jacg(r2, 3, 0.0, 0.0);
   EXPECT_NEAR(r2(0), -0.77459666924, tol);
   EXPECT_NEAR(r2(1), 0, tol);
@@ -100,13 +100,13 @@ TEST(GLL_tests, JACW) {
   const auto &jacg = gll_utils::jacg;
   const auto &jacw = gll_utils::jacw;
 
-  HostArray<double> r2("r1", 3);
+  Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> r2("r1", 3);
   jacg(r2, 3, 1.0, 1.0);
   EXPECT_NEAR(r2(0), -0.6546536707, tol);
   EXPECT_NEAR(r2(1), 0, tol);
   EXPECT_NEAR(r2(2), 0.6546536707, tol);
 
-  HostArray<double> w2("r2", 3);
+  Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> w2("r2", 3);
   jacw(r2, w2, 3, 1.0, 1.0);
   std::array<double, 3> reference = { 0.5444444444, 0.7111111111,
                                       0.5444444444 };
@@ -121,8 +121,8 @@ TEST(GLL_tests, ZWGJD) {
   const double tol = 1e-6;
   const auto &zwgjd = gll_utils::zwgjd;
 
-  HostArray<double> r1("r1", 1);
-  HostArray<double> w1("w1", 1);
+  Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> r1("r1", 1);
+  Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> w1("w1", 1);
   zwgjd(r1, w1, 1, 1.0, 1.0);
 
   EXPECT_NEAR(r1(0), 0.0, tol);
@@ -134,8 +134,8 @@ TEST(GLL_tests, ZWGLJD) {
   double tol = 1e-6;
   const auto &zwgljd = gll_library::zwgljd;
 
-  HostArray<double> z1("z1", 3);
-  HostArray<double> w1("w1", 3);
+  Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> z1("z1", 3);
+  Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> w1("w1", 3);
   zwgljd(z1, w1, 3, 0.0, 0.0);
   EXPECT_NEAR(z1(0), -1.0, tol);
   EXPECT_NEAR(z1(1), 0.0, tol);
@@ -144,8 +144,8 @@ TEST(GLL_tests, ZWGLJD) {
   EXPECT_NEAR(w1(1), 1.333333, tol);
   EXPECT_NEAR(w1(2), 0.333333, tol);
 
-  HostArray<double> z2("z1", 5);
-  HostArray<double> w2("w1", 5);
+  Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> z2("z1", 5);
+  Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> w2("w1", 5);
   zwgljd(z2, w2, 5, 0.0, 0.0);
   EXPECT_NEAR(z2(0), -1.0, tol);
   EXPECT_NEAR(z2(1), -0.6546536707, tol);
@@ -170,8 +170,8 @@ TEST(GLL_tests, ZWGLJD) {
   EXPECT_NEAR(w2(3), 0.794338936, tol);
   EXPECT_NEAR(w2(4), 0.1666666667, tol);
 
-  HostArray<double> z3("z1", 7);
-  HostArray<double> w3("w1", 7);
+  Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> z3("z1", 7);
+  Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> w3("w1", 7);
   zwgljd(z3, w3, 7, 0.0, 0.0);
   EXPECT_NEAR(z3(0), -1.0, tol);
   EXPECT_NEAR(z3(1), -0.8302238962, tol);
