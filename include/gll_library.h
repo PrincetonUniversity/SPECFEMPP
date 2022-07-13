@@ -54,14 +54,22 @@ double pndglj(const double z, const int n);
 void zwgljd(HostArray<double> z, HostArray<double> w, const int np,
             const double alpha, const double beta);
 
+/**
+ * @warning GLL class is still in progress,
+ * will get to it as I understand the Fortran code more
+ * and what things need to be added here
+ *
+ */
 class gll {
 public:
   gll();
+  gll(const double alpha, const double beta);
   gll(const double alpha, const double beta, const int ngll);
+  gll(const double alpha, const double beta, const int ngllx, const int ngllz);
 
 private:
   double alpha, beta;
-  int ngll;
+  int ngllx, ngllz;
 };
 } // namespace gll_library
 
