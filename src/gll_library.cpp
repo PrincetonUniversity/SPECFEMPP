@@ -127,8 +127,10 @@ double gll_library::pndglj(const double z, const int n) {
   return glj_deriv;
 }
 
-void gll_library::zwgljd(HostArray<double> z, HostArray<double> w, const int np,
-                         const double alpha, const double beta) {
+void gll_library::zwgljd(
+    Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> z,
+    Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> w,
+    const int np, const double alpha, const double beta) {
 
   double p, pd;
 

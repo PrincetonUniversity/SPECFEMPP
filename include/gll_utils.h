@@ -4,8 +4,6 @@
 #include <Kokkos_Core.hpp>
 #include <tuple>
 
-template <typename T>
-using HostArray = Kokkos::View<T *, Kokkos::LayoutRight, Kokkos::HostSpace>;
 /**
  * @warning These routines are primarily called within GLL library module.
  * If you require any of the routines here then check if your task can be
@@ -35,8 +33,8 @@ std::tuple<double, double, double> jacobf(const int n, const double alpha,
  * @param xjac HostArray where Gauss points (GLL points) will be stored
  * xjac.extent(0) == np, xjac.rank == 1
  */
-void jacg(HostArray<double> &xjac, const int np, const double alpha,
-          const double beta);
+void jacg(Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> xjac,
+          const int np, const double alpha, const double beta);
 
 double calc_gammaf(const double x);
 double calc_pnormj(const int n, const double alpha, const double beta);
@@ -51,8 +49,9 @@ double calc_pnormj(const int n, const double alpha, const double beta);
  * @param alpha alpha value of Jacobi polynomial
  * @param beta beta value of Jacobi polynomial
  */
-void jacw(HostArray<double> z, HostArray<double> w, const int np,
-          const int alpha, const int beta);
+void jacw(Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> z,
+          Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> w,
+          const int np, const int alpha, const int beta);
 
 /**
  * @brief Compute the GLL points and weights of jacobi polynomials inside the
@@ -67,8 +66,9 @@ void jacw(HostArray<double> z, HostArray<double> w, const int np,
  * @param alpha Alpha value of the Jacobi polynomial
  * @param beta Beta value of the Jacobi polynomial
  */
-void zwgjd(HostArray<double> z, HostArray<double> w, const int np,
-           const int alpha, const int beta);
+void zwgjd(Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> z,
+           Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> w,
+           const int np, const int alpha, const int beta);
 
 /**
  * @brief Calculate the weight contribution at xi == -1.0

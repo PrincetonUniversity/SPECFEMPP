@@ -8,8 +8,10 @@
 #include <stdexcept>
 #include <tuple>
 
-double update_x(double &x, const double p, const double pd,
-                const HostArray<double> &xjac, const int j) {
+double update_x(
+    double &x, const double p, const double pd,
+    const Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> xjac,
+    const int j) {
   int recsum = 0.0;
   double delx;
   for (int i = 1; i < j; i++) {
@@ -20,8 +22,9 @@ double update_x(double &x, const double p, const double pd,
   return delx;
 }
 
-void gll_utils::jacg(HostArray<double> &xjac, const int np, const double alpha,
-                     const double beta) {
+void gll_utils::jacg(
+    Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> xjac,
+    const int np, const double alpha, const double beta) {
 
   double xlast, dth, x, x1, x2, delx;
   double p, pd;
@@ -177,8 +180,10 @@ double gll_utils::calc_pnormj(const int n, const double alpha,
   return pnormj;
 }
 
-void gll_utils::jacw(HostArray<double> z, HostArray<double> w, const int np,
-                     const int alpha, const int beta) {
+void gll_utils::jacw(
+    Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> z,
+    Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> w,
+    const int np, const int alpha, const int beta) {
 
   double p, pd, pm1d;
 
@@ -202,8 +207,10 @@ void gll_utils::jacw(HostArray<double> z, HostArray<double> w, const int np,
   return;
 }
 
-void gll_utils::zwgjd(HostArray<double> z, HostArray<double> w, const int np,
-                      const int alpha, const int beta) {
+void gll_utils::zwgjd(
+    Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> z,
+    Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> w,
+    const int np, const int alpha, const int beta) {
 
   // calculate the GLL points and weights in the open interval (-1.0, 1.0)
 
