@@ -38,5 +38,19 @@ target_link_libraries(
   kokkos_environment
 )
 
+add_executable(
+  lagrange_tests
+  Lagrange_tests.cpp
+)
+
+target_link_libraries(
+  lagrange_tests
+  gtest_main
+  lagrange
+  gll_library
+  kokkos_environment
+)
+
 include(GoogleTest)
 gtest_discover_tests(gll_tests)
+gtest_discover_tests(lagrange_tests)

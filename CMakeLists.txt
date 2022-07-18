@@ -38,6 +38,18 @@ target_link_libraries(
         gll_utils
 )
 
+add_library(
+        lagrange
+        src/lagrange_poly.cpp
+        include/lagrange_poly.h
+)
+
+target_link_libraries(
+        lagrange
+        gll_library
+        Kokkos::kokkos
+)
+
 # Include tests
 add_subdirectory(tests/unittests)
 
