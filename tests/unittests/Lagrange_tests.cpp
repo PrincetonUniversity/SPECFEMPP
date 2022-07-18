@@ -41,7 +41,7 @@ TEST(lagrange_tests, LAGRANGE_TESTS) {
                           (static_cast<double>(degpoly) + 1.0) * 0.25;
           EXPECT_NEAR(h1_prime(j), result, tol) << i;
         } else {
-          double result = 1.0;
+          double result = 0.0;
           EXPECT_NEAR(h1_prime(j), result, tol) << i;
         }
       } else {
