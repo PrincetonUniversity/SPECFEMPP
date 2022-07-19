@@ -25,7 +25,7 @@ void compute_lagrange_interpolants(
  * Nisser-meyer-founier-dahlen-2007 equation (A19)
  *
  * @param hprime_ii Derivates of lagrange polynomials at GLL points i.e.
- * hprime_ii(i,j) = \partial_{\xi}l_{j}(xigll(i))
+ * \f$hprime_ii(i,j) = \partial_{\xi}l_{j}(xigll(i))\f$
  * @param xigll GLL points generally calculated using gll_library::zwgljd
  * @param ngll Order used to approximate functions
  */
@@ -40,7 +40,7 @@ void compute_lagrange_derivatives_GLL(
  * Nisser-meyer-founier-dahlen-2007 equation (A27)
  *
  * @param hprimeBar_ii Derivates of Jacobi polynomials at GLJ points i.e.
- * hprime_ii(i,j) = \partial_{\xi}l_{j}(xiglj(i))
+ * \f$hprime_ii(i,j) = \partial_{\xi}l_{j}(xiglj(i))\f$
  * @param xiglj GLJ points generally calculated using gll_library::zwgljd
  * @param nglj Order used to approximate functions
  */

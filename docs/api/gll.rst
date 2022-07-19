@@ -1,6 +1,6 @@
 .. _GLL:
 
-Lagrange
+GLL Class
 ===========
 
 .. doxygenfile:: gll.h
