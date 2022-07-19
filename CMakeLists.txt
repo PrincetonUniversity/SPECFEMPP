@@ -50,6 +50,19 @@ target_link_libraries(
         Kokkos::kokkos
 )
 
+add_library(
+        gll
+        src/gll.cpp
+        include/gll.h
+)
+
+target_link_libraries(
+        gll
+        lagrange
+        gll_library
+        Kokkos::kokkos
+)
+
 # Include tests
 add_subdirectory(tests/unittests)
 
