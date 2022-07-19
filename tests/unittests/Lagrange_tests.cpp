@@ -1,3 +1,4 @@
+#include "../../include/gll.h"
 #include "../../include/gll_library.h"
 #include "../../include/lagrange_poly.h"
 #include "Kokkos_Environment.hpp"
