@@ -25,6 +25,6 @@ Table of Contents
 
 .. toctree::
     :maxdepth: 2
-
     self
+    developer_docs
     api/index
