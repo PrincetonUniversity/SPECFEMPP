@@ -21,11 +21,11 @@ void compute_lagrange_interpolants(
 
 /**
  * @brief Compute the derivatives of Lagrange functions at GLL points
- * @note Please refer Nisser-Meyer et.al. 2007 \cite
- * Nisser-meyer-founier-dahlen-2007 equation (A19)
+ * @note Please refer Nisser-Meyer et.al. 2007 equation (A19)
  *
  * @param hprime_ii Derivates of lagrange polynomials at GLL points i.e.
- * \f$hprime_ii(i,j) = \partial_{\xi}l_{j}(xigll(i))\f$
+ * \f$h'(i,j) = \evalat{\partial_{\xi}l_{j}(\xi_i)}{\xi_i \eps \textrm{GLL
+ * points}}\f$
  * @param xigll GLL points generally calculated using gll_library::zwgljd
  * @param ngll Order used to approximate functions
  */
@@ -36,11 +36,11 @@ void compute_lagrange_derivatives_GLL(
 
 /**
  * @brief Compute the derivatives of Jacobi functions at GLJ points
- * @note Please refer Nisser-Meyer et.al. 2007 \cite
- * Nisser-meyer-founier-dahlen-2007 equation (A27)
+ * @note Please refer Nisser-Meyer et.al. 2007 equation (A27)
  *
  * @param hprimeBar_ii Derivates of Jacobi polynomials at GLJ points i.e.
- * \f$hprime_ii(i,j) = \partial_{\xi}l_{j}(xiglj(i))\f$
+ * \f$h'(i,j) = \evalat{\partial_{\xi}l_{j}(\xi_i)}{\xi_i \eps \textrm{GLJ
+ * points}}\f$
  * @param xiglj GLJ points generally calculated using gll_library::zwgljd
  * @param nglj Order used to approximate functions
  */
