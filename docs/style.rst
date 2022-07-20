@@ -30,7 +30,7 @@ Adding python packages
 
     This section is only for educational purposes since SPECFEM comes with a pyproject.toml
 
-We define all the packages required within our environment using the `pyproject.toml` file. For example, if we needed to add pre-commit to our environment we would define it within `pyproject.toml` as
+We define all the packages required within our environment using the `pyproject.toml` file. For example, if we needed to add pre-commit to our environment we would define it within :code:`pyproject.toml` as
 
 .. code-block:: toml
 
