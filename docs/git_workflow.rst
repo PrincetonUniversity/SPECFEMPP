@@ -12,7 +12,7 @@ To contribute to the develop branch first checkout develop branch:
 
 .. note::
 
-    It is also recommended that you run :bash:`poetry install` every time you pull the develop branch
+    It is also recommended that you run :code:`poetry install` every time you pull the develop branch. Please check :ref:`style section<style>` for more information on poetry.
 
 Next create a feature branch against develop branch. Please be explicit while naming the feature branch.
 
