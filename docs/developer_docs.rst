@@ -7,3 +7,7 @@ At SPECFEM we try to follow best practices to keep the code readable, maintainab
     git_workflow
     build_requirements
     style
+    tests
+    doxygen_primer
+    cmake_primer
+    kokkos_primer
