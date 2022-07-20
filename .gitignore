@@ -6,5 +6,3 @@ _static/
 _templates/
 public/
 firebase*.yml
-*.toml
-*.lock
