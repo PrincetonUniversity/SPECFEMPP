@@ -38,9 +38,12 @@ void compute_lagrange_derivatives_GLL(
  * @brief Compute the derivatives of Jacobi functions at GLJ points
  * @note Please refer Nisser-Meyer et.al. 2007 equation (A27)
  *
- * @param hprimeBar_ii Derivates of Jacobi polynomials at GLJ points i.e.
- * \f$h'(i,j) = \partial_{\xi}l_{j}(\xi_i)\f$ where \f$\xi_i \epsilon
- * \textrm{GLJpoints}\f$
+ * @warning This function hasn't been tested yet. Could be potential source of
+ * error.
+ *
+ * @param hprimeBar_ii Derivates of Jacobi polynomials at GLJ points at \f$
+ * (\alpha, \beta) = (0,1) i.e. \f$h'(i,j) = \partial_{\xi}l_{j}(\xi_i)\f$ where
+ * \f$\xi_i \epsilon \textrm{GLJpoints}\f$
  * @param xiglj GLJ points generally calculated using gll_library::zwgljd
  * @param nglj Order used to approximate functions
  */

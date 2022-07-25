@@ -8,6 +8,11 @@
 #include <stdexcept>
 
 TEST(lagrange_tests, LAGRANGE_TESTS) {
+  /**
+   *  This test checks if compute_lagrange_interpolants and
+   * compute_lagrange_derivatives_GLL give the same value at GLL points
+   *
+   */
   const auto &compute_lagrange_interpolants =
       Lagrange::compute_lagrange_interpolants;
   const auto &zwgljd = gll_library::zwgljd;
@@ -51,6 +56,29 @@ TEST(lagrange_tests, LAGRANGE_TESTS) {
     }
   }
 }
+
+// TEST(lagrange_tests, GLJ_DERIVS_TEST){
+//   const auto& compute_jacobi_derivatives_GLJ =
+//   Lagrange::compute_jacobi_derivatives_GLJ; const auto& jacobf =
+//   gll_utils::jacobf; const auto &zwgljd = gll_library::zwgljd; const double
+//   alpha = 0.0, beta = 1.0; const int nglj = 5; double tol = 1e-6; double pd;
+//   Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> z1("r1",
+//   nglj); Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace>
+//   w1("w1", nglj); Kokkos::View<double **, Kokkos::LayoutRight,
+//   Kokkos::HostSpace> h1_primeBar_xx(
+//       "h1_primeBar_xx", nglj, nglj);
+
+//   zwgljd(z1, w1, nglj, alpha, beta);
+//   compute_jacobi_derivatives_GLJ(h1_primeBar_xx, z1, nglj);
+
+//   for (int i = 0; i < nglj-2; i++){
+//     for (int j = 0; j < nglj-2; j++){
+//       std::cout << i << " " << j << std::endl;
+//       std::tie(std::ignore, pd, std::ignore) = jacobf(j, alpha, beta, z1(i));
+//       EXPECT_NEAR(h1_primeBar_xx(i+1, j-1), pd, tol);
+//     }
+//   }
+// }
 
 int main(int argc, char *argv[]) {
   ::testing::InitGoogleTest(&argc, argv);

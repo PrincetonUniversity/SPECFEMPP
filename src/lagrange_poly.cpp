@@ -83,37 +83,39 @@ void Lagrange::compute_jacobi_derivatives_GLJ(
   int degpoly = nglj - 1;
   for (int i = 0; i < nglj; i++) {
     for (int j = 0; j < nglj; j++) {
-      if (i == 0 && j == 0) {
+      std::cout << gll_library::pnglj(xiglj(i), degpoly) << " " << xiglj(i)
+                << std::endl;
+      if (j == 0 && i == 0) {
         hprimeBar_ii(i, j) = -1.0 * static_cast<double>(degpoly) *
                              (static_cast<double>(degpoly) + 2.0) / 6.0;
-      } else if (i == 0 && 0 < j && j < degpoly) {
+      } else if (j == 0 && 0 < i && i < degpoly) {
         hprimeBar_ii(i, j) =
             2.0 * std::pow(-1.0, degpoly) *
-            gll_library::pnglj(xiglj(j), degpoly) /
-            ((1.0 + xiglj(j)) * (static_cast<double>(degpoly) + 1.0));
-      } else if (i == 0 && j == degpoly) {
+            gll_library::pnglj(xiglj(i), degpoly) /
+            ((1.0 + xiglj(i)) * (static_cast<double>(degpoly) + 1.0));
+      } else if (j == 0 && i == degpoly) {
         hprimeBar_ii(i, j) =
             std::pow(-1, degpoly) / (static_cast<double>(degpoly) + 1.0);
-      } else if (0 < i && i < degpoly && j == 0) {
+      } else if (0 < j && j < degpoly && i == 0) {
         hprimeBar_ii(i, j) =
             std::pow(-1, degpoly + 1) * (static_cast<double>(degpoly) + 1.0) /
-            (2.0 * gll_library::pnglj(xiglj(i), degpoly) * (1.0 + xiglj(i)));
-      } else if (0 < i && i < degpoly && 0 < j && j < degpoly && i != j) {
-        hprimeBar_ii(i, j) = 1.0 / (xiglj(j) - xiglj(i)) *
-                             gll_library::pnglj(xiglj(j), degpoly) /
-                             gll_library::pnglj(xiglj(i), degpoly);
-      } else if (0 < i && i < degpoly && i == j) {
-        hprimeBar_ii(i, j) = -1.0 / (2.0 * (1.0 + xiglj(i)));
-      } else if (0 < i && i < degpoly && j == degpoly) {
+            (2.0 * gll_library::pnglj(xiglj(j), degpoly) * (1.0 + xiglj(j)));
+      } else if (0 < j && j < degpoly && 0 < i && i < degpoly && i != j) {
+        hprimeBar_ii(i, j) = 1.0 / (xiglj(i) - xiglj(j)) *
+                             gll_library::pnglj(xiglj(i), degpoly) /
+                             gll_library::pnglj(xiglj(j), degpoly);
+      } else if (0 < j && j < degpoly && i == j) {
+        hprimeBar_ii(i, j) = -1.0 / (2.0 * (1.0 + xiglj(j)));
+      } else if (0 < j && j < degpoly && i == degpoly) {
         hprimeBar_ii(i, j) =
-            1.0 / (gll_library::pnglj(xiglj(i), degpoly) * (1.0 - xiglj(i)));
-      } else if (i == degpoly && j == 0) {
+            1.0 / (gll_library::pnglj(xiglj(i), degpoly) * (1.0 - xiglj(j)));
+      } else if (j == degpoly && i == 0) {
         hprimeBar_ii(i, j) = std::pow(-1, degpoly + 1) *
                              (static_cast<double>(degpoly) + 1.0) / 4.0;
-      } else if (i == degpoly && 0 < j && j < degpoly) {
+      } else if (j == degpoly && 0 < i && i < degpoly) {
         hprimeBar_ii(i, j) =
-            -1.0 / (1.0 - xiglj(j)) * gll_library::pnglj(xiglj(j), degpoly);
-      } else if (i == degpoly && j == degpoly) {
+            -1.0 / (1.0 - xiglj(i)) * gll_library::pnglj(xiglj(i), degpoly);
+      } else if (j == degpoly && i == degpoly) {
         hprimeBar_ii(i, j) = (static_cast<double>(degpoly) *
                                   (static_cast<double>(degpoly) + 2.0) -
                               1.0) /
