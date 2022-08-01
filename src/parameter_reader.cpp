@@ -87,7 +87,7 @@ void IO::param_file::read(std::string value, std::string name) {
 }
 
 void IO::read_parameters_file(std::string param_file,
-                              parameters::parameters &param) {
+                              specfem::parameters::parameters &param) {
 
   IO::param_file::param_file param_file(param_file);
   param_file.open();

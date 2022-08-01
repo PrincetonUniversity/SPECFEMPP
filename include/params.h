@@ -1,7 +1,7 @@
 #include "../include/config.h"
 #include <string>
 
-namespace parameters {
+namespace specfem::parameters {
 struct parameters {
   std::string title, model, save_model, seismotype, tomography_file, mesh_file,
       nodes_coords_file, materials_file, free_surface_file, axial_elements_file,
@@ -30,4 +30,4 @@ struct parameters {
       k_max_PML, damping_change_factor_acoustic, damping_change_factor_elastic,
       periodic_horiz_dist, xmin_param, xmax_param;
 }
-} // namespace parameters
+} // namespace specfem::parameters
