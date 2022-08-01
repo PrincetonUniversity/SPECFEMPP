@@ -1,9 +1,12 @@
 #ifndef GLL_UTILS_H
 #define GLL_UTILS_H
 
+#include "../include/config.h"
+#include "../include/kokkos_abstractions.h"
 #include <Kokkos_Core.hpp>
 #include <tuple>
 
+using HostMirror1d = specfem::HostMirror1d<type_real>;
 /**
  * @warning These routines are primarily called within GLL library module.
  * If you require any of the routines here then check if your task can be
@@ -18,11 +21,13 @@ namespace gll_utils {
  * @param alpha alpha value of Jacobi
  * @param beta beta value
  * @param x value to evaluate the jacobi polynomial and its derivative
- * @return std::tuple<double, double> [p, pd] where p is the value of the
+ * @return std::tuple<type_real, type_real> [p, pd] where p is the value of the
  * polynomial and pd is its derivative at x
  */
-std::tuple<double, double, double> jacobf(const int n, const double alpha,
-                                          const double beta, const double x);
+std::tuple<type_real, type_real, type_real> jacobf(const int n,
+                                                   const type_real alpha,
+                                                   const type_real beta,
+                                                   const type_real x);
 
 /**
  * @brief Compute Gauss points i.e. the zeros of the Jacobi polynomials
@@ -33,11 +38,11 @@ std::tuple<double, double, double> jacobf(const int n, const double alpha,
  * @param xjac HostArray where Gauss points (GLL points) will be stored
  * xjac.extent(0) == np, xjac.rank == 1
  */
-void jacg(Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> xjac,
-          const int np, const double alpha, const double beta);
+void jacg(HostMirror1d xjac, const int np, const type_real alpha,
+          const type_real beta);
 
-double calc_gammaf(const double x);
-double calc_pnormj(const int n, const double alpha, const double beta);
+type_real calc_gammaf(const type_real x);
+type_real calc_pnormj(const int n, const type_real alpha, const type_real beta);
 
 /**
  * @brief Compute the weights of GLL quadrature at GLL points
@@ -49,9 +54,8 @@ double calc_pnormj(const int n, const double alpha, const double beta);
  * @param alpha alpha value of Jacobi polynomial
  * @param beta beta value of Jacobi polynomial
  */
-void jacw(Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> z,
-          Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> w,
-          const int np, const int alpha, const int beta);
+void jacw(HostMirror1d z, HostMirror1d w, const int np, const int alpha,
+          const int beta);
 
 /**
  * @brief Compute the GLL points and weights of jacobi polynomials inside the
@@ -66,9 +70,8 @@ void jacw(Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> z,
  * @param alpha Alpha value of the Jacobi polynomial
  * @param beta Beta value of the Jacobi polynomial
  */
-void zwgjd(Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> z,
-           Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> w,
-           const int np, const int alpha, const int beta);
+void zwgjd(HostMirror1d z, HostMirror1d w, const int np, const int alpha,
+           const int beta);
 
 /**
  * @brief Calculate the weight contribution at xi == -1.0
@@ -76,9 +79,9 @@ void zwgjd(Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> z,
  * @param n NGLL - 1
  * @param alpha Alpha value of the Jacobi polynomial
  * @param beta Beta value of the Jacobi polynomial
- * @return double weight at xi == -1
+ * @return type_real weight at xi == -1
  */
-double endw1(const int n, const double alpha, const double beta);
+type_real endw1(const int n, const type_real alpha, const type_real beta);
 
 /**
  * @brief Calculate the weight contribution at xi == 1.0
@@ -86,9 +89,9 @@ double endw1(const int n, const double alpha, const double beta);
  * @param n NGLL - 1
  * @param alpha Alpha value of the Jacobi polynomial
  * @param beta Beta value of the Jacobi polynomial
- * @return double weight at xi == 1
+ * @return type_real weight at xi == 1
  */
-double endw2(const int n, const double alpha, const double beta);
+type_real endw2(const int n, const type_real alpha, const type_real beta);
 } // namespace gll_utils
 
 #endif // GLL_UTILS_H

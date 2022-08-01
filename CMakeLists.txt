@@ -51,13 +51,14 @@ target_link_libraries(
 )
 
 add_library(
-        gll
-        src/gll.cpp
-        include/gll.h
+        quadrature
+        src/quadrature.cpp
+        include/quadrature.h
+        include/kokkos_abstractions.h
 )
 
 target_link_libraries(
-        gll
+        quadrature
         lagrange
         gll_library
         Kokkos::kokkos
