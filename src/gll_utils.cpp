@@ -1,4 +1,6 @@
 #include "../include/gll_utils.h"
+#include "../include/config.h"
+#include "../include/kokkos_abstractions.h"
 #include <Kokkos_Core.hpp>
 #include <Kokkos_Sort.hpp>
 #include <algorithm>
@@ -8,12 +10,12 @@
 #include <stdexcept>
 #include <tuple>
 
-double update_x(
-    double &x, const double p, const double pd,
-    const Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> xjac,
-    const int j) {
+using HostMirror1d = specfem::HostMirror1d<type_real>;
+
+type_real update_x(type_real &x, const type_real p, const type_real pd,
+                   const HostMirror1d xjac, const int j) {
   int recsum = 0.0;
-  double delx;
+  type_real delx;
   for (int i = 1; i < j; i++) {
     recsum = recsum + 1.0 / (x - xjac(xjac.extent(0) - i));
   }
@@ -22,28 +24,27 @@ double update_x(
   return delx;
 }
 
-void gll_utils::jacg(
-    Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> xjac,
-    const int np, const double alpha, const double beta) {
+void gll_utils::jacg(HostMirror1d xjac, const int np, const type_real alpha,
+                     const type_real beta) {
 
-  double xlast, dth, x, x1, x2, delx;
-  double p, pd;
+  type_real xlast, dth, x, x1, x2, delx;
+  type_real p, pd;
   int k, jmin, jm, n;
   const int k_max = 10;
-  const double eps = 1e-12;
+  const type_real eps = 1e-12;
 
   assert(xjac.rank == 1);
   assert(xjac.extent(0) == np);
 
   xlast = 0.0;
   n = np - 1;
-  dth = 4.0 * std::atan(1.0) / (2.0 * static_cast<double>(n) + 2.0);
+  dth = 4.0 * std::atan(1.0) / (2.0 * static_cast<type_real>(n) + 2.0);
 
   for (int j = 1; j <= np; j++) {
     if (j == 1) {
-      x = std::cos((2.0 * (static_cast<double>(j) - 1.0) + 1.0) * dth);
+      x = std::cos((2.0 * (static_cast<type_real>(j) - 1.0) + 1.0) * dth);
     } else {
-      x1 = std::cos((2.0 * (static_cast<double>(j) - 1.0) + 1.0) * dth);
+      x1 = std::cos((2.0 * (static_cast<type_real>(j) - 1.0) + 1.0) * dth);
       x2 = xlast;
       x = (x1 + x2) / 2.0;
     }
@@ -71,14 +72,13 @@ void gll_utils::jacg(
   return;
 }
 
-std::tuple<double, double, double> gll_utils::jacobf(const int n,
-                                                     const double alpha,
-                                                     const double beta,
-                                                     const double x) {
+std::tuple<type_real, type_real, type_real>
+gll_utils::jacobf(const int n, const type_real alpha, const type_real beta,
+                  const type_real x) {
 
-  double p1 = 0.0, p1d = 0.0, pm1, pm1d, pm2, pm2d;
+  type_real p1 = 0.0, p1d = 0.0, pm1, pm1d, pm2, pm2d;
 
-  double double_k, a1, a2, b3, a3, a4;
+  type_real double_k, a1, a2, b3, a3, a4;
   int k;
 
   p1 = 1.0;
@@ -96,7 +96,7 @@ std::tuple<double, double, double> gll_utils::jacobf(const int n,
     return std::make_tuple(p1, p1d, pm1d);
 
   for (int k = 2; k <= n; k++) {
-    double_k = static_cast<double>(k);
+    double_k = static_cast<type_real>(k);
     pm2 = pm1;
     pm2d = pm1d;
     pm1 = p1;
@@ -115,11 +115,11 @@ std::tuple<double, double, double> gll_utils::jacobf(const int n,
   return std::make_tuple(p1, p1d, pm1d);
 }
 
-double gll_utils::calc_gammaf(const double x) {
+type_real gll_utils::calc_gammaf(const type_real x) {
 
-  const double pi = 3.1415926535897930;
+  const type_real pi = 3.1415926535897930;
 
-  double gammaf = 1.0;
+  type_real gammaf = 1.0;
 
   if (x == -0.5)
     gammaf = -2.0 * std::sqrt(pi);
@@ -147,12 +147,12 @@ double gll_utils::calc_gammaf(const double x) {
   return gammaf;
 }
 
-double gll_utils::calc_pnormj(const int n, const double alpha,
-                              const double beta) {
+type_real gll_utils::calc_pnormj(const int n, const type_real alpha,
+                                 const type_real beta) {
 
-  double double_n, apb1, prod, double_i, pnormj;
+  type_real double_n, apb1, prod, double_i, pnormj;
 
-  double_n = static_cast<double>(n);
+  double_n = static_cast<type_real>(n);
   apb1 = alpha + beta + 1.0;
 
   if (n <= 1) {
@@ -171,7 +171,7 @@ double gll_utils::calc_pnormj(const int n, const double alpha,
   prod = prod * (1.0 + beta) * (2.0 + beta);
 
   for (int i = 3; i < n + 1; i++) {
-    double_i = static_cast<double>(i);
+    double_i = static_cast<type_real>(i);
     prod = prod * (double_i + alpha) * (double_i + beta) /
            (double_i * (double_i + alpha + beta));
   }
@@ -180,12 +180,10 @@ double gll_utils::calc_pnormj(const int n, const double alpha,
   return pnormj;
 }
 
-void gll_utils::jacw(
-    Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> z,
-    Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> w,
-    const int np, const int alpha, const int beta) {
+void gll_utils::jacw(HostMirror1d z, HostMirror1d w, const int np,
+                     const int alpha, const int beta) {
 
-  double p, pd, pm1d;
+  type_real p, pd, pm1d;
 
   int n = np - 1;
 
@@ -194,12 +192,12 @@ void gll_utils::jacw(
   assert(z.extent(0) == np);
   assert(w.extent(0) == np);
 
-  double fac1 = static_cast<double>(n + 1) + alpha + beta + 1.0;
-  double fac2 = fac1 + static_cast<double>(n + 1);
-  double fac3 = fac2 + 1.0;
-  double fnorm = gll_utils::calc_pnormj(n + 1, alpha, beta);
-  double rcoef =
-      (fnorm * fac2 * fac3) / (2.0 * fac1 * static_cast<double>(n + 2));
+  type_real fac1 = static_cast<type_real>(n + 1) + alpha + beta + 1.0;
+  type_real fac2 = fac1 + static_cast<type_real>(n + 1);
+  type_real fac3 = fac2 + 1.0;
+  type_real fnorm = gll_utils::calc_pnormj(n + 1, alpha, beta);
+  type_real rcoef =
+      (fnorm * fac2 * fac3) / (2.0 * fac1 * static_cast<type_real>(n + 2));
   for (int i = 0; i < np; i++) {
     std::tie(p, pd, pm1d) = gll_utils::jacobf(n + 2, alpha, beta, z(i));
     w(i) = -rcoef / ((p * pm1d));
@@ -207,10 +205,8 @@ void gll_utils::jacw(
   return;
 }
 
-void gll_utils::zwgjd(
-    Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> z,
-    Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> w,
-    const int np, const int alpha, const int beta) {
+void gll_utils::zwgjd(HostMirror1d z, HostMirror1d w, const int np,
+                      const int alpha, const int beta) {
 
   // calculate the GLL points and weights in the open interval (-1.0, 1.0)
 
@@ -235,10 +231,11 @@ void gll_utils::zwgjd(
   return;
 }
 
-double gll_utils::endw1(const int n, const double alpha, const double beta) {
+type_real gll_utils::endw1(const int n, const type_real alpha,
+                           const type_real beta) {
 
   // Calculates the weight contrinution at xi == -1.0
-  double apb, f1, fint1, fint2, f2, double_i, abn, abnn, a1, a2, a3, f3;
+  type_real apb, f1, fint1, fint2, f2, double_i, abn, abnn, a1, a2, a3, f3;
 
   // I dont think np == 0 && np == 1 are ever reached based on where these
   // function is called
@@ -267,7 +264,7 @@ double gll_utils::endw1(const int n, const double alpha, const double beta) {
     return f2;
   }
   for (int i = 3; i <= n; i++) {
-    double_i = static_cast<double>(i - 1);
+    double_i = static_cast<type_real>(i - 1);
     abn = alpha + beta + double_i;
     abnn = abn + double_i;
     a1 = -(2.0 * (double_i + alpha) * (double_i + beta)) /
@@ -282,10 +279,11 @@ double gll_utils::endw1(const int n, const double alpha, const double beta) {
   return f3;
 }
 
-double gll_utils::endw2(const int n, const double alpha, const double beta) {
+type_real gll_utils::endw2(const int n, const type_real alpha,
+                           const type_real beta) {
 
   // Calculates the weight contribution at xi == 1.0
-  double apb, f1, fint1, fint2, f2, double_i, abn, abnn, a1, a2, a3, f3;
+  type_real apb, f1, fint1, fint2, f2, double_i, abn, abnn, a1, a2, a3, f3;
 
   // I dont think np == 0 && np == 1 are ever reached based on where these
   // function is called
@@ -314,7 +312,7 @@ double gll_utils::endw2(const int n, const double alpha, const double beta) {
     return f2;
   }
   for (int i = 3; i <= n; i++) {
-    double_i = static_cast<double>(i - 1);
+    double_i = static_cast<type_real>(i - 1);
     abn = alpha + beta + double_i;
     abnn = abn + double_i;
     a1 = -(2.0 * (double_i + alpha) * (double_i + beta)) /

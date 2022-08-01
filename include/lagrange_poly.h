@@ -1,4 +1,12 @@
+#ifndef LAGRANGE_H
+#define LAGRANGE_H
+
+#include "../include/config.h"
+#include "../include/kokkos_abstractions.h"
 #include <Kokkos_Core.hpp>
+
+using HostMirror1d = specfem::HostMirror1d<type_real>;
+using HostMirror2d = specfem::HostMirror2d<type_real>;
 
 namespace Lagrange {
 /**
@@ -13,11 +21,9 @@ namespace Lagrange {
  * @param xigll Array of GLL points generally calculated using
  * gll_library::zwgljd
  */
-void compute_lagrange_interpolants(
-    Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> h,
-    Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> hprime,
-    const double xi, const int ngll,
-    const Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> xigll);
+void compute_lagrange_interpolants(HostMirror1d h, HostMirror1d hprime,
+                                   const type_real xi, const int ngll,
+                                   const HostMirror1d xigll);
 
 /**
  * @brief Compute the derivatives of Lagrange functions at GLL points
@@ -29,10 +35,8 @@ void compute_lagrange_interpolants(
  * @param xigll GLL points generally calculated using gll_library::zwgljd
  * @param ngll Order used to approximate functions
  */
-void compute_lagrange_derivatives_GLL(
-    Kokkos::View<double **, Kokkos::LayoutRight, Kokkos::HostSpace> hprime_ii,
-    const Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> xigll,
-    const int ngll);
+void compute_lagrange_derivatives_GLL(HostMirror2d hprime_ii,
+                                      const HostMirror1d xigll, const int ngll);
 
 /**
  * @brief Compute the derivatives of Jacobi functions at GLJ points
@@ -47,10 +51,9 @@ void compute_lagrange_derivatives_GLL(
  * @param xiglj GLJ points generally calculated using gll_library::zwgljd
  * @param nglj Order used to approximate functions
  */
-void compute_jacobi_derivatives_GLJ(
-    Kokkos::View<double **, Kokkos::LayoutRight, Kokkos::HostSpace>
-        hprimeBar_ii,
-    const Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> xiglj,
-    const int nglj);
+void compute_jacobi_derivatives_GLJ(HostMirror2d hprimeBar_ii,
+                                    const HostMirror1d xiglj, const int nglj);
 
 } // namespace Lagrange
+
+#endif
