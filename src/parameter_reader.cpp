@@ -10,7 +10,8 @@ void IO::param_file::open() { this->stream.open(this->filename); }
 
 void IO::param_file::close() { this->stream.close(); }
 
-std::string IO::param_file::param_read(std::string name) {
+std::string IO::param_file::param_read(std::string name,
+                                       bool start_from_beginning = true) {
 
   std::string string_read;
   //  Trim the parameter name
@@ -26,7 +27,8 @@ std::string IO::param_file::param_read(std::string name) {
   std::regex pattern(
       "^[ \t]*([^# \t]+)[ \t]*=[ \t]*([^# \t]+([ \t]+[^# \t]+)*)");
 
-  this->stream.seekg(0, ios::beg);
+  if (start_from_beginning)
+    this->stream.seekg(0, ios::beg);
   std::string line;
   std::cmatch parameter;
   while (getline(stream, line)) {
@@ -48,7 +50,8 @@ std::string IO::param_file::param_read(std::string name) {
   return string_read;
 }
 
-void IO::param_file::read(int &value, std::string name) {
+void IO::param_file::read(int &value, std::string name,
+                          bool start_from_beginning = true) {
   std::string string_read = IO::param_file::param_read(name);
   if (string_read == "")
     throw std::runtime_error("Missing parameter " + name);
@@ -56,14 +59,16 @@ void IO::param_file::read(int &value, std::string name) {
   return;
 }
 
-void IO::param_file::read(type_real &value, std::string name) {
+void IO::param_file::read(type_real &value, std::string name,
+                          bool start_from_beginning = true) {
   std::string string_read = IO::param_file::param_read(name);
   if (string_read == "")
     throw std::runtime_error("Missing parameter " + name);
   value = std::atof(string_read);
 }
 
-void IO::param_file::read(bool &value, std::string name) {
+void IO::param_file::read(bool &value, std::string name,
+                          bool start_from_beginning = true) {
   std::string string_read = IO::param_file::param_read(name);
   if (string_read == "")
     throw std::runtime_error("Missing parameter " + name);
@@ -79,7 +84,8 @@ void IO::param_file::read(bool &value, std::string name) {
   return;
 }
 
-void IO::param_file::read(std::string value, std::string name) {
+void IO::param_file::read(std::string value, std::string name,
+                          bool start_from_beginning = true) {
   value = IO::param_file::param_read(name);
   if (value == "")
     throw std::runtime_error("Missing parameter " + name);
@@ -846,4 +852,132 @@ void IO::read_parameters_file(std::string param_file,
 
   param_file.close();
   return;
+}
+
+void IO::read_sources_file(std::string source_file,
+                           std::vector<specfem::sources::source> &sources,
+                           int nsources) {
+
+  IO::param_file::param_file param_file(param_file);
+  param_file.open();
+
+  // Have to add checks to figure out if sources file is in correct format.
+
+  for (int i = 0; i < nsources, nsources) {
+    specfem::sources::source source;
+
+    try {
+      param_file.read(source.source_surf, "source_surf", false);
+    } catch std::runtime_error &e {
+      std::cout << e << std::endl;
+      some_parameters_are_missing = true;
+    }
+
+    try {
+      param_file.read(source.x_source, "x_source", false);
+    } catch std::runtime_error &e {
+      std::cout << e << std::endl;
+      some_parameters_are_missing = true;
+    }
+
+    try {
+      param_file.read(source.z_source, "z_source", false);
+    } catch std::runtime_error &e {
+      std::cout << e << std::endl;
+      some_parameters_are_missing = true;
+    }
+
+    try {
+      param_file.read(source.source_type, "source_type", false);
+    } catch std::runtime_error &e {
+      std::cout << e << std::endl;
+      some_parameters_are_missing = true;
+    }
+
+    try {
+      param_file.read(source.time_function_type, "time_function_type", false);
+    } catch std::runtime_error &e {
+      std::cout << e << std::endl;
+      some_parameters_are_missing = true;
+    }
+
+    try {
+      param_file.read(source.name_of_source_file, "name_of_source_file", false);
+    } catch std::runtime_error &e {
+      std::cout << e << std::endl;
+      some_parameters_are_missing = true;
+    }
+
+    try {
+      param_file.read(source.burst_band_width, "burst_band_width", false);
+    } catch std::runtime_error &e {
+      std::cout << e << std::endl;
+      some_parameters_are_missing = true;
+    }
+
+    try {
+      param_file.read(source.f0_source, "f0_source", false);
+    } catch std::runtime_error &e {
+      std::cout << e << std::endl;
+      some_parameters_are_missing = true;
+    }
+
+    try {
+      param_file.read(source.tshift_src, "tshift_src", false);
+    } catch std::runtime_error &e {
+      std::cout << e << std::endl;
+      some_parameters_are_missing = true;
+    }
+
+    try {
+      param_file.read(source.anglesource, "anglesource", false);
+    } catch std::runtime_error &e {
+      std::cout << e << std::endl;
+      some_parameters_are_missing = true;
+    }
+
+    try {
+      param_file.read(source.Mxx, "Mxx", false);
+    } catch std::runtime_error &e {
+      std::cout << e << std::endl;
+      some_parameters_are_missing = true;
+    }
+
+    try {
+      param_file.read(source.Mxz, "Mxz", false);
+    } catch std::runtime_error &e {
+      std::cout << e << std::endl;
+      some_parameters_are_missing = true;
+    }
+
+    try {
+      param_file.read(source.Mzz, "Mzz", false);
+    } catch std::runtime_error &e {
+      std::cout << e << std::endl;
+      some_parameters_are_missing = true;
+    }
+
+    try {
+      param_file.read(source.factor, "factor", false);
+    } catch std::runtime_error &e {
+      std::cout << e << std::endl;
+      some_parameters_are_missing = true;
+    }
+
+    try {
+      param_file.read(source.vx_source, "vx_source", false);
+    } catch std::runtime_error &e {
+      std::cout << e << std::endl;
+      some_parameters_are_missing = true;
+    }
+
+    try {
+      param_file.read(source.vz_source, "vz_source", false);
+    } catch std::runtime_error &e {
+      std::cout << e << std::endl;
+      some_parameters_are_missing = true;
+    }
+
+    sources.push_back(source);
+  }
 }

@@ -10,6 +10,7 @@ public:
   void open();
   void close();
   std::string param_read(std::string name);
+  std::string param_read(bool ignore_junk);
   void read(int value, std::string name);
   void read(type_real value, std::string name);
   void read(bool value, std::string name);
