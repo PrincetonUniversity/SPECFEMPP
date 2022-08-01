@@ -844,5 +844,6 @@ void IO::read_parameters_file(std::string param_file,
     }
   }
 
+  param_file.close();
   return;
 }
