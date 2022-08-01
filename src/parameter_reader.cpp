@@ -980,4 +980,6 @@ void IO::read_sources_file(std::string source_file,
 
     sources.push_back(source);
   }
+
+  return;
 }
