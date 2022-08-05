@@ -64,6 +64,23 @@ target_link_libraries(
         Kokkos::kokkos
 )
 
+add_library(
+        fortranio
+        src/fortran_IO.cpp
+        include/fortran_IO.h
+)
+
+# add_library(
+#         specfem_IO
+#         src/parameter_reader.cpp
+#         include/parameter_reader.h
+# )
+
+# target_link_libraries(
+#         specfem_IO
+#         fortranio
+# )
+
 # Include tests
 add_subdirectory(tests/unittests)
 

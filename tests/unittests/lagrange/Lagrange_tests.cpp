@@ -1,6 +1,6 @@
-#include "../../include/gll_library.h"
-#include "../../include/lagrange_poly.h"
-#include "Kokkos_Environment.hpp"
+#include "../../../include/gll_library.h"
+#include "../../../include/lagrange_poly.h"
+#include "../Kokkos_Environment.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
