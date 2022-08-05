@@ -28,7 +28,7 @@ target_link_libraries(
 
 add_executable(
   gll_tests
-  gll_tests.cpp
+  gll/gll_tests.cpp
 )
 target_link_libraries(
   gll_tests
@@ -40,7 +40,7 @@ target_link_libraries(
 
 add_executable(
   lagrange_tests
-  Lagrange_tests.cpp
+  lagrange/Lagrange_tests.cpp
 )
 
 target_link_libraries(
@@ -51,6 +51,19 @@ target_link_libraries(
   kokkos_environment
 )
 
+add_executable(
+  fortranio_test
+  fortran_io/fortranio_tests.cpp
+)
+
+target_link_libraries(
+  fortranio_test
+  gtest_main
+  gmock_main
+  fortranio
+)
+
 include(GoogleTest)
 gtest_discover_tests(gll_tests)
 gtest_discover_tests(lagrange_tests)
+gtest_discover_tests(fortranio_test)
