@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.17.5)
 project(specfem2d_kokkos VERSION 0.1.0)
 
 set(CMAKE_CXX_STANDARD 17)
+option(MPI_PARALLEL "MPI enabled" OFF)
 
 # Install Kokkos as a dependency
 ## TODO: Add options for on utilizing in house builds
@@ -70,16 +71,50 @@ add_library(
         include/fortran_IO.h
 )
 
-# add_library(
-#         specfem_IO
-#         src/parameter_reader.cpp
-#         include/parameter_reader.h
-# )
+add_library(
+        specfem_mpi
+        src/specfem_mpi.cpp
+        include/specfem_mpi.h
+)
 
-# target_link_libraries(
-#         specfem_IO
-#         fortranio
-# )
+if (MPI_PARALLEL)
+        target_compile_definitions(
+                specfem_mpi
+                PRIVATE -DMPI_PARALLEL
+        )
+        message("-- Compiling SPECFEM with MPI")
+else()
+        message("-- Compiling SPECFEM without MPI")
+endif(MPI_PARALLEL)
+
+add_library(
+        parameter_reader
+        src/parameter_reader.cpp
+        include/parameter_reader.h
+        include/sources.h
+        include/mesh.h
+)
+
+target_link_libraries(
+        parameter_reader
+        fortranio
+        Kokkos::kokkos
+)
+
+add_library(
+        database_reader
+        src/read_mesh_database.cpp
+        include/read_mesh_database.h
+        include/mesh.h
+        include/kokkos_abstractions.h
+)
+
+target_link_libraries(
+        database_reader
+        specfem_mpi
+        fortranio
+        Kokkos::kokkos
+)
 
 # Include tests
 add_subdirectory(tests/unittests)

@@ -26,6 +26,18 @@ target_link_libraries(
   gtest_main
 )
 
+add_library(
+  mpi_environment
+  MPI_environment.hpp
+  MPI_environment.cpp
+)
+
+target_link_libraries(
+  mpi_environment
+  gtest_main
+  specfem_mpi
+)
+
 add_executable(
   gll_tests
   gll/gll_tests.cpp
@@ -36,6 +48,7 @@ target_link_libraries(
   gll_library
   gll_utils
   kokkos_environment
+  -lpthread -lm
 )
 
 add_executable(
@@ -49,6 +62,7 @@ target_link_libraries(
   lagrange
   gll_library
   kokkos_environment
+  -lpthread -lm
 )
 
 add_executable(
@@ -61,9 +75,25 @@ target_link_libraries(
   gtest_main
   gmock_main
   fortranio
+  -lpthread -lm
+)
+
+add_executable(
+  parameter_reader_tests
+  parameter_reader/parameter_reader_tests.cpp
+)
+
+target_link_libraries(
+  parameter_reader_tests
+  gtest_main
+  database_reader
+  mpi_environment
+  specfem_mpi
+  -lpthread -lm
 )
 
 include(GoogleTest)
 gtest_discover_tests(gll_tests)
 gtest_discover_tests(lagrange_tests)
 gtest_discover_tests(fortranio_test)
+gtest_discover_tests(parameter_reader_tests)
