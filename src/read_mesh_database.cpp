@@ -138,7 +138,6 @@ void IO::read_coorg_elements(std::ifstream &stream, specfem::mesh &mesh,
     IO::fortran_IO::fortran_read_line(stream, &ipoin, &coorgi, &coorgj);
     if (ipoin < 1 || ipoin > npgeo) {
       throw std::runtime_error("Error reading coordinates");
-      mpi->exit();
     }
     mesh.coorg(1, ipoin) = coorgi;
     mesh.coorg(2, ipoin) = coorgj;
@@ -171,7 +170,6 @@ void read_mesh_database_attenuation(std::ifstream &stream,
   if (params.n_sls < 1) {
     throw std::runtime_error("must have N_SLS >= 1 even if attenuation if off "
                              "because it is used to assign some arrays");
-    mpi->exit();
   }
 }
 
