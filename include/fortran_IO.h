@@ -1,7 +1,11 @@
+#ifndef FORTRAN_IO_H
+#define FORTRAN_IO_H
+
 #include "../include/config.h"
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <vector>
 
 namespace IO::fortran_IO {
 
@@ -32,4 +36,20 @@ void fortran_read_line(std::ifstream &stream, Args... values) {
   stream.read(reinterpret_cast<char *>(&buffer_length), fint);
   return;
 }
+
+template <typename T>
+void IO::fortran_IO::fortran_read_value(std::vector<T> *value,
+                                        std::ifstream &stream,
+                                        int &buffer_length) {
+  int nsize = value->size();
+  std::vector<T> &rvalue = *value;
+
+  for (int i = 0; i < nsize; i++) {
+    IO::fortran_IO::fortran_read_value(&rvalue[i], stream, buffer_length);
+  }
+
+  return;
+}
 } // namespace IO::fortran_IO
+
+#endif
