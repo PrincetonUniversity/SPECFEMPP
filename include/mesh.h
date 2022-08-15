@@ -3,6 +3,7 @@
 
 #include "../include/config.h"
 #include "../include/kokkos_abstractions.h"
+#include <Kokkos_Core.hpp>
 
 namespace specfem {
 struct prop {

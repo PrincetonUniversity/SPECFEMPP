@@ -7,6 +7,7 @@
 namespace specfem {
 
 using HostMemSpace = Kokkos::HostSpace;
+using HostExecSpace = Kokkos::DefaultHostExecutionSpace;
 using DevMemSpace = Kokkos::DefaultExecutionSpace::memory_space;
 using DevExecSpace = Kokkos::DefaultExecutionSpace;
 
@@ -17,6 +18,7 @@ template <typename T> using DeviceView2d = Kokkos::View<T **, DevMemSpace>;
 // Host views
 template <typename T> using HostView1d = Kokkos::View<T *, HostMemSpace>;
 template <typename T> using HostView2d = Kokkos::View<T **, HostMemSpace>;
+template <typename T> using HostView3d = Kokkos::View<T ***, HostMemSpace>;
 
 // Host Mirrors
 template <typename T> using HostMirror1d = typename DeviceView1d<T>::HostMirror;

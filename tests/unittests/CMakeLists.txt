@@ -86,8 +86,11 @@ add_executable(
 target_link_libraries(
   parameter_reader_tests
   gtest_main
+  material_class
   database_reader
+  material_reader
   mpi_environment
+  kokkos_environment
   specfem_mpi
   -lpthread -lm
 )
