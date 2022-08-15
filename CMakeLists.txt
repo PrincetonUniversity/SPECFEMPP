@@ -116,6 +116,24 @@ target_link_libraries(
         Kokkos::kokkos
 )
 
+add_library(
+        material_class
+        src/material.cpp
+        include/material.h
+)
+
+add_library(
+        material_reader
+        src/read_material_properties.cpp
+        include/read_material_properties.h
+)
+
+target_link_libraries(
+        material_reader
+        material_class
+        specfem_mpi
+        fortranio
+)
 # Include tests
 add_subdirectory(tests/unittests)
 

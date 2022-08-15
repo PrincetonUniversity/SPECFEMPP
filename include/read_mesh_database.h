@@ -1,3 +1,6 @@
+#ifndef READ_MESH_DATABASE_H
+#define READ_MESH_DATABASE_H
+
 #include "../include/fortran_IO.h"
 #include "../include/mesh.h"
 #include "../include/params.h"
@@ -15,3 +18,5 @@ void read_mesh_database_attenuation(std::ifstream &stream,
                                     specfem::MPI *mpi);
 
 } // namespace IO
+
+#endif

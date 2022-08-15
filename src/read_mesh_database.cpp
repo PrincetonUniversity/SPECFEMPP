@@ -1,10 +1,15 @@
 #include "../include/read_mesh_database.h"
+#include "../include/config.h"
 #include "../include/fortran_IO.h"
+#include "../include/kokkos_abstractions.h"
 #include "../include/mesh.h"
 #include "../include/params.h"
 #include "../include/specfem_mpi.h"
+#include <Kokkos_Core.hpp>
 #include <fstream>
 #include <iostream>
+
+using HostView2d = specfem::HostView2d<type_real>;
 
 void IO::read_mesh_database_header(std::ifstream &stream, specfem::mesh &mesh,
                                    specfem::MPI *mpi) {
@@ -131,16 +136,17 @@ void IO::read_coorg_elements(std::ifstream &stream, specfem::mesh &mesh,
                              specfem::MPI *mpi) {
 
   int npgeo = mesh.npgeo, ipoin = 0;
+
   type_real coorgi, coorgj;
-  mesh.coorg =
-      specfem::HostView2d<type_real>("specfem::mesh::coorg", ndim, npgeo);
-  for (int ipoin = 0; ipoin < npgeo; ipoin++) {
+  int buffer_length;
+  mesh.coorg = HostView2d("specfem::mesh::coorg", ndim, npgeo);
+  for (int i = 0; i < npgeo; i++) {
     IO::fortran_IO::fortran_read_line(stream, &ipoin, &coorgi, &coorgj);
     if (ipoin < 1 || ipoin > npgeo) {
       throw std::runtime_error("Error reading coordinates");
     }
-    mesh.coorg(1, ipoin) = coorgi;
-    mesh.coorg(2, ipoin) = coorgj;
+    mesh.coorg(0, ipoin - 1) = coorgi;
+    mesh.coorg(1, ipoin - 1) = coorgj;
   }
 
   specfem::prop &properties = mesh.properties;
@@ -156,13 +162,10 @@ void IO::read_coorg_elements(std::ifstream &stream, specfem::mesh &mesh,
       &properties.nnodes_tagential_curve, &properties.nelem_on_the_axis);
 }
 
-void read_mesh_database_attenuation(std::ifstream &stream,
-                                    specfem::parameters &params,
-                                    specfem::MPI *mpi) {
+void IO::read_mesh_database_attenuation(std::ifstream &stream,
+                                        specfem::parameters &params,
+                                        specfem::MPI *mpi) {
 
-  if (mpi->get_rank() == 0) {
-    std::cout << "Reading attenuation setup";
-  }
   IO::fortran_IO::fortran_read_line(stream, &params.n_sls,
                                     &params.attenuation_f0_reference,
                                     &params.read_velocities_at_f0);
