@@ -6,9 +6,12 @@
 #include <iostream>
 #include <stdexcept>
 
+using DeviceView1d = specfem::DeviceView1d<type_real>;
+using HostMirror1d = specfem::HostMirror1d<type_real>;
+
 TEST(GLL_tests, PNLEG) {
   const auto &pnleg = gll_library::pnleg;
-  double tol = 1e-6;
+  type_real tol = 1e-6;
 
   try {
     gll_library::pnleg(-1.0, 0);
@@ -31,7 +34,7 @@ TEST(GLL_tests, PNLEG) {
 TEST(GLL_tests, PNDLEG) {
   const auto &pndleg = gll_library::pndleg;
 
-  double tol = 1e-6;
+  type_real tol = 1e-6;
   try {
     gll_library::pndleg(-1.0, 0);
     FAIL();
@@ -51,7 +54,7 @@ TEST(GLL_tests, PNDLEG) {
 
 TEST(GLL_tests, JACOBF) {
 
-  double tol = 1e-6, p, pd;
+  type_real tol = 1e-6, p, pd;
   const auto &jacobf = gll_utils::jacobf;
 
   // Tests for Legendre polynnomials
@@ -73,136 +76,149 @@ TEST(GLL_tests, JACOBF) {
 
 TEST(GLL_tests, JACG) {
 
-  double tol = 1e-6;
+  type_real tol = 1e-6;
   const auto &jacg = gll_utils::jacg;
 
-  Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> r3("r3", 3);
-  ASSERT_DEATH(jacg(r3, 2, 0.0, 0.0), "");
+  DeviceView1d r3("gll_tests::gll_utils::r3", 3);
+  HostMirror1d h_r3 = Kokkos::create_mirror_view(r3);
+  ASSERT_DEATH(jacg(h_r3, 2, 0.0, 0.0), "");
 
-  Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> r1("r1", 5);
-  jacg(r1, 5, 0.0, 0.0);
-  EXPECT_NEAR(r1(0), -0.9061798459, tol);
-  EXPECT_NEAR(r1(1), -0.538469310, tol);
-  EXPECT_NEAR(r1(2), 0, tol);
-  EXPECT_NEAR(r1(3), 0.538469310, tol);
-  EXPECT_NEAR(r1(4), 0.9061798459, tol);
+  DeviceView1d r1("gll_tests::gll_utils::r1", 5);
+  HostMirror1d h_r1 = Kokkos::create_mirror_view(r1);
+  jacg(h_r1, 5, 0.0, 0.0);
+  EXPECT_NEAR(h_r1(0), -0.9061798459, tol);
+  EXPECT_NEAR(h_r1(1), -0.538469310, tol);
+  EXPECT_NEAR(h_r1(2), 0, tol);
+  EXPECT_NEAR(h_r1(3), 0.538469310, tol);
+  EXPECT_NEAR(h_r1(4), 0.9061798459, tol);
 
-  Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> r2("r2", 3);
-  jacg(r2, 3, 0.0, 0.0);
-  EXPECT_NEAR(r2(0), -0.77459666924, tol);
-  EXPECT_NEAR(r2(1), 0, tol);
-  EXPECT_NEAR(r2(2), 0.77459666924, tol);
+  DeviceView1d r2("gll_tests::gll_utils::r2", 3);
+  HostMirror1d h_r2 = Kokkos::create_mirror_view(r2);
+  jacg(h_r2, 3, 0.0, 0.0);
+  EXPECT_NEAR(h_r2(0), -0.77459666924, tol);
+  EXPECT_NEAR(h_r2(1), 0, tol);
+  EXPECT_NEAR(h_r2(2), 0.77459666924, tol);
 }
 
 TEST(GLL_tests, JACW) {
 
-  double tol = 1e-6;
+  type_real tol = 1e-6;
   const auto &jacg = gll_utils::jacg;
   const auto &jacw = gll_utils::jacw;
 
-  Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> r2("r1", 3);
-  jacg(r2, 3, 1.0, 1.0);
-  EXPECT_NEAR(r2(0), -0.6546536707, tol);
-  EXPECT_NEAR(r2(1), 0, tol);
-  EXPECT_NEAR(r2(2), 0.6546536707, tol);
+  DeviceView1d r2("gll_tests::gll_utils::r2", 3);
+  HostMirror1d h_r2 = Kokkos::create_mirror_view(r2);
+  jacg(h_r2, 3, 1.0, 1.0);
+  EXPECT_NEAR(h_r2(0), -0.6546536707, tol);
+  EXPECT_NEAR(h_r2(1), 0, tol);
+  EXPECT_NEAR(h_r2(2), 0.6546536707, tol);
 
-  Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> w2("r2", 3);
-  jacw(r2, w2, 3, 1.0, 1.0);
-  std::array<double, 3> reference = { 0.5444444444, 0.7111111111,
-                                      0.5444444444 };
+  DeviceView1d w2("gll_tests::gll_utils::w2", 3);
+  HostMirror1d h_w2 = Kokkos::create_mirror_view(w2);
+  jacw(h_r2, h_w2, 3, 1.0, 1.0);
+  std::array<type_real, 3> reference = { 0.5444444444, 0.7111111111,
+                                         0.5444444444 };
   for (int i = 0; i < 3; i++) {
-    double result = reference[i] * (1.0 - r2(i) * r2(i));
-    EXPECT_NEAR(w2(i), result, tol);
+    type_real result = reference[i] * (1.0 - h_r2(i) * h_r2(i));
+    EXPECT_NEAR(h_w2(i), result, tol);
   }
 }
 
 TEST(GLL_tests, ZWGJD) {
   // This test checks for the special case of np == 1
-  const double tol = 1e-6;
+  const type_real tol = 1e-6;
   const auto &zwgjd = gll_utils::zwgjd;
 
-  Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> r1("r1", 1);
-  Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> w1("w1", 1);
-  zwgjd(r1, w1, 1, 1.0, 1.0);
+  DeviceView1d r1("gll_tests::gll_utils::r1", 1);
+  HostMirror1d h_r1 = Kokkos::create_mirror_view(r1);
+  DeviceView1d w1("gll_tests::gll_utils::w1", 1);
+  HostMirror1d h_w1 = Kokkos::create_mirror_view(w1);
+  zwgjd(h_r1, h_w1, 1, 1.0, 1.0);
 
-  EXPECT_NEAR(r1(0), 0.0, tol);
-  EXPECT_NEAR(w1(0), 1.333333, tol);
+  EXPECT_NEAR(h_r1(0), 0.0, tol);
+  EXPECT_NEAR(h_w1(0), 1.333333, tol);
 }
 
 TEST(GLL_tests, ZWGLJD) {
 
-  double tol = 1e-6;
+  type_real tol = 1e-6;
   const auto &zwgljd = gll_library::zwgljd;
 
-  Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> z1("z1", 3);
-  Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> w1("w1", 3);
-  zwgljd(z1, w1, 3, 0.0, 0.0);
-  EXPECT_NEAR(z1(0), -1.0, tol);
-  EXPECT_NEAR(z1(1), 0.0, tol);
-  EXPECT_NEAR(z1(2), 1.0, tol);
-  EXPECT_NEAR(w1(0), 0.333333, tol);
-  EXPECT_NEAR(w1(1), 1.333333, tol);
-  EXPECT_NEAR(w1(2), 0.333333, tol);
+  DeviceView1d z1("gll_tests::gll_library::z1", 3);
+  HostMirror1d h_z1 = Kokkos::create_mirror_view(z1);
+  DeviceView1d w1("gll_tests::gll_library::w1", 3);
+  HostMirror1d h_w1 = Kokkos::create_mirror_view(w1);
+  zwgljd(h_z1, h_w1, 3, 0.0, 0.0);
+  EXPECT_NEAR(h_z1(0), -1.0, tol);
+  EXPECT_NEAR(h_z1(1), 0.0, tol);
+  EXPECT_NEAR(h_z1(2), 1.0, tol);
+  EXPECT_NEAR(h_w1(0), 0.333333, tol);
+  EXPECT_NEAR(h_w1(1), 1.333333, tol);
+  EXPECT_NEAR(h_w1(2), 0.333333, tol);
 
-  Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> z2("z1", 5);
-  Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> w2("w1", 5);
-  zwgljd(z2, w2, 5, 0.0, 0.0);
-  EXPECT_NEAR(z2(0), -1.0, tol);
-  EXPECT_NEAR(z2(1), -0.6546536707, tol);
-  EXPECT_NEAR(z2(2), 0.0, tol);
-  EXPECT_NEAR(z2(3), 0.6546536707, tol);
-  EXPECT_NEAR(z2(4), 1.0, tol);
-  EXPECT_NEAR(w2(0), 0.1, tol);
-  EXPECT_NEAR(w2(1), 0.5444444444, tol);
-  EXPECT_NEAR(w2(2), 0.7111111111, tol);
-  EXPECT_NEAR(w2(3), 0.5444444444, tol);
-  EXPECT_NEAR(w2(4), 0.1, tol);
+  DeviceView1d z2("gll_tests::gll_library::z2", 5);
+  HostMirror1d h_z2 = Kokkos::create_mirror_view(z2);
+  DeviceView1d w2("gll_tests::gll_library::w2", 5);
+  HostMirror1d h_w2 = Kokkos::create_mirror_view(w2);
+  zwgljd(h_z2, h_w2, 5, 0.0, 0.0);
+  EXPECT_NEAR(h_z2(0), -1.0, tol);
+  EXPECT_NEAR(h_z2(1), -0.6546536707, tol);
+  EXPECT_NEAR(h_z2(2), 0.0, tol);
+  EXPECT_NEAR(h_z2(3), 0.6546536707, tol);
+  EXPECT_NEAR(h_z2(4), 1.0, tol);
+  EXPECT_NEAR(h_w2(0), 0.1, tol);
+  EXPECT_NEAR(h_w2(1), 0.5444444444, tol);
+  EXPECT_NEAR(h_w2(2), 0.7111111111, tol);
+  EXPECT_NEAR(h_w2(3), 0.5444444444, tol);
+  EXPECT_NEAR(h_w2(4), 0.1, tol);
 
-  zwgljd(z2, w2, 5, 0.0, 1.0);
-  EXPECT_NEAR(z2(0), -1.0, tol);
-  EXPECT_NEAR(z2(1), -0.5077876295, tol);
-  EXPECT_NEAR(z2(2), 0.1323008207, tol);
-  EXPECT_NEAR(z2(3), 0.7088201421, tol);
-  EXPECT_NEAR(z2(4), 1.0, tol);
-  EXPECT_NEAR(w2(0), 0.01333333333, tol);
-  EXPECT_NEAR(w2(1), 0.2896566946, tol);
-  EXPECT_NEAR(w2(2), 0.7360043695, tol);
-  EXPECT_NEAR(w2(3), 0.794338936, tol);
-  EXPECT_NEAR(w2(4), 0.1666666667, tol);
+  zwgljd(h_z2, h_w2, 5, 0.0, 1.0);
+  EXPECT_NEAR(h_z2(0), -1.0, tol);
+  EXPECT_NEAR(h_z2(1), -0.5077876295, tol);
+  EXPECT_NEAR(h_z2(2), 0.1323008207, tol);
+  EXPECT_NEAR(h_z2(3), 0.7088201421, tol);
+  EXPECT_NEAR(h_z2(4), 1.0, tol);
+  EXPECT_NEAR(h_w2(0), 0.01333333333, tol);
+  EXPECT_NEAR(h_w2(1), 0.2896566946, tol);
+  EXPECT_NEAR(h_w2(2), 0.7360043695, tol);
+  EXPECT_NEAR(h_w2(3), 0.794338936, tol);
+  EXPECT_NEAR(h_w2(4), 0.1666666667, tol);
 
-  Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> z3("z1", 7);
-  Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> w3("w1", 7);
-  zwgljd(z3, w3, 7, 0.0, 0.0);
-  EXPECT_NEAR(z3(0), -1.0, tol);
-  EXPECT_NEAR(z3(1), -0.8302238962, tol);
-  EXPECT_NEAR(z3(2), -0.4688487934, tol);
-  EXPECT_NEAR(z3(3), 0.0, tol);
-  EXPECT_NEAR(z3(4), 0.4688487934, tol);
-  EXPECT_NEAR(z3(5), 0.8302238962, tol);
-  EXPECT_NEAR(z3(6), 1.0, tol);
-  EXPECT_NEAR(w3(0), 0.0476190476, tol);
-  EXPECT_NEAR(w3(1), 0.2768260473, tol);
-  EXPECT_NEAR(w3(2), 0.4317453812, tol);
-  EXPECT_NEAR(w3(3), 0.4876190476, tol);
-  EXPECT_NEAR(w3(4), 0.4317453812, tol);
-  EXPECT_NEAR(w3(5), 0.2768260473, tol);
-  EXPECT_NEAR(w3(6), 0.0476190476, tol);
+  DeviceView1d z3("gll_tests::gll_library::z3", 7);
+  HostMirror1d h_z3 = Kokkos::create_mirror_view(z3);
+  DeviceView1d w3("gll_tests::gll_library::w3", 7);
+  HostMirror1d h_w3 = Kokkos::create_mirror_view(w3);
+  zwgljd(h_z3, h_w3, 7, 0.0, 0.0);
+  EXPECT_NEAR(h_z3(0), -1.0, tol);
+  EXPECT_NEAR(h_z3(1), -0.8302238962, tol);
+  EXPECT_NEAR(h_z3(2), -0.4688487934, tol);
+  EXPECT_NEAR(h_z3(3), 0.0, tol);
+  EXPECT_NEAR(h_z3(4), 0.4688487934, tol);
+  EXPECT_NEAR(h_z3(5), 0.8302238962, tol);
+  EXPECT_NEAR(h_z3(6), 1.0, tol);
+  EXPECT_NEAR(h_w3(0), 0.0476190476, tol);
+  EXPECT_NEAR(h_w3(1), 0.2768260473, tol);
+  EXPECT_NEAR(h_w3(2), 0.4317453812, tol);
+  EXPECT_NEAR(h_w3(3), 0.4876190476, tol);
+  EXPECT_NEAR(h_w3(4), 0.4317453812, tol);
+  EXPECT_NEAR(h_w3(5), 0.2768260473, tol);
+  EXPECT_NEAR(h_w3(6), 0.0476190476, tol);
 
-  zwgljd(z3, w3, 7, 0.0, 1.0);
-  EXPECT_NEAR(z3(0), -1.0, tol);
-  EXPECT_NEAR(z3(1), -0.7401236486, tol);
-  EXPECT_NEAR(z3(2), -0.3538526341, tol);
-  EXPECT_NEAR(z3(3), 0.09890279315, tol);
-  EXPECT_NEAR(z3(4), 0.5288423045, tol);
-  EXPECT_NEAR(z3(5), 0.8508465697, tol);
-  EXPECT_NEAR(z3(6), 1.0, tol);
-  EXPECT_NEAR(w3(0), 0.003401360544, tol);
-  EXPECT_NEAR(w3(1), 0.08473655296, tol);
-  EXPECT_NEAR(w3(2), 0.2803032119, tol);
-  EXPECT_NEAR(w3(3), 0.5016469619, tol);
-  EXPECT_NEAR(w3(4), 0.5945754451, tol);
-  EXPECT_NEAR(w3(5), 0.4520031342, tol);
-  EXPECT_NEAR(w3(6), 0.08333333333, tol);
+  zwgljd(h_z3, h_w3, 7, 0.0, 1.0);
+  EXPECT_NEAR(h_z3(0), -1.0, tol);
+  EXPECT_NEAR(h_z3(1), -0.7401236486, tol);
+  EXPECT_NEAR(h_z3(2), -0.3538526341, tol);
+  EXPECT_NEAR(h_z3(3), 0.09890279315, tol);
+  EXPECT_NEAR(h_z3(4), 0.5288423045, tol);
+  EXPECT_NEAR(h_z3(5), 0.8508465697, tol);
+  EXPECT_NEAR(h_z3(6), 1.0, tol);
+  EXPECT_NEAR(h_w3(0), 0.003401360544, tol);
+  EXPECT_NEAR(h_w3(1), 0.08473655296, tol);
+  EXPECT_NEAR(h_w3(2), 0.2803032119, tol);
+  EXPECT_NEAR(h_w3(3), 0.5016469619, tol);
+  EXPECT_NEAR(h_w3(4), 0.5945754451, tol);
+  EXPECT_NEAR(h_w3(5), 0.4520031342, tol);
+  EXPECT_NEAR(h_w3(6), 0.08333333333, tol);
 }
 
 int main(int argc, char *argv[]) {
