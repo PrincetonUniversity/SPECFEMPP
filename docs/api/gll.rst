@@ -1,7 +1,7 @@
-.. _GLL:
+.. _Quadrature:
 
-GLL Class
+Quadrature Class
 ===========
 
-.. doxygenfile:: gll.h
+.. doxygenfile:: quadrature.h
    :project: SPECFEM KOKKOS IMPLEMENTATION

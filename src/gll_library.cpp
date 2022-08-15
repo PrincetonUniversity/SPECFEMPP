@@ -1,17 +1,20 @@
 #include "../include/gll_library.h"
+#include "../include/config.h"
 #include "../include/gll_utils.h"
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
 
-double gll_library::pnleg(const double z, const int n) {
+using HostMirror1d = specfem::HostMirror1d<type_real>;
+
+type_real gll_library::pnleg(const type_real z, const int n) {
   // Generate Lagendre polynomials using recurrance relation
   // (l+1)P_(l+1)(x)-(2l+1)xP_l(x)+lP_(l-1)(x)=0
 
   if (n == 0)
     throw std::invalid_argument("value of n > 0");
 
-  double p1, p2, p3, double_k;
+  type_real p1, p2, p3, double_k;
 
   p1 = 1.0;
   p2 = z;
@@ -27,12 +30,12 @@ double gll_library::pnleg(const double z, const int n) {
   return p3;
 }
 
-double gll_library::pnglj(const double z, const int n) {
+type_real gll_library::pnglj(const type_real z, const int n) {
 
   if (n == 0)
     throw std::invalid_argument("value of n > 0");
 
-  double glj_value;
+  type_real glj_value;
 
   if (std::abs(z + 1.0) > 1e-9) {
     glj_value =
@@ -44,12 +47,12 @@ double gll_library::pnglj(const double z, const int n) {
   return glj_value;
 }
 
-double gll_library::pndleg(const double z, const int n) {
+type_real gll_library::pndleg(const type_real z, const int n) {
 
   if (n == 0)
     throw std::invalid_argument("value of n > 0");
 
-  double p1, p2, p1d, p2d, p3, p3d, double_k;
+  type_real p1, p2, p1d, p2d, p3, p3d, double_k;
 
   p1 = 1.0;
   p2 = z;
@@ -72,12 +75,12 @@ double gll_library::pndleg(const double z, const int n) {
   return p3d;
 }
 
-double gll_library::pndglj(const double z, const int n) {
+type_real gll_library::pndglj(const type_real z, const int n) {
 
   if (n == 0)
     throw std::invalid_argument("value of n > 0");
 
-  double glj_deriv;
+  type_real glj_deriv;
 
   if (std::abs(z + 1.0) > 1e-9) {
     glj_deriv = (gll_library::pndleg(z, n) + gll_library::pndleg(z, n + 1)) /
@@ -91,12 +94,10 @@ double gll_library::pndglj(const double z, const int n) {
   return glj_deriv;
 }
 
-void gll_library::zwgljd(
-    Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> z,
-    Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> w,
-    const int np, const double alpha, const double beta) {
+void gll_library::zwgljd(HostMirror1d z, HostMirror1d w, const int np,
+                         const type_real alpha, const type_real beta) {
 
-  double p, pd;
+  type_real p, pd;
 
   assert(np > 2);
   assert(alpha > -1.0 && beta > -1.0);
