@@ -49,8 +49,8 @@ type_real pndglj(const type_real z, const int n);
  * polynomials are special case of Jacobi polynomials just by setting alpha and
  * beta to 0.
  *
- * @param z HostArray where GLL points will be stored
- * @param w HostArray where GLL weights will be stored
+ * @param z HostMirror1d where GLL points will be stored
+ * @param w HostMirror1d where GLL weights will be stored
  * @param np Number of GLL points
  * @param alpha Alpha value of the Jacobi polynomial
  * @param beta Beta value of the Jacobi polynomial
