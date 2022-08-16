@@ -20,7 +20,6 @@ FetchContent_MakeAvailable(kokkos)
 add_library(
         gll_utils
         src/gll_utils.cpp
-        include/gll_utils.h
 )
 
 target_link_libraries(
@@ -31,7 +30,6 @@ target_link_libraries(
 add_library(
         gll_library
         src/gll_library.cpp
-        include/gll_library.h
 )
 
 target_link_libraries(
@@ -42,7 +40,6 @@ target_link_libraries(
 add_library(
         lagrange
         src/lagrange_poly.cpp
-        include/lagrange_poly.h
 )
 
 target_link_libraries(
@@ -54,8 +51,6 @@ target_link_libraries(
 add_library(
         quadrature
         src/quadrature.cpp
-        include/quadrature.h
-        include/kokkos_abstractions.h
 )
 
 target_link_libraries(
@@ -74,7 +69,6 @@ add_library(
 add_library(
         specfem_mpi
         src/specfem_mpi.cpp
-        include/specfem_mpi.h
 )
 
 if (MPI_PARALLEL)
@@ -90,9 +84,6 @@ endif(MPI_PARALLEL)
 add_library(
         parameter_reader
         src/parameter_reader.cpp
-        include/parameter_reader.h
-        include/sources.h
-        include/mesh.h
 )
 
 target_link_libraries(
@@ -104,9 +95,6 @@ target_link_libraries(
 add_library(
         database_reader
         src/read_mesh_database.cpp
-        include/read_mesh_database.h
-        include/mesh.h
-        include/kokkos_abstractions.h
 )
 
 target_link_libraries(
@@ -119,13 +107,11 @@ target_link_libraries(
 add_library(
         material_class
         src/material.cpp
-        include/material.h
 )
 
 add_library(
         material_reader
         src/read_material_properties.cpp
-        include/read_material_properties.h
 )
 
 target_link_libraries(
