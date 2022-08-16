@@ -16,7 +16,6 @@ enable_testing()
 
 add_library(
   kokkos_environment
-  Kokkos_Environment.hpp
   Kokkos_Environment.cpp
 )
 
@@ -28,7 +27,6 @@ target_link_libraries(
 
 add_library(
   mpi_environment
-  MPI_environment.hpp
   MPI_environment.cpp
 )
 

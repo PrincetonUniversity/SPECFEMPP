@@ -3,6 +3,8 @@
 
 specfem::MPI::MPI(int *argc, char ***argv) {
 #ifdef MPI_PARALLEL
+  if (specfem::MPI::MPI_Initialized)
+    throw std::runtime_error("MPI has already been initialized");
   MPI_Init(argc, argv);
   this->comm = MPI_COMM_WORLD;
   MPI_Comm_size(this->comm, &this->world_size);

@@ -7,6 +7,10 @@
 #include <string>
 #include <vector>
 
+/**
+ * @brief This module is used to read unformatted fortran binary files
+ *
+ */
 namespace IO::fortran_IO {
 
 void fortran_IO(std::ifstream &stream, int &buffer_length);
@@ -26,6 +30,12 @@ void fortran_IO(std::ifstream &stream, int &buffer_length, T *value,
   return;
 }
 
+/**
+ * @brief Read a line from fortran unformatted binary file
+ *
+ * @param stream An open file stream.
+ * @param values Comma separated list of variable addresses to be read.
+ */
 template <typename... Args>
 void fortran_read_line(std::ifstream &stream, Args... values) {
   int buffer_length;
