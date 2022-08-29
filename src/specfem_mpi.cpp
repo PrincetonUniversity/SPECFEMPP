@@ -1,10 +1,10 @@
 #include "../include/specfem_mpi.h"
+#include <iostream>
+#include <stdexcept>
 #include <stdlib.h>
 
 specfem::MPI::MPI(int *argc, char ***argv) {
 #ifdef MPI_PARALLEL
-  if (specfem::MPI::MPI_Initialized)
-    throw std::runtime_error("MPI has already been initialized");
   MPI_Init(argc, argv);
   this->comm = MPI_COMM_WORLD;
   MPI_Comm_size(this->comm, &this->world_size);
@@ -36,5 +36,17 @@ void specfem::MPI::exit() {
   int ierr = MPI_Abort(this->comm, 30);
 #else
   std::exit(30);
+#endif
+}
+
+int specfem::MPI::reduce(int lvalue) {
+#ifdef MPI_PARALLEL
+  int svalue;
+
+  MPI_Reduce(&lvalue, &svalue, 1, MPI_INT, MPI_SUM, 0, this->comm);
+
+  return svalue;
+#else
+  return lvalue;
 #endif
 }

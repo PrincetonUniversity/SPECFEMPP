@@ -45,7 +45,7 @@ TEST(lagrange_tests, LAGRANGE_TESTS) {
   compute_lagrange_derivatives_GLL(h_hprime_xx, h_z1, ngll);
 
   for (int i = 0; i < ngll; i++) {
-    compute_lagrange_interpolants(h_h1, h_h1_prime, h_z1(i), ngll, z1);
+    compute_lagrange_interpolants(h_h1, h_h1_prime, h_z1(i), ngll, h_z1);
     for (int j = 0; j < ngll; j++) {
       EXPECT_NEAR(h_hprime_xx(i, j), h_h1_prime(j), tol);
       if (i == j) {

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.17.5)
 
 project(specfem2d_kokkos VERSION 0.1.0)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 option(MPI_PARALLEL "MPI enabled" OFF)
 
 # Install Kokkos as a dependency
@@ -93,18 +93,6 @@ target_link_libraries(
 )
 
 add_library(
-        database_reader
-        src/read_mesh_database.cpp
-)
-
-target_link_libraries(
-        database_reader
-        specfem_mpi
-        fortranio
-        Kokkos::kokkos
-)
-
-add_library(
         material_class
         src/material.cpp
 )
@@ -120,6 +108,33 @@ target_link_libraries(
         specfem_mpi
         fortranio
 )
+
+add_library(
+        database_reader
+        src/read_mesh_database.cpp
+)
+
+target_link_libraries(
+        database_reader
+        specfem_mpi
+        fortranio
+        material_reader
+        Kokkos::kokkos
+)
+
+add_executable(
+        specfem2d
+        src/specfem2d.cpp
+)
+
+target_link_libraries(
+        specfem2d
+        material_class
+        specfem_mpi
+        database_reader
+        Kokkos::kokkos
+)
+
 # Include tests
 add_subdirectory(tests/unittests)
 

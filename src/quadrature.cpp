@@ -63,3 +63,5 @@ DeviceView1d quadrature::quadrature::get_xi() const { return this->xi; }
 DeviceView1d quadrature::quadrature::get_w() const { return this->w; }
 
 DeviceView2d quadrature::quadrature::get_hprime() const { return this->hprime; }
+
+int quadrature::quadrature::get_N() const { return this->N; };
