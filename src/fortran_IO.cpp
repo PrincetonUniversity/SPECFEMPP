@@ -15,10 +15,15 @@ void IO::fortran_IO::fortran_read_value(bool *value, std::ifstream &stream,
                                         int &buffer_length) {
 
   buffer_length -= fbool;
+  char *ivalue = new char[fbool];
   if (buffer_length < 0) {
     throw std::runtime_error("Error reading fortran file");
   }
-  stream.read(reinterpret_cast<char *>(value), fbool);
+  stream.read(ivalue, fbool);
+
+  *value = *reinterpret_cast<bool *>(ivalue);
+
+  delete[] ivalue;
   return;
 }
 
@@ -26,23 +31,29 @@ void IO::fortran_IO::fortran_read_value(int *value, std::ifstream &stream,
                                         int &buffer_length) {
 
   buffer_length -= fint;
+  char *ivalue = new char[fint];
   if (buffer_length < 0) {
     throw std::runtime_error("Error reading fortran file");
   }
-  stream.read(reinterpret_cast<char *>(value), fint);
+  stream.read(ivalue, fint);
+  *value = *reinterpret_cast<int *>(ivalue);
+  delete[] ivalue;
   return;
 }
 
 void IO::fortran_IO::fortran_read_value(type_real *value, std::ifstream &stream,
                                         int &buffer_length) {
 
-  double temp;
+  double *temp;
   buffer_length -= fdouble;
+  char *ivalue = new char[fdouble];
   if (buffer_length < 0) {
     throw std::runtime_error("Error reading fortran file");
   }
-  stream.read(reinterpret_cast<char *>(&temp), fdouble);
-  *value = static_cast<type_real>(temp);
+  stream.read(ivalue, fdouble);
+  temp = reinterpret_cast<double *>(ivalue);
+  *value = static_cast<type_real>(*temp);
+  delete[] ivalue;
   return;
 }
 

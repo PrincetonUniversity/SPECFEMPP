@@ -1,6 +1,8 @@
 #ifndef SPECFEM_MPI_H
 #define SPECFEM_MPI_H
 
+#include <iostream>
+
 #ifdef MPI_PARALLEL
 #include <mpi.h>
 #endif
@@ -42,16 +44,36 @@ public:
    */
   int get_rank();
   /**
-   * @brief MPI_Finalize
+   * @brief MPI_Abort
    *
    */
   void exit();
+  /**
+   * @brief Print string s from the head node
+   *
+   */
+  template <typename T> void cout(T s) {
+#ifdef MPI_PARALLEL
+    if (my_rank == 0)
+      std::cout << s << std::endl;
+#else
+    std::cout << s << std::endl;
+#endif
+  }
+
   ~MPI();
+
+  /**
+   * @brief MPI reduce implemetation
+   *
+   * @param lvalue local value to reduce
+   * @return int Reduced value. Should only be reduced on the root=0 process.
+   */
+  int reduce(int lvalue);
 
 private:
   int world_size, my_rank;
 #ifdef MPI_PARALLEL
-  static bool MPI_initialized = false;
   MPI_Comm comm;
 #endif
 };

@@ -33,12 +33,12 @@ IO::read_material_properties(std::ifstream &stream, int numat,
       if (read_values.val2 == 0) {
         specfem::acoustic_material acoustic_holder;
         acoustic_holder.assign(read_values);
-        std::cout << acoustic_holder << std::endl;
+        mpi->cout(acoustic_holder);
         materials[read_values.n - 1] = acoustic_holder;
       } else {
         specfem::elastic_material elastic_holder;
         elastic_holder.assign(read_values);
-        std::cout << elastic_holder << std::endl;
+        mpi->cout(elastic_holder);
         materials[read_values.n - 1] = elastic_holder;
       }
     } else {

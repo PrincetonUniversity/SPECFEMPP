@@ -24,6 +24,7 @@ public:
   DeviceView1d get_xi() const;
   DeviceView1d get_w() const;
   DeviceView2d get_hprime() const;
+  int get_N() const;
 
 private:
   type_real alpha, beta;

@@ -16,13 +16,13 @@ specfem::acoustic_material::acoustic_material()
 
 std::ostream &specfem::operator<<(std::ostream &out,
                                   const specfem::elastic_material &h) {
-  out << "Placeholder string";
+  out << "Placeholder string elastic material";
   return out;
 }
 
 std::ostream &specfem::operator<<(std::ostream &out,
                                   const specfem::acoustic_material &h) {
-  out << "Placeholder string";
+  out << "Placeholder string acoustic material";
   return out;
 }
 
