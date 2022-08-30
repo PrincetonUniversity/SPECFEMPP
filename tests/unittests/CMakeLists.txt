@@ -90,6 +90,7 @@ target_link_libraries(
   mpi_environment
   kokkos_environment
   specfem_mpi
+  yaml-cpp
   -lpthread -lm
 )
 

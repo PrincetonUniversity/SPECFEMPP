@@ -14,6 +14,12 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(kokkos)
 
+FetchContent_Declare(
+        yaml
+	URL https://github.com/jbeder/yaml-cpp/archive/refs/tags/yaml-cpp-0.7.0.zip
+)
+FetchContent_MakeAvailable(yaml)
+include_directories(BEFORE SYSTEM ${yaml_SOURCE_DIR} ${yaml_BINARY_DIR}/include)
 
 # Build specfem2d libraries
 ## TODO: Reorgnanize into separate directories
@@ -109,6 +115,13 @@ target_link_libraries(
         fortranio
 )
 
+if (MPI_PARALLEL)
+        target_compile_definitions(
+                material_reader
+                PUBLIC -DMPI_PARALLEL
+        )
+endif(MPI_PARALLEL)
+
 add_library(
         database_reader
         src/read_mesh_database.cpp
@@ -122,6 +135,13 @@ target_link_libraries(
         Kokkos::kokkos
 )
 
+if (MPI_PARALLEL)
+        target_compile_definitions(
+                database_reader
+                PUBLIC -DMPI_PARALLEL
+        )
+endif(MPI_PARALLEL)
+
 add_executable(
         specfem2d
         src/specfem2d.cpp
@@ -133,6 +153,7 @@ target_link_libraries(
         specfem_mpi
         database_reader
         Kokkos::kokkos
+        yaml-cpp
 )
 
 # Include tests
