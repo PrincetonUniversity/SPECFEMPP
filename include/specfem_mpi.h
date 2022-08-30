@@ -54,8 +54,9 @@ public:
    */
   template <typename T> void cout(T s) {
 #ifdef MPI_PARALLEL
-    if (my_rank == 0)
+    if (my_rank == 0) {
       std::cout << s << std::endl;
+    }
 #else
     std::cout << s << std::endl;
 #endif
