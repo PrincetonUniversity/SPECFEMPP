@@ -540,11 +540,11 @@ void IO::read_mesh_absorbing_boundaries(
           }
         }
       }
-
-      int ncorner_all = mpi->reduce(ncorner);
-      if (mpi->get_rank() == 0)
-        assert(ncorner_all <= 4);
     }
+
+    int ncorner_all = mpi->reduce(ncorner);
+    if (mpi->get_rank() == 0)
+      assert(ncorner_all <= 4);
 
     for (int inum = 0; inum < num_abs_boundary_faces; inum++) {
       if (abs_boundary.codeabs(inum, 0)) {
