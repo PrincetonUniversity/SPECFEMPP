@@ -11,6 +11,7 @@ Mesh struct defintion:
     ToDo: We might not need nproc in mesh struct
 
 .. code-block:: C++
+
     struct mesh {
         int npgeo; // Total number of spectral element control nodes
         int nspec; // Total number of spectral elements
