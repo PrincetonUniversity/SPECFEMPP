@@ -135,3 +135,69 @@ The following code snippet demostrates the usage of absorbing boundary struct to
 
 .. note::
     Todo - Add code snippet to demostrate absorbing_boundary struct
+
+The `forcing_boundary struct` specifies the variables required to impose acoustic forcing at rigid boundaries
+
+.. code-block:: C++
+
+    struct forcing_boundary {
+
+        // numacforcing(i) defines the ispec of ith acoustic forcing element
+        specfem::HostView1d numacforcing;
+
+        // Defines if the acoustic forcing boundary type is top, left, right or bottom
+        // This is only used during plotting
+        specfem::HostView1d typeacforcing;
+
+        // Here
+        //      edge1 as the bottom boundary
+        //      edge2 as the right boundary
+        //      edge3 as the top boundary
+        //      edge4 as the left boundary
+
+        // ibegin_<edge#> defines the i or j index limits for loop iterations
+        // Check demostration code below
+        specfem::HostView1d ibegin_edge1, ibegin_edge2, ibegin_edge3, ibegin_edge4;
+        specfem::HostView1d iend_edge1, iend_edge2, iend_edge3, iend_edge4;
+
+        // Specifies if an element is bottom, right, top or left acoustic forcing boundary
+        // for bottom boundary
+        //          codeacforcing(i, 0) == true
+        // for right boundary
+        //          codeacforcing(i, 1) == true
+        // for top boundary
+        //          codeacforcing(i, 2) == true
+        // for left boundary
+        //          codeacforcing(i, 3) == true
+        specfem::HostView2d<bool> codeacforcing;
+
+        // Specifies the ispec_edge for that edge
+        // For example
+        //      ib_bottom(i) = ispec_bottom
+        //          where 0 < ispec_bottom < total number of acoustic forcing elements on
+        //                                   the bottom boundary
+
+        // This can specifically used to store data related to acoustic forcing elements in a
+        // compact format
+        specfem::HostView1d ib_bottom, ib_top, ib_right, ib_left;
+    };
+
+The following code snippet demostrates the usage of acoustic forcing boundary struct to impose stacey boundary conditions
+
+.. note::
+    Todo - Add code snippet to demostrate acforcing_boundary struct
+
+.. note::
+    Todo - Add acfree_surface documentation
+
+.. note::
+    Todo - Add tangential surface elements documentation
+
+The `axial_elements struct` defines if an element is axial or not
+
+.. code-block:: C++
+
+    struct axial_elements {
+        // is_on_the_axis(ispec) defines is an element is axial or not
+        specfem::HostView1d<bool> is_on_the_axis;
+    };
