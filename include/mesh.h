@@ -21,17 +21,17 @@ struct prop {
 };
 
 struct absorbing_boundary {
-  HostView1d<int> numabs, abs_boundary_type, ibegin_edge1, ibegin_edge2,
-      ibegin_edge3, ibegin_edge4, iend_edge1, iend_edge2, iend_edge3,
-      iend_edge4, ib_bottom, ib_top, ib_right, ib_left;
-  HostView2d<bool> codeabs, codeabscorner;
+  specfem::HostView1d<int> numabs, abs_boundary_type, ibegin_edge1,
+      ibegin_edge2, ibegin_edge3, ibegin_edge4, iend_edge1, iend_edge2,
+      iend_edge3, iend_edge4, ib_bottom, ib_top, ib_right, ib_left;
+  specfem::HostView2d<bool> codeabs, codeabscorner;
 };
 
 struct forcing_boundary {
-  HostView1d<int> numacforcing, typeacforcing, ibegin_edge1, ibegin_edge2,
-      ibegin_edge3, ibegin_edge4, iend_edge1, iend_edge2, iend_edge3,
-      iend_edge4, ib_bottom, ib_top, ib_right, ib_left;
-  HostView2d<bool> codeacforcing;
+  specfem::HostView1d<int> numacforcing, typeacforcing, ibegin_edge1,
+      ibegin_edge2, ibegin_edge3, ibegin_edge4, iend_edge1, iend_edge2,
+      iend_edge3, iend_edge4, ib_bottom, ib_top, ib_right, ib_left;
+  specfem::HostView2d<bool> codeacforcing;
 };
 
 struct acoustic_free_surface {
