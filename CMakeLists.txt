@@ -21,6 +21,8 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(yaml)
 include_directories(BEFORE SYSTEM ${yaml_SOURCE_DIR} ${yaml_BINARY_DIR}/include)
 
+add_subdirectory(boost-cmake)
+
 # Build specfem2d libraries
 ## TODO: Reorgnanize into separate directories
 add_library(
@@ -72,6 +74,11 @@ add_library(
         include/fortran_IO.h
 )
 
+target_link_libraries(
+        fortranio
+        PUBLIC Boost::boost
+)
+
 add_library(
         specfem_mpi
         src/specfem_mpi.cpp
@@ -96,6 +103,7 @@ target_link_libraries(
         parameter_reader
         fortranio
         Kokkos::kokkos
+        Boost::boost
 )
 
 add_library(
