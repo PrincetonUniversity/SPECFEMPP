@@ -10,6 +10,8 @@ jobs:
         run: gcc --version && cmake --version
       - name: Checkout repository
         uses: actions/checkout@v1
+      - name: test
+        run: ls -ltr boost-cmake
       - name: Configure
         run: cmake -S . -B build
       - name: Build
