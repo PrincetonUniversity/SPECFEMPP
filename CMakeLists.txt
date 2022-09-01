@@ -94,17 +94,17 @@ else()
         message("-- Compiling SPECFEM without MPI")
 endif(MPI_PARALLEL)
 
-add_library(
-        parameter_reader
-        src/parameter_reader.cpp
-)
+# add_library(
+#         parameter_reader
+#         src/parameter_reader.cpp
+# )
 
-target_link_libraries(
-        parameter_reader
-        fortranio
-        Kokkos::kokkos
-        Boost::boost
-)
+# target_link_libraries(
+#         parameter_reader
+#         fortranio
+#         Kokkos::kokkos
+#         Boost::boost
+# )
 
 add_library(
         material_class
