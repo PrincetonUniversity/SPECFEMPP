@@ -98,7 +98,7 @@ TEST(MPI_parameter_reader, read_mesh_database_header) {
       mesh.properties.num_solid_poro_edges, MPIEnvironment::mpi_));
 
   EXPECT_NO_THROW(IO::read_mesh_database_tangential(
-      stream, mesh.tangential_nodes, mesh.properties.nnodes_tagential_curve));
+      stream, mesh.tangential_nodes, mesh.properties.nnodes_tangential_curve));
 
   EXPECT_NO_THROW(IO::read_mesh_database_axial(
       stream, mesh.axial_nodes, mesh.properties.nelem_on_the_axis, mesh.nspec,

@@ -39,29 +39,39 @@ public:
    *
    * @param holder holder used to hold read values
    */
-  void assign(utilities::value_holder &holder);
+  void assign(utilities::value_holder &holder) override;
   friend std::ostream &operator<<(std::ostream &out, const elastic_material &h);
 
 private:
-  /*! \var type_real density
-      \brief Density of the elastic material
-  */
-
-  /*! \var type_real cs
-      \brief of the elastic material
-  */
+  /**
+   * @brief Elastic material properties
+   *
+   */
   type_real density, cs, cp, Qkappa, Qmu, compaction_grad, lambdaplus2mu, mu,
       lambda, kappa, young, poisson;
 };
 
 class acoustic_material : public material {
 public:
+  /**
+   * @brief Construct a new acoustic material object
+   *
+   */
   acoustic_material();
-  void assign(utilities::value_holder &holder);
+  /**
+   * @brief Assign acoustic material values
+   *
+   * @param holder holder used to hold read values
+   */
+  void assign(utilities::value_holder &holder) override;
   friend std::ostream &operator<<(std::ostream &out,
                                   const acoustic_material &h);
 
 private:
+  /**
+   * @brief Acoustic material properties
+   *
+   */
   type_real density, cs, cp, Qkappa, Qmu, compaction_grad, lambdaplus2mu, mu,
       lambda, kappa, young, poisson;
 };
@@ -70,7 +80,6 @@ std::ostream &operator<<(std::ostream &out, const specfem::elastic_material &h);
 
 std::ostream &operator<<(std::ostream &out,
                          const specfem::acoustic_material &h);
-
 } // namespace specfem
 
 #endif
