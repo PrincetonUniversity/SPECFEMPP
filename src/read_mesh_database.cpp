@@ -10,6 +10,138 @@
 #include <fstream>
 #include <iostream>
 
+void allocate_MPI_interfaces(specfem::interface &interface,
+                             const int ninterfaces,
+                             const int max_interface_size) {
+#ifdef MPI_PARALLEL
+  if (ninterfaces > 0) {
+    interface.my_neighbors = specfem::HostView1d<int>(
+        "specfem::mesh::interfaces::my_neighbors", ninterfaces);
+    interface.my_nelmnts_neighbors = specfem::HostView1d<int>(
+        "specfem::mesh::interfaces::my_nelmnts_neighbors", ninterfaces);
+    interface.my_interfaces =
+        specfem::HostView3d<int>("specfem::mesh::interfaces::my_interfaces",
+                                 ninterfaces, max_interface_size, 4);
+
+    // initialize values
+    for (int i = 0; i < ninterfaces; i++) {
+      interface.my_neighbors(i) = -1;
+      interface.my_nelmnts_neighbors(i) = 0;
+      for (int j = 0; j < max_interface_size; j++) {
+        for (int k = 0; k < 4; k++) {
+          interface.my_interfaces(i, j, k) = -1;
+        }
+      }
+    }
+  } else {
+    interface.my_neighbors =
+        specfem::HostView1d<int>("specfem::mesh::interfaces::my_neighbors", 1);
+    interface.my_nelmnts_neighbors = specfem::HostView1d<int>(
+        "specfem::mesh::interfaces::my_nelmnts_neighbors", 1);
+    interface.my_interfaces = specfem::HostView3d<int>(
+        "specfem::mesh::interfaces::my_interfaces", 1, 1, 1);
+
+    // initialize values
+    interface.my_neighbors(1) = -1;
+    interface.my_nelmnts_neighbors(1) = 0;
+    interface.my_interfaces(1, 1, 1) = -1;
+  }
+#else
+  if (ninterfaces > 0)
+    throw std::runtime_error("Found interfaces but SPECFEM compiled without "
+                             "MPI. Compile SPECFEM with MPI");
+  interface.my_neighbors =
+      specfem::HostView1d<int>("specfem::mesh::interfaces::my_neighbors", 1);
+  interface.my_nelmnts_neighbors = specfem::HostView1d<int>(
+      "specfem::mesh::interfaces::my_nelmnts_neighbors", 1);
+  interface.my_interfaces = specfem::HostView3d<int>(
+      "specfem::mesh::interfaces::my_interfaces", 1, 1, 1);
+
+  // initialize values
+  interface.my_neighbors(1) = -1;
+  interface.my_nelmnts_neighbors(1) = 0;
+  interface.my_interfaces(1, 1, 1) = -1;
+#endif
+
+  return;
+}
+
+// Find corner elements of the absorbing boundary
+void find_corners(const specfem::HostView1d<int> numabs,
+                  const specfem::HostView2d<bool> codeabs,
+                  specfem::HostView2d<bool> codeabscorner,
+                  const int num_abs_boundary_faces, specfem::MPI *mpi) {
+  int ncorner = 0;
+  for (int inum = 0; inum < num_abs_boundary_faces; inum++) {
+    if (codeabs(inum, 0)) {
+      for (int inum_duplicate = 0; inum_duplicate < num_abs_boundary_faces;
+           inum_duplicate++) {
+        if (inum != inum_duplicate) {
+          if (numabs(inum) == numabs(inum_duplicate)) {
+            if (codeabs(inum_duplicate, 3)) {
+              codeabscorner(inum, 1) = true;
+              ncorner++;
+            }
+            if (codeabs(inum_duplicate, 1)) {
+              codeabscorner(inum, 2) = true;
+              ncorner++;
+            }
+          }
+        }
+      }
+    }
+    if (codeabs(inum, 2)) {
+      for (int inum_duplicate = 0; inum_duplicate < num_abs_boundary_faces;
+           inum_duplicate++) {
+        if (inum != inum_duplicate) {
+          if (numabs(inum) == numabs(inum_duplicate)) {
+            if (codeabs(inum_duplicate, 3)) {
+              codeabscorner(inum, 3) = true;
+              ncorner++;
+            }
+            if (codeabs(inum_duplicate, 1)) {
+              codeabscorner(inum, 4) = true;
+              ncorner++;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  int ncorner_all = mpi->reduce(ncorner);
+  if (mpi->get_rank() == 0)
+    assert(ncorner_all <= 4);
+}
+
+void calculate_ib(const specfem::HostView2d<bool> code,
+                  specfem::HostView1d<int> ib_bottom,
+                  specfem::HostView1d<int> ib_top,
+                  specfem::HostView1d<int> ib_left,
+                  specfem::HostView1d<int> ib_right, const int nelements) {
+
+  int nspec_left = 0, nspec_right = 0, nspec_top = 0, nspec_bottom = 0;
+  for (int inum = 0; inum < nelements; inum++) {
+    if (code(inum, 0)) {
+      ib_bottom(inum) = nspec_bottom;
+      nspec_bottom++;
+    } else if (code(inum, 1)) {
+      ib_right(inum) = nspec_right;
+      nspec_right++;
+    } else if (code(inum, 2)) {
+      ib_top(inum) = nspec_top;
+      nspec_top++;
+    } else if (code(inum, 3)) {
+      ib_left(inum) = nspec_left;
+      nspec_left++;
+    } else {
+      throw std::runtime_error("Incorrect acoustic boundary element type read");
+    }
+  }
+
+  assert(nspec_left + nspec_right + nspec_bottom + nspec_top == nelements);
+}
+
 void IO::read_mesh_database_header(std::ifstream &stream, specfem::mesh &mesh,
                                    specfem::MPI *mpi) {
   // This subroutine reads header values of the database which are skipped
@@ -148,10 +280,14 @@ void IO::read_coorg_elements(std::ifstream &stream, specfem::mesh &mesh,
     if (ipoin < 1 || ipoin > npgeo) {
       throw std::runtime_error("Error reading coordinates");
     }
+    // coorg stores the x,z for every control point
+    // coorg([0, 2), i) = [x, z]
     mesh.coorg(0, ipoin - 1) = coorgi;
     mesh.coorg(1, ipoin - 1) = coorgj;
   }
 
+  // ---------------------------------------------------------------------
+  // reading mesh properties
   specfem::prop &properties = mesh.properties;
 
   IO::fortran_IO::fortran_read_line(
@@ -162,8 +298,10 @@ void IO::read_coorg_elements(std::ifstream &stream, specfem::mesh &mesh,
       stream, &properties.nelemabs, &properties.nelem_acforcing,
       &properties.nelem_acoustic_surface, &properties.num_fluid_solid_edges,
       &properties.num_fluid_poro_edges, &properties.num_solid_poro_edges,
-      &properties.nnodes_tagential_curve, &properties.nelem_on_the_axis);
+      &properties.nnodes_tangential_curve, &properties.nelem_on_the_axis);
+  // ----------------------------------------------------------------------
 
+  mesh.allocate();
   return;
 }
 
@@ -185,20 +323,8 @@ void IO::read_mesh_database_attenuation(std::ifstream &stream,
 
 void IO::read_mesh_database_mato(std::ifstream &stream, specfem::mesh &mesh,
                                  specfem::MPI *mpi) {
-  int n, kmato_read, pml_read;
   std::vector<int> knods_read(mesh.properties.ngnod, -1);
-  mesh.region_CPML = specfem::HostView1d<int>("specfem::mesh::region_CPML",
-                                              mesh.properties.nspec);
-  mesh.kmato = specfem::HostView1d<int>("specfem::mesh::region_CPML",
-                                        mesh.properties.nspec);
-  mesh.knods =
-      specfem::HostView2d<int>("specfem::mesh::region_CPML",
-                               mesh.properties.ngnod, mesh.properties.nspec);
-
-  for (int ispec = 0; ispec < mesh.properties.nspec; ispec++) {
-    mesh.kmato(ispec) = -1;
-  }
-
+  int n, kmato_read, pml_read;
   // Read an assign material values, coordinate numbering, PML association
   for (int ispec = 0; ispec < mesh.properties.nspec; ispec++) {
     // format: #element_id  #material_id #node_id1 #node_id2 #...
@@ -212,7 +338,7 @@ void IO::read_mesh_database_mato(std::ifstream &stream, specfem::mesh &mesh,
     mesh.kmato(n - 1) = kmato_read - 1;
     mesh.region_CPML(n - 1) = pml_read;
 
-    // element control node indices
+    // element control node indices (ipgeo)
     for (int i = 0; i < mesh.properties.ngnod; i++) {
       if (knods_read[i] == -1)
         throw std::runtime_error("Error reading knods (node_id) values");
@@ -237,67 +363,20 @@ void IO::read_mesh_database_interfaces(std::ifstream &stream,
                                        specfem::MPI *mpi) {
 
   // read number of interfaces
+  // Where these 2 values are written needs to change in new database format
   IO::fortran_IO::fortran_read_line(stream, &interface.ninterfaces,
                                     &interface.max_interface_size);
 
   mpi->cout("Number of interaces = " + std::to_string(interface.ninterfaces));
 
-#ifdef MPI_PARALLEL
-  if (interface.ninterfaces > 0) {
-    interface.my_neighbors = specfem::HostView1d<int>(
-        "specfem::mesh::interfaces::my_neighbors", interface.ninterfaces);
-    interface.my_nelmnts_neighbors = specfem::HostView1d<int>(
-        "specfem::mesh::interfaces::my_nelmnts_neighbors",
-        interface.ninterfaces);
-    interface.my_interfaces = specfem::HostView3d<int>(
-        "specfem::mesh::interfaces::my_interfaces", interface.ninterfaces,
-        interface.max_interface_size, 4);
-
-    // initialize values
-    for (int i = 0; i < interface.ninterfaces; i++) {
-      interface.my_neighbors(i) = -1;
-      interface.my_nelmnts_neighbors(i) = 0;
-      for (int j = 0; j < interface.max_interface_size; j++) {
-        for (int k = 0; k < 4; k++) {
-          interface.my_interfaces(i, j, k) = -1;
-        }
-      }
-    }
-  } else {
-    interface.my_neighbors =
-        specfem::HostView1d<int>("specfem::mesh::interfaces::my_neighbors", 1);
-    interface.my_nelmnts_neighbors = specfem::HostView1d<int>(
-        "specfem::mesh::interfaces::my_nelmnts_neighbors", 1);
-    interface.my_interfaces = specfem::HostView3d<int>(
-        "specfem::mesh::interfaces::my_interfaces", 1, 1, 1);
-
-    // initialize values
-    interface.my_neighbors(1) = -1;
-    interface.my_nelmnts_neighbors(1) = 0;
-    interface.my_interfaces(1, 1, 1) = -1;
-  }
-#else
-  if (interface.ninterfaces > 0)
-    throw std::runtime_error("Found interfaces but SPECFEM compiled without "
-                             "MPI. Compile SPECFEM with MPI");
-  interface.my_neighbors =
-      specfem::HostView1d<int>("specfem::mesh::interfaces::my_neighbors", 1);
-  interface.my_nelmnts_neighbors = specfem::HostView1d<int>(
-      "specfem::mesh::interfaces::my_nelmnts_neighbors", 1);
-  interface.my_interfaces = specfem::HostView3d<int>(
-      "specfem::mesh::interfaces::my_interfaces", 1, 1, 1);
-
-  // initialize values
-  interface.my_neighbors(1) = -1;
-  interface.my_nelmnts_neighbors(1) = 0;
-  interface.my_interfaces(1, 1, 1) = -1;
-#endif
+  // allocate interface variables
+  allocate_MPI_interfaces(interface, interface.ninterfaces,
+                          interface.max_interface_size);
 
   // note: for serial simulations, ninterface will be zero.
   //       thus no further reading will be done below
 
   // reads in interfaces
-
 #ifdef MPI_PARALLEL
   for (int num_interface = 0; num_interface < interface.ninterfaces;
        num_interface++) {
@@ -332,139 +411,16 @@ void IO::read_mesh_database_interfaces(std::ifstream &stream,
 void IO::read_mesh_absorbing_boundaries(
     std::ifstream &stream, specfem::absorbing_boundary &abs_boundary,
     int &num_abs_boundary_faces, int nspec, specfem::MPI *mpi) {
+
   // I have to do this because std::vector<bool> is a fake container type that
   // causes issues when getting a reference
   bool codeabsread1 = true, codeabsread2 = true, codeabsread3 = true,
        codeabsread4 = true;
   std::vector<int> iedgeread(8, 0);
-  int nspec_left = 0, nspec_right = 0, nspec_top = 0, nspec_bottom = 0;
   int numabsread, typeabsread;
   if (num_abs_boundary_faces < 0) {
     mpi->cout("Warning: read in negative nelemabs resetting to 0!");
     num_abs_boundary_faces = 0;
-  }
-
-  if (num_abs_boundary_faces > 0) {
-    abs_boundary.numabs = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::numabs", num_abs_boundary_faces);
-    abs_boundary.abs_boundary_type = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::abs_boundary_type",
-        num_abs_boundary_faces);
-    abs_boundary.ibegin_edge1 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge1",
-        num_abs_boundary_faces);
-    abs_boundary.ibegin_edge2 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge2",
-        num_abs_boundary_faces);
-    abs_boundary.ibegin_edge3 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge3",
-        num_abs_boundary_faces);
-    abs_boundary.ibegin_edge4 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge4",
-        num_abs_boundary_faces);
-    abs_boundary.iend_edge1 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge1",
-        num_abs_boundary_faces);
-    abs_boundary.iend_edge2 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge2",
-        num_abs_boundary_faces);
-    abs_boundary.iend_edge3 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge3",
-        num_abs_boundary_faces);
-    abs_boundary.iend_edge4 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge4",
-        num_abs_boundary_faces);
-    abs_boundary.ib_bottom = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_bottom", num_abs_boundary_faces);
-    abs_boundary.ib_top = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_top", num_abs_boundary_faces);
-    abs_boundary.ib_right = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_right", num_abs_boundary_faces);
-    abs_boundary.ib_left = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_left", num_abs_boundary_faces);
-  } else {
-    abs_boundary.numabs = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::numabs", 1);
-    abs_boundary.abs_boundary_type = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::abs_boundary_type", 1);
-    abs_boundary.ibegin_edge1 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge1", 1);
-    abs_boundary.ibegin_edge2 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge2", 1);
-    abs_boundary.ibegin_edge3 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge3", 1);
-    abs_boundary.ibegin_edge4 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge4", 1);
-    abs_boundary.iend_edge1 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge1", 1);
-    abs_boundary.iend_edge2 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge2", 1);
-    abs_boundary.iend_edge3 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge3", 1);
-    abs_boundary.iend_edge4 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge4", 1);
-    abs_boundary.ib_bottom = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_bottom", 1);
-    abs_boundary.ib_top = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_top", 1);
-    abs_boundary.ib_right = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_right", 1);
-    abs_boundary.ib_left = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_left", 1);
-  }
-
-  if (num_abs_boundary_faces > 0) {
-    abs_boundary.codeabs =
-        specfem::HostView2d<bool>("specfem::mesh::absorbing_boundary::codeabs",
-                                  num_abs_boundary_faces, 4);
-    abs_boundary.codeabscorner = specfem::HostView2d<bool>(
-        "specfem::mesh::absorbing_boundary::codeabs_corner",
-        num_abs_boundary_faces, 4);
-  } else {
-    abs_boundary.codeabs = specfem::HostView2d<bool>(
-        "specfem::mesh::absorbing_boundary::codeabs", 1, 1);
-    abs_boundary.codeabscorner = specfem::HostView2d<bool>(
-        "specfem::mesh::absorbing_boundary::codeabs_corner", 1, 1);
-  }
-
-  if (num_abs_boundary_faces > 0) {
-    for (int n = 0; n < num_abs_boundary_faces; n++) {
-      abs_boundary.numabs(n) = 0;
-      abs_boundary.abs_boundary_type(n) = 0;
-      abs_boundary.ibegin_edge1(n) = 0;
-      abs_boundary.ibegin_edge2(n) = 0;
-      abs_boundary.ibegin_edge3(n) = 0;
-      abs_boundary.ibegin_edge4(n) = 0;
-      abs_boundary.iend_edge1(n) = 0;
-      abs_boundary.iend_edge2(n) = 0;
-      abs_boundary.iend_edge3(n) = 0;
-      abs_boundary.iend_edge4(n) = 0;
-      abs_boundary.ib_bottom(n) = 0;
-      abs_boundary.ib_left(n) = 0;
-      abs_boundary.ib_top(n) = 0;
-      abs_boundary.ib_right(n) = 0;
-      for (int i = 0; i < 4; i++) {
-        abs_boundary.codeabs(n, i) = false;
-        abs_boundary.codeabscorner(n, i) = false;
-      }
-    }
-  } else {
-    abs_boundary.numabs(1) = 0;
-    abs_boundary.abs_boundary_type(1) = 0;
-    abs_boundary.ibegin_edge1(1) = 0;
-    abs_boundary.ibegin_edge2(1) = 0;
-    abs_boundary.ibegin_edge3(1) = 0;
-    abs_boundary.ibegin_edge4(1) = 0;
-    abs_boundary.iend_edge1(1) = 0;
-    abs_boundary.iend_edge2(1) = 0;
-    abs_boundary.iend_edge3(1) = 0;
-    abs_boundary.iend_edge4(1) = 0;
-    abs_boundary.ib_bottom(1) = 0;
-    abs_boundary.ib_left(1) = 0;
-    abs_boundary.ib_top(1) = 0;
-    abs_boundary.ib_right(1) = 0;
-    abs_boundary.codeabs(1, 1) = false;
-    abs_boundary.codeabscorner(1, 1) = false;
   }
 
   // user output
@@ -502,71 +458,14 @@ void IO::read_mesh_absorbing_boundaries(
       abs_boundary.iend_edge4(inum) = iedgeread[7];
     }
 
-    int ncorner = 0;
-    for (int inum = 0; inum < num_abs_boundary_faces; inum++) {
-      if (abs_boundary.codeabs(inum, 0)) {
-        for (int inum_duplicate = 0; inum_duplicate < num_abs_boundary_faces;
-             inum_duplicate++) {
-          if (inum != inum_duplicate) {
-            if (abs_boundary.numabs(inum) ==
-                abs_boundary.numabs(inum_duplicate)) {
-              if (abs_boundary.codeabs(inum_duplicate, 3)) {
-                abs_boundary.codeabscorner(inum, 1) = true;
-                ncorner++;
-              }
-              if (abs_boundary.codeabs(inum_duplicate, 1)) {
-                abs_boundary.codeabscorner(inum, 2) = true;
-                ncorner++;
-              }
-            }
-          }
-        }
-      }
-      if (abs_boundary.codeabs(inum, 2)) {
-        for (int inum_duplicate = 0; inum_duplicate < num_abs_boundary_faces;
-             inum_duplicate++) {
-          if (inum != inum_duplicate) {
-            if (abs_boundary.numabs(inum) ==
-                abs_boundary.numabs(inum_duplicate)) {
-              if (abs_boundary.codeabs(inum_duplicate, 3)) {
-                abs_boundary.codeabscorner(inum, 3) = true;
-                ncorner++;
-              }
-              if (abs_boundary.codeabs(inum_duplicate, 1)) {
-                abs_boundary.codeabscorner(inum, 4) = true;
-                ncorner++;
-              }
-            }
-          }
-        }
-      }
-    }
+    // Find corner elements
+    find_corners(abs_boundary.numabs, abs_boundary.codeabs,
+                 abs_boundary.codeabscorner, num_abs_boundary_faces, mpi);
 
-    int ncorner_all = mpi->reduce(ncorner);
-    if (mpi->get_rank() == 0)
-      assert(ncorner_all <= 4);
-
-    for (int inum = 0; inum < num_abs_boundary_faces; inum++) {
-      if (abs_boundary.codeabs(inum, 0)) {
-        abs_boundary.ib_bottom(inum) = nspec_bottom;
-        nspec_bottom++;
-      } else if (abs_boundary.codeabs(inum, 1)) {
-        abs_boundary.ib_right(inum) = nspec_right;
-        nspec_right++;
-      } else if (abs_boundary.codeabs(inum, 2)) {
-        abs_boundary.ib_top(inum) = nspec_top;
-        nspec_top++;
-      } else if (abs_boundary.codeabs(inum, 3)) {
-        abs_boundary.ib_left(inum) = nspec_left;
-        nspec_left++;
-      } else {
-        throw std::runtime_error(
-            "incorrect absorbing boundary element type read");
-      }
-    }
-
-    assert(nspec_left + nspec_right + nspec_bottom + nspec_top ==
-           num_abs_boundary_faces);
+    // populate ib_bottom, ib_top, ib_left, ib_right arrays
+    calculate_ib(abs_boundary.codeabs, abs_boundary.ib_bottom,
+                 abs_boundary.ib_top, abs_boundary.ib_left,
+                 abs_boundary.ib_right, num_abs_boundary_faces);
   }
 
   mpi->cout("Todo: Placeholder string - read_mesh_database.f90 line 1092-1112");
@@ -580,109 +479,8 @@ void IO::read_mesh_database_acoustic_forcing(
   bool codeacread1 = true, codeacread2 = true, codeacread3 = true,
        codeacread4 = true;
   std::vector<int> iedgeread(8, 0);
-  int nspec_left = 0, nspec_right = 0, nspec_top = 0, nspec_bottom = 0;
   int numacread, typeacread;
-  if (nelement_acforcing > 0) {
-    acforcing_boundary.numacforcing = specfem::HostView1d<int>(
-        "specfem::mesh::forcing_boundary::numacforcing", nelement_acforcing);
-    acforcing_boundary.codeacforcing = specfem::HostView2d<bool>(
-        "specfem::mesh::forcing_boundary::numacforcing", nelement_acforcing, 4);
-    acforcing_boundary.typeacforcing = specfem::HostView1d<int>(
-        "specfem::mesh::forcing_boundary::numacforcing", nelement_acforcing);
-    acforcing_boundary.ibegin_edge1 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge1", nelement_acforcing);
-    acforcing_boundary.ibegin_edge2 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge2", nelement_acforcing);
-    acforcing_boundary.ibegin_edge3 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge3", nelement_acforcing);
-    acforcing_boundary.ibegin_edge4 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge4", nelement_acforcing);
-    acforcing_boundary.iend_edge1 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge1", nelement_acforcing);
-    acforcing_boundary.iend_edge2 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge2", nelement_acforcing);
-    acforcing_boundary.iend_edge3 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge3", nelement_acforcing);
-    acforcing_boundary.iend_edge4 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge4", nelement_acforcing);
-    acforcing_boundary.ib_bottom = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_bottom", nelement_acforcing);
-    acforcing_boundary.ib_top = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_top", nelement_acforcing);
-    acforcing_boundary.ib_right = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_right", nelement_acforcing);
-    acforcing_boundary.ib_left = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_left", nelement_acforcing);
-  } else {
-    acforcing_boundary.numacforcing = specfem::HostView1d<int>(
-        "specfem::mesh::forcing_boundary::numacforcing", 1);
-    acforcing_boundary.codeacforcing = specfem::HostView2d<bool>(
-        "specfem::mesh::forcing_boundary::numacforcing", 1, 1);
-    acforcing_boundary.typeacforcing = specfem::HostView1d<int>(
-        "specfem::mesh::forcing_boundary::numacforcing", 1);
-    acforcing_boundary.ibegin_edge1 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge1", 1);
-    acforcing_boundary.ibegin_edge2 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge2", 1);
-    acforcing_boundary.ibegin_edge3 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge3", 1);
-    acforcing_boundary.ibegin_edge4 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge4", 1);
-    acforcing_boundary.iend_edge1 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge1", 1);
-    acforcing_boundary.iend_edge2 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge2", 1);
-    acforcing_boundary.iend_edge3 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge3", 1);
-    acforcing_boundary.iend_edge4 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge4", 1);
-    acforcing_boundary.ib_bottom = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_bottom", 1);
-    acforcing_boundary.ib_top = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_top", 1);
-    acforcing_boundary.ib_right = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_right", 1);
-    acforcing_boundary.ib_left = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_left", 1);
-  }
 
-  if (nelement_acforcing > 0) {
-    for (int n = 0; n < nelement_acforcing; n++) {
-      acforcing_boundary.numacforcing(n) = 0;
-      acforcing_boundary.typeacforcing(n) = 0;
-      acforcing_boundary.ibegin_edge1(n) = 0;
-      acforcing_boundary.ibegin_edge2(n) = 0;
-      acforcing_boundary.ibegin_edge3(n) = 0;
-      acforcing_boundary.ibegin_edge4(n) = 0;
-      acforcing_boundary.iend_edge1(n) = 0;
-      acforcing_boundary.iend_edge2(n) = 0;
-      acforcing_boundary.iend_edge3(n) = 0;
-      acforcing_boundary.iend_edge4(n) = 0;
-      acforcing_boundary.ib_bottom(n) = 0;
-      acforcing_boundary.ib_left(n) = 0;
-      acforcing_boundary.ib_top(n) = 0;
-      acforcing_boundary.ib_right(n) = 0;
-      for (int i = 0; i < 4; i++) {
-        acforcing_boundary.codeacforcing(n, i) = false;
-      }
-    }
-  } else {
-    acforcing_boundary.numacforcing(1) = 0;
-    acforcing_boundary.typeacforcing(1) = 0;
-    acforcing_boundary.ibegin_edge1(1) = 0;
-    acforcing_boundary.ibegin_edge2(1) = 0;
-    acforcing_boundary.ibegin_edge3(1) = 0;
-    acforcing_boundary.ibegin_edge4(1) = 0;
-    acforcing_boundary.iend_edge1(1) = 0;
-    acforcing_boundary.iend_edge2(1) = 0;
-    acforcing_boundary.iend_edge3(1) = 0;
-    acforcing_boundary.iend_edge4(1) = 0;
-    acforcing_boundary.ib_bottom(1) = 0;
-    acforcing_boundary.ib_left(1) = 0;
-    acforcing_boundary.ib_top(1) = 0;
-    acforcing_boundary.ib_right(1) = 0;
-    acforcing_boundary.codeacforcing(1, 1) = false;
-  }
   if (nelement_acforcing > 0) {
     for (int inum = 0; inum < nelement_acforcing; inum++) {
       IO::fortran_IO::fortran_read_line(stream, &numacread, &codeacread1,
@@ -715,29 +513,12 @@ void IO::read_mesh_database_acoustic_forcing(
       acforcing_boundary.ibegin_edge4(inum) = iedgeread[6];
       acforcing_boundary.iend_edge4(inum) = iedgeread[7];
     }
-
-    for (int inum = 0; inum < nelement_acforcing; inum++) {
-      if (acforcing_boundary.codeacforcing(inum, 0)) {
-        acforcing_boundary.ib_bottom(inum) = nspec_bottom;
-        nspec_bottom++;
-      } else if (acforcing_boundary.codeacforcing(inum, 1)) {
-        acforcing_boundary.ib_right(inum) = nspec_right;
-        nspec_right++;
-      } else if (acforcing_boundary.codeacforcing(inum, 2)) {
-        acforcing_boundary.ib_top(inum) = nspec_top;
-        nspec_top++;
-      } else if (acforcing_boundary.codeacforcing(inum, 3)) {
-        acforcing_boundary.ib_left(inum) = nspec_left;
-        nspec_left++;
-      } else {
-        throw std::runtime_error(
-            "Incorrect acoustic boundary element type read");
-      }
-    }
-
-    assert(nspec_left + nspec_right + nspec_bottom + nspec_top ==
-           nelement_acforcing);
   }
+
+  // populate ib_bottom, ib_top, ib_left, ib_right arrays
+  calculate_ib(acforcing_boundary.codeacforcing, acforcing_boundary.ib_bottom,
+               acforcing_boundary.ib_top, acforcing_boundary.ib_left,
+               acforcing_boundary.ib_right, nelement_acforcing);
 
   mpi->cout("Todo: Placeholder string - read_mesh_database.f90 line 1272-1282");
 }
@@ -747,26 +528,6 @@ void IO::read_mesh_database_free_surface(
     int nelem_acoustic_surface, specfem::MPI *mpi) {
 
   std::vector<int> acfree_edge(4, 0);
-  if (nelem_acoustic_surface > 0) {
-    acfree_surface.numacfree_surface = specfem::HostView1d<int>(
-        "specfem::mesh::acoustic_free_surface::numacfree_surface",
-        nelem_acoustic_surface);
-    acfree_surface.typeacfree_surface = specfem::HostView1d<int>(
-        "specfem::mesh::acoustic_free_surface::typeacfree_surface",
-        nelem_acoustic_surface);
-    acfree_surface.e1 = specfem::HostView1d<int>(
-        "specfem::mesh::acoustic_free_surface::e1", nelem_acoustic_surface);
-    acfree_surface.e2 = specfem::HostView1d<int>(
-        "specfem::mesh::acoustic_free_surface::e2", nelem_acoustic_surface);
-    acfree_surface.ixmin = specfem::HostView1d<int>(
-        "specfem::mesh::acoustic_free_surface::ixmin", nelem_acoustic_surface);
-    acfree_surface.ixmax = specfem::HostView1d<int>(
-        "specfem::mesh::acoustic_free_surface::ixmax", nelem_acoustic_surface);
-    acfree_surface.izmin = specfem::HostView1d<int>(
-        "specfem::mesh::acoustic_free_surface::izmin", nelem_acoustic_surface);
-    acfree_surface.izmax = specfem::HostView1d<int>(
-        "specfem::mesh::acoustic_free_surface::izmax", nelem_acoustic_surface);
-  }
 
   if (nelem_acoustic_surface > 0) {
     for (int inum = 0; inum < nelem_acoustic_surface; inum++) {
@@ -813,27 +574,6 @@ void IO::read_mesh_database_tangential(
     std::ifstream &stream, specfem::tangential_elements &tangential_nodes,
     int nnodes_tangential_curve) {
   type_real xread, yread;
-  if (nnodes_tangential_curve > 0) {
-    tangential_nodes.x = specfem::HostView1d<type_real>(
-        "specfem::mesh::tangential_nodes::x", nnodes_tangential_curve);
-    tangential_nodes.y = specfem::HostView1d<type_real>(
-        "specfem::mesh::tangential_nodes::y", nnodes_tangential_curve);
-  } else {
-    tangential_nodes.x =
-        specfem::HostView1d<type_real>("specfem::mesh::tangential_nodes::x", 1);
-    tangential_nodes.y =
-        specfem::HostView1d<type_real>("specfem::mesh::tangential_nodes::y", 1);
-  }
-
-  if (nnodes_tangential_curve > 0) {
-    for (int inum = 0; inum < nnodes_tangential_curve; inum++) {
-      tangential_nodes.x(inum) = 0.0;
-      tangential_nodes.y(inum) = 0.0;
-    }
-  } else {
-    tangential_nodes.x(1) = 0.0;
-    tangential_nodes.y(1) = 0.0;
-  }
 
   IO::fortran_IO::fortran_read_line(stream,
                                     &tangential_nodes.force_normal_to_surface,
@@ -858,12 +598,6 @@ void IO::read_mesh_database_axial(std::ifstream &stream,
                                   int nelem_on_the_axis, int nspec,
                                   specfem::MPI *mpi) {
   int ispec;
-  axial_nodes.is_on_the_axis = specfem::HostView1d<bool>(
-      "specfem::mesh::axial_element::is_on_the_axis", nspec);
-
-  for (int inum = 0; inum < nspec; inum++) {
-    axial_nodes.is_on_the_axis(nspec) = false;
-  }
 
   for (int inum = 0; inum < nelem_on_the_axis; inum++) {
     IO::fortran_IO::fortran_read_line(stream, &ispec);
@@ -881,6 +615,7 @@ void IO::read_mesh_database(const std::string filename, specfem::mesh &mesh,
                             std::vector<specfem::material> &materials,
                             specfem::MPI *mpi) {
 
+  // Driver function to read database file
   std::ifstream stream;
 
   stream.open(filename);
@@ -1016,7 +751,7 @@ void IO::read_mesh_database(const std::string filename, specfem::mesh &mesh,
 
   try {
     IO::read_mesh_database_tangential(stream, mesh.tangential_nodes,
-                                      mesh.properties.nnodes_tagential_curve);
+                                      mesh.properties.nnodes_tangential_curve);
   } catch (std::runtime_error &e) {
     throw;
   }

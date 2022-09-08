@@ -131,6 +131,16 @@ if (MPI_PARALLEL)
 endif(MPI_PARALLEL)
 
 add_library(
+        mesh
+        src/mesh.cpp
+)
+
+target_link_libraries(
+        mesh
+        Kokkos::kokkos
+)
+
+add_library(
         database_reader
         src/read_mesh_database.cpp
 )
@@ -141,6 +151,7 @@ target_link_libraries(
         fortranio
         material_reader
         Kokkos::kokkos
+        mesh
 )
 
 if (MPI_PARALLEL)
@@ -162,6 +173,7 @@ target_link_libraries(
         database_reader
         Kokkos::kokkos
         yaml-cpp
+        mesh
 )
 
 # Include tests
