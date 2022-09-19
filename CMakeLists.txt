@@ -1,36 +1,71 @@
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.17.5)
 
-set(CMAKE_CXX_FLAGS_DEBUG "-O3 -Wall")
+project(specfem2d_kokkos VERSION 0.1.0)
 
-project(cpp_doxygen_sphinx VERSION 0.1.0)
+set(CMAKE_CXX_STANDARD 17)
 
-include(CTest)
-enable_testing()
+# Install Kokkos as a dependency
+## TODO: Add options for on utilizing in house builds
+include(FetchContent)
+FetchContent_Declare(
+  kokkos
+  URL https://github.com/kokkos/kokkos/archive/refs/tags/3.6.01.zip
+)
+FetchContent_MakeAvailable(kokkos)
 
-# Source and header dir
-set(PROJECT_SOURCE_DIR "src")
-set(PROJECT_INCLUDE_DIR "include")
 
-# Source files, without extensions or directory names
-# Here assuming each file has both header and impl
-set(SRC_FILES cpp_doxygen_sphinx)
+# Build specfem2d libraries
+## TODO: Reorgnanize into separate directories
+add_library(
+        gll_utils
+        src/gll_utils.cpp
+        include/gll_utils.h
+)
 
-# Create SOURCE_FILES
-foreach(file ${SRC_FILES})
-	list(APPEND SOURCE_FILES
-        ${PROJECT_SOURCE_DIR}/${file}.cpp
-        ${PROJECT_INCLUDE_DIR}/${file}.hpp
-	)
-endforeach()
+target_link_libraries(
+        gll_utils PUBLIC
+        Kokkos::kokkos
+)
 
-# Set up such that your IDE organizes the files correctly
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCE_FILES})
+add_library(
+        gll_library
+        src/gll_library.cpp
+        include/gll_library.h
+)
 
-add_library(cpp_doxygen_sphinx ${SOURCE_FILES})
+target_link_libraries(
+        gll_library
+        gll_utils
+)
 
-set(CPACK_PROJECT_NAME ${PROJECT_NAME})
-set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
-include(CPack)
+add_library(
+        lagrange
+        src/lagrange_poly.cpp
+        include/lagrange_poly.h
+)
+
+target_link_libraries(
+        lagrange
+        gll_library
+        Kokkos::kokkos
+)
+
+add_library(
+        quadrature
+        src/quadrature.cpp
+        include/quadrature.h
+        include/kokkos_abstractions.h
+)
+
+target_link_libraries(
+        quadrature
+        lagrange
+        gll_library
+        Kokkos::kokkos
+)
+
+# Include tests
+add_subdirectory(tests/unittests)
 
 # Doxygen
 
@@ -39,7 +74,7 @@ find_package(Doxygen)
 
 if (DOXYGEN_FOUND)
     # set input and output files
-    set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/docs_doxygen/Doxyfile.in)
+    set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/docs/Doxyfile.in)
     set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile.out)
 
     # request to configure the file
