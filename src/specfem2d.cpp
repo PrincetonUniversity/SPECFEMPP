@@ -1,3 +1,4 @@
+#include "../include/config.h"
 #include "../include/kokkos_abstractions.h"
 #include "../include/material.h"
 #include "../include/mesh.h"
@@ -61,6 +62,14 @@ int main(int argc, char **argv) {
 
     config config = get_node_config(config_file, mpi);
 
+    // Set up GLL quadrature points
+    quadrature::quadrature gllx(0.0, 0.0, ngll);
+    gllx.set_derivation_matrices();
+    quadrature::quadrature gllz(0.0, 0.0, ngll);
+    gllz.set_derivation_matrices();
+    quadrature::quadrature gljx(0.0, 1.0, ngll);
+    gljx.set_derivation_matrices();
+
     specfem::mesh mesh{};
     std::vector<specfem::material> materials;
     specfem::parameters params;
@@ -78,6 +87,12 @@ int main(int argc, char **argv) {
 
     mpi->cout("\n\n\n================Done Reading Database "
               "file=====================\n\n\n");
+
+    mpi->cout("\n\n\n================ Setup Mesh ==============\n\n\n");
+
+    mesh.setup(gllx, gllz);
+
+    mpi->cout("\n\n\n================ Done ====================\n\n\n");
   }
 
   // Finalize Kokkos

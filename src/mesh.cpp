@@ -1,5 +1,10 @@
 #include "../include/mesh.h"
+#include "../include/config.h"
 #include "../include/kokkos_abstractions.h"
+#include "../include/quadrature.h"
+#include "../include/shape_functions.h"
+#include <Kokkos_Core.hpp>
+#include <algorithm>
 
 void allocate_mesh_materials(specfem::mesh &mesh, const int nspec,
                              const int ngnod) {
@@ -328,4 +333,173 @@ void specfem::mesh::allocate() {
                                this->properties.nnodes_tangential_curve);
   allocate_axial_elements(this->axial_nodes, this->properties.nspec);
   return;
+}
+
+struct qp {
+  type_real x = 0, y = 0;
+  int iloc = 0, iglob = 0;
+};
+
+specfem::HostView3d<int>
+assign_numbering(const specfem::HostView2d<type_real> coorg,
+                 const specfem::HostView2d<int> knods,
+                 const quadrature::quadrature &quadx,
+                 const quadrature::quadrature &quadz) {
+
+  int ngnod = knods.extent(0);
+  int nspec = knods.extent(1);
+
+  int ngllx = quadx.get_N();
+  int ngllz = quadz.get_N();
+  int ngllxz = ngllx * ngllz;
+
+  specfem::HostMirror1d<type_real> xi = quadx.get_hxi();
+  specfem::HostMirror1d<type_real> gamma = quadz.get_hxi();
+
+  specfem::HostView3d<type_real> shape2D("specfem::mesh::assign_numbering",
+                                         ngllz, ngllx, ngnod);
+
+  std::vector<qp> cart_cord(nspec * ngllxz);
+  std::vector<qp> *pcart_cord = &cart_cord;
+  int scratch_size =
+      2 * specfem::HostScratchView1d<type_real>::shmem_size(ngnod);
+
+  // Allocate shape functions
+  Kokkos::parallel_for(
+      "shape_functions", specfem::HostMDrange<2>({ 0, 0 }, { ngllz, ngllx }),
+      KOKKOS_LAMBDA(const int iz, const int ix) {
+        type_real ixxi = xi(ix);
+        type_real izgamma = gamma(iz);
+
+        specfem::HostView1d<type_real> shape2D_tmp =
+            shape_functions::define_shape_functions(ixxi, izgamma, ngnod);
+        for (int in = 0; in < ngnod; in++)
+          shape2D(iz, ix, in) = shape2D_tmp(in);
+      });
+
+  // Calculate the x and y coordinates for every GLL point
+
+  Kokkos::parallel_for(
+      specfem::HostTeam(nspec, Kokkos::AUTO, ngnod)
+          .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
+      KOKKOS_LAMBDA(const specfem::HostTeam::member_type &teamMember) {
+        const int ispec = teamMember.league_rank();
+
+        //----- Load coorgx, coorgz in level 0 cache to be utilized later
+        specfem::HostScratchView1d<type_real> s_coorgx(
+            teamMember.team_scratch(0), ngnod);
+        specfem::HostScratchView1d<type_real> s_coorgz(
+            teamMember.team_scratch(0), ngnod);
+
+        // This loop is not vectorizable because access to coorg via
+        // knods(ispec, in) is not vectorizable
+        Kokkos::parallel_for(Kokkos::TeamThreadRange(teamMember, ngnod),
+                             [&](const int in) {
+                               s_coorgx(in) = coorg(0, knods(in, ispec));
+                               s_coorgz(in) = coorg(1, knods(in, ispec));
+                             });
+
+        teamMember.team_barrier();
+        //-----
+
+        Kokkos::parallel_for(
+            Kokkos::TeamThreadRange(teamMember, ngllxz), [&](const int xz) {
+              const int ix = xz % ngllz;
+              const int iz = xz / ngllz;
+              const int iloc = ispec * (ngllxz) + xz;
+
+              type_real xcor = 0.0;
+              type_real ycor = 0.0;
+
+              // FIXME:: Multi reduction is not yet implemented in kokkos
+              // This is hacky way of doing this using double vector loops
+              // Use multiple reducers once kokkos enables the feature
+              Kokkos::parallel_reduce(
+                  Kokkos::ThreadVectorRange(teamMember, ngnod),
+                  [&](const int &in, type_real &update_xcor) {
+                    update_xcor += shape2D(iz, ix, in) * s_coorgx(in);
+                  },
+                  xcor);
+              Kokkos::parallel_reduce(
+                  Kokkos::ThreadVectorRange(teamMember, ngnod),
+                  [&](const int &in, type_real &update_ycor) {
+                    update_ycor += shape2D(iz, ix, in) * s_coorgz(in);
+                  },
+                  ycor);
+              // ------------
+              // Hacky way of doing this (but nacessary), because KOKKOS_LAMBDA
+              // is a const operation so I cannot update cart_cord inside of a
+              // lambda directly Since iloc is different within every thread I
+              // ensure that I don't have a race condition here.
+              (*pcart_cord)[iloc].x = xcor;
+              (*pcart_cord)[iloc].y = ycor;
+              (*pcart_cord)[iloc].iloc = iloc;
+            });
+      });
+
+  // Sort cartesian coordinates in ascending order i.e.
+  // cart_cord = [{0,0}, {0, 25}, {0, 50}, ..., {50, 0}, {50, 25}, {50, 50}]
+  std::sort(cart_cord.begin(), cart_cord.end(),
+            [&](const qp qp1, const qp qp2) {
+              if (qp1.x != qp2.x) {
+                return qp1.x < qp2.x;
+              }
+
+              return qp1.y < qp2.y;
+            });
+
+  // Setup numbering
+  int ig = 0;
+  cart_cord[0].iglob = ig;
+
+  for (int iloc = 1; iloc < cart_cord.size(); iloc++) {
+    // check if the previous point is same as current
+    if (((cart_cord[iloc].x * cart_cord[iloc].x -
+          cart_cord[iloc - 1].x * cart_cord[iloc - 1].x) +
+         (cart_cord[iloc].y * cart_cord[iloc].y -
+          cart_cord[iloc - 1].y * cart_cord[iloc - 1].y)) > 1e-6) {
+      ig++;
+    }
+    cart_cord[iloc].iglob = ig;
+  }
+
+  std::vector<qp> copy_cart_cord(nspec * ngllxz);
+
+  // reorder cart cord in original format
+  for (int i = 0; i < cart_cord.size(); i++) {
+    int iloc = cart_cord[i].iloc;
+    copy_cart_cord[iloc] = cart_cord[i];
+  }
+
+  int nglob = ig;
+
+  // Assign numbering to corresponding ispec, iz, ix
+  specfem::HostView3d<int> ibool("specfem::mesh::ibool", nspec, ngllz, ngllx);
+  std::vector<int> iglob_counted(nglob, -1);
+  int iloc = 0;
+  int inum = 0;
+  for (int ispec = 0; ispec < nspec; ispec++) {
+    for (int iz = 0; iz < ngllz; iz++) {
+      for (int ix = 0; ix < ngllx; ix++) {
+        if (iglob_counted[copy_cart_cord[iloc].iglob] == -1) {
+          ibool(ispec, iz, ix) = inum;
+          iglob_counted[copy_cart_cord[iloc].iglob] = inum;
+          inum++;
+        } else {
+          ibool(ispec, iz, ix) = iglob_counted[copy_cart_cord[iloc].iglob];
+        }
+        iloc++;
+      }
+    }
+  }
+
+  assert(inum == nglob);
+
+  return ibool;
+}
+
+void specfem::mesh::setup(const quadrature::quadrature &quadx,
+                          const quadrature::quadrature &quadz) {
+
+  this->ibool = assign_numbering(this->coorg, this->knods, quadx, quadz);
 }

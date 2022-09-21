@@ -123,6 +123,16 @@ target_link_libraries(
         fortranio
 )
 
+add_library(
+        shape_functions
+        src/shape_functions.cpp
+)
+
+target_link_libraries(
+        shape_functions
+        Kokkos::kokkos
+)
+
 if (MPI_PARALLEL)
         target_compile_definitions(
                 material_reader
@@ -137,7 +147,9 @@ add_library(
 
 target_link_libraries(
         mesh
+        shape_functions
         Kokkos::kokkos
+        quadrature
 )
 
 add_library(
@@ -174,6 +186,7 @@ target_link_libraries(
         Kokkos::kokkos
         yaml-cpp
         mesh
+        quadrature
 )
 
 # Include tests
