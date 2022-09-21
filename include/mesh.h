@@ -3,6 +3,7 @@
 
 #include "../include/config.h"
 #include "../include/kokkos_abstractions.h"
+#include "../include/quadrature.h"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -60,8 +61,11 @@ struct mesh {
   forcing_boundary acforcing_boundary;
   tangential_elements tangential_nodes;
   axial_elements axial_nodes;
+  specfem::HostView3d<int> ibool;
 
   void allocate();
+  void setup(const quadrature::quadrature &quadx,
+             const quadrature::quadrature &quadz);
 };
 } // namespace specfem
 

@@ -1,3 +1,6 @@
+#ifndef QUADRATURE_H
+#define QUADRATURE_H
+
 #include "../include/config.h"
 #include "../include/kokkos_abstractions.h"
 #include <Kokkos_Core.hpp>
@@ -24,6 +27,9 @@ public:
   DeviceView1d get_xi() const;
   DeviceView1d get_w() const;
   DeviceView2d get_hprime() const;
+  HostMirror1d get_hxi() const;
+  HostMirror1d get_hw() const;
+  HostMirror2d get_hhprime() const;
   int get_N() const;
 
 private:
@@ -37,3 +43,5 @@ private:
   void sync_views();
 };
 } // namespace quadrature
+
+#endif

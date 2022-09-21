@@ -340,10 +340,10 @@ void IO::read_mesh_database_mato(std::ifstream &stream, specfem::mesh &mesh,
 
     // element control node indices (ipgeo)
     for (int i = 0; i < mesh.properties.ngnod; i++) {
-      if (knods_read[i] == -1)
+      if (knods_read[i] == 0)
         throw std::runtime_error("Error reading knods (node_id) values");
 
-      mesh.knods(i, n) = knods_read[i];
+      mesh.knods(i, n - 1) = knods_read[i] - 1;
     }
   }
 
