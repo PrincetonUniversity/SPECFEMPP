@@ -1,6 +1,7 @@
 #include "../include/material.h"
 #include "../include/utils.h"
 #include <ostream>
+#include <tuple>
 
 specfem::material::material(){};
 
@@ -26,7 +27,7 @@ std::ostream &specfem::operator<<(std::ostream &out,
   return out;
 }
 
-void specfem::elastic_material::assign(utilities::value_holder &holder) {
+void specfem::elastic_material::assign(utilities::input_holder &holder) {
   // density
   this->density = holder.val0;
   // P and S velocity
@@ -58,7 +59,7 @@ void specfem::elastic_material::assign(utilities::value_holder &holder) {
     std::runtime_error("Poisson's ratio out of range");
 }
 
-void specfem::acoustic_material::assign(utilities::value_holder &holder) {
+void specfem::acoustic_material::assign(utilities::input_holder &holder) {
   // density
   this->density = holder.val0;
   // P and S velocity
@@ -88,4 +89,15 @@ void specfem::acoustic_material::assign(utilities::value_holder &holder) {
 
   if (this->poisson < -1.0 || this->poisson > 0.5)
     std::runtime_error("Poisson's ratio out of range");
+}
+
+utilities::return_holder specfem::elastic_material::get_properties() {
+  utilities::return_holder holder;
+  holder.rho = this->density;
+  holder.mu = this->mu;
+  holder.kappa = this->kappa;
+  holder.qmu = this->Qmu;
+  holder.qkappa = this->Qkappa;
+
+  return holder;
 }

@@ -61,48 +61,55 @@ TEST(MPI_parameter_reader, read_mesh_database_header) {
   stream.open(test_config.database_filename);
   specfem::mesh mesh{};
   specfem::parameters params{};
+  int nspec, npgeo, nproc;
 
-  EXPECT_NO_THROW(
-      IO::read_mesh_database_header(stream, mesh, MPIEnvironment::mpi_));
+  EXPECT_NO_THROW(std::tie(nspec, npgeo, nproc) = IO::read_mesh_database_header(
+                      stream, MPIEnvironment::mpi_));
 
-  EXPECT_NO_THROW(IO::read_coorg_elements(stream, mesh, MPIEnvironment::mpi_));
+  EXPECT_NO_THROW(auto coorg = IO::read_coorg_elements(stream, npgeo,
+                                                       MPIEnvironment::mpi_));
+
+  EXPECT_NO_THROW(mesh.parameters =
+                      IO::read_mesh_properties(stream, MPIEnvironment::mpi_));
 
   EXPECT_NO_THROW(
       IO::read_mesh_database_attenuation(stream, params, MPIEnvironment::mpi_));
 
-  EXPECT_NO_THROW(std::vector<specfem::material> materials =
+  EXPECT_NO_THROW(std::vector<specfem::material *> materials =
                       IO::read_material_properties(
-                          stream, mesh.properties.numat, MPIEnvironment::mpi_));
+                          stream, mesh.parameters.numat, MPIEnvironment::mpi_));
 
-  EXPECT_NO_THROW(
-      IO::read_mesh_database_mato(stream, mesh, MPIEnvironment::mpi_));
+  EXPECT_NO_THROW(mesh.material_ind = IO::read_mesh_database_mato(
+                      stream, mesh.parameters.ngnod, nspec,
+                      mesh.parameters.numat, MPIEnvironment::mpi_));
 
-  EXPECT_NO_THROW(IO::read_mesh_database_interfaces(stream, mesh.inter,
-                                                    MPIEnvironment::mpi_));
+  EXPECT_NO_THROW(mesh.interface = IO::read_mesh_database_interfaces(
+                      stream, MPIEnvironment::mpi_));
 
-  EXPECT_NO_THROW(IO::read_mesh_absorbing_boundaries(
-      stream, mesh.abs_boundary, mesh.properties.nelemabs,
-      mesh.properties.nspec, MPIEnvironment::mpi_));
+  EXPECT_NO_THROW(mesh.abs_boundary = IO::read_mesh_absorbing_boundaries(
+                      stream, mesh.parameters.nelemabs, mesh.parameters.nspec,
+                      MPIEnvironment::mpi_));
 
-  EXPECT_NO_THROW(IO::read_mesh_database_acoustic_forcing(
-      stream, mesh.acforcing_boundary, mesh.properties.nelem_acforcing,
-      mesh.properties.nspec, MPIEnvironment::mpi_));
+  EXPECT_NO_THROW(mesh.acforcing_boundary =
+                      IO::read_mesh_database_acoustic_forcing(
+                          stream, mesh.parameters.nelem_acforcing,
+                          mesh.parameters.nspec, MPIEnvironment::mpi_));
 
-  EXPECT_NO_THROW(IO::read_mesh_database_free_surface(
-      stream, mesh.acfree_surface, mesh.properties.nelem_acoustic_surface,
-      MPIEnvironment::mpi_));
+  EXPECT_NO_THROW(mesh.acfree_surface = IO::read_mesh_database_free_surface(
+                      stream, mesh.parameters.nelem_acoustic_surface,
+                      MPIEnvironment::mpi_));
 
   EXPECT_NO_THROW(IO::read_mesh_database_coupled(
-      stream, mesh.properties.num_fluid_solid_edges,
-      mesh.properties.num_fluid_poro_edges,
-      mesh.properties.num_solid_poro_edges, MPIEnvironment::mpi_));
+      stream, mesh.parameters.num_fluid_solid_edges,
+      mesh.parameters.num_fluid_poro_edges,
+      mesh.parameters.num_solid_poro_edges, MPIEnvironment::mpi_));
 
-  EXPECT_NO_THROW(IO::read_mesh_database_tangential(
-      stream, mesh.tangential_nodes, mesh.properties.nnodes_tangential_curve));
+  EXPECT_NO_THROW(mesh.tangential_nodes = IO::read_mesh_database_tangential(
+                      stream, mesh.parameters.nnodes_tangential_curve));
 
-  EXPECT_NO_THROW(IO::read_mesh_database_axial(
-      stream, mesh.axial_nodes, mesh.properties.nelem_on_the_axis, mesh.nspec,
-      MPIEnvironment::mpi_));
+  EXPECT_NO_THROW(mesh.axial_nodes = IO::read_mesh_database_axial(
+                      stream, mesh.parameters.nelem_on_the_axis, mesh.nspec,
+                      MPIEnvironment::mpi_));
 
   stream.close();
 }

@@ -141,6 +141,66 @@ if (MPI_PARALLEL)
 endif(MPI_PARALLEL)
 
 add_library(
+        jacobian
+        src/jacobian.cpp
+)
+
+target_link_libraries(
+        jacobian
+        Kokkos::kokkos
+)
+
+add_library(
+        boundaries
+        src/boundaries.cpp
+)
+
+target_link_libraries(
+        boundaries
+        Kokkos::kokkos
+)
+
+add_library(
+        compute
+        src/compute.cpp
+)
+
+target_link_libraries(
+        compute
+        Kokkos::kokkos
+)
+
+add_library(
+        surfaces
+        src/surfaces.cpp
+)
+
+target_link_libraries(
+        surfaces
+        Kokkos::kokkos
+)
+
+add_library(
+        elements
+        src/elements.cpp
+)
+
+target_link_libraries(
+        elements
+        Kokkos::kokkos
+)
+
+add_library(
+        mpi_interfaces
+        src/mpi_interfaces.cpp
+)
+
+target_link_libraries(
+        mpi_interfaces
+        Kokkos::kokkos
+)
+
+add_library(
         mesh
         src/mesh.cpp
 )
@@ -148,8 +208,11 @@ add_library(
 target_link_libraries(
         mesh
         shape_functions
+        jacobian
         Kokkos::kokkos
         quadrature
+        specfem_mpi
+        material_class
 )
 
 add_library(
@@ -164,6 +227,11 @@ target_link_libraries(
         material_reader
         Kokkos::kokkos
         mesh
+        boundaries
+        compute
+        surfaces
+        elements
+        mpi_interfaces
 )
 
 if (MPI_PARALLEL)

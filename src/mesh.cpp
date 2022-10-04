@@ -1,337 +1,29 @@
 #include "../include/mesh.h"
+#include "../include/boundaries.h"
+#include "../include/compute.h"
 #include "../include/config.h"
+#include "../include/jacobian.h"
 #include "../include/kokkos_abstractions.h"
+#include "../include/material.h"
+#include "../include/mpi_interfaces.h"
 #include "../include/quadrature.h"
 #include "../include/shape_functions.h"
+#include "../include/specfem_mpi.h"
 #include <Kokkos_Core.hpp>
 #include <algorithm>
+#include <limits>
 
-void allocate_mesh_materials(specfem::mesh &mesh, const int nspec,
-                             const int ngnod) {
-  mesh.region_CPML =
+specfem::materials::material_ind::material_ind(const int nspec,
+                                               const int ngnod) {
+  this->region_CPML =
       specfem::HostView1d<int>("specfem::mesh::region_CPML", nspec);
-  mesh.kmato = specfem::HostView1d<int>("specfem::mesh::region_CPML", nspec);
-  mesh.knods =
+  this->kmato = specfem::HostView1d<int>("specfem::mesh::region_CPML", nspec);
+  this->knods =
       specfem::HostView2d<int>("specfem::mesh::region_CPML", ngnod, nspec);
 
   for (int ispec = 0; ispec < nspec; ispec++) {
-    mesh.kmato(ispec) = -1;
+    this->kmato(ispec) = -1;
   }
-  return;
-}
-
-void allocate_mesh_absorbing_boundaries(
-    specfem::absorbing_boundary &abs_boundary,
-    const int num_abs_boundary_faces) {
-  if (num_abs_boundary_faces > 0) {
-    abs_boundary.numabs = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::numabs", num_abs_boundary_faces);
-    abs_boundary.abs_boundary_type = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::abs_boundary_type",
-        num_abs_boundary_faces);
-    abs_boundary.ibegin_edge1 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge1",
-        num_abs_boundary_faces);
-    abs_boundary.ibegin_edge2 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge2",
-        num_abs_boundary_faces);
-    abs_boundary.ibegin_edge3 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge3",
-        num_abs_boundary_faces);
-    abs_boundary.ibegin_edge4 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge4",
-        num_abs_boundary_faces);
-    abs_boundary.iend_edge1 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge1",
-        num_abs_boundary_faces);
-    abs_boundary.iend_edge2 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge2",
-        num_abs_boundary_faces);
-    abs_boundary.iend_edge3 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge3",
-        num_abs_boundary_faces);
-    abs_boundary.iend_edge4 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge4",
-        num_abs_boundary_faces);
-    abs_boundary.ib_bottom = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_bottom", num_abs_boundary_faces);
-    abs_boundary.ib_top = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_top", num_abs_boundary_faces);
-    abs_boundary.ib_right = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_right", num_abs_boundary_faces);
-    abs_boundary.ib_left = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_left", num_abs_boundary_faces);
-  } else {
-    abs_boundary.numabs = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::numabs", 1);
-    abs_boundary.abs_boundary_type = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::abs_boundary_type", 1);
-    abs_boundary.ibegin_edge1 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge1", 1);
-    abs_boundary.ibegin_edge2 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge2", 1);
-    abs_boundary.ibegin_edge3 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge3", 1);
-    abs_boundary.ibegin_edge4 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge4", 1);
-    abs_boundary.iend_edge1 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge1", 1);
-    abs_boundary.iend_edge2 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge2", 1);
-    abs_boundary.iend_edge3 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge3", 1);
-    abs_boundary.iend_edge4 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge4", 1);
-    abs_boundary.ib_bottom = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_bottom", 1);
-    abs_boundary.ib_top = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_top", 1);
-    abs_boundary.ib_right = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_right", 1);
-    abs_boundary.ib_left = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_left", 1);
-  }
-
-  if (num_abs_boundary_faces > 0) {
-    abs_boundary.codeabs =
-        specfem::HostView2d<bool>("specfem::mesh::absorbing_boundary::codeabs",
-                                  num_abs_boundary_faces, 4);
-    abs_boundary.codeabscorner = specfem::HostView2d<bool>(
-        "specfem::mesh::absorbing_boundary::codeabs_corner",
-        num_abs_boundary_faces, 4);
-  } else {
-    abs_boundary.codeabs = specfem::HostView2d<bool>(
-        "specfem::mesh::absorbing_boundary::codeabs", 1, 1);
-    abs_boundary.codeabscorner = specfem::HostView2d<bool>(
-        "specfem::mesh::absorbing_boundary::codeabs_corner", 1, 1);
-  }
-
-  if (num_abs_boundary_faces > 0) {
-    for (int n = 0; n < num_abs_boundary_faces; n++) {
-      abs_boundary.numabs(n) = 0;
-      abs_boundary.abs_boundary_type(n) = 0;
-      abs_boundary.ibegin_edge1(n) = 0;
-      abs_boundary.ibegin_edge2(n) = 0;
-      abs_boundary.ibegin_edge3(n) = 0;
-      abs_boundary.ibegin_edge4(n) = 0;
-      abs_boundary.iend_edge1(n) = 0;
-      abs_boundary.iend_edge2(n) = 0;
-      abs_boundary.iend_edge3(n) = 0;
-      abs_boundary.iend_edge4(n) = 0;
-      abs_boundary.ib_bottom(n) = 0;
-      abs_boundary.ib_left(n) = 0;
-      abs_boundary.ib_top(n) = 0;
-      abs_boundary.ib_right(n) = 0;
-      for (int i = 0; i < 4; i++) {
-        abs_boundary.codeabs(n, i) = false;
-        abs_boundary.codeabscorner(n, i) = false;
-      }
-    }
-  } else {
-    abs_boundary.numabs(1) = 0;
-    abs_boundary.abs_boundary_type(1) = 0;
-    abs_boundary.ibegin_edge1(1) = 0;
-    abs_boundary.ibegin_edge2(1) = 0;
-    abs_boundary.ibegin_edge3(1) = 0;
-    abs_boundary.ibegin_edge4(1) = 0;
-    abs_boundary.iend_edge1(1) = 0;
-    abs_boundary.iend_edge2(1) = 0;
-    abs_boundary.iend_edge3(1) = 0;
-    abs_boundary.iend_edge4(1) = 0;
-    abs_boundary.ib_bottom(1) = 0;
-    abs_boundary.ib_left(1) = 0;
-    abs_boundary.ib_top(1) = 0;
-    abs_boundary.ib_right(1) = 0;
-    abs_boundary.codeabs(1, 1) = false;
-    abs_boundary.codeabscorner(1, 1) = false;
-  }
-  return;
-}
-
-void allocate_mesh_acforcing_boundaries(
-    specfem::forcing_boundary &acforcing_boundary,
-    const int nelement_acforcing) {
-  if (nelement_acforcing > 0) {
-    acforcing_boundary.numacforcing = specfem::HostView1d<int>(
-        "specfem::mesh::forcing_boundary::numacforcing", nelement_acforcing);
-    acforcing_boundary.codeacforcing = specfem::HostView2d<bool>(
-        "specfem::mesh::forcing_boundary::numacforcing", nelement_acforcing, 4);
-    acforcing_boundary.typeacforcing = specfem::HostView1d<int>(
-        "specfem::mesh::forcing_boundary::numacforcing", nelement_acforcing);
-    acforcing_boundary.ibegin_edge1 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge1", nelement_acforcing);
-    acforcing_boundary.ibegin_edge2 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge2", nelement_acforcing);
-    acforcing_boundary.ibegin_edge3 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge3", nelement_acforcing);
-    acforcing_boundary.ibegin_edge4 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge4", nelement_acforcing);
-    acforcing_boundary.iend_edge1 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge1", nelement_acforcing);
-    acforcing_boundary.iend_edge2 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge2", nelement_acforcing);
-    acforcing_boundary.iend_edge3 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge3", nelement_acforcing);
-    acforcing_boundary.iend_edge4 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge4", nelement_acforcing);
-    acforcing_boundary.ib_bottom = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_bottom", nelement_acforcing);
-    acforcing_boundary.ib_top = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_top", nelement_acforcing);
-    acforcing_boundary.ib_right = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_right", nelement_acforcing);
-    acforcing_boundary.ib_left = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_left", nelement_acforcing);
-  } else {
-    acforcing_boundary.numacforcing = specfem::HostView1d<int>(
-        "specfem::mesh::forcing_boundary::numacforcing", 1);
-    acforcing_boundary.codeacforcing = specfem::HostView2d<bool>(
-        "specfem::mesh::forcing_boundary::numacforcing", 1, 1);
-    acforcing_boundary.typeacforcing = specfem::HostView1d<int>(
-        "specfem::mesh::forcing_boundary::numacforcing", 1);
-    acforcing_boundary.ibegin_edge1 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge1", 1);
-    acforcing_boundary.ibegin_edge2 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge2", 1);
-    acforcing_boundary.ibegin_edge3 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge3", 1);
-    acforcing_boundary.ibegin_edge4 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge4", 1);
-    acforcing_boundary.iend_edge1 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge1", 1);
-    acforcing_boundary.iend_edge2 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge2", 1);
-    acforcing_boundary.iend_edge3 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge3", 1);
-    acforcing_boundary.iend_edge4 = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge4", 1);
-    acforcing_boundary.ib_bottom = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_bottom", 1);
-    acforcing_boundary.ib_top = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_top", 1);
-    acforcing_boundary.ib_right = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_right", 1);
-    acforcing_boundary.ib_left = specfem::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_left", 1);
-  }
-
-  if (nelement_acforcing > 0) {
-    for (int n = 0; n < nelement_acforcing; n++) {
-      acforcing_boundary.numacforcing(n) = 0;
-      acforcing_boundary.typeacforcing(n) = 0;
-      acforcing_boundary.ibegin_edge1(n) = 0;
-      acforcing_boundary.ibegin_edge2(n) = 0;
-      acforcing_boundary.ibegin_edge3(n) = 0;
-      acforcing_boundary.ibegin_edge4(n) = 0;
-      acforcing_boundary.iend_edge1(n) = 0;
-      acforcing_boundary.iend_edge2(n) = 0;
-      acforcing_boundary.iend_edge3(n) = 0;
-      acforcing_boundary.iend_edge4(n) = 0;
-      acforcing_boundary.ib_bottom(n) = 0;
-      acforcing_boundary.ib_left(n) = 0;
-      acforcing_boundary.ib_top(n) = 0;
-      acforcing_boundary.ib_right(n) = 0;
-      for (int i = 0; i < 4; i++) {
-        acforcing_boundary.codeacforcing(n, i) = false;
-      }
-    }
-  } else {
-    acforcing_boundary.numacforcing(1) = 0;
-    acforcing_boundary.typeacforcing(1) = 0;
-    acforcing_boundary.ibegin_edge1(1) = 0;
-    acforcing_boundary.ibegin_edge2(1) = 0;
-    acforcing_boundary.ibegin_edge3(1) = 0;
-    acforcing_boundary.ibegin_edge4(1) = 0;
-    acforcing_boundary.iend_edge1(1) = 0;
-    acforcing_boundary.iend_edge2(1) = 0;
-    acforcing_boundary.iend_edge3(1) = 0;
-    acforcing_boundary.iend_edge4(1) = 0;
-    acforcing_boundary.ib_bottom(1) = 0;
-    acforcing_boundary.ib_left(1) = 0;
-    acforcing_boundary.ib_top(1) = 0;
-    acforcing_boundary.ib_right(1) = 0;
-    acforcing_boundary.codeacforcing(1, 1) = false;
-  }
-  return;
-}
-
-void allocate_acfree_surface(specfem::acoustic_free_surface &acfree_surface,
-                             const int nelem_acoustic_surface) {
-  if (nelem_acoustic_surface > 0) {
-    acfree_surface.numacfree_surface = specfem::HostView1d<int>(
-        "specfem::mesh::acoustic_free_surface::numacfree_surface",
-        nelem_acoustic_surface);
-    acfree_surface.typeacfree_surface = specfem::HostView1d<int>(
-        "specfem::mesh::acoustic_free_surface::typeacfree_surface",
-        nelem_acoustic_surface);
-    acfree_surface.e1 = specfem::HostView1d<int>(
-        "specfem::mesh::acoustic_free_surface::e1", nelem_acoustic_surface);
-    acfree_surface.e2 = specfem::HostView1d<int>(
-        "specfem::mesh::acoustic_free_surface::e2", nelem_acoustic_surface);
-    acfree_surface.ixmin = specfem::HostView1d<int>(
-        "specfem::mesh::acoustic_free_surface::ixmin", nelem_acoustic_surface);
-    acfree_surface.ixmax = specfem::HostView1d<int>(
-        "specfem::mesh::acoustic_free_surface::ixmax", nelem_acoustic_surface);
-    acfree_surface.izmin = specfem::HostView1d<int>(
-        "specfem::mesh::acoustic_free_surface::izmin", nelem_acoustic_surface);
-    acfree_surface.izmax = specfem::HostView1d<int>(
-        "specfem::mesh::acoustic_free_surface::izmax", nelem_acoustic_surface);
-  }
-  return;
-}
-
-void allocate_tangential_elements(
-    specfem::tangential_elements &tangential_nodes,
-    const int nnodes_tangential_curve) {
-  if (nnodes_tangential_curve > 0) {
-    tangential_nodes.x = specfem::HostView1d<type_real>(
-        "specfem::mesh::tangential_nodes::x", nnodes_tangential_curve);
-    tangential_nodes.y = specfem::HostView1d<type_real>(
-        "specfem::mesh::tangential_nodes::y", nnodes_tangential_curve);
-  } else {
-    tangential_nodes.x =
-        specfem::HostView1d<type_real>("specfem::mesh::tangential_nodes::x", 1);
-    tangential_nodes.y =
-        specfem::HostView1d<type_real>("specfem::mesh::tangential_nodes::y", 1);
-  }
-
-  if (nnodes_tangential_curve > 0) {
-    for (int inum = 0; inum < nnodes_tangential_curve; inum++) {
-      tangential_nodes.x(inum) = 0.0;
-      tangential_nodes.y(inum) = 0.0;
-    }
-  } else {
-    tangential_nodes.x(1) = 0.0;
-    tangential_nodes.y(1) = 0.0;
-  }
-  return;
-}
-
-void allocate_axial_elements(specfem::axial_elements &axial_nodes,
-                             const int nspec) {
-  axial_nodes.is_on_the_axis = specfem::HostView1d<bool>(
-      "specfem::mesh::axial_element::is_on_the_axis", nspec);
-
-  for (int inum = 0; inum < nspec; inum++) {
-    axial_nodes.is_on_the_axis(nspec) = false;
-  }
-
-  return;
-}
-
-void specfem::mesh::allocate() {
-
-  allocate_mesh_materials(*this, this->properties.nspec,
-                          this->properties.ngnod);
-  allocate_mesh_absorbing_boundaries(this->abs_boundary,
-                                     this->properties.nelemabs);
-  allocate_mesh_acforcing_boundaries(this->acforcing_boundary,
-                                     this->properties.nelem_acforcing);
-  allocate_acfree_surface(this->acfree_surface,
-                          this->properties.nelem_acoustic_surface);
-  allocate_tangential_elements(this->tangential_nodes,
-                               this->properties.nnodes_tangential_curve);
-  allocate_axial_elements(this->axial_nodes, this->properties.nspec);
   return;
 }
 
@@ -339,6 +31,32 @@ struct qp {
   type_real x = 0, y = 0;
   int iloc = 0, iglob = 0;
 };
+
+type_real get_tolerance(std::vector<qp> cart_cord, const int nspec,
+                        const int ngllxz) {
+
+  assert(cart_cord.size() == ngllxz * nspec);
+
+  type_real xtypdist = std::numeric_limits<type_real>::max();
+  for (int ispec = 0; ispec < nspec; ispec++) {
+    type_real xmax = std::numeric_limits<type_real>::min();
+    type_real xmin = std::numeric_limits<type_real>::max();
+    type_real ymax = std::numeric_limits<type_real>::min();
+    type_real ymin = std::numeric_limits<type_real>::max();
+    for (int xz = 0; xz < ngllxz; xz++) {
+      int iloc = ispec * (ngllxz) + xz;
+      xmax = std::max(xmax, cart_cord[iloc].x);
+      xmin = std::min(xmin, cart_cord[iloc].x);
+      ymax = std::max(ymax, cart_cord[iloc].y);
+      ymin = std::min(ymin, cart_cord[iloc].y);
+    }
+
+    xtypdist = std::min(xtypdist, xmax - xmin);
+    xtypdist = std::min(xtypdist, ymax - ymin);
+  }
+
+  return 1e-6 * xtypdist;
+}
 
 specfem::HostView3d<int>
 assign_numbering(const specfem::HostView2d<type_real> coorg,
@@ -362,7 +80,7 @@ assign_numbering(const specfem::HostView2d<type_real> coorg,
   std::vector<qp> cart_cord(nspec * ngllxz);
   std::vector<qp> *pcart_cord = &cart_cord;
   int scratch_size =
-      2 * specfem::HostScratchView1d<type_real>::shmem_size(ngnod);
+      specfem::HostScratchView2d<type_real>::shmem_size(ndim, ngnod);
 
   // Allocate shape functions
   Kokkos::parallel_for(
@@ -386,17 +104,15 @@ assign_numbering(const specfem::HostView2d<type_real> coorg,
         const int ispec = teamMember.league_rank();
 
         //----- Load coorgx, coorgz in level 0 cache to be utilized later
-        specfem::HostScratchView1d<type_real> s_coorgx(
-            teamMember.team_scratch(0), ngnod);
-        specfem::HostScratchView1d<type_real> s_coorgz(
-            teamMember.team_scratch(0), ngnod);
+        specfem::HostScratchView2d<type_real> s_coorg(
+            teamMember.team_scratch(0), ndim, ngnod);
 
         // This loop is not vectorizable because access to coorg via
         // knods(ispec, in) is not vectorizable
         Kokkos::parallel_for(Kokkos::TeamThreadRange(teamMember, ngnod),
                              [&](const int in) {
-                               s_coorgx(in) = coorg(0, knods(in, ispec));
-                               s_coorgz(in) = coorg(1, knods(in, ispec));
+                               s_coorg(0, in) = coorg(0, knods(in, ispec));
+                               s_coorg(1, in) = coorg(1, knods(in, ispec));
                              });
 
         teamMember.team_barrier();
@@ -408,29 +124,16 @@ assign_numbering(const specfem::HostView2d<type_real> coorg,
               const int iz = xz / ngllz;
               const int iloc = ispec * (ngllxz) + xz;
 
-              type_real xcor = 0.0;
-              type_real ycor = 0.0;
-
-              // FIXME:: Multi reduction is not yet implemented in kokkos
-              // This is hacky way of doing this using double vector loops
-              // Use multiple reducers once kokkos enables the feature
-              Kokkos::parallel_reduce(
-                  Kokkos::ThreadVectorRange(teamMember, ngnod),
-                  [&](const int &in, type_real &update_xcor) {
-                    update_xcor += shape2D(iz, ix, in) * s_coorgx(in);
-                  },
-                  xcor);
-              Kokkos::parallel_reduce(
-                  Kokkos::ThreadVectorRange(teamMember, ngnod),
-                  [&](const int &in, type_real &update_ycor) {
-                    update_ycor += shape2D(iz, ix, in) * s_coorgz(in);
-                  },
-                  ycor);
+              // Get x and y coordinates for (ix, iz) point
+              auto sv_shape2D = Kokkos::subview(shape2D, iz, ix, Kokkos::ALL);
+              auto [xcor, ycor] = jacobian::compute_locations(
+                  teamMember, s_coorg, ngnod, sv_shape2D);
               // ------------
-              // Hacky way of doing this (but nacessary), because KOKKOS_LAMBDA
-              // is a const operation so I cannot update cart_cord inside of a
-              // lambda directly Since iloc is different within every thread I
-              // ensure that I don't have a race condition here.
+              // Hacky way of doing this (but nacessary), because
+              // KOKKOS_LAMBDA is a const operation so I cannot update
+              // cart_cord inside of a lambda directly Since iloc is
+              // different within every thread I ensure that I don't have a
+              // race condition here.
               (*pcart_cord)[iloc].x = xcor;
               (*pcart_cord)[iloc].y = ycor;
               (*pcart_cord)[iloc].iloc = iloc;
@@ -452,12 +155,12 @@ assign_numbering(const specfem::HostView2d<type_real> coorg,
   int ig = 0;
   cart_cord[0].iglob = ig;
 
+  type_real xtol = get_tolerance(cart_cord, nspec, ngllxz);
+
   for (int iloc = 1; iloc < cart_cord.size(); iloc++) {
     // check if the previous point is same as current
-    if (((cart_cord[iloc].x * cart_cord[iloc].x -
-          cart_cord[iloc - 1].x * cart_cord[iloc - 1].x) +
-         (cart_cord[iloc].y * cart_cord[iloc].y -
-          cart_cord[iloc - 1].y * cart_cord[iloc - 1].y)) > 1e-6) {
+    if ((std::abs(cart_cord[iloc].x - cart_cord[iloc - 1].x) > xtol) ||
+        (std::abs(cart_cord[iloc].y - cart_cord[iloc - 1].y) > xtol)) {
       ig++;
     }
     cart_cord[iloc].iglob = ig;
@@ -471,7 +174,7 @@ assign_numbering(const specfem::HostView2d<type_real> coorg,
     copy_cart_cord[iloc] = cart_cord[i];
   }
 
-  int nglob = ig;
+  int nglob = ig + 1;
 
   // Assign numbering to corresponding ispec, iz, ix
   specfem::HostView3d<int> ibool("specfem::mesh::ibool", nspec, ngllz, ngllx);
@@ -493,13 +196,197 @@ assign_numbering(const specfem::HostView2d<type_real> coorg,
     }
   }
 
+  assert(nglob != (nspec * ngllxz));
+
   assert(inum == nglob);
 
   return ibool;
 }
 
-void specfem::mesh::setup(const quadrature::quadrature &quadx,
-                          const quadrature::quadrature &quadz) {
+specfem::compute::coordinates
+assign_mesh_coordinates(const specfem::HostView2d<type_real> coorg,
+                        const specfem::HostView2d<int> knods,
+                        const quadrature::quadrature &quadx,
+                        const quadrature::quadrature &quadz) {
 
-  this->ibool = assign_numbering(this->coorg, this->knods, quadx, quadz);
+  // Needs an axisymmetric update
+
+  int ngnod = knods.extent(0);
+  int nspec = knods.extent(1);
+
+  int ngllx = quadx.get_N();
+  int ngllz = quadz.get_N();
+  int ngllxz = ngllx * ngllz;
+
+  specfem::HostMirror1d<type_real> xi = quadx.get_hxi();
+  specfem::HostMirror1d<type_real> gamma = quadz.get_hxi();
+
+  specfem::HostView3d<type_real> shape2D(
+      "specfem::mesh::assign_numbering::shape2D", ngllz, ngllx, ngnod);
+  specfem::HostView4d<type_real> dershape2D(
+      "specfem::mesh::assign_numbering::dershape2D", ngllz, ngllx, ndim, ngnod);
+  int scratch_size =
+      specfem::HostScratchView2d<type_real>::shmem_size(ndim, ngnod);
+
+  // Allocate shape functions
+  Kokkos::parallel_for(
+      "shape_functions", specfem::HostMDrange<2>({ 0, 0 }, { ngllz, ngllx }),
+      KOKKOS_LAMBDA(const int iz, const int ix) {
+        type_real ixxi = xi(ix);
+        type_real izgamma = gamma(iz);
+
+        specfem::HostView1d<type_real> shape2D_tmp =
+            shape_functions::define_shape_functions(ixxi, izgamma, ngnod);
+        specfem::HostView2d<type_real> dershape2D_tmp =
+            shape_functions::define_shape_functions_derivatives(ixxi, izgamma,
+                                                                ngnod);
+        for (int in = 0; in < ngnod; in++)
+          shape2D(iz, ix, in) = shape2D_tmp(in);
+        for (int idim = 0; idim < ndim; idim++)
+          for (int in = 0; in < ngnod; in++)
+            dershape2D(iz, ix, idim, in) = dershape2D_tmp(idim, in);
+      });
+
+  specfem::compute::coordinates coordinates(nspec, ngllz, ngllx);
+
+  Kokkos::parallel_for(
+      specfem::HostTeam(nspec, Kokkos::AUTO, ngnod)
+          .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
+      KOKKOS_LAMBDA(const specfem::HostTeam::member_type &teamMember) {
+        const int ispec = teamMember.league_rank();
+
+        //----- Load coorgx, coorgz in level 0 cache to be utilized later
+        specfem::HostScratchView2d<type_real> s_coorg(
+            teamMember.team_scratch(0), ndim, ngnod);
+
+        // This loop is not vectorizable because access to coorg via
+        // knods(ispec, in) is not vectorizable
+        Kokkos::parallel_for(Kokkos::TeamThreadRange(teamMember, ngnod),
+                             [&](const int in) {
+                               s_coorg(0, in) = coorg(0, knods(in, ispec));
+                               s_coorg(1, in) = coorg(1, knods(in, ispec));
+                             });
+
+        teamMember.team_barrier();
+        //-----
+
+        Kokkos::parallel_for(
+            Kokkos::TeamThreadRange(teamMember, ngllxz), [&](const int xz) {
+              const int ix = xz % ngllz;
+              const int iz = xz / ngllz;
+
+              // Get x and y coordinates for (ix, iz) point
+              auto sv_shape2D = Kokkos::subview(shape2D, iz, ix, Kokkos::ALL);
+              auto [xcor, ycor] = jacobian::compute_locations(
+                  teamMember, s_coorg, ngnod, sv_shape2D);
+
+              // compute partial derivatives
+              auto sv_dershape2D =
+                  Kokkos::subview(dershape2D, iz, ix, Kokkos::ALL, Kokkos::ALL);
+              auto [xxi, zxi, xgamma, zgamma] =
+                  jacobian::compute_partial_derivatives(teamMember, s_coorg,
+                                                        ngnod, sv_dershape2D);
+
+              type_real jacobianl =
+                  jacobian::compute_jacobian(xxi, zxi, xgamma, zgamma);
+
+              // invert the relation
+              type_real xixl = zgamma / jacobianl;
+              type_real gammaxl = -zxi / jacobianl;
+              type_real xizl = -xgamma / jacobianl;
+              type_real gammazl = xxi / jacobianl;
+
+              coordinates.xcor(ispec, iz, ix) = xcor;
+              coordinates.ycor(ispec, iz, ix) = ycor;
+              coordinates.xix(ispec, iz, ix) = xixl;
+              coordinates.gammax(ispec, iz, ix) = gammaxl;
+              coordinates.xiz(ispec, iz, ix) = xizl;
+              coordinates.gammaz(ispec, iz, ix) = gammazl;
+              coordinates.jacobian(ispec, iz, ix) = jacobianl;
+            });
+      });
+
+  return coordinates;
 }
+
+// void setup_mesh_periodic_edges(const int numacforcing){
+//     if (numacforcing > 0){
+//         throw std::runtime_error("Periodic edges are not implemented yet");
+//     }
+// }
+
+void setup_mesh_acforcing_edges(const int numacforcing) {
+  if (numacforcing > 0) {
+    throw std::runtime_error("acoustic forcing edges are not implemented yet");
+  }
+}
+
+specfem::compute::properties
+setup_mesh_properties(specfem::HostView1d<int> kmato,
+                      std::vector<specfem::material *> &materials,
+                      const int nspec, const int ngllz, const int ngllx) {
+  // Setup mesh properties
+  // UPDATEME::
+  //           acoustic materials
+  //           poroelastic materials
+  //           axisymmetric materials
+  //           anisotropic materials
+
+  specfem::compute::properties properties(nspec, ngllz, ngllx);
+
+  Kokkos::parallel_for(
+      "setup_mesh_properties",
+      specfem::HostMDrange<3>({ 0, 0, 0 }, { nspec, ngllz, ngllx }),
+      KOKKOS_LAMBDA(const int ispec, const int iz, const int ix) {
+        const int imat = kmato(ispec);
+        utilities::return_holder holder = materials[imat]->get_properties();
+        auto [rho, mu, kappa, qmu, qkappa] = std::make_tuple(
+            holder.rho, holder.mu, holder.kappa, holder.qmu, holder.qkappa);
+        properties.rho(ispec, iz, ix) = rho;
+        properties.mu(ispec, iz, ix) = mu;
+        properties.kappa(ispec, iz, ix) = kappa;
+
+        properties.qmu(ispec, iz, ix) = qmu;
+        properties.qkappa(ispec, iz, ix) = qkappa;
+
+        type_real vp = std::sqrt((kappa + mu) / rho);
+        type_real vs = std::sqrt(mu / rho);
+
+        properties.rho_vp(ispec, iz, ix) = rho * vp;
+        properties.rho_vs(ispec, iz, ix) = rho * vs;
+      });
+
+  return properties;
+}
+
+void specfem::mesh::setup(std::vector<specfem::material *> &materials,
+                          const quadrature::quadrature &quadx,
+                          const quadrature::quadrature &quadz,
+                          specfem::MPI *mpi) {
+
+  this->compute.ibool =
+      assign_numbering(this->coorg, this->material_ind.knods, quadx, quadz);
+
+  mpi->sync_all();
+
+  this->compute.coordinates = assign_mesh_coordinates(
+      this->coorg, this->material_ind.knods, quadx, quadz);
+
+  mpi->sync_all();
+
+  setup_mesh_acforcing_edges(parameters.nelem_acforcing);
+
+  mpi->sync_all();
+
+  int ngllx = quadx.get_N();
+  int ngllz = quadz.get_N();
+
+  this->compute.properties = setup_mesh_properties(
+      this->material_ind.kmato, materials, this->nspec, ngllx, ngllz);
+
+  mpi->sync_all();
+}
+
+// specfem::mesh::mesh(std::filename){
+//   auto [mesh_tmp, materials] =
+// }
