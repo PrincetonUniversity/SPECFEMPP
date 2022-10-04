@@ -70,16 +70,17 @@ int main(int argc, char **argv) {
     quadrature::quadrature gljx(0.0, 1.0, ngll);
     gljx.set_derivation_matrices();
 
-    specfem::mesh mesh{};
-    std::vector<specfem::material> materials;
+    // specfem::mesh mesh{};
+    // std::vector<specfem::material *> materials;
     specfem::parameters params;
 
     mpi->cout("\n\n\n================Reading database "
               "file=====================\n\n\n");
 
     try {
-      IO::read_mesh_database(config.database_filename, mesh, params, materials,
-                             mpi);
+      // specfem::mesh mesh(filename);
+      auto [mesh, materials] =
+          IO::read_mesh_database(config.database_filename, params, mpi);
     } catch (std::runtime_error &e) {
       std::cout << e.what() << std::endl;
       mpi->exit();
@@ -90,7 +91,7 @@ int main(int argc, char **argv) {
 
     mpi->cout("\n\n\n================ Setup Mesh ==============\n\n\n");
 
-    mesh.setup(gllx, gllz);
+    // mesh.setup(materials, gllx, gllz, mpi);
 
     mpi->cout("\n\n\n================ Done ====================\n\n\n");
   }

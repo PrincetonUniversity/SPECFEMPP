@@ -5,13 +5,13 @@
 #include "../include/utils.h"
 #include <vector>
 
-std::vector<specfem::material>
+std::vector<specfem::material *>
 IO::read_material_properties(std::ifstream &stream, int numat,
                              specfem::MPI *mpi) {
 
-  utilities::value_holder read_values;
+  utilities::input_holder read_values;
 
-  std::vector<specfem::material> materials(numat, specfem::material());
+  std::vector<specfem::material *> materials(numat);
 
   if (mpi->get_rank() == 0)
     std::cout << "Numat = " << numat << std::endl;
@@ -31,14 +31,16 @@ IO::read_material_properties(std::ifstream &stream, int numat,
 
     if (read_values.indic == 1) {
       if (read_values.val2 == 0) {
-        specfem::acoustic_material acoustic_holder;
-        acoustic_holder.assign(read_values);
-        mpi->cout(acoustic_holder);
+        specfem::acoustic_material *acoustic_holder =
+            new specfem::acoustic_material();
+        acoustic_holder->assign(read_values);
+        mpi->cout(*acoustic_holder);
         materials[read_values.n - 1] = acoustic_holder;
       } else {
-        specfem::elastic_material elastic_holder;
-        elastic_holder.assign(read_values);
-        mpi->cout(elastic_holder);
+        specfem::elastic_material *elastic_holder =
+            new specfem::elastic_material();
+        elastic_holder->assign(read_values);
+        mpi->cout(*elastic_holder);
         materials[read_values.n - 1] = elastic_holder;
       }
     } else {

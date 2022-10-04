@@ -1,4 +1,5 @@
 #include "../include/read_mesh_database.h"
+#include "../include/boundaries.h"
 #include "../include/config.h"
 #include "../include/fortran_IO.h"
 #include "../include/kokkos_abstractions.h"
@@ -9,62 +10,7 @@
 #include <Kokkos_Core.hpp>
 #include <fstream>
 #include <iostream>
-
-void allocate_MPI_interfaces(specfem::interface &interface,
-                             const int ninterfaces,
-                             const int max_interface_size) {
-#ifdef MPI_PARALLEL
-  if (ninterfaces > 0) {
-    interface.my_neighbors = specfem::HostView1d<int>(
-        "specfem::mesh::interfaces::my_neighbors", ninterfaces);
-    interface.my_nelmnts_neighbors = specfem::HostView1d<int>(
-        "specfem::mesh::interfaces::my_nelmnts_neighbors", ninterfaces);
-    interface.my_interfaces =
-        specfem::HostView3d<int>("specfem::mesh::interfaces::my_interfaces",
-                                 ninterfaces, max_interface_size, 4);
-
-    // initialize values
-    for (int i = 0; i < ninterfaces; i++) {
-      interface.my_neighbors(i) = -1;
-      interface.my_nelmnts_neighbors(i) = 0;
-      for (int j = 0; j < max_interface_size; j++) {
-        for (int k = 0; k < 4; k++) {
-          interface.my_interfaces(i, j, k) = -1;
-        }
-      }
-    }
-  } else {
-    interface.my_neighbors =
-        specfem::HostView1d<int>("specfem::mesh::interfaces::my_neighbors", 1);
-    interface.my_nelmnts_neighbors = specfem::HostView1d<int>(
-        "specfem::mesh::interfaces::my_nelmnts_neighbors", 1);
-    interface.my_interfaces = specfem::HostView3d<int>(
-        "specfem::mesh::interfaces::my_interfaces", 1, 1, 1);
-
-    // initialize values
-    interface.my_neighbors(1) = -1;
-    interface.my_nelmnts_neighbors(1) = 0;
-    interface.my_interfaces(1, 1, 1) = -1;
-  }
-#else
-  if (ninterfaces > 0)
-    throw std::runtime_error("Found interfaces but SPECFEM compiled without "
-                             "MPI. Compile SPECFEM with MPI");
-  interface.my_neighbors =
-      specfem::HostView1d<int>("specfem::mesh::interfaces::my_neighbors", 1);
-  interface.my_nelmnts_neighbors = specfem::HostView1d<int>(
-      "specfem::mesh::interfaces::my_nelmnts_neighbors", 1);
-  interface.my_interfaces = specfem::HostView3d<int>(
-      "specfem::mesh::interfaces::my_interfaces", 1, 1, 1);
-
-  // initialize values
-  interface.my_neighbors(1) = -1;
-  interface.my_nelmnts_neighbors(1) = 0;
-  interface.my_interfaces(1, 1, 1) = -1;
-#endif
-
-  return;
-}
+#include <tuple>
 
 // Find corner elements of the absorbing boundary
 void find_corners(const specfem::HostView1d<int> numabs,
@@ -142,21 +88,22 @@ void calculate_ib(const specfem::HostView2d<bool> code,
   assert(nspec_left + nspec_right + nspec_bottom + nspec_top == nelements);
 }
 
-void IO::read_mesh_database_header(std::ifstream &stream, specfem::mesh &mesh,
-                                   specfem::MPI *mpi) {
+std::tuple<int, int, int> IO::read_mesh_database_header(std::ifstream &stream,
+                                                        specfem::MPI *mpi) {
   // This subroutine reads header values of the database which are skipped
   std::string dummy_s;
   int dummy_i, dummy_i1, dummy_i2;
   type_real dummy_d, dummy_d1;
   bool dummy_b, dummy_b1, dummy_b2, dummy_b3;
+  int nspec, npgeo, nproc;
 
   IO::fortran_IO::fortran_read_line(stream, &dummy_s); // title
   IO::fortran_IO::fortran_read_line(stream, &dummy_i,
                                     &dummy_b); // noise tomography,
                                                // undo_attenuation_and_or_PML
-  IO::fortran_IO::fortran_read_line(stream, &mesh.nspec); // nspec
-  IO::fortran_IO::fortran_read_line(stream, &mesh.npgeo,
-                                    &mesh.nproc); // ngeo, nproc
+  IO::fortran_IO::fortran_read_line(stream, &nspec); // nspec
+  IO::fortran_IO::fortran_read_line(stream, &npgeo,
+                                    &nproc); // ngeo, nproc
   IO::fortran_IO::fortran_read_line(stream, &dummy_b1,
                                     &dummy_b2); // output_grid_per_plot,
                                                 // interpol
@@ -262,18 +209,18 @@ void IO::read_mesh_database_header(std::ifstream &stream, specfem::mesh &mesh,
 
   mpi->sync_all();
 
-  return;
+  return std::make_tuple(nspec, npgeo, nproc);
 }
 
-void IO::read_coorg_elements(std::ifstream &stream, specfem::mesh &mesh,
-                             specfem::MPI *mpi) {
+specfem::HostView2d<type_real> IO::read_coorg_elements(std::ifstream &stream,
+                                                       const int npgeo,
+                                                       specfem::MPI *mpi) {
 
-  int npgeo = mesh.npgeo, ipoin = 0;
+  int ipoin = 0;
 
   type_real coorgi, coorgj;
   int buffer_length;
-  mesh.coorg =
-      specfem::HostView2d<type_real>("specfem::mesh::coorg", ndim, npgeo);
+  specfem::HostView2d<type_real> coorg("specfem::mesh::coorg", ndim, npgeo);
 
   for (int i = 0; i < npgeo; i++) {
     IO::fortran_IO::fortran_read_line(stream, &ipoin, &coorgi, &coorgj);
@@ -282,13 +229,18 @@ void IO::read_coorg_elements(std::ifstream &stream, specfem::mesh &mesh,
     }
     // coorg stores the x,z for every control point
     // coorg([0, 2), i) = [x, z]
-    mesh.coorg(0, ipoin - 1) = coorgi;
-    mesh.coorg(1, ipoin - 1) = coorgj;
+    coorg(0, ipoin - 1) = coorgi;
+    coorg(1, ipoin - 1) = coorgj;
   }
 
+  return coorg;
+}
+
+specfem::properties IO::read_mesh_properties(std::ifstream &stream,
+                                             specfem::MPI *mpi) {
   // ---------------------------------------------------------------------
   // reading mesh properties
-  specfem::prop &properties = mesh.properties;
+  specfem::properties properties;
 
   IO::fortran_IO::fortran_read_line(
       stream, &properties.numat, &properties.ngnod, &properties.nspec,
@@ -301,8 +253,8 @@ void IO::read_coorg_elements(std::ifstream &stream, specfem::mesh &mesh,
       &properties.nnodes_tangential_curve, &properties.nelem_on_the_axis);
   // ----------------------------------------------------------------------
 
-  mesh.allocate();
-  return;
+  mpi->sync_all();
+  return properties;
 }
 
 void IO::read_mesh_database_attenuation(std::ifstream &stream,
@@ -321,57 +273,58 @@ void IO::read_mesh_database_attenuation(std::ifstream &stream,
   return;
 }
 
-void IO::read_mesh_database_mato(std::ifstream &stream, specfem::mesh &mesh,
-                                 specfem::MPI *mpi) {
-  std::vector<int> knods_read(mesh.properties.ngnod, -1);
+specfem::materials::material_ind
+IO::read_mesh_database_mato(std::ifstream &stream, const int ngnod,
+                            const int nspec, const int numat,
+                            specfem::MPI *mpi) {
+  std::vector<int> knods_read(ngnod, -1);
+  specfem::materials::material_ind material_indic(nspec, ngnod);
   int n, kmato_read, pml_read;
   // Read an assign material values, coordinate numbering, PML association
-  for (int ispec = 0; ispec < mesh.properties.nspec; ispec++) {
+  for (int ispec = 0; ispec < nspec; ispec++) {
     // format: #element_id  #material_id #node_id1 #node_id2 #...
     IO::fortran_IO::fortran_read_line(stream, &n, &kmato_read, &knods_read,
                                       &pml_read);
 
     // material association
-    if (n < 1 || n > mesh.properties.nspec) {
+    if (n < 1 || n > nspec) {
       throw std::runtime_error("Error reading mato properties");
     }
-    mesh.kmato(n - 1) = kmato_read - 1;
-    mesh.region_CPML(n - 1) = pml_read;
+    material_indic.kmato(n - 1) = kmato_read - 1;
+    material_indic.region_CPML(n - 1) = pml_read;
 
     // element control node indices (ipgeo)
-    for (int i = 0; i < mesh.properties.ngnod; i++) {
+    for (int i = 0; i < ngnod; i++) {
       if (knods_read[i] == 0)
         throw std::runtime_error("Error reading knods (node_id) values");
 
-      mesh.knods(i, n - 1) = knods_read[i] - 1;
+      material_indic.knods(i, n - 1) = knods_read[i] - 1;
     }
   }
 
-  for (int ispec = 0; ispec < mesh.properties.nspec; ispec++) {
-    int imat = mesh.kmato(ispec);
-    if (imat < 0 || imat >= mesh.properties.numat) {
+  for (int ispec = 0; ispec < nspec; ispec++) {
+    int imat = material_indic.kmato(ispec);
+    if (imat < 0 || imat >= numat) {
       throw std::runtime_error(
           "Error reading material properties. Invalid material ID number");
     }
   }
 
-  return;
+  return material_indic;
 }
 
-void IO::read_mesh_database_interfaces(std::ifstream &stream,
-                                       specfem::interface &interface,
-                                       specfem::MPI *mpi) {
+specfem::interfaces::interface IO::read_mesh_database_interfaces(
+    std::ifstream &stream, specfem::MPI *mpi) {
 
   // read number of interfaces
   // Where these 2 values are written needs to change in new database format
-  IO::fortran_IO::fortran_read_line(stream, &interface.ninterfaces,
-                                    &interface.max_interface_size);
+  int ninterfaces, max_interface_size;
+  IO::fortran_IO::fortran_read_line(stream, &ninterfaces, &max_interface_size);
 
-  mpi->cout("Number of interaces = " + std::to_string(interface.ninterfaces));
+  mpi->cout("Number of interaces = " + std::to_string(ninterfaces));
 
   // allocate interface variables
-  allocate_MPI_interfaces(interface, interface.ninterfaces,
-                          interface.max_interface_size);
+  specfem::interfaces::interface interface(ninterfaces, max_interface_size);
 
   // note: for serial simulations, ninterface will be zero.
   //       thus no further reading will be done below
@@ -405,12 +358,13 @@ void IO::read_mesh_database_interfaces(std::ifstream &stream,
   }
 #endif
 
-  return;
+  return interface;
 }
 
-void IO::read_mesh_absorbing_boundaries(
-    std::ifstream &stream, specfem::absorbing_boundary &abs_boundary,
-    int &num_abs_boundary_faces, int nspec, specfem::MPI *mpi) {
+specfem::boundaries::absorbing_boundary
+IO::read_mesh_absorbing_boundaries(std::ifstream &stream,
+                                   int num_abs_boundary_faces, int nspec,
+                                   specfem::MPI *mpi) {
 
   // I have to do this because std::vector<bool> is a fake container type that
   // causes issues when getting a reference
@@ -422,6 +376,8 @@ void IO::read_mesh_absorbing_boundaries(
     mpi->cout("Warning: read in negative nelemabs resetting to 0!");
     num_abs_boundary_faces = 0;
   }
+
+  specfem::boundaries::absorbing_boundary abs_boundary(num_abs_boundary_faces);
 
   // user output
   mpi->cout("Todo: placeholder string - read_mesh_database.f90 line 831 - 840");
@@ -470,16 +426,19 @@ void IO::read_mesh_absorbing_boundaries(
 
   mpi->cout("Todo: Placeholder string - read_mesh_database.f90 line 1092-1112");
 
-  return;
+  return abs_boundary;
 }
 
-void IO::read_mesh_database_acoustic_forcing(
-    std::ifstream &stream, specfem::forcing_boundary &acforcing_boundary,
-    int nelement_acforcing, int nspec, specfem::MPI *mpi) {
+specfem::boundaries::forcing_boundary
+IO::read_mesh_database_acoustic_forcing(std::ifstream &stream,
+                                        int nelement_acforcing, int nspec,
+                                        specfem::MPI *mpi) {
   bool codeacread1 = true, codeacread2 = true, codeacread3 = true,
        codeacread4 = true;
   std::vector<int> iedgeread(8, 0);
   int numacread, typeacread;
+
+  specfem::boundaries::forcing_boundary acforcing_boundary(nelement_acforcing);
 
   if (nelement_acforcing > 0) {
     for (int inum = 0; inum < nelement_acforcing; inum++) {
@@ -521,13 +480,16 @@ void IO::read_mesh_database_acoustic_forcing(
                acforcing_boundary.ib_right, nelement_acforcing);
 
   mpi->cout("Todo: Placeholder string - read_mesh_database.f90 line 1272-1282");
+
+  return acforcing_boundary;
 }
 
-void IO::read_mesh_database_free_surface(
-    std::ifstream &stream, specfem::acoustic_free_surface &acfree_surface,
-    int nelem_acoustic_surface, specfem::MPI *mpi) {
+specfem::surfaces::acoustic_free_surface IO::read_mesh_database_free_surface(
+    std::ifstream &stream, int nelem_acoustic_surface, specfem::MPI *mpi) {
 
   std::vector<int> acfree_edge(4, 0);
+  specfem::surfaces::acoustic_free_surface acfree_surface(
+      nelem_acoustic_surface);
 
   if (nelem_acoustic_surface > 0) {
     for (int inum = 0; inum < nelem_acoustic_surface; inum++) {
@@ -538,6 +500,8 @@ void IO::read_mesh_database_free_surface(
       acfree_surface.e2(inum) = acfree_edge[3];
     }
   }
+
+  return acfree_surface;
 }
 
 void IO::read_mesh_database_coupled(std::ifstream &stream,
@@ -570,10 +534,13 @@ void IO::read_mesh_database_coupled(std::ifstream &stream,
   return;
 }
 
-void IO::read_mesh_database_tangential(
-    std::ifstream &stream, specfem::tangential_elements &tangential_nodes,
-    int nnodes_tangential_curve) {
+specfem::elements::tangential_elements
+IO::read_mesh_database_tangential(std::ifstream &stream,
+                                  int nnodes_tangential_curve) {
   type_real xread, yread;
+
+  specfem::elements::tangential_elements tangential_nodes(
+      nnodes_tangential_curve);
 
   IO::fortran_IO::fortran_read_line(stream,
                                     &tangential_nodes.force_normal_to_surface,
@@ -590,15 +557,15 @@ void IO::read_mesh_database_tangential(
     tangential_nodes.rec_normal_to_surface = false;
   }
 
-  return;
+  return tangential_nodes;
 }
 
-void IO::read_mesh_database_axial(std::ifstream &stream,
-                                  specfem::axial_elements &axial_nodes,
-                                  int nelem_on_the_axis, int nspec,
-                                  specfem::MPI *mpi) {
+specfem::elements::axial_elements
+IO::read_mesh_database_axial(std::ifstream &stream, int nelem_on_the_axis,
+                             int nspec, specfem::MPI *mpi) {
   int ispec;
 
+  specfem::elements::axial_elements axial_nodes(nspec);
   for (int inum = 0; inum < nelem_on_the_axis; inum++) {
     IO::fortran_IO::fortran_read_line(stream, &ispec);
     if (ispec < 0 || ispec > nspec - 1)
@@ -607,16 +574,18 @@ void IO::read_mesh_database_axial(std::ifstream &stream,
     axial_nodes.is_on_the_axis(ispec) = true;
   }
 
-  return;
+  return axial_nodes;
 }
 
-void IO::read_mesh_database(const std::string filename, specfem::mesh &mesh,
-                            specfem::parameters &params,
-                            std::vector<specfem::material> &materials,
-                            specfem::MPI *mpi) {
+std::tuple<specfem::mesh, std::vector<specfem::material *> >
+IO::read_mesh_database(const std::string filename, specfem::parameters &params,
+                       specfem::MPI *mpi) {
 
   // Driver function to read database file
   std::ifstream stream;
+
+  specfem::mesh mesh;
+  std::vector<specfem::material *> materials;
 
   stream.open(filename);
 
@@ -627,37 +596,48 @@ void IO::read_mesh_database(const std::string filename, specfem::mesh &mesh,
   mpi->cout("\n------------ Reading database header ----------------\n");
 
   try {
-    IO::read_mesh_database_header(stream, mesh, mpi);
+    auto [nspec, npgeo, nproc] = IO::read_mesh_database_header(stream, mpi);
+    mesh.nspec = nspec;
+    mesh.npgeo = npgeo;
+    mesh.nproc = nproc;
   } catch (std::runtime_error &e) {
     throw;
   }
 
   mpi->cout("\n------------ Reading global coordinates ----------------\n");
   try {
-    IO::read_coorg_elements(stream, mesh, mpi);
+    mesh.coorg = IO::read_coorg_elements(stream, mesh.npgeo, mpi);
+  } catch (std::runtime_error &e) {
+    throw;
+  }
+
+  mpi->cout("\n--------------Reading mesh properties---------------\n");
+
+  try {
+    mesh.parameters = IO::read_mesh_properties(stream, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
 
   mpi->cout("-- Spectral Elements --");
 
-  int nspec_all = mpi->reduce(mesh.properties.nspec);
-  int nelem_acforcing_all = mpi->reduce(mesh.properties.nelem_acforcing);
+  int nspec_all = mpi->reduce(mesh.parameters.nspec);
+  int nelem_acforcing_all = mpi->reduce(mesh.parameters.nelem_acforcing);
   int nelem_acoustic_surface_all =
-      mpi->reduce(mesh.properties.nelem_acoustic_surface);
+      mpi->reduce(mesh.parameters.nelem_acoustic_surface);
 
   std::ostringstream message;
   message << "Number of spectral elements . . . . . . . . . .(nspec) = "
           << nspec_all
           << "\n"
              "Number of control nodes per element . . . . . .(NGNOD) = "
-          << mesh.properties.ngnod
+          << mesh.parameters.ngnod
           << "\n"
              "Number of points for display . . . . . . .(pointsdisp) = "
-          << mesh.properties.pointsdisp
+          << mesh.parameters.pointsdisp
           << "\n"
              "Number of element material sets . . . . . . . .(numat) = "
-          << mesh.properties.numat
+          << mesh.parameters.numat
           << "\n"
              "Number of acoustic forcing elements .(nelem_acforcing) = "
           << nelem_acforcing_all
@@ -679,7 +659,7 @@ void IO::read_mesh_database(const std::string filename, specfem::mesh &mesh,
 
   try {
     materials =
-        IO::read_material_properties(stream, mesh.properties.numat, mpi);
+        IO::read_material_properties(stream, mesh.parameters.numat, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
@@ -688,7 +668,8 @@ void IO::read_mesh_database(const std::string filename, specfem::mesh &mesh,
       "\n------------ Reading material specifications ----------------\n");
 
   try {
-    IO::read_mesh_database_mato(stream, mesh, mpi);
+    mesh.material_ind = IO::read_mesh_database_mato(
+        stream, mesh.parameters.ngnod, mesh.nspec, mesh.parameters.numat, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
@@ -697,7 +678,7 @@ void IO::read_mesh_database(const std::string filename, specfem::mesh &mesh,
       "\n------- Reading MPI interfaces for allocating MPI buffers --------\n");
 
   try {
-    IO::read_mesh_database_interfaces(stream, mesh.inter, mpi);
+    mesh.interface = IO::read_mesh_database_interfaces(stream, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
@@ -705,9 +686,8 @@ void IO::read_mesh_database(const std::string filename, specfem::mesh &mesh,
   mpi->cout("\n------------ Reading absorbing boundaries --------------\n");
 
   try {
-    IO::read_mesh_absorbing_boundaries(stream, mesh.abs_boundary,
-                                       mesh.properties.nelemabs,
-                                       mesh.properties.nspec, mpi);
+    mesh.abs_boundary = IO::read_mesh_absorbing_boundaries(
+        stream, mesh.parameters.nelemabs, mesh.parameters.nspec, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
@@ -716,9 +696,8 @@ void IO::read_mesh_database(const std::string filename, specfem::mesh &mesh,
       "\n-------------- Reading acoustic forcing boundary-----------------\n");
 
   try {
-    IO::read_mesh_database_acoustic_forcing(stream, mesh.acforcing_boundary,
-                                            mesh.properties.nelem_acforcing,
-                                            mesh.properties.nspec, mpi);
+    mesh.acforcing_boundary = IO::read_mesh_database_acoustic_forcing(
+        stream, mesh.parameters.nelem_acforcing, mesh.parameters.nspec, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
@@ -726,9 +705,8 @@ void IO::read_mesh_database(const std::string filename, specfem::mesh &mesh,
   mpi->cout("\n-------------- Reading acoustic free surface--------------\n");
 
   try {
-    IO::read_mesh_database_free_surface(stream, mesh.acfree_surface,
-                                        mesh.properties.nelem_acoustic_surface,
-                                        mpi);
+    mesh.acfree_surface = IO::read_mesh_database_free_surface(
+        stream, mesh.parameters.nelem_acoustic_surface, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
@@ -740,9 +718,9 @@ void IO::read_mesh_database(const std::string filename, specfem::mesh &mesh,
 
   try {
     IO::read_mesh_database_coupled(stream,
-                                   mesh.properties.num_fluid_solid_edges,
-                                   mesh.properties.num_fluid_poro_edges,
-                                   mesh.properties.num_solid_poro_edges, mpi);
+                                   mesh.parameters.num_fluid_solid_edges,
+                                   mesh.parameters.num_fluid_poro_edges,
+                                   mesh.parameters.num_solid_poro_edges, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
@@ -750,8 +728,8 @@ void IO::read_mesh_database(const std::string filename, specfem::mesh &mesh,
   mpi->cout("\n-------------Read mesh tangential elements---------------\n");
 
   try {
-    IO::read_mesh_database_tangential(stream, mesh.tangential_nodes,
-                                      mesh.properties.nnodes_tangential_curve);
+    mesh.tangential_nodes = IO::read_mesh_database_tangential(
+        stream, mesh.parameters.nnodes_tangential_curve);
   } catch (std::runtime_error &e) {
     throw;
   }
@@ -759,9 +737,8 @@ void IO::read_mesh_database(const std::string filename, specfem::mesh &mesh,
   mpi->cout("\n----------------Read mesh axial elements-----------------\n");
 
   try {
-    IO::read_mesh_database_axial(stream, mesh.axial_nodes,
-                                 mesh.properties.nelem_on_the_axis, mesh.nspec,
-                                 mpi);
+    mesh.axial_nodes = IO::read_mesh_database_axial(
+        stream, mesh.parameters.nelem_on_the_axis, mesh.nspec, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
@@ -773,4 +750,6 @@ void IO::read_mesh_database(const std::string filename, specfem::mesh &mesh,
   }
 
   stream.close();
+
+  return std::make_tuple(mesh, materials);
 }

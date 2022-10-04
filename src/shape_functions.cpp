@@ -25,7 +25,7 @@ HostView1d shape_functions::define_shape_functions(const double xi,
     h_shape2D(2) = 0.25 * sp * tp;
     h_shape2D(3) = -0.25 * sm * tp;
     double sumshape = h_shape2D(0) + h_shape2D(1) + h_shape2D(2) + h_shape2D(3);
-
+    assert(std::abs(sumshape - 1) < 1e-6);
   } else if (ngnod == 9) {
     //----    9-node element
     const double sp = xi + 1.0;
@@ -67,7 +67,7 @@ HostView1d shape_functions::define_shape_functions(const double xi,
 HostView2d shape_functions::define_shape_functions_derivatives(
     const double xi, const double gamma, const int ngnod) {
 
-  HostView2d h_dershape2D("shape_functions::HostView::h_dershape2D", ngnod,
+  HostView2d h_dershape2D("shape_functions::HostView::h_dershape2D", ndim,
                           ngnod);
   if (ngnod == 4) {
     const double sp = xi + 1.0;
@@ -84,11 +84,13 @@ HostView2d shape_functions::define_shape_functions_derivatives(
     h_dershape2D(1, 2) = 0.25 * sp;
     h_dershape2D(1, 3) = -0.25 * sm;
 
-    double sumdershape1 = h_dershape2D(0, 0) + h_dershape2D(0, 1) +
+    double dersumshape1 = h_dershape2D(0, 0) + h_dershape2D(0, 1) +
                           h_dershape2D(0, 2) + h_dershape2D(0, 3);
 
-    double sumdershape2 = h_dershape2D(1, 0) + h_dershape2D(1, 1) +
+    double dersumshape2 = h_dershape2D(1, 0) + h_dershape2D(1, 1) +
                           h_dershape2D(1, 2) + h_dershape2D(1, 3);
+    assert(std::abs(dersumshape1) < 1e-6);
+    assert(std::abs(dersumshape2) < 1e-6);
   } else if (ngnod == 9) {
     const double sp = xi + 1.0;
     const double sm = xi - 1.0;

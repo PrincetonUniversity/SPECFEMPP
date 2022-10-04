@@ -4,6 +4,7 @@
 #include "../include/config.h"
 #include "../include/utils.h"
 #include <ostream>
+#include <tuple>
 
 namespace specfem {
 
@@ -24,7 +25,11 @@ public:
    *
    * @param holder holder used to hold read values
    */
-  virtual void assign(utilities::value_holder &holder){};
+  virtual void assign(utilities::input_holder &holder){};
+  virtual utilities::return_holder get_properties() {
+    utilities::return_holder holder;
+    return holder;
+  };
 };
 
 class elastic_material : public material {
@@ -39,8 +44,9 @@ public:
    *
    * @param holder holder used to hold read values
    */
-  void assign(utilities::value_holder &holder) override;
+  void assign(utilities::input_holder &holder) override;
   friend std::ostream &operator<<(std::ostream &out, const elastic_material &h);
+  utilities::return_holder get_properties() override;
 
 private:
   /**
@@ -63,7 +69,7 @@ public:
    *
    * @param holder holder used to hold read values
    */
-  void assign(utilities::value_holder &holder) override;
+  void assign(utilities::input_holder &holder) override;
   friend std::ostream &operator<<(std::ostream &out,
                                   const acoustic_material &h);
 

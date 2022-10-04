@@ -11,52 +11,68 @@ using HostExecSpace = Kokkos::DefaultHostExecutionSpace;
 using DevMemSpace = Kokkos::DefaultExecutionSpace::memory_space;
 using DevExecSpace = Kokkos::DefaultExecutionSpace;
 
+// Dafault layout
+using LayoutWrapper = Kokkos::LayoutRight;
+
+// Default iterate policy for MDRange
+// using IterateWrapper = Kokkos::Iterate::Right;
+
 // scratch memory spaces
 using HostScratchSpace = HostExecSpace::scratch_memory_space;
 using DevScratchSpace = DevExecSpace::scratch_memory_space;
 
 // Device views
-template <typename T> using DeviceView1d = Kokkos::View<T *, DevMemSpace>;
-template <typename T> using DeviceView2d = Kokkos::View<T **, DevMemSpace>;
+template <typename T, typename L = LayoutWrapper>
+using DeviceView1d = Kokkos::View<T *, L, DevMemSpace>;
+template <typename T, typename L = LayoutWrapper>
+using DeviceView2d = Kokkos::View<T **, L, DevMemSpace>;
 
 // Host views
-template <typename T> using HostView1d = Kokkos::View<T *, HostMemSpace>;
-template <typename T> using HostView2d = Kokkos::View<T **, HostMemSpace>;
-template <typename T> using HostView3d = Kokkos::View<T ***, HostMemSpace>;
+template <typename T, typename L = LayoutWrapper>
+using HostView1d = Kokkos::View<T *, L, HostMemSpace>;
+template <typename T, typename L = LayoutWrapper>
+using HostView2d = Kokkos::View<T **, L, HostMemSpace>;
+template <typename T, typename L = LayoutWrapper>
+using HostView3d = Kokkos::View<T ***, L, HostMemSpace>;
+template <typename T, typename L = LayoutWrapper>
+using HostView4d = Kokkos::View<T ****, L, HostMemSpace>;
 
 // Host Mirrors
-template <typename T> using HostMirror1d = typename DeviceView1d<T>::HostMirror;
-template <typename T> using HostMirror2d = typename DeviceView2d<T>::HostMirror;
+template <typename T, typename L = LayoutWrapper>
+using HostMirror1d = typename DeviceView1d<T, L>::HostMirror;
+template <typename T, typename L = LayoutWrapper>
+using HostMirror2d = typename DeviceView2d<T, L>::HostMirror;
 
 // Scratch Views
-template <typename T>
+template <typename T, typename L = LayoutWrapper>
 using HostScratchView1d =
-    Kokkos::View<T *, HostScratchSpace,
+    Kokkos::View<T *, L, HostScratchSpace,
                  Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
-template <typename T>
+template <typename T, typename L = LayoutWrapper>
 using HostScratchView2d =
-    Kokkos::View<T **, HostScratchSpace,
+    Kokkos::View<T **, L, HostScratchSpace,
                  Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
-template <typename T>
+template <typename T, typename L = LayoutWrapper>
 using HostScratchView3d =
-    Kokkos::View<T ***, HostScratchSpace,
+    Kokkos::View<T ***, L, HostScratchSpace,
                  Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
 
-template <typename T>
-using DevScratchView1d = Kokkos::View<T *, DevScratchSpace,
+template <typename T, typename L = LayoutWrapper>
+using DevScratchView1d = Kokkos::View<T *, L, DevScratchSpace,
                                       Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
-template <typename T>
-using DevScratchView2d = Kokkos::View<T **, DevScratchSpace,
+template <typename T, typename L = LayoutWrapper>
+using DevScratchView2d = Kokkos::View<T **, L, DevScratchSpace,
                                       Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
-template <typename T>
-using DevScratchView3d = Kokkos::View<T ***, DevScratchSpace,
+template <typename T, typename L = LayoutWrapper>
+using DevScratchView3d = Kokkos::View<T ***, L, DevScratchSpace,
                                       Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
 
 // Loop Strategies
 // Range policy strategies
 
-template <int T>
-using HostMDrange = Kokkos::MDRangePolicy<HostExecSpace, Kokkos::Rank<T> >;
+template <int T, Kokkos::Iterate IteratePolicy = Kokkos::Iterate::Right>
+using HostMDrange =
+    Kokkos::MDRangePolicy<HostExecSpace, Kokkos::Rank<T, IteratePolicy> >;
 
 // Team Policy Strategy
 
