@@ -70,30 +70,9 @@ int main(int argc, char **argv) {
     quadrature::quadrature gljx(0.0, 1.0, ngll);
     gljx.set_derivation_matrices();
 
-    // specfem::mesh mesh{};
-    // std::vector<specfem::material *> materials;
     specfem::parameters params;
 
-    mpi->cout("\n\n\n================Reading database "
-              "file=====================\n\n\n");
-
-    try {
-      // specfem::mesh mesh(filename);
-      auto [mesh, materials] =
-          IO::read_mesh_database(config.database_filename, params, mpi);
-    } catch (std::runtime_error &e) {
-      std::cout << e.what() << std::endl;
-      mpi->exit();
-    }
-
-    mpi->cout("\n\n\n================Done Reading Database "
-              "file=====================\n\n\n");
-
-    mpi->cout("\n\n\n================ Setup Mesh ==============\n\n\n");
-
-    // mesh.setup(materials, gllx, gllz, mpi);
-
-    mpi->cout("\n\n\n================ Done ====================\n\n\n");
+    specfem::mesh mesh(config.database_filename, mpi);
   }
 
   // Finalize Kokkos
