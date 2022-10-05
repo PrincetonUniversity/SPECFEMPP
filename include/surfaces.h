@@ -2,6 +2,7 @@
 #define SURFACES_H
 
 #include "../include/kokkos_abstractions.h"
+#include "../include/specfem_mpi.h"
 
 namespace specfem {
 namespace surfaces {
@@ -12,6 +13,8 @@ struct acoustic_free_surface {
 
   acoustic_free_surface(){};
   acoustic_free_surface(const int nelem_acoustic_surface);
+  acoustic_free_surface(std::ifstream &stream, const int nelem_acoustic_surface,
+                        const specfem::MPI *mpi);
 };
 
 } // namespace surfaces

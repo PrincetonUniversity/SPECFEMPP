@@ -22,6 +22,8 @@ struct compute {
   specfem::HostView3d<int> ibool;
   specfem::compute::coordinates coordinates;
   specfem::compute::properties properties;
+  compute(){};
+  compute(const int nspec, const int ngllx, const int ngllz);
 };
 
 } // namespace compute

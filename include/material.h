@@ -2,6 +2,8 @@
 #define MATERIAL_H
 
 #include "../include/config.h"
+#include "../include/kokkos_abstractions.h"
+#include "../include/specfem_mpi.h"
 #include "../include/utils.h"
 #include <ostream>
 #include <tuple>
@@ -86,6 +88,7 @@ std::ostream &operator<<(std::ostream &out, const specfem::elastic_material &h);
 
 std::ostream &operator<<(std::ostream &out,
                          const specfem::acoustic_material &h);
+
 } // namespace specfem
 
 #endif

@@ -15,7 +15,7 @@ specfem::MPI::MPI(int *argc, char ***argv) {
 #endif
 }
 
-void specfem::MPI::sync_all() {
+void specfem::MPI::sync_all() const {
 #ifdef MPI_PARALLEL
   MPI_Barrier(this->comm);
 #endif
@@ -27,9 +27,9 @@ specfem::MPI::~MPI() {
 #endif
 }
 
-int specfem::MPI::get_size() { return this->world_size; }
+int specfem::MPI::get_size() const { return this->world_size; }
 
-int specfem::MPI::get_rank() { return this->my_rank; }
+int specfem::MPI::get_rank() const { return this->my_rank; }
 
 void specfem::MPI::exit() {
 #ifdef MPI_PARALLEL
@@ -39,7 +39,7 @@ void specfem::MPI::exit() {
 #endif
 }
 
-int specfem::MPI::reduce(int lvalue) {
+int specfem::MPI::reduce(int lvalue) const {
 #ifdef MPI_PARALLEL
   int svalue;
 
