@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.17.5)
 
 project(specfem2d_kokkos VERSION 0.1.0)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 option(MPI_PARALLEL "MPI enabled" OFF)
 
 # Install Kokkos as a dependency
@@ -170,10 +170,14 @@ target_link_libraries(
 add_library(
         compute
         src/compute.cpp
+        src/compute_coordinates.cpp
+        src/compute_properties.cpp
 )
 
 target_link_libraries(
         compute
+        quadrature
+        material_class
         Kokkos::kokkos
 )
 
@@ -266,6 +270,7 @@ target_link_libraries(
         material_reader
         mesh_properties
         material_indic
+        compute
 )
 
 if (MPI_PARALLEL)
