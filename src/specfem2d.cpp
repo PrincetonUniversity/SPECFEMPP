@@ -67,12 +67,12 @@ int main(int argc, char **argv) {
     gllx.set_derivation_matrices();
     quadrature::quadrature gllz(0.0, 0.0, ngll);
     gllz.set_derivation_matrices();
-    quadrature::quadrature gljx(0.0, 1.0, ngll);
-    gljx.set_derivation_matrices();
+    // quadrature::quadrature gljx(0.0, 1.0, ngll);
+    // gljx.set_derivation_matrices();
 
     specfem::parameters params;
 
-    specfem::mesh mesh(config.database_filename, mpi);
+    specfem::mesh mesh(config.database_filename, gllx, gllz, mpi);
   }
 
   // Finalize Kokkos

@@ -30,7 +30,8 @@ struct mesh {
   specfem::compute::compute compute;
 
   mesh(){};
-  mesh(const std::string filename, specfem::MPI *mpi);
+  mesh(const std::string filename, const quadrature::quadrature &quadx,
+       const quadrature::quadrature &quadz, const specfem::MPI *mpi);
 
   void setup(std::vector<specfem::material *> &materials,
              const quadrature::quadrature &quadx,

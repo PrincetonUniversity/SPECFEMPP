@@ -6,8 +6,8 @@
 #include <vector>
 
 std::vector<specfem::material *>
-IO::read_material_properties(std::ifstream &stream, int numat,
-                             specfem::MPI *mpi) {
+IO::read_material_properties(std::ifstream &stream, const int numat,
+                             const specfem::MPI *mpi) {
 
   utilities::input_holder read_values;
 

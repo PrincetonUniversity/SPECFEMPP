@@ -10,7 +10,8 @@
 namespace IO {
 
 std::vector<specfem::material *>
-read_material_properties(std::ifstream &stream, int numat, specfem::MPI *mpi);
+read_material_properties(std::ifstream &stream, const int numat,
+                         const specfem::MPI *mpi);
 }
 
 #endif

@@ -1,30 +1,123 @@
 #include "../include/compute.h"
+#include "../include/jacobian.h"
 #include "../include/kokkos_abstractions.h"
+#include "../include/material.h"
+#include "../include/quadrature.h"
+#include "../include/shape_functions.h"
 #include <Kokkos_Core.hpp>
+#include <vector>
 
-specfem::compute::coordinates::coordinates(const int nspec, const int ngllz,
-                                           const int ngllx)
-    : xcor(specfem::HostView3d<type_real>("specfem::mesh::compute::xcor", nspec,
-                                          ngllz, ngllx)),
-      ycor(specfem::HostView3d<type_real>("specfem::mesh::compute::ycor", nspec,
-                                          ngllz, ngllx)),
-      xix(specfem::HostView3d<type_real>("specfem::mesh::compute::xix", nspec,
-                                         ngllz, ngllx)),
-      xiz(specfem::HostView3d<type_real>("specfem::mesh::compute::xiz", nspec,
-                                         ngllz, ngllx)),
-      gammax(specfem::HostView3d<type_real>("specfem::mesh::compute::gammax",
-                                            nspec, ngllz, ngllx)),
-      gammaz(specfem::HostView3d<type_real>("specfem::mesh::compute::gammaz",
-                                            nspec, ngllz, ngllx)),
-      jacobian(specfem::HostView3d<type_real>(
-          "specfem::mesh::compute::jacobian", nspec, ngllz, ngllx)){};
+struct qp {
+  type_real x = 0, y = 0;
+  int iloc = 0, iglob = 0;
+};
 
-specfem::compute::coordinates::coordinates(
+type_real get_tolerance(std::vector<qp> cart_cord, const int nspec,
+                        const int ngllxz) {
+
+  assert(cart_cord.size() == ngllxz * nspec);
+
+  type_real xtypdist = std::numeric_limits<type_real>::max();
+  for (int ispec = 0; ispec < nspec; ispec++) {
+    type_real xmax = std::numeric_limits<type_real>::min();
+    type_real xmin = std::numeric_limits<type_real>::max();
+    type_real ymax = std::numeric_limits<type_real>::min();
+    type_real ymin = std::numeric_limits<type_real>::max();
+    for (int xz = 0; xz < ngllxz; xz++) {
+      int iloc = ispec * (ngllxz) + xz;
+      xmax = std::max(xmax, cart_cord[iloc].x);
+      xmin = std::min(xmin, cart_cord[iloc].x);
+      ymax = std::max(ymax, cart_cord[iloc].y);
+      ymin = std::min(ymin, cart_cord[iloc].y);
+    }
+
+    xtypdist = std::min(xtypdist, xmax - xmin);
+    xtypdist = std::min(xtypdist, ymax - ymin);
+  }
+
+  return 1e-6 * xtypdist;
+}
+
+specfem::HostView3d<int> assign_numbering(std::vector<qp> &cart_cord,
+                                          const int nspec, const int ngllx,
+                                          const int ngllz) {
+
+  int ngllxz = ngllx * ngllz;
+  // Sort cartesian coordinates in ascending order i.e.
+  // cart_cord = [{0,0}, {0, 25}, {0, 50}, ..., {50, 0}, {50, 25}, {50, 50}]
+  std::sort(cart_cord.begin(), cart_cord.end(),
+            [&](const qp qp1, const qp qp2) {
+              if (qp1.x != qp2.x) {
+                return qp1.x < qp2.x;
+              }
+
+              return qp1.y < qp2.y;
+            });
+
+  // Setup numbering
+  int ig = 0;
+  cart_cord[0].iglob = ig;
+
+  type_real xtol = get_tolerance(cart_cord, nspec, ngllxz);
+
+  for (int iloc = 1; iloc < cart_cord.size(); iloc++) {
+    // check if the previous point is same as current
+    if ((std::abs(cart_cord[iloc].x - cart_cord[iloc - 1].x) > xtol) ||
+        (std::abs(cart_cord[iloc].y - cart_cord[iloc - 1].y) > xtol)) {
+      ig++;
+    }
+    cart_cord[iloc].iglob = ig;
+  }
+
+  std::vector<qp> copy_cart_cord(nspec * ngllxz);
+
+  // reorder cart cord in original format
+  for (int i = 0; i < cart_cord.size(); i++) {
+    int iloc = cart_cord[i].iloc;
+    copy_cart_cord[iloc] = cart_cord[i];
+  }
+
+  int nglob = ig + 1;
+
+  specfem::HostView3d<int> ibool("specfem::mesh::ibool", nspec, ngllz, ngllx);
+  // Assign numbering to corresponding ispec, iz, ix
+  std::vector<int> iglob_counted(nglob, -1);
+  int iloc = 0;
+  int inum = 0;
+  for (int ispec = 0; ispec < nspec; ispec++) {
+    for (int iz = 0; iz < ngllz; iz++) {
+      for (int ix = 0; ix < ngllx; ix++) {
+        if (iglob_counted[copy_cart_cord[iloc].iglob] == -1) {
+          ibool(ispec, iz, ix) = inum;
+          iglob_counted[copy_cart_cord[iloc].iglob] = inum;
+          inum++;
+        } else {
+          ibool(ispec, iz, ix) = iglob_counted[copy_cart_cord[iloc].iglob];
+        }
+        iloc++;
+      }
+    }
+  }
+
+  assert(nglob != (nspec * ngllxz));
+
+  assert(inum == nglob);
+
+  return ibool;
+}
+
+specfem::compute::compute::compute(const int nspec, const int ngllz,
+                                   const int ngllx)
+    : ibool(specfem::HostView3d<int>("specfem::mesh::ibool", nspec, ngllz,
+                                     ngllx)),
+      coordinates(specfem::compute::coordinates(nspec, ngllz, ngllx)),
+      properties(specfem::compute::properties(nspec, ngllz, ngllx)){};
+
+specfem::compute::compute::compute(
     const specfem::HostView2d<type_real> coorg,
-    const specfem::HostView2d<int> knods, const quadrature::quadrature &quadx,
-    const quadrature::quadrature &quadz) {
-
-  // Needs an axisymmetric update
+    const specfem::HostView2d<int> knods, const specfem::HostView1d<int> kmato,
+    const quadrature::quadrature &quadx, const quadrature::quadrature &quadz,
+    const std::vector<specfem::material *> &materials) {
 
   int ngnod = knods.extent(0);
   int nspec = knods.extent(1);
@@ -33,15 +126,13 @@ specfem::compute::coordinates::coordinates(
   int ngllz = quadz.get_N();
   int ngllxz = ngllx * ngllz;
 
-  *this = specfem::compute::coordinates(nspec, ngllz, ngllx);
-
   specfem::HostMirror1d<type_real> xi = quadx.get_hxi();
   specfem::HostMirror1d<type_real> gamma = quadz.get_hxi();
+  specfem::HostView3d<type_real> shape2D("specfem::mesh::assign_numbering",
+                                         ngllz, ngllx, ngnod);
 
-  specfem::HostView3d<type_real> shape2D(
-      "specfem::mesh::assign_numbering::shape2D", ngllz, ngllx, ngnod);
-  specfem::HostView4d<type_real> dershape2D(
-      "specfem::mesh::assign_numbering::dershape2D", ngllz, ngllx, ndim, ngnod);
+  std::vector<qp> cart_cord(nspec * ngllxz);
+  std::vector<qp> *pcart_cord = &cart_cord;
   int scratch_size =
       specfem::HostScratchView2d<type_real>::shmem_size(ndim, ngnod);
 
@@ -54,20 +145,16 @@ specfem::compute::coordinates::coordinates(
 
         specfem::HostView1d<type_real> shape2D_tmp =
             shape_functions::define_shape_functions(ixxi, izgamma, ngnod);
-        specfem::HostView2d<type_real> dershape2D_tmp =
-            shape_functions::define_shape_functions_derivatives(ixxi, izgamma,
-                                                                ngnod);
         for (int in = 0; in < ngnod; in++)
           shape2D(iz, ix, in) = shape2D_tmp(in);
-        for (int idim = 0; idim < ndim; idim++)
-          for (int in = 0; in < ngnod; in++)
-            dershape2D(iz, ix, idim, in) = dershape2D_tmp(idim, in);
       });
+
+  // Calculate the x and y coordinates for every GLL point
 
   Kokkos::parallel_for(
       specfem::HostTeam(nspec, Kokkos::AUTO, ngnod)
           .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
-      KOKKOS_LAMBDA(const specfem::HostTeam::member_type &teamMember) {
+      KOKKOS_LAMBDA(const specfem::HostTeam::member_type teamMember) {
         const int ispec = teamMember.league_rank();
 
         //----- Load coorgx, coorgz in level 0 cache to be utilized later
@@ -89,61 +176,26 @@ specfem::compute::coordinates::coordinates(
             Kokkos::TeamThreadRange(teamMember, ngllxz), [&](const int xz) {
               const int ix = xz % ngllz;
               const int iz = xz / ngllz;
+              const int iloc = ispec * (ngllxz) + xz;
 
               // Get x and y coordinates for (ix, iz) point
               auto sv_shape2D = Kokkos::subview(shape2D, iz, ix, Kokkos::ALL);
               auto [xcor, ycor] = jacobian::compute_locations(
                   teamMember, s_coorg, ngnod, sv_shape2D);
-
-              // compute partial derivatives
-              auto sv_dershape2D =
-                  Kokkos::subview(dershape2D, iz, ix, Kokkos::ALL, Kokkos::ALL);
-              auto [xxi, zxi, xgamma, zgamma] =
-                  jacobian::compute_partial_derivatives(teamMember, s_coorg,
-                                                        ngnod, sv_dershape2D);
-
-              type_real jacobianl =
-                  jacobian::compute_jacobian(xxi, zxi, xgamma, zgamma);
-
-              // invert the relation
-              type_real xixl = zgamma / jacobianl;
-              type_real gammaxl = -zxi / jacobianl;
-              type_real xizl = -xgamma / jacobianl;
-              type_real gammazl = xxi / jacobianl;
-
-              this->xcor(ispec, iz, ix) = xcor;
-              this->ycor(ispec, iz, ix) = ycor;
-              this->xix(ispec, iz, ix) = xixl;
-              this->gammax(ispec, iz, ix) = gammaxl;
-              this->xiz(ispec, iz, ix) = xizl;
-              this->gammaz(ispec, iz, ix) = gammazl;
-              this->jacobian(ispec, iz, ix) = jacobianl;
+              // ------------
+              // Hacky way of doing this (but nacessary), because
+              // KOKKOS_LAMBDA is a const operation so I cannot update
+              // cart_cord inside of a lambda directly Since iloc is
+              // different within every thread I ensure that I don't have a
+              // race condition here.
+              (*pcart_cord)[iloc].x = xcor;
+              (*pcart_cord)[iloc].y = ycor;
+              (*pcart_cord)[iloc].iloc = iloc;
             });
       });
 
-  return;
+  this->ibool = assign_numbering(cart_cord, nspec, ngllx, ngllz);
+  this->coordinates = specfem::compute::coordinates(coorg, knods, quadx, quadz);
+  this->properties =
+      specfem::compute::properties(kmato, materials, nspec, ngllx, ngllz);
 }
-
-specfem::compute::properties::properties(const int nspec, const int ngllz,
-                                         const int ngllx)
-    : rho(specfem::HostView3d<type_real>("specfem::mesh::rho", nspec, ngllz,
-                                         ngllx)),
-      mu(specfem::HostView3d<type_real>("specfem::mesh::mu", nspec, ngllz,
-                                        ngllx)),
-      kappa(specfem::HostView3d<type_real>("specfem::mesh::kappa", nspec, ngllz,
-                                           ngllx)),
-      qmu(specfem::HostView3d<type_real>("specfem::mesh::qmu", nspec, ngllz,
-                                         ngllx)),
-      qkappa(specfem::HostView3d<type_real>("specfem::mesh::qkappa", nspec,
-                                            ngllz, ngllx)),
-      rho_vp(specfem::HostView3d<type_real>("specfem::mesh::rho_vp", nspec,
-                                            ngllz, ngllx)),
-      rho_vs(specfem::HostView3d<type_real>("specfem::mesh::rho_vs", nspec,
-                                            ngllz, ngllx)){};
-
-specfem::compute::compute::compute(const int nspec, const int ngllz,
-                                   const int ngllx)
-    : ibool(specfem::HostView3d<int>("specfem::mesh::ibool", nspec, ngllz,
-                                     ngllx)),
-      coordinates(specfem::compute::coordinates(nspec, ngllz, ngllx)),
-      properties(specfem::compute::properties(nspec, ngllz, ngllx)){};
