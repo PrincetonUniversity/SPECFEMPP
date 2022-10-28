@@ -29,6 +29,8 @@ std::ostream &specfem::operator<<(std::ostream &out,
 }
 
 void specfem::elastic_material::assign(utilities::input_holder &holder) {
+  // element type is defined in config.h
+  this->ispec_type = elastic;
   // density
   this->density = holder.val0;
   // P and S velocity
@@ -61,6 +63,8 @@ void specfem::elastic_material::assign(utilities::input_holder &holder) {
 }
 
 void specfem::acoustic_material::assign(utilities::input_holder &holder) {
+  // element type is defined in config.h
+  this->ispec_type = acoustic;
   // density
   this->density = holder.val0;
   // P and S velocity
