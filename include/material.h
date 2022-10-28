@@ -32,6 +32,10 @@ public:
     utilities::return_holder holder;
     return holder;
   };
+  virtual element_type get_ispec_type() {
+    element_type dummy;
+    return dummy;
+  };
 };
 
 class elastic_material : public material {
@@ -49,6 +53,7 @@ public:
   void assign(utilities::input_holder &holder) override;
   friend std::ostream &operator<<(std::ostream &out, const elastic_material &h);
   utilities::return_holder get_properties() override;
+  element_type get_ispec_type(){ return ispec_type };
 
 private:
   /**
@@ -57,6 +62,7 @@ private:
    */
   type_real density, cs, cp, Qkappa, Qmu, compaction_grad, lambdaplus2mu, mu,
       lambda, kappa, young, poisson;
+  element_type ispec_type;
 };
 
 class acoustic_material : public material {
@@ -74,6 +80,7 @@ public:
   void assign(utilities::input_holder &holder) override;
   friend std::ostream &operator<<(std::ostream &out,
                                   const acoustic_material &h);
+  element_type get_ispec_type(){ return ispec_type };
 
 private:
   /**
@@ -82,6 +89,7 @@ private:
    */
   type_real density, cs, cp, Qkappa, Qmu, compaction_grad, lambdaplus2mu, mu,
       lambda, kappa, young, poisson;
+  element_type ispec_type;
 };
 
 std::ostream &operator<<(std::ostream &out, const specfem::elastic_material &h);
