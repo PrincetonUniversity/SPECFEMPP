@@ -1,11 +1,14 @@
+.. _mesh_interface:
+
 Specifications of the mesh interface
 =====================================
 
-In SPECFEM we define the mesh as a C++ struct. The mesh struct defines all the variables nacessary to compute mass and stiffness matrices. The mesh is decomposed into several logical structs which help keep the code concise/readable/maintainable. Below we define the mesh definition and its components.
+.. doxygenfile:: mesh.h
+   :project: SPECFEM KOKKOS IMPLEMENTATION
 
-For performance reasons (specifically on GPUs), the mesh is mostly defined as struct of arrays.
+.. For performance reasons (specifically on GPUs), the mesh is mostly defined as struct of arrays.
 
-Mesh struct defintion:
+.. Mesh struct defintion:
 
 .. note::
     ToDo: We might not need nproc in mesh struct
