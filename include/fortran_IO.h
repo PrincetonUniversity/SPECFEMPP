@@ -7,10 +7,6 @@
 #include <string>
 #include <vector>
 
-/**
- * @brief This module is used to read unformatted fortran binary files
- *
- */
 namespace IO::fortran_IO {
 
 void fortran_IO(std::ifstream &stream, int &buffer_length);
