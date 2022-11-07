@@ -1,7 +1,7 @@
 .. _api_funcs:
 
-Funcs
-=====
+API documentation
+=================
 
 .. toctree::
     :maxdepth: 2
