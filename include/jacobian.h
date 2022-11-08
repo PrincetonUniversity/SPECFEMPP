@@ -11,15 +11,15 @@ namespace jacobian {
  */
 
 /**
- * @brief Compute global locations (x,z) from (xi, gamma)
+ * @brief Compute global locations (x,z) from \f$(\xi, \gamma)\f$
  *
  * @note This function can only be called within a team policy
  *
  * @param teamMember Kokkos team policy team member
  * @param s_coorg scratch view of coorg subviewed at required element
  * @param ngnod Total number of control nodes per element
- * @param xi xi value of the point
- * @param gamma gamma value of point
+ * @param xi \f$ \xi \f$ value of the point
+ * @param gamma \f$ \gamma \f$ value of point
  * @return std::tuple<type_real, type_real> (x,z) value for the point
  */
 std::tuple<type_real, type_real>
@@ -28,13 +28,13 @@ compute_locations(const specfem::HostTeam::member_type &teamMember,
                   const int ngnod, const type_real xi, const type_real gamma);
 
 /**
- * @brief Compute global locations (x,z) from (xi, gamma)
+ * @brief Compute global locations (x,z) from \f$(\xi, \gamma)\f$
  *
  *
  * @param coorg Global control node locations (x_a, z_a)
  * @param ngnod Total number of control nodes per element
- * @param xi xi value of the point
- * @param gamma gamma value of point
+ * @param xi \f$ \xi \f$ value of the point
+ * @param gamma \f$ \gamma \f$ value of point
  * @return std::tuple<type_real, type_real> (x,z) value for the point
  */
 std::tuple<type_real, type_real>
@@ -43,14 +43,14 @@ compute_locations(const specfem::HostView2d<type_real> coorg, const int ngnod,
 
 /**
  * @brief Compute global locations (x,z) from shape function matrix calcualted
- * at (xi, gamma)
+ * at \f$ (\xi, \gamma) \f$
  *
  * @note This function can only be called within a team policy
  *
  * @param teamMember Kokkos team policy team member
  * @param s_coorg scratch view of coorg subviewed at required element
  * @param ngnod Total number of control nodes per element
- * @param shape2D shape function matrix calculated at (xi, gamma)
+ * @param shape2D shape function matrix calculated at  \f$ (\xi, \gamma) \f$
  * @return std::tuple<type_real, type_real> (x,z) value for the point
  */
 std::tuple<type_real, type_real>
@@ -61,11 +61,11 @@ compute_locations(const specfem::HostTeam::member_type &teamMember,
 
 /**
  * @brief Compute global locations (x,z) from shape function matrix calcualted
- * at (xi, gamma)
+ * at  \f$ (\xi, \gamma) \f$
  *
  * @param coorg Global control node locations (x_a, z_a)
  * @param ngnod Total number of control nodes per element
- * @param shape2D shape function matrix calculated at (xi, gamma)
+ * @param shape2D shape function matrix calculated at  \f$ (\xi, \gamma) \f$
  * @return std::tuple<type_real, type_real> (x,z) value for the point
  */
 std::tuple<type_real, type_real>
@@ -73,17 +73,18 @@ compute_locations(const specfem::HostView2d<type_real> coorg, const int ngnod,
                   const specfem::HostView1d<type_real> shape2D);
 
 /**
- * @brief Compute partial derivatives at xi, gamma
+ * @brief Compute partial derivatives at  \f$ (\xi, \gamma) \f$
  *
  * @note This function can only be called within a team policy
  *
  * @param teamMember Kokkos team policy team member
  * @param s_coorg scratch view of coorg subviewed at required element
  * @param ngnod Total number of control nodes per element
- * @param xi xi value of the point
- * @param gamma gamma value of point
+ * @param xi \f$ \xi \f$ value of the point
+ * @param gamma \f$ \gamma \f$ value of point
  * @return std::tuple<type_real, type_real, type_real, type_real> partial
- * derivatives (dx/dxi, dx/dgamma, dz/dxi, dz/dgamma)
+ * derivatives \f$ (\partial x/\partial \xi, \partial x/\partial \gamma,
+ * \partial z/\partial \xi, \partial z/\partial \gamma) \f$
  */
 std::tuple<type_real, type_real, type_real, type_real>
 compute_partial_derivatives(const specfem::HostTeam::member_type &teamMember,
@@ -92,7 +93,7 @@ compute_partial_derivatives(const specfem::HostTeam::member_type &teamMember,
                             const type_real gamma);
 
 /**
- * @brief Compute partial derivatives at xi, gamma
+ * @brief Compute partial derivatives at  \f$ (\xi, \gamma) \f$
  *
  * @note This function can only be called within a team policy
  *
@@ -102,7 +103,8 @@ compute_partial_derivatives(const specfem::HostTeam::member_type &teamMember,
  * @param dershape2D derivative of shape function matrix calculated at (xi,
  * gamma)
  * @return std::tuple<type_real, type_real, type_real, type_real> partial
- * derivatives (dx/dxi, dx/dgamma, dz/dxi, dz/dgamma)
+ * derivatives \f$ (\partial x/\partial \xi, \partial x/\partial \gamma,
+ * \partial z/\partial \xi, \partial z/\partial \gamma) \f$
  */
 std::tuple<type_real, type_real, type_real, type_real>
 compute_partial_derivatives(const specfem::HostTeam::member_type &teamMember,
@@ -113,10 +115,10 @@ compute_partial_derivatives(const specfem::HostTeam::member_type &teamMember,
 /**
  * @brief compute jacobian given partial derivatives at a point
  *
- * @param xxi partial derivative dx/dxi
- * @param zxi partial derivative dz/dxi
- * @param xgamma partial derivative dx/dgamma
- * @param zgamma partial derivative dz/dgamma
+ * @param xxi partial derivative \f$ \partial x/\partial \xi \f$
+ * @param zxi partial derivative \f$ \partial z/\partial \xi \f$
+ * @param xgamma partial derivative \f$ \partial x/\partial \gamma \f$
+ * @param zgamma partial derivative \f$ \partial z/\partial \gamma \f$
  * @return type_real computed jacobian
  */
 type_real compute_jacobian(const type_real xxi, const type_real zxi,
@@ -127,8 +129,8 @@ type_real compute_jacobian(const type_real xxi, const type_real zxi,
  *
  * @param s_coorg scratch view of coorg subviewed at required element
  * @param ngnod Total number of control nodes per element
- * @param xi xi value of the point
- * @param gamma gamma value of point
+ * @param xi \f$ \xi \f$ value of the point
+ * @param gamma \f$ \gamma \f$ value of point
  * @return type_real computed jacobian
  */
 type_real compute_jacobian(const specfem::HostTeam::member_type &teamMember,
@@ -142,8 +144,8 @@ type_real compute_jacobian(const specfem::HostTeam::member_type &teamMember,
  *
  * @param s_coorg scratch view of coorg subviewed at required element
  * @param ngnod Total number of control nodes per element
- * @param dershape2D derivative of shape function matrix calculated at (xi,
- * gamma)
+ * @param dershape2D derivative of shape function matrix calculated at \f$ (\xi,
+ * \gamma) \f$
  * @return type_real computed jacobian
  */
 type_real compute_jacobian(const specfem::HostTeam::member_type &teamMember,
