@@ -13,6 +13,11 @@ Mesh properties
 .. doxygenfile:: mesh_properties.h
     :project: SPECFEM KOKKOS IMPLEMENTATION
 
+Material Definition
+--------------------
+.. doxygenfile:: material_indic.h
+    :project: SPECFEM KOKKOS IMPLEMENTATION
+
 Boundaries Interface
 --------------------
 
