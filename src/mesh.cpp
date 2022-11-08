@@ -38,7 +38,8 @@ specfem::mesh::mesh(const std::string filename,
   mpi->cout("\n------------ Reading database header ----------------\n");
 
   try {
-    auto [nspec, npgeo, nproc] = IO::read_mesh_database_header(stream, mpi);
+    auto [nspec, npgeo, nproc] =
+        IO::fortran_database::read_mesh_database_header(stream, mpi);
     this->nspec = nspec;
     this->npgeo = npgeo;
     this->nproc = nproc;
@@ -49,7 +50,8 @@ specfem::mesh::mesh(const std::string filename,
   mpi->cout("\n------------ Reading global coordinates ----------------\n");
 
   try {
-    this->coorg = IO::read_coorg_elements(stream, this->npgeo, mpi);
+    this->coorg =
+        IO::fortran_database::read_coorg_elements(stream, this->npgeo, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
@@ -94,7 +96,7 @@ specfem::mesh::mesh(const std::string filename,
 
   try {
     auto [n_sls, attenuation_f0_reference, read_velocities_at_f0] =
-        IO::read_mesh_database_attenuation(stream, mpi);
+        IO::fortran_database::read_mesh_database_attenuation(stream, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
@@ -163,10 +165,10 @@ specfem::mesh::mesh(const std::string filename,
             "**********\n");
 
   try {
-    IO::read_mesh_database_coupled(stream,
-                                   this->parameters.num_fluid_solid_edges,
-                                   this->parameters.num_fluid_poro_edges,
-                                   this->parameters.num_solid_poro_edges, mpi);
+    IO::fortran_database::read_mesh_database_coupled(
+        stream, this->parameters.num_fluid_solid_edges,
+        this->parameters.num_fluid_poro_edges,
+        this->parameters.num_solid_poro_edges, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
@@ -198,13 +200,14 @@ specfem::mesh::mesh(const std::string filename,
               "file=====================\n\n\n");
   }
 
-  mpi->cout("\n\n\n================Setting up Mesh================\n\n\n");
+  // mpi->cout("\n\n\n================Setting up Mesh================\n\n\n");
 
-  this->compute = specfem::compute::compute(
-      this->coorg, this->material_ind.knods, this->material_ind.kmato, quadx,
-      quadz, materials);
+  // this->compute = specfem::compute::compute(
+  //     this->coorg, this->material_ind.knods, this->material_ind.kmato, quadx,
+  //     quadz, materials);
 
-  mpi->cout("\n\n\n================Done setting up Mesh================\n\n\n");
+  // mpi->cout("\n\n\n================Done setting up
+  // Mesh================\n\n\n");
 
   stream.close();
 

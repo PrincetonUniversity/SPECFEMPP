@@ -14,7 +14,8 @@
 #include <tuple>
 
 std::tuple<int, int, int>
-IO::read_mesh_database_header(std::ifstream &stream, const specfem::MPI *mpi) {
+IO::fortran_database::read_mesh_database_header(std::ifstream &stream,
+                                                const specfem::MPI *mpi) {
   // This subroutine reads header values of the database which are skipped
   std::string dummy_s;
   int dummy_i, dummy_i1, dummy_i2;
@@ -137,9 +138,8 @@ IO::read_mesh_database_header(std::ifstream &stream, const specfem::MPI *mpi) {
   return std::make_tuple(nspec, npgeo, nproc);
 }
 
-specfem::HostView2d<type_real>
-IO::read_coorg_elements(std::ifstream &stream, const int npgeo,
-                        const specfem::MPI *mpi) {
+specfem::HostView2d<type_real> IO::fortran_database::read_coorg_elements(
+    std::ifstream &stream, const int npgeo, const specfem::MPI *mpi) {
 
   int ipoin = 0;
 
@@ -162,8 +162,8 @@ IO::read_coorg_elements(std::ifstream &stream, const int npgeo,
 }
 
 std::tuple<int, type_real, bool>
-IO::read_mesh_database_attenuation(std::ifstream &stream,
-                                   const specfem::MPI *mpi) {
+IO::fortran_database::read_mesh_database_attenuation(std::ifstream &stream,
+                                                     const specfem::MPI *mpi) {
 
   int n_sls;
   type_real attenuation_f0_reference;
@@ -180,11 +180,10 @@ IO::read_mesh_database_attenuation(std::ifstream &stream,
                          read_velocities_at_f0);
 }
 
-void IO::read_mesh_database_coupled(std::ifstream &stream,
-                                    const int num_fluid_solid_edges,
-                                    const int num_fluid_poro_edges,
-                                    const int num_solid_poro_edges,
-                                    const specfem::MPI *mpi) {
+void IO::fortran_database::read_mesh_database_coupled(
+    std::ifstream &stream, const int num_fluid_solid_edges,
+    const int num_fluid_poro_edges, const int num_solid_poro_edges,
+    const specfem::MPI *mpi) {
 
   int dummy_i, dummy_i1;
 
