@@ -73,9 +73,10 @@ public:
   int reduce(int lvalue) const;
 
 private:
-  int world_size, my_rank;
+  int world_size; ///< total number of MPI processes
+  int my_rank;    ///< rank of my process
 #ifdef MPI_PARALLEL
-  MPI_Comm comm;
+  MPI_Comm comm; ///< MPI communicator
 #endif
 };
 } // namespace specfem
