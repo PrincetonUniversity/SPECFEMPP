@@ -5,6 +5,13 @@
 #include "../include/specfem_mpi.h"
 
 namespace specfem {
+
+/**
+ * Define elements on a surface
+ *
+ * @note Need to still document this section
+ *
+ */
 namespace surfaces {
 
 struct acoustic_free_surface {

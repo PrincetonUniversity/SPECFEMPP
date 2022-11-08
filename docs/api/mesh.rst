@@ -23,3 +23,15 @@ Boundaries Interface
 
 .. doxygenfile:: boundaries.h
     :project: SPECFEM KOKKOS IMPLEMENTATION
+
+Elements Interface
+-------------------
+
+.. doxygenfile:: elements.h
+    :project: SPECFEM KOKKOS IMPLEMENTATION
+
+Surface Interface
+------------------
+
+.. doxygenfile:: surfaces.h
+    :project: SPECFEM KOKKOS IMPLEMENTATION
