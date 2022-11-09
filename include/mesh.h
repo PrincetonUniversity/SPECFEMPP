@@ -72,12 +72,9 @@ struct mesh {
    * @brief Construct mesh from a fortran binary database file
    *
    * @param filename Fortran binary database filename
-   * @param quadx quadrature in x-direction
-   * @param quadz quadrature in z-direction
    * @param mpi pointer to MPI object to manage communication
    */
-  mesh(const std::string filename, const quadrature::quadrature &quadx,
-       const quadrature::quadrature &quadz, const specfem::MPI *mpi);
+  mesh(const std::string filename, const specfem::MPI *mpi);
 };
 } // namespace specfem
 
