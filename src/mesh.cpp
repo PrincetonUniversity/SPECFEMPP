@@ -18,10 +18,7 @@
 #include <limits>
 #include <vector>
 
-specfem::mesh::mesh(const std::string filename,
-                    const quadrature::quadrature &quadx,
-                    const quadrature::quadrature &quadz,
-                    const specfem::MPI *mpi) {
+specfem::mesh::mesh(const std::string filename, const specfem::MPI *mpi) {
 
   // Read the database file and populate mesh
 
@@ -199,15 +196,6 @@ specfem::mesh::mesh(const std::string filename,
     mpi->cout("\n\n\n================Done Reading Database "
               "file=====================\n\n\n");
   }
-
-  // mpi->cout("\n\n\n================Setting up Mesh================\n\n\n");
-
-  // this->compute = specfem::compute::compute(
-  //     this->coorg, this->material_ind.knods, this->material_ind.kmato, quadx,
-  //     quadz, materials);
-
-  // mpi->cout("\n\n\n================Done setting up
-  // Mesh================\n\n\n");
 
   stream.close();
 
