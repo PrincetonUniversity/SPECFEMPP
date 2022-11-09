@@ -2,6 +2,7 @@
 #include "../include/fortran_IO.h"
 #include "../include/kokkos_abstractions.h"
 #include "../include/specfem_mpi.h"
+#include <tuple>
 
 specfem::interfaces::interface::interface(const int ninterfaces,
                                           const int max_interface_size) {

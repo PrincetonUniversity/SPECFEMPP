@@ -74,7 +74,7 @@ public:
    * properties
    */
   utilities::return_holder get_properties() override;
-  element_type get_ispec_type(){ return ispec_type };
+  element_type get_ispec_type() { return ispec_type; };
 
 private:
   /**
@@ -95,8 +95,7 @@ private:
   type_real young;
   type_real poisson;
   ///@}
-  element_type ispec_type =
-      specfem::elastic; ///< Type or element == specfem::elastic
+  element_type ispec_type = elastic; ///< Type or element == specfem::elastic
 };
 
 class acoustic_material : public material {
@@ -114,7 +113,7 @@ public:
   void assign(utilities::input_holder &holder) override;
   friend std::ostream &operator<<(std::ostream &out,
                                   const acoustic_material &h);
-  element_type get_ispec_type(){ return ispec_type };
+  element_type get_ispec_type() { return ispec_type; };
 
 private:
   /**
