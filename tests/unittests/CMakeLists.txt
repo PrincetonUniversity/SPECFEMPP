@@ -77,19 +77,16 @@ target_link_libraries(
 )
 
 add_executable(
-  parameter_reader_tests
-  parameter_reader/parameter_reader_tests.cpp
+  mesh_tests
+  mesh/mesh_tests.cpp
 )
 
 target_link_libraries(
-  parameter_reader_tests
+  mesh_tests
   gtest_main
-  material_class
-  database_reader
-  material_reader
+  mesh
   mpi_environment
   kokkos_environment
-  specfem_mpi
   yaml-cpp
   -lpthread -lm
 )
@@ -98,4 +95,4 @@ include(GoogleTest)
 gtest_discover_tests(gll_tests)
 gtest_discover_tests(lagrange_tests)
 gtest_discover_tests(fortranio_test)
-gtest_discover_tests(parameter_reader_tests)
+gtest_discover_tests(mesh_tests)

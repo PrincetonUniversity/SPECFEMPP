@@ -28,4 +28,4 @@ run-config:
   number of runs: 1
 databases:
   - processor : 0
-    database_file : "../tests/unittests/parameter_reader/serial/database.bin"
+    database_file : "../tests/unittests/mesh/serial/database.bin"
