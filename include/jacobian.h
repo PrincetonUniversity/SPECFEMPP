@@ -2,13 +2,12 @@
 #define JACOBIAN_H
 
 #include "../include/kokkos_abstractions.h"
-
-namespace jacobian {
 /**
  * Jacobian namespace contains overloaded functions for serial (without Kokkos)
  * and Kokkos implementations (using team policy)
  *
  */
+namespace jacobian {
 
 /**
  * @brief Compute global locations (x,z) from \f$(\xi, \gamma)\f$
