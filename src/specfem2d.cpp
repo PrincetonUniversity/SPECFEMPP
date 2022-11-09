@@ -64,15 +64,11 @@ int main(int argc, char **argv) {
 
     // Set up GLL quadrature points
     quadrature::quadrature gllx(0.0, 0.0, ngll);
-    gllx.set_derivation_matrices();
     quadrature::quadrature gllz(0.0, 0.0, ngll);
-    gllz.set_derivation_matrices();
-    // quadrature::quadrature gljx(0.0, 1.0, ngll);
-    // gljx.set_derivation_matrices();
 
     specfem::parameters params;
 
-    specfem::mesh mesh(config.database_filename, gllx, gllz, mpi);
+    specfem::mesh mesh(config.database_filename, mpi);
   }
 
   // Finalize Kokkos
