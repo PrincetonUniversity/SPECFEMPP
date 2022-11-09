@@ -62,10 +62,6 @@ struct mesh {
 
   specfem::elements::axial_elements axial_nodes; ///< Defines axial nodes
 
-  specfem::compute::compute compute; ///< Struct used to store data required to
-                                     ///< compute forces (mass and stiffness
-                                     ///< terms)
-
   /**
    * @brief Default mesh constructor
    *
