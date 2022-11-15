@@ -262,6 +262,43 @@ target_link_libraries(
         surfaces
 )
 
+add_library(
+        shape_functions
+        src/shape_functions.cpp
+)
+
+target_link_libraries(
+        shape_functions
+        Kokkos::kokkos
+)
+
+add_library(
+        jacobian
+        src/jacobian.cpp
+)
+
+target_link_libraries(
+        jacobian
+        shape_functions
+        Kokkos::kokkos
+)
+
+add_library(
+        compute
+        src/compute.cpp
+        src/compute_coordinates.cpp
+        src/compute_properties.cpp
+)
+
+target_link_libraries(
+        compute
+        quadrature
+        material_class
+        jacobian
+        shape_functions
+        Kokkos::kokkos
+)
+
 add_executable(
         specfem2d
         src/specfem2d.cpp
@@ -276,6 +313,7 @@ target_link_libraries(
         yaml-cpp
         mesh
         quadrature
+        compute
 )
 
 # Include tests

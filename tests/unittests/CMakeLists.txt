@@ -36,6 +36,18 @@ target_link_libraries(
   specfem_mpi
 )
 
+add_library(
+  compare_arrays
+  utilities/src/compare_array.cpp
+)
+
+target_link_libraries(
+  compare_arrays
+  Kokkos::kokkos
+  fortranio
+)
+
+
 add_executable(
   gll_tests
   gll/gll_tests.cpp
@@ -88,11 +100,51 @@ target_link_libraries(
   mpi_environment
   kokkos_environment
   yaml-cpp
+  material_class
   -lpthread -lm
 )
+
+add_executable(
+  compute_coordinates_tests
+  compute/compute_coordinates_tests.cpp
+)
+
+target_link_libraries(
+  compute_coordinates_tests
+  mesh
+  compute
+  quadrature
+  mpi_environment
+  kokkos_environment
+  yaml-cpp
+  compare_arrays
+  material_class
+  -lpthread -lm
+)
+
+add_executable(
+  compute_properties_tests
+  compute/compute_properties_tests.cpp
+)
+
+target_link_libraries(
+  compute_properties_tests
+  mesh
+  compute
+  quadrature
+  mpi_environment
+  kokkos_environment
+  yaml-cpp
+  compare_arrays
+  material_class
+  -lpthread -lm
+)
+
 
 include(GoogleTest)
 gtest_discover_tests(gll_tests)
 gtest_discover_tests(lagrange_tests)
 gtest_discover_tests(fortranio_test)
 gtest_discover_tests(mesh_tests)
+gtest_discover_tests(compute_coordinates_tests)
+gtest_discover_tests(compute_properties_tests)
