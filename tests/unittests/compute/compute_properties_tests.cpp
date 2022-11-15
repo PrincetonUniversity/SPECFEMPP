@@ -81,51 +81,33 @@ TEST(COMPUTE_TESTS, compute_properties) {
   specfem::compute::properties properties(mesh.material_ind.kmato, materials,
                                           mesh.nspec, gllz.get_N(),
                                           gllx.get_N());
-  //   std::cout << "1" << std::endl;
-  //   EXPECT_NO_THROW(specfem::testing::test_array(properties.rho,
-  //                                                test_config.rho_file,
-  //                                                mesh.nspec, gllz.get_N(),
-  //                                                gllx.get_N()));
-  //   std::cout << "2" << std::endl;
+  EXPECT_NO_THROW(specfem::testing::test_array(properties.rho,
+                                               test_config.rho_file, mesh.nspec,
+                                               gllz.get_N(), gllx.get_N()));
 
-  //   EXPECT_NO_THROW(
-  //       specfem::testing::test_array(properties.kappa,
-  //       test_config.kappa_file,
-  //                                    mesh.nspec, gllz.get_N(),
-  //                                    gllx.get_N()));
-  //   std::cout << "3" << std::endl;
+  EXPECT_NO_THROW(
+      specfem::testing::test_array(properties.kappa, test_config.kappa_file,
+                                   mesh.nspec, gllz.get_N(), gllx.get_N()));
 
-  //   EXPECT_NO_THROW(specfem::testing::test_array(properties.mu,
-  //                                                test_config.mu_file,
-  //                                                mesh.nspec, gllz.get_N(),
-  //                                                gllx.get_N()));
-  //   std::cout << "4" << std::endl;
+  EXPECT_NO_THROW(specfem::testing::test_array(properties.mu,
+                                               test_config.mu_file, mesh.nspec,
+                                               gllz.get_N(), gllx.get_N()));
 
-  //   EXPECT_NO_THROW(
-  //       specfem::testing::test_array(properties.rho_vp,
-  //       test_config.rho_vp_file,
-  //                                    mesh.nspec, gllz.get_N(),
-  //                                    gllx.get_N()));
-  //   std::cout << "5" << std::endl;
+  EXPECT_NO_THROW(
+      specfem::testing::test_array(properties.rho_vp, test_config.rho_vp_file,
+                                   mesh.nspec, gllz.get_N(), gllx.get_N()));
 
-  //   EXPECT_NO_THROW(
-  //       specfem::testing::test_array(properties.rho_vs,
-  //       test_config.rho_vs_file,
-  //                                    mesh.nspec, gllz.get_N(),
-  //                                    gllx.get_N()));
-  //   std::cout << "6" << std::endl;
+  EXPECT_NO_THROW(
+      specfem::testing::test_array(properties.rho_vs, test_config.rho_vs_file,
+                                   mesh.nspec, gllz.get_N(), gllx.get_N()));
 
-  //   EXPECT_NO_THROW(
-  //       specfem::testing::test_array(properties.qkappa,
-  //       test_config.qkappa_file,
-  //                                    mesh.nspec, gllz.get_N(),
-  //                                    gllx.get_N()));
-  //   std::cout << "7" << std::endl;
+  EXPECT_NO_THROW(
+      specfem::testing::test_array(properties.qkappa, test_config.qkappa_file,
+                                   mesh.nspec, gllz.get_N(), gllx.get_N()));
 
-  //   EXPECT_NO_THROW(specfem::testing::test_array(properties.qmu,
-  //                                                test_config.qmu_file,
-  //                                                mesh.nspec, gllz.get_N(),
-  //                                                gllx.get_N()));
+  EXPECT_NO_THROW(specfem::testing::test_array(properties.qmu,
+                                               test_config.qmu_file, mesh.nspec,
+                                               gllz.get_N(), gllx.get_N()));
 }
 
 int main(int argc, char *argv[]) {
