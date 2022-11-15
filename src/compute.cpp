@@ -147,10 +147,11 @@ specfem::compute::compute::compute(
         type_real ixxi = xi(ix);
         type_real izgamma = gamma(iz);
 
-        specfem::HostView1d<type_real> shape2D_tmp =
-            shape_functions::define_shape_functions(ixxi, izgamma, ngnod);
-        for (int in = 0; in < ngnod; in++)
-          shape2D(iz, ix, in) = shape2D_tmp(in);
+        // Always use subviews inside parallel regions
+        // ** Do not allocate views inside parallel regions **
+        auto sv_shape2D = Kokkos::subview(shape2D, iz, ix, Kokkos::ALL);
+        shape_functions::define_shape_functions(sv_shape2D, ixxi, izgamma,
+                                                ngnod);
       });
 
   // Calculate the x and y coordinates for every GLL point

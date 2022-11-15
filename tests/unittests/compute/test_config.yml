@@ -4,6 +4,7 @@ SerialTest:
   database:
     - processor : 0
       database_file : "../../../tests/unittests/compute/serial/data/Database00000.bin"
+      ibool_file : "../../../tests/unittests/compute/serial/data/ibool_00000.bin"
       xix_file: "../../../tests/unittests/compute/serial/data/xix_00000.bin"
       xiz_file: "../../../tests/unittests/compute/serial/data/xiz_00000.bin"
       gammax_file: "../../../tests/unittests/compute/serial/data/gammax_00000.bin"
