@@ -74,7 +74,8 @@ struct mesh {
    * @param filename Fortran binary database filename
    * @param mpi pointer to MPI object to manage communication
    */
-  mesh(const std::string filename, const specfem::MPI *mpi);
+  mesh(const std::string filename, std::vector<specfem::material *> &materials,
+       const specfem::MPI *mpi);
 };
 } // namespace specfem
 

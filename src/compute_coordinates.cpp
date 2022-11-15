@@ -6,11 +6,7 @@
 
 specfem::compute::coordinates::coordinates(const int nspec, const int ngllz,
                                            const int ngllx)
-    : xcor(specfem::HostView3d<type_real>("specfem::mesh::compute::xcor", nspec,
-                                          ngllz, ngllx)),
-      ycor(specfem::HostView3d<type_real>("specfem::mesh::compute::ycor", nspec,
-                                          ngllz, ngllx)),
-      xix(specfem::HostView3d<type_real>("specfem::mesh::compute::xix", nspec,
+    : xix(specfem::HostView3d<type_real>("specfem::mesh::compute::xix", nspec,
                                          ngllz, ngllx)),
       xiz(specfem::HostView3d<type_real>("specfem::mesh::compute::xiz", nspec,
                                          ngllz, ngllx)),
@@ -56,17 +52,19 @@ specfem::compute::coordinates::coordinates(
         type_real ixxi = xi(ix);
         type_real izgamma = gamma(iz);
 
-        specfem::HostView1d<type_real> shape2D_tmp =
-            shape_functions::define_shape_functions(ixxi, izgamma, ngnod);
-        specfem::HostView2d<type_real> dershape2D_tmp =
-            shape_functions::define_shape_functions_derivatives(ixxi, izgamma,
-                                                                ngnod);
-        for (int in = 0; in < ngnod; in++)
-          shape2D(iz, ix, in) = shape2D_tmp(in);
-        for (int idim = 0; idim < ndim; idim++)
-          for (int in = 0; in < ngnod; in++)
-            dershape2D(iz, ix, idim, in) = dershape2D_tmp(idim, in);
+        // Always use subviews inside parallel regions
+        // ** Do not allocate views inside parallel regions **
+        auto sv_shape2D = Kokkos::subview(shape2D, iz, ix, Kokkos::ALL);
+        auto sv_dershape2D =
+            Kokkos::subview(dershape2D, iz, ix, Kokkos::ALL, Kokkos::ALL);
+
+        shape_functions::define_shape_functions(sv_shape2D, ixxi, izgamma,
+                                                ngnod);
+        shape_functions::define_shape_functions_derivatives(sv_dershape2D, ixxi,
+                                                            izgamma, ngnod);
       });
+
+  Kokkos::fence();
 
   Kokkos::parallel_for(
       specfem::HostTeam(nspec, Kokkos::AUTO, ngnod)
@@ -115,8 +113,6 @@ specfem::compute::coordinates::coordinates(
               type_real xizl = -xgamma / jacobianl;
               type_real gammazl = xxi / jacobianl;
 
-              this->xcor(ispec, iz, ix) = xcor;
-              this->ycor(ispec, iz, ix) = ycor;
               this->xix(ispec, iz, ix) = xixl;
               this->gammax(ispec, iz, ix) = gammaxl;
               this->xiz(ispec, iz, ix) = xizl;

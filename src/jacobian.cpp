@@ -2,6 +2,7 @@
 #include "../include/config.h"
 #include "../include/kokkos_abstractions.h"
 #include "../include/shape_functions.h"
+#include <Kokkos_Core.hpp>
 
 std::tuple<type_real, type_real>
 jacobian::compute_locations(const specfem::HostTeam::member_type &teamMember,
@@ -38,6 +39,28 @@ jacobian::compute_locations(const specfem::HostTeam::member_type &teamMember,
 }
 
 std::tuple<type_real, type_real>
+jacobian::compute_locations(const specfem::HostView2d<type_real> coorg,
+                            const int ngnod, const type_real xi,
+                            const type_real gamma) {
+
+  assert(coorg.extent(0) == ndim);
+  assert(coorg.extent(1) == ngnod);
+
+  type_real xcor = 0.0;
+  type_real ycor = 0.0;
+
+  specfem::HostView1d<type_real> shape2D =
+      shape_functions::define_shape_functions(xi, gamma, ngnod);
+
+  for (int in = 0; in < ngnod; in++) {
+    xcor += shape2D(in) * coorg(0, in);
+    ycor += shape2D(in) * coorg(1, in);
+  }
+
+  return std::make_tuple(xcor, ycor);
+}
+
+std::tuple<type_real, type_real>
 jacobian::compute_locations(const specfem::HostTeam::member_type &teamMember,
                             const specfem::HostScratchView2d<type_real> s_coorg,
                             const int ngnod,
@@ -66,6 +89,26 @@ jacobian::compute_locations(const specfem::HostTeam::member_type &teamMember,
         update_ycor += shape2D(in) * s_coorg(1, in);
       },
       ycor);
+
+  return std::make_tuple(xcor, ycor);
+}
+
+std::tuple<type_real, type_real>
+jacobian::compute_locations(const specfem::HostView2d<type_real> coorg,
+                            const int ngnod,
+                            const specfem::HostView1d<type_real> shape2D) {
+
+  assert(coorg.extent(0) == ndim);
+  assert(coorg.extent(1) == ngnod);
+  assert(shape2D.extent(0) == ngnod);
+
+  type_real xcor = 0.0;
+  type_real ycor = 0.0;
+
+  for (int in = 0; in < ngnod; in++) {
+    xcor += shape2D(in) * coorg(0, in);
+    ycor += shape2D(in) * coorg(1, in);
+  }
 
   return std::make_tuple(xcor, ycor);
 }

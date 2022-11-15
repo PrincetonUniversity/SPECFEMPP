@@ -5,6 +5,7 @@
 #include "../include/quadrature.h"
 #include "../include/shape_functions.h"
 #include <Kokkos_Core.hpp>
+#include <tuple>
 #include <vector>
 
 struct qp {
@@ -38,9 +39,9 @@ type_real get_tolerance(std::vector<qp> cart_cord, const int nspec,
   return 1e-6 * xtypdist;
 }
 
-specfem::HostView3d<int> assign_numbering(std::vector<qp> &cart_cord,
-                                          const int nspec, const int ngllx,
-                                          const int ngllz) {
+std::tuple<specfem::HostView3d<int>, specfem::HostView2d<type_real> >
+assign_numbering(std::vector<qp> &cart_cord, const int nspec, const int ngllx,
+                 const int ngllz) {
 
   int ngllxz = ngllx * ngllz;
   // Sort cartesian coordinates in ascending order i.e.
@@ -80,6 +81,7 @@ specfem::HostView3d<int> assign_numbering(std::vector<qp> &cart_cord,
   int nglob = ig + 1;
 
   specfem::HostView3d<int> ibool("specfem::mesh::ibool", nspec, ngllz, ngllx);
+  specfem::HostView2d<type_real> coord("specfem::mesh::coord", ndim, nglob);
   // Assign numbering to corresponding ispec, iz, ix
   std::vector<int> iglob_counted(nglob, -1);
   int iloc = 0;
@@ -90,6 +92,8 @@ specfem::HostView3d<int> assign_numbering(std::vector<qp> &cart_cord,
         if (iglob_counted[copy_cart_cord[iloc].iglob] == -1) {
           ibool(ispec, iz, ix) = inum;
           iglob_counted[copy_cart_cord[iloc].iglob] = inum;
+          coord(0, inum) = copy_cart_cord[iloc].x;
+          coord(1, inum) = copy_cart_cord[iloc].y;
           inum++;
         } else {
           ibool(ispec, iz, ix) = iglob_counted[copy_cart_cord[iloc].iglob];
@@ -103,7 +107,7 @@ specfem::HostView3d<int> assign_numbering(std::vector<qp> &cart_cord,
 
   assert(inum == nglob);
 
-  return ibool;
+  return std::make_tuple(ibool, coord);
 }
 
 specfem::compute::compute::compute(const int nspec, const int ngllz,
@@ -194,7 +198,8 @@ specfem::compute::compute::compute(
             });
       });
 
-  this->ibool = assign_numbering(cart_cord, nspec, ngllx, ngllz);
+  std::tie(this->ibool, this->coord) =
+      assign_numbering(cart_cord, nspec, ngllx, ngllz);
   this->coordinates = specfem::compute::coordinates(coorg, knods, quadx, quadz);
   this->properties =
       specfem::compute::properties(kmato, materials, nspec, ngllx, ngllz);

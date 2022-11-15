@@ -1,4 +1,5 @@
 #include "../include/compute.h"
+#include "../include/config.h"
 #include "../include/jacobian.h"
 #include "../include/kokkos_abstractions.h"
 #include "../include/shape_functions.h"
@@ -19,7 +20,9 @@ specfem::compute::properties::properties(const int nspec, const int ngllz,
       rho_vp(specfem::HostView3d<type_real>("specfem::mesh::rho_vp", nspec,
                                             ngllz, ngllx)),
       rho_vs(specfem::HostView3d<type_real>("specfem::mesh::rho_vs", nspec,
-                                            ngllz, ngllx)){};
+                                            ngllz, ngllx)),
+      ispec_type(specfem::HostView1d<element_type>("specfem::mesh::ispec_type",
+                                                   nspec)){};
 
 specfem::compute::properties::properties(
     const specfem::HostView1d<int> kmato,
@@ -55,5 +58,12 @@ specfem::compute::properties::properties(
 
         this->rho_vp(ispec, iz, ix) = rho * vp;
         this->rho_vs(ispec, iz, ix) = rho * vs;
+      });
+
+  Kokkos::parallel_for(
+      "setup_mesh_ispec", specfem::HostRange(0, nspec),
+      KOKKOS_LAMBDA(const int ispec) {
+        const int imat = kmato(ispec);
+        this->ispec_type(ispec) = materials[imat]->get_ispec_type();
       });
 }

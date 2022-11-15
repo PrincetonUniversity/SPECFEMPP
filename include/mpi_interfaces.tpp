@@ -2,7 +2,7 @@
 // struct to store interface point temporarily
 struct ip {
   int iglob = 0;
-  type_real xp = 0, type_real zp = 0;
+  type_real xp = 0, zp = 0;
 }
 
 std::tuple<int, int, int, int, int>

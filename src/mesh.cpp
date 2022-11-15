@@ -15,7 +15,9 @@
 #include <limits>
 #include <vector>
 
-specfem::mesh::mesh(const std::string filename, const specfem::MPI *mpi) {
+specfem::mesh::mesh(const std::string filename,
+                    std::vector<specfem::material *> &materials,
+                    const specfem::MPI *mpi) {
 
   // Read the database file and populate mesh
 
@@ -97,7 +99,6 @@ specfem::mesh::mesh(const std::string filename, const specfem::MPI *mpi) {
 
   mpi->cout("\n------------ Reading material properties ----------------\n");
 
-  std::vector<specfem::material *> materials;
   try {
     materials =
         IO::read_material_properties(stream, this->parameters.numat, mpi);
