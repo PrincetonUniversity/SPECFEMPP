@@ -50,52 +50,6 @@ config get_node_config(std::string config_file, specfem::MPI *mpi) {
   return config;
 }
 //-----------------------------------------------------------------
-void equate(int computed_value, int ref_value) {
-  if (computed_value != ref_value) {
-    std::ostringstream ss;
-    ss << "Computed value " << computed_value << " != ref value" << ref_value;
-
-    throw std::runtime_error(ss.str());
-  }
-};
-void equate(type_real computed_value, type_real ref_value) {
-  if (fabs(computed_value - ref_value) >= 1e-4) {
-    std::ostringstream ss;
-    ss << "Computed value = " << computed_value
-       << " != ref value = " << ref_value;
-
-    throw std::runtime_error(ss.str());
-  }
-};
-
-template <typename T>
-void test_array(specfem::HostView3d<T> computed_array, std::string ref_file,
-                int n1, int n2, int n3) {
-  assert(computed_array.extent(0) == n1);
-  assert(computed_array.extent(1) == n2);
-  assert(computed_array.extent(2) == n3);
-
-  T ref_value;
-  std::ifstream stream;
-  stream.open(ref_file);
-
-  for (int i1 = 0; i1 < n1; i1++) {
-    for (int i2 = 0; i2 < n2; i2++) {
-      for (int i3 = 0; i3 < n3; i3++) {
-        IO::fortran_IO::fortran_read_line(stream, &ref_value);
-        try {
-          equate(computed_array(i1, i2, i3), ref_value);
-        } catch (std::runtime_error &e) {
-          stream.close();
-          std::ostringstream ss;
-          ss << e.what() << ", at i1 = " << i1 << ", i2 = " << i2
-             << ", i3 = " << i3;
-          throw std::runtime_error(ss.str());
-        }
-      }
-    }
-  }
-}
 
 int main(int argc, char **argv) {
 
@@ -120,15 +74,9 @@ int main(int argc, char **argv) {
     specfem::compute::coordinates coordinates(
         mesh.coorg, mesh.material_ind.knods, gllx, gllz);
 
-    specfem::compute::properties properties(mesh.material_ind.kmato, materials,
-                                            mesh.nspec, gllz.get_N(),
-                                            gllx.get_N());
-
-    // std::string ref_file{ "/scratch/gpfs/rk9481/specfem2d_kokkos/tests/"
-    //                       "unittests/compute/serial/data/xiz_00000.bin" };
-
-    // test_array(coordinates.xiz, ref_file, mesh.nspec, gllz.get_N(),
-    //            gllx.get_N());
+    specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods,
+                                      mesh.material_ind.kmato, gllx, gllz,
+                                      materials);
   }
 
   // Finalize Kokkos
