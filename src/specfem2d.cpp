@@ -71,8 +71,6 @@ int main(int argc, char **argv) {
 
     std::vector<specfem::material *> materials;
     specfem::mesh mesh(config.database_filename, materials, mpi);
-    specfem::compute::coordinates coordinates(
-        mesh.coorg, mesh.material_ind.knods, gllx, gllz);
 
     specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods,
                                       mesh.material_ind.kmato, gllx, gllz,
