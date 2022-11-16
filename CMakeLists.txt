@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.17.5)
 
 project(specfem2d_kokkos VERSION 0.1.0)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
+option(MPI_PARALLEL "MPI enabled" OFF)
 
 # Install Kokkos as a dependency
 ## TODO: Add options for on utilizing in house builds
@@ -13,13 +14,20 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(kokkos)
 
+FetchContent_Declare(
+        yaml
+	URL https://github.com/jbeder/yaml-cpp/archive/refs/tags/yaml-cpp-0.7.0.zip
+)
+FetchContent_MakeAvailable(yaml)
+include_directories(BEFORE SYSTEM ${yaml_SOURCE_DIR} ${yaml_BINARY_DIR}/include)
+
+add_subdirectory(boost-cmake)
 
 # Build specfem2d libraries
 ## TODO: Reorgnanize into separate directories
 add_library(
         gll_utils
         src/gll_utils.cpp
-        include/gll_utils.h
 )
 
 target_link_libraries(
@@ -30,7 +38,6 @@ target_link_libraries(
 add_library(
         gll_library
         src/gll_library.cpp
-        include/gll_library.h
 )
 
 target_link_libraries(
@@ -41,7 +48,6 @@ target_link_libraries(
 add_library(
         lagrange
         src/lagrange_poly.cpp
-        include/lagrange_poly.h
 )
 
 target_link_libraries(
@@ -53,8 +59,6 @@ target_link_libraries(
 add_library(
         quadrature
         src/quadrature.cpp
-        include/quadrature.h
-        include/kokkos_abstractions.h
 )
 
 target_link_libraries(
@@ -62,6 +66,114 @@ target_link_libraries(
         lagrange
         gll_library
         Kokkos::kokkos
+)
+
+add_library(
+        fortranio
+        src/fortran_IO.cpp
+        include/fortran_IO.h
+)
+
+target_link_libraries(
+        fortranio
+        PUBLIC Boost::boost
+)
+
+add_library(
+        specfem_mpi
+        src/specfem_mpi.cpp
+)
+
+if (MPI_PARALLEL)
+        target_compile_definitions(
+                specfem_mpi
+                PRIVATE -DMPI_PARALLEL
+        )
+        message("-- Compiling SPECFEM with MPI")
+else()
+        message("-- Compiling SPECFEM without MPI")
+endif(MPI_PARALLEL)
+
+# add_library(
+#         parameter_reader
+#         src/parameter_reader.cpp
+# )
+
+# target_link_libraries(
+#         parameter_reader
+#         fortranio
+#         Kokkos::kokkos
+#         Boost::boost
+# )
+
+add_library(
+        material_class
+        src/material.cpp
+)
+
+add_library(
+        material_reader
+        src/read_material_properties.cpp
+)
+
+target_link_libraries(
+        material_reader
+        material_class
+        specfem_mpi
+        fortranio
+)
+
+if (MPI_PARALLEL)
+        target_compile_definitions(
+                material_reader
+                PUBLIC -DMPI_PARALLEL
+        )
+endif(MPI_PARALLEL)
+
+add_library(
+        mesh
+        src/mesh.cpp
+)
+
+target_link_libraries(
+        mesh
+        Kokkos::kokkos
+)
+
+add_library(
+        database_reader
+        src/read_mesh_database.cpp
+)
+
+target_link_libraries(
+        database_reader
+        specfem_mpi
+        fortranio
+        material_reader
+        Kokkos::kokkos
+        mesh
+)
+
+if (MPI_PARALLEL)
+        target_compile_definitions(
+                database_reader
+                PUBLIC -DMPI_PARALLEL
+        )
+endif(MPI_PARALLEL)
+
+add_executable(
+        specfem2d
+        src/specfem2d.cpp
+)
+
+target_link_libraries(
+        specfem2d
+        material_class
+        specfem_mpi
+        database_reader
+        Kokkos::kokkos
+        yaml-cpp
+        mesh
 )
 
 # Include tests
