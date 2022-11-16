@@ -6,11 +6,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Requirements
-        run: apt-get install doxygen
+        run: sudo apt-get install doxygen -y
           && pip3 install sphinx-doc
           && pip3 install sphinx-rtd-theme
           && pip3 install breathe
           && pip3 install sphinx-sitemap
+        shell: bash
       - name: Checkout repo
         uses: actions/checkout@v2
       - name: Build docs
