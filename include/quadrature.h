@@ -8,6 +8,11 @@
 namespace quadrature {
 
 class quadrature {
+  /**
+   * @brief Defines the GLL/GLJ quadrature and related matrices required for
+   * quadrature integration
+   *
+   */
 public:
   /**
    * @brief Construct a quadrature object with default values

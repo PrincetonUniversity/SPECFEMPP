@@ -34,7 +34,7 @@ std::tuple<type_real, type_real, type_real> jacobf(const int n,
  * @param np degree of the Jacobi polynomial
  * @param alpha alpha value of Jacobi polynomial
  * @param beta beta value of Jacobi polynomial
- * @param xjac HostArray where Gauss points (GLL points) will be stored
+ * @param xjac HostMirror1d where Gauss points (GLL points) will be stored
  * xjac.extent(0) == np, xjac.rank == 1
  */
 void jacg(specfem::HostMirror1d<type_real> xjac, const int np,
@@ -46,9 +46,9 @@ type_real calc_pnormj(const int n, const type_real alpha, const type_real beta);
 /**
  * @brief Compute the weights of GLL quadrature at GLL points
  *
- * @param z HostArray of GLL points (use gll_utils::jacg to calculate GLL
+ * @param z HostMirror1d of GLL points (use gll_utils::jacg to calculate GLL
  * points)
- * @param w HostArray where the GLL weights will be stored
+ * @param w HostMirror1d where the GLL weights will be stored
  * @param np degree of the Jacobi polynomial
  * @param alpha alpha value of Jacobi polynomial
  * @param beta beta value of Jacobi polynomial
