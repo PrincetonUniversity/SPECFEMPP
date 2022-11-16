@@ -3,15 +3,14 @@ on: pull_request
 jobs:
   build-and-preview:
     if: '${{ github.event.pull_request.head.repo.full_name == github.repository }}'
-    runs-on: macos-12
+    runs-on: ubuntu-latest
     steps:
       - name: Requirements
-        run: brew install doxygen
+        run: apt-get install doxygen
           && pip3 install sphinx-doc
           && pip3 install sphinx-rtd-theme
           && pip3 install breathe
           && pip3 install sphinx-sitemap
-          # && export PATH="/usr/local/opt/sphinx-doc/bin:$PATH"
       - name: Checkout repo
         uses: actions/checkout@v2
       - name: Build docs
