@@ -29,6 +29,7 @@ void quadrature::quadrature::sync_views() {
 
 quadrature::quadrature::quadrature() : alpha(0.0), beta(0.0), N(5) {
   this->set_allocations();
+  this->set_derivation_matrices();
 };
 
 quadrature::quadrature::quadrature(const type_real alpha, const type_real beta)
@@ -36,6 +37,7 @@ quadrature::quadrature::quadrature(const type_real alpha, const type_real beta)
   if ((alpha <= -1.0) || (beta <= -1.0))
     throw std::invalid_argument("alpha and beta must be greater than -1");
   this->set_allocations();
+  this->set_derivation_matrices();
 }
 
 quadrature::quadrature::quadrature(const type_real alpha, const type_real beta,
@@ -49,6 +51,7 @@ quadrature::quadrature::quadrature(const type_real alpha, const type_real beta,
   if ((alpha <= -1.0) || (beta <= -1.0))
     throw std::invalid_argument("alpha and beta must be greater than -1");
   this->set_allocations();
+  this->set_derivation_matrices();
 }
 
 void quadrature::quadrature::set_derivation_matrices() {
@@ -63,5 +66,13 @@ DeviceView1d quadrature::quadrature::get_xi() const { return this->xi; }
 DeviceView1d quadrature::quadrature::get_w() const { return this->w; }
 
 DeviceView2d quadrature::quadrature::get_hprime() const { return this->hprime; }
+
+HostMirror1d quadrature::quadrature::get_hxi() const { return this->h_xi; }
+
+HostMirror1d quadrature::quadrature::get_hw() const { return this->h_w; }
+
+HostMirror2d quadrature::quadrature::get_hhprime() const {
+  return this->h_hprime;
+}
 
 int quadrature::quadrature::get_N() const { return this->N; };

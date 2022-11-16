@@ -1,3 +1,5 @@
+#include "../include/compute.h"
+#include "../include/config.h"
 #include "../include/kokkos_abstractions.h"
 #include "../include/material.h"
 #include "../include/mesh.h"
@@ -61,23 +63,18 @@ int main(int argc, char **argv) {
 
     config config = get_node_config(config_file, mpi);
 
-    specfem::mesh mesh{};
-    std::vector<specfem::material> materials;
+    // Set up GLL quadrature points
+    quadrature::quadrature gllx(0.0, 0.0, ngll);
+    quadrature::quadrature gllz(0.0, 0.0, ngll);
+
     specfem::parameters params;
 
-    mpi->cout("\n\n\n================Reading database "
-              "file=====================\n\n\n");
+    std::vector<specfem::material *> materials;
+    specfem::mesh mesh(config.database_filename, materials, mpi);
 
-    try {
-      IO::read_mesh_database(config.database_filename, mesh, params, materials,
-                             mpi);
-    } catch (std::runtime_error &e) {
-      std::cout << e.what() << std::endl;
-      mpi->exit();
-    }
-
-    mpi->cout("\n\n\n================Done Reading Database "
-              "file=====================\n\n\n");
+    specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods,
+                                      mesh.material_ind.kmato, gllx, gllz,
+                                      materials);
   }
 
   // Finalize Kokkos

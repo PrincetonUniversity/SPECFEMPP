@@ -1,13 +1,11 @@
+#ifndef QUADRATURE_H
+#define QUADRATURE_H
+
 #include "../include/config.h"
 #include "../include/kokkos_abstractions.h"
 #include <Kokkos_Core.hpp>
 
 namespace quadrature {
-
-using DeviceView1d = specfem::DeviceView1d<type_real>;
-using DeviceView2d = specfem::DeviceView2d<type_real>;
-using HostMirror1d = specfem::HostMirror1d<type_real>;
-using HostMirror2d = specfem::HostMirror2d<type_real>;
 
 class quadrature {
   /**
@@ -17,74 +15,97 @@ class quadrature {
    */
 public:
   /**
-   * @brief Construct a new quadrature object
+   * @brief Construct a quadrature object with default values
+   *
+   * Default values: alpha = 0, beta = 0, N = 5
    *
    */
   quadrature();
   /**
    * @brief Construct a new quadrature object
    *
-   * @param alpha alpha value for the polynomial functions
-   * @param beta beta value for the polynomial functions
-   *
-   * @note if alpha = 0.0 and beta = 0.0 implies GLL quadrature. if alpha = 0.0
-   * and beta = 1.0 implies GLJ quadrature
+   * @param alpha alpha value of the quadrature
+   * @param beta beta value of the quadrature
    */
   quadrature(const type_real alpha, const type_real beta);
   /**
    * @brief Construct a new quadrature object
    *
-   * @param alpha alpha value for the polynomial functions
-   * @param beta beta value for the polynomial functions
-   * @param N Degree of the polynomial used
-   *
-   * @note if alpha = 0.0 and beta = 0.0 implies GLL quadrature. if alpha = 0.0
-   * and beta = 1.0 implies GLJ quadrature
+   * @param alpha alpha value of the quadrature
+   * @param beta beta value of quadrature
+   * @param N Number of quadrature points
    */
   quadrature(const type_real alpha, const type_real beta, const int N);
-
   /**
-   * @brief Define derivation matrices. Sets values of xi, w & hprime and
-   * transfers the values to device.
+   * @brief Set the derivation matrices
+   *
+   * Set the matrices required for compute integrals
+   *
    */
   void set_derivation_matrices();
   /**
-   * @brief Get the value of xi on the device
+   * Get quadrature points on device
    *
-   * @return DeviceView1d xi
    */
-  DeviceView1d get_xi() const;
+  specfem::DeviceView1d<type_real> get_xi() const;
   /**
-   * @brief Get the w on the device
+   * Get quadrature weights on device
    *
-   * @return DeviceView1d w
    */
-  DeviceView1d get_w() const;
+  specfem::DeviceView1d<type_real> get_w() const;
   /**
-   * @brief Get the hprime on the device
+   * Get derivatives of quadrature polynomials at quadrature points on device
    *
-   * @return DeviceView2d hprime
    */
-  DeviceView2d get_hprime() const;
+  specfem::DeviceView2d<type_real> get_hprime() const;
+  /**
+   * Get quadrature points on host
+   *
+   */
+  specfem::HostMirror1d<type_real> get_hxi() const;
+  /**
+   * Get quadrature weights on host
+   *
+   */
+  specfem::HostMirror1d<type_real> get_hw() const;
+  /**
+   * Get derivatives of quadrature polynomials at quadrature points on host
+   *
+   */
+  specfem::HostMirror2d<type_real> get_hhprime() const;
+  /**
+   * @brief get number of quadrture points
+   *
+   */
   int get_N() const;
 
 private:
-  type_real alpha; //!< alpha value for the quadrature
-  type_real beta;  //!< beta value for the quadrature
-  int N;           //!< degree of the polynomial used for quadrature
-  DeviceView1d xi, w;
-  DeviceView2d hprime;
-  HostMirror1d h_xi, h_w;
-  HostMirror2d h_hprime;
+  type_real alpha; ///< alpha value of the quadrature
+  type_real beta;  ///< beta value of the quadrature
+  int N;           ///< Number of qudrature points
+
+  specfem::DeviceView1d<type_real> xi;   ///< qudrature points stored on device
+  specfem::HostMirror1d<type_real> h_xi; ///< quadrature points stored on host
+
+  specfem::DeviceView1d<type_real> w;   ///< qudrature weights stored on device
+  specfem::HostMirror1d<type_real> h_w; ///< quadrature weights stored on host
+
+  specfem::DeviceView2d<type_real> hprime; ///< Polynomial derivatives stored on
+                                           ///< device
+  specfem::HostMirror2d<type_real> h_hprime; ///< Polynomial derivatives store
+                                             ///< on host
+
   /**
-   * @brief Set allocations for private variables
+   * Set View allocations for all derivative matrices
    *
    */
   void set_allocations();
   /**
-   * @brief sync mirror and device views
+   * Sync views between device and host
    *
    */
   void sync_views();
 };
 } // namespace quadrature
+
+#endif

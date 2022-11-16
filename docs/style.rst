@@ -11,11 +11,17 @@ Here we give a short tutorial for using poetry specifically with intention of us
 Poetry Installation
 ~~~~~~~~~~~~~~~~~~~~
 
-Poetry requires python 2.7 or python 3.5+. However, we recommend that you use python 3.7+. First, download and install poetry:
+Make sure your python version is 3.7+ :
 
 .. code-block:: bash
 
-    curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
+    python3 --version
+
+Download and install poetry:
+
+.. code-block:: bash
+
+    curl -sSL https://install.python-poetry.org | python3 - --version 1.1.13
 
 You can check if installation succeeded using
 

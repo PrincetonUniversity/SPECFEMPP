@@ -30,19 +30,19 @@ public:
    * @brief Sync all process. MPI_Barrier
    *
    */
-  void sync_all();
+  void sync_all() const;
   /**
    * @brief Get world_size
    *
    * @return int world size
    */
-  int get_size();
+  int get_size() const;
   /**
    * @brief Get my_rank
    *
    * @return int my_rank
    */
-  int get_rank();
+  int get_rank() const;
   /**
    * @brief MPI_Abort
    *
@@ -52,7 +52,7 @@ public:
    * @brief Print string s from the head node
    *
    */
-  template <typename T> void cout(T s) {
+  template <typename T> void cout(T s) const {
 #ifdef MPI_PARALLEL
     if (my_rank == 0) {
       std::cout << s << std::endl;
@@ -70,12 +70,13 @@ public:
    * @param lvalue local value to reduce
    * @return int Reduced value. Should only be reduced on the root=0 process.
    */
-  int reduce(int lvalue);
+  int reduce(int lvalue) const;
 
 private:
-  int world_size, my_rank;
+  int world_size; ///< total number of MPI processes
+  int my_rank;    ///< rank of my process
 #ifdef MPI_PARALLEL
-  MPI_Comm comm;
+  MPI_Comm comm; ///< MPI communicator
 #endif
 };
 } // namespace specfem
