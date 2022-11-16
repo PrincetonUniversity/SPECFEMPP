@@ -3,12 +3,11 @@ on: pull_request
 jobs:
   build-and-preview:
     if: '${{ github.event.pull_request.head.repo.full_name == github.repository }}'
-    runs-on: macos-latest
+    runs-on: macos-12
     steps:
       - name: Requirements
         run: brew install doxygen
           && brew install sphinx-doc
-          && brew link sphinx-doc --force
           && pip3 install sphinx-rtd-theme
           && pip3 install breathe
           && pip3 install sphinx-sitemap
