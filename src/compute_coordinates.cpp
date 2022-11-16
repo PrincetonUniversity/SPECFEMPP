@@ -48,7 +48,7 @@ specfem::compute::coordinates::coordinates(
   // Allocate shape functions
   Kokkos::parallel_for(
       "shape_functions", specfem::HostMDrange<2>({ 0, 0 }, { ngllz, ngllx }),
-      KOKKOS_LAMBDA(const int iz, const int ix) {
+      [=](const int iz, const int ix) {
         type_real ixxi = xi(ix);
         type_real izgamma = gamma(iz);
 
@@ -69,7 +69,7 @@ specfem::compute::coordinates::coordinates(
   Kokkos::parallel_for(
       specfem::HostTeam(nspec, Kokkos::AUTO, ngnod)
           .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
-      KOKKOS_LAMBDA(const specfem::HostTeam::member_type &teamMember) {
+      [=](const specfem::HostTeam::member_type &teamMember) {
         const int ispec = teamMember.league_rank();
 
         //----- Load coorgx, coorgz in level 0 cache to be utilized later

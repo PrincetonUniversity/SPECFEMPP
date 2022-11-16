@@ -41,7 +41,7 @@ specfem::compute::properties::properties(
   Kokkos::parallel_for(
       "setup_mesh_properties",
       specfem::HostMDrange<3>({ 0, 0, 0 }, { nspec, ngllz, ngllx }),
-      KOKKOS_LAMBDA(const int ispec, const int iz, const int ix) {
+      [=](const int ispec, const int iz, const int ix) {
         const int imat = kmato(ispec);
         utilities::return_holder holder = materials[imat]->get_properties();
         auto [rho, mu, kappa, qmu, qkappa] = std::make_tuple(
@@ -61,8 +61,7 @@ specfem::compute::properties::properties(
       });
 
   Kokkos::parallel_for(
-      "setup_mesh_ispec", specfem::HostRange(0, nspec),
-      KOKKOS_LAMBDA(const int ispec) {
+      "setup_mesh_ispec", specfem::HostRange(0, nspec), [=](const int ispec) {
         const int imat = kmato(ispec);
         this->ispec_type(ispec) = materials[imat]->get_ispec_type();
       });
