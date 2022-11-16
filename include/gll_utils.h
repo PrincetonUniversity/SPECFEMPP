@@ -6,7 +6,6 @@
 #include <Kokkos_Core.hpp>
 #include <tuple>
 
-using HostMirror1d = specfem::HostMirror1d<type_real>;
 /**
  * @warning These routines are primarily called within GLL library module.
  * If you require any of the routines here then check if your task can be
@@ -38,8 +37,8 @@ std::tuple<type_real, type_real, type_real> jacobf(const int n,
  * @param xjac HostMirror1d where Gauss points (GLL points) will be stored
  * xjac.extent(0) == np, xjac.rank == 1
  */
-void jacg(HostMirror1d xjac, const int np, const type_real alpha,
-          const type_real beta);
+void jacg(specfem::HostMirror1d<type_real> xjac, const int np,
+          const type_real alpha, const type_real beta);
 
 type_real calc_gammaf(const type_real x);
 type_real calc_pnormj(const int n, const type_real alpha, const type_real beta);
@@ -54,7 +53,8 @@ type_real calc_pnormj(const int n, const type_real alpha, const type_real beta);
  * @param alpha alpha value of Jacobi polynomial
  * @param beta beta value of Jacobi polynomial
  */
-void jacw(HostMirror1d z, HostMirror1d w, const int np, const int alpha,
+void jacw(specfem::HostMirror1d<type_real> z,
+          specfem::HostMirror1d<type_real> w, const int np, const int alpha,
           const int beta);
 
 /**
@@ -70,7 +70,8 @@ void jacw(HostMirror1d z, HostMirror1d w, const int np, const int alpha,
  * @param alpha Alpha value of the Jacobi polynomial
  * @param beta Beta value of the Jacobi polynomial
  */
-void zwgjd(HostMirror1d z, HostMirror1d w, const int np, const int alpha,
+void zwgjd(specfem::HostMirror1d<type_real> z,
+           specfem::HostMirror1d<type_real> w, const int np, const int alpha,
            const int beta);
 
 /**

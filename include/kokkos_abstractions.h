@@ -6,23 +6,196 @@
 
 namespace specfem {
 
-using HostMemSpace = Kokkos::HostSpace;
+/** @name Execution Spaces
+ */
+///@{
 using HostExecSpace = Kokkos::DefaultHostExecutionSpace;
-using DevMemSpace = Kokkos::DefaultExecutionSpace::memory_space;
 using DevExecSpace = Kokkos::DefaultExecutionSpace;
+///@}
 
-// Device views
-template <typename T> using DeviceView1d = Kokkos::View<T *, DevMemSpace>;
-template <typename T> using DeviceView2d = Kokkos::View<T **, DevMemSpace>;
+/** @name Memory Spaces
+ */
+///@{
+using HostMemSpace = Kokkos::HostSpace;
+using DevMemSpace = Kokkos::DefaultExecutionSpace::memory_space;
+///@}
 
-// Host views
-template <typename T> using HostView1d = Kokkos::View<T *, HostMemSpace>;
-template <typename T> using HostView2d = Kokkos::View<T **, HostMemSpace>;
-template <typename T> using HostView3d = Kokkos::View<T ***, HostMemSpace>;
+/** @name View Layout
+ * @note The default view layoput is set to Kokkos::LayoutRight format for all
+ * views. In most cases views are accessed inside team-policies (Host or
+ * Device). Which means a LayoutRight data layout results in caching as well as
+ * coalescing.
+ */
+///@{
+using LayoutWrapper = Kokkos::LayoutRight;
+///@}
 
-// Host Mirrors
-template <typename T> using HostMirror1d = typename DeviceView1d<T>::HostMirror;
-template <typename T> using HostMirror2d = typename DeviceView2d<T>::HostMirror;
+/** @name Scratch Memory Spaces
+ */
+///@{
+using HostScratchSpace = HostExecSpace::scratch_memory_space;
+using DevScratchSpace = DevExecSpace::scratch_memory_space;
+///@}
+
+/** @name Device views
+ */
+///@{
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ */
+template <typename T, typename L = LayoutWrapper>
+using DeviceView1d = Kokkos::View<T *, L, DevMemSpace>;
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ */
+template <typename T, typename L = LayoutWrapper>
+using DeviceView2d = Kokkos::View<T **, L, DevMemSpace>;
+///@}
+
+/** @name Host views
+ */
+///@{
+
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ */
+template <typename T, typename L = LayoutWrapper>
+using HostView1d = Kokkos::View<T *, L, HostMemSpace>;
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ */
+template <typename T, typename L = LayoutWrapper>
+using HostView2d = Kokkos::View<T **, L, HostMemSpace>;
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ */
+template <typename T, typename L = LayoutWrapper>
+using HostView3d = Kokkos::View<T ***, L, HostMemSpace>;
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ */
+template <typename T, typename L = LayoutWrapper>
+using HostView4d = Kokkos::View<T ****, L, HostMemSpace>;
+///@}
+
+/** @name Host Mirrors
+ *
+ * Use host mirrors of device views to sync data between host and device
+ */
+///@{
+
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ */
+template <typename T, typename L = LayoutWrapper>
+using HostMirror1d = typename DeviceView1d<T, L>::HostMirror;
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ */
+template <typename T, typename L = LayoutWrapper>
+using HostMirror2d = typename DeviceView2d<T, L>::HostMirror;
+///@}
+
+// Scratch Views
+/** @name Scratch views
+ * Scratch views are generally used to allocate data in kokkos scratch memory
+ * spaces. Optimal use of scrach memory spaces can optimize bandwidth of the
+ * kernel
+ */
+///@{
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ */
+template <typename T, typename L = LayoutWrapper>
+using HostScratchView1d =
+    Kokkos::View<T *, L, HostScratchSpace,
+                 Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ */
+template <typename T, typename L = LayoutWrapper>
+using HostScratchView2d =
+    Kokkos::View<T **, L, HostScratchSpace,
+                 Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ */
+template <typename T, typename L = LayoutWrapper>
+using HostScratchView3d =
+    Kokkos::View<T ***, L, HostScratchSpace,
+                 Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ */
+template <typename T, typename L = LayoutWrapper>
+using DevScratchView1d = Kokkos::View<T *, L, DevScratchSpace,
+                                      Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ */
+template <typename T, typename L = LayoutWrapper>
+using DevScratchView2d = Kokkos::View<T **, L, DevScratchSpace,
+                                      Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ */
+template <typename T, typename L = LayoutWrapper>
+using DevScratchView3d = Kokkos::View<T ***, L, DevScratchSpace,
+                                      Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+///@}
+
+// Loop Strategies
+// Range policy strategies
+
+/** @name Range policies
+ *
+ * TODO : have an example code here on how to use HostMDrange policy
+ *
+ */
+///@{
+/**
+ * @brief Host multi-dimensional range policy
+ *
+ * TODO : have an example code here on how to use HostMDrange policy
+ *
+ * @tparam T Number of view dimensions to collapse inside the loop
+ * @tparam IteratePolicy
+ */
+template <int T, Kokkos::Iterate IteratePolicy = Kokkos::Iterate::Right>
+using HostMDrange =
+    Kokkos::MDRangePolicy<HostExecSpace, Kokkos::Rank<T, IteratePolicy> >;
+
+/**
+ * @brief Host range policy
+ *
+ */
+using HostRange = Kokkos::RangePolicy<HostExecSpace>;
+///@}
+
+// Team Policy Strategy
+
+// TODO add launch bounds
+
+/** @name Team policies
+ */
+///@{
+using HostTeam = Kokkos::TeamPolicy<HostExecSpace>;
+using DevTeam = Kokkos::TeamPolicy<DevExecSpace>;
+///@}
 
 } // namespace specfem
 

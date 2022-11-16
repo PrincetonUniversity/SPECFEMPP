@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.17.5)
 
 project(specfem2d_kokkos VERSION 0.1.0)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 option(MPI_PARALLEL "MPI enabled" OFF)
 
 # Install Kokkos as a dependency
@@ -94,21 +94,15 @@ else()
         message("-- Compiling SPECFEM without MPI")
 endif(MPI_PARALLEL)
 
-# add_library(
-#         parameter_reader
-#         src/parameter_reader.cpp
-# )
-
-# target_link_libraries(
-#         parameter_reader
-#         fortranio
-#         Kokkos::kokkos
-#         Boost::boost
-# )
-
 add_library(
         material_class
         src/material.cpp
+)
+
+target_link_libraries(
+        material_class
+        Kokkos::kokkos
+        specfem_mpi
 )
 
 add_library(
@@ -123,6 +117,16 @@ target_link_libraries(
         fortranio
 )
 
+# add_library(
+#         shape_functions
+#         src/shape_functions.cpp
+# )
+
+# target_link_libraries(
+#         shape_functions
+#         Kokkos::kokkos
+# )
+
 if (MPI_PARALLEL)
         target_compile_definitions(
                 material_reader
@@ -130,14 +134,72 @@ if (MPI_PARALLEL)
         )
 endif(MPI_PARALLEL)
 
+# add_library(
+#         jacobian
+#         src/jacobian.cpp
+# )
+
+# target_link_libraries(
+#         jacobian
+#         Kokkos::kokkos
+# )
+
 add_library(
-        mesh
-        src/mesh.cpp
+        boundaries
+        src/boundaries.cpp
 )
 
 target_link_libraries(
-        mesh
+        boundaries
         Kokkos::kokkos
+        specfem_mpi
+)
+
+# add_library(
+#         compute
+#         src/compute.cpp
+#         src/compute_coordinates.cpp
+#         src/compute_properties.cpp
+# )
+
+# target_link_libraries(
+#         compute
+#         quadrature
+#         material_class
+#         Kokkos::kokkos
+# )
+
+add_library(
+        surfaces
+        src/surfaces.cpp
+)
+
+target_link_libraries(
+        surfaces
+        Kokkos::kokkos
+        specfem_mpi
+)
+
+add_library(
+        elements
+        src/elements.cpp
+)
+
+target_link_libraries(
+        elements
+        Kokkos::kokkos
+        specfem_mpi
+)
+
+add_library(
+        mpi_interfaces
+        src/mpi_interfaces.cpp
+)
+
+target_link_libraries(
+        mpi_interfaces
+        Kokkos::kokkos
+        specfem_mpi
 )
 
 add_library(
@@ -149,9 +211,8 @@ target_link_libraries(
         database_reader
         specfem_mpi
         fortranio
-        material_reader
         Kokkos::kokkos
-        mesh
+        mpi_interfaces
 )
 
 if (MPI_PARALLEL)
@@ -160,6 +221,83 @@ if (MPI_PARALLEL)
                 PUBLIC -DMPI_PARALLEL
         )
 endif(MPI_PARALLEL)
+
+add_library(
+        mesh_properties
+        src/mesh_properties.cpp
+)
+
+target_link_libraries(
+        mesh_properties
+        specfem_mpi
+)
+
+add_library(
+        material_indic
+        src/material_indic.cpp
+)
+
+target_link_libraries(
+        material_indic
+        specfem_mpi
+        Kokkos::kokkos
+)
+
+add_library(
+        mesh
+        src/mesh.cpp
+)
+
+target_link_libraries(
+        mesh
+        Kokkos::kokkos
+        specfem_mpi
+        material_class
+        database_reader
+        material_reader
+        mesh_properties
+        material_indic
+        boundaries
+        elements
+        surfaces
+)
+
+add_library(
+        shape_functions
+        src/shape_functions.cpp
+)
+
+target_link_libraries(
+        shape_functions
+        Kokkos::kokkos
+)
+
+add_library(
+        jacobian
+        src/jacobian.cpp
+)
+
+target_link_libraries(
+        jacobian
+        shape_functions
+        Kokkos::kokkos
+)
+
+add_library(
+        compute
+        src/compute.cpp
+        src/compute_coordinates.cpp
+        src/compute_properties.cpp
+)
+
+target_link_libraries(
+        compute
+        quadrature
+        material_class
+        jacobian
+        shape_functions
+        Kokkos::kokkos
+)
 
 add_executable(
         specfem2d
@@ -174,6 +312,8 @@ target_link_libraries(
         Kokkos::kokkos
         yaml-cpp
         mesh
+        quadrature
+        compute
 )
 
 # Include tests

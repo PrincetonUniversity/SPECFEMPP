@@ -7,3 +7,5 @@ _templates/
 public/
 firebase*.yml
 *.out
+debug.sh
+output.log
