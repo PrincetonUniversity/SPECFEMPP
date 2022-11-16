@@ -66,6 +66,7 @@ public:
    * @return DeviceView2d hprime
    */
   DeviceView2d get_hprime() const;
+  int get_N() const;
 
 private:
   type_real alpha; //!< alpha value for the quadrature
