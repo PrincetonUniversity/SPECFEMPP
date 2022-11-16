@@ -7,9 +7,9 @@ jobs:
     steps:
       - name: Requirements
         run: sudo apt-get install doxygen -y
-          && pip3 install sphinx-rtd-theme == 1.0.0
-          && pip3 install breathe == 4.34.0
-          && pip3 install sphinx-sitemap == 2.2.0
+          && pip3 install sphinx-rtd-theme==1.0.0
+          && pip3 install breathe==4.34.0
+          && pip3 install sphinx-sitemap==2.2.0
         shell: bash
       - name: Checkout repo
         uses: actions/checkout@v2
