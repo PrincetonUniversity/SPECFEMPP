@@ -7,11 +7,11 @@ jobs:
     steps:
       - name: Requirements
         run: brew install doxygen
-          && brew install sphinx-doc
+          && pip3 install sphinx-doc
           && pip3 install sphinx-rtd-theme
           && pip3 install breathe
           && pip3 install sphinx-sitemap
-          && export PATH="/usr/local/opt/sphinx-doc/bin:$PATH"
+          # && export PATH="/usr/local/opt/sphinx-doc/bin:$PATH"
       - name: Checkout repo
         uses: actions/checkout@v2
       - name: Build docs
