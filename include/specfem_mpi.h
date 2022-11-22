@@ -9,6 +9,23 @@
 
 namespace specfem {
 
+namespace MPI {
+#ifdef MPI_PARALLEL
+/**
+ * @brief MPI reducer type
+ *
+ * Incase specfem is compiled without MPI then I need placeholders for reducer
+ * types
+ */
+enum reduce_type { sum : MPI_SUM, min : MPI_MIN, max : MPI_MAX };
+#else
+/**
+ * @brief MPI reducer type
+ *
+ */
+enum reduce_type { sum, min, max };
+}
+
 /**
  * @brief MPI class instance to manage MPI communication
  *
@@ -68,15 +85,56 @@ public:
    * @brief MPI reduce implemetation
    *
    * @param lvalue local value to reduce
+   * @param reduce_type specfem reducer type
    * @return int Reduced value. Should only be reduced on the root=0 process.
    */
-  int reduce(int lvalue) const;
+  int reduce(int lvalue, specfem::MPI::reduce_type reduce_type) const;
+  /**
+   * @brief MPI reduce implemetation
+   *
+   * @param lvalue local value to reduce
+   * @param reduce_type specfem reducer type
+   * @return int Reduced value. Should only be reduced on the root=0 process.
+   */
+  float reduce(float lvalue, specfem::MPI::reduce_type reduce_type) const;
+  /**
+   * @brief MPI reduce implemetation
+   *
+   * @param lvalue local value to reduce
+   * @param reduce_type specfem reducer type
+   * @return int Reduced value. Should only be reduced on the root=0 process.
+   */
+  double reduce(double lvalue, specfem::MPI::reduce_type reduce_type) const;
+  /**
+   * @brief MPI all reduce implementation
+   *
+   * @param lvalue local value to reduce
+   * @param reduce_type
+   * @return int Reduced value. Should only be reduced on the root=0 process.
+   */
+  int all_reduce(int lvalue, specfem::MPI::reduce_type reduce_type) const;
+  /**
+   * @brief MPI all reduce implementation
+   *
+   * @param lvalue local value to reduce
+   * @param reduce_type
+   * @return int Reduced value. Should only be reduced on the root=0 process.
+   */
+  float all_reduce(float lvalue, specfem::MPI::reduce_type reduce_type) const;
+  /**
+   * @brief MPI all reduce implementation
+   *
+   * @param lvalue local value to reduce
+   * @param reduce_type
+   * @return int Reduced value. Should only be reduced on the root=0 process.
+   */
+  double all_reduce(double lvalue, specfem::MPI::reduce_type reduce_type) const;
 
 private:
   int world_size; ///< total number of MPI processes
   int my_rank;    ///< rank of my process
 #ifdef MPI_PARALLEL
-  MPI_Comm comm; ///< MPI communicator
+  MPI_Comm comm;  ///< MPI communicator
 #endif
 };
 } // namespace specfem

@@ -39,11 +39,76 @@ void specfem::MPI::exit() {
 #endif
 }
 
-int specfem::MPI::reduce(int lvalue) const {
+int specfem::MPI::reduce(int lvalue, specfem::MPI::reduce_type reducer) const {
 #ifdef MPI_PARALLEL
   int svalue;
 
-  MPI_Reduce(&lvalue, &svalue, 1, MPI_INT, MPI_SUM, 0, this->comm);
+  MPI_Reduce(&lvalue, &svalue, 1, MPI_INT, reducer, 0, this->comm);
+
+  return svalue;
+#else
+  return lvalue;
+#endif
+}
+
+int specfem::MPI::all_reduce(int lvalue,
+                             specfem::MPI::reduce_type reducer) const {
+#ifdef MPI_PARALLEL
+  int svalue;
+
+  MPI_All_Reduce(&lvalue, &svalue, 1, MPI_INT, reducer, 0, this->comm);
+
+  return svalue;
+#else
+  return lvalue;
+#endif
+}
+
+float specfem::MPI::reduce(float lvalue,
+                           specfem::MPI::reduce_type reducer) const {
+#ifdef MPI_PARALLEL
+  float svalue;
+
+  MPI_Reduce(&lvalue, &svalue, 1, MPI_FLOAT, reducer, 0, this->comm);
+
+  return svalue;
+#else
+  return lvalue;
+#endif
+}
+
+float specfem::MPI::all_reduce(float lvalue,
+                               specfem::MPI::reduce_type reducer) const {
+#ifdef MPI_PARALLEL
+  float svalue;
+
+  MPI_All_Reduce(&lvalue, &svalue, 1, MPI_FLOAT, reducer, 0, this->comm);
+
+  return svalue;
+#else
+  return lvalue;
+#endif
+}
+
+double specfem::MPI::reduce(double lvalue,
+                            specfem::MPI::reduce_type reducer) const {
+#ifdef MPI_PARALLEL
+  double svalue;
+
+  MPI_Reduce(&lvalue, &svalue, 1, MPI_DOUBLE, reducer, 0, this->comm);
+
+  return svalue;
+#else
+  return lvalue;
+#endif
+}
+
+double specfem::MPI::all_reduce(double lvalue,
+                                specfem::MPI::reduce_type reducer) const {
+#ifdef MPI_PARALLEL
+  double svalue;
+
+  MPI_All_Reduce(&lvalue, &svalue, 1, MPI_DOUBLE, reducer, 0, this->comm);
 
   return svalue;
 #else
