@@ -129,6 +129,42 @@ struct sources {
           specfem::MPI *mpi);
 }
 
+// /**
+//  * @brief This struct is used to store arrays required to impose adjoint
+//  sources (at reciever locations) during
+//  * the time loop
+//  *
+//  * @note Does not implement moving sources yet
+//  *
+//  */
+// struct recievers {
+//   specfem::HostView4d<type_real> reciever_array; ///< Array to store lagrange
+//                                                ///< interpolants for sources.
+//                                                ///< These arrays are used to
+//                                                ///< impose reciever effects
+//                                                at end
+//                                                ///< of every time-step.
+//   spefecm::HostView2d<type_real> stf_array; //< Value of source-time function
+//   at
+//                                             ///< every time step
+//   /**
+//    * @brief Default constructor
+//    *
+//    */
+//   recievers(){};
+//   /**
+//    * @brief Constructor to allocate and assign views
+//    *
+//    * @param recievers Pointer to recievers objects read from sources file
+//    * @param quadx Quarature object in x dimension
+//    * @param quadz Quadrature object in z dimension
+//    * @param mpi Pointer to the MPI object
+//    */
+//   recievers(std::vector<specfem::sources::source *> recievers,
+//           quadrature::quadrature &quadx, quadrature::quadrature &quadz,
+//           specfem::MPI *mpi);
+// }
+
 struct coordinates {
 
   specfem::HostView2d<type_real> coord; ///< (x, z) for every distinct control
