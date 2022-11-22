@@ -286,7 +286,7 @@ target_link_libraries(
 add_library(
         compute
         src/compute.cpp
-        src/compute_coordinates.cpp
+        src/compute_partial_derivatives.cpp
         src/compute_properties.cpp
 )
 

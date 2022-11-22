@@ -105,12 +105,12 @@ target_link_libraries(
 )
 
 add_executable(
-  compute_coordinates_tests
-  compute/compute_coordinates_tests.cpp
+  compute_partial_derivatives_tests
+  compute/compute_partial_derivatives_tests.cpp
 )
 
 target_link_libraries(
-  compute_coordinates_tests
+  compute_partial_derivatives_tests
   mesh
   compute
   quadrature
@@ -164,6 +164,6 @@ gtest_discover_tests(gll_tests)
 gtest_discover_tests(lagrange_tests)
 gtest_discover_tests(fortranio_test)
 gtest_discover_tests(mesh_tests)
-gtest_discover_tests(compute_coordinates_tests)
+gtest_discover_tests(compute_partial_derivatives_tests)
 gtest_discover_tests(compute_properties_tests)
 gtest_discover_tests(compute_tests)
