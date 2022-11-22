@@ -1,0 +1,24 @@
+number-of-sources: 2
+sources:
+  - source_type: force source
+    x : 2500.0
+    z : 2500.0
+    source_surf: false
+    stf_type: Dirac
+    f0 : 10.0
+    angle : 0.0
+    vx : 0.0
+    vz : 0.0
+    factor: 1.0
+  - source_type: Moment-tensor source
+    x : 2500.0
+    z : 2500.0
+    source_surf: false
+    stf_type: Dirac
+    f0 : 10.0
+    Mxx : 1.0
+    Mzz : 1.0
+    Mxz : 0.0
+    vx : 0.0
+    vz : 0.0
+    factor : 1.0
