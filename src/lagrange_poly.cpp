@@ -3,17 +3,17 @@
 #include "../include/gll_library.h"
 #include <Kokkos_Core.hpp>
 
-using HostMirror1d = specfem::HostMirror1d<type_real>;
-using HostMirror2d = specfem::HostMirror2d<type_real>;
+using HostView1d = specfem::HostView1d<type_real>;
+using HostView2d = specfem::HostView2d<type_real>;
 
-void Lagrange::compute_lagrange_interpolants(HostMirror1d h,
-                                             HostMirror1d hprime,
-                                             const type_real xi, const int ngll,
-                                             const HostMirror1d xigll) {
+std::tuple<HostView1d, HostView1d> void
+Lagrange::compute_lagrange_interpolants(const type_real xi, const int ngll,
+                                        const HostView1d xigll) {
 
   assert(xigll.extent(0) == ngll);
-  assert(h.extent(0) == ngll);
-  assert(hprime.extent(0) == ngll);
+
+  HostView1d h("Lagrange::compute_lagrange_interpolants::h", ngll);
+  HostView1d hbar("Lagrange::compute_lagrange_interpolants::hbar", ngll);
   type_real prod1, prod2, prod3, prod2_inv, sum, x0, x;
 
   for (int dgr = 0; dgr < ngll; dgr++) {
@@ -37,15 +37,16 @@ void Lagrange::compute_lagrange_interpolants(HostMirror1d h,
     hprime(dgr) = sum * prod2_inv;
   }
 
-  return;
+  return std::make_tuple(h, hbar);
 }
 
-void Lagrange::compute_lagrange_derivatives_GLL(HostMirror2d hprime_ii,
-                                                const HostMirror1d xigll,
-                                                const int ngll) {
+HostView2d Lagrange::compute_lagrange_derivatives_GLL(const HostView1d xigll,
+                                                      const int ngll) {
 
   assert(xigll.extent(0) == ngll);
-  assert(hprime_ii.extent(0) == ngll && hprime_ii.extent(1) == ngll);
+
+  HostView2d hprime_ii("Lagrange::compute_lagrange_derivates_GLL::hprime_ii",
+                       ngll, ngll);
   int degpoly = ngll - 1;
   for (int i = 0; i < ngll; i++) {
     for (int j = 0; j < ngll; j++) {
@@ -70,15 +71,16 @@ void Lagrange::compute_lagrange_derivatives_GLL(HostMirror2d hprime_ii,
       }
     }
   }
-  return;
+  return hprime_ii;
 }
 
-void Lagrange::compute_jacobi_derivatives_GLJ(HostMirror2d hprimeBar_ii,
-                                              const HostMirror1d xiglj,
-                                              const int nglj) {
+HostView2d Lagrange::compute_jacobi_derivatives_GLJ(const HostView1d xiglj,
+                                                    const int nglj) {
 
   assert(xiglj.extent(0) == nglj);
-  assert(hprimeBar_ii.extent(0) == nglj && hprimeBar_ii.extent(1) == nglj);
+
+  HostView2d hprime_ii("Lagrange::compute_lagrange_derivates_GLJ::hprimeBar_ii",
+                       nglj, nglj);
   int degpoly = nglj - 1;
   for (int i = 0; i < nglj; i++) {
     for (int j = 0; j < nglj; j++) {
@@ -126,5 +128,5 @@ void Lagrange::compute_jacobi_derivatives_GLJ(HostMirror2d hprimeBar_ii,
       }
     }
   }
-  return;
+  return hprimeBar_ii;
 }
