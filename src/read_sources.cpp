@@ -1,3 +1,8 @@
+#include "../include/config.h"
+#include "../include/source.h"
+#include <vector>
+#include <yaml-cpp>
+
 //-----------------------------------------------------------------
 void operator>>(YAML::Node &Node, force_source &force_source) {
   force_source.x = Node["x"].as<type_real>();
@@ -25,8 +30,8 @@ void operator>>(YAML::Node &Node, moment_tensor &moment_tensor) {
   moment_tensor.factor = Node["factor"].as<type_real>();
 }
 
-std::vector<specfem::sources::source *> read_sources(std::string sources_file,
-                                                     specfem::MPI *mpi) {
+std::vector<specfem::sources::source *>
+specfem::read_sources(std::string sources_file, specfem::MPI *mpi) {
   // read sources file
   std::vector<specfem::sources::source *> sources;
   YAML::Node yaml = YAML::LoadFile(sources_file);
