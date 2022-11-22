@@ -71,10 +71,20 @@ int main(int argc, char **argv) {
 
     std::vector<specfem::material *> materials;
     specfem::mesh mesh(config.database_filename, materials, mpi);
+    std::vector<specfem::sources::source *> sources =
+        read_sources(config.source_filename, mpi);
 
     specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods,
                                       mesh.material_ind.kmato, gllx, gllz,
-                                      materials);
+                                      materials, sources);
+
+    for (source : sources) {
+      source->locate(mesh.ibool, compute.coord, gllx.get_hxi(), gllz.get_hxi(),
+                     mesh.nproc, mesh.coorg, mesh.material_ind.knods,
+                     mesh.npgeo, mpi);
+    }
+
+    compute.sources = specfem::compute::sources(sources);
   }
 
   // Finalize Kokkos
