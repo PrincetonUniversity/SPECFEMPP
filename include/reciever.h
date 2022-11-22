@@ -26,6 +26,8 @@ public:
   void check_locations(const type_real xmin, const type_real xmax,
                        const type_real zmin, const type_real zmax,
                        specfem::MPI *mpi);
+  int get_islice(){ return this->islice } override;
+  int get_ispec(){ return this->ispec } override;
 
 private:
   type_real xi;         ///< f$ \xi f$ value of source inside element
