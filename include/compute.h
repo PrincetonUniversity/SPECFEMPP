@@ -11,12 +11,12 @@ namespace specfem {
 namespace compute {
 
 /**
- * @brief Matrices required to compute integrals
+ * @brief Partial derivates matrices required to compute integrals
  *
  * The matrices are stored in (ispec, iz, ix) format
  *
  */
-struct coordinates {
+struct partial_derivates {
   specfem::HostView3d<type_real> xix;    ///< inverted partial derivates
                                          ///< \f$\partial \xi / \partial x\f$
   specfem::HostView3d<type_real> xiz;    ///< inverted partial derivates
@@ -30,7 +30,7 @@ struct coordinates {
    * @brief Default constructor
    *
    */
-  coordinates(){};
+  partial_derivates(){};
   /**
    * @brief Constructor to allocate views
    *
@@ -38,7 +38,7 @@ struct coordinates {
    * @param ngllz Number of quadrature points in z direction
    * @param ngllx Number of quadrature points in x direction
    */
-  coordinates(const int nspec, const int ngllz, const int ngllx);
+  partial_derivates(const int nspec, const int ngllz, const int ngllx);
   /**
    * @brief Constructor to allocate and assign views
    *
@@ -47,18 +47,23 @@ struct coordinates {
    * @param quadx Quadrature object in x dimension
    * @param quadz Quadrature object in z dimension
    */
-  coordinates(const specfem::HostView2d<type_real> coorg,
-              const specfem::HostView2d<int> knods,
-              const quadrature::quadrature &quadx,
-              const quadrature::quadrature &quadz);
+  partial_derivates(const specfem::HostView2d<type_real> coorg,
+                    const specfem::HostView2d<int> knods,
+                    const quadrature::quadrature &quadx,
+                    const quadrature::quadrature &quadz);
 };
-
+/**
+ * @brief Material properties stored at every quadrature point
+ *
+ */
 struct properties {
   /**
-   * Material properties defined for every quadrature point
+   * @name Material properties
    *
    */
+  ///@{
   specfem::HostView3d<type_real> rho, mu, kappa, qmu, qkappa, rho_vp, rho_vs;
+  ///@}
   // element type is defined in config.h
   specfem::HostView1d<element_type> ispec_type; ///< type of element. Available
                                                 ///< element types are defined
@@ -91,12 +96,65 @@ struct properties {
              const int ngllx, const int ngllz);
 };
 
-struct compute {
-  specfem::HostView3d<int> ibool; ///< Global number for every quadrature point
+/**
+ * @brief This struct is used to store arrays required to impose source during
+ * the time loop
+ *
+ * @note Does not implement moving sources yet
+ *
+ */
+struct sources {
+  specfem::HostView4d<type_real> source_array; ///< Array to store lagrange
+                                               ///< interpolants for sources.
+                                               ///< These arrays are used to
+                                               ///< impose source effects at end
+                                               ///< of every time-step.
+  spefecm::HostView2d<type_real> stf_array; //< Value of source-time function at
+                                            ///< every time step
+  /**
+   * @brief Default constructor
+   *
+   */
+  sources(){};
+  /**
+   * @brief Constructor to allocate and assign views
+   *
+   * @param sources Pointer to sources objects read from sources file
+   * @param quadx Quarature object in x dimension
+   * @param quadz Quadrature object in z dimension
+   * @param mpi Pointer to the MPI object
+   */
+  sources(std::vector<specfem::sources::source *> sources,
+          quadrature::quadrature &quadx, quadrature::quadrature &quadz,
+          specfem::MPI *mpi);
+}
+
+struct coordinates {
+
   specfem::HostView2d<type_real> coord; ///< (x, z) for every distinct control
                                         ///< node
-  specfem::compute::coordinates coordinates; ///< Matrices required to compute
-                                             ///< integrals
+  /**
+   * @name Coodindates meta data
+   **/
+  ///@{
+  type_real xmax; ///< maximum x-coorinate of the quadrature point within this
+                  ///< MPI slice
+  type_real xmin; ///< minimum x-coorinate of the quadrature point within this
+                  ///< MPI slice
+  type_real zmax; ///< maximum z-coorinate of the quadrature point within this
+                  ///< MPI slice
+  type_real zmin; ///< minimum z-coorinate of the quadrature point within this
+                  ///< MPI slice
+  ///@}
+}
+
+struct compute {
+  specfem::HostView3d<int> ibool; ///< Global number for every quadrature point
+  specfem::compute::coordinates coordinates; ///< Cartesian coordinates and
+                                             ///< related meta-data
+  specfem::compute::partial_derivates partial_derivates; ///< Matrices required
+                                                         ///< to compute
+                                                         ///< integrals
   specfem::compute::properties properties; ///< Material properties at elemental
                                            ///< level
   /**
@@ -113,7 +171,7 @@ struct compute {
    */
   compute(const int nspec, const int ngllx, const int ngllz);
   /**
-   * @brief Construct a allocate and assign views
+   * @brief Construct allocate and assign views
    *
    * @param coorg (x_a, z_a) for every control node
    * @param knods Global control element number for every control node
