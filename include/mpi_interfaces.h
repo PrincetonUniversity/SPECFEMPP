@@ -15,7 +15,7 @@ struct interface {
   specfem::HostView3d<int> my_interfaces;
   interface(){};
   interface(const int ninterfaces, const int max_interface_size);
-  interface(std::ifstream &stream, const specfem::MPI *mpi);
+  interface(std::ifstream &stream, const specfem::MPI::MPI *mpi);
 };
 } // namespace interfaces
 

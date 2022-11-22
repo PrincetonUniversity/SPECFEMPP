@@ -6,8 +6,8 @@
 #include <vector>
 
 namespace specfem {
-std::vector<specfem::sources::source *> read_sources(std::string sources_file,
-                                                     specfem::MPI *mpi)
+std::vector<specfem::sources::source *>
+read_sources(const std::string sources_file, const specfem::MPI::MPI *mpi)
 }
 
 #endif

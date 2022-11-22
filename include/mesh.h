@@ -75,7 +75,7 @@ struct mesh {
    * @param mpi pointer to MPI object to manage communication
    */
   mesh(const std::string filename, std::vector<specfem::material *> &materials,
-       const specfem::MPI *mpi);
+       const specfem::MPI::MPI *mpi);
 };
 } // namespace specfem
 

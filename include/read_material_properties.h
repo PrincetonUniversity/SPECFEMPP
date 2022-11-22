@@ -21,7 +21,7 @@ namespace IO {
  */
 std::vector<specfem::material *>
 read_material_properties(std::ifstream &stream, const int numat,
-                         const specfem::MPI *mpi);
+                         const specfem::MPI::MPI *mpi);
 } // namespace IO
 
 #endif

@@ -29,7 +29,7 @@ specfem::surfaces::acoustic_free_surface::acoustic_free_surface(
 
 specfem::surfaces::acoustic_free_surface::acoustic_free_surface(
     std::ifstream &stream, const int nelem_acoustic_surface,
-    const specfem::MPI *mpi) {
+    const specfem::MPI::MPI *mpi) {
 
   std::vector<int> acfree_edge(4, 0);
   *this = specfem::surfaces::acoustic_free_surface(nelem_acoustic_surface);

@@ -18,13 +18,12 @@ namespace MPI {
  * types
  */
 enum reduce_type { sum : MPI_SUM, min : MPI_MIN, max : MPI_MAX };
-#else
+#endif
 /**
  * @brief MPI reducer type
  *
  */
 enum reduce_type { sum, min, max };
-}
 
 /**
  * @brief MPI class instance to manage MPI communication
@@ -134,9 +133,11 @@ private:
   int world_size; ///< total number of MPI processes
   int my_rank;    ///< rank of my process
 #ifdef MPI_PARALLEL
-  MPI_Comm comm;  ///< MPI communicator
+  MPI_Comm comm; ///< MPI communicator
 #endif
 };
+} // namespace MPI
+
 } // namespace specfem
 
 #endif // SPECFEM_MPI_H

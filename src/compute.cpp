@@ -1,7 +1,6 @@
 #include "../include/compute.h"
 #include "../include/jacobian.h"
 #include "../include/kokkos_abstractions.h"
-#include "../include/material.h"
 #include "../include/quadrature.h"
 #include "../include/shape_functions.h"
 #include <Kokkos_Core.hpp>
@@ -123,19 +122,10 @@ assign_numbering(std::vector<qp> &cart_cord, const int nspec, const int ngllx,
   return std::make_tuple(ibool, coord, xmin, xmax, zmin, zmax);
 }
 
-specfem::compute::compute::compute(const int nspec, const int ngllz,
-                                   const int ngllx)
-    : ibool(specfem::HostView3d<int>("specfem::mesh::ibool", nspec, ngllz,
-                                     ngllx)),
-      partial_derivatives(
-          specfem::compute::partial_derivatives(nspec, ngllz, ngllx)),
-      properties(specfem::compute::properties(nspec, ngllz, ngllx)){};
-
-specfem::compute::compute::compute(
-    const specfem::HostView2d<type_real> coorg,
-    const specfem::HostView2d<int> knods, const specfem::HostView1d<int> kmato,
-    const quadrature::quadrature &quadx, const quadrature::quadrature &quadz,
-    const std::vector<specfem::material *> &materials) {
+specfem::compute::compute::compute(const specfem::HostView2d<type_real> coorg,
+                                   const specfem::HostView2d<int> knods,
+                                   const quadrature::quadrature &quadx,
+                                   const quadrature::quadrature &quadz) {
 
   int ngnod = knods.extent(0);
   int nspec = knods.extent(1);
@@ -217,8 +207,4 @@ specfem::compute::compute::compute(
            this->coordinates.xmax, this->coordinates.zmin,
            this->coordinates.zmax) =
       assign_numbering(cart_cord, nspec, ngllx, ngllz);
-  this->partial_derivatives =
-      specfem::compute::partial_derivatives(coorg, knods, quadx, quadz);
-  this->properties =
-      specfem::compute::properties(kmato, materials, nspec, ngllx, ngllz);
 }

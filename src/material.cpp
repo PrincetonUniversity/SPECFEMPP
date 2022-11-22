@@ -96,7 +96,7 @@ void specfem::acoustic_material::assign(utilities::input_holder &holder) {
     std::runtime_error("Poisson's ratio out of range");
 }
 
-utilities::return_holder specfem::elastic_material::get_properties() {
+specfem::utilities::return_holder specfem::elastic_material::get_properties() {
   utilities::return_holder holder;
   holder.rho = this->density;
   holder.mu = this->mu;

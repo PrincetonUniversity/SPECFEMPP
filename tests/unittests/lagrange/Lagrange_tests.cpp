@@ -12,20 +12,16 @@ TEST(lagrange_tests, LAGRANGE_TESTS) {
    * compute_lagrange_derivatives_GLL give the same value at GLL points
    *
    */
-  const auto &compute_lagrange_interpolants =
-      Lagrange::compute_lagrange_interpolants;
-  const auto &zwgljd = gll_library::zwgljd;
-  const auto &compute_lagrange_derivatives_GLL =
-      Lagrange::compute_lagrange_derivatives_GLL;
   int ngll = 5;
   type_real degpoly = ngll - 1;
   type_real tol = 1e-6;
 
-  auto [h_z1, h_w1] = zwgljd(ngll, 0.0, 0.0);
-  auto h_hprime_xx = compute_lagrange_derivatives_GLL(h_z1, ngll);
+  auto [h_z1, h_w1] = gll_library::zwgljd(ngll, 0.0, 0.0);
+  auto h_hprime_xx = Lagrange::compute_lagrange_derivatives_GLL(h_z1, ngll);
 
   for (int i = 0; i < ngll; i++) {
-    compute_lagrange_interpolants(h_h1, h_h1_prime, h_z1(i), ngll, h_z1);
+    auto [h_h1, h_h1_prime] =
+        Lagrange::compute_lagrange_interpolants(h_z1(i), ngll, h_z1);
     for (int j = 0; j < ngll; j++) {
       EXPECT_NEAR(h_hprime_xx(i, j), h_h1_prime(j), tol);
       if (i == j) {

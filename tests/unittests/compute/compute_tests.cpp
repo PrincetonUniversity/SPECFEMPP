@@ -24,7 +24,8 @@ void operator>>(YAML::Node &Node, test_config &test_config) {
   return;
 }
 
-test_config get_test_config(std::string config_filename, specfem::MPI *mpi) {
+test_config get_test_config(std::string config_filename,
+                            specfem::MPI::MPI *mpi) {
   // read test config file
   YAML::Node yaml = YAML::LoadFile(config_filename);
   test_config test_config{};
@@ -71,9 +72,8 @@ TEST(COMPUTE_TESTS, compute_ibool) {
   specfem::mesh mesh(test_config.database_filename, materials,
                      MPIEnvironment::mpi_);
 
-  specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods,
-                                    mesh.material_ind.kmato, gllx, gllz,
-                                    materials);
+  specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
+                                    gllz);
 
   EXPECT_NO_THROW(
       specfem::testing::test_array(compute.ibool, test_config.ibool_file,

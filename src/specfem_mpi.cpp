@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <stdlib.h>
 
-specfem::MPI::MPI(int *argc, char ***argv) {
+specfem::MPI::MPI::MPI(int *argc, char ***argv) {
 #ifdef MPI_PARALLEL
   MPI_Init(argc, argv);
   this->comm = MPI_COMM_WORLD;
@@ -15,23 +15,23 @@ specfem::MPI::MPI(int *argc, char ***argv) {
 #endif
 }
 
-void specfem::MPI::sync_all() const {
+void specfem::MPI::MPI::sync_all() const {
 #ifdef MPI_PARALLEL
   MPI_Barrier(this->comm);
 #endif
 }
 
-specfem::MPI::~MPI() {
+specfem::MPI::MPI::~MPI() {
 #ifdef MPI_PARALLEL
   MPI_Finalize();
 #endif
 }
 
-int specfem::MPI::get_size() const { return this->world_size; }
+int specfem::MPI::MPI::get_size() const { return this->world_size; }
 
-int specfem::MPI::get_rank() const { return this->my_rank; }
+int specfem::MPI::MPI::get_rank() const { return this->my_rank; }
 
-void specfem::MPI::exit() {
+void specfem::MPI::MPI::exit() {
 #ifdef MPI_PARALLEL
   int ierr = MPI_Abort(this->comm, 30);
 #else
@@ -39,7 +39,8 @@ void specfem::MPI::exit() {
 #endif
 }
 
-int specfem::MPI::reduce(int lvalue, specfem::MPI::reduce_type reducer) const {
+int specfem::MPI::MPI::reduce(int lvalue,
+                              specfem::MPI::reduce_type reducer) const {
 #ifdef MPI_PARALLEL
   int svalue;
 
@@ -51,8 +52,8 @@ int specfem::MPI::reduce(int lvalue, specfem::MPI::reduce_type reducer) const {
 #endif
 }
 
-int specfem::MPI::all_reduce(int lvalue,
-                             specfem::MPI::reduce_type reducer) const {
+int specfem::MPI::MPI::all_reduce(int lvalue,
+                                  specfem::MPI::reduce_type reducer) const {
 #ifdef MPI_PARALLEL
   int svalue;
 
@@ -64,8 +65,8 @@ int specfem::MPI::all_reduce(int lvalue,
 #endif
 }
 
-float specfem::MPI::reduce(float lvalue,
-                           specfem::MPI::reduce_type reducer) const {
+float specfem::MPI::MPI::reduce(float lvalue,
+                                specfem::MPI::reduce_type reducer) const {
 #ifdef MPI_PARALLEL
   float svalue;
 
@@ -77,8 +78,8 @@ float specfem::MPI::reduce(float lvalue,
 #endif
 }
 
-float specfem::MPI::all_reduce(float lvalue,
-                               specfem::MPI::reduce_type reducer) const {
+float specfem::MPI::MPI::all_reduce(float lvalue,
+                                    specfem::MPI::reduce_type reducer) const {
 #ifdef MPI_PARALLEL
   float svalue;
 
@@ -90,8 +91,8 @@ float specfem::MPI::all_reduce(float lvalue,
 #endif
 }
 
-double specfem::MPI::reduce(double lvalue,
-                            specfem::MPI::reduce_type reducer) const {
+double specfem::MPI::MPI::reduce(double lvalue,
+                                 specfem::MPI::reduce_type reducer) const {
 #ifdef MPI_PARALLEL
   double svalue;
 
@@ -103,8 +104,8 @@ double specfem::MPI::reduce(double lvalue,
 #endif
 }
 
-double specfem::MPI::all_reduce(double lvalue,
-                                specfem::MPI::reduce_type reducer) const {
+double specfem::MPI::MPI::all_reduce(double lvalue,
+                                     specfem::MPI::reduce_type reducer) const {
 #ifdef MPI_PARALLEL
   double svalue;
 

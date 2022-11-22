@@ -64,7 +64,7 @@ specfem::interfaces::interface::interface(const int ninterfaces,
 }
 
 specfem::interfaces::interface::interface(std::ifstream &stream,
-                                          const specfem::MPI *mpi) {
+                                          const specfem::MPI::MPI *mpi) {
 
   // read number of interfaces
   // Where these 2 values are written needs to change in new database format
