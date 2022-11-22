@@ -1,3 +1,6 @@
+#ifndef RECIEVER_H
+#define RECIEVER_H
+
 #include "../include/config.h"
 #include "../include/kokkos_abstractions.h"
 #include "../include/specfem_mpi.h"
@@ -36,3 +39,5 @@ private:
 } // namespace recievers
 
 } // namespace specfem
+
+#endif
