@@ -31,7 +31,7 @@ jobs:
         run: cmake -S . -B build -DKokkos_ENABLE_OPENMP=ON
       - name: Build
         run: cmake --build build
-  build-cuda:
+  build-ampere80:
     runs-on: ubuntu-latest
     steps:
       - name: Check GNU and Cmake versions
@@ -46,7 +46,7 @@ jobs:
       - name: Get submodules
         run: git submodule init
           &&  git submodule update
-      - name: Configure OpenMP build
-        run: cmake -S . -B build -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON  -DKokkos_ENABLE_CUDA_LAMBDA=ON
+      - name: Configure OPENMP & CUDA build
+        run: cmake -S . -B build -DKokkos_ENABLE_OPENMP=ON -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON  -DKokkos_ENABLE_CUDA_LAMBDA=ON
       - name: Build
         run: cmake --build build
