@@ -4,6 +4,7 @@
 #include "../include/kokkos_abstractions.h"
 #include "../include/material.h"
 #include "../include/quadrature.h"
+#include "../include/source.h"
 #include <Kokkos_Core.hpp>
 #include <vector>
 
@@ -16,7 +17,7 @@ namespace compute {
  * The matrices are stored in (ispec, iz, ix) format
  *
  */
-struct partial_derivates {
+struct partial_derivatives {
   specfem::HostView3d<type_real> xix;    ///< inverted partial derivates
                                          ///< \f$\partial \xi / \partial x\f$
   specfem::HostView3d<type_real> xiz;    ///< inverted partial derivates
@@ -30,7 +31,7 @@ struct partial_derivates {
    * @brief Default constructor
    *
    */
-  partial_derivates(){};
+  partial_derivatives(){};
   /**
    * @brief Constructor to allocate views
    *
@@ -38,7 +39,7 @@ struct partial_derivates {
    * @param ngllz Number of quadrature points in z direction
    * @param ngllx Number of quadrature points in x direction
    */
-  partial_derivates(const int nspec, const int ngllz, const int ngllx);
+  partial_derivatives(const int nspec, const int ngllz, const int ngllx);
   /**
    * @brief Constructor to allocate and assign views
    *
@@ -47,10 +48,10 @@ struct partial_derivates {
    * @param quadx Quadrature object in x dimension
    * @param quadz Quadrature object in z dimension
    */
-  partial_derivates(const specfem::HostView2d<type_real> coorg,
-                    const specfem::HostView2d<int> knods,
-                    const quadrature::quadrature &quadx,
-                    const quadrature::quadrature &quadz);
+  partial_derivatives(const specfem::HostView2d<type_real> coorg,
+                      const specfem::HostView2d<int> knods,
+                      const quadrature::quadrature &quadx,
+                      const quadrature::quadrature &quadz);
 };
 /**
  * @brief Material properties stored at every quadrature point
@@ -109,7 +110,7 @@ struct sources {
                                                ///< These arrays are used to
                                                ///< impose source effects at end
                                                ///< of every time-step.
-  spefecm::HostView2d<type_real> stf_array; //< Value of source-time function at
+  specfem::HostView2d<type_real> stf_array; //< Value of source-time function at
                                             ///< every time step
   /**
    * @brief Default constructor
@@ -126,8 +127,8 @@ struct sources {
    */
   sources(std::vector<specfem::sources::source *> sources,
           quadrature::quadrature &quadx, quadrature::quadrature &quadz,
-          specfem::MPI *mpi);
-}
+          specfem::MPI::MPI *mpi);
+};
 
 // /**
 //  * @brief This struct is used to store arrays required to impose adjoint
@@ -162,7 +163,7 @@ struct sources {
 //    */
 //   recievers(std::vector<specfem::sources::source *> recievers,
 //           quadrature::quadrature &quadx, quadrature::quadrature &quadz,
-//           specfem::MPI *mpi);
+//           specfem::MPI::MPI *mpi);
 // }
 
 struct coordinates {
@@ -182,17 +183,12 @@ struct coordinates {
   type_real zmin; ///< minimum z-coorinate of the quadrature point within this
                   ///< MPI slice
   ///@}
-}
+};
 
 struct compute {
   specfem::HostView3d<int> ibool; ///< Global number for every quadrature point
   specfem::compute::coordinates coordinates; ///< Cartesian coordinates and
                                              ///< related meta-data
-  specfem::compute::partial_derivates partial_derivates; ///< Matrices required
-                                                         ///< to compute
-                                                         ///< integrals
-  specfem::compute::properties properties; ///< Material properties at elemental
-                                           ///< level
   /**
    * @brief Default constructor
    *
@@ -211,17 +207,13 @@ struct compute {
    *
    * @param coorg (x_a, z_a) for every control node
    * @param knods Global control element number for every control node
-   * @param kmato Material specification number
    * @param quadx Quarature object in x dimension
    * @param quadz Quadrature object in z dimension
-   * @param materials Pointer to material objects read from database file
    */
   compute(const specfem::HostView2d<type_real> coorg,
           const specfem::HostView2d<int> knods,
-          const specfem::HostView1d<int> kmato,
           const quadrature::quadrature &quadx,
-          const quadrature::quadrature &quadz,
-          const std::vector<specfem::material *> &materials);
+          const quadrature::quadrature &quadz);
 };
 
 } // namespace compute

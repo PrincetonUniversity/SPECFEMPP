@@ -19,13 +19,13 @@ public:
               const specfem::HostView3d<type_real> coorg,
               const specfem::HostView2d<int> knods, const int npgeo,
               const specfem::HostView1d<element_type> ispec_type,
-              const specfem::MPI *mpi){};
+              const specfem::MPI::MPI *mpi){};
   void compute_reciever_array(specfem::quadrature &quadx,
                               specfem::quadrature &quadz,
                               specfem::HostView3d<type_real> reciever_array){};
   void check_locations(const type_real xmin, const type_real xmax,
                        const type_real zmin, const type_real zmax,
-                       specfem::MPI *mpi);
+                       specfem::MPI::MPI *mpi);
   int get_islice(){ return this->islice } override;
   int get_ispec(){ return this->ispec } override;
 

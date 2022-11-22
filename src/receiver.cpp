@@ -11,7 +11,7 @@ void specfem::recievers::reciever::locate(
     const specfem::HostView3d<type_real> coorg,
     const specfem::HostView2d<int> knods, const int npgeo,
     const specfem::HostView1d<element_type> ispec_type,
-    const specfem::MPI *mpi) {
+    const specfem::MPI::MPI *mpi) {
   std::tie(this->xi, this->gamma, this->ispec, this->islice) =
       specfem::utilities::locate(ibool, coord, xigll, zigll, nproc, this->x,
                                  this->z, coorg, knods, npgeo, mpi);
@@ -19,11 +19,9 @@ void specfem::recievers::reciever::locate(
     this->el_type = ispec_type(ispec);
 }
 
-void specfem::recievers::reciever::check_locations(const type_real xmin,
-                                                   const type_real xmax,
-                                                   const type_real zmin,
-                                                   const type_real zmax,
-                                                   const specfem::MPI *mpi) {
+void specfem::recievers::reciever::check_locations(
+    const type_real xmin, const type_real xmax, const type_real zmin,
+    const type_real zmax, const specfem::MPI::MPI *mpi) {
   specfem::utilities::check_locations(xmin, xmax, zmin, zmax, mpi);
 }
 

@@ -1,7 +1,10 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include "config.h"
+#include "../include/config.h"
+#include "../include/kokkos_abstractions.h"
+#include "../include/quadrature.h"
+#include "../include/specfem_mpi.h"
 
 namespace specfem {
 namespace utilities {
@@ -39,12 +42,12 @@ struct moment_tensor {
   type_real Mxx, Mxz, Mzz;
   type_real vx, vz;
   type_real factor;
-}
+};
 
 std::tuple<int, int, int, type_real, type_real>
 locate(const specfem::HostView3d<int> ibool,
        const specfem::HostView2d<type_real> coord,
-       const specfem::quadrature &quadx, const specfem::quadrature &quadz,
+       const quadrature::quadrature &quadx, const quadrature::quadrature &quadz,
        const int nproc, const type_real x, const type_real z,
        const specfem::HostView3d<type_real> coorg,
        const specfem::HostView2d<int> knods, const int npgeo);

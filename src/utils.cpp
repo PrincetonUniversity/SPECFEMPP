@@ -98,7 +98,7 @@ get_best_location(const type_real x_source, const type_real z_source,
   return std::make_tuple(xi, gamma);
 }
 
-int get_islice(const int final_dist, const specfem::MPI *mpi) {
+int get_islice(const int final_dist, const specfem::MPI::MPI *mpi) {
 
   int islice = 0;
   type_real glob_final_dist = mpi->all_reduce(final_dist, specfem::MPI::min);
@@ -142,7 +142,7 @@ specfem::utilities::locate(const specfem::HostView3d<int> ibool,
                            const type_real z_source,
                            const specfem::HostView3d<type_real> coorg,
                            const specfem::HostView2d<int> knods,
-                           const int npgeo, const specfem::MPI *mpi) {
+                           const int npgeo, const specfem::MPI::MPI *mpi) {
 
   const int nspec = ibool.extent(0);
   const int ngllx = ibool.extent(1);
@@ -190,7 +190,7 @@ specfem::utilities::locate(const specfem::HostView3d<int> ibool,
 
 specfem::utilities::check_locations(const type_real xmin, const type_real xmax,
                                     const type_real zmin, const type_real zmax,
-                                    const specfem::MPI *mpi) {
+                                    const specfem::MPI::MPI *mpi) {
   // Check if the source is inside the domain
 
   type_real global_xmin = mpi->reduce(xmin, specfem::MPI::min);

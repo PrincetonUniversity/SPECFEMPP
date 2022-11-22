@@ -152,7 +152,7 @@ struct absorbing_boundary {
    * @param mpi Pointer to MPI object
    */
   absorbing_boundary(std::ifstream &stream, int num_abs_boundary_faces,
-                     const int nspec, const specfem::MPI *mpi);
+                     const int nspec, const specfem::MPI::MPI *mpi);
 };
 
 /**
@@ -266,7 +266,7 @@ struct forcing_boundary {
    * @param mpi Pointer to MPI object
    */
   forcing_boundary(std::ifstream &stream, const int nelement_acforcing,
-                   const int nspec, const specfem::MPI *mpi);
+                   const int nspec, const specfem::MPI::MPI *mpi);
 };
 
 } // namespace boundaries

@@ -3,7 +3,7 @@
 
 char **argv;
 int argc = 0;
-specfem::MPI *MPIEnvironment::mpi_ = new specfem::MPI(&argc, &argv);
+specfem::MPI::MPI *MPIEnvironment::mpi_ = new specfem::MPI::MPI(&argc, &argv);
 
 void MPIEnvironment::SetUp() {}
 

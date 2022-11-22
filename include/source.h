@@ -3,6 +3,7 @@
 
 #include "../include/config.h"
 #include "../include/kokkos_abstractions.h"
+#include "../include/quadrature.h"
 #include "../include/specfem_mpi.h"
 
 namespace specfem {
@@ -19,17 +20,18 @@ public:
                       const specfem::HostView3d<type_real> coorg,
                       const specfem::HostView2d<int> knods, const int npgeo,
                       const specfem::HostView1d<element_type> ispec_type,
-                      const specfem::MPI *mpi){};
+                      const specfem::MPI::MPI *mpi){};
   virtual void
-  compute_source_array(specfem::quadrature &quadx, specfem::quadrature &quadz,
+  compute_source_array(quadrature::quadrature &quadx,
+                       quadrature::quadrature &quadz,
                        specfem::HostView3d<type_real> source_array){};
   virtual void compute_stf(){};
   void check_locations(const type_real xmin, const type_real xmax,
                        const type_real zmin, const type_real zmax,
-                       specfem::MPI *mpi);
+                       const specfem::MPI::MPI *mpi);
   virtual int get_islice();
   virtual int get_ispec();
-}
+};
 
 class force : public source {
 
@@ -46,16 +48,17 @@ public:
               const specfem::HostView3d<type_real> coorg,
               const specfem::HostView2d<int> knods, const int npgeo,
               const specfem::HostView1d<element_type> ispec_type,
-              const specfem::MPI *mpi) override;
+              const specfem::MPI::MPI *mpi) override;
   void
-  compute_source_array(specfem::quadrature &quadx, specfem::quadrature &quadz,
+  compute_source_array(quadrature::quadrature &quadx,
+                       quadrature::quadrature &quadz,
                        specfem::HostView3d<type_real> source_array) override;
   void compute_stf() override;
   void check_locations(const type_real xmin, const type_real xmax,
                        const type_real zmin, const type_real zmax,
-                       specfem::MPI *mpi);
-  int get_islice(){ return this->islice } override;
-  int get_ispec(){ return this->ispec } override;
+                       const specfem::MPI::MPI *mpi);
+  int get_islice() override { return this->islice; }
+  int get_ispec() override { return this->ispec; }
 
 private:
   type_real xi;         ///< f$ \xi f$ value of source inside element
@@ -67,7 +70,7 @@ private:
   int islice;           ///< MPI slice (rank) where the source is located
   element_type el_type; ///< type of the element inside which this source lies
   wave_type wave;       ///< SH or P-SV wave
-}
+};
 
 class moment_tensor : public source {
 
@@ -85,13 +88,14 @@ public:
               const specfem::HostView3d<type_real> coorg,
               const specfem::HostView2d<int> knods, const int npgeo,
               const specfem::HostView1d<element_type> ispec_type,
-              const specfem::MPI *mpi) override;
+              const specfem::MPI::MPI *mpi) override;
   void
-  compute_source_array(specfem::quadrature &quadx, specfem::quadrature &quadz,
+  compute_source_array(quadrature::quadrature &quadx,
+                       quadrature::quadrature &quadz,
                        specfem::HostView3d<type_real> source_array) override;
   void compute_stf() override;
-  int get_islice(){ return this->islice } override;
-  int get_ispec(){ return this->ispec } override;
+  int get_islice() override { return this->islice; }
+  int get_ispec() override { return this->ispec; }
 
 private:
   type_real xi;    ///< f$ \xi f$ value of source inside element
@@ -103,7 +107,7 @@ private:
   type_real Mzz;   ///< Mzz for the source
   int ispec;       ///< ispec element number where source is located
   int islice;      ///< MPI slice (rank) where the source is located
-}
+};
 } // namespace sources
 
 } // namespace specfem

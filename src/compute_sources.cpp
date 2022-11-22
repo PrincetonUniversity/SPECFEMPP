@@ -8,8 +8,8 @@
 
 specfem::compute::sources::sources(
     std::vector<specfem::sources::source *> sources,
-    quadrature::quadrature &quadx, quadrature::quadrature &quadz,
-    specfem::MPI *mpi) {
+    quadrature::quadrature &quadx, quadrature::quadrature &quadz, specfem::MPI
+    : MPI *mpi) {
 
   // Get  sources which lie in processor
   std::vector<specfem::sources::source *> my_sources;

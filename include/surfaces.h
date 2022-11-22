@@ -21,7 +21,7 @@ struct acoustic_free_surface {
   acoustic_free_surface(){};
   acoustic_free_surface(const int nelem_acoustic_surface);
   acoustic_free_surface(std::ifstream &stream, const int nelem_acoustic_surface,
-                        const specfem::MPI *mpi);
+                        const specfem::MPI::MPI *mpi);
 };
 
 } // namespace surfaces

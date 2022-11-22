@@ -23,7 +23,7 @@ void operator>>(YAML::Node &Node, config &config) {
   config.database_filename = Node["database_file"].as<std::string>();
 }
 
-config get_node_config(std::string config_file, specfem::MPI *mpi) {
+config get_node_config(std::string config_file, specfem::MPI::MPI *mpi) {
   // read specfem config file
   config config{};
   YAML::Node yaml = YAML::LoadFile(config_file);
@@ -54,7 +54,7 @@ config get_node_config(std::string config_file, specfem::MPI *mpi) {
 int main(int argc, char **argv) {
 
   // Initialize MPI
-  specfem::MPI *mpi = new specfem::MPI(&argc, &argv);
+  specfem::MPI::MPI *mpi = new specfem::MPI::MPI(&argc, &argv);
   // Initialize Kokkos
   Kokkos::initialize(argc, argv);
   {
@@ -71,20 +71,17 @@ int main(int argc, char **argv) {
 
     std::vector<specfem::material *> materials;
     specfem::mesh mesh(config.database_filename, materials, mpi);
-    std::vector<specfem::sources::source *> sources =
-        read_sources(config.source_filename, mpi);
+    // std::vector<specfem::sources::source *> sources =
+    //     specfem::read_sources(config.source_filename, mpi);
 
-    specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods,
-                                      mesh.material_ind.kmato, gllx, gllz,
-                                      materials, sources);
-
-    for (source : sources) {
-      source->locate(mesh.ibool, compute.coord, gllx.get_hxi(), gllz.get_hxi(),
-                     mesh.nproc, mesh.coorg, mesh.material_ind.knods,
-                     mesh.npgeo, mpi);
-    }
-
-    compute.sources = specfem::compute::sources(sources);
+    specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
+                                      gllz);
+    specfem::compute::partial_derivatives partial_derivatives(
+        mesh.coorg, mesh.material_ind.knods, gllx, gllz);
+    specfem::compute::properties material_properties(
+        mesh.material_ind.kmato, materials, mesh.nspec, gllx.get_N(),
+        gllz.get_N());
+    // specfem::compute::sources compute_sources(sources, gllx, gllz, mpi);
   }
 
   // Finalize Kokkos

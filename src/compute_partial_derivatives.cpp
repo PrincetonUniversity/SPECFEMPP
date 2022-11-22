@@ -4,9 +4,9 @@
 #include "../include/shape_functions.h"
 #include <Kokkos_Core.hpp>
 
-specfem::compute::partial_derivates::partial_derivates(const int nspec,
-                                                       const int ngllz,
-                                                       const int ngllx)
+specfem::compute::partial_derivatives::partial_derivatives(const int nspec,
+                                                           const int ngllz,
+                                                           const int ngllx)
     : xix(specfem::HostView3d<type_real>("specfem::mesh::compute::xix", nspec,
                                          ngllz, ngllx)),
       xiz(specfem::HostView3d<type_real>("specfem::mesh::compute::xiz", nspec,
@@ -18,7 +18,7 @@ specfem::compute::partial_derivates::partial_derivates(const int nspec,
       jacobian(specfem::HostView3d<type_real>(
           "specfem::mesh::compute::jacobian", nspec, ngllz, ngllx)){};
 
-specfem::compute::partial_derivates::partial_derivates(
+specfem::compute::partial_derivatives::partial_derivatives(
     const specfem::HostView2d<type_real> coorg,
     const specfem::HostView2d<int> knods, const quadrature::quadrature &quadx,
     const quadrature::quadrature &quadz) {
@@ -33,7 +33,7 @@ specfem::compute::partial_derivates::partial_derivates(
   int ngllxz = ngllx * ngllz;
 
   // Allocate views
-  *this = specfem::partial_derivates::partial_derivates(nspec, ngllz, ngllx);
+  *this = specfem::compute::partial_derivatives(nspec, ngllz, ngllx);
 
   specfem::HostMirror1d<type_real> xi = quadx.get_hxi();
   specfem::HostMirror1d<type_real> gamma = quadz.get_hxi();

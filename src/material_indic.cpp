@@ -20,7 +20,7 @@ specfem::materials::material_ind::material_ind(const int nspec,
 specfem::materials::material_ind::material_ind(std::ifstream &stream,
                                                const int ngnod, const int nspec,
                                                const int numat,
-                                               const specfem::MPI *mpi) {
+                                               const specfem::MPI::MPI *mpi) {
   std::vector<int> knods_read(ngnod, -1);
   int n, kmato_read, pml_read;
 
