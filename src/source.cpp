@@ -4,7 +4,7 @@
 #include "../include/kokkos_abstractions.h"
 #include "../include/lagrange_poly.h"
 #include "../include/specfem_mpi.h"
-#include "../include/util.h"
+#include "../include/utils.h"
 
 void specfem::sources::source::check_locations(const type_real xmin,
                                                const type_real xmax,
@@ -68,7 +68,6 @@ void specfem::sources::force::compute_source_array(
     quadrature::quadrature &quadx, quadrature::quadrature &quadz,
     specfem::HostView3d<type_real> source_array) {
 
-  int ispec = this->ispec;
   type_real xi = this->xi;
   type_real gamma = this->gamma;
   type_real angle = this->angle;
@@ -105,7 +104,6 @@ void specfem::sources::moment_tensor::compute_source_array(
     quadrature::quadrature &quadx, quadrature::quadrature &quadz,
     specfem::HostView3d<type_real> source_array) {
 
-  int ispec = this->ispec;
   type_real xi = this->xi;
   type_real gamma = this->gamma;
   type_real Mxx = this->Mxx;
