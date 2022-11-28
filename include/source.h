@@ -5,6 +5,7 @@
 #include "../include/kokkos_abstractions.h"
 #include "../include/quadrature.h"
 #include "../include/specfem_mpi.h"
+#include "../include/utils.h"
 
 namespace specfem {
 namespace sources {
@@ -12,12 +13,13 @@ namespace sources {
 class source {
 
 public:
+  source(){};
   virtual void locate(const specfem::HostView3d<int> ibool,
                       const specfem::HostView2d<type_real> coord,
                       const specfem::HostMirror1d<type_real> xigll,
                       const specfem::HostMirror1d<type_real> zigll,
                       const int nproc,
-                      const specfem::HostView3d<type_real> coorg,
+                      const specfem::HostView2d<type_real> coorg,
                       const specfem::HostView2d<int> knods, const int npgeo,
                       const specfem::HostView1d<element_type> ispec_type,
                       const specfem::MPI::MPI *mpi){};
@@ -29,8 +31,10 @@ public:
   void check_locations(const type_real xmin, const type_real xmax,
                        const type_real zmin, const type_real zmax,
                        const specfem::MPI::MPI *mpi);
-  virtual int get_islice();
-  virtual int get_ispec();
+  virtual int get_islice() const { return 0; }
+  virtual int get_ispec() const { return 0; }
+  virtual type_real get_x() const { return 0.0; }
+  virtual type_real get_z() const { return 0.0; }
 };
 
 class force : public source {
@@ -45,7 +49,7 @@ public:
               const specfem::HostView2d<type_real> coord,
               const specfem::HostMirror1d<type_real> xigll,
               const specfem::HostMirror1d<type_real> zigll, const int nproc,
-              const specfem::HostView3d<type_real> coorg,
+              const specfem::HostView2d<type_real> coorg,
               const specfem::HostView2d<int> knods, const int npgeo,
               const specfem::HostView1d<element_type> ispec_type,
               const specfem::MPI::MPI *mpi) override;
@@ -57,8 +61,10 @@ public:
   void check_locations(const type_real xmin, const type_real xmax,
                        const type_real zmin, const type_real zmax,
                        const specfem::MPI::MPI *mpi);
-  int get_islice() override { return this->islice; }
-  int get_ispec() override { return this->ispec; }
+  int get_islice() const override { return this->islice; }
+  int get_ispec() const override { return this->ispec; }
+  type_real get_x() const override { return x; }
+  type_real get_z() const override { return z; }
 
 private:
   type_real xi;         ///< f$ \xi f$ value of source inside element
@@ -85,7 +91,7 @@ public:
               const specfem::HostView2d<type_real> coord,
               const specfem::HostMirror1d<type_real> xigll,
               const specfem::HostMirror1d<type_real> zigll, const int nproc,
-              const specfem::HostView3d<type_real> coorg,
+              const specfem::HostView2d<type_real> coorg,
               const specfem::HostView2d<int> knods, const int npgeo,
               const specfem::HostView1d<element_type> ispec_type,
               const specfem::MPI::MPI *mpi) override;
@@ -94,8 +100,10 @@ public:
                        quadrature::quadrature &quadz,
                        specfem::HostView3d<type_real> source_array) override;
   void compute_stf() override;
-  int get_islice() override { return this->islice; }
-  int get_ispec() override { return this->ispec; }
+  int get_islice() const override { return this->islice; }
+  int get_ispec() const override { return this->ispec; }
+  type_real get_x() const override { return x; }
+  type_real get_z() const override { return z; }
 
 private:
   type_real xi;    ///< f$ \xi f$ value of source inside element
@@ -107,9 +115,11 @@ private:
   type_real Mzz;   ///< Mzz for the source
   int ispec;       ///< ispec element number where source is located
   int islice;      ///< MPI slice (rank) where the source is located
+  specfem::HostView2d<type_real> s_coorg; ///< control nodes subviewed at the
+                                          ///< element where this source is
+                                          ///< located
 };
 } // namespace sources
 
 } // namespace specfem
-
 #endif

@@ -7,7 +7,7 @@
 
 namespace specfem {
 std::vector<specfem::sources::source *>
-read_sources(const std::string sources_file, const specfem::MPI::MPI *mpi)
+read_sources(const std::string sources_file, const specfem::MPI::MPI *mpi);
 }
 
 #endif

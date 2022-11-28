@@ -2,6 +2,7 @@
 #define SPECFEM_MPI_H
 
 #include <iostream>
+#include <vector>
 
 #ifdef MPI_PARALLEL
 #include <mpi.h>
@@ -59,6 +60,8 @@ public:
    * @return int my_rank
    */
   int get_rank() const;
+  int main_proc() const { return this->get_rank() == 0; };
+  int get_main() const { return 0; }
   /**
    * @brief MPI_Abort
    *
@@ -128,6 +131,14 @@ public:
    * @return int Reduced value. Should only be reduced on the root=0 process.
    */
   double all_reduce(double lvalue, specfem::MPI::reduce_type reduce_type) const;
+
+  std::vector<int> gather(int lelement) const;
+  std::vector<float> gather(float lelement) const;
+  std::vector<double> gather(double lelement) const;
+
+  int scatter(std::vector<int> gelement) const;
+  float scatter(std::vector<float> gelement) const;
+  double scatter(std::vector<double> gelement) const;
 
 private:
   int world_size; ///< total number of MPI processes
