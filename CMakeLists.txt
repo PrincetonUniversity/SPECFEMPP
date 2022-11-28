@@ -284,16 +284,54 @@ target_link_libraries(
 )
 
 add_library(
+        utilities
+        src/utils.cpp
+)
+
+target_link_libraries(
+        utilities
+        jacobian
+        Kokkos::kokkos
+        specfem_mpi
+)
+
+add_library(
+        source_class
+        src/source.cpp
+)
+
+target_link_libraries(
+        source_class
+        Kokkos::kokkos
+        specfem_mpi
+        utilities
+)
+
+add_library(
+        source_reader
+        src/read_sources.cpp
+)
+
+target_link_libraries(
+        source_reader
+        source_class
+        yaml-cpp
+        utilities
+)
+
+add_library(
         compute
         src/compute.cpp
         src/compute_partial_derivatives.cpp
         src/compute_properties.cpp
+        src/compute_sources.cpp
 )
 
 target_link_libraries(
         compute
         quadrature
         material_class
+        source_class
         jacobian
         shape_functions
         Kokkos::kokkos
@@ -314,6 +352,8 @@ target_link_libraries(
         mesh
         quadrature
         compute
+        source_class
+        source_reader
 )
 
 # Include tests

@@ -101,18 +101,13 @@ specfem::compute::partial_derivatives::partial_derivatives(
               // compute partial derivatives
               auto sv_dershape2D =
                   Kokkos::subview(dershape2D, iz, ix, Kokkos::ALL, Kokkos::ALL);
-              auto [xxi, zxi, xgamma, zgamma] =
-                  jacobian::compute_partial_derivatives(teamMember, s_coorg,
-                                                        ngnod, sv_dershape2D);
 
-              type_real jacobianl =
-                  jacobian::compute_jacobian(xxi, zxi, xgamma, zgamma);
+              type_real jacobianl = jacobian::compute_jacobian(
+                  teamMember, s_coorg, ngnod, sv_dershape2D);
 
-              // invert the relation
-              type_real xixl = zgamma / jacobianl;
-              type_real gammaxl = -zxi / jacobianl;
-              type_real xizl = -xgamma / jacobianl;
-              type_real gammazl = xxi / jacobianl;
+              auto [xixl, gammaxl, xizl, gammazl] =
+                  jacobian::compute_inverted_derivatives(teamMember, s_coorg,
+                                                         ngnod, sv_dershape2D);
 
               this->xix(ispec, iz, ix) = xixl;
               this->gammax(ispec, iz, ix) = gammaxl;

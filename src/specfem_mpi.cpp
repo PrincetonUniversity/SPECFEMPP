@@ -1,7 +1,9 @@
 #include "../include/specfem_mpi.h"
+#include <cassert>
 #include <iostream>
 #include <stdexcept>
 #include <stdlib.h>
+#include <vector>
 
 specfem::MPI::MPI::MPI(int *argc, char ***argv) {
 #ifdef MPI_PARALLEL
@@ -44,7 +46,8 @@ int specfem::MPI::MPI::reduce(int lvalue,
 #ifdef MPI_PARALLEL
   int svalue;
 
-  MPI_Reduce(&lvalue, &svalue, 1, MPI_INT, reducer, 0, this->comm);
+  MPI_Reduce(&lvalue, &svalue, 1, MPI_INT, reducer, this->get_main(),
+             this->comm);
 
   return svalue;
 #else
@@ -57,7 +60,8 @@ int specfem::MPI::MPI::all_reduce(int lvalue,
 #ifdef MPI_PARALLEL
   int svalue;
 
-  MPI_All_Reduce(&lvalue, &svalue, 1, MPI_INT, reducer, 0, this->comm);
+  MPI_All_Reduce(&lvalue, &svalue, 1, MPI_INT, reducer, this->get_main(),
+                 this->comm);
 
   return svalue;
 #else
@@ -70,7 +74,8 @@ float specfem::MPI::MPI::reduce(float lvalue,
 #ifdef MPI_PARALLEL
   float svalue;
 
-  MPI_Reduce(&lvalue, &svalue, 1, MPI_FLOAT, reducer, 0, this->comm);
+  MPI_Reduce(&lvalue, &svalue, 1, MPI_FLOAT, reducer, this->get_main(),
+             this->comm);
 
   return svalue;
 #else
@@ -83,7 +88,8 @@ float specfem::MPI::MPI::all_reduce(float lvalue,
 #ifdef MPI_PARALLEL
   float svalue;
 
-  MPI_All_Reduce(&lvalue, &svalue, 1, MPI_FLOAT, reducer, 0, this->comm);
+  MPI_All_Reduce(&lvalue, &svalue, 1, MPI_FLOAT, reducer, this->get_main(),
+                 this->comm);
 
   return svalue;
 #else
@@ -96,7 +102,8 @@ double specfem::MPI::MPI::reduce(double lvalue,
 #ifdef MPI_PARALLEL
   double svalue;
 
-  MPI_Reduce(&lvalue, &svalue, 1, MPI_DOUBLE, reducer, 0, this->comm);
+  MPI_Reduce(&lvalue, &svalue, 1, MPI_DOUBLE, reducer, this->get_main(),
+             this->comm);
 
   return svalue;
 #else
@@ -109,10 +116,104 @@ double specfem::MPI::MPI::all_reduce(double lvalue,
 #ifdef MPI_PARALLEL
   double svalue;
 
-  MPI_All_Reduce(&lvalue, &svalue, 1, MPI_DOUBLE, reducer, 0, this->comm);
+  MPI_All_Reduce(&lvalue, &svalue, 1, MPI_DOUBLE, reducer, this->get_main(),
+                 this->comm);
 
   return svalue;
 #else
   return lvalue;
+#endif
+}
+
+std::vector<int> specfem::MPI::MPI::gather(int lelement) const {
+
+  std::vector<int> gelement(this->world_size, 0);
+
+#ifdef MPI_PARALLEL
+  auto data_type = MPI_INT;
+  MPI_Gather(&lelement, 1, data_type, &gelement[0], this->world_size, data_type,
+             this->get_main(), this->comm);
+  return gelement;
+#else
+  gelement[0] = lelement;
+  return gelement;
+#endif
+}
+
+std::vector<float> specfem::MPI::MPI::gather(float lelement) const {
+
+  std::vector<float> gelement(this->world_size, 0);
+
+#ifdef MPI_PARALLEL
+  auto data_type = MPI_FLOAT;
+  MPI_Gather(&lelement, 1, data_type, &gelement[0], this->world_size, data_type,
+             this->get_main(), this->comm);
+  return gelement;
+#else
+  gelement[0] = lelement;
+  return gelement;
+#endif
+}
+
+std::vector<double> specfem::MPI::MPI::gather(double lelement) const {
+
+  std::vector<double> gelement(this->world_size, 0);
+
+#ifdef MPI_PARALLEL
+  auto data_type = MPI_DOUBLE;
+  MPI_Gather(&lelement, 1, data_type, &gelement[0], this->world_size, data_type,
+             this->get_main(), this->comm);
+  return gelement;
+#else
+  gelement[0] = lelement;
+  return gelement;
+#endif
+}
+
+int specfem::MPI::MPI::scatter(std::vector<int> gelement) const {
+
+  int lelement;
+  assert(gelement.size() == this->world_size);
+
+#ifdef MPI_PARALLEL
+  auto data_type = MPI_INT;
+  MPI_Scatter(&gelement[0], this->world_size, data_type, &lelement, 1,
+              data_type, this->get_main(), this->comm);
+  return lelement;
+#else
+  lelement = gelement[0];
+  return lelement;
+#endif
+}
+
+float specfem::MPI::MPI::scatter(std::vector<float> gelement) const {
+
+  float lelement;
+  assert(gelement.size() == this->world_size);
+
+#ifdef MPI_PARALLEL
+  auto data_type = MPI_FLOAT;
+  MPI_Scatter(&gelement[0], this->world_size, data_type, &lelement, 1,
+              data_type, this->get_main(), this->comm);
+  return lelement;
+#else
+  lelement = gelement[0];
+  return lelement;
+#endif
+}
+
+double specfem::MPI::MPI::scatter(std::vector<double> gelement) const {
+
+  double lelement;
+  assert(gelement.size() == this->world_size);
+
+#ifdef MPI_PARALLEL
+  auto data_type = MPI_DOUBLE;
+  MPI_Scatter(&gelement[0], this->world_size, data_type, &lelement, 1,
+              data_type, this->get_main(), this->comm);
+  return lelement;
+#else
+  lelement = gelement[0];
+  return lelement;
 #endif
 }
