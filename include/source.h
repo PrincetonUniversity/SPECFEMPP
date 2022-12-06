@@ -35,6 +35,8 @@ public:
   virtual int get_ispec() const { return 0; }
   virtual type_real get_x() const { return 0.0; }
   virtual type_real get_z() const { return 0.0; }
+  virtual type_real get_xi() const { return 0.0; }
+  virtual type_real get_gamma() const { return 0.0; }
 };
 
 class force : public source {
@@ -65,6 +67,8 @@ public:
   int get_ispec() const override { return this->ispec; }
   type_real get_x() const override { return x; }
   type_real get_z() const override { return z; }
+  type_real get_xi() const override { return xi; }
+  type_real get_gamma() const override { return gamma; }
 
 private:
   type_real xi;         ///< f$ \xi f$ value of source inside element
@@ -104,6 +108,8 @@ public:
   int get_ispec() const override { return this->ispec; }
   type_real get_x() const override { return x; }
   type_real get_z() const override { return z; }
+  type_real get_xi() const override { return xi; }
+  type_real get_gamma() const override { return gamma; }
 
 private:
   type_real xi;    ///< f$ \xi f$ value of source inside element

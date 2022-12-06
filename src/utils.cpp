@@ -13,10 +13,10 @@ std::vector<int> get_best_candidates(const int ispec_guess,
   const int ngllz = ibool.extent(2);
 
   std::vector<int> iglob_guess;
-  iglob_guess.push_back(ibool(0, 0, ispec_guess));
-  iglob_guess.push_back(ibool(0, ngllz - 1, ispec_guess));
-  iglob_guess.push_back(ibool(ngllx - 1, 0, ispec_guess));
-  iglob_guess.push_back(ibool(ngllx - 1, ngllz - 1, ispec_guess));
+  iglob_guess.push_back(ibool(ispec_guess, 0, 0));
+  iglob_guess.push_back(ibool(ispec_guess, ngllz - 1, 0));
+  iglob_guess.push_back(ibool(ispec_guess, 0, ngllx - 1));
+  iglob_guess.push_back(ibool(ispec_guess, ngllz - 1, ngllx - 1));
 
   std::vector<int> ispec_candidates;
   ispec_candidates.push_back(ispec_guess);
@@ -65,12 +65,13 @@ rough_location(const type_real x_source, const type_real z_source,
       for (int i = 0; i < ngllx; i++) {
         int iglob = ibool(ispec, j, i);
         dist_squared =
-            (x_source - coord(1, iglob)) * (x_source - coord(1, iglob)) +
-            (z_source - coord(2, iglob)) * (z_source - coord(2, iglob));
+            (x_source - coord(0, iglob)) * (x_source - coord(0, iglob)) +
+            (z_source - coord(1, iglob)) * (z_source - coord(1, iglob));
         if (dist_squared < dist_min) {
           ispec_selected = ispec;
           ix_selected = i;
           iz_selected = j;
+          dist_min = dist_squared;
         }
       }
     }
@@ -85,7 +86,7 @@ get_best_location(const type_real x_source, const type_real z_source,
                   type_real gamma, const specfem::HostView2d<int> knods,
                   const int ispec) {
 
-  int ngnod = coorg.extent(1);
+  int ngnod = knods.extent(0);
 
   specfem::HostView2d<type_real> s_coorg("get_best_location::s_coorg", ndim,
                                          ngnod);
@@ -175,7 +176,9 @@ specfem::utilities::locate(const specfem::HostView3d<int> ibool,
   // get closest quadrature point to source
   auto [ix_guess, iz_guess, ispec_guess] =
       rough_location(x_source, z_source, ibool, coord);
-  int ngnod = coorg.extent(1);
+  int ngnod = knods.extent(0);
+
+  assert(ispec_guess < nspec);
 
   // get best candidates to search
   auto ispec_candidates = get_best_candidates(ispec_guess, ibool);
@@ -187,7 +190,7 @@ specfem::utilities::locate(const specfem::HostView3d<int> ibool,
   type_real xi_source, gamma_source;
 
   for (int i = 0; i < ispec_candidates.size(); i++) {
-    if (i > 1) {
+    if (i > 0) {
       ix_guess = int(ngllx / 2.0);
       iz_guess = int(ngllz / 2.0);
     }
@@ -225,6 +228,11 @@ specfem::utilities::locate(const specfem::HostView3d<int> ibool,
 #else
   int islice = 0;
 #endif
+
+  mpi->bcast(xi_source, islice);
+  mpi->bcast(gamma_source, islice);
+  mpi->bcast(ispec_selected_source, islice);
+
   return std::make_tuple(xi_source, gamma_source, ispec_selected_source,
                          islice);
 }

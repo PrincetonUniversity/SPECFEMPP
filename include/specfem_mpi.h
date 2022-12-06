@@ -18,13 +18,24 @@ namespace MPI {
  * Incase specfem is compiled without MPI then I need placeholders for reducer
  * types
  */
-enum reduce_type { sum : MPI_SUM, min : MPI_MIN, max : MPI_MAX };
-#endif
+enum reduce_type { sum = MPI_SUM, min = MPI_MIN, max = MPI_MAX };
+// /**
+//  * @brief MPI datatype
+//  *
+//  */
+// using datatype = MPI_Datatype;
+#else
 /**
  * @brief MPI reducer type
  *
  */
 enum reduce_type { sum, min, max };
+// /**
+//  * @brief MPI Datatype
+//  *
+//  */
+// enum datatype { datatype };
+#endif
 
 /**
  * @brief MPI class instance to manage MPI communication
@@ -139,6 +150,28 @@ public:
   int scatter(std::vector<int> gelement) const;
   float scatter(std::vector<float> gelement) const;
   double scatter(std::vector<double> gelement) const;
+
+  void bcast(int &val) const;
+  void bcast(float &val) const;
+  void bcast(double &val) const;
+
+  void bcast(int &val, int root) const;
+  void bcast(float &val, int root) const;
+  void bcast(double &val, int root) const;
+
+  //   template<typename T> void bcast(T &val, specfem::MPI::datatype type)
+  //   const {
+  // #ifdef MPI_PARALLEL
+  //     MPI_Bcast(&val, 1, type, this->get_main(), this->comm);
+  // #endif
+  //   };
+
+  //   template<typename T> void bcast(T &val, specfem::MPI::datatype type, int
+  //   root) const {
+  // #ifdef MPI_PARALLEL
+  //     MPI_Bcast(&val, 1, type, root, this->comm, this->comm);
+  // #endif
+  //   };
 
 private:
   int world_size; ///< total number of MPI processes

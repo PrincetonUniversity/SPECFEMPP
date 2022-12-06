@@ -1,0 +1,35 @@
+number-of-sources: 6
+number-of-solutions: 1
+solution:
+  - number-of-nodes: 1
+    source-locations:
+    - source: 1
+      xi: -0.7475E+00
+      gamma: 0.2905E+00
+      ispec: 1453
+      islice: 0
+    - source: 2
+      xi: 0.4020E+00
+      gamma: 0.5832E-01
+      ispec: 197
+      islice: 0
+    - source: 3
+      xi: 0.5831E+00
+      gamma: -0.2247E+00
+      ispec: 351
+      islice: 0
+    - source: 4
+      xi: -0.1010E+01
+      gamma: 0.1010E+01
+      ispec: 4744
+      islice: 0
+    - source: 5
+      xi: 0.8980E+00
+      gamma: 0.4248E+00
+      ispec: 4550
+      islice: 0
+    - source: 6
+      xi: -0.2744E+00
+      gamma: 0.3945E+00
+      ispec: 701
+      islice: 0

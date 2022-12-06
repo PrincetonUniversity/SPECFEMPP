@@ -84,6 +84,12 @@ int main(int argc, char **argv) {
     specfem::compute::properties material_properties(
         mesh.material_ind.kmato, materials, mesh.nspec, gllx.get_N(),
         gllz.get_N());
+
+    for (auto &source : sources)
+      source->locate(compute.ibool, compute.coordinates.coord, gllx.get_hxi(),
+                     gllz.get_hxi(), mesh.nproc, mesh.coorg,
+                     mesh.material_ind.knods, mesh.npgeo,
+                     material_properties.ispec_type, mpi);
     specfem::compute::sources compute_sources(sources, gllx, gllz, mpi);
   }
 
