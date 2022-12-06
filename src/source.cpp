@@ -28,8 +28,9 @@ void specfem::sources::force::locate(
       specfem::utilities::locate(ibool, coord, xigll, zigll, nproc,
                                  this->get_x(), this->get_z(), coorg, knods,
                                  npgeo, mpi);
-  if (this->islice == mpi->get_rank())
+  if (this->islice == mpi->get_rank()) {
     this->el_type = ispec_type(ispec);
+  }
 }
 
 void specfem::sources::moment_tensor::locate(
@@ -51,7 +52,7 @@ void specfem::sources::moment_tensor::locate(
       throw std::runtime_error(
           "Found a Moment-tensor source in acoustic/poroelastic element");
   }
-  int ngnod = coorg.extent(1);
+  int ngnod = knods.extent(0);
   this->s_coorg = specfem::HostView2d<type_real>(
       "specfem::sources::moment_tensor::s_coorg", ndim, ngnod);
 

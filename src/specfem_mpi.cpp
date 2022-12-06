@@ -60,8 +60,7 @@ int specfem::MPI::MPI::all_reduce(int lvalue,
 #ifdef MPI_PARALLEL
   int svalue;
 
-  MPI_All_Reduce(&lvalue, &svalue, 1, MPI_INT, reducer, this->get_main(),
-                 this->comm);
+  MPI_Allreduce(&lvalue, &svalue, 1, MPI_INT, reducer, this->comm);
 
   return svalue;
 #else
@@ -88,8 +87,7 @@ float specfem::MPI::MPI::all_reduce(float lvalue,
 #ifdef MPI_PARALLEL
   float svalue;
 
-  MPI_All_Reduce(&lvalue, &svalue, 1, MPI_FLOAT, reducer, this->get_main(),
-                 this->comm);
+  MPI_Allreduce(&lvalue, &svalue, 1, MPI_FLOAT, reducer, this->comm);
 
   return svalue;
 #else
@@ -116,8 +114,7 @@ double specfem::MPI::MPI::all_reduce(double lvalue,
 #ifdef MPI_PARALLEL
   double svalue;
 
-  MPI_All_Reduce(&lvalue, &svalue, 1, MPI_DOUBLE, reducer, this->get_main(),
-                 this->comm);
+  MPI_Allreduce(&lvalue, &svalue, 1, MPI_DOUBLE, reducer, this->comm);
 
   return svalue;
 #else
@@ -215,5 +212,41 @@ double specfem::MPI::MPI::scatter(std::vector<double> gelement) const {
 #else
   lelement = gelement[0];
   return lelement;
+#endif
+}
+
+void specfem::MPI::MPI::bcast(int &val) const {
+#ifdef MPI_PARALLEL
+  MPI_Bcast(&val, 1, MPI_INT, this->get_main(), this->comm);
+#endif
+}
+
+void specfem::MPI::MPI::bcast(float &val) const {
+#ifdef MPI_PARALLEL
+  MPI_Bcast(&val, 1, MPI_FLOAT, this->get_main(), this->comm);
+#endif
+}
+
+void specfem::MPI::MPI::bcast(double &val) const {
+#ifdef MPI_PARALLEL
+  MPI_Bcast(&val, 1, MPI_DOUBLE, this->get_main(), this->comm);
+#endif
+}
+
+void specfem::MPI::MPI::bcast(int &val, int root) const {
+#ifdef MPI_PARALLEL
+  MPI_Bcast(&val, 1, MPI_INT, root, this->comm);
+#endif
+}
+
+void specfem::MPI::MPI::bcast(float &val, int root) const {
+#ifdef MPI_PARALLEL
+  MPI_Bcast(&val, 1, MPI_FLOAT, root, this->comm);
+#endif
+}
+
+void specfem::MPI::MPI::bcast(double &val, int root) const {
+#ifdef MPI_PARALLEL
+  MPI_Bcast(&val, 1, MPI_DOUBLE, root, this->comm);
 #endif
 }

@@ -87,7 +87,7 @@ add_library(
 if (MPI_PARALLEL)
         target_compile_definitions(
                 specfem_mpi
-                PRIVATE -DMPI_PARALLEL
+                PUBLIC -DMPI_PARALLEL
         )
         message("-- Compiling SPECFEM with MPI")
 else()
@@ -116,33 +116,6 @@ target_link_libraries(
         specfem_mpi
         fortranio
 )
-
-# add_library(
-#         shape_functions
-#         src/shape_functions.cpp
-# )
-
-# target_link_libraries(
-#         shape_functions
-#         Kokkos::kokkos
-# )
-
-if (MPI_PARALLEL)
-        target_compile_definitions(
-                material_reader
-                PUBLIC -DMPI_PARALLEL
-        )
-endif(MPI_PARALLEL)
-
-# add_library(
-#         jacobian
-#         src/jacobian.cpp
-# )
-
-# target_link_libraries(
-#         jacobian
-#         Kokkos::kokkos
-# )
 
 add_library(
         boundaries
@@ -214,13 +187,6 @@ target_link_libraries(
         Kokkos::kokkos
         mpi_interfaces
 )
-
-if (MPI_PARALLEL)
-        target_compile_definitions(
-                database_reader
-                PUBLIC -DMPI_PARALLEL
-        )
-endif(MPI_PARALLEL)
 
 add_library(
         mesh_properties
@@ -305,6 +271,8 @@ target_link_libraries(
         Kokkos::kokkos
         specfem_mpi
         utilities
+        quadrature
+        lagrange
 )
 
 add_library(
