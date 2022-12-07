@@ -10,3 +10,9 @@ Source Interface
 
 .. doxygenfile:: source.h
     :project: SPECFEM KOKKOS IMPLEMENTATION
+
+Reciever Interface
+-------------------
+
+.. note::
+    Need to document the receiver interface
