@@ -56,6 +56,21 @@ type_real pndglj(const type_real z, const int n);
 void zwgljd(specfem::HostMirror1d<type_real> z,
             specfem::HostMirror1d<type_real> w, const int np,
             const type_real alpha, const type_real beta);
+/**
+ * Generate np Gauss-Lobatto-Jacobi points and the weights associated
+ * with Jacobi polynomials of degree n = np-1.
+ * @note alpha and beta coefficients must be greater than -1. Legendre
+ * polynomials are special case of Jacobi polynomials just by setting alpha and
+ * beta to 0.
+ *
+ * @param np Number of GLL points
+ * @param alpha Alpha value of the Jacobi polynomial
+ * @param beta Beta value of the Jacobi polynomial
+ * @return std::tuple<specfem::HostView<type_real>,
+ * specfem::HostView<type_real>> GLL points and weights
+ */
+std::tuple<specfem::HostView1d<type_real>, specfem::HostView1d<type_real> >
+zwgljd(const int np, const type_real alpha, const type_real beta);
 } // namespace gll_library
 
 #endif // GLL_LIBRARY_H

@@ -5,6 +5,8 @@
 #include "../include/mesh.h"
 #include "../include/params.h"
 #include "../include/read_mesh_database.h"
+#include "../include/read_sources.h"
+#include "../include/source.h"
 #include "../include/specfem_mpi.h"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
@@ -16,14 +18,15 @@
 //-----------------------------------------------------------------
 // config parser routines
 struct config {
-  std::string database_filename;
+  std::string database_filename, source_filename;
 };
 
 void operator>>(YAML::Node &Node, config &config) {
   config.database_filename = Node["database_file"].as<std::string>();
+  config.source_filename = Node["source_file"].as<std::string>();
 }
 
-config get_node_config(std::string config_file, specfem::MPI *mpi) {
+config get_node_config(std::string config_file, specfem::MPI::MPI *mpi) {
   // read specfem config file
   config config{};
   YAML::Node yaml = YAML::LoadFile(config_file);
@@ -54,7 +57,7 @@ config get_node_config(std::string config_file, specfem::MPI *mpi) {
 int main(int argc, char **argv) {
 
   // Initialize MPI
-  specfem::MPI *mpi = new specfem::MPI(&argc, &argv);
+  specfem::MPI::MPI *mpi = new specfem::MPI::MPI(&argc, &argv);
   // Initialize Kokkos
   Kokkos::initialize(argc, argv);
   {
@@ -71,10 +74,23 @@ int main(int argc, char **argv) {
 
     std::vector<specfem::material *> materials;
     specfem::mesh mesh(config.database_filename, materials, mpi);
+    std::vector<specfem::sources::source *> sources =
+        specfem::read_sources(config.source_filename, mpi);
 
-    specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods,
-                                      mesh.material_ind.kmato, gllx, gllz,
-                                      materials);
+    specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
+                                      gllz);
+    specfem::compute::partial_derivatives partial_derivatives(
+        mesh.coorg, mesh.material_ind.knods, gllx, gllz);
+    specfem::compute::properties material_properties(
+        mesh.material_ind.kmato, materials, mesh.nspec, gllx.get_N(),
+        gllz.get_N());
+
+    for (auto &source : sources)
+      source->locate(compute.ibool, compute.coordinates.coord, gllx.get_hxi(),
+                     gllz.get_hxi(), mesh.nproc, mesh.coorg,
+                     mesh.material_ind.knods, mesh.npgeo,
+                     material_properties.ispec_type, mpi);
+    specfem::compute::sources compute_sources(sources, gllx, gllz, mpi);
   }
 
   // Finalize Kokkos

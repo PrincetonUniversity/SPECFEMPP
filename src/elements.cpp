@@ -62,10 +62,9 @@ specfem::elements::tangential_elements::tangential_elements(
   return;
 }
 
-specfem::elements::axial_elements::axial_elements(std::ifstream &stream,
-                                                  const int nelem_on_the_axis,
-                                                  const int nspec,
-                                                  const specfem::MPI *mpi) {
+specfem::elements::axial_elements::axial_elements(
+    std::ifstream &stream, const int nelem_on_the_axis, const int nspec,
+    const specfem::MPI::MPI *mpi) {
   int ispec;
 
   *this = specfem::elements::axial_elements(nspec);

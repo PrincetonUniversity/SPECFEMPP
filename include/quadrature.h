@@ -87,13 +87,13 @@ private:
   specfem::DeviceView1d<type_real> xi;   ///< qudrature points stored on device
   specfem::HostMirror1d<type_real> h_xi; ///< quadrature points stored on host
 
-  specfem::DeviceView1d<type_real> w;   ///< qudrature weights stored on device
-  specfem::HostMirror1d<type_real> h_w; ///< quadrature weights stored on host
+  specfem::DeviceView1d<type_real> w; ///< qudrature weights stored on device
+  specfem::HostView1d<type_real> h_w; ///< quadrature weights stored on host
 
   specfem::DeviceView2d<type_real> hprime; ///< Polynomial derivatives stored on
                                            ///< device
-  specfem::HostMirror2d<type_real> h_hprime; ///< Polynomial derivatives store
-                                             ///< on host
+  specfem::HostView2d<type_real> h_hprime; ///< Polynomial derivatives store
+                                           ///< on host
 
   /**
    * Set View allocations for all derivative matrices

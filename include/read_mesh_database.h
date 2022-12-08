@@ -33,8 +33,8 @@ namespace fortran_database {
  * @return std::tuple<int, int, int> nspec, npgeo, nproc values read from
  * database file
  */
-std::tuple<int, int, int> read_mesh_database_header(std::ifstream &stream,
-                                                    const specfem::MPI *mpi);
+std::tuple<int, int, int>
+read_mesh_database_header(std::ifstream &stream, const specfem::MPI::MPI *mpi);
 /**
  * @brief Read coorg elements from fortran binary database file
  *
@@ -45,22 +45,23 @@ std::tuple<int, int, int> read_mesh_database_header(std::ifstream &stream,
  * @return specfem::HostView2d<type_real> coorg values as read from fortran
  * binary database file
  */
-specfem::HostView2d<type_real> read_coorg_elements(std::ifstream &stream,
-                                                   const int npgeo,
-                                                   const specfem::MPI *mpi);
+specfem::HostView2d<type_real>
+read_coorg_elements(std::ifstream &stream, const int npgeo,
+                    const specfem::MPI::MPI *mpi);
 
 /**
  * @warning These two routines need to be implemented
  */
 
 std::tuple<int, type_real, bool>
-read_mesh_database_attenuation(std::ifstream &stream, const specfem::MPI *mpi);
+read_mesh_database_attenuation(std::ifstream &stream,
+                               const specfem::MPI::MPI *mpi);
 
 void read_mesh_database_coupled(std::ifstream &stream,
                                 const int num_fluid_solid_edges,
                                 const int num_fluid_poro_edges,
                                 const int num_solid_poro_edges,
-                                const specfem::MPI *mpi);
+                                const specfem::MPI::MPI *mpi);
 } // namespace fortran_database
 } // namespace IO
 

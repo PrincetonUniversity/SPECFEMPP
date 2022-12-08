@@ -5,5 +5,5 @@ class MPIEnvironment : public ::testing::Environment {
 public:
   virtual void SetUp();
   virtual void TearDown();
-  static specfem::MPI *mpi_;
+  static specfem::MPI::MPI *mpi_;
 };

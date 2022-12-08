@@ -29,11 +29,11 @@ public:
    */
   virtual void assign(utilities::input_holder &holder){};
   virtual utilities::return_holder get_properties() {
-    utilities::return_holder holder;
+    utilities::return_holder holder{};
     return holder;
   };
   virtual element_type get_ispec_type() {
-    element_type dummy;
+    element_type dummy{ elastic };
     return dummy;
   };
 };

@@ -13,7 +13,7 @@
 
 std::tuple<int, int, int>
 IO::fortran_database::read_mesh_database_header(std::ifstream &stream,
-                                                const specfem::MPI *mpi) {
+                                                const specfem::MPI::MPI *mpi) {
   // This subroutine reads header values of the database which are skipped
   std::string dummy_s;
   int dummy_i, dummy_i1, dummy_i2;
@@ -137,7 +137,7 @@ IO::fortran_database::read_mesh_database_header(std::ifstream &stream,
 }
 
 specfem::HostView2d<type_real> IO::fortran_database::read_coorg_elements(
-    std::ifstream &stream, const int npgeo, const specfem::MPI *mpi) {
+    std::ifstream &stream, const int npgeo, const specfem::MPI::MPI *mpi) {
 
   int ipoin = 0;
 
@@ -160,8 +160,8 @@ specfem::HostView2d<type_real> IO::fortran_database::read_coorg_elements(
 }
 
 std::tuple<int, type_real, bool>
-IO::fortran_database::read_mesh_database_attenuation(std::ifstream &stream,
-                                                     const specfem::MPI *mpi) {
+IO::fortran_database::read_mesh_database_attenuation(
+    std::ifstream &stream, const specfem::MPI::MPI *mpi) {
 
   int n_sls;
   type_real attenuation_f0_reference;
@@ -181,7 +181,7 @@ IO::fortran_database::read_mesh_database_attenuation(std::ifstream &stream,
 void IO::fortran_database::read_mesh_database_coupled(
     std::ifstream &stream, const int num_fluid_solid_edges,
     const int num_fluid_poro_edges, const int num_solid_poro_edges,
-    const specfem::MPI *mpi) {
+    const specfem::MPI::MPI *mpi) {
 
   int dummy_i, dummy_i1;
 

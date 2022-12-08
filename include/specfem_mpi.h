@@ -2,12 +2,30 @@
 #define SPECFEM_MPI_H
 
 #include <iostream>
+#include <vector>
 
 #ifdef MPI_PARALLEL
 #include <mpi.h>
 #endif
 
 namespace specfem {
+
+namespace MPI {
+#ifdef MPI_PARALLEL
+/**
+ * @brief MPI reducer type
+ *
+ * Incase specfem is compiled without MPI then I need placeholders for reducer
+ * types
+ */
+enum reduce_type { sum = MPI_SUM, min = MPI_MIN, max = MPI_MAX };
+#else
+/**
+ * @brief MPI reducer type
+ *
+ */
+enum reduce_type { sum, min, max };
+#endif
 
 /**
  * @brief MPI class instance to manage MPI communication
@@ -44,6 +62,20 @@ public:
    */
   int get_rank() const;
   /**
+   * @brief Checks if current proc is main proc
+   *
+   * @return bool rank of the main proc
+   */
+  bool main_proc() const { return this->get_rank() == this->get_main(); };
+  /**
+   * @brief Gets rank of main proc.
+   *
+   * For now rank = 0 is hard coded as the main proc
+   *
+   * @return int rank of the main proc
+   */
+  int get_main() const { return 0; }
+  /**
    * @brief MPI_Abort
    *
    */
@@ -68,9 +100,132 @@ public:
    * @brief MPI reduce implemetation
    *
    * @param lvalue local value to reduce
+   * @param reduce_type specfem reducer type
    * @return int Reduced value. Should only be reduced on the root=0 process.
    */
-  int reduce(int lvalue) const;
+  int reduce(int lvalue, specfem::MPI::reduce_type reduce_type) const;
+  /**
+   * @brief MPI reduce implemetation
+   *
+   * @param lvalue local value to reduce
+   * @param reduce_type specfem reducer type
+   * @return int Reduced value. Should only be reduced on the root=0 process.
+   */
+  float reduce(float lvalue, specfem::MPI::reduce_type reduce_type) const;
+  /**
+   * @brief MPI reduce implemetation
+   *
+   * @param lvalue local value to reduce
+   * @param reduce_type specfem reducer type
+   * @return int Reduced value. Should only be reduced on the root=0 process.
+   */
+  double reduce(double lvalue, specfem::MPI::reduce_type reduce_type) const;
+  /**
+   * @brief MPI all reduce implementation
+   *
+   * @param lvalue local value to reduce
+   * @param reduce_type
+   * @return int Reduced value. Should only be reduced on the root=0 process.
+   */
+  int all_reduce(int lvalue, specfem::MPI::reduce_type reduce_type) const;
+  /**
+   * @brief MPI all reduce implementation
+   *
+   * @param lvalue local value to reduce
+   * @param reduce_type
+   * @return int Reduced value. Should only be reduced on the root=0 process.
+   */
+  float all_reduce(float lvalue, specfem::MPI::reduce_type reduce_type) const;
+  /**
+   * @brief MPI all reduce implementation
+   *
+   * @param lvalue local value to reduce
+   * @param reduce_type
+   * @return int Reduced value. Should only be reduced on the root=0 process.
+   */
+  double all_reduce(double lvalue, specfem::MPI::reduce_type reduce_type) const;
+
+  /**
+   * @brief Gathers elements from all procs in communicator in a vector on main
+   *
+   * @param lelement element to gather
+   * @return std::vector<int> vector of gathered elements
+   */
+  std::vector<int> gather(int lelement) const;
+  /**
+   * @brief Gathers elements from all procs in communicator in a vector on main
+   *
+   * @param lelement element to gather
+   * @return std::vector<float> vector of gathered elements
+   */
+  std::vector<float> gather(float lelement) const;
+  /**
+   * @brief Gathers elements from all procs in communicator in a vector on main
+   *
+   * @param lelement element to gather
+   * @return std::vector<double> vector of gathered elements
+   */
+  std::vector<double> gather(double lelement) const;
+
+  /**
+   * @brief scatter elements on main proc to rest of the processors
+   *
+   * @param gelement vector of elements to scatter
+   * @return int scattered element
+   */
+  int scatter(std::vector<int> gelement) const;
+  /**
+   * @brief scatter elements on main proc to rest of the processors
+   *
+   * @param gelement vector of elements to scatter
+   * @return float scattered element
+   */
+  float scatter(std::vector<float> gelement) const;
+  /**
+   * @brief scatter elements on main proc to rest of the processors
+   *
+   * @param gelement vector of elements to scatter
+   * @return double scattered element
+   */
+  double scatter(std::vector<double> gelement) const;
+
+  /**
+   * @brief Broadcast a value from main proc to the rest
+   *
+   * @param val value to broadcast
+   */
+  void bcast(int &val) const;
+  /**
+   * @brief Broadcast a value from main proc to the rest
+   *
+   * @param val value to broadcast
+   */
+  void bcast(float &val) const;
+  /**
+   * @brief Broadcast a value from main proc to the rest
+   *
+   * @param val value to broadcast
+   */
+  void bcast(double &val) const;
+
+  /**
+   * @brief Broadcast a value from root proc to the rest
+   *
+   * @param val value to broadcast
+   */
+  void bcast(int &val, int root) const;
+  /**
+   * @brief Broadcast a value from root proc to the rest
+   *
+   * @param val value to broadcast
+   */
+  void bcast(float &val, int root) const;
+  /**
+   * @brief Broadcast a value from root proc to the rest
+   *
+   * @param val value to broadcast
+   */
+  void bcast(double &val, int root) const;
 
 private:
   int world_size; ///< total number of MPI processes
@@ -79,6 +234,8 @@ private:
   MPI_Comm comm; ///< MPI communicator
 #endif
 };
+} // namespace MPI
+
 } // namespace specfem
 
 #endif // SPECFEM_MPI_H

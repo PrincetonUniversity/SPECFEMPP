@@ -4,8 +4,9 @@
 #include "../include/shape_functions.h"
 #include <Kokkos_Core.hpp>
 
-specfem::compute::coordinates::coordinates(const int nspec, const int ngllz,
-                                           const int ngllx)
+specfem::compute::partial_derivatives::partial_derivatives(const int nspec,
+                                                           const int ngllz,
+                                                           const int ngllx)
     : xix(specfem::HostView3d<type_real>("specfem::mesh::compute::xix", nspec,
                                          ngllz, ngllx)),
       xiz(specfem::HostView3d<type_real>("specfem::mesh::compute::xiz", nspec,
@@ -17,7 +18,7 @@ specfem::compute::coordinates::coordinates(const int nspec, const int ngllz,
       jacobian(specfem::HostView3d<type_real>(
           "specfem::mesh::compute::jacobian", nspec, ngllz, ngllx)){};
 
-specfem::compute::coordinates::coordinates(
+specfem::compute::partial_derivatives::partial_derivatives(
     const specfem::HostView2d<type_real> coorg,
     const specfem::HostView2d<int> knods, const quadrature::quadrature &quadx,
     const quadrature::quadrature &quadz) {
@@ -32,7 +33,7 @@ specfem::compute::coordinates::coordinates(
   int ngllxz = ngllx * ngllz;
 
   // Allocate views
-  *this = specfem::compute::coordinates(nspec, ngllz, ngllx);
+  *this = specfem::compute::partial_derivatives(nspec, ngllz, ngllx);
 
   specfem::HostMirror1d<type_real> xi = quadx.get_hxi();
   specfem::HostMirror1d<type_real> gamma = quadz.get_hxi();
@@ -100,18 +101,13 @@ specfem::compute::coordinates::coordinates(
               // compute partial derivatives
               auto sv_dershape2D =
                   Kokkos::subview(dershape2D, iz, ix, Kokkos::ALL, Kokkos::ALL);
-              auto [xxi, zxi, xgamma, zgamma] =
-                  jacobian::compute_partial_derivatives(teamMember, s_coorg,
-                                                        ngnod, sv_dershape2D);
 
-              type_real jacobianl =
-                  jacobian::compute_jacobian(xxi, zxi, xgamma, zgamma);
+              type_real jacobianl = jacobian::compute_jacobian(
+                  teamMember, s_coorg, ngnod, sv_dershape2D);
 
-              // invert the relation
-              type_real xixl = zgamma / jacobianl;
-              type_real gammaxl = -zxi / jacobianl;
-              type_real xizl = -xgamma / jacobianl;
-              type_real gammazl = xxi / jacobianl;
+              auto [xixl, gammaxl, xizl, gammazl] =
+                  jacobian::compute_inverted_derivatives(teamMember, s_coorg,
+                                                         ngnod, sv_dershape2D);
 
               this->xix(ispec, iz, ix) = xixl;
               this->gammax(ispec, iz, ix) = gammaxl;

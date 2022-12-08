@@ -17,7 +17,7 @@
 
 specfem::mesh::mesh(const std::string filename,
                     std::vector<specfem::material *> &materials,
-                    const specfem::MPI *mpi) {
+                    const specfem::MPI::MPI *mpi) {
 
   // Read the database file and populate mesh
 
@@ -62,10 +62,11 @@ specfem::mesh::mesh(const std::string filename,
 
   mpi->cout("-- Spectral Elements --");
 
-  int nspec_all = mpi->reduce(this->parameters.nspec);
-  int nelem_acforcing_all = mpi->reduce(this->parameters.nelem_acforcing);
+  int nspec_all = mpi->reduce(this->parameters.nspec, specfem::MPI::sum);
+  int nelem_acforcing_all =
+      mpi->reduce(this->parameters.nelem_acforcing, specfem::MPI::sum);
   int nelem_acoustic_surface_all =
-      mpi->reduce(this->parameters.nelem_acoustic_surface);
+      mpi->reduce(this->parameters.nelem_acoustic_surface, specfem::MPI::sum);
 
   std::ostringstream message;
   message << "Number of spectral elements . . . . . . . . . .(nspec) = "
