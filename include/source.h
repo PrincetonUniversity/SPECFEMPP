@@ -102,15 +102,15 @@ public:
    */
   virtual type_real get_z() const { return 0.0; }
   /**
-   * @brief Get the xi value of the source within the element
+   * @brief Get the \f$ \xi \f$ value of the source within the element
    *
-   * @return type_real xi value
+   * @return type_real \f$ \xi \f$ value
    */
   virtual type_real get_xi() const { return 0.0; }
   /**
-   * @brief Get the gamma value of the source within the element
+   * @brief Get the \f$ \gamma \f$ value of the source within the element
    *
-   * @return type_real gamma value
+   * @return type_real \f$ \gamma \f$ value
    */
   virtual type_real get_gamma() const { return 0.0; }
 };
@@ -217,21 +217,21 @@ public:
    */
   type_real get_z() const override { return z; }
   /**
-   * @brief Get the xi value of the source within the element
+   * @brief Get the \f$ \xi \f$ value of the source within the element
    *
-   * @return type_real xi value
+   * @return type_real \f$ \xi \f$ value
    */
   type_real get_xi() const override { return xi; }
   /**
-   * @brief Get the gamma value of the source within the element
+   * @brief Get the \f$ \gamma \f$ value of the source within the element
    *
-   * @return type_real gamma value
+   * @return type_real \f$ \gamma \f$ value
    */
   type_real get_gamma() const override { return gamma; }
 
 private:
-  type_real xi;         ///< f$ \xi f$ value of source inside element
-  type_real gamma;      ///< f$ \gamma f$ value of source inside element
+  type_real xi;         ///< \f$ \xi \f$ value of source inside element
+  type_real gamma;      ///< \f$ \gamma \f$ value of source inside element
   type_real x;          ///< x coordinate of source
   type_real z;          ///< z coordinate of source
   type_real angle;      ///< angle of the source
@@ -332,21 +332,21 @@ public:
    */
   type_real get_z() const override { return z; }
   /**
-   * @brief Get the xi value of the source within the element
+   * @brief Get the \f$ \xi \f$ value of the source within the element
    *
-   * @return type_real xi value
+   * @return type_real \f$ \xi \f$ value
    */
   type_real get_xi() const override { return xi; }
   /**
-   * @brief Get the gamma value of the source within the element
+   * @brief Get the \f$ \gamma \f$ value of the source within the element
    *
-   * @return type_real gamma value
+   * @return type_real \f$ \gamma \f$ value
    */
   type_real get_gamma() const override { return gamma; }
 
 private:
-  type_real xi;    ///< f$ \xi f$ value of source inside element
-  type_real gamma; ///< f$ \gamma f$ value of source inside element
+  type_real xi;    ///< \f$ \xi \f$ value of source inside element
+  type_real gamma; ///< \f$ \gamma \f$ value of source inside element
   type_real x;     ///< x coordinate of source
   type_real z;     ///< z coordinate of source
   type_real Mxx;   ///< Mxx for the source
