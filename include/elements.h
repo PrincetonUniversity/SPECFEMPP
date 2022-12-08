@@ -37,7 +37,7 @@ struct axial_elements {
   axial_elements(){};
   axial_elements(const int nspec);
   axial_elements(std::ifstream &stream, const int nelem_on_the_axis,
-                 const int nspec, const specfem::MPI *mpi);
+                 const int nspec, const specfem::MPI::MPI *mpi);
 };
 
 } // namespace elements

@@ -29,7 +29,7 @@ void gll_utils::jacg(HostMirror1d xjac, const int np, const type_real alpha,
 
   type_real xlast, dth, x, x1, x2, delx;
   type_real p, pd;
-  int k, jmin, jm, n;
+  int n;
   const int k_max = 10;
   const type_real eps = 1e-12;
 
@@ -79,7 +79,6 @@ gll_utils::jacobf(const int n, const type_real alpha, const type_real beta,
   type_real p1 = 0.0, p1d = 0.0, pm1, pm1d, pm2, pm2d;
 
   type_real double_k, a1, a2, b3, a3, a4;
-  int k;
 
   p1 = 1.0;
   p1d = 0.0;

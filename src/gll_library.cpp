@@ -6,6 +6,7 @@
 #include <stdexcept>
 
 using HostMirror1d = specfem::HostMirror1d<type_real>;
+using HostView1d = specfem::HostView1d<type_real>;
 
 type_real gll_library::pnleg(const type_real z, const int n) {
   // Generate Lagendre polynomials using recurrance relation
@@ -137,4 +138,48 @@ void gll_library::zwgljd(HostMirror1d z, HostMirror1d w, const int np,
   w(np - 1) = gll_utils::endw2(np - 1, alpha, beta) / (2.0 * pd);
 
   return;
+}
+
+std::tuple<HostView1d, HostView1d>
+gll_library::zwgljd(const int np, const type_real alpha, const type_real beta) {
+
+  type_real p, pd;
+
+  assert(np > 2);
+  assert(alpha > -1.0 && beta > -1.0);
+
+  HostView1d z("specfem::gll_library::z", np);
+  HostView1d w("specfem::gll_library::z", np);
+
+  if (np > 2) {
+    auto z_view = Kokkos::subview(z, Kokkos::pair(1, np - 1));
+    auto w_view = Kokkos::subview(w, Kokkos::pair(1, np - 1));
+    gll_utils::zwgjd(z_view, w_view, np - 2, alpha + 1.0, beta + 1.0);
+  }
+
+  // start and end point at exactly -1 and 1
+  z(0) = -1.0;
+  z(np - 1) = 1.0;
+
+  // note: Jacobi polynomials with (alpha,beta) equal to zero become Legendre
+  // polynomials.
+  //       for Legendre polynomials, if number of points is odd, the middle
+  //       abscissa is exactly zero
+  if (std::abs(alpha) < 1e-9 && std::abs(beta) < 1e-9) {
+    if (np % 2 != 0)
+      z((np - 1) / 2) = 0.0;
+  }
+
+  for (int i = 1; i < np - 1; i++) {
+    w(i) = w(i) / (1.0 - z(i) * z(i));
+  }
+
+  std::tie(p, pd, std::ignore) = gll_utils::jacobf(np - 1, alpha, beta, z(0));
+  w(0) = gll_utils::endw1(np - 1, alpha, beta) / (2.0 * pd);
+
+  std::tie(p, pd, std::ignore) =
+      gll_utils::jacobf(np - 1, alpha, beta, z(np - 1));
+  w(np - 1) = gll_utils::endw2(np - 1, alpha, beta) / (2.0 * pd);
+
+  return std::make_tuple(z, w);
 }

@@ -87,7 +87,7 @@ add_library(
 if (MPI_PARALLEL)
         target_compile_definitions(
                 specfem_mpi
-                PRIVATE -DMPI_PARALLEL
+                PUBLIC -DMPI_PARALLEL
         )
         message("-- Compiling SPECFEM with MPI")
 else()
@@ -116,33 +116,6 @@ target_link_libraries(
         specfem_mpi
         fortranio
 )
-
-# add_library(
-#         shape_functions
-#         src/shape_functions.cpp
-# )
-
-# target_link_libraries(
-#         shape_functions
-#         Kokkos::kokkos
-# )
-
-if (MPI_PARALLEL)
-        target_compile_definitions(
-                material_reader
-                PUBLIC -DMPI_PARALLEL
-        )
-endif(MPI_PARALLEL)
-
-# add_library(
-#         jacobian
-#         src/jacobian.cpp
-# )
-
-# target_link_libraries(
-#         jacobian
-#         Kokkos::kokkos
-# )
 
 add_library(
         boundaries
@@ -215,13 +188,6 @@ target_link_libraries(
         mpi_interfaces
 )
 
-if (MPI_PARALLEL)
-        target_compile_definitions(
-                database_reader
-                PUBLIC -DMPI_PARALLEL
-        )
-endif(MPI_PARALLEL)
-
 add_library(
         mesh_properties
         src/mesh_properties.cpp
@@ -284,16 +250,56 @@ target_link_libraries(
 )
 
 add_library(
+        utilities
+        src/utils.cpp
+)
+
+target_link_libraries(
+        utilities
+        jacobian
+        Kokkos::kokkos
+        specfem_mpi
+)
+
+add_library(
+        source_class
+        src/source.cpp
+)
+
+target_link_libraries(
+        source_class
+        Kokkos::kokkos
+        specfem_mpi
+        utilities
+        quadrature
+        lagrange
+)
+
+add_library(
+        source_reader
+        src/read_sources.cpp
+)
+
+target_link_libraries(
+        source_reader
+        source_class
+        yaml-cpp
+        utilities
+)
+
+add_library(
         compute
         src/compute.cpp
-        src/compute_coordinates.cpp
+        src/compute_partial_derivatives.cpp
         src/compute_properties.cpp
+        src/compute_sources.cpp
 )
 
 target_link_libraries(
         compute
         quadrature
         material_class
+        source_class
         jacobian
         shape_functions
         Kokkos::kokkos
@@ -314,6 +320,8 @@ target_link_libraries(
         mesh
         quadrature
         compute
+        source_class
+        source_reader
 )
 
 # Include tests

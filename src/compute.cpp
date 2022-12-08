@@ -1,7 +1,6 @@
 #include "../include/compute.h"
 #include "../include/jacobian.h"
 #include "../include/kokkos_abstractions.h"
-#include "../include/material.h"
 #include "../include/quadrature.h"
 #include "../include/shape_functions.h"
 #include <Kokkos_Core.hpp>
@@ -39,7 +38,8 @@ type_real get_tolerance(std::vector<qp> cart_cord, const int nspec,
   return 1e-6 * xtypdist;
 }
 
-std::tuple<specfem::HostView3d<int>, specfem::HostView2d<type_real> >
+std::tuple<specfem::HostView3d<int>, specfem::HostView2d<type_real>, type_real,
+           type_real, type_real, type_real>
 assign_numbering(std::vector<qp> &cart_cord, const int nspec, const int ngllx,
                  const int ngllz) {
 
@@ -86,6 +86,10 @@ assign_numbering(std::vector<qp> &cart_cord, const int nspec, const int ngllx,
   std::vector<int> iglob_counted(nglob, -1);
   int iloc = 0;
   int inum = 0;
+  type_real xmin = std::numeric_limits<type_real>::max();
+  type_real xmax = std::numeric_limits<type_real>::min();
+  type_real zmin = std::numeric_limits<type_real>::max();
+  type_real zmax = std::numeric_limits<type_real>::min();
   for (int ispec = 0; ispec < nspec; ispec++) {
     for (int iz = 0; iz < ngllz; iz++) {
       for (int ix = 0; ix < ngllx; ix++) {
@@ -94,6 +98,14 @@ assign_numbering(std::vector<qp> &cart_cord, const int nspec, const int ngllx,
           iglob_counted[copy_cart_cord[iloc].iglob] = inum;
           coord(0, inum) = copy_cart_cord[iloc].x;
           coord(1, inum) = copy_cart_cord[iloc].y;
+          if (xmin > coord(0, inum))
+            xmin = coord(0, inum);
+          if (zmin > coord(1, inum))
+            zmin = coord(1, inum);
+          if (xmax < coord(0, inum))
+            xmax = coord(0, inum);
+          if (zmax < coord(1, inum))
+            zmax = coord(0, inum);
           inum++;
         } else {
           ibool(ispec, iz, ix) = iglob_counted[copy_cart_cord[iloc].iglob];
@@ -107,21 +119,13 @@ assign_numbering(std::vector<qp> &cart_cord, const int nspec, const int ngllx,
 
   assert(inum == nglob);
 
-  return std::make_tuple(ibool, coord);
+  return std::make_tuple(ibool, coord, xmin, xmax, zmin, zmax);
 }
 
-specfem::compute::compute::compute(const int nspec, const int ngllz,
-                                   const int ngllx)
-    : ibool(specfem::HostView3d<int>("specfem::mesh::ibool", nspec, ngllz,
-                                     ngllx)),
-      coordinates(specfem::compute::coordinates(nspec, ngllz, ngllx)),
-      properties(specfem::compute::properties(nspec, ngllz, ngllx)){};
-
-specfem::compute::compute::compute(
-    const specfem::HostView2d<type_real> coorg,
-    const specfem::HostView2d<int> knods, const specfem::HostView1d<int> kmato,
-    const quadrature::quadrature &quadx, const quadrature::quadrature &quadz,
-    const std::vector<specfem::material *> &materials) {
+specfem::compute::compute::compute(const specfem::HostView2d<type_real> coorg,
+                                   const specfem::HostView2d<int> knods,
+                                   const quadrature::quadrature &quadx,
+                                   const quadrature::quadrature &quadz) {
 
   int ngnod = knods.extent(0);
   int nspec = knods.extent(1);
@@ -199,9 +203,8 @@ specfem::compute::compute::compute(
             });
       });
 
-  std::tie(this->ibool, this->coord) =
+  std::tie(this->ibool, this->coordinates.coord, this->coordinates.xmin,
+           this->coordinates.xmax, this->coordinates.zmin,
+           this->coordinates.zmax) =
       assign_numbering(cart_cord, nspec, ngllx, ngllz);
-  this->coordinates = specfem::compute::coordinates(coorg, knods, quadx, quadz);
-  this->properties =
-      specfem::compute::properties(kmato, materials, nspec, ngllx, ngllz);
 }

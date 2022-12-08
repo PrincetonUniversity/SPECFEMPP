@@ -31,7 +31,8 @@ void operator>>(YAML::Node &Node, test_config &test_config) {
   return;
 }
 
-test_config get_test_config(std::string config_filename, specfem::MPI *mpi) {
+test_config get_test_config(std::string config_filename,
+                            specfem::MPI::MPI *mpi) {
   // read test config file
   YAML::Node yaml = YAML::LoadFile(config_filename);
   test_config test_config{};

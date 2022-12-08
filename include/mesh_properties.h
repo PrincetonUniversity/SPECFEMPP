@@ -38,7 +38,7 @@ struct properties {
    * section
    * @param mpi Pointer to MPI object
    */
-  properties(std::ifstream &stream, const specfem::MPI *mpi);
+  properties(std::ifstream &stream, const specfem::MPI::MPI *mpi);
 };
 } // namespace specfem
 

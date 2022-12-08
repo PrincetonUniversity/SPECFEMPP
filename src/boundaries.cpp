@@ -8,7 +8,8 @@
 void find_corners(const specfem::HostView1d<int> numabs,
                   const specfem::HostView2d<bool> codeabs,
                   specfem::HostView2d<bool> codeabscorner,
-                  const int num_abs_boundary_faces, const specfem::MPI *mpi) {
+                  const int num_abs_boundary_faces,
+                  const specfem::MPI::MPI *mpi) {
   int ncorner = 0;
   for (int inum = 0; inum < num_abs_boundary_faces; inum++) {
     if (codeabs(inum, 0)) {
@@ -47,7 +48,7 @@ void find_corners(const specfem::HostView1d<int> numabs,
     }
   }
 
-  int ncorner_all = mpi->reduce(ncorner);
+  int ncorner_all = mpi->reduce(ncorner, specfem::MPI::sum);
   if (mpi->get_rank() == 0)
     assert(ncorner_all <= 4);
 }
@@ -315,7 +316,7 @@ specfem::boundaries::forcing_boundary::forcing_boundary(
 
 specfem::boundaries::absorbing_boundary::absorbing_boundary(
     std::ifstream &stream, int num_abs_boundary_faces, const int nspec,
-    const specfem::MPI *mpi) {
+    const specfem::MPI::MPI *mpi) {
 
   // I have to do this because std::vector<bool> is a fake container type that
   // causes issues when getting a reference
@@ -381,7 +382,7 @@ specfem::boundaries::absorbing_boundary::absorbing_boundary(
 
 specfem::boundaries::forcing_boundary::forcing_boundary(
     std::ifstream &stream, const int nelement_acforcing, const int nspec,
-    const specfem::MPI *mpi) {
+    const specfem::MPI::MPI *mpi) {
   bool codeacread1 = true, codeacread2 = true, codeacread3 = true,
        codeacread4 = true;
   std::vector<int> iedgeread(8, 0);

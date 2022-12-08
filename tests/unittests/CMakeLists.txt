@@ -105,12 +105,12 @@ target_link_libraries(
 )
 
 add_executable(
-  compute_coordinates_tests
-  compute/compute_coordinates_tests.cpp
+  compute_partial_derivatives_tests
+  compute/compute_partial_derivatives_tests.cpp
 )
 
 target_link_libraries(
-  compute_coordinates_tests
+  compute_partial_derivatives_tests
   mesh
   compute
   quadrature
@@ -158,12 +158,35 @@ target_link_libraries(
   -lpthread -lm
 )
 
+add_executable(
+  source_location_tests
+  source/source_location_tests.cpp
+)
 
-include(GoogleTest)
-gtest_discover_tests(gll_tests)
-gtest_discover_tests(lagrange_tests)
-gtest_discover_tests(fortranio_test)
-gtest_discover_tests(mesh_tests)
-gtest_discover_tests(compute_coordinates_tests)
-gtest_discover_tests(compute_properties_tests)
-gtest_discover_tests(compute_tests)
+target_link_libraries(
+  source_location_tests
+  material_class
+  mpi_environment
+  database_reader
+  kokkos_environment
+  yaml-cpp
+  mesh
+  quadrature
+  compute
+  source_class
+  source_reader
+  -lpthread -lm
+)
+
+# Link to gtest only if MPI is enabled
+if (NOT MPI_PARALLEL)
+  include(GoogleTest)
+  gtest_discover_tests(gll_tests)
+  gtest_discover_tests(lagrange_tests)
+  gtest_discover_tests(fortranio_test)
+  gtest_discover_tests(mesh_tests)
+  gtest_discover_tests(compute_partial_derivatives_tests)
+  gtest_discover_tests(compute_properties_tests)
+  gtest_discover_tests(compute_tests)
+  gtest_discover_tests(source_location_tests)
+endif(NOT MPI_PARALLEL)

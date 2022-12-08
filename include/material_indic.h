@@ -56,7 +56,7 @@ struct material_ind {
    * @param mpi Pointer to a MPI object
    */
   material_ind(std::ifstream &stream, const int ngnod, const int nspec,
-               const int numat, const specfem::MPI *mpi);
+               const int numat, const specfem::MPI::MPI *mpi);
 };
 } // namespace materials
 } // namespace specfem

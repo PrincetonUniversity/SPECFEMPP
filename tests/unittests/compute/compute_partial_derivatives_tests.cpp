@@ -28,7 +28,8 @@ void operator>>(YAML::Node &Node, test_config &test_config) {
   return;
 }
 
-test_config get_test_config(std::string config_filename, specfem::MPI *mpi) {
+test_config get_test_config(std::string config_filename,
+                            specfem::MPI::MPI *mpi) {
   // read test config file
   YAML::Node yaml = YAML::LoadFile(config_filename);
   test_config test_config{};
@@ -60,7 +61,7 @@ test_config get_test_config(std::string config_filename, specfem::MPI *mpi) {
  * This test should be run on single and multiple nodes
  *
  */
-TEST(COMPUTE_TESTS, compute_coordinates) {
+TEST(COMPUTE_TESTS, compute_partial_derivatives) {
 
   std::string config_filename =
       "../../../tests/unittests/compute/test_config.yml";
@@ -75,24 +76,24 @@ TEST(COMPUTE_TESTS, compute_coordinates) {
   specfem::mesh mesh(test_config.database_filename, materials,
                      MPIEnvironment::mpi_);
 
-  specfem::compute::coordinates coordinates(mesh.coorg, mesh.material_ind.knods,
-                                            gllx, gllz);
+  specfem::compute::partial_derivatives partial_derivatives(
+      mesh.coorg, mesh.material_ind.knods, gllx, gllz);
 
-  EXPECT_NO_THROW(specfem::testing::test_array(coordinates.xix,
+  EXPECT_NO_THROW(specfem::testing::test_array(partial_derivatives.xix,
                                                test_config.xix_file, mesh.nspec,
                                                gllz.get_N(), gllx.get_N()));
   // EXPECT_NO_THROW(specfem::testing::test_array(
-  //     coordinates.xiz, test_config.xiz_file, mesh.nspec, gllz.get_N(),
-  //     gllx.get_N()));
-  EXPECT_NO_THROW(
-      specfem::testing::test_array(coordinates.gammax, test_config.gammax_file,
-                                   mesh.nspec, gllz.get_N(), gllx.get_N()));
-  EXPECT_NO_THROW(
-      specfem::testing::test_array(coordinates.gammaz, test_config.gammaz_file,
-                                   mesh.nspec, gllz.get_N(), gllx.get_N()));
+  //     partial_derivatives.xiz, test_config.xiz_file, mesh.nspec,
+  //     gllz.get_N(), gllx.get_N()));
   EXPECT_NO_THROW(specfem::testing::test_array(
-      coordinates.jacobian, test_config.jacobian_file, mesh.nspec, gllz.get_N(),
-      gllx.get_N()));
+      partial_derivatives.gammax, test_config.gammax_file, mesh.nspec,
+      gllz.get_N(), gllx.get_N()));
+  EXPECT_NO_THROW(specfem::testing::test_array(
+      partial_derivatives.gammaz, test_config.gammaz_file, mesh.nspec,
+      gllz.get_N(), gllx.get_N()));
+  EXPECT_NO_THROW(specfem::testing::test_array(
+      partial_derivatives.jacobian, test_config.jacobian_file, mesh.nspec,
+      gllz.get_N(), gllx.get_N()));
 }
 
 int main(int argc, char *argv[]) {

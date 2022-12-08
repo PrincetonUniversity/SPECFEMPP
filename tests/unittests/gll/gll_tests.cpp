@@ -142,13 +142,12 @@ TEST(GLL_tests, ZWGJD) {
 TEST(GLL_tests, ZWGLJD) {
 
   type_real tol = 1e-6;
-  const auto &zwgljd = gll_library::zwgljd;
 
   DeviceView1d z1("gll_tests::gll_library::z1", 3);
   HostMirror1d h_z1 = Kokkos::create_mirror_view(z1);
   DeviceView1d w1("gll_tests::gll_library::w1", 3);
   HostMirror1d h_w1 = Kokkos::create_mirror_view(w1);
-  zwgljd(h_z1, h_w1, 3, 0.0, 0.0);
+  gll_library::zwgljd(h_z1, h_w1, 3, 0.0, 0.0);
   EXPECT_NEAR(h_z1(0), -1.0, tol);
   EXPECT_NEAR(h_z1(1), 0.0, tol);
   EXPECT_NEAR(h_z1(2), 1.0, tol);
@@ -160,7 +159,7 @@ TEST(GLL_tests, ZWGLJD) {
   HostMirror1d h_z2 = Kokkos::create_mirror_view(z2);
   DeviceView1d w2("gll_tests::gll_library::w2", 5);
   HostMirror1d h_w2 = Kokkos::create_mirror_view(w2);
-  zwgljd(h_z2, h_w2, 5, 0.0, 0.0);
+  gll_library::zwgljd(h_z2, h_w2, 5, 0.0, 0.0);
   EXPECT_NEAR(h_z2(0), -1.0, tol);
   EXPECT_NEAR(h_z2(1), -0.6546536707, tol);
   EXPECT_NEAR(h_z2(2), 0.0, tol);
@@ -172,7 +171,7 @@ TEST(GLL_tests, ZWGLJD) {
   EXPECT_NEAR(h_w2(3), 0.5444444444, tol);
   EXPECT_NEAR(h_w2(4), 0.1, tol);
 
-  zwgljd(h_z2, h_w2, 5, 0.0, 1.0);
+  gll_library::zwgljd(h_z2, h_w2, 5, 0.0, 1.0);
   EXPECT_NEAR(h_z2(0), -1.0, tol);
   EXPECT_NEAR(h_z2(1), -0.5077876295, tol);
   EXPECT_NEAR(h_z2(2), 0.1323008207, tol);
@@ -188,7 +187,7 @@ TEST(GLL_tests, ZWGLJD) {
   HostMirror1d h_z3 = Kokkos::create_mirror_view(z3);
   DeviceView1d w3("gll_tests::gll_library::w3", 7);
   HostMirror1d h_w3 = Kokkos::create_mirror_view(w3);
-  zwgljd(h_z3, h_w3, 7, 0.0, 0.0);
+  gll_library::zwgljd(h_z3, h_w3, 7, 0.0, 0.0);
   EXPECT_NEAR(h_z3(0), -1.0, tol);
   EXPECT_NEAR(h_z3(1), -0.8302238962, tol);
   EXPECT_NEAR(h_z3(2), -0.4688487934, tol);
@@ -204,7 +203,7 @@ TEST(GLL_tests, ZWGLJD) {
   EXPECT_NEAR(h_w3(5), 0.2768260473, tol);
   EXPECT_NEAR(h_w3(6), 0.0476190476, tol);
 
-  zwgljd(h_z3, h_w3, 7, 0.0, 1.0);
+  gll_library::zwgljd(h_z3, h_w3, 7, 0.0, 1.0);
   EXPECT_NEAR(h_z3(0), -1.0, tol);
   EXPECT_NEAR(h_z3(1), -0.7401236486, tol);
   EXPECT_NEAR(h_z3(2), -0.3538526341, tol);
