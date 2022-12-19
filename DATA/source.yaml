@@ -10,6 +10,7 @@ sources:
     vx : 0.0
     vz : 0.0
     factor: 1.0
+    tshift: 0.0
   - source_type: Moment-tensor source
     x : 2500.0
     z : 2500.0
@@ -22,3 +23,4 @@ sources:
     vx : 0.0
     vz : 0.0
     factor : 1.0
+    tshift: 0.0

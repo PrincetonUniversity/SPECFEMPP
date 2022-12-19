@@ -20,8 +20,9 @@ specfem::compute::partial_derivatives::partial_derivatives(const int nspec,
 
 specfem::compute::partial_derivatives::partial_derivatives(
     const specfem::HostView2d<type_real> coorg,
-    const specfem::HostView2d<int> knods, const quadrature::quadrature &quadx,
-    const quadrature::quadrature &quadz) {
+    const specfem::HostView2d<int> knods,
+    const specfem::quadrature::quadrature &quadx,
+    const specfem::quadrature::quadrature &quadz) {
 
   // Needs an axisymmetric update
 

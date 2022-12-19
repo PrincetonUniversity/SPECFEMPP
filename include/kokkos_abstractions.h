@@ -184,6 +184,24 @@ using HostMDrange =
  *
  */
 using HostRange = Kokkos::RangePolicy<HostExecSpace>;
+
+/**
+ * @brief Device multi-dimensional range policy
+ *
+ * TODO : have an example code here on how to use DeviceMDrange policy
+ *
+ * @tparam T Number of view dimensions to collapse inside the loop
+ * @tparam IteratePolicy
+ */
+template <int T, Kokkos::Iterate IteratePolicy = Kokkos::Iterate::Right>
+using DevMDrange =
+    Kokkos::MDRangePolicy<DevExecSpace, Kokkos::Rank<T, IteratePolicy> >;
+
+/**
+ * @brief Device range policy
+ *
+ */
+using DevRange = Kokkos::RangePolicy<DevExecSpace>;
 ///@}
 
 // Team Policy Strategy

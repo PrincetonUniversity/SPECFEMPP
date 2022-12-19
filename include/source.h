@@ -4,7 +4,9 @@
 #include "../include/config.h"
 #include "../include/kokkos_abstractions.h"
 #include "../include/quadrature.h"
+#include "../include/source_time_function.h"
 #include "../include/specfem_mpi.h"
+#include "../include/timescheme.h"
 #include "../include/utils.h"
 
 namespace specfem {
@@ -57,14 +59,16 @@ public:
    * @param source_array view to store the source array
    */
   virtual void
-  compute_source_array(quadrature::quadrature &quadx,
-                       quadrature::quadrature &quadz,
+  compute_source_array(specfem::quadrature::quadrature &quadx,
+                       specfem::quadrature::quadrature &quadz,
                        specfem::HostView3d<type_real> source_array){};
   /**
    * @brief Compute source time function
    *
    */
-  virtual void compute_stf(){};
+  virtual void
+  compute_stf(specfem::HostView1d<type_real, Kokkos::LayoutStride> stf_array,
+              specfem::TimeScheme::TimeScheme *it){};
   /**
    * @brief Check if the source is within the domain
    *
@@ -113,6 +117,9 @@ public:
    * @return type_real \f$ \gamma \f$ value
    */
   virtual type_real get_gamma() const { return 0.0; }
+  virtual type_real get_t0() const { return 0.0; }
+  virtual void update_tshift(type_real tshift){};
+  virtual void print(std::ostream &out) const;
 };
 
 /**
@@ -130,8 +137,9 @@ public:
    * @param angle angle of the source
    * @param wave Type of simulation P-SV or SH wave simulation
    */
-  force(type_real x, type_real z, type_real angle, wave_type wave)
-      : x(x), z(z), angle(angle), wave(wave){};
+  force(type_real x, type_real z, type_real angle, type_real tshift,
+        type_real f0, type_real factor, std::string forcing_type,
+        wave_type wave);
   /**
    * @brief Construct a new collocated force object
    *
@@ -139,9 +147,7 @@ public:
    * written in .yml format
    * @param wave Type of simulation P-SV or SH wave simulation
    */
-  force(specfem::utilities::force_source &force_source, wave_type wave)
-      : x(force_source.x), z(force_source.z), angle(force_source.angle),
-        wave(wave){};
+  force(specfem::utilities::force_source &force_source, wave_type wave);
   /**
    * @brief Locate source within the mesh
    *
@@ -176,10 +182,12 @@ public:
    * @param source_array view to store the source array
    */
   void
-  compute_source_array(quadrature::quadrature &quadx,
-                       quadrature::quadrature &quadz,
+  compute_source_array(specfem::quadrature::quadrature &quadx,
+                       specfem::quadrature::quadrature &quadz,
                        specfem::HostView3d<type_real> source_array) override;
-  void compute_stf() override;
+  void
+  compute_stf(specfem::HostView1d<type_real, Kokkos::LayoutStride> stf_array,
+              specfem::TimeScheme::TimeScheme *it) override;
   /**
    * @brief Check if the source is within the domain
    *
@@ -228,6 +236,12 @@ public:
    * @return type_real \f$ \gamma \f$ value
    */
   type_real get_gamma() const override { return gamma; }
+  ~force() { delete this->forcing_function; }
+  type_real get_t0() const override { return this->forcing_function->get_t0(); }
+  void update_tshift(type_real tshift) override {
+    this->forcing_function->update_tshift(tshift);
+  }
+  void print(std::ostream &out) const override;
 
 private:
   type_real xi;         ///< \f$ \xi \f$ value of source inside element
@@ -239,6 +253,7 @@ private:
   int islice;           ///< MPI slice (rank) where the source is located
   element_type el_type; ///< type of the element inside which this source lies
   wave_type wave;       ///< SH or P-SV wave
+  specfem::forcing_function::stf *forcing_function;
 };
 
 /**
@@ -258,17 +273,15 @@ public:
    * @param Mzz Mzz for the source
    */
   moment_tensor(type_real x, type_real z, type_real Mxx, type_real Mxz,
-                type_real Mzz)
-      : x(x), z(z), Mxx(Mxx), Mxz(Mxz), Mzz(Mzz){};
+                type_real Mzz, type_real tshift, type_real f0, type_real factor,
+                std::string forcing_type);
   /**
    * @brief Construct a new moment tensor force object
    *
    * @param moment_tensor a moment_tensor data holder read from source file
    * written in .yml format
    */
-  moment_tensor(specfem::utilities::moment_tensor &moment_tensor)
-      : x(moment_tensor.x), z(moment_tensor.z), Mxx(moment_tensor.Mxx),
-        Mxz(moment_tensor.Mxz), Mzz(moment_tensor.Mzz){};
+  moment_tensor(specfem::utilities::moment_tensor &moment_tensor);
   /**
    * @brief Locate source within the mesh
    *
@@ -303,10 +316,12 @@ public:
    * @param source_array view to store the source array
    */
   void
-  compute_source_array(quadrature::quadrature &quadx,
-                       quadrature::quadrature &quadz,
+  compute_source_array(specfem::quadrature::quadrature &quadx,
+                       specfem::quadrature::quadrature &quadz,
                        specfem::HostView3d<type_real> source_array) override;
-  void compute_stf() override;
+  void
+  compute_stf(specfem::HostView1d<type_real, Kokkos::LayoutStride> stf_array,
+              specfem::TimeScheme::TimeScheme *it) override;
   /**
    * @brief Get the processor on which this source lies
    *
@@ -343,6 +358,13 @@ public:
    * @return type_real \f$ \gamma \f$ value
    */
   type_real get_gamma() const override { return gamma; }
+  type_real get_t0() const override { return this->forcing_function->get_t0(); }
+  void update_tshift(type_real tshift) {
+    this->forcing_function->update_tshift(tshift);
+  }
+  friend std::ostream &operator<<(std::ostream &out, const moment_tensor *h);
+  void print(std::ostream &out) const override;
+  ~moment_tensor() { delete this->forcing_function; }
 
 private:
   type_real xi;    ///< \f$ \xi \f$ value of source inside element
@@ -357,7 +379,13 @@ private:
   specfem::HostView2d<type_real> s_coorg; ///< control nodes subviewed at the
                                           ///< element where this source is
                                           ///< located
+
+  specfem::forcing_function::stf *forcing_function;
 };
+
+std::ostream &operator<<(std::ostream &out,
+                         const specfem::sources::source &source);
+
 } // namespace sources
 
 } // namespace specfem

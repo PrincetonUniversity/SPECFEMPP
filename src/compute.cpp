@@ -122,10 +122,11 @@ assign_numbering(std::vector<qp> &cart_cord, const int nspec, const int ngllx,
   return std::make_tuple(ibool, coord, xmin, xmax, zmin, zmax);
 }
 
-specfem::compute::compute::compute(const specfem::HostView2d<type_real> coorg,
-                                   const specfem::HostView2d<int> knods,
-                                   const quadrature::quadrature &quadx,
-                                   const quadrature::quadrature &quadz) {
+specfem::compute::compute::compute(
+    const specfem::HostView2d<type_real> coorg,
+    const specfem::HostView2d<int> knods,
+    const specfem::quadrature::quadrature &quadx,
+    const specfem::quadrature::quadrature &quadz) {
 
   int ngnod = knods.extent(0);
   int nspec = knods.extent(1);
