@@ -1,32 +1,28 @@
-# run-config:
-#   number of processors: 10
-#   number of runs: 1
-# databases:
-#   - processor : 0
-#     database_file : "../tests/unittests/parameter_reader/parallel/Database00000.bin"
-#   - processor : 1
-#     database_file : "../tests/unittests/parameter_reader/parallel/Database00001.bin"
-#   - processor : 2
-#     database_file : "../tests/unittests/parameter_reader/parallel/Database00002.bin"
-#   - processor : 3
-#     database_file : "../tests/unittests/parameter_reader/parallel/Database00003.bin"
-#   - processor : 4
-#     database_file : "../tests/unittests/parameter_reader/parallel/Database00004.bin"
-#   - processor : 5
-#     database_file : "../tests/unittests/parameter_reader/parallel/Database00005.bin"
-#   - processor : 6
-#     database_file : "../tests/unittests/parameter_reader/parallel/Database00006.bin"
-#   - processor : 7
-#     database_file : "../tests/unittests/parameter_reader/parallel/Database00007.bin"
-#   - processor : 8
-#     database_file : "../tests/unittests/parameter_reader/parallel/Database00008.bin"
-#   - processor : 9
-#     database_file : "../tests/unittests/parameter_reader/parallel/Database00009.bin"
-
 run-config:
-  number of processors: 1
-  number of runs: 1
-databases:
-  - processor : 0
-    database_file : "../tests/unittests/mesh/serial/database.bin"
-    source_file : "../DATA/source.yaml"
+
+  header:
+    ## Header information is used for logging. It is good practice to give your simulations explicit names
+    title: Elastic simulation # name for your simulation
+    description: None # A detailed description for your simulation
+
+  simulation-setup:
+    ## quadrature setup
+    quadrature:
+      alpha: 0.0
+      beta: 0.0
+      ngllx: 5
+      ngllz: 5
+
+    ## Solver setup
+    solver:
+      solver-type: time-marching
+      type-of-simulation: forward
+      Time-scheme:
+        type: Newmark
+        dt: 1e-3
+        nstep: 1600
+
+  ## Runtime setup
+  run-setup:
+    number-of-processors: 1
+    number-of-runs: 1

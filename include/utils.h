@@ -31,6 +31,7 @@ struct force_source {
   type_real angle;
   type_real vx, vz;
   type_real factor;
+  type_real tshift;
 };
 
 struct moment_tensor {
@@ -43,6 +44,7 @@ struct moment_tensor {
   type_real Mxx, Mxz, Mzz;
   type_real vx, vz;
   type_real factor;
+  type_real tshift;
 };
 
 std::tuple<type_real, type_real, int, int>
@@ -58,6 +60,8 @@ locate(const specfem::HostView3d<int> ibool,
 void check_locations(const type_real x, const type_real z, const type_real xmin,
                      const type_real xmax, const type_real zmin,
                      const type_real zmax, const specfem::MPI::MPI *mpi);
+
+int compute_nglob(const specfem::HostView3d<int> ibool);
 } // namespace utilities
 } // namespace specfem
 

@@ -264,3 +264,23 @@ void specfem::utilities::check_locations(const type_real x, const type_real z,
 
   return;
 }
+
+int specfem::utilities::compute_nglob(const specfem::HostView3d<int> ibool) {
+
+  const int nspec = ibool.extent(0);
+  const int ngllz = ibool.extent(1);
+  const int ngllx = ibool.extent(2);
+
+  type_real nglob;
+  Kokkos::parallel_reduce(
+      "specfem::utils::compute_nglob",
+      specfem::HostMDrange<3>({ 0, 0, 0 }, { nspec, ngllz, ngllx }),
+      KOKKOS_LAMBDA(const int ispec, const int iz, const int ix,
+                    type_real &l_nglob) {
+        l_nglob =
+            l_nglob > ibool(ispec, iz, ix) ? l_nglob : ibool(ispec, iz, ix);
+      },
+      Kokkos::Max<type_real>(nglob));
+
+  return nglob;
+}
