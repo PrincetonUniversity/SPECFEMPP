@@ -3,6 +3,7 @@
 
 #include "../include/config.h"
 #include <Kokkos_Core.hpp>
+#include <Kokkos_ScatterView.hpp>
 
 namespace specfem {
 
@@ -83,6 +84,66 @@ using HostView3d = Kokkos::View<T ***, L, HostMemSpace>;
 template <typename T, typename L = LayoutWrapper>
 using HostView4d = Kokkos::View<T ****, L, HostMemSpace>;
 ///@}
+
+/** @name Host Scatter Views
+ * Scatter views are used when an atomic update is needed on a view.
+ * Scattered access optimizes for atomic algorithm used when updating a view.
+ * For more details check Kokkos scatter view tutorials.
+ */
+
+///@{
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ */
+template <typename T, typename L = LayoutWrapper>
+using HostScatterView1d =
+    Kokkos::Experimental::ScatterView<T *, L, HostExecSpace>;
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ */
+template <typename T, typename L = LayoutWrapper>
+using HostScatterView2d =
+    Kokkos::Experimental::ScatterView<T **, L, HostExecSpace>;
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ */
+template <typename T, typename L = LayoutWrapper>
+using HostScatterView3d =
+    Kokkos::Experimental::ScatterView<T ***, L, HostExecSpace>;
+///}
+
+/** @name Device Scatter Views
+ * Scatter views are used when an atomic update is needed on a view.
+ * Scattered access optimizes for atomic algorithm used when updating a view.
+ * For more details check Kokkos scatter view tutorials.
+ */
+
+///@{
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ */
+template <typename T, typename L = LayoutWrapper>
+using DeviceScatterView1d =
+    Kokkos::Experimental::ScatterView<T *, L, DevExecSpace>;
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ */
+template <typename T, typename L = LayoutWrapper>
+using DeviceScatterView2d =
+    Kokkos::Experimental::ScatterView<T **, L, DevExecSpace>;
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ */
+template <typename T, typename L = LayoutWrapper>
+using DeviceScatterView3d =
+    Kokkos::Experimental::ScatterView<T ***, L, DevExecSpace>;
+///}
 
 /** @name Host Mirrors
  *

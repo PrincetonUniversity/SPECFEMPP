@@ -37,7 +37,7 @@ specfem::Domain::Elastic::Elastic(
 
   Kokkos::fence();
   // Compute the mass matrix
-  Kokkos::Experimental::ScatterView<type_real **> results(rmass_inverse);
+  specfem::HostScatterView2d<type_real> results(rmass_inverse);
   auto wxgll = quadx->get_hw();
   auto wzgll = quadz->get_hw();
   Kokkos::parallel_for(
