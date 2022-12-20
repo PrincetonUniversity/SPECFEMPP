@@ -27,7 +27,7 @@ specfem::compute::sources::sources(
 
   this->stf_array =
       specfem::HostView2d<type_real>("specfem::compute::sources::stf_array",
-                                     it->get_max_time(), my_sources.size());
+                                     it->get_max_timestep(), my_sources.size());
 
   // store source array for sources in my islice
   for (int isource = 0; isource < my_sources.size(); isource++) {

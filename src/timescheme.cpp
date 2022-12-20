@@ -9,7 +9,7 @@ specfem::TimeScheme::Newmark::Newmark(int nstep, type_real t0, type_real dt)
   this->current_time = this->t0;
 }
 
-void specfem::TimeScheme::Newmark::update_time() {
+void specfem::TimeScheme::Newmark::increment_time() {
   this->istep++;
   this->current_time += this->deltat;
   return;
