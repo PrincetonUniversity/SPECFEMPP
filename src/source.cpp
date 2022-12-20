@@ -235,7 +235,7 @@ void specfem::sources::force::compute_stf(
     int istep = it->get_timestep();
     stf_array(istep) = this->forcing_function->compute(timeval);
 
-    it->update_time();
+    it->increment_time();
   }
 
   it->reset_time();
@@ -250,7 +250,7 @@ void specfem::sources::moment_tensor::compute_stf(
     int istep = it->get_timestep();
     stf_array(istep) = this->forcing_function->compute(timeval);
 
-    it->update_time();
+    it->increment_time();
   }
 
   it->reset_time();
