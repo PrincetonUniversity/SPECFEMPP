@@ -144,7 +144,7 @@ test_config parse_test_config(std::string config_filename) {
  * This test should be run on single and multiple nodes
  *
  */
-TEST(COMPUTE_TESTS, compute_ibool) {
+TEST(SOURCE_LOCATION_TESTS, compute_source_locations) {
   std::string config_filename =
       "../../../tests/unittests/source/test_config.yml";
 
