@@ -36,7 +36,7 @@ specfem::Domain::Elastic::Elastic(
                        });
 
   Kokkos::fence();
-  // Compute the inverse mass matrix
+  // Compute the mass matrix
   Kokkos::Experimental::ScatterView<type_real **> results(rmass_inverse);
   auto wxgll = quadx->get_hw();
   auto wzgll = quadz->get_hw();
@@ -57,6 +57,20 @@ specfem::Domain::Elastic::Elastic(
 
   Kokkos::Experimental::contribute(rmass_inverse, results);
   Kokkos::fence();
+
+  // invert the mass matrix
+  Kokkos::parallel_for("specfem::Domain::Elastic", specfem::HostRange(0, nglob),
+                       [=](const int iglob) {
+                         if (rmass_inverse(iglob, 0) > 0.0) {
+                           rmass_inverse(iglob, 0) =
+                               1.0 / rmass_inverse(iglob, 0);
+                           rmass_inverse(iglob, 1) =
+                               1.0 / rmass_inverse(iglob, 1);
+                         } else {
+                           rmass_inverse(iglob, 0) = 1.0;
+                           rmass_inverse(iglob, 1) = 1.0;
+                         }
+                       });
 
   return;
 };

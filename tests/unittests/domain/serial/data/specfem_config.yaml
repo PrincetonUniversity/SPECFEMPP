@@ -1,0 +1,28 @@
+run-config:
+
+  header:
+    ## Header information is used for logging. It is good practice to give your simulations explicit names
+    title: Elastic simulation # name for your simulation
+    description: None # A detailed description for your simulation
+
+  simulation-setup:
+    ## quadrature setup
+    quadrature:
+      alpha: 0.0
+      beta: 0.0
+      ngllx: 5
+      ngllz: 5
+
+    ## Solver setup
+    solver:
+      solver-type: time-marching
+      type-of-simulation: forward
+      Time-scheme:
+        type: Newmark
+        dt: 1e-3
+        nstep: 1600
+
+  ## Runtime setup
+  run-setup:
+    number-of-processors: 1
+    number-of-runs: 1
