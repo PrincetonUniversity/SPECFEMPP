@@ -11,18 +11,24 @@ namespace Domain {
 class Domain {
 
 public:
-  virtual specfem::HostView2d<type_real> get_field() { return this->field; }
-  virtual specfem::HostView2d<type_real> get_field_dot() {
+  virtual specfem::HostView2d<type_real> get_field() const {
+    return this->field;
+  }
+  virtual specfem::HostView2d<type_real> get_field_dot() const {
     return this->field_dot;
   }
-  virtual specfem::HostView2d<type_real> get_field_dot_dot() {
+  virtual specfem::HostView2d<type_real> get_field_dot_dot() const {
     return this->field_dot_dot;
+  }
+  virtual specfem::HostView2d<type_real> get_rmass_inverse() const {
+    return this->rmass_inverse;
   }
 
 private:
   specfem::HostView2d<type_real> field;
   specfem::HostView2d<type_real> field_dot;
   specfem::HostView2d<type_real> field_dot_dot;
+  specfem::HostView2d<type_real> rmass_inverse;
 };
 
 class Elastic : public Domain {
@@ -32,13 +38,15 @@ public:
    *
    * @return specfem::HostView2d<type_real> View of the displacement
    */
-  specfem::HostView2d<type_real> get_field() override { return this->field; }
+  specfem::HostView2d<type_real> get_field() const override {
+    return this->field;
+  }
   /**
    * @brief Get a view of velocity
    *
    * @return specfem::HostView2d<type_real> view of the velocity
    */
-  specfem::HostView2d<type_real> get_field_dot() override {
+  specfem::HostView2d<type_real> get_field_dot() const override {
     return this->field_dot;
   }
   /**
@@ -46,8 +54,12 @@ public:
    *
    * @return specfem::HostView2d<type_real> view of the acceleration
    */
-  specfem::HostView2d<type_real> get_field_dot_dot() override {
+  specfem::HostView2d<type_real> get_field_dot_dot() const override {
     return this->field_dot_dot;
+  }
+
+  specfem::HostView2d<type_real> get_rmass_inverse() const override {
+    return this->rmass_inverse;
   }
 
   /**
