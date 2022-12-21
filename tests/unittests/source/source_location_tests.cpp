@@ -144,7 +144,7 @@ test_config parse_test_config(std::string config_filename) {
  * This test should be run on single and multiple nodes
  *
  */
-TEST(COMPUTE_TESTS, compute_ibool) {
+TEST(SOURCE_LOCATION_TESTS, compute_source_locations) {
   std::string config_filename =
       "../../../tests/unittests/source/test_config.yml";
 
@@ -157,8 +157,8 @@ TEST(COMPUTE_TESTS, compute_ibool) {
       parse_solution_file(test_config.solutions_file);
 
   // Set up GLL quadrature points
-  quadrature::quadrature gllx(0.0, 0.0, ngll);
-  quadrature::quadrature gllz(0.0, 0.0, ngll);
+  specfem::quadrature::quadrature gllx(0.0, 0.0, ngll);
+  specfem::quadrature::quadrature gllz(0.0, 0.0, ngll);
 
   specfem::parameters params;
 
@@ -167,8 +167,7 @@ TEST(COMPUTE_TESTS, compute_ibool) {
   specfem::mesh mesh(test_config.database_file, materials, mpi);
 
   // read sources file
-  std::vector<specfem::sources::source *> sources =
-      specfem::read_sources(test_config.sources_file, mpi);
+  auto [sources, t0] = specfem::read_sources(test_config.sources_file, mpi);
 
   // setup compute struct for future use
   specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,

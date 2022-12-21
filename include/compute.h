@@ -50,8 +50,8 @@ struct partial_derivatives {
    */
   partial_derivatives(const specfem::HostView2d<type_real> coorg,
                       const specfem::HostView2d<int> knods,
-                      const quadrature::quadrature &quadx,
-                      const quadrature::quadrature &quadz);
+                      const specfem::quadrature::quadrature &quadx,
+                      const specfem::quadrature::quadrature &quadz);
 };
 /**
  * @brief Material properties stored at every quadrature point
@@ -126,8 +126,9 @@ struct sources {
    * @param mpi Pointer to the MPI object
    */
   sources(std::vector<specfem::sources::source *> sources,
-          quadrature::quadrature &quadx, quadrature::quadrature &quadz,
-          specfem::MPI::MPI *mpi);
+          specfem::quadrature::quadrature &quadx,
+          specfem::quadrature::quadrature &quadz,
+          specfem::TimeScheme::TimeScheme *it, specfem::MPI::MPI *mpi);
 };
 
 // /**
@@ -162,8 +163,8 @@ struct sources {
 //    * @param mpi Pointer to the MPI object
 //    */
 //   recievers(std::vector<specfem::sources::source *> recievers,
-//           quadrature::quadrature &quadx, quadrature::quadrature &quadz,
-//           specfem::MPI::MPI *mpi);
+//           specfem::quadrature::quadrature &quadx,
+//           specfem::quadrature::quadrature &quadz, specfem::MPI::MPI *mpi);
 // }
 
 struct coordinates {
@@ -212,8 +213,8 @@ struct compute {
    */
   compute(const specfem::HostView2d<type_real> coorg,
           const specfem::HostView2d<int> knods,
-          const quadrature::quadrature &quadx,
-          const quadrature::quadrature &quadz);
+          const specfem::quadrature::quadrature &quadx,
+          const specfem::quadrature::quadrature &quadz);
 };
 
 } // namespace compute

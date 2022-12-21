@@ -5,6 +5,7 @@
 #include "../include/kokkos_abstractions.h"
 #include <Kokkos_Core.hpp>
 
+namespace specfem {
 namespace quadrature {
 
 class quadrature {
@@ -107,5 +108,5 @@ private:
   void sync_views();
 };
 } // namespace quadrature
-
+} // namespace specfem
 #endif

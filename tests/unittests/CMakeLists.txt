@@ -178,6 +178,27 @@ target_link_libraries(
   -lpthread -lm
 )
 
+add_executable(
+  rmass_inverse_tests
+  domain/rmass_inverse_tests.cpp
+)
+
+target_link_libraries(
+  rmass_inverse_tests
+  quadrature
+  mesh
+  material_class
+  yaml-cpp
+  kokkos_environment
+  mpi_environment
+  compute
+  parameter_reader
+  utilities
+  compare_arrays
+  domain
+  -lpthread -lm
+)
+
 # Link to gtest only if MPI is enabled
 if (NOT MPI_PARALLEL)
   include(GoogleTest)
@@ -189,4 +210,5 @@ if (NOT MPI_PARALLEL)
   gtest_discover_tests(compute_properties_tests)
   gtest_discover_tests(compute_tests)
   gtest_discover_tests(source_location_tests)
+  gtest_discover_tests(rmass_inverse_tests)
 endif(NOT MPI_PARALLEL)

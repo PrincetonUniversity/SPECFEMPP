@@ -128,20 +128,6 @@ target_link_libraries(
         specfem_mpi
 )
 
-# add_library(
-#         compute
-#         src/compute.cpp
-#         src/compute_coordinates.cpp
-#         src/compute_properties.cpp
-# )
-
-# target_link_libraries(
-#         compute
-#         quadrature
-#         material_class
-#         Kokkos::kokkos
-# )
-
 add_library(
         surfaces
         src/surfaces.cpp
@@ -262,6 +248,16 @@ target_link_libraries(
 )
 
 add_library(
+        source_time_function
+        src/source_time_function.cpp
+)
+
+add_library(
+        timescheme
+        src/timescheme.cpp
+)
+
+add_library(
         source_class
         src/source.cpp
 )
@@ -273,6 +269,20 @@ target_link_libraries(
         utilities
         quadrature
         lagrange
+        source_time_function
+        timescheme
+)
+
+add_library(
+        parameter_reader
+        src/parameter_parser.cpp
+)
+
+target_link_libraries(
+        parameter_reader
+        quadrature
+        timescheme
+        yaml-cpp
 )
 
 add_library(
@@ -305,6 +315,18 @@ target_link_libraries(
         Kokkos::kokkos
 )
 
+add_library(
+        domain
+        src/domain.cpp
+)
+
+target_link_libraries(
+        domain
+        compute
+        quadrature
+        Kokkos::kokkos
+)
+
 add_executable(
         specfem2d
         src/specfem2d.cpp
@@ -322,6 +344,9 @@ target_link_libraries(
         compute
         source_class
         source_reader
+        parameter_reader
+        domain
+        utilities
 )
 
 # Include tests
