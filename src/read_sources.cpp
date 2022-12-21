@@ -16,6 +16,7 @@ void operator>>(YAML::Node &Node,
   force_source.vx = Node["vx"].as<type_real>();
   force_source.vz = Node["vz"].as<type_real>();
   force_source.factor = Node["factor"].as<type_real>();
+  force_source.tshift = Node["tshift"].as<type_real>();
 }
 
 void operator>>(YAML::Node &Node,
@@ -31,9 +32,10 @@ void operator>>(YAML::Node &Node,
   moment_tensor.vx = Node["vx"].as<type_real>();
   moment_tensor.vz = Node["vz"].as<type_real>();
   moment_tensor.factor = Node["factor"].as<type_real>();
+  moment_tensor.tshift = Node["tshift"].as<type_real>();
 }
 
-std::vector<specfem::sources::source *>
+std::tuple<std::vector<specfem::sources::source *>, type_real>
 specfem::read_sources(const std::string sources_file,
                       const specfem::MPI::MPI *mpi) {
   // read sources file
@@ -64,6 +66,19 @@ specfem::read_sources(const std::string sources_file,
             << " Please check if there is a error in sources file.";
     throw std::runtime_error(message.str());
   }
-  // Dummy return type. Should never reach here.
-  return sources;
+
+  type_real t0 = std::numeric_limits<type_real>::max();
+  for (auto &source : sources) {
+    type_real cur_t0 = source->get_t0();
+    if (cur_t0 < t0) {
+      t0 = cur_t0;
+    }
+  }
+
+  for (auto &source : sources) {
+    type_real cur_t0 = source->get_t0();
+    source->update_tshift(cur_t0 - t0);
+  }
+
+  return std::make_tuple(sources, t0);
 }

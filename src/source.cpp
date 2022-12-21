@@ -3,8 +3,12 @@
 #include "../include/jacobian.h"
 #include "../include/kokkos_abstractions.h"
 #include "../include/lagrange_poly.h"
+#include "../include/source_time_function.h"
 #include "../include/specfem_mpi.h"
+#include "../include/timescheme.h"
 #include "../include/utils.h"
+
+using LayoutStride = Kokkos::LayoutStride;
 
 void specfem::sources::source::check_locations(const type_real xmin,
                                                const type_real xmax,
@@ -66,7 +70,8 @@ void specfem::sources::moment_tensor::locate(
 }
 
 void specfem::sources::force::compute_source_array(
-    quadrature::quadrature &quadx, quadrature::quadrature &quadz,
+    specfem::quadrature::quadrature &quadx,
+    specfem::quadrature::quadrature &quadz,
     specfem::HostView3d<type_real> source_array) {
 
   type_real xi = this->xi;
@@ -102,7 +107,8 @@ void specfem::sources::force::compute_source_array(
 };
 
 void specfem::sources::moment_tensor::compute_source_array(
-    quadrature::quadrature &quadx, quadrature::quadrature &quadz,
+    specfem::quadrature::quadrature &quadx,
+    specfem::quadrature::quadrature &quadz,
     specfem::HostView3d<type_real> source_array) {
 
   type_real xi = this->xi;
@@ -167,6 +173,128 @@ void specfem::sources::force::check_locations(const type_real xmin,
       "acoustic surface");
 }
 
-void specfem::sources::force::compute_stf(){};
+specfem::sources::force::force(type_real x, type_real z, type_real angle,
+                               type_real tshift, type_real f0, type_real factor,
+                               std::string forcing_type, wave_type wave)
+    : x(x), z(z), angle(angle), wave(wave) {
 
-void specfem::sources::moment_tensor::compute_stf(){};
+  bool use_trick_for_better_pressure = true;
+
+  if (forcing_type == "Dirac") {
+    this->forcing_function = new specfem::forcing_function::Dirac(
+        f0, tshift, factor, use_trick_for_better_pressure);
+  }
+};
+
+specfem::sources::force::force(specfem::utilities::force_source &force_source,
+                               wave_type wave)
+    : x(force_source.x), z(force_source.z), angle(force_source.angle),
+      wave(wave) {
+
+  bool use_trick_for_better_pressure = true;
+
+  if (force_source.stf_type == "Dirac") {
+    this->forcing_function = new specfem::forcing_function::Dirac(
+        force_source.f0, force_source.tshift, force_source.factor,
+        use_trick_for_better_pressure);
+  }
+};
+
+specfem::sources::moment_tensor::moment_tensor(type_real x, type_real z,
+                                               type_real Mxx, type_real Mxz,
+                                               type_real Mzz, type_real tshift,
+                                               type_real f0, type_real factor,
+                                               std::string forcing_type)
+    : x(x), z(z), Mxx(Mxx), Mxz(Mxz), Mzz(Mzz) {
+
+  bool use_trick_for_better_pressure = true;
+
+  if (forcing_type == "Dirac") {
+    this->forcing_function = new specfem::forcing_function::Dirac(
+        f0, tshift, factor, use_trick_for_better_pressure);
+  }
+};
+
+specfem::sources::moment_tensor::moment_tensor(
+    specfem::utilities::moment_tensor &moment_tensor)
+    : x(moment_tensor.x), z(moment_tensor.z), Mxx(moment_tensor.Mxx),
+      Mxz(moment_tensor.Mxz), Mzz(moment_tensor.Mzz) {
+
+  if (moment_tensor.stf_type == "Dirac") {
+    this->forcing_function = new specfem::forcing_function::Dirac(
+        moment_tensor.f0, moment_tensor.tshift, moment_tensor.factor, true);
+  }
+};
+
+void specfem::sources::force::compute_stf(
+    specfem::HostView1d<type_real, LayoutStride> stf_array,
+    specfem::TimeScheme::TimeScheme *it) {
+
+  while (it->status()) {
+    type_real timeval = it->get_time();
+    int istep = it->get_timestep();
+    stf_array(istep) = this->forcing_function->compute(timeval);
+
+    it->increment_time();
+  }
+
+  it->reset_time();
+};
+
+void specfem::sources::moment_tensor::compute_stf(
+    specfem::HostView1d<type_real, LayoutStride> stf_array,
+    specfem::TimeScheme::TimeScheme *it) {
+
+  while (it->status()) {
+    type_real timeval = it->get_time();
+    int istep = it->get_timestep();
+    stf_array(istep) = this->forcing_function->compute(timeval);
+
+    it->increment_time();
+  }
+
+  it->reset_time();
+};
+
+void specfem::sources::source::print(std::ostream &out) const {
+  out << "Error allocating source. Base class being called.";
+
+  throw std::runtime_error("Error allocating source. Base class being called.");
+
+  return;
+}
+
+void specfem::sources::force::print(std::ostream &out) const {
+  out << "Source Information: Force Source \n"
+      << "   Source Location: \n"
+      << "                    x = " << this->x << "\n"
+      << "                    z = " << this->z << "\n"
+      << "                    xi = " << this->xi << "\n"
+      << "                    gamma = " << this->gamma << "\n"
+      << "                    ispec = " << this->ispec << "\n"
+      << "                    islice = " << this->islice << "\n";
+  out << *(this->forcing_function);
+
+  return;
+}
+
+void specfem::sources::moment_tensor::print(std::ostream &out) const {
+  out << "Source Information: Moment Tensor Source \n"
+      << "   Source Location: \n"
+      << "                    x = " << this->x << "\n"
+      << "                    z = " << this->z << "\n"
+      << "                    xi = " << this->xi << "\n"
+      << "                    gamma = " << this->gamma << "\n"
+      << "                    ispec = " << this->ispec << "\n"
+      << "                    islice = " << this->islice << "\n";
+  out << *(this->forcing_function);
+
+  return;
+}
+
+std::ostream &
+specfem::sources::operator<<(std::ostream &out,
+                             const specfem::sources::source &source) {
+  source.print(out);
+  return out;
+}

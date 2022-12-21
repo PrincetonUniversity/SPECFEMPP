@@ -59,14 +59,15 @@ test_config get_test_config(std::string config_filename,
  */
 TEST(COMPUTE_TESTS, compute_ibool) {
 
+  std::cout << "Hello -2" << std::endl;
   std::string config_filename =
       "../../../tests/unittests/compute/test_config.yml";
   test_config test_config =
       get_test_config(config_filename, MPIEnvironment::mpi_);
 
   // Set up GLL quadrature points
-  quadrature::quadrature gllx(0.0, 0.0, ngll);
-  quadrature::quadrature gllz(0.0, 0.0, ngll);
+  specfem::quadrature::quadrature gllx(0.0, 0.0, ngll);
+  specfem::quadrature::quadrature gllz(0.0, 0.0, ngll);
   std::vector<specfem::material *> materials;
 
   specfem::mesh mesh(test_config.database_filename, materials,

@@ -17,7 +17,7 @@ namespace specfem {
  * @return std::vector<specfem::sources::source *> vector of instantiated source
  * objects
  */
-std::vector<specfem::sources::source *>
+std::tuple<std::vector<specfem::sources::source *>, type_real>
 read_sources(const std::string sources_file, const specfem::MPI::MPI *mpi);
 } // namespace specfem
 
