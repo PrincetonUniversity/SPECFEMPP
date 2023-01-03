@@ -23,7 +23,7 @@ TEST(lagrange_tests, LAGRANGE_TESTS) {
     auto [h_h1, h_h1_prime] =
         Lagrange::compute_lagrange_interpolants(h_z1(i), ngll, h_z1);
     for (int j = 0; j < ngll; j++) {
-      EXPECT_NEAR(h_hprime_xx(i, j), h_h1_prime(j), tol);
+      EXPECT_NEAR(h_hprime_xx(j, i), h_h1_prime(j), tol);
       if (i == j) {
         EXPECT_NEAR(h_h1(j), 1.0, tol);
         if (i == 0) {

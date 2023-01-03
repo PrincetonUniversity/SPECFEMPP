@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.17.5)
 
 project(specfem2d_kokkos VERSION 0.1.0)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 option(MPI_PARALLEL "MPI enabled" OFF)
 
 # Install Kokkos as a dependency
@@ -10,7 +10,7 @@ option(MPI_PARALLEL "MPI enabled" OFF)
 include(FetchContent)
 FetchContent_Declare(
   kokkos
-  URL https://github.com/kokkos/kokkos/archive/refs/tags/3.6.01.zip
+  URL https://github.com/kokkos/kokkos/archive/refs/tags/3.7.01.zip
 )
 FetchContent_MakeAvailable(kokkos)
 
