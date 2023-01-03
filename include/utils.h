@@ -17,7 +17,7 @@ struct input_holder {
 };
 
 struct return_holder {
-  type_real rho, mu, kappa, qmu, qkappa;
+  type_real rho, mu, kappa, qmu, qkappa, lambdaplus2mu;
 };
 
 // config parser routines

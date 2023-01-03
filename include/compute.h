@@ -63,7 +63,8 @@ struct properties {
    *
    */
   ///@{
-  specfem::HostView3d<type_real> rho, mu, kappa, qmu, qkappa, rho_vp, rho_vs;
+  specfem::HostView3d<type_real> rho, mu, kappa, qmu, qkappa, rho_vp, rho_vs,
+      lambdaplus2mu;
   ///@}
   // element type is defined in config.h
   specfem::HostView1d<element_type> ispec_type; ///< type of element. Available

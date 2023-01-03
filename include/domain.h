@@ -24,6 +24,8 @@ public:
     return this->rmass_inverse;
   }
 
+  virtual void compute_forces(){};
+
 private:
   specfem::HostView2d<type_real> field;
   specfem::HostView2d<type_real> field_dot;
@@ -77,6 +79,8 @@ public:
           specfem::compute::partial_derivatives *partial_derivatives,
           quadrature::quadrature *quadx, quadrature::quadrature *quadz);
 
+  void compute_forces() override;
+
 private:
   specfem::HostView2d<type_real> field; ///< Displacement inside elastic domain
   specfem::HostView2d<type_real> field_dot; ///< Velocity inside elastic domain
@@ -93,6 +97,10 @@ private:
                                  ///< x-dimension
   quadrature::quadrature *quadz; ///< Pointer to quadrature object in
                                  ///< z-dimension
+  int nelem_domain;              ///< Total number of elements in this domain
+  specfem::HostView1d<int> ispec_domain; ///< Array containing global
+                                         ///< indices(ispec) of all elements in
+                                         ///< this domain
 };
 } // namespace Domain
 } // namespace specfem

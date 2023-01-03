@@ -44,8 +44,9 @@ specfem::compute::properties::properties(
       [=](const int ispec, const int iz, const int ix) {
         const int imat = kmato(ispec);
         utilities::return_holder holder = materials[imat]->get_properties();
-        auto [rho, mu, kappa, qmu, qkappa] = std::make_tuple(
-            holder.rho, holder.mu, holder.kappa, holder.qmu, holder.qkappa);
+        auto [rho, mu, kappa, qmu, qkappa, lambdaplus2mu] =
+            std::make_tuple(holder.rho, holder.mu, holder.kappa, holder.qmu,
+                            holder.qkappa, holder.lambdaplus2mu);
         this->rho(ispec, iz, ix) = rho;
         this->mu(ispec, iz, ix) = mu;
         this->kappa(ispec, iz, ix) = kappa;
@@ -58,6 +59,7 @@ specfem::compute::properties::properties(
 
         this->rho_vp(ispec, iz, ix) = rho * vp;
         this->rho_vs(ispec, iz, ix) = rho * vs;
+        this->lambdaplus2mu(ispec, iz, ix) = lambdaplus2mu;
       });
 
   Kokkos::parallel_for(

@@ -128,6 +128,8 @@ int main(int argc, char **argv) {
     specfem::Domain::Domain *domains = new specfem::Domain::Elastic(
         ndim, nglob, &compute, &material_properties, &partial_derivatives,
         &gllx, &gllz);
+
+    domains->compute_forces();
   }
 
   // Finalize Kokkos
