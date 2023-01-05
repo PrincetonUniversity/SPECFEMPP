@@ -29,6 +29,9 @@ specfem::compute::sources::sources(
       specfem::HostView2d<type_real>("specfem::compute::sources::stf_array",
                                      it->get_max_timestep(), my_sources.size());
 
+  this->ispec_array = specfem::HostView1d<int>(
+      "specfem::compute::sources::ispec_array", my_sources.size());
+
   // store source array for sources in my islice
   for (int isource = 0; isource < my_sources.size(); isource++) {
     auto sv_source_array = Kokkos::subview(
@@ -36,6 +39,7 @@ specfem::compute::sources::sources(
     my_sources[isource]->compute_source_array(quadx, quadz, sv_source_array);
     auto sv_stf_array = Kokkos::subview(this->stf_array, Kokkos::ALL, isource);
     my_sources[isource]->compute_stf(sv_stf_array, it);
+    ispec_array(isource) = my_sources[isource]->get_ispec();
   }
 
   return;

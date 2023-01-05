@@ -24,7 +24,8 @@ public:
     return this->rmass_inverse;
   }
 
-  virtual void compute_forces(){};
+  virtual void compute_stiffness_interaction(){};
+  virtual void divide_mass_matrix(){};
 
 private:
   specfem::HostView2d<type_real> field;
@@ -79,7 +80,8 @@ public:
           specfem::compute::partial_derivatives *partial_derivatives,
           quadrature::quadrature *quadx, quadrature::quadrature *quadz);
 
-  void compute_forces() override;
+  void compute_stiffness_interaction() override;
+  void divide_mass_matrix() override;
 
 private:
   specfem::HostView2d<type_real> field; ///< Displacement inside elastic domain
@@ -93,6 +95,7 @@ private:
                                                      ///< to store material
                                                      ///< properties
   specfem::compute::partial_derivatives *partial_derivatives;
+  specfem::compute::sources *sources;
   quadrature::quadrature *quadx; ///< Pointer to quadrature object in
                                  ///< x-dimension
   quadrature::quadrature *quadz; ///< Pointer to quadrature object in

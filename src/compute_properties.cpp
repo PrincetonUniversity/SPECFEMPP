@@ -7,29 +7,31 @@
 
 specfem::compute::properties::properties(const int nspec, const int ngllz,
                                          const int ngllx)
-    : rho(specfem::HostView3d<type_real>("specfem::mesh::rho", nspec, ngllz,
-                                         ngllx)),
-      mu(specfem::HostView3d<type_real>("specfem::mesh::mu", nspec, ngllz,
-                                        ngllx)),
-      kappa(specfem::HostView3d<type_real>("specfem::mesh::kappa", nspec, ngllz,
-                                           ngllx)),
-      qmu(specfem::HostView3d<type_real>("specfem::mesh::qmu", nspec, ngllz,
-                                         ngllx)),
-      qkappa(specfem::HostView3d<type_real>("specfem::mesh::qkappa", nspec,
-                                            ngllz, ngllx)),
-      rho_vp(specfem::HostView3d<type_real>("specfem::mesh::rho_vp", nspec,
-                                            ngllz, ngllx)),
-      rho_vs(specfem::HostView3d<type_real>("specfem::mesh::rho_vs", nspec,
-                                            ngllz, ngllx)),
-      ispec_type(specfem::HostView1d<element_type>("specfem::mesh::ispec_type",
-                                                   nspec)){};
+    : rho(specfem::HostView3d<type_real>("specfem::compute::properties::rho",
+                                         nspec, ngllz, ngllx)),
+      mu(specfem::HostView3d<type_real>("specfem::compute::properties::mu",
+                                        nspec, ngllz, ngllx)),
+      kappa(specfem::HostView3d<type_real>(
+          "specfem::compute::properties::kappa", nspec, ngllz, ngllx)),
+      qmu(specfem::HostView3d<type_real>("specfem::compute::properties::qmu",
+                                         nspec, ngllz, ngllx)),
+      qkappa(specfem::HostView3d<type_real>(
+          "specfem::compute::properties::qkappa", nspec, ngllz, ngllx)),
+      rho_vp(specfem::HostView3d<type_real>(
+          "specfem::compute::properties::rho_vp", nspec, ngllz, ngllx)),
+      rho_vs(specfem::HostView3d<type_real>(
+          "specfem::compute::properties::rho_vs", nspec, ngllz, ngllx)),
+      lambdaplus2mu(specfem::HostView3d<type_real>(
+          "specfem::compute::properties::lambdaplus2mu", nspec, ngllz, ngllx)),
+      ispec_type(specfem::HostView1d<element_type>(
+          "specfem::compute::properties::ispec_type", nspec)){};
 
 specfem::compute::properties::properties(
     const specfem::HostView1d<int> kmato,
     const std::vector<specfem::material *> &materials, const int nspec,
     const int ngllx, const int ngllz) {
 
-  // Setup mesh properties
+  // Setup compute::properties properties
   // UPDATEME::
   //           acoustic materials
   //           poroelastic materials
@@ -39,7 +41,7 @@ specfem::compute::properties::properties(
   *this = specfem::compute::properties(nspec, ngllz, ngllx);
 
   Kokkos::parallel_for(
-      "setup_mesh_properties",
+      "setup_compute::properties_properties",
       specfem::HostMDrange<3>({ 0, 0, 0 }, { nspec, ngllz, ngllx }),
       [=](const int ispec, const int iz, const int ix) {
         const int imat = kmato(ispec);
@@ -62,9 +64,10 @@ specfem::compute::properties::properties(
         this->lambdaplus2mu(ispec, iz, ix) = lambdaplus2mu;
       });
 
-  Kokkos::parallel_for(
-      "setup_mesh_ispec", specfem::HostRange(0, nspec), [=](const int ispec) {
-        const int imat = kmato(ispec);
-        this->ispec_type(ispec) = materials[imat]->get_ispec_type();
-      });
+  Kokkos::parallel_for("setup_compute::properties_ispec",
+                       specfem::HostRange(0, nspec), [=](const int ispec) {
+                         const int imat = kmato(ispec);
+                         this->ispec_type(ispec) =
+                             materials[imat]->get_ispec_type();
+                       });
 }
