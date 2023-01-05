@@ -50,9 +50,8 @@ public:
    * @return int max timestep
    */
   virtual int get_max_timestep() { return 0; }
-  // virtual void apply_predictor_phase(specfem::Domain::Domain *domain_class)
-  // {}; virtual void apply_corrector_phase(specfem::Domain::Domain
-  // *domain_class) {};
+  virtual void apply_predictor_phase(specfem::Domain::Domain *domain_class){};
+  virtual void apply_corrector_phase(specfem::Domain::Domain *domain_class){};
   friend std::ostream &operator<<(std::ostream &out, TimeScheme &ts);
   /**
    * @brief Log timescheme information to console
@@ -111,8 +110,10 @@ public:
    * @return int max timestep
    */
   int get_max_timestep() override { return this->nstep; }
-  // void apply_predictor_phase(specfem::Domain::Domain *domain_class) override;
-  // void apply_corrector_phase(specfem::Domain::Domain *domain_class) override;
+  void
+  apply_predictor_phase(const specfem::Domain::Domain *domain_class) override;
+  void
+  apply_corrector_phase(const specfem::Domain::Domain *domain_class) override;
   /**
    * @brief Log timescheme information to console
    */

@@ -113,6 +113,8 @@ struct sources {
                                                ///< of every time-step.
   specfem::HostView2d<type_real> stf_array; //< Value of source-time function at
                                             ///< every time step
+  specfem::HostView1d<type_real> ispec_array; ///< Spectral element number where
+                                              ///< the source lies
   /**
    * @brief Default constructor
    *

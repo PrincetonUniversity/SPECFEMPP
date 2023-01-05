@@ -93,7 +93,7 @@ specfem::Domain::Elastic::Elastic(
   return;
 };
 
-void specfem::Domain::Elastic::compute_forces() {
+void specfem::Domain::Elastic::compute_stiffness_interaction() {
 
   const int ngllx = this->quadx->get_N();
   const int ngllz = this->quadz->get_N();
@@ -104,8 +104,8 @@ void specfem::Domain::Elastic::compute_forces() {
   const specfem::HostView2d<type_real> hprime_zz = this->quadz->get_hhprime();
   const specfem::HostView3d<int> ibool = this->compute->ibool;
 
-  int scratch_size = specfem::HostScratchView2d<type_real>::shmem_size(ngllx);
-  scratch_size += specfem::HostScratchView2d<type_real>::shmem_size(ngllz);
+  int scratch_size = specfem::HostScratchView1d<type_real>::shmem_size(ngllx);
+  scratch_size += specfem::HostScratchView1d<type_real>::shmem_size(ngllz);
   scratch_size +=
       specfem::HostScratchView2d<type_real>::shmem_size(ngllx, ngllx);
   scratch_size +=
@@ -118,7 +118,7 @@ void specfem::Domain::Elastic::compute_forces() {
       specfem::HostTeam(this->nelem_domain, Kokkos::AUTO, ngllx)
           .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
       KOKKOS_LAMBDA(const specfem::HostTeam::member_type &team_member) {
-        const int ispec = this->ispec_domain[team_member.league_rank()];
+        const int ispec = this->ispec_domain(team_member.league_rank());
         auto ibool = Kokkos::subview(this->compute->ibool, ispec, Kokkos::ALL,
                                      Kokkos::ALL);
         auto xix = Kokkos::subview(this->partial_derivatives->xix, ispec,
@@ -381,4 +381,65 @@ void specfem::Domain::Elastic::compute_forces() {
               Kokkos::atomic_add(&this->field_dot_dot(iglob, 1), sum_terms3);
             });
       });
+
+  Kokkos::fence();
+  return;
+}
+
+void specfem::Domain::Elastic::divide_mass_matrix() {
+
+  const int nglob = this->rmass_inverse.extent(0);
+
+  Kokkos::parallel_for("specfem::Domain::Elastic::divide_mass_matrix",
+                       specfem::HostRange(0, nglob), [=](const int iglob) {
+                         this->field_dot_dot(iglob, 0) *=
+                             this->rmass_inverse(iglob, 0);
+                         this->field_dot_dot(iglob, 1) *=
+                             this->rmass_inverse(iglob, 1);
+                       });
+
+  Kokkos::fence();
+  return;
+}
+
+void specfem::Domain::Elastic::compute_source_interaction(const int istep) {
+
+  const int nsources = sources->source_array.extent(0);
+  const int ngllz = sources->source_array.extent(1);
+  const int ngllx = sources->source_array.extent(2);
+  const int ngllxz = ngllx * ngllz;
+
+  Kokkos::parallel_for(
+      "specfem::Domain::Elastic::compute_source_interaction",
+      specfem::HostTeam(nsources, Kokkos::AUTO, ngllx),
+      KOKKOS_LAMBDA(const specfem::HostTeam::member_type &team_member) {
+        ispec = sources->ispec_array(team_member.league_rank());
+        auto ibool = Kokkos::subview(this->compute->ibool, ispec, Kokkos::ALL,
+                                     Kokkos::ALL);
+
+        if (material_properties->ispec_type(ispec) == elastic) {
+          Kokkos::parallel_for(
+              Kokkos::TeamThreadRange(team_member, ngllxz), [=](const int xz) {
+                const int ix = xz % ngllz;
+                const int iz = xz / ngllz;
+                int iglob = ibool(iz, ix);
+
+                if (p_sv) {
+                  type_real accelx = sources->source_array(isource, iz, ix, 0) *
+                                     sources->stf_array(istep, isource);
+                  type_real accelz = sources->source_array(isource, iz, ix, 1) *
+                                     sources->stf_array(istep, isource);
+                  Kokkos::atomic_add(&this->field_dot_dot(iglob, 0), accelx);
+                  Kokkos::atomic_add(&this->field_dot_dot(iglob, 1), accelz);
+                } else {
+                  type_real accelx = sources->source_array(isource, iz, ix, 0) *
+                                     sources->stf_array(istep, isource);
+                  Kokkos::atomic_add(&this->field_dot_dot(iglob, 0), accelx);
+                }
+              });
+        }
+      });
+
+  Kokkos::fence();
+  return;
 }
