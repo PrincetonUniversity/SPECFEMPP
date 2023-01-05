@@ -8,6 +8,7 @@
 #include "../include/params.h"
 #include "../include/read_mesh_database.h"
 #include "../include/read_sources.h"
+#include "../include/solver.h"
 #include "../include/source.h"
 #include "../include/specfem_mpi.h"
 #include "../include/timescheme.h"
@@ -121,7 +122,7 @@ int main(int argc, char **argv) {
       std::cout << *it << std::endl;
 
     // Setup solver compute struct
-    specfem::compute::sources compute_sources(sources, gllx, gllz, it, mpi);
+    specfem::compute::sources compute_sources(sources, gllx, gllz, mpi);
 
     // Instantiate domain classes
     const int nglob = specfem::utilities::compute_nglob(compute.ibool);
@@ -129,7 +130,10 @@ int main(int argc, char **argv) {
         ndim, nglob, &compute, &material_properties, &partial_derivatives,
         &gllx, &gllz);
 
-    domains->compute_forces();
+    specfem::solver::solver *solver =
+        new specfem::solver::time_marching(domains, it);
+
+    solver->run();
   }
 
   // Finalize Kokkos

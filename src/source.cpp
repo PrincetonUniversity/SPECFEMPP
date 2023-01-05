@@ -5,7 +5,6 @@
 #include "../include/lagrange_poly.h"
 #include "../include/source_time_function.h"
 #include "../include/specfem_mpi.h"
-#include "../include/timescheme.h"
 #include "../include/utils.h"
 
 using LayoutStride = Kokkos::LayoutStride;
@@ -179,10 +178,18 @@ specfem::sources::force::force(type_real x, type_real z, type_real angle,
     : x(x), z(z), angle(angle), wave(wave) {
 
   bool use_trick_for_better_pressure = true;
-
   if (forcing_type == "Dirac") {
-    this->forcing_function = new specfem::forcing_function::Dirac(
-        f0, tshift, factor, use_trick_for_better_pressure);
+    this->forcing_function =
+        (specfem::forcing_function::stf *)Kokkos::kokkos_malloc<HostMemSpace>(
+            sizeof(specfem::forcing_function::Dirac));
+
+    Kokkos::parallel_for(
+        "specfem::sources::force::force::allocate_stf",
+        specfem::HostRange(0, 1), [=](const int &) {
+          new ((specfem::forcing_function::Dirac *)this->forcing_function)
+              specfem::forcing_function::Dirac(f0, tshift, factor,
+                                               use_trick_for_better_pressure);
+        });
   }
 };
 
@@ -192,11 +199,19 @@ specfem::sources::force::force(specfem::utilities::force_source &force_source,
       wave(wave) {
 
   bool use_trick_for_better_pressure = true;
-
   if (force_source.stf_type == "Dirac") {
-    this->forcing_function = new specfem::forcing_function::Dirac(
-        force_source.f0, force_source.tshift, force_source.factor,
-        use_trick_for_better_pressure);
+    this->forcing_function =
+        (specfem::forcing_function::stf *)Kokkos::kokkos_malloc<HostMemSpace>(
+            sizeof(specfem::forcing_function::Dirac));
+
+    Kokkos::parallel_for(
+        "specfem::sources::force::force::allocate_stf",
+        specfem::HostRange(0, 1), [=](const int &) {
+          new ((specfem::forcing_function::Dirac *)this->forcing_function)
+              specfem::forcing_function::Dirac(
+                  force_source.f0, force_source.tshift, force_source.factor,
+                  use_trick_for_better_pressure);
+        });
   }
 };
 
@@ -208,10 +223,18 @@ specfem::sources::moment_tensor::moment_tensor(type_real x, type_real z,
     : x(x), z(z), Mxx(Mxx), Mxz(Mxz), Mzz(Mzz) {
 
   bool use_trick_for_better_pressure = true;
-
   if (forcing_type == "Dirac") {
-    this->forcing_function = new specfem::forcing_function::Dirac(
-        f0, tshift, factor, use_trick_for_better_pressure);
+    this->forcing_function =
+        (specfem::forcing_function::stf *)Kokkos::kokkos_malloc<HostMemSpace>(
+            sizeof(specfem::forcing_function::Dirac));
+
+    Kokkos::parallel_for(
+        "specfem::sources::moment_tensor::moment_tensor::allocate_stf",
+        specfem::HostRange(0, 1), [=](const int &) {
+          new ((specfem::forcing_function::Dirac *)this->forcing_function)
+              specfem::forcing_function::Dirac(f0, tshift, factor,
+                                               use_trick_for_better_pressure);
+        });
   }
 };
 
@@ -220,40 +243,21 @@ specfem::sources::moment_tensor::moment_tensor(
     : x(moment_tensor.x), z(moment_tensor.z), Mxx(moment_tensor.Mxx),
       Mxz(moment_tensor.Mxz), Mzz(moment_tensor.Mzz) {
 
+  bool use_trick_for_better_pressure = true;
   if (moment_tensor.stf_type == "Dirac") {
-    this->forcing_function = new specfem::forcing_function::Dirac(
-        moment_tensor.f0, moment_tensor.tshift, moment_tensor.factor, true);
+    this->forcing_function =
+        (specfem::forcing_function::stf *)Kokkos::kokkos_malloc<HostMemSpace>(
+            sizeof(specfem::forcing_function::Dirac));
+
+    Kokkos::parallel_for(
+        "specfem::sources::moment_tensor::moment_tensor::allocate_stf",
+        specfem::HostRange(0, 1), [=](const int &) {
+          new ((specfem::forcing_function::Dirac *)this->forcing_function)
+              specfem::forcing_function::Dirac(
+                  moment_tensor.f0, moment_tensor.tshift, moment_tensor.factor,
+                  use_trick_for_better_pressure);
+        });
   }
-};
-
-void specfem::sources::force::compute_stf(
-    specfem::HostView1d<type_real, LayoutStride> stf_array,
-    specfem::TimeScheme::TimeScheme *it) {
-
-  while (it->status()) {
-    type_real timeval = it->get_time();
-    int istep = it->get_timestep();
-    stf_array(istep) = this->forcing_function->compute(timeval);
-
-    it->increment_time();
-  }
-
-  it->reset_time();
-};
-
-void specfem::sources::moment_tensor::compute_stf(
-    specfem::HostView1d<type_real, LayoutStride> stf_array,
-    specfem::TimeScheme::TimeScheme *it) {
-
-  while (it->status()) {
-    type_real timeval = it->get_time();
-    int istep = it->get_timestep();
-    stf_array(istep) = this->forcing_function->compute(timeval);
-
-    it->increment_time();
-  }
-
-  it->reset_time();
 };
 
 void specfem::sources::source::print(std::ostream &out) const {
@@ -273,7 +277,7 @@ void specfem::sources::force::print(std::ostream &out) const {
       << "                    gamma = " << this->gamma << "\n"
       << "                    ispec = " << this->ispec << "\n"
       << "                    islice = " << this->islice << "\n";
-  out << *(this->forcing_function);
+  // out << *(this->forcing_function);
 
   return;
 }
@@ -287,7 +291,7 @@ void specfem::sources::moment_tensor::print(std::ostream &out) const {
       << "                    gamma = " << this->gamma << "\n"
       << "                    ispec = " << this->ispec << "\n"
       << "                    islice = " << this->islice << "\n";
-  out << *(this->forcing_function);
+  // out << *(this->forcing_function);
 
   return;
 }

@@ -26,6 +26,7 @@ public:
 
   virtual void compute_stiffness_interaction(){};
   virtual void divide_mass_matrix(){};
+  virtual void compute_source_interaction(const type_real timeval){};
 
 private:
   specfem::HostView2d<type_real> field;
@@ -82,6 +83,7 @@ public:
 
   void compute_stiffness_interaction() override;
   void divide_mass_matrix() override;
+  void compute_source_interaction(const type_real timeval) override;
 
 private:
   specfem::HostView2d<type_real> field; ///< Displacement inside elastic domain

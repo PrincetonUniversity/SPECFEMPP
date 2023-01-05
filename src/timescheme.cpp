@@ -28,11 +28,11 @@ void specfem::TimeScheme::Newmark::apply_predictor_phase(
   auto field_dot_dot = domain->get_field_dot_dot();
 
   const int nglob = field.extent(0);
-  const int ndim = field.extene(1);
+  const int ndim = field.extent(1);
 
   Kokkos::parallel_for("specfem::TimeScheme::Newmark::apply_predictor_phase",
                        specfem::HostRange(0, nglob), [=](const int iglob) {
-                         for (int idim = 0; i < ndim; idim++) {
+                         for (int idim = 0; idim < ndim; idim++) {
                            // update displacements
                            field(iglob, idim) +=
                                this->deltat * field_dot(iglob, idim) +
@@ -56,11 +56,11 @@ void specfem::TimeScheme::Newmark::apply_corrector_phase(
   auto field_dot_dot = domain->get_field_dot_dot();
 
   const int nglob = field_dot.extent(0);
-  const int ndim = field_dot.extene(1);
+  const int ndim = field_dot.extent(1);
 
   Kokkos::parallel_for("specfem::TimeScheme::Newmark::apply_predictor_phase",
                        specfem::HostRange(0, nglob), [=](const int iglob) {
-                         for (int idim = 0; i < ndim; idim++) {
+                         for (int idim = 0; idim < ndim; idim++) {
                            // apply corrector phase
                            field_dot(iglob, idim) +=
                                this->deltatover2 * field_dot_dot(iglob, idim);
