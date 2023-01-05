@@ -2,7 +2,7 @@
 #define TIMESCHEME_H
 
 #include "../include/config.h"
-// #include "../include/domain.h"
+#include "../include/domain.h"
 #include <ostream>
 
 namespace specfem {
@@ -50,8 +50,13 @@ public:
    * @return int max timestep
    */
   virtual int get_max_timestep() { return 0; }
-  virtual void apply_predictor_phase(specfem::Domain::Domain *domain_class){};
-  virtual void apply_corrector_phase(specfem::Domain::Domain *domain_class){};
+
+  virtual void
+  apply_predictor_phase(const specfem::Domain::Domain *domain_class){};
+
+  virtual void
+  apply_corrector_phase(const specfem::Domain::Domain *domain_class){};
+
   friend std::ostream &operator<<(std::ostream &out, TimeScheme &ts);
   /**
    * @brief Log timescheme information to console

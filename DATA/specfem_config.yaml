@@ -20,7 +20,7 @@ run-config:
       Time-scheme:
         type: Newmark
         dt: 1e-3
-        nstep: 1600
+        nstep: 100
 
   ## Runtime setup
   run-setup:

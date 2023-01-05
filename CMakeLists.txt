@@ -252,9 +252,9 @@ add_library(
         src/source_time_function.cpp
 )
 
-add_library(
-        timescheme
-        src/timescheme.cpp
+target_link_libraries(
+        source_time_function
+        Kokkos::kokkos
 )
 
 add_library(
@@ -270,7 +270,6 @@ target_link_libraries(
         quadrature
         lagrange
         source_time_function
-        timescheme
 )
 
 add_library(
@@ -327,6 +326,27 @@ target_link_libraries(
         Kokkos::kokkos
 )
 
+add_library(
+        timescheme
+        src/timescheme.cpp
+)
+
+target_link_libraries(
+        timescheme
+        domain
+)
+
+add_library(
+        solver
+        src/solver.cpp
+)
+
+target_link_libraries(
+        solver
+        domain
+        timescheme
+)
+
 add_executable(
         specfem2d
         src/specfem2d.cpp
@@ -346,6 +366,7 @@ target_link_libraries(
         source_reader
         parameter_reader
         domain
+        solver
         utilities
 )
 

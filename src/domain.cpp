@@ -402,18 +402,20 @@ void specfem::Domain::Elastic::divide_mass_matrix() {
   return;
 }
 
-void specfem::Domain::Elastic::compute_source_interaction(const int istep) {
+void specfem::Domain::Elastic::compute_source_interaction(
+    const type_real timeval) {
 
-  const int nsources = sources->source_array.extent(0);
-  const int ngllz = sources->source_array.extent(1);
-  const int ngllx = sources->source_array.extent(2);
+  const int nsources = this->sources->source_array.extent(0);
+  const int ngllz = this->sources->source_array.extent(1);
+  const int ngllx = this->sources->source_array.extent(2);
   const int ngllxz = ngllx * ngllz;
 
   Kokkos::parallel_for(
       "specfem::Domain::Elastic::compute_source_interaction",
       specfem::HostTeam(nsources, Kokkos::AUTO, ngllx),
       KOKKOS_LAMBDA(const specfem::HostTeam::member_type &team_member) {
-        ispec = sources->ispec_array(team_member.league_rank());
+        int isource = team_member.league_rank();
+        int ispec = sources->ispec_array(isource);
         auto ibool = Kokkos::subview(this->compute->ibool, ispec, Kokkos::ALL,
                                      Kokkos::ALL);
 
@@ -425,15 +427,18 @@ void specfem::Domain::Elastic::compute_source_interaction(const int istep) {
                 int iglob = ibool(iz, ix);
 
                 if (p_sv) {
-                  type_real accelx = sources->source_array(isource, iz, ix, 0) *
-                                     sources->stf_array(istep, isource);
-                  type_real accelz = sources->source_array(isource, iz, ix, 1) *
-                                     sources->stf_array(istep, isource);
+                  type_real accelx =
+                      this->sources->source_array(isource, iz, ix, 0) *
+                      this->sources->stf_array(isource).T->compute(timeval);
+                  type_real accelz =
+                      this->sources->source_array(isource, iz, ix, 1) *
+                      this->sources->stf_array(isource).T->compute(timeval);
                   Kokkos::atomic_add(&this->field_dot_dot(iglob, 0), accelx);
                   Kokkos::atomic_add(&this->field_dot_dot(iglob, 1), accelz);
                 } else {
-                  type_real accelx = sources->source_array(isource, iz, ix, 0) *
-                                     sources->stf_array(istep, isource);
+                  type_real accelx =
+                      this->sources->source_array(isource, iz, ix, 0) *
+                      this->sources->stf_array(isource).T->compute(timeval);
                   Kokkos::atomic_add(&this->field_dot_dot(iglob, 0), accelx);
                 }
               });

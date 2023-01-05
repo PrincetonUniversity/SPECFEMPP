@@ -6,7 +6,6 @@
 #include "../include/quadrature.h"
 #include "../include/source_time_function.h"
 #include "../include/specfem_mpi.h"
-#include "../include/timescheme.h"
 #include "../include/utils.h"
 
 namespace specfem {
@@ -63,13 +62,6 @@ public:
                        specfem::quadrature::quadrature &quadz,
                        specfem::HostView3d<type_real> source_array){};
   /**
-   * @brief Compute source time function
-   *
-   */
-  virtual void
-  compute_stf(specfem::HostView1d<type_real, Kokkos::LayoutStride> stf_array,
-              specfem::TimeScheme::TimeScheme *it){};
-  /**
    * @brief Check if the source is within the domain
    *
    * @param xmin minimum x-coordinate on my processor
@@ -120,6 +112,9 @@ public:
   virtual type_real get_t0() const { return 0.0; }
   virtual void update_tshift(type_real tshift){};
   virtual void print(std::ostream &out) const;
+  virtual specfem::forcing_function::stf *get_stf() const {
+    return new specfem::forcing_function::stf();
+  }
 };
 
 /**
@@ -185,9 +180,6 @@ public:
   compute_source_array(specfem::quadrature::quadrature &quadx,
                        specfem::quadrature::quadrature &quadz,
                        specfem::HostView3d<type_real> source_array) override;
-  void
-  compute_stf(specfem::HostView1d<type_real, Kokkos::LayoutStride> stf_array,
-              specfem::TimeScheme::TimeScheme *it) override;
   /**
    * @brief Check if the source is within the domain
    *
@@ -236,12 +228,16 @@ public:
    * @return type_real \f$ \gamma \f$ value
    */
   type_real get_gamma() const override { return gamma; }
-  ~force() { delete this->forcing_function; }
+  ~force() { Kokkos::kokkos_free<HostMemSpace>(this->forcing_function); }
   type_real get_t0() const override { return this->forcing_function->get_t0(); }
   void update_tshift(type_real tshift) override {
     this->forcing_function->update_tshift(tshift);
   }
   void print(std::ostream &out) const override;
+
+  specfem::forcing_function::stf *get_stf() const override {
+    return forcing_function;
+  }
 
 private:
   type_real xi;         ///< \f$ \xi \f$ value of source inside element
@@ -272,9 +268,10 @@ public:
    * @param Mxz Mxz for the source
    * @param Mzz Mzz for the source
    */
-  moment_tensor(type_real x, type_real z, type_real Mxx, type_real Mxz,
-                type_real Mzz, type_real tshift, type_real f0, type_real factor,
-                std::string forcing_type);
+  KOKKOS_FUNCTION moment_tensor(type_real x, type_real z, type_real Mxx,
+                                type_real Mxz, type_real Mzz, type_real tshift,
+                                type_real f0, type_real factor,
+                                std::string forcing_type);
   /**
    * @brief Construct a new moment tensor force object
    *
@@ -319,9 +316,6 @@ public:
   compute_source_array(specfem::quadrature::quadrature &quadx,
                        specfem::quadrature::quadrature &quadz,
                        specfem::HostView3d<type_real> source_array) override;
-  void
-  compute_stf(specfem::HostView1d<type_real, Kokkos::LayoutStride> stf_array,
-              specfem::TimeScheme::TimeScheme *it) override;
   /**
    * @brief Get the processor on which this source lies
    *
@@ -364,7 +358,13 @@ public:
   }
   friend std::ostream &operator<<(std::ostream &out, const moment_tensor *h);
   void print(std::ostream &out) const override;
-  ~moment_tensor() { delete this->forcing_function; }
+  specfem::forcing_function::stf *get_stf() const override {
+    return forcing_function;
+  }
+
+  ~moment_tensor() {
+    Kokkos::kokkos_free<HostMemSpace>(this->forcing_function);
+  }
 
 private:
   type_real xi;    ///< \f$ \xi \f$ value of source inside element

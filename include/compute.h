@@ -111,10 +111,10 @@ struct sources {
                                                ///< These arrays are used to
                                                ///< impose source effects at end
                                                ///< of every time-step.
-  specfem::HostView2d<type_real> stf_array; //< Value of source-time function at
-                                            ///< every time step
-  specfem::HostView1d<type_real> ispec_array; ///< Spectral element number where
-                                              ///< the source lies
+  specfem::HostView1d<specfem::forcing_function::stf_storage>
+      stf_array; //< Pointer to source time function for every source
+  specfem::HostView1d<int> ispec_array; ///< Spectral element number where
+                                        ///< the source lies
   /**
    * @brief Default constructor
    *
@@ -130,8 +130,7 @@ struct sources {
    */
   sources(std::vector<specfem::sources::source *> sources,
           specfem::quadrature::quadrature &quadx,
-          specfem::quadrature::quadrature &quadz,
-          specfem::TimeScheme::TimeScheme *it, specfem::MPI::MPI *mpi);
+          specfem::quadrature::quadrature &quadz, specfem::MPI::MPI *mpi);
 };
 
 // /**
