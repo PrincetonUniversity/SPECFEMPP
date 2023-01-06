@@ -79,7 +79,8 @@ public:
   Elastic(const int ndim, const int nglob, specfem::compute::compute *compute,
           specfem::compute::properties *material_properties,
           specfem::compute::partial_derivatives *partial_derivatives,
-          quadrature::quadrature *quadx, quadrature::quadrature *quadz);
+          specfem::compute::sources *sources, quadrature::quadrature *quadx,
+          quadrature::quadrature *quadz);
 
   void compute_stiffness_interaction() override;
   void divide_mass_matrix() override;

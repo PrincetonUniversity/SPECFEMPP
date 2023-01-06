@@ -196,6 +196,7 @@ target_link_libraries(
   utilities
   compare_arrays
   domain
+  source_reader
   -lpthread -lm
 )
 

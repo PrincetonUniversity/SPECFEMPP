@@ -7,6 +7,7 @@
 #include "../include/source_time_function.h"
 #include "../include/specfem_mpi.h"
 #include "../include/utils.h"
+#include <Kokkos_Core.hpp>
 
 namespace specfem {
 namespace sources {
