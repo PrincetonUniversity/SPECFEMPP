@@ -9,7 +9,8 @@ specfem::Domain::Elastic::Elastic(
     const int ndim, const int nglob, specfem::compute::compute *compute,
     specfem::compute::properties *material_properties,
     specfem::compute::partial_derivatives *partial_derivatives,
-    quadrature::quadrature *quadx, quadrature::quadrature *quadz)
+    specfem::compute::sources *sources, quadrature::quadrature *quadx,
+    quadrature::quadrature *quadz)
     : field(specfem::HostView2d<type_real>("specfem::Domain::Elastic::field",
                                            nglob, ndim)),
       field_dot(specfem::HostView2d<type_real>(
@@ -19,7 +20,8 @@ specfem::Domain::Elastic::Elastic(
       rmass_inverse(specfem::HostView2d<type_real>(
           "specfem::Domain::Elastic::rmass_inverse", nglob, ndim)),
       compute(compute), material_properties(material_properties),
-      partial_derivatives(partial_derivatives), quadx(quadx), quadz(quadz) {
+      partial_derivatives(partial_derivatives), sources(sources), quadx(quadx),
+      quadz(quadz) {
 
   const specfem::HostView3d<int> ibool = compute->ibool;
   const int nspec = ibool.extent(0);

@@ -128,7 +128,7 @@ int main(int argc, char **argv) {
     const int nglob = specfem::utilities::compute_nglob(compute.ibool);
     specfem::Domain::Domain *domains = new specfem::Domain::Elastic(
         ndim, nglob, &compute, &material_properties, &partial_derivatives,
-        &gllx, &gllz);
+        &compute_sources, &gllx, &gllz);
 
     specfem::solver::solver *solver =
         new specfem::solver::time_marching(domains, it);
