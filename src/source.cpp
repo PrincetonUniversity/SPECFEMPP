@@ -6,12 +6,13 @@
 #include "../include/source_time_function.h"
 #include "../include/specfem_mpi.h"
 #include "../include/utils.h"
+#include <cmath>
 
 using LayoutStride = Kokkos::LayoutStride;
 
 specfem::forcing_function::stf *assign_stf(std::string forcing_type,
                                            type_real f0, type_real tshift,
-                                           type_real factor,
+                                           type_real factor, type_real dt,
                                            bool use_trick_for_better_pressure) {
 
   specfem::forcing_function::stf *forcing_function;
@@ -19,6 +20,8 @@ specfem::forcing_function::stf *assign_stf(std::string forcing_type,
     forcing_function = (specfem::forcing_function::stf *)
         Kokkos::kokkos_malloc<specfem::HostMemSpace>(
             sizeof(specfem::forcing_function::Dirac));
+
+    f0 = 1.0 / (10.0 * dt);
 
     Kokkos::parallel_for(
         "specfem::sources::moment_tensor::moment_tensor::allocate_stf",
@@ -121,8 +124,10 @@ void specfem::sources::force::compute_source_array(
         source_array(j, i, 1) = hlagrange;
       } else if ((el_type == elastic && wave == p_sv) ||
                  el_type == poroelastic) {
-        source_array(j, i, 0) = sin(angle) * hlagrange;
-        source_array(j, i, 1) = -1.0 * cos(angle) * hlagrange;
+        type_real tempx = sin(angle) * hlagrange;
+        source_array(j, i, 0) = tempx;
+        type_real tempz = -1.0 * cos(angle) * hlagrange;
+        source_array(j, i, 1) = tempz;
       }
     }
   }
@@ -197,50 +202,52 @@ void specfem::sources::force::check_locations(const type_real xmin,
 
 specfem::sources::force::force(type_real x, type_real z, type_real angle,
                                type_real tshift, type_real f0, type_real factor,
-                               std::string forcing_type, wave_type wave)
+                               const type_real dt, std::string forcing_type,
+                               wave_type wave)
     : x(x), z(z), angle(angle), wave(wave) {
 
-  bool use_trick_for_better_pressure = true;
+  bool use_trick_for_better_pressure = false;
 
-  this->forcing_function = assign_stf(forcing_type, f0, tshift, factor,
+  this->forcing_function = assign_stf(forcing_type, f0, tshift, factor, dt,
                                       use_trick_for_better_pressure);
 };
 
 specfem::sources::force::force(specfem::utilities::force_source &force_source,
-                               wave_type wave)
+                               const type_real dt, wave_type wave)
     : x(force_source.x), z(force_source.z), angle(force_source.angle),
       wave(wave) {
 
-  bool use_trick_for_better_pressure = true;
+  bool use_trick_for_better_pressure = false;
 
   this->forcing_function =
       assign_stf(force_source.stf_type, force_source.f0, force_source.tshift,
-                 force_source.factor, use_trick_for_better_pressure);
+                 force_source.factor, dt, use_trick_for_better_pressure);
 };
 
 specfem::sources::moment_tensor::moment_tensor(type_real x, type_real z,
                                                type_real Mxx, type_real Mxz,
                                                type_real Mzz, type_real tshift,
                                                type_real f0, type_real factor,
+                                               const type_real dt,
                                                std::string forcing_type)
     : x(x), z(z), Mxx(Mxx), Mxz(Mxz), Mzz(Mzz) {
 
-  bool use_trick_for_better_pressure = true;
+  bool use_trick_for_better_pressure = false;
 
-  this->forcing_function = assign_stf(forcing_type, f0, tshift, factor,
+  this->forcing_function = assign_stf(forcing_type, f0, tshift, factor, dt,
                                       use_trick_for_better_pressure);
 };
 
 specfem::sources::moment_tensor::moment_tensor(
-    specfem::utilities::moment_tensor &moment_tensor)
+    specfem::utilities::moment_tensor &moment_tensor, const type_real dt)
     : x(moment_tensor.x), z(moment_tensor.z), Mxx(moment_tensor.Mxx),
       Mxz(moment_tensor.Mxz), Mzz(moment_tensor.Mzz) {
 
-  bool use_trick_for_better_pressure = true;
+  bool use_trick_for_better_pressure = false;
 
   this->forcing_function =
       assign_stf(moment_tensor.stf_type, moment_tensor.f0, moment_tensor.tshift,
-                 moment_tensor.factor, use_trick_for_better_pressure);
+                 moment_tensor.factor, dt, use_trick_for_better_pressure);
 };
 
 void specfem::sources::source::print(std::ostream &out) const {

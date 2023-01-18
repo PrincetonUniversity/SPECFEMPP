@@ -5,10 +5,12 @@
 #include "../../../include/parameter_parser.h"
 #include "../../../include/quadrature.h"
 #include "../../../include/read_sources.h"
+#include "../../../include/solver.h"
+#include "../../../include/timescheme.h"
 #include "../../../include/utils.h"
-#include "../Kokkos_Environment.hpp"
-#include "../MPI_environment.hpp"
-#include "../utilities/include/compare_array.h"
+#include "../../Kokkos_Environment.hpp"
+#include "../../MPI_environment.hpp"
+#include "../../utilities/include/compare_array.h"
 #include "yaml-cpp/yaml.h"
 
 // ----- Parse test config ------------- //
@@ -43,9 +45,9 @@ test_config parse_test_config(std::string test_configuration_file,
 
 // ------------------------------------- //
 
-TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
+TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
   std::string config_filename =
-      "../../../tests/unittests/domain/test_config.yaml";
+      "../../../tests/unittests/displacement_tests/Newmark/test_config.yaml";
 
   specfem::MPI::MPI *mpi = MPIEnvironment::mpi_;
 
@@ -56,6 +58,7 @@ TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
   const std::string database_file = test_config.database_file;
 
   specfem::runtime_configuration::setup setup(parameter_file);
+  mpi->cout(setup.print_header());
 
   // Set up GLL quadrature points
   auto [gllx, gllz] = setup.instantiate_quadrature();
@@ -92,10 +95,7 @@ TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
   }
 
   // Update solver intialization time
-  setup.update_t0(t0);
-
-  // Update solver intialization time
-  setup.update_t0(t0);
+  setup.update_t0(-1.0 * t0);
 
   // Instantiate the solver and timescheme
   auto it = setup.instantiate_solver();
@@ -109,13 +109,21 @@ TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
 
   // Instantiate domain classes
   const int nglob = specfem::utilities::compute_nglob(compute.ibool);
-
   specfem::Domain::Domain *domains = new specfem::Domain::Elastic(
       ndim, nglob, &compute, &material_properties, &partial_derivatives,
       &compute_sources, &gllx, &gllz);
 
-  EXPECT_NO_THROW(specfem::testing::test_array(
-      domains->get_rmass_inverse(), test_config.solutions_file, nglob, ndim));
+  specfem::solver::solver *solver =
+      new specfem::solver::time_marching(domains, it);
+
+  solver->run();
+
+  auto field = domains->get_field();
+
+  type_real tolerance = 0.01;
+
+  EXPECT_NO_THROW(specfem::testing::compare_norm(
+      field, test_config.solutions_file, nglob, ndim, tolerance));
 }
 
 int main(int argc, char *argv[]) {

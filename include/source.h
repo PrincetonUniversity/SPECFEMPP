@@ -134,8 +134,8 @@ public:
    * @param wave Type of simulation P-SV or SH wave simulation
    */
   force(type_real x, type_real z, type_real angle, type_real tshift,
-        type_real f0, type_real factor, std::string forcing_type,
-        wave_type wave);
+        type_real f0, type_real factor, const type_real dt,
+        std::string forcing_type, wave_type wave);
   /**
    * @brief Construct a new collocated force object
    *
@@ -143,7 +143,8 @@ public:
    * written in .yml format
    * @param wave Type of simulation P-SV or SH wave simulation
    */
-  force(specfem::utilities::force_source &force_source, wave_type wave);
+  force(specfem::utilities::force_source &force_source, const type_real dt,
+        wave_type wave);
   /**
    * @brief Locate source within the mesh
    *
@@ -272,14 +273,15 @@ public:
   KOKKOS_FUNCTION moment_tensor(type_real x, type_real z, type_real Mxx,
                                 type_real Mxz, type_real Mzz, type_real tshift,
                                 type_real f0, type_real factor,
-                                std::string forcing_type);
+                                const type_real dt, std::string forcing_type);
   /**
    * @brief Construct a new moment tensor force object
    *
    * @param moment_tensor a moment_tensor data holder read from source file
    * written in .yml format
    */
-  moment_tensor(specfem::utilities::moment_tensor &moment_tensor);
+  moment_tensor(specfem::utilities::moment_tensor &moment_tensor,
+                const type_real dt);
   /**
    * @brief Locate source within the mesh
    *

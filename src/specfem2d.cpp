@@ -86,8 +86,8 @@ int main(int argc, char **argv) {
     // Read sources
     //    if start time is not explicitly specified then t0 is determined using
     //    source frequencies and time shift
-    auto [sources, t0] =
-        specfem::read_sources(database_config.source_filename, mpi);
+    auto [sources, t0] = specfem::read_sources(database_config.source_filename,
+                                               setup.get_dt(), mpi);
 
     // Generate compute structs to be used by the solver
     specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
     }
 
     // Update solver intialization time
-    setup.update_t0(t0);
+    setup.update_t0(-1.0 * t0);
 
     // Instantiate the solver and timescheme
     auto it = setup.instantiate_solver();

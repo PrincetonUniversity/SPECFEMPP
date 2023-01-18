@@ -9,6 +9,7 @@ void specfem::solver::time_marching::run() {
 
   while (it->status()) {
     int istep = it->get_timestep();
+
     type_real timeval = it->get_time();
 
     it->apply_predictor_phase(domain);
