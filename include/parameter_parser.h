@@ -134,6 +134,11 @@ public:
    * @param t0 Simulation start time
    */
   virtual void update_t0(type_real t0){};
+
+  virtual type_real get_dt() const {
+    std::runtime_error("Solver not instantiated properly");
+    return 0.0;
+  };
 };
 
 /**
@@ -177,6 +182,8 @@ public:
    * used in the solver algorithm
    */
   specfem::TimeScheme::TimeScheme *instantiate() override;
+
+  type_real get_dt() const override { return this->dt; }
 
 private:
   int nstep;              ///< number of time steps
@@ -265,6 +272,8 @@ public:
    * @brief Log the header and description of the simulation
    */
   std::string print_header();
+
+  type_real get_dt() const { return solver->get_dt(); }
 
 private:
   specfem::runtime_configuration::header *header; ///< Pointer to header object

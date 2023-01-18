@@ -42,10 +42,11 @@ void specfem::TimeScheme::Newmark::apply_predictor_phase(
                            field_dot(iglob, idim) +=
                                this->deltatover2 * field_dot_dot(iglob, idim);
                            // reset acceleration
-                           field_dot_dot(iglob, idim) = 0.0;
+                           field_dot_dot(iglob, idim) = 0;
                          }
                        });
 
+  Kokkos::fence();
   return;
 }
 
@@ -64,9 +65,14 @@ void specfem::TimeScheme::Newmark::apply_corrector_phase(
                            // apply corrector phase
                            field_dot(iglob, idim) +=
                                this->deltatover2 * field_dot_dot(iglob, idim);
+                           //  if (iglob == 64040 && idim == 1){
+                           //     type_real temp = field_dot_dot(iglob, idim);
+                           //     std::cout << temp << std::endl;
+                           //  }
                          }
                        });
 
+  Kokkos::fence();
   return;
 }
 

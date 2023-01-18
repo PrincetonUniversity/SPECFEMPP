@@ -19,7 +19,7 @@ specfem::runtime_configuration::time_marching::instantiate() {
 
   specfem::TimeScheme::TimeScheme *it;
   if (this->timescheme == "Newmark") {
-    it = new specfem::TimeScheme::Newmark(this->nstep, this->dt, this->t0);
+    it = new specfem::TimeScheme::Newmark(this->nstep, this->t0, this->dt);
   }
 
   return it;
