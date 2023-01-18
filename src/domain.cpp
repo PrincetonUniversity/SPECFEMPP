@@ -271,12 +271,9 @@ void specfem::Domain::Elastic::compute_stiffness_interaction() {
               type_real duzdxl_plus_duxdzl = duzdxl + duxdzl;
               if (wave == p_sv) {
                 // P_SV case
-                type_real sigma_xx = lambdaplus2mul * duxdxl + lambdal * duzdzl;
-                s_sigma_xx(iz, ix) = sigma_xx;
-                type_real sigma_zz = lambdaplus2mul * duzdzl + lambdal * duxdxl;
-                s_sigma_zz(iz, ix) = sigma_zz;
-                type_real sigma_xz = mul * duzdxl_plus_duxdzl;
-                s_sigma_xz(iz, ix) = sigma_xz;
+                s_sigma_xx(iz, ix) = lambdaplus2mul * duxdxl + lambdal * duzdzl;
+                s_sigma_zz(iz, ix) = lambdaplus2mul * duzdzl + lambdal * duxdxl;
+                s_sigma_xz(iz, ix) = mul * duzdxl_plus_duxdzl;
               } else {
                 // SH-case
                 s_sigma_xx(iz, ix) =
@@ -379,14 +376,10 @@ void specfem::Domain::Elastic::compute_stiffness_interaction() {
               const int ix = xz % ngllz;
               const int iz = xz / ngllz;
               int iglob = ibool(iz, ix);
-              type_real tempx1l = s_tempx1(iz, ix);
-              type_real tempx3l = s_tempx3(iz, ix);
-              type_real tempz1l = s_tempz1(iz, ix);
-              type_real tempz3l = s_tempz3(iz, ix);
-              type_real sum_terms1 =
-                  -1.0 * (s_wzgll(iz) * tempx1l) - (s_wxgll(ix) * tempx3l);
-              type_real sum_terms3 =
-                  -1.0 * (s_wzgll(iz) * tempz1l) - (s_wxgll(ix) * tempz3l);
+              type_real sum_terms1 = -1.0 * (s_wzgll(iz) * s_tempx1(iz, ix)) -
+                                     (s_wxgll(ix) * s_tempx3(iz, ix));
+              type_real sum_terms3 = -1.0 * (s_wzgll(iz) * s_tempz1(iz, ix)) -
+                                     (s_wxgll(ix) * s_tempz3(iz, ix));
               Kokkos::atomic_add(&this->field_dot_dot(iglob, 0), sum_terms1);
               Kokkos::atomic_add(&this->field_dot_dot(iglob, 1), sum_terms3);
             });
@@ -440,24 +433,13 @@ void specfem::Domain::Elastic::compute_source_interaction(
                 type_real stf =
                     this->sources->stf_array(isource).T->compute(timeval);
 
-                // std::cout << "iz = " << iz << "ix = " << ix << "value = "
-                //           << this->sources->source_array(isource, iz, ix, 1)
-                //           << std::endl;
-
                 if (wave == p_sv) {
                   type_real accelx =
                       this->sources->source_array(isource, iz, ix, 0) * stf;
                   type_real accelz =
                       this->sources->source_array(isource, iz, ix, 1) * stf;
-                  // std::cout << "iglob = " << iglob << " accelz = " << accelz
-                  //           << std::endl;
                   Kokkos::atomic_add(&this->field_dot_dot(iglob, 0), accelx);
                   Kokkos::atomic_add(&this->field_dot_dot(iglob, 1), accelz);
-                  // if (iglob == 64040)
-                  //   std::cout << "iglob = " << iglob
-                  //             << " accelz = " << this->field_dot_dot(iglob,
-                  //             1)
-                  //             << std::endl;
                 } else {
                   type_real accelx =
                       this->sources->source_array(isource, iz, ix, 0) * stf;
