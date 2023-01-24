@@ -30,7 +30,7 @@ public:
    * Given the global cartesian coordinates of a source, locate the spectral
    * element and xi, gamma value of the source
    *
-   * @param ibool Global number for every quadrature point
+   * @param h_ibool Global number for every quadrature point
    * @param coord (x, z) for every distinct control node
    * @param xigll Quadrature points in x-dimension
    * @param zigll Quadrature points in z-dimension
@@ -41,14 +41,14 @@ public:
    * @param ispec_type material type for every spectral element
    * @param mpi Pointer to specfem MPI object
    */
-  virtual void locate(const specfem::HostView3d<int> ibool,
-                      const specfem::HostView2d<type_real> coord,
+  virtual void locate(const specfem::HostView2d<type_real> coord,
+                      const specfem::HostMirror3d<int> h_ibool,
                       const specfem::HostMirror1d<type_real> xigll,
                       const specfem::HostMirror1d<type_real> zigll,
                       const int nproc,
                       const specfem::HostView2d<type_real> coorg,
                       const specfem::HostView2d<int> knods, const int npgeo,
-                      const specfem::HostView1d<element_type> ispec_type,
+                      const specfem::HostMirror1d<element_type> ispec_type,
                       const specfem::MPI::MPI *mpi){};
   /**
    * @brief Precompute and store lagrangian values used to compute integrals for
@@ -110,6 +110,7 @@ public:
    * @return type_real \f$ \gamma \f$ value
    */
   virtual type_real get_gamma() const { return 0.0; }
+  KOKKOS_IMPL_HOST_FUNCTION
   virtual type_real get_t0() const { return 0.0; }
   virtual void update_tshift(type_real tshift){};
   virtual void print(std::ostream &out) const;
@@ -151,7 +152,7 @@ public:
    * Given the global cartesian coordinates of a source, locate the spectral
    * element and xi, gamma value of the source
    *
-   * @param ibool Global number for every quadrature point
+   * @param h_ibool Global number for every quadrature point
    * @param coord (x, z) for every distinct control node
    * @param xigll Quadrature points in x-dimension
    * @param zigll Quadrature points in z-dimension
@@ -162,13 +163,13 @@ public:
    * @param ispec_type material type for every spectral element
    * @param mpi Pointer to specfem MPI object
    */
-  void locate(const specfem::HostView3d<int> ibool,
-              const specfem::HostView2d<type_real> coord,
+  void locate(const specfem::HostView2d<type_real> coord,
+              const specfem::HostMirror3d<int> h_ibool,
               const specfem::HostMirror1d<type_real> xigll,
               const specfem::HostMirror1d<type_real> zigll, const int nproc,
               const specfem::HostView2d<type_real> coorg,
               const specfem::HostView2d<int> knods, const int npgeo,
-              const specfem::HostView1d<element_type> ispec_type,
+              const specfem::HostMirror1d<element_type> ispec_type,
               const specfem::MPI::MPI *mpi) override;
   /**
    * @brief Precompute and store lagrangian values used to compute integrals for
@@ -231,10 +232,9 @@ public:
    */
   type_real get_gamma() const override { return gamma; }
   ~force() { Kokkos::kokkos_free<HostMemSpace>(this->forcing_function); }
-  type_real get_t0() const override { return this->forcing_function->get_t0(); }
-  void update_tshift(type_real tshift) override {
-    this->forcing_function->update_tshift(tshift);
-  }
+  KOKKOS_IMPL_HOST_FUNCTION
+  type_real get_t0() const override;
+  void update_tshift(type_real tshift) override;
   void print(std::ostream &out) const override;
 
   specfem::forcing_function::stf *get_stf() const override {
@@ -251,7 +251,7 @@ private:
   int islice;           ///< MPI slice (rank) where the source is located
   element_type el_type; ///< type of the element inside which this source lies
   wave_type wave;       ///< SH or P-SV wave
-  specfem::forcing_function::stf *forcing_function;
+  specfem::forcing_function::stf *forcing_function = NULL;
 };
 
 /**
@@ -288,7 +288,7 @@ public:
    * Given the global cartesian coordinates of a source, locate the spectral
    * element and xi, gamma value of the source
    *
-   * @param ibool Global number for every quadrature point
+   * @param h_ibool Global number for every quadrature point
    * @param coord (x, z) for every distinct control node
    * @param xigll Quadrature points in x-dimension
    * @param zigll Quadrature points in z-dimension
@@ -299,13 +299,13 @@ public:
    * @param ispec_type material type for every spectral element
    * @param mpi Pointer to specfem MPI object
    */
-  void locate(const specfem::HostView3d<int> ibool,
-              const specfem::HostView2d<type_real> coord,
+  void locate(const specfem::HostView2d<type_real> coord,
+              const specfem::HostMirror3d<int> h_ibool,
               const specfem::HostMirror1d<type_real> xigll,
               const specfem::HostMirror1d<type_real> zigll, const int nproc,
               const specfem::HostView2d<type_real> coorg,
               const specfem::HostView2d<int> knods, const int npgeo,
-              const specfem::HostView1d<element_type> ispec_type,
+              const specfem::HostMirror1d<element_type> ispec_type,
               const specfem::MPI::MPI *mpi) override;
   /**
    * @brief Precompute and store lagrangian values used to compute integrals for
@@ -355,10 +355,9 @@ public:
    * @return type_real \f$ \gamma \f$ value
    */
   type_real get_gamma() const override { return gamma; }
-  type_real get_t0() const override { return this->forcing_function->get_t0(); }
-  void update_tshift(type_real tshift) {
-    this->forcing_function->update_tshift(tshift);
-  }
+  KOKKOS_IMPL_HOST_FUNCTION
+  type_real get_t0() const override;
+  void update_tshift(type_real tshift) override;
   friend std::ostream &operator<<(std::ostream &out, const moment_tensor *h);
   void print(std::ostream &out) const override;
   specfem::forcing_function::stf *get_stf() const override {
@@ -383,7 +382,7 @@ private:
                                           ///< element where this source is
                                           ///< located
 
-  specfem::forcing_function::stf *forcing_function;
+  specfem::forcing_function::stf *forcing_function = NULL;
 };
 
 std::ostream &operator<<(std::ostream &out,

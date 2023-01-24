@@ -7,16 +7,23 @@
 specfem::compute::partial_derivatives::partial_derivatives(const int nspec,
                                                            const int ngllz,
                                                            const int ngllx)
-    : xix(specfem::HostView3d<type_real>("specfem::mesh::compute::xix", nspec,
-                                         ngllz, ngllx)),
-      xiz(specfem::HostView3d<type_real>("specfem::mesh::compute::xiz", nspec,
-                                         ngllz, ngllx)),
-      gammax(specfem::HostView3d<type_real>("specfem::mesh::compute::gammax",
-                                            nspec, ngllz, ngllx)),
-      gammaz(specfem::HostView3d<type_real>("specfem::mesh::compute::gammaz",
-                                            nspec, ngllz, ngllx)),
-      jacobian(specfem::HostView3d<type_real>(
-          "specfem::mesh::compute::jacobian", nspec, ngllz, ngllx)){};
+    : xix(specfem::DeviceView3d<type_real>("specfem::mesh::compute::xix", nspec,
+                                           ngllz, ngllx)),
+      xiz(specfem::DeviceView3d<type_real>("specfem::mesh::compute::xiz", nspec,
+                                           ngllz, ngllx)),
+      gammax(specfem::DeviceView3d<type_real>("specfem::mesh::compute::gammax",
+                                              nspec, ngllz, ngllx)),
+      gammaz(specfem::DeviceView3d<type_real>("specfem::mesh::compute::gammaz",
+                                              nspec, ngllz, ngllx)),
+      jacobian(specfem::DeviceView3d<type_real>(
+          "specfem::mesh::compute::jacobian", nspec, ngllz, ngllx)) {
+
+  h_xix = Kokkos::create_mirror_view(xix);
+  h_xiz = Kokkos::create_mirror_view(xiz);
+  h_gammax = Kokkos::create_mirror_view(gammax);
+  h_gammaz = Kokkos::create_mirror_view(gammaz);
+  h_jacobian = Kokkos::create_mirror_view(gammaz);
+};
 
 specfem::compute::partial_derivatives::partial_derivatives(
     const specfem::HostView2d<type_real> coorg,
@@ -110,13 +117,23 @@ specfem::compute::partial_derivatives::partial_derivatives(
                   jacobian::compute_inverted_derivatives(teamMember, s_coorg,
                                                          ngnod, sv_dershape2D);
 
-              this->xix(ispec, iz, ix) = xixl;
-              this->gammax(ispec, iz, ix) = gammaxl;
-              this->xiz(ispec, iz, ix) = xizl;
-              this->gammaz(ispec, iz, ix) = gammazl;
-              this->jacobian(ispec, iz, ix) = jacobianl;
+              this->h_xix(ispec, iz, ix) = xixl;
+              this->h_gammax(ispec, iz, ix) = gammaxl;
+              this->h_xiz(ispec, iz, ix) = xizl;
+              this->h_gammaz(ispec, iz, ix) = gammazl;
+              this->h_jacobian(ispec, iz, ix) = jacobianl;
             });
       });
 
+  this->sync_views();
+
   return;
+}
+
+void specfem::compute::partial_derivatives::sync_views() {
+  Kokkos::deep_copy(xix, h_xix);
+  Kokkos::deep_copy(xiz, h_xiz);
+  Kokkos::deep_copy(gammax, h_gammax);
+  Kokkos::deep_copy(gammaz, h_gammaz);
+  Kokkos::deep_copy(jacobian, h_jacobian);
 }
