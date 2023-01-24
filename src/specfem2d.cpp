@@ -100,10 +100,10 @@ int main(int argc, char **argv) {
 
     // Locate the sources
     for (auto &source : sources)
-      source->locate(compute.ibool, compute.coordinates.coord, gllx.get_hxi(),
+      source->locate(compute.coordinates.coord, compute.h_ibool, gllx.get_hxi(),
                      gllz.get_hxi(), mesh.nproc, mesh.coorg,
                      mesh.material_ind.knods, mesh.npgeo,
-                     material_properties.ispec_type, mpi);
+                     material_properties.h_ispec_type, mpi);
 
     // User output
     for (auto &source : sources) {
@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
     specfem::compute::sources compute_sources(sources, gllx, gllz, mpi);
 
     // Instantiate domain classes
-    const int nglob = specfem::utilities::compute_nglob(compute.ibool);
+    const int nglob = specfem::utilities::compute_nglob(compute.h_ibool);
     specfem::Domain::Domain *domains = new specfem::Domain::Elastic(
         ndim, nglob, &compute, &material_properties, &partial_derivatives,
         &compute_sources, &gllx, &gllz);

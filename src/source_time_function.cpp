@@ -32,6 +32,7 @@ specfem::forcing_function::Dirac::Dirac(type_real f0, type_real tshift,
                                         bool use_trick_for_better_pressure)
     : f0(f0), factor(factor),
       use_trick_for_better_pressure(use_trick_for_better_pressure) {
+
   type_real hdur = 1.0 / this->f0;
 
   this->t0 = 1.2 * hdur + this->tshift;

@@ -77,7 +77,7 @@ TEST(COMPUTE_TESTS, compute_ibool) {
                                     gllz);
 
   EXPECT_NO_THROW(
-      specfem::testing::test_array(compute.ibool, test_config.ibool_file,
+      specfem::testing::test_array(compute.h_ibool, test_config.ibool_file,
                                    mesh.nspec, gllz.get_N(), gllx.get_N()));
 }
 
