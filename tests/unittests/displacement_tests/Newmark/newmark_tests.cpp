@@ -72,8 +72,6 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
   //    source frequencies and time shift
   auto [sources, t0] = specfem::read_sources(sources_file, setup.get_dt(), mpi);
 
-  std::cout << "Source assigned 2" << std::endl;
-
   // Generate compute structs to be used by the solver
   specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
                                     gllz);

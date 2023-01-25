@@ -368,9 +368,12 @@ void specfem::Domain::Elastic::compute_stiffness_interaction() {
               const type_real duzdxl_plus_duxdzl = duzdxl + duxdzl;
               if (wave == p_sv) {
                 // P_SV case
-                s_sigma_xx(iz, ix) = lambdaplus2mul * duxdxl + lambdal * duzdzl;
-                s_sigma_zz(iz, ix) = lambdaplus2mul * duzdzl + lambdal * duxdxl;
-                s_sigma_xz(iz, ix) = mul * duzdxl_plus_duxdzl;
+                type_real sigmaxx = lambdaplus2mul * duxdxl + lambdal * duzdzl;
+                s_sigma_xx(iz, ix) = sigmaxx;
+                type_real sigmazz = lambdaplus2mul * duzdzl + lambdal * duxdxl;
+                s_sigma_zz(iz, ix) = sigmazz;
+                type_real sigmaxz = mul * duzdxl_plus_duxdzl;
+                s_sigma_xz(iz, ix) = sigmaxz;
               } else {
                 // SH-case
                 s_sigma_xx(iz, ix) =
@@ -479,15 +482,19 @@ void specfem::Domain::Elastic::compute_stiffness_interaction() {
               const type_real sum_terms3 =
                   -1.0 * (s_wzgll(iz) * s_tempz1(iz, ix)) -
                   (s_wxgll(ix) * s_tempz3(iz, ix));
-              Kokkos::atomic_add(&this->field_dot_dot(iglob, 0), sum_terms1);
-              Kokkos::atomic_add(&this->field_dot_dot(iglob, 1), sum_terms3);
+              Kokkos::single(Kokkos::PerThread(team_member), [=] {
+                Kokkos::atomic_add(&this->field_dot_dot(iglob, 0), sum_terms1);
+                Kokkos::atomic_add(&this->field_dot_dot(iglob, 1), sum_terms3);
+              });
             });
       });
 
   Kokkos::fence();
+
   return;
 }
 
+KOKKOS_IMPL_HOST_FUNCTION
 void specfem::Domain::Elastic::divide_mass_matrix() {
 
   const int nglob = this->rmass_inverse.extent(0);
@@ -502,6 +509,7 @@ void specfem::Domain::Elastic::divide_mass_matrix() {
       });
 
   Kokkos::fence();
+
   return;
 }
 
@@ -520,28 +528,40 @@ void specfem::Domain::Elastic::compute_source_interaction(
 
   Kokkos::parallel_for(
       "specfem::Domain::Elastic::compute_source_interaction",
-      specfem::DeviceTeam(nsources, Kokkos::AUTO, ngllx),
+      specfem::DeviceTeam(nsources, Kokkos::AUTO, 1),
       KOKKOS_CLASS_LAMBDA(const specfem::DeviceTeam::member_type &team_member) {
         int isource = team_member.league_rank();
         int ispec = ispec_array(isource);
         auto sv_ibool = Kokkos::subview(ibool, ispec, Kokkos::ALL, Kokkos::ALL);
 
         if (ispec_type(ispec) == elastic) {
+
+          type_real stf;
+
+          Kokkos::parallel_reduce(
+              Kokkos::TeamThreadRange(team_member, 1),
+              [=](const int &, type_real &lsum) {
+                lsum = stf_array(isource).T->compute(timeval);
+              },
+              stf);
+
+          team_member.team_barrier();
+
           Kokkos::parallel_for(
               Kokkos::TeamThreadRange(team_member, ngllxz), [=](const int xz) {
                 const int ix = xz % ngllz;
                 const int iz = xz / ngllz;
                 int iglob = sv_ibool(iz, ix);
 
-                const type_real stf = stf_array(isource).T->compute(timeval);
-
                 if (wave == p_sv) {
                   const type_real accelx =
                       source_array(isource, iz, ix, 0) * stf;
                   const type_real accelz =
                       source_array(isource, iz, ix, 1) * stf;
-                  Kokkos::atomic_add(&this->field_dot_dot(iglob, 0), accelx);
-                  Kokkos::atomic_add(&this->field_dot_dot(iglob, 1), accelz);
+                  Kokkos::single(Kokkos::PerThread(team_member), [=] {
+                    Kokkos::atomic_add(&this->field_dot_dot(iglob, 0), accelx);
+                    Kokkos::atomic_add(&this->field_dot_dot(iglob, 1), accelz);
+                  });
                 } else {
                   const type_real accelx =
                       source_array(isource, iz, ix, 0) * stf;
