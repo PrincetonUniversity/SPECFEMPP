@@ -22,7 +22,7 @@ specfem::compute::partial_derivatives::partial_derivatives(const int nspec,
   h_xiz = Kokkos::create_mirror_view(xiz);
   h_gammax = Kokkos::create_mirror_view(gammax);
   h_gammaz = Kokkos::create_mirror_view(gammaz);
-  h_jacobian = Kokkos::create_mirror_view(gammaz);
+  h_jacobian = Kokkos::create_mirror_view(jacobian);
 };
 
 specfem::compute::partial_derivatives::partial_derivatives(

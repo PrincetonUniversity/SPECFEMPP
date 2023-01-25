@@ -231,7 +231,9 @@ public:
    * @return type_real \f$ \gamma \f$ value
    */
   type_real get_gamma() const override { return gamma; }
-  ~force() { Kokkos::kokkos_free<HostMemSpace>(this->forcing_function); }
+  ~force() {
+    Kokkos::kokkos_free<specfem::DevMemSpace>(this->forcing_function);
+  }
   KOKKOS_IMPL_HOST_FUNCTION
   type_real get_t0() const override;
   void update_tshift(type_real tshift) override;
@@ -365,7 +367,7 @@ public:
   }
 
   ~moment_tensor() {
-    Kokkos::kokkos_free<HostMemSpace>(this->forcing_function);
+    Kokkos::kokkos_free<specfem::DevMemSpace>(this->forcing_function);
   }
 
 private:

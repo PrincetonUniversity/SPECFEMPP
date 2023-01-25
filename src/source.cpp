@@ -32,23 +32,6 @@ specfem::forcing_function::stf *assign_stf(std::string forcing_type,
     Kokkos::fence();
   }
 
-  type_real t0;
-
-  if (forcing_function == NULL) {
-    std::cout << "Forcing function not allocated" << std::endl;
-  }
-
-  Kokkos::parallel_reduce(
-      "specfem::sources::force::get_t0", specfem::DeviceRange({ 0, 1 }),
-      KOKKOS_LAMBDA(const int &, type_real &lsum) {
-        lsum = forcing_function->get_t0();
-      },
-      t0);
-
-  Kokkos::fence();
-
-  std::cout << t0 << std::endl;
-
   return forcing_function;
 }
 
@@ -271,16 +254,12 @@ KOKKOS_IMPL_HOST_FUNCTION
 type_real specfem::sources::force::get_t0() const {
 
   type_real t0;
+  specfem::forcing_function::stf *forcing_func = this->forcing_function;
 
-  if (forcing_function == NULL) {
-    std::cout << "Forcing function not allocated" << std::endl;
-  }
-
-  std::cout << "Hello" << std::endl;
   Kokkos::parallel_reduce(
       "specfem::sources::force::get_t0", specfem::DeviceRange({ 0, 1 }),
-      KOKKOS_CLASS_LAMBDA(const int &, type_real &lsum) {
-        lsum = this->forcing_function->get_t0();
+      KOKKOS_LAMBDA(const int &, type_real &lsum) {
+        lsum = forcing_func->get_t0();
       },
       t0);
 
@@ -293,16 +272,12 @@ KOKKOS_IMPL_HOST_FUNCTION
 type_real specfem::sources::moment_tensor::get_t0() const {
 
   type_real t0;
-  specfem::forcing_function::stf *forcing_function = this->forcing_function;
-
-  if (forcing_function == NULL) {
-    std::cout << "Forcing function not allocated" << std::endl;
-  }
+  specfem::forcing_function::stf *forcing_func = this->forcing_function;
 
   Kokkos::parallel_reduce(
       "specfem::sources::force::get_t0", specfem::DeviceRange({ 0, 1 }),
-      KOKKOS_CLASS_LAMBDA(const int &, type_real &lsum) {
-        lsum = forcing_function->get_t0();
+      KOKKOS_LAMBDA(const int &, type_real &lsum) {
+        lsum = forcing_func->get_t0();
       },
       t0);
 
@@ -313,11 +288,11 @@ type_real specfem::sources::moment_tensor::get_t0() const {
 
 void specfem::sources::force::update_tshift(type_real tshift) {
 
+  specfem::forcing_function::stf *forcing_func = this->forcing_function;
+
   Kokkos::parallel_for(
       "specfem::sources::force::get_t0", specfem::DeviceRange({ 0, 1 }),
-      KOKKOS_CLASS_LAMBDA(const int &) {
-        this->forcing_function->update_tshift(tshift);
-      });
+      KOKKOS_LAMBDA(const int &) { forcing_func->update_tshift(tshift); });
 
   Kokkos::fence();
 
@@ -326,11 +301,11 @@ void specfem::sources::force::update_tshift(type_real tshift) {
 
 void specfem::sources::moment_tensor::update_tshift(type_real tshift) {
 
+  specfem::forcing_function::stf *forcing_func = this->forcing_function;
+
   Kokkos::parallel_for(
       "specfem::sources::moment_tensor::get_t0", specfem::DeviceRange({ 0, 1 }),
-      KOKKOS_CLASS_LAMBDA(const int &) {
-        this->forcing_function->update_tshift(tshift);
-      });
+      KOKKOS_LAMBDA(const int &) { forcing_func->update_tshift(tshift); });
 
   Kokkos::fence();
 

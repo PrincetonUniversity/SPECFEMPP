@@ -51,8 +51,6 @@ specfem::read_sources(const std::string sources_file, const type_real dt,
       sources.push_back(new specfem::sources::force(force_source, dt, wave));
     }
 
-    std::cout << "Source assigned" << std::endl;
-
     if (N["source_type"].as<std::string>() == "Moment-tensor source") {
       specfem::utilities::moment_tensor moment_tensor;
       N >> moment_tensor;
@@ -69,8 +67,6 @@ specfem::read_sources(const std::string sources_file, const type_real dt,
     throw std::runtime_error(message.str());
   }
 
-  std::cout << "Source assigned 2" << std::endl;
-
   type_real t0 = std::numeric_limits<type_real>::max();
   for (auto &source : sources) {
     type_real cur_t0 = source->get_t0();
@@ -79,14 +75,10 @@ specfem::read_sources(const std::string sources_file, const type_real dt,
     }
   }
 
-  std::cout << "Source assigned 3" << std::endl;
-
   for (auto &source : sources) {
     type_real cur_t0 = source->get_t0();
     source->update_tshift(cur_t0 - t0);
   }
-
-  std::cout << "Source assigned 4" << std::endl;
 
   return std::make_tuple(sources, t0);
 }

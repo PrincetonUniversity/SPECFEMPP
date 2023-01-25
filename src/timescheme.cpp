@@ -21,6 +21,7 @@ void specfem::TimeScheme::Newmark::reset_time() {
   return;
 }
 
+KOKKOS_IMPL_HOST_FUNCTION
 void specfem::TimeScheme::Newmark::apply_predictor_phase(
     const specfem::Domain::Domain *domain) {
   auto field = domain->get_field();
@@ -47,9 +48,11 @@ void specfem::TimeScheme::Newmark::apply_predictor_phase(
       });
 
   Kokkos::fence();
+
   return;
 }
 
+KOKKOS_IMPL_HOST_FUNCTION
 void specfem::TimeScheme::Newmark::apply_corrector_phase(
     const specfem::Domain::Domain *domain) {
 
