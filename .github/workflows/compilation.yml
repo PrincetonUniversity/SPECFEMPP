@@ -47,6 +47,6 @@ jobs:
         run: git submodule init
           &&  git submodule update
       - name: Configure OPENMP & CUDA build
-        run: cmake -S . -B build -DKokkos_ENABLE_OPENMP=ON -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON  -DKokkos_ENABLE_CUDA_LAMBDA=ON
+        run: cmake -S . -B build -DKokkos_ENABLE_OPENMP=ON -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON  -DKokkos_ENABLE_CUDA_LAMBDA=ON -DKokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE=ON
       - name: Build
         run: cmake --build build
