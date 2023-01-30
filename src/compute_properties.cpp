@@ -47,7 +47,7 @@ specfem::compute::properties::properties(
   *this = specfem::compute::properties(nspec, ngllz, ngllx);
 
   Kokkos::parallel_for(
-      "setup_compute::properties_properties",
+      "specfem::compute::properties::properties",
       specfem::HostMDrange<3>({ 0, 0, 0 }, { nspec, ngllz, ngllx }),
       [=](const int ispec, const int iz, const int ix) {
         const int imat = kmato(ispec);
