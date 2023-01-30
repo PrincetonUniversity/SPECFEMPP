@@ -47,8 +47,6 @@ void specfem::TimeScheme::Newmark::apply_predictor_phase(
         }
       });
 
-  Kokkos::fence();
-
   return;
 }
 
@@ -72,7 +70,6 @@ void specfem::TimeScheme::Newmark::apply_corrector_phase(
         }
       });
 
-  Kokkos::fence();
   return;
 }
 

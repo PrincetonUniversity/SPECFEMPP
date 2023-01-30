@@ -210,7 +210,7 @@ void specfem::Domain::Elastic::compute_stiffness_interaction() {
 
   Kokkos::parallel_for(
       "specfem::Domain::Elastic::compute_forces",
-      specfem::DeviceTeam(this->nelem_domain, Kokkos::AUTO, ngllx)
+      specfem::DeviceTeam(this->nelem_domain, 32, 1)
           .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
       KOKKOS_CLASS_LAMBDA(const specfem::DeviceTeam::member_type &team_member) {
         const int ispec = ispec_domain(team_member.league_rank());
@@ -264,13 +264,23 @@ void specfem::Domain::Elastic::compute_stiffness_interaction() {
         specfem::DeviceScratchView2d<type_real> s_tempz3(
             team_member.team_scratch(0), ngllz, ngllx);
 
+        // if (team_member.team_rank() == 0 && team_member.league_rank() == 0)
+        // printf("%i\n", team_member.team_size());
         // -------------Load into scratch memory----------------------------
         if (team_member.team_rank() == 0) {
-          Kokkos::parallel_for(Kokkos::ThreadVectorRange(team_member, ngllx),
-                               [=](const int ix) {
-                                 s_wxgll(ix) = wxgll(ix);
-                                 s_wzgll(ix) = wzgll(ix);
-                               });
+
+          for (int ix = 0; ix < ngllx; ix++) {
+            s_wxgll(ix) = wxgll(ix);
+          }
+
+          for (int iz = 0; iz < ngllz; iz++) {
+            s_wzgll(iz) = wzgll(iz);
+          }
+          // Kokkos::parallel_for(Kokkos::ThreadVectorRange(team_member, ngllx),
+          //                      [=](const int ix) {
+          //                        s_wxgll(ix) = wxgll(ix);
+          //                        s_wzgll(ix) = wzgll(ix);
+          //                      });
         }
 
         Kokkos::parallel_for(Kokkos::TeamThreadRange(team_member, ngllxz),
@@ -319,41 +329,51 @@ void specfem::Domain::Elastic::compute_stiffness_interaction() {
               type_real sum_hprime_z1 = 0;
               type_real sum_hprime_z3 = 0;
 
-              Kokkos::parallel_reduce(
-                  Kokkos::ThreadVectorRange(team_member, ngllx),
-                  [&](const int l, type_real &sumx) {
-                    type_real fac = s_hprime_xx(ix, l);
-                    type_real sx = s_tempx(iz, l);
-                    sumx += sx * fac;
-                  },
-                  sum_hprime_x1);
+              for (int l = 0; l < ngllx; l++) {
+                sum_hprime_x1 += s_hprime_xx(ix, l) * s_tempx(iz, l);
+                sum_hprime_x3 += s_hprime_xx(ix, l) * s_tempz(iz, l);
+              }
 
-              Kokkos::parallel_reduce(
-                  Kokkos::ThreadVectorRange(team_member, ngllx),
-                  [&](const int l, type_real &sumx) {
-                    type_real fac = s_hprime_xx(ix, l);
-                    type_real sz = s_tempz(iz, l);
-                    sumx += sz * fac;
-                  },
-                  sum_hprime_x3);
+              for (int l = 0; l < ngllz; l++) {
+                sum_hprime_z1 += s_hprime_zz(iz, l) * s_tempx(l, ix);
+                sum_hprime_z3 += s_hprime_zz(iz, l) * s_tempz(l, ix);
+              }
 
-              Kokkos::parallel_reduce(
-                  Kokkos::ThreadVectorRange(team_member, ngllz),
-                  [&](const int l, type_real &sumx) {
-                    type_real fac = s_hprime_zz(iz, l);
-                    type_real sx = s_tempx(l, ix);
-                    sumx += sx * fac;
-                  },
-                  sum_hprime_z1);
+              // Kokkos::parallel_reduce(
+              //     Kokkos::ThreadVectorRange(team_member, ngllx),
+              //     [&](const int l, type_real &sumx) {
+              //       type_real fac = s_hprime_xx(ix, l);
+              //       type_real sx = s_tempx(iz, l);
+              //       sumx += sx * fac;
+              //     },
+              //     sum_hprime_x1);
 
-              Kokkos::parallel_reduce(
-                  Kokkos::ThreadVectorRange(team_member, ngllz),
-                  [&](const int l, type_real &sumx) {
-                    type_real fac = s_hprime_zz(iz, l);
-                    type_real sz = s_tempz(l, ix);
-                    sumx += sz * fac;
-                  },
-                  sum_hprime_z3);
+              // Kokkos::parallel_reduce(
+              //     Kokkos::ThreadVectorRange(team_member, ngllx),
+              //     [&](const int l, type_real &sumx) {
+              //       type_real fac = s_hprime_xx(ix, l);
+              //       type_real sz = s_tempz(iz, l);
+              //       sumx += sz * fac;
+              //     },
+              //     sum_hprime_x3);
+
+              // Kokkos::parallel_reduce(
+              //     Kokkos::ThreadVectorRange(team_member, ngllz),
+              //     [&](const int l, type_real &sumx) {
+              //       type_real fac = s_hprime_zz(iz, l);
+              //       type_real sx = s_tempx(l, ix);
+              //       sumx += sx * fac;
+              //     },
+              //     sum_hprime_z1);
+
+              // Kokkos::parallel_reduce(
+              //     Kokkos::ThreadVectorRange(team_member, ngllz),
+              //     [&](const int l, type_real &sumx) {
+              //       type_real fac = s_hprime_zz(iz, l);
+              //       type_real sz = s_tempz(l, ix);
+              //       sumx += sz * fac;
+              //     },
+              //     sum_hprime_z3);
 
               const type_real duxdxl =
                   xixl * sum_hprime_x1 + gammaxl * sum_hprime_x3;
@@ -403,27 +423,36 @@ void specfem::Domain::Elastic::compute_stiffness_interaction() {
             Kokkos::TeamThreadRange(team_member, ngllxz), [&](const int xz) {
               const int ix = xz % ngllz;
               const int iz = xz / ngllz;
-              Kokkos::parallel_reduce(
-                  Kokkos::ThreadVectorRange(team_member, ngllx),
-                  [&](const int l, type_real &sumx) {
-                    type_real fac = s_wxgll(l) * s_hprime_xx(l, ix);
-                    sumx += s_tempx(iz, l) * fac;
-                  },
-                  s_tempx1(iz, ix));
+
+              s_tempx1(iz, ix) = 0;
+              s_tempz1(iz, ix) = 0;
+              for (int l = 0; l < ngllx; l++) {
+                s_tempx1(iz, ix) +=
+                    s_wxgll(l) * s_hprime_xx(l, ix) * s_tempx(iz, l);
+                s_tempz1(iz, ix) +=
+                    s_wxgll(l) * s_hprime_xx(l, ix) * s_tempz(iz, l);
+              }
+              // Kokkos::parallel_reduce(
+              //     Kokkos::ThreadVectorRange(team_member, ngllx),
+              //     [&](const int l, type_real &sumx) {
+              //       type_real fac = s_wxgll(l) * s_hprime_xx(l, ix);
+              //       sumx += s_tempx(iz, l) * fac;
+              //     },
+              //     s_tempx1(iz, ix));
             });
 
-        Kokkos::parallel_for(
-            Kokkos::TeamThreadRange(team_member, ngllxz), [&](const int xz) {
-              const int ix = xz % ngllz;
-              const int iz = xz / ngllz;
-              Kokkos::parallel_reduce(
-                  Kokkos::ThreadVectorRange(team_member, ngllx),
-                  [&](const int l, type_real &sumx) {
-                    type_real fac = s_wxgll(l) * s_hprime_xx(l, ix);
-                    sumx += s_tempz(iz, l) * fac;
-                  },
-                  s_tempz1(iz, ix));
-            });
+        // Kokkos::parallel_for(
+        //     Kokkos::TeamThreadRange(team_member, ngllxz), [&](const int xz) {
+        //       const int ix = xz % ngllz;
+        //       const int iz = xz / ngllz;
+        //       Kokkos::parallel_reduce(
+        //           Kokkos::ThreadVectorRange(team_member, ngllx),
+        //           [&](const int l, type_real &sumx) {
+        //             type_real fac = s_wxgll(l) * s_hprime_xx(l, ix);
+        //             sumx += s_tempz(iz, l) * fac;
+        //           },
+        //           s_tempz1(iz, ix));
+        //     });
 
         team_member.team_barrier();
 
@@ -446,27 +475,36 @@ void specfem::Domain::Elastic::compute_stiffness_interaction() {
             Kokkos::TeamThreadRange(team_member, ngllxz), [&](const int xz) {
               const int ix = xz % ngllz;
               const int iz = xz / ngllz;
-              Kokkos::parallel_reduce(
-                  Kokkos::ThreadVectorRange(team_member, ngllz),
-                  [&](const int l, type_real &sumx) {
-                    type_real fac = s_wzgll(l) * s_hprime_zz(l, iz);
-                    sumx += s_tempx(l, ix) * fac;
-                  },
-                  s_tempx3(iz, ix));
+
+              s_tempx3(iz, ix) = 0;
+              s_tempz3(iz, ix) = 0;
+              for (int l = 0; l < ngllz; l++) {
+                s_tempx3(iz, ix) +=
+                    s_wzgll(l) * s_hprime_zz(l, iz) * s_tempx(l, ix);
+                s_tempz3(iz, ix) +=
+                    s_wzgll(l) * s_hprime_zz(l, iz) * s_tempz(l, ix);
+              }
+              // Kokkos::parallel_reduce(
+              //     Kokkos::ThreadVectorRange(team_member, ngllz),
+              //     [&](const int l, type_real &sumx) {
+              //       type_real fac = s_wzgll(l) * s_hprime_zz(l, iz);
+              //       sumx += s_tempx(l, ix) * fac;
+              //     },
+              //     s_tempx3(iz, ix));
             });
 
-        Kokkos::parallel_for(
-            Kokkos::TeamThreadRange(team_member, ngllxz), [&](const int xz) {
-              const int ix = xz % ngllz;
-              const int iz = xz / ngllz;
-              Kokkos::parallel_reduce(
-                  Kokkos::ThreadVectorRange(team_member, ngllz),
-                  [&](const int l, type_real &sumx) {
-                    type_real fac = s_wzgll(l) * s_hprime_zz(l, iz);
-                    sumx += s_tempz(l, ix) * fac;
-                  },
-                  s_tempz3(iz, ix));
-            });
+        // Kokkos::parallel_for(
+        //     Kokkos::TeamThreadRange(team_member, ngllxz), [&](const int xz) {
+        //       const int ix = xz % ngllz;
+        //       const int iz = xz / ngllz;
+        //       Kokkos::parallel_reduce(
+        //           Kokkos::ThreadVectorRange(team_member, ngllz),
+        //           [&](const int l, type_real &sumx) {
+        //             type_real fac = s_wzgll(l) * s_hprime_zz(l, iz);
+        //             sumx += s_tempz(l, ix) * fac;
+        //           },
+        //           s_tempz3(iz, ix));
+        //     });
 
         team_member.team_barrier();
 
