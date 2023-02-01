@@ -264,8 +264,6 @@ void specfem::Domain::Elastic::compute_stiffness_interaction() {
         specfem::DeviceScratchView2d<type_real> s_tempz3(
             team_member.team_scratch(0), ngllz, ngllx);
 
-        // if (team_member.team_rank() == 0 && team_member.league_rank() == 0)
-        // printf("%i\n", team_member.team_size());
         // -------------Load into scratch memory----------------------------
         if (team_member.team_rank() == 0) {
 
@@ -310,14 +308,6 @@ void specfem::Domain::Elastic::compute_stiffness_interaction() {
             Kokkos::TeamThreadRange(team_member, ngllxz), [=](const int xz) {
               const int ix = xz % ngllz;
               const int iz = xz / ngllz;
-              const type_real xixl = sv_xix(iz, ix);
-              const type_real xizl = sv_xiz(iz, ix);
-              const type_real gammaxl = sv_gammax(iz, ix);
-              const type_real gammazl = sv_gammaz(iz, ix);
-              const type_real jacobianl = sv_jacobian(iz, ix);
-              const type_real mul = sv_mu(iz, ix);
-              const type_real lambdaplus2mul = sv_lambdaplus2mu(iz, ix);
-              const type_real lambdal = lambdaplus2mul - 2.0 * mul;
 
               type_real sum_hprime_x1 = 0;
               type_real sum_hprime_x3 = 0;
@@ -334,6 +324,12 @@ void specfem::Domain::Elastic::compute_stiffness_interaction() {
                 sum_hprime_z3 += s_hprime_zz(iz, l) * s_tempz(l, ix);
               }
 
+              const type_real xixl = sv_xix(iz, ix);
+              const type_real xizl = sv_xiz(iz, ix);
+              const type_real gammaxl = sv_gammax(iz, ix);
+              const type_real gammazl = sv_gammaz(iz, ix);
+              const type_real jacobianl = sv_jacobian(iz, ix);
+
               const type_real duxdxl =
                   xixl * sum_hprime_x1 + gammaxl * sum_hprime_x3;
               const type_real duxdzl =
@@ -345,14 +341,16 @@ void specfem::Domain::Elastic::compute_stiffness_interaction() {
                   xizl * sum_hprime_z1 + gammazl * sum_hprime_z3;
 
               const type_real duzdxl_plus_duxdzl = duzdxl + duxdzl;
+
+              const type_real mul = sv_mu(iz, ix);
+              const type_real lambdaplus2mul = sv_lambdaplus2mu(iz, ix);
+              const type_real lambdal = lambdaplus2mul - 2.0 * mul;
+
               if (wave == p_sv) {
                 // P_SV case
-                type_real sigmaxx = lambdaplus2mul * duxdxl + lambdal * duzdzl;
-                s_sigma_xx(iz, ix) = sigmaxx;
-                type_real sigmazz = lambdaplus2mul * duzdzl + lambdal * duxdxl;
-                s_sigma_zz(iz, ix) = sigmazz;
-                type_real sigmaxz = mul * duzdxl_plus_duxdzl;
-                s_sigma_xz(iz, ix) = sigmaxz;
+                s_sigma_xx(iz, ix) = lambdaplus2mul * duxdxl + lambdal * duzdzl;
+                s_sigma_zz(iz, ix) = lambdaplus2mul * duzdzl + lambdal * duxdxl;
+                s_sigma_xz(iz, ix) = mul * duzdxl_plus_duxdzl;
               } else {
                 // SH-case
                 s_sigma_xx(iz, ix) =
