@@ -203,14 +203,9 @@ void specfem::Domain::Elastic::compute_stiffness_interaction() {
   scratch_size +=
       4 * specfem::DeviceScratchView2d<type_real>::shmem_size(ngllx, ngllz);
 
-  // int catch_scratch_size = specfem::HostTeam(this->nelem_domain,
-  // Kokkos::AUTO, ngllx).scratch_size_max(0); int hbmem_scratch_size =
-  // specfem::HostTeam(this->nelem_domain, Kokkos::AUTO,
-  // ngllx).scratch_size_max(0);
-
   Kokkos::parallel_for(
       "specfem::Domain::Elastic::compute_forces",
-      specfem::DeviceTeam(this->nelem_domain, 32, 1)
+      specfem::DeviceTeam(this->nelem_domain, Kokkos::AUTO, 1)
           .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
       KOKKOS_CLASS_LAMBDA(const specfem::DeviceTeam::member_type &team_member) {
         const int ispec = ispec_domain(team_member.league_rank());
