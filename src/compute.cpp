@@ -38,10 +38,10 @@ type_real get_tolerance(std::vector<qp> cart_cord, const int nspec,
   return 1e-6 * xtypdist;
 }
 
-std::tuple<specfem::HostView3d<int>, specfem::HostView2d<type_real>, type_real,
-           type_real, type_real, type_real>
-assign_numbering(std::vector<qp> &cart_cord, const int nspec, const int ngllx,
-                 const int ngllz) {
+std::tuple<specfem::HostView2d<type_real>, type_real, type_real, type_real,
+           type_real>
+assign_numbering(specfem::HostMirror3d<int> h_ibool, std::vector<qp> &cart_cord,
+                 const int nspec, const int ngllx, const int ngllz) {
 
   int ngllxz = ngllx * ngllz;
   // Sort cartesian coordinates in ascending order i.e.
@@ -80,7 +80,6 @@ assign_numbering(std::vector<qp> &cart_cord, const int nspec, const int ngllx,
 
   int nglob = ig + 1;
 
-  specfem::HostView3d<int> ibool("specfem::mesh::ibool", nspec, ngllz, ngllx);
   specfem::HostView2d<type_real> coord("specfem::mesh::coord", ndim, nglob);
   // Assign numbering to corresponding ispec, iz, ix
   std::vector<int> iglob_counted(nglob, -1);
@@ -94,7 +93,7 @@ assign_numbering(std::vector<qp> &cart_cord, const int nspec, const int ngllx,
     for (int iz = 0; iz < ngllz; iz++) {
       for (int ix = 0; ix < ngllx; ix++) {
         if (iglob_counted[copy_cart_cord[iloc].iglob] == -1) {
-          ibool(ispec, iz, ix) = inum;
+          h_ibool(ispec, iz, ix) = inum;
           iglob_counted[copy_cart_cord[iloc].iglob] = inum;
           coord(0, inum) = copy_cart_cord[iloc].x;
           coord(1, inum) = copy_cart_cord[iloc].y;
@@ -108,7 +107,7 @@ assign_numbering(std::vector<qp> &cart_cord, const int nspec, const int ngllx,
             zmax = coord(0, inum);
           inum++;
         } else {
-          ibool(ispec, iz, ix) = iglob_counted[copy_cart_cord[iloc].iglob];
+          h_ibool(ispec, iz, ix) = iglob_counted[copy_cart_cord[iloc].iglob];
         }
         iloc++;
       }
@@ -119,7 +118,15 @@ assign_numbering(std::vector<qp> &cart_cord, const int nspec, const int ngllx,
 
   assert(inum == nglob);
 
-  return std::make_tuple(ibool, coord, xmin, xmax, zmin, zmax);
+  return std::make_tuple(coord, xmin, xmax, zmin, zmax);
+}
+
+specfem::compute::compute::compute(const int nspec, const int ngllz,
+                                   const int ngllx)
+    : ibool(specfem::DeviceView3d<int>("specfem::compute::compute::ibool",
+                                       nspec, ngllz, ngllx)) {
+  h_ibool = Kokkos::create_mirror_view(ibool);
+  return;
 }
 
 specfem::compute::compute::compute(
@@ -134,6 +141,8 @@ specfem::compute::compute::compute(
   int ngllx = quadx.get_N();
   int ngllz = quadz.get_N();
   int ngllxz = ngllx * ngllz;
+
+  *this = specfem::compute::compute(nspec, ngllz, ngllx);
 
   specfem::HostMirror1d<type_real> xi = quadx.get_hxi();
   specfem::HostMirror1d<type_real> gamma = quadz.get_hxi();
@@ -204,8 +213,16 @@ specfem::compute::compute::compute(
             });
       });
 
-  std::tie(this->ibool, this->coordinates.coord, this->coordinates.xmin,
+  std::tie(this->coordinates.coord, this->coordinates.xmin,
            this->coordinates.xmax, this->coordinates.zmin,
            this->coordinates.zmax) =
-      assign_numbering(cart_cord, nspec, ngllx, ngllz);
+      assign_numbering(this->h_ibool, cart_cord, nspec, ngllx, ngllz);
+
+  this->sync_views();
+}
+
+void specfem::compute::compute::sync_views() {
+  Kokkos::deep_copy(ibool, h_ibool);
+
+  return;
 }

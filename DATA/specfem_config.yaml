@@ -24,7 +24,7 @@ run-config:
       type-of-simulation: forward
       Time-scheme:
         type: Newmark
-        dt: 1.1e-3
+        dt: 1.1e-5
         nstep: 1600
 
   ## Runtime setup

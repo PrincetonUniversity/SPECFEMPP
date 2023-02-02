@@ -82,7 +82,7 @@ TEST(COMPUTE_TESTS, compute_properties) {
   specfem::compute::properties properties(mesh.material_ind.kmato, materials,
                                           mesh.nspec, gllz.get_N(),
                                           gllx.get_N());
-  EXPECT_NO_THROW(specfem::testing::test_array(properties.rho,
+  EXPECT_NO_THROW(specfem::testing::test_array(properties.h_rho,
                                                test_config.rho_file, mesh.nspec,
                                                gllz.get_N(), gllx.get_N()));
 
@@ -90,7 +90,7 @@ TEST(COMPUTE_TESTS, compute_properties) {
       specfem::testing::test_array(properties.kappa, test_config.kappa_file,
                                    mesh.nspec, gllz.get_N(), gllx.get_N()));
 
-  EXPECT_NO_THROW(specfem::testing::test_array(properties.mu,
+  EXPECT_NO_THROW(specfem::testing::test_array(properties.h_mu,
                                                test_config.mu_file, mesh.nspec,
                                                gllz.get_N(), gllx.get_N()));
 

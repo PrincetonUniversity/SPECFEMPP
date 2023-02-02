@@ -8,20 +8,21 @@ KOKKOS_FUNCTION
 type_real gaussian(type_real t, type_real f0) {
   // Gaussian wavelet i.e. second integral of a Ricker wavelet
 
-  type_real pi = 2 * std::acos(0.0);
+  type_real pi = 2 * Kokkos::Experimental::acos(0.0);
 
   type_real a = pi * pi * f0 * f0;
-  type_real gaussian = -1.0 * std::exp(-a * t * t) / (2.0 * a);
+  type_real gaussian = -1.0 * Kokkos::Experimental::exp(-a * t * t) / (2.0 * a);
 
   return gaussian;
 }
 
 KOKKOS_FUNCTION
 type_real d2gaussian(type_real t, type_real f0) {
-  type_real pi = 2 * std::acos(0.0);
+  type_real pi = 2 * Kokkos::Experimental::acos(0.0);
 
   type_real a = pi * pi * f0 * f0;
-  type_real d2gaussian = (1.0 - 2.0 * a * t * t) * std::exp(-a * t * t);
+  type_real d2gaussian =
+      (1.0 - 2.0 * a * t * t) * Kokkos::Experimental::exp(-a * t * t);
 
   return d2gaussian;
 }
@@ -32,6 +33,7 @@ specfem::forcing_function::Dirac::Dirac(type_real f0, type_real tshift,
                                         bool use_trick_for_better_pressure)
     : f0(f0), factor(factor),
       use_trick_for_better_pressure(use_trick_for_better_pressure) {
+
   type_real hdur = 1.0 / this->f0;
 
   this->t0 = 1.2 * hdur + this->tshift;

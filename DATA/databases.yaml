@@ -1,4 +1,4 @@
 databases:
   - processor : 0
-    database_file : "../tests/unittests/mesh/serial/database.bin"
+    database_file : "../DATA/databases/database.bin"
     source_file : "../DATA/source.yaml"

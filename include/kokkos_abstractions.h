@@ -7,6 +7,9 @@
 
 namespace specfem {
 
+namespace sync {
+enum kind { HostToDevice, DeviceToHost };
+}
 /** @name Execution Spaces
  */
 ///@{
@@ -53,6 +56,18 @@ using DeviceView1d = Kokkos::View<T *, L, DevMemSpace>;
  */
 template <typename T, typename L = LayoutWrapper>
 using DeviceView2d = Kokkos::View<T **, L, DevMemSpace>;
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ */
+template <typename T, typename L = LayoutWrapper>
+using DeviceView3d = Kokkos::View<T ***, L, DevMemSpace>;
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ */
+template <typename T, typename L = LayoutWrapper>
+using DeviceView4d = Kokkos::View<T ****, L, DevMemSpace>;
 ///@}
 
 /** @name Host views
@@ -163,6 +178,18 @@ using HostMirror1d = typename DeviceView1d<T, L>::HostMirror;
  */
 template <typename T, typename L = LayoutWrapper>
 using HostMirror2d = typename DeviceView2d<T, L>::HostMirror;
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ */
+template <typename T, typename L = LayoutWrapper>
+using HostMirror3d = typename DeviceView3d<T, L>::HostMirror;
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ */
+template <typename T, typename L = LayoutWrapper>
+using HostMirror4d = typename DeviceView4d<T, L>::HostMirror;
 ///@}
 
 // Scratch Views
@@ -201,22 +228,25 @@ using HostScratchView3d =
  * @tparam L view layout - default layout is LayoutRight
  */
 template <typename T, typename L = LayoutWrapper>
-using DevScratchView1d = Kokkos::View<T *, L, DevScratchSpace,
-                                      Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+using DeviceScratchView1d =
+    Kokkos::View<T *, L, DevScratchSpace,
+                 Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
  */
 template <typename T, typename L = LayoutWrapper>
-using DevScratchView2d = Kokkos::View<T **, L, DevScratchSpace,
-                                      Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+using DeviceScratchView2d =
+    Kokkos::View<T **, L, DevScratchSpace,
+                 Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
  */
 template <typename T, typename L = LayoutWrapper>
-using DevScratchView3d = Kokkos::View<T ***, L, DevScratchSpace,
-                                      Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+using DeviceScratchView3d =
+    Kokkos::View<T ***, L, DevScratchSpace,
+                 Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
 ///@}
 
 // Loop Strategies
@@ -255,14 +285,14 @@ using HostRange = Kokkos::RangePolicy<HostExecSpace>;
  * @tparam IteratePolicy
  */
 template <int T, Kokkos::Iterate IteratePolicy = Kokkos::Iterate::Right>
-using DevMDrange =
+using DeviceMDrange =
     Kokkos::MDRangePolicy<DevExecSpace, Kokkos::Rank<T, IteratePolicy> >;
 
 /**
  * @brief Device range policy
  *
  */
-using DevRange = Kokkos::RangePolicy<DevExecSpace>;
+using DeviceRange = Kokkos::RangePolicy<DevExecSpace>;
 ///@}
 
 // Team Policy Strategy
@@ -273,7 +303,7 @@ using DevRange = Kokkos::RangePolicy<DevExecSpace>;
  */
 ///@{
 using HostTeam = Kokkos::TeamPolicy<HostExecSpace>;
-using DevTeam = Kokkos::TeamPolicy<DevExecSpace>;
+using DeviceTeam = Kokkos::TeamPolicy<DevExecSpace>;
 ///@}
 
 } // namespace specfem

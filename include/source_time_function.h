@@ -10,6 +10,7 @@ namespace forcing_function {
 
 class stf {
 public:
+  KOKKOS_FUNCTION stf(){};
   KOKKOS_FUNCTION virtual type_real compute(type_real t) { return 0.0; }
   KOKKOS_FUNCTION virtual void update_tshift(type_real tshift){};
   KOKKOS_FUNCTION virtual type_real get_t0() const { return 0.0; }
