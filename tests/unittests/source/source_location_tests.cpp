@@ -181,10 +181,10 @@ TEST(SOURCE_LOCATION_TESTS, compute_source_locations) {
 
   // Locate every source
   for (auto &source : sources)
-    source->locate(compute.ibool, compute.coordinates.coord, gllx.get_hxi(),
+    source->locate(compute.coordinates.coord, compute.h_ibool, gllx.get_hxi(),
                    gllz.get_hxi(), mesh.nproc, mesh.coorg,
                    mesh.material_ind.knods, mesh.npgeo,
-                   material_properties.ispec_type, mpi);
+                   material_properties.h_ispec_type, mpi);
 
   // flag to check if a solution exists for current MPI configuration
   bool tested = false;

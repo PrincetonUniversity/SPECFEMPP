@@ -79,20 +79,20 @@ TEST(COMPUTE_TESTS, compute_partial_derivatives) {
   specfem::compute::partial_derivatives partial_derivatives(
       mesh.coorg, mesh.material_ind.knods, gllx, gllz);
 
-  EXPECT_NO_THROW(specfem::testing::test_array(partial_derivatives.xix,
+  EXPECT_NO_THROW(specfem::testing::test_array(partial_derivatives.h_xix,
                                                test_config.xix_file, mesh.nspec,
                                                gllz.get_N(), gllx.get_N()));
   // EXPECT_NO_THROW(specfem::testing::test_array(
   //     partial_derivatives.xiz, test_config.xiz_file, mesh.nspec,
   //     gllz.get_N(), gllx.get_N()));
   EXPECT_NO_THROW(specfem::testing::test_array(
-      partial_derivatives.gammax, test_config.gammax_file, mesh.nspec,
+      partial_derivatives.h_gammax, test_config.gammax_file, mesh.nspec,
       gllz.get_N(), gllx.get_N()));
   EXPECT_NO_THROW(specfem::testing::test_array(
-      partial_derivatives.gammaz, test_config.gammaz_file, mesh.nspec,
+      partial_derivatives.h_gammaz, test_config.gammaz_file, mesh.nspec,
       gllz.get_N(), gllx.get_N()));
   EXPECT_NO_THROW(specfem::testing::test_array(
-      partial_derivatives.jacobian, test_config.jacobian_file, mesh.nspec,
+      partial_derivatives.h_jacobian, test_config.jacobian_file, mesh.nspec,
       gllz.get_N(), gllx.get_N()));
 }
 

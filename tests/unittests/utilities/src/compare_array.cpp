@@ -263,6 +263,10 @@ void specfem::testing::compare_norm(
     computed_norm += std::sqrt((computed_array(i1) * computed_array(i1)));
   }
 
+  std::cout << error_norm << std::endl;
+
+  std::cout << computed_norm << std::endl;
+
   stream.close();
 
   equate_norm(error_norm, computed_norm, tolerance);
@@ -323,6 +327,10 @@ void specfem::testing::compare_norm(
       }
     }
   }
+
+  std::cout << error_norm << std::endl;
+
+  std::cout << computed_norm << std::endl;
 
   stream.close();
 
