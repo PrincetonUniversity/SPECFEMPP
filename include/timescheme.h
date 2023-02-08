@@ -125,13 +125,13 @@ public:
   void print(std::ostream &out) const override;
 
 private:
-  type_real current_time;
-  int istep = 0;
-  type_real deltat;
-  type_real deltatover2;
-  type_real deltatsquareover2;
-  int nstep;
-  type_real t0;
+  type_real current_time;      ///< Current simulation time in seconds
+  int istep = 0;               ///< Current simulation step
+  type_real deltat;            ///< time increment (\f$ \delta t \f$)
+  type_real deltatover2;       ///< \f$ \delta t / 2 \f$
+  type_real deltatsquareover2; ///< \f$ \delta t^2 / 2 \f$
+  int nstep;                   ///< Maximum value of timestep
+  type_real t0;                ///< Simultion start time in seconds
 };
 
 std::ostream &operator<<(std::ostream &out,
