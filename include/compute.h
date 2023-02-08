@@ -18,22 +18,34 @@ namespace compute {
  *
  */
 struct partial_derivatives {
-  specfem::DeviceView3d<type_real> xix; ///< inverted partial derivates
-                                        ///< \f$\partial \xi / \partial x\f$
-  specfem::HostMirror3d<type_real> h_xix;
-  specfem::DeviceView3d<type_real> xiz; ///< inverted partial derivates
-                                        ///< \f$\partial \xi / \partial z\f$
-  specfem::HostMirror3d<type_real> h_xiz;
+  specfem::DeviceView3d<type_real> xix;    ///< inverted partial derivates
+                                           ///< \f$\partial \xi / \partial x\f$
+                                           ///< stored on the device
+  specfem::HostMirror3d<type_real> h_xix;  ///< inverted partial derivates
+                                           ///< \f$\partial \xi / \partial x\f$
+                                           ///< stored on the host
+  specfem::DeviceView3d<type_real> xiz;    ///< inverted partial derivates
+                                           ///< \f$\partial \xi / \partial z\f$
+                                           ///< stored on the device
+  specfem::HostMirror3d<type_real> h_xiz;  ///< inverted partial derivates
+                                           ///< \f$\partial \xi / \partial z\f$
+                                           ///< stored on the host
   specfem::DeviceView3d<type_real> gammax; ///< inverted partial derivates
                                            ///< \f$\partial \gamma / \partial
-                                           ///< x\f$
-  specfem::HostMirror3d<type_real> h_gammax;
-  specfem::DeviceView3d<type_real> gammaz; ///< inverted partial derivates
-                                           ///< \f$\partial \gamma / \partial
-                                           ///< z\f$
-  specfem::HostMirror3d<type_real> h_gammaz;
-  specfem::DeviceView3d<type_real> jacobian; ///< Jacobian values
-  specfem::HostMirror3d<type_real> h_jacobian;
+                                           ///< x\f$ stored on device
+  specfem::HostMirror3d<type_real> h_gammax; ///< inverted partial derivates
+                                             ///< \f$\partial \gamma / \partial
+                                             ///< x\f$ stored on host
+  specfem::DeviceView3d<type_real> gammaz;   ///< inverted partial derivates
+                                             ///< \f$\partial \gamma / \partial
+                                             ///< z\f$ stored on device
+  specfem::HostMirror3d<type_real> h_gammaz; ///< inverted partial derivates
+                                             ///< \f$\partial \gamma / \partial
+                                             ///< z\f$ stored on host
+  specfem::DeviceView3d<type_real> jacobian; ///< Jacobian values stored on
+                                             ///< device
+  specfem::HostMirror3d<type_real> h_jacobian; ///< Jacobian values stored on
+                                               ///< host
   /**
    * @brief Default constructor
    *
@@ -60,6 +72,10 @@ struct partial_derivatives {
                       const specfem::quadrature::quadrature &quadx,
                       const specfem::quadrature::quadrature &quadz);
 
+  /**
+   * @brief Helper routine to sync views within this struct
+   *
+   */
   void sync_views();
 };
 /**
@@ -70,6 +86,7 @@ struct properties {
   /**
    * @name Material properties
    *
+   * h_ prefixes denote views stored on host
    */
   ///@{
   specfem::DeviceView3d<type_real> rho;
@@ -92,13 +109,13 @@ struct properties {
   specfem::HostMirror3d<type_real> h_lambdaplus2mu;
   ///@}
   // element type is defined in config.h
-  specfem::DeviceView1d<element_type> ispec_type; ///< type of element.
-                                                  ///< Available element types
-                                                  ///< are defined in config.h
-  specfem::HostMirror1d<element_type> h_ispec_type;
+  specfem::DeviceView1d<element_type> ispec_type; ///< type of element stored on
+                                                  ///< device
+  specfem::HostMirror1d<element_type> h_ispec_type; ///< type of element stored
+                                                    ///< on host
 
   /**
-   * @brief Default
+   * @brief Default constructor
    *
    */
   properties(){};
@@ -123,6 +140,10 @@ struct properties {
              const std::vector<specfem::material *> &materials, const int nspec,
              const int ngllx, const int ngllz);
 
+  /**
+   * @brief Helper routine to sync views within this struct
+   *
+   */
   void sync_views();
 };
 
@@ -134,18 +155,22 @@ struct properties {
  *
  */
 struct sources {
-  specfem::DeviceView4d<type_real> source_array; ///< Array to store lagrange
-                                                 ///< interpolants for sources.
-                                                 ///< These arrays are used to
-                                                 ///< impose source effects at
-                                                 ///< end of every time-step.
-  specfem::HostMirror4d<type_real> h_source_array;
+  specfem::DeviceView4d<type_real> source_array;   ///< Array to store lagrange
+                                                   ///< interpolants for sources
+                                                   ///< stored on device
+  specfem::HostMirror4d<type_real> h_source_array; ///< Array to store lagrange
+                                                   ///< interpolants for sources
+                                                   ///< stored on host
   specfem::DeviceView1d<specfem::forcing_function::stf_storage>
-      stf_array; //< Pointer to source time function for every source
-  specfem::HostMirror1d<specfem::forcing_function::stf_storage> h_stf_array;
+      stf_array; ///< Pointer to source time function for every source stored on
+                 ///< device
+  specfem::HostMirror1d<specfem::forcing_function::stf_storage>
+      h_stf_array; ///< Pointer to source time function for every source stored
+                   ///< on host
   specfem::DeviceView1d<int> ispec_array; ///< Spectral element number where
-                                          ///< the source lies
-  specfem::HostMirror1d<int> h_ispec_array;
+                                          ///< the source lies stored on device
+  specfem::HostMirror1d<int> h_ispec_array; ///< Spectral element number where
+                                            ///< the source lies stored on host
   /**
    * @brief Default constructor
    *
@@ -162,7 +187,10 @@ struct sources {
   sources(std::vector<specfem::sources::source *> sources,
           specfem::quadrature::quadrature &quadx,
           specfem::quadrature::quadrature &quadz, specfem::MPI::MPI *mpi);
-
+  /**
+   * @brief Helper routine to sync views within this struct
+   *
+   */
   void sync_views();
 };
 
@@ -222,9 +250,10 @@ struct coordinates {
 };
 
 struct compute {
-  specfem::DeviceView3d<int> ibool; ///< Global number for every quadrature
-                                    ///< point
-  specfem::HostMirror3d<int> h_ibool;
+  specfem::DeviceView3d<int> ibool;   ///< Global number for every quadrature
+                                      ///< point stored on device
+  specfem::HostMirror3d<int> h_ibool; ///< Global number for every quadrature
+                                      ///< point stored on host
   specfem::compute::coordinates coordinates; ///< Cartesian coordinates and
                                              ///< related meta-data
   /**
@@ -252,7 +281,10 @@ struct compute {
           const specfem::HostView2d<int> knods,
           const specfem::quadrature::quadrature &quadx,
           const specfem::quadrature::quadrature &quadz);
-
+  /**
+   * @brief Helper routine to sync views within this struct
+   *
+   */
   void sync_views();
 };
 
