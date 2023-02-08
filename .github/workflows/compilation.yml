@@ -33,7 +33,7 @@ jobs:
         run: cmake --build build
   build-ampere80:
     runs-on: ubuntu-latest
-    container: nvidia/cuda:11.7.0-base-ubuntu18.04
+    container: nvidia/cuda:11.8.0-devel-ubuntu22.04
     steps:
       - name: Check GNU and Cmake versions
         run: gcc --version && cmake --version
