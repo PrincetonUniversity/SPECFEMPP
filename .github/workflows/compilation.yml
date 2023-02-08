@@ -35,6 +35,11 @@ jobs:
     runs-on: ubuntu-latest
     container: nvidia/cuda:11.8.0-devel-ubuntu22.04
     steps:
+      - name: Install Cmake
+        run: wget -c https://github.com/Kitware/CMake/releases/download/v3.25.2/cmake-3.25.2.tar.gz -O - | tar -xz
+            && ./bootstrap
+            && make
+            && make install
       - name: Check GNU and Cmake versions
         run: gcc --version && cmake --version
       - name: Checkout repository
