@@ -110,10 +110,29 @@ public:
    * @return type_real \f$ \gamma \f$ value
    */
   virtual type_real get_gamma() const { return 0.0; }
+  /**
+   * @brief Get the value of t0 from the specfem::stf::stf object
+   *
+   * @return value of t0
+   */
   KOKKOS_IMPL_HOST_FUNCTION
   virtual type_real get_t0() const { return 0.0; }
+  /**
+   * @brief Update the value of tshift for specfem::stf::stf object
+   *
+   * @return new value of tshift
+   */
   virtual void update_tshift(type_real tshift){};
+  /**
+   * @brief User output
+   *
+   */
   virtual void print(std::ostream &out) const;
+  /**
+   * @brief Get the device pointer to stf object
+   *
+   * @return specfem::forcing_function::stf*
+   */
   virtual specfem::forcing_function::stf *get_stf() const {
     return new specfem::forcing_function::stf();
   }
@@ -231,14 +250,36 @@ public:
    * @return type_real \f$ \gamma \f$ value
    */
   type_real get_gamma() const override { return gamma; }
+  /**
+   * @brief Destroy the force object
+   *
+   */
   ~force() {
     Kokkos::kokkos_free<specfem::DevMemSpace>(this->forcing_function);
   }
+  /**
+   * @brief Get the value of t0 from the specfem::stf::stf object
+   *
+   * @return value of t0
+   */
   KOKKOS_IMPL_HOST_FUNCTION
   type_real get_t0() const override;
+  /**
+   * @brief Update the value of tshift for specfem::stf::stf object
+   *
+   * @return new value of tshift
+   */
   void update_tshift(type_real tshift) override;
+  /**
+   * @brief User output
+   *
+   */
   void print(std::ostream &out) const override;
-
+  /**
+   * @brief Get the device pointer to stf object
+   *
+   * @return specfem::forcing_function::stf*
+   */
   specfem::forcing_function::stf *get_stf() const override {
     return forcing_function;
   }
@@ -253,7 +294,8 @@ private:
   int islice;           ///< MPI slice (rank) where the source is located
   element_type el_type; ///< type of the element inside which this source lies
   wave_type wave;       ///< SH or P-SV wave
-  specfem::forcing_function::stf *forcing_function = NULL;
+  specfem::forcing_function::stf *forcing_function =
+      NULL; ///< Pointer to source time function store on the device
 };
 
 /**
@@ -357,11 +399,29 @@ public:
    * @return type_real \f$ \gamma \f$ value
    */
   type_real get_gamma() const override { return gamma; }
+  /**
+   * @brief Get the value of t0 from the specfem::stf::stf object
+   *
+   * @return value of t0
+   */
   KOKKOS_IMPL_HOST_FUNCTION
   type_real get_t0() const override;
+  /**
+   * @brief Update the value of tshift for specfem::stf::stf object
+   *
+   * @return new value of tshift
+   */
   void update_tshift(type_real tshift) override;
-  friend std::ostream &operator<<(std::ostream &out, const moment_tensor *h);
+  /**
+   * @brief User output
+   *
+   */
   void print(std::ostream &out) const override;
+  /**
+   * @brief Get the device pointer to stf object
+   *
+   * @return specfem::forcing_function::stf*
+   */
   specfem::forcing_function::stf *get_stf() const override {
     return forcing_function;
   }
@@ -384,7 +444,8 @@ private:
                                           ///< element where this source is
                                           ///< located
 
-  specfem::forcing_function::stf *forcing_function = NULL;
+  specfem::forcing_function::stf *forcing_function =
+      NULL; ///< Pointer to source time function store on the device
 };
 
 std::ostream &operator<<(std::ostream &out,
