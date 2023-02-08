@@ -1,7 +1,7 @@
 .. _mesh_interface:
 
-Specifications of the mesh interface
-=====================================
+Mesh interface
+==============
 
 Mesh interface
 ---------------

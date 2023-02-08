@@ -134,7 +134,11 @@ public:
    * @param t0 Simulation start time
    */
   virtual void update_t0(type_real t0){};
-
+  /**
+   * @brief Get the value of time increment
+   *
+   * @return type_real value of time increment
+   */
   virtual type_real get_dt() const {
     std::runtime_error("Solver not instantiated properly");
     return 0.0;
@@ -182,7 +186,11 @@ public:
    * used in the solver algorithm
    */
   specfem::TimeScheme::TimeScheme *instantiate() override;
-
+  /**
+   * @brief Get the value of time increment
+   *
+   * @return type_real value of time increment
+   */
   type_real get_dt() const override { return this->dt; }
 
 private:
