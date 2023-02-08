@@ -60,6 +60,7 @@ specfem::Domain::Elastic::Elastic(
   return;
 };
 
+KOKKOS_IMPL_HOST_FUNCTION
 void specfem::Domain::Elastic::assign_views() {
 
   const auto ibool = compute->ibool;
