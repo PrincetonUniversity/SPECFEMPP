@@ -8,98 +8,213 @@
 
 namespace specfem {
 namespace Domain {
+
+/**
+ * @brief  Base Domain class
+ *
+ */
 class Domain {
 
 public:
+  /**
+   * @brief Get a view of the field stored on the device
+   *
+   * @return specfem::DeviceView2d<type_real>
+   */
   virtual specfem::DeviceView2d<type_real> get_field() const {
     return this->field;
   }
+  /**
+   * @brief Get a view of the field stored on the host
+   *
+   * @return specfem::HostMirror2d<type_real>
+   */
   virtual specfem::HostMirror2d<type_real> get_host_field() const {
     return this->h_field;
   }
+  /**
+   * @brief Get a view of the derivative of field stored on the device
+   *
+   * @return specfem::DeviceView2d<type_real>
+   */
   virtual specfem::DeviceView2d<type_real> get_field_dot() const {
     return this->field_dot;
   }
+  /**
+   * @brief Get a view of the derivative of field stored on the host
+   *
+   * @return specfem::HostMirror2d<type_real>
+   */
   virtual specfem::HostMirror2d<type_real> get_host_field_dot() const {
     return this->h_field_dot;
   }
+  /**
+   * @brief Get a view of the second derivative of field stored on the Device
+   *
+   * @return specfem::DeviceView2d<type_real>
+   */
   virtual specfem::DeviceView2d<type_real> get_field_dot_dot() const {
     return this->field_dot_dot;
   }
+  /**
+   * @brief Get a view of the second derivative of field stored on the host
+   *
+   * @return specfem::HostMirror2d<type_real>
+   */
   virtual specfem::HostMirror2d<type_real> get_host_field_dot_dot() const {
     return this->h_field_dot_dot;
   }
+  /**
+   * @brief Get a view of rmass_inverse stored on the device
+   *
+   * @return specfem::DeviceView2d<type_real>
+   */
   virtual specfem::DeviceView2d<type_real> get_rmass_inverse() const {
     return this->rmass_inverse;
   }
+  /**
+   * @brief Get a view of rmass_inverse stored on the host
+   *
+   * @return specfem::HostMirror2d<type_real>
+   */
   virtual specfem::HostMirror2d<type_real> get_host_rmass_inverse() const {
     return this->h_rmass_inverse;
   }
-
+  /**
+   * @brief Compute interaction of stiffness matrix on second derivative of
+   * field
+   *
+   */
   virtual void compute_stiffness_interaction(){};
+  /**
+   * @brief Divide the second derivative of field by the mass matrix
+   *
+   */
   virtual void divide_mass_matrix(){};
+  /**
+   * @brief Compute interaction of sources on second derivative of field
+   *
+   * @param timeval
+   */
   virtual void compute_source_interaction(const type_real timeval){};
 
+  /**
+   * @brief Sync field views between host and device
+   *
+   * @param kind defines sync direction i.e. DeviceToHost or HostToDevice
+   */
   virtual void sync_field(specfem::sync::kind kind){};
+  /**
+   * @brief Sync derivative of field views between host and device
+   *
+   * @param kind defines sync direction i.e. DeviceToHost or HostToDevice
+   */
   virtual void sync_field_dot(specfem::sync::kind kind){};
+  /**
+   * @brief Sync second derivative of field views between host and device
+   *
+   * @param kind defines sync direction i.e. DeviceToHost or HostToDevice
+   */
   virtual void sync_field_dot_dot(specfem::sync::kind kind){};
+  /**
+   * @brief Sync inverse of mass matrix views between host and device
+   *
+   * @param kind defines sync direction i.e. DeviceToHost or HostToDevice
+   */
   virtual void sync_rmass_inverse(specfem::sync::kind kind){};
 
 private:
-  specfem::DeviceView2d<type_real> field;
-  specfem::HostMirror2d<type_real> h_field;
-  specfem::DeviceView2d<type_real> field_dot;
-  specfem::HostMirror2d<type_real> h_field_dot;
-  specfem::DeviceView2d<type_real> field_dot_dot;
-  specfem::HostMirror2d<type_real> h_field_dot_dot;
-  specfem::DeviceView2d<type_real> rmass_inverse;
-  specfem::HostMirror2d<type_real> h_rmass_inverse;
+  specfem::DeviceView2d<type_real> field;       ///< View of field on Device
+  specfem::HostMirror2d<type_real> h_field;     ///< View of field on host
+  specfem::DeviceView2d<type_real> field_dot;   ///< View of derivative of field
+                                                ///< on Device
+  specfem::HostMirror2d<type_real> h_field_dot; ///< View of derivative of field
+                                                ///< on host
+  specfem::DeviceView2d<type_real> field_dot_dot; ///< View of second derivative
+                                                  ///< of field on Device
+  specfem::HostMirror2d<type_real> h_field_dot_dot; ///< View of second
+                                                    ///< derivative of field on
+                                                    ///< host
+  specfem::DeviceView2d<type_real> rmass_inverse;   ///< View of inverse of mass
+                                                    ///< matrix on device
+  specfem::HostMirror2d<type_real> h_rmass_inverse; ///< View of inverse of mass
+                                                    ///< matrix on host
 };
 
+/**
+ * @brief Elastic domain class
+ *
+ * Elastic domains implementation details:
+ *  - field -> Displacements along the 2 dimensions (idim) for every global
+ * point (iglob) stored as a 2D View field(iglob, idim)
+ *  - field_dot -> Velocity along the 2 dimensions (idim) for every global point
+ * (iglob) stored as a 2D View field(iglob, idim)
+ *  - field_dot_dot -> Acceleration along the 2 dimensions (idim) for every
+ * global point (iglob) stored as a 2D View field(iglob, idim)
+ */
 class Elastic : public Domain {
 public:
   /**
-   * @brief Get a view of displacement
+   * @brief Get a view of displacement stored on the device
    *
-   * @return specfem::DeviceView2d<type_real> View of the displacement
+   * @return specfem::DeviceView2d<type_real>
    */
   specfem::DeviceView2d<type_real> get_field() const override {
     return this->field;
   }
+  /**
+   * @brief Get a view of displacement stored on the hsot
+   *
+   * @return specfem::DeviceView2d<type_real>
+   */
   specfem::HostMirror2d<type_real> get_host_field() const override {
     return this->h_field;
   }
   /**
-   * @brief Get a view of velocity
+   * @brief Get a view of velocity stored on device
    *
-   * @return specfem::DeviceView2d<type_real> view of the velocity
+   * @return specfem::DeviceView2d<type_real>
    */
   specfem::DeviceView2d<type_real> get_field_dot() const override {
     return this->field_dot;
   }
+  /**
+   * @brief Get a view of velocity stored on host
+   *
+   * @return specfem::DeviceView2d<type_real>
+   */
   specfem::HostMirror2d<type_real> get_host_field_dot() const override {
     return this->h_field_dot;
   }
   /**
-   * @brief Get a view of acceleration
+   * @brief Get a view of acceleration stored on device
    *
-   * @return specfem::DeviceView2d<type_real> view of the acceleration
+   * @return specfem::DeviceView2d<type_real>
    */
   specfem::DeviceView2d<type_real> get_field_dot_dot() const override {
     return this->field_dot_dot;
   }
+  /**
+   * @brief Get a view of acceleration stored on host
+   *
+   * @return specfem::DeviceView2d<type_real>
+   */
   specfem::HostMirror2d<type_real> get_host_field_dot_dot() const override {
     return this->h_field_dot_dot;
   }
   /**
-   * @brief Get a view of acceleration
+   * @brief Get a view of inverse of mass matrix stored on device
    *
-   * @return specfem::DeviceView2d<type_real> view of the inverse of diagonal
-   * elements of mass matrix (For GLL / GLJ quadrature mass matrix is diagonal)
+   * @return specfem::DeviceView2d<type_real>
    */
   specfem::DeviceView2d<type_real> get_rmass_inverse() const override {
     return this->rmass_inverse;
   }
+  /**
+   * @brief Get a view of inverse of mass matrix stored on host
+   *
+   * @return specfem::DeviceView2d<type_real>
+   */
   specfem::HostMirror2d<type_real> get_host_rmass_inverse() const override {
     return this->h_rmass_inverse;
   }
@@ -109,8 +224,11 @@ public:
    *
    * @param ndim Number of dimensions
    * @param nglob Total number of distinct quadrature points inside the domain
+   * @param compute Pointer to specfem::compute::compute struct
    * @param material_properties Pointer to specfem::compute::properties struct
-   * used to store material properties
+   * @param partial_derivatives Pointer to specfem::compute::partial_derivatives
+   * struct
+   * @param sources Pointer to specfem::compute::sources struct
    * @param quadx Pointer to quadrature object in x-dimension
    * @param quadx Pointer to quadrature object in z-dimension
    */
@@ -119,31 +237,66 @@ public:
           specfem::compute::partial_derivatives *partial_derivatives,
           specfem::compute::sources *sources, quadrature::quadrature *quadx,
           quadrature::quadrature *quadz);
-
+  /**
+   * @brief Compute interaction of stiffness matrix on acceleration
+   *
+   */
   void compute_stiffness_interaction() override;
+  /**
+   * @brief Divide the acceleration by the mass matrix
+   *
+   */
   void divide_mass_matrix() override;
+  /**
+   * @brief Compute interaction of sources on acceleration
+   *
+   * @param timeval
+   */
   void compute_source_interaction(const type_real timeval) override;
-  void assign_views();
-
+  /**
+   * @brief Sync displacements views between host and device
+   *
+   * @param kind defines sync direction i.e. DeviceToHost or HostToDevice
+   */
   void sync_field(specfem::sync::kind kind) override;
+  /**
+   * @brief Sync velocity views between host and device
+   *
+   * @param kind defines sync direction i.e. DeviceToHost or HostToDevice
+   */
   void sync_field_dot(specfem::sync::kind kind) override;
+  /**
+   * @brief Sync acceleration views between host and device
+   *
+   * @param kind defines sync direction i.e. DeviceToHost or HostToDevice
+   */
   void sync_field_dot_dot(specfem::sync::kind kind) override;
+  /**
+   * @brief Sync inverse of mass matrix views between host and device
+   *
+   * @param kind defines sync direction i.e. DeviceToHost or HostToDevice
+   */
   void sync_rmass_inverse(specfem::sync::kind kind) override;
 
 private:
-  specfem::DeviceView2d<type_real> field; ///< Displacement inside elastic
-                                          ///< domain
-  specfem::HostMirror2d<type_real> h_field;
-  specfem::DeviceView2d<type_real> field_dot; ///< Velocity inside elastic
-                                              ///< domain
-  specfem::HostMirror2d<type_real> h_field_dot;
-  specfem::DeviceView2d<type_real> field_dot_dot; ///< Acceleration inside
-                                                  ///< elastic domain
-  specfem::HostMirror2d<type_real> h_field_dot_dot;
-  specfem::DeviceView2d<type_real> rmass_inverse; ///< Inverse of mass matrix
-                                                  ///< inside elastic domain
-  specfem::HostMirror2d<type_real> h_rmass_inverse;
-  specfem::compute::compute *compute;
+  specfem::DeviceView2d<type_real> field;       ///< View of field on Device
+  specfem::HostMirror2d<type_real> h_field;     ///< View of field on host
+  specfem::DeviceView2d<type_real> field_dot;   ///< View of derivative of field
+                                                ///< on Device
+  specfem::HostMirror2d<type_real> h_field_dot; ///< View of derivative of field
+                                                ///< on host
+  specfem::DeviceView2d<type_real> field_dot_dot; ///< View of second derivative
+                                                  ///< of field on Device
+  specfem::HostMirror2d<type_real> h_field_dot_dot; ///< View of second
+                                                    ///< derivative of field on
+                                                    ///< host
+  specfem::DeviceView2d<type_real> rmass_inverse;   ///< View of inverse of mass
+                                                    ///< matrix on device
+  specfem::HostMirror2d<type_real> h_rmass_inverse; ///< View of inverse of mass
+                                                    ///< matrix on host
+  specfem::compute::compute *compute; ///< Pointer to compute struct used to
+                                      ///< store spectral element numbering
+                                      ///< mapping (ibool)
   specfem::compute::properties *material_properties; ///< Pointer to struct used
                                                      ///< to store material
                                                      ///< properties
@@ -158,6 +311,12 @@ private:
                                            ///< indices(ispec) of all elements
                                            ///< in this domain
   specfem::HostMirror1d<int> h_ispec_domain;
+  /**
+   * @brief function used to assign host and device views used in elastic domain
+   * class
+   *
+   */
+  void assign_views();
 };
 } // namespace Domain
 } // namespace specfem
