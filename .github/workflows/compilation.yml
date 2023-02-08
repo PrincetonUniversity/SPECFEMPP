@@ -33,14 +33,10 @@ jobs:
         run: cmake --build build
   build-ampere80:
     runs-on: ubuntu-latest
+    container: nvidia/cuda:11.7.0-base-ubuntu18.04
     steps:
       - name: Check GNU and Cmake versions
         run: gcc --version && cmake --version
-      - name: Install Cuda Toolkit
-        uses: Jimver/cuda-toolkit@v0.2.8
-        id: cuda-toolkit
-        with:
-          cuda: '11.7.0'
       - name: Checkout repository
         uses: actions/checkout@v1
       - name: Get submodules
