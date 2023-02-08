@@ -22,3 +22,9 @@ Helper Routines
 
 .. doxygenfile:: read_sources.h
     :project: SPECFEM KOKKOS IMPLEMENTATION
+
+Source Time Function
+---------------------
+
+.. doxygenfile:: source_time_function.h
+    :project: SPECFEM KOKKOS IMPLEMENTATION
