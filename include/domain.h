@@ -277,6 +277,13 @@ public:
    * @param kind defines sync direction i.e. DeviceToHost or HostToDevice
    */
   void sync_rmass_inverse(specfem::sync::kind kind) override;
+  /**
+   * @brief function used to assign host and device views used in elastic domain
+   * class
+   *
+   */
+  KOKKOS_IMPL_HOST_FUNCTION
+  void assign_views();
 
 private:
   specfem::DeviceView2d<type_real> field;       ///< View of field on Device
@@ -311,12 +318,6 @@ private:
                                            ///< indices(ispec) of all elements
                                            ///< in this domain
   specfem::HostMirror1d<int> h_ispec_domain;
-  /**
-   * @brief function used to assign host and device views used in elastic domain
-   * class
-   *
-   */
-  void assign_views();
 };
 } // namespace Domain
 } // namespace specfem
