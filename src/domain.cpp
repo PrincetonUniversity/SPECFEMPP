@@ -12,13 +12,13 @@ specfem::Domain::Elastic::Elastic(
     specfem::compute::partial_derivatives *partial_derivatives,
     specfem::compute::sources *sources, quadrature::quadrature *quadx,
     quadrature::quadrature *quadz)
-    : field(specfem::DeviceView2d<type_real>("specfem::Domain::Elastic::field",
-                                             nglob, ndim)),
-      field_dot(specfem::DeviceView2d<type_real>(
+    : field(specfem::kokkos::DeviceView2d<type_real>(
+          "specfem::Domain::Elastic::field", nglob, ndim)),
+      field_dot(specfem::kokkos::DeviceView2d<type_real>(
           "specfem::Domain::Elastic::field_dot", nglob, ndim)),
-      field_dot_dot(specfem::DeviceView2d<type_real>(
+      field_dot_dot(specfem::kokkos::DeviceView2d<type_real>(
           "specfem::Domain::Elastic::field_dot_dot", nglob, ndim)),
-      rmass_inverse(specfem::DeviceView2d<type_real>(
+      rmass_inverse(specfem::kokkos::DeviceView2d<type_real>(
           "specfem::Domain::Elastic::rmass_inverse", nglob, ndim)),
       compute(compute), material_properties(material_properties),
       partial_derivatives(partial_derivatives), sources(sources), quadx(quadx),
@@ -43,7 +43,7 @@ specfem::Domain::Elastic::Elastic(
     }
   }
 
-  this->ispec_domain = specfem::DeviceView1d<int>(
+  this->ispec_domain = specfem::kokkos::DeviceView1d<int>(
       "specfem::Domain::Elastic::ispec_domain", this->nelem_domain);
   this->h_ispec_domain = Kokkos::create_mirror_view(ispec_domain);
 
@@ -72,7 +72,7 @@ void specfem::Domain::Elastic::assign_views() {
   // Initialize views
   Kokkos::parallel_for(
       "specfem::Domain::Elastic::initiaze_views",
-      specfem::DeviceMDrange<2>({ 0, 0 }, { nglob, ndim }),
+      specfem::kokkos::DeviceMDrange<2>({ 0, 0 }, { nglob, ndim }),
       KOKKOS_CLASS_LAMBDA(const int iglob, const int idim) {
         this->field(iglob, idim) = 0;
         this->field_dot(iglob, idim) = 0;
@@ -81,7 +81,7 @@ void specfem::Domain::Elastic::assign_views() {
       });
 
   // Compute the mass matrix
-  specfem::DeviceScatterView2d<type_real> results(rmass_inverse);
+  specfem::kokkos::DeviceScatterView2d<type_real> results(rmass_inverse);
   auto wxgll = quadx->get_w();
   auto wzgll = quadz->get_w();
   auto rho = this->material_properties->rho;
@@ -89,7 +89,7 @@ void specfem::Domain::Elastic::assign_views() {
   auto jacobian = this->partial_derivatives->jacobian;
   Kokkos::parallel_for(
       "specfem::Domain::Elastic::compute_mass_matrix",
-      specfem::DeviceMDrange<3>({ 0, 0, 0 }, { nspec, ngllz, ngllx }),
+      specfem::kokkos::DeviceMDrange<3>({ 0, 0, 0 }, { nspec, ngllz, ngllx }),
       KOKKOS_CLASS_LAMBDA(const int ispec, const int iz, const int ix) {
         int iglob = ibool(ispec, iz, ix);
         type_real rhol = rho(ispec, iz, ix);
@@ -107,7 +107,8 @@ void specfem::Domain::Elastic::assign_views() {
   // invert the mass matrix
   Kokkos::parallel_for(
       "specfem::Domain::Elastic::Invert_mass_matrix",
-      specfem::DeviceRange(0, nglob), KOKKOS_CLASS_LAMBDA(const int iglob) {
+      specfem::kokkos::DeviceRange(0, nglob),
+      KOKKOS_CLASS_LAMBDA(const int iglob) {
         if (rmass_inverse(iglob, 0) > 0.0) {
           rmass_inverse(iglob, 0) = 1.0 / rmass_inverse(iglob, 0);
           rmass_inverse(iglob, 1) = 1.0 / rmass_inverse(iglob, 1);
@@ -191,24 +192,30 @@ void specfem::Domain::Elastic::compute_stiffness_interaction() {
   const auto hprime_xx = this->quadx->get_hprime();
   const auto hprime_zz = this->quadz->get_hprime();
 
-  int scratch_size = specfem::DeviceScratchView1d<type_real>::shmem_size(ngllx);
-  scratch_size += specfem::DeviceScratchView1d<type_real>::shmem_size(ngllz);
+  int scratch_size =
+      specfem::kokkos::DeviceScratchView1d<type_real>::shmem_size(ngllx);
   scratch_size +=
-      specfem::DeviceScratchView2d<type_real>::shmem_size(ngllx, ngllx);
+      specfem::kokkos::DeviceScratchView1d<type_real>::shmem_size(ngllz);
   scratch_size +=
-      specfem::DeviceScratchView2d<type_real>::shmem_size(ngllz, ngllz);
+      specfem::kokkos::DeviceScratchView2d<type_real>::shmem_size(ngllx, ngllx);
   scratch_size +=
-      2 * specfem::DeviceScratchView2d<type_real>::shmem_size(ngllx, ngllz);
+      specfem::kokkos::DeviceScratchView2d<type_real>::shmem_size(ngllz, ngllz);
   scratch_size +=
-      3 * specfem::DeviceScratchView2d<type_real>::shmem_size(ngllx, ngllz);
+      2 *
+      specfem::kokkos::DeviceScratchView2d<type_real>::shmem_size(ngllx, ngllz);
   scratch_size +=
-      4 * specfem::DeviceScratchView2d<type_real>::shmem_size(ngllx, ngllz);
+      3 *
+      specfem::kokkos::DeviceScratchView2d<type_real>::shmem_size(ngllx, ngllz);
+  scratch_size +=
+      4 *
+      specfem::kokkos::DeviceScratchView2d<type_real>::shmem_size(ngllx, ngllz);
 
   Kokkos::parallel_for(
       "specfem::Domain::Elastic::compute_forces",
-      specfem::DeviceTeam(this->nelem_domain, Kokkos::AUTO, 1)
+      specfem::kokkos::DeviceTeam(this->nelem_domain, Kokkos::AUTO, 1)
           .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
-      KOKKOS_CLASS_LAMBDA(const specfem::DeviceTeam::member_type &team_member) {
+      KOKKOS_CLASS_LAMBDA(
+          const specfem::kokkos::DeviceTeam::member_type &team_member) {
         const int ispec = ispec_domain(team_member.league_rank());
 
         // Getting subviews for better readability
@@ -231,33 +238,33 @@ void specfem::Domain::Elastic::compute_stiffness_interaction() {
 
         // Assign scratch views
         // Optional performance related scratch views
-        specfem::DeviceScratchView1d<type_real> s_wxgll(
+        specfem::kokkos::DeviceScratchView1d<type_real> s_wxgll(
             team_member.team_scratch(0), ngllx);
-        specfem::DeviceScratchView1d<type_real> s_wzgll(
+        specfem::kokkos::DeviceScratchView1d<type_real> s_wzgll(
             team_member.team_scratch(0), ngllz);
-        specfem::DeviceScratchView2d<type_real> s_hprime_xx(
+        specfem::kokkos::DeviceScratchView2d<type_real> s_hprime_xx(
             team_member.team_scratch(0), ngllx, ngllx);
-        specfem::DeviceScratchView2d<type_real> s_hprime_zz(
+        specfem::kokkos::DeviceScratchView2d<type_real> s_hprime_zz(
             team_member.team_scratch(0), ngllz, ngllz);
-        specfem::DeviceScratchView2d<type_real> s_tempx(
+        specfem::kokkos::DeviceScratchView2d<type_real> s_tempx(
             team_member.team_scratch(0), ngllz, ngllx);
-        specfem::DeviceScratchView2d<type_real> s_tempz(
+        specfem::kokkos::DeviceScratchView2d<type_real> s_tempz(
             team_member.team_scratch(0), ngllz, ngllx);
 
         // Nacessary scratch views
-        specfem::DeviceScratchView2d<type_real> s_sigma_xx(
+        specfem::kokkos::DeviceScratchView2d<type_real> s_sigma_xx(
             team_member.team_scratch(0), ngllz, ngllx);
-        specfem::DeviceScratchView2d<type_real> s_sigma_xz(
+        specfem::kokkos::DeviceScratchView2d<type_real> s_sigma_xz(
             team_member.team_scratch(0), ngllz, ngllx);
-        specfem::DeviceScratchView2d<type_real> s_sigma_zz(
+        specfem::kokkos::DeviceScratchView2d<type_real> s_sigma_zz(
             team_member.team_scratch(0), ngllz, ngllx);
-        specfem::DeviceScratchView2d<type_real> s_tempx1(
+        specfem::kokkos::DeviceScratchView2d<type_real> s_tempx1(
             team_member.team_scratch(0), ngllz, ngllx);
-        specfem::DeviceScratchView2d<type_real> s_tempz1(
+        specfem::kokkos::DeviceScratchView2d<type_real> s_tempz1(
             team_member.team_scratch(0), ngllz, ngllx);
-        specfem::DeviceScratchView2d<type_real> s_tempx3(
+        specfem::kokkos::DeviceScratchView2d<type_real> s_tempx3(
             team_member.team_scratch(0), ngllz, ngllx);
-        specfem::DeviceScratchView2d<type_real> s_tempz3(
+        specfem::kokkos::DeviceScratchView2d<type_real> s_tempz3(
             team_member.team_scratch(0), ngllz, ngllx);
 
         // -------------Load into scratch memory----------------------------
@@ -452,7 +459,8 @@ void specfem::Domain::Elastic::divide_mass_matrix() {
 
   Kokkos::parallel_for(
       "specfem::Domain::Elastic::divide_mass_matrix",
-      specfem::DeviceRange(0, nglob), KOKKOS_CLASS_LAMBDA(const int iglob) {
+      specfem::kokkos::DeviceRange(0, nglob),
+      KOKKOS_CLASS_LAMBDA(const int iglob) {
         this->field_dot_dot(iglob, 0) =
             this->field_dot_dot(iglob, 0) * this->rmass_inverse(iglob, 0);
         this->field_dot_dot(iglob, 1) =
@@ -479,8 +487,9 @@ void specfem::Domain::Elastic::compute_source_interaction(
 
   Kokkos::parallel_for(
       "specfem::Domain::Elastic::compute_source_interaction",
-      specfem::DeviceTeam(nsources, Kokkos::AUTO, 1),
-      KOKKOS_CLASS_LAMBDA(const specfem::DeviceTeam::member_type &team_member) {
+      specfem::kokkos::DeviceTeam(nsources, Kokkos::AUTO, 1),
+      KOKKOS_CLASS_LAMBDA(
+          const specfem::kokkos::DeviceTeam::member_type &team_member) {
         int isource = team_member.league_rank();
         int ispec = ispec_array(isource);
         auto sv_ibool = Kokkos::subview(ibool, ispec, Kokkos::ALL, Kokkos::ALL);

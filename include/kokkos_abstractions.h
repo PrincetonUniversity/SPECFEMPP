@@ -9,7 +9,9 @@ namespace specfem {
 
 namespace sync {
 enum kind { HostToDevice, DeviceToHost };
-}
+} // namespace sync
+
+namespace kokkos {
 /** @name Execution Spaces
  */
 ///@{
@@ -306,6 +308,7 @@ using HostTeam = Kokkos::TeamPolicy<HostExecSpace>;
 using DeviceTeam = Kokkos::TeamPolicy<DevExecSpace>;
 ///@}
 
+} // namespace kokkos
 } // namespace specfem
 
 #endif

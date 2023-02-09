@@ -20,19 +20,19 @@ specfem::compute::sources::sources(
   }
 
   // allocate source array view
-  this->source_array = specfem::DeviceView4d<type_real>(
+  this->source_array = specfem::kokkos::DeviceView4d<type_real>(
       "specfem::compute::sources::source_array", my_sources.size(),
       quadz.get_N(), quadx.get_N(), ndim);
 
   this->h_source_array = Kokkos::create_mirror_view(this->source_array);
 
   this->stf_array =
-      specfem::DeviceView1d<specfem::forcing_function::stf_storage>(
+      specfem::kokkos::DeviceView1d<specfem::forcing_function::stf_storage>(
           "specfem::compute::sources::stf_array", my_sources.size());
 
   this->h_stf_array = Kokkos::create_mirror_view(this->stf_array);
 
-  this->ispec_array = specfem::DeviceView1d<int>(
+  this->ispec_array = specfem::kokkos::DeviceView1d<int>(
       "specfem::compute::sources::ispec_array", my_sources.size());
 
   this->h_ispec_array = Kokkos::create_mirror_view(ispec_array);

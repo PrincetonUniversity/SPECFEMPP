@@ -3,8 +3,8 @@
 #include "../include/kokkos_abstractions.h"
 #include <Kokkos_Core.hpp>
 
-using HostView1d = specfem::HostView1d<type_real>;
-using HostView2d = specfem::HostView2d<type_real>;
+using HostView1d = specfem::kokkos::HostView1d<type_real>;
+using HostView2d = specfem::kokkos::HostView2d<type_real>;
 
 HostView1d shape_functions::define_shape_functions(const double xi,
                                                    const double gamma,

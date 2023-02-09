@@ -136,14 +136,17 @@ IO::fortran_database::read_mesh_database_header(std::ifstream &stream,
   return std::make_tuple(nspec, npgeo, nproc);
 }
 
-specfem::HostView2d<type_real> IO::fortran_database::read_coorg_elements(
-    std::ifstream &stream, const int npgeo, const specfem::MPI::MPI *mpi) {
+specfem::kokkos::HostView2d<type_real>
+IO::fortran_database::read_coorg_elements(std::ifstream &stream,
+                                          const int npgeo,
+                                          const specfem::MPI::MPI *mpi) {
 
   int ipoin = 0;
 
   type_real coorgi, coorgj;
   int buffer_length;
-  specfem::HostView2d<type_real> coorg("specfem::mesh::coorg", ndim, npgeo);
+  specfem::kokkos::HostView2d<type_real> coorg("specfem::mesh::coorg", ndim,
+                                               npgeo);
 
   for (int i = 0; i < npgeo; i++) {
     IO::fortran_IO::fortran_read_line(stream, &ipoin, &coorgi, &coorgj);

@@ -6,10 +6,11 @@
 specfem::materials::material_ind::material_ind(const int nspec,
                                                const int ngnod) {
   this->region_CPML =
-      specfem::HostView1d<int>("specfem::mesh::region_CPML", nspec);
-  this->kmato = specfem::HostView1d<int>("specfem::mesh::region_CPML", nspec);
-  this->knods =
-      specfem::HostView2d<int>("specfem::mesh::region_CPML", ngnod, nspec);
+      specfem::kokkos::HostView1d<int>("specfem::mesh::region_CPML", nspec);
+  this->kmato =
+      specfem::kokkos::HostView1d<int>("specfem::mesh::region_CPML", nspec);
+  this->knods = specfem::kokkos::HostView2d<int>("specfem::mesh::region_CPML",
+                                                 ngnod, nspec);
 
   for (int ispec = 0; ispec < nspec; ispec++) {
     this->kmato(ispec) = -1;

@@ -18,34 +18,40 @@ namespace compute {
  *
  */
 struct partial_derivatives {
-  specfem::DeviceView3d<type_real> xix;    ///< inverted partial derivates
-                                           ///< \f$\partial \xi / \partial x\f$
-                                           ///< stored on the device
-  specfem::HostMirror3d<type_real> h_xix;  ///< inverted partial derivates
-                                           ///< \f$\partial \xi / \partial x\f$
-                                           ///< stored on the host
-  specfem::DeviceView3d<type_real> xiz;    ///< inverted partial derivates
-                                           ///< \f$\partial \xi / \partial z\f$
-                                           ///< stored on the device
-  specfem::HostMirror3d<type_real> h_xiz;  ///< inverted partial derivates
-                                           ///< \f$\partial \xi / \partial z\f$
-                                           ///< stored on the host
-  specfem::DeviceView3d<type_real> gammax; ///< inverted partial derivates
-                                           ///< \f$\partial \gamma / \partial
-                                           ///< x\f$ stored on device
-  specfem::HostMirror3d<type_real> h_gammax; ///< inverted partial derivates
-                                             ///< \f$\partial \gamma / \partial
-                                             ///< x\f$ stored on host
-  specfem::DeviceView3d<type_real> gammaz;   ///< inverted partial derivates
-                                             ///< \f$\partial \gamma / \partial
-                                             ///< z\f$ stored on device
-  specfem::HostMirror3d<type_real> h_gammaz; ///< inverted partial derivates
-                                             ///< \f$\partial \gamma / \partial
-                                             ///< z\f$ stored on host
-  specfem::DeviceView3d<type_real> jacobian; ///< Jacobian values stored on
-                                             ///< device
-  specfem::HostMirror3d<type_real> h_jacobian; ///< Jacobian values stored on
-                                               ///< host
+  specfem::kokkos::DeviceView3d<type_real> xix; ///< inverted partial derivates
+                                                ///< \f$\partial \xi / \partial
+                                                ///< x\f$ stored on the device
+  specfem::kokkos::HostMirror3d<type_real> h_xix; ///< inverted partial
+                                                  ///< derivates \f$\partial \xi
+                                                  ///< / \partial x\f$ stored on
+                                                  ///< the host
+  specfem::kokkos::DeviceView3d<type_real> xiz; ///< inverted partial derivates
+                                                ///< \f$\partial \xi / \partial
+                                                ///< z\f$ stored on the device
+  specfem::kokkos::HostMirror3d<type_real> h_xiz; ///< inverted partial
+                                                  ///< derivates \f$\partial \xi
+                                                  ///< / \partial z\f$ stored on
+                                                  ///< the host
+  specfem::kokkos::DeviceView3d<type_real> gammax;   ///< inverted partial
+                                                     ///< derivates \f$\partial
+                                                     ///< \gamma / \partial x\f$
+                                                     ///< stored on device
+  specfem::kokkos::HostMirror3d<type_real> h_gammax; ///< inverted partial
+                                                     ///< derivates \f$\partial
+                                                     ///< \gamma / \partial x\f$
+                                                     ///< stored on host
+  specfem::kokkos::DeviceView3d<type_real> gammaz;   ///< inverted partial
+                                                     ///< derivates \f$\partial
+                                                     ///< \gamma / \partial z\f$
+                                                     ///< stored on device
+  specfem::kokkos::HostMirror3d<type_real> h_gammaz; ///< inverted partial
+                                                     ///< derivates \f$\partial
+                                                     ///< \gamma / \partial z\f$
+                                                     ///< stored on host
+  specfem::kokkos::DeviceView3d<type_real> jacobian; ///< Jacobian values stored
+                                                     ///< on device
+  specfem::kokkos::HostMirror3d<type_real> h_jacobian; ///< Jacobian values
+                                                       ///< stored on host
   /**
    * @brief Default constructor
    *
@@ -67,8 +73,8 @@ struct partial_derivatives {
    * @param quadx Quadrature object in x dimension
    * @param quadz Quadrature object in z dimension
    */
-  partial_derivatives(const specfem::HostView2d<type_real> coorg,
-                      const specfem::HostView2d<int> knods,
+  partial_derivatives(const specfem::kokkos::HostView2d<type_real> coorg,
+                      const specfem::kokkos::HostView2d<int> knods,
                       const specfem::quadrature::quadrature &quadx,
                       const specfem::quadrature::quadrature &quadz);
 
@@ -89,30 +95,30 @@ struct properties {
    * h_ prefixes denote views stored on host
    */
   ///@{
-  specfem::DeviceView3d<type_real> rho;
-  specfem::HostMirror3d<type_real> h_rho;
+  specfem::kokkos::DeviceView3d<type_real> rho;
+  specfem::kokkos::HostMirror3d<type_real> h_rho;
 
-  specfem::DeviceView3d<type_real> mu;
-  specfem::HostMirror3d<type_real> h_mu;
+  specfem::kokkos::DeviceView3d<type_real> mu;
+  specfem::kokkos::HostMirror3d<type_real> h_mu;
 
-  specfem::HostView3d<type_real> kappa;
+  specfem::kokkos::HostView3d<type_real> kappa;
 
-  specfem::HostView3d<type_real> qmu;
+  specfem::kokkos::HostView3d<type_real> qmu;
 
-  specfem::HostView3d<type_real> qkappa;
+  specfem::kokkos::HostView3d<type_real> qkappa;
 
-  specfem::HostView3d<type_real> rho_vp;
+  specfem::kokkos::HostView3d<type_real> rho_vp;
 
-  specfem::HostView3d<type_real> rho_vs;
+  specfem::kokkos::HostView3d<type_real> rho_vs;
 
-  specfem::DeviceView3d<type_real> lambdaplus2mu;
-  specfem::HostMirror3d<type_real> h_lambdaplus2mu;
+  specfem::kokkos::DeviceView3d<type_real> lambdaplus2mu;
+  specfem::kokkos::HostMirror3d<type_real> h_lambdaplus2mu;
   ///@}
   // element type is defined in config.h
-  specfem::DeviceView1d<element_type> ispec_type; ///< type of element stored on
-                                                  ///< device
-  specfem::HostMirror1d<element_type> h_ispec_type; ///< type of element stored
-                                                    ///< on host
+  specfem::kokkos::DeviceView1d<element_type> ispec_type; ///< type of element
+                                                          ///< stored on device
+  specfem::kokkos::HostMirror1d<element_type> h_ispec_type; ///< type of element
+                                                            ///< stored on host
 
   /**
    * @brief Default constructor
@@ -136,7 +142,7 @@ struct properties {
    * @param ngllz Number of quadrature points in z dimension
    * @param ngllx Number of quadrature points in x dimension
    */
-  properties(const specfem::HostView1d<int> kmato,
+  properties(const specfem::kokkos::HostView1d<int> kmato,
              const std::vector<specfem::material *> &materials, const int nspec,
              const int ngllx, const int ngllz);
 
@@ -155,22 +161,28 @@ struct properties {
  *
  */
 struct sources {
-  specfem::DeviceView4d<type_real> source_array;   ///< Array to store lagrange
-                                                   ///< interpolants for sources
-                                                   ///< stored on device
-  specfem::HostMirror4d<type_real> h_source_array; ///< Array to store lagrange
-                                                   ///< interpolants for sources
-                                                   ///< stored on host
-  specfem::DeviceView1d<specfem::forcing_function::stf_storage>
+  specfem::kokkos::DeviceView4d<type_real> source_array; ///< Array to store
+                                                         ///< lagrange
+                                                         ///< interpolants for
+                                                         ///< sources stored on
+                                                         ///< device
+  specfem::kokkos::HostMirror4d<type_real> h_source_array; ///< Array to store
+                                                           ///< lagrange
+                                                           ///< interpolants for
+                                                           ///< sources stored
+                                                           ///< on host
+  specfem::kokkos::DeviceView1d<specfem::forcing_function::stf_storage>
       stf_array; ///< Pointer to source time function for every source stored on
                  ///< device
-  specfem::HostMirror1d<specfem::forcing_function::stf_storage>
+  specfem::kokkos::HostMirror1d<specfem::forcing_function::stf_storage>
       h_stf_array; ///< Pointer to source time function for every source stored
                    ///< on host
-  specfem::DeviceView1d<int> ispec_array; ///< Spectral element number where
-                                          ///< the source lies stored on device
-  specfem::HostMirror1d<int> h_ispec_array; ///< Spectral element number where
-                                            ///< the source lies stored on host
+  specfem::kokkos::DeviceView1d<int> ispec_array;   ///< Spectral element number
+                                                    ///< where the source lies
+                                                    ///< stored on device
+  specfem::kokkos::HostMirror1d<int> h_ispec_array; ///< Spectral element number
+                                                    ///< where the source lies
+                                                    ///< stored on host
   /**
    * @brief Default constructor
    *
@@ -232,8 +244,8 @@ struct sources {
 
 struct coordinates {
 
-  specfem::HostView2d<type_real> coord; ///< (x, z) for every distinct control
-                                        ///< node
+  specfem::kokkos::HostView2d<type_real> coord; ///< (x, z) for every distinct
+                                                ///< control node
   /**
    * @name Coodindates meta data
    **/
@@ -250,12 +262,14 @@ struct coordinates {
 };
 
 struct compute {
-  specfem::DeviceView3d<int> ibool;   ///< Global number for every quadrature
-                                      ///< point stored on device
-  specfem::HostMirror3d<int> h_ibool; ///< Global number for every quadrature
-                                      ///< point stored on host
-  specfem::compute::coordinates coordinates; ///< Cartesian coordinates and
-                                             ///< related meta-data
+  specfem::kokkos::DeviceView3d<int> ibool;   ///< Global number for every
+                                              ///< quadrature point stored on
+                                              ///< device
+  specfem::kokkos::HostMirror3d<int> h_ibool; ///< Global number for every
+                                              ///< quadrature point stored on
+                                              ///< host
+  specfem::compute::coordinates coordinates;  ///< Cartesian coordinates and
+                                              ///< related meta-data
   /**
    * @brief Default constructor
    *
@@ -277,8 +291,8 @@ struct compute {
    * @param quadx Quarature object in x dimension
    * @param quadz Quadrature object in z dimension
    */
-  compute(const specfem::HostView2d<type_real> coorg,
-          const specfem::HostView2d<int> knods,
+  compute(const specfem::kokkos::HostView2d<type_real> coorg,
+          const specfem::kokkos::HostView2d<int> knods,
           const specfem::quadrature::quadrature &quadx,
           const specfem::quadrature::quadrature &quadz);
   /**
