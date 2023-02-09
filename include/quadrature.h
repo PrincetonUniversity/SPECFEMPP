@@ -48,32 +48,32 @@ public:
    * Get quadrature points on device
    *
    */
-  specfem::DeviceView1d<type_real> get_xi() const;
+  specfem::kokkos::DeviceView1d<type_real> get_xi() const;
   /**
    * Get quadrature weights on device
    *
    */
-  specfem::DeviceView1d<type_real> get_w() const;
+  specfem::kokkos::DeviceView1d<type_real> get_w() const;
   /**
    * Get derivatives of quadrature polynomials at quadrature points on device
    *
    */
-  specfem::DeviceView2d<type_real> get_hprime() const;
+  specfem::kokkos::DeviceView2d<type_real> get_hprime() const;
   /**
    * Get quadrature points on host
    *
    */
-  specfem::HostMirror1d<type_real> get_hxi() const;
+  specfem::kokkos::HostMirror1d<type_real> get_hxi() const;
   /**
    * Get quadrature weights on host
    *
    */
-  specfem::HostMirror1d<type_real> get_hw() const;
+  specfem::kokkos::HostMirror1d<type_real> get_hw() const;
   /**
    * Get derivatives of quadrature polynomials at quadrature points on host
    *
    */
-  specfem::HostMirror2d<type_real> get_hhprime() const;
+  specfem::kokkos::HostMirror2d<type_real> get_hhprime() const;
   /**
    * @brief get number of quadrture points
    *
@@ -85,16 +85,20 @@ private:
   type_real beta;  ///< beta value of the quadrature
   int N;           ///< Number of qudrature points
 
-  specfem::DeviceView1d<type_real> xi;   ///< qudrature points stored on device
-  specfem::HostMirror1d<type_real> h_xi; ///< quadrature points stored on host
+  specfem::kokkos::DeviceView1d<type_real> xi;   ///< qudrature points stored on
+                                                 ///< device
+  specfem::kokkos::HostMirror1d<type_real> h_xi; ///< quadrature points stored
+                                                 ///< on host
 
-  specfem::DeviceView1d<type_real> w; ///< qudrature weights stored on device
-  specfem::HostView1d<type_real> h_w; ///< quadrature weights stored on host
+  specfem::kokkos::DeviceView1d<type_real> w; ///< qudrature weights stored on
+                                              ///< device
+  specfem::kokkos::HostView1d<type_real> h_w; ///< quadrature weights stored on
+                                              ///< host
 
-  specfem::DeviceView2d<type_real> hprime; ///< Polynomial derivatives stored on
-                                           ///< device
-  specfem::HostView2d<type_real> h_hprime; ///< Polynomial derivatives store
-                                           ///< on host
+  specfem::kokkos::DeviceView2d<type_real> hprime; ///< Polynomial derivatives
+                                                   ///< stored on device
+  specfem::kokkos::HostView2d<type_real> h_hprime; ///< Polynomial derivatives
+                                                   ///< store on host
 
   /**
    * Set View allocations for all derivative matrices

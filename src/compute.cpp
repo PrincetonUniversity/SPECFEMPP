@@ -38,10 +38,11 @@ type_real get_tolerance(std::vector<qp> cart_cord, const int nspec,
   return 1e-6 * xtypdist;
 }
 
-std::tuple<specfem::HostView2d<type_real>, type_real, type_real, type_real,
-           type_real>
-assign_numbering(specfem::HostMirror3d<int> h_ibool, std::vector<qp> &cart_cord,
-                 const int nspec, const int ngllx, const int ngllz) {
+std::tuple<specfem::kokkos::HostView2d<type_real>, type_real, type_real,
+           type_real, type_real>
+assign_numbering(specfem::kokkos::HostMirror3d<int> h_ibool,
+                 std::vector<qp> &cart_cord, const int nspec, const int ngllx,
+                 const int ngllz) {
 
   int ngllxz = ngllx * ngllz;
   // Sort cartesian coordinates in ascending order i.e.
@@ -80,7 +81,8 @@ assign_numbering(specfem::HostMirror3d<int> h_ibool, std::vector<qp> &cart_cord,
 
   int nglob = ig + 1;
 
-  specfem::HostView2d<type_real> coord("specfem::mesh::coord", ndim, nglob);
+  specfem::kokkos::HostView2d<type_real> coord("specfem::mesh::coord", ndim,
+                                               nglob);
   // Assign numbering to corresponding ispec, iz, ix
   std::vector<int> iglob_counted(nglob, -1);
   int iloc = 0;
@@ -123,15 +125,15 @@ assign_numbering(specfem::HostMirror3d<int> h_ibool, std::vector<qp> &cart_cord,
 
 specfem::compute::compute::compute(const int nspec, const int ngllz,
                                    const int ngllx)
-    : ibool(specfem::DeviceView3d<int>("specfem::compute::compute::ibool",
-                                       nspec, ngllz, ngllx)) {
+    : ibool(specfem::kokkos::DeviceView3d<int>(
+          "specfem::compute::compute::ibool", nspec, ngllz, ngllx)) {
   h_ibool = Kokkos::create_mirror_view(ibool);
   return;
 }
 
 specfem::compute::compute::compute(
-    const specfem::HostView2d<type_real> coorg,
-    const specfem::HostView2d<int> knods,
+    const specfem::kokkos::HostView2d<type_real> coorg,
+    const specfem::kokkos::HostView2d<int> knods,
     const specfem::quadrature::quadrature &quadx,
     const specfem::quadrature::quadrature &quadz) {
 
@@ -144,19 +146,20 @@ specfem::compute::compute::compute(
 
   *this = specfem::compute::compute(nspec, ngllz, ngllx);
 
-  specfem::HostMirror1d<type_real> xi = quadx.get_hxi();
-  specfem::HostMirror1d<type_real> gamma = quadz.get_hxi();
-  specfem::HostView3d<type_real> shape2D("specfem::mesh::assign_numbering",
-                                         ngllz, ngllx, ngnod);
+  specfem::kokkos::HostMirror1d<type_real> xi = quadx.get_hxi();
+  specfem::kokkos::HostMirror1d<type_real> gamma = quadz.get_hxi();
+  specfem::kokkos::HostView3d<type_real> shape2D(
+      "specfem::mesh::assign_numbering", ngllz, ngllx, ngnod);
 
   std::vector<qp> cart_cord(nspec * ngllxz);
   std::vector<qp> *pcart_cord = &cart_cord;
   int scratch_size =
-      specfem::HostScratchView2d<type_real>::shmem_size(ndim, ngnod);
+      specfem::kokkos::HostScratchView2d<type_real>::shmem_size(ndim, ngnod);
 
   // Allocate shape functions
   Kokkos::parallel_for(
-      "shape_functions", specfem::HostMDrange<2>({ 0, 0 }, { ngllz, ngllx }),
+      "shape_functions",
+      specfem::kokkos::HostMDrange<2>({ 0, 0 }, { ngllz, ngllx }),
       [=](const int iz, const int ix) {
         type_real ixxi = xi(ix);
         type_real izgamma = gamma(iz);
@@ -171,13 +174,13 @@ specfem::compute::compute::compute(
   // Calculate the x and y coordinates for every GLL point
 
   Kokkos::parallel_for(
-      specfem::HostTeam(nspec, Kokkos::AUTO, ngnod)
+      specfem::kokkos::HostTeam(nspec, Kokkos::AUTO, ngnod)
           .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
-      [=](const specfem::HostTeam::member_type teamMember) {
+      [=](const specfem::kokkos::HostTeam::member_type teamMember) {
         const int ispec = teamMember.league_rank();
 
         //----- Load coorgx, coorgz in level 0 cache to be utilized later
-        specfem::HostScratchView2d<type_real> s_coorg(
+        specfem::kokkos::HostScratchView2d<type_real> s_coorg(
             teamMember.team_scratch(0), ndim, ngnod);
 
         // This loop is not vectorizable because access to coorg via

@@ -12,13 +12,13 @@ specfem::interfaces::interface::interface(const int ninterfaces,
 
 #ifdef MPI_PARALLEL
   if (ninterfaces > 0) {
-    this->my_neighbors = specfem::HostView1d<int>(
+    this->my_neighbors = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::interfaces::my_neighbors", ninterfaces);
-    this->my_nelmnts_neighbors = specfem::HostView1d<int>(
+    this->my_nelmnts_neighbors = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::interfaces::my_nelmnts_neighbors", ninterfaces);
-    this->my_interfaces =
-        specfem::HostView3d<int>("specfem::mesh::interfaces::my_interfaces",
-                                 ninterfaces, max_interface_size, 4);
+    this->my_interfaces = specfem::kokkos::HostView3d<int>(
+        "specfem::mesh::interfaces::my_interfaces", ninterfaces,
+        max_interface_size, 4);
 
     // initialize values
     for (int i = 0; i < ninterfaces; i++) {
@@ -31,11 +31,11 @@ specfem::interfaces::interface::interface(const int ninterfaces,
       }
     }
   } else {
-    this->my_neighbors =
-        specfem::HostView1d<int>("specfem::mesh::interfaces::my_neighbors", 1);
-    this->my_nelmnts_neighbors = specfem::HostView1d<int>(
+    this->my_neighbors = specfem::kokkos::HostView1d<int>(
+        "specfem::mesh::interfaces::my_neighbors", 1);
+    this->my_nelmnts_neighbors = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::interfaces::my_nelmnts_neighbors", 1);
-    this->my_interfaces = specfem::HostView3d<int>(
+    this->my_interfaces = specfem::kokkos::HostView3d<int>(
         "specfem::mesh::interfaces::my_interfaces", 1, 1, 1);
 
     // initialize values
@@ -47,11 +47,11 @@ specfem::interfaces::interface::interface(const int ninterfaces,
   if (ninterfaces > 0)
     throw std::runtime_error("Found interfaces but SPECFEM compiled without "
                              "MPI. Compile SPECFEM with MPI");
-  this->my_neighbors =
-      specfem::HostView1d<int>("specfem::mesh::interfaces::my_neighbors", 1);
-  this->my_nelmnts_neighbors = specfem::HostView1d<int>(
+  this->my_neighbors = specfem::kokkos::HostView1d<int>(
+      "specfem::mesh::interfaces::my_neighbors", 1);
+  this->my_nelmnts_neighbors = specfem::kokkos::HostView1d<int>(
       "specfem::mesh::interfaces::my_nelmnts_neighbors", 1);
-  this->my_interfaces = specfem::HostView3d<int>(
+  this->my_interfaces = specfem::kokkos::HostView3d<int>(
       "specfem::mesh::interfaces::my_interfaces", 1, 1, 1);
 
   // initialize values
@@ -69,7 +69,8 @@ specfem::interfaces::interface::interface(std::ifstream &stream,
   // read number of interfaces
   // Where these 2 values are written needs to change in new database format
   int ninterfaces, max_interface_size;
-  IO::fortran_IO::fortran_read_line(stream, &ninterfaces, &max_interface_size);
+  specfem::fortran_IO::fortran_read_line(stream, &ninterfaces,
+                                         &max_interface_size);
 
   mpi->cout("Number of interaces = " + std::to_string(ninterfaces));
 
@@ -88,7 +89,7 @@ specfem::interfaces::interface::interface(std::ifstream &stream,
     //     process_interface_id = rank of (neighbor) process to share MPI
     //     interface with number_of_elements_on_interface = number of interface
     //     elements
-    IO::fortran_IO::fortran_read_line(
+    specfem::fortran_IO::fortran_read_line(
         stream, &this->my_neighbors(num_interface),
         &this->my_nelmnts_neighbors(num_interface));
     // loops over interface elements
@@ -99,7 +100,7 @@ specfem::interfaces::interface::interface(std::ifstream &stream,
       //   interface types:
       //       1  -  corner point only
       //       2  -  element edge
-      IO::fortran_IO::fortran_read_line(
+      specfem::fortran_IO::fortran_read_line(
           stream, &this->my_interfaces(num_interface, ie, 0),
           &this->my_interfaces(num_interface, ie, 1),
           &this->my_interfaces(num_interface, ie, 2),

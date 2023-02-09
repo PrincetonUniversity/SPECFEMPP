@@ -25,13 +25,15 @@ namespace boundaries {
  */
 struct absorbing_boundary {
 
-  specfem::HostView1d<int> numabs; ///< ispec value for the the element on the
-                                   ///< boundary
+  specfem::kokkos::HostView1d<int> numabs; ///< ispec value for the the element
+                                           ///< on the boundary
 
-  specfem::HostView1d<int> abs_boundary_type; ///< Defines if the absorbing
-                                              ///< boundary type is top, left,
-                                              ///< right or bottom. This is only
-                                              ///< used during plotting
+  specfem::kokkos::HostView1d<int> abs_boundary_type; ///< Defines if the
+                                                      ///< absorbing boundary
+                                                      ///< type is top, left,
+                                                      ///< right or bottom. This
+                                                      ///< is only used during
+                                                      ///< plotting
 
   /**
    * @name Edge definitions
@@ -45,32 +47,32 @@ struct absorbing_boundary {
    * @name Bottom boundary
    */
   /// @{
-  specfem::HostView1d<int> ibegin_edge1;
-  specfem::HostView1d<int> iend_edge1;
+  specfem::kokkos::HostView1d<int> ibegin_edge1;
+  specfem::kokkos::HostView1d<int> iend_edge1;
   /// @}
 
   /**
    * @name Right boundary
    */
   /// @{
-  specfem::HostView1d<int> ibegin_edge2;
-  specfem::HostView1d<int> iend_edge2;
+  specfem::kokkos::HostView1d<int> ibegin_edge2;
+  specfem::kokkos::HostView1d<int> iend_edge2;
   /// @}
 
   /**
    * @name Top boundary
    */
   /// @{
-  specfem::HostView1d<int> ibegin_edge3;
-  specfem::HostView1d<int> iend_edge3;
+  specfem::kokkos::HostView1d<int> ibegin_edge3;
+  specfem::kokkos::HostView1d<int> iend_edge3;
   /// @}
 
   /**
    * @name Left boundary
    */
   /// @{
-  specfem::HostView1d<int> ibegin_edge4;
-  specfem::HostView1d<int> iend_edge4;
+  specfem::kokkos::HostView1d<int> ibegin_edge4;
+  specfem::kokkos::HostView1d<int> iend_edge4;
   /// @}
 
   /// @}
@@ -82,14 +84,14 @@ struct absorbing_boundary {
    *
    */
   ///@{
-  specfem::HostView1d<int> ib_bottom; ///< Number of bottom elements on ith
-                                      ///< absorbing boundary
-  specfem::HostView1d<int> ib_top;    ///< Number of top elemetns on the ith
-                                      ///< absobing boundary
-  specfem::HostView1d<int> ib_right;  ///< Number of right elemetns on the ith
-                                      ///< absobing boundary
-  specfem::HostView1d<int> ib_left;   ///< Number of left elemetns on the ith
-                                      ///< absobing boundary
+  specfem::kokkos::HostView1d<int> ib_bottom; ///< Number of bottom elements on
+                                              ///< ith absorbing boundary
+  specfem::kokkos::HostView1d<int> ib_top;    ///< Number of top elemetns on the
+                                              ///< ith absobing boundary
+  specfem::kokkos::HostView1d<int> ib_right;  ///< Number of right elemetns on
+                                              ///< the ith absobing boundary
+  specfem::kokkos::HostView1d<int> ib_left; ///< Number of left elemetns on the
+                                            ///< ith absobing boundary
   ///@}
   /**
    * Specifies if an element is bottom, right, top or left absorbing boundary
@@ -106,7 +108,7 @@ struct absorbing_boundary {
    *@endcode
    *
    */
-  specfem::HostView2d<bool> codeabs;
+  specfem::kokkos::HostView2d<bool> codeabs;
 
   /**
    * Specifies if an element is bottom-left, bottom-right, top-left or top-right
@@ -123,7 +125,7 @@ struct absorbing_boundary {
    *  codeabscorner(i, 3) == true
    * @endcode
    */
-  specfem::HostView2d<bool> codeabscorner;
+  specfem::kokkos::HostView2d<bool> codeabscorner;
 
   /**
    * @brief Default constructor
@@ -161,50 +163,51 @@ struct absorbing_boundary {
  * TODO : Document on how is this struct used in the code.
  */
 struct forcing_boundary {
-  specfem::HostView1d<int> numacforcing; ///< ispec value for the the element on
-                                         ///< the boundary
-  specfem::HostView1d<int> typeacforcing; ///< Defines if the acoustic forcing
-                                          ///< boundary type is top, left, right
-                                          ///< or bottom. This is only used
-                                          ///< during plotting
-                                          /**
-                                           * @name Edge definitions
-                                           *
-                                           * ibegin_<edge#> defines the i or j index limits for loop iterations
-                                           *
-                                           */
+  specfem::kokkos::HostView1d<int> numacforcing;  ///< ispec value for the the
+                                                  ///< element on the boundary
+  specfem::kokkos::HostView1d<int> typeacforcing; ///< Defines if the acoustic
+                                                  ///< forcing boundary type is
+                                                  ///< top, left, right or
+                                                  ///< bottom. This is only used
+                                                  ///< during plotting
+  /**
+   * @name Edge definitions
+   *
+   * ibegin_<edge#> defines the i or j index limits for loop iterations
+   *
+   */
   /// @{
 
   /**
    * @name Bottom boundary
    */
   /// @{
-  specfem::HostView1d<int> ibegin_edge1;
-  specfem::HostView1d<int> iend_edge1;
+  specfem::kokkos::HostView1d<int> ibegin_edge1;
+  specfem::kokkos::HostView1d<int> iend_edge1;
   /// @}
 
   /**
    * @name Right boundary
    */
   /// @{
-  specfem::HostView1d<int> ibegin_edge2;
-  specfem::HostView1d<int> iend_edge2;
+  specfem::kokkos::HostView1d<int> ibegin_edge2;
+  specfem::kokkos::HostView1d<int> iend_edge2;
   /// @}
 
   /**
    * @name Top boundary
    */
   /// @{
-  specfem::HostView1d<int> ibegin_edge3;
-  specfem::HostView1d<int> iend_edge3;
+  specfem::kokkos::HostView1d<int> ibegin_edge3;
+  specfem::kokkos::HostView1d<int> iend_edge3;
   /// @}
 
   /**
    * @name Left boundary
    */
   /// @{
-  specfem::HostView1d<int> ibegin_edge4;
-  specfem::HostView1d<int> iend_edge4;
+  specfem::kokkos::HostView1d<int> ibegin_edge4;
+  specfem::kokkos::HostView1d<int> iend_edge4;
   /// @}
 
   /// @}
@@ -215,14 +218,15 @@ struct forcing_boundary {
    *
    */
   ///@{
-  specfem::HostView1d<int> ib_bottom; ///< Number of bottom elements on ith
-                                      ///< acoustic forcing boundary
-  specfem::HostView1d<int> ib_top;    ///< Number of top elemetns on the ith
-                                      ///< acoustic forcing boundary
-  specfem::HostView1d<int> ib_right;  ///< Number of right elemetns on the ith
-                                      ///< acoustic forcing boundary
-  specfem::HostView1d<int> ib_left;   ///< Number of left elemetns on the ith
-                                      ///< acoustic forcing boundary
+  specfem::kokkos::HostView1d<int> ib_bottom; ///< Number of bottom elements on
+                                              ///< ith acoustic forcing boundary
+  specfem::kokkos::HostView1d<int> ib_top;    ///< Number of top elemetns on the
+                                              ///< ith acoustic forcing boundary
+  specfem::kokkos::HostView1d<int> ib_right;  ///< Number of right elemetns on
+                                              ///< the ith acoustic forcing
+                                              ///< boundary
+  specfem::kokkos::HostView1d<int> ib_left; ///< Number of left elemetns on the
+                                            ///< ith acoustic forcing boundary
   ///@}
   /**
    * Specifies if an element is bottom, right, top or left absorbing boundary
@@ -239,7 +243,7 @@ struct forcing_boundary {
    *@endcode
    *
    */
-  specfem::HostView2d<bool> codeacforcing;
+  specfem::kokkos::HostView2d<bool> codeacforcing;
 
   /**
    * @brief Default constructor

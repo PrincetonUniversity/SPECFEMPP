@@ -10,7 +10,7 @@
 #include <stdexcept>
 #include <tuple>
 
-using HostMirror1d = specfem::HostMirror1d<type_real>;
+using HostMirror1d = specfem::kokkos::HostMirror1d<type_real>;
 
 type_real update_x(type_real &x, const type_real p, const type_real pd,
                    const HostMirror1d xjac, const int j) {

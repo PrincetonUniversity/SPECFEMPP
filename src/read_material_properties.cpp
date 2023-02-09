@@ -18,7 +18,7 @@ IO::read_material_properties(std::ifstream &stream, const int numat,
 
   for (int i = 0; i < numat; i++) {
 
-    IO::fortran_IO::fortran_read_line(
+    specfem::fortran_IO::fortran_read_line(
         stream, &read_values.n, &read_values.indic, &read_values.val0,
         &read_values.val1, &read_values.val2, &read_values.val3,
         &read_values.val4, &read_values.val5, &read_values.val6,

@@ -5,8 +5,9 @@
 #include <tuple>
 #include <vector>
 
-std::vector<int> get_best_candidates(const int ispec_guess,
-                                     const specfem::HostView3d<int> ibool) {
+std::vector<int>
+get_best_candidates(const int ispec_guess,
+                    const specfem::kokkos::HostView3d<int> ibool) {
 
   const int nspec = ibool.extent(0);
   const int ngllx = ibool.extent(1);
@@ -45,8 +46,8 @@ std::vector<int> get_best_candidates(const int ispec_guess,
 
 std::tuple<int, int, int>
 rough_location(const type_real x_source, const type_real z_source,
-               const specfem::HostView3d<int> ibool,
-               const specfem::HostView2d<type_real> coord) {
+               const specfem::kokkos::HostView3d<int> ibool,
+               const specfem::kokkos::HostView2d<type_real> coord) {
 
   /***
    *  Roughly locate closest quadrature point to the source
@@ -82,14 +83,15 @@ rough_location(const type_real x_source, const type_real z_source,
 
 std::tuple<type_real, type_real>
 get_best_location(const type_real x_source, const type_real z_source,
-                  const specfem::HostView2d<type_real> coorg, type_real xi,
-                  type_real gamma, const specfem::HostView2d<int> knods,
+                  const specfem::kokkos::HostView2d<type_real> coorg,
+                  type_real xi, type_real gamma,
+                  const specfem::kokkos::HostView2d<int> knods,
                   const int ispec) {
 
   int ngnod = knods.extent(0);
 
-  specfem::HostView2d<type_real> s_coorg("get_best_location::s_coorg", ndim,
-                                         ngnod);
+  specfem::kokkos::HostView2d<type_real> s_coorg("get_best_location::s_coorg",
+                                                 ndim, ngnod);
 
   // Store s_coorg for better caching
   for (int in = 0; in < ngnod; in++) {
@@ -160,14 +162,14 @@ int get_islice(const int final_dist, const specfem::MPI::MPI *mpi) {
 }
 
 std::tuple<type_real, type_real, int, int>
-specfem::utilities::locate(const specfem::HostView2d<type_real> coord,
-                           const specfem::HostMirror3d<int> ibool,
-                           const specfem::HostMirror1d<type_real> xigll,
-                           const specfem::HostMirror1d<type_real> zigll,
+specfem::utilities::locate(const specfem::kokkos::HostView2d<type_real> coord,
+                           const specfem::kokkos::HostMirror3d<int> ibool,
+                           const specfem::kokkos::HostMirror1d<type_real> xigll,
+                           const specfem::kokkos::HostMirror1d<type_real> zigll,
                            const int nproc, const type_real x_source,
                            const type_real z_source,
-                           const specfem::HostView2d<type_real> coorg,
-                           const specfem::HostView2d<int> knods,
+                           const specfem::kokkos::HostView2d<type_real> coorg,
+                           const specfem::kokkos::HostView2d<int> knods,
                            const int npgeo, const specfem::MPI::MPI *mpi) {
 
   const int nspec = ibool.extent(0);
@@ -182,8 +184,8 @@ specfem::utilities::locate(const specfem::HostView2d<type_real> coord,
 
   // get best candidates to search
   auto ispec_candidates = get_best_candidates(ispec_guess, ibool);
-  specfem::HostView2d<type_real> s_coorg("specfem::utilities::locate::s_coorg",
-                                         ndim, ngnod);
+  specfem::kokkos::HostView2d<type_real> s_coorg(
+      "specfem::utilities::locate::s_coorg", ndim, ngnod);
 
   type_real final_dist = std::numeric_limits<type_real>::max();
   int ispec_selected_source;
@@ -265,7 +267,8 @@ void specfem::utilities::check_locations(const type_real x, const type_real z,
   return;
 }
 
-int specfem::utilities::compute_nglob(const specfem::HostMirror3d<int> ibool) {
+int specfem::utilities::compute_nglob(
+    const specfem::kokkos::HostMirror3d<int> ibool) {
 
   const int nspec = ibool.extent(0);
   const int ngllz = ibool.extent(1);
@@ -274,7 +277,7 @@ int specfem::utilities::compute_nglob(const specfem::HostMirror3d<int> ibool) {
   type_real nglob;
   Kokkos::parallel_reduce(
       "specfem::utils::compute_nglob",
-      specfem::HostMDrange<3>({ 0, 0, 0 }, { nspec, ngllz, ngllx }),
+      specfem::kokkos::HostMDrange<3>({ 0, 0, 0 }, { nspec, ngllz, ngllx }),
       KOKKOS_LAMBDA(const int ispec, const int iz, const int ix,
                     type_real &l_nglob) {
         l_nglob =

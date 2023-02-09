@@ -22,8 +22,8 @@ namespace jacobian {
  * @return std::tuple<type_real, type_real> (x,z) value for the point
  */
 std::tuple<type_real, type_real>
-compute_locations(const specfem::HostTeam::member_type &teamMember,
-                  const specfem::HostScratchView2d<type_real> s_coorg,
+compute_locations(const specfem::kokkos::HostTeam::member_type &teamMember,
+                  const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
                   const int ngnod, const type_real xi, const type_real gamma);
 
 /**
@@ -37,8 +37,8 @@ compute_locations(const specfem::HostTeam::member_type &teamMember,
  * @return std::tuple<type_real, type_real> (x,z) value for the point
  */
 std::tuple<type_real, type_real>
-compute_locations(const specfem::HostView2d<type_real> s_coorg, const int ngnod,
-                  const type_real xi, const type_real gamma);
+compute_locations(const specfem::kokkos::HostView2d<type_real> s_coorg,
+                  const int ngnod, const type_real xi, const type_real gamma);
 
 /**
  * @brief Compute global locations (x,z) from shape function matrix calcualted
@@ -53,10 +53,10 @@ compute_locations(const specfem::HostView2d<type_real> s_coorg, const int ngnod,
  * @return std::tuple<type_real, type_real> (x,z) value for the point
  */
 std::tuple<type_real, type_real>
-compute_locations(const specfem::HostTeam::member_type &teamMember,
-                  const specfem::HostScratchView2d<type_real> s_coorg,
+compute_locations(const specfem::kokkos::HostTeam::member_type &teamMember,
+                  const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
                   const int ngnod,
-                  const specfem::HostView1d<type_real> shape2D);
+                  const specfem::kokkos::HostView1d<type_real> shape2D);
 
 /**
  * @brief Compute global locations (x,z) from shape function matrix calcualted
@@ -68,8 +68,9 @@ compute_locations(const specfem::HostTeam::member_type &teamMember,
  * @return std::tuple<type_real, type_real> (x,z) value for the point
  */
 std::tuple<type_real, type_real>
-compute_locations(const specfem::HostView2d<type_real> s_coorg, const int ngnod,
-                  const specfem::HostView1d<type_real> shape2D);
+compute_locations(const specfem::kokkos::HostView2d<type_real> s_coorg,
+                  const int ngnod,
+                  const specfem::kokkos::HostView1d<type_real> shape2D);
 
 /**
  * @brief Compute partial derivatives at  \f$ (\xi, \gamma) \f$
@@ -86,10 +87,10 @@ compute_locations(const specfem::HostView2d<type_real> s_coorg, const int ngnod,
  * \partial z/\partial \xi, \partial z/\partial \gamma) \f$
  */
 std::tuple<type_real, type_real, type_real, type_real>
-compute_partial_derivatives(const specfem::HostTeam::member_type &teamMember,
-                            const specfem::HostScratchView2d<type_real> s_coorg,
-                            const int ngnod, const type_real xi,
-                            const type_real gamma);
+compute_partial_derivatives(
+    const specfem::kokkos::HostTeam::member_type &teamMember,
+    const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
+    const int ngnod, const type_real xi, const type_real gamma);
 
 /**
  * @brief Compute partial derivatives at  \f$ (\xi, \gamma) \f$
@@ -106,10 +107,10 @@ compute_partial_derivatives(const specfem::HostTeam::member_type &teamMember,
  * \partial z/\partial \xi, \partial z/\partial \gamma) \f$
  */
 std::tuple<type_real, type_real, type_real, type_real>
-compute_partial_derivatives(const specfem::HostTeam::member_type &teamMember,
-                            const specfem::HostScratchView2d<type_real> s_coorg,
-                            const int ngnod,
-                            const specfem::HostView2d<type_real> dershape2D);
+compute_partial_derivatives(
+    const specfem::kokkos::HostTeam::member_type &teamMember,
+    const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
+    const int ngnod, const specfem::kokkos::HostView2d<type_real> dershape2D);
 
 /**
  * @brief Compute partial derivatives at  \f$ (\xi, \gamma) \f$
@@ -126,9 +127,9 @@ compute_partial_derivatives(const specfem::HostTeam::member_type &teamMember,
  * \partial z/\partial \xi, \partial z/\partial \gamma) \f$
  */
 std::tuple<type_real, type_real, type_real, type_real>
-compute_partial_derivatives(const specfem::HostView2d<type_real> s_coorg,
-                            const int ngnod, const type_real xi,
-                            const type_real gamma);
+compute_partial_derivatives(
+    const specfem::kokkos::HostView2d<type_real> s_coorg, const int ngnod,
+    const type_real xi, const type_real gamma);
 
 /**
  * @brief compute jacobian given partial derivatives at a point
@@ -151,10 +152,10 @@ type_real compute_jacobian(const type_real xxi, const type_real zxi,
  * @param gamma \f$ \gamma \f$ value of point
  * @return type_real computed jacobian
  */
-type_real compute_jacobian(const specfem::HostTeam::member_type &teamMember,
-                           const specfem::HostScratchView2d<type_real> s_coorg,
-                           const int ngnod, const type_real xi,
-                           const type_real gamma);
+type_real
+compute_jacobian(const specfem::kokkos::HostTeam::member_type &teamMember,
+                 const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
+                 const int ngnod, const type_real xi, const type_real gamma);
 
 /**
  * @brief compute jacobian at a particular point using derivatives of shape
@@ -166,10 +167,11 @@ type_real compute_jacobian(const specfem::HostTeam::member_type &teamMember,
  * \gamma) \f$
  * @return type_real computed jacobian
  */
-type_real compute_jacobian(const specfem::HostTeam::member_type &teamMember,
-                           const specfem::HostScratchView2d<type_real> s_coorg,
-                           const int ngnod,
-                           const specfem::HostView2d<type_real> dershape2D);
+type_real
+compute_jacobian(const specfem::kokkos::HostTeam::member_type &teamMember,
+                 const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
+                 const int ngnod,
+                 const specfem::kokkos::HostView2d<type_real> dershape2D);
 
 /**
  * @brief Compute partial derivatives at  \f$ (\xi, \gamma) \f$
@@ -187,9 +189,9 @@ type_real compute_jacobian(const specfem::HostTeam::member_type &teamMember,
  */
 std::tuple<type_real, type_real, type_real, type_real>
 compute_inverted_derivatives(
-    const specfem::HostTeam::member_type &teamMember,
-    const specfem::HostScratchView2d<type_real> s_coorg, const int ngnod,
-    const type_real xi, const type_real gamma);
+    const specfem::kokkos::HostTeam::member_type &teamMember,
+    const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
+    const int ngnod, const type_real xi, const type_real gamma);
 
 /**
  * @brief Compute partial derivatives at  \f$ (\xi, \gamma) \f$
@@ -207,9 +209,9 @@ compute_inverted_derivatives(
  */
 std::tuple<type_real, type_real, type_real, type_real>
 compute_inverted_derivatives(
-    const specfem::HostTeam::member_type &teamMember,
-    const specfem::HostScratchView2d<type_real> s_coorg, const int ngnod,
-    const specfem::HostView2d<type_real> dershape2D);
+    const specfem::kokkos::HostTeam::member_type &teamMember,
+    const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
+    const int ngnod, const specfem::kokkos::HostView2d<type_real> dershape2D);
 
 /**
  * @brief Compute partial derivatives at  \f$ (\xi, \gamma) \f$
@@ -226,9 +228,9 @@ compute_inverted_derivatives(
  * \partial \xi/ \partial z, \partial \gamma/ \partial z) \f$
  */
 std::tuple<type_real, type_real, type_real, type_real>
-compute_inverted_derivatives(const specfem::HostView2d<type_real> s_coorg,
-                             const int ngnod, const type_real xi,
-                             const type_real gamma);
+compute_inverted_derivatives(
+    const specfem::kokkos::HostView2d<type_real> s_coorg, const int ngnod,
+    const type_real xi, const type_real gamma);
 
 } // namespace jacobian
 

@@ -5,8 +5,8 @@
 #include <iostream>
 #include <stdexcept>
 
-using HostMirror1d = specfem::HostMirror1d<type_real>;
-using HostView1d = specfem::HostView1d<type_real>;
+using HostMirror1d = specfem::kokkos::HostMirror1d<type_real>;
+using HostView1d = specfem::kokkos::HostView1d<type_real>;
 
 type_real gll_library::pnleg(const type_real z, const int n) {
   // Generate Lagendre polynomials using recurrance relation

@@ -2,7 +2,6 @@
 #define MATERIAL_H
 
 #include "../include/config.h"
-#include "../include/kokkos_abstractions.h"
 #include "../include/specfem_mpi.h"
 #include "../include/utils.h"
 #include <ostream>
