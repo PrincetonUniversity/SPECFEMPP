@@ -17,14 +17,14 @@ specfem::forcing_function::stf *assign_stf(std::string forcing_type,
   specfem::forcing_function::stf *forcing_function;
   if (forcing_type == "Dirac") {
     forcing_function = (specfem::forcing_function::stf *)
-        Kokkos::kokkos_malloc<specfem::DevMemSpace>(
+        Kokkos::kokkos_malloc<specfem::kokkos::DevMemSpace>(
             sizeof(specfem::forcing_function::Dirac));
 
     f0 = 1.0 / (10.0 * dt);
 
     Kokkos::parallel_for(
         "specfem::sources::moment_tensor::moment_tensor::allocate_stf",
-        specfem::DeviceRange(0, 1), KOKKOS_LAMBDA(const int &) {
+        specfem::kokkos::DeviceRange(0, 1), KOKKOS_LAMBDA(const int &) {
           new (forcing_function) specfem::forcing_function::Dirac(
               f0, tshift, factor, use_trick_for_better_pressure);
         });
@@ -45,13 +45,13 @@ void specfem::sources::source::check_locations(const type_real xmin,
 }
 
 void specfem::sources::force::locate(
-    const specfem::HostView2d<type_real> coord,
-    const specfem::HostMirror3d<int> h_ibool,
-    const specfem::HostMirror1d<type_real> xigll,
-    const specfem::HostMirror1d<type_real> zigll, const int nproc,
-    const specfem::HostView2d<type_real> coorg,
-    const specfem::HostView2d<int> knods, const int npgeo,
-    const specfem::HostMirror1d<element_type> ispec_type,
+    const specfem::kokkos::HostView2d<type_real> coord,
+    const specfem::kokkos::HostMirror3d<int> h_ibool,
+    const specfem::kokkos::HostMirror1d<type_real> xigll,
+    const specfem::kokkos::HostMirror1d<type_real> zigll, const int nproc,
+    const specfem::kokkos::HostView2d<type_real> coorg,
+    const specfem::kokkos::HostView2d<int> knods, const int npgeo,
+    const specfem::kokkos::HostMirror1d<element_type> ispec_type,
     const specfem::MPI::MPI *mpi) {
   std::tie(this->xi, this->gamma, this->ispec, this->islice) =
       specfem::utilities::locate(coord, h_ibool, xigll, zigll, nproc,
@@ -63,13 +63,13 @@ void specfem::sources::force::locate(
 }
 
 void specfem::sources::moment_tensor::locate(
-    const specfem::HostView2d<type_real> coord,
-    const specfem::HostMirror3d<int> h_ibool,
-    const specfem::HostMirror1d<type_real> xigll,
-    const specfem::HostMirror1d<type_real> zigll, const int nproc,
-    const specfem::HostView2d<type_real> coorg,
-    const specfem::HostView2d<int> knods, const int npgeo,
-    const specfem::HostMirror1d<element_type> ispec_type,
+    const specfem::kokkos::HostView2d<type_real> coord,
+    const specfem::kokkos::HostMirror3d<int> h_ibool,
+    const specfem::kokkos::HostMirror1d<type_real> xigll,
+    const specfem::kokkos::HostMirror1d<type_real> zigll, const int nproc,
+    const specfem::kokkos::HostView2d<type_real> coorg,
+    const specfem::kokkos::HostView2d<int> knods, const int npgeo,
+    const specfem::kokkos::HostMirror1d<element_type> ispec_type,
     const specfem::MPI::MPI *mpi) {
   std::tie(this->xi, this->gamma, this->ispec, this->islice) =
       specfem::utilities::locate(coord, h_ibool, xigll, zigll, nproc,
@@ -82,7 +82,7 @@ void specfem::sources::moment_tensor::locate(
           "Found a Moment-tensor source in acoustic/poroelastic element");
   }
   int ngnod = knods.extent(0);
-  this->s_coorg = specfem::HostView2d<type_real>(
+  this->s_coorg = specfem::kokkos::HostView2d<type_real>(
       "specfem::sources::moment_tensor::s_coorg", ndim, ngnod);
 
   // Store s_coorg for better caching
@@ -97,7 +97,7 @@ void specfem::sources::moment_tensor::locate(
 void specfem::sources::force::compute_source_array(
     specfem::quadrature::quadrature &quadx,
     specfem::quadrature::quadrature &quadz,
-    specfem::HostView3d<type_real> source_array) {
+    specfem::kokkos::HostView3d<type_real> source_array) {
 
   type_real xi = this->xi;
   type_real gamma = this->gamma;
@@ -136,7 +136,7 @@ void specfem::sources::force::compute_source_array(
 void specfem::sources::moment_tensor::compute_source_array(
     specfem::quadrature::quadrature &quadx,
     specfem::quadrature::quadrature &quadz,
-    specfem::HostView3d<type_real> source_array) {
+    specfem::kokkos::HostView3d<type_real> source_array) {
 
   type_real xi = this->xi;
   type_real gamma = this->gamma;
@@ -257,7 +257,7 @@ type_real specfem::sources::force::get_t0() const {
   specfem::forcing_function::stf *forcing_func = this->forcing_function;
 
   Kokkos::parallel_reduce(
-      "specfem::sources::force::get_t0", specfem::DeviceRange({ 0, 1 }),
+      "specfem::sources::force::get_t0", specfem::kokkos::DeviceRange({ 0, 1 }),
       KOKKOS_LAMBDA(const int &, type_real &lsum) {
         lsum = forcing_func->get_t0();
       },
@@ -275,7 +275,7 @@ type_real specfem::sources::moment_tensor::get_t0() const {
   specfem::forcing_function::stf *forcing_func = this->forcing_function;
 
   Kokkos::parallel_reduce(
-      "specfem::sources::force::get_t0", specfem::DeviceRange({ 0, 1 }),
+      "specfem::sources::force::get_t0", specfem::kokkos::DeviceRange({ 0, 1 }),
       KOKKOS_LAMBDA(const int &, type_real &lsum) {
         lsum = forcing_func->get_t0();
       },
@@ -291,7 +291,7 @@ void specfem::sources::force::update_tshift(type_real tshift) {
   specfem::forcing_function::stf *forcing_func = this->forcing_function;
 
   Kokkos::parallel_for(
-      "specfem::sources::force::get_t0", specfem::DeviceRange({ 0, 1 }),
+      "specfem::sources::force::get_t0", specfem::kokkos::DeviceRange({ 0, 1 }),
       KOKKOS_LAMBDA(const int &) { forcing_func->update_tshift(tshift); });
 
   Kokkos::fence();
@@ -304,7 +304,8 @@ void specfem::sources::moment_tensor::update_tshift(type_real tshift) {
   specfem::forcing_function::stf *forcing_func = this->forcing_function;
 
   Kokkos::parallel_for(
-      "specfem::sources::moment_tensor::get_t0", specfem::DeviceRange({ 0, 1 }),
+      "specfem::sources::moment_tensor::get_t0",
+      specfem::kokkos::DeviceRange({ 0, 1 }),
       KOKKOS_LAMBDA(const int &) { forcing_func->update_tshift(tshift); });
 
   Kokkos::fence();

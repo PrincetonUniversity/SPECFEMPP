@@ -17,9 +17,10 @@ struct material_ind {
    * if (region_CPML(ispec) == 3) means ispec is a XZ PML element
    * @endcode
    */
-  specfem::HostView1d<int> region_CPML;
+  specfem::kokkos::HostView1d<int> region_CPML;
 
-  specfem::HostView1d<int> kmato; ///< Defines material specification number
+  specfem::kokkos::HostView1d<int> kmato; ///< Defines material specification
+                                          ///< number
 
   /**
    * @brief Defines global control element number for every control node
@@ -30,7 +31,7 @@ struct material_ind {
    *        ipgeo = knods(ia, ispec)
    * @endcode
    */
-  specfem::HostView2d<int> knods;
+  specfem::kokkos::HostView2d<int> knods;
 
   /**
    * @brief Default constructor

@@ -28,8 +28,9 @@ struct mesh {
   int npgeo; ///< Total number of spectral element control nodes
   int nspec; ///< Total number of spectral elements
   int nproc; ///< Total number of processors
-  specfem::HostView2d<type_real> coorg; ///< (x_a,z_a) for every spectral
-                                        ///< element control node
+  specfem::kokkos::HostView2d<type_real> coorg; ///< (x_a,z_a) for every
+                                                ///< spectral element control
+                                                ///< node
 
   specfem::materials::material_ind material_ind; ///< Struct used to store
                                                  ///< material information for

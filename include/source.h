@@ -41,15 +41,15 @@ public:
    * @param ispec_type material type for every spectral element
    * @param mpi Pointer to specfem MPI object
    */
-  virtual void locate(const specfem::HostView2d<type_real> coord,
-                      const specfem::HostMirror3d<int> h_ibool,
-                      const specfem::HostMirror1d<type_real> xigll,
-                      const specfem::HostMirror1d<type_real> zigll,
-                      const int nproc,
-                      const specfem::HostView2d<type_real> coorg,
-                      const specfem::HostView2d<int> knods, const int npgeo,
-                      const specfem::HostMirror1d<element_type> ispec_type,
-                      const specfem::MPI::MPI *mpi){};
+  virtual void
+  locate(const specfem::kokkos::HostView2d<type_real> coord,
+         const specfem::kokkos::HostMirror3d<int> h_ibool,
+         const specfem::kokkos::HostMirror1d<type_real> xigll,
+         const specfem::kokkos::HostMirror1d<type_real> zigll, const int nproc,
+         const specfem::kokkos::HostView2d<type_real> coorg,
+         const specfem::kokkos::HostView2d<int> knods, const int npgeo,
+         const specfem::kokkos::HostMirror1d<element_type> ispec_type,
+         const specfem::MPI::MPI *mpi){};
   /**
    * @brief Precompute and store lagrangian values used to compute integrals for
    * sources
@@ -61,7 +61,7 @@ public:
   virtual void
   compute_source_array(specfem::quadrature::quadrature &quadx,
                        specfem::quadrature::quadrature &quadz,
-                       specfem::HostView3d<type_real> source_array){};
+                       specfem::kokkos::HostView3d<type_real> source_array){};
   /**
    * @brief Check if the source is within the domain
    *
@@ -182,13 +182,14 @@ public:
    * @param ispec_type material type for every spectral element
    * @param mpi Pointer to specfem MPI object
    */
-  void locate(const specfem::HostView2d<type_real> coord,
-              const specfem::HostMirror3d<int> h_ibool,
-              const specfem::HostMirror1d<type_real> xigll,
-              const specfem::HostMirror1d<type_real> zigll, const int nproc,
-              const specfem::HostView2d<type_real> coorg,
-              const specfem::HostView2d<int> knods, const int npgeo,
-              const specfem::HostMirror1d<element_type> ispec_type,
+  void locate(const specfem::kokkos::HostView2d<type_real> coord,
+              const specfem::kokkos::HostMirror3d<int> h_ibool,
+              const specfem::kokkos::HostMirror1d<type_real> xigll,
+              const specfem::kokkos::HostMirror1d<type_real> zigll,
+              const int nproc,
+              const specfem::kokkos::HostView2d<type_real> coorg,
+              const specfem::kokkos::HostView2d<int> knods, const int npgeo,
+              const specfem::kokkos::HostMirror1d<element_type> ispec_type,
               const specfem::MPI::MPI *mpi) override;
   /**
    * @brief Precompute and store lagrangian values used to compute integrals for
@@ -198,10 +199,10 @@ public:
    * @param quadz Quadrature object in z-dimension
    * @param source_array view to store the source array
    */
-  void
-  compute_source_array(specfem::quadrature::quadrature &quadx,
-                       specfem::quadrature::quadrature &quadz,
-                       specfem::HostView3d<type_real> source_array) override;
+  void compute_source_array(
+      specfem::quadrature::quadrature &quadx,
+      specfem::quadrature::quadrature &quadz,
+      specfem::kokkos::HostView3d<type_real> source_array) override;
   /**
    * @brief Check if the source is within the domain
    *
@@ -255,7 +256,7 @@ public:
    *
    */
   ~force() {
-    Kokkos::kokkos_free<specfem::DevMemSpace>(this->forcing_function);
+    Kokkos::kokkos_free<specfem::kokkos::DevMemSpace>(this->forcing_function);
   }
   /**
    * @brief Get the value of t0 from the specfem::stf::stf object
@@ -343,13 +344,14 @@ public:
    * @param ispec_type material type for every spectral element
    * @param mpi Pointer to specfem MPI object
    */
-  void locate(const specfem::HostView2d<type_real> coord,
-              const specfem::HostMirror3d<int> h_ibool,
-              const specfem::HostMirror1d<type_real> xigll,
-              const specfem::HostMirror1d<type_real> zigll, const int nproc,
-              const specfem::HostView2d<type_real> coorg,
-              const specfem::HostView2d<int> knods, const int npgeo,
-              const specfem::HostMirror1d<element_type> ispec_type,
+  void locate(const specfem::kokkos::HostView2d<type_real> coord,
+              const specfem::kokkos::HostMirror3d<int> h_ibool,
+              const specfem::kokkos::HostMirror1d<type_real> xigll,
+              const specfem::kokkos::HostMirror1d<type_real> zigll,
+              const int nproc,
+              const specfem::kokkos::HostView2d<type_real> coorg,
+              const specfem::kokkos::HostView2d<int> knods, const int npgeo,
+              const specfem::kokkos::HostMirror1d<element_type> ispec_type,
               const specfem::MPI::MPI *mpi) override;
   /**
    * @brief Precompute and store lagrangian values used to compute integrals for
@@ -359,10 +361,10 @@ public:
    * @param quadz Quadrature object in z-dimension
    * @param source_array view to store the source array
    */
-  void
-  compute_source_array(specfem::quadrature::quadrature &quadx,
-                       specfem::quadrature::quadrature &quadz,
-                       specfem::HostView3d<type_real> source_array) override;
+  void compute_source_array(
+      specfem::quadrature::quadrature &quadx,
+      specfem::quadrature::quadrature &quadz,
+      specfem::kokkos::HostView3d<type_real> source_array) override;
   /**
    * @brief Get the processor on which this source lies
    *
@@ -427,7 +429,7 @@ public:
   }
 
   ~moment_tensor() {
-    Kokkos::kokkos_free<specfem::DevMemSpace>(this->forcing_function);
+    Kokkos::kokkos_free<specfem::kokkos::DevMemSpace>(this->forcing_function);
   }
 
 private:
@@ -440,9 +442,9 @@ private:
   type_real Mzz;   ///< Mzz for the source
   int ispec;       ///< ispec element number where source is located
   int islice;      ///< MPI slice (rank) where the source is located
-  specfem::HostView2d<type_real> s_coorg; ///< control nodes subviewed at the
-                                          ///< element where this source is
-                                          ///< located
+  specfem::kokkos::HostView2d<type_real> s_coorg; ///< control nodes subviewed
+                                                  ///< at the element where this
+                                                  ///< source is located
 
   specfem::forcing_function::stf *forcing_function =
       NULL; ///< Pointer to source time function store on the device

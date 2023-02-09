@@ -7,19 +7,19 @@
 #include <iostream>
 #include <stdexcept>
 
-using DeviceView1d = specfem::DeviceView1d<type_real>;
-using DeviceView2d = specfem::DeviceView2d<type_real>;
-using HostMirror1d = specfem::HostMirror1d<type_real>;
-using HostMirror2d = specfem::HostMirror2d<type_real>;
+using DeviceView1d = specfem::kokkos::DeviceView1d<type_real>;
+using DeviceView2d = specfem::kokkos::DeviceView2d<type_real>;
+using HostMirror1d = specfem::kokkos::HostMirror1d<type_real>;
+using HostMirror2d = specfem::kokkos::HostMirror2d<type_real>;
 
 void specfem::quadrature::quadrature::set_allocations() {
-  xi = specfem::DeviceView1d<type_real>(
+  xi = specfem::kokkos::DeviceView1d<type_real>(
       "specfem::quadrature::quadrature::DeviceView1d::xi", N);
   h_xi = Kokkos::create_mirror_view(xi);
-  w = specfem::DeviceView1d<type_real>(
+  w = specfem::kokkos::DeviceView1d<type_real>(
       "specfem::quadrature::quadrature::DeviceView1d::w", N);
   h_w = Kokkos::create_mirror_view(w);
-  hprime = specfem::DeviceView2d<type_real>(
+  hprime = specfem::kokkos::DeviceView2d<type_real>(
       "specfem::quadrature::quadrature::DeviceView1d::hprime", N, N);
   h_hprime = Kokkos::create_mirror_view(hprime);
 }

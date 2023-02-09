@@ -7,15 +7,15 @@
 specfem::compute::partial_derivatives::partial_derivatives(const int nspec,
                                                            const int ngllz,
                                                            const int ngllx)
-    : xix(specfem::DeviceView3d<type_real>("specfem::mesh::compute::xix", nspec,
-                                           ngllz, ngllx)),
-      xiz(specfem::DeviceView3d<type_real>("specfem::mesh::compute::xiz", nspec,
-                                           ngllz, ngllx)),
-      gammax(specfem::DeviceView3d<type_real>("specfem::mesh::compute::gammax",
-                                              nspec, ngllz, ngllx)),
-      gammaz(specfem::DeviceView3d<type_real>("specfem::mesh::compute::gammaz",
-                                              nspec, ngllz, ngllx)),
-      jacobian(specfem::DeviceView3d<type_real>(
+    : xix(specfem::kokkos::DeviceView3d<type_real>(
+          "specfem::mesh::compute::xix", nspec, ngllz, ngllx)),
+      xiz(specfem::kokkos::DeviceView3d<type_real>(
+          "specfem::mesh::compute::xiz", nspec, ngllz, ngllx)),
+      gammax(specfem::kokkos::DeviceView3d<type_real>(
+          "specfem::mesh::compute::gammax", nspec, ngllz, ngllx)),
+      gammaz(specfem::kokkos::DeviceView3d<type_real>(
+          "specfem::mesh::compute::gammaz", nspec, ngllz, ngllx)),
+      jacobian(specfem::kokkos::DeviceView3d<type_real>(
           "specfem::mesh::compute::jacobian", nspec, ngllz, ngllx)) {
 
   h_xix = Kokkos::create_mirror_view(xix);
@@ -26,8 +26,8 @@ specfem::compute::partial_derivatives::partial_derivatives(const int nspec,
 };
 
 specfem::compute::partial_derivatives::partial_derivatives(
-    const specfem::HostView2d<type_real> coorg,
-    const specfem::HostView2d<int> knods,
+    const specfem::kokkos::HostView2d<type_real> coorg,
+    const specfem::kokkos::HostView2d<int> knods,
     const specfem::quadrature::quadrature &quadx,
     const specfem::quadrature::quadrature &quadz) {
 
@@ -43,20 +43,21 @@ specfem::compute::partial_derivatives::partial_derivatives(
   // Allocate views
   *this = specfem::compute::partial_derivatives(nspec, ngllz, ngllx);
 
-  specfem::HostMirror1d<type_real> xi = quadx.get_hxi();
-  specfem::HostMirror1d<type_real> gamma = quadz.get_hxi();
+  specfem::kokkos::HostMirror1d<type_real> xi = quadx.get_hxi();
+  specfem::kokkos::HostMirror1d<type_real> gamma = quadz.get_hxi();
 
   // Allocate views for shape functions
-  specfem::HostView3d<type_real> shape2D(
+  specfem::kokkos::HostView3d<type_real> shape2D(
       "specfem::mesh::assign_numbering::shape2D", ngllz, ngllx, ngnod);
-  specfem::HostView4d<type_real> dershape2D(
+  specfem::kokkos::HostView4d<type_real> dershape2D(
       "specfem::mesh::assign_numbering::dershape2D", ngllz, ngllx, ndim, ngnod);
   int scratch_size =
-      specfem::HostScratchView2d<type_real>::shmem_size(ndim, ngnod);
+      specfem::kokkos::HostScratchView2d<type_real>::shmem_size(ndim, ngnod);
 
   // Allocate shape functions
   Kokkos::parallel_for(
-      "shape_functions", specfem::HostMDrange<2>({ 0, 0 }, { ngllz, ngllx }),
+      "shape_functions",
+      specfem::kokkos::HostMDrange<2>({ 0, 0 }, { ngllz, ngllx }),
       [=](const int iz, const int ix) {
         type_real ixxi = xi(ix);
         type_real izgamma = gamma(iz);
@@ -76,13 +77,13 @@ specfem::compute::partial_derivatives::partial_derivatives(
   Kokkos::fence();
 
   Kokkos::parallel_for(
-      specfem::HostTeam(nspec, Kokkos::AUTO, ngnod)
+      specfem::kokkos::HostTeam(nspec, Kokkos::AUTO, ngnod)
           .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
-      [=](const specfem::HostTeam::member_type &teamMember) {
+      [=](const specfem::kokkos::HostTeam::member_type &teamMember) {
         const int ispec = teamMember.league_rank();
 
         //----- Load coorgx, coorgz in level 0 cache to be utilized later
-        specfem::HostScratchView2d<type_real> s_coorg(
+        specfem::kokkos::HostScratchView2d<type_real> s_coorg(
             teamMember.team_scratch(0), ndim, ngnod);
 
         // This loop is not vectorizable because access to coorg via

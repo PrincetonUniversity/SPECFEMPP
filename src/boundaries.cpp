@@ -5,9 +5,9 @@
 #include <vector>
 
 // Find corner elements of the absorbing boundary
-void find_corners(const specfem::HostView1d<int> numabs,
-                  const specfem::HostView2d<bool> codeabs,
-                  specfem::HostView2d<bool> codeabscorner,
+void find_corners(const specfem::kokkos::HostView1d<int> numabs,
+                  const specfem::kokkos::HostView2d<bool> codeabs,
+                  specfem::kokkos::HostView2d<bool> codeabscorner,
                   const int num_abs_boundary_faces,
                   const specfem::MPI::MPI *mpi) {
   int ncorner = 0;
@@ -53,11 +53,12 @@ void find_corners(const specfem::HostView1d<int> numabs,
     assert(ncorner_all <= 4);
 }
 
-void calculate_ib(const specfem::HostView2d<bool> code,
-                  specfem::HostView1d<int> ib_bottom,
-                  specfem::HostView1d<int> ib_top,
-                  specfem::HostView1d<int> ib_left,
-                  specfem::HostView1d<int> ib_right, const int nelements) {
+void calculate_ib(const specfem::kokkos::HostView2d<bool> code,
+                  specfem::kokkos::HostView1d<int> ib_bottom,
+                  specfem::kokkos::HostView1d<int> ib_top,
+                  specfem::kokkos::HostView1d<int> ib_left,
+                  specfem::kokkos::HostView1d<int> ib_right,
+                  const int nelements) {
 
   int nspec_left = 0, nspec_right = 0, nspec_top = 0, nspec_bottom = 0;
   for (int inum = 0; inum < nelements; inum++) {
@@ -84,85 +85,85 @@ void calculate_ib(const specfem::HostView2d<bool> code,
 specfem::boundaries::absorbing_boundary::absorbing_boundary(
     const int num_abs_boundary_faces) {
   if (num_abs_boundary_faces > 0) {
-    this->numabs = specfem::HostView1d<int>(
+    this->numabs = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::numabs", num_abs_boundary_faces);
-    this->abs_boundary_type = specfem::HostView1d<int>(
+    this->abs_boundary_type = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::abs_boundary_type",
         num_abs_boundary_faces);
-    this->ibegin_edge1 = specfem::HostView1d<int>(
+    this->ibegin_edge1 = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::ibegin_edge1",
         num_abs_boundary_faces);
-    this->ibegin_edge2 = specfem::HostView1d<int>(
+    this->ibegin_edge2 = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::ibegin_edge2",
         num_abs_boundary_faces);
-    this->ibegin_edge3 = specfem::HostView1d<int>(
+    this->ibegin_edge3 = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::ibegin_edge3",
         num_abs_boundary_faces);
-    this->ibegin_edge4 = specfem::HostView1d<int>(
+    this->ibegin_edge4 = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::ibegin_edge4",
         num_abs_boundary_faces);
-    this->iend_edge1 = specfem::HostView1d<int>(
+    this->iend_edge1 = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::iend_edge1",
         num_abs_boundary_faces);
-    this->iend_edge2 = specfem::HostView1d<int>(
+    this->iend_edge2 = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::iend_edge2",
         num_abs_boundary_faces);
-    this->iend_edge3 = specfem::HostView1d<int>(
+    this->iend_edge3 = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::iend_edge3",
         num_abs_boundary_faces);
-    this->iend_edge4 = specfem::HostView1d<int>(
+    this->iend_edge4 = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::iend_edge4",
         num_abs_boundary_faces);
-    this->ib_bottom = specfem::HostView1d<int>(
+    this->ib_bottom = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::ib_bottom", num_abs_boundary_faces);
-    this->ib_top = specfem::HostView1d<int>(
+    this->ib_top = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::ib_top", num_abs_boundary_faces);
-    this->ib_right = specfem::HostView1d<int>(
+    this->ib_right = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::ib_right", num_abs_boundary_faces);
-    this->ib_left = specfem::HostView1d<int>(
+    this->ib_left = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::ib_left", num_abs_boundary_faces);
   } else {
-    this->numabs = specfem::HostView1d<int>(
+    this->numabs = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::numabs", 1);
-    this->abs_boundary_type = specfem::HostView1d<int>(
+    this->abs_boundary_type = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::abs_boundary_type", 1);
-    this->ibegin_edge1 = specfem::HostView1d<int>(
+    this->ibegin_edge1 = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::ibegin_edge1", 1);
-    this->ibegin_edge2 = specfem::HostView1d<int>(
+    this->ibegin_edge2 = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::ibegin_edge2", 1);
-    this->ibegin_edge3 = specfem::HostView1d<int>(
+    this->ibegin_edge3 = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::ibegin_edge3", 1);
-    this->ibegin_edge4 = specfem::HostView1d<int>(
+    this->ibegin_edge4 = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::ibegin_edge4", 1);
-    this->iend_edge1 = specfem::HostView1d<int>(
+    this->iend_edge1 = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::iend_edge1", 1);
-    this->iend_edge2 = specfem::HostView1d<int>(
+    this->iend_edge2 = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::iend_edge2", 1);
-    this->iend_edge3 = specfem::HostView1d<int>(
+    this->iend_edge3 = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::iend_edge3", 1);
-    this->iend_edge4 = specfem::HostView1d<int>(
+    this->iend_edge4 = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::iend_edge4", 1);
-    this->ib_bottom = specfem::HostView1d<int>(
+    this->ib_bottom = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::ib_bottom", 1);
-    this->ib_top = specfem::HostView1d<int>(
+    this->ib_top = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::ib_top", 1);
-    this->ib_right = specfem::HostView1d<int>(
+    this->ib_right = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::ib_right", 1);
-    this->ib_left = specfem::HostView1d<int>(
+    this->ib_left = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::ib_left", 1);
   }
 
   if (num_abs_boundary_faces > 0) {
-    this->codeabs =
-        specfem::HostView2d<bool>("specfem::mesh::absorbing_boundary::codeabs",
-                                  num_abs_boundary_faces, 4);
-    this->codeabscorner = specfem::HostView2d<bool>(
+    this->codeabs = specfem::kokkos::HostView2d<bool>(
+        "specfem::mesh::absorbing_boundary::codeabs", num_abs_boundary_faces,
+        4);
+    this->codeabscorner = specfem::kokkos::HostView2d<bool>(
         "specfem::mesh::absorbing_boundary::codeabs_corner",
         num_abs_boundary_faces, 4);
   } else {
-    this->codeabs = specfem::HostView2d<bool>(
+    this->codeabs = specfem::kokkos::HostView2d<bool>(
         "specfem::mesh::absorbing_boundary::codeabs", 1, 1);
-    this->codeabscorner = specfem::HostView2d<bool>(
+    this->codeabscorner = specfem::kokkos::HostView2d<bool>(
         "specfem::mesh::absorbing_boundary::codeabs_corner", 1, 1);
   }
 
@@ -211,66 +212,66 @@ specfem::boundaries::absorbing_boundary::absorbing_boundary(
 specfem::boundaries::forcing_boundary::forcing_boundary(
     const int nelement_acforcing) {
   if (nelement_acforcing > 0) {
-    this->numacforcing = specfem::HostView1d<int>(
+    this->numacforcing = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::forcing_boundary::numacforcing", nelement_acforcing);
-    this->codeacforcing = specfem::HostView2d<bool>(
+    this->codeacforcing = specfem::kokkos::HostView2d<bool>(
         "specfem::mesh::forcing_boundary::numacforcing", nelement_acforcing, 4);
-    this->typeacforcing = specfem::HostView1d<int>(
+    this->typeacforcing = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::forcing_boundary::numacforcing", nelement_acforcing);
-    this->ibegin_edge1 = specfem::HostView1d<int>(
+    this->ibegin_edge1 = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::ibegin_edge1", nelement_acforcing);
-    this->ibegin_edge2 = specfem::HostView1d<int>(
+    this->ibegin_edge2 = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::ibegin_edge2", nelement_acforcing);
-    this->ibegin_edge3 = specfem::HostView1d<int>(
+    this->ibegin_edge3 = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::ibegin_edge3", nelement_acforcing);
-    this->ibegin_edge4 = specfem::HostView1d<int>(
+    this->ibegin_edge4 = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::ibegin_edge4", nelement_acforcing);
-    this->iend_edge1 = specfem::HostView1d<int>(
+    this->iend_edge1 = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::iend_edge1", nelement_acforcing);
-    this->iend_edge2 = specfem::HostView1d<int>(
+    this->iend_edge2 = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::iend_edge2", nelement_acforcing);
-    this->iend_edge3 = specfem::HostView1d<int>(
+    this->iend_edge3 = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::iend_edge3", nelement_acforcing);
-    this->iend_edge4 = specfem::HostView1d<int>(
+    this->iend_edge4 = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::iend_edge4", nelement_acforcing);
-    this->ib_bottom = specfem::HostView1d<int>(
+    this->ib_bottom = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::ib_bottom", nelement_acforcing);
-    this->ib_top = specfem::HostView1d<int>(
+    this->ib_top = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::ib_top", nelement_acforcing);
-    this->ib_right = specfem::HostView1d<int>(
+    this->ib_right = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::ib_right", nelement_acforcing);
-    this->ib_left = specfem::HostView1d<int>(
+    this->ib_left = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::ib_left", nelement_acforcing);
   } else {
-    this->numacforcing = specfem::HostView1d<int>(
+    this->numacforcing = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::forcing_boundary::numacforcing", 1);
-    this->codeacforcing = specfem::HostView2d<bool>(
+    this->codeacforcing = specfem::kokkos::HostView2d<bool>(
         "specfem::mesh::forcing_boundary::numacforcing", 1, 1);
-    this->typeacforcing = specfem::HostView1d<int>(
+    this->typeacforcing = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::forcing_boundary::numacforcing", 1);
-    this->ibegin_edge1 = specfem::HostView1d<int>(
+    this->ibegin_edge1 = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::ibegin_edge1", 1);
-    this->ibegin_edge2 = specfem::HostView1d<int>(
+    this->ibegin_edge2 = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::ibegin_edge2", 1);
-    this->ibegin_edge3 = specfem::HostView1d<int>(
+    this->ibegin_edge3 = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::ibegin_edge3", 1);
-    this->ibegin_edge4 = specfem::HostView1d<int>(
+    this->ibegin_edge4 = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::ibegin_edge4", 1);
-    this->iend_edge1 = specfem::HostView1d<int>(
+    this->iend_edge1 = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::iend_edge1", 1);
-    this->iend_edge2 = specfem::HostView1d<int>(
+    this->iend_edge2 = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::iend_edge2", 1);
-    this->iend_edge3 = specfem::HostView1d<int>(
+    this->iend_edge3 = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::iend_edge3", 1);
-    this->iend_edge4 = specfem::HostView1d<int>(
+    this->iend_edge4 = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::iend_edge4", 1);
-    this->ib_bottom = specfem::HostView1d<int>(
+    this->ib_bottom = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::ib_bottom", 1);
-    this->ib_top = specfem::HostView1d<int>(
+    this->ib_top = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::ib_top", 1);
-    this->ib_right = specfem::HostView1d<int>(
+    this->ib_right = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::ib_right", 1);
-    this->ib_left = specfem::HostView1d<int>(
+    this->ib_left = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::absorbing_boundary::ib_left", 1);
   }
 

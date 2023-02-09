@@ -19,65 +19,67 @@ public:
   /**
    * @brief Get a view of the field stored on the device
    *
-   * @return specfem::DeviceView2d<type_real>
+   * @return specfem::kokkos::DeviceView2d<type_real>
    */
-  virtual specfem::DeviceView2d<type_real> get_field() const {
+  virtual specfem::kokkos::DeviceView2d<type_real> get_field() const {
     return this->field;
   }
   /**
    * @brief Get a view of the field stored on the host
    *
-   * @return specfem::HostMirror2d<type_real>
+   * @return specfem::kokkos::HostMirror2d<type_real>
    */
-  virtual specfem::HostMirror2d<type_real> get_host_field() const {
+  virtual specfem::kokkos::HostMirror2d<type_real> get_host_field() const {
     return this->h_field;
   }
   /**
    * @brief Get a view of the derivative of field stored on the device
    *
-   * @return specfem::DeviceView2d<type_real>
+   * @return specfem::kokkos::DeviceView2d<type_real>
    */
-  virtual specfem::DeviceView2d<type_real> get_field_dot() const {
+  virtual specfem::kokkos::DeviceView2d<type_real> get_field_dot() const {
     return this->field_dot;
   }
   /**
    * @brief Get a view of the derivative of field stored on the host
    *
-   * @return specfem::HostMirror2d<type_real>
+   * @return specfem::kokkos::HostMirror2d<type_real>
    */
-  virtual specfem::HostMirror2d<type_real> get_host_field_dot() const {
+  virtual specfem::kokkos::HostMirror2d<type_real> get_host_field_dot() const {
     return this->h_field_dot;
   }
   /**
    * @brief Get a view of the second derivative of field stored on the Device
    *
-   * @return specfem::DeviceView2d<type_real>
+   * @return specfem::kokkos::DeviceView2d<type_real>
    */
-  virtual specfem::DeviceView2d<type_real> get_field_dot_dot() const {
+  virtual specfem::kokkos::DeviceView2d<type_real> get_field_dot_dot() const {
     return this->field_dot_dot;
   }
   /**
    * @brief Get a view of the second derivative of field stored on the host
    *
-   * @return specfem::HostMirror2d<type_real>
+   * @return specfem::kokkos::HostMirror2d<type_real>
    */
-  virtual specfem::HostMirror2d<type_real> get_host_field_dot_dot() const {
+  virtual specfem::kokkos::HostMirror2d<type_real>
+  get_host_field_dot_dot() const {
     return this->h_field_dot_dot;
   }
   /**
    * @brief Get a view of rmass_inverse stored on the device
    *
-   * @return specfem::DeviceView2d<type_real>
+   * @return specfem::kokkos::DeviceView2d<type_real>
    */
-  virtual specfem::DeviceView2d<type_real> get_rmass_inverse() const {
+  virtual specfem::kokkos::DeviceView2d<type_real> get_rmass_inverse() const {
     return this->rmass_inverse;
   }
   /**
    * @brief Get a view of rmass_inverse stored on the host
    *
-   * @return specfem::HostMirror2d<type_real>
+   * @return specfem::kokkos::HostMirror2d<type_real>
    */
-  virtual specfem::HostMirror2d<type_real> get_host_rmass_inverse() const {
+  virtual specfem::kokkos::HostMirror2d<type_real>
+  get_host_rmass_inverse() const {
     return this->h_rmass_inverse;
   }
   /**
@@ -124,21 +126,24 @@ public:
   virtual void sync_rmass_inverse(specfem::sync::kind kind){};
 
 private:
-  specfem::DeviceView2d<type_real> field;       ///< View of field on Device
-  specfem::HostMirror2d<type_real> h_field;     ///< View of field on host
-  specfem::DeviceView2d<type_real> field_dot;   ///< View of derivative of field
-                                                ///< on Device
-  specfem::HostMirror2d<type_real> h_field_dot; ///< View of derivative of field
-                                                ///< on host
-  specfem::DeviceView2d<type_real> field_dot_dot; ///< View of second derivative
-                                                  ///< of field on Device
-  specfem::HostMirror2d<type_real> h_field_dot_dot; ///< View of second
-                                                    ///< derivative of field on
-                                                    ///< host
-  specfem::DeviceView2d<type_real> rmass_inverse;   ///< View of inverse of mass
-                                                    ///< matrix on device
-  specfem::HostMirror2d<type_real> h_rmass_inverse; ///< View of inverse of mass
-                                                    ///< matrix on host
+  specfem::kokkos::DeviceView2d<type_real> field;   ///< View of field on Device
+  specfem::kokkos::HostMirror2d<type_real> h_field; ///< View of field on host
+  specfem::kokkos::DeviceView2d<type_real> field_dot; ///< View of derivative of
+                                                      ///< field on Device
+  specfem::kokkos::HostMirror2d<type_real> h_field_dot; ///< View of derivative
+                                                        ///< of field on host
+  specfem::kokkos::DeviceView2d<type_real> field_dot_dot;   ///< View of second
+                                                            ///< derivative of
+                                                            ///< field on Device
+  specfem::kokkos::HostMirror2d<type_real> h_field_dot_dot; ///< View of second
+                                                            ///< derivative of
+                                                            ///< field on host
+  specfem::kokkos::DeviceView2d<type_real> rmass_inverse;   ///< View of inverse
+                                                          ///< of mass matrix on
+                                                          ///< device
+  specfem::kokkos::HostMirror2d<type_real> h_rmass_inverse; ///< View of inverse
+                                                            ///< of mass matrix
+                                                            ///< on host
 };
 
 /**
@@ -157,65 +162,67 @@ public:
   /**
    * @brief Get a view of displacement stored on the device
    *
-   * @return specfem::DeviceView2d<type_real>
+   * @return specfem::kokkos::DeviceView2d<type_real>
    */
-  specfem::DeviceView2d<type_real> get_field() const override {
+  specfem::kokkos::DeviceView2d<type_real> get_field() const override {
     return this->field;
   }
   /**
    * @brief Get a view of displacement stored on the hsot
    *
-   * @return specfem::DeviceView2d<type_real>
+   * @return specfem::kokkos::DeviceView2d<type_real>
    */
-  specfem::HostMirror2d<type_real> get_host_field() const override {
+  specfem::kokkos::HostMirror2d<type_real> get_host_field() const override {
     return this->h_field;
   }
   /**
    * @brief Get a view of velocity stored on device
    *
-   * @return specfem::DeviceView2d<type_real>
+   * @return specfem::kokkos::DeviceView2d<type_real>
    */
-  specfem::DeviceView2d<type_real> get_field_dot() const override {
+  specfem::kokkos::DeviceView2d<type_real> get_field_dot() const override {
     return this->field_dot;
   }
   /**
    * @brief Get a view of velocity stored on host
    *
-   * @return specfem::DeviceView2d<type_real>
+   * @return specfem::kokkos::DeviceView2d<type_real>
    */
-  specfem::HostMirror2d<type_real> get_host_field_dot() const override {
+  specfem::kokkos::HostMirror2d<type_real> get_host_field_dot() const override {
     return this->h_field_dot;
   }
   /**
    * @brief Get a view of acceleration stored on device
    *
-   * @return specfem::DeviceView2d<type_real>
+   * @return specfem::kokkos::DeviceView2d<type_real>
    */
-  specfem::DeviceView2d<type_real> get_field_dot_dot() const override {
+  specfem::kokkos::DeviceView2d<type_real> get_field_dot_dot() const override {
     return this->field_dot_dot;
   }
   /**
    * @brief Get a view of acceleration stored on host
    *
-   * @return specfem::DeviceView2d<type_real>
+   * @return specfem::kokkos::DeviceView2d<type_real>
    */
-  specfem::HostMirror2d<type_real> get_host_field_dot_dot() const override {
+  specfem::kokkos::HostMirror2d<type_real>
+  get_host_field_dot_dot() const override {
     return this->h_field_dot_dot;
   }
   /**
    * @brief Get a view of inverse of mass matrix stored on device
    *
-   * @return specfem::DeviceView2d<type_real>
+   * @return specfem::kokkos::DeviceView2d<type_real>
    */
-  specfem::DeviceView2d<type_real> get_rmass_inverse() const override {
+  specfem::kokkos::DeviceView2d<type_real> get_rmass_inverse() const override {
     return this->rmass_inverse;
   }
   /**
    * @brief Get a view of inverse of mass matrix stored on host
    *
-   * @return specfem::DeviceView2d<type_real>
+   * @return specfem::kokkos::DeviceView2d<type_real>
    */
-  specfem::HostMirror2d<type_real> get_host_rmass_inverse() const override {
+  specfem::kokkos::HostMirror2d<type_real>
+  get_host_rmass_inverse() const override {
     return this->h_rmass_inverse;
   }
 
@@ -286,21 +293,24 @@ public:
   void assign_views();
 
 private:
-  specfem::DeviceView2d<type_real> field;       ///< View of field on Device
-  specfem::HostMirror2d<type_real> h_field;     ///< View of field on host
-  specfem::DeviceView2d<type_real> field_dot;   ///< View of derivative of field
-                                                ///< on Device
-  specfem::HostMirror2d<type_real> h_field_dot; ///< View of derivative of field
-                                                ///< on host
-  specfem::DeviceView2d<type_real> field_dot_dot; ///< View of second derivative
-                                                  ///< of field on Device
-  specfem::HostMirror2d<type_real> h_field_dot_dot; ///< View of second
-                                                    ///< derivative of field on
-                                                    ///< host
-  specfem::DeviceView2d<type_real> rmass_inverse;   ///< View of inverse of mass
-                                                    ///< matrix on device
-  specfem::HostMirror2d<type_real> h_rmass_inverse; ///< View of inverse of mass
-                                                    ///< matrix on host
+  specfem::kokkos::DeviceView2d<type_real> field;   ///< View of field on Device
+  specfem::kokkos::HostMirror2d<type_real> h_field; ///< View of field on host
+  specfem::kokkos::DeviceView2d<type_real> field_dot; ///< View of derivative of
+                                                      ///< field on Device
+  specfem::kokkos::HostMirror2d<type_real> h_field_dot; ///< View of derivative
+                                                        ///< of field on host
+  specfem::kokkos::DeviceView2d<type_real> field_dot_dot;   ///< View of second
+                                                            ///< derivative of
+                                                            ///< field on Device
+  specfem::kokkos::HostMirror2d<type_real> h_field_dot_dot; ///< View of second
+                                                            ///< derivative of
+                                                            ///< field on host
+  specfem::kokkos::DeviceView2d<type_real> rmass_inverse;   ///< View of inverse
+                                                          ///< of mass matrix on
+                                                          ///< device
+  specfem::kokkos::HostMirror2d<type_real> h_rmass_inverse; ///< View of inverse
+                                                            ///< of mass matrix
+                                                            ///< on host
   specfem::compute::compute *compute; ///< Pointer to compute struct used to
                                       ///< store spectral element numbering
                                       ///< mapping (ibool)
@@ -314,10 +324,10 @@ private:
   quadrature::quadrature *quadz; ///< Pointer to quadrature object in
                                  ///< z-dimension
   int nelem_domain;              ///< Total number of elements in this domain
-  specfem::DeviceView1d<int> ispec_domain; ///< Array containing global
-                                           ///< indices(ispec) of all elements
-                                           ///< in this domain
-  specfem::HostMirror1d<int> h_ispec_domain;
+  specfem::kokkos::DeviceView1d<int> ispec_domain; ///< Array containing global
+                                                   ///< indices(ispec) of all
+                                                   ///< elements in this domain
+  specfem::kokkos::HostMirror1d<int> h_ispec_domain;
 };
 } // namespace Domain
 } // namespace specfem

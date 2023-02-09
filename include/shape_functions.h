@@ -14,9 +14,10 @@ namespace shape_functions {
  * @param xi \f$ \xi \f$ value of the point
  * @param gamma \f$ \gamma \f$ value of the point
  * @param ngod Total number of control nodes per element
- * @return specfem::HostView1d<type_real> View defining the shape function
+ * @return specfem::kokkos::HostView1d<type_real> View defining the shape
+ * function
  */
-specfem::HostView1d<type_real>
+specfem::kokkos::HostView1d<type_real>
 define_shape_functions(const double xi, const double gamma, const int ngod);
 /**
  * @brief Derivates of shape function at a particular point
@@ -26,11 +27,11 @@ define_shape_functions(const double xi, const double gamma, const int ngod);
  * @param xi \f$ \xi \f$ value of the point
  * @param gamma \f$ \gamma \f$ value of the point
  * @param ngod Total number of control nodes per element
- * @return specfem::HostView2d<type_real> View defining the derivative of shape
- * function (\f$ \partial N/\partial \xi \f$, \f$ \partial N/\partial \gamma
- * \f$)
+ * @return specfem::kokkos::HostView2d<type_real> View defining the derivative
+ * of shape function (\f$ \partial N/\partial \xi \f$, \f$ \partial N/\partial
+ * \gamma \f$)
  */
-specfem::HostView2d<type_real>
+specfem::kokkos::HostView2d<type_real>
 define_shape_functions_derivatives(const double xi, const double gamma,
                                    const int ngod);
 
@@ -42,7 +43,7 @@ define_shape_functions_derivatives(const double xi, const double gamma,
  * @param ngod Total number of control nodes per element
  * @param shape2D View defining the shape function (updated by this function)
  */
-void define_shape_functions(specfem::HostView1d<type_real> shape2D,
+void define_shape_functions(specfem::kokkos::HostView1d<type_real> shape2D,
                             const double xi, const double gamma,
                             const int ngod);
 /**
@@ -56,7 +57,7 @@ void define_shape_functions(specfem::HostView1d<type_real> shape2D,
  * \f$) (updated by this function)
  */
 void define_shape_functions_derivatives(
-    specfem::HostView2d<type_real> dershape2D, const double xi,
+    specfem::kokkos::HostView2d<type_real> dershape2D, const double xi,
     const double gamma, const int ngod);
 } // namespace shape_functions
 

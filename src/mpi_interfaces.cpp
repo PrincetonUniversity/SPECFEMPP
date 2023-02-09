@@ -12,13 +12,13 @@ specfem::interfaces::interface::interface(const int ninterfaces,
 
 #ifdef MPI_PARALLEL
   if (ninterfaces > 0) {
-    this->my_neighbors = specfem::HostView1d<int>(
+    this->my_neighbors = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::interfaces::my_neighbors", ninterfaces);
-    this->my_nelmnts_neighbors = specfem::HostView1d<int>(
+    this->my_nelmnts_neighbors = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::interfaces::my_nelmnts_neighbors", ninterfaces);
-    this->my_interfaces =
-        specfem::HostView3d<int>("specfem::mesh::interfaces::my_interfaces",
-                                 ninterfaces, max_interface_size, 4);
+    this->my_interfaces = specfem::kokkos::HostView3d<int>(
+        "specfem::mesh::interfaces::my_interfaces", ninterfaces,
+        max_interface_size, 4);
 
     // initialize values
     for (int i = 0; i < ninterfaces; i++) {
@@ -31,11 +31,11 @@ specfem::interfaces::interface::interface(const int ninterfaces,
       }
     }
   } else {
-    this->my_neighbors =
-        specfem::HostView1d<int>("specfem::mesh::interfaces::my_neighbors", 1);
-    this->my_nelmnts_neighbors = specfem::HostView1d<int>(
+    this->my_neighbors = specfem::kokkos::HostView1d<int>(
+        "specfem::mesh::interfaces::my_neighbors", 1);
+    this->my_nelmnts_neighbors = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::interfaces::my_nelmnts_neighbors", 1);
-    this->my_interfaces = specfem::HostView3d<int>(
+    this->my_interfaces = specfem::kokkos::HostView3d<int>(
         "specfem::mesh::interfaces::my_interfaces", 1, 1, 1);
 
     // initialize values
@@ -47,11 +47,11 @@ specfem::interfaces::interface::interface(const int ninterfaces,
   if (ninterfaces > 0)
     throw std::runtime_error("Found interfaces but SPECFEM compiled without "
                              "MPI. Compile SPECFEM with MPI");
-  this->my_neighbors =
-      specfem::HostView1d<int>("specfem::mesh::interfaces::my_neighbors", 1);
-  this->my_nelmnts_neighbors = specfem::HostView1d<int>(
+  this->my_neighbors = specfem::kokkos::HostView1d<int>(
+      "specfem::mesh::interfaces::my_neighbors", 1);
+  this->my_nelmnts_neighbors = specfem::kokkos::HostView1d<int>(
       "specfem::mesh::interfaces::my_nelmnts_neighbors", 1);
-  this->my_interfaces = specfem::HostView3d<int>(
+  this->my_interfaces = specfem::kokkos::HostView3d<int>(
       "specfem::mesh::interfaces::my_interfaces", 1, 1, 1);
 
   // initialize values
