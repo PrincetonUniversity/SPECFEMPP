@@ -8,8 +8,13 @@
 namespace specfem {
 
 namespace sync {
-enum kind { HostToDevice, DeviceToHost };
-}
+enum kind {
+  HostToDevice, ///< Sync data from host to device
+  DeviceToHost  ///< Sync data from device to host
+};
+} // namespace sync
+
+namespace kokkos {
 /** @name Execution Spaces
  */
 ///@{
@@ -128,7 +133,7 @@ using HostScatterView2d =
 template <typename T, typename L = LayoutWrapper>
 using HostScatterView3d =
     Kokkos::Experimental::ScatterView<T ***, L, HostExecSpace>;
-///}
+///@}
 
 /** @name Device Scatter Views
  * Scatter views are used when an atomic update is needed on a view.
@@ -158,7 +163,7 @@ using DeviceScatterView2d =
 template <typename T, typename L = LayoutWrapper>
 using DeviceScatterView3d =
     Kokkos::Experimental::ScatterView<T ***, L, DevExecSpace>;
-///}
+///@}
 
 /** @name Host Mirrors
  *
@@ -306,6 +311,7 @@ using HostTeam = Kokkos::TeamPolicy<HostExecSpace>;
 using DeviceTeam = Kokkos::TeamPolicy<DevExecSpace>;
 ///@}
 
+} // namespace kokkos
 } // namespace specfem
 
 #endif

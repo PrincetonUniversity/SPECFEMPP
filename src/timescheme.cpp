@@ -33,7 +33,8 @@ void specfem::TimeScheme::Newmark::apply_predictor_phase(
 
   Kokkos::parallel_for(
       "specfem::TimeScheme::Newmark::apply_predictor_phase",
-      specfem::DeviceRange(0, nglob), KOKKOS_CLASS_LAMBDA(const int iglob) {
+      specfem::kokkos::DeviceRange(0, nglob),
+      KOKKOS_CLASS_LAMBDA(const int iglob) {
         for (int idim = 0; idim < ndim; idim++) {
           // update displacements
           field(iglob, idim) +=
@@ -62,7 +63,8 @@ void specfem::TimeScheme::Newmark::apply_corrector_phase(
 
   Kokkos::parallel_for(
       "specfem::TimeScheme::Newmark::apply_predictor_phase",
-      specfem::DeviceRange(0, nglob), KOKKOS_CLASS_LAMBDA(const int iglob) {
+      specfem::kokkos::DeviceRange(0, nglob),
+      KOKKOS_CLASS_LAMBDA(const int iglob) {
         for (int idim = 0; idim < ndim; idim++) {
           // apply corrector phase
           field_dot(iglob, idim) +=

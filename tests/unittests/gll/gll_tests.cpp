@@ -6,8 +6,8 @@
 #include <iostream>
 #include <stdexcept>
 
-using DeviceView1d = specfem::DeviceView1d<type_real>;
-using HostMirror1d = specfem::HostMirror1d<type_real>;
+using DeviceView1d = specfem::kokkos::DeviceView1d<type_real>;
+using HostMirror1d = specfem::kokkos::HostMirror1d<type_real>;
 
 TEST(GLL_tests, PNLEG) {
   const auto &pnleg = gll_library::pnleg;

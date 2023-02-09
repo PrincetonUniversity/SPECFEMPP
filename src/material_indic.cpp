@@ -6,10 +6,11 @@
 specfem::materials::material_ind::material_ind(const int nspec,
                                                const int ngnod) {
   this->region_CPML =
-      specfem::HostView1d<int>("specfem::mesh::region_CPML", nspec);
-  this->kmato = specfem::HostView1d<int>("specfem::mesh::region_CPML", nspec);
-  this->knods =
-      specfem::HostView2d<int>("specfem::mesh::region_CPML", ngnod, nspec);
+      specfem::kokkos::HostView1d<int>("specfem::mesh::region_CPML", nspec);
+  this->kmato =
+      specfem::kokkos::HostView1d<int>("specfem::mesh::region_CPML", nspec);
+  this->knods = specfem::kokkos::HostView2d<int>("specfem::mesh::region_CPML",
+                                                 ngnod, nspec);
 
   for (int ispec = 0; ispec < nspec; ispec++) {
     this->kmato(ispec) = -1;
@@ -30,8 +31,8 @@ specfem::materials::material_ind::material_ind(std::ifstream &stream,
   // Read an assign material values, coordinate numbering, PML association
   for (int ispec = 0; ispec < nspec; ispec++) {
     // format: #element_id  #material_id #node_id1 #node_id2 #...
-    IO::fortran_IO::fortran_read_line(stream, &n, &kmato_read, &knods_read,
-                                      &pml_read);
+    specfem::fortran_IO::fortran_read_line(stream, &n, &kmato_read, &knods_read,
+                                           &pml_read);
 
     // material association
     if (n < 1 || n > nspec) {

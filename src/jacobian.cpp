@@ -4,11 +4,10 @@
 #include "../include/shape_functions.h"
 #include <Kokkos_Core.hpp>
 
-std::tuple<type_real, type_real>
-jacobian::compute_locations(const specfem::HostTeam::member_type &teamMember,
-                            const specfem::HostScratchView2d<type_real> s_coorg,
-                            const int ngnod, const type_real xi,
-                            const type_real gamma) {
+std::tuple<type_real, type_real> jacobian::compute_locations(
+    const specfem::kokkos::HostTeam::member_type &teamMember,
+    const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
+    const int ngnod, const type_real xi, const type_real gamma) {
 
   assert(s_coorg.extent(0) == ndim);
   assert(s_coorg.extent(1) == ngnod);
@@ -16,7 +15,7 @@ jacobian::compute_locations(const specfem::HostTeam::member_type &teamMember,
   type_real xcor = 0.0;
   type_real ycor = 0.0;
 
-  specfem::HostView1d<type_real> shape2D =
+  specfem::kokkos::HostView1d<type_real> shape2D =
       shape_functions::define_shape_functions(xi, gamma, ngnod);
 
   // FIXME:: Multi reduction is not yet implemented in kokkos
@@ -39,7 +38,7 @@ jacobian::compute_locations(const specfem::HostTeam::member_type &teamMember,
 }
 
 std::tuple<type_real, type_real>
-jacobian::compute_locations(const specfem::HostView2d<type_real> coorg,
+jacobian::compute_locations(const specfem::kokkos::HostView2d<type_real> coorg,
                             const int ngnod, const type_real xi,
                             const type_real gamma) {
 
@@ -49,7 +48,7 @@ jacobian::compute_locations(const specfem::HostView2d<type_real> coorg,
   type_real xcor = 0.0;
   type_real ycor = 0.0;
 
-  specfem::HostView1d<type_real> shape2D =
+  specfem::kokkos::HostView1d<type_real> shape2D =
       shape_functions::define_shape_functions(xi, gamma, ngnod);
 
   for (int in = 0; in < ngnod; in++) {
@@ -60,11 +59,10 @@ jacobian::compute_locations(const specfem::HostView2d<type_real> coorg,
   return std::make_tuple(xcor, ycor);
 }
 
-std::tuple<type_real, type_real>
-jacobian::compute_locations(const specfem::HostTeam::member_type &teamMember,
-                            const specfem::HostScratchView2d<type_real> s_coorg,
-                            const int ngnod,
-                            const specfem::HostView1d<type_real> shape2D) {
+std::tuple<type_real, type_real> jacobian::compute_locations(
+    const specfem::kokkos::HostTeam::member_type &teamMember,
+    const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
+    const int ngnod, const specfem::kokkos::HostView1d<type_real> shape2D) {
 
   assert(s_coorg.extent(0) == ndim);
   assert(s_coorg.extent(1) == ngnod);
@@ -93,10 +91,9 @@ jacobian::compute_locations(const specfem::HostTeam::member_type &teamMember,
   return std::make_tuple(xcor, ycor);
 }
 
-std::tuple<type_real, type_real>
-jacobian::compute_locations(const specfem::HostView2d<type_real> s_coorg,
-                            const int ngnod,
-                            const specfem::HostView1d<type_real> shape2D) {
+std::tuple<type_real, type_real> jacobian::compute_locations(
+    const specfem::kokkos::HostView2d<type_real> s_coorg, const int ngnod,
+    const specfem::kokkos::HostView1d<type_real> shape2D) {
 
   assert(s_coorg.extent(0) == ndim);
   assert(s_coorg.extent(1) == ngnod);
@@ -115,9 +112,9 @@ jacobian::compute_locations(const specfem::HostView2d<type_real> s_coorg,
 
 std::tuple<type_real, type_real, type_real, type_real>
 jacobian::compute_partial_derivatives(
-    const specfem::HostTeam::member_type &teamMember,
-    const specfem::HostScratchView2d<type_real> s_coorg, const int ngnod,
-    const type_real xi, const type_real gamma) {
+    const specfem::kokkos::HostTeam::member_type &teamMember,
+    const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
+    const int ngnod, const type_real xi, const type_real gamma) {
 
   assert(s_coorg.extent(0) == ndim);
   assert(s_coorg.extent(1) == ngnod);
@@ -127,7 +124,7 @@ jacobian::compute_partial_derivatives(
   type_real xgamma = 0.0;
   type_real zgamma = 0.0;
 
-  specfem::HostView2d<type_real> dershape2D =
+  specfem::kokkos::HostView2d<type_real> dershape2D =
       shape_functions::define_shape_functions_derivatives(xi, gamma, ngnod);
 
   // FIXME:: Multi reduction is not yet implemented in kokkos
@@ -164,9 +161,9 @@ jacobian::compute_partial_derivatives(
 
 std::tuple<type_real, type_real, type_real, type_real>
 jacobian::compute_partial_derivatives(
-    const specfem::HostTeam::member_type &teamMember,
-    const specfem::HostScratchView2d<type_real> s_coorg, const int ngnod,
-    const specfem::HostView2d<type_real> dershape2D) {
+    const specfem::kokkos::HostTeam::member_type &teamMember,
+    const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
+    const int ngnod, const specfem::kokkos::HostView2d<type_real> dershape2D) {
 
   assert(s_coorg.extent(0) == ndim);
   assert(s_coorg.extent(1) == ngnod);
@@ -212,7 +209,7 @@ jacobian::compute_partial_derivatives(
 
 std::tuple<type_real, type_real, type_real, type_real>
 jacobian::compute_partial_derivatives(
-    const specfem::HostView2d<type_real> s_coorg, const int ngnod,
+    const specfem::kokkos::HostView2d<type_real> s_coorg, const int ngnod,
     const type_real xi, const type_real gamma) {
 
   assert(s_coorg.extent(0) == ndim);
@@ -223,7 +220,7 @@ jacobian::compute_partial_derivatives(
   type_real xgamma = 0.0;
   type_real zgamma = 0.0;
 
-  specfem::HostView2d<type_real> dershape2D =
+  specfem::kokkos::HostView2d<type_real> dershape2D =
       shape_functions::define_shape_functions_derivatives(xi, gamma, ngnod);
 
   for (int in = 0; in < ngnod; in++) {
@@ -242,21 +239,19 @@ type_real jacobian::compute_jacobian(const type_real xxi, const type_real zxi,
   return xxi * zgamma - xgamma * zxi;
 }
 
-type_real
-jacobian::compute_jacobian(const specfem::HostTeam::member_type &teamMember,
-                           const specfem::HostScratchView2d<type_real> s_coorg,
-                           const int ngnod, const type_real xi,
-                           const type_real gamma) {
+type_real jacobian::compute_jacobian(
+    const specfem::kokkos::HostTeam::member_type &teamMember,
+    const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
+    const int ngnod, const type_real xi, const type_real gamma) {
   auto [xxi, zxi, xgamma, zgamma] = jacobian::compute_partial_derivatives(
       teamMember, s_coorg, ngnod, xi, gamma);
   return jacobian::compute_jacobian(xxi, zxi, xgamma, zgamma);
 };
 
-type_real
-jacobian::compute_jacobian(const specfem::HostTeam::member_type &teamMember,
-                           const specfem::HostScratchView2d<type_real> s_coorg,
-                           const int ngnod,
-                           const specfem::HostView2d<type_real> dershape2D) {
+type_real jacobian::compute_jacobian(
+    const specfem::kokkos::HostTeam::member_type &teamMember,
+    const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
+    const int ngnod, const specfem::kokkos::HostView2d<type_real> dershape2D) {
   auto [xxi, zxi, xgamma, zgamma] = jacobian::compute_partial_derivatives(
       teamMember, s_coorg, ngnod, dershape2D);
   return jacobian::compute_jacobian(xxi, zxi, xgamma, zgamma);
@@ -264,9 +259,9 @@ jacobian::compute_jacobian(const specfem::HostTeam::member_type &teamMember,
 
 std::tuple<type_real, type_real, type_real, type_real>
 jacobian::compute_inverted_derivatives(
-    const specfem::HostTeam::member_type &teamMember,
-    const specfem::HostScratchView2d<type_real> s_coorg, const int ngnod,
-    const type_real xi, const type_real gamma) {
+    const specfem::kokkos::HostTeam::member_type &teamMember,
+    const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
+    const int ngnod, const type_real xi, const type_real gamma) {
 
   auto [xxi, zxi, xgamma, zgamma] = jacobian::compute_partial_derivatives(
       teamMember, s_coorg, ngnod, xi, gamma);
@@ -282,9 +277,9 @@ jacobian::compute_inverted_derivatives(
 
 std::tuple<type_real, type_real, type_real, type_real>
 jacobian::compute_inverted_derivatives(
-    const specfem::HostTeam::member_type &teamMember,
-    const specfem::HostScratchView2d<type_real> s_coorg, const int ngnod,
-    const specfem::HostView2d<type_real> dershape2D) {
+    const specfem::kokkos::HostTeam::member_type &teamMember,
+    const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
+    const int ngnod, const specfem::kokkos::HostView2d<type_real> dershape2D) {
   auto [xxi, zxi, xgamma, zgamma] = jacobian::compute_partial_derivatives(
       teamMember, s_coorg, ngnod, dershape2D);
   auto jacobian = jacobian::compute_jacobian(xxi, zxi, xgamma, zgamma);
@@ -299,7 +294,7 @@ jacobian::compute_inverted_derivatives(
 
 std::tuple<type_real, type_real, type_real, type_real>
 jacobian::compute_inverted_derivatives(
-    const specfem::HostView2d<type_real> s_coorg, const int ngnod,
+    const specfem::kokkos::HostView2d<type_real> s_coorg, const int ngnod,
     const type_real xi, const type_real gamma) {
   auto [xxi, zxi, xgamma, zgamma] =
       jacobian::compute_partial_derivatives(s_coorg, ngnod, xi, gamma);
