@@ -8,7 +8,10 @@
 namespace specfem {
 
 namespace sync {
-enum kind { HostToDevice, DeviceToHost };
+enum kind {
+  HostToDevice, ///< Sync data from host to device
+  DeviceToHost  ///< Sync data from device to host
+};
 } // namespace sync
 
 namespace kokkos {
