@@ -4,15 +4,16 @@
 #include <iostream>
 #include <string>
 
-void IO::fortran_IO::fortran_IO(std::ifstream &stream, int &buffer_length) {
+void specfem::fortran_IO::fortran_IO(std::ifstream &stream,
+                                     int &buffer_length) {
   if (buffer_length != 0)
     throw std::runtime_error("Error reading fortran file");
 
   return;
 }
 
-void IO::fortran_IO::fortran_read_value(bool *value, std::ifstream &stream,
-                                        int &buffer_length) {
+void specfem::fortran_IO::fortran_read_value(bool *value, std::ifstream &stream,
+                                             int &buffer_length) {
 
   buffer_length -= fbool;
   char *ivalue = new char[fbool];
@@ -27,8 +28,8 @@ void IO::fortran_IO::fortran_read_value(bool *value, std::ifstream &stream,
   return;
 }
 
-void IO::fortran_IO::fortran_read_value(int *value, std::ifstream &stream,
-                                        int &buffer_length) {
+void specfem::fortran_IO::fortran_read_value(int *value, std::ifstream &stream,
+                                             int &buffer_length) {
 
   buffer_length -= fint;
   char *ivalue = new char[fint];
@@ -41,8 +42,9 @@ void IO::fortran_IO::fortran_read_value(int *value, std::ifstream &stream,
   return;
 }
 
-void IO::fortran_IO::fortran_read_value(type_real *value, std::ifstream &stream,
-                                        int &buffer_length) {
+void specfem::fortran_IO::fortran_read_value(type_real *value,
+                                             std::ifstream &stream,
+                                             int &buffer_length) {
 
   double *temp;
   buffer_length -= fdouble;
@@ -57,9 +59,9 @@ void IO::fortran_IO::fortran_read_value(type_real *value, std::ifstream &stream,
   return;
 }
 
-void IO::fortran_IO::fortran_read_value(std::string *value,
-                                        std::ifstream &stream,
-                                        int &buffer_length) {
+void specfem::fortran_IO::fortran_read_value(std::string *value,
+                                             std::ifstream &stream,
+                                             int &buffer_length) {
   // reading a string has few errors. There seem to unknown characters at the
   // end of the string
   char temp[fchar];

@@ -337,7 +337,7 @@ specfem::boundaries::absorbing_boundary::absorbing_boundary(
 
   if (num_abs_boundary_faces > 0) {
     for (int inum = 0; inum < num_abs_boundary_faces; inum++) {
-      IO::fortran_IO::fortran_read_line(
+      specfem::fortran_IO::fortran_read_line(
           stream, &numabsread, &codeabsread1, &codeabsread2, &codeabsread3,
           &codeabsread4, &typeabsread, &iedgeread);
       std::vector<bool> codeabsread(4, false);
@@ -393,9 +393,9 @@ specfem::boundaries::forcing_boundary::forcing_boundary(
 
   if (nelement_acforcing > 0) {
     for (int inum = 0; inum < nelement_acforcing; inum++) {
-      IO::fortran_IO::fortran_read_line(stream, &numacread, &codeacread1,
-                                        &codeacread2, &codeacread3,
-                                        &codeacread4, &typeacread, &iedgeread);
+      specfem::fortran_IO::fortran_read_line(
+          stream, &numacread, &codeacread1, &codeacread2, &codeacread3,
+          &codeacread4, &typeacread, &iedgeread);
       std::vector<bool> codeacread(4, false);
       if (numacread < 1 || numacread > nspec) {
         std::runtime_error("Wrong absorbing element number");

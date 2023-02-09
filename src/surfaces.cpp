@@ -36,7 +36,7 @@ specfem::surfaces::acoustic_free_surface::acoustic_free_surface(
 
   if (nelem_acoustic_surface > 0) {
     for (int inum = 0; inum < nelem_acoustic_surface; inum++) {
-      IO::fortran_IO::fortran_read_line(stream, &acfree_edge);
+      specfem::fortran_IO::fortran_read_line(stream, &acfree_edge);
       this->numacfree_surface(inum) = acfree_edge[0];
       this->typeacfree_surface(inum) = acfree_edge[1];
       this->e1(inum) = acfree_edge[2];
