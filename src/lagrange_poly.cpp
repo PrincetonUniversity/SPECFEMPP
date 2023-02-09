@@ -53,23 +53,17 @@ HostView2d Lagrange::compute_lagrange_derivatives_GLL(const HostView1d xigll,
   for (int i = 0; i < ngll; i++) {
     for (int j = 0; j < ngll; j++) {
       if (i == 0 && j == 0) {
-        hprime_ii(i, j) = -1.0 * static_cast<type_real>(degpoly) *
+        hprime_ii(j, i) = -1.0 * static_cast<type_real>(degpoly) *
                           (static_cast<type_real>(degpoly) + 1.0) * 0.25;
       } else if (i == degpoly && j == degpoly) {
-        hprime_ii(i, j) = 1.0 * static_cast<type_real>(degpoly) *
+        hprime_ii(j, i) = 1.0 * static_cast<type_real>(degpoly) *
                           (static_cast<type_real>(degpoly) + 1.0) * 0.25;
       } else if (i == j) {
-        hprime_ii(i, j) = 0.0;
+        hprime_ii(j, i) = 0.0;
       } else {
-        hprime_ii(i, j) = gll_library::pnleg(xigll(i), degpoly) /
-                              (gll_library::pnleg(xigll(j), degpoly) *
-                               (xigll(i) - xigll(j))) +
-                          (1.0 - xigll(i) * xigll(i)) *
-                              gll_library::pndleg(xigll(i), degpoly) /
-                              (static_cast<type_real>(degpoly) *
-                               (static_cast<type_real>(degpoly) + 1.0) *
-                               gll_library::pnleg(xigll(j), degpoly) *
-                               (xigll(i) - xigll(j)) * (xigll(i) - xigll(j)));
+        hprime_ii(j, i) =
+            gll_library::pnleg(xigll(i), degpoly) /
+            (gll_library::pnleg(xigll(j), degpoly) * (xigll(i) - xigll(j)));
       }
     }
   }

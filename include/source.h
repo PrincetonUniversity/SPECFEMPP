@@ -6,8 +6,8 @@
 #include "../include/quadrature.h"
 #include "../include/source_time_function.h"
 #include "../include/specfem_mpi.h"
-#include "../include/timescheme.h"
 #include "../include/utils.h"
+#include <Kokkos_Core.hpp>
 
 namespace specfem {
 namespace sources {
@@ -30,7 +30,7 @@ public:
    * Given the global cartesian coordinates of a source, locate the spectral
    * element and xi, gamma value of the source
    *
-   * @param ibool Global number for every quadrature point
+   * @param h_ibool Global number for every quadrature point
    * @param coord (x, z) for every distinct control node
    * @param xigll Quadrature points in x-dimension
    * @param zigll Quadrature points in z-dimension
@@ -41,14 +41,14 @@ public:
    * @param ispec_type material type for every spectral element
    * @param mpi Pointer to specfem MPI object
    */
-  virtual void locate(const specfem::HostView3d<int> ibool,
-                      const specfem::HostView2d<type_real> coord,
+  virtual void locate(const specfem::HostView2d<type_real> coord,
+                      const specfem::HostMirror3d<int> h_ibool,
                       const specfem::HostMirror1d<type_real> xigll,
                       const specfem::HostMirror1d<type_real> zigll,
                       const int nproc,
                       const specfem::HostView2d<type_real> coorg,
                       const specfem::HostView2d<int> knods, const int npgeo,
-                      const specfem::HostView1d<element_type> ispec_type,
+                      const specfem::HostMirror1d<element_type> ispec_type,
                       const specfem::MPI::MPI *mpi){};
   /**
    * @brief Precompute and store lagrangian values used to compute integrals for
@@ -62,13 +62,6 @@ public:
   compute_source_array(specfem::quadrature::quadrature &quadx,
                        specfem::quadrature::quadrature &quadz,
                        specfem::HostView3d<type_real> source_array){};
-  /**
-   * @brief Compute source time function
-   *
-   */
-  virtual void
-  compute_stf(specfem::HostView1d<type_real, Kokkos::LayoutStride> stf_array,
-              specfem::TimeScheme::TimeScheme *it){};
   /**
    * @brief Check if the source is within the domain
    *
@@ -117,9 +110,32 @@ public:
    * @return type_real \f$ \gamma \f$ value
    */
   virtual type_real get_gamma() const { return 0.0; }
+  /**
+   * @brief Get the value of t0 from the specfem::stf::stf object
+   *
+   * @return value of t0
+   */
+  KOKKOS_IMPL_HOST_FUNCTION
   virtual type_real get_t0() const { return 0.0; }
+  /**
+   * @brief Update the value of tshift for specfem::stf::stf object
+   *
+   * @return new value of tshift
+   */
   virtual void update_tshift(type_real tshift){};
+  /**
+   * @brief User output
+   *
+   */
   virtual void print(std::ostream &out) const;
+  /**
+   * @brief Get the device pointer to stf object
+   *
+   * @return specfem::forcing_function::stf*
+   */
+  virtual specfem::forcing_function::stf *get_stf() const {
+    return new specfem::forcing_function::stf();
+  }
 };
 
 /**
@@ -138,8 +154,8 @@ public:
    * @param wave Type of simulation P-SV or SH wave simulation
    */
   force(type_real x, type_real z, type_real angle, type_real tshift,
-        type_real f0, type_real factor, std::string forcing_type,
-        wave_type wave);
+        type_real f0, type_real factor, const type_real dt,
+        std::string forcing_type, wave_type wave);
   /**
    * @brief Construct a new collocated force object
    *
@@ -147,14 +163,15 @@ public:
    * written in .yml format
    * @param wave Type of simulation P-SV or SH wave simulation
    */
-  force(specfem::utilities::force_source &force_source, wave_type wave);
+  force(specfem::utilities::force_source &force_source, const type_real dt,
+        wave_type wave);
   /**
    * @brief Locate source within the mesh
    *
    * Given the global cartesian coordinates of a source, locate the spectral
    * element and xi, gamma value of the source
    *
-   * @param ibool Global number for every quadrature point
+   * @param h_ibool Global number for every quadrature point
    * @param coord (x, z) for every distinct control node
    * @param xigll Quadrature points in x-dimension
    * @param zigll Quadrature points in z-dimension
@@ -165,13 +182,13 @@ public:
    * @param ispec_type material type for every spectral element
    * @param mpi Pointer to specfem MPI object
    */
-  void locate(const specfem::HostView3d<int> ibool,
-              const specfem::HostView2d<type_real> coord,
+  void locate(const specfem::HostView2d<type_real> coord,
+              const specfem::HostMirror3d<int> h_ibool,
               const specfem::HostMirror1d<type_real> xigll,
               const specfem::HostMirror1d<type_real> zigll, const int nproc,
               const specfem::HostView2d<type_real> coorg,
               const specfem::HostView2d<int> knods, const int npgeo,
-              const specfem::HostView1d<element_type> ispec_type,
+              const specfem::HostMirror1d<element_type> ispec_type,
               const specfem::MPI::MPI *mpi) override;
   /**
    * @brief Precompute and store lagrangian values used to compute integrals for
@@ -185,9 +202,6 @@ public:
   compute_source_array(specfem::quadrature::quadrature &quadx,
                        specfem::quadrature::quadrature &quadz,
                        specfem::HostView3d<type_real> source_array) override;
-  void
-  compute_stf(specfem::HostView1d<type_real, Kokkos::LayoutStride> stf_array,
-              specfem::TimeScheme::TimeScheme *it) override;
   /**
    * @brief Check if the source is within the domain
    *
@@ -236,12 +250,39 @@ public:
    * @return type_real \f$ \gamma \f$ value
    */
   type_real get_gamma() const override { return gamma; }
-  ~force() { delete this->forcing_function; }
-  type_real get_t0() const override { return this->forcing_function->get_t0(); }
-  void update_tshift(type_real tshift) override {
-    this->forcing_function->update_tshift(tshift);
+  /**
+   * @brief Destroy the force object
+   *
+   */
+  ~force() {
+    Kokkos::kokkos_free<specfem::DevMemSpace>(this->forcing_function);
   }
+  /**
+   * @brief Get the value of t0 from the specfem::stf::stf object
+   *
+   * @return value of t0
+   */
+  KOKKOS_IMPL_HOST_FUNCTION
+  type_real get_t0() const override;
+  /**
+   * @brief Update the value of tshift for specfem::stf::stf object
+   *
+   * @return new value of tshift
+   */
+  void update_tshift(type_real tshift) override;
+  /**
+   * @brief User output
+   *
+   */
   void print(std::ostream &out) const override;
+  /**
+   * @brief Get the device pointer to stf object
+   *
+   * @return specfem::forcing_function::stf*
+   */
+  specfem::forcing_function::stf *get_stf() const override {
+    return forcing_function;
+  }
 
 private:
   type_real xi;         ///< \f$ \xi \f$ value of source inside element
@@ -253,7 +294,8 @@ private:
   int islice;           ///< MPI slice (rank) where the source is located
   element_type el_type; ///< type of the element inside which this source lies
   wave_type wave;       ///< SH or P-SV wave
-  specfem::forcing_function::stf *forcing_function;
+  specfem::forcing_function::stf *forcing_function =
+      NULL; ///< Pointer to source time function store on the device
 };
 
 /**
@@ -272,23 +314,25 @@ public:
    * @param Mxz Mxz for the source
    * @param Mzz Mzz for the source
    */
-  moment_tensor(type_real x, type_real z, type_real Mxx, type_real Mxz,
-                type_real Mzz, type_real tshift, type_real f0, type_real factor,
-                std::string forcing_type);
+  KOKKOS_FUNCTION moment_tensor(type_real x, type_real z, type_real Mxx,
+                                type_real Mxz, type_real Mzz, type_real tshift,
+                                type_real f0, type_real factor,
+                                const type_real dt, std::string forcing_type);
   /**
    * @brief Construct a new moment tensor force object
    *
    * @param moment_tensor a moment_tensor data holder read from source file
    * written in .yml format
    */
-  moment_tensor(specfem::utilities::moment_tensor &moment_tensor);
+  moment_tensor(specfem::utilities::moment_tensor &moment_tensor,
+                const type_real dt);
   /**
    * @brief Locate source within the mesh
    *
    * Given the global cartesian coordinates of a source, locate the spectral
    * element and xi, gamma value of the source
    *
-   * @param ibool Global number for every quadrature point
+   * @param h_ibool Global number for every quadrature point
    * @param coord (x, z) for every distinct control node
    * @param xigll Quadrature points in x-dimension
    * @param zigll Quadrature points in z-dimension
@@ -299,13 +343,13 @@ public:
    * @param ispec_type material type for every spectral element
    * @param mpi Pointer to specfem MPI object
    */
-  void locate(const specfem::HostView3d<int> ibool,
-              const specfem::HostView2d<type_real> coord,
+  void locate(const specfem::HostView2d<type_real> coord,
+              const specfem::HostMirror3d<int> h_ibool,
               const specfem::HostMirror1d<type_real> xigll,
               const specfem::HostMirror1d<type_real> zigll, const int nproc,
               const specfem::HostView2d<type_real> coorg,
               const specfem::HostView2d<int> knods, const int npgeo,
-              const specfem::HostView1d<element_type> ispec_type,
+              const specfem::HostMirror1d<element_type> ispec_type,
               const specfem::MPI::MPI *mpi) override;
   /**
    * @brief Precompute and store lagrangian values used to compute integrals for
@@ -319,9 +363,6 @@ public:
   compute_source_array(specfem::quadrature::quadrature &quadx,
                        specfem::quadrature::quadrature &quadz,
                        specfem::HostView3d<type_real> source_array) override;
-  void
-  compute_stf(specfem::HostView1d<type_real, Kokkos::LayoutStride> stf_array,
-              specfem::TimeScheme::TimeScheme *it) override;
   /**
    * @brief Get the processor on which this source lies
    *
@@ -358,13 +399,36 @@ public:
    * @return type_real \f$ \gamma \f$ value
    */
   type_real get_gamma() const override { return gamma; }
-  type_real get_t0() const override { return this->forcing_function->get_t0(); }
-  void update_tshift(type_real tshift) {
-    this->forcing_function->update_tshift(tshift);
-  }
-  friend std::ostream &operator<<(std::ostream &out, const moment_tensor *h);
+  /**
+   * @brief Get the value of t0 from the specfem::stf::stf object
+   *
+   * @return value of t0
+   */
+  KOKKOS_IMPL_HOST_FUNCTION
+  type_real get_t0() const override;
+  /**
+   * @brief Update the value of tshift for specfem::stf::stf object
+   *
+   * @return new value of tshift
+   */
+  void update_tshift(type_real tshift) override;
+  /**
+   * @brief User output
+   *
+   */
   void print(std::ostream &out) const override;
-  ~moment_tensor() { delete this->forcing_function; }
+  /**
+   * @brief Get the device pointer to stf object
+   *
+   * @return specfem::forcing_function::stf*
+   */
+  specfem::forcing_function::stf *get_stf() const override {
+    return forcing_function;
+  }
+
+  ~moment_tensor() {
+    Kokkos::kokkos_free<specfem::DevMemSpace>(this->forcing_function);
+  }
 
 private:
   type_real xi;    ///< \f$ \xi \f$ value of source inside element
@@ -380,7 +444,8 @@ private:
                                           ///< element where this source is
                                           ///< located
 
-  specfem::forcing_function::stf *forcing_function;
+  specfem::forcing_function::stf *forcing_function =
+      NULL; ///< Pointer to source time function store on the device
 };
 
 std::ostream &operator<<(std::ostream &out,

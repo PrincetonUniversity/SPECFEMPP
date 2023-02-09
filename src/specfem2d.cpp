@@ -8,6 +8,7 @@
 #include "../include/params.h"
 #include "../include/read_mesh_database.h"
 #include "../include/read_sources.h"
+#include "../include/solver.h"
 #include "../include/source.h"
 #include "../include/specfem_mpi.h"
 #include "../include/timescheme.h"
@@ -85,8 +86,8 @@ int main(int argc, char **argv) {
     // Read sources
     //    if start time is not explicitly specified then t0 is determined using
     //    source frequencies and time shift
-    auto [sources, t0] =
-        specfem::read_sources(database_config.source_filename, mpi);
+    auto [sources, t0] = specfem::read_sources(database_config.source_filename,
+                                               setup.get_dt(), mpi);
 
     // Generate compute structs to be used by the solver
     specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
@@ -99,10 +100,10 @@ int main(int argc, char **argv) {
 
     // Locate the sources
     for (auto &source : sources)
-      source->locate(compute.ibool, compute.coordinates.coord, gllx.get_hxi(),
+      source->locate(compute.coordinates.coord, compute.h_ibool, gllx.get_hxi(),
                      gllz.get_hxi(), mesh.nproc, mesh.coorg,
                      mesh.material_ind.knods, mesh.npgeo,
-                     material_properties.ispec_type, mpi);
+                     material_properties.h_ispec_type, mpi);
 
     // User output
     for (auto &source : sources) {
@@ -111,7 +112,7 @@ int main(int argc, char **argv) {
     }
 
     // Update solver intialization time
-    setup.update_t0(t0);
+    setup.update_t0(-1.0 * t0);
 
     // Instantiate the solver and timescheme
     auto it = setup.instantiate_solver();
@@ -121,13 +122,18 @@ int main(int argc, char **argv) {
       std::cout << *it << std::endl;
 
     // Setup solver compute struct
-    specfem::compute::sources compute_sources(sources, gllx, gllz, it, mpi);
+    specfem::compute::sources compute_sources(sources, gllx, gllz, mpi);
 
     // Instantiate domain classes
-    const int nglob = specfem::utilities::compute_nglob(compute.ibool);
+    const int nglob = specfem::utilities::compute_nglob(compute.h_ibool);
     specfem::Domain::Domain *domains = new specfem::Domain::Elastic(
         ndim, nglob, &compute, &material_properties, &partial_derivatives,
-        &gllx, &gllz);
+        &compute_sources, &gllx, &gllz);
+
+    specfem::solver::solver *solver =
+        new specfem::solver::time_marching(domains, it);
+
+    solver->run();
   }
 
   // Finalize Kokkos

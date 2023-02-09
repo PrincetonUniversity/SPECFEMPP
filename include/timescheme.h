@@ -2,7 +2,7 @@
 #define TIMESCHEME_H
 
 #include "../include/config.h"
-// #include "../include/domain.h"
+#include "../include/domain.h"
 #include <ostream>
 
 namespace specfem {
@@ -50,9 +50,13 @@ public:
    * @return int max timestep
    */
   virtual int get_max_timestep() { return 0; }
-  // virtual void apply_predictor_phase(specfem::Domain::Domain *domain_class)
-  // {}; virtual void apply_corrector_phase(specfem::Domain::Domain
-  // *domain_class) {};
+
+  virtual void
+  apply_predictor_phase(const specfem::Domain::Domain *domain_class){};
+
+  virtual void
+  apply_corrector_phase(const specfem::Domain::Domain *domain_class){};
+
   friend std::ostream &operator<<(std::ostream &out, TimeScheme &ts);
   /**
    * @brief Log timescheme information to console
@@ -111,21 +115,23 @@ public:
    * @return int max timestep
    */
   int get_max_timestep() override { return this->nstep; }
-  // void apply_predictor_phase(specfem::Domain::Domain *domain_class) override;
-  // void apply_corrector_phase(specfem::Domain::Domain *domain_class) override;
+  void
+  apply_predictor_phase(const specfem::Domain::Domain *domain_class) override;
+  void
+  apply_corrector_phase(const specfem::Domain::Domain *domain_class) override;
   /**
    * @brief Log timescheme information to console
    */
   void print(std::ostream &out) const override;
 
 private:
-  type_real current_time;
-  int istep = 0;
-  type_real deltat;
-  type_real deltatover2;
-  type_real deltatsquareover2;
-  int nstep;
-  type_real t0;
+  type_real current_time;      ///< Current simulation time in seconds
+  int istep = 0;               ///< Current simulation step
+  type_real deltat;            ///< time increment (\f$ \delta t \f$)
+  type_real deltatover2;       ///< \f$ \delta t / 2 \f$
+  type_real deltatsquareover2; ///< \f$ \delta t^2 / 2 \f$
+  int nstep;                   ///< Maximum value of timestep
+  type_real t0;                ///< Simultion start time in seconds
 };
 
 std::ostream &operator<<(std::ostream &out,
