@@ -17,7 +17,7 @@ struct input_holder {
 };
 
 struct return_holder {
-  type_real rho, mu, kappa, qmu, qkappa;
+  type_real rho, mu, kappa, qmu, qkappa, lambdaplus2mu;
 };
 
 // config parser routines
@@ -48,8 +48,8 @@ struct moment_tensor {
 };
 
 std::tuple<type_real, type_real, int, int>
-locate(const specfem::HostView3d<int> ibool,
-       const specfem::HostView2d<type_real> coord,
+locate(const specfem::HostView2d<type_real> coord,
+       const specfem::HostMirror3d<int> ibool,
        const specfem::HostMirror1d<type_real> xigll,
        const specfem::HostMirror1d<type_real> zigll, const int nproc,
        const type_real x_source, const type_real z_source,
@@ -61,7 +61,7 @@ void check_locations(const type_real x, const type_real z, const type_real xmin,
                      const type_real xmax, const type_real zmin,
                      const type_real zmax, const specfem::MPI::MPI *mpi);
 
-int compute_nglob(const specfem::HostView3d<int> ibool);
+int compute_nglob(const specfem::HostMirror3d<int> ibool);
 } // namespace utilities
 } // namespace specfem
 

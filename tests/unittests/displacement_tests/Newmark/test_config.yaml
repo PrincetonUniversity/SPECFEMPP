@@ -1,0 +1,7 @@
+Tests:
+
+  serial:
+    specfem_config: "../../../tests/unittests/displacement_tests/Newmark/serial/specfem_config.yaml"
+    solutions_file: "../../../tests/unittests/displacement_tests/Newmark/serial/displs_00000.bin"
+    sources_file: "../../../tests/unittests/displacement_tests/Newmark/serial/sources.yaml"
+    database_file: "../../../tests/unittests/displacement_tests/Newmark/serial/Database00000.bin"

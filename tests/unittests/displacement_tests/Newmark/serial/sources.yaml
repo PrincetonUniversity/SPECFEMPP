@@ -9,5 +9,5 @@ sources:
     angle : 0.0
     vx : 0.0
     vz : 0.0
-    factor: 1.0
+    factor: 1e10
     tshift: 0.0

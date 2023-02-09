@@ -103,6 +103,7 @@ specfem::utilities::return_holder specfem::elastic_material::get_properties() {
   holder.kappa = this->kappa;
   holder.qmu = this->Qmu;
   holder.qkappa = this->Qkappa;
+  holder.lambdaplus2mu = this->lambdaplus2mu;
 
   return holder;
 }

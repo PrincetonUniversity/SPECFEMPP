@@ -18,7 +18,8 @@ namespace specfem {
  * objects
  */
 std::tuple<std::vector<specfem::sources::source *>, type_real>
-read_sources(const std::string sources_file, const specfem::MPI::MPI *mpi);
+read_sources(const std::string sources_file, const type_real dt,
+             const specfem::MPI::MPI *mpi);
 } // namespace specfem
 
 #endif

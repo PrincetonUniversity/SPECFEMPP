@@ -196,6 +196,31 @@ target_link_libraries(
   utilities
   compare_arrays
   domain
+  source_reader
+  -lpthread -lm
+)
+
+add_executable(
+  newmark_tests
+  displacement_tests/Newmark/newmark_tests.cpp
+)
+
+target_link_libraries(
+  newmark_tests
+  quadrature
+  mesh
+  material_class
+  yaml-cpp
+  kokkos_environment
+  mpi_environment
+  compute
+  parameter_reader
+  utilities
+  compare_arrays
+  domain
+  source_reader
+  timescheme
+  solver
   -lpthread -lm
 )
 
@@ -211,4 +236,5 @@ if (NOT MPI_PARALLEL)
   gtest_discover_tests(compute_tests)
   gtest_discover_tests(source_location_tests)
   gtest_discover_tests(rmass_inverse_tests)
+  gtest_discover_tests(newmark_tests)
 endif(NOT MPI_PARALLEL)

@@ -20,9 +20,7 @@ namespace specfem {
  * @brief Mesh Interface
  *
  * The mesh is implemented as a C++ struct. The mesh struct defines all the
- * variables nacessary to compute mass and stiffness matrices. The mesh is
- * grouped into several logical structs which help keep the code
- * concise/readable/maintainable.
+ * variables nacessary to populate structs within specfem::compute namespace
  *
  */
 struct mesh {

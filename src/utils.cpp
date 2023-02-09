@@ -160,8 +160,8 @@ int get_islice(const int final_dist, const specfem::MPI::MPI *mpi) {
 }
 
 std::tuple<type_real, type_real, int, int>
-specfem::utilities::locate(const specfem::HostView3d<int> ibool,
-                           const specfem::HostView2d<type_real> coord,
+specfem::utilities::locate(const specfem::HostView2d<type_real> coord,
+                           const specfem::HostMirror3d<int> ibool,
                            const specfem::HostMirror1d<type_real> xigll,
                            const specfem::HostMirror1d<type_real> zigll,
                            const int nproc, const type_real x_source,
@@ -265,7 +265,7 @@ void specfem::utilities::check_locations(const type_real x, const type_real z,
   return;
 }
 
-int specfem::utilities::compute_nglob(const specfem::HostView3d<int> ibool) {
+int specfem::utilities::compute_nglob(const specfem::HostMirror3d<int> ibool) {
 
   const int nspec = ibool.extent(0);
   const int ngllz = ibool.extent(1);

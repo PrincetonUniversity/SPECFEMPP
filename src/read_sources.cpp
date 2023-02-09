@@ -36,7 +36,7 @@ void operator>>(YAML::Node &Node,
 }
 
 std::tuple<std::vector<specfem::sources::source *>, type_real>
-specfem::read_sources(const std::string sources_file,
+specfem::read_sources(const std::string sources_file, const type_real dt,
                       const specfem::MPI::MPI *mpi) {
   // read sources file
   std::vector<specfem::sources::source *> sources;
@@ -48,13 +48,13 @@ specfem::read_sources(const std::string sources_file,
     if (N["source_type"].as<std::string>() == "force source") {
       specfem::utilities::force_source force_source;
       N >> force_source;
-      sources.push_back(new specfem::sources::force(force_source, wave));
+      sources.push_back(new specfem::sources::force(force_source, dt, wave));
     }
 
     if (N["source_type"].as<std::string>() == "Moment-tensor source") {
       specfem::utilities::moment_tensor moment_tensor;
       N >> moment_tensor;
-      sources.push_back(new specfem::sources::moment_tensor(moment_tensor));
+      sources.push_back(new specfem::sources::moment_tensor(moment_tensor, dt));
     }
   }
 

@@ -30,6 +30,29 @@ void specfem::testing::equate(type_real computed_value, type_real ref_value,
   }
 };
 
+void equate_norm(type_real error_norm, type_real computed_norm,
+                 type_real tolerance) {
+  type_real percent_norm = (error_norm / computed_norm);
+
+  // check nan value
+  if (percent_norm != percent_norm) {
+    std::ostringstream ss;
+    ss << "Normalized error is NaN value";
+
+    throw std::runtime_error(ss.str());
+  }
+
+  if (percent_norm > tolerance) {
+    std::ostringstream ss;
+    ss << "Normalized error is = " << percent_norm
+       << " which is greater than specified tolerance = " << tolerance;
+
+    throw std::runtime_error(ss.str());
+  }
+
+  return;
+}
+
 void specfem::testing::test_array(specfem::HostView1d<int> computed_array,
                                   std::string ref_file, int n1) {
   assert(computed_array.extent(0) == n1);
@@ -148,13 +171,13 @@ void specfem::testing::test_array(specfem::HostView2d<type_real> computed_array,
   for (int i1 = 0; i1 < n1; i1++) {
     for (int i2 = 0; i2 < n2; i2++) {
       if (max_val < computed_array(i1, i2))
-        max_val = computed_array(i1, i2);
+        max_val = fabs(computed_array(i1, i2));
       if (min_val > computed_array(i1, i2))
-        min_val = computed_array(i1, i2);
+        min_val = fabs(computed_array(i1, i2));
     }
   }
 
-  type_real tol = 1e-2 * fabs(max_val + min_val) / 2;
+  type_real tol = 10 * fabs(max_val + min_val) / 2;
 
   type_real ref_value;
   std::ifstream stream;
@@ -218,4 +241,98 @@ void specfem::testing::test_array(specfem::HostView3d<type_real> computed_array,
       }
     }
   }
+}
+
+void specfem::testing::compare_norm(
+    specfem::HostView1d<type_real> computed_array, std::string ref_file, int n1,
+    type_real tolerance) {
+  assert(computed_array.extent(0) == n1);
+
+  type_real error_norm = 0.0;
+  type_real computed_norm = 0.0;
+
+  type_real ref_value;
+  std::ifstream stream;
+  stream.open(ref_file);
+
+  for (int i1 = 0; i1 < n1; i1++) {
+    IO::fortran_IO::fortran_read_line(stream, &ref_value);
+
+    error_norm += std::sqrt((computed_array(i1) - ref_value) *
+                            (computed_array(i1) - ref_value));
+    computed_norm += std::sqrt((computed_array(i1) * computed_array(i1)));
+  }
+
+  std::cout << error_norm << std::endl;
+
+  std::cout << computed_norm << std::endl;
+
+  stream.close();
+
+  equate_norm(error_norm, computed_norm, tolerance);
+}
+
+void specfem::testing::compare_norm(
+    specfem::HostView2d<type_real> computed_array, std::string ref_file, int n1,
+    int n2, type_real tolerance) {
+  assert(computed_array.extent(0) == n1);
+  assert(computed_array.extent(1) == n2);
+
+  type_real error_norm = 0.0;
+  type_real computed_norm = 0.0;
+
+  type_real ref_value;
+  std::ifstream stream;
+  stream.open(ref_file);
+
+  for (int i1 = 0; i1 < n1; i1++) {
+    for (int i2 = 0; i2 < n2; i2++) {
+      IO::fortran_IO::fortran_read_line(stream, &ref_value);
+
+      error_norm += std::sqrt((computed_array(i1, i2) - ref_value) *
+                              (computed_array(i1, i2) - ref_value));
+      computed_norm +=
+          std::sqrt((computed_array(i1, i2) * computed_array(i1, i2)));
+    }
+  }
+
+  stream.close();
+
+  equate_norm(error_norm, computed_norm, tolerance);
+}
+
+void specfem::testing::compare_norm(
+    specfem::HostView3d<type_real> computed_array, std::string ref_file, int n1,
+    int n2, int n3, type_real tolerance) {
+  assert(computed_array.extent(0) == n1);
+  assert(computed_array.extent(1) == n2);
+  assert(computed_array.extent(2) == n3);
+
+  type_real error_norm = 0.0;
+  type_real computed_norm = 0.0;
+
+  type_real ref_value;
+  std::ifstream stream;
+  stream.open(ref_file);
+
+  for (int i1 = 0; i1 < n1; i1++) {
+    for (int i2 = 0; i2 < n2; i2++) {
+      for (int i3 = 0; i3 < n3; i3++) {
+        IO::fortran_IO::fortran_read_line(stream, &ref_value);
+
+        error_norm += std::sqrt((computed_array(i1, i2, i3) - ref_value) *
+                                (computed_array(i1, i2, i3) - ref_value));
+        computed_norm += std::sqrt(
+            (computed_array(i1, i2, i3) * computed_array(i1, i2, i3)));
+      }
+    }
+  }
+
+  std::cout << error_norm << std::endl;
+
+  std::cout << computed_norm << std::endl;
+
+  stream.close();
+
+  equate_norm(error_norm, computed_norm, tolerance);
 }

@@ -32,6 +32,16 @@ void test_array(specfem::HostView2d<type_real> computed_array,
 
 void test_array(specfem::HostView3d<type_real> computed_array,
                 std::string ref_file, int n1, int n2, int n3);
+
+void compare_norm(specfem::HostView1d<type_real> computed_array,
+                  std::string ref_file, int n1, type_real tolerance);
+
+void compare_norm(specfem::HostView2d<type_real> computed_array,
+                  std::string ref_file, int n1, int n2, type_real tolerance);
+
+void compare_norm(specfem::HostView3d<type_real> computed_array,
+                  std::string ref_file, int n1, int n2, int n3,
+                  type_real tolerance);
 } // namespace testing
 } // namespace specfem
 
