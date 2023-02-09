@@ -130,7 +130,7 @@ using HostScatterView2d =
 template <typename T, typename L = LayoutWrapper>
 using HostScatterView3d =
     Kokkos::Experimental::ScatterView<T ***, L, HostExecSpace>;
-///}
+///@}
 
 /** @name Device Scatter Views
  * Scatter views are used when an atomic update is needed on a view.
@@ -160,7 +160,7 @@ using DeviceScatterView2d =
 template <typename T, typename L = LayoutWrapper>
 using DeviceScatterView3d =
     Kokkos::Experimental::ScatterView<T ***, L, DevExecSpace>;
-///}
+///@}
 
 /** @name Host Mirrors
  *
