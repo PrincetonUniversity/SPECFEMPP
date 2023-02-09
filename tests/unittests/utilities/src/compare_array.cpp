@@ -63,7 +63,7 @@ void specfem::testing::test_array(
   stream.open(ref_file);
 
   for (int i1 = 0; i1 < n1; i1++) {
-    IO::fortran_IO::fortran_read_line(stream, &ref_value);
+    specfem::fortran_IO::fortran_read_line(stream, &ref_value);
     try {
       equate(computed_array(i1), ref_value);
     } catch (std::runtime_error &e) {
@@ -87,7 +87,7 @@ void specfem::testing::test_array(
 
   for (int i1 = 0; i1 < n1; i1++) {
     for (int i2 = 0; i2 < n2; i2++) {
-      IO::fortran_IO::fortran_read_line(stream, &ref_value);
+      specfem::fortran_IO::fortran_read_line(stream, &ref_value);
       try {
         equate(computed_array(i1, i2), ref_value);
       } catch (std::runtime_error &e) {
@@ -114,7 +114,7 @@ void specfem::testing::test_array(
   for (int i1 = 0; i1 < n1; i1++) {
     for (int i2 = 0; i2 < n2; i2++) {
       for (int i3 = 0; i3 < n3; i3++) {
-        IO::fortran_IO::fortran_read_line(stream, &ref_value);
+        specfem::fortran_IO::fortran_read_line(stream, &ref_value);
         try {
           equate(computed_array(i1, i2, i3), ref_value);
         } catch (std::runtime_error &e) {
@@ -151,7 +151,7 @@ void specfem::testing::test_array(
   stream.open(ref_file);
 
   for (int i1 = 0; i1 < n1; i1++) {
-    IO::fortran_IO::fortran_read_line(stream, &ref_value);
+    specfem::fortran_IO::fortran_read_line(stream, &ref_value);
     try {
       equate(computed_array(i1), ref_value, tol);
     } catch (std::runtime_error &e) {
@@ -189,7 +189,7 @@ void specfem::testing::test_array(
 
   for (int i1 = 0; i1 < n1; i1++) {
     for (int i2 = 0; i2 < n2; i2++) {
-      IO::fortran_IO::fortran_read_line(stream, &ref_value);
+      specfem::fortran_IO::fortran_read_line(stream, &ref_value);
       try {
         equate(computed_array(i1, i2), ref_value, tol);
       } catch (std::runtime_error &e) {
@@ -232,7 +232,7 @@ void specfem::testing::test_array(
   for (int i1 = 0; i1 < n1; i1++) {
     for (int i2 = 0; i2 < n2; i2++) {
       for (int i3 = 0; i3 < n3; i3++) {
-        IO::fortran_IO::fortran_read_line(stream, &ref_value);
+        specfem::fortran_IO::fortran_read_line(stream, &ref_value);
         try {
           equate(computed_array(i1, i2, i3), ref_value, tol);
         } catch (std::runtime_error &e) {
@@ -260,7 +260,7 @@ void specfem::testing::compare_norm(
   stream.open(ref_file);
 
   for (int i1 = 0; i1 < n1; i1++) {
-    IO::fortran_IO::fortran_read_line(stream, &ref_value);
+    specfem::fortran_IO::fortran_read_line(stream, &ref_value);
 
     error_norm += std::sqrt((computed_array(i1) - ref_value) *
                             (computed_array(i1) - ref_value));
@@ -291,7 +291,7 @@ void specfem::testing::compare_norm(
 
   for (int i1 = 0; i1 < n1; i1++) {
     for (int i2 = 0; i2 < n2; i2++) {
-      IO::fortran_IO::fortran_read_line(stream, &ref_value);
+      specfem::fortran_IO::fortran_read_line(stream, &ref_value);
 
       error_norm += std::sqrt((computed_array(i1, i2) - ref_value) *
                               (computed_array(i1, i2) - ref_value));
@@ -322,7 +322,7 @@ void specfem::testing::compare_norm(
   for (int i1 = 0; i1 < n1; i1++) {
     for (int i2 = 0; i2 < n2; i2++) {
       for (int i3 = 0; i3 < n3; i3++) {
-        IO::fortran_IO::fortran_read_line(stream, &ref_value);
+        specfem::fortran_IO::fortran_read_line(stream, &ref_value);
 
         error_norm += std::sqrt((computed_array(i1, i2, i3) - ref_value) *
                                 (computed_array(i1, i2, i3) - ref_value));

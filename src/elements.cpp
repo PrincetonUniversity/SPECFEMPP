@@ -45,12 +45,12 @@ specfem::elements::tangential_elements::tangential_elements(
 
   *this = specfem::elements::tangential_elements(nnodes_tangential_curve);
 
-  IO::fortran_IO::fortran_read_line(stream, &this->force_normal_to_surface,
-                                    &this->rec_normal_to_surface);
+  specfem::fortran_IO::fortran_read_line(stream, &this->force_normal_to_surface,
+                                         &this->rec_normal_to_surface);
 
   if (nnodes_tangential_curve > 0) {
     for (int inum = 0; inum < nnodes_tangential_curve; inum++) {
-      IO::fortran_IO::fortran_read_line(stream, &xread, &yread);
+      specfem::fortran_IO::fortran_read_line(stream, &xread, &yread);
       this->x(inum) = xread;
       this->y(inum) = yread;
     }
@@ -69,7 +69,7 @@ specfem::elements::axial_elements::axial_elements(
 
   *this = specfem::elements::axial_elements(nspec);
   for (int inum = 0; inum < nelem_on_the_axis; inum++) {
-    IO::fortran_IO::fortran_read_line(stream, &ispec);
+    specfem::fortran_IO::fortran_read_line(stream, &ispec);
     if (ispec < 0 || ispec > nspec - 1)
       throw std::runtime_error(
           "ispec out of range when reading axial elements");

@@ -31,8 +31,8 @@ specfem::materials::material_ind::material_ind(std::ifstream &stream,
   // Read an assign material values, coordinate numbering, PML association
   for (int ispec = 0; ispec < nspec; ispec++) {
     // format: #element_id  #material_id #node_id1 #node_id2 #...
-    IO::fortran_IO::fortran_read_line(stream, &n, &kmato_read, &knods_read,
-                                      &pml_read);
+    specfem::fortran_IO::fortran_read_line(stream, &n, &kmato_read, &knods_read,
+                                           &pml_read);
 
     // material association
     if (n < 1 || n > nspec) {

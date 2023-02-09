@@ -69,7 +69,8 @@ specfem::interfaces::interface::interface(std::ifstream &stream,
   // read number of interfaces
   // Where these 2 values are written needs to change in new database format
   int ninterfaces, max_interface_size;
-  IO::fortran_IO::fortran_read_line(stream, &ninterfaces, &max_interface_size);
+  specfem::fortran_IO::fortran_read_line(stream, &ninterfaces,
+                                         &max_interface_size);
 
   mpi->cout("Number of interaces = " + std::to_string(ninterfaces));
 
@@ -88,7 +89,7 @@ specfem::interfaces::interface::interface(std::ifstream &stream,
     //     process_interface_id = rank of (neighbor) process to share MPI
     //     interface with number_of_elements_on_interface = number of interface
     //     elements
-    IO::fortran_IO::fortran_read_line(
+    specfem::fortran_IO::fortran_read_line(
         stream, &this->my_neighbors(num_interface),
         &this->my_nelmnts_neighbors(num_interface));
     // loops over interface elements
@@ -99,7 +100,7 @@ specfem::interfaces::interface::interface(std::ifstream &stream,
       //   interface types:
       //       1  -  corner point only
       //       2  -  element edge
-      IO::fortran_IO::fortran_read_line(
+      specfem::fortran_IO::fortran_read_line(
           stream, &this->my_interfaces(num_interface, ie, 0),
           &this->my_interfaces(num_interface, ie, 1),
           &this->my_interfaces(num_interface, ie, 2),
