@@ -69,17 +69,32 @@ specfem::runtime_configuration::setup::setup(std::string parameter_file) {
 
   this->header = new specfem::runtime_configuration::header(n_header);
 
-  if (n_solver["solver-type"].as<std::string>() == "time-marching") {
-    const YAML::Node &n_timescheme = n_solver["Time-scheme"];
+  try {
+    const YAML::Node &n_time_marching = n_solver["time-marching"];
+    const YAML::Node &n_timescheme = n_time_marching["time-scheme"];
+
     this->solver =
         new specfem::runtime_configuration::time_marching(n_timescheme);
-  } else {
+  } catch (YAML::ParserException &e) {
     std::ostringstream message;
     message << "Error reading parameter file. \n"
             << "Solver = " << n_solver["solver-type"].as<std::string>()
-            << "hasn't been implemented yet.";
+            << "hasn't been implemented yet.\n"
+            << e.what();
     throw std::runtime_error(message.str());
   }
+
+  // if (n_solver["solver-type"].as<std::string>() == "time-marching") {
+  //   const YAML::Node &n_timescheme = n_solver["Time-scheme"];
+  //   this->solver =
+  //       new specfem::runtime_configuration::time_marching(n_timescheme);
+  // } else {
+  //   std::ostringstream message;
+  //   message << "Error reading parameter file. \n"
+  //           << "Solver = " << n_solver["solver-type"].as<std::string>()
+  //           << "hasn't been implemented yet.";
+  //   throw std::runtime_error(message.str());
+  // }
 
   this->run_setup = new specfem::runtime_configuration::run_setup(n_run_setup);
   this->quadrature =
