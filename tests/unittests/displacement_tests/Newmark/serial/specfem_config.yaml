@@ -20,12 +20,12 @@ run-config:
 
     ## Solver setup
     solver:
-      solver-type: time-marching
-      type-of-simulation: forward
-      Time-scheme:
-        type: Newmark
-        dt: 1.1e-3
-        nstep: 100
+      time-marching:
+        type-of-simulation: forward
+        time-scheme:
+          type: Newmark
+          dt: 1.1e-3
+          nstep: 100
 
   ## Runtime setup
   run-setup:
