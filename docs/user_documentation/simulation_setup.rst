@@ -1,12 +1,12 @@
-.. _parameter:
+Setting up the solver
+=====================
 
-Simulation setup
-================
+To configure the simulation we use a configuration file written in YAML. Thus you can use all the functionality of YAML - some that might be useful in your workflow are multi line strings, value substitution using scripts.
 
-To setup a simulation use a yaml configuration (specfem_config.yaml) file as defined below
+Please read <parameter documentation for more details>
 
-Specfem configuration file
---------------------------
+Example configuration file:
+---------------------------
 
 .. code-block:: yaml
 
@@ -39,9 +39,3 @@ Specfem configuration file
         run-setup:
             number-of-processors: 1
             number-of-runs: 1
-
-Setup object used to instantiate a simulation
----------------------------------------------
-
-.. doxygenfile:: parameter_parser.h
-    :project: SPECFEM KOKKOS IMPLEMENTATION
