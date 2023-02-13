@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to SPECFEM2D KOKKOS documentation!
-======================================================
+SPECFEM Kokkos documentation!
+=============================
 
 .. toctree::
    :maxdepth: 2
@@ -26,6 +26,7 @@ Table of Contents
 .. toctree::
     :maxdepth: 2
 
-    self
-    developer_docs
+    user_documentation/index
+    parameter_documentation/index
+    developer_documentation/index
     api/index
