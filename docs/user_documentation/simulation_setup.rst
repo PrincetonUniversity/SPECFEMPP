@@ -28,12 +28,12 @@ Example configuration file:
 
             ## Solver setup
             solver:
-            solver-type: time-marching
-            type-of-simulation: forward
-            Time-scheme:
-                type: Newmark
-                dt: 1e-3
-                nstep: 1600
+                time-marching:
+                    type-of-simulation: forward
+                    time-scheme:
+                        type: Newmark
+                        dt: 1e-3
+                        nstep: 1600
 
         ## Runtime setup
         run-setup:
