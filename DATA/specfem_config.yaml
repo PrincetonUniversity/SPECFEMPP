@@ -1,4 +1,4 @@
-run-config:
+parameters:
 
   header:
     ## Header information is used for logging. It is good practice to give your simulations explicit names
@@ -31,3 +31,8 @@ run-config:
   run-setup:
     number-of-processors: 1
     number-of-runs: 1
+
+  ## databases
+  databases:
+    mesh-database: "../DATA/databases/database.bin"
+    source-file: "../DATA/source.yaml"
