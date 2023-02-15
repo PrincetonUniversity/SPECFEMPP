@@ -3,23 +3,32 @@ Header
 
 The header section is used for naming the run.
 
-**Node Name** : header
-
 Parameter definitions
 =====================
 
-**Parameter name** : ``title``
+**Parameter name** : ``header``
+-------------------------------
+
+**default value** : None
+
+**possible values** : [YAML Node]
+
+**documentation** : Define header section
+
+**Parameter name** : ``header.title``
 -----------------------------
 
 **default value**: None
+
 **possible values**: [string]
 
 **documentation**: Brief name for this simulation
 
-**Parameter name** : ``description``
+**Parameter name** : ``header.description``
 ----------------------------------
 
 **default value**: None
+
 **possible values**: [string]
 
 **documentation**: Detailed description for this run.

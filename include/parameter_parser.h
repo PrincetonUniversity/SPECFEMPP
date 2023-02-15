@@ -231,6 +231,39 @@ private:
 };
 
 /**
+ * @brief database_configuration defines the file location of databases
+ *
+ */
+class database_configuration {
+
+public:
+  /**
+   * @brief Construct a new database configuration object
+   *
+   * @param fortran_database location of fortran database
+   * @param source_database location of source file
+   */
+  database_configuration(std::string fortran_database,
+                         std::string source_database)
+      : fortran_database(fortran_database), source_database(source_database){};
+  /**
+   * @brief Construct a new run setup object
+   *
+   * @param Node YAML node describing the run configuration as read from a
+   * specfem_config.yaml
+   */
+  database_configuration(const YAML::Node &Node);
+
+  std::tuple<std::string, std::string> get_databases() const {
+    return std::make_tuple(this->fortran_database, this->source_database);
+  }
+
+private:
+  std::string fortran_database; ///< location of fortran binary database
+  std::string source_database;  ///< location of sources file
+};
+
+/**
  * Setup class is used to read the specfem_config.yaml parameter file.
  *
  * Setup class is also used to instantiate the simulation i.e. instantiate
@@ -283,6 +316,10 @@ public:
 
   type_real get_dt() const { return solver->get_dt(); }
 
+  std::tuple<std::string, std::string> get_databases() const {
+    return databases->get_databases();
+  }
+
 private:
   specfem::runtime_configuration::header *header; ///< Pointer to header object
   specfem::runtime_configuration::solver *solver; ///< Pointer to solver object
@@ -290,6 +327,8 @@ private:
                                                           ///< run_setup object
   specfem::runtime_configuration::quadrature *quadrature; ///< Pointer to
                                                           ///< quadrature object
+  specfem::runtime_configuration::database_configuration
+      *databases; ///< Get database filenames
 };
 
 } // namespace runtime_configuration
