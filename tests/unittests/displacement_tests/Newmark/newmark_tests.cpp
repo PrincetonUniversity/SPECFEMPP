@@ -16,14 +16,12 @@
 // ----- Parse test config ------------- //
 
 struct test_config {
-  std::string specfem_config, solutions_file, sources_file, database_file;
+  std::string specfem_config, solutions_file;
 };
 
 void operator>>(const YAML::Node &Node, test_config &test_config) {
   test_config.specfem_config = Node["specfem_config"].as<std::string>();
   test_config.solutions_file = Node["solutions_file"].as<std::string>();
-  test_config.sources_file = Node["sources_file"].as<std::string>();
-  test_config.database_file = Node["database_file"].as<std::string>();
 
   return;
 }
@@ -54,10 +52,10 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
   test_config test_config = parse_test_config(config_filename, mpi);
 
   const std::string parameter_file = test_config.specfem_config;
-  const std::string sources_file = test_config.sources_file;
-  const std::string database_file = test_config.database_file;
 
   specfem::runtime_configuration::setup setup(parameter_file);
+
+  const auto [database_file, sources_file] = setup.get_databases();
   mpi->cout(setup.print_header());
 
   // Set up GLL quadrature points
