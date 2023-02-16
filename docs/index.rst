@@ -28,5 +28,6 @@ Table of Contents
 
     user_documentation/index
     parameter_documentation/index
+    source_description/index
     developer_documentation/index
     api/index

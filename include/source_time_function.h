@@ -2,6 +2,7 @@
 #define SOURCE_TIME_FUNCTION_H
 
 #include "config.h"
+#include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
 #include <ostream>
 
@@ -61,6 +62,7 @@ public:
    */
   KOKKOS_FUNCTION Dirac(type_real f0, type_real tshift, type_real factor,
                         bool use_trick_for_better_pressure);
+
   /**
    * @brief compute the value of stf at time t
    *

@@ -15,51 +15,114 @@
 #include "../include/utils.h"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
+#include <boost/program_options.hpp>
 #include <stdexcept>
 #include <string>
 #include <vector>
 // Specfem2d driver
 
-// //-----------------------------------------------------------------
-// // config parser routines
-// struct database_config {
-//   std::string database_filename, source_filename;
-// };
+boost::program_options::options_description define_args() {
+  namespace po = boost::program_options;
 
-// void operator>>(YAML::Node &Node, database_config &database_config) {
-//   database_config.database_filename =
-//   Node["database_file"].as<std::string>(); database_config.source_filename =
-//   Node["source_file"].as<std::string>();
-// }
+  po::options_description desc{ "======================================\n"
+                                "------------SPECFEM Kokkos------------\n"
+                                "======================================" };
 
-// database_config get_node_config(std::string config_file,
-//                                 specfem::MPI::MPI *mpi) {
-//   // read specfem config file
-//   database_config database_config{};
-//   YAML::Node yaml = YAML::LoadFile(config_file);
-//   YAML::Node Node = yaml["databases"];
-//   assert(Node.IsSequence());
-//   if (Node.size() != mpi->get_size()) {
-//     std::ostringstream message;
-//     message << "Specfem configuration file generated with " << Node.size()
-//             << " number of processors. Current run is with nproc = "
-//             << mpi->get_size()
-//             << " Please run the code with nprocs = " << Node.size();
-//     throw std::runtime_error(message.str());
-//   }
-//   for (auto N : Node) {
-//     if (N["processor"].as<int>() == mpi->get_rank()) {
-//       N >> database_config;
-//       return database_config;
-//     }
-//   }
+  desc.add_options()("help,h", "Print this help message")(
+      "parameters_file,p", po::value<std::string>(),
+      "Location to parameters file");
 
-//   throw std::runtime_error("Could not process yaml file");
+  return desc;
+}
 
-//   // Dummy return type. Should never reach here.
-//   return database_config;
-// }
-// //-----------------------------------------------------------------
+int parse_args(int argc, char **argv,
+               boost::program_options::variables_map &vm) {
+
+  const auto desc = define_args();
+  boost::program_options::store(
+      boost::program_options::parse_command_line(argc, argv, desc), vm);
+
+  if (vm.count("help")) {
+    std::cout << desc << std::endl;
+    return 0;
+  }
+
+  if (!vm.count("parameters_file")) {
+    std::cout << desc << std::endl;
+    return 0;
+  }
+
+  return 1;
+}
+
+void execute(const std::string parameter_file, specfem::MPI::MPI *mpi) {
+
+  specfem::runtime_configuration::setup setup(parameter_file);
+  const auto [database_filename, source_filename] = setup.get_databases();
+
+  mpi->cout(setup.print_header());
+
+  // database_config database_config = get_node_config(database_file, mpi);
+
+  // Set up GLL quadrature points
+  auto [gllx, gllz] = setup.instantiate_quadrature();
+
+  // Read mesh generated MESHFEM
+  std::vector<specfem::material *> materials;
+  specfem::mesh mesh(database_filename, materials, mpi);
+
+  // Read sources
+  //    if start time is not explicitly specified then t0 is determined using
+  //    source frequencies and time shift
+  auto [sources, t0] =
+      specfem::read_sources(source_filename, setup.get_dt(), mpi);
+
+  // Generate compute structs to be used by the solver
+  specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
+                                    gllz);
+  specfem::compute::partial_derivatives partial_derivatives(
+      mesh.coorg, mesh.material_ind.knods, gllx, gllz);
+  specfem::compute::properties material_properties(mesh.material_ind.kmato,
+                                                   materials, mesh.nspec,
+                                                   gllx.get_N(), gllz.get_N());
+
+  // Locate the sources
+  for (auto &source : sources)
+    source->locate(compute.coordinates.coord, compute.h_ibool, gllx.get_hxi(),
+                   gllz.get_hxi(), mesh.nproc, mesh.coorg,
+                   mesh.material_ind.knods, mesh.npgeo,
+                   material_properties.h_ispec_type, mpi);
+
+  // User output
+  for (auto &source : sources) {
+    if (mpi->main_proc())
+      std::cout << *source << std::endl;
+  }
+
+  // Update solver intialization time
+  setup.update_t0(-1.0 * t0);
+
+  // Instantiate the solver and timescheme
+  auto it = setup.instantiate_solver();
+
+  // User output
+  if (mpi->main_proc())
+    std::cout << *it << std::endl;
+
+  // Setup solver compute struct
+  specfem::compute::sources compute_sources(sources, gllx, gllz, mpi);
+
+  // Instantiate domain classes
+  const int nglob = specfem::utilities::compute_nglob(compute.h_ibool);
+  specfem::Domain::Domain *domains = new specfem::Domain::Elastic(
+      ndim, nglob, &compute, &material_properties, &partial_derivatives,
+      &compute_sources, &gllx, &gllz);
+
+  specfem::solver::solver *solver =
+      new specfem::solver::time_marching(domains, it);
+
+  solver->run();
+}
 
 int main(int argc, char **argv) {
 
@@ -68,80 +131,16 @@ int main(int argc, char **argv) {
   // Initialize Kokkos
   Kokkos::initialize(argc, argv);
   {
-
-    std::string parameter_file = "../DATA/specfem_config.yaml";
-    // std::string database_file = "../DATA/databases.yaml";
-    specfem::runtime_configuration::setup setup(parameter_file);
-    const auto [database_filename, source_filename] = setup.get_databases();
-
-    mpi->cout(setup.print_header());
-
-    // database_config database_config = get_node_config(database_file, mpi);
-
-    // Set up GLL quadrature points
-    auto [gllx, gllz] = setup.instantiate_quadrature();
-
-    // Read mesh generated MESHFEM
-    std::vector<specfem::material *> materials;
-    specfem::mesh mesh(database_filename, materials, mpi);
-
-    // Read sources
-    //    if start time is not explicitly specified then t0 is determined using
-    //    source frequencies and time shift
-    auto [sources, t0] =
-        specfem::read_sources(source_filename, setup.get_dt(), mpi);
-
-    // Generate compute structs to be used by the solver
-    specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
-                                      gllz);
-    specfem::compute::partial_derivatives partial_derivatives(
-        mesh.coorg, mesh.material_ind.knods, gllx, gllz);
-    specfem::compute::properties material_properties(
-        mesh.material_ind.kmato, materials, mesh.nspec, gllx.get_N(),
-        gllz.get_N());
-
-    // Locate the sources
-    for (auto &source : sources)
-      source->locate(compute.coordinates.coord, compute.h_ibool, gllx.get_hxi(),
-                     gllz.get_hxi(), mesh.nproc, mesh.coorg,
-                     mesh.material_ind.knods, mesh.npgeo,
-                     material_properties.h_ispec_type, mpi);
-
-    // User output
-    for (auto &source : sources) {
-      if (mpi->main_proc())
-        std::cout << *source << std::endl;
+    boost::program_options::variables_map vm;
+    if (parse_args(argc, argv, vm)) {
+      const std::string parameters_file =
+          vm["parameters_file"].as<std::string>();
+      execute(parameters_file, mpi);
     }
-
-    // Update solver intialization time
-    setup.update_t0(-1.0 * t0);
-
-    // Instantiate the solver and timescheme
-    auto it = setup.instantiate_solver();
-
-    // User output
-    if (mpi->main_proc())
-      std::cout << *it << std::endl;
-
-    // Setup solver compute struct
-    specfem::compute::sources compute_sources(sources, gllx, gllz, mpi);
-
-    // Instantiate domain classes
-    const int nglob = specfem::utilities::compute_nglob(compute.h_ibool);
-    specfem::Domain::Domain *domains = new specfem::Domain::Elastic(
-        ndim, nglob, &compute, &material_properties, &partial_derivatives,
-        &compute_sources, &gllx, &gllz);
-
-    specfem::solver::solver *solver =
-        new specfem::solver::time_marching(domains, it);
-
-    solver->run();
   }
-
   // Finalize Kokkos
   Kokkos::finalize();
   // Finalize MPI
   delete mpi;
-
   return 0;
 }

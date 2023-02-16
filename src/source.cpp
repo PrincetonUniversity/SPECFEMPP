@@ -6,6 +6,7 @@
 #include "../include/source_time_function.h"
 #include "../include/specfem_mpi.h"
 #include "../include/utils.h"
+#include "yaml-cpp/yaml.h"
 #include <cmath>
 
 KOKKOS_IMPL_HOST_FUNCTION
@@ -31,6 +32,32 @@ specfem::forcing_function::stf *assign_stf(std::string forcing_type,
 
     Kokkos::fence();
   }
+
+  return forcing_function;
+}
+
+KOKKOS_IMPL_HOST_FUNCTION
+specfem::forcing_function::stf *
+assign_dirac(YAML::Node &Dirac, type_real dt,
+             bool use_trick_for_better_pressure) {
+
+  specfem::forcing_function::stf *forcing_function;
+  forcing_function = (specfem::forcing_function::stf *)
+      Kokkos::kokkos_malloc<specfem::kokkos::DevMemSpace>(
+          sizeof(specfem::forcing_function::Dirac));
+
+  type_real f0 = 1.0 / (10.0 * dt);
+  type_real tshift = Dirac["tshift"].as<type_real>();
+  type_real factor = Dirac["factor"].as<type_real>();
+
+  Kokkos::parallel_for(
+      "specfem::sources::moment_tensor::moment_tensor::allocate_stf",
+      specfem::kokkos::DeviceRange(0, 1), KOKKOS_LAMBDA(const int &) {
+        new (forcing_function) specfem::forcing_function::Dirac(
+            f0, tshift, factor, use_trick_for_better_pressure);
+      });
+
+  Kokkos::fence();
 
   return forcing_function;
 }
@@ -200,54 +227,58 @@ void specfem::sources::force::check_locations(const type_real xmin,
       "acoustic surface");
 }
 
-specfem::sources::force::force(type_real x, type_real z, type_real angle,
-                               type_real tshift, type_real f0, type_real factor,
-                               const type_real dt, std::string forcing_type,
+// specfem::sources::force::force(type_real x, type_real z, type_real angle,
+//                                type_real tshift, type_real f0, type_real
+//                                factor, const type_real dt, std::string
+//                                forcing_type, wave_type wave)
+//     : x(x), z(z), angle(angle), wave(wave) {
+
+//   bool use_trick_for_better_pressure = false;
+
+//   this->forcing_function = assign_stf(forcing_type, f0, tshift, factor, dt,
+//                                       use_trick_for_better_pressure);
+// };
+
+specfem::sources::force::force(YAML::Node &Node, const type_real dt,
                                wave_type wave)
-    : x(x), z(z), angle(angle), wave(wave) {
+    : x(Node["x"].as<type_real>()), z(Node["z"].as<type_real>()),
+      angle(Node["angle"].as<type_real>()), wave(wave) {
 
   bool use_trick_for_better_pressure = false;
 
-  this->forcing_function = assign_stf(forcing_type, f0, tshift, factor, dt,
-                                      use_trick_for_better_pressure);
+  if (YAML::Node Dirac = Node["Dirac"]) {
+    this->forcing_function =
+        assign_dirac(Dirac, dt, use_trick_for_better_pressure);
+  }
 };
 
-specfem::sources::force::force(specfem::utilities::force_source &force_source,
-                               const type_real dt, wave_type wave)
-    : x(force_source.x), z(force_source.z), angle(force_source.angle),
-      wave(wave) {
+// specfem::sources::moment_tensor::moment_tensor(type_real x, type_real z,
+//                                                type_real Mxx, type_real Mxz,
+//                                                type_real Mzz, type_real
+//                                                tshift, type_real f0,
+//                                                type_real factor, const
+//                                                type_real dt, std::string
+//                                                forcing_type)
+//     : x(x), z(z), Mxx(Mxx), Mxz(Mxz), Mzz(Mzz) {
+
+//   bool use_trick_for_better_pressure = false;
+
+//   this->forcing_function = assign_stf(forcing_type, f0, tshift, factor, dt,
+//                                       use_trick_for_better_pressure);
+// };
+
+specfem::sources::moment_tensor::moment_tensor(YAML::Node &Node,
+                                               const type_real dt)
+    : x(Node["x"].as<type_real>()), z(Node["z"].as<type_real>()),
+      Mxx(Node["Mxx"].as<type_real>()), Mxz(Node["Mxz"].as<type_real>()),
+      Mzz(Node["Mzz"].as<type_real>()) {
 
   bool use_trick_for_better_pressure = false;
 
-  this->forcing_function =
-      assign_stf(force_source.stf_type, force_source.f0, force_source.tshift,
-                 force_source.factor, dt, use_trick_for_better_pressure);
-};
-
-specfem::sources::moment_tensor::moment_tensor(type_real x, type_real z,
-                                               type_real Mxx, type_real Mxz,
-                                               type_real Mzz, type_real tshift,
-                                               type_real f0, type_real factor,
-                                               const type_real dt,
-                                               std::string forcing_type)
-    : x(x), z(z), Mxx(Mxx), Mxz(Mxz), Mzz(Mzz) {
-
-  bool use_trick_for_better_pressure = false;
-
-  this->forcing_function = assign_stf(forcing_type, f0, tshift, factor, dt,
-                                      use_trick_for_better_pressure);
-};
-
-specfem::sources::moment_tensor::moment_tensor(
-    specfem::utilities::moment_tensor &moment_tensor, const type_real dt)
-    : x(moment_tensor.x), z(moment_tensor.z), Mxx(moment_tensor.Mxx),
-      Mxz(moment_tensor.Mxz), Mzz(moment_tensor.Mzz) {
-
-  bool use_trick_for_better_pressure = false;
-
-  this->forcing_function =
-      assign_stf(moment_tensor.stf_type, moment_tensor.f0, moment_tensor.tshift,
-                 moment_tensor.factor, dt, use_trick_for_better_pressure);
+  if (YAML::Node Dirac = Node["Dirac"]) {
+    this->forcing_function =
+        assign_dirac(Dirac, dt, use_trick_for_better_pressure);
+  }
 };
 
 KOKKOS_IMPL_HOST_FUNCTION
