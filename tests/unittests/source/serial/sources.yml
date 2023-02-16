@@ -1,68 +1,62 @@
 number-of-sources: 6
 sources:
-  - source_type: force source
-    x : 606.313
-    z : 957.341
-    source_surf: false
-    stf_type: Dirac
-    f0 : 10.0
-    angle : 0.0
-    vx : 0.0
-    vz : 0.0
-    factor: 1.0
-    tshift: 0.0
-  - source_type: force source
-    x : 1835.050
-    z : 146.444
-    source_surf: false
-    stf_type: Dirac
-    f0 : 10.0
-    angle : 0.0
-    vx : 0.0
-    vz : 0.0
-    factor: 1.0
-    tshift: 0.0
-  - source_type: force source
-    x : 1539.578
-    z : 242.743
-    source_surf: false
-    stf_type: Dirac
-    f0 : 10.0
-    angle : 0.0
-    vx : 0.0
-    vz : 0.0
-    factor: 1.0
-    tshift: 0.0
-  - source_type: force source
-    x : 1058.709
-    z : 3342.519
-    source_surf: false
-    stf_type: Dirac
-    f0 : 10.0
-    angle : 0.0
-    vx : 0.0
-    vz : 0.0
-    factor: 1.0
-    tshift: 0.0
-  - source_type: force source
-    x : 3497.449
-    z : 2865.483
-    source_surf: false
-    stf_type: Dirac
-    f0 : 10.0
-    angle : 0.0
-    vx : 0.0
-    vz : 0.0
-    factor: 1.0
-    tshift: 0.0
-  - source_type: force source
-    x : 3018.139
-    z : 530.283
-    source_surf: false
-    stf_type: Dirac
-    f0 : 10.0
-    angle : 0.0
-    vx : 0.0
-    vz : 0.0
-    factor: 1.0
-    tshift: 0.0
+  - force:
+      x : 606.313
+      z : 957.341
+      source_surf: false
+      angle : 0.0
+      vx : 0.0
+      vz : 0.0
+      Dirac:
+        factor: 1.0
+        tshift: 0.0
+  - force:
+      x : 1835.050
+      z : 146.444
+      source_surf: false
+      angle : 0.0
+      vx : 0.0
+      vz : 0.0
+      Dirac:
+        factor: 1.0
+        tshift: 0.0
+  - force:
+      x : 1539.578
+      z : 242.743
+      source_surf: false
+      angle : 0.0
+      vx : 0.0
+      vz : 0.0
+      Dirac:
+        factor: 1.0
+        tshift: 0.0
+  - force:
+      x : 1058.709
+      z : 3342.519
+      source_surf: false
+      angle : 0.0
+      vx : 0.0
+      vz : 0.0
+      Dirac:
+        factor: 1.0
+        tshift: 0.0
+  - force:
+      x : 3497.449
+      z : 2865.483
+      source_surf: false
+      angle : 0.0
+      vx : 0.0
+      vz : 0.0
+      Dirac:
+        factor: 1.0
+        tshift: 0.0
+  - force:
+      x : 3018.139
+      z : 530.283
+      source_surf: false
+      angle : 0.0
+      vx : 0.0
+      vz : 0.0
+      Dirac:
+        factor: 1.0
+        tshift: 0.0

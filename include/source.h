@@ -7,6 +7,7 @@
 #include "../include/source_time_function.h"
 #include "../include/specfem_mpi.h"
 #include "../include/utils.h"
+#include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -145,26 +146,26 @@ public:
 class force : public source {
 
 public:
+  // /**
+  //  * @brief Construct a new collocated force object
+  //  *
+  //  * @param x x-coordinate of the source
+  //  * @param z z-coordinate of the source
+  //  * @param angle angle of the source
+  //  * @param wave Type of simulation P-SV or SH wave simulation
+  //  */
+  // force(type_real x, type_real z, type_real angle, type_real tshift,
+  //       type_real f0, type_real factor, const type_real dt,
+  //       std::string forcing_type, wave_type wave);
   /**
    * @brief Construct a new collocated force object
    *
-   * @param x x-coordinate of the source
-   * @param z z-coordinate of the source
-   * @param angle angle of the source
+   * @param force_source A YAML node defining force source
+   * @param dt Time increment in the simulation. Used to calculate dominant
+   * frequecy of Dirac source.
    * @param wave Type of simulation P-SV or SH wave simulation
    */
-  force(type_real x, type_real z, type_real angle, type_real tshift,
-        type_real f0, type_real factor, const type_real dt,
-        std::string forcing_type, wave_type wave);
-  /**
-   * @brief Construct a new collocated force object
-   *
-   * @param force_source a force_struct data holder read from source file
-   * written in .yml format
-   * @param wave Type of simulation P-SV or SH wave simulation
-   */
-  force(specfem::utilities::force_source &force_source, const type_real dt,
-        wave_type wave);
+  force(YAML::Node &Node, const type_real dt, wave_type wave);
   /**
    * @brief Locate source within the mesh
    *
@@ -306,27 +307,26 @@ private:
 class moment_tensor : public source {
 
 public:
-  /**
-   * @brief Construct a new moment tensor force object
-   *
-   * @param x x-coordinate of moment tensor source
-   * @param z z-coordinate of moment tensor source
-   * @param Mxx Mxx for the source
-   * @param Mxz Mxz for the source
-   * @param Mzz Mzz for the source
-   */
-  KOKKOS_FUNCTION moment_tensor(type_real x, type_real z, type_real Mxx,
-                                type_real Mxz, type_real Mzz, type_real tshift,
-                                type_real f0, type_real factor,
-                                const type_real dt, std::string forcing_type);
+  // /**
+  //  * @brief Construct a new moment tensor force object
+  //  *
+  //  * @param x x-coordinate of moment tensor source
+  //  * @param z z-coordinate of moment tensor source
+  //  * @param Mxx Mxx for the source
+  //  * @param Mxz Mxz for the source
+  //  * @param Mzz Mzz for the source
+  //  */
+  // KOKKOS_FUNCTION moment_tensor(type_real x, type_real z, type_real Mxx,
+  //                               type_real Mxz, type_real Mzz, type_real
+  //                               tshift, type_real f0, type_real factor, const
+  //                               type_real dt, std::string forcing_type);
   /**
    * @brief Construct a new moment tensor force object
    *
    * @param moment_tensor a moment_tensor data holder read from source file
    * written in .yml format
    */
-  moment_tensor(specfem::utilities::moment_tensor &moment_tensor,
-                const type_real dt);
+  moment_tensor(YAML::Node &Node, const type_real dt);
   /**
    * @brief Locate source within the mesh
    *

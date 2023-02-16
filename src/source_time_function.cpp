@@ -31,7 +31,7 @@ KOKKOS_FUNCTION
 specfem::forcing_function::Dirac::Dirac(type_real f0, type_real tshift,
                                         type_real factor,
                                         bool use_trick_for_better_pressure)
-    : f0(f0), factor(factor),
+    : f0(f0), factor(factor), tshift(tshift),
       use_trick_for_better_pressure(use_trick_for_better_pressure) {
 
   type_real hdur = 1.0 / this->f0;
