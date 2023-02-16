@@ -56,16 +56,24 @@ specfem::runtime_configuration::quadrature::quadrature(const YAML::Node &Node) {
       Node["ngllx"].as<int>(), Node["ngllz"].as<int>());
 }
 
+specfem::runtime_configuration::database_configuration::database_configuration(
+    const YAML::Node &Node) {
+  *this = specfem::runtime_configuration::database_configuration(
+      Node["mesh-database"].as<std::string>(),
+      Node["source-file"].as<std::string>());
+}
+
 specfem::runtime_configuration::setup::setup(std::string parameter_file) {
   YAML::Node yaml = YAML::LoadFile(parameter_file);
 
-  const YAML::Node &runtime_config = yaml["run-config"];
+  const YAML::Node &runtime_config = yaml["parameters"];
   const YAML::Node &simulation_setup = runtime_config["simulation-setup"];
 
   const YAML::Node &n_header = runtime_config["header"];
   const YAML::Node &n_solver = simulation_setup["solver"];
   const YAML::Node &n_quadrature = simulation_setup["quadrature"];
   const YAML::Node &n_run_setup = runtime_config["run-setup"];
+  const YAML::Node &n_databases = runtime_config["databases"];
 
   this->header = new specfem::runtime_configuration::header(n_header);
 
@@ -99,6 +107,9 @@ specfem::runtime_configuration::setup::setup(std::string parameter_file) {
   this->run_setup = new specfem::runtime_configuration::run_setup(n_run_setup);
   this->quadrature =
       new specfem::runtime_configuration::quadrature(n_quadrature);
+
+  this->databases =
+      new specfem::runtime_configuration::database_configuration(n_databases);
 }
 
 std::string specfem::runtime_configuration::setup::print_header() {

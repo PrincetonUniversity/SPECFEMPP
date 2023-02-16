@@ -20,45 +20,46 @@
 #include <vector>
 // Specfem2d driver
 
-//-----------------------------------------------------------------
-// config parser routines
-struct database_config {
-  std::string database_filename, source_filename;
-};
+// //-----------------------------------------------------------------
+// // config parser routines
+// struct database_config {
+//   std::string database_filename, source_filename;
+// };
 
-void operator>>(YAML::Node &Node, database_config &database_config) {
-  database_config.database_filename = Node["database_file"].as<std::string>();
-  database_config.source_filename = Node["source_file"].as<std::string>();
-}
+// void operator>>(YAML::Node &Node, database_config &database_config) {
+//   database_config.database_filename =
+//   Node["database_file"].as<std::string>(); database_config.source_filename =
+//   Node["source_file"].as<std::string>();
+// }
 
-database_config get_node_config(std::string config_file,
-                                specfem::MPI::MPI *mpi) {
-  // read specfem config file
-  database_config database_config{};
-  YAML::Node yaml = YAML::LoadFile(config_file);
-  YAML::Node Node = yaml["databases"];
-  assert(Node.IsSequence());
-  if (Node.size() != mpi->get_size()) {
-    std::ostringstream message;
-    message << "Specfem configuration file generated with " << Node.size()
-            << " number of processors. Current run is with nproc = "
-            << mpi->get_size()
-            << " Please run the code with nprocs = " << Node.size();
-    throw std::runtime_error(message.str());
-  }
-  for (auto N : Node) {
-    if (N["processor"].as<int>() == mpi->get_rank()) {
-      N >> database_config;
-      return database_config;
-    }
-  }
+// database_config get_node_config(std::string config_file,
+//                                 specfem::MPI::MPI *mpi) {
+//   // read specfem config file
+//   database_config database_config{};
+//   YAML::Node yaml = YAML::LoadFile(config_file);
+//   YAML::Node Node = yaml["databases"];
+//   assert(Node.IsSequence());
+//   if (Node.size() != mpi->get_size()) {
+//     std::ostringstream message;
+//     message << "Specfem configuration file generated with " << Node.size()
+//             << " number of processors. Current run is with nproc = "
+//             << mpi->get_size()
+//             << " Please run the code with nprocs = " << Node.size();
+//     throw std::runtime_error(message.str());
+//   }
+//   for (auto N : Node) {
+//     if (N["processor"].as<int>() == mpi->get_rank()) {
+//       N >> database_config;
+//       return database_config;
+//     }
+//   }
 
-  throw std::runtime_error("Could not process yaml file");
+//   throw std::runtime_error("Could not process yaml file");
 
-  // Dummy return type. Should never reach here.
-  return database_config;
-}
-//-----------------------------------------------------------------
+//   // Dummy return type. Should never reach here.
+//   return database_config;
+// }
+// //-----------------------------------------------------------------
 
 int main(int argc, char **argv) {
 
@@ -69,25 +70,26 @@ int main(int argc, char **argv) {
   {
 
     std::string parameter_file = "../DATA/specfem_config.yaml";
-    std::string database_file = "../DATA/databases.yaml";
+    // std::string database_file = "../DATA/databases.yaml";
     specfem::runtime_configuration::setup setup(parameter_file);
+    const auto [database_filename, source_filename] = setup.get_databases();
 
     mpi->cout(setup.print_header());
 
-    database_config database_config = get_node_config(database_file, mpi);
+    // database_config database_config = get_node_config(database_file, mpi);
 
     // Set up GLL quadrature points
     auto [gllx, gllz] = setup.instantiate_quadrature();
 
     // Read mesh generated MESHFEM
     std::vector<specfem::material *> materials;
-    specfem::mesh mesh(database_config.database_filename, materials, mpi);
+    specfem::mesh mesh(database_filename, materials, mpi);
 
     // Read sources
     //    if start time is not explicitly specified then t0 is determined using
     //    source frequencies and time shift
-    auto [sources, t0] = specfem::read_sources(database_config.source_filename,
-                                               setup.get_dt(), mpi);
+    auto [sources, t0] =
+        specfem::read_sources(source_filename, setup.get_dt(), mpi);
 
     // Generate compute structs to be used by the solver
     specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,

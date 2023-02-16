@@ -1,4 +1,0 @@
-databases:
-  - processor : 0
-    database_file : "../DATA/databases/database.bin"
-    source_file : "../DATA/source.yaml"
