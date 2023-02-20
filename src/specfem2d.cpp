@@ -16,10 +16,32 @@
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
 #include <boost/program_options.hpp>
+#include <chrono>
+#include <ctime>
 #include <stdexcept>
 #include <string>
 #include <vector>
 // Specfem2d driver
+
+std::string print_end_message(
+    std::chrono::time_point<std::chrono::high_resolution_clock> start_time) {
+  std::ostringstream message;
+  // current date/time based on current system
+  const auto now = std::chrono::high_resolution_clock::now();
+
+  std::time_t c_now = std::chrono::high_resolution_clock::to_time_t(now);
+
+  std::chrono::duration<double> diff = now - start_time;
+
+  message << "\n================================================\n"
+          << "             Finished simulation\n"
+          << "================================================\n\n"
+          << "Total simulation time : " << diff.count() << " secs\n"
+          << "Simulation end time : " << ctime(&c_now)
+          << "------------------------------------------------\n";
+
+  return message.str();
+}
 
 boost::program_options::options_description define_args() {
   namespace po = boost::program_options;
@@ -57,10 +79,13 @@ int parse_args(int argc, char **argv,
 
 void execute(const std::string parameter_file, specfem::MPI::MPI *mpi) {
 
+  // log start time
+  auto now = std::chrono::high_resolution_clock::now();
+
   specfem::runtime_configuration::setup setup(parameter_file);
   const auto [database_filename, source_filename] = setup.get_databases();
 
-  mpi->cout(setup.print_header());
+  mpi->cout(setup.print_header(now));
 
   // database_config database_config = get_node_config(database_file, mpi);
 
@@ -86,6 +111,9 @@ void execute(const std::string parameter_file, specfem::MPI::MPI *mpi) {
                                                    materials, mesh.nspec,
                                                    gllx.get_N(), gllz.get_N());
 
+  // Print spectral element information
+  mpi->cout(mesh.print(materials));
+
   // Locate the sources
   for (auto &source : sources)
     source->locate(compute.coordinates.coord, compute.h_ibool, gllx.get_hxi(),
@@ -93,10 +121,14 @@ void execute(const std::string parameter_file, specfem::MPI::MPI *mpi) {
                    mesh.material_ind.knods, mesh.npgeo,
                    material_properties.h_ispec_type, mpi);
 
-  // User output
+  mpi->cout("Source Information:");
+  mpi->cout("-------------------------------");
+  if (mpi->main_proc()) {
+    std::cout << "Number of sources :" << sources.size() << "\n\n";
+  }
+
   for (auto &source : sources) {
-    if (mpi->main_proc())
-      std::cout << *source << std::endl;
+    mpi->cout(source->print());
   }
 
   // Update solver intialization time
@@ -107,7 +139,7 @@ void execute(const std::string parameter_file, specfem::MPI::MPI *mpi) {
 
   // User output
   if (mpi->main_proc())
-    std::cout << *it << std::endl;
+    std::cout << *it << "\n";
 
   // Setup solver compute struct
   specfem::compute::sources compute_sources(sources, gllx, gllz, mpi);
@@ -122,6 +154,8 @@ void execute(const std::string parameter_file, specfem::MPI::MPI *mpi) {
       new specfem::solver::time_marching(domains, it);
 
   solver->run();
+
+  mpi->cout(print_end_message(now));
 }
 
 int main(int argc, char **argv) {

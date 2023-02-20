@@ -130,6 +130,11 @@ public:
    */
   virtual void print(std::ostream &out) const;
   /**
+   * @brief User output
+   *
+   */
+  virtual std::string print() const { return ""; };
+  /**
    * @brief Get the device pointer to stf object
    *
    * @return specfem::forcing_function::stf*
@@ -278,6 +283,11 @@ public:
    */
   void print(std::ostream &out) const override;
   /**
+   * @brief User output
+   *
+   */
+  std::string print() const override;
+  /**
    * @brief Get the device pointer to stf object
    *
    * @return specfem::forcing_function::stf*
@@ -419,6 +429,11 @@ public:
    *
    */
   void print(std::ostream &out) const override;
+  /**
+   * @brief User output
+   *
+   */
+  std::string print() const override;
   /**
    * @brief Get the device pointer to stf object
    *

@@ -56,7 +56,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
   specfem::runtime_configuration::setup setup(parameter_file);
 
   const auto [database_file, sources_file] = setup.get_databases();
-  mpi->cout(setup.print_header());
+  // mpi->cout(setup.print_header());
 
   // Set up GLL quadrature points
   auto [gllx, gllz] = setup.instantiate_quadrature();

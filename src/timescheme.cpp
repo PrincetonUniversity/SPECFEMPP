@@ -82,11 +82,13 @@ void specfem::TimeScheme::TimeScheme::print(std::ostream &out) const {
       "Time scheme wasn't initialized properly. Base class being called");
 }
 
-void specfem::TimeScheme::Newmark::print(std::ostream &out) const {
-  out << "  Time Scheme : Newmark\n"
-      << "                dt = " << this->deltat << "\n"
-      << "                number of time steps = " << this->nstep << "\n"
-      << "                Start time = " << this->t0;
+void specfem::TimeScheme::Newmark::print(std::ostream &message) const {
+  message << "  Time Scheme:\n"
+          << "------------------------------\n"
+          << "- Newmark\n"
+          << "    dt = " << this->deltat << "\n"
+          << "    number of time steps = " << this->nstep << "\n"
+          << "    Start time = " << this->t0 << "\n";
 }
 
 std::ostream &

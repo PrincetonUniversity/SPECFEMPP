@@ -16,16 +16,44 @@ specfem::acoustic_material::acoustic_material()
       compaction_grad(0.0), lambdaplus2mu(0.0), mu(0.0), lambda(0.0),
       kappa(0.0), young(0.0), poisson(0.0){};
 
-std::ostream &specfem::operator<<(std::ostream &out,
-                                  const specfem::elastic_material &h) {
-  out << "Placeholder string elastic material";
-  return out;
+std::string specfem::elastic_material::print() const {
+  std::ostringstream message;
+
+  message << "- Elastic Material : \n"
+          << "    Properties:\n"
+          << "      density : " << this->density << "\n"
+          << "      cs : " << this->cs << "\n"
+          << "      cp : " << this->cp << "\n"
+          << "      kappa : " << this->kappa << "\n"
+          << "      mu : " << this->mu << "\n"
+          << "      Qkappa : " << this->Qkappa << "\n"
+          << "      Qmu : " << this->Qmu << "\n"
+          << "      lambda : " << this->lambda << "\n"
+          << "      mu : " << this->mu << "\n"
+          << "      youngs modulus : " << this->young << "\n"
+          << "      poisson ratio : " << this->poisson << "\n";
+
+  return message.str();
 }
 
-std::ostream &specfem::operator<<(std::ostream &out,
-                                  const specfem::acoustic_material &h) {
-  out << "Placeholder string acoustic material";
-  return out;
+std::string specfem::acoustic_material::print() const {
+  std::ostringstream message;
+
+  message << "- Acoustic Material : \n"
+          << "    Properties:\n"
+          << "      density : " << this->density << "\n"
+          << "      cs : " << this->cs << "\n"
+          << "      cp : " << this->cp << "\n"
+          << "      kappa : " << this->kappa << "\n"
+          << "      mu : " << this->mu << "\n"
+          << "      Qkappa : " << this->Qkappa << "\n"
+          << "      Qmu : " << this->Qmu << "\n"
+          << "      lambda : " << this->lambda << "\n"
+          << "      mu : " << this->mu << "\n"
+          << "      youngs modulus : " << this->young << "\n"
+          << "      poisson ratio : " << this->poisson << "\n";
+
+  return message.str();
 }
 
 void specfem::elastic_material::assign(utilities::input_holder &holder) {

@@ -13,8 +13,14 @@ IO::read_material_properties(std::ifstream &stream, const int numat,
 
   std::vector<specfem::material *> materials(numat);
 
+  std::ostringstream message;
+  message << "Material systems:\n"
+          << "------------------------------";
+
+  mpi->cout(message.str());
+
   if (mpi->get_rank() == 0)
-    std::cout << "Numat = " << numat << std::endl;
+    std::cout << "Number of material systems = " << numat << "\n\n";
 
   for (int i = 0; i < numat; i++) {
 
@@ -34,19 +40,21 @@ IO::read_material_properties(std::ifstream &stream, const int numat,
         specfem::acoustic_material *acoustic_holder =
             new specfem::acoustic_material();
         acoustic_holder->assign(read_values);
-        mpi->cout(*acoustic_holder);
         materials[read_values.n - 1] = acoustic_holder;
       } else {
         specfem::elastic_material *elastic_holder =
             new specfem::elastic_material();
         elastic_holder->assign(read_values);
-        mpi->cout(*elastic_holder);
         materials[read_values.n - 1] = elastic_holder;
       }
     } else {
       throw std::runtime_error(
           "Only elastic & acoutsic material has been developed still");
     }
+  }
+
+  for (int i = 0; i < materials.size(); i++) {
+    mpi->cout(materials[i]->print());
   }
 
   return materials;

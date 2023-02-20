@@ -72,7 +72,7 @@ specfem::interfaces::interface::interface(std::ifstream &stream,
   specfem::fortran_IO::fortran_read_line(stream, &ninterfaces,
                                          &max_interface_size);
 
-  mpi->cout("Number of interaces = " + std::to_string(ninterfaces));
+  // mpi->cout("Number of interaces = " + std::to_string(ninterfaces));
 
   // allocate interface variables
   *this = specfem::interfaces::interface(ninterfaces, max_interface_size);

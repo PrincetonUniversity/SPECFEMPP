@@ -158,3 +158,36 @@ specfem::mesh::mesh(const std::string filename,
 
   return;
 }
+
+std::string
+specfem::mesh::print(std::vector<specfem::material *> materials) const {
+
+  int n_elastic = 0;
+  int n_acoustic = 0;
+
+  Kokkos::parallel_reduce(
+      "setup_compute::properties_ispec", specfem::kokkos::HostRange(0, nspec),
+      [=](const int ispec, int &l_elastic, int &l_acoustic) {
+        const int imat = this->material_ind.kmato(ispec);
+        if (materials[imat]->get_ispec_type() == elastic) {
+          l_elastic++;
+        } else if (materials[imat]->get_ispec_type() == acoustic) {
+          l_acoustic++;
+        }
+      },
+      n_elastic, n_acoustic);
+
+  std::ostringstream message;
+
+  message
+      << "Spectral element information:\n"
+      << "------------------------------\n"
+      << "Total number of spectral elements : " << this->nspec << "\n"
+      << "Total number of spectral elements assigned to elastic material : "
+      << n_elastic << "\n"
+      << "Total number of spectral elements assigned to acoustic material : "
+      << n_acoustic << "\n"
+      << "Total number of geometric points : " << this->npgeo << "\n";
+
+  return message.str();
+}

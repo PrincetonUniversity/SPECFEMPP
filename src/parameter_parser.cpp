@@ -1,5 +1,6 @@
 #include "../include/parameter_parser.h"
 #include "yaml-cpp/yaml.h"
+#include <chrono>
 #include <ctime>
 #include <ostream>
 #include <tuple>
@@ -112,20 +113,21 @@ specfem::runtime_configuration::setup::setup(std::string parameter_file) {
       new specfem::runtime_configuration::database_configuration(n_databases);
 }
 
-std::string specfem::runtime_configuration::setup::print_header() {
+std::string specfem::runtime_configuration::setup::print_header(
+    std::chrono::time_point<std::chrono::high_resolution_clock> now) {
 
   std::ostringstream message;
-  // current date/time based on current system
-  time_t now = time(0);
 
   // convert now to string form
-  char *dt = ctime(&now);
+  std::time_t c_now = std::chrono::system_clock::to_time_t(now);
 
-  message << "SPECFEM2D SIMULATION\n"
-          << "--------------------\n"
+  message << "================================================\n"
+          << "              SPECFEM2D SIMULATION\n"
+          << "================================================\n\n"
           << "Title : " << this->header->get_title() << "\n"
           << "Discription: " << this->header->get_description() << "\n"
-          << "Simulation start time: " << dt;
+          << "Simulation start time: " << ctime(&c_now)
+          << "------------------------------------------------\n";
 
   return message.str();
 }
