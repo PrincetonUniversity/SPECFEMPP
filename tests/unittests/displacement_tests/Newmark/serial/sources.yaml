@@ -1,13 +1,12 @@
 number-of-sources: 1
 sources:
-  - source_type: force source
-    x : 2500.0
-    z : 2500.0
-    source_surf: false
-    stf_type: Dirac
-    f0 : 10.0
-    angle : 0.0
-    vx : 0.0
-    vz : 0.0
-    factor: 1e10
-    tshift: 0.0
+  - force:
+      x : 2500.0
+      z : 2500.0
+      source_surf: false
+      angle : 0.0
+      vx : 0.0
+      vz : 0.0
+      Dirac:
+        factor: 1e10
+        tshift: 0.0
