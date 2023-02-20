@@ -5,6 +5,7 @@
 #include "../include/quadrature.h"
 #include "../include/timescheme.h"
 #include "yaml-cpp/yaml.h"
+#include <ctime>
 #include <tuple>
 
 namespace specfem {
@@ -312,7 +313,8 @@ public:
   /**
    * @brief Log the header and description of the simulation
    */
-  std::string print_header();
+  std::string
+  print_header(std::chrono::time_point<std::chrono::high_resolution_clock> now);
 
   type_real get_dt() const { return solver->get_dt(); }
 

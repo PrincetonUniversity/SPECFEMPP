@@ -353,31 +353,61 @@ void specfem::sources::source::print(std::ostream &out) const {
 }
 
 void specfem::sources::force::print(std::ostream &out) const {
-  out << "Source Information: Force Source \n"
+  out << "Force Source: \n"
       << "   Source Location: \n"
-      << "                    x = " << this->x << "\n"
-      << "                    z = " << this->z << "\n"
-      << "                    xi = " << this->xi << "\n"
-      << "                    gamma = " << this->gamma << "\n"
-      << "                    ispec = " << this->ispec << "\n"
-      << "                    islice = " << this->islice << "\n";
+      << "    x = " << this->x << "\n"
+      << "    z = " << this->z << "\n"
+      << "    xi = " << this->xi << "\n"
+      << "    gamma = " << this->gamma << "\n"
+      << "    ispec = " << this->ispec << "\n"
+      << "    islice = " << this->islice << "\n";
   // out << *(this->forcing_function);
 
   return;
 }
 
+std::string specfem::sources::force::print() const {
+  std::ostringstream message;
+  message << "- Force Source: \n"
+          << "    Source Location: \n"
+          << "      x = " << type_real(this->x) << "\n"
+          << "      z = " << type_real(this->z) << "\n"
+          << "      xi = " << this->xi << "\n"
+          << "      gamma = " << this->gamma << "\n"
+          << "      ispec = " << this->ispec << "\n"
+          << "      islice = " << this->islice << "\n";
+
+  return message.str();
+}
+
 void specfem::sources::moment_tensor::print(std::ostream &out) const {
-  out << "Source Information: Moment Tensor Source \n"
+  out << "Moment Tensor Source: \n"
       << "   Source Location: \n"
-      << "                    x = " << this->x << "\n"
-      << "                    z = " << this->z << "\n"
-      << "                    xi = " << this->xi << "\n"
-      << "                    gamma = " << this->gamma << "\n"
-      << "                    ispec = " << this->ispec << "\n"
-      << "                    islice = " << this->islice << "\n";
+      << "    x = " << this->x << "\n"
+      << "    z = " << this->z << "\n"
+      << "    xi = " << this->xi << "\n"
+      << "    gamma = " << this->gamma << "\n"
+      << "    ispec = " << this->ispec << "\n"
+      << "    islice = " << this->islice << "\n";
   // out << *(this->forcing_function);
 
   return;
+}
+
+std::string specfem::sources::moment_tensor::print() const {
+  std::ostringstream message;
+  message << "- Moment Tensor Source: \n"
+          << "    Source Location: \n"
+          << "      x = " << this->x << "\n"
+          << "      z = " << this->z << "\n"
+          << "      xi = " << this->xi << "\n"
+          << "      gamma = " << this->gamma << "\n"
+          << "      ispec = " << this->ispec << "\n"
+          << "      islice = " << this->islice << "\n";
+  // out << *(this->forcing_function);
+
+  return message.str();
+  ;
 }
 
 std::ostream &
