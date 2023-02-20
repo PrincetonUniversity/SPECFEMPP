@@ -212,6 +212,7 @@ target_link_libraries(
         boundaries
         elements
         surfaces
+        yaml-cpp
 )
 
 add_library(
@@ -255,6 +256,7 @@ add_library(
 target_link_libraries(
         source_time_function
         Kokkos::kokkos
+        yaml-cpp
 )
 
 add_library(
@@ -270,6 +272,7 @@ target_link_libraries(
         quadrature
         lagrange
         source_time_function
+        yaml-cpp
 )
 
 add_library(
@@ -368,6 +371,7 @@ target_link_libraries(
         domain
         solver
         utilities
+        Boost::program_options
 )
 
 # Include tests
