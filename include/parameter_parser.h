@@ -297,7 +297,12 @@ public:
    * used in the solver algorithm
    */
   specfem::TimeScheme::TimeScheme *instantiate_solver() {
-    return this->solver->instantiate();
+    auto it = this->solver->instantiate();
+
+    // User output
+    std::cout << *it << "\n";
+
+    return it;
   }
   /**
    * @brief Update simulation start time.
