@@ -35,6 +35,8 @@ public:
     element_type dummy{ elastic };
     return dummy;
   };
+
+  virtual std::string print() const { return ""; }
 };
 
 /**
@@ -75,6 +77,8 @@ public:
   utilities::return_holder get_properties() override;
   element_type get_ispec_type() { return ispec_type; };
 
+  std::string print() const override;
+
 private:
   /**
    * @name Elastic material properties
@@ -113,6 +117,7 @@ public:
   friend std::ostream &operator<<(std::ostream &out,
                                   const acoustic_material &h);
   element_type get_ispec_type() { return ispec_type; };
+  std::string print() const override;
 
 private:
   /**
@@ -121,7 +126,7 @@ private:
    */
   type_real density, cs, cp, Qkappa, Qmu, compaction_grad, lambdaplus2mu, mu,
       lambda, kappa, young, poisson;
-  element_type ispec_type;
+  element_type ispec_type = acoustic;
 };
 
 std::ostream &operator<<(std::ostream &out, const specfem::elastic_material &h);

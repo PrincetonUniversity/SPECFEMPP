@@ -219,29 +219,29 @@ specfem::boundaries::forcing_boundary::forcing_boundary(
     this->typeacforcing = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::forcing_boundary::numacforcing", nelement_acforcing);
     this->ibegin_edge1 = specfem::kokkos::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge1", nelement_acforcing);
+        "specfem::mesh::forcing_boundary::ibegin_edge1", nelement_acforcing);
     this->ibegin_edge2 = specfem::kokkos::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge2", nelement_acforcing);
+        "specfem::mesh::forcing_boundary::ibegin_edge2", nelement_acforcing);
     this->ibegin_edge3 = specfem::kokkos::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge3", nelement_acforcing);
+        "specfem::mesh::forcing_boundary::ibegin_edge3", nelement_acforcing);
     this->ibegin_edge4 = specfem::kokkos::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge4", nelement_acforcing);
+        "specfem::mesh::forcing_boundary::ibegin_edge4", nelement_acforcing);
     this->iend_edge1 = specfem::kokkos::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge1", nelement_acforcing);
+        "specfem::mesh::forcing_boundary::iend_edge1", nelement_acforcing);
     this->iend_edge2 = specfem::kokkos::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge2", nelement_acforcing);
+        "specfem::mesh::forcing_boundary::iend_edge2", nelement_acforcing);
     this->iend_edge3 = specfem::kokkos::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge3", nelement_acforcing);
+        "specfem::mesh::forcing_boundary::iend_edge3", nelement_acforcing);
     this->iend_edge4 = specfem::kokkos::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge4", nelement_acforcing);
+        "specfem::mesh::forcing_boundary::iend_edge4", nelement_acforcing);
     this->ib_bottom = specfem::kokkos::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_bottom", nelement_acforcing);
+        "specfem::mesh::forcing_boundary::ib_bottom", nelement_acforcing);
     this->ib_top = specfem::kokkos::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_top", nelement_acforcing);
+        "specfem::mesh::forcing_boundary::ib_top", nelement_acforcing);
     this->ib_right = specfem::kokkos::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_right", nelement_acforcing);
+        "specfem::mesh::forcing_boundary::ib_right", nelement_acforcing);
     this->ib_left = specfem::kokkos::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_left", nelement_acforcing);
+        "specfem::mesh::forcing_boundary::ib_left", nelement_acforcing);
   } else {
     this->numacforcing = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::forcing_boundary::numacforcing", 1);
@@ -250,29 +250,29 @@ specfem::boundaries::forcing_boundary::forcing_boundary(
     this->typeacforcing = specfem::kokkos::HostView1d<int>(
         "specfem::mesh::forcing_boundary::numacforcing", 1);
     this->ibegin_edge1 = specfem::kokkos::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge1", 1);
+        "specfem::mesh::forcing_boundary::ibegin_edge1", 1);
     this->ibegin_edge2 = specfem::kokkos::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge2", 1);
+        "specfem::mesh::forcing_boundary::ibegin_edge2", 1);
     this->ibegin_edge3 = specfem::kokkos::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge3", 1);
+        "specfem::mesh::forcing_boundary::ibegin_edge3", 1);
     this->ibegin_edge4 = specfem::kokkos::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ibegin_edge4", 1);
+        "specfem::mesh::forcing_boundary::ibegin_edge4", 1);
     this->iend_edge1 = specfem::kokkos::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge1", 1);
+        "specfem::mesh::forcing_boundary::iend_edge1", 1);
     this->iend_edge2 = specfem::kokkos::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge2", 1);
+        "specfem::mesh::forcing_boundary::iend_edge2", 1);
     this->iend_edge3 = specfem::kokkos::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge3", 1);
+        "specfem::mesh::forcing_boundary::iend_edge3", 1);
     this->iend_edge4 = specfem::kokkos::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::iend_edge4", 1);
+        "specfem::mesh::forcing_boundary::iend_edge4", 1);
     this->ib_bottom = specfem::kokkos::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_bottom", 1);
+        "specfem::mesh::forcing_boundary::ib_bottom", 1);
     this->ib_top = specfem::kokkos::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_top", 1);
+        "specfem::mesh::forcing_boundary::ib_top", 1);
     this->ib_right = specfem::kokkos::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_right", 1);
+        "specfem::mesh::forcing_boundary::ib_right", 1);
     this->ib_left = specfem::kokkos::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ib_left", 1);
+        "specfem::mesh::forcing_boundary::ib_left", 1);
   }
 
   if (nelement_acforcing > 0) {
@@ -332,9 +332,6 @@ specfem::boundaries::absorbing_boundary::absorbing_boundary(
 
   *this = specfem::boundaries::absorbing_boundary(num_abs_boundary_faces);
 
-  // user output
-  mpi->cout("Todo: placeholder string - read_mesh_database.f90 line 831 - 840");
-
   if (num_abs_boundary_faces > 0) {
     for (int inum = 0; inum < num_abs_boundary_faces; inum++) {
       specfem::fortran_IO::fortran_read_line(
@@ -375,8 +372,6 @@ specfem::boundaries::absorbing_boundary::absorbing_boundary(
     calculate_ib(this->codeabs, this->ib_bottom, this->ib_top, this->ib_left,
                  this->ib_right, num_abs_boundary_faces);
   }
-
-  mpi->cout("Todo: Placeholder string - read_mesh_database.f90 line 1092-1112");
 
   return;
 }
@@ -428,8 +423,6 @@ specfem::boundaries::forcing_boundary::forcing_boundary(
   // populate ib_bottom, ib_top, ib_left, ib_right arrays
   calculate_ib(this->codeacforcing, this->ib_bottom, this->ib_top,
                this->ib_left, this->ib_right, nelement_acforcing);
-
-  mpi->cout("Todo: Placeholder string - read_mesh_database.f90 line 1272-1282");
 
   return;
 }
