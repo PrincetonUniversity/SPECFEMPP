@@ -1,3 +1,5 @@
+.. _source_description:
+
 Source Description
 ##################
 
