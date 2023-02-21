@@ -15,6 +15,8 @@ Parameter definitions
 
 **documentation** : Define databases section
 
+.. _database-file-parameter:
+
 **Parameter name** : ``databases.mesh-database``
 ------------------------------------------------
 
