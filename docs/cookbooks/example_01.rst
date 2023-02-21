@@ -660,3 +660,10 @@ Finally, to run the SPECFEM2D kokkos solver
 .. note::
 
     Make sure either your are in the build directory of SPECFEM2D kokkos or the build directory is added to your ``PATH``.
+
+Comparing seismogram outputs
+-----------------------------
+
+.. warning::
+
+    Need to write this section after implementing seismograms.
