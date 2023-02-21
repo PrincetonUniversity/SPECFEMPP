@@ -137,10 +137,6 @@ void execute(const std::string parameter_file, specfem::MPI::MPI *mpi) {
   // Instantiate the solver and timescheme
   auto it = setup.instantiate_solver();
 
-  // User output
-  if (mpi->main_proc())
-    std::cout << *it << "\n";
-
   // Setup solver compute struct
   specfem::compute::sources compute_sources(sources, gllx, gllz, mpi);
 
