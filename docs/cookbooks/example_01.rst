@@ -318,7 +318,7 @@ Parameter File
     # geometry of the model (origin lower-left corner = 0,0) and mesh description
     xmin                            = 0.d0           # abscissa of left side of the model
     xmax                            = 4000.d0        # abscissa of right side of the model
-    nx                              = 800             # number of elements along X
+    nx                              = 80             # number of elements along X
 
     # absorbing boundary parameters (see absorbing_conditions above)
     absorbbottom                    = .false.
@@ -329,7 +329,7 @@ Parameter File
     # define the different regions of the model in the (nx,nz) spectral-element mesh
     nbregions                       = 1              # then set below the different regions and model number for each region
     # format of each line: nxmin nxmax nzmin nzmax material_number
-    1 800  1 6000 1
+    1 80  1 60 1
     # 1 59 21 40 2
     # 71 80 21 40 2
     # 1 80 41 60 3
@@ -513,7 +513,7 @@ Topography file
     #
     # layer number 1 (bottom layer)
     #
-     6000
+     60
 
 Running xmeshfem2d
 ~~~~~~~~~~~~~~~~~~~
