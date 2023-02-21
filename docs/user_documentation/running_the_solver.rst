@@ -5,4 +5,4 @@ To run the solver:
 
 .. code-block:: bash
 
-    ./specfem --specfem-config-file <path to specfem configuration file>
+    ./specfem -p <path to specfem configuration file>

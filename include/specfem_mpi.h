@@ -87,10 +87,10 @@ public:
   template <typename T> void cout(T s) const {
 #ifdef MPI_PARALLEL
     if (my_rank == 0) {
-      std::cout << s << std::endl;
+      std::cout << s << "\n";
     }
 #else
-    std::cout << s << std::endl;
+    std::cout << s << "\n";
 #endif
   }
 

@@ -75,6 +75,12 @@ struct mesh {
    */
   mesh(const std::string filename, std::vector<specfem::material *> &materials,
        const specfem::MPI::MPI *mpi);
+
+  /**
+   * @brief User output
+   *
+   */
+  std::string print(std::vector<specfem::material *> materials) const;
 };
 } // namespace specfem
 
