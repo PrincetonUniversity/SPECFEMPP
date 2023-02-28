@@ -6,22 +6,22 @@
 [![Documentation Status](https://readthedocs.org/projects/specfem2d-kokkos/badge/?version=latest)](https://specfem2d-kokkos.readthedocs.io/en/latest/?badge=latest)
 
 ## About
----------------
+
 
 SPECFEM kokkos is C++ implementation of SPECFEM suite of software using the [Kokkos](<https://kokkos.github.io/>) programming model. Kokkos is a is a production level solution for writing modern C++ applications in a hardware agnostic way, this allows us to write a single source code which can run across all modern architectures. The goal of this project is to provide the same level of functionality as provided by SPECFEM2D, SPECFEM3D and SPECFEM3d_GLOBE in a singular package that runs across all architectures.
 
 ## Documentation
--------------------
+
 
 The online documentation for SPECFEM2D Kokkos is located [here](https://specfem2d-kokkos.readthedocs.io/en/latest/index.html#)
 
 ## Installation
--------------------
+
 
 Completer installation instructions are located in the [online documentation](https://specfem2d-kokkos.readthedocs.io/en/latest/user_documentation/index.html)
 
 ## Code feature matrix
------------------------
+
 
 Table below shows various features available and tested in this package on various architectures:
 
@@ -39,14 +39,14 @@ Table below shows various features available and tested in this package on vario
 |                     |             |             |      |     |
 
 ## Contribution
-----------------
+
 
 SPECFEM is a community project that lives by the participation of its members — i.e., including you! It is our goal to build an inclusive and participatory community so we are happy that you are interested in participating! Please see [this page](https://specfem2d-kokkos.readthedocs.io/en/latest/developer_documentation/index.html) for developer documentation.
 
 In particular you should follow the git development workflow and pre-commit style checks when contributing to SPECEFM.
 
 ## License
-----------
+
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
