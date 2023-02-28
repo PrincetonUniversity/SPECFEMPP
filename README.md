@@ -53,6 +53,6 @@ In particular you should follow the git development workflow and pre-commit styl
 ## License
 
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 SPECFEM2D Kokkos is distributed under the [GPL v3 license](LICENSE)
