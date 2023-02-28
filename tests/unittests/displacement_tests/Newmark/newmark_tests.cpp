@@ -110,12 +110,13 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
 
   specfem::compute::sources compute_sources(sources, gllx, gllz, xmax, xmin,
                                             zmax, zmin, mpi);
+  specfem::compute::receivers compute_receivers;
 
   // Instantiate domain classes
   const int nglob = specfem::utilities::compute_nglob(compute.h_ibool);
   specfem::Domain::Domain *domains = new specfem::Domain::Elastic(
       ndim, nglob, &compute, &material_properties, &partial_derivatives,
-      &compute_sources, &gllx, &gllz);
+      &compute_sources, &compute_receivers, &gllx, &gllz);
 
   specfem::solver::solver *solver =
       new specfem::solver::time_marching(domains, it);
