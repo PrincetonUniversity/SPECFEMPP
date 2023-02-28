@@ -41,7 +41,7 @@ Table below shows various features available and tested in this package on vario
 
 Intructions on how to run SPECFEM2D Kokkos can be found [here](https://specfem2d-kokkos.readthedocs.io/en/latest/user_documentation/index.html).
 
-More use case examples of running the software please see [cookbooks](https://specfem2d-kokkos.readthedocs.io/en/latest/cookbooks/index.html)
+For use case examples of running the software please see [cookbooks](https://specfem2d-kokkos.readthedocs.io/en/latest/cookbooks/index.html)
 
 ## Contributing to SPECFEM2D Kokkos
 
