@@ -12,8 +12,9 @@ specfem::Domain::Elastic::Elastic(
     const int ndim, const int nglob, specfem::compute::compute *compute,
     specfem::compute::properties *material_properties,
     specfem::compute::partial_derivatives *partial_derivatives,
-    specfem::compute::sources *sources, quadrature::quadrature *quadx,
-    quadrature::quadrature *quadz)
+    specfem::compute::sources *sources, specfem::compute::receivers *receivers,
+    specfem::quadrature::quadrature *quadx,
+    specfem::quadrature::quadrature *quadz)
     : field(specfem::kokkos::DeviceView2d<type_real>(
           "specfem::Domain::Elastic::field", nglob, ndim)),
       field_dot(specfem::kokkos::DeviceView2d<type_real>(
@@ -23,8 +24,8 @@ specfem::Domain::Elastic::Elastic(
       rmass_inverse(specfem::kokkos::DeviceView2d<type_real>(
           "specfem::Domain::Elastic::rmass_inverse", nglob, ndim)),
       compute(compute), material_properties(material_properties),
-      partial_derivatives(partial_derivatives), sources(sources), quadx(quadx),
-      quadz(quadz) {
+      partial_derivatives(partial_derivatives), sources(sources),
+      receivers(receivers), quadx(quadx), quadz(quadz) {
 
   this->h_field = Kokkos::create_mirror_view(this->field);
   this->h_field_dot = Kokkos::create_mirror_view(this->field_dot);

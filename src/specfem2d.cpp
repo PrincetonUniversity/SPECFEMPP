@@ -155,7 +155,7 @@ void execute(const std::string parameter_file, specfem::MPI::MPI *mpi) {
   const int nglob = specfem::utilities::compute_nglob(compute.h_ibool);
   specfem::Domain::Domain *domains = new specfem::Domain::Elastic(
       ndim, nglob, &compute, &material_properties, &partial_derivatives,
-      &compute_sources, &gllx, &gllz);
+      &compute_sources, &compute_receivers, &gllx, &gllz);
 
   specfem::solver::solver *solver =
       new specfem::solver::time_marching(domains, it);

@@ -249,8 +249,10 @@ public:
   Elastic(const int ndim, const int nglob, specfem::compute::compute *compute,
           specfem::compute::properties *material_properties,
           specfem::compute::partial_derivatives *partial_derivatives,
-          specfem::compute::sources *sources, quadrature::quadrature *quadx,
-          quadrature::quadrature *quadz);
+          specfem::compute::sources *sources,
+          specfem::compute::receivers *receivers,
+          specfem::quadrature::quadrature *quadx,
+          specfem::quadrature::quadrature *quadz);
   /**
    * @brief Compute interaction of stiffness matrix on acceleration
    *
