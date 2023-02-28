@@ -7,7 +7,9 @@ Downloading SPECFEM
 Get the latest version of the package:
 
 .. code-block:: bash
-    <insert git clone directive here>
+
+    <Get latest version of the software using git clone>
+    git submodule init
     git submodule update
 
 Compilation
@@ -34,7 +36,7 @@ Configure the package using Cmake configuration keywords before building using c
 
 .. code-block:: bash
 
-    cmake3 -S . -B -DKokkos_ENABLE_OPENMP=ON -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON -DKokkos_ENABLE_CUDA_LAMBDA=ON -DKokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE=ON
+    cmake3 -S . -B build -DKokkos_ENABLE_OPENMP=ON -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON -DKokkos_ENABLE_CUDA_LAMBDA=ON -DKokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE=ON
     cmake3 --build build
 
 Adding SPECFEM to PATH
