@@ -26,15 +26,15 @@ Table below shows various features available and tested in this package on vario
 
 |                     | CPU(serial) | CPU(OpenMP) | CUDA | HIP
 ----------------------|------------:|-----------:|------:|-----|
-| Physics                                                      |
+| **Physics**                                                  |
 | P-SV waves          | X           | X           | X    |     |
 | SH waves            |             |             |      |     |
 | Elastic Domains     | X           | X           | X    |     |
-| Simulation Setup                                             |
+| **Simulation Setup**                                         |
 | Forward Simulations | X           | X           | X    |     |
-| Time Schemes                                                 |
+| **Time Schemes**                                             |
 | Newmark             | X           | X           | X    |     |
-| Seismograms                                                  |
+| **Seismograms**                                              |
 |                     |             |             |      |     |
 
 ## Running SPECFEM2D Kokkos
