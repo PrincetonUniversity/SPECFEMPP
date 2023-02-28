@@ -1,7 +1,10 @@
 Setting up the solver
 =====================
 
-To configure the simulation we use a configuration file written in YAML. Thus you can use all the functionality of YAML - some that might be useful in your workflow are multi line strings, value substitution using scripts.
+To configure the simulation we use a configuration file written in `YAML
+<https://yaml.org>`. Thus you can use all the functionality of YAML - some that
+might be useful in your workflow are multi line strings, value substitution
+using scripts.
 
 Please read <parameter documentation for more details>
 
@@ -13,8 +16,11 @@ Example configuration file:
     parameters:
 
         header:
-            ## Header information is used for logging. It is good practice to give your simulations explicit names
-            title: Isotropic Elastic simulation # name for your simulation
+            ## Header information is used for logging.
+            # It is good practice to give your simulations explicit names
+            #
+            # Name for your simulation
+            title: Isotropic Elastic simulation #
             # A detailed description for your simulation
             description: |
             Material systems : Elastic domain (1)
