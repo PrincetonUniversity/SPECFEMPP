@@ -50,7 +50,8 @@ Example configuration file:
             number-of-processors: 1
             number-of-runs: 1
 
-        ## databases
+        ## Databases -- Paths are defined relative to the where ``specfem2d``
+        ##              is executed from, or can be defined absolute.
         databases:
             mesh-database: "../DATA/databases/database.bin"
             source-file: "../DATA/source.yaml"
