@@ -124,6 +124,13 @@ public:
    * @param kind defines sync direction i.e. DeviceToHost or HostToDevice
    */
   virtual void sync_rmass_inverse(specfem::sync::kind kind){};
+  /**
+   * @brief Compute seismograms at for all receivers at isig_step
+   *
+   * @param seismogram_types DeviceView of types of seismograms to be calculated
+   * @param isig_step timestep for seismogram calculation
+   */
+  virtual void compute_seismogram(const int isig_step){};
 
 private:
   specfem::kokkos::DeviceView2d<type_real> field;   ///< View of field on Device
@@ -291,6 +298,13 @@ public:
    */
   KOKKOS_IMPL_HOST_FUNCTION
   void assign_views();
+  /**
+   * @brief Compute seismograms at for all receivers at isig_step
+   *
+   * @param seismogram_types DeviceView of types of seismograms to be calculated
+   * @param isig_step timestep for seismogram calculation
+   */
+  void compute_seismogram(const int isig_step) override;
 
 private:
   specfem::kokkos::DeviceView2d<type_real> field;   ///< View of field on Device
@@ -317,13 +331,20 @@ private:
   specfem::compute::properties *material_properties; ///< Pointer to struct used
                                                      ///< to store material
                                                      ///< properties
-  specfem::compute::partial_derivatives *partial_derivatives;
-  specfem::compute::sources *sources;
-  quadrature::quadrature *quadx; ///< Pointer to quadrature object in
-                                 ///< x-dimension
-  quadrature::quadrature *quadz; ///< Pointer to quadrature object in
-                                 ///< z-dimension
-  int nelem_domain;              ///< Total number of elements in this domain
+  specfem::compute::partial_derivatives *partial_derivatives; ///< Pointer to
+                                                              ///< struct used
+                                                              ///< to store
+                                                              ///< partial
+                                                              ///< derivates
+  specfem::compute::sources *sources;     ///< Pointer to struct used to store
+                                          ///< sources
+  specfem::compute::receivers *receivers; ///< Pointer to struct used to store
+                                          ///< receivers
+  quadrature::quadrature *quadx;          ///< Pointer to quadrature object in
+                                          ///< x-dimension
+  quadrature::quadrature *quadz;          ///< Pointer to quadrature object in
+                                          ///< z-dimension
+  int nelem_domain; ///< Total number of elements in this domain
   specfem::kokkos::DeviceView1d<int> ispec_domain; ///< Array containing global
                                                    ///< indices(ispec) of all
                                                    ///< elements in this domain

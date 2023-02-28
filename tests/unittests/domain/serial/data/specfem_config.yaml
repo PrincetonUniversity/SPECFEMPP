@@ -22,6 +22,14 @@ parameters:
           dt: 1e-3
           nstep: 1600
 
+  seismogram:
+    stations-file: "../DATA/STATIONS"
+    angle: 0.0
+    seismogram-type:
+      - displacement
+      - velocity
+    nstep_between_samples: 1
+
   ## Runtime setup
   run-setup:
     number-of-processors: 1

@@ -276,6 +276,20 @@ target_link_libraries(
 )
 
 add_library(
+        receiver_class
+        src/receiver.cpp
+)
+
+target_link_libraries(
+        receiver_class
+        specfem_mpi
+        Kokkos::kokkos
+        utilities
+        quadrature
+        lagrange
+)
+
+add_library(
         parameter_reader
         src/parameter_parser.cpp
 )
@@ -295,8 +309,10 @@ add_library(
 target_link_libraries(
         source_reader
         source_class
+        receiver_class
         yaml-cpp
         utilities
+        Boost::system
 )
 
 add_library(
@@ -305,6 +321,7 @@ add_library(
         src/compute_partial_derivatives.cpp
         src/compute_properties.cpp
         src/compute_sources.cpp
+        src/compute_receivers.cpp
 )
 
 target_link_libraries(
@@ -314,6 +331,7 @@ target_link_libraries(
         source_class
         jacobian
         shape_functions
+        receiver_class
         Kokkos::kokkos
 )
 
@@ -366,11 +384,13 @@ target_link_libraries(
         quadrature
         compute
         source_class
+        receiver_class
         source_reader
         parameter_reader
         domain
         solver
         utilities
+        receiver_class
         Boost::program_options
 )
 

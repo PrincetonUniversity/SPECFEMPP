@@ -72,8 +72,8 @@ TEST(COMPUTE_TESTS, compute_properties) {
       get_test_config(config_filename, MPIEnvironment::mpi_);
 
   // Set up GLL quadrature points
-  specfem::quadrature::quadrature gllx(0.0, 0.0, ngll);
-  specfem::quadrature::quadrature gllz(0.0, 0.0, ngll);
+  specfem::quadrature::quadrature gllx(0.0, 0.0, 5);
+  specfem::quadrature::quadrature gllz(0.0, 0.0, 5);
   std::vector<specfem::material *> materials;
 
   specfem::mesh mesh(test_config.database_filename, materials,

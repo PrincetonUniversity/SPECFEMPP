@@ -7,9 +7,7 @@
 KOKKOS_FUNCTION
 type_real gaussian(type_real t, type_real f0) {
   // Gaussian wavelet i.e. second integral of a Ricker wavelet
-
-  type_real pi = 2 * Kokkos::Experimental::acos(0.0);
-
+  constexpr auto pi = Kokkos::Experimental::pi_v<type_real>;
   type_real a = pi * pi * f0 * f0;
   type_real gaussian = -1.0 * Kokkos::Experimental::exp(-a * t * t) / (2.0 * a);
 
@@ -18,7 +16,7 @@ type_real gaussian(type_real t, type_real f0) {
 
 KOKKOS_FUNCTION
 type_real d2gaussian(type_real t, type_real f0) {
-  type_real pi = 2 * Kokkos::Experimental::acos(0.0);
+  constexpr auto pi = Kokkos::Experimental::pi_v<type_real>;
 
   type_real a = pi * pi * f0 * f0;
   type_real d2gaussian =

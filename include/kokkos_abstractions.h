@@ -74,6 +74,13 @@ using DeviceView3d = Kokkos::View<T ***, L, DevMemSpace>;
 template <typename T, typename L = LayoutWrapper>
 using DeviceView4d = Kokkos::View<T ****, L, DevMemSpace>;
 ///@}
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ */
+template <typename T, typename L = LayoutWrapper>
+using DeviceView5d = Kokkos::View<T *****, L, DevMemSpace>;
+///@}
 
 /** @name Host views
  */
@@ -195,6 +202,12 @@ using HostMirror3d = typename DeviceView3d<T, L>::HostMirror;
  */
 template <typename T, typename L = LayoutWrapper>
 using HostMirror4d = typename DeviceView4d<T, L>::HostMirror;
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ */
+template <typename T, typename L = LayoutWrapper>
+using HostMirror5d = typename DeviceView5d<T, L>::HostMirror;
 ///@}
 
 // Scratch Views

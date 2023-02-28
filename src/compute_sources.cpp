@@ -8,8 +8,10 @@
 
 specfem::compute::sources::sources(
     std::vector<specfem::sources::source *> sources,
-    specfem::quadrature::quadrature &quadx,
-    specfem::quadrature::quadrature &quadz, specfem::MPI::MPI *mpi) {
+    const specfem::quadrature::quadrature &quadx,
+    const specfem::quadrature::quadrature &quadz, const type_real xmax,
+    const type_real xmin, const type_real zmax, const type_real zmin,
+    specfem::MPI::MPI *mpi) {
 
   // Get  sources which lie in processor
   std::vector<specfem::sources::source *> my_sources;
@@ -39,6 +41,8 @@ specfem::compute::sources::sources(
 
   // store source array for sources in my islice
   for (int isource = 0; isource < my_sources.size(); isource++) {
+
+    my_sources[isource]->check_locations(xmax, xmin, zmax, zmin, mpi);
 
     auto sv_source_array = Kokkos::subview(
         this->h_source_array, isource, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);

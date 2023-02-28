@@ -1,4 +1,5 @@
 #include "../include/parameter_parser.h"
+#include "../include/globals.h"
 #include "yaml-cpp/yaml.h"
 #include <chrono>
 #include <ctime>
@@ -6,7 +7,8 @@
 #include <tuple>
 
 specfem::TimeScheme::TimeScheme *
-specfem::runtime_configuration::solver::instantiate() {
+specfem::runtime_configuration::solver::instantiate(
+    const int nstep_between_samples) {
   specfem::TimeScheme::TimeScheme *it = NULL;
 
   throw std::runtime_error(
@@ -16,11 +18,13 @@ specfem::runtime_configuration::solver::instantiate() {
 };
 
 specfem::TimeScheme::TimeScheme *
-specfem::runtime_configuration::time_marching::instantiate() {
+specfem::runtime_configuration::time_marching::instantiate(
+    const int nstep_between_samples) {
 
   specfem::TimeScheme::TimeScheme *it;
   if (this->timescheme == "Newmark") {
-    it = new specfem::TimeScheme::Newmark(this->nstep, this->t0, this->dt);
+    it = new specfem::TimeScheme::Newmark(this->nstep, this->t0, this->dt,
+                                          nstep_between_samples);
   }
 
   return it;
@@ -36,6 +40,32 @@ specfem::runtime_configuration::quadrature::instantiate() {
 specfem::runtime_configuration::header::header(const YAML::Node &Node) {
   *this = specfem::runtime_configuration::header(
       Node["title"].as<std::string>(), Node["description"].as<std::string>());
+}
+
+specfem::runtime_configuration::seismogram::seismogram(
+    const YAML::Node &seismogram) {
+
+  *this = specfem::runtime_configuration::seismogram(
+      seismogram["stations-file"].as<std::string>(),
+      seismogram["angle"].as<type_real>(),
+      seismogram["nstep_between_samples"].as<int>());
+
+  // Allocate seismogram types
+  assert(seismogram["seismogram-type"].IsSequence());
+
+  for (YAML::Node seismogram_type : seismogram["seismogram-type"]) {
+    if (seismogram_type.as<std::string>() == "displacement") {
+      this->stypes.push_back(specfem::seismogram::displacement);
+    } else if (seismogram_type.as<std::string>() == "velocity") {
+      this->stypes.push_back(specfem::seismogram::velocity);
+    } else if (seismogram_type.as<std::string>() == "acceleration") {
+      this->stypes.push_back(specfem::seismogram::velocity);
+    } else {
+      std::runtime_error("Seismograms config could not be read properly");
+    }
+  }
+
+  return;
 }
 
 specfem::runtime_configuration::time_marching::time_marching(
@@ -75,6 +105,7 @@ specfem::runtime_configuration::setup::setup(std::string parameter_file) {
   const YAML::Node &n_quadrature = simulation_setup["quadrature"];
   const YAML::Node &n_run_setup = runtime_config["run-setup"];
   const YAML::Node &n_databases = runtime_config["databases"];
+  const YAML::Node &n_seismogram = runtime_config["seismogram"];
 
   this->header = new specfem::runtime_configuration::header(n_header);
 
@@ -111,6 +142,9 @@ specfem::runtime_configuration::setup::setup(std::string parameter_file) {
 
   this->databases =
       new specfem::runtime_configuration::database_configuration(n_databases);
+
+  this->seismogram =
+      new specfem::runtime_configuration::seismogram(n_seismogram);
 }
 
 std::string specfem::runtime_configuration::setup::print_header(

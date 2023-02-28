@@ -2,6 +2,7 @@
 #define MATERIAL_H
 
 #include "../include/config.h"
+#include "../include/enums.h"
 #include "../include/specfem_mpi.h"
 #include "../include/utils.h"
 #include <ostream>
@@ -31,9 +32,8 @@ public:
     utilities::return_holder holder{};
     return holder;
   };
-  virtual element_type get_ispec_type() {
-    element_type dummy{ elastic };
-    return dummy;
+  virtual specfem::elements::type get_ispec_type() {
+    return specfem::elements::elastic;
   };
 
   virtual std::string print() const { return ""; }
@@ -75,7 +75,7 @@ public:
    * properties
    */
   utilities::return_holder get_properties() override;
-  element_type get_ispec_type() { return ispec_type; };
+  specfem::elements::type get_ispec_type() { return ispec_type; };
 
   std::string print() const override;
 
@@ -98,7 +98,8 @@ private:
   type_real young;
   type_real poisson;
   ///@}
-  element_type ispec_type = elastic; ///< Type or element == specfem::elastic
+  specfem::elements::type ispec_type =
+      specfem::elements::elastic; ///< Type or element == specfem::elastic
 };
 
 class acoustic_material : public material {
@@ -116,7 +117,7 @@ public:
   void assign(utilities::input_holder &holder) override;
   friend std::ostream &operator<<(std::ostream &out,
                                   const acoustic_material &h);
-  element_type get_ispec_type() { return ispec_type; };
+  specfem::elements::type get_ispec_type() { return ispec_type; };
   std::string print() const override;
 
 private:
@@ -126,7 +127,7 @@ private:
    */
   type_real density, cs, cp, Qkappa, Qmu, compaction_grad, lambdaplus2mu, mu,
       lambda, kappa, young, poisson;
-  element_type ispec_type = acoustic;
+  specfem::elements::type ispec_type = specfem::elements::acoustic;
 };
 
 std::ostream &operator<<(std::ostream &out, const specfem::elastic_material &h);

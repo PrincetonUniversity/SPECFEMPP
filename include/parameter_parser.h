@@ -123,7 +123,8 @@ public:
    * @return specfem::TimeScheme::TimeScheme* Pointer to the TimeScheme object
    * used in the solver algorithm
    */
-  virtual specfem::TimeScheme::TimeScheme *instantiate();
+  virtual specfem::TimeScheme::TimeScheme *
+  instantiate(const int nstep_between_samples);
   /**
    * @brief Update simulation start time.
    *
@@ -186,7 +187,8 @@ public:
    * @return specfem::TimeScheme::TimeScheme* Pointer to the TimeScheme object
    * used in the solver algorithm
    */
-  specfem::TimeScheme::TimeScheme *instantiate() override;
+  specfem::TimeScheme::TimeScheme *
+  instantiate(const int nstep_between_samples) override;
   /**
    * @brief Get the value of time increment
    *
@@ -199,6 +201,28 @@ private:
   type_real dt;           ///< delta time for the timescheme
   type_real t0;           ///< simulation start time
   std::string timescheme; ///< Time scheme e.g. Newmark, Runge-Kutta, LDDRK
+};
+
+class seismogram {
+
+public:
+  seismogram(const std::string stations_file, const type_real angle,
+             const int nstep_between_samples)
+      : stations_file(stations_file), angle(angle),
+        nstep_between_samples(nstep_between_samples){};
+  seismogram(const YAML::Node &Node);
+  std::string get_stations_file() const { return this->stations_file; }
+  type_real get_angle() const { return this->angle; };
+  int get_nstep_between_samples() const { return this->nstep_between_samples; }
+  std::vector<specfem::seismogram::type> get_seismogram_types() const {
+    return stypes;
+  }
+
+private:
+  std::string stations_file;
+  type_real angle;
+  int nstep_between_samples;
+  std::vector<specfem::seismogram::type> stypes;
 };
 
 /**
@@ -297,7 +321,8 @@ public:
    * used in the solver algorithm
    */
   specfem::TimeScheme::TimeScheme *instantiate_solver() {
-    auto it = this->solver->instantiate();
+    auto it = this->solver->instantiate(
+        this->seismogram->get_nstep_between_samples());
 
     // User output
     std::cout << *it << "\n";
@@ -327,6 +352,16 @@ public:
     return databases->get_databases();
   }
 
+  std::string get_stations_file() const {
+    return seismogram->get_stations_file();
+  }
+
+  type_real get_receiver_angle() const { return seismogram->get_angle(); }
+
+  std::vector<specfem::seismogram::type> get_seismogram_types() const {
+    return this->seismogram->get_seismogram_types();
+  }
+
 private:
   specfem::runtime_configuration::header *header; ///< Pointer to header object
   specfem::runtime_configuration::solver *solver; ///< Pointer to solver object
@@ -334,6 +369,8 @@ private:
                                                           ///< run_setup object
   specfem::runtime_configuration::quadrature *quadrature; ///< Pointer to
                                                           ///< quadrature object
+  specfem::runtime_configuration::seismogram *seismogram; ///< Pointer to
+                                                          ///< seismogram object
   specfem::runtime_configuration::database_configuration
       *databases; ///< Get database filenames
 };

@@ -80,14 +80,13 @@ int parse_args(int argc, char **argv,
 void execute(const std::string parameter_file, specfem::MPI::MPI *mpi) {
 
   // log start time
-  auto now = std::chrono::high_resolution_clock::now();
+  auto start_time = std::chrono::high_resolution_clock::now();
 
   specfem::runtime_configuration::setup setup(parameter_file);
   const auto [database_filename, source_filename] = setup.get_databases();
+  const auto stations_filename = setup.get_stations_file();
 
-  mpi->cout(setup.print_header(now));
-
-  // database_config database_config = get_node_config(database_file, mpi);
+  mpi->cout(setup.print_header(start_time));
 
   // Set up GLL quadrature points
   auto [gllx, gllz] = setup.instantiate_quadrature();
@@ -101,6 +100,8 @@ void execute(const std::string parameter_file, specfem::MPI::MPI *mpi) {
   //    source frequencies and time shift
   auto [sources, t0] =
       specfem::read_sources(source_filename, setup.get_dt(), mpi);
+  const auto angle = setup.get_receiver_angle();
+  auto receivers = specfem::read_receivers(stations_filename, angle);
 
   // Generate compute structs to be used by the solver
   specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
@@ -138,7 +139,17 @@ void execute(const std::string parameter_file, specfem::MPI::MPI *mpi) {
   auto it = setup.instantiate_solver();
 
   // Setup solver compute struct
-  specfem::compute::sources compute_sources(sources, gllx, gllz, mpi);
+
+  const type_real xmax = compute.coordinates.xmax;
+  const type_real xmin = compute.coordinates.xmin;
+  const type_real zmax = compute.coordinates.zmax;
+  const type_real zmin = compute.coordinates.zmin;
+
+  specfem::compute::sources compute_sources(sources, gllx, gllz, xmax, xmin,
+                                            zmax, zmin, mpi);
+  specfem::compute::receivers compute_receivers(
+      receivers, setup.get_seismogram_types(), gllx, gllz, xmax, xmin, zmax,
+      zmin, it->get_max_seismogram_step(), mpi);
 
   // Instantiate domain classes
   const int nglob = specfem::utilities::compute_nglob(compute.h_ibool);
@@ -151,7 +162,7 @@ void execute(const std::string parameter_file, specfem::MPI::MPI *mpi) {
 
   solver->run();
 
-  mpi->cout(print_end_message(now));
+  mpi->cout(print_end_message(start_time));
 }
 
 int main(int argc, char **argv) {
