@@ -3,6 +3,9 @@
 #include "../include/source.h"
 #include "../include/utils.h"
 #include "yaml-cpp/yaml.h"
+#include <boost/tokenizer.hpp>
+#include <fstream>
+#include <string>
 #include <vector>
 
 // void operator>>(YAML::Node &Node,
@@ -46,7 +49,7 @@ specfem::read_sources(const std::string sources_file, const type_real dt,
   assert(Node.IsSequence());
   for (auto N : Node) {
     if (YAML::Node force_source = N["force"]) {
-      sources.push_back(new specfem::sources::force(force_source, dt, wave));
+      sources.push_back(new specfem::sources::force(force_source, dt));
     } else if (YAML::Node moment_tensor = N["moment-tensor"]) {
       sources.push_back(new specfem::sources::moment_tensor(moment_tensor, dt));
     }
@@ -75,4 +78,37 @@ specfem::read_sources(const std::string sources_file, const type_real dt,
   }
 
   return std::make_tuple(sources, t0);
+}
+
+std::vector<specfem::receivers::receiver *>
+specfem::read_receivers(const std::string stations_file,
+                        const type_real angle) {
+
+  boost::char_separator<char> sep(" ");
+  std::vector<specfem::receivers::receiver *> receivers;
+  std::fstream stations;
+  stations.open(stations_file, std::ios::in);
+  if (stations.is_open()) {
+    std::string line;
+    // Read stations file line by line
+    while (std::getline(stations, line)) {
+      // split every line with " " delimiter
+      boost::tokenizer<boost::char_separator<char> > tokens(line, sep);
+      std::vector<std::string> current_station;
+      for (const auto &t : tokens) {
+        current_station.push_back(t);
+      }
+      // check if the read line meets the format
+      assert(current_station.size() == 6);
+      // get the x and z coordinates of the station;
+      const type_real x = static_cast<type_real>(std::stod(current_station[2]));
+      const type_real z = static_cast<type_real>(std::stod(current_station[3]));
+
+      receivers.push_back(new specfem::receivers::receiver(x, z, angle));
+    }
+
+    stations.close();
+  }
+
+  return receivers;
 }

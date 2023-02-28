@@ -1,4 +1,5 @@
 #include "../include/material.h"
+#include "../include/enums.h"
 #include "../include/fortran_IO.h"
 #include "../include/utils.h"
 #include <ostream>
@@ -57,8 +58,7 @@ std::string specfem::acoustic_material::print() const {
 }
 
 void specfem::elastic_material::assign(utilities::input_holder &holder) {
-  // element type is defined in config.h
-  this->ispec_type = elastic;
+  this->ispec_type = specfem::elements::elastic;
   // density
   this->density = holder.val0;
   // P and S velocity
@@ -92,7 +92,7 @@ void specfem::elastic_material::assign(utilities::input_holder &holder) {
 
 void specfem::acoustic_material::assign(utilities::input_holder &holder) {
   // element type is defined in config.h
-  this->ispec_type = acoustic;
+  this->ispec_type = specfem::elements::acoustic;
   // density
   this->density = holder.val0;
   // P and S velocity

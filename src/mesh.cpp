@@ -169,9 +169,10 @@ specfem::mesh::print(std::vector<specfem::material *> materials) const {
       "setup_compute::properties_ispec", specfem::kokkos::HostRange(0, nspec),
       [=](const int ispec, int &l_elastic, int &l_acoustic) {
         const int imat = this->material_ind.kmato(ispec);
-        if (materials[imat]->get_ispec_type() == elastic) {
+        if (materials[imat]->get_ispec_type() == specfem::elements::elastic) {
           l_elastic++;
-        } else if (materials[imat]->get_ispec_type() == acoustic) {
+        } else if (materials[imat]->get_ispec_type() ==
+                   specfem::elements::acoustic) {
           l_acoustic++;
         }
       },

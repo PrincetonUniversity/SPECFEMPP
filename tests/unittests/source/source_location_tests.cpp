@@ -157,8 +157,8 @@ TEST(SOURCE_LOCATION_TESTS, compute_source_locations) {
       parse_solution_file(test_config.solutions_file);
 
   // Set up GLL quadrature points
-  specfem::quadrature::quadrature gllx(0.0, 0.0, ngll);
-  specfem::quadrature::quadrature gllz(0.0, 0.0, ngll);
+  specfem::quadrature::quadrature gllx(0.0, 0.0, 5);
+  specfem::quadrature::quadrature gllz(0.0, 0.0, 5);
 
   specfem::parameters params;
 
