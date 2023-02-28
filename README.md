@@ -38,7 +38,13 @@ Table below shows various features available and tested in this package on vario
 | Seismograms                                                  |
 |                     |             |             |      |     |
 
-## Contribution
+## Running SPECFEM2D Kokkos
+
+Intructions on how to run SPECFEM2D Kokkos can be found [here](https://specfem2d-kokkos.readthedocs.io/en/latest/user_documentation/index.html).
+
+More use case examples of running the software please see [cookbooks](https://specfem2d-kokkos.readthedocs.io/en/latest/cookbooks/index.html)
+
+## Contributing to SPECFEM2D Kokkos
 
 
 SPECFEM is a community project that lives by the participation of its members — i.e., including you! It is our goal to build an inclusive and participatory community so we are happy that you are interested in participating! Please see [this page](https://specfem2d-kokkos.readthedocs.io/en/latest/developer_documentation/index.html) for developer documentation.
