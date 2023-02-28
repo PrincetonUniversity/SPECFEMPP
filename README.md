@@ -1,6 +1,5 @@
 # SPECFEM2D Kokkos implementation
 
-[![License GPL2|:](https://img.shields.io/badge/License-GPL%202%2B-red)](https://github.com/PrincetonUniversity/specfem2d_kokkos/blob/devel/LICENSE)
 [![Unittests](https://github.com/PrincetonUniversity/specfem2d_kokkos/actions/workflows/unittests.yml/badge.svg)](https://github.com/PrincetonUniversity/specfem2d_kokkos/actions/workflows/unittests.yml)
 [![Build](https://github.com/PrincetonUniversity/specfem2d_kokkos/actions/workflows/compilation.yml/badge.svg)](https://github.com/PrincetonUniversity/specfem2d_kokkos/actions/workflows/compilation.yml)
 [![Documentation Status](https://readthedocs.org/projects/specfem2d-kokkos/badge/?version=latest)](https://specfem2d-kokkos.readthedocs.io/en/latest/?badge=latest)
