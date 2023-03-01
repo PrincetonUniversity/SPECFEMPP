@@ -2,7 +2,6 @@ User documentation
 ==================
 
 .. toctree::
-    introduction
     requirements
     installation
     mesh_generation
