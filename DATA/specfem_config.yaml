@@ -28,12 +28,13 @@ parameters:
           nstep: 100
 
   seismogram:
-    stations-file: "../DATA/STATIONS"
+    stations-file: "/scratch/gpfs/rk9481/specfem2d_kokkos/DATA/STATIONS"
     angle: 0.0
     seismogram-type:
-      - displacement
       - velocity
     nstep_between_samples: 1
+    seismogram-format: ascii
+    output-folder: "/scratch/gpfs/rk9481/specfem2d_kokkos/results"
 
   ## Runtime setup
   run-setup:
@@ -42,5 +43,5 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "../DATA/databases/database.bin"
-    source-file: "../DATA/source.yaml"
+    mesh-database: "/scratch/gpfs/rk9481/specfem2d_kokkos/DATA/databases/database.bin"
+    source-file: "/scratch/gpfs/rk9481/specfem2d_kokkos/DATA/source.yaml"

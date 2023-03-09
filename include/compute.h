@@ -199,7 +199,7 @@ struct sources {
    * @param quadz Quadrature object in z dimension
    * @param mpi Pointer to the MPI object
    */
-  sources(std::vector<specfem::sources::source *> sources,
+  sources(const std::vector<specfem::sources::source *> &sources,
           const specfem::quadrature::quadrature &quadx,
           const specfem::quadrature::quadrature &quadz, const type_real xmax,
           const type_real xmin, const type_real zmax, const type_real zmin,
@@ -282,14 +282,25 @@ struct receivers {
    * @param quadz Quadrature object in z dimension
    * @param mpi Pointer to the MPI object
    */
-  receivers(std::vector<specfem::receivers::receiver *> receivers,
-            std::vector<specfem::seismogram::type> stypes,
+  receivers(const std::vector<specfem::receivers::receiver *> &receivers,
+            const std::vector<specfem::seismogram::type> &stypes,
             const specfem::quadrature::quadrature &quadx,
             const specfem::quadrature::quadrature &quadz, const type_real xmax,
             const type_real xmin, const type_real zmax, const type_real zmin,
             const int max_sig_step, specfem::MPI::MPI *mpi);
-
+  /**
+   * @brief Sync views within this struct from host to device
+   *
+   * Sync views after they have been initialized on the host
+   *
+   */
   void sync_views();
+
+  /**
+   * @brief Sync calculated seismogram from device to the host
+   *
+   */
+  void sync_seismograms();
 };
 
 struct coordinates {

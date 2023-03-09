@@ -8,6 +8,7 @@
 #include "../include/params.h"
 #include "../include/read_mesh_database.h"
 #include "../include/read_sources.h"
+#include "../include/receiver.h"
 #include "../include/solver.h"
 #include "../include/source.h"
 #include "../include/specfem_mpi.h"
@@ -122,14 +123,30 @@ void execute(const std::string parameter_file, specfem::MPI::MPI *mpi) {
                    mesh.material_ind.knods, mesh.npgeo,
                    material_properties.h_ispec_type, mpi);
 
+  for (auto &receiver : receivers)
+    receiver->locate(compute.coordinates.coord, compute.h_ibool, gllx.get_hxi(),
+                     gllz.get_hxi(), mesh.nproc, mesh.coorg,
+                     mesh.material_ind.knods, mesh.npgeo,
+                     material_properties.h_ispec_type, mpi);
+
   mpi->cout("Source Information:");
   mpi->cout("-------------------------------");
   if (mpi->main_proc()) {
-    std::cout << "Number of sources :" << sources.size() << "\n\n";
+    std::cout << "Number of sources : " << sources.size() << "\n\n";
   }
 
   for (auto &source : sources) {
     mpi->cout(source->print());
+  }
+
+  mpi->cout("Receiver Information:");
+  mpi->cout("-------------------------------");
+  if (mpi->main_proc()) {
+    std::cout << "Number of receivers : " << receivers.size() << "\n\n";
+  }
+
+  for (auto &receiver : receivers) {
+    mpi->cout(receiver->print());
   }
 
   // Update solver intialization time
@@ -147,6 +164,7 @@ void execute(const std::string parameter_file, specfem::MPI::MPI *mpi) {
 
   specfem::compute::sources compute_sources(sources, gllx, gllz, xmax, xmin,
                                             zmax, zmin, mpi);
+
   specfem::compute::receivers compute_receivers(
       receivers, setup.get_seismogram_types(), gllx, gllz, xmax, xmin, zmax,
       zmin, it->get_max_seismogram_step(), mpi);
@@ -157,12 +175,45 @@ void execute(const std::string parameter_file, specfem::MPI::MPI *mpi) {
       ndim, nglob, &compute, &material_properties, &partial_derivatives,
       &compute_sources, &compute_receivers, &gllx, &gllz);
 
+  auto writer =
+      setup.instantiate_seismogram_writer(receivers, &compute_receivers);
+
   specfem::solver::solver *solver =
       new specfem::solver::time_marching(domains, it);
 
+  mpi->cout("Executing time loop:");
+  mpi->cout("-------------------------------");
+
   solver->run();
 
+  mpi->cout("Writing seismogram files:");
+  mpi->cout("-------------------------------");
+
+  writer->write();
+
+  mpi->cout("Cleaning up:");
+  mpi->cout("-------------------------------");
+
+  for (auto &material : materials) {
+    delete material;
+  }
+
+  for (auto &source : sources) {
+    delete source;
+  }
+
+  for (auto &receiver : receivers) {
+    delete receiver;
+  }
+
+  delete it;
+  delete domains;
+  delete solver;
+  delete writer;
+
   mpi->cout(print_end_message(start_time));
+
+  return;
 }
 
 int main(int argc, char **argv) {

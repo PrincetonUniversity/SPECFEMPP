@@ -1,5 +1,6 @@
 #include "../include/read_sources.h"
 #include "../include/config.h"
+#include "../include/receiver.h"
 #include "../include/source.h"
 #include "../include/utils.h"
 #include "yaml-cpp/yaml.h"
@@ -101,10 +102,13 @@ specfem::read_receivers(const std::string stations_file,
       // check if the read line meets the format
       assert(current_station.size() == 6);
       // get the x and z coordinates of the station;
+      const std::string network_name = current_station[0];
+      const std::string station_name = current_station[1];
       const type_real x = static_cast<type_real>(std::stod(current_station[2]));
       const type_real z = static_cast<type_real>(std::stod(current_station[3]));
 
-      receivers.push_back(new specfem::receivers::receiver(x, z, angle));
+      receivers.push_back(new specfem::receivers::receiver(
+          network_name, station_name, x, z, angle));
     }
 
     stations.close();

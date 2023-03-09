@@ -3,7 +3,9 @@
 
 #include "../include/config.h"
 #include "../include/quadrature.h"
+#include "../include/receiver.h"
 #include "../include/timescheme.h"
+#include "../include/writer.h"
 #include "yaml-cpp/yaml.h"
 #include <ctime>
 #include <tuple>
@@ -14,7 +16,7 @@ namespace specfem {
  * instantiate the simulation
  *
  * Each object in runtime configuration is closely related to a node in
- * specfem_config.yaml used to setup a simulation
+ * YAML file used to setup a simulation
  */
 namespace runtime_configuration {
 
@@ -37,7 +39,7 @@ public:
   /**
    * @brief Construct a new header object using YAML node
    *
-   * @param Node YAML node as read from a specfem_config.yaml
+   * @param Node YAML node as read from a YAML file
    */
   header(const YAML::Node &Node);
 
@@ -83,8 +85,7 @@ public:
   /**
    * @brief Construct a new quadrature object
    *
-   * @param Node YAML node describing the quadrature as read from a
-   * specfem_config.yaml
+   * @param Node YAML node describing the quadrature
    */
   quadrature(const YAML::Node &Node);
   /**
@@ -142,7 +143,11 @@ public:
    * @return type_real value of time increment
    */
   virtual type_real get_dt() const {
-    std::runtime_error("Solver not instantiated properly");
+    throw std::runtime_error("Solver not instantiated properly");
+    return 0.0;
+  };
+  virtual type_real get_t0() const {
+    throw std::runtime_error("Solver not instantiated properly");
     return 0.0;
   };
 };
@@ -166,8 +171,7 @@ public:
   /**
    * @brief Construct a new time marching object
    *
-   * @param Node YAML node describing the time-marching method as read from a
-   * specfem_config.yaml
+   * @param Node YAML node describing the time-marching method
    */
   time_marching(const YAML::Node &Node);
   /**
@@ -196,6 +200,8 @@ public:
    */
   type_real get_dt() const override { return this->dt; }
 
+  type_real get_t0() const override { return this->t0; }
+
 private:
   int nstep;              ///< number of time steps
   type_real dt;           ///< delta time for the timescheme
@@ -203,26 +209,89 @@ private:
   std::string timescheme; ///< Time scheme e.g. Newmark, Runge-Kutta, LDDRK
 };
 
+/**
+ * @brief Seismogram class is used to instantiate seismogram writer
+ *
+ */
 class seismogram {
 
 public:
+  /**
+   * @brief Construct a new seismogram object
+   *
+   * @param stations_file Path to stations file
+   * @param angle Angle of the station
+   * @param nstep_between_samples number of timesteps between seismogram
+   * sampling (seismogram sampling frequency)
+   * @param seismogram_type Type of seismogram
+   * @param output_folder Path to folder location where seismogram will be
+   * stored
+   */
   seismogram(const std::string stations_file, const type_real angle,
-             const int nstep_between_samples)
+             const int nstep_between_samples,
+             const std::string seismogram_format,
+             const std::string output_folder)
       : stations_file(stations_file), angle(angle),
-        nstep_between_samples(nstep_between_samples){};
+        nstep_between_samples(nstep_between_samples),
+        seismogram_format(seismogram_format), output_folder(output_folder){};
+  /**
+   * @brief Construct a new seismogram object
+   *
+   * @param Node YAML node describing the seismogram writer
+   */
   seismogram(const YAML::Node &Node);
+  /**
+   * @brief Get the path of stations file
+   *
+   * @return std::string describing the locations of stations file
+   */
   std::string get_stations_file() const { return this->stations_file; }
+  /**
+   * @brief Get the angle of the receiver
+   *
+   * @return type_real describing the angle of the receiver
+   */
   type_real get_angle() const { return this->angle; };
+  /**
+   * @brief Get the number of time steps between seismogram sampling
+   *
+   * @return int descibing seismogram sampling frequency
+   */
   int get_nstep_between_samples() const { return this->nstep_between_samples; }
+  /**
+   * @brief Get the types of seismogram requested
+   *
+   * @return std::vector<specfem::seismogram::type> vector seismogram types
+   */
   std::vector<specfem::seismogram::type> get_seismogram_types() const {
     return stypes;
   }
 
+  /**
+   * @brief Instantiate a seismogram writer object
+   *
+   * @param receivers Vector of pointers to receiver objects used to instantiate
+   * the writer
+   * @param compute_receivers Pointer to specfem::compute::receivers struct used
+   * to instantiate the writer
+   * @param dt Time interval between timesteps
+   * @param t0 Starting time of simulation
+   * @return specfem::writer::writer* Pointer to an instantiated writer object
+   */
+  specfem::writer::writer *instantiate_seismogram_writer(
+      std::vector<specfem::receivers::receiver *> &receivers,
+      specfem::compute::receivers *compute_receivers, const type_real dt,
+      const type_real t0) const;
+
 private:
-  std::string stations_file;
-  type_real angle;
-  int nstep_between_samples;
-  std::vector<specfem::seismogram::type> stypes;
+  std::string stations_file; ///< path to stations file
+  type_real angle;           ///< Angle of the receiver
+  int nstep_between_samples; ///< Seismogram sampling frequency
+  std::vector<specfem::seismogram::type> stypes; ///< std::vector containing
+                                                 ///< type of seismograms to be
+                                                 ///< written
+  std::string seismogram_format;                 ///< format of output file
+  std::string output_folder;                     ///< Path to output folder
 };
 
 /**
@@ -245,8 +314,7 @@ public:
   /**
    * @brief Construct a new run setup object
    *
-   * @param Node YAML node describing the run configuration as read from a
-   * specfem_config.yaml
+   * @param Node YAML node describing the run configuration
    */
   run_setup(const YAML::Node &Node);
 
@@ -274,8 +342,7 @@ public:
   /**
    * @brief Construct a new run setup object
    *
-   * @param Node YAML node describing the run configuration as read from a
-   * specfem_config.yaml
+   * @param Node YAML node describing the run configuration
    */
   database_configuration(const YAML::Node &Node);
 
@@ -289,7 +356,7 @@ private:
 };
 
 /**
- * Setup class is used to read the specfem_config.yaml parameter file.
+ * Setup class is used to read the YAML file parameter file.
  *
  * Setup class is also used to instantiate the simulation i.e. instantiate
  * quadrature objects, instantiate solver objects.
@@ -301,7 +368,7 @@ public:
   /**
    * @brief Construct a new setup object
    *
-   * @param parameter_file specfem_config.yaml parameter file
+   * @param parameter_file Path to a configuration YAML file
    */
   setup(std::string parameter_file);
   /**
@@ -353,18 +420,57 @@ public:
    */
   type_real get_dt() const { return solver->get_dt(); }
 
+  /**
+   * @brief Get the path to mesh database and source yaml file
+   *
+   * @return std::tuple<std::string, std::string> std::tuple specifying the path
+   * to mesh database and source yaml file
+   */
   std::tuple<std::string, std::string> get_databases() const {
     return databases->get_databases();
   }
 
+  /**
+   * @brief Get the path to stations file
+   *
+   * @return std::string path to stations file
+   */
   std::string get_stations_file() const {
     return seismogram->get_stations_file();
   }
 
+  /**
+   * @brief Get the angle of receivers
+   *
+   * @return type_real angle of the receiver
+   */
   type_real get_receiver_angle() const { return seismogram->get_angle(); }
 
+  /**
+   * @brief Get the types of siesmograms to be calculated
+   *
+   * @return std::vector<specfem::seismogram::type> Types of seismograms to be
+   * calculated
+   */
   std::vector<specfem::seismogram::type> get_seismogram_types() const {
     return this->seismogram->get_seismogram_types();
+  }
+
+  /**
+   * @brief Instantiate a seismogram writer object
+   *
+   * @param receivers Vector of pointers to receiver objects used to instantiate
+   * the writer
+   * @param compute_receivers Pointer to specfem::compute::receivers struct used
+   * to instantiate the writer
+   * @return specfem::writer::writer* Pointer to an instantiated writer object
+   */
+  specfem::writer::writer *instantiate_seismogram_writer(
+      std::vector<specfem::receivers::receiver *> &receivers,
+      specfem::compute::receivers *compute_receivers) const {
+    return this->seismogram->instantiate_seismogram_writer(
+        receivers, compute_receivers, this->solver->get_dt(),
+        this->solver->get_t0());
   }
 
 private:

@@ -221,6 +221,7 @@ void specfem::Domain::Elastic::compute_stiffness_interaction() {
           .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
       KOKKOS_CLASS_LAMBDA(
           const specfem::kokkos::DeviceTeam::member_type &team_member) {
+        // std::cout << team_member.league_rank() << std::endl;
         const int ispec = ispec_domain(team_member.league_rank());
 
         // Getting subviews for better readability
@@ -542,6 +543,8 @@ void specfem::Domain::Elastic::compute_source_interaction(
   return;
 }
 
+// Copy the values of relevant field at the spectral element where receiver lies
+// to a storage view (field)
 KOKKOS_FUNCTION
 void get_receiver_field_for_seismogram(
     const specfem::kokkos::DeviceTeam::member_type &team_member,
@@ -550,8 +553,8 @@ void get_receiver_field_for_seismogram(
     const specfem::kokkos::DeviceView2d<int> sv_ibool,
     const specfem::Domain::Domain *domain) {
 
-  const int ngllx = sv_ibool.extent(1);
-  const int ngllz = sv_ibool.extent(2);
+  const int ngllx = sv_ibool.extent(0);
+  const int ngllz = sv_ibool.extent(1);
   const int ngllxz = ngllx * ngllz;
   specfem::kokkos::DeviceView2d<type_real> copy_field;
 
@@ -566,12 +569,15 @@ void get_receiver_field_for_seismogram(
           const int iglob = sv_ibool(iz, ix);
 
           if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
-            field(0, iz, ix) = copy_field(iglob, 0);
-            field(1, iz, ix) = copy_field(iglob, 1);
+            type_real field_v0 = copy_field(iglob, 0);
+            field(0, iz, ix) = field_v0;
+            type_real field_v1 = copy_field(iglob, 1);
+            field(1, iz, ix) = field_v1;
           } else if (specfem::globals::simulation_wave == specfem::wave::sh) {
             field(0, iz, ix) = copy_field(iglob, 0);
           }
         });
+    break;
   // Get the velocity field
   case specfem::seismogram::velocity:
     copy_field = domain->get_field_dot();
@@ -582,12 +588,15 @@ void get_receiver_field_for_seismogram(
           const int iglob = sv_ibool(iz, ix);
 
           if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
-            field(0, iz, ix) = copy_field(iglob, 0);
-            field(1, iz, ix) = copy_field(iglob, 1);
+            type_real field_v0 = copy_field(iglob, 0);
+            field(0, iz, ix) = field_v0;
+            type_real field_v1 = copy_field(iglob, 1);
+            field(1, iz, ix) = field_v1;
           } else if (specfem::globals::simulation_wave == specfem::wave::sh) {
             field(0, iz, ix) = copy_field(iglob, 0);
           }
         });
+    break;
   // Get the acceleration field
   case specfem::seismogram::acceleration:
     copy_field = domain->get_field_dot_dot();
@@ -604,11 +613,13 @@ void get_receiver_field_for_seismogram(
             field(0, iz, ix) = copy_field(iglob, 0);
           }
         });
+    break;
   }
 
   return;
 }
 
+// Compute the seismogram using field view calculated using above function
 KOKKOS_FUNCTION
 void compute_receiver_seismogram(
     const specfem::kokkos::DeviceTeam::member_type &team_member,
@@ -635,8 +646,10 @@ void compute_receiver_seismogram(
           [=](const int xz, type_real &l_vx) {
             const int ix = xz % ngllz;
             const int iz = xz / ngllz;
+            const type_real hlagrange = sv_receiver_array(iz, ix, 0);
+            const type_real field_v = field(0, iz, ix);
 
-            l_vx = l_vx + field(0, iz, ix) * sv_receiver_array(iz, ix, 0);
+            l_vx += field_v * hlagrange;
           },
           vx);
       Kokkos::parallel_reduce(
@@ -644,8 +657,10 @@ void compute_receiver_seismogram(
           [=](const int xz, type_real &l_vz) {
             const int ix = xz % ngllz;
             const int iz = xz / ngllz;
+            const type_real hlagrange = sv_receiver_array(iz, ix, 0);
+            const type_real field_v = field(1, iz, ix);
 
-            l_vz = l_vz + field(1, iz, ix) * sv_receiver_array(iz, ix, 1);
+            l_vz += field_v * hlagrange;
           },
           vz);
     } else if (specfem::globals::simulation_wave == specfem::wave::sh) {
@@ -654,8 +669,10 @@ void compute_receiver_seismogram(
           [=](const int xz, type_real &l_vx) {
             const int ix = xz % ngllz;
             const int iz = xz / ngllz;
+            const type_real hlagrange = sv_receiver_array(iz, ix, 0);
+            const type_real field_v = field(0, iz, ix);
 
-            l_vx = l_vx + field(0, iz, ix) * sv_receiver_array(iz, ix, 0);
+            l_vx += field_v * hlagrange;
           },
           vx);
     }
@@ -669,6 +686,8 @@ void compute_receiver_seismogram(
         sv_seismogram(1) = 0;
       }
     });
+
+    break;
   } // switch(type)
 
   return;
@@ -677,7 +696,7 @@ void compute_receiver_seismogram(
 void specfem::Domain::Elastic::compute_seismogram(const int isig_step) {
 
   const auto seismogram_types = this->receivers->seismogram_types;
-  const int nsigtype = seismogram_types.extent(0); // Global variable
+  const int nsigtype = seismogram_types.extent(0);
   const int nreceivers = this->receivers->receiver_array.extent(0);
   const auto ispec_array = this->receivers->ispec_array;
   const auto ispec_type = this->material_properties->ispec_type;
@@ -686,16 +705,17 @@ void specfem::Domain::Elastic::compute_seismogram(const int isig_step) {
   const auto cos_recs = this->receivers->cos_recs;
   const auto sin_recs = this->receivers->sin_recs;
   auto field = this->receivers->field;
+  const type_real test_value = this->field_dot(57619, 1);
   auto seismogram = Kokkos::subview(this->receivers->seismogram, isig_step,
                                     Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
 
   Kokkos::parallel_for(
       "specfem::Domain::Elastic::compute_seismogram",
       specfem::kokkos::DeviceTeam(nsigtype * nreceivers, Kokkos::AUTO, 1),
-      KOKKOS_LAMBDA(
+      KOKKOS_CLASS_LAMBDA(
           const specfem::kokkos::DeviceTeam::member_type &team_member) {
-        const int isigtype = team_member.league_rank() / nsigtype;
-        const int irec = team_member.league_rank() % nsigtype;
+        const int isigtype = team_member.league_rank() / nreceivers;
+        const int irec = team_member.league_rank() % nreceivers;
         const int ispec = ispec_array(irec);
         if (ispec_type(ispec) == specfem::elements::elastic) {
 

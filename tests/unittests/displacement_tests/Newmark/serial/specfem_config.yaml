@@ -34,6 +34,7 @@ parameters:
       - displacement
       - velocity
     nstep_between_samples: 1
+    seismogram-format: ascii
 
   ## Runtime setup
   run-setup:
