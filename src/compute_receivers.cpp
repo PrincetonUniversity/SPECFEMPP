@@ -2,14 +2,14 @@
 #include "../include/globals.h"
 #include "../include/kokkos_abstractions.h"
 #include "../include/quadrature.h"
-#include "../include/source.h"
+#include "../include/receiver.h"
 #include "../include/specfem_mpi.h"
 #include <Kokkos_Core.hpp>
 #include <vector>
 
 specfem::compute::receivers::receivers(
-    std::vector<specfem::receivers::receiver *> receivers,
-    std::vector<specfem::seismogram::type> stypes,
+    const std::vector<specfem::receivers::receiver *> &receivers,
+    const std::vector<specfem::seismogram::type> &stypes,
     const specfem::quadrature::quadrature &quadx,
     const specfem::quadrature::quadrature &quadz, const type_real xmax,
     const type_real xmin, const type_real zmax, const type_real zmin,
@@ -90,6 +90,12 @@ void specfem::compute::receivers::sync_views() {
   Kokkos::deep_copy(cos_recs, h_cos_recs);
   Kokkos::deep_copy(sin_recs, h_sin_recs);
   Kokkos::deep_copy(seismogram_types, h_seismogram_types);
+
+  return;
+}
+
+void specfem::compute::receivers::sync_seismograms() {
+  Kokkos::deep_copy(h_seismogram, seismogram);
 
   return;
 }

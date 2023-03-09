@@ -1,6 +1,7 @@
 #include "../include/solver.h"
 #include "../include/domain.h"
 #include "../include/timescheme.h"
+#include "../include/writer.h"
 #include <Kokkos_Core.hpp>
 
 void specfem::solver::time_marching::run() {
@@ -9,9 +10,6 @@ void specfem::solver::time_marching::run() {
   specfem::Domain::Domain *domain = this->domain;
 
   const int nstep = it->get_max_timestep();
-
-  std::cout << "Excuting time loop\n"
-            << "----------------------------\n";
 
   while (it->status()) {
     int istep = it->get_timestep();
@@ -28,6 +26,9 @@ void specfem::solver::time_marching::run() {
     domain->divide_mass_matrix();
 
     it->apply_corrector_phase(domain);
+
+    const auto copy_field = domain->get_field_dot();
+    const type_real test_v = copy_field(57620, 1);
     if (it->compute_seismogram()) {
       int isig_step = it->get_seismogram_step();
       domain->compute_seismogram(isig_step);
@@ -44,6 +45,8 @@ void specfem::solver::time_marching::run() {
 
     it->increment_time();
   }
+
+  std::cout << std::endl;
 
   return;
 }

@@ -350,7 +350,12 @@ private:
   specfem::kokkos::DeviceView1d<int> ispec_domain; ///< Array containing global
                                                    ///< indices(ispec) of all
                                                    ///< elements in this domain
-  specfem::kokkos::HostMirror1d<int> h_ispec_domain;
+                                                   ///< on the device
+  specfem::kokkos::HostMirror1d<int> h_ispec_domain; ///< Array containing
+                                                     ///< global indices(ispec)
+                                                     ///< of all elements in
+                                                     ///< this domain on the
+                                                     ///< host
 };
 } // namespace Domain
 } // namespace specfem

@@ -197,6 +197,7 @@ target_link_libraries(
   compare_arrays
   domain
   source_reader
+  writer
   -lpthread -lm
 )
 
@@ -221,6 +222,7 @@ target_link_libraries(
   source_reader
   timescheme
   solver
+  writer
   -lpthread -lm
 )
 

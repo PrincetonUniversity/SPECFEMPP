@@ -290,18 +290,6 @@ target_link_libraries(
 )
 
 add_library(
-        parameter_reader
-        src/parameter_parser.cpp
-)
-
-target_link_libraries(
-        parameter_reader
-        quadrature
-        timescheme
-        yaml-cpp
-)
-
-add_library(
         source_reader
         src/read_sources.cpp
 )
@@ -358,6 +346,17 @@ target_link_libraries(
 )
 
 add_library(
+        writer
+        src/writer.cpp
+)
+
+target_link_libraries(
+        writer
+        compute
+        receiver_class
+)
+
+add_library(
         solver
         src/solver.cpp
 )
@@ -366,6 +365,21 @@ target_link_libraries(
         solver
         domain
         timescheme
+        writer
+)
+
+add_library(
+        parameter_reader
+        src/parameter_parser.cpp
+)
+
+target_link_libraries(
+        parameter_reader
+        quadrature
+        timescheme
+        receiver_class
+        yaml-cpp
+        Boost::filesystem
 )
 
 add_executable(
@@ -384,13 +398,13 @@ target_link_libraries(
         quadrature
         compute
         source_class
-        receiver_class
         source_reader
         parameter_reader
         domain
         solver
         utilities
         receiver_class
+        writer
         Boost::program_options
 )
 

@@ -1,6 +1,8 @@
 #include "../include/parameter_parser.h"
 #include "../include/globals.h"
+#include "../include/writer.h"
 #include "yaml-cpp/yaml.h"
+#include <boost/filesystem.hpp>
 #include <chrono>
 #include <ctime>
 #include <ostream>
@@ -45,10 +47,27 @@ specfem::runtime_configuration::header::header(const YAML::Node &Node) {
 specfem::runtime_configuration::seismogram::seismogram(
     const YAML::Node &seismogram) {
 
+  boost::filesystem::path cwd = boost::filesystem::current_path();
+  std::string output_folder = cwd.string();
+  if (seismogram["output-folder"]) {
+    output_folder = seismogram["output-folder"].as<std::string>();
+  }
+
+  if (!boost::filesystem::is_directory(
+          boost::filesystem::path(output_folder))) {
+    std::ostringstream message;
+    message << "Output folder : " << output_folder << " does not exist.";
+    throw std::runtime_error(message.str());
+  }
+
+  const int nstep_between_samples =
+      seismogram["nstep_between_samples"].as<int>();
+
   *this = specfem::runtime_configuration::seismogram(
       seismogram["stations-file"].as<std::string>(),
       seismogram["angle"].as<type_real>(),
-      seismogram["nstep_between_samples"].as<int>());
+      seismogram["nstep_between_samples"].as<int>(),
+      seismogram["seismogram-format"].as<std::string>(), output_folder);
 
   // Allocate seismogram types
   assert(seismogram["seismogram-type"].IsSequence());
@@ -66,6 +85,27 @@ specfem::runtime_configuration::seismogram::seismogram(
   }
 
   return;
+}
+
+specfem::writer::writer *
+specfem::runtime_configuration::seismogram::instantiate_seismogram_writer(
+    std::vector<specfem::receivers::receiver *> &receivers,
+    specfem::compute::receivers *compute_receivers, const type_real dt,
+    const type_real t0) const {
+
+  specfem::seismogram::format::type type;
+  if (this->seismogram_format == "seismic_unix" ||
+      this->seismogram_format == "su") {
+    type = specfem::seismogram::format::seismic_unix;
+  } else if (this->seismogram_format == "ascii") {
+    type = specfem::seismogram::format::ascii;
+  }
+
+  specfem::writer::writer *writer = new specfem::writer::seismogram(
+      receivers, compute_receivers, type, this->output_folder, dt, t0,
+      this->nstep_between_samples);
+
+  return writer;
 }
 
 specfem::runtime_configuration::time_marching::time_marching(

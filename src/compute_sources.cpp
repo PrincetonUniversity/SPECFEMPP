@@ -7,7 +7,7 @@
 #include <vector>
 
 specfem::compute::sources::sources(
-    std::vector<specfem::sources::source *> sources,
+    const std::vector<specfem::sources::source *> &sources,
     const specfem::quadrature::quadrature &quadx,
     const specfem::quadrature::quadrature &quadz, const type_real xmax,
     const type_real xmin, const type_real zmax, const type_real zmin,
