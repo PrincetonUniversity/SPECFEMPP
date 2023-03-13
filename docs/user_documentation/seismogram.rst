@@ -5,8 +5,8 @@ On successful completion of the SPECFEM2D run a seismogram will be written to th
 
 .. _stations_file:
 
-Definition of STATIONS file
-----------------------------
+STATIONS file
+-------------
 
 STATIONS file is tab delimited text file, where every line describes the location of station. Every station location is defined using 6 tab delimited values. For example,
 

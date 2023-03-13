@@ -1,9 +1,7 @@
 Setting up the solver
 =====================
 
-To configure the simulation we use a configuration file written in `YAML <https://yaml.org>`. Thus you can use all the
-functionality of YAML - some that might be useful in your workflow are multi line strings, value substitution using
-scripts.
+To configure the simulation we use a configuration file written in `YAML <https://yaml.org>`. Thus you can use all the functionality of YAML - some that might be useful in your workflow are multi line strings, value substitution using scripts.
 
 Please read :ref:`parameter_documentation` for more details on paramer file documentation.
 
