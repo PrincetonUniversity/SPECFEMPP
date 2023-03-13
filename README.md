@@ -28,14 +28,17 @@ Table below shows various features available and tested in this package on vario
 ----------------------|------------:|-----------:|------:|-----|
 | **Physics**                                                  |
 | P-SV waves          | X           | X           | X    |     |
-| SH waves            |             |             |      |     |
 | Elastic Domains     | X           | X           | X    |     |
 | **Simulation Setup**                                         |
 | Forward Simulations | X           | X           | X    |     |
 | **Time Schemes**                                             |
 | Newmark             | X           | X           | X    |     |
 | **Seismograms**                                              |
-|                     |             |             |      |     |
+| Displacement        | X           | X           | X     |    |
+| Velocity            | X           | X           | X     |    |
+| Acceleration        | X           | X           | X     |    |
+| **Seismogram format**                                        |
+| ASCII               | X           | X           | X     |    |
 
 ## Running SPECFEM2D Kokkos
 

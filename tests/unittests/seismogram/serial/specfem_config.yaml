@@ -2,13 +2,11 @@ parameters:
 
   header:
     ## Header information is used for logging. It is good practice to give your simulations explicit names
-    title: Isotropic Elastic simulation # name for your simulation
+    title: Seismogram Test # name for your simulation
     # A detailed description for your simulation
-    description: |
-      Material systems : Elastic domain (1)
-      Interfaces : None
-      Sources : Force source (1)
-      Boundary conditions : Neumann BCs on all edges
+    description: >
+        This test does not iterate the solver.
+        It just interpolates a given field at specified stations.
 
   simulation-setup:
     ## quadrature setup
@@ -24,15 +22,16 @@ parameters:
         type-of-simulation: forward
         time-scheme:
           type: Newmark
-          dt: 1.1e-3
+          dt: 1.1e-5
           nstep: 100
 
   seismogram:
-    stations-file: "../DATA/STATIONS"
+    stations-file: "../../../tests/unittests/seismogram/serial/STATIONS"
     angle: 0.0
     seismogram-type:
       - displacement
       - velocity
+      - acceleration
     nstep_between_samples: 1
     seismogram-format: ascii
 
@@ -43,5 +42,5 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "../../../tests/unittests/displacement_tests/Newmark/serial/Database00000.bin"
-    source-file: "../../../tests/unittests/displacement_tests/Newmark/serial/sources.yaml"
+    mesh-database: "../../../tests/unittests/seismogram/serial/database.bin"
+    source-file: "dummy-source.yaml"

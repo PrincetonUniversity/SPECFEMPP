@@ -276,15 +276,17 @@ target_link_libraries(
 )
 
 add_library(
-        parameter_reader
-        src/parameter_parser.cpp
+        receiver_class
+        src/receiver.cpp
 )
 
 target_link_libraries(
-        parameter_reader
+        receiver_class
+        specfem_mpi
+        Kokkos::kokkos
+        utilities
         quadrature
-        timescheme
-        yaml-cpp
+        lagrange
 )
 
 add_library(
@@ -295,8 +297,10 @@ add_library(
 target_link_libraries(
         source_reader
         source_class
+        receiver_class
         yaml-cpp
         utilities
+        Boost::system
 )
 
 add_library(
@@ -305,6 +309,7 @@ add_library(
         src/compute_partial_derivatives.cpp
         src/compute_properties.cpp
         src/compute_sources.cpp
+        src/compute_receivers.cpp
 )
 
 target_link_libraries(
@@ -314,6 +319,7 @@ target_link_libraries(
         source_class
         jacobian
         shape_functions
+        receiver_class
         Kokkos::kokkos
 )
 
@@ -340,6 +346,17 @@ target_link_libraries(
 )
 
 add_library(
+        writer
+        src/writer.cpp
+)
+
+target_link_libraries(
+        writer
+        compute
+        receiver_class
+)
+
+add_library(
         solver
         src/solver.cpp
 )
@@ -348,6 +365,21 @@ target_link_libraries(
         solver
         domain
         timescheme
+        writer
+)
+
+add_library(
+        parameter_reader
+        src/parameter_parser.cpp
+)
+
+target_link_libraries(
+        parameter_reader
+        quadrature
+        timescheme
+        receiver_class
+        yaml-cpp
+        Boost::filesystem
 )
 
 add_executable(
@@ -371,6 +403,8 @@ target_link_libraries(
         domain
         solver
         utilities
+        receiver_class
+        writer
         Boost::program_options
 )
 

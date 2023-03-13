@@ -124,6 +124,13 @@ public:
    * @param kind defines sync direction i.e. DeviceToHost or HostToDevice
    */
   virtual void sync_rmass_inverse(specfem::sync::kind kind){};
+  /**
+   * @brief Compute seismograms at for all receivers at isig_step
+   *
+   * @param seismogram_types DeviceView of types of seismograms to be calculated
+   * @param isig_step timestep for seismogram calculation
+   */
+  virtual void compute_seismogram(const int isig_step){};
 
 private:
   specfem::kokkos::DeviceView2d<type_real> field;   ///< View of field on Device
@@ -229,12 +236,25 @@ public:
   /**
    * @brief Construct a new Elastic domain object
    *
+   * This contructor helps in instantiating fields. Without instantiating any
+   * material or mesh related private fields
+   *
    * @param ndim Number of dimensions
-   * @param nglob Total number of distinct quadrature points inside the domain
+   * @param nglob Total number of distinct quadrature points
+   */
+  Elastic(const int ndim, const int nglob);
+
+  /**
+   * @brief Construct a new Elastic domain object
+   *
+   * @param ndim Number of dimensions
+   * @param nglob Total number of distinct quadrature points inside the
+   * domain
    * @param compute Pointer to specfem::compute::compute struct
-   * @param material_properties Pointer to specfem::compute::properties struct
-   * @param partial_derivatives Pointer to specfem::compute::partial_derivatives
+   * @param material_properties Pointer to specfem::compute::properties
    * struct
+   * @param partial_derivatives Pointer to
+   * specfem::compute::partial_derivatives struct
    * @param sources Pointer to specfem::compute::sources struct
    * @param quadx Pointer to quadrature object in x-dimension
    * @param quadx Pointer to quadrature object in z-dimension
@@ -242,8 +262,10 @@ public:
   Elastic(const int ndim, const int nglob, specfem::compute::compute *compute,
           specfem::compute::properties *material_properties,
           specfem::compute::partial_derivatives *partial_derivatives,
-          specfem::compute::sources *sources, quadrature::quadrature *quadx,
-          quadrature::quadrature *quadz);
+          specfem::compute::sources *sources,
+          specfem::compute::receivers *receivers,
+          specfem::quadrature::quadrature *quadx,
+          specfem::quadrature::quadrature *quadz);
   /**
    * @brief Compute interaction of stiffness matrix on acceleration
    *
@@ -291,6 +313,13 @@ public:
    */
   KOKKOS_IMPL_HOST_FUNCTION
   void assign_views();
+  /**
+   * @brief Compute seismograms at for all receivers at isig_step
+   *
+   * @param seismogram_types DeviceView of types of seismograms to be calculated
+   * @param isig_step timestep for seismogram calculation
+   */
+  void compute_seismogram(const int isig_step) override;
 
 private:
   specfem::kokkos::DeviceView2d<type_real> field;   ///< View of field on Device
@@ -317,17 +346,29 @@ private:
   specfem::compute::properties *material_properties; ///< Pointer to struct used
                                                      ///< to store material
                                                      ///< properties
-  specfem::compute::partial_derivatives *partial_derivatives;
-  specfem::compute::sources *sources;
-  quadrature::quadrature *quadx; ///< Pointer to quadrature object in
-                                 ///< x-dimension
-  quadrature::quadrature *quadz; ///< Pointer to quadrature object in
-                                 ///< z-dimension
-  int nelem_domain;              ///< Total number of elements in this domain
+  specfem::compute::partial_derivatives *partial_derivatives; ///< Pointer to
+                                                              ///< struct used
+                                                              ///< to store
+                                                              ///< partial
+                                                              ///< derivates
+  specfem::compute::sources *sources;     ///< Pointer to struct used to store
+                                          ///< sources
+  specfem::compute::receivers *receivers; ///< Pointer to struct used to store
+                                          ///< receivers
+  quadrature::quadrature *quadx;          ///< Pointer to quadrature object in
+                                          ///< x-dimension
+  quadrature::quadrature *quadz;          ///< Pointer to quadrature object in
+                                          ///< z-dimension
+  int nelem_domain; ///< Total number of elements in this domain
   specfem::kokkos::DeviceView1d<int> ispec_domain; ///< Array containing global
                                                    ///< indices(ispec) of all
                                                    ///< elements in this domain
-  specfem::kokkos::HostMirror1d<int> h_ispec_domain;
+                                                   ///< on the device
+  specfem::kokkos::HostMirror1d<int> h_ispec_domain; ///< Array containing
+                                                     ///< global indices(ispec)
+                                                     ///< of all elements in
+                                                     ///< this domain on the
+                                                     ///< host
 };
 } // namespace Domain
 } // namespace specfem

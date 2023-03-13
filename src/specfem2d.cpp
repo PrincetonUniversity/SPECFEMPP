@@ -8,6 +8,7 @@
 #include "../include/params.h"
 #include "../include/read_mesh_database.h"
 #include "../include/read_sources.h"
+#include "../include/receiver.h"
 #include "../include/solver.h"
 #include "../include/source.h"
 #include "../include/specfem_mpi.h"
@@ -80,14 +81,13 @@ int parse_args(int argc, char **argv,
 void execute(const std::string parameter_file, specfem::MPI::MPI *mpi) {
 
   // log start time
-  auto now = std::chrono::high_resolution_clock::now();
+  auto start_time = std::chrono::high_resolution_clock::now();
 
   specfem::runtime_configuration::setup setup(parameter_file);
   const auto [database_filename, source_filename] = setup.get_databases();
+  const auto stations_filename = setup.get_stations_file();
 
-  mpi->cout(setup.print_header(now));
-
-  // database_config database_config = get_node_config(database_file, mpi);
+  mpi->cout(setup.print_header(start_time));
 
   // Set up GLL quadrature points
   auto [gllx, gllz] = setup.instantiate_quadrature();
@@ -101,6 +101,8 @@ void execute(const std::string parameter_file, specfem::MPI::MPI *mpi) {
   //    source frequencies and time shift
   auto [sources, t0] =
       specfem::read_sources(source_filename, setup.get_dt(), mpi);
+  const auto angle = setup.get_receiver_angle();
+  auto receivers = specfem::read_receivers(stations_filename, angle);
 
   // Generate compute structs to be used by the solver
   specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
@@ -121,14 +123,30 @@ void execute(const std::string parameter_file, specfem::MPI::MPI *mpi) {
                    mesh.material_ind.knods, mesh.npgeo,
                    material_properties.h_ispec_type, mpi);
 
+  for (auto &receiver : receivers)
+    receiver->locate(compute.coordinates.coord, compute.h_ibool, gllx.get_hxi(),
+                     gllz.get_hxi(), mesh.nproc, mesh.coorg,
+                     mesh.material_ind.knods, mesh.npgeo,
+                     material_properties.h_ispec_type, mpi);
+
   mpi->cout("Source Information:");
   mpi->cout("-------------------------------");
   if (mpi->main_proc()) {
-    std::cout << "Number of sources :" << sources.size() << "\n\n";
+    std::cout << "Number of sources : " << sources.size() << "\n\n";
   }
 
   for (auto &source : sources) {
     mpi->cout(source->print());
+  }
+
+  mpi->cout("Receiver Information:");
+  mpi->cout("-------------------------------");
+  if (mpi->main_proc()) {
+    std::cout << "Number of receivers : " << receivers.size() << "\n\n";
+  }
+
+  for (auto &receiver : receivers) {
+    mpi->cout(receiver->print());
   }
 
   // Update solver intialization time
@@ -138,20 +156,64 @@ void execute(const std::string parameter_file, specfem::MPI::MPI *mpi) {
   auto it = setup.instantiate_solver();
 
   // Setup solver compute struct
-  specfem::compute::sources compute_sources(sources, gllx, gllz, mpi);
+
+  const type_real xmax = compute.coordinates.xmax;
+  const type_real xmin = compute.coordinates.xmin;
+  const type_real zmax = compute.coordinates.zmax;
+  const type_real zmin = compute.coordinates.zmin;
+
+  specfem::compute::sources compute_sources(sources, gllx, gllz, xmax, xmin,
+                                            zmax, zmin, mpi);
+
+  specfem::compute::receivers compute_receivers(
+      receivers, setup.get_seismogram_types(), gllx, gllz, xmax, xmin, zmax,
+      zmin, it->get_max_seismogram_step(), mpi);
 
   // Instantiate domain classes
   const int nglob = specfem::utilities::compute_nglob(compute.h_ibool);
   specfem::Domain::Domain *domains = new specfem::Domain::Elastic(
       ndim, nglob, &compute, &material_properties, &partial_derivatives,
-      &compute_sources, &gllx, &gllz);
+      &compute_sources, &compute_receivers, &gllx, &gllz);
+
+  auto writer =
+      setup.instantiate_seismogram_writer(receivers, &compute_receivers);
 
   specfem::solver::solver *solver =
       new specfem::solver::time_marching(domains, it);
 
+  mpi->cout("Executing time loop:");
+  mpi->cout("-------------------------------");
+
   solver->run();
 
-  mpi->cout(print_end_message(now));
+  mpi->cout("Writing seismogram files:");
+  mpi->cout("-------------------------------");
+
+  writer->write();
+
+  mpi->cout("Cleaning up:");
+  mpi->cout("-------------------------------");
+
+  for (auto &material : materials) {
+    delete material;
+  }
+
+  for (auto &source : sources) {
+    delete source;
+  }
+
+  for (auto &receiver : receivers) {
+    delete receiver;
+  }
+
+  delete it;
+  delete domains;
+  delete solver;
+  delete writer;
+
+  mpi->cout(print_end_message(start_time));
+
+  return;
 }
 
 int main(int argc, char **argv) {

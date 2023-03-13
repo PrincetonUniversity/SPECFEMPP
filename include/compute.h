@@ -4,6 +4,7 @@
 #include "../include/kokkos_abstractions.h"
 #include "../include/material.h"
 #include "../include/quadrature.h"
+#include "../include/receiver.h"
 #include "../include/source.h"
 #include <Kokkos_Core.hpp>
 #include <vector>
@@ -115,10 +116,12 @@ struct properties {
   specfem::kokkos::HostMirror3d<type_real> h_lambdaplus2mu;
   ///@}
   // element type is defined in config.h
-  specfem::kokkos::DeviceView1d<element_type> ispec_type; ///< type of element
-                                                          ///< stored on device
-  specfem::kokkos::HostMirror1d<element_type> h_ispec_type; ///< type of element
-                                                            ///< stored on host
+  specfem::kokkos::DeviceView1d<specfem::elements::type>
+      ispec_type; ///< type of element
+                  ///< stored on device
+  specfem::kokkos::HostMirror1d<specfem::elements::type>
+      h_ispec_type; ///< type of element
+                    ///< stored on host
 
   /**
    * @brief Default constructor
@@ -154,8 +157,8 @@ struct properties {
 };
 
 /**
- * @brief This struct is used to store arrays required to impose source during
- * the time loop
+ * @brief This struct is used to store arrays required to impose source
+ * interaction during the time loop
  *
  * @note Does not implement moving sources yet
  *
@@ -196,9 +199,11 @@ struct sources {
    * @param quadz Quadrature object in z dimension
    * @param mpi Pointer to the MPI object
    */
-  sources(std::vector<specfem::sources::source *> sources,
-          specfem::quadrature::quadrature &quadx,
-          specfem::quadrature::quadrature &quadz, specfem::MPI::MPI *mpi);
+  sources(const std::vector<specfem::sources::source *> &sources,
+          const specfem::quadrature::quadrature &quadx,
+          const specfem::quadrature::quadrature &quadz, const type_real xmax,
+          const type_real xmin, const type_real zmax, const type_real zmin,
+          specfem::MPI::MPI *mpi);
   /**
    * @brief Helper routine to sync views within this struct
    *
@@ -206,41 +211,97 @@ struct sources {
   void sync_views();
 };
 
-// /**
-//  * @brief This struct is used to store arrays required to impose adjoint
-//  sources (at reciever locations) during
-//  * the time loop
-//  *
-//  * @note Does not implement moving sources yet
-//  *
-//  */
-// struct recievers {
-//   specfem::HostView4d<type_real> reciever_array; ///< Array to store lagrange
-//                                                ///< interpolants for sources.
-//                                                ///< These arrays are used to
-//                                                ///< impose reciever effects
-//                                                at end
-//                                                ///< of every time-step.
-//   spefecm::HostView2d<type_real> stf_array; //< Value of source-time function
-//   at
-//                                             ///< every time step
-//   /**
-//    * @brief Default constructor
-//    *
-//    */
-//   recievers(){};
-//   /**
-//    * @brief Constructor to allocate and assign views
-//    *
-//    * @param recievers Pointer to recievers objects read from sources file
-//    * @param quadx Quarature object in x dimension
-//    * @param quadz Quadrature object in z dimension
-//    * @param mpi Pointer to the MPI object
-//    */
-//   recievers(std::vector<specfem::sources::source *> recievers,
-//           specfem::quadrature::quadrature &quadx,
-//           specfem::quadrature::quadrature &quadz, specfem::MPI::MPI *mpi);
-// }
+/**
+ * @brief This struct is used to store receiver arrays required to interpolate
+ * fields during seismogram calculations
+ *
+ */
+struct receivers {
+  specfem::kokkos::DeviceView4d<type_real> receiver_array; ///< Array to store
+                                                           ///< lagrange
+                                                           ///< interpolants for
+                                                           ///< receivers on the
+                                                           ///< device
+  specfem::kokkos::HostMirror4d<type_real> h_receiver_array; ///< Array to store
+                                                             ///< lagrange
+                                                             ///< interpolants
+                                                             ///< for sources
+                                                             ///< stored on host
+  specfem::kokkos::DeviceView1d<int> ispec_array;   ///< Spectral element number
+                                                    ///< where the source lies
+                                                    ///< stored on device
+  specfem::kokkos::HostMirror1d<int> h_ispec_array; ///< Spectral element number
+                                                    ///< where the source lies
+                                                    ///< stored on host
+  specfem::kokkos::DeviceView1d<type_real> cos_recs; ///< consine of angle used
+                                                     ///< to rotate receiver
+                                                     ///< components stored on
+                                                     ///< device
+  specfem::kokkos::HostMirror1d<type_real> h_cos_recs; ///< consine of angle
+                                                       ///< used to rotate
+                                                       ///< receiver components
+                                                       ///< stored on host
+  specfem::kokkos::DeviceView1d<type_real> sin_recs; ///< sine of angle used to
+                                                     ///< rotate receiver
+                                                     ///< components stored on
+                                                     ///< device
+  specfem::kokkos::HostMirror1d<type_real> h_sin_recs; ///< sine of angle used
+                                                       ///< to rotate receiver
+                                                       ///< components stored on
+                                                       ///< host
+  specfem::kokkos::DeviceView5d<type_real> field;      ///< Container to store
+                                                  ///< spectral element field
+                                                  ///< used in computing
+                                                  ///< seismograms stored on the
+                                                  ///< device
+  specfem::kokkos::DeviceView4d<type_real> seismogram; ///< Container to store
+                                                       ///< computed seismograms
+                                                       ///< stored on the device
+  specfem::kokkos::HostMirror4d<type_real> h_seismogram; ///< Container to store
+                                                         ///< computed
+                                                         ///< seismograms stored
+                                                         ///< on the device
+  specfem::kokkos::DeviceView1d<specfem::seismogram::type>
+      seismogram_types; ///< Types of seismograms to be calculated stored on the
+                        ///< device
+  specfem::kokkos::HostMirror1d<specfem::seismogram::type>
+      h_seismogram_types; ///< Types of seismograms to be calculated stored on
+                          ///< the host
+
+  /**
+   * @brief Default constructor
+   *
+   */
+  receivers(){};
+  /**
+   * @brief Constructor to allocate and assign views
+   *
+   * @param receivers Pointer to receivers objects read from sources file
+   * @param stypes Types of seismograms to be written
+   * @param quadx Quarature object in x dimension
+   * @param quadz Quadrature object in z dimension
+   * @param mpi Pointer to the MPI object
+   */
+  receivers(const std::vector<specfem::receivers::receiver *> &receivers,
+            const std::vector<specfem::seismogram::type> &stypes,
+            const specfem::quadrature::quadrature &quadx,
+            const specfem::quadrature::quadrature &quadz, const type_real xmax,
+            const type_real xmin, const type_real zmax, const type_real zmin,
+            const int max_sig_step, specfem::MPI::MPI *mpi);
+  /**
+   * @brief Sync views within this struct from host to device
+   *
+   * Sync views after they have been initialized on the host
+   *
+   */
+  void sync_views();
+
+  /**
+   * @brief Sync calculated seismogram from device to the host
+   *
+   */
+  void sync_seismograms();
+};
 
 struct coordinates {
 

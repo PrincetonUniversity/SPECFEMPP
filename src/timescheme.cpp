@@ -2,11 +2,14 @@
 #include "../include/config.h"
 #include <ostream>
 
-specfem::TimeScheme::Newmark::Newmark(int nstep, type_real t0, type_real dt)
+specfem::TimeScheme::Newmark::Newmark(const int nstep, const type_real t0,
+                                      const type_real dt,
+                                      const int nstep_between_samples)
     : nstep(nstep), t0(t0), deltat(dt) {
   this->deltatover2 = dt / 2.0;
   this->deltatsquareover2 = deltatover2 * dt;
   this->current_time = this->t0;
+  this->nstep_between_samples = nstep_between_samples;
 }
 
 void specfem::TimeScheme::Newmark::increment_time() {

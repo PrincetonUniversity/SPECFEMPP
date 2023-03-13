@@ -8,5 +8,5 @@ sources:
       vx : 0.0
       vz : 0.0
       Dirac:
-        factor: 1.0
+        factor: 1e10
         tshift: 0.0

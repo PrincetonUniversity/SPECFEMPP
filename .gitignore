@@ -9,3 +9,4 @@ firebase*.yml
 debug.sh
 output.log
 run.sh
+results/

@@ -43,17 +43,24 @@ public:
    *
    */
   virtual void reset_time(){};
-  // virtual void update_fields(specfem::Domain::Domain *domain_class){};
   /**
    * @brief Get the max timestep (nstep) of the simuation
    *
    * @return int max timestep
    */
   virtual int get_max_timestep() { return 0; }
-
+  /**
+   * @brief Apply predictor phase of the timescheme
+   *
+   * @param domain_class Pointer to domain class to apply predictor phase
+   */
   virtual void
   apply_predictor_phase(const specfem::Domain::Domain *domain_class){};
-
+  /**
+   * @brief Apply corrector phase of the timescheme
+   *
+   * @param domain_class Pointer to domain class to apply corrector phase
+   */
   virtual void
   apply_corrector_phase(const specfem::Domain::Domain *domain_class){};
 
@@ -62,6 +69,28 @@ public:
    * @brief Log timescheme information to console
    */
   virtual void print(std::ostream &out) const;
+  /**
+   * @brief Compute if seismogram needs to be calculated at this timestep
+   *
+   */
+  virtual bool compute_seismogram() const { return false; }
+  /**
+   * @brief Get the current seismogram step
+   *
+   * @return int value of the current seismogram step
+   */
+  virtual int get_seismogram_step() const { return 0; }
+  /**
+   * @brief Get the max seismogram step
+   *
+   * @return int maximum value of seismogram step
+   */
+  virtual int get_max_seismogram_step() const { return 0; }
+  /**
+   * @brief increment seismogram step
+   *
+   */
+  virtual void increment_seismogram_step(){};
 };
 
 /**
@@ -78,7 +107,8 @@ public:
    * @param t0 Simulation start time
    * @param dt delta for the newmark timescheme
    */
-  Newmark(int nstep, type_real t0, type_real dt);
+  Newmark(const int nstep, const type_real t0, const type_real dt,
+          const int nstep_between_samples);
   /**
    * @brief Return the status of simulation
    *
@@ -115,12 +145,55 @@ public:
    * @return int max timestep
    */
   int get_max_timestep() override { return this->nstep; }
+  /**
+   * @brief Apply predictor phase of the timescheme
+   *
+   * @param domain_class Pointer to domain class to apply predictor phase
+   */
   void
   apply_predictor_phase(const specfem::Domain::Domain *domain_class) override;
+  /**
+   * @brief Apply corrector phase of the timescheme
+   *
+   * @param domain_class Pointer to domain class to apply corrector phase
+   */
   void
   apply_corrector_phase(const specfem::Domain::Domain *domain_class) override;
   /**
-   * @brief Log timescheme information to console
+   * @brief
+   *
+   * @return true
+   * @return false
+  /**
+   * @brief Compute if seismogram needs to be calculated at this timestep
+   *
+   */
+  bool compute_seismogram() const override {
+    return (this->istep % nstep_between_samples == 0);
+  };
+  /**
+   * @brief Get the current seismogram step
+   *
+   * @return int value of the current seismogram step
+   */
+  int get_seismogram_step() const override { return isig_step; }
+  /**
+   * @brief Get the max seismogram step
+   *
+   * @return int maximum value of seismogram step
+   */
+  virtual int get_max_seismogram_step() const override {
+    return nstep / nstep_between_samples;
+  }
+  /**
+   * @brief Increment seismogram step
+   *
+   */
+  void increment_seismogram_step() override { isig_step++; }
+
+  /**
+   * @brief
+   *
    */
   void print(std::ostream &out) const override;
 
@@ -132,6 +205,9 @@ private:
   type_real deltatsquareover2; ///< \f$ \delta t^2 / 2 \f$
   int nstep;                   ///< Maximum value of timestep
   type_real t0;                ///< Simultion start time in seconds
+  int nstep_between_samples;   ///< Number of time steps between seismogram
+                               ///< outputs
+  int isig_step = 0;           ///< current seismogram step
 };
 
 std::ostream &operator<<(std::ostream &out,
