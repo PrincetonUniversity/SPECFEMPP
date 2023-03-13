@@ -22,7 +22,7 @@ Parameter definitions
 
 **possible values** : [float, double]
 
-**documentation** : Alpha value of the quadrature.
+**documentation** : Alpha value of the Gauss-Jacobi quadrature. For GLL quadrature alpha = 0.0
 
 **Parameter Name** : ``quadrature.beta``
 **************************************
@@ -31,7 +31,7 @@ Parameter definitions
 
 **possible values** : [float, double]
 
-**documentation** : Beta value of the quadrature.
+**documentation** : Beta value of the Gauss-Jacobi quadrature. For GLL quadrature beta = 0.0, and for GLJ quadrature beta = 1.0
 
 **Parameter Name** : ``quadrature.ngllx``
 ***************************************
@@ -50,6 +50,18 @@ Parameter definitions
 **possible values** : [int]
 
 **documentation** : Number of GLL points in Z-dimension
+
+.. note::
+
+    Below is example of 4th order GLL quadrature:
+
+    .. code:: yaml
+
+        quadrature:
+            alpha: 0.0
+            beta: 0.0
+            ngllx: 5
+            ngllz: 5
 
 **Parameter Name** : ``solver``
 -------------------------------
