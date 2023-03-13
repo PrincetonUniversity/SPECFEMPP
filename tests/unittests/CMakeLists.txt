@@ -222,6 +222,26 @@ target_link_libraries(
   source_reader
   timescheme
   solver
+  -lpthread -lm
+)
+
+add_executable(
+  seismogram_tests
+  seismogram/seismogram_tests.cpp
+)
+
+target_link_libraries(
+  seismogram_tests
+  quadrature
+  mesh
+  yaml-cpp
+  kokkos_environment
+  mpi_environment
+  compute
+  parameter_reader
+  utilities
+  domain
+  source_reader
   writer
   -lpthread -lm
 )
@@ -239,4 +259,5 @@ if (NOT MPI_PARALLEL)
   gtest_discover_tests(source_location_tests)
   gtest_discover_tests(rmass_inverse_tests)
   gtest_discover_tests(newmark_tests)
+  gtest_discover_tests(seismogram_tests)
 endif(NOT MPI_PARALLEL)

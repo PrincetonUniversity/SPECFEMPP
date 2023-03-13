@@ -8,6 +8,24 @@
 #include <Kokkos_Core.hpp>
 #include <Kokkos_ScatterView.hpp>
 
+specfem::Domain::Elastic::Elastic(const int ndim, const int nglob)
+    : field(specfem::kokkos::DeviceView2d<type_real>(
+          "specfem::Domain::Elastic::field", nglob, ndim)),
+      field_dot(specfem::kokkos::DeviceView2d<type_real>(
+          "specfem::Domain::Elastic::field_dot", nglob, ndim)),
+      field_dot_dot(specfem::kokkos::DeviceView2d<type_real>(
+          "specfem::Domain::Elastic::field_dot_dot", nglob, ndim)),
+      rmass_inverse(specfem::kokkos::DeviceView2d<type_real>(
+          "specfem::Domain::Elastic::rmass_inverse", nglob, ndim)) {
+
+  this->h_field = Kokkos::create_mirror_view(this->field);
+  this->h_field_dot = Kokkos::create_mirror_view(this->field_dot);
+  this->h_field_dot_dot = Kokkos::create_mirror_view(this->field_dot_dot);
+  this->h_rmass_inverse = Kokkos::create_mirror_view(this->rmass_inverse);
+
+  return;
+}
+
 specfem::Domain::Elastic::Elastic(
     const int ndim, const int nglob, specfem::compute::compute *compute,
     specfem::compute::properties *material_properties,
@@ -545,79 +563,33 @@ void specfem::Domain::Elastic::compute_source_interaction(
 
 // Copy the values of relevant field at the spectral element where receiver lies
 // to a storage view (field)
-KOKKOS_FUNCTION
-void get_receiver_field_for_seismogram(
-    const specfem::kokkos::DeviceTeam::member_type &team_member,
-    specfem::kokkos::DeviceView3d<type_real> field,
-    const specfem::seismogram::type type,
-    const specfem::kokkos::DeviceView2d<int> sv_ibool,
-    const specfem::Domain::Domain *domain) {
+// KOKKOS_FUNCTION
+// void get_receiver_field_for_seismogram(
+//     const specfem::kokkos::DeviceTeam::member_type &team_member,
+//     specfem::kokkos::DeviceView3d<type_real> field,
+//     const specfem::kokkos::DeviceView2d<int> sv_ibool,
+//     specfem::kokkos::DeviceView2d<type_real> copy_field) {
 
-  const int ngllx = sv_ibool.extent(0);
-  const int ngllz = sv_ibool.extent(1);
-  const int ngllxz = ngllx * ngllz;
-  specfem::kokkos::DeviceView2d<type_real> copy_field;
+//   const int ngllx = sv_ibool.extent(0);
+//   const int ngllz = sv_ibool.extent(1);
+//   const int ngllxz = ngllx * ngllz;
 
-  switch (type) {
-  // Get the displacement field
-  case specfem::seismogram::displacement:
-    copy_field = domain->get_field();
-    Kokkos::parallel_for(
-        Kokkos::TeamThreadRange(team_member, ngllxz), [=](const int xz) {
-          const int ix = xz % ngllz;
-          const int iz = xz / ngllz;
-          const int iglob = sv_ibool(iz, ix);
+//   Kokkos::parallel_for(
+//       Kokkos::TeamThreadRange(team_member, ngllxz), [=](const int xz) {
+//         const int ix = xz % ngllz;
+//         const int iz = xz / ngllz;
+//         const int iglob = sv_ibool(iz, ix);
 
-          if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
-            type_real field_v0 = copy_field(iglob, 0);
-            field(0, iz, ix) = field_v0;
-            type_real field_v1 = copy_field(iglob, 1);
-            field(1, iz, ix) = field_v1;
-          } else if (specfem::globals::simulation_wave == specfem::wave::sh) {
-            field(0, iz, ix) = copy_field(iglob, 0);
-          }
-        });
-    break;
-  // Get the velocity field
-  case specfem::seismogram::velocity:
-    copy_field = domain->get_field_dot();
-    Kokkos::parallel_for(
-        Kokkos::TeamThreadRange(team_member, ngllxz), [=](const int xz) {
-          const int ix = xz % ngllz;
-          const int iz = xz / ngllz;
-          const int iglob = sv_ibool(iz, ix);
+//         if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
+//           field(0, iz, ix) = copy_field(iglob, 0);
+//           field(1, iz, ix) = copy_field(iglob, 0);
+//         } else if (specfem::globals::simulation_wave == specfem::wave::sh) {
+//           field(0, iz, ix) = copy_field(iglob, 0);
+//         }
+//       });
 
-          if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
-            type_real field_v0 = copy_field(iglob, 0);
-            field(0, iz, ix) = field_v0;
-            type_real field_v1 = copy_field(iglob, 1);
-            field(1, iz, ix) = field_v1;
-          } else if (specfem::globals::simulation_wave == specfem::wave::sh) {
-            field(0, iz, ix) = copy_field(iglob, 0);
-          }
-        });
-    break;
-  // Get the acceleration field
-  case specfem::seismogram::acceleration:
-    copy_field = domain->get_field_dot_dot();
-    Kokkos::parallel_for(
-        Kokkos::TeamThreadRange(team_member, ngllxz), [=](const int xz) {
-          const int ix = xz % ngllz;
-          const int iz = xz / ngllz;
-          const int iglob = sv_ibool(iz, ix);
-
-          if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
-            field(0, iz, ix) = copy_field(iglob, 0);
-            field(1, iz, ix) = copy_field(iglob, 1);
-          } else if (specfem::globals::simulation_wave == specfem::wave::sh) {
-            field(0, iz, ix) = copy_field(iglob, 0);
-          }
-        });
-    break;
-  }
-
-  return;
-}
+//   return;
+// }
 
 // Compute the seismogram using field view calculated using above function
 KOKKOS_FUNCTION
@@ -705,9 +677,12 @@ void specfem::Domain::Elastic::compute_seismogram(const int isig_step) {
   const auto cos_recs = this->receivers->cos_recs;
   const auto sin_recs = this->receivers->sin_recs;
   auto field = this->receivers->field;
-  const type_real test_value = this->field_dot(57619, 1);
+  const int ngllx = ibool.extent(1);
+  const int ngllz = ibool.extent(2);
+  const int ngllxz = ngllx * ngllz;
   auto seismogram = Kokkos::subview(this->receivers->seismogram, isig_step,
                                     Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
+  specfem::kokkos::DeviceView2d<type_real> copy_field;
 
   Kokkos::parallel_for(
       "specfem::Domain::Elastic::compute_seismogram",
@@ -719,14 +694,73 @@ void specfem::Domain::Elastic::compute_seismogram(const int isig_step) {
         const int ispec = ispec_array(irec);
         if (ispec_type(ispec) == specfem::elements::elastic) {
 
-          // Get seismogram field
           const specfem::seismogram::type type = seismogram_types(isigtype);
           const auto sv_ibool =
               Kokkos::subview(ibool, ispec, Kokkos::ALL, Kokkos::ALL);
           auto sv_field = Kokkos::subview(field, isigtype, irec, Kokkos::ALL,
                                           Kokkos::ALL, Kokkos::ALL);
-          get_receiver_field_for_seismogram(team_member, sv_field, type,
-                                            sv_ibool, this);
+          // Get seismogram field
+          // ----------------------------------------------------------------
+          switch (type) {
+          // Get the displacement field
+          case specfem::seismogram::displacement:
+            Kokkos::parallel_for(
+                Kokkos::TeamThreadRange(team_member, ngllxz),
+                [=](const int xz) {
+                  const int ix = xz % ngllz;
+                  const int iz = xz / ngllz;
+                  const int iglob = sv_ibool(iz, ix);
+
+                  if (specfem::globals::simulation_wave ==
+                      specfem::wave::p_sv) {
+                    sv_field(0, iz, ix) = this->field(iglob, 0);
+                    sv_field(1, iz, ix) = this->field(iglob, 1);
+                  } else if (specfem::globals::simulation_wave ==
+                             specfem::wave::sh) {
+                    sv_field(0, iz, ix) = this->field(iglob, 0);
+                  }
+                });
+            break;
+          // Get the velocity field
+          case specfem::seismogram::velocity:
+            Kokkos::parallel_for(
+                Kokkos::TeamThreadRange(team_member, ngllxz),
+                [=](const int xz) {
+                  const int ix = xz % ngllz;
+                  const int iz = xz / ngllz;
+                  const int iglob = sv_ibool(iz, ix);
+
+                  if (specfem::globals::simulation_wave ==
+                      specfem::wave::p_sv) {
+                    sv_field(0, iz, ix) = this->field_dot(iglob, 0);
+                    sv_field(1, iz, ix) = this->field_dot(iglob, 1);
+                  } else if (specfem::globals::simulation_wave ==
+                             specfem::wave::sh) {
+                    sv_field(0, iz, ix) = this->field_dot(iglob, 0);
+                  }
+                });
+            break;
+          // Get the acceleration field
+          case specfem::seismogram::acceleration:
+            Kokkos::parallel_for(
+                Kokkos::TeamThreadRange(team_member, ngllxz),
+                [=](const int xz) {
+                  const int ix = xz % ngllz;
+                  const int iz = xz / ngllz;
+                  const int iglob = sv_ibool(iz, ix);
+
+                  if (specfem::globals::simulation_wave ==
+                      specfem::wave::p_sv) {
+                    sv_field(0, iz, ix) = this->field_dot_dot(iglob, 0);
+                    sv_field(1, iz, ix) = this->field_dot_dot(iglob, 1);
+                  } else if (specfem::globals::simulation_wave ==
+                             specfem::wave::sh) {
+                    sv_field(0, iz, ix) = this->field_dot_dot(iglob, 0);
+                  }
+                });
+            break;
+          }
+          //-------------------------------------------------------------------
 
           // compute seismograms
           const auto sv_receiver_array = Kokkos::subview(
@@ -740,4 +774,6 @@ void specfem::Domain::Elastic::compute_seismogram(const int isig_step) {
                                       sin_irec);
         }
       });
+
+  Kokkos::fence();
 }

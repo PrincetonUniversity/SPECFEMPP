@@ -27,8 +27,6 @@ void specfem::solver::time_marching::run() {
 
     it->apply_corrector_phase(domain);
 
-    const auto copy_field = domain->get_field_dot();
-    const type_real test_v = copy_field(57620, 1);
     if (it->compute_seismogram()) {
       int isig_step = it->get_seismogram_step();
       domain->compute_seismogram(isig_step);
