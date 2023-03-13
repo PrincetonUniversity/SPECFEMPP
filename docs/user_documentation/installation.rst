@@ -7,7 +7,9 @@ Downloading SPECFEM
 Get the latest version of the package:
 
 .. code-block:: bash
-    <insert git clone directive here>
+
+    <Get latest version of the software using git clone>
+    git submodule init
     git submodule update
 
 Compilation
