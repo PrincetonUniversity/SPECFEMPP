@@ -236,12 +236,25 @@ public:
   /**
    * @brief Construct a new Elastic domain object
    *
+   * This contructor helps in instantiating fields. Without instantiating any
+   * material or mesh related private fields
+   *
    * @param ndim Number of dimensions
-   * @param nglob Total number of distinct quadrature points inside the domain
+   * @param nglob Total number of distinct quadrature points
+   */
+  Elastic(const int ndim, const int nglob);
+
+  /**
+   * @brief Construct a new Elastic domain object
+   *
+   * @param ndim Number of dimensions
+   * @param nglob Total number of distinct quadrature points inside the
+   * domain
    * @param compute Pointer to specfem::compute::compute struct
-   * @param material_properties Pointer to specfem::compute::properties struct
-   * @param partial_derivatives Pointer to specfem::compute::partial_derivatives
+   * @param material_properties Pointer to specfem::compute::properties
    * struct
+   * @param partial_derivatives Pointer to
+   * specfem::compute::partial_derivatives struct
    * @param sources Pointer to specfem::compute::sources struct
    * @param quadx Pointer to quadrature object in x-dimension
    * @param quadx Pointer to quadrature object in z-dimension

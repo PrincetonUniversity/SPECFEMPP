@@ -14,8 +14,8 @@ Source Interface
 Reciever Interface
 -------------------
 
-.. note::
-    Need to document the receiver interface
+.. doxygenfile:: receiver.h
+    :projet: SPECFEM KOKKOS IMPLEMENTATION
 
 Helper Routines
 ----------------

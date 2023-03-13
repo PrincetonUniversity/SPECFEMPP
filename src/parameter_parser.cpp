@@ -78,7 +78,7 @@ specfem::runtime_configuration::seismogram::seismogram(
     } else if (seismogram_type.as<std::string>() == "velocity") {
       this->stypes.push_back(specfem::seismogram::velocity);
     } else if (seismogram_type.as<std::string>() == "acceleration") {
-      this->stypes.push_back(specfem::seismogram::velocity);
+      this->stypes.push_back(specfem::seismogram::acceleration);
     } else {
       std::runtime_error("Seismograms config could not be read properly");
     }
