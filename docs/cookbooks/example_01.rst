@@ -535,7 +535,7 @@ mesher from the root of ``specfem2d`` run
 
     ./bin/xmeshfem2D
 
-Note the path of the database file and :ref:`stations_file` generated after successfully running the mesher. Generally, the database will be located within ``OUTPUT_FILES`` directory within root of SPECFEM2D and the :ref:`stations_file` file should be located in ``DATA`` folder of SPECFEM2D root.
+Note the path of the database file and :ref:`stations_file` generated after successfully running the mesher. Generally, the database will be located within ``OUTPUT_FILES`` directory within root of SPECFEM2D and the :ref:`stations_file` should be located in ``DATA`` folder of SPECFEM2D root.
 
 Defining sources
 ----------------
@@ -654,7 +654,7 @@ At this point lets focus on a few sections in this file:
       mesh-database: <PATH TO MESHFEM DATABASE FILE>
       source-file: <PATH TO SOURCES YAML FILE>
 
-- Define the path to :ref:`stations_file` file and a directory to store output. If an output directory is not specified the seismogram outputs will be stored in the current working directory. Relevant parameter values:
+- Define the path to :ref:`stations_file` and a directory to store output. If an output directory is not specified the seismogram outputs will be stored in the current working directory. Relevant parameter values:
 
 .. code:: yaml
 
