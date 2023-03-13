@@ -2,7 +2,11 @@
 .DS_Store
 build/
 _build/
-_static/
 _templates/
 public/
 firebase*.yml
+*.out
+debug.sh
+output.log
+run.sh
+results/
