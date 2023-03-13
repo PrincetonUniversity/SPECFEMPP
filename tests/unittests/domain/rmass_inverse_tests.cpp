@@ -103,14 +103,21 @@ TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
     std::cout << *it << std::endl;
 
   // Setup solver compute struct
-  specfem::compute::sources compute_sources(sources, gllx, gllz, mpi);
+  const type_real xmax = compute.coordinates.xmax;
+  const type_real xmin = compute.coordinates.xmin;
+  const type_real zmax = compute.coordinates.zmax;
+  const type_real zmin = compute.coordinates.zmin;
+
+  specfem::compute::sources compute_sources(sources, gllx, gllz, xmax, xmin,
+                                            zmax, zmin, mpi);
+  specfem::compute::receivers compute_receivers;
 
   // Instantiate domain classes
   const int nglob = specfem::utilities::compute_nglob(compute.h_ibool);
 
   specfem::Domain::Domain *domains = new specfem::Domain::Elastic(
       ndim, nglob, &compute, &material_properties, &partial_derivatives,
-      &compute_sources, &gllx, &gllz);
+      &compute_sources, &compute_receivers, &gllx, &gllz);
 
   domains->sync_rmass_inverse(specfem::sync::DeviceToHost);
 

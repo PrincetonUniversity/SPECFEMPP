@@ -197,6 +197,7 @@ target_link_libraries(
   compare_arrays
   domain
   source_reader
+  writer
   -lpthread -lm
 )
 
@@ -224,6 +225,27 @@ target_link_libraries(
   -lpthread -lm
 )
 
+add_executable(
+  seismogram_tests
+  seismogram/seismogram_tests.cpp
+)
+
+target_link_libraries(
+  seismogram_tests
+  quadrature
+  mesh
+  yaml-cpp
+  kokkos_environment
+  mpi_environment
+  compute
+  parameter_reader
+  utilities
+  domain
+  source_reader
+  writer
+  -lpthread -lm
+)
+
 # Link to gtest only if MPI is enabled
 if (NOT MPI_PARALLEL)
   include(GoogleTest)
@@ -237,4 +259,5 @@ if (NOT MPI_PARALLEL)
   gtest_discover_tests(source_location_tests)
   gtest_discover_tests(rmass_inverse_tests)
   gtest_discover_tests(newmark_tests)
+  gtest_discover_tests(seismogram_tests)
 endif(NOT MPI_PARALLEL)

@@ -1,5 +1,6 @@
 #include "../include/source.h"
 #include "../include/config.h"
+#include "../include/globals.h"
 #include "../include/jacobian.h"
 #include "../include/kokkos_abstractions.h"
 #include "../include/lagrange_poly.h"
@@ -78,7 +79,7 @@ void specfem::sources::force::locate(
     const specfem::kokkos::HostMirror1d<type_real> zigll, const int nproc,
     const specfem::kokkos::HostView2d<type_real> coorg,
     const specfem::kokkos::HostView2d<int> knods, const int npgeo,
-    const specfem::kokkos::HostMirror1d<element_type> ispec_type,
+    const specfem::kokkos::HostMirror1d<specfem::elements::type> ispec_type,
     const specfem::MPI::MPI *mpi) {
   std::tie(this->xi, this->gamma, this->ispec, this->islice) =
       specfem::utilities::locate(coord, h_ibool, xigll, zigll, nproc,
@@ -96,7 +97,7 @@ void specfem::sources::moment_tensor::locate(
     const specfem::kokkos::HostMirror1d<type_real> zigll, const int nproc,
     const specfem::kokkos::HostView2d<type_real> coorg,
     const specfem::kokkos::HostView2d<int> knods, const int npgeo,
-    const specfem::kokkos::HostMirror1d<element_type> ispec_type,
+    const specfem::kokkos::HostMirror1d<specfem::elements::type> ispec_type,
     const specfem::MPI::MPI *mpi) {
   std::tie(this->xi, this->gamma, this->ispec, this->islice) =
       specfem::utilities::locate(coord, h_ibool, xigll, zigll, nproc,
@@ -104,9 +105,12 @@ void specfem::sources::moment_tensor::locate(
                                  npgeo, mpi);
 
   if (this->islice == mpi->get_rank()) {
-    if (ispec_type(ispec) != elastic)
+    if (ispec_type(ispec) != specfem::elements::elastic) {
       throw std::runtime_error(
           "Found a Moment-tensor source in acoustic/poroelastic element");
+    } else {
+      this->el_type = specfem::elements::elastic;
+    }
   }
   int ngnod = knods.extent(0);
   this->s_coorg = specfem::kokkos::HostView2d<type_real>(
@@ -122,15 +126,14 @@ void specfem::sources::moment_tensor::locate(
 }
 
 void specfem::sources::force::compute_source_array(
-    specfem::quadrature::quadrature &quadx,
-    specfem::quadrature::quadrature &quadz,
+    const specfem::quadrature::quadrature &quadx,
+    const specfem::quadrature::quadrature &quadz,
     specfem::kokkos::HostView3d<type_real> source_array) {
 
   type_real xi = this->xi;
   type_real gamma = this->gamma;
   type_real angle = this->angle;
-  element_type el_type = this->el_type;
-  wave_type wave = this->wave;
+  specfem::elements::type el_type = this->el_type;
 
   auto [hxis, hpxis] = Lagrange::compute_lagrange_interpolants(
       xi, quadx.get_N(), quadx.get_hxi());
@@ -146,11 +149,14 @@ void specfem::sources::force::compute_source_array(
     for (int j = 0; j < nquadz; j++) {
       hlagrange = hxis(i) * hgammas(j);
 
-      if (el_type == acoustic || (el_type == elastic && wave == sh)) {
+      if (el_type == specfem::elements::acoustic ||
+          (el_type == specfem::elements::elastic &&
+           specfem::globals::simulation_wave == specfem::wave::sh)) {
         source_array(j, i, 0) = hlagrange;
         source_array(j, i, 1) = hlagrange;
-      } else if ((el_type == elastic && wave == p_sv) ||
-                 el_type == poroelastic) {
+      } else if ((el_type == specfem::elements::elastic &&
+                  specfem::globals::simulation_wave == specfem::wave::p_sv) ||
+                 el_type == specfem::elements::poroelastic) {
         type_real tempx = sin(angle) * hlagrange;
         source_array(j, i, 0) = tempx;
         type_real tempz = -1.0 * cos(angle) * hlagrange;
@@ -161,8 +167,8 @@ void specfem::sources::force::compute_source_array(
 };
 
 void specfem::sources::moment_tensor::compute_source_array(
-    specfem::quadrature::quadrature &quadx,
-    specfem::quadrature::quadrature &quadz,
+    const specfem::quadrature::quadrature &quadx,
+    const specfem::quadrature::quadrature &quadz,
     specfem::kokkos::HostView3d<type_real> source_array) {
 
   type_real xi = this->xi;
@@ -222,9 +228,18 @@ void specfem::sources::force::check_locations(const type_real xmin,
 
   specfem::utilities::check_locations(this->get_x(), this->get_z(), xmin, xmax,
                                       zmin, zmax, mpi);
-  mpi->cout(
-      "ToDo:: Need to implement a check to see if acoustic source lies on an "
-      "acoustic surface");
+  // ToDo:: Need to implement a check to see if acoustic source lies on an
+  // acoustic surface
+}
+
+void specfem::sources::moment_tensor::check_locations(
+    const type_real xmin, const type_real xmax, const type_real zmin,
+    const type_real zmax, const specfem::MPI::MPI *mpi) {
+
+  specfem::utilities::check_locations(this->get_x(), this->get_z(), xmin, xmax,
+                                      zmin, zmax, mpi);
+  // ToDo:: Need to implement a check to see if acoustic source lies on an
+  // acoustic surface
 }
 
 // specfem::sources::force::force(type_real x, type_real z, type_real angle,
@@ -239,10 +254,9 @@ void specfem::sources::force::check_locations(const type_real xmin,
 //                                       use_trick_for_better_pressure);
 // };
 
-specfem::sources::force::force(YAML::Node &Node, const type_real dt,
-                               wave_type wave)
+specfem::sources::force::force(YAML::Node &Node, const type_real dt)
     : x(Node["x"].as<type_real>()), z(Node["z"].as<type_real>()),
-      angle(Node["angle"].as<type_real>()), wave(wave) {
+      angle(Node["angle"].as<type_real>()) {
 
   bool use_trick_for_better_pressure = false;
 
