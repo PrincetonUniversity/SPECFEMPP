@@ -1,0 +1,52 @@
+name: Build
+
+on: [push, pull_request]
+
+jobs:
+  build-serial:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check GNU and Cmake versions
+        run: gcc --version && cmake --version
+      - name: Checkout repository
+        uses: actions/checkout@v1
+      - name: Get submodules
+        run: git submodule init
+          &&  git submodule update
+      - name: Configure Serial build
+        run: cmake -S . -B build
+      - name: Build
+        run: cmake --build build
+  build-openmp:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check GNU and Cmake versions
+        run: gcc --version && cmake --version
+      - name: Checkout repository
+        uses: actions/checkout@v1
+      - name: Get submodules
+        run: git submodule init
+          &&  git submodule update
+      - name: Configure OpenMP build
+        run: cmake -S . -B build -DKokkos_ENABLE_OPENMP=ON
+      - name: Build
+        run: cmake --build build
+  build-ampere80:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check GNU and Cmake versions
+        run: gcc --version && cmake --version
+      - name: Install Cuda Toolkit
+        uses: Jimver/cuda-toolkit@v0.2.8
+        id: cuda-toolkit
+        with:
+          cuda: '11.7.0'
+      - name: Checkout repository
+        uses: actions/checkout@v1
+      - name: Get submodules
+        run: git submodule init
+          &&  git submodule update
+      - name: Configure OPENMP & CUDA build
+        run: cmake -S . -B build -DKokkos_ENABLE_OPENMP=ON -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON  -DKokkos_ENABLE_CUDA_LAMBDA=ON -DKokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE=ON
+      - name: Build
+        run: cmake --build build
