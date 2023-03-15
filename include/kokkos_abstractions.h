@@ -267,6 +267,76 @@ using DeviceScratchView3d =
                  Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
 ///@}
 
+/** @name Static Scratch Views
+ * Static scratch views are best used when scratch view dimensions are known at
+ * compile time. Compile time definitions of scratch views and loop structure
+ * can dramatically improve code performance.
+ */
+
+///@{
+
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ * @tparam N length of view
+ */
+template <typename T, int N, typename L = LayoutWrapper>
+using StaticHostScratchView1d =
+    Kokkos::View<T[N], L, HostScratchSpace,
+                 Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ * @tparam N length of view
+ */
+template <typename T, int N, typename L = LayoutWrapper>
+using StaticHostScratchView2d =
+    Kokkos::View<T[N][N], L, HostScratchSpace,
+                 Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ * @tparam N length of view
+ */
+template <typename T, int N, typename L = LayoutWrapper>
+using StaticHostScratchView3d =
+    Kokkos::View<T[N][N][N], L, HostScratchSpace,
+                 Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ * @tparam N length of view
+ */
+template <typename T, int N, typename L = LayoutWrapper>
+using StaticDeviceScratchView1d =
+    Kokkos::View<T[N], L, DevScratchSpace,
+                 Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ * @tparam N length of view
+ */
+template <typename T, int N, typename L = LayoutWrapper>
+using StaticDeviceScratchView2d =
+    Kokkos::View<T[N][N], L, DevScratchSpace,
+                 Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ * @tparam N length of view
+ */
+template <typename T, int N, typename L = LayoutWrapper>
+using StaticDeviceScratchView3d =
+    Kokkos::View<T[N][N][N], L, DevScratchSpace,
+                 Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+
+///@}
+
 // Loop Strategies
 // Range policy strategies
 

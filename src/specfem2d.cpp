@@ -132,7 +132,7 @@ void execute(const std::string parameter_file, specfem::MPI::MPI *mpi) {
   mpi->cout("Source Information:");
   mpi->cout("-------------------------------");
   if (mpi->main_proc()) {
-    std::cout << "Number of sources : " << sources.size() << "\n\n";
+    std::cout << "Number of sources : " << sources.size() << "\n" << std::endl;
   }
 
   for (auto &source : sources) {
@@ -142,7 +142,8 @@ void execute(const std::string parameter_file, specfem::MPI::MPI *mpi) {
   mpi->cout("Receiver Information:");
   mpi->cout("-------------------------------");
   if (mpi->main_proc()) {
-    std::cout << "Number of receivers : " << receivers.size() << "\n\n";
+    std::cout << "Number of receivers : " << receivers.size() << "\n"
+              << std::endl;
   }
 
   for (auto &receiver : receivers) {
@@ -186,13 +187,13 @@ void execute(const std::string parameter_file, specfem::MPI::MPI *mpi) {
 
   solver->run();
 
-  mpi->cout("Writing seismogram files:");
-  mpi->cout("-------------------------------");
+  // mpi->cout("Writing seismogram files:");
+  // mpi->cout("-------------------------------");
 
-  writer->write();
+  // writer->write();
 
-  mpi->cout("Cleaning up:");
-  mpi->cout("-------------------------------");
+  // mpi->cout("Cleaning up:");
+  // mpi->cout("-------------------------------");
 
   for (auto &material : materials) {
     delete material;
