@@ -235,7 +235,7 @@ void specfem::Domain::Elastic::compute_stiffness_interaction() {
 
   Kokkos::parallel_for(
       "specfem::Domain::Elastic::compute_forces",
-      specfem::kokkos::DeviceTeam(this->nelem_domain, Kokkos::AUTO, 1)
+      specfem::kokkos::DeviceTeam(this->nelem_domain, 32, 1)
           .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
       KOKKOS_CLASS_LAMBDA(
           const specfem::kokkos::DeviceTeam::member_type &team_member) {
