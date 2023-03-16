@@ -271,6 +271,9 @@ public:
    *
    */
   void compute_stiffness_interaction() override;
+  void compute_gradients();
+  void compute_stresses();
+  void compute_integrals();
   /**
    * @brief Divide the acceleration by the mass matrix
    *
@@ -369,6 +372,9 @@ private:
                                                      ///< of all elements in
                                                      ///< this domain on the
                                                      ///< host
+
+  // specfem::kokkos::DeviceView3d<type_real> duxdz, duxdx, duzdz, duzdx;
+  specfem::kokkos::DeviceView3d<type_real> sigma_xx, sigma_zz, sigma_xz;
 };
 } // namespace Domain
 } // namespace specfem
