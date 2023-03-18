@@ -271,7 +271,7 @@ public:
    *
    */
   void compute_stiffness_interaction() override;
-  void compute_gradients();
+  template <int NGLL> void compute_gradients();
   void compute_stresses();
   void compute_integrals();
   /**
@@ -374,7 +374,7 @@ private:
                                                      ///< host
 
   // specfem::kokkos::DeviceView3d<type_real> duxdz, duxdx, duzdz, duzdx;
-  specfem::kokkos::DeviceView3d<type_real> sigma_xx, sigma_zz, sigma_xz;
+  // specfem::kokkos::DeviceView3d<type_real> sigma_xx, sigma_zz, sigma_xz;
 };
 } // namespace Domain
 } // namespace specfem
