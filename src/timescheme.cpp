@@ -32,23 +32,29 @@ void specfem::TimeScheme::Newmark::apply_predictor_phase(
   auto field_dot_dot = domain->get_field_dot_dot();
 
   const int nglob = field.extent(0);
-  const int ndim = field.extent(1);
+  // const int ndim = field.extent(1);
 
   Kokkos::parallel_for(
       "specfem::TimeScheme::Newmark::apply_predictor_phase",
-      specfem::kokkos::DeviceRange(0, nglob),
-      KOKKOS_CLASS_LAMBDA(const int iglob) {
-        for (int idim = 0; idim < ndim; idim++) {
-          // update displacements
-          field(iglob, idim) +=
-              this->deltat * field_dot(iglob, idim) +
-              this->deltatsquareover2 * field_dot_dot(iglob, idim);
-          // apply predictor phase
-          field_dot(iglob, idim) +=
-              this->deltatover2 * field_dot_dot(iglob, idim);
-          // reset acceleration
-          field_dot_dot(iglob, idim) = 0;
-        }
+      specfem::kokkos::DeviceRange(0, ndim * nglob),
+      KOKKOS_CLASS_LAMBDA(const int in) {
+        const int iglob = in % nglob;
+        const int idim = in / nglob;
+        // update displacements
+        field(iglob, idim) +=
+            this->deltat * field_dot(iglob, idim) +
+            this->deltatsquareover2 * field_dot_dot(iglob, idim);
+        // apply predictor phase
+        field_dot(iglob, idim) +=
+            this->deltatover2 * field_dot_dot(iglob, idim);
+        // reset acceleration
+        field_dot_dot(iglob, idim) = 0;
+        // field(iglob, 1) += this->deltat * field_dot(iglob, 1) +
+        //                    this->deltatsquareover2 * field_dot_dot(iglob, 1);
+        // // apply predictor phase
+        // field_dot(iglob, 1) += this->deltatover2 * field_dot_dot(iglob, 1);
+        // // reset acceleration
+        // field_dot_dot(iglob, 1) = 0;
       });
 
   return;
@@ -62,17 +68,17 @@ void specfem::TimeScheme::Newmark::apply_corrector_phase(
   auto field_dot_dot = domain->get_field_dot_dot();
 
   const int nglob = field_dot.extent(0);
-  const int ndim = field_dot.extent(1);
+  // const int ndim = field_dot.extent(1);
 
   Kokkos::parallel_for(
-      "specfem::TimeScheme::Newmark::apply_predictor_phase",
-      specfem::kokkos::DeviceRange(0, nglob),
-      KOKKOS_CLASS_LAMBDA(const int iglob) {
-        for (int idim = 0; idim < ndim; idim++) {
-          // apply corrector phase
-          field_dot(iglob, idim) +=
-              this->deltatover2 * field_dot_dot(iglob, idim);
-        }
+      "specfem::TimeScheme::Newmark::apply_corrector_phase",
+      specfem::kokkos::DeviceRange(0, ndim * nglob),
+      KOKKOS_CLASS_LAMBDA(const int in) {
+        const int iglob = in % nglob;
+        const int idim = in / nglob;
+        // apply corrector phase
+        field_dot(iglob, idim) +=
+            this->deltatover2 * field_dot_dot(iglob, idim);
       });
 
   return;

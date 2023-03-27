@@ -125,7 +125,8 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
 
   domains->sync_field(specfem::sync::DeviceToHost);
 
-  auto field = domains->get_host_field();
+  specfem::kokkos::HostView2d<type_real, Kokkos::LayoutLeft> field =
+      domains->get_host_field();
 
   type_real tolerance = 0.01;
 

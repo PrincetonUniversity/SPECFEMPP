@@ -99,7 +99,7 @@ public:
    * @return type_real Sine value of the angle of this station
    */
   type_real get_sine() {
-    return std::sin(Kokkos::Experimental::pi_v<type_real> / 180 * this->angle);
+    return std::sin(Kokkos::numbers::pi_v<type_real> / 180 * this->angle);
   }
   /**
    * @brief Get the cosine of angle of this station
@@ -107,7 +107,7 @@ public:
    * @return type_real Coine value of the angle of this station
    */
   type_real get_cosine() {
-    return std::cos(Kokkos::Experimental::pi_v<type_real> / 180 * this->angle);
+    return std::cos(Kokkos::numbers::pi_v<type_real> / 180 * this->angle);
   }
   /**
    * @brief Get the name of network where this station lies
