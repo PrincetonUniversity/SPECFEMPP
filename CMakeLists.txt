@@ -10,7 +10,7 @@ option(MPI_PARALLEL "MPI enabled" OFF)
 include(FetchContent)
 FetchContent_Declare(
   kokkos
-  URL https://github.com/kokkos/kokkos/archive/refs/tags/3.7.01.zip
+  URL https://github.com/kokkos/kokkos/archive/refs/tags/4.0.00.zip
 )
 FetchContent_MakeAvailable(kokkos)
 
