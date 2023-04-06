@@ -19,39 +19,39 @@ namespace compute {
  *
  */
 struct partial_derivatives {
-  specfem::kokkos::DeviceView3d<type_real> xix; ///< inverted partial derivates
+  specfem::kokkos::DeviceView2d<type_real> xix; ///< inverted partial derivates
                                                 ///< \f$\partial \xi / \partial
                                                 ///< x\f$ stored on the device
-  specfem::kokkos::HostMirror3d<type_real> h_xix; ///< inverted partial
+  specfem::kokkos::HostMirror2d<type_real> h_xix; ///< inverted partial
                                                   ///< derivates \f$\partial \xi
                                                   ///< / \partial x\f$ stored on
                                                   ///< the host
-  specfem::kokkos::DeviceView3d<type_real> xiz; ///< inverted partial derivates
+  specfem::kokkos::DeviceView2d<type_real> xiz; ///< inverted partial derivates
                                                 ///< \f$\partial \xi / \partial
                                                 ///< z\f$ stored on the device
-  specfem::kokkos::HostMirror3d<type_real> h_xiz; ///< inverted partial
+  specfem::kokkos::HostMirror2d<type_real> h_xiz; ///< inverted partial
                                                   ///< derivates \f$\partial \xi
                                                   ///< / \partial z\f$ stored on
                                                   ///< the host
-  specfem::kokkos::DeviceView3d<type_real> gammax;   ///< inverted partial
+  specfem::kokkos::DeviceView2d<type_real> gammax;   ///< inverted partial
                                                      ///< derivates \f$\partial
                                                      ///< \gamma / \partial x\f$
                                                      ///< stored on device
-  specfem::kokkos::HostMirror3d<type_real> h_gammax; ///< inverted partial
+  specfem::kokkos::HostMirror2d<type_real> h_gammax; ///< inverted partial
                                                      ///< derivates \f$\partial
                                                      ///< \gamma / \partial x\f$
                                                      ///< stored on host
-  specfem::kokkos::DeviceView3d<type_real> gammaz;   ///< inverted partial
+  specfem::kokkos::DeviceView2d<type_real> gammaz;   ///< inverted partial
                                                      ///< derivates \f$\partial
                                                      ///< \gamma / \partial z\f$
                                                      ///< stored on device
-  specfem::kokkos::HostMirror3d<type_real> h_gammaz; ///< inverted partial
+  specfem::kokkos::HostMirror2d<type_real> h_gammaz; ///< inverted partial
                                                      ///< derivates \f$\partial
                                                      ///< \gamma / \partial z\f$
                                                      ///< stored on host
-  specfem::kokkos::DeviceView3d<type_real> jacobian; ///< Jacobian values stored
+  specfem::kokkos::DeviceView2d<type_real> jacobian; ///< Jacobian values stored
                                                      ///< on device
-  specfem::kokkos::HostMirror3d<type_real> h_jacobian; ///< Jacobian values
+  specfem::kokkos::HostMirror2d<type_real> h_jacobian; ///< Jacobian values
                                                        ///< stored on host
   /**
    * @brief Default constructor
@@ -96,24 +96,24 @@ struct properties {
    * h_ prefixes denote views stored on host
    */
   ///@{
-  specfem::kokkos::DeviceView3d<type_real> rho;
-  specfem::kokkos::HostMirror3d<type_real> h_rho;
+  specfem::kokkos::DeviceView2d<type_real> rho;
+  specfem::kokkos::HostMirror2d<type_real> h_rho;
 
-  specfem::kokkos::DeviceView3d<type_real> mu;
-  specfem::kokkos::HostMirror3d<type_real> h_mu;
+  specfem::kokkos::DeviceView2d<type_real> mu;
+  specfem::kokkos::HostMirror2d<type_real> h_mu;
 
-  specfem::kokkos::HostView3d<type_real> kappa;
+  specfem::kokkos::HostView2d<type_real> kappa;
 
-  specfem::kokkos::HostView3d<type_real> qmu;
+  specfem::kokkos::HostView2d<type_real> qmu;
 
-  specfem::kokkos::HostView3d<type_real> qkappa;
+  specfem::kokkos::HostView2d<type_real> qkappa;
 
-  specfem::kokkos::HostView3d<type_real> rho_vp;
+  specfem::kokkos::HostView2d<type_real> rho_vp;
 
-  specfem::kokkos::HostView3d<type_real> rho_vs;
+  specfem::kokkos::HostView2d<type_real> rho_vs;
 
-  specfem::kokkos::DeviceView3d<type_real> lambdaplus2mu;
-  specfem::kokkos::HostMirror3d<type_real> h_lambdaplus2mu;
+  specfem::kokkos::DeviceView2d<type_real> lambdaplus2mu;
+  specfem::kokkos::HostMirror2d<type_real> h_lambdaplus2mu;
   ///@}
   // element type is defined in config.h
   specfem::kokkos::DeviceView1d<specfem::elements::type>
