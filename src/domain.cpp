@@ -8,27 +8,6 @@
 #include <Kokkos_Core.hpp>
 #include <Kokkos_ScatterView.hpp>
 
-class index2d {
-public:
-  KOKKOS_FUNCTION
-  void get_index(int *ix, int *iz) {
-    *ix = x;
-    *iz = z;
-    return;
-  }
-
-  KOKKOS_FUNCTION
-  index2d(int ix, int iz) {
-    x = ix;
-    z = iz;
-    return;
-  }
-
-private:
-  int x;
-  int z;
-};
-
 specfem::Domain::Elastic::Elastic(const int ndim, const int nglob)
     : field(specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>(
           "specfem::Domain::Elastic::field", nglob, ndim)),
@@ -141,14 +120,15 @@ void specfem::Domain::Elastic::assign_views() {
       specfem::kokkos::DeviceMDrange<3, Kokkos::Iterate::Left>(
           { 0, 0, 0 }, { nspec, ngllz, ngllx }),
       KOKKOS_CLASS_LAMBDA(const int ispec, const int iz, const int ix) {
+        const int xz = iz * ngllx + ix;
         int iglob = ibool(ispec, iz, ix);
-        type_real rhol = rho(ispec, iz, ix);
+        type_real rhol = rho(ispec, xz);
         auto access = results.access();
         if (ispec_type(ispec) == specfem::elements::elastic) {
           access(iglob, 0) +=
-              wxgll(ix) * wzgll(iz) * rhol * jacobian(ispec, iz, ix);
+              wxgll(ix) * wzgll(iz) * rhol * jacobian(ispec, xz);
           access(iglob, 1) +=
-              wxgll(ix) * wzgll(iz) * rhol * jacobian(ispec, iz, ix);
+              wxgll(ix) * wzgll(iz) * rhol * jacobian(ispec, xz);
         }
       });
 
@@ -255,20 +235,14 @@ template <int NGLL> void specfem::Domain::Elastic::compute_gradients() {
   assert(hprime_xx.extent(0) == NGLL);
   assert(hprime_zz.extent(1) == NGLL);
   assert(hprime_xx.extent(1) == NGLL);
-  assert(xix.extent(1) == NGLL);
-  assert(xix.extent(2) == NGLL);
-  assert(xiz.extent(1) == NGLL);
-  assert(xiz.extent(2) == NGLL);
-  assert(gammax.extent(1) == NGLL);
-  assert(gammax.extent(2) == NGLL);
-  assert(gammaz.extent(1) == NGLL);
-  assert(gammaz.extent(2) == NGLL);
+  assert(xix.extent(1) == NGLL2);
+  assert(xiz.extent(1) == NGLL2);
+  assert(gammax.extent(1) == NGLL2);
+  assert(gammaz.extent(1) == NGLL2);
   assert(ibool.extent(1) == NGLL);
   assert(ibool.extent(2) == NGLL);
-  assert(lambdaplus2mu.extent(1) == NGLL);
-  assert(lambdaplus2mu.extent(2) == NGLL);
-  assert(mu.extent(1) == NGLL);
-  assert(mu.extent(2) == NGLL);
+  assert(lambdaplus2mu.extent(1) == NGLL2);
+  assert(mu.extent(1) == NGLL2);
 
   int scratch_size =
       10 *
@@ -343,10 +317,10 @@ template <int NGLL> void specfem::Domain::Elastic::compute_gradients() {
                 sum_hprime_z3 += s_hprime_zz(iz, l) * s_tempz(l, ix);
               }
 
-              const type_real xixl = xix(ispec, iz, ix);
-              const type_real xizl = xiz(ispec, iz, ix);
-              const type_real gammaxl = gammax(ispec, iz, ix);
-              const type_real gammazl = gammaz(ispec, iz, ix);
+              const type_real xixl = xix(ispec, xz);
+              const type_real xizl = xiz(ispec, xz);
+              const type_real gammaxl = gammax(ispec, xz);
+              const type_real gammazl = gammaz(ispec, xz);
 
               const type_real duxdxl =
                   xixl * sum_hprime_x1 + gammaxl * sum_hprime_x3;
@@ -358,11 +332,11 @@ template <int NGLL> void specfem::Domain::Elastic::compute_gradients() {
               const type_real duzdzl =
                   xizl * sum_hprime_z1 + gammazl * sum_hprime_z3;
 
-              const type_real lambdaplus2mul = lambdaplus2mu(ispec, iz, ix);
-              const type_real mul = mu(ispec, iz, ix);
+              const type_real lambdaplus2mul = lambdaplus2mu(ispec, xz);
+              const type_real mul = mu(ispec, xz);
               const type_real lambdal = lambdaplus2mul - 2.0 * mul;
 
-              const type_real jacobianl = jacobian(ispec, iz, ix);
+              const type_real jacobianl = jacobian(ispec, xz);
               const type_real wxgll_l = wxgll(iz);
               const type_real wzgll_l = wzgll(iz);
 
