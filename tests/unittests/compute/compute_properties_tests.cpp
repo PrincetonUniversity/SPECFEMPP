@@ -83,35 +83,35 @@ TEST(COMPUTE_TESTS, compute_properties) {
                                           mesh.nspec, gllz.get_N(),
                                           gllx.get_N());
 
-  specfem::kokkos::HostView3d<type_real, Kokkos::LayoutRight> h_rho =
+  specfem::kokkos::HostView2d<type_real, Kokkos::LayoutRight> h_rho =
       properties.h_rho;
   EXPECT_NO_THROW(specfem::testing::test_array(
-      h_rho, test_config.rho_file, mesh.nspec, gllz.get_N(), gllx.get_N()));
+      h_rho, test_config.rho_file, mesh.nspec, gllz.get_N() * gllx.get_N()));
 
   EXPECT_NO_THROW(
       specfem::testing::test_array(properties.kappa, test_config.kappa_file,
-                                   mesh.nspec, gllz.get_N(), gllx.get_N()));
+                                   mesh.nspec, gllz.get_N() * gllx.get_N()));
 
-  specfem::kokkos::HostView3d<type_real, Kokkos::LayoutRight> h_mu =
+  specfem::kokkos::HostView2d<type_real, Kokkos::LayoutRight> h_mu =
       properties.h_mu;
   EXPECT_NO_THROW(specfem::testing::test_array(
-      h_mu, test_config.mu_file, mesh.nspec, gllz.get_N(), gllx.get_N()));
+      h_mu, test_config.mu_file, mesh.nspec, gllz.get_N() * gllx.get_N()));
 
   EXPECT_NO_THROW(
       specfem::testing::test_array(properties.rho_vp, test_config.rho_vp_file,
-                                   mesh.nspec, gllz.get_N(), gllx.get_N()));
+                                   mesh.nspec, gllz.get_N() * gllx.get_N()));
 
   EXPECT_NO_THROW(
       specfem::testing::test_array(properties.rho_vs, test_config.rho_vs_file,
-                                   mesh.nspec, gllz.get_N(), gllx.get_N()));
+                                   mesh.nspec, gllz.get_N() * gllx.get_N()));
 
   EXPECT_NO_THROW(
       specfem::testing::test_array(properties.qkappa, test_config.qkappa_file,
-                                   mesh.nspec, gllz.get_N(), gllx.get_N()));
+                                   mesh.nspec, gllz.get_N() * gllx.get_N()));
 
   EXPECT_NO_THROW(specfem::testing::test_array(properties.qmu,
                                                test_config.qmu_file, mesh.nspec,
-                                               gllz.get_N(), gllx.get_N()));
+                                               gllz.get_N() * gllx.get_N()));
 }
 
 int main(int argc, char *argv[]) {
