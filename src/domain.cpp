@@ -245,7 +245,7 @@ template <int NGLL> void specfem::Domain::Elastic::compute_gradients() {
   assert(mu.extent(1) == NGLL2);
 
   int scratch_size =
-      10 *
+      12 *
       specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL>::shmem_size();
 
   scratch_size +=
@@ -253,14 +253,15 @@ template <int NGLL> void specfem::Domain::Elastic::compute_gradients() {
 
   Kokkos::parallel_for(
       "specfem::Domain::Elastic::compute_gradients",
-      specfem::kokkos::DeviceTeam(this->nelem_domain, Kokkos::AUTO,
-                                  Kokkos::AUTO)
+      specfem::kokkos::DeviceTeam(this->nelem_domain, 32, 1)
           .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
       KOKKOS_LAMBDA(
           const specfem::kokkos::DeviceTeam::member_type &team_member) {
         const int ispec = ispec_domain(team_member.league_rank());
 
         // Assign scratch views
+        // Assign scratch views for views that are required by every thread
+        // during summations
         specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL> s_hprime_xx(
             team_member.team_scratch(0));
         specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL> s_hprime_zz(
@@ -269,119 +270,153 @@ template <int NGLL> void specfem::Domain::Elastic::compute_gradients() {
             s_hprimewgll_xx(team_member.team_scratch(0));
         specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL>
             s_hprimewgll_zz(team_member.team_scratch(0));
-        specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL> s_tempx(
-            team_member.team_scratch(0));
-        specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL> s_tempz(
-            team_member.team_scratch(0));
-        specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL> s_tempx1(
-            team_member.team_scratch(0));
-        specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL> s_tempz1(
-            team_member.team_scratch(0));
-        specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL> s_tempx3(
-            team_member.team_scratch(0));
-        specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL> s_tempz3(
-            team_member.team_scratch(0));
         specfem::kokkos::StaticDeviceScratchView2d<int, NGLL> s_iglob(
             team_member.team_scratch(0));
 
-        Kokkos::parallel_for(Kokkos::TeamThreadRange(team_member, NGLL2),
-                             [&](const int xz) {
-                               const int iz = xz * NGLL_INV;
-                               const int ix = xz - iz * NGLL;
-                               const int iglob = ibool(ispec, iz, ix);
-                               s_tempx(iz, ix) = field(iglob, 0);
-                               s_tempz(iz, ix) = field(iglob, 1);
-                               s_hprime_xx(iz, ix) = hprime_xx(iz, ix);
-                               s_hprime_zz(iz, ix) = hprime_zz(iz, ix);
-                               s_iglob(iz, ix) = iglob;
-                             });
-
-        team_member.team_barrier();
+        // Temporary scratch arrays used in calculation of integrals
+        specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL> s_temp1(
+            team_member.team_scratch(0));
+        specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL> s_temp2(
+            team_member.team_scratch(0));
+        specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL> s_temp3(
+            team_member.team_scratch(0));
+        specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL> s_temp4(
+            team_member.team_scratch(0));
+        specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL> s_temp5(
+            team_member.team_scratch(0));
+        specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL> s_temp6(
+            team_member.team_scratch(0));
+        specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL> s_temp7(
+            team_member.team_scratch(0));
+        specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL> s_temp8(
+            team_member.team_scratch(0));
 
         Kokkos::parallel_for(
             Kokkos::TeamThreadRange(team_member, NGLL2), [&](const int xz) {
-              const int iz = xz / NGLL;
-              const int ix = xz % NGLL;
-
-              type_real sigma_xx, sigma_xz, sigma_zz;
-              type_real sum_hprime_x1 = 0.0;
-              type_real sum_hprime_x3 = 0.0;
-              type_real sum_hprime_z1 = 0.0;
-              type_real sum_hprime_z3 = 0.0;
-
-              // #pragma unroll
-              for (int l = 0; l < NGLL; l++) {
-                sum_hprime_x1 += s_hprime_xx(ix, l) * s_tempx(iz, l);
-                sum_hprime_x3 += s_hprime_xx(ix, l) * s_tempz(iz, l);
-                sum_hprime_z1 += s_hprime_zz(iz, l) * s_tempx(l, ix);
-                sum_hprime_z3 += s_hprime_zz(iz, l) * s_tempz(l, ix);
-              }
-
-              const type_real xixl = xix(ispec, xz);
-              const type_real xizl = xiz(ispec, xz);
-              const type_real gammaxl = gammax(ispec, xz);
-              const type_real gammazl = gammaz(ispec, xz);
-
-              const type_real duxdxl =
-                  xixl * sum_hprime_x1 + gammaxl * sum_hprime_x3;
-              const type_real duxdzl =
-                  xizl * sum_hprime_x1 + gammazl * sum_hprime_x3;
-
-              const type_real duzdxl =
-                  xixl * sum_hprime_z1 + gammaxl * sum_hprime_z3;
-              const type_real duzdzl =
-                  xizl * sum_hprime_z1 + gammazl * sum_hprime_z3;
-
-              const type_real lambdaplus2mul = lambdaplus2mu(ispec, xz);
-              const type_real mul = mu(ispec, xz);
-              const type_real lambdal = lambdaplus2mul - 2.0 * mul;
-
-              const type_real jacobianl = jacobian(ispec, xz);
-              const type_real wxgll_l = wxgll(iz);
-              const type_real wzgll_l = wzgll(iz);
-
-              if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
-                // P_SV case
-                sigma_xx = lambdaplus2mul * duxdxl + lambdal * duzdzl;
-                sigma_zz = lambdaplus2mul * duzdzl + lambdal * duxdxl;
-                sigma_xz = mul * (duzdxl + duxdzl);
-              } else if (specfem::globals::simulation_wave ==
-                         specfem::wave::sh) {
-                // SH-case
-                sigma_xx = mul * duxdxl; // would be sigma_xy in CPU-version
-                sigma_xz = mul * duxdzl; // sigma_zy
-              }
-
-              s_hprimewgll_xx(iz, ix) = wxgll_l * s_hprime_xx(iz, ix);
-              s_hprimewgll_zz(iz, ix) = wzgll_l * s_hprime_zz(iz, ix);
-              s_tempx1(iz, ix) =
-                  jacobianl * (sigma_xx * xixl + sigma_xz * xizl);
-              s_tempz1(iz, ix) =
-                  jacobianl * (sigma_xz * xixl + sigma_zz * xizl);
-              s_tempx3(iz, ix) =
-                  jacobianl * (sigma_xx * gammaxl + sigma_xz * gammazl);
-              s_tempz3(iz, ix) =
-                  jacobianl * (sigma_xz * gammaxl + sigma_zz * gammazl);
+              const int iz = xz * NGLL_INV;
+              const int ix = xz - iz * NGLL;
+              const int iglob = ibool(ispec, iz, ix);
+              s_temp1(iz, ix) = field(iglob, 0);
+              s_temp2(iz, ix) = field(iglob, 1);
+              s_temp3(ix, iz) = field(iglob, 0);
+              s_temp4(ix, iz) = field(iglob, 1);
+              s_temp5(iz, ix) = 0.0;
+              s_temp6(iz, ix) = 0.0;
+              s_temp7(ix, iz) = 0.0;
+              s_temp8(ix, iz) = 0.0;
+              s_hprime_xx(iz, ix) = hprime_xx(iz, ix);
+              s_hprime_zz(iz, ix) = hprime_zz(iz, ix);
+              s_hprimewgll_xx(ix, iz) = wxgll(iz) * s_hprime_xx(iz, ix);
+              s_hprimewgll_zz(ix, iz) = wzgll(iz) * s_hprime_zz(iz, ix);
+              s_iglob(iz, ix) = iglob;
             });
 
         team_member.team_barrier();
 
         Kokkos::parallel_for(
             Kokkos::TeamThreadRange(team_member, NGLL2), [&](const int xz) {
+              const int iz = xz * NGLL_INV;
+              const int ix = xz - iz * NGLL;
+
+              type_real sum_hprime_x1 = 0.0;
+              type_real sum_hprime_x3 = 0.0;
+              type_real sum_hprime_z1 = 0.0;
+              type_real sum_hprime_z3 = 0.0;
+
+#pragma unroll
+              for (int l = 0; l < NGLL; l++) {
+                sum_hprime_x1 += s_hprime_xx(ix, l) * s_temp1(iz, l);
+                sum_hprime_x3 += s_hprime_xx(ix, l) * s_temp2(iz, l);
+                sum_hprime_z1 += s_hprime_zz(iz, l) * s_temp3(ix, l);
+                sum_hprime_z3 += s_hprime_zz(iz, l) * s_temp4(ix, l);
+              }
+
+              // duxdx
+              s_temp5(iz, ix) = xix(ispec, xz) * sum_hprime_x1 +
+                                gammax(ispec, xz) * sum_hprime_x3;
+
+              // duxdz
+              s_temp6(iz, ix) = xiz(ispec, xz) * sum_hprime_x1 +
+                                gammaz(ispec, xz) * sum_hprime_x3;
+
+              // duzdx
+              s_temp7(iz, ix) = xix(ispec, xz) * sum_hprime_z1 +
+                                gammax(ispec, xz) * sum_hprime_z3;
+
+              // duzdz
+              s_temp8(iz, ix) = xiz(ispec, xz) * sum_hprime_z1 +
+                                gammaz(ispec, xz) * sum_hprime_z3;
+            });
+
+        Kokkos::parallel_for(
+            Kokkos::TeamThreadRange(team_member, NGLL2), [&](const int xz) {
               const int iz = xz / NGLL;
               const int ix = xz % NGLL;
+              const type_real lambdal =
+                  lambdaplus2mu(ispec, xz) - 2.0 * mu(ispec, xz);
+
+              if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
+                // P_SV case
+                // sigma_xx
+                s_temp1(iz, ix) = lambdaplus2mu(ispec, xz) * s_temp5(iz, ix) +
+                                  lambdal * s_temp8(iz, ix);
+
+                // sigma_zz
+                s_temp2(iz, ix) = lambdaplus2mu(ispec, xz) * s_temp8(iz, ix) +
+                                  lambdal * s_temp5(iz, ix);
+
+                // sigma_xz
+                s_temp3(iz, ix) =
+                    mu(ispec, xz) * (s_temp7(iz, ix) + s_temp6(iz, ix));
+              } else if (specfem::globals::simulation_wave ==
+                         specfem::wave::sh) {
+                // SH-case
+                // sigma_xx
+                s_temp1(iz, ix) =
+                    mu(ispec, xz) *
+                    s_temp5(iz, ix); // would be sigma_xy in CPU-version
+
+                // sigma_xz
+                s_temp3(iz, ix) = mu(ispec, xz) * s_temp6(iz, ix); // sigma_zy
+              }
+            });
+
+        Kokkos::parallel_for(
+            Kokkos::TeamThreadRange(team_member, NGLL2), [&](const int xz) {
+              const int iz = xz * NGLL_INV;
+              const int ix = xz - iz * NGLL;
+              s_temp5(iz, ix) =
+                  jacobian(ispec, xz) * (s_temp1(iz, ix) * xix(ispec, xz) +
+                                         s_temp3(iz, ix) * xiz(ispec, xz));
+              s_temp6(iz, ix) =
+                  jacobian(ispec, xz) * (s_temp3(iz, ix) * xix(ispec, xz) +
+                                         s_temp2(iz, ix) * xiz(ispec, xz));
+              s_temp7(ix, iz) =
+                  jacobian(ispec, xz) * (s_temp1(iz, ix) * gammax(ispec, xz) +
+                                         s_temp3(iz, ix) * gammaz(ispec, xz));
+              s_temp8(ix, iz) =
+                  jacobian(ispec, xz) * (s_temp3(iz, ix) * gammax(ispec, xz) +
+                                         s_temp2(iz, ix) * gammaz(ispec, xz));
+            });
+
+        team_member.team_barrier();
+
+        Kokkos::parallel_for(
+            Kokkos::TeamThreadRange(team_member, NGLL2), [&](const int xz) {
+              const int iz = xz * NGLL_INV;
+              const int ix = xz - iz * NGLL;
 
               type_real tempx1 = 0.0;
               type_real tempz1 = 0.0;
               type_real tempx3 = 0.0;
               type_real tempz3 = 0.0;
 
-              // #pragma unroll
+#pragma unroll
               for (int l = 0; l < NGLL; l++) {
-                tempx1 += s_hprimewgll_xx(l, ix) * s_tempx1(iz, l);
-                tempz1 += s_hprimewgll_xx(l, ix) * s_tempz1(iz, l);
-                tempx3 += s_hprimewgll_zz(l, iz) * s_tempx3(l, ix);
-                tempz3 += s_hprimewgll_zz(l, iz) * s_tempz3(l, ix);
+                tempx1 += s_hprimewgll_xx(ix, l) * s_temp1(iz, l);
+                tempz1 += s_hprimewgll_xx(ix, l) * s_temp2(iz, l);
+                tempx3 += s_hprimewgll_zz(iz, l) * s_temp3(ix, l);
+                tempz3 += s_hprimewgll_zz(iz, l) * s_temp4(ix, l);
               }
 
               const int iglob = s_iglob(iz, ix);
