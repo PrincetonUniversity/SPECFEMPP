@@ -37,6 +37,7 @@ using DevMemSpace = Kokkos::DefaultExecutionSpace::memory_space;
  */
 ///@{
 using LayoutWrapper = Kokkos::LayoutRight;
+using LayoutStride = Kokkos::LayoutStride;
 ///@}
 
 /** @name Scratch Memory Spaces
@@ -52,34 +53,49 @@ using DevScratchSpace = DevExecSpace::scratch_memory_space;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
+ *
+ * @code ...
+ *      StridedCacheAlignedView1d = DeviceView1d<double, LayoutStride,
+ * Kokkos::MemoryTraits<Kokkos::Aligned>>(...)
+ * @endcode
  */
-template <typename T, typename L = LayoutWrapper>
-using DeviceView1d = Kokkos::View<T *, L, DevMemSpace>;
+template <typename T, typename L = LayoutWrapper, typename... Args>
+using DeviceView1d = Kokkos::View<T *, L, DevMemSpace, Args...>;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
-using DeviceView2d = Kokkos::View<T **, L, DevMemSpace>;
+template <typename T, typename L = LayoutWrapper, typename... Args>
+using DeviceView2d = Kokkos::View<T **, L, DevMemSpace, Args...>;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
-using DeviceView3d = Kokkos::View<T ***, L, DevMemSpace>;
+template <typename T, typename L = LayoutWrapper, typename... Args>
+using DeviceView3d = Kokkos::View<T ***, L, DevMemSpace, Args...>;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
-using DeviceView4d = Kokkos::View<T ****, L, DevMemSpace>;
+template <typename T, typename L = LayoutWrapper, typename... Args>
+using DeviceView4d = Kokkos::View<T ****, L, DevMemSpace, Args...>;
 ///@}
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
-using DeviceView5d = Kokkos::View<T *****, L, DevMemSpace>;
+template <typename T, typename L = LayoutWrapper, typename... Args>
+using DeviceView5d = Kokkos::View<T *****, L, DevMemSpace, Args...>;
 ///@}
 
 /** @name Host views
@@ -89,27 +105,35 @@ using DeviceView5d = Kokkos::View<T *****, L, DevMemSpace>;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
-using HostView1d = Kokkos::View<T *, L, HostMemSpace>;
+template <typename T, typename L = LayoutWrapper, typename... Args>
+using HostView1d = Kokkos::View<T *, L, HostMemSpace, Args...>;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
-using HostView2d = Kokkos::View<T **, L, HostMemSpace>;
+template <typename T, typename L = LayoutWrapper, typename... Args>
+using HostView2d = Kokkos::View<T **, L, HostMemSpace, Args...>;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
-using HostView3d = Kokkos::View<T ***, L, HostMemSpace>;
+template <typename T, typename L = LayoutWrapper, typename... Args>
+using HostView3d = Kokkos::View<T ***, L, HostMemSpace, Args...>;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
-using HostView4d = Kokkos::View<T ****, L, HostMemSpace>;
+template <typename T, typename L = LayoutWrapper, typename... Args>
+using HostView4d = Kokkos::View<T ****, L, HostMemSpace, Args...>;
 ///@}
 
 /** @name Host Scatter Views
@@ -122,24 +146,30 @@ using HostView4d = Kokkos::View<T ****, L, HostMemSpace>;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
+template <typename T, typename L = LayoutWrapper, typename... Args>
 using HostScatterView1d =
-    Kokkos::Experimental::ScatterView<T *, L, HostExecSpace>;
+    Kokkos::Experimental::ScatterView<T *, L, HostExecSpace, Args...>;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
+template <typename T, typename L = LayoutWrapper, typename... Args>
 using HostScatterView2d =
-    Kokkos::Experimental::ScatterView<T **, L, HostExecSpace>;
+    Kokkos::Experimental::ScatterView<T **, L, HostExecSpace, Args...>;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
+template <typename T, typename L = LayoutWrapper, typename... Args>
 using HostScatterView3d =
-    Kokkos::Experimental::ScatterView<T ***, L, HostExecSpace>;
+    Kokkos::Experimental::ScatterView<T ***, L, HostExecSpace, Args...>;
 ///@}
 
 /** @name Device Scatter Views
@@ -152,24 +182,30 @@ using HostScatterView3d =
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
+template <typename T, typename L = LayoutWrapper, typename... Args>
 using DeviceScatterView1d =
-    Kokkos::Experimental::ScatterView<T *, L, DevExecSpace>;
+    Kokkos::Experimental::ScatterView<T *, L, DevExecSpace, Args...>;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
+template <typename T, typename L = LayoutWrapper, typename... Args>
 using DeviceScatterView2d =
-    Kokkos::Experimental::ScatterView<T **, L, DevExecSpace>;
+    Kokkos::Experimental::ScatterView<T **, L, DevExecSpace, Args...>;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
+template <typename T, typename L = LayoutWrapper, typename... Args>
 using DeviceScatterView3d =
-    Kokkos::Experimental::ScatterView<T ***, L, DevExecSpace>;
+    Kokkos::Experimental::ScatterView<T ***, L, DevExecSpace, Args...>;
 ///@}
 
 /** @name Host Mirrors
@@ -181,33 +217,43 @@ using DeviceScatterView3d =
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
-using HostMirror1d = typename DeviceView1d<T, L>::HostMirror;
+template <typename T, typename L = LayoutWrapper, typename... Args>
+using HostMirror1d = typename DeviceView1d<T, L, Args...>::HostMirror;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
-using HostMirror2d = typename DeviceView2d<T, L>::HostMirror;
+template <typename T, typename L = LayoutWrapper, typename... Args>
+using HostMirror2d = typename DeviceView2d<T, L, Args...>::HostMirror;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
-using HostMirror3d = typename DeviceView3d<T, L>::HostMirror;
+template <typename T, typename L = LayoutWrapper, typename... Args>
+using HostMirror3d = typename DeviceView3d<T, L, Args...>::HostMirror;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
-using HostMirror4d = typename DeviceView4d<T, L>::HostMirror;
+template <typename T, typename L = LayoutWrapper, typename... Args>
+using HostMirror4d = typename DeviceView4d<T, L, Args...>::HostMirror;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
-using HostMirror5d = typename DeviceView5d<T, L>::HostMirror;
+template <typename T, typename L = LayoutWrapper, typename... Args>
+using HostMirror5d = typename DeviceView5d<T, L, Args...>::HostMirror;
 ///@}
 
 // Scratch Views
