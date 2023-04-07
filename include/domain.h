@@ -6,6 +6,8 @@
 #include "../include/quadrature.h"
 #include <Kokkos_Core.hpp>
 
+// using simd_type = Kokkos::Experimental::native_simd<double>;
+
 namespace specfem {
 namespace Domain {
 
@@ -137,6 +139,12 @@ public:
    * @param isig_step timestep for seismogram calculation
    */
   virtual void compute_seismogram(const int isig_step){};
+  // /**
+  //  * @brief Load arrays required for compute forces into simd_arrays when
+  //  * compiled with explicit SIMD types, or else reference original arrays.
+  //  *
+  //  */
+  // virtual void simd_configure_arrays();
 
 private:
   specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
@@ -343,6 +351,12 @@ public:
    * @param isig_step timestep for seismogram calculation
    */
   void compute_seismogram(const int isig_step) override;
+  // /**
+  //  * @brief Load arrays required for compute forces into simd_arrays when
+  //  * compiled with explicit SIMD types, or else reference original arrays.
+  //  *
+  //  */
+  // void simd_configure_arrays() override;
 
 private:
   specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
@@ -400,6 +414,13 @@ private:
                                                      ///< of all elements in
                                                      ///< this domain on the
                                                      ///< host
+  // specfem::kokkos::DeviceView2d<simd_type> xix;
+  // specfem::kokkos::DeviceView2d<simd_type> xiz;
+  // specfem::kokkos::DeviceView2d<simd_type> gammax;
+  // specfem::kokkos::DeviceView2d<simd_type> gammaz;
+  // specfem::kokkos::DeviceView2d<simd_type> jacobian;
+  // specfem::kokkos::DeviceView2d<simd_type> lambdaplus2mu;
+  // specfem::kokkos::DeviceView2d<simd_type> mu;
 
   // specfem::kokkos::DeviceView3d<type_real> duxdz, duxdx, duzdz, duzdx;
   // specfem::kokkos::DeviceView3d<type_real> sigma_xx, sigma_zz, sigma_xz;
