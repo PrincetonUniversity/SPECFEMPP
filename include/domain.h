@@ -414,16 +414,6 @@ private:
                                                      ///< of all elements in
                                                      ///< this domain on the
                                                      ///< host
-  // specfem::kokkos::DeviceView2d<simd_type> xix;
-  // specfem::kokkos::DeviceView2d<simd_type> xiz;
-  // specfem::kokkos::DeviceView2d<simd_type> gammax;
-  // specfem::kokkos::DeviceView2d<simd_type> gammaz;
-  // specfem::kokkos::DeviceView2d<simd_type> jacobian;
-  // specfem::kokkos::DeviceView2d<simd_type> lambdaplus2mu;
-  // specfem::kokkos::DeviceView2d<simd_type> mu;
-
-  // specfem::kokkos::DeviceView3d<type_real> duxdz, duxdx, duzdz, duzdx;
-  // specfem::kokkos::DeviceView3d<type_real> sigma_xx, sigma_zz, sigma_xz;
 };
 } // namespace Domain
 } // namespace specfem
