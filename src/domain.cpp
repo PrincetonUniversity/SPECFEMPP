@@ -311,16 +311,16 @@ template <int NGLL> void specfem::Domain::Elastic::compute_gradients() {
   assert(mu.extent(1) == NGLL2);
 
   int scratch_size =
-      12 * specfem::kokkos::StaticDeviceScratchView1d<type_real,
-                                                      NGLL2>::shmem_size();
+      12 *
+      specfem::kokkos::StaticDeviceScratchView1d<type_real,
+                                                 NGLL * NGLL>::shmem_size();
 
   scratch_size +=
       specfem::kokkos::StaticDeviceScratchView2d<int, NGLL>::shmem_size();
 
   Kokkos::parallel_for(
       "specfem::Domain::Elastic::compute_gradients",
-      specfem::kokkos::DeviceTeam(this->nelem_domain, Kokkos::AUTO,
-                                  Kokkos::AUTO)
+      specfem::kokkos::DeviceTeam(this->nelem_domain, 32, 1)
           .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
       KOKKOS_LAMBDA(
           const specfem::kokkos::DeviceTeam::member_type &team_member) {
@@ -329,34 +329,34 @@ template <int NGLL> void specfem::Domain::Elastic::compute_gradients() {
         // Assign scratch views
         // Assign scratch views for views that are required by every thread
         // during summations
-        specfem::kokkos::StaticDeviceScratchView1d<type_real, NGLL2>
+        specfem::kokkos::StaticDeviceScratchView1d<type_real, NGLL * NGLL>
             s_hprime_xx(team_member.team_scratch(0));
-        specfem::kokkos::StaticDeviceScratchView1d<type_real, NGLL2>
+        specfem::kokkos::StaticDeviceScratchView1d<type_real, NGLL * NGLL>
             s_hprime_zz(team_member.team_scratch(0));
-        specfem::kokkos::StaticDeviceScratchView1d<type_real, NGLL2>
+        specfem::kokkos::StaticDeviceScratchView1d<type_real, NGLL * NGLL>
             s_hprimewgll_xx(team_member.team_scratch(0));
-        specfem::kokkos::StaticDeviceScratchView1d<type_real, NGLL2>
+        specfem::kokkos::StaticDeviceScratchView1d<type_real, NGLL * NGLL>
             s_hprimewgll_zz(team_member.team_scratch(0));
         specfem::kokkos::StaticDeviceScratchView2d<int, NGLL> s_iglob(
             team_member.team_scratch(0));
 
         // Temporary scratch arrays used in calculation of integrals
-        specfem::kokkos::StaticDeviceScratchView1d<type_real, NGLL2> s_temp1(
-            team_member.team_scratch(0));
-        specfem::kokkos::StaticDeviceScratchView1d<type_real, NGLL2> s_temp2(
-            team_member.team_scratch(0));
-        specfem::kokkos::StaticDeviceScratchView1d<type_real, NGLL2> s_temp3(
-            team_member.team_scratch(0));
-        specfem::kokkos::StaticDeviceScratchView1d<type_real, NGLL2> s_temp4(
-            team_member.team_scratch(0));
-        specfem::kokkos::StaticDeviceScratchView1d<type_real, NGLL2> s_temp5(
-            team_member.team_scratch(0));
-        specfem::kokkos::StaticDeviceScratchView1d<type_real, NGLL2> s_temp6(
-            team_member.team_scratch(0));
-        specfem::kokkos::StaticDeviceScratchView1d<type_real, NGLL2> s_temp7(
-            team_member.team_scratch(0));
-        specfem::kokkos::StaticDeviceScratchView1d<type_real, NGLL2> s_temp8(
-            team_member.team_scratch(0));
+        specfem::kokkos::StaticDeviceScratchView1d<type_real, NGLL * NGLL>
+            s_temp1(team_member.team_scratch(0));
+        specfem::kokkos::StaticDeviceScratchView1d<type_real, NGLL * NGLL>
+            s_temp2(team_member.team_scratch(0));
+        specfem::kokkos::StaticDeviceScratchView1d<type_real, NGLL * NGLL>
+            s_temp3(team_member.team_scratch(0));
+        specfem::kokkos::StaticDeviceScratchView1d<type_real, NGLL * NGLL>
+            s_temp4(team_member.team_scratch(0));
+        specfem::kokkos::StaticDeviceScratchView1d<type_real, NGLL * NGLL>
+            s_temp5(team_member.team_scratch(0));
+        specfem::kokkos::StaticDeviceScratchView1d<type_real, NGLL * NGLL>
+            s_temp6(team_member.team_scratch(0));
+        specfem::kokkos::StaticDeviceScratchView1d<type_real, NGLL * NGLL>
+            s_temp7(team_member.team_scratch(0));
+        specfem::kokkos::StaticDeviceScratchView1d<type_real, NGLL * NGLL>
+            s_temp8(team_member.team_scratch(0));
 
         Kokkos::parallel_for(
             Kokkos::TeamThreadRange(team_member, NGLL2), [&](const int xz) {
@@ -420,12 +420,10 @@ template <int NGLL> void specfem::Domain::Elastic::compute_gradients() {
 
         Kokkos::parallel_for(
             Kokkos::TeamThreadRange(team_member, NGLL2), [&](const int xz) {
-              const int iz = xz / NGLL;
-              const int ix = xz % NGLL;
-              const type_real lambdal =
-                  lambdaplus2mu(ispec, xz) - 2.0 * mu(ispec, xz);
               const type_real lambdaplus2mul = lambdaplus2mu(ispec, xz);
               const type_real mul = mu(ispec, xz);
+              const type_real lambdal = lambdaplus2mul - 2.0 * mul;
+
               const type_real xixl = xix(ispec, xz);
               const type_real xizl = xiz(ispec, xz);
               const type_real gammaxl = gammax(ispec, xz);
