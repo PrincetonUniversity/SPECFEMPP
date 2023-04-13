@@ -7,22 +7,24 @@
 specfem::compute::partial_derivatives::partial_derivatives(const int nspec,
                                                            const int ngllz,
                                                            const int ngllx)
-    : xix(specfem::kokkos::DeviceView2d<type_real>(
-          "specfem::mesh::compute::xix", nspec, ngllz * ngllx)),
-      xiz(specfem::kokkos::DeviceView2d<type_real>(
-          "specfem::mesh::compute::xiz", nspec, ngllz * ngllx)),
-      gammax(specfem::kokkos::DeviceView2d<type_real>(
-          "specfem::mesh::compute::gammax", nspec, ngllz * ngllx)),
-      gammaz(specfem::kokkos::DeviceView2d<type_real>(
-          "specfem::mesh::compute::gammaz", nspec, ngllz * ngllx)),
-      jacobian(specfem::kokkos::DeviceView2d<type_real>(
-          "specfem::mesh::compute::jacobian", nspec, ngllz * ngllx)) {
+    : xix(specfem::kokkos::DeviceView3d<type_real>(
+          "specfem::mesh::compute::xix", nspec, ngllz, ngllx)),
+      xiz(specfem::kokkos::DeviceView3d<type_real>(
+          "specfem::mesh::compute::xiz", nspec, ngllz, ngllx)),
+      gammax(specfem::kokkos::DeviceView3d<type_real>(
+          "specfem::mesh::compute::gammax", nspec, ngllz, ngllx)),
+      gammaz(specfem::kokkos::DeviceView3d<type_real>(
+          "specfem::mesh::compute::gammaz", nspec, ngllz, ngllx)),
+      jacobian(specfem::kokkos::DeviceView3d<type_real>(
+          "specfem::mesh::compute::jacobian", nspec, ngllz, ngllx)) {
 
   h_xix = Kokkos::create_mirror_view(xix);
   h_xiz = Kokkos::create_mirror_view(xiz);
   h_gammax = Kokkos::create_mirror_view(gammax);
   h_gammaz = Kokkos::create_mirror_view(gammaz);
   h_jacobian = Kokkos::create_mirror_view(jacobian);
+
+  return;
 };
 
 specfem::compute::partial_derivatives::partial_derivatives(
@@ -118,11 +120,11 @@ specfem::compute::partial_derivatives::partial_derivatives(
                   jacobian::compute_inverted_derivatives(teamMember, s_coorg,
                                                          ngnod, sv_dershape2D);
 
-              this->h_xix(ispec, xz) = xixl;
-              this->h_gammax(ispec, xz) = gammaxl;
-              this->h_xiz(ispec, xz) = xizl;
-              this->h_gammaz(ispec, xz) = gammazl;
-              this->h_jacobian(ispec, xz) = jacobianl;
+              this->h_xix(ispec, iz, ix) = xixl;
+              this->h_gammax(ispec, iz, ix) = gammaxl;
+              this->h_xiz(ispec, iz, ix) = xizl;
+              this->h_gammaz(ispec, iz, ix) = gammazl;
+              this->h_jacobian(ispec, iz, ix) = jacobianl;
             });
       });
 

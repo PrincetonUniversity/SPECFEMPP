@@ -7,22 +7,22 @@
 
 specfem::compute::properties::properties(const int nspec, const int ngllz,
                                          const int ngllx)
-    : rho(specfem::kokkos::DeviceView2d<type_real>(
-          "specfem::compute::properties::rho", nspec, ngllz * ngllx)),
-      mu(specfem::kokkos::DeviceView2d<type_real>(
-          "specfem::compute::properties::mu", nspec, ngllz * ngllx)),
-      kappa(specfem::kokkos::HostView2d<type_real>(
-          "specfem::compute::properties::kappa", nspec, ngllz * ngllx)),
-      qmu(specfem::kokkos::HostView2d<type_real>(
-          "specfem::compute::properties::qmu", nspec, ngllz * ngllx)),
-      qkappa(specfem::kokkos::HostView2d<type_real>(
-          "specfem::compute::properties::qkappa", nspec, ngllz * ngllx)),
-      rho_vp(specfem::kokkos::HostView2d<type_real>(
-          "specfem::compute::properties::rho_vp", nspec, ngllz * ngllx)),
-      rho_vs(specfem::kokkos::HostView2d<type_real>(
-          "specfem::compute::properties::rho_vs", nspec, ngllz * ngllx)),
-      lambdaplus2mu(specfem::kokkos::DeviceView2d<type_real>(
-          "specfem::compute::properties::lambdaplus2mu", nspec, ngllz * ngllx)),
+    : rho(specfem::kokkos::DeviceView3d<type_real>(
+          "specfem::compute::properties::rho", nspec, ngllz, ngllx)),
+      mu(specfem::kokkos::DeviceView3d<type_real>(
+          "specfem::compute::properties::mu", nspec, ngllz, ngllx)),
+      kappa(specfem::kokkos::HostView3d<type_real>(
+          "specfem::compute::properties::kappa", nspec, ngllz, ngllx)),
+      qmu(specfem::kokkos::HostView3d<type_real>(
+          "specfem::compute::properties::qmu", nspec, ngllz, ngllx)),
+      qkappa(specfem::kokkos::HostView3d<type_real>(
+          "specfem::compute::properties::qkappa", nspec, ngllz, ngllx)),
+      rho_vp(specfem::kokkos::HostView3d<type_real>(
+          "specfem::compute::properties::rho_vp", nspec, ngllz, ngllx)),
+      rho_vs(specfem::kokkos::HostView3d<type_real>(
+          "specfem::compute::properties::rho_vs", nspec, ngllz, ngllx)),
+      lambdaplus2mu(specfem::kokkos::DeviceView3d<type_real>(
+          "specfem::compute::properties::lambdaplus2mu", nspec, ngllz, ngllx)),
       ispec_type(specfem::kokkos::DeviceView1d<specfem::elements::type>(
           "specfem::compute::properties::ispec_type", nspec)) {
 
@@ -48,26 +48,26 @@ specfem::compute::properties::properties(
 
   Kokkos::parallel_for(
       "specfem::compute::properties::properties",
-      specfem::kokkos::HostMDrange<2>({ 0, 0 }, { nspec, ngllz * ngllx }),
-      [=](const int ispec, const int xz) {
+      specfem::kokkos::HostMDrange<3>({ 0, 0, 0 }, { nspec, ngllz, ngllx }),
+      [=](const int ispec, const int iz, const int ix) {
         const int imat = kmato(ispec);
         utilities::return_holder holder = materials[imat]->get_properties();
         auto [rho, mu, kappa, qmu, qkappa, lambdaplus2mu] =
             std::make_tuple(holder.rho, holder.mu, holder.kappa, holder.qmu,
                             holder.qkappa, holder.lambdaplus2mu);
-        this->h_rho(ispec, xz) = rho;
-        this->h_mu(ispec, xz) = mu;
-        this->kappa(ispec, xz) = kappa;
+        this->h_rho(ispec, iz, ix) = rho;
+        this->h_mu(ispec, iz, ix) = mu;
+        this->kappa(ispec, iz, ix) = kappa;
 
-        this->qmu(ispec, xz) = qmu;
-        this->qkappa(ispec, xz) = qkappa;
+        this->qmu(ispec, iz, ix) = qmu;
+        this->qkappa(ispec, iz, ix) = qkappa;
 
         type_real vp = std::sqrt((kappa + mu) / rho);
         type_real vs = std::sqrt(mu / rho);
 
-        this->rho_vp(ispec, xz) = rho * vp;
-        this->rho_vs(ispec, xz) = rho * vs;
-        this->h_lambdaplus2mu(ispec, xz) = lambdaplus2mu;
+        this->rho_vp(ispec, iz, ix) = rho * vp;
+        this->rho_vs(ispec, iz, ix) = rho * vs;
+        this->h_lambdaplus2mu(ispec, iz, ix) = lambdaplus2mu;
       });
 
   Kokkos::parallel_for(
