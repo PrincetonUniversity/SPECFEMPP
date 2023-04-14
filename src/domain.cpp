@@ -62,29 +62,6 @@ specfem::Domain::Elastic::Elastic(
 
   this->assign_views();
 
-  this->nelem_domain = 0;
-  for (int ispec = 0; ispec < nspec; ispec++) {
-    if (material_properties->h_ispec_type(ispec) ==
-        specfem::elements::elastic) {
-      this->nelem_domain++;
-    }
-  }
-
-  this->ispec_domain = specfem::kokkos::DeviceView1d<int>(
-      "specfem::Domain::Elastic::ispec_domain", this->nelem_domain);
-  this->h_ispec_domain = Kokkos::create_mirror_view(ispec_domain);
-
-  int index = 0;
-  for (int ispec = 0; ispec < nspec; ispec++) {
-    if (material_properties->h_ispec_type(ispec) ==
-        specfem::elements::elastic) {
-      this->h_ispec_domain(index) = ispec;
-      index++;
-    }
-  }
-
-  Kokkos::deep_copy(ispec_domain, h_ispec_domain);
-
   return;
 };
 
@@ -96,6 +73,9 @@ void specfem::Domain::Elastic::assign_views() {
   const int ngllz = ibool.extent(1);
   const int ngllx = ibool.extent(2);
   const int nglob = field.extent(0);
+
+  // Inverse of mass matrix
+  //----------------------------------------------------------------------------
   // Initialize views
   Kokkos::parallel_for(
       "specfem::Domain::Elastic::initiaze_views",
@@ -147,6 +127,75 @@ void specfem::Domain::Elastic::assign_views() {
           rmass_inverse(iglob, 1) = 1.0;
         }
       });
+  // ----------------------------------------------------------------------
+
+  // Domain type
+  // ----------------------------------------------------------------------
+  this->nelem_domain = 0;
+  for (int ispec = 0; ispec < nspec; ispec++) {
+    if (material_properties->h_ispec_type(ispec) ==
+        specfem::elements::elastic) {
+      this->nelem_domain++;
+    }
+  }
+
+  this->ispec_domain = specfem::kokkos::DeviceView1d<int>(
+      "specfem::Domain::Elastic::ispec_domain", this->nelem_domain);
+  this->h_ispec_domain = Kokkos::create_mirror_view(ispec_domain);
+
+  int index = 0;
+  for (int ispec = 0; ispec < nspec; ispec++) {
+    if (material_properties->h_ispec_type(ispec) ==
+        specfem::elements::elastic) {
+      this->h_ispec_domain(index) = ispec;
+      index++;
+    }
+  }
+
+  Kokkos::deep_copy(ispec_domain, h_ispec_domain);
+  // --------------------------------------------------------------------------
+
+  // Partial derivatives
+  // ----------------------------------------------------------------------
+  if (std::is_same<type_real, simd_type>::value) {
+    this->xix = specfem::kokkos::DeviceView3d<simd_type>(
+        "specfem::Domain::Elastic::xix", nspec, ngllz, ngllx);
+    this->xiz = specfem::kokkos::DeviceView3d<simd_type>(
+        "specfem::Domain::Elastic::xiz", nspec, ngllz, ngllx);
+    this->gammax = specfem::kokkos::DeviceView3d<simd_type>(
+        "specfem::Domain::Elastic::gammax", nspec, ngllz, ngllx);
+    this->gammaz = specfem::kokkos::DeviceView3d<simd_type>(
+        "specfem::Domain::Elastic::gammaz", nspec, ngllz, ngllx);
+    this->jacobian = specfem::kokkos::DeviceView3d<simd_type>(
+        "specfem::Domain::Elastic::jacobian", nspec, ngllz, ngllx);
+
+    this->h_xix = Kokkos::create_mirror_view(this->xix);
+    this->h_xiz = Kokkos::create_mirror_view(this->xiz);
+    this->h_gammax = Kokkos::create_mirror_view(this->gammax);
+    this->h_gammaz = Kokkos::create_mirror_view(this->gammaz);
+    this->h_jacobian = Kokkos::create_mirror_view(this->jacobian);
+
+    this->h_xix = this->partial_derivatives->h_xix;
+    this->h_xiz = this->partial_derivatives->h_xiz;
+    this->h_gammax = this->partial_derivatives->h_gammax;
+    this->h_gammaz = this->partial_derivatives->h_gammaz;
+    this->h_jacobian = this->partial_derivatives->h_jacobian;
+
+    Kokkos::deep_copy(this->xix, this->h_xix);
+    Kokkos::deep_copy(this->xiz, this->h_xiz);
+    Kokkos::deep_copy(this->gammax, this->h_gammax);
+    Kokkos::deep_copy(this->gammaz, this->h_gammaz);
+    Kokkos::deep_copy(this->jacobian, this->h_jacobian);
+  }
+  // ----------------------------------------------------------------------
+
+  // compute properties
+  // ----------------------------------------------------------------------
+  if (std::is_same<type_real, simd_type>::value) {
+    this->lambdaplus2mu = this->material_properties->lambdaplus2mu;
+    this->mu = this->material_properties->mu;
+  }
+  // ---------------------------------------------------------------------
 
   return;
 }
@@ -207,14 +256,14 @@ template <int NGLL> void specfem::Domain::Elastic::compute_gradients() {
 
   const auto hprime_xx = this->quadx->get_hprime();
   const auto hprime_zz = this->quadz->get_hprime();
-  const auto xix = this->partial_derivatives->xix;
-  const auto xiz = this->partial_derivatives->xiz;
-  const auto gammax = this->partial_derivatives->gammax;
-  const auto gammaz = this->partial_derivatives->gammaz;
+  const auto xix = this->xix;
+  const auto xiz = this->xiz;
+  const auto gammax = this->gammax;
+  const auto gammaz = this->gammaz;
   const auto ibool = this->compute->ibool;
-  const auto lambdaplus2mu = this->material_properties->lambdaplus2mu;
-  const auto mu = this->material_properties->mu;
-  const auto jacobian = this->partial_derivatives->jacobian;
+  const auto lambdaplus2mu = this->lambdaplus2mu;
+  const auto mu = this->mu;
+  const auto jacobian = this->jacobian;
   const auto wxgll = this->quadx->get_w();
   const auto wzgll = this->quadz->get_w();
   const auto ispec_domain = this->ispec_domain;
@@ -247,7 +296,7 @@ template <int NGLL> void specfem::Domain::Elastic::compute_gradients() {
 
   int scratch_size =
       10 *
-      specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL>::shmem_size();
+      specfem::kokkos::StaticDeviceScratchView2d<simd_type, NGLL>::shmem_size();
 
   scratch_size +=
       specfem::kokkos::StaticDeviceScratchView2d<int, NGLL>::shmem_size();
@@ -275,17 +324,17 @@ template <int NGLL> void specfem::Domain::Elastic::compute_gradients() {
             team_member.team_scratch(0));
 
         // Temporary scratch arrays used in calculation of integrals
-        specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL> s_fieldx(
+        specfem::kokkos::StaticDeviceScratchView2d<simd_type, NGLL> s_fieldx(
             team_member.team_scratch(0));
-        specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL> s_fieldz(
+        specfem::kokkos::StaticDeviceScratchView2d<simd_type, NGLL> s_fieldz(
             team_member.team_scratch(0));
-        specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL> s_temp5(
+        specfem::kokkos::StaticDeviceScratchView2d<simd_type, NGLL> s_temp5(
             team_member.team_scratch(0));
-        specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL> s_temp6(
+        specfem::kokkos::StaticDeviceScratchView2d<simd_type, NGLL> s_temp6(
             team_member.team_scratch(0));
-        specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL> s_temp7(
+        specfem::kokkos::StaticDeviceScratchView2d<simd_type, NGLL> s_temp7(
             team_member.team_scratch(0));
-        specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL> s_temp8(
+        specfem::kokkos::StaticDeviceScratchView2d<simd_type, NGLL> s_temp8(
             team_member.team_scratch(0));
 
         Kokkos::parallel_for(
@@ -318,17 +367,17 @@ template <int NGLL> void specfem::Domain::Elastic::compute_gradients() {
               const int iz = xz * NGLL_INV;
               const int ix = xz - iz * NGLL;
 
-              const type_real lambdaplus2mul = lambdaplus2mu(ispec, iz, ix);
-              const type_real mul = mu(ispec, iz, ix);
-              const type_real lambdal = lambdaplus2mul - 2.0 * mul;
+              const simd_type lambdaplus2mul = lambdaplus2mu(ispec, iz, ix);
+              const simd_type mul = mu(ispec, iz, ix);
+              const simd_type lambdal = lambdaplus2mul - 2.0 * mul;
 
-              const type_real xixl = xix(ispec, iz, ix);
-              const type_real xizl = xiz(ispec, iz, ix);
-              const type_real gammaxl = gammax(ispec, iz, ix);
-              const type_real gammazl = gammaz(ispec, iz, ix);
-              const type_real jacobianl = jacobian(ispec, iz, ix);
+              const simd_type xixl = xix(ispec, iz, ix);
+              const simd_type xizl = xiz(ispec, iz, ix);
+              const simd_type gammaxl = gammax(ispec, iz, ix);
+              const simd_type gammazl = gammaz(ispec, iz, ix);
+              const simd_type jacobianl = jacobian(ispec, iz, ix);
 
-              type_real sigma_xx, sigma_zz, sigma_xz;
+              simd_type sigma_xx, sigma_zz, sigma_xz;
 
               if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
                 // P_SV case
@@ -368,10 +417,10 @@ template <int NGLL> void specfem::Domain::Elastic::compute_gradients() {
               const int iz = xz * NGLL_INV;
               const int ix = xz - iz * NGLL;
 
-              type_real tempx1 = 0.0;
-              type_real tempz1 = 0.0;
-              type_real tempx3 = 0.0;
-              type_real tempz3 = 0.0;
+              simd_type tempx1 = 0.0;
+              simd_type tempz1 = 0.0;
+              simd_type tempx3 = 0.0;
+              simd_type tempz3 = 0.0;
 
 #pragma unroll
               for (int l = 0; l < NGLL; l++) {

@@ -46,15 +46,15 @@ KOKKOS_FUNCTION void compute_gradients_2D(
         const int iz = xz * NGLL_INV;
         const int ix = xz - iz * NGLL;
 
-        const type_real xixl = xix(ispec, iz, ix);
-        const type_real xizl = xiz(ispec, iz, ix);
-        const type_real gammaxl = gammax(ispec, iz, ix);
-        const type_real gammazl = gammaz(ispec, iz, ix);
+        const simd_type xixl = xix(ispec, iz, ix);
+        const simd_type xizl = xiz(ispec, iz, ix);
+        const simd_type gammaxl = gammax(ispec, iz, ix);
+        const simd_type gammazl = gammaz(ispec, iz, ix);
 
-        type_real sum_hprime_x1 = 0.0;
-        type_real sum_hprime_x3 = 0.0;
-        type_real sum_hprime_z1 = 0.0;
-        type_real sum_hprime_z3 = 0.0;
+        simd_type sum_hprime_x1 = 0.0;
+        simd_type sum_hprime_x3 = 0.0;
+        simd_type sum_hprime_z1 = 0.0;
+        simd_type sum_hprime_z3 = 0.0;
 
         for (int l = 0; l < NGLL; l++) {
           sum_hprime_x1 += s_hprime_xx(ix, l) * field_x(iz, l);
