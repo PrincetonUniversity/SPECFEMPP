@@ -1,5 +1,5 @@
-#include "../../../include/config.h"
 #include "../../../include/fortran_IO.h"
+#include "../../../include/specfem_setup.hpp"
 #include <boost/algorithm/string/trim.hpp>
 #include <fstream>
 #include <gmock/gmock.h>

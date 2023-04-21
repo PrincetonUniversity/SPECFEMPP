@@ -1,8 +1,8 @@
 #ifndef MATHEMATICAL_OPERATORS_H
 #define MATHEMATICAL_OPERATORS_H
 
-#include "../include/config.h"
 #include "../include/kokkos_abstractions.h"
+#include "../include/specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
 // using type_real = Kokkos::Experimental::native_simd<type_real>;
@@ -96,6 +96,73 @@ KOKKOS_FUNCTION void compute_gradients_2D(
     specfem::kokkos::DeviceScratchView2d<type_real> s_duzdx,
     specfem::kokkos::DeviceScratchView2d<type_real> s_duzdz);
 
+template <int NGLL>
+KOKKOS_FUNCTION void add_contributions(
+    const specfem::kokkos::DeviceTeam::member_type &team_member,
+    const specfem::kokkos::DeviceView1d<type_real> wxgll,
+    const specfem::kokkos::DeviceView1d<type_real> wzgll,
+    const specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL, NGLL>
+        s_hprimewgll_xx,
+    const specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL, NGLL>
+        s_hprimewgll_zz,
+    const specfem::kokkos::StaticDeviceScratchView2d<int, NGLL, NGLL> s_iglob,
+    const specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL, NGLL>
+        integrand_1,
+    const specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL, NGLL>
+        integrand_2,
+    const specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL, NGLL>
+        integrand_3,
+    const specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL, NGLL>
+        integrand_4,
+    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+        field_dot_dot) {
+
+  assert(wxgll.extent(0) == NGLL);
+  assert(wzgll.extent(0) == NGLL);
+
+  constexpr int NGLL2 = NGLL * NGLL;
+  constexpr type_real NGLL_INV = 1.0 / NGLL;
+
+  Kokkos::parallel_for(
+      Kokkos::TeamThreadRange(team_member, NGLL2), [&](const int xz) {
+        const int iz = xz * NGLL_INV;
+        const int ix = xz - iz * NGLL;
+
+        type_real tempx1 = 0.0;
+        type_real tempz1 = 0.0;
+        type_real tempx3 = 0.0;
+        type_real tempz3 = 0.0;
+
+#pragma unroll
+        for (int l = 0; l < NGLL; l++) {
+          tempx1 += s_hprimewgll_xx(ix, l) * integrand_1(iz, l);
+          tempz1 += s_hprimewgll_xx(ix, l) * integrand_2(iz, l);
+          tempx3 += s_hprimewgll_zz(iz, l) * integrand_3(l, ix);
+          tempz3 += s_hprimewgll_zz(iz, l) * integrand_4(l, ix);
+        }
+
+        const int iglob = s_iglob(iz, ix);
+        const type_real sum_terms1 =
+            -1.0 * (wzgll(iz) * tempx1) - (wxgll(ix) * tempx3);
+        const type_real sum_terms3 =
+            -1.0 * (wzgll(iz) * tempz1) - (wxgll(ix) * tempz3);
+        Kokkos::atomic_add(&field_dot_dot(iglob, 0), sum_terms1);
+        Kokkos::atomic_add(&field_dot_dot(iglob, 1), sum_terms3);
+      });
+}
+
+KOKKOS_FUNCTION void add_contributions(
+    const specfem::kokkos::DeviceTeam::member_type &team_member,
+    const specfem::kokkos::DeviceView1d<type_real> wxgll,
+    const specfem::kokkos::DeviceView1d<type_real> wzgll,
+    const specfem::kokkos::DeviceScratchView2d<type_real> s_hprimewgll_xx,
+    const specfem::kokkos::DeviceScratchView2d<type_real> s_hprimewgll_zz,
+    const specfem::kokkos::DeviceScratchView2d<int> s_iglob,
+    const specfem::kokkos::DeviceScratchView2d<type_real> integrand_1,
+    const specfem::kokkos::DeviceScratchView2d<type_real> integrand_2,
+    const specfem::kokkos::DeviceScratchView2d<type_real> integrand_3,
+    const specfem::kokkos::DeviceScratchView2d<type_real> integrand_4,
+    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot_dot);
 } // namespace mathematical_operators
 } // namespace specfem
 

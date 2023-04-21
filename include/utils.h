@@ -1,10 +1,10 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include "../include/config.h"
 #include "../include/kokkos_abstractions.h"
 #include "../include/quadrature.h"
 #include "../include/specfem_mpi.h"
+#include "../include/specfem_setup.hpp"
 #include <tuple>
 
 namespace specfem {

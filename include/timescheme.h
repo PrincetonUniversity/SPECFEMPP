@@ -1,8 +1,8 @@
 #ifndef TIMESCHEME_H
 #define TIMESCHEME_H
 
-#include "../include/config.h"
 #include "../include/domain.h"
+#include "../include/specfem_setup.hpp"
 #include <ostream>
 
 namespace specfem {

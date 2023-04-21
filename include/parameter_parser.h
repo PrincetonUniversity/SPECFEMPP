@@ -1,9 +1,9 @@
 #ifndef PARAMETER_PARSER_H
 #define PARAMETER_PARSER_H
 
-#include "../include/config.h"
 #include "../include/quadrature.h"
 #include "../include/receiver.h"
+#include "../include/specfem_setup.hpp"
 #include "../include/timescheme.h"
 #include "../include/writer.h"
 #include "yaml-cpp/yaml.h"

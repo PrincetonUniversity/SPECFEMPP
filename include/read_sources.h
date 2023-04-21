@@ -1,9 +1,9 @@
 #ifndef READ_SOURCES_H
 #define READ_SOURCES_H
 
-#include "../include/config.h"
 #include "../include/receiver.h"
 #include "../include/source.h"
+#include "../include/specfem_setup.hpp"
 #include <vector>
 
 namespace specfem {

@@ -1,11 +1,11 @@
 #include "../include/domain.h"
 #include "../include/compute.h"
-#include "../include/config.h"
 #include "../include/enums.h"
 #include "../include/globals.h"
 #include "../include/kokkos_abstractions.h"
 #include "../include/mathematical_operators.h"
 #include "../include/quadrature.h"
+#include "../include/specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <Kokkos_ScatterView.hpp>
 
@@ -265,7 +265,7 @@ void specfem::Domain::Elastic::compute_stiffness_interaction() {
 
   Kokkos::parallel_for(
       "specfem::Domain::Elastic::compute_gradients",
-      specfem::kokkos::DeviceTeam(this->nelem_domain, 32, 1)
+      specfem::kokkos::DeviceTeam(this->nelem_domain, NTHREADS, NLANES)
           .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
       KOKKOS_LAMBDA(
           const specfem::kokkos::DeviceTeam::member_type &team_member) {
@@ -374,34 +374,9 @@ void specfem::Domain::Elastic::compute_stiffness_interaction() {
 
         team_member.team_barrier();
 
-        Kokkos::parallel_for(
-            Kokkos::TeamThreadRange(team_member, NGLL2), [&](const int xz) {
-              const int iz = xz * NGLL_INV;
-              const int ix = xz - iz * NGLL;
-
-              type_real tempx1 = 0.0;
-              type_real tempz1 = 0.0;
-              type_real tempx3 = 0.0;
-              type_real tempz3 = 0.0;
-
-#pragma unroll
-              for (int l = 0; l < NGLL; l++) {
-                tempx1 += s_hprimewgll_xx(ix, l) * s_temp5(iz, l);
-                tempz1 += s_hprimewgll_xx(ix, l) * s_temp6(iz, l);
-                tempx3 += s_hprimewgll_zz(iz, l) * s_temp7(l, ix);
-                tempz3 += s_hprimewgll_zz(iz, l) * s_temp8(l, ix);
-              }
-
-              const int iglob = s_iglob(iz, ix);
-              const type_real sum_terms1 =
-                  -1.0 * (wxgll(iz) * tempx1) - (wxgll(ix) * tempx3);
-              const type_real sum_terms3 =
-                  -1.0 * (wxgll(iz) * tempz1) - (wxgll(ix) * tempz3);
-              // Kokkos::single(Kokkos::PerThread(team_member), [=] {
-              Kokkos::atomic_add(&field_dot_dot(iglob, 0), sum_terms1);
-              Kokkos::atomic_add(&field_dot_dot(iglob, 1), sum_terms3);
-              // });
-            });
+        specfem::mathematical_operators::add_contributions(
+            team_member, wxgll, wzgll, s_hprimewgll_xx, s_hprimewgll_zz,
+            s_iglob, s_temp5, s_temp6, s_temp7, s_temp8, field_dot_dot);
       });
 
   Kokkos::fence();
@@ -449,7 +424,7 @@ void specfem::Domain::Elastic::compute_stiffness_interaction() {
 
   Kokkos::parallel_for(
       "specfem::Domain::Elastic::compute_gradients",
-      specfem::kokkos::DeviceTeam(this->nelem_domain, 32, 1)
+      specfem::kokkos::DeviceTeam(this->nelem_domain, NTHREADS, NLANES)
           .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
       KOKKOS_LAMBDA(
           const specfem::kokkos::DeviceTeam::member_type &team_member) {
@@ -575,36 +550,9 @@ void specfem::Domain::Elastic::compute_stiffness_interaction() {
 
         team_member.team_barrier();
 
-        Kokkos::parallel_for(
-            Kokkos::TeamThreadRange(team_member, ngll2), [&](const int xz) {
-              int iz, ix;
-              sub2ind(xz, ngllz, iz, ix);
-
-              type_real tempx1 = 0.0;
-              type_real tempz1 = 0.0;
-              type_real tempx3 = 0.0;
-              type_real tempz3 = 0.0;
-
-              for (int l = 0; l < ngllx; l++) {
-                tempx1 += s_hprimewgll_xx(ix, l) * s_temp1(iz, l);
-                tempz1 += s_hprimewgll_xx(ix, l) * s_temp2(iz, l);
-              }
-
-              for (int l = 0; l < ngllz; l++) {
-                tempx3 += s_hprimewgll_zz(iz, l) * s_temp3(l, ix);
-                tempz3 += s_hprimewgll_zz(iz, l) * s_temp4(l, ix);
-              }
-
-              const int iglob = s_iglob(iz, ix);
-              const type_real sum_terms1 =
-                  -1.0 * (wxgll(iz) * tempx1) - (wxgll(ix) * tempx3);
-              const type_real sum_terms3 =
-                  -1.0 * (wxgll(iz) * tempz1) - (wxgll(ix) * tempz3);
-              // Kokkos::single(Kokkos::PerThread(team_member), [=] {
-              Kokkos::atomic_add(&field_dot_dot(iglob, 0), sum_terms1);
-              Kokkos::atomic_add(&field_dot_dot(iglob, 1), sum_terms3);
-              // });
-            });
+        specfem::mathematical_operators::add_contributions(
+            team_member, wxgll, wzgll, s_hprimewgll_xx, s_hprimewgll_zz,
+            s_iglob, s_temp1, s_temp2, s_temp3, s_temp4, field_dot_dot);
       });
 
   Kokkos::fence();

@@ -2,8 +2,8 @@
 #define DOMAIN_H
 
 #include "../include/compute.h"
-#include "../include/config.h"
 #include "../include/quadrature.h"
+#include "../include/specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
 // using simd_type = Kokkos::Experimental::native_simd<double>;

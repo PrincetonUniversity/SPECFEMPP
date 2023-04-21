@@ -1,12 +1,12 @@
 #ifndef SOURCES_H
 #define SOURCES_H
 
-#include "../include/config.h"
 #include "../include/enums.h"
 #include "../include/kokkos_abstractions.h"
 #include "../include/quadrature.h"
 #include "../include/source_time_function.h"
 #include "../include/specfem_mpi.h"
+#include "../include/specfem_setup.hpp"
 #include "../include/utils.h"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>

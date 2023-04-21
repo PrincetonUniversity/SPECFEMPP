@@ -1,7 +1,7 @@
-#include "../include/config.h"
 #include "../include/params.h"
 #include "../include/sources.h"
 #include "../include/specfem_mpi.h"
+#include "../include/specfem_setup.hpp"
 #include <fstream>
 #include <iostream>
 #include <regex>

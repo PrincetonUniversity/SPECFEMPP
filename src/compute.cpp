@@ -3,6 +3,7 @@
 #include "../include/kokkos_abstractions.h"
 #include "../include/quadrature.h"
 #include "../include/shape_functions.h"
+#include "../include/specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <tuple>
 #include <vector>

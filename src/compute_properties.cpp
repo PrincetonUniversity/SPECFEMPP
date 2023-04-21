@@ -1,8 +1,8 @@
 #include "../include/compute.h"
-#include "../include/config.h"
 #include "../include/jacobian.h"
 #include "../include/kokkos_abstractions.h"
 #include "../include/shape_functions.h"
+#include "../include/specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
 specfem::compute::properties::properties(const int nspec, const int ngllz,
