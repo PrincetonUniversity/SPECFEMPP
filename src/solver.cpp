@@ -19,7 +19,7 @@ void specfem::solver::time_marching::run() {
     Kokkos::Profiling::pushRegion("Stiffness calculation");
     it->apply_predictor_phase(domain);
 
-    domain->compute_stiffness_interaction();
+    domain->compute_stiffness_interaction_calling_routine();
     domain->compute_source_interaction(timeval);
     domain->divide_mass_matrix();
 

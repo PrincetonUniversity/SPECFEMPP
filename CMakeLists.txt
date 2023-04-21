@@ -71,12 +71,12 @@ target_link_libraries(
 add_library(
         fortranio
         src/fortran_IO.cpp
-        include/fortran_IO.h
 )
 
 target_link_libraries(
         fortranio
         PUBLIC Boost::boost
+        Kokkos::kokkos
 )
 
 add_library(
@@ -93,6 +93,16 @@ if (MPI_PARALLEL)
 else()
         message("-- Compiling SPECFEM without MPI")
 endif(MPI_PARALLEL)
+
+add_library(
+        operators
+        src/mathematical_operators.cpp
+)
+
+target_link_libraries(
+        operators
+        Kokkos::kokkos
+)
 
 add_library(
         material_class
@@ -182,6 +192,7 @@ add_library(
 target_link_libraries(
         mesh_properties
         specfem_mpi
+        Kokkos::kokkos
 )
 
 add_library(
@@ -332,6 +343,7 @@ target_link_libraries(
         domain
         compute
         quadrature
+        operators
         Kokkos::kokkos
 )
 
@@ -405,6 +417,7 @@ target_link_libraries(
         utilities
         receiver_class
         writer
+        operators
         Boost::program_options
 )
 
