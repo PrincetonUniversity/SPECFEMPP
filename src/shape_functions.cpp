@@ -1,6 +1,6 @@
 #include "../include/shape_functions.h"
-#include "../include/config.h"
 #include "../include/kokkos_abstractions.h"
+#include "../include/specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
 using HostView1d = specfem::kokkos::HostView1d<type_real>;

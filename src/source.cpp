@@ -1,11 +1,11 @@
 #include "../include/source.h"
-#include "../include/config.h"
 #include "../include/globals.h"
 #include "../include/jacobian.h"
 #include "../include/kokkos_abstractions.h"
 #include "../include/lagrange_poly.h"
 #include "../include/source_time_function.h"
 #include "../include/specfem_mpi.h"
+#include "../include/specfem_setup.hpp"
 #include "../include/utils.h"
 #include "yaml-cpp/yaml.h"
 #include <cmath>

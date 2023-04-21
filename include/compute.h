@@ -6,6 +6,7 @@
 #include "../include/quadrature.h"
 #include "../include/receiver.h"
 #include "../include/source.h"
+#include "../include/specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <vector>
 
@@ -115,7 +116,7 @@ struct properties {
   specfem::kokkos::DeviceView3d<type_real> lambdaplus2mu;
   specfem::kokkos::HostMirror3d<type_real> h_lambdaplus2mu;
   ///@}
-  // element type is defined in config.h
+  // element type is defined in specfem_setup.hpp
   specfem::kokkos::DeviceView1d<specfem::elements::type>
       ispec_type; ///< type of element
                   ///< stored on device

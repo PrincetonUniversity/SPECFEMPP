@@ -1,9 +1,9 @@
 #include "../include/receiver.h"
-#include "../include/config.h"
 #include "../include/kokkos_abstractions.h"
 #include "../include/lagrange_poly.h"
 #include "../include/quadrature.h"
 #include "../include/specfem_mpi.h"
+#include "../include/specfem_setup.hpp"
 #include "../include/utils.h"
 
 void specfem::receivers::receiver::locate(

@@ -3,7 +3,6 @@
 
 #include "../include/boundaries.h"
 #include "../include/compute.h"
-#include "../include/config.h"
 #include "../include/elements.h"
 #include "../include/kokkos_abstractions.h"
 #include "../include/material.h"
@@ -11,6 +10,7 @@
 #include "../include/quadrature.h"
 #include "../include/read_mesh_database.h"
 #include "../include/specfem_mpi.h"
+#include "../include/specfem_setup.hpp"
 #include "../include/surfaces.h"
 #include <Kokkos_Core.hpp>
 

@@ -1,11 +1,11 @@
 #include "../include/read_mesh_database.h"
-#include "../include/config.h"
 #include "../include/fortran_IO.h"
 #include "../include/kokkos_abstractions.h"
 #include "../include/material.h"
 #include "../include/params.h"
 #include "../include/read_material_properties.h"
 #include "../include/specfem_mpi.h"
+#include "../include/specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <fstream>
 #include <iostream>

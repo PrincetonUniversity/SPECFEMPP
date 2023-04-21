@@ -1,7 +1,7 @@
 #include "../include/read_sources.h"
-#include "../include/config.h"
 #include "../include/receiver.h"
 #include "../include/source.h"
+#include "../include/specfem_setup.hpp"
 #include "../include/utils.h"
 #include "yaml-cpp/yaml.h"
 #include <boost/tokenizer.hpp>

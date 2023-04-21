@@ -1,5 +1,4 @@
 #include "../include/compute.h"
-#include "../include/config.h"
 #include "../include/domain.h"
 #include "../include/kokkos_abstractions.h"
 #include "../include/material.h"
@@ -12,6 +11,7 @@
 #include "../include/solver.h"
 #include "../include/source.h"
 #include "../include/specfem_mpi.h"
+#include "../include/specfem_setup.hpp"
 #include "../include/timescheme.h"
 #include "../include/utils.h"
 #include "yaml-cpp/yaml.h"

@@ -1,5 +1,5 @@
 #include "../include/source_time_function.h"
-#include "../include/config.h"
+#include "../include/specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
 #include <ostream>
