@@ -3,6 +3,7 @@
 
 #include "../include/config.h"
 #include <Kokkos_Core.hpp>
+#include <Kokkos_SIMD.hpp>
 #include <Kokkos_ScatterView.hpp>
 
 namespace specfem {
@@ -326,9 +327,9 @@ using DeviceScratchView3d =
  * @tparam L view layout - default layout is LayoutRight
  * @tparam N length of view
  */
-template <typename T, int N, typename L = LayoutWrapper>
+template <typename T, int N1, typename L = LayoutWrapper>
 using StaticHostScratchView1d =
-    Kokkos::View<T[N], L, HostScratchSpace,
+    Kokkos::View<T[N1], L, HostScratchSpace,
                  Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
 
 /**
@@ -336,9 +337,9 @@ using StaticHostScratchView1d =
  * @tparam L view layout - default layout is LayoutRight
  * @tparam N length of view
  */
-template <typename T, int N, typename L = LayoutWrapper>
+template <typename T, int N1, int N2, typename L = LayoutWrapper>
 using StaticHostScratchView2d =
-    Kokkos::View<T[N][N], L, HostScratchSpace,
+    Kokkos::View<T[N1][N2], L, HostScratchSpace,
                  Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
 
 /**
@@ -346,9 +347,9 @@ using StaticHostScratchView2d =
  * @tparam L view layout - default layout is LayoutRight
  * @tparam N length of view
  */
-template <typename T, int N, typename L = LayoutWrapper>
+template <typename T, int N1, int N2, int N3, typename L = LayoutWrapper>
 using StaticHostScratchView3d =
-    Kokkos::View<T[N][N][N], L, HostScratchSpace,
+    Kokkos::View<T[N1][N2][N3], L, HostScratchSpace,
                  Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
 
 /**
@@ -356,9 +357,9 @@ using StaticHostScratchView3d =
  * @tparam L view layout - default layout is LayoutRight
  * @tparam N length of view
  */
-template <typename T, int N, typename L = LayoutWrapper>
+template <typename T, int N1, typename L = LayoutWrapper>
 using StaticDeviceScratchView1d =
-    Kokkos::View<T[N], L, DevScratchSpace,
+    Kokkos::View<T[N1], L, DevScratchSpace,
                  Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
 
 /**
@@ -366,9 +367,9 @@ using StaticDeviceScratchView1d =
  * @tparam L view layout - default layout is LayoutRight
  * @tparam N length of view
  */
-template <typename T, int N, typename L = LayoutWrapper>
+template <typename T, int N1, int N2, typename L = LayoutWrapper>
 using StaticDeviceScratchView2d =
-    Kokkos::View<T[N][N], L, DevScratchSpace,
+    Kokkos::View<T[N1][N2], L, DevScratchSpace,
                  Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
 
 /**
@@ -376,9 +377,9 @@ using StaticDeviceScratchView2d =
  * @tparam L view layout - default layout is LayoutRight
  * @tparam N length of view
  */
-template <typename T, int N, typename L = LayoutWrapper>
+template <typename T, int N1, int N2, int N3, typename L = LayoutWrapper>
 using StaticDeviceScratchView3d =
-    Kokkos::View<T[N][N][N], L, DevScratchSpace,
+    Kokkos::View<T[N1][N2][N3], L, DevScratchSpace,
                  Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
 
 ///@}
@@ -439,6 +440,22 @@ using DeviceRange = Kokkos::RangePolicy<DevExecSpace>;
 using HostTeam = Kokkos::TeamPolicy<HostExecSpace>;
 using DeviceTeam = Kokkos::TeamPolicy<DevExecSpace>;
 ///@}
+
+/**
+ * @brief Enable SIMD intrinsics using SIMD variables.
+ *
+ * @tparam T type T of variable
+ * @tparam simd_abi simd_abi value can either be native or scalar. These values
+ * determine if the Kokkos enables SIMD vectorization or reverts to scalar
+ * operator implementations
+ *
+ * @note Currently there is a bug in Kokkos SIMD implemtation when compiling
+ * with GCC or clang. If using SIMD vectorization pass the @code -fpermissive
+ * @endcode flag to CXX compiler
+ */
+template <typename T = type_real,
+          typename simd_abi = Kokkos::Experimental::simd_abi::scalar>
+using simd_type = Kokkos::Experimental::simd<T, simd_abi>;
 
 } // namespace kokkos
 } // namespace specfem
