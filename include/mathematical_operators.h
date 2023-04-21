@@ -4,7 +4,7 @@
 #include "../include/config.h"
 #include <Kokkos_Core.hpp>
 
-// using simd_type = Kokkos::Experimental::native_simd<type_real>;
+// using type_real = Kokkos::Experimental::native_simd<type_real>;
 // using mask_type = Kokkos::Experimental::native_simd_mask<double>;
 // using tag_type = Kokkos::Experimental::element_aligned_tag;
 
@@ -18,16 +18,18 @@ KOKKOS_FUNCTION void compute_gradients_2D(
     const specfem::kokkos::DeviceView3d<type_real> xiz,
     const specfem::kokkos::DeviceView3d<type_real> gammax,
     const specfem::kokkos::DeviceView3d<type_real> gammaz,
-    const specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL>
+    const specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL, NGLL>
         s_hprime_xx,
-    const specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL>
+    const specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL, NGLL>
         s_hprime_zz,
-    const specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL> field_x,
-    const specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL> field_z,
-    specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL> s_duxdx,
-    specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL> s_duxdz,
-    specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL> s_duzdx,
-    specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL> s_duzdz) {
+    const specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL, NGLL>
+        field_x,
+    const specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL, NGLL>
+        field_z,
+    specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL, NGLL> s_duxdx,
+    specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL, NGLL> s_duxdz,
+    specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL, NGLL> s_duzdx,
+    specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL, NGLL> s_duzdz) {
 
   const int NGLL2 = NGLL * NGLL;
   assert(xix.extent(1) == NGLL);
@@ -46,15 +48,15 @@ KOKKOS_FUNCTION void compute_gradients_2D(
         const int iz = xz * NGLL_INV;
         const int ix = xz - iz * NGLL;
 
-        const simd_type xixl = xix(ispec, iz, ix);
-        const simd_type xizl = xiz(ispec, iz, ix);
-        const simd_type gammaxl = gammax(ispec, iz, ix);
-        const simd_type gammazl = gammaz(ispec, iz, ix);
+        const type_real xixl = xix(ispec, iz, ix);
+        const type_real xizl = xiz(ispec, iz, ix);
+        const type_real gammaxl = gammax(ispec, iz, ix);
+        const type_real gammazl = gammaz(ispec, iz, ix);
 
-        simd_type sum_hprime_x1 = 0.0;
-        simd_type sum_hprime_x3 = 0.0;
-        simd_type sum_hprime_z1 = 0.0;
-        simd_type sum_hprime_z3 = 0.0;
+        type_real sum_hprime_x1 = 0.0;
+        type_real sum_hprime_x3 = 0.0;
+        type_real sum_hprime_z1 = 0.0;
+        type_real sum_hprime_z3 = 0.0;
 
         for (int l = 0; l < NGLL; l++) {
           sum_hprime_x1 += s_hprime_xx(ix, l) * field_x(iz, l);
