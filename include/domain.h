@@ -95,7 +95,7 @@ public:
    * field
    *
    */
-  virtual void compute_stiffness_interaction(){};
+  virtual void compute_stiffness_interaction_calling_routine(){};
   /**
    * @brief Divide the second derivative of field by the mass matrix
    *
@@ -298,10 +298,10 @@ public:
    * @brief Compute interaction of stiffness matrix on acceleration
    *
    */
-  void compute_stiffness_interaction() override;
+  void compute_stiffness_interaction_calling_routine() override;
   template <int NGLL> void compute_stiffness_interaction();
-  void compute_stresses();
-  // void compute_integrals();
+  void compute_stiffness_interaction();
+
   /**
    * @brief Divide the acceleration by the mass matrix
    *

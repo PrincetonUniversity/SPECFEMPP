@@ -2,6 +2,7 @@
 #define MATHEMATICAL_OPERATORS_H
 
 #include "../include/config.h"
+#include "../include/kokkos_abstractions.h"
 #include <Kokkos_Core.hpp>
 
 // using type_real = Kokkos::Experimental::native_simd<type_real>;
@@ -79,6 +80,21 @@ KOKKOS_FUNCTION void compute_gradients_2D(
 
   return;
 };
+
+KOKKOS_FUNCTION void compute_gradients_2D(
+    const specfem::kokkos::DeviceTeam::member_type &team_member,
+    const int ispec, const specfem::kokkos::DeviceView3d<type_real> xix,
+    const specfem::kokkos::DeviceView3d<type_real> xiz,
+    const specfem::kokkos::DeviceView3d<type_real> gammax,
+    const specfem::kokkos::DeviceView3d<type_real> gammaz,
+    const specfem::kokkos::DeviceScratchView2d<type_real> s_hprime_xx,
+    const specfem::kokkos::DeviceScratchView2d<type_real> s_hprime_zz,
+    const specfem::kokkos::DeviceScratchView2d<type_real> field_x,
+    const specfem::kokkos::DeviceScratchView2d<type_real> field_z,
+    specfem::kokkos::DeviceScratchView2d<type_real> s_duxdx,
+    specfem::kokkos::DeviceScratchView2d<type_real> s_duxdz,
+    specfem::kokkos::DeviceScratchView2d<type_real> s_duzdx,
+    specfem::kokkos::DeviceScratchView2d<type_real> s_duzdz);
 
 } // namespace mathematical_operators
 } // namespace specfem
