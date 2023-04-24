@@ -1,9 +1,9 @@
 #ifndef _TIME_MARCHING_HPP
 #define _TIME_MARCHING_HPP
 
-#include "../../include/domain.h"
-#include "../../include/timescheme.h"
+#include "domain.h"
 #include "solver.hpp"
+#include "timescheme.h"
 
 namespace specfem {
 namespace solver {
