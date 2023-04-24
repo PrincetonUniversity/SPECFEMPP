@@ -8,7 +8,7 @@
 #include "../include/read_mesh_database.h"
 #include "../include/read_sources.h"
 #include "../include/receiver.h"
-#include "../include/solver.h"
+#include "../include/solver/interface.hpp"
 #include "../include/source.h"
 #include "../include/specfem_mpi.h"
 #include "../include/specfem_setup.hpp"

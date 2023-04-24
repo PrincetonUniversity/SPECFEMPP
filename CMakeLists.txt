@@ -370,7 +370,7 @@ target_link_libraries(
 
 add_library(
         solver
-        src/solver.cpp
+        src/solver/solver.cpp
 )
 
 target_link_libraries(

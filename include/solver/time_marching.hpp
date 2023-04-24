@@ -1,27 +1,13 @@
-#ifndef SOLVER_H
-#define SOLVER_H
+#ifndef _TIME_MARCHING_HPP
+#define _TIME_MARCHING_HPP
 
-#include "../include/domain.h"
-#include "../include/timescheme.h"
+#include "../../include/domain.h"
+#include "../../include/timescheme.h"
+#include "solver.hpp"
 
 namespace specfem {
 namespace solver {
-
-/**
- * @brief Base solver class
- *
- */
-class solver {
-
-public:
-  /**
-   * @brief Run solver algorithm
-   *
-   */
-  virtual void run(){};
-};
-
-class time_marching : public solver {
+class time_marching : public specfem::solver::solver {
 
 public:
   /**
