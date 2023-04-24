@@ -660,37 +660,7 @@ void specfem::Domain::Elastic::compute_source_interaction(
   return;
 }
 
-// Copy the values of relevant field at the spectral element where receiver lies
-// to a storage view (field)
-// KOKKOS_FUNCTION
-// void get_receiver_field_for_seismogram(
-//     const specfem::kokkos::DeviceTeam::member_type &team_member,
-//     specfem::kokkos::DeviceView3d<type_real> field,
-//     const specfem::kokkos::DeviceView2d<int> sv_ibool,
-//     specfem::kokkos::DeviceView2d<type_real> copy_field) {
-
-//   const int ngllx = sv_ibool.extent(0);
-//   const int ngllz = sv_ibool.extent(1);
-//   const int ngllxz = ngllx * ngllz;
-
-//   Kokkos::parallel_for(
-//       Kokkos::TeamThreadRange(team_member, ngllxz), [=](const int xz) {
-//         const int ix = xz % ngllz;
-//         const int iz = xz / ngllz;
-//         const int iglob = sv_ibool(iz, ix);
-
-//         if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
-//           field(0, iz, ix) = copy_field(iglob, 0);
-//           field(1, iz, ix) = copy_field(iglob, 0);
-//         } else if (specfem::globals::simulation_wave == specfem::wave::sh) {
-//           field(0, iz, ix) = copy_field(iglob, 0);
-//         }
-//       });
-
-//   return;
-// }
-
-// Compute the seismogram using field view calculated using above function
+// Compute the seismogram using field view
 KOKKOS_FUNCTION
 void compute_receiver_seismogram(
     const specfem::kokkos::DeviceTeam::member_type &team_member,
@@ -759,7 +729,7 @@ void compute_receiver_seismogram(
     });
 
     break;
-  } // switch(type)
+  }
 
   return;
 }
