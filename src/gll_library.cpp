@@ -1,6 +1,6 @@
 #include "../include/gll_library.h"
-#include "../include/config.h"
 #include "../include/gll_utils.h"
+#include "../include/specfem_setup.hpp"
 #include <cmath>
 #include <iostream>
 #include <stdexcept>

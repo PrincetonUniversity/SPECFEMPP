@@ -1,8 +1,8 @@
 #ifndef QUADRATURE_H
 #define QUADRATURE_H
 
-#include "../include/config.h"
 #include "../include/kokkos_abstractions.h"
+#include "../include/specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

@@ -1,7 +1,7 @@
 #ifndef FORTRAN_IO_H
 #define FORTRAN_IO_H
 
-#include "../include/config.h"
+#include "../include/specfem_setup.hpp"
 #include <fstream>
 #include <iostream>
 #include <string>

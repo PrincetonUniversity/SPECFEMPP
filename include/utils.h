@@ -1,10 +1,10 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include "../include/config.h"
 #include "../include/kokkos_abstractions.h"
 #include "../include/quadrature.h"
 #include "../include/specfem_mpi.h"
+#include "../include/specfem_setup.hpp"
 #include <tuple>
 
 namespace specfem {
@@ -19,33 +19,6 @@ struct input_holder {
 struct return_holder {
   type_real rho, mu, kappa, qmu, qkappa, lambdaplus2mu;
 };
-
-// // config parser routines
-// struct force_source {
-//   type_real x, z;       //< location of force source
-//   bool source_surf;     //< Does the source lie on the surface
-//                         //< In which case z value would be neglected
-//                         //< while setting up the source
-//   std::string stf_type; // type of source time function to use
-//   type_real f0;
-//   type_real angle;
-//   type_real vx, vz;
-//   type_real factor;
-//   type_real tshift;
-// };
-
-// struct moment_tensor {
-//   type_real x, z;       //< location of force source
-//   bool source_surf;     //< Does the source lie on the surface
-//                         //< In which case z value would be neglected
-//                         //< while setting up the source
-//   std::string stf_type; //< type of source time function to use
-//   type_real f0;
-//   type_real Mxx, Mxz, Mzz;
-//   type_real vx, vz;
-//   type_real factor;
-//   type_real tshift;
-// };
 
 std::tuple<type_real, type_real, int, int>
 locate(const specfem::kokkos::HostView2d<type_real> coord,

@@ -121,9 +121,11 @@ TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
 
   domains->sync_rmass_inverse(specfem::sync::DeviceToHost);
 
-  EXPECT_NO_THROW(
-      specfem::testing::test_array(domains->get_host_rmass_inverse(),
-                                   test_config.solutions_file, nglob, ndim));
+  specfem::kokkos::HostView2d<type_real, Kokkos::LayoutLeft> h_rmass_inverse =
+      domains->get_host_rmass_inverse();
+
+  EXPECT_NO_THROW(specfem::testing::test_array(
+      h_rmass_inverse, test_config.solutions_file, nglob, ndim));
 }
 
 int main(int argc, char *argv[]) {

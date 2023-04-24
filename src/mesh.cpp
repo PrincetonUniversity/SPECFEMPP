@@ -1,7 +1,6 @@
 #include "../include/mesh.h"
 #include "../include/boundaries.h"
 #include "../include/compute.h"
-#include "../include/config.h"
 #include "../include/kokkos_abstractions.h"
 #include "../include/material.h"
 #include "../include/material_indic.h"
@@ -10,6 +9,7 @@
 #include "../include/read_material_properties.h"
 #include "../include/read_mesh_database.h"
 #include "../include/specfem_mpi.h"
+#include "../include/specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <algorithm>
 #include <limits>

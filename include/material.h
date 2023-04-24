@@ -1,9 +1,9 @@
 #ifndef MATERIAL_H
 #define MATERIAL_H
 
-#include "../include/config.h"
 #include "../include/enums.h"
 #include "../include/specfem_mpi.h"
+#include "../include/specfem_setup.hpp"
 #include "../include/utils.h"
 #include <ostream>
 #include <tuple>

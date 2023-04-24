@@ -76,9 +76,9 @@ TEST(COMPUTE_TESTS, compute_ibool) {
   specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
                                     gllz);
 
-  EXPECT_NO_THROW(
-      specfem::testing::test_array(compute.h_ibool, test_config.ibool_file,
-                                   mesh.nspec, gllz.get_N(), gllx.get_N()));
+  specfem::kokkos::HostView3d<int> h_ibool = compute.h_ibool;
+  EXPECT_NO_THROW(specfem::testing::test_array(
+      h_ibool, test_config.ibool_file, mesh.nspec, gllz.get_N(), gllx.get_N()));
 }
 
 int main(int argc, char *argv[]) {
