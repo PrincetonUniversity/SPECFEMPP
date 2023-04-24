@@ -1,8 +1,9 @@
 #ifndef KOKKOS_ABSTRACTION_H
 #define KOKKOS_ABSTRACTION_H
 
-#include "../include/config.h"
+#include "../include/specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
+#include <Kokkos_SIMD.hpp>
 #include <Kokkos_ScatterView.hpp>
 
 namespace specfem {
@@ -37,6 +38,7 @@ using DevMemSpace = Kokkos::DefaultExecutionSpace::memory_space;
  */
 ///@{
 using LayoutWrapper = Kokkos::LayoutRight;
+using LayoutStride = Kokkos::LayoutStride;
 ///@}
 
 /** @name Scratch Memory Spaces
@@ -52,34 +54,49 @@ using DevScratchSpace = DevExecSpace::scratch_memory_space;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
+ *
+ * @code ...
+ *      StridedCacheAlignedView1d = DeviceView1d<double, LayoutStride,
+ * Kokkos::MemoryTraits<Kokkos::Aligned>>(...)
+ * @endcode
  */
-template <typename T, typename L = LayoutWrapper>
-using DeviceView1d = Kokkos::View<T *, L, DevMemSpace>;
+template <typename T, typename L = LayoutWrapper, typename... Args>
+using DeviceView1d = Kokkos::View<T *, L, DevMemSpace, Args...>;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
-using DeviceView2d = Kokkos::View<T **, L, DevMemSpace>;
+template <typename T, typename L = LayoutWrapper, typename... Args>
+using DeviceView2d = Kokkos::View<T **, L, DevMemSpace, Args...>;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
-using DeviceView3d = Kokkos::View<T ***, L, DevMemSpace>;
+template <typename T, typename L = LayoutWrapper, typename... Args>
+using DeviceView3d = Kokkos::View<T ***, L, DevMemSpace, Args...>;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
-using DeviceView4d = Kokkos::View<T ****, L, DevMemSpace>;
+template <typename T, typename L = LayoutWrapper, typename... Args>
+using DeviceView4d = Kokkos::View<T ****, L, DevMemSpace, Args...>;
 ///@}
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
-using DeviceView5d = Kokkos::View<T *****, L, DevMemSpace>;
+template <typename T, typename L = LayoutWrapper, typename... Args>
+using DeviceView5d = Kokkos::View<T *****, L, DevMemSpace, Args...>;
 ///@}
 
 /** @name Host views
@@ -89,27 +106,35 @@ using DeviceView5d = Kokkos::View<T *****, L, DevMemSpace>;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
-using HostView1d = Kokkos::View<T *, L, HostMemSpace>;
+template <typename T, typename L = LayoutWrapper, typename... Args>
+using HostView1d = Kokkos::View<T *, L, HostMemSpace, Args...>;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
-using HostView2d = Kokkos::View<T **, L, HostMemSpace>;
+template <typename T, typename L = LayoutWrapper, typename... Args>
+using HostView2d = Kokkos::View<T **, L, HostMemSpace, Args...>;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
-using HostView3d = Kokkos::View<T ***, L, HostMemSpace>;
+template <typename T, typename L = LayoutWrapper, typename... Args>
+using HostView3d = Kokkos::View<T ***, L, HostMemSpace, Args...>;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
-using HostView4d = Kokkos::View<T ****, L, HostMemSpace>;
+template <typename T, typename L = LayoutWrapper, typename... Args>
+using HostView4d = Kokkos::View<T ****, L, HostMemSpace, Args...>;
 ///@}
 
 /** @name Host Scatter Views
@@ -122,24 +147,30 @@ using HostView4d = Kokkos::View<T ****, L, HostMemSpace>;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
+template <typename T, typename L = LayoutWrapper, typename... Args>
 using HostScatterView1d =
-    Kokkos::Experimental::ScatterView<T *, L, HostExecSpace>;
+    Kokkos::Experimental::ScatterView<T *, L, HostExecSpace, Args...>;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
+template <typename T, typename L = LayoutWrapper, typename... Args>
 using HostScatterView2d =
-    Kokkos::Experimental::ScatterView<T **, L, HostExecSpace>;
+    Kokkos::Experimental::ScatterView<T **, L, HostExecSpace, Args...>;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
+template <typename T, typename L = LayoutWrapper, typename... Args>
 using HostScatterView3d =
-    Kokkos::Experimental::ScatterView<T ***, L, HostExecSpace>;
+    Kokkos::Experimental::ScatterView<T ***, L, HostExecSpace, Args...>;
 ///@}
 
 /** @name Device Scatter Views
@@ -152,24 +183,30 @@ using HostScatterView3d =
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
+template <typename T, typename L = LayoutWrapper, typename... Args>
 using DeviceScatterView1d =
-    Kokkos::Experimental::ScatterView<T *, L, DevExecSpace>;
+    Kokkos::Experimental::ScatterView<T *, L, DevExecSpace, Args...>;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
+template <typename T, typename L = LayoutWrapper, typename... Args>
 using DeviceScatterView2d =
-    Kokkos::Experimental::ScatterView<T **, L, DevExecSpace>;
+    Kokkos::Experimental::ScatterView<T **, L, DevExecSpace, Args...>;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
+template <typename T, typename L = LayoutWrapper, typename... Args>
 using DeviceScatterView3d =
-    Kokkos::Experimental::ScatterView<T ***, L, DevExecSpace>;
+    Kokkos::Experimental::ScatterView<T ***, L, DevExecSpace, Args...>;
 ///@}
 
 /** @name Host Mirrors
@@ -181,33 +218,43 @@ using DeviceScatterView3d =
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
-using HostMirror1d = typename DeviceView1d<T, L>::HostMirror;
+template <typename T, typename L = LayoutWrapper, typename... Args>
+using HostMirror1d = typename DeviceView1d<T, L, Args...>::HostMirror;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
-using HostMirror2d = typename DeviceView2d<T, L>::HostMirror;
+template <typename T, typename L = LayoutWrapper, typename... Args>
+using HostMirror2d = typename DeviceView2d<T, L, Args...>::HostMirror;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
-using HostMirror3d = typename DeviceView3d<T, L>::HostMirror;
+template <typename T, typename L = LayoutWrapper, typename... Args>
+using HostMirror3d = typename DeviceView3d<T, L, Args...>::HostMirror;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
-using HostMirror4d = typename DeviceView4d<T, L>::HostMirror;
+template <typename T, typename L = LayoutWrapper, typename... Args>
+using HostMirror4d = typename DeviceView4d<T, L, Args...>::HostMirror;
 /**
  * @tparam T view datatype
  * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
  */
-template <typename T, typename L = LayoutWrapper>
-using HostMirror5d = typename DeviceView5d<T, L>::HostMirror;
+template <typename T, typename L = LayoutWrapper, typename... Args>
+using HostMirror5d = typename DeviceView5d<T, L, Args...>::HostMirror;
 ///@}
 
 // Scratch Views
@@ -267,6 +314,76 @@ using DeviceScratchView3d =
                  Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
 ///@}
 
+/** @name Static Scratch Views
+ * Static scratch views are best used when scratch view dimensions are known at
+ * compile time. Compile time definitions of scratch views and loop structure
+ * can dramatically improve code performance.
+ */
+
+///@{
+
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ * @tparam N length of view
+ */
+template <typename T, int N1, typename L = LayoutWrapper>
+using StaticHostScratchView1d =
+    Kokkos::View<T[N1], L, HostScratchSpace,
+                 Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ * @tparam N length of view
+ */
+template <typename T, int N1, int N2, typename L = LayoutWrapper>
+using StaticHostScratchView2d =
+    Kokkos::View<T[N1][N2], L, HostScratchSpace,
+                 Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ * @tparam N length of view
+ */
+template <typename T, int N1, int N2, int N3, typename L = LayoutWrapper>
+using StaticHostScratchView3d =
+    Kokkos::View<T[N1][N2][N3], L, HostScratchSpace,
+                 Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ * @tparam N length of view
+ */
+template <typename T, int N1, typename L = LayoutWrapper>
+using StaticDeviceScratchView1d =
+    Kokkos::View<T[N1], L, DevScratchSpace,
+                 Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ * @tparam N length of view
+ */
+template <typename T, int N1, int N2, typename L = LayoutWrapper>
+using StaticDeviceScratchView2d =
+    Kokkos::View<T[N1][N2], L, DevScratchSpace,
+                 Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+
+/**
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ * @tparam N length of view
+ */
+template <typename T, int N1, int N2, int N3, typename L = LayoutWrapper>
+using StaticDeviceScratchView3d =
+    Kokkos::View<T[N1][N2][N3], L, DevScratchSpace,
+                 Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+
+///@}
+
 // Loop Strategies
 // Range policy strategies
 
@@ -323,6 +440,22 @@ using DeviceRange = Kokkos::RangePolicy<DevExecSpace>;
 using HostTeam = Kokkos::TeamPolicy<HostExecSpace>;
 using DeviceTeam = Kokkos::TeamPolicy<DevExecSpace>;
 ///@}
+
+/**
+ * @brief Enable SIMD intrinsics using SIMD variables.
+ *
+ * @tparam T type T of variable
+ * @tparam simd_abi simd_abi value can either be native or scalar. These values
+ * determine if the Kokkos enables SIMD vectorization or reverts to scalar
+ * operator implementations
+ *
+ * @note Currently there is a bug in Kokkos SIMD implemtation when compiling
+ * with GCC or clang. If using SIMD vectorization pass the @code -fpermissive
+ * @endcode flag to CXX compiler
+ */
+template <typename T = type_real,
+          typename simd_abi = Kokkos::Experimental::simd_abi::scalar>
+using simd_type = Kokkos::Experimental::simd<T, simd_abi>;
 
 } // namespace kokkos
 } // namespace specfem

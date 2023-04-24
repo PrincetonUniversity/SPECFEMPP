@@ -1,12 +1,12 @@
 #ifndef RECEIVER_H
 #define RECEIVER_H
 
-#include "../include/config.h"
 #include "../include/constants.h"
 #include "../include/enums.h"
 #include "../include/kokkos_abstractions.h"
 #include "../include/quadrature.h"
 #include "../include/specfem_mpi.h"
+#include "../include/specfem_setup.hpp"
 #include <cmath>
 
 namespace specfem {
@@ -99,7 +99,7 @@ public:
    * @return type_real Sine value of the angle of this station
    */
   type_real get_sine() {
-    return std::sin(Kokkos::Experimental::pi_v<type_real> / 180 * this->angle);
+    return std::sin(Kokkos::numbers::pi_v<type_real> / 180 * this->angle);
   }
   /**
    * @brief Get the cosine of angle of this station
@@ -107,7 +107,7 @@ public:
    * @return type_real Coine value of the angle of this station
    */
   type_real get_cosine() {
-    return std::cos(Kokkos::Experimental::pi_v<type_real> / 180 * this->angle);
+    return std::cos(Kokkos::numbers::pi_v<type_real> / 180 * this->angle);
   }
   /**
    * @brief Get the name of network where this station lies

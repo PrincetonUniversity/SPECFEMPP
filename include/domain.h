@@ -2,9 +2,11 @@
 #define DOMAIN_H
 
 #include "../include/compute.h"
-#include "../include/config.h"
 #include "../include/quadrature.h"
+#include "../include/specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
+
+// using simd_type = Kokkos::Experimental::native_simd<double>;
 
 namespace specfem {
 namespace Domain {
@@ -21,7 +23,8 @@ public:
    *
    * @return specfem::kokkos::DeviceView2d<type_real>
    */
-  virtual specfem::kokkos::DeviceView2d<type_real> get_field() const {
+  virtual specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+  get_field() const {
     return this->field;
   }
   /**
@@ -29,7 +32,8 @@ public:
    *
    * @return specfem::kokkos::HostMirror2d<type_real>
    */
-  virtual specfem::kokkos::HostMirror2d<type_real> get_host_field() const {
+  virtual specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>
+  get_host_field() const {
     return this->h_field;
   }
   /**
@@ -37,7 +41,8 @@ public:
    *
    * @return specfem::kokkos::DeviceView2d<type_real>
    */
-  virtual specfem::kokkos::DeviceView2d<type_real> get_field_dot() const {
+  virtual specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+  get_field_dot() const {
     return this->field_dot;
   }
   /**
@@ -45,7 +50,8 @@ public:
    *
    * @return specfem::kokkos::HostMirror2d<type_real>
    */
-  virtual specfem::kokkos::HostMirror2d<type_real> get_host_field_dot() const {
+  virtual specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>
+  get_host_field_dot() const {
     return this->h_field_dot;
   }
   /**
@@ -53,7 +59,8 @@ public:
    *
    * @return specfem::kokkos::DeviceView2d<type_real>
    */
-  virtual specfem::kokkos::DeviceView2d<type_real> get_field_dot_dot() const {
+  virtual specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+  get_field_dot_dot() const {
     return this->field_dot_dot;
   }
   /**
@@ -61,7 +68,7 @@ public:
    *
    * @return specfem::kokkos::HostMirror2d<type_real>
    */
-  virtual specfem::kokkos::HostMirror2d<type_real>
+  virtual specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>
   get_host_field_dot_dot() const {
     return this->h_field_dot_dot;
   }
@@ -70,7 +77,8 @@ public:
    *
    * @return specfem::kokkos::DeviceView2d<type_real>
    */
-  virtual specfem::kokkos::DeviceView2d<type_real> get_rmass_inverse() const {
+  virtual specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+  get_rmass_inverse() const {
     return this->rmass_inverse;
   }
   /**
@@ -78,7 +86,7 @@ public:
    *
    * @return specfem::kokkos::HostMirror2d<type_real>
    */
-  virtual specfem::kokkos::HostMirror2d<type_real>
+  virtual specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>
   get_host_rmass_inverse() const {
     return this->h_rmass_inverse;
   }
@@ -87,7 +95,7 @@ public:
    * field
    *
    */
-  virtual void compute_stiffness_interaction(){};
+  virtual void compute_stiffness_interaction_calling_routine(){};
   /**
    * @brief Divide the second derivative of field by the mass matrix
    *
@@ -131,26 +139,40 @@ public:
    * @param isig_step timestep for seismogram calculation
    */
   virtual void compute_seismogram(const int isig_step){};
+  // /**
+  //  * @brief Load arrays required for compute forces into simd_arrays when
+  //  * compiled with explicit SIMD types, or else reference original arrays.
+  //  *
+  //  */
+  // virtual void simd_configure_arrays();
 
 private:
-  specfem::kokkos::DeviceView2d<type_real> field;   ///< View of field on Device
-  specfem::kokkos::HostMirror2d<type_real> h_field; ///< View of field on host
-  specfem::kokkos::DeviceView2d<type_real> field_dot; ///< View of derivative of
-                                                      ///< field on Device
-  specfem::kokkos::HostMirror2d<type_real> h_field_dot; ///< View of derivative
-                                                        ///< of field on host
-  specfem::kokkos::DeviceView2d<type_real> field_dot_dot;   ///< View of second
-                                                            ///< derivative of
-                                                            ///< field on Device
-  specfem::kokkos::HostMirror2d<type_real> h_field_dot_dot; ///< View of second
-                                                            ///< derivative of
-                                                            ///< field on host
-  specfem::kokkos::DeviceView2d<type_real> rmass_inverse;   ///< View of inverse
-                                                          ///< of mass matrix on
-                                                          ///< device
-  specfem::kokkos::HostMirror2d<type_real> h_rmass_inverse; ///< View of inverse
-                                                            ///< of mass matrix
-                                                            ///< on host
+  specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+      field; ///< View of field on Device
+  specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>
+      h_field; ///< View of field on host
+  specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+      field_dot; ///< View of derivative of
+                 ///< field on Device
+  specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>
+      h_field_dot; ///< View of derivative
+                   ///< of field on host
+  specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+      field_dot_dot; ///< View of second
+                     ///< derivative of
+                     ///< field on Device
+  specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>
+      h_field_dot_dot; ///< View of second
+                       ///< derivative of
+                       ///< field on host
+  specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+      rmass_inverse; ///< View of inverse
+                     ///< of mass matrix on
+                     ///< device
+  specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>
+      h_rmass_inverse; ///< View of inverse
+                       ///< of mass matrix
+                       ///< on host
 };
 
 /**
@@ -171,7 +193,8 @@ public:
    *
    * @return specfem::kokkos::DeviceView2d<type_real>
    */
-  specfem::kokkos::DeviceView2d<type_real> get_field() const override {
+  specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+  get_field() const override {
     return this->field;
   }
   /**
@@ -179,7 +202,8 @@ public:
    *
    * @return specfem::kokkos::DeviceView2d<type_real>
    */
-  specfem::kokkos::HostMirror2d<type_real> get_host_field() const override {
+  specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>
+  get_host_field() const override {
     return this->h_field;
   }
   /**
@@ -187,7 +211,8 @@ public:
    *
    * @return specfem::kokkos::DeviceView2d<type_real>
    */
-  specfem::kokkos::DeviceView2d<type_real> get_field_dot() const override {
+  specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+  get_field_dot() const override {
     return this->field_dot;
   }
   /**
@@ -195,7 +220,8 @@ public:
    *
    * @return specfem::kokkos::DeviceView2d<type_real>
    */
-  specfem::kokkos::HostMirror2d<type_real> get_host_field_dot() const override {
+  specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>
+  get_host_field_dot() const override {
     return this->h_field_dot;
   }
   /**
@@ -203,7 +229,8 @@ public:
    *
    * @return specfem::kokkos::DeviceView2d<type_real>
    */
-  specfem::kokkos::DeviceView2d<type_real> get_field_dot_dot() const override {
+  specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+  get_field_dot_dot() const override {
     return this->field_dot_dot;
   }
   /**
@@ -211,7 +238,7 @@ public:
    *
    * @return specfem::kokkos::DeviceView2d<type_real>
    */
-  specfem::kokkos::HostMirror2d<type_real>
+  specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>
   get_host_field_dot_dot() const override {
     return this->h_field_dot_dot;
   }
@@ -220,7 +247,8 @@ public:
    *
    * @return specfem::kokkos::DeviceView2d<type_real>
    */
-  specfem::kokkos::DeviceView2d<type_real> get_rmass_inverse() const override {
+  specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+  get_rmass_inverse() const override {
     return this->rmass_inverse;
   }
   /**
@@ -228,7 +256,7 @@ public:
    *
    * @return specfem::kokkos::DeviceView2d<type_real>
    */
-  specfem::kokkos::HostMirror2d<type_real>
+  specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>
   get_host_rmass_inverse() const override {
     return this->h_rmass_inverse;
   }
@@ -270,7 +298,23 @@ public:
    * @brief Compute interaction of stiffness matrix on acceleration
    *
    */
-  void compute_stiffness_interaction() override;
+  void compute_stiffness_interaction_calling_routine() override;
+  /**
+   * @brief Specialized kernel to compute the interaction of stiffness matrix on
+   * acceleration.
+   *
+   * Use this kernel when NGLL is known at compile time and NGLLX == NGLLZ.
+   *
+   * @tparam NGLL number of quadrature points
+   */
+  template <int NGLL> void compute_stiffness_interaction();
+  /**
+   * @brief Compute interaction of stiffness matrix on acceleration - generic
+   * implementation
+   *
+   */
+  void compute_stiffness_interaction();
+
   /**
    * @brief Divide the acceleration by the mass matrix
    *
@@ -320,26 +364,40 @@ public:
    * @param isig_step timestep for seismogram calculation
    */
   void compute_seismogram(const int isig_step) override;
+  // /**
+  //  * @brief Load arrays required for compute forces into simd_arrays when
+  //  * compiled with explicit SIMD types, or else reference original arrays.
+  //  *
+  //  */
+  // void simd_configure_arrays() override;
 
 private:
-  specfem::kokkos::DeviceView2d<type_real> field;   ///< View of field on Device
-  specfem::kokkos::HostMirror2d<type_real> h_field; ///< View of field on host
-  specfem::kokkos::DeviceView2d<type_real> field_dot; ///< View of derivative of
-                                                      ///< field on Device
-  specfem::kokkos::HostMirror2d<type_real> h_field_dot; ///< View of derivative
-                                                        ///< of field on host
-  specfem::kokkos::DeviceView2d<type_real> field_dot_dot;   ///< View of second
-                                                            ///< derivative of
-                                                            ///< field on Device
-  specfem::kokkos::HostMirror2d<type_real> h_field_dot_dot; ///< View of second
-                                                            ///< derivative of
-                                                            ///< field on host
-  specfem::kokkos::DeviceView2d<type_real> rmass_inverse;   ///< View of inverse
-                                                          ///< of mass matrix on
-                                                          ///< device
-  specfem::kokkos::HostMirror2d<type_real> h_rmass_inverse; ///< View of inverse
-                                                            ///< of mass matrix
-                                                            ///< on host
+  specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+      field; ///< View of field on Device
+  specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>
+      h_field; ///< View of field on host
+  specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+      field_dot; ///< View of derivative of
+                 ///< field on Device
+  specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>
+      h_field_dot; ///< View of derivative
+                   ///< of field on host
+  specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+      field_dot_dot; ///< View of second
+                     ///< derivative of
+                     ///< field on Device
+  specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>
+      h_field_dot_dot; ///< View of second
+                       ///< derivative of
+                       ///< field on host
+  specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+      rmass_inverse; ///< View of inverse
+                     ///< of mass matrix on
+                     ///< device
+  specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>
+      h_rmass_inverse;                ///< View of inverse
+                                      ///< of mass matrix
+                                      ///< on host
   specfem::compute::compute *compute; ///< Pointer to compute struct used to
                                       ///< store spectral element numbering
                                       ///< mapping (ibool)

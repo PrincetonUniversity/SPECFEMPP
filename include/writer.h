@@ -2,9 +2,9 @@
 #define WRITER_H
 
 #include "../include/compute.h"
-#include "../include/config.h"
 #include "../include/enums.h"
 #include "../include/receiver.h"
+#include "../include/specfem_setup.hpp"
 #include <vector>
 
 namespace specfem {

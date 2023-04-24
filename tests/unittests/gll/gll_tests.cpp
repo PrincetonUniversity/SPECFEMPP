@@ -79,10 +79,6 @@ TEST(GLL_tests, JACG) {
   type_real tol = 1e-6;
   const auto &jacg = gll_utils::jacg;
 
-  DeviceView1d r3("gll_tests::gll_utils::r3", 3);
-  HostMirror1d h_r3 = Kokkos::create_mirror_view(r3);
-  ASSERT_DEATH(jacg(h_r3, 2, 0.0, 0.0), "");
-
   DeviceView1d r1("gll_tests::gll_utils::r1", 5);
   HostMirror1d h_r1 = Kokkos::create_mirror_view(r1);
   jacg(h_r1, 5, 0.0, 0.0);

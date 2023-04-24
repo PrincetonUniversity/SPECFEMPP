@@ -1,7 +1,7 @@
 #ifndef PARAMS_H
 #define PARAMS_H
 
-#include "../include/config.h"
+#include "../include/specfem_setup.hpp"
 #include <string>
 
 namespace specfem {

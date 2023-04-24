@@ -10,6 +10,7 @@
 #include "../include/mpi_interfaces.h"
 #include "../include/params.h"
 #include "../include/specfem_mpi.h"
+#include "../include/specfem_setup.hpp"
 #include "../include/surfaces.h"
 #include <fstream>
 #include <iostream>

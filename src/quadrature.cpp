@@ -1,8 +1,8 @@
 #include "../include/quadrature.h"
-#include "../include/config.h"
 #include "../include/gll_library.h"
 #include "../include/kokkos_abstractions.h"
 #include "../include/lagrange_poly.h"
+#include "../include/specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <iostream>
 #include <stdexcept>

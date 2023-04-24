@@ -2,6 +2,7 @@
 #define JACOBIAN_H
 
 #include "../include/kokkos_abstractions.h"
+#include "../include/specfem_setup.hpp"
 /**
  * Jacobian namespace contains overloaded functions for serial (without Kokkos)
  * and Kokkos implementations (using team policy)

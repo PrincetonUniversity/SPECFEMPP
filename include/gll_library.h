@@ -1,8 +1,8 @@
 #ifndef GLL_LIBRARY_H
 #define GLL_LIBRARY_H
 
-#include "../include/config.h"
 #include "../include/kokkos_abstractions.h"
+#include "../include/specfem_setup.hpp"
 #include "gll_utils.h"
 #include <array>
 

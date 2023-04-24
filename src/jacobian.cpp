@@ -1,7 +1,7 @@
 #include "../include/jacobian.h"
-#include "../include/config.h"
 #include "../include/kokkos_abstractions.h"
 #include "../include/shape_functions.h"
+#include "../include/specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
 std::tuple<type_real, type_real> jacobian::compute_locations(

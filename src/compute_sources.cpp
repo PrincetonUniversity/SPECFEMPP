@@ -3,6 +3,7 @@
 #include "../include/quadrature.h"
 #include "../include/source.h"
 #include "../include/specfem_mpi.h"
+#include "../include/specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <vector>
 

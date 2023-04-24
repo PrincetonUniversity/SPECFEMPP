@@ -1,7 +1,7 @@
 #ifndef SOURCE_TIME_FUNCTION_H
 #define SOURCE_TIME_FUNCTION_H
 
-#include "config.h"
+#include "../include/specfem_setup.hpp"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
 #include <ostream>

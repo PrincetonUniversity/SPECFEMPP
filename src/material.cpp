@@ -91,7 +91,7 @@ void specfem::elastic_material::assign(utilities::input_holder &holder) {
 }
 
 void specfem::acoustic_material::assign(utilities::input_holder &holder) {
-  // element type is defined in config.h
+  // element type is defined in specfem_setup.hpp
   this->ispec_type = specfem::elements::acoustic;
   // density
   this->density = holder.val0;
