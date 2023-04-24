@@ -85,13 +85,13 @@ KOKKOS_FUNCTION void add_contributions(
         s_hprimewgll_zz,
     const specfem::kokkos::StaticDeviceScratchView2d<int, NGLL, NGLL> s_iglob,
     const specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL, NGLL>
-        integrand_1,
+        stress_integrand_1,
     const specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL, NGLL>
-        integrand_2,
+        stress_integrand_2,
     const specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL, NGLL>
-        integrand_3,
+        stress_integrand_3,
     const specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL, NGLL>
-        integrand_4,
+        stress_integrand_4,
     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
         field_dot_dot) {
 
@@ -113,10 +113,10 @@ KOKKOS_FUNCTION void add_contributions(
 
 #pragma unroll
         for (int l = 0; l < NGLL; l++) {
-          tempx1 += s_hprimewgll_xx(ix, l) * integrand_1(iz, l);
-          tempz1 += s_hprimewgll_xx(ix, l) * integrand_2(iz, l);
-          tempx3 += s_hprimewgll_zz(iz, l) * integrand_3(l, ix);
-          tempz3 += s_hprimewgll_zz(iz, l) * integrand_4(l, ix);
+          tempx1 += s_hprimewgll_xx(ix, l) * stress_integrand_1(iz, l);
+          tempz1 += s_hprimewgll_xx(ix, l) * stress_integrand_2(iz, l);
+          tempx3 += s_hprimewgll_zz(iz, l) * stress_integrand_3(l, ix);
+          tempz3 += s_hprimewgll_zz(iz, l) * stress_integrand_4(l, ix);
         }
 
         const int iglob = s_iglob(iz, ix);
