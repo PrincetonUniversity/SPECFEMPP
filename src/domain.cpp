@@ -291,13 +291,13 @@ void specfem::Domain::Elastic::compute_stiffness_interaction() {
         specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL, NGLL>
             s_fieldz(team_member.team_scratch(0));
         specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL, NGLL>
-            s_temp5(team_member.team_scratch(0));
+            s_temp1(team_member.team_scratch(0));
         specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL, NGLL>
-            s_temp6(team_member.team_scratch(0));
+            s_temp2(team_member.team_scratch(0));
         specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL, NGLL>
-            s_temp7(team_member.team_scratch(0));
+            s_temp3(team_member.team_scratch(0));
         specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL, NGLL>
-            s_temp8(team_member.team_scratch(0));
+            s_temp4(team_member.team_scratch(0));
 
         Kokkos::parallel_for(
             Kokkos::TeamThreadRange(team_member, NGLL2), [&](const int xz) {
@@ -306,10 +306,10 @@ void specfem::Domain::Elastic::compute_stiffness_interaction() {
               const int iglob = ibool(ispec, iz, ix);
               s_fieldx(iz, ix) = field(iglob, 0);
               s_fieldz(iz, ix) = field(iglob, 1);
-              s_temp5(iz, ix) = 0.0;
-              s_temp6(iz, ix) = 0.0;
-              s_temp7(iz, ix) = 0.0;
-              s_temp8(iz, ix) = 0.0;
+              s_temp1(iz, ix) = 0.0;
+              s_temp2(iz, ix) = 0.0;
+              s_temp3(iz, ix) = 0.0;
+              s_temp4(iz, ix) = 0.0;
               s_hprime_xx(iz, ix) = hprime_xx(iz, ix);
               s_hprime_zz(iz, ix) = hprime_zz(iz, ix);
               s_hprimewgll_xx(ix, iz) = wxgll(iz) * hprime_xx(iz, ix);
@@ -321,8 +321,8 @@ void specfem::Domain::Elastic::compute_stiffness_interaction() {
 
         specfem::mathematical_operators::compute_gradients_2D(
             team_member, ispec, xix, xiz, gammax, gammaz, s_hprime_xx,
-            s_hprime_zz, s_fieldx, s_fieldz, s_temp5, s_temp6, s_temp7,
-            s_temp8);
+            s_hprime_zz, s_fieldx, s_fieldz, s_temp1, s_temp2, s_temp3,
+            s_temp4);
 
         Kokkos::parallel_for(
             Kokkos::TeamThreadRange(team_member, NGLL2), [&](const int xz) {
@@ -344,31 +344,31 @@ void specfem::Domain::Elastic::compute_stiffness_interaction() {
               if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
                 // P_SV case
                 // sigma_xx
-                sigma_xx = lambdaplus2mul * s_temp5(iz, ix) +
-                           lambdal * s_temp8(iz, ix);
+                sigma_xx = lambdaplus2mul * s_temp1(iz, ix) +
+                           lambdal * s_temp4(iz, ix);
 
                 // sigma_zz
-                sigma_zz = lambdaplus2mul * s_temp8(iz, ix) +
-                           lambdal * s_temp5(iz, ix);
+                sigma_zz = lambdaplus2mul * s_temp4(iz, ix) +
+                           lambdal * s_temp1(iz, ix);
 
                 // sigma_xz
-                sigma_xz = mul * (s_temp7(iz, ix) + s_temp6(iz, ix));
+                sigma_xz = mul * (s_temp3(iz, ix) + s_temp2(iz, ix));
               } else if (specfem::globals::simulation_wave ==
                          specfem::wave::sh) {
                 // SH-case
                 // sigma_xx
-                sigma_xx = mul * s_temp5(iz, ix); // would be sigma_xy in
+                sigma_xx = mul * s_temp1(iz, ix); // would be sigma_xy in
                                                   // CPU-version
 
                 // sigma_xz
-                sigma_xz = mul * s_temp6(iz, ix); // sigma_zy
+                sigma_xz = mul * s_temp2(iz, ix); // sigma_zy
               }
 
-              s_temp5(iz, ix) = jacobianl * (sigma_xx * xixl + sigma_xz * xizl);
-              s_temp6(iz, ix) = jacobianl * (sigma_xz * xixl + sigma_zz * xizl);
-              s_temp7(iz, ix) =
+              s_temp1(iz, ix) = jacobianl * (sigma_xx * xixl + sigma_xz * xizl);
+              s_temp2(iz, ix) = jacobianl * (sigma_xz * xixl + sigma_zz * xizl);
+              s_temp3(iz, ix) =
                   jacobianl * (sigma_xx * gammaxl + sigma_xz * gammazl);
-              s_temp8(iz, ix) =
+              s_temp4(iz, ix) =
                   jacobianl * (sigma_xz * gammaxl + sigma_zz * gammazl);
             });
 
@@ -376,7 +376,7 @@ void specfem::Domain::Elastic::compute_stiffness_interaction() {
 
         specfem::mathematical_operators::add_contributions(
             team_member, wxgll, wzgll, s_hprimewgll_xx, s_hprimewgll_zz,
-            s_iglob, s_temp5, s_temp6, s_temp7, s_temp8, field_dot_dot);
+            s_iglob, s_temp1, s_temp2, s_temp3, s_temp4, field_dot_dot);
       });
 
   Kokkos::fence();
