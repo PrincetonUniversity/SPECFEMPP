@@ -5,7 +5,10 @@ Domain interface
 
 Domain class is used to implement physics related to specific types of domain.
 
-.. doxygenfile:: domain.h
+.. doxygenfile:: domain.hpp
+    :project: SPECFEM KOKKOS IMPLEMENTATION
+
+.. doxygenfile:: elastci_domain.hpp
     :project: SPECFEM KOKKOS IMPLEMENTATION
 
 Helper routines to compute stresses
