@@ -1,6 +1,6 @@
 #include "domain.h"
 #include "solver/interface.hpp"
-#include "timescheme.h"
+#include "timescheme/interface.hpp"
 #include "writer.h"
 #include <Kokkos_Core.hpp>
 

@@ -351,7 +351,7 @@ target_link_libraries(
 
 add_library(
         timescheme
-        src/timescheme.cpp
+        src/timescheme/newmark.cpp
 )
 
 target_link_libraries(

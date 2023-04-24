@@ -12,7 +12,7 @@
 #include "source.h"
 #include "specfem_mpi.h"
 #include "specfem_setup.hpp"
-#include "timescheme.h"
+#include "timescheme/interface.hpp"
 #include "utils.h"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>

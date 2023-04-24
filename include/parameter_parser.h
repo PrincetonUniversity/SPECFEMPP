@@ -4,7 +4,7 @@
 #include "../include/quadrature.h"
 #include "../include/receiver.h"
 #include "../include/specfem_setup.hpp"
-#include "../include/timescheme.h"
+#include "../include/timescheme/interface.hpp"
 #include "../include/writer.h"
 #include "yaml-cpp/yaml.h"
 #include <ctime>

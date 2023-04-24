@@ -1,5 +1,5 @@
-#include "../include/timescheme.h"
-#include "../include/specfem_setup.hpp"
+#include "specfem_setup.hpp"
+#include "timescheme/interface.hpp"
 #include <ostream>
 
 specfem::TimeScheme::Newmark::Newmark(const int nstep, const type_real t0,
