@@ -8,7 +8,7 @@ Domain class is used to implement physics related to specific types of domain.
 .. doxygenfile:: domain.hpp
     :project: SPECFEM KOKKOS IMPLEMENTATION
 
-.. doxygenfile:: elastci_domain.hpp
+.. doxygenfile:: elastic_domain.hpp
     :project: SPECFEM KOKKOS IMPLEMENTATION
 
 Helper routines to compute stresses
