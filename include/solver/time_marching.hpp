@@ -3,7 +3,7 @@
 
 #include "domain.h"
 #include "solver.hpp"
-#include "timescheme.h"
+#include "timescheme/interface.hpp"
 
 namespace specfem {
 namespace solver {
