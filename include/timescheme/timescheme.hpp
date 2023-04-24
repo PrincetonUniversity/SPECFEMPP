@@ -1,7 +1,7 @@
-#ifndef TIMESCHEME_H
-#define TIMESCHEME_H
+#ifndef _TIMESCHEME_HPP
+#define _TIMESCHEME_HPP
 
-#include "domain.h"
+#include "domain/interface.hpp"
 #include "specfem_setup.hpp"
 #include <ostream>
 

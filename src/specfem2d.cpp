@@ -1,5 +1,5 @@
 #include "compute.h"
-#include "domain.h"
+#include "domain/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "material.h"
 #include "mesh.h"

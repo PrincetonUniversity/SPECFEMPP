@@ -1,11 +1,11 @@
-#include "../include/domain.h"
-#include "../include/compute.h"
-#include "../include/enums.h"
-#include "../include/globals.h"
-#include "../include/kokkos_abstractions.h"
-#include "../include/mathematical_operators.h"
-#include "../include/quadrature.h"
-#include "../include/specfem_setup.hpp"
+#include "compute.h"
+#include "domain/interface.hpp"
+#include "enums.h"
+#include "globals.h"
+#include "kokkos_abstractions.h"
+#include "mathematical_operators.h"
+#include "quadrature.h"
+#include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <Kokkos_ScatterView.hpp>
 

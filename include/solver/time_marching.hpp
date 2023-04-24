@@ -1,7 +1,7 @@
 #ifndef _TIME_MARCHING_HPP
 #define _TIME_MARCHING_HPP
 
-#include "domain.h"
+#include "domain/interface.hpp"
 #include "solver.hpp"
 #include "timescheme/interface.hpp"
 

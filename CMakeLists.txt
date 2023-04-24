@@ -338,7 +338,7 @@ target_link_libraries(
 
 add_library(
         domain
-        src/domain.cpp
+        src/domain/elastic_domain.cpp
 )
 
 target_link_libraries(
