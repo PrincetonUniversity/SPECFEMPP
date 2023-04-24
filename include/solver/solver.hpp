@@ -1,8 +1,8 @@
 #ifndef SOLVER_HPP
 #define SOLVER_HPP
 
-#include "../../include/domain.h"
-#include "../../include/timescheme.h"
+#include "domain.h"
+#include "timescheme.h"
 
 namespace specfem {
 namespace solver {

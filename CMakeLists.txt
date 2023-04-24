@@ -23,6 +23,8 @@ include_directories(BEFORE SYSTEM ${yaml_SOURCE_DIR} ${yaml_BINARY_DIR}/include)
 
 add_subdirectory(boost-cmake)
 
+include_directories(include)
+
 # Build specfem2d libraries
 ## TODO: Reorgnanize into separate directories
 add_library(
@@ -370,7 +372,7 @@ target_link_libraries(
 
 add_library(
         solver
-        src/solver/solver.cpp
+        src/solver/time_marching.cpp
 )
 
 target_link_libraries(
