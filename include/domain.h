@@ -299,7 +299,20 @@ public:
    *
    */
   void compute_stiffness_interaction_calling_routine() override;
+  /**
+   * @brief Specialized kernel to compute the interaction of stiffness matrix on
+   * acceleration.
+   *
+   * Use this kernel when NGLL is known at compile time and NGLLX == NGLLZ.
+   *
+   * @tparam NGLL number of quadrature points
+   */
   template <int NGLL> void compute_stiffness_interaction();
+  /**
+   * @brief Compute interaction of stiffness matrix on acceleration - generic
+   * implementation
+   *
+   */
   void compute_stiffness_interaction();
 
   /**
