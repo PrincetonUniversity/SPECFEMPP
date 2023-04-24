@@ -1,7 +1,7 @@
 #ifndef _NEWMARK_HPP
 #define _NEWMARK_HPP
 
-#include "domain.h"
+#include "domain/interface.hpp"
 #include "specfem_setup.hpp"
 #include "timescheme.hpp"
 #include <ostream>

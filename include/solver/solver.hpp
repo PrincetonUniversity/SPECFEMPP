@@ -1,7 +1,7 @@
 #ifndef SOLVER_HPP
 #define SOLVER_HPP
 
-#include "domain.h"
+#include "domain/interface.hpp"
 #include "timescheme/interface.hpp"
 
 namespace specfem {

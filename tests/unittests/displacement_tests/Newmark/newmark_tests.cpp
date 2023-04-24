@@ -2,7 +2,7 @@
 #include "../../MPI_environment.hpp"
 #include "../../utilities/include/compare_array.h"
 #include "compute.h"
-#include "domain.h"
+#include "domain/interface.hpp"
 #include "material.h"
 #include "mesh.h"
 #include "parameter_parser.h"

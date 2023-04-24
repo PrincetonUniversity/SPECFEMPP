@@ -1,4 +1,4 @@
-#include "domain.h"
+#include "domain/interface.hpp"
 #include "solver/interface.hpp"
 #include "timescheme/interface.hpp"
 #include "writer.h"
