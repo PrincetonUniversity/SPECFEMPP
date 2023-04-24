@@ -5,7 +5,7 @@
 #include "../../../include/parameter_parser.h"
 #include "../../../include/quadrature.h"
 #include "../../../include/read_sources.h"
-#include "../../../include/solver.h"
+#include "../../../include/solver/interface.hpp"
 #include "../../../include/timescheme.h"
 #include "../../../include/utils.h"
 #include "../Kokkos_Environment.hpp"
