@@ -1,7 +1,7 @@
 #include "compute/interface.hpp"
 #include "domain/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "material.h"
+#include "material/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "parameter_parser.h"
 #include "params.h"
@@ -92,7 +92,7 @@ void execute(const std::string parameter_file, specfem::MPI::MPI *mpi) {
   auto [gllx, gllz] = setup.instantiate_quadrature();
 
   // Read mesh generated MESHFEM
-  std::vector<specfem::material *> materials;
+  std::vector<specfem::material::material *> materials;
   specfem::mesh::mesh mesh(database_filename, materials, mpi);
 
   // Read sources

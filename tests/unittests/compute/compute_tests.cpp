@@ -2,7 +2,7 @@
 #include "../MPI_environment.hpp"
 #include "../utilities/include/compare_array.h"
 #include "compute/interface.hpp"
-#include "material.h"
+#include "material/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "quadrature.h"
 #include "yaml-cpp/yaml.h"
@@ -68,7 +68,7 @@ TEST(COMPUTE_TESTS, compute_ibool) {
   // Set up GLL quadrature points
   specfem::quadrature::quadrature gllx(0.0, 0.0, 5);
   specfem::quadrature::quadrature gllz(0.0, 0.0, 5);
-  std::vector<specfem::material *> materials;
+  std::vector<specfem::material::material *> materials;
 
   specfem::mesh::mesh mesh(test_config.database_filename, materials,
                            MPIEnvironment::mpi_);

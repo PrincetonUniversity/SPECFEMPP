@@ -2,7 +2,7 @@
 #define _COMPUTE_PROPERTIES_HPP
 
 #include "kokkos_abstractions.h"
-#include "material.h"
+#include "material/interface.hpp"
 #include "quadrature.h"
 #include "receiver.h"
 #include "source.h"
@@ -74,8 +74,8 @@ struct properties {
    * @param ngllx Number of quadrature points in x dimension
    */
   properties(const specfem::kokkos::HostView1d<int> kmato,
-             const std::vector<specfem::material *> &materials, const int nspec,
-             const int ngllx, const int ngllz);
+             const std::vector<specfem::material::material *> &materials,
+             const int nspec, const int ngllx, const int ngllz);
 
   /**
    * @brief Helper routine to sync views within this struct

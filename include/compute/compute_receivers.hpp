@@ -2,7 +2,6 @@
 #define _COMPUTE_RECEIVERS_HPP
 
 #include "kokkos_abstractions.h"
-#include "material.h"
 #include "quadrature.h"
 #include "receiver.h"
 #include "source.h"

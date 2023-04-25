@@ -1,17 +1,17 @@
 #include "mesh/IO/fortran/read_material_properties.hpp"
 #include "fortran_IO.h"
-#include "material.h"
+#include "material/interface.hpp"
 #include "specfem_mpi.h"
 #include "utils.h"
 #include <vector>
 
-std::vector<specfem::material *>
+std::vector<specfem::material::material *>
 specfem::mesh::IO::fortran::read_material_properties(
     std::ifstream &stream, const int numat, const specfem::MPI::MPI *mpi) {
 
   specfem::utilities::input_holder read_values;
 
-  std::vector<specfem::material *> materials(numat);
+  std::vector<specfem::material::material *> materials(numat);
 
   std::ostringstream message;
   message << "Material systems:\n"
@@ -37,13 +37,13 @@ specfem::mesh::IO::fortran::read_material_properties(
 
     if (read_values.indic == 1) {
       if (read_values.val2 == 0) {
-        specfem::acoustic_material *acoustic_holder =
-            new specfem::acoustic_material();
+        specfem::material::acoustic_material *acoustic_holder =
+            new specfem::material::acoustic_material();
         acoustic_holder->assign(read_values);
         materials[read_values.n - 1] = acoustic_holder;
       } else {
-        specfem::elastic_material *elastic_holder =
-            new specfem::elastic_material();
+        specfem::material::elastic_material *elastic_holder =
+            new specfem::material::elastic_material();
         elastic_holder->assign(read_values);
         materials[read_values.n - 1] = elastic_holder;
       }

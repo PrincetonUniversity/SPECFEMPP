@@ -1,7 +1,7 @@
 #ifndef _READ_MATERIAL_PROPERTIES_HPP
 #define _READ_MATERIAL_PROPERTIES_HPP
 
-#include "material.h"
+#include "material/interface.hpp"
 #include "specfem_mpi.h"
 #include <fstream>
 #include <iostream>
@@ -22,7 +22,7 @@ namespace fortran {
  * @return std::vector<specfem::material *> Pointer to material objects read
  * from the database file
  */
-std::vector<specfem::material *>
+std::vector<specfem::material::material *>
 read_material_properties(std::ifstream &stream, const int numat,
                          const specfem::MPI::MPI *mpi);
 } // namespace fortran

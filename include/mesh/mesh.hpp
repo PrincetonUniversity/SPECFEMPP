@@ -7,7 +7,7 @@
 #include "compute/interface.hpp"
 #include "elements/elements.hpp"
 #include "kokkos_abstractions.h"
-#include "material.h"
+#include "material/interface.hpp"
 #include "material_indic/material_indic.hpp"
 #include "mpi_interfaces/mpi_interfaces.hpp"
 #include "properties/properties.hpp"
@@ -80,14 +80,15 @@ struct mesh {
    * @param filename Fortran binary database filename
    * @param mpi pointer to MPI object to manage communication
    */
-  mesh(const std::string filename, std::vector<specfem::material *> &materials,
+  mesh(const std::string filename,
+       std::vector<specfem::material::material *> &materials,
        const specfem::MPI::MPI *mpi);
 
   /**
    * @brief User output
    *
    */
-  std::string print(std::vector<specfem::material *> materials) const;
+  std::string print(std::vector<specfem::material::material *> materials) const;
 };
 } // namespace mesh
 } // namespace specfem

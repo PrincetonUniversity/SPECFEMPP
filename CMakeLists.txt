@@ -108,7 +108,8 @@ target_link_libraries(
 
 add_library(
         material_class
-        src/material.cpp
+        src/material/elastic_material.cpp
+        src/material/acoustic_material.cpp
 )
 
 target_link_libraries(
