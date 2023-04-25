@@ -1,10 +1,9 @@
-#include "../include/material_indic.h"
-#include "../include/fortran_IO.h"
-#include "../include/kokkos_abstractions.h"
+#include "mesh/material_indic/material_indic.hpp"
+#include "fortran_IO.h"
+#include "kokkos_abstractions.h"
 #include <vector>
 
-specfem::materials::material_ind::material_ind(const int nspec,
-                                               const int ngnod) {
+specfem::mesh::material_ind::material_ind(const int nspec, const int ngnod) {
   this->region_CPML =
       specfem::kokkos::HostView1d<int>("specfem::mesh::region_CPML", nspec);
   this->kmato =
@@ -18,15 +17,15 @@ specfem::materials::material_ind::material_ind(const int nspec,
   return;
 }
 
-specfem::materials::material_ind::material_ind(std::ifstream &stream,
-                                               const int ngnod, const int nspec,
-                                               const int numat,
-                                               const specfem::MPI::MPI *mpi) {
+specfem::mesh::material_ind::material_ind(std::ifstream &stream,
+                                          const int ngnod, const int nspec,
+                                          const int numat,
+                                          const specfem::MPI::MPI *mpi) {
   std::vector<int> knods_read(ngnod, -1);
   int n, kmato_read, pml_read;
 
   // Allocate views
-  *this = specfem::materials::material_ind(nspec, ngnod);
+  *this = specfem::mesh::material_ind(nspec, ngnod);
 
   // Read an assign material values, coordinate numbering, PML association
   for (int ispec = 0; ispec < nspec; ispec++) {

@@ -1,13 +1,13 @@
-#include "../include/read_material_properties.h"
-#include "../include/fortran_IO.h"
-#include "../include/material.h"
-#include "../include/specfem_mpi.h"
-#include "../include/utils.h"
+#include "mesh/IO/fortran/read_material_properties.hpp"
+#include "fortran_IO.h"
+#include "material.h"
+#include "specfem_mpi.h"
+#include "utils.h"
 #include <vector>
 
 std::vector<specfem::material *>
-IO::read_material_properties(std::ifstream &stream, const int numat,
-                             const specfem::MPI::MPI *mpi) {
+specfem::mesh::IO::fortran::read_material_properties(
+    std::ifstream &stream, const int numat, const specfem::MPI::MPI *mpi) {
 
   specfem::utilities::input_holder read_values;
 

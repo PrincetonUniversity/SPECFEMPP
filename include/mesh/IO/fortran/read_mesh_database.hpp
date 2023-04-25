@@ -1,23 +1,23 @@
-#ifndef READ_MESH_DATABASE_H
-#define READ_MESH_DATABASE_H
+#ifndef _READ_MESH_DATABASE_HPP
+#define _READ_MESH_DATABASE_HPP
 
 #include "fortran_IO.h"
 #include "material.h"
-#include "material_indic.h"
 #include "params.h"
 #include "specfem_mpi.h"
 #include "specfem_setup.hpp"
-#include "surfaces.h"
 #include <fstream>
 #include <iostream>
 #include <tuple>
 
-namespace IO {
+namespace specfem {
 /**
  * Helper routines to read fortran binary database
  *
  */
-namespace fortran_database {
+namespace mesh {
+namespace IO {
+namespace fortran {
 
 /**
  * @brief Read fortran bindary database header.
@@ -59,7 +59,9 @@ void read_mesh_database_coupled(std::ifstream &stream,
                                 const int num_fluid_poro_edges,
                                 const int num_solid_poro_edges,
                                 const specfem::MPI::MPI *mpi);
-} // namespace fortran_database
+} // namespace fortran
 } // namespace IO
+} // namespace mesh
+} // namespace specfem
 
 #endif

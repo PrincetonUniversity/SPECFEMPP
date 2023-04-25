@@ -1,19 +1,18 @@
-#include "../include/read_mesh_database.h"
-#include "../include/fortran_IO.h"
-#include "../include/kokkos_abstractions.h"
-#include "../include/material.h"
-#include "../include/params.h"
-#include "../include/read_material_properties.h"
-#include "../include/specfem_mpi.h"
-#include "../include/specfem_setup.hpp"
+#include "mesh/IO/fortran/read_mesh_database.hpp"
+#include "fortran_IO.h"
+#include "kokkos_abstractions.h"
+#include "material.h"
+#include "mesh/IO/fortran/read_material_properties.hpp"
+#include "params.h"
+#include "specfem_mpi.h"
+#include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <fstream>
 #include <iostream>
 #include <tuple>
 
-std::tuple<int, int, int>
-IO::fortran_database::read_mesh_database_header(std::ifstream &stream,
-                                                const specfem::MPI::MPI *mpi) {
+std::tuple<int, int, int> specfem::mesh::IO::fortran::read_mesh_database_header(
+    std::ifstream &stream, const specfem::MPI::MPI *mpi) {
   // This subroutine reads header values of the database which are skipped
   std::string dummy_s;
   int dummy_i, dummy_i1, dummy_i2;
@@ -165,9 +164,9 @@ IO::fortran_database::read_mesh_database_header(std::ifstream &stream,
 }
 
 specfem::kokkos::HostView2d<type_real>
-IO::fortran_database::read_coorg_elements(std::ifstream &stream,
-                                          const int npgeo,
-                                          const specfem::MPI::MPI *mpi) {
+specfem::mesh::IO::fortran::read_coorg_elements(std::ifstream &stream,
+                                                const int npgeo,
+                                                const specfem::MPI::MPI *mpi) {
 
   int ipoin = 0;
 
@@ -191,7 +190,7 @@ IO::fortran_database::read_coorg_elements(std::ifstream &stream,
 }
 
 std::tuple<int, type_real, bool>
-IO::fortran_database::read_mesh_database_attenuation(
+specfem::mesh::IO::fortran::read_mesh_database_attenuation(
     std::ifstream &stream, const specfem::MPI::MPI *mpi) {
 
   int n_sls;
@@ -209,7 +208,7 @@ IO::fortran_database::read_mesh_database_attenuation(
                          read_velocities_at_f0);
 }
 
-void IO::fortran_database::read_mesh_database_coupled(
+void specfem::mesh::IO::fortran::read_mesh_database_coupled(
     std::ifstream &stream, const int num_fluid_solid_edges,
     const int num_fluid_poro_edges, const int num_solid_poro_edges,
     const specfem::MPI::MPI *mpi) {

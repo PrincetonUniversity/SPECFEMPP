@@ -1,18 +1,20 @@
 #ifndef _MESH_HPP
 #define _MESH_HPP
 
+#include "IO/fortran/read_material_properties.hpp"
+#include "IO/fortran/read_mesh_database.hpp"
 #include "boundaries/boundaries.hpp"
 #include "compute/interface.hpp"
 #include "elements/elements.hpp"
 #include "kokkos_abstractions.h"
 #include "material.h"
+#include "material_indic/material_indic.hpp"
 #include "mpi_interfaces/mpi_interfaces.hpp"
 #include "properties/properties.hpp"
 #include "quadrature.h"
-#include "read_mesh_database.h"
 #include "specfem_mpi.h"
 #include "specfem_setup.hpp"
-#include "surfaces.h"
+#include "surfaces/surfaces.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -34,9 +36,9 @@ struct mesh {
                                                 ///< spectral element control
                                                 ///< node
 
-  specfem::materials::material_ind material_ind; ///< Struct used to store
-                                                 ///< material information for
-                                                 ///< every spectral element
+  specfem::mesh::material_ind material_ind; ///< Struct used to store
+                                            ///< material information for
+                                            ///< every spectral element
 
   specfem::mesh::interfaces::interface interface; ///< Struct used to store data
                                                   ///< required to implement MPI
@@ -52,7 +54,7 @@ struct mesh {
   specfem::mesh::properties parameters; ///< Struct to store simulation launch
                                         ///< parameters
 
-  specfem::surfaces::acoustic_free_surface
+  specfem::mesh::surfaces::acoustic_free_surface
       acfree_surface; ///< Struct used to store data required to implement
                       ///< acoustic free surface
 

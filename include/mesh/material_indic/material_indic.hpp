@@ -1,11 +1,11 @@
-#ifndef MATERIAL_INDIC_H
-#define MATERIAL_INDIC_H
+#ifndef _MATERIAL_INDIC_HPP
+#define _MATERIAL_INDIC_HPP
 
-#include "../include/kokkos_abstractions.h"
-#include "../include/specfem_mpi.h"
+#include "kokkos_abstractions.h"
+#include "specfem_mpi.h"
 
 namespace specfem {
-namespace materials {
+namespace mesh {
 struct material_ind {
 
   /**
@@ -59,7 +59,7 @@ struct material_ind {
   material_ind(std::ifstream &stream, const int ngnod, const int nspec,
                const int numat, const specfem::MPI::MPI *mpi);
 };
-} // namespace materials
+} // namespace mesh
 } // namespace specfem
 
 #endif
