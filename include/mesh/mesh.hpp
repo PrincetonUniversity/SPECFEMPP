@@ -1,7 +1,6 @@
-#ifndef MESH_H
-#define MESH_H
+#ifndef _MESH_HPP
+#define _MESH_HPP
 
-#include "../include/boundaries.h"
 #include "../include/compute/interface.hpp"
 #include "../include/elements.h"
 #include "../include/kokkos_abstractions.h"
@@ -12,10 +11,12 @@
 #include "../include/specfem_mpi.h"
 #include "../include/specfem_setup.hpp"
 #include "../include/surfaces.h"
+#include "boundaries/boundaries.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
 
+namespace mesh {
 /**
  * @brief Mesh Interface
  *
@@ -40,10 +41,12 @@ struct mesh {
                                             ///< required to implement MPI
                                             ///< interfaces
 
-  specfem::boundaries::absorbing_boundary abs_boundary; ///< Struct used to
-                                                        ///< store data required
-                                                        ///< to implement
-                                                        ///< absorbing boundary
+  specfem::mesh::boundaries::absorbing_boundary abs_boundary; ///< Struct used
+                                                              ///< to store data
+                                                              ///< required to
+                                                              ///< implement
+                                                              ///< absorbing
+                                                              ///< boundary
 
   specfem::properties parameters; ///< Struct to store simulation launch
                                   ///< parameters
@@ -52,7 +55,7 @@ struct mesh {
       acfree_surface; ///< Struct used to store data required to implement
                       ///< acoustic free surface
 
-  specfem::boundaries::forcing_boundary
+  specfem::mesh::boundaries::forcing_boundary
       acforcing_boundary; ///< Struct used to store data required to implement
                           ///< acoustic forcing boundary
 
@@ -82,6 +85,7 @@ struct mesh {
    */
   std::string print(std::vector<specfem::material *> materials) const;
 };
+} // namespace mesh
 } // namespace specfem
 
 #endif

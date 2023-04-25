@@ -4,7 +4,7 @@
 #include "compute/interface.hpp"
 #include "domain/interface.hpp"
 #include "material.h"
-#include "mesh.h"
+#include "mesh/mesh.hpp"
 #include "parameter_parser.h"
 #include "quadrature.h"
 #include "read_sources.h"
@@ -63,7 +63,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
 
   // Read mesh generated MESHFEM
   std::vector<specfem::material *> materials;
-  specfem::mesh mesh(database_file, materials, mpi);
+  specfem::mesh::mesh mesh(database_file, materials, mpi);
 
   // Read sources
   //    if start time is not explicitly specified then t0 is determined using

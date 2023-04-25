@@ -3,7 +3,7 @@
 #include "../utilities/include/compare_array.h"
 #include "compute/interface.hpp"
 #include "material.h"
-#include "mesh.h"
+#include "mesh/mesh.hpp"
 #include "quadrature.h"
 #include "yaml-cpp/yaml.h"
 #include <fstream>
@@ -76,8 +76,8 @@ TEST(COMPUTE_TESTS, compute_properties) {
   specfem::quadrature::quadrature gllz(0.0, 0.0, 5);
   std::vector<specfem::material *> materials;
 
-  specfem::mesh mesh(test_config.database_filename, materials,
-                     MPIEnvironment::mpi_);
+  specfem::mesh::mesh mesh(test_config.database_filename, materials,
+                           MPIEnvironment::mpi_);
 
   specfem::compute::properties properties(mesh.material_ind.kmato, materials,
                                           mesh.nspec, gllz.get_N(),

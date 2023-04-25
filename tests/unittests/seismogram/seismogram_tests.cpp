@@ -4,7 +4,7 @@
 #include "compute/interface.hpp"
 #include "domain/interface.hpp"
 #include "material.h"
-#include "mesh.h"
+#include "mesh/mesh.hpp"
 #include "parameter_parser.h"
 #include "quadrature.h"
 #include "read_sources.h"
@@ -95,7 +95,7 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
 
   // Read mesh generated MESHFEM
   std::vector<specfem::material *> materials;
-  specfem::mesh mesh(database_file, materials, mpi);
+  specfem::mesh::mesh mesh(database_file, materials, mpi);
 
   // Generate compute structs to be used by the solver
   specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,

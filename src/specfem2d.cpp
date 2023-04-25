@@ -2,7 +2,7 @@
 #include "domain/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "material.h"
-#include "mesh.h"
+#include "mesh/mesh.hpp"
 #include "parameter_parser.h"
 #include "params.h"
 #include "read_mesh_database.h"
@@ -94,7 +94,7 @@ void execute(const std::string parameter_file, specfem::MPI::MPI *mpi) {
 
   // Read mesh generated MESHFEM
   std::vector<specfem::material *> materials;
-  specfem::mesh mesh(database_filename, materials, mpi);
+  specfem::mesh::mesh mesh(database_filename, materials, mpi);
 
   // Read sources
   //    if start time is not explicitly specified then t0 is determined using
