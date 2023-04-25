@@ -1,23 +1,22 @@
-#include "../include/mesh.h"
-#include "../include/boundaries.h"
-#include "../include/compute/interface.hpp"
-#include "../include/kokkos_abstractions.h"
-#include "../include/material.h"
-#include "../include/material_indic.h"
-#include "../include/mesh_properties.h"
-#include "../include/mpi_interfaces.h"
-#include "../include/read_material_properties.h"
-#include "../include/read_mesh_database.h"
-#include "../include/specfem_mpi.h"
-#include "../include/specfem_setup.hpp"
+#include "mesh/mesh.hpp"
+#include "compute/interface.hpp"
+#include "kokkos_abstractions.h"
+#include "material.h"
+#include "material_indic.h"
+#include "mesh_properties.h"
+#include "mpi_interfaces.h"
+#include "read_material_properties.h"
+#include "read_mesh_database.h"
+#include "specfem_mpi.h"
+#include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <algorithm>
 #include <limits>
 #include <vector>
 
-specfem::mesh::mesh(const std::string filename,
-                    std::vector<specfem::material *> &materials,
-                    const specfem::MPI::MPI *mpi) {
+specfem::mesh::mesh::mesh(const std::string filename,
+                          std::vector<specfem::material *> &materials,
+                          const specfem::MPI::MPI *mpi) {
 
   std::ifstream stream;
   stream.open(filename);
@@ -105,14 +104,14 @@ specfem::mesh::mesh(const std::string filename,
   }
 
   try {
-    this->abs_boundary = specfem::boundaries::absorbing_boundary(
+    this->abs_boundary = specfem::mesh::boundaries::absorbing_boundary(
         stream, this->parameters.nelemabs, this->parameters.nspec, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
 
   try {
-    this->acforcing_boundary = specfem::boundaries::forcing_boundary(
+    this->acforcing_boundary = specfem::mesh::boundaries::forcing_boundary(
         stream, this->parameters.nelem_acforcing, this->parameters.nspec, mpi);
   } catch (std::runtime_error &e) {
     throw;
@@ -160,7 +159,7 @@ specfem::mesh::mesh(const std::string filename,
 }
 
 std::string
-specfem::mesh::print(std::vector<specfem::material *> materials) const {
+specfem::mesh::mesh::print(std::vector<specfem::material *> materials) const {
 
   int n_elastic = 0;
   int n_acoustic = 0;
