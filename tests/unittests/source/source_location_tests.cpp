@@ -4,8 +4,7 @@
 #include "material/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "params.h"
-#include "read_sources.h"
-#include "source.h"
+#include "source/interface.hpp"
 #include "specfem_setup.hpp"
 #include "yaml-cpp/yaml.h"
 #include <stdexcept>
@@ -167,7 +166,7 @@ TEST(SOURCE_LOCATION_TESTS, compute_source_locations) {
 
   // read sources file
   auto [sources, t0] =
-      specfem::read_sources(test_config.sources_file, 1.0, mpi);
+      specfem::sources::read_sources(test_config.sources_file, 1.0, mpi);
 
   // setup compute struct for future use
   specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,

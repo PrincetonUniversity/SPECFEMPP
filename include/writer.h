@@ -3,7 +3,7 @@
 
 #include "compute/interface.hpp"
 #include "enums.h"
-#include "receiver.h"
+#include "receiver/interface.hpp"
 #include "specfem_setup.hpp"
 #include <vector>
 

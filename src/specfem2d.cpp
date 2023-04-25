@@ -5,10 +5,9 @@
 #include "mesh/mesh.hpp"
 #include "parameter_parser.h"
 #include "params.h"
-#include "read_sources.h"
-#include "receiver.h"
+#include "receiver/interface.hpp"
 #include "solver/interface.hpp"
-#include "source.h"
+#include "source/interface.hpp"
 #include "specfem_mpi.h"
 #include "specfem_setup.hpp"
 #include "timescheme/interface.hpp"
@@ -99,9 +98,9 @@ void execute(const std::string parameter_file, specfem::MPI::MPI *mpi) {
   //    if start time is not explicitly specified then t0 is determined using
   //    source frequencies and time shift
   auto [sources, t0] =
-      specfem::read_sources(source_filename, setup.get_dt(), mpi);
+      specfem::sources::read_sources(source_filename, setup.get_dt(), mpi);
   const auto angle = setup.get_receiver_angle();
-  auto receivers = specfem::read_receivers(stations_filename, angle);
+  auto receivers = specfem::receivers::read_receivers(stations_filename, angle);
 
   // Generate compute structs to be used by the solver
   specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,

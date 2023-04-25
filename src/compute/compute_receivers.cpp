@@ -2,7 +2,7 @@
 #include "globals.h"
 #include "kokkos_abstractions.h"
 #include "quadrature.h"
-#include "receiver.h"
+#include "receiver/interface.hpp"
 #include "specfem_mpi.h"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>

@@ -173,7 +173,6 @@ target_link_libraries(
   quadrature
   compute
   source_class
-  source_reader
   -lpthread -lm
 )
 
@@ -195,7 +194,6 @@ target_link_libraries(
   utilities
   compare_arrays
   domain
-  source_reader
   writer
   -lpthread -lm
 )
@@ -218,7 +216,6 @@ target_link_libraries(
   utilities
   compare_arrays
   domain
-  source_reader
   timescheme
   solver
   -lpthread -lm
@@ -240,7 +237,6 @@ target_link_libraries(
   parameter_reader
   utilities
   domain
-  source_reader
   writer
   -lpthread -lm
 )

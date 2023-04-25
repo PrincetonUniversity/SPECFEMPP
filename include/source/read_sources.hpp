@@ -1,12 +1,7 @@
-#ifndef READ_SOURCES_H
-#define READ_SOURCES_H
-
-#include "../include/receiver.h"
-#include "../include/source.h"
-#include "../include/specfem_setup.hpp"
-#include <vector>
+#include "source.hpp"
 
 namespace specfem {
+namespace sources {
 /**
  * @brief Read sources file written in .yml format
  *
@@ -21,9 +16,5 @@ namespace specfem {
 std::tuple<std::vector<specfem::sources::source *>, type_real>
 read_sources(const std::string sources_file, const type_real dt,
              const specfem::MPI::MPI *mpi);
-
-std::vector<specfem::receivers::receiver *>
-read_receivers(const std::string stations_file, const type_real angle);
+} // namespace sources
 } // namespace specfem
-
-#endif
