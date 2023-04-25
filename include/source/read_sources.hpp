@@ -1,3 +1,6 @@
+#ifndef _READ_SOURCES_HPP
+#define _READ_SOURCES_HPP
+
 #include "source.hpp"
 
 namespace specfem {
@@ -18,3 +21,5 @@ read_sources(const std::string sources_file, const type_real dt,
              const specfem::MPI::MPI *mpi);
 } // namespace sources
 } // namespace specfem
+
+#endif

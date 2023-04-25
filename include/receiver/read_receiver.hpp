@@ -1,5 +1,5 @@
-#ifndef READ_SOURCES_H
-#define READ_SOURCES_H
+#ifndef _READ_RECEIVER_HPP
+#define _READ_RECEIVER_HPP
 
 #include "receiver.hpp"
 #include "specfem_setup.hpp"
