@@ -1,10 +1,10 @@
-#include "../include/receiver.h"
-#include "../include/kokkos_abstractions.h"
-#include "../include/lagrange_poly.h"
-#include "../include/quadrature.h"
-#include "../include/specfem_mpi.h"
-#include "../include/specfem_setup.hpp"
-#include "../include/utils.h"
+#include "kokkos_abstractions.h"
+#include "lagrange_poly.h"
+#include "quadrature.h"
+#include "receiver/interface.hpp"
+#include "specfem_mpi.h"
+#include "specfem_setup.hpp"
+#include "utils.h"
 
 void specfem::receivers::receiver::locate(
     const specfem::kokkos::HostView2d<type_real> coord,

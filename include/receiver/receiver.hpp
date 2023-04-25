@@ -1,12 +1,12 @@
-#ifndef RECEIVER_H
-#define RECEIVER_H
+#ifndef _RECEIVER_HPP
+#define _RECEIVER_HPP
 
-#include "../include/constants.h"
-#include "../include/enums.h"
-#include "../include/kokkos_abstractions.h"
-#include "../include/quadrature.h"
-#include "../include/specfem_mpi.h"
-#include "../include/specfem_setup.hpp"
+#include "constants.h"
+#include "enums.h"
+#include "kokkos_abstractions.h"
+#include "quadrature.h"
+#include "specfem_mpi.h"
+#include "specfem_setup.hpp"
 #include <cmath>
 
 namespace specfem {

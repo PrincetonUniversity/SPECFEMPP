@@ -1,11 +1,11 @@
 #ifndef PARAMETER_PARSER_H
 #define PARAMETER_PARSER_H
 
-#include "../include/quadrature.h"
-#include "../include/receiver.h"
-#include "../include/specfem_setup.hpp"
-#include "../include/timescheme/interface.hpp"
-#include "../include/writer.h"
+#include "quadrature.h"
+#include "receiver/interface.hpp"
+#include "specfem_setup.hpp"
+#include "timescheme/interface.hpp"
+#include "writer.h"
 #include "yaml-cpp/yaml.h"
 #include <ctime>
 #include <tuple>

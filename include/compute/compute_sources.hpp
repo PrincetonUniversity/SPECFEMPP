@@ -3,8 +3,7 @@
 
 #include "kokkos_abstractions.h"
 #include "quadrature.h"
-#include "receiver.h"
-#include "source.h"
+#include "source/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <vector>

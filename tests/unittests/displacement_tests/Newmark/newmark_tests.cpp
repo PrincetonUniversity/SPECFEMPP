@@ -7,7 +7,6 @@
 #include "mesh/mesh.hpp"
 #include "parameter_parser.h"
 #include "quadrature.h"
-#include "read_sources.h"
 #include "solver/interface.hpp"
 #include "timescheme/interface.hpp"
 #include "utils.h"
@@ -68,7 +67,8 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
   // Read sources
   //    if start time is not explicitly specified then t0 is determined using
   //    source frequencies and time shift
-  auto [sources, t0] = specfem::read_sources(sources_file, setup.get_dt(), mpi);
+  auto [sources, t0] =
+      specfem::sources::read_sources(sources_file, setup.get_dt(), mpi);
 
   // Generate compute structs to be used by the solver
   specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,

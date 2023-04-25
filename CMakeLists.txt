@@ -188,7 +188,10 @@ target_link_libraries(
 
 add_library(
         source_class
-        src/source.cpp
+        src/source/source.cpp
+        src/source/force_source.cpp
+        src/source/moment_tensor_source.cpp
+        src/source/read_sources.cpp
 )
 
 target_link_libraries(
@@ -204,7 +207,8 @@ target_link_libraries(
 
 add_library(
         receiver_class
-        src/receiver.cpp
+        src/receiver/receiver.cpp
+        src/receiver/read_receiver.cpp
 )
 
 target_link_libraries(
@@ -214,20 +218,7 @@ target_link_libraries(
         utilities
         quadrature
         lagrange
-)
-
-add_library(
-        source_reader
-        src/read_sources.cpp
-)
-
-target_link_libraries(
-        source_reader
-        source_class
-        receiver_class
         yaml-cpp
-        utilities
-        Boost::system
 )
 
 add_library(
@@ -325,7 +316,6 @@ target_link_libraries(
         quadrature
         compute
         source_class
-        source_reader
         parameter_reader
         domain
         solver

@@ -1,6 +1,6 @@
 #include "writer.h"
 #include "compute/interface.hpp"
-#include "receiver.h"
+#include "receiver/interface.hpp"
 #include <fstream>
 
 void specfem::writer::seismogram::write() {

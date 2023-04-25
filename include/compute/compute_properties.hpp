@@ -4,8 +4,6 @@
 #include "kokkos_abstractions.h"
 #include "material/interface.hpp"
 #include "quadrature.h"
-#include "receiver.h"
-#include "source.h"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <vector>

@@ -7,7 +7,7 @@
 #include "mesh/mesh.hpp"
 #include "parameter_parser.h"
 #include "quadrature.h"
-#include "read_sources.h"
+#include "receiver/interface.hpp"
 #include "solver/interface.hpp"
 #include "timescheme/interface.hpp"
 #include "utils.h"
@@ -91,7 +91,7 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
 
   const auto angle = setup.get_receiver_angle();
   const auto stations_filename = setup.get_stations_file();
-  auto receivers = specfem::read_receivers(stations_filename, angle);
+  auto receivers = specfem::receivers::read_receivers(stations_filename, angle);
 
   // Read mesh generated MESHFEM
   std::vector<specfem::material::material *> materials;
