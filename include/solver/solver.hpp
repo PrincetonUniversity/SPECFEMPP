@@ -1,5 +1,5 @@
-#ifndef SOLVER_HPP
-#define SOLVER_HPP
+#ifndef _SOLVER_HPP
+#define _SOLVER_HPP
 
 #include "domain/interface.hpp"
 #include "timescheme/interface.hpp"

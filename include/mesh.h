@@ -2,7 +2,7 @@
 #define MESH_H
 
 #include "../include/boundaries.h"
-#include "../include/compute.h"
+#include "../include/compute/interface.hpp"
 #include "../include/elements.h"
 #include "../include/kokkos_abstractions.h"
 #include "../include/material.h"

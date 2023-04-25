@@ -1,7 +1,7 @@
 #ifndef _ELASTIC_DOMAIN_HPP
 #define _ELASTIC_DOMAIN_HPP
 
-#include "compute.h"
+#include "compute/interface.hpp"
 #include "quadrature.h"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>

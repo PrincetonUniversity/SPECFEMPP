@@ -1,10 +1,10 @@
 #ifndef WRITER_H
 #define WRITER_H
 
-#include "../include/compute.h"
-#include "../include/enums.h"
-#include "../include/receiver.h"
-#include "../include/specfem_setup.hpp"
+#include "compute/interface.hpp"
+#include "enums.h"
+#include "receiver.h"
+#include "specfem_setup.hpp"
 #include <vector>
 
 namespace specfem {

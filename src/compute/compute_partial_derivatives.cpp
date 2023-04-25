@@ -1,7 +1,7 @@
-#include "../include/compute.h"
-#include "../include/jacobian.h"
-#include "../include/kokkos_abstractions.h"
-#include "../include/shape_functions.h"
+#include "compute/interface.hpp"
+#include "jacobian.h"
+#include "kokkos_abstractions.h"
+#include "shape_functions.h"
 #include <Kokkos_Core.hpp>
 
 specfem::compute::partial_derivatives::partial_derivatives(const int nspec,
