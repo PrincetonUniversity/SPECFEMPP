@@ -118,60 +118,18 @@ target_link_libraries(
 )
 
 add_library(
-        material_reader
-        src/read_material_properties.cpp
-)
-
-target_link_libraries(
-        material_reader
-        material_class
-        specfem_mpi
-        fortranio
-)
-
-add_library(
-        surfaces
-        src/surfaces.cpp
-)
-
-target_link_libraries(
-        surfaces
-        Kokkos::kokkos
-        specfem_mpi
-)
-
-add_library(
-        database_reader
-        src/read_mesh_database.cpp
-)
-
-target_link_libraries(
-        database_reader
-        specfem_mpi
-        fortranio
-        Kokkos::kokkos
-)
-
-add_library(
-        material_indic
-        src/material_indic.cpp
-)
-
-target_link_libraries(
-        material_indic
-        specfem_mpi
-        Kokkos::kokkos
-)
-
-add_library(
         mesh
+        src/mesh/IO/fortran/read_mesh_database.cpp
+        src/mesh/IO/fortran/read_material_properties.cpp
         src/mesh/boundaries/forcing_boundaries.cpp
         src/mesh/boundaries/absorbing_boundaries.cpp
         src/mesh/elements/tangential_elements.cpp
         src/mesh/elements/axial_elements.cpp
         src/mesh/properties/properties.cpp
         src/mesh/mpi_interfaces/mpi_interfaces.cpp
-        src/mesh.cpp
+        src/mesh/material_indic/material_indic.cpp
+        src/mesh/surfaces/acoustic_free_surface.cpp
+        src/mesh/mesh.cpp
 )
 
 target_link_libraries(
@@ -179,10 +137,7 @@ target_link_libraries(
         Kokkos::kokkos
         specfem_mpi
         material_class
-        database_reader
-        material_reader
-        material_indic
-        surfaces
+        fortranio
         yaml-cpp
 )
 
@@ -363,7 +318,6 @@ target_link_libraries(
         specfem2d
         material_class
         specfem_mpi
-        database_reader
         Kokkos::kokkos
         yaml-cpp
         mesh

@@ -1,13 +1,16 @@
-#ifndef READ_MATERIAL_PROPERTIES_H
-#define READ_MATERIAL_PROPERTIES_H
+#ifndef _READ_MATERIAL_PROPERTIES_HPP
+#define _READ_MATERIAL_PROPERTIES_HPP
 
-#include "../include/material.h"
-#include "../include/specfem_mpi.h"
+#include "material.h"
+#include "specfem_mpi.h"
 #include <fstream>
 #include <iostream>
 #include <vector>
 
+namespace specfem {
+namespace mesh {
 namespace IO {
+namespace fortran {
 
 /**
  * Read material properties from a fotran binary database
@@ -22,6 +25,8 @@ namespace IO {
 std::vector<specfem::material *>
 read_material_properties(std::ifstream &stream, const int numat,
                          const specfem::MPI::MPI *mpi);
+} // namespace fortran
 } // namespace IO
-
+} // namespace mesh
+} // namespace specfem
 #endif

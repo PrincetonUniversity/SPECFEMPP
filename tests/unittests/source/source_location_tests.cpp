@@ -4,7 +4,6 @@
 #include "material.h"
 #include "mesh/mesh.hpp"
 #include "params.h"
-#include "read_mesh_database.h"
 #include "read_sources.h"
 #include "source.h"
 #include "specfem_setup.hpp"

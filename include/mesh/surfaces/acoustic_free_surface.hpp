@@ -1,17 +1,11 @@
-#ifndef SURFACES_H
-#define SURFACES_H
+#ifndef _ACOUSTIC_FREE_SURFACE_HPP
+#define _ACOUSTIC_FREE_SURFACE_HPP
 
-#include "../include/kokkos_abstractions.h"
-#include "../include/specfem_mpi.h"
+#include "kokkos_abstractions.h"
+#include "specfem_mpi.h"
 
 namespace specfem {
-
-/**
- * Define elements on a surface
- *
- * @note Need to still document this section
- *
- */
+namespace mesh {
 namespace surfaces {
 
 struct acoustic_free_surface {
@@ -23,8 +17,8 @@ struct acoustic_free_surface {
   acoustic_free_surface(std::ifstream &stream, const int nelem_acoustic_surface,
                         const specfem::MPI::MPI *mpi);
 };
-
 } // namespace surfaces
+} // namespace mesh
 } // namespace specfem
 
 #endif

@@ -2,9 +2,6 @@
 #include "compute/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "material.h"
-#include "material_indic.h"
-#include "read_material_properties.h"
-#include "read_mesh_database.h"
 #include "specfem_mpi.h"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -25,7 +22,7 @@ specfem::mesh::mesh::mesh(const std::string filename,
 
   try {
     auto [nspec, npgeo, nproc] =
-        IO::fortran_database::read_mesh_database_header(stream, mpi);
+        specfem::mesh::IO::fortran::read_mesh_database_header(stream, mpi);
     this->nspec = nspec;
     this->npgeo = npgeo;
     this->nproc = nproc;
@@ -34,8 +31,8 @@ specfem::mesh::mesh::mesh(const std::string filename,
   }
 
   try {
-    this->coorg =
-        IO::fortran_database::read_coorg_elements(stream, this->npgeo, mpi);
+    this->coorg = specfem::mesh::IO::fortran::read_coorg_elements(
+        stream, this->npgeo, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
@@ -75,22 +72,22 @@ specfem::mesh::mesh::mesh(const std::string filename,
 
   try {
     auto [n_sls, attenuation_f0_reference, read_velocities_at_f0] =
-        IO::fortran_database::read_mesh_database_attenuation(stream, mpi);
+        specfem::mesh::IO::fortran::read_mesh_database_attenuation(stream, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
 
   try {
-    materials =
-        IO::read_material_properties(stream, this->parameters.numat, mpi);
+    materials = specfem::mesh::IO::fortran::read_material_properties(
+        stream, this->parameters.numat, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
 
   try {
-    this->material_ind = specfem::materials::material_ind(
-        stream, this->parameters.ngnod, this->nspec, this->parameters.numat,
-        mpi);
+    this->material_ind =
+        specfem::mesh::material_ind(stream, this->parameters.ngnod, this->nspec,
+                                    this->parameters.numat, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
@@ -116,14 +113,14 @@ specfem::mesh::mesh::mesh(const std::string filename,
   }
 
   try {
-    this->acfree_surface = specfem::surfaces::acoustic_free_surface(
+    this->acfree_surface = specfem::mesh::surfaces::acoustic_free_surface(
         stream, this->parameters.nelem_acoustic_surface, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
 
   try {
-    IO::fortran_database::read_mesh_database_coupled(
+    specfem::mesh::IO::fortran::read_mesh_database_coupled(
         stream, this->parameters.num_fluid_solid_edges,
         this->parameters.num_fluid_poro_edges,
         this->parameters.num_solid_poro_edges, mpi);

@@ -167,7 +167,6 @@ target_link_libraries(
   source_location_tests
   material_class
   mpi_environment
-  database_reader
   kokkos_environment
   yaml-cpp
   mesh

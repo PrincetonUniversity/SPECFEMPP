@@ -5,7 +5,6 @@
 #include "mesh/mesh.hpp"
 #include "parameter_parser.h"
 #include "params.h"
-#include "read_mesh_database.h"
 #include "read_sources.h"
 #include "receiver.h"
 #include "solver/interface.hpp"
