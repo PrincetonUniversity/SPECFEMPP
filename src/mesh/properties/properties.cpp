@@ -1,8 +1,8 @@
-#include "../include/mesh_properties.h"
-#include "../include/fortran_IO.h"
+#include "mesh/properties/properties.hpp"
+#include "fortran_IO.h"
 
-specfem::properties::properties(std::ifstream &stream,
-                                const specfem::MPI::MPI *mpi) {
+specfem::mesh::properties::properties(std::ifstream &stream,
+                                      const specfem::MPI::MPI *mpi) {
   // ---------------------------------------------------------------------
   // reading mesh properties
 

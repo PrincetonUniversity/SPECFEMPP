@@ -3,8 +3,6 @@
 #include "kokkos_abstractions.h"
 #include "material.h"
 #include "material_indic.h"
-#include "mesh_properties.h"
-#include "mpi_interfaces.h"
 #include "read_material_properties.h"
 #include "read_mesh_database.h"
 #include "specfem_mpi.h"
@@ -43,7 +41,7 @@ specfem::mesh::mesh::mesh(const std::string filename,
   }
 
   try {
-    this->parameters = specfem::properties(stream, mpi);
+    this->parameters = specfem::mesh::properties(stream, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
@@ -98,7 +96,7 @@ specfem::mesh::mesh::mesh(const std::string filename,
   }
 
   try {
-    this->interface = specfem::interfaces::interface(stream, mpi);
+    this->interface = specfem::mesh::interfaces::interface(stream, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }

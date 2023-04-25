@@ -4,8 +4,6 @@
 #include "fortran_IO.h"
 #include "material.h"
 #include "material_indic.h"
-#include "mesh_properties.h"
-#include "mpi_interfaces.h"
 #include "params.h"
 #include "specfem_mpi.h"
 #include "specfem_setup.hpp"

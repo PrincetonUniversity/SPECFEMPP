@@ -6,7 +6,8 @@
 #include "elements/elements.hpp"
 #include "kokkos_abstractions.h"
 #include "material.h"
-#include "mpi_interfaces.h"
+#include "mpi_interfaces/mpi_interfaces.hpp"
+#include "properties/properties.hpp"
 #include "quadrature.h"
 #include "read_mesh_database.h"
 #include "specfem_mpi.h"
@@ -37,9 +38,9 @@ struct mesh {
                                                  ///< material information for
                                                  ///< every spectral element
 
-  specfem::interfaces::interface interface; ///< Struct used to store data
-                                            ///< required to implement MPI
-                                            ///< interfaces
+  specfem::mesh::interfaces::interface interface; ///< Struct used to store data
+                                                  ///< required to implement MPI
+                                                  ///< interfaces
 
   specfem::mesh::boundaries::absorbing_boundary abs_boundary; ///< Struct used
                                                               ///< to store data
@@ -48,8 +49,8 @@ struct mesh {
                                                               ///< absorbing
                                                               ///< boundary
 
-  specfem::properties parameters; ///< Struct to store simulation launch
-                                  ///< parameters
+  specfem::mesh::properties parameters; ///< Struct to store simulation launch
+                                        ///< parameters
 
   specfem::surfaces::acoustic_free_surface
       acfree_surface; ///< Struct used to store data required to implement
