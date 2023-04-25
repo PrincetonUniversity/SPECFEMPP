@@ -141,17 +141,6 @@ target_link_libraries(
 )
 
 add_library(
-        mpi_interfaces
-        src/mpi_interfaces.cpp
-)
-
-target_link_libraries(
-        mpi_interfaces
-        Kokkos::kokkos
-        specfem_mpi
-)
-
-add_library(
         database_reader
         src/read_mesh_database.cpp
 )
@@ -160,18 +149,6 @@ target_link_libraries(
         database_reader
         specfem_mpi
         fortranio
-        Kokkos::kokkos
-        mpi_interfaces
-)
-
-add_library(
-        mesh_properties
-        src/mesh_properties.cpp
-)
-
-target_link_libraries(
-        mesh_properties
-        specfem_mpi
         Kokkos::kokkos
 )
 
@@ -192,6 +169,8 @@ add_library(
         src/mesh/boundaries/absorbing_boundaries.cpp
         src/mesh/elements/tangential_elements.cpp
         src/mesh/elements/axial_elements.cpp
+        src/mesh/properties/properties.cpp
+        src/mesh/mpi_interfaces/mpi_interfaces.cpp
         src/mesh.cpp
 )
 
@@ -202,7 +181,6 @@ target_link_libraries(
         material_class
         database_reader
         material_reader
-        mesh_properties
         material_indic
         surfaces
         yaml-cpp

@@ -1,9 +1,11 @@
-#ifndef MESH_PROPERTIES_H
-#define MESH_PROPERTIES_H
+#ifndef _MESH_PROPERTIES_HPP
+#define _MESH_PROPERTIES_HPP
 
 #include "../include/specfem_mpi.h"
 
 namespace specfem {
+
+namespace mesh {
 /**
  * @brief Mesh properties
  *
@@ -40,6 +42,7 @@ struct properties {
    */
   properties(std::ifstream &stream, const specfem::MPI::MPI *mpi);
 };
+} // namespace mesh
 } // namespace specfem
 
 #endif
