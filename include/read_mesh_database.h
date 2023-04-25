@@ -1,17 +1,15 @@
 #ifndef READ_MESH_DATABASE_H
 #define READ_MESH_DATABASE_H
 
-#include "../include/boundaries.h"
-#include "../include/elements.h"
-#include "../include/fortran_IO.h"
-#include "../include/material.h"
-#include "../include/material_indic.h"
-#include "../include/mesh_properties.h"
-#include "../include/mpi_interfaces.h"
-#include "../include/params.h"
-#include "../include/specfem_mpi.h"
-#include "../include/specfem_setup.hpp"
-#include "../include/surfaces.h"
+#include "fortran_IO.h"
+#include "material.h"
+#include "material_indic.h"
+#include "mesh_properties.h"
+#include "mpi_interfaces.h"
+#include "params.h"
+#include "specfem_mpi.h"
+#include "specfem_setup.hpp"
+#include "surfaces.h"
 #include <fstream>
 #include <iostream>
 #include <tuple>

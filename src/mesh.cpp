@@ -134,14 +134,14 @@ specfem::mesh::mesh::mesh(const std::string filename,
   }
 
   try {
-    this->tangential_nodes = specfem::elements::tangential_elements(
+    this->tangential_nodes = specfem::mesh::elements::tangential_elements(
         stream, this->parameters.nnodes_tangential_curve);
   } catch (std::runtime_error &e) {
     throw;
   }
 
   try {
-    this->axial_nodes = specfem::elements::axial_elements(
+    this->axial_nodes = specfem::mesh::elements::axial_elements(
         stream, this->parameters.nelem_on_the_axis, this->nspec, mpi);
   } catch (std::runtime_error &e) {
     throw;

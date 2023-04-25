@@ -1,17 +1,17 @@
 #ifndef _MESH_HPP
 #define _MESH_HPP
 
-#include "../include/compute/interface.hpp"
-#include "../include/elements.h"
-#include "../include/kokkos_abstractions.h"
-#include "../include/material.h"
-#include "../include/mpi_interfaces.h"
-#include "../include/quadrature.h"
-#include "../include/read_mesh_database.h"
-#include "../include/specfem_mpi.h"
-#include "../include/specfem_setup.hpp"
-#include "../include/surfaces.h"
 #include "boundaries/boundaries.hpp"
+#include "compute/interface.hpp"
+#include "elements/elements.hpp"
+#include "kokkos_abstractions.h"
+#include "material.h"
+#include "mpi_interfaces.h"
+#include "quadrature.h"
+#include "read_mesh_database.h"
+#include "specfem_mpi.h"
+#include "specfem_setup.hpp"
+#include "surfaces.h"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -59,10 +59,11 @@ struct mesh {
       acforcing_boundary; ///< Struct used to store data required to implement
                           ///< acoustic forcing boundary
 
-  specfem::elements::tangential_elements tangential_nodes; ///< Defines
-                                                           ///< tangential nodes
+  specfem::mesh::elements::tangential_elements tangential_nodes; ///< Defines
+                                                                 ///< tangential
+                                                                 ///< nodes
 
-  specfem::elements::axial_elements axial_nodes; ///< Defines axial nodes
+  specfem::mesh::elements::axial_elements axial_nodes; ///< Defines axial nodes
 
   /**
    * @brief Default mesh constructor
