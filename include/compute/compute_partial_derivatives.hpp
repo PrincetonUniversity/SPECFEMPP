@@ -2,7 +2,6 @@
 #define _COMPUTE_PARTIAL_DERIVATIVES_HPP
 
 #include "kokkos_abstractions.h"
-#include "material.h"
 #include "quadrature.h"
 #include "receiver.h"
 #include "source.h"

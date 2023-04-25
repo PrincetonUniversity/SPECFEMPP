@@ -3,7 +3,7 @@
 #include "../utilities/include/compare_array.h"
 #include "compute/interface.hpp"
 #include "domain/interface.hpp"
-#include "material.h"
+#include "material/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "parameter_parser.h"
 #include "quadrature.h"
@@ -94,7 +94,7 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
   auto receivers = specfem::read_receivers(stations_filename, angle);
 
   // Read mesh generated MESHFEM
-  std::vector<specfem::material *> materials;
+  std::vector<specfem::material::material *> materials;
   specfem::mesh::mesh mesh(database_file, materials, mpi);
 
   // Generate compute structs to be used by the solver

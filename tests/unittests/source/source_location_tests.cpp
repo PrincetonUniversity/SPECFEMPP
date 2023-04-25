@@ -1,7 +1,7 @@
 #include "../Kokkos_Environment.hpp"
 #include "../MPI_environment.hpp"
 #include "compute/interface.hpp"
-#include "material.h"
+#include "material/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "params.h"
 #include "read_sources.h"
@@ -162,7 +162,7 @@ TEST(SOURCE_LOCATION_TESTS, compute_source_locations) {
   specfem::parameters params;
 
   // Read mesh for binary database for the test
-  std::vector<specfem::material *> materials;
+  std::vector<specfem::material::material *> materials;
   specfem::mesh::mesh mesh(test_config.database_file, materials, mpi);
 
   // read sources file

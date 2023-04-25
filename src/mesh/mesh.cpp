@@ -1,7 +1,7 @@
 #include "mesh/mesh.hpp"
 #include "compute/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "material.h"
+#include "material/interface.hpp"
 #include "specfem_mpi.h"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -10,7 +10,7 @@
 #include <vector>
 
 specfem::mesh::mesh::mesh(const std::string filename,
-                          std::vector<specfem::material *> &materials,
+                          std::vector<specfem::material::material *> &materials,
                           const specfem::MPI::MPI *mpi) {
 
   std::ifstream stream;
@@ -153,8 +153,8 @@ specfem::mesh::mesh::mesh(const std::string filename,
   return;
 }
 
-std::string
-specfem::mesh::mesh::print(std::vector<specfem::material *> materials) const {
+std::string specfem::mesh::mesh::print(
+    std::vector<specfem::material::material *> materials) const {
 
   int n_elastic = 0;
   int n_acoustic = 0;

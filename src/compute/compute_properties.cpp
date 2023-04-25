@@ -1,6 +1,7 @@
 #include "compute/interface.hpp"
 #include "jacobian.h"
 #include "kokkos_abstractions.h"
+#include "material/interface.hpp"
 #include "shape_functions.h"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -34,8 +35,8 @@ specfem::compute::properties::properties(const int nspec, const int ngllz,
 
 specfem::compute::properties::properties(
     const specfem::kokkos::HostView1d<int> kmato,
-    const std::vector<specfem::material *> &materials, const int nspec,
-    const int ngllx, const int ngllz) {
+    const std::vector<specfem::material::material *> &materials,
+    const int nspec, const int ngllx, const int ngllz) {
 
   // Setup compute::properties properties
   // UPDATEME::
