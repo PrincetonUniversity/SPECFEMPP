@@ -1,9 +1,9 @@
-#include "../include/compute.h"
-#include "../include/kokkos_abstractions.h"
-#include "../include/quadrature.h"
-#include "../include/source.h"
-#include "../include/specfem_mpi.h"
-#include "../include/specfem_setup.hpp"
+#include "compute/interface.hpp"
+#include "kokkos_abstractions.h"
+#include "quadrature.h"
+#include "source.h"
+#include "specfem_mpi.h"
+#include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <vector>
 

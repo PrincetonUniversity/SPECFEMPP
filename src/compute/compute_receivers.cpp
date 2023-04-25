@@ -1,10 +1,10 @@
-#include "../include/compute.h"
-#include "../include/globals.h"
-#include "../include/kokkos_abstractions.h"
-#include "../include/quadrature.h"
-#include "../include/receiver.h"
-#include "../include/specfem_mpi.h"
-#include "../include/specfem_setup.hpp"
+#include "compute/interface.hpp"
+#include "globals.h"
+#include "kokkos_abstractions.h"
+#include "quadrature.h"
+#include "receiver.h"
+#include "specfem_mpi.h"
+#include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <vector>
 

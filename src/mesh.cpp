@@ -1,6 +1,6 @@
 #include "../include/mesh.h"
 #include "../include/boundaries.h"
-#include "../include/compute.h"
+#include "../include/compute/interface.hpp"
 #include "../include/kokkos_abstractions.h"
 #include "../include/material.h"
 #include "../include/material_indic.h"

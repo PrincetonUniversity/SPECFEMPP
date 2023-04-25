@@ -1,10 +1,10 @@
-#include "../../../include/compute.h"
-#include "../../../include/material.h"
-#include "../../../include/mesh.h"
-#include "../../../include/quadrature.h"
 #include "../Kokkos_Environment.hpp"
 #include "../MPI_environment.hpp"
 #include "../utilities/include/compare_array.h"
+#include "compute/interface.hpp"
+#include "material.h"
+#include "mesh.h"
+#include "quadrature.h"
 #include "yaml-cpp/yaml.h"
 #include <fstream>
 #include <iostream>

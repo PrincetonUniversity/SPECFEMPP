@@ -318,11 +318,11 @@ target_link_libraries(
 
 add_library(
         compute
-        src/compute.cpp
-        src/compute_partial_derivatives.cpp
-        src/compute_properties.cpp
-        src/compute_sources.cpp
-        src/compute_receivers.cpp
+        src/compute/compute.cpp
+        src/compute/compute_partial_derivatives.cpp
+        src/compute/compute_properties.cpp
+        src/compute/compute_sources.cpp
+        src/compute/compute_receivers.cpp
 )
 
 target_link_libraries(

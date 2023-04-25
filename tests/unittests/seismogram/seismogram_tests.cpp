@@ -1,7 +1,7 @@
 #include "../Kokkos_Environment.hpp"
 #include "../MPI_environment.hpp"
 #include "../utilities/include/compare_array.h"
-#include "compute.h"
+#include "compute/interface.hpp"
 #include "domain/interface.hpp"
 #include "material.h"
 #include "mesh.h"

@@ -1,4 +1,4 @@
-#include "compute.h"
+#include "compute/interface.hpp"
 #include "domain/interface.hpp"
 #include "enums.h"
 #include "globals.h"
