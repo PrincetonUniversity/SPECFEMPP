@@ -1,7 +1,7 @@
 #include "globals.h"
 #include "jacobian.h"
 #include "kokkos_abstractions.h"
-#include "lagrange_poly.h"
+#include "quadrature/interface.hpp"
 #include "source/interface.hpp"
 #include "source_time_function.h"
 #include "specfem_mpi.h"
@@ -30,8 +30,8 @@ void specfem::sources::force::locate(
 }
 
 void specfem::sources::force::compute_source_array(
-    const specfem::quadrature::quadrature &quadx,
-    const specfem::quadrature::quadrature &quadz,
+    const specfem::quadrature::quadrature *quadx,
+    const specfem::quadrature::quadrature *quadz,
     specfem::kokkos::HostView3d<type_real> source_array) {
 
   type_real xi = this->xi;
@@ -39,13 +39,15 @@ void specfem::sources::force::compute_source_array(
   type_real angle = this->angle;
   specfem::elements::type el_type = this->el_type;
 
-  auto [hxis, hpxis] = Lagrange::compute_lagrange_interpolants(
-      xi, quadx.get_N(), quadx.get_hxi());
-  auto [hgammas, hpgammas] = Lagrange::compute_lagrange_interpolants(
-      gamma, quadz.get_N(), quadz.get_hxi());
+  auto [hxis, hpxis] =
+      specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
+          xi, quadx->get_N(), quadx->get_hxi());
+  auto [hgammas, hpgammas] =
+      specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
+          gamma, quadz->get_N(), quadz->get_hxi());
 
-  int nquadx = quadx.get_N();
-  int nquadz = quadz.get_N();
+  int nquadx = quadx->get_N();
+  int nquadz = quadz->get_N();
 
   type_real hlagrange;
 

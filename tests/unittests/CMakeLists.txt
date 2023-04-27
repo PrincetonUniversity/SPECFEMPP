@@ -55,8 +55,7 @@ add_executable(
 target_link_libraries(
   gll_tests
   gtest_main
-  gll_library
-  gll_utils
+  quadrature
   kokkos_environment
   -lpthread -lm
 )
@@ -69,8 +68,7 @@ add_executable(
 target_link_libraries(
   lagrange_tests
   gtest_main
-  lagrange
-  gll_library
+  quadrature
   kokkos_environment
   -lpthread -lm
 )

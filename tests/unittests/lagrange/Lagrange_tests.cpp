@@ -1,6 +1,6 @@
-#include "../../../include/gll_library.h"
-#include "../../../include/lagrange_poly.h"
 #include "../Kokkos_Environment.hpp"
+#include "quadrature/gll/gll_library.hpp"
+#include "quadrature/interface.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -16,12 +16,16 @@ TEST(lagrange_tests, LAGRANGE_TESTS) {
   type_real degpoly = ngll - 1;
   type_real tol = 1e-6;
 
-  auto [h_z1, h_w1] = gll_library::zwgljd(ngll, 0.0, 0.0);
-  auto h_hprime_xx = Lagrange::compute_lagrange_derivatives_GLL(h_z1, ngll);
+  auto [h_z1, h_w1] =
+      specfem::quadrature::gll::gll_library::zwgljd(ngll, 0.0, 0.0);
+  auto h_hprime_xx =
+      specfem::quadrature::gll::Lagrange::compute_lagrange_derivatives_GLL(
+          h_z1, ngll);
 
   for (int i = 0; i < ngll; i++) {
     auto [h_h1, h_h1_prime] =
-        Lagrange::compute_lagrange_interpolants(h_z1(i), ngll, h_z1);
+        specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
+            h_z1(i), ngll, h_z1);
     for (int j = 0; j < ngll; j++) {
       EXPECT_NEAR(h_hprime_xx(j, i), h_h1_prime(j), tol);
       if (i == j) {

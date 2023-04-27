@@ -1,6 +1,5 @@
 #include "kokkos_abstractions.h"
-#include "lagrange_poly.h"
-#include "quadrature.h"
+#include "quadrature/interface.hpp"
 #include "receiver/interface.hpp"
 #include "specfem_mpi.h"
 #include "specfem_setup.hpp"
@@ -31,19 +30,21 @@ void specfem::receivers::receiver::check_locations(
 }
 
 void specfem::receivers::receiver::compute_receiver_array(
-    const specfem::quadrature::quadrature &quadx,
-    const specfem::quadrature::quadrature &quadz,
+    const specfem::quadrature::quadrature *quadx,
+    const specfem::quadrature::quadrature *quadz,
     specfem::kokkos::HostView3d<type_real> receiver_array) {
   type_real xi = this->xi;
   type_real gamma = this->gamma;
 
-  auto [hxir, hpxir] = Lagrange::compute_lagrange_interpolants(
-      xi, quadx.get_N(), quadx.get_hxi());
-  auto [hgammar, hpgammar] = Lagrange::compute_lagrange_interpolants(
-      gamma, quadz.get_N(), quadz.get_hxi());
+  auto [hxir, hpxir] =
+      specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
+          xi, quadx->get_N(), quadx->get_hxi());
+  auto [hgammar, hpgammar] =
+      specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
+          gamma, quadz->get_N(), quadz->get_hxi());
 
-  int nquadx = quadx.get_N();
-  int nquadz = quadz.get_N();
+  int nquadx = quadx->get_N();
+  int nquadz = quadz->get_N();
 
   type_real hlagrange;
 

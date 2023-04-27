@@ -4,7 +4,7 @@
 #include "globals.h"
 #include "kokkos_abstractions.h"
 #include "mathematical_operators.h"
-#include "quadrature.h"
+#include "quadrature/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <Kokkos_ScatterView.hpp>

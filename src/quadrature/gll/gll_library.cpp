@@ -1,6 +1,6 @@
-#include "../include/gll_library.h"
-#include "../include/gll_utils.h"
-#include "../include/specfem_setup.hpp"
+#include "quadrature/gll/gll_library.hpp"
+#include "quadrature/gll/gll_utils.hpp"
+#include "specfem_setup.hpp"
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
@@ -8,7 +8,8 @@
 using HostMirror1d = specfem::kokkos::HostMirror1d<type_real>;
 using HostView1d = specfem::kokkos::HostView1d<type_real>;
 
-type_real gll_library::pnleg(const type_real z, const int n) {
+type_real specfem::quadrature::gll::gll_library::pnleg(const type_real z,
+                                                       const int n) {
   // Generate Lagendre polynomials using recurrance relation
   // (l+1)P_(l+1)(x)-(2l+1)xP_l(x)+lP_(l-1)(x)=0
 
@@ -31,7 +32,8 @@ type_real gll_library::pnleg(const type_real z, const int n) {
   return p3;
 }
 
-type_real gll_library::pnglj(const type_real z, const int n) {
+type_real specfem::quadrature::gll::gll_library::pnglj(const type_real z,
+                                                       const int n) {
 
   if (n == 0)
     throw std::invalid_argument("value of n > 0");
@@ -48,7 +50,8 @@ type_real gll_library::pnglj(const type_real z, const int n) {
   return glj_value;
 }
 
-type_real gll_library::pndleg(const type_real z, const int n) {
+type_real specfem::quadrature::gll::gll_library::pndleg(const type_real z,
+                                                        const int n) {
 
   if (n == 0)
     throw std::invalid_argument("value of n > 0");
@@ -76,7 +79,8 @@ type_real gll_library::pndleg(const type_real z, const int n) {
   return p3d;
 }
 
-type_real gll_library::pndglj(const type_real z, const int n) {
+type_real specfem::quadrature::gll::gll_library::pndglj(const type_real z,
+                                                        const int n) {
 
   if (n == 0)
     throw std::invalid_argument("value of n > 0");
@@ -95,8 +99,10 @@ type_real gll_library::pndglj(const type_real z, const int n) {
   return glj_deriv;
 }
 
-void gll_library::zwgljd(HostMirror1d z, HostMirror1d w, const int np,
-                         const type_real alpha, const type_real beta) {
+void specfem::quadrature::gll::gll_library::zwgljd(HostMirror1d z,
+                                                   HostMirror1d w, const int np,
+                                                   const type_real alpha,
+                                                   const type_real beta) {
 
   type_real p, pd;
 
@@ -141,7 +147,9 @@ void gll_library::zwgljd(HostMirror1d z, HostMirror1d w, const int np,
 }
 
 std::tuple<HostView1d, HostView1d>
-gll_library::zwgljd(const int np, const type_real alpha, const type_real beta) {
+specfem::quadrature::gll::gll_library::zwgljd(const int np,
+                                              const type_real alpha,
+                                              const type_real beta) {
 
   type_real p, pd;
 

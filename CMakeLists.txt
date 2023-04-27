@@ -26,47 +26,16 @@ add_subdirectory(boost-cmake)
 include_directories(include)
 
 # Build specfem2d libraries
-## TODO: Reorgnanize into separate directories
-add_library(
-        gll_utils
-        src/gll_utils.cpp
-)
-
-target_link_libraries(
-        gll_utils PUBLIC
-        Kokkos::kokkos
-)
-
-add_library(
-        gll_library
-        src/gll_library.cpp
-)
-
-target_link_libraries(
-        gll_library
-        gll_utils
-)
-
-add_library(
-        lagrange
-        src/lagrange_poly.cpp
-)
-
-target_link_libraries(
-        lagrange
-        gll_library
-        Kokkos::kokkos
-)
-
 add_library(
         quadrature
-        src/quadrature.cpp
+        src/quadrature/gll/gll_utils.cpp
+        src/quadrature/gll/gll_library.cpp
+        src/quadrature/gll/lagrange_poly.cpp
+        src/quadrature/gll/gll.cpp
 )
 
 target_link_libraries(
         quadrature
-        lagrange
-        gll_library
         Kokkos::kokkos
 )
 
@@ -200,10 +169,36 @@ target_link_libraries(
         specfem_mpi
         utilities
         quadrature
-        lagrange
         source_time_function
         yaml-cpp
 )
+
+# add_library(
+#         source_reader
+#         src/source/read_sources.cpp
+# )
+
+# target_link_libraries(
+#         source_reader
+#         Kokkos::kokkos
+#         specfem_mpi
+#         utilities
+#         quadrature
+#         source_time_function
+#         source
+#         yaml-cpp
+# )
+
+# add_library(
+#         source_class
+#         INTERFACE
+# )
+
+# target_link_libraries(
+#         source_class
+#         INTERFACE
+#         source
+#         source_reader)
 
 add_library(
         receiver_class
@@ -217,7 +212,6 @@ target_link_libraries(
         Kokkos::kokkos
         utilities
         quadrature
-        lagrange
         yaml-cpp
 )
 

@@ -155,8 +155,10 @@ TEST(SOURCE_LOCATION_TESTS, compute_source_locations) {
       parse_solution_file(test_config.solutions_file);
 
   // Set up GLL quadrature points
-  specfem::quadrature::quadrature gllx(0.0, 0.0, 5);
-  specfem::quadrature::quadrature gllz(0.0, 0.0, 5);
+  specfem::quadrature::quadrature *gllx =
+      new specfem::quadrature::gll::gll(0.0, 0.0, 5);
+  specfem::quadrature::quadrature *gllz =
+      new specfem::quadrature::gll::gll(0.0, 0.0, 5);
 
   specfem::parameters params;
 
@@ -173,14 +175,14 @@ TEST(SOURCE_LOCATION_TESTS, compute_source_locations) {
                                     gllz);
   specfem::compute::partial_derivatives partial_derivatives(
       mesh.coorg, mesh.material_ind.knods, gllx, gllz);
-  specfem::compute::properties material_properties(mesh.material_ind.kmato,
-                                                   materials, mesh.nspec,
-                                                   gllx.get_N(), gllz.get_N());
+  specfem::compute::properties material_properties(
+      mesh.material_ind.kmato, materials, mesh.nspec, gllx->get_N(),
+      gllz->get_N());
 
   // Locate every source
   for (auto &source : sources)
-    source->locate(compute.coordinates.coord, compute.h_ibool, gllx.get_hxi(),
-                   gllz.get_hxi(), mesh.nproc, mesh.coorg,
+    source->locate(compute.coordinates.coord, compute.h_ibool, gllx->get_hxi(),
+                   gllz->get_hxi(), mesh.nproc, mesh.coorg,
                    mesh.material_ind.knods, mesh.npgeo,
                    material_properties.h_ispec_type, mpi);
 

@@ -3,7 +3,7 @@
 
 #include "enums.h"
 #include "kokkos_abstractions.h"
-#include "quadrature.h"
+#include "quadrature/interface.hpp"
 #include "source_time_function.h"
 #include "specfem_mpi.h"
 #include "specfem_setup.hpp"
@@ -61,8 +61,8 @@ public:
    * @param source_array view to store the source array
    */
   virtual void
-  compute_source_array(const specfem::quadrature::quadrature &quadx,
-                       const specfem::quadrature::quadrature &quadz,
+  compute_source_array(const specfem::quadrature::quadrature *quadx,
+                       const specfem::quadrature::quadrature *quadz,
                        specfem::kokkos::HostView3d<type_real> source_array){};
   /**
    * @brief Check if the source is within the domain

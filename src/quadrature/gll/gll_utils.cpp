@@ -1,6 +1,6 @@
-#include "../include/gll_utils.h"
-#include "../include/kokkos_abstractions.h"
-#include "../include/specfem_setup.hpp"
+#include "quadrature/gll/gll_utils.hpp"
+#include "kokkos_abstractions.h"
+#include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <Kokkos_Sort.hpp>
 #include <algorithm>
@@ -24,8 +24,9 @@ type_real update_x(type_real &x, const type_real p, const type_real pd,
   return delx;
 }
 
-void gll_utils::jacg(HostMirror1d xjac, const int np, const type_real alpha,
-                     const type_real beta) {
+void specfem::quadrature::gll::gll_utils::jacg(HostMirror1d xjac, const int np,
+                                               const type_real alpha,
+                                               const type_real beta) {
 
   type_real xlast, dth, x, x1, x2, delx;
   type_real p, pd;
@@ -73,8 +74,9 @@ void gll_utils::jacg(HostMirror1d xjac, const int np, const type_real alpha,
 }
 
 std::tuple<type_real, type_real, type_real>
-gll_utils::jacobf(const int n, const type_real alpha, const type_real beta,
-                  const type_real x) {
+specfem::quadrature::gll::gll_utils::jacobf(const int n, const type_real alpha,
+                                            const type_real beta,
+                                            const type_real x) {
 
   type_real p1 = 0.0, p1d = 0.0, pm1, pm1d, pm2, pm2d;
 
@@ -114,7 +116,7 @@ gll_utils::jacobf(const int n, const type_real alpha, const type_real beta,
   return std::make_tuple(p1, p1d, pm1d);
 }
 
-type_real gll_utils::calc_gammaf(const type_real x) {
+type_real specfem::quadrature::gll::gll_utils::calc_gammaf(const type_real x) {
 
   const type_real pi = 3.1415926535897930;
 
@@ -146,8 +148,8 @@ type_real gll_utils::calc_gammaf(const type_real x) {
   return gammaf;
 }
 
-type_real gll_utils::calc_pnormj(const int n, const type_real alpha,
-                                 const type_real beta) {
+type_real specfem::quadrature::gll::gll_utils::calc_pnormj(
+    const int n, const type_real alpha, const type_real beta) {
 
   type_real double_n, apb1, prod, double_i, pnormj;
 
@@ -179,8 +181,9 @@ type_real gll_utils::calc_pnormj(const int n, const type_real alpha,
   return pnormj;
 }
 
-void gll_utils::jacw(HostMirror1d z, HostMirror1d w, const int np,
-                     const int alpha, const int beta) {
+void specfem::quadrature::gll::gll_utils::jacw(HostMirror1d z, HostMirror1d w,
+                                               const int np, const int alpha,
+                                               const int beta) {
 
   type_real p, pd, pm1d;
 
@@ -204,8 +207,9 @@ void gll_utils::jacw(HostMirror1d z, HostMirror1d w, const int np,
   return;
 }
 
-void gll_utils::zwgjd(HostMirror1d z, HostMirror1d w, const int np,
-                      const int alpha, const int beta) {
+void specfem::quadrature::gll::gll_utils::zwgjd(HostMirror1d z, HostMirror1d w,
+                                                const int np, const int alpha,
+                                                const int beta) {
 
   // calculate the GLL points and weights in the open interval (-1.0, 1.0)
 
@@ -230,8 +234,9 @@ void gll_utils::zwgjd(HostMirror1d z, HostMirror1d w, const int np,
   return;
 }
 
-type_real gll_utils::endw1(const int n, const type_real alpha,
-                           const type_real beta) {
+type_real specfem::quadrature::gll::gll_utils::endw1(const int n,
+                                                     const type_real alpha,
+                                                     const type_real beta) {
 
   // Calculates the weight contrinution at xi == -1.0
   type_real apb, f1, fint1, fint2, f2, double_i, abn, abnn, a1, a2, a3, f3;
@@ -278,8 +283,9 @@ type_real gll_utils::endw1(const int n, const type_real alpha,
   return f3;
 }
 
-type_real gll_utils::endw2(const int n, const type_real alpha,
-                           const type_real beta) {
+type_real specfem::quadrature::gll::gll_utils::endw2(const int n,
+                                                     const type_real alpha,
+                                                     const type_real beta) {
 
   // Calculates the weight contribution at xi == 1.0
   type_real apb, f1, fint1, fint2, f2, double_i, abn, abnn, a1, a2, a3, f3;

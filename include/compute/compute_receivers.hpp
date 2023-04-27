@@ -2,7 +2,6 @@
 #define _COMPUTE_RECEIVERS_HPP
 
 #include "kokkos_abstractions.h"
-#include "quadrature.h"
 #include "receiver/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -90,8 +89,8 @@ struct receivers {
    */
   receivers(const std::vector<specfem::receivers::receiver *> &receivers,
             const std::vector<specfem::seismogram::type> &stypes,
-            const specfem::quadrature::quadrature &quadx,
-            const specfem::quadrature::quadrature &quadz, const type_real xmax,
+            const specfem::quadrature::quadrature *quadx,
+            const specfem::quadrature::quadrature *quadz, const type_real xmax,
             const type_real xmin, const type_real zmax, const type_real zmin,
             const int max_sig_step, specfem::MPI::MPI *mpi);
   /**

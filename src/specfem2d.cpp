@@ -107,23 +107,23 @@ void execute(const std::string parameter_file, specfem::MPI::MPI *mpi) {
                                     gllz);
   specfem::compute::partial_derivatives partial_derivatives(
       mesh.coorg, mesh.material_ind.knods, gllx, gllz);
-  specfem::compute::properties material_properties(mesh.material_ind.kmato,
-                                                   materials, mesh.nspec,
-                                                   gllx.get_N(), gllz.get_N());
+  specfem::compute::properties material_properties(
+      mesh.material_ind.kmato, materials, mesh.nspec, gllx->get_N(),
+      gllz->get_N());
 
   // Print spectral element information
   mpi->cout(mesh.print(materials));
 
   // Locate the sources
   for (auto &source : sources)
-    source->locate(compute.coordinates.coord, compute.h_ibool, gllx.get_hxi(),
-                   gllz.get_hxi(), mesh.nproc, mesh.coorg,
+    source->locate(compute.coordinates.coord, compute.h_ibool, gllx->get_hxi(),
+                   gllz->get_hxi(), mesh.nproc, mesh.coorg,
                    mesh.material_ind.knods, mesh.npgeo,
                    material_properties.h_ispec_type, mpi);
 
   for (auto &receiver : receivers)
-    receiver->locate(compute.coordinates.coord, compute.h_ibool, gllx.get_hxi(),
-                     gllz.get_hxi(), mesh.nproc, mesh.coorg,
+    receiver->locate(compute.coordinates.coord, compute.h_ibool,
+                     gllx->get_hxi(), gllz->get_hxi(), mesh.nproc, mesh.coorg,
                      mesh.material_ind.knods, mesh.npgeo,
                      material_properties.h_ispec_type, mpi);
 
@@ -172,7 +172,7 @@ void execute(const std::string parameter_file, specfem::MPI::MPI *mpi) {
   const int nglob = specfem::utilities::compute_nglob(compute.h_ibool);
   specfem::Domain::Domain *domains = new specfem::Domain::Elastic(
       ndim, nglob, &compute, &material_properties, &partial_derivatives,
-      &compute_sources, &compute_receivers, &gllx, &gllz);
+      &compute_sources, &compute_receivers, gllx, gllz);
 
   auto writer =
       setup.instantiate_seismogram_writer(receivers, &compute_receivers);

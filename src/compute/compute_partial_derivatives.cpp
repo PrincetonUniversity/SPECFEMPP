@@ -30,23 +30,23 @@ specfem::compute::partial_derivatives::partial_derivatives(const int nspec,
 specfem::compute::partial_derivatives::partial_derivatives(
     const specfem::kokkos::HostView2d<type_real> coorg,
     const specfem::kokkos::HostView2d<int> knods,
-    const specfem::quadrature::quadrature &quadx,
-    const specfem::quadrature::quadrature &quadz) {
+    const specfem::quadrature::quadrature *quadx,
+    const specfem::quadrature::quadrature *quadz) {
 
   // Needs an axisymmetric update
 
   int ngnod = knods.extent(0);
   int nspec = knods.extent(1);
 
-  int ngllx = quadx.get_N();
-  int ngllz = quadz.get_N();
+  int ngllx = quadx->get_N();
+  int ngllz = quadz->get_N();
   int ngllxz = ngllx * ngllz;
 
   // Allocate views
   *this = specfem::compute::partial_derivatives(nspec, ngllz, ngllx);
 
-  specfem::kokkos::HostMirror1d<type_real> xi = quadx.get_hxi();
-  specfem::kokkos::HostMirror1d<type_real> gamma = quadz.get_hxi();
+  specfem::kokkos::HostMirror1d<type_real> xi = quadx->get_hxi();
+  specfem::kokkos::HostMirror1d<type_real> gamma = quadz->get_hxi();
 
   // Allocate views for shape functions
   specfem::kokkos::HostView3d<type_real> shape2D(

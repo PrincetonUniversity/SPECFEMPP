@@ -2,7 +2,7 @@
 #define _COMPUTE_SOURCES_HPP
 
 #include "kokkos_abstractions.h"
-#include "quadrature.h"
+#include "quadrature/interface.hpp"
 #include "source/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -54,8 +54,8 @@ struct sources {
    * @param mpi Pointer to the MPI object
    */
   sources(const std::vector<specfem::sources::source *> &sources,
-          const specfem::quadrature::quadrature &quadx,
-          const specfem::quadrature::quadrature &quadz, const type_real xmax,
+          const specfem::quadrature::quadrature *quadx,
+          const specfem::quadrature::quadrature *quadz, const type_real xmax,
           const type_real xmin, const type_real zmax, const type_real zmin,
           specfem::MPI::MPI *mpi);
   /**

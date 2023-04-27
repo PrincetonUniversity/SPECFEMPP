@@ -1,11 +1,14 @@
 #ifndef GLL_LIBRARY_H
 #define GLL_LIBRARY_H
 
-#include "../include/kokkos_abstractions.h"
-#include "../include/specfem_setup.hpp"
-#include "gll_utils.h"
+#include "gll_utils.hpp"
+#include "kokkos_abstractions.h"
+#include "specfem_setup.hpp"
 #include <array>
 
+namespace specfem {
+namespace quadrature {
+namespace gll {
 namespace gll_library {
 /**
  * Compute Legendre polynomial of degree n at point z
@@ -73,5 +76,8 @@ std::tuple<specfem::kokkos::HostView1d<type_real>,
            specfem::kokkos::HostView1d<type_real> >
 zwgljd(const int np, const type_real alpha, const type_real beta);
 } // namespace gll_library
+} // namespace gll
+} // namespace quadrature
+} // namespace specfem
 
 #endif // GLL_LIBRARY_H

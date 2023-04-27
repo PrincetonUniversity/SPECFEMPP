@@ -3,7 +3,7 @@
 
 #include "enums.h"
 #include "kokkos_abstractions.h"
-#include "quadrature.h"
+#include "quadrature/interface.hpp"
 #include "source.hpp"
 #include "source_time_function.h"
 #include "specfem_mpi.h"
@@ -21,17 +21,6 @@ namespace sources {
 class force : public source {
 
 public:
-  // /**
-  //  * @brief Construct a new collocated force object
-  //  *
-  //  * @param x x-coordinate of the source
-  //  * @param z z-coordinate of the source
-  //  * @param angle angle of the source
-  //  * @param wave Type of simulation P-SV or SH wave simulation
-  //  */
-  // force(type_real x, type_real z, type_real angle, type_real tshift,
-  //       type_real f0, type_real factor, const type_real dt,
-  //       std::string forcing_type, wave_type wave);
   /**
    * @brief Construct a new collocated force object
    *
@@ -75,8 +64,8 @@ public:
    * @param source_array view to store the source array
    */
   void compute_source_array(
-      const specfem::quadrature::quadrature &quadx,
-      const specfem::quadrature::quadrature &quadz,
+      const specfem::quadrature::quadrature *quadx,
+      const specfem::quadrature::quadrature *quadz,
       specfem::kokkos::HostView3d<type_real> source_array) override;
   /**
    * @brief Check if the source is within the domain

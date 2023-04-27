@@ -6,7 +6,7 @@
 #include "material/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "parameter_parser.h"
-#include "quadrature.h"
+#include "quadrature/interface.hpp"
 #include "utils.h"
 #include "yaml-cpp/yaml.h"
 
@@ -72,14 +72,14 @@ TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
                                     gllz);
   specfem::compute::partial_derivatives partial_derivatives(
       mesh.coorg, mesh.material_ind.knods, gllx, gllz);
-  specfem::compute::properties material_properties(mesh.material_ind.kmato,
-                                                   materials, mesh.nspec,
-                                                   gllx.get_N(), gllz.get_N());
+  specfem::compute::properties material_properties(
+      mesh.material_ind.kmato, materials, mesh.nspec, gllx->get_N(),
+      gllz->get_N());
 
   // Locate the sources
   for (auto &source : sources)
-    source->locate(compute.coordinates.coord, compute.h_ibool, gllx.get_hxi(),
-                   gllz.get_hxi(), mesh.nproc, mesh.coorg,
+    source->locate(compute.coordinates.coord, compute.h_ibool, gllx->get_hxi(),
+                   gllz->get_hxi(), mesh.nproc, mesh.coorg,
                    mesh.material_ind.knods, mesh.npgeo,
                    material_properties.h_ispec_type, mpi);
 
@@ -117,7 +117,7 @@ TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
 
   specfem::Domain::Domain *domains = new specfem::Domain::Elastic(
       ndim, nglob, &compute, &material_properties, &partial_derivatives,
-      &compute_sources, &compute_receivers, &gllx, &gllz);
+      &compute_sources, &compute_receivers, gllx, gllz);
 
   domains->sync_rmass_inverse(specfem::sync::DeviceToHost);
 
