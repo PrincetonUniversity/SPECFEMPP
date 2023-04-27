@@ -1,5 +1,5 @@
 #include "kokkos_abstractions.h"
-#include "source_time_function.h"
+#include "source_time_function/interface.hpp"
 
 KOKKOS_INLINE_FUNCTION
 specfem::forcing_function::stf *assign_stf(std::string forcing_type,

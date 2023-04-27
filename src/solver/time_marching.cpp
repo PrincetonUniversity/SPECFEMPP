@@ -1,7 +1,6 @@
 #include "domain/interface.hpp"
 #include "solver/interface.hpp"
 #include "timescheme/interface.hpp"
-#include "writer.h"
 #include <Kokkos_Core.hpp>
 
 void specfem::solver::time_marching::run() {

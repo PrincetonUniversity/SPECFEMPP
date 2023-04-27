@@ -1,27 +1,15 @@
-#ifndef WRITER_H
-#define WRITER_H
+#ifndef _SEISMOGRAM_WRITER_HPP
+#define _SEISMOGRAM_WRITER_HPP
 
 #include "compute/interface.hpp"
 #include "enums.h"
 #include "receiver/interface.hpp"
 #include "specfem_setup.hpp"
+#include "writer.hpp"
 #include <vector>
 
 namespace specfem {
 namespace writer {
-/**
- * @brief Base writer class
- *
- */
-class writer {
-public:
-  /**
-   * @brief Method to execute the write operation
-   *
-   */
-  virtual void write(){};
-};
-
 /**
  * @brief Seismogram writer class to write seismogram to a file
  *
@@ -76,6 +64,7 @@ private:
   int nstep_between_samples; ///< number of timesteps between seismogram
                              ///< sampling (seismogram sampling frequency)
 };
+
 } // namespace writer
 } // namespace specfem
 

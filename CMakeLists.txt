@@ -146,13 +146,12 @@ target_link_libraries(
 
 add_library(
         source_time_function
-        src/source_time_function.cpp
+        src/source_time_function/dirac.cpp
 )
 
 target_link_libraries(
         source_time_function
         Kokkos::kokkos
-        yaml-cpp
 )
 
 add_library(
@@ -233,7 +232,7 @@ target_link_libraries(
 
 add_library(
         writer
-        src/writer.cpp
+        src/writer/seismogram.cpp
 )
 
 target_link_libraries(

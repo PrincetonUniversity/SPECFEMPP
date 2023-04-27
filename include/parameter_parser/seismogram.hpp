@@ -3,7 +3,7 @@
 
 #include "receiver/interface.hpp"
 #include "specfem_setup.hpp"
-#include "writer.h"
+#include "writer/interface.hpp"
 #include "yaml-cpp/yaml.h"
 #include <tuple>
 

@@ -1,6 +1,6 @@
-#include "writer.h"
 #include "enums.h"
 #include "parameter_parser/interface.hpp"
+#include "writer/interface.hpp"
 #include "yaml-cpp/yaml.h"
 
 specfem::writer::writer *
