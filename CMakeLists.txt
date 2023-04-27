@@ -173,33 +173,6 @@ target_link_libraries(
         yaml-cpp
 )
 
-# add_library(
-#         source_reader
-#         src/source/read_sources.cpp
-# )
-
-# target_link_libraries(
-#         source_reader
-#         Kokkos::kokkos
-#         specfem_mpi
-#         utilities
-#         quadrature
-#         source_time_function
-#         source
-#         yaml-cpp
-# )
-
-# add_library(
-#         source_class
-#         INTERFACE
-# )
-
-# target_link_libraries(
-#         source_class
-#         INTERFACE
-#         source
-#         source_reader)
-
 add_library(
         receiver_class
         src/receiver/receiver.cpp
@@ -283,7 +256,15 @@ target_link_libraries(
 
 add_library(
         parameter_reader
-        src/parameter_parser.cpp
+        src/parameter_parser/run_setup.cpp
+        src/parameter_parser/solver/solver.cpp
+        src/parameter_parser/solver/time_marching.cpp
+        src/parameter_parser/database_configuration.cpp
+        src/parameter_parser/header.cpp
+        src/parameter_parser/quadrature.cpp
+        src/parameter_parser/seismogram.cpp
+        src/parameter_parser/writer.cpp
+        src/parameter_parser/setup.cpp
 )
 
 target_link_libraries(

@@ -5,7 +5,7 @@
 #include "domain/interface.hpp"
 #include "material/interface.hpp"
 #include "mesh/mesh.hpp"
-#include "parameter_parser.h"
+#include "parameter_parser/interface.hpp"
 #include "quadrature/interface.hpp"
 #include "utils.h"
 #include "yaml-cpp/yaml.h"
