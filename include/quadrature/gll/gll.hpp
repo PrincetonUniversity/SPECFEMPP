@@ -95,8 +95,6 @@ public:
    */
   int get_N() const override { return this->N; }
 
-  // typedef polynomial = specfem::quadrature::polynomial::Lagrange;
-
 private:
   type_real alpha; ///< alpha value of the quadrature
   type_real beta;  ///< beta value of the quadrature

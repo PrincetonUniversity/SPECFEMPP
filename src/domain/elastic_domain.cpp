@@ -3,7 +3,7 @@
 #include "enums.h"
 #include "globals.h"
 #include "kokkos_abstractions.h"
-#include "mathematical_operators.h"
+#include "mathematical_operators/interface.hpp"
 #include "quadrature/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>

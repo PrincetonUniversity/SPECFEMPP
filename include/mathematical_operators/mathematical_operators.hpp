@@ -1,14 +1,9 @@
-#ifndef MATHEMATICAL_OPERATORS_H
-#define MATHEMATICAL_OPERATORS_H
+#ifndef _MATHEMATICAL_OPERATORS_HPP
+#define _MATHEMATICAL_OPERATORS_HPP
 
-#include "../include/kokkos_abstractions.h"
-#include "../include/mathematical_operators.tpp"
-#include "../include/specfem_setup.hpp"
+#include "kokkos_abstractions.h"
+#include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
-
-// using type_real = Kokkos::Experimental::native_simd<type_real>;
-// using mask_type = Kokkos::Experimental::native_simd_mask<double>;
-// using tag_type = Kokkos::Experimental::element_aligned_tag;
 
 namespace specfem {
 namespace mathematical_operators {
