@@ -1,5 +1,8 @@
-#include "../include/kokkos_abstractions.h"
-#include "../include/specfem_setup.hpp"
+#ifndef _MATHEMATICAL_OPERATORS_TPP
+#define _MATHEMATICAL_OPERATORS_TPP
+
+#include "kokkos_abstractions.h"
+#include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -130,3 +133,5 @@ KOKKOS_FUNCTION void add_contributions(
 }
 } // namespace mathematical_operators
 } // namespace specfem
+
+#endif

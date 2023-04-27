@@ -1,6 +1,6 @@
-#include "../include/mathematical_operators.h"
-#include "../include/kokkos_abstractions.h"
-#include "../include/specfem_setup.hpp"
+#include "kokkos_abstractions.h"
+#include "mathematical_operators/interface.hpp"
+#include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
 KOKKOS_FUNCTION void specfem::mathematical_operators::compute_gradients_2D(

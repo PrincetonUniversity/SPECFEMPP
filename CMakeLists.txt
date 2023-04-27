@@ -67,7 +67,7 @@ endif(MPI_PARALLEL)
 
 add_library(
         operators
-        src/mathematical_operators.cpp
+        src/mathematical_operators/mathematical_operators.cpp
 )
 
 target_link_libraries(
