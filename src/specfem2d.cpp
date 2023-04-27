@@ -3,7 +3,7 @@
 #include "kokkos_abstractions.h"
 #include "material/interface.hpp"
 #include "mesh/mesh.hpp"
-#include "parameter_parser.h"
+#include "parameter_parser/interface.hpp"
 #include "params.h"
 #include "receiver/interface.hpp"
 #include "solver/interface.hpp"
