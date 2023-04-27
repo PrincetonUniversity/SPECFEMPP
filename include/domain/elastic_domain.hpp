@@ -2,7 +2,7 @@
 #define _ELASTIC_DOMAIN_HPP
 
 #include "compute/interface.hpp"
-#include "quadrature.h"
+#include "quadrature/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 

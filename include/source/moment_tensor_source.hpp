@@ -3,7 +3,8 @@
 
 #include "enums.h"
 #include "kokkos_abstractions.h"
-#include "quadrature.h"
+#include "quadrature/interface.hpp"
+#include "source.hpp"
 #include "source_time_function.h"
 #include "specfem_mpi.h"
 #include "specfem_setup.hpp"
@@ -20,19 +21,6 @@ namespace sources {
 class moment_tensor : public source {
 
 public:
-  // /**
-  //  * @brief Construct a new moment tensor force object
-  //  *
-  //  * @param x x-coordinate of moment tensor source
-  //  * @param z z-coordinate of moment tensor source
-  //  * @param Mxx Mxx for the source
-  //  * @param Mxz Mxz for the source
-  //  * @param Mzz Mzz for the source
-  //  */
-  // KOKKOS_FUNCTION moment_tensor(type_real x, type_real z, type_real Mxx,
-  //                               type_real Mxz, type_real Mzz, type_real
-  //                               tshift, type_real f0, type_real factor, const
-  //                               type_real dt, std::string forcing_type);
   /**
    * @brief Construct a new moment tensor force object
    *
@@ -75,8 +63,8 @@ public:
    * @param source_array view to store the source array
    */
   void compute_source_array(
-      const specfem::quadrature::quadrature &quadx,
-      const specfem::quadrature::quadrature &quadz,
+      const specfem::quadrature::quadrature *quadx,
+      const specfem::quadrature::quadrature *quadz,
       specfem::kokkos::HostView3d<type_real> source_array) override;
   /**
    * @brief Get the processor on which this source lies

@@ -6,6 +6,9 @@
 #include <Kokkos_Core.hpp>
 #include <tuple>
 
+namespace specfem {
+namespace quadrature {
+namespace gll {
 /**
  * @warning These routines are primarily called within GLL library module.
  * If you require any of the routines here then check if your task can be
@@ -94,5 +97,8 @@ type_real endw1(const int n, const type_real alpha, const type_real beta);
  */
 type_real endw2(const int n, const type_real alpha, const type_real beta);
 } // namespace gll_utils
+} // namespace gll
+} // namespace quadrature
+} // namespace specfem
 
 #endif // GLL_UTILS_H

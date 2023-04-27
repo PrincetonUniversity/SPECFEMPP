@@ -1,7 +1,7 @@
 #ifndef PARAMETER_PARSER_H
 #define PARAMETER_PARSER_H
 
-#include "quadrature.h"
+#include "quadrature/interface.hpp"
 #include "receiver/interface.hpp"
 #include "specfem_setup.hpp"
 #include "timescheme/interface.hpp"
@@ -94,7 +94,8 @@ public:
    * @return std::tuple<specfem::quadrature::quadrature,
    * specfem::quadrature::quadrature> Quadrature objects in x and z dimensions
    */
-  std::tuple<specfem::quadrature::quadrature, specfem::quadrature::quadrature>
+  std::tuple<specfem::quadrature::quadrature *,
+             specfem::quadrature::quadrature *>
   instantiate();
 
 private:
@@ -377,7 +378,8 @@ public:
    * @return std::tuple<specfem::quadrature::quadrature,
    * specfem::quadrature::quadrature> Quadrature objects in x and z dimensions
    */
-  std::tuple<specfem::quadrature::quadrature, specfem::quadrature::quadrature>
+  std::tuple<specfem::quadrature::quadrature *,
+             specfem::quadrature::quadrature *>
   instantiate_quadrature() {
     return this->quadrature->instantiate();
   }

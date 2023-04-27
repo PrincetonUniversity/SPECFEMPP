@@ -6,7 +6,7 @@
 #include "material/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "parameter_parser.h"
-#include "quadrature.h"
+#include "quadrature/interface.hpp"
 #include "receiver/interface.hpp"
 #include "solver/interface.hpp"
 #include "timescheme/interface.hpp"
@@ -102,14 +102,14 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
                                     gllz);
   specfem::compute::partial_derivatives partial_derivatives(
       mesh.coorg, mesh.material_ind.knods, gllx, gllz);
-  specfem::compute::properties material_properties(mesh.material_ind.kmato,
-                                                   materials, mesh.nspec,
-                                                   gllx.get_N(), gllz.get_N());
+  specfem::compute::properties material_properties(
+      mesh.material_ind.kmato, materials, mesh.nspec, gllx->get_N(),
+      gllz->get_N());
 
   // locate the recievers
   for (auto &receiver : receivers)
-    receiver->locate(compute.coordinates.coord, compute.h_ibool, gllx.get_hxi(),
-                     gllz.get_hxi(), mesh.nproc, mesh.coorg,
+    receiver->locate(compute.coordinates.coord, compute.h_ibool,
+                     gllx->get_hxi(), gllz->get_hxi(), mesh.nproc, mesh.coorg,
                      mesh.material_ind.knods, mesh.npgeo,
                      material_properties.h_ispec_type, mpi);
 
@@ -128,7 +128,7 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
   const int nglob = specfem::utilities::compute_nglob(compute.h_ibool);
   specfem::Domain::Domain *domain = new specfem::Domain::Elastic(
       2, nglob, &compute, &material_properties, &partial_derivatives, NULL,
-      &compute_receivers, &gllx, &gllz);
+      &compute_receivers, gllx, gllz);
 
   const auto displacement_field = domain->get_host_field();
   const auto velocity_field = domain->get_host_field_dot();

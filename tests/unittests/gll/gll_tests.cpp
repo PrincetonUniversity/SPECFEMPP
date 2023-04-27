@@ -1,6 +1,6 @@
-#include "../../../include/gll_library.h"
-#include "../../../include/gll_utils.h"
 #include "../Kokkos_Environment.hpp"
+#include "quadrature/gll/gll_library.hpp"
+#include "quadrature/gll/gll_utils.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -10,11 +10,11 @@ using DeviceView1d = specfem::kokkos::DeviceView1d<type_real>;
 using HostMirror1d = specfem::kokkos::HostMirror1d<type_real>;
 
 TEST(GLL_tests, PNLEG) {
-  const auto &pnleg = gll_library::pnleg;
+  const auto &pnleg = specfem::quadrature::gll::gll_library::pnleg;
   type_real tol = 1e-6;
 
   try {
-    gll_library::pnleg(-1.0, 0);
+    specfem::quadrature::gll::gll_library::pnleg(-1.0, 0);
     FAIL();
   } catch (const std::invalid_argument &err) {
     EXPECT_STREQ(err.what(), "value of n > 0");
@@ -32,11 +32,11 @@ TEST(GLL_tests, PNLEG) {
 }
 
 TEST(GLL_tests, PNDLEG) {
-  const auto &pndleg = gll_library::pndleg;
+  const auto &pndleg = specfem::quadrature::gll::gll_library::pndleg;
 
   type_real tol = 1e-6;
   try {
-    gll_library::pndleg(-1.0, 0);
+    specfem::quadrature::gll::gll_library::pndleg(-1.0, 0);
     FAIL();
   } catch (const std::invalid_argument &err) {
     EXPECT_STREQ(err.what(), "value of n > 0");
@@ -55,7 +55,7 @@ TEST(GLL_tests, PNDLEG) {
 TEST(GLL_tests, JACOBF) {
 
   type_real tol = 1e-6, p, pd;
-  const auto &jacobf = gll_utils::jacobf;
+  const auto &jacobf = specfem::quadrature::gll::gll_utils::jacobf;
 
   // Tests for Legendre polynnomials
   std::tie(p, pd, std::ignore) = jacobf(1, 0.0, 0.0, 0.0);
@@ -77,9 +77,9 @@ TEST(GLL_tests, JACOBF) {
 TEST(GLL_tests, JACG) {
 
   type_real tol = 1e-6;
-  const auto &jacg = gll_utils::jacg;
+  const auto &jacg = specfem::quadrature::gll::gll_utils::jacg;
 
-  DeviceView1d r1("gll_tests::gll_utils::r1", 5);
+  DeviceView1d r1("gll_tests::specfem::quadrature::gll::gll_utils::r1", 5);
   HostMirror1d h_r1 = Kokkos::create_mirror_view(r1);
   jacg(h_r1, 5, 0.0, 0.0);
   EXPECT_NEAR(h_r1(0), -0.9061798459, tol);
@@ -88,7 +88,7 @@ TEST(GLL_tests, JACG) {
   EXPECT_NEAR(h_r1(3), 0.538469310, tol);
   EXPECT_NEAR(h_r1(4), 0.9061798459, tol);
 
-  DeviceView1d r2("gll_tests::gll_utils::r2", 3);
+  DeviceView1d r2("gll_tests::specfem::quadrature::gll::gll_utils::r2", 3);
   HostMirror1d h_r2 = Kokkos::create_mirror_view(r2);
   jacg(h_r2, 3, 0.0, 0.0);
   EXPECT_NEAR(h_r2(0), -0.77459666924, tol);
@@ -99,17 +99,17 @@ TEST(GLL_tests, JACG) {
 TEST(GLL_tests, JACW) {
 
   type_real tol = 1e-6;
-  const auto &jacg = gll_utils::jacg;
-  const auto &jacw = gll_utils::jacw;
+  const auto &jacg = specfem::quadrature::gll::gll_utils::jacg;
+  const auto &jacw = specfem::quadrature::gll::gll_utils::jacw;
 
-  DeviceView1d r2("gll_tests::gll_utils::r2", 3);
+  DeviceView1d r2("gll_tests::specfem::quadrature::gll::gll_utils::r2", 3);
   HostMirror1d h_r2 = Kokkos::create_mirror_view(r2);
   jacg(h_r2, 3, 1.0, 1.0);
   EXPECT_NEAR(h_r2(0), -0.6546536707, tol);
   EXPECT_NEAR(h_r2(1), 0, tol);
   EXPECT_NEAR(h_r2(2), 0.6546536707, tol);
 
-  DeviceView1d w2("gll_tests::gll_utils::w2", 3);
+  DeviceView1d w2("gll_tests::specfem::quadrature::gll::gll_utils::w2", 3);
   HostMirror1d h_w2 = Kokkos::create_mirror_view(w2);
   jacw(h_r2, h_w2, 3, 1.0, 1.0);
   std::array<type_real, 3> reference = { 0.5444444444, 0.7111111111,
@@ -123,11 +123,11 @@ TEST(GLL_tests, JACW) {
 TEST(GLL_tests, ZWGJD) {
   // This test checks for the special case of np == 1
   const type_real tol = 1e-6;
-  const auto &zwgjd = gll_utils::zwgjd;
+  const auto &zwgjd = specfem::quadrature::gll::gll_utils::zwgjd;
 
-  DeviceView1d r1("gll_tests::gll_utils::r1", 1);
+  DeviceView1d r1("gll_tests::specfem::quadrature::gll::gll_utils::r1", 1);
   HostMirror1d h_r1 = Kokkos::create_mirror_view(r1);
-  DeviceView1d w1("gll_tests::gll_utils::w1", 1);
+  DeviceView1d w1("gll_tests::specfem::quadrature::gll::gll_utils::w1", 1);
   HostMirror1d h_w1 = Kokkos::create_mirror_view(w1);
   zwgjd(h_r1, h_w1, 1, 1.0, 1.0);
 
@@ -139,11 +139,11 @@ TEST(GLL_tests, ZWGLJD) {
 
   type_real tol = 1e-6;
 
-  DeviceView1d z1("gll_tests::gll_library::z1", 3);
+  DeviceView1d z1("gll_tests::specfem::quadrature::gll::gll_library::z1", 3);
   HostMirror1d h_z1 = Kokkos::create_mirror_view(z1);
-  DeviceView1d w1("gll_tests::gll_library::w1", 3);
+  DeviceView1d w1("gll_tests::specfem::quadrature::gll::gll_library::w1", 3);
   HostMirror1d h_w1 = Kokkos::create_mirror_view(w1);
-  gll_library::zwgljd(h_z1, h_w1, 3, 0.0, 0.0);
+  specfem::quadrature::gll::gll_library::zwgljd(h_z1, h_w1, 3, 0.0, 0.0);
   EXPECT_NEAR(h_z1(0), -1.0, tol);
   EXPECT_NEAR(h_z1(1), 0.0, tol);
   EXPECT_NEAR(h_z1(2), 1.0, tol);
@@ -151,11 +151,11 @@ TEST(GLL_tests, ZWGLJD) {
   EXPECT_NEAR(h_w1(1), 1.333333, tol);
   EXPECT_NEAR(h_w1(2), 0.333333, tol);
 
-  DeviceView1d z2("gll_tests::gll_library::z2", 5);
+  DeviceView1d z2("gll_tests::specfem::quadrature::gll::gll_library::z2", 5);
   HostMirror1d h_z2 = Kokkos::create_mirror_view(z2);
-  DeviceView1d w2("gll_tests::gll_library::w2", 5);
+  DeviceView1d w2("gll_tests::specfem::quadrature::gll::gll_library::w2", 5);
   HostMirror1d h_w2 = Kokkos::create_mirror_view(w2);
-  gll_library::zwgljd(h_z2, h_w2, 5, 0.0, 0.0);
+  specfem::quadrature::gll::gll_library::zwgljd(h_z2, h_w2, 5, 0.0, 0.0);
   EXPECT_NEAR(h_z2(0), -1.0, tol);
   EXPECT_NEAR(h_z2(1), -0.6546536707, tol);
   EXPECT_NEAR(h_z2(2), 0.0, tol);
@@ -167,7 +167,7 @@ TEST(GLL_tests, ZWGLJD) {
   EXPECT_NEAR(h_w2(3), 0.5444444444, tol);
   EXPECT_NEAR(h_w2(4), 0.1, tol);
 
-  gll_library::zwgljd(h_z2, h_w2, 5, 0.0, 1.0);
+  specfem::quadrature::gll::gll_library::zwgljd(h_z2, h_w2, 5, 0.0, 1.0);
   EXPECT_NEAR(h_z2(0), -1.0, tol);
   EXPECT_NEAR(h_z2(1), -0.5077876295, tol);
   EXPECT_NEAR(h_z2(2), 0.1323008207, tol);
@@ -179,11 +179,11 @@ TEST(GLL_tests, ZWGLJD) {
   EXPECT_NEAR(h_w2(3), 0.794338936, tol);
   EXPECT_NEAR(h_w2(4), 0.1666666667, tol);
 
-  DeviceView1d z3("gll_tests::gll_library::z3", 7);
+  DeviceView1d z3("gll_tests::specfem::quadrature::gll::gll_library::z3", 7);
   HostMirror1d h_z3 = Kokkos::create_mirror_view(z3);
-  DeviceView1d w3("gll_tests::gll_library::w3", 7);
+  DeviceView1d w3("gll_tests::specfem::quadrature::gll::gll_library::w3", 7);
   HostMirror1d h_w3 = Kokkos::create_mirror_view(w3);
-  gll_library::zwgljd(h_z3, h_w3, 7, 0.0, 0.0);
+  specfem::quadrature::gll::gll_library::zwgljd(h_z3, h_w3, 7, 0.0, 0.0);
   EXPECT_NEAR(h_z3(0), -1.0, tol);
   EXPECT_NEAR(h_z3(1), -0.8302238962, tol);
   EXPECT_NEAR(h_z3(2), -0.4688487934, tol);
@@ -199,7 +199,7 @@ TEST(GLL_tests, ZWGLJD) {
   EXPECT_NEAR(h_w3(5), 0.2768260473, tol);
   EXPECT_NEAR(h_w3(6), 0.0476190476, tol);
 
-  gll_library::zwgljd(h_z3, h_w3, 7, 0.0, 1.0);
+  specfem::quadrature::gll::gll_library::zwgljd(h_z3, h_w3, 7, 0.0, 1.0);
   EXPECT_NEAR(h_z3(0), -1.0, tol);
   EXPECT_NEAR(h_z3(1), -0.7401236486, tol);
   EXPECT_NEAR(h_z3(2), -0.3538526341, tol);

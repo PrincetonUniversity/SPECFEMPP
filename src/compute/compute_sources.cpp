@@ -1,6 +1,6 @@
 #include "compute/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "quadrature.h"
+#include "quadrature/interface.hpp"
 #include "source/interface.hpp"
 #include "specfem_mpi.h"
 #include "specfem_setup.hpp"
@@ -9,8 +9,8 @@
 
 specfem::compute::sources::sources(
     const std::vector<specfem::sources::source *> &sources,
-    const specfem::quadrature::quadrature &quadx,
-    const specfem::quadrature::quadrature &quadz, const type_real xmax,
+    const specfem::quadrature::quadrature *quadx,
+    const specfem::quadrature::quadrature *quadz, const type_real xmax,
     const type_real xmin, const type_real zmax, const type_real zmin,
     specfem::MPI::MPI *mpi) {
 
@@ -25,7 +25,7 @@ specfem::compute::sources::sources(
   // allocate source array view
   this->source_array = specfem::kokkos::DeviceView4d<type_real>(
       "specfem::compute::sources::source_array", my_sources.size(),
-      quadz.get_N(), quadx.get_N(), ndim);
+      quadz->get_N(), quadx->get_N(), ndim);
 
   this->h_source_array = Kokkos::create_mirror_view(this->source_array);
 

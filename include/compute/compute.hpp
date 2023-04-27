@@ -2,7 +2,7 @@
 #define _COMPUTE_HPP
 
 #include "kokkos_abstractions.h"
-#include "quadrature.h"
+#include "quadrature/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <vector>
@@ -60,8 +60,8 @@ struct compute {
    */
   compute(const specfem::kokkos::HostView2d<type_real> coorg,
           const specfem::kokkos::HostView2d<int> knods,
-          const specfem::quadrature::quadrature &quadx,
-          const specfem::quadrature::quadrature &quadz);
+          const specfem::quadrature::quadrature *quadx,
+          const specfem::quadrature::quadrature *quadz);
   /**
    * @brief Helper routine to sync views within this struct
    *

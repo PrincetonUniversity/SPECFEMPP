@@ -1,7 +1,7 @@
 #include "compute/interface.hpp"
 #include "globals.h"
 #include "kokkos_abstractions.h"
-#include "quadrature.h"
+#include "quadrature/interface.hpp"
 #include "receiver/interface.hpp"
 #include "specfem_mpi.h"
 #include "specfem_setup.hpp"
@@ -11,8 +11,8 @@
 specfem::compute::receivers::receivers(
     const std::vector<specfem::receivers::receiver *> &receivers,
     const std::vector<specfem::seismogram::type> &stypes,
-    const specfem::quadrature::quadrature &quadx,
-    const specfem::quadrature::quadrature &quadz, const type_real xmax,
+    const specfem::quadrature::quadrature *quadx,
+    const specfem::quadrature::quadrature *quadz, const type_real xmax,
     const type_real xmin, const type_real zmax, const type_real zmin,
     const int max_sig_step, specfem::MPI::MPI *mpi) {
 
@@ -27,7 +27,7 @@ specfem::compute::receivers::receivers(
   // allocate source array view
   this->receiver_array = specfem::kokkos::DeviceView4d<type_real>(
       "specfem::compute::receiver::receiver_array", my_receivers.size(),
-      quadz.get_N(), quadx.get_N(), ndim);
+      quadz->get_N(), quadx->get_N(), ndim);
 
   this->h_receiver_array = Kokkos::create_mirror_view(this->receiver_array);
 
@@ -48,7 +48,7 @@ specfem::compute::receivers::receivers(
 
   this->field = specfem::kokkos::DeviceView5d<type_real>(
       "specfem::compute::receivers::field", stypes.size(), my_receivers.size(),
-      2, quadz.get_N(), quadx.get_N());
+      2, quadz->get_N(), quadx->get_N());
 
   this->seismogram = specfem::kokkos::DeviceView4d<type_real>(
       "specfem::compute::receivers::seismogram", max_sig_step, stypes.size(),

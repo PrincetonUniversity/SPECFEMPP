@@ -4,7 +4,7 @@
 #include "constants.h"
 #include "enums.h"
 #include "kokkos_abstractions.h"
-#include "quadrature.h"
+#include "quadrature/interface.hpp"
 #include "specfem_mpi.h"
 #include "specfem_setup.hpp"
 #include <cmath>
@@ -66,8 +66,8 @@ public:
    * @param receiver_array view to store the source array
    */
   void
-  compute_receiver_array(const specfem::quadrature::quadrature &quadx,
-                         const specfem::quadrature::quadrature &quadz,
+  compute_receiver_array(const specfem::quadrature::quadrature *quadx,
+                         const specfem::quadrature::quadrature *quadz,
                          specfem::kokkos::HostView3d<type_real> receiver_array);
   /**
    * @brief Check if the station is within the domain

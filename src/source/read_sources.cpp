@@ -1,4 +1,12 @@
 #include "source/interface.hpp"
+#include "source/moment_tensor_source.hpp"
+#include "specfem_setup.hpp"
+#include "utils.h"
+#include "yaml-cpp/yaml.h"
+#include <boost/tokenizer.hpp>
+#include <fstream>
+#include <string>
+#include <vector>
 
 std::tuple<std::vector<specfem::sources::source *>, type_real>
 specfem::sources::read_sources(const std::string sources_file,
@@ -13,8 +21,9 @@ specfem::sources::read_sources(const std::string sources_file,
   for (auto N : Node) {
     if (YAML::Node force_source = N["force"]) {
       sources.push_back(new specfem::sources::force(force_source, dt));
-    } else if (YAML::Node moment_tensor = N["moment-tensor"]) {
-      sources.push_back(new specfem::sources::moment_tensor(moment_tensor, dt));
+    } else if (YAML::Node moment_tensor_source = N["moment-tensor"]) {
+      sources.push_back(
+          new specfem::sources::moment_tensor(moment_tensor_source, dt));
     }
   }
 

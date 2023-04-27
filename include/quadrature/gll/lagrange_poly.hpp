@@ -5,6 +5,9 @@
 #include "../include/specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
+namespace specfem {
+namespace quadrature {
+namespace gll {
 namespace Lagrange {
 /**
  * @brief Compute lagrange interpolants and its derivatives at xi
@@ -90,5 +93,8 @@ void compute_jacobi_derivatives_GLJ(
     const specfem::kokkos::HostMirror1d<type_real> xiglj, const int nglj);
 
 } // namespace Lagrange
+} // namespace gll
+} // namespace quadrature
+} // namespace specfem
 
 #endif

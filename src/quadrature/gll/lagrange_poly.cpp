@@ -1,6 +1,6 @@
-#include "../include/lagrange_poly.h"
-#include "../include/gll_library.h"
-#include "../include/specfem_setup.hpp"
+#include "quadrature/gll/lagrange_poly.hpp"
+#include "quadrature/gll/gll_library.hpp"
+#include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
 using HostView1d = specfem::kokkos::HostView1d<type_real>;
@@ -9,8 +9,8 @@ using HostMirror1d = specfem::kokkos::HostMirror1d<type_real>;
 using HostMirror2d = specfem::kokkos::HostMirror2d<type_real>;
 
 std::tuple<HostView1d, HostView1d>
-Lagrange::compute_lagrange_interpolants(const type_real xi, const int ngll,
-                                        const HostView1d xigll) {
+specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
+    const type_real xi, const int ngll, const HostView1d xigll) {
 
   assert(xigll.extent(0) == ngll);
 
@@ -42,8 +42,8 @@ Lagrange::compute_lagrange_interpolants(const type_real xi, const int ngll,
   return std::make_tuple(h, hprime);
 }
 
-HostView2d Lagrange::compute_lagrange_derivatives_GLL(const HostView1d xigll,
-                                                      const int ngll) {
+HostView2d specfem::quadrature::gll::Lagrange::compute_lagrange_derivatives_GLL(
+    const HostView1d xigll, const int ngll) {
 
   assert(xigll.extent(0) == ngll);
 
@@ -70,8 +70,8 @@ HostView2d Lagrange::compute_lagrange_derivatives_GLL(const HostView1d xigll,
   return hprime_ii;
 }
 
-HostView2d Lagrange::compute_jacobi_derivatives_GLJ(const HostView1d xiglj,
-                                                    const int nglj) {
+HostView2d specfem::quadrature::gll::Lagrange::compute_jacobi_derivatives_GLJ(
+    const HostView1d xiglj, const int nglj) {
 
   assert(xiglj.extent(0) == nglj);
 
@@ -127,10 +127,9 @@ HostView2d Lagrange::compute_jacobi_derivatives_GLJ(const HostView1d xiglj,
   return hprimeBar_ii;
 }
 
-void Lagrange::compute_lagrange_interpolants(HostMirror1d h,
-                                             HostMirror1d hprime,
-                                             const type_real xi, const int ngll,
-                                             const HostMirror1d xigll) {
+void specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
+    HostMirror1d h, HostMirror1d hprime, const type_real xi, const int ngll,
+    const HostMirror1d xigll) {
 
   assert(xigll.extent(0) == ngll);
   assert(h.extent(0) == ngll);
@@ -161,9 +160,8 @@ void Lagrange::compute_lagrange_interpolants(HostMirror1d h,
   return;
 }
 
-void Lagrange::compute_lagrange_derivatives_GLL(HostMirror2d hprime_ii,
-                                                const HostMirror1d xigll,
-                                                const int ngll) {
+void specfem::quadrature::gll::Lagrange::compute_lagrange_derivatives_GLL(
+    HostMirror2d hprime_ii, const HostMirror1d xigll, const int ngll) {
 
   assert(xigll.extent(0) == ngll);
   assert(hprime_ii.extent(0) == ngll && hprime_ii.extent(1) == ngll);
@@ -194,9 +192,8 @@ void Lagrange::compute_lagrange_derivatives_GLL(HostMirror2d hprime_ii,
   return;
 }
 
-void Lagrange::compute_jacobi_derivatives_GLJ(HostMirror2d hprimeBar_ii,
-                                              const HostMirror1d xiglj,
-                                              const int nglj) {
+void specfem::quadrature::gll::Lagrange::compute_jacobi_derivatives_GLJ(
+    HostMirror2d hprimeBar_ii, const HostMirror1d xiglj, const int nglj) {
 
   assert(xiglj.extent(0) == nglj);
   assert(hprimeBar_ii.extent(0) == nglj && hprimeBar_ii.extent(1) == nglj);

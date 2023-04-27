@@ -1,6 +1,7 @@
-#include "../include/parameter_parser.h"
-#include "../include/globals.h"
-#include "../include/writer.h"
+#include "parameter_parser.h"
+#include "globals.h"
+#include "quadrature/interface.hpp"
+#include "writer.h"
 #include "yaml-cpp/yaml.h"
 #include <boost/filesystem.hpp>
 #include <chrono>
@@ -32,10 +33,12 @@ specfem::runtime_configuration::time_marching::instantiate(
   return it;
 }
 
-std::tuple<specfem::quadrature::quadrature, specfem::quadrature::quadrature>
+std::tuple<specfem::quadrature::quadrature *, specfem::quadrature::quadrature *>
 specfem::runtime_configuration::quadrature::instantiate() {
-  specfem::quadrature::quadrature gllx(this->alpha, this->beta, this->ngllx);
-  specfem::quadrature::quadrature gllz(this->alpha, this->beta, this->ngllz);
+  specfem::quadrature::quadrature *gllx =
+      new specfem::quadrature::gll::gll(this->alpha, this->beta, this->ngllx);
+  specfem::quadrature::quadrature *gllz =
+      new specfem::quadrature::gll::gll(this->alpha, this->beta, this->ngllz);
   return std::make_tuple(gllx, gllz);
 }
 
