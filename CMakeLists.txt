@@ -41,12 +41,12 @@ target_link_libraries(
 
 add_library(
         fortranio
-        src/fortran_IO.cpp
+        src/fortranio/fortran_io.cpp
 )
 
 target_link_libraries(
         fortranio
-        PUBLIC Boost::boost
+        Boost::boost
         Kokkos::kokkos
 )
 

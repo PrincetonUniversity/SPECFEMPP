@@ -1,5 +1,5 @@
 #include "mesh/properties/properties.hpp"
-#include "fortran_IO.h"
+#include "fortranio/interface.hpp"
 
 specfem::mesh::properties::properties(std::ifstream &stream,
                                       const specfem::MPI::MPI *mpi) {
