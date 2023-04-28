@@ -1,4 +1,4 @@
-#include "../include/specfem_mpi.h"
+#include "specfem_mpi/interface.hpp"
 #include <cassert>
 #include <iostream>
 #include <stdexcept>

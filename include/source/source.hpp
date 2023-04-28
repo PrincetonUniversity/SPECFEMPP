@@ -5,7 +5,7 @@
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "source_time_function/interface.hpp"
-#include "specfem_mpi.h"
+#include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utils.h"
 #include "yaml-cpp/yaml.h"

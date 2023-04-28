@@ -1,5 +1,5 @@
-#ifndef SPECFEM_MPI_H
-#define SPECFEM_MPI_H
+#ifndef _SPECFEM_MPI_HPP
+#define _SPECFEM_MPI_HPP
 
 #include <iostream>
 #include <vector>
@@ -84,16 +84,12 @@ public:
    * @brief Print string s from the head node
    *
    */
-  template <typename T> void cout(T s) const {
-#ifdef MPI_PARALLEL
-    if (my_rank == 0) {
-      std::cout << s << std::endl;
-    }
-#else
-    std::cout << s << std::endl;
-#endif
-  }
+  template <typename T> void cout(T s) const;
 
+  /**
+   * @brief Destroy the MPI object
+   *
+   */
   ~MPI();
 
   /**

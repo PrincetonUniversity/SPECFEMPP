@@ -11,7 +11,7 @@
 #include "material_indic/material_indic.hpp"
 #include "mpi_interfaces/mpi_interfaces.hpp"
 #include "properties/properties.hpp"
-#include "specfem_mpi.h"
+#include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "surfaces/surfaces.hpp"
 #include <Kokkos_Core.hpp>

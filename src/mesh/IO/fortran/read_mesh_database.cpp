@@ -3,7 +3,7 @@
 #include "kokkos_abstractions.h"
 #include "mesh/IO/fortran/read_material_properties.hpp"
 #include "params.h"
-#include "specfem_mpi.h"
+#include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <fstream>

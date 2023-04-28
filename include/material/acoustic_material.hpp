@@ -3,7 +3,7 @@
 
 #include "enums.h"
 #include "material.hpp"
-#include "specfem_mpi.h"
+#include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utils.h"
 #include <ostream>

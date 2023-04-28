@@ -1,7 +1,7 @@
 #include "mesh/IO/fortran/read_material_properties.hpp"
 #include "fortranio/interface.hpp"
 #include "material/interface.hpp"
-#include "specfem_mpi.h"
+#include "specfem_mpi/interface.hpp"
 #include "utils.h"
 #include <vector>
 

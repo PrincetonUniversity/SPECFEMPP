@@ -1,6 +1,6 @@
 #include "fortranio/interface.hpp"
 #include "mesh/elements/elements.hpp"
-#include "specfem_mpi.h"
+#include "specfem_mpi/interface.hpp"
 
 specfem::mesh::elements::axial_elements::axial_elements(const int nspec) {
   this->is_on_the_axis = specfem::kokkos::HostView1d<bool>(

@@ -52,7 +52,7 @@ target_link_libraries(
 
 add_library(
         specfem_mpi
-        src/specfem_mpi.cpp
+        src/specfem_mpi/specfem_mpi.cpp
 )
 
 if (MPI_PARALLEL)
