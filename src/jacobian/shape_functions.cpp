@@ -1,14 +1,14 @@
-#include "../include/shape_functions.h"
-#include "../include/kokkos_abstractions.h"
-#include "../include/specfem_setup.hpp"
+#include "jacobian/shape_functions.hpp"
+#include "kokkos_abstractions.h"
+#include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
 using HostView1d = specfem::kokkos::HostView1d<type_real>;
 using HostView2d = specfem::kokkos::HostView2d<type_real>;
 
-HostView1d shape_functions::define_shape_functions(const double xi,
-                                                   const double gamma,
-                                                   const int ngnod) {
+HostView1d specfem::jacobian::define_shape_functions(const double xi,
+                                                     const double gamma,
+                                                     const int ngnod) {
 
   HostView1d h_shape2D("shape_functions::HostView::h_shape2D", ngnod);
 
@@ -64,7 +64,7 @@ HostView1d shape_functions::define_shape_functions(const double xi,
   return h_shape2D;
 }
 
-HostView2d shape_functions::define_shape_functions_derivatives(
+HostView2d specfem::jacobian::define_shape_functions_derivatives(
     const double xi, const double gamma, const int ngnod) {
 
   HostView2d h_dershape2D("shape_functions::HostView::h_dershape2D", ndim,
@@ -146,9 +146,9 @@ HostView2d shape_functions::define_shape_functions_derivatives(
   return h_dershape2D;
 }
 
-void shape_functions::define_shape_functions(HostView1d shape2D, double xi,
-                                             const double gamma,
-                                             const int ngnod) {
+void specfem::jacobian::define_shape_functions(HostView1d shape2D, double xi,
+                                               const double gamma,
+                                               const int ngnod) {
 
   if (ngnod == 4) {
     //----    4-node element
@@ -202,10 +202,8 @@ void shape_functions::define_shape_functions(HostView1d shape2D, double xi,
   return;
 }
 
-void shape_functions::define_shape_functions_derivatives(HostView2d dershape2D,
-                                                         double xi,
-                                                         const double gamma,
-                                                         const int ngnod) {
+void specfem::jacobian::define_shape_functions_derivatives(
+    HostView2d dershape2D, double xi, const double gamma, const int ngnod) {
 
   if (ngnod == 4) {
     const double sp = xi + 1.0;

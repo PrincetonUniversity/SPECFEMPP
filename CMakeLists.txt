@@ -112,23 +112,13 @@ target_link_libraries(
 )
 
 add_library(
-        shape_functions
-        src/shape_functions.cpp
-)
-
-target_link_libraries(
-        shape_functions
-        Kokkos::kokkos
-)
-
-add_library(
         jacobian
-        src/jacobian.cpp
+        src/jacobian/shape_functions.cpp
+        src/jacobian/jacobian.cpp
 )
 
 target_link_libraries(
         jacobian
-        shape_functions
         Kokkos::kokkos
 )
 
@@ -202,7 +192,6 @@ target_link_libraries(
         material_class
         source_class
         jacobian
-        shape_functions
         receiver_class
         Kokkos::kokkos
 )

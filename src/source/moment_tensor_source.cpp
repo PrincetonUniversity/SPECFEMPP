@@ -1,5 +1,5 @@
 #include "globals.h"
-#include "jacobian.h"
+#include "jacobian/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "source/interface.hpp"
@@ -80,7 +80,8 @@ void specfem::sources::moment_tensor::compute_source_array(
       type_real xil = quadx->get_hxi()(i);
       type_real gammal = quadz->get_hxi()(j);
       auto [xix, xiz, gammax, gammaz] =
-          jacobian::compute_inverted_derivatives(s_coorg, ngnod, xil, gammal);
+          specfem::jacobian::compute_inverted_derivatives(s_coorg, ngnod, xil,
+                                                          gammal);
       hlagrange = hxis(i) * hgammas(j);
       dxis_dx += hlagrange * xix;
       dxis_dz += hlagrange * xiz;

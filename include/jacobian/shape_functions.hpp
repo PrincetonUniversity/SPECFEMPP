@@ -1,10 +1,11 @@
-#ifndef SHAPE_FUNCTIONS_H
-#define SHAPE_FUNCTIONS_H
+#ifndef _SHAPE_FUNCTIONS_HPP
+#define _SHAPE_FUNCTIONS_HPP
 
-#include "../include/kokkos_abstractions.h"
+#include "kokkos_abstractions.h"
 #include <Kokkos_Core.hpp>
 
-namespace shape_functions {
+namespace specfem {
+namespace jacobian {
 
 /**
  * @brief Compute shape functions at particular point (xi, gamma)
@@ -59,6 +60,7 @@ void define_shape_functions(specfem::kokkos::HostView1d<type_real> shape2D,
 void define_shape_functions_derivatives(
     specfem::kokkos::HostView2d<type_real> dershape2D, const double xi,
     const double gamma, const int ngod);
-} // namespace shape_functions
+} // namespace jacobian
+} // namespace specfem
 
 #endif // SHAPE_FUNCTIONS_H

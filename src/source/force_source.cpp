@@ -1,5 +1,4 @@
 #include "globals.h"
-#include "jacobian.h"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "source/interface.hpp"
