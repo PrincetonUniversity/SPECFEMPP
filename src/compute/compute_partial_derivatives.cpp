@@ -1,7 +1,6 @@
 #include "compute/interface.hpp"
-#include "jacobian.h"
+#include "jacobian/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "shape_functions.h"
 #include <Kokkos_Core.hpp>
 
 specfem::compute::partial_derivatives::partial_derivatives(const int nspec,
@@ -70,10 +69,10 @@ specfem::compute::partial_derivatives::partial_derivatives(
         auto sv_dershape2D =
             Kokkos::subview(dershape2D, iz, ix, Kokkos::ALL, Kokkos::ALL);
 
-        shape_functions::define_shape_functions(sv_shape2D, ixxi, izgamma,
-                                                ngnod);
-        shape_functions::define_shape_functions_derivatives(sv_dershape2D, ixxi,
-                                                            izgamma, ngnod);
+        specfem::jacobian::define_shape_functions(sv_shape2D, ixxi, izgamma,
+                                                  ngnod);
+        specfem::jacobian::define_shape_functions_derivatives(
+            sv_dershape2D, ixxi, izgamma, ngnod);
       });
 
   Kokkos::fence();

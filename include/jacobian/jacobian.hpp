@@ -1,5 +1,5 @@
-#ifndef JACOBIAN_H
-#define JACOBIAN_H
+#ifndef _JACOBIAN_HPP
+#define _JACOBIAN_HPP
 
 #include "../include/kokkos_abstractions.h"
 #include "../include/specfem_setup.hpp"
@@ -8,6 +8,7 @@
  * and Kokkos implementations (using team policy)
  *
  */
+namespace specfem {
 namespace jacobian {
 
 /**
@@ -234,5 +235,6 @@ compute_inverted_derivatives(
     const type_real xi, const type_real gamma);
 
 } // namespace jacobian
+} // namespace specfem
 
 #endif

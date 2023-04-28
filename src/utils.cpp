@@ -1,7 +1,7 @@
-#include "../include/utils.h"
-#include "../include/jacobian.h"
-#include "../include/kokkos_abstractions.h"
-#include "../include/specfem_mpi.h"
+#include "utils.h"
+#include "jacobian/interface.hpp"
+#include "kokkos_abstractions.h"
+#include "specfem_mpi.h"
 #include <tuple>
 #include <vector>
 
@@ -100,9 +100,11 @@ get_best_location(const type_real x_source, const type_real z_source,
   }
 
   for (int iter_loop = 0; iter_loop < 5; iter_loop++) {
-    auto [x, z] = jacobian::compute_locations(s_coorg, ngnod, xi, gamma);
+    auto [x, z] =
+        specfem::jacobian::compute_locations(s_coorg, ngnod, xi, gamma);
     auto [xix, xiz, gammax, gammaz] =
-        jacobian::compute_inverted_derivatives(s_coorg, ngnod, xi, gamma);
+        specfem::jacobian::compute_inverted_derivatives(s_coorg, ngnod, xi,
+                                                        gamma);
 
     type_real dx = -(x - x_source);
     type_real dz = -(z - z_source);
@@ -212,7 +214,8 @@ specfem::utilities::locate(const specfem::kokkos::HostView2d<type_real> coord,
       s_coorg(1, in) = coorg(1, knods(in, ispec));
     }
 
-    auto [x, z] = jacobian::compute_locations(s_coorg, ngnod, xi, gamma);
+    auto [x, z] =
+        specfem::jacobian::compute_locations(s_coorg, ngnod, xi, gamma);
 
     type_real final_distance_this_element = std::sqrt(
         (x_source - x) * (x_source - x) + (z_source - z) * (z_source - z));

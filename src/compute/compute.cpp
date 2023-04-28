@@ -1,8 +1,7 @@
 #include "compute/interface.hpp"
-#include "jacobian.h"
+#include "jacobian/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
-#include "shape_functions.h"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <tuple>
@@ -168,8 +167,8 @@ specfem::compute::compute::compute(
         // Always use subviews inside parallel regions
         // ** Do not allocate views inside parallel regions **
         auto sv_shape2D = Kokkos::subview(shape2D, iz, ix, Kokkos::ALL);
-        shape_functions::define_shape_functions(sv_shape2D, ixxi, izgamma,
-                                                ngnod);
+        specfem::jacobian::define_shape_functions(sv_shape2D, ixxi, izgamma,
+                                                  ngnod);
       });
 
   // Calculate the x and y coordinates for every GLL point
