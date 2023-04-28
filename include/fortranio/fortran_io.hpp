@@ -1,7 +1,7 @@
-#ifndef FORTRAN_IO_H
-#define FORTRAN_IO_H
+#ifndef _FORTRAN_IO_HPP
+#define _FORTRAN_IO_HPP
 
-#include "../include/specfem_setup.hpp"
+#include "specfem_setup.hpp"
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -37,29 +37,6 @@ void fortran_IO(std::ifstream &stream, int &buffer_length, T *value,
 
   specfem::fortran_IO::fortran_read_value(value, stream, buffer_length);
   specfem::fortran_IO::fortran_IO(stream, buffer_length, values...);
-  return;
-}
-
-/**
- * @brief Read a line from fortran unformatted binary file
- *
- * @tparam Args Argument can be of the type bool, int, type_real, string,
- * vector<T = bool, int, type_real, string>
- * @param stream An open file stream.
- * @param values Comma separated list of variable addresses to be read.
- */
-template <typename... Args>
-void fortran_read_line(std::ifstream &stream, Args... values) {
-  int buffer_length;
-
-  if (!stream.is_open()) {
-    throw std::runtime_error("Could not find fortran file to read");
-  }
-
-  stream.read(reinterpret_cast<char *>(&buffer_length), fint);
-  specfem::fortran_IO::fortran_IO(stream, buffer_length, values...);
-
-  stream.read(reinterpret_cast<char *>(&buffer_length), fint);
   return;
 }
 } // namespace fortran_IO

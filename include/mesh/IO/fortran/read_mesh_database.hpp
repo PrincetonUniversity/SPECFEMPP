@@ -1,7 +1,7 @@
 #ifndef _READ_MESH_DATABASE_HPP
 #define _READ_MESH_DATABASE_HPP
 
-#include "fortran_IO.h"
+#include "fortranio/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "params.h"
 #include "specfem_mpi.h"

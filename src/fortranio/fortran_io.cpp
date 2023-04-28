@@ -1,4 +1,4 @@
-#include "../include/fortran_IO.h"
+#include "fortranio/fortran_io.hpp"
 #include <boost/algorithm/string.hpp>
 #include <fstream>
 #include <iostream>
