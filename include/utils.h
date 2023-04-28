@@ -1,9 +1,9 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include "../include/kokkos_abstractions.h"
-#include "../include/specfem_mpi.h"
-#include "../include/specfem_setup.hpp"
+#include "kokkos_abstractions.h"
+#include "specfem_mpi/interface.hpp"
+#include "specfem_setup.hpp"
 #include <tuple>
 
 namespace specfem {

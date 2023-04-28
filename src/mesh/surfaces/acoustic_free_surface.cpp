@@ -1,6 +1,6 @@
 #include "fortranio/interface.hpp"
 #include "mesh/surfaces/surfaces.hpp"
-#include "specfem_mpi.h"
+#include "specfem_mpi/interface.hpp"
 
 specfem::mesh::surfaces::acoustic_free_surface::acoustic_free_surface(
     const int nelem_acoustic_surface) {

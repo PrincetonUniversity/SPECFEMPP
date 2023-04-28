@@ -4,7 +4,7 @@
 #include "fortranio/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "params.h"
-#include "specfem_mpi.h"
+#include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include <fstream>
 #include <iostream>

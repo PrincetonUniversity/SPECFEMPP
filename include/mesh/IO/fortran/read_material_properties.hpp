@@ -2,7 +2,7 @@
 #define _READ_MATERIAL_PROPERTIES_HPP
 
 #include "material/interface.hpp"
-#include "specfem_mpi.h"
+#include "specfem_mpi/interface.hpp"
 #include <fstream>
 #include <iostream>
 #include <vector>

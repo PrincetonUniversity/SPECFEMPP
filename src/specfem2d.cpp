@@ -8,7 +8,7 @@
 #include "receiver/interface.hpp"
 #include "solver/interface.hpp"
 #include "source/interface.hpp"
-#include "specfem_mpi.h"
+#include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "timescheme/interface.hpp"
 #include "utils.h"

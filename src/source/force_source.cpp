@@ -3,7 +3,7 @@
 #include "quadrature/interface.hpp"
 #include "source/interface.hpp"
 #include "source_time_function/interface.hpp"
-#include "specfem_mpi.h"
+#include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities.cpp"
 #include "utils.h"

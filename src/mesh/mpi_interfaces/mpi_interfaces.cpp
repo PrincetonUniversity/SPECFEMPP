@@ -1,7 +1,7 @@
 #include "mesh/mpi_interfaces/mpi_interfaces.hpp"
 #include "fortranio/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "specfem_mpi.h"
+#include "specfem_mpi/interface.hpp"
 #include <tuple>
 
 specfem::mesh::interfaces::interface::interface(const int ninterfaces,

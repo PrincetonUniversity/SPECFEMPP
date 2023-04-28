@@ -2,7 +2,7 @@
 #define _FORCING_BOUNDARIES_HPP
 
 #include "kokkos_abstractions.h"
-#include "specfem_mpi.h"
+#include "specfem_mpi/interface.hpp"
 
 namespace specfem {
 namespace mesh {
