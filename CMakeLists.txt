@@ -176,6 +176,7 @@ target_link_libraries(
         utilities
         quadrature
         yaml-cpp
+        Boost::boost
 )
 
 add_library(
