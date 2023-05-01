@@ -5,5 +5,5 @@ SPECFEM abstractions for MPI interface
 
 Always manage MPI communication using a global instantiation of MPI class. Never call MPI routines directly.
 
-.. doxygenfile:: specfem_mpi.h
+.. doxygenfile:: specfem_mpi.hpp
     :project: SPECFEM KOKKOS IMPLEMENTATION
