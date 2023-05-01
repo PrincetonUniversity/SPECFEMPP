@@ -1,14 +1,15 @@
 #ifndef _JACOBIAN_HPP
 #define _JACOBIAN_HPP
 
-#include "../include/kokkos_abstractions.h"
-#include "../include/specfem_setup.hpp"
+#include "kokkos_abstractions.h"
+#include "specfem_setup.hpp"
+
+namespace specfem {
 /**
  * Jacobian namespace contains overloaded functions for serial (without Kokkos)
  * and Kokkos implementations (using team policy)
  *
  */
-namespace specfem {
 namespace jacobian {
 
 /**
