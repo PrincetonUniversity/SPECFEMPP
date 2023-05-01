@@ -8,7 +8,7 @@
 #include "source_time_function/interface.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
-#include "utils.h"
+#include "utilities/interface.hpp"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
 

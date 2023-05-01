@@ -1,5 +1,5 @@
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef _UTILITIES_HPP
+#define _UTILITIES_HPP
 
 #include "kokkos_abstractions.h"
 #include "specfem_mpi/interface.hpp"

@@ -1,6 +1,6 @@
 #include "receiver/interface.hpp"
 #include "specfem_setup.hpp"
-#include "utils.h"
+#include "utilities/interface.hpp"
 #include "yaml-cpp/yaml.h"
 #include <boost/tokenizer.hpp>
 #include <fstream>

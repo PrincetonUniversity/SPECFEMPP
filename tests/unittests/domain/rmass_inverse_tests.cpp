@@ -7,7 +7,6 @@
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"
 #include "quadrature/interface.hpp"
-#include "utils.h"
 #include "yaml-cpp/yaml.h"
 
 // ----- Parse test config ------------- //

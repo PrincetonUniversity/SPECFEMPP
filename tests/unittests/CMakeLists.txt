@@ -189,7 +189,6 @@ target_link_libraries(
   mpi_environment
   compute
   parameter_reader
-  utilities
   compare_arrays
   domain
   writer
@@ -211,7 +210,6 @@ target_link_libraries(
   mpi_environment
   compute
   parameter_reader
-  utilities
   compare_arrays
   domain
   timescheme
@@ -233,7 +231,6 @@ target_link_libraries(
   mpi_environment
   compute
   parameter_reader
-  utilities
   domain
   writer
   -lpthread -lm

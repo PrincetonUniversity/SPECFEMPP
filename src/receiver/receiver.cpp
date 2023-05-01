@@ -3,7 +3,7 @@
 #include "receiver/interface.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
-#include "utils.h"
+#include "utilities/interface.hpp"
 
 void specfem::receivers::receiver::locate(
     const specfem::kokkos::HostView2d<type_real> coord,

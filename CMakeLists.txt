@@ -124,7 +124,7 @@ target_link_libraries(
 
 add_library(
         utilities
-        src/utils.cpp
+        src/utilities/utilities.cpp
 )
 
 target_link_libraries(
@@ -274,7 +274,6 @@ target_link_libraries(
         material_class
         specfem_mpi
         Kokkos::kokkos
-        yaml-cpp
         mesh
         quadrature
         compute
@@ -282,10 +281,8 @@ target_link_libraries(
         parameter_reader
         domain
         solver
-        utilities
         receiver_class
         writer
-        operators
         Boost::program_options
 )
 

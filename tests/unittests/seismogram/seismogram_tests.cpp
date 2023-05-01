@@ -10,7 +10,6 @@
 #include "receiver/interface.hpp"
 #include "solver/interface.hpp"
 #include "timescheme/interface.hpp"
-#include "utils.h"
 #include "yaml-cpp/yaml.h"
 
 // ----- Parse test config ------------- //

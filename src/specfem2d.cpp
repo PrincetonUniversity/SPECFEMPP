@@ -11,7 +11,6 @@
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "timescheme/interface.hpp"
-#include "utils.h"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
 #include <boost/program_options.hpp>
