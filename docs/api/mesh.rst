@@ -24,7 +24,7 @@ Boundaries Interface
 .. doxygenfile:: boundaries/boundaries.hpp
     :project: SPECFEM KOKKOS IMPLEMENTATION
 
-.. doxygenfile:: boundaries/abosrbing_boundaries.hpp
+.. doxygenfile:: boundaries/absorbing_boundaries.hpp
     :project: SPECFEM KOKKOS IMPLEMENTATION
 
 .. doxygenfile:: boundaries/forcing_boundaries.hpp

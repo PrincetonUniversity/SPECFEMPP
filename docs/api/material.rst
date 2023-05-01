@@ -13,6 +13,3 @@ Material Class
 
 .. doxygenfile:: elastic_material.hpp
    :project: SPECFEM KOKKOS IMPLEMENTATION
-
-.. doxygenfile:: material.hpp
-   :project: SPECFEM KOKKOS IMPLEMENTATION
