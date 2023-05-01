@@ -7,7 +7,7 @@
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities.cpp"
-#include "utils.h"
+#include "utilities/interface.hpp"
 #include "yaml-cpp/yaml.h"
 #include <cmath>
 

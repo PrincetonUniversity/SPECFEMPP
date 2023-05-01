@@ -2,7 +2,7 @@
 #include "fortranio/interface.hpp"
 #include "material/interface.hpp"
 #include "specfem_mpi/interface.hpp"
-#include "utils.h"
+#include "utilities/interface.hpp"
 #include <vector>
 
 std::vector<specfem::material::material *>

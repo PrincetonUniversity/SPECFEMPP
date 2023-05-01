@@ -1,7 +1,7 @@
-#include "utils.h"
 #include "jacobian/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "specfem_mpi/interface.hpp"
+#include "utilities/interface.hpp"
 #include <tuple>
 #include <vector>
 

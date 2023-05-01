@@ -4,7 +4,7 @@
 #include "enums.h"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
-#include "utils.h"
+#include "utilities/interface.hpp"
 #include <ostream>
 #include <tuple>
 
