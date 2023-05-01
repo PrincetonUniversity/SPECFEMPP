@@ -1,10 +1,10 @@
-#include "../../../include/compute.h"
-#include "../../../include/material.h"
-#include "../../../include/mesh.h"
-#include "../../../include/quadrature.h"
 #include "../Kokkos_Environment.hpp"
 #include "../MPI_environment.hpp"
 #include "../utilities/include/compare_array.h"
+#include "compute/interface.hpp"
+#include "material/interface.hpp"
+#include "mesh/mesh.hpp"
+#include "quadrature/interface.hpp"
 #include "yaml-cpp/yaml.h"
 #include <fstream>
 #include <iostream>
@@ -69,19 +69,21 @@ TEST(COMPUTE_TESTS, compute_partial_derivatives) {
       get_test_config(config_filename, MPIEnvironment::mpi_);
 
   // Set up GLL quadrature points
-  specfem::quadrature::quadrature gllx(0.0, 0.0, 5);
-  specfem::quadrature::quadrature gllz(0.0, 0.0, 5);
-  std::vector<specfem::material *> materials;
+  specfem::quadrature::quadrature *gllx =
+      new specfem::quadrature::gll::gll(0.0, 0.0, 5);
+  specfem::quadrature::quadrature *gllz =
+      new specfem::quadrature::gll::gll(0.0, 0.0, 5);
+  std::vector<specfem::material::material *> materials;
 
-  specfem::mesh mesh(test_config.database_filename, materials,
-                     MPIEnvironment::mpi_);
+  specfem::mesh::mesh mesh(test_config.database_filename, materials,
+                           MPIEnvironment::mpi_);
 
   specfem::compute::partial_derivatives partial_derivatives(
       mesh.coorg, mesh.material_ind.knods, gllx, gllz);
 
   specfem::kokkos::HostView3d<type_real> h_xix = partial_derivatives.h_xix;
   EXPECT_NO_THROW(specfem::testing::test_array(
-      h_xix, test_config.xix_file, mesh.nspec, gllz.get_N(), gllx.get_N()));
+      h_xix, test_config.xix_file, mesh.nspec, gllz->get_N(), gllx->get_N()));
   // EXPECT_NO_THROW(specfem::testing::test_array(
   //     partial_derivatives.xiz, test_config.xiz_file, mesh.nspec,
   //     gllz.get_N(), gllx.get_N()));
@@ -90,19 +92,19 @@ TEST(COMPUTE_TESTS, compute_partial_derivatives) {
       partial_derivatives.h_gammax;
   EXPECT_NO_THROW(
       specfem::testing::test_array(h_gammax, test_config.gammax_file,
-                                   mesh.nspec, gllz.get_N(), gllx.get_N()));
+                                   mesh.nspec, gllz->get_N(), gllx->get_N()));
 
   specfem::kokkos::HostView3d<type_real> h_gammaz =
       partial_derivatives.h_gammaz;
   EXPECT_NO_THROW(
       specfem::testing::test_array(h_gammaz, test_config.gammaz_file,
-                                   mesh.nspec, gllz.get_N(), gllx.get_N()));
+                                   mesh.nspec, gllz->get_N(), gllx->get_N()));
 
   specfem::kokkos::HostView3d<type_real> h_jacobian =
       partial_derivatives.h_jacobian;
   EXPECT_NO_THROW(
       specfem::testing::test_array(h_jacobian, test_config.jacobian_file,
-                                   mesh.nspec, gllz.get_N(), gllx.get_N()));
+                                   mesh.nspec, gllz->get_N(), gllx->get_N()));
 }
 
 int main(int argc, char *argv[]) {

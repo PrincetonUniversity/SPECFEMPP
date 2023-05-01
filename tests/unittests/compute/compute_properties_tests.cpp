@@ -1,10 +1,10 @@
-#include "../../../include/compute.h"
-#include "../../../include/material.h"
-#include "../../../include/mesh.h"
-#include "../../../include/quadrature.h"
 #include "../Kokkos_Environment.hpp"
 #include "../MPI_environment.hpp"
 #include "../utilities/include/compare_array.h"
+#include "compute/interface.hpp"
+#include "material/interface.hpp"
+#include "mesh/mesh.hpp"
+#include "quadrature/interface.hpp"
 #include "yaml-cpp/yaml.h"
 #include <fstream>
 #include <iostream>
@@ -72,46 +72,48 @@ TEST(COMPUTE_TESTS, compute_properties) {
       get_test_config(config_filename, MPIEnvironment::mpi_);
 
   // Set up GLL quadrature points
-  specfem::quadrature::quadrature gllx(0.0, 0.0, 5);
-  specfem::quadrature::quadrature gllz(0.0, 0.0, 5);
-  std::vector<specfem::material *> materials;
+  specfem::quadrature::quadrature *gllx =
+      new specfem::quadrature::gll::gll(0.0, 0.0, 5);
+  specfem::quadrature::quadrature *gllz =
+      new specfem::quadrature::gll::gll(0.0, 0.0, 5);
+  std::vector<specfem::material::material *> materials;
 
-  specfem::mesh mesh(test_config.database_filename, materials,
-                     MPIEnvironment::mpi_);
+  specfem::mesh::mesh mesh(test_config.database_filename, materials,
+                           MPIEnvironment::mpi_);
 
   specfem::compute::properties properties(mesh.material_ind.kmato, materials,
-                                          mesh.nspec, gllz.get_N(),
-                                          gllx.get_N());
+                                          mesh.nspec, gllz->get_N(),
+                                          gllx->get_N());
 
   specfem::kokkos::HostView3d<type_real, Kokkos::LayoutRight> h_rho =
       properties.h_rho;
   EXPECT_NO_THROW(specfem::testing::test_array(
-      h_rho, test_config.rho_file, mesh.nspec, gllz.get_N(), gllx.get_N()));
+      h_rho, test_config.rho_file, mesh.nspec, gllz->get_N(), gllx->get_N()));
 
   EXPECT_NO_THROW(
       specfem::testing::test_array(properties.kappa, test_config.kappa_file,
-                                   mesh.nspec, gllz.get_N(), gllx.get_N()));
+                                   mesh.nspec, gllz->get_N(), gllx->get_N()));
 
   specfem::kokkos::HostView3d<type_real, Kokkos::LayoutRight> h_mu =
       properties.h_mu;
   EXPECT_NO_THROW(specfem::testing::test_array(
-      h_mu, test_config.mu_file, mesh.nspec, gllz.get_N(), gllx.get_N()));
+      h_mu, test_config.mu_file, mesh.nspec, gllz->get_N(), gllx->get_N()));
 
   EXPECT_NO_THROW(
       specfem::testing::test_array(properties.rho_vp, test_config.rho_vp_file,
-                                   mesh.nspec, gllz.get_N(), gllx.get_N()));
+                                   mesh.nspec, gllz->get_N(), gllx->get_N()));
 
   EXPECT_NO_THROW(
       specfem::testing::test_array(properties.rho_vs, test_config.rho_vs_file,
-                                   mesh.nspec, gllz.get_N(), gllx.get_N()));
+                                   mesh.nspec, gllz->get_N(), gllx->get_N()));
 
   EXPECT_NO_THROW(
       specfem::testing::test_array(properties.qkappa, test_config.qkappa_file,
-                                   mesh.nspec, gllz.get_N(), gllx.get_N()));
+                                   mesh.nspec, gllz->get_N(), gllx->get_N()));
 
   EXPECT_NO_THROW(specfem::testing::test_array(properties.qmu,
                                                test_config.qmu_file, mesh.nspec,
-                                               gllz.get_N(), gllx.get_N()));
+                                               gllz->get_N(), gllx->get_N()));
 }
 
 int main(int argc, char *argv[]) {

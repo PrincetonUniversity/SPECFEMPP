@@ -8,20 +8,23 @@ This section contains implementation details for the quadrature class and helper
 Quadrature Class
 -----------------
 
-.. doxygenfile:: quadrature.h
+.. doxygenfile:: quadrature/quadrature.hpp
+    :project: SPECFEM KOKKOS IMPLEMENTATION
+
+.. doxygenfile:: quadrature/gll/gll.hpp
     :project: SPECFEM KOKKOS IMPLEMENTATION
 
 GLL/GLJ helper routines
 -----------------------
 
-.. doxygenfile:: gll_library.h
+.. doxygenfile:: quadrature/gll/gll_library.hpp
     :project: SPECFEM KOKKOS IMPLEMENTATION
 
-.. doxygenfile:: gll_utils.h
+.. doxygenfile:: quadrature/gll/gll_utils.pp
     :project: SPECFEM KOKKOS IMPLEMENTATION
 
 Lagrange polynomial helper routines
 ------------------------------------
 
-.. doxygenfile:: lagrange_poly.h
+.. doxygenfile:: quadrature/gll/lagrange_poly.hpp
     :project: SPECFEM KOKKOS IMPLEMENTATION

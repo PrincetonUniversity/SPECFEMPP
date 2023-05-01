@@ -1,16 +1,15 @@
-#include "../../../include/compute.h"
-#include "../../../include/domain.h"
-#include "../../../include/material.h"
-#include "../../../include/mesh.h"
-#include "../../../include/parameter_parser.h"
-#include "../../../include/quadrature.h"
-#include "../../../include/read_sources.h"
-#include "../../../include/solver.h"
-#include "../../../include/timescheme.h"
-#include "../../../include/utils.h"
 #include "../Kokkos_Environment.hpp"
 #include "../MPI_environment.hpp"
 #include "../utilities/include/compare_array.h"
+#include "compute/interface.hpp"
+#include "domain/interface.hpp"
+#include "material/interface.hpp"
+#include "mesh/mesh.hpp"
+#include "parameter_parser/interface.hpp"
+#include "quadrature/interface.hpp"
+#include "receiver/interface.hpp"
+#include "solver/interface.hpp"
+#include "timescheme/interface.hpp"
 #include "yaml-cpp/yaml.h"
 
 // ----- Parse test config ------------- //
@@ -91,25 +90,25 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
 
   const auto angle = setup.get_receiver_angle();
   const auto stations_filename = setup.get_stations_file();
-  auto receivers = specfem::read_receivers(stations_filename, angle);
+  auto receivers = specfem::receivers::read_receivers(stations_filename, angle);
 
   // Read mesh generated MESHFEM
-  std::vector<specfem::material *> materials;
-  specfem::mesh mesh(database_file, materials, mpi);
+  std::vector<specfem::material::material *> materials;
+  specfem::mesh::mesh mesh(database_file, materials, mpi);
 
   // Generate compute structs to be used by the solver
   specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
                                     gllz);
   specfem::compute::partial_derivatives partial_derivatives(
       mesh.coorg, mesh.material_ind.knods, gllx, gllz);
-  specfem::compute::properties material_properties(mesh.material_ind.kmato,
-                                                   materials, mesh.nspec,
-                                                   gllx.get_N(), gllz.get_N());
+  specfem::compute::properties material_properties(
+      mesh.material_ind.kmato, materials, mesh.nspec, gllx->get_N(),
+      gllz->get_N());
 
   // locate the recievers
   for (auto &receiver : receivers)
-    receiver->locate(compute.coordinates.coord, compute.h_ibool, gllx.get_hxi(),
-                     gllz.get_hxi(), mesh.nproc, mesh.coorg,
+    receiver->locate(compute.coordinates.coord, compute.h_ibool,
+                     gllx->get_hxi(), gllz->get_hxi(), mesh.nproc, mesh.coorg,
                      mesh.material_ind.knods, mesh.npgeo,
                      material_properties.h_ispec_type, mpi);
 
@@ -128,7 +127,7 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
   const int nglob = specfem::utilities::compute_nglob(compute.h_ibool);
   specfem::Domain::Domain *domain = new specfem::Domain::Elastic(
       2, nglob, &compute, &material_properties, &partial_derivatives, NULL,
-      &compute_receivers, &gllx, &gllz);
+      &compute_receivers, gllx, gllz);
 
   const auto displacement_field = domain->get_host_field();
   const auto velocity_field = domain->get_host_field_dot();
