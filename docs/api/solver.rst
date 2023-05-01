@@ -3,8 +3,8 @@
 Solver interface
 ================
 
-.. doxygenfile:: solver/solver.hpp
+.. doxygenfile:: iclude/solver/solver.hpp
     :project: SPECFEM KOKKOS IMPLEMENTATION
 
-.. doxygenfile:: solver/time_marching.hpp
+.. doxygenfile:: include/solver/time_marching.hpp
     :project: SPECFEM KOKKOS IMPLEMENTATION
