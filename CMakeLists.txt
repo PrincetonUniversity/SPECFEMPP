@@ -160,6 +160,7 @@ target_link_libraries(
         quadrature
         source_time_function
         yaml-cpp
+        Boost::boost
 )
 
 add_library(
