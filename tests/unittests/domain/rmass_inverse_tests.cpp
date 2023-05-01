@@ -1,14 +1,12 @@
-#include "../../../include/compute.h"
-#include "../../../include/domain.h"
-#include "../../../include/material.h"
-#include "../../../include/mesh.h"
-#include "../../../include/parameter_parser.h"
-#include "../../../include/quadrature.h"
-#include "../../../include/read_sources.h"
-#include "../../../include/utils.h"
 #include "../Kokkos_Environment.hpp"
 #include "../MPI_environment.hpp"
 #include "../utilities/include/compare_array.h"
+#include "compute/interface.hpp"
+#include "domain/interface.hpp"
+#include "material/interface.hpp"
+#include "mesh/mesh.hpp"
+#include "parameter_parser/interface.hpp"
+#include "quadrature/interface.hpp"
 #include "yaml-cpp/yaml.h"
 
 // ----- Parse test config ------------- //
@@ -59,27 +57,28 @@ TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
   auto [gllx, gllz] = setup.instantiate_quadrature();
 
   // Read mesh generated MESHFEM
-  std::vector<specfem::material *> materials;
-  specfem::mesh mesh(database_file, materials, mpi);
+  std::vector<specfem::material::material *> materials;
+  specfem::mesh::mesh mesh(database_file, materials, mpi);
 
   // Read sources
   //    if start time is not explicitly specified then t0 is determined using
   //    source frequencies and time shift
-  auto [sources, t0] = specfem::read_sources(sources_file, setup.get_dt(), mpi);
+  auto [sources, t0] =
+      specfem::sources::read_sources(sources_file, setup.get_dt(), mpi);
 
   // Generate compute structs to be used by the solver
   specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
                                     gllz);
   specfem::compute::partial_derivatives partial_derivatives(
       mesh.coorg, mesh.material_ind.knods, gllx, gllz);
-  specfem::compute::properties material_properties(mesh.material_ind.kmato,
-                                                   materials, mesh.nspec,
-                                                   gllx.get_N(), gllz.get_N());
+  specfem::compute::properties material_properties(
+      mesh.material_ind.kmato, materials, mesh.nspec, gllx->get_N(),
+      gllz->get_N());
 
   // Locate the sources
   for (auto &source : sources)
-    source->locate(compute.coordinates.coord, compute.h_ibool, gllx.get_hxi(),
-                   gllz.get_hxi(), mesh.nproc, mesh.coorg,
+    source->locate(compute.coordinates.coord, compute.h_ibool, gllx->get_hxi(),
+                   gllz->get_hxi(), mesh.nproc, mesh.coorg,
                    mesh.material_ind.knods, mesh.npgeo,
                    material_properties.h_ispec_type, mpi);
 
@@ -117,7 +116,7 @@ TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
 
   specfem::Domain::Domain *domains = new specfem::Domain::Elastic(
       ndim, nglob, &compute, &material_properties, &partial_derivatives,
-      &compute_sources, &compute_receivers, &gllx, &gllz);
+      &compute_sources, &compute_receivers, gllx, gllz);
 
   domains->sync_rmass_inverse(specfem::sync::DeviceToHost);
 

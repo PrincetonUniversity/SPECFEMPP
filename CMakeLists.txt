@@ -23,65 +23,36 @@ include_directories(BEFORE SYSTEM ${yaml_SOURCE_DIR} ${yaml_BINARY_DIR}/include)
 
 add_subdirectory(boost-cmake)
 
+include_directories(include)
+
 # Build specfem2d libraries
-## TODO: Reorgnanize into separate directories
-add_library(
-        gll_utils
-        src/gll_utils.cpp
-)
-
-target_link_libraries(
-        gll_utils PUBLIC
-        Kokkos::kokkos
-)
-
-add_library(
-        gll_library
-        src/gll_library.cpp
-)
-
-target_link_libraries(
-        gll_library
-        gll_utils
-)
-
-add_library(
-        lagrange
-        src/lagrange_poly.cpp
-)
-
-target_link_libraries(
-        lagrange
-        gll_library
-        Kokkos::kokkos
-)
-
 add_library(
         quadrature
-        src/quadrature.cpp
+        src/quadrature/gll/gll_utils.cpp
+        src/quadrature/gll/gll_library.cpp
+        src/quadrature/gll/lagrange_poly.cpp
+        src/quadrature/gll/gll.cpp
 )
 
 target_link_libraries(
         quadrature
-        lagrange
-        gll_library
         Kokkos::kokkos
 )
 
 add_library(
         fortranio
-        src/fortran_IO.cpp
+        src/fortranio/fortran_io.cpp
 )
 
 target_link_libraries(
         fortranio
-        PUBLIC Boost::boost
+        Boost::boost
         Kokkos::kokkos
 )
 
 add_library(
         specfem_mpi
-        src/specfem_mpi.cpp
+        src/specfem_mpi/specfem_mpi.cpp
 )
 
 if (MPI_PARALLEL)
@@ -96,7 +67,7 @@ endif(MPI_PARALLEL)
 
 add_library(
         operators
-        src/mathematical_operators.cpp
+        src/mathematical_operators/mathematical_operators.cpp
 )
 
 target_link_libraries(
@@ -106,109 +77,29 @@ target_link_libraries(
 
 add_library(
         material_class
-        src/material.cpp
+        src/material/elastic_material.cpp
+        src/material/acoustic_material.cpp
 )
 
 target_link_libraries(
         material_class
         Kokkos::kokkos
         specfem_mpi
-)
-
-add_library(
-        material_reader
-        src/read_material_properties.cpp
-)
-
-target_link_libraries(
-        material_reader
-        material_class
-        specfem_mpi
-        fortranio
-)
-
-add_library(
-        boundaries
-        src/boundaries.cpp
-)
-
-target_link_libraries(
-        boundaries
-        Kokkos::kokkos
-        specfem_mpi
-)
-
-add_library(
-        surfaces
-        src/surfaces.cpp
-)
-
-target_link_libraries(
-        surfaces
-        Kokkos::kokkos
-        specfem_mpi
-)
-
-add_library(
-        elements
-        src/elements.cpp
-)
-
-target_link_libraries(
-        elements
-        Kokkos::kokkos
-        specfem_mpi
-)
-
-add_library(
-        mpi_interfaces
-        src/mpi_interfaces.cpp
-)
-
-target_link_libraries(
-        mpi_interfaces
-        Kokkos::kokkos
-        specfem_mpi
-)
-
-add_library(
-        database_reader
-        src/read_mesh_database.cpp
-)
-
-target_link_libraries(
-        database_reader
-        specfem_mpi
-        fortranio
-        Kokkos::kokkos
-        mpi_interfaces
-)
-
-add_library(
-        mesh_properties
-        src/mesh_properties.cpp
-)
-
-target_link_libraries(
-        mesh_properties
-        specfem_mpi
-        Kokkos::kokkos
-)
-
-add_library(
-        material_indic
-        src/material_indic.cpp
-)
-
-target_link_libraries(
-        material_indic
-        specfem_mpi
-        Kokkos::kokkos
 )
 
 add_library(
         mesh
-        src/mesh.cpp
+        src/mesh/IO/fortran/read_mesh_database.cpp
+        src/mesh/IO/fortran/read_material_properties.cpp
+        src/mesh/boundaries/forcing_boundaries.cpp
+        src/mesh/boundaries/absorbing_boundaries.cpp
+        src/mesh/elements/tangential_elements.cpp
+        src/mesh/elements/axial_elements.cpp
+        src/mesh/properties/properties.cpp
+        src/mesh/mpi_interfaces/mpi_interfaces.cpp
+        src/mesh/material_indic/material_indic.cpp
+        src/mesh/surfaces/acoustic_free_surface.cpp
+        src/mesh/mesh.cpp
 )
 
 target_link_libraries(
@@ -216,40 +107,24 @@ target_link_libraries(
         Kokkos::kokkos
         specfem_mpi
         material_class
-        database_reader
-        material_reader
-        mesh_properties
-        material_indic
-        boundaries
-        elements
-        surfaces
+        fortranio
         yaml-cpp
 )
 
 add_library(
-        shape_functions
-        src/shape_functions.cpp
-)
-
-target_link_libraries(
-        shape_functions
-        Kokkos::kokkos
-)
-
-add_library(
         jacobian
-        src/jacobian.cpp
+        src/jacobian/shape_functions.cpp
+        src/jacobian/jacobian.cpp
 )
 
 target_link_libraries(
         jacobian
-        shape_functions
         Kokkos::kokkos
 )
 
 add_library(
         utilities
-        src/utils.cpp
+        src/utilities/utilities.cpp
 )
 
 target_link_libraries(
@@ -261,18 +136,20 @@ target_link_libraries(
 
 add_library(
         source_time_function
-        src/source_time_function.cpp
+        src/source_time_function/dirac.cpp
 )
 
 target_link_libraries(
         source_time_function
         Kokkos::kokkos
-        yaml-cpp
 )
 
 add_library(
         source_class
-        src/source.cpp
+        src/source/source.cpp
+        src/source/force_source.cpp
+        src/source/moment_tensor_source.cpp
+        src/source/read_sources.cpp
 )
 
 target_link_libraries(
@@ -281,14 +158,15 @@ target_link_libraries(
         specfem_mpi
         utilities
         quadrature
-        lagrange
         source_time_function
         yaml-cpp
+        Boost::boost
 )
 
 add_library(
         receiver_class
-        src/receiver.cpp
+        src/receiver/receiver.cpp
+        src/receiver/read_receiver.cpp
 )
 
 target_link_libraries(
@@ -297,30 +175,17 @@ target_link_libraries(
         Kokkos::kokkos
         utilities
         quadrature
-        lagrange
-)
-
-add_library(
-        source_reader
-        src/read_sources.cpp
-)
-
-target_link_libraries(
-        source_reader
-        source_class
-        receiver_class
         yaml-cpp
-        utilities
-        Boost::system
+        Boost::boost
 )
 
 add_library(
         compute
-        src/compute.cpp
-        src/compute_partial_derivatives.cpp
-        src/compute_properties.cpp
-        src/compute_sources.cpp
-        src/compute_receivers.cpp
+        src/compute/compute.cpp
+        src/compute/compute_partial_derivatives.cpp
+        src/compute/compute_properties.cpp
+        src/compute/compute_sources.cpp
+        src/compute/compute_receivers.cpp
 )
 
 target_link_libraries(
@@ -329,14 +194,13 @@ target_link_libraries(
         material_class
         source_class
         jacobian
-        shape_functions
         receiver_class
         Kokkos::kokkos
 )
 
 add_library(
         domain
-        src/domain.cpp
+        src/domain/elastic_domain.cpp
 )
 
 target_link_libraries(
@@ -349,7 +213,7 @@ target_link_libraries(
 
 add_library(
         timescheme
-        src/timescheme.cpp
+        src/timescheme/newmark.cpp
 )
 
 target_link_libraries(
@@ -359,7 +223,7 @@ target_link_libraries(
 
 add_library(
         writer
-        src/writer.cpp
+        src/writer/seismogram.cpp
 )
 
 target_link_libraries(
@@ -370,7 +234,7 @@ target_link_libraries(
 
 add_library(
         solver
-        src/solver.cpp
+        src/solver/time_marching.cpp
 )
 
 target_link_libraries(
@@ -382,7 +246,15 @@ target_link_libraries(
 
 add_library(
         parameter_reader
-        src/parameter_parser.cpp
+        src/parameter_parser/run_setup.cpp
+        src/parameter_parser/solver/solver.cpp
+        src/parameter_parser/solver/time_marching.cpp
+        src/parameter_parser/database_configuration.cpp
+        src/parameter_parser/header.cpp
+        src/parameter_parser/quadrature.cpp
+        src/parameter_parser/seismogram.cpp
+        src/parameter_parser/writer.cpp
+        src/parameter_parser/setup.cpp
 )
 
 target_link_libraries(
@@ -403,21 +275,16 @@ target_link_libraries(
         specfem2d
         material_class
         specfem_mpi
-        database_reader
         Kokkos::kokkos
-        yaml-cpp
         mesh
         quadrature
         compute
         source_class
-        source_reader
         parameter_reader
         domain
         solver
-        utilities
         receiver_class
         writer
-        operators
         Boost::program_options
 )
 

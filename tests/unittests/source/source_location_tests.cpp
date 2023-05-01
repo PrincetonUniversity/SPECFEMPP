@@ -1,13 +1,11 @@
-#include "../../../include/compute.h"
-#include "../../../include/material.h"
-#include "../../../include/mesh.h"
-#include "../../../include/params.h"
-#include "../../../include/read_mesh_database.h"
-#include "../../../include/read_sources.h"
-#include "../../../include/source.h"
-#include "../../../include/specfem_setup.hpp"
 #include "../Kokkos_Environment.hpp"
 #include "../MPI_environment.hpp"
+#include "compute/interface.hpp"
+#include "material/interface.hpp"
+#include "mesh/mesh.hpp"
+#include "params.h"
+#include "source/interface.hpp"
+#include "specfem_setup.hpp"
 #include "yaml-cpp/yaml.h"
 #include <stdexcept>
 #include <string>
@@ -157,32 +155,34 @@ TEST(SOURCE_LOCATION_TESTS, compute_source_locations) {
       parse_solution_file(test_config.solutions_file);
 
   // Set up GLL quadrature points
-  specfem::quadrature::quadrature gllx(0.0, 0.0, 5);
-  specfem::quadrature::quadrature gllz(0.0, 0.0, 5);
+  specfem::quadrature::quadrature *gllx =
+      new specfem::quadrature::gll::gll(0.0, 0.0, 5);
+  specfem::quadrature::quadrature *gllz =
+      new specfem::quadrature::gll::gll(0.0, 0.0, 5);
 
   specfem::parameters params;
 
   // Read mesh for binary database for the test
-  std::vector<specfem::material *> materials;
-  specfem::mesh mesh(test_config.database_file, materials, mpi);
+  std::vector<specfem::material::material *> materials;
+  specfem::mesh::mesh mesh(test_config.database_file, materials, mpi);
 
   // read sources file
   auto [sources, t0] =
-      specfem::read_sources(test_config.sources_file, 1.0, mpi);
+      specfem::sources::read_sources(test_config.sources_file, 1.0, mpi);
 
   // setup compute struct for future use
   specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
                                     gllz);
   specfem::compute::partial_derivatives partial_derivatives(
       mesh.coorg, mesh.material_ind.knods, gllx, gllz);
-  specfem::compute::properties material_properties(mesh.material_ind.kmato,
-                                                   materials, mesh.nspec,
-                                                   gllx.get_N(), gllz.get_N());
+  specfem::compute::properties material_properties(
+      mesh.material_ind.kmato, materials, mesh.nspec, gllx->get_N(),
+      gllz->get_N());
 
   // Locate every source
   for (auto &source : sources)
-    source->locate(compute.coordinates.coord, compute.h_ibool, gllx.get_hxi(),
-                   gllz.get_hxi(), mesh.nproc, mesh.coorg,
+    source->locate(compute.coordinates.coord, compute.h_ibool, gllx->get_hxi(),
+                   gllz->get_hxi(), mesh.nproc, mesh.coorg,
                    mesh.material_ind.knods, mesh.npgeo,
                    material_properties.h_ispec_type, mpi);
 

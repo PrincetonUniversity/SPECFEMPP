@@ -55,8 +55,7 @@ add_executable(
 target_link_libraries(
   gll_tests
   gtest_main
-  gll_library
-  gll_utils
+  quadrature
   kokkos_environment
   -lpthread -lm
 )
@@ -69,8 +68,7 @@ add_executable(
 target_link_libraries(
   lagrange_tests
   gtest_main
-  lagrange
-  gll_library
+  quadrature
   kokkos_environment
   -lpthread -lm
 )
@@ -167,14 +165,12 @@ target_link_libraries(
   source_location_tests
   material_class
   mpi_environment
-  database_reader
   kokkos_environment
   yaml-cpp
   mesh
   quadrature
   compute
   source_class
-  source_reader
   -lpthread -lm
 )
 
@@ -193,10 +189,8 @@ target_link_libraries(
   mpi_environment
   compute
   parameter_reader
-  utilities
   compare_arrays
   domain
-  source_reader
   writer
   -lpthread -lm
 )
@@ -216,10 +210,8 @@ target_link_libraries(
   mpi_environment
   compute
   parameter_reader
-  utilities
   compare_arrays
   domain
-  source_reader
   timescheme
   solver
   -lpthread -lm
@@ -239,9 +231,7 @@ target_link_libraries(
   mpi_environment
   compute
   parameter_reader
-  utilities
   domain
-  source_reader
   writer
   -lpthread -lm
 )

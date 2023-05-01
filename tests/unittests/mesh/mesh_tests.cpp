@@ -1,7 +1,7 @@
-#include "../../../include/material.h"
-#include "../../../include/mesh.h"
 #include "../Kokkos_Environment.hpp"
 #include "../MPI_environment.hpp"
+#include "material/interface.hpp"
+#include "mesh/mesh.hpp"
 #include "yaml-cpp/yaml.h"
 #include <fstream>
 #include <iostream>
@@ -60,9 +60,9 @@ TEST(MESH_TESTS, fortran_binary_reader) {
   test_config test_config =
       get_test_config(config_filename, MPIEnvironment::mpi_);
 
-  std::vector<specfem::material *> materials;
-  EXPECT_NO_THROW(specfem::mesh mesh(test_config.database_filename, materials,
-                                     MPIEnvironment::mpi_));
+  std::vector<specfem::material::material *> materials;
+  EXPECT_NO_THROW(specfem::mesh::mesh mesh(test_config.database_filename,
+                                           materials, MPIEnvironment::mpi_));
 }
 
 int main(int argc, char *argv[]) {

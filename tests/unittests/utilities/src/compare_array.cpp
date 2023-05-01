@@ -1,7 +1,7 @@
 
 #include "../include/compare_array.h"
-#include "../../../../include/fortran_IO.h"
-#include "../../../../include/kokkos_abstractions.h"
+#include "fortranio/interface.hpp"
+#include "kokkos_abstractions.h"
 #include <Kokkos_Core.hpp>
 #include <exception>
 #include <fstream>

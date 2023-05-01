@@ -1,5 +1,5 @@
 #include "MPI_environment.hpp"
-#include "../../include/specfem_mpi.h"
+#include "specfem_mpi/interface.hpp"
 
 char **argv;
 int argc = 0;

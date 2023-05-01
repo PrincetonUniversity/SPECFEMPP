@@ -1,4 +1,4 @@
-#include "../../include/specfem_mpi.h"
+#include "specfem_mpi/interface.hpp"
 #include <gtest/gtest.h>
 
 class MPIEnvironment : public ::testing::Environment {
