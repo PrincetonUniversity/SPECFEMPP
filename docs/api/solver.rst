@@ -3,7 +3,7 @@
 Solver interface
 ================
 
-.. doxygenfile:: iclude/solver/solver.hpp
+.. doxygenfile:: include/solver/solver.hpp
     :project: SPECFEM KOKKOS IMPLEMENTATION
 
 .. doxygenfile:: include/solver/time_marching.hpp
