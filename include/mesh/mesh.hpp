@@ -39,9 +39,11 @@ struct mesh {
                                             ///< material information for
                                             ///< every spectral element
 
-  specfem::mesh::interfaces::interface interface; ///< Struct used to store data
-                                                  ///< required to implement MPI
-                                                  ///< interfaces
+  // specfem::mesh::interfaces::interface interface; ///< Struct used to store
+  // data
+  //                                                 ///< required to implement
+  //                                                 MPI
+  //                                                 ///< interfaces
 
   specfem::mesh::boundaries::absorbing_boundary abs_boundary; ///< Struct used
                                                               ///< to store data

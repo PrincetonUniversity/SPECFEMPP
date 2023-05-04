@@ -25,7 +25,7 @@ parameters:
         time-scheme:
           type: Newmark
           dt: 1.1e-5
-          nstep: 1600
+          nstep: 100
 
   seismogram:
     stations-file: "/scratch/gpfs/rk9481/specfem2d_kokkos/DATA/STATIONS"
