@@ -5,6 +5,13 @@ project(specfem2d_kokkos VERSION 0.1.0)
 set(CMAKE_CXX_STANDARD 17)
 option(MPI_PARALLEL "MPI enabled" OFF)
 
+if (CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
+        set(CMAKE_CXX_FLAGS "-fp-model=precise")
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+        message("Detected Intel classic compiler. It is recommended you use IntelLLVM compiler since Intel classic compiler will be deprecated soon.")
+        set(CMAKE_CXX_FLAGS "-diag-disable=10441 -fp-model=precise")
+endif ()
+
 # Install Kokkos as a dependency
 ## TODO: Add options for on utilizing in house builds
 include(FetchContent)
@@ -197,6 +204,9 @@ target_link_libraries(
         receiver_class
         Kokkos::kokkos
 )
+
+# there seems to be a bug when compiling compute with -O3 mode using the icpx compiler.
+# set_target_properties(compute PROPERTIES COMPILE_OPTIONS "$<$<CONFIG:RELEASE>:-fp-model=precise>")
 
 add_library(
         domain

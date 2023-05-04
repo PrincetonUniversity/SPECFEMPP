@@ -82,6 +82,8 @@ specfem::mesh::interfaces::interface::interface(std::ifstream &stream,
 
   // reads in interfaces
 #ifdef MPI_PARALLEL
+
+  std::cout << "Compiling with MPI" << std::endl;
   for (int num_interface = 0; num_interface < this->ninterfaces;
        num_interface++) {
     // format: #process_interface_id  #number_of_elements_on_interface
