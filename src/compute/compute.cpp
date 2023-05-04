@@ -152,7 +152,8 @@ specfem::compute::compute::compute(
       "specfem::mesh::assign_numbering", ngllz, ngllx, ngnod);
 
   std::vector<qp> cart_cord(nspec * ngllxz);
-  std::vector<qp> *pcart_cord = &cart_cord;
+  specfem::kokkos::HostView1d<qp> pcart_cord(
+      "specfem::compute::compute::pcart_cord", nspec * ngllxz);
   int scratch_size =
       specfem::kokkos::HostScratchView2d<type_real>::shmem_size(ndim, ngnod);
 
@@ -210,11 +211,15 @@ specfem::compute::compute::compute(
               // cart_cord inside of a lambda directly Since iloc is
               // different within every thread I ensure that I don't have a
               // race condition here.
-              (*pcart_cord)[iloc].x = xcor;
-              (*pcart_cord)[iloc].y = ycor;
-              (*pcart_cord)[iloc].iloc = iloc;
+              pcart_cord(iloc).x = xcor;
+              pcart_cord(iloc).y = ycor;
+              pcart_cord(iloc).iloc = iloc;
             });
       });
+
+  for (int iloc = 0; iloc < nspec * ngllxz; iloc++) {
+    cart_cord[iloc] = pcart_cord(iloc);
+  }
 
   std::tie(this->coordinates.coord, this->coordinates.xmin,
            this->coordinates.xmax, this->coordinates.zmin,

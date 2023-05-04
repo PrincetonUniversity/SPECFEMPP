@@ -92,11 +92,17 @@ specfem::mesh::mesh::mesh(const std::string filename,
     throw;
   }
 
-  try {
-    this->interface = specfem::mesh::interfaces::interface(stream, mpi);
-  } catch (std::runtime_error &e) {
-    throw;
-  }
+  // try {
+  //   this->interface = specfem::mesh::interfaces::interface(stream, mpi);
+  // } catch (std::runtime_error &e) {
+  //   throw;
+  // }
+
+  int ninterfaces;
+  int max_interface_size;
+
+  specfem::fortran_IO::fortran_read_line(stream, &ninterfaces,
+                                         &max_interface_size);
 
   try {
     this->abs_boundary = specfem::mesh::boundaries::absorbing_boundary(
