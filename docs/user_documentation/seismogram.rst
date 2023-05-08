@@ -20,6 +20,8 @@ STATIONS file is tab delimited text file, where every line describes the locatio
 Seismogram output formats
 --------------------------
 
+.. _ASCII:
+
 ASCII format
 ^^^^^^^^^^^^^
 
