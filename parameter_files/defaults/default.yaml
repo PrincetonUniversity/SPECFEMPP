@@ -1,0 +1,8 @@
+default-parameters:
+
+  quadrature:
+    quadrature-type: GLL4
+
+  run-setup:
+    number-of-processors: 1
+    number-of-runs: 1

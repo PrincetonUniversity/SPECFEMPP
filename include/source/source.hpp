@@ -1,7 +1,7 @@
 #ifndef _SOURCE_HPP
 #define _SOURCE_HPP
 
-#include "enums.h"
+#include "constants.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "source_time_function/interface.hpp"

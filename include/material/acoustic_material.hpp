@@ -1,7 +1,7 @@
 #ifndef _ACOUSTIC_MATERIAL_HPP
 #define _ACOUSTIC_MATERIAL_HPP
 
-#include "enums.h"
+#include "constants.hpp"
 #include "material.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"

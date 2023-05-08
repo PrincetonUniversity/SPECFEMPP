@@ -1,7 +1,7 @@
 #ifndef _ELASTIC_MATERIAL_HPP
 #define _ELASTIC_MATERIAL_HPP
 
-#include "enums.h"
+#include "constants.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"

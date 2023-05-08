@@ -1,8 +1,7 @@
 #ifndef _RECEIVER_HPP
 #define _RECEIVER_HPP
 
-#include "constants.h"
-#include "enums.h"
+#include "constants.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "specfem_mpi/interface.hpp"

@@ -27,14 +27,13 @@ parameters:
           dt: 1.1e-3
           nstep: 100
 
-  seismogram:
+  receivers:
     stations-file: "../DATA/STATIONS"
     angle: 0.0
     seismogram-type:
       - displacement
       - velocity
     nstep_between_samples: 1
-    seismogram-format: ascii
 
   ## Runtime setup
   run-setup:
