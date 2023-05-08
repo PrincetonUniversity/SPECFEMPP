@@ -75,11 +75,6 @@ public:
   void
   apply_corrector_phase(const specfem::Domain::Domain *domain_class) override;
   /**
-   * @brief
-   *
-   * @return true
-   * @return false
-  /**
    * @brief Compute if seismogram needs to be calculated at this timestep
    *
    */
