@@ -18,7 +18,7 @@ Parameter definitions
 .. _database-file-parameter:
 
 **Parameter name** : ``databases.mesh-database``
-------------------------------------------------
+******************************************************
 
 **default value**: None
 
@@ -27,7 +27,7 @@ Parameter definitions
 **documentation**: Location of the fortran binary database file defining the mesh
 
 **Parameter name** : ``databases.source-file``
-----------------------------------------------
+******************************************************
 
 **default value**: None
 
