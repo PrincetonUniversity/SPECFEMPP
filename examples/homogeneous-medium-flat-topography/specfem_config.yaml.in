@@ -25,7 +25,7 @@ parameters:
           nstep: 100
 
   receivers:
-    stations-file: "/scratch/gpfs/rk9481/specfem2d_kokkos/DATA/STATIONS"
+    stations-file: "@CMAKE_SOURCE_DIR@/examples/homogeneous-medium-flat-topgraphy/STATIONS"
     angle: 0.0
     seismogram-type:
       - velocity
@@ -42,5 +42,5 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "/scratch/gpfs/rk9481/specfem2d_kokkos/DATA/databases/database.bin"
-    source-file: "/scratch/gpfs/rk9481/specfem2d_kokkos/DATA/source.yaml"
+    mesh-database: "@CMAKE_SOURCE_DIR@/examples/homogeneous-medium-flat-topgraphy/databases/database.bin"
+    source-file: "@CMAKE_SOURCE_DIR@/examples/homogeneous-medium-flat-topgraphy/source.yaml"
