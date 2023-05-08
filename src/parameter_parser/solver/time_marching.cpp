@@ -1,6 +1,7 @@
 #include "parameter_parser/interface.hpp"
 #include "timescheme/interface.hpp"
 #include "yaml-cpp/yaml.h"
+#include <ostream>
 
 specfem::TimeScheme::TimeScheme *
 specfem::runtime_configuration::solver::time_marching::instantiate(
@@ -12,13 +13,24 @@ specfem::runtime_configuration::solver::time_marching::instantiate(
                                           nstep_between_samples);
   }
 
+  // User output
+  std::cout << *it << "\n";
+
   return it;
 }
 
 specfem::runtime_configuration::solver::time_marching::time_marching(
     const YAML::Node &timescheme) {
 
-  *this = specfem::runtime_configuration::solver::time_marching(
-      timescheme["type"].as<std::string>(), timescheme["dt"].as<type_real>(),
-      timescheme["nstep"].as<int>());
+  try {
+    *this = specfem::runtime_configuration::solver::time_marching(
+        timescheme["type"].as<std::string>(), timescheme["dt"].as<type_real>(),
+        timescheme["nstep"].as<int>());
+  } catch (YAML::ParserException &e) {
+    std::ostringstream message;
+
+    message << "Error reading time marching timescheme. \n" << e.what();
+
+    std::runtime_error(message.str());
+  }
 }

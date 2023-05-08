@@ -4,7 +4,6 @@
 #include "material/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"
-#include "params.h"
 #include "receiver/interface.hpp"
 #include "solver/interface.hpp"
 #include "source/interface.hpp"
@@ -50,7 +49,10 @@ boost::program_options::options_description define_args() {
 
   desc.add_options()("help,h", "Print this help message")(
       "parameters_file,p", po::value<std::string>(),
-      "Location to parameters file");
+      "Location to parameters file")(
+      "default_file,d",
+      po::value<std::string>()->default_value(__default_file__),
+      "Location of default parameters file.");
 
   return desc;
 }
@@ -75,14 +77,14 @@ int parse_args(int argc, char **argv,
   return 1;
 }
 
-void execute(const std::string parameter_file, specfem::MPI::MPI *mpi) {
+void execute(const std::string &parameter_file, const std::string &default_file,
+             specfem::MPI::MPI *mpi) {
 
   // log start time
   auto start_time = std::chrono::high_resolution_clock::now();
 
-  specfem::runtime_configuration::setup setup(parameter_file);
+  specfem::runtime_configuration::setup setup(parameter_file, default_file);
   const auto [database_filename, source_filename] = setup.get_databases();
-  const auto stations_filename = setup.get_stations_file();
 
   mpi->cout(setup.print_header(start_time));
 
@@ -98,6 +100,8 @@ void execute(const std::string parameter_file, specfem::MPI::MPI *mpi) {
   //    source frequencies and time shift
   auto [sources, t0] =
       specfem::sources::read_sources(source_filename, setup.get_dt(), mpi);
+
+  const auto stations_filename = setup.get_stations_file();
   const auto angle = setup.get_receiver_angle();
   auto receivers = specfem::receivers::read_receivers(stations_filename, angle);
 
@@ -184,13 +188,16 @@ void execute(const std::string parameter_file, specfem::MPI::MPI *mpi) {
 
   solver->run();
 
-  // mpi->cout("Writing seismogram files:");
-  // mpi->cout("-------------------------------");
+  // Write only if a writer object has been defined
+  if (writer) {
+    mpi->cout("Writing seismogram files:");
+    mpi->cout("-------------------------------");
 
-  // writer->write();
+    writer->write();
+  }
 
-  // mpi->cout("Cleaning up:");
-  // mpi->cout("-------------------------------");
+  mpi->cout("Cleaning up:");
+  mpi->cout("-------------------------------");
 
   for (auto &material : materials) {
     delete material;
@@ -225,7 +232,8 @@ int main(int argc, char **argv) {
     if (parse_args(argc, argv, vm)) {
       const std::string parameters_file =
           vm["parameters_file"].as<std::string>();
-      execute(parameters_file, mpi);
+      const std::string default_file = vm["default_file"].as<std::string>();
+      execute(parameters_file, default_file, mpi);
     }
   }
   // Finalize Kokkos

@@ -68,6 +68,10 @@ public:
    *
    */
   virtual int get_N() const { return this->N; };
+  /**
+   * @brief Log quadrature information to console
+   */
+  virtual void print(std::ostream &out) const;
 
   // typedef polynomial = specfem::quadrature::polynomial::Lagrange;
 
@@ -91,6 +95,9 @@ private:
   specfem::kokkos::HostView2d<type_real> h_hprime; ///< Polynomial derivatives
                                                    ///< store on host
 };
+
+std::ostream &operator<<(std::ostream &out,
+                         specfem::quadrature::quadrature &quad);
 } // namespace quadrature
 } // namespace specfem
 

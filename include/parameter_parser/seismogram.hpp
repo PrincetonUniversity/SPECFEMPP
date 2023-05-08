@@ -21,52 +21,17 @@ public:
    * @brief Construct a new seismogram object
    *
    * @param stations_file Path to stations file
-   * @param angle Angle of the station
-   * @param nstep_between_samples number of timesteps between seismogram
-   * sampling (seismogram sampling frequency)
-   * @param seismogram_type Type of seismogram
    * @param output_folder Path to folder location where seismogram will be
    * stored
    */
-  seismogram(const std::string stations_file, const type_real angle,
-             const int nstep_between_samples,
-             const std::string seismogram_format,
-             const std::string output_folder)
-      : stations_file(stations_file), angle(angle),
-        nstep_between_samples(nstep_between_samples),
-        seismogram_format(seismogram_format), output_folder(output_folder){};
+  seismogram(const std::string stations_file, const std::string output_folder)
+      : seismogram_format(seismogram_format), output_folder(output_folder){};
   /**
    * @brief Construct a new seismogram object
    *
    * @param Node YAML node describing the seismogram writer
    */
   seismogram(const YAML::Node &Node);
-  /**
-   * @brief Get the path of stations file
-   *
-   * @return std::string describing the locations of stations file
-   */
-  std::string get_stations_file() const { return this->stations_file; }
-  /**
-   * @brief Get the angle of the receiver
-   *
-   * @return type_real describing the angle of the receiver
-   */
-  type_real get_angle() const { return this->angle; };
-  /**
-   * @brief Get the number of time steps between seismogram sampling
-   *
-   * @return int descibing seismogram sampling frequency
-   */
-  int get_nstep_between_samples() const { return this->nstep_between_samples; }
-  /**
-   * @brief Get the types of seismogram requested
-   *
-   * @return std::vector<specfem::seismogram::type> vector seismogram types
-   */
-  std::vector<specfem::seismogram::type> get_seismogram_types() const {
-    return stypes;
-  }
 
   /**
    * @brief Instantiate a seismogram writer object
@@ -82,17 +47,11 @@ public:
   specfem::writer::writer *instantiate_seismogram_writer(
       std::vector<specfem::receivers::receiver *> &receivers,
       specfem::compute::receivers *compute_receivers, const type_real dt,
-      const type_real t0) const;
+      const type_real t0, const int nsteps_between_samples) const;
 
 private:
-  std::string stations_file; ///< path to stations file
-  type_real angle;           ///< Angle of the receiver
-  int nstep_between_samples; ///< Seismogram sampling frequency
-  std::vector<specfem::seismogram::type> stypes; ///< std::vector containing
-                                                 ///< type of seismograms to be
-                                                 ///< written
-  std::string seismogram_format;                 ///< format of output file
-  std::string output_folder;                     ///< Path to output folder
+  std::string seismogram_format; ///< format of output file
+  std::string output_folder;     ///< Path to output folder
 };
 
 } // namespace runtime_configuration

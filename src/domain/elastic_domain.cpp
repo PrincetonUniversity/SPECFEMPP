@@ -1,6 +1,6 @@
 #include "compute/interface.hpp"
+#include "constants.hpp"
 #include "domain/interface.hpp"
-#include "enums.h"
 #include "globals.h"
 #include "kokkos_abstractions.h"
 #include "mathematical_operators/interface.hpp"

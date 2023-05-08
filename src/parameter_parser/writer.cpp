@@ -1,4 +1,4 @@
-#include "enums.h"
+#include "constants.hpp"
 #include "parameter_parser/interface.hpp"
 #include "writer/interface.hpp"
 #include "yaml-cpp/yaml.h"
@@ -7,7 +7,7 @@ specfem::writer::writer *
 specfem::runtime_configuration::seismogram::instantiate_seismogram_writer(
     std::vector<specfem::receivers::receiver *> &receivers,
     specfem::compute::receivers *compute_receivers, const type_real dt,
-    const type_real t0) const {
+    const type_real t0, const int nstep_between_samples) const {
 
   specfem::seismogram::format::type type;
   if (this->seismogram_format == "seismic_unix" ||
@@ -19,7 +19,7 @@ specfem::runtime_configuration::seismogram::instantiate_seismogram_writer(
 
   specfem::writer::writer *writer = new specfem::writer::seismogram(
       receivers, compute_receivers, type, this->output_folder, dt, t0,
-      this->nstep_between_samples);
+      nstep_between_samples);
 
   return writer;
 }

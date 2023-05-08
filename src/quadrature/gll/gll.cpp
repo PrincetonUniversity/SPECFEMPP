@@ -63,3 +63,11 @@ void specfem::quadrature::gll::gll::set_derivation_matrices() {
       this->h_hprime, this->h_xi, this->N);
   this->sync_views();
 }
+
+void specfem::quadrature::gll::gll::print(std::ostream &message) const {
+  message << "------------------------------\n"
+          << "- GLL\n"
+          << "    alpha = " << this->alpha << "\n"
+          << "    beta = " << this->beta << "\n"
+          << "    Number of GLL points = " << this->N << "\n";
+}

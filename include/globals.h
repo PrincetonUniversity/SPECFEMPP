@@ -1,7 +1,7 @@
 #ifndef GLOBALS_H
 #define GLOBALS_H
 
-#include "../include/enums.h"
+#include "constants.hpp"
 
 namespace specfem {
 namespace globals {
