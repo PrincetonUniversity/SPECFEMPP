@@ -1,7 +1,7 @@
 Runtime Setup
 #############
 
-Runtime setup section defines the run-time setup of the simulation.
+Runtime setup section defines the run-time setup of the simulation. If this section is not defined, the simulation will be a serial simulation with a single run.
 
 Parameter definitions
 =====================
@@ -9,7 +9,13 @@ Parameter definitions
 **Parameter Name** : ``run-setup``
 -----------------------------------
 
-**default value** : None
+**default value** :
+
+.. code:: yaml
+
+    run-setup:
+        number-of-processors: 1
+        number-of-runs: 1
 
 **possible values** : [YAML Node]
 
