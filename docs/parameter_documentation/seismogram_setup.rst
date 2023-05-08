@@ -25,8 +25,7 @@ Parameter definitions
 
 **documentation** : Type of seismogram format to be written.
 
-Possible formats:
-1. ascii - ASCII format writes calculated seismogram values to seismogram files in string format.
+1. ascii - :ref:`ASCII` writes calculated seismogram values to seismogram files in string format.
 
 **Parameter Name** : ``seismogram.output-folder``
 ******************************************************
