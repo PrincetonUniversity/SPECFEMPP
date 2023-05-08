@@ -46,7 +46,7 @@ public:
    * properties
    */
   utilities::return_holder get_properties() override;
-  specfem::elements::type get_ispec_type() { return ispec_type; };
+  specfem::elements::type get_ispec_type() override { return ispec_type; };
 
   std::string print() const override;
 
