@@ -93,6 +93,8 @@ public:
   virtual void increment_seismogram_step(){};
 };
 
+std::ostream &operator<<(std::ostream &out,
+                         specfem::TimeScheme::TimeScheme &ts);
 } // namespace TimeScheme
 } // namespace specfem
 #endif

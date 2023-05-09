@@ -5,45 +5,94 @@
 #include <ostream>
 #include <tuple>
 
-specfem::runtime_configuration::setup::setup(std::string parameter_file) {
-  YAML::Node yaml = YAML::LoadFile(parameter_file);
+specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
+                                             const std::string &default_file) {
+  YAML::Node parameter_yaml = YAML::LoadFile(parameter_file);
+  YAML::Node default_yaml = YAML::LoadFile(default_file);
 
-  const YAML::Node &runtime_config = yaml["parameters"];
+  const YAML::Node &runtime_config = parameter_yaml["parameters"];
+  const YAML::Node &default_config = default_yaml["default-parameters"];
+
   const YAML::Node &simulation_setup = runtime_config["simulation-setup"];
-
-  const YAML::Node &n_header = runtime_config["header"];
   const YAML::Node &n_solver = simulation_setup["solver"];
-  const YAML::Node &n_quadrature = simulation_setup["quadrature"];
-  const YAML::Node &n_run_setup = runtime_config["run-setup"];
-  const YAML::Node &n_databases = runtime_config["databases"];
-  const YAML::Node &n_seismogram = runtime_config["seismogram"];
 
-  this->header = new specfem::runtime_configuration::header(n_header);
+  try {
+    this->header = std::make_unique<specfem::runtime_configuration::header>(
+        runtime_config["header"]);
+  } catch (YAML::InvalidNode &e) {
+    std::ostringstream message;
+    message << "Error reading specfem parameter header. \n" << e.what();
+
+    throw std::runtime_error(message.str());
+  }
+
+  if (const YAML::Node &n_quadrature = simulation_setup["quadrature"]) {
+    this->quadrature =
+        std::make_unique<specfem::runtime_configuration::quadrature>(
+            n_quadrature);
+  } else if (const YAML::Node &n_quadrature = default_config["quadrature"]) {
+    this->quadrature =
+        std::make_unique<specfem::runtime_configuration::quadrature>(
+            n_quadrature);
+  } else {
+    throw std::runtime_error("Error reading specfem quadrature config.");
+  }
+
+  if (const YAML::Node &n_run_setup = runtime_config["run-setup"]) {
+    this->run_setup =
+        std::make_unique<specfem::runtime_configuration::run_setup>(
+            n_run_setup);
+  } else if (const YAML::Node &n_run_setup = default_yaml["run-setup"]) {
+    this->run_setup =
+        std::make_unique<specfem::runtime_configuration::run_setup>(
+            n_run_setup);
+  } else {
+    throw std::runtime_error("Error reading specfem runtime configuration.");
+  }
+
+  try {
+    this->databases = std::make_unique<
+        specfem::runtime_configuration::database_configuration>(
+        runtime_config["databases"]);
+  } catch (YAML::InvalidNode &e) {
+    std::ostringstream message;
+
+    message << "Error reading specfem database configuration. \n" << e.what();
+
+    throw std::runtime_error(message.str());
+  }
+
+  try {
+    this->receivers =
+        std::make_unique<specfem::runtime_configuration::receivers>(
+            runtime_config["receivers"]);
+  } catch (YAML::InvalidNode &e) {
+    std::ostringstream message;
+    message << "Error reading specfem receiver configuration. \n" << e.what();
+
+    throw std::runtime_error(message.str());
+  }
+
+  try {
+    this->seismogram =
+        std::make_unique<specfem::runtime_configuration::seismogram>(
+            runtime_config["seismogram"]);
+  } catch (YAML::InvalidNode &e) {
+    this->seismogram = NULL;
+  }
 
   try {
     const YAML::Node &n_time_marching = n_solver["time-marching"];
     const YAML::Node &n_timescheme = n_time_marching["time-scheme"];
 
     this->solver =
-        new specfem::runtime_configuration::solver::time_marching(n_timescheme);
-  } catch (YAML::ParserException &e) {
+        std::make_unique<specfem::runtime_configuration::solver::time_marching>(
+            n_timescheme);
+  } catch (YAML::InvalidNode &e) {
     std::ostringstream message;
-    message << "Error reading parameter file. \n"
-            << "Solver = " << n_solver["solver-type"].as<std::string>()
-            << "hasn't been implemented yet.\n"
-            << e.what();
+    message << "Error reading specfem solver configuration. \n" << e.what();
     throw std::runtime_error(message.str());
   }
-
-  this->run_setup = new specfem::runtime_configuration::run_setup(n_run_setup);
-  this->quadrature =
-      new specfem::runtime_configuration::quadrature(n_quadrature);
-
-  this->databases =
-      new specfem::runtime_configuration::database_configuration(n_databases);
-
-  this->seismogram =
-      new specfem::runtime_configuration::seismogram(n_seismogram);
 }
 
 std::string specfem::runtime_configuration::setup::print_header(

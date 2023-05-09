@@ -1,7 +1,7 @@
 #ifndef _ELASTIC_MATERIAL_HPP
 #define _ELASTIC_MATERIAL_HPP
 
-#include "enums.h"
+#include "constants.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
@@ -46,7 +46,7 @@ public:
    * properties
    */
   utilities::return_holder get_properties() override;
-  specfem::elements::type get_ispec_type() { return ispec_type; };
+  specfem::elements::type get_ispec_type() override { return ispec_type; };
 
   std::string print() const override;
 

@@ -1,7 +1,7 @@
 #ifndef _MOMENT_TENSOR_SOURCE_HPP
 #define _MOMENT_TENSOR_SOURCE_HPP
 
-#include "enums.h"
+#include "constants.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "source.hpp"

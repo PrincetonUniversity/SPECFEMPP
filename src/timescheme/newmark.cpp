@@ -84,13 +84,6 @@ void specfem::TimeScheme::Newmark::apply_corrector_phase(
   return;
 }
 
-void specfem::TimeScheme::TimeScheme::print(std::ostream &out) const {
-  out << "Time scheme wasn't initialized properly. Base class being called";
-
-  throw std::runtime_error(
-      "Time scheme wasn't initialized properly. Base class being called");
-}
-
 void specfem::TimeScheme::Newmark::print(std::ostream &message) const {
   message << "  Time Scheme:\n"
           << "------------------------------\n"
@@ -98,12 +91,4 @@ void specfem::TimeScheme::Newmark::print(std::ostream &message) const {
           << "    dt = " << this->deltat << "\n"
           << "    number of time steps = " << this->nstep << "\n"
           << "    Start time = " << this->t0 << "\n";
-}
-
-std::ostream &
-specfem::TimeScheme::operator<<(std::ostream &out,
-                                specfem::TimeScheme::TimeScheme &ts) {
-  ts.print(out);
-
-  return out;
 }

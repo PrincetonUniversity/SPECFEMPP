@@ -75,11 +75,6 @@ public:
   void
   apply_corrector_phase(const specfem::Domain::Domain *domain_class) override;
   /**
-   * @brief
-   *
-   * @return true
-   * @return false
-  /**
    * @brief Compute if seismogram needs to be calculated at this timestep
    *
    */
@@ -107,7 +102,7 @@ public:
   void increment_seismogram_step() override { isig_step++; }
 
   /**
-   * @brief
+   * @brief Log newmark timescheme information to console
    *
    */
   void print(std::ostream &out) const override;
@@ -124,9 +119,6 @@ private:
                                ///< outputs
   int isig_step = 0;           ///< current seismogram step
 };
-
-std::ostream &operator<<(std::ostream &out,
-                         specfem::TimeScheme::TimeScheme &ts);
 } // namespace TimeScheme
 } // namespace specfem
 #endif

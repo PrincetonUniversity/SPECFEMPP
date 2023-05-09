@@ -19,28 +19,15 @@ specfem::runtime_configuration::seismogram::seismogram(
     throw std::runtime_error(message.str());
   }
 
-  const int nstep_between_samples =
-      seismogram["nstep_between_samples"].as<int>();
+  try {
+    *this = specfem::runtime_configuration::seismogram(
+        seismogram["seismogram-format"].as<std::string>(), output_folder);
+  } catch (YAML::ParserException &e) {
+    std::ostringstream message;
 
-  *this = specfem::runtime_configuration::seismogram(
-      seismogram["stations-file"].as<std::string>(),
-      seismogram["angle"].as<type_real>(),
-      seismogram["nstep_between_samples"].as<int>(),
-      seismogram["seismogram-format"].as<std::string>(), output_folder);
+    message << "Error reading seismogram config. \n" << e.what();
 
-  // Allocate seismogram types
-  assert(seismogram["seismogram-type"].IsSequence());
-
-  for (YAML::Node seismogram_type : seismogram["seismogram-type"]) {
-    if (seismogram_type.as<std::string>() == "displacement") {
-      this->stypes.push_back(specfem::seismogram::displacement);
-    } else if (seismogram_type.as<std::string>() == "velocity") {
-      this->stypes.push_back(specfem::seismogram::velocity);
-    } else if (seismogram_type.as<std::string>() == "acceleration") {
-      this->stypes.push_back(specfem::seismogram::acceleration);
-    } else {
-      std::runtime_error("Seismograms config could not be read properly");
-    }
+    std::runtime_error(message.str());
   }
 
   return;

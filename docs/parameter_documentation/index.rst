@@ -8,6 +8,7 @@ Overall run-time behaviour of simulation can be configured using a configuration
 .. toctree::
     header
     simulation_setup
+    receivers
     seismogram_setup
     run_setup
     databases

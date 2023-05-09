@@ -1,5 +1,12 @@
-#ifndef ENUMS_H
-#define ENUMS_H
+#ifndef _CONSTANTS_HPP
+#define _CONSTANTS_HPP
+
+#include "specfem_setup.hpp"
+#include <Kokkos_Core.hpp>
+#include <string>
+
+const type_real pi = 2 * Kokkos::acos(0.0);
+const std::string __default_file__ = "@CMAKE_SOURCE_DIR@/parameter_files/defaults/default.yaml";
 
 namespace specfem {
 

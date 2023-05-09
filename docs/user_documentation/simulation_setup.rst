@@ -39,12 +39,14 @@ Example configuration file:
               dt: 1.1e-5
               nstep: 100
 
-      seismogram:
+      receivers:
         stations-file: <PATH TO STATIONS FILE>
         angle: 0.0
         seismogram-type:
           - velocity
         nstep_between_samples: 1
+
+      seismogram:
         seismogram-format: ascii
         output-folder: <PATH TO DIRECTORY FOR STORING OUTPUTS>
 

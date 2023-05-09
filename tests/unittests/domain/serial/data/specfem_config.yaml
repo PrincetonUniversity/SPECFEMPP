@@ -22,14 +22,13 @@ parameters:
           dt: 1e-3
           nstep: 1600
 
-  seismogram:
+  receivers:
     stations-file: "../DATA/STATIONS"
     angle: 0.0
     seismogram-type:
       - displacement
       - velocity
     nstep_between_samples: 1
-    seismogram-format: seismic_unix
 
   ## Runtime setup
   run-setup:

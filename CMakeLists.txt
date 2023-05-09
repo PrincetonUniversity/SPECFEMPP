@@ -31,11 +31,15 @@ include_directories(BEFORE SYSTEM ${yaml_SOURCE_DIR} ${yaml_BINARY_DIR}/include)
 
 add_subdirectory(boost-cmake)
 
+configure_file(constants.hpp.in constants.hpp)
+
 include_directories(include)
+include_directories(${CMAKE_BINARY_DIR})
 
 # Build specfem2d libraries
 add_library(
         quadrature
+        src/quadrature/quadrature.cpp
         src/quadrature/gll/gll_utils.cpp
         src/quadrature/gll/gll_library.cpp
         src/quadrature/gll/lagrange_poly.cpp
@@ -224,6 +228,7 @@ target_link_libraries(
 
 add_library(
         timescheme
+        src/timescheme/timescheme.cpp
         src/timescheme/newmark.cpp
 )
 
@@ -263,6 +268,7 @@ add_library(
         src/parameter_parser/database_configuration.cpp
         src/parameter_parser/header.cpp
         src/parameter_parser/quadrature.cpp
+        src/parameter_parser/receivers.cpp
         src/parameter_parser/seismogram.cpp
         src/parameter_parser/writer.cpp
         src/parameter_parser/setup.cpp
@@ -301,6 +307,7 @@ target_link_libraries(
 
 # Include tests
 add_subdirectory(tests/unittests)
+add_subdirectory(examples)
 
 # Doxygen
 

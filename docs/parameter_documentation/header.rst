@@ -16,7 +16,7 @@ Parameter definitions
 **documentation** : Define header section
 
 **Parameter name** : ``header.title``
------------------------------
+*****************************************
 
 **default value**: None
 
@@ -25,7 +25,7 @@ Parameter definitions
 **documentation**: Brief name for this simulation
 
 **Parameter name** : ``header.description``
-----------------------------------
+*********************************************
 
 **default value**: None
 

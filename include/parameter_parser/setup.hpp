@@ -4,11 +4,13 @@
 #include "database_configuration.hpp"
 #include "header.hpp"
 #include "quadrature.hpp"
+#include "receivers.hpp"
 #include "run_setup.hpp"
 #include "seismogram.hpp"
 #include "solver/interface.hpp"
 #include "specfem_setup.hpp"
 #include "yaml-cpp/yaml.h"
+#include <memory>
 #include <tuple>
 
 namespace specfem {
@@ -27,8 +29,10 @@ public:
    * @brief Construct a new setup object
    *
    * @param parameter_file Path to a configuration YAML file
+   * @param default_file Path to a YAML file to be used to instantiate default
+   * parameters
    */
-  setup(std::string parameter_file);
+  setup(const std::string &parameter_file, const std::string &default_file);
   /**
    * @brief Instantiate quadrature objects in x and z dimensions
    *
@@ -47,11 +51,8 @@ public:
    * used in the solver algorithm
    */
   specfem::TimeScheme::TimeScheme *instantiate_solver() {
-    auto it = this->solver->instantiate(
-        this->seismogram->get_nstep_between_samples());
-
-    // User output
-    std::cout << *it << "\n";
+    auto it =
+        this->solver->instantiate(this->receivers->get_nstep_between_samples());
 
     return it;
   }
@@ -95,7 +96,7 @@ public:
    * @return std::string path to stations file
    */
   std::string get_stations_file() const {
-    return seismogram->get_stations_file();
+    return this->receivers->get_stations_file();
   }
 
   /**
@@ -103,7 +104,7 @@ public:
    *
    * @return type_real angle of the receiver
    */
-  type_real get_receiver_angle() const { return seismogram->get_angle(); }
+  type_real get_receiver_angle() const { return this->receivers->get_angle(); }
 
   /**
    * @brief Get the types of siesmograms to be calculated
@@ -112,7 +113,7 @@ public:
    * calculated
    */
   std::vector<specfem::seismogram::type> get_seismogram_types() const {
-    return this->seismogram->get_seismogram_types();
+    return this->receivers->get_seismogram_types();
   }
 
   /**
@@ -127,23 +128,35 @@ public:
   specfem::writer::writer *instantiate_seismogram_writer(
       std::vector<specfem::receivers::receiver *> &receivers,
       specfem::compute::receivers *compute_receivers) const {
-    return this->seismogram->instantiate_seismogram_writer(
-        receivers, compute_receivers, this->solver->get_dt(),
-        this->solver->get_t0());
+    if (this->seismogram) {
+      return this->seismogram->instantiate_seismogram_writer(
+          receivers, compute_receivers, this->solver->get_dt(),
+          this->solver->get_t0(), this->receivers->get_nstep_between_samples());
+    } else {
+      return NULL;
+    }
   }
 
 private:
-  specfem::runtime_configuration::header *header; ///< Pointer to header object
-  specfem::runtime_configuration::solver::solver *solver; ///< Pointer to solver
-                                                          ///< object
-  specfem::runtime_configuration::run_setup *run_setup;   ///< Pointer to
-                                                          ///< run_setup object
-  specfem::runtime_configuration::quadrature *quadrature; ///< Pointer to
-                                                          ///< quadrature object
-  specfem::runtime_configuration::seismogram *seismogram; ///< Pointer to
-                                                          ///< seismogram object
-  specfem::runtime_configuration::database_configuration
-      *databases; ///< Get database filenames
+  std::unique_ptr<specfem::runtime_configuration::header> header; ///< Pointer
+                                                                  ///< to header
+                                                                  ///< object
+  std::unique_ptr<specfem::runtime_configuration::solver::solver>
+      solver; ///< Pointer to solver
+              ///< object
+  std::unique_ptr<specfem::runtime_configuration::run_setup>
+      run_setup; ///< Pointer to
+                 ///< run_setup object
+  std::unique_ptr<specfem::runtime_configuration::quadrature>
+      quadrature; ///< Pointer to
+                  ///< quadrature object
+  std::unique_ptr<specfem::runtime_configuration::receivers>
+      receivers; ///< Pointer to receivers object
+  std::unique_ptr<specfem::runtime_configuration::seismogram>
+      seismogram; ///< Pointer to
+                  ///< seismogram object
+  std::unique_ptr<specfem::runtime_configuration::database_configuration>
+      databases; ///< Get database filenames
 };
 } // namespace runtime_configuration
 } // namespace specfem

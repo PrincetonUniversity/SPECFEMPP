@@ -1,7 +1,7 @@
 #ifndef _ACOUSTIC_MATERIAL_HPP
 #define _ACOUSTIC_MATERIAL_HPP
 
-#include "enums.h"
+#include "constants.hpp"
 #include "material.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
@@ -26,7 +26,7 @@ public:
   void assign(utilities::input_holder &holder) override;
   friend std::ostream &operator<<(std::ostream &out,
                                   const acoustic_material &h);
-  specfem::elements::type get_ispec_type() { return ispec_type; };
+  specfem::elements::type get_ispec_type() override { return ispec_type; };
   std::string print() const override;
 
 private:

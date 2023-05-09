@@ -2,6 +2,7 @@
 #include "../MPI_environment.hpp"
 #include "../utilities/include/compare_array.h"
 #include "compute/interface.hpp"
+#include "constants.hpp"
 #include "domain/interface.hpp"
 #include "material/interface.hpp"
 #include "mesh/mesh.hpp"
@@ -49,7 +50,7 @@ TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
 
   const std::string parameter_file = test_config.specfem_config;
 
-  specfem::runtime_configuration::setup setup(parameter_file);
+  specfem::runtime_configuration::setup setup(parameter_file, __default_file__);
 
   const auto [database_file, sources_file] = setup.get_databases();
 
