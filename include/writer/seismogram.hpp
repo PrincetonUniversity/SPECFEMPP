@@ -2,7 +2,7 @@
 #define _SEISMOGRAM_WRITER_HPP
 
 #include "compute/interface.hpp"
-#include "enums.h"
+#include "constants.hpp"
 #include "receiver/interface.hpp"
 #include "specfem_setup.hpp"
 #include "writer.hpp"

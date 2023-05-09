@@ -3,7 +3,6 @@
 #include "compute/interface.hpp"
 #include "material/interface.hpp"
 #include "mesh/mesh.hpp"
-#include "params.h"
 #include "source/interface.hpp"
 #include "specfem_setup.hpp"
 #include "yaml-cpp/yaml.h"
@@ -159,8 +158,6 @@ TEST(SOURCE_LOCATION_TESTS, compute_source_locations) {
       new specfem::quadrature::gll::gll(0.0, 0.0, 5);
   specfem::quadrature::quadrature *gllz =
       new specfem::quadrature::gll::gll(0.0, 0.0, 5);
-
-  specfem::parameters params;
 
   // Read mesh for binary database for the test
   std::vector<specfem::material::material *> materials;

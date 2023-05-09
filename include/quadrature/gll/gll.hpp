@@ -94,6 +94,10 @@ public:
    *
    */
   int get_N() const override { return this->N; }
+  /**
+   * @brief Log GLL quadrature information to console
+   */
+  void print(std::ostream &out) const override;
 
 private:
   type_real alpha; ///< alpha value of the quadrature
