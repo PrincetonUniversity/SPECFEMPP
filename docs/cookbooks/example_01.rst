@@ -610,10 +610,7 @@ Now that we have generated a mesh and defined the sources, we need to set up the
       simulation-setup:
         ## quadrature setup
         quadrature:
-          alpha: 0.0
-          beta: 0.0
-          ngllx: 5
-          ngllz: 5
+          quadrature-type: GLL4
 
         ## Solver setup
         solver:
@@ -624,12 +621,14 @@ Now that we have generated a mesh and defined the sources, we need to set up the
               dt: 1.1e-5
               nstep: 100
 
-      seismogram:
+      receivers:
         stations-file: <PATH TO STATIONS FILE>
         angle: 0.0
         seismogram-type:
           - velocity
         nstep_between_samples: 1
+
+      seismogram:
         seismogram-format: ascii
         output-folder: <PATH TO DIRECTORY FOR STORING OUTPUTS>
 
