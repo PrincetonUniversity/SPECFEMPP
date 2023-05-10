@@ -23,7 +23,7 @@ Parameter definitions
 **Parameter Name** : ``quadrature.alpha``
 ******************************************
 
-**default value** : 0.0
+**default value** : None
 
 **possible values** : [float, double]
 
@@ -32,7 +32,7 @@ Parameter definitions
 **Parameter Name** : ``quadrature.beta``
 *****************************************
 
-**default value** : 0.0
+**default value** : None
 
 **possible values** : [float, double]
 
@@ -41,7 +41,7 @@ Parameter definitions
 **Parameter Name** : ``quadrature.ngllx``
 ******************************************
 
-**default value** : 5
+**default value** : None
 
 **possible values** : [int]
 
@@ -50,7 +50,7 @@ Parameter definitions
 **Parameter Name** : ``quadrature.ngllz``
 ******************************************
 
-**default value** : 5
+**default value** : None
 
 **possible values** : [int]
 
@@ -58,7 +58,7 @@ Parameter definitions
 
 .. note::
 
-    Below is example of 4th order GLL quadrature:
+    Below is example of 4th order GLL quadrature with 5 GLL points:
 
     .. code:: yaml
 
@@ -73,16 +73,16 @@ Parameter definitions
 
 **default value** : None
 
-**possible values** : [GLL4, GLL8]
+**possible values** : [GLL4, GLL7]
 
 **decumentation** : Predefined quadrature types.
 
-1. ``GLL4`` defines 4th order GLL quadrature.
-2. ``GLL7`` defines 7th order GLL quadrature.
+1. ``GLL4`` defines 4th order GLL quadrature with 5 GLL points.
+2. ``GLL7`` defines 7th order GLL quadrature with 8 GLL points.
 
 .. note::
 
-    4th order GLL quadrature using pre-defined quadrature types:
+    4th order GLL quadrature with 5 GLL points using pre-defined quadrature types:
 
     .. code:: yaml
 
