@@ -21,7 +21,7 @@ pipeline{
 
                 echo ' Building '
 
-                sh 'cmake3 -S . -B build -DCMAKE_C_COMPILER=icx -DCMAKE_CXX_COMPILER=icpx -DCMAKE_BUILD_TYPE=Release'
+                sh 'cmake3 -S . -B build -DCMAKE_C_COMPILER=`which icx` -DCMAKE_CXX_COMPILER=`which icpx` -DCMAKE_BUILD_TYPE=Release'
 
                 sh 'cmake3 --build build'
 
