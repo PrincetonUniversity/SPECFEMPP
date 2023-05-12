@@ -8,25 +8,49 @@ pipeline{
 
     stages{
 
-        stage( ' Build ' ){
+        stage( ' Load git modules ' ){
+
             steps {
 
                 echo ' Getting git submodules '
                 sh 'git submodule init'
                 sh 'git submodule update'
+            }
+        }
 
+        stage ( ' Load required modules ' ){
+
+            steps {
                 echo ' Loading required module '
 
                 sh 'module load intel/2022.2.0'
+            }
+        }
 
+        stage ( ' Build ' ){
+            environment {
+                // Define C compiler
+                CC = """${sh(
+                        returnStdout: true,
+                        script: 'echo $(which icx)'
+                    )}"""
+                // Using returnStatus
+                CXX = """${sh(
+                        returnStdout: true,
+                        script: 'echo $(which icpx)'
+                    )}"""
+            }
+
+            steps {
                 echo ' Building '
 
-                sh 'cmake3 -S . -B build -DCMAKE_C_COMPILER=`which icx` -DCMAKE_CXX_COMPILER=`which icpx` -DCMAKE_BUILD_TYPE=Release'
+                sh 'cmake3 -S . -B build -DCMAKE_BUILD_TYPE=Release'
 
                 sh 'cmake3 --build build'
 
                 echo ' Build completed '
             }
+
         }
 
         stage( ' Test ' ){
