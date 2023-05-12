@@ -306,7 +306,7 @@ target_link_libraries(
 )
 
 # Include tests
-add_subdirectory(tests/unittests)
+add_subdirectory(tests/unit-tests)
 add_subdirectory(examples)
 
 # Doxygen
