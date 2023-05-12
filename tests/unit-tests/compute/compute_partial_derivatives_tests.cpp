@@ -64,7 +64,7 @@ test_config get_test_config(std::string config_filename,
 TEST(COMPUTE_TESTS, compute_partial_derivatives) {
 
   std::string config_filename =
-      "../../../tests/unittests/compute/test_config.yml";
+      "../../../tests/unit-tests/compute/test_config.yml";
   test_config test_config =
       get_test_config(config_filename, MPIEnvironment::mpi_);
 

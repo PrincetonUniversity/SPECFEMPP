@@ -1,7 +1,7 @@
 Tests:
 
   serial:
-    specfem_config: "../../../tests/unittests/seismogram/serial/specfem_config.yaml"
-    displacement_field: "../../../tests/unittests/seismogram/serial/displs_00000.bin"
-    velocity_field: "../../../tests/unittests/seismogram/serial/veloc_00000.bin"
-    acceleration_field: "../../../tests/unittests/seismogram/serial/accel_00000.bin"
+    specfem_config: "../../../tests/unit-tests/seismogram/serial/specfem_config.yaml"
+    displacement_field: "../../../tests/unit-tests/seismogram/serial/displs_00000.bin"
+    velocity_field: "../../../tests/unit-tests/seismogram/serial/veloc_00000.bin"
+    acceleration_field: "../../../tests/unit-tests/seismogram/serial/accel_00000.bin"

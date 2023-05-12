@@ -61,7 +61,7 @@ TEST(COMPUTE_TESTS, compute_ibool) {
 
   std::cout << "Hello -2" << std::endl;
   std::string config_filename =
-      "../../../tests/unittests/compute/test_config.yml";
+      "../../../tests/unit-tests/compute/test_config.yml";
   test_config test_config =
       get_test_config(config_filename, MPIEnvironment::mpi_);
 

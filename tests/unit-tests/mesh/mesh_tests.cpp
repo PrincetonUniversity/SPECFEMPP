@@ -56,7 +56,7 @@ test_config get_test_config(std::string config_filename,
 TEST(MESH_TESTS, fortran_binary_reader) {
 
   std::string config_filename =
-      "../../../tests/unittests/mesh/test_config.yaml";
+      "../../../tests/unit-tests/mesh/test_config.yaml";
   test_config test_config =
       get_test_config(config_filename, MPIEnvironment::mpi_);
 

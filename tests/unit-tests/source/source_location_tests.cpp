@@ -143,7 +143,7 @@ test_config parse_test_config(std::string config_filename) {
  */
 TEST(SOURCE_LOCATION_TESTS, compute_source_locations) {
   std::string config_filename =
-      "../../../tests/unittests/source/test_config.yml";
+      "../../../tests/unit-tests/source/test_config.yml";
 
   //  alias the mpi environment pointer
   specfem::MPI::MPI *mpi = MPIEnvironment::mpi_;

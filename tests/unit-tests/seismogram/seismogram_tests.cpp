@@ -73,7 +73,7 @@ void read_field(
 
 TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
   std::string config_filename =
-      "../../../tests/unittests/seismogram/test_config.yaml";
+      "../../../tests/unit-tests/seismogram/test_config.yaml";
 
   specfem::MPI::MPI *mpi = MPIEnvironment::mpi_;
 
