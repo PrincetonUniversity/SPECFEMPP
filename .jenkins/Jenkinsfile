@@ -1,6 +1,6 @@
 pipeline{
 
-    agent none
+    agent della-rk9481
 
     stages{
 
