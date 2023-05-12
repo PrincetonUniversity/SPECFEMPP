@@ -30,15 +30,9 @@ pipeline{
         stage ( ' Build ' ){
             environment {
                 // Define C compiler
-                CC = """${sh(
-                        returnStdout: true,
-                        script: 'echo "/opt/intel/oneapi/compiler/2022.2.0/linux/bin/icx"'
-                    )}"""
-                // Using returnStatus
-                CXX = """${sh(
-                        returnStdout: true,
-                        script: 'echo "/opt/intel/oneapi/compiler/2022.2.0/linux/bin/icpx"'
-                    )}"""
+                CC = '/opt/intel/oneapi/compiler/2022.2.0/linux/bin/icx'
+                // Using CXX compiler
+                CXX = '/opt/intel/oneapi/compiler/2022.2.0/linux/bin/icpx'
             }
 
             steps {
