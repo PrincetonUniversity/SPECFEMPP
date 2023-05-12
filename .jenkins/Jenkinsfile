@@ -32,12 +32,12 @@ pipeline{
                 // Define C compiler
                 CC = """${sh(
                         returnStdout: true,
-                        script: 'echo $(which icx)'
+                        script: 'echo "/opt/intel/oneapi/compiler/2022.2.0/linux/bin/icx"'
                     )}"""
                 // Using returnStatus
                 CXX = """${sh(
                         returnStdout: true,
-                        script: 'echo $(which icpx)'
+                        script: 'echo "/opt/intel/oneapi/compiler/2022.2.0/linux/bin/icpx"'
                     )}"""
             }
 
