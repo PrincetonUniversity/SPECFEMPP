@@ -4,34 +4,34 @@ pipeline{
 
     stages{
 
-        stage( " Build main " ){
+        stage( ' Build main ' ){
             steps {
 
-                echo " Getting git submodules "
-                git submodule init
-                git submodule update
+                echo ' Getting git submodules '
+                sh 'git submodule init'
+                sh 'git submodule update'
 
-                echo " Loading required module "
+                echo ' Loading required module '
 
-                echo " Building "
+                echo ' Building '
 
-                cmake3 -S . -B build -DCMAKE_BUILD_TYPE=Release
+                sh 'cmake3 -S . -B build -DCMAKE_BUILD_TYPE=Release'
 
-                cmake3 --build build
+                sh 'cmake3 --build build'
 
-                echo " Build completed "
+                echo ' Build completed '
             }
         }
 
-        stage( " Test Main " ){
+        stage( ' Test Main ' ){
 
             steps {
 
-                echo " Running Unit Tests "
+                echo ' Running Unit Tests '
 
-                cd build/tests/unit-tests
+                sh 'cd build/tests/unit-tests'
 
-                ctest
+                sh 'ctest'
             }
         }
     }
