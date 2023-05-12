@@ -42,7 +42,7 @@ test_config parse_test_config(std::string test_configuration_file,
 
 TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
   std::string config_filename =
-      "../../../tests/unittests/domain/test_config.yaml";
+      "../../../tests/unit-tests/domain/test_config.yaml";
 
   specfem::MPI::MPI *mpi = MPIEnvironment::mpi_;
 

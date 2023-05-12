@@ -44,7 +44,7 @@ test_config parse_test_config(std::string test_configuration_file,
 
 TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
   std::string config_filename =
-      "../../../tests/unittests/displacement_tests/Newmark/test_config.yaml";
+      "../../../tests/unit-tests/displacement_tests/Newmark/test_config.yaml";
 
   specfem::MPI::MPI *mpi = MPIEnvironment::mpi_;
 

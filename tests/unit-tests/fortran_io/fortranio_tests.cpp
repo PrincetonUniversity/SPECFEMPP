@@ -10,7 +10,7 @@
 
 TEST(iotests, fortran_io) {
 
-  std::string filename = "../../../tests/unittests/fortran_io/input.bin";
+  std::string filename = "../../../tests/unit-tests/fortran_io/input.bin";
   std::ifstream stream;
 
   int ival;
