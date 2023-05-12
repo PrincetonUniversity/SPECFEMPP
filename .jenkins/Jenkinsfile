@@ -2,7 +2,7 @@ pipeline{
 
     agent {
         node {
-            label 'della-rk9481'
+            label 'della_rk9481'
         }
     }
 
