@@ -8,7 +8,7 @@ pipeline{
 
     stages{
 
-        stage( ' Build main ' ){
+        stage( ' Build ' ){
             steps {
 
                 echo ' Getting git submodules '
@@ -17,9 +17,11 @@ pipeline{
 
                 echo ' Loading required module '
 
+                sh 'module load intel/2022.2.0'
+
                 echo ' Building '
 
-                sh 'cmake3 -S . -B build -DCMAKE_BUILD_TYPE=Release'
+                sh 'cmake3 -S . -B build -DCMAKE_C_COMPILER=icx -DCMAKE_CXX_COMPILER=icpx -DCMAKE_BUILD_TYPE=Release'
 
                 sh 'cmake3 --build build'
 
@@ -27,15 +29,13 @@ pipeline{
             }
         }
 
-        stage( ' Test Main ' ){
+        stage( ' Test ' ){
 
             steps {
 
                 echo ' Running Unit Tests '
 
-                sh 'cd build/tests/unit-tests'
-
-                sh 'ctest'
+                sh 'cd build/tests/unit-tests && ctest'
             }
         }
     }
