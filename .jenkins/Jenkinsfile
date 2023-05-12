@@ -1,6 +1,10 @@
 pipeline{
 
-    agent della-rk9481
+    agent {
+        node {
+            label 'della-rk9481'
+        }
+    }
 
     stages{
 
