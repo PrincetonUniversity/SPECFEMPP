@@ -17,41 +17,41 @@ pipeline{
                         values '', '-DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON'
                     }
                 }
-            }
-            stages {
-                stage( ' Load git modules ' ){
-                    steps {
-                        echo ' Getting git submodules '
-                        sh 'git submodule init'
-                        sh 'git submodule update'
+                stages {
+                    stage( ' Load git modules ' ){
+                        steps {
+                            echo ' Getting git submodules '
+                            sh 'git submodule init'
+                            sh 'git submodule update'
+                        }
                     }
-                }
-                stage ( ' Load required modules ' ){
-                    steps {
-                        echo ' Loading required module '
-                        sh 'module load cudatoolkit/11.7'
+                    stage ( ' Load required modules ' ){
+                        steps {
+                            echo ' Loading required module '
+                            sh 'module load cudatoolkit/11.7'
+                        }
                     }
-                }
-                stage ( ' Build ' ){
-                    environment {
-                        // Define C compiler
-                        CC = 'cc'
-                        // Using CXX compiler
-                        CXX = 'c++'
-                        // CMAKE build flags
-                        CMAKE_BUILD_FLAGS = '${HostSpace} ${DeviceSpace}'
+                    stage ( ' Build ' ){
+                        environment {
+                            // Define C compiler
+                            CC = 'cc'
+                            // Using CXX compiler
+                            CXX = 'c++'
+                            // CMAKE build flags
+                            CMAKE_BUILD_FLAGS = '${HostSpace} ${DeviceSpace}'
+                        }
+                        steps {
+                            echo ' Building ${CMAKE_BUILD_FLAGS}'
+                            sh 'cmake3 -S . -B build_GNU -DCMAKE_BUILD_TYPE=Release ${CMAKE_BUILD_FLAGS}'
+                            sh 'cmake3 --build build'
+                            echo ' Build completed '
+                        }
                     }
-                    steps {
-                        echo ' Building ${CMAKE_BUILD_FLAGS}'
-                        sh 'cmake3 -S . -B build_GNU -DCMAKE_BUILD_TYPE=Release ${CMAKE_BUILD_FLAGS}'
-                        sh 'cmake3 --build build'
-                        echo ' Build completed '
-                    }
-                }
-                stage ( ' Clean ' ){
-                    steps {
-                        echo ' Cleaning '
-                        sh 'rm -rf build_GNU'
+                    stage ( ' Clean ' ){
+                        steps {
+                            echo ' Cleaning '
+                            sh 'rm -rf build_GNU'
+                        }
                     }
                 }
             }
@@ -68,41 +68,41 @@ pipeline{
                         values ''
                     }
                 }
-            }
-            stages {
-                stage( ' Load git modules ' ){
-                    steps {
-                        echo ' Getting git submodules '
-                        sh 'git submodule init'
-                        sh 'git submodule update'
+                stages {
+                    stage( ' Load git modules ' ){
+                        steps {
+                            echo ' Getting git submodules '
+                            sh 'git submodule init'
+                            sh 'git submodule update'
+                        }
                     }
-                }
-                stage ( ' Load required modules ' ){
-                    steps {
-                        echo ' Loading required module '
-                        sh 'module load intel/2022.2.0'
+                    stage ( ' Load required modules ' ){
+                        steps {
+                            echo ' Loading required module '
+                            sh 'module load intel/2022.2.0'
+                        }
                     }
-                }
-                stage ( ' Build ' ){
-                    environment {
-                        // Define C compiler
-                        CC = '/opt/intel/oneapi/compiler/2022.2.0/linux/bin/icx'
-                        // Using CXX compiler
-                        CXX = '/opt/intel/oneapi/compiler/2022.2.0/linux/bin/icpx'
-                        // CMAKE build flags
-                        CMAKE_BUILD_FLAGS = '${HostSpace} ${DeviceSpace}'
+                    stage ( ' Build ' ){
+                        environment {
+                            // Define C compiler
+                            CC = '/opt/intel/oneapi/compiler/2022.2.0/linux/bin/icx'
+                            // Using CXX compiler
+                            CXX = '/opt/intel/oneapi/compiler/2022.2.0/linux/bin/icpx'
+                            // CMAKE build flags
+                            CMAKE_BUILD_FLAGS = '${HostSpace} ${DeviceSpace}'
+                        }
+                        steps {
+                            echo ' Building ${CMAKE_BUILD_FLAGS}'
+                            sh 'cmake3 -S . -B build_INTEL -DCMAKE_BUILD_TYPE=Release ${CMAKE_BUILD_FLAGS}'
+                            sh 'cmake3 --build build'
+                            echo ' Build completed '
+                        }
                     }
-                    steps {
-                        echo ' Building ${CMAKE_BUILD_FLAGS}'
-                        sh 'cmake3 -S . -B build_INTEL -DCMAKE_BUILD_TYPE=Release ${CMAKE_BUILD_FLAGS}'
-                        sh 'cmake3 --build build'
-                        echo ' Build completed '
-                    }
-                }
-                stage ( ' Clean ' ){
-                    steps {
-                        echo ' Cleaning '
-                        sh 'rm -rf build_INTEL'
+                    stage ( ' Clean ' ){
+                        steps {
+                            echo ' Cleaning '
+                            sh 'rm -rf build_INTEL'
+                        }
                     }
                 }
             }
