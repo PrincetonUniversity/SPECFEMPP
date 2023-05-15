@@ -14,8 +14,10 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
 endif()
 
 if (DEFINED Kokkos_ENABLE_CUDA)
-        set(Kokkos_ENABLE_CUDA_LAMBDA ON)
-        set(Kokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE ON)
+        if (Kokkos_ENABLE_CUDA EQUAL ON)
+                set(Kokkos_ENABLE_CUDA_LAMBDA ON)
+                set(Kokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE ON)
+        endif()
 endif()
 
 # Install Kokkos as a dependency
