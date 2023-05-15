@@ -10,11 +10,11 @@ pipeline{
                 axes {
                     axis{
                         name 'HostSpace'
-                        values '-DKokkos_SERIAL=ON', '-DKokkos_OPENMP=ON'
+                        values '-DKokkos_ENABLE_SERIAL=ON', '-DKokkos_ENABLE_OPENMP=ON'
                     }
                     axis{
                         name 'DeviceSpace'
-                        values '', '-DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON'
+                        values '-DKokkos_ENABLE_CUDA=OFF', '-DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON'
                     }
                 }
                 stages {
@@ -61,11 +61,11 @@ pipeline{
                 axes {
                     axis{
                         name 'HostSpace'
-                        values '-DKokkos_SERIAL=ON', '-DKokkos_OPENMP=ON'
+                        values '-DKokkos_ENABLE_SERIAL=ON', '-DKokkos_ENABLE_OPENMP=ON'
                     }
                     axis{
                         name 'DeviceSpace'
-                        values ''
+                        values '-DKokkos_ENABLE_CUDA=OFF'
                     }
                 }
                 stages {
