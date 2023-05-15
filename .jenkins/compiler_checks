@@ -1,0 +1,100 @@
+pipeline{
+    agent {
+        node {
+            label 'della_rk9481'
+        }
+    }
+    stages{
+        matrix {
+            axes {
+                axis{
+                    name 'HostSpace'
+                    values '-DKokkos_SERIAL=ON', '-DKokkos_OPENMP=ON'
+                }
+                axis{
+                    name 'DeviceSpace'
+                    values '', '-DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON'
+                }
+            }
+        }
+        stage(' GNU Compilation Check '){
+            stages {
+                stage( ' Load git modules ' ){
+                    steps {
+                        echo ' Getting git submodules '
+                        sh 'git submodule init'
+                        sh 'git submodule update'
+                    }
+                }
+                stage ( ' Load required modules ' ){
+                    steps {
+                        echo ' Loading required module '
+                        sh 'module load cudatoolkit/11.7'
+                    }
+                }
+                stage ( ' Build ' ){
+                    environment {
+                        // Define C compiler
+                        CC = 'cc'
+                        // Using CXX compiler
+                        CXX = 'c++'
+                        // CMAKE build flags
+                        CMAKE_BUILD_FLAGS = '${HostSpace} ${DeviceSpace}'
+                    }
+                    steps {
+                        echo ' Building '
+                        sh 'cmake3 -S . -B build_GNU -DCMAKE_BUILD_TYPE=Release ${CMAKE_BUILD_FLAGS}'
+                        sh 'cmake3 --build build'
+                        echo ' Build completed '
+                    }
+                }
+                stage ( ' Clean ' ){
+                    steps {
+                        echo ' Cleaning '
+                        sh 'rm -rf build_GNU'
+                    }
+                }
+            }
+        }
+        stage(' Intel Compilation Check '){
+            stages {
+                stage( ' Load git modules ' ){
+                    steps {
+                        echo ' Getting git submodules '
+                        sh 'git submodule init'
+                        sh 'git submodule update'
+                    }
+                }
+                stage ( ' Load required modules ' ){
+                    steps {
+                        echo ' Loading required module '
+                        sh 'module load intel/2022.2.0'
+                        sh 'module load cudatoolkit/11.7'
+                    }
+                }
+                stage ( ' Build ' ){
+                    environment {
+                        // Define C compiler
+                        CC = '/opt/intel/oneapi/compiler/2022.2.0/linux/bin/icx'
+                        // Using CXX compiler
+                        CXX = '/opt/intel/oneapi/compiler/2022.2.0/linux/bin/icpx'
+                        // CMAKE build flags
+                        CMAKE_BUILD_FLAGS = '${HostSpace} ${DeviceSpace}'
+                    }
+                    steps {
+                        echo ' Building '
+                        sh 'cmake3 -S . -B build_INTEL -DCMAKE_BUILD_TYPE=Release ${CMAKE_BUILD_FLAGS}'
+                        sh 'cmake3 --build build'
+                        echo ' Build completed '
+                    }
+                }
+                stage ( ' Clean ' ){
+                    steps {
+                        echo ' Cleaning '
+                        sh 'rm -rf build_INTEL'
+                    }
+                }
+            }
+        }
+    }
+}
