@@ -14,7 +14,7 @@ pipeline{
                     }
                     axis{
                         name 'DeviceSpace'
-                        values 'NONE;-DKokkos_ENABLE_CUDA=OFF', 'CUDA;-DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON'
+                        values 'NONE;-DKokkos_ENABLE_CUDA=OFF', 'CUDA_AMPERE80;-DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON', 'CUDA_VOLTA70;-DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_VOLTA70=ON', 'CUDA_PASCAL60;-DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_PASCAL60=ON'
                     }
                 }
                 stages {
@@ -37,6 +37,8 @@ pipeline{
                             CC = 'cc'
                             // Using CXX compiler
                             CXX = 'c++'
+                            // Define cuda root directory
+                            CUDA_ROOT='/usr/local/cuda-11.7'
                             // CMAKE build flags
                             CMAKE_HOST_NAME = """${sh(
                                                     returnStdout: true,
