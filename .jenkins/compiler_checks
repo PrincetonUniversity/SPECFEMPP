@@ -10,11 +10,11 @@ pipeline{
                 axes {
                     axis{
                         name 'HostSpace'
-                        values '-DKokkos_ENABLE_SERIAL=ON', '-DKokkos_ENABLE_OPENMP=ON'
+                        values 'SERIAL;-DKokkos_ENABLE_SERIAL=ON', 'OPENMP;-DKokkos_ENABLE_OPENMP=ON'
                     }
                     axis{
                         name 'DeviceSpace'
-                        values '-DKokkos_ENABLE_CUDA=OFF', '-DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON'
+                        values 'NONE;-DKokkos_ENABLE_CUDA=OFF', 'CUDA;-DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON'
                     }
                 }
                 stages {
@@ -38,19 +38,53 @@ pipeline{
                             // Using CXX compiler
                             CXX = 'c++'
                             // CMAKE build flags
-                            CMAKE_BUILD_FLAGS = "${HostSpace} ${DeviceSpace}"
+                            CMAKE_HOST_NAME = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'cut -d";" -f1 <<<"${HostSpace}"'
+                                                ).trim()}"""
+                            CMAKE_HOST_FLAGS = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'cut -d";" -f2 <<<"${HostSpace}"'
+                                                ).trim()}"""
+                            CMAKE_DEVICE_NAME = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'cut -d";" -f1 <<<"${DeviceSpace}"'
+                                                ).trim()}"""
+                            CMAKE_DEVICE_FLAGS = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'cut -d";" -f2 <<<"${DeviceSpace}"'
+                                                ).trim()}"""
                         }
                         steps {
-                            sh "echo Building ${CMAKE_BUILD_FLAGS}"
-                            sh "cmake3 -S . -B build_GNU -DCMAKE_BUILD_TYPE=Release ${CMAKE_BUILD_FLAGS}"
+                            echo "Building ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS}"
+                            sh "cmake3 -S . -B build_GNU_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS}"
                             sh 'cmake3 --build build'
                             echo ' Build completed '
                         }
                     }
                     stage ( ' Clean ' ){
+                        environment {
+                            // CMAKE build flags
+                            CMAKE_HOST_NAME = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'cut -d";" -f1 <<<"${HostSpace}"'
+                                                ).trim()}"""
+                            CMAKE_HOST_FLAGS = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'cut -d";" -f2 <<<"${HostSpace}"'
+                                                ).trim()}"""
+                            CMAKE_DEVICE_NAME = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'cut -d";" -f1 <<<"${DeviceSpace}"'
+                                                ).trim()}"""
+                            CMAKE_DEVICE_FLAGS = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'cut -d";" -f2 <<<"${DeviceSpace}"'
+                                                ).trim()}"""
+                        }
                         steps {
                             echo ' Cleaning '
-                            sh 'rm -rf build_GNU'
+                            sh "rm -rf build_GNU_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}"
                         }
                     }
                 }
@@ -61,11 +95,11 @@ pipeline{
                 axes {
                     axis{
                         name 'HostSpace'
-                        values '-DKokkos_ENABLE_SERIAL=ON', '-DKokkos_ENABLE_OPENMP=ON'
+                        values 'SERIAL;-DKokkos_ENABLE_SERIAL=ON', 'OPENMP;-DKokkos_ENABLE_OPENMP=ON'
                     }
                     axis{
                         name 'DeviceSpace'
-                        values '-DKokkos_ENABLE_CUDA=OFF'
+                        values 'NONE;-DKokkos_ENABLE_CUDA=OFF'
                     }
                 }
                 stages {
@@ -89,19 +123,53 @@ pipeline{
                             // Using CXX compiler
                             CXX = '/opt/intel/oneapi/compiler/2022.2.0/linux/bin/icpx'
                             // CMAKE build flags
-                            CMAKE_BUILD_FLAGS = "${HostSpace} ${DeviceSpace}"
+                            CMAKE_HOST_NAME = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'cut -d";" -f1 <<<"${HostSpace}"'
+                                                ).trim()}"""
+                            CMAKE_HOST_FLAGS = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'cut -d";" -f2 <<<"${HostSpace}"'
+                                                ).trim()}"""
+                            CMAKE_DEVICE_NAME = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'cut -d";" -f1 <<<"${DeviceSpace}"'
+                                                ).trim()}"""
+                            CMAKE_DEVICE_FLAGS = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'cut -d";" -f2 <<<"${DeviceSpace}"'
+                                                ).trim()}"""
                         }
                         steps {
-                            echo "Building ${CMAKE_BUILD_FLAGS}"
-                            sh "cmake3 -S . -B build_INTEL -DCMAKE_BUILD_TYPE=Release ${CMAKE_BUILD_FLAGS}"
+                            echo "Building ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS}"
+                            sh "cmake3 -S . -B build_INTEL_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS}"
                             sh 'cmake3 --build build'
                             echo ' Build completed '
                         }
                     }
                     stage ( ' Clean ' ){
+                        environment {
+                            // CMAKE build flags
+                            CMAKE_HOST_NAME = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'cut -d";" -f1 <<<"${HostSpace}"'
+                                                ).trim()}"""
+                            CMAKE_HOST_FLAGS = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'cut -d";" -f2 <<<"${HostSpace}"'
+                                                ).trim()}"""
+                            CMAKE_DEVICE_NAME = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'cut -d";" -f1 <<<"${DeviceSpace}"'
+                                                ).trim()}"""
+                            CMAKE_DEVICE_FLAGS = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'cut -d";" -f2 <<<"${DeviceSpace}"'
+                                                ).trim()}"""
+                        }
                         steps {
                             echo ' Cleaning '
-                            sh 'rm -rf build_INTEL'
+                            sh "rm -rf build_INTEL_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}"
                         }
                     }
                 }
