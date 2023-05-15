@@ -38,11 +38,11 @@ pipeline{
                             // Using CXX compiler
                             CXX = 'c++'
                             // CMAKE build flags
-                            CMAKE_BUILD_FLAGS = '${HostSpace} ${DeviceSpace}'
+                            CMAKE_BUILD_FLAGS = "${HostSpace} ${DeviceSpace}"
                         }
                         steps {
-                            echo ' Building ${CMAKE_BUILD_FLAGS}'
-                            sh 'cmake3 -S . -B build_GNU -DCMAKE_BUILD_TYPE=Release ${CMAKE_BUILD_FLAGS}'
+                            sh "echo Building ${CMAKE_BUILD_FLAGS}"
+                            sh "cmake3 -S . -B build_GNU -DCMAKE_BUILD_TYPE=Release ${CMAKE_BUILD_FLAGS}"
                             sh 'cmake3 --build build'
                             echo ' Build completed '
                         }
@@ -89,11 +89,11 @@ pipeline{
                             // Using CXX compiler
                             CXX = '/opt/intel/oneapi/compiler/2022.2.0/linux/bin/icpx'
                             // CMAKE build flags
-                            CMAKE_BUILD_FLAGS = '${HostSpace} ${DeviceSpace}'
+                            CMAKE_BUILD_FLAGS = "${HostSpace} ${DeviceSpace}"
                         }
                         steps {
-                            echo ' Building ${CMAKE_BUILD_FLAGS}'
-                            sh 'cmake3 -S . -B build_INTEL -DCMAKE_BUILD_TYPE=Release ${CMAKE_BUILD_FLAGS}'
+                            echo "Building ${CMAKE_BUILD_FLAGS}"
+                            sh "cmake3 -S . -B build_INTEL -DCMAKE_BUILD_TYPE=Release ${CMAKE_BUILD_FLAGS}"
                             sh 'cmake3 --build build'
                             echo ' Build completed '
                         }
