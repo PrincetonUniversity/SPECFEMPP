@@ -71,17 +71,9 @@ pipeline{
                                                     returnStdout: true,
                                                     script: 'cut -d";" -f1 <<<"${HostSpace}"'
                                                 ).trim()}"""
-                            CMAKE_HOST_FLAGS = """${sh(
-                                                    returnStdout: true,
-                                                    script: 'cut -d";" -f2 <<<"${HostSpace}"'
-                                                ).trim()}"""
                             CMAKE_DEVICE_NAME = """${sh(
                                                     returnStdout: true,
                                                     script: 'cut -d";" -f1 <<<"${DeviceSpace}"'
-                                                ).trim()}"""
-                            CMAKE_DEVICE_FLAGS = """${sh(
-                                                    returnStdout: true,
-                                                    script: 'cut -d";" -f2 <<<"${DeviceSpace}"'
                                                 ).trim()}"""
                         }
                         steps {
@@ -156,17 +148,9 @@ pipeline{
                                                     returnStdout: true,
                                                     script: 'cut -d";" -f1 <<<"${HostSpace}"'
                                                 ).trim()}"""
-                            CMAKE_HOST_FLAGS = """${sh(
-                                                    returnStdout: true,
-                                                    script: 'cut -d";" -f2 <<<"${HostSpace}"'
-                                                ).trim()}"""
                             CMAKE_DEVICE_NAME = """${sh(
                                                     returnStdout: true,
                                                     script: 'cut -d";" -f1 <<<"${DeviceSpace}"'
-                                                ).trim()}"""
-                            CMAKE_DEVICE_FLAGS = """${sh(
-                                                    returnStdout: true,
-                                                    script: 'cut -d";" -f2 <<<"${DeviceSpace}"'
                                                 ).trim()}"""
                         }
                         steps {
