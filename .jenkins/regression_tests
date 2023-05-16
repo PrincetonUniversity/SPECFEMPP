@@ -8,7 +8,7 @@ pipeline{
     stages {
         stage (' Build main branch '){
             when {
-                branch 'regression-testing'
+                branch 'regression_tests'
             }
             matrix {
                 axes {
