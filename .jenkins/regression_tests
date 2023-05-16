@@ -20,7 +20,7 @@ pipeline{
                     }
                     axis{
                         name 'DeviceSpace'
-                        values 'NONE;-DKokkos_ENABLE_CUDA=OFF;--constraint=broadwell', 'CUDA_AMPERE80;-DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON;--gres=gpu:1 --constraint=cryoem'
+                        values 'NONE;-DKokkos_ENABLE_CUDA=OFF;--constraint=skylake', 'CUDA_AMPERE80;-DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON;--gres=gpu:1 --constraint=a100'
                     }
                 }
                 stages {
