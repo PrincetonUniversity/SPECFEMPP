@@ -12,13 +12,6 @@ pipeline{
                 sh 'git submodule update'
             }
         }
-        stage ( ' Load required modules ' ){
-            steps {
-                echo ' Loading required module '
-                sh 'module load cudatoolkit/11.7'
-                sh 'module load intel/2022.2.0'
-            }
-        }
         stage(' GNU Compilation Check '){
             matrix {
                 axes {
@@ -34,12 +27,7 @@ pipeline{
                 stages {
                     stage ('Build and Clean '){
                         environment {
-                            // Define C compiler
-                            CC = 'cc'
-                            // Using CXX compiler
-                            CXX = 'c++'
-                            // Define cuda root directory
-                            CUDA_ROOT='/usr/local/cuda-11.7'
+                            CUDA_MODULE='cudatoolkit/11.7'
                             // CMAKE build flags
                             CMAKE_HOST_NAME = """${sh(
                                                     returnStdout: true,
@@ -62,8 +50,11 @@ pipeline{
                             stage (' Build '){
                                 steps {
                                     echo "Building ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS}"
-                                    sh "cmake3 -S . -B build_GNU_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS}"
-                                    sh "cmake3 --build build_GNU_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}"
+                                    sh """
+                                        module load ${CUDA_MODULE}
+                                        cmake3 -S . -B build_GNU_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS}
+                                        cmake3 --build build_GNU_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}
+                                    """
                                     echo ' Build completed '
                                 }
                             }
@@ -93,10 +84,6 @@ pipeline{
                 stages {
                     stage ('Build and Clean '){
                         environment {
-                            // Define C compiler
-                            CC = '/opt/intel/oneapi/compiler/2022.2.0/linux/bin/icx'
-                            // Using CXX compiler
-                            CXX = '/opt/intel/oneapi/compiler/2022.2.0/linux/bin/icpx'
                             // CMAKE build flags
                             CMAKE_HOST_NAME = """${sh(
                                                     returnStdout: true,
@@ -119,8 +106,13 @@ pipeline{
                             stage (' Build '){
                                 steps {
                                     echo "Building ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS}"
-                                    sh "cmake3 -S . -B build_INTEL_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS}"
-                                    sh "cmake3 --build build_INTEL_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}"
+                                    sh """
+                                        module load intel/2022.2.0
+                                        export CC=icx
+                                        export CXX=icpx
+                                        cmake3 -S . -B build_INTEL_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS}"
+                                        cmake3 --build build_INTEL_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}
+                                    """
                                     echo ' Build completed '
                                 }
                             }
