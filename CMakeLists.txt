@@ -13,12 +13,17 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
         set(CMAKE_CXX_FLAGS "-diag-disable=10441 -fp-model=precise")
 endif()
 
-if (DEFINED Kokkos_ENABLE_CUDA)
-        if (Kokkos_ENABLE_CUDA)
-                set(Kokkos_ENABLE_CUDA_LAMBDA ON)
-                set(Kokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE ON)
-        endif()
-endif()
+# if (DEFINED Kokkos_ENABLE_CUDA)
+#         if (Kokkos_ENABLE_CUDA)
+#                 message("Setting CUDA variables")
+#                 set(Kokkos_ENABLE_CUDA_LAMBDA ON)
+#                 set(Kokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE ON)
+#         endif()
+# endif()
+
+# if (Kokkos_ENABLE_CUDA_LAMBDA)
+#         message("Set to ON")
+# endif()
 
 # Install Kokkos as a dependency
 ## TODO: Add options for on utilizing in house builds
