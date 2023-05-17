@@ -32,43 +32,47 @@ pipeline{
                     }
                 }
                 stages {
-                    environment {
-                        // Define C compiler
-                        CC = 'cc'
-                        // Using CXX compiler
-                        CXX = 'c++'
-                        // Define cuda root directory
-                        CUDA_ROOT='/usr/local/cuda-11.7'
-                        // CMAKE build flags
-                        CMAKE_HOST_NAME = """${sh(
-                                                returnStdout: true,
-                                                script: 'cut -d";" -f1 <<<"${HostSpace}"'
-                                            ).trim()}"""
-                        CMAKE_HOST_FLAGS = """${sh(
-                                                returnStdout: true,
-                                                script: 'cut -d";" -f2 <<<"${HostSpace}"'
-                                            ).trim()}"""
-                        CMAKE_DEVICE_NAME = """${sh(
-                                                returnStdout: true,
-                                                script: 'cut -d";" -f1 <<<"${DeviceSpace}"'
-                                            ).trim()}"""
-                        CMAKE_DEVICE_FLAGS = """${sh(
-                                                returnStdout: true,
-                                                script: 'cut -d";" -f2 <<<"${DeviceSpace}"'
-                                            ).trim()}"""
-                    }
-                    stage (' Build '){
-                        steps {
-                            echo "Building ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS}"
-                            sh "cmake3 -S . -B build_GNU_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS}"
-                            sh "cmake3 --build build_GNU_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}"
-                            echo ' Build completed '
+                    stage{
+                        environment {
+                            // Define C compiler
+                            CC = 'cc'
+                            // Using CXX compiler
+                            CXX = 'c++'
+                            // Define cuda root directory
+                            CUDA_ROOT='/usr/local/cuda-11.7'
+                            // CMAKE build flags
+                            CMAKE_HOST_NAME = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'cut -d";" -f1 <<<"${HostSpace}"'
+                                                ).trim()}"""
+                            CMAKE_HOST_FLAGS = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'cut -d";" -f2 <<<"${HostSpace}"'
+                                                ).trim()}"""
+                            CMAKE_DEVICE_NAME = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'cut -d";" -f1 <<<"${DeviceSpace}"'
+                                                ).trim()}"""
+                            CMAKE_DEVICE_FLAGS = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'cut -d";" -f2 <<<"${DeviceSpace}"'
+                                                ).trim()}"""
                         }
-                    }
-                    stage (' Clean '){
-                        steps {
-                            echo ' Cleaning '
-                            sh "rm -rf build_GNU_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}"
+                        stages {
+                            stage (' Build '){
+                                steps {
+                                    echo "Building ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS}"
+                                    sh "cmake3 -S . -B build_GNU_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS}"
+                                    sh "cmake3 --build build_GNU_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}"
+                                    echo ' Build completed '
+                                }
+                            }
+                            stage (' Clean '){
+                                steps {
+                                    echo ' Cleaning '
+                                    sh "rm -rf build_GNU_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}"
+                                }
+                            }
                         }
                     }
                 }
@@ -87,41 +91,45 @@ pipeline{
                     }
                 }
                 stages {
-                    environment {
-                        // Define C compiler
-                        CC = '/opt/intel/oneapi/compiler/2022.2.0/linux/bin/icx'
-                        // Using CXX compiler
-                        CXX = '/opt/intel/oneapi/compiler/2022.2.0/linux/bin/icpx'
-                        // CMAKE build flags
-                        CMAKE_HOST_NAME = """${sh(
-                                                returnStdout: true,
-                                                script: 'cut -d";" -f1 <<<"${HostSpace}"'
-                                            ).trim()}"""
-                        CMAKE_HOST_FLAGS = """${sh(
-                                                returnStdout: true,
-                                                script: 'cut -d";" -f2 <<<"${HostSpace}"'
-                                            ).trim()}"""
-                        CMAKE_DEVICE_NAME = """${sh(
-                                                returnStdout: true,
-                                                script: 'cut -d";" -f1 <<<"${DeviceSpace}"'
-                                            ).trim()}"""
-                        CMAKE_DEVICE_FLAGS = """${sh(
-                                                returnStdout: true,
-                                                script: 'cut -d";" -f2 <<<"${DeviceSpace}"'
-                                            ).trim()}"""
-                    }
-                    stage (' Build '){
-                        steps {
-                            echo "Building ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS}"
-                            sh "cmake3 -S . -B build_INTEL_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS}"
-                            sh "cmake3 --build build_INTEL_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}"
-                            echo ' Build completed '
+                    stage {
+                        environment {
+                            // Define C compiler
+                            CC = '/opt/intel/oneapi/compiler/2022.2.0/linux/bin/icx'
+                            // Using CXX compiler
+                            CXX = '/opt/intel/oneapi/compiler/2022.2.0/linux/bin/icpx'
+                            // CMAKE build flags
+                            CMAKE_HOST_NAME = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'cut -d";" -f1 <<<"${HostSpace}"'
+                                                ).trim()}"""
+                            CMAKE_HOST_FLAGS = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'cut -d";" -f2 <<<"${HostSpace}"'
+                                                ).trim()}"""
+                            CMAKE_DEVICE_NAME = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'cut -d";" -f1 <<<"${DeviceSpace}"'
+                                                ).trim()}"""
+                            CMAKE_DEVICE_FLAGS = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'cut -d";" -f2 <<<"${DeviceSpace}"'
+                                                ).trim()}"""
                         }
-                    }
-                    stage (' Clean '){
-                        steps {
-                            echo ' Cleaning '
-                            sh "rm -rf build_INTEL_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}"
+                        stages {
+                            stage (' Build '){
+                                steps {
+                                    echo "Building ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS}"
+                                    sh "cmake3 -S . -B build_INTEL_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS}"
+                                    sh "cmake3 --build build_INTEL_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}"
+                                    echo ' Build completed '
+                                }
+                            }
+                            stage (' Clean '){
+                                steps {
+                                    echo ' Cleaning '
+                                    sh "rm -rf build_INTEL_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}"
+                                }
+                            }
                         }
                     }
                 }
