@@ -1,6 +1,6 @@
 .vscode/
 .DS_Store
-build_*/
+build*/*
 _build/
 _templates/
 public/
