@@ -28,7 +28,7 @@ pipeline{
                     }
                     axis{
                         name 'DeviceSpace'
-                        values 'NONE;-DKokkos_ENABLE_CUDA=OFF', 'CUDA_AMPERE80;-DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON', 'CUDA_VOLTA70;-DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_VOLTA70=ON', 'CUDA_PASCAL60;-DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_PASCAL60=ON'
+                        values 'NONE;-DKokkos_ENABLE_CUDA=OFF', 'CUDA_AMPERE80;-DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON -DKokkos_ENABLE_CUDA_LAMBDA=ON -DKokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE=ON', 'CUDA_VOLTA70;-DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_VOLTA70=ON -DKokkos_ENABLE_CUDA_LAMBDA=ON -DKokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE=ON', 'CUDA_PASCAL60;-DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_PASCAL60=ON -DKokkos_ENABLE_CUDA_LAMBDA=ON -DKokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE=ON'
                     }
                 }
                 stages {
