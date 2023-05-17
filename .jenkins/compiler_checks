@@ -32,7 +32,7 @@ pipeline{
                     }
                 }
                 stages {
-                    stage{
+                    stage ('Build and Clean '){
                         environment {
                             // Define C compiler
                             CC = 'cc'
@@ -91,7 +91,7 @@ pipeline{
                     }
                 }
                 stages {
-                    stage {
+                    stage ('Build and Clean '){
                         environment {
                             // Define C compiler
                             CC = '/opt/intel/oneapi/compiler/2022.2.0/linux/bin/icx'
