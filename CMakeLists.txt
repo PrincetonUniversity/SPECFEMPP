@@ -14,7 +14,7 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
 endif()
 
 if (DEFINED Kokkos_ENABLE_CUDA)
-        if (Kokkos_ENABLE_CUDA EQUAL ON)
+        if (Kokkos_ENABLE_CUDA)
                 set(Kokkos_ENABLE_CUDA_LAMBDA ON)
                 set(Kokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE ON)
         endif()
@@ -314,6 +314,7 @@ target_link_libraries(
 
 # Include tests
 add_subdirectory(tests/unit-tests)
+# add_subdirectory(tests/regression-tests)
 add_subdirectory(examples)
 
 # Doxygen
