@@ -21,7 +21,7 @@ pipeline{
                     }
                     axis{
                         name 'DeviceSpace'
-                        values 'NONE;-DKokkos_ENABLE_CUDA=OFF', 'CUDA_AMPERE80;-DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON -DKokkos_ENABLE_CUDA_LAMBDA=ON -DKokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE=ON', 'CUDA_VOLTA70;-DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_VOLTA70=ON -DKokkos_ENABLE_CUDA_LAMBDA=ON -DKokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE=ON', 'CUDA_PASCAL60;-DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_PASCAL60=ON -DKokkos_ENABLE_CUDA_LAMBDA=ON -DKokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE=ON'
+                        values 'NONE;-DKokkos_ENABLE_CUDA=OFF', 'CUDA_AMPERE80;-DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON', 'CUDA_VOLTA70;-DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_VOLTA70=ON', 'CUDA_PASCAL60;-DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_PASCAL60=ON'
                     }
                 }
                 stages {
@@ -110,7 +110,7 @@ pipeline{
                                         module load intel/2022.2.0
                                         export CC=icx
                                         export CXX=icpx
-                                        cmake3 -S . -B build_INTEL_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS}"
+                                        cmake3 -S . -B build_INTEL_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS}
                                         cmake3 --build build_INTEL_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}
                                     """
                                     echo ' Build completed '
