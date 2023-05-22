@@ -25,15 +25,11 @@ parameters:
           nstep: 100
 
   receivers:
-    stations-file: "@CMAKE_SOURCE_DIR@/examples/homogeneous-medium-flat-topography/STATIONS"
+    stations-file: "@CMAKE_SOURCE_DIR@/tests/regression-tests/elastic_domain/cpu/STATIONS"
     angle: 0.0
     seismogram-type:
       - velocity
     nstep_between_samples: 1
-
-  # seismogram:
-  #   seismogram-format: ascii
-  #   output-folder: "/scratch/gpfs/rk9481/specfem2d_kokkos/results"
 
   ## Runtime setup
   run-setup:
@@ -42,5 +38,5 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "@CMAKE_SOURCE_DIR@/examples/homogeneous-medium-flat-topography/databases/database.bin"
-    source-file: "@CMAKE_SOURCE_DIR@/examples/homogeneous-medium-flat-topography/source.yaml"
+    mesh-database: "@CMAKE_SOURCE_DIR@/tests/regression-tests/elastic_domain/cpu/databases/database.bin"
+    source-file: "@CMAKE_SOURCE_DIR@/tests/regression-tests/elastic_domain/cpu/source.yaml"

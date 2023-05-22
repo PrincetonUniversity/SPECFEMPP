@@ -21,7 +21,8 @@
 // Specfem2d driver
 
 std::string print_end_message(
-    std::chrono::time_point<std::chrono::high_resolution_clock> start_time) {
+    std::chrono::time_point<std::chrono::high_resolution_clock> start_time,
+    std::chrono::duration<double> solver_time) {
   std::ostringstream message;
   // current date/time based on current system
   const auto now = std::chrono::high_resolution_clock::now();
@@ -34,6 +35,8 @@ std::string print_end_message(
           << "             Finished simulation\n"
           << "================================================\n\n"
           << "Total simulation time : " << diff.count() << " secs\n"
+          << "Total solver time (time loop) : " << solver_time.count()
+          << " secs\n"
           << "Simulation end time : " << ctime(&c_now)
           << "------------------------------------------------\n";
 
@@ -186,7 +189,12 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   mpi->cout("Executing time loop:");
   mpi->cout("-------------------------------");
 
+  const auto solver_start_time = std::chrono::high_resolution_clock::now();
   solver->run();
+  const auto solver_end_time = std::chrono::high_resolution_clock::now();
+
+  std::chrono::duration<double> solver_time =
+      solver_end_time - solver_start_time;
 
   // Write only if a writer object has been defined
   if (writer) {
@@ -216,7 +224,7 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   delete solver;
   delete writer;
 
-  mpi->cout(print_end_message(start_time));
+  mpi->cout(print_end_message(start_time, solver_time));
 
   return;
 }
