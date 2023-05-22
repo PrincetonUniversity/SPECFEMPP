@@ -8,7 +8,6 @@ firebase*.yml
 *.out
 debug.sh
 output.log
-run.sh
 results/
 timing.sh
 *.dat
