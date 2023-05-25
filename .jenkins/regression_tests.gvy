@@ -126,5 +126,15 @@ pipeline {
                 }
             }
         }
+
+        stage (' Compare results '){
+            steps {
+                sh """
+                    cd build/tests/regression-tests
+                    ./build/tests/regression-tests/compare_regression_tests --pr regression-results/results/PR-cpu.yaml --main regression-results/results/main-cpu.yaml && \
+                    ./build/tests/regression-tests/compare_regression_tests --pr regression-results/results/PR-gpu.yaml --main regression-results/results/main-gpu.yaml
+                """
+            }
+        }
     }
 }
