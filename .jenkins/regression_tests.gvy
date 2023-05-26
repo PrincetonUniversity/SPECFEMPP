@@ -9,7 +9,7 @@ pipeline {
         stage (' Build and run PR branch '){
 
             stages {
-                stage (' Build '){
+                stage (' Update and Build'){
                     stages {
                         stage (' Update git modules '){
                             steps {
@@ -18,25 +18,27 @@ pipeline {
                                 sh 'git submodule update'
                             }
                         }
-                        parallel{
-                            stage (' Build CPU '){
-                                steps {
-                                    echo " Building SPECFEM "
-                                    sh """
-                                        cmake -S . -B build_cpu -DCMAKE_BUILD_TYPE=Release
-                                        cmake3 --build build_cpu
-                                    """
+                        stage (' Build '){
+                            parallel{
+                                stage (' Build CPU '){
+                                    steps {
+                                        echo " Building SPECFEM "
+                                        sh """
+                                            cmake -S . -B build_cpu -DCMAKE_BUILD_TYPE=Release
+                                            cmake3 --build build_cpu
+                                        """
+                                    }
                                 }
-                            }
 
-                            stage (' Build GPU '){
-                                steps {
-                                    echo " Building SPECFEM "
-                                    sh """
-                                        module load cudatoolkit/11.7
-                                        cmake -S . -B build_gpu -DCMAKE_BUILD_TYPE=Release -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON -DKokkos_ENABLE_OPENMP=ON
-                                        cmake3 --build build_gpu
-                                    """
+                                stage (' Build GPU '){
+                                    steps {
+                                        echo " Building SPECFEM "
+                                        sh """
+                                            module load cudatoolkit/11.7
+                                            cmake -S . -B build_gpu -DCMAKE_BUILD_TYPE=Release -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON -DKokkos_ENABLE_OPENMP=ON
+                                            cmake3 --build build_gpu
+                                        """
+                                    }
                                 }
                             }
                         }
@@ -87,7 +89,7 @@ pipeline {
                     }
                 }
 
-                stage (' Build '){
+                stage (' Update and Build '){
                     stages {
                         stage (' Update git modules '){
                             steps {
@@ -97,25 +99,27 @@ pipeline {
                             }
                         }
 
-                        parallel{
-                            stage (' Build CPU '){
-                                steps {
-                                    echo " Building SPECFEM "
-                                    sh """
-                                        cmake -S . -B build_cpu -DCMAKE_BUILD_TYPE=Release
-                                        cmake3 --build build_cpu
-                                    """
+                        stage (' Build '){
+                            parallel{
+                                stage (' Build CPU '){
+                                    steps {
+                                        echo " Building SPECFEM "
+                                        sh """
+                                            cmake -S . -B build_cpu -DCMAKE_BUILD_TYPE=Release
+                                            cmake3 --build build_cpu
+                                        """
+                                    }
                                 }
-                            }
 
-                            stage (' Build GPU '){
-                                steps {
-                                    echo " Building SPECFEM "
-                                    sh """
-                                        module load cudatoolkit/11.7
-                                        cmake -S . -B build_gpu -DCMAKE_BUILD_TYPE=Release -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON -DKokkos_ENABLE_OPENMP=ON
-                                        cmake3 --build build_gpu
-                                    """
+                                stage (' Build GPU '){
+                                    steps {
+                                        echo " Building SPECFEM "
+                                        sh """
+                                            module load cudatoolkit/11.7
+                                            cmake -S . -B build_gpu -DCMAKE_BUILD_TYPE=Release -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON -DKokkos_ENABLE_OPENMP=ON
+                                            cmake3 --build build_gpu
+                                        """
+                                    }
                                 }
                             }
                         }
@@ -147,17 +151,15 @@ pipeline {
         }
 
         stage (' Compare results '){
-            stages {
-                parallel {
-                    stage (' Compare CPU results '){
-                        steps {
-                            sh "./build_cpu/tests/regression-tests/compare_regression_tests --pr regression-results/results/PR-cpu.yaml --main regression-results/results/main-cpu.yaml"
-                        }
+            parallel {
+                stage (' Compare CPU results '){
+                    steps {
+                        sh "./build_cpu/tests/regression-tests/compare_regression_tests --pr regression-results/results/PR-cpu.yaml --main regression-results/results/main-cpu.yaml"
                     }
-                    stage (' Compare CPU results '){
-                        steps {
-                            sh "./build_gpu/tests/regression-tests/compare_regression_tests --pr regression-results/results/PR-cpu.yaml --main regression-results/results/main-cpu.yaml"
-                        }
+                }
+                stage (' Compare CPU results '){
+                    steps {
+                        sh "./build_gpu/tests/regression-tests/compare_regression_tests --pr regression-results/results/PR-cpu.yaml --main regression-results/results/main-cpu.yaml"
                     }
                 }
             }
