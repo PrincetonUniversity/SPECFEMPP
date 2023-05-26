@@ -69,6 +69,7 @@ pipeline {
                     steps {
                         checkout([$class: 'GitSCM',
                                 branches: [[name: 'regression-testing']],
+                                extensions: [lfs()],
                                 userRemoteConfigs: [[url: 'https://github.com/PrincetonUniversity/specfem2d_kokkos']]])
                     }
                 }
