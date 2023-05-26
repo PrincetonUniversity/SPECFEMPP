@@ -153,7 +153,7 @@ pipeline {
                         steps {
                             sh "./build_cpu/tests/regression-tests/compare_regression_tests --pr regression-results/results/PR-cpu.yaml --main regression-results/results/main-cpu.yaml"
                         }
-
+                    }
                     stage (' Compare CPU results '){
                         steps {
                             sh "./build_gpu/tests/regression-tests/compare_regression_tests --pr regression-results/results/PR-cpu.yaml --main regression-results/results/main-cpu.yaml"
