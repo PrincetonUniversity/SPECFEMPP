@@ -245,7 +245,6 @@ pipeline {
                     scancel --me
                     rm -rf build_cpu
                     rm -rf build_gpu
-                    screen -ls | grep Detached | cut -d. -f1 | awk "{print $1}" | xargs kill
                 """
             }
         }
