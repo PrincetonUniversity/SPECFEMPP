@@ -60,19 +60,29 @@ pipeline {
                         stage ('Run CPU tests'){
                             stages {
                                 stage (' Check Allocations '){
+                                    environment{
+                                        JOB_ID = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'squeue --format="%.i %.j" | grep "jenkins_cpu_${env.GIT_COMMIT}" | cut -d ' ' -f1'
+                                                ).trim()}"""
+                                    }
                                     steps {
                                         sh """
-                                            JOB_ID=$(squeue --format="%.i %.j" | grep "jenkins_cpu_${env.GIT_COMMIT}" | cut -d ' ' -f1)
                                             until srun --jobid=${JOB_ID} bash -c "echo Hello" &> /dev/null ; do sleep 30 ; done ;
                                         """
                                     }
                                 }
 
                                 stage (' Run test '){
+                                    environment{
+                                        JOB_ID = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'squeue --format="%.i %.j" | grep "jenkins_cpu_${env.GIT_COMMIT}" | cut -d ' ' -f1'
+                                                ).trim()}"""
+                                    }
                                     steps {
                                         sh """
                                             mkdir -p regression-tests/results
-                                            JOB_ID=$(squeue --format="%.i %.j" | grep "jenkins_cpu_${env.GIT_COMMIT}" | cut -d ' ' -f1)
                                             srun --jobid=${JOB_ID} bash tests/regression-tests/run.sh -d cpu -i tests/regression-tests -e build_cpu/specfem2d -r regression-tests/results/PR-cpu.yaml
                                         """
                                     }
@@ -83,18 +93,28 @@ pipeline {
                         stage ('Run GPU tests'){
                             stages {
                                 stage (' Check Allocations '){
+                                    environment{
+                                        JOB_ID = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'squeue --format="%.i %.j" | grep "jenkins_gpu_${env.GIT_COMMIT}" | cut -d ' ' -f1'
+                                                ).trim()}"""
+                                    }
                                     steps {
                                         sh """
-                                            JOB_ID=$(squeue --format="%.i %.j" | grep "jenkins_gpu_${env.GIT_COMMIT}" | cut -d ' ' -f1)
                                             until srun --jobid=${JOB_ID} bash -c "echo Hello" &> /dev/null ; do sleep 30 ; done ;
                                         """
                                     }
                                 }
 
                                 stage (' Run test '){
+                                    environment{
+                                        JOB_ID = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'squeue --format="%.i %.j" | grep "jenkins_gpu_${env.GIT_COMMIT}" | cut -d ' ' -f1'
+                                                ).trim()}"""
+                                    }
                                     steps {
                                         sh """
-                                            JOB_ID=$(squeue --format="%.i %.j" | grep "jenkins_gpu_${env.GIT_COMMIT}" | cut -d ' ' -f1)
                                             mkdir -p regression-tests/results
                                             srun --jobid=${JOB_ID} bash tests/regression-tests/run.sh -d gpu -i tests/regression-tests -e build_gpu/specfem2d -r regression-tests/results/PR-gpu.yaml
                                         """
@@ -167,20 +187,30 @@ pipeline {
                 stage (' Run regression tests '){
                     parallel {
                         stage ('Run CPU tests'){
+                            environment{
+                                JOB_ID = """${sh(
+                                            returnStdout: true,
+                                            script: 'squeue --format="%.i %.j" | grep "jenkins_cpu_${env.GIT_COMMIT}" | cut -d ' ' -f1'
+                                        ).trim()}"""
+                            }
                             steps {
                                 sh """
                                     mkdir -p regression-tests/results
-                                    JOB_ID=$(squeue --format="%.i %.j" | grep "jenkins_cpu_${env.GIT_COMMIT}" | cut -d ' ' -f1)
                                     srun --jobid=${JOB_ID} bash tests/regression-tests/run.sh -d cpu -i tests/regression-tests -e build_cpu/specfem2d -r regression-tests/results/PR-cpu.yaml
                                 """
                             }
                         }
 
                         stage ('Run GPU tests'){
+                            environment{
+                                JOB_ID = """${sh(
+                                            returnStdout: true,
+                                            script: 'squeue --format="%.i %.j" | grep "jenkins_gpu_${env.GIT_COMMIT}" | cut -d ' ' -f1'
+                                        ).trim()}"""
+                            }
                             steps {
                                 sh """
                                     mkdir -p regression-tests/results
-                                    JOB_ID=$(squeue --format="%.i %.j" | grep "jenkins_gpu_${env.GIT_COMMIT}" | cut -d ' ' -f1)
                                     srun --jobid=${JOB_ID} bash tests/regression-tests/run.sh -d gpu -i tests/regression-tests -e build_gpu/specfem2d -r regression-tests/results/PR-gpu.yaml
                                 """
                             }
