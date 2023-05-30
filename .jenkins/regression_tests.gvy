@@ -9,9 +9,11 @@ pipeline {
 
         stage (' Allocate resources '){
             steps {
+                // Start slurm sessions in the background
+                // Screen is needed since the sessions need to remain active even when this stage exits
                 sh """
-                    salloc -J jenkins_cpu -N 1 -n 1 -t 00:10:00 --constraint=broadwell &
-                    salloc -J jenkins_gpu -N 1 -c 10 -t 00:10:00 --gres=gpu:1 --constraint=a100 &
+                    screen -dm salloc -J jenkins_cpu -N 1 -n 1 -t 00:10:00 --constraint=broadwell
+                    screen -dm salloc -J jenkins_gpu -N 1 -c 10 -t 00:10:00 --gres=gpu:1 --constraint=a100 &
                 """
             }
         }
@@ -60,6 +62,7 @@ pipeline {
                         stage ('Run CPU tests'){
                             stages {
                                 stage (' Check Allocations '){
+                                    // check if the CPU job started
                                     environment{
                                         JOB_ID = """${sh(
                                                     returnStdout: true,
@@ -93,6 +96,7 @@ pipeline {
                         stage ('Run GPU tests'){
                             stages {
                                 stage (' Check Allocations '){
+                                    // check if the GPU job started
                                     environment{
                                         JOB_ID = """${sh(
                                                     returnStdout: true,
@@ -241,6 +245,7 @@ pipeline {
                     scancel --me
                     rm -rf build_cpu
                     rm -rf build_gpu
+                    screen -ls | grep Detached | cut -d. -f1 | awk '{print $1}' | xargs kill
                 """
             }
         }
