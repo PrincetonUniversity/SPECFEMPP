@@ -6,6 +6,16 @@ pipeline {
     }
 
     stages {
+
+        stage (' Allocate resources '){
+            steps {
+                sh """
+                    salloc -J jenkins_cpu_${env.GIT_COMMIT} -N 1 -n 1 -t 00:10:00 --constraint=broadwell &
+                    salloc -J jenkins_gpu_${env.GIT_COMMIT} -N 1 -c 10 -t 00:10:00 --gres=gpu:1 --constraint=a100 &
+                """
+            }
+        }
+
         stage (' Build and run PR branch '){
 
             stages {
@@ -43,25 +53,53 @@ pipeline {
                             }
                         }
                     }
-                }
+                })
 
                 stage (' Run regression tests '){
                     parallel {
                         stage ('Run CPU tests'){
-                            steps {
-                                sh """
-                                    mkdir -p regression-tests/results
-                                    srun -N 1 -n 1 -t 00:10:00 --constraint=broadwell bash tests/regression-tests/run.sh -d cpu -i tests/regression-tests -e build_cpu/specfem2d -r regression-tests/results/PR-cpu.yaml
-                                """
+                            stages {
+                                stage (' Check Allocations '){
+                                    steps {
+                                        sh """
+                                            JOB_ID=$(squeue --format="%.i %.j" | grep "jenkins_cpu_${env.GIT_COMMIT}" | cut -d ' ' -f1)
+                                            until srun --jobid=${JOB_ID} bash -c "echo Hello" &> /dev/null ; do sleep 30 ; done ;
+                                        """
+                                    }
+                                }
+
+                                stage (' Run test '){
+                                    steps {
+                                        sh """
+                                            mkdir -p regression-tests/results
+                                            JOB_ID=$(squeue --format="%.i %.j" | grep "jenkins_cpu_${env.GIT_COMMIT}" | cut -d ' ' -f1)
+                                            srun --jobid=${JOB_ID} bash tests/regression-tests/run.sh -d cpu -i tests/regression-tests -e build_cpu/specfem2d -r regression-tests/results/PR-cpu.yaml
+                                        """
+                                    }
+                                }
                             }
                         }
 
                         stage ('Run GPU tests'){
-                            steps {
-                                sh """
-                                    mkdir -p regression-tests/results
-                                    srun -N 1 -c 10 -t 00:10:00 --gres=gpu:1 --constraint=a100 bash tests/regression-tests/run.sh -d gpu -i tests/regression-tests -e build_gpu/specfem2d -r regression-tests/results/PR-gpu.yaml
-                                """
+                            stages {
+                                stage (' Check Allocations '){
+                                    steps {
+                                        sh """
+                                            JOB_ID=$(squeue --format="%.i %.j" | grep "jenkins_gpu_${env.GIT_COMMIT}" | cut -d ' ' -f1)
+                                            until srun --jobid=${JOB_ID} bash -c "echo Hello" &> /dev/null ; do sleep 30 ; done ;
+                                        """
+                                    }
+                                }
+
+                                stage (' Run test '){
+                                    steps {
+                                        sh """
+                                            JOB_ID=$(squeue --format="%.i %.j" | grep "jenkins_gpu_${env.GIT_COMMIT}" | cut -d ' ' -f1)
+                                            mkdir -p regression-tests/results
+                                            srun --jobid=${JOB_ID} bash tests/regression-tests/run.sh -d gpu -i tests/regression-tests -e build_gpu/specfem2d -r regression-tests/results/PR-gpu.yaml
+                                        """
+                                    }
+                                }
                             }
                         }
                     }
@@ -132,7 +170,8 @@ pipeline {
                             steps {
                                 sh """
                                     mkdir -p regression-tests/results
-                                    srun -N 1 -n 1 -t 00:10:00 --constraint=broadwell bash tests/regression-tests/run.sh -d cpu -i tests/regression-tests -e build_cpu/specfem2d -r regression-tests/results/PR-cpu.yaml
+                                    JOB_ID=$(squeue --format="%.i %.j" | grep "jenkins_cpu_${env.GIT_COMMIT}" | cut -d ' ' -f1)
+                                    srun --jobid=${JOB_ID} bash tests/regression-tests/run.sh -d cpu -i tests/regression-tests -e build_cpu/specfem2d -r regression-tests/results/PR-cpu.yaml
                                 """
                             }
                         }
@@ -141,7 +180,8 @@ pipeline {
                             steps {
                                 sh """
                                     mkdir -p regression-tests/results
-                                    srun -N 1 -c 10 -t 00:10:00 --gres=gpu:1 --constraint=a100 bash tests/regression-tests/run.sh -d gpu -i tests/regression-tests -e build_gpu/specfem2d -r regression-tests/results/PR-gpu.yaml
+                                    JOB_ID=$(squeue --format="%.i %.j" | grep "jenkins_gpu_${env.GIT_COMMIT}" | cut -d ' ' -f1)
+                                    srun --jobid=${JOB_ID} bash tests/regression-tests/run.sh -d gpu -i tests/regression-tests -e build_gpu/specfem2d -r regression-tests/results/PR-gpu.yaml
                                 """
                             }
                         }
@@ -162,6 +202,16 @@ pipeline {
                         sh "./build_gpu/tests/regression-tests/compare_regression_tests --pr regression-results/results/PR-cpu.yaml --main regression-results/results/main-cpu.yaml"
                     }
                 }
+            }
+        }
+
+        stage (' Clean '){
+            steps {
+                sh """
+                    scancel --me
+                    rm -rf build_cpu
+                    rm -rf build_gpu
+                """
             }
         }
     }
