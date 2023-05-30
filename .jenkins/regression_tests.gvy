@@ -63,7 +63,7 @@ pipeline {
                                     environment{
                                         JOB_ID = """${sh(
                                                     returnStdout: true,
-                                                    script: 'squeue --format="%.i %.j" | grep "jenkins_cpu_${env.GIT_COMMIT}" | cut -d ' ' -f1'
+                                                    script: 'squeue --format="%.i %.j" | grep "jenkins_cpu_${env.GIT_COMMIT}" | cut -d " " -f1'
                                                 ).trim()}"""
                                     }
                                     steps {
@@ -77,7 +77,7 @@ pipeline {
                                     environment{
                                         JOB_ID = """${sh(
                                                     returnStdout: true,
-                                                    script: 'squeue --format="%.i %.j" | grep "jenkins_cpu_${env.GIT_COMMIT}" | cut -d ' ' -f1'
+                                                    script: 'squeue --format="%.i %.j" | grep "jenkins_cpu_${env.GIT_COMMIT}" | cut -d " " -f1'
                                                 ).trim()}"""
                                     }
                                     steps {
@@ -96,7 +96,7 @@ pipeline {
                                     environment{
                                         JOB_ID = """${sh(
                                                     returnStdout: true,
-                                                    script: 'squeue --format="%.i %.j" | grep "jenkins_gpu_${env.GIT_COMMIT}" | cut -d ' ' -f1'
+                                                    script: 'squeue --format="%.i %.j" | grep "jenkins_gpu_${env.GIT_COMMIT}" | cut -d " " -f1'
                                                 ).trim()}"""
                                     }
                                     steps {
@@ -110,7 +110,7 @@ pipeline {
                                     environment{
                                         JOB_ID = """${sh(
                                                     returnStdout: true,
-                                                    script: 'squeue --format="%.i %.j" | grep "jenkins_gpu_${env.GIT_COMMIT}" | cut -d ' ' -f1'
+                                                    script: 'squeue --format="%.i %.j" | grep "jenkins_gpu_${env.GIT_COMMIT}" | cut -d " " -f1'
                                                 ).trim()}"""
                                     }
                                     steps {
@@ -190,7 +190,7 @@ pipeline {
                             environment{
                                 JOB_ID = """${sh(
                                             returnStdout: true,
-                                            script: 'squeue --format="%.i %.j" | grep "jenkins_cpu_${env.GIT_COMMIT}" | cut -d ' ' -f1'
+                                            script: 'squeue --format="%.i %.j" | grep "jenkins_cpu_${env.GIT_COMMIT}" | cut -d " " -f1'
                                         ).trim()}"""
                             }
                             steps {
@@ -205,7 +205,7 @@ pipeline {
                             environment{
                                 JOB_ID = """${sh(
                                             returnStdout: true,
-                                            script: 'squeue --format="%.i %.j" | grep "jenkins_gpu_${env.GIT_COMMIT}" | cut -d ' ' -f1'
+                                            script: 'squeue --format="%.i %.j" | grep "jenkins_gpu_${env.GIT_COMMIT}" | cut -d " " -f1'
                                         ).trim()}"""
                             }
                             steps {
