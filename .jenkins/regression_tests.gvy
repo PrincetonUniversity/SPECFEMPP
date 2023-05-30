@@ -10,8 +10,8 @@ pipeline {
         stage (' Allocate resources '){
             steps {
                 sh """
-                    salloc -J jenkins_cpu_${env.GIT_COMMIT} -N 1 -n 1 -t 00:10:00 --constraint=broadwell &
-                    salloc -J jenkins_gpu_${env.GIT_COMMIT} -N 1 -c 10 -t 00:10:00 --gres=gpu:1 --constraint=a100 &
+                    salloc -J jenkins_cpu -N 1 -n 1 -t 00:10:00 --constraint=broadwell &
+                    salloc -J jenkins_gpu -N 1 -c 10 -t 00:10:00 --gres=gpu:1 --constraint=a100 &
                 """
             }
         }
@@ -63,7 +63,7 @@ pipeline {
                                     environment{
                                         JOB_ID = """${sh(
                                                     returnStdout: true,
-                                                    script: 'squeue --format="%.i %.j" | grep "jenkins_cpu_${env.GIT_COMMIT}" | cut -d " " -f1'
+                                                    script: 'squeue --format="%.i %.j" | grep "jenkins_cpu" | cut -d " " -f1'
                                                 ).trim()}"""
                                     }
                                     steps {
@@ -77,7 +77,7 @@ pipeline {
                                     environment{
                                         JOB_ID = """${sh(
                                                     returnStdout: true,
-                                                    script: 'squeue --format="%.i %.j" | grep "jenkins_cpu_${env.GIT_COMMIT}" | cut -d " " -f1'
+                                                    script: 'squeue --format="%.i %.j" | grep "jenkins_cpu" | cut -d " " -f1'
                                                 ).trim()}"""
                                     }
                                     steps {
@@ -96,7 +96,7 @@ pipeline {
                                     environment{
                                         JOB_ID = """${sh(
                                                     returnStdout: true,
-                                                    script: 'squeue --format="%.i %.j" | grep "jenkins_gpu_${env.GIT_COMMIT}" | cut -d " " -f1'
+                                                    script: 'squeue --format="%.i %.j" | grep "jenkins_gpu" | cut -d " " -f1'
                                                 ).trim()}"""
                                     }
                                     steps {
@@ -110,7 +110,7 @@ pipeline {
                                     environment{
                                         JOB_ID = """${sh(
                                                     returnStdout: true,
-                                                    script: 'squeue --format="%.i %.j" | grep "jenkins_gpu_${env.GIT_COMMIT}" | cut -d " " -f1'
+                                                    script: 'squeue --format="%.i %.j" | grep "jenkins_gpu" | cut -d " " -f1'
                                                 ).trim()}"""
                                     }
                                     steps {
@@ -190,7 +190,7 @@ pipeline {
                             environment{
                                 JOB_ID = """${sh(
                                             returnStdout: true,
-                                            script: 'squeue --format="%.i %.j" | grep "jenkins_cpu_${env.GIT_COMMIT}" | cut -d " " -f1'
+                                            script: 'squeue --format="%.i %.j" | grep "jenkins_cpu" | cut -d " " -f1'
                                         ).trim()}"""
                             }
                             steps {
@@ -205,7 +205,7 @@ pipeline {
                             environment{
                                 JOB_ID = """${sh(
                                             returnStdout: true,
-                                            script: 'squeue --format="%.i %.j" | grep "jenkins_gpu_${env.GIT_COMMIT}" | cut -d " " -f1'
+                                            script: 'squeue --format="%.i %.j" | grep "jenkins_gpu" | cut -d " " -f1'
                                         ).trim()}"""
                             }
                             steps {
