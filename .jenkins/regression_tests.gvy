@@ -53,7 +53,7 @@ pipeline {
                             }
                         }
                     }
-                })
+                }
 
                 stage (' Run regression tests '){
                     parallel {
