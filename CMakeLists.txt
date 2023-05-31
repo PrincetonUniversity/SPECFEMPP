@@ -13,6 +13,14 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
         set(CMAKE_CXX_FLAGS "-diag-disable=10441 -fp-model=precise")
 endif()
 
+if (DEFINED Kokkos_ENABLE_CUDA)
+        if (Kokkos_ENABLE_CUDA)
+                # message("Setting CUDA variables")
+                set(Kokkos_ENABLE_CUDA_LAMBDA ON CACHE BOOL "Using CUDA Lambda by default")
+                set(Kokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE ON CACHE BOOL "Using CUDA Relocatable device by default")
+        endif()
+endif()
+
 # Install Kokkos as a dependency
 ## TODO: Add options for on utilizing in house builds
 include(FetchContent)
@@ -306,7 +314,8 @@ target_link_libraries(
 )
 
 # Include tests
-add_subdirectory(tests/unittests)
+add_subdirectory(tests/unit-tests)
+add_subdirectory(tests/regression-tests)
 add_subdirectory(examples)
 
 # Doxygen

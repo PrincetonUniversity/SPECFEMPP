@@ -1,6 +1,6 @@
 name: Unittests
 
-on: [push, pull_request]
+on: [push]
 
 jobs:
   build-and-test:
@@ -18,5 +18,5 @@ jobs:
       - name: Build
         run: cmake --build build
       - name: Run all tests
-        run: cd build/tests/unittests
+        run: cd build/tests/unit-tests
           && ctest
