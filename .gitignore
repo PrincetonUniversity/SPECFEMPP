@@ -1,6 +1,6 @@
 .vscode/
 .DS_Store
-build/
+build*/*
 _build/
 _templates/
 public/
@@ -8,8 +8,10 @@ firebase*.yml
 *.out
 debug.sh
 output.log
-run.sh
 results/
 timing.sh
 *.dat
 examples/*/*_config.yaml
+tests/regression-tests/*.yaml
+tests/regression-tests/*/cpu/*.yaml
+tests/regression-tests/*/gpu/*.yaml

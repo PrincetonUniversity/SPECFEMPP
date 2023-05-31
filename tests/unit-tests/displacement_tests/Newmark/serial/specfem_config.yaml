@@ -13,7 +13,10 @@ parameters:
   simulation-setup:
     ## quadrature setup
     quadrature:
-      quadrature-type: GLL4
+      alpha: 0.0
+      beta: 0.0
+      ngllx: 5
+      ngllz: 5
 
     ## Solver setup
     solver:
@@ -21,19 +24,16 @@ parameters:
         type-of-simulation: forward
         time-scheme:
           type: Newmark
-          dt: 1.1e-5
+          dt: 1.1e-3
           nstep: 100
 
   receivers:
-    stations-file: "@CMAKE_SOURCE_DIR@/examples/homogeneous-medium-flat-topography/STATIONS"
+    stations-file: "../DATA/STATIONS"
     angle: 0.0
     seismogram-type:
+      - displacement
       - velocity
     nstep_between_samples: 1
-
-  # seismogram:
-  #   seismogram-format: ascii
-  #   output-folder: "/scratch/gpfs/rk9481/specfem2d_kokkos/results"
 
   ## Runtime setup
   run-setup:
@@ -42,5 +42,5 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "@CMAKE_SOURCE_DIR@/examples/homogeneous-medium-flat-topography/databases/database.bin"
-    source-file: "@CMAKE_SOURCE_DIR@/examples/homogeneous-medium-flat-topography/source.yaml"
+    mesh-database: "../../../tests/unit-tests/displacement_tests/Newmark/serial/Database00000.bin"
+    source-file: "../../../tests/unit-tests/displacement_tests/Newmark/serial/sources.yaml"
