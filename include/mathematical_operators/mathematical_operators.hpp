@@ -96,8 +96,8 @@ KOKKOS_FUNCTION void compute_gradients_2D(
  */
 template <int NGLL>
 KOKKOS_FUNCTION void compute_gradients_2D(
-    const specfem::kokkos::DeviceTeam::member_type &team_member,
-    const int ispec, const specfem::kokkos::DeviceView3d<type_real> xix,
+    const int &xz, const int &ispec,
+    const specfem::kokkos::DeviceView3d<type_real> xix,
     const specfem::kokkos::DeviceView3d<type_real> xiz,
     const specfem::kokkos::DeviceView3d<type_real> gammax,
     const specfem::kokkos::DeviceView3d<type_real> gammaz,
@@ -109,10 +109,7 @@ KOKKOS_FUNCTION void compute_gradients_2D(
         field_x,
     const specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL, NGLL>
         field_z,
-    specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL, NGLL> s_duxdx,
-    specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL, NGLL> s_duxdz,
-    specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL, NGLL> s_duzdx,
-    specfem::kokkos::StaticDeviceScratchView2d<type_real, NGLL, NGLL> s_duzdz);
+    type_real &duxdxl, type_real &duxdzl, type_real &duzdxl, type_real &duzdzl);
 
 /**
  * @brief Compute and contributions of stress integrands in 2D.

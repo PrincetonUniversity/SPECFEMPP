@@ -45,7 +45,9 @@ void equate_norm(type_real error_norm, type_real computed_norm,
   if (percent_norm > tolerance) {
     std::ostringstream ss;
     ss << "Normalized error is = " << percent_norm
-       << " which is greater than specified tolerance = " << tolerance;
+       << " which is greater than specified tolerance = " << tolerance
+       << " computed norm = " << computed_norm
+       << " error norm = " << error_norm;
 
     throw std::runtime_error(ss.str());
   }

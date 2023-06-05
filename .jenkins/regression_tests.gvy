@@ -13,7 +13,7 @@ pipeline {
                 // Screen is needed since the sessions need to remain active even when this stage exits
                 sh """
                     screen -dm salloc -J jenkins_cpu -N 1 -n 1 -t 00:30:00 --constraint=broadwell
-                    screen -dm salloc -J jenkins_gpu -N 1 -c 10 -t 00:30:00 --gres=gpu:1 --constraint=a100 &
+                    screen -dm salloc -J jenkins_gpu -N 1 -c 10 -t 00:30:00 --gres=gpu:1 --constraint=a100
                 """
             }
         }

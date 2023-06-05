@@ -62,6 +62,14 @@ int run_test(const std::string &PR_regression_results_file,
   assert(PR_results.IsSequence());
   assert(main_results.IsSequence());
 
+  std::ostringstream message;
+
+  message << "===================================================\n"
+          << "------------Checking regression results------------\n"
+          << "===================================================";
+
+  std::cout << message.str() << std::endl;
+
   for (YAML::const_iterator it = main_results.begin(); it != main_results.end();
        ++it) {
     std::string test_name = it->first.as<std::string>();
@@ -69,16 +77,29 @@ int run_test(const std::string &PR_regression_results_file,
 
     if (PR_results[test_name]) {
       if (value / PR_results[test_name].as<type_real>() < threshhold) {
-        std::ostringstream message;
+        message.clear();
         message << "Performance for test : " << test_name
                 << " not within limits.\n"
                 << "    Test performance on main branch : " << value << "\n"
                 << "    Test performance on PR branch : "
                 << PR_results[test_name].as<type_real>();
         throw std::runtime_error(message.str());
+      } else {
+        message.clear();
+        message << test_name << " ........... "
+                << "PASSED";
+        std::cout << message.str() << std::endl;
       }
     }
   }
+
+  message.clear();
+
+  message << "===================================================\n"
+          << "-----------------------Done------------------------\n"
+          << "===================================================";
+
+  std::cout << message.str() << std::endl;
 
   return 0;
 }

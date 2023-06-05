@@ -75,7 +75,6 @@ struct partial_derivatives {
                       const specfem::kokkos::HostView2d<int> knods,
                       const specfem::quadrature::quadrature *quadx,
                       const specfem::quadrature::quadrature *quadz);
-
   /**
    * @brief Helper routine to sync views within this struct
    *

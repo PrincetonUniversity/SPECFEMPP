@@ -2,6 +2,9 @@
 #define _ELASTIC_DOMAIN_HPP
 
 #include "compute/interface.hpp"
+#include "domain/elastic_domain/impl/operators/gradient2d.hpp"
+#include "domain/elastic_domain/impl/operators/stress2d.hpp"
+#include "domain/elastic_domain/impl/operators/update_acceleration2d.hpp"
 #include "quadrature/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -260,6 +263,9 @@ private:
                                                      ///< of all elements in
                                                      ///< this domain on the
                                                      ///< host
+  specfem::Domain::elastic::impl::operators::gradient2d compute_gradients;
+  specfem::Domain::elastic::impl::operators::stress2d compute_stresses;
+  specfem::Domain::elastic::impl::operators::update_acceleration2d update_accel;
 };
 } // namespace Domain
 } // namespace specfem

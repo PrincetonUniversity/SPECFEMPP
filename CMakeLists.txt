@@ -223,6 +223,9 @@ target_link_libraries(
 
 add_library(
         domain
+        src/domain/elastic_domain/impl/operators/gradient2d.cpp
+        src/domain/elastic_domain/impl/operators/stress2d.cpp
+        src/domain/elastic_domain/impl/operators/update_acceleration2d.cpp
         src/domain/elastic_domain.cpp
 )
 
