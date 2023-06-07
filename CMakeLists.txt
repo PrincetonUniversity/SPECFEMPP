@@ -226,6 +226,7 @@ add_library(
         src/domain/elastic_domain/impl/operators/gradient2d.cpp
         src/domain/elastic_domain/impl/operators/stress2d.cpp
         src/domain/elastic_domain/impl/operators/update_acceleration2d.cpp
+        src/domain/impl/elements/elastic/elastic2d_isotropic.cpp
         src/domain/elastic_domain.cpp
 )
 
