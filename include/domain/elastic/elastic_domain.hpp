@@ -10,7 +10,7 @@
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
-namespace Domain {
+namespace domain {
 /**
  * @brief Elastic domain class
  *
@@ -22,7 +22,8 @@ namespace Domain {
  *  - field_dot_dot -> Acceleration along the 2 dimensions (idim) for every
  * global point (iglob) stored as a 2D View field(iglob, idim)
  */
-class Elastic : public specfem::Domain::Domain {
+template <typename element_type>
+class domain<specfem::enums::medium::elastic, element_type> {
 public:
   /**
    * @brief Get a view of displacement stored on the device
@@ -98,7 +99,7 @@ public:
   }
 
   /**
-   * @brief Construct a new Elastic domain object
+   * @brief Construct a new elastic domain object
    *
    * This contructor helps in instantiating fields. Without instantiating any
    * material or mesh related private fields
@@ -106,10 +107,10 @@ public:
    * @param ndim Number of dimensions
    * @param nglob Total number of distinct quadrature points
    */
-  Elastic(const int ndim, const int nglob);
+  domain(const int ndim, const int nglob);
 
   /**
-   * @brief Construct a new Elastic domain object
+   * @brief Construct a new elastic domain object
    *
    * @param ndim Number of dimensions
    * @param nglob Total number of distinct quadrature points inside the
@@ -123,30 +124,15 @@ public:
    * @param quadx Pointer to quadrature object in x-dimension
    * @param quadx Pointer to quadrature object in z-dimension
    */
-  Elastic(const int ndim, const int nglob, specfem::compute::compute *compute,
-          specfem::compute::properties *material_properties,
-          specfem::compute::partial_derivatives *partial_derivatives,
-          specfem::compute::sources *sources,
-          specfem::compute::receivers *receivers,
-          specfem::quadrature::quadrature *quadx,
-          specfem::quadrature::quadrature *quadz);
+  domain(const int ndim, const int nglob, specfem::compute::compute *compute,
+         specfem::compute::properties *material_properties,
+         specfem::compute::partial_derivatives *partial_derivatives,
+         specfem::compute::sources *sources,
+         specfem::compute::receivers *receivers,
+         specfem::quadrature::quadrature *quadx,
+         specfem::quadrature::quadrature *quadz);
   /**
    * @brief Compute interaction of stiffness matrix on acceleration
-   *
-   */
-  void compute_stiffness_interaction_calling_routine() override;
-  /**
-   * @brief Specialized kernel to compute the interaction of stiffness matrix on
-   * acceleration.
-   *
-   * Use this kernel when NGLL is known at compile time and NGLLX == NGLLZ.
-   *
-   * @tparam NGLL number of quadrature points
-   */
-  template <int NGLL> void compute_stiffness_interaction();
-  /**
-   * @brief Compute interaction of stiffness matrix on acceleration - generic
-   * implementation
    *
    */
   void compute_stiffness_interaction();
@@ -200,12 +186,6 @@ public:
    * @param isig_step timestep for seismogram calculation
    */
   void compute_seismogram(const int isig_step) override;
-  // /**
-  //  * @brief Load arrays required for compute forces into simd_arrays when
-  //  * compiled with explicit SIMD types, or else reference original arrays.
-  //  *
-  //  */
-  // void simd_configure_arrays() override;
 
 private:
   specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
@@ -231,20 +211,12 @@ private:
                      ///< of mass matrix on
                      ///< device
   specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>
-      h_rmass_inverse;                ///< View of inverse
-                                      ///< of mass matrix
-                                      ///< on host
-  specfem::compute::compute *compute; ///< Pointer to compute struct used to
-                                      ///< store spectral element numbering
-                                      ///< mapping (ibool)
-  specfem::compute::properties *material_properties; ///< Pointer to struct used
-                                                     ///< to store material
-                                                     ///< properties
-  specfem::compute::partial_derivatives *partial_derivatives; ///< Pointer to
-                                                              ///< struct used
-                                                              ///< to store
-                                                              ///< partial
-                                                              ///< derivates
+      h_rmass_inverse;                    ///< View of inverse
+                                          ///< of mass matrix
+                                          ///< on host
+  specfem::compute::compute *compute;     ///< Pointer to compute struct used to
+                                          ///< store spectral element numbering
+                                          ///< mapping (ibool)
   specfem::compute::sources *sources;     ///< Pointer to struct used to store
                                           ///< sources
   specfem::compute::receivers *receivers; ///< Pointer to struct used to store
@@ -254,20 +226,17 @@ private:
   quadrature::quadrature *quadz;          ///< Pointer to quadrature object in
                                           ///< z-dimension
   int nelem_domain; ///< Total number of elements in this domain
-  specfem::kokkos::DeviceView1d<int> ispec_domain; ///< Array containing global
-                                                   ///< indices(ispec) of all
-                                                   ///< elements in this domain
-                                                   ///< on the device
-  specfem::kokkos::HostMirror1d<int> h_ispec_domain; ///< Array containing
-                                                     ///< global indices(ispec)
-                                                     ///< of all elements in
-                                                     ///< this domain on the
-                                                     ///< host
-  specfem::Domain::elastic::impl::operators::gradient2d compute_gradients;
-  specfem::Domain::elastic::impl::operators::stress2d compute_stresses;
-  specfem::Domain::elastic::impl::operators::update_acceleration2d update_accel;
+  specfem::kokkos::DeviceView1d<element_type> elements;   ///< Container to
+                                                          ///< store pointer to
+                                                          ///< every element
+                                                          ///< inside
+  specfem::kokkos::HostMirror1d<element_type> h_elements; ///< Container to
+                                                          ///< store pointer to
+                                                          ///< every element
+                                                          ///< inside
 };
-} // namespace Domain
+
+} // namespace domain
 } // namespace specfem
 
 #endif
