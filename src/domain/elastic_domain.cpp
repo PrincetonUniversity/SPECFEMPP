@@ -235,19 +235,10 @@ void specfem::Domain::Elastic::compute_stiffness_interaction() {
 
   const auto hprime_xx = this->quadx->get_hprime();
   const auto hprime_zz = this->quadz->get_hprime();
-  const auto xix = this->partial_derivatives->xix;
-  const auto xiz = this->partial_derivatives->xiz;
-  const auto gammax = this->partial_derivatives->gammax;
-  const auto gammaz = this->partial_derivatives->gammaz;
-  const auto ibool = this->compute->ibool;
-  const auto lambdaplus2mu = this->material_properties->lambdaplus2mu;
-  const auto mu = this->material_properties->mu;
-  const auto jacobian = this->partial_derivatives->jacobian;
   const auto wxgll = this->quadx->get_w();
   const auto wzgll = this->quadz->get_w();
   const auto ispec_domain = this->ispec_domain;
   const auto field = this->field;
-  auto field_dot_dot = this->field_dot_dot;
 
   constexpr int NGLL2 = NGLL * NGLL;
   constexpr type_real NGLL_INV = 1.0 / NGLL;

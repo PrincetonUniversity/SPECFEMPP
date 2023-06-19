@@ -54,15 +54,17 @@ public:
    *
    * @param domain_class Pointer to domain class to apply predictor phase
    */
-  virtual void
-  apply_predictor_phase(const specfem::Domain::Domain *domain_class){};
+  template <typename medium, typename qp_type>
+  virtual void apply_predictor_phase(
+      const specfem::domain::domain<medium, qp_type> *domain_class){};
   /**
    * @brief Apply corrector phase of the timescheme
    *
    * @param domain_class Pointer to domain class to apply corrector phase
    */
-  virtual void
-  apply_corrector_phase(const specfem::Domain::Domain *domain_class){};
+  template <typename medium, typename qp_type>
+  virtual void apply_corrector_phase(
+      const specfem::domain::domain<medium, qp_type> *domain_class){};
 
   friend std::ostream &operator<<(std::ostream &out, TimeScheme &ts);
   /**

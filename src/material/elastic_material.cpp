@@ -32,7 +32,7 @@ std::string specfem::material::elastic_material::print() const {
 
 void specfem::material::elastic_material::assign(
     utilities::input_holder &holder) {
-  this->ispec_type = specfem::elements::elastic;
+  this->ispec_type = specfem::enums::element::elastic;
   // density
   this->density = holder.val0;
   // P and S velocity

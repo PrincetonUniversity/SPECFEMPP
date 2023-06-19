@@ -3,6 +3,7 @@
 #include "quadrature/interface.hpp"
 #include "source/interface.hpp"
 #include "source_time_function/interface.hpp"
+#include "specfem_enums.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities.cpp"
@@ -17,7 +18,8 @@ void specfem::sources::force::locate(
     const specfem::kokkos::HostMirror1d<type_real> zigll, const int nproc,
     const specfem::kokkos::HostView2d<type_real> coorg,
     const specfem::kokkos::HostView2d<int> knods, const int npgeo,
-    const specfem::kokkos::HostMirror1d<specfem::elements::type> ispec_type,
+    const specfem::kokkos::HostMirror1d<specfem::enums::element::type>
+        ispec_type,
     const specfem::MPI::MPI *mpi) {
   std::tie(this->xi, this->gamma, this->ispec, this->islice) =
       specfem::utilities::locate(coord, h_ibool, xigll, zigll, nproc,
@@ -36,7 +38,7 @@ void specfem::sources::force::compute_source_array(
   type_real xi = this->xi;
   type_real gamma = this->gamma;
   type_real angle = this->angle;
-  specfem::elements::type el_type = this->el_type;
+  specfem::enums::element::type el_type = this->el_type;
 
   auto [hxis, hpxis] =
       specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
@@ -54,14 +56,14 @@ void specfem::sources::force::compute_source_array(
     for (int j = 0; j < nquadz; j++) {
       hlagrange = hxis(i) * hgammas(j);
 
-      if (el_type == specfem::elements::acoustic ||
-          (el_type == specfem::elements::elastic &&
+      if (el_type == specfem::enums::element::acoustic ||
+          (el_type == specfem::enums::element::elastic &&
            specfem::globals::simulation_wave == specfem::wave::sh)) {
         source_array(j, i, 0) = hlagrange;
         source_array(j, i, 1) = hlagrange;
-      } else if ((el_type == specfem::elements::elastic &&
+      } else if ((el_type == specfem::enums::element::elastic &&
                   specfem::globals::simulation_wave == specfem::wave::p_sv) ||
-                 el_type == specfem::elements::poroelastic) {
+                 el_type == specfem::enums::element::poroelastic) {
         type_real tempx = sin(angle) * hlagrange;
         source_array(j, i, 0) = tempx;
         type_real tempz = -1.0 * cos(angle) * hlagrange;

@@ -12,7 +12,8 @@ void specfem::receivers::receiver::locate(
     const specfem::kokkos::HostMirror1d<type_real> zigll, const int nproc,
     const specfem::kokkos::HostView2d<type_real> coorg,
     const specfem::kokkos::HostView2d<int> knods, const int npgeo,
-    const specfem::kokkos::HostMirror1d<specfem::elements::type> ispec_type,
+    const specfem::kokkos::HostMirror1d<specfem::enums::element::type>
+        ispec_type,
     const specfem::MPI::MPI *mpi) {
   std::tie(this->xi, this->gamma, this->ispec, this->islice) =
       specfem::utilities::locate(coord, h_ibool, xigll, zigll, nproc, this->x,

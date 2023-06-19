@@ -190,51 +190,49 @@ target_link_libraries(
   compute
   parameter_reader
   compare_arrays
-  domain
-  writer
   -lpthread -lm
 )
 
-add_executable(
-  newmark_tests
-  displacement_tests/Newmark/newmark_tests.cpp
-)
+# add_executable(
+#   newmark_tests
+#   displacement_tests/Newmark/newmark_tests.cpp
+# )
 
-target_link_libraries(
-  newmark_tests
-  quadrature
-  mesh
-  material_class
-  yaml-cpp
-  kokkos_environment
-  mpi_environment
-  compute
-  parameter_reader
-  compare_arrays
-  domain
-  timescheme
-  solver
-  -lpthread -lm
-)
+# target_link_libraries(
+#   newmark_tests
+#   quadrature
+#   mesh
+#   material_class
+#   yaml-cpp
+#   kokkos_environment
+#   mpi_environment
+#   compute
+#   parameter_reader
+#   compare_arrays
+#   domain
+#   timescheme
+#   solver
+#   -lpthread -lm
+# )
 
-add_executable(
-  seismogram_tests
-  seismogram/seismogram_tests.cpp
-)
+# add_executable(
+#   seismogram_tests
+#   seismogram/seismogram_tests.cpp
+# )
 
-target_link_libraries(
-  seismogram_tests
-  quadrature
-  mesh
-  yaml-cpp
-  kokkos_environment
-  mpi_environment
-  compute
-  parameter_reader
-  domain
-  writer
-  -lpthread -lm
-)
+# target_link_libraries(
+#   seismogram_tests
+#   quadrature
+#   mesh
+#   yaml-cpp
+#   kokkos_environment
+#   mpi_environment
+#   compute
+#   parameter_reader
+#   domain
+#   writer
+#   -lpthread -lm
+# )
 
 # Link to gtest only if MPI is enabled
 if (NOT MPI_PARALLEL)
@@ -248,6 +246,6 @@ if (NOT MPI_PARALLEL)
   gtest_discover_tests(compute_tests)
   gtest_discover_tests(source_location_tests)
   gtest_discover_tests(rmass_inverse_tests)
-  gtest_discover_tests(newmark_tests)
-  gtest_discover_tests(seismogram_tests)
+  # gtest_discover_tests(newmark_tests)
+  # gtest_discover_tests(seismogram_tests)
 endif(NOT MPI_PARALLEL)

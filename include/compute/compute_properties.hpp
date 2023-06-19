@@ -41,10 +41,10 @@ struct properties {
   specfem::kokkos::HostMirror3d<type_real> h_lambdaplus2mu;
   ///@}
   // element type is defined in specfem_setup.hpp
-  specfem::kokkos::DeviceView1d<specfem::elements::type>
+  specfem::kokkos::DeviceView1d<specfem::enums::element::type>
       ispec_type; ///< type of element
                   ///< stored on device
-  specfem::kokkos::HostMirror1d<specfem::elements::type>
+  specfem::kokkos::HostMirror1d<specfem::enums::element::type>
       h_ispec_type; ///< type of element
                     ///< stored on host
 

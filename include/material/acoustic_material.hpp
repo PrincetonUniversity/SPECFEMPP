@@ -3,6 +3,7 @@
 
 #include "constants.hpp"
 #include "material.hpp"
+#include "specfem_enums.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
@@ -26,7 +27,9 @@ public:
   void assign(utilities::input_holder &holder) override;
   friend std::ostream &operator<<(std::ostream &out,
                                   const acoustic_material &h);
-  specfem::elements::type get_ispec_type() override { return ispec_type; };
+  specfem::enums::element::type get_ispec_type() override {
+    return ispec_type;
+  };
   std::string print() const override;
 
 private:
@@ -36,7 +39,7 @@ private:
    */
   type_real density, cs, cp, Qkappa, Qmu, compaction_grad, lambdaplus2mu, mu,
       lambda, kappa, young, poisson;
-  specfem::elements::type ispec_type = specfem::elements::acoustic;
+  specfem::enums::element::type ispec_type = specfem::enums::element::acoustic;
 };
 
 std::ostream &operator<<(std::ostream &out,

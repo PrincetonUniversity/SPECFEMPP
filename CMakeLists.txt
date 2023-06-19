@@ -221,22 +221,22 @@ target_link_libraries(
 # there seems to be a bug when compiling compute with -O3 mode using the icpx compiler.
 # set_target_properties(compute PROPERTIES COMPILE_OPTIONS "$<$<CONFIG:RELEASE>:-fp-model=precise>")
 
-add_library(
-        domain
-        src/domain/elastic_domain/impl/operators/gradient2d.cpp
-        src/domain/elastic_domain/impl/operators/stress2d.cpp
-        src/domain/elastic_domain/impl/operators/update_acceleration2d.cpp
-        src/domain/impl/elements/elastic/elastic2d_isotropic.cpp
-        src/domain/elastic_domain.cpp
-)
+# add_library(
+#         domain
+#         src/domain/elastic_domain/impl/operators/gradient2d.cpp
+#         src/domain/elastic_domain/impl/operators/stress2d.cpp
+#         src/domain/elastic_domain/impl/operators/update_acceleration2d.cpp
+#         src/domain/impl/elements/elastic/elastic2d_isotropic.cpp
+#         src/domain/elastic_domain.cpp
+# )
 
-target_link_libraries(
-        domain
-        compute
-        quadrature
-        operators
-        Kokkos::kokkos
-)
+# target_link_libraries(
+#         domain
+#         compute
+#         quadrature
+#         operators
+#         Kokkos::kokkos
+# )
 
 add_library(
         timescheme
@@ -295,27 +295,27 @@ target_link_libraries(
         Boost::filesystem
 )
 
-add_executable(
-        specfem2d
-        src/specfem2d.cpp
-)
+# add_executable(
+#         specfem2d
+#         src/specfem2d.cpp
+# )
 
-target_link_libraries(
-        specfem2d
-        material_class
-        specfem_mpi
-        Kokkos::kokkos
-        mesh
-        quadrature
-        compute
-        source_class
-        parameter_reader
-        domain
-        solver
-        receiver_class
-        writer
-        Boost::program_options
-)
+# target_link_libraries(
+#         specfem2d
+#         material_class
+#         specfem_mpi
+#         Kokkos::kokkos
+#         mesh
+#         quadrature
+#         compute
+#         source_class
+#         parameter_reader
+#         domain
+#         solver
+#         receiver_class
+#         writer
+#         Boost::program_options
+# )
 
 # Include tests
 add_subdirectory(tests/unit-tests)
