@@ -10,14 +10,6 @@ const std::string __default_file__ = "@CMAKE_SOURCE_DIR@/parameter_files/default
 
 namespace specfem {
 
-namespace elements {
-enum type {
-  elastic,    ///< elastic element
-  acoustic,   ///< acoustic element
-  poroelastic ///< poroelastic element
-};
-} // namespace elements
-
 namespace wave {
 enum type {
   p_sv, ///< P-SV wave

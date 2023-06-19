@@ -2,6 +2,7 @@
 #include "compute/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "material/interface.hpp"
+#include "specfem_enums.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -169,10 +170,11 @@ std::string specfem::mesh::mesh::print(
       "setup_compute::properties_ispec", specfem::kokkos::HostRange(0, nspec),
       [=](const int ispec, int &l_elastic, int &l_acoustic) {
         const int imat = this->material_ind.kmato(ispec);
-        if (materials[imat]->get_ispec_type() == specfem::elements::elastic) {
+        if (materials[imat]->get_ispec_type() ==
+            specfem::enums::element::elastic) {
           l_elastic++;
         } else if (materials[imat]->get_ispec_type() ==
-                   specfem::elements::acoustic) {
+                   specfem::enums::element::acoustic) {
           l_acoustic++;
         }
       },

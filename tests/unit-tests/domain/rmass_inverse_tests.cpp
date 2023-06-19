@@ -64,8 +64,7 @@ TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
   // Read sources
   //    if start time is not explicitly specified then t0 is determined using
   //    source frequencies and time shift
-  auto [sources, t0] =
-      specfem::sources::read_sources(sources_file, setup.get_dt(), mpi);
+  auto [sources, t0] = specfem::sources::read_sources(sources_file, 1e-5, mpi);
 
   // Generate compute structs to be used by the solver
   specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
@@ -115,14 +114,30 @@ TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
   // Instantiate domain classes
   const int nglob = specfem::utilities::compute_nglob(compute.h_ibool);
 
-  specfem::Domain::Domain *domains = new specfem::Domain::Elastic(
-      ndim, nglob, &compute, &material_properties, &partial_derivatives,
-      &compute_sources, &compute_receivers, gllx, gllz);
+  specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
+  specfem::domain::domain<
+      specfem::enums::element::medium::elastic,
+      specfem::enums::element::quadrature::static_quadrature_points<5> >
+      elastic_domain(ndim, nglob, qp5, &compute, material_properties,
+                     partial_derivatives, &compute_sources, &compute_receivers,
+                     gllx, gllz);
 
-  domains->sync_rmass_inverse(specfem::sync::DeviceToHost);
+  elastic_domain.sync_rmass_inverse(specfem::sync::DeviceToHost);
 
   specfem::kokkos::HostView2d<type_real, Kokkos::LayoutLeft> h_rmass_inverse =
-      domains->get_host_rmass_inverse();
+      elastic_domain.get_host_rmass_inverse();
+
+  // specfem::enums::element::quadrature::quadrature_points qp;
+
+  // specfem::Domain::Domain *domains = new specfem::Domain::Elastic(
+  //     ndim, nglob, &compute, &material_properties, &partial_derivatives,
+  //     &compute_sources, &compute_receivers, gllx, gllz);
+
+  // domains->sync_rmass_inverse(specfem::sync::DeviceToHost);
+
+  // specfem::kokkos::HostView2d<type_real, Kokkos::LayoutLeft> h_rmass_inverse
+  // =
+  //     domains->get_host_rmass_inverse();
 
   EXPECT_NO_THROW(specfem::testing::test_array(
       h_rmass_inverse, test_config.solutions_file, nglob, ndim));

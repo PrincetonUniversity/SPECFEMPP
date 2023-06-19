@@ -18,7 +18,8 @@ void specfem::sources::moment_tensor::locate(
     const specfem::kokkos::HostMirror1d<type_real> zigll, const int nproc,
     const specfem::kokkos::HostView2d<type_real> coorg,
     const specfem::kokkos::HostView2d<int> knods, const int npgeo,
-    const specfem::kokkos::HostMirror1d<specfem::elements::type> ispec_type,
+    const specfem::kokkos::HostMirror1d<specfem::enums::element::type>
+        ispec_type,
     const specfem::MPI::MPI *mpi) {
   std::tie(this->xi, this->gamma, this->ispec, this->islice) =
       specfem::utilities::locate(coord, h_ibool, xigll, zigll, nproc,
@@ -26,11 +27,11 @@ void specfem::sources::moment_tensor::locate(
                                  npgeo, mpi);
 
   if (this->islice == mpi->get_rank()) {
-    if (ispec_type(ispec) != specfem::elements::elastic) {
+    if (ispec_type(ispec) != specfem::enums::element::elastic) {
       throw std::runtime_error(
           "Found a Moment-tensor source in acoustic/poroelastic element");
     } else {
-      this->el_type = specfem::elements::elastic;
+      this->el_type = specfem::enums::element::elastic;
     }
   }
   int ngnod = knods.extent(0);

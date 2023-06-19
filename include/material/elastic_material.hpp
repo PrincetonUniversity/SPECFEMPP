@@ -2,6 +2,7 @@
 #define _ELASTIC_MATERIAL_HPP
 
 #include "constants.hpp"
+#include "specfem_enums.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
@@ -46,7 +47,9 @@ public:
    * properties
    */
   utilities::return_holder get_properties() override;
-  specfem::elements::type get_ispec_type() override { return ispec_type; };
+  specfem::enums::element::type get_ispec_type() override {
+    return ispec_type;
+  };
 
   std::string print() const override;
 
@@ -69,8 +72,8 @@ private:
   type_real young;
   type_real poisson;
   ///@}
-  specfem::elements::type ispec_type =
-      specfem::elements::elastic; ///< Type or element == specfem::elastic
+  specfem::enums::element::type ispec_type =
+      specfem::enums::element::elastic; ///< Type or element == specfem::elastic
 };
 
 std::ostream &operator<<(std::ostream &out,

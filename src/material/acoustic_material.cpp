@@ -33,7 +33,7 @@ std::string specfem::material::acoustic_material::print() const {
 void specfem::material::acoustic_material::assign(
     utilities::input_holder &holder) {
   // element type is defined in specfem_setup.hpp
-  this->ispec_type = specfem::elements::acoustic;
+  this->ispec_type = specfem::enums::element::acoustic;
   // density
   this->density = holder.val0;
   // P and S velocity

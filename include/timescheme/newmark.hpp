@@ -65,15 +65,17 @@ public:
    *
    * @param domain_class Pointer to domain class to apply predictor phase
    */
-  void
-  apply_predictor_phase(const specfem::Domain::Domain *domain_class) override;
+  template <typename medium, typename qp_type>
+  void apply_predictor_phase(
+      const specfem::domain::domain<medium, qp_type> *domain_class) override;
   /**
    * @brief Apply corrector phase of the timescheme
    *
    * @param domain_class Pointer to domain class to apply corrector phase
    */
-  void
-  apply_corrector_phase(const specfem::Domain::Domain *domain_class) override;
+  template <typename medium, typename qp_type>
+  void apply_corrector_phase(
+      const specfem::domain::domain<medium, qp_type> *domain_class) override;
   /**
    * @brief Compute if seismogram needs to be calculated at this timestep
    *

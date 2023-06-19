@@ -2,7 +2,8 @@
 #define _DOMAIN_INTERFACE_HPP
 
 #include "domain.hpp"
-#include "elastic_domain.hpp"
+// #include "domain.tpp"
+#include "elastic/interface.hpp"
 #include "impl/elements/interface.hpp"
 
 #endif

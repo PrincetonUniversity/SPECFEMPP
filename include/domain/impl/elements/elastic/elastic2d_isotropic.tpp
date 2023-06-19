@@ -2,7 +2,6 @@
 #define _DOMAIN_ELASTIC_ELEMENTS2D_ISOTROPIC_TPP
 
 #include "compute/interface.hpp"
-#include "domain/impl/elements/elastic/elastic2d.hpp"
 #include "domain/impl/elements/elastic/elastic2d_isotropic.hpp"
 #include "domain/impl/elements/element.hpp"
 #include "globals.h"
@@ -10,32 +9,68 @@
 #include "specfem_enums.hpp"
 #include "specfem_setup.hpp"
 
-template <typename quadrature_points>
-specfem::compute::partial_derivatives specfem::Domain::impl::elements::element<
-    specfem::enums::element::dimension::dim2, quadrature_points,
-    specfem::enums::element::medium::elastic,
-    specfem::enums::element::property::isotropic>::partial_derivatives =
-    specfem::compute::partial_derivatives();
+template <int N, typename T>
+using StaticScratchViewType =
+    typename specfem::enums::element::quadrature::static_quadrature_points<
+        N>::template ScratchViewType<T>;
 
-template <typename quadrature_points>
-specfem::compute::properties specfem::Domain::impl::elements::element<
-    specfem::enums::element::dimension::dim2, quadrature_points,
-    specfem::enums::element::medium::elastic,
-    specfem::enums::element::property::isotropic>::properties =
-    specfem::compute::properties();
+template <typename T>
+using DynamicScratchViewType = typename specfem::enums::element::quadrature::
+    dynamic_quadrature_points::template ScratchViewType<T>;
 
-template <typename quadrature_points>
+// -----------------------------------------------------------------------------
+//                     INSTANTIATE STATIC VARIABLES
+// -----------------------------------------------------------------------------
+
+template <int N>
+specfem::compute::partial_derivatives specfem::domain::impl::elements::element<
+    specfem::enums::element::dimension::dim2,
+    specfem::enums::element::medium::elastic,
+    specfem::enums::element::quadrature::static_quadrature_points<N>,
+    specfem::enums::element::property::isotropic>::partial_derivatives;
+
+template <int N>
+specfem::compute::properties specfem::domain::impl::elements::element<
+    specfem::enums::element::dimension::dim2,
+    specfem::enums::element::medium::elastic,
+    specfem::enums::element::quadrature::static_quadrature_points<N>,
+    specfem::enums::element::property::isotropic>::properties;
+
+template <int N>
 specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
-    specfem::Domain::impl::elements::element<
-        specfem::enums::element::dimension::dim2, quadrature_points,
+    specfem::domain::impl::elements::element<
+        specfem::enums::element::dimension::dim2,
         specfem::enums::element::medium::elastic,
-        specfem::enums::element::property::isotropic>::field_dot_dot =
-        specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>();
+        specfem::enums::element::quadrature::static_quadrature_points<N>,
+        specfem::enums::element::property::isotropic>::field_dot_dot;
 
-template <typename quadrature_points>
-specfem::Domain::impl::elements::element<
-    specfem::enums::element::dimension::dim2, quadrature_points,
+specfem::compute::partial_derivatives specfem::domain::impl::elements::element<
+    specfem::enums::element::dimension::dim2,
     specfem::enums::element::medium::elastic,
+    specfem::enums::element::quadrature::dynamic_quadrature_points,
+    specfem::enums::element::property::isotropic>::partial_derivatives;
+
+specfem::compute::properties specfem::domain::impl::elements::element<
+    specfem::enums::element::dimension::dim2,
+    specfem::enums::element::medium::elastic,
+    specfem::enums::element::quadrature::dynamic_quadrature_points,
+    specfem::enums::element::property::isotropic>::properties;
+
+specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+    specfem::domain::impl::elements::element<
+        specfem::enums::element::dimension::dim2,
+        specfem::enums::element::medium::elastic,
+        specfem::enums::element::quadrature::dynamic_quadrature_points,
+        specfem::enums::element::property::isotropic>::field_dot_dot;
+// -----------------------------------------------------------------------------
+//                     SPECIALIZED GENERALIZED ELEMENT
+// -----------------------------------------------------------------------------
+
+template <int NGLL>
+specfem::domain::impl::elements::element<
+    specfem::enums::element::dimension::dim2,
+    specfem::enums::element::medium::elastic,
+    specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic>::
     element(const int ispec,
             const specfem::compute::partial_derivatives partial_derivatives,
@@ -48,57 +83,39 @@ specfem::Domain::impl::elements::element<
   this->properties = properties;
   this->field_dot_dot = field_dot_dot;
 
-  static_assert(this->partial_derivatives.xix.extent(1) ==
-                quadrature_points::NGLL);
-  static_assert(this->partial_derivatives.xix.extent(2) ==
-                quadrature_points::NGLL);
-  static_assert(this->partial_derivatives.gammax.extent(1) ==
-                quadrature_points::NGLL);
-  static_assert(this->partial_derivatives.gammax.extent(2) ==
-                quadrature_points::NGLL);
-  static_assert(this->partial_derivatives.xiz.extent(1) ==
-                quadrature_points::NGLL);
-  static_assert(this->partial_derivatives.xiz.extent(2) ==
-                quadrature_points::NGLL);
-  static_assert(this->partial_derivatives.gammaz.extent(1) ==
-                quadrature_points::NGLL);
-  static_assert(this->partial_derivatives.gammaz.extent(2) ==
-                quadrature_points::NGLL);
-  static_assert(this->partial_derivatives.jacobian.extent(1) ==
-                quadrature_points::NGLL);
-  static_assert(this->partial_derivatives.jacobian.extent(2) ==
-                quadrature_points::NGLL);
+  assert(this->partial_derivatives.xix.extent(1) == NGLL);
+  assert(this->partial_derivatives.xix.extent(2) == NGLL);
+  assert(this->partial_derivatives.gammax.extent(1) == NGLL);
+  assert(this->partial_derivatives.gammax.extent(2) == NGLL);
+  assert(this->partial_derivatives.xiz.extent(1) == NGLL);
+  assert(this->partial_derivatives.xiz.extent(2) == NGLL);
+  assert(this->partial_derivatives.gammaz.extent(1) == NGLL);
+  assert(this->partial_derivatives.gammaz.extent(2) == NGLL);
+  assert(this->partial_derivatives.jacobian.extent(1) == NGLL);
+  assert(this->partial_derivatives.jacobian.extent(2) == NGLL);
 
-  static_assert(this->properties.lambdaplus2mu.extent(1) =
-                    quadrature_points::NGLL);
-  static_assert(this->properties.mu.extent(1) = quadrature_points::NGLL);
+  assert(this->properties.lambdaplus2mu.extent(1) == NGLL);
+  assert(this->properties.lambdaplus2mu.extent(2) == NGLL);
+  assert(this->properties.mu.extent(1) == NGLL);
+  assert(this->properties.mu.extent(2) == NGLL);
 
   return;
 }
 
-template <typename quadrature_points>
-KOKKOS_FUNCTION void specfem::Domain::impl::elements::element<
-    specfem::enums::element::dimension::dim2, quadrature_points,
+template <int NGLL>
+KOKKOS_FUNCTION void specfem::domain::impl::elements::element<
+    specfem::enums::element::dimension::dim2,
     specfem::enums::element::medium::elastic,
+    specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic>::
-    compute_gradient(
-        const int &xz,
-        const specfem::kokkos::StaticDeviceScratchView2d<
-            type_real, quadrature_points::NGLL, quadrature_points::NGLL>
-            s_hprime_xx,
-        const specfem::kokkos::StaticDeviceScratchView2d<
-            type_real, quadrature_points::NGLL, quadrature_points::NGLL>
-            s_hprime_zz,
-        const specfem::kokkos::StaticDeviceScratchView2d<
-            type_real, quadrature_points::NGLL, quadrature_points::NGLL>
-            field_x,
-        const specfem::kokkos::StaticDeviceScratchView2d<
-            type_real, quadrature_points::NGLL, quadrature_points::NGLL>
-            field_z,
-        type_real &duxdxl, type_real &duxdzl, type_real &duzdxl,
-        type_real &duzdzl) const {
+    compute_gradient(const int &xz,
+                     const StaticScratchViewType<NGLL, type_real> s_hprime_xx,
+                     const StaticScratchViewType<NGLL, type_real> s_hprime_zz,
+                     const StaticScratchViewType<NGLL, type_real> field_x,
+                     const StaticScratchViewType<NGLL, type_real> field_z,
+                     type_real &duxdxl, type_real &duxdzl, type_real &duzdxl,
+                     type_real &duzdzl) const {
 
-  constexpr int NGLL = quadrature_points::NGLL;
   int ix, iz;
   sub2ind(xz, NGLL, iz, ix);
 
@@ -133,10 +150,11 @@ KOKKOS_FUNCTION void specfem::Domain::impl::elements::element<
   return;
 }
 
-template <typename quadrature_points>
-KOKKOS_FUNCTION void specfem::Domain::impl::elements::element<
-    specfem::enums::element::dimension::dim2, quadrature_points,
+template <int NGLL>
+KOKKOS_FUNCTION void specfem::domain::impl::elements::element<
+    specfem::enums::element::dimension::dim2,
     specfem::enums::element::medium::elastic,
+    specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic>::
     compute_stress(const int &xz, const type_real &duxdxl,
                    const type_real &duxdzl, const type_real &duzdxl,
@@ -145,7 +163,6 @@ KOKKOS_FUNCTION void specfem::Domain::impl::elements::element<
                    type_real &stress_integrand_3l,
                    type_real &stress_integrand_4l) const {
 
-  constexpr int NGLL = quadrature_points::NGLL;
   int ix, iz;
   sub2ind(xz, NGLL, iz, ix);
 
@@ -190,34 +207,22 @@ KOKKOS_FUNCTION void specfem::Domain::impl::elements::element<
   return;
 }
 
-template <typename quadrature_points>
-KOKKOS_FUNCTION void specfem::Domain::impl::elements::element<
-    specfem::enums::element::dimension::dim2, quadrature_points,
+template <int NGLL>
+KOKKOS_FUNCTION void specfem::domain::impl::elements::element<
+    specfem::enums::element::dimension::dim2,
     specfem::enums::element::medium::elastic,
+    specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic>::
     update_acceleration(
         const int &xz, const int &iglob, const type_real &wxglll,
         const type_real &wzglll,
-        const specfem::kokkos::StaticDeviceScratchView2d<
-            type_real, quadrature_points::NGLL, quadrature_points::NGLL>
-            stress_integrand_1,
-        const specfem::kokkos::StaticDeviceScratchView2d<
-            type_real, quadrature_points::NGLL, quadrature_points::NGLL>
-            stress_integrand_2,
-        const specfem::kokkos::StaticDeviceScratchView2d<
-            type_real, quadrature_points::NGLL, quadrature_points::NGLL>
-            stress_integrand_3,
-        const specfem::kokkos::StaticDeviceScratchView2d<
-            type_real, quadrature_points::NGLL, quadrature_points::NGLL>
-            stress_integrand_4,
-        const specfem::kokkos::StaticDeviceScratchView2d<
-            type_real, quadrature_points::NGLL, quadrature_points::NGLL>
-            s_hprimewgll_xx,
-        const specfem::kokkos::StaticDeviceScratchView2d<
-            type_real, quadrature_points::NGLL, quadrature_points::NGLL>
-            s_hprimewgll_zz) const {
+        const StaticScratchViewType<NGLL, type_real> stress_integrand_1,
+        const StaticScratchViewType<NGLL, type_real> stress_integrand_2,
+        const StaticScratchViewType<NGLL, type_real> stress_integrand_3,
+        const StaticScratchViewType<NGLL, type_real> stress_integrand_4,
+        const StaticScratchViewType<NGLL, type_real> s_hprimewgll_xx,
+        const StaticScratchViewType<NGLL, type_real> s_hprimewgll_zz) const {
 
-  constexpr int NGLL = quadrature_points::NGLL;
   int ix, iz;
   sub2ind(xz, NGLL, iz, ix);
   type_real tempx1 = 0.0;
@@ -239,32 +244,14 @@ KOKKOS_FUNCTION void specfem::Domain::impl::elements::element<
   Kokkos::atomic_add(&field_dot_dot(iglob, 1), sum_terms3);
 }
 
-template <>
-specfem::compute::partial_derivatives specfem::Domain::impl::elements::element<
+// -----------------------------------------------------------------------------
+//                          BEGIN GENERALIZED ELEMENT
+// -----------------------------------------------------------------------------
+
+KOKKOS_FUNCTION specfem::domain::impl::elements::element<
     specfem::enums::element::dimension::dim2,
     specfem::enums::element::medium::elastic,
-    specfem::enums::element::property::isotropic>::partial_derivatives =
-    specfem::compute::partial_derivatives();
-
-template <>
-specfem::compute::properties specfem::Domain::impl::elements::element<
-    specfem::enums::element::dimension::dim2,
-    specfem::enums::element::medium::elastic,
-    specfem::enums::element::property::isotropic>::properties =
-    specfem::compute::properties();
-
-template <>
-specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
-    specfem::Domain::impl::elements::element<
-        specfem::enums::element::dimension::dim2,
-        specfem::enums::element::medium::elastic,
-        specfem::enums::element::property::isotropic>::field_dot_dot =
-        specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>();
-
-template <>
-KOKKOS_FUNCTION specfem::Domain::impl::elements::element<
-    specfem::enums::element::dimension::dim2,
-    specfem::enums::element::medium::elastic,
+    specfem::enums::element::quadrature::dynamic_quadrature_points,
     specfem::enums::element::property::isotropic>::
     element(const int ispec,
             const specfem::compute::partial_derivatives partial_derivatives,
@@ -296,19 +283,18 @@ KOKKOS_FUNCTION specfem::Domain::impl::elements::element<
   return;
 }
 
-template <>
-KOKKOS_FUNCTION void specfem::Domain::impl::elements::element<
+KOKKOS_FUNCTION void specfem::domain::impl::elements::element<
     specfem::enums::element::dimension::dim2,
     specfem::enums::element::medium::elastic,
+    specfem::enums::element::quadrature::dynamic_quadrature_points,
     specfem::enums::element::property::isotropic>::
-    compute_gradient(
-        const int &xz,
-        const specfem::kokkos::DeviceScratchView2d<type_real> s_hprime_xx,
-        const specfem::kokkos::DeviceScratchView2d<type_real> s_hprime_zz,
-        const specfem::kokkos::DeviceScratchView2d<type_real> field_x,
-        const specfem::kokkos::DeviceScratchView2d<type_real> field_z,
-        type_real &duxdxl, type_real &duxdzl, type_real &duzdxl,
-        type_real &duzdzl) const {
+    compute_gradient(const int &xz,
+                     const DynamicScratchViewType<type_real> s_hprime_xx,
+                     const DynamicScratchViewType<type_real> s_hprime_zz,
+                     const DynamicScratchViewType<type_real> field_x,
+                     const DynamicScratchViewType<type_real> field_z,
+                     type_real &duxdxl, type_real &duxdzl, type_real &duzdxl,
+                     type_real &duzdzl) const {
 
   assert(s_hprime_xx.extent(0) == ngllx);
   assert(s_hprime_xx.extent(1) == ngllx);
@@ -329,7 +315,7 @@ KOKKOS_FUNCTION void specfem::Domain::impl::elements::element<
   const type_real gammaxl =
       this->partial_derivatives.gammax(this->ispec, iz, ix);
   const type_real gammazl =
-      this->partial_derivatives.gammaz(this->this->ispec, iz, ix);
+      this->partial_derivatives.gammaz(this->ispec, iz, ix);
 
   type_real sum_hprime_x1 = 0.0;
   type_real sum_hprime_x3 = 0.0;
@@ -360,12 +346,12 @@ KOKKOS_FUNCTION void specfem::Domain::impl::elements::element<
   return;
 }
 
-template <>
-KOKKOS_FUNCTION void specfem::Domain::impl::elements::element<
+KOKKOS_FUNCTION void specfem::domain::impl::elements::element<
     specfem::enums::element::dimension::dim2,
     specfem::enums::element::medium::elastic,
+    specfem::enums::element::quadrature::dynamic_quadrature_points,
     specfem::enums::element::property::isotropic>::
-    compute_stress(const int &xz, const int &ngllx, const type_real &duxdxl,
+    compute_stress(const int &xz, const type_real &duxdxl,
                    const type_real &duxdzl, const type_real &duzdxl,
                    const type_real &duzdzl, type_real &stress_integrand_1l,
                    type_real &stress_integrand_2l,
@@ -377,7 +363,7 @@ KOKKOS_FUNCTION void specfem::Domain::impl::elements::element<
 
   const type_real lambdaplus2mul =
       this->properties.lambdaplus2mu(this->ispec, iz, ix);
-  const type_real mul = this->properties.mu(thi->ispec, iz, ix);
+  const type_real mul = this->properties.mu(this->ispec, iz, ix);
   const type_real lambdal = lambdaplus2mul - 2.0 * mul;
 
   const type_real xixl = this->partial_derivatives.xix(this->ispec, iz, ix);
@@ -419,25 +405,20 @@ KOKKOS_FUNCTION void specfem::Domain::impl::elements::element<
   return;
 }
 
-template <>
-KOKKOS_FUNCTION void specfem::Domain::impl::elements::element<
+KOKKOS_FUNCTION void specfem::domain::impl::elements::element<
     specfem::enums::element::dimension::dim2,
     specfem::enums::element::medium::elastic,
+    specfem::enums::element::quadrature::dynamic_quadrature_points,
     specfem::enums::element::property::isotropic>::
     update_acceleration(
         const int &xz, const int &iglob, const type_real &wxglll,
         const type_real &wzglll,
-        const specfem::kokkos::DeviceScratchView2d<type_real>
-            stress_integrand_1,
-        const specfem::kokkos::DeviceScratchView2d<type_real>
-            stress_integrand_2,
-        const specfem::kokkos::DeviceScratchView2d<type_real>
-            stress_integrand_3,
-        const specfem::kokkos::DeviceScratchView2d<type_real>
-            stress_integrand_4,
-        const specfem::kokkos::DeviceScratchView2d<type_real> s_hprimewgll_xx,
-        const specfem::kokkos::DeviceScratchView2d<type_real> s_hprimewgll_zz)
-        const {
+        const DynamicScratchViewType<type_real> stress_integrand_1,
+        const DynamicScratchViewType<type_real> stress_integrand_2,
+        const DynamicScratchViewType<type_real> stress_integrand_3,
+        const DynamicScratchViewType<type_real> stress_integrand_4,
+        const DynamicScratchViewType<type_real> s_hprimewgll_xx,
+        const DynamicScratchViewType<type_real> s_hprimewgll_zz) const {
 
   assert(s_hprimewgll_xx.extent(0) == ngllx);
   assert(s_hprimewgll_xx.extent(1) == ngllx);

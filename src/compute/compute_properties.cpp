@@ -22,7 +22,7 @@ specfem::compute::properties::properties(const int nspec, const int ngllz,
           "specfem::compute::properties::rho_vs", nspec, ngllz, ngllx)),
       lambdaplus2mu(specfem::kokkos::DeviceView3d<type_real>(
           "specfem::compute::properties::lambdaplus2mu", nspec, ngllz, ngllx)),
-      ispec_type(specfem::kokkos::DeviceView1d<specfem::elements::type>(
+      ispec_type(specfem::kokkos::DeviceView1d<specfem::enums::element::type>(
           "specfem::compute::properties::ispec_type", nspec)) {
 
   h_rho = Kokkos::create_mirror_view(rho);

@@ -4,14 +4,14 @@
 #include "specfem_enums.hpp"
 
 namespace specfem {
-namespace Domain {
+namespace domain {
 namespace impl {
 namespace elements {
 template <class... properties> class element {};
 
 } // namespace elements
 } // namespace impl
-} // namespace Domain
+} // namespace domain
 } // namespace specfem
 
 #endif

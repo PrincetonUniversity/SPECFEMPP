@@ -2,6 +2,7 @@
 #define _MATERIAL_HPP
 
 #include "constants.hpp"
+#include "specfem_enums.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
@@ -33,8 +34,8 @@ public:
     utilities::return_holder holder{};
     return holder;
   };
-  virtual specfem::elements::type get_ispec_type() {
-    return specfem::elements::elastic;
+  virtual specfem::enums::element::type get_ispec_type() {
+    return specfem::enums::element::elastic;
   };
 
   virtual std::string print() const { return ""; }
