@@ -222,7 +222,7 @@ target_link_libraries(
 # set_target_properties(compute PROPERTIES COMPILE_OPTIONS "$<$<CONFIG:RELEASE>:-fp-model=precise>")
 
 # add_library(
-#         domain
+#         domain INTEFACE
 #         src/domain/elastic_domain/impl/operators/gradient2d.cpp
 #         src/domain/elastic_domain/impl/operators/stress2d.cpp
 #         src/domain/elastic_domain/impl/operators/update_acceleration2d.cpp
@@ -246,31 +246,33 @@ add_library(
 
 target_link_libraries(
         timescheme
-        domain
+        # domain
+        Kokkos::kokkos
+        yaml-cpp
 )
 
-add_library(
-        writer
-        src/writer/seismogram.cpp
-)
+# add_library(
+#         writer
+#         src/writer/seismogram.cpp
+# )
 
-target_link_libraries(
-        writer
-        compute
-        receiver_class
-)
+# target_link_libraries(
+#         writer
+#         compute
+#         receiver_class
+# )
 
-add_library(
-        solver
-        src/solver/time_marching.cpp
-)
+# add_library(
+#         solver
+#         src/solver/time_marching.cpp
+# )
 
-target_link_libraries(
-        solver
-        domain
-        timescheme
-        writer
-)
+# target_link_libraries(
+#         solver
+#         domain
+#         timescheme
+#         writer
+# )
 
 add_library(
         parameter_reader

@@ -65,17 +65,21 @@ public:
    *
    * @param domain_class Pointer to domain class to apply predictor phase
    */
-  template <typename medium, typename qp_type>
   void apply_predictor_phase(
-      const specfem::domain::domain<medium, qp_type> *domain_class) override;
+      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field,
+      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot,
+      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+          field_dot_dot) override;
   /**
    * @brief Apply corrector phase of the timescheme
    *
    * @param domain_class Pointer to domain class to apply corrector phase
    */
-  template <typename medium, typename qp_type>
   void apply_corrector_phase(
-      const specfem::domain::domain<medium, qp_type> *domain_class) override;
+      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field,
+      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot,
+      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+          field_dot_dot) override;
   /**
    * @brief Compute if seismogram needs to be calculated at this timestep
    *
