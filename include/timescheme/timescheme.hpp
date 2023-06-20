@@ -54,17 +54,21 @@ public:
    *
    * @param domain_class Pointer to domain class to apply predictor phase
    */
-  template <typename medium, typename qp_type>
   virtual void apply_predictor_phase(
-      const specfem::domain::domain<medium, qp_type> *domain_class){};
+      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field,
+      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot,
+      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+          field_dot_dot){};
   /**
    * @brief Apply corrector phase of the timescheme
    *
    * @param domain_class Pointer to domain class to apply corrector phase
    */
-  template <typename medium, typename qp_type>
   virtual void apply_corrector_phase(
-      const specfem::domain::domain<medium, qp_type> *domain_class){};
+      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field,
+      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot,
+      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+          field_dot_dot){};
 
   friend std::ostream &operator<<(std::ostream &out, TimeScheme &ts);
   /**

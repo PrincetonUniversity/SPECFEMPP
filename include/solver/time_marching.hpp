@@ -7,6 +7,7 @@
 
 namespace specfem {
 namespace solver {
+template <typename qp_type>
 class time_marching : public specfem::solver::solver {
 
 public:
@@ -16,7 +17,10 @@ public:
    * @param domain Pointer to specfem::Domain::Domain class
    * @param it Pointer to spectem::TimeScheme::TimeScheme class
    */
-  time_marching(specfem::Domain::Domain *domain,
+  template <typename qp_type>
+  time_marching(specfem::domain::domain<
+                    specfem::enums::elements::medium::elastic, qp_type>
+                    elastic_domain,
                 specfem::TimeScheme::TimeScheme *it)
       : domain(domain), it(it){};
   /**
@@ -26,7 +30,8 @@ public:
   void run() override;
 
 private:
-  specfem::Domain::Domain *domain; ///< Pointer to spefem::Domain::Domain class
+  specfem::domain::domain<specfem::enums::elements::medium::elastic, qp_type>
+      elastic_domain; ///< Pointer to spefem::Domain::Domain class
   specfem::TimeScheme::TimeScheme *it; ///< Pointer to
                                        ///< spectem::TimeScheme::TimeScheme
                                        ///< class
