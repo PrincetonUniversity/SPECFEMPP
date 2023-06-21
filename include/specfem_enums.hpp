@@ -40,6 +40,8 @@ public:
   using scratch_memory_space =
       specfem::kokkos::DevExecSpace::scratch_memory_space;
 
+  using member_type = specfem::kokkos::DeviceTeam::member_type;
+
   template <typename T>
   using ScratchViewType = specfem::kokkos::DeviceScratchView2d<T>;
 
@@ -51,7 +53,7 @@ public:
   ~dynamic_quadrature_points() = default;
 
   template <typename T, specfem::enums::axes ax1, specfem::enums::axes ax2>
-  std::size_t shmem_size() {
+  std::size_t shmem_size() const {
     if constexpr (ax1 == specfem::enums::axes::x &&
                   ax2 == specfem::enums::axes::x) {
       return ScratchViewType<T>::shmem_size(this->ngllx, this->ngllx);
@@ -64,7 +66,7 @@ public:
   }
 
   template <typename T, specfem::enums::axes ax1, specfem::enums::axes ax2>
-  ScratchViewType<T> ScratchView(scratch_memory_space &ptr) {
+  ScratchViewType<T> ScratchView(scratch_memory_space &ptr) const {
     if constexpr (ax1 == specfem::enums::axes::x &&
                   ax2 == specfem::enums::axes::x) {
       return ScratchViewType<T>(ptr, this->ngllx, this->ngllx);
@@ -76,9 +78,8 @@ public:
     }
   };
 
-  template <typename TeamMemberType, specfem::enums::axes ax1,
-            specfem::enums::axes ax2>
-  auto TeamThreadRange(TeamMemberType team_member) {
+  template <specfem::enums::axes ax1, specfem::enums::axes ax2>
+  auto TeamThreadRange(const member_type &team_member) const {
     if constexpr (ax1 == specfem::enums::axes::x &&
                   ax2 == specfem::enums::axes::x) {
       return Kokkos::TeamThreadRange(team_member, ngllx * ngllx);
@@ -90,7 +91,9 @@ public:
     }
   }
 
-  std::tuple<int, int> get_ngll() { return std::make_tuple(ngllx, ngllz); }
+  std::tuple<int, int> get_ngll() const {
+    return std::make_tuple(ngllx, ngllz);
+  }
 };
 
 // Define the number of quadrature points at compile time
@@ -102,6 +105,8 @@ public:
   using scratch_memory_space =
       specfem::kokkos::DevExecSpace::scratch_memory_space;
 
+  using member_type = specfem::kokkos::DeviceTeam::member_type;
+
   template <typename T>
   using ScratchViewType =
       specfem::kokkos::StaticDeviceScratchView2d<T, NGLL, NGLL>;
@@ -110,22 +115,21 @@ public:
   ~static_quadrature_points() = default;
 
   template <typename T, specfem::enums::axes ax_1, specfem::enums::axes ax_2>
-  std::size_t shmem_size() {
+  std::size_t shmem_size() const {
     return ScratchViewType<T>::shmem_size();
   }
 
   template <typename T, specfem::enums::axes ax_1, specfem::enums::axes ax_2>
-  ScratchViewType<T> ScratchView(scratch_memory_space &ptr) {
+  ScratchViewType<T> ScratchView(const scratch_memory_space &ptr) const {
     return ScratchViewType<T>(ptr);
   }
 
-  template <class TeamMemberType, specfem::enums::axes ax_1,
-            specfem::enums::axes ax_2>
-  auto TeamThreadRange(TeamMemberType team_member) {
+  template <specfem::enums::axes ax_1, specfem::enums::axes ax_2>
+  auto TeamThreadRange(const member_type &team_member) const {
     return Kokkos::TeamThreadRange(team_member, NGLL * NGLL);
   }
 
-  constexpr std::tuple<int, int> get_ngll() {
+  constexpr std::tuple<int, int> get_ngll() const {
     return std::make_tuple(NGLL, NGLL);
   }
 };

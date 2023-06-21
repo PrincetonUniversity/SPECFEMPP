@@ -15,20 +15,22 @@ template <typename base_element> struct container {
     return;
   }
 
-  template <typename... Args> void compute_gradient(Args... values) {
+  template <typename... Args> void compute_gradient(Args... values) const {
     this->element->compute_gradient(values...);
     return;
   }
 
-  template <typename... Args> void compute_stress(Args... values) {
-    this->element->compute_stresss(values...);
+  template <typename... Args> void compute_stress(Args... values) const {
+    this->element->compute_stress(values...);
     return;
   }
 
-  template <typename... Args> void update_acceleration(Args... values) {
+  template <typename... Args> void update_acceleration(Args... values) const {
     this->element->update_acceleration(values...);
     return;
   }
+
+  int get_ispec() const { return this->element->get_ispec(); }
 
   ~container() = default;
 };

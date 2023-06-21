@@ -221,8 +221,24 @@ target_link_libraries(
 # there seems to be a bug when compiling compute with -O3 mode using the icpx compiler.
 # set_target_properties(compute PROPERTIES COMPILE_OPTIONS "$<$<CONFIG:RELEASE>:-fp-model=precise>")
 
+# add_library(elements INTERFACE)
+
+# target_include_directories(
+
+# )
+
 # add_library(
-#         domain INTEFACE
+#         domain
+#         src/domain/impl/elements/elastic/elastic2d_isotropic.cpp
+# )
+
+# target_link_libraries(
+#         domain
+#         compute
+# )
+
+# add_library(
+#         domain
 #         src/domain/elastic_domain/impl/operators/gradient2d.cpp
 #         src/domain/elastic_domain/impl/operators/stress2d.cpp
 #         src/domain/elastic_domain/impl/operators/update_acceleration2d.cpp

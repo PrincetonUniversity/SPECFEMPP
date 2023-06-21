@@ -118,29 +118,39 @@ TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
   specfem::domain::domain<
       specfem::enums::element::medium::elastic,
       specfem::enums::element::quadrature::static_quadrature_points<5> >
-      elastic_domain(ndim, nglob, qp5, &compute, material_properties,
-                     partial_derivatives, &compute_sources, &compute_receivers,
-                     gllx, gllz);
+      elastic_domain_static(ndim, nglob, qp5, &compute, material_properties,
+                            partial_derivatives, &compute_sources,
+                            &compute_receivers, gllx, gllz);
 
-  elastic_domain.sync_rmass_inverse(specfem::sync::DeviceToHost);
+  elastic_domain_static.sync_rmass_inverse(specfem::sync::DeviceToHost);
 
-  specfem::kokkos::HostView2d<type_real, Kokkos::LayoutLeft> h_rmass_inverse =
-      elastic_domain.get_host_rmass_inverse();
-
-  // specfem::enums::element::quadrature::quadrature_points qp;
-
-  // specfem::Domain::Domain *domains = new specfem::Domain::Elastic(
-  //     ndim, nglob, &compute, &material_properties, &partial_derivatives,
-  //     &compute_sources, &compute_receivers, gllx, gllz);
-
-  // domains->sync_rmass_inverse(specfem::sync::DeviceToHost);
-
-  // specfem::kokkos::HostView2d<type_real, Kokkos::LayoutLeft> h_rmass_inverse
-  // =
-  //     domains->get_host_rmass_inverse();
+  specfem::kokkos::HostView2d<type_real, Kokkos::LayoutLeft>
+      h_rmass_inverse_static = elastic_domain_static.get_host_rmass_inverse();
 
   EXPECT_NO_THROW(specfem::testing::test_array(
-      h_rmass_inverse, test_config.solutions_file, nglob, ndim));
+      h_rmass_inverse_static, test_config.solutions_file, nglob, ndim));
+
+  // const int ngllx = gllx->get_N();
+  // const int ngllz = gllz->get_N();
+
+  // specfem::enums::element::quadrature::dynamic_quadrature_points qp(ngllz,
+  // ngllx);
+
+  // specfem::domain::domain<
+  //     specfem::enums::element::medium::elastic,
+  //     specfem::enums::element::quadrature::dynamic_quadrature_points>
+  //     elastic_domain_dynamic(ndim, nglob, qp, &compute, material_properties,
+  //                            partial_derivatives, &compute_sources,
+  //                            &compute_receivers, gllx, gllz);
+
+  // elastic_domain_dynamic.sync_rmass_inverse(specfem::sync::DeviceToHost);
+
+  // specfem::kokkos::HostView2d<type_real, Kokkos::LayoutLeft>
+  //     h_rmass_inverse_dynamic =
+  //     elastic_domain_dynamic.get_host_rmass_inverse();
+
+  // EXPECT_NO_THROW(specfem::testing::test_array(
+  //     h_rmass_inverse_dynamic, test_config.solutions_file, nglob, ndim));
 }
 
 int main(int argc, char *argv[]) {

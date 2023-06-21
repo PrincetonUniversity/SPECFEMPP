@@ -114,19 +114,24 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
 
   // Instantiate domain classes
   const int nglob = specfem::utilities::compute_nglob(compute.h_ibool);
-  specfem::Domain::Domain *domains = new specfem::Domain::Elastic(
-      ndim, nglob, &compute, &material_properties, &partial_derivatives,
-      &compute_sources, &compute_receivers, gllx, gllz);
+  specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
+  specfem::domain::domain<
+      specfem::enums::element::medium::elastic,
+      specfem::enums::element::quadrature::static_quadrature_points<5> >
+      elastic_domain_static(ndim, nglob, qp5, &compute, material_properties,
+                            partial_derivatives, &compute_sources,
+                            &compute_receivers, gllx, gllz);
 
-  specfem::solver::solver *solver =
-      new specfem::solver::time_marching(domains, it);
+  specfem::solver::solver *solver = new specfem::solver::time_marching<
+      specfem::enums::element::quadrature::static_quadrature_points<5> >(
+      elastic_domain_static, it);
 
   solver->run();
 
-  domains->sync_field(specfem::sync::DeviceToHost);
+  elastic_domain_static.sync_field(specfem::sync::DeviceToHost);
 
   specfem::kokkos::HostView2d<type_real, Kokkos::LayoutLeft> field =
-      domains->get_host_field();
+      elastic_domain_static.get_host_field();
 
   type_real tolerance = 0.01;
 

@@ -65,6 +65,8 @@ public:
       const ScratchViewType<type_real> s_hprimewgll_xx,
       const ScratchViewType<type_real> s_hprimewgll_zz) const override;
 
+  KOKKOS_FUNCTION int get_ispec() const override { return this->ispec; }
+
 private:
   int ispec;
   static specfem::compute::partial_derivatives partial_derivatives;

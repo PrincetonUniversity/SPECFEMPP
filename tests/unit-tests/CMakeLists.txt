@@ -188,32 +188,33 @@ target_link_libraries(
   kokkos_environment
   mpi_environment
   compute
+  # domain
   parameter_reader
   compare_arrays
   -lpthread -lm
 )
 
-# add_executable(
-#   newmark_tests
-#   displacement_tests/Newmark/newmark_tests.cpp
-# )
+add_executable(
+  newmark_tests
+  displacement_tests/Newmark/newmark_tests.cpp
+)
 
-# target_link_libraries(
-#   newmark_tests
-#   quadrature
-#   mesh
-#   material_class
-#   yaml-cpp
-#   kokkos_environment
-#   mpi_environment
-#   compute
-#   parameter_reader
-#   compare_arrays
-#   domain
-#   timescheme
-#   solver
-#   -lpthread -lm
-# )
+target_link_libraries(
+  newmark_tests
+  quadrature
+  mesh
+  material_class
+  yaml-cpp
+  kokkos_environment
+  mpi_environment
+  compute
+  parameter_reader
+  compare_arrays
+  # domain
+  timescheme
+  # solver
+  -lpthread -lm
+)
 
 # add_executable(
 #   seismogram_tests
