@@ -159,7 +159,7 @@ public:
    * calculated
    * @param isig_step timestep for seismogram calculation
    */
-  void compute_seismogram(const int isig_step){};
+  void compute_seismogram(const int isig_step);
 
 private:
   specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>

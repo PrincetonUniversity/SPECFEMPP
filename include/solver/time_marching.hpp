@@ -3,6 +3,7 @@
 
 #include "domain/interface.hpp"
 #include "solver.hpp"
+#include "specfem_enums.hpp"
 #include "timescheme/interface.hpp"
 
 namespace specfem {
@@ -17,12 +18,11 @@ public:
    * @param domain Pointer to specfem::Domain::Domain class
    * @param it Pointer to spectem::TimeScheme::TimeScheme class
    */
-  template <typename qp_type>
-  time_marching(specfem::domain::domain<
-                    specfem::enums::elements::medium::elastic, qp_type>
-                    elastic_domain,
-                specfem::TimeScheme::TimeScheme *it)
-      : domain(domain), it(it){};
+  time_marching(
+      specfem::domain::domain<specfem::enums::element::medium::elastic, qp_type>
+          elastic_domain,
+      specfem::TimeScheme::TimeScheme *it)
+      : elastic_domain(elastic_domain), it(it){};
   /**
    * @brief Run time-marching solver algorithm
    *
@@ -30,7 +30,7 @@ public:
   void run() override;
 
 private:
-  specfem::domain::domain<specfem::enums::elements::medium::elastic, qp_type>
+  specfem::domain::domain<specfem::enums::element::medium::elastic, qp_type>
       elastic_domain; ///< Pointer to spefem::Domain::Domain class
   specfem::TimeScheme::TimeScheme *it; ///< Pointer to
                                        ///< spectem::TimeScheme::TimeScheme
