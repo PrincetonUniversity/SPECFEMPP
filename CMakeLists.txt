@@ -314,27 +314,25 @@ target_link_libraries(
         Boost::filesystem
 )
 
-# add_executable(
-#         specfem2d
-#         src/specfem2d.cpp
-# )
+add_executable(
+        specfem2d
+        src/specfem2d.cpp
+)
 
-# target_link_libraries(
-#         specfem2d
-#         material_class
-#         specfem_mpi
-#         Kokkos::kokkos
-#         mesh
-#         quadrature
-#         compute
-#         source_class
-#         parameter_reader
-#         domain
-#         solver
-#         receiver_class
-#         writer
-#         Boost::program_options
-# )
+target_link_libraries(
+        specfem2d
+        material_class
+        specfem_mpi
+        Kokkos::kokkos
+        mesh
+        quadrature
+        compute
+        source_class
+        parameter_reader
+        receiver_class
+        writer
+        Boost::program_options
+)
 
 # Include tests
 add_subdirectory(tests/unit-tests)

@@ -176,15 +176,20 @@ void execute(const std::string &parameter_file, const std::string &default_file,
 
   // Instantiate domain classes
   const int nglob = specfem::utilities::compute_nglob(compute.h_ibool);
-  specfem::Domain::Domain *domains = new specfem::Domain::Elastic(
-      ndim, nglob, &compute, &material_properties, &partial_derivatives,
-      &compute_sources, &compute_receivers, gllx, gllz);
+  specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
+  specfem::domain::domain<
+      specfem::enums::element::medium::elastic,
+      specfem::enums::element::quadrature::static_quadrature_points<5> >
+      elastic_domain_static(ndim, nglob, qp5, &compute, material_properties,
+                            partial_derivatives, &compute_sources,
+                            &compute_receivers, gllx, gllz);
 
   auto writer =
       setup.instantiate_seismogram_writer(receivers, &compute_receivers);
 
-  specfem::solver::solver *solver =
-      new specfem::solver::time_marching(domains, it);
+  specfem::solver::solver *solver = new specfem::solver::time_marching<
+      specfem::enums::element::quadrature::static_quadrature_points<5> >(
+      elastic_domain_static, it);
 
   mpi->cout("Executing time loop:");
   mpi->cout("-------------------------------");
@@ -220,7 +225,6 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   }
 
   delete it;
-  delete domains;
   delete solver;
   delete writer;
 
