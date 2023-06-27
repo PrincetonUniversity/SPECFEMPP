@@ -267,16 +267,16 @@ target_link_libraries(
         yaml-cpp
 )
 
-# add_library(
-#         writer
-#         src/writer/seismogram.cpp
-# )
+add_library(
+        writer
+        src/writer/seismogram.cpp
+)
 
-# target_link_libraries(
-#         writer
-#         compute
-#         receiver_class
-# )
+target_link_libraries(
+        writer
+        compute
+        receiver_class
+)
 
 # add_library(
 #         solver
@@ -310,6 +310,7 @@ target_link_libraries(
         timescheme
         receiver_class
         yaml-cpp
+        writer
         Boost::filesystem
 )
 

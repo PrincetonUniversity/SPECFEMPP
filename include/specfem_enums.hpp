@@ -66,7 +66,8 @@ public:
   }
 
   template <typename T, specfem::enums::axes ax1, specfem::enums::axes ax2>
-  ScratchViewType<T> ScratchView(scratch_memory_space &ptr) const {
+  KOKKOS_INLINE_FUNCTION ScratchViewType<T>
+  ScratchView(scratch_memory_space &ptr) const {
     if constexpr (ax1 == specfem::enums::axes::x &&
                   ax2 == specfem::enums::axes::x) {
       return ScratchViewType<T>(ptr, this->ngllx, this->ngllx);
@@ -79,7 +80,8 @@ public:
   };
 
   template <specfem::enums::axes ax1, specfem::enums::axes ax2>
-  auto TeamThreadRange(const member_type &team_member) const {
+  KOKKOS_INLINE_FUNCTION auto
+  TeamThreadRange(const member_type &team_member) const {
     if constexpr (ax1 == specfem::enums::axes::x &&
                   ax2 == specfem::enums::axes::x) {
       return Kokkos::TeamThreadRange(team_member, ngllx * ngllx);
@@ -91,8 +93,9 @@ public:
     }
   }
 
-  std::tuple<int, int> get_ngll() const {
-    return std::make_tuple(ngllx, ngllz);
+  KOKKOS_INLINE_FUNCTION void get_ngll(int *ngllx, int *ngllz) const {
+    *ngllx = this->ngllx;
+    *ngllz = this->ngllz;
   }
 };
 
@@ -120,17 +123,20 @@ public:
   }
 
   template <typename T, specfem::enums::axes ax_1, specfem::enums::axes ax_2>
-  ScratchViewType<T> ScratchView(const scratch_memory_space &ptr) const {
+  KOKKOS_INLINE_FUNCTION ScratchViewType<T>
+  ScratchView(const scratch_memory_space &ptr) const {
     return ScratchViewType<T>(ptr);
   }
 
   template <specfem::enums::axes ax_1, specfem::enums::axes ax_2>
-  auto TeamThreadRange(const member_type &team_member) const {
+  KOKKOS_INLINE_FUNCTION auto
+  TeamThreadRange(const member_type &team_member) const {
     return Kokkos::TeamThreadRange(team_member, NGLL * NGLL);
   }
 
-  constexpr std::tuple<int, int> get_ngll() const {
-    return std::make_tuple(NGLL, NGLL);
+  KOKKOS_INLINE_FUNCTION constexpr void get_ngll(int *ngllx, int *ngllz) const {
+    *ngllx = NGLL;
+    *ngllz = NGLL;
   }
 };
 
