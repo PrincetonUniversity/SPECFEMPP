@@ -48,6 +48,80 @@ using HostScratchSpace = HostExecSpace::scratch_memory_space;
 using DevScratchSpace = DevExecSpace::scratch_memory_space;
 ///@}
 
+/** @name Static Device views
+ */
+///@{
+/**
+ * @tparam T view datatype
+ * @tparam N view size
+ * @tparam L view layout - default layout is LayoutRight
+ *  @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
+ *
+ * @code ...
+ *    StridedCacheAlignedView1d = StaticDeviceView1d<double, 100,
+ * Kokkos::MemoryTraits<Kokkos::Aligned>>(...)
+ * @endcode
+ */
+template <typename T, int N, typename L = LayoutWrapper, typename... Args>
+using StaticDeviceView1d = Kokkos::View<T[N], L, DevMemSpace, Args...>;
+
+/**
+ * @tparam T view datatype
+ * @tparam N view size
+ * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
+ */
+template <typename T, int N, typename L = LayoutWrapper, typename... Args>
+using StaticDeviceView2d = Kokkos::View<T[N][N], L, DevMemSpace, Args...>;
+
+/**
+ * @tparam T view datatype
+ * @tparam N view size
+ * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
+ */
+template <typename T, int N, typename L = LayoutWrapper, typename... Args>
+using StaticDeviceView3d = Kokkos::View<T[N][N][N], L, DevMemSpace, Args...>;
+///@}
+
+/** @name Static Host views
+ */
+///@{
+
+/**
+ * @tparam T view datatype
+ * @tparam N view size
+ * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
+ */
+template <typename T, int N, typename L = LayoutWrapper, typename... Args>
+using StaticHostView1d = Kokkos::View<T[N], L, HostMemSpace, Args...>;
+
+/**
+ * @tparam T view datatype
+ * @tparam N view size
+ * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
+ */
+template <typename T, int N, typename L = LayoutWrapper, typename... Args>
+using StaticHostView2d = Kokkos::View<T[N][N], L, HostMemSpace, Args...>;
+
+/**
+ * @tparam T view datatype
+ * @tparam N view size
+ * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
+ */
+template <typename T, int N, typename L = LayoutWrapper, typename... Args>
+using StaticHostView3d = Kokkos::View<T[N][N][N], L, HostMemSpace, Args...>;
+///@}
+
 /** @name Device views
  */
 ///@{
