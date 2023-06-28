@@ -5,6 +5,8 @@
 #include "domain/elastic_domain/impl/operators/gradient2d.hpp"
 #include "domain/elastic_domain/impl/operators/stress2d.hpp"
 #include "domain/elastic_domain/impl/operators/update_acceleration2d.hpp"
+#include "domain/impl/elements/interface.hpp"
+#include "domain/impl/sources/interface.hpp"
 #include "quadrature/interface.hpp"
 #include "specfem_enums.hpp"
 #include "specfem_setup.hpp"
@@ -107,7 +109,7 @@ public:
          specfem::compute::compute *compute,
          specfem::compute::properties material_properties,
          specfem::compute::partial_derivatives partial_derivatives,
-         specfem::compute::sources *sources,
+         specfem::compute::sources compute_sources,
          specfem::compute::receivers *receivers,
          specfem::quadrature::quadrature *quadx,
          specfem::quadrature::quadrature *quadz);
@@ -191,8 +193,6 @@ private:
   specfem::compute::compute *compute;     ///< Pointer to compute struct used to
                                           ///< store spectral element numbering
                                           ///< mapping (ibool)
-  specfem::compute::sources *sources;     ///< Pointer to struct used to store
-                                          ///< sources
   specfem::compute::receivers *receivers; ///< Pointer to struct used to store
                                           ///< receivers
   quadrature::quadrature *quadx;          ///< Pointer to quadrature object in
@@ -206,12 +206,14 @@ private:
           specfem::enums::element::medium::elastic,
           qp_type> > >
       elements; ///< Container to store pointer to every element inside
-  specfem::kokkos::HostMirror1d<specfem::domain::impl::elements::container<
-      specfem::domain::impl::elements::element<
+                ///< this domain
+  specfem::kokkos::DeviceView1d<specfem::domain::impl::sources::container<
+      specfem::domain::impl::sources::source<
           specfem::enums::element::dimension::dim2,
           specfem::enums::element::medium::elastic,
           qp_type> > >
-      h_elements; ///< Container to store pointer to every element inside
+      sources; ///< Container to store pointer to every source inside
+               ///< this domain
 
   qp_type quadrature_points;
 };

@@ -9,6 +9,10 @@
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
+using field_type = Kokkos::Subview<
+    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>, int,
+    std::remove_const_t<decltype(Kokkos::ALL)> >;
+
 namespace specfem {
 namespace domain {
 namespace impl {
@@ -82,7 +86,7 @@ public:
    * @param duzdzl Computed partial derivative of field \f$\frac{\partial
    * u_z}{\partial z}\f$
    */
-  KOKKOS_FUNCTION void
+  KOKKOS_INLINE_FUNCTION void
   compute_gradient(const int &xz, const ScratchViewType<type_real> s_hprime_xx,
                    const ScratchViewType<type_real> s_hprime_zz,
                    const ScratchViewType<type_real> field_x,
@@ -115,7 +119,7 @@ public:
    * point xz
    * @return KOKKOS_FUNCTION
    */
-  KOKKOS_FUNCTION void
+  KOKKOS_INLINE_FUNCTION void
   compute_stress(const int &xz, const type_real &duxdxl,
                  const type_real &duxdzl, const type_real &duzdxl,
                  const type_real &duzdzl, type_real *stress_integrand_1l,
@@ -127,7 +131,6 @@ public:
    * quadrature point
    *
    * @param xz Index of Gauss-Lobatto-Legendre quadrature point
-   * @param iglob Global index of the Gauss-Lobatto-Legendre quadrature point
    * @param wxglll Weight of the Gauss-Lobatto-Legendre quadrature point in x
    * direction
    * @param wzglll Weight of the Gauss-Lobatto-Legendre quadrature point in z
@@ -142,27 +145,25 @@ public:
    * + sigma_zz * gammazl) as computed by compute_stress
    * @param s_hprimewgll_xx Scratch view hprime_xx * wxgll
    * @param s_hprimewgll_zz Scratch view hprime_zz * wzgll
-   * @param field_dot_dot Acceleration of the field
-   * @return KOKKOS_FUNCTION
+   * @param field_dot_dot Acceleration of the field subviewed at global index
    */
-  KOKKOS_FUNCTION void update_acceleration(
-      const int &xz, const int &iglob, const type_real &wxglll,
-      const type_real &wzglll,
-      const ScratchViewType<type_real> stress_integrand_1,
-      const ScratchViewType<type_real> stress_integrand_2,
-      const ScratchViewType<type_real> stress_integrand_3,
-      const ScratchViewType<type_real> stress_integrand_4,
-      const ScratchViewType<type_real> s_hprimewgll_xx,
-      const ScratchViewType<type_real> s_hprimewgll_zz,
-      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
-          field_dot_dot) const override;
+  KOKKOS_INLINE_FUNCTION void
+  update_acceleration(const int &xz, const type_real &wxglll,
+                      const type_real &wzglll,
+                      const ScratchViewType<type_real> stress_integrand_1,
+                      const ScratchViewType<type_real> stress_integrand_2,
+                      const ScratchViewType<type_real> stress_integrand_3,
+                      const ScratchViewType<type_real> stress_integrand_4,
+                      const ScratchViewType<type_real> s_hprimewgll_xx,
+                      const ScratchViewType<type_real> s_hprimewgll_zz,
+                      field_type field_dot_dot) const override;
 
   /**
    * @brief Get the index of the element
    *
    * @return int Index of the element
    */
-  KOKKOS_FUNCTION int get_ispec() const override { return this->ispec; }
+  KOKKOS_INLINE_FUNCTION int get_ispec() const override { return this->ispec; }
 
 private:
   int ispec;                                         ///< Index of the element

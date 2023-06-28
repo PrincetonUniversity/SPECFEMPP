@@ -5,6 +5,8 @@
 #include "constants.hpp"
 #include "domain/domain.hpp"
 #include "domain/elastic/elastic_domain.hpp"
+#include "domain/impl/elements/interface.hpp"
+#include "domain/impl/sources/interface.hpp"
 #include "globals.h"
 #include "kokkos_abstractions.h"
 #include "mathematical_operators/interface.hpp"
@@ -15,11 +17,20 @@
 #include <Kokkos_ScatterView.hpp>
 
 template <typename element_type>
-using container =
+using element_container =
     typename specfem::domain::impl::elements::container<element_type>;
 
 template <class qp_type, class... traits>
-using element_type = specfem::domain::impl::elements::element<
+using element_type = typename specfem::domain::impl::elements::element<
+    specfem::enums::element::dimension::dim2,
+    specfem::enums::element::medium::elastic, qp_type, traits...>;
+
+template <typename source_type>
+using source_container =
+    typename specfem::domain::impl::sources::container<source_type>;
+
+template <class qp_type, class... traits>
+using source_type = typename specfem::domain::impl::sources::source<
     specfem::enums::element::dimension::dim2,
     specfem::enums::element::medium::elastic, qp_type, traits...>;
 
@@ -107,14 +118,11 @@ void initialize_rmass_inverse(
 }
 
 template <class qp_type>
-void instantiate_element(
+void instantialize_element(
     specfem::compute::partial_derivatives partial_derivatives,
     specfem::compute::properties properties,
-    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot_dot,
     specfem::kokkos::HostMirror1d<int> h_ispec_domain,
-    specfem::kokkos::HostMirror1d<container<element_type<qp_type> > >
-        h_elements,
-    specfem::kokkos::DeviceView1d<container<element_type<qp_type> > >
+    specfem::kokkos::DeviceView1d<element_container<element_type<qp_type> > >
         elements) {
 
   for (int i = 0; i < h_ispec_domain.extent(0); i++) {
@@ -127,7 +135,7 @@ void instantiate_element(
     const int ispec = h_ispec_domain(i);
 
     Kokkos::parallel_for(
-        "specfem::sources::moment_tensor::moment_tensor::allocate_stf",
+        "specfem::domain::elastic_isotropic::instantialize_element",
         specfem::kokkos::DeviceRange(0, 1), KOKKOS_LAMBDA(const int &) {
           new (element)
               element_type<qp_type,
@@ -138,7 +146,7 @@ void instantiate_element(
 
           // printf("memory address %p\n", element);
 
-          elements(i) = container<element_type<qp_type> >(element);
+          elements(i) = element_container<element_type<qp_type> >(element);
         });
 
     Kokkos::fence();
@@ -148,16 +156,63 @@ void instantiate_element(
     const int ispec = h_ispec_domain(i);
     int ispec_t = 15;
 
-    Kokkos::parallel_reduce("get_ispec", specfem::kokkos::DeviceRange(0, 1),
-                            KOKKOS_LAMBDA(const int &, int &l) {
-                              l = elements(i).get_ispec();
-                            },
-                            ispec_t);
+    Kokkos::parallel_reduce(
+        "get_ispec", specfem::kokkos::DeviceRange(0, 1),
+        KOKKOS_LAMBDA(const int &, int &l) { l = elements(i).get_ispec(); },
+        ispec_t);
 
     Kokkos::fence();
 
     assert(ispec == ispec_t);
   }
+
+  return;
+}
+
+template <class qp_type>
+void initialize_sources(
+    const specfem::kokkos::HostMirror1d<specfem::enums::element::type>
+        h_ispec_type,
+    const specfem::compute::sources compute_sources,
+    specfem::kokkos::DeviceView1d<source_container<source_type<qp_type> > > &sources) {
+
+  const auto ispec_array = compute_sources.h_ispec_array;
+  const int nsources = ispec_array.extent(0);
+
+  sources = specfem::kokkos::DeviceView1d<source_container<source_type<qp_type> > >(
+      "specfem::domain::elastic_isotropic::sources", nsources);
+
+  for (int isource = 0; isource < nsources; isource++) {
+    source_type<qp_type> *source;
+
+    source = (source_type<qp_type> *)
+        Kokkos::kokkos_malloc<specfem::kokkos::DevMemSpace>(
+            sizeof(source_type<qp_type, specfem::enums::element::property::isotropic>));
+
+    const int ispec = ispec_array(isource);
+
+    specfem::forcing_function::stf* source_time_function = compute_sources.h_stf_array(isource).T;
+
+    const auto sv_source_array =
+        Kokkos::subview(compute_sources.source_array, isource, Kokkos::ALL(),
+                        Kokkos::ALL(), Kokkos::ALL());
+
+    if (h_ispec_type(ispec) == specfem::enums::element::elastic) {
+      Kokkos::parallel_for(
+          "specfem::domain::elastic_isotropic::initialize_source",
+          specfem::kokkos::DeviceRange(0, 1), KOKKOS_LAMBDA(const int &) {
+            new (source)
+                source_type<qp_type,
+                            specfem::enums::element::property::isotropic>(
+                    ispec, sv_source_array, source_time_function);
+            sources(isource) = source_container<source_type<qp_type> >(source);
+          });
+
+      Kokkos::fence();
+    }
+  }
+
+  return;
 }
 
 template <class qp_type>
@@ -165,9 +220,8 @@ void assign_elemental_properties(
     specfem::compute::partial_derivatives partial_derivatives,
     specfem::compute::properties properties,
     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot_dot,
-    specfem::kokkos::HostMirror1d<container<element_type<qp_type> > >
-        &h_elements,
-    specfem::kokkos::DeviceView1d<container<element_type<qp_type> > > &elements,
+    specfem::kokkos::DeviceView1d<element_container<element_type<qp_type> > >
+        &elements,
     const int &nspec, const int &ngllz, const int &ngllx, int &nelem_domain) {
 
   // Assign elemental properties
@@ -185,9 +239,9 @@ void assign_elemental_properties(
   specfem::kokkos::HostMirror1d<int> h_ispec_domain =
       Kokkos::create_mirror_view(ispec_domain);
 
-  elements = specfem::kokkos::DeviceView1d<container<element_type<qp_type> > >(
-      "specfem::domain::elastic::elements", nelem_domain);
-  h_elements = Kokkos::create_mirror_view(elements);
+  elements =
+      specfem::kokkos::DeviceView1d<element_container<element_type<qp_type> > >(
+          "specfem::domain::elastic::elements", nelem_domain);
 
   int index = 0;
   for (int ispec = 0; ispec < nspec; ispec++) {
@@ -199,8 +253,8 @@ void assign_elemental_properties(
 
   Kokkos::deep_copy(ispec_domain, h_ispec_domain);
 
-  instantiate_element(partial_derivatives, properties, field_dot_dot,
-                      h_ispec_domain, h_elements, elements);
+  instantialize_element(partial_derivatives, properties, h_ispec_domain,
+                        elements);
 };
 
 template <class qp_type>
@@ -209,7 +263,7 @@ specfem::domain::domain<specfem::enums::element::medium::elastic, qp_type>::
            specfem::compute::compute *compute,
            specfem::compute::properties material_properties,
            specfem::compute::partial_derivatives partial_derivatives,
-           specfem::compute::sources *sources,
+           specfem::compute::sources compute_sources,
            specfem::compute::receivers *receivers,
            specfem::quadrature::quadrature *quadx,
            specfem::quadrature::quadrature *quadz)
@@ -227,7 +281,7 @@ specfem::domain::domain<specfem::enums::element::medium::elastic, qp_type>::
           specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>(
               "specfem::Domain::Elastic::rmass_inverse", nglob,
               specfem::enums::element::medium::elastic::components)),
-      quadrature_points(quadrature_points), compute(compute), sources(sources),
+      quadrature_points(quadrature_points), compute(compute),
       receivers(receivers), quadx(quadx), quadz(quadz) {
 
   this->h_field = Kokkos::create_mirror_view(this->field);
@@ -240,7 +294,6 @@ specfem::domain::domain<specfem::enums::element::medium::elastic, qp_type>::
   const int ngllz = ibool.extent(1);
   const int ngllx = ibool.extent(2);
 
-  // Inverse of mass matrix
   //----------------------------------------------------------------------------
   // Initialize views
 
@@ -248,17 +301,27 @@ specfem::domain::domain<specfem::enums::element::medium::elastic, qp_type>::
       nglob, this->field, this->field_dot, this->field_dot_dot,
       this->rmass_inverse);
 
+  //----------------------------------------------------------------------------
+  // Inverse of mass matrix
+
   initialize_rmass_inverse<specfem::enums::element::medium::elastic>(
       compute->ibool, material_properties.ispec_type, quadx->get_w(),
       quadz->get_w(), material_properties.rho, partial_derivatives.jacobian,
       this->rmass_inverse);
 
   // ----------------------------------------------------------------------------
+  // Inverse of mass matrix
 
   assign_elemental_properties(partial_derivatives, material_properties,
-                              this->field_dot_dot, this->h_elements,
+                              this->field_dot_dot,
                               this->elements, nspec, ngllz, ngllx,
                               this->nelem_domain);
+
+  // ----------------------------------------------------------------------------
+  // Initialize the sources
+
+  initialize_sources(material_properties.h_ispec_type, compute_sources,
+                     this->sources);
 
   return;
 };
@@ -386,8 +449,8 @@ void specfem::domain::domain<specfem::enums::element::medium::elastic,
           const specfem::kokkos::DeviceTeam::member_type &team_member) {
         int ngllx, ngllz;
         quadrature_points.get_ngll(&ngllx, &ngllz);
-        const auto element = this->elements(team_member.league_rank());
-        const auto ispec = element.get_ispec();
+        const auto element = this->elements(team_member.league_rank()).element;
+        const auto ispec = element->get_ispec();
 
         // Instantiate shared views
         // ---------------------------------------------------------------
@@ -484,11 +547,11 @@ void specfem::domain::domain<specfem::enums::element::medium::elastic,
               type_real duzdxl = 0.0;
               type_real duzdzl = 0.0;
 
-              element.compute_gradient(xz, s_hprime_xx, s_hprime_zz, s_fieldx,
+              element->compute_gradient(xz, s_hprime_xx, s_hprime_zz, s_fieldx,
                                        s_fieldz, &duxdxl, &duxdzl, &duzdxl,
                                        &duzdzl);
 
-              element.compute_stress(
+              element->compute_stress(
                   xz, duxdxl, duxdzl, duzdxl, duzdzl,
                   &s_stress_integral_1(iz, ix), &s_stress_integral_2(iz, ix),
                   &s_stress_integral_3(iz, ix), &s_stress_integral_4(iz, ix));
@@ -508,10 +571,13 @@ void specfem::domain::domain<specfem::enums::element::medium::elastic,
               const type_real wxglll = wxgll(ix);
               const type_real wzglll = wzgll(iz);
 
-              element.update_acceleration(
-                  xz, iglob, wxglll, wzglll, s_stress_integral_1,
-                  s_stress_integral_2, s_stress_integral_3, s_stress_integral_4,
-                  s_hprimewgll_xx, s_hprimewgll_zz, this->field_dot_dot);
+              auto sv_field_dot_dot =
+                  Kokkos::subview(field_dot_dot, iglob, Kokkos::ALL());
+
+              element->update_acceleration(
+                  xz, wxglll, wzglll, s_stress_integral_1, s_stress_integral_2,
+                  s_stress_integral_3, s_stress_integral_4, s_hprimewgll_xx,
+                  s_hprimewgll_zz, sv_field_dot_dot);
             });
       });
 
@@ -525,13 +591,7 @@ void specfem::domain::domain<
     specfem::enums::element::medium::elastic,
     qp_type>::compute_source_interaction(const type_real timeval) {
 
-  const int nsources = this->sources->source_array.extent(0);
-  const int ngllz = this->sources->source_array.extent(1);
-  const int ngllx = this->sources->source_array.extent(2);
-  const int ngllxz = ngllx * ngllz;
-  const auto ispec_array = this->sources->ispec_array;
-  const auto stf_array = this->sources->stf_array;
-  const auto source_array = this->sources->source_array;
+  const int nsources = this->sources.extent(0);
   const auto ibool = this->compute->ibool;
 
   Kokkos::parallel_for(
@@ -539,8 +599,11 @@ void specfem::domain::domain<
       specfem::kokkos::DeviceTeam(nsources, Kokkos::AUTO, 1),
       KOKKOS_CLASS_LAMBDA(
           const specfem::kokkos::DeviceTeam::member_type &team_member) {
+        int ngllx, ngllz;
+        quadrature_points.get_ngll(&ngllx, &ngllz);
         int isource = team_member.league_rank();
-        int ispec = ispec_array(isource);
+        const auto source = this->sources(isource);
+        const int ispec = source.get_ispec();
         auto sv_ibool = Kokkos::subview(ibool, ispec, Kokkos::ALL, Kokkos::ALL);
 
         type_real stf;
@@ -548,34 +611,31 @@ void specfem::domain::domain<
         Kokkos::parallel_reduce(
             Kokkos::TeamThreadRange(team_member, 1),
             [=](const int &, type_real &lsum) {
-              lsum = stf_array(isource).T->compute(timeval);
+              lsum = source.eval_stf(timeval);
             },
             stf);
 
         team_member.team_barrier();
 
         Kokkos::parallel_for(
-            Kokkos::TeamThreadRange(team_member, ngllxz), [=](const int xz) {
-              const int ix = xz % ngllz;
-              const int iz = xz / ngllz;
-              int iglob = sv_ibool(iz, ix);
+            quadrature_points.template TeamThreadRange<specfem::enums::axes::z,
+                                                       specfem::enums::axes::x>(
+                team_member),
+            [=](const int xz) {
+              int iz, ix;
+              sub2ind(xz, ngllx, iz, ix);
+              int iglob = ibool(ispec, iz, ix);
 
-              if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
-                const type_real accelx = source_array(isource, iz, ix, 0) * stf;
-                const type_real accelz = source_array(isource, iz, ix, 1) * stf;
-                Kokkos::single(Kokkos::PerThread(team_member), [=] {
-                  Kokkos::atomic_add(&this->field_dot_dot(iglob, 0), accelx);
-                  Kokkos::atomic_add(&this->field_dot_dot(iglob, 1), accelz);
-                });
-              } else if (specfem::globals::simulation_wave ==
-                         specfem::wave::sh) {
-                const type_real accelx = source_array(isource, iz, ix, 0) * stf;
-                Kokkos::atomic_add(&this->field_dot_dot(iglob, 0), accelx);
-              }
+              type_real accelx, accelz;
+              auto sv_field_dot_dot =
+                  Kokkos::subview(field_dot_dot, iglob, Kokkos::ALL());
+
+              source.compute_interaction(xz, stf, &accelx, &accelz);
+              source.update_acceleration(accelx, accelz, sv_field_dot_dot);
             });
       });
 
-  // Kokkos::fence();
+  Kokkos::fence();
   return;
 }
 

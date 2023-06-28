@@ -181,7 +181,7 @@ void execute(const std::string &parameter_file, const std::string &default_file,
       specfem::enums::element::medium::elastic,
       specfem::enums::element::quadrature::static_quadrature_points<5> >
       elastic_domain_static(ndim, nglob, qp5, &compute, material_properties,
-                            partial_derivatives, &compute_sources,
+                            partial_derivatives, compute_sources,
                             &compute_receivers, gllx, gllz);
 
   auto writer =

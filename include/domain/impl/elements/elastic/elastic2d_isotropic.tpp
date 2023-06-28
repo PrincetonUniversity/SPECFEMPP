@@ -15,6 +15,9 @@ using StaticScratchViewType =
     typename specfem::enums::element::quadrature::static_quadrature_points<
         N>::template ScratchViewType<T>;
 
+using field_type = Kokkos::Subview<specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>,
+                                   int, std::remove_const_t<decltype(Kokkos::ALL)>>;
+
 // -----------------------------------------------------------------------------
 //                     SPECIALIZED ELEMENT
 // -----------------------------------------------------------------------------
@@ -29,7 +32,7 @@ KOKKOS_FUNCTION specfem::domain::impl::elements::element<
             const specfem::compute::properties properties)
     : ispec(ispec) {
 
-  assert(static_cast<int>(partial_derivatives.xix.extent(1)) == NGLL);
+  assert(partial_derivatives.xix.extent(1) == NGLL);
   assert(partial_derivatives.xix.extent(2) == NGLL);
   assert(partial_derivatives.gammax.extent(1) == NGLL);
   assert(partial_derivatives.gammax.extent(2) == NGLL);
@@ -63,7 +66,7 @@ KOKKOS_FUNCTION specfem::domain::impl::elements::element<
 }
 
 template <int NGLL>
-KOKKOS_FUNCTION void specfem::domain::impl::elements::element<
+KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
     specfem::enums::element::dimension::dim2,
     specfem::enums::element::medium::elastic,
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
@@ -111,7 +114,7 @@ KOKKOS_FUNCTION void specfem::domain::impl::elements::element<
 }
 
 template <int NGLL>
-KOKKOS_FUNCTION void specfem::domain::impl::elements::element<
+KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
     specfem::enums::element::dimension::dim2,
     specfem::enums::element::medium::elastic,
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
@@ -166,13 +169,13 @@ KOKKOS_FUNCTION void specfem::domain::impl::elements::element<
 }
 
 template <int NGLL>
-KOKKOS_FUNCTION void specfem::domain::impl::elements::element<
+KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
     specfem::enums::element::dimension::dim2,
     specfem::enums::element::medium::elastic,
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic>::
     update_acceleration(
-        const int &xz, const int &iglob, const type_real &wxglll,
+        const int &xz, const type_real &wxglll,
         const type_real &wzglll,
         const StaticScratchViewType<NGLL, type_real> stress_integrand_1,
         const StaticScratchViewType<NGLL, type_real> stress_integrand_2,
@@ -180,8 +183,7 @@ KOKKOS_FUNCTION void specfem::domain::impl::elements::element<
         const StaticScratchViewType<NGLL, type_real> stress_integrand_4,
         const StaticScratchViewType<NGLL, type_real> s_hprimewgll_xx,
         const StaticScratchViewType<NGLL, type_real> s_hprimewgll_zz,
-        specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
-            field_dot_dot) const {
+        field_type field_dot_dot) const {
 
   int ix, iz;
   sub2ind(xz, NGLL, iz, ix);
@@ -200,8 +202,8 @@ KOKKOS_FUNCTION void specfem::domain::impl::elements::element<
 
   const type_real sum_terms1 = -1.0 * (wzglll * tempx1) - (wxglll * tempx3);
   const type_real sum_terms3 = -1.0 * (wzglll * tempz1) - (wxglll * tempz3);
-  Kokkos::atomic_add(&field_dot_dot(iglob, 0), sum_terms1);
-  Kokkos::atomic_add(&field_dot_dot(iglob, 1), sum_terms3);
+  Kokkos::atomic_add(&field_dot_dot(0), sum_terms1);
+  Kokkos::atomic_add(&field_dot_dot(1), sum_terms3);
 }
 
 #endif
