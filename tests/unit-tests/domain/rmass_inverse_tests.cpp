@@ -119,7 +119,7 @@ TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
       specfem::enums::element::medium::elastic,
       specfem::enums::element::quadrature::static_quadrature_points<5> >
       elastic_domain_static(ndim, nglob, qp5, &compute, material_properties,
-                            partial_derivatives, &compute_sources,
+                            partial_derivatives, compute_sources,
                             &compute_receivers, gllx, gllz);
 
   elastic_domain_static.sync_rmass_inverse(specfem::sync::DeviceToHost);

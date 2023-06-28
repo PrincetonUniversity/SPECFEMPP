@@ -18,24 +18,24 @@ template <typename base_element> struct container {
   }
 
   template <typename... Args>
-  KOKKOS_FUNCTION void compute_gradient(Args... values) const {
+  KOKKOS_INLINE_FUNCTION void compute_gradient(Args... values) const {
     this->element->compute_gradient(values...);
     return;
   }
 
   template <typename... Args>
-  KOKKOS_FUNCTION void compute_stress(Args... values) const {
+  KOKKOS_INLINE_FUNCTION void compute_stress(Args... values) const {
     this->element->compute_stress(values...);
     return;
   }
 
   template <typename... Args>
-  KOKKOS_FUNCTION void update_acceleration(Args... values) const {
+  KOKKOS_INLINE_FUNCTION void update_acceleration(Args... values) const {
     this->element->update_acceleration(values...);
     return;
   }
 
-  KOKKOS_FUNCTION
+  KOKKOS_INLINE_FUNCTION
   int get_ispec() const { return this->element->get_ispec(); }
 
   KOKKOS_FUNCTION
