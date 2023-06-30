@@ -121,50 +121,33 @@ template <class qp_type>
 void instantialize_element(
     specfem::compute::partial_derivatives partial_derivatives,
     specfem::compute::properties properties,
-    specfem::kokkos::HostMirror1d<int> h_ispec_domain,
+    specfem::kokkos::DeviceView1d<int> ispec_domain,
     specfem::kokkos::DeviceView1d<element_container<element_type<qp_type> > >
         elements) {
 
-  for (int i = 0; i < h_ispec_domain.extent(0); i++) {
-    element_type<qp_type> *element;
+  auto h_elements = Kokkos::create_mirror_view(elements);
 
-    element = (element_type<qp_type> *)Kokkos::kokkos_malloc<
-        specfem::kokkos::DevMemSpace>(sizeof(
-        element_type<qp_type, specfem::enums::element::property::isotropic>));
+  Kokkos::parallel_for("specfem::domain::elastic_isotropic::allocate_memory",
+    specfem::kokkos::HostRange(0, h_elements.extent(0)),
+    KOKKOS_LAMBDA(const int i) {
+      h_elements(i).element = (element_type<qp_type> *)Kokkos::kokkos_malloc<
+          specfem::kokkos::DevMemSpace>(sizeof(
+          element_type<qp_type, specfem::enums::element::property::isotropic>));
+    });
 
-    const int ispec = h_ispec_domain(i);
+  Kokkos::deep_copy(elements, h_elements);
 
-    Kokkos::parallel_for(
-        "specfem::domain::elastic_isotropic::instantialize_element",
-        specfem::kokkos::DeviceRange(0, 1), KOKKOS_LAMBDA(const int &) {
-          new (element)
-              element_type<qp_type,
-                           specfem::enums::element::property::isotropic>(
-                  ispec, partial_derivatives, properties);
-
-          auto ispec = element->get_ispec();
-
-          // printf("memory address %p\n", element);
-
-          elements(i) = element_container<element_type<qp_type> >(element);
-        });
-
-    Kokkos::fence();
-  }
-
-  for (int i = 0; i < h_ispec_domain.extent(0); i++) {
-    const int ispec = h_ispec_domain(i);
-    int ispec_t = 15;
-
-    Kokkos::parallel_reduce(
-        "get_ispec", specfem::kokkos::DeviceRange(0, 1),
-        KOKKOS_LAMBDA(const int &, int &l) { l = elements(i).get_ispec(); },
-        ispec_t);
-
-    Kokkos::fence();
-
-    assert(ispec == ispec_t);
-  }
+  Kokkos::parallel_for(
+      "specfem::domain::elastic_isotropic::instantialize_element",
+      specfem::kokkos::DeviceRange(0, ispec_domain.extent(0)),
+      KOKKOS_LAMBDA(const int i) {
+        const int ispec = ispec_domain(i);
+        auto &element = elements(ispec).element;
+        new (element)
+            element_type<qp_type,
+                         specfem::enums::element::property::isotropic>(
+                ispec, partial_derivatives, properties);
+      });
 
   return;
 }
@@ -253,7 +236,7 @@ void assign_elemental_properties(
 
   Kokkos::deep_copy(ispec_domain, h_ispec_domain);
 
-  instantialize_element(partial_derivatives, properties, h_ispec_domain,
+  instantialize_element(partial_derivatives, properties, ispec_domain,
                         elements);
 };
 
