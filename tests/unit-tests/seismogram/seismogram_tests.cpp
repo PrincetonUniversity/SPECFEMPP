@@ -126,23 +126,28 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
                                                 xmax, xmin, zmax, zmin, 1, mpi);
 
   const int nglob = specfem::utilities::compute_nglob(compute.h_ibool);
-  specfem::Domain::Domain *domain = new specfem::Domain::Elastic(
-      2, nglob, &compute, &material_properties, &partial_derivatives, NULL,
-      &compute_receivers, gllx, gllz);
+  specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
+  specfem::domain::domain<
+      specfem::enums::element::medium::elastic,
+      specfem::enums::element::quadrature::static_quadrature_points<5> >
+      elastic_domain_static(ndim, nglob, qp5, &compute, material_properties,
+                            partial_derivatives, specfem::compute::sources(),
+                            &compute_receivers, gllx, gllz);
 
-  const auto displacement_field = domain->get_host_field();
-  const auto velocity_field = domain->get_host_field_dot();
-  const auto acceleration_field = domain->get_host_field_dot_dot();
+  const auto displacement_field = elastic_domain_static.get_host_field();
+  const auto velocity_field = elastic_domain_static.get_host_field_dot();
+  const auto acceleration_field =
+      elastic_domain_static.get_host_field_dot_dot();
 
   read_field(test_config.displacement_field, displacement_field, nglob, 2);
   read_field(test_config.velocity_field, velocity_field, nglob, 2);
   read_field(test_config.acceleration_field, acceleration_field, nglob, 2);
 
-  domain->sync_field(specfem::sync::HostToDevice);
-  domain->sync_field_dot(specfem::sync::HostToDevice);
-  domain->sync_field_dot_dot(specfem::sync::HostToDevice);
+  elastic_domain_static.sync_field(specfem::sync::HostToDevice);
+  elastic_domain_static.sync_field_dot(specfem::sync::HostToDevice);
+  elastic_domain_static.sync_field_dot_dot(specfem::sync::HostToDevice);
 
-  domain->compute_seismogram(0);
+  elastic_domain_static.compute_seismogram(0);
 
   compute_receivers.sync_seismograms();
 
