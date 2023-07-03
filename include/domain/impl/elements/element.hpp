@@ -14,9 +14,9 @@ namespace elements {
  * domain. Each instance of an element class respresent a single spectral
  * element within the domain. The class itself provides methods to compute the
  * element's contribution to the global force vector. The methods included in
- * this class @code compute_gradients, compute_stresses, update_acceleration
- * @endcode compute the relevant quantities at the quadrature points of the
- * element.
+ * this class @c compute_gradients, @c compute_stresses, and @c
+ * update_acceleration compute the relevant quantities at the quadrature points
+ * of the element.
  *
  * Elements are implementated as template specializations. The template
  * parameters are used to specify the dimensionality of the element, the medium,
