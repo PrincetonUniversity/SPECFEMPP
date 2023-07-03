@@ -6,6 +6,10 @@
 #include "specfem_enums.hpp"
 #include "specfem_setup.hpp"
 
+/**
+ * @brief Decltype for the field subviewed at particular global index
+ *
+ */
 using field_type = Kokkos::Subview<
     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>, int,
     std::remove_const_t<decltype(Kokkos::ALL)> >;
@@ -23,7 +27,8 @@ namespace elements {
  * points of the element. The specific implementaions are left to the derived
  * classes.
  *
- * @tparam quadrature_points
+ * @tparam quadrature_points Type for number of quadrature points defined either
+ * at compile time or run time
  */
 template <typename quadrature_points>
 class element<specfem::enums::element::dimension::dim2,
@@ -34,7 +39,7 @@ public:
    * @brief Scratch view type as defined by the quadrature points (either at
    * compile time or run time)
    *
-   * @tparam T
+   * @tparam T Type of the scratch view
    */
   template <typename T>
   using ScratchViewType =
