@@ -15,6 +15,12 @@
 namespace specfem {
 namespace domain {
 
+/**
+ * @brief Specialized domain class for elastic media
+ *
+ * @tparam qp_type class used to define the quadrature points either at compile
+ * time or run time
+ */
 template <typename qp_type>
 class domain<specfem::enums::element::medium::elastic, qp_type> {
 
@@ -96,14 +102,21 @@ public:
    * @brief Construct a new domain object
    *
    * @param ndim Number of dimensions
-   * @param nglob Total number of distinct quadrature points inside the
-   * domain
-   * @param compute Pointer to specfem::compute::compute struct
-   * @param material_properties  specfem::compute::properties struct
-   * @param partial_derivatives specfem::compute::partial_derivatives struct
-   * @param sources Pointer to specfem::compute::sources struct
-   * @param quadx Pointer to quadrature object in x-dimension
-   * @param quadx Pointer to quadrature object in z-dimension
+   * @param nglob Total number of distinct quadrature points
+   * @param quadrature_points quadrature points to define compile time
+   * quadrature or runtime quadrature
+   * @param compute Compute struct used to store global index of each quadrature
+   * point
+   * @param material_properties Struct used to store material properties at each
+   * quadrature point
+   * @param partial_derivatives Struct used to store partial derivatives of
+   * shape functions at each quadrature
+   * @param compute_sources Struct used to store pre-computed source arrays at
+   * each quadrature point and source time function
+   * @param receivers Struct used to store pre-computed receiver arrays at each
+   * quadrature point
+   * @param quadx quadrature class in x direction
+   * @param quadz quadrature class in z direction
    */
   domain(const int ndim, const int nglob, const qp_type &quadrature_points,
          specfem::compute::compute *compute,
@@ -215,7 +228,8 @@ private:
       sources; ///< Container to store pointer to every source inside
                ///< this domain
 
-  qp_type quadrature_points;
+  qp_type quadrature_points; ///< Quadrature points to define compile time
+                             ///< quadrature or runtime quadrature
 };
 
 } // namespace domain

@@ -18,7 +18,8 @@ namespace domain {
 namespace impl {
 namespace elements {
 /**
- * @brief Elastic 2D isotropic element
+ * @brief Elastic 2D isotropic element class with number of quadrature points
+ * defined at compile time
  *
  * @tparam N Number of Gauss-Lobatto-Legendre quadrature points
  */
@@ -77,14 +78,14 @@ public:
    * direction
    * @param field_x Scrath view of field in x direction
    * @param field_z Scratch view of field in z direction
-   * @param duxdxl Computed partial derivative of field \f$\frac{\partial
-   * u_x}{\partial x}\f$
-   * @param duxdzl Computed partial derivative of field \f$\frac{\partial
-   * u_x}{\partial z}\f$
-   * @param duzdxl Computed partial derivative of field \f$\frac{\partial
-   * u_z}{\partial x}\f$
-   * @param duzdzl Computed partial derivative of field \f$\frac{\partial
-   * u_z}{\partial z}\f$
+   * @param duxdxl Computed partial derivative of field \f$ \frac{\partial
+   * u_x}{\partial x} \f$
+   * @param duxdzl Computed partial derivative of field \f$ \frac{\partial
+   * u_x}{\partial z} \f$
+   * @param duzdxl Computed partial derivative of field \f$ \frac{\partial
+   * u_z}{\partial x} \f$
+   * @param duzdzl Computed partial derivative of field \f$ \frac{\partial
+   * u_z}{\partial z} \f$
    */
   KOKKOS_INLINE_FUNCTION void
   compute_gradient(const int &xz, const ScratchViewType<type_real> s_hprime_xx,
@@ -99,14 +100,14 @@ public:
    * quadrature point
    *
    * @param xz Index of Gauss-Lobatto-Legendre quadrature point
-   * @param duxdxl Partial derivative of field \f$\frac{\partial u_x}{\partial
-   * x}\f$
-   * @param duxdzl Partial derivative of field \f$\frac{\partial u_x}{\partial
-   * z}\f$
-   * @param duzdxl Partial derivative of field \f$\frac{\partial u_z}{\partial
-   * x}\f$
-   * @param duzdzl Partial derivative of field \f$\frac{\partial u_z}{\partial
-   * z}\f$
+   * @param duxdxl Partial derivative of field \f$ \frac{\partial u_x}{\partial
+   * x} \f$
+   * @param duxdzl Partial derivative of field \f$ \frac{\partial u_x}{\partial
+   * z} \f$
+   * @param duzdxl Partial derivative of field \f$ \frac{\partial u_z}{\partial
+   * x} \f$
+   * @param duzdzl Partial derivative of field \f$ \frac{\partial u_z}{\partial
+   * z} \f$
    * @param stress_integrand_1l Stress integrand jacobianl * (sigma_xx * xixl +
    * sigma_xz * xizl) at a particular Gauss-Lobatto-Legendre quadrature point xz
    * @param stress_integrand_2l Stress integrand jacobianl * (sigma_xz * xixl +
@@ -145,7 +146,7 @@ public:
    * + sigma_zz * gammazl) as computed by compute_stress
    * @param s_hprimewgll_xx Scratch view hprime_xx * wxgll
    * @param s_hprimewgll_zz Scratch view hprime_zz * wzgll
-   * @param field_dot_dot Acceleration of the field subviewed at global index
+   * @param field_dot_dot Acceleration of the field subviewed at global index xz
    */
   KOKKOS_INLINE_FUNCTION void
   update_acceleration(const int &xz, const type_real &wxglll,

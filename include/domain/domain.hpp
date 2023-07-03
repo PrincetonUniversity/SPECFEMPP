@@ -13,14 +13,20 @@ namespace domain {
 /**
  * @brief domain class
  *
+ * Domain class serves as the driver used to compute the elemental kernels. For
+ * example, method @code compute_stiffness_interaction @endcode is used to
+ * implement Kokkos parallelization and loading memory to scratch spaces, which
+ * are then used by the elemental implementation to update acceleration. The
+ * goal the domain class is to provide a general Kokkos parallelization
+ * framework which can be used by specialized elemental implementations. This
+ * allows us to hide the Kokkos parallelization details from the end developer
+ * when implementing new physics (i.e. specialized elements).
+ *
+ *
  * @tparam medium class defining the domain medium. Separate implementations
  * exist for elastic, acoustic or poroelastic media
- * @tparam element type element type defines the base element type to be used in
- * the medium. Having a base element lets us define specialized kernels for
- * elemental operations.
- *
- * Check specfem::domain::impl::elements for more details on specialized
- * elemental kernels
+ * @tparam quadrature_points class used to define the quadrature points either
+ * at compile time or run time
  *
  * Domain implementation details:
  *  - field -> stores a 2 dimensional field along different components. The
