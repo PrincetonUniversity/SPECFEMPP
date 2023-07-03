@@ -14,7 +14,7 @@ namespace domain {
  * @brief domain class
  *
  * Domain class serves as the driver used to compute the elemental kernels. For
- * example, method @code compute_stiffness_interaction @endcode is used to
+ * example, method @c compute_stiffness_interaction is used to
  * implement Kokkos parallelization and loading memory to scratch spaces, which
  * are then used by the elemental implementation to update acceleration. The
  * goal the domain class is to provide a general Kokkos parallelization
