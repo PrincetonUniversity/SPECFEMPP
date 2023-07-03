@@ -210,9 +210,7 @@ target_link_libraries(
   compute
   parameter_reader
   compare_arrays
-  # domain
   timescheme
-  # solver
   -lpthread -lm
 )
 

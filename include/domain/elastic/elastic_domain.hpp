@@ -2,9 +2,6 @@
 #define _ELASTIC_DOMAIN_HPP
 
 #include "compute/interface.hpp"
-#include "domain/elastic_domain/impl/operators/gradient2d.hpp"
-#include "domain/elastic_domain/impl/operators/stress2d.hpp"
-#include "domain/elastic_domain/impl/operators/update_acceleration2d.hpp"
 #include "domain/impl/elements/interface.hpp"
 #include "domain/impl/sources/interface.hpp"
 #include "quadrature/interface.hpp"

@@ -8,6 +8,15 @@
 
 namespace specfem {
 namespace solver {
+/**
+ * @brief Time marching solver class
+ *
+ * Implements a forward time marching scheme given a time scheme and domains.
+ * Currently only elastic domains are supported.
+ *
+ * @tparam qp_type Type defining number of quadrature points either at compile
+ * time or run time
+ */
 template <typename qp_type>
 class time_marching : public specfem::solver::solver {
 
@@ -15,8 +24,8 @@ public:
   /**
    * @brief Construct a new time marching solver object
    *
-   * @param domain Pointer to specfem::Domain::Domain class
-   * @param it Pointer to spectem::TimeScheme::TimeScheme class
+   * @param elastic_domain domain object template specialized for elastic media
+   * @param it Pointer to time scheme object (it stands for iterator)
    */
   time_marching(
       specfem::domain::domain<specfem::enums::element::medium::elastic, qp_type>
