@@ -22,7 +22,7 @@ subprocess.call('doxygen Doxyfile.in', shell=True)
 # -- Project information -----------------------------------------------------
 
 project = 'SPECFEM KOKKOS IMPLEMENTATION'
-copyright = '2020, Rohit Kakodkar'
+copyright = '2023, Rohit Kakodkar'
 author = 'Rohit Kakodkar'
 
 
