@@ -9,6 +9,10 @@
 #include "specfem_enums.hpp"
 #include <Kokkos_Core.hpp>
 
+/**
+ * @brief Decltype for the field subviewed at particular global index
+ *
+ */
 using field_type = Kokkos::Subview<
     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>, int,
     std::remove_const_t<decltype(Kokkos::ALL)> >;

@@ -432,8 +432,8 @@ void specfem::domain::domain<specfem::enums::element::medium::elastic,
           const specfem::kokkos::DeviceTeam::member_type &team_member) {
         int ngllx, ngllz;
         quadrature_points.get_ngll(&ngllx, &ngllz);
-        const auto element = this->elements(team_member.league_rank()).element;
-        const auto ispec = element->get_ispec();
+        const auto element = this->elements(team_member.league_rank());
+        const auto ispec = element.get_ispec();
 
         // Instantiate shared views
         // ---------------------------------------------------------------
@@ -530,11 +530,11 @@ void specfem::domain::domain<specfem::enums::element::medium::elastic,
               type_real duzdxl = 0.0;
               type_real duzdzl = 0.0;
 
-              element->compute_gradient(xz, s_hprime_xx, s_hprime_zz, s_fieldx,
+              element.compute_gradient(xz, s_hprime_xx, s_hprime_zz, s_fieldx,
                                        s_fieldz, &duxdxl, &duxdzl, &duzdxl,
                                        &duzdzl);
 
-              element->compute_stress(
+              element.compute_stress(
                   xz, duxdxl, duxdzl, duzdxl, duzdzl,
                   &s_stress_integral_1(iz, ix), &s_stress_integral_2(iz, ix),
                   &s_stress_integral_3(iz, ix), &s_stress_integral_4(iz, ix));
@@ -557,7 +557,7 @@ void specfem::domain::domain<specfem::enums::element::medium::elastic,
               auto sv_field_dot_dot =
                   Kokkos::subview(field_dot_dot, iglob, Kokkos::ALL());
 
-              element->update_acceleration(
+              element.update_acceleration(
                   xz, wxglll, wzglll, s_stress_integral_1, s_stress_integral_2,
                   s_stress_integral_3, s_stress_integral_4, s_hprimewgll_xx,
                   s_hprimewgll_zz, sv_field_dot_dot);
