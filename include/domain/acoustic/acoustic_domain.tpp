@@ -1,10 +1,10 @@
-#ifndef _ELASTIC_DOMAIN_TPP
-#define _ELASTIC_DOMAIN_TPP
+#ifndef _ACOUSTIC_DOMAIN_TPP
+#define _ACOUSTIC_DOMAIN_TPP
 
 #include "compute/interface.hpp"
 #include "constants.hpp"
 #include "domain/domain.hpp"
-#include "domain/elastic/elastic_domain.hpp"
+#include "domain/acoustic/acoustic_domain.hpp"
 #include "domain/impl/elements/interface.hpp"
 #include "domain/impl/sources/interface.hpp"
 #include "globals.h"
@@ -22,7 +22,7 @@ using element_container =
 template <class qp_type, class... traits>
 using element_type = typename specfem::domain::impl::elements::element<
     specfem::enums::element::dimension::dim2,
-    specfem::enums::element::medium::elastic, qp_type, traits...>;
+    specfem::enums::element::medium::acoustic, qp_type, traits...>;
 
 template <typename source_type>
 using source_container =
@@ -31,7 +31,7 @@ using source_container =
 template <class qp_type, class... traits>
 using source_type = typename specfem::domain::impl::sources::source<
     specfem::enums::element::dimension::dim2,
-    specfem::enums::element::medium::elastic, qp_type, traits...>;
+    specfem::enums::element::medium::acoustic, qp_type, traits...>;
 
 template <class medium>
 void initialize_views(
@@ -87,12 +87,12 @@ void initialize_rmass_inverse(
           { 0, 0, 0 }, { nspec, ngllz, ngllx }),
       KOKKOS_LAMBDA(const int ispec, const int iz, const int ix) {
         int iglob = ibool(ispec, iz, ix);
-        type_real rhol = rho(ispec, iz, ix);
+        type_real kappal = kappa(ispec, iz, ix);
         auto access = results.access();
         if (ispec_type(ispec) == value) {
           for (int icomponent = 0; icomponent < components; icomponent++) {
             access(iglob, icomponent) +=
-                wxgll(ix) * wzgll(iz) * rhol * jacobian(ispec, iz, ix);
+                wxgll(ix) * wzgll(iz) * jacobian(ispec, iz, ix) / kappal;
           }
         }
       });
@@ -179,7 +179,7 @@ void initialize_sources(
         Kokkos::subview(compute_sources.source_array, isource, Kokkos::ALL(),
                         Kokkos::ALL(), Kokkos::ALL());
 
-    if (h_ispec_type(ispec) == specfem::enums::element::elastic) {
+    if (h_ispec_type(ispec) == specfem::enums::element::acoustic) {
       Kokkos::parallel_for(
           "specfem::domain::elastic_isotropic::initialize_source",
           specfem::kokkos::DeviceRange(0, 1), KOKKOS_LAMBDA(const int &) {
@@ -227,7 +227,7 @@ void assign_elemental_properties(
 
   int index = 0;
   for (int ispec = 0; ispec < nspec; ispec++) {
-    if (properties.h_ispec_type(ispec) == specfem::enums::element::elastic) {
+    if (properties.h_ispec_type(ispec) == specfem::enums::element::acoustic) {
       h_ispec_domain(index) = ispec;
       index++;
     }
@@ -240,7 +240,7 @@ void assign_elemental_properties(
 };
 
 template <class qp_type>
-specfem::domain::domain<specfem::enums::element::medium::elastic, qp_type>::
+specfem::domain::domain<specfem::enums::element::medium::acoustic, qp_type>::
     domain(const int ndim, const int nglob, const qp_type &quadrature_points,
            specfem::compute::compute *compute,
            specfem::compute::properties material_properties,
@@ -250,19 +250,19 @@ specfem::domain::domain<specfem::enums::element::medium::elastic, qp_type>::
            specfem::quadrature::quadrature *quadx,
            specfem::quadrature::quadrature *quadz)
     : field(specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>(
-          "specfem::Domain::Elastic::field", nglob,
-          specfem::enums::element::medium::elastic::components)),
+          "specfem::Domain::acoustic::field", nglob,
+          specfem::enums::element::medium::acoustic::components)),
       field_dot(specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>(
-          "specfem::Domain::Elastic::field_dot", nglob,
-          specfem::enums::element::medium::elastic::components)),
+          "specfem::Domain::acoustic::field_dot", nglob,
+          specfem::enums::element::medium::acoustic::components)),
       field_dot_dot(
           specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>(
-              "specfem::Domain::Elastic::field_dot_dot", nglob,
-              specfem::enums::element::medium::elastic::components)),
+              "specfem::Domain::acoustic::field_dot_dot", nglob,
+              specfem::enums::element::medium::acoustic::components)),
       rmass_inverse(
           specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>(
-              "specfem::Domain::Elastic::rmass_inverse", nglob,
-              specfem::enums::element::medium::elastic::components)),
+              "specfem::Domain::acoustic::rmass_inverse", nglob,
+              specfem::enums::element::medium::acoustic::components)),
       quadrature_points(quadrature_points), compute(compute),
       receivers(receivers), quadx(quadx), quadz(quadz) {
 
@@ -309,7 +309,7 @@ specfem::domain::domain<specfem::enums::element::medium::elastic, qp_type>::
 };
 
 template <class qp_type>
-void specfem::domain::domain<specfem::enums::element::medium::elastic,
+void specfem::domain::domain<specfem::enums::element::medium::acoustic,
                              qp_type>::sync_field(specfem::sync::kind kind) {
 
   if (kind == specfem::sync::DeviceToHost) {
@@ -324,7 +324,7 @@ void specfem::domain::domain<specfem::enums::element::medium::elastic,
 }
 
 template <class qp_type>
-void specfem::domain::domain<specfem::enums::element::medium::elastic,
+void specfem::domain::domain<specfem::enums::element::medium::acoustic,
                              qp_type>::sync_field_dot(specfem::sync::kind
                                                           kind) {
 
@@ -340,7 +340,7 @@ void specfem::domain::domain<specfem::enums::element::medium::elastic,
 }
 
 template <class qp_type>
-void specfem::domain::domain<specfem::enums::element::medium::elastic,
+void specfem::domain::domain<specfem::enums::element::medium::acoustic,
                              qp_type>::sync_field_dot_dot(specfem::sync::kind
                                                               kind) {
 
@@ -356,7 +356,7 @@ void specfem::domain::domain<specfem::enums::element::medium::elastic,
 }
 
 template <class qp_type>
-void specfem::domain::domain<specfem::enums::element::medium::elastic,
+void specfem::domain::domain<specfem::enums::element::medium::acoustic,
                              qp_type>::sync_rmass_inverse(specfem::sync::kind
                                                               kind) {
 
@@ -372,15 +372,15 @@ void specfem::domain::domain<specfem::enums::element::medium::elastic,
 }
 
 template <class qp_type>
-void specfem::domain::domain<specfem::enums::element::medium::elastic,
+void specfem::domain::domain<specfem::enums::element::medium::acoustic,
                              qp_type>::divide_mass_matrix() {
 
   const int nglob = this->rmass_inverse.extent(0);
 
   Kokkos::parallel_for(
-      "specfem::Domain::Elastic::divide_mass_matrix",
+      "specfem::Domain::acoustic::divide_mass_matrix",
       specfem::kokkos::DeviceRange(
-          0, specfem::enums::element::medium::elastic::components * nglob),
+          0, specfem::enums::element::medium::acoustic::components * nglob),
       KOKKOS_CLASS_LAMBDA(const int in) {
         const int iglob = in % nglob;
         const int idim = in / nglob;
@@ -394,7 +394,7 @@ void specfem::domain::domain<specfem::enums::element::medium::elastic,
 }
 
 template <class qp_type>
-void specfem::domain::domain<specfem::enums::element::medium::elastic,
+void specfem::domain::domain<specfem::enums::element::medium::acoustic,
                              qp_type>::compute_stiffness_interaction() {
 
   const auto hprime_xx = this->quadx->get_hprime();
@@ -415,7 +415,7 @@ void specfem::domain::domain<specfem::enums::element::medium::elastic,
                                             specfem::enums::axes::z>();
 
   scratch_size +=
-      6 *
+      3 *
       quadrature_points.template shmem_size<type_real, specfem::enums::axes::x,
                                             specfem::enums::axes::z>();
 
@@ -449,22 +449,13 @@ void specfem::domain::domain<specfem::enums::element::medium::elastic,
             type_real, specfem::enums::axes::z, specfem::enums::axes::z>(
             team_member.team_scratch(0));
 
-        auto s_fieldx = quadrature_points.template ScratchView<
-            type_real, specfem::enums::axes::z, specfem::enums::axes::x>(
-            team_member.team_scratch(0));
-        auto s_fieldz = quadrature_points.template ScratchView<
+        auto s_field = quadrature_points.template ScratchView<
             type_real, specfem::enums::axes::z, specfem::enums::axes::x>(
             team_member.team_scratch(0));
         auto s_stress_integral_1 = quadrature_points.template ScratchView<
             type_real, specfem::enums::axes::z, specfem::enums::axes::x>(
             team_member.team_scratch(0));
         auto s_stress_integral_2 = quadrature_points.template ScratchView<
-            type_real, specfem::enums::axes::z, specfem::enums::axes::x>(
-            team_member.team_scratch(0));
-        auto s_stress_integral_3 = quadrature_points.template ScratchView<
-            type_real, specfem::enums::axes::z, specfem::enums::axes::x>(
-            team_member.team_scratch(0));
-        auto s_stress_integral_4 = quadrature_points.template ScratchView<
             type_real, specfem::enums::axes::z, specfem::enums::axes::x>(
             team_member.team_scratch(0));
         auto s_iglob =
@@ -504,11 +495,8 @@ void specfem::domain::domain<specfem::enums::element::medium::elastic,
               sub2ind(xz, ngllx, iz, ix);
               const int iglob = ibool(ispec, iz, ix);
               s_fieldx(iz, ix) = field(iglob, 0);
-              s_fieldz(iz, ix) = field(iglob, 1);
               s_stress_integral_1(iz, ix) = 0.0;
               s_stress_integral_2(iz, ix) = 0.0;
-              s_stress_integral_3(iz, ix) = 0.0;
-              s_stress_integral_4(iz, ix) = 0.0;
               s_iglob(iz, ix) = iglob;
             });
 
@@ -529,14 +517,9 @@ void specfem::domain::domain<specfem::enums::element::medium::elastic,
               type_real duzdxl = 0.0;
               type_real duzdzl = 0.0;
 
-              element.compute_gradient(xz, s_hprime_xx, s_hprime_zz, s_fieldx,
-                                       s_fieldz, &duxdxl, &duxdzl, &duzdxl,
-                                       &duzdzl);
+              // TODO : Implement acoustic element compute gradients
 
-              element.compute_stress(
-                  xz, duxdxl, duxdzl, duzdxl, duzdzl,
-                  &s_stress_integral_1(iz, ix), &s_stress_integral_2(iz, ix),
-                  &s_stress_integral_3(iz, ix), &s_stress_integral_4(iz, ix));
+              // TODO : Implement acoustic element compute stresses
             });
 
         team_member.team_barrier();
@@ -556,10 +539,7 @@ void specfem::domain::domain<specfem::enums::element::medium::elastic,
               auto sv_field_dot_dot =
                   Kokkos::subview(field_dot_dot, iglob, Kokkos::ALL());
 
-              element.update_acceleration(
-                  xz, wxglll, wzglll, s_stress_integral_1, s_stress_integral_2,
-                  s_stress_integral_3, s_stress_integral_4, s_hprimewgll_xx,
-                  s_hprimewgll_zz, sv_field_dot_dot);
+              // TODO : Implement acoustic element update acceleration
             });
       });
 
@@ -608,18 +588,20 @@ void specfem::domain::domain<
               sub2ind(xz, ngllx, iz, ix);
               int iglob = ibool(ispec, iz, ix);
 
-              type_real accelx, accelz;
+              type_real accel;
               auto sv_field_dot_dot =
                   Kokkos::subview(field_dot_dot, iglob, Kokkos::ALL());
 
-              source.compute_interaction(xz, stf, &accelx, &accelz);
-              source.update_acceleration(accelx, accelz, sv_field_dot_dot);
+              // TODO : Implement acoustic source element compute interaction
+              // TODO : Implement acoustic source element update acceleration
             });
       });
 
   Kokkos::fence();
   return;
 }
+
+// TODO : Implement acoustic element compute seismogram
 
 template <typename qp_type>
 void specfem::domain::domain<specfem::enums::element::medium::elastic,

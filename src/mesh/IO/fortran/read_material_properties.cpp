@@ -5,11 +5,18 @@
 #include "utilities/interface.hpp"
 #include <vector>
 
+struct input_holder {
+  // Struct to hold temporary variables read from database file
+  type_real val0, val1, val2, val3, val4, val5, val6, val7, val8, val9, val10,
+      val11, val12;
+  int n, indic;
+};
+
 std::vector<specfem::material::material *>
 specfem::mesh::IO::fortran::read_material_properties(
     std::ifstream &stream, const int numat, const specfem::MPI::MPI *mpi) {
 
-  specfem::utilities::input_holder read_values;
+  input_holder read_values;
 
   std::vector<specfem::material::material *> materials(numat);
 
@@ -39,17 +46,22 @@ specfem::mesh::IO::fortran::read_material_properties(
       if (read_values.val2 == 0) {
         specfem::material::acoustic_material *acoustic_holder =
             new specfem::material::acoustic_material();
-        acoustic_holder->assign(read_values);
         materials[read_values.n - 1] = acoustic_holder;
       } else {
+        const type_real density = read_values.val0;
+        const type_real cp = read_values.val1;
+        const type_real cs = read_values.val2;
+        const type_real compaction_grad = read_values.val3;
+        const type_real Qkappa = read_values.val5;
+        const type_real Qmu = read_values.val6;
         specfem::material::elastic_material *elastic_holder =
-            new specfem::material::elastic_material();
-        elastic_holder->assign(read_values);
+            new specfem::material::elastic_material(density, cs, cp, Qkappa,
+                                                    Qmu, compaction_grad);
         materials[read_values.n - 1] = elastic_holder;
       }
     } else {
       throw std::runtime_error(
-          "Only elastic & acoutsic material has been developed still");
+          "Error reading material properties. Invalid material type");
     }
   }
 

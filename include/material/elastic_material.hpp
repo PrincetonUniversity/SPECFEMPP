@@ -25,11 +25,18 @@ public:
    */
   elastic_material();
   /**
-   * @brief Assign elastic material values
+   * @brief Construct a new elastic material object
    *
-   * @param holder holder used to hold read values
+   * @param density Density of the material
+   * @param cs Compression wave speed
+   * @param cp Transverse wave speed
+   * @param Qkappa Kappa attenuation factor
+   * @param Qmu Mu attenuation factor
+   * @param compaction_grad compaction gradient
    */
-  void assign(utilities::input_holder &holder) override;
+  elastic_material(const type_real &density, const type_real &cs,
+                   const type_real &cp, const type_real &Qkappa,
+                   const type_real &Qmu, const type_real &compaction_grad);
   /**
    * @brief User output
    * Prints the read material values and additional information on
@@ -50,7 +57,11 @@ public:
   specfem::enums::element::type get_ispec_type() override {
     return ispec_type;
   };
-
+  /**
+   * @brief Print material information to the console
+   *
+   * @return std::string String containing the material information
+   */
   std::string print() const override;
 
 private:
