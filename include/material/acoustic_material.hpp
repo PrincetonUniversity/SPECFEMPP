@@ -20,16 +20,27 @@ public:
    */
   acoustic_material();
   /**
-   * @brief Assign acoustic material values
+   * @brief ostream operator for acoustic material
    *
-   * @param holder holder used to hold read values
+   * @param out Output stream
+   * @param h Acoustic material object
+   * @return std::ostream& Output stream
    */
-  void assign(utilities::input_holder &holder) override;
   friend std::ostream &operator<<(std::ostream &out,
                                   const acoustic_material &h);
+  /**
+   * @brief Get the type of the material
+   *
+   * @return specfem::enums::element::type The type of the material
+   */
   specfem::enums::element::type get_ispec_type() override {
     return ispec_type;
   };
+  /**
+   * @brief Print material information to the console
+   *
+   * @return std::string String containing the material information
+   */
   std::string print() const override;
 
 private:

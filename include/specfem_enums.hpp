@@ -327,6 +327,22 @@ public:
    */
   constexpr static int components = 2;
 };
+
+class acoustic {
+public:
+  /**
+   * @brief constexpr defining the type of the element
+   *
+   */
+  constexpr static specfem::enums::element::type value =
+      specfem::enums::element::acoustic;
+  /**
+   * @brief constexpr defining number of components for this medium.
+   *
+   */
+  constexpr static int components = 1;
+};
+
 } // namespace medium
 
 /**

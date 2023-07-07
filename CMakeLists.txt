@@ -86,16 +86,6 @@ else()
 endif(MPI_PARALLEL)
 
 add_library(
-        operators
-        src/mathematical_operators/mathematical_operators.cpp
-)
-
-target_link_libraries(
-        operators
-        Kokkos::kokkos
-)
-
-add_library(
         material_class
         src/material/elastic_material.cpp
         src/material/acoustic_material.cpp

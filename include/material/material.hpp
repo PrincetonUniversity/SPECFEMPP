@@ -24,20 +24,29 @@ public:
    */
   material(){};
   /**
-   * @brief Virtual function to assign values read from database file to
-   * material class members
+   * @brief Get the properties of the material
    *
-   * @param holder holder used to hold read values
+   * @return utilities::return_holder Struct containing the properties of the
+   * material
    */
-  virtual void assign(utilities::input_holder &holder){};
   virtual utilities::return_holder get_properties() {
     utilities::return_holder holder{};
     return holder;
   };
+  /**
+   * @brief Get the type of the material
+   *
+   * @return specfem::enums::element::type The type of the material
+   */
   virtual specfem::enums::element::type get_ispec_type() {
     return specfem::enums::element::elastic;
   };
 
+  /**
+   * @brief Print material information to the console
+   *
+   * @return std::string String containing the material information
+   */
   virtual std::string print() const { return ""; }
 };
 
