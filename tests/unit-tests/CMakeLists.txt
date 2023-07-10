@@ -104,7 +104,7 @@ target_link_libraries(
 
 add_executable(
   compute_partial_derivatives_tests
-  compute/compute_partial_derivatives_tests.cpp
+  compute/partial_derivatives/compute_partial_derivatives_tests.cpp
 )
 
 target_link_libraries(
@@ -121,12 +121,12 @@ target_link_libraries(
 )
 
 add_executable(
-  compute_properties_tests
-  compute/compute_properties_tests.cpp
+  compute_elastic_tests
+  compute/elastic/compute_properties_tests.cpp
 )
 
 target_link_libraries(
-  compute_properties_tests
+  compute_elastic_tests
   mesh
   compute
   quadrature
@@ -140,7 +140,7 @@ target_link_libraries(
 
 add_executable(
   compute_tests
-  compute/compute_tests.cpp
+  compute/index/compute_tests.cpp
 )
 
 target_link_libraries(
@@ -240,7 +240,7 @@ if (NOT MPI_PARALLEL)
   gtest_discover_tests(fortranio_test)
   gtest_discover_tests(mesh_tests)
   gtest_discover_tests(compute_partial_derivatives_tests)
-  gtest_discover_tests(compute_properties_tests)
+  gtest_discover_tests(compute_elastic_tests)
   gtest_discover_tests(compute_tests)
   gtest_discover_tests(source_location_tests)
   gtest_discover_tests(rmass_inverse_tests)
