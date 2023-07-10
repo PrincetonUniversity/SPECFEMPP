@@ -32,7 +32,7 @@ Elemental sources
 .. doxygenfile:: include/domain/impl/sources/source.hpp
     :project: SPECFEM KOKKOS IMPLEMENTATION
 
-.. doxygenfile:: include/domain/impl/sources/elastic/elastic.hpp
+.. doxygenfile:: include/domain/impl/sources/elastic/elastic2d.hpp
     :project: SPECFEM KOKKOS IMPLEMENTATION
 
 .. doxygenfile:: include/domain/impl/sources/elastic/elastic2d_isotropic.hpp
