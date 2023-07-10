@@ -1,6 +1,6 @@
-#include "../Kokkos_Environment.hpp"
-#include "../MPI_environment.hpp"
-#include "../utilities/include/compare_array.h"
+#include "../../Kokkos_Environment.hpp"
+#include "../../MPI_environment.hpp"
+#include "../../utilities/include/compare_array.h"
 #include "compute/interface.hpp"
 #include "material/interface.hpp"
 #include "mesh/mesh.hpp"
@@ -67,7 +67,7 @@ test_config get_test_config(std::string config_filename,
 TEST(COMPUTE_TESTS, compute_properties) {
 
   std::string config_filename =
-      "../../../tests/unit-tests/compute/test_config.yml";
+      "../../../tests/unit-tests/compute/elastic/test_config.yml";
   test_config test_config =
       get_test_config(config_filename, MPIEnvironment::mpi_);
 

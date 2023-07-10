@@ -1,6 +1,6 @@
-#include "../Kokkos_Environment.hpp"
-#include "../MPI_environment.hpp"
-#include "../utilities/include/compare_array.h"
+#include "../../Kokkos_Environment.hpp"
+#include "../../MPI_environment.hpp"
+#include "../../utilities/include/compare_array.h"
 #include "compute/interface.hpp"
 #include "material/interface.hpp"
 #include "mesh/mesh.hpp"
@@ -61,7 +61,7 @@ TEST(COMPUTE_TESTS, compute_ibool) {
 
   std::cout << "Hello -2" << std::endl;
   std::string config_filename =
-      "../../../tests/unit-tests/compute/test_config.yml";
+      "../../../tests/unit-tests/compute/index/test_config.yml";
   test_config test_config =
       get_test_config(config_filename, MPIEnvironment::mpi_);
 

@@ -328,6 +328,10 @@ public:
   constexpr static int components = 2;
 };
 
+/**
+ * @brief Acoustic medium
+ *
+ */
 class acoustic {
 public:
   /**
