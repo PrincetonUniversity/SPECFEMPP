@@ -22,19 +22,21 @@ list of tested GPU architectures:
 
 Currently, GPU compilation is only checked using GNU compilers. The following matrix shows the list of compilers and GPU architectures that are tested:
 
+.. rst-class:: center-table
+
 +------------------------------+--------------------+---------------------+--------------------+---------------------+
-|                              | NONE               | NVIDIA Ampere: A100 | NVIDIA Volta: V100 | NVIDIA Pascal: P100 |
+|                              |        NONE        | NVIDIA Ampere: A100 | NVIDIA Volta: V100 | NVIDIA Pascal: P100 |
 +==============================+====================+=====================+====================+=====================+
-| GNU 8.5.0 (serial mode)      | :heavy_check_mark: | :heavy_check_mark:  | :heavy_check_mark: | :heavy_check_mark:  |
+| GNU 8.5.0 (serial mode)      |         ✓          |          ✓          |         ✓          |          ✓          |
 +------------------------------+--------------------+---------------------+--------------------+---------------------+
-| Intel 2020.2.0 (serial mode) | :heavy_check_mark: | :x:                 | :x:                | :x:                 |
+| Intel 2020.2.0 (serial mode) |         ✓          |          ✘          |         ✘          |          ✘          |
 +------------------------------+--------------------+---------------------+--------------------+---------------------+
-| GNU 8.5.0 (OpenMP)           | :heavy_check_mark: | :heavy_check_mark:  | :heavy_check_mark: | :heavy_check_mark:  |
+| GNU 8.5.0 (OpenMP)           |         ✓          |          ✓          |         ✓          |          ✓          |
 +------------------------------+--------------------+---------------------+--------------------+---------------------+
-| Intel 2020.2.0 (OpenMP)      | :heavy_check_mark: | :x:                 | :x:                | :x:                 |
+| Intel 2020.2.0 (OpenMP)      |         ✓          |          ✘          |         ✘          |          ✘          |
 +------------------------------+--------------------+---------------------+--------------------+---------------------+
 
-4. **Complete unit tests (Jenkins)**: These tests are run on every pull request to the repository. The tests ensure the code runs accurately on various supported platforms. If you're are first time contributor, then an admin would have to approve your request to run these tests. The pull request would be merged only if these tests pass.
+1. **Complete unit tests (Jenkins)**: These tests are run on every pull request to the repository. The tests ensure the code runs accurately on various supported platforms. If you're are first time contributor, then an admin would have to approve your request to run these tests. The pull request would be merged only if these tests pass.
 
 list of tested compilers:
 
@@ -47,16 +49,18 @@ list of tested GPU architectures:
 
 Currently, GPU compilation is only checked using GNU compilers. The following matrix shows the list of compilers and GPU architectures that are tested:
 
+.. rst-class:: center-table
+
 +------------------------------+--------------------+---------------------+
-|                              | NONE               | NVIDIA Ampere: A100 |
+|                              |        NONE        | NVIDIA Ampere: A100 |
 +==============================+====================+=====================+
-| GNU 8.5.0 (serial mode)      | :heavy_check_mark: | :heavy_check_mark:  |
+| GNU 8.5.0 (serial mode)      |         ✓          |          ✓          |
 +------------------------------+--------------------+---------------------+
-| Intel 2020.2.0 (serial mode) | :heavy_check_mark: | :x:                 |
+| Intel 2020.2.0 (serial mode) |         ✓          |          ✘          |
 +------------------------------+--------------------+---------------------+
-| GNU 8.5.0 (OpenMP)           | :heavy_check_mark: | :heavy_check_mark:  |
+| GNU 8.5.0 (OpenMP)           |         ✓          |          ✓          |
 +------------------------------+--------------------+---------------------+
-| Intel 2020.2.0 (OpenMP)      | :heavy_check_mark: | :x:                 |
+| Intel 2020.2.0 (OpenMP)      |         ✓          |          ✘          |
 +------------------------------+--------------------+---------------------+
 
 5. **Regression tests (Jenkins)**: These tests are run on every pull request to the repository. The tests ensure that the current pull request doesn't degrade the performance of the code. If you're are first time contributor, then an admin would have to approve your request to run these tests. The pull request would be merged only if these tests pass.
