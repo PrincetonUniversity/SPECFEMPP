@@ -36,7 +36,7 @@ Currently, GPU compilation is only checked using GNU compilers. The following ma
 | Intel 2020.2.0 (OpenMP)      |         ✓          |          ✘          |         ✘          |          ✘          |
 +------------------------------+--------------------+---------------------+--------------------+---------------------+
 
-1. **Complete unit tests (Jenkins)**: These tests are run on every pull request to the repository. The tests ensure the code runs accurately on various supported platforms. If you're are first time contributor, then an admin would have to approve your request to run these tests. The pull request would be merged only if these tests pass.
+4. **Complete unit tests (Jenkins)**: These tests are run on every pull request to the repository. The tests ensure the code runs accurately on various supported platforms. If you're are first time contributor, then an admin would have to approve your request to run these tests. The pull request would be merged only if these tests pass.
 
 list of tested compilers:
 
