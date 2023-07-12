@@ -195,12 +195,12 @@ target_link_libraries(
 )
 
 add_executable(
-  newmark_tests
-  displacement_tests/Newmark/newmark_tests.cpp
+  displacement_newmark_elastic_tests
+  displacement_tests/Newmark/elastic/newmark_tests.cpp
 )
 
 target_link_libraries(
-  newmark_tests
+  displacement_newmark_elastic_tests
   quadrature
   mesh
   material_class
@@ -244,6 +244,6 @@ if (NOT MPI_PARALLEL)
   gtest_discover_tests(compute_tests)
   gtest_discover_tests(source_location_tests)
   gtest_discover_tests(rmass_inverse_elastic_tests)
-  gtest_discover_tests(newmark_tests)
+  gtest_discover_tests(displacement_newmark_elastic_tests)
   gtest_discover_tests(seismogram_tests)
 endif(NOT MPI_PARALLEL)
