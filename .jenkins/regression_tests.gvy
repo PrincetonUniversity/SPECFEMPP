@@ -145,7 +145,7 @@ pipeline {
                 stage (' Checkout main branch '){
                     steps {
                         checkout([$class: 'GitSCM',
-                                branches: [[name: 'devel']],
+                                branches: [[name: 'code-along']],
                                 extensions: [lfs()],
                                 userRemoteConfigs: [[url: 'https://github.com/PrincetonUniversity/specfem2d_kokkos']]])
                     }
