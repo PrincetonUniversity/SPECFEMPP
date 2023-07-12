@@ -175,12 +175,12 @@ target_link_libraries(
 )
 
 add_executable(
-  rmass_inverse_tests
-  domain/rmass_inverse_tests.cpp
+  rmass_inverse_elastic_tests
+  domain/elastic/rmass_inverse_tests.cpp
 )
 
 target_link_libraries(
-  rmass_inverse_tests
+  rmass_inverse_elastic_tests
   quadrature
   mesh
   material_class
@@ -243,7 +243,7 @@ if (NOT MPI_PARALLEL)
   gtest_discover_tests(compute_elastic_tests)
   gtest_discover_tests(compute_tests)
   gtest_discover_tests(source_location_tests)
-  gtest_discover_tests(rmass_inverse_tests)
+  gtest_discover_tests(rmass_inverse_elastic_tests)
   gtest_discover_tests(newmark_tests)
   gtest_discover_tests(seismogram_tests)
 endif(NOT MPI_PARALLEL)

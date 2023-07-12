@@ -1,6 +1,6 @@
-#include "../Kokkos_Environment.hpp"
-#include "../MPI_environment.hpp"
-#include "../utilities/include/compare_array.h"
+#include "../../Kokkos_Environment.hpp"
+#include "../../MPI_environment.hpp"
+#include "../../utilities/include/compare_array.h"
 #include "compute/interface.hpp"
 #include "constants.hpp"
 #include "domain/interface.hpp"
@@ -42,7 +42,7 @@ test_config parse_test_config(std::string test_configuration_file,
 
 TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
   std::string config_filename =
-      "../../../tests/unit-tests/domain/test_config.yaml";
+      "../../../tests/unit-tests/domain/elastic/test_config.yaml";
 
   specfem::MPI::MPI *mpi = MPIEnvironment::mpi_;
 
