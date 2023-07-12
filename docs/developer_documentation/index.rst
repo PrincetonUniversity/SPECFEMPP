@@ -9,3 +9,4 @@ SPECFEM tries to follow best practices to keep the code readable, maintainable a
     git_workflow
     build_requirements
     style
+    tests
