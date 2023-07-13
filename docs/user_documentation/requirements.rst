@@ -4,6 +4,8 @@ Requirements
 Compiler Versions
 -----------------
 
+The following compilers are supported:
+
 .. list-table::
     :widths: 30 35 35
     :header-rows: 1
@@ -40,6 +42,8 @@ Compiler Versions
     * * ARM/Clang
       * 20.1
       * 20.1
+
+For a list of tested compilers and platforms, see :ref:`tests` section.
 
 Build system
 ------------
