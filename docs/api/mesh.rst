@@ -11,7 +11,7 @@ The mesh interface is used to store the mesh information created using meshfem. 
 .. doxygenfile:: mesh.hpp
    :project: SPECFEM KOKKOS IMPLEMENTATION
 
-.. doxygenfile:: mesh_properties.hpp
+.. doxygenfile:: include/mesh/properties/properties.hpp
     :project: SPECFEM KOKKOS IMPLEMENTATION
 
 .. doxygenfile:: material_indic.hpp
