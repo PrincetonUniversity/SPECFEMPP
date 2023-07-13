@@ -4,7 +4,8 @@ Requirements
 Compiler Versions
 -----------------
 
-The following compilers are supported:
+.. note::
+    The following compilers are supported and tested by Kokkos. In theory, SPECFEM2D should work with any of these compiler versions. However we have not tested all of them and cannot guarantee the same. If you have issues compiling with a compiler versions listed below, please create an issue on GitHub. For a list of tested compilers and platforms, see :ref:`tests` section.
 
 .. list-table::
     :widths: 30 35 35
@@ -42,8 +43,6 @@ The following compilers are supported:
     * * ARM/Clang
       * 20.1
       * 20.1
-
-For a list of tested compilers and platforms, see :ref:`tests` section.
 
 Build system
 ------------
