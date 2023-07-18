@@ -69,8 +69,9 @@ Boost
 
 Current requirements of the ``Boost`` library are a version that is ``>=1.66.0``.
 If you have ``Boost`` installed on your system, set the environment variable
-``BOOST_ROOT`` containing the absolute path to your ``Boost`` installation. On
-most machines, this can be done using
+``BOOST_ROOT`` containing the absolute path to your ``Boost`` installation.
+For example, on machines (clusters) with ``lmod`` package manager this can be
+done by loading the boost module
 
 .. code:: bash
 
