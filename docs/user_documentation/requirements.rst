@@ -55,3 +55,23 @@ Build system
 
 * CMake >= 3.16: required
 * CMake >= 3.21.1 for NVC++
+
+
+Dependencies
+------------
+
+None of the dependencies need to be installed prior to the installation of
+the package. Having installed some packages does however reduce build time
+because the dependencies do not have to be fetched.
+
+Boost
++++++
+
+Current requirements of the ``Boost`` library are a version that is ``>=1.66.0``.
+If you have ``Boost`` installed on your system, set the environment variable
+``BOOST_ROOT`` containing the absolute path to your ``Boost`` installation. On
+most machines, this can be done using
+
+.. code:: bash
+
+    module load boost/?.??.? # Eg. boost/1.73.0
