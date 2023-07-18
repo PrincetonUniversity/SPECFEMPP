@@ -44,6 +44,12 @@ Compiler Versions
       * 20.1
       * 20.1
 
+.. warning::
+
+    There seem to be issues with ``cudatoolkit/11.1``. We have successfully
+    compiled the package with versions ``>=11.7``. For a list of tested
+    compilers and platforms, see :ref:`tests` section.
+
 Build system
 ------------
 

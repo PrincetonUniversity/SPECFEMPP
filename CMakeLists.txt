@@ -38,7 +38,7 @@ FetchContent_MakeAvailable(yaml)
 include_directories(BEFORE SYSTEM ${yaml_SOURCE_DIR} ${yaml_BINARY_DIR}/include)
 
 # Try finding boost and if not found install.
-find_package(Boost 1.73.0 COMPONENTS program_options filesystem)
+find_package(Boost 1.73.0 COMPONENTS program_options filesystem system)
 
 if (NOT ${Boost_FOUND})
         add_subdirectory(boost-cmake)
@@ -47,7 +47,6 @@ else ()
         message(STATUS "    INC:   ${Boost_INCLUDE_DIRS}")
         message(STATUS "    LIBSO: ${Boost_LIBRARIES}")
 endif()
-#message( FATAL_ERROR "EXITING BECAUSE I WANT TO.")
 
 configure_file(constants.hpp.in constants.hpp)
 
