@@ -66,6 +66,7 @@ specfem::compute::properties::properties(
 
         this->rho_vp(ispec, iz, ix) = rho * vp;
         this->rho_vs(ispec, iz, ix) = rho * vs;
+        this->rho_inverse(ispec, iz, ix) = 1 / rho;
         this->h_lambdaplus2mu(ispec, iz, ix) = lambdaplus2mu;
       });
 
