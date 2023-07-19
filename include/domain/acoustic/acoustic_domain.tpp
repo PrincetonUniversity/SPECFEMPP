@@ -155,6 +155,7 @@ template <class qp_type>
 void initialize_sources(
     const specfem::kokkos::HostMirror1d<specfem::enums::element::type>
         h_ispec_type,
+    const specfem::kokkos::DeviceView3d<type_real> kappa,
     const specfem::compute::sources compute_sources,
     specfem::kokkos::DeviceView1d<source_container<source_type<qp_type> > > &sources) {
 
@@ -186,7 +187,7 @@ void initialize_sources(
             new (source)
                 source_type<qp_type,
                             specfem::enums::element::property::isotropic>(
-                    ispec, sv_source_array, source_time_function);
+                    ispec, kappa, sv_source_array, source_time_function);
             sources(isource) = source_container<source_type<qp_type> >(source);
           });
 
@@ -302,7 +303,7 @@ specfem::domain::domain<specfem::enums::element::medium::acoustic, qp_type>::
   // ----------------------------------------------------------------------------
   // Initialize the sources
 
-  initialize_sources(material_properties.h_ispec_type, compute_sources,
+  initialize_sources(material_properties.h_ispec_type, material_properties.kappa, compute_sources,
                      this->sources);
 
   return;
@@ -592,8 +593,8 @@ void specfem::domain::domain<
               auto sv_field_dot_dot =
                   Kokkos::subview(field_dot_dot, iglob, Kokkos::ALL());
 
-              // TODO : Implement acoustic source element compute interaction
-              // TODO : Implement acoustic source element update acceleration
+              source.compute_interaction(xz, stf, &accel);
+              source.update_acceleration(accel, sv_field_dot_dot);
             });
       });
 
