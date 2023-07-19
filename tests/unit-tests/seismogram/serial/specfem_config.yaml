@@ -43,3 +43,7 @@ parameters:
   databases:
     mesh-database: "../../../tests/unit-tests/seismogram/serial/database.bin"
     source-file: "dummy-source.yaml"
+
+  seismogram:
+    seismogram-format: ascii
+    output-folder: "."

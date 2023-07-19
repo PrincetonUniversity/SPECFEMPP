@@ -38,3 +38,7 @@ parameters:
   databases:
     mesh-database: "../../../tests/unit-tests/domain/elastic/serial/Database00000.bin"
     source-file: "../../../tests/unit-tests/domain/elastic/serial/source.yaml"
+
+  seismogram:
+    seismogram-format: ascii
+    output-folder: "."
