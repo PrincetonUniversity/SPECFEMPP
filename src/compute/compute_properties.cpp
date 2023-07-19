@@ -56,7 +56,7 @@ specfem::compute::properties::properties(
                             holder.qkappa, holder.lambdaplus2mu);
         this->h_rho(ispec, iz, ix) = rho;
         this->h_mu(ispec, iz, ix) = mu;
-        this->kappa(ispec, iz, ix) = kappa;
+        this->h_kappa(ispec, iz, ix) = kappa;
 
         this->qmu(ispec, iz, ix) = qmu;
         this->qkappa(ispec, iz, ix) = qkappa;
@@ -82,6 +82,7 @@ specfem::compute::properties::properties(
 void specfem::compute::properties::sync_views() {
   Kokkos::deep_copy(rho, h_rho);
   Kokkos::deep_copy(mu, h_mu);
+  Kokkos::deep_copy(kappa, h_kappa);
   Kokkos::deep_copy(lambdaplus2mu, h_lambdaplus2mu);
   Kokkos::deep_copy(ispec_type, h_ispec_type);
 
