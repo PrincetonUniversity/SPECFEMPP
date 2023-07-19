@@ -25,19 +25,28 @@ endif()
 ## TODO: Add options for on utilizing in house builds
 include(FetchContent)
 FetchContent_Declare(
-  kokkos
-  URL https://github.com/kokkos/kokkos/archive/refs/tags/4.0.00.zip
+kokkos
+URL https://github.com/kokkos/kokkos/archive/refs/tags/4.0.00.zip
 )
 FetchContent_MakeAvailable(kokkos)
 
 FetchContent_Declare(
         yaml
-	URL https://github.com/jbeder/yaml-cpp/archive/refs/tags/yaml-cpp-0.7.0.zip
+        URL https://github.com/jbeder/yaml-cpp/archive/refs/tags/yaml-cpp-0.7.0.zip
 )
 FetchContent_MakeAvailable(yaml)
 include_directories(BEFORE SYSTEM ${yaml_SOURCE_DIR} ${yaml_BINARY_DIR}/include)
 
-add_subdirectory(boost-cmake)
+# Try finding boost and if not found install.
+find_package(Boost 1.73.0 COMPONENTS program_options filesystem system)
+
+if (NOT ${Boost_FOUND})
+        add_subdirectory(boost-cmake)
+else ()
+        message(STATUS "    LIB:   ${Boost_LIBRARY_DIRS}")
+        message(STATUS "    INC:   ${Boost_INCLUDE_DIRS}")
+        message(STATUS "    LIBSO: ${Boost_LIBRARIES}")
+endif()
 
 configure_file(constants.hpp.in constants.hpp)
 
