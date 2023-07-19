@@ -85,14 +85,10 @@ public:
    * direction
    * @param wzglll Weight of the Gauss-Lobatto-Legendre quadrature point in z
    * direction
-   * @param stress_integrand_1 Stress integrand jacobianl * (sigma_xx * xixl +
+   * @param stress_integrand_1 Stress integrand jacobianl * (\Nabla * xixl +
    * sigma_xz * xizl) as computed by compute_stress
    * @param stress_integrand_2 Stress integrand jacobianl * (sigma_xz * xixl +
    * sigma_zz * xizl) as computed by compute_stress
-   * @param stress_integrand_3 Stress integrand jacobianl * (sigma_xx * gammaxl
-   * + sigma_xz * gammazl) as computed by compute_stress
-   * @param stress_integrand_4 Stress integrand jacobianl * (sigma_xz * gammaxl
-   * + sigma_zz * gammazl) as computed by compute_stress
    * @param s_hprimewgll_xx Scratch view hprime_xx * wxgll
    * @param s_hprimewgll_zz Scratch view hprime_zz * wzgll
    * @param field_dot_dot Acceleration of the field subviewed at global index xz
