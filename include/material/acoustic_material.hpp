@@ -12,6 +12,12 @@
 
 namespace specfem {
 namespace material {
+/**
+ * @brief Acoustic material class
+ *
+ * Defines the routines required to read and assign acoustic material properties
+ * to specfem mesh.
+ */
 class acoustic_material : public material {
 public:
   /**
@@ -19,6 +25,18 @@ public:
    *
    */
   acoustic_material();
+  /**
+   * @brief Constructs a new acoustic material object
+   * @param density Density of the material
+   * @param cp Compressional wave speed
+   * @param Qkappa Kappa attenuation factor
+   * @param Qmu Mu attenuation factor
+   * @param compaction_grad compaction gradient
+   *
+   */
+  acoustic_material(const type_real &density, const type_real &cp,
+                    const type_real &Qkappa, const type_real &Qmu,
+                    const type_real &compaction_grad);
   /**
    * @brief ostream operator for acoustic material
    *
@@ -37,6 +55,13 @@ public:
     return ispec_type;
   };
   /**
+   * @brief Get private elastic material properties
+   *
+   * @return utilities::return_holder holder used to return elastic material
+   * properties
+   */
+  utilities::return_holder get_properties() override;
+  /**
    * @brief Print material information to the console
    *
    * @return std::string String containing the material information
@@ -48,8 +73,8 @@ private:
    * @brief Acoustic material properties
    *
    */
-  type_real density, cs, cp, Qkappa, Qmu, compaction_grad, lambdaplus2mu, mu,
-      lambda, kappa, young, poisson;
+  type_real density, cp, Qkappa, Qmu, compaction_grad, lambdaplus2mu, lambda,
+      kappa, young, poisson;
   specfem::enums::element::type ispec_type = specfem::enums::element::acoustic;
 };
 
