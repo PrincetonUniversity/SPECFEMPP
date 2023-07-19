@@ -285,9 +285,11 @@ target_link_libraries(
 )
 
 # Include tests
-add_subdirectory(tests/unit-tests)
-add_subdirectory(tests/regression-tests)
-add_subdirectory(examples)
+if (BUILD_TESTS)
+        add_subdirectory(tests/unit-tests)
+        add_subdirectory(tests/regression-tests)
+        add_subdirectory(examples)
+endif()
 
 # Doxygen
 
