@@ -43,9 +43,17 @@ specfem::mesh::IO::fortran::read_material_properties(
     }
 
     if (read_values.indic == 1) {
+      // Acoustic Material
       if (read_values.val2 == 0) {
+        const type_real density = read_values.val0;
+        const type_real cp = read_values.val1;
+        const type_real compaction_grad = read_values.val3;
+        const type_real Qkappa = read_values.val5;
+        const type_real Qmu = read_values.val6;
         specfem::material::acoustic_material *acoustic_holder =
-            new specfem::material::acoustic_material();
+            new specfem::material::acoustic_material(density, cp, Qkappa, Qmu,
+                                                     compaction_grad);
+
         materials[read_values.n - 1] = acoustic_holder;
       } else {
         const type_real density = read_values.val0;
