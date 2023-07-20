@@ -33,6 +33,8 @@ KOKKOS_FUNCTION specfem::domain::impl::sources::source<
 
   assert(source_array.extent(0) == NGLL);
   assert(source_array.extent(1) == NGLL);
+  assert(kappa.extent(0) == NGLL);
+  assert(kappa.extent(1) == NGLL);
 
   this->source_array = source_array;
 
