@@ -1,4 +1,4 @@
-#ifndef _DOMAIN_ELASTIC_ELEMENTS2D_HPP
+#ifndef _DOMAIN_ACOUSTIC_ELEMENTS2D_HPP
 #define _DOMAIN_ACOUSTIC_ELEMENTS2D_HPP
 
 #include "domain/impl/elements/element.hpp"
@@ -47,28 +47,41 @@ public:
 
   /**
    * @brief Compute the gradient of the field at the quadrature point xz
+   * (Komatisch & Tromp, 2002-I., eq. 22(theory, OC),44,45)
    *
    * @param xz Index of the quadrature point
    * @param s_hprime_xx lagrange polynomial derivative in x direction
    * @param s_hprime_zz lagraange polynomial derivative in z direction
-   * @param field_p potential field in
-   * @param dpdxl \f$ \frac{\partial p}{\partial x} \f$
-   * @param dpdzl \f$ \frac{\partial p}{\partial z} \f$
+   * @param field_chi potential field
+   * @param dchidxl \f$ \frac{\partial \chi}{\partial x} \f$
+   * @param dchidzl \f$ \frac{\partial \chi}{\partial z} \f$
    */
   KOKKOS_INLINE_FUNCTION virtual void
   compute_gradient(const int &xz, const ScratchViewType<type_real> s_hprime_xx,
                    const ScratchViewType<type_real> s_hprime_zz,
-                   const ScratchViewType<type_real> field_p, type_real *dpdxl,
-                   type_real *dpdzl) const = 0;
+                   const ScratchViewType<type_real> field_chi,
+                   type_real *dchidxl, type_real *dpdzl) const = 0;
 
   /**
-   * @brief Compute the stress at the quadrature point xz
+   * @brief Compute the stress integrand at a particular Gauss-Lobatto-Legendre
+   * quadrature point. Note the collapse of jacobian elements into the
+   * integrands for the gradient of \f$ w \f$
+   * (Komatisch & Tromp, 2002-I., eq. 44,45)
    *
-   * @param xz Index of the quadrature point
-   * @param dpdxl \f$ \frac{\partial u_x}{\partial x} \f$ as computed by
-   * compute_gradient
-   * @param dpdzl \f$ \frac{\partial u_x}{\partial z} \f$ as computed by
-   * compute_gradient
+   * @param xz Index of Gauss-Lobatto-Legendre quadrature point
+   * @param dchidxl Partial derivative of field \f$ \frac{\partial
+   * \chi}{\partial x} \f$
+   * @param dchipdzl Partial derivative of field \f$ \frac{\partial
+   * \chi}{\partial z} \f$
+   * @param stress_integrand_xi Stress integrand  wrt. \f$ \xi \f$
+   * \f$ J^{\alpha\gamma} * {\rho^{\alpha\gamma}}^{-1}
+   * \partial_x \chi \partial_x \xi
+   * + \partial_z \chi * \partial_z \xi \f$
+   * @param stress_integrand_gamma Stress integrand  wrt. \f$\gamma\f$
+   * \f$ J^{\alpha\gamma} * {\rho^{\alpha\gamma}}^{-1}
+   * \partial_x \chi \partial_x \gamma
+   * + \partial_z \chi * \partial_z \gamma \f$
+   * @return KOKKOS_FUNCTION
    */
   KOKKOS_INLINE_FUNCTION virtual void
   compute_stress(const int &xz, const type_real &duxdxl,

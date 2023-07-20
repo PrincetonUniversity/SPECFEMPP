@@ -22,19 +22,19 @@ namespace domain {
 namespace impl {
 namespace elements {
 /**
- * @brief Elastic 2D isotropic element class with number of quadrature points
+ * @brief Acoustic 2D isotropic element class with number of quadrature points
  * defined at compile time
  *
  * @tparam N Number of Gauss-Lobatto-Legendre quadrature points
  */
 template <int N>
 class element<specfem::enums::element::dimension::dim2,
-              specfem::enums::element::medium::elastic,
+              specfem::enums::element::medium::acoustic,
               specfem::enums::element::quadrature::static_quadrature_points<N>,
               specfem::enums::element::property::isotropic>
     : public element<
           specfem::enums::element::dimension::dim2,
-          specfem::enums::element::medium::elastic,
+          specfem::enums::element::medium::acoustic,
           specfem::enums::element::quadrature::static_quadrature_points<N> > {
 public:
   /**
@@ -72,53 +72,49 @@ public:
           const specfem::compute::properties properties);
 
   /**
-   * @brief Compute the gradient of the field at a particular
-   * Gauss-Lobatto-Legendre quadrature point
+   * @brief Compute the gradient of the field at the quadrature point xz
+   * (Komatisch & Tromp, 2002-I., eq. 22(theory, OC),44,45)
    *
-   * @param xz Index of Gauss-Lobatto-Legendre quadrature point
-   * @param s_hprime_xx Scratch view of derivative of Lagrange polynomial in x
-   * direction
-   * @param s_hprime_zz Scratch view of derivative of Lagrange polynomial in z
-   * direction
-   * @param field_p Scratch view of potential field
-   * @param dpdxl Computed partial derivative of field \f$ \frac{\partial
-   * u_x}{\partial x} \f$
-   * @param dpdzl Computed partial derivative of field \f$ \frac{\partial
-   * u_x}{\partial z} \f$
+   * @param xz Index of the quadrature point
+   * @param s_hprime_xx lagrange polynomial derivative in x direction
+   * @param s_hprime_zz lagraange polynomial derivative in z direction
+   * @param field_chi potential field
+   * @param dchidxl Computed partial derivative of field \f$ \frac{\partial
+   * \chi}{\partial x} \f$
+   * @param dchidzl Computed partial derivative of field \f$ \frac{\partial
+   * \chi}{\partial z} \f$
    */
   KOKKOS_INLINE_FUNCTION void
   compute_gradient(const int &xz, const ScratchViewType<type_real> s_hprime_xx,
                    const ScratchViewType<type_real> s_hprime_zz,
-                   const ScratchViewType<type_real> field_p, type_real *dpdxl,
-                   type_real *dpdzl) const override;
+                   const ScratchViewType<type_real> field_chi,
+                   type_real *dchidxl, type_real *dchidzl) const override;
 
   /**
    * @brief Compute the stress integrand at a particular Gauss-Lobatto-Legendre
-   * quadrature point
+   * quadrature point. Note the collapse of jacobian elements into the
+   * integrands for the gradient of \f$ w \f$
+   * (Komatisch & Tromp, 2002-I., eq. 44,45)
    *
    * @param xz Index of Gauss-Lobatto-Legendre quadrature point
-   * @param dpdxl Partial derivative of field \f$ \frac{\partial p}{\partial
-   * x} \f$
-   * @param dpdzl Partial derivative of field \f$ \frac{\partial p}{\partial
-   * z} \f$
-   * @param stress_integrand_1l Stress integrand jacobianl * (sigma_xx * xixl +
-   * sigma_xz * xizl) at a particular Gauss-Lobatto-Legendre quadrature point xz
-   * @param stress_integrand_2l Stress integrand jacobianl * (sigma_xz * xixl +
-   * sigma_zz * xizl) at a particular Gauss-Lobatto-Legendre quadrature point xz
-   * @param stress_integrand_3l Stress integrand jacobianl * (sigma_xx * gammaxl
-   * + sigma_xz * gammazl) at a particular Gauss-Lobatto-Legendre quadrature
-   * point xz
-   * @param stress_integrand_4l Stress integrand jacobianl * (sigma_xz * gammaxl
-   * + sigma_zz * gammazl) at a particular Gauss-Lobatto-Legendre quadrature
-   * point xz
+   * @param dchidxl Partial derivative of field \f$ \frac{\partial
+   * \chi}{\partial x} \f$
+   * @param dchipdzl Partial derivative of field \f$ \frac{\partial
+   * \chi}{\partial z} \f$
+   * @param stress_integrand_xi Stress integrand  wrt. \f$ \xi \f$
+   * \f$ J^{\alpha\gamma} * {\rho^{\alpha\gamma}}^{-1}
+   * \partial_x \chi \partial_x \xi
+   * + \partial_z \chi * \partial_z \xi \f$
+   * @param stress_integrand_gamma Stress integrand  wrt. \f$\gamma\f$
+   * \f$ J^{\alpha\gamma} * {\rho^{\alpha\gamma}}^{-1}
+   * \partial_x \chi \partial_x \gamma
+   * + \partial_z \chi * \partial_z \gamma \f$
    * @return KOKKOS_FUNCTION
    */
   KOKKOS_INLINE_FUNCTION void
-  compute_stress(const int &xz, const type_real &duxdxl,
-                 const type_real &duxdzl, const type_real &duzdxl,
-                 const type_real &duzdzl, type_real *stress_integrand_1l,
-                 type_real *stress_integrand_2l, type_real *stress_integrand_3l,
-                 type_real *stress_integrand_4l) const override;
+  compute_stress(const int &xz, const type_real &dchidxl,
+                 const type_real &dchidzl, type_real *stress_integrand_xi,
+                 type_real *stress_integrand_gamma) const override;
 
   /**
    * @brief Update the acceleration at a particular Gauss-Lobatto-Legendre
@@ -129,14 +125,14 @@ public:
    * direction
    * @param wzglll Weight of the Gauss-Lobatto-Legendre quadrature point in z
    * direction
-   * @param stress_integrand_1 Stress integrand jacobianl * (sigma_xx * xixl +
-   * sigma_xz * xizl) as computed by compute_stress
-   * @param stress_integrand_2 Stress integrand jacobianl * (sigma_xz * xixl +
-   * sigma_zz * xizl) as computed by compute_stress
-   * @param stress_integrand_3 Stress integrand jacobianl * (sigma_xx * gammaxl
-   * + sigma_xz * gammazl) as computed by compute_stress
-   * @param stress_integrand_4 Stress integrand jacobianl * (sigma_xz * gammaxl
-   * + sigma_zz * gammazl) as computed by compute_stress
+   * @param stress_integrand_xi Stress integrand  wrt. \f$ \xi \f$
+   * \f$ J^{\alpha\gamma} * {\rho^{\alpha\gamma}}^{-1}
+   * \partial_x \chi \partial_x \xi
+   * + \partial_z \chi * \partial_z \xi \f$
+   * @param stress_integrand_gamma Stress integrand  wrt. \f$\gamma\f$
+   * \f$ J^{\alpha\gamma} * {\rho^{\alpha\gamma}}^{-1}
+   * \partial_x \chi \partial_x \gamma
+   * + \partial_z \chi * \partial_z \gamma \f$
    * @param s_hprimewgll_xx Scratch view hprime_xx * wxgll
    * @param s_hprimewgll_zz Scratch view hprime_zz * wzgll
    * @param field_dot_dot Acceleration of the field subviewed at global index xz
@@ -144,10 +140,8 @@ public:
   KOKKOS_INLINE_FUNCTION void
   update_acceleration(const int &xz, const type_real &wxglll,
                       const type_real &wzglll,
-                      const ScratchViewType<type_real> stress_integrand_1,
-                      const ScratchViewType<type_real> stress_integrand_2,
-                      const ScratchViewType<type_real> stress_integrand_3,
-                      const ScratchViewType<type_real> stress_integrand_4,
+                      const ScratchViewType<type_real> stress_integrand_xi,
+                      const ScratchViewType<type_real> stress_integrand_gamma,
                       const ScratchViewType<type_real> s_hprimewgll_xx,
                       const ScratchViewType<type_real> s_hprimewgll_zz,
                       field_type field_dot_dot) const override;
@@ -166,9 +160,7 @@ private:
   specfem::kokkos::DeviceView2d<type_real> gammax;   ///< gammax
   specfem::kokkos::DeviceView2d<type_real> gammaz;   ///< gammaz
   specfem::kokkos::DeviceView2d<type_real> jacobian; ///< jacobian
-  specfem::kokkos::DeviceView2d<type_real> lambdaplus2mu; ///< lambda +
-                                                          ///< 2 * mu
-  specfem::kokkos::StaticDeviceView2d<type_real, N> mu;   ///< mu
+  specfem::kokkos::DeviceView2d<type_real> rho_inverse; ///< rho inverse
 };
 } // namespace elements
 } // namespace impl
