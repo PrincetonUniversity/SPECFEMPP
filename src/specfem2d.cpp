@@ -178,6 +178,12 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   const int nglob = specfem::utilities::compute_nglob(compute.h_ibool);
   specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
   specfem::domain::domain<
+      specfem::enums::element::medium::acoustic,
+      specfem::enums::element::quadrature::static_quadrature_points<5> >
+      acoustic_domain_static(ndim, nglob, qp5, &compute, material_properties,
+                            partial_derivatives, compute_sources,
+                            &compute_receivers, gllx, gllz);
+  specfem::domain::domain<
       specfem::enums::element::medium::elastic,
       specfem::enums::element::quadrature::static_quadrature_points<5> >
       elastic_domain_static(ndim, nglob, qp5, &compute, material_properties,
@@ -189,7 +195,7 @@ void execute(const std::string &parameter_file, const std::string &default_file,
 
   specfem::solver::solver *solver = new specfem::solver::time_marching<
       specfem::enums::element::quadrature::static_quadrature_points<5> >(
-      elastic_domain_static, it);
+      acoustic_domain_static, elastic_domain_static, it);
 
   mpi->cout("Executing time loop:");
   mpi->cout("-------------------------------");
