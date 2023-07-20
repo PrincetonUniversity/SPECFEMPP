@@ -176,7 +176,7 @@ void initialize_sources(
 
     specfem::forcing_function::stf* source_time_function = compute_sources.h_stf_array(isource).T;
 
-    const auto kappax = Kokkos::subview(kappa, ispec, Kokkos::ALL(),
+    const auto sv_kappa = Kokkos::subview(kappa, ispec, Kokkos::ALL(),
                                  Kokkos::ALL());
 
     const auto sv_source_array =
@@ -190,7 +190,7 @@ void initialize_sources(
             new (source)
                 source_type<qp_type,
                             specfem::enums::element::property::isotropic>(
-                    ispec, kappax, sv_source_array, source_time_function);
+                    ispec, sv_kappa, sv_source_array, source_time_function);
             sources(isource) = source_container<source_type<qp_type> >(source);
           });
 
