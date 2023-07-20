@@ -73,9 +73,22 @@ private:
    * @brief Acoustic material properties
    *
    */
-  type_real density, cp, Qkappa, Qmu, compaction_grad, lambdaplus2mu, lambda,
-      kappa, young, poisson;
-  specfem::enums::element::type ispec_type = specfem::enums::element::acoustic;
+
+  ///@{
+  type_real density;
+  type_real cp;
+  type_real Qkappa;
+  type_real Qmu;
+  type_real compaction_grad;
+  type_real lambdaplus2mu;
+  type_real lambda;
+  type_real kappa;
+  type_real young;
+  type_real poisson;
+  ///@}
+  specfem::enums::element::type ispec_type =
+      specfem::enums::element::acoustic; ///< Type or element ==
+                                         ///< specfem::acoustic
 };
 
 std::ostream &operator<<(std::ostream &out,

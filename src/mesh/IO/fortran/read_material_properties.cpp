@@ -43,6 +43,7 @@ specfem::mesh::IO::fortran::read_material_properties(
     }
 
     if (read_values.indic == 1) {
+      // Acoustic Material
       if (read_values.val2 == 0) {
         const type_real density = read_values.val0;
         const type_real cp = read_values.val1;
