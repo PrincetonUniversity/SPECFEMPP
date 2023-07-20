@@ -644,9 +644,11 @@ void specfem::domain::domain<specfem::enums::element::medium::acoustic,
         case specfem::seismogram::displacement:
           Kokkos::parallel_for(
               Kokkos::TeamThreadRange(team_member, ngllxz), [=](const int xz) {
-                const int ix = xz % ngllz;
-                const int iz = xz / ngllz;
+                int ix, iz;
+                sub2ind(xz, ngllx, iz, ix);
                 const int iglob = sv_ibool(iz, ix);
+
+
 
                 if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
                   sv_field(0, iz, ix) = this->field(iglob, 0);
@@ -661,8 +663,8 @@ void specfem::domain::domain<specfem::enums::element::medium::acoustic,
         case specfem::seismogram::velocity:
           Kokkos::parallel_for(
               Kokkos::TeamThreadRange(team_member, ngllxz), [=](const int xz) {
-                const int ix = xz % ngllz;
-                const int iz = xz / ngllz;
+                int ix, iz;
+                sub2ind(xz, ngllx, iz, ix);
                 const int iglob = sv_ibool(iz, ix);
 
                 if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
@@ -678,8 +680,8 @@ void specfem::domain::domain<specfem::enums::element::medium::acoustic,
         case specfem::seismogram::acceleration:
           Kokkos::parallel_for(
               Kokkos::TeamThreadRange(team_member, ngllxz), [=](const int xz) {
-                const int ix = xz % ngllz;
-                const int iz = xz / ngllz;
+                int ix, iz;
+                sub2ind(xz, ngllx, iz, ix);
                 const int iglob = sv_ibool(iz, ix);
 
                 if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
@@ -713,8 +715,8 @@ void specfem::domain::domain<specfem::enums::element::medium::acoustic,
             Kokkos::parallel_reduce(
                 Kokkos::TeamThreadRange(team_member, ngllxz),
                 [=](const int xz, type_real &l_vx) {
-                  const int ix = xz % ngllz;
-                  const int iz = xz / ngllz;
+                  int ix, iz;
+                  sub2ind(xz, ngllx, iz, ix);
                   const type_real hlagrange = sv_receiver_array(iz, ix, 0);
                   const type_real field_v = sv_field(0, iz, ix);
 
@@ -724,8 +726,8 @@ void specfem::domain::domain<specfem::enums::element::medium::acoustic,
             Kokkos::parallel_reduce(
                 Kokkos::TeamThreadRange(team_member, ngllxz),
                 [=](const int xz, type_real &l_vz) {
-                  const int ix = xz % ngllz;
-                  const int iz = xz / ngllz;
+                  int ix, iz;
+                  sub2ind(xz, ngllx, iz, ix);
                   const type_real hlagrange = sv_receiver_array(iz, ix, 0);
                   const type_real field_v = sv_field(1, iz, ix);
 
@@ -736,8 +738,8 @@ void specfem::domain::domain<specfem::enums::element::medium::acoustic,
             Kokkos::parallel_reduce(
                 Kokkos::TeamThreadRange(team_member, ngllxz),
                 [=](const int xz, type_real &l_vx) {
-                  const int ix = xz % ngllz;
-                  const int iz = xz / ngllz;
+                  int ix, iz;
+                  sub2ind(xz, ngllx, iz, ix);
                   const type_real hlagrange = sv_receiver_array(iz, ix, 0);
                   const type_real field_v = sv_field(0, iz, ix);
 
