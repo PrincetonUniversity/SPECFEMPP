@@ -3,6 +3,7 @@
 
 #include "domain.hpp"
 // #include "domain.tpp"
+#include "acoustic/interface.hpp"
 #include "elastic/interface.hpp"
 #include "impl/elements/interface.hpp"
 
