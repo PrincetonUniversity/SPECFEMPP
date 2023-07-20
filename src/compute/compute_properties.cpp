@@ -67,7 +67,7 @@ specfem::compute::properties::properties(
 
         this->rho_vp(ispec, iz, ix) = rho * vp;
         this->rho_vs(ispec, iz, ix) = rho * vs;
-        this->rho_inverse(ispec, iz, ix) = 1 / rho;
+        this->h_rho_inverse(ispec, iz, ix) = 1 / rho;
         this->h_lambdaplus2mu(ispec, iz, ix) = lambdaplus2mu;
       });
 
@@ -84,9 +84,10 @@ specfem::compute::properties::properties(
 void specfem::compute::properties::sync_views() {
   Kokkos::deep_copy(rho, h_rho);
   Kokkos::deep_copy(mu, h_mu);
-//   Kokkos::deep_copy(kappa, h_kappa);
+  Kokkos::deep_copy(kappa, h_kappa);
   Kokkos::deep_copy(lambdaplus2mu, h_lambdaplus2mu);
   Kokkos::deep_copy(ispec_type, h_ispec_type);
+  Kokkos::deep_copy(rho_inverse, h_rho_inverse);
 
   return;
 }
