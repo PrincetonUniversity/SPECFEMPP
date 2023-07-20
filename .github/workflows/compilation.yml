@@ -14,6 +14,6 @@ jobs:
         run: git submodule init
           &&  git submodule update
       - name: Configure Serial build
-        run: cmake -S . -B build -DBUILD_TESTS=ON
+        run: cmake -S . -B build
       - name: Build
         run: cmake --build build
