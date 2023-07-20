@@ -90,8 +90,10 @@ TEST(COMPUTE_TESTS, compute_properties) {
   EXPECT_NO_THROW(specfem::testing::test_array(
       h_rho, test_config.rho_file, mesh.nspec, gllz->get_N(), gllx->get_N()));
 
+specfem::kokkos::HostView3d<type_real, Kokkos::LayoutRight> h_kappa =
+      properties.h_kappa;
   EXPECT_NO_THROW(
-      specfem::testing::test_array(properties.kappa, test_config.kappa_file,
+      specfem::testing::test_array(h_kappa, test_config.kappa_file,
                                    mesh.nspec, gllz->get_N(), gllx->get_N()));
 
   specfem::kokkos::HostView3d<type_real, Kokkos::LayoutRight> h_mu =

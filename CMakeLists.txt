@@ -4,6 +4,7 @@ project(specfem2d_kokkos VERSION 0.1.0)
 
 set(CMAKE_CXX_STANDARD 17)
 option(MPI_PARALLEL "MPI enabled" OFF)
+option(BUILD_TESTS "Tests included" OFF)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
         set(CMAKE_CXX_FLAGS "-fp-model=precise")
@@ -285,9 +286,12 @@ target_link_libraries(
 )
 
 # Include tests
-add_subdirectory(tests/unit-tests)
-add_subdirectory(tests/regression-tests)
-add_subdirectory(examples)
+if (BUILD_TESTS)
+        message("-- Including tests.")
+        add_subdirectory(tests/unit-tests)
+        add_subdirectory(tests/regression-tests)
+        add_subdirectory(examples)
+endif()
 
 # Doxygen
 

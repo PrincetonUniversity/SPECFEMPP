@@ -27,7 +27,8 @@ struct properties {
   specfem::kokkos::DeviceView3d<type_real> mu;
   specfem::kokkos::HostMirror3d<type_real> h_mu;
 
-  specfem::kokkos::HostView3d<type_real> kappa;
+  specfem::kokkos::DeviceView3d<type_real> kappa;
+  specfem::kokkos::HostMirror3d<type_real> h_kappa;
 
   specfem::kokkos::HostView3d<type_real> qmu;
 
