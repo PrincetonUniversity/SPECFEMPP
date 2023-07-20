@@ -38,8 +38,11 @@ struct properties {
 
   specfem::kokkos::HostView3d<type_real> rho_vs;
 
+  specfem::kokkos::HostView3d<type_real> rho_inverse;
+
   specfem::kokkos::DeviceView3d<type_real> lambdaplus2mu;
   specfem::kokkos::HostMirror3d<type_real> h_lambdaplus2mu;
+
   ///@}
   // element type is defined in specfem_setup.hpp
   specfem::kokkos::DeviceView1d<specfem::enums::element::type>
