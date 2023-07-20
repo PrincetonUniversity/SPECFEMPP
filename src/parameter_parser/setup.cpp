@@ -78,7 +78,11 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
         std::make_unique<specfem::runtime_configuration::seismogram>(
             runtime_config["seismogram"]);
   } catch (YAML::InvalidNode &e) {
-    this->seismogram = NULL;
+    YAML::Node seismogram;
+    seismogram["seismogram-format"] = "ascii";
+    seismogram["output-folder"] = "./results";
+    this->seismogram = std::make_unique<specfem::runtime_configuration::seismogram>(
+            seismogram);
   }
 
   try {
