@@ -26,7 +26,7 @@ KOKKOS_FUNCTION specfem::domain::impl::sources::source<
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic>::
     source(const int &ispec,
-           const specfem::kokkos::DeviceView3d<type_real> &kappa,
+           const specfem::kokkos::DeviceView2d<type_real> &kappa,
            specfem::kokkos::DeviceView3d<type_real> source_array,
            specfem::forcing_function::stf *stf)
     : ispec(ispec), kappa(kappa), stf(stf) {
@@ -50,7 +50,7 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::sources::source<
   int ix, iz;
   sub2ind(xz, NGLL, iz, ix);
 
-  *accel = source_array(iz, ix, 0) * stf_value / kappa(ispec, iz, ix);
+  *accel = source_array(iz, ix, 0) * stf_value / kappa(iz, ix);
 
   return;
 }

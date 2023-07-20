@@ -60,7 +60,7 @@ public:
    * @param stf Pointer to the source time function object
    */
   KOKKOS_FUNCTION source(const int &ispec,
-                         const specfem::kokkos::DeviceView3d<type_real> &kappa,
+                         const specfem::kokkos::DeviceView2d<type_real> &kappa,
                          specfem::kokkos::DeviceView3d<type_real> source_array,
                          specfem::forcing_function::stf *stf);
 
@@ -108,7 +108,7 @@ public:
 
 private:
   int ispec; ///< Index of the element where the source is located
-  specfem::kokkos::DeviceView3d<type_real> kappa; /// kappa array
+  specfem::kokkos::DeviceView2d<type_real> kappa; /// kappa array
   specfem::forcing_function::stf *stf; ///< Pointer to the source time function
                                        ///< object
   specfem::kokkos::DeviceView3d<type_real> source_array; ///< Source array
