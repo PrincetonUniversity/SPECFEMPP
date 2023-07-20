@@ -30,6 +30,10 @@ void specfem::solver::time_marching<qp_type>::run() {
     elastic_domain.compute_source_interaction(timeval);
     elastic_domain.divide_mass_matrix();
 
+    acoustic_domain.compute_stiffness_interaction();
+    acoustic_domain.compute_source_interaction(timeval);
+    acoustic_domain.divide_mass_matrix();
+
     it->apply_corrector_phase(field, field_dot, field_dot_dot);
 
     if (it->compute_seismogram()) {
