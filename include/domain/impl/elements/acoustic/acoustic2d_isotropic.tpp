@@ -75,7 +75,8 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
                      const StaticScratchViewType<NGLL, type_real> s_hprime_xx,
                      const StaticScratchViewType<NGLL, type_real> s_hprime_zz,
                      const StaticScratchViewType<NGLL, type_real> field_chi,
-                     type_real *dchidxl, type_real *dchidzl) const {
+                     type_real *dchidxl,
+                     type_real *dchidzl) const {
 
   int ix, iz;
   sub2ind(xz, NGLL, iz, ix);
@@ -85,12 +86,12 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
   const type_real xizl = this->xiz(iz, ix);
   const type_real gammazl = this->gammaz(iz, ix);
 
-  type_real dchi_dxil = 0.0;
-  type_real dchi_dgammal = 0.0;
+  type_real dchi_dxi = 0.0;
+  type_real dchi_dgamma = 0.0;
 
   for (int l = 0; l < NGLL; l++) {
-    dchi_dxil += s_hprime_xx(ix, l) * field_chi(iz, l);
-    dchi_dgammal += s_hprime_zz(iz, l) * field_chi(l, ix);
+    dchi_dxi += s_hprime_xx(ix, l) * field_chi(iz, l);
+    dchi_dgamma += s_hprime_zz(iz, l) * field_chi(l, ix);
   }
 
   // dchidx
@@ -158,10 +159,8 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
 
   int ix, iz;
   sub2ind(xz, NGLL, iz, ix);
-  type_real tempx1 = 0.0;
-  type_real tempz1 = 0.0;
-  type_real tempx3 = 0.0;
-  type_real tempz3 = 0.0;
+  type_real temp1l = 0.0;
+  type_real temp2l = 0.0;
 
 #pragma unroll
   for (int l = 0; l < NGLL; l++) {
