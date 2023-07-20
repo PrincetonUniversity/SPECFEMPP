@@ -15,233 +15,237 @@
 #include <Kokkos_Core.hpp>
 #include <Kokkos_ScatterView.hpp>
 
-template <typename element_type>
-using element_container =
-    typename specfem::domain::impl::elements::container<element_type>;
+namespace acoustic_tmp {
 
-template <class qp_type, class... traits>
-using element_type = typename specfem::domain::impl::elements::element<
-    specfem::enums::element::dimension::dim2,
-    specfem::enums::element::medium::acoustic, qp_type, traits...>;
+  template <typename element_type>
+  using element_container =
+      typename specfem::domain::impl::elements::container<element_type>;
 
-template <typename source_type>
-using source_container =
-    typename specfem::domain::impl::sources::container<source_type>;
+  template <class qp_type, class... traits>
+  using element_type = typename specfem::domain::impl::elements::element<
+      specfem::enums::element::dimension::dim2,
+      specfem::enums::element::medium::acoustic, qp_type, traits...>;
 
-template <class qp_type, class... traits>
-using source_type = typename specfem::domain::impl::sources::source<
-    specfem::enums::element::dimension::dim2,
-    specfem::enums::element::medium::acoustic, qp_type, traits...>;
+  template <typename source_type>
+  using source_container =
+      typename specfem::domain::impl::sources::container<source_type>;
 
-template <class medium>
-void initialize_views(
-    const int &nglob,
-    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field,
-    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot,
-    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot_dot,
-    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
-        rmass_inverse) {
+  template <class qp_type, class... traits>
+  using source_type = typename specfem::domain::impl::sources::source<
+      specfem::enums::element::dimension::dim2,
+      specfem::enums::element::medium::acoustic, qp_type, traits...>;
 
-  constexpr int components = medium::components;
+  template <class medium>
+  void initialize_views(
+      const int &nglob,
+      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field,
+      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot,
+      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot_dot,
+      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+          rmass_inverse) {
 
-  Kokkos::parallel_for(
-      "specfem::Domain::acoustic::initiaze_views",
-      specfem::kokkos::DeviceMDrange<2, Kokkos::Iterate::Left>(
-          { 0, 0 }, { nglob, components }),
-      KOKKOS_LAMBDA(const int iglob, const int idim) {
-        field(iglob, idim) = 0;
-        field_dot(iglob, idim) = 0;
-        field_dot_dot(iglob, idim) = 0;
-        rmass_inverse(iglob, idim) = 0;
-      });
-}
+    constexpr int components = medium::components;
 
-template <class medium>
-void initialize_rmass_inverse(
-    const specfem::kokkos::DeviceView3d<int> ibool,
-    const specfem::kokkos::DeviceView1d<specfem::enums::element::type>
-        ispec_type,
-    const specfem::kokkos::DeviceView1d<type_real> wxgll,
-    const specfem::kokkos::DeviceView1d<type_real> wzgll,
-    const specfem::kokkos::DeviceView3d<type_real> rho,
-    const specfem::kokkos::DeviceView3d<type_real> jacobian,
-    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
-        rmass_inverse) {
-  // Compute the mass matrix
+    Kokkos::parallel_for(
+        "specfem::Domain::acoustic::initiaze_views",
+        specfem::kokkos::DeviceMDrange<2, Kokkos::Iterate::Left>(
+            { 0, 0 }, { nglob, components }),
+        KOKKOS_LAMBDA(const int iglob, const int idim) {
+          field(iglob, idim) = 0;
+          field_dot(iglob, idim) = 0;
+          field_dot_dot(iglob, idim) = 0;
+          rmass_inverse(iglob, idim) = 0;
+        });
+  }
 
-  constexpr int components = medium::components;
-  constexpr auto value = medium::value;
+  template <class medium>
+  void initialize_rmass_inverse(
+      const specfem::kokkos::DeviceView3d<int> ibool,
+      const specfem::kokkos::DeviceView1d<specfem::enums::element::type>
+          ispec_type,
+      const specfem::kokkos::DeviceView1d<type_real> wxgll,
+      const specfem::kokkos::DeviceView1d<type_real> wzgll,
+      const specfem::kokkos::DeviceView3d<type_real> rho,
+      const specfem::kokkos::DeviceView3d<type_real> kappa,
+      const specfem::kokkos::DeviceView3d<type_real> jacobian,
+      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+          rmass_inverse) {
+    // Compute the mass matrix
 
-  const int nspec = ibool.extent(0);
-  const int ngllz = ibool.extent(1);
-  const int ngllx = ibool.extent(2);
+    constexpr int components = medium::components;
+    constexpr auto value = medium::value;
 
-  const int nglob = rmass_inverse.extent(0);
+    const int nspec = ibool.extent(0);
+    const int ngllz = ibool.extent(1);
+    const int ngllx = ibool.extent(2);
 
-  specfem::kokkos::DeviceScatterView2d<type_real, Kokkos::LayoutLeft> results(
-      rmass_inverse);
+    const int nglob = rmass_inverse.extent(0);
 
-  Kokkos::parallel_for(
-      "specfem::Domain::acoustic::compute_mass_matrix",
-      specfem::kokkos::DeviceMDrange<3, Kokkos::Iterate::Left>(
-          { 0, 0, 0 }, { nspec, ngllz, ngllx }),
-      KOKKOS_LAMBDA(const int ispec, const int iz, const int ix) {
-        int iglob = ibool(ispec, iz, ix);
-        type_real kappal = kappa(ispec, iz, ix);
-        auto access = results.access();
-        if (ispec_type(ispec) == value) {
-          for (int icomponent = 0; icomponent < components; icomponent++) {
-            access(iglob, icomponent) +=
-                wxgll(ix) * wzgll(iz) * jacobian(ispec, iz, ix) / kappal;
+    specfem::kokkos::DeviceScatterView2d<type_real, Kokkos::LayoutLeft> results(
+        rmass_inverse);
+
+    Kokkos::parallel_for(
+        "specfem::Domain::acoustic::compute_mass_matrix",
+        specfem::kokkos::DeviceMDrange<3, Kokkos::Iterate::Left>(
+            { 0, 0, 0 }, { nspec, ngllz, ngllx }),
+        KOKKOS_LAMBDA(const int ispec, const int iz, const int ix) {
+          int iglob = ibool(ispec, iz, ix);
+          type_real kappal = kappa(ispec, iz, ix);
+          auto access = results.access();
+          if (ispec_type(ispec) == value) {
+            for (int icomponent = 0; icomponent < components; icomponent++) {
+              access(iglob, icomponent) +=
+                  wxgll(ix) * wzgll(iz) * jacobian(ispec, iz, ix) / kappal;
+            }
           }
-        }
-      });
+        });
 
-  Kokkos::Experimental::contribute(rmass_inverse, results);
+    Kokkos::Experimental::contribute(rmass_inverse, results);
 
-  // invert the mass matrix
-  Kokkos::parallel_for(
-      "specfem::Domain::acoustic::Invert_mass_matrix",
-      specfem::kokkos::DeviceRange(0, nglob), KOKKOS_LAMBDA(const int iglob) {
-        if (rmass_inverse(iglob, 0) > 0.0) {
-          for (int icomponent = 0; icomponent < components; icomponent++) {
-            rmass_inverse(iglob, icomponent) =
-                1.0 / rmass_inverse(iglob, icomponent);
+    // invert the mass matrix
+    Kokkos::parallel_for(
+        "specfem::Domain::acoustic::Invert_mass_matrix",
+        specfem::kokkos::DeviceRange(0, nglob), KOKKOS_LAMBDA(const int iglob) {
+          if (rmass_inverse(iglob, 0) > 0.0) {
+            for (int icomponent = 0; icomponent < components; icomponent++) {
+              rmass_inverse(iglob, icomponent) =
+                  1.0 / rmass_inverse(iglob, icomponent);
+            }
+          } else {
+            for (int icomponent = 0; icomponent < components; icomponent++) {
+              rmass_inverse(iglob, icomponent) = 1.0;
+            }
           }
-        } else {
-          for (int icomponent = 0; icomponent < components; icomponent++) {
-            rmass_inverse(iglob, icomponent) = 1.0;
-          }
-        }
-      });
-}
+        });
+  }
 
-template <class qp_type>
-void instantialize_element(
-    specfem::compute::partial_derivatives partial_derivatives,
-    specfem::compute::properties properties,
-    specfem::kokkos::DeviceView1d<int> ispec_domain,
-    specfem::kokkos::DeviceView1d<element_container<element_type<qp_type> > >
-        elements) {
+  template <class qp_type>
+  void instantialize_element(
+      specfem::compute::partial_derivatives partial_derivatives,
+      specfem::compute::properties properties,
+      specfem::kokkos::DeviceView1d<int> ispec_domain,
+      specfem::kokkos::DeviceView1d<acoustic_tmp::element_container<acoustic_tmp::element_type<qp_type> > >
+          elements) {
 
-  auto h_elements = Kokkos::create_mirror_view(elements);
+    auto h_elements = Kokkos::create_mirror_view(elements);
 
-  Kokkos::parallel_for("specfem::domain::acoustic_isotropic::allocate_memory",
-    specfem::kokkos::HostRange(0, h_elements.extent(0)),
-    KOKKOS_LAMBDA(const int i) {
-      h_elements(i).element = (element_type<qp_type> *)Kokkos::kokkos_malloc<
-          specfem::kokkos::DevMemSpace>(sizeof(
-          element_type<qp_type, specfem::enums::element::property::isotropic>));
-    });
-
-  Kokkos::deep_copy(elements, h_elements);
-
-  Kokkos::parallel_for(
-      "specfem::domain::acoustic_isotropic::instantialize_element",
-      specfem::kokkos::DeviceRange(0, ispec_domain.extent(0)),
+    Kokkos::parallel_for("specfem::domain::acoustic_isotropic::allocate_memory",
+      specfem::kokkos::HostRange(0, h_elements.extent(0)),
       KOKKOS_LAMBDA(const int i) {
-        const int ispec = ispec_domain(i);
-        auto &element = elements(ispec).element;
-        new (element)
-            element_type<qp_type,
-                         specfem::enums::element::property::isotropic>(
-                ispec, partial_derivatives, properties);
+        h_elements(i).element = (element_type<qp_type> *)Kokkos::kokkos_malloc<
+            specfem::kokkos::DevMemSpace>(sizeof(
+            element_type<qp_type, specfem::enums::element::property::isotropic>));
       });
 
-  return;
+    Kokkos::deep_copy(elements, h_elements);
+
+    Kokkos::parallel_for(
+        "specfem::domain::acoustic_isotropic::instantialize_element",
+        specfem::kokkos::DeviceRange(0, ispec_domain.extent(0)),
+        KOKKOS_LAMBDA(const int i) {
+          const int ispec = ispec_domain(i);
+          auto &element = elements(ispec).element;
+          new (element)
+              element_type<qp_type,
+                          specfem::enums::element::property::isotropic>(
+                  ispec, partial_derivatives, properties);
+        });
+
+    return;
+  }
+
+  template <class qp_type>
+  void initialize_sources(
+      const specfem::kokkos::HostMirror1d<specfem::enums::element::type>
+          h_ispec_type,
+      const specfem::kokkos::DeviceView3d<type_real> kappa,
+      const specfem::compute::sources compute_sources,
+      specfem::kokkos::DeviceView1d<source_container<source_type<qp_type> > > &sources) {
+
+    const auto ispec_array = compute_sources.h_ispec_array;
+    const int nsources = ispec_array.extent(0);
+
+    sources = specfem::kokkos::DeviceView1d<source_container<source_type<qp_type> > >(
+        "specfem::domain::acoustic_isotropic::sources", nsources);
+
+    for (int isource = 0; isource < nsources; isource++) {
+      source_type<qp_type> *source;
+
+      source = (source_type<qp_type> *)
+          Kokkos::kokkos_malloc<specfem::kokkos::DevMemSpace>(
+              sizeof(source_type<qp_type, specfem::enums::element::property::isotropic>));
+
+      const int ispec = ispec_array(isource);
+
+      specfem::forcing_function::stf* source_time_function = compute_sources.h_stf_array(isource).T;
+
+      const auto sv_kappa = Kokkos::subview(kappa, ispec, Kokkos::ALL(),
+                                  Kokkos::ALL());
+
+      const auto sv_source_array =
+          Kokkos::subview(compute_sources.source_array, isource, Kokkos::ALL(),
+                          Kokkos::ALL(), Kokkos::ALL());
+
+      if (h_ispec_type(ispec) == specfem::enums::element::acoustic) {
+        Kokkos::parallel_for(
+            "specfem::domain::acoustic_isotropic::initialize_source",
+            specfem::kokkos::DeviceRange(0, 1), KOKKOS_LAMBDA(const int &) {
+              new (source)
+                  source_type<qp_type,
+                              specfem::enums::element::property::isotropic>(
+                      ispec, sv_kappa, sv_source_array, source_time_function);
+              sources(isource) = source_container<source_type<qp_type> >(source);
+            });
+
+        Kokkos::fence();
+      }
+    }
+
+    return;
+  }
+
+  template <class qp_type>
+  void assign_elemental_properties(
+      specfem::compute::partial_derivatives partial_derivatives,
+      specfem::compute::properties properties,
+      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot_dot,
+      specfem::kokkos::DeviceView1d<acoustic_tmp::element_container<acoustic_tmp::element_type<qp_type> > >
+          &elements,
+      const int &nspec, const int &ngllz, const int &ngllx, int &nelem_domain) {
+
+    // Assign elemental properties
+    // ----------------------------------------------------------------------
+    nelem_domain = 0;
+    for (int ispec = 0; ispec < nspec; ispec++) {
+      if (properties.h_ispec_type(ispec) ==
+          specfem::enums::element::medium::acoustic::value) {
+        nelem_domain++;
+      }
+    }
+
+    specfem::kokkos::DeviceView1d<int> ispec_domain(
+        "specfem::domain::acoustic::h_ispec_domain", nelem_domain);
+    specfem::kokkos::HostMirror1d<int> h_ispec_domain =
+        Kokkos::create_mirror_view(ispec_domain);
+
+    elements =
+        specfem::kokkos::DeviceView1d<acoustic_tmp::element_container<acoustic_tmp::element_type<qp_type> > >(
+            "specfem::domain::acoustic::elements", nelem_domain);
+
+    int index = 0;
+    for (int ispec = 0; ispec < nspec; ispec++) {
+      if (properties.h_ispec_type(ispec) == specfem::enums::element::acoustic) {
+        h_ispec_domain(index) = ispec;
+        index++;
+      }
+    }
+
+    Kokkos::deep_copy(ispec_domain, h_ispec_domain);
+
+    instantialize_element(partial_derivatives, properties, ispec_domain,
+                          elements);
+  };
 }
-
-template <class qp_type>
-void initialize_sources(
-    const specfem::kokkos::HostMirror1d<specfem::enums::element::type>
-        h_ispec_type,
-    const specfem::kokkos::DeviceView3d<type_real> kappa,
-    const specfem::compute::sources compute_sources,
-    specfem::kokkos::DeviceView1d<source_container<source_type<qp_type> > > &sources) {
-
-  const auto ispec_array = compute_sources.h_ispec_array;
-  const int nsources = ispec_array.extent(0);
-
-  sources = specfem::kokkos::DeviceView1d<source_container<source_type<qp_type> > >(
-      "specfem::domain::acoustic_isotropic::sources", nsources);
-
-  for (int isource = 0; isource < nsources; isource++) {
-    source_type<qp_type> *source;
-
-    source = (source_type<qp_type> *)
-        Kokkos::kokkos_malloc<specfem::kokkos::DevMemSpace>(
-            sizeof(source_type<qp_type, specfem::enums::element::property::isotropic>));
-
-    const int ispec = ispec_array(isource);
-
-    specfem::forcing_function::stf* source_time_function = compute_sources.h_stf_array(isource).T;
-
-    const auto sv_kappa = Kokkos::subview(kappa, ispec, Kokkos::ALL(),
-                                 Kokkos::ALL());
-
-    const auto sv_source_array =
-        Kokkos::subview(compute_sources.source_array, isource, Kokkos::ALL(),
-                        Kokkos::ALL(), Kokkos::ALL());
-
-    if (h_ispec_type(ispec) == specfem::enums::element::acoustic) {
-      Kokkos::parallel_for(
-          "specfem::domain::acoustic_isotropic::initialize_source",
-          specfem::kokkos::DeviceRange(0, 1), KOKKOS_LAMBDA(const int &) {
-            new (source)
-                source_type<qp_type,
-                            specfem::enums::element::property::isotropic>(
-                    ispec, sv_kappa, sv_source_array, source_time_function);
-            sources(isource) = source_container<source_type<qp_type> >(source);
-          });
-
-      Kokkos::fence();
-    }
-  }
-
-  return;
-}
-
-template <class qp_type>
-void assign_elemental_properties(
-    specfem::compute::partial_derivatives partial_derivatives,
-    specfem::compute::properties properties,
-    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot_dot,
-    specfem::kokkos::DeviceView1d<element_container<element_type<qp_type> > >
-        &elements,
-    const int &nspec, const int &ngllz, const int &ngllx, int &nelem_domain) {
-
-  // Assign elemental properties
-  // ----------------------------------------------------------------------
-  nelem_domain = 0;
-  for (int ispec = 0; ispec < nspec; ispec++) {
-    if (properties.h_ispec_type(ispec) ==
-        specfem::enums::element::medium::acoustic::value) {
-      nelem_domain++;
-    }
-  }
-
-  specfem::kokkos::DeviceView1d<int> ispec_domain(
-      "specfem::domain::acoustic::h_ispec_domain", nelem_domain);
-  specfem::kokkos::HostMirror1d<int> h_ispec_domain =
-      Kokkos::create_mirror_view(ispec_domain);
-
-  elements =
-      specfem::kokkos::DeviceView1d<element_container<element_type<qp_type> > >(
-          "specfem::domain::acoustic::elements", nelem_domain);
-
-  int index = 0;
-  for (int ispec = 0; ispec < nspec; ispec++) {
-    if (properties.h_ispec_type(ispec) == specfem::enums::element::acoustic) {
-      h_ispec_domain(index) = ispec;
-      index++;
-    }
-  }
-
-  Kokkos::deep_copy(ispec_domain, h_ispec_domain);
-
-  instantialize_element(partial_derivatives, properties, ispec_domain,
-                        elements);
-};
 
 template <class qp_type>
 specfem::domain::domain<specfem::enums::element::medium::acoustic, qp_type>::
@@ -283,22 +287,22 @@ specfem::domain::domain<specfem::enums::element::medium::acoustic, qp_type>::
   //----------------------------------------------------------------------------
   // Initialize views
 
-  initialize_views<specfem::enums::element::medium::acoustic>(
+  acoustic_tmp::initialize_views<specfem::enums::element::medium::acoustic>(
       nglob, this->field, this->field_dot, this->field_dot_dot,
       this->rmass_inverse);
 
   //----------------------------------------------------------------------------
   // Inverse of mass matrix
 
-  initialize_rmass_inverse<specfem::enums::element::medium::acoustic>(
+  acoustic_tmp::initialize_rmass_inverse<specfem::enums::element::medium::acoustic>(
       compute->ibool, material_properties.ispec_type, quadx->get_w(),
-      quadz->get_w(), material_properties.rho, partial_derivatives.jacobian,
+      quadz->get_w(), material_properties.rho, material_properties.kappa, partial_derivatives.jacobian,
       this->rmass_inverse);
 
   // ----------------------------------------------------------------------------
   // Inverse of mass matrix
 
-  assign_elemental_properties(partial_derivatives, material_properties,
+  acoustic_tmp::assign_elemental_properties(partial_derivatives, material_properties,
                               this->field_dot_dot,
                               this->elements, nspec, ngllz, ngllx,
                               this->nelem_domain);
@@ -306,7 +310,7 @@ specfem::domain::domain<specfem::enums::element::medium::acoustic, qp_type>::
   // ----------------------------------------------------------------------------
   // Initialize the sources
 
-  initialize_sources(material_properties.h_ispec_type, material_properties.kappa, compute_sources,
+  acoustic_tmp::initialize_sources(material_properties.h_ispec_type, material_properties.kappa, compute_sources,
                      this->sources);
 
   return;
@@ -453,13 +457,13 @@ void specfem::domain::domain<specfem::enums::element::medium::acoustic,
             type_real, specfem::enums::axes::z, specfem::enums::axes::z>(
             team_member.team_scratch(0));
 
-        auto s_field = quadrature_points.template ScratchView<
+        auto s_field_chi = quadrature_points.template ScratchView<
             type_real, specfem::enums::axes::z, specfem::enums::axes::x>(
             team_member.team_scratch(0));
-        auto s_stress_integral_1 = quadrature_points.template ScratchView<
+        auto s_stress_integrand_xi = quadrature_points.template ScratchView<
             type_real, specfem::enums::axes::z, specfem::enums::axes::x>(
             team_member.team_scratch(0));
-        auto s_stress_integral_2 = quadrature_points.template ScratchView<
+        auto s_stress_integrand_gamma = quadrature_points.template ScratchView<
             type_real, specfem::enums::axes::z, specfem::enums::axes::x>(
             team_member.team_scratch(0));
         auto s_iglob =
@@ -498,9 +502,9 @@ void specfem::domain::domain<specfem::enums::element::medium::acoustic,
               int iz, ix;
               sub2ind(xz, ngllx, iz, ix);
               const int iglob = ibool(ispec, iz, ix);
-              s_fieldx(iz, ix) = field(iglob, 0);
-              s_stress_integral_1(iz, ix) = 0.0;
-              s_stress_integral_2(iz, ix) = 0.0;
+              s_field_chi(iz, ix) = field(iglob, 0);
+              s_stress_integrand_xi(iz, ix) = 0.0;
+              s_stress_integrand_gamma(iz, ix) = 0.0;
               s_iglob(iz, ix) = iglob;
             });
 
@@ -516,14 +520,14 @@ void specfem::domain::domain<specfem::enums::element::medium::acoustic,
               int ix, iz;
               sub2ind(xz, ngllx, iz, ix);
 
-              type_real duxdxl = 0.0;
-              type_real duxdzl = 0.0;
-              type_real duzdxl = 0.0;
-              type_real duzdzl = 0.0;
+              type_real dchidxl = 0.0;
+              type_real dchidzl = 0.0;
 
-              // TODO : Implement acoustic element compute gradients
+              element.compute_gradient(xz, s_hprime_xx, s_hprime_zz, s_field_chi, &dchidxl, &dchidzl);
 
-              // TODO : Implement acoustic element compute stresses
+              element.compute_stress(
+                  xz, dchidxl, dchidzl,
+                  &s_stress_integrand_xi(iz, ix), &s_stress_integrand_gamma(iz, ix));
             });
 
         team_member.team_barrier();
@@ -543,7 +547,9 @@ void specfem::domain::domain<specfem::enums::element::medium::acoustic,
               auto sv_field_dot_dot =
                   Kokkos::subview(field_dot_dot, iglob, Kokkos::ALL());
 
-              // TODO : Implement acoustic element update acceleration
+              element.update_acceleration(
+                  xz, wxglll, wzglll, s_stress_integrand_xi, s_stress_integrand_gamma, s_hprimewgll_xx,
+                  s_hprimewgll_zz, sv_field_dot_dot);
             });
       });
 

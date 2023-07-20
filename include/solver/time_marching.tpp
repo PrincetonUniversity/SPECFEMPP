@@ -35,7 +35,7 @@ void specfem::solver::time_marching<qp_type>::run() {
 
     acoustic_domain.compute_stiffness_interaction();
     acoustic_domain.compute_source_interaction(timeval);
-    acoustic_domain.divide_mass_matrix();
+    // acoustic_domain.divide_mass_matrix();
 
     elastic_domain.compute_stiffness_interaction();
     elastic_domain.compute_source_interaction(timeval);
