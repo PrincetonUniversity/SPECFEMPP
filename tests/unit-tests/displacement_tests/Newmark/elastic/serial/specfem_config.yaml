@@ -44,3 +44,7 @@ parameters:
   databases:
     mesh-database: "../../../tests/unit-tests/displacement_tests/Newmark/elastic/serial/Database00000.bin"
     source-file: "../../../tests/unit-tests/displacement_tests/Newmark/elastic/serial/sources.yaml"
+
+  seismogram:
+    seismogram-format: ascii
+    output-folder: "."
