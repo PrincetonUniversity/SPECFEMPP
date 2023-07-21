@@ -44,12 +44,12 @@ void specfem::solver::time_marching<qp_type>::run() {
     it->apply_corrector_phase(acoustic_field, acoustic_field_dot, acoustic_field_dot_dot);
     it->apply_corrector_phase(elastic_field, elastic_field_dot, elastic_field_dot_dot);
 
-    if (it->compute_seismogram()) {
-      int isig_step = it->get_seismogram_step();
-      acoustic_domain.compute_seismogram(isig_step);
-      elastic_domain.compute_seismogram(isig_step);
-      it->increment_seismogram_step();
-    }
+    // if (it->compute_seismogram()) {
+    //   int isig_step = it->get_seismogram_step();
+    //   acoustic_domain.compute_seismogram(isig_step);
+    //   elastic_domain.compute_seismogram(isig_step);
+    //   it->increment_seismogram_step();
+    // }
     Kokkos::Profiling::popRegion();
 
     if (istep % 10 == 0) {

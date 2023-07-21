@@ -52,4 +52,3 @@ Testing Installation
 =====================
 
 To check if the compilation is successful, compile and run the tests, then build the code with ``-DBUILD_TESTS=ON``. Then, run the test by ``cd build/tests/unit-tests  && ctest``.
-

@@ -24,17 +24,20 @@ public:
   /**
    * @brief Construct a new time marching solver object
    *
-   * @param acoustic_domain domain object template specialized for acoustic media
+   * @param acoustic_domain domain object template specialized for acoustic
+   * media
    * @param elastic_domain domain object template specialized for elastic media
    * @param it Pointer to time scheme object (it stands for iterator)
    */
   time_marching(
-      specfem::domain::domain<specfem::enums::element::medium::acoustic, qp_type>
+      specfem::domain::domain<specfem::enums::element::medium::acoustic,
+                              qp_type>
           acoustic_domain,
       specfem::domain::domain<specfem::enums::element::medium::elastic, qp_type>
           elastic_domain,
       specfem::TimeScheme::TimeScheme *it)
-      : acoustic_domain(acoustic_domain), elastic_domain(elastic_domain), it(it){};
+      : acoustic_domain(acoustic_domain), elastic_domain(elastic_domain),
+        it(it){};
   /**
    * @brief Run time-marching solver algorithm
    *

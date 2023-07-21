@@ -159,12 +159,18 @@ void initialize_sources(
     specfem::kokkos::DeviceView1d<source_container<source_type<qp_type> > > &sources) {
 
   const auto ispec_array = compute_sources.h_ispec_array;
-  const int nsources = ispec_array.extent(0);
+  int nsources_domain = 0;
+
+  for (int ispec = 0; ispec < ispec_array.extent(0); ispec++) {
+    if (h_ispec_type(ispec_array(ispec)) == specfem::enums::element::elastic) {
+      nsources_domain++;
+    }
+  }
 
   sources = specfem::kokkos::DeviceView1d<source_container<source_type<qp_type> > >(
-      "specfem::domain::elastic_isotropic::sources", nsources);
+      "specfem::domain::elastic_isotropic::sources", nsources_domain);
 
-  for (int isource = 0; isource < nsources; isource++) {
+  for (int isource = 0; isource < nsources_domain; isource++) {
     source_type<qp_type> *source;
 
     source = (source_type<qp_type> *)

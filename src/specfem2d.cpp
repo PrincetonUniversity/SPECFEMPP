@@ -181,8 +181,8 @@ void execute(const std::string &parameter_file, const std::string &default_file,
       specfem::enums::element::medium::acoustic,
       specfem::enums::element::quadrature::static_quadrature_points<5> >
       acoustic_domain_static(ndim, nglob, qp5, &compute, material_properties,
-                            partial_derivatives, compute_sources,
-                            &compute_receivers, gllx, gllz);
+                             partial_derivatives, compute_sources,
+                             &compute_receivers, gllx, gllz);
   specfem::domain::domain<
       specfem::enums::element::medium::elastic,
       specfem::enums::element::quadrature::static_quadrature_points<5> >

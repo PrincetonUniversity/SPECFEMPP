@@ -211,9 +211,9 @@ private:
                                           ///< z-dimension
   int nelem_domain; ///< Total number of elements in this domain
   specfem::kokkos::DeviceView1d<specfem::domain::impl::elements::container<
-       specfem::domain::impl::elements::element<
-      specfem::enums::element::dimension::dim2,
-      specfem::enums::element::medium::acoustic, qp_type> > >
+      specfem::domain::impl::elements::element<
+          specfem::enums::element::dimension::dim2,
+          specfem::enums::element::medium::acoustic, qp_type> > >
       elements; ///< Container to store pointer to every element inside
                 ///< this domain
   specfem::kokkos::DeviceView1d<specfem::domain::impl::sources::container<
