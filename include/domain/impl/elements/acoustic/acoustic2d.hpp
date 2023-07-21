@@ -60,7 +60,7 @@ public:
   compute_gradient(const int &xz, const ScratchViewType<type_real> s_hprime_xx,
                    const ScratchViewType<type_real> s_hprime_zz,
                    const ScratchViewType<type_real> field_chi,
-                   type_real *dchidxl, type_real *dpdzl) const = 0;
+                   type_real *dchidxl, type_real *dchidzl) const = 0;
 
   /**
    * @brief Compute the stress integrand at a particular Gauss-Lobatto-Legendre
@@ -84,11 +84,9 @@ public:
    * @return KOKKOS_FUNCTION
    */
   KOKKOS_INLINE_FUNCTION virtual void
-  compute_stress(const int &xz, const type_real &duxdxl,
-                 const type_real &duxdzl, const type_real &duzdxl,
-                 const type_real &duzdzl, type_real *stress_integrand_1l,
-                 type_real *stress_integrand_2l, type_real *stress_integrand_3l,
-                 type_real *stress_integrand_4l) const = 0;
+  compute_stress(const int &xz, const type_real &dchidxl,
+                 const type_real &dchidzl, type_real *stress_integrand_xi,
+                 type_real *stress_integrand_gamma) const = 0;
 
   /**
    * @brief Update the acceleration at the quadrature point xz
@@ -109,10 +107,8 @@ public:
   KOKKOS_INLINE_FUNCTION virtual void
   update_acceleration(const int &xz, const type_real &wxglll,
                       const type_real &wzglll,
-                      const ScratchViewType<type_real> stress_integrand_1,
-                      const ScratchViewType<type_real> stress_integrand_2,
-                      const ScratchViewType<type_real> stress_integrand_3,
-                      const ScratchViewType<type_real> stress_integrand_4,
+                      const ScratchViewType<type_real> stress_integrand_xi,
+                      const ScratchViewType<type_real> stress_integrand_gamma,
                       const ScratchViewType<type_real> s_hprimewgll_xx,
                       const ScratchViewType<type_real> s_hprimewgll_zz,
                       field_type field_dot_dot) const = 0;
