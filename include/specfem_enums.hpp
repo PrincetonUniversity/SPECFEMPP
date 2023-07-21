@@ -21,6 +21,38 @@ enum class axes {
   z  ///< Z axis
 };
 
+namespace seismogram {
+enum class type {
+  displacement, ///< Displacement seismogram
+  velocity,     ///< Velocity Seismogram
+  acceleration  ///< Acceleration seismogram
+};
+
+std::ostream &operator<<(std::ostream &os, const type &t) {
+  switch (t) {
+  case type::displacement:
+    os << "displacement";
+    break;
+  case type::velocity:
+    os << "velocity";
+    break;
+  case type::acceleration:
+    os << "acceleration";
+    break;
+  default:
+    os << "unknown";
+    break;
+  }
+  return os;
+}
+
+enum format {
+  seismic_unix, ///< Seismic unix output format
+  ascii         ///< ASCII output format
+};
+
+} // namespace seismogram
+
 /**
  * @brief element namespace is used to store element properties used in the
  * element class.
@@ -51,6 +83,7 @@ namespace dimension {
  *
  */
 class dim2 {
+public:
   constexpr static int dim = 2;
 };
 /**
@@ -58,6 +91,7 @@ class dim2 {
  *
  */
 class dim3 {
+public:
   constexpr static int dim = 3;
 };
 } // namespace dimension

@@ -1,5 +1,5 @@
-#ifndef _RUNTIME_CONFIGURATION_RECIEVERS_HPP
-#define _RUNTIME_CONFIGURATION_RECIEVERS_HPP
+#ifndef _RUNTIME_CONFIGURATION_RECEIVERS_HPP
+#define _RUNTIME_CONFIGURATION_RECEIVERS_HPP
 
 #include "constants.hpp"
 #include "yaml-cpp/yaml.h"
@@ -43,7 +43,7 @@ public:
    *
    * @return std::vector<specfem::seismogram::type> vector seismogram types
    */
-  std::vector<specfem::seismogram::type> get_seismogram_types() const {
+  std::vector<specfem::enums::seismogram::type> get_seismogram_types() const {
     return stypes;
   }
 
@@ -51,9 +51,10 @@ private:
   std::string stations_file; ///< path to stations file
   type_real angle;           ///< Angle of the receiver
   int nstep_between_samples; ///< Seismogram sampling frequency
-  std::vector<specfem::seismogram::type> stypes; ///< std::vector containing
-                                                 ///< type of seismograms to be
-                                                 ///< written
+  std::vector<specfem::enums::seismogram::type> stypes; ///< std::vector
+                                                        ///< containing type of
+                                                        ///< seismograms to be
+                                                        ///< written
 };
 } // namespace runtime_configuration
 } // namespace specfem

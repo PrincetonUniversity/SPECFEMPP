@@ -22,11 +22,11 @@ specfem::runtime_configuration::receivers::receivers(const YAML::Node &Node) {
 
   for (YAML::Node seismogram_type : Node["seismogram-type"]) {
     if (seismogram_type.as<std::string>() == "displacement") {
-      this->stypes.push_back(specfem::seismogram::displacement);
+      this->stypes.push_back(specfem::enums::seismogram::type::displacement);
     } else if (seismogram_type.as<std::string>() == "velocity") {
-      this->stypes.push_back(specfem::seismogram::velocity);
+      this->stypes.push_back(specfem::enums::seismogram::type::velocity);
     } else if (seismogram_type.as<std::string>() == "acceleration") {
-      this->stypes.push_back(specfem::seismogram::acceleration);
+      this->stypes.push_back(specfem::enums::seismogram::type::acceleration);
     } else {
       std::ostringstream message;
 
