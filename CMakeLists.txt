@@ -37,8 +37,15 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(yaml)
 include_directories(BEFORE SYSTEM ${yaml_SOURCE_DIR} ${yaml_BINARY_DIR}/include)
 
-add_subdirectory(boost-cmake)
+find_package(Boost 1.66.0 COMPONENTS program_options filesystem system)
 
+if (NOT ${Boost_FOUND})
+        add_subdirectory(boost-cmake)
+else ()
+        message(STATUS "    LIB:   ${Boost_LIBRARY_DIRS}")
+        message(STATUS "    INC:   ${Boost_INCLUDE_DIRS}")
+        message(STATUS "    LIBSO: ${Boost_LIBRARIES}")
+endif()
 configure_file(constants.hpp.in constants.hpp)
 
 include_directories(include)
