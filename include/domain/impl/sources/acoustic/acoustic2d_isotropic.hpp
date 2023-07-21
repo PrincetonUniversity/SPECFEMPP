@@ -22,8 +22,8 @@ namespace domain {
 namespace impl {
 namespace sources {
 /**
- * @brief Elemenatal source class for 2D isotropic acoustic medium with number of
- * quadrature points defined at compile time
+ * @brief Elemenatal source class for 2D isotropic acoustic medium with number
+ * of quadrature points defined at compile time
  *
  * @tparam N Number of Gauss-Lobatto-Legendre quadrature points
  */

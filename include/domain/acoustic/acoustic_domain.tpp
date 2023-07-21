@@ -163,12 +163,19 @@ namespace acoustic_tmp {
       specfem::kokkos::DeviceView1d<source_container<source_type<qp_type> > > &sources) {
 
     const auto ispec_array = compute_sources.h_ispec_array;
-    const int nsources = ispec_array.extent(0);
+
+    int nsources_domain = 0;
+
+    for (int isource = 0; isource < ispec_array.extent(0); isource++) {
+      if (h_ispec_type(ispec_array(isource)) == specfem::enums::element::acoustic) {
+        nsources_domain++;
+      }
+    }
 
     sources = specfem::kokkos::DeviceView1d<source_container<source_type<qp_type> > >(
-        "specfem::domain::acoustic_isotropic::sources", nsources);
+        "specfem::domain::acoustic_isotropic::sources", nsources_domain);
 
-    for (int isource = 0; isource < nsources; isource++) {
+    for (int isource = 0; isource < nsources_domain; isource++) {
       source_type<qp_type> *source;
 
       source = (source_type<qp_type> *)
