@@ -189,7 +189,7 @@ void execute(const std::string &parameter_file, const std::string &default_file,
       specfem::enums::element::quadrature::static_quadrature_points<5> >
       elastic_domain_static(ndim, nglob, qp5, &compute, material_properties,
                             partial_derivatives, compute_sources,
-                            &compute_receivers, gllx, gllz);
+                            compute_receivers, gllx, gllz);
 
   auto writer =
       setup.instantiate_seismogram_writer(receivers, &compute_receivers);

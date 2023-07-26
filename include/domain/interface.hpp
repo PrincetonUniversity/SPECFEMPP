@@ -5,6 +5,8 @@
 // #include "domain.tpp"
 #include "acoustic/interface.hpp"
 #include "elastic/interface.hpp"
-#include "impl/elements/interface.hpp"
+// #include "impl/elements/interface.hpp"
+// #include "impl/receivers/interface.hpp"
+// #include "impl/sources/interface.hpp"
 
 #endif

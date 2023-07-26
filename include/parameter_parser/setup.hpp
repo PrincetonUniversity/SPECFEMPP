@@ -113,7 +113,7 @@ public:
    * @return std::vector<specfem::seismogram::type> Types of seismograms to be
    * calculated
    */
-  std::vector<specfem::seismogram::type> get_seismogram_types() const {
+  std::vector<specfem::enums::seismogram::type> get_seismogram_types() const {
     return this->receivers->get_seismogram_types();
   }
 

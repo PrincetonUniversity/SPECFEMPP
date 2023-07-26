@@ -3,6 +3,7 @@
 
 #include "compute/interface.hpp"
 #include "domain/impl/elements/interface.hpp"
+#include "domain/impl/receivers/interface.hpp"
 #include "domain/impl/sources/interface.hpp"
 #include "quadrature/interface.hpp"
 #include "specfem_enums.hpp"
@@ -120,7 +121,7 @@ public:
          specfem::compute::properties material_properties,
          specfem::compute::partial_derivatives partial_derivatives,
          specfem::compute::sources compute_sources,
-         specfem::compute::receivers *receivers,
+         specfem::compute::receivers compute_receivers,
          specfem::quadrature::quadrature *quadx,
          specfem::quadrature::quadrature *quadz);
   /**
@@ -197,18 +198,16 @@ private:
                      ///< of mass matrix on
                      ///< device
   specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>
-      h_rmass_inverse;                    ///< View of inverse
-                                          ///< of mass matrix
-                                          ///< on host
-  specfem::compute::compute *compute;     ///< Pointer to compute struct used to
-                                          ///< store spectral element numbering
-                                          ///< mapping (ibool)
-  specfem::compute::receivers *receivers; ///< Pointer to struct used to store
-                                          ///< receivers
-  quadrature::quadrature *quadx;          ///< Pointer to quadrature object in
-                                          ///< x-dimension
-  quadrature::quadrature *quadz;          ///< Pointer to quadrature object in
-                                          ///< z-dimension
+      h_rmass_inverse;                ///< View of inverse
+                                      ///< of mass matrix
+                                      ///< on host
+  specfem::compute::compute *compute; ///< Pointer to compute struct used to
+                                      ///< store spectral element numbering
+                                      ///< mapping (ibool)
+  quadrature::quadrature *quadx;      ///< Pointer to quadrature object in
+                                      ///< x-dimension
+  quadrature::quadrature *quadz;      ///< Pointer to quadrature object in
+                                      ///< z-dimension
   int nelem_domain; ///< Total number of elements in this domain
   specfem::kokkos::DeviceView1d<specfem::domain::impl::elements::container<
       specfem::domain::impl::elements::element<
@@ -224,6 +223,13 @@ private:
           qp_type> > >
       sources; ///< Container to store pointer to every source inside
                ///< this domain
+  specfem::kokkos::DeviceView1d<specfem::domain::impl::receivers::container<
+      specfem::domain::impl::receivers::receiver<
+          specfem::enums::element::dimension::dim2,
+          specfem::enums::element::medium::elastic,
+          qp_type> > >
+      receivers; ///< Container to store pointer to every receiver inside
+                 ///< this domain
 
   qp_type quadrature_points; ///< Quadrature points to define compile time
                              ///< quadrature or runtime quadrature
