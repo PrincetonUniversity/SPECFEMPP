@@ -108,6 +108,7 @@ namespace acoustic_tmp {
         specfem::kokkos::DeviceRange(0, nglob), KOKKOS_LAMBDA(const int iglob) {
           if (rmass_inverse(iglob, 0) > 0.0) {
             for (int icomponent = 0; icomponent < components; icomponent++) {
+              type_real rmass_inverse_l = rmass_inverse(iglob, icomponent);
               rmass_inverse(iglob, icomponent) =
                   1.0 / rmass_inverse(iglob, icomponent);
             }
@@ -416,7 +417,6 @@ void specfem::domain::domain<specfem::enums::element::medium::acoustic,
   const auto hprime_zz = this->quadz->get_hprime();
   const auto wxgll = this->quadx->get_w();
   const auto wzgll = this->quadz->get_w();
-  const auto field = this->field;
   const auto ibool = this->compute->ibool;
 
   int scratch_size =

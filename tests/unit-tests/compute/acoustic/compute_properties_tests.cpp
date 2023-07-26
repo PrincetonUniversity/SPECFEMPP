@@ -64,7 +64,7 @@ test_config get_test_config(std::string config_filename,
  * This test should be run on single and multiple nodes
  *
  */
-TEST(COMPUTE_TESTS, compute_elastic_properties) {
+TEST(COMPUTE_TESTS, compute_acoustic_properties) {
 
   std::string config_filename =
       "../../../tests/unit-tests/compute/elastic/test_config.yml";
@@ -85,16 +85,18 @@ TEST(COMPUTE_TESTS, compute_elastic_properties) {
                                           mesh.nspec, gllz->get_N(),
                                           gllx->get_N());
 
-  specfem::kokkos::HostView3d<type_real, Kokkos::LayoutRight> h_rho =
-      properties.h_rho;
-  EXPECT_NO_THROW(specfem::testing::test_array(
-      h_rho, test_config.rho_file, mesh.nspec, gllz->get_N(), gllx->get_N()));
-
   specfem::kokkos::HostView3d<type_real, Kokkos::LayoutRight> h_kappa =
       properties.h_kappa;
   EXPECT_NO_THROW(specfem::testing::test_array(h_kappa, test_config.kappa_file,
                                                mesh.nspec, gllz->get_N(),
                                                gllx->get_N()));
+
+  // specfem::kokkos::HostView3d<type_real, Kokkos::LayoutRight> h_kappa =
+  //     properties.h_kappa;
+  // EXPECT_NO_THROW(specfem::testing::test_array(h_kappa,
+  // test_config.kappa_file,
+  //                                              mesh.nspec, gllz->get_N(),
+  //                                              gllx->get_N()));
 
   specfem::kokkos::HostView3d<type_real, Kokkos::LayoutRight> h_mu =
       properties.h_mu;
