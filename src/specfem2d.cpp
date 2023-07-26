@@ -177,7 +177,6 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   // Instantiate domain classes
   const int nglob = specfem::utilities::compute_nglob(compute.h_ibool);
 
-  std::cout << nglob << std::endl;
   specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
   specfem::domain::domain<
       specfem::enums::element::medium::acoustic,

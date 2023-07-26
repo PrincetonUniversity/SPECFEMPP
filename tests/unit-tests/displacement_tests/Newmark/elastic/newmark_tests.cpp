@@ -113,7 +113,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
   specfem::compute::receivers compute_receivers;
 
   // Instantiate domain classes
-  const int nglob = specfem::utilities::compute_nglob(compute.h_ibool) + 1;
+  const int nglob = specfem::utilities::compute_nglob(compute.h_ibool);
   specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
   specfem::domain::domain<
       specfem::enums::element::medium::acoustic,
