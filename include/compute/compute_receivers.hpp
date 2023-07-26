@@ -66,10 +66,10 @@ struct receivers {
                                                          ///< seismograms
                                                          ///< stored on the
                                                          ///< device
-  specfem::kokkos::DeviceView1d<specfem::seismogram::type>
+  specfem::kokkos::DeviceView1d<specfem::enums::seismogram::type>
       seismogram_types; ///< Types of seismograms to be calculated stored on
                         ///< the device
-  specfem::kokkos::HostMirror1d<specfem::seismogram::type>
+  specfem::kokkos::HostMirror1d<specfem::enums::seismogram::type>
       h_seismogram_types; ///< Types of seismograms to be calculated stored on
                           ///< the host
 
@@ -88,7 +88,7 @@ struct receivers {
    * @param mpi Pointer to the MPI object
    */
   receivers(const std::vector<specfem::receivers::receiver *> &receivers,
-            const std::vector<specfem::seismogram::type> &stypes,
+            const std::vector<specfem::enums::seismogram::type> &stypes,
             const specfem::quadrature::quadrature *quadx,
             const specfem::quadrature::quadrature *quadz, const type_real xmax,
             const type_real xmin, const type_real zmax, const type_real zmin,
