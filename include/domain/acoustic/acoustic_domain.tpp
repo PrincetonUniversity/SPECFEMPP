@@ -649,7 +649,7 @@ void specfem::domain::domain<specfem::enums::element::medium::acoustic,
         const int irec = team_member.league_rank() % nreceivers;
         const int ispec = ispec_array(irec);
 
-        const specfem::seismogram::type type = seismogram_types(isigtype);
+        const specfem::enums::seismogram::type type = seismogram_types(isigtype);
         const auto sv_ibool =
             Kokkos::subview(ibool, ispec, Kokkos::ALL, Kokkos::ALL);
         auto sv_field = Kokkos::subview(field, isigtype, irec, Kokkos::ALL,

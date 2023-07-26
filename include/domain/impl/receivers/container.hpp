@@ -37,7 +37,7 @@ public:
 
   // "Join" intermediate results from different threads.
   // This should normally implement the same reduction
-  // operation as operator() above.
+  // operation as operator().
   KOKKOS_INLINE_FUNCTION void join(value_type &update,
                                    const value_type &source) const {
     for (size_type i = 0; i < value_count; ++i) {
