@@ -44,7 +44,7 @@ test_config parse_test_config(std::string test_configuration_file,
 
 TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
   std::string config_filename = "../../../tests/unit-tests/displacement_tests/"
-                                "Newmark/elastic/test_config.yaml";
+                                "Newmark/acoustic/test_config.yaml";
 
   specfem::MPI::MPI *mpi = MPIEnvironment::mpi_;
 
@@ -114,6 +114,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
 
   // Instantiate domain classes
   const int nglob = specfem::utilities::compute_nglob(compute.h_ibool) + 1;
+
   specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
   specfem::domain::domain<
       specfem::enums::element::medium::acoustic,
@@ -134,15 +135,19 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
 
   solver->run();
 
-  elastic_domain_static.sync_field(specfem::sync::DeviceToHost);
+  acoustic_domain_static.sync_field(specfem::sync::DeviceToHost);
 
-  specfem::kokkos::HostView2d<type_real, Kokkos::LayoutLeft> field =
-      elastic_domain_static.get_host_field();
+  // specfem::kokkos::HostView2d<type_real, Kokkos::LayoutLeft> field =
+  //     acoustic_domain_static.get_host_field();
+
+  specfem::kokkos::HostView1d<type_real, Kokkos::LayoutLeft> field =
+      Kokkos::subview(acoustic_domain_static.get_host_field(), Kokkos::ALL(),
+                      0);
 
   type_real tolerance = 0.01;
 
   EXPECT_NO_THROW(specfem::testing::compare_norm(
-      field, test_config.solutions_file, nglob, ndim, tolerance));
+      field, test_config.solutions_file, nglob, tolerance));
 }
 
 int main(int argc, char *argv[]) {

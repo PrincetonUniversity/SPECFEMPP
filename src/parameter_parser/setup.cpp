@@ -2,8 +2,23 @@
 #include "yaml-cpp/yaml.h"
 #include <chrono>
 #include <ctime>
+#include <iostream>
 #include <ostream>
+#include <sys/stat.h>
 #include <tuple>
+
+void create_folder_if_not_exists(const std::string &folder_name) {
+  struct stat info;
+
+  if (stat(folder_name.c_str(), &info) != 0) {
+    std::cout << "Creating folder: " << folder_name << std::endl;
+    mkdir(folder_name.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+  } else if (info.st_mode & S_IFDIR) {
+    std::cout << "Folder already exists: " << folder_name << std::endl;
+  } else {
+    std::cout << "Error: " << folder_name << " is not a directory" << std::endl;
+  }
+}
 
 specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
                                              const std::string &default_file) {
@@ -80,7 +95,9 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
   } catch (YAML::InvalidNode &e) {
     YAML::Node seismogram;
     seismogram["seismogram-format"] = "ascii";
-    seismogram["output-folder"] = "./results";
+    std::string folder_name = "results";
+    create_folder_if_not_exists(folder_name);
+    seismogram["output-folder"] = folder_name;
     this->seismogram =
         std::make_unique<specfem::runtime_configuration::seismogram>(
             seismogram);

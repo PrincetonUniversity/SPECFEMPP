@@ -31,17 +31,19 @@ void specfem::solver::time_marching<qp_type>::run() {
 
     Kokkos::Profiling::pushRegion("Stiffness calculation");
     it->apply_predictor_phase(acoustic_field, acoustic_field_dot, acoustic_field_dot_dot);
-    it->apply_predictor_phase(elastic_field, elastic_field_dot, elastic_field_dot_dot);
 
     acoustic_domain.compute_stiffness_interaction();
     acoustic_domain.compute_source_interaction(timeval);
-    // acoustic_domain.divide_mass_matrix();
+    acoustic_domain.divide_mass_matrix();
+
+    it->apply_corrector_phase(acoustic_field, acoustic_field_dot, acoustic_field_dot_dot);
+
+    it->apply_predictor_phase(elastic_field, elastic_field_dot, elastic_field_dot_dot);
 
     elastic_domain.compute_stiffness_interaction();
     elastic_domain.compute_source_interaction(timeval);
     elastic_domain.divide_mass_matrix();
 
-    it->apply_corrector_phase(acoustic_field, acoustic_field_dot, acoustic_field_dot_dot);
     it->apply_corrector_phase(elastic_field, elastic_field_dot, elastic_field_dot_dot);
 
     // if (it->compute_seismogram()) {

@@ -15,8 +15,9 @@ using StaticScratchViewType =
     typename specfem::enums::element::quadrature::static_quadrature_points<
         N>::template ScratchViewType<T>;
 
-using field_type = Kokkos::Subview<specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>,
-                                   int, std::remove_const_t<decltype(Kokkos::ALL)>>;
+using field_type = Kokkos::Subview<
+    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>, int,
+    std::remove_const_t<decltype(Kokkos::ALL)> >;
 
 // -----------------------------------------------------------------------------
 //                     SPECIALIZED ELEMENT
@@ -48,20 +49,20 @@ KOKKOS_FUNCTION specfem::domain::impl::elements::element<
   assert(properties.rho_inverse.extent(2) == NGLL);
 
   // Assert wave property. Acoustic only in sh. For now.
-  assert(specfem::globals::simulation_wave == specfem::wave::sh);
+  // assert(specfem::globals::simulation_wave == specfem::wave::sh);
 
   this->xix = Kokkos::subview(partial_derivatives.xix, ispec, Kokkos::ALL(),
                               Kokkos::ALL());
-  this->gammax = Kokkos::subview(partial_derivatives.gammax, ispec, Kokkos::ALL(),
-                                 Kokkos::ALL());
+  this->gammax = Kokkos::subview(partial_derivatives.gammax, ispec,
+                                 Kokkos::ALL(), Kokkos::ALL());
   this->xiz = Kokkos::subview(partial_derivatives.xiz, ispec, Kokkos::ALL(),
                               Kokkos::ALL());
-  this->gammaz = Kokkos::subview(partial_derivatives.gammaz, ispec, Kokkos::ALL(),
-                                 Kokkos::ALL());
+  this->gammaz = Kokkos::subview(partial_derivatives.gammaz, ispec,
+                                 Kokkos::ALL(), Kokkos::ALL());
   this->jacobian = Kokkos::subview(partial_derivatives.jacobian, ispec,
                                    Kokkos::ALL(), Kokkos::ALL());
   this->rho_inverse = Kokkos::subview(properties.rho_inverse, ispec,
-                                        Kokkos::ALL(), Kokkos::ALL());
+                                      Kokkos::ALL(), Kokkos::ALL());
   return;
 }
 
@@ -75,8 +76,7 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
                      const StaticScratchViewType<NGLL, type_real> s_hprime_xx,
                      const StaticScratchViewType<NGLL, type_real> s_hprime_zz,
                      const StaticScratchViewType<NGLL, type_real> field_chi,
-                     type_real *dchidxl,
-                     type_real *dchidzl) const {
+                     type_real *dchidxl, type_real *dchidzl) const {
 
   int ix, iz;
   sub2ind(xz, NGLL, iz, ix);
@@ -95,10 +95,10 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
   }
 
   // dchidx
-  *dchidxl = dchi_dxi * xixl  + dchi_dgamma * gammaxl ;
+  *dchidxl = dchi_dxi * xixl + dchi_dgamma * gammaxl;
 
   // dchidz
-  *dchidzl = dchi_dxi * xizl + dchi_dgamma * gammazl ;
+  *dchidzl = dchi_dxi * xizl + dchi_dgamma * gammazl;
 
   return;
 }
@@ -109,10 +109,8 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
     specfem::enums::element::medium::acoustic,
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic>::
-    compute_stress(const int &xz,
-                   const type_real &dchidxl,
-                   const type_real &dchidzl,
-                   type_real *stress_integrand_xi,
+    compute_stress(const int &xz, const type_real &dchidxl,
+                   const type_real &dchidzl, type_real *stress_integrand_xi,
                    type_real *stress_integrand_gamma) const {
 
   int ix, iz;
@@ -135,7 +133,7 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
   // for the gradient of w^{\alpha\gamma}. In this->update_acceleration
   // the weights for the integration and the interpolated values for the
   // first derivatives of the lagrange polynomials are then collapsed
-  *stress_integrand_xi= fac * (xixl * dchidxl + xizl * dchidzl);
+  *stress_integrand_xi = fac * (xixl * dchidxl + xizl * dchidzl);
   *stress_integrand_gamma = fac * (gammaxl * dchidxl + gammazl * dchidzl);
 
   return;
@@ -148,9 +146,7 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic>::
     update_acceleration(
-        const int &xz,
-        const type_real &wxglll,
-        const type_real &wzglll,
+        const int &xz, const type_real &wxglll, const type_real &wzglll,
         const StaticScratchViewType<NGLL, type_real> stress_integrand_xi,
         const StaticScratchViewType<NGLL, type_real> stress_integrand_gamma,
         const StaticScratchViewType<NGLL, type_real> s_hprimewgll_xx,
