@@ -80,6 +80,12 @@ specfem::compute::receivers::receivers(
     this->h_seismogram_types(i) = stypes[i];
   }
 
+  this->receiver_field = specfem::kokkos::DeviceView6d<type_real>(
+      "specfem::compute::receivers::receiver_field", max_sig_step,
+      my_receivers.size(), stypes.size(), 2, quadz->get_N(), quadx->get_N());
+
+  this->h_receiver_field = Kokkos::create_mirror_view(this->receiver_field);
+
   this->sync_views();
 
   return;

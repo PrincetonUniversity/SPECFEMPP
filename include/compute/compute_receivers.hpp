@@ -72,6 +72,18 @@ struct receivers {
   specfem::kokkos::HostMirror1d<specfem::enums::seismogram::type>
       h_seismogram_types; ///< Types of seismograms to be calculated stored on
                           ///< the host
+  specfem::kokkos::DeviceView6d<type_real> receiver_field;   ///< Receiver field
+                                                             ///< inside the
+                                                             ///< element where
+                                                             ///< receiver is
+                                                             ///< located stored
+                                                             ///< on the device
+  specfem::kokkos::HostMirror6d<type_real> h_receiver_field; ///< Receiver field
+                                                             ///< inside the
+                                                             ///< element where
+                                                             ///< receiver is
+                                                             ///< located stored
+                                                             ///< on the host
 
   /**
    * @brief Default constructor

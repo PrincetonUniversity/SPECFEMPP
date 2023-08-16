@@ -171,6 +171,16 @@ using DeviceView4d = Kokkos::View<T ****, L, DevMemSpace, Args...>;
  */
 template <typename T, typename L = LayoutWrapper, typename... Args>
 using DeviceView5d = Kokkos::View<T *****, L, DevMemSpace, Args...>;
+/**
+ * @brief 6d device view
+ *
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
+ */
+template <typename T, typename L = LayoutWrapper, typename... Args>
+using DeviceView6d = Kokkos::View<T ******, L, DevMemSpace, Args...>;
 ///@}
 
 /** @name Host views
@@ -329,6 +339,16 @@ using HostMirror4d = typename DeviceView4d<T, L, Args...>::HostMirror;
  */
 template <typename T, typename L = LayoutWrapper, typename... Args>
 using HostMirror5d = typename DeviceView5d<T, L, Args...>::HostMirror;
+/**
+ * @brief Host mirror of 6d device view
+ *
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
+ */
+template <typename T, typename L = LayoutWrapper, typename... Args>
+using HostMirror6d = typename DeviceView6d<T, L, Args...>::HostMirror;
 ///@}
 
 // Scratch Views
@@ -556,7 +576,7 @@ public:
    * (https://kokkos.github.io/kokkos-core-wiki/ProgrammingGuide/Custom-Reductions-Custom-Reducers.html)
    *
    */
-  using value_type = T; ///< Value type of reduction
+  typedef T value_type; ///< Value type of reduction
   typedef Sum reducer;  ///< Required typedef for reduction
   typedef Kokkos::View<value_type *, Space,
                        Kokkos::MemoryTraits<Kokkos::Unmanaged> >
