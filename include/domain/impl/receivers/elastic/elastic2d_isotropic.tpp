@@ -60,6 +60,10 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
               const specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
                   field_dot_dot) const {
 
+  assert(field.extent(1) == medium::components);
+  assert(field_dot.extent(1) == medium::components);
+  assert(field_dot_dot.extent(1) == medium::components);
+
   int ix, iz;
   sub2ind(xz, NGLL, iz, ix);
   const int iglob = ibool(iz, ix);
