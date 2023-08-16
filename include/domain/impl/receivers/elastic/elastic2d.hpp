@@ -10,24 +10,29 @@ namespace domain {
 namespace impl {
 namespace receivers {
 
-template <class quadrature_points>
+template <class qp_type>
 class receiver<specfem::enums::element::dimension::dim2,
-               specfem::enums::element::medium::elastic, quadrature_points> {
+               specfem::enums::element::medium::elastic, qp_type> {
 public:
+  using dimension = specfem::enums::element::dimension::dim2;
+  using medium = specfem::enums::element::medium::elastic;
+  using quadrature_points = qp_type;
   using value_type = type_real[];
   KOKKOS_INLINE_FUNCTION virtual void get_field(
-      const int xz, const specfem::kokkos::DeviceView2d<type_real> field,
-      const specfem::kokkos::DeviceView2d<type_real> field_dot,
-      const specfem::kokkos::DeviceView2d<type_real> field_dot_dot) const {};
+      const int xz,
+      const specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field,
+      const specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+          field_dot,
+      const specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+          field_dot_dot) const {};
   KOKKOS_INLINE_FUNCTION virtual void compute_seismogram_components(
-      const int xz, type_real (&l_seismogram_components)[2]) const {};
-  KOKKOS_INLINE_FUNCTION virtual void
-  compute_seismogram(const int isig_step,
-                     const type_real (&seismogram_components)[2]) const {};
+      const int xz,
+      dimension::array_type<type_real> &l_seismogram_components) const {};
+  KOKKOS_INLINE_FUNCTION virtual void compute_seismogram(
+      const int isig_step,
+      const dimension::array_type<type_real> &seismogram_components){};
   KOKKOS_INLINE_FUNCTION virtual specfem::enums::seismogram::type
   get_seismogram_type() const = 0;
-
-  using medium = specfem::enums::element::medium::elastic;
 };
 
 } // namespace receivers

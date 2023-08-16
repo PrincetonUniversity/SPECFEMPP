@@ -26,7 +26,12 @@ namespace elements {
  *
  * @tparam properties Properties of the element
  */
-template <class... properties> class element {};
+template <class... properties> class element {
+
+  using dimension = void;
+  using medium = void;
+  using quadrature_points = void;
+};
 
 } // namespace elements
 } // namespace impl

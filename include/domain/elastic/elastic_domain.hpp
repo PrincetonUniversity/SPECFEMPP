@@ -23,6 +23,7 @@ template <typename qp_type>
 class domain<specfem::enums::element::medium::elastic, qp_type> {
 
 public:
+  using dimension = specfem::enums::element::dimension::dim2;
   /**
    * @brief Get a view of field stored on the device
    *

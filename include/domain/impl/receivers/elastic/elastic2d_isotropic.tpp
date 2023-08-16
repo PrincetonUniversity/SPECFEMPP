@@ -11,7 +11,16 @@
 #include "specfem_enums.hpp"
 #include "specfem_setup.hpp"
 
-using value_type = type_real[];
+using sv_receiver_array_type =
+    Kokkos::Subview<specfem::kokkos::DeviceView4d<type_real>, int,
+                    std::remove_const_t<decltype(Kokkos::ALL)>,
+                    std::remove_const_t<decltype(Kokkos::ALL)>,
+                    std::remove_const_t<decltype(Kokkos::ALL)> >;
+
+using sv_receiver_seismogram_type =
+    Kokkos::Subview<specfem::kokkos::DeviceView4d<type_real>,
+                    std::remove_const_t<decltype(Kokkos::ALL)>, int, int,
+                    std::remove_const_t<decltype(Kokkos::ALL)> >;
 
 template <int NGLL>
 specfem::domain::impl::receivers::receiver<
@@ -19,25 +28,17 @@ specfem::domain::impl::receivers::receiver<
     specfem::enums::element::medium::elastic,
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic>::
-    receiver(const int irec, const int iseis, const int ispec,
-             const type_real sin_rec, const type_real cos_rec,
+    receiver(const type_real sin_rec, const type_real cos_rec,
              const specfem::enums::seismogram::type seismogram,
-             const specfem::compute::receivers receivers,
-             const specfem::kokkos::DeviceView3d<int> ibool,
-             specfem::quadrature::quadrature *gllx,
-             specfem::quadrature::quadrature *gllz)
-    : ispec(ispec), sin_rec(sin_rec), cos_rec(cos_rec), gllx(gllx), gllz(gllz) {
+             const sv_receiver_array_type receiver_array,
+             const sv_receiver_seismogram_type receiver_seismogram,
+             const specfem::kokkos::DeviceView2d<int> ibool)
+    : sin_rec(sin_rec), cos_rec(cos_rec), seismogram(seismogram),
+      receiver_seismogram(receiver_seismogram), receiver_array(receiver_array),
+      ibool(ibool) {
   this->receiver_field = specfem::kokkos::DeviceView3d<type_real>(
       "receiver_field", specfem::enums::element::dimension::dim2::dim, NGLL,
       NGLL);
-  this->receiver_array = Kokkos::subview(receivers.receiver_array, irec,
-                                         Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
-
-  // Subview the seismogram array at current receiver and current seismogram
-  // value
-  this->receiver_seismogram = Kokkos::subview(receivers.seismogram, Kokkos::ALL,
-                                              iseis, irec, Kokkos::ALL);
-  this->ibool = Kokkos::subview(ibool, ispec, Kokkos::ALL, Kokkos::ALL);
 
   return;
 }
@@ -48,10 +49,13 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
     specfem::enums::element::medium::elastic,
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic>::
-    get_field(
-        const int xz, const specfem::kokkos::DeviceView2d<type_real> field,
-        const specfem::kokkos::DeviceView2d<type_real> field_dot,
-        const specfem::kokkos::DeviceView2d<type_real> field_dot_dot) const {
+    get_field(const int xz,
+              const specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+                  field,
+              const specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+                  field_dot,
+              const specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+                  field_dot_dot) const {
 
   int ix, iz;
   sub2ind(xz, NGLL, iz, ix);
@@ -60,8 +64,10 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
   switch (this->seismogram) {
   case specfem::enums::seismogram::type::displacement:
     if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
-      receiver_field(0, iz, ix) = field(iglob, 0);
-      receiver_field(1, iz, ix) = field(iglob, 1);
+      type_real fieldx = field(iglob, 0);
+      type_real fieldz = field(iglob, 1);
+      receiver_field(0, iz, ix) = fieldx;
+      receiver_field(1, iz, ix) = fieldz;
     } else if (specfem::globals::simulation_wave == specfem::wave::sh) {
       receiver_field(0, iz, ix) = field(iglob, 0);
     }
@@ -97,8 +103,9 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
     specfem::enums::element::medium::elastic,
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic>::
-    compute_seismogram_components(const int xz,
-                                  type_real (&l_seismogram_components)[2]) const {
+    compute_seismogram_components(
+        const int xz,
+        dimension::array_type<type_real> &l_seismogram_components) const {
   int ix, iz;
   sub2ind(xz, NGLL, iz, ix);
 
@@ -133,10 +140,10 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
     specfem::enums::element::medium::elastic,
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic>::
-    compute_seismogram(const int isig_step,
-                       const type_real (&seismogram_components)[2]) const {
+    compute_seismogram(
+        const int isig_step,
+        const dimension::array_type<type_real> &seismogram_components) {
 
-  assert(seismogram_components.extent(1) == 2);
   if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
     receiver_seismogram(isig_step, 0) =
         this->cos_rec * seismogram_components[0] +

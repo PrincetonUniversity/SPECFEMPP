@@ -45,11 +45,6 @@ void specfem::writer::seismogram::write() {
                        this->output_folder + "/" + network_name + station_name +
                            "BXZ" + ".sema" };
           break;
-        default:
-          std::ostringstream message;
-          message << "seismogram type " << stype
-                  << " has not been implemented yet.";
-          throw std::runtime_error(message.str());
         }
 
         for (int iorientation = 0; iorientation < filename.size();

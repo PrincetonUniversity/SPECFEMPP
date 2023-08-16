@@ -30,11 +30,15 @@ namespace elements {
  * @tparam quadrature_points Type for number of quadrature points defined either
  * at compile time or run time
  */
-template <typename quadrature_points>
+template <typename qp_type>
 class element<specfem::enums::element::dimension::dim2,
-              specfem::enums::element::medium::elastic, quadrature_points> {
+              specfem::enums::element::medium::elastic, qp_type> {
 
 public:
+  using dimension = specfem::enums::element::dimension::dim2;
+  using medium = specfem::enums::element::medium::elastic;
+  using quadrature_points = qp_type;
+
   /**
    * @brief Scratch view type as defined by the quadrature points (either at
    * compile time or run time)

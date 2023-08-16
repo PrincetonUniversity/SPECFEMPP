@@ -31,6 +31,8 @@ specfem::runtime_configuration::receivers::receivers(const YAML::Node &Node) {
       std::ostringstream message;
 
       message << "Error reading specfem receiver configuration. \n";
+      message << "Unknown seismogram type: "
+              << seismogram_type.as<std::string>() << "\n";
 
       std::runtime_error(message.str());
     }
