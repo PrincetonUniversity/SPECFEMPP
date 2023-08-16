@@ -6,8 +6,8 @@
 #include "domain/domain.hpp"
 #include "domain/elastic/elastic_domain.hpp"
 #include "domain/impl/elements/interface.hpp"
-#include "domain/impl/sources/interface.hpp"
 #include "domain/impl/receivers/interface.hpp"
+#include "domain/impl/sources/interface.hpp"
 #include "globals.h"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
@@ -138,7 +138,6 @@ void instantialize_element(
     specfem::kokkos::DeviceView1d<int> ispec_domain,
     specfem::kokkos::DeviceView1d<element_container<element_type<qp_type> > >
         elements) {
-
   auto h_elements = Kokkos::create_mirror_view(elements);
 
   Kokkos::parallel_for(
@@ -169,65 +168,66 @@ void instantialize_element(
 
 template <class qp_type>
 void initialize_sources(
-    const specfem::kokkos::HostMirror1d<specfem::enums::element::type>
-        h_ispec_type,
+    const specfem::kokkos::DeviceView1d<specfem::enums::element::type>
+        ispec_type,
     const specfem::compute::sources compute_sources,
     specfem::kokkos::DeviceView1d<source_container<source_type<qp_type> > >
         &sources) {
 
-  const auto ispec_array = compute_sources.h_ispec_array;
+  const auto ispec_array = compute_sources.ispec_array;
   const int nsources = ispec_array.extent(0);
 
   sources =
       specfem::kokkos::DeviceView1d<source_container<source_type<qp_type> > >(
           "specfem::domain::elastic_isotropic::sources", nsources);
 
-  for (int isource = 0; isource < nsources; isource++) {
-    source_type<qp_type> *source;
+  auto h_sources = Kokkos::create_mirror_view(sources);
 
-    source = (source_type<qp_type> *)Kokkos::kokkos_malloc<
-        specfem::kokkos::DevMemSpace>(sizeof(
-        source_type<qp_type, specfem::enums::element::property::isotropic>));
-
-    const int ispec = ispec_array(isource);
-
-    specfem::forcing_function::stf *source_time_function =
-        compute_sources.h_stf_array(isource).T;
-
-    const auto sv_source_array =
-        Kokkos::subview(compute_sources.source_array, isource, Kokkos::ALL(),
-                        Kokkos::ALL(), Kokkos::ALL());
-
-    if (h_ispec_type(ispec) == specfem::enums::element::elastic) {
-      Kokkos::parallel_for(
-          "specfem::domain::elastic_isotropic::initialize_source",
-          specfem::kokkos::DeviceRange(0, 1), KOKKOS_LAMBDA(const int &) {
-            new (source)
+  Kokkos::parallel_for(
+      "specfem::domain::elastic_isotropic::allocate_memory",
+      specfem::kokkos::HostRange(0, nsources),
+      KOKKOS_LAMBDA(const int i) {
+        h_sources(i).source = (source_type<qp_type> *)
+            Kokkos::kokkos_malloc<specfem::kokkos::DevMemSpace>(sizeof(
                 source_type<qp_type,
-                            specfem::enums::element::property::isotropic>(
-                    ispec, sv_source_array, source_time_function);
-            sources(isource) = source_container<source_type<qp_type> >(source);
-          });
+                            specfem::enums::element::property::isotropic>));
+      });
 
-      Kokkos::fence();
-    }
-  }
+  Kokkos::deep_copy(sources, h_sources);
+
+  Kokkos::parallel_for(
+      "specfem::domain::elastic_isotropic::initialize_source",
+      specfem::kokkos::DeviceRange(0, nsources),
+      KOKKOS_LAMBDA(const int isource) {
+        if (ispec_type(ispec_array(isource)) ==
+            specfem::enums::element::elastic) {
+          auto &source = sources(isource).source;
+          const int ispec = ispec_array(isource);
+          auto source_time_function =
+              compute_sources.stf_array(isource).T;
+          const auto sv_source_array =
+              Kokkos::subview(compute_sources.source_array, isource, Kokkos::ALL(),
+                              Kokkos::ALL(), Kokkos::ALL());
+          new (source)
+              source_type<qp_type,
+                          specfem::enums::element::property::isotropic>(
+                  ispec, sv_source_array, source_time_function);
+        }
+      });
 
   return;
 }
 
 template <class qp_type>
 void initialize_receivers(
-    const specfem::kokkos::HostMirror1d<specfem::enums::element::type>
-        h_ispec_type,
+    const specfem::kokkos::DeviceView1d<specfem::enums::element::type>
+        ispec_type,
     const specfem::compute::receivers compute_receivers,
     const specfem::kokkos::DeviceView3d<int> ibool,
-    specfem::quadrature::quadrature* gllx,
-    specfem::quadrature::quadrature* gllz,
-    specfem::kokkos::DeviceView1d<
-        receiver_container<receiver_type<qp_type> > > receivers) {
+    specfem::kokkos::DeviceView1d<receiver_container<receiver_type<qp_type> > >
+        &receivers) {
 
-  const auto ispec_array = compute_receivers.h_ispec_array;
+  const auto ispec_array = compute_receivers.ispec_array;
   const auto seis_types = compute_receivers.seismogram_types;
 
   const int nreceivers = ispec_array.extent(0) * seis_types.extent(0);
@@ -236,40 +236,105 @@ void initialize_receivers(
       receiver_container<receiver_type<qp_type> > >(
       "specfem::domain::elastic_isotropic::receivers", nreceivers);
 
-  for (int irec = 0; irec < ispec_array.extent(0); irec++) {
-    for (int iseis = 0; iseis < seis_types.extent(0); iseis++) {
-      const int ispec = ispec_array(irec);
-      const auto seis_type = seis_types(iseis);
+  auto h_receivers = Kokkos::create_mirror_view(receivers);
 
-      const type_real cos_rec = compute_receivers.h_cos_recs(irec);
-      const type_real sin_rec = compute_receivers.h_sin_recs(irec);
+  Kokkos::parallel_for(
+      "specfem::domain::elastic_isotropic::allocate_memory",
+      specfem::kokkos::HostRange(0, nreceivers),
+      KOKKOS_LAMBDA(const int i) {
+        h_receivers(i).receiver = (receiver_type<qp_type> *)
+            Kokkos::kokkos_malloc<specfem::kokkos::DevMemSpace>(sizeof(
+                receiver_type<qp_type,
+                              specfem::enums::element::property::isotropic>));
+      });
 
-      const int inum = irec * seis_types.extent(0) + iseis;
+  Kokkos::deep_copy(receivers, h_receivers);
 
-      receiver_type<qp_type> *receiver;
+  Kokkos::parallel_for(
+      "specfem::domain::elastic_isotropic::initialize_receiver",
+      specfem::kokkos::DeviceRange(0, nreceivers),
+      KOKKOS_LAMBDA(const int inum) {
+        const int irec = inum / seis_types.extent(0);
+        const int iseis = inum % seis_types.extent(0);
+        const int ispec = ispec_array(irec);
+        const auto seis_type = seis_types(iseis);
 
-      receiver = (receiver_type<qp_type> *)
-          Kokkos::kokkos_malloc<specfem::kokkos::DevMemSpace>(sizeof(
-              receiver_type<qp_type,
-                            specfem::enums::element::property::isotropic>));
+        const type_real cos_rec = compute_receivers.cos_recs(irec);
+        const type_real sin_rec = compute_receivers.sin_recs(irec);
 
-      if (h_ispec_type(ispec) == specfem::enums::element::elastic) {
-        Kokkos::parallel_for(
-            "specfem::domain::elastic_isotropic::initialize_receiver",
-            specfem::kokkos::DeviceRange(0, 1), KOKKOS_LAMBDA(const int &) {
-              new (receiver)
-                  receiver_type<qp_type,
-                                specfem::enums::element::property::isotropic>(
-                      irec, iseis, ispec, sin_rec, cos_rec, seis_type, compute_receivers,
-                      ibool, gllx, gllz);
-              receivers(inum) =
-                  receiver_container<receiver_type<qp_type> >(receiver);
-            });
+        auto sv_receiver_array = Kokkos::subview(compute_receivers.receiver_array, irec,
+                                         Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
 
-        Kokkos::fence();
-      }
-    }
-  }
+        // Subview the seismogram array at current receiver and current seismogram
+        // value
+        auto sv_receiver_seismogram = Kokkos::subview(compute_receivers.seismogram, Kokkos::ALL,
+                                                    iseis, irec, Kokkos::ALL);
+        auto sv_ibool = Kokkos::subview(ibool, ispec, Kokkos::ALL, Kokkos::ALL);
+
+        auto &receiver = receivers(inum).receiver;
+        new (receiver)
+            receiver_type<qp_type,
+                          specfem::enums::element::property::isotropic>(
+                sin_rec, cos_rec, seis_type,
+                sv_receiver_array, sv_receiver_seismogram, sv_ibool);
+
+      });
+
+
+  // for (int irec = 0; irec < ispec_array.extent(0); irec++) {
+  //   for (int iseis = 0; iseis < seis_types.extent(0); iseis++) {
+  //     const int ispec = ispec_array(irec);
+  //     const auto seis_type = seis_types(iseis);
+
+  //     const type_real cos_rec = compute_receivers.h_cos_recs(irec);
+  //     const type_real sin_rec = compute_receivers.h_sin_recs(irec);
+
+  //     const int inum = irec * seis_types.extent(0) + iseis;
+
+  //     receiver_type<qp_type> *receiver;
+
+  //     receiver = (receiver_type<qp_type> *)
+  //         Kokkos::kokkos_malloc<specfem::kokkos::DevMemSpace>(sizeof(
+  //             receiver_type<qp_type,
+  //                           specfem::enums::element::property::isotropic>));
+
+  //     specfem::enums::seismogram::type *seismogram;
+
+  //     // printf("receiver from host %p\n", receiver);
+  //     if (h_ispec_type(ispec) == specfem::enums::element::elastic) {
+  //       Kokkos::parallel_for(
+  //           "specfem::domain::elastic_isotropic::initialize_receiver",
+  //           specfem::kokkos::DeviceRange(0, 1), KOKKOS_LAMBDA(const int &) {
+  //             new (receiver)
+  //                 receiver_type<qp_type,
+  //                               specfem::enums::element::property::isotropic>(
+  //                     irec, iseis, ispec, sin_rec, cos_rec, seis_type,
+  //                     compute_receivers, ibool);
+  //             receivers(inum) =
+  //                 receiver_container<receiver_type<qp_type> >(receiver);
+
+  //             *seismogram = receivers(inum).get_seismogram_type();
+  //           });
+
+  //       Kokkos::fence();
+
+  //       assert(*seismogram == seis_type);
+
+
+
+  //       Kokkos::parallel_for(
+  //           "specfem::domain::elastic_isotropic::check_initialize_receiver",
+  //           specfem::kokkos::DeviceRange(0, 1), KOKKOS_LAMBDA(const int &) {
+  //             auto seismogram = receiver->get_seismogram_type();
+  //           });
+
+  //       Kokkos::fence();
+
+  //     }
+  //   }
+  // }
+
+  return;
 }
 
 template <class qp_type>
@@ -376,14 +441,14 @@ specfem::domain::domain<specfem::enums::element::medium::elastic, qp_type>::
   // ----------------------------------------------------------------------------
   // Initialize the sources
 
-  initialize_sources(material_properties.h_ispec_type, compute_sources,
+  initialize_sources(material_properties.ispec_type, compute_sources,
                      this->sources);
 
   // ----------------------------------------------------------------------------
   // Initialize the receivers
 
-  initialize_receivers(material_properties.h_ispec_type, compute_receivers,
-                       ibool, quadx, quadz, this->receivers);
+  initialize_receivers(material_properties.ispec_type, compute_receivers,
+                       ibool, this->receivers);
 
   return;
 };
@@ -642,9 +707,6 @@ void specfem::domain::domain<specfem::enums::element::medium::elastic,
                   s_hprimewgll_zz, sv_field_dot_dot);
             });
       });
-
-  Kokkos::fence();
-
   return;
 }
 
@@ -696,8 +758,6 @@ void specfem::domain::domain<
               source.update_acceleration(accelx, accelz, sv_field_dot_dot);
             });
       });
-
-  Kokkos::fence();
   return;
 }
 
@@ -705,38 +765,15 @@ template <typename qp_type>
 void specfem::domain::domain<specfem::enums::element::medium::elastic,
                              qp_type>::compute_seismogram(const int isig_step) {
 
-  // const auto seismogram_types = this->receivers->seismogram_types;
-  // const int nsigtype = seismogram_types.extent(0);
-  // const int nreceivers = this->receivers->receiver_array.extent(0);
-  // const auto ispec_array = this->receivers->ispec_array;
-  // const auto receiver_array = this->receivers->receiver_array;
-  // const auto ibool = this->compute->ibool;
-  // const auto cos_recs = this->receivers->cos_recs;
-  // const auto sin_recs = this->receivers->sin_recs;
-  // auto field = this->receivers->field;
-  // const int ngllx = ibool.extent(1);
-  // const int ngllz = ibool.extent(2);
-  // const int ngllxz = ngllx * ngllz;
-  // auto seismogram = Kokkos::subview(this->receivers->seismogram, isig_step,
-  //                                   Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
-  // specfem::kokkos::DeviceView2d<type_real> copy_field;
-
   Kokkos::parallel_for(
       "specfem::Domain::Elastic::compute_seismogram",
       specfem::kokkos::DeviceTeam(this->receivers.extent(0), Kokkos::AUTO, 1),
       KOKKOS_CLASS_LAMBDA(
           const specfem::kokkos::DeviceTeam::member_type &team_member) {
-        const auto receiver = this->receivers(team_member.league_rank());
+        const int irec = team_member.league_rank();
+        const auto receiver = this->receivers(irec);
         const auto seismogram_type = receiver.get_seismogram_type();
-        // const int isigtype = team_member.league_rank() / nreceivers;
-        // const int irec = team_member.league_rank() % nreceivers;
-        // const int ispec = ispec_array(irec);
 
-        // const specfem::seismogram::type type = seismogram_types(isigtype);
-        // const auto sv_ibool =
-        //     Kokkos::subview(ibool, ispec, Kokkos::ALL, Kokkos::ALL);
-        // auto sv_field = Kokkos::subview(field, isigtype, irec, Kokkos::ALL,
-        //                                 Kokkos::ALL, Kokkos::ALL);
         // Get seismogram field
         // ----------------------------------------------------------------
 
@@ -745,156 +782,34 @@ void specfem::domain::domain<specfem::enums::element::medium::elastic,
                                                        specfem::enums::axes::x>(
                 team_member),
             [=](const int xz) {
-              receiver.get_field(xz, field, field_dot, field_dot_dot);
+              receiver.get_field(xz, this->field, this->field_dot,
+                                 this->field_dot_dot);
             });
-
-        // switch (type) {
-        // // Get the displacement field
-        // case specfem::seismogram::displacement:
-        //   Kokkos::parallel_for(
-        //       Kokkos::TeamThreadRange(team_member, ngllxz), [=](const int xz)
-        //       {
-        //         const int ix = xz % ngllz;
-        //         const int iz = xz / ngllz;
-        //         const int iglob = sv_ibool(iz, ix);
-
-        //         if (specfem::globals::simulation_wave == specfem::wave::p_sv)
-        //         {
-        //           sv_field(0, iz, ix) = this->field(iglob, 0);
-        //           sv_field(1, iz, ix) = this->field(iglob, 1);
-        //         } else if (specfem::globals::simulation_wave ==
-        //                    specfem::wave::sh) {
-        //           sv_field(0, iz, ix) = this->field(iglob, 0);
-        //         }
-        //       });
-        //   break;
-        // // Get the velocity field
-        // case specfem::seismogram::velocity:
-        //   Kokkos::parallel_for(
-        //       Kokkos::TeamThreadRange(team_member, ngllxz), [=](const int xz)
-        //       {
-        //         const int ix = xz % ngllz;
-        //         const int iz = xz / ngllz;
-        //         const int iglob = sv_ibool(iz, ix);
-
-        //         if (specfem::globals::simulation_wave == specfem::wave::p_sv)
-        //         {
-        //           sv_field(0, iz, ix) = this->field_dot(iglob, 0);
-        //           sv_field(1, iz, ix) = this->field_dot(iglob, 1);
-        //         } else if (specfem::globals::simulation_wave ==
-        //                    specfem::wave::sh) {
-        //           sv_field(0, iz, ix) = this->field_dot(iglob, 0);
-        //         }
-        //       });
-        //   break;
-        // // Get the acceleration field
-        // case specfem::seismogram::acceleration:
-        //   Kokkos::parallel_for(
-        //       Kokkos::TeamThreadRange(team_member, ngllxz), [=](const int xz)
-        //       {
-        //         const int ix = xz % ngllz;
-        //         const int iz = xz / ngllz;
-        //         const int iglob = sv_ibool(iz, ix);
-
-        //         if (specfem::globals::simulation_wave == specfem::wave::p_sv)
-        //         {
-        //           sv_field(0, iz, ix) = this->field_dot_dot(iglob, 0);
-        //           sv_field(1, iz, ix) = this->field_dot_dot(iglob, 1);
-        //         } else if (specfem::globals::simulation_wave ==
-        //                    specfem::wave::sh) {
-        //           sv_field(0, iz, ix) = this->field_dot_dot(iglob, 0);
-        //         }
-        //       });
-        //   break;
-        // }
-        //-------------------------------------------------------------------
 
         // compute seismograms components
         //-------------------------------------------------------------------
-        type_real seismogram_components[2];
         switch (seismogram_type) {
         case specfem::enums::seismogram::type::displacement:
         case specfem::enums::seismogram::type::velocity:
         case specfem::enums::seismogram::type::acceleration:
+          dimension::array_type<type_real> seismogram_components;
           Kokkos::parallel_reduce(
               quadrature_points.template TeamThreadRange<
                   specfem::enums::axes::z, specfem::enums::axes::x>(
-                  team_member), receiver.compute_seismogram_components,
-              seismogram_components);
+                  team_member),
+              [=](const int xz,
+                  dimension::array_type<type_real> &l_seismogram_components) {
+                receiver.compute_seismogram_components(xz,
+                                                       l_seismogram_components);
+              },
+              specfem::kokkos::Sum<dimension::array_type<type_real> >(
+                  seismogram_components));
+          Kokkos::single(Kokkos::PerTeam(team_member), [=] {
+            receiver.compute_seismogram(isig_step, seismogram_components);
+          });
+          break;
         }
-
-        // const auto sv_receiver_array = Kokkos::subview(
-        //     receiver_array, irec, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
-        // const type_real cos_irec = cos_recs(irec);
-        // const type_real sin_irec = sin_recs(irec);
-        // auto sv_seismogram =
-        //     Kokkos::subview(seismogram, isigtype, irec, Kokkos::ALL);
-        // switch (type) {
-        // case specfem::seismogram::displacement:
-        // case specfem::seismogram::velocity:
-        // case specfem::seismogram::acceleration:
-
-        //   type_real vx = 0.0;
-        //   type_real vz = 0.0;
-
-        //   if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
-        //     Kokkos::parallel_reduce(
-        //         Kokkos::TeamThreadRange(team_member, ngllxz),
-        //         [=](const int xz, type_real &l_vx) {
-        //           const int ix = xz % ngllz;
-        //           const int iz = xz / ngllz;
-        //           const type_real hlagrange = sv_receiver_array(iz, ix, 0);
-        //           const type_real field_v = sv_field(0, iz, ix);
-
-        //           l_vx += field_v * hlagrange;
-        //         },
-        //         vx);
-        //     Kokkos::parallel_reduce(
-        //         Kokkos::TeamThreadRange(team_member, ngllxz),
-        //         [=](const int xz, type_real &l_vz) {
-        //           const int ix = xz % ngllz;
-        //           const int iz = xz / ngllz;
-        //           const type_real hlagrange = sv_receiver_array(iz, ix, 0);
-        //           const type_real field_v = sv_field(1, iz, ix);
-
-        //           l_vz += field_v * hlagrange;
-        //         },
-        //         vz);
-        //   } else if (specfem::globals::simulation_wave == specfem::wave::sh)
-        //   {
-        //     Kokkos::parallel_reduce(
-        //         Kokkos::TeamThreadRange(team_member, ngllxz),
-        //         [=](const int xz, type_real &l_vx) {
-        //           const int ix = xz % ngllz;
-        //           const int iz = xz / ngllz;
-        //           const type_real hlagrange = sv_receiver_array(iz, ix, 0);
-        //           const type_real field_v = sv_field(0, iz, ix);
-
-        //           l_vx += field_v * hlagrange;
-        //         },
-        //         vx);
-        //   }
-
-        Kokkos::single(Kokkos::PerTeam(team_member), [=] {
-          receiver.compute_seismogram(isig_step, seismogram_components);
-        });
-
-        // Kokkos::single(Kokkos::PerTeam(team_member), [=] {
-        //   if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
-        //     sv_seismogram(0) = cos_irec * vx + sin_irec * vz;
-        //     sv_seismogram(1) = sin_irec * vx + cos_irec * vz;
-        //   } else if ((specfem::globals::simulation_wave ==
-        //   specfem::wave::sh)) {
-        //     sv_seismogram(0) = cos_irec * vx + sin_irec * vz;
-        //     sv_seismogram(1) = 0;
-        //   }
-        // });
-
-        // break;
-        //     }
       });
-
-  // Kokkos::fence();
 }
 
 #endif

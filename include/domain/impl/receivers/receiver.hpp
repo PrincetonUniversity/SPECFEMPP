@@ -19,7 +19,12 @@ namespace receivers {
  *
  * @tparam properties Properties of the source
  */
-template <class... properties> class receiver {};
+template <class... properties> class receiver {
+
+  using dimension = void;
+  using medium = void;
+  using quadrature_points = void;
+};
 
 } // namespace receivers
 } // namespace impl

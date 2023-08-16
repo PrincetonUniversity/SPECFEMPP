@@ -14,6 +14,17 @@ namespace domain {
 namespace impl {
 namespace receivers {
 
+using sv_receiver_array_type =
+    Kokkos::Subview<specfem::kokkos::DeviceView4d<type_real>, int,
+                    std::remove_const_t<decltype(Kokkos::ALL)>,
+                    std::remove_const_t<decltype(Kokkos::ALL)>,
+                    std::remove_const_t<decltype(Kokkos::ALL)> >;
+
+using sv_receiver_seismogram_type =
+    Kokkos::Subview<specfem::kokkos::DeviceView4d<type_real>,
+                    std::remove_const_t<decltype(Kokkos::ALL)>, int, int,
+                    std::remove_const_t<decltype(Kokkos::ALL)> >;
+
 template <int NGLL>
 class receiver<
     specfem::enums::element::dimension::dim2,
@@ -25,26 +36,31 @@ class receiver<
                       specfem::enums::element::quadrature::
                           static_quadrature_points<NGLL> > {
 public:
+  using dimension = specfem::enums::element::dimension::dim2;
+  using medium = specfem::enums::element::medium::elastic;
+  using quadrature_points =
+      specfem::enums::element::quadrature::static_quadrature_points<NGLL>;
   KOKKOS_FUNCTION receiver() = default;
   KOKKOS_FUNCTION
-  receiver(const int irec, const int iseis, const int ispec,
-           const type_real sin_rec, const type_real cos_rec,
+  receiver(const type_real sin_rec, const type_real cos_rec,
            const specfem::enums::seismogram::type seismogram,
-           const specfem::compute::receivers receivers,
-           const specfem::kokkos::DeviceView3d<int> ibool,
-           specfem::quadrature::quadrature *gllx,
-           specfem::quadrature::quadrature *gllz);
-  KOKKOS_INLINE_FUNCTION void
-  get_field(const int xz, const specfem::kokkos::DeviceView2d<type_real> field,
-            const specfem::kokkos::DeviceView2d<type_real> field_dot,
-            const specfem::kokkos::DeviceView2d<type_real> field_dot_dot)
-      const override;
+           const sv_receiver_array_type receiver_array,
+           const sv_receiver_seismogram_type receiver_seismogram,
+           const specfem::kokkos::DeviceView2d<int> ibool);
+  KOKKOS_INLINE_FUNCTION void get_field(
+      const int xz,
+      const specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field,
+      const specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+          field_dot,
+      const specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+          field_dot_dot) const override;
 
   KOKKOS_INLINE_FUNCTION void compute_seismogram_components(
-      const int xz, type_real (&l_seismogram_components)[2]) const override;
+      const int xz,
+      dimension::array_type<type_real> &l_seismogram_components) const override;
   KOKKOS_INLINE_FUNCTION void compute_seismogram(
       const int isig_step,
-      const type_real (&seismogram_components)[2]) const override;
+      const dimension::array_type<type_real> &seismogram_components) override;
 
   KOKKOS_INLINE_FUNCTION specfem::enums::seismogram::type
   get_seismogram_type() const override {
@@ -55,13 +71,10 @@ private:
   specfem::enums::seismogram::type seismogram;
   type_real sin_rec;
   type_real cos_rec;
-  int ispec;
   specfem::kokkos::DeviceView3d<type_real> receiver_field;
-  specfem::kokkos::DeviceView3d<type_real> receiver_array;
-  specfem::kokkos::DeviceView2d<type_real> receiver_seismogram;
+  sv_receiver_array_type receiver_array;
+  sv_receiver_seismogram_type receiver_seismogram;
   specfem::kokkos::DeviceView2d<int> ibool;
-  specfem::quadrature::quadrature *gllx;
-  specfem::quadrature::quadrature *gllz;
 };
 
 } // namespace receivers

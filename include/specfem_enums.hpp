@@ -28,24 +28,6 @@ enum class type {
   acceleration  ///< Acceleration seismogram
 };
 
-std::ostream &operator<<(std::ostream &os, const type &t) {
-  switch (t) {
-  case type::displacement:
-    os << "displacement";
-    break;
-  case type::velocity:
-    os << "velocity";
-    break;
-  case type::acceleration:
-    os << "acceleration";
-    break;
-  default:
-    os << "unknown";
-    break;
-  }
-  return os;
-}
-
 enum format {
   seismic_unix, ///< Seismic unix output format
   ascii         ///< ASCII output format
@@ -85,6 +67,75 @@ namespace dimension {
 class dim2 {
 public:
   constexpr static int dim = 2;
+
+  /**
+   * @brief Array to store temporary values when doing reductions
+   *
+   * @tparam T array type
+   */
+  template <typename T> struct array_type {
+    T data[2]; ///< Data array
+
+    /**
+     * @brief operator [] to access the data array
+     *
+     * @param i index
+     * @return T& reference to the data array
+     */
+    KOKKOS_INLINE_FUNCTION T &operator[](const int &i) { return data[i]; }
+
+    /**
+     * @brief operator [] to access the data array
+     *
+     * @param i index
+     * @return const T& reference to the data array
+     */
+    KOKKOS_INLINE_FUNCTION const T &operator[](const int &i) const {
+      return data[i];
+    }
+
+    /**
+     * @brief operator += to add two arrays
+     *
+     * @param rhs right hand side array
+     * @return array_type<T>& reference to the array
+     */
+    KOKKOS_INLINE_FUNCTION array_type<T> &operator+=(const array_type<T> &rhs) {
+      for (int i = 0; i < 2; i++) {
+        data[i] += rhs[i];
+      }
+      return *this;
+    }
+
+    /**
+     * @brief Initialize the array for sum reductions
+     *
+     */
+    KOKKOS_INLINE_FUNCTION void init() {
+      for (int i = 0; i < 2; i++) {
+        data[i] = 0.0;
+      }
+    }
+
+    // Default constructor
+    /**
+     * @brief Construct a new array type object
+     *
+     */
+    KOKKOS_INLINE_FUNCTION array_type() { init(); }
+
+    // Copy constructor
+    /**
+     * @brief Copy constructor
+     *
+     * @param other other array
+     */
+    KOKKOS_INLINE_FUNCTION array_type(const array_type<T> &other) {
+      for (int i = 0; i < 2; i++) {
+        data[i] = other[i];
+      }
+    }
+  };
 };
 /**
  * @brief 3D element
@@ -93,6 +144,75 @@ public:
 class dim3 {
 public:
   constexpr static int dim = 3;
+
+  /**
+   * @brief Array to store temporary values when doing reductions
+   *
+   * @tparam T array type
+   */
+  template <typename T> struct array_type {
+    T data[3]; ///< Data array
+
+    /**
+     * @brief operator [] to access the data array
+     *
+     * @param i index
+     * @return T& reference to the data array
+     */
+    KOKKOS_INLINE_FUNCTION T &operator[](const int &i) { return data[i]; }
+
+    /**
+     * @brief operator [] to access the data array
+     *
+     * @param i index
+     * @return const T& reference to the data array
+     */
+    KOKKOS_INLINE_FUNCTION const T &operator[](const int &i) const {
+      return data[i];
+    }
+
+    /**
+     * @brief operator += to add two arrays
+     *
+     * @param rhs right hand side array
+     * @return array_type<T>& reference to the array
+     */
+    KOKKOS_INLINE_FUNCTION array_type<T> &operator+=(const array_type<T> &rhs) {
+      for (int i = 0; i < 3; i++) {
+        data[i] += rhs[i];
+      }
+      return *this;
+    }
+
+    /**
+     * @brief Initialize the array for sum reductions
+     *
+     */
+    KOKKOS_INLINE_FUNCTION void init() {
+      for (int i = 0; i < 3; i++) {
+        data[i] = 0.0;
+      }
+    }
+
+    // Default constructor
+    /**
+     * @brief Construct a new array type object
+     *
+     */
+    KOKKOS_INLINE_FUNCTION array_type() { init(); }
+
+    // Copy constructor
+    /**
+     * @brief Copy constructor
+     *
+     * @param other other array
+     */
+    KOKKOS_INLINE_FUNCTION array_type(const array_type<T> &other) {
+      for (int i = 0; i < 3; i++) {
+        data[i] = other[i];
+      }
+    }
+  };
 };
 } // namespace dimension
 

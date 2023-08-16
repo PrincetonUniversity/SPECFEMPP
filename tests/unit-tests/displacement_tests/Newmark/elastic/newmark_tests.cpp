@@ -120,7 +120,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
       specfem::enums::element::quadrature::static_quadrature_points<5> >
       elastic_domain_static(ndim, nglob, qp5, &compute, material_properties,
                             partial_derivatives, compute_sources,
-                            &compute_receivers, gllx, gllz);
+                            compute_receivers, gllx, gllz);
 
   specfem::solver::solver *solver = new specfem::solver::time_marching<
       specfem::enums::element::quadrature::static_quadrature_points<5> >(
