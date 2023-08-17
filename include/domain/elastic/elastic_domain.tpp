@@ -819,8 +819,6 @@ void specfem::domain::domain<specfem::enums::element::medium::elastic,
               int iz, ix;
               sub2ind(xz, ngllx, iz, ix);
               int iglob = ibool(ispec, iz, ix);
-              type_real fieldx = this->field(iglob, 0);
-              type_real fieldz = this->field(iglob, 1);
               s_fieldx(iz, ix) = this->field(iglob, 0);
               s_fieldx_dot(iz, ix) = this->field_dot(iglob, 0);
               s_fieldx_dot_dot(iz, ix) = this->field_dot_dot(iglob, 0);
