@@ -59,7 +59,9 @@ public:
            const specfem::enums::seismogram::type seismogram,
            const sv_receiver_array_type receiver_array,
            const sv_receiver_seismogram_type receiver_seismogram,
-           const sv_receiver_field_type receiver_field);
+           const specfem::compute::partial_derivatives &partial_derivatives,
+           const specfem::compute::properties &properties,
+           sv_receiver_field_type receiver_field);
 
   KOKKOS_INLINE_FUNCTION void
   get_field(const int xz, const int isig_step,
@@ -88,13 +90,13 @@ public:
   int get_ispec() const { return this->ispec; }
 
 private:
-  int ispec;
-  specfem::enums::seismogram::type seismogram;
-  type_real sin_rec;
-  type_real cos_rec;
+  const int ispec;
+  const specfem::enums::seismogram::type seismogram;
+  const type_real sin_rec;
+  const type_real cos_rec;
+  const sv_receiver_array_type receiver_array;
+  const sv_receiver_seismogram_type receiver_seismogram;
   sv_receiver_field_type receiver_field;
-  sv_receiver_array_type receiver_array;
-  sv_receiver_seismogram_type receiver_seismogram;
 };
 
 } // namespace receivers

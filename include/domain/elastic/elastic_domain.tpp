@@ -221,6 +221,8 @@ void initialize_receivers(
     const specfem::kokkos::DeviceView1d<specfem::enums::element::type>
         ispec_type,
     const specfem::compute::receivers compute_receivers,
+    const specfem::compute::partial_derivatives &partial_derivatives,
+    const specfem::compute::properties &properties,
     specfem::kokkos::DeviceView1d<receiver_container<receiver_type<qp_type> > >
         &receivers) {
 
@@ -279,7 +281,8 @@ void initialize_receivers(
             receiver_type<qp_type,
                           specfem::enums::element::property::isotropic>(
                 ispec, sin_rec, cos_rec, seis_type, sv_receiver_array,
-                sv_receiver_seismogram, sv_receiver_field);
+                sv_receiver_seismogram, partial_derivatives, properties,
+                sv_receiver_field);
       });
 
   return;
@@ -395,7 +398,7 @@ specfem::domain::domain<specfem::enums::element::medium::elastic, qp_type>::
   // ----------------------------------------------------------------------------
   // Initialize the receivers
 
-  initialize_receivers(material_properties.ispec_type, compute_receivers,
+  initialize_receivers(material_properties.ispec_type, compute_receivers, partial_derivatives, material_properties,
                        this->receivers);
 
   return;

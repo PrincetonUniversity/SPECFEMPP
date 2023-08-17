@@ -40,7 +40,9 @@ KOKKOS_FUNCTION specfem::domain::impl::receivers::receiver<
              const specfem::enums::seismogram::type seismogram,
              const sv_receiver_array_type receiver_array,
              const sv_receiver_seismogram_type receiver_seismogram,
-             const sv_receiver_field_type receiver_field)
+             const specfem::compute::partial_derivatives &partial_derivatives,
+             const specfem::compute::properties &properties,
+             sv_receiver_field_type receiver_field)
     : ispec(ispec), sin_rec(sin_rec), cos_rec(cos_rec), seismogram(seismogram),
       receiver_seismogram(receiver_seismogram), receiver_array(receiver_array),
       receiver_field(receiver_field) {}
@@ -84,35 +86,33 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
   int ix, iz;
   sub2ind(xz, NGLL, iz, ix);
 
+  ScratchViewType<type_real> active_fieldx;
+  ScratchViewType<type_real> active_fieldz;
+
   switch (this->seismogram) {
   case specfem::enums::seismogram::type::displacement:
-    if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
-      this->receiver_field(isig_step, 0, iz, ix) = fieldx(iz, ix);
-      this->receiver_field(isig_step, 1, iz, ix) = fieldz(iz, ix);
-    } else if (specfem::globals::simulation_wave == specfem::wave::sh) {
-      this->receiver_field(isig_step, 0, iz, ix) = fieldx(iz, ix);
-    }
+    active_fieldx = fieldx;
+    active_fieldz = fieldz;
     break;
   case specfem::enums::seismogram::type::velocity:
-    if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
-      this->receiver_field(isig_step, 0, iz, ix) = fieldx_dot(iz, ix);
-      this->receiver_field(isig_step, 1, iz, ix) = fieldz_dot(iz, ix);
-    } else if (specfem::globals::simulation_wave == specfem::wave::sh) {
-      this->receiver_field(isig_step, 0, iz, ix) = fieldx_dot(iz, ix);
-    }
+    active_fieldx = fieldx_dot;
+    active_fieldz = fieldz_dot;
     break;
   case specfem::enums::seismogram::type::acceleration:
-    if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
-      this->receiver_field(isig_step, 0, iz, ix) = fieldx_dot_dot(iz, ix);
-      this->receiver_field(isig_step, 1, iz, ix) = fieldz_dot_dot(iz, ix);
-    } else if (specfem::globals::simulation_wave == specfem::wave::sh) {
-      this->receiver_field(isig_step, 0, iz, ix) = fieldx_dot_dot(iz, ix);
-    }
+    active_fieldx = fieldx_dot_dot;
+    active_fieldz = fieldz_dot_dot;
     break;
   default:
     // seismogram not supported
     assert(false);
     break;
+  }
+
+  if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
+    this->receiver_field(isig_step, 0, iz, ix) = active_fieldx(iz, ix);
+    this->receiver_field(isig_step, 1, iz, ix) = active_fieldz(iz, ix);
+  } else if (specfem::globals::simulation_wave == specfem::wave::sh) {
+    this->receiver_field(isig_step, 0, iz, ix) = active_fieldx(iz, ix);
   }
 
   return;
