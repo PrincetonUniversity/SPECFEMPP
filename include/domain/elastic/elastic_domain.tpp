@@ -221,7 +221,6 @@ void initialize_receivers(
     const specfem::kokkos::DeviceView1d<specfem::enums::element::type>
         ispec_type,
     const specfem::compute::receivers compute_receivers,
-    const specfem::kokkos::DeviceView3d<int> ibool,
     specfem::kokkos::DeviceView1d<receiver_container<receiver_type<qp_type> > >
         &receivers) {
 
@@ -271,17 +270,16 @@ void initialize_receivers(
         auto sv_receiver_seismogram =
             Kokkos::subview(compute_receivers.seismogram, Kokkos::ALL, iseis,
                             irec, Kokkos::ALL);
-        auto sv_ibool = Kokkos::subview(ibool, ispec, Kokkos::ALL, Kokkos::ALL);
         auto sv_receiver_field =
-            Kokkos::subview(compute_receivers.receiver_field, Kokkos::ALL, irec, iseis,
-                            Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
+            Kokkos::subview(compute_receivers.receiver_field, Kokkos::ALL, irec,
+                            iseis, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
 
         auto &receiver = receivers(inum).receiver;
         new (receiver)
             receiver_type<qp_type,
                           specfem::enums::element::property::isotropic>(
-                sin_rec, cos_rec, seis_type, sv_receiver_array,
-                sv_receiver_seismogram, sv_ibool, sv_receiver_field);
+                ispec, sin_rec, cos_rec, seis_type, sv_receiver_array,
+                sv_receiver_seismogram, sv_receiver_field);
       });
 
   return;
@@ -397,7 +395,7 @@ specfem::domain::domain<specfem::enums::element::medium::elastic, qp_type>::
   // ----------------------------------------------------------------------------
   // Initialize the receivers
 
-  initialize_receivers(material_properties.ispec_type, compute_receivers, ibool,
+  initialize_receivers(material_properties.ispec_type, compute_receivers,
                        this->receivers);
 
   return;
@@ -715,14 +713,118 @@ template <typename qp_type>
 void specfem::domain::domain<specfem::enums::element::medium::elastic,
                              qp_type>::compute_seismogram(const int isig_step) {
 
+  // Allocate scratch views for field, field_dot & field_dot_dot. Incase of
+  // acostic domains when calculating displacement, velocity and acceleration
+  // seismograms we need to compute the derivatives of the field variables. This
+  // requires summing over all lagrange derivatives at all quadrature points
+  // within the element. Scratch views speed up this computation by limiting
+  // global memory accesses.
+
+  const auto ibool = this->compute->ibool;
+  const auto hprime_xx = this->quadx->get_hprime();
+  const auto hprime_zz = this->quadz->get_hprime();
+  // hprime_xx
+  int scratch_size =
+      quadrature_points.template shmem_size<type_real, specfem::enums::axes::x,
+                                            specfem::enums::axes::x>();
+
+  // hprime_zz
+  scratch_size +=
+      quadrature_points.template shmem_size<type_real, specfem::enums::axes::z,
+                                            specfem::enums::axes::z>();
+
+  // field, field_dot, field_dot_dot - x and z components
+  scratch_size +=
+      6 *
+      quadrature_points.template shmem_size<type_real, specfem::enums::axes::z,
+                                            specfem::enums::axes::x>();
+
   Kokkos::parallel_for(
       "specfem::Domain::Elastic::compute_seismogram",
-      specfem::kokkos::DeviceTeam(this->receivers.extent(0), Kokkos::AUTO, 1),
+      specfem::kokkos::DeviceTeam(this->receivers.extent(0), Kokkos::AUTO, 1)
+          .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
       KOKKOS_CLASS_LAMBDA(
           const specfem::kokkos::DeviceTeam::member_type &team_member) {
+        int ngllx, ngllz;
+        quadrature_points.get_ngll(&ngllx, &ngllz);
         const int irec = team_member.league_rank();
         const auto receiver = this->receivers(irec);
+        const int ispec = receiver.get_ispec();
         const auto seismogram_type = receiver.get_seismogram_type();
+
+        // Instantiate shared views
+        // ----------------------------------------------------------------
+        auto s_hprime_xx = quadrature_points.template ScratchView<
+            type_real, specfem::enums::axes::x, specfem::enums::axes::x>(
+            team_member.team_scratch(0));
+
+        auto s_hprime_zz = quadrature_points.template ScratchView<
+            type_real, specfem::enums::axes::z, specfem::enums::axes::z>(
+            team_member.team_scratch(0));
+
+        auto s_fieldx = quadrature_points.template ScratchView<
+            type_real, specfem::enums::axes::z, specfem::enums::axes::x>(
+            team_member.team_scratch(0));
+
+        auto s_fieldx_dot = quadrature_points.template ScratchView<
+            type_real, specfem::enums::axes::z, specfem::enums::axes::x>(
+            team_member.team_scratch(0));
+
+        auto s_fieldx_dot_dot = quadrature_points.template ScratchView<
+            type_real, specfem::enums::axes::z, specfem::enums::axes::x>(
+            team_member.team_scratch(0));
+
+        auto s_fieldz = quadrature_points.template ScratchView<
+            type_real, specfem::enums::axes::z, specfem::enums::axes::x>(
+            team_member.team_scratch(0));
+
+        auto s_fieldz_dot = quadrature_points.template ScratchView<
+            type_real, specfem::enums::axes::z, specfem::enums::axes::x>(
+            team_member.team_scratch(0));
+
+        auto s_fieldz_dot_dot = quadrature_points.template ScratchView<
+            type_real, specfem::enums::axes::z, specfem::enums::axes::x>(
+            team_member.team_scratch(0));
+
+        // Allocate shared views
+        // ----------------------------------------------------------------
+        Kokkos::parallel_for(
+            quadrature_points.template TeamThreadRange<specfem::enums::axes::x,
+                                                       specfem::enums::axes::x>(
+                team_member),
+            [=](const int xz) {
+              int iz, ix;
+              sub2ind(xz, ngllx, iz, ix);
+              s_hprime_xx(iz, ix) = hprime_xx(iz, ix);
+            });
+
+        Kokkos::parallel_for(
+            quadrature_points.template TeamThreadRange<specfem::enums::axes::z,
+                                                       specfem::enums::axes::z>(
+                team_member),
+            [=](const int xz) {
+              int iz, ix;
+              sub2ind(xz, ngllz, iz, ix);
+              s_hprime_zz(iz, ix) = hprime_zz(iz, ix);
+            });
+
+        Kokkos::parallel_for(
+            quadrature_points.template TeamThreadRange<specfem::enums::axes::z,
+                                                       specfem::enums::axes::x>(
+                team_member),
+            [=](const int xz) {
+              int iz, ix;
+              sub2ind(xz, ngllx, iz, ix);
+              int iglob = ibool(ispec, iz, ix);
+              type_real fieldx = this->field(iglob, 0);
+              type_real fieldz = this->field(iglob, 1);
+              s_fieldx(iz, ix) = this->field(iglob, 0);
+              s_fieldx_dot(iz, ix) = this->field_dot(iglob, 0);
+              s_fieldx_dot_dot(iz, ix) = this->field_dot_dot(iglob, 0);
+              s_fieldz(iz, ix) = this->field(iglob, 1);
+              s_fieldz_dot(iz, ix) = this->field_dot(iglob, 1);
+              s_fieldz_dot_dot(iz, ix) = this->field_dot_dot(iglob, 1);
+            });
 
         // Get seismogram field
         // ----------------------------------------------------------------
@@ -732,8 +834,9 @@ void specfem::domain::domain<specfem::enums::element::medium::elastic,
                                                        specfem::enums::axes::x>(
                 team_member),
             [=](const int xz) {
-              receiver.get_field(xz, isig_step, this->field, this->field_dot,
-                                 this->field_dot_dot);
+              receiver.get_field(xz, isig_step, s_fieldx, s_fieldz,
+                                 s_fieldx_dot, s_fieldz_dot, s_fieldx_dot_dot,
+                                 s_fieldz_dot_dot, s_hprime_xx, s_hprime_zz);
             });
 
         // compute seismograms components

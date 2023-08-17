@@ -47,21 +47,30 @@ public:
   using medium = specfem::enums::element::medium::elastic;
   using quadrature_points =
       specfem::enums::element::quadrature::static_quadrature_points<NGLL>;
+
+  template <typename T>
+  using ScratchViewType =
+      typename quadrature_points::template ScratchViewType<T>;
+
   KOKKOS_FUNCTION receiver() = default;
+
   KOKKOS_FUNCTION
-  receiver(const type_real sin_rec, const type_real cos_rec,
+  receiver(const int ispec, const type_real sin_rec, const type_real cos_rec,
            const specfem::enums::seismogram::type seismogram,
            const sv_receiver_array_type receiver_array,
            const sv_receiver_seismogram_type receiver_seismogram,
-           const specfem::kokkos::DeviceView2d<int> ibool,
            const sv_receiver_field_type receiver_field);
-  KOKKOS_INLINE_FUNCTION void get_field(
-      const int xz, const int isig_step,
-      const specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field,
-      const specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
-          field_dot,
-      const specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
-          field_dot_dot) const override;
+
+  KOKKOS_INLINE_FUNCTION void
+  get_field(const int xz, const int isig_step,
+            const ScratchViewType<type_real> fieldx,
+            const ScratchViewType<type_real> fieldz,
+            const ScratchViewType<type_real> fieldx_dot,
+            const ScratchViewType<type_real> fieldz_dot,
+            const ScratchViewType<type_real> fieldx_dot_dot,
+            const ScratchViewType<type_real> fieldz_dot_dot,
+            const ScratchViewType<type_real> s_hprime_xx,
+            const ScratchViewType<type_real> s_hprime_zz) const override;
 
   KOKKOS_INLINE_FUNCTION void compute_seismogram_components(
       const int xz, const int isig_step,
@@ -75,14 +84,17 @@ public:
     return this->seismogram;
   }
 
+  KOKKOS_INLINE_FUNCTION
+  int get_ispec() const { return this->ispec; }
+
 private:
+  int ispec;
   specfem::enums::seismogram::type seismogram;
-  type_real sin_rec = 0.0;
-  type_real cos_rec = 0.0;
+  type_real sin_rec;
+  type_real cos_rec;
   sv_receiver_field_type receiver_field;
   sv_receiver_array_type receiver_array;
   sv_receiver_seismogram_type receiver_seismogram;
-  specfem::kokkos::DeviceView2d<int> ibool;
 };
 
 } // namespace receivers

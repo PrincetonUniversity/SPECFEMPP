@@ -36,15 +36,14 @@ KOKKOS_FUNCTION specfem::domain::impl::receivers::receiver<
     specfem::enums::element::medium::elastic,
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic>::
-    receiver(const type_real sin_rec, const type_real cos_rec,
+    receiver(const int ispec, const type_real sin_rec, const type_real cos_rec,
              const specfem::enums::seismogram::type seismogram,
              const sv_receiver_array_type receiver_array,
              const sv_receiver_seismogram_type receiver_seismogram,
-             const specfem::kokkos::DeviceView2d<int> ibool,
              const sv_receiver_field_type receiver_field)
-    : sin_rec(sin_rec), cos_rec(cos_rec), seismogram(seismogram),
+    : ispec(ispec), sin_rec(sin_rec), cos_rec(cos_rec), seismogram(seismogram),
       receiver_seismogram(receiver_seismogram), receiver_array(receiver_array),
-      ibool(ibool), receiver_field(receiver_field) {}
+      receiver_field(receiver_field) {}
 
 template <int NGLL>
 KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
@@ -53,44 +52,61 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic>::
     get_field(const int xz, const int isig_step,
-              const specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
-                  field,
-              const specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
-                  field_dot,
-              const specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
-                  field_dot_dot) const {
+              const ScratchViewType<type_real> fieldx,
+              const ScratchViewType<type_real> fieldz,
+              const ScratchViewType<type_real> fieldx_dot,
+              const ScratchViewType<type_real> fieldz_dot,
+              const ScratchViewType<type_real> fieldx_dot_dot,
+              const ScratchViewType<type_real> fieldz_dot_dot,
+              const ScratchViewType<type_real> s_hprime_xx,
+              const ScratchViewType<type_real> s_hprime_zz) const {
 
-  assert(field.extent(1) == medium::components);
-  assert(field_dot.extent(1) == medium::components);
-  assert(field_dot_dot.extent(1) == medium::components);
+#ifndef NDEBUG
+  // check that the dimensions of the fields are correct
+  assert(fieldx.extent(0) == NGLL);
+  assert(fieldx.extent(1) == NGLL);
+  assert(fieldz.extent(0) == NGLL);
+  assert(fieldz.extent(1) == NGLL);
+  assert(fieldx_dot.extent(0) == NGLL);
+  assert(fieldx_dot.extent(1) == NGLL);
+  assert(fieldz_dot.extent(0) == NGLL);
+  assert(fieldz_dot.extent(1) == NGLL);
+  assert(fieldx_dot_dot.extent(0) == NGLL);
+  assert(fieldx_dot_dot.extent(1) == NGLL);
+  assert(fieldz_dot_dot.extent(0) == NGLL);
+  assert(fieldz_dot_dot.extent(1) == NGLL);
+  assert(s_hprime_xx.extent(0) == NGLL);
+  assert(s_hprime_xx.extent(1) == NGLL);
+  assert(s_hprime_zz.extent(0) == NGLL);
+  assert(s_hprime_zz.extent(1) == NGLL);
+#endif /* NDEBUG */
 
   int ix, iz;
   sub2ind(xz, NGLL, iz, ix);
-  const int iglob = ibool(iz, ix);
 
   switch (this->seismogram) {
   case specfem::enums::seismogram::type::displacement:
     if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
-      this->receiver_field(isig_step, 0, iz, ix) = field(iglob, 0);
-      this->receiver_field(isig_step, 1, iz, ix) = field(iglob, 1);
+      this->receiver_field(isig_step, 0, iz, ix) = fieldx(iz, ix);
+      this->receiver_field(isig_step, 1, iz, ix) = fieldz(iz, ix);
     } else if (specfem::globals::simulation_wave == specfem::wave::sh) {
-      this->receiver_field(isig_step, 0, iz, ix) = field(iglob, 0);
+      this->receiver_field(isig_step, 0, iz, ix) = fieldx(iz, ix);
     }
     break;
   case specfem::enums::seismogram::type::velocity:
     if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
-      this->receiver_field(isig_step, 0, iz, ix) = field_dot(iglob, 0);
-      this->receiver_field(isig_step, 1, iz, ix) = field_dot(iglob, 1);
+      this->receiver_field(isig_step, 0, iz, ix) = fieldx_dot(iz, ix);
+      this->receiver_field(isig_step, 1, iz, ix) = fieldz_dot(iz, ix);
     } else if (specfem::globals::simulation_wave == specfem::wave::sh) {
-      this->receiver_field(isig_step, 0, iz, ix) = field_dot(iglob, 0);
+      this->receiver_field(isig_step, 0, iz, ix) = fieldx_dot(iz, ix);
     }
     break;
   case specfem::enums::seismogram::type::acceleration:
     if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
-      this->receiver_field(isig_step, 0, iz, ix) = field_dot_dot(iglob, 0);
-      this->receiver_field(isig_step, 1, iz, ix) = field_dot_dot(iglob, 1);
+      this->receiver_field(isig_step, 0, iz, ix) = fieldx_dot_dot(iz, ix);
+      this->receiver_field(isig_step, 1, iz, ix) = fieldz_dot_dot(iz, ix);
     } else if (specfem::globals::simulation_wave == specfem::wave::sh) {
-      this->receiver_field(isig_step, 0, iz, ix) = field_dot_dot(iglob, 0);
+      this->receiver_field(isig_step, 0, iz, ix) = fieldx_dot_dot(iz, ix);
     }
     break;
   default:
@@ -119,13 +135,13 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
   case specfem::enums::seismogram::type::velocity:
   case specfem::enums::seismogram::type::acceleration:
     if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
-      l_seismogram_components[0] +=
-          this->receiver_array(iz, ix, 0) * this->receiver_field(isig_step, 0, iz, ix);
-      l_seismogram_components[1] +=
-          this->receiver_array(iz, ix, 1) * this->receiver_field(isig_step, 1, iz, ix);
+      l_seismogram_components[0] += this->receiver_array(iz, ix, 0) *
+                                    this->receiver_field(isig_step, 0, iz, ix);
+      l_seismogram_components[1] += this->receiver_array(iz, ix, 1) *
+                                    this->receiver_field(isig_step, 1, iz, ix);
     } else if (specfem::globals::simulation_wave == specfem::wave::sh) {
-      l_seismogram_components[0] +=
-          this->receiver_array(iz, ix, 0) * this->receiver_field(isig_step, 0, iz, ix);
+      l_seismogram_components[0] += this->receiver_array(iz, ix, 0) *
+                                    this->receiver_field(isig_step, 0, iz, ix);
       l_seismogram_components[1] += 0;
     }
     break;
