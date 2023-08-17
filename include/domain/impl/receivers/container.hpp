@@ -47,6 +47,10 @@ public:
     return;
   }
 
+  KOKKOS_INLINE_FUNCTION int get_ispec() const {
+    return this->receiver->get_ispec();
+  }
+
   KOKKOS_FUNCTION
   ~container() = default;
 };
