@@ -34,7 +34,8 @@ template <int NGLL>
 class receiver<
     specfem::enums::element::dimension::dim2,
     specfem::enums::element::medium::acoustic,
-    specfem::enums::element::quadrature::static_quadrature_points<NGLL> >
+    specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
+    specfem::enums::element::property::isotropic>
     : public receiver<specfem::enums::element::dimension::dim2,
                       specfem::enums::element::medium::acoustic,
                       specfem::enums::element::quadrature::
@@ -58,7 +59,6 @@ public:
            const specfem::enums::seismogram::type seismogram,
            const sv_receiver_array_type receiver_array,
            const sv_receiver_seismogram_type receiver_seismogram,
-           const specfem::kokkos::DeviceView2d<int> ibool,
            const specfem::compute::partial_derivatives &partial_derivatives,
            const specfem::compute::properties &properties,
            sv_receiver_field_type receiver_field);
@@ -96,7 +96,6 @@ private:
   const specfem::enums::seismogram::type seismogram;
   const sv_receiver_array_type receiver_array;
   const sv_receiver_seismogram_type receiver_seismogram;
-  const specfem::kokkos::DeviceView2d<int> ibool;
   specfem::kokkos::DeviceView2d<type_real> xix;
   specfem::kokkos::DeviceView2d<type_real> gammax;
   specfem::kokkos::DeviceView2d<type_real> xiz;

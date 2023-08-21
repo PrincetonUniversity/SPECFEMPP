@@ -1,5 +1,5 @@
-#ifndef DOMAIN_IMPL_RECEIVERS_ACOUSTIC2D_ISOTRPOIC_TPP_
-#define DOMAIN_IMPL_RECEIVERS_ACOUSTIC2D_ISOTRPOIC_TPP_
+#ifndef DOMAIN_IMPL_RECEIVERS_ACOUSTIC2D_ISOTROPIC_TPP_
+#define DOMAIN_IMPL_RECEIVERS_ACOUSTIC2D_ISOTROPIC_TPP_
 
 #include "constants.hpp"
 #include "domain/impl/receivers/acoustic/acoustic2d.hpp"
@@ -31,7 +31,8 @@ template <int NGLL>
 KOKKOS_FUNCTION specfem::domain::impl::receivers::receiver<
     specfem::enums::element::dimension::dim2,
     specfem::enums::element::medium::acoustic,
-    specfem::enums::element::quadrature::static_quadrature_points<NGLL> >::
+    specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
+    specfem::enums::element::property::isotropic >::
     receiver(const int ispec, const type_real sin_rec, const type_real cos_rec,
              const specfem::enums::seismogram::type seismogram,
              const sv_receiver_array_type receiver_array,
@@ -66,8 +67,6 @@ KOKKOS_FUNCTION specfem::domain::impl::receivers::receiver<
                               Kokkos::ALL());
   this->gammaz = Kokkos::subview(partial_derivatives.gammaz, ispec,
                                  Kokkos::ALL(), Kokkos::ALL());
-  this->jacobian = Kokkos::subview(partial_derivatives.jacobian, ispec,
-                                   Kokkos::ALL(), Kokkos::ALL());
   this->rho_inverse = Kokkos::subview(properties.rho_inverse, ispec,
                                       Kokkos::ALL(), Kokkos::ALL());
   return;
@@ -108,7 +107,7 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
   const type_real gammazl = this->gammaz(iz, ix);
   const type_real rho_inversel = this->rho_inverse(iz, ix);
 
-  const ScratchViewType<type_real> &active_field;
+  ScratchViewType<type_real> active_field;
 
   switch (this->seismogram) {
   case specfem::enums::seismogram::type::displacement:
@@ -123,15 +122,15 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
   type_real dchi_dgamma = 0.0;
 
   for (int l = 0; l < NGLL; l++) {
-    dchi_dxi += s_hprime_xx(ix, l) * active_field(iz, l);
-    dchi_dgamma += s_hprime_zz(iz, l) * active_field(l, ix);
+    dchi_dxi += hprime_xx(ix, l) * active_field(iz, l);
+    dchi_dgamma += hprime_zz(iz, l) * active_field(l, ix);
   }
 
   // dchidx
   type_real fieldx = (dchi_dxi * xixl + dchi_dgamma * gammaxl) * rho_inversel;
 
   // dchidz
-  type_real fieldx = (dchi_dxi * xizl + dchi_dgamma * gammazl) * rho_inversel;
+  type_real fieldz = (dchi_dxi * xizl + dchi_dgamma * gammazl) * rho_inversel;
 
   this->receiver_field(isig_step, 0, iz, ix) = fieldx;
   this->receiver_field(isig_step, 1, iz, ix) = fieldz;
@@ -200,3 +199,5 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
 
   return;
 }
+
+#endif /* DOMAIN_IMPL_RECEIVERS_ACOUSTIC2D_ISOTROPIC_TPP_ */

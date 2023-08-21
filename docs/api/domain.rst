@@ -23,6 +23,12 @@ Elements
 .. doxygenfile:: include/domain/impl/elements/elastic/elastic2d_isotropic.hpp
     :project: SPECFEM KOKKOS IMPLEMENTATION
 
+.. doxygenfile:: include/domain/impl/elements/acoustic/acoustic2d.hpp
+    :project: SPECFEM KOKKOS IMPLEMENTATION
+
+.. doxygenfile:: include/domain/impl/elements/acoustic/acoustic2d_isotropic.hpp
+    :project: SPECFEM KOKKOS IMPLEMENTATION
+
 .. doxygenfile:: include/domain/impl/elements/container.hpp
     :project: SPECFEM KOKKOS IMPLEMENTATION
 

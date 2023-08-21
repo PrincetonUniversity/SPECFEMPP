@@ -4,6 +4,7 @@ project(specfem2d_kokkos VERSION 0.1.0)
 
 set(CMAKE_CXX_STANDARD 17)
 option(MPI_PARALLEL "MPI enabled" OFF)
+option(BUILD_TESTS "Tests included" OFF)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
         set(CMAKE_CXX_FLAGS "-fp-model=precise")
@@ -25,19 +26,20 @@ endif()
 ## TODO: Add options for on utilizing in house builds
 include(FetchContent)
 FetchContent_Declare(
-  kokkos
-  URL https://github.com/kokkos/kokkos/archive/refs/tags/4.0.00.zip
+kokkos
+URL https://github.com/kokkos/kokkos/archive/refs/tags/4.0.00.zip
 )
 FetchContent_MakeAvailable(kokkos)
 
 FetchContent_Declare(
         yaml
-	URL https://github.com/jbeder/yaml-cpp/archive/refs/tags/yaml-cpp-0.7.0.zip
+        URL https://github.com/jbeder/yaml-cpp/archive/refs/tags/yaml-cpp-0.7.0.zip
 )
 FetchContent_MakeAvailable(yaml)
 include_directories(BEFORE SYSTEM ${yaml_SOURCE_DIR} ${yaml_BINARY_DIR}/include)
 
-find_package(Boost 1.66.0 COMPONENTS program_options filesystem system)
+# Try finding boost and if not found install.
+find_package(Boost 1.73.0 COMPONENTS program_options filesystem system)
 
 if (NOT ${Boost_FOUND})
         add_subdirectory(boost-cmake)
@@ -46,6 +48,7 @@ else ()
         message(STATUS "    INC:   ${Boost_INCLUDE_DIRS}")
         message(STATUS "    LIBSO: ${Boost_LIBRARIES}")
 endif()
+
 configure_file(constants.hpp.in constants.hpp)
 
 include_directories(include)
@@ -283,9 +286,12 @@ target_link_libraries(
 )
 
 # Include tests
-add_subdirectory(tests/unit-tests)
-add_subdirectory(tests/regression-tests)
-add_subdirectory(examples)
+if (BUILD_TESTS)
+        message("-- Including tests.")
+        add_subdirectory(tests/unit-tests)
+        add_subdirectory(tests/regression-tests)
+        add_subdirectory(examples)
+endif()
 
 # Doxygen
 

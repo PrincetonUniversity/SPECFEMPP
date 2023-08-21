@@ -2,6 +2,7 @@
 #define _ELASTIC_DOMAIN_HPP
 
 #include "compute/interface.hpp"
+#include "domain/domain.hpp"
 #include "domain/impl/elements/interface.hpp"
 #include "domain/impl/receivers/interface.hpp"
 #include "domain/impl/sources/interface.hpp"

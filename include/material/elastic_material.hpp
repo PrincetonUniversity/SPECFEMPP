@@ -28,8 +28,8 @@ public:
    * @brief Construct a new elastic material object
    *
    * @param density Density of the material
-   * @param cs Compression wave speed
-   * @param cp Transverse wave speed
+   * @param cs Transverse wave speed
+   * @param cp Compressional wave speed
    * @param Qkappa Kappa attenuation factor
    * @param Qmu Mu attenuation factor
    * @param compaction_grad compaction gradient
