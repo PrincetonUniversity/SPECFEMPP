@@ -300,7 +300,7 @@ void initialize_receivers(
   }
 
 #ifndef NDEBUG
-  assert(index == nreceivers_domain / seis_types.extent(0));
+  assert(index * seis_types.extent(0) == nreceivers_domain);
 #endif
 
   Kokkos::deep_copy(my_receivers, h_my_receivers);

@@ -26,7 +26,7 @@ parameters:
           nstep: 100
 
   receivers:
-    stations-file: "../../../tests/unit-tests/seismogram/serial/STATIONS"
+    stations-file: "../../../tests/unit-tests/seismogram/acoustic/serial/STATIONS"
     angle: 0.0
     seismogram-type:
       - displacement
@@ -41,7 +41,7 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "../../../tests/unit-tests/seismogram/serial/database.bin"
+    mesh-database: "../../../tests/unit-tests/seismogram/acoustic/serial/database.bin"
     source-file: "dummy-source.yaml"
 
   seismogram:
