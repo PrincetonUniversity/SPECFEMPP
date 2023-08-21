@@ -1,6 +1,6 @@
-#include "../../../Kokkos_Environment.hpp"
-#include "../../../MPI_environment.hpp"
-#include "../../../utilities/include/compare_array.h"
+#include "../../Kokkos_Environment.hpp"
+#include "../../MPI_environment.hpp"
+#include "../../utilities/include/compare_array.h"
 #include "compute/interface.hpp"
 #include "constants.hpp"
 #include "domain/interface.hpp"
@@ -8,8 +8,6 @@
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"
 #include "quadrature/interface.hpp"
-#include "solver/interface.hpp"
-#include "timescheme/interface.hpp"
 #include "yaml-cpp/yaml.h"
 
 // ----- Parse test config ------------- //
@@ -42,9 +40,9 @@ test_config parse_test_config(std::string test_configuration_file,
 
 // ------------------------------------- //
 
-TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
-  std::string config_filename = "../../../tests/unit-tests/displacement_tests/"
-                                "Newmark/elastic/test_config.yaml";
+TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
+  std::string config_filename =
+      "../../../tests/unit-tests/domain/acoustic/test_config.yaml";
 
   specfem::MPI::MPI *mpi = MPIEnvironment::mpi_;
 
@@ -55,7 +53,6 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
   specfem::runtime_configuration::setup setup(parameter_file, __default_file__);
 
   const auto [database_file, sources_file] = setup.get_databases();
-  // mpi->cout(setup.print_header());
 
   // Set up GLL quadrature points
   auto [gllx, gllz] = setup.instantiate_quadrature();
@@ -67,8 +64,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
   // Read sources
   //    if start time is not explicitly specified then t0 is determined using
   //    source frequencies and time shift
-  auto [sources, t0] =
-      specfem::sources::read_sources(sources_file, setup.get_dt(), mpi);
+  auto [sources, t0] = specfem::sources::read_sources(sources_file, 1e-5, mpi);
 
   // Generate compute structs to be used by the solver
   specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
@@ -93,7 +89,10 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
   }
 
   // Update solver intialization time
-  setup.update_t0(-1.0 * t0);
+  setup.update_t0(t0);
+
+  // Update solver intialization time
+  setup.update_t0(t0);
 
   // Instantiate the solver and timescheme
   auto it = setup.instantiate_solver();
@@ -114,6 +113,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
 
   // Instantiate domain classes
   const int nglob = specfem::utilities::compute_nglob(compute.h_ibool);
+
   specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
   specfem::domain::domain<
       specfem::enums::element::medium::acoustic,
@@ -121,28 +121,36 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
       acoustic_domain_static(ndim, nglob, qp5, &compute, material_properties,
                              partial_derivatives, compute_sources,
                              compute_receivers, gllx, gllz);
-  specfem::domain::domain<
-      specfem::enums::element::medium::elastic,
-      specfem::enums::element::quadrature::static_quadrature_points<5> >
-      elastic_domain_static(ndim, nglob, qp5, &compute, material_properties,
-                            partial_derivatives, compute_sources,
-                            compute_receivers, gllx, gllz);
 
-  specfem::solver::solver *solver = new specfem::solver::time_marching<
-      specfem::enums::element::quadrature::static_quadrature_points<5> >(
-      acoustic_domain_static, elastic_domain_static, it);
+  acoustic_domain_static.sync_rmass_inverse(specfem::sync::DeviceToHost);
 
-  solver->run();
+  specfem::kokkos::HostView2d<type_real, Kokkos::LayoutLeft>
+      h_rmass_inverse_static = acoustic_domain_static.get_host_rmass_inverse();
 
-  elastic_domain_static.sync_field(specfem::sync::DeviceToHost);
+  EXPECT_NO_THROW(specfem::testing::test_array(
+      h_rmass_inverse_static, test_config.solutions_file, nglob, 1));
 
-  specfem::kokkos::HostView2d<type_real, Kokkos::LayoutLeft> field =
-      elastic_domain_static.get_host_field();
+  // const int ngllx = gllx->get_N();
+  // const int ngllz = gllz->get_N();
 
-  type_real tolerance = 0.01;
+  // specfem::enums::element::quadrature::dynamic_quadrature_points qp(ngllz,
+  // ngllx);
 
-  EXPECT_NO_THROW(specfem::testing::compare_norm(
-      field, test_config.solutions_file, nglob, ndim, tolerance));
+  // specfem::domain::domain<
+  //     specfem::enums::element::medium::elastic,
+  //     specfem::enums::element::quadrature::dynamic_quadrature_points>
+  //     elastic_domain_dynamic(ndim, nglob, qp, &compute, material_properties,
+  //                            partial_derivatives, &compute_sources,
+  //                            &compute_receivers, gllx, gllz);
+
+  // elastic_domain_dynamic.sync_rmass_inverse(specfem::sync::DeviceToHost);
+
+  // specfem::kokkos::HostView2d<type_real, Kokkos::LayoutLeft>
+  //     h_rmass_inverse_dynamic =
+  //     elastic_domain_dynamic.get_host_rmass_inverse();
+
+  // EXPECT_NO_THROW(specfem::testing::test_array(
+  //     h_rmass_inverse_dynamic, test_config.solutions_file, nglob, ndim));
 }
 
 int main(int argc, char *argv[]) {

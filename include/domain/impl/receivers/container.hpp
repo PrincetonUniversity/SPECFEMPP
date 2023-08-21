@@ -18,7 +18,6 @@ public:
   KOKKOS_FUNCTION
   container(base_elemental_receiver *receiver) {
     this->receiver = receiver;
-    printf("Receiver memory address: %p\n", receiver);
     return;
   }
 

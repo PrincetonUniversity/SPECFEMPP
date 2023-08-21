@@ -168,24 +168,58 @@ void instantialize_element(
 
 template <class qp_type>
 void initialize_sources(
-    const specfem::kokkos::DeviceView1d<specfem::enums::element::type>
-        ispec_type,
-    const specfem::compute::sources compute_sources,
+    const specfem::compute::properties &properties,
+    const specfem::compute::sources &compute_sources,
     specfem::kokkos::DeviceView1d<source_container<source_type<qp_type> > >
         &sources) {
 
+  const auto h_ispec_type = properties.h_ispec_type;
+  const auto ispec_type = properties.ispec_type;
+  const auto h_ispec_array = compute_sources.h_ispec_array;
   const auto ispec_array = compute_sources.ispec_array;
-  const int nsources = ispec_array.extent(0);
+  int nsources_domain = 0;
+
+  specfem::kokkos::DeviceView1d<int> my_recs;
+
+  // Check how many sources belong to this domain
+  for (int ispec = 0; ispec < h_ispec_array.extent(0); ispec++) {
+    if (h_ispec_type(h_ispec_array(ispec)) ==
+        specfem::enums::element::elastic) {
+      nsources_domain++;
+    }
+  }
 
   sources =
       specfem::kokkos::DeviceView1d<source_container<source_type<qp_type> > >(
-          "specfem::domain::elastic_isotropic::sources", nsources);
+          "specfem::domain::elastic_isotropic::sources", nsources_domain);
+
+  specfem::kokkos::DeviceView1d<int> my_sources(
+      "specfem::domain::elastic_isotropic::my_sources", nsources_domain);
 
   auto h_sources = Kokkos::create_mirror_view(sources);
+  auto h_my_sources = Kokkos::create_mirror_view(my_sources);
 
+  // Store which sources belong to this domain
+  int index = 0;
+  for (int isource = 0; isource < h_ispec_array.extent(0); isource++) {
+    if (h_ispec_type(h_ispec_array(isource)) ==
+        specfem::enums::element::elastic) {
+      h_my_sources(index) = isource;
+      index++;
+    }
+  }
+
+#ifndef NDEBUG
+  assert(index == nsources_domain);
+#endif
+
+  Kokkos::deep_copy(my_sources, h_my_sources);
+
+  // Allocate memory for the sources on the device
   Kokkos::parallel_for(
       "specfem::domain::elastic_isotropic::allocate_memory",
-      specfem::kokkos::HostRange(0, nsources), KOKKOS_LAMBDA(const int i) {
+      specfem::kokkos::HostRange(0, nsources_domain),
+      KOKKOS_LAMBDA(const int i) {
         h_sources(i).source = (source_type<qp_type> *)
             Kokkos::kokkos_malloc<specfem::kokkos::DevMemSpace>(sizeof(
                 source_type<qp_type,
@@ -196,21 +230,18 @@ void initialize_sources(
 
   Kokkos::parallel_for(
       "specfem::domain::elastic_isotropic::initialize_source",
-      specfem::kokkos::DeviceRange(0, nsources),
+      specfem::kokkos::DeviceRange(0, nsources_domain),
       KOKKOS_LAMBDA(const int isource) {
-        if (ispec_type(ispec_array(isource)) ==
-            specfem::enums::element::elastic) {
-          auto &source = sources(isource).source;
-          const int ispec = ispec_array(isource);
-          auto source_time_function = compute_sources.stf_array(isource).T;
-          const auto sv_source_array =
-              Kokkos::subview(compute_sources.source_array, isource,
-                              Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL());
-          new (source)
-              source_type<qp_type,
-                          specfem::enums::element::property::isotropic>(
-                  ispec, sv_source_array, source_time_function);
-        }
+        auto &source = sources(isource).source;
+        const int ispec = ispec_array(my_sources(isource));
+        auto source_time_function =
+            compute_sources.stf_array(my_sources(isource)).T;
+        const auto sv_source_array =
+            Kokkos::subview(compute_sources.source_array, my_sources(isource),
+                            Kokkos::ALL(), Kokkos::ALL(), Kokkos::ALL());
+        new (source)
+            source_type<qp_type, specfem::enums::element::property::isotropic>(
+                ispec, sv_source_array, source_time_function);
       });
 
   return;
@@ -218,28 +249,55 @@ void initialize_sources(
 
 template <class qp_type>
 void initialize_receivers(
-    const specfem::kokkos::DeviceView1d<specfem::enums::element::type>
-        ispec_type,
     const specfem::compute::receivers compute_receivers,
     const specfem::compute::partial_derivatives &partial_derivatives,
     const specfem::compute::properties &properties,
     specfem::kokkos::DeviceView1d<receiver_container<receiver_type<qp_type> > >
         &receivers) {
 
+  const auto h_ispec_type = properties.h_ispec_type;
+  const auto h_ispec_array = compute_receivers.h_ispec_array;
   const auto ispec_array = compute_receivers.ispec_array;
   const auto seis_types = compute_receivers.seismogram_types;
 
-  const int nreceivers = ispec_array.extent(0) * seis_types.extent(0);
+  int nreceivers_domain = 0;
+
+  // Check how many receivers belong to this domain
+  for (int irec = 0; irec < ispec_array.extent(0); irec++) {
+    if (h_ispec_type(h_ispec_array(irec)) == specfem::enums::element::elastic) {
+      nreceivers_domain++;
+    }
+  }
+
+  nreceivers_domain = nreceivers_domain * seis_types.extent(0);
 
   receivers = specfem::kokkos::DeviceView1d<
       receiver_container<receiver_type<qp_type> > >(
-      "specfem::domain::elastic_isotropic::receivers", nreceivers);
+      "specfem::domain::elastic_isotropic::receivers", nreceivers_domain);
 
+  specfem::kokkos::DeviceView1d<int> my_receivers(
+      "specfem::domain::elastic_isotropic::my_recs", nreceivers_domain);
+
+  auto h_my_receivers = Kokkos::create_mirror_view(my_receivers);
   auto h_receivers = Kokkos::create_mirror_view(receivers);
+
+  // Store which receivers belong to this domain
+  int index = 0;
+  for (int irec = 0; irec < ispec_array.extent(0); irec++) {
+    if (h_ispec_type(h_ispec_array(irec)) == specfem::enums::element::elastic) {
+      h_my_receivers(index) = irec;
+      index++;
+    }
+  }
+
+#ifndef NDEBUG
+  assert(index == nreceivers_domain/ seis_types.extent(0));
+#endif
 
   Kokkos::parallel_for(
       "specfem::domain::elastic_isotropic::allocate_memory",
-      specfem::kokkos::HostRange(0, nreceivers), KOKKOS_LAMBDA(const int i) {
+      specfem::kokkos::HostRange(0, nreceivers_domain),
+      KOKKOS_LAMBDA(const int i) {
         h_receivers(i).receiver = (receiver_type<qp_type> *)
             Kokkos::kokkos_malloc<specfem::kokkos::DevMemSpace>(sizeof(
                 receiver_type<qp_type,
@@ -247,16 +305,15 @@ void initialize_receivers(
       });
 
   Kokkos::deep_copy(receivers, h_receivers);
+  Kokkos::deep_copy(my_receivers, h_my_receivers);
 
   Kokkos::parallel_for(
       "specfem::domain::elastic_isotropic::initialize_receiver",
-      specfem::kokkos::DeviceRange(0, nreceivers),
+      specfem::kokkos::DeviceRange(0, nreceivers_domain),
       KOKKOS_LAMBDA(const int inum) {
-        const int irec = inum / seis_types.extent(0);
+        const int irec = my_receivers(inum / seis_types.extent(0));
         const int iseis = inum % seis_types.extent(0);
-        if (ispec_type(ispec_array(irec)) != specfem::enums::element::elastic) {
-          return;
-        }
+
         const int ispec = ispec_array(irec);
         const auto seis_type = seis_types(iseis);
 
@@ -392,14 +449,13 @@ specfem::domain::domain<specfem::enums::element::medium::elastic, qp_type>::
   // ----------------------------------------------------------------------------
   // Initialize the sources
 
-  initialize_sources(material_properties.ispec_type, compute_sources,
-                     this->sources);
+  initialize_sources(material_properties, compute_sources, this->sources);
 
   // ----------------------------------------------------------------------------
   // Initialize the receivers
 
-  initialize_receivers(material_properties.ispec_type, compute_receivers, partial_derivatives, material_properties,
-                       this->receivers);
+  initialize_receivers(compute_receivers, partial_derivatives,
+                       material_properties, this->receivers);
 
   return;
 };
@@ -497,7 +553,6 @@ void specfem::domain::domain<specfem::enums::element::medium::elastic,
   const auto hprime_zz = this->quadz->get_hprime();
   const auto wxgll = this->quadx->get_w();
   const auto wzgll = this->quadz->get_w();
-  const auto field = this->field;
   const auto ibool = this->compute->ibool;
 
   int scratch_size =

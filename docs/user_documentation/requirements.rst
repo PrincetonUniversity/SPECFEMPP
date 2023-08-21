@@ -44,8 +44,35 @@ Compiler Versions
       * 20.1
       * 20.1
 
+.. warning::
+
+    There seem to be issues with ``cudatoolkit/11.1``. We have successfully
+    compiled the package with versions ``>=11.7``. For a list of tested
+    compilers and platforms, see :ref:`tests` section.
+
 Build system
 ------------
 
 * CMake >= 3.16: required
 * CMake >= 3.21.1 for NVC++
+
+
+Dependencies
+------------
+
+None of the dependencies need to be installed prior to the installation of
+the package. Having installed some packages does however reduce build time
+because the dependencies do not have to be fetched.
+
+Boost
++++++
+
+Current requirements of the ``Boost`` library are a version that is ``>=1.66.0``.
+If you have ``Boost`` installed on your system, set the environment variable
+``BOOST_ROOT`` containing the absolute path to your ``Boost`` installation.
+For example, on machines (clusters) with ``lmod`` package manager this can be
+done by loading the boost module
+
+.. code:: bash
+
+    module load boost/?.??.? # Eg. boost/1.73.0

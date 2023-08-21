@@ -100,8 +100,8 @@ specfem::compute::partial_derivatives::partial_derivatives(
 
         Kokkos::parallel_for(
             Kokkos::TeamThreadRange(teamMember, ngllxz), [&](const int xz) {
-              const int ix = xz % ngllz;
-              const int iz = xz / ngllz;
+              int ix, iz;
+              sub2ind(xz, ngllx, iz, ix);
 
               // Get x and y coordinates for (ix, iz) point
               auto sv_shape2D = Kokkos::subview(shape2D, iz, ix, Kokkos::ALL);
