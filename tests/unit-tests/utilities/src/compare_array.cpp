@@ -557,10 +557,6 @@ void specfem::testing::compare_norm(
     computed_norm += std::sqrt((computed_array(i1) * computed_array(i1)));
   }
 
-  std::cout << error_norm << std::endl;
-
-  std::cout << computed_norm << std::endl;
-
   stream.close();
 
   equate_norm(error_norm, computed_norm, tolerance);
@@ -582,11 +578,11 @@ void specfem::testing::compare_norm(
   for (int i1 = 0; i1 < n1; i1++) {
     for (int i2 = 0; i2 < n2; i2++) {
       specfem::fortran_IO::fortran_read_line(stream, &ref_value);
+      type_real computed_value = computed_array(i1, i2);
 
-      error_norm += std::sqrt((computed_array(i1, i2) - ref_value) *
-                              (computed_array(i1, i2) - ref_value));
-      computed_norm +=
-          std::sqrt((computed_array(i1, i2) * computed_array(i1, i2)));
+      error_norm += std::sqrt((computed_value - ref_value) *
+                              (computed_value - ref_value));
+      computed_norm += std::sqrt((computed_value * computed_value));
     }
   }
 

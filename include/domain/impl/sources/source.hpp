@@ -11,7 +11,8 @@ namespace sources {
  * @brief Elemental source class
  *
  * Elemental source class contains methods used to compute the elemental source
- * contribution to the global force vector.
+ * contribution to the global force vector. The class computes how the source
+ * interacts with a particular type of element.
  *
  * Elemental sources are implementated as template specializations. Having
  * specialized elemental sources allows for a more flexible and efficient
