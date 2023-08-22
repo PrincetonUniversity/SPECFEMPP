@@ -112,10 +112,13 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
   switch (this->seismogram) {
   case specfem::enums::seismogram::type::displacement:
     active_field = field;
+    break;
   case specfem::enums::seismogram::type::velocity:
     active_field = field_dot;
+    break;
   case specfem::enums::seismogram::type::acceleration:
     active_field = field_dot_dot;
+    break;
   }
 
   type_real dchi_dxi = 0.0;

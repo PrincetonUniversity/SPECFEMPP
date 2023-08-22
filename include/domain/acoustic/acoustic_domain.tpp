@@ -169,20 +169,21 @@ void instantialize_element(
 
 template <class qp_type>
 void initialize_sources(
-    const specfem::kokkos::HostMirror1d<specfem::enums::element::type>
-        h_ispec_type,
-    const specfem::kokkos::DeviceView3d<type_real> kappa,
-    const specfem::compute::sources compute_sources,
+    const specfem::compute::properties &properties,
+    const specfem::compute::sources &compute_sources,
     specfem::kokkos::DeviceView1d<source_container<source_type<qp_type> > >
         &sources) {
 
-  const auto ispec_array = compute_sources.h_ispec_array;
+  const auto h_ispec_type = properties.h_ispec_type;
+  const auto ispec_array = compute_sources.ispec_array;
+  const auto h_ispec_array = compute_sources.h_ispec_array;
+  const auto kappa = properties.kappa;
 
   int nsources_domain = 0;
 
   // Count the number of sources in the domain
   for (int isource = 0; isource < ispec_array.extent(0); isource++) {
-    if (h_ispec_type(ispec_array(isource)) ==
+    if (h_ispec_type(h_ispec_array(isource)) ==
         specfem::enums::element::acoustic) {
       nsources_domain++;
     }
@@ -201,7 +202,7 @@ void initialize_sources(
   // Check if the source is in the domain
   int index = 0;
   for (int isource = 0; isource < ispec_array.extent(0); isource++) {
-    if (h_ispec_type(ispec_array(isource)) ==
+    if (h_ispec_type(h_ispec_array(isource)) ==
         specfem::enums::element::acoustic) {
       h_my_sources(index) = isource;
       index++;
@@ -235,7 +236,7 @@ void initialize_sources(
         const int ispec = ispec_array(my_sources(isource));
 
         specfem::forcing_function::stf *source_time_function =
-            compute_sources.h_stf_array(my_sources(isource)).T;
+            compute_sources.stf_array(my_sources(isource)).T;
 
         const auto sv_kappa =
             Kokkos::subview(kappa, ispec, Kokkos::ALL(), Kokkos::ALL());
@@ -461,9 +462,7 @@ specfem::domain::domain<specfem::enums::element::medium::acoustic, qp_type>::
   // ----------------------------------------------------------------------------
   // Initialize the sources
 
-  acoustic_tmp::initialize_sources(material_properties.h_ispec_type,
-                                   material_properties.kappa, compute_sources,
-                                   this->sources);
+  acoustic_tmp::initialize_sources(material_properties, compute_sources, this->sources);
 
   // ----------------------------------------------------------------------------
   // Initialize the receivers

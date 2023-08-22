@@ -2,6 +2,6 @@ Tests:
 
   serial:
     specfem_config: "../../../tests/unit-tests/seismogram/acoustic/serial/specfem_config.yaml"
-    displacement_field: "../../../tests/unit-tests/seismogram/acoustic/serial/displs_00000.bin"
-    velocity_field: "../../../tests/unit-tests/seismogram/acoustic/serial/veloc_00000.bin"
-    acceleration_field: "../../../tests/unit-tests/seismogram/acoustic/serial/accel_00000.bin"
+    displacement_field: "../../../tests/unit-tests/seismogram/acoustic/serial/potential_acoustic_00000.bin"
+    velocity_field: "../../../tests/unit-tests/seismogram/acoustic/serial/potential_acoustic_dot_00000.bin"
+    acceleration_field: "../../../tests/unit-tests/seismogram/acoustic/serial/potential_acoustic_dot_dot_00000.bin"

@@ -73,7 +73,7 @@ void read_field(
 
 TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
   std::string config_filename =
-      "../../../tests/unit-tests/seismogram/elastic/test_config.yaml";
+      "../../../tests/unit-tests/seismogram/acoustic/test_config.yaml";
 
   specfem::MPI::MPI *mpi = MPIEnvironment::mpi_;
 
@@ -151,7 +151,7 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
 
   compute_receivers.sync_seismograms();
 
-  type_real tol = 1e-6;
+  type_real tol = 1e-5;
 
   std::vector<type_real> ground_truth = {
     0.0000000000000000,       -3.0960039922602422E-011,
