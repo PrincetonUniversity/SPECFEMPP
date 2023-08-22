@@ -36,5 +36,9 @@ parameters:
     number-of-runs: 1
 
   databases:
-    mesh-database: "../../../tests/unit-tests/domain/serial/data/Database00000.bin"
-    source-file: "../../../tests/unit-tests/domain/serial/data/source.yaml"
+    mesh-database: "../../../tests/unit-tests/domain/acoustic/serial/Database00000.bin"
+    source-file: "../../../tests/unit-tests/domain/acoustic/serial/source.yaml"
+
+  seismogram:
+    seismogram-format: ascii
+    output-folder: "."

@@ -38,11 +38,20 @@ class element<specfem::enums::element::dimension::dim2,
           specfem::enums::element::quadrature::static_quadrature_points<N> > {
 public:
   /**
+   * @brief Dimension of the element
+   *
+   */
+  using dimension = specfem::enums::element::dimension::dim2;
+  /**
+   * @brief Medium of the element
+   *
+   */
+  using medium = specfem::enums::element::medium::elastic;
+  /**
    * @brief Number of Gauss-Lobatto-Legendre quadrature points
    */
   using quadrature_points =
       specfem::enums::element::quadrature::static_quadrature_points<N>;
-
   /**
    * @brief Use the scratch view type from the quadrature points
    *

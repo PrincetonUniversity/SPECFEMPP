@@ -6,6 +6,7 @@ namespace domain {
 namespace impl {
 namespace sources {
 template <typename base_elemental_source> struct container {
+public:
   base_elemental_source *source;
 
   KOKKOS_FUNCTION

@@ -10,7 +10,7 @@
 
 specfem::compute::receivers::receivers(
     const std::vector<specfem::receivers::receiver *> &receivers,
-    const std::vector<specfem::seismogram::type> &stypes,
+    const std::vector<specfem::enums::seismogram::type> &stypes,
     const specfem::quadrature::quadrature *quadx,
     const specfem::quadrature::quadrature *quadz, const type_real xmax,
     const type_real xmin, const type_real zmax, const type_real zmin,
@@ -71,7 +71,7 @@ specfem::compute::receivers::receivers(
   }
 
   this->seismogram_types =
-      specfem::kokkos::DeviceView1d<specfem::seismogram::type>(
+      specfem::kokkos::DeviceView1d<specfem::enums::seismogram::type>(
           "specfem::compute::receivers::seismogram_types", stypes.size());
 
   this->h_seismogram_types = Kokkos::create_mirror_view(this->seismogram_types);
@@ -79,6 +79,12 @@ specfem::compute::receivers::receivers(
   for (int i = 0; i < stypes.size(); i++) {
     this->h_seismogram_types(i) = stypes[i];
   }
+
+  this->receiver_field = specfem::kokkos::DeviceView6d<type_real>(
+      "specfem::compute::receivers::receiver_field", max_sig_step,
+      my_receivers.size(), stypes.size(), 2, quadz->get_N(), quadx->get_N());
+
+  this->h_receiver_field = Kokkos::create_mirror_view(this->receiver_field);
 
   this->sync_views();
 

@@ -1,6 +1,6 @@
-#include "../Kokkos_Environment.hpp"
-#include "../MPI_environment.hpp"
-#include "../utilities/include/compare_array.h"
+#include "../../Kokkos_Environment.hpp"
+#include "../../MPI_environment.hpp"
+#include "../../utilities/include/compare_array.h"
 #include "compute/interface.hpp"
 #include "constants.hpp"
 #include "domain/interface.hpp"
@@ -73,7 +73,7 @@ void read_field(
 
 TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
   std::string config_filename =
-      "../../../tests/unit-tests/seismogram/test_config.yaml";
+      "../../../tests/unit-tests/seismogram/acoustic/test_config.yaml";
 
   specfem::MPI::MPI *mpi = MPIEnvironment::mpi_;
 
@@ -128,44 +128,44 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
   const int nglob = specfem::utilities::compute_nglob(compute.h_ibool);
   specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
   specfem::domain::domain<
-      specfem::enums::element::medium::elastic,
+      specfem::enums::element::medium::acoustic,
       specfem::enums::element::quadrature::static_quadrature_points<5> >
-      elastic_domain_static(ndim, nglob, qp5, &compute, material_properties,
-                            partial_derivatives, specfem::compute::sources(),
-                            &compute_receivers, gllx, gllz);
+      acoustic_domain_static(ndim, nglob, qp5, &compute, material_properties,
+                             partial_derivatives, specfem::compute::sources(),
+                             compute_receivers, gllx, gllz);
 
-  const auto displacement_field = elastic_domain_static.get_host_field();
-  const auto velocity_field = elastic_domain_static.get_host_field_dot();
+  const auto displacement_field = acoustic_domain_static.get_host_field();
+  const auto velocity_field = acoustic_domain_static.get_host_field_dot();
   const auto acceleration_field =
-      elastic_domain_static.get_host_field_dot_dot();
+      acoustic_domain_static.get_host_field_dot_dot();
 
-  read_field(test_config.displacement_field, displacement_field, nglob, 2);
-  read_field(test_config.velocity_field, velocity_field, nglob, 2);
-  read_field(test_config.acceleration_field, acceleration_field, nglob, 2);
+  read_field(test_config.displacement_field, displacement_field, nglob, 1);
+  read_field(test_config.velocity_field, velocity_field, nglob, 1);
+  read_field(test_config.acceleration_field, acceleration_field, nglob, 1);
 
-  elastic_domain_static.sync_field(specfem::sync::HostToDevice);
-  elastic_domain_static.sync_field_dot(specfem::sync::HostToDevice);
-  elastic_domain_static.sync_field_dot_dot(specfem::sync::HostToDevice);
+  acoustic_domain_static.sync_field(specfem::sync::HostToDevice);
+  acoustic_domain_static.sync_field_dot(specfem::sync::HostToDevice);
+  acoustic_domain_static.sync_field_dot_dot(specfem::sync::HostToDevice);
 
-  elastic_domain_static.compute_seismogram(0);
+  acoustic_domain_static.compute_seismogram(0);
 
   compute_receivers.sync_seismograms();
 
-  type_real tol = 1e-6;
+  type_real tol = 1e-5;
 
   std::vector<type_real> ground_truth = {
-    2.0550622561421793e-032,  1.8686745381396431e-032,
-    1.3080300305168132e-030,  -2.1906492252753700e-032,
-    -9.0217861369207779e-027, -3.9905076983364219e-013,
-    -1.4026049322672686e-032, 1.6751417898470163e-019,
-    1.8389801799426992e-029,  1.4203556224296551e-029,
-    2.2285583550372299e-027,  -1.5172766331841327e-027,
-    -4.5863248350600626e-023, 3.2148834521809124e-009,
-    -3.4039863284108916e-029, -9.4081223795340489e-016,
-    -6.8297735413853655e-028, -5.6148816325380543e-027,
-    2.3802139708429514e-024,  -2.7232009472557120e-024,
-    4.8572257327350591e-021,  -6.7130089207176591e-007,
-    -2.3332620537792063e-026, -9.3957047271406868e-013
+    0.0000000000000000,       -3.0960039922602422E-011,
+    0.0000000000000000,       -8.3379189277645219E-011,
+    4.4439509143591454E-010,  1.8368718019109921E-010,
+    -3.8585618629325063E-010, 2.5444961269509465E-010,
+    0.0000000000000000,       7.1296417833791251E-008,
+    0.0000000000000000,       2.4165936811725470E-008,
+    5.6330467200175704E-007,  3.5364862913830020E-007,
+    -9.3482598617042963E-008, -3.6004231966844085E-007,
+    0.0000000000000000,       2.0541840830987639E-005,
+    0.0000000000000000,       9.0448554680095616E-006,
+    -3.3644759982233034E-004, -3.5943211587533610E-004,
+    3.1162494730438027E-004,  -2.9608074956535943E-004
   };
 
   int index = 0;

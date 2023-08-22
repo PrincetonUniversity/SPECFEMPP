@@ -64,7 +64,7 @@ test_config get_test_config(std::string config_filename,
  * This test should be run on single and multiple nodes
  *
  */
-TEST(COMPUTE_TESTS, compute_properties) {
+TEST(COMPUTE_TESTS, compute_elastic_properties) {
 
   std::string config_filename =
       "../../../tests/unit-tests/compute/elastic/test_config.yml";

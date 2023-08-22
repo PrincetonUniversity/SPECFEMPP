@@ -17,21 +17,6 @@ enum type {
 };
 } // namespace wave
 
-namespace seismogram {
-enum type {
-  displacement, ///< Displacement seismogram
-  velocity,     ///< Velocity Seismogram
-  acceleration  ///< Acceleration seismogram
-};
-
-namespace format {
-enum type {
-  seismic_unix, ///< Seismic unix output format
-  ascii         ///< ASCII output format
-};
-}
-} // namespace seismogram
-
 } // namespace specfem
 
 #endif
