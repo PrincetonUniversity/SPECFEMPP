@@ -37,6 +37,8 @@ class element<specfem::enums::element::dimension::dim2,
           specfem::enums::element::medium::acoustic,
           specfem::enums::element::quadrature::static_quadrature_points<N> > {
 public:
+  using dimension = specfem::enums::element::dimension::dim2;
+  using medium = specfem::enums::element::medium::acoustic;
   /**
    * @brief Number of Gauss-Lobatto-Legendre quadrature points
    */
@@ -70,6 +72,20 @@ public:
   element(const int ispec,
           const specfem::compute::partial_derivatives partial_derivatives,
           const specfem::compute::properties properties);
+
+  /**
+   * @brief Compute the mass matrix component ($ m_{\alpha, \beta} $) for a
+   * given quadrature point
+   *
+   * Mass matrix is given by \\f$ M =  \sum_{\Omega_e} \sum_{\alpha, \beta}
+   * \omega_{\alpha} \omega_{\beta}  m_{\alpha, \beta} \\f$
+   *
+   * @param xz index of the quadrature point
+   * @return type_real mass matrix component
+   */
+  KOKKOS_INLINE_FUNCTION
+  type_real[medium::components] compute_mass_matrix_component(
+      const int &xz) const override;
 
   /**
    * @brief Compute the gradient of the field at the quadrature point xz
@@ -161,6 +177,7 @@ private:
   specfem::kokkos::DeviceView2d<type_real> gammaz;   ///< gammaz
   specfem::kokkos::DeviceView2d<type_real> jacobian; ///< jacobian
   specfem::kokkos::DeviceView2d<type_real> rho_inverse; ///< rho inverse
+  specfem::kokkos::DeviceView2d<type_real> kappa;       ///< kappa
 };
 } // namespace elements
 } // namespace impl

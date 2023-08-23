@@ -59,13 +59,15 @@ void initialize_views(
       });
 }
 
-template <class medium>
+template <class medium, class qp_type>
 void initialize_rmass_inverse(
     const specfem::kokkos::DeviceView3d<int> ibool,
     const specfem::kokkos::DeviceView1d<type_real> wxgll,
     const specfem::kokkos::DeviceView1d<type_real> wzgll,
-    const specfem::compute::partial_derivatives &partial_derivatives,
-    const specfem::compute::properties &properties,
+    const specfem::kokkos::DeviceView1d<element_container<element_type<
+        specfem::enums::element::dimension::dim2, medium, qp_type> > >
+        &elements,
+    const qp_type &quadrature_points,
     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
         rmass_inverse) {
   // Compute the mass matrix
@@ -81,45 +83,36 @@ void initialize_rmass_inverse(
 
   const int nglob = rmass_inverse.extent(0);
 
-  specfem::kokkos::DeviceScatterView2d<type_real, Kokkos::LayoutLeft> results(
-      rmass_inverse);
-
   Kokkos::parallel_for(
-      "specfem::Domain::acoustic::compute_mass_matrix",
-      specfem::kokkos::DeviceMDrange<2, Kokkos::Iterate::Left>(
-          { 0, 0 }, { nspec, ngllxz }),
-      KOKKOS_LAMBDA(const int ispec, const int xz) {
-        int ix, iz;
-        sub2ind(xz, ngllx, iz, ix);
-        int iglob = ibool(ispec, iz, ix);
-        auto access = results.access();
-        if (ispec_type(ispec) == value) {
-          for (int icomponent = 0; icomponent < components; icomponent++) {
-            access(iglob, icomponent) +=
-                wxgll(ix) * wzgll(iz) *
-                medium::compute_mass_matrix_component(
-                    ispec, xz, icomponent, properties, partial_derivatives);
-          }
-        }
-      });
+      "specfem::domain::domain::rmass_matrix",
+      specfem::kokkos::DeviceTeam(elements.extent(0), Kokkos::AUTO, 1),
+      KOKKOS_LAMBDA(
+          const specfem::kokkos::DeviceTeam::member_type &team_member) {
+        int ngllx, ngllz;
+        quadrature_points.get_ngll(&ngllx, &ngllz);
+        const auto element = this->elements(team_member.league_rank());
+        const auto ispec = element.get_ispec();
 
-  Kokkos::Experimental::contribute(rmass_inverse, results);
+        Kokkos::parallel_for(
+            quadrature_points.template TeamThreadRange<specfem::enums::axes::x,
+                                                       specfem::enums::axes::z>(
+                team_member),
+            [&](const int xz) {
+              int ix, iz;
+              sub2ind(xz, ngllx, iz, ix);
+              int iglob = ibool(ispec, iz, ix);
 
-  // invert the mass matrix
-  Kokkos::parallel_for(
-      "specfem::domain::domain::invert_mass_matrix",
-      specfem::kokkos::DeviceRange(0, nglob), KOKKOS_LAMBDA(const int iglob) {
-        if (rmass_inverse(iglob, 0) > 0.0) {
-          for (int icomponent = 0; icomponent < components; icomponent++) {
-            type_real rmass_inverse_l = rmass_inverse(iglob, icomponent);
-            rmass_inverse(iglob, icomponent) =
-                1.0 / rmass_inverse(iglob, icomponent);
-          }
-        } else {
-          for (int icomponent = 0; icomponent < components; icomponent++) {
-            rmass_inverse(iglob, icomponent) = 1.0;
-          }
-        }
+              type_real[components] mass_matrix_element =
+                  wxgll(ix) * wzgll(iz) *
+                  element.compute_mass_matrix_component(xz);
+
+              for (int icomponent = 0; icomponent < components; icomponent++) {
+                Kokkos::single(Kokkos::PerThread(team_member), [&]() {
+                  Kokkos::atomic_add(&rmass_inverse(iglob, icomponent),
+                                     mass_matrix_element[icomponent]);
+                });
+              }
+            });
       });
 }
 
@@ -426,19 +419,19 @@ specfem::domain::domain<medium, qp_type>::domain(
   initialize_views<medium>(nglob, this->field, this->field_dot,
                            this->field_dot_dot, this->rmass_inverse);
 
-  //----------------------------------------------------------------------------
-  // Inverse of mass matrix
-
-  initialize_rmass_inverse<medium>(compute->ibool, quadx->get_w(),
-                                   quadz->get_w(), partial_derivatives,
-                                   material_properties, this->rmass_inverse);
-
   // ----------------------------------------------------------------------------
   // Inverse of mass matrix
 
   assign_elemental_properties(partial_derivatives, material_properties,
                               this->field_dot_dot, this->elements, nspec, ngllz,
                               ngllx, this->nelem_domain);
+
+  //----------------------------------------------------------------------------
+  // Inverse of mass matrix
+
+  initialize_rmass_inverse(compute->ibool, quadx->get_w(), quadz->get_w(),
+                           this->elements, this->quadrature_points,
+                           this->rmass_inverse);
 
   // ----------------------------------------------------------------------------
   // Initialize the sources
@@ -534,7 +527,5 @@ void specfem::domain::domain<medium, qp_type>::divide_mass_matrix() {
 
   return;
 }
-
-
 
 #endif

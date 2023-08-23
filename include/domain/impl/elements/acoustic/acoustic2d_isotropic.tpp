@@ -48,6 +48,8 @@ KOKKOS_FUNCTION specfem::domain::impl::elements::element<
   // Properties
   assert(properties.rho_inverse.extent(1) == NGLL);
   assert(properties.rho_inverse.extent(2) == NGLL);
+  assert(properties.kappa.extent(1) == NGLL);
+  assert(properties.kappa.extent(2) == NGLL);
 #endif
 
   // Assert wave property. Acoustic only in sh. For now.
@@ -65,7 +67,29 @@ KOKKOS_FUNCTION specfem::domain::impl::elements::element<
                                    Kokkos::ALL(), Kokkos::ALL());
   this->rho_inverse = Kokkos::subview(properties.rho_inverse, ispec,
                                       Kokkos::ALL(), Kokkos::ALL());
+  this->kappa =
+      Kokkos::subview(properties.kappa, ispec, Kokkos::ALL(), Kokkos::ALL());
   return;
+}
+
+template <int NGLL>
+KOKKOS_INLINE_FUNCTION
+    type_real[medium::components] specfem::domain::impl::elements::element<
+        specfem::enums::element::dimension::dim2,
+        specfem::enums::element::medium::acoustic,
+        specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
+        specfem::enums::element::property::isotropic>::
+        compute_mass_matrix_component(const int &xz) {
+  int ix, iz;
+  sub2ind(xz, NGLL, iz, ix);
+
+  static_assert(medium::components == 1,
+                "Acoustic medium has only one component");
+
+  type_real[medium::components] mass_matrix{ this->jacobian(iz, ix) /
+                                             this->kappa(iz, ix) };
+
+  return mass_matrix;
 }
 
 template <int NGLL>

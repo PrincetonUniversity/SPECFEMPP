@@ -35,6 +35,8 @@ class element<specfem::enums::element::dimension::dim2,
               specfem::enums::element::medium::acoustic, quadrature_points> {
 
 public:
+  using dimension = specfem::enums::element::dimension::dim2;
+  using medium = specfem::enums::element::medium::acoustic;
   /**
    * @brief Scratch view type as defined by the quadrature points (either at
    * compile time or run time)
@@ -44,6 +46,20 @@ public:
   template <typename T>
   using ScratchViewType =
       typename quadrature_points::template ScratchViewType<T>;
+
+  /**
+   * @brief Compute the mass matrix component ($ m_{\alpha, \beta} $) for a
+   * given quadrature point
+   *
+   * Mass matrix is given by \\f$ M =  \sum_{\Omega_e} \sum_{\alpha, \beta}
+   * \omega_{\alpha} \omega_{\beta}  m_{\alpha, \beta} \\f$
+   *
+   * @param xz index of the quadrature point
+   * @return type_real mass matrix component
+   */
+  KOKKOS_INLINE_FUNCTION virtual type_real
+      [specfem::enums::element::medium::acoustic::
+           components] compute_mass_matrix_component(const int &xz) const = 0;
 
   /**
    * @brief Compute the gradient of the field at the quadrature point xz

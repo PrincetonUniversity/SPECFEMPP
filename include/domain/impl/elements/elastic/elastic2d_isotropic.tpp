@@ -15,8 +15,9 @@ using StaticScratchViewType =
     typename specfem::enums::element::quadrature::static_quadrature_points<
         N>::template ScratchViewType<T>;
 
-using field_type = Kokkos::Subview<specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>,
-                                   int, std::remove_const_t<decltype(Kokkos::ALL)>>;
+using field_type = Kokkos::Subview<
+    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>, int,
+    std::remove_const_t<decltype(Kokkos::ALL)> >;
 
 // -----------------------------------------------------------------------------
 //                     SPECIALIZED ELEMENT
@@ -44,6 +45,9 @@ KOKKOS_FUNCTION specfem::domain::impl::elements::element<
   assert(partial_derivatives.jacobian.extent(1) == NGLL);
   assert(partial_derivatives.jacobian.extent(2) == NGLL);
 
+  // Properties
+  assert(properties.rho.extent(1) == NGLL);
+  assert(properties.rho.extent(2) == NGLL);
   assert(properties.lambdaplus2mu.extent(1) == NGLL);
   assert(properties.lambdaplus2mu.extent(2) == NGLL);
   assert(properties.mu.extent(1) == NGLL);
@@ -52,19 +56,45 @@ KOKKOS_FUNCTION specfem::domain::impl::elements::element<
 
   this->xix = Kokkos::subview(partial_derivatives.xix, ispec, Kokkos::ALL(),
                               Kokkos::ALL());
-  this->gammax = Kokkos::subview(partial_derivatives.gammax, ispec, Kokkos::ALL(),
-                                 Kokkos::ALL());
+  this->gammax = Kokkos::subview(partial_derivatives.gammax, ispec,
+                                 Kokkos::ALL(), Kokkos::ALL());
   this->xiz = Kokkos::subview(partial_derivatives.xiz, ispec, Kokkos::ALL(),
                               Kokkos::ALL());
-  this->gammaz = Kokkos::subview(partial_derivatives.gammaz, ispec, Kokkos::ALL(),
-                                 Kokkos::ALL());
+  this->gammaz = Kokkos::subview(partial_derivatives.gammaz, ispec,
+                                 Kokkos::ALL(), Kokkos::ALL());
   this->jacobian = Kokkos::subview(partial_derivatives.jacobian, ispec,
                                    Kokkos::ALL(), Kokkos::ALL());
   this->lambdaplus2mu = Kokkos::subview(properties.lambdaplus2mu, ispec,
                                         Kokkos::ALL(), Kokkos::ALL());
-  this->mu = Kokkos::subview(properties.mu, ispec, Kokkos::ALL(), Kokkos::ALL());
+  this->mu =
+      Kokkos::subview(properties.mu, ispec, Kokkos::ALL(), Kokkos::ALL());
+  this->rho =
+      Kokkos::subview(properties.rho, ispec, Kokkos::ALL(), Kokkos::ALL());
 
   return;
+}
+
+template <int NGLL>
+KOKKOS_INLINE_FUNCTION
+    type_real[medium::components] specfem::domain::impl::elements::element<
+        specfem::enums::element::dimension::dim2,
+        specfem::enums::element::medium::elastic,
+        specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
+        specfem::enums::element::property::isotropic>::
+        compute_mass_matrix_component(const int &xz) const {
+  int ix, iz;
+  sub2ind(xz, NGLL, iz, ix);
+
+  static_assert(medium::components == 2,
+                "Number of components must be 2 for 2D isotropic elastic "
+                "medium");
+
+  type_real[specfem::enums::element::medium::elastic::components] mass_matrix{
+    this->rho(iz, ix) * this->jacobian(iz, ix),
+    this->rho(iz, ix) * this->jacobian(iz, ix)
+  };
+
+  return mass_matrix;
 }
 
 template <int NGLL>
@@ -177,8 +207,7 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic>::
     update_acceleration(
-        const int &xz, const type_real &wxglll,
-        const type_real &wzglll,
+        const int &xz, const type_real &wxglll, const type_real &wzglll,
         const StaticScratchViewType<NGLL, type_real> stress_integrand_1,
         const StaticScratchViewType<NGLL, type_real> stress_integrand_2,
         const StaticScratchViewType<NGLL, type_real> stress_integrand_3,
