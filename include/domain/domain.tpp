@@ -103,13 +103,13 @@ void initialize_rmass_inverse(
               int iglob = ibool(ispec, iz, ix);
 
               type_real[components] mass_matrix_element =
-                  wxgll(ix) * wzgll(iz) *
                   element.compute_mass_matrix_component(xz);
 
               for (int icomponent = 0; icomponent < components; icomponent++) {
                 Kokkos::single(Kokkos::PerThread(team_member), [&]() {
                   Kokkos::atomic_add(&rmass_inverse(iglob, icomponent),
-                                     mass_matrix_element[icomponent]);
+                                     wxgll(ix) * wzgll(iz) *
+                                         mass_matrix_element[icomponent]);
                 });
               }
             });
