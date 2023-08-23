@@ -26,17 +26,20 @@ KOKKOS_FUNCTION specfem::domain::impl::sources::source<
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic>::
     source(const int &ispec,
-           const specfem::kokkos::DeviceView2d<type_real> &kappa,
+           const specfem::compute::properties &properties,
            specfem::kokkos::DeviceView3d<type_real> source_array,
            specfem::forcing_function::stf *stf)
     : ispec(ispec), kappa(kappa), stf(stf) {
 
+#ifndef NDEBUG
   assert(source_array.extent(0) == NGLL);
   assert(source_array.extent(1) == NGLL);
-  assert(kappa.extent(0) == NGLL);
-  assert(kappa.extent(1) == NGLL);
+  assert(properties.kappa.extent(1) == NGLL);
+  assert(properties.kappa.extent(2) == NGLL);
+#endif
 
   this->source_array = source_array;
+  this->kappa = Kokkos::subview(properties.kappa, ispec, Kokkos::ALL(), Kokkos::ALL());
 
   return;
 }

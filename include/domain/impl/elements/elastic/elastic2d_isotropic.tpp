@@ -32,6 +32,7 @@ KOKKOS_FUNCTION specfem::domain::impl::elements::element<
             const specfem::compute::properties properties)
     : ispec(ispec) {
 
+#ifndef NDEBUG
   assert(partial_derivatives.xix.extent(1) == NGLL);
   assert(partial_derivatives.xix.extent(2) == NGLL);
   assert(partial_derivatives.gammax.extent(1) == NGLL);
@@ -47,6 +48,7 @@ KOKKOS_FUNCTION specfem::domain::impl::elements::element<
   assert(properties.lambdaplus2mu.extent(2) == NGLL);
   assert(properties.mu.extent(1) == NGLL);
   assert(properties.mu.extent(2) == NGLL);
+#endif
 
   this->xix = Kokkos::subview(partial_derivatives.xix, ispec, Kokkos::ALL(),
                               Kokkos::ALL());
