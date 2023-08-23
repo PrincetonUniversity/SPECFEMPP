@@ -114,6 +114,21 @@ void initialize_rmass_inverse(
               }
             });
       });
+
+  Kokkos::fence();
+
+  // Invert the mass matrix
+  Kokkos::parallel_for(
+      "specfem::domain::domain::invert_rmass_matrix",
+      specfem::kokkos::DeviceMDrange<2, Kokkos::Iterate::Left>(
+          { 0, 0 }, { nglob, components }),
+      KOKKOS_LAMBDA(const int iglob, const int idim) {
+        rmass_inverse(iglob, idim) = 1.0 / rmass_inverse(iglob, idim);
+      });
+
+  Kokkos::fence();
+
+  return;
 }
 
 template <class medium, class qp_type>
