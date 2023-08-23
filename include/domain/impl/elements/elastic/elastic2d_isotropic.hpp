@@ -81,6 +81,20 @@ public:
           const specfem::compute::properties properties);
 
   /**
+   * @brief Compute the mass matrix component ($ m_{\alpha, \beta} $) for a
+   * given quadrature point
+   *
+   * Mass matrix is given by \\f$ M =  \sum_{\Omega_e} \sum_{\alpha, \beta}
+   * \omega_{\alpha} \omega_{\beta}  m_{\alpha, \beta} \\f$
+   *
+   * @param xz index of the quadrature point
+   * @return type_real mass matrix component
+   */
+  KOKKOS_INLINE_FUNCTION
+  type_real[medium::components] compute_mass_matrix_component(
+      const int &xz) const override;
+
+  /**
    * @brief Compute the gradient of the field at a particular
    * Gauss-Lobatto-Legendre quadrature point
    *
@@ -188,7 +202,8 @@ private:
   specfem::kokkos::DeviceView2d<type_real> jacobian; ///< jacobian
   specfem::kokkos::DeviceView2d<type_real> lambdaplus2mu; ///< lambda +
                                                           ///< 2 * mu
-  specfem::kokkos::StaticDeviceView2d<type_real, N> mu;   ///< mu
+  specfem::kokkos::DeviceView2d<type_real> mu;            ///< mu
+  specfem::kokkos::DeviceView2d<type_real> rho;           ///< rho
 };
 } // namespace elements
 } // namespace impl
