@@ -476,10 +476,38 @@ public:
   constexpr static specfem::enums::element::type value =
       specfem::enums::element::elastic;
   /**
-   * @brief constexpr defining number of components for this medium.
+   * @brief Number of components for this medium
    *
    */
   constexpr static int components = 2;
+
+  /**
+   * @brief Compute the mass matrix component ($ m_{\alpha, \beta} $) for a
+   * given quadrature point
+   *
+   * Mass matrix is given by \\f$ M =  \sum_{\Omega_e} \sum_{\alpha, \beta}
+   * \omega_{\alpha} \omega_{\beta}  m_{\alpha, \beta} \\f$
+   *
+   * @param ispec index of the spectral element
+   * @param xz index of the quadrature point
+   * @param icomponent component index
+   * @param properties Elemental properties
+   * @param partial_derivatives Spacial derivatives
+   * @return type_real mass matrix component
+   */
+  KOKKOS_FUNCTION type_real compute_mass_matrix_component(
+      const int &ispec, const int &xz, const int &icomponent,
+      const specfem::compute::properties &properties,
+      const specfem::compute::partial_derivatives &partial_derivatives) const {
+    int ix, iz;
+    const int ngllx = partial_derivatives.xix.extent(2);
+    const int ngllz = partial_derivatives.xix.extent(1);
+
+    sub2ind(xz, ngllx, iz, ix);
+
+    return properties.rho(ispec, iz, ix) *
+           partial_derivatives.jacobian(ispec, iz, ix);
+  };
 };
 
 /**
@@ -499,6 +527,34 @@ public:
    *
    */
   constexpr static int components = 1;
+
+  /**
+   * @brief Compute the mass matrix component ($ m_{\alpha, \beta} $) for a
+   * given quadrature point
+   *
+   * Mass matrix is given by \\f$ M =  \sum_{\Omega_e} \sum_{\alpha, \beta}
+   * \omega_{\alpha} \omega_{\beta}  m_{\alpha, \beta} \\f$
+   *
+   * @param ispec index of the spectral element
+   * @param xz index of the quadrature point
+   * @param icomponent component index
+   * @param properties Elemental properties
+   * @param partial_derivatives Spacial derivatives
+   * @return type_real mass matrix component
+   */
+  KOKKOS_FUNCTION type_real compute_mass_matrix_component(
+      const int &ispec, const int &xz, const int &icomponent,
+      const specfem::compute::properties &properties,
+      const specfem::compute::partial_derivatives &partial_derivatives) const {
+    int ix, iz;
+    const int ngllx = partial_derivatives.xix.extent(2);
+    const int ngllz = partial_derivatives.xix.extent(1);
+
+    sub2ind(xz, ngllx, iz, ix);
+
+    return partial_derivatives.jacobian(ispec, iz, ix) /
+           properties.kappa(ispec, iz, ix);
+  };
 };
 
 } // namespace medium

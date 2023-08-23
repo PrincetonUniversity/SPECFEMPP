@@ -33,6 +33,7 @@ KOKKOS_FUNCTION specfem::domain::impl::elements::element<
             const specfem::compute::properties properties)
     : ispec(ispec) {
 
+#ifndef NDEBUG
   assert(partial_derivatives.xix.extent(1) == NGLL);
   assert(partial_derivatives.xix.extent(2) == NGLL);
   assert(partial_derivatives.gammax.extent(1) == NGLL);
@@ -47,6 +48,7 @@ KOKKOS_FUNCTION specfem::domain::impl::elements::element<
   // Properties
   assert(properties.rho_inverse.extent(1) == NGLL);
   assert(properties.rho_inverse.extent(2) == NGLL);
+#endif
 
   // Assert wave property. Acoustic only in sh. For now.
   // assert(specfem::globals::simulation_wave == specfem::wave::sh);
