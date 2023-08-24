@@ -725,4 +725,57 @@ void specfem::domain::domain<medium, qp_type>::compute_stiffness_interaction() {
   return;
 }
 
+template <typename medium, typename qp_type>
+void specfem::domain::domain<medium, qp_type>::compute_source_interaction(
+    const type_real timeval) {
+
+  constexpr int components = medium::components;
+  const int nsources = this->sources.extent(0);
+  const auto ibool = this->compute->ibool;
+
+  Kokkos::parallel_for(
+      "specfem::Domain::acoustic::compute_source_interaction",
+      specfem::kokkos::DeviceTeam(nsources, Kokkos::AUTO, 1),
+      KOKKOS_CLASS_LAMBDA(
+          const specfem::kokkos::DeviceTeam::member_type &team_member) {
+        int ngllx, ngllz;
+        quadrature_points.get_ngll(&ngllx, &ngllz);
+        int isource = team_member.league_rank();
+        const auto source = this->sources(isource);
+        const int ispec = source.get_ispec();
+        auto sv_ibool = Kokkos::subview(ibool, ispec, Kokkos::ALL, Kokkos::ALL);
+
+        type_real stf;
+
+        Kokkos::parallel_reduce(
+            Kokkos::TeamThreadRange(team_member, 1),
+            [=](const int &, type_real &lsum) {
+              lsum = source.eval_stf(timeval);
+            },
+            stf);
+
+        team_member.team_barrier();
+
+        Kokkos::parallel_for(
+            quadrature_points.template TeamThreadRange<specfem::enums::axes::z,
+                                                       specfem::enums::axes::x>(
+                team_member),
+            [=](const int xz) {
+              int iz, ix;
+              sub2ind(xz, ngllx, iz, ix);
+              int iglob = ibool(ispec, iz, ix);
+
+              type_real[components] accel;
+              auto sv_field_dot_dot =
+                  Kokkos::subview(field_dot_dot, iglob, Kokkos::ALL());
+
+              source.compute_interaction(xz, stf, &accel);
+              source.update_acceleration(&accel, sv_field_dot_dot);
+            });
+      });
+
+  Kokkos::fence();
+  return;
+}
+
 #endif

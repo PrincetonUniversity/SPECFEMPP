@@ -55,7 +55,7 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::sources::source<
   int ix, iz;
   sub2ind(xz, NGLL, iz, ix);
 
-  *accel = source_array(iz, ix, 0) * stf_value / kappa(iz, ix);
+  accel[0] = source_array(iz, ix, 0) * stf_value / kappa(iz, ix);
 
   return;
 }
@@ -66,9 +66,9 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::sources::source<
     specfem::enums::element::medium::acoustic,
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic>::
-    update_acceleration(const type_real &accel,
+    update_acceleration(const type_real *accel,
                         field_type field_dot_dot) const {
-  Kokkos::atomic_add(&field_dot_dot(0), accel);
+  Kokkos::atomic_add(&field_dot_dot(0), accel[0]);
 
   return;
 }
