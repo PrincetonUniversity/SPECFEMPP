@@ -45,9 +45,9 @@ public:
    *
    * @tparam T Type of the scratch view
    */
-  template <typename T>
+  template <typename T, int N>
   using ScratchViewType =
-      typename quadrature_points::template ScratchViewType<T>;
+      typename quadrature_points::template ScratchViewType<T, N>;
 
   /**
    * @brief Compute the mass matrix component ($ m_{\alpha, \beta} $) for a
@@ -59,9 +59,8 @@ public:
    * @param xz index of the quadrature point
    * @return type_real mass matrix component
    */
-  KOKKOS_INLINE_FUNCTION virtual type_real
-      [medium::components] compute_mass_matrix_component(
-          const int &xz) const = 0;
+  KOKKOS_INLINE_FUNCTION virtual type_real *
+  compute_mass_matrix_component(const int &xz) const = 0;
 
   /**
    * @brief Compute the gradient of the field at the quadrature point xz
@@ -69,50 +68,41 @@ public:
    * @param xz Index of the quadrature point
    * @param s_hprime_xx lagrange polynomial derivative in x direction
    * @param s_hprime_zz lagraange polynomial derivative in z direction
-   * @param field_x field in x direction
-   * @param field_z field in z direction
-   * @param duxdxl \f$ \frac{\partial u_x}{\partial x} \f$
-   * @param duxdzl \f$ \frac{\partial u_x}{\partial z} \f$
-   * @param duzdxl \f$ \frac{\partial u_z}{\partial x} \f$
-   * @param duzdzl \f$ \frac{\partial u_z}{\partial z} \f$
+   * @param u Scratch view of field. In elastic domains the field has 2
+   * components
+   * @param dudxl Partial derivative of field \f$ \frac{\partial
+   * \tilde{u}}{\partial x} \f$
+   * @param dudzl Partial derivative of field \f$ \frac{\partial
+   * \tilde{u}}{\partial z} \f$
    */
   KOKKOS_INLINE_FUNCTION virtual void
-  compute_gradient(const int &xz, const ScratchViewType<type_real> s_hprime_xx,
-                   const ScratchViewType<type_real> s_hprime_zz,
-                   const ScratchViewType<type_real> field_x,
-                   const ScratchViewType<type_real> field_z, type_real *duxdxl,
-                   type_real *duxdzl, type_real *duzdxl,
-                   type_real *duzdzl) const = 0;
+  compute_gradient(const int &xz,
+                   const ScratchViewType<type_real, 1> s_hprime_xx,
+                   const ScratchViewType<type_real, 1> s_hprime_zz,
+                   const ScratchViewType<type_real, medium::components> u,
+                   type_real *dudxl, type_real *dudzl) const = 0;
 
   /**
-   * @brief Compute the stress at the quadrature point xz
+   * @brief Compute the stress integrand at a particular Gauss-Lobatto-Legendre
+   * quadrature point.
    *
-   * @param xz Index of the quadrature point
-   * @param duxdxl \f$ \frac{\partial u_x}{\partial x} \f$ as computed by
-   * compute_gradient
-   * @param duxdzl \f$ \frac{\partial u_x}{\partial z} \f$ as computed by
-   * compute_gradient
-   * @param duzdxl \f$ \frac{\partial u_z}{\partial x} \f$ as computed by
-   * compute_gradient
-   * @param duzdzl \f$ \frac{\partial u_z}{\partial z} \f$ as computed by
-   * compute_gradient
-   * @param stress_integrand_1l Stress integrand jacobianl * (sigma_xx * xixl +
-   * sigma_xz * xizl) at a particular Gauss-Lobatto-Legendre quadrature point xz
-   * @param stress_integrand_2l Stress integrand jacobianl * (sigma_xz * xixl +
-   * sigma_zz * xizl) at a particular Gauss-Lobatto-Legendre quadrature point xz
-   * @param stress_integrand_3l Stress integrand jacobianl * (sigma_xx * gammaxl
-   * + sigma_xz * gammazl) at a particular Gauss-Lobatto-Legendre quadrature
-   * point xz
-   * @param stress_integrand_4l Stress integrand jacobianl * (sigma_xz * gammaxl
-   * + sigma_zz * gammazl) at a particular Gauss-Lobatto-Legendre quadrature
-   * point xz
+   * @param xz Index of Gauss-Lobatto-Legendre quadrature point
+   * @param dudxl Partial derivative of field \f$ \frac{\partial
+   * \tilde{u}}{\partial x} \f$
+   * @param dudzl Partial derivative of field \f$ \frac{\partial
+   * \tilde{u}}{\partial z} \f$
+   * @param stress_integrand_xi Stress integrand  wrt. \f$ \xi \f$ \f$
+   * J^{\alpha, \gamma} \partial_x u \partial_x \xi + \partial_z u * \partial_z
+   * \xi \f$
+   * @param stress_integrand_gamma Stress integrand  wrt. \f$\gamma\f$ \f$
+   * J^{\alpha, \gamma} \partial_x u \partial_x \gamma + \partial_z u *
+   * \partial_z \gamma \f$
+   * @return KOKKOS_FUNCTION
    */
   KOKKOS_INLINE_FUNCTION virtual void
-  compute_stress(const int &xz, const type_real &duxdxl,
-                 const type_real &duxdzl, const type_real &duzdxl,
-                 const type_real &duzdzl, type_real *stress_integrand_1l,
-                 type_real *stress_integrand_2l, type_real *stress_integrand_3l,
-                 type_real *stress_integrand_4l) const = 0;
+  compute_stress(const int &xz, type_real *dudxl, type_real *dudzl,
+                 type_real *stress_integrand_xi,
+                 type_real *stress_integrand_gamma) const = 0;
 
   /**
    * @brief Update the acceleration at the quadrature point xz
@@ -122,28 +112,24 @@ public:
    * direction
    * @param wzglll Weight of the Gauss-Lobatto-Legendre quadrature point in z
    * direction
-   * @param stress_integrand_1 Stress integrand jacobianl * (sigma_xx * xixl +
-   * sigma_xz * xizl) as computed by compute_stress
-   * @param stress_integrand_2 Stress integrand jacobianl * (sigma_xz * xixl +
-   * sigma_zz * xizl) as computed by compute_stress
-   * @param stress_integrand_3 Stress integrand jacobianl * (sigma_xx * gammaxl
-   * + sigma_xz * gammazl) as computed by compute_stress
-   * @param stress_integrand_4 Stress integrand jacobianl * (sigma_xz * gammaxl
-   * + sigma_zz * gammazl) as computed by compute_stress
+   * @param stress_integrand_1 Stress integrand wrt. \f$ \xi \f$ \f$ J^{\alpha,
+   * \gamma} \partial_x u \partial_x \xi + \partial_z u * \partial_z \xi \f$ as
+   * computed by compute_stress
+   * @param stress_integrand_2 Stress integrand wrt. \f$\gamma\f$ \f$ J^{\alpha,
+   * \gamma} \partial_x u \partial_x \gamma + \partial_z u * \partial_z \gamma
+   * \f$ as computed by compute_stress
    * @param s_hprimewgll_xx Scratch view hprime_xx * wxgll
    * @param s_hprimewgll_zz Scratch view hprime_zz * wzgll
    * @param field_dot_dot Acceleration of the field subviewed at global index xz
    */
-  KOKKOS_INLINE_FUNCTION virtual void
-  update_acceleration(const int &xz, const type_real &wxglll,
-                      const type_real &wzglll,
-                      const ScratchViewType<type_real> stress_integrand_1,
-                      const ScratchViewType<type_real> stress_integrand_2,
-                      const ScratchViewType<type_real> stress_integrand_3,
-                      const ScratchViewType<type_real> stress_integrand_4,
-                      const ScratchViewType<type_real> s_hprimewgll_xx,
-                      const ScratchViewType<type_real> s_hprimewgll_zz,
-                      field_type field_dot_dot) const = 0;
+  KOKKOS_INLINE_FUNCTION virtual void update_acceleration(
+      const int &xz, const type_real &wxglll, const type_real &wzglll,
+      const ScratchViewType<type_real, medium::components> stress_integrand_xi,
+      const ScratchViewType<type_real, medium::components>
+          stress_integrand_gamma,
+      const ScratchViewType<type_real, 1> s_hprimewgll_xx,
+      const ScratchViewType<type_real, 1> s_hprimewgll_zz,
+      field_type field_dot_dot) const = 0;
 
   /**
    * @brief Get the global index of the element

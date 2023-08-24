@@ -27,15 +27,16 @@ namespace elements {
  *
  * @tparam N Number of Gauss-Lobatto-Legendre quadrature points
  */
-template <int N>
-class element<specfem::enums::element::dimension::dim2,
-              specfem::enums::element::medium::acoustic,
-              specfem::enums::element::quadrature::static_quadrature_points<N>,
-              specfem::enums::element::property::isotropic>
-    : public element<
-          specfem::enums::element::dimension::dim2,
-          specfem::enums::element::medium::acoustic,
-          specfem::enums::element::quadrature::static_quadrature_points<N> > {
+template <int NGLL>
+class element<
+    specfem::enums::element::dimension::dim2,
+    specfem::enums::element::medium::acoustic,
+    specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
+    specfem::enums::element::property::isotropic>
+    : public element<specfem::enums::element::dimension::dim2,
+                     specfem::enums::element::medium::acoustic,
+                     specfem::enums::element::quadrature::
+                         static_quadrature_points<NGLL> > {
 public:
   using dimension = specfem::enums::element::dimension::dim2;
   using medium = specfem::enums::element::medium::acoustic;
@@ -43,16 +44,16 @@ public:
    * @brief Number of Gauss-Lobatto-Legendre quadrature points
    */
   using quadrature_points =
-      specfem::enums::element::quadrature::static_quadrature_points<N>;
+      specfem::enums::element::quadrature::static_quadrature_points<NGLL>;
 
   /**
    * @brief Use the scratch view type from the quadrature points
    *
    * @tparam T Type of the scratch view
    */
-  template <typename T>
+  template <typename T, int N>
   using ScratchViewType =
-      typename quadrature_points::template ScratchViewType<T>;
+      typename quadrature_points::template ScratchViewType<T, N>;
 
   /**
    * @brief Construct a new element object
@@ -84,8 +85,7 @@ public:
    * @return type_real mass matrix component
    */
   KOKKOS_INLINE_FUNCTION
-  type_real[medium::components] compute_mass_matrix_component(
-      const int &xz) const override;
+  type_real *compute_mass_matrix_component(const int &xz) const override;
 
   /**
    * @brief Compute the gradient of the field at the quadrature point xz
@@ -100,11 +100,11 @@ public:
    * @param dchidzl Computed partial derivative of field \f$ \frac{\partial
    * \chi}{\partial z} \f$
    */
-  KOKKOS_INLINE_FUNCTION void
-  compute_gradient(const int &xz, const ScratchViewType<type_real> s_hprime_xx,
-                   const ScratchViewType<type_real> s_hprime_zz,
-                   const ScratchViewType<type_real> field_chi,
-                   type_real *dchidxl, type_real *dchidzl) const override;
+  KOKKOS_INLINE_FUNCTION void compute_gradient(
+      const int &xz, const ScratchViewType<type_real, 1> s_hprime_xx,
+      const ScratchViewType<type_real, 1> s_hprime_zz,
+      const ScratchViewType<type_real, medium::components> field_chi,
+      type_real *dchidxl, type_real *dchidzl) const override;
 
   /**
    * @brief Compute the stress integrand at a particular Gauss-Lobatto-Legendre
@@ -143,24 +143,24 @@ public:
    * direction
    * @param stress_integrand_xi Stress integrand  wrt. \f$ \xi \f$
    * \f$ J^{\alpha\gamma} * {\rho^{\alpha\gamma}}^{-1}
-   * \partial_x \chi \partial_x \xi
-   * + \partial_z \chi * \partial_z \xi \f$
+   * \partial_x \chi \partial_x \xi + \partial_z \chi * \partial_z \xi \f$ as
+   * computed by compute_stress
    * @param stress_integrand_gamma Stress integrand  wrt. \f$\gamma\f$
    * \f$ J^{\alpha\gamma} * {\rho^{\alpha\gamma}}^{-1}
-   * \partial_x \chi \partial_x \gamma
-   * + \partial_z \chi * \partial_z \gamma \f$
+   * \partial_x \chi \partial_x \gamma + \partial_z \chi * \partial_z \gamma \f$
+   * as computed by compute_stress
    * @param s_hprimewgll_xx Scratch view hprime_xx * wxgll
    * @param s_hprimewgll_zz Scratch view hprime_zz * wzgll
    * @param field_dot_dot Acceleration of the field subviewed at global index xz
    */
-  KOKKOS_INLINE_FUNCTION void
-  update_acceleration(const int &xz, const type_real &wxglll,
-                      const type_real &wzglll,
-                      const ScratchViewType<type_real> stress_integrand_xi,
-                      const ScratchViewType<type_real> stress_integrand_gamma,
-                      const ScratchViewType<type_real> s_hprimewgll_xx,
-                      const ScratchViewType<type_real> s_hprimewgll_zz,
-                      field_type field_dot_dot) const override;
+  KOKKOS_INLINE_FUNCTION void update_acceleration(
+      const int &xz, const type_real &wxglll, const type_real &wzglll,
+      const ScratchViewType<type_real, medium::components> stress_integrand_xi,
+      const ScratchViewType<type_real, medium::components>
+          stress_integrand_gamma,
+      const ScratchViewType<type_real, 1> s_hprimewgll_xx,
+      const ScratchViewType<type_real, 1> s_hprimewgll_zz,
+      field_type field_dot_dot) const override;
 
   /**
    * @brief Get the index of the element

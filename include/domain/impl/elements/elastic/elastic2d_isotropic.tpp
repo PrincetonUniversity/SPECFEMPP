@@ -104,12 +104,10 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic>::
     compute_gradient(const int &xz,
-                     const StaticScratchViewType<NGLL, type_real> s_hprime_xx,
-                     const StaticScratchViewType<NGLL, type_real> s_hprime_zz,
-                     const StaticScratchViewType<NGLL, type_real> field_x,
-                     const StaticScratchViewType<NGLL, type_real> field_z,
-                     type_real *duxdxl, type_real *duxdzl, type_real *duzdxl,
-                     type_real *duzdzl) const {
+                     const ScratchViewType<type_real, 1> s_hprime_xx,
+                     const ScratchViewType<type_real, 1> s_hprime_zz,
+                     const ScratchViewType<type_real, medium::components> u,
+                     type_real *dudxl, type_real *dudzl) const {
 
   int ix, iz;
   sub2ind(xz, NGLL, iz, ix);
@@ -124,23 +122,26 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
   type_real sum_hprime_z1 = 0.0;
   type_real sum_hprime_z3 = 0.0;
 
+#ifdef KOKKOS_ENABLE_CUDA
+#pragma unroll
+#endif
   for (int l = 0; l < NGLL; l++) {
-    sum_hprime_x1 += s_hprime_xx(ix, l) * field_x(iz, l);
-    sum_hprime_x3 += s_hprime_xx(ix, l) * field_z(iz, l);
-    sum_hprime_z1 += s_hprime_zz(iz, l) * field_x(l, ix);
-    sum_hprime_z3 += s_hprime_zz(iz, l) * field_z(l, ix);
+    sum_hprime_x1 += s_hprime_xx(ix, l) * u(iz, l, 0);
+    sum_hprime_x3 += s_hprime_xx(ix, l) * u(iz, l, 1);
+    sum_hprime_z1 += s_hprime_zz(iz, l) * u(l, ix, 0);
+    sum_hprime_z3 += s_hprime_zz(iz, l) * u(l, ix, 1);
   }
   // duxdx
-  *duxdxl = xixl * sum_hprime_x1 + gammaxl * sum_hprime_x3;
+  *dudxl[0] = xixl * sum_hprime_x1 + gammaxl * sum_hprime_x3;
 
   // duxdz
-  *duxdzl = xizl * sum_hprime_x1 + gammazl * sum_hprime_x3;
+  *dudzl[0] = xizl * sum_hprime_x1 + gammazl * sum_hprime_x3;
 
   // duzdx
-  *duzdxl = xixl * sum_hprime_z1 + gammaxl * sum_hprime_z3;
+  *dudxl[1] = xixl * sum_hprime_z1 + gammaxl * sum_hprime_z3;
 
   // duzdz
-  *duzdzl = xizl * sum_hprime_z1 + gammazl * sum_hprime_z3;
+  *dudzl[1] = xizl * sum_hprime_z1 + gammazl * sum_hprime_z3;
 
   return;
 }
@@ -151,12 +152,9 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
     specfem::enums::element::medium::elastic,
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic>::
-    compute_stress(const int &xz, const type_real &duxdxl,
-                   const type_real &duxdzl, const type_real &duzdxl,
-                   const type_real &duzdzl, type_real *stress_integrand_1l,
-                   type_real *stress_integrand_2l,
-                   type_real *stress_integrand_3l,
-                   type_real *stress_integrand_4l) const {
+    compute_stress(const int &xz, const type_real *dudxl,
+                   const type_real *dudzl, type_real *stress_integrand_xi,
+                   type_real *stress_integrand_gamma) const {
 
   int ix, iz;
   sub2ind(xz, NGLL, iz, ix);
@@ -175,27 +173,29 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
   if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
     // P_SV case
     // sigma_xx
-    sigma_xx = lambdaplus2mul * duxdxl + lambdal * duzdzl;
+    sigma_xx = lambdaplus2mul * dudxl[0] + lambdal * dudzl[1];
 
     // sigma_zz
-    sigma_zz = lambdaplus2mul * duzdzl + lambdal * duxdxl;
+    sigma_zz = lambdaplus2mul * dudzl[1] + lambdal * dudxl[0];
 
     // sigma_xz
     sigma_xz = mul * (duzdxl + duxdzl);
   } else if (specfem::globals::simulation_wave == specfem::wave::sh) {
     // SH-case
     // sigma_xx
-    sigma_xx = mul * duxdxl; // would be sigma_xy in
-                             // CPU-version
+    sigma_xx = mul * dudxl[0]; // would be sigma_xy in
+                               // CPU-version
 
     // sigma_xz
-    sigma_xz = mul * duxdzl; // sigma_zy
+    sigma_xz = mul * dudzl[0]; // sigma_zy
   }
 
-  *stress_integrand_1l = jacobianl * (sigma_xx * xixl + sigma_xz * xizl);
-  *stress_integrand_2l = jacobianl * (sigma_xz * xixl + sigma_zz * xizl);
-  *stress_integrand_3l = jacobianl * (sigma_xx * gammaxl + sigma_xz * gammazl);
-  *stress_integrand_4l = jacobianl * (sigma_xz * gammaxl + sigma_zz * gammazl);
+  stress_integrand_xi[0] = jacobianl * (sigma_xx * xixl + sigma_xz * xizl);
+  stress_integrand_xi[1] = jacobianl * (sigma_xz * xixl + sigma_zz * xizl);
+  stress_integrand_gamma[0] =
+      jacobianl * (sigma_xx * gammaxl + sigma_xz * gammazl);
+  stress_integrand_gamma[1] =
+      jacobianl * (sigma_xz * gammaxl + sigma_zz * gammazl);
 
   return;
 }
@@ -206,15 +206,15 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
     specfem::enums::element::medium::elastic,
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic>::
-    update_acceleration(
-        const int &xz, const type_real &wxglll, const type_real &wzglll,
-        const StaticScratchViewType<NGLL, type_real> stress_integrand_1,
-        const StaticScratchViewType<NGLL, type_real> stress_integrand_2,
-        const StaticScratchViewType<NGLL, type_real> stress_integrand_3,
-        const StaticScratchViewType<NGLL, type_real> stress_integrand_4,
-        const StaticScratchViewType<NGLL, type_real> s_hprimewgll_xx,
-        const StaticScratchViewType<NGLL, type_real> s_hprimewgll_zz,
-        field_type field_dot_dot) const {
+    update_acceleration(const int &xz, const type_real &wxglll,
+                        const type_real &wzglll,
+                        const ScratchViewType<type_real, medium::components>
+                            stress_integrand_xi,
+                        const ScratchViewType<type_real, medium::components>
+                            stress_integrand_gamma,
+                        const ScratchViewType<type_real, 1> s_hprimewgll_xx,
+                        const ScratchViewType<type_real, 1> s_hprimewgll_zz,
+                        field_type field_dot_dot) const {
 
   int ix, iz;
   sub2ind(xz, NGLL, iz, ix);
@@ -223,12 +223,14 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
   type_real tempx3 = 0.0;
   type_real tempz3 = 0.0;
 
+#ifdef KOKKOS_ENABLE_CUDA
 #pragma unroll
+#endif
   for (int l = 0; l < NGLL; l++) {
-    tempx1 += s_hprimewgll_xx(ix, l) * stress_integrand_1(iz, l);
-    tempz1 += s_hprimewgll_xx(ix, l) * stress_integrand_2(iz, l);
-    tempx3 += s_hprimewgll_zz(iz, l) * stress_integrand_3(l, ix);
-    tempz3 += s_hprimewgll_zz(iz, l) * stress_integrand_4(l, ix);
+    tempx1 += s_hprimewgll_xx(ix, l) * stress_integrand_xi(iz, l, 0);
+    tempz1 += s_hprimewgll_xx(ix, l) * stress_integrand_xi(iz, l, 1);
+    tempx3 += s_hprimewgll_zz(iz, l) * stress_integrand_gamma(l, ix, 0);
+    tempz3 += s_hprimewgll_zz(iz, l) * stress_integrand_gamma(l, ix, 1);
   }
 
   const type_real sum_terms1 = -1.0 * (wzglll * tempx1) - (wxglll * tempx3);

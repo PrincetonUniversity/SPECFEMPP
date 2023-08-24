@@ -43,9 +43,9 @@ public:
    *
    * @tparam T Type of the scratch view
    */
-  template <typename T>
+  template <typename T, int N>
   using ScratchViewType =
-      typename quadrature_points::template ScratchViewType<T>;
+      typename quadrature_points::template ScratchViewType<T, N>;
 
   /**
    * @brief Compute the mass matrix component ($ m_{\alpha, \beta} $) for a
@@ -57,9 +57,8 @@ public:
    * @param xz index of the quadrature point
    * @return type_real mass matrix component
    */
-  KOKKOS_INLINE_FUNCTION virtual type_real
-      [specfem::enums::element::medium::acoustic::
-           components] compute_mass_matrix_component(const int &xz) const = 0;
+  KOKKOS_INLINE_FUNCTION virtual type_real *
+  compute_mass_matrix_component(const int &xz) const = 0;
 
   /**
    * @brief Compute the gradient of the field at the quadrature point xz
@@ -72,11 +71,11 @@ public:
    * @param dchidxl \f$ \frac{\partial \chi}{\partial x} \f$
    * @param dchidzl \f$ \frac{\partial \chi}{\partial z} \f$
    */
-  KOKKOS_INLINE_FUNCTION virtual void
-  compute_gradient(const int &xz, const ScratchViewType<type_real> s_hprime_xx,
-                   const ScratchViewType<type_real> s_hprime_zz,
-                   const ScratchViewType<type_real> field_chi,
-                   type_real *dchidxl, type_real *dchidzl) const = 0;
+  KOKKOS_INLINE_FUNCTION virtual void compute_gradient(
+      const int &xz, const ScratchViewType<type_real, 1> s_hprime_xx,
+      const ScratchViewType<type_real, 1> s_hprime_zz,
+      const ScratchViewType<type_real, medium::components> field_chi,
+      type_real *dchidxl, type_real *dchidzl) const = 0;
 
   /**
    * @brief Compute the stress integrand at a particular Gauss-Lobatto-Legendre
@@ -100,8 +99,8 @@ public:
    * @return KOKKOS_FUNCTION
    */
   KOKKOS_INLINE_FUNCTION virtual void
-  compute_stress(const int &xz, const type_real &dchidxl,
-                 const type_real &dchidzl, type_real *stress_integrand_xi,
+  compute_stress(const int &xz, const type_real *dchidxl,
+                 const type_real *dchidzl, type_real *stress_integrand_xi,
                  type_real *stress_integrand_gamma) const = 0;
 
   /**
@@ -112,22 +111,25 @@ public:
    * direction
    * @param wzglll Weight of the Gauss-Lobatto-Legendre quadrature point in z
    * direction
-   * @param stress_integrand_1 Stress integrand jacobianl * (\Nabla * xixl +
-   * sigma_xz * xizl) as computed by compute_stress
-   * @param stress_integrand_2 Stress integrand jacobianl * (sigma_xz * xixl +
-   * sigma_zz * xizl) as computed by compute_stress
+   * @param stress_integrand_xi Stress integrand wrt. \f$ \xi \f$
+   * J^{\alpha\gamma} * {\rho^{\alpha\gamma}}^{-1} \partial_x \chi \partial_x
+   * \xi + \partial_z \chi * \partial_z \xi as computed by compute_stress
+   * @param stress_integrand_gamma Stress integrand wrt. \f$\gamma\f$
+   * \f$ J^{\alpha\gamma} * {\rho^{\alpha\gamma}}^{-1}
+   * \partial_x \chi \partial_x \gamma + \partial_z \chi * \partial_z \gamma \f$
+   * as computed by compute_stress
    * @param s_hprimewgll_xx Scratch view hprime_xx * wxgll
    * @param s_hprimewgll_zz Scratch view hprime_zz * wzgll
    * @param field_dot_dot Acceleration of the field subviewed at global index xz
    */
-  KOKKOS_INLINE_FUNCTION virtual void
-  update_acceleration(const int &xz, const type_real &wxglll,
-                      const type_real &wzglll,
-                      const ScratchViewType<type_real> stress_integrand_xi,
-                      const ScratchViewType<type_real> stress_integrand_gamma,
-                      const ScratchViewType<type_real> s_hprimewgll_xx,
-                      const ScratchViewType<type_real> s_hprimewgll_zz,
-                      field_type field_dot_dot) const = 0;
+  KOKKOS_INLINE_FUNCTION virtual void update_acceleration(
+      const int &xz, const type_real &wxglll, const type_real &wzglll,
+      const ScratchViewType<type_real, medium::components> stress_integrand_xi,
+      const ScratchViewType<type_real, medium::components>
+          stress_integrand_gamma,
+      const ScratchViewType<type_real, 1> s_hprimewgll_xx,
+      const ScratchViewType<type_real, 1> s_hprimewgll_zz,
+      field_type field_dot_dot) const = 0;
 
   /**
    * @brief Get the global index of the element
