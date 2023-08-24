@@ -45,7 +45,8 @@ public:
    *
    * @param xz Index of the quadrature point
    * @param stf_value Source time function value
-   * @param accel Acceleration (return value)
+   * @param accel Acceleration contribution to the global force vector by the
+   * source
    */
   KOKKOS_INLINE_FUNCTION virtual void
   compute_interaction(const int &xz, const type_real &stf_value,
@@ -54,13 +55,13 @@ public:
   /**
    * @brief Update the acceleration field
    *
-   * @param accel Acceleration as computed by
-   * compute_interaction
+   * @param accel Acceleration contribution to the global force vector by the
+   * source
    * @param field_dot_dot Acceleration field subviewed at global index
    * ibool(ispec, iz, ix)
    */
   KOKKOS_INLINE_FUNCTION virtual void
-  update_acceleration(const type_real &accel,
+  update_acceleration(const type_real *accel,
                       field_type field_dot_dot) const = 0;
 
   /**
