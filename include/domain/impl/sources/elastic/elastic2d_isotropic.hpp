@@ -38,6 +38,10 @@ class source<specfem::enums::element::dimension::dim2,
           specfem::enums::element::quadrature::static_quadrature_points<N> > {
 
 public:
+  using dimension = specfem::enums::element::dimension::dim2;
+  using medium_type = specfem::enums::element::medium::elastic;
+  using quadrature_points_type =
+      specfem::enums::element::quadrature::static_quadrature_points<N>;
   /**
    * @brief Default elemental source constructor
    *
@@ -59,6 +63,7 @@ public:
    * @param stf Pointer to the source time function object
    */
   KOKKOS_FUNCTION source(const int &ispec,
+                         const specfem::compute::properties &properties,
                          specfem::kokkos::DeviceView3d<type_real> source_array,
                          specfem::forcing_function::stf *stf);
 

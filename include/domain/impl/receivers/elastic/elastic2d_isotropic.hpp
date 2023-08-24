@@ -44,13 +44,13 @@ class receiver<
                           static_quadrature_points<NGLL> > {
 public:
   using dimension = specfem::enums::element::dimension::dim2;
-  using medium = specfem::enums::element::medium::elastic;
-  using quadrature_points =
+  using medium_type = specfem::enums::element::medium::elastic;
+  using quadrature_points_type =
       specfem::enums::element::quadrature::static_quadrature_points<NGLL>;
 
   template <typename T, int N>
   using ScratchViewType =
-      typename quadrature_points::template ScratchViewType<T, N>;
+      typename quadrature_points_type::template ScratchViewType<T, N>;
 
   KOKKOS_FUNCTION receiver() = default;
 
@@ -63,13 +63,13 @@ public:
            const specfem::compute::properties &properties,
            sv_receiver_field_type receiver_field);
 
-  KOKKOS_INLINE_FUNCTION void
-  get_field(const int xz, const int isig_step,
-            const ScratchViewType<type_real, medium::components> field,
-            const ScratchViewType<type_real, medium::components> field_dot,
-            const ScratchViewType<type_real, medium::components> field_dot_dot,
-            const ScratchViewType<type_real, 1> s_hprime_xx,
-            const ScratchViewType<type_real, 1> s_hprime_zz) const override;
+  KOKKOS_INLINE_FUNCTION void get_field(
+      const int xz, const int isig_step,
+      const ScratchViewType<type_real, medium_type::components> field,
+      const ScratchViewType<type_real, medium_type::components> field_dot,
+      const ScratchViewType<type_real, medium_type::components> field_dot_dot,
+      const ScratchViewType<type_real, 1> s_hprime_xx,
+      const ScratchViewType<type_real, 1> s_hprime_zz) const override;
 
   KOKKOS_INLINE_FUNCTION void compute_seismogram_components(
       const int xz, const int isig_step,

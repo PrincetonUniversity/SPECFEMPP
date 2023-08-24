@@ -29,8 +29,8 @@ namespace elements {
 template <class... properties> class element {
 
   using dimension = void;
-  using medium = void;
-  using quadrature_points = void;
+  using medium_type = void;
+  using quadrature_points_type = void;
 };
 
 } // namespace elements

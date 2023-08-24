@@ -26,6 +26,7 @@ KOKKOS_FUNCTION specfem::domain::impl::sources::source<
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic>::
     source(const int &ispec,
+            const specfem::compute::properties &properties,
            specfem::kokkos::DeviceView3d<type_real> source_array,
            specfem::forcing_function::stf *stf)
     : ispec(ispec), stf(stf) {

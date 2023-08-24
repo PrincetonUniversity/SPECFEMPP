@@ -55,10 +55,11 @@ public:
    * \omega_{\alpha} \omega_{\beta}  m_{\alpha, \beta} \\f$
    *
    * @param xz index of the quadrature point
-   * @return type_real mass matrix component
+   * @param mass_matrix mass matrix component
    */
-  KOKKOS_INLINE_FUNCTION virtual type_real *
-  compute_mass_matrix_component(const int &xz) const = 0;
+  KOKKOS_INLINE_FUNCTION virtual void
+  compute_mass_matrix_component(const int &xz,
+                                type_real *mass_matrix) const = 0;
 
   /**
    * @brief Compute the gradient of the field at the quadrature point xz

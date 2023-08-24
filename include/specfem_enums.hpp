@@ -317,7 +317,7 @@ public:
    */
   template <typename T, int N, specfem::enums::axes ax1,
             specfem::enums::axes ax2>
-  KOKKOS_INLINE_FUNCTION ScratchViewType<T>
+  KOKKOS_INLINE_FUNCTION ScratchViewType<T, N>
   ScratchView(scratch_memory_space &ptr) const {
     if constexpr (ax1 == specfem::enums::axes::x &&
                   ax2 == specfem::enums::axes::x) {
@@ -432,7 +432,7 @@ public:
    */
   template <typename T, int N, specfem::enums::axes ax_1,
             specfem::enums::axes ax_2>
-  KOKKOS_INLINE_FUNCTION ScratchViewType<T>
+  KOKKOS_INLINE_FUNCTION ScratchViewType<T, N>
   ScratchView(const scratch_memory_space &ptr) const {
     return ScratchViewType<T, N>(ptr);
   }
