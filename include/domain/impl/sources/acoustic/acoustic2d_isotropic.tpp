@@ -29,7 +29,7 @@ KOKKOS_FUNCTION specfem::domain::impl::sources::source<
            const specfem::compute::properties &properties,
            specfem::kokkos::DeviceView3d<type_real> source_array,
            specfem::forcing_function::stf *stf)
-    : ispec(ispec), kappa(kappa), stf(stf) {
+    : ispec(ispec), stf(stf) {
 
 #ifndef NDEBUG
   assert(source_array.extent(0) == NGLL);

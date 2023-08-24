@@ -79,9 +79,9 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic>::
     get_field(const int xz, const int isig_step,
-              const ScratchViewType<type_real, medium::components> field,
-              const ScratchViewType<type_real, medium::components> field_dot,
-              const ScratchViewType<type_real, medium::components> field_dot_dot,
+              const ScratchViewType<type_real, medium_type::components> field,
+              const ScratchViewType<type_real, medium_type::components> field_dot,
+              const ScratchViewType<type_real, medium_type::components> field_dot_dot,
               const ScratchViewType<type_real, 1> hprime_xx,
               const ScratchViewType<type_real, 1> hprime_zz) const {
 
@@ -107,17 +107,22 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
   const type_real gammazl = this->gammaz(iz, ix);
   const type_real rho_inversel = this->rho_inverse(iz, ix);
 
-  ScratchViewType<type_real, 1> active_field;
+  using sv_ScratchViewType =
+      Kokkos::Subview<ScratchViewType<type_real, medium_type::components>,
+                      std::remove_const_t<decltype(Kokkos::ALL)>,
+                      std::remove_const_t<decltype(Kokkos::ALL)>, int >;
+
+  sv_ScratchViewType active_field;
 
   switch (this->seismogram) {
   case specfem::enums::seismogram::type::displacement:
-    active_field = field;
+    active_field = Kokkos::subview(field, Kokkos::ALL, Kokkos::ALL, 0);
     break;
   case specfem::enums::seismogram::type::velocity:
-    active_field = field_dot;
+    active_field = Kokkos::subview(field_dot, Kokkos::ALL, Kokkos::ALL, 0);
     break;
   case specfem::enums::seismogram::type::acceleration:
-    active_field = field_dot_dot;
+    active_field = Kokkos::subview(field_dot_dot, Kokkos::ALL, Kokkos::ALL, 0);
     break;
   }
 
@@ -125,8 +130,8 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
   type_real dchi_dgamma = 0.0;
 
   for (int l = 0; l < NGLL; l++) {
-    dchi_dxi += hprime_xx(ix, l) * active_field(iz, l);
-    dchi_dgamma += hprime_zz(iz, l) * active_field(l, ix);
+    dchi_dxi += hprime_xx(ix, l, 0) * active_field(iz, l);
+    dchi_dgamma += hprime_zz(iz, l, 0) * active_field(l, ix);
   }
 
   // dchidx

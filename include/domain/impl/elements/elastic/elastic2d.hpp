@@ -36,8 +36,8 @@ class element<specfem::enums::element::dimension::dim2,
 
 public:
   using dimension = specfem::enums::element::dimension::dim2;
-  using medium = specfem::enums::element::medium::elastic;
-  using quadrature_points = qp_type;
+  using medium_type = specfem::enums::element::medium::elastic;
+  using quadrature_points_type = qp_type;
 
   /**
    * @brief Scratch view type as defined by the quadrature points (either at
@@ -47,7 +47,7 @@ public:
    */
   template <typename T, int N>
   using ScratchViewType =
-      typename quadrature_points::template ScratchViewType<T, N>;
+      typename quadrature_points_type::template ScratchViewType<T, N>;
 
   /**
    * @brief Compute the mass matrix component ($ m_{\alpha, \beta} $) for a
@@ -57,10 +57,11 @@ public:
    * \omega_{\alpha} \omega_{\beta}  m_{\alpha, \beta} \\f$
    *
    * @param xz index of the quadrature point
-   * @return type_real mass matrix component
+   * @param mass_matrix mass matrix component
    */
-  KOKKOS_INLINE_FUNCTION virtual type_real *
-  compute_mass_matrix_component(const int &xz) const = 0;
+  KOKKOS_INLINE_FUNCTION virtual void
+  compute_mass_matrix_component(const int &xz,
+                                type_real *mass_matrix) const = 0;
 
   /**
    * @brief Compute the gradient of the field at the quadrature point xz
@@ -79,7 +80,7 @@ public:
   compute_gradient(const int &xz,
                    const ScratchViewType<type_real, 1> s_hprime_xx,
                    const ScratchViewType<type_real, 1> s_hprime_zz,
-                   const ScratchViewType<type_real, medium::components> u,
+                   const ScratchViewType<type_real, medium_type::components> u,
                    type_real *dudxl, type_real *dudzl) const = 0;
 
   /**
@@ -100,7 +101,7 @@ public:
    * @return KOKKOS_FUNCTION
    */
   KOKKOS_INLINE_FUNCTION virtual void
-  compute_stress(const int &xz, type_real *dudxl, type_real *dudzl,
+  compute_stress(const int &xz, const type_real *dudxl, const type_real *dudzl,
                  type_real *stress_integrand_xi,
                  type_real *stress_integrand_gamma) const = 0;
 
@@ -122,14 +123,16 @@ public:
    * @param s_hprimewgll_zz Scratch view hprime_zz * wzgll
    * @param field_dot_dot Acceleration of the field subviewed at global index xz
    */
-  KOKKOS_INLINE_FUNCTION virtual void update_acceleration(
-      const int &xz, const type_real &wxglll, const type_real &wzglll,
-      const ScratchViewType<type_real, medium::components> stress_integrand_xi,
-      const ScratchViewType<type_real, medium::components>
-          stress_integrand_gamma,
-      const ScratchViewType<type_real, 1> s_hprimewgll_xx,
-      const ScratchViewType<type_real, 1> s_hprimewgll_zz,
-      field_type field_dot_dot) const = 0;
+  KOKKOS_INLINE_FUNCTION virtual void
+  update_acceleration(const int &xz, const type_real &wxglll,
+                      const type_real &wzglll,
+                      const ScratchViewType<type_real, medium_type::components>
+                          stress_integrand_xi,
+                      const ScratchViewType<type_real, medium_type::components>
+                          stress_integrand_gamma,
+                      const ScratchViewType<type_real, 1> s_hprimewgll_xx,
+                      const ScratchViewType<type_real, 1> s_hprimewgll_zz,
+                      field_type field_dot_dot) const = 0;
 
   /**
    * @brief Get the global index of the element

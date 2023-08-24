@@ -22,8 +22,8 @@ namespace receivers {
 template <class... properties> class receiver {
 
   using dimension = void;
-  using medium = void;
-  using quadrature_points = void;
+  using medium_type = void;
+  using quadrature_points_type = void;
 };
 
 } // namespace receivers

@@ -2,6 +2,10 @@
 #define _DOMAIN_TPP
 
 #include "compute/interface.hpp"
+#include "domain.hpp"
+#include "impl/elements/interface.hpp"
+#include "impl/receivers/interface.hpp"
+#include "impl/sources/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "specfem_enums.hpp"
@@ -10,29 +14,29 @@
 #include <Kokkos_ScatterView.hpp>
 
 template <typename element_type>
-static using element_container =
+using element_container =
     typename specfem::domain::impl::elements::container<element_type>;
 
 template <class dimension, class medium, class qp_type, class... traits>
-static using element_type =
+using element_type =
     typename specfem::domain::impl::elements::element<dimension, medium,
                                                       qp_type, traits...>;
 
 template <typename source_type>
-static using source_container =
+using source_container =
     typename specfem::domain::impl::sources::container<source_type>;
 
 template <class dimension, class medium, class qp_type, class... traits>
-static using source_type =
+using source_type =
     typename specfem::domain::impl::sources::source<dimension, medium, qp_type,
                                                     traits...>;
 
 template <typename receiver_type>
-static using receiver_container =
+using receiver_container =
     typename specfem::domain::impl::receivers::container<receiver_type>;
 
 template <class dimension, class medium, class qp_type, class... traits>
-static using receiver_type =
+using receiver_type =
     typename specfem::domain::impl::receivers::receiver<dimension, medium,
                                                         qp_type, traits...>;
 
@@ -75,7 +79,6 @@ void initialize_rmass_inverse(
   constexpr int components = medium::components;
   constexpr auto value = medium::value;
 
-  const auto ispec_type = properties.ispec_type;
   const int nspec = ibool.extent(0);
   const int ngllz = ibool.extent(1);
   const int ngllx = ibool.extent(2);
@@ -90,7 +93,7 @@ void initialize_rmass_inverse(
           const specfem::kokkos::DeviceTeam::member_type &team_member) {
         int ngllx, ngllz;
         quadrature_points.get_ngll(&ngllx, &ngllz);
-        const auto element = this->elements(team_member.league_rank());
+        const auto element = elements(team_member.league_rank());
         const auto ispec = element.get_ispec();
 
         Kokkos::parallel_for(
@@ -102,8 +105,9 @@ void initialize_rmass_inverse(
               sub2ind(xz, ngllx, iz, ix);
               int iglob = ibool(ispec, iz, ix);
 
-              type_real[components] mass_matrix_element =
-                  element.compute_mass_matrix_component(xz);
+              type_real mass_matrix_element[components];
+
+              element.compute_mass_matrix_component(xz, mass_matrix_element);
 
               for (int icomponent = 0; icomponent < components; icomponent++) {
                 Kokkos::single(Kokkos::PerThread(team_member), [&]() {
@@ -157,9 +161,9 @@ void assign_elemental_properties(
   specfem::kokkos::HostMirror1d<int> h_ispec_domain =
       Kokkos::create_mirror_view(ispec_domain);
 
-  elements =
-      specfem::kokkos::DeviceView1d<element_container<element_type<qp_type> > >(
-          "specfem::domain::domain::elements", nelem_domain);
+  elements = specfem::kokkos::DeviceView1d<element_container<element_type<
+      specfem::enums::element::dimension::dim2, medium, qp_type> > >(
+      "specfem::domain::domain::elements", nelem_domain);
 
   // Get ispec for each element in this domain
   int index = 0;
@@ -184,9 +188,12 @@ void assign_elemental_properties(
       "specfem::domain::allocate_memory",
       specfem::kokkos::HostRange(0, h_elements.extent(0)),
       KOKKOS_LAMBDA(const int i) {
-        h_elements(i).element = (element_type<qp_type> *)
+        h_elements(i)
+            .element = (element_type<specfem::enums::element::dimension::dim2,
+                                     medium, qp_type> *)
             Kokkos::kokkos_malloc<specfem::kokkos::DevMemSpace>(sizeof(
-                element_type<qp_type,
+                element_type<specfem::enums::element::dimension::dim2, medium,
+                             qp_type,
                              specfem::enums::element::property::isotropic>));
       });
 
@@ -199,7 +206,8 @@ void assign_elemental_properties(
         const int ispec = ispec_domain(i);
         auto &element = elements(ispec).element;
         new (element)
-            element_type<qp_type, specfem::enums::element::property::isotropic>(
+            element_type<specfem::enums::element::dimension::dim2, medium,
+                         qp_type, specfem::enums::element::property::isotropic>(
                 ispec, partial_derivatives, properties);
       });
 
@@ -207,9 +215,10 @@ void assign_elemental_properties(
 };
 
 template <class medium, class qp_type>
-void assign_source_properties(
+void initialize_sources(
+    specfem::compute::properties &properties,
     specfem::compute::partial_derivatives &partial_derivatives,
-    specfem::compute::properties &compute_sources,
+    specfem::compute::sources &compute_sources,
     specfem::kokkos::DeviceView1d<source_container<source_type<
         specfem::enums::element::dimension::dim2, medium, qp_type> > >
         &sources) {
@@ -228,9 +237,9 @@ void assign_source_properties(
     }
   }
 
-  sources =
-      specfem::kokkos::DeviceView1d<source_container<source_type<qp_type> > >(
-          "specfem::domain::domain::sources", nsources_domain);
+  sources = specfem::kokkos::DeviceView1d<source_container<source_type<
+      specfem::enums::element::dimension::dim2, medium, qp_type> > >(
+      "specfem::domain::domain::sources", nsources_domain);
 
   specfem::kokkos::DeviceView1d<int> my_sources(
       "specfem::domain::domain::my_sources", nsources_domain);
@@ -258,10 +267,13 @@ void assign_source_properties(
       "specfem::domain::domain::allocate_memory",
       specfem::kokkos::HostRange(0, nsources_domain),
       KOKKOS_LAMBDA(const int isource) {
-        h_sources(isource).source = (source_type<qp_type> *)
-            Kokkos::kokkos_malloc<specfem::kokkos::DevMemSpace>(sizeof(
-                source_type<qp_type,
-                            specfem::enums::element::property::isotropic>));
+        h_sources(isource).source =
+            (source_type<specfem::enums::element::dimension::dim2, medium,
+                         qp_type> *)
+                Kokkos::kokkos_malloc<specfem::kokkos::DevMemSpace>(sizeof(
+                    source_type<specfem::enums::element::dimension::dim2,
+                                medium, qp_type,
+                                specfem::enums::element::property::isotropic>));
       });
 
   Kokkos::deep_copy(sources, h_sources);
@@ -282,7 +294,8 @@ void assign_source_properties(
 
         auto &source = sources(isource).source;
         new (source)
-            source_type<qp_type, specfem::enums::element::property::isotropic>(
+            source_type<specfem::enums::element::dimension::dim2, medium,
+                        qp_type, specfem::enums::element::property::isotropic>(
                 ispec, properties, sv_source_array, source_time_function);
       });
 
@@ -316,8 +329,8 @@ void initialize_receivers(
 
   nreceivers_domain = nreceivers_domain * seis_types.extent(0);
 
-  receivers = specfem::kokkos::DeviceView1d<
-      receiver_container<receiver_type<qp_type> > >(
+  receivers = specfem::kokkos::DeviceView1d<receiver_container<receiver_type<
+      specfem::enums::element::dimension::dim2, medium, qp_type> > >(
       "specfem::domain::domain::receivers", nreceivers_domain);
 
   specfem::kokkos::DeviceView1d<int> my_receivers(
@@ -346,9 +359,12 @@ void initialize_receivers(
       "specfem::domain::domain::allocate_memory",
       specfem::kokkos::HostRange(0, nreceivers_domain),
       KOKKOS_LAMBDA(const int irec) {
-        h_receivers(irec).receiver = (receiver_type<qp_type> *)
+        h_receivers(irec)
+            .receiver = (receiver_type<specfem::enums::element::dimension::dim2,
+                                       medium, qp_type> *)
             Kokkos::kokkos_malloc<specfem::kokkos::DevMemSpace>(sizeof(
-                receiver_type<qp_type,
+                receiver_type<specfem::enums::element::dimension::dim2, medium,
+                              qp_type,
                               specfem::enums::element::property::isotropic>));
       });
 
@@ -380,7 +396,8 @@ void initialize_receivers(
 
         auto &receiver = receivers(inum).receiver;
         new (receiver)
-            receiver_type<qp_type,
+            receiver_type<specfem::enums::element::dimension::dim2, medium,
+                          qp_type,
                           specfem::enums::element::property::isotropic>(
                 ispec, sin_rec, cos_rec, seis_type, sv_receiver_array,
                 sv_receiver_seismogram, partial_derivatives, properties,
@@ -392,7 +409,7 @@ void initialize_receivers(
 
 template <class medium, class qp_type>
 specfem::domain::domain<medium, qp_type>::domain(
-    const int ndim, const int nglob, const qp_type &quadrature_points,
+    const int nglob, const qp_type &quadrature_points,
     specfem::compute::compute *compute,
     specfem::compute::properties material_properties,
     specfem::compute::partial_derivatives partial_derivatives,
@@ -428,6 +445,8 @@ specfem::domain::domain<medium, qp_type>::domain(
   //----------------------------------------------------------------------------
   // Initialize views
 
+  // In CUDA you can call class lambdas inside the constructors
+  // Hence I need to use this function to initialize views
   initialize_views<medium>(nglob, this->field, this->field_dot,
                            this->field_dot_dot, this->rmass_inverse);
 
@@ -448,7 +467,8 @@ specfem::domain::domain<medium, qp_type>::domain(
   // ----------------------------------------------------------------------------
   // Initialize the sources
 
-  initialize_sources(material_properties, compute_sources, this->sources);
+  initialize_sources(material_properties, partial_derivatives, compute_sources,
+                     this->sources);
 
   // ----------------------------------------------------------------------------
   // Initialize the receivers
@@ -474,9 +494,8 @@ void specfem::domain::domain<medium, qp_type>::sync_field(
 }
 
 template <class medium, class qp_type>
-void specfem::domain::domain<medium,
-                             qp_type>::sync_field_dot(specfem::sync::kind
-                                                          kind) {
+void specfem::domain::domain<medium, qp_type>::sync_field_dot(
+    specfem::sync::kind kind) {
 
   if (kind == specfem::sync::DeviceToHost) {
     Kokkos::deep_copy(h_field_dot, field_dot);
@@ -625,8 +644,8 @@ void specfem::domain::domain<medium, qp_type>::compute_stiffness_interaction() {
             [&](const int xz) {
               int iz, ix;
               sub2ind(xz, ngllx, iz, ix);
-              s_hprime_xx(iz, ix) = hprime_xx(iz, ix);
-              s_hprimewgll_xx(ix, iz) = wxgll(iz) * hprime_xx(iz, ix);
+              s_hprime_xx(iz, ix, 0) = hprime_xx(iz, ix);
+              s_hprimewgll_xx(ix, iz, 0) = wxgll(iz) * hprime_xx(iz, ix);
             });
 
         Kokkos::parallel_for(
@@ -636,8 +655,8 @@ void specfem::domain::domain<medium, qp_type>::compute_stiffness_interaction() {
             [&](const int xz) {
               int iz, ix;
               sub2ind(xz, ngllz, iz, ix);
-              s_hprime_zz(iz, ix) = hprime_zz(iz, ix);
-              s_hprimewgll_zz(ix, iz) = wzgll(iz) * hprime_zz(iz, ix);
+              s_hprime_zz(iz, ix, 0) = hprime_zz(iz, ix);
+              s_hprimewgll_zz(ix, iz, 0) = wzgll(iz) * hprime_zz(iz, ix);
             });
 
         Kokkos::parallel_for(
@@ -648,7 +667,7 @@ void specfem::domain::domain<medium, qp_type>::compute_stiffness_interaction() {
               int iz, ix;
               sub2ind(xz, ngllx, iz, ix);
               const int iglob = ibool(ispec, iz, ix);
-              s_iglob(iz, ix) = iglob;
+              s_iglob(iz, ix, 0) = iglob;
 #ifdef KOKKOS_ENABLE_CUDA
 #pragma unroll
 #endif
@@ -678,10 +697,10 @@ void specfem::domain::domain<medium, qp_type>::compute_stiffness_interaction() {
               type_real stress_integrand_gamma[components];
 
               element.compute_gradient(xz, s_hprime_xx, s_hprime_zz, s_field,
-                                       &dudxl, &dudzl);
+                                       dudxl, dudzl);
 
-              element.compute_stress(xz, &dudxl, &dudzl, &stress_integrand_xi,
-                                     &stress_integrand_gamma);
+              element.compute_stress(xz, dudxl, dudzl, stress_integrand_xi,
+                                     stress_integrand_gamma);
 #ifdef KOKKOS_ENABLE_CUDA
 #pragma unroll
 #endif
@@ -703,7 +722,7 @@ void specfem::domain::domain<medium, qp_type>::compute_stiffness_interaction() {
               int iz, ix;
               sub2ind(xz, ngllx, iz, ix);
 
-              const int iglob = s_iglob(iz, ix);
+              const int iglob = s_iglob(iz, ix, 0);
               const type_real wxglll = wxgll(ix);
               const type_real wzglll = wzgll(iz);
 
@@ -762,12 +781,12 @@ void specfem::domain::domain<medium, qp_type>::compute_source_interaction(
               sub2ind(xz, ngllx, iz, ix);
               int iglob = ibool(ispec, iz, ix);
 
-              type_real[components] accel;
+              type_real accel[components];
               auto sv_field_dot_dot =
                   Kokkos::subview(field_dot_dot, iglob, Kokkos::ALL());
 
-              source.compute_interaction(xz, stf, &accel);
-              source.update_acceleration(&accel, sv_field_dot_dot);
+              source.compute_interaction(xz, stf, accel);
+              source.update_acceleration(accel, sv_field_dot_dot);
             });
       });
 
@@ -855,7 +874,7 @@ void specfem::domain::domain<medium, qp_type>::compute_seismogram(
             [=](const int xz) {
               int iz, ix;
               sub2ind(xz, ngllx, iz, ix);
-              s_hprime_xx(iz, ix) = hprime_xx(iz, ix);
+              s_hprime_xx(iz, ix, 0) = hprime_xx(iz, ix);
             });
 
         Kokkos::parallel_for(
@@ -865,7 +884,7 @@ void specfem::domain::domain<medium, qp_type>::compute_seismogram(
             [=](const int xz) {
               int iz, ix;
               sub2ind(xz, ngllz, iz, ix);
-              s_hprime_zz(iz, ix) = hprime_zz(iz, ix);
+              s_hprime_zz(iz, ix, 0) = hprime_zz(iz, ix);
             });
 
         Kokkos::parallel_for(
@@ -925,4 +944,4 @@ void specfem::domain::domain<medium, qp_type>::compute_seismogram(
       });
 }
 
-#endif
+#endif /* DOMAIN_HPP_ */

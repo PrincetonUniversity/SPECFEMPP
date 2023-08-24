@@ -31,6 +31,9 @@ template <typename quadrature_points>
 class source<specfem::enums::element::dimension::dim2,
              specfem::enums::element::medium::acoustic, quadrature_points> {
 public:
+  using dimension = specfem::enums::element::dimension::dim2;
+  using medium_type = specfem::enums::element::medium::acoustic;
+  using quadrature_points_type = quadrature_points;
   /**
    * @brief Compute the source time function value at a given time
    *

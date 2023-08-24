@@ -15,20 +15,20 @@ class receiver<specfem::enums::element::dimension::dim2,
                specfem::enums::element::medium::elastic, qp_type> {
 public:
   using dimension = specfem::enums::element::dimension::dim2;
-  using medium = specfem::enums::element::medium::elastic;
-  using quadrature_points = qp_type;
+  using medium_type = specfem::enums::element::medium::elastic;
+  using quadrature_points_type = qp_type;
 
   template <typename T, int N>
   using ScratchViewType =
-      typename quadrature_points::template ScratchViewType<T, N>;
+      typename quadrature_points_type::template ScratchViewType<T, N>;
 
-  KOKKOS_INLINE_FUNCTION virtual void
-  get_field(const int xz, const int isig_step,
-            const ScratchViewType<type_real, medium::components> fieldx,
-            const ScratchViewType<type_real, medium::components> field_dot,
-            const ScratchViewType<type_real, medium::components> fieldx_dot_dot,
-            const ScratchViewType<type_real, 1> s_hprime_xx,
-            const ScratchViewType<type_real, 1> s_hprime_zz) const {};
+  KOKKOS_INLINE_FUNCTION virtual void get_field(
+      const int xz, const int isig_step,
+      const ScratchViewType<type_real, medium_type::components> fieldx,
+      const ScratchViewType<type_real, medium_type::components> field_dot,
+      const ScratchViewType<type_real, medium_type::components> fieldx_dot_dot,
+      const ScratchViewType<type_real, 1> s_hprime_xx,
+      const ScratchViewType<type_real, 1> s_hprime_zz) const {};
   KOKKOS_INLINE_FUNCTION virtual void compute_seismogram_components(
       const int xz, const int isig_step,
       dimension::array_type<type_real> &l_seismogram_components) const {};

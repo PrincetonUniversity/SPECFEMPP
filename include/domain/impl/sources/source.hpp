@@ -20,7 +20,11 @@ namespace sources {
  *
  * @tparam properties Properties of the source
  */
-template <class... properties> class source {};
+template <class... properties> class source {
+  using dimension = void;
+  using medium_type = void;
+  using quadrature_points_type = void;
+};
 
 } // namespace sources
 } // namespace impl
