@@ -19,17 +19,17 @@ public:
   using medium = specfem::enums::element::medium::acoustic;
   using quadrature_points = qp_type;
 
-  template <typename T>
+  template <typename T, int N>
   using ScratchViewType =
-      typename quadrature_points::template ScratchViewType<T>;
+      typename quadrature_points::template ScratchViewType<T, N>;
 
   KOKKOS_INLINE_FUNCTION virtual void
   get_field(const int xz, const int isig_step,
-            const ScratchViewType<type_real> field,
-            const ScratchViewType<type_real> field_dot,
-            const ScratchViewType<type_real> field_dot_dot,
-            const ScratchViewType<type_real> hprime_xx,
-            const ScratchViewType<type_real> hprime_zz) const {};
+            const ScratchViewType<type_real, medium::components> field,
+            const ScratchViewType<type_real, medium::components> field_dot,
+            const ScratchViewType<type_real, medium::components> field_dot_dot,
+            const ScratchViewType<type_real, 1> hprime_xx,
+            const ScratchViewType<type_real, 1> hprime_zz) const {};
   KOKKOS_INLINE_FUNCTION virtual void compute_seismogram_components(
       const int xz, const int isig_step,
       dimension::array_type<type_real> &l_seismogram_components) const {};

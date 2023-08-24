@@ -54,14 +54,11 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic>::
     get_field(const int xz, const int isig_step,
-              const ScratchViewType<type_real> fieldx,
-              const ScratchViewType<type_real> fieldz,
-              const ScratchViewType<type_real> fieldx_dot,
-              const ScratchViewType<type_real> fieldz_dot,
-              const ScratchViewType<type_real> fieldx_dot_dot,
-              const ScratchViewType<type_real> fieldz_dot_dot,
-              const ScratchViewType<type_real> s_hprime_xx,
-              const ScratchViewType<type_real> s_hprime_zz) const {
+              const ScratchViewType<type_real, medium::components> fieldx,
+              const ScratchViewType<type_real, medium::components> fieldx_dot,
+              const ScratchViewType<type_real, medium::components> fieldx_dot_dot,
+              const ScratchViewType<type_real, 1> s_hprime_xx,
+              const ScratchViewType<type_real, 1> s_hprime_zz) const {
 
 #ifndef NDEBUG
   // check that the dimensions of the fields are correct
@@ -86,21 +83,21 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
   int ix, iz;
   sub2ind(xz, NGLL, iz, ix);
 
-  ScratchViewType<type_real> active_fieldx;
-  ScratchViewType<type_real> active_fieldz;
+  ScratchViewType<type_real, 1> active_fieldx;
+  ScratchViewType<type_real, 1> active_fieldz;
 
   switch (this->seismogram) {
   case specfem::enums::seismogram::type::displacement:
-    active_fieldx = fieldx;
-    active_fieldz = fieldz;
+    active_fieldx = Kokkos::subview(field, Kokkos::ALL, Kokkos::ALL, 0);
+    active_fieldz = Kokkos::subview(field, Kokkos::ALL, Kokkos::ALL, 1);
     break;
   case specfem::enums::seismogram::type::velocity:
-    active_fieldx = fieldx_dot;
-    active_fieldz = fieldz_dot;
+    active_fieldx = Kokkos::subview(field_dot, Kokkos::ALL, Kokkos::ALL, 0);
+    active_fieldz = Kokkos::subview(field_dot, Kokkos::ALL, Kokkos::ALL, 1);
     break;
   case specfem::enums::seismogram::type::acceleration:
-    active_fieldx = fieldx_dot_dot;
-    active_fieldz = fieldz_dot_dot;
+    active_fieldx = Kokkos::subview(field_dot_dot, Kokkos::ALL, Kokkos::ALL, 0);
+    active_fieldz = Kokkos::subview(field_dot_dot, Kokkos::ALL, Kokkos::ALL, 1);
     break;
   default:
     // seismogram not supported
