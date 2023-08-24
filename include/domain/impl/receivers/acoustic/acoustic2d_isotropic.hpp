@@ -64,12 +64,13 @@ public:
            sv_receiver_field_type receiver_field);
 
   KOKKOS_INLINE_FUNCTION
-  void get_field(const int xz, const int isig_step,
-                 const ScratchViewType<type_real> field,
-                 const ScratchViewType<type_real> field_dot,
-                 const ScratchViewType<type_real> field_dot_dot,
-                 const ScratchViewType<type_real> hprime_xx,
-                 const ScratchViewType<type_real> hprime_zz) const override;
+  void
+  get_field(const int xz, const int isig_step,
+            const ScratchViewType<type_real, medium::components> field,
+            const ScratchViewType<type_real, medium::components> field_dot,
+            const ScratchViewType<type_real, medium::components> field_dot_dot,
+            const ScratchViewType<type_real, 1> hprime_xx,
+            const ScratchViewType<type_real, 1> hprime_zz) const override;
 
   KOKKOS_INLINE_FUNCTION
   void compute_seismogram_components(

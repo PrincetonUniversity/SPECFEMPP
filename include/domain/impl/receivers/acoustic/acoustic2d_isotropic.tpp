@@ -79,11 +79,11 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic>::
     get_field(const int xz, const int isig_step,
-              const ScratchViewType<type_real> field,
-              const ScratchViewType<type_real> field_dot,
-              const ScratchViewType<type_real> field_dot_dot,
-              const ScratchViewType<type_real> hprime_xx,
-              const ScratchViewType<type_real> hprime_zz) const {
+              const ScratchViewType<type_real, medium::components> field,
+              const ScratchViewType<type_real, medium::components> field_dot,
+              const ScratchViewType<type_real, medium::components> field_dot_dot,
+              const ScratchViewType<type_real, 1> hprime_xx,
+              const ScratchViewType<type_real, 1> hprime_zz) const {
 
 #ifndef NDEBUG
   assert(field.extent(0) == NGLL);
@@ -107,7 +107,7 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
   const type_real gammazl = this->gammaz(iz, ix);
   const type_real rho_inversel = this->rho_inverse(iz, ix);
 
-  ScratchViewType<type_real> active_field;
+  ScratchViewType<type_real, 1> active_field;
 
   switch (this->seismogram) {
   case specfem::enums::seismogram::type::displacement:
