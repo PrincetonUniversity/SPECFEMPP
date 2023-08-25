@@ -117,31 +117,29 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
   const type_real xizl = this->xiz(iz, ix);
   const type_real gammazl = this->gammaz(iz, ix);
 
-  type_real sum_hprime_x1 = 0.0;
-  type_real sum_hprime_x3 = 0.0;
-  type_real sum_hprime_z1 = 0.0;
-  type_real sum_hprime_z3 = 0.0;
+  type_real du_dxi[medium_type::components] = { 0.0, 0.0 };
+  type_real du_dgamma[medium_type::components] = { 0.0, 0.0 };
 
 #ifdef KOKKOS_ENABLE_CUDA
 #pragma unroll
 #endif
   for (int l = 0; l < NGLL; l++) {
-    sum_hprime_x1 += s_hprime_xx(ix, l, 0) * u(iz, l, 0);
-    sum_hprime_x3 += s_hprime_xx(ix, l, 0) * u(iz, l, 1);
-    sum_hprime_z1 += s_hprime_zz(iz, l, 0) * u(l, ix, 0);
-    sum_hprime_z3 += s_hprime_zz(iz, l, 0) * u(l, ix, 1);
+    du_dxi[0] += s_hprime_xx(ix, l, 0) * u(iz, l, 0);
+    du_dxi[1] += s_hprime_xx(ix, l, 0) * u(iz, l, 1);
+    du_dgamma[0] += s_hprime_zz(iz, l, 0) * u(l, ix, 0);
+    du_dgamma[1] += s_hprime_zz(iz, l, 0) * u(l, ix, 1);
   }
   // duxdx
-  dudxl[0] = xixl * sum_hprime_x1 + gammaxl * sum_hprime_x3;
+  dudxl[0] = xixl * du_dxi[0] + gammaxl * du_dxi[1];
 
   // duxdz
-  dudzl[0] = xizl * sum_hprime_x1 + gammazl * sum_hprime_x3;
+  dudzl[0] = xizl * du_dxi[0] + gammazl * du_dxi[1];
 
   // duzdx
-  dudxl[1] = xixl * sum_hprime_z1 + gammaxl * sum_hprime_z3;
+  dudxl[1] = xixl * du_dgamma[0] + gammaxl * du_dgamma[1];
 
   // duzdz
-  dudzl[1] = xizl * sum_hprime_z1 + gammazl * sum_hprime_z3;
+  dudzl[1] = xizl * du_dgamma[0] + gammazl * du_dgamma[1];
 
   return;
 }
