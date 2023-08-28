@@ -33,6 +33,7 @@ KOKKOS_FUNCTION specfem::domain::impl::elements::element<
             const specfem::compute::properties properties)
     : ispec(ispec) {
 
+#ifndef NDEBUG
   assert(partial_derivatives.xix.extent(1) == NGLL);
   assert(partial_derivatives.xix.extent(2) == NGLL);
   assert(partial_derivatives.gammax.extent(1) == NGLL);
@@ -47,6 +48,9 @@ KOKKOS_FUNCTION specfem::domain::impl::elements::element<
   // Properties
   assert(properties.rho_inverse.extent(1) == NGLL);
   assert(properties.rho_inverse.extent(2) == NGLL);
+  assert(properties.kappa.extent(1) == NGLL);
+  assert(properties.kappa.extent(2) == NGLL);
+#endif
 
   // Assert wave property. Acoustic only in sh. For now.
   // assert(specfem::globals::simulation_wave == specfem::wave::sh);
@@ -63,6 +67,28 @@ KOKKOS_FUNCTION specfem::domain::impl::elements::element<
                                    Kokkos::ALL(), Kokkos::ALL());
   this->rho_inverse = Kokkos::subview(properties.rho_inverse, ispec,
                                       Kokkos::ALL(), Kokkos::ALL());
+  this->kappa =
+      Kokkos::subview(properties.kappa, ispec, Kokkos::ALL(), Kokkos::ALL());
+  return;
+}
+
+template <int NGLL>
+KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
+    specfem::enums::element::dimension::dim2,
+    specfem::enums::element::medium::acoustic,
+    specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
+    specfem::enums::element::property::isotropic>::
+    compute_mass_matrix_component(const int &xz, type_real* mass_matrix) const{
+  int ix, iz;
+  sub2ind(xz, NGLL, iz, ix);
+
+  constexpr int components = medium_type::components;
+
+  static_assert(components == 1,
+                "Acoustic medium has only one component");
+
+  mass_matrix[0] = this->jacobian(iz, ix) / this->kappa(iz, ix);
+
   return;
 }
 
@@ -73,9 +99,9 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic>::
     compute_gradient(const int &xz,
-                     const StaticScratchViewType<NGLL, type_real> s_hprime_xx,
-                     const StaticScratchViewType<NGLL, type_real> s_hprime_zz,
-                     const StaticScratchViewType<NGLL, type_real> field_chi,
+                     const ScratchViewType<type_real, 1> s_hprime_xx,
+                     const ScratchViewType<type_real, 1> s_hprime_zz,
+                     const ScratchViewType<type_real, medium_type::components> field_chi,
                      type_real *dchidxl, type_real *dchidzl) const {
 
   int ix, iz;
@@ -89,16 +115,19 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
   type_real dchi_dxi = 0.0;
   type_real dchi_dgamma = 0.0;
 
+#ifdef KOKKOS_ENABLE_CUDA
+#pragma unroll
+#endif
   for (int l = 0; l < NGLL; l++) {
-    dchi_dxi += s_hprime_xx(ix, l) * field_chi(iz, l);
-    dchi_dgamma += s_hprime_zz(iz, l) * field_chi(l, ix);
+    dchi_dxi += s_hprime_xx(ix, l, 0) * field_chi(iz, l, 0);
+    dchi_dgamma += s_hprime_zz(iz, l, 0) * field_chi(l, ix, 0);
   }
 
   // dchidx
-  *dchidxl = dchi_dxi * xixl + dchi_dgamma * gammaxl;
+  dchidxl[0] = dchi_dxi * xixl + dchi_dgamma * gammaxl;
 
   // dchidz
-  *dchidzl = dchi_dxi * xizl + dchi_dgamma * gammazl;
+  dchidzl[0] = dchi_dxi * xizl + dchi_dgamma * gammazl;
 
   return;
 }
@@ -109,8 +138,8 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
     specfem::enums::element::medium::acoustic,
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic>::
-    compute_stress(const int &xz, const type_real &dchidxl,
-                   const type_real &dchidzl, type_real *stress_integrand_xi,
+    compute_stress(const int &xz, const type_real *dchidxl,
+                   const type_real *dchidzl, type_real *stress_integrand_xi,
                    type_real *stress_integrand_gamma) const {
 
   int ix, iz;
@@ -133,8 +162,9 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
   // for the gradient of w^{\alpha\gamma}. In this->update_acceleration
   // the weights for the integration and the interpolated values for the
   // first derivatives of the lagrange polynomials are then collapsed
-  *stress_integrand_xi = fac * (xixl * dchidxl + xizl * dchidzl);
-  *stress_integrand_gamma = fac * (gammaxl * dchidxl + gammazl * dchidzl);
+  stress_integrand_xi[0] = fac * (xixl * dchidxl[0] + xizl * dchidzl[0]);
+  stress_integrand_gamma[0] =
+      fac * (gammaxl * dchidxl[0] + gammazl * dchidzl[0]);
 
   return;
 }
@@ -145,23 +175,27 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
     specfem::enums::element::medium::acoustic,
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic>::
-    update_acceleration(
-        const int &xz, const type_real &wxglll, const type_real &wzglll,
-        const StaticScratchViewType<NGLL, type_real> stress_integrand_xi,
-        const StaticScratchViewType<NGLL, type_real> stress_integrand_gamma,
-        const StaticScratchViewType<NGLL, type_real> s_hprimewgll_xx,
-        const StaticScratchViewType<NGLL, type_real> s_hprimewgll_zz,
-        field_type field_dot_dot) const {
+    update_acceleration(const int &xz, const type_real &wxglll,
+                        const type_real &wzglll,
+                        const ScratchViewType<type_real, medium_type::components>
+                            stress_integrand_xi,
+                        const ScratchViewType<type_real, medium_type::components>
+                            stress_integrand_gamma,
+                        const ScratchViewType<type_real, 1> s_hprimewgll_xx,
+                        const ScratchViewType<type_real, 1> s_hprimewgll_zz,
+                        field_type field_dot_dot) const {
 
   int ix, iz;
   sub2ind(xz, NGLL, iz, ix);
   type_real temp1l = 0.0;
   type_real temp2l = 0.0;
 
+#ifdef KOKKOS_ENABLE_CUDA
 #pragma unroll
+#endif
   for (int l = 0; l < NGLL; l++) {
-    temp1l += s_hprimewgll_xx(ix, l) * stress_integrand_xi(iz, l);
-    temp2l += s_hprimewgll_zz(iz, l) * stress_integrand_gamma(l, ix);
+    temp1l += s_hprimewgll_xx(ix, l, 0) * stress_integrand_xi(iz, l, 0);
+    temp2l += s_hprimewgll_zz(iz, l, 0) * stress_integrand_gamma(l, ix, 0);
   }
 
   const type_real sum_terms = -1.0 * ((wzglll * temp1l) + (wxglll * temp2l));

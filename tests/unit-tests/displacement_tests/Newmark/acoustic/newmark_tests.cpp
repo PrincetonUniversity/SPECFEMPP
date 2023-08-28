@@ -119,13 +119,13 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
   specfem::domain::domain<
       specfem::enums::element::medium::acoustic,
       specfem::enums::element::quadrature::static_quadrature_points<5> >
-      acoustic_domain_static(ndim, nglob, qp5, &compute, material_properties,
+      acoustic_domain_static(nglob, qp5, &compute, material_properties,
                              partial_derivatives, compute_sources,
                              compute_receivers, gllx, gllz);
   specfem::domain::domain<
       specfem::enums::element::medium::elastic,
       specfem::enums::element::quadrature::static_quadrature_points<5> >
-      elastic_domain_static(ndim, nglob, qp5, &compute, material_properties,
+      elastic_domain_static(nglob, qp5, &compute, material_properties,
                             partial_derivatives, compute_sources,
                             compute_receivers, gllx, gllz);
 
