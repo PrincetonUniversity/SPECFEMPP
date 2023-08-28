@@ -5,6 +5,7 @@
 #include "IO/fortran/read_mesh_database.hpp"
 #include "boundaries/boundaries.hpp"
 #include "compute/interface.hpp"
+#include "coupled_interfaces/coupled_interfaces.hpp"
 #include "elements/elements.hpp"
 #include "kokkos_abstractions.h"
 #include "material/interface.hpp"
@@ -39,12 +40,6 @@ struct mesh {
                                             ///< material information for
                                             ///< every spectral element
 
-  // specfem::mesh::interfaces::interface interface; ///< Struct used to store
-  // data
-  //                                                 ///< required to implement
-  //                                                 MPI
-  //                                                 ///< interfaces
-
   specfem::mesh::boundaries::absorbing_boundary abs_boundary; ///< Struct used
                                                               ///< to store data
                                                               ///< required to
@@ -54,6 +49,10 @@ struct mesh {
 
   specfem::mesh::properties parameters; ///< Struct to store simulation launch
                                         ///< parameters
+
+  specfem::mesh::coupled_interfaces::coupled_interfaces
+      coupled_interfaces; ///< Struct to store
+                          ///< coupled interfaces
 
   specfem::mesh::surfaces::acoustic_free_surface
       acfree_surface; ///< Struct used to store data required to implement
