@@ -39,6 +39,12 @@ template <typename base_element> struct container {
     return;
   }
 
+  template <typename... Args>
+  KOKKOS_INLINE_FUNCTION void
+  compute_mass_matrix_component(Args... values) const {
+    return this->element->compute_mass_matrix_component(values...);
+  }
+
   /**
    * @brief Wrapper to compute gradients method of the element
    *

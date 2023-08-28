@@ -54,29 +54,20 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic>::
     get_field(const int xz, const int isig_step,
-              const ScratchViewType<type_real> fieldx,
-              const ScratchViewType<type_real> fieldz,
-              const ScratchViewType<type_real> fieldx_dot,
-              const ScratchViewType<type_real> fieldz_dot,
-              const ScratchViewType<type_real> fieldx_dot_dot,
-              const ScratchViewType<type_real> fieldz_dot_dot,
-              const ScratchViewType<type_real> s_hprime_xx,
-              const ScratchViewType<type_real> s_hprime_zz) const {
+              const ScratchViewType<type_real, medium_type::components> field,
+              const ScratchViewType<type_real, medium_type::components> field_dot,
+              const ScratchViewType<type_real, medium_type::components> field_dot_dot,
+              const ScratchViewType<type_real, 1> s_hprime_xx,
+              const ScratchViewType<type_real, 1> s_hprime_zz) const {
 
 #ifndef NDEBUG
   // check that the dimensions of the fields are correct
-  assert(fieldx.extent(0) == NGLL);
-  assert(fieldx.extent(1) == NGLL);
-  assert(fieldz.extent(0) == NGLL);
-  assert(fieldz.extent(1) == NGLL);
-  assert(fieldx_dot.extent(0) == NGLL);
-  assert(fieldx_dot.extent(1) == NGLL);
-  assert(fieldz_dot.extent(0) == NGLL);
-  assert(fieldz_dot.extent(1) == NGLL);
-  assert(fieldx_dot_dot.extent(0) == NGLL);
-  assert(fieldx_dot_dot.extent(1) == NGLL);
-  assert(fieldz_dot_dot.extent(0) == NGLL);
-  assert(fieldz_dot_dot.extent(1) == NGLL);
+  assert(field.extent(0) == NGLL);
+  assert(field.extent(1) == NGLL);
+  assert(field_dot.extent(0) == NGLL);
+  assert(field_dot.extent(1) == NGLL);
+  assert(field_dot_dot.extent(0) == NGLL);
+  assert(field_dot_dot.extent(1) == NGLL);
   assert(s_hprime_xx.extent(0) == NGLL);
   assert(s_hprime_xx.extent(1) == NGLL);
   assert(s_hprime_zz.extent(0) == NGLL);
@@ -86,21 +77,27 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
   int ix, iz;
   sub2ind(xz, NGLL, iz, ix);
 
-  ScratchViewType<type_real> active_fieldx;
-  ScratchViewType<type_real> active_fieldz;
+  using sv_ScratchViewType =
+      Kokkos::Subview<ScratchViewType<type_real, medium_type::components>,
+                      std::remove_const_t<decltype(Kokkos::ALL)>,
+                      std::remove_const_t<decltype(Kokkos::ALL)>,
+                      int>;
+
+  sv_ScratchViewType active_fieldx;
+  sv_ScratchViewType active_fieldz;
 
   switch (this->seismogram) {
   case specfem::enums::seismogram::type::displacement:
-    active_fieldx = fieldx;
-    active_fieldz = fieldz;
+    active_fieldx = Kokkos::subview(field, Kokkos::ALL, Kokkos::ALL, 0);
+    active_fieldz = Kokkos::subview(field, Kokkos::ALL, Kokkos::ALL, 1);
     break;
   case specfem::enums::seismogram::type::velocity:
-    active_fieldx = fieldx_dot;
-    active_fieldz = fieldz_dot;
+    active_fieldx = Kokkos::subview(field_dot, Kokkos::ALL, Kokkos::ALL, 0);
+    active_fieldz = Kokkos::subview(field_dot, Kokkos::ALL, Kokkos::ALL, 1);
     break;
   case specfem::enums::seismogram::type::acceleration:
-    active_fieldx = fieldx_dot_dot;
-    active_fieldz = fieldz_dot_dot;
+    active_fieldx = Kokkos::subview(field_dot_dot, Kokkos::ALL, Kokkos::ALL, 0);
+    active_fieldz = Kokkos::subview(field_dot_dot, Kokkos::ALL, Kokkos::ALL, 1);
     break;
   default:
     // seismogram not supported

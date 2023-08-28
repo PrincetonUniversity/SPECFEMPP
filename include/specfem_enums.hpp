@@ -253,10 +253,14 @@ public:
    * For dynamic quadrature points, the scratch view type is a 2D dynamic view
    * stored on scratch space.
    *
-   * @tparam T
+   * @tparam T Type of the scratch view
+   * @tparam N Number of components
    */
-  template <typename T>
-  using ScratchViewType = specfem::kokkos::DeviceScratchView2d<T>;
+  template <typename T, int N>
+  using ScratchViewType =
+      Kokkos::View<T **[N], Kokkos::LayoutRight,
+                   specfem::kokkos::DevScratchSpace,
+                   Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
 
   /**
    * @brief Deleted default constructor
@@ -288,16 +292,17 @@ public:
    * @tparam ax2 Axis 2
    * @return std::size_t Size of the scratch memory space
    */
-  template <typename T, specfem::enums::axes ax1, specfem::enums::axes ax2>
+  template <typename T, int N, specfem::enums::axes ax1,
+            specfem::enums::axes ax2>
   std::size_t shmem_size() const {
     if constexpr (ax1 == specfem::enums::axes::x &&
                   ax2 == specfem::enums::axes::x) {
-      return ScratchViewType<T>::shmem_size(this->ngllx, this->ngllx);
+      return ScratchViewType<T, N>::shmem_size(this->ngllx, this->ngllx);
     } else if constexpr (ax1 == specfem::enums::axes::z &&
                          ax2 == specfem::enums::axes::z) {
-      return ScratchViewType<T>::shmem_size(this->ngllz, this->ngllz);
+      return ScratchViewType<T, N>::shmem_size(this->ngllz, this->ngllz);
     } else {
-      return ScratchViewType<T>::shmem_size(this->ngllz, this->ngllx);
+      return ScratchViewType<T, N>::shmem_size(this->ngllz, this->ngllx);
     }
   }
 
@@ -310,17 +315,18 @@ public:
    * @param ptr Address in the scratch memory space to allocate the scratch view
    * @return ScratchViewType<T> Scratch view allocated at the address ptr
    */
-  template <typename T, specfem::enums::axes ax1, specfem::enums::axes ax2>
-  KOKKOS_INLINE_FUNCTION ScratchViewType<T>
+  template <typename T, int N, specfem::enums::axes ax1,
+            specfem::enums::axes ax2>
+  KOKKOS_INLINE_FUNCTION ScratchViewType<T, N>
   ScratchView(scratch_memory_space &ptr) const {
     if constexpr (ax1 == specfem::enums::axes::x &&
                   ax2 == specfem::enums::axes::x) {
-      return ScratchViewType<T>(ptr, this->ngllx, this->ngllx);
+      return ScratchViewType<T, N>(ptr, this->ngllx, this->ngllx);
     } else if constexpr (ax1 == specfem::enums::axes::z &&
                          ax2 == specfem::enums::axes::z) {
-      return ScratchViewType<T>(ptr, this->ngllz, this->ngllz);
+      return ScratchViewType<T, N>(ptr, this->ngllz, this->ngllz);
     } else {
-      return ScratchViewType<T>(ptr, this->ngllz, this->ngllx);
+      return ScratchViewType<T, N>(ptr, this->ngllz, this->ngllx);
     }
   };
 
@@ -359,11 +365,9 @@ public:
 };
 
 // Define the number of quadrature points at compile time
-template <int N> class static_quadrature_points {
+template <int NGLL> class static_quadrature_points {
 
 public:
-  constexpr static int NGLL = N; ///< Number of quadrature points
-
   /**
    * @brief Scratch memory space type
    *
@@ -385,10 +389,11 @@ public:
    * NGLL defined at compile time.
    *
    * @tparam T Type of the scratch view
+   * @tparam N Number of components
    */
-  template <typename T>
+  template <typename T, int N>
   using ScratchViewType =
-      specfem::kokkos::StaticDeviceScratchView2d<T, NGLL, NGLL>;
+      specfem::kokkos::StaticDeviceScratchView3d<T, NGLL, NGLL, N>;
 
   /**
    * @brief Construct a new static quadrature points object
@@ -410,9 +415,10 @@ public:
    * @tparam ax_2 Axis 2
    * @return std::size_t Size of the scratch memory space
    */
-  template <typename T, specfem::enums::axes ax_1, specfem::enums::axes ax_2>
+  template <typename T, int N, specfem::enums::axes ax_1,
+            specfem::enums::axes ax_2>
   std::size_t shmem_size() const {
-    return ScratchViewType<T>::shmem_size();
+    return ScratchViewType<T, N>::shmem_size();
   }
 
   /**
@@ -424,10 +430,11 @@ public:
    * @param ptr Address in the scratch memory space to allocate the scratch view
    * @return ScratchViewType<T> Scratch view allocated at the address ptr
    */
-  template <typename T, specfem::enums::axes ax_1, specfem::enums::axes ax_2>
-  KOKKOS_INLINE_FUNCTION ScratchViewType<T>
+  template <typename T, int N, specfem::enums::axes ax_1,
+            specfem::enums::axes ax_2>
+  KOKKOS_INLINE_FUNCTION ScratchViewType<T, N>
   ScratchView(const scratch_memory_space &ptr) const {
-    return ScratchViewType<T>(ptr);
+    return ScratchViewType<T, N>(ptr);
   }
 
   /**
@@ -476,7 +483,7 @@ public:
   constexpr static specfem::enums::element::type value =
       specfem::enums::element::elastic;
   /**
-   * @brief constexpr defining number of components for this medium.
+   * @brief Number of components for this medium
    *
    */
   constexpr static int components = 2;

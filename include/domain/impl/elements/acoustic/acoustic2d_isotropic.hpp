@@ -27,30 +27,33 @@ namespace elements {
  *
  * @tparam N Number of Gauss-Lobatto-Legendre quadrature points
  */
-template <int N>
-class element<specfem::enums::element::dimension::dim2,
-              specfem::enums::element::medium::acoustic,
-              specfem::enums::element::quadrature::static_quadrature_points<N>,
-              specfem::enums::element::property::isotropic>
-    : public element<
-          specfem::enums::element::dimension::dim2,
-          specfem::enums::element::medium::acoustic,
-          specfem::enums::element::quadrature::static_quadrature_points<N> > {
+template <int NGLL>
+class element<
+    specfem::enums::element::dimension::dim2,
+    specfem::enums::element::medium::acoustic,
+    specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
+    specfem::enums::element::property::isotropic>
+    : public element<specfem::enums::element::dimension::dim2,
+                     specfem::enums::element::medium::acoustic,
+                     specfem::enums::element::quadrature::
+                         static_quadrature_points<NGLL> > {
 public:
+  using dimension = specfem::enums::element::dimension::dim2;
+  using medium_type = specfem::enums::element::medium::acoustic;
   /**
    * @brief Number of Gauss-Lobatto-Legendre quadrature points
    */
-  using quadrature_points =
-      specfem::enums::element::quadrature::static_quadrature_points<N>;
+  using quadrature_points_type =
+      specfem::enums::element::quadrature::static_quadrature_points<NGLL>;
 
   /**
    * @brief Use the scratch view type from the quadrature points
    *
    * @tparam T Type of the scratch view
    */
-  template <typename T>
+  template <typename T, int N>
   using ScratchViewType =
-      typename quadrature_points::template ScratchViewType<T>;
+      typename quadrature_points_type::template ScratchViewType<T, N>;
 
   /**
    * @brief Construct a new element object
@@ -72,6 +75,20 @@ public:
           const specfem::compute::properties properties);
 
   /**
+   * @brief Compute the mass matrix component ($ m_{\alpha, \beta} $) for a
+   * given quadrature point
+   *
+   * Mass matrix is given by \\f$ M =  \sum_{\Omega_e} \sum_{\alpha, \beta}
+   * \omega_{\alpha} \omega_{\beta}  m_{\alpha, \beta} \\f$
+   *
+   * @param xz index of the quadrature point
+   * @param mass_matrix mass matrix component
+   */
+  KOKKOS_INLINE_FUNCTION
+  void compute_mass_matrix_component(const int &xz,
+                                     type_real *mass_matrix) const override;
+
+  /**
    * @brief Compute the gradient of the field at the quadrature point xz
    * (Komatisch & Tromp, 2002-I., eq. 22(theory, OC),44,45)
    *
@@ -84,11 +101,11 @@ public:
    * @param dchidzl Computed partial derivative of field \f$ \frac{\partial
    * \chi}{\partial z} \f$
    */
-  KOKKOS_INLINE_FUNCTION void
-  compute_gradient(const int &xz, const ScratchViewType<type_real> s_hprime_xx,
-                   const ScratchViewType<type_real> s_hprime_zz,
-                   const ScratchViewType<type_real> field_chi,
-                   type_real *dchidxl, type_real *dchidzl) const override;
+  KOKKOS_INLINE_FUNCTION void compute_gradient(
+      const int &xz, const ScratchViewType<type_real, 1> s_hprime_xx,
+      const ScratchViewType<type_real, 1> s_hprime_zz,
+      const ScratchViewType<type_real, medium_type::components> field_chi,
+      type_real *dchidxl, type_real *dchidzl) const override;
 
   /**
    * @brief Compute the stress integrand at a particular Gauss-Lobatto-Legendre
@@ -112,8 +129,8 @@ public:
    * @return KOKKOS_FUNCTION
    */
   KOKKOS_INLINE_FUNCTION void
-  compute_stress(const int &xz, const type_real &dchidxl,
-                 const type_real &dchidzl, type_real *stress_integrand_xi,
+  compute_stress(const int &xz, const type_real *dchidxl,
+                 const type_real *dchidzl, type_real *stress_integrand_xi,
                  type_real *stress_integrand_gamma) const override;
 
   /**
@@ -127,12 +144,12 @@ public:
    * direction
    * @param stress_integrand_xi Stress integrand  wrt. \f$ \xi \f$
    * \f$ J^{\alpha\gamma} * {\rho^{\alpha\gamma}}^{-1}
-   * \partial_x \chi \partial_x \xi
-   * + \partial_z \chi * \partial_z \xi \f$
+   * \partial_x \chi \partial_x \xi + \partial_z \chi * \partial_z \xi \f$ as
+   * computed by compute_stress
    * @param stress_integrand_gamma Stress integrand  wrt. \f$\gamma\f$
    * \f$ J^{\alpha\gamma} * {\rho^{\alpha\gamma}}^{-1}
-   * \partial_x \chi \partial_x \gamma
-   * + \partial_z \chi * \partial_z \gamma \f$
+   * \partial_x \chi \partial_x \gamma + \partial_z \chi * \partial_z \gamma \f$
+   * as computed by compute_stress
    * @param s_hprimewgll_xx Scratch view hprime_xx * wxgll
    * @param s_hprimewgll_zz Scratch view hprime_zz * wzgll
    * @param field_dot_dot Acceleration of the field subviewed at global index xz
@@ -140,10 +157,12 @@ public:
   KOKKOS_INLINE_FUNCTION void
   update_acceleration(const int &xz, const type_real &wxglll,
                       const type_real &wzglll,
-                      const ScratchViewType<type_real> stress_integrand_xi,
-                      const ScratchViewType<type_real> stress_integrand_gamma,
-                      const ScratchViewType<type_real> s_hprimewgll_xx,
-                      const ScratchViewType<type_real> s_hprimewgll_zz,
+                      const ScratchViewType<type_real, medium_type::components>
+                          stress_integrand_xi,
+                      const ScratchViewType<type_real, medium_type::components>
+                          stress_integrand_gamma,
+                      const ScratchViewType<type_real, 1> s_hprimewgll_xx,
+                      const ScratchViewType<type_real, 1> s_hprimewgll_zz,
                       field_type field_dot_dot) const override;
 
   /**
@@ -161,6 +180,7 @@ private:
   specfem::kokkos::DeviceView2d<type_real> gammaz;   ///< gammaz
   specfem::kokkos::DeviceView2d<type_real> jacobian; ///< jacobian
   specfem::kokkos::DeviceView2d<type_real> rho_inverse; ///< rho inverse
+  specfem::kokkos::DeviceView2d<type_real> kappa;       ///< kappa
 };
 } // namespace elements
 } // namespace impl

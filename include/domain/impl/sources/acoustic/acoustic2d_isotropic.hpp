@@ -38,6 +38,10 @@ class source<specfem::enums::element::dimension::dim2,
           specfem::enums::element::quadrature::static_quadrature_points<N> > {
 
 public:
+  using dimension = specfem::enums::element::dimension::dim2;
+  using medium_type = specfem::enums::element::medium::acoustic;
+  using quadrature_points_type =
+      specfem::enums::element::quadrature::static_quadrature_points<N>;
   /**
    * @brief Default elemental source constructor
    *
@@ -60,7 +64,7 @@ public:
    * @param stf Pointer to the source time function object
    */
   KOKKOS_FUNCTION source(const int &ispec,
-                         const specfem::kokkos::DeviceView2d<type_real> &kappa,
+                         const specfem::compute::properties &properties,
                          specfem::kokkos::DeviceView3d<type_real> source_array,
                          specfem::forcing_function::stf *stf);
 
@@ -70,8 +74,8 @@ public:
    *
    * @param xz Quadrature point index in the element
    * @param stf_value Value of the source time function at the current time step
-   * @param accel Acceleration in the x direction at the quadrature point
-   * (return value)
+   * @param accel Acceleration contribution to the global force vector by the
+   * source
    */
   KOKKOS_INLINE_FUNCTION void
   compute_interaction(const int &xz, const type_real &stf_value,
@@ -90,13 +94,13 @@ public:
   /**
    * @brief Update the acceleration at the quadrature point xz
    *
-   * @param accel Acceleration at the quadrature point as
-   * computed by compute_interaction
+   * @param accel Acceleration contribution to the global force vector by the
+   * source
    * @param field_dot_dot Acceleration field subviewed at global index
    * ibool(ispec, iz, ix)
    */
   KOKKOS_INLINE_FUNCTION void
-  update_acceleration(const type_real &accel,
+  update_acceleration(const type_real *accel,
                       field_type field_dot_dot) const override;
 
   /**

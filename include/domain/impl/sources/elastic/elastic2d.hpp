@@ -31,6 +31,9 @@ template <typename quadrature_points>
 class source<specfem::enums::element::dimension::dim2,
              specfem::enums::element::medium::elastic, quadrature_points> {
 public:
+  using dimension = specfem::enums::element::dimension::dim2;
+  using medium_type = specfem::enums::element::medium::elastic;
+  using quadrature_points_type = quadrature_points;
   /**
    * @brief Compute the source time function value at a given time
    *
@@ -45,25 +48,23 @@ public:
    *
    * @param xz Index of the quadrature point
    * @param stf_value Source time function value
-   * @param accelx Acceleration in the x direction (return value)
-   * @param accelz Acceleration in the z direction (return value)
+   * @param accel Acceleration contribution to the global force vector by the
+   * source
    */
   KOKKOS_INLINE_FUNCTION virtual void
   compute_interaction(const int &xz, const type_real &stf_value,
-                      type_real *accelx, type_real *accelz) const = 0;
+                      type_real *accel) const = 0;
 
   /**
    * @brief Update the acceleration field
    *
-   * @param accelx Acceleration in the x direction as computed by
-   * compute_interaction
-   * @param accelz Acceleration in the z direction as computed by
-   * compute_interaction
+   * @param accel Acceleration contribution to the global force vector by the
+   * source
    * @param field_dot_dot Acceleration field subviewed at global index
    * ibool(ispec, iz, ix)
    */
   KOKKOS_INLINE_FUNCTION virtual void
-  update_acceleration(const type_real &accelx, const type_real &accelz,
+  update_acceleration(const type_real *accel,
                       field_type field_dot_dot) const = 0;
 
   /**

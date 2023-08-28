@@ -130,7 +130,7 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
   specfem::domain::domain<
       specfem::enums::element::medium::elastic,
       specfem::enums::element::quadrature::static_quadrature_points<5> >
-      elastic_domain_static(ndim, nglob, qp5, &compute, material_properties,
+      elastic_domain_static(nglob, qp5, &compute, material_properties,
                             partial_derivatives, specfem::compute::sources(),
                             compute_receivers, gllx, gllz);
 
