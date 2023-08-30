@@ -12,7 +12,7 @@ public:
   elastic_poroelastic(){};
   elastic_poroelastic(const int num_interfaces, std::ifstream &stream,
                       const specfem::MPI::MPI *mpi);
-  int num_interfaces;
+  int num_interfaces = 0;
   specfem::kokkos::HostView1d<int> elastic_ispec;
   specfem::kokkos::HostView1d<int> poroelastic_ispec;
 };
