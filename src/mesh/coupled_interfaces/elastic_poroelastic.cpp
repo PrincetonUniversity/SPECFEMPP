@@ -16,8 +16,8 @@ specfem::mesh::coupled_interfaces::elastic_poroelastic::elastic_poroelastic(
   for (int i = 0; i < num_interfaces; i++) {
     specfem::fortran_IO::fortran_read_line(stream, &poroelastic_ispec_l,
                                            &elastic_ispec_l);
-    elastic_ispec(i) = elastic_ispec_l;
-    poroelastic_ispec(i) = poroelastic_ispec_l;
+    elastic_ispec(i) = elastic_ispec_l - 1;
+    poroelastic_ispec(i) = poroelastic_ispec_l - 1;
   }
 
   return;

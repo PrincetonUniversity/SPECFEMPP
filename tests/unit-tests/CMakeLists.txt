@@ -308,6 +308,23 @@ target_link_libraries(
   -lpthread -lm
 )
 
+add_executable(
+  compute_coupled_interfaces_tests
+  compute/coupled_interfaces/coupled_interfaces_tests.cpp
+)
+
+target_link_libraries(
+  compute_coupled_interfaces_tests
+  quadrature
+  mesh
+  yaml-cpp
+  kokkos_environment
+  mpi_environment
+  compute
+  compare_arrays
+  -lpthread -lm
+)
+
 # Link to gtest only if MPI is enabled
 if (NOT MPI_PARALLEL)
   include(GoogleTest)

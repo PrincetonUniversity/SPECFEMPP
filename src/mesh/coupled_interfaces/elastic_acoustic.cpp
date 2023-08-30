@@ -16,8 +16,8 @@ specfem::mesh::coupled_interfaces::elastic_acoustic::elastic_acoustic(
   for (int i = 0; i < num_interfaces; i++) {
     specfem::fortran_IO::fortran_read_line(stream, &acoustic_ispec_l,
                                            &elastic_ispec_l);
-    elastic_ispec(i) = elastic_ispec_l;
-    acoustic_ispec(i) = acoustic_ispec_l;
+    elastic_ispec(i) = elastic_ispec_l - 1;
+    acoustic_ispec(i) = acoustic_ispec_l - 1;
   }
 
   return;

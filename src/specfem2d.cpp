@@ -116,6 +116,9 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   specfem::compute::properties material_properties(
       mesh.material_ind.kmato, materials, mesh.nspec, gllx->get_N(),
       gllz->get_N());
+  specfem::compute::coupled_interfaces::coupled_interfaces coupled_interfaces(
+      compute.h_ibool, compute.coordinates.coord,
+      material_properties.h_ispec_type, mesh.coupled_interfaces);
 
   // Print spectral element information
   mpi->cout(mesh.print(materials));
