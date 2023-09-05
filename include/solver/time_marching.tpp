@@ -33,6 +33,7 @@ void specfem::solver::time_marching<qp_type>::run() {
     it->apply_predictor_phase(acoustic_field, acoustic_field_dot, acoustic_field_dot_dot);
 
     acoustic_domain.compute_stiffness_interaction();
+    acoustic_elastic_interface.compute_coupling();
     acoustic_domain.compute_source_interaction(timeval);
     acoustic_domain.divide_mass_matrix();
 
@@ -41,6 +42,7 @@ void specfem::solver::time_marching<qp_type>::run() {
     it->apply_predictor_phase(elastic_field, elastic_field_dot, elastic_field_dot_dot);
 
     elastic_domain.compute_stiffness_interaction();
+    elastic_acoustic_interface.compute_coupling();
     elastic_domain.compute_source_interaction(timeval);
     elastic_domain.divide_mass_matrix();
 

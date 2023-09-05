@@ -2,6 +2,7 @@
 #define _COUPLED_INTERFACE_IMPL_ACOUSTIC_ELASTIC_EDGE_HPP
 
 #include "coupled_interface/impl/edge/edge.hpp"
+#include "domain/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "specfem_enums.hpp"
 #include "specfem_setup.hpp"
@@ -23,7 +24,7 @@ public:
                                        qp_type>::medium_type;
   using quadrature_points_type = qp_type;
 
-  edge() = default;
+  edge(){};
   edge(const int &inum_edge,
        const specfem::domain::domain<specfem::enums::element::medium::acoustic,
                                      qp_type> &self_domain,
@@ -37,7 +38,15 @@ public:
        const specfem::kokkos::DeviceView1d<type_real> wzgll,
        const specfem::kokkos::DeviceView3d<int> ibool);
 
-  void compute_coupling(const int &ipoint);
+  void compute_coupling(const int &ipoint) const;
+
+  void
+  get_edges(specfem::enums::coupling::edge::type &self_edge_type,
+            specfem::enums::coupling::edge::type &coupled_edge_type) const {
+    self_edge_type = this->self_edge_type;
+    coupled_edge_type = this->coupled_edge_type;
+    return;
+  }
 
 private:
   specfem::kokkos::DeviceView2d<int> self_ibool;
