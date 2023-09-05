@@ -20,7 +20,7 @@ specfem::coupled_interface::
         const specfem::kokkos::DeviceView3d<int> ibool,
         const specfem::kokkos::DeviceView1d<type_real> wxgll,
         const specfem::kokkos::DeviceView1d<type_real> wzgll)
-    : self_domain(self_domain), coupled_domain(coupled_domain) {
+    : self_domain(self_domain), coupled_domain(coupled_domain), quadrature_points(quadrature_points) {
 
   static_assert(std::is_same_v<self_medium, coupled_medium> == false,
                 "Error: self_medium cannot be equal to coupled_medium");
@@ -72,16 +72,22 @@ void specfem::coupled_interface::coupled_interface<
 
   Kokkos::parallel_for(
       "specfem::coupled_interfaces::coupled_interfaces::compute_coupling",
-      specfem::kokkos::DeviceTeam(this->num_edges, Kokkos::AUTO, 1),
+      specfem::kokkos::DeviceTeam(this->edges.extent(0), Kokkos::AUTO, 1),
       KOKKOS_CLASS_LAMBDA(
           const specfem::kokkos::DeviceTeam::member_type &team_member) {
+        // Get number of quadrature points
+        int ngllx, ngllz;
+        quadrature_points.get_ngll(&ngllx, &ngllz);
         // Get the edge
         auto &edge = this->edges(team_member.league_rank());
-        auto &[edge1l, edge2l] = edge.get_edges();
+        // Get the edge types
+        specfem::enums::coupling::edge::type self_edge_type;
+        specfem::enums::coupling::edge::type coupled_edge_type;
+        edge.get_edges(self_edge_type, coupled_edge_type);
         // Get the number of points along the edge
         auto npoints =
             specfem::compute::coupled_interfaces::iterator::get_npoints(
-                edge1l, this->ngllx, this->ngllz);
+                self_edge_type, ngllx, ngllz);
 
         // Iterate over the edges using TeamThreadRange
         Kokkos::parallel_for(

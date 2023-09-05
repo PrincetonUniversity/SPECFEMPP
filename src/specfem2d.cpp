@@ -210,7 +210,8 @@ void execute(const std::string &parameter_file, const std::string &default_file,
 
   specfem::solver::solver *solver = new specfem::solver::time_marching<
       specfem::enums::element::quadrature::static_quadrature_points<5> >(
-      acoustic_domain_static, elastic_domain_static, it);
+      acoustic_domain_static, elastic_domain_static, acoustic_elastic_interface,
+      elastic_acoustic_interface, it);
 
   mpi->cout("Executing time loop:");
   mpi->cout("-------------------------------");

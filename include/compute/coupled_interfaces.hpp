@@ -2,6 +2,7 @@
 #define _COMPUTE_COUPLED_INTERFACES_HPP
 
 #include "kokkos_abstractions.h"
+#include "macros.hpp"
 #include "mesh/coupled_interfaces/coupled_interfaces.hpp"
 #include "specfem_enums.hpp"
 
@@ -146,12 +147,26 @@ public:
 
 namespace iterator {
 
+namespace enums {
+
+/**
+ * @brief Tags for edges of the elements on either side of the interface
+ *
+ */
+enum class edge {
+  self,   ///< The edge of the element that is coupled
+  coupled ///< The edge of the element that is coupled to
+};
+} // namespace enums
+
 int get_npoints(const specfem::enums::coupling::edge::type &edge,
                 const int ngllx, const int ngllz);
 
+template <class edge_interface_type>
 void get_points_along_the_edges(
     const int &ipoint, const specfem::enums::coupling::edge::type &edge,
     const int &ngllx, const int &ngllz, int &i, int &j);
+
 } // namespace iterator
 } // namespace coupled_interfaces
 } // namespace compute

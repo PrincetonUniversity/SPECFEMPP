@@ -26,7 +26,7 @@ public:
       specfem::enums::element::medium::acoustic, qp_type>::medium_type;
   using quadrature_points_type = qp_type;
 
-  edge() = default;
+  edge(){};
 
   edge(const int &inum_edge,
        const specfem::domain::domain<specfem::enums::element::medium::elastic,
@@ -41,12 +41,14 @@ public:
        const specfem::kokkos::DeviceView1d<type_real> wzgll,
        const specfem::kokkos::DeviceView3d<int> ibool);
 
-  void compute_coupling(const int &ipoint);
+  void compute_coupling(const int &ipoint) const;
 
-  std::pair<specfem::enums::coupling::edge::type,
-            specfem::enums::coupling::edge::type>
-  get_edges() const {
-    return std::make_pair(self_edge_type, coupled_edge_type);
+  void
+  get_edges(specfem::enums::coupling::edge::type &self_edge_type,
+            specfem::enums::coupling::edge::type &coupled_edge_type) const {
+    self_edge_type = this->self_edge_type;
+    coupled_edge_type = this->coupled_edge_type;
+    return;
   }
 
 private:

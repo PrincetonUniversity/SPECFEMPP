@@ -56,13 +56,19 @@ specfem::coupled_interface::impl::edge<
       coupled_interfaces.elastic_acoustic.elastic_ispec(inum_edge);
 
   self_ibool = Kokkos::subview(ibool, self_ispec, Kokkos::ALL, Kokkos::ALL);
-  coupled_ibool = Kokkos::subview(ibool, coupled_ispec, Kokkos::ALL, Kokkos::ALL);
+  coupled_ibool =
+      Kokkos::subview(ibool, coupled_ispec, Kokkos::ALL, Kokkos::ALL);
 
-  xix = Kokkos::subview(partial_derivatives.xix, self_ispec, Kokkos::ALL, Kokkos::ALL);
-  xiz = Kokkos::subview(partial_derivatives.xiz, self_ispec, Kokkos::ALL, Kokkos::ALL);
-  gammax = Kokkos::subview(partial_derivatives.gammax, self_ispec, Kokkos::ALL, Kokkos::ALL);
-  gammaz = Kokkos::subview(partial_derivatives.gammaz, self_ispec, Kokkos::ALL, Kokkos::ALL);
-  jacobian = Kokkos::subview(partial_derivatives.jacobian, self_ispec, Kokkos::ALL, Kokkos::ALL);
+  xix = Kokkos::subview(partial_derivatives.xix, self_ispec, Kokkos::ALL,
+                        Kokkos::ALL);
+  xiz = Kokkos::subview(partial_derivatives.xiz, self_ispec, Kokkos::ALL,
+                        Kokkos::ALL);
+  gammax = Kokkos::subview(partial_derivatives.gammax, self_ispec, Kokkos::ALL,
+                           Kokkos::ALL);
+  gammaz = Kokkos::subview(partial_derivatives.gammaz, self_ispec, Kokkos::ALL,
+                           Kokkos::ALL);
+  jacobian = Kokkos::subview(partial_derivatives.jacobian, self_ispec,
+                             Kokkos::ALL, Kokkos::ALL);
 
   self_edge_type = coupled_interfaces.elastic_acoustic.acoustic_edge(inum_edge);
   coupled_edge_type =
@@ -83,21 +89,20 @@ template <typename qp_type>
 void specfem::coupled_interface::impl::edge<
     specfem::domain::domain<specfem::enums::element::medium::acoustic, qp_type>,
     specfem::domain::domain<specfem::enums::element::medium::elastic,
-                            qp_type> >::compute_coupling(const int &ipoint) {
+                            qp_type> >::compute_coupling(const int &ipoint)
+    const {
 
-  const int ngllx, ngllz;
+  int ngllx, ngllz;
   quadrature_points.get_ngll(&ngllx, &ngllz);
 
   int i, j;
-  specfem::compute::coupled_interfaces::iterator::get_points_along_the_edges(
-      ipoint, coupled_edge_type, ngllx, ngllz, i, j);
+  coupled_iterator(ipoint, coupled_edge_type, ngllx, ngllz, i, j);
 
-  const int iglob = coupled_ibool(j, i);
+  int iglob = coupled_ibool(j, i);
   const type_real displ_x = coupled_field(iglob, 0);
   const type_real displ_z = coupled_field(iglob, 1);
 
-  specfem::compute::coupled_interfaces::iterator::get_points_along_the_edges(
-      ipoint, self_edge_type, ngllx, ngllz, i, j);
+  self_iterator(ipoint, self_edge_type, ngllx, ngllz, i, j);
 
   iglob = self_ibool(j, i);
 

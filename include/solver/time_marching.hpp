@@ -1,6 +1,7 @@
 #ifndef _TIME_MARCHING_HPP
 #define _TIME_MARCHING_HPP
 
+#include "coupled_interface/interface.hpp"
 #include "domain/interface.hpp"
 #include "solver.hpp"
 #include "specfem_enums.hpp"
@@ -31,13 +32,23 @@ public:
    */
   time_marching(
       specfem::domain::domain<specfem::enums::element::medium::acoustic,
-                              qp_type>
-          acoustic_domain,
+                              qp_type> &acoustic_domain,
       specfem::domain::domain<specfem::enums::element::medium::elastic, qp_type>
-          elastic_domain,
+          &elastic_domain,
+      specfem::coupled_interface::coupled_interface<
+          specfem::domain::domain<specfem::enums::element::medium::acoustic,
+                                  qp_type>,
+          specfem::domain::domain<specfem::enums::element::medium::elastic,
+                                  qp_type> > &acoustic_elastic_interface,
+      specfem::coupled_interface::coupled_interface<
+          specfem::domain::domain<specfem::enums::element::medium::elastic,
+                                  qp_type>,
+          specfem::domain::domain<specfem::enums::element::medium::acoustic,
+                                  qp_type> > &elastic_acoustic_interface,
       specfem::TimeScheme::TimeScheme *it)
       : acoustic_domain(acoustic_domain), elastic_domain(elastic_domain),
-        it(it){};
+        acoustic_elastic_interface(acoustic_elastic_interface),
+        elastic_acoustic_interface(elastic_acoustic_interface), it(it){};
   /**
    * @brief Run time-marching solver algorithm
    *
@@ -46,9 +57,21 @@ public:
 
 private:
   specfem::domain::domain<specfem::enums::element::medium::acoustic, qp_type>
-      acoustic_domain; ///< Pointer to spefem::Domain::Domain class
+      acoustic_domain; ///< Acoustic domain
   specfem::domain::domain<specfem::enums::element::medium::elastic, qp_type>
-      elastic_domain; ///< Pointer to spefem::Domain::Domain class
+      elastic_domain; ///< Acoustic domain
+  specfem::coupled_interface::coupled_interface<
+      specfem::domain::domain<specfem::enums::element::medium::acoustic,
+                              qp_type>,
+      specfem::domain::domain<specfem::enums::element::medium::elastic,
+                              qp_type> >
+      acoustic_elastic_interface; /// Acoustic elastic interface
+  specfem::coupled_interface::coupled_interface<
+      specfem::domain::domain<specfem::enums::element::medium::elastic,
+                              qp_type>,
+      specfem::domain::domain<specfem::enums::element::medium::acoustic,
+                              qp_type> >
+      elastic_acoustic_interface;      /// Elastic acoustic interface
   specfem::TimeScheme::TimeScheme *it; ///< Pointer to
                                        ///< spectem::TimeScheme::TimeScheme
                                        ///< class

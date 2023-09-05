@@ -31,6 +31,7 @@ public:
 private:
   self_domain_type self_domain;
   coupled_domain_type coupled_domain;
+  quadrature_points_type quadrature_points;
   specfem::kokkos::DeviceView1d<specfem::coupled_interface::impl::edge<
       self_domain_type, coupled_domain_type> >
       edges;
