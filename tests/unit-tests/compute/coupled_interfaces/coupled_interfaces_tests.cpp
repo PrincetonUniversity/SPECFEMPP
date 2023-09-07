@@ -133,24 +133,20 @@ void test_edges(
     const auto edge2l = edge2(interface);
 
     // iterate over the edge
-    int npoints = specfem::compute::coupled_interfaces::iterator::get_npoints(
+    int npoints = specfem::compute::coupled_interfaces::iterator::npoints(
         edge1l, ngllx, ngllz);
 
     for (int ipoint = 0; ipoint < npoints; ipoint++) {
       // Get ipoint along the edge in element1
       int i1, j1;
-      specfem::compute::coupled_interfaces::iterator::
-          get_points_along_the_edges<specfem::compute::coupled_interfaces::
-                                         iterator::enums::edge::coupled>(
-              ipoint, edge1l, ngllx, ngllz, i1, j1);
+      specfem::compute::coupled_interfaces::iterator::coupled_iterator(
+          ipoint, edge1l, ngllx, ngllz, i1, j1);
       const int iglob1 = h_ibool(ispec1l, j1, i1);
 
       // Get ipoint along the edge in element2
       int i2, j2;
-      specfem::compute::coupled_interfaces::iterator::
-          get_points_along_the_edges<specfem::compute::coupled_interfaces::
-                                         iterator::enums::edge::self>(
-              ipoint, edge2l, ngllx, ngllz, i2, j2);
+      specfem::compute::coupled_interfaces::iterator::self_iterator(
+          ipoint, edge2l, ngllx, ngllz, i2, j2);
       const int iglob2 = h_ibool(ispec2l, j2, i2);
 
       // Check that the distance between the two points is small

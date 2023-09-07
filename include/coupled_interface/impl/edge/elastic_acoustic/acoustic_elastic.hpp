@@ -11,6 +11,7 @@
 namespace specfem {
 namespace coupled_interface {
 namespace impl {
+namespace edges {
 template <typename qp_type>
 class edge<
     specfem::domain::domain<specfem::enums::element::medium::acoustic, qp_type>,
@@ -64,7 +65,11 @@ private:
   qp_type quadrature_points;
   specfem::kokkos::DeviceView1d<type_real> wxgll;
   specfem::kokkos::DeviceView1d<type_real> wzgll;
+
+  specfem::coupled_interface::impl::edges::self_iterator self_iterator;
+  specfem::coupled_interface::impl::edges::coupled_iterator coupled_iterator;
 };
+} // namespace edges
 } // namespace impl
 } // namespace coupled_interface
 } // namespace specfem

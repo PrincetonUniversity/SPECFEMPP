@@ -1,5 +1,5 @@
 #include "compute/coupled_interfaces.hpp"
-#include "compute/coupled_interfaces.tpp"
+// #include "compute/coupled_interfaces.tpp"
 #include "kokkos_abstractions.h"
 #include "macros.hpp"
 #include "mesh/coupled_interfaces/coupled_interfaces.hpp"
@@ -64,7 +64,7 @@ void get_edge_range(const specfem::enums::coupling::edge::type &edge,
 
 // Given an edge, return the number of points along the edge
 // This ends up being important when ngllx != ngllz
-int specfem::compute::coupled_interfaces::iterator::get_npoints(
+int specfem::compute::coupled_interfaces::iterator::npoints(
     const specfem::enums::coupling::edge::type &edge, const int ngllx,
     const int ngllz) {
 
@@ -82,32 +82,57 @@ int specfem::compute::coupled_interfaces::iterator::get_npoints(
   }
 }
 
-// // Given an edge and an ith point, return the elemetal i, j indices of the
-// point void
-// specfem::compute::coupled_interfaces::iterator::get_points_along_the_edges(
-//     const int &ipoint, const specfem::enums::coupling::edge::type &edge,
-//     const int &ngllx, const int &ngllz, int &i, int &j) {
-//   switch (edge) {
-//   case specfem::enums::coupling::edge::type::BOTTOM:
-//     i = ipoint;
-//     j = 0;
-//     break;
-//   case specfem::enums::coupling::edge::type::TOP:
-//     i = ipoint;
-//     j = ngllz - 1;
-//     break;
-//   case specfem::enums::coupling::edge::type::LEFT:
-//     i = 0;
-//     j = ipoint;
-//     break;
-//   case specfem::enums::coupling::edge::type::RIGHT:
-//     i = ngllx - 1;
-//     j = ipoint;
-//     break;
-//   default:
-//     throw std::runtime_error("Invalid edge type");
-//   }
-// }
+void specfem::compute::coupled_interfaces::iterator::self_iterator(
+    const int &ipoint, const specfem::enums::coupling::edge::type &edge,
+    const int ngllx, const int ngllz, int &i, int &j) {
+
+  switch (edge) {
+  case specfem::enums::coupling::edge::type::BOTTOM:
+    i = ipoint;
+    j = 0;
+    break;
+  case specfem::enums::coupling::edge::type::TOP:
+    i = ngllx - 1 - ipoint;
+    j = ngllz - 1;
+    break;
+  case specfem::enums::coupling::edge::type::LEFT:
+    i = 0;
+    j = ipoint;
+    break;
+  case specfem::enums::coupling::edge::type::RIGHT:
+    i = ngllx - 1;
+    j = ngllz - 1 - ipoint;
+    break;
+  default:
+    throw std::runtime_error("Invalid edge type");
+  }
+}
+
+void specfem::compute::coupled_interfaces::iterator::coupled_iterator(
+    const int &ipoint, const specfem::enums::coupling::edge::type &edge,
+    const int ngllx, const int ngllz, int &i, int &j) {
+
+  switch (edge) {
+  case specfem::enums::coupling::edge::type::BOTTOM:
+    i = ngllx - 1 - ipoint;
+    j = 0;
+    break;
+  case specfem::enums::coupling::edge::type::TOP:
+    i = ipoint;
+    j = ngllz - 1;
+    break;
+  case specfem::enums::coupling::edge::type::LEFT:
+    i = ngllx - 1;
+    j = ngllz - 1 - ipoint;
+    break;
+  case specfem::enums::coupling::edge::type::RIGHT:
+    i = 0;
+    j = ipoint;
+    break;
+  default:
+    throw std::runtime_error("Invalid edge type");
+  }
+}
 
 bool check_if_edges_are_connected(
     const specfem::kokkos::HostView3d<int> h_ibool,
@@ -227,24 +252,20 @@ void check_edges(
     const auto edge2l = edge2(interface);
 
     // iterate over the edge
-    int npoints = specfem::compute::coupled_interfaces::iterator::get_npoints(
+    int npoints = specfem::compute::coupled_interfaces::iterator::npoints(
         edge1l, ngllx, ngllz);
 
     for (int ipoint = 0; ipoint < npoints; ipoint++) {
       // Get ipoint along the edge in element1
       int i1, j1;
-      specfem::compute::coupled_interfaces::iterator::
-          get_points_along_the_edges<specfem::compute::coupled_interfaces::
-                                         iterator::enums::edge::self>(
-              ipoint, edge1l, ngllx, ngllz, i1, j1);
+      specfem::compute::coupled_interfaces::iterator::self_iterator(
+          ipoint, edge1l, ngllx, ngllz, i1, j1);
       const int iglob1 = h_ibool(ispec1l, j1, i1);
 
       // Get ipoint along the edge in element2
       int i2, j2;
-      specfem::compute::coupled_interfaces::iterator::
-          get_points_along_the_edges<specfem::compute::coupled_interfaces::
-                                         iterator::enums::edge::coupled>(
-              ipoint, edge2l, ngllx, ngllz, i2, j2);
+      specfem::compute::coupled_interfaces::iterator::coupled_iterator(
+          ipoint, edge2l, ngllx, ngllz, i2, j2);
       const int iglob2 = h_ibool(ispec2l, j2, i2);
 
       // Check that the distance between the two points is small

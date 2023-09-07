@@ -45,7 +45,7 @@ specfem::coupled_interface::
   }
 
   // Allocate the edges
-  edges = specfem::kokkos::DeviceView1d<specfem::coupled_interface::impl::edge<
+  edges = specfem::kokkos::DeviceView1d<specfem::coupled_interface::impl::edges::edge<
       self_domain_type, coupled_domain_type> >(
       "specfem::coupled_interfaces::coupled_interfaces::edges", num_interfaces);
 
@@ -55,7 +55,7 @@ specfem::coupled_interface::
   for (int inum_edge = 0; inum_edge < num_interfaces; ++inum_edge) {
     // Create the edge
     h_edges(inum_edge) =
-        specfem::coupled_interface::impl::edge<self_domain_type,
+        specfem::coupled_interface::impl::edges::edge<self_domain_type,
                                                coupled_domain_type>(
             inum_edge, self_domain, coupled_domain, quadrature_points,
             coupled_interfaces, partial_derivatives, wxgll, wzgll, ibool);
@@ -86,7 +86,7 @@ void specfem::coupled_interface::coupled_interface<
         edge.get_edges(self_edge_type, coupled_edge_type);
         // Get the number of points along the edge
         auto npoints =
-            specfem::compute::coupled_interfaces::iterator::get_npoints(
+            specfem::compute::coupled_interfaces::iterator::npoints(
                 self_edge_type, ngllx, ngllz);
 
         // Iterate over the edges using TeamThreadRange

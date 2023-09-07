@@ -95,7 +95,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
 
   for (auto &Test : Tests) {
     std::cout << "-------------------------------------------------------\n"
-              << "[RUNNING] Test: " << Test.name << "\n"
+              << "\033[0;32m[RUNNING]\033[0m Test: " << Test.name << "\n"
               << "-------------------------------------------------------\n\n"
               << std::endl;
 
@@ -231,14 +231,14 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
       }
 
       std::cout << "--------------------------------------------------\n"
-                << "[PASSED] Test: " << Test.name << "\n"
+                << "\033[0;32m[PASSED]\033[0m Test: " << Test.name << "\n"
                 << "--------------------------------------------------\n\n"
                 << std::endl;
 
     } catch (std::runtime_error &e) {
       std::cout << " - Error: " << e.what() << std::endl;
       FAIL() << "--------------------------------------------------\n"
-             << "[FAILED] Test failed\n"
+             << "\033[0;31m[FAILED]\033[0m Test failed\n"
              << " - Test name: " << Test.name << "\n"
              << " - Number of MPI processors: "
              << Test.configuration.number_of_processors << "\n"
