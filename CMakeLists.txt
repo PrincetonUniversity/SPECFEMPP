@@ -160,6 +160,7 @@ target_link_libraries(
 add_library(
         source_time_function
         src/source_time_function/dirac.cpp
+        src/source_time_function/ricker.cpp
 )
 
 target_link_libraries(

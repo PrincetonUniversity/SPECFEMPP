@@ -147,25 +147,16 @@ public:
 
 namespace iterator {
 
-namespace enums {
+int npoints(const specfem::enums::coupling::edge::type &edge, const int ngllx,
+            const int ngllz);
 
-/**
- * @brief Tags for edges of the elements on either side of the interface
- *
- */
-enum class edge {
-  self,   ///< The edge of the element that is coupled
-  coupled ///< The edge of the element that is coupled to
-};
-} // namespace enums
+void self_iterator(const int &ipoint,
+                   const specfem::enums::coupling::edge::type &edge,
+                   const int ngllx, const int ngllz, int &i, int &j);
 
-int get_npoints(const specfem::enums::coupling::edge::type &edge,
-                const int ngllx, const int ngllz);
-
-template <class edge_interface_type>
-void get_points_along_the_edges(
-    const int &ipoint, const specfem::enums::coupling::edge::type &edge,
-    const int &ngllx, const int &ngllz, int &i, int &j);
+void coupled_iterator(const int &ipoint,
+                      const specfem::enums::coupling::edge::type &edge,
+                      const int ngllx, const int ngllz, int &i, int &j);
 
 } // namespace iterator
 } // namespace coupled_interfaces

@@ -204,7 +204,7 @@ void assign_elemental_properties(
       specfem::kokkos::DeviceRange(0, ispec_domain.extent(0)),
       KOKKOS_LAMBDA(const int i) {
         const int ispec = ispec_domain(i);
-        auto &element = elements(ispec).element;
+        auto &element = elements(i).element;
         new (element)
             element_type<specfem::enums::element::dimension::dim2, medium,
                          qp_type, specfem::enums::element::property::isotropic>(

@@ -12,7 +12,7 @@
 #include <Kokkos_Core.hpp>
 
 template <typename qp_type>
-specfem::coupled_interface::impl::edge<
+specfem::coupled_interface::impl::edges::edge<
     specfem::domain::domain<specfem::enums::element::medium::acoustic, qp_type>,
     specfem::domain::domain<specfem::enums::element::medium::elastic,
                             qp_type> >::
@@ -74,6 +74,12 @@ specfem::coupled_interface::impl::edge<
   coupled_edge_type =
       coupled_interfaces.elastic_acoustic.elastic_edge(inum_edge);
 
+  self_iterator = specfem::coupled_interface::impl::edges::self_iterator(
+      self_edge_type, ngllx, ngllz);
+
+  coupled_iterator = specfem::coupled_interface::impl::edges::coupled_iterator(
+      coupled_edge_type, ngllx, ngllz);
+
   self_field_dot_dot = self_domain.get_field_dot_dot();
   coupled_field = coupled_domain.get_field();
 
@@ -86,7 +92,7 @@ specfem::coupled_interface::impl::edge<
 }
 
 template <typename qp_type>
-void specfem::coupled_interface::impl::edge<
+void specfem::coupled_interface::impl::edges::edge<
     specfem::domain::domain<specfem::enums::element::medium::acoustic, qp_type>,
     specfem::domain::domain<specfem::enums::element::medium::elastic,
                             qp_type> >::compute_coupling(const int &ipoint)
@@ -96,13 +102,13 @@ void specfem::coupled_interface::impl::edge<
   quadrature_points.get_ngll(&ngllx, &ngllz);
 
   int i, j;
-  coupled_iterator(ipoint, coupled_edge_type, ngllx, ngllz, i, j);
+  coupled_iterator(ipoint, i, j);
 
   int iglob = coupled_ibool(j, i);
   const type_real displ_x = coupled_field(iglob, 0);
   const type_real displ_z = coupled_field(iglob, 1);
 
-  self_iterator(ipoint, self_edge_type, ngllx, ngllz, i, j);
+  self_iterator(ipoint, i, j);
 
   iglob = self_ibool(j, i);
 
