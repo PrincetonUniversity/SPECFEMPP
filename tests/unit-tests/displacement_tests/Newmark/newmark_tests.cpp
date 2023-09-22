@@ -189,13 +189,13 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
       // Instantiate coupled interfaces
       specfem::coupled_interface::coupled_interface acoustic_elastic_interface(
           acoustic_domain_static, elastic_domain_static, coupled_interfaces,
-          qp5, partial_derivatives, compute.h_ibool, gllx->get_xi(),
-          gllz->get_xi());
+          qp5, partial_derivatives, compute.h_ibool, gllx->get_w(),
+          gllz->get_w());
 
       specfem::coupled_interface::coupled_interface elastic_acoustic_interface(
           elastic_domain_static, acoustic_domain_static, coupled_interfaces,
-          qp5, partial_derivatives, compute.h_ibool, gllx->get_xi(),
-          gllz->get_xi());
+          qp5, partial_derivatives, compute.h_ibool, gllx->get_w(),
+          gllz->get_w());
 
       specfem::solver::solver *solver = new specfem::solver::time_marching<
           specfem::enums::element::quadrature::static_quadrature_points<5> >(

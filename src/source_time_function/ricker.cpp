@@ -22,9 +22,9 @@ type_real specfem::forcing_function::Ricker::compute(type_real t) {
   type_real val;
 
   if (this->use_trick_for_better_pressure) {
-    val = this->factor * d4gaussian(t - this->tshift, this->f0);
+    val = -1.0 * this->factor * d4gaussian(t - this->tshift, this->f0);
   } else {
-    val = this->factor * d2gaussian(t - this->tshift, this->f0);
+    val = -1.0 * this->factor * d2gaussian(t - this->tshift, this->f0);
   }
 
   return val;

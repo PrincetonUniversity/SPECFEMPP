@@ -141,6 +141,19 @@ void specfem::sources::source::print(std::ostream &out) const {
 }
 
 void specfem::sources::force::print(std::ostream &out) const {
+
+  std::string element_type;
+
+  if (this->el_type == specfem::enums::element::acoustic) {
+    element_type = "acoustic";
+  } else if (this->el_type == specfem::enums::element::elastic) {
+    element_type = "elastic";
+  } else if (this->el_type == specfem::enums::element::poroelastic) {
+    element_type = "poroelastic";
+  } else {
+    element_type = "unknown";
+  }
+
   out << "Force Source: \n"
       << "   Source Location: \n"
       << "    x = " << this->x << "\n"
@@ -148,13 +161,26 @@ void specfem::sources::force::print(std::ostream &out) const {
       << "    xi = " << this->xi << "\n"
       << "    gamma = " << this->gamma << "\n"
       << "    ispec = " << this->ispec << "\n"
-      << "    islice = " << this->islice << "\n";
+      << "    islice = " << this->islice << "\n"
+      << "    element type = " << element_type << "\n";
   // out << *(this->forcing_function);
 
   return;
 }
 
 std::string specfem::sources::force::print() const {
+  std::string element_type;
+
+  if (this->el_type == specfem::enums::element::acoustic) {
+    element_type = "acoustic";
+  } else if (this->el_type == specfem::enums::element::elastic) {
+    element_type = "elastic";
+  } else if (this->el_type == specfem::enums::element::poroelastic) {
+    element_type = "poroelastic";
+  } else {
+    element_type = "unknown";
+  }
+
   std::ostringstream message;
   message << "- Force Source: \n"
           << "    Source Location: \n"
@@ -163,7 +189,8 @@ std::string specfem::sources::force::print() const {
           << "      xi = " << this->xi << "\n"
           << "      gamma = " << this->gamma << "\n"
           << "      ispec = " << this->ispec << "\n"
-          << "      islice = " << this->islice << "\n";
+          << "      islice = " << this->islice << "\n"
+          << "      element type = " << element_type << "\n";
 
   return message.str();
 }

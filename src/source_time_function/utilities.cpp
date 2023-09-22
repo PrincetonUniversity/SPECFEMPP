@@ -28,8 +28,6 @@ type_real d4gaussian(const type_real t, const type_real f0) {
   constexpr auto pi = Kokkos::numbers::pi_v<type_real>;
 
   type_real a = pi * pi * f0 * f0;
-  // d4gaussian = - 2.d0 * a * (3.d0 - 12.d0 * a * t*t + 4.d0 * a**2 * t*t*t*t)
-  // * exp( -a * t*t )
 
   type_real d4gaussian =
       -2.0 * a * (3.0 - 12.0 * a * t * t + 4.0 * a * a * t * t * t * t) *

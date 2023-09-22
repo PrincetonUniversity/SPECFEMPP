@@ -127,7 +127,11 @@ void initialize_rmass_inverse(
       specfem::kokkos::DeviceMDrange<2, Kokkos::Iterate::Left>(
           { 0, 0 }, { nglob, components }),
       KOKKOS_LAMBDA(const int iglob, const int idim) {
-        rmass_inverse(iglob, idim) = 1.0 / rmass_inverse(iglob, idim);
+        if (rmass_inverse(iglob, idim) == 0) {
+          rmass_inverse(iglob, idim) = 1.0;
+        } else {
+          rmass_inverse(iglob, idim) = 1.0 / rmass_inverse(iglob, idim);
+        }
       });
 
   Kokkos::fence();

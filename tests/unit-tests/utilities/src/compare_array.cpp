@@ -471,7 +471,7 @@ void specfem::testing::test_array(
     }
   }
 
-  type_real tol = 10 * fabs(max_val + min_val) / 2;
+  type_real tol = 1e-2 * fabs(max_val + min_val) / 2;
 
   type_real ref_value;
   std::ifstream stream;

@@ -50,35 +50,34 @@ specfem::coupled_interface::impl::edges::edge<
   assert(wzgll.extent(0) == ngllz);
 #endif
 
-  const int self_ispec =
+  this->acoustic_ispec =
       coupled_interfaces.elastic_acoustic.acoustic_ispec(inum_edge);
-  const int coupled_ispec =
+  this->elastic_ispec =
       coupled_interfaces.elastic_acoustic.elastic_ispec(inum_edge);
 
-  self_ibool = Kokkos::subview(ibool, self_ispec, Kokkos::ALL, Kokkos::ALL);
+  self_ibool = Kokkos::subview(ibool, acoustic_ispec, Kokkos::ALL, Kokkos::ALL);
   coupled_ibool =
-      Kokkos::subview(ibool, coupled_ispec, Kokkos::ALL, Kokkos::ALL);
+      Kokkos::subview(ibool, elastic_ispec, Kokkos::ALL, Kokkos::ALL);
 
-  xix = Kokkos::subview(partial_derivatives.xix, self_ispec, Kokkos::ALL,
+  xix = Kokkos::subview(partial_derivatives.xix, acoustic_ispec, Kokkos::ALL,
                         Kokkos::ALL);
-  xiz = Kokkos::subview(partial_derivatives.xiz, self_ispec, Kokkos::ALL,
+  xiz = Kokkos::subview(partial_derivatives.xiz, acoustic_ispec, Kokkos::ALL,
                         Kokkos::ALL);
-  gammax = Kokkos::subview(partial_derivatives.gammax, self_ispec, Kokkos::ALL,
-                           Kokkos::ALL);
-  gammaz = Kokkos::subview(partial_derivatives.gammaz, self_ispec, Kokkos::ALL,
-                           Kokkos::ALL);
-  jacobian = Kokkos::subview(partial_derivatives.jacobian, self_ispec,
+  gammax = Kokkos::subview(partial_derivatives.gammax, acoustic_ispec,
+                           Kokkos::ALL, Kokkos::ALL);
+  gammaz = Kokkos::subview(partial_derivatives.gammaz, acoustic_ispec,
+                           Kokkos::ALL, Kokkos::ALL);
+  jacobian = Kokkos::subview(partial_derivatives.jacobian, acoustic_ispec,
                              Kokkos::ALL, Kokkos::ALL);
 
-  self_edge_type = coupled_interfaces.elastic_acoustic.acoustic_edge(inum_edge);
-  coupled_edge_type =
-      coupled_interfaces.elastic_acoustic.elastic_edge(inum_edge);
+  acoustic_edge = coupled_interfaces.elastic_acoustic.acoustic_edge(inum_edge);
+  elastic_edge = coupled_interfaces.elastic_acoustic.elastic_edge(inum_edge);
 
   self_iterator = specfem::coupled_interface::impl::edges::self_iterator(
-      self_edge_type, ngllx, ngllz);
+      acoustic_edge, ngllx, ngllz);
 
   coupled_iterator = specfem::coupled_interface::impl::edges::coupled_iterator(
-      coupled_edge_type, ngllx, ngllz);
+      elastic_edge, ngllx, ngllz);
 
   self_field_dot_dot = self_domain.get_field_dot_dot();
   coupled_field = coupled_domain.get_field();
@@ -108,33 +107,38 @@ void specfem::coupled_interface::impl::edges::edge<
   const type_real displ_x = coupled_field(iglob, 0);
   const type_real displ_z = coupled_field(iglob, 1);
 
-  self_iterator(ipoint, i, j);
+  type_real val;
 
-  iglob = self_ibool(j, i);
-
-  switch (self_edge_type) {
+  switch (acoustic_edge) {
   case specfem::enums::coupling::edge::type::LEFT:
-    Kokkos::atomic_add(&self_field_dot_dot(iglob, 0),
-                       -1.0 * wzgll(j) *
-                           (xix(j, i) * jacobian(j, i) * displ_x +
-                            xiz(j, i) * jacobian(j, i) * displ_z));
+    self_iterator(ipoint, i, j);
+    iglob = self_ibool(j, i);
+    val = -1.0 * wzgll(j) *
+          (xix(j, i) * jacobian(j, i) * displ_x +
+           xiz(j, i) * jacobian(j, i) * displ_z);
+    Kokkos::atomic_add(&self_field_dot_dot(iglob, 0), val);
     break;
   case specfem::enums::coupling::edge::type::RIGHT:
-    Kokkos::atomic_add(&self_field_dot_dot(iglob, 0),
-                       wzgll(j) * (xix(j, i) * jacobian(j, i) * displ_x +
-                                   xiz(j, i) * jacobian(j, i) * displ_z));
+    self_iterator(ipoint, i, j);
+    iglob = self_ibool(j, i);
+    val = wzgll(j) * (xix(j, i) * jacobian(j, i) * displ_x +
+                      xiz(j, i) * jacobian(j, i) * displ_z);
+    Kokkos::atomic_add(&self_field_dot_dot(iglob, 0), val);
     break;
   case specfem::enums::coupling::edge::type::BOTTOM:
-    Kokkos::atomic_add(&self_field_dot_dot(iglob, 0),
-                       -1.0 * wxgll(i) *
-                           (gammax(j, i) * jacobian(j, i) * displ_x +
-                            gammaz(j, i) * jacobian(j, i) * displ_z));
-
+    self_iterator(ipoint, i, j);
+    iglob = self_ibool(j, i);
+    val = -1.0 * wxgll(i) *
+          (gammax(j, i) * jacobian(j, i) * displ_x +
+           gammaz(j, i) * jacobian(j, i) * displ_z);
+    Kokkos::atomic_add(&self_field_dot_dot(iglob, 0), val);
     break;
   case specfem::enums::coupling::edge::type::TOP:
-    Kokkos::atomic_add(&self_field_dot_dot(iglob, 0),
-                       wxgll(i) * (gammax(j, i) * jacobian(j, i) * displ_x +
-                                   gammaz(j, i) * jacobian(j, i) * displ_z));
+    self_iterator(ipoint, i, j);
+    iglob = self_ibool(j, i);
+    val = wxgll(i) * (gammax(j, i) * jacobian(j, i) * displ_x +
+                      gammaz(j, i) * jacobian(j, i) * displ_z);
+    Kokkos::atomic_add(&self_field_dot_dot(iglob, 0), val);
     break;
   default:
     break;
