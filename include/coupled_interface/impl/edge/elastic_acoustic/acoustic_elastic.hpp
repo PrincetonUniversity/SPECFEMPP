@@ -44,12 +44,14 @@ public:
   void
   get_edges(specfem::enums::coupling::edge::type &self_edge_type,
             specfem::enums::coupling::edge::type &coupled_edge_type) const {
-    self_edge_type = this->self_edge_type;
-    coupled_edge_type = this->coupled_edge_type;
+    self_edge_type = this->acoustic_edge;
+    coupled_edge_type = this->elastic_edge;
     return;
   }
 
 private:
+  int acoustic_ispec;
+  int elastic_ispec;
   specfem::kokkos::DeviceView2d<int> self_ibool;
   specfem::kokkos::DeviceView2d<int> coupled_ibool;
   specfem::kokkos::DeviceView2d<type_real> xix;
@@ -57,8 +59,8 @@ private:
   specfem::kokkos::DeviceView2d<type_real> gammax;
   specfem::kokkos::DeviceView2d<type_real> gammaz;
   specfem::kokkos::DeviceView2d<type_real> jacobian;
-  specfem::enums::coupling::edge::type self_edge_type;
-  specfem::enums::coupling::edge::type coupled_edge_type;
+  specfem::enums::coupling::edge::type acoustic_edge;
+  specfem::enums::coupling::edge::type elastic_edge;
   specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
       self_field_dot_dot;
   specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> coupled_field;

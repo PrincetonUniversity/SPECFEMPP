@@ -42,8 +42,8 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "@CMAKE_SOURCE_DIR@/examples/fluid_solid_interface/databases/database.bin"
-    source-file: "@CMAKE_SOURCE_DIR@/examples/fluid_solid_interface/databases/sources.yaml"
+    mesh-database: "@CMAKE_SOURCE_DIR@/examples/fluid-solid-interface/databases/database.bin"
+    source-file: "@CMAKE_SOURCE_DIR@/examples/fluid-solid-interface/sources.yaml"
 
   seismogram:
     seismogram-format: ascii
