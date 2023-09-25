@@ -37,7 +37,7 @@ specfem::forcing_function::stf *assign_stf(std::string forcing_type,
 
     Kokkos::fence();
   } else {
-    throw std::runtime_error("Unknown forcing function type.");
+    assert(false && "Unknown forcing type");
   }
 
   return forcing_function;

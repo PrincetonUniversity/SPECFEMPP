@@ -147,13 +147,16 @@ public:
 
 namespace iterator {
 
+KOKKOS_FUNCTION
 int npoints(const specfem::enums::coupling::edge::type &edge, const int ngllx,
             const int ngllz);
 
+KOKKOS_FUNCTION
 void self_iterator(const int &ipoint,
                    const specfem::enums::coupling::edge::type &edge,
                    const int ngllx, const int ngllz, int &i, int &j);
 
+KOKKOS_FUNCTION
 void coupled_iterator(const int &ipoint,
                       const specfem::enums::coupling::edge::type &edge,
                       const int ngllx, const int ngllz, int &i, int &j);

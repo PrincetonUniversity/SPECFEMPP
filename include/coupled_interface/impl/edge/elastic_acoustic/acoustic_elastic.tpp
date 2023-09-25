@@ -51,9 +51,9 @@ specfem::coupled_interface::impl::edges::edge<
 #endif
 
   this->acoustic_ispec =
-      coupled_interfaces.elastic_acoustic.acoustic_ispec(inum_edge);
+      coupled_interfaces.elastic_acoustic.h_acoustic_ispec(inum_edge);
   this->elastic_ispec =
-      coupled_interfaces.elastic_acoustic.elastic_ispec(inum_edge);
+      coupled_interfaces.elastic_acoustic.h_elastic_ispec(inum_edge);
 
   self_ibool = Kokkos::subview(ibool, acoustic_ispec, Kokkos::ALL, Kokkos::ALL);
   coupled_ibool =
@@ -70,8 +70,8 @@ specfem::coupled_interface::impl::edges::edge<
   jacobian = Kokkos::subview(partial_derivatives.jacobian, acoustic_ispec,
                              Kokkos::ALL, Kokkos::ALL);
 
-  acoustic_edge = coupled_interfaces.elastic_acoustic.acoustic_edge(inum_edge);
-  elastic_edge = coupled_interfaces.elastic_acoustic.elastic_edge(inum_edge);
+  acoustic_edge = coupled_interfaces.elastic_acoustic.h_acoustic_edge(inum_edge);
+  elastic_edge = coupled_interfaces.elastic_acoustic.h_elastic_edge(inum_edge);
 
   self_iterator = specfem::coupled_interface::impl::edges::self_iterator(
       acoustic_edge, ngllx, ngllz);
@@ -91,7 +91,7 @@ specfem::coupled_interface::impl::edges::edge<
 }
 
 template <typename qp_type>
-void specfem::coupled_interface::impl::edges::edge<
+KOKKOS_FUNCTION void specfem::coupled_interface::impl::edges::edge<
     specfem::domain::domain<specfem::enums::element::medium::acoustic, qp_type>,
     specfem::domain::domain<specfem::enums::element::medium::elastic,
                             qp_type> >::compute_coupling(const int &ipoint)

@@ -70,16 +70,19 @@ template <class self_domain_type, class coupled_domain_type>
 void specfem::coupled_interface::coupled_interface<
     self_domain_type, coupled_domain_type>::compute_coupling() {
 
+  const int nedges = this->edges.extent(0);
+
   Kokkos::parallel_for(
       "specfem::coupled_interfaces::coupled_interfaces::compute_coupling",
-      specfem::kokkos::DeviceTeam(this->edges.extent(0), Kokkos::AUTO, 1),
+      specfem::kokkos::DeviceTeam(nedges, 5, 1),
       KOKKOS_CLASS_LAMBDA(
           const specfem::kokkos::DeviceTeam::member_type &team_member) {
         // Get number of quadrature points
         int ngllx, ngllz;
         quadrature_points.get_ngll(&ngllx, &ngllz);
+        int iedge = team_member.league_rank();
         // Get the edge
-        auto &edge = this->edges(team_member.league_rank());
+        auto edge = this->edges(iedge);
         // Get the edge types
         specfem::enums::coupling::edge::type self_edge_type;
         specfem::enums::coupling::edge::type coupled_edge_type;
@@ -92,8 +95,10 @@ void specfem::coupled_interface::coupled_interface<
         // Iterate over the edges using TeamThreadRange
         Kokkos::parallel_for(
             Kokkos::TeamThreadRange(team_member, npoints),
-            [=](const int &ipoint) { edge.compute_coupling(ipoint); });
+            [=](const int ipoint) { edge.compute_coupling(ipoint); });
       });
+
+  Kokkos::fence();
 
   return;
 }

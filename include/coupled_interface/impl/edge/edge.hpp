@@ -21,7 +21,7 @@ struct self_iterator {
                 const int &ngllx, const int &ngllz)
       : edge_type(edge_type), ngllx(ngllx), ngllz(ngllz){};
 
-  KOKKOS_INLINE_FUNCTION
+  KOKKOS_FUNCTION
   void operator()(const int &ipoint, int &i, int &j) const {
     specfem::compute::coupled_interfaces::iterator::self_iterator(
         ipoint, this->edge_type, this->ngllx, this->ngllz, i, j);
@@ -40,7 +40,7 @@ struct coupled_iterator {
                    const int &ngllx, const int &ngllz)
       : edge_type(edge_type), ngllx(ngllx), ngllz(ngllz){};
 
-  KOKKOS_INLINE_FUNCTION
+  KOKKOS_FUNCTION
   void operator()(const int &ipoint, int &i, int &j) const {
     specfem::compute::coupled_interfaces::iterator::coupled_iterator(
         ipoint, this->edge_type, this->ngllx, this->ngllz, i, j);
