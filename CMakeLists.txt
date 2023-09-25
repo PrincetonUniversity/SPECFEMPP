@@ -119,6 +119,9 @@ add_library(
         src/mesh/mpi_interfaces/mpi_interfaces.cpp
         src/mesh/material_indic/material_indic.cpp
         src/mesh/surfaces/acoustic_free_surface.cpp
+        src/mesh/coupled_interfaces/elastic_acoustic.cpp
+        src/mesh/coupled_interfaces/elastic_poroelastic.cpp
+        src/mesh/coupled_interfaces/acoustic_poroelastic.cpp
         src/mesh/mesh.cpp
 )
 
@@ -157,6 +160,7 @@ target_link_libraries(
 add_library(
         source_time_function
         src/source_time_function/dirac.cpp
+        src/source_time_function/ricker.cpp
 )
 
 target_link_libraries(
@@ -206,6 +210,7 @@ add_library(
         src/compute/compute_properties.cpp
         src/compute/compute_sources.cpp
         src/compute/compute_receivers.cpp
+        src/compute/coupled_interfaces.cpp
 )
 
 target_link_libraries(

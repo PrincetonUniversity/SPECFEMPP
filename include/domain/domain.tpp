@@ -127,7 +127,11 @@ void initialize_rmass_inverse(
       specfem::kokkos::DeviceMDrange<2, Kokkos::Iterate::Left>(
           { 0, 0 }, { nglob, components }),
       KOKKOS_LAMBDA(const int iglob, const int idim) {
-        rmass_inverse(iglob, idim) = 1.0 / rmass_inverse(iglob, idim);
+        if (rmass_inverse(iglob, idim) == 0) {
+          rmass_inverse(iglob, idim) = 1.0;
+        } else {
+          rmass_inverse(iglob, idim) = 1.0 / rmass_inverse(iglob, idim);
+        }
       });
 
   Kokkos::fence();
@@ -204,7 +208,7 @@ void assign_elemental_properties(
       specfem::kokkos::DeviceRange(0, ispec_domain.extent(0)),
       KOKKOS_LAMBDA(const int i) {
         const int ispec = ispec_domain(i);
-        auto &element = elements(ispec).element;
+        auto &element = elements(i).element;
         new (element)
             element_type<specfem::enums::element::dimension::dim2, medium,
                          qp_type, specfem::enums::element::property::isotropic>(

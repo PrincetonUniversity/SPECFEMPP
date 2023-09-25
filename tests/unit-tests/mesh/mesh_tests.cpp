@@ -8,42 +8,75 @@
 #include <string>
 
 // ------------------------------------------------------------------------
-// Reading test config
-struct test_config {
-  std::string database_filename;
+// Test configuration
+namespace test_configuration {
+struct configuration {
+public:
+  int processors;
 };
 
-void operator>>(YAML::Node &Node, test_config &test_config) {
-  test_config.database_filename = Node["database_file"].as<std::string>();
+void operator>>(YAML::Node &Node, configuration &configuration) {
+  configuration.processors = Node["nproc"].as<int>();
   return;
 }
 
-test_config get_test_config(std::string config_filename,
-                            specfem::MPI::MPI *mpi) {
-  // read test config file
-  YAML::Node yaml = YAML::LoadFile(config_filename);
-  test_config test_config{};
-  if (mpi->get_size() == 1) {
-    YAML::Node Node = yaml["SerialTest"];
-    YAML::Node database = Node["database"];
+struct databases {
+public:
+  databases() : processors(0){};
+  databases(const int &nproc) : processors(nproc), filenames(nproc){};
+
+  void append(const YAML::Node &Node) {
+    filenames[Node["processor"].as<int>()] = Node["filename"].as<std::string>();
+  }
+  int processors;
+  std::vector<std::string> filenames;
+};
+
+struct Test {
+public:
+  Test(const YAML::Node &Node) {
+    name = Node["name"].as<std::string>();
+    description = Node["description"].as<std::string>();
+    YAML::Node config = Node["config"];
+    config >> configuration;
+    YAML::Node database = Node["databases"];
+
     assert(database.IsSequence());
-    assert(database.size() == 1);
+    assert(database.size() == configuration.processors);
+
+    databases = test_configuration::databases(configuration.processors);
+
+    assert(databases.filenames.size() == configuration.processors);
+
     for (auto N : database)
-      N >> test_config;
-  } else {
-    YAML::Node Node = yaml["ParallelTest"];
-    YAML::Node database = Node["database"];
-    assert(database.IsSequence());
-    assert(database.size() == Node["config"]["nproc"].as<int>());
-    assert(mpi->get_size() == Node["config"]["nproc"].as<int>());
-    for (auto N : database) {
-      if (N["processor"].as<int>() == mpi->get_rank())
-        N >> test_config;
-    }
+      databases.append(N);
+
+    assert(databases.filenames.size() == configuration.processors);
+
+    return;
   }
 
-  return test_config;
+  std::string name;
+  std::string description;
+  test_configuration::databases databases;
+  test_configuration::configuration configuration;
+};
+} // namespace test_configuration
+
+// ------------------------------------------------------------------------
+// Reading test config
+
+void parse_test_config(const YAML::Node &yaml,
+                       std::vector<test_configuration::Test> &tests) {
+  YAML::Node all_tests = yaml["Tests"];
+  assert(all_tests.IsSequence());
+
+  for (auto N : all_tests)
+    tests.push_back(test_configuration::Test(N));
+
+  return;
 }
+
 // ---------------------------------------------------------------------------
 
 /**
@@ -57,12 +90,28 @@ TEST(MESH_TESTS, fortran_binary_reader) {
 
   std::string config_filename =
       "../../../tests/unit-tests/mesh/test_config.yaml";
-  test_config test_config =
-      get_test_config(config_filename, MPIEnvironment::mpi_);
+  std::vector<test_configuration::Test> tests;
+  parse_test_config(YAML::LoadFile(config_filename), tests);
 
-  std::vector<specfem::material::material *> materials;
-  EXPECT_NO_THROW(specfem::mesh::mesh mesh(test_config.database_filename,
-                                           materials, MPIEnvironment::mpi_));
+  for (auto test : tests) {
+    std::vector<specfem::material::material *> materials;
+    std::cout << "Executing test: " << test.description << std::endl;
+    try {
+      specfem::mesh::mesh mesh(
+          test.databases.filenames[test.configuration.processors - 1],
+          materials, MPIEnvironment::mpi_);
+      std::cout << " - Test passed\n" << std::endl;
+    } catch (std::runtime_error &e) {
+      std::cout << " - Error: " << e.what() << std::endl;
+      FAIL() << " Test failed\n"
+             << " - Test name: " << test.name << "\n"
+             << " - Number of MPI processors: " << test.configuration.processors
+             << "\n"
+             << " - Error: " << e.what() << std::endl;
+    }
+  }
+  SUCCEED();
+  return;
 }
 
 int main(int argc, char *argv[]) {

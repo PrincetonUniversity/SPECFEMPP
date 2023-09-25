@@ -520,6 +520,19 @@ namespace property {
 class isotropic {};
 } // namespace property
 } // namespace element
+
+namespace coupling {
+namespace edge {
+enum type {
+  TOP,    ///< Top edge
+  BOTTOM, ///< Bottom edge
+  LEFT,   ///< Left edge
+  RIGHT   ///< Right edge
+};
+
+constexpr int num_edges = 4;
+} // namespace edge
+} // namespace coupling
 } // namespace enums
 } // namespace specfem
 
