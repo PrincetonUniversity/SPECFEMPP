@@ -125,6 +125,11 @@ specfem::sources::moment_tensor::moment_tensor(YAML::Node &Node,
   if (YAML::Node Dirac = Node["Dirac"]) {
     this->forcing_function =
         assign_dirac(Dirac, dt, use_trick_for_better_pressure);
+  } else if (YAML::Node Ricker = Node["Ricker"]) {
+    this->forcing_function =
+        assign_ricker(Ricker, dt, use_trick_for_better_pressure);
+  } else {
+    throw std::runtime_error("Only Dirac and Ricker sources are supported");
   }
 };
 

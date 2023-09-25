@@ -31,20 +31,22 @@ void specfem::solver::time_marching<qp_type>::run() {
 
     Kokkos::Profiling::pushRegion("Stiffness calculation");
     it->apply_predictor_phase(acoustic_field, acoustic_field_dot, acoustic_field_dot_dot);
+    it->apply_predictor_phase(elastic_field, elastic_field_dot, elastic_field_dot_dot);
 
-    acoustic_domain.compute_stiffness_interaction();
+    acoustic_elastic_interface.compute_coupling();
     acoustic_domain.compute_source_interaction(timeval);
+    acoustic_domain.compute_stiffness_interaction();
     acoustic_domain.divide_mass_matrix();
 
     it->apply_corrector_phase(acoustic_field, acoustic_field_dot, acoustic_field_dot_dot);
 
-    it->apply_predictor_phase(elastic_field, elastic_field_dot, elastic_field_dot_dot);
-
-    elastic_domain.compute_stiffness_interaction();
+    elastic_acoustic_interface.compute_coupling();
     elastic_domain.compute_source_interaction(timeval);
+    elastic_domain.compute_stiffness_interaction();
     elastic_domain.divide_mass_matrix();
 
     it->apply_corrector_phase(elastic_field, elastic_field_dot, elastic_field_dot_dot);
+    Kokkos::Profiling::popRegion();
 
     if (it->compute_seismogram()) {
       int isig_step = it->get_seismogram_step();
@@ -52,14 +54,13 @@ void specfem::solver::time_marching<qp_type>::run() {
       elastic_domain.compute_seismogram(isig_step);
       it->increment_seismogram_step();
     }
-    Kokkos::Profiling::popRegion();
+
+    it->increment_time();
 
     if (istep % 10 == 0) {
       std::cout << "Progress : executed " << istep << " steps of " << nstep
                 << " steps" << std::endl;
     }
-
-    it->increment_time();
   }
 
   std::cout << std::endl;

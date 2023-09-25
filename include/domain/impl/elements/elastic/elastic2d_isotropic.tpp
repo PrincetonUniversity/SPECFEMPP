@@ -130,16 +130,16 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
     du_dgamma[1] += s_hprime_zz(iz, l, 0) * u(l, ix, 1);
   }
   // duxdx
-  dudxl[0] = xixl * du_dxi[0] + gammaxl * du_dxi[1];
+  dudxl[0] = xixl * du_dxi[0] + gammaxl * du_dgamma[0];
 
   // duxdz
-  dudzl[0] = xizl * du_dxi[0] + gammazl * du_dxi[1];
+  dudzl[0] = xizl * du_dxi[0] + gammazl * du_dgamma[0];
 
   // duzdx
-  dudxl[1] = xixl * du_dgamma[0] + gammaxl * du_dgamma[1];
+  dudxl[1] = xixl * du_dxi[1] + gammaxl * du_dgamma[1];
 
   // duzdz
-  dudzl[1] = xizl * du_dgamma[0] + gammazl * du_dgamma[1];
+  dudzl[1] = xizl * du_dxi[1] + gammazl * du_dgamma[1];
 
   return;
 }
