@@ -64,6 +64,7 @@ void get_edge_range(const specfem::enums::coupling::edge::type &edge,
 
 // Given an edge, return the number of points along the edge
 // This ends up being important when ngllx != ngllz
+KOKKOS_FUNCTION
 int specfem::compute::coupled_interfaces::iterator::npoints(
     const specfem::enums::coupling::edge::type &edge, const int ngllx,
     const int ngllz) {
@@ -78,10 +79,11 @@ int specfem::compute::coupled_interfaces::iterator::npoints(
     return ngllz;
     break;
   default:
-    throw std::runtime_error("Invalid edge type");
+    assert(false && "Invalid edge type");
   }
 }
 
+KOKKOS_FUNCTION
 void specfem::compute::coupled_interfaces::iterator::self_iterator(
     const int &ipoint, const specfem::enums::coupling::edge::type &edge,
     const int ngllx, const int ngllz, int &i, int &j) {
@@ -104,10 +106,11 @@ void specfem::compute::coupled_interfaces::iterator::self_iterator(
     j = ngllz - 1 - ipoint;
     break;
   default:
-    throw std::runtime_error("Invalid edge type");
+    assert(false && "Invalid edge type");
   }
 }
 
+KOKKOS_FUNCTION
 void specfem::compute::coupled_interfaces::iterator::coupled_iterator(
     const int &ipoint, const specfem::enums::coupling::edge::type &edge,
     const int ngllx, const int ngllz, int &i, int &j) {
@@ -130,7 +133,7 @@ void specfem::compute::coupled_interfaces::iterator::coupled_iterator(
     j = ipoint;
     break;
   default:
-    throw std::runtime_error("Invalid edge type");
+    assert(false && "Invalid edge type");
   }
 }
 
