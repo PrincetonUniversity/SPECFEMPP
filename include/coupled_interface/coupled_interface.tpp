@@ -74,7 +74,7 @@ void specfem::coupled_interface::coupled_interface<
 
   Kokkos::parallel_for(
       "specfem::coupled_interfaces::coupled_interfaces::compute_coupling",
-      specfem::kokkos::DeviceTeam(nedges, 5, 1),
+      specfem::kokkos::DeviceTeam(nedges, Kokkos::AUTO, 1),
       KOKKOS_CLASS_LAMBDA(
           const specfem::kokkos::DeviceTeam::member_type &team_member) {
         // Get number of quadrature points
