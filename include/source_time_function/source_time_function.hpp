@@ -61,6 +61,8 @@ std::ostream &operator<<(std::ostream &out,
  */
 struct stf_storage {
   specfem::forcing_function::stf *T;
+
+  KOKKOS_FUNCTION type_real compute(const type_real t) { return T->compute(t); }
 };
 
 } // namespace forcing_function

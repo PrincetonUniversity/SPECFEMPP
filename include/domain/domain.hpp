@@ -2,7 +2,7 @@
 #define _DOMAIN_HPP
 
 #include "compute/interface.hpp"
-#include "impl/elements/interface.hpp"
+#include "impl/interface.hpp"
 #include "impl/receivers/interface.hpp"
 #include "impl/sources/interface.hpp"
 #include "quadrature/interface.hpp"
@@ -99,7 +99,9 @@ public:
    * @brief Compute interaction of stiffness matrix on acceleration
    *
    */
-  void compute_stiffness_interaction();
+  void compute_stiffness_interaction() {
+    kernels.compute_stiffness_interaction();
+  };
 
   /**
    * @brief Divide the acceleration by the mass matrix
@@ -111,7 +113,9 @@ public:
    *
    * @param timeval
    */
-  void compute_source_interaction(const type_real timeval);
+  void compute_source_interaction(const type_real timeval) {
+    kernels.compute_source_interaction(timeval);
+  };
   /**
    * @brief Sync displacements views between host and device
    *
@@ -253,11 +257,15 @@ private:
   quadrature::quadrature *quadz;      ///< Pointer to quadrature object in
                                       ///< z-dimension
   int nelem_domain; ///< Total number of elements in this domain
-  specfem::kokkos::DeviceView1d<specfem::domain::impl::elements::container<
-      specfem::domain::impl::elements::element<dimension, medium_type,
-                                               quadrature_points_type> > >
-      elements; ///< Container to store pointer to every element inside
-                ///< this domain
+
+  specfem::domain::impl::kernels::kernels<medium_type, quadrature_points_type>
+      kernels;
+
+  // specfem::kokkos::DeviceView1d<specfem::domain::impl::elements::container<
+  //     specfem::domain::impl::elements::element<dimension, medium_type,
+  //                                              quadrature_points_type> > >
+  //     elements; ///< Container to store pointer to every element inside
+  //               ///< this domain
   specfem::kokkos::DeviceView1d<specfem::domain::impl::sources::container<
       specfem::domain::impl::sources::source<dimension, medium_type,
                                              quadrature_points_type> > >
