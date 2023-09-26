@@ -9,13 +9,13 @@
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
-/**
- * @brief Decltype for the field subviewed at particular global index
- *
- */
-using field_type = Kokkos::Subview<
-    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>, int,
-    std::remove_const_t<decltype(Kokkos::ALL)> >;
+// /**
+//  * @brief Decltype for the field subviewed at particular global index
+//  *
+//  */
+// using field_type = Kokkos::Subview<
+//     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>, int,
+//     std::remove_const_t<decltype(Kokkos::ALL)> >;
 
 namespace specfem {
 namespace domain {
@@ -32,11 +32,7 @@ class element<
     specfem::enums::element::dimension::dim2,
     specfem::enums::element::medium::elastic,
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
-    specfem::enums::element::property::isotropic>
-    : public element<specfem::enums::element::dimension::dim2,
-                     specfem::enums::element::medium::elastic,
-                     specfem::enums::element::quadrature::
-                         static_quadrature_points<NGLL> > {
+    specfem::enums::element::property::isotropic> {
 public:
   /**
    * @brief Dimension of the element
@@ -77,8 +73,7 @@ public:
    * @param properties Properties of the element
    */
   KOKKOS_FUNCTION
-  element(const int ispec,
-          const specfem::compute::partial_derivatives partial_derivatives,
+  element(const specfem::compute::partial_derivatives partial_derivatives,
           const specfem::compute::properties properties);
 
   /**
@@ -92,8 +87,8 @@ public:
    * @param mass_matrix mass matrix component
    */
   KOKKOS_INLINE_FUNCTION
-  void compute_mass_matrix_component(const int &xz,
-                                     type_real *mass_matrix) const override;
+  void compute_mass_matrix_component(const int &ispec, const int &xz,
+                                     type_real *mass_matrix) const;
 
   /**
    * @brief Compute the gradient of the field at a particular
@@ -112,11 +107,11 @@ public:
    * \tilde{u}}{\partial z} \f$
    */
   KOKKOS_INLINE_FUNCTION void
-  compute_gradient(const int &xz,
+  compute_gradient(const int &ispec, const int &xz,
                    const ScratchViewType<type_real, 1> s_hprime_xx,
                    const ScratchViewType<type_real, 1> s_hprime_zz,
                    const ScratchViewType<type_real, medium_type::components> u,
-                   type_real *dudxl, type_real *dudzl) const override;
+                   type_real *dudxl, type_real *dudzl) const;
 
   /**
    * @brief Compute the stress integrand at a particular Gauss-Lobatto-Legendre
@@ -135,9 +130,9 @@ public:
    * \partial_z \gamma \f$
    */
   KOKKOS_INLINE_FUNCTION void
-  compute_stress(const int &xz, const type_real *dudxl, const type_real *dudzl,
-                 type_real *stress_integrand_xi,
-                 type_real *stress_integrand_gamma) const override;
+  compute_stress(const int &ispec, const int &xz, const type_real *dudxl,
+                 const type_real *dudzl, type_real *stress_integrand_xi,
+                 type_real *stress_integrand_gamma) const;
 
   /**
    * @brief Update the acceleration at the quadrature point xz
@@ -158,34 +153,26 @@ public:
    * @param field_dot_dot Acceleration of the field subviewed at global index xz
    */
   KOKKOS_INLINE_FUNCTION void
-  update_acceleration(const int &xz, const type_real &wxglll,
-                      const type_real &wzglll,
-                      const ScratchViewType<type_real, medium_type::components>
-                          stress_integrand_xi,
-                      const ScratchViewType<type_real, medium_type::components>
-                          stress_integrand_gamma,
-                      const ScratchViewType<type_real, 1> s_hprimewgll_xx,
-                      const ScratchViewType<type_real, 1> s_hprimewgll_zz,
-                      field_type field_dot_dot) const override;
-
-  /**
-   * @brief Get the index of the element
-   *
-   * @return int Index of the element
-   */
-  KOKKOS_INLINE_FUNCTION int get_ispec() const override { return this->ispec; }
+  compute_acceleration(const int &xz, const type_real &wxglll,
+                       const type_real &wzglll,
+                       const ScratchViewType<type_real, medium_type::components>
+                           stress_integrand_xi,
+                       const ScratchViewType<type_real, medium_type::components>
+                           stress_integrand_gamma,
+                       const ScratchViewType<type_real, 1> s_hprimewgll_xx,
+                       const ScratchViewType<type_real, 1> s_hprimewgll_zz,
+                       type_real *acceleration) const;
 
 private:
-  int ispec;                                         ///< Index of the element
-  specfem::kokkos::DeviceView2d<type_real> xix;      ///< xix
-  specfem::kokkos::DeviceView2d<type_real> xiz;      ///< xiz
-  specfem::kokkos::DeviceView2d<type_real> gammax;   ///< gammax
-  specfem::kokkos::DeviceView2d<type_real> gammaz;   ///< gammaz
-  specfem::kokkos::DeviceView2d<type_real> jacobian; ///< jacobian
-  specfem::kokkos::DeviceView2d<type_real> lambdaplus2mu; ///< lambda +
+  specfem::kokkos::DeviceView3d<type_real> xix;           ///< xix
+  specfem::kokkos::DeviceView3d<type_real> xiz;           ///< xiz
+  specfem::kokkos::DeviceView3d<type_real> gammax;        ///< gammax
+  specfem::kokkos::DeviceView3d<type_real> gammaz;        ///< gammaz
+  specfem::kokkos::DeviceView3d<type_real> jacobian;      ///< jacobian
+  specfem::kokkos::DeviceView3d<type_real> lambdaplus2mu; ///< lambda +
                                                           ///< 2 * mu
-  specfem::kokkos::DeviceView2d<type_real> mu;            ///< mu
-  specfem::kokkos::DeviceView2d<type_real> rho;           ///< rho
+  specfem::kokkos::DeviceView3d<type_real> mu;            ///< mu
+  specfem::kokkos::DeviceView3d<type_real> rho;           ///< rho
 };
 } // namespace elements
 } // namespace impl

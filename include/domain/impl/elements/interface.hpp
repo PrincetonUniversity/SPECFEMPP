@@ -9,5 +9,7 @@
 #include "elastic/elastic2d_isotropic.hpp"
 #include "elastic/elastic2d_isotropic.tpp"
 #include "element.hpp"
+#include "kernel.hpp"
+#include "kernel.tpp"
 
 #endif

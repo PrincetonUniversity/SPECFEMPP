@@ -3,7 +3,7 @@
 
 #include "compute/interface.hpp"
 #include "domain.hpp"
-#include "impl/elements/interface.hpp"
+#include "impl/interface.hpp"
 #include "impl/receivers/interface.hpp"
 #include "impl/sources/interface.hpp"
 #include "kokkos_abstractions.h"
@@ -65,59 +65,50 @@ void initialize_views(
 
 template <class medium, class qp_type>
 void initialize_rmass_inverse(
-    const specfem::kokkos::DeviceView3d<int> ibool,
-    const specfem::kokkos::DeviceView1d<type_real> wxgll,
-    const specfem::kokkos::DeviceView1d<type_real> wzgll,
-    const specfem::kokkos::DeviceView1d<element_container<element_type<
-        specfem::enums::element::dimension::dim2, medium, qp_type> > >
-        &elements,
-    const qp_type &quadrature_points,
+    const specfem::domain::impl::kernels::kernels<medium, qp_type> &kernels,
     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
         rmass_inverse) {
   // Compute the mass matrix
 
   constexpr int components = medium::components;
-  constexpr auto value = medium::value;
-
-  const int nspec = ibool.extent(0);
-  const int ngllz = ibool.extent(1);
-  const int ngllx = ibool.extent(2);
-  const int ngllxz = ngllx * ngllz;
-
   const int nglob = rmass_inverse.extent(0);
 
-  Kokkos::parallel_for(
-      "specfem::domain::domain::rmass_matrix",
-      specfem::kokkos::DeviceTeam(elements.extent(0), Kokkos::AUTO, 1),
-      KOKKOS_LAMBDA(
-          const specfem::kokkos::DeviceTeam::member_type &team_member) {
-        int ngllx, ngllz;
-        quadrature_points.get_ngll(&ngllx, &ngllz);
-        const auto element = elements(team_member.league_rank());
-        const auto ispec = element.get_ispec();
+  kernels.compute_mass_matrix();
 
-        Kokkos::parallel_for(
-            quadrature_points.template TeamThreadRange<specfem::enums::axes::x,
-                                                       specfem::enums::axes::z>(
-                team_member),
-            [&](const int xz) {
-              int ix, iz;
-              sub2ind(xz, ngllx, iz, ix);
-              int iglob = ibool(ispec, iz, ix);
+  // Kokkos::parallel_for(
+  //     "specfem::domain::domain::rmass_matrix",
+  //     specfem::kokkos::DeviceTeam(elements.extent(0), Kokkos::AUTO, 1),
+  //     KOKKOS_LAMBDA(
+  //         const specfem::kokkos::DeviceTeam::member_type &team_member) {
+  //       int ngllx, ngllz;
+  //       quadrature_points.get_ngll(&ngllx, &ngllz);
+  //       const auto element = elements(team_member.league_rank());
+  //       const auto ispec = element.get_ispec();
 
-              type_real mass_matrix_element[components];
+  //       Kokkos::parallel_for(
+  //           quadrature_points.template
+  //           TeamThreadRange<specfem::enums::axes::x,
+  //                                                      specfem::enums::axes::z>(
+  //               team_member),
+  //           [&](const int xz) {
+  //             int ix, iz;
+  //             sub2ind(xz, ngllx, iz, ix);
+  //             int iglob = ibool(ispec, iz, ix);
 
-              element.compute_mass_matrix_component(xz, mass_matrix_element);
+  //             type_real mass_matrix_element[components];
 
-              for (int icomponent = 0; icomponent < components; icomponent++) {
-                Kokkos::single(Kokkos::PerThread(team_member), [&]() {
-                  Kokkos::atomic_add(&rmass_inverse(iglob, icomponent),
-                                     wxgll(ix) * wzgll(iz) *
-                                         mass_matrix_element[icomponent]);
-                });
-              }
-            });
-      });
+  //             element.compute_mass_matrix_component(xz, mass_matrix_element);
+
+  //             for (int icomponent = 0; icomponent < components; icomponent++)
+  //             {
+  //               Kokkos::single(Kokkos::PerThread(team_member), [&]() {
+  //                 Kokkos::atomic_add(&rmass_inverse(iglob, icomponent),
+  //                                    wxgll(ix) * wzgll(iz) *
+  //                                        mass_matrix_element[icomponent]);
+  //               });
+  //             }
+  //           });
+  //     });
 
   Kokkos::fence();
 
@@ -139,84 +130,89 @@ void initialize_rmass_inverse(
   return;
 }
 
-template <class medium, class qp_type>
-void assign_elemental_properties(
-    specfem::compute::partial_derivatives &partial_derivatives,
-    specfem::compute::properties &properties,
-    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot_dot,
-    specfem::kokkos::DeviceView1d<element_container<element_type<
-        specfem::enums::element::dimension::dim2, medium, qp_type> > >
-        &elements,
-    const int &nspec, const int &ngllz, const int &ngllx, int &nelem_domain) {
+// template <class medium, class qp_type>
+// void assign_elemental_properties(
+//     specfem::compute::partial_derivatives &partial_derivatives,
+//     specfem::compute::properties &properties,
+//     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+//     field_dot_dot,
+//     specfem::kokkos::DeviceView1d<element_container<element_type<
+//         specfem::enums::element::dimension::dim2, medium, qp_type> > >
+//         &elements,
+//     const int &nspec, const int &ngllz, const int &ngllx, int &nelem_domain)
+//     {
 
-  const auto value = medium::value;
-  const auto components = medium::components;
+//   const auto value = medium::value;
+//   const auto components = medium::components;
 
-  // count number of elements in this domain
-  nelem_domain = 0;
-  for (int ispec = 0; ispec < nspec; ispec++) {
-    if (properties.h_ispec_type(ispec) == value) {
-      nelem_domain++;
-    }
-  }
+//   // count number of elements in this domain
+//   nelem_domain = 0;
+//   for (int ispec = 0; ispec < nspec; ispec++) {
+//     if (properties.h_ispec_type(ispec) == value) {
+//       nelem_domain++;
+//     }
+//   }
 
-  specfem::kokkos::DeviceView1d<int> ispec_domain(
-      "specfem::domain::domain::h_ispec_domain", nelem_domain);
-  specfem::kokkos::HostMirror1d<int> h_ispec_domain =
-      Kokkos::create_mirror_view(ispec_domain);
+//   specfem::kokkos::DeviceView1d<int> ispec_domain(
+//       "specfem::domain::domain::h_ispec_domain", nelem_domain);
+//   specfem::kokkos::HostMirror1d<int> h_ispec_domain =
+//       Kokkos::create_mirror_view(ispec_domain);
 
-  elements = specfem::kokkos::DeviceView1d<element_container<element_type<
-      specfem::enums::element::dimension::dim2, medium, qp_type> > >(
-      "specfem::domain::domain::elements", nelem_domain);
+//   elements = specfem::kokkos::DeviceView1d<element_container<element_type<
+//       specfem::enums::element::dimension::dim2, medium, qp_type> > >(
+//       "specfem::domain::domain::elements", nelem_domain);
 
-  // Get ispec for each element in this domain
-  int index = 0;
-  for (int ispec = 0; ispec < nspec; ispec++) {
-    if (properties.h_ispec_type(ispec) == value) {
-      h_ispec_domain(index) = ispec;
-      index++;
-    }
-  }
+//   // Get ispec for each element in this domain
+//   int index = 0;
+//   for (int ispec = 0; ispec < nspec; ispec++) {
+//     if (properties.h_ispec_type(ispec) == value) {
+//       h_ispec_domain(index) = ispec;
+//       index++;
+//     }
+//   }
 
-#ifndef NDEBUG
-  assert(index == nelem_domain);
-#endif
+// #ifndef NDEBUG
+//   assert(index == nelem_domain);
+// #endif
 
-  Kokkos::deep_copy(ispec_domain, h_ispec_domain);
+//   Kokkos::deep_copy(ispec_domain, h_ispec_domain);
 
-  // Assign elemental properties
-  // ----------------------------------------------------------------------
-  auto h_elements = Kokkos::create_mirror_view(elements);
+//   // Assign elemental properties
+//   // ----------------------------------------------------------------------
+//   auto h_elements = Kokkos::create_mirror_view(elements);
 
-  Kokkos::parallel_for(
-      "specfem::domain::allocate_memory",
-      specfem::kokkos::HostRange(0, h_elements.extent(0)),
-      KOKKOS_LAMBDA(const int i) {
-        h_elements(i)
-            .element = (element_type<specfem::enums::element::dimension::dim2,
-                                     medium, qp_type> *)
-            Kokkos::kokkos_malloc<specfem::kokkos::DevMemSpace>(sizeof(
-                element_type<specfem::enums::element::dimension::dim2, medium,
-                             qp_type,
-                             specfem::enums::element::property::isotropic>));
-      });
+//   Kokkos::parallel_for(
+//       "specfem::domain::allocate_memory",
+//       specfem::kokkos::HostRange(0, h_elements.extent(0)),
+//       KOKKOS_LAMBDA(const int i) {
+//         h_elements(i)
+//             .element =
+//             (element_type<specfem::enums::element::dimension::dim2,
+//                                      medium, qp_type> *)
+//             Kokkos::kokkos_malloc<specfem::kokkos::DevMemSpace>(sizeof(
+//                 element_type<specfem::enums::element::dimension::dim2,
+//                 medium,
+//                              qp_type,
+//                              specfem::enums::element::property::isotropic>));
+//       });
 
-  Kokkos::deep_copy(elements, h_elements);
+//   Kokkos::deep_copy(elements, h_elements);
 
-  Kokkos::parallel_for(
-      "specfem::domain::instantialize_element",
-      specfem::kokkos::DeviceRange(0, ispec_domain.extent(0)),
-      KOKKOS_LAMBDA(const int i) {
-        const int ispec = ispec_domain(i);
-        auto &element = elements(i).element;
-        new (element)
-            element_type<specfem::enums::element::dimension::dim2, medium,
-                         qp_type, specfem::enums::element::property::isotropic>(
-                ispec, partial_derivatives, properties);
-      });
+//   Kokkos::parallel_for(
+//       "specfem::domain::instantialize_element",
+//       specfem::kokkos::DeviceRange(0, ispec_domain.extent(0)),
+//       KOKKOS_LAMBDA(const int i) {
+//         const int ispec = ispec_domain(i);
+//         auto &element = elements(i).element;
+//         new (element)
+//             element_type<specfem::enums::element::dimension::dim2, medium,
+//                          qp_type,
+//                          specfem::enums::element::property::isotropic>(
+//                 ispec, partial_derivatives, properties);
+//       });
 
-  Kokkos::fence();
-};
+//   Kokkos::fence();
+// };
 
 template <class medium, class qp_type>
 void initialize_sources(
@@ -449,7 +445,7 @@ specfem::domain::domain<medium, qp_type>::domain(
   //----------------------------------------------------------------------------
   // Initialize views
 
-  // In CUDA you can call class lambdas inside the constructors
+  // In CUDA you can't call class lambdas inside the constructors
   // Hence I need to use this function to initialize views
   initialize_views<medium>(nglob, this->field, this->field_dot,
                            this->field_dot_dot, this->rmass_inverse);
@@ -457,22 +453,24 @@ specfem::domain::domain<medium, qp_type>::domain(
   // ----------------------------------------------------------------------------
   // Inverse of mass matrix
 
-  assign_elemental_properties(partial_derivatives, material_properties,
-                              this->field_dot_dot, this->elements, nspec, ngllz,
-                              ngllx, this->nelem_domain);
+  // assign_elemental_properties(partial_derivatives, material_properties,
+  //                             this->field_dot_dot, this->elements, nspec,
+  //                             ngllz, ngllx, this->nelem_domain);
+
+  this->kernels = specfem::domain::impl::kernels::kernels<medium, qp_type>(compute->ibool,
+      partial_derivatives, material_properties, compute_sources, quadx, quadz, quadrature_points,
+      field, field_dot_dot, rmass_inverse);
 
   //----------------------------------------------------------------------------
   // Inverse of mass matrix
 
-  initialize_rmass_inverse(compute->ibool, quadx->get_w(), quadz->get_w(),
-                           this->elements, this->quadrature_points,
-                           this->rmass_inverse);
+  initialize_rmass_inverse(this->kernels, this->rmass_inverse);
 
   // ----------------------------------------------------------------------------
   // Initialize the sources
 
-  initialize_sources(material_properties, partial_derivatives, compute_sources,
-                     this->sources);
+  // initialize_sources(material_properties, partial_derivatives, compute_sources,
+  //                    this->sources);
 
   // ----------------------------------------------------------------------------
   // Initialize the receivers
@@ -563,240 +561,251 @@ void specfem::domain::domain<medium, qp_type>::divide_mass_matrix() {
   return;
 }
 
-template <class medium, class qp_type>
-void specfem::domain::domain<medium, qp_type>::compute_stiffness_interaction() {
+// template <class medium, class qp_type>
+// void specfem::domain::domain<medium,
+// qp_type>::compute_stiffness_interaction() {
 
-  constexpr int components = medium::components;
-  const auto hprime_xx = this->quadx->get_hprime();
-  const auto hprime_zz = this->quadz->get_hprime();
-  const auto wxgll = this->quadx->get_w();
-  const auto wzgll = this->quadz->get_w();
-  const auto ibool = this->compute->ibool;
+//   constexpr int components = medium::components;
+//   const auto hprime_xx = this->quadx->get_hprime();
+//   const auto hprime_zz = this->quadz->get_hprime();
+//   const auto wxgll = this->quadx->get_w();
+//   const auto wzgll = this->quadz->get_w();
+//   const auto ibool = this->compute->ibool;
 
-  // s_hprime_xx, s_hprimewgll_xx
-  int scratch_size =
-      2 * quadrature_points.template shmem_size<
-              type_real, 1, specfem::enums::axes::x, specfem::enums::axes::x>();
+//   // s_hprime_xx, s_hprimewgll_xx
+//   int scratch_size =
+//       2 * quadrature_points.template shmem_size<
+//               type_real, 1, specfem::enums::axes::x,
+//               specfem::enums::axes::x>();
 
-  // s_hprime_zz, s_hprimewgll_zz
-  scratch_size +=
-      2 * quadrature_points.template shmem_size<
-              type_real, 1, specfem::enums::axes::z, specfem::enums::axes::z>();
+//   // s_hprime_zz, s_hprimewgll_zz
+//   scratch_size +=
+//       2 * quadrature_points.template shmem_size<
+//               type_real, 1, specfem::enums::axes::z,
+//               specfem::enums::axes::z>();
 
-  // s_field, s_stress_integrand_xi, s_stress_integrand_gamma
-  scratch_size +=
-      3 *
-      quadrature_points
-          .template shmem_size<type_real, components, specfem::enums::axes::x,
-                               specfem::enums::axes::z>();
+//   // s_field, s_stress_integrand_xi, s_stress_integrand_gamma
+//   scratch_size +=
+//       3 *
+//       quadrature_points
+//           .template shmem_size<type_real, components,
+//           specfem::enums::axes::x,
+//                                specfem::enums::axes::z>();
 
-  // s_iglob
-  scratch_size +=
-      quadrature_points.template shmem_size<int, 1, specfem::enums::axes::x,
-                                            specfem::enums::axes::z>();
+//   // s_iglob
+//   scratch_size +=
+//       quadrature_points.template shmem_size<int, 1, specfem::enums::axes::x,
+//                                             specfem::enums::axes::z>();
 
-  Kokkos::parallel_for(
-      "specfem::domain::domain::compute_gradients",
-      specfem::kokkos::DeviceTeam(this->nelem_domain, NTHREADS, NLANES)
-          .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
-      KOKKOS_CLASS_LAMBDA(
-          const specfem::kokkos::DeviceTeam::member_type &team_member) {
-        int ngllx, ngllz;
-        quadrature_points.get_ngll(&ngllx, &ngllz);
-        const auto element = this->elements(team_member.league_rank());
-        const auto ispec = element.get_ispec();
+//   Kokkos::parallel_for(
+//       "specfem::domain::domain::compute_gradients",
+//       specfem::kokkos::DeviceTeam(this->nelem_domain, NTHREADS, NLANES)
+//           .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
+//       KOKKOS_CLASS_LAMBDA(
+//           const specfem::kokkos::DeviceTeam::member_type &team_member) {
+//         int ngllx, ngllz;
+//         quadrature_points.get_ngll(&ngllx, &ngllz);
+//         const auto element = this->elements(team_member.league_rank());
+//         const auto ispec = element.get_ispec();
 
-        // Instantiate shared views
-        // ---------------------------------------------------------------
-        auto s_hprime_xx = quadrature_points.template ScratchView<
-            type_real, 1, specfem::enums::axes::x, specfem::enums::axes::x>(
-            team_member.team_scratch(0));
-        auto s_hprime_zz = quadrature_points.template ScratchView<
-            type_real, 1, specfem::enums::axes::z, specfem::enums::axes::z>(
-            team_member.team_scratch(0));
-        auto s_hprimewgll_xx = quadrature_points.template ScratchView<
-            type_real, 1, specfem::enums::axes::x, specfem::enums::axes::x>(
-            team_member.team_scratch(0));
-        auto s_hprimewgll_zz = quadrature_points.template ScratchView<
-            type_real, 1, specfem::enums::axes::z, specfem::enums::axes::z>(
-            team_member.team_scratch(0));
+//         // Instantiate shared views
+//         // ---------------------------------------------------------------
+//         auto s_hprime_xx = quadrature_points.template ScratchView<
+//             type_real, 1, specfem::enums::axes::x, specfem::enums::axes::x>(
+//             team_member.team_scratch(0));
+//         auto s_hprime_zz = quadrature_points.template ScratchView<
+//             type_real, 1, specfem::enums::axes::z, specfem::enums::axes::z>(
+//             team_member.team_scratch(0));
+//         auto s_hprimewgll_xx = quadrature_points.template ScratchView<
+//             type_real, 1, specfem::enums::axes::x, specfem::enums::axes::x>(
+//             team_member.team_scratch(0));
+//         auto s_hprimewgll_zz = quadrature_points.template ScratchView<
+//             type_real, 1, specfem::enums::axes::z, specfem::enums::axes::z>(
+//             team_member.team_scratch(0));
 
-        auto s_field =
-            quadrature_points.template ScratchView<type_real, components,
-                                                   specfem::enums::axes::z,
-                                                   specfem::enums::axes::x>(
-                team_member.team_scratch(0));
-        auto s_stress_integrand_xi =
-            quadrature_points.template ScratchView<type_real, components,
-                                                   specfem::enums::axes::z,
-                                                   specfem::enums::axes::x>(
-                team_member.team_scratch(0));
-        auto s_stress_integrand_gamma =
-            quadrature_points.template ScratchView<type_real, components,
-                                                   specfem::enums::axes::z,
-                                                   specfem::enums::axes::x>(
-                team_member.team_scratch(0));
-        auto s_iglob = quadrature_points.template ScratchView<
-            int, 1, specfem::enums::axes::z, specfem::enums::axes::x>(
-            team_member.team_scratch(0));
+//         auto s_field =
+//             quadrature_points.template ScratchView<type_real, components,
+//                                                    specfem::enums::axes::z,
+//                                                    specfem::enums::axes::x>(
+//                 team_member.team_scratch(0));
+//         auto s_stress_integrand_xi =
+//             quadrature_points.template ScratchView<type_real, components,
+//                                                    specfem::enums::axes::z,
+//                                                    specfem::enums::axes::x>(
+//                 team_member.team_scratch(0));
+//         auto s_stress_integrand_gamma =
+//             quadrature_points.template ScratchView<type_real, components,
+//                                                    specfem::enums::axes::z,
+//                                                    specfem::enums::axes::x>(
+//                 team_member.team_scratch(0));
+//         auto s_iglob = quadrature_points.template ScratchView<
+//             int, 1, specfem::enums::axes::z, specfem::enums::axes::x>(
+//             team_member.team_scratch(0));
 
-        // ---------- Allocate shared views -------------------------------
-        Kokkos::parallel_for(
-            quadrature_points.template TeamThreadRange<specfem::enums::axes::x,
-                                                       specfem::enums::axes::x>(
-                team_member),
-            [&](const int xz) {
-              int iz, ix;
-              sub2ind(xz, ngllx, iz, ix);
-              s_hprime_xx(iz, ix, 0) = hprime_xx(iz, ix);
-              s_hprimewgll_xx(ix, iz, 0) = wxgll(iz) * hprime_xx(iz, ix);
-            });
+//         // ---------- Allocate shared views -------------------------------
+//         Kokkos::parallel_for(
+//             quadrature_points.template
+//             TeamThreadRange<specfem::enums::axes::x,
+//                                                        specfem::enums::axes::x>(
+//                 team_member),
+//             [&](const int xz) {
+//               int iz, ix;
+//               sub2ind(xz, ngllx, iz, ix);
+//               s_hprime_xx(iz, ix, 0) = hprime_xx(iz, ix);
+//               s_hprimewgll_xx(ix, iz, 0) = wxgll(iz) * hprime_xx(iz, ix);
+//             });
 
-        Kokkos::parallel_for(
-            quadrature_points.template TeamThreadRange<specfem::enums::axes::z,
-                                                       specfem::enums::axes::z>(
-                team_member),
-            [&](const int xz) {
-              int iz, ix;
-              sub2ind(xz, ngllz, iz, ix);
-              s_hprime_zz(iz, ix, 0) = hprime_zz(iz, ix);
-              s_hprimewgll_zz(ix, iz, 0) = wzgll(iz) * hprime_zz(iz, ix);
-            });
+//         Kokkos::parallel_for(
+//             quadrature_points.template
+//             TeamThreadRange<specfem::enums::axes::z,
+//                                                        specfem::enums::axes::z>(
+//                 team_member),
+//             [&](const int xz) {
+//               int iz, ix;
+//               sub2ind(xz, ngllz, iz, ix);
+//               s_hprime_zz(iz, ix, 0) = hprime_zz(iz, ix);
+//               s_hprimewgll_zz(ix, iz, 0) = wzgll(iz) * hprime_zz(iz, ix);
+//             });
 
-        Kokkos::parallel_for(
-            quadrature_points.template TeamThreadRange<specfem::enums::axes::z,
-                                                       specfem::enums::axes::x>(
-                team_member),
-            [&](const int xz) {
-              int iz, ix;
-              sub2ind(xz, ngllx, iz, ix);
-              const int iglob = ibool(ispec, iz, ix);
-              s_iglob(iz, ix, 0) = iglob;
-#ifdef KOKKOS_ENABLE_CUDA
-#pragma unroll
-#endif
-              for (int icomponent = 0; icomponent < components; icomponent++) {
-                s_field(iz, ix, icomponent) = field(iglob, icomponent);
-                s_stress_integrand_xi(iz, ix, icomponent) = 0.0;
-                s_stress_integrand_gamma(iz, ix, icomponent) = 0.0;
-              }
-            });
+//         Kokkos::parallel_for(
+//             quadrature_points.template
+//             TeamThreadRange<specfem::enums::axes::z,
+//                                                        specfem::enums::axes::x>(
+//                 team_member),
+//             [&](const int xz) {
+//               int iz, ix;
+//               sub2ind(xz, ngllx, iz, ix);
+//               const int iglob = ibool(ispec, iz, ix);
+//               s_iglob(iz, ix, 0) = iglob;
+// #ifdef KOKKOS_ENABLE_CUDA
+// #pragma unroll
+// #endif
+//               for (int icomponent = 0; icomponent < components; icomponent++)
+//               {
+//                 s_field(iz, ix, icomponent) = field(iglob, icomponent);
+//                 s_stress_integrand_xi(iz, ix, icomponent) = 0.0;
+//                 s_stress_integrand_gamma(iz, ix, icomponent) = 0.0;
+//               }
+//             });
 
-        // ------------------------------------------------------------------
+//         // ------------------------------------------------------------------
 
-        team_member.team_barrier();
+//         team_member.team_barrier();
 
-        Kokkos::parallel_for(
-            quadrature_points.template TeamThreadRange<specfem::enums::axes::z,
-                                                       specfem::enums::axes::x>(
-                team_member),
-            [&](const int xz) {
-              int ix, iz;
-              sub2ind(xz, ngllx, iz, ix);
+//         Kokkos::parallel_for(
+//             quadrature_points.template
+//             TeamThreadRange<specfem::enums::axes::z,
+//                                                        specfem::enums::axes::x>(
+//                 team_member),
+//             [&](const int xz) {
+//               int ix, iz;
+//               sub2ind(xz, ngllx, iz, ix);
 
-              type_real dudxl[components];
-              type_real dudzl[components];
+//               type_real dudxl[components];
+//               type_real dudzl[components];
 
-              type_real stress_integrand_xi[components];
-              type_real stress_integrand_gamma[components];
+//               type_real stress_integrand_xi[components];
+//               type_real stress_integrand_gamma[components];
 
-              element.compute_gradient(xz, s_hprime_xx, s_hprime_zz, s_field,
-                                       dudxl, dudzl);
+//               element.compute_gradient(xz, s_hprime_xx, s_hprime_zz, s_field,
+//                                        dudxl, dudzl);
 
-              element.compute_stress(xz, dudxl, dudzl, stress_integrand_xi,
-                                     stress_integrand_gamma);
-#ifdef KOKKOS_ENABLE_CUDA
-#pragma unroll
-#endif
-              for (int icomponent = 0; icomponent < components; icomponent++) {
-                s_stress_integrand_xi(iz, ix, icomponent) =
-                    stress_integrand_xi[icomponent];
-                s_stress_integrand_gamma(iz, ix, icomponent) =
-                    stress_integrand_gamma[icomponent];
-              }
-            });
+//               element.compute_stress(xz, dudxl, dudzl, stress_integrand_xi,
+//                                      stress_integrand_gamma);
+// #ifdef KOKKOS_ENABLE_CUDA
+// #pragma unroll
+// #endif
+//               for (int icomponent = 0; icomponent < components; icomponent++)
+//               {
+//                 s_stress_integrand_xi(iz, ix, icomponent) =
+//                     stress_integrand_xi[icomponent];
+//                 s_stress_integrand_gamma(iz, ix, icomponent) =
+//                     stress_integrand_gamma[icomponent];
+//               }
+//             });
 
-        team_member.team_barrier();
+//         team_member.team_barrier();
 
-        Kokkos::parallel_for(
-            quadrature_points.template TeamThreadRange<specfem::enums::axes::z,
-                                                       specfem::enums::axes::x>(
-                team_member),
-            [&](const int xz) {
-              int iz, ix;
-              sub2ind(xz, ngllx, iz, ix);
+//         Kokkos::parallel_for(
+//             quadrature_points.template
+//             TeamThreadRange<specfem::enums::axes::z,
+//                                                        specfem::enums::axes::x>(
+//                 team_member),
+//             [&](const int xz) {
+//               int iz, ix;
+//               sub2ind(xz, ngllx, iz, ix);
 
-              const int iglob = s_iglob(iz, ix, 0);
-              const type_real wxglll = wxgll(ix);
-              const type_real wzglll = wzgll(iz);
+//               const int iglob = s_iglob(iz, ix, 0);
+//               const type_real wxglll = wxgll(ix);
+//               const type_real wzglll = wzgll(iz);
 
-              auto sv_field_dot_dot =
-                  Kokkos::subview(field_dot_dot, iglob, Kokkos::ALL());
+//               auto sv_field_dot_dot =
+//                   Kokkos::subview(field_dot_dot, iglob, Kokkos::ALL());
 
-              element.update_acceleration(
-                  xz, wxglll, wzglll, s_stress_integrand_xi,
-                  s_stress_integrand_gamma, s_hprimewgll_xx, s_hprimewgll_zz,
-                  sv_field_dot_dot);
-            });
-      });
+//               element.update_acceleration(
+//                   xz, wxglll, wzglll, s_stress_integrand_xi,
+//                   s_stress_integrand_gamma, s_hprimewgll_xx, s_hprimewgll_zz,
+//                   sv_field_dot_dot);
+//             });
+//       });
 
-  Kokkos::fence();
+//   Kokkos::fence();
 
-  return;
-}
+//   return;
+// }
 
-template <typename medium, typename qp_type>
-void specfem::domain::domain<medium, qp_type>::compute_source_interaction(
-    const type_real timeval) {
+// template <typename medium, typename qp_type>
+// void specfem::domain::domain<medium, qp_type>::compute_source_interaction(
+//     const type_real timeval) {
 
-  constexpr int components = medium::components;
-  const int nsources = this->sources.extent(0);
-  const auto ibool = this->compute->ibool;
+//   constexpr int components = medium::components;
+//   const int nsources = this->sources.extent(0);
+//   const auto ibool = this->compute->ibool;
 
-  Kokkos::parallel_for(
-      "specfem::domain::domain::compute_source_interaction",
-      specfem::kokkos::DeviceTeam(nsources, Kokkos::AUTO, 1),
-      KOKKOS_CLASS_LAMBDA(
-          const specfem::kokkos::DeviceTeam::member_type &team_member) {
-        int ngllx, ngllz;
-        quadrature_points.get_ngll(&ngllx, &ngllz);
-        int isource = team_member.league_rank();
-        const auto source = this->sources(isource);
-        const int ispec = source.get_ispec();
-        auto sv_ibool = Kokkos::subview(ibool, ispec, Kokkos::ALL, Kokkos::ALL);
+//   Kokkos::parallel_for(
+//       "specfem::domain::domain::compute_source_interaction",
+//       specfem::kokkos::DeviceTeam(nsources, Kokkos::AUTO, 1),
+//       KOKKOS_CLASS_LAMBDA(
+//           const specfem::kokkos::DeviceTeam::member_type &team_member) {
+//         int ngllx, ngllz;
+//         quadrature_points.get_ngll(&ngllx, &ngllz);
+//         int isource = team_member.league_rank();
+//         const auto source = this->sources(isource);
+//         const int ispec = source.get_ispec();
+//         auto sv_ibool = Kokkos::subview(ibool, ispec, Kokkos::ALL, Kokkos::ALL);
 
-        type_real stf;
+//         type_real stf;
 
-        Kokkos::parallel_reduce(
-            Kokkos::TeamThreadRange(team_member, 1),
-            [=](const int &, type_real &lsum) {
-              lsum = source.eval_stf(timeval);
-            },
-            stf);
+//         Kokkos::parallel_reduce(
+//             Kokkos::TeamThreadRange(team_member, 1),
+//             [=](const int &, type_real &lsum) {
+//               lsum = source.eval_stf(timeval);
+//             },
+//             stf);
 
-        team_member.team_barrier();
+//         team_member.team_barrier();
 
-        Kokkos::parallel_for(
-            quadrature_points.template TeamThreadRange<specfem::enums::axes::z,
-                                                       specfem::enums::axes::x>(
-                team_member),
-            [=](const int xz) {
-              int iz, ix;
-              sub2ind(xz, ngllx, iz, ix);
-              int iglob = ibool(ispec, iz, ix);
+//         Kokkos::parallel_for(
+//             quadrature_points.template TeamThreadRange<specfem::enums::axes::z,
+//                                                        specfem::enums::axes::x>(
+//                 team_member),
+//             [=](const int xz) {
+//               int iz, ix;
+//               sub2ind(xz, ngllx, iz, ix);
+//               int iglob = ibool(ispec, iz, ix);
 
-              type_real accel[components];
-              auto sv_field_dot_dot =
-                  Kokkos::subview(field_dot_dot, iglob, Kokkos::ALL());
+//               type_real accel[components];
+//               auto sv_field_dot_dot =
+//                   Kokkos::subview(field_dot_dot, iglob, Kokkos::ALL());
 
-              source.compute_interaction(xz, stf, accel);
-              source.update_acceleration(accel, sv_field_dot_dot);
-            });
-      });
+//               source.compute_interaction(xz, stf, accel);
+//               source.update_acceleration(accel, sv_field_dot_dot);
+//             });
+//       });
 
-  Kokkos::fence();
-  return;
-}
+//   Kokkos::fence();
+//   return;
+// }
 
 template <typename medium, typename qp_type>
 void specfem::domain::domain<medium, qp_type>::compute_seismogram(

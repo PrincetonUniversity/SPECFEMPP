@@ -60,7 +60,7 @@ public:
    * @param mass_matrix mass matrix component
    */
   KOKKOS_INLINE_FUNCTION virtual void
-  compute_mass_matrix_component(const int &xz,
+  compute_mass_matrix_component(const int &ispec, const int &xz,
                                 type_real *mass_matrix) const = 0;
 
   /**
@@ -77,7 +77,7 @@ public:
    * \tilde{u}}{\partial z} \f$
    */
   KOKKOS_INLINE_FUNCTION virtual void
-  compute_gradient(const int &xz,
+  compute_gradient(const int &ispec, const int &xz,
                    const ScratchViewType<type_real, 1> s_hprime_xx,
                    const ScratchViewType<type_real, 1> s_hprime_zz,
                    const ScratchViewType<type_real, medium_type::components> u,
@@ -101,8 +101,8 @@ public:
    * @return KOKKOS_FUNCTION
    */
   KOKKOS_INLINE_FUNCTION virtual void
-  compute_stress(const int &xz, const type_real *dudxl, const type_real *dudzl,
-                 type_real *stress_integrand_xi,
+  compute_stress(const int &ispec, const int &xz, const type_real *dudxl,
+                 const type_real *dudzl, type_real *stress_integrand_xi,
                  type_real *stress_integrand_gamma) const = 0;
 
   /**
@@ -132,7 +132,7 @@ public:
                           stress_integrand_gamma,
                       const ScratchViewType<type_real, 1> s_hprimewgll_xx,
                       const ScratchViewType<type_real, 1> s_hprimewgll_zz,
-                      field_type field_dot_dot) const = 0;
+                      type_real *acceleration) const = 0;
 
   /**
    * @brief Get the global index of the element
