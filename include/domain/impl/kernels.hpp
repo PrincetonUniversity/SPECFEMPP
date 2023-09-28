@@ -3,6 +3,7 @@
 
 #include "compute/interface.hpp"
 #include "domain/impl/elements/interface.hpp"
+#include "domain/impl/receivers/interface.hpp"
 #include "domain/impl/sources/interface.hpp"
 #include "specfem_enums.hpp"
 
@@ -24,9 +25,12 @@ public:
       const specfem::kokkos::DeviceView3d<int> ibool,
       const specfem::compute::partial_derivatives &partial_derivatives,
       const specfem::compute::properties &properties,
-      const specfem::compute::sources &sources, quadrature::quadrature *quadx,
-      quadrature::quadrature *quadz, qp_type quadrature_points,
+      const specfem::compute::sources &sources,
+      const specfem::compute::receivers &receives,
+      specfem::quadrature::quadrature *quadx,
+      specfem::quadrature::quadrature *quadz, qp_type quadrature_points,
       specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field,
+      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot,
       specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
           field_dot_dot,
       specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> mass_matrix);
@@ -46,8 +50,12 @@ public:
     return;
   }
 
+  __inline__ void compute_seismograms(const int &isig_step) const {
+    isotropic_receivers.compute_seismograms(isig_step);
+    return;
+  }
+
 private:
-  qp_type quadrature_points;
   specfem::domain::impl::kernels::element_kernel<
       medium_type, quadrature_point_type,
       specfem::enums::element::property::isotropic>
@@ -56,10 +64,10 @@ private:
       medium_type, quadrature_point_type,
       specfem::enums::element::property::isotropic>
       isotropic_sources;
-  //   specfem::domain::kernels::receivers<
-  //       dimension, medium_type, quadrature_points_type,
-  //       specfem::enums::element::property::isotropic>
-  //       isotropic_receivers;
+  specfem::domain::impl::kernels::receiver_kernel<
+      medium_type, quadrature_point_type,
+      specfem::enums::element::property::isotropic>
+      isotropic_receivers;
 };
 } // namespace kernels
 } // namespace impl
