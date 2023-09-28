@@ -18,7 +18,7 @@ specfem::domain::impl::kernels::
         const specfem::kokkos::DeviceView1d<int> ispec,
         const specfem::compute::partial_derivatives &partial_derivatives,
         const specfem::compute::properties &properties,
-        quadrature::quadrature *quadx, quadrature::quadrature *quadz,
+        specfem::quadrature::quadrature *quadx, specfem::quadrature::quadrature *quadz,
         qp_type quadrature_points,
         specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field,
         specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>

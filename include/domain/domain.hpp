@@ -147,7 +147,9 @@ public:
    * calculated
    * @param isig_step timestep for seismogram calculation
    */
-  void compute_seismogram(const int isig_step);
+  void compute_seismogram(const int isig_step) {
+    kernels.compute_seismograms(isig_step);
+  };
 
   /**
    * @brief Get a view of field stored on the device
@@ -246,39 +248,13 @@ private:
                      ///< of mass matrix on
                      ///< device
   specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>
-      h_rmass_inverse;                ///< View of inverse
-                                      ///< of mass matrix
-                                      ///< on host
-  specfem::compute::compute *compute; ///< Pointer to compute struct used to
-                                      ///< store spectral element numbering
-                                      ///< mapping (ibool)
-  quadrature::quadrature *quadx;      ///< Pointer to quadrature object in
-                                      ///< x-dimension
-  quadrature::quadrature *quadz;      ///< Pointer to quadrature object in
-                                      ///< z-dimension
-  int nelem_domain; ///< Total number of elements in this domain
+      h_rmass_inverse; ///< View of inverse
+                       ///< of mass matrix
+                       ///< on host
+  int nelem_domain;    ///< Total number of elements in this domain
 
   specfem::domain::impl::kernels::kernels<medium_type, quadrature_points_type>
       kernels;
-
-  // specfem::kokkos::DeviceView1d<specfem::domain::impl::elements::container<
-  //     specfem::domain::impl::elements::element<dimension, medium_type,
-  //                                              quadrature_points_type> > >
-  //     elements; ///< Container to store pointer to every element inside
-  //               ///< this domain
-  specfem::kokkos::DeviceView1d<specfem::domain::impl::sources::container<
-      specfem::domain::impl::sources::source<dimension, medium_type,
-                                             quadrature_points_type> > >
-      sources; ///< Container to store pointer to every source inside
-               ///< this domain
-  specfem::kokkos::DeviceView1d<specfem::domain::impl::receivers::container<
-      specfem::domain::impl::receivers::receiver<dimension, medium_type,
-                                                 quadrature_points_type> > >
-      receivers; ///< Container to store pointer to every receiver inside
-                 ///< this domain
-
-  qp_type quadrature_points; ///< Quadrature points to define compile time
-                             ///< quadrature or runtime quadrature
 };
 } // namespace domain
 
