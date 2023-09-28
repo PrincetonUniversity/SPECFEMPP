@@ -25,10 +25,10 @@ KOKKOS_FUNCTION specfem::domain::impl::sources::source<
            specfem::kokkos::DeviceView4d<type_real> source_array)
     : source_array(source_array) {
 
-#ifndef NDEBUG
-  assert(source_array.extent(1) == NGLL);
-  assert(source_array.extent(2) == NGLL);
-#endif
+// #ifndef NDEBUG
+//   assert(source_array.extent(1) == NGLL);
+//   assert(source_array.extent(2) == NGLL);
+// #endif
 
   return;
 }

@@ -24,7 +24,8 @@ specfem::domain::impl::kernels::
             field_dot,
         const specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
             field_dot_dot,
-        specfem::quadrature::quadrature *quadx, specfem::quadrature::quadrature *quadz,
+        specfem::quadrature::quadrature *quadx,
+        specfem::quadrature::quadrature *quadz,
         quadrature_points_type quadrature_points)
     : ibool(ibool), ispec(ispec), ireceiver(ireceiver),
       quadrature_points(quadrature_points), field(field), field_dot(field_dot),
@@ -33,9 +34,9 @@ specfem::domain::impl::kernels::
       receiver_seismogram(receivers.seismogram) {
 
 #ifndef NDEBUG
-    assert(field.extent(1) == medium::components);
-    assert(field_dot.extent(1) == medium::components);
-    assert(field_dot_dot.extent(1) == medium::components);
+  assert(field.extent(1) == medium::components);
+  assert(field_dot.extent(1) == medium::components);
+  assert(field_dot_dot.extent(1) == medium::components);
 #endif
 
   const auto sin_rec = receivers.sin_recs;
@@ -66,6 +67,10 @@ void specfem::domain::impl::kernels::receiver_kernel<
 
   constexpr int components = medium::components;
   const int nreceivers = ispec.extent(0);
+
+  if (nreceivers == 0)
+    return;
+
   const int nseismograms = seismogram_types.extent(0);
   const auto ibool = this->ibool;
   const auto hprime_xx = this->quadx->get_hprime();
@@ -95,7 +100,8 @@ void specfem::domain::impl::kernels::receiver_kernel<
         quadrature_points.get_ngll(&ngllx, &ngllz);
         const int ireceiver_l =
             this->ireceiver(team_member.league_rank() / nseismograms);
-        const int ispec_l = this->ispec(ireceiver_l);
+        const int ispec_l =
+            this->ispec(team_member.league_rank() / nseismograms);
         const int iseis_l = team_member.league_rank() % nseismograms;
         const auto seismogram_type_l = this->seismogram_types(iseis_l);
 
@@ -176,9 +182,10 @@ void specfem::domain::impl::kernels::receiver_kernel<
                                                        specfem::enums::axes::x>(
                 team_member),
             [=](const int xz) {
-              receiver.get_field(ireceiver_l, iseis_l, ispec_l, seismogram_type_l, xz,
-                                 isig_step, s_field, s_field_dot,
-                                 s_field_dot_dot, s_hprime_xx, s_hprime_zz);
+              receiver.get_field(ireceiver_l, iseis_l, ispec_l,
+                                 seismogram_type_l, xz, isig_step, s_field,
+                                 s_field_dot, s_field_dot_dot, s_hprime_xx,
+                                 s_hprime_zz);
             });
 
         // compute seismograms components

@@ -29,12 +29,16 @@ public:
   void compute_coupling();
 
 private:
+  int nedges;
+  specfem::kokkos::DeviceView1d<specfem::enums::coupling::edge::type> self_edge;
+  specfem::kokkos::DeviceView1d<specfem::enums::coupling::edge::type>
+      coupled_edge;
   self_domain_type self_domain;
   coupled_domain_type coupled_domain;
   quadrature_points_type quadrature_points;
-  specfem::kokkos::DeviceView1d<specfem::coupled_interface::impl::edges::edge<
-      self_domain_type, coupled_domain_type> >
-      edges;
+  specfem::coupled_interface::impl::edges::edge<self_domain_type,
+                                                coupled_domain_type>
+      edge;
 };
 } // namespace coupled_interface
 } // namespace specfem

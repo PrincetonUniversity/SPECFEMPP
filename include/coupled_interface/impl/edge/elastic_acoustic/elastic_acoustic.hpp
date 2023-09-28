@@ -29,8 +29,7 @@ public:
 
   edge(){};
 
-  edge(const int &inum_edge,
-       const specfem::domain::domain<specfem::enums::element::medium::elastic,
+  edge(const specfem::domain::domain<specfem::enums::element::medium::elastic,
                                      qp_type> &self_domain,
        const specfem::domain::domain<specfem::enums::element::medium::acoustic,
                                      qp_type> &coupled_domain,
@@ -43,28 +42,30 @@ public:
        const specfem::kokkos::DeviceView3d<int> ibool);
 
   KOKKOS_FUNCTION
-  void compute_coupling(const int &ipoint) const;
+  void compute_coupling(const int &iedge, const int &ipoint) const;
 
   KOKKOS_FUNCTION void
-  get_edges(specfem::enums::coupling::edge::type &self_edge_type,
+  get_edges(const int &iedge,
+            specfem::enums::coupling::edge::type &self_edge_type,
             specfem::enums::coupling::edge::type &coupled_edge_type) const {
-    self_edge_type = this->elastic_edge;
-    coupled_edge_type = this->acoustic_edge;
+    self_edge_type = this->elastic_edge(iedge);
+    coupled_edge_type = this->acoustic_edge(iedge);
     return;
   }
 
 private:
-  int ispec_acoustic;
-  int ispec_elastic;
-  specfem::kokkos::DeviceView2d<int> self_ibool;
-  specfem::kokkos::DeviceView2d<int> coupled_ibool;
-  specfem::kokkos::DeviceView2d<type_real> xix;
-  specfem::kokkos::DeviceView2d<type_real> xiz;
-  specfem::kokkos::DeviceView2d<type_real> gammax;
-  specfem::kokkos::DeviceView2d<type_real> gammaz;
-  specfem::kokkos::DeviceView2d<type_real> jacobian;
-  specfem::enums::coupling::edge::type acoustic_edge;
-  specfem::enums::coupling::edge::type elastic_edge;
+  specfem::kokkos::DeviceView1d<int> acoustic_ispec;
+  specfem::kokkos::DeviceView1d<int> elastic_ispec;
+  specfem::kokkos::DeviceView3d<int> ibool;
+  specfem::kokkos::DeviceView3d<type_real> xix;
+  specfem::kokkos::DeviceView3d<type_real> xiz;
+  specfem::kokkos::DeviceView3d<type_real> gammax;
+  specfem::kokkos::DeviceView3d<type_real> gammaz;
+  specfem::kokkos::DeviceView3d<type_real> jacobian;
+  specfem::kokkos::DeviceView1d<specfem::enums::coupling::edge::type>
+      acoustic_edge;
+  specfem::kokkos::DeviceView1d<specfem::enums::coupling::edge::type>
+      elastic_edge;
   specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
       self_field_dot_dot;
   specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
