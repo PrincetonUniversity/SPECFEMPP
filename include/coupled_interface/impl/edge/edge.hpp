@@ -11,39 +11,39 @@ namespace impl {
 namespace edges {
 
 struct self_iterator {
-  specfem::enums::coupling::edge::type edge_type;
   int ngllx;
   int ngllz;
 
   self_iterator() = default;
 
-  self_iterator(const specfem::enums::coupling::edge::type &edge_type,
-                const int &ngllx, const int &ngllz)
-      : edge_type(edge_type), ngllx(ngllx), ngllz(ngllz){};
+  self_iterator(const int &ngllx, const int &ngllz)
+      : ngllx(ngllx), ngllz(ngllz){};
 
   KOKKOS_FUNCTION
-  void operator()(const int &ipoint, int &i, int &j) const {
+  void operator()(const int &ipoint,
+                  const specfem::enums::coupling::edge::type &iedge_type,
+                  int &i, int &j) const {
     specfem::compute::coupled_interfaces::iterator::self_iterator(
-        ipoint, this->edge_type, this->ngllx, this->ngllz, i, j);
+        ipoint, iedge_type, this->ngllx, this->ngllz, i, j);
     return;
   }
 };
 
 struct coupled_iterator {
-  specfem::enums::coupling::edge::type edge_type;
   int ngllx;
   int ngllz;
 
   coupled_iterator() = default;
 
-  coupled_iterator(const specfem::enums::coupling::edge::type &edge_type,
-                   const int &ngllx, const int &ngllz)
-      : edge_type(edge_type), ngllx(ngllx), ngllz(ngllz){};
+  coupled_iterator(const int &ngllx, const int &ngllz)
+      : ngllx(ngllx), ngllz(ngllz){};
 
   KOKKOS_FUNCTION
-  void operator()(const int &ipoint, int &i, int &j) const {
+  void operator()(const int &ipoint,
+                  const specfem::enums::coupling::edge::type &iedge_type,
+                  int &i, int &j) const {
     specfem::compute::coupled_interfaces::iterator::coupled_iterator(
-        ipoint, this->edge_type, this->ngllx, this->ngllz, i, j);
+        ipoint, iedge_type, this->ngllx, this->ngllz, i, j);
     return;
   }
 };
