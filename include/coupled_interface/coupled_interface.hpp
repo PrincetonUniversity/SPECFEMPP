@@ -2,9 +2,9 @@
 #define _COUPLED_INTERFACE_HPP_
 
 #include "compute/interface.hpp"
+#include "enumerations/interface.hpp"
 #include "impl/edge/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "specfem_enums.hpp"
 #include "specfem_setup.hpp"
 
 namespace specfem {

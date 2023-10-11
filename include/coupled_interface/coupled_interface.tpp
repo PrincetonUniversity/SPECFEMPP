@@ -6,7 +6,7 @@
 #include "impl/edge/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "macros.hpp"
-#include "specfem_enums.hpp"
+#include "enumerations/interface.hpp"
 #include <Kokkos_Core.hpp>
 
 template <class self_domain_type, class coupled_domain_type>

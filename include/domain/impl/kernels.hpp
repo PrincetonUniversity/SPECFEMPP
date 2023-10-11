@@ -5,7 +5,7 @@
 #include "domain/impl/elements/interface.hpp"
 #include "domain/impl/receivers/interface.hpp"
 #include "domain/impl/sources/interface.hpp"
-#include "specfem_enums.hpp"
+#include "enumerations/interface.hpp"
 
 namespace specfem {
 namespace domain {

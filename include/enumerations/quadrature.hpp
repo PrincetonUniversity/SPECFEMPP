@@ -1,223 +1,11 @@
-#ifndef SPECFEM_ENUM_HPP
-#define SPECFEM_ENUM_HPP
-
-#include "kokkos_abstractions.h"
-#include <Kokkos_Core.hpp>
+#ifndef _ENUMERATIONS_QUADRATURE_HPP_
+#define _ENUMERATIONS_QUADRATURE_HPP_
 
 namespace specfem {
-/**
- * @brief enums namespace is used to store enumerations.
- *
- */
-namespace enums {
-
-/**
- * @brief Cartesian axes
- *
- */
-enum class axes {
-  x, ///< X axis
-  y, ///< Y axis
-  z  ///< Z axis
-};
-
-namespace seismogram {
-enum class type {
-  displacement, ///< Displacement seismogram
-  velocity,     ///< Velocity Seismogram
-  acceleration  ///< Acceleration seismogram
-};
-
-enum format {
-  seismic_unix, ///< Seismic unix output format
-  ascii         ///< ASCII output format
-};
-
-} // namespace seismogram
-
-/**
- * @brief element namespace is used to store element properties used in the
- * element class.
- *
- */
+namespace enumerations {
 namespace element {
-
 /**
- * @brief type of element
- *
- * This is primarily used to label the element as elastic, acoustic or
- * poroelastic.
- *
- */
-enum type {
-  elastic,    ///< elastic element
-  acoustic,   ///< acoustic element
-  poroelastic ///< poroelastic element
-};
-
-/**
- * @brief dimensionality property of the element
- *
- */
-namespace dimension {
-/**
- * @brief 2D element
- *
- */
-class dim2 {
-public:
-  constexpr static int dim = 2;
-
-  /**
-   * @brief Array to store temporary values when doing reductions
-   *
-   * @tparam T array type
-   */
-  template <typename T> struct array_type {
-    T data[2]; ///< Data array
-
-    /**
-     * @brief operator [] to access the data array
-     *
-     * @param i index
-     * @return T& reference to the data array
-     */
-    KOKKOS_INLINE_FUNCTION T &operator[](const int &i) { return data[i]; }
-
-    /**
-     * @brief operator [] to access the data array
-     *
-     * @param i index
-     * @return const T& reference to the data array
-     */
-    KOKKOS_INLINE_FUNCTION const T &operator[](const int &i) const {
-      return data[i];
-    }
-
-    /**
-     * @brief operator += to add two arrays
-     *
-     * @param rhs right hand side array
-     * @return array_type<T>& reference to the array
-     */
-    KOKKOS_INLINE_FUNCTION array_type<T> &operator+=(const array_type<T> &rhs) {
-      for (int i = 0; i < 2; i++) {
-        data[i] += rhs[i];
-      }
-      return *this;
-    }
-
-    /**
-     * @brief Initialize the array for sum reductions
-     *
-     */
-    KOKKOS_INLINE_FUNCTION void init() {
-      for (int i = 0; i < 2; i++) {
-        data[i] = 0.0;
-      }
-    }
-
-    // Default constructor
-    /**
-     * @brief Construct a new array type object
-     *
-     */
-    KOKKOS_INLINE_FUNCTION array_type() { init(); }
-
-    // Copy constructor
-    /**
-     * @brief Copy constructor
-     *
-     * @param other other array
-     */
-    KOKKOS_INLINE_FUNCTION array_type(const array_type<T> &other) {
-      for (int i = 0; i < 2; i++) {
-        data[i] = other[i];
-      }
-    }
-  };
-};
-/**
- * @brief 3D element
- *
- */
-class dim3 {
-public:
-  constexpr static int dim = 3;
-
-  /**
-   * @brief Array to store temporary values when doing reductions
-   *
-   * @tparam T array type
-   */
-  template <typename T> struct array_type {
-    T data[3]; ///< Data array
-
-    /**
-     * @brief operator [] to access the data array
-     *
-     * @param i index
-     * @return T& reference to the data array
-     */
-    KOKKOS_INLINE_FUNCTION T &operator[](const int &i) { return data[i]; }
-
-    /**
-     * @brief operator [] to access the data array
-     *
-     * @param i index
-     * @return const T& reference to the data array
-     */
-    KOKKOS_INLINE_FUNCTION const T &operator[](const int &i) const {
-      return data[i];
-    }
-
-    /**
-     * @brief operator += to add two arrays
-     *
-     * @param rhs right hand side array
-     * @return array_type<T>& reference to the array
-     */
-    KOKKOS_INLINE_FUNCTION array_type<T> &operator+=(const array_type<T> &rhs) {
-      for (int i = 0; i < 3; i++) {
-        data[i] += rhs[i];
-      }
-      return *this;
-    }
-
-    /**
-     * @brief Initialize the array for sum reductions
-     *
-     */
-    KOKKOS_INLINE_FUNCTION void init() {
-      for (int i = 0; i < 3; i++) {
-        data[i] = 0.0;
-      }
-    }
-
-    // Default constructor
-    /**
-     * @brief Construct a new array type object
-     *
-     */
-    KOKKOS_INLINE_FUNCTION array_type() { init(); }
-
-    // Copy constructor
-    /**
-     * @brief Copy constructor
-     *
-     * @param other other array
-     */
-    KOKKOS_INLINE_FUNCTION array_type(const array_type<T> &other) {
-      for (int i = 0; i < 3; i++) {
-        data[i] = other[i];
-      }
-    }
-  };
-};
-} // namespace dimension
-
-/**
- * @brief number of quadrature points defined either at compile time or at
+ * @namespace number of quadrature points defined either at compile time or at
  * runtime
  *
  */
@@ -364,7 +152,11 @@ public:
   }
 };
 
-// Define the number of quadrature points at compile time
+/**
+ * @brief define the number of quadrature points at compile time
+ *
+ * @tparam NGLL Number of quadrature points
+ */
 template <int NGLL> class static_quadrature_points {
 
 public:
@@ -464,76 +256,8 @@ public:
 };
 
 } // namespace quadrature
-
-/**
- * @brief medium property of the element
- *
- */
-namespace medium {
-/**
- * @brief Elastic medium
- *
- */
-class elastic {
-public:
-  /**
-   * @brief constexpr defining the type of the element
-   *
-   */
-  constexpr static specfem::enums::element::type value =
-      specfem::enums::element::elastic;
-  /**
-   * @brief Number of components for this medium
-   *
-   */
-  constexpr static int components = 2;
-};
-
-/**
- * @brief Acoustic medium
- *
- */
-class acoustic {
-public:
-  /**
-   * @brief constexpr defining the type of the element
-   *
-   */
-  constexpr static specfem::enums::element::type value =
-      specfem::enums::element::acoustic;
-  /**
-   * @brief constexpr defining number of components for this medium.
-   *
-   */
-  constexpr static int components = 1;
-};
-
-} // namespace medium
-
-/**
- * @brief Elemental properties
- *
- * Properties can be utilized to distinguish elements based on physics or to
- * optimize kernel calculations for specific elements.
- */
-namespace property {
-class isotropic {};
-} // namespace property
 } // namespace element
-
-namespace coupling {
-namespace edge {
-enum type {
-  TOP,    ///< Top edge
-  BOTTOM, ///< Bottom edge
-  LEFT,   ///< Left edge
-  RIGHT   ///< Right edge
-};
-
-constexpr int num_edges = 4;
-} // namespace edge
-} // namespace coupling
-} // namespace enums
+} // namespace enumerations
 } // namespace specfem
 
-#endif
+#endif /* _ENUMERATIONS_QUADRATURE_HPP_ */

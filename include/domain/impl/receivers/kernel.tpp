@@ -6,7 +6,7 @@
 #include "kernel.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
-#include "specfem_enums.hpp"
+#include "enumerations/interface.hpp"
 #include "specfem_setup.hpp"
 
 template <class medium, class qp_type, typename... elemental_properties>

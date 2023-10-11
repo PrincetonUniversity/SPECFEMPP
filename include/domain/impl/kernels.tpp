@@ -8,7 +8,7 @@
 #include "kernels.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
-#include "specfem_enums.hpp"
+#include "enumerations/interface.hpp"
 
 template <class medium, class qp_type>
 static void allocate_isotropic_elements(

@@ -2,8 +2,8 @@
 #define _DOMAIN_ELASTIC_ELEMENTS2D_HPP
 
 #include "domain/impl/elements/element.hpp"
+#include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "specfem_enums.hpp"
 #include "specfem_setup.hpp"
 
 /**

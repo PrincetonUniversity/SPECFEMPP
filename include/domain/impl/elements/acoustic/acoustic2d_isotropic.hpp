@@ -4,8 +4,8 @@
 #include "compute/interface.hpp"
 #include "domain/impl/elements/acoustic/acoustic2d.hpp"
 #include "domain/impl/elements/element.hpp"
+#include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "specfem_enums.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 

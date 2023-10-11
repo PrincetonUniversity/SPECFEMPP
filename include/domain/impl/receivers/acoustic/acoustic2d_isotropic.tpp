@@ -6,26 +6,8 @@
 #include "domain/impl/receivers/receiver.hpp"
 #include "globals.h"
 #include "kokkos_abstractions.h"
-#include "specfem_enums.hpp"
+#include "enumerations/interface.hpp"
 #include <Kokkos_Core.hpp>
-
-// using sv_receiver_array_type =
-//     Kokkos::Subview<specfem::kokkos::DeviceView4d<type_real>, int,
-//                     std::remove_const_t<decltype(Kokkos::ALL)>,
-//                     std::remove_const_t<decltype(Kokkos::ALL)>,
-//                     std::remove_const_t<decltype(Kokkos::ALL)> >;
-
-// using sv_receiver_seismogram_type =
-//     Kokkos::Subview<specfem::kokkos::DeviceView4d<type_real>,
-//                     std::remove_const_t<decltype(Kokkos::ALL)>, int, int,
-//                     std::remove_const_t<decltype(Kokkos::ALL)> >;
-
-// using sv_receiver_field_type =
-//     Kokkos::Subview<specfem::kokkos::DeviceView6d<type_real>,
-//                     std::remove_const_t<decltype(Kokkos::ALL)>, int, int,
-//                     std::remove_const_t<decltype(Kokkos::ALL)>,
-//                     std::remove_const_t<decltype(Kokkos::ALL)>,
-//                     std::remove_const_t<decltype(Kokkos::ALL)> >;
 
 template <int NGLL>
 KOKKOS_FUNCTION specfem::domain::impl::receivers::receiver<
