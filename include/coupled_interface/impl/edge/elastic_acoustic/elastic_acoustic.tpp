@@ -7,7 +7,7 @@
 #include "domain/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "macros.hpp"
-#include "specfem_enums.hpp"
+#include "enumerations/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 

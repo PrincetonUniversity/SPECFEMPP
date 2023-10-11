@@ -4,9 +4,9 @@
 #include "compute/interface.hpp"
 #include "domain/impl/sources/acoustic/acoustic2d.hpp"
 #include "domain/impl/sources/source.hpp"
+#include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "source_time_function/source_time_function.hpp"
-#include "specfem_enums.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

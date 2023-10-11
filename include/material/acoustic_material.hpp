@@ -2,8 +2,8 @@
 #define _ACOUSTIC_MATERIAL_HPP
 
 #include "constants.hpp"
+#include "enumerations/interface.hpp"
 #include "material.hpp"
-#include "specfem_enums.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"

@@ -2,7 +2,7 @@
 #define _COUPLED_INTERFACE_IMPL_EDGE_HPP
 
 #include "compute/coupled_interfaces.hpp"
-#include "specfem_enums.hpp"
+#include "enumerations/interface.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

@@ -4,9 +4,9 @@
 #include "constants.hpp"
 #include "domain/impl/receivers/elastic/elastic2d.hpp"
 #include "domain/impl/receivers/receiver.hpp"
+#include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
-#include "specfem_enums.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

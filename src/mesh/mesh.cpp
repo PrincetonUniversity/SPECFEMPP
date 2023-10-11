@@ -1,8 +1,8 @@
 #include "mesh/mesh.hpp"
 #include "compute/interface.hpp"
+#include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "material/interface.hpp"
-#include "specfem_enums.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>

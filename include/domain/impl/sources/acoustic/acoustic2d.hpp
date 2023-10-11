@@ -2,7 +2,7 @@
 #define _DOMAIN_SOURCE_ACOUSTIC2D_HPP
 
 #include "domain/impl/sources/source.hpp"
-#include "specfem_enums.hpp"
+#include "enumerations/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 

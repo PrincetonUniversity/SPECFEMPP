@@ -4,7 +4,7 @@
 #include "constants.hpp"
 #include "domain/impl/receivers/acoustic/acoustic2d.hpp"
 #include "domain/impl/receivers/receiver.hpp"
-#include "specfem_enums.hpp"
+#include "enumerations/interface.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

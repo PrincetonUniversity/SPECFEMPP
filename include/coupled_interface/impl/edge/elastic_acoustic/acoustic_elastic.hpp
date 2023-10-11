@@ -3,8 +3,8 @@
 
 #include "coupled_interface/impl/edge/edge.hpp"
 #include "domain/interface.hpp"
+#include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "specfem_enums.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
