@@ -9,23 +9,16 @@
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
-// /**
-//  * @brief Decltype for the field subviewed at particular global index
-//  *
-//  */
-// using field_type = Kokkos::Subview<
-//     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>, int,
-//     std::remove_const_t<decltype(Kokkos::ALL)> >;
-
 namespace specfem {
 namespace domain {
 namespace impl {
 namespace elements {
 /**
- * @brief Acoustic 2D isotropic element class with number of quadrature points
- * defined at compile time
+ * @brief Element specialization for 2D elastic isotropic spectral elements with
+ * static quadrature points
  *
- * @tparam N Number of Gauss-Lobatto-Legendre quadrature points
+ * @tparam NGLL Number of Gauss-Lobatto-Legendre quadrature points defined at
+ * compile time
  */
 template <int NGLL>
 class element<
@@ -34,7 +27,19 @@ class element<
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic> {
 public:
+  /** @name Typedefs
+   *
+   */
+  ///@{
+  /**
+   * @brief dimension of the element
+   *
+   */
   using dimension = specfem::enums::element::dimension::dim2;
+  /**
+   * @brief Medium of the element
+   *
+   */
   using medium_type = specfem::enums::element::medium::acoustic;
   /**
    * @brief Number of Gauss-Lobatto-Legendre quadrature points
@@ -46,10 +51,12 @@ public:
    * @brief Use the scratch view type from the quadrature points
    *
    * @tparam T Type of the scratch view
+   * @tparam N Number of components
    */
   template <typename T, int N>
   using ScratchViewType =
       typename quadrature_points_type::template ScratchViewType<T, N>;
+  ///@}
 
   /**
    * @brief Construct a new element object

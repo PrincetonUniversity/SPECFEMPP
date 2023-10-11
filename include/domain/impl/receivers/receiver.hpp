@@ -8,23 +8,13 @@ namespace domain {
 namespace impl {
 namespace receivers {
 /**
- * @brief Elemental source class
+ * @brief Elemental receiver class
  *
- * Elemental source class contains methods used to compute the elemental source
- * contribution to the global force vector.
+ * Elemental receiver class to compute the seismogram at the receiver location.
  *
- * Elemental sources are implementated as template specializations. Having
- * specialized elemental sources allows for a more flexible and efficient
- * implementation of the methods.
- *
- * @tparam properties Properties of the source
+ * @tparam properties Properties of the receiver
  */
-template <class... properties> class receiver {
-
-  using dimension = void;
-  using medium_type = void;
-  using quadrature_points_type = void;
-};
+template <class... properties> class receiver {};
 
 } // namespace receivers
 } // namespace impl

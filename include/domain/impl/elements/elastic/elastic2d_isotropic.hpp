@@ -9,23 +9,16 @@
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
-// /**
-//  * @brief Decltype for the field subviewed at particular global index
-//  *
-//  */
-// using field_type = Kokkos::Subview<
-//     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>, int,
-//     std::remove_const_t<decltype(Kokkos::ALL)> >;
-
 namespace specfem {
 namespace domain {
 namespace impl {
 namespace elements {
 /**
- * @brief Elastic 2D isotropic element class with number of quadrature points
- * defined at compile time
+ * @brief Element specialization for 2D elastic isotropic spectral elements with
+ * static quadrature points
  *
- * @tparam N Number of Gauss-Lobatto-Legendre quadrature points
+ * @tparam NGLL Number of Gauss-Lobatto-Legendre quadrature points defined at
+ * compile time
  */
 template <int NGLL>
 class element<
@@ -34,32 +27,42 @@ class element<
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic> {
 public:
+  /** @name Typedefs
+   *
+   */
+  ///@{
   /**
-   * @brief Dimension of the element
+   * @brief dimension of the element
    *
    */
   using dimension = specfem::enums::element::dimension::dim2;
+
   /**
    * @brief Medium of the element
    *
    */
   using medium_type = specfem::enums::element::medium::elastic;
+
   /**
-   * @brief Number of Gauss-Lobatto-Legendre quadrature points
+   * @brief Number of Gauss-Lobatto-Legendre quadrature points defined at
+   * compile time
    */
   using quadrature_points_type =
       specfem::enums::element::quadrature::static_quadrature_points<NGLL>;
+
   /**
    * @brief Use the scratch view type from the quadrature points
    *
    * @tparam T Type of the scratch view
+   * @tparam N Number of components
    */
   template <typename T, int N>
   using ScratchViewType =
       typename quadrature_points_type::template ScratchViewType<T, N>;
+  ///@}
 
   /**
-   * @brief Construct a new element object
+   * @brief Default constructor
    *
    */
   KOKKOS_FUNCTION
@@ -68,9 +71,10 @@ public:
   /**
    * @brief Construct a new element object
    *
-   * @param ispec Index of the element
-   * @param partial_derivatives partial derivatives
-   * @param properties Properties of the element
+   * @param partial_derivatives struct used to store partial derivatives at
+   * every GLL point
+   * @param properties struct used to store material properties at every GLL
+   * point
    */
   KOKKOS_FUNCTION
   element(const specfem::compute::partial_derivatives partial_derivatives,
@@ -83,7 +87,8 @@ public:
    * Mass matrix is given by \\f$ M =  \sum_{\Omega_e} \sum_{\alpha, \beta}
    * \omega_{\alpha} \omega_{\beta}  m_{\alpha, \beta} \\f$
    *
-   * @param xz index of the quadrature point
+   * @param ispec Index of the spectral element
+   * @param xz index of the quadrature point within the spectral element
    * @param mass_matrix mass matrix component
    */
   KOKKOS_INLINE_FUNCTION
@@ -94,6 +99,7 @@ public:
    * @brief Compute the gradient of the field at a particular
    * Gauss-Lobatto-Legendre quadrature point
    *
+   * @param ispec Index of the spectral element
    * @param xz Index of Gauss-Lobatto-Legendre quadrature point
    * @param s_hprime_xx Scratch view of derivative of Lagrange polynomial in x
    * direction
@@ -117,6 +123,7 @@ public:
    * @brief Compute the stress integrand at a particular Gauss-Lobatto-Legendre
    * quadrature point.
    *
+   * @param ispec Index of the spectral element
    * @param xz Index of Gauss-Lobatto-Legendre quadrature point
    * @param dudxl Partial derivative of field \f$ \frac{\partial
    * \tilde{u}}{\partial x} \f$
