@@ -1,7 +1,7 @@
-.. domain_dev_gui::
+.. domain_coupled_interface_dev_guide::
 
-Domain developer guide
-======================
+Domain and Coupled Interface Developer Guide
+===========================================
 
 `specfem::domain::domain` is a templated C++ class. A templated domain class allows us to provide cookie-cutter parallelism frameworks while allowing developers to describe the physics at elemental level `specfem::domain::impl::elements`. This developer guide provides an in-depth methodology for understanding and extending the domain class to implement new physics.
 
@@ -50,10 +50,10 @@ There are a couple of key points to note here from a performance standpoint:
 
 Apart from performance, templates also provide us a way to define a generic interface for different types of data i.e. in the above code we didn't need to write two different functions for `dim2` and `dim3` vectors. The importance of this in SPECFEM context will become clear in the following sections.
 
-Anatomy of a SPECFEM domain
----------------------------
+Anatomy of a SPECFEM Domain and Coupled Interface
+-------------------------------------------------
 
-The following figure shows the different components of a SPECFEM domain.
+The following figure shows the different components of a SPECFEM domain and coupled interface.
 
 .. warning::
 
@@ -62,6 +62,12 @@ The following figure shows the different components of a SPECFEM domain.
 
 As the name suggests `specfem::domain::domain` is closely related to a spectral element domain. The domain is comprised of set of finite elements. The finite element method provide us a way to descritize the domain into small elements where we can approximate the solution using a polynomial basis. The approach is then to compute the coefficients of the polynomial basis at elemental levels which greatly reduces the computational cost.
 
+Similaly, coupled interface is a set of finite element edges which are used to describe coupling physics between different domains. Each edge contains a mapping between coupled GLL points between the 2 domains.
+
+.. note::
+
+    While the above figure depicts the finite elements are conforming between the 2 domains, this is not a nacessity. For example, non-conforming elements are used to describe the coupling physics at a fault.
+
 Let us look at computing the contribution of acoustic domain to global :math:`\frac{{\partial \chi}{\partial t^2}}`. The methematical formulation to which is given by (Komatitsch and Tromp, 2002 :cite:`Komatitsch2002`):
 
 .. warning::
@@ -69,6 +75,10 @@ Let us look at computing the contribution of acoustic domain to global :math:`\f
     Need to add the equation here
 
 The key thing to note in the above expression is, given the types of elements inside a domain we can loop over all the elements and compute its contribution in an element agnostic way. This is the key idea behind the domain class. The domain class provides a generic interface to compute the elemental contribution of a given physics. This lets us separate the physics from the parallelism.
+
+.. note::
+
+    Later we will see a similar analogy of separating the physics from parallelism can be drawn between coupled interface and finite element edges.
 
 Understanding the parallelism
 ------------------------------
@@ -316,7 +326,7 @@ Using the above specialization we've provided a unified interface for acoustic a
 
 .. note::
 
-    Specializing the elemental implementation for different types of elements is a powerful tool for performance optimization. However, it requires us to launch a different kernel for each type of element. This creates a bookkeeping overhead - where we need to make sure every element is accounted for exactly once. The launch of the kernels itself is done using `specfem::domain::impl::kernels`
+    Specializing the elemental implementation for different types of elements is a powerful tool for performance optimization. However, it requires us to launch a different kernel for each type of element. This creates a bookkeeping overhead - where we need to make sure every element is accounted for exactly once. This bookkeeping and launch of the kernels is done by `specfem::domain::impl::kernels`
 
 .. note::
 
@@ -324,3 +334,120 @@ Using the above specialization we've provided a unified interface for acoustic a
 
 Optimization using loop unrolling
 ---------------------------------
+
+From some profiling experiments we found that the most computationally intensive loop is the one used to compute gradients and evaluate integrals. The loops is shown below:
+
+.. code-block:: C++
+
+    // compute gradients
+    for (int l = 0; l < ngllx; l++) {
+        dchi_dxi += s_hprime_xx(ix, l) * s_field_chi(l, ix);
+    }
+
+    for (int l = 0; l < ngllz; l++) {
+        dchi_dgamma += s_hprime_zz(iz, l) * s_field_chi(iz, l);
+    }
+
+.. code-block:: C++
+
+    // evaluate integrals
+    for (int l = 0; l < ngllx; l++) {
+        temp1 += s_hprimewgll_xx(ix, l) * stress_integrand_xx(l, iz);
+    }
+
+    for (int l = 0; l < ngllz; l++) {
+        temp2 += s_hprimewgll_zz(iz, l) * stress_integrand_zz(l, ix);
+    }
+
+The above loops are not very efficient, especially on the GPU, since there are large number of memory accesses for each iteration. In many applications where SPECFEM is used, the number of GLL points is fixed - in most cases 4th order GLL quadrature (NGLL = 5) or 7th order GLL quadrature (NGLL = 8). Thus we can specialize the above methods for those NGLL values and unroll the loops.
+
+.. code:: C++
+
+    template <int NGLL>
+    class element<
+            dim2, acoustic,
+            static_quadrature_points<NGLL>,
+            isotropic > {
+        void compute_gradient(
+            const int &ispec, const int &xz, const ScratchView2d<type_real> hprime_xx,
+            const ScratchView2d<type_real> hprime_zz, const ScratchView2d<type_real> field_chi,
+            type_real *dchidxl, type_real *dchidzl){
+
+
+            int ix, iz, iglob;
+            sub2ind(xz, NGLL, iz, ix);
+
+            const type_real xixl = this->xix(ispec, iz, ix);
+            const type_real gammaxl = this->gammax(ispec, iz, ix);
+            const type_real xizl = this->xiz(ispec, iz, ix);
+            const type_real gammazl = this->gammaz(ispec, iz, ix);
+
+            type_real dchi_dxi = 0.0;
+            type_real dchi_dgamma = 0.0;
+
+    #ifdef KOKKOS_ENABLE_CUDA
+    #pragma unroll
+    #endif
+            for (int l = 0; l < NGLL; l++) {
+                dchi_dxi += s_hprime_xx(ix, l, 0) * field_chi(iz, l, 0);
+                dchi_dgamma += s_hprime_zz(iz, l, 0) * field_chi(l, ix, 0);
+            }
+
+            // dchidx
+            dchidxl[0] = dchi_dxi * xixl + dchi_dgamma * gammaxl;
+
+            // dchidz
+            dchidzl[0] = dchi_dxi * xizl + dchi_dgamma * gammazl;
+
+            return;
+        }
+    };
+
+The speedup from the above optimization is significant. For example, for 4th order GLL quadrature the speedup is ~ 4x on NVIDIA A100 GPU.
+
+.. note::
+
+    The key thing to note here is we need to define NGLL at compile time. As stated earlier, in many applications the NGLL = 5 or 8 so we can specialize the above method for those values in our implementation of the solver. However, to support cases when NGLL is not either of those values we have a general, *much slower*, implementation of the above method. So the performance of SPECFEM, by design, is dependent on the NGLL value.
+
+.. warning::
+
+    The generalized implementation is not included in this release. It will be added soon as a patch release.
+
+Understanding the coupled interface
+-----------------------------------
+
+`specfem::coupled_interfaces::coupled_interface` is a templated C++ class that lets us define coupling physics between two types of domains. Similar to `specfem::domain::domain` class the `specfem::coupled_interfaces::coupled_interface` class serves as parallelism framework to implement the coupling physics defined inside `specfem::coupled_interface::impl::edge` class.
+
+Let us now look at the mathematical formulation for the coupling physics between elastic and acoustic domains as described on the elastic side by (Komatitsch and Tromp, 2002 :cite:`Komatitsch2002`):
+
+.. warning::
+
+    Need to add the equation here. equation 42 from Komatitsch and Tromp, 2002
+
+Again, similar to a methodology described in section :ref:`Understanding the parallelism <parallelism>` we can describe the the outer summation over all edges using Kokkos teams and the inner summation over all quadrature points using Kokkos thread teams. This ensures that we avoid warp divergence on GPUs and potentially benefit from vectorization on CPUs.
+
+.. code-block:: C++
+
+    void compute_coupling(){
+        Kokkos::parallel_for(
+            "specfem::coupled_interfaces::coupled_interfaces::compute_coupling",
+            specfem::kokkos::DeviceTeam(this->nedges, Kokkos::AUTO, 1),
+            KOKKOS_CLASS_LAMBDA(
+                const specfem::kokkos::DeviceTeam::member_type &team_member) {
+            // Get number of quadrature points
+            int ngllx, ngllz;
+            quadrature_points.get_ngll(&ngllx, &ngllz);
+            int iedge_l = team_member.league_rank();
+            // Get the edge
+            const auto self_edge_l = this->self_edge(iedge_l);
+            const auto coupled_edge_l = this->coupled_edge(iedge_l);
+
+            auto npoints = specfem::compute::coupled_interfaces::iterator::npoints(
+                self_edge_l, ngllx, ngllz);
+
+            // Iterate over the edges using TeamThreadRange
+            Kokkos::parallel_for(
+                Kokkos::TeamThreadRange(team_member, npoints),
+                    [=](const int ipoint) { edge.compute_coupling(iedge_l, ipoint); });
+        });
+    }
