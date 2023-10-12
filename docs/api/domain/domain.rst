@@ -1,35 +1,35 @@
 .. _domain::
 
 Domain API
-==========
+----------
 
 Definition
-----------
+==========
 
 .. doxygenclass:: specfem::domain::domain
 
 Interface
-.........
+~~~~~~~~~
 
 .. code-block::
 
-    template <class medium, class quadrature_points_type>
-    class specfem::domain::domain
+  template <class medium, class quadrature_points_type>
+  class specfem::domain::domain
 
 Parameters
-..........
+~~~~~~~~~~
 
 .. _elastic:: elastic.html
 
-.. |elastic| replace:: "elastic()"
+.. |elastic| replace:: elastic()
 
 .. _acoustic:: acoustic.html
 
-.. |acoustic| replace:: "acoustic()"
+.. |acoustic| replace:: acoustic()
 
 .. _static_quadrature_points:: static_quadrature_points.html
 
-.. |static_quadrature_points| replace:: "static_quadrature_points()"
+.. |static_quadrature_points| replace:: static_quadrature_points()
 
 * ``medium``:
 
@@ -45,7 +45,7 @@ Parameters
   - |static_quadrature_points|: A static quadrature point set.
 
 Class members
--------------
+=============
 
 .. doxygenclass:: specfem::domain::domain
     :members:

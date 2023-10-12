@@ -11,7 +11,7 @@ Definition
 .. doxygenclass:: specfem::domain::impl::sources::source
 
 Interface
-.........
+~~~~~~~~~
 
 .. code-block::
 
@@ -19,7 +19,7 @@ Interface
     class specfem::domain::impl::sources::source
 
 Parameters
-..........
+~~~~~~~~~~
 
 .. _dim2: dim2.html
 

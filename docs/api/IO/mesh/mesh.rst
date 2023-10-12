@@ -17,16 +17,10 @@ The mesh interface is used to store the mesh information created using meshfem. 
 .. doxygenfile:: material_indic.hpp
     :project: SPECFEM KOKKOS IMPLEMENTATION
 
-.. doxygenfile:: boundaries/boundaries.hpp
-    :project: SPECFEM KOKKOS IMPLEMENTATION
-
 .. doxygenfile:: boundaries/absorbing_boundaries.hpp
     :project: SPECFEM KOKKOS IMPLEMENTATION
 
 .. doxygenfile:: boundaries/forcing_boundaries.hpp
-    :project: SPECFEM KOKKOS IMPLEMENTATION
-
-.. doxygenfile:: elements/elements.hpp
     :project: SPECFEM KOKKOS IMPLEMENTATION
 
 .. doxygenfile:: elements/axial_elements.hpp
