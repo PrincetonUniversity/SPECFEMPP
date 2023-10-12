@@ -9,6 +9,10 @@
 
 namespace specfem {
 namespace compute {
+/**
+ * @brief Compute and store global coordinates for the mesh during assembly
+ *
+ */
 struct coordinates {
 
   specfem::kokkos::HostView2d<type_real> coord; ///< (x, z) for every distinct
@@ -17,17 +21,17 @@ struct coordinates {
    * @name Coodindates meta data
    **/
   ///@{
-  type_real xmax; ///< maximum x-coorinate of the quadrature point within this
-                  ///< MPI slice
-  type_real xmin; ///< minimum x-coorinate of the quadrature point within this
-                  ///< MPI slice
-  type_real zmax; ///< maximum z-coorinate of the quadrature point within this
-                  ///< MPI slice
-  type_real zmin; ///< minimum z-coorinate of the quadrature point within this
-                  ///< MPI slice
+  type_real xmax; ///< maximum x-coorinate of the quadrature point
+  type_real xmin; ///< minimum x-coorinate of the quadrature point
+  type_real zmax; ///< maximum z-coorinate of the quadrature point
+  type_real zmin; ///< minimum z-coorinate of the quadrature point
   ///@}
 };
 
+/**
+ * @brief Compute and store mesh assembly information
+ *
+ */
 struct compute {
   specfem::kokkos::DeviceView3d<int> ibool;   ///< Global number for every
                                               ///< quadrature point stored on

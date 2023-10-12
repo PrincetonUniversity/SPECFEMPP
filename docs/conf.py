@@ -102,4 +102,4 @@ breathe_projects = {
 	"SPECFEM KOKKOS IMPLEMENTATION": "_build/xml"
 }
 breathe_default_project = "SPECFEM KOKKOS IMPLEMENTATION"
-breathe_default_members = ('members', 'undoc-members')
+breathe_default_members = ()

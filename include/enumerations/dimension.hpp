@@ -2,7 +2,7 @@
 #define _ENUMERATIONS_DIMENSION_HPP_
 
 namespace specfem {
-namespace enumerations {
+namespace enums {
 namespace element {
 /**
  * @namespace dimensionality property of the element
@@ -165,7 +165,7 @@ public:
 };
 } // namespace dimension
 } // namespace element
-} // namespace enumerations
+} // namespace enums
 } // namespace specfem
 
 #endif /* _ENUMERATIONS_DIMENSION_HPP_ */

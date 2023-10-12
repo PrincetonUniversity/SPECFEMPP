@@ -6,7 +6,7 @@
 
 namespace specfem {
 namespace mesh {
-namespace surfaces {
+namespace boundaries {
 
 struct acoustic_free_surface {
   specfem::kokkos::HostView1d<int> numacfree_surface, typeacfree_surface, e1,
@@ -17,7 +17,7 @@ struct acoustic_free_surface {
   acoustic_free_surface(std::ifstream &stream, const int nelem_acoustic_surface,
                         const specfem::MPI::MPI *mpi);
 };
-} // namespace surfaces
+} // namespace boundaries
 } // namespace mesh
 } // namespace specfem
 

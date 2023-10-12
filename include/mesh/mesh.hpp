@@ -14,7 +14,6 @@
 #include "properties/properties.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
-#include "surfaces/surfaces.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

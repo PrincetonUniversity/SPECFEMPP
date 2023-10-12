@@ -22,12 +22,20 @@ enum class axes {
 };
 
 namespace seismogram {
+/**
+ * @brief type of seismogram
+ *
+ */
 enum class type {
   displacement, ///< Displacement seismogram
   velocity,     ///< Velocity Seismogram
   acceleration  ///< Acceleration seismogram
 };
 
+/**
+ * @brief Output format of seismogram
+ *
+ */
 enum format {
   seismic_unix, ///< Seismic unix output format
   ascii         ///< ASCII output format

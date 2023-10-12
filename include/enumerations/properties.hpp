@@ -2,7 +2,7 @@
 #define _ENUMERATIONS_PROPERTIES_HPP_
 
 namespace specfem {
-namespace enumerations {
+namespace enums {
 namespace element {
 /**
  * @namespace Elemental properties
@@ -18,7 +18,7 @@ namespace property {
 class isotropic {};
 } // namespace property
 } // namespace element
-} // namespace enumerations
+} // namespace enums
 } // namespace specfem
 
 #endif /* _ENUMERATIONS_PROPERTIES_HPP_ */

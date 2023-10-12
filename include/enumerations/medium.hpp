@@ -2,7 +2,7 @@
 #define _ENUMERATIONS_MEDIUM_HPP_
 
 namespace specfem {
-namespace enumerations {
+namespace enums {
 namespace element {
 
 /**
@@ -50,7 +50,7 @@ public:
 
 } // namespace medium
 } // namespace element
-} // namespace enumerations
+} // namespace enums
 } // namespace specfem
 
 #endif /* _ENUMERATIONS_MEDIUM_HPP_ */

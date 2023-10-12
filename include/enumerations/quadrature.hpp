@@ -2,7 +2,7 @@
 #define _ENUMERATIONS_QUADRATURE_HPP_
 
 namespace specfem {
-namespace enumerations {
+namespace enums {
 namespace element {
 /**
  * @namespace number of quadrature points defined either at compile time or at
@@ -257,7 +257,7 @@ public:
 
 } // namespace quadrature
 } // namespace element
-} // namespace enumerations
+} // namespace enums
 } // namespace specfem
 
 #endif /* _ENUMERATIONS_QUADRATURE_HPP_ */
