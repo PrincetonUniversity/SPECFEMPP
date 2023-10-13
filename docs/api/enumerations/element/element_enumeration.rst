@@ -31,31 +31,35 @@ Enumerations that define a type of element.
 Dimension
 _________
 
-  The dimension of the element.
+The dimension of the element.
 
-  - |dim2|_: A two dimensional element.
-  - |dim3|_: A three dimensional element.
+- |dim2|_: A two dimensional element.
+- |dim3|_: A three dimensional element.
 
 Medium
 ______
 
-  The medium of the element.
+The medium of the element.
 
-  - |elastic|_: An elastic element.
-  - |acoustic|_: An acoustic element.
+- |elastic|_: An elastic element.
+- |acoustic|_: An acoustic element.
+
+Medium enumerations to tag the element with a medium.
+
+.. doxygenenum:: specfem::enums::element::type
 
 Quadrature Points
 _________________
 
-  The quadrature points of the element.
+The quadrature points of the element.
 
-  - |static_quadrature_points|_: A static quadrature point set.
+- |static_quadrature_points|_: A static quadrature point set.
 
 Elemental Properties
 ____________________
 
-  The properties of the element. The properties describe any specializations made the implementation.
+The properties of the element. The properties describe any specializations made the implementation.
 
-  - Type of element:
+- Type of element:
 
-    - |isotropic|_: An isotropic element.
+  - |isotropic|_: An isotropic element.
