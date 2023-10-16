@@ -77,7 +77,7 @@ Template Specializations
 
 .. _elastic_acoustic_edge: elastic_acoustic/elastic_acoustic_edge.html
 
-.. |elastic_acoustic_edge| replace:: edge< |static_elastic_domain|, |static_acoustic_domain|>()
+.. |elastic_acoustic_edge| replace:: edge< |static_elastic_domain|, |static_acoustic_domain| >()
 
 .. _acoustic_elastic_edge: elastic_acoustic/acoustic_elastic_edge.html
 

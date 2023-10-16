@@ -7,6 +7,7 @@ API documentation
     :maxdepth: 2
     :glob:
 
+    kokkos_abstractions
     namespace/index
     quadrature/index
     material/index
