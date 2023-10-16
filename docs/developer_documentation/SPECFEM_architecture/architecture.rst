@@ -14,3 +14,11 @@ The code is divided into set of modules (classes and structs), the major of whic
    The domain class in itself defines (Kokkos) parallelism used to compute the evolution of the wavefield. The physics of the domain is defined by specialized templated element, source and receiver classes. This lets us separate the physics of the domain from the parallelism, which should make it easier to extend the code to different physics.
 5. Coupling Interfaces : `coupled_interfaces` class defines the methods used to compute coupling between different domains. The class is templated on the two domains that are coupled (`self_domain_type`, `coupled_domain_type`), where we define specialized template implementations for different domain combinations.
    Similar to the domain class, the coupling interface class in itself defines (Kokkos) parallelism used to compute the coupling between the two domains. The physics of the coupling is defined by specialized templated edge class.
+
+.. toctree::
+   :maxdepth: 1
+
+   quadrature
+   mesh
+   compute
+   domain
