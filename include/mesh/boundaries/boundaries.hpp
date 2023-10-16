@@ -2,7 +2,7 @@
 #define _BOUNDARIES_HPP
 
 #include "absorbing_boundaries.hpp"
+#include "acoustic_free_surface.hpp"
 #include "forcing_boundaries.hpp"
-#include "interface_boundaries.hpp"
 
 #endif

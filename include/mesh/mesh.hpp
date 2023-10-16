@@ -53,7 +53,7 @@ struct mesh {
       coupled_interfaces; ///< Struct to store
                           ///< coupled interfaces
 
-  specfem::mesh::surfaces::acoustic_free_surface
+  specfem::mesh::boundaries::acoustic_free_surface
       acfree_surface; ///< Struct used to store data required to implement
                       ///< acoustic free surface
 

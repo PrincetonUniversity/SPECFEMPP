@@ -1,8 +1,8 @@
+#include "mesh/boundaries/acoustic_free_surface.hpp"
 #include "fortranio/interface.hpp"
-#include "mesh/surfaces/surfaces.hpp"
 #include "specfem_mpi/interface.hpp"
 
-specfem::mesh::surfaces::acoustic_free_surface::acoustic_free_surface(
+specfem::mesh::boundaries::acoustic_free_surface::acoustic_free_surface(
     const int nelem_acoustic_surface) {
   if (nelem_acoustic_surface > 0) {
     this->numacfree_surface = specfem::kokkos::HostView1d<int>(
@@ -27,13 +27,13 @@ specfem::mesh::surfaces::acoustic_free_surface::acoustic_free_surface(
   return;
 }
 
-specfem::mesh::surfaces::acoustic_free_surface::acoustic_free_surface(
+specfem::mesh::boundaries::acoustic_free_surface::acoustic_free_surface(
     std::ifstream &stream, const int nelem_acoustic_surface,
     const specfem::MPI::MPI *mpi) {
 
   std::vector<int> acfree_edge(4, 0);
   *this =
-      specfem::mesh::surfaces::acoustic_free_surface(nelem_acoustic_surface);
+      specfem::mesh::boundaries::acoustic_free_surface(nelem_acoustic_surface);
 
   if (nelem_acoustic_surface > 0) {
     for (int inum = 0; inum < nelem_acoustic_surface; inum++) {

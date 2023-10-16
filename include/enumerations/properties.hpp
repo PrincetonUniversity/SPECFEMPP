@@ -1,6 +1,8 @@
 #ifndef _ENUMERATIONS_PROPERTIES_HPP_
 #define _ENUMERATIONS_PROPERTIES_HPP_
 
+#include "specfem_enums.hpp"
+
 namespace specfem {
 namespace enums {
 namespace element {

@@ -1,6 +1,10 @@
 #ifndef _ENUMERATIONS_QUADRATURE_HPP_
 #define _ENUMERATIONS_QUADRATURE_HPP_
 
+#include "kokkos_abstractions.h"
+#include "specfem_enums.hpp"
+#include <Kokkos_Core.hpp>
+
 namespace specfem {
 namespace enums {
 namespace element {
