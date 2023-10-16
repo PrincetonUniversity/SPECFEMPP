@@ -1,6 +1,8 @@
 #ifndef _ENUMERATIONS_DIMENSION_HPP_
 #define _ENUMERATIONS_DIMENSION_HPP_
 
+#include "specfem_enums.hpp"
+
 namespace specfem {
 namespace enums {
 namespace element {
