@@ -47,14 +47,14 @@ Parameters
 
   The medium of the element.
 
-  - |elastic|: An elastic element.
-  - |acoustic|: An acoustic element.
+  - |elastic|_: An elastic element.
+  - |acoustic|_: An acoustic element.
 
 * ``quadrature_points_type``:
 
   The quadrature points of the element.
 
-  - |static_quadrature_points|: A static quadrature point set.
+  - |static_quadrature_points|_: A static quadrature point set.
 
 Class members
 =============
