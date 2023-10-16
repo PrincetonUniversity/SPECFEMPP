@@ -47,9 +47,7 @@ Parameters
 Template Specializations
 ------------------------
 
-.. _dim2: :ref:`<specfem_enums_element_dimension_dim2>`
-
-.. |dim2| replace:: dim2()
+.. |dim2| replace:: :ref:`dim2 <specfem_enums_element_dimension_dim2>`
 
 .. _dim3: :ref:`<specfem_enums_element_dimension_dim3>`
 
