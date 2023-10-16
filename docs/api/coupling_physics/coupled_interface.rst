@@ -22,7 +22,7 @@ Parameters
 
   Coupled interface template parameters are deduced from the constructor arguments.
 
-.. _domain: :ref:`domain`
+.. _domain: ../domain/domain.html
 
 .. |domain| replace:: domain()
 
