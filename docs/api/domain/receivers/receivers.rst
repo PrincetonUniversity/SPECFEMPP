@@ -21,27 +21,27 @@ Interface
 Parameters
 ~~~~~~~~~~
 
-.. _dim2: :ref:`<specfem_enums_element_dimension_dim2>`
+.. _dim2: ../../enumerations/element/dim2.html
 
 .. |dim2| replace:: dim2()
 
-.. _dim3: :ref:`<specfem_enums_element_dimension_dim3>`
+.. _dim3: ../../enumerations/element/dim3.html
 
 .. |dim3| replace:: dim3()
 
-.. _elastic: :ref:`<specfem_enums_element_medium_elastic>`
+.. _elastic: ../../enumerations/element/elastic.html
 
 .. |elastic| replace:: elastic()
 
-.. _acoustic: :ref:`<specfem_enums_element_medium_acoustic>`
+.. _acoustic: ../../enumerations/element/acoustic.html
 
 .. |acoustic| replace:: acoustic()
 
-.. _static_quadrature_points: :ref:`<specfem_enums_element_quadrature_static_quadrature_points>`
+.. _static_quadrature_points: ../../enumerations/element/static_quadrature_points.html
 
 .. |static_quadrature_points| replace:: static_quadrature_points< NGLL >()
 
-.. _isotropic: :ref:`<specfem_enums_element_properties_isotropic>`
+.. _isotropic: ../../enumerations/element/isotropic.html
 
 .. |isotropic| replace:: isotropic()
 
@@ -49,21 +49,21 @@ Parameters
 
   The dimension of the element.
 
-  - |dim2|: A two dimensional element.
-  - |dim3|: A three dimensional element.
+  - |dim2|_: A two dimensional element.
+  - |dim3|_: A three dimensional element.
 
 * ``medium``:
 
   The medium of the element.
 
-  - |elastic|: An elastic element.
-  - |acoustic|: An acoustic element.
+  - |elastic|_: An elastic element.
+  - |acoustic|_: An acoustic element.
 
 * ``quadrature_points_type``:
 
   The quadrature points of the element.
 
-  - |static_quadrature_points|: A static quadrature point set.
+  - |static_quadrature_points|_: A static quadrature point set.
 
 * ``Properties``:
 
@@ -71,7 +71,7 @@ Parameters
 
   - Type of element:
 
-    - |isotropic|: An isotropic element.
+    - |isotropic|_: An isotropic element.
 
 .. warning::
 
