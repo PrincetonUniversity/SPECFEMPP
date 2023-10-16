@@ -75,11 +75,11 @@ Template Specializations
 
 .. |static_acoustic_domain| replace:: domain< |acoustic|_, |static_quadrature_points|_ >()
 
-.. _elastic_acoustic_edge: :ref:`<specfem_enums_element_edge_elastic_acoustic>`
+.. _elastic_acoustic_edge: :ref:`<specfem_coupling_physics_edge_elastic_acoustic>`
 
 .. |elastic_acoustic_edge| replace:: edge< |static_elastic_domain|, |static_acoustic_domain|>()
 
-.. _acoustic_elastic_edge: :ref:`<specfem_enums_element_edge_acoustic_elastic>`
+.. _acoustic_elastic_edge: :ref:`<specfem_coupling_physics_edge_acoustic_elastic>`
 
 .. |acoustic_elastic_edge| replace:: edge< |static_acoustic_domain|, |static_elastic_domain| >()
 
