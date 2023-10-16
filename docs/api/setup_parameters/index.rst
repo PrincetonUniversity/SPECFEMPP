@@ -14,3 +14,4 @@ Methods used to read the runtime configuration file and set up the simulation. E
     run_setup
     database_configuration
     seismogram
+    setup
