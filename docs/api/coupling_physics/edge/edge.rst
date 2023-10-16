@@ -47,27 +47,39 @@ Parameters
 Template Specializations
 ------------------------
 
-.. _elastic: elastic.html
+.. _dim2: :ref:`<specfem_enums_element_dimension_dim2>`
+
+.. |dim2| replace:: dim2()
+
+.. _dim3: :ref:`<specfem_enums_element_dimension_dim3>`
+
+.. |dim3| replace:: dim3()
+
+.. _elastic: :ref:`<specfem_enums_element_medium_elastic>`
 
 .. |elastic| replace:: elastic()
 
-.. _acoustic: acoustic.html
+.. _acoustic: :ref:`<specfem_enums_element_medium_acoustic>`
 
 .. |acoustic| replace:: acoustic()
 
-.. _static_quadrature_points: static_quadrature_points.html
+.. _static_quadrature_points: :ref:`<specfem_enums_element_quadrature_static_quadrature_points>`
 
 .. |static_quadrature_points| replace:: static_quadrature_points< NGLL >()
+
+.. _isotropic: :ref:`<specfem_enums_element_properties_isotropic>`
+
+.. |isotropic| replace:: isotropic()
 
 .. |static_elastic_domain| replace:: domain< |elastic|_, |static_quadrature_points|_ >()
 
 .. |static_acoustic_domain| replace:: domain< |acoustic|_, |static_quadrature_points|_ >()
 
-.. _elastic_acoustic_edge: elastic_acoustic_edge.html
+.. _elastic_acoustic_edge: :ref:`<specfem_enums_element_edge_elastic_acoustic>`
 
 .. |elastic_acoustic_edge| replace:: edge< |static_elastic_domain|, |static_acoustic_domain|>()
 
-.. _acoustic_elastic_edge: acoustic_elastic_edge.html
+.. _acoustic_elastic_edge: :ref:`<specfem_enums_element_edge_acoustic_elastic>`
 
 .. |acoustic_elastic_edge| replace:: edge< |static_acoustic_domain|, |static_elastic_domain| >()
 

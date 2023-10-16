@@ -21,27 +21,27 @@ Interface
 Parameters
 ~~~~~~~~~~
 
-.. _dim2: dim2.html
+.. _dim2: :ref:`<specfem_enums_element_dimension_dim2>`
 
 .. |dim2| replace:: dim2()
 
-.. _dim3: dim3.html
+.. _dim3: :ref:`<specfem_enums_element_dimension_dim3>`
 
 .. |dim3| replace:: dim3()
 
-.. _elastic: elastic.html
+.. _elastic: :ref:`<specfem_enums_element_medium_elastic>`
 
 .. |elastic| replace:: elastic()
 
-.. _acoustic: acoustic.html
+.. _acoustic: :ref:`<specfem_enums_element_medium_acoustic>`
 
 .. |acoustic| replace:: acoustic()
 
-.. _static_quadrature_points: static_quadrature_points.html
+.. _static_quadrature_points: :ref:`<specfem_enums_element_quadrature_static_quadrature_points>`
 
 .. |static_quadrature_points| replace:: static_quadrature_points< NGLL >()
 
-.. _isotropic: isotropic.html
+.. _isotropic: :ref:`<specfem_enums_element_properties_isotropic>`
 
 .. |isotropic| replace:: isotropic()
 
