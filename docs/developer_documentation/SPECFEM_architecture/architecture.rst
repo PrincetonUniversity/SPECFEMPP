@@ -18,6 +18,7 @@ The code is divided into set of modules (classes and structs), the major of whic
 .. figure:: SPECFEM_Architecture.svg
    :alt: SPECFEM Architecture
    :width: 800
+   :align: center
 
    SPECFEM Architecture.
 
