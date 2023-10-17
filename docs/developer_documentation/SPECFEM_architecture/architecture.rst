@@ -15,11 +15,11 @@ The code is divided into set of modules (classes and structs), the major of whic
 5. Coupling Interfaces : `coupled_interfaces` class defines the methods used to compute coupling between different domains. The class is templated on the two domains that are coupled (`self_domain_type`, `coupled_domain_type`), where we define specialized template implementations for different domain combinations.
    Similar to the domain class, the coupling interface class in itself defines (Kokkos) parallelism used to compute the coupling between the two domains. The physics of the coupling is defined by specialized templated edge class.
 
-.. figure:: SPECFEM_Architecture.png
+.. figure:: SPECFEM_Architecture.svg
    :alt: SPECFEM Architecture
    :width: 400
 
-   SPECFEM Architecture. The figure shows the major modules and classes in SPECFEM and their association with each other.
+   SPECFEM Architecture.
 
 .. toctree::
    :maxdepth: 1
