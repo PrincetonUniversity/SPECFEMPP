@@ -454,7 +454,7 @@ Let us now look at the mathematical formulation for the coupling physics on the 
 
     \int_{\Gamma} p \hat{n} \cdot w d\Gamma = \sum_b \int_{\Gamma_b} p \hat{n} \cdot w d\Gamma_b \approx \sum_b \sum_{\alpha, \beta = 0}^{n_{\alpha}, n_{\beta}} \omega_{\alpha} \omega_{\beta} J_b^{\alpha \beta} \dot{\chi}(t) \sum_{i = 1}^{3} w_i^{\alpha \beta} \hat{n}_i^{\alpha \beta}
 
-Again, similar to a methodology described in section :ref:`Understanding the parallelism <parallelism>` we can describe the the outer summation over all edges using Kokkos teams and the inner summation over all quadrature points using Kokkos thread teams. This ensures that we avoid warp divergence on GPUs and potentially benefit from vectorization on CPUs.
+Again, similar to a methodology described in section `Understanding the parallelism`_ we can describe the the outer summation over all edges using Kokkos teams and the inner summation over all quadrature points using Kokkos thread teams. This ensures that we avoid warp divergence on GPUs and potentially benefit from vectorization on CPUs.
 
 .. code-block:: C++
 
