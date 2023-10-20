@@ -3,7 +3,7 @@
 Domain and Coupled Interface Developer Guide
 ===========================================
 
-`specfem::domain::domain` is a templated C++ class. A templated domain class allows us to provide cookie-cutter parallelism frameworks while allowing developers to describe the physics at elemental level `specfem::domain::impl::elements`. This developer guide provides an in-depth methodology for understanding and extending the domain class to implement new physics.
+``specfem::domain::domain`` is a templated C++ class. A templated domain class allows us to provide cookie-cutter parallelism frameworks while allowing developers to describe the physics at elemental level ``specfem::domain::impl::elements``. This developer guide provides an in-depth methodology for understanding and extending the domain class to implement new physics.
 
 Brief introduction to C++ templates
 -----------------------------------
@@ -46,7 +46,7 @@ The power of templates for writing portable code becomes obvious when using user
 There are a couple of key points to note here from a performance standpoint:
 
 1. The compiler will generate a different version of the function for each dimension.
-2. Since `T::dim` is a `constexpr` the compiler will unroll the loop - which on modern CPUs and GPUs can lead to significant performance gains.
+2. Since ``T::dim`` is a ``constexpr`` the compiler will unroll the loop - which on modern CPUs and GPUs can lead to significant performance gains.
 
 Apart from performance, templates also provide us a way to define a generic interface for different types of data i.e. in the above code we didn't need to write two different functions for `dim2` and `dim3` vectors. The importance of this in SPECFEM context will become clear in the following sections.
 
@@ -63,7 +63,7 @@ The following figure shows the different components of a SPECFEM domain and coup
    Schematic of elements of domain and coupled interface. Each of the elements are implemented as C++ objects within SPECFEM++.
 
 
-As the name suggests `specfem::domain::domain` is closely related to a spectral element domain. The domain is comprised of set of finite elements. The finite element method provide us a way to descritize the domain into small elements where we can approximate the solution using a polynomial basis. The approach is then to compute the coefficients of the polynomial basis at elemental levels which greatly reduces the computational cost.
+As the name suggests ``specfem::domain::domain`` is closely related to a spectral element domain. The domain is comprised of set of finite elements. The finite element method provide us a way to descritize the domain into small elements where we can approximate the solution using a polynomial basis. The approach is then to compute the coefficients of the polynomial basis at elemental levels which greatly reduces the computational cost.
 
 Similaly, coupled interface is a set of finite element edges which are used to describe coupling physics between different domains. Each edge contains a mapping between coupled GLL points between the 2 domains.
 
@@ -71,13 +71,40 @@ Similaly, coupled interface is a set of finite element edges which are used to d
 
     While the above figure depicts the finite elements are conforming between the 2 domains, this is not a nacessity. For example, non-conforming elements are used to describe the coupling physics at a fault.
 
-Let us look at computing the contribution of acoustic domain to global :math:`\frac{{\partial \chi}{\partial t^2}}`. The methematical formulation to which is given by (Komatitsch and Tromp, 2002 :cite:`Komatitsch2002`):
+Let us look at computing the contribution of acoustic domain to global :math:`\frac {\partial \chi}{\partial t^2}`. The mathematical formulation to which is given by `Komatitsch and Tromp, 2002 <https://doi.org/10.1046/j.1365-246X.2002.01653.x>`_:
 
-.. warning::
+.. math::
 
-    Need to add the equation here
+    \int \kappa^{-1} w \partial_t^2 \chi dV = - \int \rho^{-1} \nabla w \cdot \nabla \chi dV + \int w \hat{n} \cdot \partial_t s dS
 
-The key thing to note in the above expression is, given the types of elements inside a domain we can loop over all the elements and compute its contribution in an element agnostic way. This is the key idea behind the domain class. The domain class provides a generic interface to compute the elemental contribution of a given physics. This lets us separate the physics from the parallelism.
+Where the first term on the right hand side is the contribution from the acoustic domain and the second term is the contribution from the coupled interface. The above equation is evaluated at each GLL point in the domain. Thus the contribution from the acoustic domain at elemental level is given by:
+
+.. math::
+
+    \int_{\Omega_e} \rho^{-1} \nabla w \cdot \nabla \chi dV \approx \sum_{\alpha, \beta, \gamma = 0}^{n_{\alpha}, n_{\beta}, n_{\gamma}} w^{\alpha \beta \gamma} \left[ \omega_{\beta} \omega_{\gamma} \sigma_{\xi}  + \omega_{\alpha} \omega_{\gamma} \sigma_{\eta} + \omega_{\alpha} \omega_{\beta} \sigma_{\zeta} \right]
+
+where:
+
+.. math::
+
+    \sigma_{\xi} = \sum_{\alpha' = 0}^{n_{\alpha}} \omega_{\alpha'} J^{\alpha' \beta \gamma} \left( \rho^{\alpha' \beta \gamma} \right)^{-1} \left( \partial_1 \chi \right)^{\alpha' \beta \gamma} l'_{\alpha} \left( \xi_{\alpha'} \right)
+
+    \sigma_{\eta} = \sum_{\beta' = 0}^{n_{\beta}} \omega_{\beta'} J^{\alpha \beta' \gamma} \left( \rho^{\alpha \beta' \gamma} \right)^{-1} \left( \partial_2 \chi \right)^{\alpha \beta' \gamma} l'_{\beta} \left( \eta_{\beta'} \right)
+
+    \sigma_{\zeta} = \sum_{\gamma' = 0}^{n_{\gamma}} \omega_{\gamma'} J^{\alpha \beta \gamma'} \left( \rho^{\alpha \beta \gamma'} \right)^{-1} \left( \partial_3 \chi \right)^{\alpha \beta \gamma'} l'_{\gamma} \left( \zeta_{\gamma'} \right)
+
+The terms :math:`J^{\alpha' \beta \gamma} \left( \rho^{\alpha' \beta \gamma} \right)^{-1} \left( \partial_1 \chi \right)^{\alpha' \beta \gamma}` is what we call stress integrand in SPECFEM++. Finally, the gradient of the potential (i.e. :math:`\partial_i \chi`) is given by:
+
+.. math::
+
+    \left( \partial_i \chi \right)^{\alpha \beta \gamma} = \sum_{\alpha = 0}^{n_{\alpha}} \chi^{\alpha \beta' \gamma'} l'_{\alpha} \left( \xi_{\alpha'} \right) \partial_i \xi + \sum_{\beta = 0}^{n_{\beta}} \chi^{\alpha' \beta \gamma'} l'_{\beta} \left( \eta_{\beta'} \right) \partial_i \eta + \sum_{\gamma = 0}^{n_{\gamma}} \chi^{\alpha' \beta' \gamma} l'_{\gamma} \left( \zeta_{\gamma'} \right) \partial_i \zeta
+
+There are several key features of this equation that can be exploited when designing the domain class:
+
+1. As with any finite element code, the integration over a whole domain involves computing the elemental contribution at all GLL points within that domain.
+2. The elemental contribution at each GLL point is independent of the other GLL points and is independent of other elements in the domain.
+
+Thus we can design the domain class in an element agnostic way. The domain class provides a generic interface to compute the elemental contribution of a given physics - separating the physics from the parallelism.
 
 .. note::
 
@@ -161,7 +188,7 @@ Kokkos parallelism
 
 The above code is a good starting point for parallelizing the code. A naive method of parallelizing the above section would be to distribute the 2 for loops among the available threads for example using OpenMP `collapse(2)` clause. However, since different elements could have different implementation (physics) for calculating the gradient, stresses, and acceleration contribution such a parallelization would result in poor performance on GPUs cause of warp divergence. Even on CPUs the performance would be poor since compiler could miss vectorization opportunities.
 
-Kokkos provides a natural formalism to exploit this type of parallelism using :ref:`heirarchical parallelism <https://kokkos.github.io/kokkos-core-wiki/ProgrammingGuide/HierarchicalParallelism.html>`_ . The idea is to parallelize the outer loop over elements using Kokkos teams and then parallelize the inner loop over quadrature points using Kokkos thread teams. This guarantees that all the threads in a team (which is mapped to CUDA blocks on NVIDIA GPUs) execute the same code path - thus avoiding warp divergence.
+Kokkos provides a natural formalism to exploit this type of parallelism using `heirarchical parallelism <https://kokkos.github.io/kokkos-core-wiki/ProgrammingGuide/HierarchicalParallelism.html>`_ . The idea is to parallelize the outer loop over elements using Kokkos teams and then parallelize the inner loop over quadrature points using Kokkos thread teams. This guarantees that all the threads in a team (which is mapped to CUDA blocks on NVIDIA GPUs) execute the same code path - thus avoiding warp divergence.
 
 .. code:: C++
 
@@ -287,19 +314,19 @@ This implementation is not very efficient since it requires a lot of global memo
 Specializing elemental implementations
 --------------------------------------
 
-Let us next conside the elemental implementation for computing stresses in 2D isotropic elastic element and 2D anisotropic elastic element. The stress tensor for a general element is given by:
+Let us next consider the elemental implementation for computing stresses in 2D isotropic elastic element and 2D anisotropic elastic element.
 
-.. warning::
+.. math::
 
-    Need to add the equation here
+    \bf{T(\bf{x} (\xi_{\alpha}, \eta_{beta}, \zeta_{\gamma}), t)} = \bf{c}(\bf{x} (\xi_{\alpha}, \eta_{\beta}, \zeta_{\gamma}), t) : \bf{e}(\bf{x} (\xi_{\alpha}, \eta_{\beta}, \zeta_{\gamma}), t)
 
-However, for isotropic elements the tensor :math:`\bf{c(x)}` is a diagonal with only 2 independent components. Thus the stress tensor simplifies to:
+The elasticity tensor :math:`C^{ijkl}` for anisotropic elements is a 4th order tensor with 21 independent components. However, for isotropic elements the tensor :math:`\bf{c(x)}` is a diagonal with only 2 independent components given by:
 
-.. warning::
+.. math::
 
-    Need to add the equation here
+    C^{ijkl} = \lambda \delta^{ij} \delta^{kl} + \mu \left( \delta^{ik} \delta^{jl} + \delta^{il} \delta^{jk} \right)
 
-Computationally, the number of accesses from global memory when computing the stresses for isotropic elements is an order or magnitude less than that for anisotropic elements (2 accesses vs 27 accesses). Thus it makes sense to specialize the elemental implementation for isotropic and anisotropic elements.
+Computationally, the number of accesses from global memory when computing the stresses for isotropic elements is an order or magnitude less than that for anisotropic elements (2 accesses vs 21 accesses). Thus it makes sense to specialize the elemental implementation for isotropic and anisotropic elements.
 
 .. code:: C++
 
@@ -329,7 +356,7 @@ Using the above specialization we've provided a unified interface for acoustic a
 
 .. note::
 
-    Specializing the elemental implementation for different types of elements is a powerful tool for performance optimization. However, it requires us to launch a different kernel for each type of element. This creates a bookkeeping overhead - where we need to make sure every element is accounted for exactly once. This bookkeeping and launch of the kernels is done by `specfem::domain::impl::kernels`
+    Specializing the elemental implementation for different types of elements is a powerful tool for performance optimization. However, it requires us to launch a different kernel for each type of element. This creates a bookkeeping overhead - where we need to make sure every element is accounted for exactly once. This bookkeeping and launch of the kernels is done by ``specfem::domain::impl::kernels``
 
 .. note::
 
@@ -419,13 +446,13 @@ The speedup from the above optimization is significant. For example, for 4th ord
 Understanding the coupled interface
 -----------------------------------
 
-`specfem::coupled_interfaces::coupled_interface` is a templated C++ class that lets us define coupling physics between two types of domains. Similar to `specfem::domain::domain` class the `specfem::coupled_interfaces::coupled_interface` class serves as parallelism framework to implement the coupling physics defined inside `specfem::coupled_interface::impl::edge` class.
+``specfem::coupled_interfaces::coupled_interface`` is a templated C++ class that lets us define coupling physics between two types of domains. Similar to ``specfem::domain::domain`` class the ``specfem::coupled_interfaces::coupled_interface`` class serves as parallelism framework to implement the coupling physics defined inside ``specfem::coupled_interface::impl::edge`` class.
 
-Let us now look at the mathematical formulation for the coupling physics between elastic and acoustic domains as described on the elastic side by (Komatitsch and Tromp, 2002 :cite:`Komatitsch2002`):
+Let us now look at the mathematical formulation for the coupling physics on the coupling interface (:math:`\Gamma`) between elastic and acoustic domains as described on the elastic side by `Komatitsch and Tromp, 2002 <https://doi.org/10.1046/j.1365-246X.2002.01653.x>`_:
 
-.. warning::
+.. math::
 
-    Need to add the equation here. equation 42 from Komatitsch and Tromp, 2002
+    \int_{\Gamma} p \hat{n} \cdot w d\Gamma = \sum_b \int_{\Gamma_b} p \hat{n} \cdot w d\Gamma_b \approx \sum_b \sum_{\alpha, \beta = 0}^{n_{\alpha}, n_{\beta}} \omega_{\alpha} \omega_{\beta} J_b^{\alpha \beta} \dot{\chi}(t) \sum_{i = 1}^{3} w_i^{\alpha \beta} \hat{n}_i^{\alpha \beta}
 
 Again, similar to a methodology described in section :ref:`Understanding the parallelism <parallelism>` we can describe the the outer summation over all edges using Kokkos teams and the inner summation over all quadrature points using Kokkos thread teams. This ensures that we avoid warp divergence on GPUs and potentially benefit from vectorization on CPUs.
 
