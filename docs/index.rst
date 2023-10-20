@@ -7,6 +7,7 @@ SPECFEM++ - A modular and portable spectral-element code for seismic wave propag
 =====================================================================================
 
 SPECFEM++ is a complete re-write of SPECFEM suite of packages (SPECFEM2D, SPECFEM3D, SPECFEM3D_GLOBE) using C++. Compared to the earlier version, SPECFEM++ code base provides:
+
  1. a robust and flexible code structure,
  2. modularity that allows for easy addition of new features,
  3. portability that allows the code to run on a variety of architectures (CPU, NVIDIA GPUs, Intel GPUs, AMD GPUs etc.), and
