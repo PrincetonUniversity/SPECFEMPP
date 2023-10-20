@@ -55,9 +55,12 @@ Anatomy of a SPECFEM Domain and Coupled Interface
 
 The following figure shows the different components of a SPECFEM domain and coupled interface.
 
-.. warning::
+.. figure:: domain_coupled_interface_definition.svg
+   :alt: Domain definition
+   :width: 800
+   :align: center
 
-    Need to add a figure here
+   Schematic of elements of domain and coupled interface. Each of the elements are implemented as C++ objects within SPECFEM++.
 
 
 As the name suggests `specfem::domain::domain` is closely related to a spectral element domain. The domain is comprised of set of finite elements. The finite element method provide us a way to descritize the domain into small elements where we can approximate the solution using a polynomial basis. The approach is then to compute the coefficients of the polynomial basis at elemental levels which greatly reduces the computational cost.
