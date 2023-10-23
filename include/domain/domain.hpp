@@ -2,7 +2,7 @@
 #define _DOMAIN_HPP
 
 #include "compute/interface.hpp"
-#include "impl/elements/interface.hpp"
+#include "impl/interface.hpp"
 #include "impl/receivers/interface.hpp"
 #include "impl/sources/interface.hpp"
 #include "quadrature/interface.hpp"
@@ -15,15 +15,8 @@ namespace domain {
 /**
  * @brief domain class
  *
- * Domain class serves as the driver used to compute the elemental kernels. For
- * example, method @c compute_stiffness_interaction is used to
- * implement Kokkos parallelization and loading memory to scratch spaces, which
- * are then used by the elemental implementation to update acceleration. The
- * goal the domain class is to provide a general Kokkos parallelization
- * framework which can be used by specialized elemental implementations. This
- * allows us to hide the Kokkos parallelization details from the end developer
- * when implementing new physics (i.e. specialized elements).
- *
+ * Domain class serves as the driver used to compute the elemental kernels. It
+ * describes the parallelism and updates the wavefield at each time step.
  *
  * @tparam medium class defining the domain medium. Separate implementations
  * exist for elastic, acoustic or poroelastic media
@@ -90,7 +83,7 @@ public:
          specfem::quadrature::quadrature *quadz);
 
   /**
-   * @brief Destroy the domain object
+   * @brief Default destructor
    *
    */
   ~domain() = default;
@@ -99,43 +92,53 @@ public:
    * @brief Compute interaction of stiffness matrix on acceleration
    *
    */
-  void compute_stiffness_interaction();
+  void compute_stiffness_interaction() {
+    kernels.compute_stiffness_interaction();
+  };
 
   /**
    * @brief Divide the acceleration by the mass matrix
    *
    */
   void divide_mass_matrix();
+
   /**
    * @brief Compute interaction of sources on acceleration
    *
    * @param timeval
    */
-  void compute_source_interaction(const type_real timeval);
+  void compute_source_interaction(const type_real timeval) {
+    kernels.compute_source_interaction(timeval);
+  };
+
   /**
    * @brief Sync displacements views between host and device
    *
    * @param kind defines sync direction i.e. DeviceToHost or HostToDevice
    */
   void sync_field(specfem::sync::kind kind);
+
   /**
    * @brief Sync velocity views between host and device
    *
    * @param kind defines sync direction i.e. DeviceToHost or HostToDevice
    */
   void sync_field_dot(specfem::sync::kind kind);
+
   /**
    * @brief Sync acceleration views between host and device
    *
    * @param kind defines sync direction i.e. DeviceToHost or HostToDevice
    */
   void sync_field_dot_dot(specfem::sync::kind kind);
+
   /**
    * @brief Sync inverse of mass matrix views between host and device
    *
    * @param kind defines sync direction i.e. DeviceToHost or HostToDevice
    */
   void sync_rmass_inverse(specfem::sync::kind kind);
+
   /**
    * @brief Compute seismograms at for all receivers at isig_step
    *
@@ -143,7 +146,9 @@ public:
    * calculated
    * @param isig_step timestep for seismogram calculation
    */
-  void compute_seismogram(const int isig_step);
+  void compute_seismogram(const int isig_step) {
+    kernels.compute_seismograms(isig_step);
+  };
 
   /**
    * @brief Get a view of field stored on the device
@@ -154,6 +159,7 @@ public:
   get_field() const {
     return this->field;
   }
+
   /**
    * @brief Get a view of field stored on the host
    *
@@ -163,6 +169,7 @@ public:
   get_host_field() const {
     return this->h_field;
   }
+
   /**
    * @brief Get a view of derivate of field stored on device
    *
@@ -172,6 +179,7 @@ public:
   get_field_dot() const {
     return this->field_dot;
   }
+
   /**
    * @brief Get a view of derivative of field stored on host
    *
@@ -181,6 +189,7 @@ public:
   get_host_field_dot() const {
     return this->h_field_dot;
   }
+
   /**
    * @brief Get a view of double derivative of field stored on device
    *
@@ -190,6 +199,7 @@ public:
   get_field_dot_dot() const {
     return this->field_dot_dot;
   }
+
   /**
    * @brief Get a view of double derivative of field stored on host
    *
@@ -199,6 +209,7 @@ public:
   get_host_field_dot_dot() const {
     return this->h_field_dot_dot;
   }
+
   /**
    * @brief Get a view of inverse of mass matrix stored on device
    *
@@ -208,6 +219,7 @@ public:
   get_rmass_inverse() const {
     return this->rmass_inverse;
   }
+
   /**
    * @brief Get a view of inverse of mass matrix stored on host
    *
@@ -242,35 +254,13 @@ private:
                      ///< of mass matrix on
                      ///< device
   specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>
-      h_rmass_inverse;                ///< View of inverse
-                                      ///< of mass matrix
-                                      ///< on host
-  specfem::compute::compute *compute; ///< Pointer to compute struct used to
-                                      ///< store spectral element numbering
-                                      ///< mapping (ibool)
-  quadrature::quadrature *quadx;      ///< Pointer to quadrature object in
-                                      ///< x-dimension
-  quadrature::quadrature *quadz;      ///< Pointer to quadrature object in
-                                      ///< z-dimension
-  int nelem_domain; ///< Total number of elements in this domain
-  specfem::kokkos::DeviceView1d<specfem::domain::impl::elements::container<
-      specfem::domain::impl::elements::element<dimension, medium_type,
-                                               quadrature_points_type> > >
-      elements; ///< Container to store pointer to every element inside
-                ///< this domain
-  specfem::kokkos::DeviceView1d<specfem::domain::impl::sources::container<
-      specfem::domain::impl::sources::source<dimension, medium_type,
-                                             quadrature_points_type> > >
-      sources; ///< Container to store pointer to every source inside
-               ///< this domain
-  specfem::kokkos::DeviceView1d<specfem::domain::impl::receivers::container<
-      specfem::domain::impl::receivers::receiver<dimension, medium_type,
-                                                 quadrature_points_type> > >
-      receivers; ///< Container to store pointer to every receiver inside
-                 ///< this domain
+      h_rmass_inverse; ///< View of inverse
+                       ///< of mass matrix
+                       ///< on host
+  int nelem_domain;    ///< Total number of elements in this domain
 
-  qp_type quadrature_points; ///< Quadrature points to define compile time
-                             ///< quadrature or runtime quadrature
+  specfem::domain::impl::kernels::kernels<medium_type, quadrature_points_type>
+      kernels; ///< Kernels object used to compute elemental kernels
 };
 } // namespace domain
 

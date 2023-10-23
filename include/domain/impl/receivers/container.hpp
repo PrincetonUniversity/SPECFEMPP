@@ -1,7 +1,7 @@
 #ifndef _RECEIVER_CONTAINER_HPP
 #define _RECEIVER_CONTAINER_HPP
 
-#include "specfem_enums.hpp"
+#include "enumerations/interface.hpp"
 
 namespace specfem {
 namespace domain {

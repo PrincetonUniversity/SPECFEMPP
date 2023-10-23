@@ -2,7 +2,7 @@
 #define _DOMAIN_IMPL_RECEIVERS_ELASTIC2D_HPP_
 
 #include "domain/impl/receivers/receiver.hpp"
-#include "specfem_enums.hpp"
+#include "enumerations/interface.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

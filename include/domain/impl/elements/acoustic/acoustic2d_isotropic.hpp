@@ -4,41 +4,42 @@
 #include "compute/interface.hpp"
 #include "domain/impl/elements/acoustic/acoustic2d.hpp"
 #include "domain/impl/elements/element.hpp"
+#include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "specfem_enums.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
-
-/**
- * @brief Decltype for the field subviewed at particular global index
- *
- */
-using field_type = Kokkos::Subview<
-    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>, int,
-    std::remove_const_t<decltype(Kokkos::ALL)> >;
 
 namespace specfem {
 namespace domain {
 namespace impl {
 namespace elements {
 /**
- * @brief Acoustic 2D isotropic element class with number of quadrature points
- * defined at compile time
+ * @brief Element specialization for 2D elastic isotropic spectral elements with
+ * static quadrature points
  *
- * @tparam N Number of Gauss-Lobatto-Legendre quadrature points
+ * @tparam NGLL Number of Gauss-Lobatto-Legendre quadrature points defined at
+ * compile time
  */
 template <int NGLL>
 class element<
     specfem::enums::element::dimension::dim2,
     specfem::enums::element::medium::acoustic,
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
-    specfem::enums::element::property::isotropic>
-    : public element<specfem::enums::element::dimension::dim2,
-                     specfem::enums::element::medium::acoustic,
-                     specfem::enums::element::quadrature::
-                         static_quadrature_points<NGLL> > {
+    specfem::enums::element::property::isotropic> {
 public:
+  /** @name Typedefs
+   *
+   */
+  ///@{
+  /**
+   * @brief dimension of the element
+   *
+   */
   using dimension = specfem::enums::element::dimension::dim2;
+  /**
+   * @brief Medium of the element
+   *
+   */
   using medium_type = specfem::enums::element::medium::acoustic;
   /**
    * @brief Number of Gauss-Lobatto-Legendre quadrature points
@@ -50,10 +51,12 @@ public:
    * @brief Use the scratch view type from the quadrature points
    *
    * @tparam T Type of the scratch view
+   * @tparam N Number of components
    */
   template <typename T, int N>
   using ScratchViewType =
       typename quadrature_points_type::template ScratchViewType<T, N>;
+  ///@}
 
   /**
    * @brief Construct a new element object
@@ -70,8 +73,7 @@ public:
    * @param properties Properties of the element
    */
   KOKKOS_FUNCTION
-  element(const int ispec,
-          const specfem::compute::partial_derivatives partial_derivatives,
+  element(const specfem::compute::partial_derivatives partial_derivatives,
           const specfem::compute::properties properties);
 
   /**
@@ -85,8 +87,8 @@ public:
    * @param mass_matrix mass matrix component
    */
   KOKKOS_INLINE_FUNCTION
-  void compute_mass_matrix_component(const int &xz,
-                                     type_real *mass_matrix) const override;
+  void compute_mass_matrix_component(const int &ispec, const int &xz,
+                                     type_real *mass_matrix) const;
 
   /**
    * @brief Compute the gradient of the field at the quadrature point xz
@@ -102,10 +104,11 @@ public:
    * \chi}{\partial z} \f$
    */
   KOKKOS_INLINE_FUNCTION void compute_gradient(
-      const int &xz, const ScratchViewType<type_real, 1> s_hprime_xx,
+      const int &ispec, const int &xz,
+      const ScratchViewType<type_real, 1> s_hprime_xx,
       const ScratchViewType<type_real, 1> s_hprime_zz,
       const ScratchViewType<type_real, medium_type::components> field_chi,
-      type_real *dchidxl, type_real *dchidzl) const override;
+      type_real *dchidxl, type_real *dchidzl) const;
 
   /**
    * @brief Compute the stress integrand at a particular Gauss-Lobatto-Legendre
@@ -129,9 +132,9 @@ public:
    * @return KOKKOS_FUNCTION
    */
   KOKKOS_INLINE_FUNCTION void
-  compute_stress(const int &xz, const type_real *dchidxl,
+  compute_stress(const int &ispec, const int &xz, const type_real *dchidxl,
                  const type_real *dchidzl, type_real *stress_integrand_xi,
-                 type_real *stress_integrand_gamma) const override;
+                 type_real *stress_integrand_gamma) const;
 
   /**
    * @brief Update the acceleration at a particular Gauss-Lobatto-Legendre
@@ -155,32 +158,24 @@ public:
    * @param field_dot_dot Acceleration of the field subviewed at global index xz
    */
   KOKKOS_INLINE_FUNCTION void
-  update_acceleration(const int &xz, const type_real &wxglll,
-                      const type_real &wzglll,
-                      const ScratchViewType<type_real, medium_type::components>
-                          stress_integrand_xi,
-                      const ScratchViewType<type_real, medium_type::components>
-                          stress_integrand_gamma,
-                      const ScratchViewType<type_real, 1> s_hprimewgll_xx,
-                      const ScratchViewType<type_real, 1> s_hprimewgll_zz,
-                      field_type field_dot_dot) const override;
-
-  /**
-   * @brief Get the index of the element
-   *
-   * @return int Index of the element
-   */
-  KOKKOS_INLINE_FUNCTION int get_ispec() const override { return this->ispec; }
+  compute_acceleration(const int &xz, const type_real &wxglll,
+                       const type_real &wzglll,
+                       const ScratchViewType<type_real, medium_type::components>
+                           stress_integrand_xi,
+                       const ScratchViewType<type_real, medium_type::components>
+                           stress_integrand_gamma,
+                       const ScratchViewType<type_real, 1> s_hprimewgll_xx,
+                       const ScratchViewType<type_real, 1> s_hprimewgll_zz,
+                       type_real *acceleration) const;
 
 private:
-  int ispec;                                         ///< Index of the element
-  specfem::kokkos::DeviceView2d<type_real> xix;      ///< xix
-  specfem::kokkos::DeviceView2d<type_real> xiz;      ///< xiz
-  specfem::kokkos::DeviceView2d<type_real> gammax;   ///< gammax
-  specfem::kokkos::DeviceView2d<type_real> gammaz;   ///< gammaz
-  specfem::kokkos::DeviceView2d<type_real> jacobian; ///< jacobian
-  specfem::kokkos::DeviceView2d<type_real> rho_inverse; ///< rho inverse
-  specfem::kokkos::DeviceView2d<type_real> kappa;       ///< kappa
+  specfem::kokkos::DeviceView3d<type_real> xix;         ///< xix
+  specfem::kokkos::DeviceView3d<type_real> xiz;         ///< xiz
+  specfem::kokkos::DeviceView3d<type_real> gammax;      ///< gammax
+  specfem::kokkos::DeviceView3d<type_real> gammaz;      ///< gammaz
+  specfem::kokkos::DeviceView3d<type_real> jacobian;    ///< jacobian
+  specfem::kokkos::DeviceView3d<type_real> rho_inverse; ///< rho inverse
+  specfem::kokkos::DeviceView3d<type_real> kappa;       ///< kappa
 };
 } // namespace elements
 } // namespace impl

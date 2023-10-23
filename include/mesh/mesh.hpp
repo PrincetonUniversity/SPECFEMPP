@@ -14,7 +14,6 @@
 #include "properties/properties.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
-#include "surfaces/surfaces.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -54,7 +53,7 @@ struct mesh {
       coupled_interfaces; ///< Struct to store
                           ///< coupled interfaces
 
-  specfem::mesh::surfaces::acoustic_free_surface
+  specfem::mesh::boundaries::acoustic_free_surface
       acfree_surface; ///< Struct used to store data required to implement
                       ///< acoustic free surface
 

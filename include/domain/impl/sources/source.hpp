@@ -1,7 +1,7 @@
 #ifndef DOMAIN_SOURCE_ELEMENTS_HPP
 #define DOMAIN_SOURCE_ELEMENTS_HPP
 
-#include "specfem_enums.hpp"
+#include "enumerations/interface.hpp"
 
 namespace specfem {
 namespace domain {
@@ -10,21 +10,12 @@ namespace sources {
 /**
  * @brief Elemental source class
  *
- * Elemental source class contains methods used to compute the elemental source
- * contribution to the global force vector. The class computes how the source
- * interacts with a particular type of element.
- *
- * Elemental sources are implementated as template specializations. Having
- * specialized elemental sources allows for a more flexible and efficient
- * implementation of the methods.
+ * Elemental source class to describe the source contribution to the global
+ * force vector.
  *
  * @tparam properties Properties of the source
  */
-template <class... properties> class source {
-  using dimension = void;
-  using medium_type = void;
-  using quadrature_points_type = void;
-};
+template <class... properties> class source {};
 
 } // namespace sources
 } // namespace impl

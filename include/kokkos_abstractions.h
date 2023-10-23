@@ -15,6 +15,11 @@ enum kind {
 };
 } // namespace sync
 
+/**
+ * @namespace Defines views and execution policies used throughout the SPECFEM
+ * project
+ *
+ */
 namespace kokkos {
 /** @name Execution Spaces
  */

@@ -1,9 +1,9 @@
 #include "compute/coupled_interfaces.hpp"
 // #include "compute/coupled_interfaces.tpp"
+#include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "macros.hpp"
 #include "mesh/coupled_interfaces/coupled_interfaces.hpp"
-#include "specfem_enums.hpp"
 
 // Topological map ordering for coupled elements
 
