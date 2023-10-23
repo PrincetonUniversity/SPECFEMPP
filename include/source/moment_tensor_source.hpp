@@ -2,11 +2,11 @@
 #define _MOMENT_TENSOR_SOURCE_HPP
 
 #include "constants.hpp"
+#include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "source.hpp"
 #include "source_time_function/interface.hpp"
-#include "specfem_enums.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"

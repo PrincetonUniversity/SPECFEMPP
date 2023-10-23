@@ -3,8 +3,8 @@
 
 #include "coupled_interface/interface.hpp"
 #include "domain/interface.hpp"
+#include "enumerations/interface.hpp"
 #include "solver.hpp"
-#include "specfem_enums.hpp"
 #include "timescheme/interface.hpp"
 
 namespace specfem {

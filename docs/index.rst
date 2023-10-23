@@ -3,77 +3,124 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-SPECFEM Kokkos documentation
-=============================
+SPECFEM++ - A modular and portable spectral-element code for seismic wave propagation
+=====================================================================================
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+SPECFEM++ is a complete re-write of SPECFEM suite of packages (SPECFEM2D, SPECFEM3D, SPECFEM3D_GLOBE) using C++. Compared to the earlier version, SPECFEM++ code base provides:
 
-About SPECFEM2D Kokkos
-^^^^^^^^^^^^^^^^^^^^^^
+ 1. a robust and flexible code structure,
+ 2. modularity that allows for easy addition of new features,
+ 3. portability that allows the code to run on a variety of architectures (CPU, NVIDIA GPUs, Intel GPUs, AMD GPUs etc.), and
+ 4. a user-friendly build infrastructure that allows the code to be easily compiled and run on a variety of platforms.
 
-Introduction
--------------
+.. note::
+    The package is currently under development and is not yet ready for production use. We are working towards making the package more complete. Any contributions to this documentation and package are always welcome. Please see :ref:`developer documentation` sections for more details.
 
-SPECFEM kokkos is C++ implementation of SPECFEM suite of software using the `Kokkos <https://kokkos.github.io/>`_ programming model. Kokkos is a is a production level solution for writing modern C++ applications in a hardware agnostic way, this allows us to write a single source code which can run across all modern architectures. The goal of this project is to provide the same level of functionality as provided by SPECFEM2D, SPECFEM3D and SPECFEM3d_GLOBE in a singular package that runs across all architectures.
-
-Code feature matrix
+Current capabilities
 --------------------
 
 Table below shows various features available and tested in this package on various architectures:
 
-+---------------------+-------------+-------------+------+-----+
-|                     | CPU(serial) | CPU(OpenMP) | CUDA | HIP |
-+=====================+=============+=============+======+=====+
-| Physics                                                      |
-+---------------------+-------------+-------------+------+-----+
-| P-SV waves          | ✔           | ✔           | ✔    |     |
-+---------------------+-------------+-------------+------+-----+
-| Elastic Domains     | ✔           | ✔           | ✔    |     |
-+---------------------+-------------+-------------+------+-----+
-| Simulation Setup                                             |
-+---------------------+-------------+-------------+------+-----+
-| Forward Simulations | ✔           | ✔           | ✔    |     |
-+---------------------+-------------+-------------+------+-----+
-| Time Schemes                                                 |
-+---------------------+-------------+-------------+------+-----+
-| Newmark             | ✔           | ✔           | ✔    |     |
-+---------------------+-------------+-------------+------+-----+
-| Seismograms                                                  |
-+---------------------+-------------+-------------+------+-----+
-| displacement        | ✔           | ✔           | ✔    |     |
-+---------------------+-------------+-------------+------+-----+
-| velocity            | ✔           | ✔           | ✔    |     |
-+---------------------+-------------+-------------+------+-----+
-| Seimogram Formats                                            |
-+---------------------+-------------+-------------+------+-----+
-| ASCII               | ✔           | ✔           | ✔    |     |
-+---------------------+-------------+-------------+------+-----+
+ +---------------------+-------------+-------------+------+-----+
+ |                     | CPU(serial) | CPU(OpenMP) | CUDA | HIP |
+ +=====================+=============+=============+======+=====+
+ | Physics                                                      |
+ +---------------------+-------------+-------------+------+-----+
+ | P-SV waves          | ✔           | ✔           | ✔    |     |
+ +---------------------+-------------+-------------+------+-----+
+ | Elastic Domains     | ✔           | ✔           | ✔    |     |
+ +---------------------+-------------+-------------+------+-----+
+ | Acoustic Domains    | ✔           | ✔           | ✔    |     |
+ +---------------------+-------------+-------------+------+-----+
+ | Simulation Setup                                             |
+ +---------------------+-------------+-------------+------+-----+
+ | Forward Simulations | ✔           | ✔           | ✔    |     |
+ +---------------------+-------------+-------------+------+-----+
+ | Time Schemes                                                 |
+ +---------------------+-------------+-------------+------+-----+
+ | Newmark             | ✔           | ✔           | ✔    |     |
+ +---------------------+-------------+-------------+------+-----+
+ | Seismograms                                                  |
+ +---------------------+-------------+-------------+------+-----+
+ | displacement        | ✔           | ✔           | ✔    |     |
+ +---------------------+-------------+-------------+------+-----+
+ | velocity            | ✔           | ✔           | ✔    |     |
+ +---------------------+-------------+-------------+------+-----+
+ | Seimogram Formats                                            |
+ +---------------------+-------------+-------------+------+-----+
+ | ASCII               | ✔           | ✔           | ✔    |     |
+ +---------------------+-------------+-------------+------+-----+
 
 .. note::
     While we work towards building this package and making the code/documentation more complete, please refer relevant SPECFEM package documentations for technical details on SPECFEM theory.
 
 Any contributions to this documentation and package are always welcome. Please see :ref:`developer documentation` sections for more details.
 
+.. raw:: html
 
+   <style>
+   /* front page: hide chapter titles
+    * needed for consistent HTML-PDF-EPUB chapters
+    */
+   section#user-documentation,
+   section#cookbooks,
+   section#contribution-guidelines,
+   section#api-documentation,
+   section#community {
+       display:none;
+   }
+   </style>
 
-Table of Contents
-^^^^^^^^^^^^^^^^^
+User Documentation
+------------------
 
 .. toctree::
-    :maxdepth: 2
+    :caption: USER DOCUMENTATION
+    :maxdepth: 1
+    :hidden:
 
     user_documentation/index
     parameter_documentation/index
     source_description/index
+
+Cookbooks
+---------
+
+.. toctree::
+    :caption: COOKBOOKS
+    :maxdepth: 1
+    :hidden:
+
     cookbooks/index
+
+Contribution Guidelines
+-----------------------
+
+.. toctree::
+    :caption: CONTRIBUTION GUIDELINES
+    :maxdepth: 1
+    :hidden:
+
     developer_documentation/index
+
+Community
+---------
+
+.. toctree::
+    :caption: COMMUNITY
+    :maxdepth: 1
+    :hidden:
+
+    report_bugs/index
+    request_features/index
+    :ref:`Join the discussion <https://github.com/orgs/SPECFEM/discussions>`
+
+API Documentation
+-----------------
+
+.. toctree::
+    :caption: API DOCUMENTATION
+    :maxdepth: 1
+    :hidden:
+
     api/index
-
-Indices and tables
-^^^^^^^^^^^^^^^^^^
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

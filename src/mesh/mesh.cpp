@@ -1,8 +1,8 @@
 #include "mesh/mesh.hpp"
 #include "compute/interface.hpp"
+#include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "material/interface.hpp"
-#include "specfem_enums.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -120,7 +120,7 @@ specfem::mesh::mesh::mesh(const std::string filename,
   }
 
   try {
-    this->acfree_surface = specfem::mesh::surfaces::acoustic_free_surface(
+    this->acfree_surface = specfem::mesh::boundaries::acoustic_free_surface(
         stream, this->parameters.nelem_acoustic_surface, mpi);
   } catch (std::runtime_error &e) {
     throw;
