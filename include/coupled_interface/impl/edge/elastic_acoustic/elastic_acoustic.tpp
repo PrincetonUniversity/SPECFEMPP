@@ -7,7 +7,7 @@
 #include "domain/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "macros.hpp"
-#include "specfem_enums.hpp"
+#include "enumerations/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -16,9 +16,7 @@ specfem::coupled_interface::impl::edges::edge<
     specfem::domain::domain<specfem::enums::element::medium::elastic, qp_type>,
     specfem::domain::domain<specfem::enums::element::medium::acoustic,
                             qp_type> >::
-    edge(
-        const int &inum_edge,
-        const specfem::domain::domain<specfem::enums::element::medium::elastic,
+    edge(const specfem::domain::domain<specfem::enums::element::medium::elastic,
                                       qp_type> &self_domain,
         const specfem::domain::domain<specfem::enums::element::medium::acoustic,
                                       qp_type> &coupled_domain,
@@ -29,7 +27,16 @@ specfem::coupled_interface::impl::edges::edge<
         const specfem::kokkos::DeviceView1d<type_real> wxgll,
         const specfem::kokkos::DeviceView1d<type_real> wzgll,
         const specfem::kokkos::DeviceView3d<int> ibool)
-    : quadrature_points(quadrature_points), wxgll(wxgll), wzgll(wzgll) {
+    : acoustic_ispec(coupled_interfaces.elastic_acoustic.acoustic_ispec),
+      elastic_ispec(coupled_interfaces.elastic_acoustic.elastic_ispec),
+      acoustic_edge(coupled_interfaces.elastic_acoustic.acoustic_edge),
+      elastic_edge(coupled_interfaces.elastic_acoustic.elastic_edge),
+      ibool(ibool), xix(partial_derivatives.xix), xiz(partial_derivatives.xiz),
+      gammax(partial_derivatives.gammax), gammaz(partial_derivatives.gammaz),
+      jacobian(partial_derivatives.jacobian),
+      self_field_dot_dot(self_domain.get_field_dot_dot()),
+      coupled_field_dot_dot(coupled_domain.get_field_dot_dot()),
+      quadrature_points(quadrature_points), wxgll(wxgll), wzgll(wzgll) {
 
   int ngllx, ngllz;
   quadrature_points.get_ngll(&ngllx, &ngllz);
@@ -51,35 +58,10 @@ specfem::coupled_interface::impl::edges::edge<
   assert(wzgll.extent(0) == ngllz);
 #endif
 
-  ispec_acoustic = coupled_interfaces.elastic_acoustic.h_acoustic_ispec(inum_edge);
-  ispec_elastic = coupled_interfaces.elastic_acoustic.h_elastic_ispec(inum_edge);
-
-  self_ibool = Kokkos::subview(ibool, ispec_elastic, Kokkos::ALL, Kokkos::ALL);
-  coupled_ibool =
-      Kokkos::subview(ibool, ispec_acoustic, Kokkos::ALL, Kokkos::ALL);
-
-  xix = Kokkos::subview(partial_derivatives.xix, ispec_acoustic, Kokkos::ALL,
-                        Kokkos::ALL);
-  xiz = Kokkos::subview(partial_derivatives.xiz, ispec_acoustic, Kokkos::ALL,
-                        Kokkos::ALL);
-  gammax = Kokkos::subview(partial_derivatives.gammax, ispec_acoustic, Kokkos::ALL,
-                           Kokkos::ALL);
-  gammaz = Kokkos::subview(partial_derivatives.gammaz, ispec_acoustic, Kokkos::ALL,
-                           Kokkos::ALL);
-  jacobian = Kokkos::subview(partial_derivatives.jacobian, ispec_acoustic,
-                             Kokkos::ALL, Kokkos::ALL);
-
-  elastic_edge = coupled_interfaces.elastic_acoustic.h_elastic_edge(inum_edge);
-  acoustic_edge =
-      coupled_interfaces.elastic_acoustic.h_acoustic_edge(inum_edge);
-
-  self_iterator = specfem::coupled_interface::impl::edges::self_iterator(
-      elastic_edge, ngllx, ngllz);
-  coupled_iterator = specfem::coupled_interface::impl::edges::coupled_iterator(
-      acoustic_edge, ngllx, ngllz);
-
-  self_field_dot_dot = self_domain.get_field_dot_dot();
-  coupled_field_dot_dot = coupled_domain.get_field_dot_dot();
+  self_iterator =
+      specfem::coupled_interface::impl::edges::self_iterator(ngllx, ngllz);
+  coupled_iterator =
+      specfem::coupled_interface::impl::edges::coupled_iterator(ngllx, ngllz);
 
 #ifndef NDEBUG
   assert(self_field_dot_dot.extent(1) == self_medium::components);
@@ -93,50 +75,69 @@ template <typename qp_type>
 KOKKOS_FUNCTION void specfem::coupled_interface::impl::edges::edge<
     specfem::domain::domain<specfem::enums::element::medium::elastic, qp_type>,
     specfem::domain::domain<specfem::enums::element::medium::acoustic,
-                            qp_type> >::compute_coupling(const int &ipoint)
+                            qp_type> >::compute_coupling(const int &iedge,
+                                                         const int &ipoint)
     const {
   int ngllx, ngllz;
 
   quadrature_points.get_ngll(&ngllx, &ngllz);
 
-  int i, j;
-  coupled_iterator(ipoint, i, j);
+  const auto acoustic_edge_type = this->acoustic_edge(iedge);
+  const auto elastic_edge_type = this->elastic_edge(iedge);
 
-  int iglob = coupled_ibool(j, i);
+  const int acoustic_ispec_l = this->acoustic_ispec(iedge);
+  const int elastic_ispec_l = this->elastic_ispec(iedge);
+
+  int ix, iz;
+  coupled_iterator(ipoint, acoustic_edge_type, ix, iz);
+
+  int iglob = ibool(acoustic_ispec_l, iz, ix);
   type_real pressure = -1.0 * coupled_field_dot_dot(iglob, 0);
 
   type_real valx, valz;
 
-  switch (acoustic_edge) {
+  switch (acoustic_edge_type) {
   case specfem::enums::coupling::edge::type::LEFT:
-    valx = -1.0 * wzgll(j) * (xix(j, i) * jacobian(j, i) * pressure);
-    valz = -1.0 * wzgll(j) * (xiz(j, i) * jacobian(j, i) * pressure);
-    self_iterator(ipoint, i, j);
-    iglob = self_ibool(j, i);
+    valx = -1.0 * wzgll(iz) *
+           (xix(acoustic_ispec_l, iz, ix) * jacobian(acoustic_ispec_l, iz, ix) *
+            pressure);
+    valz = -1.0 * wzgll(iz) *
+           (xiz(acoustic_ispec_l, iz, ix) * jacobian(acoustic_ispec_l, iz, ix) *
+            pressure);
+    self_iterator(ipoint, elastic_edge_type, ix, iz);
+    iglob = ibool(elastic_ispec_l, iz, ix);
     Kokkos::atomic_add(&self_field_dot_dot(iglob, 0), valx);
     Kokkos::atomic_add(&self_field_dot_dot(iglob, 1), valz);
     break;
   case specfem::enums::coupling::edge::type::RIGHT:
-    valx = wzgll(j) * (xix(j, i) * jacobian(j, i) * pressure);
-    valz = wzgll(j) * (xiz(j, i) * jacobian(j, i) * pressure);
-    self_iterator(ipoint, i, j);
-    iglob = self_ibool(j, i);
+    valx = wzgll(iz) * (xix(acoustic_ispec_l, iz, ix) *
+                        jacobian(acoustic_ispec_l, iz, ix) * pressure);
+    valz = wzgll(iz) * (xiz(acoustic_ispec_l, iz, ix) *
+                        jacobian(acoustic_ispec_l, iz, ix) * pressure);
+    self_iterator(ipoint, elastic_edge_type, ix, iz);
+    iglob = ibool(elastic_ispec_l, iz, ix);
     Kokkos::atomic_add(&self_field_dot_dot(iglob, 0), valx);
     Kokkos::atomic_add(&self_field_dot_dot(iglob, 1), valz);
     break;
   case specfem::enums::coupling::edge::type::BOTTOM:
-    valx = -1.0 * wxgll(i) * (gammax(j, i) * jacobian(j, i) * pressure);
-    valz = -1.0 * wxgll(i) * (gammaz(j, i) * jacobian(j, i) * pressure);
-    self_iterator(ipoint, i, j);
-    iglob = self_ibool(j, i);
+    valx = -1.0 * wxgll(ix) *
+           (gammax(acoustic_ispec_l, iz, ix) *
+            jacobian(acoustic_ispec_l, iz, ix) * pressure);
+    valz = -1.0 * wxgll(ix) *
+           (gammaz(acoustic_ispec_l, iz, ix) *
+            jacobian(acoustic_ispec_l, iz, ix) * pressure);
+    self_iterator(ipoint, elastic_edge_type, ix, iz);
+    iglob = ibool(elastic_ispec_l, iz, ix);
     Kokkos::atomic_add(&self_field_dot_dot(iglob, 0), valx);
     Kokkos::atomic_add(&self_field_dot_dot(iglob, 1), valz);
     break;
   case specfem::enums::coupling::edge::type::TOP:
-    valx = wxgll(i) * (gammax(j, i) * jacobian(j, i) * pressure);
-    valz = wxgll(i) * (gammaz(j, i) * jacobian(j, i) * pressure);
-    self_iterator(ipoint, i, j);
-    iglob = self_ibool(j, i);
+    valx = wxgll(ix) * (gammax(acoustic_ispec_l, iz, ix) *
+                        jacobian(acoustic_ispec_l, iz, ix) * pressure);
+    valz = wxgll(ix) * (gammaz(acoustic_ispec_l, iz, ix) *
+                        jacobian(acoustic_ispec_l, iz, ix) * pressure);
+    self_iterator(ipoint, elastic_edge_type, ix, iz);
+    iglob = ibool(elastic_ispec_l, iz, ix);
     Kokkos::atomic_add(&self_field_dot_dot(iglob, 0), valx);
     Kokkos::atomic_add(&self_field_dot_dot(iglob, 1), valz);
     break;

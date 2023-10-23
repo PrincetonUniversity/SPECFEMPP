@@ -4,9 +4,9 @@
 #include "compute/interface.hpp"
 #include "domain/impl/elements/acoustic/interface.hpp"
 #include "domain/impl/elements/elastic/interface.hpp"
+#include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
-#include "specfem_enums.hpp"
 #include "specfem_setup.hpp"
 
 namespace specfem {

@@ -113,12 +113,12 @@ add_library(
         src/mesh/IO/fortran/read_material_properties.cpp
         src/mesh/boundaries/forcing_boundaries.cpp
         src/mesh/boundaries/absorbing_boundaries.cpp
+        src/mesh/boundaries/acoustic_free_surface.cpp
         src/mesh/elements/tangential_elements.cpp
         src/mesh/elements/axial_elements.cpp
         src/mesh/properties/properties.cpp
         src/mesh/mpi_interfaces/mpi_interfaces.cpp
         src/mesh/material_indic/material_indic.cpp
-        src/mesh/surfaces/acoustic_free_surface.cpp
         src/mesh/coupled_interfaces/elastic_acoustic.cpp
         src/mesh/coupled_interfaces/elastic_poroelastic.cpp
         src/mesh/coupled_interfaces/acoustic_poroelastic.cpp

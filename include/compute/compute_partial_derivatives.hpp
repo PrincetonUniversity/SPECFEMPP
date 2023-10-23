@@ -17,34 +17,26 @@ namespace compute {
  */
 struct partial_derivatives {
   specfem::kokkos::DeviceView3d<type_real> xix; ///< inverted partial derivates
-                                                ///< \f$\partial \xi / \partial
-                                                ///< x\f$ stored on the device
+                                                ///< @xix stored on the device
   specfem::kokkos::HostMirror3d<type_real> h_xix; ///< inverted partial
-                                                  ///< derivates \f$\partial \xi
-                                                  ///< / \partial x\f$ stored on
+                                                  ///< derivates @xix stored on
                                                   ///< the host
   specfem::kokkos::DeviceView3d<type_real> xiz; ///< inverted partial derivates
-                                                ///< \f$\partial \xi / \partial
-                                                ///< z\f$ stored on the device
-  specfem::kokkos::HostMirror3d<type_real> h_xiz; ///< inverted partial
-                                                  ///< derivates \f$\partial \xi
-                                                  ///< / \partial z\f$ stored on
-                                                  ///< the host
-  specfem::kokkos::DeviceView3d<type_real> gammax;   ///< inverted partial
-                                                     ///< derivates \f$\partial
-                                                     ///< \gamma / \partial x\f$
-                                                     ///< stored on device
+                                                ///< @xiz stored on the device
+  specfem::kokkos::HostMirror3d<type_real> h_xiz;  ///< inverted partial
+                                                   ///< derivates @xiz stored on
+                                                   ///< the host
+  specfem::kokkos::DeviceView3d<type_real> gammax; ///< inverted partial
+                                                   ///< derivates @gammax
+                                                   ///< stored on device
   specfem::kokkos::HostMirror3d<type_real> h_gammax; ///< inverted partial
-                                                     ///< derivates \f$\partial
-                                                     ///< \gamma / \partial x\f$
+                                                     ///< derivates @gammax
                                                      ///< stored on host
   specfem::kokkos::DeviceView3d<type_real> gammaz;   ///< inverted partial
-                                                     ///< derivates \f$\partial
-                                                     ///< \gamma / \partial z\f$
+                                                     ///< derivates @gammaz
                                                      ///< stored on device
   specfem::kokkos::HostMirror3d<type_real> h_gammaz; ///< inverted partial
-                                                     ///< derivates \f$\partial
-                                                     ///< \gamma / \partial z\f$
+                                                     ///< derivates @gammaz
                                                      ///< stored on host
   specfem::kokkos::DeviceView3d<type_real> jacobian; ///< Jacobian values stored
                                                      ///< on device

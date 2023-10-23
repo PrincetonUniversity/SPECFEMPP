@@ -8,7 +8,7 @@
 #include "impl/sources/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
-#include "specfem_enums.hpp"
+#include "enumerations/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <Kokkos_ScatterView.hpp>

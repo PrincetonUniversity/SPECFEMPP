@@ -6,7 +6,7 @@
 #include "domain/impl/sources/elastic/interface.hpp"
 #include "kernel.hpp"
 #include "kokkos_abstractions.h"
-#include "specfem_enums.hpp"
+#include "enumerations/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -21,8 +21,9 @@ specfem::domain::impl::kernels::
         quadrature_point_type quadrature_points,
         specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
             field_dot_dot)
-    : ibool(ibool), ispec(ispec), isource(isource), quadrature_points(quadrature_points),
-      stf_array(sources.stf_array), field_dot_dot(field_dot_dot) {
+    : ibool(ibool), ispec(ispec), isource(isource),
+      quadrature_points(quadrature_points), stf_array(sources.stf_array),
+      field_dot_dot(field_dot_dot) {
 
 #ifndef NDEBUG
   assert(field_dot_dot.extent(1) == medium::components);
@@ -44,6 +45,9 @@ void specfem::domain::impl::kernels::source_kernel<medium, qp_type,
 
   constexpr int components = medium::components;
   const int nsources = this->ispec.extent(0);
+
+  if (nsources == 0)
+    return;
 
   const auto ibool = this->ibool;
 
@@ -79,7 +83,8 @@ void specfem::domain::impl::kernels::source_kernel<medium, qp_type,
 
               type_real acceleration[components];
 
-              source.compute_interaction(isource_l, ispec_l, xz, stf, acceleration);
+              source.compute_interaction(isource_l, ispec_l, xz, stf,
+                                         acceleration);
 
 #ifndef KOKKOS_ENABLE_CUDA
 #pragma unroll

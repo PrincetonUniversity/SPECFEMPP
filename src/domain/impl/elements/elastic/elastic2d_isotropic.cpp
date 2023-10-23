@@ -1,7 +1,7 @@
 #include "compute/interface.hpp"
 #include "domain/interface.hpp"
+#include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "specfem_enums.hpp"
 
 specfem::compute::partial_derivatives specfem::domain::impl::elements::element<
     specfem::enums::element::dimension::dim2,
