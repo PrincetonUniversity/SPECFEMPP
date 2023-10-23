@@ -7,7 +7,7 @@
 #include "kernel.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
-#include "specfem_enums.hpp"
+#include "enumerations/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -18,8 +18,8 @@ specfem::domain::impl::kernels::
         const specfem::kokkos::DeviceView1d<int> ispec,
         const specfem::compute::partial_derivatives &partial_derivatives,
         const specfem::compute::properties &properties,
-        specfem::quadrature::quadrature *quadx, specfem::quadrature::quadrature *quadz,
-        qp_type quadrature_points,
+        specfem::quadrature::quadrature *quadx,
+        specfem::quadrature::quadrature *quadz, qp_type quadrature_points,
         specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field,
         specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
             field_dot_dot,
@@ -95,12 +95,15 @@ void specfem::domain::impl::kernels::element_kernel<
     const {
 
   constexpr int components = medium::components;
+  const int nelements = ispec.extent(0);
+
+  if (nelements == 0)
+    return;
+
   const auto hprime_xx = this->quadx->get_hprime();
   const auto hprime_zz = this->quadz->get_hprime();
   const auto wxgll = this->quadx->get_w();
   const auto wzgll = this->quadz->get_w();
-
-  const int nelements = ispec.extent(0);
 
   // s_hprime_xx, s_hprimewgll_xx
   int scratch_size =

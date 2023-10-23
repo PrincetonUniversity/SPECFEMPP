@@ -3,8 +3,8 @@
 
 #include "coupled_interface/impl/edge/edge.hpp"
 #include "domain/interface.hpp"
+#include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "specfem_enums.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -12,23 +12,58 @@ namespace specfem {
 namespace coupled_interface {
 namespace impl {
 namespace edges {
+/**
+ * @brief Template specialization for the edge between an acoustic and an
+ * elastic domain.
+ *
+ * @tparam qp_type Quadrature points type.
+ */
 template <typename qp_type>
 class edge<
     specfem::domain::domain<specfem::enums::element::medium::acoustic, qp_type>,
     specfem::domain::domain<specfem::enums::element::medium::elastic,
                             qp_type> > {
 public:
+  /**
+   * @name Typedefs
+   *
+   */
+  ///@{
+  /**
+   * @brief Self medium type.
+   */
   using self_medium = typename specfem::domain::domain<
       specfem::enums::element::medium::acoustic, qp_type>::medium_type;
+  /**
+   * @brief Coupled medium type.
+   *
+   */
   using coupled_medium =
       typename specfem::domain::domain<specfem::enums::element::medium::elastic,
                                        qp_type>::medium_type;
+  /**
+   * @brief Quadrature points type.
+   *
+   */
   using quadrature_points_type = qp_type;
+  ///@}
 
   edge(){};
 
-  edge(const int &inum_edge,
-       const specfem::domain::domain<specfem::enums::element::medium::acoustic,
+  /**
+   * @brief Construct a new coupling edge object
+   *
+   * @param self_domain Primary domain of the interface (acoustic).
+   * @param coupled_domain Coupled domain of the interface (elastic).
+   * @param quadrature_points A quadrature points object defining the quadrature
+   * points either at compile time or run time.
+   * @param coupled_interfaces struct containing the coupling information.
+   * @param partial_derivatives struct containing the partial derivatives.
+   * @param wxgll weights for the GLL quadrature points in the x direction.
+   * @param wzgll weights for the GLL quadrature points in the z direction.
+   * @param ibool Global indexing for all GLL points
+   */
+  edge(const specfem::domain::domain<specfem::enums::element::medium::acoustic,
                                      qp_type> &self_domain,
        const specfem::domain::domain<specfem::enums::element::medium::elastic,
                                      qp_type> &coupled_domain,
@@ -40,38 +75,67 @@ public:
        const specfem::kokkos::DeviceView1d<type_real> wzgll,
        const specfem::kokkos::DeviceView3d<int> ibool);
 
+  /**
+   * @brief Compute the coupling between the acoustic and elastic domains.
+   *
+   * @param iedge Index of the edge.
+   * @param ipoint Index of the quadrature point on the edge.
+   */
   KOKKOS_FUNCTION
-  void compute_coupling(const int &ipoint) const;
+  void compute_coupling(const int &iedge, const int &ipoint) const;
 
+  /**
+   * @brief Get the orientation of edges on the coupled interface.
+   *
+   * @param iedge Index of the edge.
+   * @param self_edge_type Orientation of the edge on the self domain.
+   * @param coupled_edge_type Orientation of the edge on the coupled domain.
+   */
   KOKKOS_FUNCTION void
-  get_edges(specfem::enums::coupling::edge::type &self_edge_type,
+  get_edges(const int &iedge,
+            specfem::enums::coupling::edge::type &self_edge_type,
             specfem::enums::coupling::edge::type &coupled_edge_type) const {
-    self_edge_type = this->acoustic_edge;
-    coupled_edge_type = this->elastic_edge;
+    self_edge_type = this->acoustic_edge(iedge);
+    coupled_edge_type = this->elastic_edge(iedge);
     return;
   }
 
 private:
-  int acoustic_ispec;
-  int elastic_ispec;
-  specfem::kokkos::DeviceView2d<int> self_ibool;
-  specfem::kokkos::DeviceView2d<int> coupled_ibool;
-  specfem::kokkos::DeviceView2d<type_real> xix;
-  specfem::kokkos::DeviceView2d<type_real> xiz;
-  specfem::kokkos::DeviceView2d<type_real> gammax;
-  specfem::kokkos::DeviceView2d<type_real> gammaz;
-  specfem::kokkos::DeviceView2d<type_real> jacobian;
-  specfem::enums::coupling::edge::type acoustic_edge;
-  specfem::enums::coupling::edge::type elastic_edge;
+  specfem::kokkos::DeviceView1d<int> acoustic_ispec; ///< Index of acoustic
+                                                     ///< elements on the edge
+  specfem::kokkos::DeviceView1d<int> elastic_ispec;  ///< Index of elastic
+                                                     ///< elements on the edge
+  specfem::kokkos::DeviceView3d<int> ibool;     ///< Global indexing for all GLL
+                                                ///< points
+  specfem::kokkos::DeviceView3d<type_real> xix; ///< xix
+  specfem::kokkos::DeviceView3d<type_real> xiz; ///< xiz
+  specfem::kokkos::DeviceView3d<type_real> gammax;   ///< gammax
+  specfem::kokkos::DeviceView3d<type_real> gammaz;   ///< gammaz
+  specfem::kokkos::DeviceView3d<type_real> jacobian; ///< Jacobian
+  specfem::kokkos::DeviceView1d<specfem::enums::coupling::edge::type>
+      acoustic_edge; ///< Orientation of edges on the acoustic domain
+  specfem::kokkos::DeviceView1d<specfem::enums::coupling::edge::type>
+      elastic_edge; ///< Orientation of edges on the elastic domain
   specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
-      self_field_dot_dot;
-  specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> coupled_field;
-  qp_type quadrature_points;
-  specfem::kokkos::DeviceView1d<type_real> wxgll;
-  specfem::kokkos::DeviceView1d<type_real> wzgll;
+      self_field_dot_dot; ///< Second derivative of potential field on the
+                          ///< acoustic domain
+  specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+      coupled_field;         ///< Displacement on the elastic domain
+  qp_type quadrature_points; ///< Quadrature points object defining the
+                             ///< quadrature points either at compile time or
+                             ///< run time.
+  specfem::kokkos::DeviceView1d<type_real> wxgll; ///< Weights for the GLL
+                                                  ///< quadrature points in the
+                                                  ///< x direction
+  specfem::kokkos::DeviceView1d<type_real> wzgll; ///< Weights for the GLL
+                                                  ///< quadrature points in the
+                                                  ///< z direction
 
-  specfem::coupled_interface::impl::edges::self_iterator self_iterator;
-  specfem::coupled_interface::impl::edges::coupled_iterator coupled_iterator;
+  specfem::coupled_interface::impl::edges::self_iterator
+      self_iterator; ///< Iterator for points on the edge in the primary domain
+  specfem::coupled_interface::impl::edges::coupled_iterator
+      coupled_iterator; ///< Iterator for points on the edge in the coupled
+                        ///< domain
 };
 } // namespace edges
 } // namespace impl
