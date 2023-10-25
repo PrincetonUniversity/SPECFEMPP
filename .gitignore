@@ -15,3 +15,5 @@ examples/*/*_config.yaml
 tests/regression-tests/*.yaml
 tests/regression-tests/*/cpu/*.yaml
 tests/regression-tests/*/gpu/*.yaml
+*.mod
+*.o
