@@ -36,7 +36,7 @@
                                 npoints_interface_top,max_npoints_interface)
 
   use constants, only: IOUT,IMAIN,MAX_STRING_LEN,mygroup,IN_DATA_FILES
-  use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS
+  use shared_parameters, only: stations_filename
 
   implicit none
 
@@ -55,14 +55,11 @@
   integer :: nrec_total
   double precision :: xrec,zrec
   double precision, external :: value_spline
-  character(len=MAX_STRING_LEN) :: stations_filename,path_to_add
 
-  stations_filename = trim(IN_DATA_FILES)//'STATIONS'
-
-  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-    stations_filename = path_to_add(1:len_trim(path_to_add))//stations_filename(1:len_trim(stations_filename))
-  endif
+  ! if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+  !   write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+  !   stations_filename = path_to_add(1:len_trim(path_to_add))//stations_filename(1:len_trim(stations_filename))
+  ! endif
 
   ! user output
   write(IMAIN,*)

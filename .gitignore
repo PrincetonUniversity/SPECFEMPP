@@ -17,3 +17,7 @@ tests/regression-tests/*/cpu/*.yaml
 tests/regression-tests/*/gpu/*.yaml
 *.mod
 *.o
+*/OUTPUT_FILES/*
+*.gnu
+examples/*/Par_File
+OUTPUT_FILES/*

@@ -425,11 +425,11 @@
 !
 !   k1 = A U(tn)
 !   k2 = A {
-  U(tn + dt / 2) + 1 / 2 dt k1 }
+  !U(tn + dt / 2) + 1 / 2 dt k1 }
 !   k3 = A {
-  U(tn + dt / 2) + 1 / 2 dt k2 }
+  !U(tn + dt / 2) + 1 / 2 dt k2 }
 !   k4 = A {
-  U(tn + dt) + dt k3 }
+  !U(tn + dt) + dt k3 }
 !
 !  U(tn + dt) = 1/6 * dt * { k1 + 2 k2 + 2 k3 + k4 }
 

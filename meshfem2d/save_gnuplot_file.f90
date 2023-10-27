@@ -35,7 +35,8 @@
 
 ! creates a Gnuplot file that displays the grid
 
-  use constants, only: IMAIN,IOUT_VIS,OUTPUT_FILES,myrank
+  use constants, only: IMAIN,IOUT_VIS,myrank
+  use shared_parameters, only: OUTPUT_FILES
 
   implicit none
 
@@ -53,9 +54,9 @@
     call flush_IMAIN()
   endif
 
-  open(unit=IOUT_VIS,file=trim(OUTPUT_FILES)//'gridfile.gnu',status='unknown',iostat=ier)
+  open(unit=IOUT_VIS,file=trim(OUTPUT_FILES)//'/gridfile.gnu',status='unknown',iostat=ier)
   if (ier /= 0 ) then
-    print *,'Error opening gnuplot file for writing: ',trim(OUTPUT_FILES)//'gridfile.gnu'
+    print *,'Error opening gnuplot file for writing: ',trim(OUTPUT_FILES)//'/gridfile.gnu'
     print *,'Please make sure directory ',trim(OUTPUT_FILES),' exists...'
     call stop_the_code('Error saving gnuplot file')
   endif
@@ -97,12 +98,12 @@
   close(IOUT_VIS)
 
   ! create a Gnuplot script to display the grid
-  open(unit=IOUT_VIS,file=trim(OUTPUT_FILES)//'plot_gridfile.gnu',status='unknown',iostat=ier)
+  open(unit=IOUT_VIS,file=trim(OUTPUT_FILES)//'/plot_gridfile.gnu',status='unknown',iostat=ier)
   if (ier /= 0 ) call stop_the_code('Error saving plotgnu file')
 
   write(IOUT_VIS,*) '#set term wxt'
   write(IOUT_VIS,*) 'set term postscript landscape monochrome solid "Helvetica" 22'
-  write(IOUT_VIS,*) 'set output "',trim(OUTPUT_FILES)//'gridfile.ps"'
+  write(IOUT_VIS,*) 'set output "',trim(OUTPUT_FILES)//'/gridfile.ps"'
   write(IOUT_VIS,*) '#set xrange [',sngl(minval(x)),':',sngl(maxval(x)),']'
   write(IOUT_VIS,*) '#set yrange [',sngl(minval(z)),':',sngl(maxval(z)),']'
   ! use same unit length on both X and Y axes
