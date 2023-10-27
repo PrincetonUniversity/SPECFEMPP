@@ -117,17 +117,17 @@ end module my_mpi
 ! create sub-communicators if needed, if running more than one earthquake from the same job
   call world_split()
 
-#else
+! #else
 
-  NUMBER_OF_SIMULTANEOUS_RUNS = NUMBER_OF_SIMULTANEOUS_RUNS ! To avoid compiler warning
-  BROADCAST_SAME_MESH_AND_MODEL = BROADCAST_SAME_MESH_AND_MODEL ! To avoid compiler warning
-  ! we need to make sure that NUMBER_OF_SIMULTANEOUS_RUNS is read, thus read the parameter file
-  ! initialize
-  call read_parameter_file_init()
-  ! open the Par_file
-  call open_parameter_file()
-  ! read only parameters (without receiver-line section, material tables or region definitions)
-  call read_parameter_file_only()
+!   NUMBER_OF_SIMULTANEOUS_RUNS = NUMBER_OF_SIMULTANEOUS_RUNS ! To avoid compiler warning
+!   BROADCAST_SAME_MESH_AND_MODEL = BROADCAST_SAME_MESH_AND_MODEL ! To avoid compiler warning
+!   ! we need to make sure that NUMBER_OF_SIMULTANEOUS_RUNS is read, thus read the parameter file
+!   ! initialize
+!   call read_parameter_file_init()
+!   ! open the Par_file
+!   call open_parameter_file()
+!   ! read only parameters (without receiver-line section, material tables or region definitions)
+!   call read_parameter_file_only()
 
 #endif
 

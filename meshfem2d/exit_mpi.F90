@@ -35,59 +35,60 @@
 ! subroutine to stop the code, whether sequential or parallel
 !------------------------------------------------------------
 
-  subroutine exit_MPI(myrank,error_msg)
+subroutine exit_MPI(myrank,error_msg)
 
-  use constants, only: MAX_STRING_LEN,IMAIN,ISTANDARD_OUTPUT,OUTPUT_FILES
+   use constants, only: MAX_STRING_LEN,IMAIN,ISTANDARD_OUTPUT
+   use shared_parameters, only: OUTPUT_FILES
 
-  implicit none
+   implicit none
 
-  integer,intent(in) :: myrank
-  character(len=*),intent(in) :: error_msg
+   integer,intent(in) :: myrank
+   character(len=*),intent(in) :: error_msg
 
-  ! local parameters
-  character(len=MAX_STRING_LEN) :: outputname
-  ! identifier for error message file
-  integer, parameter :: IERROR = 30
+   ! local parameters
+   character(len=MAX_STRING_LEN) :: outputname
+   ! identifier for error message file
+   integer, parameter :: IERROR = 30
 
-  ! write error message to screen
-  write(*,*) error_msg(1:len(error_msg))
-  write(*,*) 'Error detected, aborting MPI... proc ',myrank
+   ! write error message to screen
+   write(*,*) error_msg(1:len(error_msg))
+   write(*,*) 'Error detected, aborting MPI... proc ',myrank
 
 ! write error message to file
-  write(outputname,"('/error_message',i6.6,'.txt')") myrank
-  open(unit=IERROR,file=trim(OUTPUT_FILES)//outputname,status='unknown')
-  write(IERROR,*) error_msg(1:len(error_msg))
-  write(IERROR,*) 'Error detected, aborting MPI... proc ',myrank
-  close(IERROR)
+   write(outputname,"('/error_message',i6.6,'.txt')") myrank
+   open(unit=IERROR,file=trim(OUTPUT_FILES)//outputname,status='unknown')
+   write(IERROR,*) error_msg(1:len(error_msg))
+   write(IERROR,*) 'Error detected, aborting MPI... proc ',myrank
+   close(IERROR)
 
 ! close output file
-  if (myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) close(IMAIN)
+   if (myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) close(IMAIN)
 
-  ! stop all the MPI processes, and exit
-  if (error_msg /= 'Error, program ended in exit_MPI') call abort_mpi()
+   ! stop all the MPI processes, and exit
+   if (error_msg /= 'Error, program ended in exit_MPI') call abort_mpi()
 
-  ! otherwise: there is no standard behaviour to exit with an error code in Fortran,
-  ! however most compilers do recognize this as an error code stop statement;
-  ! to check stop code in terminal: > echo $?
-  stop 30
+   ! otherwise: there is no standard behaviour to exit with an error code in Fortran,
+   ! however most compilers do recognize this as an error code stop statement;
+   ! to check stop code in terminal: > echo $?
+   stop 30
 
-  end subroutine exit_MPI
+end subroutine exit_MPI
 
 !-------------------------------------------------------------------------------------------------
 
 ! alias for exit_MPI, useful to convert stop statements to this automatically in the code cleaning script ran by Buildbot
 
-  subroutine stop_the_code(error_msg)
+subroutine stop_the_code(error_msg)
 
-  use constants, only: myrank
+   use constants, only: myrank
 
-  implicit none
+   implicit none
 
-  character(len=*) :: error_msg
+   character(len=*) :: error_msg
 
-  call exit_MPI(myrank,error_msg)
+   call exit_MPI(myrank,error_msg)
 
-  end subroutine stop_the_code
+end subroutine stop_the_code
 
 !-------------------------------------------------------------------------------------------------
 !
@@ -95,22 +96,22 @@
 !
 !-------------------------------------------------------------------------------------------------
 
-  subroutine flush_IMAIN()
+subroutine flush_IMAIN()
 
-  use constants, only: IMAIN
+   use constants, only: IMAIN
 
-  implicit none
+   implicit none
 
-  ! only main process writes out to main output file
-  ! file I/O in Fortran is buffered by default
-  !
-  ! note: Fortran2003 includes a FLUSH statement
-  !          which is implemented by most compilers by now
-  !
-  ! otherwise:
-  !   a) comment out the line below
-  !   b) try to use instead: call flush(IMAIN)
+   ! only main process writes out to main output file
+   ! file I/O in Fortran is buffered by default
+   !
+   ! note: Fortran2003 includes a FLUSH statement
+   !          which is implemented by most compilers by now
+   !
+   ! otherwise:
+   !   a) comment out the line below
+   !   b) try to use instead: call flush(IMAIN)
 
-  flush(IMAIN)
+   flush(IMAIN)
 
-  end subroutine flush_IMAIN
+end subroutine flush_IMAIN

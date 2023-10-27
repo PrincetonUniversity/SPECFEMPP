@@ -197,10 +197,11 @@ specfem::mesh::IO::fortran::read_mesh_database_attenuation(
   specfem::fortran_IO::fortran_read_line(
       stream, &n_sls, &attenuation_f0_reference, &read_velocities_at_f0);
 
-  if (n_sls < 1) {
-    throw std::runtime_error("must have N_SLS >= 1 even if attenuation if off "
-                             "because it is used to assign some arrays");
-  }
+  //   if (n_sls < 1) {
+  //     throw std::runtime_error("must have N_SLS >= 1 even if attenuation if
+  //     off "
+  //                              "because it is used to assign some arrays");
+  //   }
 
   return std::make_tuple(n_sls, attenuation_f0_reference,
                          read_velocities_at_f0);

@@ -1,10 +1,17 @@
 cmake_minimum_required(VERSION 3.10)
 
-message("- Building meshfem2D along with this project")
+message("-- Building meshfem2D along with this project")
+message("--     MESHFEM2D is build without MPI support")
+message("--     MESHFEM2D is build without SCOTCH support")
+
+unset(WITH_MPI)
+unset(WITH_SCOTCH)
 
 # Set the Fortran compiler
 enable_language(Fortran)
 enable_language(C)
+
+set(FCFLAGS_f90 -g -O2 -fbacktrace)
 
 ## ========= MACROS =========
 # define macro wrapper on custom command
@@ -45,6 +52,19 @@ build_fortran_command(${SHARED_MODULE} ${CMAKE_CURRENT_SOURCE_DIR}/constants.h)
 
 add_custom_target(shared_module ALL
     DEPENDS ${SHARED_MODULE}
+)
+
+set (UTILITIES
+    command_line_arguments.mesh_utilities.o
+    file_management.mesh_utilities.o
+)
+
+foreach(module_files ${UTILITIES})
+    build_fortran_command(${module_files} shared_module)
+endforeach()
+
+add_custom_target(mesh_utilities ALL
+    DEPENDS ${UTILITIES}
 )
 
 # shared objects
@@ -108,6 +128,7 @@ add_custom_target(shared_mpi ALL
 
 set(MESHFEM_SHARED_OBJECTS
     ${SHARED_MODULE}
+    ${UTILITIES}
     ${shared_OBJECTS}
     ${SHARED_MPI_LIBS}
     ${cc_OBJECTS}
