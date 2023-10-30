@@ -54,8 +54,6 @@ Table below shows various features available and tested in this package on vario
 .. note::
     While we work towards building this package and making the code/documentation more complete, please refer relevant SPECFEM package documentations for technical details on SPECFEM theory.
 
-Any contributions to this documentation and package are always welcome. Please see :ref:`developer documentation` sections for more details.
-
 .. raw:: html
 
    <style>
@@ -107,14 +105,14 @@ Contribution Guidelines
 Community
 ---------
 
-`Report bugs <https://github.com/PrincetonUniversity/specfem2d_kokkos/issues/new>`_
-===================================================================================
+.. toctree::
+    :caption: COMMUNITY
+    :maxdepth: 1
+    :hidden:
 
-`Request a new feature <https://github.com/PrincetonUniversity/specfem2d_kokkos/issues/new>`_
-=============================================================================================
-
-`Join the discussion <https://github.com/orgs/SPECFEM/discussions>`_
-====================================================================
+    Report bugs <https://github.com/PrincetonUniversity/specfem2d_kokkos/issues/new>
+    Request a new feature <https://github.com/PrincetonUniversity/specfem2d_kokkos/issues/new>
+    Join the discussion <https://github.com/orgs/SPECFEM/discussions>
 
 API Documentation
 -----------------
