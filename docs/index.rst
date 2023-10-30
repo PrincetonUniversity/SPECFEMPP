@@ -107,14 +107,14 @@ Contribution Guidelines
 Community
 ---------
 
-.. toctree::
-    :caption: COMMUNITY
-    :maxdepth: 1
-    :hidden:
+`Report bugs <https://github.com/PrincetonUniversity/specfem2d_kokkos/issues/new>`_
+===================================================================================
 
-    report_bugs/index
-    feature_request/index
-    join_the_community/index
+`Request a new feature <https://github.com/PrincetonUniversity/specfem2d_kokkos/issues/new>`_
+=============================================================================================
+
+`Join the discussion <https://github.com/orgs/SPECFEM/discussions>`_
+====================================================================
 
 API Documentation
 -----------------
