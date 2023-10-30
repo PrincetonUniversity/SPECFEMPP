@@ -7,7 +7,7 @@ SPECFEM++ - A modular and portable spectral-element code for seismic wave propag
 
 .. admonition:: Under Development
 
-    The package is currently under development and is not yet ready for production use. We are working towards making the package more complete. Please `report any bugs <https://github.com/PrincetonUniversity/specfem2d_kokkos/issues/new?assignees=&labels=&projects=&template=bug_report.md&title=>`_ you find or `request features https://github.com/PrincetonUniversity/specfem2d_kokkos/issues/new?assignees=&labels=&projects=&template=feature_request.md&title=`_ that you would like to see in the package.
+    The package is currently under development and is not yet ready for production use. We are working towards making the package more complete. Please `report any bugs <https://github.com/PrincetonUniversity/specfem2d_kokkos/issues/new?assignees=&labels=&projects=&template=bug_report.md&title=>`_ you find or `request features <https://github.com/PrincetonUniversity/specfem2d_kokkos/issues/new?assignees=&labels=&projects=&template=feature_request.md&title=>`_ that you would like to see in the package.
 
 SPECFEM++ is a complete re-write of SPECFEM suite of packages (SPECFEM2D, SPECFEM3D, SPECFEM3D_GLOBE) using C++. Compared to the earlier version, SPECFEM++ code base provides:
 
