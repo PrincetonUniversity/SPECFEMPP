@@ -240,7 +240,7 @@ To run the solver, we first need to define a configuration file ``specfem_config
 
 .. code-block:: yaml
     :linenos:
-    :caption:: specfem_config.yaml
+    :caption: specfem_config.yaml
 
     parameters:
 
