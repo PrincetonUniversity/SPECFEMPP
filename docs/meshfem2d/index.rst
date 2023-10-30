@@ -20,10 +20,10 @@ Parameter Description
     header
     meshing_parameters
     receivers
-    velocity_model
+    velocity_models
     internal_mesher
     external_mesher
-    display_paramter
+    display_parameter
 
 .. _topography_file:
 
