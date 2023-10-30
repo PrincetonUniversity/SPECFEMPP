@@ -1,8 +1,13 @@
 Mesh Generation
 ===============
 
-In this version of the package meshfem has not been implemented. However, the package can read internal meshes generated via `SPECFEM2D mesh generator <https://specfem2d.readthedocs.io/en/latest/03_mesh_generation/>`_ . Please refer to the documentation there to generate meshes. Thus for now, we require a *Par_file* for generation of mesh and a *configuration file* for setting up and running the solver.
+Mesh generation requires use of a meshing software. We provide an internal mesher to generate meshes for simple domain geometries i.e. layer cake model (rectangular domains with interfaces between different material systems). However, for more complex geometries, we recommend using external meshing software such as Gmsh (http://gmsh.info/) or CUBIT (https://cubit.sandia.gov/).
 
-The recommended workflow for running the code would be to generate an internal mesh using ``xmeshfem2D``. Make sure the domain is entirely elastic, this version does not support acoustic domains. Then define the path to the generated database file using :ref:`database-file-parameter`.
+.. note::
+    The internal mesher is a slightly modified version of the mesher provided with the original `SPECFEM2D <https://specfem2d.readthedocs.io/en/latest/03_mesh_generation/>`_ package.
 
-Please have a look at the :ref:`cookbooks` for examples on generating a mesh.
+We configure the mesher using a :ref:`Parameter_File` to define the meshing specifications and a :ref:`Topography_File` to define the topography of the domain. The meshing software is called using the following command:
+
+.. code-block:: bash
+
+    $ ./xmeshfem2d -p <Parameter_File>
