@@ -1,10 +1,11 @@
-.. C++ Sphinx Doxygen Breathe documentation master file, created by
-   sphinx-quickstart on Wed Jun 24 11:46:27 2020.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 SPECFEM++ - A modular and portable spectral-element code for seismic wave propagation
 =====================================================================================
+
+.. admonition:: Community Project
+    SPECFEM++ is a community project. We welcome contributions from everyone. Please see :ref:`developer documentation` sections for more details.
+
+.. admonition:: Under Development
+    The package is currently under development and is not yet ready for production use. We are working towards making the package more complete. Please `report any bugs` you find or `request features` that you would like to see in the package.
 
 SPECFEM++ is a complete re-write of SPECFEM suite of packages (SPECFEM2D, SPECFEM3D, SPECFEM3D_GLOBE) using C++. Compared to the earlier version, SPECFEM++ code base provides:
 
@@ -12,9 +13,6 @@ SPECFEM++ is a complete re-write of SPECFEM suite of packages (SPECFEM2D, SPECFE
  2. modularity that allows for easy addition of new features,
  3. portability that allows the code to run on a variety of architectures (CPU, NVIDIA GPUs, Intel GPUs, AMD GPUs etc.), and
  4. a user-friendly build infrastructure that allows the code to be easily compiled and run on a variety of platforms.
-
-.. note::
-    The package is currently under development and is not yet ready for production use. We are working towards making the package more complete. Any contributions to this documentation and package are always welcome. Please see :ref:`developer documentation` sections for more details.
 
 Current capabilities
 --------------------
@@ -80,6 +78,7 @@ User Documentation
     :hidden:
 
     user_documentation/index
+    meshfem2d/index
     parameter_documentation/index
     source_description/index
 

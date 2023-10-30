@@ -12,4 +12,5 @@ In this section, let us define a number "cookbooks" - examples / case studies sh
     <https://specfem2d.readthedocs.io/en/latest/>`_ as ``SPECFEM2D``.
 
 .. toctree::
+    :maxdepth: 1
     example_01
