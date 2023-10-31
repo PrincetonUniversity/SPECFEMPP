@@ -20,4 +20,4 @@ tests/regression-tests/*/gpu/*.yaml
 */OUTPUT_FILES/*
 *.gnu
 examples/*/Par_File
-OUTPUT_FILES/*
+*OUTPUT_FILES*

@@ -25,7 +25,7 @@ parameters:
           nstep: 100
 
   receivers:
-    stations-file: "@CMAKE_SOURCE_DIR@/examples/homogeneous-medium-flat-topography/STATIONS"
+    stations-file: "@CMAKE_SOURCE_DIR@/examples/homogeneous-medium-flat-topography/OUTPUT_FILES/STATIONS"
     angle: 0.0
     seismogram-type:
       - velocity
@@ -42,5 +42,5 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "@CMAKE_SOURCE_DIR@/examples/homogeneous-medium-flat-topography/databases/database.bin"
+    mesh-database: "@CMAKE_SOURCE_DIR@/examples/homogeneous-medium-flat-topography/OUTPUT_FILES/database.bin"
     source-file: "@CMAKE_SOURCE_DIR@/examples/homogeneous-medium-flat-topography/source.yaml"
