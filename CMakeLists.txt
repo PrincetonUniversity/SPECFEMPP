@@ -297,6 +297,10 @@ if (BUILD_TESTS)
         message("-- Including tests.")
         add_subdirectory(tests/unit-tests)
         add_subdirectory(tests/regression-tests)
+endif()
+
+if (BUILD_EXAMPLES)
+        message("-- Including examples.")
         add_subdirectory(examples)
 endif()
 
