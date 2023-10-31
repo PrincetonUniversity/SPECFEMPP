@@ -16,6 +16,10 @@ SPECFEM++ is a complete re-write of SPECFEM suite of packages (SPECFEM2D, SPECFE
  3. portability that allows the code to run on a variety of architectures (CPU, NVIDIA GPUs, Intel GPUs, AMD GPUs etc.), and
  4. a user-friendly build infrastructure that allows the code to be easily compiled and run on a variety of platforms.
 
+.. admonition:: Download the code
+
+    The code is available on `GitHub <https://github.com/PrincetonUniversity/specfem2d_kokkos/tree/main>`_.
+
 Current capabilities
 --------------------
 

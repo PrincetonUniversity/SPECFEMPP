@@ -21,8 +21,8 @@ parameters:
         type-of-simulation: forward
         time-scheme:
           type: Newmark
-          dt: 1.1e-5
-          nstep: 100
+          dt: 1.1e-3
+          nstep: 1600
 
   receivers:
     stations-file: "@CMAKE_SOURCE_DIR@/examples/homogeneous-medium-flat-topography/OUTPUT_FILES/STATIONS"
