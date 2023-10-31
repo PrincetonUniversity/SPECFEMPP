@@ -7,6 +7,7 @@ The interfaces provided here stores data required to compute mass and stiffness 
 
 .. toctree::
     :maxdepth: 1
+
     compute
     compute_partial_derivatives
     compute_properties

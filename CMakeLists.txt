@@ -5,6 +5,7 @@ project(specfem2d_kokkos VERSION 0.1.0)
 set(CMAKE_CXX_STANDARD 17)
 option(MPI_PARALLEL "MPI enabled" OFF)
 option(BUILD_TESTS "Tests included" OFF)
+option(BUILD_EXAMPLES "Examples included" OFF)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
         set(CMAKE_CXX_FLAGS "-fp-model=precise")
@@ -53,6 +54,8 @@ configure_file(constants.hpp.in constants.hpp)
 
 include_directories(include)
 include_directories(${CMAKE_BINARY_DIR})
+
+add_subdirectory(meshfem2d)
 
 # Build specfem2d libraries
 add_library(
@@ -295,6 +298,10 @@ if (BUILD_TESTS)
         message("-- Including tests.")
         add_subdirectory(tests/unit-tests)
         add_subdirectory(tests/regression-tests)
+endif()
+
+if (BUILD_EXAMPLES)
+        message("-- Including examples.")
         add_subdirectory(examples)
 endif()
 
