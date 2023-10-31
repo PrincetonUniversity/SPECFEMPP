@@ -1,6 +1,6 @@
-# Wave propagation through homogeneous medium with no interfaces
+# Wave propagration through fluid-solid interface
 
-In this example we simulate wave propagation through a 2-dimensional homogeneous medium.
+This example creates the fluid-solid example with flat ocean bottom from [Komatitsch et. al.](https://doi.org/10.1190/1.1444758).
 
 ## Generating the mesh
 
