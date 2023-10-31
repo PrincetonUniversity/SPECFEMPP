@@ -5,6 +5,7 @@ project(specfem2d_kokkos VERSION 0.1.0)
 set(CMAKE_CXX_STANDARD 17)
 option(MPI_PARALLEL "MPI enabled" OFF)
 option(BUILD_TESTS "Tests included" OFF)
+option(BUILD_EXAMPLES "Examples included" OFF)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
         set(CMAKE_CXX_FLAGS "-fp-model=precise")
