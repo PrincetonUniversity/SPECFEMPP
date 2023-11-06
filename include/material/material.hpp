@@ -2,7 +2,7 @@
 #define _MATERIAL_HPP
 
 #include "constants.hpp"
-#include "enumerations/interface.hpp"
+#include "enumerations/specfem_enums.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
@@ -39,7 +39,8 @@ public:
    * @return specfem::enums::element::type The type of the material
    */
   virtual specfem::enums::element::type get_ispec_type() {
-    return specfem::enums::element::elastic;
+    throw std::runtime_error("Material is not assigned properly");
+    return specfem::enums::element::type::elastic;
   };
 
   /**

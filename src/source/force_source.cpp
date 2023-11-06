@@ -56,14 +56,14 @@ void specfem::sources::force::compute_source_array(
     for (int j = 0; j < nquadz; j++) {
       hlagrange = hxis(i) * hgammas(j);
 
-      if (el_type == specfem::enums::element::acoustic ||
-          (el_type == specfem::enums::element::elastic &&
+      if (el_type == specfem::enums::element::type::acoustic ||
+          (el_type == specfem::enums::element::type::elastic &&
            specfem::globals::simulation_wave == specfem::wave::sh)) {
         source_array(j, i, 0) = hlagrange;
         source_array(j, i, 1) = hlagrange;
-      } else if ((el_type == specfem::enums::element::elastic &&
+      } else if ((el_type == specfem::enums::element::type::elastic &&
                   specfem::globals::simulation_wave == specfem::wave::p_sv) ||
-                 el_type == specfem::enums::element::poroelastic) {
+                 el_type == specfem::enums::element::type::poroelastic) {
         type_real tempx = sin(angle) * hlagrange;
         source_array(j, i, 0) = tempx;
         type_real tempz = -1.0 * cos(angle) * hlagrange;
@@ -144,11 +144,11 @@ void specfem::sources::force::print(std::ostream &out) const {
 
   std::string element_type;
 
-  if (this->el_type == specfem::enums::element::acoustic) {
+  if (this->el_type == specfem::enums::element::type::acoustic) {
     element_type = "acoustic";
-  } else if (this->el_type == specfem::enums::element::elastic) {
+  } else if (this->el_type == specfem::enums::element::type::elastic) {
     element_type = "elastic";
-  } else if (this->el_type == specfem::enums::element::poroelastic) {
+  } else if (this->el_type == specfem::enums::element::type::poroelastic) {
     element_type = "poroelastic";
   } else {
     element_type = "unknown";
@@ -171,11 +171,11 @@ void specfem::sources::force::print(std::ostream &out) const {
 std::string specfem::sources::force::print() const {
   std::string element_type;
 
-  if (this->el_type == specfem::enums::element::acoustic) {
+  if (this->el_type == specfem::enums::element::type::acoustic) {
     element_type = "acoustic";
-  } else if (this->el_type == specfem::enums::element::elastic) {
+  } else if (this->el_type == specfem::enums::element::type::elastic) {
     element_type = "elastic";
-  } else if (this->el_type == specfem::enums::element::poroelastic) {
+  } else if (this->el_type == specfem::enums::element::type::poroelastic) {
     element_type = "poroelastic";
   } else {
     element_type = "unknown";

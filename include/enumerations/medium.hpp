@@ -23,7 +23,7 @@ public:
    *
    */
   constexpr static specfem::enums::element::type value =
-      specfem::enums::element::elastic;
+      specfem::enums::element::type::elastic;
   /**
    * @brief Number of components for this medium
    *
@@ -42,7 +42,7 @@ public:
    *
    */
   constexpr static specfem::enums::element::type value =
-      specfem::enums::element::acoustic;
+      specfem::enums::element::type::acoustic;
   /**
    * @brief constexpr defining number of components for this medium.
    *

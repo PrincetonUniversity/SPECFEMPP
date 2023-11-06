@@ -34,10 +34,11 @@ FetchContent_MakeAvailable(kokkos)
 
 FetchContent_Declare(
         yaml
-        URL https://github.com/jbeder/yaml-cpp/archive/refs/tags/yaml-cpp-0.7.0.zip
+        URL https://github.com/jbeder/yaml-cpp/archive/refs/tags/0.8.0.tar.gz
 )
 FetchContent_MakeAvailable(yaml)
-include_directories(BEFORE SYSTEM ${yaml_SOURCE_DIR} ${yaml_BINARY_DIR}/include)
+
+include_directories(BEFORE SYSTEM ${yaml_BINARY_DIR} ${yaml_SOURCE_DIR}/include)
 
 # Try finding boost and if not found install.
 find_package(Boost 1.73.0 COMPONENTS program_options filesystem system)
@@ -214,6 +215,7 @@ add_library(
         src/compute/compute_sources.cpp
         src/compute/compute_receivers.cpp
         src/compute/coupled_interfaces.cpp
+        src/compute/compute_boundaries.cpp
 )
 
 target_link_libraries(

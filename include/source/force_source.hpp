@@ -1,7 +1,7 @@
 #ifndef _FORCE_SOURCE_HPP
 #define _FORCE_SOURCE_HPP
 
-#include "enumerations/interface.hpp"
+#include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "source.hpp"

@@ -3,12 +3,12 @@
 
 #include "compute/interface.hpp"
 #include "domain.hpp"
+#include "enumerations/interface.hpp"
 #include "impl/interface.hpp"
 #include "impl/receivers/interface.hpp"
 #include "impl/sources/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
-#include "enumerations/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <Kokkos_ScatterView.hpp>
@@ -74,6 +74,7 @@ specfem::domain::domain<medium, qp_type>::domain(
     specfem::compute::compute *compute,
     specfem::compute::properties material_properties,
     specfem::compute::partial_derivatives partial_derivatives,
+    specfem::compute::boundaries boundary_conditions,
     specfem::compute::sources compute_sources,
     specfem::compute::receivers compute_receivers,
     specfem::quadrature::quadrature *quadx,
@@ -105,9 +106,9 @@ specfem::domain::domain<medium, qp_type>::domain(
                            this->field_dot_dot, this->rmass_inverse);
 
   this->kernels = specfem::domain::impl::kernels::kernels<medium, qp_type>(
-      compute->ibool, partial_derivatives, material_properties, compute_sources,
-      compute_receivers, quadx, quadz, quadrature_points, field, field_dot,
-      field_dot_dot, rmass_inverse);
+      compute->ibool, partial_derivatives, material_properties,
+      boundary_conditions, compute_sources, compute_receivers, quadx, quadz,
+      quadrature_points, field, field_dot, field_dot_dot, rmass_inverse);
 
   //----------------------------------------------------------------------------
   // Inverse of mass matrix

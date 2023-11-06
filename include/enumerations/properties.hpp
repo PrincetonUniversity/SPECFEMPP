@@ -17,7 +17,11 @@ namespace property {
  * @brief Isotropic element
  *
  */
-class isotropic {};
+class isotropic {
+public:
+  constexpr static specfem::enums::element::property_tag value =
+      specfem::enums::element::property_tag::isotropic;
+};
 } // namespace property
 } // namespace element
 } // namespace enums
