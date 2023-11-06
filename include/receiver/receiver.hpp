@@ -2,7 +2,7 @@
 #define _RECEIVER_HPP
 
 #include "constants.hpp"
-#include "enumerations/interface.hpp"
+#include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "specfem_mpi/interface.hpp"

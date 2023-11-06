@@ -64,6 +64,7 @@ public:
       const specfem::kokkos::DeviceView3d<int> ibool,
       const specfem::compute::partial_derivatives &partial_derivatives,
       const specfem::compute::properties &properties,
+      const specfem::compute::boundaries &boundaries,
       const specfem::compute::sources &sources,
       const specfem::compute::receivers &receives,
       specfem::quadrature::quadrature *quadx,
@@ -81,6 +82,7 @@ public:
    */
   __inline__ void compute_stiffness_interaction() const {
     isotropic_elements.compute_stiffness_interaction();
+    isotropic_elements_dirichlet.compute_stiffness_interaction();
     return;
   }
 
@@ -90,6 +92,7 @@ public:
    */
   __inline__ void compute_mass_matrix() const {
     isotropic_elements.compute_mass_matrix();
+    isotropic_elements_dirichlet.compute_mass_matrix();
     return;
   }
 
@@ -121,8 +124,18 @@ public:
 private:
   specfem::domain::impl::kernels::element_kernel<
       medium_type, quadrature_point_type,
-      specfem::enums::element::property::isotropic>
+      specfem::enums::element::property::isotropic,
+      specfem::enums::boundary_conditions::template none<
+          dimension, medium_type, quadrature_point_type> >
       isotropic_elements; ///< Elemental kernels for isotropic elements
+  specfem::domain::impl::kernels::element_kernel<
+      medium_type, quadrature_point_type,
+      specfem::enums::element::property::isotropic,
+      specfem::enums::boundary_conditions::template dirichlet<
+          dimension, medium_type, quadrature_point_type> >
+      isotropic_elements_dirichlet; ///< Elemental kernels for isotropic
+                                    ///< elements with dirichlet boundary
+                                    ///< conditions
   specfem::domain::impl::kernels::source_kernel<
       medium_type, quadrature_point_type,
       specfem::enums::element::property::isotropic>

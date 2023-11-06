@@ -31,7 +31,7 @@ specfem::material::acoustic_material::acoustic_material(
     : density(density), cp(cp), Qkappa(Qkappa), Qmu(Qmu),
       compaction_grad(compaction_grad) {
 
-  this->ispec_type = specfem::enums::element::acoustic;
+  this->ispec_type = specfem::enums::element::type::acoustic;
 
   if (this->Qkappa <= 0.0 || this->Qmu <= 0.0) {
     std::runtime_error(

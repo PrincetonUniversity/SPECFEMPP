@@ -77,6 +77,7 @@ public:
          specfem::compute::compute *compute,
          specfem::compute::properties material_properties,
          specfem::compute::partial_derivatives partial_derivatives,
+         specfem::compute::boundaries boundary_conditions,
          specfem::compute::sources compute_sources,
          specfem::compute::receivers compute_receivers,
          specfem::quadrature::quadrature *quadx,

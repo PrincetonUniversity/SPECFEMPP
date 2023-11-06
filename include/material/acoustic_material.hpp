@@ -2,7 +2,7 @@
 #define _ACOUSTIC_MATERIAL_HPP
 
 #include "constants.hpp"
-#include "enumerations/interface.hpp"
+#include "enumerations/specfem_enums.hpp"
 #include "material.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
@@ -87,8 +87,8 @@ private:
   type_real poisson;
   ///@}
   specfem::enums::element::type ispec_type =
-      specfem::enums::element::acoustic; ///< Type or element ==
-                                         ///< specfem::acoustic
+      specfem::enums::element::type::acoustic; ///< Type or element ==
+                                               ///< specfem::acoustic
 };
 
 std::ostream &operator<<(std::ostream &out,

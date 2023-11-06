@@ -121,7 +121,8 @@ specfem::mesh::mesh::mesh(const std::string filename,
 
   try {
     this->acfree_surface = specfem::mesh::boundaries::acoustic_free_surface(
-        stream, this->parameters.nelem_acoustic_surface, mpi);
+        stream, this->parameters.nelem_acoustic_surface,
+        this->material_ind.knods, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
@@ -172,10 +173,10 @@ std::string specfem::mesh::mesh::print(
       [=](const int ispec, int &l_elastic, int &l_acoustic) {
         const int imat = this->material_ind.kmato(ispec);
         if (materials[imat]->get_ispec_type() ==
-            specfem::enums::element::elastic) {
+            specfem::enums::element::type::elastic) {
           l_elastic++;
         } else if (materials[imat]->get_ispec_type() ==
-                   specfem::enums::element::acoustic) {
+                   specfem::enums::element::type::acoustic) {
           l_acoustic++;
         }
       },

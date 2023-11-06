@@ -18,6 +18,7 @@ specfem::domain::impl::kernels::
         const specfem::kokkos::DeviceView1d<int> ispec,
         const specfem::compute::partial_derivatives &partial_derivatives,
         const specfem::compute::properties &properties,
+        const specfem::compute::boundaries &boundary_conditions,
         specfem::quadrature::quadrature *quadx,
         specfem::quadrature::quadrature *quadz, qp_type quadrature_points,
         specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field,
@@ -37,7 +38,7 @@ specfem::domain::impl::kernels::
 
   element = specfem::domain::impl::elements::element<
       dimension, medium_type, quadrature_point_type, elemental_properties...>(
-      partial_derivatives, properties);
+      partial_derivatives, properties, boundary_conditions, quadrature_points);
   return;
 }
 
@@ -46,6 +47,11 @@ void specfem::domain::impl::kernels::element_kernel<
     medium, qp_type, elemental_properties...>::compute_mass_matrix() const {
 
   constexpr int components = medium::components;
+  const int nelements = ispec.extent(0);
+
+  if (nelements == 0)
+    return;
+
   const auto wxgll = this->quadx->get_w();
   const auto wzgll = this->quadz->get_w();
 
@@ -67,7 +73,8 @@ void specfem::domain::impl::kernels::element_kernel<
               sub2ind(xz, ngllx, iz, ix);
               int iglob = ibool(ispec_l, iz, ix);
 
-              type_real mass_matrix_element[components];
+              typename dimension::template array_type<type_real>
+                  mass_matrix_element;
 
               element.compute_mass_matrix_component(ispec_l, xz,
                                                     mass_matrix_element);
@@ -225,14 +232,14 @@ void specfem::domain::impl::kernels::element_kernel<
               int ix, iz;
               sub2ind(xz, ngllx, iz, ix);
 
-              type_real dudxl[components];
-              type_real dudzl[components];
-
-              type_real stress_integrand_xi[components];
-              type_real stress_integrand_gamma[components];
+              typename dimension::template array_type<type_real> dudxl;
+              typename dimension::template array_type<type_real> dudzl;
 
               element.compute_gradient(ispec_l, xz, s_hprime_xx, s_hprime_zz,
                                        s_field, dudxl, dudzl);
+
+              typename dimension::template array_type<type_real> stress_integrand_xi;
+              typename dimension::template array_type<type_real> stress_integrand_gamma;
 
               element.compute_stress(ispec_l, xz, dudxl, dudzl,
                                      stress_integrand_xi,
@@ -262,10 +269,10 @@ void specfem::domain::impl::kernels::element_kernel<
               const type_real wxglll = wxgll(ix);
               const type_real wzglll = wzgll(iz);
 
-              type_real acceleration[components];
+              typename dimension::template array_type<type_real> acceleration;
 
               element.compute_acceleration(
-                  xz, wxglll, wzglll, s_stress_integrand_xi,
+                  ispec_l, xz, wxglll, wzglll, s_stress_integrand_xi,
                   s_stress_integrand_gamma, s_hprimewgll_xx, s_hprimewgll_zz,
                   acceleration);
 

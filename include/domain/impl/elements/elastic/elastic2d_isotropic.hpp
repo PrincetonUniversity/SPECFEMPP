@@ -19,13 +19,16 @@ namespace elements {
  *
  * @tparam NGLL Number of Gauss-Lobatto-Legendre quadrature points defined at
  * compile time
+ *
+ * @tparam BC Boundary conditions if void then neumann boundary conditions are
+ * assumed
  */
-template <int NGLL>
+template <int NGLL, typename BC>
 class element<
     specfem::enums::element::dimension::dim2,
     specfem::enums::element::medium::elastic,
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
-    specfem::enums::element::property::isotropic> {
+    specfem::enums::element::property::isotropic, BC> {
 public:
   /** @name Typedefs
    *
@@ -49,6 +52,14 @@ public:
    */
   using quadrature_points_type =
       specfem::enums::element::quadrature::static_quadrature_points<NGLL>;
+
+  /**
+   * @brief Boundary conditions of the element
+   *
+   * if BC == none then neumann boundary conditions are assumed
+   *
+   */
+  using boundary_conditions_type = BC;
 
   /**
    * @brief Use the scratch view type from the quadrature points
@@ -77,8 +88,10 @@ public:
    * point
    */
   KOKKOS_FUNCTION
-  element(const specfem::compute::partial_derivatives partial_derivatives,
-          const specfem::compute::properties properties);
+  element(const specfem::compute::partial_derivatives &partial_derivatives,
+          const specfem::compute::properties &properties,
+          const specfem::compute::boundaries &boundary_conditions,
+          const quadrature_points_type &quadrature_points);
 
   /**
    * @brief Compute the mass matrix component ($ m_{\alpha, \beta} $) for a
@@ -92,8 +105,9 @@ public:
    * @param mass_matrix mass matrix component
    */
   KOKKOS_INLINE_FUNCTION
-  void compute_mass_matrix_component(const int &ispec, const int &xz,
-                                     type_real *mass_matrix) const;
+  void compute_mass_matrix_component(
+      const int &ispec, const int &xz,
+      typename dimension::template array_type<type_real> &mass_matrix) const;
 
   /**
    * @brief Compute the gradient of the field at a particular
@@ -112,12 +126,13 @@ public:
    * @param dudzl Computed partial derivative of field \f$ \frac{\partial
    * \tilde{u}}{\partial z} \f$
    */
-  KOKKOS_INLINE_FUNCTION void
-  compute_gradient(const int &ispec, const int &xz,
-                   const ScratchViewType<type_real, 1> s_hprime_xx,
-                   const ScratchViewType<type_real, 1> s_hprime_zz,
-                   const ScratchViewType<type_real, medium_type::components> u,
-                   type_real *dudxl, type_real *dudzl) const;
+  KOKKOS_INLINE_FUNCTION void compute_gradient(
+      const int &ispec, const int &xz,
+      const ScratchViewType<type_real, 1> s_hprime_xx,
+      const ScratchViewType<type_real, 1> s_hprime_zz,
+      const ScratchViewType<type_real, medium_type::components> u,
+      typename dimension::template array_type<type_real> &dudxl,
+      typename dimension::template array_type<type_real> &dudzl) const;
 
   /**
    * @brief Compute the stress integrand at a particular Gauss-Lobatto-Legendre
@@ -136,10 +151,13 @@ public:
    * J^{\alpha, \gamma} \partial_x u \partial_x \gamma + \partial_z u *
    * \partial_z \gamma \f$
    */
-  KOKKOS_INLINE_FUNCTION void
-  compute_stress(const int &ispec, const int &xz, const type_real *dudxl,
-                 const type_real *dudzl, type_real *stress_integrand_xi,
-                 type_real *stress_integrand_gamma) const;
+  KOKKOS_INLINE_FUNCTION void compute_stress(
+      const int &ispec, const int &xz,
+      const typename dimension::template array_type<type_real> &dudxl,
+      const typename dimension::template array_type<type_real> &dudzl,
+      typename dimension::template array_type<type_real> &stress_integrand_xi,
+      typename dimension::template array_type<type_real>
+          &stress_integrand_gamma) const;
 
   /**
    * @brief Update the acceleration at the quadrature point xz
@@ -159,16 +177,16 @@ public:
    * @param s_hprimewgll_zz Scratch view hprime_zz * wzgll
    * @param field_dot_dot Acceleration of the field subviewed at global index xz
    */
-  KOKKOS_INLINE_FUNCTION void
-  compute_acceleration(const int &xz, const type_real &wxglll,
-                       const type_real &wzglll,
-                       const ScratchViewType<type_real, medium_type::components>
-                           stress_integrand_xi,
-                       const ScratchViewType<type_real, medium_type::components>
-                           stress_integrand_gamma,
-                       const ScratchViewType<type_real, 1> s_hprimewgll_xx,
-                       const ScratchViewType<type_real, 1> s_hprimewgll_zz,
-                       type_real *acceleration) const;
+  KOKKOS_INLINE_FUNCTION void compute_acceleration(
+      const int &ispec, const int &xz, const type_real &wxglll,
+      const type_real &wzglll,
+      const ScratchViewType<type_real, medium_type::components>
+          stress_integrand_xi,
+      const ScratchViewType<type_real, medium_type::components>
+          stress_integrand_gamma,
+      const ScratchViewType<type_real, 1> s_hprimewgll_xx,
+      const ScratchViewType<type_real, 1> s_hprimewgll_zz,
+      typename dimension::template array_type<type_real> &acceleration) const;
 
 private:
   specfem::kokkos::DeviceView3d<type_real> xix;           ///< xix
@@ -180,6 +198,7 @@ private:
                                                           ///< 2 * mu
   specfem::kokkos::DeviceView3d<type_real> mu;            ///< mu
   specfem::kokkos::DeviceView3d<type_real> rho;           ///< rho
+  boundary_conditions_type boundary_conditions; ///< Boundary conditions
 };
 } // namespace elements
 } // namespace impl

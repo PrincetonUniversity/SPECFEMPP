@@ -331,11 +331,12 @@ specfem::compute::coupled_interfaces::elastic_acoustic::elastic_acoustic(
 
     // Check that the interface is between an elastic and an acoustic element
 
-    ASSERT(
-        ((ispec_elastic != ispec_acoustic) &&
-         (h_ispec_type(ispec_elastic) == specfem::enums::element::elastic) &&
-         (h_ispec_type(ispec_acoustic) == specfem::enums::element::acoustic)),
-        "Invalid interface");
+    ASSERT(((ispec_elastic != ispec_acoustic) &&
+            (h_ispec_type(ispec_elastic) ==
+             specfem::enums::element::type::elastic) &&
+            (h_ispec_type(ispec_acoustic) ==
+             specfem::enums::element::type::acoustic)),
+           "Invalid interface");
   }
 #endif
 
@@ -402,9 +403,10 @@ specfem::compute::coupled_interfaces::elastic_poroelastic::elastic_poroelastic(
     // Check that the interface is between an elastic and a poroelastic
     // element
     ASSERT(((ispec_elastic != ispec_poroelastic) &&
-            (h_ispec_type(ispec_elastic) == specfem::enums::element::elastic) &&
+            (h_ispec_type(ispec_elastic) ==
+             specfem::enums::element::type::elastic) &&
             (h_ispec_type(ispec_poroelastic) ==
-             specfem::enums::element::poroelastic)),
+             specfem::enums::element::type::poroelastic)),
            "Invalid interface");
   }
 #endif
@@ -473,12 +475,12 @@ specfem::compute::coupled_interfaces::acoustic_poroelastic::
 
     // Check that the interface is between an acoustic and a poroelastic
     // element
-    ASSERT(
-        ((ispec_acoustic != ispec_poroelastic) &&
-         (h_ispec_type(ispec_acoustic) == specfem::enums::element::acoustic) &&
-         (h_ispec_type(ispec_poroelastic) ==
-          specfem::enums::element::poroelastic)),
-        "Invalid interface");
+    ASSERT(((ispec_acoustic != ispec_poroelastic) &&
+            (h_ispec_type(ispec_acoustic) ==
+             specfem::enums::element::type::acoustic) &&
+            (h_ispec_type(ispec_poroelastic) ==
+             specfem::enums::element::type::poroelastic)),
+           "Invalid interface");
   }
 #endif
 

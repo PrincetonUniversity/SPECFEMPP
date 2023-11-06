@@ -1,7 +1,7 @@
 #ifndef _COMPUTE_COUPLED_INTERFACES_HPP
 #define _COMPUTE_COUPLED_INTERFACES_HPP
 
-#include "enumerations/interface.hpp"
+#include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
 #include "macros.hpp"
 #include "mesh/coupled_interfaces/coupled_interfaces.hpp"

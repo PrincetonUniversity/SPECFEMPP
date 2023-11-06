@@ -57,10 +57,19 @@ namespace element {
  * poroelastic.
  *
  */
-enum type {
+enum class type {
   elastic,    ///< elastic element
   acoustic,   ///< acoustic element
   poroelastic ///< poroelastic element
+};
+
+enum class property_tag {
+  isotropic, ///< isotropic material
+};
+
+enum class boundary_tag {
+  none,                  ///< no boundary
+  acoustic_free_surface, ///< free surface boundary for acoustic elements
 };
 
 } // namespace element
@@ -77,6 +86,28 @@ enum type {
 constexpr int num_edges = 4; ///< Number of edges in the mesh
 } // namespace edge
 } // namespace coupling
+
+/**
+ * @namespace boundaries enumeration namespace is used to store enumerations
+ * used to describe various parts of the boundaries in a mesh.
+ *
+ */
+namespace boundaries {
+/**
+ * @brief type of the boundary (corner, edge)
+ *
+ */
+enum type {
+  TOP_LEFT,     ///< Top left corner
+  TOP_RIGHT,    ///< Top right corner
+  BOTTOM_LEFT,  ///< Bottom left corner
+  BOTTOM_RIGHT, ///< Bottom right corner
+  TOP,          ///< Top edge
+  LEFT,         ///< Left edge
+  RIGHT,        ///< Right edge
+  BOTTOM        ///< Bottom edge
+};
+} // namespace boundaries
 } // namespace enums
 } // namespace specfem
 
