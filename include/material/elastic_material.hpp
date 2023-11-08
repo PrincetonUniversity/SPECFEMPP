@@ -53,8 +53,8 @@ public:
    * @return utilities::return_holder holder used to return elastic material
    * properties
    */
-  utilities::return_holder get_properties() override;
-  specfem::enums::element::type get_ispec_type() override {
+  utilities::return_holder get_properties() const override;
+  specfem::enums::element::type get_ispec_type() const override {
     return ispec_type;
   };
   /**

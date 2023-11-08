@@ -132,7 +132,8 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
         material_properties.h_ispec_type, mesh.coupled_interfaces);
 
     // Set up boundary conditions
-    specfem::compute::boundaries boundary_conditions(mesh.acfree_surface);
+    specfem::compute::boundaries boundary_conditions(
+        mesh.material_ind.kmato, materials, mesh.acfree_surface);
 
     // Locate the sources
     for (auto &source : sources)

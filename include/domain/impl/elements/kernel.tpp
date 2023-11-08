@@ -4,10 +4,10 @@
 #include "compute/interface.hpp"
 #include "domain/impl/elements/acoustic/interface.hpp"
 #include "domain/impl/elements/elastic/interface.hpp"
+#include "enumerations/interface.hpp"
 #include "kernel.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
-#include "enumerations/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -142,7 +142,8 @@ void specfem::domain::impl::kernels::element_kernel<
           const specfem::kokkos::DeviceTeam::member_type &team_member) {
         int ngllx, ngllz;
         quadrature_points.get_ngll(&ngllx, &ngllz);
-        const auto ispec_l = ispec(team_member.league_rank());
+        const auto ielement = team_member.league_rank();
+        const auto ispec_l = ispec(ielement);
 
         // Instantiate shared views
         // ---------------------------------------------------------------
@@ -235,13 +236,15 @@ void specfem::domain::impl::kernels::element_kernel<
               typename dimension::template array_type<type_real> dudxl;
               typename dimension::template array_type<type_real> dudzl;
 
-              element.compute_gradient(ispec_l, xz, s_hprime_xx, s_hprime_zz,
-                                       s_field, dudxl, dudzl);
+              element.compute_gradient(ispec_l, ielement, xz, s_hprime_xx,
+                                       s_hprime_zz, s_field, dudxl, dudzl);
 
-              typename dimension::template array_type<type_real> stress_integrand_xi;
-              typename dimension::template array_type<type_real> stress_integrand_gamma;
+              typename dimension::template array_type<type_real>
+                  stress_integrand_xi;
+              typename dimension::template array_type<type_real>
+                  stress_integrand_gamma;
 
-              element.compute_stress(ispec_l, xz, dudxl, dudzl,
+              element.compute_stress(ispec_l, ielement, xz, dudxl, dudzl,
                                      stress_integrand_xi,
                                      stress_integrand_gamma);
 #ifdef KOKKOS_ENABLE_CUDA
@@ -272,7 +275,7 @@ void specfem::domain::impl::kernels::element_kernel<
               typename dimension::template array_type<type_real> acceleration;
 
               element.compute_acceleration(
-                  ispec_l, xz, wxglll, wzglll, s_stress_integrand_xi,
+                  ispec_l, ielement, xz, wxglll, wzglll, s_stress_integrand_xi,
                   s_stress_integrand_gamma, s_hprimewgll_xx, s_hprimewgll_zz,
                   acceleration);
 

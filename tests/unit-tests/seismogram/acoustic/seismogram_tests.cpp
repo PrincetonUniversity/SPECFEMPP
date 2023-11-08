@@ -106,7 +106,8 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
       mesh.material_ind.kmato, materials, mesh.nspec, gllx->get_N(),
       gllz->get_N());
 
-  specfem::compute::boundaries boundary_conditions(mesh.acfree_surface);
+  specfem::compute::boundaries boundary_conditions(
+      mesh.material_ind.kmato, materials, mesh.acfree_surface);
 
   // locate the recievers
   for (auto &receiver : receivers)

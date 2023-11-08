@@ -72,7 +72,7 @@ void specfem::coupled_interface::coupled_interface<
         const auto self_edge_l = this->self_edge(iedge_l);
         const auto coupled_edge_l = this->coupled_edge(iedge_l);
 
-        auto npoints = specfem::compute::coupled_interfaces::iterator::npoints(
+        auto npoints = specfem::compute::coupled_interfaces::access::npoints(
             self_edge_l, ngllx, ngllz);
 
         // Iterate over the edges using TeamThreadRange

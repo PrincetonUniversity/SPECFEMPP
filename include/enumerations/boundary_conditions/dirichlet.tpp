@@ -12,14 +12,7 @@ template <typename dim, typename medium, typename qp_type>
 specfem::enums::boundary_conditions::dirichlet<dim, medium, qp_type>::
     dirichlet(const specfem::compute::boundaries &boundary_conditions,
               const quadrature_points_type &quadrature_points)
-    : quadrature_points(quadrature_points) {
-
-  const int nelem = boundary_conditions.acoustic_free_surface.type.extent(0);
-  this->type = specfem::kokkos::DeviceView1d<specfem::enums::boundaries::type>(
-      "specfem::enums::boundary_conditions::dirichlet::type", nelem);
-
-  Kokkos::deep_copy(this->type, boundary_conditions.acoustic_free_surface.type);
-
+    : quadrature_points(quadrature_points), type(boundary_conditions.acoustic_free_surface.type) {
   return;
 }
 

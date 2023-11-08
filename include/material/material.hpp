@@ -29,7 +29,7 @@ public:
    * @return utilities::return_holder Struct containing the properties of the
    * material
    */
-  virtual utilities::return_holder get_properties() {
+  virtual utilities::return_holder get_properties() const {
     utilities::return_holder holder{};
     return holder;
   };
@@ -38,7 +38,7 @@ public:
    *
    * @return specfem::enums::element::type The type of the material
    */
-  virtual specfem::enums::element::type get_ispec_type() {
+  virtual specfem::enums::element::type get_ispec_type() const {
     throw std::runtime_error("Material is not assigned properly");
     return specfem::enums::element::type::elastic;
   };

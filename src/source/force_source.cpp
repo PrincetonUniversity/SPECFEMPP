@@ -1,4 +1,4 @@
-#include "enumerations/interface.hpp"
+#include "enumerations/specfem_enums.hpp"
 #include "globals.h"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
