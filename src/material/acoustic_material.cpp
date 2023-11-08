@@ -57,7 +57,7 @@ specfem::material::acoustic_material::acoustic_material(
 }
 
 specfem::utilities::return_holder
-specfem::material::acoustic_material::get_properties() {
+specfem::material::acoustic_material::get_properties() const {
   utilities::return_holder holder;
   holder.rho = this->density;
   holder.kappa = this->kappa;

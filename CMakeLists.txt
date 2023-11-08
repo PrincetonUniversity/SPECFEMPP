@@ -238,6 +238,7 @@ target_link_libraries(
         timescheme
         Kokkos::kokkos
         yaml-cpp
+        compute
 )
 
 add_library(

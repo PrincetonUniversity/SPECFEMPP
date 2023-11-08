@@ -95,7 +95,7 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic, BC>::
     compute_gradient(
-        const int &ispec, const int &xz,
+        const int &ispec, const int &ielement, const int &xz,
         const ScratchViewType<type_real, 1> s_hprime_xx,
         const ScratchViewType<type_real, 1> s_hprime_zz,
         const ScratchViewType<type_real, medium_type::components> field_chi,
@@ -127,7 +127,7 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
   // dchidz
   dchidzl[0] = dchi_dxi * xizl + dchi_dgamma * gammazl;
 
-  boundary_conditions.enforce_gradient(ispec, xz, dchidxl, dchidzl);
+  boundary_conditions.enforce_gradient(ielement, xz, dchidxl, dchidzl);
 
   return;
 }
@@ -139,7 +139,7 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic, BC>::
     compute_stress(
-        const int &ispec, const int &xz,
+        const int &ispec, const int &ielement, const int &xz,
         const typename dimension::template array_type<type_real> &dchidxl,
         const typename dimension::template array_type<type_real> &dchidzl,
         typename dimension::template array_type<type_real> &stress_integrand_xi,
@@ -170,7 +170,7 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
   stress_integrand_gamma[0] =
       fac * (gammaxl * dchidxl[0] + gammazl * dchidzl[0]);
 
-  boundary_conditions.enforce_stress(ispec, xz, stress_integrand_xi,
+  boundary_conditions.enforce_stress(ielement, xz, stress_integrand_xi,
                                      stress_integrand_gamma);
 
   return;
@@ -183,8 +183,8 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic, BC>::
     compute_acceleration(
-        const int &ispec, const int &xz, const type_real &wxglll,
-        const type_real &wzglll,
+        const int &ispec, const int &ielement, const int &xz,
+        const type_real &wxglll, const type_real &wzglll,
         const ScratchViewType<type_real, medium_type::components>
             stress_integrand_xi,
         const ScratchViewType<type_real, medium_type::components>
@@ -213,7 +213,7 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
 
   acceleration[0] = -1.0 * ((wzglll * temp1l) + (wxglll * temp2l));
 
-  boundary_conditions.enforce_traction(ispec, xz, acceleration);
+  boundary_conditions.enforce_traction(ielement, xz, acceleration);
 }
 
 #endif

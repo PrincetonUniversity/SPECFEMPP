@@ -8,6 +8,7 @@
 #include "enumerations/interface.hpp"
 #include "kernels.hpp"
 #include "kokkos_abstractions.h"
+#include "macros.hpp"
 #include "quadrature/interface.hpp"
 
 struct element_tag {
@@ -143,6 +144,22 @@ static void allocate_isotropic_elements_v2(
         element_tags(ispec).boundary_tag == boundary_tag) {
       h_ispec_domain(index) = ispec;
       index++;
+    }
+  }
+
+  // assert that boundary_conditions ispec matches with calculated ispec
+  if constexpr ((boundary_tag == specfem::enums::element::boundary_tag::
+                                     acoustic_free_surface) &&
+                (medium_tag == specfem::enums::element::type::acoustic)) {
+    ASSERT(nelements ==
+               boundary_conditions.acoustic_free_surface.nelem_acoustic_surface,
+           "nelements = " << nelements << " nelem_acoustic_surface = "
+                          << boundary_conditions.acoustic_free_surface
+                                 .nelem_acoustic_surface);
+    for (int i = 0; i < nelements; i++) {
+      ASSERT(h_ispec_domain(i) == boundary_conditions.acoustic_free_surface
+                                      .h_ispec_acoustic_surface(i),
+             "Error: computing ispec for acoustic free surface elements");
     }
   }
 

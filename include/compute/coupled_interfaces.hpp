@@ -208,10 +208,10 @@ public:
 };
 
 /**
- * @namespace Helper functions to iterate over edges at an interface
+ * @namespace Helper functions to access the edges at an interface
  *
  */
-namespace iterator {
+namespace access {
 
 /**
  * @brief Compute the number of points at an edge of an element
@@ -258,7 +258,7 @@ void coupled_iterator(const int &ipoint,
                       const specfem::enums::coupling::edge::type &edge,
                       const int ngllx, const int ngllz, int &i, int &j);
 
-} // namespace iterator
+} // namespace access
 } // namespace coupled_interfaces
 } // namespace compute
 } // namespace specfem

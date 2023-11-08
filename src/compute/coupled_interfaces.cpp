@@ -65,7 +65,7 @@ void get_edge_range(const specfem::enums::coupling::edge::type &edge,
 // Given an edge, return the number of points along the edge
 // This ends up being important when ngllx != ngllz
 KOKKOS_FUNCTION
-int specfem::compute::coupled_interfaces::iterator::npoints(
+int specfem::compute::coupled_interfaces::access::npoints(
     const specfem::enums::coupling::edge::type &edge, const int ngllx,
     const int ngllz) {
 
@@ -84,7 +84,7 @@ int specfem::compute::coupled_interfaces::iterator::npoints(
 }
 
 KOKKOS_FUNCTION
-void specfem::compute::coupled_interfaces::iterator::self_iterator(
+void specfem::compute::coupled_interfaces::access::self_iterator(
     const int &ipoint, const specfem::enums::coupling::edge::type &edge,
     const int ngllx, const int ngllz, int &i, int &j) {
 
@@ -111,7 +111,7 @@ void specfem::compute::coupled_interfaces::iterator::self_iterator(
 }
 
 KOKKOS_FUNCTION
-void specfem::compute::coupled_interfaces::iterator::coupled_iterator(
+void specfem::compute::coupled_interfaces::access::coupled_iterator(
     const int &ipoint, const specfem::enums::coupling::edge::type &edge,
     const int ngllx, const int ngllz, int &i, int &j) {
 
@@ -255,19 +255,19 @@ void check_edges(
     const auto edge2l = edge2(interface);
 
     // iterate over the edge
-    int npoints = specfem::compute::coupled_interfaces::iterator::npoints(
+    int npoints = specfem::compute::coupled_interfaces::access::npoints(
         edge1l, ngllx, ngllz);
 
     for (int ipoint = 0; ipoint < npoints; ipoint++) {
       // Get ipoint along the edge in element1
       int i1, j1;
-      specfem::compute::coupled_interfaces::iterator::self_iterator(
+      specfem::compute::coupled_interfaces::access::self_iterator(
           ipoint, edge1l, ngllx, ngllz, i1, j1);
       const int iglob1 = h_ibool(ispec1l, j1, i1);
 
       // Get ipoint along the edge in element2
       int i2, j2;
-      specfem::compute::coupled_interfaces::iterator::coupled_iterator(
+      specfem::compute::coupled_interfaces::access::coupled_iterator(
           ipoint, edge2l, ngllx, ngllz, i2, j2);
       const int iglob2 = h_ibool(ispec2l, j2, i2);
 

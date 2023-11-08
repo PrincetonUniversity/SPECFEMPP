@@ -77,7 +77,8 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic,
     BC>::compute_mass_matrix_component(const int &ispec, const int &xz,
-                                       typename dimension::template array_type<type_real> &mass_matrix) const {
+                                       typename dimension::template array_type<
+                                           type_real> &mass_matrix) const {
   int ix, iz;
   sub2ind(xz, NGLL, iz, ix);
 
@@ -100,7 +101,7 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic, BC>::
     compute_gradient(
-        const int &ispec, const int &xz,
+        const int &ispec, const int &ielement, const int &xz,
         const ScratchViewType<type_real, 1> s_hprime_xx,
         const ScratchViewType<type_real, 1> s_hprime_zz,
         const ScratchViewType<type_real, medium_type::components> u,
@@ -139,7 +140,7 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
   // duzdz
   dudzl[1] = xizl * du_dxi[1] + gammazl * du_dgamma[1];
 
-  boundary_conditions.enforce_gradient(ispec, xz, dudxl, dudzl);
+  boundary_conditions.enforce_gradient(ielement, xz, dudxl, dudzl);
 
   return;
 }
@@ -151,7 +152,7 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic, BC>::
     compute_stress(
-        const int &ispec, const int &xz,
+        const int &ispec, const int &ielement, const int &xz,
         const typename dimension::template array_type<type_real> &dudxl,
         const typename dimension::template array_type<type_real> &dudzl,
         typename dimension::template array_type<type_real> &stress_integrand_xi,
@@ -199,7 +200,7 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
   stress_integrand_gamma[1] =
       jacobianl * (sigma_xz * gammaxl + sigma_zz * gammazl);
 
-  boundary_conditions.enforce_stress(ispec, xz, stress_integrand_xi,
+  boundary_conditions.enforce_stress(ielement, xz, stress_integrand_xi,
                                      stress_integrand_gamma);
 
   return;
@@ -212,8 +213,8 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic, BC>::
     compute_acceleration(
-        const int &ispec, const int &xz, const type_real &wxglll,
-        const type_real &wzglll,
+        const int &ispec, const int &ielement, const int &xz,
+        const type_real &wxglll, const type_real &wzglll,
         const ScratchViewType<type_real, medium_type::components>
             stress_integrand_xi,
         const ScratchViewType<type_real, medium_type::components>
@@ -249,7 +250,7 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
   acceleration[0] = -1.0 * (wzglll * tempx1) - (wxglll * tempx3);
   acceleration[1] = -1.0 * (wzglll * tempz1) - (wxglll * tempz3);
 
-  boundary_conditions.enforce_traction(ispec, xz, acceleration);
+  boundary_conditions.enforce_traction(ielement, xz, acceleration);
 }
 
 #endif

@@ -65,7 +65,7 @@ public:
       typename dimension::template array_type<type_real> &field_dot_dot) const;
 
 private:
-  specfem::kokkos::DeviceView1d<specfem::enums::boundaries::type>
+  specfem::kokkos::DeviceView1d<specfem::compute::access::boundary_types>
       type; ///< type of the edge on an element on the boundary.
   quadrature_points_type quadrature_points; ///< Quadrature points object.
 };

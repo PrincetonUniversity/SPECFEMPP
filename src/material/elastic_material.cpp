@@ -62,7 +62,7 @@ specfem::material::elastic_material::elastic_material(
 }
 
 specfem::utilities::return_holder
-specfem::material::elastic_material::get_properties() {
+specfem::material::elastic_material::get_properties() const {
   utilities::return_holder holder;
   holder.rho = this->density;
   holder.mu = this->mu;

@@ -127,7 +127,7 @@ public:
    * \tilde{u}}{\partial z} \f$
    */
   KOKKOS_INLINE_FUNCTION void compute_gradient(
-      const int &ispec, const int &xz,
+      const int &ispec, const int &ielement, const int &xz,
       const ScratchViewType<type_real, 1> s_hprime_xx,
       const ScratchViewType<type_real, 1> s_hprime_zz,
       const ScratchViewType<type_real, medium_type::components> u,
@@ -152,7 +152,7 @@ public:
    * \partial_z \gamma \f$
    */
   KOKKOS_INLINE_FUNCTION void compute_stress(
-      const int &ispec, const int &xz,
+      const int &ispec, const int &ielement, const int &xz,
       const typename dimension::template array_type<type_real> &dudxl,
       const typename dimension::template array_type<type_real> &dudzl,
       typename dimension::template array_type<type_real> &stress_integrand_xi,
@@ -178,8 +178,8 @@ public:
    * @param field_dot_dot Acceleration of the field subviewed at global index xz
    */
   KOKKOS_INLINE_FUNCTION void compute_acceleration(
-      const int &ispec, const int &xz, const type_real &wxglll,
-      const type_real &wzglll,
+      const int &ispec, const int &ielement, const int &xz,
+      const type_real &wxglll, const type_real &wzglll,
       const ScratchViewType<type_real, medium_type::components>
           stress_integrand_xi,
       const ScratchViewType<type_real, medium_type::components>
