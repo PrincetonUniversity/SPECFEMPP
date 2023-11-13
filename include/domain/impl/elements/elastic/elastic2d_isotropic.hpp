@@ -47,6 +47,12 @@ public:
   using medium_type = specfem::enums::element::medium::elastic;
 
   /**
+   * @brief Property of the element
+   *
+   */
+  using property_type = specfem::enums::element::property::isotropic;
+
+  /**
    * @brief Number of Gauss-Lobatto-Legendre quadrature points defined at
    * compile time
    */
@@ -107,7 +113,7 @@ public:
   KOKKOS_INLINE_FUNCTION
   void compute_mass_matrix_component(
       const int &ispec, const int &xz,
-      typename dimension::template array_type<type_real> &mass_matrix) const;
+      specfem::kokkos::array_type<type_real, 2> &mass_matrix) const;
 
   /**
    * @brief Compute the gradient of the field at a particular
@@ -126,13 +132,13 @@ public:
    * @param dudzl Computed partial derivative of field \f$ \frac{\partial
    * \tilde{u}}{\partial z} \f$
    */
-  KOKKOS_INLINE_FUNCTION void compute_gradient(
-      const int &ispec, const int &ielement, const int &xz,
-      const ScratchViewType<type_real, 1> s_hprime_xx,
-      const ScratchViewType<type_real, 1> s_hprime_zz,
-      const ScratchViewType<type_real, medium_type::components> u,
-      typename dimension::template array_type<type_real> &dudxl,
-      typename dimension::template array_type<type_real> &dudzl) const;
+  KOKKOS_INLINE_FUNCTION void
+  compute_gradient(const int &ispec, const int &ielement, const int &xz,
+                   const ScratchViewType<type_real, 1> s_hprime_xx,
+                   const ScratchViewType<type_real, 1> s_hprime_zz,
+                   const ScratchViewType<type_real, medium_type::components> u,
+                   specfem::kokkos::array_type<type_real, 2> &dudxl,
+                   specfem::kokkos::array_type<type_real, 2> &dudzl) const;
 
   /**
    * @brief Compute the stress integrand at a particular Gauss-Lobatto-Legendre
@@ -153,11 +159,10 @@ public:
    */
   KOKKOS_INLINE_FUNCTION void compute_stress(
       const int &ispec, const int &ielement, const int &xz,
-      const typename dimension::template array_type<type_real> &dudxl,
-      const typename dimension::template array_type<type_real> &dudzl,
-      typename dimension::template array_type<type_real> &stress_integrand_xi,
-      typename dimension::template array_type<type_real>
-          &stress_integrand_gamma) const;
+      const specfem::kokkos::array_type<type_real, 2> &dudxl,
+      const specfem::kokkos::array_type<type_real, 2> &dudzl,
+      specfem::kokkos::array_type<type_real, 2> &stress_integrand_xi,
+      specfem::kokkos::array_type<type_real, 2> &stress_integrand_gamma) const;
 
   /**
    * @brief Update the acceleration at the quadrature point xz
@@ -186,7 +191,9 @@ public:
           stress_integrand_gamma,
       const ScratchViewType<type_real, 1> s_hprimewgll_xx,
       const ScratchViewType<type_real, 1> s_hprimewgll_zz,
-      typename dimension::template array_type<type_real> &acceleration) const;
+      const specfem::kokkos::array_type<type_real, medium_type::components>
+          &velocity,
+      specfem::kokkos::array_type<type_real, 2> &acceleration) const;
 
 private:
   specfem::kokkos::DeviceView3d<type_real> xix;           ///< xix

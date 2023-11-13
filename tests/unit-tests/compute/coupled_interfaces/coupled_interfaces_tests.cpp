@@ -116,10 +116,8 @@ void test_edges(
     const specfem::kokkos::HostView2d<type_real> coord,
     const specfem::kokkos::HostMirror1d<int> ispec1,
     const specfem::kokkos::HostMirror1d<int> ispec2,
-    const specfem::kokkos::HostMirror1d<specfem::enums::coupling::edge::type>
-        edge1,
-    const specfem::kokkos::HostMirror1d<specfem::enums::coupling::edge::type>
-        edge2) {
+    const specfem::kokkos::HostMirror1d<specfem::enums::edge::type> edge1,
+    const specfem::kokkos::HostMirror1d<specfem::enums::edge::type> edge2) {
 
   const int num_interfaces = ispec1.extent(0);
   const int ngllx = h_ibool.extent(2);

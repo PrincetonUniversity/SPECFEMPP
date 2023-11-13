@@ -11,9 +11,41 @@
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
-template <class medium, class qp_type, typename... elemental_properties>
-specfem::domain::impl::kernels::
-    element_kernel<medium, qp_type, elemental_properties...>::element_kernel(
+// Do not pull velocity from global memory
+template <typename BC>
+KOKKOS_INLINE_FUNCTION static specfem::kokkos::array_type<type_real, BC::medium_type::components>
+        get_velocity(
+    const int &iglob,
+    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot) {
+
+  specfem::kokkos::array_type<type_real, BC::medium_type::components> velocity;
+  return velocity;
+};
+
+// // Pull velocity from global memory for stacey boundary conditions
+// KOKKOS_INLINE_FUNCTION
+// template <typename dim, typename medium, typename qp_type>
+// static void
+// get_velocity<specfem::enums::boundary_conditions::stacey<dim, medium,
+// qp_type>,
+//              N>(
+//     const int &iglob,
+//     specfem::kokkos::array_type<type_real, medium::components> &velocity,
+//     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot) {
+
+// #ifdef KOKKOS_ENABLE_CUDA
+// #pragma unroll
+// #endif
+//   for (int icomponent = 0; icomponent < components; icomponent++) {
+//     velocity[icomponent] = field_dot(iglob, icomponent);
+//   }
+
+//   return;
+// }
+
+template <class medium, class qp_type, class property, class BC>
+specfem::domain::impl::kernels::element_kernel<medium, qp_type, property, BC>::
+    element_kernel(
         const specfem::kokkos::DeviceView3d<int> ibool,
         const specfem::kokkos::DeviceView1d<int> ispec,
         const specfem::compute::partial_derivatives &partial_derivatives,
@@ -22,12 +54,13 @@ specfem::domain::impl::kernels::
         specfem::quadrature::quadrature *quadx,
         specfem::quadrature::quadrature *quadz, qp_type quadrature_points,
         specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field,
+        specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot,
         specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
             field_dot_dot,
         specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
             mass_matrix)
     : ibool(ibool), ispec(ispec), quadx(quadx), quadz(quadz),
-      quadrature_points(quadrature_points), field(field),
+      quadrature_points(quadrature_points), field(field), field_dot(field_dot),
       field_dot_dot(field_dot_dot), mass_matrix(mass_matrix) {
 
 #ifndef NDEBUG
@@ -37,14 +70,14 @@ specfem::domain::impl::kernels::
 #endif
 
   element = specfem::domain::impl::elements::element<
-      dimension, medium_type, quadrature_point_type, elemental_properties...>(
+      dimension, medium_type, quadrature_point_type, property, BC>(
       partial_derivatives, properties, boundary_conditions, quadrature_points);
   return;
 }
 
-template <class medium, class qp_type, typename... elemental_properties>
+template <class medium, class qp_type, class property, class BC>
 void specfem::domain::impl::kernels::element_kernel<
-    medium, qp_type, elemental_properties...>::compute_mass_matrix() const {
+    medium, qp_type, property, BC>::compute_mass_matrix() const {
 
   constexpr int components = medium::components;
   const int nelements = ispec.extent(0);
@@ -73,7 +106,7 @@ void specfem::domain::impl::kernels::element_kernel<
               sub2ind(xz, ngllx, iz, ix);
               int iglob = ibool(ispec_l, iz, ix);
 
-              typename dimension::template array_type<type_real>
+              specfem::kokkos::array_type<type_real, medium_type::components>
                   mass_matrix_element;
 
               element.compute_mass_matrix_component(ispec_l, xz,
@@ -96,10 +129,9 @@ void specfem::domain::impl::kernels::element_kernel<
   return;
 }
 
-template <class medium, class qp_type, typename... elemental_properties>
+template <class medium, class qp_type, class property, class BC>
 void specfem::domain::impl::kernels::element_kernel<
-    medium, qp_type, elemental_properties...>::compute_stiffness_interaction()
-    const {
+    medium, qp_type, property, BC>::compute_stiffness_interaction() const {
 
   constexpr int components = medium::components;
   const int nelements = ispec.extent(0);
@@ -233,15 +265,17 @@ void specfem::domain::impl::kernels::element_kernel<
               int ix, iz;
               sub2ind(xz, ngllx, iz, ix);
 
-              typename dimension::template array_type<type_real> dudxl;
-              typename dimension::template array_type<type_real> dudzl;
+              specfem::kokkos::array_type<type_real, medium_type::components>
+                  dudxl;
+              specfem::kokkos::array_type<type_real, medium_type::components>
+                  dudzl;
 
               element.compute_gradient(ispec_l, ielement, xz, s_hprime_xx,
                                        s_hprime_zz, s_field, dudxl, dudzl);
 
-              typename dimension::template array_type<type_real>
+              specfem::kokkos::array_type<type_real, medium_type::components>
                   stress_integrand_xi;
-              typename dimension::template array_type<type_real>
+              specfem::kokkos::array_type<type_real, medium_type::components>
                   stress_integrand_gamma;
 
               element.compute_stress(ispec_l, ielement, xz, dudxl, dudzl,
@@ -272,12 +306,16 @@ void specfem::domain::impl::kernels::element_kernel<
               const type_real wxglll = wxgll(ix);
               const type_real wzglll = wzgll(iz);
 
-              typename dimension::template array_type<type_real> acceleration;
+              specfem::kokkos::array_type<type_real, medium_type::components>
+                  acceleration;
+
+              // only get velocity from global memory for stacey boundary
+              auto velocity = get_velocity<BC>(iglob, field_dot);
 
               element.compute_acceleration(
                   ispec_l, ielement, xz, wxglll, wzglll, s_stress_integrand_xi,
                   s_stress_integrand_gamma, s_hprimewgll_xx, s_hprimewgll_zz,
-                  acceleration);
+                  velocity, acceleration);
 
 #ifdef KOKKOS_ENABLE_CUDA
 #pragma unroll

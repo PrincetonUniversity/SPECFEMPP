@@ -45,6 +45,12 @@ public:
    */
   using medium_type = specfem::enums::element::medium::acoustic;
   /**
+   * @brief Property of the element
+   *
+   */
+  using property_type = specfem::enums::element::property::isotropic;
+
+  /**
    * @brief Number of Gauss-Lobatto-Legendre quadrature points
    */
   using quadrature_points_type =
@@ -100,7 +106,7 @@ public:
   KOKKOS_INLINE_FUNCTION
   void compute_mass_matrix_component(
       const int &ispec, const int &xz,
-      typename dimension::template array_type<type_real> &mass_matrix) const;
+      specfem::kokkos::array_type<type_real, 1> &mass_matrix) const;
 
   /**
    * @brief Compute the gradient of the field at the quadrature point xz
@@ -120,8 +126,8 @@ public:
       const ScratchViewType<type_real, 1> s_hprime_xx,
       const ScratchViewType<type_real, 1> s_hprime_zz,
       const ScratchViewType<type_real, medium_type::components> field_chi,
-      typename dimension::array_type<type_real> &dchidxl,
-      typename dimension::array_type<type_real> &dchidzl) const;
+      specfem::kokkos::array_type<type_real, 1> &dchidxl,
+      specfem::kokkos::array_type<type_real, 1> &dchidzl) const;
 
   /**
    * @brief Compute the stress integrand at a particular Gauss-Lobatto-Legendre
@@ -146,11 +152,10 @@ public:
    */
   KOKKOS_INLINE_FUNCTION void compute_stress(
       const int &ispec, const int &ielement, const int &xz,
-      const typename dimension::template array_type<type_real> &dchidxl,
-      const typename dimension::template array_type<type_real> &dchidzl,
-      typename dimension::template array_type<type_real> &stress_integrand_xi,
-      typename dimension::template array_type<type_real>
-          &stress_integrand_gamma) const;
+      const specfem::kokkos::array_type<type_real, 1> &dchidxl,
+      const specfem::kokkos::array_type<type_real, 1> &dchidzl,
+      specfem::kokkos::array_type<type_real, 1> &stress_integrand_xi,
+      specfem::kokkos::array_type<type_real, 1> &stress_integrand_gamma) const;
 
   /**
    * @brief Update the acceleration at a particular Gauss-Lobatto-Legendre
@@ -182,7 +187,9 @@ public:
           stress_integrand_gamma,
       const ScratchViewType<type_real, 1> s_hprimewgll_xx,
       const ScratchViewType<type_real, 1> s_hprimewgll_zz,
-      typename dimension::template array_type<type_real> &acceleration) const;
+      const specfem::kokkos::array_type<type_real, medium_type::components>
+          &velocity,
+      specfem::kokkos::array_type<type_real, 1> &acceleration) const;
 
 private:
   specfem::kokkos::DeviceView3d<type_real> xix;         ///< xix
@@ -191,8 +198,11 @@ private:
   specfem::kokkos::DeviceView3d<type_real> gammaz;      ///< gammaz
   specfem::kokkos::DeviceView3d<type_real> jacobian;    ///< jacobian
   specfem::kokkos::DeviceView3d<type_real> rho_inverse; ///< rho inverse
-  specfem::kokkos::DeviceView3d<type_real> kappa;       ///< kappa
-  boundary_conditions_type boundary_conditions;         ///< boundary conditions
+  specfem::kokkos::DeviceView3d<type_real> lambdaplus2mu_inverse; ///< lambda +
+                                                                  ///< 2 mu
+                                                                  ///< inverse
+  specfem::kokkos::DeviceView3d<type_real> kappa;                 ///< kappa
+  boundary_conditions_type boundary_conditions; ///< boundary conditions
 };
 } // namespace elements
 } // namespace impl

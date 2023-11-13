@@ -29,12 +29,13 @@ public:
       const ScratchViewType<type_real, medium_type::components> fieldx_dot_dot,
       const ScratchViewType<type_real, 1> s_hprime_xx,
       const ScratchViewType<type_real, 1> s_hprime_zz) const {};
-  KOKKOS_INLINE_FUNCTION virtual void compute_seismogram_components(
-      const int xz, const int isig_step,
-      dimension::array_type<type_real> &l_seismogram_components) const {};
+  KOKKOS_INLINE_FUNCTION virtual void
+  compute_seismogram_components(const int xz, const int isig_step,
+                                specfem::kokkos::array_type<type_real, 2>
+                                    &l_seismogram_components) const {};
   KOKKOS_INLINE_FUNCTION virtual void compute_seismogram(
       const int isig_step,
-      const dimension::array_type<type_real> &seismogram_components){};
+      const specfem::kokkos::array_type<type_real, 2> &seismogram_components){};
   KOKKOS_INLINE_FUNCTION virtual specfem::enums::seismogram::type
   get_seismogram_type() const = 0;
   KOKKOS_INLINE_FUNCTION virtual int get_ispec() const = 0;

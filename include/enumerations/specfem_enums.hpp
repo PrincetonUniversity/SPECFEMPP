@@ -74,7 +74,6 @@ enum class boundary_tag {
 
 } // namespace element
 
-namespace coupling {
 namespace edge {
 enum type {
   TOP,    ///< Top edge
@@ -85,7 +84,6 @@ enum type {
 
 constexpr int num_edges = 4; ///< Number of edges in the mesh
 } // namespace edge
-} // namespace coupling
 
 /**
  * @namespace boundaries enumeration namespace is used to store enumerations
