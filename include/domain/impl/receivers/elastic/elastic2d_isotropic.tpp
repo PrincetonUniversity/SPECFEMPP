@@ -5,10 +5,10 @@
 #include "domain/impl/receivers/elastic/elastic2d.hpp"
 #include "domain/impl/receivers/elastic/elastic2d_isotropic.hpp"
 #include "domain/impl/receivers/receiver.hpp"
+#include "enumerations/interface.hpp"
 #include "globals.h"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
-#include "enumerations/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -116,7 +116,8 @@ KOKKOS_FUNCTION void specfem::domain::impl::receivers::receiver<
         const int &ireceiver, const int &iseis,
         const specfem::enums::seismogram::type &seismogram_type, const int &xz,
         const int &isig_step,
-        dimension::array_type<type_real> &l_seismogram_components) const {
+        specfem::kokkos::array_type<type_real, 2> &l_seismogram_components)
+        const {
   int ix, iz;
   sub2ind(xz, NGLL, iz, ix);
 
@@ -154,7 +155,7 @@ KOKKOS_FUNCTION void specfem::domain::impl::receivers::receiver<
     specfem::enums::element::property::isotropic>::
     compute_seismogram(
         const int &ireceiver,
-        const dimension::array_type<type_real> &seismogram_components,
+        const specfem::kokkos::array_type<type_real, 2> &seismogram_components,
         specfem::kokkos::DeviceView1d<type_real> receiver_seismogram) const {
 
   if (specfem::globals::simulation_wave == specfem::wave::p_sv) {

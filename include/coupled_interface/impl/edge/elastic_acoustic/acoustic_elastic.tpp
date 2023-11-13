@@ -99,7 +99,7 @@ KOKKOS_FUNCTION void specfem::coupled_interface::impl::edges::edge<
   type_real val;
 
   switch (acoustic_edge_type) {
-  case specfem::enums::coupling::edge::type::LEFT:
+  case specfem::enums::edge::type::LEFT:
     self_iterator(ipoint, acoustic_edge_type, ix, iz);
     iglob = ibool(acoustic_ispec_l, iz, ix);
     val = -1.0 * wzgll(iz) *
@@ -109,7 +109,7 @@ KOKKOS_FUNCTION void specfem::coupled_interface::impl::edges::edge<
                displ_z);
     Kokkos::atomic_add(&self_field_dot_dot(iglob, 0), val);
     break;
-  case specfem::enums::coupling::edge::type::RIGHT:
+  case specfem::enums::edge::type::RIGHT:
     self_iterator(ipoint, acoustic_edge_type, ix, iz);
     iglob = ibool(acoustic_ispec_l, iz, ix);
     val = wzgll(iz) * (xix(acoustic_ispec_l, iz, ix) *
@@ -118,7 +118,7 @@ KOKKOS_FUNCTION void specfem::coupled_interface::impl::edges::edge<
                           jacobian(acoustic_ispec_l, iz, ix) * displ_z);
     Kokkos::atomic_add(&self_field_dot_dot(iglob, 0), val);
     break;
-  case specfem::enums::coupling::edge::type::BOTTOM:
+  case specfem::enums::edge::type::BOTTOM:
     self_iterator(ipoint, acoustic_edge_type, ix, iz);
     iglob = ibool(acoustic_ispec_l, iz, ix);
     val = -1.0 * wxgll(ix) *
@@ -128,7 +128,7 @@ KOKKOS_FUNCTION void specfem::coupled_interface::impl::edges::edge<
                jacobian(acoustic_ispec_l, iz, ix) * displ_z);
     Kokkos::atomic_add(&self_field_dot_dot(iglob, 0), val);
     break;
-  case specfem::enums::coupling::edge::type::TOP:
+  case specfem::enums::edge::type::TOP:
     self_iterator(ipoint, acoustic_edge_type, ix, iz);
     iglob = ibool(acoustic_ispec_l, iz, ix);
     val = wxgll(ix) * (gammax(acoustic_ispec_l, iz, ix) *

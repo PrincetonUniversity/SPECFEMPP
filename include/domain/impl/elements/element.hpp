@@ -10,7 +10,8 @@ namespace elements {
 /**
  * @brief Element class to describe the physics of a spectral element
  *
- * @tparam properties of the element used to specialize elemental implementation
+ * @tparam properties of the element used to specialize elemental
+ * implementation
  */
 template <class... properties> class element {};
 

@@ -3,10 +3,10 @@
 
 #include "domain/impl/receivers/acoustic/interface.hpp"
 #include "domain/impl/receivers/elastic/interface.hpp"
+#include "enumerations/interface.hpp"
 #include "kernel.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
-#include "enumerations/interface.hpp"
 #include "specfem_setup.hpp"
 
 template <class medium, class qp_type, typename... elemental_properties>
@@ -194,18 +194,18 @@ void specfem::domain::impl::kernels::receiver_kernel<
         case specfem::enums::seismogram::type::displacement:
         case specfem::enums::seismogram::type::velocity:
         case specfem::enums::seismogram::type::acceleration:
-          dimension::array_type<type_real> seismogram_components;
+          specfem::kokkos::array_type<type_real, 2> seismogram_components;
           Kokkos::parallel_reduce(
               quadrature_points.template TeamThreadRange<
                   specfem::enums::axes::z, specfem::enums::axes::x>(
                   team_member),
-              [=](const int xz,
-                  dimension::array_type<type_real> &l_seismogram_components) {
+              [=](const int xz, specfem::kokkos::array_type<type_real, 2>
+                                    &l_seismogram_components) {
                 receiver.compute_seismogram_components(
                     ireceiver_l, iseis_l, seismogram_type_l, xz, isig_step,
                     l_seismogram_components);
               },
-              specfem::kokkos::Sum<dimension::array_type<type_real> >(
+              specfem::kokkos::Sum<specfem::kokkos::array_type<type_real, 2> >(
                   seismogram_components));
           auto sv_receiver_seismogram =
               Kokkos::subview(receiver_seismogram, isig_step, iseis_l,

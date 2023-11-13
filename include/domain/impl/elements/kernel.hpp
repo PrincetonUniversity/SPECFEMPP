@@ -14,13 +14,15 @@ namespace domain {
 namespace impl {
 namespace kernels {
 
-template <class medium, class qp_type, typename... element_properties>
+template <class medium, class qp_type, typename property, typename BC>
 class element_kernel {
 
 public:
   using dimension = specfem::enums::element::dimension::dim2;
   using medium_type = medium;
   using quadrature_point_type = qp_type;
+  using property_type = property;
+  using boundary_conditions_type = BC;
 
   element_kernel() = default;
   element_kernel(
@@ -32,6 +34,7 @@ public:
       specfem::quadrature::quadrature *quadx,
       specfem::quadrature::quadrature *quadz, qp_type quadrature_points,
       specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field,
+      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot,
       specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
           field_dot_dot,
       specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> mass_matrix);
@@ -44,13 +47,14 @@ private:
   specfem::kokkos::DeviceView1d<int> ispec;
   specfem::kokkos::DeviceView3d<int> ibool;
   specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field;
+  specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot;
   specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot_dot;
   specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> mass_matrix;
   qp_type quadrature_points;
   specfem::quadrature::quadrature *quadx;
   specfem::quadrature::quadrature *quadz;
-  specfem::domain::impl::elements::element<dimension, medium, qp_type,
-                                           element_properties...>
+  specfem::domain::impl::elements::element<
+      dimension, medium, qp_type, property_type, boundary_conditions_type>
       element;
 };
 

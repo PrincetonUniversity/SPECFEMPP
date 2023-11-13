@@ -557,6 +557,77 @@ template <typename T = type_real,
 using simd_type = Kokkos::Experimental::simd<T, simd_abi>;
 
 /**
+ * @brief Array to store temporary values when doing Kokkos reductions
+ *
+ * @tparam T array type
+ * @tparam N size of array
+ */
+template <typename T, int N> struct array_type {
+  T data[N]; ///< Data array
+
+  /**
+   * @brief operator [] to access the data array
+   *
+   * @param i index
+   * @return T& reference to the data array
+   */
+  KOKKOS_INLINE_FUNCTION T &operator[](const int &i) { return data[i]; }
+
+  /**
+   * @brief operator [] to access the data array
+   *
+   * @param i index
+   * @return const T& reference to the data array
+   */
+  KOKKOS_INLINE_FUNCTION const T &operator[](const int &i) const {
+    return data[i];
+  }
+
+  /**
+   * @brief operator += to add two arrays
+   *
+   * @param rhs right hand side array
+   * @return array_type<T>& reference to the array
+   */
+  KOKKOS_INLINE_FUNCTION array_type<T, N> &
+  operator+=(const array_type<T, N> &rhs) {
+    for (int i = 0; i < N; i++) {
+      data[i] += rhs[i];
+    }
+    return *this;
+  }
+
+  /**
+   * @brief Initialize the array for sum reductions
+   *
+   */
+  KOKKOS_INLINE_FUNCTION void init() {
+    for (int i = 0; i < N; i++) {
+      data[i] = 0.0;
+    }
+  }
+
+  // Default constructor
+  /**
+   * @brief Construct a new array type object
+   *
+   */
+  KOKKOS_INLINE_FUNCTION array_type() { init(); }
+
+  // Copy constructor
+  /**
+   * @brief Copy constructor
+   *
+   * @param other other array
+   */
+  KOKKOS_INLINE_FUNCTION array_type(const array_type<T, N> &other) {
+    for (int i = 0; i < N; i++) {
+      data[i] = other[i];
+    }
+  }
+};
+
+/**
  * @name Custom reductions for Kokkos TeamThreadRange policies.
  *
  * These reductions are used in Kokkos nested policies. Kokkos required

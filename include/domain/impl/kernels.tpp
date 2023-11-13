@@ -100,6 +100,7 @@ static void allocate_isotropic_elements_v2(
     specfem::quadrature::quadrature *quadx,
     specfem::quadrature::quadrature *quadz, qp_type quadrature_points,
     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field,
+    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot,
     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot_dot,
     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> mass_matrix,
     specfem::domain::impl::kernels::element_kernel<medium, qp_type, property,
@@ -170,7 +171,8 @@ static void allocate_isotropic_elements_v2(
   elements = specfem::domain::impl::kernels::element_kernel<medium, qp_type,
                                                             property, BC>(
       ibool, ispec_domain, partial_derivatives, properties, boundary_conditions,
-      quadx, quadz, quadrature_points, field, field_dot_dot, mass_matrix);
+      quadx, quadz, quadrature_points, field, field_dot, field_dot_dot,
+      mass_matrix);
 }
 
 template <class medium, class qp_type>
@@ -362,16 +364,16 @@ specfem::domain::impl::kernels::kernels<medium, qp_type>::kernels(
   // -----------------------------------------------------------
 
   // Allocate isotropic elements with dirichlet boundary conditions
-  allocate_isotropic_elements_v2(ibool, element_tags, partial_derivatives,
-                                 properties, boundary_conditions, quadx, quadz,
-                                 quadrature_points, field, field_dot_dot,
-                                 mass_matrix, isotropic_elements_dirichlet);
+  allocate_isotropic_elements_v2(
+      ibool, element_tags, partial_derivatives, properties, boundary_conditions,
+      quadx, quadz, quadrature_points, field, field_dot, field_dot_dot,
+      mass_matrix, isotropic_elements_dirichlet);
 
   // Allocate isotropic elements
 
   allocate_isotropic_elements_v2(ibool, element_tags, partial_derivatives,
                                  properties, boundary_conditions, quadx, quadz,
-                                 quadrature_points, field, field_dot_dot,
+                                 quadrature_points, field, field_dot, field_dot_dot,
                                  mass_matrix, isotropic_elements);
 
   // Allocate isotropic sources

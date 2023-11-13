@@ -73,9 +73,9 @@ public:
 
 private:
   int nedges; ///< Number of edges in the interface.
-  specfem::kokkos::DeviceView1d<specfem::enums::coupling::edge::type>
+  specfem::kokkos::DeviceView1d<specfem::enums::edge::type>
       self_edge; ///< Orientation of the edge of the primary domain.
-  specfem::kokkos::DeviceView1d<specfem::enums::coupling::edge::type>
+  specfem::kokkos::DeviceView1d<specfem::enums::edge::type>
       coupled_edge; ///< Orientation of the edge of the coupled domain.
   self_domain_type self_domain;       ///< Primary domain of the interface.
   coupled_domain_type coupled_domain; ///< Coupled domain of the interface.

@@ -1,6 +1,7 @@
 #ifndef _COMPUTE_PROPERTIES_HPP
 #define _COMPUTE_PROPERTIES_HPP
 
+#include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
 #include "material/interface.hpp"
 #include "specfem_setup.hpp"
@@ -44,6 +45,9 @@ struct properties {
   specfem::kokkos::DeviceView3d<type_real> lambdaplus2mu;
   specfem::kokkos::HostMirror3d<type_real> h_lambdaplus2mu;
 
+  specfem::kokkos::DeviceView3d<type_real> lambdaplus2mu_inverse;
+  specfem::kokkos::HostMirror3d<type_real> h_lambdaplus2mu_inverse;
+
   ///@}
   // element type is defined in specfem_setup.hpp
   specfem::kokkos::DeviceView1d<specfem::enums::element::type>
@@ -84,6 +88,50 @@ struct properties {
    *
    */
   void sync_views();
+};
+
+template <specfem::enums::element::type medium,
+          specfem::enums::element::property_tag property>
+struct element_properties {};
+
+template <>
+struct element_properties<specfem::enums::element::type::elastic,
+                          specfem::enums::element::property_tag::isotropic> {
+  type_real lambdaplus2mu;
+  type_real mu;
+  type_real rho;
+  type_real lambda;
+
+  type_real rho_vp;
+  type_real rho_vs;
+
+  KOKKOS_FUNCTION
+  element_properties() = default;
+
+  KOKKOS_FUNCTION
+  element_properties(const type_real &lambdaplus2mu, const type_real &mu,
+                     const type_real &rho)
+      : lambdaplus2mu(lambdaplus2mu), mu(mu), rho(rho),
+        lambda(lambdaplus2mu - 2 * mu), rho_vp(rho * lambdaplus2mu),
+        rho_vs(rho * mu) {}
+};
+
+template <>
+struct element_properties<specfem::enums::element::type::acoustic,
+                          specfem::enums::element::property_tag::isotropic> {
+  type_real lambdaplus2mu_inverse;
+  type_real rho_inverse;
+
+  type_real rho_vpinverse;
+
+  KOKKOS_FUNCTION
+  element_properties() = default;
+
+  KOKKOS_FUNCTION
+  element_properties(const type_real &lambdaplus2mu_inverse,
+                     const type_real &rho_inverse)
+      : lambdaplus2mu_inverse(lambdaplus2mu_inverse), rho_inverse(rho_inverse),
+        rho_vpinverse(rho_inverse * lambdaplus2mu_inverse) {}
 };
 
 } // namespace compute

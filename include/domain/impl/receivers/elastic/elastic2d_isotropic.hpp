@@ -124,7 +124,7 @@ public:
       const int &ireceiver, const int &iseis,
       const specfem::enums::seismogram::type &seismogram_type, const int &xz,
       const int &isig_step,
-      dimension::array_type<type_real> &l_seismogram_components) const;
+      specfem::kokkos::array_type<type_real, 2> &l_seismogram_components) const;
 
   /**
    * @brief Store the computed seismogram components in the global seismogram
@@ -136,7 +136,7 @@ public:
    */
   KOKKOS_FUNCTION void compute_seismogram(
       const int &ireceiver,
-      const dimension::array_type<type_real> &seismogram_components,
+      const specfem::kokkos::array_type<type_real, 2> &seismogram_components,
       specfem::kokkos::DeviceView1d<type_real> receiver_seismogram) const;
 
 private:
