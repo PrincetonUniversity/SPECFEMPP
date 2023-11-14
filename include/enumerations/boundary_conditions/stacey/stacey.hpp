@@ -40,6 +40,12 @@ public:
       specfem::enums::element::boundary_tag::stacey; ///< boundary tag
 
   stacey(){};
+
+  /**
+   * @brief Convert Stacey BC to string
+   *
+   */
+  __inline__ static std::string to_string() { return "Stacey"; }
 };
 } // namespace boundary_conditions
 } // namespace enums

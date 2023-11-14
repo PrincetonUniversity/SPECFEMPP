@@ -76,6 +76,12 @@ public:
       specfem::kokkos::array_type<type_real, medium_type::components>
           &field_dot_dot) const;
 
+  /**
+   * @brief Convert the boundary to a string
+   *
+   */
+  __inline__ static std::string to_string() { return "Dirichlet"; }
+
 private:
   specfem::kokkos::DeviceView1d<specfem::compute::access::boundary_types>
       type; ///< type of the edge on an element on the boundary.
