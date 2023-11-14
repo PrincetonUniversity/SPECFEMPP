@@ -184,7 +184,7 @@ public:
    */
   KOKKOS_INLINE_FUNCTION void compute_acceleration(
       const int &ispec, const int &ielement, const int &xz,
-      const type_real &wxglll, const type_real &wzglll,
+      const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
       const ScratchViewType<type_real, medium_type::components>
           stress_integrand_xi,
       const ScratchViewType<type_real, medium_type::components>

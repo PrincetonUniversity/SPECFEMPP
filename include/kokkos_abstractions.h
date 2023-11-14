@@ -591,6 +591,9 @@ template <typename T, int N> struct array_type {
    */
   KOKKOS_INLINE_FUNCTION array_type<T, N> &
   operator+=(const array_type<T, N> &rhs) {
+#ifdef KOKKOS_ENABLE_CUDA
+#pragma unroll
+#endif
     for (int i = 0; i < N; i++) {
       data[i] += rhs[i];
     }
@@ -602,6 +605,9 @@ template <typename T, int N> struct array_type {
    *
    */
   KOKKOS_INLINE_FUNCTION void init() {
+#ifdef KOKKOS_ENABLE_CUDA
+#pragma unroll
+#endif
     for (int i = 0; i < N; i++) {
       data[i] = 0.0;
     }
@@ -621,9 +627,36 @@ template <typename T, int N> struct array_type {
    * @param other other array
    */
   KOKKOS_INLINE_FUNCTION array_type(const array_type<T, N> &other) {
+#ifdef KOKKOS_ENABLE_CUDA
+#pragma unroll
+#endif
     for (int i = 0; i < N; i++) {
       data[i] = other[i];
     }
+  }
+
+  KOKKOS_INLINE_FUNCTION type_real l2_norm() const {
+    type_real norm = 0.0;
+#ifdef KOKKOS_ENABLE_CUDA
+#pragma unroll
+#endif
+    for (int i = 0; i < N; i++) {
+      norm += data[i] * data[i];
+    }
+    return sqrt(norm);
+  }
+
+  KOKKOS_INLINE_FUNCTION static type_real dot(const array_type<T, N> &a,
+                                              const array_type<T, N> &b) {
+
+    type_real dot = 0.0;
+#ifdef KOKKOS_ENABLE_CUDA
+#pragma unroll
+#endif
+    for (int i = 0; i < N; i++) {
+      dot += a[i] * b[i];
+    }
+    return dot;
   }
 };
 

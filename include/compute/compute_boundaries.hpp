@@ -54,6 +54,36 @@ struct acoustic_free_surface {
       h_type;
 };
 
+struct stacey_medium {
+
+  stacey_medium() = default;
+
+  stacey_medium(const specfem::enums::element::type medium,
+                const specfem::kokkos::HostView1d<int> kmato,
+                const std::vector<specfem::material::material *> materials,
+                const specfem::mesh::boundaries::absorbing_boundary
+                    &absorbing_boundaries);
+
+  int nelements;
+  specfem::kokkos::DeviceView1d<int> ispec;
+  specfem::kokkos::HostMirror1d<int> h_ispec;
+  specfem::kokkos::DeviceView1d<specfem::compute::access::boundary_types> type;
+  specfem::kokkos::HostMirror1d<specfem::compute::access::boundary_types>
+      h_type;
+};
+
+struct stacey {
+
+  stacey(const specfem::kokkos::HostView1d<int> kmato,
+         const std::vector<specfem::material::material *> materials,
+         const specfem::mesh::boundaries::absorbing_boundary
+             &absorbing_boundaries);
+
+  int nelements;
+  specfem::compute::stacey_medium elastic;
+  specfem::compute::stacey_medium acoustic;
+};
+
 struct boundaries {
   /**
    * @brief Construct a new boundaries object
@@ -61,16 +91,21 @@ struct boundaries {
    * @param boundaries mesh boundaries object providing the necessary
    * information about boundaries within the mesh
    */
-  boundaries(const specfem::kokkos::HostView1d<int> kmato,
-             const std::vector<specfem::material::material *> materials,
-             const specfem::mesh::boundaries::acoustic_free_surface
-                 &acoustic_free_surface)
-      : acoustic_free_surface(kmato, materials, acoustic_free_surface) {}
+  boundaries(
+      const specfem::kokkos::HostView1d<int> kmato,
+      const std::vector<specfem::material::material *> materials,
+      const specfem::mesh::boundaries::acoustic_free_surface
+          &acoustic_free_surface,
+      const specfem::mesh::boundaries::absorbing_boundary &absorbing_boundaries)
+      : acoustic_free_surface(kmato, materials, acoustic_free_surface),
+        stacey(kmato, materials, absorbing_boundaries) {}
 
   specfem::compute::acoustic_free_surface acoustic_free_surface; ///< acoustic
                                                                  ///< free
                                                                  ///< surface
                                                                  ///< boundary
+
+  specfem::compute::stacey stacey;
 };
 } // namespace compute
 } // namespace specfem

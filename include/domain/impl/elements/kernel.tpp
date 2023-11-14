@@ -303,8 +303,11 @@ void specfem::domain::impl::kernels::element_kernel<
               sub2ind(xz, ngllx, iz, ix);
 
               const int iglob = s_iglob(iz, ix, 0);
-              const type_real wxglll = wxgll(ix);
-              const type_real wzglll = wzgll(iz);
+              specfem::kokkos::array_type<type_real, dimension::dim>
+                  weight;
+
+              weight[0] = wxgll(ix);
+              weight[1] = wzgll(iz);
 
               specfem::kokkos::array_type<type_real, medium_type::components>
                   acceleration;
@@ -313,7 +316,7 @@ void specfem::domain::impl::kernels::element_kernel<
               auto velocity = get_velocity<BC>(iglob, field_dot);
 
               element.compute_acceleration(
-                  ispec_l, ielement, xz, wxglll, wzglll, s_stress_integrand_xi,
+                  ispec_l, ielement, xz, weight, s_stress_integrand_xi,
                   s_stress_integrand_gamma, s_hprimewgll_xx, s_hprimewgll_zz,
                   velocity, acceleration);
 

@@ -77,7 +77,8 @@ TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
 
   // Set up boundary conditions
   specfem::compute::boundaries boundary_conditions(
-      mesh.material_ind.kmato, materials, mesh.acfree_surface);
+      mesh.material_ind.kmato, materials, mesh.acfree_surface,
+      mesh.abs_boundary);
 
   // Locate the sources
   for (auto &source : sources)

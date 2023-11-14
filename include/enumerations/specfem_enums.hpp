@@ -70,6 +70,7 @@ enum class property_tag {
 enum class boundary_tag {
   none,                  ///< no boundary
   acoustic_free_surface, ///< free surface boundary for acoustic elements
+  stacey                 ///< stacey boundary for elastic elements
 };
 
 } // namespace element
