@@ -111,6 +111,7 @@ struct element_partial_derivatives {
   KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, 2>
   compute_normal() const {
     ASSERT(false, "Invalid boundary type");
+    return specfem::kokkos::array_type<type_real, 2>();
   };
 };
 } // namespace compute

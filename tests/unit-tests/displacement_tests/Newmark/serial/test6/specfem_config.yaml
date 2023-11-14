@@ -1,0 +1,52 @@
+## Testing dirichlet BC to enforce free pressure surface on acoustic domains
+
+parameters:
+
+  header:
+    ## Header information is used for logging. It is good practice to give your simulations explicit names
+    title: Homogeneous acoustic domain with dirichlet BCs  # name for your simulation
+    # A detailed description for your simulation
+    description: |
+      Material systems : Acoustic domain (1)
+      Interfaces : None
+      Sources : Force source (1)
+      Boundary conditions : Dirichlet BCs on all edges
+
+  simulation-setup:
+    ## quadrature setup
+    quadrature:
+      alpha: 0.0
+      beta: 0.0
+      ngllx: 5
+      ngllz: 5
+
+    ## Solver setup
+    solver:
+      time-marching:
+        type-of-simulation: forward
+        time-scheme:
+          type: Newmark
+          dt: 1.0e-3
+          nstep: 300
+
+  receivers:
+    stations-file: "../DATA/STATIONS"
+    angle: 0.0
+    seismogram-type:
+      - displacement
+      - velocity
+    nstep_between_samples: 1
+
+  ## Runtime setup
+  run-setup:
+    number-of-processors: 1
+    number-of-runs: 1
+
+  ## databases
+  databases:
+    mesh-database: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test6/database.bin"
+    source-file: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test6/sources.yaml"
+
+  seismogram:
+    seismogram-format: ascii
+    output-folder: "."

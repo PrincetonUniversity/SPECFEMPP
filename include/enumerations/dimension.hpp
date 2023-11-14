@@ -18,6 +18,12 @@ namespace dimension {
 class dim2 {
 public:
   constexpr static int dim = 2; ///< Dimensionality of the element
+
+  /**
+   * @brief Convert the dimension to a string
+   *
+   */
+  __inline__ static std::string to_string() { return "2D"; }
 };
 /**
  * @brief 3D element
@@ -26,6 +32,12 @@ public:
 class dim3 {
 public:
   constexpr static int dim = 3; ///< Dimensionality of the element
+
+  /**
+   * @brief Convert the dimension to a string
+   *
+   */
+  __inline__ static std::string to_string() { return "3D"; }
 };
 } // namespace dimension
 } // namespace element

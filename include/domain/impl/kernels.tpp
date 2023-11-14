@@ -189,6 +189,13 @@ static void allocate_isotropic_elements_v2(
   // Copy ispec_domain to device
   Kokkos::deep_copy(ispec_domain, h_ispec_domain);
 
+  std::cout << "  - Element type: \n"
+            << "    - dimension           : " << specfem::enums::element::dimension::dim2::to_string() << "\n"
+            << "    - property            : " << property::to_string() << "\n"
+            << "    - Boundary Conditions : " << BC::to_string() << "\n"
+            << "    - Number of elements  : " << nelements << "\n\n";
+
+
   // Create isotropic acoustic surface elements
   elements = specfem::domain::impl::kernels::element_kernel<medium, qp_type,
                                                             property, BC>(
@@ -402,6 +409,10 @@ specfem::domain::impl::kernels::kernels<medium, qp_type>::kernels(
                       ielement_boundary(ispec));
     }
   }
+
+  std::cout << " Element Statistics \n"
+            << "------------------------------\n"
+            << "- Types of elements in " << medium::to_string() << " medium :\n\n";
 
   // -----------------------------------------------------------
 

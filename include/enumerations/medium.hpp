@@ -29,6 +29,12 @@ public:
    *
    */
   constexpr static int components = 2;
+
+  /**
+   * @brief Convert the medium to a string
+   *
+   */
+  __inline__ static std::string to_string() { return "Elastic"; }
 };
 
 /**
@@ -48,6 +54,12 @@ public:
    *
    */
   constexpr static int components = 1;
+
+  /**
+   * @brief Convert the medium to a string
+   *
+   */
+  __inline__ static std::string to_string() { return "Acoustic"; }
 };
 
 } // namespace medium
