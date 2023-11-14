@@ -7,7 +7,7 @@
 
 specfem::compute::acoustic_free_surface::acoustic_free_surface(
     const specfem::kokkos::HostView1d<int> kmato,
-    std::vector<specfem::material::material *> materials,
+    const std::vector<specfem::material::material *> materials,
     const specfem::mesh::boundaries::acoustic_free_surface
         &acoustic_free_surface) {
   const int nspec = kmato.extent(0);
@@ -71,6 +71,79 @@ specfem::compute::acoustic_free_surface::acoustic_free_surface(
   } else {
     this->nelem_acoustic_surface = 0;
   }
+}
+
+specfem::compute::stacey_medium::stacey_medium(
+    const specfem::enums::element::type medium,
+    const specfem::kokkos::HostView1d<int> kmato,
+    const std::vector<specfem::material::material *> materials,
+    const specfem::mesh::boundaries::absorbing_boundary &absorbing_boundaries) {
+
+  const int nspec = kmato.extent(0);
+  if (absorbing_boundaries.nelements > 0) {
+    std::vector<specfem::enums::element::boundary_tag> boundary_tag(nspec);
+    std::vector<specfem::compute::access::boundary_types> boundary_types(nspec);
+
+    // make sure all elements are initialized to none
+    std::fill(boundary_tag.begin(), boundary_tag.end(),
+              specfem::enums::element::boundary_tag::none);
+
+    // make sure all elements are do not have any boundary
+    std::fill(boundary_types.begin(), boundary_types.end(),
+              specfem::compute::access::boundary_types());
+
+    for (int i = 0; i < absorbing_boundaries.nelements; ++i) {
+      const int ispec = absorbing_boundaries.ispec(i);
+      if (materials[kmato(ispec)]->get_ispec_type() == medium) {
+        boundary_tag[ispec] = specfem::enums::element::boundary_tag::stacey;
+        boundary_types[ispec].update_boundary_type(
+            absorbing_boundaries.type(i));
+      }
+    }
+
+    this->nelements = std::count(boundary_tag.begin(), boundary_tag.end(),
+                                 specfem::enums::element::boundary_tag::stacey);
+
+    this->ispec = specfem::kokkos::DeviceView1d<int>(
+        "specfem::compute::boundaries::stacey_medium::ispec", nelements);
+
+    this->type =
+        specfem::kokkos::DeviceView1d<specfem::compute::access::boundary_types>(
+            "specfem::compute::boundaries::stacey_medium::type", nelements);
+
+    this->h_ispec = Kokkos::create_mirror_view(ispec);
+    this->h_type = Kokkos::create_mirror_view(type);
+
+    int index = 0;
+    for (int ispec = 0; ispec < nspec; ++ispec) {
+      if (boundary_tag[ispec] ==
+          specfem::enums::element::boundary_tag::stacey) {
+        this->h_ispec(index) = ispec;
+        this->h_type(index) = boundary_types[ispec];
+        index++;
+      }
+    }
+
+    assert(index == nelements);
+
+    Kokkos::deep_copy(this->ispec, this->h_ispec);
+    Kokkos::deep_copy(this->type, this->h_type);
+  } else {
+    this->nelements = 0;
+  }
+}
+
+specfem::compute::stacey::stacey(
+    const specfem::kokkos::HostView1d<int> kmato,
+    const std::vector<specfem::material::material *> materials,
+    const specfem::mesh::boundaries::absorbing_boundary &absorbing_boundaries) {
+  this->elastic =
+      specfem::compute::stacey_medium(specfem::enums::element::type::elastic,
+                                      kmato, materials, absorbing_boundaries);
+  this->acoustic =
+      specfem::compute::stacey_medium(specfem::enums::element::type::acoustic,
+                                      kmato, materials, absorbing_boundaries);
+  this->nelements = this->elastic.nelements + this->acoustic.nelements;
 }
 
 KOKKOS_FUNCTION void

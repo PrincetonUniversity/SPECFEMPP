@@ -83,6 +83,7 @@ public:
   __inline__ void compute_stiffness_interaction() const {
     isotropic_elements.compute_stiffness_interaction();
     isotropic_elements_dirichlet.compute_stiffness_interaction();
+    isotropic_elements_stacey.compute_stiffness_interaction();
     return;
   }
 
@@ -93,6 +94,7 @@ public:
   __inline__ void compute_mass_matrix() const {
     isotropic_elements.compute_mass_matrix();
     isotropic_elements_dirichlet.compute_mass_matrix();
+    isotropic_elements_stacey.compute_mass_matrix();
     return;
   }
 
@@ -136,6 +138,13 @@ private:
       isotropic_elements_dirichlet; ///< Elemental kernels for isotropic
                                     ///< elements with dirichlet boundary
                                     ///< conditions
+  specfem::domain::impl::kernels::element_kernel<
+      medium_type, quadrature_point_type,
+      specfem::enums::element::property::isotropic,
+      specfem::enums::boundary_conditions::template stacey<
+          dimension, medium_type, quadrature_point_type> >
+      isotropic_elements_stacey; ///< Elemental kernels for isotropic elements
+                                 ///< with stacey boundary conditions
   specfem::domain::impl::kernels::source_kernel<
       medium_type, quadrature_point_type,
       specfem::enums::element::property::isotropic>

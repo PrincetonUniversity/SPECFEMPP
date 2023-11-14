@@ -121,7 +121,8 @@ void execute(const std::string &parameter_file, const std::string &default_file,
       compute.h_ibool, compute.coordinates.coord,
       material_properties.h_ispec_type, mesh.coupled_interfaces);
   specfem::compute::boundaries boundary_conditions(
-      mesh.material_ind.kmato, materials, mesh.acfree_surface);
+      mesh.material_ind.kmato, materials, mesh.acfree_surface,
+      mesh.abs_boundary);
 
   // Print spectral element information
   mpi->cout(mesh.print(materials));

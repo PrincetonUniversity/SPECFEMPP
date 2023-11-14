@@ -1,17 +1,21 @@
-#ifndef _ENUMS_BOUNDARY_CONDITIONS_NONE_HPP_
-#define _ENUMS_BOUNDARY_CONDITIONS_NONE_HPP_
+#ifndef _ENUMS_BOUNDARY_CONDITIONS_STACEY2D_ACOUSTIC_HPP_
+#define _ENUMS_BOUNDARY_CONDITIONS_STACEY2D_ACOUSTIC_HPP_
 
 #include "compute/interface.hpp"
 #include "enumerations/dimension.hpp"
+#include "enumerations/medium.hpp"
 #include "enumerations/quadrature.hpp"
 #include "enumerations/specfem_enums.hpp"
+#include "kokkos_abstractions.h"
+#include "stacey.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
 namespace enums {
 namespace boundary_conditions {
-
-template <typename dim, typename medium, typename qp_type> class none {
+template <typename qp_type>
+class stacey<specfem::enums::element::dimension::dim2,
+             specfem::enums::element::medium::acoustic, qp_type> {
 
 public:
   /**
@@ -23,12 +27,12 @@ public:
    * @brief Medium type of the boundary.
    *
    */
-  using medium_type = medium;
+  using medium_type = specfem::enums::element::medium::acoustic;
   /**
    * @brief Dimension of the boundary.
    *
    */
-  using dimension = dim;
+  using dimension = specfem::enums::element::dimension::dim2;
   /**
    * @brief Quadrature points object to define the quadrature points either at
    * compile time or run time.
@@ -38,14 +42,15 @@ public:
   ///@}
 
   constexpr static specfem::enums::element::boundary_tag value =
-      specfem::enums::element::boundary_tag::none; ///< boundary tag
+      specfem::enums::element::boundary_tag::stacey; ///< boundary tag
 
-  none(){};
+  stacey(){};
 
-  none(const specfem::compute::boundaries &boundary_conditions,
-       const quadrature_points_type &quadrature_points){};
+  stacey(const specfem::compute::boundaries &boundary_conditions,
+         const quadrature_points_type &quadrature_points);
 
-  KOKKOS_INLINE_FUNCTION void enforce_gradient(
+  KOKKOS_INLINE_FUNCTION
+  void enforce_gradient(
       const int &ielement, const int &xz,
       const specfem::compute::element_partial_derivatives &partial_derivatives,
       specfem::kokkos::array_type<type_real, medium_type::components> &df_dx,
@@ -71,13 +76,17 @@ public:
       const specfem::compute::element_properties<medium_type::value, property>
           &properties,
       const specfem::kokkos::array_type<type_real, medium_type::components>
-          &field_dot,
+          &velocity,
       specfem::kokkos::array_type<type_real, medium_type::components>
-          &field_dot_dot) const {};
-};
+          &accelation) const;
 
+private:
+  quadrature_points_type quadrature_points; ///< Quadrature points object.
+  specfem::kokkos::DeviceView1d<specfem::compute::access::boundary_types>
+      type; ///< type of the edge on an element on the boundary.
+};
 } // namespace boundary_conditions
 } // namespace enums
 } // namespace specfem
 
-#endif /* _ENUMS_BOUNDARY_CONDITIONS_NONE_HPP_ */
+#endif // _ENUMS_BOUNDARY_CONDITIONS_STACEY2D_ACOUSTIC_HPP_

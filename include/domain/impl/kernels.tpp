@@ -164,6 +164,28 @@ static void allocate_isotropic_elements_v2(
     }
   }
 
+  // assert that boundary_conditions ispec matches with calculated ispec
+  if constexpr ((boundary_tag == specfem::enums::element::boundary_tag::stacey) &&
+                (medium_tag == specfem::enums::element::type::acoustic)) {
+    ASSERT(nelements == boundary_conditions.stacey.acoustic.nelements,
+           "nelements = " << nelements << " nelements = "
+                          << boundary_conditions.stacey.acoustic.nelements);
+    for (int i = 0; i < nelements; i++) {
+      ASSERT(h_ispec_domain(i) == boundary_conditions.stacey.acoustic.ispec(i),
+             "Error: computing ispec for stacey elements");
+    }
+  } else if constexpr ((boundary_tag == specfem::enums::element::boundary_tag::
+                                            stacey) &&
+                       (medium_tag == specfem::enums::element::type::elastic)) {
+    ASSERT(nelements == boundary_conditions.stacey.elastic.nelements,
+           "nelements = " << nelements << " nelements = "
+                          << boundary_conditions.stacey.elastic.nelements);
+    for (int i = 0; i < nelements; i++) {
+      ASSERT(h_ispec_domain(i) == boundary_conditions.stacey.elastic.ispec(i),
+             "Error: computing ispec for stacey elements");
+    }
+  }
+
   // Copy ispec_domain to device
   Kokkos::deep_copy(ispec_domain, h_ispec_domain);
 
@@ -353,6 +375,26 @@ specfem::domain::impl::kernels::kernels<medium, qp_type>::kernels(
       }
     }
 
+    const auto &stacey = boundary_conditions.stacey;
+    // mark stacey elements
+    if (stacey.nelements > 0) {
+      if (stacey.acoustic.nelements > 0) {
+        for (int i = 0; i < stacey.acoustic.nelements; i++) {
+          const int ispec = stacey.acoustic.ispec(i);
+          ielement_boundary(ispec) =
+              specfem::enums::element::boundary_tag::stacey;
+        }
+      }
+
+      if (stacey.elastic.nelements > 0) {
+        for (int i = 0; i < stacey.elastic.nelements; i++) {
+          const int ispec = stacey.elastic.ispec(i);
+          ielement_boundary(ispec) =
+              specfem::enums::element::boundary_tag::stacey;
+        }
+      }
+    }
+
     // mark every element type
     for (int ispec = 0; ispec < nspec; ispec++) {
       element_tags(ispec) =
@@ -368,6 +410,12 @@ specfem::domain::impl::kernels::kernels<medium, qp_type>::kernels(
       ibool, element_tags, partial_derivatives, properties, boundary_conditions,
       quadx, quadz, quadrature_points, field, field_dot, field_dot_dot,
       mass_matrix, isotropic_elements_dirichlet);
+
+  // Allocate isotropic elements with stacey boundary conditions
+  allocate_isotropic_elements_v2(
+      ibool, element_tags, partial_derivatives, properties, boundary_conditions,
+      quadx, quadz, quadrature_points, field, field_dot, field_dot_dot,
+      mass_matrix, isotropic_elements_stacey);
 
   // Allocate isotropic elements
 

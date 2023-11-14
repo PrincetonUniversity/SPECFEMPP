@@ -3,6 +3,7 @@
 
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
+#include "macros.hpp"
 #include "quadrature/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -102,17 +103,57 @@ struct element_partial_derivatives {
       : xix(xix), gammax(gammax), xiz(xiz), gammaz(gammaz), jacobian(jacobian) {
   }
 
-  KOKKOS_FUNCTION
-  type_real
-  compute_normal(const specfem::kokkos::array_type<type_real, 2> &vector,
-                 const specfem::enums::edge::type &type);
+  // KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, 2>
+  // specfem::compute::element_partial_derivatives::compute_normal(
+  //     const specfem::enums::boundaries::type type) const;
 
-  KOKKOS_FUNCTION
-  type_real
-  compute_normal(const specfem::kokkos::array_type<type_real, 1> &scalar,
-                 const specfem::enums::edge::type &type);
+  template <specfem::enums::boundaries::type type>
+  KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, 2>
+  compute_normal() const {
+    ASSERT(false, "Invalid boundary type");
+  };
 };
 } // namespace compute
 } // namespace specfem
+
+template <>
+KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, 2>
+specfem::compute::element_partial_derivatives::compute_normal<
+    specfem::enums::boundaries::type::BOTTOM>() const {
+  specfem::kokkos::array_type<type_real, 2> dn;
+  dn[0] = -1.0 * this->gammax * this->jacobian;
+  dn[1] = -1.0 * this->gammaz * this->jacobian;
+  return dn;
+};
+
+template <>
+KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, 2>
+specfem::compute::element_partial_derivatives::compute_normal<
+    specfem::enums::boundaries::type::TOP>() const {
+  specfem::kokkos::array_type<type_real, 2> dn;
+  dn[0] = this->gammax * this->jacobian;
+  dn[1] = this->gammaz * this->jacobian;
+  return dn;
+};
+
+template <>
+KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, 2>
+specfem::compute::element_partial_derivatives::compute_normal<
+    specfem::enums::boundaries::type::LEFT>() const {
+  specfem::kokkos::array_type<type_real, 2> dn;
+  dn[0] = -1.0 * this->xix * this->jacobian;
+  dn[1] = -1.0 * this->xiz * this->jacobian;
+  return dn;
+};
+
+template <>
+KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, 2>
+specfem::compute::element_partial_derivatives::compute_normal<
+    specfem::enums::boundaries::type::RIGHT>() const {
+  specfem::kokkos::array_type<type_real, 2> dn;
+  dn[0] = this->xix * this->jacobian;
+  dn[1] = this->xiz * this->jacobian;
+  return dn;
+};
 
 #endif
