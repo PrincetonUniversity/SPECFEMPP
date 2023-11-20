@@ -171,7 +171,7 @@ static void allocate_isotropic_elements_v2(
            "nelements = " << nelements << " nelements = "
                           << boundary_conditions.stacey.acoustic.nelements);
     for (int i = 0; i < nelements; i++) {
-      ASSERT(h_ispec_domain(i) == boundary_conditions.stacey.acoustic.ispec(i),
+      ASSERT(h_ispec_domain(i) == boundary_conditions.stacey.acoustic.h_ispec(i),
              "Error: computing ispec for stacey elements");
     }
   } else if constexpr ((boundary_tag == specfem::enums::element::boundary_tag::
@@ -181,7 +181,7 @@ static void allocate_isotropic_elements_v2(
            "nelements = " << nelements << " nelements = "
                           << boundary_conditions.stacey.elastic.nelements);
     for (int i = 0; i < nelements; i++) {
-      ASSERT(h_ispec_domain(i) == boundary_conditions.stacey.elastic.ispec(i),
+      ASSERT(h_ispec_domain(i) == boundary_conditions.stacey.elastic.h_ispec(i),
              "Error: computing ispec for stacey elements");
     }
   }
@@ -387,7 +387,7 @@ specfem::domain::impl::kernels::kernels<medium, qp_type>::kernels(
     if (stacey.nelements > 0) {
       if (stacey.acoustic.nelements > 0) {
         for (int i = 0; i < stacey.acoustic.nelements; i++) {
-          const int ispec = stacey.acoustic.ispec(i);
+          const int ispec = stacey.acoustic.h_ispec(i);
           ielement_boundary(ispec) =
               specfem::enums::element::boundary_tag::stacey;
         }
@@ -395,7 +395,7 @@ specfem::domain::impl::kernels::kernels<medium, qp_type>::kernels(
 
       if (stacey.elastic.nelements > 0) {
         for (int i = 0; i < stacey.elastic.nelements; i++) {
-          const int ispec = stacey.elastic.ispec(i);
+          const int ispec = stacey.elastic.h_ispec(i);
           ielement_boundary(ispec) =
               specfem::enums::element::boundary_tag::stacey;
         }

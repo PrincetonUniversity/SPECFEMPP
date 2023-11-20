@@ -43,6 +43,9 @@ public:
 
   void compute_stiffness_interaction() const;
 
+  template <specfem::enums::time_scheme::type time_scheme>
+  void mass_time_contribution(const type_real dt) const;
+
 private:
   specfem::kokkos::DeviceView1d<int> ispec;
   specfem::kokkos::DeviceView3d<int> ibool;

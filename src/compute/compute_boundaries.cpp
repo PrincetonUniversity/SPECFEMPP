@@ -166,7 +166,7 @@ specfem::compute::access::boundary_types::update_boundary_type(
   } else if (type == specfem::enums::boundaries::type::TOP_LEFT) {
     top_left = true;
   } else {
-    ASSERT(false, "Error: Unknown boundary type");
+    DEVICE_ASSERT(false, "Error: Unknown boundary type");
   }
 }
 

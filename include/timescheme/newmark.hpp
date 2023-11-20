@@ -2,6 +2,7 @@
 #define _NEWMARK_HPP
 
 #include "domain/interface.hpp"
+#include "enumerations/specfem_enums.hpp"
 #include "specfem_setup.hpp"
 #include "timescheme.hpp"
 #include <ostream>
@@ -15,6 +16,14 @@ namespace TimeScheme {
 class Newmark : public specfem::TimeScheme::TimeScheme {
 
 public:
+  /**
+   * @brief Get the timescheme type
+   *
+   * @return constexpr specfem::enums::time_scheme
+   */
+  specfem::enums::time_scheme::type timescheme() const override {
+    return specfem::enums::time_scheme::type::newmark;
+  }
   /**
    * @brief Construct a new Newmark timescheme object
    *
@@ -106,6 +115,12 @@ public:
    *
    */
   void increment_seismogram_step() override { isig_step++; }
+
+  /**
+   * @brief Get time increment
+   *
+   */
+  type_real get_time_increment() const override { return this->deltat; }
 
   /**
    * @brief Log newmark timescheme information to console

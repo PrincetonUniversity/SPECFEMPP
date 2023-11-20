@@ -92,6 +92,42 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
 }
 
 template <int NGLL, typename BC>
+template <specfem::enums::time_scheme::type time_scheme>
+KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
+    specfem::enums::element::dimension::dim2,
+    specfem::enums::element::medium::acoustic,
+    specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
+    specfem::enums::element::property::isotropic, BC>::
+    mass_time_contribution(
+        const int &ispec, const int &ielement, const int &xz,
+        const type_real &dt,
+        const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
+        specfem::kokkos::array_type<type_real, medium_type::components>
+            &rmass_inverse) const {
+
+  int ix, iz;
+  sub2ind(xz, NGLL, iz, ix);
+
+  const specfem::compute::element_partial_derivatives partial_derivatives(
+      this->xix(ispec, iz, ix), this->gammax(ispec, iz, ix),
+      this->xiz(ispec, iz, ix), this->gammaz(ispec, iz, ix),
+      this->jacobian(ispec, iz, ix));
+
+  const specfem::compute::element_properties<medium_type::value,
+                                             property_type::value>
+      properties(this->lambdaplus2mu_inverse(ispec, iz, ix),
+                 this->rho_inverse(ispec, iz, ix));
+
+  rmass_inverse[0] = 0.0;
+
+  // comppute mass matrix component
+  boundary_conditions.template mass_time_contribution<time_scheme>(
+      ielement, xz, dt, weight, partial_derivatives, properties, rmass_inverse);
+
+  return;
+}
+
+template <int NGLL, typename BC>
 KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
     specfem::enums::element::dimension::dim2,
     specfem::enums::element::medium::acoustic,
@@ -250,6 +286,8 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
   boundary_conditions.enforce_traction(ielement, xz, weight,
                                        partial_derivatives, properties,
                                        velocity, acceleration);
+
+  return;
 }
 
 #endif

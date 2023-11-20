@@ -115,6 +115,13 @@ public:
       const int &ispec, const int &xz,
       specfem::kokkos::array_type<type_real, 2> &mass_matrix) const;
 
+  template <specfem::enums::time_scheme::type time_scheme>
+  KOKKOS_INLINE_FUNCTION void mass_time_contribution(
+      const int &ispec, const int &ielement, const int &xz, const type_real &dt,
+      const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
+      specfem::kokkos::array_type<type_real, medium_type::components>
+          &rmass_inverse) const;
+
   /**
    * @brief Compute the gradient of the field at a particular
    * Gauss-Lobatto-Legendre quadrature point

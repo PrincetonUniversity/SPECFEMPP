@@ -8,26 +8,24 @@
 #include "enumerations/specfem_enums.hpp"
 #include <Kokkos_Core.hpp>
 
-template <typename dim, typename medium, typename qp_type>
-specfem::enums::boundary_conditions::dirichlet<dim, medium, qp_type>::dirichlet(
-    const specfem::compute::boundaries &boundary_conditions,
-    const quadrature_points_type &quadrature_points)
+template <typename dim, typename medium, typename property, typename qp_type>
+specfem::enums::boundary_conditions::dirichlet<dim, medium, property, qp_type>::
+    dirichlet(const specfem::compute::boundaries &boundary_conditions,
+              const quadrature_points_type &quadrature_points)
     : quadrature_points(quadrature_points),
       type(boundary_conditions.acoustic_free_surface.type) {
   return;
 }
 
-template <typename dim, typename medium, typename qp_type>
-template <specfem::enums::element::property_tag property>
+template <typename dim, typename medium, typename property, typename qp_type>
 KOKKOS_FUNCTION void specfem::enums::boundary_conditions::
-    dirichlet<dim, medium, qp_type>::enforce_traction(
+    dirichlet<dim, medium, property, qp_type>::enforce_traction(
         const int &ielement, const int &xz,
-        const specfem::kokkos::array_type<type_real, dimension::dim>
-            &weight,
+        const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
         const specfem::compute::element_partial_derivatives
             &partial_derivatives,
-        const specfem::compute::element_properties<medium_type::value, property>
-            &properties,
+        const specfem::compute::element_properties<
+            medium_type::value, property_type::value> &properties,
         const specfem::kokkos::array_type<type_real, medium_type::components>
             &field_dot,
         specfem::kokkos::array_type<type_real, medium_type::components>

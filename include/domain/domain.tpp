@@ -13,6 +13,7 @@
 #include <Kokkos_Core.hpp>
 #include <Kokkos_ScatterView.hpp>
 
+namespace {
 template <class medium>
 void initialize_views(
     const int &nglob,
@@ -40,33 +41,34 @@ template <class medium, class qp_type>
 void initialize_rmass_inverse(
     const specfem::domain::impl::kernels::kernels<medium, qp_type> &kernels,
     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
-        rmass_inverse) {
+        &rmass_inverse) {
   // Compute the mass matrix
 
-  constexpr int components = medium::components;
   const int nglob = rmass_inverse.extent(0);
+  const int components = rmass_inverse.extent(1);
 
   kernels.compute_mass_matrix();
 
-  Kokkos::fence();
+  // Kokkos::fence();
 
-  // Invert the mass matrix
-  Kokkos::parallel_for(
-      "specfem::domain::domain::invert_rmass_matrix",
-      specfem::kokkos::DeviceMDrange<2, Kokkos::Iterate::Left>(
-          { 0, 0 }, { nglob, components }),
-      KOKKOS_LAMBDA(const int iglob, const int idim) {
-        if (rmass_inverse(iglob, idim) == 0) {
-          rmass_inverse(iglob, idim) = 1.0;
-        } else {
-          rmass_inverse(iglob, idim) = 1.0 / rmass_inverse(iglob, idim);
-        }
-      });
+  // // Invert the mass matrix
+  // Kokkos::parallel_for(
+  //     "specfem::domain::domain::invert_rmass_matrix",
+  //     specfem::kokkos::DeviceMDrange<2, Kokkos::Iterate::Left>(
+  //         { 0, 0 }, { nglob, components }),
+  //     KOKKOS_LAMBDA(const int iglob, const int idim) {
+  //       if (rmass_inverse(iglob, idim) == 0) {
+  //         rmass_inverse(iglob, idim) = 1.0;
+  //       } else {
+  //         rmass_inverse(iglob, idim) = 1.0 / rmass_inverse(iglob, idim);
+  //       }
+  //     });
 
-  Kokkos::fence();
+  // Kokkos::fence();
 
   return;
 }
+} // namespace
 
 template <class medium, class qp_type>
 specfem::domain::domain<medium, qp_type>::domain(
@@ -108,7 +110,7 @@ specfem::domain::domain<medium, qp_type>::domain(
   this->kernels = specfem::domain::impl::kernels::kernels<medium, qp_type>(
       compute->ibool, partial_derivatives, material_properties,
       boundary_conditions, compute_sources, compute_receivers, quadx, quadz,
-      quadrature_points, field, field_dot, field_dot_dot, rmass_inverse);
+      quadrature_points, this->field, this->field_dot, this->field_dot_dot, this->rmass_inverse);
 
   //----------------------------------------------------------------------------
   // Inverse of mass matrix
@@ -190,6 +192,8 @@ void specfem::domain::domain<medium, qp_type>::divide_mass_matrix() {
       KOKKOS_CLASS_LAMBDA(const int in) {
         const int iglob = in % nglob;
         const int idim = in / nglob;
+        const type_real acceleration = this->field_dot_dot(iglob, idim);
+        const type_real rmass_inverse = this->rmass_inverse(iglob, idim);
         this->field_dot_dot(iglob, idim) =
             this->field_dot_dot(iglob, idim) * this->rmass_inverse(iglob, idim);
       });
@@ -197,6 +201,29 @@ void specfem::domain::domain<medium, qp_type>::divide_mass_matrix() {
   Kokkos::fence();
 
   return;
+}
+
+template <class medium, class qp_type>
+void specfem::domain::domain<medium, qp_type>::invert_mass_matrix() {
+
+  constexpr int components = medium::components;
+  const int nglob = this->rmass_inverse.extent(0);
+
+  Kokkos::parallel_for(
+      "specfem::domain::domain::invert_mass_matrix",
+      specfem::kokkos::DeviceRange(0, components * nglob),
+      KOKKOS_CLASS_LAMBDA(const int in) {
+        const int iglob = in % nglob;
+        const int idim = in / nglob;
+        if (this->rmass_inverse(iglob, idim) == 0) {
+          this->rmass_inverse(iglob, idim) = 1.0;
+        } else {
+          this->rmass_inverse(iglob, idim) =
+              1.0 / this->rmass_inverse(iglob, idim);
+        }
+      });
+
+  Kokkos::fence();
 }
 
 #endif /* DOMAIN_HPP_ */

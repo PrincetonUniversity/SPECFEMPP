@@ -112,8 +112,8 @@ struct element_properties<specfem::enums::element::type::elastic,
   element_properties(const type_real &lambdaplus2mu, const type_real &mu,
                      const type_real &rho)
       : lambdaplus2mu(lambdaplus2mu), mu(mu), rho(rho),
-        lambda(lambdaplus2mu - 2 * mu), rho_vp(rho * lambdaplus2mu),
-        rho_vs(rho * mu) {}
+        lambda(lambdaplus2mu - 2 * mu), rho_vp(sqrt(rho * lambdaplus2mu)),
+        rho_vs(sqrt(rho * mu)) {}
 };
 
 template <>
@@ -131,7 +131,7 @@ struct element_properties<specfem::enums::element::type::acoustic,
   element_properties(const type_real &lambdaplus2mu_inverse,
                      const type_real &rho_inverse)
       : lambdaplus2mu_inverse(lambdaplus2mu_inverse), rho_inverse(rho_inverse),
-        rho_vpinverse(rho_inverse * lambdaplus2mu_inverse) {}
+        rho_vpinverse(sqrt(rho_inverse * lambdaplus2mu_inverse)) {}
 };
 
 } // namespace compute
