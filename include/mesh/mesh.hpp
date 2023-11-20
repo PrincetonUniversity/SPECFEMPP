@@ -4,7 +4,6 @@
 #include "IO/fortran/read_material_properties.hpp"
 #include "IO/fortran/read_mesh_database.hpp"
 #include "boundaries/boundaries.hpp"
-#include "compute/interface.hpp"
 #include "coupled_interfaces/coupled_interfaces.hpp"
 #include "elements/elements.hpp"
 #include "kokkos_abstractions.h"

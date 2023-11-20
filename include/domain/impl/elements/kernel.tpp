@@ -4,29 +4,69 @@
 #include "compute/interface.hpp"
 #include "domain/impl/elements/acoustic/interface.hpp"
 #include "domain/impl/elements/elastic/interface.hpp"
+#include "enumerations/interface.hpp"
 #include "kernel.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
-#include "enumerations/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
-template <class medium, class qp_type, typename... elemental_properties>
-specfem::domain::impl::kernels::
-    element_kernel<medium, qp_type, elemental_properties...>::element_kernel(
+// Do not pull velocity from global memory
+template <int components, specfem::enums::element::boundary_tag tag>
+KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, components>
+get_velocity(
+    const int &iglob,
+    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot) {
+
+  specfem::kokkos::array_type<type_real, components> velocity;
+  return velocity;
+};
+
+template <>
+KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, 1>
+get_velocity<1, specfem::enums::element::boundary_tag::stacey>(
+    const int &iglob,
+    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot) {
+
+  specfem::kokkos::array_type<type_real, 1> velocity;
+
+  velocity[0] = field_dot(iglob, 0);
+
+  return velocity;
+};
+
+template <>
+KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, 2>
+get_velocity<2, specfem::enums::element::boundary_tag::stacey>(
+    const int &iglob,
+    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot) {
+
+  specfem::kokkos::array_type<type_real, 2> velocity;
+
+  velocity[0] = field_dot(iglob, 0);
+  velocity[1] = field_dot(iglob, 1);
+
+  return velocity;
+};
+
+template <class medium, class qp_type, class property, class BC>
+specfem::domain::impl::kernels::element_kernel<medium, qp_type, property, BC>::
+    element_kernel(
         const specfem::kokkos::DeviceView3d<int> ibool,
         const specfem::kokkos::DeviceView1d<int> ispec,
         const specfem::compute::partial_derivatives &partial_derivatives,
         const specfem::compute::properties &properties,
+        const specfem::compute::boundaries &boundary_conditions,
         specfem::quadrature::quadrature *quadx,
         specfem::quadrature::quadrature *quadz, qp_type quadrature_points,
         specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field,
+        specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot,
         specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
             field_dot_dot,
         specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
             mass_matrix)
     : ibool(ibool), ispec(ispec), quadx(quadx), quadz(quadz),
-      quadrature_points(quadrature_points), field(field),
+      quadrature_points(quadrature_points), field(field), field_dot(field_dot),
       field_dot_dot(field_dot_dot), mass_matrix(mass_matrix) {
 
 #ifndef NDEBUG
@@ -36,16 +76,21 @@ specfem::domain::impl::kernels::
 #endif
 
   element = specfem::domain::impl::elements::element<
-      dimension, medium_type, quadrature_point_type, elemental_properties...>(
-      partial_derivatives, properties);
+      dimension, medium_type, quadrature_point_type, property, BC>(
+      partial_derivatives, properties, boundary_conditions, quadrature_points);
   return;
 }
 
-template <class medium, class qp_type, typename... elemental_properties>
+template <class medium, class qp_type, class property, class BC>
 void specfem::domain::impl::kernels::element_kernel<
-    medium, qp_type, elemental_properties...>::compute_mass_matrix() const {
+    medium, qp_type, property, BC>::compute_mass_matrix() const {
 
   constexpr int components = medium::components;
+  const int nelements = ispec.extent(0);
+
+  if (nelements == 0)
+    return;
+
   const auto wxgll = this->quadx->get_w();
   const auto wzgll = this->quadz->get_w();
 
@@ -67,7 +112,8 @@ void specfem::domain::impl::kernels::element_kernel<
               sub2ind(xz, ngllx, iz, ix);
               int iglob = ibool(ispec_l, iz, ix);
 
-              type_real mass_matrix_element[components];
+              specfem::kokkos::array_type<type_real, medium_type::components>
+                  mass_matrix_element;
 
               element.compute_mass_matrix_component(ispec_l, xz,
                                                     mass_matrix_element);
@@ -86,13 +132,75 @@ void specfem::domain::impl::kernels::element_kernel<
       });
 
   Kokkos::fence();
+
   return;
 }
 
-template <class medium, class qp_type, typename... elemental_properties>
+template <class medium, class qp_type, class property, class BC>
+template <specfem::enums::time_scheme::type time_scheme>
 void specfem::domain::impl::kernels::element_kernel<
-    medium, qp_type, elemental_properties...>::compute_stiffness_interaction()
+    medium, qp_type, property, BC>::mass_time_contribution(const type_real dt)
     const {
+
+  constexpr int components = medium::components;
+  const int nelements = ispec.extent(0);
+
+  if (nelements == 0)
+    return;
+
+  const auto wxgll = this->quadx->get_w();
+  const auto wzgll = this->quadz->get_w();
+
+  Kokkos::parallel_for(
+      "specfem::domain::kernes::elements::add_mass_matrix_contribution",
+      specfem::kokkos::DeviceTeam(ispec.extent(0), Kokkos::AUTO, 1),
+      KOKKOS_CLASS_LAMBDA(
+          const specfem::kokkos::DeviceTeam::member_type &team_member) {
+        int ngllx, ngllz;
+        quadrature_points.get_ngll(&ngllx, &ngllz);
+        const auto ielement = team_member.league_rank();
+        const auto ispec_l = ispec(ielement);
+
+        Kokkos::parallel_for(
+            quadrature_points.template TeamThreadRange<specfem::enums::axes::x,
+                                                       specfem::enums::axes::z>(
+                team_member),
+            [&](const int xz) {
+              int ix, iz;
+              sub2ind(xz, ngllx, iz, ix);
+              int iglob = ibool(ispec_l, iz, ix);
+
+              specfem::kokkos::array_type<type_real, medium_type::components>
+                  mass_matrix_element;
+
+              specfem::kokkos::array_type<type_real, dimension::dim> weight;
+
+              weight[0] = wxgll(ix);
+              weight[1] = wzgll(iz);
+
+              element.template mass_time_contribution<time_scheme>(
+                  ispec_l, ielement, xz, dt, weight, mass_matrix_element);
+
+#ifdef KOKKOS_ENABLE_CUDA
+#pragma unroll
+#endif
+              for (int icomponent = 0; icomponent < components; ++icomponent) {
+                const type_real __mass_matrix = mass_matrix(iglob, icomponent);
+                Kokkos::single(Kokkos::PerThread(team_member), [&]() {
+                  Kokkos::atomic_add(&mass_matrix(iglob, icomponent),
+                                     mass_matrix_element[icomponent]);
+                });
+              }
+            });
+      });
+
+  Kokkos::fence();
+  return;
+}
+
+template <class medium, class qp_type, class property, class BC>
+void specfem::domain::impl::kernels::element_kernel<
+    medium, qp_type, property, BC>::compute_stiffness_interaction() const {
 
   constexpr int components = medium::components;
   const int nelements = ispec.extent(0);
@@ -135,7 +243,8 @@ void specfem::domain::impl::kernels::element_kernel<
           const specfem::kokkos::DeviceTeam::member_type &team_member) {
         int ngllx, ngllz;
         quadrature_points.get_ngll(&ngllx, &ngllz);
-        const auto ispec_l = ispec(team_member.league_rank());
+        const auto ielement = team_member.league_rank();
+        const auto ispec_l = ispec(ielement);
 
         // Instantiate shared views
         // ---------------------------------------------------------------
@@ -206,7 +315,7 @@ void specfem::domain::impl::kernels::element_kernel<
 #ifdef KOKKOS_ENABLE_CUDA
 #pragma unroll
 #endif
-              for (int icomponent = 0; icomponent < components; icomponent++) {
+              for (int icomponent = 0; icomponent < components; ++icomponent) {
                 s_field(iz, ix, icomponent) = field(iglob, icomponent);
                 s_stress_integrand_xi(iz, ix, icomponent) = 0.0;
                 s_stress_integrand_gamma(iz, ix, icomponent) = 0.0;
@@ -225,22 +334,26 @@ void specfem::domain::impl::kernels::element_kernel<
               int ix, iz;
               sub2ind(xz, ngllx, iz, ix);
 
-              type_real dudxl[components];
-              type_real dudzl[components];
+              specfem::kokkos::array_type<type_real, medium_type::components>
+                  dudxl;
+              specfem::kokkos::array_type<type_real, medium_type::components>
+                  dudzl;
 
-              type_real stress_integrand_xi[components];
-              type_real stress_integrand_gamma[components];
+              element.compute_gradient(ispec_l, ielement, xz, s_hprime_xx,
+                                       s_hprime_zz, s_field, dudxl, dudzl);
 
-              element.compute_gradient(ispec_l, xz, s_hprime_xx, s_hprime_zz,
-                                       s_field, dudxl, dudzl);
+              specfem::kokkos::array_type<type_real, medium_type::components>
+                  stress_integrand_xi;
+              specfem::kokkos::array_type<type_real, medium_type::components>
+                  stress_integrand_gamma;
 
-              element.compute_stress(ispec_l, xz, dudxl, dudzl,
+              element.compute_stress(ispec_l, ielement, xz, dudxl, dudzl,
                                      stress_integrand_xi,
                                      stress_integrand_gamma);
 #ifdef KOKKOS_ENABLE_CUDA
 #pragma unroll
 #endif
-              for (int icomponent = 0; icomponent < components; icomponent++) {
+              for (int icomponent = 0; icomponent < components; ++icomponent) {
                 s_stress_integrand_xi(iz, ix, icomponent) =
                     stress_integrand_xi[icomponent];
                 s_stress_integrand_gamma(iz, ix, icomponent) =
@@ -259,20 +372,27 @@ void specfem::domain::impl::kernels::element_kernel<
               sub2ind(xz, ngllx, iz, ix);
 
               const int iglob = s_iglob(iz, ix, 0);
-              const type_real wxglll = wxgll(ix);
-              const type_real wzglll = wzgll(iz);
+              specfem::kokkos::array_type<type_real, dimension::dim> weight;
 
-              type_real acceleration[components];
+              weight[0] = wxgll(ix);
+              weight[1] = wzgll(iz);
+
+              specfem::kokkos::array_type<type_real, medium_type::components>
+                  acceleration;
+
+              // only get velocity from global memory for stacey boundary
+              auto velocity =
+                  get_velocity<components, BC::value>(iglob, field_dot);
 
               element.compute_acceleration(
-                  xz, wxglll, wzglll, s_stress_integrand_xi,
+                  ispec_l, ielement, xz, weight, s_stress_integrand_xi,
                   s_stress_integrand_gamma, s_hprimewgll_xx, s_hprimewgll_zz,
-                  acceleration);
+                  velocity, acceleration);
 
 #ifdef KOKKOS_ENABLE_CUDA
 #pragma unroll
 #endif
-              for (int icomponent = 0; icomponent < components; icomponent++) {
+              for (int icomponent = 0; icomponent < components; ++icomponent) {
                 Kokkos::single(Kokkos::PerThread(team_member), [&]() {
                   Kokkos::atomic_add(&field_dot_dot(iglob, icomponent),
                                      acceleration[icomponent]);

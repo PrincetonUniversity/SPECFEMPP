@@ -36,7 +36,7 @@ specfem::material::elastic_material::elastic_material(
     const type_real &compaction_grad)
     : density(density), cs(cs), cp(cp), Qkappa(Qkappa), Qmu(Qmu),
       compaction_grad(compaction_grad) {
-  this->ispec_type = specfem::enums::element::elastic;
+  this->ispec_type = specfem::enums::element::type::elastic;
 
   if (this->Qkappa <= 0.0 || this->Qmu <= 0.0) {
     std::runtime_error(
@@ -62,7 +62,7 @@ specfem::material::elastic_material::elastic_material(
 }
 
 specfem::utilities::return_holder
-specfem::material::elastic_material::get_properties() {
+specfem::material::elastic_material::get_properties() const {
   utilities::return_holder holder;
   holder.rho = this->density;
   holder.mu = this->mu;

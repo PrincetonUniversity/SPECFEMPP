@@ -2,7 +2,7 @@
 #define _SOURCE_HPP
 
 #include "constants.hpp"
-#include "enumerations/interface.hpp"
+#include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "source_time_function/interface.hpp"

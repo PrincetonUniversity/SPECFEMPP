@@ -1,6 +1,6 @@
 #include "compute/coupled_interfaces.hpp"
 // #include "compute/coupled_interfaces.tpp"
-#include "enumerations/interface.hpp"
+#include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
 #include "macros.hpp"
 #include "mesh/coupled_interfaces/coupled_interfaces.hpp"
@@ -30,28 +30,28 @@
 
 // Given an edge, return the range of i, j indices to iterate over the edge in
 // correct order The range is normalized to [0,1]
-void get_edge_range(const specfem::enums::coupling::edge::type &edge,
-                    int &ibegin, int &jbegin, int &iend, int &jend) {
+void get_edge_range(const specfem::enums::edge::type &edge, int &ibegin,
+                    int &jbegin, int &iend, int &jend) {
   switch (edge) {
-  case specfem::enums::coupling::edge::type::BOTTOM:
+  case specfem::enums::edge::type::BOTTOM:
     ibegin = 0;
     jbegin = 0;
     iend = 1;
     jend = 0;
     break;
-  case specfem::enums::coupling::edge::type::TOP:
+  case specfem::enums::edge::type::TOP:
     ibegin = 1;
     jbegin = 1;
     iend = 0;
     jend = 1;
     break;
-  case specfem::enums::coupling::edge::type::LEFT:
+  case specfem::enums::edge::type::LEFT:
     ibegin = 0;
     jbegin = 1;
     iend = 0;
     jend = 0;
     break;
-  case specfem::enums::coupling::edge::type::RIGHT:
+  case specfem::enums::edge::type::RIGHT:
     ibegin = 1;
     jbegin = 0;
     iend = 1;
@@ -65,43 +65,43 @@ void get_edge_range(const specfem::enums::coupling::edge::type &edge,
 // Given an edge, return the number of points along the edge
 // This ends up being important when ngllx != ngllz
 KOKKOS_FUNCTION
-int specfem::compute::coupled_interfaces::iterator::npoints(
-    const specfem::enums::coupling::edge::type &edge, const int ngllx,
-    const int ngllz) {
+int specfem::compute::coupled_interfaces::access::npoints(
+    const specfem::enums::edge::type &edge, const int ngllx, const int ngllz) {
 
   switch (edge) {
-  case specfem::enums::coupling::edge::type::BOTTOM:
-  case specfem::enums::coupling::edge::type::TOP:
+  case specfem::enums::edge::type::BOTTOM:
+  case specfem::enums::edge::type::TOP:
     return ngllx;
     break;
-  case specfem::enums::coupling::edge::type::LEFT:
-  case specfem::enums::coupling::edge::type::RIGHT:
+  case specfem::enums::edge::type::LEFT:
+  case specfem::enums::edge::type::RIGHT:
     return ngllz;
     break;
   default:
     assert(false && "Invalid edge type");
+    return 0;
   }
 }
 
 KOKKOS_FUNCTION
-void specfem::compute::coupled_interfaces::iterator::self_iterator(
-    const int &ipoint, const specfem::enums::coupling::edge::type &edge,
-    const int ngllx, const int ngllz, int &i, int &j) {
+void specfem::compute::coupled_interfaces::access::self_iterator(
+    const int &ipoint, const specfem::enums::edge::type &edge, const int ngllx,
+    const int ngllz, int &i, int &j) {
 
   switch (edge) {
-  case specfem::enums::coupling::edge::type::BOTTOM:
+  case specfem::enums::edge::type::BOTTOM:
     i = ipoint;
     j = 0;
     break;
-  case specfem::enums::coupling::edge::type::TOP:
+  case specfem::enums::edge::type::TOP:
     i = ngllx - 1 - ipoint;
     j = ngllz - 1;
     break;
-  case specfem::enums::coupling::edge::type::LEFT:
+  case specfem::enums::edge::type::LEFT:
     i = 0;
     j = ipoint;
     break;
-  case specfem::enums::coupling::edge::type::RIGHT:
+  case specfem::enums::edge::type::RIGHT:
     i = ngllx - 1;
     j = ngllz - 1 - ipoint;
     break;
@@ -111,24 +111,24 @@ void specfem::compute::coupled_interfaces::iterator::self_iterator(
 }
 
 KOKKOS_FUNCTION
-void specfem::compute::coupled_interfaces::iterator::coupled_iterator(
-    const int &ipoint, const specfem::enums::coupling::edge::type &edge,
-    const int ngllx, const int ngllz, int &i, int &j) {
+void specfem::compute::coupled_interfaces::access::coupled_iterator(
+    const int &ipoint, const specfem::enums::edge::type &edge, const int ngllx,
+    const int ngllz, int &i, int &j) {
 
   switch (edge) {
-  case specfem::enums::coupling::edge::type::BOTTOM:
+  case specfem::enums::edge::type::BOTTOM:
     i = ngllx - 1 - ipoint;
     j = 0;
     break;
-  case specfem::enums::coupling::edge::type::TOP:
+  case specfem::enums::edge::type::TOP:
     i = ipoint;
     j = ngllz - 1;
     break;
-  case specfem::enums::coupling::edge::type::LEFT:
+  case specfem::enums::edge::type::LEFT:
     i = ngllx - 1;
     j = ngllz - 1 - ipoint;
     break;
-  case specfem::enums::coupling::edge::type::RIGHT:
+  case specfem::enums::edge::type::RIGHT:
     i = 0;
     j = ipoint;
     break;
@@ -139,8 +139,8 @@ void specfem::compute::coupled_interfaces::iterator::coupled_iterator(
 
 bool check_if_edges_are_connected(
     const specfem::kokkos::HostView3d<int> h_ibool,
-    const specfem::enums::coupling::edge::type &edge1,
-    const specfem::enums::coupling::edge::type &edge2, const int &ispec1,
+    const specfem::enums::edge::type &edge1,
+    const specfem::enums::edge::type &edge2, const int &ispec1,
     const int &ispec2) {
 
   // Check that edge1 in element1 is coupling with edge2 in element2
@@ -179,8 +179,8 @@ void compute_edges(
     const specfem::kokkos::HostMirror3d<int> h_ibool,
     const specfem::kokkos::HostMirror1d<int> ispec1,
     const specfem::kokkos::HostMirror1d<int> ispec2,
-    specfem::kokkos::HostMirror1d<specfem::enums::coupling::edge::type> edge1,
-    specfem::kokkos::HostMirror1d<specfem::enums::coupling::edge::type> edge2) {
+    specfem::kokkos::HostMirror1d<specfem::enums::edge::type> edge1,
+    specfem::kokkos::HostMirror1d<specfem::enums::edge::type> edge2) {
 
   const int num_interfaces = ispec1.extent(0);
 
@@ -189,40 +189,35 @@ void compute_edges(
     const int ispec2l = ispec2(inum);
 
     int num_connected = 0;
-    for (int edge1l = 0; edge1l < specfem::enums::coupling::edge::num_edges;
-         edge1l++) {
-      for (int edge2l = 0; edge2l < specfem::enums::coupling::edge::num_edges;
-           edge2l++) {
+    for (int edge1l = 0; edge1l < specfem::enums::edge::num_edges; edge1l++) {
+      for (int edge2l = 0; edge2l < specfem::enums::edge::num_edges; edge2l++) {
         if (check_if_edges_are_connected(
-                h_ibool,
-                static_cast<specfem::enums::coupling::edge::type>(edge1l),
-                static_cast<specfem::enums::coupling::edge::type>(edge2l),
-                ispec1l, ispec2l)) {
+                h_ibool, static_cast<specfem::enums::edge::type>(edge1l),
+                static_cast<specfem::enums::edge::type>(edge2l), ispec1l,
+                ispec2l)) {
           // Check that the two edges are different
           ASSERT(edge1l != edge2l, "Invalid edge1 and edge2");
           // BOTTOM-TOP, LEFT-RIGHT coupling
-          ASSERT((((static_cast<specfem::enums::coupling::edge::type>(edge1l) ==
-                    specfem::enums::coupling::edge::type::BOTTOM) &&
-                   (static_cast<specfem::enums::coupling::edge::type>(edge2l) ==
-                    specfem::enums::coupling::edge::type::TOP)) ||
-                  ((static_cast<specfem::enums::coupling::edge::type>(edge1l) ==
-                    specfem::enums::coupling::edge::type::TOP) &&
-                   (static_cast<specfem::enums::coupling::edge::type>(edge2l) ==
-                    specfem::enums::coupling::edge::type::BOTTOM)) ||
-                  ((static_cast<specfem::enums::coupling::edge::type>(edge1l) ==
-                    specfem::enums::coupling::edge::type::LEFT) &&
-                   (static_cast<specfem::enums::coupling::edge::type>(edge2l) ==
-                    specfem::enums::coupling::edge::type::RIGHT)) ||
-                  ((static_cast<specfem::enums::coupling::edge::type>(edge1l) ==
-                    specfem::enums::coupling::edge::type::RIGHT) &&
-                   (static_cast<specfem::enums::coupling::edge::type>(edge2l) ==
-                    specfem::enums::coupling::edge::type::LEFT))),
+          ASSERT((((static_cast<specfem::enums::edge::type>(edge1l) ==
+                    specfem::enums::edge::type::BOTTOM) &&
+                   (static_cast<specfem::enums::edge::type>(edge2l) ==
+                    specfem::enums::edge::type::TOP)) ||
+                  ((static_cast<specfem::enums::edge::type>(edge1l) ==
+                    specfem::enums::edge::type::TOP) &&
+                   (static_cast<specfem::enums::edge::type>(edge2l) ==
+                    specfem::enums::edge::type::BOTTOM)) ||
+                  ((static_cast<specfem::enums::edge::type>(edge1l) ==
+                    specfem::enums::edge::type::LEFT) &&
+                   (static_cast<specfem::enums::edge::type>(edge2l) ==
+                    specfem::enums::edge::type::RIGHT)) ||
+                  ((static_cast<specfem::enums::edge::type>(edge1l) ==
+                    specfem::enums::edge::type::RIGHT) &&
+                   (static_cast<specfem::enums::edge::type>(edge2l) ==
+                    specfem::enums::edge::type::LEFT))),
                  "Invalid edge1 and edge2");
 
-          edge1(inum) =
-              static_cast<specfem::enums::coupling::edge::type>(edge1l);
-          edge2(inum) =
-              static_cast<specfem::enums::coupling::edge::type>(edge2l);
+          edge1(inum) = static_cast<specfem::enums::edge::type>(edge1l);
+          edge2(inum) = static_cast<specfem::enums::edge::type>(edge2l);
           num_connected++;
         }
       }
@@ -238,10 +233,8 @@ void check_edges(
     const specfem::kokkos::HostView2d<type_real> coord,
     const specfem::kokkos::HostMirror1d<int> ispec1,
     const specfem::kokkos::HostMirror1d<int> ispec2,
-    const specfem::kokkos::HostMirror1d<specfem::enums::coupling::edge::type>
-        edge1,
-    const specfem::kokkos::HostMirror1d<specfem::enums::coupling::edge::type>
-        edge2) {
+    const specfem::kokkos::HostMirror1d<specfem::enums::edge::type> edge1,
+    const specfem::kokkos::HostMirror1d<specfem::enums::edge::type> edge2) {
 
   const int num_interfaces = ispec1.extent(0);
   const int ngllx = h_ibool.extent(2);
@@ -255,19 +248,19 @@ void check_edges(
     const auto edge2l = edge2(interface);
 
     // iterate over the edge
-    int npoints = specfem::compute::coupled_interfaces::iterator::npoints(
+    int npoints = specfem::compute::coupled_interfaces::access::npoints(
         edge1l, ngllx, ngllz);
 
     for (int ipoint = 0; ipoint < npoints; ipoint++) {
       // Get ipoint along the edge in element1
       int i1, j1;
-      specfem::compute::coupled_interfaces::iterator::self_iterator(
+      specfem::compute::coupled_interfaces::access::self_iterator(
           ipoint, edge1l, ngllx, ngllz, i1, j1);
       const int iglob1 = h_ibool(ispec1l, j1, i1);
 
       // Get ipoint along the edge in element2
       int i2, j2;
-      specfem::compute::coupled_interfaces::iterator::coupled_iterator(
+      specfem::compute::coupled_interfaces::access::coupled_iterator(
           ipoint, edge2l, ngllx, ngllz, i2, j2);
       const int iglob2 = h_ibool(ispec2l, j2, i2);
 
@@ -331,11 +324,12 @@ specfem::compute::coupled_interfaces::elastic_acoustic::elastic_acoustic(
 
     // Check that the interface is between an elastic and an acoustic element
 
-    ASSERT(
-        ((ispec_elastic != ispec_acoustic) &&
-         (h_ispec_type(ispec_elastic) == specfem::enums::element::elastic) &&
-         (h_ispec_type(ispec_acoustic) == specfem::enums::element::acoustic)),
-        "Invalid interface");
+    ASSERT(((ispec_elastic != ispec_acoustic) &&
+            (h_ispec_type(ispec_elastic) ==
+             specfem::enums::element::type::elastic) &&
+            (h_ispec_type(ispec_acoustic) ==
+             specfem::enums::element::type::acoustic)),
+           "Invalid interface");
   }
 #endif
 
@@ -402,9 +396,10 @@ specfem::compute::coupled_interfaces::elastic_poroelastic::elastic_poroelastic(
     // Check that the interface is between an elastic and a poroelastic
     // element
     ASSERT(((ispec_elastic != ispec_poroelastic) &&
-            (h_ispec_type(ispec_elastic) == specfem::enums::element::elastic) &&
+            (h_ispec_type(ispec_elastic) ==
+             specfem::enums::element::type::elastic) &&
             (h_ispec_type(ispec_poroelastic) ==
-             specfem::enums::element::poroelastic)),
+             specfem::enums::element::type::poroelastic)),
            "Invalid interface");
   }
 #endif
@@ -473,12 +468,12 @@ specfem::compute::coupled_interfaces::acoustic_poroelastic::
 
     // Check that the interface is between an acoustic and a poroelastic
     // element
-    ASSERT(
-        ((ispec_acoustic != ispec_poroelastic) &&
-         (h_ispec_type(ispec_acoustic) == specfem::enums::element::acoustic) &&
-         (h_ispec_type(ispec_poroelastic) ==
-          specfem::enums::element::poroelastic)),
-        "Invalid interface");
+    ASSERT(((ispec_acoustic != ispec_poroelastic) &&
+            (h_ispec_type(ispec_acoustic) ==
+             specfem::enums::element::type::acoustic) &&
+            (h_ispec_type(ispec_poroelastic) ==
+             specfem::enums::element::type::poroelastic)),
+           "Invalid interface");
   }
 #endif
 

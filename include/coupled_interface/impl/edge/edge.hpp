@@ -43,9 +43,9 @@ struct self_iterator {
    */
   KOKKOS_FUNCTION
   void operator()(const int &ipoint,
-                  const specfem::enums::coupling::edge::type &iedge_type,
-                  int &i, int &j) const {
-    specfem::compute::coupled_interfaces::iterator::self_iterator(
+                  const specfem::enums::edge::type &iedge_type, int &i,
+                  int &j) const {
+    specfem::compute::coupled_interfaces::access::self_iterator(
         ipoint, iedge_type, this->ngllx, this->ngllz, i, j);
     return;
   }
@@ -84,9 +84,9 @@ struct coupled_iterator {
    */
   KOKKOS_FUNCTION
   void operator()(const int &ipoint,
-                  const specfem::enums::coupling::edge::type &iedge_type,
-                  int &i, int &j) const {
-    specfem::compute::coupled_interfaces::iterator::coupled_iterator(
+                  const specfem::enums::edge::type &iedge_type, int &i,
+                  int &j) const {
+    specfem::compute::coupled_interfaces::access::coupled_iterator(
         ipoint, iedge_type, this->ngllx, this->ngllz, i, j);
     return;
   }

@@ -45,6 +45,18 @@ Parameters
 
 .. |isotropic| replace:: isotropic()
 
+.. _boundary_conditions: ../boundary_conditions.html
+
+.. |boundary_conditions| replace:: boundary_conditions
+
+.. _dirichlet: ../boundary_conditions/dirichlet.html
+
+.. |dirichlet| replace:: dirichlet()
+
+.. _stacey: ../boundary_conditions/stacey.html
+
+.. |stacey| replace:: stacey()
+
 * ``dimension``:
 
   The dimension of the element.
@@ -73,6 +85,14 @@ Parameters
 
     - |isotropic|_: An isotropic element.
 
+  - Boundary conditions:
+
+.. note::
+    An element on the boundary is not Boundary conditions are not specified, the element will be assumed to have neumann boundary condition.
+
+    - |dirichlet|_: A Dirichlet boundary condition.
+    - |stacey|_: A Stacey boundary condition.
+
 
 .. warning::
 
@@ -83,11 +103,11 @@ Template specializations
 
 .. _dim2_elastic_static_quadrature_points_isotropic: elements_dim2_elastic_static_quadrature_points_isotropic.html
 
-.. |dim2_elastic_static_quadrature_points_isotropic| replace:: element< |dim2|_, |elastic|_, |static_quadrature_points|_, |isotropic|_ >()
+.. |dim2_elastic_static_quadrature_points_isotropic| replace:: element< |dim2|_, |elastic|_, |static_quadrature_points|_, |isotropic|_, typename |boundary_conditions|_ >()
 
 .. _dim2_acoustic_static_quadrature_points_isotropic: elements_dim2_acoustic_static_quadrature_points_isotropic.html
 
-.. |dim2_acoustic_static_quadrature_points_isotropic| replace:: element< |dim2|_, |acoustic|_, |static_quadrature_points|_, |isotropic|_ >()
+.. |dim2_acoustic_static_quadrature_points_isotropic| replace:: element< |dim2|_, |acoustic|_, |static_quadrature_points|_, |isotropic|_, typename |boundary_conditions|_ >()
 
 * 2D elastic isotropic elements:
 

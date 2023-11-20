@@ -77,6 +77,7 @@ public:
          specfem::compute::compute *compute,
          specfem::compute::properties material_properties,
          specfem::compute::partial_derivatives partial_derivatives,
+         specfem::compute::boundaries boundary_conditions,
          specfem::compute::sources compute_sources,
          specfem::compute::receivers compute_receivers,
          specfem::quadrature::quadrature *quadx,
@@ -89,12 +90,27 @@ public:
   ~domain() = default;
 
   /**
+   * @brief Initialize the domain
+   *
+   */
+  template <specfem::enums::time_scheme::type time_scheme>
+  void mass_time_contribution(const type_real dt) {
+    kernels.template mass_time_contribution<time_scheme>(dt);
+  };
+
+  /**
    * @brief Compute interaction of stiffness matrix on acceleration
    *
    */
   void compute_stiffness_interaction() {
     kernels.compute_stiffness_interaction();
   };
+
+  /**
+   * @brief Invert the mass matrix
+   *
+   */
+  void invert_mass_matrix();
 
   /**
    * @brief Divide the acceleration by the mass matrix

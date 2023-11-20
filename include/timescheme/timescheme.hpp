@@ -15,6 +15,11 @@ class TimeScheme {
 
 public:
   /**
+   * @brief Get the timescheme type
+   *
+   */
+  virtual specfem::enums::time_scheme::type timescheme() const = 0;
+  /**
    * @brief Return the status of simulation
    *
    * @return false if current step >= number of steps
@@ -97,6 +102,11 @@ public:
    *
    */
   virtual void increment_seismogram_step(){};
+  /**
+   * @brief Get time increment
+   *
+   */
+  virtual type_real get_time_increment() const { return 0.0; }
 };
 
 std::ostream &operator<<(std::ostream &out,

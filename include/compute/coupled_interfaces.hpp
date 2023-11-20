@@ -1,7 +1,7 @@
 #ifndef _COMPUTE_COUPLED_INTERFACES_HPP
 #define _COMPUTE_COUPLED_INTERFACES_HPP
 
-#include "enumerations/interface.hpp"
+#include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
 #include "macros.hpp"
 #include "mesh/coupled_interfaces/coupled_interfaces.hpp"
@@ -31,16 +31,16 @@ struct elastic_acoustic {
                                                      ///< element on the
                                                      ///< acoustic side of the
                                                      ///< interface
-  specfem::kokkos::DeviceView1d<specfem::enums::coupling::edge::type>
+  specfem::kokkos::DeviceView1d<specfem::enums::edge::type>
       elastic_edge; ///< Which edge of the element is coupled to the acoustic
                     ///< element
-  specfem::kokkos::DeviceView1d<specfem::enums::coupling::edge::type>
+  specfem::kokkos::DeviceView1d<specfem::enums::edge::type>
       acoustic_edge; ///< Which edge of the element is coupled to the elastic
                      ///< element
-  specfem::kokkos::HostMirror1d<specfem::enums::coupling::edge::type>
+  specfem::kokkos::HostMirror1d<specfem::enums::edge::type>
       h_elastic_edge; ///< Which edge of the element is coupled to the acoustic
                       ///< element (host mirror)
-  specfem::kokkos::HostMirror1d<specfem::enums::coupling::edge::type>
+  specfem::kokkos::HostMirror1d<specfem::enums::edge::type>
       h_acoustic_edge; ///< Which edge of the element is coupled to the elastic
                        ///< element (host mirror)
   int num_interfaces;  ///< Total number of edges coupled between elastic and
@@ -85,16 +85,16 @@ struct elastic_poroelastic {
                                                         ///< the poroelastic
                                                         ///< side of the
                                                         ///< interface
-  specfem::kokkos::DeviceView1d<specfem::enums::coupling::edge::type>
+  specfem::kokkos::DeviceView1d<specfem::enums::edge::type>
       elastic_edge; ///< Which edge of the element is coupled to the poroelastic
                     ///< element
-  specfem::kokkos::DeviceView1d<specfem::enums::coupling::edge::type>
+  specfem::kokkos::DeviceView1d<specfem::enums::edge::type>
       poroelastic_edge; ///< Which edge of the element is coupled to the elastic
                         ///< element
-  specfem::kokkos::HostMirror1d<specfem::enums::coupling::edge::type>
+  specfem::kokkos::HostMirror1d<specfem::enums::edge::type>
       h_elastic_edge; ///< Which edge of the element is coupled to the
                       ///< poroelastic element (host mirror)
-  specfem::kokkos::HostMirror1d<specfem::enums::coupling::edge::type>
+  specfem::kokkos::HostMirror1d<specfem::enums::edge::type>
       h_poroelastic_edge; ///< Which edge of the element is coupled to the
                           ///< elastic element (host mirror)
   int num_interfaces;     ///< Total number of edges coupled between elastic and
@@ -140,16 +140,16 @@ struct acoustic_poroelastic {
                                                         ///< the poroelastic
                                                         ///< side of the
                                                         ///< interface
-  specfem::kokkos::DeviceView1d<specfem::enums::coupling::edge::type>
+  specfem::kokkos::DeviceView1d<specfem::enums::edge::type>
       acoustic_edge; ///< Which edge of the element is coupled to the
                      ///< poroelastic element
-  specfem::kokkos::DeviceView1d<specfem::enums::coupling::edge::type>
+  specfem::kokkos::DeviceView1d<specfem::enums::edge::type>
       poroelastic_edge; ///< Which edge of the element is coupled to the
                         ///< acoustic element
-  specfem::kokkos::HostMirror1d<specfem::enums::coupling::edge::type>
+  specfem::kokkos::HostMirror1d<specfem::enums::edge::type>
       h_acoustic_edge; ///< Which edge of the element is coupled to the
                        ///< poroelastic element (host mirror)
-  specfem::kokkos::HostMirror1d<specfem::enums::coupling::edge::type>
+  specfem::kokkos::HostMirror1d<specfem::enums::edge::type>
       h_poroelastic_edge; ///< Which edge of the element is coupled to the
                           ///< acoustic element (host mirror)
   int num_interfaces; ///< Total number of edges coupled between acoustic and
@@ -208,10 +208,10 @@ public:
 };
 
 /**
- * @namespace Helper functions to iterate over edges at an interface
+ * @namespace Helper functions to access the edges at an interface
  *
  */
-namespace iterator {
+namespace access {
 
 /**
  * @brief Compute the number of points at an edge of an element
@@ -221,7 +221,7 @@ namespace iterator {
  * @param ngllz Number of GLL points in the z-direction
  */
 KOKKOS_FUNCTION
-int npoints(const specfem::enums::coupling::edge::type &edge, const int ngllx,
+int npoints(const specfem::enums::edge::type &edge, const int ngllx,
             const int ngllz);
 
 /**
@@ -237,8 +237,7 @@ int npoints(const specfem::enums::coupling::edge::type &edge, const int ngllx,
  * @param j iz index of the quadrature point
  */
 KOKKOS_FUNCTION
-void self_iterator(const int &ipoint,
-                   const specfem::enums::coupling::edge::type &edge,
+void self_iterator(const int &ipoint, const specfem::enums::edge::type &edge,
                    const int ngllx, const int ngllz, int &i, int &j);
 
 /**
@@ -254,11 +253,10 @@ void self_iterator(const int &ipoint,
  * @param j iz index of the quadrature point
  */
 KOKKOS_FUNCTION
-void coupled_iterator(const int &ipoint,
-                      const specfem::enums::coupling::edge::type &edge,
+void coupled_iterator(const int &ipoint, const specfem::enums::edge::type &edge,
                       const int ngllx, const int ngllz, int &i, int &j);
 
-} // namespace iterator
+} // namespace access
 } // namespace coupled_interfaces
 } // namespace compute
 } // namespace specfem

@@ -116,10 +116,8 @@ void test_edges(
     const specfem::kokkos::HostView2d<type_real> coord,
     const specfem::kokkos::HostMirror1d<int> ispec1,
     const specfem::kokkos::HostMirror1d<int> ispec2,
-    const specfem::kokkos::HostMirror1d<specfem::enums::coupling::edge::type>
-        edge1,
-    const specfem::kokkos::HostMirror1d<specfem::enums::coupling::edge::type>
-        edge2) {
+    const specfem::kokkos::HostMirror1d<specfem::enums::edge::type> edge1,
+    const specfem::kokkos::HostMirror1d<specfem::enums::edge::type> edge2) {
 
   const int num_interfaces = ispec1.extent(0);
   const int ngllx = h_ibool.extent(2);
@@ -133,19 +131,19 @@ void test_edges(
     const auto edge2l = edge2(interface);
 
     // iterate over the edge
-    int npoints = specfem::compute::coupled_interfaces::iterator::npoints(
+    int npoints = specfem::compute::coupled_interfaces::access::npoints(
         edge1l, ngllx, ngllz);
 
     for (int ipoint = 0; ipoint < npoints; ipoint++) {
       // Get ipoint along the edge in element1
       int i1, j1;
-      specfem::compute::coupled_interfaces::iterator::coupled_iterator(
+      specfem::compute::coupled_interfaces::access::coupled_iterator(
           ipoint, edge1l, ngllx, ngllz, i1, j1);
       const int iglob1 = h_ibool(ispec1l, j1, i1);
 
       // Get ipoint along the edge in element2
       int i2, j2;
-      specfem::compute::coupled_interfaces::iterator::self_iterator(
+      specfem::compute::coupled_interfaces::access::self_iterator(
           ipoint, edge2l, ngllx, ngllz, i2, j2);
       const int iglob2 = h_ibool(ispec2l, j2, i2);
 

@@ -131,6 +131,11 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
         compute.h_ibool, compute.coordinates.coord,
         material_properties.h_ispec_type, mesh.coupled_interfaces);
 
+    // Set up boundary conditions
+    specfem::compute::boundaries boundary_conditions(
+        mesh.material_ind.kmato, materials, mesh.acfree_surface,
+        mesh.abs_boundary);
+
     // Locate the sources
     for (auto &source : sources)
       source->locate(compute.coordinates.coord, compute.h_ibool,
@@ -176,15 +181,16 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
           specfem::enums::element::medium::elastic,
           specfem::enums::element::quadrature::static_quadrature_points<5> >
           elastic_domain_static(nglob, qp5, &compute, material_properties,
-                                partial_derivatives, compute_sources,
-                                compute_receivers, gllx, gllz);
+                                partial_derivatives, boundary_conditions,
+                                compute_sources, compute_receivers, gllx, gllz);
 
       specfem::domain::domain<
           specfem::enums::element::medium::acoustic,
           specfem::enums::element::quadrature::static_quadrature_points<5> >
           acoustic_domain_static(nglob, qp5, &compute, material_properties,
-                                 partial_derivatives, compute_sources,
-                                 compute_receivers, gllx, gllz);
+                                 partial_derivatives, boundary_conditions,
+                                 compute_sources, compute_receivers, gllx,
+                                 gllz);
 
       // Instantiate coupled interfaces
       specfem::coupled_interface::coupled_interface acoustic_elastic_interface(

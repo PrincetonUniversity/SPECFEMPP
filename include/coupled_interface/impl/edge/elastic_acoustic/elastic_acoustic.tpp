@@ -97,7 +97,7 @@ KOKKOS_FUNCTION void specfem::coupled_interface::impl::edges::edge<
   type_real valx, valz;
 
   switch (acoustic_edge_type) {
-  case specfem::enums::coupling::edge::type::LEFT:
+  case specfem::enums::edge::type::LEFT:
     valx = -1.0 * wzgll(iz) *
            (xix(acoustic_ispec_l, iz, ix) * jacobian(acoustic_ispec_l, iz, ix) *
             pressure);
@@ -109,7 +109,7 @@ KOKKOS_FUNCTION void specfem::coupled_interface::impl::edges::edge<
     Kokkos::atomic_add(&self_field_dot_dot(iglob, 0), valx);
     Kokkos::atomic_add(&self_field_dot_dot(iglob, 1), valz);
     break;
-  case specfem::enums::coupling::edge::type::RIGHT:
+  case specfem::enums::edge::type::RIGHT:
     valx = wzgll(iz) * (xix(acoustic_ispec_l, iz, ix) *
                         jacobian(acoustic_ispec_l, iz, ix) * pressure);
     valz = wzgll(iz) * (xiz(acoustic_ispec_l, iz, ix) *
@@ -119,7 +119,7 @@ KOKKOS_FUNCTION void specfem::coupled_interface::impl::edges::edge<
     Kokkos::atomic_add(&self_field_dot_dot(iglob, 0), valx);
     Kokkos::atomic_add(&self_field_dot_dot(iglob, 1), valz);
     break;
-  case specfem::enums::coupling::edge::type::BOTTOM:
+  case specfem::enums::edge::type::BOTTOM:
     valx = -1.0 * wxgll(ix) *
            (gammax(acoustic_ispec_l, iz, ix) *
             jacobian(acoustic_ispec_l, iz, ix) * pressure);
@@ -131,7 +131,7 @@ KOKKOS_FUNCTION void specfem::coupled_interface::impl::edges::edge<
     Kokkos::atomic_add(&self_field_dot_dot(iglob, 0), valx);
     Kokkos::atomic_add(&self_field_dot_dot(iglob, 1), valz);
     break;
-  case specfem::enums::coupling::edge::type::TOP:
+  case specfem::enums::edge::type::TOP:
     valx = wxgll(ix) * (gammax(acoustic_ispec_l, iz, ix) *
                         jacobian(acoustic_ispec_l, iz, ix) * pressure);
     valz = wxgll(ix) * (gammaz(acoustic_ispec_l, iz, ix) *
