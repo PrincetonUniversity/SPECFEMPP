@@ -127,6 +127,8 @@ TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
                             partial_derivatives, boundary_conditions,
                             compute_sources, compute_receivers, gllx, gllz);
 
+  elastic_domain_static.invert_mass_matrix();
+
   elastic_domain_static.sync_rmass_inverse(specfem::sync::DeviceToHost);
 
   specfem::kokkos::HostView2d<type_real, Kokkos::LayoutLeft>

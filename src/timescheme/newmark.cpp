@@ -68,6 +68,8 @@ void specfem::TimeScheme::Newmark::apply_corrector_phase(
       KOKKOS_CLASS_LAMBDA(const int in) {
         const int iglob = in % nglob;
         const int idim = in / nglob;
+        type_real acceleration = field_dot_dot(iglob, idim);
+        type_real velocity = field_dot(iglob, idim);
         // apply corrector phase
         field_dot(iglob, idim) +=
             this->deltatover2 * field_dot_dot(iglob, idim);

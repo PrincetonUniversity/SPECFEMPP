@@ -10,7 +10,8 @@
 namespace specfem {
 namespace enums {
 namespace boundary_conditions {
-template <typename dim, typename medium, typename qp_type> class stacey {
+template <typename dim, typename medium, typename property, typename qp_type>
+class stacey {
 
 public:
   /**
@@ -34,6 +35,11 @@ public:
    *
    */
   using quadrature_points_type = qp_type;
+  /**
+   * @brief Property type of the boundary.
+   *
+   */
+  using property_type = property;
   ///@}
 
   constexpr static specfem::enums::element::boundary_tag value =

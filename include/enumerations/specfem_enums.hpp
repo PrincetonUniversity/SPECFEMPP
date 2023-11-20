@@ -107,6 +107,16 @@ enum type {
   BOTTOM        ///< Bottom edge
 };
 } // namespace boundaries
+
+namespace time_scheme {
+/**
+ * @brief type of time scheme
+ *
+ */
+enum class type {
+  newmark, ///< Newmark time scheme
+};
+} // namespace time_scheme
 } // namespace enums
 } // namespace specfem
 

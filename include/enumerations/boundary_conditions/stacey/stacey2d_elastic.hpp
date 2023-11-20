@@ -13,9 +13,9 @@
 namespace specfem {
 namespace enums {
 namespace boundary_conditions {
-template <typename qp_type>
+template <typename property, typename qp_type>
 class stacey<specfem::enums::element::dimension::dim2,
-             specfem::enums::element::medium::elastic, qp_type> {
+             specfem::enums::element::medium::elastic, property, qp_type> {
 
 public:
   /**
@@ -39,6 +39,11 @@ public:
    *
    */
   using quadrature_points_type = qp_type;
+  /**
+   * @brief Property type of the boundary.
+   *
+   */
+  using property_type = property;
   ///@}
 
   constexpr static specfem::enums::element::boundary_tag value =
@@ -49,6 +54,16 @@ public:
   stacey(const specfem::compute::boundaries &boundary_conditions,
          const quadrature_points_type &quadrature_points);
 
+  template <specfem::enums::time_scheme::type time_scheme>
+  KOKKOS_INLINE_FUNCTION void mass_time_contribution(
+      const int &ielement, const int &xz, const type_real &dt,
+      const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
+      const specfem::compute::element_partial_derivatives &partial_derivatives,
+      const specfem::compute::element_properties<
+          medium_type::value, property_type::value> &properties,
+      specfem::kokkos::array_type<type_real, medium_type::components>
+          &rmass_inverse) const;
+
   KOKKOS_INLINE_FUNCTION
   void enforce_gradient(
       const int &ielement, const int &xz,
@@ -57,24 +72,22 @@ public:
       specfem::kokkos::array_type<type_real, medium_type::components> &df_dz)
       const {};
 
-  template <specfem::enums::element::property_tag property>
   KOKKOS_INLINE_FUNCTION void enforce_stress(
       const int &ielement, const int &xz,
       const specfem::compute::element_partial_derivatives &partial_derivatives,
-      const specfem::compute::element_properties<medium_type::value, property>
-          &properties,
+      const specfem::compute::element_properties<
+          medium_type::value, property_type::value> &properties,
       specfem::kokkos::array_type<type_real, medium_type::components>
           &stress_integrand_xi,
       specfem::kokkos::array_type<type_real, medium_type::components>
           &stress_integrand_xgamma) const {};
 
-  template <specfem::enums::element::property_tag property>
   KOKKOS_INLINE_FUNCTION void enforce_traction(
       const int &ielement, const int &xz,
       const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
       const specfem::compute::element_partial_derivatives &partial_derivatives,
-      const specfem::compute::element_properties<medium_type::value, property>
-          &properties,
+      const specfem::compute::element_properties<
+          medium_type::value, property_type::value> &properties,
       const specfem::kokkos::array_type<type_real, medium_type::components>
           &velocity,
       specfem::kokkos::array_type<type_real, medium_type::components>
