@@ -106,6 +106,11 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
       mesh.material_ind.kmato, materials, mesh.nspec, gllx->get_N(),
       gllz->get_N());
 
+  // Setup boundary conditions
+  specfem::compute::boundaries boundary_conditions(
+      mesh.material_ind.kmato, materials, mesh.acfree_surface,
+      mesh.abs_boundary);
+
   // locate the recievers
   for (auto &receiver : receivers)
     receiver->locate(compute.coordinates.coord, compute.h_ibool,
@@ -131,8 +136,9 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
       specfem::enums::element::medium::elastic,
       specfem::enums::element::quadrature::static_quadrature_points<5> >
       elastic_domain_static(nglob, qp5, &compute, material_properties,
-                            partial_derivatives, specfem::compute::sources(),
-                            compute_receivers, gllx, gllz);
+                            partial_derivatives, boundary_conditions,
+                            specfem::compute::sources(), compute_receivers,
+                            gllx, gllz);
 
   const auto displacement_field = elastic_domain_static.get_host_field();
   const auto velocity_field = elastic_domain_static.get_host_field_dot();

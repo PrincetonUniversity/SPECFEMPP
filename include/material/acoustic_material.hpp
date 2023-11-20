@@ -2,7 +2,7 @@
 #define _ACOUSTIC_MATERIAL_HPP
 
 #include "constants.hpp"
-#include "enumerations/interface.hpp"
+#include "enumerations/specfem_enums.hpp"
 #include "material.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
@@ -51,7 +51,7 @@ public:
    *
    * @return specfem::enums::element::type The type of the material
    */
-  specfem::enums::element::type get_ispec_type() override {
+  specfem::enums::element::type get_ispec_type() const override {
     return ispec_type;
   };
   /**
@@ -60,7 +60,7 @@ public:
    * @return utilities::return_holder holder used to return elastic material
    * properties
    */
-  utilities::return_holder get_properties() override;
+  utilities::return_holder get_properties() const override;
   /**
    * @brief Print material information to the console
    *
@@ -87,8 +87,8 @@ private:
   type_real poisson;
   ///@}
   specfem::enums::element::type ispec_type =
-      specfem::enums::element::acoustic; ///< Type or element ==
-                                         ///< specfem::acoustic
+      specfem::enums::element::type::acoustic; ///< Type or element ==
+                                               ///< specfem::acoustic
 };
 
 std::ostream &operator<<(std::ostream &out,

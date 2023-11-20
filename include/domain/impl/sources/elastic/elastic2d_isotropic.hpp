@@ -81,10 +81,11 @@ public:
    * @param acceleration Acceleration contribution to the global force vector by
    * the source
    */
-  KOKKOS_INLINE_FUNCTION void
-  compute_interaction(const int &isource, const int &ispec, const int &xz,
-                      const type_real &stf_value,
-                      type_real *acceleration) const;
+  KOKKOS_INLINE_FUNCTION void compute_interaction(
+      const int &isource, const int &ispec, const int &xz,
+      const type_real &stf_value,
+      specfem::kokkos::array_type<type_real, medium_type::components>
+          &acceleration) const;
 
 private:
   specfem::kokkos::DeviceView4d<type_real> source_array; ///< Source array

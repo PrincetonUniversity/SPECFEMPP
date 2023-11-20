@@ -27,11 +27,11 @@ void specfem::sources::moment_tensor::locate(
                                  npgeo, mpi);
 
   if (this->islice == mpi->get_rank()) {
-    if (ispec_type(ispec) != specfem::enums::element::elastic) {
+    if (ispec_type(ispec) != specfem::enums::element::type::elastic) {
       throw std::runtime_error(
           "Found a Moment-tensor source in acoustic/poroelastic element");
     } else {
-      this->el_type = specfem::enums::element::elastic;
+      this->el_type = specfem::enums::element::type::elastic;
     }
   }
   int ngnod = knods.extent(0);

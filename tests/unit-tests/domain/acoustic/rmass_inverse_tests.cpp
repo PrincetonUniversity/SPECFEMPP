@@ -75,6 +75,11 @@ TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
       mesh.material_ind.kmato, materials, mesh.nspec, gllx->get_N(),
       gllz->get_N());
 
+  // Set up boundary conditions
+  specfem::compute::boundaries boundary_conditions(
+      mesh.material_ind.kmato, materials, mesh.acfree_surface,
+      mesh.abs_boundary);
+
   // Locate the sources
   for (auto &source : sources)
     source->locate(compute.coordinates.coord, compute.h_ibool, gllx->get_hxi(),
@@ -119,8 +124,10 @@ TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
       specfem::enums::element::medium::acoustic,
       specfem::enums::element::quadrature::static_quadrature_points<5> >
       acoustic_domain_static(nglob, qp5, &compute, material_properties,
-                             partial_derivatives, compute_sources,
-                             compute_receivers, gllx, gllz);
+                             partial_derivatives, boundary_conditions,
+                             compute_sources, compute_receivers, gllx, gllz);
+
+  acoustic_domain_static.invert_mass_matrix();
 
   acoustic_domain_static.sync_rmass_inverse(specfem::sync::DeviceToHost);
 

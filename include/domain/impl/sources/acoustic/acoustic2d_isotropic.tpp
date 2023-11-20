@@ -46,12 +46,15 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::sources::source<
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic>::
     compute_interaction(const int &isource, const int &ispec, const int &xz, const type_real &stf_value,
-                        type_real *acceleration) const {
+                        specfem::kokkos::array_type<type_real, medium_type::components> &acceleration) const {
   int ix, iz;
   sub2ind(xz, NGLL, iz, ix);
 
   static_assert(medium_type::components == 1,
                 "Acoustic medium must have 1 component");
+
+  type_real sal = source_array(isource, iz, ix, 0);
+  type_real kap = kappa(ispec, iz, ix);
 
   acceleration[0] = source_array(isource, iz, ix, 0) * stf_value / kappa(ispec, iz, ix);
 

@@ -23,12 +23,18 @@ public:
    *
    */
   constexpr static specfem::enums::element::type value =
-      specfem::enums::element::elastic;
+      specfem::enums::element::type::elastic;
   /**
    * @brief Number of components for this medium
    *
    */
   constexpr static int components = 2;
+
+  /**
+   * @brief Convert the medium to a string
+   *
+   */
+  __inline__ static std::string to_string() { return "Elastic"; }
 };
 
 /**
@@ -42,12 +48,18 @@ public:
    *
    */
   constexpr static specfem::enums::element::type value =
-      specfem::enums::element::acoustic;
+      specfem::enums::element::type::acoustic;
   /**
    * @brief constexpr defining number of components for this medium.
    *
    */
   constexpr static int components = 1;
+
+  /**
+   * @brief Convert the medium to a string
+   *
+   */
+  __inline__ static std::string to_string() { return "Acoustic"; }
 };
 
 } // namespace medium

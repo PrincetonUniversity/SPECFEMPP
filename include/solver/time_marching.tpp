@@ -14,6 +14,18 @@ void specfem::solver::time_marching<qp_type>::run() {
   auto acoustic_domain = this->acoustic_domain;
   auto elastic_domain = this->elastic_domain;
 
+  // Special contributions to mass matrix inverse in case of Newmark scheme
+  if (it->timescheme() == specfem::enums::time_scheme::type::newmark) {
+    elastic_domain.template mass_time_contribution<
+        specfem::enums::time_scheme::type::newmark>(it->get_time_increment());
+    acoustic_domain.template mass_time_contribution<
+        specfem::enums::time_scheme::type::newmark>(it->get_time_increment());
+  }
+
+  // Compute and store the inverse of mass matrix for faster computations
+  elastic_domain.invert_mass_matrix();
+  acoustic_domain.invert_mass_matrix();
+
   const int nstep = it->get_max_timestep();
 
   auto acoustic_field = acoustic_domain.get_field();
@@ -30,22 +42,26 @@ void specfem::solver::time_marching<qp_type>::run() {
     type_real timeval = it->get_time();
 
     Kokkos::Profiling::pushRegion("Stiffness calculation");
-    it->apply_predictor_phase(acoustic_field, acoustic_field_dot, acoustic_field_dot_dot);
-    it->apply_predictor_phase(elastic_field, elastic_field_dot, elastic_field_dot_dot);
+    it->apply_predictor_phase(acoustic_field, acoustic_field_dot,
+                              acoustic_field_dot_dot);
+    it->apply_predictor_phase(elastic_field, elastic_field_dot,
+                              elastic_field_dot_dot);
 
     acoustic_elastic_interface.compute_coupling();
     acoustic_domain.compute_source_interaction(timeval);
     acoustic_domain.compute_stiffness_interaction();
     acoustic_domain.divide_mass_matrix();
 
-    it->apply_corrector_phase(acoustic_field, acoustic_field_dot, acoustic_field_dot_dot);
+    it->apply_corrector_phase(acoustic_field, acoustic_field_dot,
+                              acoustic_field_dot_dot);
 
     elastic_acoustic_interface.compute_coupling();
     elastic_domain.compute_source_interaction(timeval);
     elastic_domain.compute_stiffness_interaction();
     elastic_domain.divide_mass_matrix();
 
-    it->apply_corrector_phase(elastic_field, elastic_field_dot, elastic_field_dot_dot);
+    it->apply_corrector_phase(elastic_field, elastic_field_dot,
+                              elastic_field_dot_dot);
     Kokkos::Profiling::popRegion();
 
     if (it->compute_seismogram()) {

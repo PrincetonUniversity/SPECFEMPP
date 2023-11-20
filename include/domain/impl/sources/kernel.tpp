@@ -81,7 +81,7 @@ void specfem::domain::impl::kernels::source_kernel<medium, qp_type,
               sub2ind(xz, ngllx, iz, ix);
               int iglob = ibool(ispec_l, iz, ix);
 
-              type_real acceleration[components];
+              specfem::kokkos::array_type<type_real, components> acceleration;
 
               source.compute_interaction(isource_l, ispec_l, xz, stf,
                                          acceleration);

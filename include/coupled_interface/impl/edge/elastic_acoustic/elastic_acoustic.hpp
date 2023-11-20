@@ -93,9 +93,8 @@ public:
    * @param coupled_edge_type Orientation of edge in coupled domain.
    */
   KOKKOS_FUNCTION void
-  get_edges(const int &iedge,
-            specfem::enums::coupling::edge::type &self_edge_type,
-            specfem::enums::coupling::edge::type &coupled_edge_type) const {
+  get_edges(const int &iedge, specfem::enums::edge::type &self_edge_type,
+            specfem::enums::edge::type &coupled_edge_type) const {
     self_edge_type = this->elastic_edge(iedge);
     coupled_edge_type = this->acoustic_edge(iedge);
     return;
@@ -113,9 +112,9 @@ private:
   specfem::kokkos::DeviceView3d<type_real> gammax;   ///< gammax
   specfem::kokkos::DeviceView3d<type_real> gammaz;   ///< gammaz
   specfem::kokkos::DeviceView3d<type_real> jacobian; ///< Jacobian
-  specfem::kokkos::DeviceView1d<specfem::enums::coupling::edge::type>
+  specfem::kokkos::DeviceView1d<specfem::enums::edge::type>
       acoustic_edge; ///< Orientation of edge in acoustic domain
-  specfem::kokkos::DeviceView1d<specfem::enums::coupling::edge::type>
+  specfem::kokkos::DeviceView1d<specfem::enums::edge::type>
       elastic_edge; ///< Orientation of edge in elastic domain
   specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
       self_field_dot_dot; ///< Acceleration in elastic domain

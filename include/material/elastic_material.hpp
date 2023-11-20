@@ -2,7 +2,7 @@
 #define _ELASTIC_MATERIAL_HPP
 
 #include "constants.hpp"
-#include "enumerations/interface.hpp"
+#include "enumerations/specfem_enums.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
@@ -53,8 +53,8 @@ public:
    * @return utilities::return_holder holder used to return elastic material
    * properties
    */
-  utilities::return_holder get_properties() override;
-  specfem::enums::element::type get_ispec_type() override {
+  utilities::return_holder get_properties() const override;
+  specfem::enums::element::type get_ispec_type() const override {
     return ispec_type;
   };
   /**
@@ -84,7 +84,8 @@ private:
   type_real poisson;
   ///@}
   specfem::enums::element::type ispec_type =
-      specfem::enums::element::elastic; ///< Type or element == specfem::elastic
+      specfem::enums::element::type::elastic; ///< Type or element ==
+                                              ///< specfem::elastic
 };
 
 std::ostream &operator<<(std::ostream &out,
