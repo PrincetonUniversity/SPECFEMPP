@@ -21,3 +21,6 @@ tests/regression-tests/*/gpu/*.yaml
 *.gnu
 examples/*/Par_File
 *OUTPUT_FILES*
+*.sqlite
+*.nsys-rep
+*.ncu-rep
