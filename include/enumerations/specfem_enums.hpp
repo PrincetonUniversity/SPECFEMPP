@@ -68,10 +68,58 @@ enum class property_tag {
 };
 
 enum class boundary_tag {
+  // primary boundaries
   none,                  ///< no boundary
   acoustic_free_surface, ///< free surface boundary for acoustic elements
-  stacey                 ///< stacey boundary for elastic elements
+  stacey,                ///< stacey boundary for elements
+
+  // composite boundaries
+  composite_stacey_dirichlet ///< composite boundary for acoustic elements
 };
+
+class boundary_tag_container {
+public:
+  std::vector<boundary_tag> get_tags() const { return tags; }
+
+  boundary_tag_container(){};
+
+  boundary_tag_container &operator=(const boundary_tag &tag) {
+    if (tags.size() == 1 && tags[0] == boundary_tag::none) {
+      tags[0] = tag;
+    } else {
+      tags.push_back(tag);
+    }
+    return *this;
+  }
+
+  bool operator==(const boundary_tag &tag) const {
+    return (tags.size() == 1 && tags[0] == tag);
+  }
+
+  bool operator==(const std::tuple<boundary_tag, boundary_tag> &tag) const {
+    return (tags.size() == 2 && tags[0] == std::get<0>(tag) &&
+            tags[1] == std::get<1>(tag));
+  }
+
+  bool operator==(
+      const std::tuple<boundary_tag, boundary_tag, boundary_tag> &tag) const {
+    return (tags.size() == 3 && tags[0] == std::get<0>(tag) &&
+            tags[1] == std::get<1>(tag) && tags[2] == std::get<2>(tag));
+  }
+
+private:
+  std::vector<boundary_tag> tags = { boundary_tag::none };
+};
+
+constexpr bool operator==(const std::tuple<boundary_tag, boundary_tag> &lhs,
+                          const boundary_tag &rhs) {
+  return false;
+}
+
+constexpr bool operator==(const boundary_tag &lhs,
+                          const std::tuple<boundary_tag, boundary_tag> &rhs) {
+  return false;
+}
 
 } // namespace element
 

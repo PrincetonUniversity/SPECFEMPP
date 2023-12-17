@@ -38,7 +38,7 @@ public:
   using quadrature_points_type = qp_type;
 
   /**
-   * @brief Property type of the boundary.
+   * @brief
    *
    */
   using property_type = property;
@@ -49,6 +49,11 @@ public:
                                                            ///< tag
 
   dirichlet(){};
+
+  dirichlet(const quadrature_points_type &quadrature_points,
+            const specfem::kokkos::DeviceView1d<
+                specfem::compute::access::boundary_types> &type)
+      : quadrature_points(quadrature_points), type(type) {}
 
   dirichlet(const specfem::compute::boundaries &boundary_conditions,
             const quadrature_points_type &quadrature_points);
