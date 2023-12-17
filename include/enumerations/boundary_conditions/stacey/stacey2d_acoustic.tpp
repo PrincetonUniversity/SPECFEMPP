@@ -32,6 +32,7 @@ template <specfem::enums::element::property_tag property>
 KOKKOS_FUNCTION void newmark_mass_terms(
     const int &ix, const int &iz, const int &ngllx, const int &ngllz,
     const type_real &dt, const specfem::compute::access::boundary_types &itype,
+    const specfem::enums::element::boundary_tag &tag,
     const specfem::kokkos::array_type<type_real, 2> &weight,
     const specfem::compute::element_partial_derivatives &partial_derivatives,
     const specfem::compute::element_properties<
@@ -40,12 +41,12 @@ KOKKOS_FUNCTION void newmark_mass_terms(
 
   specfem::kokkos::array_type<type_real, 1> velocity;
 
-  velocity[0] = - 1.0 * dt * 0.5;
+  velocity[0] = -1.0 * dt * 0.5;
 
   specfem::kokkos::array_type<type_real, 2> dn; // normal vector
 
   // Left Boundary
-  if (itype.left && ix == 0) {
+  if (itype.left == tag && ix == 0) {
     dn = partial_derivatives
              .compute_normal<specfem::enums::boundaries::type::LEFT>();
     enforce_traction_boundary(weight[1], dn, properties, velocity,
@@ -54,7 +55,7 @@ KOKKOS_FUNCTION void newmark_mass_terms(
   }
 
   // Right Boundary
-  if (itype.right && ix == ngllx - 1) {
+  if (itype.right == tag && ix == ngllx - 1) {
     dn = partial_derivatives
              .compute_normal<specfem::enums::boundaries::type::RIGHT>();
     enforce_traction_boundary(weight[1], dn, properties, velocity,
@@ -63,7 +64,7 @@ KOKKOS_FUNCTION void newmark_mass_terms(
   }
 
   // Bottom Boundary
-  if (itype.bottom && iz == 0) {
+  if (itype.bottom == tag && iz == 0) {
     dn = partial_derivatives
              .compute_normal<specfem::enums::boundaries::type::BOTTOM>();
     enforce_traction_boundary(weight[0], dn, properties, velocity,
@@ -72,7 +73,7 @@ KOKKOS_FUNCTION void newmark_mass_terms(
   }
 
   // Top Boundary
-  if (itype.top && iz == ngllz - 1) {
+  if (itype.top == tag && iz == ngllz - 1) {
     dn = partial_derivatives
              .compute_normal<specfem::enums::boundaries::type::TOP>();
     enforce_traction_boundary(weight[0], dn, properties, velocity,
@@ -122,13 +123,13 @@ KOKKOS_INLINE_FUNCTION void specfem::enums::boundary_conditions::stacey<
   sub2ind(xz, ngllx, iz, ix);
 
   const auto itype = this->type(ielement);
-  if (!specfem::compute::access::is_on_boundary(itype, iz, ix, ngllz, ngllx)) {
+  if (!specfem::compute::access::is_on_boundary(value, itype, iz, ix, ngllz, ngllx)) {
     return;
   }
   // --------------------------------------------------------------------------
 
   if constexpr (time_scheme == specfem::enums::time_scheme::type::newmark) {
-    newmark_mass_terms(ix, iz, ngllx, ngllz, dt, itype, weight,
+    newmark_mass_terms(ix, iz, ngllx, ngllz, dt, itype, value, weight,
                        partial_derivatives, properties, rmass_inverse);
     return;
   }
@@ -162,7 +163,7 @@ KOKKOS_FUNCTION void specfem::enums::boundary_conditions::stacey<
   sub2ind(xz, ngllx, iz, ix);
 
   const auto itype = this->type(ielement);
-  if (!specfem::compute::access::is_on_boundary(itype, iz, ix, ngllz, ngllx)) {
+  if (!specfem::compute::access::is_on_boundary(value, itype, iz, ix, ngllz, ngllx)) {
     return;
   }
   // --------------------------------------------------------------------------
@@ -176,7 +177,7 @@ KOKKOS_FUNCTION void specfem::enums::boundary_conditions::stacey<
   specfem::kokkos::array_type<type_real, dimension::dim> dn; // normal vector
 
   // Left Boundary
-  if (itype.left && ix == 0) {
+  if (itype.left == value && ix == 0) {
     dn = partial_derivatives
              .compute_normal<specfem::enums::boundaries::type::LEFT>();
     enforce_traction_boundary(weight[1], dn, properties, field_dot,
@@ -185,7 +186,7 @@ KOKKOS_FUNCTION void specfem::enums::boundary_conditions::stacey<
   }
 
   // Right Boundary
-  if (itype.right && ix == ngllx - 1) {
+  if (itype.right == value && ix == ngllx - 1) {
     dn = partial_derivatives
              .compute_normal<specfem::enums::boundaries::type::RIGHT>();
     enforce_traction_boundary(weight[1], dn, properties, field_dot,
@@ -194,7 +195,7 @@ KOKKOS_FUNCTION void specfem::enums::boundary_conditions::stacey<
   }
 
   // Bottom Boundary
-  if (itype.bottom && iz == 0) {
+  if (itype.bottom == value && iz == 0) {
     dn = partial_derivatives
              .compute_normal<specfem::enums::boundaries::type::BOTTOM>();
     enforce_traction_boundary(weight[0], dn, properties, field_dot,
@@ -203,7 +204,7 @@ KOKKOS_FUNCTION void specfem::enums::boundary_conditions::stacey<
   }
 
   // Top Boundary
-  if (itype.top && iz == ngllz - 1) {
+  if (itype.top == value && iz == ngllz - 1) {
     dn = partial_derivatives
              .compute_normal<specfem::enums::boundaries::type::TOP>();
     enforce_traction_boundary(weight[0], dn, properties, field_dot,

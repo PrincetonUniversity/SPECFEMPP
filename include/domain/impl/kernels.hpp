@@ -85,6 +85,8 @@ public:
     isotropic_elements_dirichlet.template mass_time_contribution<time_scheme>(
         dt);
     isotropic_elements_stacey.template mass_time_contribution<time_scheme>(dt);
+    isotropic_elements_stacey_dirichlet
+        .template mass_time_contribution<time_scheme>(dt);
     return;
   }
 
@@ -97,6 +99,7 @@ public:
     isotropic_elements.compute_stiffness_interaction();
     isotropic_elements_dirichlet.compute_stiffness_interaction();
     isotropic_elements_stacey.compute_stiffness_interaction();
+    isotropic_elements_stacey_dirichlet.compute_stiffness_interaction();
     return;
   }
 
@@ -108,6 +111,7 @@ public:
     isotropic_elements.compute_mass_matrix();
     isotropic_elements_dirichlet.compute_mass_matrix();
     isotropic_elements_stacey.compute_mass_matrix();
+    isotropic_elements_stacey_dirichlet.compute_mass_matrix();
     return;
   }
 
@@ -137,30 +141,56 @@ public:
   }
 
 private:
+  template <class property>
+  using dirichlet = specfem::enums::boundary_conditions::template dirichlet<
+      dimension, medium_type, property, quadrature_point_type>; // Dirichlet
+                                                                // boundary
+                                                                // conditions
+
+  template <class property>
+  using stacey = specfem::enums::boundary_conditions::template stacey<
+      dimension, medium_type, property, quadrature_point_type>; // Stacey
+                                                                // boundary
+                                                                // conditions
+
+  template <class property>
+  using none = specfem::enums::boundary_conditions::template none<
+      dimension, medium_type, property, quadrature_point_type>; // No boundary
+                                                                // conditions
+
+  template <class BC1, class BC2>
+  using composite_boundary =
+      specfem::enums::boundary_conditions::composite_boundary<
+          BC1, BC2>; // Composite boundary conditions
+
   specfem::domain::impl::kernels::element_kernel<
       medium_type, quadrature_point_type,
       specfem::enums::element::property::isotropic,
-      specfem::enums::boundary_conditions::template none<
-          dimension, medium_type, specfem::enums::element::property::isotropic,
-          quadrature_point_type> >
+      none<specfem::enums::element::property::isotropic> >
       isotropic_elements; ///< Elemental kernels for isotropic elements
   specfem::domain::impl::kernels::element_kernel<
       medium_type, quadrature_point_type,
       specfem::enums::element::property::isotropic,
-      specfem::enums::boundary_conditions::template dirichlet<
-          dimension, medium_type, specfem::enums::element::property::isotropic,
-          quadrature_point_type> >
+      dirichlet<specfem::enums::element::property::isotropic> >
       isotropic_elements_dirichlet; ///< Elemental kernels for isotropic
                                     ///< elements with dirichlet boundary
                                     ///< conditions
   specfem::domain::impl::kernels::element_kernel<
       medium_type, quadrature_point_type,
       specfem::enums::element::property::isotropic,
-      specfem::enums::boundary_conditions::template stacey<
-          dimension, medium_type, specfem::enums::element::property::isotropic,
-          quadrature_point_type> >
+      stacey<specfem::enums::element::property::isotropic> >
       isotropic_elements_stacey; ///< Elemental kernels for isotropic elements
                                  ///< with stacey boundary conditions
+  specfem::domain::impl::kernels::element_kernel<
+      medium_type, quadrature_point_type,
+      specfem::enums::element::property::isotropic,
+      composite_boundary<
+          stacey<specfem::enums::element::property::isotropic>,
+          dirichlet<specfem::enums::element::property::isotropic> > >
+      isotropic_elements_stacey_dirichlet; ///< Elemental kernels for isotropic
+                                           ///< elements with stacey and
+                                           ///< dirichlet boundary conditions
+                                           ///< (corner nodes)
   specfem::domain::impl::kernels::source_kernel<
       medium_type, quadrature_point_type,
       specfem::enums::element::property::isotropic>

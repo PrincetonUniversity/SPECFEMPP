@@ -51,6 +51,11 @@ public:
 
   stacey(){};
 
+  stacey(const quadrature_points_type &quadrature_points,
+         const specfem::kokkos::DeviceView1d<
+             specfem::compute::access::boundary_types> &type)
+      : quadrature_points(quadrature_points), type(type) {}
+
   stacey(const specfem::compute::boundaries &boundary_conditions,
          const quadrature_points_type &quadrature_points);
 

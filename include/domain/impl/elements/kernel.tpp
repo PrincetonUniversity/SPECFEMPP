@@ -11,6 +11,7 @@
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
+namespace {
 // Do not pull velocity from global memory
 template <int components, specfem::enums::element::boundary_tag tag>
 KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, components>
@@ -19,35 +20,25 @@ get_velocity(
     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot) {
 
   specfem::kokkos::array_type<type_real, components> velocity;
-  return velocity;
-};
 
-template <>
-KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, 1>
-get_velocity<1, specfem::enums::element::boundary_tag::stacey>(
-    const int &iglob,
-    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot) {
+  // check if we need the velocity for computing the acceleration
+  constexpr bool flag =
+      ((tag == specfem::enums::element::boundary_tag::stacey) ||
+       (tag ==
+        specfem::enums::element::boundary_tag::composite_stacey_dirichlet));
 
-  specfem::kokkos::array_type<type_real, 1> velocity;
-
-  velocity[0] = field_dot(iglob, 0);
-
-  return velocity;
-};
-
-template <>
-KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, 2>
-get_velocity<2, specfem::enums::element::boundary_tag::stacey>(
-    const int &iglob,
-    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot) {
-
-  specfem::kokkos::array_type<type_real, 2> velocity;
-
-  velocity[0] = field_dot(iglob, 0);
-  velocity[1] = field_dot(iglob, 1);
+  // Only get velocity from global memory for stacey boundary
+  if constexpr (flag) {
+    for (int icomponent = 0; icomponent < components; ++icomponent)
+      velocity[icomponent] = field_dot(iglob, icomponent);
+  } else {
+    for (int icomponent = 0; icomponent < components; ++icomponent)
+      velocity[icomponent] = 0.0;
+  }
 
   return velocity;
 };
+} // namespace
 
 template <class medium, class qp_type, class property, class BC>
 specfem::domain::impl::kernels::element_kernel<medium, qp_type, property, BC>::
@@ -74,6 +65,19 @@ specfem::domain::impl::kernels::element_kernel<medium, qp_type, property, BC>::
   assert(field_dot_dot.extent(1) == medium::components);
   assert(mass_matrix.extent(1) == medium::components);
 #endif
+
+  static_assert(std::is_same_v<medium, typename BC::medium_type>,
+                "Boundary conditions should have the same medium type as the "
+                "element kernel");
+  static_assert(std::is_same_v<dimension, typename BC::dimension>,
+                "Boundary conditions should have the same dimension as the "
+                "element kernel");
+  static_assert(std::is_same_v<qp_type, typename BC::quadrature_points_type>,
+                "Boundary conditions should have the same quadrature point "
+                "type as the element kernel");
+  static_assert(std::is_same_v<property, typename BC::property_type>,
+                "Boundary conditions should have the same property as the "
+                "element kernel");
 
   element = specfem::domain::impl::elements::element<
       dimension, medium_type, quadrature_point_type, property, BC>(
