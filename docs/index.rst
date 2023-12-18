@@ -150,6 +150,18 @@ Table below shows various features available and tested in this package on vario
 .. note::
     While we work towards building this package and making the code/documentation more complete, please refer relevant SPECFEM package documentations for technical details on SPECFEM theory.
 
+Performance Benchmarks
+----------------------
+
+Performance comparison of SPECFEM++ with SPECFEM2D on Intel Xeon CPU and NVIDIA A100 GPU:
+
+.. figure:: images/SPECFEM_benchmarks.svg
+   :alt: SPECFEM++ Benchmarks
+   :width: 800
+   :align: center
+
+   SPECFEM++ performance comparison with SPECFEM2D for coupled acoustic-elastic domains. a) Performance comparison on NVIDIA A100 GPU. b) Performance comparison on Intel Xeon CPU.
+
 .. raw:: html
 
    <style>
