@@ -8,7 +8,7 @@ Get the latest version of the package:
 
 .. code-block:: bash
 
-    git clone
+    git clone ``{envvar}``
     git submodule init
     git submodule update
 
