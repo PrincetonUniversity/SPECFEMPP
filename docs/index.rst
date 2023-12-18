@@ -160,6 +160,7 @@ Table below shows various features available and tested in this package on vario
    section#cookbooks,
    section#contribution-guidelines,
    section#api-documentation,
+   section#benchmarks,
    section#community {
        display:none;
    }
@@ -209,6 +210,16 @@ Community
     Report bugs <https://github.com/PrincetonUniversity/specfempp/issues/new?assignees=&labels=&projects=&template=bug_report.md&title=>
     Request a new feature <https://github.com/PrincetonUniversity/specfempp/issues/new?assignees=&labels=&projects=&template=feature_request.md&title=>
     Join the discussion <https://github.com/orgs/SPECFEM/discussions>
+
+Benchmarks
+----------
+
+.. toctree::
+    :caption: BENCHMARKS
+    :maxdepth: 1
+    :hidden:
+
+    benchmarks/benchmark.rst
 
 API Documentation
 -----------------
