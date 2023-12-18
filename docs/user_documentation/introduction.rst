@@ -1,3 +1,5 @@
+.. This file is not part of the SPECFEM++ documentation.
+
 Introduction
 ============
 

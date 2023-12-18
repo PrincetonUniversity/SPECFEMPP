@@ -1,9 +1,9 @@
 .. _architecture:
 
-SPECFEM Architecture
+SPECFEM++ Architecture
 ====================
 
-SPECFEM is designed with portability and modularity as primary goals. The goal is develop a code that is easy to maintain and extend, while maintaining performance characteristics of SPECFEM Fortran. This is achieved using C++ templatized classes.
+SPECFEM++ is designed with portability and modularity as primary goals. The goal is develop a code that is easy to maintain and extend, while maintaining performance characteristics of original `SPECFEM2D solver <https://specfem2d.readthedocs.io>`_. This is achieved using C++ templatized classes.
 
 The code is divided into set of modules (classes and structs), the major of which to understand code architecture are:
 

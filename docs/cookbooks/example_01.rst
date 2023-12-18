@@ -112,9 +112,6 @@ Parameter File
     #       To convert one to the other see doc/Qkappa_Qmu_versus_Qp_Qs_relationship_in_2D_plane_strain.pdf and
     #       utils/attenuation/conversion_from_Qkappa_Qmu_to_Qp_Qs_from_Dahlen_Tromp_959_960.f90.
     1 1 2700.d0 3000.d0 1732.051d0 0 0 9999 9999 0 0 0 0 0 0
-    # 2 1 2500.d0 2700.d0 1443.375d0 0 0 9999 9999 0 0 0 0 0 0
-    # 3 1 2200.d0 2500.d0 1443.375d0 0 0 9999 9999 0 0 0 0 0 0
-    # 4 1 2200.d0 2200.d0 1343.375d0 0 0 9999 9999 0 0 0 0 0 0
 
     # external tomography file
     TOMOGRAPHY_FILE                 = ./DATA/tomo_file.xyz
@@ -176,11 +173,9 @@ Parameter File
     output_grid_ASCII               = .false.        # dump the grid in an ASCII text file consisting of a set of X,Y,Z points or not
 
 
-At this point, it is worthwhile to note few key parameters within the ``PAR_FILE`` as it pertains to the ``Kokkos``
-version of the solver.
+At this point, it is worthwhile to note few key parameters within the ``PAR_FILE`` as it pertains to SPECFEM++.
 
-- This version of SPECFEM2D Kokkos does not support simulations running across multiple nodes, i.e., we have not enabled
-  MPI. Relevant parameter value:
+- This version of SPECFEM++ does not support simulations running across multiple nodes, i.e., we have not enabled MPI. Relevant parameter value:
 
 .. code:: bash
 
@@ -237,7 +232,7 @@ To execute the mesher run
 
 .. note::
 
-    Make sure either your are in the build directory of SPECFEM2D kokkos or the build directory is added to your ``PATH``.
+    Make sure either your are in the build directory of SPECFEM++ or the build directory is added to your ``PATH``.
 
 Note the path of the database file and :ref:`stations_file` generated after successfully running the mesher.
 
@@ -356,7 +351,7 @@ At this point lets focus on a few sections in this file:
 Running the solver
 -------------------
 
-Finally, to run the SPECFEM2D kokkos solver
+Finally, to run the SPECFEM++ solver
 
 .. code:: bash
 
@@ -364,7 +359,7 @@ Finally, to run the SPECFEM2D kokkos solver
 
 .. note::
 
-    Make sure either your are in the build directory of SPECFEM2D kokkos or the build directory is added to your ``PATH``.
+    Make sure either your are in the build directory of SPECFEM++ or the build directory is added to your ``PATH``.
 
 Visualizing seimograms
 ----------------------
