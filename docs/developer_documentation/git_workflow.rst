@@ -33,4 +33,4 @@ To make a change to SPECFEM++ (This development workflow is similar to the one s
 
     git push origin <name-of-the-feature-brach>
 
-- Finally, head over to the main `SPECFEM++ repo <https://github.com/PrincetonUniversity/specfem2d_kokkos>`_ and issue a pull request against the develop branch. Once you've issued a pull request one of the maintainers will have a look at the changes, before approving a merge.
+- Finally, head over to the main `SPECFEM++ repo <https://github.com/PrincetonUniversity/specfempp>`_ and issue a pull request against the develop branch. Once you've issued a pull request one of the maintainers will have a look at the changes, before approving a merge.

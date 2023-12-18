@@ -206,8 +206,8 @@ Community
     :maxdepth: 1
     :hidden:
 
-    Report bugs <https://github.com/PrincetonUniversity/specfem2d_kokkos/issues/new?assignees=&labels=&projects=&template=bug_report.md&title=>
-    Request a new feature <https://github.com/PrincetonUniversity/specfem2d_kokkos/issues/new?assignees=&labels=&projects=&template=feature_request.md&title=>
+    Report bugs <https://github.com/PrincetonUniversity/specfempp/issues/new?assignees=&labels=&projects=&template=bug_report.md&title=>
+    Request a new feature <https://github.com/PrincetonUniversity/specfempp/issues/new?assignees=&labels=&projects=&template=feature_request.md&title=>
     Join the discussion <https://github.com/orgs/SPECFEM/discussions>
 
 API Documentation
