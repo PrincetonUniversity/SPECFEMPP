@@ -41,7 +41,7 @@ We define all the packages required within our environment using the `pyproject.
 .. code-block:: toml
 
     [tool.poetry]
-    name = "specfem2d_kokkos"
+    name = "specfempp"
     version = "0.1.0"
     description = "Kokkos implementation of SpecFEM2D code"
     authors = ["Your Name <you@example.com>"]
