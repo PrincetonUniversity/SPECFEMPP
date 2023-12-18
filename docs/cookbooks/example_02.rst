@@ -292,8 +292,3 @@ To run the solver, we first need to define a configuration file ``specfem_config
       seismogram:
         seismogram-format: ascii
         output-folder: "."
-
-Visualizing the seismograms
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-To visualize the seismograms we use ``obspy``. We first need to read the generated seismograms in ASCII format as numpy arrays and then create a obspy stream object to plot the traces.
