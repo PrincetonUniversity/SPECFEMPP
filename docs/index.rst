@@ -33,13 +33,13 @@ Table below shows various features available and tested in this package on vario
     :widths: 36 16 16 16 16
     :header-rows: 1
 
-    * - *Feature*
-      - *CPU (serial)*
-      - *CPU (OpenMP)*
-      - *CUDA*
-      - *HIP*
+    * - **Feature**
+      - **CPU (serial)**
+      - **CPU (OpenMP)**
+      - **CUDA**
+      - **HIP**
 
-    * - *Physics*
+    * - **Physics**
       -
       -
       -
@@ -69,7 +69,7 @@ Table below shows various features available and tested in this package on vario
       - ✔
       -
 
-    * - *Boundary Conditions*
+    * - **Boundary Conditions**
       -
       -
       -
@@ -87,7 +87,7 @@ Table below shows various features available and tested in this package on vario
       - ✔
       -
 
-    * - *Simulation Setup*
+    * - **Simulation Setup**
       -
       -
       -
@@ -99,7 +99,7 @@ Table below shows various features available and tested in this package on vario
       - ✔
       -
 
-    * - *Time Schemes*
+    * - **Time Schemes**
       -
       -
       -
@@ -111,7 +111,7 @@ Table below shows various features available and tested in this package on vario
       - ✔
       -
 
-    * - *Seismograms*
+    * - **Seismograms**
       -
       -
       -
@@ -135,7 +135,7 @@ Table below shows various features available and tested in this package on vario
       - ✔
       -
 
-    * - *Seimogram Formats*
+    * - **Seimogram Formats**
       -
       -
       -
