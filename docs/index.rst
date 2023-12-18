@@ -30,7 +30,7 @@ Current capabilities
 Table below shows various features available and tested in this package on various architectures:
 
 .. list-table::
-    :widths: 25 25 25 25
+    :widths: 36 16 16 16 16
     :header-rows: 1
 
     * - *Feature*
@@ -40,76 +40,112 @@ Table below shows various features available and tested in this package on vario
       - *HIP*
 
     * - *Physics*
+      -
+      -
+      -
+      -
 
     * - P-SV waves
       - ✔
       - ✔
       - ✔
+      -
 
     * - Elastic Domains
       - ✔
       - ✔
       - ✔
+      -
 
     * - Acoustic Domains
       - ✔
       - ✔
       - ✔
+      -
 
     * - Acoustic-Elastic coupling
       - ✔
       - ✔
       - ✔
+      -
 
     * - *Boundary Conditions*
+      -
+      -
+      -
+      -
 
     * - Absorbing Boundary Conditions (Stacey)
       - ✔
       - ✔
       - ✔
+      -
 
     * - Free Surface Boundary Conditions
       - ✔
       - ✔
       - ✔
+      -
 
     * - *Simulation Setup*
+      -
+      -
+      -
+      -
 
     * - Forward Simulations
       - ✔
       - ✔
       - ✔
+      -
 
     * - *Time Schemes*
+      -
+      -
+      -
+      -
 
     * - Newmark
       - ✔
       - ✔
       - ✔
+      -
 
     * - *Seismograms*
+      -
+      -
+      -
+      -
 
     * - displacement
       - ✔
       - ✔
       - ✔
+      -
 
     * - velocity
       - ✔
       - ✔
       - ✔
+      -
 
     * - acceleration
       - ✔
       - ✔
       - ✔
+      -
 
     * - *Seimogram Formats*
+      -
+      -
+      -
+      -
 
     * - ASCII
       - ✔
       - ✔
       - ✔
+      -
 
 .. note::
     While we work towards building this package and making the code/documentation more complete, please refer relevant SPECFEM package documentations for technical details on SPECFEM theory.
