@@ -219,7 +219,7 @@ Benchmarks
     :maxdepth: 1
     :hidden:
 
-    benchmarks/benchmark.rst
+    benchmarks/benchmarks.rst
 
 API Documentation
 -----------------
