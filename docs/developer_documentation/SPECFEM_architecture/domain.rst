@@ -48,12 +48,12 @@ There are a couple of key points to note here from a performance standpoint:
 1. The compiler will generate a different version of the function for each dimension.
 2. Since ``T::dim`` is a ``constexpr`` the compiler will unroll the loop - which on modern CPUs and GPUs can lead to significant performance gains.
 
-Apart from performance, templates also provide us a way to define a generic interface for different types of data i.e. in the above code we didn't need to write two different functions for `dim2` and `dim3` vectors. The importance of this in SPECFEM context will become clear in the following sections.
+Apart from performance, templates also provide us a way to define a generic interface for different types of data i.e. in the above code we didn't need to write two different functions for `dim2` and `dim3` vectors. The importance of this in SPECFEM++ context will become clear in the following sections.
 
-Anatomy of a SPECFEM Domain and Coupled Interface
--------------------------------------------------
+Anatomy of a SPECFEM++ Domain and Coupled Interface
+---------------------------------------------------
 
-The following figure shows the different components of a SPECFEM domain and coupled interface.
+The following figure shows the different components of a SPECFEM++ domain and coupled interface.
 
 .. figure:: domain_coupled_interface_definition.svg
    :alt: Domain definition
@@ -389,7 +389,7 @@ From some profiling experiments we found that the most computationally intensive
         temp2 += s_hprimewgll_zz(iz, l) * stress_integrand_zz(l, ix);
     }
 
-The above loops are not very efficient, especially on the GPU, since there are large number of memory accesses for each iteration. In many applications where SPECFEM is used, the number of GLL points is fixed - in most cases 4th order GLL quadrature (NGLL = 5) or 7th order GLL quadrature (NGLL = 8). Thus we can specialize the above methods for those NGLL values and unroll the loops.
+The above loops are not very efficient, especially on the GPU, since there are large number of memory accesses for each iteration. In many applications where SPECFEM++ is used, the number of GLL points is fixed - in most cases 4th order GLL quadrature (NGLL = 5) or 7th order GLL quadrature (NGLL = 8). Thus we can specialize the above methods for those NGLL values and unroll the loops.
 
 .. code:: C++
 
@@ -437,7 +437,7 @@ The speedup from the above optimization is significant. For example, for 4th ord
 
 .. note::
 
-    The key thing to note here is we need to define NGLL at compile time. As stated earlier, in many applications the NGLL = 5 or 8 so we can specialize the above method for those values in our implementation of the solver. However, to support cases when NGLL is not either of those values we have a general, *much slower*, implementation of the above method. So the performance of SPECFEM, by design, is dependent on the NGLL value.
+    The key thing to note here is we need to define NGLL at compile time. As stated earlier, in many applications the NGLL = 5 or 8 so we can specialize the above method for those values in our implementation of the solver. However, to support cases when NGLL is not either of those values we have a general, *much slower*, implementation of the above method. So the performance of SPECFEM++, by design, is dependent on the NGLL value.
 
 .. warning::
 
