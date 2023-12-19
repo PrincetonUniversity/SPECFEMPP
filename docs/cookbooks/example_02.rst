@@ -150,12 +150,10 @@ Parameter file
   - Firstly, ``nbmodels`` defines the number of material systems in the simulation domain.
   - We then define the velocity model for each material system using the following format: ``model_number rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0``.
 
-- Note we set Stacey boundary conditions on all the edges of the domain using the ``absorbbottom``, ``absorbright``, ``absorbtop`` and ``absorbleft`` parameters.
-
 Defining the topography of the domain
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-We specify the domain interfaces using the following topography file
+We define the topography of the domain using the following topography file
 
 .. code:: bash
 
