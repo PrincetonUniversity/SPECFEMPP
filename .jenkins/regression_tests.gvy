@@ -147,7 +147,7 @@ pipeline {
                         checkout([$class: 'GitSCM',
                                 branches: [[name: 'code-along']],
                                 extensions: [lfs()],
-                                userRemoteConfigs: [[url: 'https://github.com/PrincetonUniversity/specfem2d_kokkos']]])
+                                userRemoteConfigs: [[url: 'https://github.com/PrincetonUniversity/specfempp']]])
                     }
                 }
 

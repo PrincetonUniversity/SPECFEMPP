@@ -1,7 +1,7 @@
 Wave propagration through fluid-solid interface
 ===============================================
 
-This example creates the fluid-solid example with flat ocean bottom from `Komatitsch et. al. <https://doi.org/10.1190/1.1444758>`_.
+This example simulates the fluid-solid example with flat ocean bottom from `Komatitsch et. al. <https://doi.org/10.1190/1.1444758>`_.
 
 Meshing the domain
 ------------------
@@ -292,8 +292,3 @@ To run the solver, we first need to define a configuration file ``specfem_config
       seismogram:
         seismogram-format: ascii
         output-folder: "."
-
-Visualizing the seismograms
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-To visualize the seismograms we use ``obspy``. We first need to read the generated seismograms in ASCII format as numpy arrays and then create a obspy stream object to plot the traces.
