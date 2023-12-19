@@ -177,8 +177,7 @@ specfem::compute::composite_stacey_dirichlet::composite_stacey_dirichlet(
   }
 }
 
-KOKKOS_FUNCTION void
-specfem::compute::access::boundary_types::update_boundary_type(
+void specfem::compute::access::boundary_types::update_boundary_type(
     const specfem::enums::boundaries::type &type,
     const specfem::enums::element::boundary_tag &tag) {
   if (type == specfem::enums::boundaries::type::TOP) {
