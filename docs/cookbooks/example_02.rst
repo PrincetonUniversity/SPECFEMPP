@@ -1,7 +1,7 @@
 Wave propagration through fluid-solid interface
 ===============================================
 
-This example simulates the fluid-solid example with flat ocean bottom from `Komatitsch et. al. <https://doi.org/10.1190/1.1444758>`_.
+This example simulates the fluid-solid example with flat ocean bottom from `Komatitsch et. al. <https://doi.org/10.1190/1.1444758>`_. This example demonstrates the use of the ``xmeshfem2D`` mesher to generate interface between 2 conforming material systems and the setting up absorbing boundary conditions.
 
 Meshing the domain
 ------------------
@@ -149,6 +149,8 @@ Parameter file
 - We define the acoustic and elastic velocity models in the `Velocity and density models` section of the parameter file.
   - Firstly, ``nbmodels`` defines the number of material systems in the simulation domain.
   - We then define the velocity model for each material system using the following format: ``model_number rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0``.
+
+- We define stacey absorbing boundary conditions on all the edges of the domain using the ``absorbbottom``, ``absorbright``, ``absorbtop`` and ``absorbleft`` parameters.
 
 Defining the topography of the domain
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
