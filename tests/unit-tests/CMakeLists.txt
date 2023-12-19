@@ -193,31 +193,12 @@ target_link_libraries(
 )
 
 add_executable(
-  rmass_inverse_elastic_tests
-  domain/elastic/rmass_inverse_tests.cpp
+  rmass_inverse_tests
+  domain/rmass_inverse_tests.cpp
 )
 
 target_link_libraries(
-  rmass_inverse_elastic_tests
-  quadrature
-  mesh
-  material_class
-  yaml-cpp
-  kokkos_environment
-  mpi_environment
-  compute
-  parameter_reader
-  compare_arrays
-  -lpthread -lm
-)
-
-add_executable(
-  rmass_inverse_acoustic_tests
-  domain/acoustic/rmass_inverse_tests.cpp
-)
-
-target_link_libraries(
-  rmass_inverse_acoustic_tests
+  rmass_inverse_tests
   quadrature
   mesh
   material_class
@@ -316,8 +297,7 @@ if (NOT MPI_PARALLEL)
   gtest_discover_tests(compute_coupled_interfaces_tests)
   gtest_discover_tests(compute_tests)
   gtest_discover_tests(source_location_tests)
-  gtest_discover_tests(rmass_inverse_elastic_tests)
-  gtest_discover_tests(rmass_inverse_acoustic_tests)
+  gtest_discover_tests(rmass_inverse_tests)
   gtest_discover_tests(displacement_newmark_tests)
   gtest_discover_tests(seismogram_elastic_tests)
   gtest_discover_tests(seismogram_acoustic_tests)
