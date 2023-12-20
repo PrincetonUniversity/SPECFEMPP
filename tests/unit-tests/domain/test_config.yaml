@@ -23,8 +23,8 @@ Tests:
     config:
       nproc : 1
     databases:
-      specfem_config: "../../../tests/unit-tests/domain/serial/test6/specfem_config.yaml"
-      acoustic_domain_field: "../../../tests/unit-tests/domain/serial/test6/potential_acoustic.bin"
+      specfem_config: "../../../tests/unit-tests/domain/serial/test3/specfem_config.yaml"
+      acoustic_domain_field: "../../../tests/unit-tests/domain/serial/test3/potential_acoustic.bin"
 
   - name : "SerialTest4 : Homogeneous elastic domain (stacey BC)"
     description: >
@@ -32,5 +32,5 @@ Tests:
     config:
       nproc : 1
     databases:
-      specfem_config: "../../../tests/unit-tests/domain/serial/test7/specfem_config.yaml"
-      elastic_domain_field: "../../../tests/unit-tests/domain/serial/test7/displacement.bin"
+      specfem_config: "../../../tests/unit-tests/domain/serial/test4/specfem_config.yaml"
+      elastic_domain_field: "../../../tests/unit-tests/domain/serial/test4/displacement.bin"
