@@ -160,7 +160,7 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
             h_rmass_inverse_static =
                 elastic_domain_static.get_host_rmass_inverse();
 
-        type_real tolerance = 0.01;
+        type_real tolerance = 1e-5;
 
         specfem::testing::compare_norm(h_rmass_inverse_static,
                                        Test.database.elastic_mass_matrix, nglob,
@@ -173,7 +173,7 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
                 Kokkos::subview(acoustic_domain_static.get_host_rmass_inverse(),
                                 Kokkos::ALL(), 0);
 
-        type_real tolerance = 0.01;
+        type_real tolerance = 1e-5;
 
         specfem::testing::compare_norm(h_rmass_inverse_static,
                                        Test.database.acoustic_mass_matrix,
