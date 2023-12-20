@@ -12,6 +12,7 @@
 #include "quadrature/interface.hpp"
 
 namespace {
+/// Struct to tag each element
 struct element_tag {
 
   element_tag(
@@ -126,11 +127,8 @@ void allocate_elements(
   }
 
   // assert that boundary_conditions ispec matches with calculated ispec
-  if constexpr ((boundary_tag ==
-                 std::tuple<specfem::enums::element::boundary_tag,
-                            specfem::enums::element::boundary_tag>(
-                     specfem::enums::element::boundary_tag::stacey,
-                     specfem::enums::element::boundary_tag::acoustic_free_surface)) &&
+  if constexpr ((boundary_tag == specfem::enums::element::boundary_tag::
+                                     composite_stacey_dirichlet) &&
                 (medium_tag == specfem::enums::element::type::acoustic)) {
     ASSERT(nelements ==
                boundary_conditions.composite_stacey_dirichlet.nelements,
