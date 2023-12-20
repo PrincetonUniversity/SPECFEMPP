@@ -59,11 +59,13 @@ public:
 
   template <typename... Args>
   KOKKOS_INLINE_FUNCTION void enforce_traction(Args &&...args) const {
+    // The order of operations is important here. The Dirichlet boundary
+    // conditions must be applied last.
     stacey.enforce_traction(std::forward<Args>(args)...);
     dirichlet.enforce_traction(std::forward<Args>(args)...);
   }
 
-  __inline__ static std::string to_string() {
+  inline static std::string to_string() {
     return "Composite: Stacey, Dirichlet";
   }
 

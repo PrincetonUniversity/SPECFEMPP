@@ -329,7 +329,7 @@ specfem::domain::impl::kernels::kernels<medium, qp_type>::kernels(
       if (stacey.acoustic.nelements > 0) {
         for (int i = 0; i < stacey.acoustic.nelements; i++) {
           const int ispec = stacey.acoustic.h_ispec(i);
-          ielement_boundary(ispec) =
+          ielement_boundary(ispec) +=
               specfem::enums::element::boundary_tag::stacey;
         }
       }
@@ -337,7 +337,7 @@ specfem::domain::impl::kernels::kernels<medium, qp_type>::kernels(
       if (stacey.elastic.nelements > 0) {
         for (int i = 0; i < stacey.elastic.nelements; i++) {
           const int ispec = stacey.elastic.h_ispec(i);
-          ielement_boundary(ispec) =
+          ielement_boundary(ispec) +=
               specfem::enums::element::boundary_tag::stacey;
         }
       }
@@ -350,8 +350,20 @@ specfem::domain::impl::kernels::kernels<medium, qp_type>::kernels(
     if (acoustic_free_surface.nelements > 0) {
       for (int i = 0; i < acoustic_free_surface.nelements; i++) {
         const int ispec = acoustic_free_surface.h_ispec(i);
-        ielement_boundary(ispec) =
+        ielement_boundary(ispec) +=
             specfem::enums::element::boundary_tag::acoustic_free_surface;
+      }
+    }
+
+    const auto &composite_stacey_dirichlet =
+        boundary_conditions.composite_stacey_dirichlet;
+
+    // mark composite stacey dirichlet elements
+    if (composite_stacey_dirichlet.nelements > 0) {
+      for (int i = 0; i < composite_stacey_dirichlet.nelements; i++) {
+        const int ispec = composite_stacey_dirichlet.h_ispec(i);
+        ielement_boundary(ispec) +=
+            specfem::enums::element::boundary_tag::composite_stacey_dirichlet;
       }
     }
 

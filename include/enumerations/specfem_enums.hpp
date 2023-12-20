@@ -89,7 +89,7 @@ public:
    *
    * @return std::vector<boundary_tag> vector of boundary tags
    */
-  std::vector<boundary_tag> get_tags() const { return tags; }
+  inline boundary_tag get_tag() const { return tag; }
 
   /**
    * @brief Construct a new boundary tag container object
@@ -97,20 +97,71 @@ public:
    */
   boundary_tag_container(){};
 
+  boundary_tag_container &operator=(const boundary_tag &tag) = delete;
+
   /**
    * @brief Update boundary tag container with new tag
    *
    * This function checks if a boundary can be of composite type and returns the
    * correct tags
    *
-   * @param tag boundary tag to be added
+   * @param rtag boundary tag to be added
    */
-  boundary_tag_container &operator=(const boundary_tag &tag) {
-    if (tags.size() == 1 && tags[0] == boundary_tag::none) {
-      tags[0] = tag;
-    } else {
-      tags.push_back(tag);
+  boundary_tag_container &operator+=(const boundary_tag &rtag) {
+    switch (rtag) {
+    case boundary_tag::none:
+      break;
+    case boundary_tag::acoustic_free_surface:
+      switch (this->tag) {
+      case boundary_tag::none:
+        this->tag = rtag;
+        break;
+      case boundary_tag::acoustic_free_surface:
+      case boundary_tag::composite_stacey_dirichlet:
+        break;
+      case boundary_tag::stacey:
+        this->tag = boundary_tag::composite_stacey_dirichlet;
+        break;
+      default:
+        throw std::runtime_error("Invalid boundary tag");
+        break;
+      }
+      break;
+    case boundary_tag::stacey:
+      switch (this->tag) {
+      case boundary_tag::none:
+        this->tag = rtag;
+        break;
+      case boundary_tag::acoustic_free_surface:
+        this->tag = boundary_tag::composite_stacey_dirichlet;
+        break;
+      case boundary_tag::stacey:
+      case boundary_tag::composite_stacey_dirichlet:
+        break;
+      default:
+        throw std::runtime_error("Invalid boundary tag");
+        break;
+      }
+      break;
+    case boundary_tag::composite_stacey_dirichlet:
+      switch (this->tag) {
+      case boundary_tag::none:
+        this->tag = rtag;
+        break;
+      case boundary_tag::acoustic_free_surface:
+      case boundary_tag::stacey:
+      case boundary_tag::composite_stacey_dirichlet:
+        break;
+      default:
+        throw std::runtime_error("Invalid boundary tag");
+        break;
+      }
+      break;
+    default:
+      throw std::runtime_error("Invalid boundary tag");
+      break;
     }
+
     return *this;
   }
 
@@ -123,39 +174,10 @@ public:
    * @param tag boundary tag to be checked
    * @return bool true if boundary container specifies the boundary tag
    */
-  bool operator==(const boundary_tag &tag) const {
-    return (tags.size() == 1 && tags[0] == tag);
-  }
-
-  /**
-   * @brief Check if boundary tag container specifies a specific boundary tag
-   *
-   * Function overload for checking if the boundary container is of composite
-   * type
-   *
-   * @param tag tuple of boundary tags to be checked
-   * @return bool true if boundary container specifies the boundary tag
-   */
-  bool operator==(const std::tuple<boundary_tag, boundary_tag> &tag) const {
-    return (tags.size() == 2 && tags[0] == std::get<0>(tag) &&
-            tags[1] == std::get<1>(tag));
-  }
-
-  /**
-   * @brief Check if boundary tag container specifies a specific boundary tag
-   *
-   * @param tag tuple of boundary tags to be checked
-   * @return bool true if boundary container specifies the boundary tag
-   */
-  bool operator==(
-      const std::tuple<boundary_tag, boundary_tag, boundary_tag> &tag) const {
-    return (tags.size() == 3 && tags[0] == std::get<0>(tag) &&
-            tags[1] == std::get<1>(tag) && tags[2] == std::get<2>(tag));
-  }
+  bool operator==(const boundary_tag &tag) const { return (tag == this->tag); }
 
 private:
-  std::vector<boundary_tag> tags = { boundary_tag::none }; ///< vector of
-                                                           ///< boundary tags
+  boundary_tag tag = boundary_tag::none; ///< boundary tag
 };
 
 } // namespace element

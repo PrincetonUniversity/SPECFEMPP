@@ -3,13 +3,13 @@ parameters:
 
   header:
     ## Header information is used for logging. It is good practice to give your simulations explicit names
-    title: Homogeneous acoustic domain with dirichlet BCs  # name for your simulation
+    title: Homogeneous elastic domain with composite stacey dirichlet BCs  # name for your simulation
     # A detailed description for your simulation
     description: |
-      Material systems : Acoustic domain (1)
+      Material systems : Elastic domain (1)
       Interfaces : None
       Sources : Force source (1)
-      Boundary conditions : Dirichlet BCs on all edges
+      Boundary conditions : Stacey BCs on (bottom, left, right) and Dirichlet BCs on tops
 
   simulation-setup:
     ## quadrature setup
@@ -25,8 +25,8 @@ parameters:
         type-of-simulation: forward
         time-scheme:
           type: Newmark
-          dt: 1.0e-3
-          nstep: 300
+          dt: 1.65e-3
+          nstep: 600
 
   receivers:
     stations-file: "../DATA/STATIONS"
@@ -43,8 +43,8 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test5/database.bin"
-    source-file: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test5/sources.yaml"
+    mesh-database: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test8/database.bin"
+    source-file: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test8/source.yaml"
 
   seismogram:
     seismogram-format: ascii

@@ -30,7 +30,7 @@ void tag_elements(
     const int ispec = absorbing_boundaries.ispec(i);
     // Only tag acoustic elements
     if (materials[kmato(ispec)]->get_ispec_type() == medium) {
-      boundary_tag[ispec] = specfem::enums::element::boundary_tag::stacey;
+      boundary_tag[ispec] += specfem::enums::element::boundary_tag::stacey;
       boundary_types[ispec].update_boundary_type(
           absorbing_boundaries.type(i),
           specfem::enums::element::boundary_tag::stacey);
@@ -44,7 +44,7 @@ void tag_elements(
       throw std::invalid_argument(
           "Error: Acoustic free surface boundary is not an acoustic element");
     }
-    boundary_tag[ispec] =
+    boundary_tag[ispec] +=
         specfem::enums::element::boundary_tag::acoustic_free_surface;
     boundary_types[ispec].update_boundary_type(
         acoustic_free_surface.type(i),
@@ -52,12 +52,12 @@ void tag_elements(
   }
 }
 
-template <typename boundary_type, typename tag_type>
+template <typename boundary_type>
 void assign_boundary(
     const std::vector<specfem::enums::element::boundary_tag_container>
         boundary_tag,
     const std::vector<specfem::compute::access::boundary_types> boundary_types,
-    const tag_type tag, boundary_type *boundary) {
+    const specfem::enums::element::boundary_tag tag, boundary_type *boundary) {
   const int nspec = boundary_tag.size();
 
   boundary->nelements =
@@ -167,10 +167,7 @@ specfem::compute::composite_stacey_dirichlet::composite_stacey_dirichlet(
                  boundary_types);
     assign_boundary(
         boundary_tag, boundary_types,
-        std::tuple<specfem::enums::element::boundary_tag,
-                   specfem::enums::element::boundary_tag>(
-            specfem::enums::element::boundary_tag::stacey,
-            specfem::enums::element::boundary_tag::acoustic_free_surface),
+        specfem::enums::element::boundary_tag::composite_stacey_dirichlet,
         this);
   } else {
     this->nelements = 0;

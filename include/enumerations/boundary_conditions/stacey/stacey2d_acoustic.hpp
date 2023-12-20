@@ -98,7 +98,7 @@ public:
       specfem::kokkos::array_type<type_real, medium_type::components>
           &accelation) const;
 
-  __inline__ static std::string to_string() { return "Stacey"; }
+  inline static std::string to_string() { return "Stacey"; }
 
 private:
   quadrature_points_type quadrature_points; ///< Quadrature points object.

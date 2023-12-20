@@ -51,7 +51,7 @@ public:
    * @brief Convert Stacey BC to string
    *
    */
-  __inline__ static std::string to_string() { return "Stacey"; }
+  inline static std::string to_string() { return "Stacey"; }
 };
 } // namespace boundary_conditions
 } // namespace enums

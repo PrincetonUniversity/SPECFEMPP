@@ -100,7 +100,7 @@ public:
    * @brief Convert the boundary to a string
    *
    */
-  __inline__ static std::string to_string() { return "Dirichlet"; }
+  inline static std::string to_string() { return "Dirichlet"; }
 
 private:
   specfem::kokkos::DeviceView1d<specfem::compute::access::boundary_types>
