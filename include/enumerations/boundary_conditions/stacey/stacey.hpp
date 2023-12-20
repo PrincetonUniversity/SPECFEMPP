@@ -10,6 +10,15 @@
 namespace specfem {
 namespace enums {
 namespace boundary_conditions {
+/**
+ * @brief Stacey boundary conditions
+ *
+ * @tparam dim Dimension of the boundary
+ * @tparam medium medium type for the boundary condition
+ * @tparam property property type for the boundary condition (iso/anisotropic)
+ * @tparam qp_type Quadrature points type for the boundary condition
+ * (compile/run time)
+ */
 template <typename dim, typename medium, typename property, typename qp_type>
 class stacey {
 
@@ -45,6 +54,10 @@ public:
   constexpr static specfem::enums::element::boundary_tag value =
       specfem::enums::element::boundary_tag::stacey; ///< boundary tag
 
+  /**
+   * @brief Construct a new stacey object
+   *
+   */
   stacey(){};
 
   /**

@@ -97,6 +97,13 @@ public:
    */
   boundary_tag_container(){};
 
+  /**
+   * @brief Construct a new boundary tag container object
+   *
+   * Please use operator+= to update the boundary tag container
+   *
+   * @param tag boundary tag
+   */
   boundary_tag_container &operator=(const boundary_tag &tag) = delete;
 
   /**
