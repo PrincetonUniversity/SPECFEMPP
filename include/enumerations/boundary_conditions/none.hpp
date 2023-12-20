@@ -90,7 +90,7 @@ public:
       specfem::kokkos::array_type<type_real, medium_type::components>
           &field_dot_dot) const {};
 
-  __inline__ static std::string to_string() { return ""; }
+  inline static std::string to_string() { return ""; }
 };
 
 } // namespace boundary_conditions
