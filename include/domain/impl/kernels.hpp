@@ -80,7 +80,7 @@ public:
    *
    */
   template <specfem::enums::time_scheme::type time_scheme>
-  __inline__ void mass_time_contribution(const type_real &dt) const {
+  inline void mass_time_contribution(const type_real &dt) const {
     isotropic_elements.template mass_time_contribution<time_scheme>(dt);
     isotropic_elements_dirichlet.template mass_time_contribution<time_scheme>(
         dt);
@@ -95,7 +95,7 @@ public:
    * the global acceleration
    *
    */
-  __inline__ void compute_stiffness_interaction() const {
+  inline void compute_stiffness_interaction() const {
     isotropic_elements.compute_stiffness_interaction();
     isotropic_elements_dirichlet.compute_stiffness_interaction();
     isotropic_elements_stacey.compute_stiffness_interaction();
@@ -107,7 +107,7 @@ public:
    * @brief execute Kokkos kernel to compute the mass matrix for every GLL point
    *
    */
-  __inline__ void compute_mass_matrix() const {
+  inline void compute_mass_matrix() const {
     isotropic_elements.compute_mass_matrix();
     isotropic_elements_dirichlet.compute_mass_matrix();
     isotropic_elements_stacey.compute_mass_matrix();
@@ -121,7 +121,7 @@ public:
    *
    * @param timeval time value at the current time step
    */
-  __inline__ void compute_source_interaction(const type_real timeval) const {
+  inline void compute_source_interaction(const type_real timeval) const {
     isotropic_sources.compute_source_interaction(timeval);
     return;
   }
@@ -135,7 +135,7 @@ public:
    *
    * @param isig_step current seismogram step.
    */
-  __inline__ void compute_seismograms(const int &isig_step) const {
+  inline void compute_seismograms(const int &isig_step) const {
     isotropic_receivers.compute_seismograms(isig_step);
     return;
   }
@@ -163,38 +163,63 @@ private:
       specfem::enums::boundary_conditions::composite_boundary<
           BC1, BC2>; // Composite boundary conditions
 
+  /**
+   * @brief Elemental kernels for isotropic elements
+   *
+   */
   specfem::domain::impl::kernels::element_kernel<
       medium_type, quadrature_point_type,
       specfem::enums::element::property::isotropic,
       none<specfem::enums::element::property::isotropic> >
-      isotropic_elements; ///< Elemental kernels for isotropic elements
+      isotropic_elements;
+
+  /**
+   * @brief Elemental kernels for isotropic elements with dirichlet boundary
+   * conditions
+   *
+   */
   specfem::domain::impl::kernels::element_kernel<
       medium_type, quadrature_point_type,
       specfem::enums::element::property::isotropic,
       dirichlet<specfem::enums::element::property::isotropic> >
-      isotropic_elements_dirichlet; ///< Elemental kernels for isotropic
-                                    ///< elements with dirichlet boundary
-                                    ///< conditions
+      isotropic_elements_dirichlet;
+
+  /**
+   * @brief Elemental kernels for isotropic elements with stacey boundary
+   *
+   */
   specfem::domain::impl::kernels::element_kernel<
       medium_type, quadrature_point_type,
       specfem::enums::element::property::isotropic,
       stacey<specfem::enums::element::property::isotropic> >
-      isotropic_elements_stacey; ///< Elemental kernels for isotropic elements
-                                 ///< with stacey boundary conditions
+      isotropic_elements_stacey;
+
+  /**
+   * @brief Elemental kernels for isotropic elements with composite stacey and
+   * dirichlet boundary
+   *
+   */
   specfem::domain::impl::kernels::element_kernel<
       medium_type, quadrature_point_type,
       specfem::enums::element::property::isotropic,
       composite_boundary<
           stacey<specfem::enums::element::property::isotropic>,
           dirichlet<specfem::enums::element::property::isotropic> > >
-      isotropic_elements_stacey_dirichlet; ///< Elemental kernels for isotropic
-                                           ///< elements with stacey and
-                                           ///< dirichlet boundary conditions
-                                           ///< (corner nodes)
+      isotropic_elements_stacey_dirichlet;
+
+  /**
+   * @brief Elemental source kernels for isotropic elements
+   *
+   */
   specfem::domain::impl::kernels::source_kernel<
       medium_type, quadrature_point_type,
       specfem::enums::element::property::isotropic>
-      isotropic_sources; ///< Elemental source kernels for isotropic elements
+      isotropic_sources;
+
+  /**
+   * @brief Elemental receiver kernels for isotropic elements
+   *
+   */
   specfem::domain::impl::kernels::receiver_kernel<
       medium_type, quadrature_point_type,
       specfem::enums::element::property::isotropic>
