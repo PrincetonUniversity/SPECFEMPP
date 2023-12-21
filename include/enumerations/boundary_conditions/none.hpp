@@ -11,6 +11,15 @@ namespace specfem {
 namespace enums {
 namespace boundary_conditions {
 
+/**
+ * @brief None boundary condition (no boundary condition)
+ *
+ * @tparam dim Dimension of the boundary.
+ * @tparam medium Medium type for the element where the boundary is located.
+ * @tparam property Property type for the element where the boundary is located.
+ * @tparam qp_type Quadrature points object to define the quadrature points
+ * either at compile time or run time.
+ */
 template <typename dim, typename medium, typename property, typename qp_type>
 class none {
 

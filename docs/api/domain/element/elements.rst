@@ -15,7 +15,7 @@ Interface
 
 .. code-block::
 
-    template<class dimension, class medium, class quadrature_points_type [, class... Properties]>
+    template<class dimension, class medium, class quadrature_points_type , class Properties, class boundary_conditions>
     class specfem::domain::impl::elements::element
 
 Parameters
@@ -45,9 +45,7 @@ Parameters
 
 .. |isotropic| replace:: isotropic()
 
-.. _boundary_conditions: ../boundary_conditions.html
-
-.. |boundary_conditions| replace:: boundary_conditions
+.. _boundary_conditions: ../boundary_conditions/boundary_conditions.html
 
 .. _dirichlet: ../boundary_conditions/dirichlet.html
 
@@ -56,6 +54,14 @@ Parameters
 .. _stacey: ../boundary_conditions/stacey.html
 
 .. |stacey| replace:: stacey()
+
+.. _none: ../boundary_conditions/none.html
+
+.. |none| replace:: none()
+
+.. _composite: ../boundary_conditions/composite.html
+
+.. |composite| replace:: composite()
 
 * ``dimension``:
 
@@ -77,7 +83,7 @@ Parameters
 
   - |static_quadrature_points|_: A static quadrature point set.
 
-* ``Properties``:
+* ``properties``:
 
   The properties of the element. The properties describe any specializations made the implementation.
 
@@ -85,13 +91,17 @@ Parameters
 
     - |isotropic|_: An isotropic element.
 
-  - Boundary conditions:
+* ``boundary_conditions``:
+
+  The boundary conditions to be applied to the element. The boundary conditions modify the contribution of element's force vector to the global force vector.
 
 .. note::
     An element on the boundary is not Boundary conditions are not specified, the element will be assumed to have neumann boundary condition.
 
-    - |dirichlet|_: A Dirichlet boundary condition.
-    - |stacey|_: A Stacey boundary condition.
+  - |dirichlet|_: A Dirichlet boundary condition.
+  - |stacey|_: A Stacey boundary condition.
+  - |none|_ (default): No boundary condition.
+  - |composite|_: A composite boundary condition.
 
 
 .. warning::
