@@ -13,7 +13,7 @@ Definition
 Interface
 ---------
 
-.. condeblock::
+.. codeblock::
 
     template <typename... BC>
     class composite_boundary;
