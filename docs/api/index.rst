@@ -17,6 +17,7 @@ API documentation
     compute/index
     enumerations/index
     domain/index
+    boundary_conditions/index
     coupling_physics/index
     timescheme/index
     solver/index

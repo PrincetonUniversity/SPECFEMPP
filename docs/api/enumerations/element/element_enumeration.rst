@@ -28,6 +28,10 @@ Enumerations that define a type of element.
 
 .. |isotropic| replace:: isotropic()
 
+.. _boundary_conditions: ../../boundary_conditions/index.html
+
+.. |boundary_conditions| replace:: boundary_conditions
+
 Dimension
 _________
 
@@ -63,3 +67,18 @@ The properties of the element. The properties describe any specializations made 
 - Type of element:
 
   - |isotropic|_: An isotropic element.
+
+Property enumerations to tag the element with a property.
+
+.. doxygenenum:: specfem::enums::element::property_tag
+
+Boundary Conditions
+___________________
+
+Defines the boundary conditions on the element. The boundary conditions are used to modify the element's force contribution to the global force vector.
+
+- |boundary_conditions|_: The boundary conditions of the element.
+
+Boundary condition enumerations to tag the element with a boundary condition.
+
+.. doxygenenum:: specfem::enums::element::boundary_tag

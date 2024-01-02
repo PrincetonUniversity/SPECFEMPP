@@ -39,7 +39,8 @@ KOKKOS_FUNCTION void specfem::enums::boundary_conditions::
   sub2ind(xz, ngllx, iz, ix);
 
   const auto itype = this->type(ielement);
-  if (!specfem::compute::access::is_on_boundary(itype, iz, ix, ngllz, ngllx)) {
+  if (!specfem::compute::access::is_on_boundary(value, itype, iz, ix, ngllz,
+                                                ngllx)) {
     return;
   }
 

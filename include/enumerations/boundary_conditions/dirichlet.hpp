@@ -12,6 +12,15 @@ namespace specfem {
 namespace enums {
 namespace boundary_conditions {
 
+/**
+ * @brief Dirichlet boundary condition
+ *
+ * @tparam dim Dimension of the boundary.
+ * @tparam medium Medium type for the element where the boundary is located.
+ * @tparam property Property type for the element where the boundary is located.
+ * @tparam qp_type Quadrature points object to define the quadrature points
+ * either at compile time or run time.
+ */
 template <typename dim, typename medium, typename property, typename qp_type>
 class dirichlet {
 public:
@@ -38,7 +47,7 @@ public:
   using quadrature_points_type = qp_type;
 
   /**
-   * @brief Property type of the boundary.
+   * @brief
    *
    */
   using property_type = property;
@@ -48,11 +57,48 @@ public:
       enums::element::boundary_tag::acoustic_free_surface; ///< boundary
                                                            ///< tag
 
+  /**
+   * @brief Construct a new dirichlet object
+   *
+   */
   dirichlet(){};
 
+  /**
+   * @brief Construct a new dirichlet object
+   *
+   * @param quadrature_points Quadrature points object to define the quadrature
+   * points either at compile time or run time.
+   * @param type type of the edge on an element on the boundary.
+   */
+  dirichlet(const quadrature_points_type &quadrature_points,
+            const specfem::kokkos::DeviceView1d<
+                specfem::compute::access::boundary_types> &type)
+      : quadrature_points(quadrature_points), type(type) {}
+
+  /**
+   * @brief Construct a new dirichlet object
+   *
+   * @param boundary_conditions boundary conditions object specifying the
+   * boundary conditions
+   * @param quadrature_points Quadrature points object to define the quadrature
+   * points either at compile time or run time.
+   */
   dirichlet(const specfem::compute::boundaries &boundary_conditions,
             const quadrature_points_type &quadrature_points);
 
+  /**
+   * @brief Compute the mass time contribution for the boundary condition
+   *
+   * @tparam time_scheme Time scheme to use when computing the mass time
+   * contribution
+   * @param ielement index of the element
+   * @param xz index of the quadrature point
+   * @param dt time step
+   * @param weight weights(x,z) for the quadrature point
+   * @param partial_derivatives partial derivatives of the shape functions
+   * @param properties properties of the element at the quadrature point
+   * @param mass_matrix mass matrix to update
+   */
   template <specfem::enums::time_scheme::type time_scheme>
   KOKKOS_INLINE_FUNCTION void mass_time_contribution(
       const int &ielement, const int &xz, const type_real &dt,
@@ -63,6 +109,15 @@ public:
       specfem::kokkos::array_type<type_real, medium_type::components>
           &rmass_inverse) const {};
 
+  /**
+   * @brief Compute the contribuition of BC to the gradient term
+   *
+   * @param ielement index of the element
+   * @param xz index of the quadrature point
+   * @param partial_derivatives spacial derivatives at the quadrature point
+   * @param df_dx Gradient of field in x-direction to update
+   * @param df_dz Gradient of field in z-direction to update
+   */
   KOKKOS_INLINE_FUNCTION void enforce_gradient(
       const int &ielement, const int &xz,
       const specfem::compute::element_partial_derivatives &partial_derivatives,
@@ -70,6 +125,17 @@ public:
       specfem::kokkos::array_type<type_real, medium_type::components> &df_dz)
       const {};
 
+  /**
+   * @brief Compute the contribution of BC to the stress term
+   *
+   * @param ielement index of the element
+   * @param xz index of the quadrature point
+   * @param partial_derivatives spacial derivatives at the quadrature point
+   * @param properties properties of the element at the quadrature point
+   * @param stress_integrand_xi /f$ \sigma_{\xi} /f$ to update
+   * @param stress_integrand_xgamma /f$ \sigma_{\gamma} /f$ to update
+   * @return KOKKOS_INLINE_FUNCTION
+   */
   KOKKOS_INLINE_FUNCTION void enforce_stress(
       const int &ielement, const int &xz,
       const specfem::compute::element_partial_derivatives &partial_derivatives,
@@ -80,6 +146,19 @@ public:
       specfem::kokkos::array_type<type_real, medium_type::components>
           &stress_integrand_xgamma) const {};
 
+  /**
+   * @brief Compute the contribution of BC to the traction term
+   *
+   * @param ielement index of the element
+   * @param xz index of the quadrature point
+   * @param weight weights(x,z) for the quadrature point
+   * @param partial_derivatives partial derivatives of the shape functions
+   * @param properties properties of the element at the quadrature point
+   * @param velocity first derivative of the field computed from previous time
+   * step
+   * @param accelation second derivative of the field to update
+   * @return KOKKOS_INLINE_FUNCTION
+   */
   KOKKOS_FUNCTION void enforce_traction(
       const int &ielement, const int &xz,
       const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
@@ -95,7 +174,7 @@ public:
    * @brief Convert the boundary to a string
    *
    */
-  __inline__ static std::string to_string() { return "Dirichlet"; }
+  inline static std::string to_string() { return "Dirichlet"; }
 
 private:
   specfem::kokkos::DeviceView1d<specfem::compute::access::boundary_types>
