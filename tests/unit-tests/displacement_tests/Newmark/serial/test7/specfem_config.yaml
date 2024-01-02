@@ -1,10 +1,9 @@
-## Testing dirichlet BC to enforce free pressure surface on acoustic domains
 
 parameters:
 
   header:
     ## Header information is used for logging. It is good practice to give your simulations explicit names
-    title: Homogeneous elastic domain with dirichlet BCs  # name for your simulation
+    title: Homogeneous elastic domain with stacey BCs  # name for your simulation
     # A detailed description for your simulation
     description: |
       Material systems : Elastic domain (1)

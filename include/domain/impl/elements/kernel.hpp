@@ -46,6 +46,8 @@ public:
   template <specfem::enums::time_scheme::type time_scheme>
   void mass_time_contribution(const type_real dt) const;
 
+  __inline__ int total_elements() const { return ispec.extent(0); }
+
 private:
   specfem::kokkos::DeviceView1d<int> ispec;
   specfem::kokkos::DeviceView3d<int> ibool;
