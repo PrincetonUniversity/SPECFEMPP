@@ -18,7 +18,7 @@ specfem::enums::boundary_conditions::dirichlet<dim, medium, property, qp_type>::
 }
 
 template <typename dim, typename medium, typename property, typename qp_type>
-KOKKOS_FUNCTION void specfem::enums::boundary_conditions::
+KOKKOS_INLINE_FUNCTION void specfem::enums::boundary_conditions::
     dirichlet<dim, medium, property, qp_type>::enforce_traction(
         const int &ielement, const int &xz,
         const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
@@ -32,6 +32,8 @@ KOKKOS_FUNCTION void specfem::enums::boundary_conditions::
             &field_dot_dot) const {
 
   constexpr int components = medium_type::components;
+  constexpr auto value_t = value;
+
   int ngllx, ngllz;
   quadrature_points.get_ngll(&ngllx, &ngllz);
 
@@ -39,7 +41,7 @@ KOKKOS_FUNCTION void specfem::enums::boundary_conditions::
   sub2ind(xz, ngllx, iz, ix);
 
   const auto itype = this->type(ielement);
-  if (!specfem::compute::access::is_on_boundary(value, itype, iz, ix, ngllz,
+  if (!specfem::compute::access::is_on_boundary(value_t, itype, iz, ix, ngllz,
                                                 ngllx)) {
     return;
   }
