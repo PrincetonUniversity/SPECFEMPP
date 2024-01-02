@@ -128,6 +128,8 @@ KOKKOS_INLINE_FUNCTION void specfem::enums::boundary_conditions::stacey<
   // Check if the GLL point is on the boundary
   //--------------------------------------------------------------------------
   constexpr int components = 2;
+  constexpr auto value_t = value;
+
   int ngllx, ngllz;
 
   quadrature_points.get_ngll(&ngllx, &ngllz);
@@ -136,13 +138,13 @@ KOKKOS_INLINE_FUNCTION void specfem::enums::boundary_conditions::stacey<
   sub2ind(xz, ngllx, iz, ix);
 
   const auto itype = this->type(ielement);
-  if (!specfem::compute::access::is_on_boundary(value, itype, iz, ix, ngllz, ngllx)) {
+  if (!specfem::compute::access::is_on_boundary(value_t, itype, iz, ix, ngllz, ngllx)) {
     return;
   }
   //--------------------------------------------------------------------------
 
   if constexpr (time_scheme == specfem::enums::time_scheme::type::newmark) {
-    newmark_mass_terms(ix, iz, ngllx, ngllz, dt, itype, value, weight,
+    newmark_mass_terms(ix, iz, ngllx, ngllz, dt, itype, value_t, weight,
                        partial_derivatives, properties, rmass_inverse);
     return;
   }
@@ -151,7 +153,7 @@ KOKKOS_INLINE_FUNCTION void specfem::enums::boundary_conditions::stacey<
 }
 
 template <typename property, typename qp_type>
-KOKKOS_FUNCTION void specfem::enums::boundary_conditions::stacey<
+KOKKOS_INLINE_FUNCTION void specfem::enums::boundary_conditions::stacey<
     specfem::enums::element::dimension::dim2,
     specfem::enums::element::medium::elastic, property, qp_type>::
     enforce_traction(
@@ -168,6 +170,8 @@ KOKKOS_FUNCTION void specfem::enums::boundary_conditions::stacey<
   // Check if the GLL point is on the boundary
   //--------------------------------------------------------------------------
   constexpr int components = 2;
+  constexpr auto value_t = value;
+
   int ngllx, ngllz;
 
   quadrature_points.get_ngll(&ngllx, &ngllz);
@@ -176,7 +180,7 @@ KOKKOS_FUNCTION void specfem::enums::boundary_conditions::stacey<
   sub2ind(xz, ngllx, iz, ix);
 
   const auto itype = this->type(ielement);
-  if (!specfem::compute::access::is_on_boundary(value, itype, iz, ix,
+  if (!specfem::compute::access::is_on_boundary(value_t, itype, iz, ix,
                                                 ngllz, ngllx)) {
     return;
   }
@@ -191,7 +195,7 @@ KOKKOS_FUNCTION void specfem::enums::boundary_conditions::stacey<
   specfem::kokkos::array_type<type_real, dimension::dim> dn;
 
   // Left Boundary
-  if (itype.left == value && ix == 0) {
+  if (itype.left == value_t && ix == 0) {
     dn = partial_derivatives
              .compute_normal<specfem::enums::boundaries::type::LEFT>();
     enforce_traction_boundary(weight[1], dn, properties, field_dot,
@@ -200,7 +204,7 @@ KOKKOS_FUNCTION void specfem::enums::boundary_conditions::stacey<
   }
 
   // Right Boundary
-  if (itype.right == value && ix == ngllx - 1) {
+  if (itype.right == value_t && ix == ngllx - 1) {
     dn = partial_derivatives
              .compute_normal<specfem::enums::boundaries::type::RIGHT>();
     enforce_traction_boundary(weight[1], dn, properties, field_dot,
@@ -209,7 +213,7 @@ KOKKOS_FUNCTION void specfem::enums::boundary_conditions::stacey<
   }
 
   // Top Boundary
-  if (itype.top == value && iz == ngllz - 1) {
+  if (itype.top == value_t && iz == ngllz - 1) {
     dn = partial_derivatives
              .compute_normal<specfem::enums::boundaries::type::TOP>();
     enforce_traction_boundary(weight[0], dn, properties, field_dot,
@@ -218,7 +222,7 @@ KOKKOS_FUNCTION void specfem::enums::boundary_conditions::stacey<
   }
 
   // Bottom Boundary
-  if (itype.bottom == value && iz == 0) {
+  if (itype.bottom == value_t && iz == 0) {
     dn = partial_derivatives
              .compute_normal<specfem::enums::boundaries::type::BOTTOM>();
     enforce_traction_boundary(weight[0], dn, properties, field_dot,

@@ -6,6 +6,7 @@
 #include "enumerations/boundary_conditions/stacey/interface.hpp"
 #include "enumerations/quadrature.hpp"
 #include "enumerations/specfem_enums.hpp"
+#include <Kokkos_Core.hpp>
 
 namespace specfem {
 namespace enums {
@@ -61,7 +62,7 @@ public:
    * @brief Construct a new composite boundary object
    *
    */
-  composite_boundary() = default;
+  composite_boundary(){};
 
   /**
    * @brief Construct a new stacey object
