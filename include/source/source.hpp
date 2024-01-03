@@ -2,13 +2,13 @@
 #define _SOURCE_HPP
 
 #include "constants.hpp"
+#include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "source_time_function/interface.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
-#include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -43,15 +43,16 @@ public:
    * @param ispec_type material type for every spectral element
    * @param mpi Pointer to specfem MPI object
    */
-  virtual void locate(
-      const specfem::kokkos::HostView2d<type_real> coord,
-      const specfem::kokkos::HostMirror3d<int> h_ibool,
-      const specfem::kokkos::HostMirror1d<type_real> xigll,
-      const specfem::kokkos::HostMirror1d<type_real> zigll, const int nproc,
-      const specfem::kokkos::HostView2d<type_real> coorg,
-      const specfem::kokkos::HostView2d<int> knods, const int npgeo,
-      const specfem::kokkos::HostMirror1d<specfem::elements::type> ispec_type,
-      const specfem::MPI::MPI *mpi){};
+  virtual void
+  locate(const specfem::kokkos::HostView2d<type_real> coord,
+         const specfem::kokkos::HostMirror3d<int> h_ibool,
+         const specfem::kokkos::HostMirror1d<type_real> xigll,
+         const specfem::kokkos::HostMirror1d<type_real> zigll, const int nproc,
+         const specfem::kokkos::HostView2d<type_real> coorg,
+         const specfem::kokkos::HostView2d<int> knods, const int npgeo,
+         const specfem::kokkos::HostMirror1d<specfem::enums::element::type>
+             ispec_type,
+         const specfem::MPI::MPI *mpi){};
   /**
    * @brief Precompute and store lagrangian values used to compute integrals for
    * sources

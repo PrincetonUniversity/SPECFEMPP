@@ -288,5 +288,5 @@ int specfem::utilities::compute_nglob(
       },
       Kokkos::Max<type_real>(nglob));
 
-  return nglob;
+  return nglob + 1;
 }

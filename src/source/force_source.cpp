@@ -1,3 +1,4 @@
+#include "enumerations/specfem_enums.hpp"
 #include "globals.h"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
@@ -17,7 +18,8 @@ void specfem::sources::force::locate(
     const specfem::kokkos::HostMirror1d<type_real> zigll, const int nproc,
     const specfem::kokkos::HostView2d<type_real> coorg,
     const specfem::kokkos::HostView2d<int> knods, const int npgeo,
-    const specfem::kokkos::HostMirror1d<specfem::elements::type> ispec_type,
+    const specfem::kokkos::HostMirror1d<specfem::enums::element::type>
+        ispec_type,
     const specfem::MPI::MPI *mpi) {
   std::tie(this->xi, this->gamma, this->ispec, this->islice) =
       specfem::utilities::locate(coord, h_ibool, xigll, zigll, nproc,
@@ -36,7 +38,7 @@ void specfem::sources::force::compute_source_array(
   type_real xi = this->xi;
   type_real gamma = this->gamma;
   type_real angle = this->angle;
-  specfem::elements::type el_type = this->el_type;
+  specfem::enums::element::type el_type = this->el_type;
 
   auto [hxis, hpxis] =
       specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
@@ -54,14 +56,14 @@ void specfem::sources::force::compute_source_array(
     for (int j = 0; j < nquadz; j++) {
       hlagrange = hxis(i) * hgammas(j);
 
-      if (el_type == specfem::elements::acoustic ||
-          (el_type == specfem::elements::elastic &&
+      if (el_type == specfem::enums::element::type::acoustic ||
+          (el_type == specfem::enums::element::type::elastic &&
            specfem::globals::simulation_wave == specfem::wave::sh)) {
         source_array(j, i, 0) = hlagrange;
         source_array(j, i, 1) = hlagrange;
-      } else if ((el_type == specfem::elements::elastic &&
+      } else if ((el_type == specfem::enums::element::type::elastic &&
                   specfem::globals::simulation_wave == specfem::wave::p_sv) ||
-                 el_type == specfem::elements::poroelastic) {
+                 el_type == specfem::enums::element::type::poroelastic) {
         type_real tempx = sin(angle) * hlagrange;
         source_array(j, i, 0) = tempx;
         type_real tempz = -1.0 * cos(angle) * hlagrange;
@@ -92,6 +94,11 @@ specfem::sources::force::force(YAML::Node &Node, const type_real dt)
   if (YAML::Node Dirac = Node["Dirac"]) {
     this->forcing_function =
         assign_dirac(Dirac, dt, use_trick_for_better_pressure);
+  } else if (YAML::Node Ricker = Node["Ricker"]) {
+    this->forcing_function =
+        assign_ricker(Ricker, dt, use_trick_for_better_pressure);
+  } else {
+    throw std::runtime_error("Only Dirac and Ricker sources are supported.");
   }
 };
 
@@ -134,6 +141,19 @@ void specfem::sources::source::print(std::ostream &out) const {
 }
 
 void specfem::sources::force::print(std::ostream &out) const {
+
+  std::string element_type;
+
+  if (this->el_type == specfem::enums::element::type::acoustic) {
+    element_type = "acoustic";
+  } else if (this->el_type == specfem::enums::element::type::elastic) {
+    element_type = "elastic";
+  } else if (this->el_type == specfem::enums::element::type::poroelastic) {
+    element_type = "poroelastic";
+  } else {
+    element_type = "unknown";
+  }
+
   out << "Force Source: \n"
       << "   Source Location: \n"
       << "    x = " << this->x << "\n"
@@ -141,13 +161,26 @@ void specfem::sources::force::print(std::ostream &out) const {
       << "    xi = " << this->xi << "\n"
       << "    gamma = " << this->gamma << "\n"
       << "    ispec = " << this->ispec << "\n"
-      << "    islice = " << this->islice << "\n";
+      << "    islice = " << this->islice << "\n"
+      << "    element type = " << element_type << "\n";
   // out << *(this->forcing_function);
 
   return;
 }
 
 std::string specfem::sources::force::print() const {
+  std::string element_type;
+
+  if (this->el_type == specfem::enums::element::type::acoustic) {
+    element_type = "acoustic";
+  } else if (this->el_type == specfem::enums::element::type::elastic) {
+    element_type = "elastic";
+  } else if (this->el_type == specfem::enums::element::type::poroelastic) {
+    element_type = "poroelastic";
+  } else {
+    element_type = "unknown";
+  }
+
   std::ostringstream message;
   message << "- Force Source: \n"
           << "    Source Location: \n"
@@ -156,7 +189,8 @@ std::string specfem::sources::force::print() const {
           << "      xi = " << this->xi << "\n"
           << "      gamma = " << this->gamma << "\n"
           << "      ispec = " << this->ispec << "\n"
-          << "      islice = " << this->islice << "\n";
+          << "      islice = " << this->islice << "\n"
+          << "      element type = " << element_type << "\n";
 
   return message.str();
 }

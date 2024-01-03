@@ -4,6 +4,8 @@ project(specfem2d_kokkos VERSION 0.1.0)
 
 set(CMAKE_CXX_STANDARD 17)
 option(MPI_PARALLEL "MPI enabled" OFF)
+option(BUILD_TESTS "Tests included" OFF)
+option(BUILD_EXAMPLES "Examples included" OFF)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
         set(CMAKE_CXX_FLAGS "-fp-model=precise")
@@ -25,24 +27,36 @@ endif()
 ## TODO: Add options for on utilizing in house builds
 include(FetchContent)
 FetchContent_Declare(
-  kokkos
-  URL https://github.com/kokkos/kokkos/archive/refs/tags/4.0.00.zip
+kokkos
+URL https://github.com/kokkos/kokkos/archive/refs/tags/4.0.00.zip
 )
 FetchContent_MakeAvailable(kokkos)
 
 FetchContent_Declare(
         yaml
-	URL https://github.com/jbeder/yaml-cpp/archive/refs/tags/yaml-cpp-0.7.0.zip
+        URL https://github.com/jbeder/yaml-cpp/archive/refs/tags/0.8.0.tar.gz
 )
 FetchContent_MakeAvailable(yaml)
-include_directories(BEFORE SYSTEM ${yaml_SOURCE_DIR} ${yaml_BINARY_DIR}/include)
 
-add_subdirectory(boost-cmake)
+include_directories(BEFORE SYSTEM ${yaml_BINARY_DIR} ${yaml_SOURCE_DIR}/include)
+
+# Try finding boost and if not found install.
+find_package(Boost 1.73.0 COMPONENTS program_options filesystem system)
+
+if (NOT ${Boost_FOUND})
+        add_subdirectory(boost-cmake)
+else ()
+        message(STATUS "    LIB:   ${Boost_LIBRARY_DIRS}")
+        message(STATUS "    INC:   ${Boost_INCLUDE_DIRS}")
+        message(STATUS "    LIBSO: ${Boost_LIBRARIES}")
+endif()
 
 configure_file(constants.hpp.in constants.hpp)
 
 include_directories(include)
 include_directories(${CMAKE_BINARY_DIR})
+
+add_subdirectory(meshfem2d)
 
 # Build specfem2d libraries
 add_library(
@@ -86,16 +100,6 @@ else()
 endif(MPI_PARALLEL)
 
 add_library(
-        operators
-        src/mathematical_operators/mathematical_operators.cpp
-)
-
-target_link_libraries(
-        operators
-        Kokkos::kokkos
-)
-
-add_library(
         material_class
         src/material/elastic_material.cpp
         src/material/acoustic_material.cpp
@@ -113,12 +117,15 @@ add_library(
         src/mesh/IO/fortran/read_material_properties.cpp
         src/mesh/boundaries/forcing_boundaries.cpp
         src/mesh/boundaries/absorbing_boundaries.cpp
+        src/mesh/boundaries/acoustic_free_surface.cpp
         src/mesh/elements/tangential_elements.cpp
         src/mesh/elements/axial_elements.cpp
         src/mesh/properties/properties.cpp
         src/mesh/mpi_interfaces/mpi_interfaces.cpp
         src/mesh/material_indic/material_indic.cpp
-        src/mesh/surfaces/acoustic_free_surface.cpp
+        src/mesh/coupled_interfaces/elastic_acoustic.cpp
+        src/mesh/coupled_interfaces/elastic_poroelastic.cpp
+        src/mesh/coupled_interfaces/acoustic_poroelastic.cpp
         src/mesh/mesh.cpp
 )
 
@@ -157,6 +164,7 @@ target_link_libraries(
 add_library(
         source_time_function
         src/source_time_function/dirac.cpp
+        src/source_time_function/ricker.cpp
 )
 
 target_link_libraries(
@@ -206,6 +214,8 @@ add_library(
         src/compute/compute_properties.cpp
         src/compute/compute_sources.cpp
         src/compute/compute_receivers.cpp
+        src/compute/coupled_interfaces.cpp
+        src/compute/compute_boundaries.cpp
 )
 
 target_link_libraries(
@@ -218,22 +228,6 @@ target_link_libraries(
         Kokkos::kokkos
 )
 
-# there seems to be a bug when compiling compute with -O3 mode using the icpx compiler.
-# set_target_properties(compute PROPERTIES COMPILE_OPTIONS "$<$<CONFIG:RELEASE>:-fp-model=precise>")
-
-add_library(
-        domain
-        src/domain/elastic_domain.cpp
-)
-
-target_link_libraries(
-        domain
-        compute
-        quadrature
-        operators
-        Kokkos::kokkos
-)
-
 add_library(
         timescheme
         src/timescheme/timescheme.cpp
@@ -242,7 +236,9 @@ add_library(
 
 target_link_libraries(
         timescheme
-        domain
+        Kokkos::kokkos
+        yaml-cpp
+        compute
 )
 
 add_library(
@@ -254,18 +250,6 @@ target_link_libraries(
         writer
         compute
         receiver_class
-)
-
-add_library(
-        solver
-        src/solver/time_marching.cpp
-)
-
-target_link_libraries(
-        solver
-        domain
-        timescheme
-        writer
 )
 
 add_library(
@@ -288,6 +272,7 @@ target_link_libraries(
         timescheme
         receiver_class
         yaml-cpp
+        writer
         Boost::filesystem
 )
 
@@ -306,17 +291,22 @@ target_link_libraries(
         compute
         source_class
         parameter_reader
-        domain
-        solver
         receiver_class
         writer
         Boost::program_options
 )
 
 # Include tests
-add_subdirectory(tests/unit-tests)
-add_subdirectory(tests/regression-tests)
-add_subdirectory(examples)
+if (BUILD_TESTS)
+        message("-- Including tests.")
+        add_subdirectory(tests/unit-tests)
+        add_subdirectory(tests/regression-tests)
+endif()
+
+if (BUILD_EXAMPLES)
+        message("-- Including examples.")
+        add_subdirectory(examples)
+endif()
 
 # Doxygen
 

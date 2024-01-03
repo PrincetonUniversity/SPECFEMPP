@@ -61,9 +61,10 @@ pipeline {
                                 steps {
                                     echo "Building ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS}"
                                     sh """
+                                        module load boost/1.73.0
                                         module load ${CUDA_MODULE}
-                                        cmake3 -S . -B build_GNU_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS}
-                                        cmake3 --build build_GNU_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}
+                                        cmake3 -S . -B build_GNU_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${env.GIT_COMMIT} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS} -DBUILD_TESTS=ON
+                                        cmake3 --build build_GNU_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${env.GIT_COMMIT}
                                     """
                                     echo ' Build completed '
                                 }
@@ -72,16 +73,17 @@ pipeline {
                                 steps {
                                     echo " Running Unittests "
                                     sh """
-                                        cd build_GNU_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}/tests/unit-tests
-                                        srun -N 1 -t 00:10:00 ${HOST_RUN_FLAGS} ${DEVICE_RUN_FLAGS} bash -c 'export OMP_PROC_BIND=spread; export OMP_THREADS=places; ctest'
+                                        module load boost/1.73.0
+                                        cd build_GNU_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${env.GIT_COMMIT}/tests/unit-tests
+                                        srun -N 1 -t 00:10:00 ${HOST_RUN_FLAGS} ${DEVICE_RUN_FLAGS} bash -c 'export OMP_PROC_BIND=spread; export OMP_THREADS=places; ctest; ctest --rerun-failed --output-on-failure;'
                                     """
                                 }
                             }
-                            stage (' Clean '){
-                                steps {
-                                    echo ' Cleaning '
-                                    sh "rm -rf build_GNU_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}"
-                                }
+                        }
+                        post {
+                            always {
+                                echo ' Cleaning '
+                                sh "rm -rf build_GNU_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${env.GIT_COMMIT}"
                             }
                         }
                     }
@@ -138,8 +140,8 @@ pipeline {
                                         module load intel/2022.2.0
                                         export CC=icx
                                         export CXX=icpx
-                                        cmake3 -S . -B build_INTEL_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS}
-                                        cmake3 --build build_INTEL_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}
+                                        cmake3 -S . -B build_INTEL_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${env.GIT_COMMIT} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS} -DBUILD_TESTS=ON
+                                        cmake3 --build build_INTEL_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${env.GIT_COMMIT}
                                     """
                                     echo ' Build completed '
                                 }
@@ -148,17 +150,18 @@ pipeline {
                                 steps {
                                     echo " Running Unittests "
                                     sh """
+                                        module load boost/1.73.0
                                         module load intel/2022.2.0
-                                        cd build_INTEL_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}/tests/unit-tests
-                                        srun -N 1 -t 00:10:00 ${HOST_RUN_FLAGS} ${DEVICE_RUN_FLAGS} bash -c 'export OMP_PROC_BIND=spread; export OMP_THREADS=places; ctest'
+                                        cd build_INTEL_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${env.GIT_COMMIT}/tests/unit-tests
+                                        srun -N 1 -t 00:10:00 ${HOST_RUN_FLAGS} ${DEVICE_RUN_FLAGS} bash -c 'export OMP_PROC_BIND=spread; export OMP_THREADS=places; ctest; ctest --rerun-failed --output-on-failure;'
                                     """
                                 }
                             }
-                            stage (' Clean '){
-                                steps {
-                                    echo ' Cleaning '
-                                    sh "rm -rf build_INTEL_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}"
-                                }
+                        }
+                        post {
+                            always {
+                                echo ' Cleaning '
+                                sh "rm -rf build_INTEL_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${env.GIT_COMMIT}"
                             }
                         }
                     }

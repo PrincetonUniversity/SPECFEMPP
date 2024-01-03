@@ -1,4 +1,5 @@
 #include "compute/interface.hpp"
+#include "coupled_interface/interface.hpp"
 #include "domain/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "material/interface.hpp"
@@ -116,6 +117,12 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   specfem::compute::properties material_properties(
       mesh.material_ind.kmato, materials, mesh.nspec, gllx->get_N(),
       gllz->get_N());
+  specfem::compute::coupled_interfaces::coupled_interfaces coupled_interfaces(
+      compute.h_ibool, compute.coordinates.coord,
+      material_properties.h_ispec_type, mesh.coupled_interfaces);
+  specfem::compute::boundaries boundary_conditions(
+      mesh.material_ind.kmato, materials, mesh.acfree_surface,
+      mesh.abs_boundary);
 
   // Print spectral element information
   mpi->cout(mesh.print(materials));
@@ -176,15 +183,38 @@ void execute(const std::string &parameter_file, const std::string &default_file,
 
   // Instantiate domain classes
   const int nglob = specfem::utilities::compute_nglob(compute.h_ibool);
-  specfem::Domain::Domain *domains = new specfem::Domain::Elastic(
-      ndim, nglob, &compute, &material_properties, &partial_derivatives,
-      &compute_sources, &compute_receivers, gllx, gllz);
 
+  specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
+  specfem::domain::domain<
+      specfem::enums::element::medium::acoustic,
+      specfem::enums::element::quadrature::static_quadrature_points<5> >
+      acoustic_domain_static(nglob, qp5, &compute, material_properties,
+                             partial_derivatives, boundary_conditions,
+                             compute_sources, compute_receivers, gllx, gllz);
+  specfem::domain::domain<
+      specfem::enums::element::medium::elastic,
+      specfem::enums::element::quadrature::static_quadrature_points<5> >
+      elastic_domain_static(nglob, qp5, &compute, material_properties,
+                            partial_derivatives, boundary_conditions,
+                            compute_sources, compute_receivers, gllx, gllz);
+
+  // Instantiate coupled interfaces
+  specfem::coupled_interface::coupled_interface acoustic_elastic_interface(
+      acoustic_domain_static, elastic_domain_static, coupled_interfaces, qp5,
+      partial_derivatives, compute.ibool, gllx->get_w(), gllz->get_w());
+
+  specfem::coupled_interface::coupled_interface elastic_acoustic_interface(
+      elastic_domain_static, acoustic_domain_static, coupled_interfaces, qp5,
+      partial_derivatives, compute.ibool, gllx->get_w(), gllz->get_w());
+
+  // Instantiate the writer
   auto writer =
       setup.instantiate_seismogram_writer(receivers, &compute_receivers);
 
-  specfem::solver::solver *solver =
-      new specfem::solver::time_marching(domains, it);
+  specfem::solver::solver *solver = new specfem::solver::time_marching<
+      specfem::enums::element::quadrature::static_quadrature_points<5> >(
+      acoustic_domain_static, elastic_domain_static, acoustic_elastic_interface,
+      elastic_acoustic_interface, it);
 
   mpi->cout("Executing time loop:");
   mpi->cout("-------------------------------");
@@ -220,7 +250,6 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   }
 
   delete it;
-  delete domains;
   delete solver;
   delete writer;
 

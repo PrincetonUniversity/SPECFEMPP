@@ -1,5 +1,36 @@
 Tests:
+  - name : "SerialTest1 : Homogeneous elastic domain"
+    description: >
+      Testing inverse of mass matrix for homogeneous elastic domain with no interfaces. Test is run on a single MPI process.
+    config:
+      nproc : 1
+    databases:
+      specfem_config: "../../../tests/unit-tests/domain/serial/test1/specfem_config.yaml"
+      elastic_domain_field: "../../../tests/unit-tests/domain/serial/test1/displacement.bin"
 
-  serial:
-    specfem_config: "../../../tests/unit-tests/domain/serial/data/specfem_config.yaml"
-    solutions_file: "../../../tests/unit-tests/domain/serial/data/rmass_inverse_elastic_00000.bin"
+  - name : "SerialTest2 : Homogeneous acoustic domain"
+    description: >
+      Testing inverse of mass matrix on a homogeneous acoustic domain with no interfaces. Test is run on a single MPI process.
+    config:
+      nproc : 1
+    databases:
+      specfem_config: "../../../tests/unit-tests/domain/serial/test2/specfem_config.yaml"
+      acoustic_domain_field: "../../../tests/unit-tests/domain/serial/test2/potential_acoustic.bin"
+
+  - name : "SerialTest3 : Homogeneous acoustic domain (stacey BC)"
+    description: >
+      Testing inverse of mass matrix on a homogeneous acoustic domain with no interfaces. Test is run on a single MPI process. Stacey BC are applied on top/right/left/bottom boundaries.
+    config:
+      nproc : 1
+    databases:
+      specfem_config: "../../../tests/unit-tests/domain/serial/test3/specfem_config.yaml"
+      acoustic_domain_field: "../../../tests/unit-tests/domain/serial/test3/potential_acoustic.bin"
+
+  - name : "SerialTest4 : Homogeneous elastic domain (stacey BC)"
+    description: >
+      Testing inverse of mass matrix on a homogeneous elastic domain with no interfaces. Test is run on a single MPI process. Stacey BC are applied on top/right/left/bottom boundaries.
+    config:
+      nproc : 1
+    databases:
+      specfem_config: "../../../tests/unit-tests/domain/serial/test4/specfem_config.yaml"
+      elastic_domain_field: "../../../tests/unit-tests/domain/serial/test4/displacement.bin"

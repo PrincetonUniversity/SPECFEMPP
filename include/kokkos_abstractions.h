@@ -15,6 +15,11 @@ enum kind {
 };
 } // namespace sync
 
+/**
+ * @namespace Defines views and execution policies used throughout the SPECFEM
+ * project
+ *
+ */
 namespace kokkos {
 /** @name Execution Spaces
  */
@@ -46,6 +51,80 @@ using LayoutStride = Kokkos::LayoutStride;
 ///@{
 using HostScratchSpace = HostExecSpace::scratch_memory_space;
 using DevScratchSpace = DevExecSpace::scratch_memory_space;
+///@}
+
+/** @name Static Device views
+ */
+///@{
+/**
+ * @tparam T view datatype
+ * @tparam N view size
+ * @tparam L view layout - default layout is LayoutRight
+ *  @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
+ *
+ * @code ...
+ *    StridedCacheAlignedView1d = StaticDeviceView1d<double, 100,
+ * Kokkos::MemoryTraits<Kokkos::Aligned>>(...)
+ * @endcode
+ */
+template <typename T, int N, typename L = LayoutWrapper, typename... Args>
+using StaticDeviceView1d = Kokkos::View<T[N], L, DevMemSpace, Args...>;
+
+/**
+ * @tparam T view datatype
+ * @tparam N view size
+ * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
+ */
+template <typename T, int N, typename L = LayoutWrapper, typename... Args>
+using StaticDeviceView2d = Kokkos::View<T[N][N], L, DevMemSpace, Args...>;
+
+/**
+ * @tparam T view datatype
+ * @tparam N view size
+ * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
+ */
+template <typename T, int N, typename L = LayoutWrapper, typename... Args>
+using StaticDeviceView3d = Kokkos::View<T[N][N][N], L, DevMemSpace, Args...>;
+///@}
+
+/** @name Static Host views
+ */
+///@{
+
+/**
+ * @tparam T view datatype
+ * @tparam N view size
+ * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
+ */
+template <typename T, int N, typename L = LayoutWrapper, typename... Args>
+using StaticHostView1d = Kokkos::View<T[N], L, HostMemSpace, Args...>;
+
+/**
+ * @tparam T view datatype
+ * @tparam N view size
+ * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
+ */
+template <typename T, int N, typename L = LayoutWrapper, typename... Args>
+using StaticHostView2d = Kokkos::View<T[N][N], L, HostMemSpace, Args...>;
+
+/**
+ * @tparam T view datatype
+ * @tparam N view size
+ * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
+ */
+template <typename T, int N, typename L = LayoutWrapper, typename... Args>
+using StaticHostView3d = Kokkos::View<T[N][N][N], L, HostMemSpace, Args...>;
 ///@}
 
 /** @name Device views
@@ -97,6 +176,16 @@ using DeviceView4d = Kokkos::View<T ****, L, DevMemSpace, Args...>;
  */
 template <typename T, typename L = LayoutWrapper, typename... Args>
 using DeviceView5d = Kokkos::View<T *****, L, DevMemSpace, Args...>;
+/**
+ * @brief 6d device view
+ *
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
+ */
+template <typename T, typename L = LayoutWrapper, typename... Args>
+using DeviceView6d = Kokkos::View<T ******, L, DevMemSpace, Args...>;
 ///@}
 
 /** @name Host views
@@ -255,6 +344,16 @@ using HostMirror4d = typename DeviceView4d<T, L, Args...>::HostMirror;
  */
 template <typename T, typename L = LayoutWrapper, typename... Args>
 using HostMirror5d = typename DeviceView5d<T, L, Args...>::HostMirror;
+/**
+ * @brief Host mirror of 6d device view
+ *
+ * @tparam T view datatype
+ * @tparam L view layout - default layout is LayoutRight
+ * @tparam Args - Args can be used to customize your views. These are passed
+ * directly to Kokkos::Views objects
+ */
+template <typename T, typename L = LayoutWrapper, typename... Args>
+using HostMirror6d = typename DeviceView6d<T, L, Args...>::HostMirror;
 ///@}
 
 // Scratch Views
@@ -456,6 +555,193 @@ using DeviceTeam = Kokkos::TeamPolicy<DevExecSpace>;
 template <typename T = type_real,
           typename simd_abi = Kokkos::Experimental::simd_abi::scalar>
 using simd_type = Kokkos::Experimental::simd<T, simd_abi>;
+
+/**
+ * @brief Array to store temporary values when doing Kokkos reductions
+ *
+ * @tparam T array type
+ * @tparam N size of array
+ */
+template <typename T, int N> struct array_type {
+  T data[N]; ///< Data array
+
+  /**
+   * @brief operator [] to access the data array
+   *
+   * @param i index
+   * @return T& reference to the data array
+   */
+  KOKKOS_INLINE_FUNCTION T &operator[](const int &i) { return data[i]; }
+
+  /**
+   * @brief operator [] to access the data array
+   *
+   * @param i index
+   * @return const T& reference to the data array
+   */
+  KOKKOS_INLINE_FUNCTION const T &operator[](const int &i) const {
+    return data[i];
+  }
+
+  /**
+   * @brief operator += to add two arrays
+   *
+   * @param rhs right hand side array
+   * @return array_type<T>& reference to the array
+   */
+  KOKKOS_INLINE_FUNCTION array_type<T, N> &
+  operator+=(const array_type<T, N> &rhs) {
+#ifdef KOKKOS_ENABLE_CUDA
+#pragma unroll
+#endif
+    for (int i = 0; i < N; i++) {
+      data[i] += rhs[i];
+    }
+    return *this;
+  }
+
+  /**
+   * @brief Initialize the array for sum reductions
+   *
+   */
+  KOKKOS_INLINE_FUNCTION void init() {
+#ifdef KOKKOS_ENABLE_CUDA
+#pragma unroll
+#endif
+    for (int i = 0; i < N; i++) {
+      data[i] = 0.0;
+    }
+  }
+
+  // Default constructor
+  /**
+   * @brief Construct a new array type object
+   *
+   */
+  KOKKOS_INLINE_FUNCTION array_type() { init(); }
+
+  // Copy constructor
+  /**
+   * @brief Copy constructor
+   *
+   * @param other other array
+   */
+  KOKKOS_INLINE_FUNCTION array_type(const array_type<T, N> &other) {
+#ifdef KOKKOS_ENABLE_CUDA
+#pragma unroll
+#endif
+    for (int i = 0; i < N; i++) {
+      data[i] = other[i];
+    }
+  }
+
+  KOKKOS_INLINE_FUNCTION type_real l2_norm() const {
+    type_real norm = 0.0;
+#ifdef KOKKOS_ENABLE_CUDA
+#pragma unroll
+#endif
+    for (int i = 0; i < N; i++) {
+      norm += data[i] * data[i];
+    }
+    return sqrt(norm);
+  }
+
+  KOKKOS_INLINE_FUNCTION static type_real dot(const array_type<T, N> &a,
+                                              const array_type<T, N> &b) {
+
+    type_real dot = 0.0;
+#ifdef KOKKOS_ENABLE_CUDA
+#pragma unroll
+#endif
+    for (int i = 0; i < N; i++) {
+      dot += a[i] * b[i];
+    }
+    return dot;
+  }
+};
+
+/**
+ * @name Custom reductions for Kokkos TeamThreadRange policies.
+ *
+ * These reductions are used in Kokkos nested policies. Kokkos required
+ * nested policy reductions to be reduced into scalar types. Use of these
+ * reduction policies would be appropriate when reductions need to be done into
+ * arrays - for example when computing seismograms (check
+ * domain.tpp::compute_seismograms() for examples on how to use this)
+ *
+ */
+///@{
+/**
+ * Sum reduction
+ *
+ * @tparam T Scalar Array types for reductions. Can be either <dim2 or
+ * dim3>::<array_type or scalar_type>
+ */
+template <typename T, class Space = DevMemSpace> class Sum {
+public:
+  // Required typedefs
+  /**
+   * @brief Check Kokkos custom reducers for more details
+   * (https://kokkos.github.io/kokkos-core-wiki/ProgrammingGuide/Custom-Reductions-Custom-Reducers.html)
+   *
+   */
+  typedef T value_type; ///< Value type of reduction
+  typedef Sum reducer;  ///< Required typedef for reduction
+  typedef Kokkos::View<value_type *, Space,
+                       Kokkos::MemoryTraits<Kokkos::Unmanaged> >
+      result_view_type; ///< Required typedef for reduction
+
+  /**
+   * @brief Constructor
+   *
+   * @param value - reference to value to be reduced into
+   */
+  KOKKOS_INLINE_FUNCTION Sum(value_type &value) : value(value) {}
+
+  /**
+   * @brief init operator to initialize value to be reduced
+   *
+   * @param update value to be reduced into
+   * @return KOKKOS_INLINE_FUNCTION
+   */
+  KOKKOS_INLINE_FUNCTION void init(value_type &update) const { update.init(); }
+
+  /**
+   * @brief join operator to join values from different threads
+   *
+   * @param update value to be reduced into
+   * @param source value to be reduced from
+   */
+  KOKKOS_INLINE_FUNCTION void join(value_type &update,
+                                   const value_type &source) const {
+    update += source;
+  }
+
+  /**
+   * @brief reference operator to return reference to value to be reduced into
+   *
+   */
+  KOKKOS_INLINE_FUNCTION value_type &reference() const { return value; }
+
+  /**
+   * @brief view operator to return view of value to be reduced into
+   *
+   */
+  KOKKOS_INLINE_FUNCTION result_view_type view() const {
+    return result_view_type(&value, 1);
+  }
+
+  /**
+   * @brief references_scalar operator to return true if value to be reduced is
+   * a scalar type
+   *
+   */
+  KOKKOS_INLINE_FUNCTION bool references_scalar() const { return true; }
+
+private:
+  value_type &value; ///< Reference to value to be reduced into
+};
+///@}
 
 } // namespace kokkos
 } // namespace specfem

@@ -1,6 +1,7 @@
 #include "compute/interface.hpp"
 #include "jacobian/interface.hpp"
 #include "kokkos_abstractions.h"
+#include "macros.hpp"
 #include <Kokkos_Core.hpp>
 
 specfem::compute::partial_derivatives::partial_derivatives(const int nspec,
@@ -100,8 +101,8 @@ specfem::compute::partial_derivatives::partial_derivatives(
 
         Kokkos::parallel_for(
             Kokkos::TeamThreadRange(teamMember, ngllxz), [&](const int xz) {
-              const int ix = xz % ngllz;
-              const int iz = xz / ngllz;
+              int ix, iz;
+              sub2ind(xz, ngllx, iz, ix);
 
               // Get x and y coordinates for (ix, iz) point
               auto sv_shape2D = Kokkos::subview(shape2D, iz, ix, Kokkos::ALL);
@@ -139,3 +140,30 @@ void specfem::compute::partial_derivatives::sync_views() {
   Kokkos::deep_copy(gammaz, h_gammaz);
   Kokkos::deep_copy(jacobian, h_jacobian);
 }
+
+// KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, 2>
+// specfem::compute::element_partial_derivatives::compute_normal(
+//     const specfem::enums::boundaries::type type) const {
+
+//   switch (type) {
+//   case specfem::enums::boundaries::type::BOTTOM:
+//     return this->compute_normal<specfem::enums::boundaries::type::BOTTOM>();
+//     break;
+//   case specfem::enums::boundaries::type::TOP:
+//     return this->compute_normal<specfem::enums::boundaries::type::TOP>();
+//     break;
+//   case specfem::enums::boundaries::type::LEFT:
+//     return this->compute_normal<specfem::enums::boundaries::type::LEFT>();
+//     break;
+//   case specfem::enums::boundaries::type::RIGHT:
+//     return this->compute_normal<specfem::enums::boundaries::type::RIGHT>();
+//     break;
+//   default:
+// #ifndef NDEBUG
+//     ASSERT(false, "Invalid boundary type");
+// #endif
+//     break;
+//   }
+
+//   return specfem::kokkos::array_type<type_real, 2>();
+// }

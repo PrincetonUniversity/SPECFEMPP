@@ -15,6 +15,11 @@ class TimeScheme {
 
 public:
   /**
+   * @brief Get the timescheme type
+   *
+   */
+  virtual specfem::enums::time_scheme::type timescheme() const = 0;
+  /**
    * @brief Return the status of simulation
    *
    * @return false if current step >= number of steps
@@ -54,15 +59,21 @@ public:
    *
    * @param domain_class Pointer to domain class to apply predictor phase
    */
-  virtual void
-  apply_predictor_phase(const specfem::Domain::Domain *domain_class){};
+  virtual void apply_predictor_phase(
+      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field,
+      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot,
+      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+          field_dot_dot){};
   /**
    * @brief Apply corrector phase of the timescheme
    *
    * @param domain_class Pointer to domain class to apply corrector phase
    */
-  virtual void
-  apply_corrector_phase(const specfem::Domain::Domain *domain_class){};
+  virtual void apply_corrector_phase(
+      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field,
+      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot,
+      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+          field_dot_dot){};
 
   friend std::ostream &operator<<(std::ostream &out, TimeScheme &ts);
   /**
@@ -91,6 +102,11 @@ public:
    *
    */
   virtual void increment_seismogram_step(){};
+  /**
+   * @brief Get time increment
+   *
+   */
+  virtual type_real get_time_increment() const { return 0.0; }
 };
 
 std::ostream &operator<<(std::ostream &out,

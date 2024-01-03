@@ -1,5 +1,5 @@
 #include "mesh/mesh.hpp"
-#include "compute/interface.hpp"
+#include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
 #include "material/interface.hpp"
 #include "specfem_mpi/interface.hpp"
@@ -119,17 +119,19 @@ specfem::mesh::mesh::mesh(const std::string filename,
   }
 
   try {
-    this->acfree_surface = specfem::mesh::surfaces::acoustic_free_surface(
-        stream, this->parameters.nelem_acoustic_surface, mpi);
+    this->acfree_surface = specfem::mesh::boundaries::acoustic_free_surface(
+        stream, this->parameters.nelem_acoustic_surface,
+        this->material_ind.knods, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
 
   try {
-    specfem::mesh::IO::fortran::read_mesh_database_coupled(
-        stream, this->parameters.num_fluid_solid_edges,
-        this->parameters.num_fluid_poro_edges,
-        this->parameters.num_solid_poro_edges, mpi);
+    this->coupled_interfaces =
+        specfem::mesh::coupled_interfaces::coupled_interfaces(
+            stream, this->parameters.num_fluid_solid_edges,
+            this->parameters.num_fluid_poro_edges,
+            this->parameters.num_solid_poro_edges, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
@@ -169,10 +171,11 @@ std::string specfem::mesh::mesh::print(
       "setup_compute::properties_ispec", specfem::kokkos::HostRange(0, nspec),
       [=](const int ispec, int &l_elastic, int &l_acoustic) {
         const int imat = this->material_ind.kmato(ispec);
-        if (materials[imat]->get_ispec_type() == specfem::elements::elastic) {
+        if (materials[imat]->get_ispec_type() ==
+            specfem::enums::element::type::elastic) {
           l_elastic++;
         } else if (materials[imat]->get_ispec_type() ==
-                   specfem::elements::acoustic) {
+                   specfem::enums::element::type::acoustic) {
           l_acoustic++;
         }
       },

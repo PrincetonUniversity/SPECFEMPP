@@ -1,7 +1,7 @@
 Seismogram output
 ==================
 
-On successful completion of the SPECFEM2D run a seismogram will be written to the output directory. Below are definitions output formats as defined in SPECFEM.
+On successful completion of the SPECFEM++ run a seismogram will be written to the output directory. Below are definitions output formats as defined in SPECFEM2D.
 
 .. _stations_file:
 

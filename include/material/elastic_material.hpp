@@ -2,6 +2,7 @@
 #define _ELASTIC_MATERIAL_HPP
 
 #include "constants.hpp"
+#include "enumerations/specfem_enums.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
@@ -24,11 +25,18 @@ public:
    */
   elastic_material();
   /**
-   * @brief Assign elastic material values
+   * @brief Construct a new elastic material object
    *
-   * @param holder holder used to hold read values
+   * @param density Density of the material
+   * @param cs Transverse wave speed
+   * @param cp Compressional wave speed
+   * @param Qkappa Kappa attenuation factor
+   * @param Qmu Mu attenuation factor
+   * @param compaction_grad compaction gradient
    */
-  void assign(utilities::input_holder &holder) override;
+  elastic_material(const type_real &density, const type_real &cs,
+                   const type_real &cp, const type_real &Qkappa,
+                   const type_real &Qmu, const type_real &compaction_grad);
   /**
    * @brief User output
    * Prints the read material values and additional information on
@@ -45,9 +53,15 @@ public:
    * @return utilities::return_holder holder used to return elastic material
    * properties
    */
-  utilities::return_holder get_properties() override;
-  specfem::elements::type get_ispec_type() override { return ispec_type; };
-
+  utilities::return_holder get_properties() const override;
+  specfem::enums::element::type get_ispec_type() const override {
+    return ispec_type;
+  };
+  /**
+   * @brief Print material information to the console
+   *
+   * @return std::string String containing the material information
+   */
   std::string print() const override;
 
 private:
@@ -69,8 +83,9 @@ private:
   type_real young;
   type_real poisson;
   ///@}
-  specfem::elements::type ispec_type =
-      specfem::elements::elastic; ///< Type or element == specfem::elastic
+  specfem::enums::element::type ispec_type =
+      specfem::enums::element::type::elastic; ///< Type or element ==
+                                              ///< specfem::elastic
 };
 
 std::ostream &operator<<(std::ostream &out,

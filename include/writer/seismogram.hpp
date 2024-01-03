@@ -31,7 +31,7 @@ public:
    */
   seismogram(std ::vector<specfem::receivers::receiver *> &receivers,
              specfem::compute::receivers *compute_receivers,
-             const specfem::seismogram::format::type type,
+             const specfem::enums::seismogram::format type,
              const std::string output_folder, const type_real dt,
              const type_real t0, const int nstep_between_samples)
       : receivers(receivers), compute_receivers(compute_receivers), type(type),
@@ -44,8 +44,8 @@ public:
   void write() override;
 
 private:
-  specfem::seismogram::format::type type; ///< Output format of the seismogram
-                                          ///< file
+  specfem::enums::seismogram::format type; ///< Output format of the seismogram
+                                           ///< file
   std::string output_folder; ///< Path to output folder where results will be
                              ///< stored
   specfem::compute::receivers

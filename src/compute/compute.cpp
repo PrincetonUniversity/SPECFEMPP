@@ -197,8 +197,8 @@ specfem::compute::compute::compute(
 
         Kokkos::parallel_for(
             Kokkos::TeamThreadRange(teamMember, ngllxz), [&](const int xz) {
-              const int ix = xz % ngllz;
-              const int iz = xz / ngllz;
+              int ix, iz;
+              sub2ind(xz, ngllx, iz, ix);
               const int iloc = ispec * (ngllxz) + xz;
 
               // Get x and y coordinates for (ix, iz) point
