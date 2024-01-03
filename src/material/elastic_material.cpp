@@ -30,42 +30,39 @@ std::string specfem::material::elastic_material::print() const {
   return message.str();
 }
 
-void specfem::material::elastic_material::assign(
-    utilities::input_holder &holder) {
-  this->ispec_type = specfem::elements::elastic;
-  // density
-  this->density = holder.val0;
-  // P and S velocity
-  this->cp = holder.val1;
-  this->cs = holder.val2;
-  this->compaction_grad = holder.val3;
+specfem::material::elastic_material::elastic_material(
+    const type_real &density, const type_real &cs, const type_real &cp,
+    const type_real &Qkappa, const type_real &Qmu,
+    const type_real &compaction_grad)
+    : density(density), cs(cs), cp(cp), Qkappa(Qkappa), Qmu(Qmu),
+      compaction_grad(compaction_grad) {
+  this->ispec_type = specfem::enums::element::type::elastic;
 
-  // Qkappa and Qmu values
-  this->Qkappa = holder.val5;
-  this->Qmu = holder.val6;
   if (this->Qkappa <= 0.0 || this->Qmu <= 0.0) {
     std::runtime_error(
         "negative or null values of Q attenuation factor not allowed; set "
         "them equal to 9999 to indicate no attenuation");
   }
+
   // Lame parameters
-  this->lambdaplus2mu = this->density * this->cp * this->cp;
-  this->mu = this->density * this->cs * this->cs;
+  this->lambdaplus2mu = density * cp * cp;
+  this->mu = density * cs * cs;
   this->lambda = this->lambdaplus2mu - 2.0 * this->mu;
   // Bulk modulus
   this->kappa = this->lambda + this->mu;
   // Youngs modulus
   this->young = 9.0 * this->kappa * this->mu / (3.0 * this->kappa + this->mu);
   // Poisson's ratio
-  this->poisson = 0.5 * (this->cp * this->cp - 2.0 * this->cs * this->cs) /
-                  (this->cp * this->cp - this->cs * this->cs);
+  this->poisson = 0.5 * (cp * cp - 2.0 * cs * cs) / (cp * cp - cs * cs);
 
   if (this->poisson < -1.0 || this->poisson > 0.5)
     std::runtime_error("Poisson's ratio out of range");
+
+  return;
 }
 
 specfem::utilities::return_holder
-specfem::material::elastic_material::get_properties() {
+specfem::material::elastic_material::get_properties() const {
   utilities::return_holder holder;
   holder.rho = this->density;
   holder.mu = this->mu;

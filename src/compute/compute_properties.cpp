@@ -10,7 +10,7 @@ specfem::compute::properties::properties(const int nspec, const int ngllz,
           "specfem::compute::properties::rho", nspec, ngllz, ngllx)),
       mu(specfem::kokkos::DeviceView3d<type_real>(
           "specfem::compute::properties::mu", nspec, ngllz, ngllx)),
-      kappa(specfem::kokkos::HostView3d<type_real>(
+      kappa(specfem::kokkos::DeviceView3d<type_real>(
           "specfem::compute::properties::kappa", nspec, ngllz, ngllx)),
       qmu(specfem::kokkos::HostView3d<type_real>(
           "specfem::compute::properties::qmu", nspec, ngllz, ngllx)),
@@ -22,13 +22,21 @@ specfem::compute::properties::properties(const int nspec, const int ngllz,
           "specfem::compute::properties::rho_vs", nspec, ngllz, ngllx)),
       lambdaplus2mu(specfem::kokkos::DeviceView3d<type_real>(
           "specfem::compute::properties::lambdaplus2mu", nspec, ngllz, ngllx)),
-      ispec_type(specfem::kokkos::DeviceView1d<specfem::elements::type>(
-          "specfem::compute::properties::ispec_type", nspec)) {
+      ispec_type(specfem::kokkos::DeviceView1d<specfem::enums::element::type>(
+          "specfem::compute::properties::ispec_type", nspec)),
+      rho_inverse(specfem::kokkos::DeviceView3d<type_real>(
+          "specfem::compute::properties::rho_inverse", nspec, ngllz, ngllx)),
+      lambdaplus2mu_inverse(specfem::kokkos::DeviceView3d<type_real>(
+          "specfem::compute::properties::lambdaplus2mu_inverse", nspec, ngllz,
+          ngllx)) {
 
   h_rho = Kokkos::create_mirror_view(rho);
   h_mu = Kokkos::create_mirror_view(mu);
+  h_kappa = Kokkos::create_mirror_view(kappa);
   h_lambdaplus2mu = Kokkos::create_mirror_view(lambdaplus2mu);
   h_ispec_type = Kokkos::create_mirror_view(ispec_type);
+  h_rho_inverse = Kokkos::create_mirror_view(rho_inverse);
+  h_lambdaplus2mu_inverse = Kokkos::create_mirror_view(lambdaplus2mu_inverse);
 };
 
 specfem::compute::properties::properties(
@@ -56,7 +64,7 @@ specfem::compute::properties::properties(
                             holder.qkappa, holder.lambdaplus2mu);
         this->h_rho(ispec, iz, ix) = rho;
         this->h_mu(ispec, iz, ix) = mu;
-        this->kappa(ispec, iz, ix) = kappa;
+        this->h_kappa(ispec, iz, ix) = kappa;
 
         this->qmu(ispec, iz, ix) = qmu;
         this->qkappa(ispec, iz, ix) = qkappa;
@@ -66,6 +74,8 @@ specfem::compute::properties::properties(
 
         this->rho_vp(ispec, iz, ix) = rho * vp;
         this->rho_vs(ispec, iz, ix) = rho * vs;
+        this->h_rho_inverse(ispec, iz, ix) = 1.0 / rho;
+        this->h_lambdaplus2mu_inverse(ispec, iz, ix) = 1.0 / lambdaplus2mu;
         this->h_lambdaplus2mu(ispec, iz, ix) = lambdaplus2mu;
       });
 
@@ -82,8 +92,11 @@ specfem::compute::properties::properties(
 void specfem::compute::properties::sync_views() {
   Kokkos::deep_copy(rho, h_rho);
   Kokkos::deep_copy(mu, h_mu);
+  Kokkos::deep_copy(kappa, h_kappa);
   Kokkos::deep_copy(lambdaplus2mu, h_lambdaplus2mu);
   Kokkos::deep_copy(ispec_type, h_ispec_type);
+  Kokkos::deep_copy(rho_inverse, h_rho_inverse);
+  Kokkos::deep_copy(lambdaplus2mu_inverse, h_lambdaplus2mu_inverse);
 
   return;
 }

@@ -18,7 +18,7 @@ void specfem::writer::seismogram::write() {
   std::cout << "output folder : " << this->output_folder << "\n";
 
   switch (this->type) {
-  case specfem::seismogram::format::ascii:
+  case specfem::enums::seismogram::ascii:
     // Open stream
     for (int irec = 0; irec < n_receivers; irec++) {
       std::string network_name = receivers[irec]->get_network_name();
@@ -27,29 +27,24 @@ void specfem::writer::seismogram::write() {
         std::vector<std::string> filename;
         auto stype = this->compute_receivers->h_seismogram_types(isig);
         switch (stype) {
-        case specfem::seismogram::displacement:
+        case specfem::enums::seismogram::type::displacement:
           filename = { this->output_folder + "/" + network_name + station_name +
                            "BXX" + ".semd",
                        this->output_folder + "/" + network_name + station_name +
                            "BXZ" + ".semd" };
           break;
-        case specfem::seismogram::velocity:
+        case specfem::enums::seismogram::type::velocity:
           filename = { this->output_folder + "/" + network_name + station_name +
                            "BXX" + ".semv",
                        this->output_folder + "/" + network_name + station_name +
                            "BXZ" + ".semv" };
           break;
-        case specfem::seismogram::acceleration:
+        case specfem::enums::seismogram::type::acceleration:
           filename = { this->output_folder + "/" + network_name + station_name +
                            "BXX" + ".sema",
                        this->output_folder + "/" + network_name + station_name +
                            "BXZ" + ".sema" };
           break;
-        default:
-          std::ostringstream message;
-          message << "seismogram type " << stype
-                  << " has not been implemented yet.";
-          throw std::runtime_error(message.str());
         }
 
         for (int iorientation = 0; iorientation < filename.size();

@@ -197,40 +197,12 @@ specfem::mesh::IO::fortran::read_mesh_database_attenuation(
   specfem::fortran_IO::fortran_read_line(
       stream, &n_sls, &attenuation_f0_reference, &read_velocities_at_f0);
 
-  if (n_sls < 1) {
-    throw std::runtime_error("must have N_SLS >= 1 even if attenuation if off "
-                             "because it is used to assign some arrays");
-  }
+  //   if (n_sls < 1) {
+  //     throw std::runtime_error("must have N_SLS >= 1 even if attenuation if
+  //     off "
+  //                              "because it is used to assign some arrays");
+  //   }
 
   return std::make_tuple(n_sls, attenuation_f0_reference,
                          read_velocities_at_f0);
-}
-
-void specfem::mesh::IO::fortran::read_mesh_database_coupled(
-    std::ifstream &stream, const int num_fluid_solid_edges,
-    const int num_fluid_poro_edges, const int num_solid_poro_edges,
-    const specfem::MPI::MPI *mpi) {
-
-  int dummy_i, dummy_i1;
-
-  if (num_fluid_solid_edges > 0 || num_fluid_poro_edges > 0 ||
-      num_solid_poro_edges > 0) {
-    mpi->cout("\n Warning coupled surfaces haven't been implemented yet \n");
-  }
-
-  if (num_fluid_solid_edges > 0) {
-    for (int inum = 0; inum < num_fluid_solid_edges; inum++)
-      specfem::fortran_IO::fortran_read_line(stream, &dummy_i, &dummy_i1);
-  }
-
-  if (num_fluid_poro_edges > 0) {
-    for (int inum = 0; inum < num_fluid_poro_edges; inum++)
-      specfem::fortran_IO::fortran_read_line(stream, &dummy_i, &dummy_i1);
-  }
-
-  if (num_solid_poro_edges > 0) {
-    for (int inum = 0; inum < num_solid_poro_edges; inum++)
-      specfem::fortran_IO::fortran_read_line(stream, &dummy_i, &dummy_i1);
-  }
-  return;
 }

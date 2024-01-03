@@ -18,7 +18,8 @@ void specfem::sources::moment_tensor::locate(
     const specfem::kokkos::HostMirror1d<type_real> zigll, const int nproc,
     const specfem::kokkos::HostView2d<type_real> coorg,
     const specfem::kokkos::HostView2d<int> knods, const int npgeo,
-    const specfem::kokkos::HostMirror1d<specfem::elements::type> ispec_type,
+    const specfem::kokkos::HostMirror1d<specfem::enums::element::type>
+        ispec_type,
     const specfem::MPI::MPI *mpi) {
   std::tie(this->xi, this->gamma, this->ispec, this->islice) =
       specfem::utilities::locate(coord, h_ibool, xigll, zigll, nproc,
@@ -26,11 +27,11 @@ void specfem::sources::moment_tensor::locate(
                                  npgeo, mpi);
 
   if (this->islice == mpi->get_rank()) {
-    if (ispec_type(ispec) != specfem::elements::elastic) {
+    if (ispec_type(ispec) != specfem::enums::element::type::elastic) {
       throw std::runtime_error(
           "Found a Moment-tensor source in acoustic/poroelastic element");
     } else {
-      this->el_type = specfem::elements::elastic;
+      this->el_type = specfem::enums::element::type::elastic;
     }
   }
   int ngnod = knods.extent(0);
@@ -124,6 +125,11 @@ specfem::sources::moment_tensor::moment_tensor(YAML::Node &Node,
   if (YAML::Node Dirac = Node["Dirac"]) {
     this->forcing_function =
         assign_dirac(Dirac, dt, use_trick_for_better_pressure);
+  } else if (YAML::Node Ricker = Node["Ricker"]) {
+    this->forcing_function =
+        assign_ricker(Ricker, dt, use_trick_for_better_pressure);
+  } else {
+    throw std::runtime_error("Only Dirac and Ricker sources are supported");
   }
 };
 

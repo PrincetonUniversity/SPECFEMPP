@@ -1,6 +1,7 @@
 #ifndef _ABSORBING_BOUNDARIES_HPP
 #define _ABSORBING_BOUNDARIES_HPP
 
+#include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
 #include "specfem_mpi/interface.hpp"
 
@@ -14,107 +15,13 @@ namespace boundaries {
  */
 struct absorbing_boundary {
 
-  specfem::kokkos::HostView1d<int> numabs; ///< ispec value for the the element
-                                           ///< on the boundary
+  int nelements; ///< Number of elements on the absorbing boundary
 
-  specfem::kokkos::HostView1d<int> abs_boundary_type; ///< Defines if the
-                                                      ///< absorbing boundary
-                                                      ///< type is top, left,
-                                                      ///< right or bottom. This
-                                                      ///< is only used during
-                                                      ///< plotting
+  specfem::kokkos::HostView1d<int> ispec; ///< ispec value for the the element
+                                          ///< on the boundary
 
-  /**
-   * @name Edge definitions
-   *
-   * ibegin_<edge#> defines the i or j index limits for loop iterations
-   *
-   */
-  /// @{
-
-  /**
-   * @name Bottom boundary
-   */
-  /// @{
-  specfem::kokkos::HostView1d<int> ibegin_edge1;
-  specfem::kokkos::HostView1d<int> iend_edge1;
-  /// @}
-
-  /**
-   * @name Right boundary
-   */
-  /// @{
-  specfem::kokkos::HostView1d<int> ibegin_edge2;
-  specfem::kokkos::HostView1d<int> iend_edge2;
-  /// @}
-
-  /**
-   * @name Top boundary
-   */
-  /// @{
-  specfem::kokkos::HostView1d<int> ibegin_edge3;
-  specfem::kokkos::HostView1d<int> iend_edge3;
-  /// @}
-
-  /**
-   * @name Left boundary
-   */
-  /// @{
-  specfem::kokkos::HostView1d<int> ibegin_edge4;
-  specfem::kokkos::HostView1d<int> iend_edge4;
-  /// @}
-
-  /// @}
-
-  /**
-   * @name Elements on boundary
-   *
-   * number of top/left/right/bottom elements on ith absorbing boundary
-   *
-   */
-  ///@{
-  specfem::kokkos::HostView1d<int> ib_bottom; ///< Number of bottom elements on
-                                              ///< ith absorbing boundary
-  specfem::kokkos::HostView1d<int> ib_top;    ///< Number of top elemetns on the
-                                              ///< ith absobing boundary
-  specfem::kokkos::HostView1d<int> ib_right;  ///< Number of right elemetns on
-                                              ///< the ith absobing boundary
-  specfem::kokkos::HostView1d<int> ib_left; ///< Number of left elemetns on the
-                                            ///< ith absobing boundary
-  ///@}
-  /**
-   * Specifies if an element is bottom, right, top or left absorbing boundary
-   *
-   * @code
-   * for elements on bottom boundary
-   *    codeabs(i, 0) == true
-   * for elements on right boundary
-   *    codeabs(i, 1) == true
-   * for elements on top boundary
-   *    codeabs(i, 2) == true
-   * for elements on left boundary
-   *    codeabs(i, 3) == true
-   *@endcode
-   *
-   */
-  specfem::kokkos::HostView2d<bool> codeabs;
-
-  /**
-   * Specifies if an element is bottom-left, bottom-right, top-left or top-right
-   * corner element
-   *
-   * @code
-   * for bottom-left boundary element
-   *  codeabscorner(i, 0) == true
-   * for bottom-right boundary element
-   *  codeabscorner(i, 1) == true
-   * for top-left boundary element
-   *  codeabscorner(i, 2) == true
-   * for top-right boundary element
-   *  codeabscorner(i, 3) == true
-   * @endcode
-   */
-  specfem::kokkos::HostView2d<bool> codeabscorner;
+  specfem::kokkos::HostView1d<specfem::enums::boundaries::type>
+      type; ///< Type of the boundary
 
   /**
    * @brief Default constructor

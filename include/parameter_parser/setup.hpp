@@ -47,7 +47,8 @@ public:
   /**
    * @brief Instantiate the Timescheme
    *
-   * @return specfem::TimeScheme::TimeScheme* Pointer to the TimeScheme object
+   * @return specfem::TimeScheme::TimeScheme* Pointer to the TimeScheme
+   object
    * used in the solver algorithm
    */
   specfem::TimeScheme::TimeScheme *instantiate_solver() {
@@ -112,18 +113,21 @@ public:
    * @return std::vector<specfem::seismogram::type> Types of seismograms to be
    * calculated
    */
-  std::vector<specfem::seismogram::type> get_seismogram_types() const {
+  std::vector<specfem::enums::seismogram::type> get_seismogram_types() const {
     return this->receivers->get_seismogram_types();
   }
 
   /**
    * @brief Instantiate a seismogram writer object
    *
-   * @param receivers Vector of pointers to receiver objects used to instantiate
+   * @param receivers Vector of pointers to receiver objects used to
+   instantiate
    * the writer
-   * @param compute_receivers Pointer to specfem::compute::receivers struct used
+   * @param compute_receivers Pointer to specfem::compute::receivers struct
+   used
    * to instantiate the writer
-   * @return specfem::writer::writer* Pointer to an instantiated writer object
+   * @return specfem::writer::writer* Pointer to an instantiated writer
+   object
    */
   specfem::writer::writer *instantiate_seismogram_writer(
       std::vector<specfem::receivers::receiver *> &receivers,

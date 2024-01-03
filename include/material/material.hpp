@@ -2,6 +2,7 @@
 #define _MATERIAL_HPP
 
 #include "constants.hpp"
+#include "enumerations/specfem_enums.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
@@ -23,20 +24,30 @@ public:
    */
   material(){};
   /**
-   * @brief Virtual function to assign values read from database file to
-   * material class members
+   * @brief Get the properties of the material
    *
-   * @param holder holder used to hold read values
+   * @return utilities::return_holder Struct containing the properties of the
+   * material
    */
-  virtual void assign(utilities::input_holder &holder){};
-  virtual utilities::return_holder get_properties() {
+  virtual utilities::return_holder get_properties() const {
     utilities::return_holder holder{};
     return holder;
   };
-  virtual specfem::elements::type get_ispec_type() {
-    return specfem::elements::elastic;
+  /**
+   * @brief Get the type of the material
+   *
+   * @return specfem::enums::element::type The type of the material
+   */
+  virtual specfem::enums::element::type get_ispec_type() const {
+    throw std::runtime_error("Material is not assigned properly");
+    return specfem::enums::element::type::elastic;
   };
 
+  /**
+   * @brief Print material information to the console
+   *
+   * @return std::string String containing the material information
+   */
   virtual std::string print() const { return ""; }
 };
 

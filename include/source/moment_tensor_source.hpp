@@ -2,6 +2,7 @@
 #define _MOMENT_TENSOR_SOURCE_HPP
 
 #include "constants.hpp"
+#include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "source.hpp"
@@ -45,15 +46,16 @@ public:
    * @param ispec_type material type for every spectral element
    * @param mpi Pointer to specfem MPI object
    */
-  void locate(
-      const specfem::kokkos::HostView2d<type_real> coord,
-      const specfem::kokkos::HostMirror3d<int> h_ibool,
-      const specfem::kokkos::HostMirror1d<type_real> xigll,
-      const specfem::kokkos::HostMirror1d<type_real> zigll, const int nproc,
-      const specfem::kokkos::HostView2d<type_real> coorg,
-      const specfem::kokkos::HostView2d<int> knods, const int npgeo,
-      const specfem::kokkos::HostMirror1d<specfem::elements::type> ispec_type,
-      const specfem::MPI::MPI *mpi) override;
+  void locate(const specfem::kokkos::HostView2d<type_real> coord,
+              const specfem::kokkos::HostMirror3d<int> h_ibool,
+              const specfem::kokkos::HostMirror1d<type_real> xigll,
+              const specfem::kokkos::HostMirror1d<type_real> zigll,
+              const int nproc,
+              const specfem::kokkos::HostView2d<type_real> coorg,
+              const specfem::kokkos::HostView2d<int> knods, const int npgeo,
+              const specfem::kokkos::HostMirror1d<specfem::enums::element::type>
+                  ispec_type,
+              const specfem::MPI::MPI *mpi) override;
   /**
    * @brief Precompute and store lagrangian values used to compute integrals for
    * sources
@@ -168,8 +170,8 @@ private:
   specfem::forcing_function::stf *forcing_function =
       NULL; ///< Pointer to source time function store on the device
 
-  specfem::elements::type el_type; ///< element type where this source is
-                                   ///< located
+  specfem::enums::element::type el_type; ///< element type where this source is
+                                         ///< located
 };
 } // namespace sources
 } // namespace specfem

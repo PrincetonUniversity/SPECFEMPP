@@ -52,12 +52,6 @@ read_coorg_elements(std::ifstream &stream, const int npgeo,
 std::tuple<int, type_real, bool>
 read_mesh_database_attenuation(std::ifstream &stream,
                                const specfem::MPI::MPI *mpi);
-
-void read_mesh_database_coupled(std::ifstream &stream,
-                                const int num_fluid_solid_edges,
-                                const int num_fluid_poro_edges,
-                                const int num_solid_poro_edges,
-                                const specfem::MPI::MPI *mpi);
 } // namespace fortran
 } // namespace IO
 } // namespace mesh
