@@ -241,10 +241,6 @@ void execute(const std::string &parameter_file, const std::string &default_file,
     delete material;
   }
 
-  for (auto &source : sources) {
-    delete source;
-  }
-
   for (auto &receiver : receivers) {
     delete receiver;
   }
