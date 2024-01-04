@@ -46,6 +46,8 @@ public:
   KOKKOS_FUNCTION virtual type_real get_t0() const { return 0.0; }
 
   // virtual void print(std::ostream &out) const;
+
+  virtual ~stf() = default;
 };
 
 std::ostream &operator<<(std::ostream &out,

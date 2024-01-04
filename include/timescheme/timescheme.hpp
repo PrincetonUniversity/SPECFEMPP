@@ -107,6 +107,12 @@ public:
    *
    */
   virtual type_real get_time_increment() const { return 0.0; }
+
+  /**
+   * @brief Default destructor
+   *
+   */
+  virtual ~TimeScheme() = default;
 };
 
 std::ostream &operator<<(std::ostream &out,
