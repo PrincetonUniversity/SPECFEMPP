@@ -146,7 +146,7 @@ TEST(SOURCE_LOCATION_TESTS, compute_source_locations) {
       "../../../tests/unit-tests/source/test_config.yml";
 
   //  alias the mpi environment pointer
-  specfem::MPI::MPI *mpi = MPIEnvironment::mpi_;
+  specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
 
   // parse solutions file for future use
   test_config test_config = parse_test_config(config_filename);

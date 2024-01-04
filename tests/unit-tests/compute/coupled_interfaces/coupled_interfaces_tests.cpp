@@ -161,6 +161,8 @@ void test_edges(
 
 TEST(COMPUTE_TESTS, coupled_interfaces_tests) {
 
+  specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
+
   std::string config_filename =
       "../../../tests/unit-tests/compute/coupled_interfaces/test_config.yaml";
 
@@ -179,7 +181,7 @@ TEST(COMPUTE_TESTS, coupled_interfaces_tests) {
 
     // Read mesh generated MESHFEM
     specfem::mesh::mesh mesh(Test.databases.mesh.database_filename, materials,
-                             MPIEnvironment::mpi_);
+                             mpi);
 
     // Generate compute structs to be used by the solver
     specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
