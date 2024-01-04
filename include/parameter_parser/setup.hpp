@@ -130,8 +130,8 @@ public:
    object
    */
   specfem::writer::writer *instantiate_seismogram_writer(
-      std::vector<specfem::receivers::receiver *> &receivers,
-      specfem::compute::receivers *compute_receivers) const {
+      std::vector<std::shared_ptr<specfem::receivers::receiver> > &receivers,
+      specfem::compute::receivers &compute_receivers) const {
     if (this->seismogram) {
       return this->seismogram->instantiate_seismogram_writer(
           receivers, compute_receivers, this->solver->get_dt(),

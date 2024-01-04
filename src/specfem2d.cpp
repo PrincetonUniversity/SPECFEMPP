@@ -209,7 +209,7 @@ void execute(const std::string &parameter_file, const std::string &default_file,
 
   // Instantiate the writer
   auto writer =
-      setup.instantiate_seismogram_writer(receivers, &compute_receivers);
+      setup.instantiate_seismogram_writer(receivers, compute_receivers);
 
   specfem::solver::solver *solver = new specfem::solver::time_marching<
       specfem::enums::element::quadrature::static_quadrature_points<5> >(
@@ -239,10 +239,6 @@ void execute(const std::string &parameter_file, const std::string &default_file,
 
   for (auto &material : materials) {
     delete material;
-  }
-
-  for (auto &receiver : receivers) {
-    delete receiver;
   }
 
   delete it;

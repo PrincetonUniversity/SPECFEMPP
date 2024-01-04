@@ -9,7 +9,8 @@
 #include <vector>
 
 specfem::compute::receivers::receivers(
-    const std::vector<specfem::receivers::receiver *> &receivers,
+    const std::vector<std::shared_ptr<specfem::receivers::receiver> >
+        &receivers,
     const std::vector<specfem::enums::seismogram::type> &stypes,
     const specfem::quadrature::quadrature *quadx,
     const specfem::quadrature::quadrature *quadz, const type_real xmax,
@@ -17,7 +18,7 @@ specfem::compute::receivers::receivers(
     const int max_sig_step, specfem::MPI::MPI *mpi) {
 
   // Get  sources which lie in processor
-  std::vector<specfem::receivers::receiver *> my_receivers;
+  std::vector<std::shared_ptr<specfem::receivers::receiver> > my_receivers;
   for (auto &receiver : receivers) {
     if (receiver->get_islice() == mpi->get_rank()) {
       my_receivers.push_back(receiver);
