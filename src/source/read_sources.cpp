@@ -5,25 +5,27 @@
 #include "yaml-cpp/yaml.h"
 #include <boost/tokenizer.hpp>
 #include <fstream>
+#include <memory>
 #include <string>
 #include <vector>
 
-std::tuple<std::vector<specfem::sources::source *>, type_real>
+std::tuple<std::vector<std::shared_ptr<specfem::sources::source> >, type_real>
 specfem::sources::read_sources(const std::string sources_file,
                                const type_real dt,
                                const specfem::MPI::MPI *mpi) {
   // read sources file
-  std::vector<specfem::sources::source *> sources;
+  std::vector<std::shared_ptr<specfem::sources::source> > sources;
   YAML::Node yaml = YAML::LoadFile(sources_file);
   int nsources = yaml["number-of-sources"].as<int>();
   YAML::Node Node = yaml["sources"];
   assert(Node.IsSequence());
   for (auto N : Node) {
     if (YAML::Node force_source = N["force"]) {
-      sources.push_back(new specfem::sources::force(force_source, dt));
-    } else if (YAML::Node moment_tensor_source = N["moment-tensor"]) {
       sources.push_back(
-          new specfem::sources::moment_tensor(moment_tensor_source, dt));
+          std::make_shared<specfem::sources::force>(force_source, dt));
+    } else if (YAML::Node moment_tensor_source = N["moment-tensor"]) {
+      sources.push_back(std::make_shared<specfem::sources::moment_tensor>(
+          moment_tensor_source, dt));
     }
   }
 

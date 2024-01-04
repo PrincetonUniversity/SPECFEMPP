@@ -2,6 +2,7 @@
 #define _READ_SOURCES_HPP
 
 #include "source.hpp"
+#include <memory>
 
 namespace specfem {
 namespace sources {
@@ -16,7 +17,7 @@ namespace sources {
  * @return std::vector<specfem::sources::source *> vector of instantiated source
  * objects
  */
-std::tuple<std::vector<specfem::sources::source *>, type_real>
+std::tuple<std::vector<std::shared_ptr<specfem::sources::source> >, type_real>
 read_sources(const std::string sources_file, const type_real dt,
              const specfem::MPI::MPI *mpi);
 } // namespace sources
