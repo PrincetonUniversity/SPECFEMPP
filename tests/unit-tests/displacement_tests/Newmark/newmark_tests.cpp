@@ -203,8 +203,9 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
           qp5, partial_derivatives, compute.ibool, gllx->get_w(),
           gllz->get_w());
 
-      specfem::solver::solver *solver = new specfem::solver::time_marching<
-          specfem::enums::element::quadrature::static_quadrature_points<5> >(
+      std::shared_ptr<specfem::solver::solver> solver = std::make_shared<
+          specfem::solver::time_marching<specfem::enums::element::quadrature::
+                                             static_quadrature_points<5> > >(
           acoustic_domain_static, elastic_domain_static,
           acoustic_elastic_interface, elastic_acoustic_interface, it);
 

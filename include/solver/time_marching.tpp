@@ -10,7 +10,7 @@
 template <typename qp_type>
 void specfem::solver::time_marching<qp_type>::run() {
 
-  auto *it = this->it;
+  auto it = this->it;
   auto acoustic_domain = this->acoustic_domain;
   auto elastic_domain = this->elastic_domain;
 

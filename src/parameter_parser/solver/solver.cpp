@@ -2,10 +2,10 @@
 #include "timescheme/interface.hpp"
 #include "yaml-cpp/yaml.h"
 
-specfem::TimeScheme::TimeScheme *
+std::shared_ptr<specfem::TimeScheme::TimeScheme>
 specfem::runtime_configuration::solver::solver::instantiate(
     const int nstep_between_samples) {
-  specfem::TimeScheme::TimeScheme *it = NULL;
+  std::shared_ptr<specfem::TimeScheme::TimeScheme> it;
 
   throw std::runtime_error(
       "Could not instantiate solver : Error reading parameter file");
