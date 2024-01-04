@@ -212,10 +212,11 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   auto writer =
       setup.instantiate_seismogram_writer(receivers, compute_receivers);
 
-  specfem::solver::solver *solver = new specfem::solver::time_marching<
-      specfem::enums::element::quadrature::static_quadrature_points<5> >(
-      acoustic_domain_static, elastic_domain_static, acoustic_elastic_interface,
-      elastic_acoustic_interface, it);
+  std::shared_ptr<specfem::solver::solver> solver =
+      std::make_shared<specfem::solver::time_marching<
+          specfem::enums::element::quadrature::static_quadrature_points<5> > >(
+          acoustic_domain_static, elastic_domain_static,
+          acoustic_elastic_interface, elastic_acoustic_interface, it);
 
   mpi->cout("Executing time loop:");
   mpi->cout("-------------------------------");
@@ -237,10 +238,6 @@ void execute(const std::string &parameter_file, const std::string &default_file,
 
   mpi->cout("Cleaning up:");
   mpi->cout("-------------------------------");
-
-  delete it;
-  delete solver;
-  delete writer;
 
   mpi->cout(print_end_message(start_time, solver_time));
 

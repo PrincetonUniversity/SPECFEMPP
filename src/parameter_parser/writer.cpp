@@ -2,8 +2,9 @@
 #include "parameter_parser/interface.hpp"
 #include "writer/interface.hpp"
 #include "yaml-cpp/yaml.h"
+#include <memory>
 
-specfem::writer::writer *
+std::shared_ptr<specfem::writer::writer>
 specfem::runtime_configuration::seismogram::instantiate_seismogram_writer(
     std::vector<std::shared_ptr<specfem::receivers::receiver> > &receivers,
     specfem::compute::receivers &compute_receivers, const type_real dt,
@@ -17,9 +18,10 @@ specfem::runtime_configuration::seismogram::instantiate_seismogram_writer(
     type = specfem::enums::seismogram::format::ascii;
   }
 
-  specfem::writer::writer *writer = new specfem::writer::seismogram(
-      receivers, compute_receivers, type, this->output_folder, dt, t0,
-      nstep_between_samples);
+  std::shared_ptr<specfem::writer::writer> writer =
+      std::make_shared<specfem::writer::seismogram>(
+          receivers, compute_receivers, type, this->output_folder, dt, t0,
+          nstep_between_samples);
 
   return writer;
 }

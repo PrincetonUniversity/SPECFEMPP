@@ -45,7 +45,7 @@ public:
                                   qp_type>,
           specfem::domain::domain<specfem::enums::element::medium::acoustic,
                                   qp_type> > &elastic_acoustic_interface,
-      specfem::TimeScheme::TimeScheme *it)
+      std::shared_ptr<specfem::TimeScheme::TimeScheme> it)
       : acoustic_domain(acoustic_domain), elastic_domain(elastic_domain),
         acoustic_elastic_interface(acoustic_elastic_interface),
         elastic_acoustic_interface(elastic_acoustic_interface), it(it){};
@@ -71,10 +71,11 @@ private:
                               qp_type>,
       specfem::domain::domain<specfem::enums::element::medium::acoustic,
                               qp_type> >
-      elastic_acoustic_interface;      /// Elastic acoustic interface
-  specfem::TimeScheme::TimeScheme *it; ///< Pointer to
-                                       ///< spectem::TimeScheme::TimeScheme
-                                       ///< class
+      elastic_acoustic_interface; /// Elastic acoustic interface
+  std::shared_ptr<specfem::TimeScheme::TimeScheme>
+      it; ///< Pointer to
+          ///< spectem::TimeScheme::TimeScheme
+          ///< class
 };
 } // namespace solver
 } // namespace specfem

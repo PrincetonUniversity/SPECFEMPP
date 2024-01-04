@@ -5,6 +5,7 @@
 #include "specfem_setup.hpp"
 #include "writer/interface.hpp"
 #include "yaml-cpp/yaml.h"
+#include <memory>
 #include <tuple>
 
 namespace specfem {
@@ -45,7 +46,7 @@ public:
    * @param t0 Starting time of simulation
    * @return specfem::writer::writer* Pointer to an instantiated writer object
    */
-  specfem::writer::writer *instantiate_seismogram_writer(
+  std::shared_ptr<specfem::writer::writer> instantiate_seismogram_writer(
       std::vector<std::shared_ptr<specfem::receivers::receiver> > &receivers,
       specfem::compute::receivers &compute_receivers, const type_real dt,
       const type_real t0, const int nsteps_between_samples) const;
