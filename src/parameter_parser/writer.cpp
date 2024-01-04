@@ -5,8 +5,8 @@
 
 specfem::writer::writer *
 specfem::runtime_configuration::seismogram::instantiate_seismogram_writer(
-    std::vector<specfem::receivers::receiver *> &receivers,
-    specfem::compute::receivers *compute_receivers, const type_real dt,
+    std::vector<std::shared_ptr<specfem::receivers::receiver> > &receivers,
+    specfem::compute::receivers &compute_receivers, const type_real dt,
     const type_real t0, const int nstep_between_samples) const {
 
   specfem::enums::seismogram::format type;

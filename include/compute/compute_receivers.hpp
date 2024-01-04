@@ -99,7 +99,8 @@ struct receivers {
    * @param quadz Quadrature object in z dimension
    * @param mpi Pointer to the MPI object
    */
-  receivers(const std::vector<specfem::receivers::receiver *> &receivers,
+  receivers(const std::vector<std::shared_ptr<specfem::receivers::receiver> >
+                &receivers,
             const std::vector<specfem::enums::seismogram::type> &stypes,
             const specfem::quadrature::quadrature *quadx,
             const specfem::quadrature::quadrature *quadz, const type_real xmax,
