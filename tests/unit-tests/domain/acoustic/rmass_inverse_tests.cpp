@@ -44,7 +44,7 @@ TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
   std::string config_filename =
       "../../../tests/unit-tests/domain/acoustic/test_config.yaml";
 
-  specfem::MPI::MPI *mpi = MPIEnvironment::mpi_;
+  specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
 
   test_config test_config = parse_test_config(config_filename, mpi);
 

@@ -87,7 +87,7 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
   std::string config_filename =
       "../../../tests/unit-tests/domain/test_config.yaml";
 
-  specfem::MPI::MPI *mpi = MPIEnvironment::mpi_;
+  specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
 
   auto Tests = parse_test_config(config_filename, mpi);
 

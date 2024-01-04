@@ -3,6 +3,6 @@
 
 class KokkosEnvironment : public ::testing::Environment {
 public:
-  virtual void SetUp();
-  virtual void TearDown();
+  void SetUp();
+  void TearDown();
 };

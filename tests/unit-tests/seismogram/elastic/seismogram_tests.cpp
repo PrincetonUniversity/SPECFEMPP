@@ -75,7 +75,7 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
   std::string config_filename =
       "../../../tests/unit-tests/seismogram/elastic/test_config.yaml";
 
-  specfem::MPI::MPI *mpi = MPIEnvironment::mpi_;
+  specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
 
   test_config test_config = parse_test_config(config_filename, mpi);
 

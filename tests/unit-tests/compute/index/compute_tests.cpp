@@ -60,11 +60,12 @@ test_config get_test_config(std::string config_filename,
  */
 TEST(COMPUTE_TESTS, compute_ibool) {
 
+  specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
+
   std::cout << "Hello -2" << std::endl;
   std::string config_filename =
       "../../../tests/unit-tests/compute/index/test_config.yml";
-  test_config test_config =
-      get_test_config(config_filename, MPIEnvironment::mpi_);
+  test_config test_config = get_test_config(config_filename, mpi);
 
   // Set up GLL quadrature points
   specfem::quadrature::quadrature *gllx =
@@ -73,8 +74,7 @@ TEST(COMPUTE_TESTS, compute_ibool) {
       new specfem::quadrature::gll::gll(0.0, 0.0, 5);
   std::vector<std::shared_ptr<specfem::material::material> > materials;
 
-  specfem::mesh::mesh mesh(test_config.database_filename, materials,
-                           MPIEnvironment::mpi_);
+  specfem::mesh::mesh mesh(test_config.database_filename, materials, mpi);
 
   specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
                                     gllz);
