@@ -3,6 +3,7 @@
 #include "material/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
+#include <memory>
 
 specfem::compute::properties::properties(const int nspec, const int ngllz,
                                          const int ngllx)
@@ -41,7 +42,7 @@ specfem::compute::properties::properties(const int nspec, const int ngllz,
 
 specfem::compute::properties::properties(
     const specfem::kokkos::HostView1d<int> kmato,
-    const std::vector<specfem::material::material *> &materials,
+    const std::vector<std::shared_ptr<specfem::material::material> > &materials,
     const int nspec, const int ngllx, const int ngllz) {
 
   // Setup compute::properties properties

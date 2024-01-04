@@ -8,7 +8,9 @@
 #include "yaml-cpp/yaml.h"
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <string>
+#include <vector>
 
 // ------------------------------------------------------------------------
 // Reading test config
@@ -73,7 +75,7 @@ TEST(COMPUTE_TESTS, compute_partial_derivatives) {
       new specfem::quadrature::gll::gll(0.0, 0.0, 5);
   specfem::quadrature::quadrature *gllz =
       new specfem::quadrature::gll::gll(0.0, 0.0, 5);
-  std::vector<specfem::material::material *> materials;
+  std::vector<std::shared_ptr<specfem::material::material> > materials;
 
   specfem::mesh::mesh mesh(test_config.database_filename, materials,
                            MPIEnvironment::mpi_);

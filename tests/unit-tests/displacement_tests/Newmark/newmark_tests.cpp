@@ -110,7 +110,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     auto [gllx, gllz] = setup.instantiate_quadrature();
 
     // Read mesh generated MESHFEM
-    std::vector<specfem::material::material *> materials;
+    std::vector<std::shared_ptr<specfem::material::material> > materials;
     specfem::mesh::mesh mesh(database_file, materials, mpi);
 
     // Read sources
