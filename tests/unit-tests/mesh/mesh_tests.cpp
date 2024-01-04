@@ -94,7 +94,7 @@ TEST(MESH_TESTS, fortran_binary_reader) {
   parse_test_config(YAML::LoadFile(config_filename), tests);
 
   for (auto test : tests) {
-    std::vector<specfem::material::material *> materials;
+    std::vector<std::shared_ptr<specfem::material::material> > materials;
     std::cout << "Executing test: " << test.description << std::endl;
     try {
       specfem::mesh::mesh mesh(

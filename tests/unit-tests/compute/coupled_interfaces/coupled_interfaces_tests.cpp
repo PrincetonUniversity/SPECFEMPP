@@ -8,6 +8,7 @@
 #include "yaml-cpp/yaml.h"
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -171,7 +172,7 @@ TEST(COMPUTE_TESTS, coupled_interfaces_tests) {
       new specfem::quadrature::gll::gll(0.0, 0.0, 5);
   specfem::quadrature::quadrature *gllz =
       new specfem::quadrature::gll::gll(0.0, 0.0, 5);
-  std::vector<specfem::material::material *> materials;
+  std::vector<std::shared_ptr<specfem::material::material> > materials;
 
   for (auto Test : tests) {
     std::cout << "Executing test: " << Test.name << std::endl;

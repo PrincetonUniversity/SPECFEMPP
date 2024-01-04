@@ -16,6 +16,7 @@
 #include <boost/program_options.hpp>
 #include <chrono>
 #include <ctime>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -96,7 +97,7 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   auto [gllx, gllz] = setup.instantiate_quadrature();
 
   // Read mesh generated MESHFEM
-  std::vector<specfem::material::material *> materials;
+  std::vector<std::shared_ptr<specfem::material::material> > materials;
   specfem::mesh::mesh mesh(database_filename, materials, mpi);
 
   // Read sources
@@ -236,10 +237,6 @@ void execute(const std::string &parameter_file, const std::string &default_file,
 
   mpi->cout("Cleaning up:");
   mpi->cout("-------------------------------");
-
-  for (auto &material : materials) {
-    delete material;
-  }
 
   delete it;
   delete solver;

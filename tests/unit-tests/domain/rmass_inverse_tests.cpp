@@ -108,7 +108,7 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
     auto [gllx, gllz] = setup.instantiate_quadrature();
 
     // Read mesh generated MESHFEM
-    std::vector<specfem::material::material *> materials;
+    std::vector<std::shared_ptr<specfem::material::material> > materials;
     specfem::mesh::mesh mesh(database_file, materials, mpi);
 
     // Generate compute structs to be used by the solver

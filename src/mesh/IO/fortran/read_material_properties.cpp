@@ -3,6 +3,7 @@
 #include "material/interface.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "utilities/interface.hpp"
+#include <memory>
 #include <vector>
 
 struct input_holder {
@@ -12,13 +13,13 @@ struct input_holder {
   int n, indic;
 };
 
-std::vector<specfem::material::material *>
+std::vector<std::shared_ptr<specfem::material::material> >
 specfem::mesh::IO::fortran::read_material_properties(
     std::ifstream &stream, const int numat, const specfem::MPI::MPI *mpi) {
 
   input_holder read_values;
 
-  std::vector<specfem::material::material *> materials(numat);
+  std::vector<std::shared_ptr<specfem::material::material> > materials(numat);
 
   std::ostringstream message;
   message << "Material systems:\n"
@@ -50,9 +51,9 @@ specfem::mesh::IO::fortran::read_material_properties(
         const type_real compaction_grad = read_values.val3;
         const type_real Qkappa = read_values.val5;
         const type_real Qmu = read_values.val6;
-        specfem::material::acoustic_material *acoustic_holder =
-            new specfem::material::acoustic_material(density, cp, Qkappa, Qmu,
-                                                     compaction_grad);
+        std::shared_ptr<specfem::material::acoustic_material> acoustic_holder =
+            std::make_shared<specfem::material::acoustic_material>(
+                density, cp, Qkappa, Qmu, compaction_grad);
 
         materials[read_values.n - 1] = acoustic_holder;
       } else {
@@ -62,9 +63,9 @@ specfem::mesh::IO::fortran::read_material_properties(
         const type_real compaction_grad = read_values.val3;
         const type_real Qkappa = read_values.val5;
         const type_real Qmu = read_values.val6;
-        specfem::material::elastic_material *elastic_holder =
-            new specfem::material::elastic_material(density, cs, cp, Qkappa,
-                                                    Qmu, compaction_grad);
+        std::shared_ptr<specfem::material::elastic_material> elastic_holder =
+            std::make_shared<specfem::material::elastic_material>(
+                density, cs, cp, Qkappa, Qmu, compaction_grad);
         materials[read_values.n - 1] = elastic_holder;
       }
     } else {

@@ -5,6 +5,7 @@
 #include "specfem_mpi/interface.hpp"
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <vector>
 
 namespace specfem {
@@ -22,7 +23,7 @@ namespace fortran {
  * @return std::vector<specfem::material *> Pointer to material objects read
  * from the database file
  */
-std::vector<specfem::material::material *>
+std::vector<std::shared_ptr<specfem::material::material> >
 read_material_properties(std::ifstream &stream, const int numat,
                          const specfem::MPI::MPI *mpi);
 } // namespace fortran
