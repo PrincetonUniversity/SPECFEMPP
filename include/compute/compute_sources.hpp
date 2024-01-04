@@ -6,6 +6,7 @@
 #include "source/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
+#include <memory>
 #include <vector>
 
 namespace specfem {
