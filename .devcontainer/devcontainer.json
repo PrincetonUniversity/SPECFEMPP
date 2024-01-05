@@ -1,6 +1,5 @@
 {
-    "name": "SPECFEM++ Playground",
-    "image": "ghcr.io/princetonuniversity/specfempp:dockerfile",
+    "image": "ghcr.io/princetonuniversity/specfempp:devel",
     "workspaceFolder": "/usr/local/specfempp",
     "features": {
     }
