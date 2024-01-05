@@ -19,8 +19,6 @@ RUN echo "cmake version:" && \
     cmake --version && \
     echo "Done."
 
-RUN echo $(ls -ltra .)
-
 ## TODO: Install boost from a tarball
 
 # Install SPECFEM++
