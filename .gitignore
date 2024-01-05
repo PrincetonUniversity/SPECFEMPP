@@ -10,7 +10,6 @@ debug.sh
 output.log
 results/
 timing.sh
-*.dat
 examples/*/*_config.yaml
 tests/regression-tests/*.yaml
 tests/regression-tests/*/cpu/*.yaml

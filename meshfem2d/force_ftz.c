@@ -57,37 +57,37 @@
    (since it calls some low-level system routines) just suppress all the lines below (i.e. make it an empty file)
    and comment out the call to force_ftz() in the main SPECFEM program */
 
-#include "config.h"
+// #include "config.h"
 
-#define FTZ_BIT 15
-#define UNDERFLOW_EXCEPTION_MASK 11
+// #define FTZ_BIT 15
+// #define UNDERFLOW_EXCEPTION_MASK 11
 
-#ifdef __GNUC__ // only use these features on gnu compiler
-#ifdef HAVE_XMMINTRIN
-  #define FORCE_FTZ
-  #include <xmmintrin.h>
-#elif HAVE_EMMINTRIN
-  #include <emmintrin.h>
-  #define FORCE_FTZ
-#endif
-#endif // __GNUC__
+// #ifdef __GNUC__ // only use these features on gnu compiler
+// #ifdef HAVE_XMMINTRIN
+//   #define FORCE_FTZ
+//   #include <xmmintrin.h>
+// #elif HAVE_EMMINTRIN
+//   #include <emmintrin.h>
+//   #define FORCE_FTZ
+// #endif
+// #endif // __GNUC__
 
-void
-FC_FUNC_(force_ftz,FORCE_FTZ)()
-{
+// void
+// FC_FUNC_(force_ftz,FORCE_FTZ)()
+// {
 
-// DK DK Nov 2018: uncomment this if you have any problem compiling this file
-//#undef FORCE_FTZ
+// // DK DK Nov 2018: uncomment this if you have any problem compiling this file
+// // #undef FORCE_FTZ
 
-#ifdef __GNUC__
-#ifdef FORCE_FTZ
-  unsigned int x;
+// #ifdef __GNUC__
+// #ifdef FORCE_FTZ
+//   unsigned int x;
 
-  /* force FTZ by setting bits 11 and 15 to one */
-  x = _mm_getcsr();
-  x |= (1 << FTZ_BIT);
-  x |= (1 << UNDERFLOW_EXCEPTION_MASK);
-  _mm_setcsr(x);
-#endif
-#endif // __GNUC__
-}
+//   /* force FTZ by setting bits 11 and 15 to one */
+//   x = _mm_getcsr();
+//   x |= (1 << FTZ_BIT);
+//   x |= (1 << UNDERFLOW_EXCEPTION_MASK);
+//   _mm_setcsr(x);
+// #endif
+// #endif // __GNUC__
+// }
