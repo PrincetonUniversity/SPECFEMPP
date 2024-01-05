@@ -2,7 +2,8 @@ name: Publish to Docker
 on:
   push:
     branches:
-      - dockerfile
+      - devel
+      - main
     tags:
       - v*
 permissions:
@@ -20,9 +21,9 @@ jobs:
         with:
           images: ghcr.io/PrincetonUniversity/SPECFEMPP
           tags: |
-            type=ref,event=branch
+            type=ref,event=branch,enable=${{ github.ref == format('refs/heads/{0}', 'devel') }}
             type=ref,event=tag
-            type=ref,event=pr
+            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'main') }}
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
