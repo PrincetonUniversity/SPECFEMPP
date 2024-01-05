@@ -1,6 +1,11 @@
 # Dockerfile to build serial version
 
-FROM gcc/9.5.0
+FROM gcc:9.5.0
+
+# Set up WORKDIR
+WORKDIR /usr/local/specfempp
+
+COPY . .
 
 # Install CMake
 RUN echo "Installing CMake..." && \
@@ -14,22 +19,16 @@ RUN echo "cmake version:" && \
     cmake --version && \
     echo "Done."
 
-# Install Boost 1.73.0
-RUN echo "Installing Boost 1.73.0..." && \
-    echo "==========================" && \
-    echo "" && \
-    apt-get install -y libboost1.73-dev && \
-    echo "Done."
+RUN echo $(ls -ltra .)
 
-RUN echo "Boost version:" && \
-    echo $(dpkg -s libboost1.73-dev | grep Version) && \
-    echo "Done."
+## TODO: Install boost from a tarball
 
 # Install SPECFEM++
 RUN echo "Installing SPECFEM++..." && \
     echo "========================" && \
     echo "" && \
-    cmake -S . -B build -D CMAKE_BUILD_TYPE=Release && \
+    git submodule init && git submodule update && \
+    cmake -S . -B build -D CMAKE_BUILD_TYPE=Release -D BUILD_TESTS=ON -D BUILD_EXAMPLES=ON && \
     cmake --build build && \
     echo "Done."
 
