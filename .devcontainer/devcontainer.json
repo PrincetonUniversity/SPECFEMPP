@@ -1,5 +1,6 @@
 {
     "image": "ghcr.io/princetonuniversity/specfempp:dockerfile",
+    "workspaceFolder": "/usr/local/specfempp",
     "features": {
     }
 }
