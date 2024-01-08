@@ -3,6 +3,7 @@
 
 #include "compute/interface.hpp"
 #include "enumerations/boundary_conditions/dirichlet.hpp"
+#include "enumerations/boundary_conditions/dirichlet.tpp"
 #include "enumerations/boundary_conditions/stacey/interface.hpp"
 #include "enumerations/quadrature.hpp"
 #include "enumerations/specfem_enums.hpp"

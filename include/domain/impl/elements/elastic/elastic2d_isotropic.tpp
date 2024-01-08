@@ -298,8 +298,11 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
       properties;
 
   //   populate partial derivatives only if the boundary is stacey
-  if constexpr (boundary_conditions_type::value ==
-                specfem::enums::element::boundary_tag::stacey) {
+  if constexpr ((boundary_conditions_type::value ==
+                 specfem::enums::element::boundary_tag::stacey) ||
+                (boundary_conditions_type::value ==
+                 specfem::enums::element::boundary_tag::
+                     composite_stacey_dirichlet)) {
     partial_derivatives = specfem::compute::element_partial_derivatives(
         this->xix(ispec, iz, ix), this->gammax(ispec, iz, ix),
         this->xiz(ispec, iz, ix), this->gammaz(ispec, iz, ix),
