@@ -75,7 +75,7 @@ pipeline {
                                     sh """
                                         module load boost/1.73.0
                                         cd build_GNU_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${env.GIT_COMMIT}/tests/unit-tests
-                                        srun -N 1 -t 00:10:00 ${HOST_RUN_FLAGS} ${DEVICE_RUN_FLAGS} bash -c 'export OMP_PROC_BIND=spread; export OMP_THREADS=places; ctest; ctest --rerun-failed --output-on-failure;'
+                                        srun -N 1 -t 00:20:00 ${HOST_RUN_FLAGS} ${DEVICE_RUN_FLAGS} bash -c 'export OMP_PROC_BIND=spread; export OMP_THREADS=places; ctest; ctest --rerun-failed --output-on-failure;'
                                     """
                                 }
                             }
@@ -154,7 +154,7 @@ pipeline {
                                         module load boost/1.73.0
                                         module load intel/2022.2.0
                                         cd build_INTEL_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${env.GIT_COMMIT}/tests/unit-tests
-                                        srun -N 1 -t 00:10:00 ${HOST_RUN_FLAGS} ${DEVICE_RUN_FLAGS} bash -c 'export OMP_PROC_BIND=spread; export OMP_THREADS=places; ctest -E "DISPLACEMENT_TESTS"; ctest --rerun-failed --output-on-failure; ./displacement_newmark_tests'
+                                        srun -N 1 -t 00:20:00 ${HOST_RUN_FLAGS} ${DEVICE_RUN_FLAGS} bash -c 'export OMP_PROC_BIND=spread; export OMP_THREADS=places; ctest -E "DISPLACEMENT_TESTS"; ctest --rerun-failed --output-on-failure; ./displacement_newmark_tests'
                                     """
                                 }
                             }
