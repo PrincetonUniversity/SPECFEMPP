@@ -19,7 +19,16 @@ RUN echo "cmake version:" && \
     cmake --version && \
     echo "Done."
 
-## TODO: Install boost from a tarball
+# Install Boost
+RUN echo "Installing Boost..." && \
+    echo "====================" && \
+    echo "" && \
+    wget https://archives.boost.io/release/1.73.0/source/boost_1_73_0.tar.bz2 && \
+    tar --bzip2 -xf boost_1_73_0.tar.bz2 && \
+    cd boost_1_73_0 && \
+    ./bootstrap.sh --prefix=/usr/local/boost_1_73_0 && \
+    ./b2 install && \
+    cd ..
 
 # Install SPECFEM++
 RUN echo "Installing SPECFEM++..." && \
