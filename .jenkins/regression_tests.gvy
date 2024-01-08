@@ -47,6 +47,7 @@ pipeline {
                                         echo " Building SPECFEM "
                                         sh """
                                             module load cudatoolkit/11.7
+                                            module load boost/1.73.0
                                             cmake -S . -B build_gpu -DCMAKE_BUILD_TYPE=Release -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON -DKokkos_ENABLE_OPENMP=ON
                                             cmake3 --build build_gpu
                                         """
@@ -178,6 +179,7 @@ pipeline {
                                         echo " Building SPECFEM "
                                         sh """
                                             module load cudatoolkit/11.7
+                                            module load boost/1.73.0
                                             cmake -S . -B build_gpu -DCMAKE_BUILD_TYPE=Release -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON -DKokkos_ENABLE_OPENMP=ON
                                             cmake3 --build build_gpu
                                         """

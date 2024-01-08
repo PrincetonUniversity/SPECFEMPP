@@ -27,7 +27,7 @@ pipeline{
                 stages {
                     stage ('Build and Clean '){
                         environment {
-                            CUDA_MODULE='cudatoolkit/11.7'
+                            CUDA_MODULE='cudatoolkit/12.2'
                             // CMAKE build flags
                             CMAKE_HOST_NAME = """${sh(
                                                     returnStdout: true,
