@@ -230,7 +230,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
             field_acoustic = Kokkos::subview(
                 acoustic_domain_static.get_host_field(), Kokkos::ALL(), 0);
 
-        type_real tolerance = 0.01;
+        type_real tolerance = 0.0001;
 
         specfem::testing::compare_norm(field_acoustic,
                                        Test.database.acoustic_domain_field,
