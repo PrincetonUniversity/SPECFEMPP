@@ -29,7 +29,7 @@ pipeline {
                 stages {
                     stage ('Build and Clean '){
                         environment {
-                            CUDA_MODULE='cudatoolkit/11.7'
+                            CUDA_MODULE='cudatoolkit/12.2'
                             // CMAKE build flags
                             CMAKE_HOST_NAME = """${sh(
                                                     returnStdout: true,
@@ -138,6 +138,7 @@ pipeline {
                                     echo "Building ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS}"
                                     sh """
                                         module load intel/2022.2.0
+                                        module load boost/1.73.0
                                         export CC=icx
                                         export CXX=icpx
                                         cmake3 -S . -B build_INTEL_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${env.GIT_COMMIT} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS} -DBUILD_TESTS=ON
