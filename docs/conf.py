@@ -21,8 +21,8 @@ subprocess.call('doxygen Doxyfile.in', shell=True)
 
 # -- Project information -----------------------------------------------------
 
-project = 'SPECFEM KOKKOS IMPLEMENTATION'
-copyright = '2020, Rohit Kakodkar'
+project = 'SPECFEM++'
+copyright = '2023, Rohit Kakodkar'
 author = 'Rohit Kakodkar'
 
 
@@ -33,6 +33,7 @@ author = 'Rohit Kakodkar'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
     'sphinx.ext.autosectionlabel',
     'sphinx.ext.todo',
@@ -91,6 +92,7 @@ html_static_path = ['_static']
 # or fully qualified paths (eg. https://...)
 html_css_files = [
     'css/scrollable_code_blocks.css',
+    'css/center_align_table.css',
 ]
 
 
@@ -100,4 +102,4 @@ breathe_projects = {
 	"SPECFEM KOKKOS IMPLEMENTATION": "_build/xml"
 }
 breathe_default_project = "SPECFEM KOKKOS IMPLEMENTATION"
-breathe_default_members = ('members', 'undoc-members')
+breathe_default_members = ()

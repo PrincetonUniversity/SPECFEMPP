@@ -9,43 +9,48 @@ Parameter definitions
 **Parameter Name** : ``quadrature``
 -----------------------------------
 
-**default value** : None
+**default value** :
+
+.. code:: yaml
+
+    quadrature:
+        quadrature-type: GLL4
 
 **possible values**: [YAML Node]
 
-**documentation** : quadrature parameter defines the type of quadrature used for the simulation (X and Z dimension). It is implemented as a YAML node.
+**documentation** : quadrature parameter defines the type of quadrature used for the simulation (X and Z dimension).
 
 **Parameter Name** : ``quadrature.alpha``
-****************************************
+******************************************
 
-**default value** : 0.0
+**default value** : None
 
 **possible values** : [float, double]
 
 **documentation** : Alpha value of the Gauss-Jacobi quadrature. For GLL quadrature alpha = 0.0
 
 **Parameter Name** : ``quadrature.beta``
-**************************************
+*****************************************
 
-**default value** : 0.0
+**default value** : None
 
 **possible values** : [float, double]
 
 **documentation** : Beta value of the Gauss-Jacobi quadrature. For GLL quadrature beta = 0.0, and for GLJ quadrature beta = 1.0
 
 **Parameter Name** : ``quadrature.ngllx``
-***************************************
+******************************************
 
-**default value** : 5
+**default value** : None
 
 **possible values** : [int]
 
 **documentation** : Number of GLL points in X-dimension
 
 **Parameter Name** : ``quadrature.ngllz``
-***************************************
+******************************************
 
-**default value** : 5
+**default value** : None
 
 **possible values** : [int]
 
@@ -53,7 +58,7 @@ Parameter definitions
 
 .. note::
 
-    Below is example of 4th order GLL quadrature:
+    Below is example of 4th order GLL quadrature with 5 GLL points:
 
     .. code:: yaml
 
@@ -62,6 +67,27 @@ Parameter definitions
             beta: 0.0
             ngllx: 5
             ngllz: 5
+
+**Parameter Name** : ``quadrature.quadrature-type``
+***************************************************
+
+**default value** : None
+
+**possible values** : [GLL4, GLL7]
+
+**decumentation** : Predefined quadrature types.
+
+1. ``GLL4`` defines 4th order GLL quadrature with 5 GLL points.
+2. ``GLL7`` defines 7th order GLL quadrature with 8 GLL points.
+
+.. note::
+
+    4th order GLL quadrature with 5 GLL points using pre-defined quadrature types:
+
+    .. code:: yaml
+
+        quadrature:
+            quadrature-type: GLL4
 
 **Parameter Name** : ``solver``
 -------------------------------
@@ -73,7 +99,7 @@ Parameter definitions
 **documentation** : Type of solver to use for the simulation.
 
 **Parameter Name** : ``solver.time-marching``
-*******************************************
+**********************************************
 
 **default value** : None
 
@@ -100,7 +126,7 @@ Parameter definitions
 **documentation** : Select the time-marching scheme.
 
 **Parameter Name** : ``solver.time-marching.time-scheme.type``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **default value** : Newmark
 
@@ -118,7 +144,7 @@ Parameter definitions
 **documentation** : Value of time step in seconds
 
 **Parameter Name** : ``solver.time-marching.time-scheme.nstep``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **default value** : None
 

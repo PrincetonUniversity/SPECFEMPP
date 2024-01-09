@@ -1,5 +1,0 @@
-Tests:
-
-  serial:
-    specfem_config: "../../../tests/unittests/domain/serial/data/specfem_config.yaml"
-    solutions_file: "../../../tests/unittests/domain/serial/data/rmass_inverse_elastic_00000.bin"
