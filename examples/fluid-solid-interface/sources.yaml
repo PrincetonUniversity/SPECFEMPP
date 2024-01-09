@@ -1,13 +1,13 @@
 number-of-sources: 1
 sources:
   - force:
-      x : 1575.0
-      z : 2900.0
-      source_surf: false
-      angle : 0.0
-      vx : 0.0
-      vz : 0.0
+      x : 1575.0 # (meters)
+      z : 2900.0 # (meters)
+      source_surf: false # Place the source at the surface (true)
+      angle : 0.0 # (degrees)
+      vx : 0.0 # (m/s)
+      vz : 0.0 # (m/s)
       Ricker:
         factor: 1e9
-        tshift: 0.0
-        f0: 10.0
+        tshift: 0.0 # (seconds)
+        f0: 10.0 # (Hz)
