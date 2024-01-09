@@ -23,6 +23,8 @@ public:
    *
    */
   virtual void run() = 0;
+
+  virtual ~solver() = default;
 };
 
 } // namespace solver

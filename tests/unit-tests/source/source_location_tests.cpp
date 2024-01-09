@@ -146,7 +146,7 @@ TEST(SOURCE_LOCATION_TESTS, compute_source_locations) {
       "../../../tests/unit-tests/source/test_config.yml";
 
   //  alias the mpi environment pointer
-  specfem::MPI::MPI *mpi = MPIEnvironment::mpi_;
+  specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
 
   // parse solutions file for future use
   test_config test_config = parse_test_config(config_filename);
@@ -160,7 +160,7 @@ TEST(SOURCE_LOCATION_TESTS, compute_source_locations) {
       new specfem::quadrature::gll::gll(0.0, 0.0, 5);
 
   // Read mesh for binary database for the test
-  std::vector<specfem::material::material *> materials;
+  std::vector<std::shared_ptr<specfem::material::material> > materials;
   specfem::mesh::mesh mesh(test_config.database_file, materials, mpi);
 
   // read sources file

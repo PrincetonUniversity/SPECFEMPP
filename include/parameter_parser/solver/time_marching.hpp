@@ -48,7 +48,7 @@ public:
    * @return specfem::TimeScheme::TimeScheme* Pointer to the TimeScheme object
    * used in the solver algorithm
    */
-  specfem::TimeScheme::TimeScheme *
+  std::shared_ptr<specfem::TimeScheme::TimeScheme>
   instantiate(const int nstep_between_samples) override;
   /**
    * @brief Get the value of time increment

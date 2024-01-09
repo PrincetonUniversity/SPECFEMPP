@@ -75,7 +75,7 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
   std::string config_filename =
       "../../../tests/unit-tests/seismogram/acoustic/test_config.yaml";
 
-  specfem::MPI::MPI *mpi = MPIEnvironment::mpi_;
+  specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
 
   test_config test_config = parse_test_config(config_filename, mpi);
 
@@ -94,7 +94,7 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
   auto receivers = specfem::receivers::read_receivers(stations_filename, angle);
 
   // Read mesh generated MESHFEM
-  std::vector<specfem::material::material *> materials;
+  std::vector<std::shared_ptr<specfem::material::material> > materials;
   specfem::mesh::mesh mesh(database_file, materials, mpi);
 
   // Generate compute structs to be used by the solver

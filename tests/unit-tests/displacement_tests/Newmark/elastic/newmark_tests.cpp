@@ -46,7 +46,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
   std::string config_filename = "../../../tests/unit-tests/displacement_tests/"
                                 "Newmark/elastic/test_config.yaml";
 
-  specfem::MPI::MPI *mpi = MPIEnvironment::mpi_;
+  specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
 
   test_config test_config = parse_test_config(config_filename, mpi);
 

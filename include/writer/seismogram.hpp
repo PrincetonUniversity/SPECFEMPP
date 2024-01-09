@@ -29,11 +29,12 @@ public:
    * @param nstep_between_samples number of timesteps between seismogram
    * sampling (seismogram sampling frequency)
    */
-  seismogram(std ::vector<specfem::receivers::receiver *> &receivers,
-             specfem::compute::receivers *compute_receivers,
-             const specfem::enums::seismogram::format type,
-             const std::string output_folder, const type_real dt,
-             const type_real t0, const int nstep_between_samples)
+  seismogram(
+      std ::vector<std::shared_ptr<specfem::receivers::receiver> > &receivers,
+      specfem::compute::receivers &compute_receivers,
+      const specfem::enums::seismogram::format type,
+      const std::string output_folder, const type_real dt, const type_real t0,
+      const int nstep_between_samples)
       : receivers(receivers), compute_receivers(compute_receivers), type(type),
         output_folder(output_folder), dt(dt), t0(t0),
         nstep_between_samples(nstep_between_samples){};
@@ -49,13 +50,13 @@ private:
   std::string output_folder; ///< Path to output folder where results will be
                              ///< stored
   specfem::compute::receivers
-      *compute_receivers; ///< Pointer to
-                          ///< specfem::compute::receivers
-                          ///< object. This object
-                          ///< containes the view used
-                          ///< to store calculated
-                          ///< seismograms
-  std::vector<specfem::receivers::receiver *>
+      compute_receivers; ///< Pointer to
+                         ///< specfem::compute::receivers
+                         ///< object. This object
+                         ///< containes the view used
+                         ///< to store calculated
+                         ///< seismograms
+  std::vector<std::shared_ptr<specfem::receivers::receiver> >
       receivers; ///< Vector of pointers to specfem::receivers::receiver
                  ///< objects. These are used to get station and network name
                  ///< where saving the seismogram

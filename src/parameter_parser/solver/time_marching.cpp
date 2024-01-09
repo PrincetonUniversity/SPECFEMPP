@@ -1,16 +1,17 @@
 #include "parameter_parser/interface.hpp"
 #include "timescheme/interface.hpp"
 #include "yaml-cpp/yaml.h"
+#include <memory>
 #include <ostream>
 
-specfem::TimeScheme::TimeScheme *
+std::shared_ptr<specfem::TimeScheme::TimeScheme>
 specfem::runtime_configuration::solver::time_marching::instantiate(
     const int nstep_between_samples) {
 
-  specfem::TimeScheme::TimeScheme *it;
+  std::shared_ptr<specfem::TimeScheme::TimeScheme> it;
   if (this->timescheme == "Newmark") {
-    it = new specfem::TimeScheme::Newmark(this->nstep, this->t0, this->dt,
-                                          nstep_between_samples);
+    it = std::make_shared<specfem::TimeScheme::Newmark>(
+        this->nstep, this->t0, this->dt, nstep_between_samples);
   }
 
   // User output

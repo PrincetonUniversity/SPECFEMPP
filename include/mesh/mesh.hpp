@@ -14,6 +14,7 @@
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
+#include <memory>
 
 namespace specfem {
 
@@ -79,14 +80,15 @@ struct mesh {
    * @param mpi pointer to MPI object to manage communication
    */
   mesh(const std::string filename,
-       std::vector<specfem::material::material *> &materials,
+       std::vector<std::shared_ptr<specfem::material::material> > &materials,
        const specfem::MPI::MPI *mpi);
 
   /**
    * @brief User output
    *
    */
-  std::string print(std::vector<specfem::material::material *> materials) const;
+  std::string print(std::vector<std::shared_ptr<specfem::material::material> >
+                        &materials) const;
 };
 } // namespace mesh
 } // namespace specfem

@@ -18,7 +18,7 @@ namespace receivers {
  * @return std::vector<specfem::receivers::receiver *> vector of instantiated
  * receiver objects
  */
-std::vector<specfem::receivers::receiver *>
+std::vector<std::shared_ptr<specfem::receivers::receiver> >
 read_receivers(const std::string stations_file, const type_real angle);
 } // namespace receivers
 } // namespace specfem
