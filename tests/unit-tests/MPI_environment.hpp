@@ -3,7 +3,11 @@
 
 class MPIEnvironment : public ::testing::Environment {
 public:
-  virtual void SetUp();
-  virtual void TearDown();
-  static specfem::MPI::MPI *mpi_;
+  void SetUp();
+  void TearDown();
+
+  static specfem::MPI::MPI *get_mpi() { return mpi_.get(); }
+
+private:
+  static std::shared_ptr<specfem::MPI::MPI> mpi_;
 };

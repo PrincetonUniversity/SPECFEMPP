@@ -16,6 +16,7 @@
 #include <boost/program_options.hpp>
 #include <chrono>
 #include <ctime>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -96,7 +97,7 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   auto [gllx, gllz] = setup.instantiate_quadrature();
 
   // Read mesh generated MESHFEM
-  std::vector<specfem::material::material *> materials;
+  std::vector<std::shared_ptr<specfem::material::material> > materials;
   specfem::mesh::mesh mesh(database_filename, materials, mpi);
 
   // Read sources
@@ -209,12 +210,13 @@ void execute(const std::string &parameter_file, const std::string &default_file,
 
   // Instantiate the writer
   auto writer =
-      setup.instantiate_seismogram_writer(receivers, &compute_receivers);
+      setup.instantiate_seismogram_writer(receivers, compute_receivers);
 
-  specfem::solver::solver *solver = new specfem::solver::time_marching<
-      specfem::enums::element::quadrature::static_quadrature_points<5> >(
-      acoustic_domain_static, elastic_domain_static, acoustic_elastic_interface,
-      elastic_acoustic_interface, it);
+  std::shared_ptr<specfem::solver::solver> solver =
+      std::make_shared<specfem::solver::time_marching<
+          specfem::enums::element::quadrature::static_quadrature_points<5> > >(
+          acoustic_domain_static, elastic_domain_static,
+          acoustic_elastic_interface, elastic_acoustic_interface, it);
 
   mpi->cout("Executing time loop:");
   mpi->cout("-------------------------------");
@@ -236,22 +238,6 @@ void execute(const std::string &parameter_file, const std::string &default_file,
 
   mpi->cout("Cleaning up:");
   mpi->cout("-------------------------------");
-
-  for (auto &material : materials) {
-    delete material;
-  }
-
-  for (auto &source : sources) {
-    delete source;
-  }
-
-  for (auto &receiver : receivers) {
-    delete receiver;
-  }
-
-  delete it;
-  delete solver;
-  delete writer;
 
   mpi->cout(print_end_message(start_time, solver_time));
 

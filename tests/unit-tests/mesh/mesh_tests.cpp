@@ -88,18 +88,19 @@ void parse_test_config(const YAML::Node &yaml,
  */
 TEST(MESH_TESTS, fortran_binary_reader) {
 
+  specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
   std::string config_filename =
       "../../../tests/unit-tests/mesh/test_config.yaml";
   std::vector<test_configuration::Test> tests;
   parse_test_config(YAML::LoadFile(config_filename), tests);
 
   for (auto test : tests) {
-    std::vector<specfem::material::material *> materials;
+    std::vector<std::shared_ptr<specfem::material::material> > materials;
     std::cout << "Executing test: " << test.description << std::endl;
     try {
       specfem::mesh::mesh mesh(
           test.databases.filenames[test.configuration.processors - 1],
-          materials, MPIEnvironment::mpi_);
+          materials, mpi);
       std::cout << " - Test passed\n" << std::endl;
     } catch (std::runtime_error &e) {
       std::cout << " - Error: " << e.what() << std::endl;

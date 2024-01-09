@@ -8,6 +8,7 @@
 #include "yaml-cpp/yaml.h"
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -160,6 +161,8 @@ void test_edges(
 
 TEST(COMPUTE_TESTS, coupled_interfaces_tests) {
 
+  specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
+
   std::string config_filename =
       "../../../tests/unit-tests/compute/coupled_interfaces/test_config.yaml";
 
@@ -171,14 +174,14 @@ TEST(COMPUTE_TESTS, coupled_interfaces_tests) {
       new specfem::quadrature::gll::gll(0.0, 0.0, 5);
   specfem::quadrature::quadrature *gllz =
       new specfem::quadrature::gll::gll(0.0, 0.0, 5);
-  std::vector<specfem::material::material *> materials;
+  std::vector<std::shared_ptr<specfem::material::material> > materials;
 
   for (auto Test : tests) {
     std::cout << "Executing test: " << Test.name << std::endl;
 
     // Read mesh generated MESHFEM
     specfem::mesh::mesh mesh(Test.databases.mesh.database_filename, materials,
-                             MPIEnvironment::mpi_);
+                             mpi);
 
     // Generate compute structs to be used by the solver
     specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,

@@ -5,17 +5,18 @@
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
+#include <memory>
 #include <vector>
 
 specfem::compute::sources::sources(
-    const std::vector<specfem::sources::source *> &sources,
+    const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
     const specfem::quadrature::quadrature *quadx,
     const specfem::quadrature::quadrature *quadz, const type_real xmax,
     const type_real xmin, const type_real zmax, const type_real zmin,
     specfem::MPI::MPI *mpi) {
 
   // Get  sources which lie in processor
-  std::vector<specfem::sources::source *> my_sources;
+  std::vector<std::shared_ptr<specfem::sources::source> > my_sources;
   for (auto &source : sources) {
     if (source->get_islice() == mpi->get_rank()) {
       my_sources.push_back(source);

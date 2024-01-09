@@ -51,7 +51,7 @@ public:
    object
    * used in the solver algorithm
    */
-  specfem::TimeScheme::TimeScheme *instantiate_solver() {
+  std::shared_ptr<specfem::TimeScheme::TimeScheme> instantiate_solver() {
     auto it =
         this->solver->instantiate(this->receivers->get_nstep_between_samples());
 
@@ -129,9 +129,9 @@ public:
    * @return specfem::writer::writer* Pointer to an instantiated writer
    object
    */
-  specfem::writer::writer *instantiate_seismogram_writer(
-      std::vector<specfem::receivers::receiver *> &receivers,
-      specfem::compute::receivers *compute_receivers) const {
+  std::shared_ptr<specfem::writer::writer> instantiate_seismogram_writer(
+      std::vector<std::shared_ptr<specfem::receivers::receiver> > &receivers,
+      specfem::compute::receivers &compute_receivers) const {
     if (this->seismogram) {
       return this->seismogram->instantiate_seismogram_writer(
           receivers, compute_receivers, this->solver->get_dt(),

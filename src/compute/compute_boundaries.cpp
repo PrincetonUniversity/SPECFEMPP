@@ -4,6 +4,7 @@
 #include "macros.hpp"
 #include "mesh/mesh.hpp"
 #include <Kokkos_Core.hpp>
+#include <memory>
 
 namespace {
 
@@ -15,7 +16,7 @@ namespace {
 void tag_elements(
     const specfem::kokkos::HostView1d<int> &kmato,
     const specfem::enums::element::type &medium,
-    const std::vector<specfem::material::material *> &materials,
+    const std::vector<std::shared_ptr<specfem::material::material> > &materials,
     const specfem::mesh::boundaries::absorbing_boundary &absorbing_boundaries,
     const specfem::mesh::boundaries::acoustic_free_surface
         &acoustic_free_surface,
@@ -92,7 +93,7 @@ void assign_boundary(
 
 specfem::compute::acoustic_free_surface::acoustic_free_surface(
     const specfem::kokkos::HostView1d<int> kmato,
-    const std::vector<specfem::material::material *> materials,
+    const std::vector<std::shared_ptr<specfem::material::material> > &materials,
     const specfem::mesh::boundaries::absorbing_boundary &absorbing_boundaries,
     const specfem::mesh::boundaries::acoustic_free_surface
         &acoustic_free_surface) {
@@ -115,7 +116,7 @@ specfem::compute::acoustic_free_surface::acoustic_free_surface(
 specfem::compute::stacey_medium::stacey_medium(
     const specfem::enums::element::type medium,
     const specfem::kokkos::HostView1d<int> kmato,
-    const std::vector<specfem::material::material *> materials,
+    const std::vector<std::shared_ptr<specfem::material::material> > &materials,
     const specfem::mesh::boundaries::absorbing_boundary &absorbing_boundaries,
     const specfem::mesh::boundaries::acoustic_free_surface
         &acoustic_free_surface) {
@@ -136,7 +137,7 @@ specfem::compute::stacey_medium::stacey_medium(
 
 specfem::compute::stacey::stacey(
     const specfem::kokkos::HostView1d<int> kmato,
-    const std::vector<specfem::material::material *> materials,
+    const std::vector<std::shared_ptr<specfem::material::material> > &materials,
     const specfem::mesh::boundaries::absorbing_boundary &absorbing_boundaries,
     const specfem::mesh::boundaries::acoustic_free_surface
         &acoustic_free_surface) {
@@ -151,7 +152,7 @@ specfem::compute::stacey::stacey(
 
 specfem::compute::composite_stacey_dirichlet::composite_stacey_dirichlet(
     const specfem::kokkos::HostView1d<int> kmato,
-    const std::vector<specfem::material::material *> materials,
+    const std::vector<std::shared_ptr<specfem::material::material> > &materials,
     const specfem::mesh::boundaries::absorbing_boundary &absorbing_boundaries,
     const specfem::mesh::boundaries::acoustic_free_surface
         &acoustic_free_surface) {

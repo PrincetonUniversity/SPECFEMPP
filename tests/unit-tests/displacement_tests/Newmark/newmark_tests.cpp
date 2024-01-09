@@ -89,7 +89,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
   std::string config_filename = "../../../tests/unit-tests/displacement_tests/"
                                 "Newmark/test_config.yaml";
 
-  specfem::MPI::MPI *mpi = MPIEnvironment::mpi_;
+  specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
 
   auto Tests = parse_test_config(config_filename, mpi);
 
@@ -110,7 +110,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     auto [gllx, gllz] = setup.instantiate_quadrature();
 
     // Read mesh generated MESHFEM
-    std::vector<specfem::material::material *> materials;
+    std::vector<std::shared_ptr<specfem::material::material> > materials;
     specfem::mesh::mesh mesh(database_file, materials, mpi);
 
     // Read sources
@@ -203,8 +203,9 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
           qp5, partial_derivatives, compute.ibool, gllx->get_w(),
           gllz->get_w());
 
-      specfem::solver::solver *solver = new specfem::solver::time_marching<
-          specfem::enums::element::quadrature::static_quadrature_points<5> >(
+      std::shared_ptr<specfem::solver::solver> solver = std::make_shared<
+          specfem::solver::time_marching<specfem::enums::element::quadrature::
+                                             static_quadrature_points<5> > >(
           acoustic_domain_static, elastic_domain_static,
           acoustic_elastic_interface, elastic_acoustic_interface, it);
 
@@ -229,7 +230,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
             field_acoustic = Kokkos::subview(
                 acoustic_domain_static.get_host_field(), Kokkos::ALL(), 0);
 
-        type_real tolerance = 0.01;
+        type_real tolerance = 0.0001;
 
         specfem::testing::compare_norm(field_acoustic,
                                        Test.database.acoustic_domain_field,

@@ -141,9 +141,9 @@ public:
    *
    * @return specfem::forcing_function::stf*
    */
-  virtual specfem::forcing_function::stf *get_stf() const {
-    return new specfem::forcing_function::stf();
-  }
+  virtual specfem::forcing_function::stf *get_stf() const = 0;
+
+  virtual ~source() = default;
 };
 
 std::ostream &operator<<(std::ostream &out,

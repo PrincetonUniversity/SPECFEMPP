@@ -6,6 +6,7 @@
 #include "source/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
+#include <memory>
 #include <vector>
 
 namespace specfem {
@@ -53,11 +54,12 @@ struct sources {
    * @param quadz Quadrature object in z dimension
    * @param mpi Pointer to the MPI object
    */
-  sources(const std::vector<specfem::sources::source *> &sources,
-          const specfem::quadrature::quadrature *quadx,
-          const specfem::quadrature::quadrature *quadz, const type_real xmax,
-          const type_real xmin, const type_real zmax, const type_real zmin,
-          specfem::MPI::MPI *mpi);
+  sources(
+      const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
+      const specfem::quadrature::quadrature *quadx,
+      const specfem::quadrature::quadrature *quadz, const type_real xmax,
+      const type_real xmin, const type_real zmax, const type_real zmin,
+      specfem::MPI::MPI *mpi);
   /**
    * @brief Helper routine to sync views within this struct
    *

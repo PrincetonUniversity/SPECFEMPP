@@ -7,11 +7,13 @@
 #include <Kokkos_Core.hpp>
 #include <algorithm>
 #include <limits>
+#include <memory>
 #include <vector>
 
-specfem::mesh::mesh::mesh(const std::string filename,
-                          std::vector<specfem::material::material *> &materials,
-                          const specfem::MPI::MPI *mpi) {
+specfem::mesh::mesh::mesh(
+    const std::string filename,
+    std::vector<std::shared_ptr<specfem::material::material> > &materials,
+    const specfem::MPI::MPI *mpi) {
 
   std::ifstream stream;
   stream.open(filename);
@@ -48,27 +50,6 @@ specfem::mesh::mesh::mesh(const std::string filename,
       mpi->reduce(this->parameters.nelem_acforcing, specfem::MPI::sum);
   int nelem_acoustic_surface_all =
       mpi->reduce(this->parameters.nelem_acoustic_surface, specfem::MPI::sum);
-
-  // std::ostringstream message;
-  // message << "Number of spectral elements . . . . . . . . . .(nspec) = "
-  //         << nspec_all
-  //         << "\n"
-  //            "Number of control nodes per element . . . . . .(NGNOD) = "
-  //         << this->parameters.ngnod
-  //         << "\n"
-  //            "Number of points for display . . . . . . .(pointsdisp) = "
-  //         << this->parameters.pointsdisp
-  //         << "\n"
-  //            "Number of element material sets . . . . . . . .(numat) = "
-  //         << this->parameters.numat
-  //         << "\n"
-  //            "Number of acoustic forcing elements .(nelem_acforcing) = "
-  //         << nelem_acforcing_all
-  //         << "\n"
-  //            "Number of acoustic free surf .(nelem_acoustic_surface) = "
-  //         << nelem_acoustic_surface_all;
-
-  // mpi->cout(message.str());
 
   try {
     auto [n_sls, attenuation_f0_reference, read_velocities_at_f0] =
@@ -162,7 +143,8 @@ specfem::mesh::mesh::mesh(const std::string filename,
 }
 
 std::string specfem::mesh::mesh::print(
-    std::vector<specfem::material::material *> materials) const {
+    std::vector<std::shared_ptr<specfem::material::material> > &materials)
+    const {
 
   int n_elastic = 0;
   int n_acoustic = 0;

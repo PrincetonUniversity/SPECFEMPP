@@ -87,7 +87,7 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
   std::string config_filename =
       "../../../tests/unit-tests/domain/test_config.yaml";
 
-  specfem::MPI::MPI *mpi = MPIEnvironment::mpi_;
+  specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
 
   auto Tests = parse_test_config(config_filename, mpi);
 
@@ -108,7 +108,7 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
     auto [gllx, gllz] = setup.instantiate_quadrature();
 
     // Read mesh generated MESHFEM
-    std::vector<specfem::material::material *> materials;
+    std::vector<std::shared_ptr<specfem::material::material> > materials;
     specfem::mesh::mesh mesh(database_file, materials, mpi);
 
     // Generate compute structs to be used by the solver
