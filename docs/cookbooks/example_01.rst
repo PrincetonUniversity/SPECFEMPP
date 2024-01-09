@@ -1,3 +1,5 @@
+.. homogeneous_example::
+
 Wave propagration through homogeneous media
 ===========================================
 
@@ -6,11 +8,12 @@ In this example we simulate wave propagation through a 2-dimensional homogeneous
 Generating a mesh
 -----------------
 
-To generate a mesh for homogeneous media we utilize `SPECFEM2D mesh generator
-<https://specfem2d.readthedocs.io/en/latest/03_mesh_generation/>`_ (xmeshfem2d). To run xmeshfem2d we need to define 2
-files: The ``Par_file``, which defines the parameters used by ``xmeshfem2D``, and ``topography_file.dat``, which defines
-the topography of the domain. More information on generating the mesh can be found `here
-<https://specfem2d.readthedocs.io/en/latest/03_mesh_generation/>`_.
+To generate the mesh for the homogeneous media we need a parameter file, ``Par_File``, a topography file, `topography_file.dat`, and the mesher executible, ``xmeshfem2D``, which should have been compiled during the installation process.
+
+.. note::
+  Currently, we still use a mesher that was developed for the original `SPECFEM2D <https://specfem2d.readthedocs.io/en/latest/03_mesh_generation/>`_ code. More details on the meshing process can be found `here <https://specfem2d.readthedocs.io/en/latest/03_mesh_generation/>`_.
+
+We first define the meshing parameters in a Parameter file.
 
 Parameter File
 ~~~~~~~~~~~~~~~~
@@ -27,34 +30,12 @@ Parameter File
     # title of job
     title                           = Elastic Simulation with point source
 
-    # forward or adjoint simulation
-    # 1 = forward, 2 = adjoint, 3 = both simultaneously
-    # note: 2 is purposely UNUSED (for compatibility with the numbering of our 3D codes)
-    SIMULATION_TYPE                 = 1
-    # 0 = regular wave propagation simulation, 1/2/3 = noise simulation
-    NOISE_TOMOGRAPHY                = 0
-    # save the last frame, needed for adjoint simulation
-    SAVE_FORWARD                    = .false.
-
     # parameters concerning partitioning
     NPROC                           = 1              # number of processes
 
-    # time step parameters
-    # total number of time steps
-    NSTEP                           = 100
+    # Output folder to store mesh related files
+    OUTPUT_FILES                   = <Location to store output artifacts>
 
-    # duration of a time step (see section "How to choose the time step" of the manual for how to do this)
-    DT                              = 1.1d-5
-
-    # time stepping
-    # 1 = Newmark (2nd order), 2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta), 3 = classical RK4 4th-order 4-stage Runge-Kutta
-    time_stepping_scheme            = 1
-
-    # set the type of calculation (P-SV or SH/membrane waves)
-    P_SV                            = .true.
-
-    # axisymmetric (2.5D) or Cartesian planar (2D) simulation
-    AXISYM                          = .false.
 
     #-----------------------------------------------------------
     #
@@ -68,123 +49,14 @@ Parameter File
     # number of control nodes per element (4 or 9)
     NGNOD                           = 9
 
-    # creates/reads a binary database that allows to skip all time consuming setup steps in initialization
-    # 0 = does not read/create database
-    # 1 = creates database
-    # 2 = reads database
-    setup_with_binary_database      = 0
-
-    # available models
-    #   default       - define model using nbmodels below
-    #   ascii         - read model from ascii database file
-    #   binary        - read model from binary databse file
-    #   binary_voigt  - read Voigt model from binary database file
-    #   external      - define model using define_external_model subroutine
-    #   gll           - read GLL model from binary database file
-    #   legacy        - read model from model_velocity.dat_input
-    MODEL                           = default
-
-    # Output the model with the requested type, does not save if turn to default or .false.
-    # (available output formats: ascii,binary,gll,legacy)
-    SAVE_MODEL                      = default
-
-
-    #-----------------------------------------------------------
-    #
-    # Attenuation
-    #
-    #-----------------------------------------------------------
-
-    # attenuation parameters
-    ATTENUATION_VISCOELASTIC        = .false.        # turn attenuation (viscoelasticity) on or off for non-poroelastic solid parts of the model
-    ATTENUATION_VISCOACOUSTIC       = .false.        # turn attenuation (viscoacousticity) on or off for non-poroelastic fluid parts of the model
-
-    # for viscoelastic or viscoacoustic attenuation
-    N_SLS                           = 3              # number of standard linear solids for attenuation (3 is usually the minimum)
-    ATTENUATION_f0_REFERENCE        = 5.196          # in case of attenuation, reference frequency in Hz at which the velocity values in the velocity model are given (unused otherwise); relevant only if source is a Dirac or a Heaviside, otherwise it is automatically set to f0 the dominant frequency of the source in the DATA/SOURCE file
-    READ_VELOCITIES_AT_f0           = .false.        # read seismic velocities at ATTENUATION_f0_REFERENCE instead of at infinite frequency (see user manual for more information)
-    USE_SOLVOPT                     = .false.        # use more precise but much more expensive way of determining the Q factor relaxation times, as in https://doi.org/10.1093/gji/ggw024
-
-    # for poroelastic attenuation
-    ATTENUATION_PORO_FLUID_PART     = .false.        # turn viscous attenuation on or off for the fluid part of poroelastic parts of the model
-    Q0_poroelastic                  = 1              # quality factor for viscous attenuation (ignore it if you are not using a poroelastic material)
-    freq0_poroelastic               = 10             # frequency for viscous attenuation (ignore it if you are not using a poroelastic material)
-
-    # to undo attenuation and/or PMLs for sensitivity kernel calculations or forward runs with SAVE_FORWARD
-    # use the flag below. It performs undoing of attenuation and/or of PMLs in an exact way for sensitivity kernel calculations
-    # but requires disk space for temporary storage, and uses a significant amount of memory used as buffers for temporary storage.
-    # When that option is on the second parameter indicates how often the code dumps restart files to disk (if in doubt, use something between 100 and 1000).
-    UNDO_ATTENUATION_AND_OR_PML     = .false.
-    NT_DUMP_ATTENUATION             = 500
-
-    # Instead of reconstructing the forward wavefield, this option reads it from the disk using asynchronous I/O.
-    # Outperforms conventional mode using a value of NTSTEP_BETWEEN_COMPUTE_KERNELS high enough.
-    NO_BACKWARD_RECONSTRUCTION      = .false.
-
-    #-----------------------------------------------------------
-    #
-    # Sources
-    #
-    #-----------------------------------------------------------
-
-    # source parameters
-    NSOURCES                        = 1              # number of sources (source information is then read from the DATA/SOURCE file)
-    force_normal_to_surface         = .false.        # angleforce normal to surface (external mesh and curve file needed)
-
-    # use an existing initial wave field as source or start from zero (medium initially at rest)
-    initialfield                    = .false.
-    add_Bielak_conditions_bottom    = .false.        # add Bielak conditions or not if initial plane wave
-    add_Bielak_conditions_right     = .false.
-    add_Bielak_conditions_top       = .false.
-    add_Bielak_conditions_left      = .false.
-
-    # acoustic forcing
-    ACOUSTIC_FORCING                = .false.        # acoustic forcing of an acoustic medium with a rigid interface
-
-    # noise simulations - type of noise source time function:
-    # 0=external (S_squared), 1=Ricker(second derivative), 2=Ricker(first derivative), 3=Gaussian, 4=Figure 2a of Tromp et al. 2010
-    # (default value 4 is chosen to reproduce the time function from Fig 2a of "Tromp et al., 2010, Noise Cross-Correlation Sensitivity Kernels")
-    noise_source_time_function_type = 4
-
-    # moving sources
-    # Set write_moving_sources_database to .true. if the generation of moving source databases takes
-    # a long time. Then the simulation is done in two steps: first you run the code and it writes the databases to file
-    # (in DATA folder by default). Then you rerun the code and it will read the databases in there directly possibly
-    # saving a lot of time.
-    # This is only useful for GPU version (for now)
-    write_moving_sources_database   = .false.
+    # location to store the mesh
+    database_filename               = <Output file to store the mesh generated>
 
     #-----------------------------------------------------------
     #
     # Receivers
     #
     #-----------------------------------------------------------
-
-    # receiver set parameters for recording stations (i.e. recording points)
-    # seismotype : record 1=displ 2=veloc 3=accel 4=pressure 5=curl of displ 6=the fluid potential
-    seismotype                      = 1              # several values can be chosen. For example : 1,2,4
-
-    # interval in time steps for writing of seismograms
-    # every how many time steps we save the seismograms
-    # (costly, do not use a very small value; if you use a very large value that is larger than the total number
-    #  of time steps of the run, the seismograms will automatically be saved once at the end of the run anyway)
-    NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 10000
-
-    # set to n to reduce the sampling rate of output seismograms by a factor of n
-    # defaults to 1, which means no down-sampling
-    NTSTEP_BETWEEN_OUTPUT_SAMPLE    = 1
-
-    # so far, this option can only be used if all the receivers are in acoustic elements
-    USE_TRICK_FOR_BETTER_PRESSURE   = .false.
-
-    # use this t0 as earliest starting time rather than the automatically calculated one
-    USER_T0                         = 0.0d0
-
-    # seismogram formats
-    save_ASCII_seismograms          = .true.         # save seismograms in ASCII format or not
-    save_binary_seismograms_single  = .true.         # save seismograms in single precision binary format or not (can be used jointly with ASCII above to save both)
-    save_binary_seismograms_double  = .false.        # save seismograms in double precision binary format or not (can be used jointly with both flags above to save all)
-    SU_FORMAT                       = .false.        # output single precision binary seismograms in Seismic Unix format (adjoint traces will be read in the same format)
 
     # use an existing STATION file found in ./DATA or create a new one from the receiver positions below in this Par_file
     use_existing_STATIONS           = .false.
@@ -197,65 +69,24 @@ Parameter File
     rec_normal_to_surface           = .false.        # base anglerec normal to surface (external mesh and curve file needed)
 
     # first receiver set (repeat these 6 lines and adjust nreceiversets accordingly)
-    nrec                            = 11             # number of receivers
-    xdeb                            = 300.           # first receiver x in meters
+    nrec                            = 3             # number of receivers
+    xdeb                            = 2200.           # first receiver x in meters
     zdeb                            = 2200.          # first receiver z in meters
-    xfin                            = 3700.          # last receiver x in meters (ignored if only one receiver)
+    xfin                            = 2800.          # last receiver x in meters (ignored if only one receiver)
     zfin                            = 2200.          # last receiver z in meters (ignored if only one receiver)
     record_at_surface_same_vertical = .true.         # receivers inside the medium or at the surface (z values are ignored if this is set to true, they are replaced with the topography height)
 
     # second receiver set
-    nrec                            = 11             # number of receivers
+    nrec                            = 3             # number of receivers
     xdeb                            = 2500.          # first receiver x in meters
     zdeb                            = 2500.          # first receiver z in meters
     xfin                            = 2500.          # last receiver x in meters (ignored if only one receiver)
-    zfin                            = 0.             # last receiver z in meters (ignored if only one receiver)
+    zfin                            = 1900.             # last receiver z in meters (ignored if only one receiver)
     record_at_surface_same_vertical = .false.        # receivers inside the medium or at the surface (z values are ignored if this is set to true, they are replaced with the topography height)
 
 
-    #-----------------------------------------------------------
-    #
-    # adjoint kernel outputs
-    #
-    #-----------------------------------------------------------
-
-    # save sensitivity kernels in ASCII format (much bigger files, but compatible with current GMT scripts) or in binary format
-    save_ASCII_kernels              = .true.
-
-    # since the accuracy of kernel integration may not need to respect the CFL, this option permits to save computing time, and memory with UNDO_ATTENUATION_AND_OR_PML mode
-    NTSTEP_BETWEEN_COMPUTE_KERNELS  = 1
-
-    # outputs approximate Hessian for preconditioning
-    APPROXIMATE_HESS_KL             = .false.
-
-    #-----------------------------------------------------------
-    #
-    # Boundary conditions
-    #
-    #-----------------------------------------------------------
-
-    # Perfectly Matched Layer (PML) boundaries
-    # absorbing boundary active or not
-    PML_BOUNDARY_CONDITIONS         = .false.
-    NELEM_PML_THICKNESS             = 3
-    ROTATE_PML_ACTIVATE             = .false.
-    ROTATE_PML_ANGLE                = 30.
-    # change the four parameters below only if you know what you are doing; they change the damping profiles inside the PMLs
-    K_MIN_PML                       = 1.0d0          # from Gedney page 8.11
-    K_MAX_PML                       = 1.0d0
-    damping_change_factor_acoustic  = 0.5d0
-    damping_change_factor_elastic   = 1.0d0
-    # set the parameter below to .false. unless you know what you are doing; this implements automatic adjustment of the PML parameters for elongated models.
-    # The goal is to improve the absorbing efficiency of PML for waves with large incidence angles, but this can lead to artefacts.
-    # In particular, this option is efficient only when the number of sources NSOURCES is equal to one.
-    PML_PARAMETER_ADJUSTMENT        = .false.
-
-    # Stacey ABC
-    STACEY_ABSORBING_CONDITIONS     = .false.
-
-    # periodic boundaries
-    ADD_PERIODIC_CONDITIONS         = .false.
-    PERIODIC_HORIZ_DIST             = 4000.d0
+    # filename to store stations file
+    stations_filename              = <Location to stations file>
 
     #-----------------------------------------------------------
     #
@@ -281,9 +112,6 @@ Parameter File
     #       To convert one to the other see doc/Qkappa_Qmu_versus_Qp_Qs_relationship_in_2D_plane_strain.pdf and
     #       utils/attenuation/conversion_from_Qkappa_Qmu_to_Qp_Qs_from_Dahlen_Tromp_959_960.f90.
     1 1 2700.d0 3000.d0 1732.051d0 0 0 9999 9999 0 0 0 0 0 0
-    # 2 1 2500.d0 2700.d0 1443.375d0 0 0 9999 9999 0 0 0 0 0 0
-    # 3 1 2200.d0 2500.d0 1443.375d0 0 0 9999 9999 0 0 0 0 0 0
-    # 4 1 2200.d0 2200.d0 1343.375d0 0 0 9999 9999 0 0 0 0 0 0
 
     # external tomography file
     TOMOGRAPHY_FILE                 = ./DATA/tomo_file.xyz
@@ -316,7 +144,7 @@ Parameter File
     #-----------------------------------------------------------
 
     # file containing interfaces for internal mesh
-    interfacesfile                  = ../EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/DATA/interfaces_simple_topo_flat.dat
+    interfacesfile                  = <Location to topography file>
 
     # geometry of the model (origin lower-left corner = 0,0) and mesh description
     xmin                            = 0.d0           # abscissa of left side of the model
@@ -333,157 +161,25 @@ Parameter File
     nbregions                       = 1              # then set below the different regions and model number for each region
     # format of each line: nxmin nxmax nzmin nzmax material_number
     1 80  1 60 1
-    # 1 59 21 40 2
-    # 71 80 21 40 2
-    # 1 80 41 60 3
-    # 60 70 21 40 4
 
     #-----------------------------------------------------------
     #
-    # Display parameters
+    # DISPLAY PARAMETERS
     #
     #-----------------------------------------------------------
-
-    # interval at which we output time step info and max of norm of displacement
-    # (every how many time steps we display information about the simulation. costly, do not use a very small value)
-    NTSTEP_BETWEEN_OUTPUT_INFO      = 100
 
     # meshing output
     output_grid_Gnuplot             = .false.        # generate a GNUPLOT file containing the grid, and a script to plot it
     output_grid_ASCII               = .false.        # dump the grid in an ASCII text file consisting of a set of X,Y,Z points or not
 
-    # to plot total energy curves, for instance to monitor how CPML absorbing layers behave;
-    # should be turned OFF in most cases because a bit expensive
-    OUTPUT_ENERGY                   = .false.
 
-    # every how many time steps we compute energy (which is a bit expensive to compute)
-    NTSTEP_BETWEEN_OUTPUT_ENERGY    = 10
+At this point, it is worthwhile to note few key parameters within the ``PAR_FILE`` as it pertains to SPECFEM++.
 
-    # Compute the field int_0^t v^2 dt for a set of GLL points and write it to file. Use
-    # the script utils/visualisation/plotIntegratedEnergyFile.py to watch. It is refreshed at the same time than the seismograms
-    COMPUTE_INTEGRATED_ENERGY_FIELD = .false.
-
-    #-----------------------------------------------------------
-    #
-    # Movies/images/snaphots visualizations
-    #
-    #-----------------------------------------------------------
-
-    # every how many time steps we draw JPEG or PostScript pictures of the simulation
-    # and/or we dump results of the simulation as ASCII or binary files (costly, do not use a very small value)
-    NTSTEP_BETWEEN_OUTPUT_IMAGES    = 100
-
-    # minimum amplitude kept in % for the JPEG and PostScript snapshots; amplitudes below that are muted
-    cutsnaps                        = 1.
-
-    #### for JPEG color images ####
-    output_color_image              = .false.         # output JPEG color image of the results every NTSTEP_BETWEEN_OUTPUT_IMAGES time steps or not
-    imagetype_JPEG                  = 3              # display 1=displ_Ux 2=displ_Uz 3=displ_norm 4=veloc_Vx 5=veloc_Vz 6=veloc_norm 7=accel_Ax 8=accel_Az 9=accel_norm 10=pressure
-    factor_subsample_image          = 1.0d0          # (double precision) factor to subsample or oversample (if set to e.g. 0.5) color images output by the code (useful for very large models, or to get nicer looking denser pictures)
-    USE_CONSTANT_MAX_AMPLITUDE      = .true.        # by default the code normalizes each image independently to its maximum; use this option to use the global maximum below instead
-    CONSTANT_MAX_AMPLITUDE_TO_USE   = 1.17d-7         # constant maximum amplitude to use for all color images if the above USE_CONSTANT_MAX_AMPLITUDE option is true
-    POWER_DISPLAY_COLOR             = 0.30d0         # non linear display to enhance small amplitudes in JPEG color images
-    DRAW_SOURCES_AND_RECEIVERS      = .true.         # display sources as orange crosses and receivers as green squares in JPEG images or not
-    DRAW_WATER_IN_BLUE              = .true.         # display acoustic layers as constant blue in JPEG images, because they likely correspond to water in the case of ocean acoustics or in the case of offshore oil industry experiments (if off, display them as greyscale, as for elastic or poroelastic elements, for instance for acoustic-only oil industry models of solid media)
-    USE_SNAPSHOT_NUMBER_IN_FILENAME = .false.        # use snapshot number in the file name of JPEG color snapshots instead of the time step (for instance to create movies in an easier way later)
-
-    #### for PostScript snapshots ####
-    output_postscript_snapshot      = .false.         # output Postscript snapshot of the results every NTSTEP_BETWEEN_OUTPUT_IMAGES time steps or not
-    imagetype_postscript            = 1              # display 1=displ vector 2=veloc vector 3=accel vector; small arrows are displayed for the vectors
-    meshvect                        = .true.         # display mesh on PostScript plots or not
-    modelvect                       = .false.        # display velocity model on PostScript plots or not
-    boundvect                       = .true.         # display boundary conditions on PostScript plots or not
-    interpol                        = .true.         # interpolation of the PostScript display on a regular grid inside each spectral element, or use the non-evenly spaced GLL points
-    pointsdisp                      = 6              # number of points in each direction for interpolation of PostScript snapshots (set to 1 for lower-left corner only)
-    subsamp_postscript              = 1              # subsampling of background velocity model in PostScript snapshots
-    sizemax_arrows                  = 1.d0           # maximum size of arrows on PostScript plots in centimeters
-    US_LETTER                       = .false.        # use US letter or European A4 paper for PostScript plots
-
-    #### for wavefield dumps ####
-    output_wavefield_dumps          = .false.        # output wave field to a text file (creates very big files)
-    imagetype_wavefield_dumps       = 1              # display 1=displ vector 2=veloc vector 3=accel vector 4=pressure
-    use_binary_for_wavefield_dumps  = .false.        # use ASCII or single-precision binary format for the wave field dumps
-
-    #-----------------------------------------------------------
-
-    # Ability to run several calculations (several earthquakes)
-    # in an embarrassingly-parallel fashion from within the same run;
-    # this can be useful when using a very large supercomputer to compute
-    # many earthquakes in a catalog, in which case it can be better from
-    # a batch job submission point of view to start fewer and much larger jobs,
-    # each of them computing several earthquakes in parallel.
-    # To turn that option on, set parameter NUMBER_OF_SIMULTANEOUS_RUNS to a value greater than 1.
-    # To implement that, we create NUMBER_OF_SIMULTANEOUS_RUNS MPI sub-communicators,
-    # each of them being labeled "my_local_mpi_comm_world", and we use them
-    # in all the routines in "src/shared/parallel.f90", except in MPI_ABORT() because in that case
-    # we need to kill the entire run.
-    # When that option is on, of course the number of processor cores used to start
-    # the code in the batch system must be a multiple of NUMBER_OF_SIMULTANEOUS_RUNS,
-    # all the individual runs must use the same number of processor cores,
-    # which as usual is NPROC in the Par_file,
-    # and thus the total number of processor cores to request from the batch system
-    # should be NUMBER_OF_SIMULTANEOUS_RUNS * NPROC.
-    # All the runs to perform must be placed in directories called run0001, run0002, run0003 and so on
-    # (with exactly four digits).
-    #
-    # Imagine you have 10 independent calculations to do, each of them on 100 cores; you have three options:
-    #
-    # 1/ submit 10 jobs to the batch system
-    #
-    # 2/ submit a single job on 1000 cores to the batch, and in that script create a sub-array of jobs to start 10 jobs,
-    # each running on 100 cores (see e.g. http://www.schedmd.com/slurmdocs/job_array.html )
-    #
-    # 3/ submit a single job on 1000 cores to the batch, start SPECFEM2D on 1000 cores, create 10 sub-communicators,
-    # cd into one of 10 subdirectories (called e.g. run0001, run0002,... run0010) depending on the sub-communicator
-    # your MPI rank belongs to, and run normally on 100 cores using that sub-communicator.
-    #
-    # The option below implements 3/.
-    #
-    NUMBER_OF_SIMULTANEOUS_RUNS     = 1
-
-    # if we perform simultaneous runs in parallel, if only the source and receivers vary between these runs
-    # but not the mesh nor the model (velocity and density) then we can also read the mesh and model files
-    # from a single run in the beginning and broadcast them to all the others; for a large number of simultaneous
-    # runs for instance when solving inverse problems iteratively this can DRASTICALLY reduce I/Os to disk in the solver
-    # (by a factor equal to NUMBER_OF_SIMULTANEOUS_RUNS), and reducing I/Os is crucial in the case of huge runs.
-    # Thus, always set this option to .true. if the mesh and the model are the same for all simultaneous runs.
-    # In that case there is no need to duplicate the mesh and model file database (the content of the DATABASES_MPI
-    # directories) in each of the run0001, run0002,... directories, it is sufficient to have one in run0001
-    # and the code will broadcast it to the others)
-    BROADCAST_SAME_MESH_AND_MODEL   = .true.
-
-    #-----------------------------------------------------------
-
-    # set to true to use GPUs
-    GPU_MODE                        = .true.
-
-At this point, it is worthwhile to note few key parameters within the ``PAR_FILE`` as it pertains to the ``Kokkos``
-version of the solver.
-
-- This version of SPECFEM2D Kokkos does not support simulations running across multiple nodes, i.e., we have not enabled
-  MPI. Relevant parameter value:
+- This version of SPECFEM++ does not support simulations running across multiple nodes, i.e., we have not enabled MPI. Relevant parameter value:
 
 .. code:: bash
 
         NPROC   = 1
-
-- This version of the software can only simulate meshes generated by the internal mesher included in meshfem2d. Relevant
-  parameter values:
-
-.. code:: bash
-
-        MODEL                           = default
-
-        SAVE_MODEL                      = default
-
-- While defining the velocity models for different materials we need to make sure that all materials describe elastic
-  materials. Other material systems are not implemented in this version of the package.
-
-.. note::
-
-    The ``PAR_FILE`` shown above contains many values which define the runtime behaviour of `xmeshfem2D
-    <https://specfem2d.readthedocs.io/en/latest/04_running_the_solver/>`_ . These values will be omitted by the
-    ``Kokkos`` solver. We define some of these values below in ``specfem_config.yaml``
 
 - The path to the topography file is provided using the ``interfacesfile`` parameter. Relevant values:
 
@@ -528,19 +224,22 @@ Topography file
 Running ``xmeshfem2D``
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Copy the parameters file and topography file to the ``DATA`` folder within ``SPECFEM2D`` root directory. To execute the
-mesher from the root of ``specfem2d`` run
+To execute the mesher run
 
 .. code:: bash
 
-    ./bin/xmeshfem2D
+    ./xmeshfem2D -p <PATH TO PAR_FILE>
 
-Note the path of the database file and :ref:`stations_file` generated after successfully running the mesher. Generally, the database will be located within ``OUTPUT_FILES`` directory within root of SPECFEM2D and the :ref:`stations_file` should be located in ``DATA`` folder of SPECFEM2D root.
+.. note::
+
+    Make sure either your are in the build directory of SPECFEM++ or the build directory is added to your ``PATH``.
+
+Note the path of the database file and :ref:`stations_file` generated after successfully running the mesher.
 
 Defining sources
 ----------------
 
-Next we define the sources using a YAML file. For full description on parameters used to define sources refer :ref:`source_description`. Here we define 2 sources file pertaining to a single single source and 2 sources inside the simulation box.
+Next we define the sources using a YAML file. For full description on parameters used to define sources refer :ref:`source_description`.
 
 .. code:: yaml
     :linenos:
@@ -555,36 +254,10 @@ Next we define the sources using a YAML file. For full description on parameters
           angle : 0.0
           vx : 0.0
           vz : 0.0
-          Dirac:
-            factor: 1.0
+          Ricker:
+            factor: 1e10
             tshift: 0.0
-
-.. code:: yaml
-    :linenos:
-    :caption: two_sources.yaml
-
-    number-of-sources: 2
-    sources:
-      - force:
-          x : 2500.0
-          z : 2500.0
-          source_surf: false
-          angle : 0.0
-          vx : 0.0
-          vz : 0.0
-          Dirac:
-            factor: 1.0
-            tshift: 0.0
-      - force:
-          x : 2500.0
-          z : 500.0
-          source_surf: false
-          angle : 0.0
-          vx : 0.0
-          vz : 0.0
-          Dirac:
-            factor: 1.0
-            tshift: 0.0
+            f0: 10.0
 
 Configuring the solver
 -----------------------
@@ -610,10 +283,7 @@ Now that we have generated a mesh and defined the sources, we need to set up the
       simulation-setup:
         ## quadrature setup
         quadrature:
-          alpha: 0.0
-          beta: 0.0
-          ngllx: 5
-          ngllz: 5
+          quadrature-type: GLL4
 
         ## Solver setup
         solver:
@@ -621,15 +291,17 @@ Now that we have generated a mesh and defined the sources, we need to set up the
             type-of-simulation: forward
             time-scheme:
               type: Newmark
-              dt: 1.1e-5
-              nstep: 100
+              dt: 1.1e-3
+              nstep: 1600
 
-      seismogram:
+      receivers:
         stations-file: <PATH TO STATIONS FILE>
         angle: 0.0
         seismogram-type:
           - velocity
         nstep_between_samples: 1
+
+      seismogram:
         seismogram-format: ascii
         output-folder: <PATH TO DIRECTORY FOR STORING OUTPUTS>
 
@@ -679,7 +351,7 @@ At this point lets focus on a few sections in this file:
 Running the solver
 -------------------
 
-Finally, to run the SPECFEM2D kokkos solver
+Finally, to run the SPECFEM++ solver
 
 .. code:: bash
 
@@ -687,13 +359,41 @@ Finally, to run the SPECFEM2D kokkos solver
 
 .. note::
 
-    Make sure either your are in the build directory of SPECFEM2D kokkos or the build directory is added to your ``PATH``.
+    Make sure either your are in the build directory of SPECFEM++ or the build directory is added to your ``PATH``.
 
 Visualizing seimograms
 ----------------------
 
-On successful completion of the simulation the seismograms are stored within the output folder. Which can be visualized using standard plotting tools.
+Let us now plot the traces generated by the solver using ``obspy``. This version of the code only supports ASCII output format for seismograms. To plot the seismograms we need to read the ASCII files as ``numpy`` arrays and them convert them to ``obspy`` streams. The following code snippet shows how to do this.
 
-.. note::
+.. code-block:: python
 
-  As we move forward, we plan to add modules for visualizing seismograms and integrating with common siesmic postprocessing tools like obspy.
+    import os
+    import numpy as np
+    import obspy
+
+    def get_traces(directory):
+        traces = []
+        ## iterate over all seismograms
+        for filename in os.listdir(directory):
+            f = os.path.join(directory, filename)
+            station_name = os.path.splitext(filename)[0]
+            trace = np.loadtxt(f, delimiter=' ')
+            starttime = trace[0,0]
+            dt = trace[1,0] - trace[0,0]
+            traces.append(obspy.Trace(trace[:,1], {'network': station_name, 'starttime': starttime, 'delta': dt}))
+
+        stream = obspy.Stream(traces)
+
+        return stream
+
+    directory = ## PATH TO DIRECTORY WHERE SEISMOGRAMS ARE STORED
+    stream = get_traces(directory)
+    stream.plot(size=(800, 1000))
+
+.. figure:: ../../examples/homogeneous-medium-flat-topography/traces.svg
+   :alt: Traces
+   :width: 800
+   :align: center
+
+   Traces.

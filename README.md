@@ -1,53 +1,35 @@
-# SPECFEM2D Kokkos implementation
+# SPECFEM++
 
-[![Unittests](https://github.com/PrincetonUniversity/specfem2d_kokkos/actions/workflows/unittests.yml/badge.svg)](https://github.com/PrincetonUniversity/specfem2d_kokkos/actions/workflows/unittests.yml)
+[![Tests](https://github.com/PrincetonUniversity/specfem2d_kokkos/actions/workflows/unittests.yml/badge.svg)](https://github.com/PrincetonUniversity/specfem2d_kokkos/actions/workflows/unittests.yml)
 [![Build](https://github.com/PrincetonUniversity/specfem2d_kokkos/actions/workflows/compilation.yml/badge.svg)](https://github.com/PrincetonUniversity/specfem2d_kokkos/actions/workflows/compilation.yml)
 [![Documentation Status](https://readthedocs.org/projects/specfem2d-kokkos/badge/?version=latest)](https://specfem2d-kokkos.readthedocs.io/en/latest/?badge=latest)
 
 ## About
 
+SPECFEM++ is a complete re-write of SPECFEM suite of packages (SPECFEM2D, SPECFEM3D, SPECFEM3D_GLOBE) using C++. Compared to the earlier version, SPECFEM++ code base provides:
 
-SPECFEM kokkos is C++ implementation of SPECFEM suite of software using the [Kokkos](<https://kokkos.github.io/>) programming model. Kokkos is a is a production level solution for writing modern C++ applications in a hardware agnostic way, this allows us to write a single source code which can run across all modern architectures. The goal of this project is to provide the same level of functionality as provided by SPECFEM2D, SPECFEM3D and SPECFEM3d_GLOBE in a singular package that runs across all architectures.
+ 1. a robust and flexible code structure,
+ 2. modularity that allows for easy addition of new features,
+ 3. portability that allows the code to run on a variety of architectures (CPU, NVIDIA GPUs, Intel GPUs, AMD GPUs etc.), and
+ 4. a user-friendly build infrastructure that allows the code to be easily compiled and run on a variety of platforms.
 
 ## Documentation
 
 
-The online documentation for SPECFEM2D Kokkos is located [here](https://specfem2d-kokkos.readthedocs.io/en/latest/index.html#)
+The online documentation for SPECFEM++ is located [here](https://specfem2d-kokkos.readthedocs.io/en/latest/index.html#)
 
 ## Installation
 
 
 Completer installation instructions are located in the [online documentation](https://specfem2d-kokkos.readthedocs.io/en/latest/user_documentation/index.html)
 
-## Code feature matrix
+## Running SPECFEM++
 
-
-Table below shows various features available and tested in this package on various architectures:
-
-|                     | CPU(serial) | CPU(OpenMP) | CUDA | HIP
-----------------------|------------:|-----------:|------:|-----|
-| **Physics**                                                  |
-| P-SV waves          | X           | X           | X    |     |
-| Elastic Domains     | X           | X           | X    |     |
-| **Simulation Setup**                                         |
-| Forward Simulations | X           | X           | X    |     |
-| **Time Schemes**                                             |
-| Newmark             | X           | X           | X    |     |
-| **Seismograms**                                              |
-| Displacement        | X           | X           | X     |    |
-| Velocity            | X           | X           | X     |    |
-| Acceleration        | X           | X           | X     |    |
-| **Seismogram format**                                        |
-| ASCII               | X           | X           | X     |    |
-
-## Running SPECFEM2D Kokkos
-
-Intructions on how to run SPECFEM2D Kokkos can be found [here](https://specfem2d-kokkos.readthedocs.io/en/latest/user_documentation/index.html).
+Intructions on how to run SPECFEM++ can be found [here](https://specfem2d-kokkos.readthedocs.io/en/latest/user_documentation/index.html).
 
 For use case examples of running the software please see [cookbooks](https://specfem2d-kokkos.readthedocs.io/en/latest/cookbooks/index.html)
 
-## Contributing to SPECFEM2D Kokkos
-
+## Contributing to SPECFEM++
 
 SPECFEM is a community project that lives by the participation of its members — i.e., including you! It is our goal to build an inclusive and participatory community so we are happy that you are interested in participating! Please see [this page](https://specfem2d-kokkos.readthedocs.io/en/latest/developer_documentation/index.html) for developer documentation.
 
@@ -55,7 +37,6 @@ In particular you should follow the git development workflow and pre-commit styl
 
 ## License
 
-
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
-SPECFEM2D Kokkos is distributed under the [GPL v3 license](LICENSE)
+SPECFEM++ is distributed under the [GPL v3 license](LICENSE)

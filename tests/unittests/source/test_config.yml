@@ -1,3 +1,0 @@
-database_file: "../../../tests/unittests/source/serial/database.bin"
-sources_file: "../../../tests/unittests/source/serial/sources.yml"
-solutions_file: "../../../tests/unittests/source/serial/source_locations.yml"

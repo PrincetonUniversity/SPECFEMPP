@@ -1,0 +1,28 @@
+Tests:
+  # Test 1:
+  - name : "SerialTest1 : Homogeneous elastic domain"
+    description: >
+      Serial mesh IO test. Homogeneous elastic domain.
+    config:
+      nproc : 1
+    databases:
+      - processor : 0
+        filename : "../../../tests/unit-tests/mesh/serial/test1/database.bin"
+  # Test 2:
+  - name : "SerialTest2 : Homogeneous acoustic domain"
+    description: >
+      Serial mesh IO test. Homogeneous acoustic domain.
+    config:
+      nproc : 1
+    databases:
+      - processor : 0
+        filename : "../../../tests/unit-tests/mesh/serial/test2/database.bin"
+  # Test 3:
+  - name : "SerialTest3 : Heterogeneous elastic acoustic domain"
+    description: >
+      Serial mesh IO test. Heterogeneous elastic acoustic domain.
+    config:
+      nproc : 1
+    databases:
+      - processor : 0
+        filename : "../../../tests/unit-tests/mesh/serial/test3/database.bin"

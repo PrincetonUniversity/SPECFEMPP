@@ -1,6 +1,6 @@
 name: Unittests
 
-on: [push, pull_request]
+on: [push]
 
 jobs:
   build-and-test:
@@ -14,9 +14,9 @@ jobs:
         run: git submodule init
           &&  git submodule update
       - name: Configure
-        run: cmake -S . -B build
+        run: cmake -S . -B build -DBUILD_TESTS=ON
       - name: Build
         run: cmake --build build
       - name: Run all tests
-        run: cd build/tests/unittests
+        run: cd build/tests/unit-tests
           && ctest
