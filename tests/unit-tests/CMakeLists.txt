@@ -102,23 +102,23 @@ target_link_libraries(
   -lpthread -lm
 )
 
-# add_executable(
-#   compute_partial_derivatives_tests
-#   compute/partial_derivatives/compute_partial_derivatives_tests.cpp
-# )
+add_executable(
+  compute_partial_derivatives_tests
+  compute/partial_derivatives/compute_partial_derivatives_tests.cpp
+)
 
-# target_link_libraries(
-#   compute_partial_derivatives_tests
-#   mesh
-#   compute
-#   quadrature
-#   mpi_environment
-#   kokkos_environment
-#   yaml-cpp
-#   compare_arrays
-#   material_class
-#   -lpthread -lm
-# )
+target_link_libraries(
+  compute_partial_derivatives_tests
+  mesh
+  compute
+  quadrature
+  mpi_environment
+  kokkos_environment
+  yaml-cpp
+  compare_arrays
+  material_class
+  -lpthread -lm
+)
 
 # add_executable(
 #   compute_elastic_tests
@@ -291,7 +291,7 @@ if (NOT MPI_PARALLEL)
   gtest_discover_tests(lagrange_tests)
   gtest_discover_tests(fortranio_test)
   gtest_discover_tests(mesh_tests)
-  # gtest_discover_tests(compute_partial_derivatives_tests)
+  gtest_discover_tests(compute_partial_derivatives_tests)
   # gtest_discover_tests(compute_elastic_tests)
   # gtest_discover_tests(compute_acoustic_tests)
   # gtest_discover_tests(compute_coupled_interfaces_tests)

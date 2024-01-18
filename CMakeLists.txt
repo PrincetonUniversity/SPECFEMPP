@@ -210,7 +210,7 @@ target_link_libraries(
 add_library(
         compute
         src/compute/compute_mesh.cpp
-        # src/compute/compute_partial_derivatives.cpp
+        src/compute/compute_partial_derivatives.cpp
         # src/compute/compute_properties.cpp
         # src/compute/compute_sources.cpp
         # src/compute/compute_receivers.cpp

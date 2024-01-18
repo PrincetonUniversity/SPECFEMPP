@@ -39,9 +39,8 @@ type_real get_tolerance(std::vector<qp> cart_cord, const int nspec,
   return 1e-6 * xtypdist;
 }
 
-specfem::compute::points
-assign_numbering(specfem::kokkos::HostView3d<specfem::point::global<2> >
-                     &global_coordinates) {
+specfem::compute::points assign_numbering(
+    specfem::kokkos::HostView3d<specfem::point::gcoord2> &global_coordinates) {
 
   int nspec = global_coordinates.extent(0);
   int ngll = global_coordinates.extent(1);
@@ -53,8 +52,8 @@ assign_numbering(specfem::kokkos::HostView3d<specfem::point::global<2> >
     for (int iz = 0; iz < ngll; iz++) {
       for (int ix = 0; ix < ngll; ix++) {
         int iloc = ispec * (ngllxz) + iz * ngll + ix;
-        cart_cord[iloc].x = global_coordinates(ispec, iz, ix).coordinates[0];
-        cart_cord[iloc].z = global_coordinates(ispec, iz, ix).coordinates[1];
+        cart_cord[iloc].x = global_coordinates(ispec, iz, ix).x;
+        cart_cord[iloc].z = global_coordinates(ispec, iz, ix).z;
         cart_cord[iloc].iloc = iloc;
       }
     }
@@ -241,7 +240,7 @@ specfem::compute::points specfem::compute::mesh::assemble() {
   const int scratch_size =
       specfem::kokkos::HostScratchView2d<type_real>::shmem_size(ndim, ngnod);
 
-  specfem::kokkos::HostView3d<specfem::point::global<2> > global_coordinates(
+  specfem::kokkos::HostView3d<specfem::point::gcoord2> global_coordinates(
       "specfem::compute::mesh::assemble::global_coordinates", nspec, ngll,
       ngll);
 
