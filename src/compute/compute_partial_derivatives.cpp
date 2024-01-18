@@ -2,12 +2,14 @@
 #include "jacobian/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "macros.hpp"
+#include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
 specfem::compute::partial_derivatives::partial_derivatives(const int nspec,
                                                            const int ngllz,
                                                            const int ngllx)
-    : xix("specfem::compute::partial_derivatives::xix", nspec, ngllz, ngllx),
+    : nspec(nspec), ngllz(ngllz), ngllx(ngllx),
+      xix("specfem::compute::partial_derivatives::xix", nspec, ngllz, ngllx),
       xiz("specfem::compute::partial_derivatives::xiz", nspec, ngllz, ngllx),
       gammax("specfem::compute::partial_derivatives::gammax", nspec, ngllz,
              ngllx),
@@ -24,17 +26,28 @@ specfem::compute::partial_derivatives::partial_derivatives(const int nspec,
 };
 
 specfem::compute::partial_derivatives::partial_derivatives(
-    const specfem::compute::mesh &mesh,
-    const specfem::compute::quadrature &quadrature) {
+    const specfem::compute::mesh &mesh)
+    : nspec(mesh.control_nodes.nspec), ngllz(mesh.quadratures.gll.N),
+      ngllx(mesh.quadratures.gll.N),
+      xix("specfem::compute::partial_derivatives::xix", nspec, ngllz, ngllx),
+      xiz("specfem::compute::partial_derivatives::xiz", nspec, ngllz, ngllx),
+      gammax("specfem::compute::partial_derivatives::gammax", nspec, ngllz,
+             ngllx),
+      gammaz("specfem::compute::partial_derivatives::gammaz", nspec, ngllz,
+             ngllx),
+      jacobian("specfem::compute::partial_derivatives::jacobian", nspec, ngllz,
+               ngllx),
+      h_xix(Kokkos::create_mirror_view(xix)),
+      h_xiz(Kokkos::create_mirror_view(xiz)),
+      h_gammax(Kokkos::create_mirror_view(gammax)),
+      h_gammaz(Kokkos::create_mirror_view(gammaz)),
+      h_jacobian(Kokkos::create_mirror_view(jacobian)) {
 
-  // Needs an axisymmetric update
+  const int ngnod = mesh.control_nodes.ngnod;
+  const int ngllxz = ngllz * ngllx;
 
-  // I have to port this section to GPU
-
-  const int nspec = mesh.nspec;
-  const int ngll = quadrature.ngll;
-
-  *this = specfem::compute::partial_derivatives(nspec, ngll, ngll);
+  const int scratch_size =
+      specfem::kokkos::HostScratchView2d<type_real>::shmem_size(ndim, ngnod);
 
   Kokkos::parallel_for(
       specfem::kokkos::HostTeam(nspec, Kokkos::AUTO, Kokkos::AUTO)
@@ -51,7 +64,7 @@ specfem::compute::partial_derivatives::partial_derivatives(
         Kokkos::parallel_for(
             Kokkos::TeamThreadRange(teamMember, ngnod), [&](const int in) {
               s_coorg(0, in) = mesh.control_nodes.h_coord(0, ispec, in);
-              s_coorg(1, in) = mesh.control_nodes.h_coord(1, ispec, in)
+              s_coorg(1, in) = mesh.control_nodes.h_coord(1, ispec, in);
             });
 
         teamMember.team_barrier();
@@ -63,23 +76,26 @@ specfem::compute::partial_derivatives::partial_derivatives(
               sub2ind(xz, ngllx, iz, ix);
 
               // compute partial derivatives
-              auto sv_dershape2D =
-                  Kokkos::subview(mesh.shape_functions.h_dshape2D, iz, ix,
-                                  Kokkos::ALL, Kokkos::ALL);
+              auto sv_dershape2D = Kokkos::subview(
+                  mesh.quadratures.gll.shape_functions.h_dshape2D, iz, ix,
+                  Kokkos::ALL, Kokkos::ALL);
 
-              auto elemental_derivatives =
-                  jacobian::compute_inverted_derivatives(teamMember, s_coorg,
-                                                         ngnod, sv_dershape2D);
+              auto derivatives = jacobian::compute_derivatives(
+                  teamMember, s_coorg, ngnod, sv_dershape2D);
 
-              this->h_xix(ispec, iz, ix) = elemental_derivatives.xix;
-              this->h_gammax(ispec, iz, ix) = elemental_derivatives.gammax;
-              this->h_xiz(ispec, iz, ix) = elemental_derivatives.xiz;
-              this->h_gammaz(ispec, iz, ix) = elemental_derivatives.gammaz;
-              this->h_jacobian(ispec, iz, ix) = elemental_derivatives.jacobian;
+              this->h_xix(ispec, iz, ix) = derivatives.xix;
+              this->h_gammax(ispec, iz, ix) = derivatives.gammax;
+              this->h_xiz(ispec, iz, ix) = derivatives.xiz;
+              this->h_gammaz(ispec, iz, ix) = derivatives.gammaz;
+              this->h_jacobian(ispec, iz, ix) = derivatives.jacobian;
             });
       });
 
-  this->sync_views();
+  Kokkos::deep_copy(xix, h_xix);
+  Kokkos::deep_copy(xiz, h_xiz);
+  Kokkos::deep_copy(gammax, h_gammax);
+  Kokkos::deep_copy(gammaz, h_gammaz);
+  Kokkos::deep_copy(jacobian, h_jacobian);
 
   return;
 }

@@ -2,6 +2,7 @@
 #define _JACOBIAN_HPP
 
 #include "kokkos_abstractions.h"
+#include "point/partial_derivatives.hpp"
 #include "specfem_setup.hpp"
 
 namespace specfem {
@@ -234,6 +235,12 @@ std::tuple<type_real, type_real, type_real, type_real>
 compute_inverted_derivatives(
     const specfem::kokkos::HostView2d<type_real> s_coorg, const int ngnod,
     const type_real xi, const type_real gamma);
+
+specfem::point::partial_derivatives2
+compute_derivatives(const specfem::kokkos::HostTeam::member_type &teamMember,
+                    const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
+                    const int ngnod,
+                    const specfem::kokkos::HostView2d<type_real> dershape2D);
 
 } // namespace jacobian
 } // namespace specfem

@@ -4,7 +4,7 @@
 // #include "compute/compute_quadrature.hpp"
 #include "kokkos_abstractions.h"
 #include "mesh/mesh.hpp"
-#include "point/point.hpp"
+#include "point/interface.hpp"
 #include "quadrature/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -117,9 +117,9 @@ struct mesh {
 
   specfem::compute::points assemble();
 
-  specfem::point::global<2> locate(const specfem::point::local<2> &point);
+  specfem::point::gcoord2 locate(const specfem::point::lcoord2 &point);
 
-  specfem::point::local<2> locate(const specfem::point::global<2> &point);
+  specfem::point::lcoord2 locate(const specfem::point::gcoord2 &point);
 };
 
 // /**
