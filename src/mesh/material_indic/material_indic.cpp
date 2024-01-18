@@ -8,8 +8,6 @@ specfem::mesh::material_ind::material_ind(const int nspec, const int ngnod) {
       specfem::kokkos::HostView1d<int>("specfem::mesh::region_CPML", nspec);
   this->kmato =
       specfem::kokkos::HostView1d<int>("specfem::mesh::region_CPML", nspec);
-  this->knods = specfem::kokkos::HostView2d<int>("specfem::mesh::region_CPML",
-                                                 ngnod, nspec);
 
   for (int ispec = 0; ispec < nspec; ispec++) {
     this->kmato(ispec) = -1;
@@ -17,10 +15,10 @@ specfem::mesh::material_ind::material_ind(const int nspec, const int ngnod) {
   return;
 }
 
-specfem::mesh::material_ind::material_ind(std::ifstream &stream,
-                                          const int ngnod, const int nspec,
-                                          const int numat,
-                                          const specfem::MPI::MPI *mpi) {
+specfem::mesh::material_ind::material_ind(
+    std::ifstream &stream, const int ngnod, const int nspec, const int numat,
+    const specfem::kokkos::HostView2d<int> knods,
+    const specfem::MPI::MPI *mpi) {
   std::vector<int> knods_read(ngnod, -1);
   int n, kmato_read, pml_read;
 
@@ -45,7 +43,7 @@ specfem::mesh::material_ind::material_ind(std::ifstream &stream,
       if (knods_read[i] == 0)
         throw std::runtime_error("Error reading knods (node_id) values");
 
-      this->knods(i, n - 1) = knods_read[i] - 1;
+      knods(i, n - 1) = knods_read[i] - 1;
     }
   }
 

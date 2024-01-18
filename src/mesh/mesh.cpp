@@ -33,7 +33,7 @@ specfem::mesh::mesh::mesh(
   }
 
   try {
-    this->coorg = specfem::mesh::IO::fortran::read_coorg_elements(
+    this->control_nodes.coord = specfem::mesh::IO::fortran::read_coorg_elements(
         stream, this->npgeo, mpi);
   } catch (std::runtime_error &e) {
     throw;
@@ -44,6 +44,11 @@ specfem::mesh::mesh::mesh(
   } catch (std::runtime_error &e) {
     throw;
   }
+
+  this->control_nodes.ngnod = this->parameters.ngnod;
+  this->control_nodes.nspec = this->nspec;
+  this->control_nodes.knods = specfem::kokkos::HostView2d<int>(
+      "specfem::mesh::knods", this->parameters.ngnod, this->nspec);
 
   int nspec_all = mpi->reduce(this->parameters.nspec, specfem::MPI::sum);
   int nelem_acforcing_all =
@@ -66,9 +71,9 @@ specfem::mesh::mesh::mesh(
   }
 
   try {
-    this->material_ind =
-        specfem::mesh::material_ind(stream, this->parameters.ngnod, this->nspec,
-                                    this->parameters.numat, mpi);
+    this->material_ind = specfem::mesh::material_ind(
+        stream, this->parameters.ngnod, this->nspec, this->parameters.numat,
+        this->control_nodes.knods, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
@@ -102,7 +107,7 @@ specfem::mesh::mesh::mesh(
   try {
     this->acfree_surface = specfem::mesh::boundaries::acoustic_free_surface(
         stream, this->parameters.nelem_acoustic_surface,
-        this->material_ind.knods, mpi);
+        this->control_nodes.knods, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }

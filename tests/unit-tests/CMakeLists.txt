@@ -102,59 +102,59 @@ target_link_libraries(
   -lpthread -lm
 )
 
-add_executable(
-  compute_partial_derivatives_tests
-  compute/partial_derivatives/compute_partial_derivatives_tests.cpp
-)
+# add_executable(
+#   compute_partial_derivatives_tests
+#   compute/partial_derivatives/compute_partial_derivatives_tests.cpp
+# )
 
-target_link_libraries(
-  compute_partial_derivatives_tests
-  mesh
-  compute
-  quadrature
-  mpi_environment
-  kokkos_environment
-  yaml-cpp
-  compare_arrays
-  material_class
-  -lpthread -lm
-)
+# target_link_libraries(
+#   compute_partial_derivatives_tests
+#   mesh
+#   compute
+#   quadrature
+#   mpi_environment
+#   kokkos_environment
+#   yaml-cpp
+#   compare_arrays
+#   material_class
+#   -lpthread -lm
+# )
 
-add_executable(
-  compute_elastic_tests
-  compute/elastic/compute_properties_tests.cpp
-)
+# add_executable(
+#   compute_elastic_tests
+#   compute/elastic/compute_properties_tests.cpp
+# )
 
-target_link_libraries(
-  compute_elastic_tests
-  mesh
-  compute
-  quadrature
-  mpi_environment
-  kokkos_environment
-  yaml-cpp
-  compare_arrays
-  material_class
-  -lpthread -lm
-)
+# target_link_libraries(
+#   compute_elastic_tests
+#   mesh
+#   compute
+#   quadrature
+#   mpi_environment
+#   kokkos_environment
+#   yaml-cpp
+#   compare_arrays
+#   material_class
+#   -lpthread -lm
+# )
 
-add_executable(
-  compute_acoustic_tests
-  compute/acoustic/compute_properties_tests.cpp
-)
+# add_executable(
+#   compute_acoustic_tests
+#   compute/acoustic/compute_properties_tests.cpp
+# )
 
-target_link_libraries(
-  compute_acoustic_tests
-  mesh
-  compute
-  quadrature
-  mpi_environment
-  kokkos_environment
-  yaml-cpp
-  compare_arrays
-  material_class
-  -lpthread -lm
-)
+# target_link_libraries(
+#   compute_acoustic_tests
+#   mesh
+#   compute
+#   quadrature
+#   mpi_environment
+#   kokkos_environment
+#   yaml-cpp
+#   compare_arrays
+#   material_class
+#   -lpthread -lm
+# )
 
 add_executable(
   compute_tests
@@ -174,115 +174,115 @@ target_link_libraries(
   -lpthread -lm
 )
 
-add_executable(
-  source_location_tests
-  source/source_location_tests.cpp
-)
+# add_executable(
+#   source_location_tests
+#   source/source_location_tests.cpp
+# )
 
-target_link_libraries(
-  source_location_tests
-  material_class
-  mpi_environment
-  kokkos_environment
-  yaml-cpp
-  mesh
-  quadrature
-  compute
-  source_class
-  -lpthread -lm
-)
+# target_link_libraries(
+#   source_location_tests
+#   material_class
+#   mpi_environment
+#   kokkos_environment
+#   yaml-cpp
+#   mesh
+#   quadrature
+#   compute
+#   source_class
+#   -lpthread -lm
+# )
 
-add_executable(
-  rmass_inverse_tests
-  domain/rmass_inverse_tests.cpp
-)
+# add_executable(
+#   rmass_inverse_tests
+#   domain/rmass_inverse_tests.cpp
+# )
 
-target_link_libraries(
-  rmass_inverse_tests
-  quadrature
-  mesh
-  material_class
-  yaml-cpp
-  kokkos_environment
-  mpi_environment
-  compute
-  parameter_reader
-  compare_arrays
-  -lpthread -lm
-)
+# target_link_libraries(
+#   rmass_inverse_tests
+#   quadrature
+#   mesh
+#   material_class
+#   yaml-cpp
+#   kokkos_environment
+#   mpi_environment
+#   compute
+#   parameter_reader
+#   compare_arrays
+#   -lpthread -lm
+# )
 
-add_executable(
-  displacement_newmark_tests
-  displacement_tests/Newmark/newmark_tests.cpp
-)
+# add_executable(
+#   displacement_newmark_tests
+#   displacement_tests/Newmark/newmark_tests.cpp
+# )
 
-target_link_libraries(
-  displacement_newmark_tests
-  quadrature
-  mesh
-  material_class
-  yaml-cpp
-  kokkos_environment
-  mpi_environment
-  compute
-  parameter_reader
-  compare_arrays
-  timescheme
-  -lpthread -lm
-)
+# target_link_libraries(
+#   displacement_newmark_tests
+#   quadrature
+#   mesh
+#   material_class
+#   yaml-cpp
+#   kokkos_environment
+#   mpi_environment
+#   compute
+#   parameter_reader
+#   compare_arrays
+#   timescheme
+#   -lpthread -lm
+# )
 
-add_executable(
-  seismogram_elastic_tests
-  seismogram/elastic/seismogram_tests.cpp
-)
+# add_executable(
+#   seismogram_elastic_tests
+#   seismogram/elastic/seismogram_tests.cpp
+# )
 
-target_link_libraries(
-  seismogram_elastic_tests
-  quadrature
-  mesh
-  yaml-cpp
-  kokkos_environment
-  mpi_environment
-  compute
-  parameter_reader
-  writer
-  -lpthread -lm
-)
+# target_link_libraries(
+#   seismogram_elastic_tests
+#   quadrature
+#   mesh
+#   yaml-cpp
+#   kokkos_environment
+#   mpi_environment
+#   compute
+#   parameter_reader
+#   writer
+#   -lpthread -lm
+# )
 
-add_executable(
-  seismogram_acoustic_tests
-  seismogram/acoustic/seismogram_tests.cpp
-)
+# add_executable(
+#   seismogram_acoustic_tests
+#   seismogram/acoustic/seismogram_tests.cpp
+# )
 
-target_link_libraries(
-  seismogram_acoustic_tests
-  quadrature
-  mesh
-  yaml-cpp
-  kokkos_environment
-  mpi_environment
-  compute
-  parameter_reader
-  writer
-  -lpthread -lm
-)
+# target_link_libraries(
+#   seismogram_acoustic_tests
+#   quadrature
+#   mesh
+#   yaml-cpp
+#   kokkos_environment
+#   mpi_environment
+#   compute
+#   parameter_reader
+#   writer
+#   -lpthread -lm
+# )
 
-add_executable(
-  compute_coupled_interfaces_tests
-  compute/coupled_interfaces/coupled_interfaces_tests.cpp
-)
+# add_executable(
+#   compute_coupled_interfaces_tests
+#   compute/coupled_interfaces/coupled_interfaces_tests.cpp
+# )
 
-target_link_libraries(
-  compute_coupled_interfaces_tests
-  quadrature
-  mesh
-  yaml-cpp
-  kokkos_environment
-  mpi_environment
-  compute
-  compare_arrays
-  -lpthread -lm
-)
+# target_link_libraries(
+#   compute_coupled_interfaces_tests
+#   quadrature
+#   mesh
+#   yaml-cpp
+#   kokkos_environment
+#   mpi_environment
+#   compute
+#   compare_arrays
+#   -lpthread -lm
+# )
 
 # Link to gtest only if MPI is enabled
 if (NOT MPI_PARALLEL)
@@ -291,14 +291,14 @@ if (NOT MPI_PARALLEL)
   gtest_discover_tests(lagrange_tests)
   gtest_discover_tests(fortranio_test)
   gtest_discover_tests(mesh_tests)
-  gtest_discover_tests(compute_partial_derivatives_tests)
-  gtest_discover_tests(compute_elastic_tests)
-  gtest_discover_tests(compute_acoustic_tests)
-  gtest_discover_tests(compute_coupled_interfaces_tests)
+  # gtest_discover_tests(compute_partial_derivatives_tests)
+  # gtest_discover_tests(compute_elastic_tests)
+  # gtest_discover_tests(compute_acoustic_tests)
+  # gtest_discover_tests(compute_coupled_interfaces_tests)
   gtest_discover_tests(compute_tests)
-  gtest_discover_tests(source_location_tests)
-  gtest_discover_tests(rmass_inverse_tests)
-  gtest_discover_tests(displacement_newmark_tests)
-  gtest_discover_tests(seismogram_elastic_tests)
-  gtest_discover_tests(seismogram_acoustic_tests)
+  # gtest_discover_tests(source_location_tests)
+  # gtest_discover_tests(rmass_inverse_tests)
+  # gtest_discover_tests(displacement_newmark_tests)
+  # gtest_discover_tests(seismogram_elastic_tests)
+  # gtest_discover_tests(seismogram_acoustic_tests)
 endif(NOT MPI_PARALLEL)

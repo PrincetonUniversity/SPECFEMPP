@@ -65,10 +65,8 @@ struct partial_derivatives {
    * @param quadx Quadrature object in x dimension
    * @param quadz Quadrature object in z dimension
    */
-  partial_derivatives(const specfem::kokkos::HostView2d<type_real> coorg,
-                      const specfem::kokkos::HostView2d<int> knods,
-                      const specfem::quadrature::quadrature *quadx,
-                      const specfem::quadrature::quadrature *quadz);
+  partial_derivatives(const specfem::compute::mesh &mesh,
+                      const specfem::compute::quadrature &quadrature);
   /**
    * @brief Helper routine to sync views within this struct
    *

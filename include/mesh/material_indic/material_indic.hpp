@@ -23,17 +23,6 @@ struct material_ind {
                                           ///< number
 
   /**
-   * @brief Defines global control element number for every control node
-   * @code
-   * for ispec : nspec
-   *    for ia : ngnod
-   *        // ipgeo defines global element control number
-   *        ipgeo = knods(ia, ispec)
-   * @endcode
-   */
-  specfem::kokkos::HostView2d<int> knods;
-
-  /**
    * @brief Default constructor
    *
    */
@@ -57,7 +46,8 @@ struct material_ind {
    * @param mpi Pointer to a MPI object
    */
   material_ind(std::ifstream &stream, const int ngnod, const int nspec,
-               const int numat, const specfem::MPI::MPI *mpi);
+               const int numat, const specfem::kokkos::HostView2d<int> knods,
+               const specfem::MPI::MPI *mpi);
 };
 } // namespace mesh
 } // namespace specfem
