@@ -4,6 +4,7 @@
 #include "IO/fortran/read_material_properties.hpp"
 #include "IO/fortran/read_mesh_database.hpp"
 #include "boundaries/boundaries.hpp"
+#include "control_nodes/control_nodes.hpp"
 #include "coupled_interfaces/coupled_interfaces.hpp"
 #include "elements/elements.hpp"
 #include "kokkos_abstractions.h"
@@ -31,9 +32,7 @@ struct mesh {
   int npgeo; ///< Total number of spectral element control nodes
   int nspec; ///< Total number of spectral elements
   int nproc; ///< Total number of processors
-  specfem::kokkos::HostView2d<type_real> coorg; ///< (x_a,z_a) for every
-                                                ///< spectral element control
-                                                ///< node
+  specfem::mesh::control_nodes control_nodes; ///< Defines control nodes
 
   specfem::mesh::material_ind material_ind; ///< Struct used to store
                                             ///< material information for

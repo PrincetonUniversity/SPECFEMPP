@@ -149,152 +149,153 @@ target_link_libraries(
         Kokkos::kokkos
 )
 
-add_library(
-        utilities
-        src/utilities/utilities.cpp
-)
+# add_library(
+#         utilities
+#         src/utilities/utilities.cpp
+# )
 
-target_link_libraries(
-        utilities
-        jacobian
-        Kokkos::kokkos
-        specfem_mpi
-)
+# target_link_libraries(
+#         utilities
+#         jacobian
+#         Kokkos::kokkos
+#         specfem_mpi
+# )
 
-add_library(
-        source_time_function
-        src/source_time_function/dirac.cpp
-        src/source_time_function/ricker.cpp
-)
+# add_library(
+#         source_time_function
+#         src/source_time_function/dirac.cpp
+#         src/source_time_function/ricker.cpp
+# )
 
-target_link_libraries(
-        source_time_function
-        Kokkos::kokkos
-)
+# target_link_libraries(
+#         source_time_function
+#         Kokkos::kokkos
+# )
 
-add_library(
-        source_class
-        src/source/source.cpp
-        src/source/force_source.cpp
-        src/source/moment_tensor_source.cpp
-        src/source/read_sources.cpp
-)
+# add_library(
+#         source_class
+#         src/source/source.cpp
+#         src/source/force_source.cpp
+#         src/source/moment_tensor_source.cpp
+#         src/source/read_sources.cpp
+# )
 
-target_link_libraries(
-        source_class
-        Kokkos::kokkos
-        specfem_mpi
-        utilities
-        quadrature
-        source_time_function
-        yaml-cpp
-        Boost::boost
-)
+# target_link_libraries(
+#         source_class
+#         Kokkos::kokkos
+#         specfem_mpi
+#         utilities
+#         quadrature
+#         source_time_function
+#         yaml-cpp
+#         Boost::boost
+# )
 
-add_library(
-        receiver_class
-        src/receiver/receiver.cpp
-        src/receiver/read_receiver.cpp
-)
+# add_library(
+#         receiver_class
+#         src/receiver/receiver.cpp
+#         src/receiver/read_receiver.cpp
+# )
 
-target_link_libraries(
-        receiver_class
-        specfem_mpi
-        Kokkos::kokkos
-        utilities
-        quadrature
-        yaml-cpp
-        Boost::boost
-)
+# target_link_libraries(
+#         receiver_class
+#         specfem_mpi
+#         Kokkos::kokkos
+#         utilities
+#         quadrature
+#         yaml-cpp
+#         Boost::boost
+# )
 
 add_library(
         compute
-        src/compute/compute.cpp
-        src/compute/compute_partial_derivatives.cpp
-        src/compute/compute_properties.cpp
-        src/compute/compute_sources.cpp
-        src/compute/compute_receivers.cpp
-        src/compute/coupled_interfaces.cpp
-        src/compute/compute_boundaries.cpp
+        src/compute/compute_mesh.cpp
+        # src/compute/compute_partial_derivatives.cpp
+        # src/compute/compute_properties.cpp
+        # src/compute/compute_sources.cpp
+        # src/compute/compute_receivers.cpp
+        # src/compute/coupled_interfaces.cpp
+        # src/compute/compute_boundaries.cpp
 )
 
 target_link_libraries(
         compute
         quadrature
-        material_class
-        source_class
-        jacobian
-        receiver_class
-        Kokkos::kokkos
-)
-
-add_library(
-        timescheme
-        src/timescheme/timescheme.cpp
-        src/timescheme/newmark.cpp
-)
-
-target_link_libraries(
-        timescheme
-        Kokkos::kokkos
-        yaml-cpp
-        compute
-)
-
-add_library(
-        writer
-        src/writer/seismogram.cpp
-)
-
-target_link_libraries(
-        writer
-        compute
-        receiver_class
-)
-
-add_library(
-        parameter_reader
-        src/parameter_parser/run_setup.cpp
-        src/parameter_parser/solver/solver.cpp
-        src/parameter_parser/solver/time_marching.cpp
-        src/parameter_parser/database_configuration.cpp
-        src/parameter_parser/header.cpp
-        src/parameter_parser/quadrature.cpp
-        src/parameter_parser/receivers.cpp
-        src/parameter_parser/seismogram.cpp
-        src/parameter_parser/writer.cpp
-        src/parameter_parser/setup.cpp
-)
-
-target_link_libraries(
-        parameter_reader
-        quadrature
-        timescheme
-        receiver_class
-        yaml-cpp
-        writer
-        Boost::filesystem
-)
-
-add_executable(
-        specfem2d
-        src/specfem2d.cpp
-)
-
-target_link_libraries(
-        specfem2d
-        material_class
-        specfem_mpi
-        Kokkos::kokkos
         mesh
-        quadrature
-        compute
-        source_class
-        parameter_reader
-        receiver_class
-        writer
-        Boost::program_options
+        # material_class
+        # source_class
+        jacobian
+        # receiver_class
+        Kokkos::kokkos
 )
+
+# add_library(
+#         timescheme
+#         src/timescheme/timescheme.cpp
+#         src/timescheme/newmark.cpp
+# )
+
+# target_link_libraries(
+#         timescheme
+#         Kokkos::kokkos
+#         yaml-cpp
+#         compute
+# )
+
+# add_library(
+#         writer
+#         src/writer/seismogram.cpp
+# )
+
+# target_link_libraries(
+#         writer
+#         compute
+#         receiver_class
+# )
+
+# add_library(
+#         parameter_reader
+#         src/parameter_parser/run_setup.cpp
+#         src/parameter_parser/solver/solver.cpp
+#         src/parameter_parser/solver/time_marching.cpp
+#         src/parameter_parser/database_configuration.cpp
+#         src/parameter_parser/header.cpp
+#         src/parameter_parser/quadrature.cpp
+#         src/parameter_parser/receivers.cpp
+#         src/parameter_parser/seismogram.cpp
+#         src/parameter_parser/writer.cpp
+#         src/parameter_parser/setup.cpp
+# )
+
+# target_link_libraries(
+#         parameter_reader
+#         quadrature
+#         timescheme
+#         receiver_class
+#         yaml-cpp
+#         writer
+#         Boost::filesystem
+# )
+
+# add_executable(
+#         specfem2d
+#         src/specfem2d.cpp
+# )
+
+# target_link_libraries(
+#         specfem2d
+#         material_class
+#         specfem_mpi
+#         Kokkos::kokkos
+#         mesh
+#         quadrature
+#         compute
+#         source_class
+#         parameter_reader
+#         receiver_class
+#         writer
+#         Boost::program_options
+# )
 
 # Include tests
 if (BUILD_TESTS)
