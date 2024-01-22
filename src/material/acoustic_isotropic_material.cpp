@@ -1,15 +1,16 @@
 #include "constants.hpp"
 #include "fortranio/interface.hpp"
 #include "material/interface.hpp"
+#include "point/property.hpp"
 #include "utilities/interface.hpp"
 #include <ostream>
 #include <tuple>
 
-specfem::material::acoustic_material::acoustic_material()
+specfem::material::acoustic_isotropic_material::acoustic_isotropic_material()
     : density(0.0), cp(0.0), Qkappa(9999.0), Qmu(9999.0), compaction_grad(0.0),
       lambdaplus2mu(0.0), lambda(0.0), kappa(0.0), young(0.0), poisson(0.0){};
 
-std::string specfem::material::acoustic_material::print() const {
+std::string specfem::material::acoustic_isotropic_material::print() const {
   std::ostringstream message;
 
   message << "- Acoustic Material : \n"
@@ -25,13 +26,11 @@ std::string specfem::material::acoustic_material::print() const {
   return message.str();
 }
 
-specfem::material::acoustic_material::acoustic_material(
+specfem::material::acoustic_isotropic_material::acoustic_isotropic_material(
     const type_real &density, const type_real &cp, const type_real &Qkappa,
     const type_real &Qmu, const type_real &compaction_grad)
     : density(density), cp(cp), Qkappa(Qkappa), Qmu(Qmu),
       compaction_grad(compaction_grad) {
-
-  this->ispec_type = specfem::enums::element::type::acoustic;
 
   if (this->Qkappa <= 0.0 || this->Qmu <= 0.0) {
     std::runtime_error(
@@ -56,14 +55,7 @@ specfem::material::acoustic_material::acoustic_material(
   return;
 }
 
-specfem::utilities::return_holder
-specfem::material::acoustic_material::get_properties() const {
-  utilities::return_holder holder;
-  holder.rho = this->density;
-  holder.kappa = this->kappa;
-  holder.qmu = this->Qmu;
-  holder.qkappa = this->Qkappa;
-  holder.lambdaplus2mu = this->lambdaplus2mu;
-
-  return holder;
+specfem::point::properties<type, property>
+specfem::material::acoustic_isotropic_material::get_properties() const {
+  return { 1.0 / lambdaplus2mu, 1.0 / density };
 }

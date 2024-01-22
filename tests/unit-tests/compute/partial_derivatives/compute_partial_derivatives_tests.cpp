@@ -1,6 +1,6 @@
 #include "../../Kokkos_Environment.hpp"
 #include "../../MPI_environment.hpp"
-#include "../../utilities/include/compare_array.h"
+#include "../../utilities/include/interface.hpp"
 #include "compute/interface.hpp"
 #include "material/interface.hpp"
 #include "mesh/mesh.hpp"
@@ -75,9 +75,7 @@ TEST(COMPUTE_TESTS, compute_partial_derivatives) {
   specfem::quadrature::gll::gll gll(0.0, 0.0, 5);
   specfem::quadrature::quadratures quadratures(gll);
 
-  std::vector<std::shared_ptr<specfem::material::material> > materials;
-
-  specfem::mesh::mesh mesh(test_config.database_filename, materials, mpi);
+  specfem::mesh::mesh mesh(test_config.database_filename, mpi);
 
   specfem::compute::mesh compute_mesh(mesh.control_nodes, quadratures);
   specfem::compute::partial_derivatives partial_derivatives(compute_mesh);
@@ -87,26 +85,37 @@ TEST(COMPUTE_TESTS, compute_partial_derivatives) {
   const int ngllx = compute_mesh.quadratures.gll.N;
 
   specfem::kokkos::HostView3d<type_real> h_xix = partial_derivatives.h_xix;
-  EXPECT_NO_THROW(specfem::testing::test_array(h_xix, test_config.xix_file,
-                                               nspec, ngllz, ngllx));
-  // EXPECT_NO_THROW(specfem::testing::test_array(
-  //     partial_derivatives.xiz, test_config.xiz_file, mesh.nspec,
-  //     gllz.get_N(), gllx.get_N()));
+  specfem::testing::array3d<type_real, Kokkos::LayoutRight> xix_array(
+      h_xix); // convert to array3d
+  specfem::testing::array3d<type_real, Kokkos::LayoutRight> xix_ref(
+      test_config.xix_file, nspec, ngllz, ngllx);
+  EXPECT_TRUE(xix_array == xix_ref);
 
   specfem::kokkos::HostView3d<type_real> h_gammax =
       partial_derivatives.h_gammax;
-  EXPECT_NO_THROW(specfem::testing::test_array(
-      h_gammax, test_config.gammax_file, nspec, ngllz, ngllx));
+  specfem::testing::array3d<type_real, Kokkos::LayoutRight> gammax_array(
+      h_gammax); // convert to array3d
+  specfem::testing::array3d<type_real, Kokkos::LayoutRight> gammax_ref(
+      test_config.gammax_file, nspec, ngllz, ngllx);
+  EXPECT_TRUE(gammax_array == gammax_ref);
 
   specfem::kokkos::HostView3d<type_real> h_gammaz =
       partial_derivatives.h_gammaz;
-  EXPECT_NO_THROW(specfem::testing::test_array(
-      h_gammaz, test_config.gammaz_file, nspec, ngllz, ngllx));
+  specfem::testing::array3d<type_real, Kokkos::LayoutRight> gammaz_array(
+      h_gammaz); // convert to array3d
+  specfem::testing::array3d<type_real, Kokkos::LayoutRight> gammaz_ref(
+      test_config.gammaz_file, nspec, ngllz, ngllx);
+  EXPECT_TRUE(gammaz_array == gammaz_ref);
 
   specfem::kokkos::HostView3d<type_real> h_jacobian =
       partial_derivatives.h_jacobian;
-  EXPECT_NO_THROW(specfem::testing::test_array(
-      h_jacobian, test_config.jacobian_file, nspec, ngllz, ngllx));
+  specfem::testing::array3d<type_real, Kokkos::LayoutRight> jacobian_array(
+      h_jacobian); // convert to array3d
+  specfem::testing::array3d<type_real, Kokkos::LayoutRight> jacobian_ref(
+      test_config.jacobian_file, nspec, ngllz, ngllx);
+  EXPECT_TRUE(jacobian_array == jacobian_ref);
+
+  return;
 }
 
 int main(int argc, char *argv[]) {

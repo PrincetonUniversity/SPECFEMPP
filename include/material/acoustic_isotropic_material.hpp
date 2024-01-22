@@ -4,6 +4,7 @@
 #include "constants.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "material.hpp"
+#include "point/properties.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
@@ -18,13 +19,20 @@ namespace material {
  * Defines the routines required to read and assign acoustic material properties
  * to specfem mesh.
  */
-class acoustic_material : public material {
+class acoustic_isotropic_material
+    : public material<acoustic_isotropic_material> {
 public:
+  constexpr static specfem::enums::element::type type =
+      specfem::enums::element::type::acoustic; ///< Type of element
+  constexpr static specfem::enums::element::property_tag property =
+      specfem::enums::element::property_tag::isotropic; ///< Property of element
+
   /**
    * @brief Construct a new acoustic material object
    *
    */
-  acoustic_material();
+  acoustic_isotropic_material();
+
   /**
    * @brief Constructs a new acoustic material object
    * @param density Density of the material
@@ -34,39 +42,25 @@ public:
    * @param compaction_grad compaction gradient
    *
    */
-  acoustic_material(const type_real &density, const type_real &cp,
-                    const type_real &Qkappa, const type_real &Qmu,
-                    const type_real &compaction_grad);
-  /**
-   * @brief ostream operator for acoustic material
-   *
-   * @param out Output stream
-   * @param h Acoustic material object
-   * @return std::ostream& Output stream
-   */
-  friend std::ostream &operator<<(std::ostream &out,
-                                  const acoustic_material &h);
+  acoustic_isotropic_material(const type_real &density, const type_real &cp,
+                              const type_real &Qkappa, const type_real &Qmu,
+                              const type_real &compaction_grad);
+
   /**
    * @brief Get the type of the material
    *
    * @return specfem::enums::element::type The type of the material
    */
-  specfem::enums::element::type get_ispec_type() const override {
-    return ispec_type;
-  };
-  /**
-   * @brief Get private elastic material properties
-   *
-   * @return utilities::return_holder holder used to return elastic material
-   * properties
-   */
-  utilities::return_holder get_properties() const override;
+  specfem::enums::element::type get_type() const { return type; };
+
+  specfem::point::properties<type, property> get_properties() const;
+
   /**
    * @brief Print material information to the console
    *
    * @return std::string String containing the material information
    */
-  std::string print() const override;
+  std::string print() const;
 
 private:
   /**
@@ -86,13 +80,7 @@ private:
   type_real young;
   type_real poisson;
   ///@}
-  specfem::enums::element::type ispec_type =
-      specfem::enums::element::type::acoustic; ///< Type or element ==
-                                               ///< specfem::acoustic
 };
-
-std::ostream &operator<<(std::ostream &out,
-                         const specfem::material::acoustic_material &h);
 
 } // namespace material
 } // namespace specfem

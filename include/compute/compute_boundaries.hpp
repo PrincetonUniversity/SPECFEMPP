@@ -96,8 +96,6 @@ struct acoustic_free_surface {
    */
   acoustic_free_surface(
       const specfem::kokkos::HostView1d<int> kmato,
-      const std::vector<std::shared_ptr<specfem::material::material> >
-          &materials,
       const specfem::mesh::boundaries::absorbing_boundary &absorbing_boundaries,
       const specfem::mesh::boundaries::acoustic_free_surface
           &acoustic_free_surface);
@@ -138,8 +136,6 @@ struct stacey_medium {
   stacey_medium(
       const specfem::enums::element::type medium,
       const specfem::kokkos::HostView1d<int> kmato,
-      const std::vector<std::shared_ptr<specfem::material::material> >
-          &materials,
       const specfem::mesh::boundaries::absorbing_boundary &absorbing_boundaries,
       const specfem::mesh::boundaries::acoustic_free_surface
           &acoustic_free_surface);
@@ -171,8 +167,6 @@ struct stacey {
    */
   stacey(
       const specfem::kokkos::HostView1d<int> kmato,
-      const std::vector<std::shared_ptr<specfem::material::material> >
-          &materials,
       const specfem::mesh::boundaries::absorbing_boundary &absorbing_boundaries,
       const specfem::mesh::boundaries::acoustic_free_surface
           &acoustic_free_surface);
@@ -199,8 +193,6 @@ struct composite_stacey_dirichlet {
    */
   composite_stacey_dirichlet(
       const specfem::kokkos::HostView1d<int> kmato,
-      const std::vector<std::shared_ptr<specfem::material::material> >
-          &materials,
       const specfem::mesh::boundaries::absorbing_boundary &absorbing_boundaries,
       const specfem::mesh::boundaries::acoustic_free_surface
           &acoustic_free_surface);
@@ -228,15 +220,13 @@ struct boundaries {
    */
   boundaries(
       const specfem::kokkos::HostView1d<int> kmato,
-      const std::vector<std::shared_ptr<specfem::material::material> >
-          &materials,
       const specfem::mesh::boundaries::acoustic_free_surface
           &acoustic_free_surface,
       const specfem::mesh::boundaries::absorbing_boundary &absorbing_boundaries)
-      : acoustic_free_surface(kmato, materials, absorbing_boundaries,
+      : acoustic_free_surface(kmato, absorbing_boundaries,
                               acoustic_free_surface),
-        stacey(kmato, materials, absorbing_boundaries, acoustic_free_surface),
-        composite_stacey_dirichlet(kmato, materials, absorbing_boundaries,
+        stacey(kmato, absorbing_boundaries, acoustic_free_surface),
+        composite_stacey_dirichlet(kmato, absorbing_boundaries,
                                    acoustic_free_surface) {}
 
   specfem::compute::acoustic_free_surface acoustic_free_surface; ///< acoustic
