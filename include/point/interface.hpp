@@ -4,5 +4,6 @@
 #include "coordinates.hpp"
 #include "partial_derivatives.hpp"
 #include "partial_derivatives.tpp"
+#include "properties.hpp"
 
 #endif

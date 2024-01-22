@@ -10,10 +10,8 @@
 #include <memory>
 #include <vector>
 
-specfem::mesh::mesh::mesh(
-    const std::string filename,
-    std::vector<std::shared_ptr<specfem::material::material> > &materials,
-    const specfem::MPI::MPI *mpi) {
+specfem::mesh::mesh::mesh(const std::string filename,
+                          const specfem::MPI::MPI *mpi) {
 
   std::ifstream stream;
   stream.open(filename);
@@ -64,19 +62,27 @@ specfem::mesh::mesh::mesh(
   }
 
   try {
-    materials = specfem::mesh::IO::fortran::read_material_properties(
-        stream, this->parameters.numat, mpi);
+    this->materials =
+        specfem::mesh::materials(stream, this->parameters.numat, this->nspec,
+                                 this->control_nodes.knods, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
 
-  try {
-    this->material_ind = specfem::mesh::material_ind(
-        stream, this->parameters.ngnod, this->nspec, this->parameters.numat,
-        this->control_nodes.knods, mpi);
-  } catch (std::runtime_error &e) {
-    throw;
-  }
+  // try {
+  //   materials = specfem::mesh::IO::fortran::read_material_properties(
+  //       stream, this->parameters.numat, mpi);
+  // } catch (std::runtime_error &e) {
+  //   throw;
+  // }
+
+  // try {
+  //   this->material_ind = specfem::mesh::material_ind(
+  //       stream, this->parameters.ngnod, this->nspec, this->parameters.numat,
+  //       this->control_nodes.knods, mpi);
+  // } catch (std::runtime_error &e) {
+  //   throw;
+  // }
 
   // try {
   //   this->interface = specfem::mesh::interfaces::interface(stream, mpi);
@@ -147,23 +153,20 @@ specfem::mesh::mesh::mesh(
   return;
 }
 
-std::string specfem::mesh::mesh::print(
-    std::vector<std::shared_ptr<specfem::material::material> > &materials)
-    const {
+std::string specfem::mesh::mesh::print() const {
 
-  int n_elastic = 0;
-  int n_acoustic = 0;
+  int n_elastic;
+  int n_acoustic;
 
   Kokkos::parallel_reduce(
-      "setup_compute::properties_ispec", specfem::kokkos::HostRange(0, nspec),
-      [=](const int ispec, int &l_elastic, int &l_acoustic) {
-        const int imat = this->material_ind.kmato(ispec);
-        if (materials[imat]->get_ispec_type() ==
+      "specfem::mesh::mesh::print", this->nspec,
+      KOKKOS_LAMBDA(const int ispec, int &n_elastic, int &n_acoustic) {
+        if (this->materials.material_index_mapping(ispec).type ==
             specfem::enums::element::type::elastic) {
-          l_elastic++;
-        } else if (materials[imat]->get_ispec_type() ==
+          n_elastic++;
+        } else if (this->materials.material_index_mapping(ispec).type ==
                    specfem::enums::element::type::acoustic) {
-          l_acoustic++;
+          n_acoustic++;
         }
       },
       n_elastic, n_acoustic);

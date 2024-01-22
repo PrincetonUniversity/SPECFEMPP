@@ -1,6 +1,6 @@
 #include "../../Kokkos_Environment.hpp"
 #include "../../MPI_environment.hpp"
-#include "../../utilities/include/compare_array.h"
+#include "../../utilities/include/interface.hpp"
 #include "compute/interface.hpp"
 #include "material/interface.hpp"
 #include "mesh/mesh.hpp"
@@ -11,6 +11,10 @@
 #include <memory>
 #include <string>
 #include <vector>
+
+using HostView1d = specfem::kokkos::HostView1d<int>;
+using HostView2d = specfem::kokkos::HostView2d<int>;
+using HostView3d = specfem::kokkos::HostView3d<int>;
 
 // ------------------------------------------------------------------------
 // Reading test config
@@ -72,19 +76,19 @@ TEST(COMPUTE_TESTS, compute_ibool) {
   specfem::quadrature::quadratures quadratures(gll);
 
   // Read mesh generated MESHFEM
-  std::vector<std::shared_ptr<specfem::material::material> > materials;
-  specfem::mesh::mesh mesh(test_config.database_filename, materials, mpi);
+  specfem::mesh::mesh mesh(test_config.database_filename, mpi);
 
   // Setup compute structs
   specfem::compute::mesh assembly(mesh.control_nodes,
                                   quadratures); // mesh assembly
 
-  specfem::kokkos::HostView3d<int> index_mapping =
-      assembly.points.h_index_mapping;
+  HostView3d h_index_mapping = assembly.points.h_index_mapping;
+  specfem::testing::array3d<int, Kokkos::LayoutRight> index_array(
+      h_index_mapping);
+  specfem::testing::array3d<int, Kokkos::LayoutRight> index_ref(
+      test_config.ibool_file, mesh.nspec, gll.get_N(), gll.get_N());
 
-  EXPECT_NO_THROW(
-      specfem::testing::test_array(index_mapping, test_config.ibool_file,
-                                   mesh.nspec, gll.get_N(), gll.get_N()));
+  EXPECT_TRUE(index_array == index_ref);
 }
 
 int main(int argc, char *argv[]) {

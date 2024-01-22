@@ -3,6 +3,8 @@
 
 #include "constants.hpp"
 #include "enumerations/specfem_enums.hpp"
+#include "point/properties.hpp"
+#include "properties.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
@@ -16,39 +18,48 @@ namespace material {
  * @brief Base material class
  *
  */
-class material {
+template <specfem::enums::element::type type,
+          specfem::enums::element::property_tag property>
+class material : public specfem::material::properties<type, property> {
 public:
+  constexpr static auto value_type = type;
+  constexpr static auto property_type = property;
   /**
    * @brief Construct a new material object
    *
    */
-  material(){};
-  /**
-   * @brief Get the properties of the material
-   *
-   * @return utilities::return_holder Struct containing the properties of the
-   * material
-   */
-  virtual utilities::return_holder get_properties() const {
-    utilities::return_holder holder{};
-    return holder;
-  };
-  /**
-   * @brief Get the type of the material
-   *
-   * @return specfem::enums::element::type The type of the material
-   */
-  virtual specfem::enums::element::type get_ispec_type() const {
-    throw std::runtime_error("Material is not assigned properly");
-    return specfem::enums::element::type::elastic;
-  };
+  material() = default;
 
   /**
-   * @brief Print material information to the console
+   * @brief Destroy the material object
    *
-   * @return std::string String containing the material information
    */
-  virtual std::string print() const { return ""; }
+  ~material() = default;
+
+  template <
+      specfem::enums::element::type U = value_type,
+      std::enable_if_t<U == specfem::enums::element::type::elastic, int> = 0>
+  material(const type_real &density, const type_real &cs, const type_real &cp,
+           const type_real &Qkappa, const type_real &Qmu,
+           const type_real &compaction_grad)
+      : specfem::material::properties<type, property>(density, cs, cp, Qkappa,
+                                                      Qmu, compaction_grad){};
+
+  template <
+      specfem::enums::element::type U = value_type,
+      std::enable_if_t<U == specfem::enums::element::type::acoustic, int> = 0>
+  material(const type_real &density, const type_real &cp,
+           const type_real &Qkappa, const type_real &Qmu,
+           const type_real &compaction_grad)
+      : specfem::material::properties<type, property>(density, cp, Qkappa, Qmu,
+                                                      compaction_grad){};
+
+  /**
+   * @brief Get the material type
+   *
+   * @return specfem::enums::material::type
+   */
+  constexpr specfem::enums::element::type get_type() const { return type; };
 };
 
 } // namespace material

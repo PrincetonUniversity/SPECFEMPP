@@ -1,16 +1,17 @@
 #include "constants.hpp"
 #include "fortranio/interface.hpp"
 #include "material/interface.hpp"
+#include "point/properties.hpp"
 #include "utilities/interface.hpp"
 #include <ostream>
 #include <tuple>
 
-specfem::material::elastic_material::elastic_material()
+specfem::material::elastic_isotropic_material::elastic_isotropic_material()
     : density(0.0), cs(0.0), cp(0.0), Qkappa(9999.0), Qmu(9999.0),
       compaction_grad(0.0), lambdaplus2mu(0.0), mu(0.0), lambda(0.0),
       kappa(0.0), young(0.0), poisson(0.0){};
 
-std::string specfem::material::elastic_material::print() const {
+std::string specfem::material::elastic_isotropic_material::print() const {
   std::ostringstream message;
 
   message << "- Elastic Material : \n"
@@ -30,13 +31,12 @@ std::string specfem::material::elastic_material::print() const {
   return message.str();
 }
 
-specfem::material::elastic_material::elastic_material(
+specfem::material::elastic_isotropic_material::elastic_isotropic_material(
     const type_real &density, const type_real &cs, const type_real &cp,
     const type_real &Qkappa, const type_real &Qmu,
     const type_real &compaction_grad)
     : density(density), cs(cs), cp(cp), Qkappa(Qkappa), Qmu(Qmu),
       compaction_grad(compaction_grad) {
-  this->ispec_type = specfem::enums::element::type::elastic;
 
   if (this->Qkappa <= 0.0 || this->Qmu <= 0.0) {
     std::runtime_error(
@@ -61,15 +61,8 @@ specfem::material::elastic_material::elastic_material(
   return;
 }
 
-specfem::utilities::return_holder
-specfem::material::elastic_material::get_properties() const {
-  utilities::return_holder holder;
-  holder.rho = this->density;
-  holder.mu = this->mu;
-  holder.kappa = this->kappa;
-  holder.qmu = this->Qmu;
-  holder.qkappa = this->Qkappa;
-  holder.lambdaplus2mu = this->lambdaplus2mu;
-
-  return holder;
+specfem::point::properties<specfem::enums::element::type::elastic,
+                           specfem::enums::element::property_tag::isotropic>
+specfem::material::elastic_isotropic_material::get_properties() const {
+  return { this->lambdaplus2mu, this->mu, this->density };
 }

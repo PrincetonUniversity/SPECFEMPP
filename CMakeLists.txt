@@ -99,22 +99,22 @@ else()
         message("-- Compiling SPECFEM without MPI")
 endif(MPI_PARALLEL)
 
-add_library(
-        material_class
-        src/material/elastic_material.cpp
-        src/material/acoustic_material.cpp
-)
+# add_library(
+#         material_class
+#         src/material/elastic_isotropic_material.cpp
+#         src/material/acoustic_isotropic_material.cpp
+# )
 
-target_link_libraries(
-        material_class
-        Kokkos::kokkos
-        specfem_mpi
-)
+# target_link_libraries(
+#         material_class
+#         Kokkos::kokkos
+#         specfem_mpi
+# )
 
 add_library(
         mesh
         src/mesh/IO/fortran/read_mesh_database.cpp
-        src/mesh/IO/fortran/read_material_properties.cpp
+        # src/mesh/IO/fortran/read_material_properties.cpp
         src/mesh/boundaries/forcing_boundaries.cpp
         src/mesh/boundaries/absorbing_boundaries.cpp
         src/mesh/boundaries/acoustic_free_surface.cpp
@@ -122,7 +122,7 @@ add_library(
         src/mesh/elements/axial_elements.cpp
         src/mesh/properties/properties.cpp
         src/mesh/mpi_interfaces/mpi_interfaces.cpp
-        src/mesh/material_indic/material_indic.cpp
+        src/mesh/materials/materials.cpp
         src/mesh/coupled_interfaces/elastic_acoustic.cpp
         src/mesh/coupled_interfaces/elastic_poroelastic.cpp
         src/mesh/coupled_interfaces/acoustic_poroelastic.cpp
@@ -133,7 +133,7 @@ target_link_libraries(
         mesh
         Kokkos::kokkos
         specfem_mpi
-        material_class
+        # material_class
         fortranio
         yaml-cpp
 )
@@ -211,7 +211,7 @@ add_library(
         compute
         src/compute/compute_mesh.cpp
         src/compute/compute_partial_derivatives.cpp
-        # src/compute/compute_properties.cpp
+        src/compute/compute_properties.cpp
         # src/compute/compute_sources.cpp
         # src/compute/compute_receivers.cpp
         # src/compute/coupled_interfaces.cpp
