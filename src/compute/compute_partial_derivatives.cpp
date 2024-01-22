@@ -107,30 +107,3 @@ void specfem::compute::partial_derivatives::sync_views() {
   Kokkos::deep_copy(gammaz, h_gammaz);
   Kokkos::deep_copy(jacobian, h_jacobian);
 }
-
-// KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, 2>
-// specfem::compute::element_partial_derivatives::compute_normal(
-//     const specfem::enums::boundaries::type type) const {
-
-//   switch (type) {
-//   case specfem::enums::boundaries::type::BOTTOM:
-//     return this->compute_normal<specfem::enums::boundaries::type::BOTTOM>();
-//     break;
-//   case specfem::enums::boundaries::type::TOP:
-//     return this->compute_normal<specfem::enums::boundaries::type::TOP>();
-//     break;
-//   case specfem::enums::boundaries::type::LEFT:
-//     return this->compute_normal<specfem::enums::boundaries::type::LEFT>();
-//     break;
-//   case specfem::enums::boundaries::type::RIGHT:
-//     return this->compute_normal<specfem::enums::boundaries::type::RIGHT>();
-//     break;
-//   default:
-// #ifndef NDEBUG
-//     ASSERT(false, "Invalid boundary type");
-// #endif
-//     break;
-//   }
-
-//   return specfem::kokkos::array_type<type_real, 2>();
-// }

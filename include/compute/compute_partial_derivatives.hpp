@@ -4,6 +4,7 @@
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
 #include "macros.hpp"
+#include "point/interface.hpp"
 #include "quadrature/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -74,6 +75,18 @@ struct partial_derivatives {
    *
    */
   void sync_views();
+
+  template <bool load_jacobian>
+  KOKKOS_INLINE_FUNCTION specfem::point::partial_derivatives2
+  load_derivatives(const int ispec, const int iz, const int ix) const {
+    if constexpr (load_jacobian) {
+      return { xix(ispec, iz, ix), xiz(ispec, iz, ix), gammax(ispec, iz, ix),
+               gammaz(ispec, iz, ix), jacobian(ispec, iz, ix) };
+    } else {
+      return { xix(ispec, iz, ix), xiz(ispec, iz, ix), gammax(ispec, iz, ix),
+               gammaz(ispec, iz, ix) };
+    }
+  };
 };
 } // namespace compute
 } // namespace specfem
