@@ -1,8 +1,9 @@
-#ifndef _SPECFEM_POINT_HPP
-#define _SPECFEM_POINT_HPP
+#ifndef _POINT_COORDINATES_HPP
+#define _POINT_COORDINATES_HPP
 
 #include "kokkos_abstractions.h"
 #include "specfem_setup.hpp"
+#include <Kokkos_Core.hpp>
 
 namespace specfem {
 namespace point {
@@ -27,12 +28,8 @@ struct gcoord2 {
   gcoord2(const type_real &x, const type_real &z) : x(x), z(z) {}
 };
 
-template <int N>
 type_real distance(const specfem::point::gcoord2 &p1,
-                   const specfem::point::gcoord2 &p2) {
-  return std::sqrt((p1.x - p2.x) * (p1.x - p2.x) +
-                   (p1.z - p2.z) * (p1.z - p2.z));
-}
+                   const specfem::point::gcoord2 &p2);
 
 } // namespace point
 } // namespace specfem

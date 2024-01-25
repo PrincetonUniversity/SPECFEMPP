@@ -5,6 +5,7 @@
 #include "kokkos_abstractions.h"
 #include "macros.hpp"
 #include "specfem_setup.hpp"
+#include <Kokkos_Core.hpp>
 
 namespace specfem {
 namespace point {
@@ -31,6 +32,22 @@ struct partial_derivatives2 {
       : xix(xix), gammax(gammax), xiz(xiz), gammaz(gammaz), jacobian(jacobian) {
   }
 
+  KOKKOS_FUNCTION
+  partial_derivatives2(const type_real constant)
+      : xix(constant), gammax(constant), xiz(constant), gammaz(constant) {}
+
+  KOKKOS_FUNCTION
+  void init() {
+    this->xix = 0.0;
+    this->gammax = 0.0;
+    this->xiz = 0.0;
+    this->gammaz = 0.0;
+    return;
+  }
+
+  KOKKOS_FUNCTION
+  partial_derivatives2(const partial_derivatives2 &rhs) = default;
+
   template <specfem::enums::boundaries::type type>
   KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, 2>
   compute_normal() const {
@@ -38,6 +55,25 @@ struct partial_derivatives2 {
     return specfem::kokkos::array_type<type_real, 2>();
   };
 };
+
+// operator+
+KOKKOS_FUNCTION
+specfem::point::partial_derivatives2 operator+(const partial_derivatives2 &lhs,
+                                               const partial_derivatives2 &rhs);
+// operator+=
+KOKKOS_FUNCTION
+specfem::point::partial_derivatives2 &
+operator+=(partial_derivatives2 &lhs, const partial_derivatives2 &rhs);
+
+// operator*
+KOKKOS_FUNCTION
+specfem::point::partial_derivatives2 operator*(const type_real &lhs,
+                                               const partial_derivatives2 &rhs);
+
+// operator*
+KOKKOS_FUNCTION
+specfem::point::partial_derivatives2 operator*(const partial_derivatives2 &lhs,
+                                               const type_real &rhs);
 } // namespace point
 } // namespace specfem
 

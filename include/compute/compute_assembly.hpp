@@ -14,7 +14,10 @@ struct assembly {
   specfem::compute::boundaries boundaries;
   specfem::compute::coupled_interfaces coupled_interfaces;
 
-  assembly(const specfem::mesh::mesh &mesh);
+  assembly(
+      const specfem::mesh::mesh &mesh,
+      const std::vector<std::shared_ptr<specfem::source::source> > &sources,
+      const int nspec);
 }
 
 } // namespace compute

@@ -33,6 +33,10 @@ struct properties {
                                                                ///< element to
                                                                ///< material
                                                                ///< properties
+  specfem::kokkos::DeviceView1d<specfem::enums::element::type>
+      element_types; ///< Element types
+  specfem::kokkos::HostMirror1d<specfem::enums::element::type>
+      h_element_types; ///< Element types
   specfem::compute::impl::properties::material_property<
       specfem::enums::element::type::elastic,
       specfem::enums::element::property_tag::isotropic>
