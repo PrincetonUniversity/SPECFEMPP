@@ -4,7 +4,6 @@
 #include <Kokkos_Core.hpp>
 #include <cmath>
 
-KOKKOS_FUNCTION
 specfem::forcing_function::Ricker::Ricker(type_real f0, type_real tshift,
                                           type_real factor,
                                           bool use_trick_for_better_pressure)
@@ -16,7 +15,17 @@ specfem::forcing_function::Ricker::Ricker(type_real f0, type_real tshift,
   this->t0 = 1.2 * hdur + this->tshift;
 }
 
-KOKKOS_FUNCTION
+specfem::forcing_function::Ricker::Ricker(
+    YAML::Node &Ricker, const int dt,
+    const bool use_trick_for_better_pressure) {
+  type_real f0 = Ricker["f0"].as<type_real>();
+  type_real tshift = Ricker["tshift"].as<type_real>();
+  type_real factor = Ricker["factor"].as<type_real>();
+
+  *this = specfem::forcing_function::Ricker(f0, tshift, factor,
+                                            use_trick_for_better_pressure);
+}
+
 type_real specfem::forcing_function::Ricker::compute(type_real t) {
 
   type_real val;
@@ -28,4 +37,26 @@ type_real specfem::forcing_function::Ricker::compute(type_real t) {
   }
 
   return val;
+}
+
+void specfem::forcing_function::Ricker::compute_source_time_function(
+    const int nsteps,
+    specfem::kokkos::HostView1d<type_real> source_time_function) {
+
+  for (int i = 0; i < nsteps; i++) {
+    source_time_function(i) = this->compute(this->t0 + i * this->dt);
+  }
+}
+
+std::string specfem::forcing_function::Ricker::print() const {
+  std::stringstream ss;
+  ss << "        Ricker source time function:\n"
+     << "          f0: " << this->f0 << "\n"
+     << "          tshift: " << this->tshift << "\n"
+     << "          factor: " << this->factor << "\n"
+     << "          t0: " << this->t0 << "\n"
+     << "          use_trick_for_better_pressure: "
+     << this->use_trick_for_better_pressure << "\n";
+
+  return ss.str();
 }

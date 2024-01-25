@@ -85,6 +85,17 @@ target_link_libraries(
 )
 
 add_library(
+        point
+        src/point/coordinates.cpp
+        src/point/partial_derivatives.cpp
+)
+
+target_link_libraries(
+        point
+        Kokkos::kokkos
+)
+
+add_library(
         specfem_mpi
         src/specfem_mpi/specfem_mpi.cpp
 )
@@ -147,6 +158,7 @@ add_library(
 target_link_libraries(
         jacobian
         Kokkos::kokkos
+        point
 )
 
 # add_library(
@@ -161,35 +173,36 @@ target_link_libraries(
 #         specfem_mpi
 # )
 
-# add_library(
-#         source_time_function
-#         src/source_time_function/dirac.cpp
-#         src/source_time_function/ricker.cpp
-# )
+add_library(
+        source_time_function
+        src/source_time_function/dirac.cpp
+        src/source_time_function/ricker.cpp
+)
 
-# target_link_libraries(
-#         source_time_function
-#         Kokkos::kokkos
-# )
+target_link_libraries(
+        source_time_function
+        Kokkos::kokkos
+        point
+)
 
-# add_library(
-#         source_class
-#         src/source/source.cpp
-#         src/source/force_source.cpp
-#         src/source/moment_tensor_source.cpp
-#         src/source/read_sources.cpp
-# )
+add_library(
+        source_class
+        src/source/source.cpp
+        src/source/force_source.cpp
+        src/source/moment_tensor_source.cpp
+        src/source/read_sources.cpp
+)
 
-# target_link_libraries(
-#         source_class
-#         Kokkos::kokkos
-#         specfem_mpi
-#         utilities
-#         quadrature
-#         source_time_function
-#         yaml-cpp
-#         Boost::boost
-# )
+target_link_libraries(
+        source_class
+        Kokkos::kokkos
+        specfem_mpi
+        # utilities
+        quadrature
+        source_time_function
+        yaml-cpp
+        Boost::boost
+)
 
 # add_library(
 #         receiver_class
@@ -208,6 +221,18 @@ target_link_libraries(
 # )
 
 add_library(
+        algorithms
+        src/algorithms/locate_point.cpp
+)
+
+target_link_libraries(
+        algorithms
+        Kokkos::kokkos
+        jacobian
+        point
+)
+
+add_library(
         compute
         src/compute/compute_mesh.cpp
         src/compute/compute_partial_derivatives.cpp
@@ -223,7 +248,7 @@ target_link_libraries(
         quadrature
         mesh
         # material_class
-        # source_class
+        source_class
         jacobian
         # receiver_class
         Kokkos::kokkos

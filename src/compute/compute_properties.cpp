@@ -9,6 +9,8 @@ specfem::compute::properties::properties(
     const int nspec, const int ngllz, const int ngllx,
     const specfem::mesh::materials &materials)
     : nspec(nspec), ngllz(ngllz), ngllx(ngllx),
+      element_types("specfem::compute::properties::element_types", nspec),
+      h_element_types(Kokkos::create_mirror_view(element_types)),
       property_index_mapping(
           "specfem::compute::properties::property_index_mapping", nspec),
       h_property_index_mapping(
@@ -24,9 +26,11 @@ specfem::compute::properties::properties(
         if (materials.material_index_mapping(ispec).type ==
             specfem::enums::element::type::elastic) {
           n_elastic++;
+          h_element_types(ispec) = specfem::enums::element::type::elastic;
         } else if (materials.material_index_mapping(ispec).type ==
                    specfem::enums::element::type::acoustic) {
           n_acoustic++;
+          h_element_types(ispec) = specfem::enums::element::type::acoustic;
         }
       },
       n_elastic, n_acoustic);
@@ -44,6 +48,7 @@ specfem::compute::properties::properties(
       nspec, n_elastic, ngllz, ngllx, materials, h_property_index_mapping);
 
   Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);
+  Kokkos::deep_copy(element_types, h_element_types);
 
   return;
 }

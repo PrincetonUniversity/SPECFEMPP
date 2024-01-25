@@ -12,6 +12,8 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
+include_directories(.)
+
 enable_testing()
 
 add_library(
@@ -57,6 +59,7 @@ target_link_libraries(
   gtest_main
   quadrature
   kokkos_environment
+  point
   -lpthread -lm
 )
 
@@ -172,6 +175,38 @@ target_link_libraries(
   compare_arrays
   # material_class
   -lpthread -lm
+)
+
+add_executable(
+  locate_point
+  algorithms/locate.cpp
+)
+
+target_link_libraries(
+  locate_point
+  mesh
+  compute
+  quadrature
+  mpi_environment
+  kokkos_environment
+  algorithms
+  point
+)
+
+add_executable(
+  interpolate_function
+  algorithms/interpolate_function.cpp
+)
+
+target_link_libraries(
+  interpolate_function
+  mesh
+  compute
+  quadrature
+  mpi_environment
+  kokkos_environment
+  algorithms
+  point
 )
 
 # add_executable(
@@ -296,7 +331,8 @@ if (NOT MPI_PARALLEL)
   # gtest_discover_tests(compute_acoustic_tests)
   # gtest_discover_tests(compute_coupled_interfaces_tests)
   gtest_discover_tests(compute_tests)
-  # gtest_discover_tests(source_location_tests)
+  gtest_discover_tests(locate_point)
+  gtest_discover_tests(interpolate_function)
   # gtest_discover_tests(rmass_inverse_tests)
   # gtest_discover_tests(displacement_newmark_tests)
   # gtest_discover_tests(seismogram_elastic_tests)

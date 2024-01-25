@@ -122,51 +122,6 @@ struct mesh {
   specfem::point::lcoord2 locate(const specfem::point::gcoord2 &point);
 };
 
-// /**
-//  * @brief Compute and store mesh assembly information
-//  *
-//  */
-// struct compute {
-//   specfem::kokkos::DeviceView3d<int> ibool;   ///< Global number for every
-//                                               ///< quadrature point stored on
-//                                               ///< device
-//   specfem::kokkos::HostMirror3d<int> h_ibool; ///< Global number for every
-//                                               ///< quadrature point stored on
-//                                               ///< host
-//   specfem::compute::coordinates coordinates;  ///< Cartesian coordinates and
-//                                               ///< related meta-data
-//   /**
-//    * @brief Default constructor
-//    *
-//    */
-//   compute(){};
-//   /**
-//    * @brief Constructor to allocate views
-//    *
-//    * @param nspec Number for spectral elements
-//    * @param ngllz Number of quadrature points in z dimension
-//    * @param ngllx Number of quadrature points in x dimension
-//    */
-//   compute(const int nspec, const int ngllx, const int ngllz);
-//   /**
-//    * @brief Construct allocate and assign views
-//    *
-//    * @param coorg (x_a, z_a) for every control node
-//    * @param knods Global control element number for every control node
-//    * @param quadx Quarature object in x dimension
-//    * @param quadz Quadrature object in z dimension
-//    */
-//   compute(const specfem::kokkos::HostView2d<type_real> coorg,
-//           const specfem::kokkos::HostView2d<int> knods,
-//           const specfem::quadrature::quadrature *quadx,
-//           const specfem::quadrature::quadrature *quadz);
-//   /**
-//    * @brief Helper routine to sync views within this struct
-//    *
-//    */
-//   void sync_views();
-// };
-
 } // namespace compute
 } // namespace specfem
 

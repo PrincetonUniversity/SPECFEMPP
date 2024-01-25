@@ -21,20 +21,8 @@ std::tuple<type_real, type_real> specfem::jacobian::compute_locations(
   // FIXME:: Multi reduction is not yet implemented in kokkos
   // This is hacky way of doing this using double vector loops
   // Use multiple reducers once kokkos enables the feature
-  Kokkos::parallel_reduce(
-      Kokkos::ThreadVectorRange(teamMember, ngnod),
-      [&](const int &in, type_real &update_xcor) {
-        update_xcor += shape2D(in) * s_coorg(0, in);
-      },
-      xcor);
-  Kokkos::parallel_reduce(
-      Kokkos::ThreadVectorRange(teamMember, ngnod),
-      [&](const int &in, type_real &update_ycor) {
-        update_ycor += shape2D(in) * s_coorg(1, in);
-      },
-      ycor);
-
-  return std::make_tuple(xcor, ycor);
+  return specfem::jacobian::compute_locations(teamMember, s_coorg, ngnod,
+                                              shape2D);
 }
 
 std::tuple<type_real, type_real> specfem::jacobian::compute_locations(
@@ -50,12 +38,7 @@ std::tuple<type_real, type_real> specfem::jacobian::compute_locations(
   specfem::kokkos::HostView1d<type_real> shape2D =
       specfem::jacobian::define_shape_functions(xi, gamma, ngnod);
 
-  for (int in = 0; in < ngnod; in++) {
-    xcor += shape2D(in) * coorg(0, in);
-    ycor += shape2D(in) * coorg(1, in);
-  }
-
-  return std::make_tuple(xcor, ycor);
+  return specfem::jacobian::compute_locations(coorg, ngnod, shape2D);
 }
 
 std::tuple<type_real, type_real> specfem::jacobian::compute_locations(

@@ -11,8 +11,7 @@
 
 std::tuple<std::vector<std::shared_ptr<specfem::sources::source> >, type_real>
 specfem::sources::read_sources(const std::string sources_file,
-                               const type_real dt,
-                               const specfem::MPI::MPI *mpi) {
+                               const type_real dt) {
   // read sources file
   std::vector<std::shared_ptr<specfem::sources::source> > sources;
   YAML::Node yaml = YAML::LoadFile(sources_file);
