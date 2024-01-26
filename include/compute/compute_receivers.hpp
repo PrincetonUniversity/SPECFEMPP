@@ -101,11 +101,7 @@ struct receivers {
    */
   receivers(const std::vector<std::shared_ptr<specfem::receivers::receiver> >
                 &receivers,
-            const std::vector<specfem::enums::seismogram::type> &stypes,
-            const specfem::quadrature::quadrature *quadx,
-            const specfem::quadrature::quadrature *quadz, const type_real xmax,
-            const type_real xmin, const type_real zmax, const type_real zmin,
-            const int max_sig_step, specfem::MPI::MPI *mpi);
+            const specfem::compute::mesh &mesh);
   /**
    * @brief Sync views within this struct from host to device
    *

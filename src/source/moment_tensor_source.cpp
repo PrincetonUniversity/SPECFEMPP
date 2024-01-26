@@ -87,9 +87,13 @@ void specfem::sources::moment_tensor::compute_source_array(
       type_real dsrc_dz =
           (hpxi_source(ix) * derivatives_source.xiz) * hgamma_source(iz) +
           hxi_source(ix) * (hpgamma_source(iz) * derivatives_source.gammaz);
-
-      source_array(0, iz, ix) += Mxx * dsrc_dx + Mxz * dsrc_dz;
-      source_array(1, iz, ix) += Mxz * dsrc_dx + Mzz * dsrc_dz;
+      if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
+        source_array(0, iz, ix) += Mxx * dsrc_dx + Mxz * dsrc_dz;
+        source_array(1, iz, ix) += Mxz * dsrc_dx + Mzz * dsrc_dz;
+      } else if (specfem::globals::simulation_wave == specfem::wave::sh) {
+        source_array(0, iz, ix) += Mxx * dsrc_dx + Mxz * dsrc_dz;
+        source_array(1, iz, ix) += 0;
+      }
     }
   }
 };
