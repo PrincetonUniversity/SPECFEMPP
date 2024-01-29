@@ -1,6 +1,7 @@
 #ifndef _RECEIVER_HPP
 #define _RECEIVER_HPP
 
+#include "compute/compute_mesh.hpp"
 #include "constants.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"

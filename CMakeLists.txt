@@ -204,21 +204,21 @@ target_link_libraries(
         Boost::boost
 )
 
-# add_library(
-#         receiver_class
-#         src/receiver/receiver.cpp
-#         src/receiver/read_receiver.cpp
-# )
+add_library(
+        receiver_class
+        src/receiver/receiver.cpp
+        src/receiver/read_receiver.cpp
+)
 
-# target_link_libraries(
-#         receiver_class
-#         specfem_mpi
-#         Kokkos::kokkos
-#         utilities
-#         quadrature
-#         yaml-cpp
-#         Boost::boost
-# )
+target_link_libraries(
+        receiver_class
+        specfem_mpi
+        Kokkos::kokkos
+        # utilities
+        quadrature
+        yaml-cpp
+        Boost::boost
+)
 
 add_library(
         algorithms
@@ -237,10 +237,10 @@ add_library(
         src/compute/compute_mesh.cpp
         src/compute/compute_partial_derivatives.cpp
         src/compute/compute_properties.cpp
-        # src/compute/compute_sources.cpp
-        # src/compute/compute_receivers.cpp
+        src/compute/compute_sources.cpp
+        src/compute/compute_receivers.cpp
         # src/compute/coupled_interfaces.cpp
-        # src/compute/compute_boundaries.cpp
+        src/compute/compute_boundaries.cpp
 )
 
 target_link_libraries(
@@ -250,7 +250,8 @@ target_link_libraries(
         # material_class
         source_class
         jacobian
-        # receiver_class
+        point
+        receiver_class
         Kokkos::kokkos
 )
 

@@ -1,3 +1,4 @@
+#include "algorithms/interface.hpp"
 #include "compute/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"

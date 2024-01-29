@@ -1,3 +1,5 @@
+#include "algorithms/locate_point.hpp"
+#include "globals.h"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "receiver/interface.hpp"
@@ -49,11 +51,7 @@ std::string specfem::receivers::receiver::print() const {
           << "      Network Name = " << this->network_name << "\n"
           << "      Receiver Location: \n"
           << "        x = " << type_real(this->x) << "\n"
-          << "        z = " << type_real(this->z) << "\n"
-          << "        xi = " << this->xi << "\n"
-          << "        gamma = " << this->gamma << "\n"
-          << "        ispec = " << this->ispec << "\n"
-          << "        islice = " << this->islice << "\n";
+          << "        z = " << type_real(this->z) << "\n";
 
   return message.str();
 }

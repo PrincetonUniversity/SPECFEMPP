@@ -52,15 +52,13 @@ void specfem::sources::force::compute_source_array(
       } else if ((el_type == specfem::enums::element::type::elastic &&
                   specfem::globals::simulation_wave == specfem::wave::p_sv) ||
                  el_type == specfem::enums::element::type::poroelastic) {
-        type_real tempx =
+        source_array(0, iz, ix) =
             std::sin(Kokkos::numbers::pi_v<type_real> / 180 * this->angle) *
             hlagrange;
-        source_array(0, iz, ix) = tempx;
-        type_real tempz =
+        source_array(1, iz, ix) =
             -1.0 *
             std::cos(Kokkos::numbers::pi_v<type_real> / 180 * this->angle) *
             hlagrange;
-        source_array(1, iz, ix) = tempz;
       }
     }
   }
