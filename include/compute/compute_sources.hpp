@@ -29,11 +29,11 @@ struct sources {
                                                            ///< interpolants for
                                                            ///< sources stored
                                                            ///< on host
-  specfem::kokkos::DeviceView1d<type_real> stf_array;   ///< Pointer to source
+  specfem::kokkos::DeviceView2d<type_real> stf_array;   ///< Pointer to source
                                                         ///< time function for
                                                         ///< every source stored
                                                         ///< on device
-  specfem::kokkos::HostMirror1d<type_real> h_stf_array; ///< Pointer to source
+  specfem::kokkos::HostMirror2d<type_real> h_stf_array; ///< Pointer to source
                                                         ///< time function for
                                                         ///< every source stored
                                                         ///< on host

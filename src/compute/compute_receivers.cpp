@@ -1,3 +1,4 @@
+#include "algorithms/locate_point.hpp"
 #include "compute/interface.hpp"
 #include "globals.h"
 #include "kokkos_abstractions.h"

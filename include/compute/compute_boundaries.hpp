@@ -111,9 +111,11 @@ struct acoustic_free_surface {
 };
 
 /**
- * @brief Struct to store the Stacey boundary for a given medium
+ * @brief
  *
  */
+template <specfem::enums::element::type type,
+          specfem::enums::element::property_tag property>
 struct stacey_medium {
 
   /**
@@ -134,7 +136,6 @@ struct stacey_medium {
    * in mesh module
    */
   stacey_medium(
-      const specfem::enums::element::type medium,
       const specfem::kokkos::HostView1d<int> kmato,
       const specfem::mesh::boundaries::absorbing_boundary &absorbing_boundaries,
       const specfem::mesh::boundaries::acoustic_free_surface
@@ -166,14 +167,20 @@ struct stacey {
    * in mesh module
    */
   stacey(
-      const specfem::kokkos::HostView1d<int> kmato,
+      const specfem::compute::mesh::control_nodes &control_nodes,
       const specfem::mesh::boundaries::absorbing_boundary &absorbing_boundaries,
       const specfem::mesh::boundaries::acoustic_free_surface
           &acoustic_free_surface);
 
   int nelements; ///< Number of elements with Stacey boundary
-  specfem::compute::stacey_medium elastic;  ///< Elastic Stacey boundary
-  specfem::compute::stacey_medium acoustic; ///< Acoustic Stacey boundary
+  specfem::compute::stacey_medium<
+      specfem::enums::element::type::elastic,
+      specfem::enums::element::property_tag::isotropic>
+      elastic; ///< Elastic Stacey boundary
+  specfem::compute::stacey_medium<
+      specfem::enums::element::type::acoustic,
+      specfem::enums::element::property_tag::isotropic>
+      acoustic; ///< Acoustic Stacey boundary
 };
 
 /**
@@ -192,7 +199,7 @@ struct composite_stacey_dirichlet {
    * in mesh module
    */
   composite_stacey_dirichlet(
-      const specfem::kokkos::HostView1d<int> kmato,
+      const specfem::compute::mesh::control_nodes &control_nodes,
       const specfem::mesh::boundaries::absorbing_boundary &absorbing_boundaries,
       const specfem::mesh::boundaries::acoustic_free_surface
           &acoustic_free_surface);
@@ -219,24 +226,25 @@ struct boundaries {
    * information about boundaries within the mesh
    */
   boundaries(
-      const specfem::kokkos::HostView1d<int> kmato,
+      const specfem::compute::mesh::control_nodes &control_nodes,
+      const specfem::mesh::boundaries::absorbing_boundary &absorbing_boundaries,
       const specfem::mesh::boundaries::acoustic_free_surface
-          &acoustic_free_surface,
-      const specfem::mesh::boundaries::absorbing_boundary &absorbing_boundaries)
-      : acoustic_free_surface(kmato, absorbing_boundaries,
+          &acoustic_free_surface);
+      : acoustic_free_surface(control_nodes, absorbing_boundaries,
                               acoustic_free_surface),
-        stacey(kmato, absorbing_boundaries, acoustic_free_surface),
-        composite_stacey_dirichlet(kmato, absorbing_boundaries,
-                                   acoustic_free_surface) {}
+        stacey(control_nodes, absorbing_boundaries, acoustic_free_surface),
+        composite_stacey_dirichlet(control_nodes, absorbing_boundaries,
+                              acoustic_free_surface) {}
 
-  specfem::compute::acoustic_free_surface acoustic_free_surface; ///< acoustic
-                                                                 ///< free
-                                                                 ///< surface
-                                                                 ///< boundary
+      specfem::compute::acoustic_free_surface
+          acoustic_free_surface; ///< acoustic
+                                 ///< free
+                                 ///< surface
+                                 ///< boundary
 
-  specfem::compute::stacey stacey; ///< Stacey boundary
-  specfem::compute::composite_stacey_dirichlet
-      composite_stacey_dirichlet; ///< Composite Stacey-Dirichlet boundary
+      specfem::compute::stacey stacey; ///< Stacey boundary
+      specfem::compute::composite_stacey_dirichlet
+          composite_stacey_dirichlet; ///< Composite Stacey-Dirichlet boundary
 };
 } // namespace compute
 } // namespace specfem
