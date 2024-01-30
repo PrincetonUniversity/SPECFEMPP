@@ -95,12 +95,10 @@ TEST(MESH_TESTS, fortran_binary_reader) {
   parse_test_config(YAML::LoadFile(config_filename), tests);
 
   for (auto test : tests) {
-    std::vector<std::shared_ptr<specfem::material::material> > materials;
     std::cout << "Executing test: " << test.description << std::endl;
     try {
       specfem::mesh::mesh mesh(
-          test.databases.filenames[test.configuration.processors - 1],
-          materials, mpi);
+          test.databases.filenames[test.configuration.processors - 1], mpi);
       std::cout << " - Test passed\n" << std::endl;
     } catch (std::runtime_error &e) {
       std::cout << " - Error: " << e.what() << std::endl;

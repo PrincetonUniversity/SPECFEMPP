@@ -1,14 +1,15 @@
 #ifndef _MESH_HPP
 #define _MESH_HPP
 
-#include "IO/fortran/read_material_properties.hpp"
+// #include "IO/fortran/read_material_properties.hpp"
 #include "IO/fortran/read_mesh_database.hpp"
 #include "boundaries/boundaries.hpp"
+#include "control_nodes/control_nodes.hpp"
 #include "coupled_interfaces/coupled_interfaces.hpp"
 #include "elements/elements.hpp"
 #include "kokkos_abstractions.h"
-#include "material/interface.hpp"
-#include "material_indic/material_indic.hpp"
+#include "materials/interface.hpp"
+// #include "material_indic/material_indic.hpp"
 #include "mpi_interfaces/mpi_interfaces.hpp"
 #include "properties/properties.hpp"
 #include "specfem_mpi/interface.hpp"
@@ -31,13 +32,11 @@ struct mesh {
   int npgeo; ///< Total number of spectral element control nodes
   int nspec; ///< Total number of spectral elements
   int nproc; ///< Total number of processors
-  specfem::kokkos::HostView2d<type_real> coorg; ///< (x_a,z_a) for every
-                                                ///< spectral element control
-                                                ///< node
+  specfem::mesh::control_nodes control_nodes; ///< Defines control nodes
 
-  specfem::mesh::material_ind material_ind; ///< Struct used to store
-                                            ///< material information for
-                                            ///< every spectral element
+  //   specfem::mesh::material_ind material_ind; ///< Struct used to store
+  //                                             ///< material information for
+  //                                             ///< every spectral element
 
   specfem::mesh::boundaries::absorbing_boundary abs_boundary; ///< Struct used
                                                               ///< to store data
@@ -49,9 +48,8 @@ struct mesh {
   specfem::mesh::properties parameters; ///< Struct to store simulation launch
                                         ///< parameters
 
-  specfem::mesh::coupled_interfaces::coupled_interfaces
-      coupled_interfaces; ///< Struct to store
-                          ///< coupled interfaces
+  specfem::mesh::coupled_interfaces coupled_interfaces; ///< Struct to store
+                                                        ///< coupled interfaces
 
   specfem::mesh::boundaries::acoustic_free_surface
       acfree_surface; ///< Struct used to store data required to implement
@@ -66,6 +64,7 @@ struct mesh {
                                                                  ///< nodes
 
   specfem::mesh::elements::axial_elements axial_nodes; ///< Defines axial nodes
+  specfem::mesh::materials materials; ///< Defines material properties
 
   /**
    * @brief Default mesh constructor
@@ -79,16 +78,13 @@ struct mesh {
    * @param filename Fortran binary database filename
    * @param mpi pointer to MPI object to manage communication
    */
-  mesh(const std::string filename,
-       std::vector<std::shared_ptr<specfem::material::material> > &materials,
-       const specfem::MPI::MPI *mpi);
+  mesh(const std::string filename, const specfem::MPI::MPI *mpi);
 
   /**
    * @brief User output
    *
    */
-  std::string print(std::vector<std::shared_ptr<specfem::material::material> >
-                        &materials) const;
+  std::string print() const;
 };
 } // namespace mesh
 } // namespace specfem

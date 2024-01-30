@@ -1,9 +1,11 @@
 #include "../../Kokkos_Environment.hpp"
 #include "../../MPI_environment.hpp"
-#include "../../utilities/include/compare_array.h"
+#include "../../utilities/include/interface.hpp"
 #include "compute/interface.hpp"
+#include "edge/interface.hpp"
 #include "material/interface.hpp"
 #include "mesh/mesh.hpp"
+#include "point/coordinates.hpp"
 #include "quadrature/interface.hpp"
 #include "yaml-cpp/yaml.h"
 #include <fstream>
@@ -113,16 +115,15 @@ void parse_test_config(const YAML::Node &yaml,
 // ---------------------------------------------------------------------------
 
 void test_edges(
-    const specfem::kokkos::HostMirror3d<int> h_ibool,
-    const specfem::kokkos::HostView2d<type_real> coord,
+    const specfem::kokkos::HostView4d<type_real> coordinates,
     const specfem::kokkos::HostMirror1d<int> ispec1,
     const specfem::kokkos::HostMirror1d<int> ispec2,
-    const specfem::kokkos::HostMirror1d<specfem::enums::edge::type> edge1,
-    const specfem::kokkos::HostMirror1d<specfem::enums::edge::type> edge2) {
+    const specfem::kokkos::HostMirror1d<specfem::edge::interface> edge1,
+    const specfem::kokkos::HostMirror1d<specfem::edge::interface> edge2) {
 
   const int num_interfaces = ispec1.extent(0);
-  const int ngllx = h_ibool.extent(2);
-  const int ngllz = h_ibool.extent(1);
+  const int ngllx = coordinates.extent(3);
+  const int ngllz = coordinates.extent(2);
 
   for (int interface = 0; interface < num_interfaces; interface++) {
     const int ispec1l = ispec1(interface);
@@ -132,28 +133,29 @@ void test_edges(
     const auto edge2l = edge2(interface);
 
     // iterate over the edge
-    int npoints = specfem::compute::coupled_interfaces::access::npoints(
-        edge1l, ngllx, ngllz);
+    int npoints = specfem::edge::num_points_on_interface(edge1l, ngllx, ngllz);
 
     for (int ipoint = 0; ipoint < npoints; ipoint++) {
       // Get ipoint along the edge in element1
       int i1, j1;
-      specfem::compute::coupled_interfaces::access::coupled_iterator(
-          ipoint, edge1l, ngllx, ngllz, i1, j1);
-      const int iglob1 = h_ibool(ispec1l, j1, i1);
+      specfem::edge::locate_point_on_self_edge(ipoint, edge1l, ngllx, ngllz, i1,
+                                               j1);
+      const specfem::point::gcoord2 self_point(coordinates(0, ispec1l, j1, i1),
+                                               coordinates(1, ispec1l, j1, i1));
 
       // Get ipoint along the edge in element2
       int i2, j2;
-      specfem::compute::coupled_interfaces::access::self_iterator(
-          ipoint, edge2l, ngllx, ngllz, i2, j2);
-      const int iglob2 = h_ibool(ispec2l, j2, i2);
+      specfem::edge::locate_point_on_coupled_edge(ipoint, edge2l, ngllx, ngllz,
+                                                  i2, j2);
+      const specfem::point::gcoord2 coupled_point(
+          coordinates(0, ispec2l, j2, i2), coordinates(1, ispec2l, j2, i2));
+
+      const type_real distance =
+          specfem::point::distance(self_point, coupled_point);
 
       // Check that the distance between the two points is small
 
-      ASSERT_TRUE((((coord(0, iglob1) - coord(0, iglob2)) *
-                    (coord(0, iglob1) - coord(0, iglob2))) +
-                   ((coord(1, iglob1) - coord(1, iglob2)) *
-                    (coord(1, iglob1) - coord(1, iglob2)))) < 1.e-10)
+      ASSERT_TRUE(distance < 1.e-10)
           << "Invalid edges found at interface number " << interface;
     }
   }
@@ -170,33 +172,25 @@ TEST(COMPUTE_TESTS, coupled_interfaces_tests) {
   parse_test_config(YAML::LoadFile(config_filename), tests);
 
   // Set up GLL quadrature points
-  specfem::quadrature::quadrature *gllx =
-      new specfem::quadrature::gll::gll(0.0, 0.0, 5);
-  specfem::quadrature::quadrature *gllz =
-      new specfem::quadrature::gll::gll(0.0, 0.0, 5);
-  std::vector<std::shared_ptr<specfem::material::material> > materials;
+  specfem::quadrature::gll::gll gll(0.0, 0.0, 5);
+  specfem::quadrature::quadratures quadratures(gll);
 
   for (auto Test : tests) {
     std::cout << "Executing test: " << Test.name << std::endl;
 
     // Read mesh generated MESHFEM
-    specfem::mesh::mesh mesh(Test.databases.mesh.database_filename, materials,
-                             mpi);
+    specfem::mesh::mesh mesh(Test.databases.mesh.database_filename, mpi);
 
     // Generate compute structs to be used by the solver
-    specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
-                                      gllz);
+    specfem::compute::mesh assembly(mesh.control_nodes, quadratures);
 
-    // Generate properties struct to be used by the solver
-    specfem::compute::properties properties(mesh.material_ind.kmato, materials,
-                                            mesh.nspec, gllz->get_N(),
-                                            gllx->get_N());
+    specfem::compute::properties properties(assembly.nspec, assembly.ngllz,
+                                            assembly.ngllx, mesh.materials);
 
     try {
       // Generate coupled interfaces struct to be used by the solver
-      specfem::compute::coupled_interfaces::coupled_interfaces
-          coupled_interfaces(compute.h_ibool, compute.coordinates.coord,
-                             properties.h_ispec_type, mesh.coupled_interfaces);
+      specfem::compute::coupled_interfaces coupled_interfaces(
+          assembly, properties, mesh.coupled_interfaces);
 
       // Test coupled interfaces
       // Check if the mesh was read correctly
@@ -205,48 +199,69 @@ TEST(COMPUTE_TESTS, coupled_interfaces_tests) {
       specfem::kokkos::HostView1d<int> h_poroelastic_ispec;
 
       if (Test.databases.elastic_acoustic.elastic_ispec_file != "NULL") {
-        h_elastic_ispec = coupled_interfaces.elastic_acoustic.h_elastic_ispec;
-        specfem::testing::test_array(
-            h_elastic_ispec, Test.databases.elastic_acoustic.elastic_ispec_file,
+        h_elastic_ispec =
+            coupled_interfaces.elastic_acoustic.h_medium1_index_mapping;
+        specfem::testing::array1d<int, Kokkos::LayoutRight> elastic_ispec_array(
+            h_elastic_ispec);
+
+        specfem::testing::array1d<int, Kokkos::LayoutRight> elastic_ispec_ref(
+            Test.databases.elastic_acoustic.elastic_ispec_file,
             coupled_interfaces.elastic_acoustic.num_interfaces);
 
-        h_acoustic_ispec = coupled_interfaces.elastic_acoustic.h_acoustic_ispec;
-        specfem::testing::test_array(
-            h_acoustic_ispec,
+        ASSERT_TRUE(elastic_ispec_array == elastic_ispec_ref);
+
+        h_acoustic_ispec =
+            coupled_interfaces.elastic_acoustic.h_medium2_index_mapping;
+        specfem::testing::array1d<int, Kokkos::LayoutRight>
+            acoustic_ispec_array(h_acoustic_ispec);
+
+        specfem::testing::array1d<int, Kokkos::LayoutRight> acoustic_ispec_ref(
             Test.databases.elastic_acoustic.acoustic_ispec_file,
             coupled_interfaces.elastic_acoustic.num_interfaces);
 
+        ASSERT_TRUE(acoustic_ispec_array == acoustic_ispec_ref);
+
         // test if the edges match
-        test_edges(compute.h_ibool, compute.coordinates.coord,
-                   coupled_interfaces.elastic_acoustic.h_elastic_ispec,
-                   coupled_interfaces.elastic_acoustic.h_acoustic_ispec,
-                   coupled_interfaces.elastic_acoustic.h_elastic_edge,
-                   coupled_interfaces.elastic_acoustic.h_acoustic_edge);
+        test_edges(assembly.points.h_coord,
+                   coupled_interfaces.elastic_acoustic.h_medium1_index_mapping,
+                   coupled_interfaces.elastic_acoustic.h_medium2_index_mapping,
+                   coupled_interfaces.elastic_acoustic.h_medium1_edge_type,
+                   coupled_interfaces.elastic_acoustic.h_medium2_edge_type);
       } else {
         ASSERT_TRUE(coupled_interfaces.elastic_acoustic.num_interfaces == 0);
       }
       // Check if the mesh was read correctly
       if (Test.databases.elastic_poroelastic.elastic_ispec_file != "NULL") {
         h_elastic_ispec =
-            coupled_interfaces.elastic_poroelastic.h_elastic_ispec;
-        specfem::testing::test_array(
-            h_elastic_ispec,
+            coupled_interfaces.elastic_poroelastic.h_medium1_index_mapping;
+        specfem::testing::array1d<int, Kokkos::LayoutRight> elastic_ispec_array(
+            h_elastic_ispec);
+
+        specfem::testing::array1d<int, Kokkos::LayoutRight> elastic_ispec_ref(
             Test.databases.elastic_poroelastic.elastic_ispec_file,
             coupled_interfaces.elastic_poroelastic.num_interfaces);
 
+        ASSERT_TRUE(elastic_ispec_array == elastic_ispec_ref);
+
         h_poroelastic_ispec =
-            coupled_interfaces.elastic_poroelastic.h_poroelastic_ispec;
-        specfem::testing::test_array(
-            h_poroelastic_ispec,
-            Test.databases.elastic_poroelastic.poroelastic_ispec_file,
-            coupled_interfaces.elastic_poroelastic.num_interfaces);
+            coupled_interfaces.elastic_poroelastic.h_medium2_index_mapping;
+        specfem::testing::array1d<int, Kokkos::LayoutRight>
+            poroelastic_ispec_array(h_poroelastic_ispec);
+
+        specfem::testing::array1d<int, Kokkos::LayoutRight>
+            poroelastic_ispec_ref(
+                Test.databases.elastic_poroelastic.poroelastic_ispec_file,
+                coupled_interfaces.elastic_poroelastic.num_interfaces);
+
+        ASSERT_TRUE(poroelastic_ispec_array == poroelastic_ispec_ref);
 
         // test if the edges match
-        test_edges(compute.h_ibool, compute.coordinates.coord,
-                   coupled_interfaces.elastic_poroelastic.h_elastic_ispec,
-                   coupled_interfaces.elastic_poroelastic.h_poroelastic_ispec,
-                   coupled_interfaces.elastic_poroelastic.h_elastic_edge,
-                   coupled_interfaces.elastic_poroelastic.h_poroelastic_edge);
+        test_edges(
+            assembly.points.h_coord,
+            coupled_interfaces.elastic_poroelastic.h_medium1_index_mapping,
+            coupled_interfaces.elastic_poroelastic.h_medium2_index_mapping,
+            coupled_interfaces.elastic_poroelastic.h_medium1_edge_type,
+            coupled_interfaces.elastic_poroelastic.h_medium2_edge_type);
       } else {
         ASSERT_TRUE(coupled_interfaces.elastic_poroelastic.num_interfaces == 0);
       }
@@ -254,25 +269,35 @@ TEST(COMPUTE_TESTS, coupled_interfaces_tests) {
       // Check if the mesh was read correctly
       if (Test.databases.acoustic_poroelastic.acoustic_ispec_file != "NULL") {
         h_poroelastic_ispec =
-            coupled_interfaces.acoustic_poroelastic.h_poroelastic_ispec;
-        specfem::testing::test_array(
-            h_poroelastic_ispec,
-            Test.databases.acoustic_poroelastic.poroelastic_ispec_file,
-            coupled_interfaces.acoustic_poroelastic.num_interfaces);
+            coupled_interfaces.acoustic_poroelastic.h_medium2_index_mapping;
+        specfem::testing::array1d<int, Kokkos::LayoutRight>
+            poroelastic_ispec_array(h_poroelastic_ispec);
+
+        specfem::testing::array1d<int, Kokkos::LayoutRight>
+            poroelastic_ispec_ref(
+                Test.databases.acoustic_poroelastic.poroelastic_ispec_file,
+                coupled_interfaces.acoustic_poroelastic.num_interfaces);
+
+        ASSERT_TRUE(poroelastic_ispec_array == poroelastic_ispec_ref);
 
         h_acoustic_ispec =
-            coupled_interfaces.acoustic_poroelastic.h_acoustic_ispec;
-        specfem::testing::test_array(
-            h_acoustic_ispec,
+            coupled_interfaces.acoustic_poroelastic.h_medium1_index_mapping;
+        specfem::testing::array1d<int, Kokkos::LayoutRight>
+            acoustic_ispec_array(h_acoustic_ispec);
+
+        specfem::testing::array1d<int, Kokkos::LayoutRight> acoustic_ispec_ref(
             Test.databases.acoustic_poroelastic.acoustic_ispec_file,
             coupled_interfaces.acoustic_poroelastic.num_interfaces);
 
+        ASSERT_TRUE(acoustic_ispec_array == acoustic_ispec_ref);
+
         // test if the edges match
-        test_edges(compute.h_ibool, compute.coordinates.coord,
-                   coupled_interfaces.acoustic_poroelastic.h_poroelastic_ispec,
-                   coupled_interfaces.acoustic_poroelastic.h_acoustic_ispec,
-                   coupled_interfaces.acoustic_poroelastic.h_poroelastic_edge,
-                   coupled_interfaces.acoustic_poroelastic.h_acoustic_edge);
+        test_edges(
+            assembly.points.h_coord,
+            coupled_interfaces.acoustic_poroelastic.h_medium1_index_mapping,
+            coupled_interfaces.acoustic_poroelastic.h_medium2_index_mapping,
+            coupled_interfaces.acoustic_poroelastic.h_medium1_edge_type,
+            coupled_interfaces.acoustic_poroelastic.h_medium2_edge_type);
       } else {
         ASSERT_TRUE(coupled_interfaces.acoustic_poroelastic.num_interfaces ==
                     0);

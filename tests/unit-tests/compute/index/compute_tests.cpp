@@ -1,6 +1,6 @@
 #include "../../Kokkos_Environment.hpp"
 #include "../../MPI_environment.hpp"
-#include "../../utilities/include/compare_array.h"
+#include "../../utilities/include/interface.hpp"
 #include "compute/interface.hpp"
 #include "material/interface.hpp"
 #include "mesh/mesh.hpp"
@@ -11,6 +11,10 @@
 #include <memory>
 #include <string>
 #include <vector>
+
+using HostView1d = specfem::kokkos::HostView1d<int>;
+using HostView2d = specfem::kokkos::HostView2d<int>;
+using HostView3d = specfem::kokkos::HostView3d<int>;
 
 // ------------------------------------------------------------------------
 // Reading test config
@@ -62,27 +66,29 @@ TEST(COMPUTE_TESTS, compute_ibool) {
 
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
 
-  std::cout << "Hello -2" << std::endl;
   std::string config_filename =
       "../../../tests/unit-tests/compute/index/test_config.yml";
   test_config test_config = get_test_config(config_filename, mpi);
 
   // Set up GLL quadrature points
-  specfem::quadrature::quadrature *gllx =
-      new specfem::quadrature::gll::gll(0.0, 0.0, 5);
-  specfem::quadrature::quadrature *gllz =
-      new specfem::quadrature::gll::gll(0.0, 0.0, 5);
-  std::vector<std::shared_ptr<specfem::material::material> > materials;
+  specfem::quadrature::gll::gll gll(0.0, 0.0, 5);
 
-  specfem::mesh::mesh mesh(test_config.database_filename, materials, mpi);
+  specfem::quadrature::quadratures quadratures(gll);
 
-  specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
-                                    gllz);
+  // Read mesh generated MESHFEM
+  specfem::mesh::mesh mesh(test_config.database_filename, mpi);
 
-  specfem::kokkos::HostView3d<int> h_ibool = compute.h_ibool;
-  EXPECT_NO_THROW(specfem::testing::test_array(h_ibool, test_config.ibool_file,
-                                               mesh.nspec, gllz->get_N(),
-                                               gllx->get_N()));
+  // Setup compute structs
+  specfem::compute::mesh assembly(mesh.control_nodes,
+                                  quadratures); // mesh assembly
+
+  HostView3d h_index_mapping = assembly.points.h_index_mapping;
+  specfem::testing::array3d<int, Kokkos::LayoutRight> index_array(
+      h_index_mapping);
+  specfem::testing::array3d<int, Kokkos::LayoutRight> index_ref(
+      test_config.ibool_file, mesh.nspec, gll.get_N(), gll.get_N());
+
+  EXPECT_TRUE(index_array == index_ref);
 }
 
 int main(int argc, char *argv[]) {
