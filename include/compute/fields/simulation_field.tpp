@@ -1,0 +1,144 @@
+#ifndef _COMPUTE_FIELDS_SIMULATION_FIELD_TPP_
+#define _COMPUTE_FIELDS_SIMULATION_FIELD_TPP_
+
+#include "compute/fields/simulation_field.hpp"
+#include "compute/fields/impl/field_impl.hpp"
+#include "compute/fields/impl/field_impl.tpp"
+#include "enumerations/specfem_enums.hpp"
+#include "kokkos_abstractions.h"
+#include "specfem_setup.hpp"
+#include <Kokkos_Core.hpp>
+
+template <typename simulation>
+specfem::compute::simulation_field<simulation>::simulation_field(
+    const specfem::compute::mesh &mesh,
+    const specfem::compute::properties &properties) {
+
+  nglob = compute_nglob(mesh.points.index_mapping);
+
+  assembly_index_mapping =
+      Kokkos::View<int * [specfem::enums::element::ntypes], Kokkos::LayoutLeft,
+                   specfem::kokkos::DevMemSpace>(
+          "specfem::compute::simulation_field::index_mapping", nglob);
+
+  h_assembly_index_mapping = Kokkos::View<
+      int * [specfem::enums::element::ntypes], Kokkos::LayoutLeft,
+      specfem::kokkos::HostMemSpace>(
+      Kokkos::create_mirror_view(assembly_index_mapping));
+
+  elastic = specfem::compute::impl::field_impl<elastic_type>(
+      mesh, properties, h_assembly_index_mapping);
+
+  acoustic = specfem::compute::impl::field_impl<acoustic_type>(
+      mesh, properties, h_assembly_index_mapping);
+
+  Kokkos::deep_copy(assembly_index_mapping, h_assembly_index_mapping);
+
+  return;
+}
+
+template <typename simulation>
+template <typename medium>
+KOKKOS_INLINE_FUNCTION type_real &
+specfem::compute::simulation_field<simulation>::field(const int &iglob,
+                                                      const int &icomp) {
+  if constexpr (std::is_same_v<medium, elastic_type>) {
+    int index = assembly_index_mapping(iglob, static_cast<int>(medium::value));
+    return elastic.field(index, icomp);
+  } else if constexpr (std::is_same_v<medium, acoustic_type>) {
+    int index = assembly_index_mapping(iglob, static_cast<int>(medium::value));
+    return acoustic.field(index, icomp);
+  }
+}
+
+template <typename simulation>
+template <typename medium>
+inline type_real &
+specfem::compute::simulation_field<simulation>::h_field(const int &iglob,
+                                                        const int &icomp) {
+  if constexpr (std::is_same_v<medium, elastic_type>) {
+    int index =
+        h_assembly_index_mapping(iglob, static_cast<int>(medium::value));
+    return elastic.h_field(index, icomp);
+  } else if constexpr (std::is_same_v<medium, acoustic_type>) {
+    int index =
+        h_assembly_index_mapping(iglob, static_cast<int>(medium::value));
+    return acoustic.h_field(index, icomp);
+  }
+}
+
+template <typename simulation>
+template <typename medium>
+KOKKOS_INLINE_FUNCTION type_real &
+specfem::compute::simulation_field<simulation>::field_dot(const int &iglob,
+                                                          const int &icomp) {
+  if constexpr (std::is_same_v<medium, elastic_type>) {
+    int index = assembly_index_mapping(iglob, static_cast<int>(medium::value));
+    return elastic.field_dot(index, icomp);
+  } else if constexpr (std::is_same_v<medium, acoustic_type>) {
+    int index = assembly_index_mapping(iglob, static_cast<int>(medium::value));
+    return acoustic.field_dot(index, icomp);
+  }
+}
+
+template <typename simulation>
+template <typename medium>
+inline type_real &
+specfem::compute::simulation_field<simulation>::h_field_dot(const int &iglob,
+                                                            const int &icomp) {
+  if constexpr (std::is_same_v<medium, elastic_type>) {
+    int index =
+        h_assembly_index_mapping(iglob, static_cast<int>(medium::value));
+    return elastic.h_field_dot(index, icomp);
+  } else if constexpr (std::is_same_v<medium, acoustic_type>) {
+    int index =
+        h_assembly_index_mapping(iglob, static_cast<int>(medium::value));
+    return acoustic.h_field_dot(index, icomp);
+  }
+}
+
+template <typename simulation>
+template <typename medium>
+KOKKOS_INLINE_FUNCTION type_real &
+specfem::compute::simulation_field<simulation>::field_dot_dot(
+    const int &iglob, const int &icomp) {
+  if constexpr (std::is_same_v<medium, elastic_type>) {
+    int index = assembly_index_mapping(iglob, static_cast<int>(medium::value));
+    return elastic.field_dot_dot(index, icomp);
+  } else if constexpr (std::is_same_v<medium, acoustic_type>) {
+    int index = assembly_index_mapping(iglob, static_cast<int>(medium::value));
+    return acoustic.field_dot_dot(index, icomp);
+  }
+}
+
+template <typename simulation>
+template <typename medium>
+inline type_real &
+specfem::compute::simulation_field<simulation>::h_field_dot_dot(
+    const int &iglob, const int &icomp) {
+  if constexpr (std::is_same_v<medium, elastic_type>) {
+    int index =
+        h_assembly_index_mapping(iglob, static_cast<int>(medium::value));
+    return elastic.h_field_dot_dot(index, icomp);
+  } else if constexpr (std::is_same_v<medium, acoustic_type>) {
+    int index =
+        h_assembly_index_mapping(iglob, static_cast<int>(medium::value));
+    return acoustic.h_field_dot_dot(index, icomp);
+  }
+}
+
+template <typename simulation>
+template <typename medium>
+KOKKOS_INLINE_FUNCTION type_real &
+specfem::compute::simulation_field<simulation>::mass_inverse(const int &iglob,
+                                                             const int &icomp) {
+  if constexpr (std::is_same_v<medium, elastic_type>) {
+    int index = assembly_index_mapping(iglob, static_cast<int>(medium::value));
+    return elastic.mass_inverse(index, icomp);
+  } else if constexpr (std::is_same_v<medium, acoustic_type>) {
+    int index = assembly_index_mapping(iglob, static_cast<int>(medium::value));
+    return acoustic.mass_inverse(index, icomp);
+  }
+}
+
+#endif /* _COMPUTE_FIELDS_SIMULATION_FIELD_TPP_ */

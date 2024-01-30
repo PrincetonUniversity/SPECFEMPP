@@ -249,6 +249,7 @@ add_library(
         src/compute/compute_receivers.cpp
         src/compute/coupled_interfaces.cpp
         src/compute/compute_boundaries.cpp
+        src/compute/compute_fields.cpp
 )
 
 target_link_libraries(
