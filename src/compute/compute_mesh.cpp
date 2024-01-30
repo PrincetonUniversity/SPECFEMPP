@@ -129,6 +129,8 @@ specfem::compute::points assign_numbering(
         } else {
           points.h_index_mapping(ispec, iz, ix) =
               iglob_counted[copy_cart_cord[iloc].iglob];
+          points.h_coord(0, ispec, iz, ix) = copy_cart_cord[iloc].x;
+          points.h_coord(1, ispec, iz, ix) = copy_cart_cord[iloc].z;
         }
         iloc++;
       }
@@ -219,6 +221,10 @@ specfem::compute::mesh::mesh(
     const specfem::mesh::control_nodes &control_nodes,
     const specfem::quadrature::quadratures &quadratures)
     : control_nodes(control_nodes), quadratures(quadratures, control_nodes) {
+
+  nspec = this->control_nodes.nspec;
+  ngllx = this->quadratures.gll.N;
+  ngllz = this->quadratures.gll.N;
 
   points = this->assemble();
 }

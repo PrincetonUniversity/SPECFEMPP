@@ -119,11 +119,10 @@ specfem::mesh::mesh::mesh(const std::string filename,
   }
 
   try {
-    this->coupled_interfaces =
-        specfem::mesh::coupled_interfaces::coupled_interfaces(
-            stream, this->parameters.num_fluid_solid_edges,
-            this->parameters.num_fluid_poro_edges,
-            this->parameters.num_solid_poro_edges, mpi);
+    this->coupled_interfaces = specfem::mesh::coupled_interfaces(
+        stream, this->parameters.num_fluid_solid_edges,
+        this->parameters.num_fluid_poro_edges,
+        this->parameters.num_solid_poro_edges, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }

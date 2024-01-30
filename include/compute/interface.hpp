@@ -7,7 +7,9 @@
 #include "compute_partial_derivatives.hpp"
 #include "compute_receivers.hpp"
 #include "compute_sources.hpp"
-#include "coupled_interfaces.hpp"
+// #include "coupled_interfaces.hpp"
+#include "coupled_interfaces/coupled_interfaces.hpp"
+#include "coupled_interfaces/interface_container.hpp"
 #include "properties/interface.hpp"
 
 #endif

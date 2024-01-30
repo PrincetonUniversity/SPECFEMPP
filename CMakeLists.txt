@@ -96,6 +96,16 @@ target_link_libraries(
 )
 
 add_library(
+        edge
+        src/edge/interface.cpp
+)
+
+target_link_libraries(
+        edge
+        Kokkos::kokkos
+)
+
+add_library(
         specfem_mpi
         src/specfem_mpi/specfem_mpi.cpp
 )
@@ -134,9 +144,7 @@ add_library(
         src/mesh/properties/properties.cpp
         src/mesh/mpi_interfaces/mpi_interfaces.cpp
         src/mesh/materials/materials.cpp
-        src/mesh/coupled_interfaces/elastic_acoustic.cpp
-        src/mesh/coupled_interfaces/elastic_poroelastic.cpp
-        src/mesh/coupled_interfaces/acoustic_poroelastic.cpp
+        src/mesh/coupled_interfaces/coupled_interfaces.cpp
         src/mesh/mesh.cpp
 )
 
@@ -239,7 +247,7 @@ add_library(
         src/compute/compute_properties.cpp
         src/compute/compute_sources.cpp
         src/compute/compute_receivers.cpp
-        # src/compute/coupled_interfaces.cpp
+        src/compute/coupled_interfaces.cpp
         src/compute/compute_boundaries.cpp
 )
 
@@ -251,6 +259,7 @@ target_link_libraries(
         source_class
         jacobian
         point
+        edge
         receiver_class
         Kokkos::kokkos
 )
