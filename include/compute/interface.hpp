@@ -10,6 +10,7 @@
 // #include "coupled_interfaces.hpp"
 #include "coupled_interfaces/coupled_interfaces.hpp"
 #include "coupled_interfaces/interface_container.hpp"
+#include "fields/fields.hpp"
 #include "properties/interface.hpp"
 
 #endif

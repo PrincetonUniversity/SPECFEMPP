@@ -43,12 +43,25 @@ enum format {
 
 } // namespace seismogram
 
+namespace simulation {
+/**
+ * @brief type of simulation
+ *
+ */
+enum class type {
+  forward ///< Forward simulation type
+};
+
+} // namespace simulation
+
 /**
  * @namespace element namespace is used to store element properties used in the
  * element class.
  *
  */
 namespace element {
+
+constexpr int ntypes = 2; ///< Number of element types
 
 /**
  * @brief type of element
