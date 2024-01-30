@@ -565,6 +565,9 @@ using simd_type = Kokkos::Experimental::simd<T, simd_abi>;
 template <typename T, int N> struct array_type {
   T data[N]; ///< Data array
 
+  template <typename... Args>
+  KOKKOS_INLINE_FUNCTION array_type(const Args &...args) : data{ args... } {}
+
   /**
    * @brief operator [] to access the data array
    *

@@ -4,9 +4,9 @@
 #include "constants.hpp"
 #include "domain/impl/receivers/acoustic/acoustic2d.hpp"
 #include "domain/impl/receivers/receiver.hpp"
+#include "enumerations/interface.hpp"
 #include "globals.h"
 #include "kokkos_abstractions.h"
-#include "enumerations/interface.hpp"
 #include <Kokkos_Core.hpp>
 
 template <int NGLL>
@@ -143,7 +143,8 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
         const int &ireceiver, const int &iseis,
         const specfem::enums::seismogram::type &seismogram_type, const int &xz,
         const int &isig_step,
-        specfem::kokkos::array_type<type_real, 2> &l_seismogram_components) const {
+        specfem::kokkos::array_type<type_real, 2> &l_seismogram_components)
+        const {
   int ix, iz;
   sub2ind(xz, NGLL, iz, ix);
 
@@ -192,9 +193,7 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
         this->sin_rec(ireceiver) * seismogram_components[0] +
         this->cos_rec(ireceiver) * seismogram_components[1];
   } else if (specfem::globals::simulation_wave == specfem::wave::sh) {
-    receiver_seismogram(0) =
-        this->cos_rec(ireceiver) * seismogram_components[0] +
-        this->sin_rec(ireceiver) * seismogram_components[1];
+    receiver_seismogram(0) = seismogram_components[0];
     receiver_seismogram(1) = 0;
   }
 

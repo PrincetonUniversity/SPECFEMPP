@@ -29,12 +29,14 @@ struct sources {
                                                            ///< interpolants for
                                                            ///< sources stored
                                                            ///< on host
-  specfem::kokkos::DeviceView1d<specfem::forcing_function::stf_storage>
-      stf_array; ///< Pointer to source time function for every source stored on
-                 ///< device
-  specfem::kokkos::HostMirror1d<specfem::forcing_function::stf_storage>
-      h_stf_array; ///< Pointer to source time function for every source stored
-                   ///< on host
+  specfem::kokkos::DeviceView2d<type_real> stf_array;   ///< Pointer to source
+                                                        ///< time function for
+                                                        ///< every source stored
+                                                        ///< on device
+  specfem::kokkos::HostMirror2d<type_real> h_stf_array; ///< Pointer to source
+                                                        ///< time function for
+                                                        ///< every source stored
+                                                        ///< on host
   specfem::kokkos::DeviceView1d<int> ispec_array;   ///< Spectral element number
                                                     ///< where the source lies
                                                     ///< stored on device
@@ -56,15 +58,14 @@ struct sources {
    */
   sources(
       const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
-      const specfem::quadrature::quadrature *quadx,
-      const specfem::quadrature::quadrature *quadz, const type_real xmax,
-      const type_real xmin, const type_real zmax, const type_real zmin,
-      specfem::MPI::MPI *mpi);
-  /**
-   * @brief Helper routine to sync views within this struct
-   *
-   */
-  void sync_views();
+      const specfem::compute::mesh &mesh,
+      const specfem::compute::partial_derivatives &partial_derivatives,
+      const specfem::compute::properties &properties, const int nsteps);
+  // /**
+  //  * @brief Helper routine to sync views within this struct
+  //  *
+  //  */
+  // void sync_views();
 };
 
 } // namespace compute

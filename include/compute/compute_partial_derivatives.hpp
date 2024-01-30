@@ -4,6 +4,7 @@
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
 #include "macros.hpp"
+#include "point/interface.hpp"
 #include "quadrature/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -18,6 +19,9 @@ namespace compute {
  *
  */
 struct partial_derivatives {
+  int nspec; ///< Number of spectral elements
+  int ngllz; ///< Number of quadrature points in z direction
+  int ngllx; ///< Number of quadrature points in x direction
   specfem::kokkos::DeviceView3d<type_real> xix; ///< inverted partial derivates
                                                 ///< @xix stored on the device
   specfem::kokkos::HostMirror3d<type_real> h_xix; ///< inverted partial
@@ -48,7 +52,7 @@ struct partial_derivatives {
    * @brief Default constructor
    *
    */
-  partial_derivatives(){};
+  partial_derivatives() = default;
   /**
    * @brief Constructor to allocate views
    *
@@ -65,96 +69,38 @@ struct partial_derivatives {
    * @param quadx Quadrature object in x dimension
    * @param quadz Quadrature object in z dimension
    */
-  partial_derivatives(const specfem::kokkos::HostView2d<type_real> coorg,
-                      const specfem::kokkos::HostView2d<int> knods,
-                      const specfem::quadrature::quadrature *quadx,
-                      const specfem::quadrature::quadrature *quadz);
+  partial_derivatives(const specfem::compute::mesh &mesh);
   /**
    * @brief Helper routine to sync views within this struct
    *
    */
   void sync_views();
-};
 
-/**
- * @brief Struct to store the partial derivatives of the element at a given
- * quadrature point
- *
- */
-struct element_partial_derivatives {
-  type_real xix;
-  type_real gammax;
-  type_real xiz;
-  type_real gammaz;
-  type_real jacobian;
-
-  KOKKOS_FUNCTION
-  element_partial_derivatives() = default;
-
-  KOKKOS_FUNCTION
-  element_partial_derivatives(const type_real &xix, const type_real &gammax,
-                              const type_real &xiz, const type_real &gammaz)
-      : xix(xix), gammax(gammax), xiz(xiz), gammaz(gammaz) {}
-
-  KOKKOS_FUNCTION
-  element_partial_derivatives(const type_real &xix, const type_real &gammax,
-                              const type_real &xiz, const type_real &gammaz,
-                              const type_real &jacobian)
-      : xix(xix), gammax(gammax), xiz(xiz), gammaz(gammaz), jacobian(jacobian) {
-  }
-
-  // KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, 2>
-  // specfem::compute::element_partial_derivatives::compute_normal(
-  //     const specfem::enums::boundaries::type type) const;
-
-  template <specfem::enums::boundaries::type type>
-  KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, 2>
-  compute_normal() const {
-    ASSERT(false, "Invalid boundary type");
-    return specfem::kokkos::array_type<type_real, 2>();
+  template <bool load_jacobian,
+            typename ExecSpace = specfem::kokkos::DevExecSpace>
+  KOKKOS_INLINE_FUNCTION specfem::point::partial_derivatives2
+  load_derivatives(const int ispec, const int iz, const int ix) const {
+    if (std::is_same_v<ExecSpace, specfem::kokkos::DevExecSpace>) {
+      if constexpr (load_jacobian) {
+        return { xix(ispec, iz, ix), xiz(ispec, iz, ix), gammax(ispec, iz, ix),
+                 gammaz(ispec, iz, ix), jacobian(ispec, iz, ix) };
+      } else {
+        return { xix(ispec, iz, ix), xiz(ispec, iz, ix), gammax(ispec, iz, ix),
+                 gammaz(ispec, iz, ix) };
+      }
+    } else if (std::is_same_v<ExecSpace, specfem::kokkos::HostExecSpace>) {
+      if constexpr (load_jacobian) {
+        return { h_xix(ispec, iz, ix), h_xiz(ispec, iz, ix),
+                 h_gammax(ispec, iz, ix), h_gammaz(ispec, iz, ix),
+                 h_jacobian(ispec, iz, ix) };
+      } else {
+        return { h_xix(ispec, iz, ix), h_xiz(ispec, iz, ix),
+                 h_gammax(ispec, iz, ix), h_gammaz(ispec, iz, ix) };
+      }
+    }
   };
 };
 } // namespace compute
 } // namespace specfem
-
-template <>
-KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, 2>
-specfem::compute::element_partial_derivatives::compute_normal<
-    specfem::enums::boundaries::type::BOTTOM>() const {
-  specfem::kokkos::array_type<type_real, 2> dn;
-  dn[0] = -1.0 * this->gammax * this->jacobian;
-  dn[1] = -1.0 * this->gammaz * this->jacobian;
-  return dn;
-};
-
-template <>
-KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, 2>
-specfem::compute::element_partial_derivatives::compute_normal<
-    specfem::enums::boundaries::type::TOP>() const {
-  specfem::kokkos::array_type<type_real, 2> dn;
-  dn[0] = this->gammax * this->jacobian;
-  dn[1] = this->gammaz * this->jacobian;
-  return dn;
-};
-
-template <>
-KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, 2>
-specfem::compute::element_partial_derivatives::compute_normal<
-    specfem::enums::boundaries::type::LEFT>() const {
-  specfem::kokkos::array_type<type_real, 2> dn;
-  dn[0] = -1.0 * this->xix * this->jacobian;
-  dn[1] = -1.0 * this->xiz * this->jacobian;
-  return dn;
-};
-
-template <>
-KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, 2>
-specfem::compute::element_partial_derivatives::compute_normal<
-    specfem::enums::boundaries::type::RIGHT>() const {
-  specfem::kokkos::array_type<type_real, 2> dn;
-  dn[0] = this->xix * this->jacobian;
-  dn[1] = this->xiz * this->jacobian;
-  return dn;
-};
 
 #endif

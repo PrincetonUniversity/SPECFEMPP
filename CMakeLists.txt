@@ -85,6 +85,27 @@ target_link_libraries(
 )
 
 add_library(
+        point
+        src/point/coordinates.cpp
+        src/point/partial_derivatives.cpp
+)
+
+target_link_libraries(
+        point
+        Kokkos::kokkos
+)
+
+add_library(
+        edge
+        src/edge/interface.cpp
+)
+
+target_link_libraries(
+        edge
+        Kokkos::kokkos
+)
+
+add_library(
         specfem_mpi
         src/specfem_mpi/specfem_mpi.cpp
 )
@@ -99,22 +120,22 @@ else()
         message("-- Compiling SPECFEM without MPI")
 endif(MPI_PARALLEL)
 
-add_library(
-        material_class
-        src/material/elastic_material.cpp
-        src/material/acoustic_material.cpp
-)
+# add_library(
+#         material_class
+#         src/material/elastic_isotropic_material.cpp
+#         src/material/acoustic_isotropic_material.cpp
+# )
 
-target_link_libraries(
-        material_class
-        Kokkos::kokkos
-        specfem_mpi
-)
+# target_link_libraries(
+#         material_class
+#         Kokkos::kokkos
+#         specfem_mpi
+# )
 
 add_library(
         mesh
         src/mesh/IO/fortran/read_mesh_database.cpp
-        src/mesh/IO/fortran/read_material_properties.cpp
+        # src/mesh/IO/fortran/read_material_properties.cpp
         src/mesh/boundaries/forcing_boundaries.cpp
         src/mesh/boundaries/absorbing_boundaries.cpp
         src/mesh/boundaries/acoustic_free_surface.cpp
@@ -122,10 +143,8 @@ add_library(
         src/mesh/elements/axial_elements.cpp
         src/mesh/properties/properties.cpp
         src/mesh/mpi_interfaces/mpi_interfaces.cpp
-        src/mesh/material_indic/material_indic.cpp
-        src/mesh/coupled_interfaces/elastic_acoustic.cpp
-        src/mesh/coupled_interfaces/elastic_poroelastic.cpp
-        src/mesh/coupled_interfaces/acoustic_poroelastic.cpp
+        src/mesh/materials/materials.cpp
+        src/mesh/coupled_interfaces/coupled_interfaces.cpp
         src/mesh/mesh.cpp
 )
 
@@ -133,7 +152,7 @@ target_link_libraries(
         mesh
         Kokkos::kokkos
         specfem_mpi
-        material_class
+        # material_class
         fortranio
         yaml-cpp
 )
@@ -147,19 +166,20 @@ add_library(
 target_link_libraries(
         jacobian
         Kokkos::kokkos
+        point
 )
 
-add_library(
-        utilities
-        src/utilities/utilities.cpp
-)
+# add_library(
+#         utilities
+#         src/utilities/utilities.cpp
+# )
 
-target_link_libraries(
-        utilities
-        jacobian
-        Kokkos::kokkos
-        specfem_mpi
-)
+# target_link_libraries(
+#         utilities
+#         jacobian
+#         Kokkos::kokkos
+#         specfem_mpi
+# )
 
 add_library(
         source_time_function
@@ -170,6 +190,7 @@ add_library(
 target_link_libraries(
         source_time_function
         Kokkos::kokkos
+        point
 )
 
 add_library(
@@ -184,7 +205,7 @@ target_link_libraries(
         source_class
         Kokkos::kokkos
         specfem_mpi
-        utilities
+        # utilities
         quadrature
         source_time_function
         yaml-cpp
@@ -201,100 +222,117 @@ target_link_libraries(
         receiver_class
         specfem_mpi
         Kokkos::kokkos
-        utilities
+        # utilities
         quadrature
         yaml-cpp
         Boost::boost
 )
 
 add_library(
+        algorithms
+        src/algorithms/locate_point.cpp
+)
+
+target_link_libraries(
+        algorithms
+        Kokkos::kokkos
+        jacobian
+        point
+)
+
+add_library(
         compute
-        src/compute/compute.cpp
+        src/compute/compute_mesh.cpp
         src/compute/compute_partial_derivatives.cpp
         src/compute/compute_properties.cpp
         src/compute/compute_sources.cpp
         src/compute/compute_receivers.cpp
         src/compute/coupled_interfaces.cpp
         src/compute/compute_boundaries.cpp
+        src/compute/compute_fields.cpp
+        src/compute/compute_assembly.cpp
 )
 
 target_link_libraries(
         compute
         quadrature
-        material_class
+        mesh
+        # material_class
         source_class
         jacobian
+        point
+        edge
         receiver_class
         Kokkos::kokkos
 )
 
-add_library(
-        timescheme
-        src/timescheme/timescheme.cpp
-        src/timescheme/newmark.cpp
-)
+# add_library(
+#         timescheme
+#         src/timescheme/timescheme.cpp
+#         src/timescheme/newmark.cpp
+# )
 
-target_link_libraries(
-        timescheme
-        Kokkos::kokkos
-        yaml-cpp
-        compute
-)
+# target_link_libraries(
+#         timescheme
+#         Kokkos::kokkos
+#         yaml-cpp
+#         compute
+# )
 
-add_library(
-        writer
-        src/writer/seismogram.cpp
-)
+# add_library(
+#         writer
+#         src/writer/seismogram.cpp
+# )
 
-target_link_libraries(
-        writer
-        compute
-        receiver_class
-)
+# target_link_libraries(
+#         writer
+#         compute
+#         receiver_class
+# )
 
-add_library(
-        parameter_reader
-        src/parameter_parser/run_setup.cpp
-        src/parameter_parser/solver/solver.cpp
-        src/parameter_parser/solver/time_marching.cpp
-        src/parameter_parser/database_configuration.cpp
-        src/parameter_parser/header.cpp
-        src/parameter_parser/quadrature.cpp
-        src/parameter_parser/receivers.cpp
-        src/parameter_parser/seismogram.cpp
-        src/parameter_parser/writer.cpp
-        src/parameter_parser/setup.cpp
-)
+# add_library(
+#         parameter_reader
+#         src/parameter_parser/run_setup.cpp
+#         src/parameter_parser/solver/solver.cpp
+#         src/parameter_parser/solver/time_marching.cpp
+#         src/parameter_parser/database_configuration.cpp
+#         src/parameter_parser/header.cpp
+#         src/parameter_parser/quadrature.cpp
+#         src/parameter_parser/receivers.cpp
+#         src/parameter_parser/seismogram.cpp
+#         src/parameter_parser/writer.cpp
+#         src/parameter_parser/setup.cpp
+# )
 
-target_link_libraries(
-        parameter_reader
-        quadrature
-        timescheme
-        receiver_class
-        yaml-cpp
-        writer
-        Boost::filesystem
-)
+# target_link_libraries(
+#         parameter_reader
+#         quadrature
+#         timescheme
+#         receiver_class
+#         yaml-cpp
+#         writer
+#         Boost::filesystem
+# )
 
-add_executable(
-        specfem2d
-        src/specfem2d.cpp
-)
+# add_executable(
+#         specfem2d
+#         src/specfem2d.cpp
+# )
 
-target_link_libraries(
-        specfem2d
-        material_class
-        specfem_mpi
-        Kokkos::kokkos
-        mesh
-        quadrature
-        compute
-        source_class
-        parameter_reader
-        receiver_class
-        writer
-        Boost::program_options
-)
+# target_link_libraries(
+#         specfem2d
+#         material_class
+#         specfem_mpi
+#         Kokkos::kokkos
+#         mesh
+#         quadrature
+#         compute
+#         source_class
+#         parameter_reader
+#         receiver_class
+#         writer
+#         Boost::program_options
+# )
 
 # Include tests
 if (BUILD_TESTS)
