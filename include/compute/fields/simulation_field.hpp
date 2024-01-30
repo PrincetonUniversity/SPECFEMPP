@@ -18,6 +18,8 @@ template <typename simulation> struct simulation_field {
   using elastic_type = specfem::enums::element::medium::elastic;
   using acoustic_type = specfem::enums::element::medium::acoustic;
 
+  simulation_field() = default;
+
   simulation_field(const specfem::compute::mesh &mesh,
                    const specfem::compute::properties &properties);
 

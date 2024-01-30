@@ -36,6 +36,8 @@ struct shape_functions {
   shape_functions(const specfem::kokkos::HostMirror1d<type_real> xi,
                   const specfem::kokkos::HostMirror1d<type_real> gamma,
                   const int &ngll, const int &ngnod);
+
+  shape_functions() = default;
 };
 
 struct quadrature {
@@ -45,12 +47,16 @@ struct quadrature {
     specfem::kokkos::HostMirror1d<type_real> h_xi;     ///< Quadrature points
     specfem::compute::shape_functions shape_functions; ///< Shape functions
 
+    GLL() = default;
+
     GLL(const specfem::quadrature::quadratures &quadratures, const int &ngnod)
         : N(quadratures.gll.get_N()), xi(quadratures.gll.get_xi()),
           h_xi(quadratures.gll.get_hxi()), shape_functions(xi, xi, N, ngnod) {}
   };
 
   specfem::compute::quadrature::GLL gll; ///< GLL object
+
+  quadrature() = default;
 
   quadrature(const specfem::quadrature::quadratures &quadratures,
              const specfem::mesh::control_nodes &control_nodes)
@@ -72,6 +78,8 @@ struct control_nodes {
                                                       ///< distinct control node
 
   control_nodes(const specfem::mesh::control_nodes &control_nodes);
+
+  control_nodes() = default;
 };
 
 struct points {
@@ -117,6 +125,8 @@ struct mesh {
   specfem::compute::control_nodes control_nodes; ///< Control nodes
   specfem::compute::points points;               ///< Quadrature points
   specfem::compute::quadrature quadratures;      ///< Quadrature object
+
+  mesh() = default;
 
   mesh(const specfem::mesh::control_nodes &control_nodes,
        const specfem::quadrature::quadratures &quadratures);

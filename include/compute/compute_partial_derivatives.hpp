@@ -52,7 +52,7 @@ struct partial_derivatives {
    * @brief Default constructor
    *
    */
-  partial_derivatives(){};
+  partial_derivatives() = default;
   /**
    * @brief Constructor to allocate views
    *
