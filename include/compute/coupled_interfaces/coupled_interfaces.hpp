@@ -11,8 +11,7 @@ namespace specfem {
 namespace compute {
 struct coupled_interfaces {
 
-  coupled_interfaces()
-      : elastic_acoustic(), acoustic_poroelastic(), elastic_poroelastic(){};
+  coupled_interfaces() = default;
 
   coupled_interfaces(
       const specfem::compute::mesh &mesh,

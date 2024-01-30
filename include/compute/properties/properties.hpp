@@ -46,6 +46,8 @@ struct properties {
       specfem::enums::element::property_tag::isotropic>
       acoustic_isotropic;
 
+  properties() = default;
+
   properties(const int nspec, const int ngllz, const int ngllx,
              const specfem::mesh::materials &materials);
 };

@@ -14,6 +14,8 @@ struct fields {
 
   using forward_type = specfem::enums::simulation::forward;
 
+  fields() = default;
+
   fields(const specfem::compute::mesh &mesh,
          const specfem::compute::properties &properties);
 
