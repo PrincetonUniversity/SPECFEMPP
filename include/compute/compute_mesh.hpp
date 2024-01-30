@@ -108,6 +108,12 @@ struct points {
  *
  */
 struct mesh {
+  int nspec;                                     ///< Number of spectral
+                                                 ///< elements
+  int ngllz;                                     ///< Number of quadrature
+                                                 ///< points in z dimension
+  int ngllx;                                     ///< Number of quadrature
+                                                 ///< points in x dimension
   specfem::compute::control_nodes control_nodes; ///< Control nodes
   specfem::compute::points points;               ///< Quadrature points
   specfem::compute::quadrature quadratures;      ///< Quadrature object

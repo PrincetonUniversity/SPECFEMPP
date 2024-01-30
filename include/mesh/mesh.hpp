@@ -48,9 +48,8 @@ struct mesh {
   specfem::mesh::properties parameters; ///< Struct to store simulation launch
                                         ///< parameters
 
-  specfem::mesh::coupled_interfaces::coupled_interfaces
-      coupled_interfaces; ///< Struct to store
-                          ///< coupled interfaces
+  specfem::mesh::coupled_interfaces coupled_interfaces; ///< Struct to store
+                                                        ///< coupled interfaces
 
   specfem::mesh::boundaries::acoustic_free_surface
       acfree_surface; ///< Struct used to store data required to implement

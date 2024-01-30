@@ -25,6 +25,22 @@ struct boundary_container {
       const std::vector<specfem::point::boundary> &boundary_types);
 
   int nelements;
+  specfem::kokkos::DeviceView1d<int> boundary_index_mapping;
+  specfem::kokkos::HostMirror1d<int> h_boundary_index_mapping;
+
+  specfem::compute::impl::boundaries::element_boundary_container<
+      specfem::enums::element::type::acoustic>
+      acoustic;
+  specfem::compute::impl::boundaries::element_boundary_container<
+      specfem::enums::element::type::elastic>
+      elastic;
+
+  template <specfem::enums::element::type medium>
+  int get_spectral_elem_index(const int boundary_index) const;
+
+  template <typename MemSpace>
+  specfem::point::boundary get_boundary_type(const int boundary_index) const;
+
   specfem::kokkos::DeviceView1d<int> index_mapping;
   specfem::kokkos::HostMirror1d<int> h_index_mapping;
   specfem::kokkos::DeviceView1d<specfem::point::boundary> boundary_type;

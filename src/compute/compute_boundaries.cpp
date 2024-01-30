@@ -94,24 +94,42 @@ specfem::compute::boundaries::boundaries(
     const int nspec, const specfem::compute::properties &properties,
     const specfem::mesh::boundaries::absorbing_boundary &absorbing_boundaries,
     const specfem::mesh::boundaries::acoustic_free_surface
-        &acoustic_free_surface) {
+        &acoustic_free_surface)
+    : boundary_tags("specfem::compute::boundaries::boundary_"
+                    "tags",
+                    nspec),
+      h_boundary_tags(Kokkos::create_mirror_view(boundary_tags)),
+      boundary_types("specfem::compute::boundaries::boundary_"
+                     "types",
+                     nspec),
+      h_boundary_types(Kokkos::create_mirror_view(boundary_types)) {
 
-  auto [boundary_tag, boundary_types] = tag_elements(
-      nspec, properties, absorbing_boundaries, acoustic_free_surface);
+  // Tag the elements with the boundary tag and boundary type
 
-  this->acoustic_free_surface =
-      specfem::compute::impl::boundaries::boundary_container<
-          specfem::enums::element::boundary_tag::acoustic_free_surface>(
-          boundary_tag, boundary_types);
+  for (int i = 0; i < absorbing_boundaries.nelements; ++i) {
+    const int ispec = absorbing_boundaries.ispec(i);
+    h_boundary_tags(ispec) += specfem::enums::element::boundary_tag::stacey;
+    h_boundary_types(ispec).update_boundary(
+        absorbing_boundaries.type(i),
+        specfem::enums::element::boundary_tag::stacey);
+  }
 
-  this->stacey = specfem::compute::impl::boundaries::boundary_container<
-      specfem::enums::element::boundary_tag::stacey>(boundary_tag,
-                                                     boundary_types);
+  for (int i = 0; i < acoustic_free_surface.nelem_acoustic_surface; ++i) {
+    const int ispec = acoustic_free_surface.ispec_acoustic_surface(i);
+    if (properties.h_element_types(ispec) !=
+        specfem::enums::element::type::acoustic) {
+      throw std::invalid_argument(
+          "Error: Acoustic free surface boundary is not an acoustic element");
+    }
+    h_boundary_tags(ispec) +=
+        specfem::enums::element::boundary_tag::acoustic_free_surface;
+    h_boundary_types(ispec).update_boundary(
+        acoustic_free_surface.type(i),
+        specfem::enums::element::boundary_tag::acoustic_free_surface);
+  }
 
-  this->composite_stacey_dirichlet =
-      specfem::compute::impl::boundaries::boundary_container<
-          specfem::enums::element::boundary_tag::composite_stacey_dirichlet>(
-          boundary_tag, boundary_types);
+  Kokkos::deep_copy(boundary_tags, h_boundary_tags);
+  Kokkos::deep_copy(boundary_types, h_boundary_types);
 
   return;
 }
