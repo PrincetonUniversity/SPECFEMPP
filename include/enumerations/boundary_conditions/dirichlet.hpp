@@ -1,7 +1,7 @@
 #ifndef _ENUMS_BOUNDARY_CONDITIONS_DIRICHLET_HPP_
 #define _ENUMS_BOUNDARY_CONDITIONS_DIRICHLET_HPP_
 
-#include "compute/compute_boundaries.hpp"
+// #include "compute/compute_boundaries.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/interface.hpp"
 #include "enumerations/quadrature.hpp"

@@ -13,6 +13,8 @@ specfem::compute::properties::properties(
       h_element_types(Kokkos::create_mirror_view(element_types)),
       property_index_mapping(
           "specfem::compute::properties::property_index_mapping", nspec),
+      element_property("specfem::compute::properties::element_property", nspec),
+      h_element_property(Kokkos::create_mirror_view(element_property)),
       h_property_index_mapping(
           Kokkos::create_mirror_view(property_index_mapping)) {
 
@@ -27,10 +29,14 @@ specfem::compute::properties::properties(
             specfem::enums::element::type::elastic) {
           n_elastic++;
           h_element_types(ispec) = specfem::enums::element::type::elastic;
+          h_element_property(ispec) =
+              specfem::enums::element::property_tag::isotropic;
         } else if (materials.material_index_mapping(ispec).type ==
                    specfem::enums::element::type::acoustic) {
           n_acoustic++;
           h_element_types(ispec) = specfem::enums::element::type::acoustic;
+          h_element_property(ispec) =
+              specfem::enums::element::property_tag::isotropic;
         }
       },
       n_elastic, n_acoustic);
@@ -49,6 +55,7 @@ specfem::compute::properties::properties(
 
   Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);
   Kokkos::deep_copy(element_types, h_element_types);
+  Kokkos::deep_copy(element_property, h_element_property);
 
   return;
 }

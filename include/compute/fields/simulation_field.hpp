@@ -24,31 +24,49 @@ template <typename simulation> struct simulation_field {
                    const specfem::compute::properties &properties);
 
   template <typename medium>
-  KOKKOS_INLINE_FUNCTION type_real &field(const int &iglob, const int &icomp);
+  KOKKOS_INLINE_FUNCTION specfem::compute::impl::field_impl<medium>
+  get_field() const {
+    if constexpr (std::is_same_v<medium, elastic_type>) {
+      return elastic;
+    } else if constexpr (std::is_same_v<medium, acoustic_type>) {
+      return acoustic;
+    } else {
+      static_assert("medium type not supported");
+    }
+  }
 
-  template <typename medium>
-  inline type_real &h_field(const int &iglob, const int &icomp);
+  template <specfem::sync::kind sync> void sync_fields() {
+    elastic.sync_fields<sync>();
+    acoustic.sync_fields<sync>();
+  }
 
-  template <typename medium>
-  KOKKOS_INLINE_FUNCTION type_real &field_dot(const int &iglob,
-                                              const int &icomp);
+  // template <typename medium>
+  // KOKKOS_INLINE_FUNCTION type_real &field(const int &iglob, const int
+  // &icomp);
 
-  template <typename medium>
-  inline type_real &h_field_dot(const int &iglob, const int &icomp);
+  // template <typename medium>
+  // inline type_real &h_field(const int &iglob, const int &icomp);
 
-  template <typename medium>
-  KOKKOS_INLINE_FUNCTION type_real &field_dot_dot(const int &iglob,
-                                                  const int &icomp);
+  // template <typename medium>
+  // KOKKOS_INLINE_FUNCTION type_real &field_dot(const int &iglob,
+  //                                             const int &icomp);
 
-  template <typename medium>
-  inline type_real &h_field_dot_dot(const int &iglob, const int &icomp);
+  // template <typename medium>
+  // inline type_real &h_field_dot(const int &iglob, const int &icomp);
 
-  template <typename medium>
-  KOKKOS_INLINE_FUNCTION type_real &mass_inverse(const int &iglob,
-                                                 const int &icomp);
+  // template <typename medium>
+  // KOKKOS_INLINE_FUNCTION type_real &field_dot_dot(const int &iglob,
+  //                                                 const int &icomp);
 
-  template <typename medium>
-  inline type_real &h_mass_inverse(const int &iglob, const int &icomp);
+  // template <typename medium>
+  // inline type_real &h_field_dot_dot(const int &iglob, const int &icomp);
+
+  // template <typename medium>
+  // KOKKOS_INLINE_FUNCTION type_real &mass_inverse(const int &iglob,
+  //                                                const int &icomp);
+
+  // template <typename medium>
+  // inline type_real &h_mass_inverse(const int &iglob, const int &icomp);
 
   int nglob = 0;
   Kokkos::View<int * [specfem::enums::element::ntypes], Kokkos::LayoutLeft,

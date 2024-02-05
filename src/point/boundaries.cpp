@@ -1,6 +1,8 @@
+#include "enumerations/specfem_enums.hpp"
+#include "macros.hpp"
+#include "point/boundary.hpp"
 
-
-void specfem::point::boundary::update_boundary_type(
+void specfem::point::boundary::update_boundary(
     const specfem::enums::boundaries::type &type,
     const specfem::enums::element::boundary_tag &tag) {
   if (type == specfem::enums::boundaries::type::TOP) {
@@ -20,15 +22,15 @@ void specfem::point::boundary::update_boundary_type(
   } else if (type == specfem::enums::boundaries::type::TOP_LEFT) {
     top_left = tag;
   } else {
-    DEVICE_ASSERT(false, "Error: Unknown boundary type");
+    ASSERT(false, "Error: Unknown boundary type");
   }
 }
 
 KOKKOS_FUNCTION
 bool specfem::point::is_on_boundary(
     const specfem::enums::element::boundary_tag &tag,
-    const specfem::compute::access::boundary_types &type, const int &iz,
-    const int &ix, const int &ngllz, const int &ngllx) {
+    const specfem::point::boundary &type, const int &iz, const int &ix,
+    const int &ngllz, const int &ngllx) {
 
   return (type.top == tag && iz == ngllz - 1) ||
          (type.bottom == tag && iz == 0) || (type.left == tag && ix == 0) ||

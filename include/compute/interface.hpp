@@ -8,6 +8,7 @@
 #include "compute_receivers.hpp"
 #include "compute_sources.hpp"
 // #include "coupled_interfaces.hpp"
+#include "compute_assembly.hpp"
 #include "coupled_interfaces/coupled_interfaces.hpp"
 #include "coupled_interfaces/interface_container.hpp"
 #include "fields/fields.hpp"
