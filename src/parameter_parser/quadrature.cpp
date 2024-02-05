@@ -5,30 +5,30 @@
 #include <string>
 #include <tuple>
 
-std::tuple<specfem::quadrature::quadrature *, specfem::quadrature::quadrature *>
+specfem::quadrature::quadratures
 specfem::runtime_configuration::quadrature::instantiate() {
 
-  specfem::quadrature::quadrature *gllx =
-      new specfem::quadrature::gll::gll(this->alpha, this->beta, this->ngllx);
-  specfem::quadrature::quadrature *gllz =
-      new specfem::quadrature::gll::gll(this->alpha, this->beta, this->ngllz);
+  std::cout << this->alpha << " " << this->beta << " " << this->ngll
+            << std::endl;
+
+  specfem::quadrature::gll::gll gll(this->alpha, this->beta, this->ngll);
 
   std::cout << " Quadrature in X-dimension \n";
-  std::cout << *gllx << std::endl;
+  std::cout << gll << std::endl;
 
   std::cout << " Quadrature in Z-dimension \n";
-  std::cout << *gllz << std::endl;
+  std::cout << gll << std::endl;
 
-  return std::make_tuple(gllx, gllz);
+  return specfem::quadrature::quadratures(gll);
 }
 
 specfem::runtime_configuration::quadrature::quadrature(
     const std::string quadrature) {
 
   if (quadrature == "GLL4") {
-    *this = specfem::runtime_configuration::quadrature(0.0, 0.0, 5, 5);
+    *this = specfem::runtime_configuration::quadrature(0.0, 0.0, 5);
   } else if (quadrature == "GLL7") {
-    *this = specfem::runtime_configuration::quadrature(0.0, 0.0, 8, 8);
+    *this = specfem::runtime_configuration::quadrature(0.0, 0.0, 8);
   } else {
     std::ostringstream message;
     message << "Error reading quadrature argument. " << quadrature
@@ -43,7 +43,7 @@ specfem::runtime_configuration::quadrature::quadrature(const YAML::Node &Node) {
   try {
     *this = specfem::runtime_configuration::quadrature(
         Node["alpha"].as<type_real>(), Node["beta"].as<type_real>(),
-        Node["ngllx"].as<int>(), Node["ngllz"].as<int>());
+        Node["ngll"].as<int>());
   } catch (YAML::InvalidNode &e) {
     try {
       *this = specfem::runtime_configuration::quadrature(

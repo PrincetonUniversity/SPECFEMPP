@@ -24,43 +24,57 @@ public:
   using property_type = property;
   using boundary_conditions_type = BC;
 
+  static_assert(std::is_same_v<medium, typename BC::medium_type>,
+                "Boundary conditions should have the same medium type as the "
+                "element kernel");
+  static_assert(std::is_same_v<dimension, typename BC::dimension>,
+                "Boundary conditions should have the same dimension as the "
+                "element kernel");
+  static_assert(std::is_same_v<qp_type, typename BC::quadrature_points_type>,
+                "Boundary conditions should have the same quadrature point "
+                "type as the element kernel");
+  static_assert(std::is_same_v<property, typename BC::property_type>,
+                "Boundary conditions should have the same property as the "
+                "element kernel");
+
   element_kernel() = default;
   element_kernel(
-      const specfem::kokkos::DeviceView3d<int> ibool,
-      const specfem::kokkos::DeviceView1d<int> ispec,
-      const specfem::compute::partial_derivatives &partial_derivatives,
-      const specfem::compute::properties &properties,
-      const specfem::compute::boundaries &boundary_conditions,
-      specfem::quadrature::quadrature *quadx,
-      specfem::quadrature::quadrature *quadz, qp_type quadrature_points,
-      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field,
-      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot,
-      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
-          field_dot_dot,
-      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> mass_matrix);
+      const specfem::compute::assembly &assembly,
+      const specfem::kokkos::DeviceView1d<int> element_kernel_index_mapping,
+      const quadrature_point_type &quadrature_points);
 
   void compute_mass_matrix() const;
 
-  void compute_stiffness_interaction() const;
+  // void compute_stiffness_interaction() const;
 
-  template <specfem::enums::time_scheme::type time_scheme>
-  void mass_time_contribution(const type_real dt) const;
+  // template <specfem::enums::time_scheme::type time_scheme>
+  // void mass_time_contribution(const type_real dt) const;
 
-  __inline__ int total_elements() const { return ispec.extent(0); }
+  inline int total_elements() const { return nelements; }
 
 private:
-  specfem::kokkos::DeviceView1d<int> ispec;
-  specfem::kokkos::DeviceView3d<int> ibool;
-  specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field;
-  specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot;
-  specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot_dot;
-  specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> mass_matrix;
-  qp_type quadrature_points;
-  specfem::quadrature::quadrature *quadx;
-  specfem::quadrature::quadrature *quadz;
+  int nelements;
+  specfem::compute::points points;
+  specfem::compute::quadrature quadrature;
+  specfem::kokkos::DeviceView1d<int> element_kernel_index_mapping;
+  Kokkos::View<int * [specfem::enums::element::ntypes], Kokkos::LayoutLeft,
+               specfem::kokkos::DevMemSpace>
+      global_index_mapping;
+  specfem::compute::properties properties;
+  specfem::compute::partial_derivatives partial_derivatives;
+  specfem::compute::impl::field_impl<medium_type> field;
+  quadrature_point_type quadrature_points;
   specfem::domain::impl::elements::element<
       dimension, medium, qp_type, property_type, boundary_conditions_type>
       element;
+
+  // using load_properties = properties.load_properties<medium_type::value,
+  // property_type::value, specfem::kokkos::DevExecSpace>;
+
+  // template <bool load_jacobian>
+  // using load_partial_derivatives =
+  // partial_derivatives.load_partial_derivatives<load_jacobian,
+  // specfem::kokkos::DevExecSpace>;
 };
 
 } // namespace kernels

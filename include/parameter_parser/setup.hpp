@@ -39,47 +39,45 @@ public:
    * @return std::tuple<specfem::quadrature::quadrature,
    * specfem::quadrature::quadrature> Quadrature objects in x and z dimensions
    */
-  std::tuple<specfem::quadrature::quadrature *,
-             specfem::quadrature::quadrature *>
-  instantiate_quadrature() {
+  specfem::quadrature::quadratures instantiate_quadrature() {
     return this->quadrature->instantiate();
   }
-  /**
-   * @brief Instantiate the Timescheme
-   *
-   * @return specfem::TimeScheme::TimeScheme* Pointer to the TimeScheme
-   object
-   * used in the solver algorithm
-   */
-  std::shared_ptr<specfem::TimeScheme::TimeScheme> instantiate_solver() {
-    auto it =
-        this->solver->instantiate(this->receivers->get_nstep_between_samples());
+  // /**
+  //  * @brief Instantiate the Timescheme
+  //  *
+  //  * @return specfem::TimeScheme::TimeScheme* Pointer to the TimeScheme
+  //  object
+  //  * used in the solver algorithm
+  //  */
+  // std::shared_ptr<specfem::TimeScheme::TimeScheme> instantiate_solver() {
+  //   auto it =
+  //       this->solver->instantiate(this->receivers->get_nstep_between_samples());
 
-    return it;
-  }
-  /**
-   * @brief Update simulation start time.
-   *
-   * If user has not defined start time then we need to update the simulation
-   * start time based on source frequencies and time shift
-   *
-   * @note This might be specific to only time-marching solvers
-   *
-   * @param t0 Simulation start time
-   */
-  void update_t0(type_real t0) { this->solver->update_t0(t0); }
+  //   return it;
+  // }
+  // /**
+  //  * @brief Update simulation start time.
+  //  *
+  //  * If user has not defined start time then we need to update the simulation
+  //  * start time based on source frequencies and time shift
+  //  *
+  //  * @note This might be specific to only time-marching solvers
+  //  *
+  //  * @param t0 Simulation start time
+  //  */
+  // void update_t0(type_real t0) { this->solver->update_t0(t0); }
   /**
    * @brief Log the header and description of the simulation
    */
   std::string
   print_header(std::chrono::time_point<std::chrono::high_resolution_clock> now);
 
-  /**
-   * @brief Get delta time value
-   *
-   * @return type_real
-   */
-  type_real get_dt() const { return solver->get_dt(); }
+  // /**
+  //  * @brief Get delta time value
+  //  *
+  //  * @return type_real
+  //  */
+  // type_real get_dt() const { return solver->get_dt(); }
 
   /**
    * @brief Get the path to mesh database and source yaml file
@@ -117,37 +115,38 @@ public:
     return this->receivers->get_seismogram_types();
   }
 
-  /**
-   * @brief Instantiate a seismogram writer object
-   *
-   * @param receivers Vector of pointers to receiver objects used to
-   instantiate
-   * the writer
-   * @param compute_receivers Pointer to specfem::compute::receivers struct
-   used
-   * to instantiate the writer
-   * @return specfem::writer::writer* Pointer to an instantiated writer
-   object
-   */
-  std::shared_ptr<specfem::writer::writer> instantiate_seismogram_writer(
-      std::vector<std::shared_ptr<specfem::receivers::receiver> > &receivers,
-      specfem::compute::receivers &compute_receivers) const {
-    if (this->seismogram) {
-      return this->seismogram->instantiate_seismogram_writer(
-          receivers, compute_receivers, this->solver->get_dt(),
-          this->solver->get_t0(), this->receivers->get_nstep_between_samples());
-    } else {
-      return NULL;
-    }
-  }
+  // /**
+  //  * @brief Instantiate a seismogram writer object
+  //  *
+  //  * @param receivers Vector of pointers to receiver objects used to
+  //  instantiate
+  //  * the writer
+  //  * @param compute_receivers Pointer to specfem::compute::receivers struct
+  //  used
+  //  * to instantiate the writer
+  //  * @return specfem::writer::writer* Pointer to an instantiated writer
+  //  object
+  //  */
+  // std::shared_ptr<specfem::writer::writer> instantiate_seismogram_writer(
+  //     std::vector<std::shared_ptr<specfem::receivers::receiver> > &receivers,
+  //     specfem::compute::receivers &compute_receivers) const {
+  //   if (this->seismogram) {
+  //     return this->seismogram->instantiate_seismogram_writer(
+  //         receivers, compute_receivers, this->solver->get_dt(),
+  //         this->solver->get_t0(),
+  //         this->receivers->get_nstep_between_samples());
+  //   } else {
+  //     return NULL;
+  //   }
+  // }
 
 private:
   std::unique_ptr<specfem::runtime_configuration::header> header; ///< Pointer
                                                                   ///< to header
                                                                   ///< object
-  std::unique_ptr<specfem::runtime_configuration::solver::solver>
-      solver; ///< Pointer to solver
-              ///< object
+  // std::unique_ptr<specfem::runtime_configuration::solver::solver>
+  //     solver; ///< Pointer to solver
+  //             ///< object
   std::unique_ptr<specfem::runtime_configuration::run_setup>
       run_setup; ///< Pointer to
                  ///< run_setup object
@@ -156,9 +155,9 @@ private:
                   ///< quadrature object
   std::unique_ptr<specfem::runtime_configuration::receivers>
       receivers; ///< Pointer to receivers object
-  std::unique_ptr<specfem::runtime_configuration::seismogram>
-      seismogram; ///< Pointer to
-                  ///< seismogram object
+  // std::unique_ptr<specfem::runtime_configuration::seismogram>
+  //     seismogram; ///< Pointer to
+  //                 ///< seismogram object
   std::unique_ptr<specfem::runtime_configuration::database_configuration>
       databases; ///< Get database filenames
 };

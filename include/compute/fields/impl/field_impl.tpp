@@ -28,9 +28,9 @@ int compute_nglob(const specfem::kokkos::HostView3d<int> index_mapping) {
 
 template <typename medium>
 specfem::compute::impl::field_impl<medium>::field_impl(const int nglob,
-                                                 const int nspec,
-                                                 const int ngllz,
-                                                 const int ngllx)
+                                                       const int nspec,
+                                                       const int ngllz,
+                                                       const int ngllx)
     : nglob(nglob), nspec(nspec),
       index_mapping("specfem::compute::fields::index_mapping", nspec, ngllz,
                     ngllx),
@@ -50,7 +50,7 @@ template <typename medium>
 specfem::compute::impl::field_impl<medium>::field_impl(
     const specfem::compute::mesh &mesh,
     const specfem::compute::properties &properties,
-    Kokkos::View<int * [specfem::enums::element::ntypes], Kokkos::LayoutLeft,
+    Kokkos::View<int *, Kokkos::LayoutLeft,
                  specfem::kokkos::HostMemSpace>
         assembly_index_mapping) {
 
@@ -72,9 +72,9 @@ specfem::compute::impl::field_impl<medium>::field_impl(
           // increase the count only if the global index is not already counted
           /// static_cast<int>(medium::value) is the index of the medium in the
           /// enum class
-          if (assembly_index_mapping(index, static_cast<int>(medium::value)) ==
+          if (assembly_index_mapping(index) ==
               -1) {
-            assembly_index_mapping(index, static_cast<int>(medium::value)) =
+            assembly_index_mapping(index) =
                 count;
             count++;
           }
@@ -84,6 +84,7 @@ specfem::compute::impl::field_impl<medium>::field_impl(
   }
 
   nglob = count;
+
   field = specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>(
       "specfem::compute::fields::field", nglob, medium::components);
   h_field = specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>(
@@ -94,6 +95,13 @@ specfem::compute::impl::field_impl<medium>::field_impl(
       Kokkos::create_mirror_view(field_dot));
   field_dot_dot = specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>(
       "specfem::compute::fields::field_dot_dot", nglob, medium::components);
+  h_field_dot_dot =
+      specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>(
+          Kokkos::create_mirror_view(field_dot_dot));
+  mass_inverse = specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>(
+      "specfem::compute::fields::mass_inverse", nglob, medium::components);
+  h_mass_inverse = specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>(
+      Kokkos::create_mirror_view(mass_inverse));
 
   Kokkos::parallel_for(
       "specfem::compute::fields::field_impl::initialize_field",
@@ -114,11 +122,27 @@ specfem::compute::impl::field_impl<medium>::field_impl(
   return;
 }
 
+template <typename medium>
+template <specfem::sync::kind sync>
+void specfem::compute::impl::field_impl<medium>::sync_fields() const {
+  if constexpr (sync == specfem::sync::kind::DeviceToHost) {
+    Kokkos::deep_copy(h_field, field);
+    Kokkos::deep_copy(h_field_dot, field_dot);
+    Kokkos::deep_copy(h_field_dot_dot, field_dot_dot);
+    Kokkos::deep_copy(h_mass_inverse, mass_inverse);
+  } else if constexpr (sync == specfem::sync::kind::HostToDevice) {
+    Kokkos::deep_copy(field, h_field);
+    Kokkos::deep_copy(field_dot, h_field_dot);
+    Kokkos::deep_copy(field_dot_dot, h_field_dot_dot);
+    Kokkos::deep_copy(mass_inverse, h_mass_inverse);
+  }
+}
+
 #endif /* _COMPUTE_FIELDS_IMPL_FIELD_IMPL_TPP_ */
 
-
 // template <typename medium>
-//   KOKKOS_INLINE_FUNCTION type_real &specfem::compute::(const int &iglob, const int &icomp) {
+//   KOKKOS_INLINE_FUNCTION type_real &specfem::compute::(const int &iglob,
+//   const int &icomp) {
 //     if constexpr (std::is_same_v<medium, elastic_type>) {
 //       int index =
 //           assembly_index_mapping(iglob, static_cast<int>(medium::value));

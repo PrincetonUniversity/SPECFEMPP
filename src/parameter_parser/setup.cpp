@@ -88,33 +88,33 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
     throw std::runtime_error(message.str());
   }
 
-  try {
-    this->seismogram =
-        std::make_unique<specfem::runtime_configuration::seismogram>(
-            runtime_config["seismogram"]);
-  } catch (YAML::InvalidNode &e) {
-    YAML::Node seismogram;
-    seismogram["seismogram-format"] = "ascii";
-    std::string folder_name = "results";
-    create_folder_if_not_exists(folder_name);
-    seismogram["output-folder"] = folder_name;
-    this->seismogram =
-        std::make_unique<specfem::runtime_configuration::seismogram>(
-            seismogram);
-  }
+  // try {
+  //   this->seismogram =
+  //       std::make_unique<specfem::runtime_configuration::seismogram>(
+  //           runtime_config["seismogram"]);
+  // } catch (YAML::InvalidNode &e) {
+  //   YAML::Node seismogram;
+  //   seismogram["seismogram-format"] = "ascii";
+  //   std::string folder_name = "results";
+  //   create_folder_if_not_exists(folder_name);
+  //   seismogram["output-folder"] = folder_name;
+  //   this->seismogram =
+  //       std::make_unique<specfem::runtime_configuration::seismogram>(
+  //           seismogram);
+  // }
 
-  try {
-    const YAML::Node &n_time_marching = n_solver["time-marching"];
-    const YAML::Node &n_timescheme = n_time_marching["time-scheme"];
+  // try {
+  //   const YAML::Node &n_time_marching = n_solver["time-marching"];
+  //   const YAML::Node &n_timescheme = n_time_marching["time-scheme"];
 
-    this->solver =
-        std::make_unique<specfem::runtime_configuration::solver::time_marching>(
-            n_timescheme);
-  } catch (YAML::InvalidNode &e) {
-    std::ostringstream message;
-    message << "Error reading specfem solver configuration. \n" << e.what();
-    throw std::runtime_error(message.str());
-  }
+  //   this->solver =
+  //       std::make_unique<specfem::runtime_configuration::solver::time_marching>(
+  //           n_timescheme);
+  // } catch (YAML::InvalidNode &e) {
+  //   std::ostringstream message;
+  //   message << "Error reading specfem solver configuration. \n" << e.what();
+  //   throw std::runtime_error(message.str());
+  // }
 }
 
 std::string specfem::runtime_configuration::setup::print_header(
