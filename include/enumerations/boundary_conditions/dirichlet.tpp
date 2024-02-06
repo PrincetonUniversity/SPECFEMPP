@@ -8,14 +8,14 @@
 #include "enumerations/specfem_enums.hpp"
 #include <Kokkos_Core.hpp>
 
-template <typename dim, typename medium, typename property, typename qp_type>
-specfem::enums::boundary_conditions::dirichlet<dim, medium, property, qp_type>::
-    dirichlet(const specfem::compute::boundaries &boundary_conditions,
-              const quadrature_points_type &quadrature_points)
-    : quadrature_points(quadrature_points),
-      type(boundary_conditions.acoustic_free_surface.type) {
-  return;
-}
+// template <typename dim, typename medium, typename property, typename qp_type>
+// specfem::enums::boundary_conditions::dirichlet<dim, medium, property, qp_type>::
+//     dirichlet(const specfem::compute::boundaries &boundary_conditions,
+//               const quadrature_points_type &quadrature_points)
+//     : quadrature_points(quadrature_points),
+//       type(boundary_conditions.acoustic_free_surface.type) {
+//   return;
+// }
 
 template <typename dim, typename medium, typename property, typename qp_type>
 KOKKOS_INLINE_FUNCTION void specfem::enums::boundary_conditions::

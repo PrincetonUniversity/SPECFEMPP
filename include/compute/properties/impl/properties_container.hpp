@@ -51,11 +51,11 @@ struct properties_container<specfem::enums::element::type::elastic,
   load_properties(const int &ispec, const int &iz, const int &ix) const {
     if constexpr (std::is_same_v<ExecSpace, specfem::kokkos::DevExecSpace>) {
       return specfem::point::properties<value_type, property_type>(
-          lambdaplus2mu(ispec, iz, ix), rho(ispec, iz, ix), mu(ispec, iz, ix));
+          lambdaplus2mu(ispec, iz, ix), mu(ispec, iz, ix), rho(ispec, iz, ix));
     } else {
       return specfem::point::properties<value_type, property_type>(
-          h_lambdaplus2mu(ispec, iz, ix), h_rho(ispec, iz, ix),
-          h_mu(ispec, iz, ix));
+          h_lambdaplus2mu(ispec, iz, ix), h_mu(ispec, iz, ix),
+          h_rho(ispec, iz, ix));
     }
   }
 

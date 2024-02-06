@@ -57,6 +57,7 @@ private:
   specfem::compute::points points;
   specfem::compute::quadrature quadrature;
   specfem::kokkos::DeviceView1d<int> element_kernel_index_mapping;
+  specfem::kokkos::HostMirror1d<int> h_element_kernel_index_mapping;
   Kokkos::View<int * [specfem::enums::element::ntypes], Kokkos::LayoutLeft,
                specfem::kokkos::DevMemSpace>
       global_index_mapping;

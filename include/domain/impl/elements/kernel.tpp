@@ -47,6 +47,7 @@ specfem::domain::impl::kernels::element_kernel<medium, qp_type, property, BC>::
         const specfem::kokkos::HostView1d<int> h_element_kernel_index_mapping,
         const quadrature_point_type &quadrature_points)
     : nelements(h_element_kernel_index_mapping.extent(0)),
+      h_element_kernel_index_mapping(h_element_kernel_index_mapping),
       points(assembly.mesh.points), quadrature(assembly.mesh.quadratures),
       partial_derivatives(assembly.partial_derivatives),
       properties(assembly.properties), quadrature_points(quadrature_points),
