@@ -2,7 +2,7 @@
 #define _PARAMETER_SOLVER_HPP
 
 #include "specfem_setup.hpp"
-#include "timescheme/interface.hpp"
+// #include "timescheme/interface.hpp"
 #include "yaml-cpp/yaml.h"
 #include <tuple>
 
@@ -21,14 +21,15 @@ namespace solver {
 class solver {
 
 public:
-  /**
-   * @brief Instantiate the Timescheme
-   *
-   * @return specfem::TimeScheme::TimeScheme* Pointer to the TimeScheme object
-   * used in the solver algorithm
-   */
-  virtual std::shared_ptr<specfem::TimeScheme::TimeScheme>
-  instantiate(const int nstep_between_samples);
+  // /**
+  //  * @brief Instantiate the Timescheme
+  //  *
+  //  * @return specfem::TimeScheme::TimeScheme* Pointer to the TimeScheme
+  //  object
+  //  * used in the solver algorithm
+  //  */
+  // virtual std::shared_ptr<specfem::TimeScheme::TimeScheme>
+  // instantiate(const int nstep_between_samples);
   /**
    * @brief Update simulation start time.
    *

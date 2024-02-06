@@ -47,8 +47,8 @@ public:
 
   // void compute_stiffness_interaction() const;
 
-  // template <specfem::enums::time_scheme::type time_scheme>
-  // void mass_time_contribution(const type_real dt) const;
+  template <specfem::enums::time_scheme::type time_scheme>
+  void mass_time_contribution(const type_real dt) const;
 
   inline int total_elements() const { return nelements; }
 
@@ -63,6 +63,7 @@ private:
       global_index_mapping;
   specfem::compute::properties properties;
   specfem::compute::partial_derivatives partial_derivatives;
+  specfem::kokkos::DeviceView1d<specfem::point::boundary> boundary_conditions;
   specfem::compute::impl::field_impl<medium_type> field;
   quadrature_point_type quadrature_points;
   specfem::domain::impl::elements::element<
