@@ -2,7 +2,7 @@
 #define _PARAMETER_TIME_MARCHING_HPP
 
 #include "specfem_setup.hpp"
-#include "timescheme/interface.hpp"
+// #include "timescheme/interface.hpp"
 #include "yaml-cpp/yaml.h"
 #include <tuple>
 
@@ -42,14 +42,15 @@ public:
    * @param t0 Simulation start time
    */
   void update_t0(type_real t0) override { this->t0 = t0; }
-  /**
-   * @brief Instantiate the Timescheme
-   *
-   * @return specfem::TimeScheme::TimeScheme* Pointer to the TimeScheme object
-   * used in the solver algorithm
-   */
-  std::shared_ptr<specfem::TimeScheme::TimeScheme>
-  instantiate(const int nstep_between_samples) override;
+  // /**
+  //  * @brief Instantiate the Timescheme
+  //  *
+  //  * @return specfem::TimeScheme::TimeScheme* Pointer to the TimeScheme
+  //  object
+  //  * used in the solver algorithm
+  //  */
+  // std::shared_ptr<specfem::TimeScheme::TimeScheme>
+  // instantiate(const int nstep_between_samples) override;
   /**
    * @brief Get the value of time increment
    *

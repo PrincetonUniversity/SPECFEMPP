@@ -6,6 +6,8 @@
 #include "enumerations/interface.hpp"
 #include "enumerations/quadrature.hpp"
 #include "enumerations/specfem_enums.hpp"
+#include "point/partial_derivatives.hpp"
+#include "point/properties.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -100,11 +102,12 @@ public:
    */
   template <specfem::enums::time_scheme::type time_scheme>
   KOKKOS_INLINE_FUNCTION void mass_time_contribution(
-      const int &ielement, const int &xz, const type_real &dt,
+      const int &xz, const type_real &dt,
       const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
       const specfem::point::partial_derivatives2 &partial_derivatives,
       const specfem::point::properties<medium_type::value, property_type::value>
           &properties,
+      const specfem::point::boundary &boundary_type,
       specfem::kokkos::array_type<type_real, medium_type::components>
           &rmass_inverse) const {};
 

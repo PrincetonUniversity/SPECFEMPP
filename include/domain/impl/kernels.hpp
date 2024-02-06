@@ -5,8 +5,6 @@
 #include "domain/impl/elements/interface.hpp"
 #include "domain/impl/receivers/interface.hpp"
 #include "domain/impl/sources/interface.hpp"
-#include "enumerations/boundary_conditions/dirichlet.hpp"
-#include "enumerations/boundary_conditions/none.hpp"
 #include "enumerations/interface.hpp"
 
 namespace specfem {
@@ -65,22 +63,20 @@ public:
   kernels(const specfem::compute::assembly &assembly,
           const quadrature_point_type &quadrature_points);
 
-  // /**
-  //  * @brief
-  //  *
-  //  */
-  // template <specfem::enums::time_scheme::type time_scheme>
-  // inline void mass_time_contribution(const type_real &dt) const {
-  //   isotropic_elements.template mass_time_contribution<time_scheme>(dt);
-  //   isotropic_elements_dirichlet.template
-  //   mass_time_contribution<time_scheme>(
-  //       dt);
-  //   isotropic_elements_stacey.template
-  //   mass_time_contribution<time_scheme>(dt);
-  //   isotropic_elements_stacey_dirichlet
-  //       .template mass_time_contribution<time_scheme>(dt);
-  //   return;
-  // }
+  /**
+   * @brief
+   *
+   */
+  template <specfem::enums::time_scheme::type time_scheme>
+  inline void mass_time_contribution(const type_real &dt) const {
+    isotropic_elements.template mass_time_contribution<time_scheme>(dt);
+    isotropic_elements_dirichlet.template mass_time_contribution<time_scheme>(
+        dt);
+    isotropic_elements_stacey.template mass_time_contribution<time_scheme>(dt);
+    isotropic_elements_stacey_dirichlet
+        .template mass_time_contribution<time_scheme>(dt);
+    return;
+  }
 
   // /**
   //  * @brief execute Kokkos kernel to compute contribution of stiffness matrix
@@ -103,8 +99,8 @@ public:
   inline void compute_mass_matrix() const {
     isotropic_elements.compute_mass_matrix();
     isotropic_elements_dirichlet.compute_mass_matrix();
-    // isotropic_elements_stacey.compute_mass_matrix();
-    // isotropic_elements_stacey_dirichlet.compute_mass_matrix();
+    isotropic_elements_stacey.compute_mass_matrix();
+    isotropic_elements_stacey_dirichlet.compute_mass_matrix();
     return;
   }
 
@@ -141,21 +137,21 @@ private:
                                                                 // boundary
                                                                 // conditions
 
-  // template <class property>
-  // using stacey = specfem::enums::boundary_conditions::template stacey<
-  //     dimension, medium_type, property, quadrature_point_type>; // Stacey
-  //                                                               // boundary
-  //                                                               // conditions
+  template <class property>
+  using stacey = specfem::enums::boundary_conditions::template stacey<
+      dimension, medium_type, property, quadrature_point_type>; // Stacey
+                                                                // boundary
+                                                                // conditions
 
   template <class property>
   using none = specfem::enums::boundary_conditions::template none<
       dimension, medium_type, property, quadrature_point_type>; // No boundary
                                                                 // conditions
 
-  // template <class BC1, class BC2>
-  // using composite_boundary =
-  //     specfem::enums::boundary_conditions::composite_boundary<
-  //         BC1, BC2>; // Composite boundary conditions
+  template <class BC1, class BC2>
+  using composite_boundary =
+      specfem::enums::boundary_conditions::composite_boundary<
+          BC1, BC2>; // Composite boundary conditions
 
   /**
    * @brief Elemental kernels for isotropic elements
@@ -178,29 +174,29 @@ private:
       dirichlet<specfem::enums::element::property::isotropic> >
       isotropic_elements_dirichlet;
 
-  // /**
-  //  * @brief Elemental kernels for isotropic elements with stacey boundary
-  //  *
-  //  */
-  // specfem::domain::impl::kernels::element_kernel<
-  //     medium_type, quadrature_point_type,
-  //     specfem::enums::element::property::isotropic,
-  //     stacey<specfem::enums::element::property::isotropic> >
-  //     isotropic_elements_stacey;
+  /**
+   * @brief Elemental kernels for isotropic elements with stacey boundary
+   *
+   */
+  specfem::domain::impl::kernels::element_kernel<
+      medium_type, quadrature_point_type,
+      specfem::enums::element::property::isotropic,
+      stacey<specfem::enums::element::property::isotropic> >
+      isotropic_elements_stacey;
 
-  // /**
-  //  * @brief Elemental kernels for isotropic elements with composite stacey
-  //  and
-  //  * dirichlet boundary
-  //  *
-  //  */
-  // specfem::domain::impl::kernels::element_kernel<
-  //     medium_type, quadrature_point_type,
-  //     specfem::enums::element::property::isotropic,
-  //     composite_boundary<
-  //         stacey<specfem::enums::element::property::isotropic>,
-  //         dirichlet<specfem::enums::element::property::isotropic> > >
-  //     isotropic_elements_stacey_dirichlet;
+  /**
+   * @brief Elemental kernels for isotropic elements with composite stacey
+   and
+   * dirichlet boundary
+   *
+   */
+  specfem::domain::impl::kernels::element_kernel<
+      medium_type, quadrature_point_type,
+      specfem::enums::element::property::isotropic,
+      composite_boundary<
+          stacey<specfem::enums::element::property::isotropic>,
+          dirichlet<specfem::enums::element::property::isotropic> > >
+      isotropic_elements_stacey_dirichlet;
 
   // /**
   //  * @brief Elemental source kernels for isotropic elements

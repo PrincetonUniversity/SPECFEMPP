@@ -95,7 +95,8 @@ public:
    */
   KOKKOS_FUNCTION
   element(const specfem::compute::assembly &assembly,
-          const quadrature_points_type &quadrature_points){};
+          const quadrature_points_type &quadrature_points)
+      : boundary_conditions(assembly.boundaries, quadrature_points){};
 
   /**
    * @brief Compute the mass matrix component ($ m_{\alpha, \beta} $) for a
@@ -115,13 +116,16 @@ public:
       const specfem::point::partial_derivatives2 &partial_derivatives,
       specfem::kokkos::array_type<type_real, 2> &mass_matrix) const;
 
-  //   template <specfem::enums::time_scheme::type time_scheme>
-  //   KOKKOS_INLINE_FUNCTION void mass_time_contribution(
-  //       const int &ispec, const int &ielement, const int &xz, const type_real
-  //       &dt, const specfem::kokkos::array_type<type_real, dimension::dim>
-  //       &weight, specfem::kokkos::array_type<type_real,
-  //       medium_type::components>
-  //           &rmass_inverse) const;
+  template <specfem::enums::time_scheme::type time_scheme>
+  KOKKOS_INLINE_FUNCTION void mass_time_contribution(
+      const int &xz, const type_real &dt,
+      const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
+      const specfem::point::partial_derivatives2 &partial_derivatives,
+      const specfem::point::properties<medium_type::value, property_type::value>
+          &properties,
+      const specfem::point::boundary &boundary_type,
+      specfem::kokkos::array_type<type_real, medium_type::components>
+          &rmass_inverse) const;
 
   //   /**
   //    * @brief Compute the gradient of the field at a particular
@@ -224,7 +228,7 @@ private:
   //                                                           ///< 2 * mu
   //   specfem::kokkos::DeviceView3d<type_real> mu;            ///< mu
   //   specfem::kokkos::DeviceView3d<type_real> rho;           ///< rho
-  //   boundary_conditions_type boundary_conditions; ///< Boundary conditions
+  boundary_conditions_type boundary_conditions; ///< Boundary conditions
 };
 } // namespace elements
 } // namespace impl

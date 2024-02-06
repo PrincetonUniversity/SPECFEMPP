@@ -376,16 +376,15 @@ specfem::domain::impl::kernels::kernels<medium, qp_type>::kernels(
   allocate_elements(assembly, quadrature_points, element_tags,
                     isotropic_elements_dirichlet);
 
-  // // Allocate isotropic elements with stacey boundary conditions
-  // allocate_elements(assembly, quadrature_points, element_tags,
-  //                   isotropic_elements_stacey);
+  // Allocate isotropic elements with stacey boundary conditions
+  allocate_elements(assembly, quadrature_points, element_tags,
+                    isotropic_elements_stacey);
 
-  // // Allocate isotropic elements with stacey dirichlet boundary conditions
-  // allocate_elements(assembly, quadrature_points, element_tags,
-  //                   isotropic_elements_stacey_dirichlet);
+  // Allocate isotropic elements with stacey dirichlet boundary conditions
+  allocate_elements(assembly, quadrature_points, element_tags,
+                    isotropic_elements_stacey_dirichlet);
 
-  // // Allocate isotropic elements
-
+  // Allocate isotropic elements
   allocate_elements(assembly, quadrature_points, element_tags,
                     isotropic_elements);
 

@@ -201,10 +201,10 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
           specfem::enums::element::quadrature::static_quadrature_points<5> >
           acoustic_domain_static(assembly, qp5);
 
-      // elastic_domain_static.template mass_time_contribution<
-      //     specfem::enums::time_scheme::type::newmark>(setup.get_dt());
-      // acoustic_domain_static.template mass_time_contribution<
-      //     specfem::enums::time_scheme::type::newmark>(setup.get_dt());
+      elastic_domain_static.template mass_time_contribution<
+          specfem::enums::time_scheme::type::newmark>(setup.get_dt());
+      acoustic_domain_static.template mass_time_contribution<
+          specfem::enums::time_scheme::type::newmark>(setup.get_dt());
 
       elastic_domain_static.invert_mass_matrix();
       acoustic_domain_static.invert_mass_matrix();

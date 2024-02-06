@@ -68,14 +68,14 @@ public:
    */
   ~domain() = default;
 
-  // /**
-  //  * @brief Initialize the domain
-  //  *
-  //  */
-  // template <specfem::enums::time_scheme::type time_scheme>
-  // void mass_time_contribution(const type_real dt) {
-  //   kernels.template mass_time_contribution<time_scheme>(dt);
-  // };
+  /**
+   * @brief Initialize the domain
+   *
+   */
+  template <specfem::enums::time_scheme::type time_scheme>
+  void mass_time_contribution(const type_real dt) {
+    kernels.template mass_time_contribution<time_scheme>(dt);
+  };
 
   // /**
   //  * @brief Compute interaction of stiffness matrix on acceleration

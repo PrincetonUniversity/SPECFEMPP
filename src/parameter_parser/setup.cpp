@@ -103,18 +103,18 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
   //           seismogram);
   // }
 
-  // try {
-  //   const YAML::Node &n_time_marching = n_solver["time-marching"];
-  //   const YAML::Node &n_timescheme = n_time_marching["time-scheme"];
+  try {
+    const YAML::Node &n_time_marching = n_solver["time-marching"];
+    const YAML::Node &n_timescheme = n_time_marching["time-scheme"];
 
-  //   this->solver =
-  //       std::make_unique<specfem::runtime_configuration::solver::time_marching>(
-  //           n_timescheme);
-  // } catch (YAML::InvalidNode &e) {
-  //   std::ostringstream message;
-  //   message << "Error reading specfem solver configuration. \n" << e.what();
-  //   throw std::runtime_error(message.str());
-  // }
+    this->solver =
+        std::make_unique<specfem::runtime_configuration::solver::time_marching>(
+            n_timescheme);
+  } catch (YAML::InvalidNode &e) {
+    std::ostringstream message;
+    message << "Error reading specfem solver configuration. \n" << e.what();
+    throw std::runtime_error(message.str());
+  }
 }
 
 std::string specfem::runtime_configuration::setup::print_header(

@@ -72,12 +72,12 @@ public:
   std::string
   print_header(std::chrono::time_point<std::chrono::high_resolution_clock> now);
 
-  // /**
-  //  * @brief Get delta time value
-  //  *
-  //  * @return type_real
-  //  */
-  // type_real get_dt() const { return solver->get_dt(); }
+  /**
+   * @brief Get delta time value
+   *
+   * @return type_real
+   */
+  type_real get_dt() const { return solver->get_dt(); }
 
   /**
    * @brief Get the path to mesh database and source yaml file
@@ -144,9 +144,9 @@ private:
   std::unique_ptr<specfem::runtime_configuration::header> header; ///< Pointer
                                                                   ///< to header
                                                                   ///< object
-  // std::unique_ptr<specfem::runtime_configuration::solver::solver>
-  //     solver; ///< Pointer to solver
-  //             ///< object
+  std::unique_ptr<specfem::runtime_configuration::solver::solver>
+      solver; ///< Pointer to solver
+              ///< object
   std::unique_ptr<specfem::runtime_configuration::run_setup>
       run_setup; ///< Pointer to
                  ///< run_setup object

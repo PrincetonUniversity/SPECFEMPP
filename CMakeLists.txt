@@ -294,8 +294,8 @@ target_link_libraries(
 add_library(
         parameter_reader
         src/parameter_parser/run_setup.cpp
-        # src/parameter_parser/solver/solver.cpp
-        # src/parameter_parser/solver/time_marching.cpp
+        src/parameter_parser/solver/solver.cpp
+        src/parameter_parser/solver/time_marching.cpp
         src/parameter_parser/database_configuration.cpp
         src/parameter_parser/header.cpp
         src/parameter_parser/quadrature.cpp
