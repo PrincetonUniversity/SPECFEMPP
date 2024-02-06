@@ -5,6 +5,7 @@
 #include "domain/impl/elements/interface.hpp"
 #include "domain/impl/receivers/interface.hpp"
 #include "domain/impl/sources/interface.hpp"
+#include "enumerations/boundary_conditions/dirichlet.hpp"
 #include "enumerations/boundary_conditions/none.hpp"
 #include "enumerations/interface.hpp"
 
@@ -101,7 +102,7 @@ public:
    */
   inline void compute_mass_matrix() const {
     isotropic_elements.compute_mass_matrix();
-    // isotropic_elements_dirichlet.compute_mass_matrix();
+    isotropic_elements_dirichlet.compute_mass_matrix();
     // isotropic_elements_stacey.compute_mass_matrix();
     // isotropic_elements_stacey_dirichlet.compute_mass_matrix();
     return;
@@ -134,11 +135,11 @@ public:
   // }
 
 private:
-  // template <class property>
-  // using dirichlet = specfem::enums::boundary_conditions::template dirichlet<
-  //     dimension, medium_type, property, quadrature_point_type>; // Dirichlet
-  //                                                               // boundary
-  //                                                               // conditions
+  template <class property>
+  using dirichlet = specfem::enums::boundary_conditions::template dirichlet<
+      dimension, medium_type, property, quadrature_point_type>; // Dirichlet
+                                                                // boundary
+                                                                // conditions
 
   // template <class property>
   // using stacey = specfem::enums::boundary_conditions::template stacey<
@@ -166,16 +167,16 @@ private:
       none<specfem::enums::element::property::isotropic> >
       isotropic_elements;
 
-  // /**
-  //  * @brief Elemental kernels for isotropic elements with dirichlet boundary
-  //  * conditions
-  //  *
-  //  */
-  // specfem::domain::impl::kernels::element_kernel<
-  //     medium_type, quadrature_point_type,
-  //     specfem::enums::element::property::isotropic,
-  //     dirichlet<specfem::enums::element::property::isotropic> >
-  //     isotropic_elements_dirichlet;
+  /**
+   * @brief Elemental kernels for isotropic elements with dirichlet boundary
+   * conditions
+   *
+   */
+  specfem::domain::impl::kernels::element_kernel<
+      medium_type, quadrature_point_type,
+      specfem::enums::element::property::isotropic,
+      dirichlet<specfem::enums::element::property::isotropic> >
+      isotropic_elements_dirichlet;
 
   // /**
   //  * @brief Elemental kernels for isotropic elements with stacey boundary

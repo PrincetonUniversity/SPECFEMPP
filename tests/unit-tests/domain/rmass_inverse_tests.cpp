@@ -85,6 +85,72 @@ std::vector<test_config::Test> parse_test_config(std::string test_config_file,
 
 // ------------------------------------- //
 
+// ------------------------------------- //
+
+template <specfem::enums::element::type medium>
+specfem::testing::array1d<type_real, Kokkos::LayoutLeft> compact_array(
+    const specfem::testing::array1d<type_real, Kokkos::LayoutLeft> global,
+    const specfem::kokkos::HostView1d<int, Kokkos::LayoutLeft> index_mapping) {
+
+  const int nglob = index_mapping.extent(0);
+  const int n1 = global.n1;
+
+  assert(n1 == nglob);
+
+  int count = 0;
+  for (int i = 0; i < nglob; ++i) {
+    if (index_mapping(i) != -1) {
+      count++;
+    }
+  }
+
+  specfem::testing::array1d<type_real, Kokkos::LayoutLeft> local_array(count);
+
+  count = 0;
+  for (int i = 0; i < nglob; ++i) {
+    if (index_mapping(i) != -1) {
+      local_array.data(count) = global.data(i);
+      count++;
+    }
+  }
+
+  return local_array;
+}
+
+template <specfem::enums::element::type medium>
+specfem::testing::array2d<type_real, Kokkos::LayoutLeft> compact_array(
+    const specfem::testing::array2d<type_real, Kokkos::LayoutLeft> global,
+    const specfem::kokkos::HostView1d<int, Kokkos::LayoutLeft> index_mapping) {
+
+  const int nglob = index_mapping.extent(0);
+  const int n1 = global.n1;
+  const int n2 = global.n2;
+
+  assert(n1 == nglob);
+
+  int count = 0;
+  for (int i = 0; i < nglob; ++i) {
+    if (index_mapping(i) != -1) {
+      count++;
+    }
+  }
+
+  specfem::testing::array2d<type_real, Kokkos::LayoutLeft> local_array(count,
+                                                                       n2);
+
+  count = 0;
+  for (int i = 0; i < nglob; ++i) {
+    if (index_mapping(i) != -1) {
+      for (int j = 0; j < n2; ++j) {
+        local_array.data(count, j) = global.data(i, j);
+      }
+      count++;
+    }
+  }
+
+  return local_array;
+}
+
 TEST(DOMAIN_TESTS, rmass_inverse) {
   std::string config_filename =
       "../../../tests/unit-tests/domain/test_config.yaml";
@@ -145,33 +211,68 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
 
       assembly.fields.sync_fields<specfem::sync::DeviceToHost>();
 
+      const int nglob = assembly.fields.forward.nglob;
+
       // elastic_domain_static.sync_rmass_inverse(specfem::sync::DeviceToHost);
       // acoustic_domain_static.sync_rmass_inverse(specfem::sync::DeviceToHost);
 
-      // if (Test.database.elastic_mass_matrix != "NULL") {
-      //   specfem::kokkos::HostView2d<type_real, Kokkos::LayoutLeft>
-      //       h_rmass_inverse_static =
-      //           elastic_domain_static.get_host_rmass_inverse();
+      if (Test.database.elastic_mass_matrix != "NULL") {
+        specfem::kokkos::HostView2d<type_real, Kokkos::LayoutLeft>
+            h_mass_inverse = assembly.fields.forward.elastic.h_mass_inverse;
 
-      //   type_real tolerance = 1e-5;
+        specfem::testing::array2d<type_real, Kokkos::LayoutLeft> mass_inverse(
+            h_mass_inverse);
 
-      //   specfem::testing::compare_norm(h_rmass_inverse_static,
-      //                                  Test.database.elastic_mass_matrix,
-      //                                  nglob, ndim, tolerance);
-      // }
+        specfem::testing::array2d<type_real, Kokkos::LayoutLeft>
+            h_mass_matrix_global(Test.database.elastic_mass_matrix, nglob, 2);
 
-      // if (Test.database.acoustic_mass_matrix != "NULL") {
-      //   specfem::kokkos::HostView1d<type_real, Kokkos::LayoutLeft>
-      //       h_rmass_inverse_static =
-      //           Kokkos::subview(acoustic_domain_static.get_host_rmass_inverse(),
-      //                           Kokkos::ALL(), 0);
+        auto index_mapping = Kokkos::subview(
+            assembly.fields.forward.h_assembly_index_mapping, Kokkos::ALL(),
+            static_cast<int>(specfem::enums::element::type::elastic));
 
-      //   type_real tolerance = 1e-5;
+        auto h_mass_matrix_local =
+            compact_array<specfem::enums::element::type::elastic>(
+                h_mass_matrix_global, index_mapping);
 
-      //   specfem::testing::compare_norm(h_rmass_inverse_static,
-      //                                  Test.database.acoustic_mass_matrix,
-      //                                  nglob, tolerance);
-      // }
+        type_real tolerance = 1e-5;
+
+        ASSERT_TRUE(specfem::testing::compare_norm(
+            mass_inverse, h_mass_matrix_local, tolerance));
+
+        // specfem::testing::compare_norm(h_rmass_inverse_static,
+        //                                Test.database.elastic_mass_matrix,
+        //                                nglob, ndim, tolerance);
+      }
+
+      if (Test.database.acoustic_mass_matrix != "NULL") {
+        specfem::kokkos::HostView1d<type_real, Kokkos::LayoutLeft>
+            h_rmass_inverse =
+                Kokkos::subview(assembly.fields.forward.acoustic.h_mass_inverse,
+                                Kokkos::ALL(), 0);
+
+        specfem::testing::array1d<type_real, Kokkos::LayoutLeft> mass_inverse(
+            h_rmass_inverse);
+
+        specfem::testing::array1d<type_real, Kokkos::LayoutLeft>
+            h_mass_matrix_global(Test.database.acoustic_mass_matrix, nglob);
+
+        auto index_mapping = Kokkos::subview(
+            assembly.fields.forward.h_assembly_index_mapping, Kokkos::ALL(),
+            static_cast<int>(specfem::enums::element::type::acoustic));
+
+        auto h_mass_matrix_local =
+            compact_array<specfem::enums::element::type::acoustic>(
+                h_mass_matrix_global, index_mapping);
+
+        type_real tolerance = 1e-5;
+
+        ASSERT_TRUE(specfem::testing::compare_norm(
+            mass_inverse, h_mass_matrix_local, tolerance));
+
+        // specfem::testing::compare_norm(h_rmass_inverse_static,
+        //                                Test.database.acoustic_mass_matrix,
+        //                                nglob, tolerance);
+      }
 
       std::cout << "--------------------------------------------------\n"
                 << "\033[0;32m[PASSED]\033[0m Test: " << Test.name << "\n"

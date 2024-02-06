@@ -68,7 +68,7 @@ specfem::compute::impl::field_impl<medium>::field_impl(
     if (element_type(ispec) == medium::value) {
       for (int iz = 0; iz < ngllz; ++iz) {
         for (int ix = 0; ix < ngllx; ++ix) {
-          const int index = index_mapping(ispec, iz, ix);
+          const int index = index_mapping(ispec, iz, ix); // get global index
           // increase the count only if the global index is not already counted
           /// static_cast<int>(medium::value) is the index of the medium in the
           /// enum class

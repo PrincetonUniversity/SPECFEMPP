@@ -163,12 +163,11 @@ void specfem::domain::domain<medium, qp_type>::divide_mass_matrix() {
 
   Kokkos::parallel_for(
       "specfem::domain::domain::divide_mass_matrix",
-      specfem::kokkos::DeviceRange(0, components * nglob),
-      KOKKOS_CLASS_LAMBDA(const int in) {
-        const int iglob = in % nglob;
-        const int idim = in / nglob;
+      specfem::kokkos::DeviceMDrange<2, Kokkos::Iterate::Left>(
+          { 0, 0 }, { nglob, components }),
+      KOKKOS_CLASS_LAMBDA(const int iglob, const int idim) {
         field.field_dot_dot(iglob, idim) =
-            field.field_dot_dot(iglob, idim) * field.rmass_inverse(iglob, idim);
+            field.field_dot_dot(iglob, idim) * field.mass_inverse(iglob, idim);
       });
 
   Kokkos::fence();
@@ -184,16 +183,10 @@ void specfem::domain::domain<medium, qp_type>::invert_mass_matrix() {
 
   Kokkos::parallel_for(
       "specfem::domain::domain::invert_mass_matrix",
-      specfem::kokkos::DeviceRange(0, components * nglob),
-      KOKKOS_CLASS_LAMBDA(const int in) {
-        const int iglob = in % nglob;
-        const int idim = in / nglob;
-        if (field.mass_inverse(iglob, idim) == 0) {
-          field.mass_inverse(iglob, idim) = 1.0;
-        } else {
-          field.mass_inverse(iglob, idim) =
-              1.0 / field.mass_inverse(iglob, idim);
-        }
+      specfem::kokkos::DeviceMDrange<2, Kokkos::Iterate::Left>(
+          { 0, 0 }, { nglob, components }),
+      KOKKOS_CLASS_LAMBDA(const int iglob, const int idim) {
+        field.mass_inverse(iglob, idim) = 1.0 / field.mass_inverse(iglob, idim);
       });
 
   Kokkos::fence();
