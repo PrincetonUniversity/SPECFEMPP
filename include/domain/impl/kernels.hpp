@@ -78,19 +78,19 @@ public:
     return;
   }
 
-  // /**
-  //  * @brief execute Kokkos kernel to compute contribution of stiffness matrix
-  //  to
-  //  * the global acceleration
-  //  *
-  //  */
-  // inline void compute_stiffness_interaction() const {
-  //   isotropic_elements.compute_stiffness_interaction();
-  //   isotropic_elements_dirichlet.compute_stiffness_interaction();
-  //   isotropic_elements_stacey.compute_stiffness_interaction();
-  //   isotropic_elements_stacey_dirichlet.compute_stiffness_interaction();
-  //   return;
-  // }
+  //   /**
+  //    * @brief execute Kokkos kernel to compute contribution of stiffness
+  //    matrix to
+  //    * the global acceleration
+  //    *
+  //    */
+  //   inline void compute_stiffness_interaction() const {
+  //     isotropic_elements.compute_stiffness_interaction();
+  //     isotropic_elements_dirichlet.compute_stiffness_interaction();
+  //     isotropic_elements_stacey.compute_stiffness_interaction();
+  //     isotropic_elements_stacey_dirichlet.compute_stiffness_interaction();
+  //     return;
+  //   }
 
   /**
    * @brief execute Kokkos kernel to compute the mass matrix for every GLL point
@@ -104,16 +104,16 @@ public:
     return;
   }
 
-  // /**
-  //  * @brief execute Kokkos kernel compute the contribution of sources to the
-  //  * global acceleration
-  //  *
-  //  * @param timeval time value at the current time step
-  //  */
-  // inline void compute_source_interaction(const type_real timeval) const {
-  //   isotropic_sources.compute_source_interaction(timeval);
-  //   return;
-  // }
+  /**
+   * @brief execute Kokkos kernel compute the contribution of sources to the
+   * global acceleration
+   *
+   * @param timeval time value at the current time step
+   */
+  inline void compute_source_interaction(const type_real timeval) const {
+    isotropic_sources.compute_source_interaction(timeval);
+    return;
+  }
 
   // /**
   //  * @brief execute Kokkos kernel to compute seismogram values at every
@@ -198,14 +198,14 @@ private:
           dirichlet<specfem::enums::element::property::isotropic> > >
       isotropic_elements_stacey_dirichlet;
 
-  // /**
-  //  * @brief Elemental source kernels for isotropic elements
-  //  *
-  //  */
-  // specfem::domain::impl::kernels::source_kernel<
-  //     medium_type, quadrature_point_type,
-  //     specfem::enums::element::property::isotropic>
-  //     isotropic_sources;
+  /**
+   * @brief Elemental source kernels for isotropic elements
+   *
+   */
+  specfem::domain::impl::kernels::source_kernel<
+      medium_type, quadrature_point_type,
+      specfem::enums::element::property::isotropic>
+      isotropic_sources;
 
   // /**
   //  * @brief Elemental receiver kernels for isotropic elements
