@@ -267,18 +267,18 @@ target_link_libraries(
         Kokkos::kokkos
 )
 
-# add_library(
-#         timescheme
-#         src/timescheme/timescheme.cpp
-#         src/timescheme/newmark.cpp
-# )
+add_library(
+        timescheme
+        src/timescheme/timescheme.cpp
+        src/timescheme/newmark.cpp
+)
 
-# target_link_libraries(
-#         timescheme
-#         Kokkos::kokkos
-#         yaml-cpp
-#         compute
-# )
+target_link_libraries(
+        timescheme
+        Kokkos::kokkos
+        yaml-cpp
+        compute
+)
 
 # add_library(
 #         writer
@@ -308,7 +308,7 @@ add_library(
 target_link_libraries(
         parameter_reader
         quadrature
-        # timescheme
+        timescheme
         receiver_class
         yaml-cpp
         # writer
