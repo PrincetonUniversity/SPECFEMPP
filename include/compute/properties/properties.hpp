@@ -41,6 +41,7 @@ struct properties {
       h_element_types; ///< Element types
   specfem::kokkos::HostMirror1d<specfem::enums::element::property_tag>
       h_element_property; ///< Element properties
+
   specfem::compute::impl::properties::material_property<
       specfem::enums::element::type::elastic,
       specfem::enums::element::property_tag::isotropic>
@@ -51,35 +52,41 @@ struct properties {
       acoustic_isotropic;
 
   template <specfem::enums::element::type type,
-            specfem::enums::element::property_tag property, typename ExecSpace>
+            specfem::enums::element::property_tag property>
   KOKKOS_FUNCTION specfem::point::properties<type, property>
-  load_properties(const int ispec, const int iz, const int ix) const {
-    const specfem::compute::impl::properties::properties_container<type,
-                                                                   property>
-        container = [&]() {
-          if constexpr ((type == specfem::enums::element::type::elastic) &&
-                        (property ==
-                         specfem::enums::element::property_tag::isotropic)) {
-            return elastic_isotropic;
-          } else if constexpr ((type ==
-                                specfem::enums::element::type::acoustic) &&
-                               (property == specfem::enums::element::
-                                                property_tag::isotropic)) {
-            return acoustic_isotropic;
-          } else {
-            static_assert("Material type not implemented");
-          }
-        }();
+  load_device_properties(const int ispec, const int iz, const int ix) const {
+    const int index = property_index_mapping(ispec);
 
-    const int index = [&]() {
-      if constexpr (std::is_same_v<ExecSpace, specfem::kokkos::DevExecSpace>) {
-        return property_index_mapping(ispec);
-      } else {
-        return h_property_index_mapping(ispec);
-      }
-    }();
+    if constexpr ((type == specfem::enums::element::type::elastic) &&
+                  (property ==
+                   specfem::enums::element::property_tag::isotropic)) {
+      return elastic_isotropic.load_device_properties(index, iz, ix);
+    } else if constexpr ((type == specfem::enums::element::type::acoustic) &&
+                         (property ==
+                          specfem::enums::element::property_tag::isotropic)) {
+      return acoustic_isotropic.load_device_properties(index, iz, ix);
+    } else {
+      static_assert("Material type not implemented");
+    }
+  }
 
-    return container.template load_properties<ExecSpace>(index, iz, ix);
+  template <specfem::enums::element::type type,
+            specfem::enums::element::property_tag property>
+  specfem::point::properties<type, property>
+  load_host_properties(const int ispec, const int iz, const int ix) const {
+    const int index = h_property_index_mapping(ispec);
+
+    if constexpr ((type == specfem::enums::element::type::elastic) &&
+                  (property ==
+                   specfem::enums::element::property_tag::isotropic)) {
+      return elastic_isotropic.load_host_properties(index, iz, ix);
+    } else if constexpr ((type == specfem::enums::element::type::acoustic) &&
+                         (property ==
+                          specfem::enums::element::property_tag::isotropic)) {
+      return acoustic_isotropic.load_host_properties(index, iz, ix);
+    } else {
+      static_assert("Material type not implemented");
+    }
   }
 
   properties() = default;

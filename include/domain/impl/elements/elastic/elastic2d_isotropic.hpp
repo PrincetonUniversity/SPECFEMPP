@@ -127,60 +127,67 @@ public:
       specfem::kokkos::array_type<type_real, medium_type::components>
           &rmass_inverse) const;
 
-  //   /**
-  //    * @brief Compute the gradient of the field at a particular
-  //    * Gauss-Lobatto-Legendre quadrature point
-  //    *
-  //    * @param ispec Index of the spectral element
-  //    * @param xz Index of Gauss-Lobatto-Legendre quadrature point
-  //    * @param s_hprime_xx Scratch view of derivative of Lagrange polynomial
-  //    in x
-  //    * direction
-  //    * @param s_hprime_zz Scratch view of derivative of Lagrange polynomial
-  //    in z
-  //    * direction
-  //    * @param u Scrath view of field. For elastic domains the field has 2
-  //    * components
-  //    * @param dudxl Computed partial derivative of field \f$ \frac{\partial
-  //    * \tilde{u}}{\partial x} \f$
-  //    * @param dudzl Computed partial derivative of field \f$ \frac{\partial
-  //    * \tilde{u}}{\partial z} \f$
-  //    */
-  //   KOKKOS_INLINE_FUNCTION void
-  //   compute_gradient(const int &ispec, const int &ielement, const int &xz,
-  //                    const ScratchViewType<type_real, 1> s_hprime_xx,
-  //                    const ScratchViewType<type_real, 1> s_hprime_zz,
-  //                    const ScratchViewType<type_real,
-  //                    medium_type::components> u,
-  //                    specfem::kokkos::array_type<type_real, 2> &dudxl,
-  //                    specfem::kokkos::array_type<type_real, 2> &dudzl) const;
+  /**
+   * @brief Compute the gradient of the field at a particular
+   * Gauss-Lobatto-Legendre quadrature point
+   *
+   * @param ispec Index of the spectral element
+   * @param xz Index of Gauss-Lobatto-Legendre quadrature point
+   * @param s_hprime_xx Scratch view of derivative of Lagrange polynomial
+   in x
+   * direction
+   * @param s_hprime_zz Scratch view of derivative of Lagrange polynomial
+   in z
+   * direction
+   * @param u Scrath view of field. For elastic domains the field has 2
+   * components
+   * @param dudxl Computed partial derivative of field \f$ \frac{\partial
+   * \tilde{u}}{\partial x} \f$
+   * @param dudzl Computed partial derivative of field \f$ \frac{\partial
+   * \tilde{u}}{\partial z} \f$
+   */
+  KOKKOS_INLINE_FUNCTION void compute_gradient(
+      const int xz, const ScratchViewType<type_real, 1> s_hprime,
+      const ScratchViewType<type_real, medium_type::components> u,
+      const specfem::point::partial_derivatives2 &partial_derivatives,
+      const specfem::point::boundary &boundary_type,
+      specfem::kokkos::array_type<type_real, medium_type::components> &dudxl,
+      specfem::kokkos::array_type<type_real, medium_type::components> &dudzl)
+      const;
 
-  //   /**
-  //    * @brief Compute the stress integrand at a particular
-  //    Gauss-Lobatto-Legendre
-  //    * quadrature point.
-  //    *
-  //    * @param ispec Index of the spectral element
-  //    * @param xz Index of Gauss-Lobatto-Legendre quadrature point
-  //    * @param dudxl Partial derivative of field \f$ \frac{\partial
-  //    * \tilde{u}}{\partial x} \f$
-  //    * @param dudzl Partial derivative of field \f$ \frac{\partial
-  //    * \tilde{u}}{\partial z} \f$
-  //    * @param stress_integrand_xi Stress integrand  wrt. \f$ \xi \f$ \f$
-  //    * J^{\alpha, \gamma} \partial_x u \partial_x \xi + \partial_z u *
-  //    \partial_z
-  //    * \xi \f$
-  //    * @param stress_integrand_gamma Stress integrand  wrt. \f$\gamma\f$ \f$
-  //    * J^{\alpha, \gamma} \partial_x u \partial_x \gamma + \partial_z u *
-  //    * \partial_z \gamma \f$
-  //    */
-  //   KOKKOS_INLINE_FUNCTION void compute_stress(
-  //       const int &ispec, const int &ielement, const int &xz,
-  //       const specfem::kokkos::array_type<type_real, 2> &dudxl,
-  //       const specfem::kokkos::array_type<type_real, 2> &dudzl,
-  //       specfem::kokkos::array_type<type_real, 2> &stress_integrand_xi,
-  //       specfem::kokkos::array_type<type_real, 2> &stress_integrand_gamma)
-  //       const;
+  /**
+   * @brief Compute the stress integrand at a particular
+   Gauss-Lobatto-Legendre
+   * quadrature point.
+   *
+   * @param ispec Index of the spectral element
+   * @param xz Index of Gauss-Lobatto-Legendre quadrature point
+   * @param dudxl Partial derivative of field \f$ \frac{\partial
+   * \tilde{u}}{\partial x} \f$
+   * @param dudzl Partial derivative of field \f$ \frac{\partial
+   * \tilde{u}}{\partial z} \f$
+   * @param stress_integrand_xi Stress integrand  wrt. \f$ \xi \f$ \f$
+   * J^{\alpha, \gamma} \partial_x u \partial_x \xi + \partial_z u *
+   \partial_z
+   * \xi \f$
+   * @param stress_integrand_gamma Stress integrand  wrt. \f$\gamma\f$ \f$
+   * J^{\alpha, \gamma} \partial_x u \partial_x \gamma + \partial_z u *
+   * \partial_z \gamma \f$
+   */
+  KOKKOS_INLINE_FUNCTION void compute_stress(
+      const int xz,
+      const specfem::kokkos::array_type<type_real, medium_type::components>
+          &dudxl,
+      const specfem::kokkos::array_type<type_real, medium_type::components>
+          &dudzl,
+      const specfem::point::partial_derivatives2 &partial_derivatives,
+      const specfem::point::properties<medium_type::value, property_type::value>
+          &properties,
+      const specfem::point::boundary &boundary_type,
+      specfem::kokkos::array_type<type_real, medium_type::components>
+          &stress_integrand_xi,
+      specfem::kokkos::array_type<type_real, medium_type::components>
+          &stress_integrand_gamma) const;
 
   //   /**
   //    * @brief Update the acceleration at the quadrature point xz

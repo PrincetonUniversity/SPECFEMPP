@@ -118,103 +118,92 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
   return;
 }
 
-// template <int NGLL, typename BC>
-// KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
-//     specfem::enums::element::dimension::dim2,
-//     specfem::enums::element::medium::acoustic,
-//     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
-//     specfem::enums::element::property::isotropic, BC>::
-//     compute_gradient(
-//         const int &ispec, const int &ielement, const int &xz,
-//         const ScratchViewType<type_real, 1> s_hprime_xx,
-//         const ScratchViewType<type_real, 1> s_hprime_zz,
-//         const ScratchViewType<type_real, medium_type::components> field_chi,
-//         specfem::kokkos::array_type<type_real, 1> &dchidxl,
-//         specfem::kokkos::array_type<type_real, 1> &dchidzl) const {
+template <int NGLL, typename BC>
+KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
+    specfem::enums::element::dimension::dim2,
+    specfem::enums::element::medium::acoustic,
+    specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
+    specfem::enums::element::property::isotropic, BC>::
+    compute_gradient(
+        const int xz, const ScratchViewType<type_real, 1> s_hprime,
+        const ScratchViewType<type_real, medium_type::components> field_chi,
+        const specfem::point::partial_derivatives2 &partial_derivatives,
+        const specfem::point::boundary &boundary_type,
+        specfem::kokkos::array_type<type_real, medium_type::components>
+            &dchidxl,
+        specfem::kokkos::array_type<type_real, medium_type::components>
+            &dchidzl) const {
 
-//   int ix, iz;
-//   sub2ind(xz, NGLL, iz, ix);
+  int ix, iz;
+  sub2ind(xz, NGLL, iz, ix);
 
-//   const specfem::compute::element_partial_derivatives partial_derivatives =
-//       specfem::compute::element_partial_derivatives(
-//           this->xix(ispec, iz, ix), this->gammax(ispec, iz, ix),
-//           this->xiz(ispec, iz, ix), this->gammaz(ispec, iz, ix));
+  type_real dchi_dxi = 0.0;
+  type_real dchi_dgamma = 0.0;
 
-//   type_real dchi_dxi = 0.0;
-//   type_real dchi_dgamma = 0.0;
+#ifdef KOKKOS_ENABLE_CUDA
+#pragma unroll
+#endif
+  for (int l = 0; l < NGLL; l++) {
+    dchi_dxi += s_hprime(ix, l, 0) * field_chi(iz, l, 0);
+    dchi_dgamma += s_hprime(iz, l, 0) * field_chi(l, ix, 0);
+  }
 
-// #ifdef KOKKOS_ENABLE_CUDA
-// #pragma unroll
-// #endif
-//   for (int l = 0; l < NGLL; l++) {
-//     dchi_dxi += s_hprime_xx(ix, l, 0) * field_chi(iz, l, 0);
-//     dchi_dgamma += s_hprime_zz(iz, l, 0) * field_chi(l, ix, 0);
-//   }
+  // dchidx
+  dchidxl[0] = dchi_dxi * partial_derivatives.xix +
+               dchi_dgamma * partial_derivatives.gammax;
 
-//   // dchidx
-//   dchidxl[0] = dchi_dxi * partial_derivatives.xix +
-//                dchi_dgamma * partial_derivatives.gammax;
+  // dchidz
+  dchidzl[0] = dchi_dxi * partial_derivatives.xiz +
+               dchi_dgamma * partial_derivatives.gammaz;
 
-//   // dchidz
-//   dchidzl[0] = dchi_dxi * partial_derivatives.xiz +
-//                dchi_dgamma * partial_derivatives.gammaz;
+  boundary_conditions.enforce_gradient(xz, partial_derivatives, boundary_type,
+                                       dchidxl, dchidzl);
 
-//   boundary_conditions.enforce_gradient(ielement, xz, partial_derivatives,
-//                                        dchidxl, dchidzl);
+  return;
+}
 
-//   return;
-// }
+template <int NGLL, typename BC>
+KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
+    specfem::enums::element::dimension::dim2,
+    specfem::enums::element::medium::acoustic,
+    specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
+    specfem::enums::element::property::isotropic, BC>::
+    compute_stress(
+        const int xz,
+        const specfem::kokkos::array_type<type_real, medium_type::components>
+            &dchidxl,
+        const specfem::kokkos::array_type<type_real, medium_type::components>
+            &dchidzl,
+        const specfem::point::partial_derivatives2 &partial_derivatives,
+        const specfem::point::properties<medium_type::value,
+                                         property_type::value> &properties,
+        const specfem::point::boundary &boundary_type,
+        specfem::kokkos::array_type<type_real, medium_type::components>
+            &stress_integrand_xi,
+        specfem::kokkos::array_type<type_real, medium_type::components>
+            &stress_integrand_gamma) const {
 
-// template <int NGLL, typename BC>
-// KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
-//     specfem::enums::element::dimension::dim2,
-//     specfem::enums::element::medium::acoustic,
-//     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
-//     specfem::enums::element::property::isotropic, BC>::
-//     compute_stress(
-//         const int &ispec, const int &ielement, const int &xz,
-//         const specfem::kokkos::array_type<type_real, 1> &dchidxl,
-//         const specfem::kokkos::array_type<type_real, 1> &dchidzl,
-//         specfem::kokkos::array_type<type_real, 1> &stress_integrand_xi,
-//         specfem::kokkos::array_type<type_real, 1> &stress_integrand_gamma)
-//         const {
+  // Precompute the factor
+  type_real fac = partial_derivatives.jacobian * properties.rho_inverse;
 
-//   int ix, iz;
-//   sub2ind(xz, NGLL, iz, ix);
+  // Compute stress integrands 1 and 2
+  // Here it is extremely important that this seems at odds with
+  // equations (44) & (45) from Komatitsch and Tromp 2002 I. - Validation
+  // The equations are however missing dxi/dx, dxi/dz, dzeta/dx, dzeta/dz
+  // for the gradient of w^{\alpha\gamma}. In this->update_acceleration
+  // the weights for the integration and the interpolated values for the
+  // first derivatives of the lagrange polynomials are then collapsed
+  stress_integrand_xi[0] = fac * (partial_derivatives.xix * dchidxl[0] +
+                                  partial_derivatives.xiz * dchidzl[0]);
+  stress_integrand_gamma[0] = fac * (partial_derivatives.gammax * dchidxl[0] +
+                                     partial_derivatives.gammaz * dchidzl[0]);
 
-//   const specfem::compute::element_partial_derivatives partial_derivatives(
-//       this->xix(ispec, iz, ix), this->gammax(ispec, iz, ix),
-//       this->xiz(ispec, iz, ix), this->gammaz(ispec, iz, ix),
-//       this->jacobian(ispec, iz, ix));
+  boundary_conditions.enforce_stress(xz, partial_derivatives, properties,
+                                     boundary_type, stress_integrand_xi,
+                                     stress_integrand_gamma);
 
-//   const specfem::compute::element_properties<medium_type::value,
-//                                              property_type::value>
-//       properties(this->lambdaplus2mu_inverse(ispec, iz, ix),
-//                  this->rho_inverse(ispec, iz, ix));
-
-//   // Precompute the factor
-//   type_real fac = partial_derivatives.jacobian * properties.rho_inverse;
-
-//   // Compute stress integrands 1 and 2
-//   // Here it is extremely important that this seems at odds with
-//   // equations (44) & (45) from Komatitsch and Tromp 2002 I. - Validation
-//   // The equations are however missing dxi/dx, dxi/dz, dzeta/dx, dzeta/dz
-//   // for the gradient of w^{\alpha\gamma}. In this->update_acceleration
-//   // the weights for the integration and the interpolated values for the
-//   // first derivatives of the lagrange polynomials are then collapsed
-//   stress_integrand_xi[0] = fac * (partial_derivatives.xix * dchidxl[0] +
-//                                   partial_derivatives.xiz * dchidzl[0]);
-//   stress_integrand_gamma[0] = fac * (partial_derivatives.gammax * dchidxl[0]
-//   +
-//                                      partial_derivatives.gammaz *
-//                                      dchidzl[0]);
-
-//   boundary_conditions.enforce_stress(ielement, xz, partial_derivatives,
-//                                      properties, stress_integrand_xi,
-//                                      stress_integrand_gamma);
-
-//   return;
-// }
+  return;
+}
 
 // template <int NGLL, typename BC>
 // KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<

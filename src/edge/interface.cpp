@@ -4,43 +4,30 @@
 
 KOKKOS_FUNCTION
 int specfem::edge::num_points_on_interface(
-    const specfem::edge::interface &interface, const int ngllz,
-    const int ngllx) {
-  switch (interface.type) {
-  case specfem::enums::edge::type::BOTTOM:
-  case specfem::enums::edge::type::TOP:
-    return ngllx;
-    break;
-  case specfem::enums::edge::type::LEFT:
-  case specfem::enums::edge::type::RIGHT:
-    return ngllz;
-    break;
-  default:
-    assert(false && "Invalid edge type");
-    return 0;
-  }
+    const specfem::edge::interface &interface) {
+  return interface.ngll;
 }
 
 KOKKOS_FUNCTION
 void specfem::edge::locate_point_on_self_edge(
-    const int &ipoint, const specfem::edge::interface &interface,
-    const int ngllx, const int ngllz, int &i, int &j) {
+    const int &ipoint, const specfem::edge::interface &interface, int &i,
+    int &j) {
   switch (interface.type) {
   case specfem::enums::edge::type::BOTTOM:
     i = ipoint;
     j = 0;
     break;
   case specfem::enums::edge::type::TOP:
-    i = ngllx - 1 - ipoint;
-    j = ngllz - 1;
+    i = interface.ngll - 1 - ipoint;
+    j = interface.ngll - 1;
     break;
   case specfem::enums::edge::type::LEFT:
     i = 0;
     j = ipoint;
     break;
   case specfem::enums::edge::type::RIGHT:
-    i = ngllx - 1;
-    j = ngllz - 1 - ipoint;
+    i = interface.ngll - 1;
+    j = interface.ngll - 1 - ipoint;
     break;
   default:
     assert(false && "Invalid edge type");
@@ -49,20 +36,20 @@ void specfem::edge::locate_point_on_self_edge(
 
 KOKKOS_FUNCTION
 void specfem::edge::locate_point_on_coupled_edge(
-    const int &ipoint, const specfem::edge::interface &interface,
-    const int ngllx, const int ngllz, int &i, int &j) {
+    const int &ipoint, const specfem::edge::interface &interface, int &i,
+    int &j) {
   switch (interface.type) {
   case specfem::enums::edge::type::BOTTOM:
-    i = ngllx - 1 - ipoint;
+    i = interface.ngll - 1 - ipoint;
     j = 0;
     break;
   case specfem::enums::edge::type::TOP:
     i = ipoint;
-    j = ngllz - 1;
+    j = interface.ngll - 1;
     break;
   case specfem::enums::edge::type::LEFT:
-    i = ngllx - 1;
-    j = ngllz - 1 - ipoint;
+    i = interface.ngll - 1;
+    j = interface.ngll - 1 - ipoint;
     break;
   case specfem::enums::edge::type::RIGHT:
     i = 0;

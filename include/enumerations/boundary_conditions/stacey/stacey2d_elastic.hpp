@@ -117,8 +117,9 @@ public:
    */
   KOKKOS_INLINE_FUNCTION
   void enforce_gradient(
-      const int &ielement, const int &xz,
+      const int &xz,
       const specfem::point::partial_derivatives2 &partial_derivatives,
+      const specfem::point::boundary &boundary_type,
       specfem::kokkos::array_type<type_real, medium_type::components> &df_dx,
       specfem::kokkos::array_type<type_real, medium_type::components> &df_dz)
       const {};
@@ -135,10 +136,11 @@ public:
    * @return KOKKOS_INLINE_FUNCTION
    */
   KOKKOS_INLINE_FUNCTION void enforce_stress(
-      const int &ielement, const int &xz,
+      const int &xz,
       const specfem::point::partial_derivatives2 &partial_derivatives,
       const specfem::point::properties<medium_type::value, property_type::value>
           &properties,
+      const specfem::point::boundary &boundary_type,
       specfem::kokkos::array_type<type_real, medium_type::components>
           &stress_integrand_xi,
       specfem::kokkos::array_type<type_real, medium_type::components>

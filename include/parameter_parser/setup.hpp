@@ -49,12 +49,10 @@ public:
   //  object
   //  * used in the solver algorithm
   //  */
-  // std::shared_ptr<specfem::TimeScheme::TimeScheme> instantiate_solver() {
-  //   auto it =
-  //       this->solver->instantiate(this->receivers->get_nstep_between_samples());
-
-  //   return it;
-  // }
+  std::shared_ptr<specfem::TimeScheme::TimeScheme> instantiate_solver() {
+    return this->solver->instantiate(
+        this->receivers->get_nstep_between_samples());
+  }
   // /**
   //  * @brief Update simulation start time.
   //  *
@@ -65,7 +63,7 @@ public:
   //  *
   //  * @param t0 Simulation start time
   //  */
-  // void update_t0(type_real t0) { this->solver->update_t0(t0); }
+  void update_t0(type_real t0) { this->solver->update_t0(t0); }
   /**
    * @brief Log the header and description of the simulation
    */

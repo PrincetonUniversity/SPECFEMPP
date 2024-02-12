@@ -117,16 +117,12 @@ void specfem::domain::impl::kernels::element_kernel<
               int iglob_l =
                   global_index_mapping(iglob, static_cast<int>(medium::value));
 
-              const auto point_property =
-                  properties
-                      .load_properties<medium_type::value, property_type::value,
-                                       specfem::kokkos::DevExecSpace>(ispec_l,
-                                                                      iz, ix);
+              const auto point_property = properties.load_device_properties<
+                  medium_type::value, property_type::value>(ispec_l, iz, ix);
 
               const auto point_partial_derivatives =
-                  partial_derivatives
-                      .load_derivatives<true, specfem::kokkos::DevExecSpace>(
-                          ispec_l, iz, ix);
+                  partial_derivatives.load_device_derivatives<true>(ispec_l, iz,
+                                                                    ix);
 
               specfem::kokkos::array_type<type_real, medium_type::components>
                   mass_matrix_element;
@@ -191,16 +187,12 @@ void specfem::domain::impl::kernels::element_kernel<
               int iglob_l =
                   global_index_mapping(iglob, static_cast<int>(medium::value));
 
-              const auto point_property =
-                  properties
-                      .load_properties<medium_type::value, property_type::value,
-                                       specfem::kokkos::DevExecSpace>(ispec_l,
-                                                                      iz, ix);
+              const auto point_property = properties.load_device_properties<
+                  medium_type::value, property_type::value>(ispec_l, iz, ix);
 
               const auto point_partial_derivatives =
-                  partial_derivatives
-                      .load_derivatives<true, specfem::kokkos::DevExecSpace>(
-                          ispec_l, iz, ix);
+                  partial_derivatives.load_device_derivatives<true>(ispec_l, iz,
+                                                                    ix);
 
               specfem::kokkos::array_type<type_real, medium_type::components>
                   mass_matrix_element;
@@ -228,234 +220,209 @@ void specfem::domain::impl::kernels::element_kernel<
   return;
 }
 
-// template <class medium, class qp_type, class property, class BC>
-// void specfem::domain::impl::kernels::element_kernel<
-//     medium, qp_type, property, BC>::compute_stiffness_interaction() const {
+template <class medium, class qp_type, class property, class BC>
+void specfem::domain::impl::kernels::element_kernel<
+    medium, qp_type, property, BC>::compute_stiffness_interaction() const {
 
-//   constexpr int components = medium::components;
-//   const int nelements = ispec.extent(0);
+  constexpr int components = medium::components;
 
-//   if (nelements == 0)
-//     return;
+  if (nelements == 0)
+    return;
 
-//   const auto hprime_xx = this->quadx->get_hprime();
-//   const auto hprime_zz = this->quadz->get_hprime();
-//   const auto wxgll = this->quadx->get_w();
-//   const auto wzgll = this->quadz->get_w();
+  const auto hprime = quadrature.gll.hprime;
+  const auto wgll = quadrature.gll.weights;
+  const auto index_mapping = points.index_mapping;
 
-//   // s_hprime_xx, s_hprimewgll_xx
-//   int scratch_size =
-//       2 * quadrature_points.template shmem_size<
-//               type_real, 1, specfem::enums::axes::x,
-//               specfem::enums::axes::x>();
+  // s_hprime, s_hprimewgll
+  int scratch_size =
+      2 * quadrature_points.template shmem_size<
+              type_real, 1, specfem::enums::axes::x, specfem::enums::axes::x>();
 
-//   // s_hprime_zz, s_hprimewgll_zz
-//   scratch_size +=
-//       2 * quadrature_points.template shmem_size<
-//               type_real, 1, specfem::enums::axes::z,
-//               specfem::enums::axes::z>();
+  // s_field, s_stress_integrand_xi, s_stress_integrand_gamma
+  scratch_size +=
+      3 *
+      quadrature_points
+          .template shmem_size<type_real, components, specfem::enums::axes::x,
+                               specfem::enums::axes::z>();
 
-//   // s_field, s_stress_integrand_xi, s_stress_integrand_gamma
-//   scratch_size +=
-//       3 *
-//       quadrature_points
-//           .template shmem_size<type_real, components,
-//           specfem::enums::axes::x,
-//                                specfem::enums::axes::z>();
+  // s_iglob
+  scratch_size +=
+      quadrature_points.template shmem_size<int, 1, specfem::enums::axes::x,
+                                            specfem::enums::axes::z>();
 
-//   // s_iglob
-//   scratch_size +=
-//       quadrature_points.template shmem_size<int, 1,
-//       specfem::enums::axes::x,
-//                                             specfem::enums::axes::z>();
+  Kokkos::parallel_for(
+      "specfem::domain::impl::kernels::elements::compute_stiffness_interaction",
+      specfem::kokkos::DeviceTeam(nelements, NTHREADS, NLANES)
+          .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
+      KOKKOS_CLASS_LAMBDA(
+          const specfem::kokkos::DeviceTeam::member_type &team_member) {
+        int ngllx, ngllz;
+        quadrature_points.get_ngll(&ngllx, &ngllz);
+        const auto ispec_l =
+            element_kernel_index_mapping(team_member.league_rank());
 
-//   Kokkos::parallel_for(
-//       "specfem::domain::impl::kernels::elements::compute_stiffness_interaction",
-//       specfem::kokkos::DeviceTeam(nelements, NTHREADS, NLANES)
-//           .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
-//       KOKKOS_CLASS_LAMBDA(
-//           const specfem::kokkos::DeviceTeam::member_type &team_member) {
-//         int ngllx, ngllz;
-//         quadrature_points.get_ngll(&ngllx, &ngllz);
-//         const auto ielement = team_member.league_rank();
-//         const auto ispec_l = ispec(ielement);
+        const auto point_boundary_type = boundary_conditions(ispec_l);
 
-//         // Instantiate shared views
-//         // ---------------------------------------------------------------
-//         auto s_hprime_xx = quadrature_points.template ScratchView<
-//             type_real, 1, specfem::enums::axes::x,
-//             specfem::enums::axes::x>( team_member.team_scratch(0));
-//         auto s_hprime_zz = quadrature_points.template ScratchView<
-//             type_real, 1, specfem::enums::axes::z,
-//             specfem::enums::axes::z>( team_member.team_scratch(0));
-//         auto s_hprimewgll_xx = quadrature_points.template ScratchView<
-//             type_real, 1, specfem::enums::axes::x,
-//             specfem::enums::axes::x>( team_member.team_scratch(0));
-//         auto s_hprimewgll_zz = quadrature_points.template ScratchView<
-//             type_real, 1, specfem::enums::axes::z,
-//             specfem::enums::axes::z>( team_member.team_scratch(0));
+        // Instantiate shared views
+        // ---------------------------------------------------------------
+        auto s_hprime = quadrature_points.template ScratchView<
+            type_real, 1, specfem::enums::axes::x, specfem::enums::axes::x>(
+            team_member.team_scratch(0));
+        auto s_hprimewgll = quadrature_points.template ScratchView<
+            type_real, 1, specfem::enums::axes::x, specfem::enums::axes::x>(
+            team_member.team_scratch(0));
 
-//         auto s_field =
-//             quadrature_points.template ScratchView<type_real, components,
-//                                                    specfem::enums::axes::z,
-//                                                    specfem::enums::axes::x>(
-//                 team_member.team_scratch(0));
-//         auto s_stress_integrand_xi =
-//             quadrature_points.template ScratchView<type_real, components,
-//                                                    specfem::enums::axes::z,
-//                                                    specfem::enums::axes::x>(
-//                 team_member.team_scratch(0));
-//         auto s_stress_integrand_gamma =
-//             quadrature_points.template ScratchView<type_real, components,
-//                                                    specfem::enums::axes::z,
-//                                                    specfem::enums::axes::x>(
-//                 team_member.team_scratch(0));
-//         auto s_iglob = quadrature_points.template ScratchView<
-//             int, 1, specfem::enums::axes::z, specfem::enums::axes::x>(
-//             team_member.team_scratch(0));
+        auto s_field =
+            quadrature_points.template ScratchView<type_real, components,
+                                                   specfem::enums::axes::z,
+                                                   specfem::enums::axes::x>(
+                team_member.team_scratch(0));
+        auto s_stress_integrand_xi =
+            quadrature_points.template ScratchView<type_real, components,
+                                                   specfem::enums::axes::z,
+                                                   specfem::enums::axes::x>(
+                team_member.team_scratch(0));
+        auto s_stress_integrand_gamma =
+            quadrature_points.template ScratchView<type_real, components,
+                                                   specfem::enums::axes::z,
+                                                   specfem::enums::axes::x>(
+                team_member.team_scratch(0));
+        auto s_iglob = quadrature_points.template ScratchView<
+            int, 1, specfem::enums::axes::z, specfem::enums::axes::x>(
+            team_member.team_scratch(0));
 
-//         // ---------- Allocate shared views -------------------------------
-//         Kokkos::parallel_for(
-//             quadrature_points.template
-//             TeamThreadRange<specfem::enums::axes::x,
-//                                                        specfem::enums::axes::x>(
-//                 team_member),
-//             [&](const int xz) {
-//               int iz, ix;
-//               sub2ind(xz, ngllx, iz, ix);
-//               s_hprime_xx(iz, ix, 0) = hprime_xx(iz, ix);
-//               s_hprimewgll_xx(ix, iz, 0) = wxgll(iz) * hprime_xx(iz, ix);
-//             });
+        // ---------- Allocate shared views -------------------------------
 
-//         Kokkos::parallel_for(
-//             quadrature_points.template
-//             TeamThreadRange<specfem::enums::axes::z,
-//                                                        specfem::enums::axes::z>(
-//                 team_member),
-//             [&](const int xz) {
-//               int iz, ix;
-//               sub2ind(xz, ngllz, iz, ix);
-//               s_hprime_zz(iz, ix, 0) = hprime_zz(iz, ix);
-//               s_hprimewgll_zz(ix, iz, 0) = wzgll(iz) * hprime_zz(iz, ix);
-//             });
+        Kokkos::parallel_for(
+            quadrature_points.template TeamThreadRange<specfem::enums::axes::x,
+                                                       specfem::enums::axes::z>(
+                team_member),
+            [&](const int xz) {
+              int ix, iz;
+              sub2ind(xz, ngllx, iz, ix);
+              s_hprime(ix, iz, 0) = hprime(iz, ix);
+              s_hprimewgll(ix, iz, 0) = wgll(iz) * hprime(iz, ix);
+              const int iglob = index_mapping(ispec_l, iz, ix);
+              const int iglob_l =
+                  global_index_mapping(iglob, static_cast<int>(medium::value));
+#ifdef KOKKOS_ENABLE_CUDA
+#pragma unroll
+#endif
+              for (int icomponent = 0; icomponent < components; ++icomponent) {
+                s_field(iz, ix, icomponent) = field.field(iglob_l, icomponent);
+                s_stress_integrand_xi(iz, ix, icomponent) = 0.0;
+                s_stress_integrand_gamma(iz, ix, icomponent) = 0.0;
+              }
+            });
 
-//         Kokkos::parallel_for(
-//             quadrature_points.template
-//             TeamThreadRange<specfem::enums::axes::z,
-//                                                        specfem::enums::axes::x>(
-//                 team_member),
-//             [&](const int xz) {
-//               int iz, ix;
-//               sub2ind(xz, ngllx, iz, ix);
-//               const int iglob = ibool(ispec_l, iz, ix);
-//               s_iglob(iz, ix, 0) = iglob;
-// #ifdef KOKKOS_ENABLE_CUDA
-// #pragma unroll
-// #endif
-//               for (int icomponent = 0; icomponent < components;
-//               ++icomponent)
-//               {
-//                 s_field(iz, ix, icomponent) = field(iglob, icomponent);
-//                 s_stress_integrand_xi(iz, ix, icomponent) = 0.0;
-//                 s_stress_integrand_gamma(iz, ix, icomponent) = 0.0;
-//               }
-//             });
+        // ---------------------------------------------------------------
 
-//         //
-//         ------------------------------------------------------------------
+        team_member.team_barrier();
 
-//         team_member.team_barrier();
+        Kokkos::parallel_for(
+            quadrature_points.template TeamThreadRange<specfem::enums::axes::z,
+                                                       specfem::enums::axes::x>(
+                team_member),
+            [&](const int xz) {
+              int ix, iz;
+              sub2ind(xz, ngllx, iz, ix);
 
-//         Kokkos::parallel_for(
-//             quadrature_points.template
-//             TeamThreadRange<specfem::enums::axes::z,
-//                                                        specfem::enums::axes::x>(
-//                 team_member),
-//             [&](const int xz) {
-//               int ix, iz;
-//               sub2ind(xz, ngllx, iz, ix);
+              specfem::kokkos::array_type<type_real, medium_type::components>
+                  dudxl;
+              specfem::kokkos::array_type<type_real, medium_type::components>
+                  dudzl;
 
-//               specfem::kokkos::array_type<type_real,
-//               medium_type::components>
-//                   dudxl;
-//               specfem::kokkos::array_type<type_real,
-//               medium_type::components>
-//                   dudzl;
+              const auto point_partial_derivatives =
+                  partial_derivatives
+                      .load_device_derivatives<true>(
+                          ispec_l, iz, ix);
 
-//               element.compute_gradient(ispec_l, ielement, xz, s_hprime_xx,
-//                                        s_hprime_zz, s_field, dudxl, dudzl);
+              element.compute_gradient(xz, s_hprime, s_field,
+                                       point_partial_derivatives,
+                                       point_boundary_type, dudxl, dudzl);
 
-//               specfem::kokkos::array_type<type_real,
-//               medium_type::components>
-//                   stress_integrand_xi;
-//               specfem::kokkos::array_type<type_real,
-//               medium_type::components>
-//                   stress_integrand_gamma;
+              // element.compute_gradient(ispec_l, ielement, xz, s_hprime_xx,
+              //                          s_hprime_zz, s_field, dudxl, dudzl);
 
-//               element.compute_stress(ispec_l, ielement, xz, dudxl, dudzl,
-//                                      stress_integrand_xi,
-//                                      stress_integrand_gamma);
-// #ifdef KOKKOS_ENABLE_CUDA
-// #pragma unroll
-// #endif
-//               for (int icomponent = 0; icomponent < components;
-//               ++icomponent)
-//               {
-//                 s_stress_integrand_xi(iz, ix, icomponent) =
-//                     stress_integrand_xi[icomponent];
-//                 s_stress_integrand_gamma(iz, ix, icomponent) =
-//                     stress_integrand_gamma[icomponent];
-//               }
-//             });
+              specfem::kokkos::array_type<type_real, medium_type::components>
+                  stress_integrand_xi;
+              specfem::kokkos::array_type<type_real, medium_type::components>
+                  stress_integrand_gamma;
 
-//         team_member.team_barrier();
+              const auto point_property =
+                  properties
+                      .load_device_properties<medium_type::value, property_type::value>(ispec_l,
+                                                                      iz, ix);
 
-//         Kokkos::parallel_for(
-//             quadrature_points.template
-//             TeamThreadRange<specfem::enums::axes::z,
-//                                                        specfem::enums::axes::x>(
-//                 team_member),
-//             [&](const int xz) {
-//               int iz, ix;
-//               sub2ind(xz, ngllx, iz, ix);
+              element.compute_stress(xz, dudxl, dudzl,
+                                     point_partial_derivatives, point_property,
+                                     point_boundary_type, stress_integrand_xi,
+                                     stress_integrand_gamma);
+      // element.compute_stress(ispec_l, ielement, xz, dudxl, dudzl,
+      //                        stress_integrand_xi,
+      //                        stress_integrand_gamma);
+#ifdef KOKKOS_ENABLE_CUDA
+#pragma unroll
+#endif
+              for (int icomponent = 0; icomponent < components; ++icomponent) {
+                s_stress_integrand_xi(iz, ix, icomponent) =
+                    stress_integrand_xi[icomponent];
+                s_stress_integrand_gamma(iz, ix, icomponent) =
+                    stress_integrand_gamma[icomponent];
+              }
+            });
 
-//               const int iglob = s_iglob(iz, ix, 0);
-//               specfem::kokkos::array_type<type_real, dimension::dim>
-//               weight;
+        team_member.team_barrier();
 
-//               weight[0] = wxgll(ix);
-//               weight[1] = wzgll(iz);
+        //         Kokkos::parallel_for(
+        //             quadrature_points.template
+        //             TeamThreadRange<specfem::enums::axes::z,
+        //                                                        specfem::enums::axes::x>(
+        //                 team_member),
+        //             [&](const int xz) {
+        //               int iz, ix;
+        //               sub2ind(xz, ngllx, iz, ix);
 
-//               specfem::kokkos::array_type<type_real,
-//               medium_type::components>
-//                   acceleration;
+        //               const int iglob = s_iglob(iz, ix, 0);
+        //               specfem::kokkos::array_type<type_real, dimension::dim>
+        //               weight;
 
-//               // only get velocity from global memory for stacey boundary
-//               auto velocity =
-//                   get_velocity<components, BC::value>(iglob, field_dot);
+        //               weight[0] = wxgll(ix);
+        //               weight[1] = wzgll(iz);
 
-//               element.compute_acceleration(
-//                   ispec_l, ielement, xz, weight, s_stress_integrand_xi,
-//                   s_stress_integrand_gamma, s_hprimewgll_xx,
-//                   s_hprimewgll_zz, velocity, acceleration);
+        //               specfem::kokkos::array_type<type_real,
+        //               medium_type::components>
+        //                   acceleration;
 
-// #ifdef KOKKOS_ENABLE_CUDA
-// #pragma unroll
-// #endif
-//               for (int icomponent = 0; icomponent < components;
-//               ++icomponent)
-//               {
-//                 Kokkos::single(Kokkos::PerThread(team_member), [&]() {
-//                   Kokkos::atomic_add(&field_dot_dot(iglob, icomponent),
-//                                      acceleration[icomponent]);
-//                 });
-//               }
-//             });
-//       });
+        //               // only get velocity from global memory for stacey
+        //               boundary auto velocity =
+        //                   get_velocity<components, BC::value>(iglob,
+        //                   field_dot);
 
-//   Kokkos::fence();
+        //               element.compute_acceleration(
+        //                   ispec_l, ielement, xz, weight,
+        //                   s_stress_integrand_xi, s_stress_integrand_gamma,
+        //                   s_hprimewgll_xx, s_hprimewgll_zz, velocity,
+        //                   acceleration);
 
-//   return;
-// }
+        // #ifdef KOKKOS_ENABLE_CUDA
+        // #pragma unroll
+        // #endif
+        //               for (int icomponent = 0; icomponent < components;
+        //               ++icomponent) {
+        //                 Kokkos::single(Kokkos::PerThread(team_member), [&]()
+        //                 {
+        //                   Kokkos::atomic_add(&field_dot_dot(iglob,
+        //                   icomponent),
+        //                                      acceleration[icomponent]);
+        //                 });
+        //               }
+        //             });
+      });
+
+  Kokkos::fence();
+
+  return;
+}
 
 #endif // _DOMAIN_IMPL_ELEMENTS_KERNEL_TPP

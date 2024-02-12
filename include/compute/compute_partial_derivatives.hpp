@@ -76,27 +76,35 @@ struct partial_derivatives {
    */
   void sync_views();
 
-  template <bool load_jacobian,
-            typename ExecSpace = specfem::kokkos::DevExecSpace>
+  template <bool load_jacobian>
   KOKKOS_INLINE_FUNCTION specfem::point::partial_derivatives2
-  load_derivatives(const int ispec, const int iz, const int ix) const {
-    if (std::is_same_v<ExecSpace, specfem::kokkos::DevExecSpace>) {
-      if constexpr (load_jacobian) {
-        return { xix(ispec, iz, ix), xiz(ispec, iz, ix), gammax(ispec, iz, ix),
-                 gammaz(ispec, iz, ix), jacobian(ispec, iz, ix) };
-      } else {
-        return { xix(ispec, iz, ix), xiz(ispec, iz, ix), gammax(ispec, iz, ix),
-                 gammaz(ispec, iz, ix) };
-      }
-    } else if (std::is_same_v<ExecSpace, specfem::kokkos::HostExecSpace>) {
-      if constexpr (load_jacobian) {
-        return { h_xix(ispec, iz, ix), h_xiz(ispec, iz, ix),
-                 h_gammax(ispec, iz, ix), h_gammaz(ispec, iz, ix),
-                 h_jacobian(ispec, iz, ix) };
-      } else {
-        return { h_xix(ispec, iz, ix), h_xiz(ispec, iz, ix),
-                 h_gammax(ispec, iz, ix), h_gammaz(ispec, iz, ix) };
-      }
+  load_device_derivatives(const int ispec, const int iz, const int ix) const {
+    if constexpr (load_jacobian) {
+      return { xix(ispec, iz, ix), xiz(ispec, iz, ix), gammax(ispec, iz, ix),
+               gammaz(ispec, iz, ix), jacobian(ispec, iz, ix) };
+    } else {
+      return { xix(ispec, iz, ix), xiz(ispec, iz, ix), gammax(ispec, iz, ix),
+               gammaz(ispec, iz, ix) };
+    }
+    if constexpr (load_jacobian) {
+      return { h_xix(ispec, iz, ix), h_xiz(ispec, iz, ix),
+               h_gammax(ispec, iz, ix), h_gammaz(ispec, iz, ix),
+               h_jacobian(ispec, iz, ix) };
+    } else {
+      return { h_xix(ispec, iz, ix), h_xiz(ispec, iz, ix),
+               h_gammax(ispec, iz, ix), h_gammaz(ispec, iz, ix) };
+    }
+  };
+
+  template <bool load_jacobian>
+  specfem::point::partial_derivatives2
+  load_host_derivatives(const int ispec, const int iz, const int ix) const {
+    if constexpr (load_jacobian) {
+      return { xix(ispec, iz, ix), xiz(ispec, iz, ix), gammax(ispec, iz, ix),
+               gammaz(ispec, iz, ix), jacobian(ispec, iz, ix) };
+    } else {
+      return { xix(ispec, iz, ix), xiz(ispec, iz, ix), gammax(ispec, iz, ix),
+               gammaz(ispec, iz, ix) };
     }
   };
 };

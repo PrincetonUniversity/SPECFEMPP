@@ -210,6 +210,8 @@ target_link_libraries(
         quadrature
         source_time_function
         yaml-cpp
+        point
+        algorithms
         Boost::boost
 )
 
