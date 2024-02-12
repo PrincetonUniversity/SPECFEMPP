@@ -45,7 +45,7 @@ public:
 
   void compute_mass_matrix() const;
 
-  // void compute_stiffness_interaction() const;
+  void compute_stiffness_interaction() const;
 
   template <specfem::enums::time_scheme::type time_scheme>
   void mass_time_contribution(const type_real dt) const;

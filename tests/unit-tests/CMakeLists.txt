@@ -248,25 +248,28 @@ target_link_libraries(
   -lpthread -lm
 )
 
-# add_executable(
-#   displacement_newmark_tests
-#   displacement_tests/Newmark/newmark_tests.cpp
-# )
+add_executable(
+  displacement_newmark_tests
+  displacement_tests/Newmark/newmark_tests.cpp
+)
 
-# target_link_libraries(
-#   displacement_newmark_tests
-#   quadrature
-#   mesh
-#   material_class
-#   yaml-cpp
-#   kokkos_environment
-#   mpi_environment
-#   compute
-#   parameter_reader
-#   compare_arrays
-#   timescheme
-#   -lpthread -lm
-# )
+target_link_libraries(
+  displacement_newmark_tests
+  quadrature
+  mesh
+  # material_class
+  yaml-cpp
+  kokkos_environment
+  mpi_environment
+  compute
+  parameter_reader
+  compare_arrays
+  timescheme
+  point
+  edge
+  algorithms
+  -lpthread -lm
+)
 
 # add_executable(
 #   seismogram_elastic_tests
@@ -338,7 +341,7 @@ if (NOT MPI_PARALLEL)
   gtest_discover_tests(locate_point)
   gtest_discover_tests(interpolate_function)
   gtest_discover_tests(rmass_inverse_tests)
-  # gtest_discover_tests(displacement_newmark_tests)
+  gtest_discover_tests(displacement_newmark_tests)
   # gtest_discover_tests(seismogram_elastic_tests)
   # gtest_discover_tests(seismogram_acoustic_tests)
 endif(NOT MPI_PARALLEL)

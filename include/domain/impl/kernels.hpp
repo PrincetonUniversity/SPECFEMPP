@@ -78,19 +78,19 @@ public:
     return;
   }
 
-  //   /**
-  //    * @brief execute Kokkos kernel to compute contribution of stiffness
-  //    matrix to
-  //    * the global acceleration
-  //    *
-  //    */
-  //   inline void compute_stiffness_interaction() const {
-  //     isotropic_elements.compute_stiffness_interaction();
-  //     isotropic_elements_dirichlet.compute_stiffness_interaction();
-  //     isotropic_elements_stacey.compute_stiffness_interaction();
-  //     isotropic_elements_stacey_dirichlet.compute_stiffness_interaction();
-  //     return;
-  //   }
+  /**
+   * @brief execute Kokkos kernel to compute contribution of stiffness
+   matrix to
+   * the global acceleration
+   *
+   */
+  inline void compute_stiffness_interaction() const {
+    isotropic_elements.compute_stiffness_interaction();
+    isotropic_elements_dirichlet.compute_stiffness_interaction();
+    isotropic_elements_stacey.compute_stiffness_interaction();
+    isotropic_elements_stacey_dirichlet.compute_stiffness_interaction();
+    return;
+  }
 
   /**
    * @brief execute Kokkos kernel to compute the mass matrix for every GLL point

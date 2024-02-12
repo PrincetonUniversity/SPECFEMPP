@@ -92,16 +92,12 @@ void specfem::domain::impl::kernels::source_kernel<medium, qp_type, property>::
                   iglob, static_cast<int>(medium_type::value));
 
               const type_real stf = sources.stf_array(isource_l, timestep);
-              const auto point_properties =
-                  properties
-                      .load_properties<medium_type::value, property_type::value,
-                                       specfem::kokkos::DevExecSpace>(ispec_l,
-                                                                      iz, ix);
+              const auto point_properties = properties.load_device_properties<
+                  medium_type::value, property_type::value>(ispec_l, iz, ix);
 
-              specfem::kokkos::array_type<type_real, components>
-                  lagrange_interpolant(
-                      sources.source_array(isource_l, iz, ix, 0),
-                      sources.source_array(isource_l, iz, ix, 1));
+              specfem::kokkos::array_type<type_real, 2> lagrange_interpolant(
+                  sources.source_array(isource_l, iz, ix, 0),
+                  sources.source_array(isource_l, iz, ix, 1));
 
               specfem::kokkos::array_type<type_real, components> acceleration;
 

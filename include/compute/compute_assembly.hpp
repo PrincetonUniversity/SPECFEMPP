@@ -19,7 +19,6 @@ namespace compute {
 
 struct assembly {
   specfem::compute::mesh mesh;
-  specfem::quadrature::quadrature quadrature;
   specfem::compute::partial_derivatives partial_derivatives;
   specfem::compute::properties properties;
   specfem::compute::sources sources;

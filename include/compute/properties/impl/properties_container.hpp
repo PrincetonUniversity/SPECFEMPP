@@ -46,17 +46,17 @@ struct properties_container<specfem::enums::element::type::elastic,
                       ngllz, ngllx),
         h_lambdaplus2mu(Kokkos::create_mirror_view(lambdaplus2mu)) {}
 
-  template <typename ExecSpace>
   KOKKOS_INLINE_FUNCTION specfem::point::properties<value_type, property_type>
-  load_properties(const int &ispec, const int &iz, const int &ix) const {
-    if constexpr (std::is_same_v<ExecSpace, specfem::kokkos::DevExecSpace>) {
-      return specfem::point::properties<value_type, property_type>(
-          lambdaplus2mu(ispec, iz, ix), mu(ispec, iz, ix), rho(ispec, iz, ix));
-    } else {
-      return specfem::point::properties<value_type, property_type>(
-          h_lambdaplus2mu(ispec, iz, ix), h_mu(ispec, iz, ix),
-          h_rho(ispec, iz, ix));
-    }
+  load_device_properties(const int &ispec, const int &iz, const int &ix) const {
+    return specfem::point::properties<value_type, property_type>(
+        lambdaplus2mu(ispec, iz, ix), mu(ispec, iz, ix), rho(ispec, iz, ix));
+  }
+
+  specfem::point::properties<value_type, property_type>
+  load_host_properties(const int &ispec, const int &iz, const int &ix) const {
+    return specfem::point::properties<value_type, property_type>(
+        h_lambdaplus2mu(ispec, iz, ix), h_mu(ispec, iz, ix),
+        h_rho(ispec, iz, ix));
   }
 
   void copy_to_device() {
@@ -107,18 +107,18 @@ struct properties_container<specfem::enums::element::type::acoustic,
         kappa("specfem::compute::properties::kappa", nspec, ngllz, ngllx),
         h_kappa(Kokkos::create_mirror_view(kappa)) {}
 
-  template <typename ExecSpace>
   KOKKOS_INLINE_FUNCTION specfem::point::properties<value_type, property_type>
-  load_properties(const int &ispec, const int &iz, const int &ix) const {
-    if constexpr (std::is_same_v<ExecSpace, specfem::kokkos::DevExecSpace>) {
-      return specfem::point::properties<value_type, property_type>(
-          lambdaplus2mu_inverse(ispec, iz, ix), rho_inverse(ispec, iz, ix),
-          kappa(ispec, iz, ix));
-    } else {
-      return specfem::point::properties<value_type, property_type>(
-          h_lambdaplus2mu_inverse(ispec, iz, ix), h_rho_inverse(ispec, iz, ix),
-          h_kappa(ispec, iz, ix));
-    }
+  load_device_properties(const int &ispec, const int &iz, const int &ix) const {
+    return specfem::point::properties<value_type, property_type>(
+        lambdaplus2mu_inverse(ispec, iz, ix), rho_inverse(ispec, iz, ix),
+        kappa(ispec, iz, ix));
+  }
+
+  specfem::point::properties<value_type, property_type>
+  load_host_properties(const int &ispec, const int &iz, const int &ix) const {
+    return specfem::point::properties<value_type, property_type>(
+        h_lambdaplus2mu_inverse(ispec, iz, ix), h_rho_inverse(ispec, iz, ix),
+        h_kappa(ispec, iz, ix));
   }
 
   void copy_to_device() {

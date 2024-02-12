@@ -77,13 +77,13 @@ public:
     kernels.template mass_time_contribution<time_scheme>(dt);
   };
 
-  // /**
-  //  * @brief Compute interaction of stiffness matrix on acceleration
-  //  *
-  //  */
-  // void compute_stiffness_interaction() {
-  //   kernels.compute_stiffness_interaction();
-  // };
+  /**
+   * @brief Compute interaction of stiffness matrix on acceleration
+   *
+   */
+  void compute_stiffness_interaction() {
+    kernels.compute_stiffness_interaction();
+  };
 
   /**
    * @brief Invert the mass matrix
@@ -97,14 +97,14 @@ public:
    */
   void divide_mass_matrix();
 
-  // /**
-  //  * @brief Compute interaction of sources on acceleration
-  //  *
-  //  * @param timeval
-  //  */
-  // void compute_source_interaction(const type_real timeval) {
-  //   kernels.compute_source_interaction(timeval);
-  // };
+  /**
+   * @brief Compute interaction of sources on acceleration
+   *
+   * @param timeval
+   */
+  void compute_source_interaction(const type_real timeval) {
+    kernels.compute_source_interaction(timeval);
+  };
 
   // /**
   //  * @brief Sync displacements views between host and device

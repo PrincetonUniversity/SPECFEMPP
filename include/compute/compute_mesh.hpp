@@ -48,7 +48,7 @@ struct quadrature {
     specfem::compute::shape_functions shape_functions;  ///< Shape functions
     specfem::kokkos::DeviceView1d<type_real> weights;   ///< Quadrature weights
     specfem::kokkos::HostMirror1d<type_real> h_weights; ///< Quadrature weights
-    specfem::kokkos::DeviceView1d<type_real> hprime;    ///< Derivative of
+    specfem::kokkos::DeviceView2d<type_real> hprime;    ///< Derivative of
                                                      ///< lagrange interpolants
 
     GLL() = default;
@@ -57,6 +57,7 @@ struct quadrature {
         : N(quadratures.gll.get_N()), xi(quadratures.gll.get_xi()),
           weights(quadratures.gll.get_w()), h_xi(quadratures.gll.get_hxi()),
           h_weights(quadratures.gll.get_hw()),
+          hprime(quadratures.gll.get_hprime()),
           shape_functions(xi, xi, N, ngnod) {}
   };
 

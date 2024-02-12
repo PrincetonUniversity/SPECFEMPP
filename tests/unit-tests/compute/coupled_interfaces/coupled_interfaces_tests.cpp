@@ -133,20 +133,18 @@ void test_edges(
     const auto edge2l = edge2(interface);
 
     // iterate over the edge
-    int npoints = specfem::edge::num_points_on_interface(edge1l, ngllx, ngllz);
+    int npoints = specfem::edge::num_points_on_interface(edge1l);
 
     for (int ipoint = 0; ipoint < npoints; ipoint++) {
       // Get ipoint along the edge in element1
       int i1, j1;
-      specfem::edge::locate_point_on_self_edge(ipoint, edge1l, ngllx, ngllz, i1,
-                                               j1);
+      specfem::edge::locate_point_on_self_edge(ipoint, edge1l, i1, j1);
       const specfem::point::gcoord2 self_point(coordinates(0, ispec1l, j1, i1),
                                                coordinates(1, ispec1l, j1, i1));
 
       // Get ipoint along the edge in element2
       int i2, j2;
-      specfem::edge::locate_point_on_coupled_edge(ipoint, edge2l, ngllx, ngllz,
-                                                  i2, j2);
+      specfem::edge::locate_point_on_coupled_edge(ipoint, edge2l, i2, j2);
       const specfem::point::gcoord2 coupled_point(
           coordinates(0, ispec2l, j2, i2), coordinates(1, ispec2l, j2, i2));
 

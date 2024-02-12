@@ -118,142 +118,128 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
   rmass_inverse[1] = 0.0;
 
   boundary_conditions.template mass_time_contribution<time_scheme>(
-      xz, dt, weight, partial_derivatives, properties,
-      boundary_type, rmass_inverse);
+      xz, dt, weight, partial_derivatives, properties, boundary_type,
+      rmass_inverse);
 
   return;
 }
 
-// template <int NGLL, typename BC>
-// KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
-//     specfem::enums::element::dimension::dim2,
-//     specfem::enums::element::medium::elastic,
-//     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
-//     specfem::enums::element::property::isotropic, BC>::
-//     compute_gradient(
-//         const int &ispec, const int &ielement, const int &xz,
-//         const ScratchViewType<type_real, 1> s_hprime_xx,
-//         const ScratchViewType<type_real, 1> s_hprime_zz,
-//         const ScratchViewType<type_real, medium_type::components> u,
-//         specfem::kokkos::array_type<type_real, 2> &dudxl,
-//         specfem::kokkos::array_type<type_real, 2> &dudzl) const {
+template <int NGLL, typename BC>
+KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
+    specfem::enums::element::dimension::dim2,
+    specfem::enums::element::medium::elastic,
+    specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
+    specfem::enums::element::property::isotropic, BC>::
+    compute_gradient(
+        const int xz, const ScratchViewType<type_real, 1> s_hprime,
+        const ScratchViewType<type_real, medium_type::components> u,
+        const specfem::point::partial_derivatives2 &partial_derivatives,
+        const specfem::point::boundary &boundary_type,
+        specfem::kokkos::array_type<type_real, medium_type::components> &dudxl,
+        specfem::kokkos::array_type<type_real, medium_type::components> &dudzl)
+        const {
 
-//   int ix, iz;
-//   sub2ind(xz, NGLL, iz, ix);
+  int ix, iz;
+  sub2ind(xz, NGLL, iz, ix);
 
-//   const specfem::compute::element_partial_derivatives partial_derivatives =
-//       specfem::compute::element_partial_derivatives(
-//           this->xix(ispec, iz, ix), this->gammax(ispec, iz, ix),
-//           this->xiz(ispec, iz, ix), this->gammaz(ispec, iz, ix));
+  type_real du_dxi[medium_type::components] = { 0.0, 0.0 };
+  type_real du_dgamma[medium_type::components] = { 0.0, 0.0 };
 
-//   type_real du_dxi[medium_type::components] = { 0.0, 0.0 };
-//   type_real du_dgamma[medium_type::components] = { 0.0, 0.0 };
+#ifdef KOKKOS_ENABLE_CUDA
+#pragma unroll
+#endif
+  for (int l = 0; l < NGLL; l++) {
+    du_dxi[0] += s_hprime(ix, l, 0) * u(iz, l, 0);
+    du_dxi[1] += s_hprime(ix, l, 0) * u(iz, l, 1);
+    du_dgamma[0] += s_hprime(iz, l, 0) * u(l, ix, 0);
+    du_dgamma[1] += s_hprime(iz, l, 0) * u(l, ix, 1);
+  }
+  // duxdx
+  dudxl[0] = partial_derivatives.xix * du_dxi[0] +
+             partial_derivatives.gammax * du_dgamma[0];
 
-// #ifdef KOKKOS_ENABLE_CUDA
-// #pragma unroll
-// #endif
-//   for (int l = 0; l < NGLL; l++) {
-//     du_dxi[0] += s_hprime_xx(ix, l, 0) * u(iz, l, 0);
-//     du_dxi[1] += s_hprime_xx(ix, l, 0) * u(iz, l, 1);
-//     du_dgamma[0] += s_hprime_zz(iz, l, 0) * u(l, ix, 0);
-//     du_dgamma[1] += s_hprime_zz(iz, l, 0) * u(l, ix, 1);
-//   }
-//   // duxdx
-//   dudxl[0] = partial_derivatives.xix * du_dxi[0] +
-//              partial_derivatives.gammax * du_dgamma[0];
+  // duxdz
+  dudzl[0] = partial_derivatives.xiz * du_dxi[0] +
+             partial_derivatives.gammaz * du_dgamma[0];
 
-//   // duxdz
-//   dudzl[0] = partial_derivatives.xiz * du_dxi[0] +
-//              partial_derivatives.gammaz * du_dgamma[0];
+  // duzdx
+  dudxl[1] = partial_derivatives.xix * du_dxi[1] +
+             partial_derivatives.gammax * du_dgamma[1];
 
-//   // duzdx
-//   dudxl[1] = partial_derivatives.xix * du_dxi[1] +
-//              partial_derivatives.gammax * du_dgamma[1];
+  // duzdz
+  dudzl[1] = partial_derivatives.gammax * du_dxi[1] +
+             partial_derivatives.gammaz * du_dgamma[1];
 
-//   // duzdz
-//   dudzl[1] = partial_derivatives.gammax * du_dxi[1] +
-//              partial_derivatives.gammaz * du_dgamma[1];
+  boundary_conditions.enforce_gradient(xz, partial_derivatives, boundary_type,
+                                       dudxl, dudzl);
 
-//   boundary_conditions.enforce_gradient(ielement, xz, partial_derivatives,
-//   dudxl,
-//                                        dudzl);
+  return;
+}
 
-//   return;
-// }
+template <int NGLL, typename BC>
+KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
+    specfem::enums::element::dimension::dim2,
+    specfem::enums::element::medium::elastic,
+    specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
+    specfem::enums::element::property::isotropic, BC>::
+    compute_stress(
+        const int xz,
+        const specfem::kokkos::array_type<type_real, medium_type::components>
+            &dudxl,
+        const specfem::kokkos::array_type<type_real, medium_type::components>
+            &dudzl,
+        const specfem::point::partial_derivatives2 &partial_derivatives,
+        const specfem::point::properties<medium_type::value,
+                                         property_type::value> &properties,
+        const specfem::point::boundary &boundary_type,
+        specfem::kokkos::array_type<type_real, medium_type::components>
+            &stress_integrand_xi,
+        specfem::kokkos::array_type<type_real, medium_type::components>
+            &stress_integrand_gamma) const {
 
-// template <int NGLL, typename BC>
-// KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
-//     specfem::enums::element::dimension::dim2,
-//     specfem::enums::element::medium::elastic,
-//     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
-//     specfem::enums::element::property::isotropic,
-//     BC>::compute_stress(const int &ispec, const int &ielement, const int &xz,
-//                         const specfem::kokkos::array_type<type_real, 2>
-//                         &dudxl, const specfem::kokkos::array_type<type_real,
-//                         2> &dudzl, specfem::kokkos::array_type<type_real, 2>
-//                             &stress_integrand_xi,
-//                         specfem::kokkos::array_type<type_real, 2>
-//                             &stress_integrand_gamma) const {
+  type_real sigma_xx, sigma_zz, sigma_xz;
 
-//   int ix, iz;
-//   sub2ind(xz, NGLL, iz, ix);
+  if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
+    // P_SV case
+    // sigma_xx
+    sigma_xx =
+        properties.lambdaplus2mu * dudxl[0] + properties.lambda * dudzl[1];
 
-//   const specfem::compute::element_partial_derivatives partial_derivatives =
-//       specfem::compute::element_partial_derivatives(
-//           this->xix(ispec, iz, ix), this->gammax(ispec, iz, ix),
-//           this->xiz(ispec, iz, ix), this->gammaz(ispec, iz, ix),
-//           this->jacobian(ispec, iz, ix));
+    // sigma_zz
+    sigma_zz =
+        properties.lambdaplus2mu * dudzl[1] + properties.lambda * dudxl[0];
 
-//   const specfem::compute::element_properties<medium_type::value,
-//                                              property_type::value>
-//       properties(this->lambdaplus2mu(ispec, iz, ix), this->mu(ispec, iz, ix),
-//                  this->rho(ispec, iz, ix));
+    // sigma_xz
+    sigma_xz = properties.mu * (dudxl[1] + dudzl[0]);
+  } else if (specfem::globals::simulation_wave == specfem::wave::sh) {
+    // SH-case
+    // sigma_xx
+    sigma_xx = properties.mu * dudxl[0]; // would be sigma_xy in
+                                         // CPU-version
 
-//   type_real sigma_xx, sigma_zz, sigma_xz;
+    // sigma_xz
+    sigma_xz = properties.mu * dudzl[0]; // sigma_zy
+  }
 
-//   if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
-//     // P_SV case
-//     // sigma_xx
-//     sigma_xx =
-//         properties.lambdaplus2mu * dudxl[0] + properties.lambda * dudzl[1];
+  stress_integrand_xi[0] =
+      partial_derivatives.jacobian *
+      (sigma_xx * partial_derivatives.xix + sigma_xz * partial_derivatives.xiz);
+  stress_integrand_xi[1] =
+      partial_derivatives.jacobian *
+      (sigma_xz * partial_derivatives.xix + sigma_zz * partial_derivatives.xiz);
+  stress_integrand_gamma[0] =
+      partial_derivatives.jacobian * (sigma_xx * partial_derivatives.gammax +
+                                      sigma_xz * partial_derivatives.gammaz);
+  stress_integrand_gamma[1] =
+      partial_derivatives.jacobian * (sigma_xz * partial_derivatives.gammax +
+                                      sigma_zz * partial_derivatives.gammaz);
 
-//     // sigma_zz
-//     sigma_zz =
-//         properties.lambdaplus2mu * dudzl[1] + properties.lambda * dudxl[0];
+  boundary_conditions.enforce_stress(xz, partial_derivatives, properties,
+                                     boundary_type, stress_integrand_xi,
+                                     stress_integrand_gamma);
 
-//     // sigma_xz
-//     sigma_xz = properties.mu * (dudxl[1] + dudzl[0]);
-//   } else if (specfem::globals::simulation_wave == specfem::wave::sh) {
-//     // SH-case
-//     // sigma_xx
-//     sigma_xx = properties.mu * dudxl[0]; // would be sigma_xy in
-//                                          // CPU-version
-
-//     // sigma_xz
-//     sigma_xz = properties.mu * dudzl[0]; // sigma_zy
-//   }
-
-//   stress_integrand_xi[0] =
-//       partial_derivatives.jacobian *
-//       (sigma_xx * partial_derivatives.xix + sigma_xz *
-//       partial_derivatives.xiz);
-//   stress_integrand_xi[1] =
-//       partial_derivatives.jacobian *
-//       (sigma_xz * partial_derivatives.xix + sigma_zz *
-//       partial_derivatives.xiz);
-//   stress_integrand_gamma[0] =
-//       partial_derivatives.jacobian * (sigma_xx * partial_derivatives.gammax +
-//                                       sigma_xz * partial_derivatives.gammaz);
-//   stress_integrand_gamma[1] =
-//       partial_derivatives.jacobian * (sigma_xz * partial_derivatives.gammax +
-//                                       sigma_zz * partial_derivatives.gammaz);
-
-//   boundary_conditions.enforce_stress(ielement, xz, partial_derivatives,
-//                                      properties, stress_integrand_xi,
-//                                      stress_integrand_gamma);
-
-//   return;
-// }
+  return;
+}
 
 // template <int NGLL, typename BC>
 // KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<

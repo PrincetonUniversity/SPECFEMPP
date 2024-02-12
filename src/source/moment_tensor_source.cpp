@@ -7,6 +7,7 @@
 #include "kokkos_abstractions.h"
 #include "point/coordinates.hpp"
 #include "point/partial_derivatives.hpp"
+#include "point/partial_derivatives.tpp"
 #include "quadrature/interface.hpp"
 #include "source/interface.hpp"
 #include "source_time_function/interface.hpp"
@@ -47,10 +48,8 @@ void specfem::sources::moment_tensor::compute_source_array(
       specfem::kokkos::HostMDrange<2>({ 0, 0 }, { N, N }),
       KOKKOS_LAMBDA(const int iz, const int ix) {
         type_real hlagrange = hxi_source(ix) * hgamma_source(iz);
-        auto derivatives =
-            partial_derivatives
-                .load_derivatives<false, specfem::kokkos::HostExecSpace>(
-                    lcoord.ispec, iz, ix);
+        auto derivatives = partial_derivatives.load_host_derivatives<false>(
+            lcoord.ispec, iz, ix);
         source_polynomial(iz, ix) = hlagrange;
         element_derivatives(iz, ix) = derivatives;
       });
