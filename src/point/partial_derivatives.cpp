@@ -1,5 +1,6 @@
 
 #include "point/partial_derivatives.hpp"
+#include "point/partial_derivatives.tpp"
 #include <Kokkos_Core.hpp>
 
 // operator+
@@ -42,21 +43,27 @@ specfem::point::operator*(const specfem::point::partial_derivatives2 &lhs,
                                               lhs.xiz * rhs, lhs.gammaz * rhs);
 }
 
-// compute_normal
 KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, 2>
 specfem::point::partial_derivatives2::compute_normal(
-    const specfem::edge::interface &interface) const {
-  switch (interface.type) {
+    const specfem::enums::edge::type &type) const {
+  switch (type) {
   case specfem::enums::edge::type::BOTTOM:
-    return this->compute_normal<specfem::enums::boundaries::type::BOTTOM>();
+    return this->compute_normal<specfem::enums::edge::type::BOTTOM>();
   case specfem::enums::edge::type::TOP:
-    return this->compute_normal<specfem::enums::boundaries::type::TOP>();
+    return this->compute_normal<specfem::enums::edge::type::TOP>();
   case specfem::enums::edge::type::LEFT:
-    return this->compute_normal<specfem::enums::boundaries::type::LEFT>();
+    return this->compute_normal<specfem::enums::edge::type::LEFT>();
   case specfem::enums::edge::type::RIGHT:
-    return this->compute_normal<specfem::enums::boundaries::type::RIGHT>();
+    return this->compute_normal<specfem::enums::edge::type::RIGHT>();
   default:
     ASSERT(false, "Invalid boundary type");
     return specfem::kokkos::array_type<type_real, 2>();
   }
+}
+
+// compute_normal
+KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, 2>
+specfem::point::partial_derivatives2::compute_normal(
+    const specfem::edge::interface &interface) const {
+  return specfem::point::partial_derivatives2::compute_normal(interface.type);
 }

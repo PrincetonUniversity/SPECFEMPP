@@ -164,11 +164,12 @@ public:
    * @return KOKKOS_INLINE_FUNCTION
    */
   KOKKOS_FUNCTION void enforce_traction(
-      const int &ielement, const int &xz,
+      const int &xz,
       const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
       const specfem::point::partial_derivatives2 &partial_derivatives,
       const specfem::point::properties<medium_type::value, property_type::value>
           &properties,
+      const specfem::point::boundary &boundary_type,
       const specfem::kokkos::array_type<type_real, medium_type::components>
           &field_dot,
       specfem::kokkos::array_type<type_real, medium_type::components>

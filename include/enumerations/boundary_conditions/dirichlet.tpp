@@ -23,11 +23,12 @@
 template <typename dim, typename medium, typename property, typename qp_type>
 KOKKOS_INLINE_FUNCTION void specfem::enums::boundary_conditions::
     dirichlet<dim, medium, property, qp_type>::enforce_traction(
-        const int &ielement, const int &xz,
+        const int &xz,
         const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
         const specfem::point::partial_derivatives2 &partial_derivatives,
         const specfem::point::properties<medium_type::value,
                                          property_type::value> &properties,
+        const specfem::point::boundary &boundary_type,
         const specfem::kokkos::array_type<type_real, medium_type::components>
             &field_dot,
         specfem::kokkos::array_type<type_real, medium_type::components>
@@ -42,8 +43,8 @@ KOKKOS_INLINE_FUNCTION void specfem::enums::boundary_conditions::
   int ix, iz;
   sub2ind(xz, ngllx, iz, ix);
 
-  const auto itype = this->type(ielement);
-  if (!specfem::point::is_on_boundary(value_t, itype, iz, ix, ngllz, ngllx)) {
+  if (!specfem::point::is_on_boundary(value_t, boundary_type, iz, ix, ngllz,
+                                      ngllx)) {
     return;
   }
 

@@ -302,14 +302,14 @@ void specfem::domain::impl::kernels::element_kernel<
               sub2ind(xz, ngllx, iz, ix);
               s_hprime(ix, iz, 0) = hprime(iz, ix);
               s_hprimewgll(ix, iz, 0) = wgll(iz) * hprime(iz, ix);
-              const int iglob = index_mapping(ispec_l, iz, ix);
-              const int iglob_l =
-                  global_index_mapping(iglob, static_cast<int>(medium::value));
+              const int iglob =
+                  global_index_mapping(index_mapping(ispec_l, iz, ix),
+                                       static_cast<int>(medium::value));
 #ifdef KOKKOS_ENABLE_CUDA
 #pragma unroll
 #endif
               for (int icomponent = 0; icomponent < components; ++icomponent) {
-                s_field(iz, ix, icomponent) = field.field(iglob_l, icomponent);
+                s_field(iz, ix, icomponent) = field.field(iglob, icomponent);
                 s_stress_integrand_xi(iz, ix, icomponent) = 0.0;
                 s_stress_integrand_gamma(iz, ix, icomponent) = 0.0;
               }
@@ -333,34 +333,25 @@ void specfem::domain::impl::kernels::element_kernel<
                   dudzl;
 
               const auto point_partial_derivatives =
-                  partial_derivatives
-                      .load_device_derivatives<true>(
-                          ispec_l, iz, ix);
+                  partial_derivatives.load_device_derivatives<true>(ispec_l, iz,
+                                                                    ix);
 
               element.compute_gradient(xz, s_hprime, s_field,
                                        point_partial_derivatives,
                                        point_boundary_type, dudxl, dudzl);
-
-              // element.compute_gradient(ispec_l, ielement, xz, s_hprime_xx,
-              //                          s_hprime_zz, s_field, dudxl, dudzl);
 
               specfem::kokkos::array_type<type_real, medium_type::components>
                   stress_integrand_xi;
               specfem::kokkos::array_type<type_real, medium_type::components>
                   stress_integrand_gamma;
 
-              const auto point_property =
-                  properties
-                      .load_device_properties<medium_type::value, property_type::value>(ispec_l,
-                                                                      iz, ix);
+              const auto point_property = properties.load_device_properties<
+                  medium_type::value, property_type::value>(ispec_l, iz, ix);
 
               element.compute_stress(xz, dudxl, dudzl,
                                      point_partial_derivatives, point_property,
                                      point_boundary_type, stress_integrand_xi,
                                      stress_integrand_gamma);
-      // element.compute_stress(ispec_l, ielement, xz, dudxl, dudzl,
-      //                        stress_integrand_xi,
-      //                        stress_integrand_gamma);
 #ifdef KOKKOS_ENABLE_CUDA
 #pragma unroll
 #endif
@@ -374,50 +365,83 @@ void specfem::domain::impl::kernels::element_kernel<
 
         team_member.team_barrier();
 
-        //         Kokkos::parallel_for(
-        //             quadrature_points.template
-        //             TeamThreadRange<specfem::enums::axes::z,
-        //                                                        specfem::enums::axes::x>(
-        //                 team_member),
-        //             [&](const int xz) {
-        //               int iz, ix;
-        //               sub2ind(xz, ngllx, iz, ix);
+        Kokkos::parallel_for(
+            quadrature_points.template TeamThreadRange<specfem::enums::axes::z,
+                                                       specfem::enums::axes::x>(
+                team_member),
+            [&](const int xz) {
+              int iz, ix;
+              sub2ind(xz, ngllx, iz, ix);
+              constexpr auto tag = BC::value;
 
-        //               const int iglob = s_iglob(iz, ix, 0);
-        //               specfem::kokkos::array_type<type_real, dimension::dim>
-        //               weight;
+              const int iglob =
+                  global_index_mapping(index_mapping(ispec_l, iz, ix),
+                                       static_cast<int>(medium::value));
+              const specfem::kokkos::array_type<type_real, dimension::dim>
+                  weight(wgll(ix), wgll(iz));
 
-        //               weight[0] = wxgll(ix);
-        //               weight[1] = wzgll(iz);
+              specfem::kokkos::array_type<type_real, medium_type::components>
+                  acceleration;
 
-        //               specfem::kokkos::array_type<type_real,
-        //               medium_type::components>
-        //                   acceleration;
+              // Get velocity, partial derivatives, and properties
+              // only if needed by the boundary condition
+              // ---------------------------------------------------------------
+              constexpr bool flag =
+                  ((tag == specfem::enums::element::boundary_tag::stacey) ||
+                   (tag == specfem::enums::element::boundary_tag::
+                               composite_stacey_dirichlet));
 
-        //               // only get velocity from global memory for stacey
-        //               boundary auto velocity =
-        //                   get_velocity<components, BC::value>(iglob,
-        //                   field_dot);
+              const auto velocity =
+                  [&]() -> specfem::kokkos::array_type<type_real, components> {
+                if constexpr (flag) {
+                  const auto velocity_l =
+                      Kokkos::subview(field.field_dot, iglob, Kokkos::ALL);
+                  return specfem::kokkos::array_type<type_real, components>(
+                      velocity_l);
+                } else {
+                  return specfem::kokkos::array_type<type_real, components>();
+                }
+              }();
 
-        //               element.compute_acceleration(
-        //                   ispec_l, ielement, xz, weight,
-        //                   s_stress_integrand_xi, s_stress_integrand_gamma,
-        //                   s_hprimewgll_xx, s_hprimewgll_zz, velocity,
-        //                   acceleration);
+              const auto point_partial_derivatives =
+                  [&]() -> specfem::point::partial_derivatives2 {
+                if constexpr (flag) {
+                  return partial_derivatives.load_device_derivatives<true>(
+                      ispec_l, iz, ix);
+                } else {
+                  return specfem::point::partial_derivatives2();
+                }
+              }();
 
-        // #ifdef KOKKOS_ENABLE_CUDA
-        // #pragma unroll
-        // #endif
-        //               for (int icomponent = 0; icomponent < components;
-        //               ++icomponent) {
-        //                 Kokkos::single(Kokkos::PerThread(team_member), [&]()
-        //                 {
-        //                   Kokkos::atomic_add(&field_dot_dot(iglob,
-        //                   icomponent),
-        //                                      acceleration[icomponent]);
-        //                 });
-        //               }
-        //             });
+              const auto point_property =
+                  [&]() -> specfem::point::properties<medium_type::value,
+                                                      property_type::value> {
+                if constexpr (flag) {
+                  return properties.load_device_properties<
+                      medium_type::value, property_type::value>(ispec_l, iz,
+                                                                ix);
+                } else {
+                  return specfem::point::properties<medium_type::value,
+                                                    property_type::value>();
+                }
+              }();
+              // ---------------------------------------------------------------
+
+              element.compute_acceleration(
+                  xz, weight, s_stress_integrand_xi, s_stress_integrand_gamma,
+                  s_hprimewgll, point_partial_derivatives, point_property,
+                  point_boundary_type, velocity, acceleration);
+
+#ifdef KOKKOS_ENABLE_CUDA
+#pragma unroll
+#endif
+              for (int icomponent = 0; icomponent < components; ++icomponent) {
+                Kokkos::single(Kokkos::PerThread(team_member), [&]() {
+                  Kokkos::atomic_add(&field.field_dot_dot(iglob, icomponent),
+                                     acceleration[icomponent]);
+                });
+              }
+            });
       });
 
   Kokkos::fence();
