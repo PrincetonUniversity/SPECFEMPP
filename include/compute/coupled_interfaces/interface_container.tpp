@@ -196,8 +196,8 @@ void compute_edges(
     const int ispec2l = ispec2(inum);
 
     int num_connected = 0;
-    for (int edge1l = 0; edge1l < specfem::enums::edge::num_edges; edge1l++) {
-      for (int edge2l = 0; edge2l < specfem::enums::edge::num_edges; edge2l++) {
+    for (int edge1l = 1; edge1l < specfem::enums::edge::num_edges; edge1l++) {
+      for (int edge2l = 1; edge2l < specfem::enums::edge::num_edges; edge2l++) {
         if (check_if_edges_are_connected(
                 h_ibool, static_cast<specfem::enums::edge::type>(edge1l),
                 static_cast<specfem::enums::edge::type>(edge2l), ispec1l,

@@ -49,12 +49,15 @@ struct partial_derivatives2 {
   KOKKOS_FUNCTION
   partial_derivatives2(const partial_derivatives2 &rhs) = default;
 
-  template <specfem::enums::boundaries::type type>
+  template <specfem::enums::edge::type type>
   KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, 2>
   compute_normal() const {
     ASSERT(false, "Invalid boundary type");
     return specfem::kokkos::array_type<type_real, 2>();
   };
+
+  KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, 2>
+  compute_normal(const specfem::enums::edge::type &type) const;
 
   KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, 2>
   compute_normal(const specfem::edge::interface &interface) const;

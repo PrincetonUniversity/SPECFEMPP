@@ -179,44 +179,47 @@ public:
       specfem::kokkos::array_type<type_real, medium_type::components>
           &stress_integrand_gamma) const;
 
-  //   /**
-  //    * @brief Update the acceleration at a particular Gauss-Lobatto-Legendre
-  //    * quadrature point
-  //    *
-  //    * @param xz Index of Gauss-Lobatto-Legendre quadrature point
-  //    * @param wxglll Weight of the Gauss-Lobatto-Legendre quadrature point in
-  //    x
-  //    * direction
-  //    * @param wzglll Weight of the Gauss-Lobatto-Legendre quadrature point in
-  //    z
-  //    * direction
-  //    * @param stress_integrand_xi Stress integrand  wrt. \f$ \xi \f$
-  //    * \f$ J^{\alpha\gamma} * {\rho^{\alpha\gamma}}^{-1}
-  //    * \partial_x \chi \partial_x \xi + \partial_z \chi * \partial_z \xi \f$
-  //    as
-  //    * computed by compute_stress
-  //    * @param stress_integrand_gamma Stress integrand  wrt. \f$\gamma\f$
-  //    * \f$ J^{\alpha\gamma} * {\rho^{\alpha\gamma}}^{-1}
-  //    * \partial_x \chi \partial_x \gamma + \partial_z \chi * \partial_z
-  //    \gamma \f$
-  //    * as computed by compute_stress
-  //    * @param s_hprimewgll_xx Scratch view hprime_xx * wxgll
-  //    * @param s_hprimewgll_zz Scratch view hprime_zz * wzgll
-  //    * @param field_dot_dot Acceleration of the field subviewed at global
-  //    index xz
-  //    */
-  //   KOKKOS_INLINE_FUNCTION void compute_acceleration(
-  //       const int &ispec, const int &ielement, const int &xz,
-  //       const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
-  //       const ScratchViewType<type_real, medium_type::components>
-  //           stress_integrand_xi,
-  //       const ScratchViewType<type_real, medium_type::components>
-  //           stress_integrand_gamma,
-  //       const ScratchViewType<type_real, 1> s_hprimewgll_xx,
-  //       const ScratchViewType<type_real, 1> s_hprimewgll_zz,
-  //       const specfem::kokkos::array_type<type_real, medium_type::components>
-  //           &velocity,
-  //       specfem::kokkos::array_type<type_real, 1> &acceleration) const;
+  /**
+   * @brief Update the acceleration at a particular Gauss-Lobatto-Legendre
+   * quadrature point
+   *
+   * @param xz Index of Gauss-Lobatto-Legendre quadrature point
+   * @param wxglll Weight of the Gauss-Lobatto-Legendre quadrature point in
+   x
+   * direction
+   * @param wzglll Weight of the Gauss-Lobatto-Legendre quadrature point in
+   z
+   * direction
+   * @param stress_integrand_xi Stress integrand  wrt. \f$ \xi \f$
+   * \f$ J^{\alpha\gamma} * {\rho^{\alpha\gamma}}^{-1}
+   * \partial_x \chi \partial_x \xi + \partial_z \chi * \partial_z \xi \f$
+   as
+   * computed by compute_stress
+   * @param stress_integrand_gamma Stress integrand  wrt. \f$\gamma\f$
+   * \f$ J^{\alpha\gamma} * {\rho^{\alpha\gamma}}^{-1}
+   * \partial_x \chi \partial_x \gamma + \partial_z \chi * \partial_z
+   \gamma \f$
+   * as computed by compute_stress
+   * @param s_hprimewgll_xx Scratch view hprime_xx * wxgll
+   * @param s_hprimewgll_zz Scratch view hprime_zz * wzgll
+   * @param field_dot_dot Acceleration of the field subviewed at global
+   index xz
+   */
+  KOKKOS_INLINE_FUNCTION void compute_acceleration(
+      const int &xz,
+      const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
+      const ScratchViewType<type_real, medium_type::components>
+          stress_integrand_xi,
+      const ScratchViewType<type_real, medium_type::components>
+          stress_integrand_gamma,
+      const ScratchViewType<type_real, 1> s_hprimewgll,
+      const specfem::point::partial_derivatives2 &partial_derivatives,
+      const specfem::point::properties<medium_type::value, property_type::value>
+          &properties,
+      const specfem::point::boundary &boundary_type,
+      const specfem::kokkos::array_type<type_real, medium_type::components>
+          &velocity,
+      specfem::kokkos::array_type<type_real, 1> &acceleration) const;
 
 private:
   //   specfem::kokkos::DeviceView3d<type_real> xix;         ///< xix

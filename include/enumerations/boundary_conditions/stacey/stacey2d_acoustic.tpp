@@ -39,47 +39,75 @@ KOKKOS_FUNCTION void newmark_mass_terms(
                                      property> &properties,
     specfem::kokkos::array_type<type_real, 1> &rmass_inverse) {
 
-  specfem::kokkos::array_type<type_real, 1> velocity;
+  const specfem::kokkos::array_type<type_real, 1> velocity(static_cast<type_real>(-1.0 * dt * 0.5));
 
-  velocity[0] = -1.0 * dt * 0.5;
+  const specfem::enums::edge::type edge = [&]() -> specfem::enums::edge::type {
+    if (boundary_type.left == tag && ix == 0)
+      return specfem::enums::edge::type::LEFT;
+    if (boundary_type.right == tag && ix == ngllx - 1)
+      return specfem::enums::edge::type::RIGHT;
+    if (boundary_type.bottom == tag && iz == 0)
+      return specfem::enums::edge::type::BOTTOM;
+    if (boundary_type.top == tag && iz == ngllz - 1)
+      return specfem::enums::edge::type::TOP;
+    return specfem::enums::edge::type::NONE;
+  }();
 
-  specfem::kokkos::array_type<type_real, 2> dn; // normal vector
+  const type_real factor = [&]() -> type_real {
+    switch (edge) {
+    case specfem::enums::edge::type::LEFT:
+    case specfem::enums::edge::type::RIGHT:
+      return weight[1];
+    case specfem::enums::edge::type::BOTTOM:
+    case specfem::enums::edge::type::TOP:
+      return weight[0];
+    default:
+      return static_cast<type_real>(0.0);
+    }
+  }();
 
-  // Left Boundary
-  if (boundary_type.left == tag && ix == 0) {
-    dn = partial_derivatives
-             .compute_normal<specfem::enums::boundaries::type::LEFT>();
-    enforce_traction_boundary(weight[1], dn, properties, velocity,
-                              rmass_inverse);
+  if (edge == specfem::enums::edge::type::NONE) {
     return;
   }
 
-  // Right Boundary
-  if (boundary_type.right == tag && ix == ngllx - 1) {
-    dn = partial_derivatives
-             .compute_normal<specfem::enums::boundaries::type::RIGHT>();
-    enforce_traction_boundary(weight[1], dn, properties, velocity,
-                              rmass_inverse);
-    return;
-  }
+  const auto dn = partial_derivatives.compute_normal(edge);
+  enforce_traction_boundary(factor, dn, properties, velocity, rmass_inverse);
 
-  // Bottom Boundary
-  if (boundary_type.bottom == tag && iz == 0) {
-    dn = partial_derivatives
-             .compute_normal<specfem::enums::boundaries::type::BOTTOM>();
-    enforce_traction_boundary(weight[0], dn, properties, velocity,
-                              rmass_inverse);
-    return;
-  }
+  // // Left Boundary
+  // if (boundary_type.left == tag && ix == 0) {
+  //   dn = partial_derivatives
+  //            .compute_normal<specfem::enums::boundaries::type::LEFT>();
+  //   enforce_traction_boundary(weight[1], dn, properties, velocity,
+  //                             rmass_inverse);
+  //   return;
+  // }
 
-  // Top Boundary
-  if (boundary_type.top == tag && iz == ngllz - 1) {
-    dn = partial_derivatives
-             .compute_normal<specfem::enums::boundaries::type::TOP>();
-    enforce_traction_boundary(weight[0], dn, properties, velocity,
-                              rmass_inverse);
-    return;
-  }
+  // // Right Boundary
+  // if (boundary_type.right == tag && ix == ngllx - 1) {
+  //   dn = partial_derivatives
+  //            .compute_normal<specfem::enums::boundaries::type::RIGHT>();
+  //   enforce_traction_boundary(weight[1], dn, properties, velocity,
+  //                             rmass_inverse);
+  //   return;
+  // }
+
+  // // Bottom Boundary
+  // if (boundary_type.bottom == tag && iz == 0) {
+  //   dn = partial_derivatives
+  //            .compute_normal<specfem::enums::boundaries::type::BOTTOM>();
+  //   enforce_traction_boundary(weight[0], dn, properties, velocity,
+  //                             rmass_inverse);
+  //   return;
+  // }
+
+  // // Top Boundary
+  // if (boundary_type.top == tag && iz == ngllz - 1) {
+  //   dn = partial_derivatives
+  //            .compute_normal<specfem::enums::boundaries::type::TOP>();
+  //   enforce_traction_boundary(weight[0], dn, properties, velocity,
+  //                             rmass_inverse);
+  //   return;
+  // }
 
   return;
 }
@@ -144,11 +172,13 @@ KOKKOS_INLINE_FUNCTION void specfem::enums::boundary_conditions::stacey<
     specfem::enums::element::dimension::dim2,
     specfem::enums::element::medium::acoustic, property, qp_type>::
     enforce_traction(
-        const int &ielement, const int &xz, const specfem::kokkos::array_type<type_real, 2> &weight,
+        const int &xz,
+        const specfem::kokkos::array_type<type_real, 2> &weight,
         const specfem::point::partial_derivatives2 &partial_derivatives,
         const specfem::point::properties<
             specfem::enums::element::type::acoustic, property_type::value>
             &properties,
+        const specfem::point::boundary &boundary_type,
         const specfem::kokkos::array_type<type_real, 1> &field_dot,
         specfem::kokkos::array_type<type_real, 1> &field_dot_dot) const {
 
@@ -164,8 +194,8 @@ KOKKOS_INLINE_FUNCTION void specfem::enums::boundary_conditions::stacey<
   int ix, iz;
   sub2ind(xz, ngllx, iz, ix);
 
-  const auto itype = this->type(ielement);
-  if (!specfem::point::is_on_boundary(value_t, itype, iz, ix, ngllz, ngllx)) {
+  if (!specfem::point::is_on_boundary(value_t, boundary_type, iz, ix, ngllz,
+                                      ngllx)) {
     return;
   }
   // --------------------------------------------------------------------------
@@ -176,43 +206,75 @@ KOKKOS_INLINE_FUNCTION void specfem::enums::boundary_conditions::stacey<
   // applied top or bottom traction conditions are ignored in this case. This
   // ensures there is no conflict in calculating the normal
 
-  specfem::kokkos::array_type<type_real, dimension::dim> dn; // normal vector
+  const specfem::enums::edge::type edge = [&]() -> specfem::enums::edge::type {
+    if (boundary_type.left == value_t && ix == 0)
+      return specfem::enums::edge::type::LEFT;
+    if (boundary_type.right == value_t && ix == ngllx - 1)
+      return specfem::enums::edge::type::RIGHT;
+    if (boundary_type.bottom == value_t && iz == 0)
+      return specfem::enums::edge::type::BOTTOM;
+    if (boundary_type.top == value_t && iz == ngllz - 1)
+      return specfem::enums::edge::type::TOP;
+    return specfem::enums::edge::type::NONE;
+  }();
 
-  // Left Boundary
-  if (itype.left == value_t && ix == 0) {
-    dn = partial_derivatives
-             .compute_normal<specfem::enums::boundaries::type::LEFT>();
-    enforce_traction_boundary(weight[1], dn, properties, field_dot,
-                              field_dot_dot);
+  const type_real factor = [&]() -> type_real {
+    switch (edge) {
+    case specfem::enums::edge::type::LEFT:
+    case specfem::enums::edge::type::RIGHT:
+      return weight[1];
+    case specfem::enums::edge::type::BOTTOM:
+    case specfem::enums::edge::type::TOP:
+      return weight[0];
+    default:
+      return static_cast<type_real>(0.0);
+    }
+  }();
+
+  if (edge == specfem::enums::edge::type::NONE) {
     return;
   }
 
-  // Right Boundary
-  if (itype.right == value_t && ix == ngllx - 1) {
-    dn = partial_derivatives
-             .compute_normal<specfem::enums::boundaries::type::RIGHT>();
-    enforce_traction_boundary(weight[1], dn, properties, field_dot,
-                              field_dot_dot);
-    return;
-  }
+  const auto dn = partial_derivatives.compute_normal(edge);
+  enforce_traction_boundary(factor, dn, properties, field_dot, field_dot_dot);
 
-  // Bottom Boundary
-  if (itype.bottom == value_t && iz == 0) {
-    dn = partial_derivatives
-             .compute_normal<specfem::enums::boundaries::type::BOTTOM>();
-    enforce_traction_boundary(weight[0], dn, properties, field_dot,
-                              field_dot_dot);
-    return;
-  }
+  // specfem::kokkos::array_type<type_real, dimension::dim> dn; // normal vector
 
-  // Top Boundary
-  if (itype.top == value_t && iz == ngllz - 1) {
-    dn = partial_derivatives
-             .compute_normal<specfem::enums::boundaries::type::TOP>();
-    enforce_traction_boundary(weight[0], dn, properties, field_dot,
-                              field_dot_dot);
-    return;
-  }
+  // // Left Boundary
+  // if (itype.left == value_t && ix == 0) {
+  //   dn = partial_derivatives
+  //            .compute_normal<specfem::enums::boundaries::type::LEFT>();
+  //   enforce_traction_boundary(weight[1], dn, properties, field_dot,
+  //                             field_dot_dot);
+  //   return;
+  // }
+
+  // // Right Boundary
+  // if (itype.right == value_t && ix == ngllx - 1) {
+  //   dn = partial_derivatives
+  //            .compute_normal<specfem::enums::boundaries::type::RIGHT>();
+  //   enforce_traction_boundary(weight[1], dn, properties, field_dot,
+  //                             field_dot_dot);
+  //   return;
+  // }
+
+  // // Bottom Boundary
+  // if (itype.bottom == value_t && iz == 0) {
+  //   dn = partial_derivatives
+  //            .compute_normal<specfem::enums::boundaries::type::BOTTOM>();
+  //   enforce_traction_boundary(weight[0], dn, properties, field_dot,
+  //                             field_dot_dot);
+  //   return;
+  // }
+
+  // // Top Boundary
+  // if (itype.top == value_t && iz == ngllz - 1) {
+  //   dn = partial_derivatives
+  //            .compute_normal<specfem::enums::boundaries::type::TOP>();
+  //   enforce_traction_boundary(weight[0], dn, properties, field_dot,
+  //                             field_dot_dot);
+  //   return;
+  // }
   // --------------------------------------------------------------------------
 
   return;
