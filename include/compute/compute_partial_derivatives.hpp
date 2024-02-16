@@ -80,19 +80,11 @@ struct partial_derivatives {
   KOKKOS_INLINE_FUNCTION specfem::point::partial_derivatives2
   load_device_derivatives(const int ispec, const int iz, const int ix) const {
     if constexpr (load_jacobian) {
-      return { xix(ispec, iz, ix), xiz(ispec, iz, ix), gammax(ispec, iz, ix),
+      return { xix(ispec, iz, ix), gammax(ispec, iz, ix), xiz(ispec, iz, ix),
                gammaz(ispec, iz, ix), jacobian(ispec, iz, ix) };
     } else {
-      return { xix(ispec, iz, ix), xiz(ispec, iz, ix), gammax(ispec, iz, ix),
+      return { xix(ispec, iz, ix), gammax(ispec, iz, ix), xiz(ispec, iz, ix),
                gammaz(ispec, iz, ix) };
-    }
-    if constexpr (load_jacobian) {
-      return { h_xix(ispec, iz, ix), h_xiz(ispec, iz, ix),
-               h_gammax(ispec, iz, ix), h_gammaz(ispec, iz, ix),
-               h_jacobian(ispec, iz, ix) };
-    } else {
-      return { h_xix(ispec, iz, ix), h_xiz(ispec, iz, ix),
-               h_gammax(ispec, iz, ix), h_gammaz(ispec, iz, ix) };
     }
   };
 
@@ -100,11 +92,12 @@ struct partial_derivatives {
   specfem::point::partial_derivatives2
   load_host_derivatives(const int ispec, const int iz, const int ix) const {
     if constexpr (load_jacobian) {
-      return { xix(ispec, iz, ix), xiz(ispec, iz, ix), gammax(ispec, iz, ix),
-               gammaz(ispec, iz, ix), jacobian(ispec, iz, ix) };
+      return { h_xix(ispec, iz, ix), h_gammax(ispec, iz, ix),
+               h_xiz(ispec, iz, ix), h_gammaz(ispec, iz, ix),
+               h_jacobian(ispec, iz, ix) };
     } else {
-      return { xix(ispec, iz, ix), xiz(ispec, iz, ix), gammax(ispec, iz, ix),
-               gammaz(ispec, iz, ix) };
+      return { h_xix(ispec, iz, ix), h_gammax(ispec, iz, ix),
+               h_xiz(ispec, iz, ix), h_gammaz(ispec, iz, ix) };
     }
   };
 };

@@ -4,10 +4,12 @@
 #include <Kokkos_Core.hpp>
 #include <cmath>
 
-specfem::forcing_function::Ricker::Ricker(type_real f0, type_real tshift,
-                                          type_real factor,
+specfem::forcing_function::Ricker::Ricker(const type_real dt,
+                                          const type_real f0,
+                                          const type_real tshift,
+                                          const type_real factor,
                                           bool use_trick_for_better_pressure)
-    : f0(f0), factor(factor), tshift(tshift),
+    : dt(dt), f0(f0), factor(factor), tshift(tshift),
       use_trick_for_better_pressure(use_trick_for_better_pressure) {
 
   type_real hdur = 1.0 / this->f0;
@@ -16,13 +18,13 @@ specfem::forcing_function::Ricker::Ricker(type_real f0, type_real tshift,
 }
 
 specfem::forcing_function::Ricker::Ricker(
-    YAML::Node &Ricker, const int dt,
+    YAML::Node &Ricker, const type_real dt,
     const bool use_trick_for_better_pressure) {
   type_real f0 = Ricker["f0"].as<type_real>();
   type_real tshift = Ricker["tshift"].as<type_real>();
   type_real factor = Ricker["factor"].as<type_real>();
 
-  *this = specfem::forcing_function::Ricker(f0, tshift, factor,
+  *this = specfem::forcing_function::Ricker(dt, f0, tshift, factor,
                                             use_trick_for_better_pressure);
 }
 

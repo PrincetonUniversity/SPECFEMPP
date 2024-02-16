@@ -85,6 +85,70 @@ std::vector<test_config::Test> parse_test_config(std::string test_config_file,
 
 // ------------------------------------- //
 
+template <specfem::enums::element::type medium>
+specfem::testing::array1d<type_real, Kokkos::LayoutLeft> compact_array(
+    const specfem::testing::array1d<type_real, Kokkos::LayoutLeft> global,
+    const specfem::kokkos::HostView1d<int, Kokkos::LayoutLeft> index_mapping) {
+
+  const int nglob = index_mapping.extent(0);
+  const int n1 = global.n1;
+
+  assert(n1 == nglob);
+
+  int count = 0;
+  for (int i = 0; i < nglob; ++i) {
+    if (index_mapping(i) != -1) {
+      count++;
+    }
+  }
+
+  specfem::testing::array1d<type_real, Kokkos::LayoutLeft> local_array(count);
+
+  count = 0;
+  for (int i = 0; i < nglob; ++i) {
+    if (index_mapping(i) != -1) {
+      local_array.data(count) = global.data(i);
+      count++;
+    }
+  }
+
+  return local_array;
+}
+
+template <specfem::enums::element::type medium>
+specfem::testing::array2d<type_real, Kokkos::LayoutLeft> compact_array(
+    const specfem::testing::array2d<type_real, Kokkos::LayoutLeft> global,
+    const specfem::kokkos::HostView1d<int, Kokkos::LayoutLeft> index_mapping) {
+
+  const int nglob = index_mapping.extent(0);
+  const int n1 = global.n1;
+  const int n2 = global.n2;
+
+  assert(n1 == nglob);
+
+  int count = 0;
+  for (int i = 0; i < nglob; ++i) {
+    if (index_mapping(i) != -1) {
+      count++;
+    }
+  }
+
+  specfem::testing::array2d<type_real, Kokkos::LayoutLeft> local_array(count,
+                                                                       n2);
+
+  count = 0;
+  for (int i = 0; i < nglob; ++i) {
+    if (index_mapping(i) != -1) {
+      for (int j = 0; j < n2; ++j) {
+        local_array.data(count, j) = global.data(i, j);
+      }
+      count++;
+    }
+  }
+
+  return local_array;
+}
+
 TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
   std::string config_filename = "../../../tests/unit-tests/displacement_tests/"
                                 "Newmark/test_config.yaml";
@@ -123,16 +187,17 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
         std::cout << source->print() << std::endl;
     }
 
-    setup.update_t0(-1.0 * t0);
+    setup.update_t0(t0);
+
+    // Instantiate the solver and timescheme
+    auto it = setup.instantiate_solver();
 
     std::vector<std::shared_ptr<specfem::receivers::receiver> > receivers(0);
     std::vector<specfem::enums::seismogram::type> seismogram_types(0);
 
+    const type_real nsteps = it->get_max_timestep();
     specfem::compute::assembly assembly(mesh, quadratures, sources, receivers,
-                                        seismogram_types, 0);
-
-    // Instantiate the solver and timescheme
-    auto it = setup.instantiate_solver();
+                                        seismogram_types, nsteps, 0);
 
     // User output
     if (mpi->main_proc())
@@ -175,28 +240,57 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
 
       assembly.fields.sync_fields<specfem::sync::kind::DeviceToHost>();
 
-      // if (Test.database.elastic_domain_field != "NULL") {
-      //   specfem::kokkos::HostView2d<type_real, Kokkos::LayoutLeft>
-      //       field_elastic = elastic_domain_static.get_host_field();
+      const int nglob = assembly.fields.forward.nglob;
 
-      //   type_real tolerance = 0.01;
+      if (Test.database.elastic_domain_field != "NULL") {
 
-      //   specfem::testing::compare_norm(field_elastic,
-      //                                  Test.database.elastic_domain_field,
-      //                                  nglob, ndim, tolerance);
-      // }
+        specfem::kokkos::HostView2d<type_real, Kokkos::LayoutLeft>
+            h_elastic_field = assembly.fields.forward.elastic.h_field;
 
-      // if (Test.database.acoustic_domain_field != "NULL") {
-      //   specfem::kokkos::HostView1d<type_real, Kokkos::LayoutLeft>
-      //       field_acoustic = Kokkos::subview(
-      //           acoustic_domain_static.get_host_field(), Kokkos::ALL(), 0);
+        specfem::testing::array2d<type_real, Kokkos::LayoutLeft> displacement(
+            h_elastic_field);
 
-      //   type_real tolerance = 0.0001;
+        specfem::testing::array2d<type_real, Kokkos::LayoutLeft>
+            displacement_global(Test.database.elastic_domain_field, nglob, 2);
 
-      //   specfem::testing::compare_norm(field_acoustic,
-      //                                  Test.database.acoustic_domain_field,
-      //                                  nglob, tolerance);
-      // }
+        auto index_mapping = Kokkos::subview(
+            assembly.fields.forward.h_assembly_index_mapping, Kokkos::ALL(),
+            static_cast<int>(specfem::enums::element::type::elastic));
+
+        auto displacement_ref =
+            compact_array<specfem::enums::element::type::elastic>(
+                displacement_global, index_mapping);
+
+        type_real tolerance = 0.01;
+
+        ASSERT_TRUE(specfem::testing::compare_norm(
+            displacement, displacement_ref, tolerance));
+      }
+
+      if (Test.database.acoustic_domain_field != "NULL") {
+        specfem::kokkos::HostView1d<type_real, Kokkos::LayoutLeft>
+            h_acoustic_field = Kokkos::subview(
+                assembly.fields.forward.acoustic.h_field, Kokkos::ALL(), 0);
+
+        specfem::testing::array1d<type_real, Kokkos::LayoutLeft> potential(
+            h_acoustic_field);
+
+        specfem::testing::array1d<type_real, Kokkos::LayoutLeft>
+            potential_global(Test.database.acoustic_domain_field, nglob);
+
+        auto index_mapping = Kokkos::subview(
+            assembly.fields.forward.h_assembly_index_mapping, Kokkos::ALL(),
+            static_cast<int>(specfem::enums::element::type::acoustic));
+
+        auto potential_ref =
+            compact_array<specfem::enums::element::type::acoustic>(
+                potential_global, index_mapping);
+
+        type_real tolerance = 0.01;
+
+        ASSERT_TRUE(specfem::testing::compare_norm(potential, potential_ref,
+                                                   tolerance));
+      }
 
       std::cout << "--------------------------------------------------\n"
                 << "\033[0;32m[PASSED]\033[0m Test: " << Test.name << "\n"
