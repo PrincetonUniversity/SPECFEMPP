@@ -300,7 +300,7 @@ void specfem::domain::impl::kernels::element_kernel<
             [&](const int xz) {
               int ix, iz;
               sub2ind(xz, ngllx, iz, ix);
-              s_hprime(ix, iz, 0) = hprime(iz, ix);
+              s_hprime(iz, ix, 0) = hprime(iz, ix);
               s_hprimewgll(ix, iz, 0) = wgll(iz) * hprime(iz, ix);
               const int iglob =
                   global_index_mapping(index_mapping(ispec_l, iz, ix),
@@ -326,6 +326,8 @@ void specfem::domain::impl::kernels::element_kernel<
             [&](const int xz) {
               int ix, iz;
               sub2ind(xz, ngllx, iz, ix);
+
+              specfem::kokkos::array_type<type_real, 50> field_test(s_field.data());
 
               specfem::kokkos::array_type<type_real, medium_type::components>
                   dudxl;
@@ -373,6 +375,9 @@ void specfem::domain::impl::kernels::element_kernel<
               int iz, ix;
               sub2ind(xz, ngllx, iz, ix);
               constexpr auto tag = BC::value;
+
+              specfem::kokkos::array_type<type_real, 50> stress_integrand_xi_test(s_stress_integrand_xi.data());
+              specfem::kokkos::array_type<type_real, 50> stress_integrand_gamma_test(s_stress_integrand_gamma.data());
 
               const int iglob =
                   global_index_mapping(index_mapping(ispec_l, iz, ix),

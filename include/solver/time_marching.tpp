@@ -30,8 +30,6 @@ void specfem::solver::time_marching<qp_type>::run() {
   while (it->status()) {
     int istep = it->get_timestep();
 
-    type_real timeval = it->get_time();
-
     Kokkos::Profiling::pushRegion("Stiffness calculation");
     it->apply_predictor_phase(acoustic_field.field, acoustic_field.field_dot,
                               acoustic_field.field_dot_dot);
@@ -39,7 +37,7 @@ void specfem::solver::time_marching<qp_type>::run() {
                               elastic_field.field_dot_dot);
 
     acoustic_elastic_interface.compute_coupling();
-    acoustic_domain.compute_source_interaction(timeval);
+    acoustic_domain.compute_source_interaction(istep);
     acoustic_domain.compute_stiffness_interaction();
     acoustic_domain.divide_mass_matrix();
 
@@ -47,7 +45,7 @@ void specfem::solver::time_marching<qp_type>::run() {
                               acoustic_field.field_dot_dot);
 
     elastic_acoustic_interface.compute_coupling();
-    elastic_domain.compute_source_interaction(timeval);
+    elastic_domain.compute_source_interaction(istep);
     elastic_domain.compute_stiffness_interaction();
     elastic_domain.divide_mass_matrix();
 

@@ -583,6 +583,12 @@ template <typename T, int N> struct array_type {
     }
   }
 
+  KOKKOS_INLINE_FUNCTION array_type(const T *values) {
+    for (int i = 0; i < N; ++i) {
+      data[i] = values[i];
+    }
+  }
+
   /**
    * @brief operator [] to access the data array
    *

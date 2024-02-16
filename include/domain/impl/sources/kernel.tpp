@@ -96,8 +96,8 @@ void specfem::domain::impl::kernels::source_kernel<medium, qp_type, property>::
                   medium_type::value, property_type::value>(ispec_l, iz, ix);
 
               specfem::kokkos::array_type<type_real, 2> lagrange_interpolant(
-                  sources.source_array(isource_l, iz, ix, 0),
-                  sources.source_array(isource_l, iz, ix, 1));
+                  sources.source_array(isource_l, 0, iz, ix),
+                  sources.source_array(isource_l, 1, iz, ix));
 
               specfem::kokkos::array_type<type_real, components> acceleration;
 
