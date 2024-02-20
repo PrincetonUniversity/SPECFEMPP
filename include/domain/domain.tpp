@@ -166,6 +166,8 @@ void specfem::domain::domain<medium, qp_type>::divide_mass_matrix() {
       specfem::kokkos::DeviceMDrange<2, Kokkos::Iterate::Left>(
           { 0, 0 }, { nglob, components }),
       KOKKOS_CLASS_LAMBDA(const int iglob, const int idim) {
+        type_real mass = field.mass_inverse(iglob, idim);
+        type_real acceleration = field.field_dot_dot(iglob, idim);
         field.field_dot_dot(iglob, idim) =
             field.field_dot_dot(iglob, idim) * field.mass_inverse(iglob, idim);
       });

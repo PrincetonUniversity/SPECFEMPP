@@ -183,13 +183,16 @@ specfem::coupled_interface::impl::edges::edge<
     switch (coupled_edge.type) {
     case specfem::enums::edge::type::LEFT:
     case specfem::enums::edge::type::RIGHT:
-      return weights[1];
+      return -1.0 * weights[1];
+      break;
     case specfem::enums::edge::type::BOTTOM:
     case specfem::enums::edge::type::TOP:
-      return weights[0];
+      return -1.0 * weights[0];
+      break;
     default:
       ASSERT(false, "Invalid edge type");
       return 0.0;
+      break;
     }
   }();
 

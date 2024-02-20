@@ -71,11 +71,14 @@ KOKKOS_FUNCTION void newmark_mass_terms(
     case specfem::enums::edge::type::LEFT:
     case specfem::enums::edge::type::RIGHT:
       return weight[1];
+      break;
     case specfem::enums::edge::type::TOP:
     case specfem::enums::edge::type::BOTTOM:
       return weight[0];
+      break;
     default:
       return static_cast<type_real>(0.0);
+      break;
     }
   }();
 
@@ -234,11 +237,14 @@ KOKKOS_INLINE_FUNCTION void specfem::enums::boundary_conditions::stacey<
     case specfem::enums::edge::type::LEFT:
     case specfem::enums::edge::type::RIGHT:
       return weight[1];
+      break;
     case specfem::enums::edge::type::TOP:
     case specfem::enums::edge::type::BOTTOM:
       return weight[0];
+      break;
     default:
       return static_cast<type_real>(0.0);
+      break;
     }
   }();
 
