@@ -95,20 +95,20 @@ specfem::testing::array1d<type_real, Kokkos::LayoutLeft> compact_array(
 
   assert(n1 == nglob);
 
-  int count = 0;
+  int max_global_index = std::numeric_limits<int>::min();
+
   for (int i = 0; i < nglob; ++i) {
     if (index_mapping(i) != -1) {
-      count++;
+      max_global_index = std::max(max_global_index, index_mapping(i));
     }
   }
 
-  specfem::testing::array1d<type_real, Kokkos::LayoutLeft> local_array(count);
+  specfem::testing::array1d<type_real, Kokkos::LayoutLeft> local_array(
+      max_global_index + 1);
 
-  count = 0;
   for (int i = 0; i < nglob; ++i) {
     if (index_mapping(i) != -1) {
-      local_array.data(count) = global.data(i);
-      count++;
+      local_array.data(index_mapping(i)) = global.data(i);
     }
   }
 
@@ -126,23 +126,22 @@ specfem::testing::array2d<type_real, Kokkos::LayoutLeft> compact_array(
 
   assert(n1 == nglob);
 
-  int count = 0;
+  int max_global_index = std::numeric_limits<int>::min();
+
   for (int i = 0; i < nglob; ++i) {
     if (index_mapping(i) != -1) {
-      count++;
+      max_global_index = std::max(max_global_index, index_mapping(i));
     }
   }
 
-  specfem::testing::array2d<type_real, Kokkos::LayoutLeft> local_array(count,
-                                                                       n2);
+  specfem::testing::array2d<type_real, Kokkos::LayoutLeft> local_array(
+      max_global_index + 1, n2);
 
-  count = 0;
   for (int i = 0; i < nglob; ++i) {
     if (index_mapping(i) != -1) {
       for (int j = 0; j < n2; ++j) {
-        local_array.data(count, j) = global.data(i, j);
+        local_array.data(index_mapping(i), j) = global.data(i, j);
       }
-      count++;
     }
   }
 

@@ -14,7 +14,7 @@ specfem::forcing_function::Ricker::Ricker(const type_real dt,
 
   type_real hdur = 1.0 / this->f0;
 
-  this->t0 = 1.2 * hdur + this->tshift;
+  this->t0 = -1.2 * hdur + this->tshift;
 }
 
 specfem::forcing_function::Ricker::Ricker(

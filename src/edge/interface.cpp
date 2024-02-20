@@ -10,24 +10,24 @@ int specfem::edge::num_points_on_interface(
 
 KOKKOS_FUNCTION
 void specfem::edge::locate_point_on_self_edge(
-    const int &ipoint, const specfem::edge::interface &interface, int &i,
-    int &j) {
+    const int &ipoint, const specfem::edge::interface &interface, int &iz,
+    int &ix) {
   switch (interface.type) {
   case specfem::enums::edge::type::BOTTOM:
-    i = ipoint;
-    j = 0;
+    ix = ipoint;
+    iz = 0;
     break;
   case specfem::enums::edge::type::TOP:
-    i = interface.ngll - 1 - ipoint;
-    j = interface.ngll - 1;
+    ix = interface.ngll - 1 - ipoint;
+    iz = interface.ngll - 1;
     break;
   case specfem::enums::edge::type::LEFT:
-    i = 0;
-    j = ipoint;
+    ix = 0;
+    iz = ipoint;
     break;
   case specfem::enums::edge::type::RIGHT:
-    i = interface.ngll - 1;
-    j = interface.ngll - 1 - ipoint;
+    ix = interface.ngll - 1;
+    iz = interface.ngll - 1 - ipoint;
     break;
   default:
     assert(false && "Invalid edge type");
@@ -36,24 +36,24 @@ void specfem::edge::locate_point_on_self_edge(
 
 KOKKOS_FUNCTION
 void specfem::edge::locate_point_on_coupled_edge(
-    const int &ipoint, const specfem::edge::interface &interface, int &i,
-    int &j) {
+    const int &ipoint, const specfem::edge::interface &interface, int &iz,
+    int &ix) {
   switch (interface.type) {
   case specfem::enums::edge::type::BOTTOM:
-    i = interface.ngll - 1 - ipoint;
-    j = 0;
+    ix = interface.ngll - 1 - ipoint;
+    iz = 0;
     break;
   case specfem::enums::edge::type::TOP:
-    i = ipoint;
-    j = interface.ngll - 1;
+    ix = ipoint;
+    iz = interface.ngll - 1;
     break;
   case specfem::enums::edge::type::LEFT:
-    i = interface.ngll - 1;
-    j = interface.ngll - 1 - ipoint;
+    ix = interface.ngll - 1;
+    iz = interface.ngll - 1 - ipoint;
     break;
   case specfem::enums::edge::type::RIGHT:
-    i = 0;
-    j = ipoint;
+    ix = 0;
+    iz = ipoint;
     break;
   default:
     assert(false && "Invalid edge type");

@@ -22,13 +22,13 @@ int num_points_on_interface(const specfem::edge::interface &interface);
 
 KOKKOS_FUNCTION
 void locate_point_on_self_edge(const int &ipoint,
-                               const specfem::edge::interface &edge, int &i,
-                               int &j);
+                               const specfem::edge::interface &edge, int &iz,
+                               int &ix);
 
 KOKKOS_FUNCTION
 void locate_point_on_coupled_edge(const int &ipoint,
-                                  const specfem::edge::interface &edge, int &i,
-                                  int &j);
+                                  const specfem::edge::interface &edge, int &iz,
+                                  int &ix);
 } // namespace edge
 } // namespace specfem
 
