@@ -22,71 +22,71 @@ using StaticScratchViewType =
 // -----------------------------------------------------------------------------
 //                     SPECIALIZED ELEMENT
 // -----------------------------------------------------------------------------
-template <int NGLL, typename BC>
-KOKKOS_FUNCTION specfem::domain::impl::elements::element<
-    specfem::enums::element::dimension::dim2,
-    specfem::enums::element::medium::acoustic,
-    specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
-    specfem::enums::element::property::isotropic,
-    BC>::element(const specfem::compute::partial_derivatives
-                     &partial_derivatives,
-                 const specfem::compute::properties &properties,
-                 const specfem::compute::boundaries &boundary_conditions,
-                 const quadrature_points_type &quadrature_points) {
+// template <int NGLL, typename BC>
+// KOKKOS_FUNCTION specfem::domain::impl::elements::element<
+//     specfem::enums::element::dimension::dim2,
+//     specfem::enums::element::medium::acoustic,
+//     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
+//     specfem::enums::element::property::isotropic,
+//     BC>::element(const specfem::compute::partial_derivatives
+//                      &partial_derivatives,
+//                  const specfem::compute::properties &properties,
+//                  const specfem::compute::boundaries &boundary_conditions,
+//                  const quadrature_points_type &quadrature_points) {
 
-#ifndef NDEBUG
-  assert(partial_derivatives.xix.extent(1) == NGLL);
-  assert(partial_derivatives.xix.extent(2) == NGLL);
-  assert(partial_derivatives.gammax.extent(1) == NGLL);
-  assert(partial_derivatives.gammax.extent(2) == NGLL);
-  assert(partial_derivatives.xiz.extent(1) == NGLL);
-  assert(partial_derivatives.xiz.extent(2) == NGLL);
-  assert(partial_derivatives.gammaz.extent(1) == NGLL);
-  assert(partial_derivatives.gammaz.extent(2) == NGLL);
-  assert(partial_derivatives.jacobian.extent(1) == NGLL);
-  assert(partial_derivatives.jacobian.extent(2) == NGLL);
+// #ifndef NDEBUG
+//   assert(partial_derivatives.xix.extent(1) == NGLL);
+//   assert(partial_derivatives.xix.extent(2) == NGLL);
+//   assert(partial_derivatives.gammax.extent(1) == NGLL);
+//   assert(partial_derivatives.gammax.extent(2) == NGLL);
+//   assert(partial_derivatives.xiz.extent(1) == NGLL);
+//   assert(partial_derivatives.xiz.extent(2) == NGLL);
+//   assert(partial_derivatives.gammaz.extent(1) == NGLL);
+//   assert(partial_derivatives.gammaz.extent(2) == NGLL);
+//   assert(partial_derivatives.jacobian.extent(1) == NGLL);
+//   assert(partial_derivatives.jacobian.extent(2) == NGLL);
 
-  // Properties
-  assert(properties.rho_inverse.extent(1) == NGLL);
-  assert(properties.rho_inverse.extent(2) == NGLL);
-  assert(properties.lambdaplus2mu_inverse.extent(1) == NGLL);
-  assert(properties.lambdaplus2mu_inverse.extent(2) == NGLL);
-  assert(properties.kappa.extent(1) == NGLL);
-  assert(properties.kappa.extent(2) == NGLL);
-#endif
+//   // Properties
+//   assert(properties.rho_inverse.extent(1) == NGLL);
+//   assert(properties.rho_inverse.extent(2) == NGLL);
+//   assert(properties.lambdaplus2mu_inverse.extent(1) == NGLL);
+//   assert(properties.lambdaplus2mu_inverse.extent(2) == NGLL);
+//   assert(properties.kappa.extent(1) == NGLL);
+//   assert(properties.kappa.extent(2) == NGLL);
+// #endif
 
-  this->xix = partial_derivatives.xix;
-  this->gammax = partial_derivatives.gammax;
-  this->xiz = partial_derivatives.xiz;
-  this->gammaz = partial_derivatives.gammaz;
-  this->jacobian = partial_derivatives.jacobian;
-  this->rho_inverse = properties.rho_inverse;
-  this->lambdaplus2mu_inverse = properties.lambdaplus2mu_inverse;
-  this->kappa = properties.kappa;
+//   this->xix = partial_derivatives.xix;
+//   this->gammax = partial_derivatives.gammax;
+//   this->xiz = partial_derivatives.xiz;
+//   this->gammaz = partial_derivatives.gammaz;
+//   this->jacobian = partial_derivatives.jacobian;
+//   this->rho_inverse = properties.rho_inverse;
+//   this->lambdaplus2mu_inverse = properties.lambdaplus2mu_inverse;
+//   this->kappa = properties.kappa;
 
-  this->boundary_conditions =
-      boundary_conditions_type(boundary_conditions, quadrature_points);
+//   this->boundary_conditions =
+//       boundary_conditions_type(boundary_conditions, quadrature_points);
 
-  return;
-}
+//   return;
+// }
 
 template <int NGLL, typename BC>
 KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
     specfem::enums::element::dimension::dim2,
     specfem::enums::element::medium::acoustic,
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
-    specfem::enums::element::property::isotropic,
-    BC>::compute_mass_matrix_component(const int &ispec, const int &xz,
-                                       specfem::kokkos::array_type<type_real, 1>
-                                           &mass_matrix) const {
-  int ix, iz;
-  sub2ind(xz, NGLL, iz, ix);
+    specfem::enums::element::property::isotropic, BC>::
+    compute_mass_matrix_component(
+        const specfem::point::properties<medium_type::value,
+                                         property_type::value> &properties,
+        const specfem::point::partial_derivatives2 &partial_derivatives,
+        specfem::kokkos::array_type<type_real, 1> &mass_matrix) const {
 
   constexpr int components = medium_type::components;
 
   static_assert(components == 1, "Acoustic medium has only one component");
 
-  mass_matrix[0] = this->jacobian(ispec, iz, ix) / this->kappa(ispec, iz, ix);
+  mass_matrix[0] = partial_derivatives.jacobian / properties.kappa;
 
   return;
 }
@@ -99,30 +99,21 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic, BC>::
     mass_time_contribution(
-        const int &ispec, const int &ielement, const int &xz,
-        const type_real &dt,
+        const int &xz, const type_real &dt,
         const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
+        const specfem::point::partial_derivatives2 &partial_derivatives,
+        const specfem::point::properties<medium_type::value,
+                                         property_type::value> &properties,
+        const specfem::point::boundary &boundary_type,
         specfem::kokkos::array_type<type_real, medium_type::components>
             &rmass_inverse) const {
-
-  int ix, iz;
-  sub2ind(xz, NGLL, iz, ix);
-
-  const specfem::compute::element_partial_derivatives partial_derivatives(
-      this->xix(ispec, iz, ix), this->gammax(ispec, iz, ix),
-      this->xiz(ispec, iz, ix), this->gammaz(ispec, iz, ix),
-      this->jacobian(ispec, iz, ix));
-
-  const specfem::compute::element_properties<medium_type::value,
-                                             property_type::value>
-      properties(this->lambdaplus2mu_inverse(ispec, iz, ix),
-                 this->rho_inverse(ispec, iz, ix));
 
   rmass_inverse[0] = 0.0;
 
   // comppute mass matrix component
   boundary_conditions.template mass_time_contribution<time_scheme>(
-      ielement, xz, dt, weight, partial_derivatives, properties, rmass_inverse);
+      xz, dt, weight, partial_derivatives, properties, boundary_type,
+      rmass_inverse);
 
   return;
 }
@@ -134,20 +125,17 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic, BC>::
     compute_gradient(
-        const int &ispec, const int &ielement, const int &xz,
-        const ScratchViewType<type_real, 1> s_hprime_xx,
-        const ScratchViewType<type_real, 1> s_hprime_zz,
+        const int xz, const ScratchViewType<type_real, 1> s_hprime,
         const ScratchViewType<type_real, medium_type::components> field_chi,
-        specfem::kokkos::array_type<type_real, 1> &dchidxl,
-        specfem::kokkos::array_type<type_real, 1> &dchidzl) const {
+        const specfem::point::partial_derivatives2 &partial_derivatives,
+        const specfem::point::boundary &boundary_type,
+        specfem::kokkos::array_type<type_real, medium_type::components>
+            &dchidxl,
+        specfem::kokkos::array_type<type_real, medium_type::components>
+            &dchidzl) const {
 
   int ix, iz;
   sub2ind(xz, NGLL, iz, ix);
-
-  const specfem::compute::element_partial_derivatives partial_derivatives =
-      specfem::compute::element_partial_derivatives(
-          this->xix(ispec, iz, ix), this->gammax(ispec, iz, ix),
-          this->xiz(ispec, iz, ix), this->gammaz(ispec, iz, ix));
 
   type_real dchi_dxi = 0.0;
   type_real dchi_dgamma = 0.0;
@@ -156,8 +144,8 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
 #pragma unroll
 #endif
   for (int l = 0; l < NGLL; l++) {
-    dchi_dxi += s_hprime_xx(ix, l, 0) * field_chi(iz, l, 0);
-    dchi_dgamma += s_hprime_zz(iz, l, 0) * field_chi(l, ix, 0);
+    dchi_dxi += s_hprime(ix, l, 0) * field_chi(iz, l, 0);
+    dchi_dgamma += s_hprime(iz, l, 0) * field_chi(l, ix, 0);
   }
 
   // dchidx
@@ -168,7 +156,7 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
   dchidzl[0] = dchi_dxi * partial_derivatives.xiz +
                dchi_dgamma * partial_derivatives.gammaz;
 
-  boundary_conditions.enforce_gradient(ielement, xz, partial_derivatives,
+  boundary_conditions.enforce_gradient(xz, partial_derivatives, boundary_type,
                                        dchidxl, dchidzl);
 
   return;
@@ -181,25 +169,19 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic, BC>::
     compute_stress(
-        const int &ispec, const int &ielement, const int &xz,
-        const specfem::kokkos::array_type<type_real, 1> &dchidxl,
-        const specfem::kokkos::array_type<type_real, 1> &dchidzl,
-        specfem::kokkos::array_type<type_real, 1> &stress_integrand_xi,
-        specfem::kokkos::array_type<type_real, 1> &stress_integrand_gamma)
-        const {
-
-  int ix, iz;
-  sub2ind(xz, NGLL, iz, ix);
-
-  const specfem::compute::element_partial_derivatives partial_derivatives(
-      this->xix(ispec, iz, ix), this->gammax(ispec, iz, ix),
-      this->xiz(ispec, iz, ix), this->gammaz(ispec, iz, ix),
-      this->jacobian(ispec, iz, ix));
-
-  const specfem::compute::element_properties<medium_type::value,
-                                             property_type::value>
-      properties(this->lambdaplus2mu_inverse(ispec, iz, ix),
-                 this->rho_inverse(ispec, iz, ix));
+        const int xz,
+        const specfem::kokkos::array_type<type_real, medium_type::components>
+            &dchidxl,
+        const specfem::kokkos::array_type<type_real, medium_type::components>
+            &dchidzl,
+        const specfem::point::partial_derivatives2 &partial_derivatives,
+        const specfem::point::properties<medium_type::value,
+                                         property_type::value> &properties,
+        const specfem::point::boundary &boundary_type,
+        specfem::kokkos::array_type<type_real, medium_type::components>
+            &stress_integrand_xi,
+        specfem::kokkos::array_type<type_real, medium_type::components>
+            &stress_integrand_gamma) const {
 
   // Precompute the factor
   type_real fac = partial_derivatives.jacobian * properties.rho_inverse;
@@ -216,8 +198,8 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
   stress_integrand_gamma[0] = fac * (partial_derivatives.gammax * dchidxl[0] +
                                      partial_derivatives.gammaz * dchidzl[0]);
 
-  boundary_conditions.enforce_stress(ielement, xz, partial_derivatives,
-                                     properties, stress_integrand_xi,
+  boundary_conditions.enforce_stress(xz, partial_derivatives, properties,
+                                     boundary_type, stress_integrand_xi,
                                      stress_integrand_gamma);
 
   return;
@@ -230,16 +212,17 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
     specfem::enums::element::property::isotropic, BC>::
     compute_acceleration(
-        const int &ispec, const int &ielement, const int &xz,
+        const int &xz,
         const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
         const ScratchViewType<type_real, medium_type::components>
             stress_integrand_xi,
         const ScratchViewType<type_real, medium_type::components>
             stress_integrand_gamma,
-        const ScratchViewType<type_real, medium_type::components>
-            s_hprimewgll_xx,
-        const ScratchViewType<type_real, medium_type::components>
-            s_hprimewgll_zz,
+        const ScratchViewType<type_real, medium_type::components> s_hprimewgll,
+        const specfem::point::partial_derivatives2 &partial_derivatives,
+        const specfem::point::properties<medium_type::value,
+                                         property_type::value> &properties,
+        const specfem::point::boundary &boundary_type,
         const specfem::kokkos::array_type<type_real, medium_type::components>
             &velocity,
         specfem::kokkos::array_type<type_real, medium_type::components>
@@ -254,42 +237,18 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
 
   static_assert(components == 1, "Acoustic medium has only one component");
 
-  specfem::compute::element_partial_derivatives partial_derivatives;
-
-  specfem::compute::element_properties<medium_type::value, property_type::value>
-      properties;
-
-  // populate partial derivatives only if the boundary is stacey
-  // or if the boundary is composite_stacey_dirichlet
-  if constexpr ((boundary_conditions_type::value ==
-                 specfem::enums::element::boundary_tag::stacey) ||
-                (boundary_conditions_type::value ==
-                 specfem::enums::element::boundary_tag::
-                     composite_stacey_dirichlet)) {
-    partial_derivatives = specfem::compute::element_partial_derivatives(
-        this->xix(ispec, iz, ix), this->gammax(ispec, iz, ix),
-        this->xiz(ispec, iz, ix), this->gammaz(ispec, iz, ix),
-        this->jacobian(ispec, iz, ix));
-
-    properties = specfem::compute::element_properties<medium_type::value,
-                                                      property_type::value>(
-        this->lambdaplus2mu_inverse(ispec, iz, ix),
-        this->rho_inverse(ispec, iz, ix));
-  }
-
 #ifdef KOKKOS_ENABLE_CUDA
 #pragma unroll
 #endif
   for (int l = 0; l < NGLL; l++) {
-    temp1l += s_hprimewgll_xx(ix, l, 0) * stress_integrand_xi(iz, l, 0);
-    temp2l += s_hprimewgll_zz(iz, l, 0) * stress_integrand_gamma(l, ix, 0);
+    temp1l += s_hprimewgll(ix, l, 0) * stress_integrand_xi(iz, l, 0);
+    temp2l += s_hprimewgll(iz, l, 0) * stress_integrand_gamma(l, ix, 0);
   }
 
   acceleration[0] = -1.0 * ((weight[1] * temp1l) + (weight[0] * temp2l));
 
-  boundary_conditions.enforce_traction(ielement, xz, weight,
-                                       partial_derivatives, properties,
-                                       velocity, acceleration);
+  boundary_conditions.enforce_traction(xz, weight, partial_derivatives,
+                                       properties, boundary_type, velocity, acceleration);
 
   return;
 }

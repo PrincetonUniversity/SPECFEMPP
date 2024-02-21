@@ -14,10 +14,7 @@ parameters:
   simulation-setup:
     ## quadrature setup
     quadrature:
-      alpha: 0.0
-      beta: 0.0
-      ngllx: 5
-      ngllz: 5
+      quadrature-type: GLL4
 
     ## Solver setup
     solver:

@@ -11,7 +11,7 @@
 #include "source_time_function/interface.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
-#include "utilities.cpp"
+// #include "utilities.cpp"
 #include "yaml-cpp/yaml.h"
 #include <cmath>
 

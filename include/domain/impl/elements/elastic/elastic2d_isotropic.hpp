@@ -94,10 +94,9 @@ public:
    * point
    */
   KOKKOS_FUNCTION
-  element(const specfem::compute::partial_derivatives &partial_derivatives,
-          const specfem::compute::properties &properties,
-          const specfem::compute::boundaries &boundary_conditions,
-          const quadrature_points_type &quadrature_points);
+  element(const specfem::compute::assembly &assembly,
+          const quadrature_points_type &quadrature_points)
+      : boundary_conditions(assembly.boundaries, quadrature_points){};
 
   /**
    * @brief Compute the mass matrix component ($ m_{\alpha, \beta} $) for a
@@ -112,13 +111,19 @@ public:
    */
   KOKKOS_INLINE_FUNCTION
   void compute_mass_matrix_component(
-      const int &ispec, const int &xz,
+      const specfem::point::properties<medium_type::value, property_type::value>
+          &properties,
+      const specfem::point::partial_derivatives2 &partial_derivatives,
       specfem::kokkos::array_type<type_real, 2> &mass_matrix) const;
 
   template <specfem::enums::time_scheme::type time_scheme>
   KOKKOS_INLINE_FUNCTION void mass_time_contribution(
-      const int &ispec, const int &ielement, const int &xz, const type_real &dt,
+      const int &xz, const type_real &dt,
       const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
+      const specfem::point::partial_derivatives2 &partial_derivatives,
+      const specfem::point::properties<medium_type::value, property_type::value>
+          &properties,
+      const specfem::point::boundary &boundary_type,
       specfem::kokkos::array_type<type_real, medium_type::components>
           &rmass_inverse) const;
 
@@ -128,9 +133,11 @@ public:
    *
    * @param ispec Index of the spectral element
    * @param xz Index of Gauss-Lobatto-Legendre quadrature point
-   * @param s_hprime_xx Scratch view of derivative of Lagrange polynomial in x
+   * @param s_hprime_xx Scratch view of derivative of Lagrange polynomial
+   in x
    * direction
-   * @param s_hprime_zz Scratch view of derivative of Lagrange polynomial in z
+   * @param s_hprime_zz Scratch view of derivative of Lagrange polynomial
+   in z
    * direction
    * @param u Scrath view of field. For elastic domains the field has 2
    * components
@@ -139,16 +146,18 @@ public:
    * @param dudzl Computed partial derivative of field \f$ \frac{\partial
    * \tilde{u}}{\partial z} \f$
    */
-  KOKKOS_INLINE_FUNCTION void
-  compute_gradient(const int &ispec, const int &ielement, const int &xz,
-                   const ScratchViewType<type_real, 1> s_hprime_xx,
-                   const ScratchViewType<type_real, 1> s_hprime_zz,
-                   const ScratchViewType<type_real, medium_type::components> u,
-                   specfem::kokkos::array_type<type_real, 2> &dudxl,
-                   specfem::kokkos::array_type<type_real, 2> &dudzl) const;
+  KOKKOS_INLINE_FUNCTION void compute_gradient(
+      const int xz, const ScratchViewType<type_real, 1> s_hprime,
+      const ScratchViewType<type_real, medium_type::components> u,
+      const specfem::point::partial_derivatives2 &partial_derivatives,
+      const specfem::point::boundary &boundary_type,
+      specfem::kokkos::array_type<type_real, medium_type::components> &dudxl,
+      specfem::kokkos::array_type<type_real, medium_type::components> &dudzl)
+      const;
 
   /**
-   * @brief Compute the stress integrand at a particular Gauss-Lobatto-Legendre
+   * @brief Compute the stress integrand at a particular
+   Gauss-Lobatto-Legendre
    * quadrature point.
    *
    * @param ispec Index of the spectral element
@@ -158,60 +167,77 @@ public:
    * @param dudzl Partial derivative of field \f$ \frac{\partial
    * \tilde{u}}{\partial z} \f$
    * @param stress_integrand_xi Stress integrand  wrt. \f$ \xi \f$ \f$
-   * J^{\alpha, \gamma} \partial_x u \partial_x \xi + \partial_z u * \partial_z
+   * J^{\alpha, \gamma} \partial_x u \partial_x \xi + \partial_z u *
+   \partial_z
    * \xi \f$
    * @param stress_integrand_gamma Stress integrand  wrt. \f$\gamma\f$ \f$
    * J^{\alpha, \gamma} \partial_x u \partial_x \gamma + \partial_z u *
    * \partial_z \gamma \f$
    */
   KOKKOS_INLINE_FUNCTION void compute_stress(
-      const int &ispec, const int &ielement, const int &xz,
-      const specfem::kokkos::array_type<type_real, 2> &dudxl,
-      const specfem::kokkos::array_type<type_real, 2> &dudzl,
-      specfem::kokkos::array_type<type_real, 2> &stress_integrand_xi,
-      specfem::kokkos::array_type<type_real, 2> &stress_integrand_gamma) const;
+      const int xz,
+      const specfem::kokkos::array_type<type_real, medium_type::components>
+          &dudxl,
+      const specfem::kokkos::array_type<type_real, medium_type::components>
+          &dudzl,
+      const specfem::point::partial_derivatives2 &partial_derivatives,
+      const specfem::point::properties<medium_type::value, property_type::value>
+          &properties,
+      const specfem::point::boundary &boundary_type,
+      specfem::kokkos::array_type<type_real, medium_type::components>
+          &stress_integrand_xi,
+      specfem::kokkos::array_type<type_real, medium_type::components>
+          &stress_integrand_gamma) const;
 
   /**
    * @brief Update the acceleration at the quadrature point xz
    *
    * @param xz Index of the quadrature point
-   * @param wxglll Weight of the Gauss-Lobatto-Legendre quadrature point in x
+   * @param wxglll Weight of the Gauss-Lobatto-Legendre quadrature point in
+   x
    * direction
-   * @param wzglll Weight of the Gauss-Lobatto-Legendre quadrature point in z
+   * @param wzglll Weight of the Gauss-Lobatto-Legendre quadrature point in
+   z
    * direction
-   * @param stress_integrand_xi Stress integrand wrt. \f$ \xi \f$ \f$ J^{\alpha,
-   * \gamma} \partial_x u \partial_x \xi + \partial_z u * \partial_z \xi \f$ as
+   * @param stress_integrand_xi Stress integrand wrt. \f$ \xi \f$ \f$
+   J^{\alpha,
+   * \gamma} \partial_x u \partial_x \xi + \partial_z u * \partial_z \xi
+   \f$ as
    * computed by compute_stress
    * @param stress_integrand_gamma Stress integrand wrt. \f$\gamma\f$ \f$
    * J^{\alpha, \gamma} \partial_x u \partial_x \gamma + \partial_z u *
    * \partial_z \gamma \f$ as computed by compute_stress
    * @param s_hprimewgll_xx Scratch view hprime_xx * wxgll
    * @param s_hprimewgll_zz Scratch view hprime_zz * wzgll
-   * @param field_dot_dot Acceleration of the field subviewed at global index xz
+   * @param field_dot_dot Acceleration of the field subviewed at global
+   index xz
    */
   KOKKOS_INLINE_FUNCTION void compute_acceleration(
-      const int &ispec, const int &ielement, const int &xz,
+      const int &xz,
       const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
       const ScratchViewType<type_real, medium_type::components>
           stress_integrand_xi,
       const ScratchViewType<type_real, medium_type::components>
           stress_integrand_gamma,
-      const ScratchViewType<type_real, 1> s_hprimewgll_xx,
-      const ScratchViewType<type_real, 1> s_hprimewgll_zz,
+      const ScratchViewType<type_real, 1> s_hprimewgll,
+      const specfem::point::partial_derivatives2 &partial_derivatives,
+      const specfem::point::properties<medium_type::value, property_type::value>
+          &properties,
+      const specfem::point::boundary &boundary_type,
       const specfem::kokkos::array_type<type_real, medium_type::components>
           &velocity,
       specfem::kokkos::array_type<type_real, 2> &acceleration) const;
 
 private:
-  specfem::kokkos::DeviceView3d<type_real> xix;           ///< xix
-  specfem::kokkos::DeviceView3d<type_real> xiz;           ///< xiz
-  specfem::kokkos::DeviceView3d<type_real> gammax;        ///< gammax
-  specfem::kokkos::DeviceView3d<type_real> gammaz;        ///< gammaz
-  specfem::kokkos::DeviceView3d<type_real> jacobian;      ///< jacobian
-  specfem::kokkos::DeviceView3d<type_real> lambdaplus2mu; ///< lambda +
-                                                          ///< 2 * mu
-  specfem::kokkos::DeviceView3d<type_real> mu;            ///< mu
-  specfem::kokkos::DeviceView3d<type_real> rho;           ///< rho
+  //   specfem::kokkos::DeviceView3d<type_real> xix;           ///< xix
+  //   specfem::kokkos::DeviceView3d<type_real> xiz;           ///< xiz
+  //   specfem::kokkos::DeviceView3d<type_real> gammax;        ///< gammax
+  //   specfem::kokkos::DeviceView3d<type_real> gammaz;        ///< gammaz
+  //   specfem::kokkos::DeviceView3d<type_real> jacobian;      ///< jacobian
+  //   specfem::kokkos::DeviceView3d<type_real> lambdaplus2mu; ///< lambda +
+  //                                                           ///< 2 * mu
+  //   specfem::kokkos::DeviceView3d<type_real> mu;            ///< mu
+  //   specfem::kokkos::DeviceView3d<type_real> rho;           ///< rho
   boundary_conditions_type boundary_conditions; ///< Boundary conditions
 };
 } // namespace elements

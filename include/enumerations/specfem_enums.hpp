@@ -213,13 +213,14 @@ namespace edge {
  *
  */
 enum type {
-  TOP,    ///< Top edge
-  BOTTOM, ///< Bottom edge
-  LEFT,   ///< Left edge
-  RIGHT   ///< Right edge
+  NONE = 0,   /// Not an edge
+  TOP = 1,    ///< Top edge
+  BOTTOM = 2, ///< Bottom edge
+  LEFT = 3,   ///< Left edge
+  RIGHT = 4   ///< Right edge
 };
 
-constexpr int num_edges = 4; ///< Number of edges in the mesh
+constexpr int num_edges = 5; ///< Number of edges in the mesh
 } // namespace edge
 
 /**

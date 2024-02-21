@@ -19,7 +19,6 @@ namespace compute {
 
 struct assembly {
   specfem::compute::mesh mesh;
-  specfem::quadrature::quadrature quadrature;
   specfem::compute::partial_derivatives partial_derivatives;
   specfem::compute::properties properties;
   specfem::compute::sources sources;
@@ -35,7 +34,7 @@ struct assembly {
       const std::vector<std::shared_ptr<specfem::receivers::receiver> >
           &receivers,
       const std::vector<specfem::enums::seismogram::type> &stypes,
-      const int max_sig_step);
+      const int max_timesteps, const int max_sig_step);
 };
 
 } // namespace compute

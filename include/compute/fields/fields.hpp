@@ -27,6 +27,10 @@ struct fields {
     }
   }
 
+  template <specfem::sync::kind sync> void sync_fields() {
+    forward.sync_fields<sync>();
+  }
+
   specfem::compute::simulation_field<forward_type> forward;
 };
 } // namespace compute

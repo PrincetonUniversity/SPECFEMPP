@@ -565,8 +565,29 @@ using simd_type = Kokkos::Experimental::simd<T, simd_abi>;
 template <typename T, int N> struct array_type {
   T data[N]; ///< Data array
 
-  template <typename... Args>
+  template <typename... Args,
+            typename std::enable_if<sizeof...(Args) == N, bool>::type = true>
   KOKKOS_INLINE_FUNCTION array_type(const Args &...args) : data{ args... } {}
+
+  template <typename MemorySpace, typename Layout, typename MemoryTraits>
+  KOKKOS_INLINE_FUNCTION
+  array_type(const Kokkos::View<T *, Layout, MemorySpace, MemoryTraits> view) {
+    for (int i = 0; i < N; ++i) {
+      data[i] = view(i);
+    }
+  }
+
+  KOKKOS_INLINE_FUNCTION array_type(const T value) {
+    for (int i = 0; i < N; ++i) {
+      data[i] = value;
+    }
+  }
+
+  KOKKOS_INLINE_FUNCTION array_type(const T *values) {
+    for (int i = 0; i < N; ++i) {
+      data[i] = values[i];
+    }
+  }
 
   /**
    * @brief operator [] to access the data array
@@ -597,7 +618,7 @@ template <typename T, int N> struct array_type {
 #ifdef KOKKOS_ENABLE_CUDA
 #pragma unroll
 #endif
-    for (int i = 0; i < N; i++) {
+    for (int i = 0; i < N; ++i) {
       data[i] += rhs[i];
     }
     return *this;
@@ -611,7 +632,7 @@ template <typename T, int N> struct array_type {
 #ifdef KOKKOS_ENABLE_CUDA
 #pragma unroll
 #endif
-    for (int i = 0; i < N; i++) {
+    for (int i = 0; i < N; ++i) {
       data[i] = 0.0;
     }
   }
@@ -633,7 +654,7 @@ template <typename T, int N> struct array_type {
 #ifdef KOKKOS_ENABLE_CUDA
 #pragma unroll
 #endif
-    for (int i = 0; i < N; i++) {
+    for (int i = 0; i < N; ++i) {
       data[i] = other[i];
     }
   }
@@ -643,7 +664,7 @@ template <typename T, int N> struct array_type {
 #ifdef KOKKOS_ENABLE_CUDA
 #pragma unroll
 #endif
-    for (int i = 0; i < N; i++) {
+    for (int i = 0; i < N; ++i) {
       norm += data[i] * data[i];
     }
     return sqrt(norm);
@@ -656,7 +677,7 @@ template <typename T, int N> struct array_type {
 #ifdef KOKKOS_ENABLE_CUDA
 #pragma unroll
 #endif
-    for (int i = 0; i < N; i++) {
+    for (int i = 0; i < N; ++i) {
       dot += a[i] * b[i];
     }
     return dot;

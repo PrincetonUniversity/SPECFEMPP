@@ -41,6 +41,8 @@ public:
    *
    */
   using medium_type = specfem::enums::element::medium::elastic;
+
+  using property_type = specfem::enums::element::property::isotropic;
   /**
    * @brief Number of Gauss-Lobatto-Legendre quadrature points
    */
@@ -59,27 +61,29 @@ public:
 
   KOKKOS_FUNCTION receiver() = default;
 
-  /**
-   * @brief Construct a new elemental receiver object
-   *
-   * @param sin_rec sin of the receiver angle
-   * @param cos_rec cosine of the receiver angle
-   * @param receiver_array receiver array containing pre-computed lagrange
-   * interpolants
-   * @param partial_derivatives struct used to store partial derivatives at
-   * quadrature points
-   * @param properties struct used to store material properties at quadrature
-   * points
-   * @param receiver_field view to store compute receiver field at all GLL
-   * points where the receiver is located
-   */
-  KOKKOS_FUNCTION
-  receiver(const specfem::kokkos::DeviceView1d<type_real> sin_rec,
-           const specfem::kokkos::DeviceView1d<type_real> cos_rec,
-           const specfem::kokkos::DeviceView4d<type_real> receiver_array,
-           const specfem::compute::partial_derivatives &partial_derivatives,
-           const specfem::compute::properties &properties,
-           specfem::kokkos::DeviceView6d<type_real> receiver_field);
+  //   /**
+  //    * @brief Construct a new elemental receiver object
+  //    *
+  //    * @param sin_rec sin of the receiver angle
+  //    * @param cos_rec cosine of the receiver angle
+  //    * @param receiver_array receiver array containing pre-computed lagrange
+  //    * interpolants
+  //    * @param partial_derivatives struct used to store partial derivatives at
+  //    * quadrature points
+  //    * @param properties struct used to store material properties at
+  //    quadrature
+  //    * points
+  //    * @param receiver_field view to store compute receiver field at all GLL
+  //    * points where the receiver is located
+  //    */
+  //   KOKKOS_FUNCTION
+  //   receiver(const specfem::kokkos::DeviceView1d<type_real> sin_rec,
+  //            const specfem::kokkos::DeviceView1d<type_real> cos_rec,
+  //            const specfem::kokkos::DeviceView4d<type_real> receiver_array,
+  //            const specfem::compute::partial_derivatives
+  //            &partial_derivatives, const specfem::compute::properties
+  //            &properties, specfem::kokkos::DeviceView6d<type_real>
+  //            receiver_field);
 
   /**
    * @brief Compute and populate the receiver field at all GLL points where the
@@ -98,60 +102,51 @@ public:
    * @param hprime_xx Derivates of Lagrange interpolants in the x direction
    * @param hprime_zz Derivates of Lagrange interpolants in the z direction
    */
-  KOKKOS_FUNCTION void get_field(
-      const int &ireceiver, const int &iseis, const int &ispec,
-      const specfem::enums::seismogram::type &seismogram_type, const int &xz,
-      const int &isig_step,
-      const ScratchViewType<type_real, medium_type::components> field,
-      const ScratchViewType<type_real, medium_type::components> field_dot,
-      const ScratchViewType<type_real, medium_type::components> field_dot_dot,
-      const ScratchViewType<type_real, 1> s_hprime_xx,
-      const ScratchViewType<type_real, 1> s_hprime_zz) const;
+  KOKKOS_FUNCTION
+  void get_field(
+      const int iz, const int ix,
+      const specfem::point::partial_derivatives2 partial_derivatives,
+      const specfem::point::properties<medium_type::value, property_type::value>
+          properties,
+      const ScratchViewType<type_real, 1> hprime,
+      const ScratchViewType<type_real, medium_type::components> active_field,
+      Kokkos::View<type_real[2], Kokkos::LayoutStride,
+                   specfem::kokkos::DevMemSpace>
+          receiver_field) const;
 
-  /**
-   * @brief Compute the seismogram components for a given receiver and
-   * seismogram
-   *
-   * @param ireceiver Index of the receiver
-   * @param iseis Index of the seismogram
-   * @param seismogram_type Type of the seismogram
-   * @param xz Index of the quadrature point
-   * @param isig_step Seismogram step. Seismograms step = current time step /
-   * seismogram sampling rate
-   * @param l_seismogram_components Local seismogram components
-   */
-  KOKKOS_FUNCTION void compute_seismogram_components(
-      const int &ireceiver, const int &iseis,
-      const specfem::enums::seismogram::type &seismogram_type, const int &xz,
-      const int &isig_step,
-      specfem::kokkos::array_type<type_real, 2> &l_seismogram_components) const;
+  //   /**
+  //    * @brief Compute the seismogram components for a given receiver and
+  //    * seismogram
+  //    *
+  //    * @param ireceiver Index of the receiver
+  //    * @param iseis Index of the seismogram
+  //    * @param seismogram_type Type of the seismogram
+  //    * @param xz Index of the quadrature point
+  //    * @param isig_step Seismogram step. Seismograms step = current time step
+  //    /
+  //    * seismogram sampling rate
+  //    * @param l_seismogram_components Local seismogram components
+  //    */
+  //   KOKKOS_FUNCTION void compute_seismogram_components(
+  //       const int &ireceiver, const int &iseis,
+  //       const specfem::enums::seismogram::type &seismogram_type, const int
+  //       &xz, const int &isig_step, specfem::kokkos::array_type<type_real, 2>
+  //       &l_seismogram_components) const;
 
-  /**
-   * @brief Store the computed seismogram components in the global seismogram
-   * view
-   *
-   * @param ireceiver Index of the receiver
-   * @param seismogram_components Local seismogram components
-   * @param receiver_seismogram Gloabl seismogram view
-   */
-  KOKKOS_FUNCTION void compute_seismogram(
-      const int &ireceiver,
-      const specfem::kokkos::array_type<type_real, 2> &seismogram_components,
-      specfem::kokkos::DeviceView1d<type_real> receiver_seismogram) const;
-
-private:
-  specfem::kokkos::DeviceView1d<type_real> sin_rec; ///< sin of the receiver
-                                                    ///< angle
-  specfem::kokkos::DeviceView1d<type_real> cos_rec; ///< cosine of the receiver
-                                                    ///< angle
-  specfem::kokkos::DeviceView4d<type_real> receiver_array; ///< receiver array
-                                                           ///< containing
-                                                           ///< pre-computed
-                                                           ///< lagrange
-                                                           ///< interpolants
-  specfem::kokkos::DeviceView6d<type_real>
-      receiver_field; ///< view to store compute receiver field at all GLL
-                      ///< points where the receiver is located
+  //   /**
+  //    * @brief Store the computed seismogram components in the global
+  //    seismogram
+  //    * view
+  //    *
+  //    * @param ireceiver Index of the receiver
+  //    * @param seismogram_components Local seismogram components
+  //    * @param receiver_seismogram Gloabl seismogram view
+  //    */
+  //   KOKKOS_FUNCTION void compute_seismogram(
+  //       const int &ireceiver,
+  //       const specfem::kokkos::array_type<type_real, 2>
+  //       &seismogram_components, specfem::kokkos::DeviceView1d<type_real>
+  //       receiver_seismogram) const;
 };
 
 } // namespace receivers

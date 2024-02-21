@@ -4,24 +4,26 @@
 #include <Kokkos_Core.hpp>
 #include <cmath>
 
-specfem::forcing_function::Dirac::Dirac(type_real f0, type_real tshift,
-                                        type_real factor,
+specfem::forcing_function::Dirac::Dirac(const type_real dt, const type_real f0,
+                                        const type_real tshift,
+                                        const type_real factor,
                                         bool use_trick_for_better_pressure)
-    : f0(f0), factor(factor), tshift(tshift),
+    : dt(dt), f0(f0), factor(factor), tshift(tshift),
       use_trick_for_better_pressure(use_trick_for_better_pressure) {
 
   type_real hdur = 1.0 / this->f0;
 
-  this->t0 = 1.2 * hdur + this->tshift;
+  this->t0 = -1.2 * hdur + this->tshift;
 }
 
 specfem::forcing_function::Dirac::Dirac(
-    YAML::Node &Dirac, const int dt, const bool use_trick_for_better_pressure) {
+    YAML::Node &Dirac, const type_real dt,
+    const bool use_trick_for_better_pressure) {
   type_real f0 = 1.0 / (10.0 * dt);
   type_real tshift = Dirac["tshift"].as<type_real>();
   type_real factor = Dirac["factor"].as<type_real>();
 
-  *this = specfem::forcing_function::Dirac(f0, tshift, factor,
+  *this = specfem::forcing_function::Dirac(dt, f0, tshift, factor,
                                            use_trick_for_better_pressure);
 }
 

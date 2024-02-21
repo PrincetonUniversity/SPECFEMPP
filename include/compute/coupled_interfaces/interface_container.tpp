@@ -187,6 +187,8 @@ void compute_edges(
     specfem::kokkos::HostMirror1d<specfem::edge::interface> edge1,
     specfem::kokkos::HostMirror1d<specfem::edge::interface> edge2) {
 
+  const int ngll = h_ibool.extent(1);
+
   const int num_interfaces = ispec1.extent(0);
 
   for (int inum = 0; inum < num_interfaces; inum++) {
@@ -194,8 +196,8 @@ void compute_edges(
     const int ispec2l = ispec2(inum);
 
     int num_connected = 0;
-    for (int edge1l = 0; edge1l < specfem::enums::edge::num_edges; edge1l++) {
-      for (int edge2l = 0; edge2l < specfem::enums::edge::num_edges; edge2l++) {
+    for (int edge1l = 1; edge1l < specfem::enums::edge::num_edges; edge1l++) {
+      for (int edge2l = 1; edge2l < specfem::enums::edge::num_edges; edge2l++) {
         if (check_if_edges_are_connected(
                 h_ibool, static_cast<specfem::enums::edge::type>(edge1l),
                 static_cast<specfem::enums::edge::type>(edge2l), ispec1l,
@@ -222,9 +224,9 @@ void compute_edges(
                  "Invalid edge1 and edge2");
 
           edge1(inum) = specfem::edge::interface(
-              static_cast<specfem::enums::edge::type>(edge1l));
+              static_cast<specfem::enums::edge::type>(edge1l), ngll);
           edge2(inum) = specfem::edge::interface(
-              static_cast<specfem::enums::edge::type>(edge2l));
+              static_cast<specfem::enums::edge::type>(edge2l), ngll);
           num_connected++;
         }
       }
@@ -254,20 +256,18 @@ void check_edges(
     const auto edge2l = edge2(interface);
 
     // iterate over the edge
-    int npoints = specfem::edge::num_points_on_interface(edge1l, ngllx, ngllz);
+    int npoints = specfem::edge::num_points_on_interface(edge1l);
 
     for (int ipoint = 0; ipoint < npoints; ipoint++) {
       // Get ipoint along the edge in element1
       int i1, j1;
-      specfem::edge::locate_point_on_self_edge(ipoint, edge1l, ngllx, ngllz, i1,
-                                               j1);
+      specfem::edge::locate_point_on_self_edge(ipoint, edge1l, j1, i1);
       const specfem::point::gcoord2 self_coordinates(
           coordinates(0, ispec1l, j1, i1), coordinates(1, ispec1l, j1, i1));
 
       // Get ipoint along the edge in element2
       int i2, j2;
-      specfem::edge::locate_point_on_coupled_edge(ipoint, edge2l, ngllx, ngllz,
-                                                  i2, j2);
+      specfem::edge::locate_point_on_coupled_edge(ipoint, edge2l, j2, i2);
       const specfem::point::gcoord2 coupled_coordinates(
           coordinates(0, ispec2l, j2, i2), coordinates(1, ispec2l, j2, i2));
 
@@ -350,33 +350,76 @@ specfem::compute::interface_container<medium1, medium2>::interface_container(
   return;
 }
 
+// template <specfem::enums::element::type medium1,
+//           specfem::enums::element::type medium2>
+// specfem::compute::interface_container<medium1, medium2>::interface_container(
+//     const specfem::compute::interface_container<medium2, medium1> &other)
+//     : num_interfaces(other.num_interfaces),
+//       medium1_index_mapping(other.medium2_index_mapping),
+//       h_medium1_index_mapping(other.h_medium2_index_mapping),
+//       medium2_index_mapping(other.medium1_index_mapping),
+//       h_medium2_index_mapping(other.h_medium1_index_mapping),
+//       medium1_edge_type(other.medium2_edge_type),
+//       h_medium1_edge_type(other.h_medium2_edge_type),
+//       medium2_edge_type(other.medium1_edge_type),
+//       h_medium2_edge_type(other.h_medium1_edge_type) {
+//   return;
+// }
+
 template <specfem::enums::element::type medium1,
           specfem::enums::element::type medium2>
 template <specfem::enums::element::type medium>
-specfem::kokkos::DeviceView1d<int>
-specfem::compute::interface_container<medium1,
-                                      medium2>::get_index_mapping_view() const {
+KOKKOS_INLINE_FUNCTION int specfem::compute::interface_container<
+    medium1, medium2>::load_device_index_mapping(const int iedge) const {
   if constexpr (medium == medium1) {
-    return medium1_index_mapping;
+    return medium1_index_mapping(iedge);
   } else if constexpr (medium == medium2) {
-    return medium2_index_mapping;
+    return medium2_index_mapping(iedge);
   } else {
-    throw std::runtime_error("Invalid medium type");
+    static_assert("Invalid medium type");
   }
 }
 
 template <specfem::enums::element::type medium1,
           specfem::enums::element::type medium2>
 template <specfem::enums::element::type medium>
-specfem::kokkos::DeviceView1d<specfem::edge::interface>
-specfem::compute::interface_container<medium1, medium2>::get_edge_type_view()
-    const {
+int specfem::compute::interface_container<
+    medium1, medium2>::load_host_index_mapping(const int iedge) const {
   if constexpr (medium == medium1) {
-    return medium1_edge_type;
+    return h_medium1_index_mapping(iedge);
   } else if constexpr (medium == medium2) {
-    return medium2_edge_type;
+    return h_medium2_index_mapping(iedge);
   } else {
-    throw std::runtime_error("Invalid medium type");
+    static_assert("Invalid medium type");
+  }
+}
+
+template <specfem::enums::element::type medium1,
+          specfem::enums::element::type medium2>
+template <specfem::enums::element::type medium>
+KOKKOS_INLINE_FUNCTION specfem::edge::interface specfem::compute::
+    interface_container<medium1, medium2>::load_device_edge_type(
+        const int iedge) const {
+  if constexpr (medium == medium1) {
+    return medium1_edge_type(iedge);
+  } else if constexpr (medium == medium2) {
+    return medium2_edge_type(iedge);
+  } else {
+    static_assert("Invalid medium type");
+  }
+}
+
+template <specfem::enums::element::type medium1,
+          specfem::enums::element::type medium2>
+template <specfem::enums::element::type medium>
+specfem::edge::interface specfem::compute::interface_container<
+    medium1, medium2>::load_host_edge_type(const int iedge) const {
+  if constexpr (medium == medium1) {
+    return h_medium1_edge_type(iedge);
+  } else if constexpr (medium == medium2) {
+    return h_medium2_edge_type(iedge);
+  } else {
+    static_assert("Invalid medium type");
   }
 }
 

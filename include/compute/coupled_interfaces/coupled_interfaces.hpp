@@ -18,6 +18,11 @@ struct coupled_interfaces {
       const specfem::compute::properties &properties,
       const specfem::mesh::coupled_interfaces &coupled_interfaces);
 
+  template <specfem::enums::element::type medium1,
+            specfem::enums::element::type medium2>
+  specfem::compute::interface_container<medium1, medium2>
+  get_interface_container() const;
+
   specfem::compute::interface_container<specfem::enums::element::type::elastic,
                                         specfem::enums::element::type::acoustic>
       elastic_acoustic;

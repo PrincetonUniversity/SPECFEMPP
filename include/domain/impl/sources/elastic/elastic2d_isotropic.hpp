@@ -42,6 +42,8 @@ public:
    *
    */
   using medium_type = specfem::enums::element::medium::elastic;
+
+  using property_type = specfem::enums::element::property::isotropic;
   /**
    * @brief Number of Gauss-Lobatto-Legendre quadrature points
    */
@@ -61,14 +63,15 @@ public:
    */
   KOKKOS_FUNCTION source(const source &) = default;
 
-  /**
-   * @brief Construct a new elemental source object
-   *
-   * @param source_array Source array containing pre-computed lagrange
-   * interpolants
-   */
-  KOKKOS_FUNCTION source(const specfem::compute::properties &properties,
-                         specfem::kokkos::DeviceView4d<type_real> source_array);
+  //   /**
+  //    * @brief Construct a new elemental source object
+  //    *
+  //    * @param source_array Source array containing pre-computed lagrange
+  //    * interpolants
+  //    */
+  //   KOKKOS_FUNCTION source(const specfem::compute::properties &properties,
+  //                          specfem::kokkos::DeviceView4d<type_real>
+  //                          source_array);
 
   /**
    * @brief Compute the interaction of the source with the medium computed at
@@ -82,17 +85,12 @@ public:
    * the source
    */
   KOKKOS_INLINE_FUNCTION void compute_interaction(
-      const int &isource, const int &ispec, const int &xz,
-      const type_real &stf_value,
+      const type_real &stf,
+      const specfem::kokkos::array_type<type_real, 2> &lagrange_interpolant,
+      const specfem::point::properties<medium_type::value, property_type::value>
+          &properties,
       specfem::kokkos::array_type<type_real, medium_type::components>
           &acceleration) const;
-
-private:
-  specfem::kokkos::DeviceView4d<type_real> source_array; ///< Source array
-                                                         ///< containing
-                                                         ///< pre-computed
-                                                         ///< lagrange
-                                                         ///< interpolants
 };
 } // namespace sources
 } // namespace impl

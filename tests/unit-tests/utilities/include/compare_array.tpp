@@ -311,6 +311,9 @@ bool specfem::testing::compare_norm(
     computed_norm += std::abs(computed_array.data(i1));
   }
 
+  std::cout << "Error norm = " << error_norm << " computed norm = "
+            << computed_norm << std::endl;
+
   return equate_norm(error_norm, computed_norm, tolerance);
 }
 
@@ -333,6 +336,9 @@ bool specfem::testing::compare_norm(
       computed_norm += std::abs(computed_array.data(i1, i2));
     }
   }
+
+  std::cout << "Error norm = " << error_norm << " computed norm = "
+            << computed_norm << std::endl;
 
   return equate_norm(error_norm, computed_norm, tolerance);
 }

@@ -88,6 +88,7 @@ add_library(
         point
         src/point/coordinates.cpp
         src/point/partial_derivatives.cpp
+        src/point/boundaries.cpp
 )
 
 target_link_libraries(
@@ -209,6 +210,8 @@ target_link_libraries(
         quadrature
         source_time_function
         yaml-cpp
+        point
+        algorithms
         Boost::boost
 )
 
@@ -266,18 +269,18 @@ target_link_libraries(
         Kokkos::kokkos
 )
 
-# add_library(
-#         timescheme
-#         src/timescheme/timescheme.cpp
-#         src/timescheme/newmark.cpp
-# )
+add_library(
+        timescheme
+        src/timescheme/timescheme.cpp
+        src/timescheme/newmark.cpp
+)
 
-# target_link_libraries(
-#         timescheme
-#         Kokkos::kokkos
-#         yaml-cpp
-#         compute
-# )
+target_link_libraries(
+        timescheme
+        Kokkos::kokkos
+        yaml-cpp
+        compute
+)
 
 # add_library(
 #         writer
@@ -290,29 +293,29 @@ target_link_libraries(
 #         receiver_class
 # )
 
-# add_library(
-#         parameter_reader
-#         src/parameter_parser/run_setup.cpp
-#         src/parameter_parser/solver/solver.cpp
-#         src/parameter_parser/solver/time_marching.cpp
-#         src/parameter_parser/database_configuration.cpp
-#         src/parameter_parser/header.cpp
-#         src/parameter_parser/quadrature.cpp
-#         src/parameter_parser/receivers.cpp
-#         src/parameter_parser/seismogram.cpp
-#         src/parameter_parser/writer.cpp
-#         src/parameter_parser/setup.cpp
-# )
+add_library(
+        parameter_reader
+        src/parameter_parser/run_setup.cpp
+        src/parameter_parser/solver/solver.cpp
+        src/parameter_parser/solver/time_marching.cpp
+        src/parameter_parser/database_configuration.cpp
+        src/parameter_parser/header.cpp
+        src/parameter_parser/quadrature.cpp
+        src/parameter_parser/receivers.cpp
+        src/parameter_parser/seismogram.cpp
+        # src/parameter_parser/writer.cpp
+        src/parameter_parser/setup.cpp
+)
 
-# target_link_libraries(
-#         parameter_reader
-#         quadrature
-#         timescheme
-#         receiver_class
-#         yaml-cpp
-#         writer
-#         Boost::filesystem
-# )
+target_link_libraries(
+        parameter_reader
+        quadrature
+        timescheme
+        receiver_class
+        yaml-cpp
+        # writer
+        Boost::filesystem
+)
 
 # add_executable(
 #         specfem2d
