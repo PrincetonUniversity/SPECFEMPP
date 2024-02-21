@@ -40,7 +40,7 @@ public:
   element_kernel() = default;
   element_kernel(
       const specfem::compute::assembly &assembly,
-      const specfem::kokkos::DeviceView1d<int> element_kernel_index_mapping,
+      const specfem::kokkos::HostView1d<int> h_element_kernel_index_mapping,
       const quadrature_point_type &quadrature_points);
 
   void compute_mass_matrix() const;

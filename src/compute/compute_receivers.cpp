@@ -27,8 +27,8 @@ specfem::compute::receivers::receivers(const int nreceivers,
       seismogram_types("specfem::compute::receivers::seismogram_types",
                        n_seis_types),
       h_seismogram_types(Kokkos::create_mirror_view(seismogram_types)),
-      receiver_field("specfem::compute::receivers::receiver_field",
-                     max_sig_step, nreceivers, n_seis_types, ndim, N, N),
+      receiver_field("specfem::compute::receivers::receiver_field", N, N,
+                     n_seis_types, nreceivers, max_sig_step),
       h_receiver_field(Kokkos::create_mirror_view(receiver_field)) {}
 
 specfem::compute::receivers::receivers(

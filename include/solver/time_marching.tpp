@@ -53,12 +53,12 @@ void specfem::solver::time_marching<qp_type>::run() {
                               elastic_field.field_dot_dot);
     Kokkos::Profiling::popRegion();
 
-    // if (it->compute_seismogram()) {
-    //   int isig_step = it->get_seismogram_step();
-    //   acoustic_domain.compute_seismogram(isig_step);
-    //   elastic_domain.compute_seismogram(isig_step);
-    //   it->increment_seismogram_step();
-    // }
+    if (it->compute_seismogram()) {
+      int isig_step = it->get_seismogram_step();
+      acoustic_domain.compute_seismogram(isig_step);
+      elastic_domain.compute_seismogram(isig_step);
+      it->increment_seismogram_step();
+    }
 
     it->increment_time();
 

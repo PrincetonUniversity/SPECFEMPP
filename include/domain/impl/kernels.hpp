@@ -115,20 +115,20 @@ public:
     return;
   }
 
-  // /**
-  //  * @brief execute Kokkos kernel to compute seismogram values at every
-  //  receiver
-  //  * for the current seismogram step
-  //  *
-  //  * A seismogram step is defined as the current time step divided by the
-  //  * seismogram sampling rate
-  //  *
-  //  * @param isig_step current seismogram step.
-  //  */
-  // inline void compute_seismograms(const int &isig_step) const {
-  //   isotropic_receivers.compute_seismograms(isig_step);
-  //   return;
-  // }
+  /**
+   * @brief execute Kokkos kernel to compute seismogram values at every
+   receiver
+   * for the current seismogram step
+   *
+   * A seismogram step is defined as the current time step divided by the
+   * seismogram sampling rate
+   *
+   * @param isig_step current seismogram step.
+   */
+  inline void compute_seismograms(const int &isig_step) const {
+    isotropic_receivers.compute_seismograms(isig_step);
+    return;
+  }
 
 private:
   template <class property>
@@ -207,15 +207,15 @@ private:
       specfem::enums::element::property::isotropic>
       isotropic_sources;
 
-  // /**
-  //  * @brief Elemental receiver kernels for isotropic elements
-  //  *
-  //  */
-  // specfem::domain::impl::kernels::receiver_kernel<
-  //     medium_type, quadrature_point_type,
-  //     specfem::enums::element::property::isotropic>
-  //     isotropic_receivers; ///< Elemental receiver kernels for isotropic
-  //                          ///< elements
+  /**
+   * @brief Elemental receiver kernels for isotropic elements
+   *
+   */
+  specfem::domain::impl::kernels::receiver_kernel<
+      medium_type, quadrature_point_type,
+      specfem::enums::element::property::isotropic>
+      isotropic_receivers; ///< Elemental receiver kernels for isotropic
+                           ///< elements
 };
 } // namespace kernels
 } // namespace impl

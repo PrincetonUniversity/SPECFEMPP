@@ -134,16 +134,16 @@ public:
   //  */
   // void sync_rmass_inverse(specfem::sync::kind kind);
 
-  // /**
-  //  * @brief Compute seismograms at for all receivers at isig_step
-  //  *
-  //  * @param seismogram_types DeviceView of types of seismograms to be
-  //  * calculated
-  //  * @param isig_step timestep for seismogram calculation
-  //  */
-  // void compute_seismogram(const int isig_step) {
-  //   kernels.compute_seismograms(isig_step);
-  // };
+  /**
+   * @brief Compute seismograms at for all receivers at isig_step
+   *
+   * @param seismogram_types DeviceView of types of seismograms to be
+   * calculated
+   * @param isig_step timestep for seismogram calculation
+   */
+  void compute_seismogram(const int isig_step) {
+    kernels.compute_seismograms(isig_step);
+  };
 
   // /**
   //  * @brief Get a view of field stored on the device
