@@ -3,54 +3,27 @@
 
 #include "compute/interface.hpp"
 #include "coupled_interface.hpp"
+#include "enumerations/interface.hpp"
 #include "impl/edge/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "macros.hpp"
-#include "enumerations/interface.hpp"
 #include <Kokkos_Core.hpp>
 
-template <class self_domain_type, class coupled_domain_type>
-specfem::coupled_interface::
-    coupled_interface<self_domain_type, coupled_domain_type>::coupled_interface(
-        self_domain_type &self_domain, coupled_domain_type &coupled_domain,
-        const specfem::compute::coupled_interfaces::coupled_interfaces
-            &coupled_interfaces,
-        const quadrature_points_type &quadrature_points,
-        const specfem::compute::partial_derivatives &partial_derivatives,
-        const specfem::kokkos::DeviceView3d<int> ibool,
-        const specfem::kokkos::DeviceView1d<type_real> wxgll,
-        const specfem::kokkos::DeviceView1d<type_real> wzgll)
-    : nedges(coupled_interfaces.elastic_acoustic.num_interfaces),
-      self_domain(self_domain), coupled_domain(coupled_domain),
-      quadrature_points(quadrature_points),
-      edge(self_domain, coupled_domain, quadrature_points, coupled_interfaces,
-           partial_derivatives, wxgll, wzgll, ibool) {
-
-  static_assert(std::is_same_v<self_medium, coupled_medium> == false,
-                "Error: self_medium cannot be equal to coupled_medium");
-
-  bool constexpr elastic_acoustic_condition =
-      (std::is_same_v<self_medium, specfem::enums::element::medium::elastic> &&
-       std::is_same_v<coupled_medium,
-                      specfem::enums::element::medium::acoustic>) ||
-      (std::is_same_v<self_medium, specfem::enums::element::medium::acoustic> &&
-       std::is_same_v<coupled_medium,
-                      specfem::enums::element::medium::elastic>);
-
-  static_assert(elastic_acoustic_condition,
-                "Only acoustic-elastic coupling is supported at the moment.");
-
-  if constexpr (std::is_same_v<self_medium,
-                               specfem::enums::element::medium::elastic>) {
-    this->self_edge = coupled_interfaces.elastic_acoustic.elastic_edge;
-    this->coupled_edge = coupled_interfaces.elastic_acoustic.acoustic_edge;
-  } else {
-    this->self_edge = coupled_interfaces.elastic_acoustic.acoustic_edge;
-    this->coupled_edge = coupled_interfaces.elastic_acoustic.elastic_edge;
-  }
-
-  return;
-}
+template <class self_medium, class coupled_medium>
+specfem::coupled_interface::coupled_interface<self_medium, coupled_medium>::
+    coupled_interface(const specfem::compute::assembly &assembly)
+    : nedges(assembly.coupled_interfaces
+                 .get_interface_container<self_medium::value,
+                                          coupled_medium::value>()
+                 .num_interfaces),
+      interface_data(assembly.coupled_interfaces.get_interface_container<
+                     self_medium::value, coupled_medium::value>()),
+      points(assembly.mesh.points), quadrature(assembly.mesh.quadratures),
+      partial_derivatives(assembly.partial_derivatives),
+      global_index_mapping(assembly.fields.forward.assembly_index_mapping),
+      self_field(assembly.fields.forward.get_field<self_medium>()),
+      coupled_field(assembly.fields.forward.get_field<coupled_medium>()),
+      edge(assembly) {}
 
 template <class self_domain_type, class coupled_domain_type>
 void specfem::coupled_interface::coupled_interface<
@@ -59,26 +32,82 @@ void specfem::coupled_interface::coupled_interface<
   if (this->nedges == 0)
     return;
 
+  const auto wgll = quadrature.gll.weights;
+  const auto index_mapping = points.index_mapping;
+
   Kokkos::parallel_for(
       "specfem::coupled_interfaces::coupled_interfaces::compute_coupling",
       specfem::kokkos::DeviceTeam(this->nedges, Kokkos::AUTO, 1),
       KOKKOS_CLASS_LAMBDA(
           const specfem::kokkos::DeviceTeam::member_type &team_member) {
-        // Get number of quadrature points
-        int ngllx, ngllz;
-        quadrature_points.get_ngll(&ngllx, &ngllz);
         int iedge_l = team_member.league_rank();
-        // Get the edge
-        const auto self_edge_l = this->self_edge(iedge_l);
-        const auto coupled_edge_l = this->coupled_edge(iedge_l);
 
-        auto npoints = specfem::compute::coupled_interfaces::access::npoints(
-            self_edge_l, ngllx, ngllz);
+        // Load the spectral element index and the edge type for the edge
+        //---------------------------------------------------------------------
+        const auto self_edge_type =
+            interface_data
+                .template load_device_edge_type<self_medium_type::value>(
+                    iedge_l);
+        const auto coupled_edge_type =
+            interface_data
+                .template load_device_edge_type<coupled_medium_type::value>(
+                    iedge_l);
+
+        const int self_index =
+            interface_data
+                .template load_device_index_mapping<self_medium_type::value>(
+                    iedge_l);
+        const int coupled_index =
+            interface_data
+                .template load_device_index_mapping<coupled_medium_type::value>(
+                    iedge_l);
+
+        auto npoints = specfem::edge::num_points_on_interface(self_edge_type);
+        //---------------------------------------------------------------------
 
         // Iterate over the edges using TeamThreadRange
         Kokkos::parallel_for(
             Kokkos::TeamThreadRange(team_member, npoints),
-            [=](const int ipoint) { edge.compute_coupling(iedge_l, ipoint); });
+            [=](const int ipoint) {
+              int iz, ix;
+              specfem::edge::locate_point_on_coupled_edge(
+                  ipoint, coupled_edge_type, iz, ix);
+
+              // compute normal
+              const auto normal =
+                  partial_derivatives
+                      .load_device_derivatives<true>(coupled_index, iz, ix)
+                      .compute_normal(coupled_edge_type);
+
+              // get coupling field elements
+              const int coupled_global_index = global_index_mapping(
+                  index_mapping(coupled_index, iz, ix),
+                  static_cast<int>(coupled_medium_type::value));
+              const auto coupled_field_elements =
+                  edge.load_field_elements(coupled_global_index, coupled_field);
+
+              const specfem::kokkos::array_type<type_real, 2> weights(wgll(ix),
+                                                                      wgll(iz));
+
+              const auto coupling_terms = edge.compute_coupling_terms(
+                  normal, weights, coupled_edge_type, coupled_field_elements);
+
+              specfem::edge::locate_point_on_self_edge(ipoint, self_edge_type,
+                                                       iz, ix);
+
+              // Add coupling contributions
+              const int self_global_index = global_index_mapping(
+                  index_mapping(self_index, iz, ix),
+                  static_cast<int>(self_medium_type::value));
+
+              Kokkos::single(Kokkos::PerThread(team_member), [&]() {
+                for (int i = 0; i < self_medium_type::components; i++) {
+                  Kokkos::atomic_add(
+                      &self_field.field_dot_dot(self_global_index, i),
+                      coupling_terms[i]);
+                }
+              });
+            });
       });
 
   Kokkos::fence();

@@ -24,7 +24,8 @@ public:
   /**
    * @brief Instantiate the Timescheme
    *
-   * @return specfem::TimeScheme::TimeScheme* Pointer to the TimeScheme object
+   * @return specfem::TimeScheme::TimeScheme* Pointer to the TimeScheme
+   object
    * used in the solver algorithm
    */
   virtual std::shared_ptr<specfem::TimeScheme::TimeScheme>

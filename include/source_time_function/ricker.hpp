@@ -20,10 +20,10 @@ public:
    * @param factor factor to scale source time function
    * @param use_trick_for_better_pressure
    */
-  Ricker(type_real f0, type_real tshift, type_real factor,
-         bool use_trick_for_better_pressure);
+  Ricker(const type_real dt, const type_real f0, const type_real tshift,
+         const type_real factor, const bool use_trick_for_better_pressure);
 
-  Ricker(YAML::Node &Ricker, const int dt,
+  Ricker(YAML::Node &Ricker, const type_real dt,
          const bool use_trick_for_better_pressure);
 
   /**

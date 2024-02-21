@@ -45,6 +45,8 @@ public:
    */
   using quadrature_points_type =
       specfem::enums::element::quadrature::static_quadrature_points<NGLL>;
+
+  using property_type = specfem::enums::element::property::isotropic;
   /**
    * @brief Use the scratch view type from the quadrature points
    *
@@ -59,27 +61,29 @@ public:
   KOKKOS_FUNCTION
   receiver() = default;
 
-  /**
-   * @brief Construct a new elemental receiver object
-   *
-   * @param sin_rec sin of the receiver angle
-   * @param cos_rec cosine of the receiver angle
-   * @param receiver_array receiver array containing pre-computed lagrange
-   * interpolants
-   * @param partial_derivatives struct used to store partial derivatives at
-   * quadrature points
-   * @param properties struct used to store material properties at quadrature
-   * points
-   * @param receiver_field view to store compute receiver field at all GLL
-   * points where the receiver is located
-   */
-  KOKKOS_FUNCTION
-  receiver(const specfem::kokkos::DeviceView1d<type_real> sin_rec,
-           const specfem::kokkos::DeviceView1d<type_real> cos_rec,
-           const specfem::kokkos::DeviceView4d<type_real> receiver_array,
-           const specfem::compute::partial_derivatives &partial_derivatives,
-           const specfem::compute::properties &properties,
-           specfem::kokkos::DeviceView6d<type_real> receiver_field);
+  //   /**
+  //    * @brief Construct a new elemental receiver object
+  //    *
+  //    * @param sin_rec sin of the receiver angle
+  //    * @param cos_rec cosine of the receiver angle
+  //    * @param receiver_array receiver array containing pre-computed lagrange
+  //    * interpolants
+  //    * @param partial_derivatives struct used to store partial derivatives at
+  //    * quadrature points
+  //    * @param properties struct used to store material properties at
+  //    quadrature
+  //    * points
+  //    * @param receiver_field view to store compute receiver field at all GLL
+  //    * points where the receiver is located
+  //    */
+  //   KOKKOS_FUNCTION
+  //   receiver(const specfem::kokkos::DeviceView1d<type_real> sin_rec,
+  //            const specfem::kokkos::DeviceView1d<type_real> cos_rec,
+  //            const specfem::kokkos::DeviceView4d<type_real> receiver_array,
+  //            const specfem::compute::partial_derivatives
+  //            &partial_derivatives, const specfem::compute::properties
+  //            &properties, specfem::kokkos::DeviceView6d<type_real>
+  //            receiver_field);
 
   /**
    * @brief Compute and populate the receiver field at all GLL points where the
@@ -100,14 +104,15 @@ public:
    */
   KOKKOS_FUNCTION
   void get_field(
-      const int &ireceiver, const int &iseis, const int &ispec,
-      const specfem::enums::seismogram::type &siesmogram_type, const int &xz,
-      const int &isig_step,
-      const ScratchViewType<type_real, medium_type::components> field,
-      const ScratchViewType<type_real, medium_type::components> field_dot,
-      const ScratchViewType<type_real, medium_type::components> field_dot_dot,
-      const ScratchViewType<type_real, 1> hprime_xx,
-      const ScratchViewType<type_real, 1> hprime_zz) const;
+      const int iz, const int ix,
+      const specfem::point::partial_derivatives2 partial_derivatives,
+      const specfem::point::properties<medium_type::value, property_type::value>
+          properties,
+      const ScratchViewType<type_real, 1> hprime,
+      const ScratchViewType<type_real, medium_type::components> active_field,
+      Kokkos::View<type_real[2], Kokkos::LayoutStride,
+                   specfem::kokkos::DevMemSpace>
+          receiver_field) const;
 
   /**
    * @brief Compute the seismogram components for a given receiver and

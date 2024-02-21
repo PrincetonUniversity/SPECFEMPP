@@ -88,20 +88,20 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
     throw std::runtime_error(message.str());
   }
 
-  try {
-    this->seismogram =
-        std::make_unique<specfem::runtime_configuration::seismogram>(
-            runtime_config["seismogram"]);
-  } catch (YAML::InvalidNode &e) {
-    YAML::Node seismogram;
-    seismogram["seismogram-format"] = "ascii";
-    std::string folder_name = "results";
-    create_folder_if_not_exists(folder_name);
-    seismogram["output-folder"] = folder_name;
-    this->seismogram =
-        std::make_unique<specfem::runtime_configuration::seismogram>(
-            seismogram);
-  }
+  // try {
+  //   this->seismogram =
+  //       std::make_unique<specfem::runtime_configuration::seismogram>(
+  //           runtime_config["seismogram"]);
+  // } catch (YAML::InvalidNode &e) {
+  //   YAML::Node seismogram;
+  //   seismogram["seismogram-format"] = "ascii";
+  //   std::string folder_name = "results";
+  //   create_folder_if_not_exists(folder_name);
+  //   seismogram["output-folder"] = folder_name;
+  //   this->seismogram =
+  //       std::make_unique<specfem::runtime_configuration::seismogram>(
+  //           seismogram);
+  // }
 
   try {
     const YAML::Node &n_time_marching = n_solver["time-marching"];

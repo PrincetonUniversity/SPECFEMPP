@@ -59,6 +59,23 @@ public:
       specfem::enums::element::boundary_tag::
           composite_stacey_dirichlet; ///< boundary tag
 
+  static_assert(
+      std::is_same<typename stacey_type::medium_type,
+                   typename dirichlet_type::medium_type>::value,
+      "Medium types must be the same for composite boundary conditions.");
+  static_assert(
+      std::is_same<typename stacey_type::dimension,
+                   typename dirichlet_type::dimension>::value,
+      "Dimensions must be the same for composite boundary conditions.");
+  static_assert(
+      std::is_same<typename stacey_type::quadrature_points_type,
+                   typename dirichlet_type::quadrature_points_type>::value,
+      "Quadrature points must be the same for composite boundary conditions.");
+  static_assert(
+      std::is_same<typename stacey_type::property_type,
+                   typename dirichlet_type::property_type>::value,
+      "Property types must be the same for composite boundary conditions.");
+
   /**
    * @brief Construct a new composite boundary object
    *
@@ -73,7 +90,7 @@ public:
    * @param quadrature_points Quadrature points object
    */
   composite_boundary(const specfem::compute::boundaries &boundary_conditions,
-                     const quadrature_points_type &quadrature_points);
+                     const quadrature_points_type &quadrature_points){};
 
   /**
    * @brief Compute the contribution of composite boundaries to the mass term

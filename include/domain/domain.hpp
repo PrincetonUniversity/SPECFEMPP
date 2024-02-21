@@ -57,31 +57,10 @@ public:
   /**
    * @brief Construct a new domain object
    *
-   * @param nglob Total number of distinct quadrature points
-   * @param quadrature_points Type of quadrature points - either static (number
-   * of quadrature points defined at compile time) or dynamic (number of
-   * quadrature points defined at runtime)
-   * @param compute Pointer to compute struct used to store spectral element
-   * numbering mapping (ibool)
-   * @param material_properties properties struct used to store material
-   * properties at each quadrature point
-   * @param partial_derivatives partial derivatives struct used to store partial
-   * derivatives of basis functions at each quadrature point
-   * @param compute_sources sources struct used to store source information
-   * @param compute_receivers receivers struct used to store receiver
-   * information
-   * @param quadx Quadrature object in x-dimension
-   * @param quadz Quadrature object in z-dimension
+   * @param assembly object containing the assembly information
    */
-  domain(const int nglob, const qp_type &quadrature_points,
-         specfem::compute::compute *compute,
-         specfem::compute::properties material_properties,
-         specfem::compute::partial_derivatives partial_derivatives,
-         specfem::compute::boundaries boundary_conditions,
-         specfem::compute::sources compute_sources,
-         specfem::compute::receivers compute_receivers,
-         specfem::quadrature::quadrature *quadx,
-         specfem::quadrature::quadrature *quadz);
+  domain(const specfem::compute::assembly &assembly,
+         const quadrature_points_type &quadrature_points);
 
   /**
    * @brief Default destructor
@@ -127,33 +106,33 @@ public:
     kernels.compute_source_interaction(timeval);
   };
 
-  /**
-   * @brief Sync displacements views between host and device
-   *
-   * @param kind defines sync direction i.e. DeviceToHost or HostToDevice
-   */
-  void sync_field(specfem::sync::kind kind);
+  // /**
+  //  * @brief Sync displacements views between host and device
+  //  *
+  //  * @param kind defines sync direction i.e. DeviceToHost or HostToDevice
+  //  */
+  // void sync_field(specfem::sync::kind kind);
 
-  /**
-   * @brief Sync velocity views between host and device
-   *
-   * @param kind defines sync direction i.e. DeviceToHost or HostToDevice
-   */
-  void sync_field_dot(specfem::sync::kind kind);
+  // /**
+  //  * @brief Sync velocity views between host and device
+  //  *
+  //  * @param kind defines sync direction i.e. DeviceToHost or HostToDevice
+  //  */
+  // void sync_field_dot(specfem::sync::kind kind);
 
-  /**
-   * @brief Sync acceleration views between host and device
-   *
-   * @param kind defines sync direction i.e. DeviceToHost or HostToDevice
-   */
-  void sync_field_dot_dot(specfem::sync::kind kind);
+  // /**
+  //  * @brief Sync acceleration views between host and device
+  //  *
+  //  * @param kind defines sync direction i.e. DeviceToHost or HostToDevice
+  //  */
+  // void sync_field_dot_dot(specfem::sync::kind kind);
 
-  /**
-   * @brief Sync inverse of mass matrix views between host and device
-   *
-   * @param kind defines sync direction i.e. DeviceToHost or HostToDevice
-   */
-  void sync_rmass_inverse(specfem::sync::kind kind);
+  // /**
+  //  * @brief Sync inverse of mass matrix views between host and device
+  //  *
+  //  * @param kind defines sync direction i.e. DeviceToHost or HostToDevice
+  //  */
+  // void sync_rmass_inverse(specfem::sync::kind kind);
 
   /**
    * @brief Compute seismograms at for all receivers at isig_step
@@ -166,115 +145,88 @@ public:
     kernels.compute_seismograms(isig_step);
   };
 
-  /**
-   * @brief Get a view of field stored on the device
-   *
-   * @return specfem::kokkos::DeviceView2d<type_real>
-   */
-  specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
-  get_field() const {
-    return this->field;
-  }
+  // /**
+  //  * @brief Get a view of field stored on the device
+  //  *
+  //  * @return specfem::kokkos::DeviceView2d<type_real>
+  //  */
+  // specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+  // get_field() const {
+  //   return this->field;
+  // }
 
-  /**
-   * @brief Get a view of field stored on the host
-   *
-   * @return specfem::kokkos::DeviceView2d<type_real>
-   */
-  specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>
-  get_host_field() const {
-    return this->h_field;
-  }
+  // /**
+  //  * @brief Get a view of field stored on the host
+  //  *
+  //  * @return specfem::kokkos::DeviceView2d<type_real>
+  //  */
+  // specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>
+  // get_host_field() const {
+  //   return this->h_field;
+  // }
 
-  /**
-   * @brief Get a view of derivate of field stored on device
-   *
-   * @return specfem::kokkos::DeviceView2d<type_real>
-   */
-  specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
-  get_field_dot() const {
-    return this->field_dot;
-  }
+  // /**
+  //  * @brief Get a view of derivate of field stored on device
+  //  *
+  //  * @return specfem::kokkos::DeviceView2d<type_real>
+  //  */
+  // specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+  // get_field_dot() const {
+  //   return this->field_dot;
+  // }
 
-  /**
-   * @brief Get a view of derivative of field stored on host
-   *
-   * @return specfem::kokkos::DeviceView2d<type_real>
-   */
-  specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>
-  get_host_field_dot() const {
-    return this->h_field_dot;
-  }
+  // /**
+  //  * @brief Get a view of derivative of field stored on host
+  //  *
+  //  * @return specfem::kokkos::DeviceView2d<type_real>
+  //  */
+  // specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>
+  // get_host_field_dot() const {
+  //   return this->h_field_dot;
+  // }
 
-  /**
-   * @brief Get a view of double derivative of field stored on device
-   *
-   * @return specfem::kokkos::DeviceView2d<type_real>
-   */
-  specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
-  get_field_dot_dot() const {
-    return this->field_dot_dot;
-  }
+  // /**
+  //  * @brief Get a view of double derivative of field stored on device
+  //  *
+  //  * @return specfem::kokkos::DeviceView2d<type_real>
+  //  */
+  // specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+  // get_field_dot_dot() const {
+  //   return this->field_dot_dot;
+  // }
 
-  /**
-   * @brief Get a view of double derivative of field stored on host
-   *
-   * @return specfem::kokkos::DeviceView2d<type_real>
-   */
-  specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>
-  get_host_field_dot_dot() const {
-    return this->h_field_dot_dot;
-  }
+  // /**
+  //  * @brief Get a view of double derivative of field stored on host
+  //  *
+  //  * @return specfem::kokkos::DeviceView2d<type_real>
+  //  */
+  // specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>
+  // get_host_field_dot_dot() const {
+  //   return this->h_field_dot_dot;
+  // }
 
-  /**
-   * @brief Get a view of inverse of mass matrix stored on device
-   *
-   * @return specfem::kokkos::DeviceView2d<type_real>
-   */
-  specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
-  get_rmass_inverse() const {
-    return this->rmass_inverse;
-  }
+  // /**
+  //  * @brief Get a view of inverse of mass matrix stored on device
+  //  *
+  //  * @return specfem::kokkos::DeviceView2d<type_real>
+  //  */
+  // specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+  // get_rmass_inverse() const {
+  //   return this->rmass_inverse;
+  // }
 
-  /**
-   * @brief Get a view of inverse of mass matrix stored on host
-   *
-   * @return specfem::kokkos::DeviceView2d<type_real>
-   */
-  specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>
-  get_host_rmass_inverse() const {
-    return this->h_rmass_inverse;
-  }
+  // /**
+  //  * @brief Get a view of inverse of mass matrix stored on host
+  //  *
+  //  * @return specfem::kokkos::DeviceView2d<type_real>
+  //  */
+  // specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>
+  // get_host_rmass_inverse() const {
+  //   return this->h_rmass_inverse;
+  // }
 
 private:
-  specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
-      field; ///< View of field on Device
-  specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>
-      h_field; ///< View of field on host
-  specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
-      field_dot; ///< View of derivative of
-                 ///< field on Device
-  specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>
-      h_field_dot; ///< View of derivative
-                   ///< of field on host
-  specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
-      field_dot_dot; ///< View of second
-                     ///< derivative of
-                     ///< field on Device
-  specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>
-      h_field_dot_dot; ///< View of second
-                       ///< derivative of
-                       ///< field on host
-  specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
-      rmass_inverse; ///< View of inverse
-                     ///< of mass matrix on
-                     ///< device
-  specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>
-      h_rmass_inverse; ///< View of inverse
-                       ///< of mass matrix
-                       ///< on host
-  int nelem_domain;    ///< Total number of elements in this domain
-
+  specfem::compute::impl::field_impl<medium_type> field; ///< Field object
   specfem::domain::impl::kernels::kernels<medium_type, quadrature_points_type>
       kernels; ///< Kernels object used to compute elemental kernels
 };

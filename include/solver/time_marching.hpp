@@ -22,6 +22,9 @@ template <typename qp_type>
 class time_marching : public specfem::solver::solver {
 
 public:
+  using elastic_type = specfem::enums::element::medium::elastic;
+  using acoustic_type = specfem::enums::element::medium::acoustic;
+  using forward_type = specfem::enums::simulation::forward;
   /**
    * @brief Construct a new time marching solver object
    *
@@ -31,22 +34,16 @@ public:
    * @param it Pointer to time scheme object (it stands for iterator)
    */
   time_marching(
-      specfem::domain::domain<specfem::enums::element::medium::acoustic,
-                              qp_type> &acoustic_domain,
-      specfem::domain::domain<specfem::enums::element::medium::elastic, qp_type>
-          &elastic_domain,
-      specfem::coupled_interface::coupled_interface<
-          specfem::domain::domain<specfem::enums::element::medium::acoustic,
-                                  qp_type>,
-          specfem::domain::domain<specfem::enums::element::medium::elastic,
-                                  qp_type> > &acoustic_elastic_interface,
-      specfem::coupled_interface::coupled_interface<
-          specfem::domain::domain<specfem::enums::element::medium::elastic,
-                                  qp_type>,
-          specfem::domain::domain<specfem::enums::element::medium::acoustic,
-                                  qp_type> > &elastic_acoustic_interface,
+      const specfem::compute::assembly &assembly,
+      const specfem::domain::domain<acoustic_type, qp_type> &acoustic_domain,
+      const specfem::domain::domain<elastic_type, qp_type> &elastic_domain,
+      const specfem::coupled_interface::coupled_interface<
+          acoustic_type, elastic_type> &acoustic_elastic_interface,
+      const specfem::coupled_interface::coupled_interface<
+          elastic_type, acoustic_type> &elastic_acoustic_interface,
       std::shared_ptr<specfem::TimeScheme::TimeScheme> it)
-      : acoustic_domain(acoustic_domain), elastic_domain(elastic_domain),
+      : forward_field(assembly.fields.forward),
+        acoustic_domain(acoustic_domain), elastic_domain(elastic_domain),
         acoustic_elastic_interface(acoustic_elastic_interface),
         elastic_acoustic_interface(elastic_acoustic_interface), it(it){};
   /**
@@ -56,22 +53,18 @@ public:
   void run() override;
 
 private:
-  specfem::domain::domain<specfem::enums::element::medium::acoustic, qp_type>
-      acoustic_domain; ///< Acoustic domain
-  specfem::domain::domain<specfem::enums::element::medium::elastic, qp_type>
-      elastic_domain; ///< Acoustic domain
-  specfem::coupled_interface::coupled_interface<
-      specfem::domain::domain<specfem::enums::element::medium::acoustic,
-                              qp_type>,
-      specfem::domain::domain<specfem::enums::element::medium::elastic,
-                              qp_type> >
-      acoustic_elastic_interface; /// Acoustic elastic interface
-  specfem::coupled_interface::coupled_interface<
-      specfem::domain::domain<specfem::enums::element::medium::elastic,
-                              qp_type>,
-      specfem::domain::domain<specfem::enums::element::medium::acoustic,
-                              qp_type> >
-      elastic_acoustic_interface; /// Elastic acoustic interface
+  specfem::compute::simulation_field<forward_type> forward_field;  ///< Fields
+                                                                   ///< object
+  specfem::domain::domain<acoustic_type, qp_type> acoustic_domain; ///< Acoustic
+                                                                   ///< domain
+                                                                   ///< object
+  specfem::domain::domain<elastic_type, qp_type> elastic_domain;   ///< Elastic
+                                                                   ///< domain
+                                                                   ///< object
+  specfem::coupled_interface::coupled_interface<acoustic_type, elastic_type>
+      acoustic_elastic_interface; ///< Acoustic-elastic interface object
+  specfem::coupled_interface::coupled_interface<elastic_type, acoustic_type>
+      elastic_acoustic_interface; ///< Elastic-acoustic interface object
   std::shared_ptr<specfem::TimeScheme::TimeScheme>
       it; ///< Pointer to
           ///< spectem::TimeScheme::TimeScheme

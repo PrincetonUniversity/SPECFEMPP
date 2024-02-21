@@ -21,10 +21,10 @@ public:
    * @param factor factor to scale source time function
    * @param use_trick_for_better_pressure
    */
-  Dirac(type_real f0, type_real tshift, type_real factor,
-        bool use_trick_for_better_pressure);
+  Dirac(const type_real dt, const type_real f0, const type_real tshift,
+        const type_real factor, const bool use_trick_for_better_pressure);
 
-  Dirac(YAML::Node &Dirac, const int dt,
+  Dirac(YAML::Node &Dirac, const type_real dt,
         const bool use_trick_for_better_pressure);
 
   /**

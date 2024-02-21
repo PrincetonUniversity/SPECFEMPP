@@ -1,6 +1,7 @@
 // #include "compute/coupled_interfaces.hpp"
 // #include "compute/coupled_interfaces.tpp"
 #include "compute/coupled_interfaces/coupled_interfaces.hpp"
+#include "compute/coupled_interfaces/coupled_interfaces.tpp"
 #include "compute/coupled_interfaces/interface_container.hpp"
 #include "compute/coupled_interfaces/interface_container.tpp"
 #include "enumerations/specfem_enums.hpp"
@@ -550,24 +551,142 @@ template class specfem::compute::interface_container<
     specfem::enums::element::type::elastic,
     specfem::enums::element::type::poroelastic>;
 
+template specfem::compute::interface_container<
+    specfem::enums::element::type::elastic,
+    specfem::enums::element::type::acoustic>
+specfem::compute::coupled_interfaces::get_interface_container<
+    specfem::enums::element::type::elastic,
+    specfem::enums::element::type::acoustic>() const;
+
+template specfem::compute::interface_container<
+    specfem::enums::element::type::acoustic,
+    specfem::enums::element::type::elastic>
+specfem::compute::coupled_interfaces::get_interface_container<
+    specfem::enums::element::type::acoustic,
+    specfem::enums::element::type::elastic>() const;
+
+template specfem::compute::interface_container<
+    specfem::enums::element::type::elastic,
+    specfem::enums::element::type::poroelastic>
+specfem::compute::coupled_interfaces::get_interface_container<
+    specfem::enums::element::type::elastic,
+    specfem::enums::element::type::poroelastic>() const;
+
+template specfem::compute::interface_container<
+    specfem::enums::element::type::poroelastic,
+    specfem::enums::element::type::elastic>
+specfem::compute::coupled_interfaces::get_interface_container<
+    specfem::enums::element::type::poroelastic,
+    specfem::enums::element::type::elastic>() const;
+
+template specfem::compute::interface_container<
+    specfem::enums::element::type::acoustic,
+    specfem::enums::element::type::poroelastic>
+specfem::compute::coupled_interfaces::get_interface_container<
+    specfem::enums::element::type::acoustic,
+    specfem::enums::element::type::poroelastic>() const;
+
+template specfem::compute::interface_container<
+    specfem::enums::element::type::poroelastic,
+    specfem::enums::element::type::acoustic>
+specfem::compute::coupled_interfaces::get_interface_container<
+    specfem::enums::element::type::poroelastic,
+    specfem::enums::element::type::acoustic>() const;
+
 // Explicit template member function instantiation
 
-template specfem::kokkos::DeviceView1d<int>
+template KOKKOS_FUNCTION int
 specfem::compute::interface_container<specfem::enums::element::type::elastic,
                                       specfem::enums::element::type::acoustic>::
-    get_index_mapping_view<specfem::enums::element::type::elastic>() const;
+    load_device_index_mapping<specfem::enums::element::type::elastic>(
+        const int iedge) const;
 
-template specfem::kokkos::DeviceView1d<int>
-specfem::compute::interface_container<specfem::enums::element::type::elastic,
-                                      specfem::enums::element::type::acoustic>::
-    get_index_mapping_view<specfem::enums::element::type::acoustic>() const;
+template KOKKOS_FUNCTION int
+specfem::compute::interface_container<specfem::enums::element::type::acoustic,
+                                      specfem::enums::element::type::elastic>::
+    load_device_index_mapping<specfem::enums::element::type::acoustic>(
+        const int iedge) const;
 
-template specfem::kokkos::DeviceView1d<specfem::edge::interface>
+template KOKKOS_FUNCTION int
 specfem::compute::interface_container<specfem::enums::element::type::elastic,
                                       specfem::enums::element::type::acoustic>::
-    get_edge_type_view<specfem::enums::element::type::elastic>() const;
+    load_device_index_mapping<specfem::enums::element::type::acoustic>(
+        const int iedge) const;
 
-template specfem::kokkos::DeviceView1d<specfem::edge::interface>
+template KOKKOS_FUNCTION int
+specfem::compute::interface_container<specfem::enums::element::type::acoustic,
+                                      specfem::enums::element::type::elastic>::
+    load_device_index_mapping<specfem::enums::element::type::elastic>(
+        const int iedge) const;
+
+template int
 specfem::compute::interface_container<specfem::enums::element::type::elastic,
                                       specfem::enums::element::type::acoustic>::
-    get_edge_type_view<specfem::enums::element::type::acoustic>() const;
+    load_host_index_mapping<specfem::enums::element::type::elastic>(
+        const int iedge) const;
+
+template int
+specfem::compute::interface_container<specfem::enums::element::type::acoustic,
+                                      specfem::enums::element::type::elastic>::
+    load_host_index_mapping<specfem::enums::element::type::acoustic>(
+        const int iedge) const;
+
+template int
+specfem::compute::interface_container<specfem::enums::element::type::elastic,
+                                      specfem::enums::element::type::acoustic>::
+    load_host_index_mapping<specfem::enums::element::type::acoustic>(
+        const int iedge) const;
+
+template int
+specfem::compute::interface_container<specfem::enums::element::type::acoustic,
+                                      specfem::enums::element::type::elastic>::
+    load_host_index_mapping<specfem::enums::element::type::elastic>(
+        const int iedge) const;
+
+template KOKKOS_FUNCTION specfem::edge::interface specfem::compute::
+    interface_container<specfem::enums::element::type::elastic,
+                        specfem::enums::element::type::acoustic>::
+        load_device_edge_type<specfem::enums::element::type::elastic>(
+            const int iedge) const;
+
+template KOKKOS_FUNCTION specfem::edge::interface specfem::compute::
+    interface_container<specfem::enums::element::type::acoustic,
+                        specfem::enums::element::type::elastic>::
+        load_device_edge_type<specfem::enums::element::type::acoustic>(
+            const int iedge) const;
+
+template specfem::edge::interface specfem::compute::interface_container<
+    specfem::enums::element::type::elastic,
+    specfem::enums::element::type::acoustic>::
+    load_host_edge_type<specfem::enums::element::type::elastic>(
+        const int iedge) const;
+
+template specfem::edge::interface specfem::compute::interface_container<
+    specfem::enums::element::type::acoustic,
+    specfem::enums::element::type::elastic>::
+    load_host_edge_type<specfem::enums::element::type::acoustic>(
+        const int iedge) const;
+
+template KOKKOS_FUNCTION specfem::edge::interface specfem::compute::
+    interface_container<specfem::enums::element::type::elastic,
+                        specfem::enums::element::type::acoustic>::
+        load_device_edge_type<specfem::enums::element::type::acoustic>(
+            const int iedge) const;
+
+template KOKKOS_FUNCTION specfem::edge::interface specfem::compute::
+    interface_container<specfem::enums::element::type::acoustic,
+                        specfem::enums::element::type::elastic>::
+        load_device_edge_type<specfem::enums::element::type::elastic>(
+            const int iedge) const;
+
+template specfem::edge::interface specfem::compute::interface_container<
+    specfem::enums::element::type::elastic,
+    specfem::enums::element::type::acoustic>::
+    load_host_edge_type<specfem::enums::element::type::acoustic>(
+        const int iedge) const;
+
+template specfem::edge::interface specfem::compute::interface_container<
+    specfem::enums::element::type::acoustic,
+    specfem::enums::element::type::elastic>::
+    load_host_edge_type<specfem::enums::element::type::elastic>(
+        const int iedge) const;

@@ -6,7 +6,7 @@ Tests:
       nproc : 1
     databases:
       specfem_config: "../../../tests/unit-tests/domain/serial/test1/specfem_config.yaml"
-      elastic_domain_field: "../../../tests/unit-tests/domain/serial/test1/displacement.bin"
+      elastic_mass_matrix: "../../../tests/unit-tests/domain/serial/test1/rmass_inverse_elastic.bin"
 
   - name : "SerialTest2 : Homogeneous acoustic domain"
     description: >
@@ -15,7 +15,7 @@ Tests:
       nproc : 1
     databases:
       specfem_config: "../../../tests/unit-tests/domain/serial/test2/specfem_config.yaml"
-      acoustic_domain_field: "../../../tests/unit-tests/domain/serial/test2/potential_acoustic.bin"
+      acoustic_mass_matrix: "../../../tests/unit-tests/domain/serial/test2/rmass_inverse_acoustic.bin"
 
   - name : "SerialTest3 : Homogeneous acoustic domain (stacey BC)"
     description: >

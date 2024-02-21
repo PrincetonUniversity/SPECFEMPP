@@ -60,20 +60,8 @@ public:
    * @param field_dot_dot double derivative of wavefield inside the domain
    * @param mass_matrix mass matrix for every GLL point inside the domain
    */
-  kernels(
-      const specfem::kokkos::DeviceView3d<int> ibool,
-      const specfem::compute::partial_derivatives &partial_derivatives,
-      const specfem::compute::properties &properties,
-      const specfem::compute::boundaries &boundaries,
-      const specfem::compute::sources &sources,
-      const specfem::compute::receivers &receives,
-      specfem::quadrature::quadrature *quadx,
-      specfem::quadrature::quadrature *quadz, qp_type quadrature_points,
-      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field,
-      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot,
-      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
-          field_dot_dot,
-      specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> mass_matrix);
+  kernels(const specfem::compute::assembly &assembly,
+          const quadrature_point_type &quadrature_points);
 
   /**
    * @brief
@@ -91,7 +79,8 @@ public:
   }
 
   /**
-   * @brief execute Kokkos kernel to compute contribution of stiffness matrix to
+   * @brief execute Kokkos kernel to compute contribution of stiffness
+   matrix to
    * the global acceleration
    *
    */
@@ -127,7 +116,8 @@ public:
   }
 
   /**
-   * @brief execute Kokkos kernel to compute seismogram values at every receiver
+   * @brief execute Kokkos kernel to compute seismogram values at every
+   receiver
    * for the current seismogram step
    *
    * A seismogram step is defined as the current time step divided by the
@@ -195,7 +185,8 @@ private:
       isotropic_elements_stacey;
 
   /**
-   * @brief Elemental kernels for isotropic elements with composite stacey and
+   * @brief Elemental kernels for isotropic elements with composite stacey
+   and
    * dirichlet boundary
    *
    */

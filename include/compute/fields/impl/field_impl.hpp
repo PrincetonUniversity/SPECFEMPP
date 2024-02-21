@@ -17,14 +17,16 @@ public:
 
   field_impl() = default;
 
-  field_impl(const specfem::compute::mesh &mesh,
-             const specfem::compute::properties &properties,
-             Kokkos::View<int * [specfem::enums::element::ntypes],
-                          Kokkos::LayoutLeft, specfem::kokkos::HostMemSpace>
-                 assembly_index_mapping);
+  field_impl(
+      const specfem::compute::mesh &mesh,
+      const specfem::compute::properties &properties,
+      Kokkos::View<int *, Kokkos::LayoutLeft, specfem::kokkos::HostMemSpace>
+          assembly_index_mapping);
 
   field_impl(const int nglob, const int nspec, const int ngllz,
              const int ngllx);
+
+  template <specfem::sync::kind sync> void sync_fields() const;
 
   int nglob;
   int nspec;

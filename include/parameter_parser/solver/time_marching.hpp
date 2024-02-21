@@ -2,7 +2,7 @@
 #define _PARAMETER_TIME_MARCHING_HPP
 
 #include "specfem_setup.hpp"
-#include "timescheme/interface.hpp"
+// #include "timescheme/interface.hpp"
 #include "yaml-cpp/yaml.h"
 #include <tuple>
 
@@ -45,7 +45,8 @@ public:
   /**
    * @brief Instantiate the Timescheme
    *
-   * @return specfem::TimeScheme::TimeScheme* Pointer to the TimeScheme object
+   * @return specfem::TimeScheme::TimeScheme* Pointer to the TimeScheme
+   object
    * used in the solver algorithm
    */
   std::shared_ptr<specfem::TimeScheme::TimeScheme>
