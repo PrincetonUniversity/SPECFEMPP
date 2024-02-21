@@ -1,6 +1,6 @@
 #include "../../Kokkos_Environment.hpp"
 #include "../../MPI_environment.hpp"
-#include "../../utilities/include/compare_array.h"
+// #include "../../utilities/include/compare_array.h"
 #include "compute/interface.hpp"
 #include "constants.hpp"
 #include "domain/interface.hpp"
@@ -87,75 +87,43 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
   // mpi->cout(setup.print_header());
 
   // Set up GLL quadrature points
-  auto [gllx, gllz] = setup.instantiate_quadrature();
+  const auto quadratures = setup.instantiate_quadrature();
+
+  // Read mesh generated MESHFEM
+  specfem::mesh::mesh mesh(database_file, mpi);
+
+  std::vector<std::shared_ptr<specfem::sources::source> > sources(0);
 
   const auto angle = setup.get_receiver_angle();
   const auto stations_filename = setup.get_stations_file();
   auto receivers = specfem::receivers::read_receivers(stations_filename, angle);
-
-  // Read mesh generated MESHFEM
-  std::vector<std::shared_ptr<specfem::material::material> > materials;
-  specfem::mesh::mesh mesh(database_file, materials, mpi);
-
-  // Generate compute structs to be used by the solver
-  specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
-                                    gllz);
-  specfem::compute::partial_derivatives partial_derivatives(
-      mesh.coorg, mesh.material_ind.knods, gllx, gllz);
-  specfem::compute::properties material_properties(
-      mesh.material_ind.kmato, materials, mesh.nspec, gllx->get_N(),
-      gllz->get_N());
-
-  // Setup boundary conditions
-  specfem::compute::boundaries boundary_conditions(
-      mesh.material_ind.kmato, materials, mesh.acfree_surface,
-      mesh.abs_boundary);
-
-  // locate the recievers
-  for (auto &receiver : receivers)
-    receiver->locate(compute.coordinates.coord, compute.h_ibool,
-                     gllx->get_hxi(), gllz->get_hxi(), mesh.nproc, mesh.coorg,
-                     mesh.material_ind.knods, mesh.npgeo,
-                     material_properties.h_ispec_type, mpi);
-
-  // Setup solver compute struct
-
-  const type_real xmax = compute.coordinates.xmax;
-  const type_real xmin = compute.coordinates.xmin;
-  const type_real zmax = compute.coordinates.zmax;
-  const type_real zmin = compute.coordinates.zmin;
-
   const auto stypes = setup.get_seismogram_types();
 
-  specfem::compute::receivers compute_receivers(receivers, stypes, gllx, gllz,
-                                                xmax, xmin, zmax, zmin, 1, mpi);
+  specfem::compute::assembly assembly(mesh, quadratures, sources, receivers,
+                                      stypes, 0, 1);
 
-  const int nglob = specfem::utilities::compute_nglob(compute.h_ibool);
-  specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
-  specfem::domain::domain<
-      specfem::enums::element::medium::elastic,
-      specfem::enums::element::quadrature::static_quadrature_points<5> >
-      elastic_domain_static(nglob, qp5, &compute, material_properties,
-                            partial_derivatives, boundary_conditions,
-                            specfem::compute::sources(), compute_receivers,
-                            gllx, gllz);
+  const auto displacement_field = assembly.fields.forward.elastic.field;
+  const auto velocity_field = assembly.fields.forward.elastic.field_dot;
+  const auto acceleration_field = assembly.fields.forward.elastic.field_dot_dot;
 
-  const auto displacement_field = elastic_domain_static.get_host_field();
-  const auto velocity_field = elastic_domain_static.get_host_field_dot();
-  const auto acceleration_field =
-      elastic_domain_static.get_host_field_dot_dot();
+  const int nglob = assembly.fields.forward.nglob;
 
   read_field(test_config.displacement_field, displacement_field, nglob, 2);
   read_field(test_config.velocity_field, velocity_field, nglob, 2);
   read_field(test_config.acceleration_field, acceleration_field, nglob, 2);
 
-  elastic_domain_static.sync_field(specfem::sync::HostToDevice);
-  elastic_domain_static.sync_field_dot(specfem::sync::HostToDevice);
-  elastic_domain_static.sync_field_dot_dot(specfem::sync::HostToDevice);
+  assembly.fields.sync_fields<specfem::sync::kind::HostToDevice>();
+
+  specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
+
+  specfem::domain::domain<
+      specfem::enums::element::medium::elastic,
+      specfem::enums::element::quadrature::static_quadrature_points<5> >
+      elastic_domain_static(assembly, qp5);
 
   elastic_domain_static.compute_seismogram(0);
 
-  compute_receivers.sync_seismograms();
+  assembly.receivers.sync_seismograms();
 
   type_real tol = 1e-6;
 
@@ -179,7 +147,7 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
   for (int isys = 0; isys < stypes.size(); isys++) {
     for (int irec = 0; irec < receivers.size(); irec++) {
       for (int idim = 0; idim < 2; idim++) {
-        EXPECT_NEAR(compute_receivers.h_seismogram(0, isys, irec, idim),
+        EXPECT_NEAR(assembly.receivers.h_seismogram(0, isys, irec, idim),
                     ground_truth[index], std::fabs(tol * ground_truth[index]));
         index++;
       }

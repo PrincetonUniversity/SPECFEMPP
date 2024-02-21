@@ -137,7 +137,7 @@ void allocate_elements(
   // }
 
   // Copy ispec_domain to device
-  Kokkos::deep_copy(ispec_domain, h_ispec_domain);
+  // Kokkos::deep_copy(ispec_domain, h_ispec_domain);
 
   std::cout << "  - Element type: \n"
             << "    - dimension           : "
@@ -199,65 +199,52 @@ void allocate_isotropic_sources(
   return;
 }
 
-// template <class medium, class qp_type>
-// void allocate_isotropic_receivers(
-//     const specfem::kokkos::DeviceView3d<int> ibool,
-//     const specfem::compute::partial_derivatives &partial_derivatives,
-//     const specfem::compute::properties &properties,
-//     const specfem::compute::receivers &receivers,
-//     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field,
-//     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot,
-//     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
-//     field_dot_dot, specfem::quadrature::quadrature *quadx,
-//     specfem::quadrature::quadrature *quadz, qp_type quadrature_points,
-//     specfem::domain::impl::kernels::receiver_kernel<
-//         medium, qp_type, specfem::enums::element::property::isotropic>
-//         &isotropic_receivers) {
+template <class medium, class qp_type>
+void allocate_isotropic_receivers(
+    const specfem::compute::assembly &assembly, qp_type quadrature_points,
+    specfem::domain::impl::kernels::receiver_kernel<
+        medium, qp_type, specfem::enums::element::property::isotropic>
+        &isotropic_receivers) {
 
-//   const auto value = medium::value;
+  const auto value = medium::value;
 
-//   // Create isotropic receivers
+  // Create isotropic sources
+  const auto ispec_array = assembly.receivers.h_ispec_array;
 
-//   const auto ispec_array = receivers.h_ispec_array;
-//   int nreceivers = 0;
-//   for (int ireceiver = 0; ireceiver < ispec_array.extent(0); ireceiver++) {
-//     if (properties.h_ispec_type(ispec_array(ireceiver)) == value) {
-//       nreceivers++;
-//     }
-//   }
+  // Count the number of sources within this medium
+  int nreceivers = 0;
+  for (int ireceiver = 0; ireceiver < ispec_array.extent(0); ireceiver++) {
+    const int ispec = ispec_array(ireceiver);
+    if (assembly.properties.h_element_types(ispec) == value) {
+      nreceivers++;
+    }
+  }
 
-//   specfem::kokkos::DeviceView1d<int> ispec_receivers(
-//       "specfem::domain::domain::ispec_receivers", nreceivers);
+  // Save the index for sources in this domain
+  specfem::kokkos::HostView1d<int> h_receiver_kernel_index_mapping(
+      "specfem::domain::domain::receiver_kernel_index_mapping", nreceivers);
 
-//   specfem::kokkos::HostMirror1d<int> h_ispec_receivers =
-//       Kokkos::create_mirror_view(ispec_receivers);
+  specfem::kokkos::HostMirror1d<int> h_receiver_mapping(
+      "specfem::domain::domain::receiver_mapping", nreceivers);
 
-//   specfem::kokkos::DeviceView1d<int> ireceiver_array(
-//       "specfem::domain::domain::ireceiver_array", nreceivers);
+  int index = 0;
+  for (int ireceiver = 0; ireceiver < ispec_array.extent(0); ireceiver++) {
+    const int ispec = ispec_array(ireceiver);
+    if (assembly.properties.h_element_types(ispec) == value) {
+      h_receiver_kernel_index_mapping(index) = ispec_array(ireceiver);
+      h_receiver_mapping(index) = ireceiver;
+      index++;
+    }
+  }
 
-//   specfem::kokkos::HostMirror1d<int> h_ireceiver_array =
-//       Kokkos::create_mirror_view(ireceiver_array);
+  // Allocate isotropic sources
+  isotropic_receivers = specfem::domain::impl::kernels::receiver_kernel<
+      medium, qp_type, specfem::enums::element::property::isotropic>(
+      assembly, h_receiver_kernel_index_mapping, h_receiver_mapping,
+      quadrature_points);
 
-//   int index = 0;
-//   for (int ireceiver = 0; ireceiver < ispec_array.extent(0); ireceiver++) {
-//     if (properties.h_ispec_type(ispec_array(ireceiver)) == value) {
-//       h_ispec_receivers(index) = ispec_array(ireceiver);
-//       h_ireceiver_array(index) = ireceiver;
-//       index++;
-//     }
-//   }
-
-//   Kokkos::deep_copy(ispec_receivers, h_ispec_receivers);
-//   Kokkos::deep_copy(ireceiver_array, h_ireceiver_array);
-
-//   isotropic_receivers = specfem::domain::impl::kernels::receiver_kernel<
-//       medium, qp_type, specfem::enums::element::property::isotropic>(
-//       ibool, ispec_receivers, ireceiver_array, partial_derivatives,
-//       properties, receivers, field, field_dot, field_dot_dot, quadx, quadz,
-//       quadrature_points);
-
-//   return;
-// }
+  return;
+}
 } // namespace
 
 template <class medium, class qp_type>
@@ -381,14 +368,14 @@ specfem::domain::impl::kernels::kernels<medium, qp_type>::kernels(
   allocate_elements(assembly, quadrature_points, element_tags,
                     isotropic_elements);
 
-  // // Allocate isotropic sources
+  // Allocate isotropic sources
 
   allocate_isotropic_sources(assembly, quadrature_points, isotropic_sources);
 
-  // // Allocate isotropic receivers
+  // Allocate isotropic receivers
 
-  // allocate_isotropic_receivers(assembly, quadrature_points,
-  //                              isotropic_receivers);
+  allocate_isotropic_receivers(assembly, quadrature_points,
+                               isotropic_receivers);
 
   return;
 }
