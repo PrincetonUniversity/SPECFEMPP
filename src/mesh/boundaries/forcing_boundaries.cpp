@@ -1,4 +1,4 @@
-#include "fortranio/interface.hpp"
+#include "IO/fortranio/interface.hpp"
 #include "mesh/boundaries/boundaries.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "utilities.cpp"
@@ -123,9 +123,9 @@ specfem::mesh::boundaries::forcing_boundary::forcing_boundary(
 
   if (nelement_acforcing > 0) {
     for (int inum = 0; inum < nelement_acforcing; inum++) {
-      specfem::fortran_IO::fortran_read_line(
-          stream, &numacread, &codeacread1, &codeacread2, &codeacread3,
-          &codeacread4, &typeacread, &iedgeread);
+      specfem::IO::fortran_read_line(stream, &numacread, &codeacread1,
+                                     &codeacread2, &codeacread3, &codeacread4,
+                                     &typeacread, &iedgeread);
       std::vector<bool> codeacread(4, false);
       if (numacread < 1 || numacread > nspec) {
         std::runtime_error("Wrong absorbing element number");

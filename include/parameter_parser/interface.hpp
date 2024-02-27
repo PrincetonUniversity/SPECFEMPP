@@ -8,5 +8,6 @@
 #include "seismogram.hpp"
 #include "setup.hpp"
 #include "solver/interface.hpp"
+#include "wavefield.hpp"
 
 #endif

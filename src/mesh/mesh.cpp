@@ -1,4 +1,5 @@
 #include "mesh/mesh.hpp"
+#include "IO/fortranio/interface.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
 #include "material/interface.hpp"
@@ -93,8 +94,7 @@ specfem::mesh::mesh::mesh(const std::string filename,
   int ninterfaces;
   int max_interface_size;
 
-  specfem::fortran_IO::fortran_read_line(stream, &ninterfaces,
-                                         &max_interface_size);
+  specfem::IO::fortran_read_line(stream, &ninterfaces, &max_interface_size);
 
   try {
     this->abs_boundary = specfem::mesh::boundaries::absorbing_boundary(
@@ -148,6 +148,40 @@ specfem::mesh::mesh::mesh(const std::string filename,
   }
 
   stream.close();
+
+  // Print material properties
+
+  mpi->cout("Material systems:\n"
+            "------------------------------");
+
+  mpi->cout("Number of material systems = " +
+            std::to_string(this->materials.n_materials) + "\n\n");
+
+  for (int i = 0; i < this->materials.n_materials; i++) {
+    const auto material_index_mapping =
+        this->materials.material_index_mapping(i);
+    if ((material_index_mapping.type ==
+         specfem::enums::element::type::elastic) &&
+        (material_index_mapping.property ==
+         specfem::enums::element::property_tag::isotropic)) {
+      const auto material = std::get<specfem::material::material<
+          specfem::enums::element::type::elastic,
+          specfem::enums::element::property_tag::isotropic> >(
+          this->materials[i]);
+      mpi->cout(material.print());
+    } else if ((material_index_mapping.type ==
+                specfem::enums::element::type::acoustic) &&
+               (material_index_mapping.property ==
+                specfem::enums::element::property_tag::isotropic)) {
+      const auto material = std::get<specfem::material::material<
+          specfem::enums::element::type::acoustic,
+          specfem::enums::element::property_tag::isotropic> >(
+          this->materials[i]);
+      mpi->cout(material.print());
+    } else {
+      throw std::runtime_error("Material type not supported");
+    }
+  }
 
   return;
 }

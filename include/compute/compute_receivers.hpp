@@ -5,6 +5,7 @@
 #include "receiver/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
+#include <string>
 #include <vector>
 
 namespace specfem {
@@ -16,6 +17,9 @@ namespace compute {
  *
  */
 struct receivers {
+  int nreceivers;                         ///< Number of receivers
+  std::vector<std::string> network_names; ///< Network names of the receivers
+  std::vector<std::string> station_names; ///< Station names of the receivers
   specfem::kokkos::DeviceView4d<type_real> receiver_array;   ///< Array to store
                                                              ///< lagrange
                                                              ///< interpolants
