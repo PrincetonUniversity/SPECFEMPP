@@ -1,4 +1,4 @@
-#include "fortranio/interface.hpp"
+#include "IO/fortranio/interface.hpp"
 #include "mesh/boundaries/boundaries.hpp"
 #include "specfem_mpi/interface.hpp"
 #include <Kokkos_Core.hpp>
@@ -140,9 +140,9 @@ specfem::mesh::boundaries::absorbing_boundary::absorbing_boundary(
 
   if (num_abs_boundary_faces > 0) {
     for (int inum = 0; inum < num_abs_boundary_faces; inum++) {
-      specfem::fortran_IO::fortran_read_line(
-          stream, &numabsread, &codeabsread1, &codeabsread2, &codeabsread3,
-          &codeabsread4, &typeabsread, &iedgeread);
+      specfem::IO::fortran_read_line(stream, &numabsread, &codeabsread1,
+                                     &codeabsread2, &codeabsread3,
+                                     &codeabsread4, &typeabsread, &iedgeread);
       if (numabsread < 1 || numabsread > nspec)
         throw std::runtime_error("Wrong absorbing element number");
       ispec_edge(inum) = numabsread - 1;

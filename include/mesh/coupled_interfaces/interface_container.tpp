@@ -2,7 +2,7 @@
 #define _MESH_COUPLED_INTERFACES_IMPL_INTERFACE_CONTAINER_TPP_
 
 #include "enumerations/specfem_enums.hpp"
-#include "fortranio/interface.hpp"
+#include "IO/fortranio/interface.hpp"
 #include "interface_container.hpp"
 #include "specfem_mpi/interface.hpp"
 
@@ -22,7 +22,7 @@ specfem::mesh::interface_container<
   int medium1_ispec_l, medium2_ispec_l;
 
   for (int i = 0; i < num_interfaces; i++) {
-    specfem::fortran_IO::fortran_read_line(stream, &medium2_ispec_l,
+    specfem::IO::fortran_read_line(stream, &medium2_ispec_l,
                                            &medium1_ispec_l);
     medium1_index_mapping(i) = medium1_ispec_l - 1;
     medium2_index_mapping(i) = medium2_ispec_l - 1;

@@ -1,5 +1,5 @@
 #include "mesh/materials/materials.hpp"
-#include "fortranio/interface.hpp"
+#include "IO/fortranio/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "mesh/materials/materials.tpp"
 #include <vector>
@@ -54,7 +54,7 @@ std::vector<specfem::mesh::materials::material_specification> read_materials(
 
   for (int i = 0; i < numat; i++) {
 
-    specfem::fortran_IO::fortran_read_line(
+    specfem::IO::fortran_read_line(
         stream, &read_values.n, &read_values.indic, &read_values.val0,
         &read_values.val1, &read_values.val2, &read_values.val3,
         &read_values.val4, &read_values.val5, &read_values.val6,
@@ -147,8 +147,8 @@ void read_material_indices(
 
   for (int ispec = 0; ispec < nspec; ispec++) {
     // format: #element_id  #material_id #node_id1 #node_id2 #...
-    specfem::fortran_IO::fortran_read_line(stream, &n, &kmato_read, &knods_read,
-                                           &pml_read);
+    specfem::IO::fortran_read_line(stream, &n, &kmato_read, &knods_read,
+                                   &pml_read);
 
     if (n < 1 || n > nspec) {
       throw std::runtime_error("Error reading material indices");
@@ -187,7 +187,8 @@ void read_material_indices(
 specfem::mesh::materials::materials(
     std::ifstream &stream, const int numat, const int nspec,
     const specfem::kokkos::HostView2d<int> knods, const specfem::MPI::MPI *mpi)
-    : material_index_mapping("specfem::mesh::material_index_mapping", nspec) {
+    : n_materials(numat),
+      material_index_mapping("specfem::mesh::material_index_mapping", nspec) {
 
   // Read material properties
   auto index_mapping = read_materials(stream, numat, this->elastic_isotropic,
@@ -242,7 +243,7 @@ specfem::mesh::materials::operator[](const int index) const {
 //   // Read an assign material values, coordinate numbering, PML association
 //   for (int ispec = 0; ispec < nspec; ispec++) {
 //     // format: #element_id  #material_id #node_id1 #node_id2 #...
-//     specfem::fortran_IO::fortran_read_line(stream, &n, &kmato_read,
+//     specfem::IO::fortran_read_line(stream, &n, &kmato_read,
 //     &knods_read,
 //                                            &pml_read);
 

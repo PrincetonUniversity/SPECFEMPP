@@ -9,6 +9,7 @@
 #include "seismogram.hpp"
 #include "solver/interface.hpp"
 #include "specfem_setup.hpp"
+#include "wavefield.hpp"
 #include "yaml-cpp/yaml.h"
 #include <memory>
 #include <tuple>
@@ -39,7 +40,7 @@ public:
    * @return std::tuple<specfem::quadrature::quadrature,
    * specfem::quadrature::quadrature> Quadrature objects in x and z dimensions
    */
-  specfem::quadrature::quadratures instantiate_quadrature() {
+  specfem::quadrature::quadratures instantiate_quadrature() const {
     return this->quadrature->instantiate();
   }
   // /**
@@ -49,7 +50,7 @@ public:
   //  object
   //  * used in the solver algorithm
   //  */
-  std::shared_ptr<specfem::TimeScheme::TimeScheme> instantiate_solver() {
+  std::shared_ptr<specfem::TimeScheme::TimeScheme> instantiate_solver() const {
     return this->solver->instantiate(
         this->receivers->get_nstep_between_samples());
   }
@@ -67,8 +68,8 @@ public:
   /**
    * @brief Log the header and description of the simulation
    */
-  std::string
-  print_header(std::chrono::time_point<std::chrono::high_resolution_clock> now);
+  std::string print_header(
+      const std::chrono::time_point<std::chrono::high_resolution_clock> now);
 
   /**
    * @brief Get delta time value
@@ -113,30 +114,34 @@ public:
     return this->receivers->get_seismogram_types();
   }
 
-  // /**
-  //  * @brief Instantiate a seismogram writer object
-  //  *
-  //  * @param receivers Vector of pointers to receiver objects used to
-  //  instantiate
-  //  * the writer
-  //  * @param compute_receivers Pointer to specfem::compute::receivers struct
-  //  used
-  //  * to instantiate the writer
-  //  * @return specfem::writer::writer* Pointer to an instantiated writer
-  //  object
-  //  */
-  // std::shared_ptr<specfem::writer::writer> instantiate_seismogram_writer(
-  //     std::vector<std::shared_ptr<specfem::receivers::receiver> > &receivers,
-  //     specfem::compute::receivers &compute_receivers) const {
-  //   if (this->seismogram) {
-  //     return this->seismogram->instantiate_seismogram_writer(
-  //         receivers, compute_receivers, this->solver->get_dt(),
-  //         this->solver->get_t0(),
-  //         this->receivers->get_nstep_between_samples());
-  //   } else {
-  //     return NULL;
-  //   }
-  // }
+  /**
+   * @brief Instantiate a seismogram writer object
+   *
+   * @param receivers Pointer to specfem::compute::receivers struct
+   used
+   * to instantiate the writer
+   * @return specfem::writer::writer* Pointer to an instantiated writer
+   object
+   */
+  std::shared_ptr<specfem::writer::writer> instantiate_seismogram_writer(
+      const specfem::compute::assembly &assembly) const {
+    if (this->seismogram) {
+      return this->seismogram->instantiate_seismogram_writer(
+          assembly.receivers, this->solver->get_dt(), this->solver->get_t0(),
+          this->receivers->get_nstep_between_samples());
+    } else {
+      return NULL;
+    }
+  }
+
+  std::shared_ptr<specfem::writer::writer> instantiate_wavefield_writer(
+      const specfem::compute::assembly &assembly) const {
+    if (this->wavefield) {
+      return this->wavefield->instantiate_wavefield_writer(assembly);
+    } else {
+      return nullptr;
+    }
+  }
 
 private:
   std::unique_ptr<specfem::runtime_configuration::header> header; ///< Pointer
@@ -153,9 +158,12 @@ private:
                   ///< quadrature object
   std::unique_ptr<specfem::runtime_configuration::receivers>
       receivers; ///< Pointer to receivers object
-  // std::unique_ptr<specfem::runtime_configuration::seismogram>
-  //     seismogram; ///< Pointer to
-  //                 ///< seismogram object
+  std::unique_ptr<specfem::runtime_configuration::seismogram>
+      seismogram; ///< Pointer to
+                  ///< seismogram object
+  std::unique_ptr<specfem::runtime_configuration::wavefield>
+      wavefield; ///< Pointer to
+                 ///< wavefield object
   std::unique_ptr<specfem::runtime_configuration::database_configuration>
       databases; ///< Get database filenames
 };
