@@ -12,7 +12,9 @@
 specfem::compute::receivers::receivers(const int nreceivers,
                                        const int max_sig_step, const int N,
                                        const int n_seis_types)
-    : receiver_array("specfem::compute::receiver::receiver_array", nreceivers,
+    : nreceivers(nreceivers), station_names(nreceivers),
+      network_names(nreceivers),
+      receiver_array("specfem::compute::receiver::receiver_array", nreceivers,
                      ndim, N, N),
       h_receiver_array(Kokkos::create_mirror_view(receiver_array)),
       ispec_array("specfem::compute::receivers::ispec_array", nreceivers),
@@ -46,6 +48,8 @@ specfem::compute::receivers::receivers(
       specfem::compute::receivers(nreceivers, max_sig_step, N, n_seis_types);
 
   for (int irec = 0; irec < nreceivers; irec++) {
+    station_names[irec] = receivers[irec]->get_station_name();
+    network_names[irec] = receivers[irec]->get_network_name();
     auto sv_receiver_array = Kokkos::subview(
         this->h_receiver_array, irec, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
     receivers[irec]->compute_receiver_array(mesh, sv_receiver_array);

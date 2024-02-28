@@ -1,19 +1,18 @@
-#include "fortranio/fortran_io.hpp"
+#include "IO/fortranio/fortran_io.hpp"
 #include <boost/algorithm/string.hpp>
 #include <fstream>
 #include <iostream>
 #include <string>
 
-void specfem::fortran_IO::fortran_IO(std::ifstream &stream,
-                                     int &buffer_length) {
+void specfem::IO::fortran_IO(std::ifstream &stream, int &buffer_length) {
   if (buffer_length != 0)
     throw std::runtime_error("Error reading fortran file");
 
   return;
 }
 
-void specfem::fortran_IO::fortran_read_value(bool *value, std::ifstream &stream,
-                                             int &buffer_length) {
+void specfem::IO::fortran_read_value(bool *value, std::ifstream &stream,
+                                     int &buffer_length) {
 
   buffer_length -= fbool;
   char *ivalue = new char[fbool];
@@ -28,8 +27,8 @@ void specfem::fortran_IO::fortran_read_value(bool *value, std::ifstream &stream,
   return;
 }
 
-void specfem::fortran_IO::fortran_read_value(int *value, std::ifstream &stream,
-                                             int &buffer_length) {
+void specfem::IO::fortran_read_value(int *value, std::ifstream &stream,
+                                     int &buffer_length) {
 
   buffer_length -= fint;
   char *ivalue = new char[fint];
@@ -42,9 +41,8 @@ void specfem::fortran_IO::fortran_read_value(int *value, std::ifstream &stream,
   return;
 }
 
-void specfem::fortran_IO::fortran_read_value(type_real *value,
-                                             std::ifstream &stream,
-                                             int &buffer_length) {
+void specfem::IO::fortran_read_value(type_real *value, std::ifstream &stream,
+                                     int &buffer_length) {
 
   double *temp;
   buffer_length -= fdouble;
@@ -59,9 +57,8 @@ void specfem::fortran_IO::fortran_read_value(type_real *value,
   return;
 }
 
-void specfem::fortran_IO::fortran_read_value(std::string *value,
-                                             std::ifstream &stream,
-                                             int &buffer_length) {
+void specfem::IO::fortran_read_value(std::string *value, std::ifstream &stream,
+                                     int &buffer_length) {
   // reading a string has few errors. There seem to unknown characters at the
   // end of the string
   char temp[fchar];

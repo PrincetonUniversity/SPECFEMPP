@@ -48,6 +48,7 @@ struct materials {
                  &l_material);
   };
 
+  int n_materials; ///< Total number of different materials
   specfem::kokkos::HostView1d<material_specification>
       material_index_mapping; ///< Mapping of spectral element to material
                               ///< properties

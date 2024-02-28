@@ -1,6 +1,7 @@
 #include "../../Kokkos_Environment.hpp"
 #include "../../MPI_environment.hpp"
 // #include "../../utilities/include/compare_array.h"
+#include "IO/fortranio/interface.hpp"
 #include "compute/interface.hpp"
 #include "constants.hpp"
 #include "domain/interface.hpp"
@@ -61,7 +62,7 @@ void read_field(
   type_real ref_value;
   for (int i1 = 0; i1 < n1; i1++) {
     for (int i2 = 0; i2 < n2; i2++) {
-      specfem::fortran_IO::fortran_read_line(stream, &ref_value);
+      specfem::IO::fortran_read_line(stream, &ref_value);
       field(i1, i2) = ref_value;
     }
   }

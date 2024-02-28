@@ -51,6 +51,23 @@ else ()
         message(STATUS "    LIBSO: ${Boost_LIBRARIES}")
 endif()
 
+# Install HDF5 as a dependency if not found
+find_package(HDF5 COMPONENTS CXX)
+
+if (NOT ${HDF5_FOUND})
+        message("-- HDF5 not found. Installing HDF5.")
+        include(FetchContent)
+        FetchContent_Declare(
+                hdf5
+                URL https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.12/hdf5-1.12.0/src/hdf5-1.12.0.tar.gz
+        )
+        FetchContent_MakeAvailable(hdf5)
+else ()
+        message(STATUS "    LIB:   ${HDF5_LIBRARIES}")
+        message(STATUS "    INC:   ${HDF5_INCLUDE_DIRS}")
+        message(STATUS "    LIBSO: ${HDF5_CXX_LIBRARIES}")
+endif()
+
 configure_file(constants.hpp.in constants.hpp)
 
 include_directories(include)
@@ -74,14 +91,16 @@ target_link_libraries(
 )
 
 add_library(
-        fortranio
-        src/fortranio/fortran_io.cpp
+        IO
+        src/IO/fortranio/fortran_io.cpp
+        src/IO/HDF5/native_type.cpp
 )
 
 target_link_libraries(
-        fortranio
+        IO
         Boost::boost
         Kokkos::kokkos
+        ${HDF5_LIBRARIES}
 )
 
 add_library(
@@ -154,7 +173,7 @@ target_link_libraries(
         Kokkos::kokkos
         specfem_mpi
         # material_class
-        fortranio
+        IO
         yaml-cpp
 )
 
@@ -282,16 +301,18 @@ target_link_libraries(
         compute
 )
 
-# add_library(
-#         writer
-#         src/writer/seismogram.cpp
-# )
+add_library(
+        writer
+        src/writer/seismogram.cpp
+        src/writer/wavefield.cpp
+)
 
-# target_link_libraries(
-#         writer
-#         compute
-#         receiver_class
-# )
+target_link_libraries(
+        writer
+        compute
+        receiver_class
+        IO
+)
 
 add_library(
         parameter_reader
@@ -303,8 +324,8 @@ add_library(
         src/parameter_parser/quadrature.cpp
         src/parameter_parser/receivers.cpp
         src/parameter_parser/seismogram.cpp
-        # src/parameter_parser/writer.cpp
         src/parameter_parser/setup.cpp
+        src/parameter_parser/wavefield.cpp
 )
 
 target_link_libraries(
@@ -313,29 +334,29 @@ target_link_libraries(
         timescheme
         receiver_class
         yaml-cpp
-        # writer
+        writer
         Boost::filesystem
 )
 
-# add_executable(
-#         specfem2d
-#         src/specfem2d.cpp
-# )
+add_executable(
+        specfem2d
+        src/specfem2d.cpp
+)
 
-# target_link_libraries(
-#         specfem2d
-#         material_class
-#         specfem_mpi
-#         Kokkos::kokkos
-#         mesh
-#         quadrature
-#         compute
-#         source_class
-#         parameter_reader
-#         receiver_class
-#         writer
-#         Boost::program_options
-# )
+target_link_libraries(
+        specfem2d
+        specfem_mpi
+        Kokkos::kokkos
+        mesh
+        quadrature
+        compute
+        source_class
+        parameter_reader
+        receiver_class
+        writer
+        Boost::program_options
+        ${HDF5_LIBRARIES}
+)
 
 # Include tests
 if (BUILD_TESTS)
