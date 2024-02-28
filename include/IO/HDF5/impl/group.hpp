@@ -3,8 +3,6 @@
 
 #include "H5Cpp.h"
 #include "dataset.hpp"
-#include "dataset.tpp"
-#include "file.hpp"
 #include <memory>
 #include <string>
 
