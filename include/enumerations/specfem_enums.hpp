@@ -49,7 +49,8 @@ namespace simulation {
  *
  */
 enum class type {
-  forward ///< Forward simulation type
+  forward, ///< Forward simulation type
+  adjoint  ///< Backward simulation type
 };
 
 } // namespace simulation

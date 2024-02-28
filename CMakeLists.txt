@@ -315,6 +315,17 @@ target_link_libraries(
 )
 
 add_library(
+        reader
+        src/reader/wavefield.cpp
+)
+
+target_link_libraries(
+        reader
+        compute
+        IO
+)
+
+add_library(
         parameter_reader
         src/parameter_parser/run_setup.cpp
         src/parameter_parser/solver/solver.cpp

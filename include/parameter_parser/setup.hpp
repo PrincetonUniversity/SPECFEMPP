@@ -143,6 +143,15 @@ public:
     }
   }
 
+  std::shared_ptr<specfem::reader::reader> instantiate_wavefield_reader(
+      const specfem::compute::assembly &assembly) const {
+    if (this->wavefield) {
+      return this->wavefield->instantiate_wavefield_reader(assembly);
+    } else {
+      return nullptr;
+    }
+  }
+
 private:
   std::unique_ptr<specfem::runtime_configuration::header> header; ///< Pointer
                                                                   ///< to header
