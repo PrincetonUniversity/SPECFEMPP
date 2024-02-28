@@ -46,7 +46,7 @@ add_library(
 target_link_libraries(
   compare_arrays
   Kokkos::kokkos
-  fortranio
+  IO
 )
 
 
@@ -85,7 +85,7 @@ target_link_libraries(
   fortranio_test
   gtest_main
   gmock_main
-  fortranio
+  IO
   -lpthread -lm
 )
 
@@ -285,7 +285,7 @@ target_link_libraries(
   mpi_environment
   compute
   parameter_reader
-  # writer
+  writer
   -lpthread -lm
 )
 
@@ -303,7 +303,7 @@ target_link_libraries(
   mpi_environment
   compute
   parameter_reader
-  # writer
+  writer
   -lpthread -lm
 )
 

@@ -1,6 +1,6 @@
 
 #include "../include/interface.hpp"
-#include "fortranio/interface.hpp"
+#include "IO/fortranio/interface.hpp"
 #include "kokkos_abstractions.h"
 #include <Kokkos_Core.hpp>
 #include <exception>

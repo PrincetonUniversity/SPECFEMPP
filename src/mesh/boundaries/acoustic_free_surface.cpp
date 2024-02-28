@@ -1,5 +1,5 @@
 #include "mesh/boundaries/acoustic_free_surface.hpp"
-#include "fortranio/interface.hpp"
+#include "IO/fortranio/interface.hpp"
 #include "specfem_mpi/interface.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -79,7 +79,7 @@ specfem::mesh::boundaries::acoustic_free_surface::acoustic_free_surface(
 
   if (nelem_acoustic_surface > 0) {
     for (int inum = 0; inum < nelem_acoustic_surface; inum++) {
-      specfem::fortran_IO::fortran_read_line(stream, &acfree_edge);
+      specfem::IO::fortran_read_line(stream, &acfree_edge);
       this->ispec_acoustic_surface(inum) = acfree_edge[0] - 1;
       const auto control_nodes = Kokkos::subview(
           knods, Kokkos::ALL, this->ispec_acoustic_surface(inum));

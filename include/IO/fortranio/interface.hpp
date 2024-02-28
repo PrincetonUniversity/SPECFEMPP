@@ -6,7 +6,7 @@
 #include <fstream>
 
 namespace specfem {
-namespace fortran_IO {
+namespace IO {
 /**
  * @brief Read a line from fortran unformatted binary file
  *
@@ -17,7 +17,7 @@ namespace fortran_IO {
  */
 template <typename... Args>
 void fortran_read_line(std::ifstream &stream, Args... values);
-} // namespace fortran_IO
+} // namespace IO
 } // namespace specfem
 
 #endif

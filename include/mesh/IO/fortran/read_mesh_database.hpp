@@ -1,7 +1,6 @@
 #ifndef _READ_MESH_DATABASE_HPP
 #define _READ_MESH_DATABASE_HPP
 
-#include "fortranio/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"

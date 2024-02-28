@@ -88,20 +88,28 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
     throw std::runtime_error(message.str());
   }
 
-  // try {
-  //   this->seismogram =
-  //       std::make_unique<specfem::runtime_configuration::seismogram>(
-  //           runtime_config["seismogram"]);
-  // } catch (YAML::InvalidNode &e) {
-  //   YAML::Node seismogram;
-  //   seismogram["seismogram-format"] = "ascii";
-  //   std::string folder_name = "results";
-  //   create_folder_if_not_exists(folder_name);
-  //   seismogram["output-folder"] = folder_name;
-  //   this->seismogram =
-  //       std::make_unique<specfem::runtime_configuration::seismogram>(
-  //           seismogram);
-  // }
+  try {
+    this->seismogram =
+        std::make_unique<specfem::runtime_configuration::seismogram>(
+            runtime_config["seismogram"]);
+  } catch (YAML::InvalidNode &e) {
+    YAML::Node seismogram;
+    seismogram["seismogram-format"] = "ascii";
+    std::string folder_name = "results";
+    create_folder_if_not_exists(folder_name);
+    seismogram["output-folder"] = folder_name;
+    this->seismogram =
+        std::make_unique<specfem::runtime_configuration::seismogram>(
+            seismogram);
+  }
+
+  try {
+    this->wavefield =
+        std::make_unique<specfem::runtime_configuration::wavefield>(
+            runtime_config["wavefield"]);
+  } catch (YAML::InvalidNode &e) {
+    this->wavefield = nullptr;
+  }
 
   try {
     const YAML::Node &n_time_marching = n_solver["time-marching"];
@@ -118,12 +126,12 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
 }
 
 std::string specfem::runtime_configuration::setup::print_header(
-    std::chrono::time_point<std::chrono::high_resolution_clock> now) {
+    const std::chrono::time_point<std::chrono::high_resolution_clock> now) {
 
   std::ostringstream message;
 
   // convert now to string form
-  std::time_t c_now = std::chrono::system_clock::to_time_t(now);
+  const std::time_t c_now = std::chrono::system_clock::to_time_t(now);
 
   message << "================================================\n"
           << "              SPECFEM2D SIMULATION\n"

@@ -46,10 +46,10 @@ public:
    * @param t0 Starting time of simulation
    * @return specfem::writer::writer* Pointer to an instantiated writer object
    */
-  std::shared_ptr<specfem::writer::writer> instantiate_seismogram_writer(
-      std::vector<std::shared_ptr<specfem::receivers::receiver> > &receivers,
-      specfem::compute::receivers &compute_receivers, const type_real dt,
-      const type_real t0, const int nsteps_between_samples) const;
+  std::shared_ptr<specfem::writer::writer>
+  instantiate_seismogram_writer(const specfem::compute::receivers &receivers,
+                                const type_real dt, const type_real t0,
+                                const int nsteps_between_samples) const;
 
 private:
   std::string seismogram_format; ///< format of output file
