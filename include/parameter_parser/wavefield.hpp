@@ -18,6 +18,9 @@ public:
   std::shared_ptr<specfem::writer::writer> instantiate_wavefield_writer(
       const specfem::compute::assembly &assembly) const;
 
+  std::shared_ptr<specfem::reader::reader> instantiate_wavefield_reader(
+      const specfem::compute::assembly &assembly) const;
+
 private:
   std::string wavefield_format; ///< format of output file
   std::string output_folder;    ///< Path to output folder

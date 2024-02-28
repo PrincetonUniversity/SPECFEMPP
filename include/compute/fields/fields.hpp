@@ -13,7 +13,7 @@ namespace compute {
 struct fields {
 
   using forward_type = specfem::enums::simulation::forward;
-
+  using adjoint_type = specfem::enums::simulation::adjoint;
   fields() = default;
 
   fields(const specfem::compute::mesh &mesh,
@@ -32,6 +32,7 @@ struct fields {
   }
 
   specfem::compute::simulation_field<forward_type> forward;
+  specfem::compute::simulation_field<adjoint_type> adjoint;
 };
 } // namespace compute
 } // namespace specfem
