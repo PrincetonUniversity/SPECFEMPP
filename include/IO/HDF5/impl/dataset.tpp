@@ -6,11 +6,6 @@
 #include "native_type.hpp"
 #include <string>
 
-template <typename ViewType>
-const H5::PredType specfem::IO::impl::HDF5::Dataset<ViewType>::native_type =
-    specfem::IO::impl::HDF5::native_type<
-        typename ViewType::non_const_value_type>::type;
-
 // check if Kokkos version is < 4.1
 #if KOKKOS_VERSION < 40100
 template <typename ViewType>
@@ -32,10 +27,11 @@ specfem::IO::impl::HDF5::Dataset<ViewType>::Dataset(
                           dims[i] = data.extent(i);
                         }
                         return dims;
-                      }())),
-      dataset(std::make_unique<H5::DataSet>(
-          file->createDataSet(name, native_type, *dataspace))) {
-  ASSERT(data.span_is_contiguous() == true, "ViewType must be contiguous");
+                      }())) {
+
+  this->dataset = std::make_unique<H5::DataSet>(
+      file->createDataSet(name, native_type::type(), *dataspace));
+  ASSERT(data.span_is_contiguous(), "ViewType must be contiguous");
 }
 
 template <typename ViewType>
@@ -50,22 +46,22 @@ specfem::IO::impl::HDF5::Dataset<ViewType>::Dataset(
                           dims[i] = data.extent(i);
                         }
                         return dims;
-                      }())),
-      dataset(std::make_unique<H5::DataSet>(
-          group->createDataSet(name, native_type, *dataspace))) {
+                      }())) {
 
-  ASSERT(data.span_is_contiguous() == true, "ViewType must be contiguous");
+  this->dataset = std::make_unique<H5::DataSet>(
+      group->createDataSet(name, native_type::type(), *dataspace));
+  ASSERT(data.span_is_contiguous(), "ViewType must be contiguous");
 }
 
 template <typename ViewType>
 void specfem::IO::impl::HDF5::Dataset<ViewType>::write() {
   if (std::is_same_v<MemSpace, specfem::kokkos::HostMemSpace>) {
-    dataset->write(data.data(), native_type);
+    dataset->write(data.data(), native_type::type());
     return;
   } else if (std::is_same_v<MemSpace, specfem::kokkos::DevMemSpace>) {
     auto host_data = Kokkos::create_mirror_view(data);
     Kokkos::deep_copy(host_data, data);
-    dataset->write(host_data.data(), native_type);
+    dataset->write(host_data.data(), native_type::type());
     return;
   } else {
     throw std::runtime_error("Unknown memory space");

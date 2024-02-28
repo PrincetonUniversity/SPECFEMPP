@@ -2,9 +2,8 @@
 #define SPECFEM_IO_HDF5_IMPL_DATASET_HPP
 
 #include "H5Cpp.h"
-#include "file.hpp"
-#include "group.hpp"
 #include "native_type.hpp"
+#include "native_type.tpp"
 #include <memory>
 #include <string>
 
@@ -23,7 +22,7 @@ public:
 
   const static int rank;
   using value_type = typename ViewType::non_const_value_type;
-  const static H5::PredType native_type;
+  using native_type = typename specfem::IO::impl::HDF5::native_type<value_type>;
   using MemSpace = typename ViewType::memory_space;
 
   Dataset(std::unique_ptr<H5::H5File> &file, const std::string &name,
@@ -37,6 +36,7 @@ public:
 
 private:
   ViewType data;
+  // native_type datatype;
   std::unique_ptr<H5::DataSet> dataset;
   std::unique_ptr<H5::DataSpace> dataspace;
 };

@@ -1,55 +1,31 @@
 #include "IO/HDF5/impl/native_type.hpp"
 #include "H5Cpp.h"
+#include "IO/HDF5/impl/native_type.tpp"
 
-template <>
-const H5::PredType specfem::IO::impl::HDF5::native_type<float>::type =
-    H5::PredType::NATIVE_FLOAT;
+// Explicit instantiation
 
-template <>
-const H5::PredType specfem::IO::impl::HDF5::native_type<double>::type =
-    H5::PredType::NATIVE_DOUBLE;
+template struct specfem::IO::impl::HDF5::native_type<float>;
 
-template <>
-const H5::PredType specfem::IO::impl::HDF5::native_type<int>::type =
-    H5::PredType::NATIVE_INT;
+template struct specfem::IO::impl::HDF5::native_type<double>;
 
-template <>
-const H5::PredType specfem::IO::impl::HDF5::native_type<long>::type =
-    H5::PredType::NATIVE_LONG;
+template struct specfem::IO::impl::HDF5::native_type<int>;
 
-template <>
-const H5::PredType specfem::IO::impl::HDF5::native_type<long long>::type =
-    H5::PredType::NATIVE_LLONG;
+template struct specfem::IO::impl::HDF5::native_type<long>;
 
-template <>
-const H5::PredType specfem::IO::impl::HDF5::native_type<unsigned int>::type =
-    H5::PredType::NATIVE_UINT;
+template struct specfem::IO::impl::HDF5::native_type<long long>;
 
-template <>
-const H5::PredType specfem::IO::impl::HDF5::native_type<unsigned long>::type =
-    H5::PredType::NATIVE_ULONG;
+template struct specfem::IO::impl::HDF5::native_type<unsigned int>;
 
-template <>
-const H5::PredType
-    specfem::IO::impl::HDF5::native_type<unsigned long long>::type =
-        H5::PredType::NATIVE_ULLONG;
+template struct specfem::IO::impl::HDF5::native_type<unsigned long>;
 
-template <>
-const H5::PredType specfem::IO::impl::HDF5::native_type<short>::type =
-    H5::PredType::NATIVE_SHORT;
+template struct specfem::IO::impl::HDF5::native_type<unsigned long long>;
 
-template <>
-const H5::PredType specfem::IO::impl::HDF5::native_type<unsigned short>::type =
-    H5::PredType::NATIVE_USHORT;
+template struct specfem::IO::impl::HDF5::native_type<short>;
 
-template <>
-const H5::PredType specfem::IO::impl::HDF5::native_type<char>::type =
-    H5::PredType::NATIVE_CHAR;
+template struct specfem::IO::impl::HDF5::native_type<unsigned short>;
 
-template <>
-const H5::PredType specfem::IO::impl::HDF5::native_type<unsigned char>::type =
-    H5::PredType::NATIVE_UCHAR;
+template struct specfem::IO::impl::HDF5::native_type<char>;
 
-template <>
-const H5::PredType specfem::IO::impl::HDF5::native_type<bool>::type =
-    H5::PredType::NATIVE_HBOOL;
+template struct specfem::IO::impl::HDF5::native_type<unsigned char>;
+
+template struct specfem::IO::impl::HDF5::native_type<bool>;

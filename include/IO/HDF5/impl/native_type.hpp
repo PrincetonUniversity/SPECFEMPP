@@ -8,7 +8,7 @@ namespace IO {
 namespace impl {
 namespace HDF5 {
 
-template <typename T> struct native_type { const static H5::PredType type; };
+template <typename T> struct native_type {};
 } // namespace HDF5
 } // namespace impl
 } // namespace IO
