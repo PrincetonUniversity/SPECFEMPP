@@ -1,5 +1,5 @@
 
-#include "compute/compute_assembly.hpp"
+#include "compute/assembly/assembly.hpp"
 #include "compute/boundaries/boundaries.hpp"
 #include "compute/compute_mesh.hpp"
 #include "compute/compute_partial_derivatives.hpp"
@@ -17,7 +17,8 @@ specfem::compute::assembly::assembly(
     const std::vector<std::shared_ptr<specfem::receivers::receiver> >
         &receivers,
     const std::vector<specfem::enums::seismogram::type> &stypes,
-    const int max_timesteps, const int max_sig_step) {
+    const int max_timesteps, const int max_sig_step,
+    const specfem::enums::simulation::type simulation) {
   this->mesh = specfem::compute::mesh(mesh.control_nodes, quadratures);
   this->partial_derivatives = specfem::compute::partial_derivatives(this->mesh);
   this->properties = specfem::compute::properties(
@@ -32,6 +33,7 @@ specfem::compute::assembly::assembly(
                                    mesh.abs_boundary, mesh.acfree_surface);
   this->coupled_interfaces = specfem::compute::coupled_interfaces(
       this->mesh, this->properties, mesh.coupled_interfaces);
-  this->fields = specfem::compute::fields(this->mesh, this->properties);
+  this->fields =
+      specfem::compute::fields(this->mesh, this->properties, simulation);
   return;
 }

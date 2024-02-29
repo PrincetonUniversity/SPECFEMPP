@@ -24,7 +24,8 @@ class time_marching : public specfem::solver::solver {
 public:
   using elastic_type = specfem::enums::element::medium::elastic;
   using acoustic_type = specfem::enums::element::medium::acoustic;
-  using forward_type = specfem::enums::simulation::forward;
+  constexpr static auto forward_type =
+      specfem::enums::simulation::type::forward;
   /**
    * @brief Construct a new time marching solver object
    *

@@ -1,7 +1,7 @@
 #ifndef _SPECFEM_RUNTIME_CONFIGURATION_WAVEFIELD_HPP
 #define _SPECFEM_RUNTIME_CONFIGURATION_WAVEFIELD_HPP
 
-#include "compute/compute_assembly.hpp"
+#include "compute/assembly/assembly.hpp"
 #include "reader/reader.hpp"
 #include "writer/writer.hpp"
 #include "yaml-cpp/yaml.h"
@@ -25,6 +25,10 @@ public:
 
   std::shared_ptr<specfem::reader::reader> instantiate_wavefield_reader(
       const specfem::compute::assembly &assembly) const;
+
+  inline specfem::enums::simulation::type get_simulation_type() const {
+    return this->simulation_type;
+  }
 
 private:
   std::string output_format;                        ///< format of output file

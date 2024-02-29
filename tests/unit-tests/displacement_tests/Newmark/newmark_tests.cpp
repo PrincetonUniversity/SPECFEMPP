@@ -196,7 +196,8 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
 
     const type_real nsteps = it->get_max_timestep();
     specfem::compute::assembly assembly(mesh, quadratures, sources, receivers,
-                                        seismogram_types, nsteps, 0);
+                                        seismogram_types, nsteps, 0,
+                                        setup.get_simulation_type());
 
     // User output
     if (mpi->main_proc())

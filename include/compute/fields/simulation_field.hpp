@@ -12,9 +12,9 @@
 namespace specfem {
 namespace compute {
 
-template <typename simulation> struct simulation_field {
+template <specfem::enums::simulation::type simulation> struct simulation_field {
 
-  using simulation_type = simulation;
+  constexpr static auto simulation_type = simulation;
   using elastic_type = specfem::enums::element::medium::elastic;
   using acoustic_type = specfem::enums::element::medium::acoustic;
 
