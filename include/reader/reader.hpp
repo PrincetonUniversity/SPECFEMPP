@@ -7,7 +7,7 @@ namespace reader {
  * @brief Base reader class
  *
  */
-template <typename IOLibrary> class reader {
+class reader {
 public:
   /**
    * @brief Method to execute the read operation
