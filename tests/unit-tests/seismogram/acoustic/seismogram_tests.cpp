@@ -101,7 +101,8 @@ TEST(SEISMOGRAM_TESTS, acoustic_seismograms_test) {
   const auto stypes = setup.get_seismogram_types();
 
   specfem::compute::assembly assembly(mesh, quadratures, sources, receivers,
-                                      stypes, 0, 1);
+                                      stypes, 0, 1,
+                                      setup.get_simulation_type());
 
   const auto displacement_field = assembly.fields.forward.acoustic.field;
   const auto velocity_field = assembly.fields.forward.acoustic.field_dot;

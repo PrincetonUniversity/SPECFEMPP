@@ -151,7 +151,8 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   const int max_seimogram_time_step = it->get_max_seismogram_step();
   const specfem::compute::assembly assembly(
       mesh, quadrature, sources, receivers, setup.get_seismogram_types(),
-      nsteps, max_seimogram_time_step);
+      nsteps, max_seimogram_time_step, setup.get_simulation_type());
+
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------

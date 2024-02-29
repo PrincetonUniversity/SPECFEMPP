@@ -9,7 +9,7 @@
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
-template <typename simulation>
+template <specfem::enums::simulation::type simulation>
 specfem::compute::simulation_field<simulation>::simulation_field(
     const specfem::compute::mesh &mesh,
     const specfem::compute::properties &properties) {

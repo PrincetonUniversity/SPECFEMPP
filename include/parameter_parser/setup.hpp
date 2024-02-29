@@ -153,6 +153,10 @@ public:
     }
   }
 
+  inline specfem::enums::simulation::type get_simulation_type() const {
+    return this->wavefield->get_simulation_type();
+  }
+
 private:
   std::unique_ptr<specfem::runtime_configuration::header> header; ///< Pointer
                                                                   ///< to header
