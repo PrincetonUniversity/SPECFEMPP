@@ -334,9 +334,9 @@ add_library(
         src/parameter_parser/header.cpp
         src/parameter_parser/quadrature.cpp
         src/parameter_parser/receivers.cpp
-        src/parameter_parser/seismogram.cpp
+        src/parameter_parser/writer/seismogram.cpp
         src/parameter_parser/setup.cpp
-        src/parameter_parser/wavefield.cpp
+        src/parameter_parser/writer/wavefield.cpp
 )
 
 target_link_libraries(
@@ -346,6 +346,7 @@ target_link_libraries(
         receiver_class
         yaml-cpp
         writer
+        reader
         Boost::filesystem
 )
 
@@ -365,6 +366,7 @@ target_link_libraries(
         parameter_reader
         receiver_class
         writer
+        reader
         Boost::program_options
         ${HDF5_LIBRARIES}
 )

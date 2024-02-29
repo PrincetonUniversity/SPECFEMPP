@@ -88,27 +88,73 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
     throw std::runtime_error(message.str());
   }
 
-  try {
-    this->seismogram =
-        std::make_unique<specfem::runtime_configuration::seismogram>(
-            runtime_config["seismogram"]);
-  } catch (YAML::InvalidNode &e) {
-    YAML::Node seismogram;
-    seismogram["seismogram-format"] = "ascii";
-    std::string folder_name = "results";
-    create_folder_if_not_exists(folder_name);
-    seismogram["output-folder"] = folder_name;
-    this->seismogram =
-        std::make_unique<specfem::runtime_configuration::seismogram>(
-            seismogram);
-  }
+  // Read simulation mode node
+  if (const YAML::Node &n_simulation_mode =
+          simulation_setup["simulation-mode"]) {
+    int number_of_simulation_modes = 0;
+    if (const YAML::Node &n_forward = n_simulation_mode["forward"]) {
+      number_of_simulation_modes++;
+      bool at_least_one_writer = false; // check if at least one writer is
+                                        // specified
+      if (const YAML::Node &n_writer = n_forward["writer"]) {
+        try {
+          // Read wavefield writer
+          this->wavefield =
+              std::make_unique<specfem::runtime_configuration::wavefield>(
+                  n_writer["wavefield"],
+                  specfem::enums::simulation::type::forward);
+          at_least_one_writer = true;
+        } catch (YAML::InvalidNode &e) {
+          this->wavefield = nullptr;
+        }
 
-  try {
-    this->wavefield =
-        std::make_unique<specfem::runtime_configuration::wavefield>(
-            runtime_config["wavefield"]);
-  } catch (YAML::InvalidNode &e) {
-    this->wavefield = nullptr;
+        try {
+          // Read seismogram writer
+          this->seismogram =
+              std::make_unique<specfem::runtime_configuration::seismogram>(
+                  n_writer["seismogram"]);
+          at_least_one_writer = true;
+        } catch (YAML::InvalidNode &e) {
+          this->seismogram = nullptr;
+        }
+
+        if (!at_least_one_writer) {
+          throw std::runtime_error("Error in configuration file: at least one "
+                                   "writer must be specified");
+        }
+      } else {
+        throw std::runtime_error("Error in configuration file: at least one "
+                                 "writer must be specified");
+      }
+    }
+
+    if (const YAML::Node &n_adjoint = n_simulation_mode["adjoint"]) {
+      number_of_simulation_modes++;
+      if (const YAML::Node &n_reader = n_adjoint["reader"]) {
+        try {
+          this->wavefield =
+              std::make_unique<specfem::runtime_configuration::wavefield>(
+                  n_reader["wavefield"],
+                  specfem::enums::simulation::type::adjoint);
+        } catch (YAML::InvalidNode &e) {
+          std::ostringstream message;
+          message << "Error reading adjoint wavefield reader configuration. \n"
+                  << e.what();
+          throw std::runtime_error(message.str());
+        }
+      } else {
+        std::ostringstream message;
+        message << "Error reading adjoint reader configuration. \n";
+        throw std::runtime_error(message.str());
+      }
+    }
+
+    if (number_of_simulation_modes != 1) {
+      throw std::runtime_error("Error in configuration file: exactly one "
+                               "simulation mode must be specified");
+    }
+  } else {
+    throw std::runtime_error("Error reading specfem simulation mode.");
   }
 
   try {

@@ -12,7 +12,7 @@ namespace reader {
  * @brief Base reader class
  *
  */
-template <typename IOLibrary> class wavefield : public reader<IOLibrary> {
+template <typename IOLibrary> class wavefield : public reader {
 
 public:
   /**

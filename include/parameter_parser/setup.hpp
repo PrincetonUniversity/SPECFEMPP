@@ -4,12 +4,13 @@
 #include "database_configuration.hpp"
 #include "header.hpp"
 #include "quadrature.hpp"
+#include "reader/reader.hpp"
 #include "receivers.hpp"
 #include "run_setup.hpp"
-#include "seismogram.hpp"
 #include "solver/interface.hpp"
 #include "specfem_setup.hpp"
-#include "wavefield.hpp"
+#include "writer/seismogram.hpp"
+#include "writer/wavefield.hpp"
 #include "yaml-cpp/yaml.h"
 #include <memory>
 #include <tuple>
@@ -130,7 +131,7 @@ public:
           assembly.receivers, this->solver->get_dt(), this->solver->get_t0(),
           this->receivers->get_nstep_between_samples());
     } else {
-      return NULL;
+      return nullptr;
     }
   }
 
