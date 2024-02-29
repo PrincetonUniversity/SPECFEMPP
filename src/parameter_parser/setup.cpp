@@ -97,25 +97,22 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
       bool at_least_one_writer = false; // check if at least one writer is
                                         // specified
       if (const YAML::Node &n_writer = n_forward["writer"]) {
-        try {
-          // Read wavefield writer
-          this->wavefield =
-              std::make_unique<specfem::runtime_configuration::wavefield>(
-                  n_writer["wavefield"],
-                  specfem::enums::simulation::type::forward);
+        if (const YAML::Node &n_seismogram = n_writer["seismogram"]) {
           at_least_one_writer = true;
-        } catch (YAML::InvalidNode &e) {
-          this->wavefield = nullptr;
-        }
-
-        try {
-          // Read seismogram writer
           this->seismogram =
               std::make_unique<specfem::runtime_configuration::seismogram>(
-                  n_writer["seismogram"]);
-          at_least_one_writer = true;
-        } catch (YAML::InvalidNode &e) {
+                  n_seismogram);
+        } else {
           this->seismogram = nullptr;
+        }
+
+        if (const YAML::Node &n_wavefield = n_writer["wavefield"]) {
+          at_least_one_writer = true;
+          this->wavefield =
+              std::make_unique<specfem::runtime_configuration::wavefield>(
+                  n_wavefield, specfem::enums::simulation::type::forward);
+        } else {
+          this->wavefield = nullptr;
         }
 
         if (!at_least_one_writer) {
@@ -131,15 +128,14 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
     if (const YAML::Node &n_adjoint = n_simulation_mode["adjoint"]) {
       number_of_simulation_modes++;
       if (const YAML::Node &n_reader = n_adjoint["reader"]) {
-        try {
+        if (const YAML::Node &n_wavefield = n_reader["wavefield"]) {
           this->wavefield =
               std::make_unique<specfem::runtime_configuration::wavefield>(
-                  n_reader["wavefield"],
-                  specfem::enums::simulation::type::adjoint);
-        } catch (YAML::InvalidNode &e) {
+                  n_wavefield, specfem::enums::simulation::type::adjoint);
+        } else {
           std::ostringstream message;
-          message << "Error reading adjoint wavefield reader configuration. \n"
-                  << e.what();
+          message << "Error reading adjoint reader configuration. \n"
+                  << "Wavefield reader must be specified. \n";
           throw std::runtime_error(message.str());
         }
       } else {

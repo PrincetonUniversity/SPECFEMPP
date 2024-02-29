@@ -19,6 +19,13 @@ parameters:
           dt: 1e-3
           nstep: 1600
 
+    simulation-mode:
+      forward:
+        writer:
+          seismogram:
+            output-format: ascii
+            output-folder: "."
+
   receivers:
     stations-file: "../DATA/STATIONS"
     angle: 0.0
@@ -35,7 +42,3 @@ parameters:
   databases:
     mesh-database: "../../../tests/unit-tests/domain/serial/test1/database.bin"
     source-file: "../../../tests/unit-tests/domain/serial/test1/source.yaml"
-
-  seismogram:
-    seismogram-format: ascii
-    output-folder: "."
