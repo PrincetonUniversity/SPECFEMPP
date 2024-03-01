@@ -43,43 +43,12 @@ enum format {
 
 } // namespace seismogram
 
-namespace simulation {
-/**
- * @brief type of simulation
- *
- */
-enum class type {
-  forward, ///< Forward simulation type
-  adjoint  ///< Backward simulation type
-};
-
-} // namespace simulation
-
 /**
  * @namespace element namespace is used to store element properties used in the
  * element class.
  *
  */
 namespace element {
-
-constexpr int ntypes = 2; ///< Number of element types
-
-/**
- * @brief type of element
- *
- * This is primarily used to label the element as elastic, acoustic or
- * poroelastic.
- *
- */
-enum class type {
-  elastic,    ///< elastic element
-  acoustic,   ///< acoustic element
-  poroelastic ///< poroelastic element
-};
-
-enum class property_tag {
-  isotropic, ///< isotropic material
-};
 
 enum class boundary_tag {
   // primary boundaries

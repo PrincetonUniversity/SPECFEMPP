@@ -14,28 +14,16 @@ namespace domain {
 namespace impl {
 namespace kernels {
 
-template <class medium, class qp_type, typename property, typename BC>
+template <
+    specfem::dimension::type dimension, specfem::element::medium_tag medium,
+    specfem::element::property_tag property,
+    specfem::element::boundary_tag boundary, typename quadrature_points_type>
 class element_kernel {
 
 public:
-  using dimension = specfem::enums::element::dimension::dim2;
-  using medium_type = medium;
-  using quadrature_point_type = qp_type;
-  using property_type = property;
-  using boundary_conditions_type = BC;
-
-  static_assert(std::is_same_v<medium, typename BC::medium_type>,
-                "Boundary conditions should have the same medium type as the "
-                "element kernel");
-  static_assert(std::is_same_v<dimension, typename BC::dimension>,
-                "Boundary conditions should have the same dimension as the "
-                "element kernel");
-  static_assert(std::is_same_v<qp_type, typename BC::quadrature_points_type>,
-                "Boundary conditions should have the same quadrature point "
-                "type as the element kernel");
-  static_assert(std::is_same_v<property, typename BC::property_type>,
-                "Boundary conditions should have the same property as the "
-                "element kernel");
+  using element_type = specfem::domain::impl::elements::element<
+      dimension, medium, property, boundary, quadrature_points_type>;
+  using qp_type = quadrature_points_type;
 
   element_kernel() = default;
   element_kernel(
@@ -66,17 +54,7 @@ private:
   specfem::kokkos::DeviceView1d<specfem::point::boundary> boundary_conditions;
   specfem::compute::impl::field_impl<medium_type> field;
   quadrature_point_type quadrature_points;
-  specfem::domain::impl::elements::element<
-      dimension, medium, qp_type, property_type, boundary_conditions_type>
-      element;
-
-  // using load_properties = properties.load_properties<medium_type::value,
-  // property_type::value, specfem::kokkos::DevExecSpace>;
-
-  // template <bool load_jacobian>
-  // using load_partial_derivatives =
-  // partial_derivatives.load_partial_derivatives<load_jacobian,
-  // specfem::kokkos::DevExecSpace>;
+  element_type element;
 };
 
 } // namespace kernels

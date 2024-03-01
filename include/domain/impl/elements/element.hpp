@@ -7,13 +7,12 @@ namespace specfem {
 namespace domain {
 namespace impl {
 namespace elements {
-/**
- * @brief Element class to describe the physics of a spectral element
- *
- * @tparam properties of the element used to specialize elemental
- * implementation
- */
-template <class... properties> class element {};
+
+template <
+    specfem::dimension::type dimension, specfem::element::medium_tag medium,
+    specfem::element::property_tag property,
+    specfem::element::boundary_tag boundary, typename quadrature_points_type>
+class element;
 
 } // namespace elements
 } // namespace impl

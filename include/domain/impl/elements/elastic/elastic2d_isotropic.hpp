@@ -23,49 +23,21 @@ namespace elements {
  * @tparam BC Boundary conditions if void then neumann boundary conditions are
  * assumed
  */
-template <int NGLL, typename BC>
+template <int NGLL, specfem::element::boundary_tag BC>
 class element<
-    specfem::enums::element::dimension::dim2,
-    specfem::enums::element::medium::elastic,
-    specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
-    specfem::enums::element::property::isotropic, BC> {
+    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+    specfem::element::property_tag::isotropic, BC,
+    specfem::element::quadrature_tag::static_quadrature_points<NGLL> > {
 public:
-  /** @name Typedefs
-   *
-   */
-  ///@{
-  /**
-   * @brief dimension of the element
-   *
-   */
-  using dimension = specfem::enums::element::dimension::dim2;
-
-  /**
-   * @brief Medium of the element
-   *
-   */
-  using medium_type = specfem::enums::element::medium::elastic;
-
-  /**
-   * @brief Property of the element
-   *
-   */
-  using property_type = specfem::enums::element::property::isotropic;
-
-  /**
-   * @brief Number of Gauss-Lobatto-Legendre quadrature points defined at
-   * compile time
-   */
   using quadrature_points_type =
       specfem::enums::element::quadrature::static_quadrature_points<NGLL>;
-
-  /**
-   * @brief Boundary conditions of the element
-   *
-   * if BC == none then neumann boundary conditions are assumed
-   *
-   */
-  using boundary_conditions_type = BC;
+  using medium_type =
+      specfem::medium::medium<specfem::dimension::type::dim2,
+                              specfem::element::medium_tag::elastic,
+                              specfem::element::property_tag::isotropic>;
+  using boundary_conditions_type = specfem::boundary::boundary<
+      specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+      specfem::element::property_tag::isotropic, quadrature_points_type, BC>;
 
   /**
    * @brief Use the scratch view type from the quadrature points
@@ -229,15 +201,6 @@ public:
       specfem::kokkos::array_type<type_real, 2> &acceleration) const;
 
 private:
-  //   specfem::kokkos::DeviceView3d<type_real> xix;           ///< xix
-  //   specfem::kokkos::DeviceView3d<type_real> xiz;           ///< xiz
-  //   specfem::kokkos::DeviceView3d<type_real> gammax;        ///< gammax
-  //   specfem::kokkos::DeviceView3d<type_real> gammaz;        ///< gammaz
-  //   specfem::kokkos::DeviceView3d<type_real> jacobian;      ///< jacobian
-  //   specfem::kokkos::DeviceView3d<type_real> lambdaplus2mu; ///< lambda +
-  //                                                           ///< 2 * mu
-  //   specfem::kokkos::DeviceView3d<type_real> mu;            ///< mu
-  //   specfem::kokkos::DeviceView3d<type_real> rho;           ///< rho
   boundary_conditions_type boundary_conditions; ///< Boundary conditions
 };
 } // namespace elements
