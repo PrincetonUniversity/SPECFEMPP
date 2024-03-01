@@ -11,37 +11,12 @@
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace {
-// Do not pull velocity from global memory
-template <int components, specfem::enums::element::boundary_tag tag>
-KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, components>
-get_velocity(
-    const int &iglob,
-    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot) {
-
-  specfem::kokkos::array_type<type_real, components> velocity;
-
-  // check if we need the velocity for computing the acceleration
-  constexpr bool flag =
-      ((tag == specfem::enums::element::boundary_tag::stacey) ||
-       (tag ==
-        specfem::enums::element::boundary_tag::composite_stacey_dirichlet));
-
-  // Only get velocity from global memory for stacey boundary
-  if constexpr (flag) {
-    for (int icomponent = 0; icomponent < components; ++icomponent)
-      velocity[icomponent] = field_dot(iglob, icomponent);
-  } else {
-    for (int icomponent = 0; icomponent < components; ++icomponent)
-      velocity[icomponent] = 0.0;
-  }
-
-  return velocity;
-};
-} // namespace
-
-template <class medium, class qp_type, class property, class BC>
-specfem::domain::impl::kernels::element_kernel<medium, qp_type, property, BC>::
+template <
+    specfem::dimension::type dimension, specfem::element::medium_tag medium,
+    specfem::element::property_tag property,
+    specfem::element::boundary_tag boundary, typename quadrature_points_type>
+specfem::domain::impl::kernels::element_kernel<
+    dimension, medium, property, boundary, quadrature_points_type>::
     element_kernel(
         const specfem::compute::assembly &assembly,
         const specfem::kokkos::HostView1d<int> h_element_kernel_index_mapping,
@@ -54,8 +29,11 @@ specfem::domain::impl::kernels::element_kernel<medium, qp_type, property, BC>::
       boundary_conditions(assembly.boundaries.boundary_types),
       quadrature_points(quadrature_points),
       global_index_mapping(assembly.fields.forward.assembly_index_mapping),
-      field(assembly.fields.forward.get_field<medium>()) {
+      field(assembly.fields.forward.get_field<medium>()),
+      element(assembly, quadrature_points) {
 
+  // Check if the elements being allocated to this kernel are of the correct
+  // type
   Kokkos::parallel_for(
       "specfem::domain::impl::kernels::element_kernel::check_properties",
       specfem::kokkos::HostRange(0, nelements),
@@ -78,16 +56,16 @@ specfem::domain::impl::kernels::element_kernel<medium, qp_type, property, BC>::
 
   Kokkos::deep_copy(element_kernel_index_mapping,
                     h_element_kernel_index_mapping);
-
-  element = specfem::domain::impl::elements::element<
-      dimension, medium_type, quadrature_point_type, property, BC>(
-      assembly, quadrature_points);
   return;
 }
 
-template <class medium, class qp_type, class property, class BC>
-void specfem::domain::impl::kernels::element_kernel<
-    medium, qp_type, property, BC>::compute_mass_matrix() const {
+template <
+    specfem::dimension::type dimension, specfem::element::medium_tag medium,
+    specfem::element::property_tag property,
+    specfem::element::boundary_tag boundary, typename quadrature_points_type>
+specfem::domain::impl::kernels::element_kernel<
+    dimension, medium, property, boundary,
+    quadrature_points_type>::compute_mass_matrix() const {
   constexpr int components = medium::components;
 
   if (nelements == 0)
@@ -149,11 +127,14 @@ void specfem::domain::impl::kernels::element_kernel<
   return;
 }
 
-template <class medium, class qp_type, class property, class BC>
-template <specfem::enums::time_scheme::type time_scheme>
-void specfem::domain::impl::kernels::element_kernel<
-    medium, qp_type, property, BC>::mass_time_contribution(const type_real dt)
-    const {
+template <
+    specfem::dimension::type dimension, specfem::element::medium_tag medium,
+    specfem::element::property_tag property,
+    specfem::element::boundary_tag boundary, typename quadrature_points_type>
+template <specfem::time_scheme::type time_scheme>
+specfem::domain::impl::kernels::element_kernel<
+    dimension, medium, property, boundary,
+    quadrature_points_type>::mass_time_contribution(const type_real dt) const {
 
   constexpr int components = medium::components;
 
@@ -220,9 +201,13 @@ void specfem::domain::impl::kernels::element_kernel<
   return;
 }
 
-template <class medium, class qp_type, class property, class BC>
-void specfem::domain::impl::kernels::element_kernel<
-    medium, qp_type, property, BC>::compute_stiffness_interaction() const {
+template <
+    specfem::dimension::type dimension, specfem::element::medium_tag medium,
+    specfem::element::property_tag property,
+    specfem::element::boundary_tag boundary, typename quadrature_points_type>
+specfem::domain::impl::kernels::element_kernel<
+    dimension, medium, property, boundary,
+    quadrature_points_type>::compute_stiffness_interaction() const {
 
   constexpr int components = medium::components;
 
@@ -327,8 +312,6 @@ void specfem::domain::impl::kernels::element_kernel<
               int ix, iz;
               sub2ind(xz, ngllx, iz, ix);
 
-              specfem::kokkos::array_type<type_real, 50> field_test(s_field.data());
-
               specfem::kokkos::array_type<type_real, medium_type::components>
                   dudxl;
               specfem::kokkos::array_type<type_real, medium_type::components>
@@ -375,9 +358,6 @@ void specfem::domain::impl::kernels::element_kernel<
               int iz, ix;
               sub2ind(xz, ngllx, iz, ix);
               constexpr auto tag = BC::value;
-
-              specfem::kokkos::array_type<type_real, 50> stress_integrand_xi_test(s_stress_integrand_xi.data());
-              specfem::kokkos::array_type<type_real, 50> stress_integrand_gamma_test(s_stress_integrand_gamma.data());
 
               const int iglob =
                   global_index_mapping(index_mapping(ispec_l, iz, ix),

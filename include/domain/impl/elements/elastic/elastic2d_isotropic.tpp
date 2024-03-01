@@ -12,72 +12,25 @@
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
+namespace {
 template <int N, typename T>
 using StaticScratchViewType =
     typename specfem::enums::element::quadrature::static_quadrature_points<
         N>::template ScratchViewType<T>;
 
-// using field_type = Kokkos::Subview<
-//     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>, int,
-//     std::remove_const_t<decltype(Kokkos::ALL)> >;
+constexpr auto Dim2 = specfem::dimension::type::dim2;
+constexpr auto Elastic = specfem::element::medium_tag::elastic;
+constexpr auto Isotropic = specfem::element::property_tag::isotropic;
+template <int NGLL>
+using StaticQuadraturePoints =
+    specfem::enums::element::quadrature::static_quadrature_points<NGLL>;
 
-// -----------------------------------------------------------------------------
-//                     SPECIALIZED ELEMENT
-// -----------------------------------------------------------------------------
-// template <int NGLL, typename BC>
-// KOKKOS_FUNCTION specfem::domain::impl::elements::element<
-//     specfem::enums::element::dimension::dim2,
-//     specfem::enums::element::medium::elastic,
-//     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
-//     specfem::enums::element::property::isotropic,
-//     BC>::element(const specfem::compute::partial_derivatives
-//                      &partial_derivatives,
-//                  const specfem::compute::properties &properties,
-//                  const specfem::compute::boundaries &boundary_conditions,
-//                  const quadrature_points_type &quadrature_points) {
+} // namespace
 
-// #ifndef NDEBUG
-//   assert(partial_derivatives.xix.extent(1) == NGLL);
-//   assert(partial_derivatives.xix.extent(2) == NGLL);
-//   assert(partial_derivatives.gammax.extent(1) == NGLL);
-//   assert(partial_derivatives.gammax.extent(2) == NGLL);
-//   assert(partial_derivatives.xiz.extent(1) == NGLL);
-//   assert(partial_derivatives.xiz.extent(2) == NGLL);
-//   assert(partial_derivatives.gammaz.extent(1) == NGLL);
-//   assert(partial_derivatives.gammaz.extent(2) == NGLL);
-//   assert(partial_derivatives.jacobian.extent(1) == NGLL);
-//   assert(partial_derivatives.jacobian.extent(2) == NGLL);
-
-//   // Properties
-//   assert(properties.rho.extent(1) == NGLL);
-//   assert(properties.rho.extent(2) == NGLL);
-//   assert(properties.lambdaplus2mu.extent(1) == NGLL);
-//   assert(properties.lambdaplus2mu.extent(2) == NGLL);
-//   assert(properties.mu.extent(1) == NGLL);
-//   assert(properties.mu.extent(2) == NGLL);
-// #endif
-
-//   this->xix = partial_derivatives.xix;
-//   this->gammax = partial_derivatives.gammax;
-//   this->xiz = partial_derivatives.xiz;
-//   this->gammaz = partial_derivatives.gammaz;
-//   this->jacobian = partial_derivatives.jacobian;
-//   this->rho = properties.rho;
-//   this->lambdaplus2mu = properties.lambdaplus2mu;
-//   this->mu = properties.mu;
-
-//   this->boundary_conditions =
-//       boundary_conditions_type(boundary_conditions, quadrature_points);
-
-//   return;
-// }
-
-template <int NGLL, typename BC>
-KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
-    specfem::enums::element::dimension::dim2,
-    specfem::enums::element::medium::elastic,
-    specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
-    specfem::enums::element::property::isotropic, BC>::
+template <int NGLL, specfem::element::boundary_tag BC>
+KOKKOS_INLINE_FUNCTION void
+specfem::domain::impl::elements::element<Dim2, Elastic, Isotropic, BC,
+                                         StaticQuadraturePoints<NGLL> >::
     compute_mass_matrix_component(
         const specfem::point::properties<medium_type::value,
                                          property_type::value> &properties,
@@ -96,13 +49,11 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
   return;
 }
 
-template <int NGLL, typename BC>
+template <int NGLL, specfem::element::boundary_tag BC>
 template <specfem::enums::time_scheme::type time_scheme>
-KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
-    specfem::enums::element::dimension::dim2,
-    specfem::enums::element::medium::elastic,
-    specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
-    specfem::enums::element::property::isotropic, BC>::
+KOKKOS_INLINE_FUNCTION void
+specfem::domain::impl::elements::element<Dim2, Elastic, Isotropic, BC,
+                                         StaticQuadraturePoints<NGLL> >::
     mass_time_contribution(
         const int &xz, const type_real &dt,
         const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
@@ -124,12 +75,10 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
   return;
 }
 
-template <int NGLL, typename BC>
-KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
-    specfem::enums::element::dimension::dim2,
-    specfem::enums::element::medium::elastic,
-    specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
-    specfem::enums::element::property::isotropic, BC>::
+template <int NGLL, specfem::element::boundary_tag BC>
+KOKKOS_INLINE_FUNCTION void
+specfem::domain::impl::elements::element<Dim2, Elastic, Isotropic, BC,
+                                         StaticQuadraturePoints<NGLL> >::
     compute_gradient(
         const int xz, const ScratchViewType<type_real, 1> s_hprime,
         const ScratchViewType<type_real, medium_type::components> u,
@@ -176,12 +125,10 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
   return;
 }
 
-template <int NGLL, typename BC>
-KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
-    specfem::enums::element::dimension::dim2,
-    specfem::enums::element::medium::elastic,
-    specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
-    specfem::enums::element::property::isotropic, BC>::
+template <int NGLL, specfem::element::boundary_tag BC>
+KOKKOS_INLINE_FUNCTION void
+specfem::domain::impl::elements::element<Dim2, Elastic, Isotropic, BC,
+                                         StaticQuadraturePoints<NGLL> >::
     compute_stress(
         const int xz,
         const specfem::kokkos::array_type<type_real, medium_type::components>
@@ -241,12 +188,10 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
   return;
 }
 
-template <int NGLL, typename BC>
-KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
-    specfem::enums::element::dimension::dim2,
-    specfem::enums::element::medium::elastic,
-    specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
-    specfem::enums::element::property::isotropic, BC>::
+template <int NGLL, specfem::element::boundary_tag BC>
+KOKKOS_INLINE_FUNCTION void
+specfem::domain::impl::elements::element<Dim2, Elastic, Isotropic, BC,
+                                         StaticQuadraturePoints<NGLL> >::
     compute_acceleration(
         const int &xz,
         const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
@@ -290,7 +235,8 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
   acceleration[1] = -1.0 * (weight[1] * tempz1) - (weight[0] * tempz3);
 
   boundary_conditions.enforce_traction(xz, weight, partial_derivatives,
-                                       properties, boundary_type, velocity, acceleration);
+                                       properties, boundary_type, velocity,
+                                       acceleration);
 }
 
 #endif

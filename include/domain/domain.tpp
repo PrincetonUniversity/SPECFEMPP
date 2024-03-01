@@ -14,86 +14,85 @@
 #include <Kokkos_ScatterView.hpp>
 
 namespace {
-template <class medium>
-void initialize_views(
-    const int &nglob,
-    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field,
-    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot,
-    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot_dot,
-    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
-        rmass_inverse) {
+// template <class medium>
+// void initialize_views(
+//     const int &nglob,
+//     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field,
+//     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot,
+//     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot_dot,
+//     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+//         rmass_inverse) {
 
-  constexpr int components = medium::components;
+//   constexpr int components = medium::components;
 
-  Kokkos::parallel_for(
-      "specfem::domain::domain::initiaze_views",
-      specfem::kokkos::DeviceMDrange<2, Kokkos::Iterate::Left>(
-          { 0, 0 }, { nglob, components }),
-      KOKKOS_LAMBDA(const int iglob, const int idim) {
-        field(iglob, idim) = 0;
-        field_dot(iglob, idim) = 0;
-        field_dot_dot(iglob, idim) = 0;
-        rmass_inverse(iglob, idim) = 0;
-      });
-}
+//   Kokkos::parallel_for(
+//       "specfem::domain::domain::initiaze_views",
+//       specfem::kokkos::DeviceMDrange<2, Kokkos::Iterate::Left>(
+//           { 0, 0 }, { nglob, components }),
+//       KOKKOS_LAMBDA(const int iglob, const int idim) {
+//         field(iglob, idim) = 0;
+//         field_dot(iglob, idim) = 0;
+//         field_dot_dot(iglob, idim) = 0;
+//         rmass_inverse(iglob, idim) = 0;
+//       });
+// }
 
-template <class medium, class qp_type>
-void initialize_rmass_inverse(
-    const specfem::domain::impl::kernels::kernels<medium, qp_type> &kernels) {
-  // Compute the mass matrix
+// template <class medium, class qp_type>
+// void initialize_rmass_inverse(
+//     const specfem::domain::impl::kernels::kernels<medium, qp_type> &kernels) {
+//   // Compute the mass matrix
 
-  kernels.compute_mass_matrix();
+//   kernels.compute_mass_matrix();
 
-  // Kokkos::fence();
+//   // Kokkos::fence();
 
-  // // Invert the mass matrix
-  // Kokkos::parallel_for(
-  //     "specfem::domain::domain::invert_rmass_matrix",
-  //     specfem::kokkos::DeviceMDrange<2, Kokkos::Iterate::Left>(
-  //         { 0, 0 }, { nglob, components }),
-  //     KOKKOS_LAMBDA(const int iglob, const int idim) {
-  //       if (rmass_inverse(iglob, idim) == 0) {
-  //         rmass_inverse(iglob, idim) = 1.0;
-  //       } else {
-  //         rmass_inverse(iglob, idim) = 1.0 / rmass_inverse(iglob, idim);
-  //       }
-  //     });
+//   // // Invert the mass matrix
+//   // Kokkos::parallel_for(
+//   //     "specfem::domain::domain::invert_rmass_matrix",
+//   //     specfem::kokkos::DeviceMDrange<2, Kokkos::Iterate::Left>(
+//   //         { 0, 0 }, { nglob, components }),
+//   //     KOKKOS_LAMBDA(const int iglob, const int idim) {
+//   //       if (rmass_inverse(iglob, idim) == 0) {
+//   //         rmass_inverse(iglob, idim) = 1.0;
+//   //       } else {
+//   //         rmass_inverse(iglob, idim) = 1.0 / rmass_inverse(iglob, idim);
+//   //       }
+//   //     });
 
-  // Kokkos::fence();
+//   // Kokkos::fence();
 
-  return;
-}
+//   return;
+// }
 } // namespace
 
-template <class medium, class qp_type>
-specfem::domain::domain<medium, qp_type>::domain(
-    const specfem::compute::assembly &assembly,
-    const qp_type &quadrature_points)
-    : field(assembly.fields.forward.get_field<medium>()) {
+// template <specfem::enums::simulation::type simulation, class medium, class qp_type>
+// specfem::domain::domain<medium, qp_type>::domain(
+//     const specfem::compute::assembly &assembly,
+//     const qp_type &quadrature_points)
+//     : field(assembly.fields.get_simulation_field<simulation>().get_field<medium>() {
+//   // this->h_field = Kokkos::create_mirror_view(this->field);
+//   // this->h_field_dot = Kokkos::create_mirror_view(this->field_dot);
+//   // this->h_field_dot_dot = Kokkos::create_mirror_view(this->field_dot_dot);
+//   // this->h_rmass_inverse = Kokkos::create_mirror_view(this->rmass_inverse);
 
-  // this->h_field = Kokkos::create_mirror_view(this->field);
-  // this->h_field_dot = Kokkos::create_mirror_view(this->field_dot);
-  // this->h_field_dot_dot = Kokkos::create_mirror_view(this->field_dot_dot);
-  // this->h_rmass_inverse = Kokkos::create_mirror_view(this->rmass_inverse);
+//   // //----------------------------------------------------------------------------
+//   // // Initialize views
 
-  // //----------------------------------------------------------------------------
-  // // Initialize views
+//   // // In CUDA you can't call class lambdas inside the constructors
+//   // // Hence I need to use this function to initialize views
+//   // initialize_views<medium>(nglob, this->field, this->field_dot,
+//   //                          this->field_dot_dot, this->rmass_inverse);
 
-  // // In CUDA you can't call class lambdas inside the constructors
-  // // Hence I need to use this function to initialize views
-  // initialize_views<medium>(nglob, this->field, this->field_dot,
-  //                          this->field_dot_dot, this->rmass_inverse);
+//   this->kernels = specfem::domain::impl::kernels::kernels<medium, qp_type>(
+//       assembly, quadrature_points);
 
-  this->kernels = specfem::domain::impl::kernels::kernels<medium, qp_type>(
-      assembly, quadrature_points);
+//   //----------------------------------------------------------------------------
+//   // Inverse of mass matrix
 
-  //----------------------------------------------------------------------------
-  // Inverse of mass matrix
+//   initialize_rmass_inverse(this->kernels);
 
-  initialize_rmass_inverse(this->kernels);
-
-  return;
-};
+//   return;
+// };
 
 // template <class medium, class qp_type>
 // void specfem::domain::domain<medium, qp_type>::sync_field(
@@ -157,7 +156,6 @@ specfem::domain::domain<medium, qp_type>::domain(
 
 template <class medium, class qp_type>
 void specfem::domain::domain<medium, qp_type>::divide_mass_matrix() {
-
   constexpr int components = medium::components;
   const int nglob = field.nglob;
 
@@ -179,7 +177,6 @@ void specfem::domain::domain<medium, qp_type>::divide_mass_matrix() {
 
 template <class medium, class qp_type>
 void specfem::domain::domain<medium, qp_type>::invert_mass_matrix() {
-
   constexpr int components = medium::components;
   const int nglob = field.nglob;
 
