@@ -8,26 +8,21 @@ namespace dimension {
 
 enum class type { dim2, dim3 };
 
-template <specfem::dimension::type dimension> class dimension {
+template <specfem::dimension::type DType> class dimension;
+
+template <> class dimension<specfem::dimension::type::dim2> {
 public:
-  static constexpr specfem::dimension::type value = dimension;
-  static constexpr int dim;
-  static std::string to_string(){};
+  static constexpr auto value = specfem::dimension::type::dim2;
+  static constexpr int dim = 2;
+  static std::string to_string() { return "2D"; }
 };
 
-template <>
-static constexpr int dimension<specfem::dimension::type::dim2>::dim = 2;
-
-template <>
-static constexpr int dimension<specfem::dimension::type::dim3>::dim = 3;
-
-template <> std::string dimension<specfem::dimension::type::dim2>::to_string() {
-  return "2D";
-}
-
-template <> std::string dimension<specfem::dimension::type::dim3>::to_string() {
-  return "3D";
-}
+template <> class dimension<specfem::dimension::type::dim3> {
+public:
+  static constexpr auto value = specfem::dimension::type::dim3;
+  static constexpr int dim = 3;
+  static std::string to_string() { return "3D"; }
+};
 
 } // namespace dimension
 } // namespace specfem

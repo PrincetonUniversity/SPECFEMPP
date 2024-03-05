@@ -34,7 +34,7 @@ struct assembly {
           &receivers,
       const std::vector<specfem::enums::seismogram::type> &stypes,
       const int max_timesteps, const int max_sig_step,
-      const specfem::enums::simulation::type simulation);
+      const specfem::simulation::type simulation);
 };
 
 } // namespace compute

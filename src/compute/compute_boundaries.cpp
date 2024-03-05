@@ -37,7 +37,7 @@ tag_elements(
   for (int i = 0; i < acoustic_free_surface.nelem_acoustic_surface; ++i) {
     const int ispec = acoustic_free_surface.ispec_acoustic_surface(i);
     if (properties.h_element_types(ispec) !=
-        specfem::enums::element::type::acoustic) {
+        specfem::element::medium_tag::acoustic) {
       throw std::invalid_argument(
           "Error: Acoustic free surface boundary is not an acoustic element");
     }
@@ -117,7 +117,7 @@ specfem::compute::boundaries::boundaries(
   for (int i = 0; i < acoustic_free_surface.nelem_acoustic_surface; ++i) {
     const int ispec = acoustic_free_surface.ispec_acoustic_surface(i);
     if (properties.h_element_types(ispec) !=
-        specfem::enums::element::type::acoustic) {
+        specfem::element::medium_tag::acoustic) {
       throw std::invalid_argument(
           "Error: Acoustic free surface boundary is not an acoustic element");
     }
@@ -148,7 +148,7 @@ specfem::compute::boundaries::boundaries(
 //         nspec);
 //     std::vector<specfem::compute::access::boundary_types>
 //     boundary_types(nspec); tag_elements(kmato,
-//     specfem::enums::element::type::acoustic, materials,
+//     specfem::element::medium_tag::acoustic, materials,
 //                  absorbing_boundaries, acoustic_free_surface, boundary_tag,
 //                  boundary_types);
 //     assign_boundary(
@@ -160,7 +160,7 @@ specfem::compute::boundaries::boundaries(
 // }
 
 // specfem::compute::stacey_medium::stacey_medium(
-//     const specfem::enums::element::type medium,
+//     const specfem::element::medium_tag medium,
 //     const specfem::kokkos::HostView1d<int> kmato,
 //     const std::vector<std::shared_ptr<specfem::material::material> >
 //     &materials, const specfem::mesh::boundaries::absorbing_boundary
@@ -192,10 +192,10 @@ specfem::compute::boundaries::boundaries(
 //     specfem::mesh::boundaries::acoustic_free_surface
 //         &acoustic_free_surface) {
 //   this->elastic = specfem::compute::stacey_medium(
-//       specfem::enums::element::type::elastic, kmato, materials,
+//       specfem::element::medium_tag::elastic, kmato, materials,
 //       absorbing_boundaries, acoustic_free_surface);
 //   this->acoustic = specfem::compute::stacey_medium(
-//       specfem::enums::element::type::acoustic, kmato, materials,
+//       specfem::element::medium_tag::acoustic, kmato, materials,
 //       absorbing_boundaries, acoustic_free_surface);
 //   this->nelements = this->elastic.nelements + this->acoustic.nelements;
 // }
@@ -216,7 +216,7 @@ specfem::compute::boundaries::boundaries(
 //         nspec);
 //     std::vector<specfem::compute::access::boundary_types>
 //     boundary_types(nspec); tag_elements(kmato,
-//     specfem::enums::element::type::acoustic, materials,
+//     specfem::element::medium_tag::acoustic, materials,
 //                  absorbing_boundaries, acoustic_free_surface, boundary_tag,
 //                  boundary_types);
 //     assign_boundary(

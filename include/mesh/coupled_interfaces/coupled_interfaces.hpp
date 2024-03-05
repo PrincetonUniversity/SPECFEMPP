@@ -22,29 +22,29 @@ public:
                      const int num_interfaces_elastic_poroelastic,
                      const specfem::MPI::MPI *mpi);
 
-  template <specfem::enums::element::type medium1,
-            specfem::enums::element::type medium2>
+  template <specfem::element::medium_tag medium1,
+            specfem::element::medium_tag medium2>
   std::variant<specfem::mesh::interface_container<
-                   specfem::enums::element::type::elastic,
-                   specfem::enums::element::type::acoustic>,
+                   specfem::element::medium_tag::elastic,
+                   specfem::element::medium_tag::acoustic>,
                specfem::mesh::interface_container<
-                   specfem::enums::element::type::acoustic,
-                   specfem::enums::element::type::poroelastic>,
+                   specfem::element::medium_tag::acoustic,
+                   specfem::element::medium_tag::poroelastic>,
                specfem::mesh::interface_container<
-                   specfem::enums::element::type::elastic,
-                   specfem::enums::element::type::poroelastic> >
+                   specfem::element::medium_tag::elastic,
+                   specfem::element::medium_tag::poroelastic> >
   get() const;
 
-  specfem::mesh::interface_container<specfem::enums::element::type::elastic,
-                                     specfem::enums::element::type::acoustic>
+  specfem::mesh::interface_container<specfem::element::medium_tag::elastic,
+                                     specfem::element::medium_tag::acoustic>
       elastic_acoustic;
 
-  specfem::mesh::interface_container<specfem::enums::element::type::acoustic,
-                                     specfem::enums::element::type::poroelastic>
+  specfem::mesh::interface_container<specfem::element::medium_tag::acoustic,
+                                     specfem::element::medium_tag::poroelastic>
       acoustic_poroelastic;
 
-  specfem::mesh::interface_container<specfem::enums::element::type::elastic,
-                                     specfem::enums::element::type::poroelastic>
+  specfem::mesh::interface_container<specfem::element::medium_tag::elastic,
+                                     specfem::element::medium_tag::poroelastic>
       elastic_poroelastic;
 };
 

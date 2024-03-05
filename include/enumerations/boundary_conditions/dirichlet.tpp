@@ -10,24 +10,17 @@
 #include "point/properties.hpp"
 #include <Kokkos_Core.hpp>
 
-// template <typename dim, typename medium, typename property, typename qp_type>
-// specfem::enums::boundary_conditions::dirichlet<dim, medium, property,
-// qp_type>::
-//     dirichlet(const specfem::compute::boundaries &boundary_conditions,
-//               const quadrature_points_type &quadrature_points)
-//     : quadrature_points(quadrature_points),
-//       type(boundary_conditions.acoustic_free_surface.type) {
-//   return;
-// }
-
-template <typename dim, typename medium, typename property, typename qp_type>
-KOKKOS_INLINE_FUNCTION void specfem::enums::boundary_conditions::
-    dirichlet<dim, medium, property, qp_type>::enforce_traction(
+template <specfem::element::medium_tag medium,
+          specfem::element::property_tag property, typename qp_type>
+KOKKOS_INLINE_FUNCTION void specfem::boundary::boundary<
+    specfem::dimension::type::dim2, medium, property,
+    specfem::element::boundary_tag::acoustic_free_surface, qp_type>::
+    enforce_traction(
         const int &xz,
         const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
         const specfem::point::partial_derivatives2 &partial_derivatives,
-        const specfem::point::properties<medium_type::value,
-                                         property_type::value> &properties,
+        const specfem::point::properties<
+            medium_type::value, medium_type::property_value> &properties,
         const specfem::point::boundary &boundary_type,
         const specfem::kokkos::array_type<type_real, medium_type::components>
             &field_dot,

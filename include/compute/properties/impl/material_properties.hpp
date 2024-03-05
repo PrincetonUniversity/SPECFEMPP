@@ -8,8 +8,8 @@ namespace specfem {
 namespace compute {
 namespace impl {
 namespace properties {
-template <specfem::enums::element::type type,
-          specfem::enums::element::property_tag property>
+template <specfem::element::medium_tag type,
+          specfem::element::property_tag property>
 struct material_property
     : public specfem::compute::impl::properties::properties_container<
           type, property> {

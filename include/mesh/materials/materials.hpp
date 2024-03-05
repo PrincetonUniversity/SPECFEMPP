@@ -11,9 +11,9 @@ namespace mesh {
 struct materials {
 
   struct material_specification {
-    specfem::enums::element::type type;             ///< Type of element
-    specfem::enums::element::property_tag property; ///< Property of element
-    int index; ///< Index of material property
+    specfem::element::medium_tag type;       ///< Type of element
+    specfem::element::property_tag property; ///< Property of element
+    int index;                               ///< Index of material property
 
     /**
      * @brief Default constructor
@@ -28,14 +28,13 @@ struct materials {
      * @param property Property of element
      * @param index Index of material property
      */
-    material_specification(specfem::enums::element::type type,
-                           specfem::enums::element::property_tag property,
-                           int index)
+    material_specification(specfem::element::medium_tag type,
+                           specfem::element::property_tag property, int index)
         : type(type), property(property), index(index) {}
   };
 
-  template <specfem::enums::element::type type,
-            specfem::enums::element::property_tag property>
+  template <specfem::element::medium_tag type,
+            specfem::element::property_tag property>
   struct material {
     int n_materials; ///< Number of elements
     specfem::kokkos::HostView1d<specfem::material::material<type, property> >
@@ -53,14 +52,12 @@ struct materials {
       material_index_mapping; ///< Mapping of spectral element to material
                               ///< properties
 
-  specfem::mesh::materials::material<
-      specfem::enums::element::type::elastic,
-      specfem::enums::element::property_tag::isotropic>
+  specfem::mesh::materials::material<specfem::element::medium_tag::elastic,
+                                     specfem::element::property_tag::isotropic>
       elastic_isotropic; ///< Elastic isotropic material properties
 
-  specfem::mesh::materials::material<
-      specfem::enums::element::type::acoustic,
-      specfem::enums::element::property_tag::isotropic>
+  specfem::mesh::materials::material<specfem::element::medium_tag::acoustic,
+                                     specfem::element::property_tag::isotropic>
       acoustic_isotropic; ///< Acoustic isotropic material properties
 
   /**
@@ -90,12 +87,11 @@ struct materials {
             const specfem::kokkos::HostView2d<int> knods,
             const specfem::MPI::MPI *mpi);
 
-  std::variant<specfem::material::material<
-                   specfem::enums::element::type::elastic,
-                   specfem::enums::element::property_tag::isotropic>,
-               specfem::material::material<
-                   specfem::enums::element::type::acoustic,
-                   specfem::enums::element::property_tag::isotropic> >
+  std::variant<
+      specfem::material::material<specfem::element::medium_tag::elastic,
+                                  specfem::element::property_tag::isotropic>,
+      specfem::material::material<specfem::element::medium_tag::acoustic,
+                                  specfem::element::property_tag::isotropic> >
   operator[](const int index) const;
 };
 } // namespace mesh

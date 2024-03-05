@@ -141,11 +141,12 @@ KOKKOS_FUNCTION void newmark_mass_terms(
 //   return;
 // }
 
-template <typename property, typename qp_type>
+template <specfem::element::property_tag property, typename qp_type>
 template <specfem::enums::time_scheme::type time_scheme>
-KOKKOS_INLINE_FUNCTION void specfem::enums::boundary_conditions::stacey<
-    specfem::enums::element::dimension::dim2,
-    specfem::enums::element::medium::elastic, property, qp_type>::
+KOKKOS_INLINE_FUNCTION void
+specfem::boundary::boundary<specfem::dimension::type::dim2,
+                            specfem::element::medium_tag::elastic, property,
+                            specfem::element::boundary_tag::stacey, qp_type>::
     mass_time_contribution(
         const int &xz, const type_real &dt,
         const specfem::kokkos::array_type<type_real, 2> &weight,
@@ -183,10 +184,11 @@ KOKKOS_INLINE_FUNCTION void specfem::enums::boundary_conditions::stacey<
   return;
 }
 
-template <typename property, typename qp_type>
-KOKKOS_INLINE_FUNCTION void specfem::enums::boundary_conditions::stacey<
-    specfem::enums::element::dimension::dim2,
-    specfem::enums::element::medium::elastic, property, qp_type>::
+template <specfem::element::property_tag property, typename qp_type>
+KOKKOS_INLINE_FUNCTION void
+specfem::boundary::boundary<specfem::dimension::type::dim2,
+                            specfem::element::medium_tag::elastic, property,
+                            specfem::element::boundary_tag::stacey, qp_type>::
     enforce_traction(
         const int &xz, const specfem::kokkos::array_type<type_real, 2> &weight,
         const specfem::point::partial_derivatives2 &partial_derivatives,

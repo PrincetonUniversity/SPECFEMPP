@@ -12,11 +12,18 @@
 namespace specfem {
 namespace compute {
 
-template <specfem::enums::simulation::type simulation> struct simulation_field {
+template <specfem::simulation::type simulation> struct simulation_field {
 
   constexpr static auto simulation_type = simulation;
-  using elastic_type = specfem::enums::element::medium::elastic;
-  using acoustic_type = specfem::enums::element::medium::acoustic;
+  using elastic_type =
+      specfem::medium::medium<specfem::dimension::type::dim2,
+                              specfem::element::medium_tag::elastic,
+                              specfem::element::property_tag::isotropic>;
+
+  using acoustic_type =
+      specfem::medium::medium<specfem::dimension::type::dim2,
+                              specfem::element::medium_tag::acoustic,
+                              specfem::element::property_tag::isotropic>;
 
   simulation_field() = default;
 
@@ -69,10 +76,10 @@ template <specfem::enums::simulation::type simulation> struct simulation_field {
   // inline type_real &h_mass_inverse(const int &iglob, const int &icomp);
 
   int nglob = 0;
-  Kokkos::View<int * [specfem::enums::element::ntypes], Kokkos::LayoutLeft,
+  Kokkos::View<int * [specfem::element::ntypes], Kokkos::LayoutLeft,
                specfem::kokkos::DevMemSpace>
       assembly_index_mapping;
-  Kokkos::View<int * [specfem::enums::element::ntypes], Kokkos::LayoutLeft,
+  Kokkos::View<int * [specfem::element::ntypes], Kokkos::LayoutLeft,
                specfem::kokkos::HostMemSpace>
       h_assembly_index_mapping;
   specfem::compute::impl::field_impl<elastic_type> elastic;
