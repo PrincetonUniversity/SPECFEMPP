@@ -2,7 +2,7 @@
 #define _DOMAIN_SOURCE_ELASTIC_ISOTROPIC2D_HPP
 
 #include "compute/interface.hpp"
-#include "domain/impl/sources/elastic/elastic2d.hpp"
+// #include "domain/impl/sources/elastic/elastic2d.hpp"
 #include "domain/impl/sources/source.hpp"
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
@@ -22,28 +22,22 @@ namespace sources {
  */
 template <int NGLL>
 class source<
-    specfem::enums::element::dimension::dim2,
-    specfem::enums::element::medium::elastic,
-    specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
-    specfem::enums::element::property::isotropic> {
+    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+    specfem::element::property_tag::isotropic,
+    specfem::enums::element::quadrature::static_quadrature_points<NGLL> > {
 
 public:
   /**
    * @name Typedefs
    */
   ///@{
-  /**
-   * @brief Dimension of the element
-   *
-   */
-  using dimension = specfem::enums::element::dimension::dim2;
-  /**
-   * @brief Medium of the element
-   *
-   */
-  using medium_type = specfem::enums::element::medium::elastic;
+  using dimension =
+      specfem::dimension::dimension<specfem::dimension::type::dim2>;
+  using medium_type =
+      specfem::medium::medium<specfem::dimension::type::dim2,
+                              specfem::element::medium_tag::elastic,
+                              specfem::element::property_tag::isotropic>;
 
-  using property_type = specfem::enums::element::property::isotropic;
   /**
    * @brief Number of Gauss-Lobatto-Legendre quadrature points
    */
@@ -87,8 +81,8 @@ public:
   KOKKOS_INLINE_FUNCTION void compute_interaction(
       const type_real &stf,
       const specfem::kokkos::array_type<type_real, 2> &lagrange_interpolant,
-      const specfem::point::properties<medium_type::value, property_type::value>
-          &properties,
+      const specfem::point::properties<medium_type::medium_tag,
+                                       medium_type::property_tag> &properties,
       specfem::kokkos::array_type<type_real, medium_type::components>
           &acceleration) const;
 };

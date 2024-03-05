@@ -17,13 +17,11 @@ template <specfem::simulation::type simulation> struct simulation_field {
   constexpr static auto simulation_type = simulation;
   using elastic_type =
       specfem::medium::medium<specfem::dimension::type::dim2,
-                              specfem::element::medium_tag::elastic,
-                              specfem::element::property_tag::isotropic>;
+                              specfem::element::medium_tag::elastic>;
 
   using acoustic_type =
       specfem::medium::medium<specfem::dimension::type::dim2,
-                              specfem::element::medium_tag::acoustic,
-                              specfem::element::property_tag::isotropic>;
+                              specfem::element::medium_tag::acoustic>;
 
   simulation_field() = default;
 

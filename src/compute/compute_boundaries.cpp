@@ -14,7 +14,7 @@ namespace {
 // 1. Stacey
 // 2. Acoustic Free Surface (Dirichlet)
 // 3. Stacey and Acoustic Free Surface (Composite Stacey-Dirichlet)
-std::tuple<std::vector<specfem::enums::element::boundary_tag_container>,
+std::tuple<std::vector<specfem::element::boundary_tag_container>,
            std::vector<specfem::point::boundary> >
 tag_elements(
     const int nspec, const specfem::compute::properties &properties,
@@ -22,16 +22,14 @@ tag_elements(
     const specfem::mesh::boundaries::acoustic_free_surface
         &acoustic_free_surface) {
 
-  std::vector<specfem::enums::element::boundary_tag_container> boundary_tag(
-      nspec);
+  std::vector<specfem::element::boundary_tag_container> boundary_tag(nspec);
   std::vector<specfem::point::boundary> boundary_types(nspec);
 
   for (int i = 0; i < absorbing_boundaries.nelements; ++i) {
     const int ispec = absorbing_boundaries.ispec(i);
-    boundary_tag[ispec] += specfem::enums::element::boundary_tag::stacey;
+    boundary_tag[ispec] += specfem::element::boundary_tag::stacey;
     boundary_types[ispec].update_boundary(
-        absorbing_boundaries.type(i),
-        specfem::enums::element::boundary_tag::stacey);
+        absorbing_boundaries.type(i), specfem::element::boundary_tag::stacey);
   }
 
   for (int i = 0; i < acoustic_free_surface.nelem_acoustic_surface; ++i) {
@@ -42,10 +40,10 @@ tag_elements(
           "Error: Acoustic free surface boundary is not an acoustic element");
     }
     boundary_tag[ispec] +=
-        specfem::enums::element::boundary_tag::acoustic_free_surface;
+        specfem::element::boundary_tag::acoustic_free_surface;
     boundary_types[ispec].update_boundary(
         acoustic_free_surface.type(i),
-        specfem::enums::element::boundary_tag::acoustic_free_surface);
+        specfem::element::boundary_tag::acoustic_free_surface);
   }
 
   return std::make_tuple(boundary_tag, boundary_types);
@@ -53,10 +51,10 @@ tag_elements(
 
 // template <typename boundary_type>
 // void assign_boundary(
-//     const std::vector<specfem::enums::element::boundary_tag_container>
+//     const std::vector<specfem::element::boundary_tag_container>
 //         boundary_tag,
 //     const std::vector<specfem::compute::access::boundary_types>
-//     boundary_types, const specfem::enums::element::boundary_tag tag,
+//     boundary_types, const specfem::element::boundary_tag tag,
 //     boundary_type *boundary) {
 //   const int nspec = boundary_tag.size();
 
@@ -108,10 +106,9 @@ specfem::compute::boundaries::boundaries(
 
   for (int i = 0; i < absorbing_boundaries.nelements; ++i) {
     const int ispec = absorbing_boundaries.ispec(i);
-    h_boundary_tags(ispec) += specfem::enums::element::boundary_tag::stacey;
+    h_boundary_tags(ispec) += specfem::element::boundary_tag::stacey;
     h_boundary_types(ispec).update_boundary(
-        absorbing_boundaries.type(i),
-        specfem::enums::element::boundary_tag::stacey);
+        absorbing_boundaries.type(i), specfem::element::boundary_tag::stacey);
   }
 
   for (int i = 0; i < acoustic_free_surface.nelem_acoustic_surface; ++i) {
@@ -122,10 +119,10 @@ specfem::compute::boundaries::boundaries(
           "Error: Acoustic free surface boundary is not an acoustic element");
     }
     h_boundary_tags(ispec) +=
-        specfem::enums::element::boundary_tag::acoustic_free_surface;
+        specfem::element::boundary_tag::acoustic_free_surface;
     h_boundary_types(ispec).update_boundary(
         acoustic_free_surface.type(i),
-        specfem::enums::element::boundary_tag::acoustic_free_surface);
+        specfem::element::boundary_tag::acoustic_free_surface);
   }
 
   Kokkos::deep_copy(boundary_tags, h_boundary_tags);
@@ -143,7 +140,7 @@ specfem::compute::boundaries::boundaries(
 //         &acoustic_free_surface) {
 //   const int nspec = kmato.extent(0);
 //   if (acoustic_free_surface.nelem_acoustic_surface > 0) {
-//     std::vector<specfem::enums::element::boundary_tag_container>
+//     std::vector<specfem::element::boundary_tag_container>
 //     boundary_tag(
 //         nspec);
 //     std::vector<specfem::compute::access::boundary_types>
@@ -153,7 +150,7 @@ specfem::compute::boundaries::boundaries(
 //                  boundary_types);
 //     assign_boundary(
 //         boundary_tag, boundary_types,
-//         specfem::enums::element::boundary_tag::acoustic_free_surface, this);
+//         specfem::element::boundary_tag::acoustic_free_surface, this);
 //   } else {
 //     this->nelements = 0;
 //   }
@@ -170,7 +167,7 @@ specfem::compute::boundaries::boundaries(
 
 //   const int nspec = kmato.extent(0);
 //   if (absorbing_boundaries.nelements > 0) {
-//     std::vector<specfem::enums::element::boundary_tag_container>
+//     std::vector<specfem::element::boundary_tag_container>
 //     boundary_tag(
 //         nspec);
 //     std::vector<specfem::compute::access::boundary_types>
@@ -178,7 +175,7 @@ specfem::compute::boundaries::boundaries(
 //     absorbing_boundaries,
 //                  acoustic_free_surface, boundary_tag, boundary_types);
 //     assign_boundary(boundary_tag, boundary_types,
-//                     specfem::enums::element::boundary_tag::stacey, this);
+//                     specfem::element::boundary_tag::stacey, this);
 //   } else {
 //     this->nelements = 0;
 //   }
@@ -211,7 +208,7 @@ specfem::compute::boundaries::boundaries(
 //   const int nspec = kmato.extent(0);
 //   if (absorbing_boundaries.nelements > 0 &&
 //       acoustic_free_surface.nelem_acoustic_surface > 0) {
-//     std::vector<specfem::enums::element::boundary_tag_container>
+//     std::vector<specfem::element::boundary_tag_container>
 //     boundary_tag(
 //         nspec);
 //     std::vector<specfem::compute::access::boundary_types>
@@ -221,7 +218,7 @@ specfem::compute::boundaries::boundaries(
 //                  boundary_types);
 //     assign_boundary(
 //         boundary_tag, boundary_types,
-//         specfem::enums::element::boundary_tag::composite_stacey_dirichlet,
+//         specfem::element::boundary_tag::composite_stacey_dirichlet,
 //         this);
 //   } else {
 //     this->nelements = 0;
@@ -230,7 +227,7 @@ specfem::compute::boundaries::boundaries(
 
 // void specfem::compute::access::boundary_types::update_boundary_type(
 //     const specfem::enums::boundaries::type &type,
-//     const specfem::enums::element::boundary_tag &tag) {
+//     const specfem::element::boundary_tag &tag) {
 //   if (type == specfem::enums::boundaries::type::TOP) {
 //     top = tag;
 //   } else if (type == specfem::enums::boundaries::type::BOTTOM) {
@@ -254,7 +251,7 @@ specfem::compute::boundaries::boundaries(
 
 // KOKKOS_FUNCTION
 // bool specfem::compute::access::is_on_boundary(
-//     const specfem::enums::element::boundary_tag &tag,
+//     const specfem::element::boundary_tag &tag,
 //     const specfem::compute::access::boundary_types &type, const int &iz,
 //     const int &ix, const int &ngllz, const int &ngllx) {
 

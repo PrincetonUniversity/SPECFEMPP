@@ -13,11 +13,14 @@ namespace domain {
 namespace impl {
 namespace kernels {
 
-template <class medium, class qp_type, class property> class receiver_kernel {
+template <specfem::dimension::type DimensionType,
+          specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag, typename qp_type>
+class receiver_kernel {
 public:
-  using dimension = specfem::enums::element::dimension::dim2;
-  using medium_type = medium;
-  using property_type = property;
+  using dimension = specfem::dimension::dimension<DimensionType>;
+  using medium_type =
+      specfem::medium::medium<DimensionType, MediumTag, PropertyTag>;
   using quadrature_points_type = qp_type;
 
   receiver_kernel() = default;
@@ -41,14 +44,14 @@ private:
   specfem::kokkos::HostMirror1d<int> h_receiver_kernel_index_mapping;
   specfem::kokkos::DeviceView1d<int> receiver_mapping;
   specfem::compute::impl::field_impl<medium_type> field;
-  Kokkos::View<int * [specfem::enums::element::ntypes], Kokkos::LayoutLeft,
+  Kokkos::View<int * [specfem::element::ntypes], Kokkos::LayoutLeft,
                specfem::kokkos::DevMemSpace>
       global_index_mapping;
   specfem::compute::receivers receivers;
   quadrature_points_type quadrature_points;
 
   specfem::domain::impl::receivers::receiver<
-      dimension, medium_type, quadrature_points_type, property_type>
+      DimensionType, MediumTag, PropertyTag, quadrature_points_type>
       receiver;
 };
 } // namespace kernels

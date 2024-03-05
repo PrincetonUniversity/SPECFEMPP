@@ -18,9 +18,9 @@ struct boundaries {
       const specfem::mesh::boundaries::acoustic_free_surface
           &acoustic_free_surface);
 
-  specfem::kokkos::DeviceView1d<specfem::enums::element::boundary_tag_container>
+  specfem::kokkos::DeviceView1d<specfem::element::boundary_tag_container>
       boundary_tags; ///< Boundary tags for each element
-  specfem::kokkos::HostMirror1d<specfem::enums::element::boundary_tag_container>
+  specfem::kokkos::HostMirror1d<specfem::element::boundary_tag_container>
       h_boundary_tags; ///< Host mirror of boundary tags
 
   specfem::kokkos::DeviceView1d<specfem::point::boundary>

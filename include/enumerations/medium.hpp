@@ -26,7 +26,8 @@ namespace medium {
 
 template <specfem::dimension::type Dimension,
           specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag>
+          specfem::element::property_tag PropertyTag =
+              specfem::element::property_tag::isotropic>
 class medium;
 
 template <>

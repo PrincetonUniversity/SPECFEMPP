@@ -3,6 +3,7 @@
 
 #include "compute/interface.hpp"
 #include "impl/interface.hpp"
+#include "impl/kernels.hpp"
 #include "impl/receivers/interface.hpp"
 #include "impl/sources/interface.hpp"
 #include "quadrature/interface.hpp"
@@ -12,24 +13,24 @@
 namespace specfem {
 namespace domain {
 
-template <specfem::enums::simulation::type simulation, typename medium,
-          typename qp_type>
+template <specfem::simulation::type simulation,
+          specfem::dimension::type DimensionType,
+          specfem::element::medium_tag MediumTag, typename qp_type>
 class domain
-    : public specfem::domain::impl::kernels<simulation, medium, qp_type> {
+    : public specfem::domain::impl::kernels::kernels<simulation, DimensionType,
+                                                     MediumTag, qp_type> {
 public:
-  using dimension = specfem::enums::element::dimension::dim2; ///< Dimension of
-                                                              ///< the domain
-  using medium_type = medium; ///< Type of medium i.e. acoustic, elastic or
-                              ///< poroelastic
+  using dimension = specfem::dimension::dimension<DimensionType>;
+  using medium_type = specfem::medium::medium<DimensionType, MediumTag>;
   using quadrature_points_type = qp_type; ///< Type of quadrature points i.e.
                                           ///< static or dynamic
 
   domain(const specfem::compute::assembly &assembly,
          const quadrature_points_type &quadrature_points)
       : field(assembly.fields.get_simulation_field<simulation>()
-                  .get_field<medium>()),
-        specfem::domain::impl::kernels<simulation, medium,
-                                       quadrature_points_type>(
+                  .template get_field<medium_type>()),
+        specfem::domain::impl::kernels::kernels<
+            simulation, DimensionType, MediumTag, quadrature_points_type>(
             assembly, quadrature_points) {}
 
   ~domain() = default;

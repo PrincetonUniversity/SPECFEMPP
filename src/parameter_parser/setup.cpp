@@ -110,7 +110,7 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
           at_least_one_writer = true;
           this->wavefield =
               std::make_unique<specfem::runtime_configuration::wavefield>(
-                  n_wavefield, specfem::enums::simulation::type::forward);
+                  n_wavefield, specfem::simulation::type::forward);
         } else {
           this->wavefield = nullptr;
         }
@@ -131,7 +131,7 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
         if (const YAML::Node &n_wavefield = n_reader["wavefield"]) {
           this->wavefield =
               std::make_unique<specfem::runtime_configuration::wavefield>(
-                  n_wavefield, specfem::enums::simulation::type::adjoint);
+                  n_wavefield, specfem::simulation::type::adjoint);
         } else {
           std::ostringstream message;
           message << "Error reading adjoint reader configuration. \n"

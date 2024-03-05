@@ -87,7 +87,7 @@ std::vector<test_config::Test> parse_test_config(std::string test_config_file,
 
 // ------------------------------------- //
 
-template <specfem::enums::element::type medium>
+template <specfem::element::medium_tag medium>
 specfem::testing::array1d<type_real, Kokkos::LayoutLeft> compact_array(
     const specfem::testing::array1d<type_real, Kokkos::LayoutLeft> global,
     const specfem::kokkos::HostView1d<int, Kokkos::LayoutLeft> index_mapping) {
@@ -117,7 +117,7 @@ specfem::testing::array1d<type_real, Kokkos::LayoutLeft> compact_array(
   return local_array;
 }
 
-template <specfem::enums::element::type medium>
+template <specfem::element::medium_tag medium>
 specfem::testing::array2d<type_real, Kokkos::LayoutLeft> compact_array(
     const specfem::testing::array2d<type_real, Kokkos::LayoutLeft> global,
     const specfem::kokkos::HostView1d<int, Kokkos::LayoutLeft> index_mapping) {
@@ -192,12 +192,14 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
       specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
 
       specfem::domain::domain<
-          specfem::enums::element::medium::elastic,
+          specfem::simulation::type::forward, specfem::dimension::type::dim2,
+          specfem::element::medium_tag::elastic,
           specfem::enums::element::quadrature::static_quadrature_points<5> >
           elastic_domain_static(assembly, qp5);
 
       specfem::domain::domain<
-          specfem::enums::element::medium::acoustic,
+          specfem::simulation::type::forward, specfem::dimension::type::dim2,
+          specfem::element::medium_tag::acoustic,
           specfem::enums::element::quadrature::static_quadrature_points<5> >
           acoustic_domain_static(assembly, qp5);
 
@@ -228,10 +230,10 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
 
         auto index_mapping = Kokkos::subview(
             assembly.fields.forward.h_assembly_index_mapping, Kokkos::ALL(),
-            static_cast<int>(specfem::enums::element::type::elastic));
+            static_cast<int>(specfem::element::medium_tag::elastic));
 
         auto h_mass_matrix_local =
-            compact_array<specfem::enums::element::type::elastic>(
+            compact_array<specfem::element::medium_tag::elastic>(
                 h_mass_matrix_global, index_mapping);
 
         type_real tolerance = 1e-5;
@@ -258,10 +260,10 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
 
         auto index_mapping = Kokkos::subview(
             assembly.fields.forward.h_assembly_index_mapping, Kokkos::ALL(),
-            static_cast<int>(specfem::enums::element::type::acoustic));
+            static_cast<int>(specfem::element::medium_tag::acoustic));
 
         auto h_mass_matrix_local =
-            compact_array<specfem::enums::element::type::acoustic>(
+            compact_array<specfem::element::medium_tag::acoustic>(
                 h_mass_matrix_global, index_mapping);
 
         type_real tolerance = 1e-5;

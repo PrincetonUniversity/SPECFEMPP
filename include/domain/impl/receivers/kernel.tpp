@@ -10,8 +10,11 @@
 #include "quadrature/interface.hpp"
 #include "specfem_setup.hpp"
 
-template <class medium, class qp_type, class property>
-specfem::domain::impl::kernels::receiver_kernel<medium, qp_type, property>::
+template <specfem::dimension::type DimensionType,
+          specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag, typename qp_type>
+specfem::domain::impl::kernels::receiver_kernel<DimensionType, MediumTag,
+                                                PropertyTag, qp_type>::
     receiver_kernel(
         const specfem::compute::assembly &assembly,
         const specfem::kokkos::HostView1d<int> h_receiver_kernel_index_mapping,
@@ -33,9 +36,9 @@ specfem::domain::impl::kernels::receiver_kernel<medium, qp_type, property>::
       KOKKOS_LAMBDA(const int isource) {
         const int ispec = h_receiver_kernel_index_mapping(isource);
         if ((assembly.properties.h_element_types(ispec) !=
-             medium_type::value) &&
+             medium_type::medium_tag) &&
             (assembly.properties.h_element_property(ispec) !=
-             property_type::value)) {
+             medium_type::property_tag)) {
           throw std::runtime_error("Invalid element detected in kernel");
         }
       });
@@ -55,16 +58,19 @@ specfem::domain::impl::kernels::receiver_kernel<medium, qp_type, property>::
                     h_receiver_kernel_index_mapping);
   Kokkos::deep_copy(receiver_mapping, h_receiver_mapping);
 
-  receiver = specfem::domain::impl::receivers::receiver<dimension, medium,
-                                                        qp_type, property>();
+  receiver =
+      specfem::domain::impl::receivers::receiver<DimensionType, MediumTag,
+                                                 PropertyTag, qp_type>();
 
   return;
 }
 
-template <class medium, class qp_type, class property>
+template <specfem::dimension::type DimensionType,
+          specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag, typename qp_type>
 void specfem::domain::impl::kernels::receiver_kernel<
-    medium, qp_type, property>::compute_seismograms(const int &isig_step)
-    const {
+    DimensionType, MediumTag, PropertyTag,
+    qp_type>::compute_seismograms(const int &isig_step) const {
 
   // Allocate scratch views for field, field_dot & field_dot_dot. Incase of
   // acostic domains when calculating displacement, velocity and acceleration
@@ -73,7 +79,7 @@ void specfem::domain::impl::kernels::receiver_kernel<
   // within the element. Scratch views speed up this computation by limiting
   // global memory accesses.
 
-  constexpr int components = medium::components;
+  constexpr int components = medium_type::components;
 
   if (nreceivers == 0)
     return;
@@ -146,7 +152,7 @@ void specfem::domain::impl::kernels::receiver_kernel<
               s_hprime(iz, ix, 0) = hprime(iz, ix);
               const int iglob =
                   global_index_mapping(index_mapping(ispec_l, iz, ix),
-                                       static_cast<int>(medium::value));
+                                       static_cast<int>(medium_type::medium_tag));
 #ifdef KOKKOS_ENABLE_CUDA
 #pragma unroll
 #endif
@@ -177,8 +183,8 @@ void specfem::domain::impl::kernels::receiver_kernel<
 
               const auto point_properties =
                   properties.template load_device_properties<
-                      medium_type::value, property_type::value>(ispec_l, iz,
-                                                                ix);
+                      medium_type::medium_tag, medium_type::property_tag>(
+                      ispec_l, iz, ix);
 
               const auto active_field = [&]() {
                 switch (seismogram_type_l) {

@@ -119,11 +119,12 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
   specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
 
   specfem::domain::domain<
-      specfem::enums::element::medium::elastic,
+      specfem::simulation::type::forward, specfem::dimension::type::dim2,
+      specfem::element::medium_tag::elastic,
       specfem::enums::element::quadrature::static_quadrature_points<5> >
       elastic_domain_static(assembly, qp5);
 
-  elastic_domain_static.compute_seismogram(0);
+  elastic_domain_static.compute_seismograms(0);
 
   assembly.receivers.sync_seismograms();
 

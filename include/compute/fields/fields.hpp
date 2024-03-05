@@ -23,10 +23,10 @@ struct fields {
 
   template <specfem::simulation::type simulation>
   KOKKOS_INLINE_FUNCTION specfem::compute::simulation_field<simulation>
-  get_simulation_field() {
-    if constexpr (std::is_same_v<simulation, forward_type>) {
+  get_simulation_field() const {
+    if constexpr (simulation == forward_type) {
       return forward;
-    } else if constexpr (std::is_same_v<simulation, adjoint_type>) {
+    } else if constexpr (simulation == adjoint_type) {
       return adjoint;
     }
   }
