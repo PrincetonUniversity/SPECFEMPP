@@ -12,18 +12,16 @@ namespace specfem {
 namespace compute {
 struct fields {
 
-  constexpr static auto forward_type =
-      specfem::enums::simulation::type::forward;
-  constexpr static auto adjoint_type =
-      specfem::enums::simulation::type::adjoint;
+  constexpr static auto forward_type = specfem::simulation::type::forward;
+  constexpr static auto adjoint_type = specfem::simulation::type::adjoint;
 
   fields() = default;
 
   fields(const specfem::compute::mesh &mesh,
          const specfem::compute::properties &properties,
-         const specfem::enums::simulation::type simulation);
+         const specfem::simulation::type simulation);
 
-  template <specfem::enums::simulation::type simulation>
+  template <specfem::simulation::type simulation>
   KOKKOS_INLINE_FUNCTION specfem::compute::simulation_field<simulation>
   get_simulation_field() {
     if constexpr (std::is_same_v<simulation, forward_type>) {

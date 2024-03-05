@@ -282,8 +282,8 @@ void check_edges(
 }
 } // namespace
 
-template <specfem::enums::element::type medium1,
-          specfem::enums::element::type medium2>
+template <specfem::element::medium_tag medium1,
+          specfem::element::medium_tag medium2>
 specfem::compute::interface_container<medium1, medium2>::interface_container(
     const specfem::compute::mesh &mesh,
     const specfem::compute::properties &properties,
@@ -350,8 +350,8 @@ specfem::compute::interface_container<medium1, medium2>::interface_container(
   return;
 }
 
-// template <specfem::enums::element::type medium1,
-//           specfem::enums::element::type medium2>
+// template <specfem::element::medium_tag medium1,
+//           specfem::element::medium_tag medium2>
 // specfem::compute::interface_container<medium1, medium2>::interface_container(
 //     const specfem::compute::interface_container<medium2, medium1> &other)
 //     : num_interfaces(other.num_interfaces),
@@ -366,9 +366,9 @@ specfem::compute::interface_container<medium1, medium2>::interface_container(
 //   return;
 // }
 
-template <specfem::enums::element::type medium1,
-          specfem::enums::element::type medium2>
-template <specfem::enums::element::type medium>
+template <specfem::element::medium_tag medium1,
+          specfem::element::medium_tag medium2>
+template <specfem::element::medium_tag medium>
 KOKKOS_INLINE_FUNCTION int specfem::compute::interface_container<
     medium1, medium2>::load_device_index_mapping(const int iedge) const {
   if constexpr (medium == medium1) {
@@ -380,9 +380,9 @@ KOKKOS_INLINE_FUNCTION int specfem::compute::interface_container<
   }
 }
 
-template <specfem::enums::element::type medium1,
-          specfem::enums::element::type medium2>
-template <specfem::enums::element::type medium>
+template <specfem::element::medium_tag medium1,
+          specfem::element::medium_tag medium2>
+template <specfem::element::medium_tag medium>
 int specfem::compute::interface_container<
     medium1, medium2>::load_host_index_mapping(const int iedge) const {
   if constexpr (medium == medium1) {
@@ -394,9 +394,9 @@ int specfem::compute::interface_container<
   }
 }
 
-template <specfem::enums::element::type medium1,
-          specfem::enums::element::type medium2>
-template <specfem::enums::element::type medium>
+template <specfem::element::medium_tag medium1,
+          specfem::element::medium_tag medium2>
+template <specfem::element::medium_tag medium>
 KOKKOS_INLINE_FUNCTION specfem::edge::interface specfem::compute::
     interface_container<medium1, medium2>::load_device_edge_type(
         const int iedge) const {
@@ -409,9 +409,9 @@ KOKKOS_INLINE_FUNCTION specfem::edge::interface specfem::compute::
   }
 }
 
-template <specfem::enums::element::type medium1,
-          specfem::enums::element::type medium2>
-template <specfem::enums::element::type medium>
+template <specfem::element::medium_tag medium1,
+          specfem::element::medium_tag medium2>
+template <specfem::element::medium_tag medium>
 specfem::edge::interface specfem::compute::interface_container<
     medium1, medium2>::load_host_edge_type(const int iedge) const {
   if constexpr (medium == medium1) {

@@ -10,77 +10,35 @@
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
-namespace enums {
-namespace boundary_conditions {
-/**
- * @brief Composite boundary conditions
- *
- * @tparam BCs Boundary conditions to be combined in the composite boundary
- */
-template <typename... BCs> class composite_boundary {};
+namespace boundary {
 
-/**
- * @brief Composite boundary conditions for Stacey BC and Dirichlet BC
- *
- * @tparam properties Properties of the Boundary conditions
- */
-template <typename... properties>
-class composite_boundary<
-    specfem::enums::boundary_conditions::stacey<properties...>,
-    specfem::enums::boundary_conditions::dirichlet<properties...> > {
+template <specfem::element::medium_tag medium,
+          specfem::element::property_tag property, typename qp_type>
+class boundary<specfem::dimension::type::dim2, medium, property,
+               specfem::element::boundary_tag::composite_stacey_dirichlet,
+               qp_type> {
 private:
-  using stacey_type = typename specfem::enums::boundary_conditions::stacey<
-      properties...>; ///< Stacey boundary conditions
-  using dirichlet_type =
-      typename specfem::enums::boundary_conditions::dirichlet<
-          properties...>; ///< Dirichlet boundary conditions
+  using stacey_type = typename specfem::boundary::boundary<
+      specfem::dimension::type::dim2, medium, property,
+      specfem::element::boundary_tag::stacey, qp_type>;
+  using dirichlet_type = typename specfem::boundary::boundary<
+      specfem::dimension::type::dim2, medium, property,
+      specfem::element::boundary_tag::acoustic_free_surface, qp_type>;
 
 public:
-  /**
-   * @name Typedefs
-   *
-   */
-  ///@{
+  using quadrature_points_type = qp_type; ///< Quadrature points type
   using medium_type =
-      typename stacey_type::medium_type; ///< Medium type of the boundary.
-  using dimension =
-      typename stacey_type::dimension; ///< Dimension of the boundary.
-  using quadrature_points_type =
-      typename stacey_type::quadrature_points_type; ///< Quadrature points
-                                                    ///< object to define the
-                                                    ///< quadrature points
-                                                    ///< either at compile time
-                                                    ///< or run time.
-  using property_type =
-      typename stacey_type::property_type; ///< Property type of the boundary.
-  ///@}
+      specfem::medium::medium<specfem::dimension::type::dim2, medium,
+                              property>; ///< Medium type
 
   constexpr static specfem::enums::element::boundary_tag value =
       specfem::enums::element::boundary_tag::
           composite_stacey_dirichlet; ///< boundary tag
-
-  static_assert(
-      std::is_same<typename stacey_type::medium_type,
-                   typename dirichlet_type::medium_type>::value,
-      "Medium types must be the same for composite boundary conditions.");
-  static_assert(
-      std::is_same<typename stacey_type::dimension,
-                   typename dirichlet_type::dimension>::value,
-      "Dimensions must be the same for composite boundary conditions.");
-  static_assert(
-      std::is_same<typename stacey_type::quadrature_points_type,
-                   typename dirichlet_type::quadrature_points_type>::value,
-      "Quadrature points must be the same for composite boundary conditions.");
-  static_assert(
-      std::is_same<typename stacey_type::property_type,
-                   typename dirichlet_type::property_type>::value,
-      "Property types must be the same for composite boundary conditions.");
-
   /**
    * @brief Construct a new composite boundary object
    *
    */
-  composite_boundary(){};
+  boundary(){};
 
   /**
    * @brief Construct a new stacey object
@@ -89,8 +47,8 @@ public:
    * boundary conditions
    * @param quadrature_points Quadrature points object
    */
-  composite_boundary(const specfem::compute::boundaries &boundary_conditions,
-                     const quadrature_points_type &quadrature_points){};
+  boundary(const specfem::compute::boundaries &boundary_conditions,
+           const quadrature_points_type &quadrature_points){};
 
   /**
    * @brief Compute the contribution of composite boundaries to the mass term
@@ -160,8 +118,7 @@ private:
   dirichlet_type dirichlet; ///< Dirichlet boundary conditions
 };
 
-} /* namespace boundary_conditions */
-} /* namespace enums */
-} /* namespace specfem */
+} // namespace boundary
+} // namespace specfem
 
 #endif /* _ENUMS_BOUNDARY_CONDITIONS_HPP */

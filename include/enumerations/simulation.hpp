@@ -8,21 +8,19 @@ namespace simulation {
 
 enum class type { forward, adjoint };
 
-template <specfem::enums::simulation::type simulation> class simulation {
+template <specfem::simulation::type SimulationType> class simulation;
+
+template <> class simulation<specfem::simulation::type::forward> {
 public:
-  static constexpr specfem::enums::simulation::type value = simulation;
-  static std::string to_string(){};
+  static constexpr auto simulation_type = specfem::simulation::type::forward;
+  static std::string to_string() { return "Forward"; }
 };
 
-template <>
-std::string simulation<specfem::enums::simulation::type::forward>::to_string() {
-  return "Forward";
-}
-
-template <>
-std::string simulation<specfem::enums::simulation::type::adjoint>::to_string() {
-  return "Adjoint";
-}
+template <> class simulation<specfem::simulation::type::adjoint> {
+public:
+  static constexpr auto simulation_type = specfem::simulation::type::adjoint;
+  static std::string to_string() { return "Adjoint"; }
+};
 
 } // namespace simulation
 } // namespace specfem

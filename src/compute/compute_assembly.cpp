@@ -18,7 +18,7 @@ specfem::compute::assembly::assembly(
         &receivers,
     const std::vector<specfem::enums::seismogram::type> &stypes,
     const int max_timesteps, const int max_sig_step,
-    const specfem::enums::simulation::type simulation) {
+    const specfem::simulation::type simulation) {
   this->mesh = specfem::compute::mesh(mesh.control_nodes, quadratures);
   this->partial_derivatives = specfem::compute::partial_derivatives(this->mesh);
   this->properties = specfem::compute::properties(
