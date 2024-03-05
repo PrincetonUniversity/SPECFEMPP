@@ -16,11 +16,15 @@ namespace edges {
  * @tparam self_domain Primary domain of the interface.
  * @tparam coupled_domain Coupled domain of the interface.
  */
-template <class self_medium, class coupled_medium> class edge {
+template <specfem::dimension::type DimensionType,
+          specfem::element::medium_tag SelfMedium,
+          specfem::element::medium_tag CoupledMedium>
+class edge {
 
 public:
-  using self_medium_type = self_medium;
-  using coupled_medium_type = coupled_medium;
+  using self_medium_type = specfem::medium::medium<DimensionType, SelfMedium>;
+  using coupled_medium_type =
+      specfem::medium::medium<DimensionType, CoupledMedium>;
 
   edge(){};
 

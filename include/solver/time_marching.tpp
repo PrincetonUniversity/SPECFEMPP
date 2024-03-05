@@ -55,8 +55,8 @@ void specfem::solver::time_marching<qp_type>::run() {
 
     if (it->compute_seismogram()) {
       int isig_step = it->get_seismogram_step();
-      acoustic_domain.compute_seismogram(isig_step);
-      elastic_domain.compute_seismogram(isig_step);
+      acoustic_domain.compute_seismograms(isig_step);
+      elastic_domain.compute_seismograms(isig_step);
       it->increment_seismogram_step();
     }
 

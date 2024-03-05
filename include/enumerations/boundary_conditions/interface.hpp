@@ -1,6 +1,7 @@
 #ifndef _ENUMS_BOUNDARY_CONDITIONS_INTERFACE_HPP_
 #define _ENUMS_BOUNDARY_CONDITIONS_INTERFACE_HPP_
 
+#include "boundary_conditions.hpp"
 #include "composite_boundary.hpp"
 #include "composite_boundary.tpp"
 #include "dirichlet.hpp"

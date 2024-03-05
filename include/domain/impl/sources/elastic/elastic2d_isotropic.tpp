@@ -34,16 +34,14 @@
 
 template <int NGLL>
 KOKKOS_INLINE_FUNCTION void specfem::domain::impl::sources::source<
-    specfem::enums::element::dimension::dim2,
-    specfem::enums::element::medium::elastic,
-    specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
-    specfem::enums::element::property::isotropic>::
+    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+    specfem::element::property_tag::isotropic,
+    specfem::enums::element::quadrature::static_quadrature_points<NGLL> >::
     compute_interaction(
         const type_real &stf,
-        const specfem::kokkos::array_type<type_real, 2>
-            &lagrange_interpolant,
-        const specfem::point::properties<medium_type::value,
-                                         property_type::value> &properties,
+        const specfem::kokkos::array_type<type_real, 2> &lagrange_interpolant,
+        const specfem::point::properties<medium_type::medium_tag,
+                                         medium_type::property_tag> &properties,
         specfem::kokkos::array_type<type_real, medium_type::components>
             &acceleration) const {
 

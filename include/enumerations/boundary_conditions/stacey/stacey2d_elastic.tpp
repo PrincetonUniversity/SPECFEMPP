@@ -14,9 +14,9 @@ namespace {
 KOKKOS_FUNCTION void enforce_traction_boundary(
     const type_real &weight,
     const specfem::kokkos::array_type<type_real, 2> &dn,
-    const specfem::point::properties<
-        specfem::enums::element::type::elastic,
-        specfem::enums::element::property_tag::isotropic> &properties,
+    const specfem::point::properties<specfem::element::medium_tag::elastic,
+                                     specfem::element::property_tag::isotropic>
+        &properties,
     const specfem::kokkos::array_type<type_real, 2> &field_dot,
     specfem::kokkos::array_type<type_real, 2> &field_dot_dot) {
 
@@ -40,14 +40,14 @@ KOKKOS_FUNCTION void enforce_traction_boundary(
   return;
 }
 
-template <specfem::enums::element::property_tag property>
+template <specfem::element::property_tag property>
 KOKKOS_FUNCTION void newmark_mass_terms(
     const int &ix, const int &iz, const int &ngllx, const int &ngllz,
     const type_real &dt, const specfem::point::boundary &boundary_type,
-    const specfem::enums::element::boundary_tag &tag,
+    const specfem::element::boundary_tag &tag,
     const specfem::kokkos::array_type<type_real, 2> &weight,
     const specfem::point::partial_derivatives2 &partial_derivatives,
-    const specfem::point::properties<specfem::enums::element::type::elastic,
+    const specfem::point::properties<specfem::element::medium_tag::elastic,
                                      property> &properties,
     specfem::kokkos::array_type<type_real, 2> &rmass_inverse) {
 
@@ -151,8 +151,8 @@ specfem::boundary::boundary<specfem::dimension::type::dim2,
         const int &xz, const type_real &dt,
         const specfem::kokkos::array_type<type_real, 2> &weight,
         const specfem::point::partial_derivatives2 &partial_derivatives,
-        const specfem::point::properties<specfem::enums::element::type::elastic,
-                                         property_type::value> &properties,
+        const specfem::point::properties<medium_type::medium_tag,
+                                         medium_type::property_tag> &properties,
         const specfem::point::boundary &boundary_type,
         specfem::kokkos::array_type<type_real, medium_type::components>
             &rmass_inverse) const {
@@ -192,11 +192,11 @@ specfem::boundary::boundary<specfem::dimension::type::dim2,
     enforce_traction(
         const int &xz, const specfem::kokkos::array_type<type_real, 2> &weight,
         const specfem::point::partial_derivatives2 &partial_derivatives,
-        const specfem::point::properties<specfem::enums::element::type::elastic,
-                                         property_type::value> &properties,
+        const specfem::point::properties<medium_type::medium_tag,
+                                         medium_type::property_tag> &properties,
         const specfem::point::boundary &boundary_type,
-        const specfem::kokkos::array_type<type_real, 2> &field_dot,
-        specfem::kokkos::array_type<type_real, 2> &field_dot_dot) const {
+        const specfem::kokkos::array_type<type_real, medium_type::components> &field_dot,
+        specfem::kokkos::array_type<type_real, medium_type::components> &field_dot_dot) const {
 
   // Check if the GLL point is on the boundary
   //--------------------------------------------------------------------------

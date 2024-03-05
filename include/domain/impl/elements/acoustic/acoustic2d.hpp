@@ -31,11 +31,11 @@ namespace elements {
  * at compile time or run time
  */
 template <typename quadrature_points>
-class element<specfem::enums::element::dimension::dim2,
+class element<specfem::dimension::type::dim2,
               specfem::enums::element::medium::acoustic, quadrature_points> {
 
 public:
-  using dimension = specfem::enums::element::dimension::dim2;
+  using dimension = specfem::dimension::type::dim2;
   using medium = specfem::enums::element::medium::acoustic;
   /**
    * @brief Scratch view type as defined by the quadrature points (either at

@@ -5,6 +5,7 @@
 #include "domain/impl/elements/acoustic/interface.hpp"
 #include "domain/impl/elements/elastic/interface.hpp"
 #include "enumerations/interface.hpp"
+#include "enumerations/specfem_enums.hpp"
 #include "kernel.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
@@ -20,7 +21,7 @@ specfem::domain::impl::kernels::element_kernel<
     element_kernel(
         const specfem::compute::assembly &assembly,
         const specfem::kokkos::HostView1d<int> h_element_kernel_index_mapping,
-        const quadrature_point_type &quadrature_points)
+        const quadrature_points_type &quadrature_points)
     : nelements(h_element_kernel_index_mapping.extent(0)),
       h_element_kernel_index_mapping(h_element_kernel_index_mapping),
       points(assembly.mesh.points), quadrature(assembly.mesh.quadratures),
@@ -29,7 +30,7 @@ specfem::domain::impl::kernels::element_kernel<
       boundary_conditions(assembly.boundaries.boundary_types),
       quadrature_points(quadrature_points),
       global_index_mapping(assembly.fields.forward.assembly_index_mapping),
-      field(assembly.fields.forward.get_field<medium>()),
+      field(assembly.fields.forward.get_field<medium_type>()),
       element(assembly, quadrature_points) {
 
   // Check if the elements being allocated to this kernel are of the correct
@@ -40,9 +41,9 @@ specfem::domain::impl::kernels::element_kernel<
       KOKKOS_LAMBDA(const int ielement) {
         const int ispec = h_element_kernel_index_mapping(ielement);
         if ((assembly.properties.h_element_types(ispec) !=
-             medium_type::value) &&
+             medium_type::medium_tag) &&
             (assembly.properties.h_element_property(ispec) !=
-             property::value)) {
+             medium_type::property_tag)) {
           throw std::runtime_error("Invalid element detected in kernel");
         }
       });
@@ -63,10 +64,10 @@ template <
     specfem::dimension::type dimension, specfem::element::medium_tag medium,
     specfem::element::property_tag property,
     specfem::element::boundary_tag boundary, typename quadrature_points_type>
-specfem::domain::impl::kernels::element_kernel<
+void specfem::domain::impl::kernels::element_kernel<
     dimension, medium, property, boundary,
     quadrature_points_type>::compute_mass_matrix() const {
-  constexpr int components = medium::components;
+  constexpr int components = medium_type::components;
 
   if (nelements == 0)
     return;
@@ -92,11 +93,13 @@ specfem::domain::impl::kernels::element_kernel<
               int ix, iz;
               sub2ind(xz, ngllx, iz, ix);
               int iglob = index_mapping(ispec_l, iz, ix);
-              int iglob_l =
-                  global_index_mapping(iglob, static_cast<int>(medium::value));
+              int iglob_l = global_index_mapping(
+                  iglob, static_cast<int>(medium_type::medium_tag));
 
-              const auto point_property = properties.load_device_properties<
-                  medium_type::value, property_type::value>(ispec_l, iz, ix);
+              const auto point_property =
+                  properties.load_device_properties<medium_type::medium_tag,
+                                                    medium_type::property_tag>(
+                      ispec_l, iz, ix);
 
               const auto point_partial_derivatives =
                   partial_derivatives.load_device_derivatives<true>(ispec_l, iz,
@@ -131,12 +134,12 @@ template <
     specfem::dimension::type dimension, specfem::element::medium_tag medium,
     specfem::element::property_tag property,
     specfem::element::boundary_tag boundary, typename quadrature_points_type>
-template <specfem::time_scheme::type time_scheme>
-specfem::domain::impl::kernels::element_kernel<
+template <specfem::enums::time_scheme::type time_scheme>
+void specfem::domain::impl::kernels::element_kernel<
     dimension, medium, property, boundary,
     quadrature_points_type>::mass_time_contribution(const type_real dt) const {
 
-  constexpr int components = medium::components;
+  constexpr int components = medium_type::components;
 
   if (nelements == 0)
     return;
@@ -165,11 +168,13 @@ specfem::domain::impl::kernels::element_kernel<
               sub2ind(xz, ngllx, iz, ix);
               int iglob = index_mapping(ispec_l, iz, ix);
 
-              int iglob_l =
-                  global_index_mapping(iglob, static_cast<int>(medium::value));
+              int iglob_l = global_index_mapping(
+                  iglob, static_cast<int>(medium_type::medium_tag));
 
-              const auto point_property = properties.load_device_properties<
-                  medium_type::value, property_type::value>(ispec_l, iz, ix);
+              const auto point_property =
+                  properties.load_device_properties<medium_type::medium_tag,
+                                                    medium_type::property_tag>(
+                      ispec_l, iz, ix);
 
               const auto point_partial_derivatives =
                   partial_derivatives.load_device_derivatives<true>(ispec_l, iz,
@@ -205,11 +210,11 @@ template <
     specfem::dimension::type dimension, specfem::element::medium_tag medium,
     specfem::element::property_tag property,
     specfem::element::boundary_tag boundary, typename quadrature_points_type>
-specfem::domain::impl::kernels::element_kernel<
+void specfem::domain::impl::kernels::element_kernel<
     dimension, medium, property, boundary,
     quadrature_points_type>::compute_stiffness_interaction() const {
 
-  constexpr int components = medium::components;
+  constexpr int components = medium_type::components;
 
   if (nelements == 0)
     return;
@@ -287,9 +292,9 @@ specfem::domain::impl::kernels::element_kernel<
               sub2ind(xz, ngllx, iz, ix);
               s_hprime(iz, ix, 0) = hprime(iz, ix);
               s_hprimewgll(ix, iz, 0) = wgll(iz) * hprime(iz, ix);
-              const int iglob =
-                  global_index_mapping(index_mapping(ispec_l, iz, ix),
-                                       static_cast<int>(medium::value));
+              const int iglob = global_index_mapping(
+                  index_mapping(ispec_l, iz, ix),
+                  static_cast<int>(medium_type::medium_tag));
 #ifdef KOKKOS_ENABLE_CUDA
 #pragma unroll
 #endif
@@ -330,8 +335,10 @@ specfem::domain::impl::kernels::element_kernel<
               specfem::kokkos::array_type<type_real, medium_type::components>
                   stress_integrand_gamma;
 
-              const auto point_property = properties.load_device_properties<
-                  medium_type::value, property_type::value>(ispec_l, iz, ix);
+              const auto point_property =
+                  properties.load_device_properties<medium_type::medium_tag,
+                                                    medium_type::property_tag>(
+                      ispec_l, iz, ix);
 
               element.compute_stress(xz, dudxl, dudzl,
                                      point_partial_derivatives, point_property,
@@ -357,11 +364,11 @@ specfem::domain::impl::kernels::element_kernel<
             [&](const int xz) {
               int iz, ix;
               sub2ind(xz, ngllx, iz, ix);
-              constexpr auto tag = BC::value;
+              constexpr auto tag = boundary_conditions_type::value;
 
               const int iglob =
                   global_index_mapping(index_mapping(ispec_l, iz, ix),
-                                       static_cast<int>(medium::value));
+                                       static_cast<int>(medium_type::medium_tag));
               const specfem::kokkos::array_type<type_real, dimension::dim>
                   weight(wgll(ix), wgll(iz));
 
@@ -372,8 +379,8 @@ specfem::domain::impl::kernels::element_kernel<
               // only if needed by the boundary condition
               // ---------------------------------------------------------------
               constexpr bool flag =
-                  ((tag == specfem::enums::element::boundary_tag::stacey) ||
-                   (tag == specfem::enums::element::boundary_tag::
+                  ((tag == specfem::element::boundary_tag::stacey) ||
+                   (tag == specfem::element::boundary_tag::
                                composite_stacey_dirichlet));
 
               const auto velocity =
@@ -399,15 +406,15 @@ specfem::domain::impl::kernels::element_kernel<
               }();
 
               const auto point_property =
-                  [&]() -> specfem::point::properties<medium_type::value,
-                                                      property_type::value> {
+                  [&]() -> specfem::point::properties<medium_type::medium_tag,
+                                                      medium_type::property_tag> {
                 if constexpr (flag) {
                   return properties.load_device_properties<
-                      medium_type::value, property_type::value>(ispec_l, iz,
-                                                                ix);
+                      medium_type::medium_tag, medium_type::property_tag>(
+                      ispec_l, iz, ix);
                 } else {
-                  return specfem::point::properties<medium_type::value,
-                                                    property_type::value>();
+                  return specfem::point::properties<medium_type::medium_tag,
+                                                    medium_type::property_tag>();
                 }
               }();
               // ---------------------------------------------------------------

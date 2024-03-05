@@ -24,14 +24,16 @@ class boundary<specfem::dimension::type::dim2,
                specfem::element::medium_tag::elastic, property,
                specfem::element::boundary_tag::stacey, qp_type> {
 public:
+  using dimension =
+      specfem::dimension::dimension<specfem::dimension::type::dim2>;
   using quadrature_points_type = qp_type; ///< Quadrature points type
   using medium_type =
       specfem::medium::medium<specfem::dimension::type::dim2,
                               specfem::element::medium_tag::elastic,
                               property>; ///< Medium type
 
-  constexpr static specfem::enums::element::boundary_tag value =
-      specfem::enums::element::boundary_tag::stacey; ///< boundary tag
+  constexpr static specfem::element::boundary_tag value =
+      specfem::element::boundary_tag::stacey; ///< boundary tag
 
   /**
    * @brief Construct a new stacey object
@@ -77,8 +79,8 @@ public:
       const int &xz, const type_real &dt,
       const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
       const specfem::point::partial_derivatives2 &partial_derivatives,
-      const specfem::point::properties<medium_type::value,
-                                       medium_type::property_value> &properties,
+      const specfem::point::properties<medium_type::medium_tag,
+                                       medium_type::property_tag> &properties,
       const specfem::point::boundary &boundary_type,
       specfem::kokkos::array_type<type_real, medium_type::components>
           &mass_matrix) const;
@@ -115,8 +117,8 @@ public:
   KOKKOS_INLINE_FUNCTION void enforce_stress(
       const int &xz,
       const specfem::point::partial_derivatives2 &partial_derivatives,
-      const specfem::point::properties<medium_type::value,
-                                       medium_type::property_value> &properties,
+      const specfem::point::properties<medium_type::medium_tag,
+                                       medium_type::property_tag> &properties,
       const specfem::point::boundary &boundary_type,
       specfem::kokkos::array_type<type_real, medium_type::components>
           &stress_integrand_xi,
@@ -140,8 +142,8 @@ public:
       const int &xz,
       const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
       const specfem::point::partial_derivatives2 &partial_derivatives,
-      const specfem::point::properties<medium_type::value,
-                                       medium_type::property_value> &properties,
+      const specfem::point::properties<medium_type::medium_tag,
+                                       medium_type::property_tag> &properties,
       const specfem::point::boundary &boundary_type,
       const specfem::kokkos::array_type<type_real, medium_type::components>
           &velocity,

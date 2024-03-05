@@ -14,11 +14,15 @@ namespace domain {
 namespace impl {
 namespace kernels {
 
-template <class medium, class qp_type, class property> class source_kernel {
+template <specfem::dimension::type DimensionType,
+          specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag, typename qp_type>
+class source_kernel {
 public:
-  using dimension = specfem::enums::element::dimension::dim2;
-  using medium_type = medium;
-  using property_type = property;
+  using dimension = specfem::dimension::dimension<DimensionType>;
+  using medium_type =
+      specfem::medium::medium<DimensionType, MediumTag, PropertyTag>;
+
   using quadrature_point_type = qp_type;
 
   source_kernel() = default;
@@ -37,15 +41,15 @@ private:
   specfem::kokkos::DeviceView1d<int> source_kernel_index_mapping;
   specfem::kokkos::HostMirror1d<int> h_source_kernel_index_mapping;
   specfem::kokkos::DeviceView1d<int> source_mapping;
-  Kokkos::View<int * [specfem::enums::element::ntypes], Kokkos::LayoutLeft,
+  Kokkos::View<int * [specfem::element::ntypes], Kokkos::LayoutLeft,
                specfem::kokkos::DevMemSpace>
       global_index_mapping;
   specfem::compute::properties properties;
   specfem::compute::impl::field_impl<medium_type> field;
   specfem::compute::sources sources;
   quadrature_point_type quadrature_points;
-  specfem::domain::impl::sources::source<dimension, medium_type,
-                                         quadrature_point_type, property_type>
+  specfem::domain::impl::sources::source<DimensionType, MediumTag, PropertyTag,
+                                         quadrature_point_type>
       source;
 };
 } // namespace kernels

@@ -7,7 +7,7 @@
 #include <boost/filesystem.hpp>
 
 specfem::runtime_configuration::wavefield::wavefield(
-    const YAML::Node &Node, const specfem::enums::simulation::type type) {
+    const YAML::Node &Node, const specfem::simulation::type type) {
 
   boost::filesystem::path cwd = boost::filesystem::current_path();
   std::string output_folder = cwd.string();
@@ -43,7 +43,7 @@ specfem::runtime_configuration::wavefield::instantiate_wavefield_writer(
 
   const std::shared_ptr<specfem::writer::writer> writer =
       [&]() -> std::shared_ptr<specfem::writer::writer> {
-    if (this->simulation_type == specfem::enums::simulation::type::forward) {
+    if (this->simulation_type == specfem::simulation::type::forward) {
       if (this->output_format == "HDF5") {
         return std::make_shared<specfem::writer::wavefield<
             specfem::IO::HDF5<specfem::IO::write> > >(assembly,
@@ -65,7 +65,7 @@ specfem::runtime_configuration::wavefield::instantiate_wavefield_reader(
 
   const std::shared_ptr<specfem::reader::reader> reader =
       [&]() -> std::shared_ptr<specfem::reader::reader> {
-    if (this->simulation_type == specfem::enums::simulation::type::adjoint) {
+    if (this->simulation_type == specfem::simulation::type::adjoint) {
       if (this->output_format == "HDF5") {
         return std::make_shared<
             specfem::reader::wavefield<specfem::IO::HDF5<specfem::IO::read> > >(

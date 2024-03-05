@@ -163,23 +163,25 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
 
   specfem::domain::domain<
-      specfem::enums::element::medium::elastic,
+      specfem::simulation::type::forward, specfem::dimension::type::dim2,
+      specfem::element::medium_tag::elastic,
       specfem::enums::element::quadrature::static_quadrature_points<5> >
       elastic_domain_static(assembly, qp5);
 
   specfem::domain::domain<
-      specfem::enums::element::medium::acoustic,
+      specfem::simulation::type::forward, specfem::dimension::type::dim2,
+      specfem::element::medium_tag::acoustic,
       specfem::enums::element::quadrature::static_quadrature_points<5> >
       acoustic_domain_static(assembly, qp5);
 
   specfem::coupled_interface::coupled_interface<
-      specfem::enums::element::medium::acoustic,
-      specfem::enums::element::medium::elastic>
+      specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
+      specfem::element::medium_tag::elastic>
       acoustic_elastic_interface(assembly);
 
   specfem::coupled_interface::coupled_interface<
-      specfem::enums::element::medium::elastic,
-      specfem::enums::element::medium::acoustic>
+      specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+      specfem::element::medium_tag::acoustic>
       elastic_acoustic_interface(assembly);
   // --------------------------------------------------------------
 

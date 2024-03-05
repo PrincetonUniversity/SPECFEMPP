@@ -120,11 +120,12 @@ TEST(SEISMOGRAM_TESTS, acoustic_seismograms_test) {
   specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
 
   specfem::domain::domain<
-      specfem::enums::element::medium::acoustic,
+      specfem::simulation::type::forward, specfem::dimension::type::dim2,
+      specfem::element::medium_tag::acoustic,
       specfem::enums::element::quadrature::static_quadrature_points<5> >
       acoustic_domain_static(assembly, qp5);
 
-  acoustic_domain_static.compute_seismogram(0);
+  acoustic_domain_static.compute_seismograms(0);
 
   assembly.receivers.sync_seismograms();
 

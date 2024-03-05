@@ -19,11 +19,16 @@ namespace edges {
  * @tparam qp_type Quadrature points type.
  */
 template <>
-class edge<specfem::enums::element::medium::acoustic,
-           specfem::enums::element::medium::elastic> {
+class edge<specfem::dimension::type::dim2,
+           specfem::element::medium_tag::acoustic,
+           specfem::element::medium_tag::elastic> {
 public:
-  using self_medium_type = specfem::enums::element::medium::acoustic;
-  using coupled_medium_type = specfem::enums::element::medium::elastic;
+  using self_medium_type =
+      specfem::medium::medium<specfem::dimension::type::dim2,
+                              specfem::element::medium_tag::acoustic>;
+  using coupled_medium_type =
+      specfem::medium::medium<specfem::dimension::type::dim2,
+                              specfem::element::medium_tag::elastic>;
 
   edge(){};
 

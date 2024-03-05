@@ -15,22 +15,22 @@ namespace coupled_interface {
  * @tparam self_domain_type Primary domain of the interface.
  * @tparam coupled_domain_type Coupled domain of the interface.
  */
-template <class self_medium, class coupled_medium> class coupled_interface {
+template <specfem::dimension::type DimensionType,
+          specfem::element::medium_tag SelfMedium,
+          specfem::element::medium_tag CoupledMedium>
+class coupled_interface {
 public:
-  using self_medium_type = self_medium;
-  using coupled_medium_type = coupled_medium;
+  using self_medium_type = specfem::medium::medium<DimensionType, SelfMedium>;
+  using coupled_medium_type =
+      specfem::medium::medium<DimensionType, CoupledMedium>;
 
-  static_assert(std::is_same_v<self_medium_type, coupled_medium_type> == false,
+  static_assert(SelfMedium != CoupledMedium,
                 "Error: self_medium cannot be equal to coupled_medium");
 
-  static_assert(((std::is_same_v<self_medium_type,
-                                 specfem::enums::element::medium::elastic> &&
-                  std::is_same_v<coupled_medium_type,
-                                 specfem::enums::element::medium::acoustic>) ||
-                 (std::is_same_v<self_medium_type,
-                                 specfem::enums::element::medium::acoustic> &&
-                  std::is_same_v<coupled_medium_type,
-                                 specfem::enums::element::medium::elastic>)),
+  static_assert(((SelfMedium == specfem::element::medium_tag::acoustic &&
+                  CoupledMedium == specfem::element::medium_tag::elastic) ||
+                 (SelfMedium == specfem::element::medium_tag::elastic &&
+                  CoupledMedium == specfem::element::medium_tag::acoustic)),
                 "Only acoustic-elastic coupling is supported at the moment.");
 
   coupled_interface(const specfem::compute::assembly &assembly);
@@ -42,16 +42,15 @@ private:
   specfem::compute::points points;
   specfem::compute::quadrature quadrature;
   specfem::compute::partial_derivatives partial_derivatives;
-  Kokkos::View<int * [specfem::enums::element::ntypes], Kokkos::LayoutLeft,
+  Kokkos::View<int * [specfem::element::ntypes], Kokkos::LayoutLeft,
                specfem::kokkos::DevMemSpace>
       global_index_mapping;
   specfem::compute::impl::field_impl<self_medium_type> self_field;
   specfem::compute::impl::field_impl<coupled_medium_type> coupled_field;
-  specfem::compute::interface_container<self_medium_type::value,
-                                        coupled_medium_type::value>
+  specfem::compute::interface_container<SelfMedium, CoupledMedium>
       interface_data; ///< Struct containing the coupling information.
-  specfem::coupled_interface::impl::edges::edge<self_medium_type,
-                                                coupled_medium_type>
+  specfem::coupled_interface::impl::edges::edge<DimensionType, SelfMedium,
+                                                CoupledMedium>
       edge; ///< Edge class to implement coupling physics
 };
 } // namespace coupled_interface

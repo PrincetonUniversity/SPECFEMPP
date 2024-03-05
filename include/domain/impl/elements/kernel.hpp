@@ -15,21 +15,25 @@ namespace impl {
 namespace kernels {
 
 template <
-    specfem::dimension::type dimension, specfem::element::medium_tag medium,
+    specfem::dimension::type DimensionType, specfem::element::medium_tag medium,
     specfem::element::property_tag property,
     specfem::element::boundary_tag boundary, typename quadrature_points_type>
 class element_kernel {
 
 public:
+  using dimension = specfem::dimension::dimension<DimensionType>;
   using element_type = specfem::domain::impl::elements::element<
-      dimension, medium, property, boundary, quadrature_points_type>;
+      DimensionType, medium, property, boundary, quadrature_points_type>;
+  using medium_type = typename element_type::medium_type;
+  using boundary_conditions_type =
+      typename element_type::boundary_conditions_type;
   using qp_type = quadrature_points_type;
 
   element_kernel() = default;
   element_kernel(
       const specfem::compute::assembly &assembly,
       const specfem::kokkos::HostView1d<int> h_element_kernel_index_mapping,
-      const quadrature_point_type &quadrature_points);
+      const quadrature_points_type &quadrature_points);
 
   void compute_mass_matrix() const;
 
@@ -46,14 +50,14 @@ private:
   specfem::compute::quadrature quadrature;
   specfem::kokkos::DeviceView1d<int> element_kernel_index_mapping;
   specfem::kokkos::HostMirror1d<int> h_element_kernel_index_mapping;
-  Kokkos::View<int * [specfem::enums::element::ntypes], Kokkos::LayoutLeft,
+  Kokkos::View<int * [specfem::element::ntypes], Kokkos::LayoutLeft,
                specfem::kokkos::DevMemSpace>
       global_index_mapping;
   specfem::compute::properties properties;
   specfem::compute::partial_derivatives partial_derivatives;
   specfem::kokkos::DeviceView1d<specfem::point::boundary> boundary_conditions;
   specfem::compute::impl::field_impl<medium_type> field;
-  quadrature_point_type quadrature_points;
+  quadrature_points_type quadrature_points;
   element_type element;
 };
 

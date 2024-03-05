@@ -18,9 +18,6 @@ using StaticScratchViewType =
     typename specfem::enums::element::quadrature::static_quadrature_points<
         N>::template ScratchViewType<T>;
 
-constexpr auto Dim2 = specfem::dimension::type::dim2;
-constexpr auto Elastic = specfem::element::medium_tag::elastic;
-constexpr auto Isotropic = specfem::element::property_tag::isotropic;
 template <int NGLL>
 using StaticQuadraturePoints =
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>;
@@ -28,12 +25,13 @@ using StaticQuadraturePoints =
 } // namespace
 
 template <int NGLL, specfem::element::boundary_tag BC>
-KOKKOS_INLINE_FUNCTION void
-specfem::domain::impl::elements::element<Dim2, Elastic, Isotropic, BC,
-                                         StaticQuadraturePoints<NGLL> >::
+KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
+    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+    specfem::element::property_tag::isotropic, BC,
+    StaticQuadraturePoints<NGLL> >::
     compute_mass_matrix_component(
-        const specfem::point::properties<medium_type::value,
-                                         property_type::value> &properties,
+        const specfem::point::properties<medium_type::medium_tag,
+                                         medium_type::property_tag> &properties,
         const specfem::point::partial_derivatives2 &partial_derivatives,
         specfem::kokkos::array_type<type_real, 2> &mass_matrix) const {
 
@@ -52,14 +50,16 @@ specfem::domain::impl::elements::element<Dim2, Elastic, Isotropic, BC,
 template <int NGLL, specfem::element::boundary_tag BC>
 template <specfem::enums::time_scheme::type time_scheme>
 KOKKOS_INLINE_FUNCTION void
-specfem::domain::impl::elements::element<Dim2, Elastic, Isotropic, BC,
-                                         StaticQuadraturePoints<NGLL> >::
+specfem::domain::impl::elements::element<
+    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+    specfem::element::property_tag::isotropic, BC,
+    StaticQuadraturePoints<NGLL> >::
     mass_time_contribution(
         const int &xz, const type_real &dt,
         const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
         const specfem::point::partial_derivatives2 &partial_derivatives,
-        const specfem::point::properties<medium_type::value,
-                                         property_type::value> &properties,
+        const specfem::point::properties<medium_type::medium_tag,
+                                         medium_type::property_tag> &properties,
         const specfem::point::boundary &boundary_type,
         specfem::kokkos::array_type<type_real, 2> &rmass_inverse) const {
 
@@ -77,8 +77,10 @@ specfem::domain::impl::elements::element<Dim2, Elastic, Isotropic, BC,
 
 template <int NGLL, specfem::element::boundary_tag BC>
 KOKKOS_INLINE_FUNCTION void
-specfem::domain::impl::elements::element<Dim2, Elastic, Isotropic, BC,
-                                         StaticQuadraturePoints<NGLL> >::
+specfem::domain::impl::elements::element<
+    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+    specfem::element::property_tag::isotropic, BC,
+    StaticQuadraturePoints<NGLL> >::
     compute_gradient(
         const int xz, const ScratchViewType<type_real, 1> s_hprime,
         const ScratchViewType<type_real, medium_type::components> u,
@@ -127,8 +129,10 @@ specfem::domain::impl::elements::element<Dim2, Elastic, Isotropic, BC,
 
 template <int NGLL, specfem::element::boundary_tag BC>
 KOKKOS_INLINE_FUNCTION void
-specfem::domain::impl::elements::element<Dim2, Elastic, Isotropic, BC,
-                                         StaticQuadraturePoints<NGLL> >::
+specfem::domain::impl::elements::element<
+    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+    specfem::element::property_tag::isotropic, BC,
+    StaticQuadraturePoints<NGLL> >::
     compute_stress(
         const int xz,
         const specfem::kokkos::array_type<type_real, medium_type::components>
@@ -136,8 +140,8 @@ specfem::domain::impl::elements::element<Dim2, Elastic, Isotropic, BC,
         const specfem::kokkos::array_type<type_real, medium_type::components>
             &dudzl,
         const specfem::point::partial_derivatives2 &partial_derivatives,
-        const specfem::point::properties<medium_type::value,
-                                         property_type::value> &properties,
+        const specfem::point::properties<medium_type::medium_tag,
+                                         medium_type::property_tag> &properties,
         const specfem::point::boundary &boundary_type,
         specfem::kokkos::array_type<type_real, medium_type::components>
             &stress_integrand_xi,
@@ -190,8 +194,10 @@ specfem::domain::impl::elements::element<Dim2, Elastic, Isotropic, BC,
 
 template <int NGLL, specfem::element::boundary_tag BC>
 KOKKOS_INLINE_FUNCTION void
-specfem::domain::impl::elements::element<Dim2, Elastic, Isotropic, BC,
-                                         StaticQuadraturePoints<NGLL> >::
+specfem::domain::impl::elements::element<
+    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+    specfem::element::property_tag::isotropic, BC,
+    StaticQuadraturePoints<NGLL> >::
     compute_acceleration(
         const int &xz,
         const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
@@ -201,8 +207,8 @@ specfem::domain::impl::elements::element<Dim2, Elastic, Isotropic, BC,
             stress_integrand_gamma,
         const ScratchViewType<type_real, 1> s_hprimewgll,
         const specfem::point::partial_derivatives2 &partial_derivatives,
-        const specfem::point::properties<medium_type::value,
-                                         property_type::value> &properties,
+        const specfem::point::properties<medium_type::medium_tag,
+                                         medium_type::property_tag> &properties,
         const specfem::point::boundary &boundary_type,
         const specfem::kokkos::array_type<type_real, medium_type::components>
             &velocity,

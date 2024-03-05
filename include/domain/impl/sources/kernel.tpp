@@ -10,8 +10,11 @@
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
-template <class medium, class qp_type, class property>
-specfem::domain::impl::kernels::source_kernel<medium, qp_type, property>::
+template <specfem::dimension::type DimensionType,
+          specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag, typename qp_type>
+specfem::domain::impl::kernels::source_kernel<DimensionType, MediumTag,
+                                              PropertyTag, qp_type>::
     source_kernel(
         const specfem::compute::assembly &assembly,
         const specfem::kokkos::HostView1d<int> h_source_kernel_index_mapping,
@@ -23,7 +26,7 @@ specfem::domain::impl::kernels::source_kernel<medium, qp_type, property>::
       properties(assembly.properties), sources(assembly.sources),
       quadrature_points(quadrature_points),
       global_index_mapping(assembly.fields.forward.assembly_index_mapping),
-      field(assembly.fields.forward.get_field<medium>()) {
+      field(assembly.fields.forward.get_field<medium_type>()) {
 
   Kokkos::parallel_for(
       "specfem::domain::impl::kernels::element_kernel::check_properties",
@@ -31,9 +34,9 @@ specfem::domain::impl::kernels::source_kernel<medium, qp_type, property>::
       KOKKOS_LAMBDA(const int isource) {
         const int ispec = h_source_kernel_index_mapping(isource);
         if ((assembly.properties.h_element_types(ispec) !=
-             medium_type::value) &&
+             medium_type::medium_tag) &&
             (assembly.properties.h_element_property(ispec) !=
-             property_type::value)) {
+              medium_type::property_tag)) {
           throw std::runtime_error("Invalid element detected in kernel");
         }
       });
@@ -52,17 +55,19 @@ specfem::domain::impl::kernels::source_kernel<medium, qp_type, property>::
   Kokkos::deep_copy(source_kernel_index_mapping, h_source_kernel_index_mapping);
   Kokkos::deep_copy(source_mapping, h_source_mapping);
 
-  source = specfem::domain::impl::sources::source<dimension, medium, qp_type,
-                                                  property>();
-
+  source = specfem::domain::impl::sources::source<DimensionType, MediumTag,
+                                                  PropertyTag, quadrature_point_type>();
   return;
 }
 
-template <class medium, class qp_type, class property>
-void specfem::domain::impl::kernels::source_kernel<medium, qp_type, property>::
-    compute_source_interaction(const int timestep) const {
+template <specfem::dimension::type DimensionType,
+          specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag, typename qp_type>
+void specfem::domain::impl::kernels::source_kernel<
+    DimensionType, MediumTag, PropertyTag,
+    qp_type>::compute_source_interaction(const int timestep) const {
 
-  constexpr int components = medium::components;
+  constexpr int components = medium_type::components;
 
   if (nsources == 0)
     return;
@@ -89,12 +94,13 @@ void specfem::domain::impl::kernels::source_kernel<medium, qp_type, property>::
               sub2ind(xz, ngllx, iz, ix);
               int iglob = index_mapping(ispec_l, iz, ix);
               int iglob_l = global_index_mapping(
-                  iglob, static_cast<int>(medium_type::value));
+                  iglob, static_cast<int>(medium_type::medium_tag));
 
               const type_real stf = sources.stf_array(isource_l, timestep);
-              const auto point_properties = properties.load_device_properties<
-                  medium_type::value, property_type::value>(ispec_l, iz, ix);
-
+              const auto point_properties =
+                  properties.load_device_properties<medium_type::medium_tag,
+                                                    medium_type::property_tag>(
+                      ispec_l, iz, ix);
               specfem::kokkos::array_type<type_real, 2> lagrange_interpolant(
                   sources.source_array(isource_l, 0, iz, ix),
                   sources.source_array(isource_l, 1, iz, ix));

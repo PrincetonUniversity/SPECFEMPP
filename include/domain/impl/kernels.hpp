@@ -13,10 +13,13 @@ namespace impl {
 namespace kernels {
 
 template <specfem::simulation::type simulation,
+          specfem::dimension::type DimensionType,
           specfem::element::medium_tag medium, typename qp_type>
 class kernels {
 
 public:
+  using quadrature_point_type = qp_type;
+  using dimension = specfem::dimension::dimension<DimensionType>;
   kernels() = default;
 
   kernels(const specfem::compute::assembly &assembly,
@@ -60,15 +63,13 @@ public:
   }
 
 private:
-  constexpr static specfem::dimension::type dimension =
-      specfem::dimension::type::dim2; // Dimension of the domain
   constexpr static specfem::element::boundary_tag dirichlet =
       specfem::element::boundary_tag::acoustic_free_surface;
   constexpr static specfem::element::boundary_tag stacey =
       specfem::element::boundary_tag::stacey;
   constexpr static specfem::element::boundary_tag none =
       specfem::element::boundary_tag::none;
-  constexpr static specfem::element::boundaty_tag composite_stacey_dirichlet =
+  constexpr static specfem::element::boundary_tag composite_stacey_dirichlet =
       specfem::element::boundary_tag::composite_stacey_dirichlet;
   constexpr static specfem::element::property_tag isotropic =
       specfem::element::property_tag::isotropic;
@@ -77,31 +78,31 @@ private:
             specfem::element::property_tag property,
             specfem::element::boundary_tag boundary>
   using element_kernel = specfem::domain::impl::kernels::element_kernel<
-      dimension, medium, property, boundary, quadrature_point_type>;
+      DimensionType, medium, property, boundary, quadrature_point_type>;
 
   template <specfem::dimension::type dimension,
             specfem::element::property_tag property>
-  using source_kernel =
-      specfem::domain::impl::kernels::source_kernel<dimension, medium, property,
-                                                    quadrature_point_type>;
+  using source_kernel = specfem::domain::impl::kernels::source_kernel<
+      DimensionType, medium, property, quadrature_point_type>;
 
   template <specfem::dimension::type dimension,
             specfem::element::property_tag property>
   using receiver_kernel = specfem::domain::impl::kernels::receiver_kernel<
-      dimension, medium, property, quadrature_point_type>;
+      DimensionType, medium, property, quadrature_point_type>;
 
-  element_kernel<dimension, isotropic, none> isotropic_elements;
+  element_kernel<DimensionType, isotropic, none> isotropic_elements;
 
-  element_kernel<dimension, isotropic, dirichlet> isotropic_elements_dirichlet;
+  element_kernel<DimensionType, isotropic, dirichlet>
+      isotropic_elements_dirichlet;
 
-  element_kernel<dimension, isotropic, stacey> isotropic_elements_stacey;
+  element_kernel<DimensionType, isotropic, stacey> isotropic_elements_stacey;
 
-  element_kernel<dimension, isotropic, composite_stacey_dirichlet>
+  element_kernel<DimensionType, isotropic, composite_stacey_dirichlet>
       isotropic_elements_stacey_dirichlet;
 
-  source_kernel<dimension, isotropic> isotropic_sources;
+  source_kernel<DimensionType, isotropic> isotropic_sources;
 
-  source_kernel<dimension, isotropic> isotropic_receivers;
+  receiver_kernel<DimensionType, isotropic> isotropic_receivers;
 };
 } // namespace kernels
 } // namespace impl

@@ -1,6 +1,7 @@
 #ifndef _ENUMS_BOUNDARY_CONDITIONS_HPP
 #define _ENUMS_BOUNDARY_CONDITIONS_HPP
 
+#include "boundary_conditions.hpp"
 #include "compute/interface.hpp"
 #include "enumerations/boundary_conditions/dirichlet.hpp"
 #include "enumerations/boundary_conditions/dirichlet.tpp"
@@ -26,14 +27,16 @@ private:
       specfem::element::boundary_tag::acoustic_free_surface, qp_type>;
 
 public:
+  using dimension =
+      specfem::dimension::dimension<specfem::dimension::type::dim2>;
   using quadrature_points_type = qp_type; ///< Quadrature points type
   using medium_type =
       specfem::medium::medium<specfem::dimension::type::dim2, medium,
                               property>; ///< Medium type
 
-  constexpr static specfem::enums::element::boundary_tag value =
-      specfem::enums::element::boundary_tag::
-          composite_stacey_dirichlet; ///< boundary tag
+  constexpr static specfem::element::boundary_tag value =
+      specfem::element::boundary_tag::composite_stacey_dirichlet; ///< boundary
+                                                                  ///< tag
   /**
    * @brief Construct a new composite boundary object
    *

@@ -19,8 +19,9 @@ namespace {
 //     const int &nglob,
 //     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field,
 //     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot,
-//     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot_dot,
 //     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+//     field_dot_dot, specfem::kokkos::DeviceView2d<type_real,
+//     Kokkos::LayoutLeft>
 //         rmass_inverse) {
 
 //   constexpr int components = medium::components;
@@ -39,7 +40,8 @@ namespace {
 
 // template <class medium, class qp_type>
 // void initialize_rmass_inverse(
-//     const specfem::domain::impl::kernels::kernels<medium, qp_type> &kernels) {
+//     const specfem::domain::impl::kernels::kernels<medium, qp_type> &kernels)
+//     {
 //   // Compute the mass matrix
 
 //   kernels.compute_mass_matrix();
@@ -65,17 +67,20 @@ namespace {
 // }
 } // namespace
 
-// template <specfem::enums::simulation::type simulation, class medium, class qp_type>
-// specfem::domain::domain<medium, qp_type>::domain(
+// template <specfem::enums::simulation::type simulation, class medium, class
+// qp_type> specfem::domain::domain<medium, qp_type>::domain(
 //     const specfem::compute::assembly &assembly,
 //     const qp_type &quadrature_points)
-//     : field(assembly.fields.get_simulation_field<simulation>().get_field<medium>() {
+//     :
+//     field(assembly.fields.get_simulation_field<simulation>().get_field<medium>()
+//     {
 //   // this->h_field = Kokkos::create_mirror_view(this->field);
 //   // this->h_field_dot = Kokkos::create_mirror_view(this->field_dot);
 //   // this->h_field_dot_dot = Kokkos::create_mirror_view(this->field_dot_dot);
 //   // this->h_rmass_inverse = Kokkos::create_mirror_view(this->rmass_inverse);
 
-//   // //----------------------------------------------------------------------------
+//   //
+//   //----------------------------------------------------------------------------
 //   // // Initialize views
 
 //   // // In CUDA you can't call class lambdas inside the constructors
@@ -154,9 +159,12 @@ namespace {
 //   return;
 // }
 
-template <class medium, class qp_type>
-void specfem::domain::domain<medium, qp_type>::divide_mass_matrix() {
-  constexpr int components = medium::components;
+template <specfem::simulation::type simulation,
+          specfem::dimension::type DimensionType,
+          specfem::element::medium_tag MediumTag, typename qp_type>
+void specfem::domain::domain<simulation, DimensionType, MediumTag,
+                             qp_type>::divide_mass_matrix() {
+  constexpr int components = medium_type::components;
   const int nglob = field.nglob;
 
   Kokkos::parallel_for(
@@ -175,9 +183,12 @@ void specfem::domain::domain<medium, qp_type>::divide_mass_matrix() {
   return;
 }
 
-template <class medium, class qp_type>
-void specfem::domain::domain<medium, qp_type>::invert_mass_matrix() {
-  constexpr int components = medium::components;
+template <specfem::simulation::type simulation,
+          specfem::dimension::type DimensionType,
+          specfem::element::medium_tag MediumTag, typename qp_type>
+void specfem::domain::domain<simulation, DimensionType, MediumTag,
+                             qp_type>::invert_mass_matrix() {
+  constexpr int components = medium_type::components;
   const int nglob = field.nglob;
 
   Kokkos::parallel_for(

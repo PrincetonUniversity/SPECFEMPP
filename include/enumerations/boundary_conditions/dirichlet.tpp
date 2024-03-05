@@ -20,7 +20,7 @@ KOKKOS_INLINE_FUNCTION void specfem::boundary::boundary<
         const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
         const specfem::point::partial_derivatives2 &partial_derivatives,
         const specfem::point::properties<
-            medium_type::value, medium_type::property_value> &properties,
+            medium_type::medium_tag, medium_type::property_tag> &properties,
         const specfem::point::boundary &boundary_type,
         const specfem::kokkos::array_type<type_real, medium_type::components>
             &field_dot,

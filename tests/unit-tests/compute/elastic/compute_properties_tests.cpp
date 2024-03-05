@@ -16,8 +16,8 @@
 // Compact global arrays to local arrays
 
 namespace {
-template <specfem::enums::element::type element_type,
-          specfem::enums::element::property_tag property>
+template <specfem::element::medium_tag element_type,
+          specfem::element::property_tag property>
 specfem::testing::array3d<type_real, Kokkos::LayoutRight> compact_global_array(
     const specfem::testing::array3d<type_real, Kokkos::LayoutRight>
         &global_array,
@@ -141,8 +141,8 @@ TEST(COMPUTE_TESTS, compute_elastic_properties) {
       test_config.rho_file, nspec, ngllz, ngllx);
 
   auto rho_local =
-      compact_global_array<specfem::enums::element::type::elastic,
-                           specfem::enums::element::property_tag::isotropic>(
+      compact_global_array<specfem::element::medium_tag::elastic,
+                           specfem::element::property_tag::isotropic>(
           rho_global, mesh.materials);
 
   EXPECT_TRUE(rho_array == rho_local);
@@ -155,8 +155,8 @@ TEST(COMPUTE_TESTS, compute_elastic_properties) {
       test_config.mu_file, nspec, ngllz, ngllx);
 
   auto mu_local =
-      compact_global_array<specfem::enums::element::type::elastic,
-                           specfem::enums::element::property_tag::isotropic>(
+      compact_global_array<specfem::element::medium_tag::elastic,
+                           specfem::element::property_tag::isotropic>(
           mu_global, mesh.materials);
 
   EXPECT_TRUE(mu_array == mu_local);
