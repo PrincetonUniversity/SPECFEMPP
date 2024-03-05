@@ -266,8 +266,7 @@ specfem::domain::impl::kernels::kernels<
     qp_type>::kernels(const specfem::compute::assembly &assembly,
                       const qp_type &quadrature_points) {
 
-  using medium_type =
-      specfem::medium::medium<DimensionType, medium>;
+  using medium_type = specfem::medium::medium<DimensionType, medium>;
 
   const int nspec = assembly.mesh.nspec;
   specfem::kokkos::HostView1d<element_tag> element_tags(
