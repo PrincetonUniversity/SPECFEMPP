@@ -393,6 +393,10 @@ specfem::domain::impl::kernels::kernels<
   allocate_isotropic_receivers(assembly, quadrature_points,
                                isotropic_receivers);
 
+  // Compute mass matrices
+
+  this->compute_mass_matrix();
+
   return;
 }
 
