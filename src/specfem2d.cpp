@@ -137,9 +137,9 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   //                   Instantiate Timescheme
   // --------------------------------------------------------------
   setup.update_t0(t0);
-  const auto it = setup.instantiate_solver();
+  const auto time_scheme = setup.instantiate_timescheme();
   if (mpi->main_proc())
-    std::cout << *it << std::endl;
+    std::cout << *time_scheme << std::endl;
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
@@ -147,52 +147,20 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   // --------------------------------------------------------------
   mpi->cout("Generating assembly:");
   mpi->cout("-------------------------------");
-  const int nsteps = it->get_max_timestep();
-  const int max_seimogram_time_step = it->get_max_seismogram_step();
+  const int nsteps = time_scheme->get_max_timestep();
+  const int max_seismogram_time_step = time_scheme->get_max_seismogram_step();
   const specfem::compute::assembly assembly(
       mesh, quadrature, sources, receivers, setup.get_seismogram_types(),
-      nsteps, max_seimogram_time_step, setup.get_simulation_type());
+      nsteps, max_seismogram_time_step, setup.get_simulation_type());
 
-  // --------------------------------------------------------------
-
-  // --------------------------------------------------------------
-  //                   Instantiate Kernels
-  // --------------------------------------------------------------
-  mpi->cout("Instantiating Kernels:");
-  mpi->cout("-------------------------------");
-  specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
-
-  specfem::domain::domain<
-      specfem::simulation::type::forward, specfem::dimension::type::dim2,
-      specfem::element::medium_tag::elastic,
-      specfem::enums::element::quadrature::static_quadrature_points<5> >
-      elastic_domain_static(assembly, qp5);
-
-  specfem::domain::domain<
-      specfem::simulation::type::forward, specfem::dimension::type::dim2,
-      specfem::element::medium_tag::acoustic,
-      specfem::enums::element::quadrature::static_quadrature_points<5> >
-      acoustic_domain_static(assembly, qp5);
-
-  specfem::coupled_interface::coupled_interface<
-      specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
-      specfem::element::medium_tag::elastic>
-      acoustic_elastic_interface(assembly);
-
-  specfem::coupled_interface::coupled_interface<
-      specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-      specfem::element::medium_tag::acoustic>
-      elastic_acoustic_interface(assembly);
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
   //                   Instantiate Solver
   // --------------------------------------------------------------
+  specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
   std::shared_ptr<specfem::solver::solver> solver =
-      std::make_shared<specfem::solver::time_marching<
-          specfem::enums::element::quadrature::static_quadrature_points<5> > >(
-          assembly, acoustic_domain_static, elastic_domain_static,
-          acoustic_elastic_interface, elastic_acoustic_interface, it);
+      setup.instantiate_solver(assembly, time_scheme, qp5);
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
