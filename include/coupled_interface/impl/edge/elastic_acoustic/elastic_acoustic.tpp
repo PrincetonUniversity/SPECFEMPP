@@ -155,7 +155,7 @@
 //   }
 // }
 
-template<>
+template <>
 KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, 1>
 specfem::coupled_interface::impl::edges::edge<
     specfem::dimension::type::dim2,

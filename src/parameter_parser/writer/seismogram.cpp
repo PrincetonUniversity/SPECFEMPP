@@ -1,5 +1,5 @@
+#include "parameter_parser/writer/seismogram.hpp"
 #include "constants.hpp"
-#include "parameter_parser/interface.hpp"
 #include "writer/interface.hpp"
 #include "yaml-cpp/yaml.h"
 #include <boost/filesystem.hpp>

@@ -6,7 +6,8 @@
 #include "quadrature.hpp"
 #include "run_setup.hpp"
 #include "setup.hpp"
-#include "solver/interface.hpp"
+// #include "solver/interface.hpp"
+#include "time_scheme/interface.hpp"
 #include "writer/seismogram.hpp"
 #include "writer/wavefield.hpp"
 
