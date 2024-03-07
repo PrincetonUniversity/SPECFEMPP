@@ -5,6 +5,7 @@
 #include "enumerations/medium.hpp"
 #include "enumerations/simulation.hpp"
 #include "enumerations/specfem_enums.hpp"
+#include "enumerations/wavefield.hpp"
 #include "kokkos_abstractions.h"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -12,9 +13,8 @@
 namespace specfem {
 namespace compute {
 
-template <specfem::simulation::type simulation> struct simulation_field {
+template <specfem::wavefield::type WavefieldType> struct simulation_field {
 
-  constexpr static auto simulation_type = simulation;
   using elastic_type =
       specfem::medium::medium<specfem::dimension::type::dim2,
                               specfem::element::medium_tag::elastic>;

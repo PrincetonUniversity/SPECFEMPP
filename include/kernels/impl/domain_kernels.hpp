@@ -10,15 +10,10 @@
 namespace specfem {
 namespace kernels {
 namespace impl {
-template <specfem::simulation::type Simulation,
+template <specfem::wavefield::type WavefieldType,
           specfem::dimension::type DimensionType, typename qp_type>
-class domain_kernels;
-
-template <specfem::dimension::type DimensionType, typename qp_type>
-class domain_kernels<specfem::simulation::type::forward, DimensionType,
-                     qp_type> {
+class domain_kernels {
 public:
-  constexpr static auto forward_type = specfem::simulation::type::forward;
   domain_kernels(const specfem::compute::assembly &assembly,
                  const qp_type &quadrature_points)
       : elastic_kernels(assembly, quadrature_points),
@@ -53,11 +48,11 @@ public:
   }
 
 private:
-  specfem::kernels::impl::kernels<forward_type, DimensionType,
+  specfem::kernels::impl::kernels<WavefieldType, DimensionType,
                                   specfem::element::medium_tag::elastic,
                                   qp_type>
       elastic_kernels;
-  specfem::kernels::impl::kernels<forward_type, DimensionType,
+  specfem::kernels::impl::kernels<WavefieldType, DimensionType,
                                   specfem::element::medium_tag::acoustic,
                                   qp_type>
       acoustic_kernels;

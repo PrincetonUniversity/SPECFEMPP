@@ -10,10 +10,11 @@
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::dimension::type DimensionType,
+template <specfem::wavefield::type WavefieldType,
+          specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, typename qp_type>
-specfem::domain::impl::kernels::source_kernel<DimensionType, MediumTag,
+specfem::domain::impl::kernels::source_kernel<WavefieldType, DimensionType, MediumTag,
                                               PropertyTag, qp_type>::
     source_kernel(
         const specfem::compute::assembly &assembly,
@@ -25,8 +26,8 @@ specfem::domain::impl::kernels::source_kernel<DimensionType, MediumTag,
       points(assembly.mesh.points), quadrature(assembly.mesh.quadratures),
       properties(assembly.properties), sources(assembly.sources),
       quadrature_points(quadrature_points),
-      global_index_mapping(assembly.fields.forward.assembly_index_mapping),
-      field(assembly.fields.forward.get_field<medium_type>()) {
+      global_index_mapping(assembly.fields.get_simulation_field<WavefieldType>().assembly_index_mapping),
+      field(assembly.fields.get_simulation_field<WavefieldType>().template get_field<medium_type>()) {
 
   Kokkos::parallel_for(
       "specfem::domain::impl::kernels::element_kernel::check_properties",
@@ -60,10 +61,10 @@ specfem::domain::impl::kernels::source_kernel<DimensionType, MediumTag,
   return;
 }
 
-template <specfem::dimension::type DimensionType,
+template <specfem::wavefield::type WavefieldType, specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, typename qp_type>
-void specfem::domain::impl::kernels::source_kernel<
+void specfem::domain::impl::kernels::source_kernel<WavefieldType,
     DimensionType, MediumTag, PropertyTag,
     qp_type>::compute_source_interaction(const int timestep) const {
 

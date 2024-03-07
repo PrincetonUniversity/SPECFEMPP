@@ -12,7 +12,7 @@ namespace domain {
 namespace impl {
 namespace kernels {
 
-template <specfem::simulation::type simulation,
+template <specfem::wavefield::type WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag medium, typename qp_type>
 class kernels {
@@ -78,17 +78,18 @@ private:
             specfem::element::property_tag property,
             specfem::element::boundary_tag boundary>
   using element_kernel = specfem::domain::impl::kernels::element_kernel<
-      DimensionType, medium, property, boundary, quadrature_point_type>;
+      WavefieldType, DimensionType, medium, property, boundary,
+      quadrature_point_type>;
 
   template <specfem::dimension::type dimension,
             specfem::element::property_tag property>
   using source_kernel = specfem::domain::impl::kernels::source_kernel<
-      DimensionType, medium, property, quadrature_point_type>;
+      WavefieldType, DimensionType, medium, property, quadrature_point_type>;
 
   template <specfem::dimension::type dimension,
             specfem::element::property_tag property>
   using receiver_kernel = specfem::domain::impl::kernels::receiver_kernel<
-      DimensionType, medium, property, quadrature_point_type>;
+      WavefieldType, DimensionType, medium, property, quadrature_point_type>;
 
   element_kernel<DimensionType, isotropic, none> isotropic_elements;
 

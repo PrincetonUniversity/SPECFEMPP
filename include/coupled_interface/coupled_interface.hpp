@@ -15,7 +15,8 @@ namespace coupled_interface {
  * @tparam self_domain_type Primary domain of the interface.
  * @tparam coupled_domain_type Coupled domain of the interface.
  */
-template <specfem::dimension::type DimensionType,
+template <specfem::wavefield::type WavefieldType,
+          specfem::dimension::type DimensionType,
           specfem::element::medium_tag SelfMedium,
           specfem::element::medium_tag CoupledMedium>
 class coupled_interface {

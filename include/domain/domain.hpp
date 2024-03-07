@@ -13,12 +13,11 @@
 namespace specfem {
 namespace domain {
 
-template <specfem::simulation::type simulation,
+template <specfem::wavefield::type WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag, typename qp_type>
-class domain
-    : public specfem::domain::impl::kernels::kernels<simulation, DimensionType,
-                                                     MediumTag, qp_type> {
+class domain : public specfem::domain::impl::kernels::kernels<
+                   WavefieldType, DimensionType, MediumTag, qp_type> {
 public:
   using dimension = specfem::dimension::dimension<DimensionType>;
   using medium_type = specfem::medium::medium<DimensionType, MediumTag>;
@@ -27,10 +26,10 @@ public:
 
   domain(const specfem::compute::assembly &assembly,
          const quadrature_points_type &quadrature_points)
-      : field(assembly.fields.get_simulation_field<simulation>()
+      : field(assembly.fields.get_simulation_field<WavefieldType>()
                   .template get_field<medium_type>()),
         specfem::domain::impl::kernels::kernels<
-            simulation, DimensionType, MediumTag, quadrature_points_type>(
+            WavefieldType, DimensionType, MediumTag, quadrature_points_type>(
             assembly, quadrature_points) {}
 
   ~domain() = default;

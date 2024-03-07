@@ -15,6 +15,7 @@ namespace impl {
 namespace kernels {
 
 template <
+    specfem::wavefield::type WavefieldType,
     specfem::dimension::type DimensionType, specfem::element::medium_tag medium,
     specfem::element::property_tag property,
     specfem::element::boundary_tag boundary, typename quadrature_points_type>

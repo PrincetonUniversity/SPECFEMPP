@@ -10,14 +10,14 @@
 namespace specfem {
 namespace kernels {
 namespace impl {
-template <specfem::simulation::type Simulation,
+template <specfem::wavefield::type WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag>
 class interface_kernels;
 
-template <specfem::simulation::type Simulation,
+template <specfem::wavefield::type WavefieldType,
           specfem::dimension::type DimensionType>
-class interface_kernels<Simulation, DimensionType,
+class interface_kernels<WavefieldType, DimensionType,
                         specfem::element::medium_tag::elastic> {
 public:
   interface_kernels(const specfem::compute::assembly &assembly)
@@ -29,14 +29,14 @@ public:
 
 private:
   specfem::coupled_interface::coupled_interface<
-      DimensionType, specfem::element::medium_tag::elastic,
+      WavefieldType, DimensionType, specfem::element::medium_tag::elastic,
       specfem::element::medium_tag::acoustic>
       elastic_acoustic_interface;
 };
 
-template <specfem::simulation::type Simulation,
+template <specfem::wavefield::type WavefieldType,
           specfem::dimension::type DimensionType>
-class interface_kernels<Simulation, DimensionType,
+class interface_kernels<WavefieldType, DimensionType,
                         specfem::element::medium_tag::acoustic> {
 public:
   interface_kernels(const specfem::compute::assembly &assembly)
@@ -48,7 +48,7 @@ public:
 
 private:
   specfem::coupled_interface::coupled_interface<
-      DimensionType, specfem::element::medium_tag::acoustic,
+      WavefieldType, DimensionType, specfem::element::medium_tag::acoustic,
       specfem::element::medium_tag::elastic>
       acoustic_elastic_interface;
 };
