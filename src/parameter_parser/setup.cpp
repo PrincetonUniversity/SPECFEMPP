@@ -131,6 +131,9 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
     }
 
     if (const YAML::Node &n_adjoint = n_simulation_mode["adjoint"]) {
+      this->solver =
+          std::make_unique<specfem::runtime_configuration::solver::solver>(
+              "adjoint");
       number_of_simulation_modes++;
       simulation = specfem::simulation::type::adjoint;
       if (const YAML::Node &n_reader = n_adjoint["reader"]) {

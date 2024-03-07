@@ -15,9 +15,15 @@ specfem::runtime_configuration::time_scheme::time_scheme::instantiate(
       it = std::make_shared<
           specfem::time_scheme::newmark<specfem::simulation::type::forward> >(
           this->nstep, nstep_between_samples, this->dt, this->t0);
+    } else if (this->type == specfem::simulation::type::adjoint) {
+      it = std::make_shared<
+          specfem::time_scheme::newmark<specfem::simulation::type::adjoint> >(
+          this->nstep, nstep_between_samples, this->dt, this->t0);
     } else {
-      throw std::runtime_error(
-          "Could not instantiate solver : Wrong simulation time");
+      std::ostringstream message;
+      message << "Error in time scheme instantiation. \n"
+              << "Unknown simulation type.";
+      throw std::runtime_error(message.str());
     }
   }
 
