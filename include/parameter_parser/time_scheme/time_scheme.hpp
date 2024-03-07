@@ -2,7 +2,6 @@
 #define _PARAMETER_TIME_MARCHING_HPP
 
 #include "specfem_setup.hpp"
-// #include "timescheme/interface.hpp"
 #include "timescheme/interface.hpp"
 #include "yaml-cpp/yaml.h"
 #include <tuple>

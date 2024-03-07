@@ -288,6 +288,16 @@ target_link_libraries(
         Kokkos::kokkos
 )
 
+add_library(coupled_interface
+        src/coupled_interface/coupled_interface.cpp
+)
+
+target_link_libraries(
+        coupled_interface
+        Kokkos::kokkos
+        compute
+)
+
 add_library(
         timescheme
         src/timescheme/timescheme.cpp
@@ -367,6 +377,7 @@ target_link_libraries(
         receiver_class
         writer
         reader
+        coupled_interface
         Boost::program_options
         ${HDF5_LIBRARIES}
 )

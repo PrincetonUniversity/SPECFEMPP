@@ -189,7 +189,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     setup.update_t0(t0);
 
     // Instantiate the solver and timescheme
-    auto it = setup.instantiate_solver();
+    auto it = setup.instantiate_timescheme();
 
     std::vector<std::shared_ptr<specfem::receivers::receiver> > receivers(0);
     std::vector<specfem::enums::seismogram::type> seismogram_types(0);
@@ -198,6 +198,8 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     specfem::compute::assembly assembly(mesh, quadratures, sources, receivers,
                                         seismogram_types, nsteps, 0,
                                         setup.get_simulation_type());
+
+    it->link_assembly(assembly);
 
     // User output
     if (mpi->main_proc())
@@ -209,35 +211,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
 
       specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
 
-      specfem::domain::domain<
-          specfem::simulation::type::forward, specfem::dimension::type::dim2,
-          specfem::element::medium_tag::elastic,
-          specfem::enums::element::quadrature::static_quadrature_points<5> >
-          elastic_domain_static(assembly, qp5);
-
-      specfem::domain::domain<
-          specfem::simulation::type::forward, specfem::dimension::type::dim2,
-          specfem::element::medium_tag::acoustic,
-          specfem::enums::element::quadrature::static_quadrature_points<5> >
-          acoustic_domain_static(assembly, qp5);
-
-      // Instantiate coupled interfaces
-      specfem::coupled_interface::coupled_interface<
-          specfem::dimension::type::dim2,
-          specfem::element::medium_tag::acoustic,
-          specfem::element::medium_tag::elastic>
-          acoustic_elastic_interface(assembly);
-
-      specfem::coupled_interface::coupled_interface<
-          specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-          specfem::element::medium_tag::acoustic>
-          elastic_acoustic_interface(assembly);
-
-      std::shared_ptr<specfem::solver::solver> solver = std::make_shared<
-          specfem::solver::time_marching<specfem::enums::element::quadrature::
-                                             static_quadrature_points<5> > >(
-          assembly, acoustic_domain_static, elastic_domain_static,
-          acoustic_elastic_interface, elastic_acoustic_interface, it);
+      const auto solver = setup.instantiate_solver(assembly, it, qp5);
 
       solver->run();
 
