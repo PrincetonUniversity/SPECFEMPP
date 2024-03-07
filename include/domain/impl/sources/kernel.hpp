@@ -14,7 +14,8 @@ namespace domain {
 namespace impl {
 namespace kernels {
 
-template <specfem::dimension::type DimensionType,
+template <specfem::wavefield::type WavefieldType,
+          specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, typename qp_type>
 class source_kernel {

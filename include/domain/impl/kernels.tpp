@@ -28,16 +28,17 @@ struct element_tag {
   specfem::element::medium_tag medium_tag;
 };
 
-template <specfem::dimension::type DimensionType,
+template <specfem::wavefield::type WavefieldType,
+          specfem::dimension::type DimensionType,
           specfem::element::medium_tag medium_tag,
           specfem::element::property_tag property_tag,
           specfem::element::boundary_tag boundary_tag, typename qp_type>
 void allocate_elements(
     const specfem::compute::assembly &assembly, qp_type quadrature_points,
     const specfem::kokkos::HostView1d<element_tag> element_tags,
-    specfem::domain::impl::kernels::element_kernel<DimensionType, medium_tag,
-                                                   property_tag, boundary_tag,
-                                                   qp_type> &elements) {
+    specfem::domain::impl::kernels::element_kernel<
+        WavefieldType, DimensionType, medium_tag, property_tag, boundary_tag,
+        qp_type> &elements) {
 
   using dimension = specfem::dimension::dimension<DimensionType>;
   using medium_type =
@@ -155,17 +156,19 @@ void allocate_elements(
 
   // Create isotropic acoustic surface elements
   elements = specfem::domain::impl::kernels::element_kernel<
-      DimensionType, medium_tag, property_tag, boundary_tag, qp_type>(
-      assembly, h_ispec_domain, quadrature_points);
+      WavefieldType, DimensionType, medium_tag, property_tag, boundary_tag,
+      qp_type>(assembly, h_ispec_domain, quadrature_points);
 }
 
-template <specfem::dimension::type DimensionType,
+template <specfem::wavefield::type WavefieldType,
+          specfem::dimension::type DimensionType,
           specfem::element::medium_tag medium_tag,
           specfem::element::property_tag property_tag, typename qp_type>
 void allocate_isotropic_sources(
     const specfem::compute::assembly &assembly, qp_type quadrature_points,
-    specfem::domain::impl::kernels::source_kernel<
-        DimensionType, medium_tag, property_tag, qp_type> &isotropic_sources) {
+    specfem::domain::impl::kernels::source_kernel<WavefieldType, DimensionType,
+                                                  medium_tag, property_tag,
+                                                  qp_type> &isotropic_sources) {
 
   const auto value = medium_tag;
   // Create isotropic sources
@@ -198,22 +201,22 @@ void allocate_isotropic_sources(
   }
 
   // Allocate isotropic sources
-  isotropic_sources =
-      specfem::domain::impl::kernels::source_kernel<DimensionType, medium_tag,
-                                                    property_tag, qp_type>(
-          assembly, h_source_kernel_index_mapping, h_source_mapping,
-          quadrature_points);
+  isotropic_sources = specfem::domain::impl::kernels::source_kernel<
+      WavefieldType, DimensionType, medium_tag, property_tag, qp_type>(
+      assembly, h_source_kernel_index_mapping, h_source_mapping,
+      quadrature_points);
 
   return;
 }
 
-template <specfem::dimension::type DimensionType,
+template <specfem::wavefield::type WavefieldType,
+          specfem::dimension::type DimensionType,
           specfem::element::medium_tag medium_tag,
           specfem::element::property_tag property_tag, typename qp_type>
 void allocate_isotropic_receivers(
     const specfem::compute::assembly &assembly, qp_type quadrature_points,
-    specfem::domain::impl::kernels::receiver_kernel<DimensionType, medium_tag,
-                                                    property_tag, qp_type>
+    specfem::domain::impl::kernels::receiver_kernel<
+        WavefieldType, DimensionType, medium_tag, property_tag, qp_type>
         &isotropic_receivers) {
 
   const auto value = medium_tag;
@@ -248,21 +251,20 @@ void allocate_isotropic_receivers(
   }
 
   // Allocate isotropic sources
-  isotropic_receivers =
-      specfem::domain::impl::kernels::receiver_kernel<DimensionType, medium_tag,
-                                                      property_tag, qp_type>(
-          assembly, h_receiver_kernel_index_mapping, h_receiver_mapping,
-          quadrature_points);
+  isotropic_receivers = specfem::domain::impl::kernels::receiver_kernel<
+      WavefieldType, DimensionType, medium_tag, property_tag, qp_type>(
+      assembly, h_receiver_kernel_index_mapping, h_receiver_mapping,
+      quadrature_points);
 
   return;
 }
 } // namespace
 
-template <specfem::simulation::type simulation,
+template <specfem::wavefield::type WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag medium, typename qp_type>
 specfem::domain::impl::kernels::kernels<
-    simulation, DimensionType, medium,
+    WavefieldType, DimensionType, medium,
     qp_type>::kernels(const specfem::compute::assembly &assembly,
                       const qp_type &quadrature_points) {
 

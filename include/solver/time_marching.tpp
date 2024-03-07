@@ -7,9 +7,9 @@
 #include "timescheme/interface.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::simulation::type Simulation,
-          specfem::dimension::type DimensionType, typename qp_type>
-void specfem::solver::time_marching<Simulation, DimensionType, qp_type>::run() {
+template <specfem::dimension::type DimensionType, typename qp_type>
+void specfem::solver::time_marching<specfem::simulation::type::forward,
+                                    DimensionType, qp_type>::run() {
 
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
   constexpr auto elastic = specfem::element::medium_tag::elastic;
@@ -19,19 +19,66 @@ void specfem::solver::time_marching<Simulation, DimensionType, qp_type>::run() {
   const int nstep = time_scheme->get_max_timestep();
 
   for (int istep : time_scheme->iterate()) {
-    time_scheme->apply_predictor_phase(acoustic);
-    time_scheme->apply_predictor_phase(elastic);
+    time_scheme->apply_predictor_phase_forward(acoustic);
+    time_scheme->apply_predictor_phase_forward(elastic);
 
     kernels.template update_wavefields<acoustic>(istep);
-    time_scheme->apply_corrector_phase(acoustic);
+    time_scheme->apply_corrector_phase_forward(acoustic);
 
     kernels.template update_wavefields<elastic>(istep);
-    time_scheme->apply_corrector_phase(elastic);
+    time_scheme->apply_corrector_phase_forward(elastic);
 
     if (time_scheme->compute_seismogram(istep)) {
       kernels.compute_seismograms(time_scheme->get_seismogram_step());
       time_scheme->increment_seismogram_step();
     }
+
+    if (istep % 10 == 0) {
+      std::cout << "Progress : executed " << istep << " steps of " << nstep
+                << " steps" << std::endl;
+    }
+  }
+
+  std::cout << std::endl;
+
+  return;
+}
+
+template <specfem::dimension::type DimensionType, typename qp_type>
+void specfem::solver::time_marching<specfem::simulation::type::adjoint,
+                                    DimensionType, qp_type>::run() {
+
+  constexpr auto acoustic = specfem::element::medium_tag::acoustic;
+  constexpr auto elastic = specfem::element::medium_tag::elastic;
+
+  adjoint_kernels.initialize(time_scheme->timescheme(), time_scheme->get_timestep());
+  backward_kernels.initialize(time_scheme->timescheme(), time_scheme->get_timestep());
+
+  const int nstep = time_scheme->get_max_timestep();
+
+  for (int istep : time_scheme->iterate()) {
+    // Adjoint time step
+    time_scheme->apply_predictor_phase_forward(elastic);
+    time_scheme->apply_predictor_phase_forward(acoustic);
+
+    adjoint_kernels.template update_wavefields<elastic>(istep);
+    time_scheme->apply_corrector_phase_forward(elastic);
+
+    adjoint_kernels.template update_wavefields<acoustic>(istep);
+    time_scheme->apply_corrector_phase_forward(acoustic);
+
+    // Backward time step
+    time_scheme->apply_predictor_phase_backward(acoustic);
+    time_scheme->apply_predictor_phase_backward(elastic);
+
+    backward_kernels.template update_wavefields<acoustic>(istep);
+    time_scheme->apply_corrector_phase_backward(acoustic);
+
+    backward_kernels.template update_wavefields<elastic>(istep);
+    time_scheme->apply_corrector_phase_backward(elastic);
+
+    // frechlet_kernels.compute_frechlet_derivatives<acoustic>(istep);
+    // frechlet_kernels.compute_frechlet_derivatives<elastic>(istep);
 
     if (istep % 10 == 0) {
       std::cout << "Progress : executed " << istep << " steps of " << nstep

@@ -10,10 +10,11 @@
 #include "quadrature/interface.hpp"
 #include "specfem_setup.hpp"
 
-template <specfem::dimension::type DimensionType,
+template <specfem::wavefield::type WavefieldType,
+          specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, typename qp_type>
-specfem::domain::impl::kernels::receiver_kernel<DimensionType, MediumTag,
+specfem::domain::impl::kernels::receiver_kernel<WavefieldType,DimensionType, MediumTag,
                                                 PropertyTag, qp_type>::
     receiver_kernel(
         const specfem::compute::assembly &assembly,
@@ -26,8 +27,8 @@ specfem::domain::impl::kernels::receiver_kernel<DimensionType, MediumTag,
       points(assembly.mesh.points), quadrature(assembly.mesh.quadratures),
       partial_derivatives(assembly.partial_derivatives),
       properties(assembly.properties), receivers(assembly.receivers),
-      field(assembly.fields.forward.get_field<medium_type>()),
-      global_index_mapping(assembly.fields.forward.assembly_index_mapping),
+      field(assembly.fields.get_simulation_field<WavefieldType>().template get_field<medium_type>()),
+      global_index_mapping(assembly.fields.get_simulation_field<WavefieldType>().assembly_index_mapping),
       quadrature_points(quadrature_points) {
 
   Kokkos::parallel_for(
@@ -65,11 +66,12 @@ specfem::domain::impl::kernels::receiver_kernel<DimensionType, MediumTag,
   return;
 }
 
-template <specfem::dimension::type DimensionType,
+template <specfem::wavefield::type WavefieldType,
+          specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, typename qp_type>
 void specfem::domain::impl::kernels::receiver_kernel<
-    DimensionType, MediumTag, PropertyTag,
+    WavefieldType, DimensionType, MediumTag, PropertyTag,
     qp_type>::compute_seismograms(const int &isig_step) const {
 
   // Allocate scratch views for field, field_dot & field_dot_dot. Incase of

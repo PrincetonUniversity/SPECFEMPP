@@ -9,8 +9,8 @@
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::simulation::type simulation>
-specfem::compute::simulation_field<simulation>::simulation_field(
+template <specfem::wavefield::type WavefieldType>
+specfem::compute::simulation_field<WavefieldType>::simulation_field(
     const specfem::compute::mesh &mesh,
     const specfem::compute::properties &properties) {
 

@@ -9,10 +9,11 @@
 #include "macros.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::dimension::type DimensionType,
+template <specfem::wavefield::type WavefieldType,
+          specfem::dimension::type DimensionType,
           specfem::element::medium_tag SelfMedium,
           specfem::element::medium_tag CoupledMedium>
-specfem::coupled_interface::coupled_interface<DimensionType, SelfMedium,
+specfem::coupled_interface::coupled_interface<WavefieldType, DimensionType, SelfMedium,
                                               CoupledMedium>::
     coupled_interface(const specfem::compute::assembly &assembly)
     : nedges(assembly.coupled_interfaces
@@ -22,15 +23,19 @@ specfem::coupled_interface::coupled_interface<DimensionType, SelfMedium,
                          .get_interface_container<SelfMedium, CoupledMedium>()),
       points(assembly.mesh.points), quadrature(assembly.mesh.quadratures),
       partial_derivatives(assembly.partial_derivatives),
-      global_index_mapping(assembly.fields.forward.assembly_index_mapping),
-      self_field(assembly.fields.forward.get_field<self_medium_type>()),
-      coupled_field(assembly.fields.forward.get_field<coupled_medium_type>()),
+      global_index_mapping(
+          assembly.fields.get_simulation_field<WavefieldType>().assembly_index_mapping),
+      self_field(
+          assembly.fields.get_simulation_field<WavefieldType>().template get_field<self_medium_type>()),
+      coupled_field(
+          assembly.fields.get_simulation_field<WavefieldType>().template get_field<coupled_medium_type>()),
       edge(assembly) {}
 
-template <specfem::dimension::type DimensionType,
+template <specfem::wavefield::type WavefieldType,
+          specfem::dimension::type DimensionType,
           specfem::element::medium_tag SelfMedium,
           specfem::element::medium_tag CoupledMedium>
-void specfem::coupled_interface::coupled_interface<
+void specfem::coupled_interface::coupled_interface<WavefieldType,
     DimensionType, SelfMedium, CoupledMedium>::compute_coupling() {
 
   if (this->nedges == 0)

@@ -12,19 +12,21 @@
 namespace specfem {
 namespace kernels {
 namespace impl {
-template <specfem::simulation::type Simulation,
+template <specfem::wavefield::type WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag, typename qp_type>
-class kernels : public interface_kernels<Simulation, DimensionType, MediumTag> {
+class kernels
+    : public interface_kernels<WavefieldType, DimensionType, MediumTag> {
 
 public:
   kernels(const specfem::compute::assembly &assembly,
           const qp_type &quadrature_points)
       : domain(assembly, quadrature_points),
-        interface_kernels<Simulation, DimensionType, MediumTag>(assembly) {}
+        interface_kernels<WavefieldType, DimensionType, MediumTag>(assembly) {}
 
   inline void update_wavefields(const int istep) {
-    interface_kernels<Simulation, DimensionType, MediumTag>::compute_coupling();
+    interface_kernels<WavefieldType, DimensionType,
+                      MediumTag>::compute_coupling();
     domain.compute_source_interaction(istep);
     domain.compute_stiffness_interaction();
     domain.divide_mass_matrix();
@@ -42,7 +44,8 @@ public:
   }
 
 private:
-  specfem::domain::domain<Simulation, DimensionType, MediumTag, qp_type> domain;
+  specfem::domain::domain<WavefieldType, DimensionType, MediumTag, qp_type>
+      domain;
 };
 } // namespace impl
 } // namespace kernels

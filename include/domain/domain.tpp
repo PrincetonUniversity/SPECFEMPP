@@ -159,10 +159,10 @@ namespace {
 //   return;
 // }
 
-template <specfem::simulation::type simulation,
+template <specfem::wavefield::type WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag, typename qp_type>
-void specfem::domain::domain<simulation, DimensionType, MediumTag,
+void specfem::domain::domain<WavefieldType, DimensionType, MediumTag,
                              qp_type>::divide_mass_matrix() {
   constexpr int components = medium_type::components;
   const int nglob = field.nglob;
@@ -183,10 +183,10 @@ void specfem::domain::domain<simulation, DimensionType, MediumTag,
   return;
 }
 
-template <specfem::simulation::type simulation,
+template <specfem::wavefield::type WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag, typename qp_type>
-void specfem::domain::domain<simulation, DimensionType, MediumTag,
+void specfem::domain::domain<WavefieldType, DimensionType, MediumTag,
                              qp_type>::invert_mass_matrix() {
   constexpr int components = medium_type::components;
   const int nglob = field.nglob;
