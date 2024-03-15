@@ -27,13 +27,6 @@ public:
    */
   stf(){};
   /**
-   * @brief compute the value of stf at time t
-   *
-   * @param t
-   * @return value of source time function at time t
-   */
-  virtual type_real compute(type_real t) { return 0.0; }
-  /**
    * @brief update the time shift value
    *
    * @param tshift new tshift value
@@ -52,25 +45,7 @@ public:
   virtual ~stf() = default;
 
   virtual void compute_source_time_function(
-      const int nsteps,
       specfem::kokkos::HostView1d<type_real> source_time_function) = 0;
-};
-
-std::ostream &operator<<(std::ostream &out,
-                         const specfem::forcing_function::stf &stf);
-
-/**
- * @brief struct used to store source time function pointer on device in a
- * device view
- *
- * There is a syntaxual bug in Kokkos which requires the need of this struct for
- * now.
- *
- */
-struct stf_storage {
-  specfem::forcing_function::stf *T;
-
-  KOKKOS_FUNCTION type_real compute(const type_real t) { return T->compute(t); }
 };
 
 } // namespace forcing_function

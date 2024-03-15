@@ -36,9 +36,10 @@ public:
    * @param moment_tensor a moment_tensor data holder read from source file
    * written in .yml format
    */
-  moment_tensor(YAML::Node &Node, const type_real dt)
+  moment_tensor(YAML::Node &Node, const int nsteps, const type_real dt)
       : Mxx(Node["Mxx"].as<type_real>()), Mzz(Node["Mzz"].as<type_real>()),
-        Mxz(Node["Mxz"].as<type_real>()), specfem::sources::source(Node, dt){};
+        Mxz(Node["Mxz"].as<type_real>()), specfem::sources::source(Node, nsteps,
+                                                                   dt){};
   /**
    * @brief User output
    *

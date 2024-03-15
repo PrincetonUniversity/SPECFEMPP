@@ -14,8 +14,8 @@ template <specfem::wavefield::type WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, typename qp_type>
-specfem::domain::impl::kernels::source_kernel<WavefieldType, DimensionType, MediumTag,
-                                              PropertyTag, qp_type>::
+specfem::domain::impl::kernels::source_kernel<WavefieldType, DimensionType,
+                                              MediumTag, PropertyTag, qp_type>::
     source_kernel(
         const specfem::compute::assembly &assembly,
         const specfem::kokkos::HostView1d<int> h_source_kernel_index_mapping,
@@ -26,8 +26,10 @@ specfem::domain::impl::kernels::source_kernel<WavefieldType, DimensionType, Medi
       points(assembly.mesh.points), quadrature(assembly.mesh.quadratures),
       properties(assembly.properties), sources(assembly.sources),
       quadrature_points(quadrature_points),
-      global_index_mapping(assembly.fields.get_simulation_field<WavefieldType>().assembly_index_mapping),
-      field(assembly.fields.get_simulation_field<WavefieldType>().template get_field<medium_type>()) {
+      global_index_mapping(assembly.fields.get_simulation_field<WavefieldType>()
+                               .assembly_index_mapping),
+      field(assembly.fields.get_simulation_field<WavefieldType>()
+                .template get_field<medium_type>()) {
 
   Kokkos::parallel_for(
       "specfem::domain::impl::kernels::element_kernel::check_properties",
@@ -37,7 +39,7 @@ specfem::domain::impl::kernels::source_kernel<WavefieldType, DimensionType, Medi
         if ((assembly.properties.h_element_types(ispec) !=
              medium_type::medium_tag) &&
             (assembly.properties.h_element_property(ispec) !=
-              medium_type::property_tag)) {
+             medium_type::property_tag)) {
           throw std::runtime_error("Invalid element detected in kernel");
         }
       });
@@ -56,16 +58,17 @@ specfem::domain::impl::kernels::source_kernel<WavefieldType, DimensionType, Medi
   Kokkos::deep_copy(source_kernel_index_mapping, h_source_kernel_index_mapping);
   Kokkos::deep_copy(source_mapping, h_source_mapping);
 
-  source = specfem::domain::impl::sources::source<DimensionType, MediumTag,
-                                                  PropertyTag, quadrature_point_type>();
+  source = specfem::domain::impl::sources::source<
+      DimensionType, MediumTag, PropertyTag, quadrature_point_type>();
   return;
 }
 
-template <specfem::wavefield::type WavefieldType, specfem::dimension::type DimensionType,
+template <specfem::wavefield::type WavefieldType,
+          specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, typename qp_type>
-void specfem::domain::impl::kernels::source_kernel<WavefieldType,
-    DimensionType, MediumTag, PropertyTag,
+void specfem::domain::impl::kernels::source_kernel<
+    WavefieldType, DimensionType, MediumTag, PropertyTag,
     qp_type>::compute_source_interaction(const int timestep) const {
 
   constexpr int components = medium_type::components;
@@ -97,19 +100,32 @@ void specfem::domain::impl::kernels::source_kernel<WavefieldType,
               int iglob_l = global_index_mapping(
                   iglob, static_cast<int>(medium_type::medium_tag));
 
-              const type_real stf = sources.stf_array(isource_l, timestep);
-              const auto point_properties =
-                  properties.load_device_properties<medium_type::medium_tag,
-                                                    medium_type::property_tag>(
-                      ispec_l, iz, ix);
               specfem::kokkos::array_type<type_real, 2> lagrange_interpolant(
                   sources.source_array(isource_l, 0, iz, ix),
                   sources.source_array(isource_l, 1, iz, ix));
 
+              // Source time function
+              // For acoustic medium, forward simulation, divide by kappa
+              const auto stf = [&]() {
+                if constexpr ((WavefieldType ==
+                               specfem::wavefield::type::forward) &&
+                              (MediumTag ==
+                               specfem::element::medium_tag::acoustic)) {
+                  const auto point_properties =
+                      properties.load_device_properties<
+                          medium_type::medium_tag, medium_type::property_tag>(
+                          ispec_l, iz, ix);
+                  return sources.stf_array(isource_l, timestep) /
+                         point_properties.kappa;
+                } else {
+                  return sources.stf_array(isource_l, timestep);
+                }
+              }();
+
               specfem::kokkos::array_type<type_real, components> acceleration;
 
               source.compute_interaction(stf, lagrange_interpolant,
-                                         point_properties, acceleration);
+                                         acceleration);
 
 #ifndef KOKKOS_ENABLE_CUDA
 #pragma unroll

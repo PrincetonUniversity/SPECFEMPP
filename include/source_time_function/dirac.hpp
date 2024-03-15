@@ -21,10 +21,11 @@ public:
    * @param factor factor to scale source time function
    * @param use_trick_for_better_pressure
    */
-  Dirac(const type_real dt, const type_real f0, const type_real tshift,
-        const type_real factor, const bool use_trick_for_better_pressure);
+  Dirac(const int nsteps, const type_real dt, const type_real f0,
+        const type_real tshift, const type_real factor,
+        const bool use_trick_for_better_pressure);
 
-  Dirac(YAML::Node &Dirac, const type_real dt,
+  Dirac(YAML::Node &Dirac, const int nsteps, const type_real dt,
         const bool use_trick_for_better_pressure);
 
   /**
@@ -33,7 +34,7 @@ public:
    * @param t
    * @return value of source time function at time t
    */
-  type_real compute(type_real t) override;
+  type_real compute(type_real t);
   /**
    * @brief update the time shift value
    *
@@ -50,10 +51,10 @@ public:
   std::string print() const override;
 
   void compute_source_time_function(
-      const int nsteps,
       specfem::kokkos::HostView1d<type_real> source_time_function) override;
 
 private:
+  int nsteps;
   type_real f0;     ///< frequence f0
   type_real tshift; ///< value of tshit
   type_real t0;     ///< t0 value

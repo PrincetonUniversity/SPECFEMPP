@@ -202,13 +202,27 @@ target_link_libraries(
 # )
 
 add_library(
+        reader
+        src/reader/wavefield.cpp
+        src/reader/seismogram.cpp
+)
+
+target_link_libraries(
+        reader
+        compute
+        IO
+)
+
+add_library(
         source_time_function
         src/source_time_function/dirac.cpp
         src/source_time_function/ricker.cpp
+        src/source_time_function/external.cpp
 )
 
 target_link_libraries(
         source_time_function
+        reader
         Kokkos::kokkos
         point
 )
@@ -218,6 +232,7 @@ add_library(
         src/source/source.cpp
         src/source/force_source.cpp
         src/source/moment_tensor_source.cpp
+        src/source/adjoint_source.cpp
         src/source/read_sources.cpp
 )
 
@@ -321,17 +336,6 @@ target_link_libraries(
         writer
         compute
         receiver_class
-        IO
-)
-
-add_library(
-        reader
-        src/reader/wavefield.cpp
-)
-
-target_link_libraries(
-        reader
-        compute
         IO
 )
 

@@ -45,14 +45,16 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
 }
 
 template <specfem::dimension::type DimensionType, typename qp_type>
-void specfem::solver::time_marching<specfem::simulation::type::adjoint,
+void specfem::solver::time_marching<specfem::simulation::type::combined,
                                     DimensionType, qp_type>::run() {
 
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
   constexpr auto elastic = specfem::element::medium_tag::elastic;
 
-  adjoint_kernels.initialize(time_scheme->timescheme(), time_scheme->get_timestep());
-  backward_kernels.initialize(time_scheme->timescheme(), time_scheme->get_timestep());
+  adjoint_kernels.initialize(time_scheme->timescheme(),
+                             time_scheme->get_timestep());
+  backward_kernels.initialize(time_scheme->timescheme(),
+                              time_scheme->get_timestep());
 
   const int nstep = time_scheme->get_max_timestep();
 
@@ -61,24 +63,33 @@ void specfem::solver::time_marching<specfem::simulation::type::adjoint,
     time_scheme->apply_predictor_phase_forward(elastic);
     time_scheme->apply_predictor_phase_forward(acoustic);
 
-    adjoint_kernels.template update_wavefields<elastic>(istep);
+    adjoint_kernels.template update_wavefields<elastic>(nstep - istep);
     time_scheme->apply_corrector_phase_forward(elastic);
 
-    adjoint_kernels.template update_wavefields<acoustic>(istep);
+    adjoint_kernels.template update_wavefields<acoustic>(nstep - istep);
     time_scheme->apply_corrector_phase_forward(acoustic);
 
     // Backward time step
     time_scheme->apply_predictor_phase_backward(acoustic);
     time_scheme->apply_predictor_phase_backward(elastic);
 
-    backward_kernels.template update_wavefields<acoustic>(istep);
+    backward_kernels.template update_wavefields<acoustic>(nstep - istep);
     time_scheme->apply_corrector_phase_backward(acoustic);
 
-    backward_kernels.template update_wavefields<elastic>(istep);
+    backward_kernels.template update_wavefields<elastic>(nstep - istep);
     time_scheme->apply_corrector_phase_backward(elastic);
 
-    // frechlet_kernels.compute_frechlet_derivatives<acoustic>(istep);
-    // frechlet_kernels.compute_frechlet_derivatives<elastic>(istep);
+    // Copy read wavefield buffer to the backward wavefield
+    // We need to do this after the first backward step to align
+    // the wavefields for the adjoint and backward simulations
+    // for accurate Frechet derivatives
+    if (istep == 0) {
+      specfem::compute::deep_copy(assembly.fields.buffer,
+                                  assembly.fields.backward);
+    }
+
+    // frechet_kernels.compute_frechet_derivatives<acoustic>(istep);
+    // frechet_kernels.compute_frechet_derivatives<elastic>(istep);
 
     if (istep % 10 == 0) {
       std::cout << "Progress : executed " << istep << " steps of " << nstep

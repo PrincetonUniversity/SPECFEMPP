@@ -33,17 +33,18 @@ private:
 };
 
 template <specfem::dimension::type DimensionType, typename qp_type>
-class time_marching<specfem::simulation::type::adjoint, DimensionType, qp_type>
+class time_marching<specfem::simulation::type::combined, DimensionType, qp_type>
     : public solver {
 public:
   time_marching(
+      const specfem::compute::assembly &assembly,
       const specfem::kernels::kernels<specfem::wavefield::type::adjoint,
                                       DimensionType, qp_type> &adjoint_kernels,
       const specfem::kernels::kernels<specfem::wavefield::type::backward,
                                       DimensionType, qp_type> &backward_kernels,
       const std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme)
-      : adjoint_kernels(adjoint_kernels), backward_kernels(backward_kernels),
-        time_scheme(time_scheme) {}
+      : assembly(assembly), adjoint_kernels(adjoint_kernels),
+        backward_kernels(backward_kernels), time_scheme(time_scheme) {}
 
   void run() override;
 
@@ -54,6 +55,7 @@ private:
   specfem::kernels::kernels<specfem::wavefield::type::backward, DimensionType,
                             qp_type>
       backward_kernels;
+  specfem::compute::assembly assembly;
   std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme;
 };
 } // namespace solver

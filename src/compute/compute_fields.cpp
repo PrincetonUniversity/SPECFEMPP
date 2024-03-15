@@ -23,7 +23,7 @@ specfem::compute::fields::fields(const specfem::compute::mesh &mesh,
                         specfem::wavefield::type::forward> {
         if (simulation == specfem::simulation::type::forward) {
           return { mesh, properties };
-        } else if (simulation == specfem::simulation::type::adjoint) {
+        } else if (simulation == specfem::simulation::type::combined) {
           return {};
         } else {
           throw std::runtime_error("Invalid simulation type");
@@ -34,7 +34,7 @@ specfem::compute::fields::fields(const specfem::compute::mesh &mesh,
                         specfem::wavefield::type::adjoint> {
         if (simulation == specfem::simulation::type::forward) {
           return {};
-        } else if (simulation == specfem::simulation::type::adjoint) {
+        } else if (simulation == specfem::simulation::type::combined) {
           return { mesh, properties };
         } else {
           throw std::runtime_error("Invalid simulation type");
@@ -45,7 +45,18 @@ specfem::compute::fields::fields(const specfem::compute::mesh &mesh,
                          specfem::wavefield::type::backward> {
         if (simulation == specfem::simulation::type::forward) {
           return {};
-        } else if (simulation == specfem::simulation::type::adjoint) {
+        } else if (simulation == specfem::simulation::type::combined) {
+          return { mesh, properties };
+        } else {
+          throw std::runtime_error("Invalid simulation type");
+        }
+      }()),
+      // Initialize the buffer field only if the simulation type is adjoint
+      buffer([&]() -> specfem::compute::simulation_field<
+                       specfem::wavefield::type::buffer> {
+        if (simulation == specfem::simulation::type::forward) {
+          return {};
+        } else if (simulation == specfem::simulation::type::combined) {
           return { mesh, properties };
         } else {
           throw std::runtime_error("Invalid simulation type");

@@ -4,12 +4,12 @@
 #include <Kokkos_Core.hpp>
 #include <cmath>
 
-specfem::forcing_function::Ricker::Ricker(const type_real dt,
+specfem::forcing_function::Ricker::Ricker(const int nsteps, const type_real dt,
                                           const type_real f0,
                                           const type_real tshift,
                                           const type_real factor,
                                           bool use_trick_for_better_pressure)
-    : dt(dt), f0(f0), factor(factor), tshift(tshift),
+    : nsteps(nsteps), dt(dt), f0(f0), factor(factor), tshift(tshift),
       use_trick_for_better_pressure(use_trick_for_better_pressure) {
 
   type_real hdur = 1.0 / this->f0;
@@ -18,13 +18,13 @@ specfem::forcing_function::Ricker::Ricker(const type_real dt,
 }
 
 specfem::forcing_function::Ricker::Ricker(
-    YAML::Node &Ricker, const type_real dt,
+    YAML::Node &Ricker, const int nsteps, const type_real dt,
     const bool use_trick_for_better_pressure) {
   type_real f0 = Ricker["f0"].as<type_real>();
   type_real tshift = Ricker["tshift"].as<type_real>();
   type_real factor = Ricker["factor"].as<type_real>();
 
-  *this = specfem::forcing_function::Ricker(dt, f0, tshift, factor,
+  *this = specfem::forcing_function::Ricker(nsteps, dt, f0, tshift, factor,
                                             use_trick_for_better_pressure);
 }
 
@@ -42,7 +42,6 @@ type_real specfem::forcing_function::Ricker::compute(type_real t) {
 }
 
 void specfem::forcing_function::Ricker::compute_source_time_function(
-    const int nsteps,
     specfem::kokkos::HostView1d<type_real> source_time_function) {
 
   for (int i = 0; i < nsteps; i++) {

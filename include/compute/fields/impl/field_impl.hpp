@@ -45,6 +45,21 @@ public:
 };
 } // namespace impl
 
+template <typename medium>
+void deep_copy(const impl::field_impl<medium> &dst,
+               const impl::field_impl<medium> &src) {
+  Kokkos::deep_copy(dst.index_mapping, src.index_mapping);
+  Kokkos::deep_copy(dst.h_index_mapping, src.h_index_mapping);
+  Kokkos::deep_copy(dst.field, src.field);
+  Kokkos::deep_copy(dst.h_field, src.h_field);
+  Kokkos::deep_copy(dst.field_dot, src.field_dot);
+  Kokkos::deep_copy(dst.h_field_dot, src.h_field_dot);
+  Kokkos::deep_copy(dst.field_dot_dot, src.field_dot_dot);
+  Kokkos::deep_copy(dst.h_field_dot_dot, src.h_field_dot_dot);
+  Kokkos::deep_copy(dst.mass_inverse, src.mass_inverse);
+  Kokkos::deep_copy(dst.h_mass_inverse, src.h_mass_inverse);
+}
+
 } // namespace compute
 } // namespace specfem
 

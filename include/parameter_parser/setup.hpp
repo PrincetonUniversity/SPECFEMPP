@@ -173,6 +173,8 @@ public:
     return this->solver->instantiate(assembly, time_scheme, quadrature);
   }
 
+  int get_nsteps() const { return this->time_scheme->get_nsteps(); }
+
 private:
   std::unique_ptr<specfem::runtime_configuration::header> header; ///< Pointer
                                                                   ///< to header

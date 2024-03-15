@@ -31,7 +31,7 @@ public:
    */
   source(){};
 
-  source(YAML::Node &Node, const type_real dt);
+  source(YAML::Node &Node, const int nsteps, const type_real dt);
   /**
    * @brief Get the x coordinate of the source
    *
@@ -76,7 +76,7 @@ public:
       const int nsteps,
       specfem::kokkos::HostView1d<type_real> source_time_function) const {
     return this->forcing_function->compute_source_time_function(
-        nsteps, source_time_function);
+        source_time_function);
   }
 
 protected:

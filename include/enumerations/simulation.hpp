@@ -6,7 +6,7 @@
 namespace specfem {
 namespace simulation {
 
-enum class type { forward, adjoint };
+enum class type { forward, combined };
 
 template <specfem::simulation::type SimulationType> class simulation;
 
@@ -16,10 +16,10 @@ public:
   static std::string to_string() { return "Forward"; }
 };
 
-template <> class simulation<specfem::simulation::type::adjoint> {
+template <> class simulation<specfem::simulation::type::combined> {
 public:
-  static constexpr auto simulation_type = specfem::simulation::type::adjoint;
-  static std::string to_string() { return "Adjoint"; }
+  static constexpr auto simulation_type = specfem::simulation::type::combined;
+  static std::string to_string() { return "Adjoint & Forward combined"; }
 };
 
 } // namespace simulation

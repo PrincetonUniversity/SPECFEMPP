@@ -27,6 +27,8 @@ struct fields {
       return adjoint;
     } else if constexpr (fieldtype == specfem::wavefield::type::backward) {
       return backward;
+    } else if constexpr (fieldtype == specfem::wavefield::type::buffer) {
+      return buffer;
     } else {
       static_assert("field type not supported");
     }
@@ -36,8 +38,10 @@ struct fields {
     forward.sync_fields<sync>();
     adjoint.sync_fields<sync>();
     backward.sync_fields<sync>();
+    buffer.sync_fields<sync>();
   }
 
+  specfem::compute::simulation_field<specfem::wavefield::type::buffer> buffer;
   specfem::compute::simulation_field<specfem::wavefield::type::forward> forward;
   specfem::compute::simulation_field<specfem::wavefield::type::adjoint> adjoint;
   specfem::compute::simulation_field<specfem::wavefield::type::backward>

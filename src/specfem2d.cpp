@@ -104,8 +104,10 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   // --------------------------------------------------------------
   //                   Read Sources and Receivers
   // --------------------------------------------------------------
+  const int nsteps = setup.get_nsteps();
   auto [sources, t0] =
-      specfem::sources::read_sources(source_filename, setup.get_dt());
+      specfem::sources::read_sources(source_filename, nsteps, setup.get_dt());
+
   const auto stations_filename = setup.get_stations_file();
   const auto angle = setup.get_receiver_angle();
   auto receivers = specfem::receivers::read_receivers(stations_filename, angle);
@@ -140,6 +142,8 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   const auto time_scheme = setup.instantiate_timescheme();
   if (mpi->main_proc())
     std::cout << *time_scheme << std::endl;
+
+  const int max_seismogram_time_step = time_scheme->get_max_seismogram_step();
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
@@ -147,12 +151,25 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   // --------------------------------------------------------------
   mpi->cout("Generating assembly:");
   mpi->cout("-------------------------------");
-  const int nsteps = time_scheme->get_max_timestep();
-  const int max_seismogram_time_step = time_scheme->get_max_seismogram_step();
-  const specfem::compute::assembly assembly(
+  specfem::compute::assembly assembly(
       mesh, quadrature, sources, receivers, setup.get_seismogram_types(),
       nsteps, max_seismogram_time_step, setup.get_simulation_type());
 
+  // --------------------------------------------------------------
+
+  // --------------------------------------------------------------
+  //                   Read wavefields
+  // --------------------------------------------------------------
+
+  const auto wavefield_reader = setup.instantiate_wavefield_reader(assembly);
+  if (wavefield_reader) {
+    mpi->cout("Reading wavefield files:");
+    mpi->cout("-------------------------------");
+
+    wavefield_reader->read();
+    // Transfer the buffer field to device
+    assembly.fields.buffer.sync_fields<specfem::sync::kind::HostToDevice>();
+  }
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------

@@ -135,12 +135,12 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
           std::make_unique<specfem::runtime_configuration::solver::solver>(
               "adjoint");
       number_of_simulation_modes++;
-      simulation = specfem::simulation::type::adjoint;
+      simulation = specfem::simulation::type::combined;
       if (const YAML::Node &n_reader = n_adjoint["reader"]) {
         if (const YAML::Node &n_wavefield = n_reader["wavefield"]) {
           this->wavefield =
               std::make_unique<specfem::runtime_configuration::wavefield>(
-                  n_wavefield, specfem::simulation::type::adjoint);
+                  n_wavefield, specfem::simulation::type::combined);
         } else {
           std::ostringstream message;
           message << "Error reading adjoint reader configuration. \n"

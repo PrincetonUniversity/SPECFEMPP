@@ -4,11 +4,12 @@
 #include <Kokkos_Core.hpp>
 #include <cmath>
 
-specfem::forcing_function::Dirac::Dirac(const type_real dt, const type_real f0,
+specfem::forcing_function::Dirac::Dirac(const int nsteps, const type_real dt,
+                                        const type_real f0,
                                         const type_real tshift,
                                         const type_real factor,
                                         bool use_trick_for_better_pressure)
-    : dt(dt), f0(f0), factor(factor), tshift(tshift),
+    : nsteps(nsteps), dt(dt), f0(f0), factor(factor), tshift(tshift),
       use_trick_for_better_pressure(use_trick_for_better_pressure) {
 
   type_real hdur = 1.0 / this->f0;
@@ -17,13 +18,13 @@ specfem::forcing_function::Dirac::Dirac(const type_real dt, const type_real f0,
 }
 
 specfem::forcing_function::Dirac::Dirac(
-    YAML::Node &Dirac, const type_real dt,
+    YAML::Node &Dirac, const int nsteps, const type_real dt,
     const bool use_trick_for_better_pressure) {
   type_real f0 = 1.0 / (10.0 * dt);
   type_real tshift = Dirac["tshift"].as<type_real>();
   type_real factor = Dirac["factor"].as<type_real>();
 
-  *this = specfem::forcing_function::Dirac(dt, f0, tshift, factor,
+  *this = specfem::forcing_function::Dirac(nsteps, dt, f0, tshift, factor,
                                            use_trick_for_better_pressure);
 }
 
@@ -41,7 +42,6 @@ type_real specfem::forcing_function::Dirac::compute(type_real t) {
 }
 
 void specfem::forcing_function::Dirac::compute_source_time_function(
-    const int nsteps,
     specfem::kokkos::HostView1d<type_real> source_time_function) {
 
   for (int i = 0; i < nsteps; i++) {
