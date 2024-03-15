@@ -65,7 +65,7 @@ specfem::runtime_configuration::wavefield::instantiate_wavefield_reader(
 
   const std::shared_ptr<specfem::reader::reader> reader =
       [&]() -> std::shared_ptr<specfem::reader::reader> {
-    if (this->simulation_type == specfem::simulation::type::adjoint) {
+    if (this->simulation_type == specfem::simulation::type::combined) {
       if (this->output_format == "HDF5") {
         return std::make_shared<
             specfem::reader::wavefield<specfem::IO::HDF5<specfem::IO::read> > >(

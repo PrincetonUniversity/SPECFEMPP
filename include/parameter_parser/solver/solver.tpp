@@ -35,9 +35,9 @@ specfem::runtime_configuration::solver::solver::instantiate(
                                                    specfem::dimension::type::dim2, qp_type>(
         assembly, quadrature);
     return std::make_shared<
-        specfem::solver::time_marching<specfem::simulation::type::adjoint,
+        specfem::solver::time_marching<specfem::simulation::type::combined,
                                        specfem::dimension::type::dim2, qp_type>>(
-        adjoint_kernels, backward_kernels, time_scheme);
+        assembly, adjoint_kernels, backward_kernels, time_scheme);
   } else {
     throw std::runtime_error("Simulation type not recognized");
   }

@@ -175,11 +175,13 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     // Read mesh generated MESHFEM
     specfem::mesh::mesh mesh(database_file, mpi);
     const type_real dt = setup.get_dt();
+    const int nsteps = setup.get_nsteps();
 
     // Read sources
     //    if start time is not explicitly specified then t0 is determined using
     //    source frequencies and time shift
-    auto [sources, t0] = specfem::sources::read_sources(sources_file, dt);
+    auto [sources, t0] =
+        specfem::sources::read_sources(sources_file, nsteps, dt);
 
     for (auto &source : sources) {
       if (mpi->main_proc())
@@ -194,7 +196,6 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     std::vector<std::shared_ptr<specfem::receivers::receiver> > receivers(0);
     std::vector<specfem::enums::seismogram::type> seismogram_types(0);
 
-    const type_real nsteps = it->get_max_timestep();
     specfem::compute::assembly assembly(mesh, quadratures, sources, receivers,
                                         seismogram_types, nsteps, 0,
                                         setup.get_simulation_type());

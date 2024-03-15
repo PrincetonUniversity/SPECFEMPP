@@ -63,7 +63,7 @@ private:
 };
 
 template <>
-class newmark<specfem::simulation::type::adjoint> : public time_scheme {
+class newmark<specfem::simulation::type::combined> : public time_scheme {
 
 public:
   using elastic_type =

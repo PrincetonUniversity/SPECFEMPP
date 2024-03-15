@@ -10,7 +10,7 @@
 #include <vector>
 
 std::tuple<std::vector<std::shared_ptr<specfem::sources::source> >, type_real>
-specfem::sources::read_sources(const std::string sources_file,
+specfem::sources::read_sources(const std::string sources_file, const int nsteps,
                                const type_real dt) {
   // read sources file
   std::vector<std::shared_ptr<specfem::sources::source> > sources;
@@ -21,10 +21,15 @@ specfem::sources::read_sources(const std::string sources_file,
   for (auto N : Node) {
     if (YAML::Node force_source = N["force"]) {
       sources.push_back(
-          std::make_shared<specfem::sources::force>(force_source, dt));
+          std::make_shared<specfem::sources::force>(force_source, nsteps, dt));
     } else if (YAML::Node moment_tensor_source = N["moment-tensor"]) {
       sources.push_back(std::make_shared<specfem::sources::moment_tensor>(
-          moment_tensor_source, dt));
+          moment_tensor_source, nsteps, dt));
+    } else if (YAML::Node adjoint_source = N["adjoint-source"]) {
+      sources.push_back(std::make_shared<specfem::sources::adjoint_source>(
+          adjoint_source, nsteps, dt));
+    } else {
+      throw std::runtime_error("Unknown source type");
     }
   }
 

@@ -59,6 +59,8 @@ public:
 
   type_real get_t0() const { return this->t0; }
 
+  int get_nsteps() const { return this->nstep; }
+
 private:
   int nstep;              ///< number of time steps
   type_real dt;           ///< delta time for the timescheme

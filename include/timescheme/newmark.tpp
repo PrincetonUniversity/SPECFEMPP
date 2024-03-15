@@ -116,7 +116,7 @@ void specfem::time_scheme::newmark<specfem::simulation::type::forward>::
   return;
 }
 
-void specfem::time_scheme::newmark<specfem::simulation::type::adjoint>::
+void specfem::time_scheme::newmark<specfem::simulation::type::combined>::
     apply_corrector_phase_forward(const specfem::element::medium_tag tag) {
   const auto field_dot = [&]() -> auto {
     if (tag == specfem::element::medium_tag::elastic) {
@@ -145,7 +145,7 @@ void specfem::time_scheme::newmark<specfem::simulation::type::adjoint>::
   return;
 }
 
-void specfem::time_scheme::newmark<specfem::simulation::type::adjoint>::
+void specfem::time_scheme::newmark<specfem::simulation::type::combined>::
     apply_corrector_phase_backward(const specfem::element::medium_tag tag) {
   const auto field_dot = [&]() -> auto {
     if (tag == specfem::element::medium_tag::elastic) {
@@ -174,7 +174,7 @@ void specfem::time_scheme::newmark<specfem::simulation::type::adjoint>::
   return;
 }
 
-void specfem::time_scheme::newmark<specfem::simulation::type::adjoint>::
+void specfem::time_scheme::newmark<specfem::simulation::type::combined>::
     apply_predictor_phase_forward(const specfem::element::medium_tag tag) {
   const auto field = [&]() -> auto {
     if (tag == specfem::element::medium_tag::elastic) {
@@ -214,7 +214,7 @@ void specfem::time_scheme::newmark<specfem::simulation::type::adjoint>::
   return;
 }
 
-void specfem::time_scheme::newmark<specfem::simulation::type::adjoint>::
+void specfem::time_scheme::newmark<specfem::simulation::type::combined>::
     apply_predictor_phase_backward(const specfem::element::medium_tag tag) {
   const auto field = [&]() -> auto {
     if (tag == specfem::element::medium_tag::elastic) {
@@ -266,7 +266,7 @@ void specfem::time_scheme::newmark<specfem::simulation::type::forward>::print(
           << "    Start time = " << this->t0 << "\n";
 }
 
-void specfem::time_scheme::newmark<specfem::simulation::type::adjoint>::print(
+void specfem::time_scheme::newmark<specfem::simulation::type::combined>::print(
     std::ostream &message) const {
   message << "  Time Scheme:\n"
           << "------------------------------\n"

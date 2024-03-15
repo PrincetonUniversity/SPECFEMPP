@@ -3,7 +3,7 @@
 
 namespace specfem {
 namespace wavefield {
-enum class type { forward, adjoint, backward };
+enum class type { forward, adjoint, backward, buffer };
 }
 } // namespace specfem
 

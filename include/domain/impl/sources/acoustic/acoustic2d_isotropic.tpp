@@ -47,12 +47,10 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::sources::source<
     compute_interaction(
         const type_real &stf,
         const specfem::kokkos::array_type<type_real, 2> &lagrange_interpolant,
-        const specfem::point::properties<medium_type::medium_tag,
-                                         medium_type::property_tag> &properties,
         specfem::kokkos::array_type<type_real, medium_type::components>
             &acceleration) const {
 
-  acceleration[0] = lagrange_interpolant[0] * stf / properties.kappa;
+  acceleration[0] = lagrange_interpolant[0] * stf;
 
   return;
 }

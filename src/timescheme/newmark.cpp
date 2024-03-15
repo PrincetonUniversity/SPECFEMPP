@@ -8,4 +8,4 @@ template class specfem::time_scheme::newmark<
     specfem::simulation::type::forward>;
 
 template class specfem::time_scheme::newmark<
-    specfem::simulation::type::adjoint>;
+    specfem::simulation::type::combined>;

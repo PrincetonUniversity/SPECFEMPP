@@ -31,12 +31,7 @@ public:
 
 private:
   std::string output_folder; ///< Path to output folder
-  specfem::compute::impl::field_impl<specfem::medium::medium<
-      specfem::dimension::type::dim2, specfem::element::medium_tag::elastic> >
-      elastic_field;
-  specfem::compute::impl::field_impl<specfem::medium::medium<
-      specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic> >
-      acoustic_field;
+  specfem::compute::simulation_field<specfem::wavefield::type::buffer> buffer;
 };
 
 } // namespace reader

@@ -15,9 +15,9 @@ specfem::runtime_configuration::time_scheme::time_scheme::instantiate(
       it = std::make_shared<
           specfem::time_scheme::newmark<specfem::simulation::type::forward> >(
           this->nstep, nstep_between_samples, this->dt, this->t0);
-    } else if (this->type == specfem::simulation::type::adjoint) {
+    } else if (this->type == specfem::simulation::type::combined) {
       it = std::make_shared<
-          specfem::time_scheme::newmark<specfem::simulation::type::adjoint> >(
+          specfem::time_scheme::newmark<specfem::simulation::type::combined> >(
           this->nstep, nstep_between_samples, this->dt, this->t0);
     } else {
       std::ostringstream message;

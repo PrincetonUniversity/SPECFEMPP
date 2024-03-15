@@ -25,8 +25,7 @@ public:
 
 private:
   std::string output_folder; ///< Path to output folder
-  specfem::compute::impl::field_impl<elastic_type> elastic_field;
-  specfem::compute::impl::field_impl<acoustic_type> acoustic_field;
+  specfem::compute::simulation_field<specfem::wavefield::type::forward> forward;
 };
 } // namespace writer
 } // namespace specfem
