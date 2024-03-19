@@ -33,8 +33,8 @@ struct assembly {
       const std::vector<std::shared_ptr<specfem::receivers::receiver> >
           &receivers,
       const std::vector<specfem::enums::seismogram::type> &stypes,
-      const int max_timesteps, const int max_sig_step,
-      const specfem::simulation::type simulation);
+      const type_real t0, const type_real dt, const int max_timesteps,
+      const int max_sig_step, const specfem::simulation::type simulation);
 };
 
 } // namespace compute

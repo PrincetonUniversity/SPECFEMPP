@@ -197,8 +197,8 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     std::vector<specfem::enums::seismogram::type> seismogram_types(0);
 
     specfem::compute::assembly assembly(mesh, quadratures, sources, receivers,
-                                        seismogram_types, nsteps, 0,
-                                        setup.get_simulation_type());
+                                        seismogram_types, t0, setup.get_dt(),
+                                        nsteps, 0, setup.get_simulation_type());
 
     it->link_assembly(assembly);
 

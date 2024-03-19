@@ -14,8 +14,8 @@ template <specfem::wavefield::type WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, typename qp_type>
-specfem::domain::impl::kernels::receiver_kernel<WavefieldType,DimensionType, MediumTag,
-                                                PropertyTag, qp_type>::
+specfem::domain::impl::kernels::receiver_kernel<
+    WavefieldType, DimensionType, MediumTag, PropertyTag, qp_type>::
     receiver_kernel(
         const specfem::compute::assembly &assembly,
         const specfem::kokkos::HostView1d<int> h_receiver_kernel_index_mapping,
@@ -27,8 +27,10 @@ specfem::domain::impl::kernels::receiver_kernel<WavefieldType,DimensionType, Med
       points(assembly.mesh.points), quadrature(assembly.mesh.quadratures),
       partial_derivatives(assembly.partial_derivatives),
       properties(assembly.properties), receivers(assembly.receivers),
-      field(assembly.fields.get_simulation_field<WavefieldType>().template get_field<medium_type>()),
-      global_index_mapping(assembly.fields.get_simulation_field<WavefieldType>().assembly_index_mapping),
+      field(assembly.fields.get_simulation_field<WavefieldType>()
+                .template get_field<medium_type>()),
+      global_index_mapping(assembly.fields.get_simulation_field<WavefieldType>()
+                               .assembly_index_mapping),
       quadrature_points(quadrature_points) {
 
   Kokkos::parallel_for(
@@ -152,16 +154,20 @@ void specfem::domain::impl::kernels::receiver_kernel<
               int ix, iz;
               sub2ind(xz, ngllx, iz, ix);
               s_hprime(iz, ix, 0) = hprime(iz, ix);
-              const int iglob =
-                  global_index_mapping(index_mapping(ispec_l, iz, ix),
-                                       static_cast<int>(medium_type::medium_tag));
+              const int iglob = global_index_mapping(
+                  index_mapping(ispec_l, iz, ix),
+                  static_cast<int>(medium_type::medium_tag));
 #ifdef KOKKOS_ENABLE_CUDA
 #pragma unroll
 #endif
               for (int icomponent = 0; icomponent < components; ++icomponent) {
+                const type_real displacement = field.field(iglob, icomponent);
                 s_field(iz, ix, icomponent) = field.field(iglob, icomponent);
+                const type_real velocity = field.field_dot(iglob, icomponent);
                 s_field_dot(iz, ix, icomponent) =
                     field.field_dot(iglob, icomponent);
+                const type_real acceleration =
+                    field.field_dot_dot(iglob, icomponent);
                 s_field_dot_dot(iz, ix, icomponent) =
                     field.field_dot_dot(iglob, icomponent);
               }
@@ -225,6 +231,33 @@ void specfem::domain::impl::kernels::receiver_kernel<
         const auto sv_receiver_field =
             Kokkos::subview(receivers.receiver_field, Kokkos::ALL, Kokkos::ALL,
                             iseis_l, ireceiver_l, isig_step, Kokkos::ALL);
+
+        const specfem::kokkos::array_type<type_real, 50> t_function(
+            sv_receiver_field(0, 0, 0), sv_receiver_field(0, 0, 1),
+            sv_receiver_field(0, 1, 0), sv_receiver_field(0, 1, 1),
+            sv_receiver_field(0, 2, 0), sv_receiver_field(0, 2, 1),
+            sv_receiver_field(0, 3, 0), sv_receiver_field(0, 3, 1),
+            sv_receiver_field(0, 4, 0), sv_receiver_field(0, 4, 1),
+            sv_receiver_field(1, 0, 0), sv_receiver_field(1, 0, 1),
+            sv_receiver_field(1, 1, 0), sv_receiver_field(1, 1, 1),
+            sv_receiver_field(1, 2, 0), sv_receiver_field(1, 2, 1),
+            sv_receiver_field(1, 3, 0), sv_receiver_field(1, 3, 1),
+            sv_receiver_field(1, 4, 0), sv_receiver_field(1, 4, 1),
+            sv_receiver_field(2, 0, 0), sv_receiver_field(2, 0, 1),
+            sv_receiver_field(2, 1, 0), sv_receiver_field(2, 1, 1),
+            sv_receiver_field(2, 2, 0), sv_receiver_field(2, 2, 1),
+            sv_receiver_field(2, 3, 0), sv_receiver_field(2, 3, 1),
+            sv_receiver_field(2, 4, 0), sv_receiver_field(2, 4, 1),
+            sv_receiver_field(3, 0, 0), sv_receiver_field(3, 0, 1),
+            sv_receiver_field(3, 1, 0), sv_receiver_field(3, 1, 1),
+            sv_receiver_field(3, 2, 0), sv_receiver_field(3, 2, 1),
+            sv_receiver_field(3, 3, 0), sv_receiver_field(3, 3, 1),
+            sv_receiver_field(3, 4, 0), sv_receiver_field(3, 4, 1),
+            sv_receiver_field(4, 0, 0), sv_receiver_field(4, 0, 1),
+            sv_receiver_field(4, 1, 0), sv_receiver_field(4, 1, 1),
+            sv_receiver_field(4, 2, 0), sv_receiver_field(4, 2, 1),
+            sv_receiver_field(4, 3, 0), sv_receiver_field(4, 3, 1),
+            sv_receiver_field(4, 4, 0), sv_receiver_field(4, 4, 1));
         const auto polynomial = Kokkos::subview(
             receivers.receiver_array, ireceiver_l, 0, Kokkos::ALL, Kokkos::ALL);
 
@@ -247,6 +280,12 @@ void specfem::domain::impl::kernels::receiver_kernel<
             receivers.seismogram(isig_step, iseis_l, ireceiver_l, 0) = 0;
           }
         });
+
+        specfem::kokkos::array_type<type_real, 2> t_values(
+                receivers.seismogram(isig_step, iseis_l, ireceiver_l, 0),
+                receivers.seismogram(isig_step, iseis_l, ireceiver_l, 1));
+
+        return;
 
         // case specfem::enums::seismogram::type::displacement:
         // case specfem::enums::seismogram::type::velocity:

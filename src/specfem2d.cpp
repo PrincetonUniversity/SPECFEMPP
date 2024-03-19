@@ -139,6 +139,7 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   //                   Instantiate Timescheme
   // --------------------------------------------------------------
   setup.update_t0(t0);
+  t0 = setup.get_t0();
   const auto time_scheme = setup.instantiate_timescheme();
   if (mpi->main_proc())
     std::cout << *time_scheme << std::endl;
@@ -151,9 +152,11 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   // --------------------------------------------------------------
   mpi->cout("Generating assembly:");
   mpi->cout("-------------------------------");
+  const type_real dt = setup.get_dt();
   specfem::compute::assembly assembly(
-      mesh, quadrature, sources, receivers, setup.get_seismogram_types(),
-      nsteps, max_seismogram_time_step, setup.get_simulation_type());
+      mesh, quadrature, sources, receivers, setup.get_seismogram_types(), t0,
+      dt, nsteps, max_seismogram_time_step, setup.get_simulation_type());
+  time_scheme->link_assembly(assembly);
 
   // --------------------------------------------------------------
 

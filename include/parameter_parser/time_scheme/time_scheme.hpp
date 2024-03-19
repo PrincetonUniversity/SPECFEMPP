@@ -24,8 +24,9 @@ public:
    * @param nstep Number of time steps
    */
   time_scheme(std::string timescheme, type_real dt, type_real nstep,
-              specfem::simulation::type simulation)
-      : timescheme(timescheme), dt(dt), nstep(nstep), type(simulation) {}
+              type_real t0, specfem::simulation::type simulation)
+      : timescheme(timescheme), dt(dt), nstep(nstep), t0(t0), type(simulation) {
+  }
   /**
    * @brief Construct a new time marching object
    *
@@ -42,7 +43,10 @@ public:
    *
    * @param t0 Simulation start time
    */
-  void update_t0(type_real t0) { this->t0 = t0; }
+  void update_t0(type_real t0) {
+    if (std::abs(this->t0) < 10 * std::numeric_limits<type_real>::epsilon())
+      this->t0 = t0;
+  }
   /**
    * @brief Instantiate the Timescheme
    *
@@ -66,7 +70,7 @@ public:
 private:
   int nstep;              ///< number of time steps
   type_real dt;           ///< delta time for the timescheme
-  type_real t0;           ///< simulation start time
+  type_real t0 = 0.0;     ///< start time
   std::string timescheme; ///< Time scheme e.g. Newmark, Runge-Kutta, LDDRK
   specfem::simulation::type type;
 };

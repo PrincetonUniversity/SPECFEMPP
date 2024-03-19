@@ -37,9 +37,17 @@ specfem::runtime_configuration::time_scheme::time_scheme::time_scheme(
     const YAML::Node &timescheme, const specfem::simulation::type simulation) {
 
   try {
+    const type_real t0 = [&timescheme]() -> type_real {
+      if (timescheme["t0"]) {
+        return -1.0 * timescheme["t0"].as<type_real>();
+      } else {
+        return 0.0;
+      }
+    }();
+
     *this = specfem::runtime_configuration::time_scheme::time_scheme(
         timescheme["type"].as<std::string>(), timescheme["dt"].as<type_real>(),
-        timescheme["nstep"].as<int>(), simulation);
+        timescheme["nstep"].as<int>(), t0, simulation);
   } catch (YAML::ParserException &e) {
     std::ostringstream message;
 

@@ -17,15 +17,15 @@ specfem::compute::assembly::assembly(
     const std::vector<std::shared_ptr<specfem::receivers::receiver> >
         &receivers,
     const std::vector<specfem::enums::seismogram::type> &stypes,
-    const int max_timesteps, const int max_sig_step,
-    const specfem::simulation::type simulation) {
+    const type_real t0, const type_real dt, const int max_timesteps,
+    const int max_sig_step, const specfem::simulation::type simulation) {
   this->mesh = specfem::compute::mesh(mesh.control_nodes, quadratures);
   this->partial_derivatives = specfem::compute::partial_derivatives(this->mesh);
   this->properties = specfem::compute::properties(
       this->mesh.nspec, this->mesh.ngllz, this->mesh.ngllx, mesh.materials);
   this->sources =
       specfem::compute::sources(sources, this->mesh, this->partial_derivatives,
-                                this->properties, max_timesteps);
+                                this->properties, t0, dt, max_timesteps);
   this->receivers =
       specfem::compute::receivers(max_sig_step, receivers, stypes, this->mesh);
   this->boundaries =
