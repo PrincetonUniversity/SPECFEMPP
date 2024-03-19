@@ -68,6 +68,8 @@ public:
   //  * @param t0 Simulation start time
   //  */
   void update_t0(type_real t0) { this->time_scheme->update_t0(t0); }
+
+  type_real get_t0() const { return this->time_scheme->get_t0(); }
   /**
    * @brief Log the header and description of the simulation
    */

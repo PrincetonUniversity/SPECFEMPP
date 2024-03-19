@@ -13,7 +13,8 @@ specfem::compute::sources::sources(
     const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
     const specfem::compute::mesh &mesh,
     const specfem::compute::partial_derivatives &partial_derivatives,
-    const specfem::compute::properties &properties, const int nsteps)
+    const specfem::compute::properties &properties, const type_real t0,
+    const type_real dt, const int nsteps)
     : source_array("specfem::compute::sources::source_array", sources.size(),
                    ndim, mesh.quadratures.gll.N, mesh.quadratures.gll.N),
       h_source_array(Kokkos::create_mirror_view(source_array)),
@@ -29,7 +30,8 @@ specfem::compute::sources::sources(
                                            properties, sv_source_array);
     auto sv_stf_array =
         Kokkos::subview(this->h_stf_array, isource, Kokkos::ALL);
-    sources[isource]->compute_source_time_function(nsteps, sv_stf_array);
+    sources[isource]->compute_source_time_function(t0, dt, nsteps,
+                                                   sv_stf_array);
     specfem::point::gcoord2 coord = specfem::point::gcoord2(
         sources[isource]->get_x(), sources[isource]->get_z());
 

@@ -101,7 +101,7 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
   const auto stypes = setup.get_seismogram_types();
 
   specfem::compute::assembly assembly(mesh, quadratures, sources, receivers,
-                                      stypes, 0, 1,
+                                      stypes, 0, 0, 0, 1,
                                       setup.get_simulation_type());
 
   const auto displacement_field = assembly.fields.forward.elastic.field;

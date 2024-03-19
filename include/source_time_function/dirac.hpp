@@ -40,27 +40,28 @@ public:
    *
    * @param tshift new tshift value
    */
-  void update_tshift(type_real tshift) override { this->tshift = tshift; }
+  void update_tshift(type_real tshift) override { this->__tshift = tshift; }
   /**
    * @brief Get the t0 value
    *
    * @return t0 value
    */
-  type_real get_t0() const override { return this->t0; }
+  type_real get_t0() const override { return this->__t0; }
 
   std::string print() const override;
 
   void compute_source_time_function(
+      const type_real t0, const type_real dt, const int nsteps,
       specfem::kokkos::HostView1d<type_real> source_time_function) override;
 
 private:
-  int nsteps;
-  type_real f0;     ///< frequence f0
-  type_real tshift; ///< value of tshit
-  type_real t0;     ///< t0 value
-  type_real factor; ///< scaling factor
-  bool use_trick_for_better_pressure;
-  type_real dt;
+  int __nsteps;
+  type_real __f0;     ///< frequence f0
+  type_real __tshift; ///< value of tshit
+  type_real __t0;     ///< t0 value
+  type_real __factor; ///< scaling factor
+  bool __use_trick_for_better_pressure;
+  type_real __dt;
 };
 
 } // namespace forcing_function
