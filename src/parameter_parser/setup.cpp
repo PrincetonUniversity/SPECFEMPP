@@ -130,10 +130,10 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
       }
     }
 
-    if (const YAML::Node &n_adjoint = n_simulation_mode["adjoint"]) {
+    if (const YAML::Node &n_adjoint = n_simulation_mode["combined"]) {
       this->solver =
           std::make_unique<specfem::runtime_configuration::solver::solver>(
-              "adjoint");
+              "combined");
       number_of_simulation_modes++;
       simulation = specfem::simulation::type::combined;
       if (const YAML::Node &n_reader = n_adjoint["reader"]) {
@@ -151,6 +151,26 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
         std::ostringstream message;
         message << "Error reading adjoint reader configuration. \n";
         throw std::runtime_error(message.str());
+      }
+
+      if (const YAML::Node &n_writer = n_adjoint["writer"]) {
+        std::ostringstream message;
+        message << "************************************************\n"
+                << "Warning : Writer has been initialized for adjoint "
+                   "simulation. \n"
+                << "         This is generally nacessary for debugging "
+                   "purposes. \n"
+                << "         If this is a production run then reconsider if "
+                   "seismogram computation is needed. \n"
+                << "************************************************\n";
+        std::cout << message.str();
+        if (const YAML::Node &n_seismogram = n_writer["seismogram"]) {
+          this->seismogram =
+              std::make_unique<specfem::runtime_configuration::seismogram>(
+                  n_seismogram);
+        } else {
+          this->seismogram = nullptr;
+        }
       }
     }
 

@@ -25,7 +25,7 @@ specfem::runtime_configuration::solver::solver::instantiate(
         specfem::solver::time_marching<specfem::simulation::type::forward,
                                        specfem::dimension::type::dim2, qp_type>>(
         kernels, time_scheme);
-  } else if (this->simulation_type == "adjoint") {
+  } else if (this->simulation_type == "combined") {
     std::cout << "Instantiating Kernels \n";
     std::cout << "-------------------------------\n";
     const auto adjoint_kernels = specfem::kernels::kernels<specfem::wavefield::type::adjoint,
