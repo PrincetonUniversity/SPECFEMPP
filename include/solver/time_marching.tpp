@@ -59,25 +59,27 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
   const int nstep = time_scheme->get_max_timestep();
 
   for (int istep : time_scheme->iterate()) {
+    const int backward_step = nstep - istep - 1;
     // Adjoint time step
-    time_scheme->apply_predictor_phase_forward(elastic);
     time_scheme->apply_predictor_phase_forward(acoustic);
+    time_scheme->apply_predictor_phase_forward(elastic);
 
-    adjoint_kernels.template update_wavefields<elastic>(nstep - istep);
-    time_scheme->apply_corrector_phase_forward(elastic);
-
-    adjoint_kernels.template update_wavefields<acoustic>(nstep - istep);
+    adjoint_kernels.template update_wavefields<acoustic>(backward_step);
     time_scheme->apply_corrector_phase_forward(acoustic);
 
+    adjoint_kernels.template update_wavefields<elastic>(backward_step);
+    time_scheme->apply_corrector_phase_forward(elastic);
+
     // Backward time step
-    time_scheme->apply_predictor_phase_backward(acoustic);
     time_scheme->apply_predictor_phase_backward(elastic);
+    time_scheme->apply_predictor_phase_backward(acoustic);
 
-    backward_kernels.template update_wavefields<acoustic>(nstep - istep);
-    time_scheme->apply_corrector_phase_backward(acoustic);
+    backward_kernels.template update_wavefields<elastic>(backward_step);
 
-    backward_kernels.template update_wavefields<elastic>(nstep - istep);
     time_scheme->apply_corrector_phase_backward(elastic);
+
+    backward_kernels.template update_wavefields<acoustic>(backward_step);
+    time_scheme->apply_corrector_phase_backward(acoustic);
 
     // Copy read wavefield buffer to the backward wavefield
     // We need to do this after the first backward step to align
@@ -90,6 +92,11 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
 
     // frechet_kernels.compute_frechet_derivatives<acoustic>(istep);
     // frechet_kernels.compute_frechet_derivatives<elastic>(istep);
+
+    if (time_scheme->compute_seismogram(istep)) {
+      backward_kernels.compute_seismograms(time_scheme->get_seismogram_step());
+      time_scheme->increment_seismogram_step();
+    }
 
     if (istep % 10 == 0) {
       std::cout << "Progress : executed " << istep << " steps of " << nstep
