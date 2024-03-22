@@ -20,10 +20,11 @@ public:
    * @param factor factor to scale source time function
    * @param use_trick_for_better_pressure
    */
-  Ricker(const type_real dt, const type_real f0, const type_real tshift,
-         const type_real factor, const bool use_trick_for_better_pressure);
+  Ricker(const int nsteps, const type_real dt, const type_real f0,
+         const type_real tshift, const type_real factor,
+         const bool use_trick_for_better_pressure);
 
-  Ricker(YAML::Node &Ricker, const type_real dt,
+  Ricker(YAML::Node &Ricker, const int nsteps, const type_real dt,
          const bool use_trick_for_better_pressure);
 
   /**
@@ -32,33 +33,34 @@ public:
    * @param t
    * @return value of source time function at time t
    */
-  type_real compute(type_real t) override;
+  type_real compute(type_real t);
   /**
    * @brief update the time shift value
    *
    * @param tshift new tshift value
    */
-  void update_tshift(type_real tshift) override { this->tshift = tshift; }
+  void update_tshift(type_real tshift) override { this->__tshift = tshift; }
   /**
    * @brief Get the t0 value
    *
    * @return t0 value
    */
-  type_real get_t0() const override { return this->t0; }
+  type_real get_t0() const override { return this->__t0; }
 
   std::string print() const override;
 
   void compute_source_time_function(
-      const int nsteps,
+      const type_real t0, const type_real dt, const int nsteps,
       specfem::kokkos::HostView1d<type_real> source_time_function) override;
 
 private:
-  type_real f0;     ///< frequence f0
-  type_real tshift; ///< value of tshit
-  type_real t0;     ///< t0 value
-  type_real factor; ///< scaling factor
-  bool use_trick_for_better_pressure;
-  type_real dt;
+  int __nsteps;
+  type_real __f0;     ///< frequence f0
+  type_real __tshift; ///< value of tshit
+  type_real __t0;     ///< t0 value
+  type_real __factor; ///< scaling factor
+  bool __use_trick_for_better_pressure;
+  type_real __dt;
 };
 
 } // namespace forcing_function

@@ -12,27 +12,42 @@ namespace specfem {
 namespace compute {
 struct fields {
 
-  using forward_type = specfem::enums::simulation::forward;
-
   fields() = default;
 
   fields(const specfem::compute::mesh &mesh,
-         const specfem::compute::properties &properties);
+         const specfem::compute::properties &properties,
+         const specfem::simulation::type simulation);
 
-  template <typename simulation>
-  KOKKOS_INLINE_FUNCTION specfem::compute::simulation_field<simulation>
-  get_simulation_field() {
-    if constexpr (std::is_same_v<simulation, forward_type>) {
+  template <specfem::wavefield::type fieldtype>
+  KOKKOS_INLINE_FUNCTION specfem::compute::simulation_field<fieldtype>
+  get_simulation_field() const {
+    if constexpr (fieldtype == specfem::wavefield::type::forward) {
       return forward;
+    } else if constexpr (fieldtype == specfem::wavefield::type::adjoint) {
+      return adjoint;
+    } else if constexpr (fieldtype == specfem::wavefield::type::backward) {
+      return backward;
+    } else if constexpr (fieldtype == specfem::wavefield::type::buffer) {
+      return buffer;
+    } else {
+      static_assert("field type not supported");
     }
   }
 
   template <specfem::sync::kind sync> void sync_fields() {
     forward.sync_fields<sync>();
+    adjoint.sync_fields<sync>();
+    backward.sync_fields<sync>();
+    buffer.sync_fields<sync>();
   }
 
-  specfem::compute::simulation_field<forward_type> forward;
+  specfem::compute::simulation_field<specfem::wavefield::type::buffer> buffer;
+  specfem::compute::simulation_field<specfem::wavefield::type::forward> forward;
+  specfem::compute::simulation_field<specfem::wavefield::type::adjoint> adjoint;
+  specfem::compute::simulation_field<specfem::wavefield::type::backward>
+      backward;
 };
+
 } // namespace compute
 } // namespace specfem
 

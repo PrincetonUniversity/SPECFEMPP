@@ -15,30 +15,37 @@ namespace {
 /// Struct to tag each element
 struct element_tag {
 
-  element_tag(
-      const specfem::enums::element::type &medium_tag,
-      const specfem::enums::element::property_tag &property_tag,
-      const specfem::enums::element::boundary_tag_container &boundary_tag)
+  element_tag(const specfem::element::medium_tag &medium_tag,
+              const specfem::element::property_tag &property_tag,
+              const specfem::element::boundary_tag_container &boundary_tag)
       : medium_tag(medium_tag), property_tag(property_tag),
         boundary_tag(boundary_tag) {}
 
   element_tag() = default;
 
-  specfem::enums::element::property_tag property_tag;
-  specfem::enums::element::boundary_tag_container boundary_tag;
-  specfem::enums::element::type medium_tag;
+  specfem::element::property_tag property_tag;
+  specfem::element::boundary_tag_container boundary_tag;
+  specfem::element::medium_tag medium_tag;
 };
 
-template <class medium, class qp_type, class property, class BC>
+template <specfem::wavefield::type WavefieldType,
+          specfem::dimension::type DimensionType,
+          specfem::element::medium_tag medium_tag,
+          specfem::element::property_tag property_tag,
+          specfem::element::boundary_tag boundary_tag, typename qp_type>
 void allocate_elements(
     const specfem::compute::assembly &assembly, qp_type quadrature_points,
     const specfem::kokkos::HostView1d<element_tag> element_tags,
-    specfem::domain::impl::kernels::element_kernel<medium, qp_type, property,
-                                                   BC> &elements) {
+    specfem::domain::impl::kernels::element_kernel<
+        WavefieldType, DimensionType, medium_tag, property_tag, boundary_tag,
+        qp_type> &elements) {
 
-  constexpr auto boundary_tag = BC::value;
-  constexpr auto medium_tag = medium::value;
-  constexpr auto property_tag = property::value;
+  using dimension = specfem::dimension::dimension<DimensionType>;
+  using medium_type =
+      specfem::medium::medium<DimensionType, medium_tag, property_tag>;
+  using boundary_conditions_type =
+      specfem::boundary::boundary<DimensionType, medium_tag, property_tag,
+                                  boundary_tag, qp_type>;
 
   const int nspec = assembly.mesh.nspec;
 
@@ -51,9 +58,9 @@ void allocate_elements(
 
       // make sure acoustic free surface elements are acoustic
       if (element_tags(ispec).boundary_tag ==
-          specfem::enums::element::boundary_tag::acoustic_free_surface) {
+          specfem::element::boundary_tag::acoustic_free_surface) {
         if (element_tags(ispec).medium_tag !=
-            specfem::enums::element::type::acoustic) {
+            specfem::element::medium_tag::acoustic) {
           throw std::runtime_error("Error: acoustic free surface boundary "
                                    "condition found non acoustic element");
         }
@@ -140,27 +147,30 @@ void allocate_elements(
   // Kokkos::deep_copy(ispec_domain, h_ispec_domain);
 
   std::cout << "  - Element type: \n"
-            << "    - dimension           : "
-            << specfem::enums::element::dimension::dim2::to_string() << "\n"
-            << "    - property            : " << property::to_string() << "\n"
-            << "    - Boundary Conditions : " << BC::to_string() << "\n"
+            << "    - dimension           : " << dimension::to_string() << "\n"
+            << "    - Element type        : " << medium_type::to_string()
+            << "\n"
+            << "    - Boundary Conditions : "
+            << boundary_conditions_type::to_string() << "\n"
             << "    - Number of elements  : " << nelements << "\n\n";
 
   // Create isotropic acoustic surface elements
-  elements = specfem::domain::impl::kernels::element_kernel<medium, qp_type,
-                                                            property, BC>(
-      assembly, h_ispec_domain, quadrature_points);
+  elements = specfem::domain::impl::kernels::element_kernel<
+      WavefieldType, DimensionType, medium_tag, property_tag, boundary_tag,
+      qp_type>(assembly, h_ispec_domain, quadrature_points);
 }
 
-template <class medium, class qp_type>
+template <specfem::wavefield::type WavefieldType,
+          specfem::dimension::type DimensionType,
+          specfem::element::medium_tag medium_tag,
+          specfem::element::property_tag property_tag, typename qp_type>
 void allocate_isotropic_sources(
     const specfem::compute::assembly &assembly, qp_type quadrature_points,
-    specfem::domain::impl::kernels::source_kernel<
-        medium, qp_type, specfem::enums::element::property::isotropic>
-        &isotropic_sources) {
+    specfem::domain::impl::kernels::source_kernel<WavefieldType, DimensionType,
+                                                  medium_tag, property_tag,
+                                                  qp_type> &isotropic_sources) {
 
-  const auto value = medium::value;
-
+  const auto value = medium_tag;
   // Create isotropic sources
   const auto ispec_array = assembly.sources.h_ispec_array;
 
@@ -192,21 +202,24 @@ void allocate_isotropic_sources(
 
   // Allocate isotropic sources
   isotropic_sources = specfem::domain::impl::kernels::source_kernel<
-      medium, qp_type, specfem::enums::element::property::isotropic>(
+      WavefieldType, DimensionType, medium_tag, property_tag, qp_type>(
       assembly, h_source_kernel_index_mapping, h_source_mapping,
       quadrature_points);
 
   return;
 }
 
-template <class medium, class qp_type>
+template <specfem::wavefield::type WavefieldType,
+          specfem::dimension::type DimensionType,
+          specfem::element::medium_tag medium_tag,
+          specfem::element::property_tag property_tag, typename qp_type>
 void allocate_isotropic_receivers(
     const specfem::compute::assembly &assembly, qp_type quadrature_points,
     specfem::domain::impl::kernels::receiver_kernel<
-        medium, qp_type, specfem::enums::element::property::isotropic>
+        WavefieldType, DimensionType, medium_tag, property_tag, qp_type>
         &isotropic_receivers) {
 
-  const auto value = medium::value;
+  const auto value = medium_tag;
 
   // Create isotropic sources
   const auto ispec_array = assembly.receivers.h_ispec_array;
@@ -239,7 +252,7 @@ void allocate_isotropic_receivers(
 
   // Allocate isotropic sources
   isotropic_receivers = specfem::domain::impl::kernels::receiver_kernel<
-      medium, qp_type, specfem::enums::element::property::isotropic>(
+      WavefieldType, DimensionType, medium_tag, property_tag, qp_type>(
       assembly, h_receiver_kernel_index_mapping, h_receiver_mapping,
       quadrature_points);
 
@@ -247,10 +260,15 @@ void allocate_isotropic_receivers(
 }
 } // namespace
 
-template <class medium, class qp_type>
-specfem::domain::impl::kernels::kernels<medium, qp_type>::kernels(
-    const specfem::compute::assembly &assembly,
-    const qp_type &quadrature_points) {
+template <specfem::wavefield::type WavefieldType,
+          specfem::dimension::type DimensionType,
+          specfem::element::medium_tag medium, typename qp_type>
+specfem::domain::impl::kernels::kernels<
+    WavefieldType, DimensionType, medium,
+    qp_type>::kernels(const specfem::compute::assembly &assembly,
+                      const qp_type &quadrature_points) {
+
+  using medium_type = specfem::medium::medium<DimensionType, medium>;
 
   const int nspec = assembly.mesh.nspec;
   specfem::kokkos::HostView1d<element_tag> element_tags(
@@ -347,7 +365,7 @@ specfem::domain::impl::kernels::kernels<medium, qp_type>::kernels(
 
   std::cout << " Element Statistics \n"
             << "------------------------------\n"
-            << "- Types of elements in " << medium::to_string()
+            << "- Types of elements in " << medium_type::to_string()
             << " medium :\n\n";
 
   // -----------------------------------------------------------
@@ -376,6 +394,10 @@ specfem::domain::impl::kernels::kernels<medium, qp_type>::kernels(
 
   allocate_isotropic_receivers(assembly, quadrature_points,
                                isotropic_receivers);
+
+  // Compute mass matrices
+
+  this->compute_mass_matrix();
 
   return;
 }

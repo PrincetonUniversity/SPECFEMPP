@@ -2,6 +2,7 @@
 #define SPECFEM_IO_HDF5_IMPL_FILE_HPP
 
 #include "H5Cpp.h"
+#include "IO/operators.hpp"
 #include "dataset.hpp"
 #include "group.hpp"
 #include <memory>
@@ -13,32 +14,55 @@ namespace impl {
 namespace HDF5 {
 
 // Forward declaration
-template <typename ViewType> class Dataset;
-class Group;
+template <typename OpType> class Group;
+template <typename ViewType, typename OpType> class Dataset;
 
-class File {
+template <typename OpType> class File;
+
+template <> class File<specfem::IO::write> {
 public:
+  using OpType = specfem::IO::write;
+
+  File(const std::string &name)
+      : file(std::make_unique<H5::H5File>(name + ".h5", H5F_ACC_TRUNC)) {}
   File(const char *name)
       : file(std::make_unique<H5::H5File>(std::string(name) + ".h5",
                                           H5F_ACC_TRUNC)) {}
 
-  File(const std::string &name)
-      : file(std::make_unique<H5::H5File>(name + ".h5", H5F_ACC_TRUNC)) {}
-
-  File(const char *name, unsigned int flags)
-      : file(std::make_unique<H5::H5File>(std::string(name) + ".h5", flags)) {}
-
-  File(const std::string &name, unsigned int flags)
-      : file(std::make_unique<H5::H5File>(name + ".h5", flags)) {}
-
   template <typename ViewType>
-  specfem::IO::impl::HDF5::Dataset<ViewType>
+  specfem::IO::impl::HDF5::Dataset<ViewType, OpType>
   createDataset(const std::string &name, const ViewType data) {
-    return specfem::IO::impl::HDF5::Dataset<ViewType>(file, name, data);
+    return specfem::IO::impl::HDF5::Dataset<ViewType, OpType>(file, name, data);
   }
 
-  specfem::IO::impl::HDF5::Group createGroup(const std::string &name) {
-    return specfem::IO::impl::HDF5::Group(file, name);
+  specfem::IO::impl::HDF5::Group<OpType> createGroup(const std::string &name) {
+    return specfem::IO::impl::HDF5::Group<OpType>(file, name);
+  }
+
+  ~File() { file->close(); }
+
+private:
+  std::unique_ptr<H5::H5File> file;
+};
+
+template <> class File<specfem::IO::read> {
+public:
+  using OpType = specfem::IO::read;
+
+  File(const std::string &name)
+      : file(std::make_unique<H5::H5File>(name + ".h5", H5F_ACC_RDONLY)) {}
+  File(const char *name)
+      : file(std::make_unique<H5::H5File>(std::string(name) + ".h5",
+                                          H5F_ACC_RDONLY)) {}
+
+  template <typename ViewType>
+  specfem::IO::impl::HDF5::Dataset<ViewType, OpType>
+  openDataset(const std::string &name, const ViewType data) {
+    return specfem::IO::impl::HDF5::Dataset<ViewType, OpType>(file, name, data);
+  }
+
+  specfem::IO::impl::HDF5::Group<OpType> openGroup(const std::string &name) {
+    return specfem::IO::impl::HDF5::Group<OpType>(file, name);
   }
 
   ~File() { file->close(); }

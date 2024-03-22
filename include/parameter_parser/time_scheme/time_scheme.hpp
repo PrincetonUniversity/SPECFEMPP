@@ -2,18 +2,18 @@
 #define _PARAMETER_TIME_MARCHING_HPP
 
 #include "specfem_setup.hpp"
-// #include "timescheme/interface.hpp"
+#include "timescheme/interface.hpp"
 #include "yaml-cpp/yaml.h"
 #include <tuple>
 
 namespace specfem {
 namespace runtime_configuration {
-namespace solver {
+namespace time_scheme {
 /**
  * @brief time_marching class is used to instantiate a time-marching solver
  *
  */
-class time_marching : public solver {
+class time_scheme {
 
 public:
   /**
@@ -23,14 +23,16 @@ public:
    * @param dt delta time of the timescheme
    * @param nstep Number of time steps
    */
-  time_marching(std::string timescheme, type_real dt, type_real nstep)
-      : timescheme(timescheme), dt(dt), nstep(nstep){};
+  time_scheme(std::string timescheme, type_real dt, type_real nstep,
+              type_real t0, specfem::simulation::type simulation)
+      : timescheme(timescheme), dt(dt), nstep(nstep), t0(t0), type(simulation) {
+  }
   /**
    * @brief Construct a new time marching object
    *
    * @param Node YAML node describing the time-marching method
    */
-  time_marching(const YAML::Node &Node);
+  time_scheme(const YAML::Node &Node, specfem::simulation::type simulation);
   /**
    * @brief Update simulation start time.
    *
@@ -41,7 +43,10 @@ public:
    *
    * @param t0 Simulation start time
    */
-  void update_t0(type_real t0) override { this->t0 = t0; }
+  void update_t0(type_real t0) {
+    if (std::abs(this->t0) < 10 * std::numeric_limits<type_real>::epsilon())
+      this->t0 = t0;
+  }
   /**
    * @brief Instantiate the Timescheme
    *
@@ -49,24 +54,27 @@ public:
    object
    * used in the solver algorithm
    */
-  std::shared_ptr<specfem::TimeScheme::TimeScheme>
-  instantiate(const int nstep_between_samples) override;
+  std::shared_ptr<specfem::time_scheme::time_scheme>
+  instantiate(const int nstep_between_samples);
   /**
    * @brief Get the value of time increment
    *
    * @return type_real value of time increment
    */
-  type_real get_dt() const override { return this->dt; }
+  type_real get_dt() const { return this->dt; }
 
-  type_real get_t0() const override { return this->t0; }
+  type_real get_t0() const { return this->t0; }
+
+  int get_nsteps() const { return this->nstep; }
 
 private:
   int nstep;              ///< number of time steps
   type_real dt;           ///< delta time for the timescheme
-  type_real t0;           ///< simulation start time
+  type_real t0 = 0.0;     ///< start time
   std::string timescheme; ///< Time scheme e.g. Newmark, Runge-Kutta, LDDRK
+  specfem::simulation::type type;
 };
-} // namespace solver
+} // namespace time_scheme
 } // namespace runtime_configuration
 } // namespace specfem
 

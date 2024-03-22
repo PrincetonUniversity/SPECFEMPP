@@ -1,6 +1,6 @@
 #include "compute/interface.hpp"
-#include "coupled_interface/interface.hpp"
-#include "domain/interface.hpp"
+// #include "coupled_interface/interface.hpp"
+// #include "domain/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "material/interface.hpp"
 #include "mesh/mesh.hpp"
@@ -104,8 +104,10 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   // --------------------------------------------------------------
   //                   Read Sources and Receivers
   // --------------------------------------------------------------
+  const int nsteps = setup.get_nsteps();
   auto [sources, t0] =
-      specfem::sources::read_sources(source_filename, setup.get_dt());
+      specfem::sources::read_sources(source_filename, nsteps, setup.get_dt());
+
   const auto stations_filename = setup.get_stations_file();
   const auto angle = setup.get_receiver_angle();
   auto receivers = specfem::receivers::read_receivers(stations_filename, angle);
@@ -137,9 +139,12 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   //                   Instantiate Timescheme
   // --------------------------------------------------------------
   setup.update_t0(t0);
-  const auto it = setup.instantiate_solver();
+  t0 = setup.get_t0();
+  const auto time_scheme = setup.instantiate_timescheme();
   if (mpi->main_proc())
-    std::cout << *it << std::endl;
+    std::cout << *time_scheme << std::endl;
+
+  const int max_seismogram_time_step = time_scheme->get_max_seismogram_step();
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
@@ -147,49 +152,35 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   // --------------------------------------------------------------
   mpi->cout("Generating assembly:");
   mpi->cout("-------------------------------");
-  const int nsteps = it->get_max_timestep();
-  const int max_seimogram_time_step = it->get_max_seismogram_step();
-  const specfem::compute::assembly assembly(
-      mesh, quadrature, sources, receivers, setup.get_seismogram_types(),
-      nsteps, max_seimogram_time_step);
-  // --------------------------------------------------------------
+  const type_real dt = setup.get_dt();
+  specfem::compute::assembly assembly(
+      mesh, quadrature, sources, receivers, setup.get_seismogram_types(), t0,
+      dt, nsteps, max_seismogram_time_step, setup.get_simulation_type());
+  time_scheme->link_assembly(assembly);
 
   // --------------------------------------------------------------
-  //                   Instantiate Kernels
+
   // --------------------------------------------------------------
-  mpi->cout("Instantiating Kernels:");
-  mpi->cout("-------------------------------");
-  specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
+  //                   Read wavefields
+  // --------------------------------------------------------------
 
-  specfem::domain::domain<
-      specfem::enums::element::medium::elastic,
-      specfem::enums::element::quadrature::static_quadrature_points<5> >
-      elastic_domain_static(assembly, qp5);
+  const auto wavefield_reader = setup.instantiate_wavefield_reader(assembly);
+  if (wavefield_reader) {
+    mpi->cout("Reading wavefield files:");
+    mpi->cout("-------------------------------");
 
-  specfem::domain::domain<
-      specfem::enums::element::medium::acoustic,
-      specfem::enums::element::quadrature::static_quadrature_points<5> >
-      acoustic_domain_static(assembly, qp5);
-
-  specfem::coupled_interface::coupled_interface<
-      specfem::enums::element::medium::acoustic,
-      specfem::enums::element::medium::elastic>
-      acoustic_elastic_interface(assembly);
-
-  specfem::coupled_interface::coupled_interface<
-      specfem::enums::element::medium::elastic,
-      specfem::enums::element::medium::acoustic>
-      elastic_acoustic_interface(assembly);
+    wavefield_reader->read();
+    // Transfer the buffer field to device
+    assembly.fields.buffer.sync_fields<specfem::sync::kind::HostToDevice>();
+  }
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
   //                   Instantiate Solver
   // --------------------------------------------------------------
+  specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
   std::shared_ptr<specfem::solver::solver> solver =
-      std::make_shared<specfem::solver::time_marching<
-          specfem::enums::element::quadrature::static_quadrature_points<5> > >(
-          assembly, acoustic_domain_static, elastic_domain_static,
-          acoustic_elastic_interface, elastic_acoustic_interface, it);
+      setup.instantiate_solver(assembly, time_scheme, qp5);
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------

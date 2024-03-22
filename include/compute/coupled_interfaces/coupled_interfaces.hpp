@@ -18,23 +18,23 @@ struct coupled_interfaces {
       const specfem::compute::properties &properties,
       const specfem::mesh::coupled_interfaces &coupled_interfaces);
 
-  template <specfem::enums::element::type medium1,
-            specfem::enums::element::type medium2>
+  template <specfem::element::medium_tag medium1,
+            specfem::element::medium_tag medium2>
   specfem::compute::interface_container<medium1, medium2>
   get_interface_container() const;
 
-  specfem::compute::interface_container<specfem::enums::element::type::elastic,
-                                        specfem::enums::element::type::acoustic>
+  specfem::compute::interface_container<specfem::element::medium_tag::elastic,
+                                        specfem::element::medium_tag::acoustic>
       elastic_acoustic;
 
   specfem::compute::interface_container<
-      specfem::enums::element::type::acoustic,
-      specfem::enums::element::type::poroelastic>
+      specfem::element::medium_tag::acoustic,
+      specfem::element::medium_tag::poroelastic>
       acoustic_poroelastic;
 
   specfem::compute::interface_container<
-      specfem::enums::element::type::elastic,
-      specfem::enums::element::type::poroelastic>
+      specfem::element::medium_tag::elastic,
+      specfem::element::medium_tag::poroelastic>
       elastic_poroelastic;
 };
 } // namespace compute

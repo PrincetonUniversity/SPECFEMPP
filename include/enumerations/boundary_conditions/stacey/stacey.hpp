@@ -51,9 +51,8 @@ public:
   using property_type = property;
   ///@}
 
-  constexpr static specfem::enums::element::boundary_tag value =
-      specfem::enums::element::boundary_tag::stacey; ///< boundary tag
-
+  constexpr static specfem::element::boundary_tag value =
+      specfem::element::boundary_tag::stacey; ///< boundary tag
   /**
    * @brief Construct a new stacey object
    *

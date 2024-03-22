@@ -1,5 +1,5 @@
+#include "parameter_parser/writer/seismogram.hpp"
 #include "constants.hpp"
-#include "parameter_parser/interface.hpp"
 #include "writer/interface.hpp"
 #include "yaml-cpp/yaml.h"
 #include <boost/filesystem.hpp>
@@ -23,7 +23,7 @@ specfem::runtime_configuration::seismogram::seismogram(
 
   try {
     *this = specfem::runtime_configuration::seismogram(
-        seismogram["seismogram-format"].as<std::string>(), output_folder);
+        seismogram["output-format"].as<std::string>(), output_folder);
   } catch (YAML::ParserException &e) {
     std::ostringstream message;
 
@@ -41,10 +41,9 @@ specfem::runtime_configuration::seismogram::instantiate_seismogram_writer(
     const type_real t0, const int nstep_between_samples) const {
 
   const auto type = [&]() {
-    if (this->seismogram_format == "seismic_unix" ||
-        this->seismogram_format == "su") {
+    if (this->output_format == "seismic_unix" || this->output_format == "su") {
       return specfem::enums::seismogram::format::seismic_unix;
-    } else if (this->seismogram_format == "ascii") {
+    } else if (this->output_format == "ascii") {
       return specfem::enums::seismogram::format::ascii;
     } else {
       throw std::runtime_error("Unknown seismogram format");

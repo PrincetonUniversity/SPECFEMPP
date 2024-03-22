@@ -85,7 +85,7 @@ std::vector<test_config::Test> parse_test_config(std::string test_config_file,
 
 // ------------------------------------- //
 
-template <specfem::enums::element::type medium>
+template <specfem::element::medium_tag medium>
 specfem::testing::array1d<type_real, Kokkos::LayoutLeft> compact_array(
     const specfem::testing::array1d<type_real, Kokkos::LayoutLeft> global,
     const specfem::kokkos::HostView1d<int, Kokkos::LayoutLeft> index_mapping) {
@@ -115,7 +115,7 @@ specfem::testing::array1d<type_real, Kokkos::LayoutLeft> compact_array(
   return local_array;
 }
 
-template <specfem::enums::element::type medium>
+template <specfem::element::medium_tag medium>
 specfem::testing::array2d<type_real, Kokkos::LayoutLeft> compact_array(
     const specfem::testing::array2d<type_real, Kokkos::LayoutLeft> global,
     const specfem::kokkos::HostView1d<int, Kokkos::LayoutLeft> index_mapping) {
@@ -175,11 +175,13 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     // Read mesh generated MESHFEM
     specfem::mesh::mesh mesh(database_file, mpi);
     const type_real dt = setup.get_dt();
+    const int nsteps = setup.get_nsteps();
 
     // Read sources
     //    if start time is not explicitly specified then t0 is determined using
     //    source frequencies and time shift
-    auto [sources, t0] = specfem::sources::read_sources(sources_file, dt);
+    auto [sources, t0] =
+        specfem::sources::read_sources(sources_file, nsteps, dt);
 
     for (auto &source : sources) {
       if (mpi->main_proc())
@@ -189,14 +191,16 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     setup.update_t0(t0);
 
     // Instantiate the solver and timescheme
-    auto it = setup.instantiate_solver();
+    auto it = setup.instantiate_timescheme();
 
     std::vector<std::shared_ptr<specfem::receivers::receiver> > receivers(0);
     std::vector<specfem::enums::seismogram::type> seismogram_types(0);
 
-    const type_real nsteps = it->get_max_timestep();
     specfem::compute::assembly assembly(mesh, quadratures, sources, receivers,
-                                        seismogram_types, nsteps, 0);
+                                        seismogram_types, t0, setup.get_dt(),
+                                        nsteps, 0, setup.get_simulation_type());
+
+    it->link_assembly(assembly);
 
     // User output
     if (mpi->main_proc())
@@ -208,32 +212,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
 
       specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
 
-      specfem::domain::domain<
-          specfem::enums::element::medium::elastic,
-          specfem::enums::element::quadrature::static_quadrature_points<5> >
-          elastic_domain_static(assembly, qp5);
-
-      specfem::domain::domain<
-          specfem::enums::element::medium::acoustic,
-          specfem::enums::element::quadrature::static_quadrature_points<5> >
-          acoustic_domain_static(assembly, qp5);
-
-      // Instantiate coupled interfaces
-      specfem::coupled_interface::coupled_interface<
-          specfem::enums::element::medium::acoustic,
-          specfem::enums::element::medium::elastic>
-          acoustic_elastic_interface(assembly);
-
-      specfem::coupled_interface::coupled_interface<
-          specfem::enums::element::medium::elastic,
-          specfem::enums::element::medium::acoustic>
-          elastic_acoustic_interface(assembly);
-
-      std::shared_ptr<specfem::solver::solver> solver = std::make_shared<
-          specfem::solver::time_marching<specfem::enums::element::quadrature::
-                                             static_quadrature_points<5> > >(
-          assembly, acoustic_domain_static, elastic_domain_static,
-          acoustic_elastic_interface, elastic_acoustic_interface, it);
+      const auto solver = setup.instantiate_solver(assembly, it, qp5);
 
       solver->run();
 
@@ -254,10 +233,10 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
 
         auto index_mapping = Kokkos::subview(
             assembly.fields.forward.h_assembly_index_mapping, Kokkos::ALL(),
-            static_cast<int>(specfem::enums::element::type::elastic));
+            static_cast<int>(specfem::element::medium_tag::elastic));
 
         auto displacement_ref =
-            compact_array<specfem::enums::element::type::elastic>(
+            compact_array<specfem::element::medium_tag::elastic>(
                 displacement_global, index_mapping);
 
         type_real tolerance = 0.01;
@@ -279,10 +258,10 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
 
         auto index_mapping = Kokkos::subview(
             assembly.fields.forward.h_assembly_index_mapping, Kokkos::ALL(),
-            static_cast<int>(specfem::enums::element::type::acoustic));
+            static_cast<int>(specfem::element::medium_tag::acoustic));
 
         auto potential_ref =
-            compact_array<specfem::enums::element::type::acoustic>(
+            compact_array<specfem::element::medium_tag::acoustic>(
                 potential_global, index_mapping);
 
         type_real tolerance = 0.01;

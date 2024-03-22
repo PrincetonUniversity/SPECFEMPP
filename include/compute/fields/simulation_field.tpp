@@ -9,34 +9,34 @@
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
-template <typename simulation>
-specfem::compute::simulation_field<simulation>::simulation_field(
+template <specfem::wavefield::type WavefieldType>
+specfem::compute::simulation_field<WavefieldType>::simulation_field(
     const specfem::compute::mesh &mesh,
     const specfem::compute::properties &properties) {
 
   nglob = compute_nglob(mesh.points.index_mapping);
 
   assembly_index_mapping =
-      Kokkos::View<int * [specfem::enums::element::ntypes], Kokkos::LayoutLeft,
+      Kokkos::View<int * [specfem::element::ntypes], Kokkos::LayoutLeft,
                    specfem::kokkos::DevMemSpace>(
           "specfem::compute::simulation_field::index_mapping", nglob);
 
   h_assembly_index_mapping =
-      Kokkos::View<int * [specfem::enums::element::ntypes], Kokkos::LayoutLeft,
+      Kokkos::View<int * [specfem::element::ntypes], Kokkos::LayoutLeft,
                    specfem::kokkos::HostMemSpace>(
           Kokkos::create_mirror_view(assembly_index_mapping));
 
   for (int iglob = 0; iglob < nglob; iglob++) {
-    for (int itype = 0; itype < specfem::enums::element::ntypes; itype++) {
+    for (int itype = 0; itype < specfem::element::ntypes; itype++) {
       h_assembly_index_mapping(iglob, itype) = -1;
     }
   }
 
   auto acoustic_index = Kokkos::subview(h_assembly_index_mapping, Kokkos::ALL,
-                                        static_cast<int>(acoustic_type::value));
+                                        static_cast<int>(acoustic_type::medium_tag));
 
   auto elastic_index = Kokkos::subview(h_assembly_index_mapping, Kokkos::ALL,
-                                       static_cast<int>(elastic_type::value));
+                                       static_cast<int>(elastic_type::medium_tag));
 
   elastic = specfem::compute::impl::field_impl<elastic_type>(mesh, properties,
                                                              elastic_index);

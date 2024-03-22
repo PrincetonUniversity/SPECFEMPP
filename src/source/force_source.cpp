@@ -44,14 +44,14 @@ void specfem::sources::force::compute_source_array(
     for (int ix = 0; ix < N; ++ix) {
       hlagrange = hxi_source(ix) * hgamma_source(iz);
 
-      if (el_type == specfem::enums::element::type::acoustic ||
-          (el_type == specfem::enums::element::type::elastic &&
+      if (el_type == specfem::element::medium_tag::acoustic ||
+          (el_type == specfem::element::medium_tag::elastic &&
            specfem::globals::simulation_wave == specfem::wave::sh)) {
         source_array(0, iz, ix) = hlagrange;
         source_array(1, iz, ix) = 0;
-      } else if ((el_type == specfem::enums::element::type::elastic &&
+      } else if ((el_type == specfem::element::medium_tag::elastic &&
                   specfem::globals::simulation_wave == specfem::wave::p_sv) ||
-                 el_type == specfem::enums::element::type::poroelastic) {
+                 el_type == specfem::element::medium_tag::poroelastic) {
         source_array(0, iz, ix) =
             std::sin(Kokkos::numbers::pi_v<type_real> / 180 * this->angle) *
             hlagrange;

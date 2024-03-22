@@ -1,16 +1,18 @@
 #ifndef _POINT_PROPERTIES_HPP
 #define _POINT_PROPERTIES_HPP
 
+#include "enumerations/medium.hpp"
+
 namespace specfem {
 namespace point {
 
-template <specfem::enums::element::type medium,
-          specfem::enums::element::property_tag property>
+template <specfem::element::medium_tag medium,
+          specfem::element::property_tag property>
 struct properties {};
 
 template <>
-struct properties<specfem::enums::element::type::elastic,
-                  specfem::enums::element::property_tag::isotropic> {
+struct properties<specfem::element::medium_tag::elastic,
+                  specfem::element::property_tag::isotropic> {
   type_real lambdaplus2mu;
   type_real mu;
   type_real rho;
@@ -31,8 +33,8 @@ struct properties<specfem::enums::element::type::elastic,
 };
 
 template <>
-struct properties<specfem::enums::element::type::acoustic,
-                  specfem::enums::element::property_tag::isotropic> {
+struct properties<specfem::element::medium_tag::acoustic,
+                  specfem::element::property_tag::isotropic> {
   type_real lambdaplus2mu_inverse;
   type_real rho_inverse;
   type_real kappa;

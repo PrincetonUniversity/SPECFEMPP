@@ -2,8 +2,8 @@
 #define SPECFEM_IO_HDF5_IMPL_DATASET_HPP
 
 #include "H5Cpp.h"
-#include "native_type.hpp"
-#include "native_type.tpp"
+#include "IO/operators.hpp"
+#include "datasetbase.hpp"
 #include <memory>
 #include <string>
 
@@ -13,10 +13,11 @@ namespace impl {
 namespace HDF5 {
 
 // Forward declaration
-class Group;
-class File;
+template <typename OpType> class Group;
+template <typename OpType> class File;
 
-template <typename ViewType> class Dataset {
+template <typename ViewType, typename OpType>
+class Dataset : public DatasetBase<OpType> {
 public:
   // static_assert(ViewType::is_contiguous, "ViewType must be contiguous");
 
@@ -27,18 +28,17 @@ public:
 
   Dataset(std::unique_ptr<H5::H5File> &file, const std::string &name,
           const ViewType data);
-  Dataset(std::unique_ptr<H5::Group> &Group, const std::string &name,
+  Dataset(std::unique_ptr<H5::Group> &group, const std::string &name,
           const ViewType data);
-  void write();
-  void close();
 
-  ~Dataset() { close(); }
+  void write();
+
+  void read();
+
+  ~Dataset() { DatasetBase<OpType>::close(); }
 
 private:
   ViewType data;
-  // native_type datatype;
-  std::unique_ptr<H5::DataSet> dataset;
-  std::unique_ptr<H5::DataSpace> dataspace;
 };
 } // namespace HDF5
 } // namespace impl

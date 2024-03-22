@@ -6,9 +6,9 @@
 
 namespace {
 
-constexpr auto elastic = specfem::enums::element::type::elastic;
-constexpr auto isotropic = specfem::enums::element::property_tag::isotropic;
-constexpr auto acoustic = specfem::enums::element::type::acoustic;
+constexpr auto elastic = specfem::element::medium_tag::elastic;
+constexpr auto isotropic = specfem::element::property_tag::isotropic;
+constexpr auto acoustic = specfem::element::medium_tag::acoustic;
 
 struct input_holder {
   // Struct to hold temporary variables read from database file
@@ -85,8 +85,8 @@ std::vector<specfem::mesh::materials::material_specification> read_materials(
         l_acoustic_isotropic.push_back(acoustic_holder);
 
         index_mapping[i] = specfem::mesh::materials::material_specification(
-            specfem::enums::element::type::acoustic,
-            specfem::enums::element::property_tag::isotropic,
+            specfem::element::medium_tag::acoustic,
+            specfem::element::property_tag::isotropic,
             index_acoustic_isotropic);
 
         index_acoustic_isotropic++;
@@ -108,9 +108,8 @@ std::vector<specfem::mesh::materials::material_specification> read_materials(
         l_elastic_isotropic.push_back(elastic_holder);
 
         index_mapping[i] = specfem::mesh::materials::material_specification(
-            specfem::enums::element::type::elastic,
-            specfem::enums::element::property_tag::isotropic,
-            index_elastic_isotropic);
+            specfem::element::medium_tag::elastic,
+            specfem::element::property_tag::isotropic, index_elastic_isotropic);
 
         index_elastic_isotropic++;
       }
@@ -201,25 +200,24 @@ specfem::mesh::materials::materials(
   return;
 }
 
-std::variant<specfem::material::material<
-                 specfem::enums::element::type::elastic,
-                 specfem::enums::element::property_tag::isotropic>,
-             specfem::material::material<
-                 specfem::enums::element::type::acoustic,
-                 specfem::enums::element::property_tag::isotropic> >
+std::variant<
+    specfem::material::material<specfem::element::medium_tag::elastic,
+                                specfem::element::property_tag::isotropic>,
+    specfem::material::material<specfem::element::medium_tag::acoustic,
+                                specfem::element::property_tag::isotropic> >
 specfem::mesh::materials::operator[](const int index) const {
 
   const auto &material_specification = this->material_index_mapping(index);
 
-  if (material_specification.type == specfem::enums::element::type::elastic &&
+  if (material_specification.type == specfem::element::medium_tag::elastic &&
       material_specification.property ==
-          specfem::enums::element::property_tag::isotropic) {
+          specfem::element::property_tag::isotropic) {
     return this->elastic_isotropic.material_properties(
         material_specification.index);
   } else if (material_specification.type ==
-                 specfem::enums::element::type::acoustic &&
+                 specfem::element::medium_tag::acoustic &&
              material_specification.property ==
-                 specfem::enums::element::property_tag::isotropic) {
+                 specfem::element::property_tag::isotropic) {
 
     return this->acoustic_isotropic.material_properties(
         material_specification.index);

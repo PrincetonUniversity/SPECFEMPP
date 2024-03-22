@@ -19,11 +19,16 @@ namespace edges {
  * @tparam qp_type Quadrature points type.
  */
 template <>
-class edge<specfem::enums::element::medium::acoustic,
-           specfem::enums::element::medium::elastic> {
+class edge<specfem::dimension::type::dim2,
+           specfem::element::medium_tag::acoustic,
+           specfem::element::medium_tag::elastic> {
 public:
-  using self_medium_type = specfem::enums::element::medium::acoustic;
-  using coupled_medium_type = specfem::enums::element::medium::elastic;
+  using self_medium_type =
+      specfem::medium::medium<specfem::dimension::type::dim2,
+                              specfem::element::medium_tag::acoustic>;
+  using coupled_medium_type =
+      specfem::medium::medium<specfem::dimension::type::dim2,
+                              specfem::element::medium_tag::elastic>;
 
   edge(){};
 
@@ -49,23 +54,16 @@ public:
    * @param ipoint Index of the quadrature point on the edge.
    */
   KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, 1>
-  specfem::coupled_interface::impl::edges::edge<
-      specfem::enums::element::medium::elastic,
-      specfem::enums::element::medium::acoustic>::
-      compute_coupling_terms(
-          const specfem::kokkos::array_type<type_real, 2> &normal,
-          const specfem::kokkos::array_type<type_real, 2> &weights,
-          const specfem::enums::edge::type &coupled_edge_type,
-          const specfem::kokkos::array_type<type_real, 2> &pressure) const;
+  compute_coupling_terms(
+      const specfem::kokkos::array_type<type_real, 2> &normal,
+      const specfem::kokkos::array_type<type_real, 2> &weights,
+      const specfem::enums::edge::type &coupled_edge_type,
+      const specfem::kokkos::array_type<type_real, 2> &pressure) const;
 
-  KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, 2>
-  specfem::coupled_interface::impl::edges::edge<
-      specfem::enums::element::medium::elastic,
-      specfem::enums::element::medium::acoustic>::
-      load_field_elements(
-          const int coupled_global_index,
-          const specfem::compute::impl::field_impl<coupled_medium_type>
-              &coupled_field) const;
+  KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, 2> load_field_elements(
+      const int coupled_global_index,
+      const specfem::compute::impl::field_impl<coupled_medium_type>
+          &coupled_field) const;
 
 private:
   //   specfem::kokkos::DeviceView1d<int> acoustic_ispec; ///< Index of acoustic

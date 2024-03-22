@@ -1,17 +1,17 @@
 #ifndef _MESH_COUPLED_INTERFACES_IMPL_INTERFACE_CONTAINER_HPP_
 #define _MESH_COUPLED_INTERFACES_IMPL_INTERFACE_CONTAINER_HPP_
 
-#include "enumerations/specfem_enums.hpp"
+#include "enumerations/medium.hpp"
 #include "kokkos_abstractions.h"
 #include "specfem_mpi/interface.hpp"
 
 namespace specfem {
 namespace mesh {
-template <specfem::enums::element::type medium1,
-          specfem::enums::element::type medium2>
+template <specfem::element::medium_tag medium1,
+          specfem::element::medium_tag medium2>
 struct interface_container {
-  constexpr static specfem::enums::element::type medium1_type = medium1;
-  constexpr static specfem::enums::element::type medium2_type = medium2;
+  constexpr static auto medium1_type = medium1;
+  constexpr static auto medium2_type = medium2;
 
   interface_container(){};
 
@@ -29,7 +29,7 @@ struct interface_container {
                                                           ///< ith element in
                                                           ///< medium 2
 
-  template <specfem::enums::element::type medium>
+  template <specfem::element::medium_tag medium>
   int get_spectral_elem_index(const int interface_index) const;
 };
 } // namespace mesh

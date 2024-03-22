@@ -2,7 +2,7 @@
 #define _DOMAIN_ELASTIC_ELEMENTS2D_ISOTROPIC_HPP
 
 #include "compute/interface.hpp"
-#include "domain/impl/elements/elastic/elastic2d.hpp"
+// #include "domain/impl/elements/elastic/elastic2d.hpp"
 #include "domain/impl/elements/element.hpp"
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
@@ -23,49 +23,23 @@ namespace elements {
  * @tparam BC Boundary conditions if void then neumann boundary conditions are
  * assumed
  */
-template <int NGLL, typename BC>
+template <int NGLL, specfem::element::boundary_tag BC>
 class element<
-    specfem::enums::element::dimension::dim2,
-    specfem::enums::element::medium::elastic,
-    specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
-    specfem::enums::element::property::isotropic, BC> {
+    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+    specfem::element::property_tag::isotropic, BC,
+    specfem::enums::element::quadrature::static_quadrature_points<NGLL> > {
 public:
-  /** @name Typedefs
-   *
-   */
-  ///@{
-  /**
-   * @brief dimension of the element
-   *
-   */
-  using dimension = specfem::enums::element::dimension::dim2;
-
-  /**
-   * @brief Medium of the element
-   *
-   */
-  using medium_type = specfem::enums::element::medium::elastic;
-
-  /**
-   * @brief Property of the element
-   *
-   */
-  using property_type = specfem::enums::element::property::isotropic;
-
-  /**
-   * @brief Number of Gauss-Lobatto-Legendre quadrature points defined at
-   * compile time
-   */
+  using dimension =
+      specfem::dimension::dimension<specfem::dimension::type::dim2>;
   using quadrature_points_type =
       specfem::enums::element::quadrature::static_quadrature_points<NGLL>;
-
-  /**
-   * @brief Boundary conditions of the element
-   *
-   * if BC == none then neumann boundary conditions are assumed
-   *
-   */
-  using boundary_conditions_type = BC;
+  using medium_type =
+      specfem::medium::medium<specfem::dimension::type::dim2,
+                              specfem::element::medium_tag::elastic,
+                              specfem::element::property_tag::isotropic>;
+  using boundary_conditions_type = specfem::boundary::boundary<
+      specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+      specfem::element::property_tag::isotropic, BC, quadrature_points_type>;
 
   /**
    * @brief Use the scratch view type from the quadrature points
@@ -111,8 +85,8 @@ public:
    */
   KOKKOS_INLINE_FUNCTION
   void compute_mass_matrix_component(
-      const specfem::point::properties<medium_type::value, property_type::value>
-          &properties,
+      const specfem::point::properties<medium_type::medium_tag,
+                                       medium_type::property_tag> &properties,
       const specfem::point::partial_derivatives2 &partial_derivatives,
       specfem::kokkos::array_type<type_real, 2> &mass_matrix) const;
 
@@ -121,8 +95,8 @@ public:
       const int &xz, const type_real &dt,
       const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
       const specfem::point::partial_derivatives2 &partial_derivatives,
-      const specfem::point::properties<medium_type::value, property_type::value>
-          &properties,
+      const specfem::point::properties<medium_type::medium_tag,
+                                       medium_type::property_tag> &properties,
       const specfem::point::boundary &boundary_type,
       specfem::kokkos::array_type<type_real, medium_type::components>
           &rmass_inverse) const;
@@ -181,8 +155,8 @@ public:
       const specfem::kokkos::array_type<type_real, medium_type::components>
           &dudzl,
       const specfem::point::partial_derivatives2 &partial_derivatives,
-      const specfem::point::properties<medium_type::value, property_type::value>
-          &properties,
+      const specfem::point::properties<medium_type::medium_tag,
+                                       medium_type::property_tag> &properties,
       const specfem::point::boundary &boundary_type,
       specfem::kokkos::array_type<type_real, medium_type::components>
           &stress_integrand_xi,
@@ -221,23 +195,14 @@ public:
           stress_integrand_gamma,
       const ScratchViewType<type_real, 1> s_hprimewgll,
       const specfem::point::partial_derivatives2 &partial_derivatives,
-      const specfem::point::properties<medium_type::value, property_type::value>
-          &properties,
+      const specfem::point::properties<medium_type::medium_tag,
+                                       medium_type::property_tag> &properties,
       const specfem::point::boundary &boundary_type,
       const specfem::kokkos::array_type<type_real, medium_type::components>
           &velocity,
       specfem::kokkos::array_type<type_real, 2> &acceleration) const;
 
 private:
-  //   specfem::kokkos::DeviceView3d<type_real> xix;           ///< xix
-  //   specfem::kokkos::DeviceView3d<type_real> xiz;           ///< xiz
-  //   specfem::kokkos::DeviceView3d<type_real> gammax;        ///< gammax
-  //   specfem::kokkos::DeviceView3d<type_real> gammaz;        ///< gammaz
-  //   specfem::kokkos::DeviceView3d<type_real> jacobian;      ///< jacobian
-  //   specfem::kokkos::DeviceView3d<type_real> lambdaplus2mu; ///< lambda +
-  //                                                           ///< 2 * mu
-  //   specfem::kokkos::DeviceView3d<type_real> mu;            ///< mu
-  //   specfem::kokkos::DeviceView3d<type_real> rho;           ///< rho
   boundary_conditions_type boundary_conditions; ///< Boundary conditions
 };
 } // namespace elements

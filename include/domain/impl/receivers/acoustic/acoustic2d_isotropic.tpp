@@ -2,7 +2,7 @@
 #define DOMAIN_IMPL_RECEIVERS_ACOUSTIC2D_ISOTROPIC_TPP_
 
 #include "constants.hpp"
-#include "domain/impl/receivers/acoustic/acoustic2d.hpp"
+// #include "domain/impl/receivers/acoustic/acoustic2d.hpp"
 #include "domain/impl/receivers/receiver.hpp"
 #include "enumerations/interface.hpp"
 #include "globals.h"
@@ -49,14 +49,13 @@
 
 template <int NGLL>
 KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
-    specfem::enums::element::dimension::dim2,
-    specfem::enums::element::medium::acoustic,
-    specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
-    specfem::enums::element::property::isotropic>::
+    specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
+    specfem::element::property_tag::isotropic,
+    specfem::enums::element::quadrature::static_quadrature_points<NGLL>>::
     get_field(
         const int iz, const int ix,
         const specfem::point::partial_derivatives2 partial_derivatives,
-        const specfem::point::properties<medium_type::value, property_type::value> properties,
+        const specfem::point::properties<medium_type::medium_tag, medium_type::property_tag> properties,
         const ScratchViewType<type_real, 1> hprime,
         const ScratchViewType<type_real, medium_type::components> active_field,
         Kokkos::View<type_real[2], Kokkos::LayoutStride,
