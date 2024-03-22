@@ -9,12 +9,12 @@
 
 namespace specfem {
 namespace compute {
-template <specfem::enums::element::type medium1,
-          specfem::enums::element::type medium2>
+template <specfem::element::medium_tag medium1,
+          specfem::element::medium_tag medium2>
 struct interface_container {
 
-  constexpr static specfem::enums::element::type medium1_type = medium1;
-  constexpr static specfem::enums::element::type medium2_type = medium2;
+  constexpr static specfem::element::medium_tag medium1_type = medium1;
+  constexpr static specfem::element::medium_tag medium2_type = medium2;
 
   interface_container() = default;
 
@@ -73,17 +73,17 @@ struct interface_container {
   specfem::kokkos::HostMirror1d<specfem::edge::interface>
       h_medium2_edge_type; ///< edge type for the ith edge in medium 2
 
-  template <specfem::enums::element::type medium>
+  template <specfem::element::medium_tag medium>
   KOKKOS_FUNCTION int load_device_index_mapping(const int iedge) const;
 
-  template <specfem::enums::element::type medium>
+  template <specfem::element::medium_tag medium>
   int load_host_index_mapping(const int iedge) const;
 
-  template <specfem::enums::element::type medium>
+  template <specfem::element::medium_tag medium>
   KOKKOS_FUNCTION specfem::edge::interface load_device_edge_type(
       const int iedge) const;
 
-  template <specfem::enums::element::type medium>
+  template <specfem::element::medium_tag medium>
   specfem::edge::interface load_host_edge_type(const int iedge) const;
 };
 } // namespace compute

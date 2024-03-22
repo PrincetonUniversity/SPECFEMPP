@@ -25,6 +25,13 @@ parameters:
           dt: 1.0e-3
           nstep: 300
 
+    simulation-mode:
+      forward:
+        writer:
+          seismogram:
+            output-format: ascii
+            output-folder: "."
+
   receivers:
     stations-file: "../DATA/STATIONS"
     angle: 0.0
@@ -42,7 +49,3 @@ parameters:
   databases:
     mesh-database: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test6/database.bin"
     source-file: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test6/sources.yaml"
-
-  seismogram:
-    seismogram-format: ascii
-    output-folder: "."

@@ -9,20 +9,20 @@ namespace impl {
 
 namespace properties {
 
-template <specfem::enums::element::type type,
-          specfem::enums::element::property_tag property>
+template <specfem::element::medium_tag type,
+          specfem::element::property_tag property>
 struct properties_container {
 
   static_assert("Material type not implemented");
 };
 
 template <>
-struct properties_container<specfem::enums::element::type::elastic,
-                            specfem::enums::element::property_tag::isotropic> {
+struct properties_container<specfem::element::medium_tag::elastic,
+                            specfem::element::property_tag::isotropic> {
 
-  constexpr static auto value_type = specfem::enums::element::type::elastic;
+  constexpr static auto value_type = specfem::element::medium_tag::elastic;
   constexpr static auto property_type =
-      specfem::enums::element::property_tag::isotropic;
+      specfem::element::property_tag::isotropic;
 
   int nspec; ///< total number of acoustic spectral elements
   int ngllz; ///< number of quadrature points in z dimension
@@ -75,12 +75,12 @@ struct properties_container<specfem::enums::element::type::elastic,
 };
 
 template <>
-struct properties_container<specfem::enums::element::type::acoustic,
-                            specfem::enums::element::property_tag::isotropic> {
+struct properties_container<specfem::element::medium_tag::acoustic,
+                            specfem::element::property_tag::isotropic> {
 
-  constexpr static auto value_type = specfem::enums::element::type::acoustic;
+  constexpr static auto value_type = specfem::element::medium_tag::acoustic;
   constexpr static auto property_type =
-      specfem::enums::element::property_tag::isotropic;
+      specfem::element::property_tag::isotropic;
 
   int nspec; ///< total number of acoustic spectral elements
   int ngllz; ///< number of quadrature points in z dimension

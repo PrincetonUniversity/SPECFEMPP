@@ -18,8 +18,8 @@ namespace material {
  * @brief Base material class
  *
  */
-template <specfem::enums::element::type type,
-          specfem::enums::element::property_tag property>
+template <specfem::element::medium_tag type,
+          specfem::element::property_tag property>
 class material : public specfem::material::properties<type, property> {
 public:
   constexpr static auto value_type = type;
@@ -37,8 +37,8 @@ public:
   ~material() = default;
 
   template <
-      specfem::enums::element::type U = value_type,
-      std::enable_if_t<U == specfem::enums::element::type::elastic, int> = 0>
+      specfem::element::medium_tag U = value_type,
+      std::enable_if_t<U == specfem::element::medium_tag::elastic, int> = 0>
   material(const type_real &density, const type_real &cs, const type_real &cp,
            const type_real &Qkappa, const type_real &Qmu,
            const type_real &compaction_grad)
@@ -46,8 +46,8 @@ public:
                                                       Qmu, compaction_grad){};
 
   template <
-      specfem::enums::element::type U = value_type,
-      std::enable_if_t<U == specfem::enums::element::type::acoustic, int> = 0>
+      specfem::element::medium_tag U = value_type,
+      std::enable_if_t<U == specfem::element::medium_tag::acoustic, int> = 0>
   material(const type_real &density, const type_real &cp,
            const type_real &Qkappa, const type_real &Qmu,
            const type_real &compaction_grad)
@@ -59,7 +59,7 @@ public:
    *
    * @return specfem::enums::material::type
    */
-  constexpr specfem::enums::element::type get_type() const { return type; };
+  constexpr specfem::element::medium_tag get_type() const { return type; };
 };
 
 } // namespace material

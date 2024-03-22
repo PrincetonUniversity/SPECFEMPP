@@ -101,7 +101,8 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
   const auto stypes = setup.get_seismogram_types();
 
   specfem::compute::assembly assembly(mesh, quadratures, sources, receivers,
-                                      stypes, 0, 1);
+                                      stypes, 0, 0, 0, 1,
+                                      setup.get_simulation_type());
 
   const auto displacement_field = assembly.fields.forward.elastic.field;
   const auto velocity_field = assembly.fields.forward.elastic.field_dot;
@@ -118,11 +119,12 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
   specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
 
   specfem::domain::domain<
-      specfem::enums::element::medium::elastic,
+      specfem::wavefield::type::forward, specfem::dimension::type::dim2,
+      specfem::element::medium_tag::elastic,
       specfem::enums::element::quadrature::static_quadrature_points<5> >
       elastic_domain_static(assembly, qp5);
 
-  elastic_domain_static.compute_seismogram(0);
+  elastic_domain_static.compute_seismograms(0);
 
   assembly.receivers.sync_seismograms();
 

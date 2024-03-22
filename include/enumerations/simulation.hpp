@@ -4,28 +4,25 @@
 #include "specfem_enums.hpp"
 
 namespace specfem {
-namespace enums {
 namespace simulation {
-/**
- * @brief Forward simulation
- *
- */
-class forward {
+
+enum class type { forward, combined };
+
+template <specfem::simulation::type SimulationType> class simulation;
+
+template <> class simulation<specfem::simulation::type::forward> {
 public:
-  /**
-   * @brief constexpr defining the type of the simulation
-   *
-   */
-  constexpr static specfem::enums::simulation::type value =
-      specfem::enums::simulation::type::forward;
-  /**
-   * @brief Convert the simulation to a string
-   *
-   */
-  inline static std::string to_string() { return "Forward"; }
+  static constexpr auto simulation_type = specfem::simulation::type::forward;
+  static std::string to_string() { return "Forward"; }
 };
+
+template <> class simulation<specfem::simulation::type::combined> {
+public:
+  static constexpr auto simulation_type = specfem::simulation::type::combined;
+  static std::string to_string() { return "Adjoint & Forward combined"; }
+};
+
 } // namespace simulation
-} // namespace enums
 } // namespace specfem
 
 #endif /* _ENUMERATIONS_SIMULATION_HPP_ */

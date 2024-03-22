@@ -155,11 +155,12 @@
 //   }
 // }
 
-template<>
+template <>
 KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, 1>
 specfem::coupled_interface::impl::edges::edge<
-    specfem::enums::element::medium::elastic,
-    specfem::enums::element::medium::acoustic>::
+    specfem::dimension::type::dim2,
+    specfem::element::medium_tag::elastic,
+    specfem::element::medium_tag::acoustic>::
     load_field_elements(
         const int coupled_global_index,
         const specfem::compute::impl::field_impl<coupled_medium_type>
@@ -171,8 +172,9 @@ specfem::coupled_interface::impl::edges::edge<
 template <>
 KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, 2>
 specfem::coupled_interface::impl::edges::edge<
-    specfem::enums::element::medium::elastic,
-    specfem::enums::element::medium::acoustic>::
+    specfem::dimension::type::dim2,
+    specfem::element::medium_tag::elastic,
+    specfem::element::medium_tag::acoustic>::
     compute_coupling_terms(
         const specfem::kokkos::array_type<type_real, 2> &normal,
         const specfem::kokkos::array_type<type_real, 2> &weights,

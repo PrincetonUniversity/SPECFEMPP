@@ -9,25 +9,34 @@
 #include "macros.hpp"
 #include <Kokkos_Core.hpp>
 
-template <class self_medium, class coupled_medium>
-specfem::coupled_interface::coupled_interface<self_medium, coupled_medium>::
+template <specfem::wavefield::type WavefieldType,
+          specfem::dimension::type DimensionType,
+          specfem::element::medium_tag SelfMedium,
+          specfem::element::medium_tag CoupledMedium>
+specfem::coupled_interface::coupled_interface<WavefieldType, DimensionType, SelfMedium,
+                                              CoupledMedium>::
     coupled_interface(const specfem::compute::assembly &assembly)
     : nedges(assembly.coupled_interfaces
-                 .get_interface_container<self_medium::value,
-                                          coupled_medium::value>()
+                 .get_interface_container<SelfMedium, CoupledMedium>()
                  .num_interfaces),
-      interface_data(assembly.coupled_interfaces.get_interface_container<
-                     self_medium::value, coupled_medium::value>()),
+      interface_data(assembly.coupled_interfaces
+                         .get_interface_container<SelfMedium, CoupledMedium>()),
       points(assembly.mesh.points), quadrature(assembly.mesh.quadratures),
       partial_derivatives(assembly.partial_derivatives),
-      global_index_mapping(assembly.fields.forward.assembly_index_mapping),
-      self_field(assembly.fields.forward.get_field<self_medium>()),
-      coupled_field(assembly.fields.forward.get_field<coupled_medium>()),
+      global_index_mapping(
+          assembly.fields.get_simulation_field<WavefieldType>().assembly_index_mapping),
+      self_field(
+          assembly.fields.get_simulation_field<WavefieldType>().template get_field<self_medium_type>()),
+      coupled_field(
+          assembly.fields.get_simulation_field<WavefieldType>().template get_field<coupled_medium_type>()),
       edge(assembly) {}
 
-template <class self_domain_type, class coupled_domain_type>
-void specfem::coupled_interface::coupled_interface<
-    self_domain_type, coupled_domain_type>::compute_coupling() {
+template <specfem::wavefield::type WavefieldType,
+          specfem::dimension::type DimensionType,
+          specfem::element::medium_tag SelfMedium,
+          specfem::element::medium_tag CoupledMedium>
+void specfem::coupled_interface::coupled_interface<WavefieldType,
+    DimensionType, SelfMedium, CoupledMedium>::compute_coupling() {
 
   if (this->nedges == 0)
     return;
@@ -46,21 +55,18 @@ void specfem::coupled_interface::coupled_interface<
         //---------------------------------------------------------------------
         const auto self_edge_type =
             interface_data
-                .template load_device_edge_type<self_medium_type::value>(
+                .template load_device_edge_type<self_medium_type::medium_tag>(
                     iedge_l);
         const auto coupled_edge_type =
-            interface_data
-                .template load_device_edge_type<coupled_medium_type::value>(
-                    iedge_l);
+            interface_data.template load_device_edge_type<
+                coupled_medium_type::medium_tag>(iedge_l);
 
         const int self_index =
-            interface_data
-                .template load_device_index_mapping<self_medium_type::value>(
-                    iedge_l);
+            interface_data.template load_device_index_mapping<
+                self_medium_type::medium_tag>(iedge_l);
         const int coupled_index =
-            interface_data
-                .template load_device_index_mapping<coupled_medium_type::value>(
-                    iedge_l);
+            interface_data.template load_device_index_mapping<
+                coupled_medium_type::medium_tag>(iedge_l);
 
         auto npoints = specfem::edge::num_points_on_interface(self_edge_type);
         //---------------------------------------------------------------------
@@ -82,7 +88,7 @@ void specfem::coupled_interface::coupled_interface<
               // get coupling field elements
               const int coupled_global_index = global_index_mapping(
                   index_mapping(coupled_index, iz, ix),
-                  static_cast<int>(coupled_medium_type::value));
+                  static_cast<int>(coupled_medium_type::medium_tag));
               const auto coupled_field_elements =
                   edge.load_field_elements(coupled_global_index, coupled_field);
 
@@ -98,7 +104,7 @@ void specfem::coupled_interface::coupled_interface<
               // Add coupling contributions
               const int self_global_index = global_index_mapping(
                   index_mapping(self_index, iz, ix),
-                  static_cast<int>(self_medium_type::value));
+                  static_cast<int>(self_medium_type::medium_tag));
 
               Kokkos::single(Kokkos::PerThread(team_member), [&]() {
                 for (int i = 0; i < self_medium_type::components; i++) {

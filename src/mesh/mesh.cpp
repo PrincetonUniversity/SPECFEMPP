@@ -161,22 +161,20 @@ specfem::mesh::mesh::mesh(const std::string filename,
     const auto material_index_mapping =
         this->materials.material_index_mapping(i);
     if ((material_index_mapping.type ==
-         specfem::enums::element::type::elastic) &&
+         specfem::element::medium_tag::elastic) &&
         (material_index_mapping.property ==
-         specfem::enums::element::property_tag::isotropic)) {
+         specfem::element::property_tag::isotropic)) {
       const auto material = std::get<specfem::material::material<
-          specfem::enums::element::type::elastic,
-          specfem::enums::element::property_tag::isotropic> >(
-          this->materials[i]);
+          specfem::element::medium_tag::elastic,
+          specfem::element::property_tag::isotropic> >(this->materials[i]);
       mpi->cout(material.print());
     } else if ((material_index_mapping.type ==
-                specfem::enums::element::type::acoustic) &&
+                specfem::element::medium_tag::acoustic) &&
                (material_index_mapping.property ==
-                specfem::enums::element::property_tag::isotropic)) {
+                specfem::element::property_tag::isotropic)) {
       const auto material = std::get<specfem::material::material<
-          specfem::enums::element::type::acoustic,
-          specfem::enums::element::property_tag::isotropic> >(
-          this->materials[i]);
+          specfem::element::medium_tag::acoustic,
+          specfem::element::property_tag::isotropic> >(this->materials[i]);
       mpi->cout(material.print());
     } else {
       throw std::runtime_error("Material type not supported");
@@ -195,10 +193,10 @@ std::string specfem::mesh::mesh::print() const {
       "specfem::mesh::mesh::print", this->nspec,
       KOKKOS_LAMBDA(const int ispec, int &n_elastic, int &n_acoustic) {
         if (this->materials.material_index_mapping(ispec).type ==
-            specfem::enums::element::type::elastic) {
+            specfem::element::medium_tag::elastic) {
           n_elastic++;
         } else if (this->materials.material_index_mapping(ispec).type ==
-                   specfem::enums::element::type::acoustic) {
+                   specfem::element::medium_tag::acoustic) {
           n_acoustic++;
         }
       },

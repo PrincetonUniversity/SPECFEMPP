@@ -8,20 +8,19 @@
 
 namespace specfem {
 namespace material {
-template <specfem::enums::element::type type,
-          specfem::enums::element::property_tag property>
+template <specfem::element::medium_tag type,
+          specfem::element::property_tag property>
 class properties {
   // disable generic properties struct
   static_assert(type != type, "Invalid material type");
 };
 
 template <>
-class properties<specfem::enums::element::type::elastic,
-                 specfem::enums::element::property_tag::isotropic> {
+class properties<specfem::element::medium_tag::elastic,
+                 specfem::element::property_tag::isotropic> {
 public:
-  constexpr static auto type = specfem::enums::element::type::elastic;
-  constexpr static auto property =
-      specfem::enums::element::property_tag::isotropic;
+  constexpr static auto type = specfem::element::medium_tag::elastic;
+  constexpr static auto property = specfem::element::property_tag::isotropic;
 
   properties(const type_real &density, const type_real &cs, const type_real &cp,
              const type_real &Qkappa, const type_real &Qmu,
@@ -83,13 +82,12 @@ protected:
 };
 
 template <>
-class properties<specfem::enums::element::type::acoustic,
-                 specfem::enums::element::property_tag::isotropic> {
+class properties<specfem::element::medium_tag::acoustic,
+                 specfem::element::property_tag::isotropic> {
 
 public:
-  constexpr static auto type = specfem::enums::element::type::acoustic;
-  constexpr static auto property =
-      specfem::enums::element::property_tag::isotropic;
+  constexpr static auto type = specfem::element::medium_tag::acoustic;
+  constexpr static auto property = specfem::element::property_tag::isotropic;
 
   properties(const type_real &density, const type_real &cp,
              const type_real &Qkappa, const type_real &Qmu,

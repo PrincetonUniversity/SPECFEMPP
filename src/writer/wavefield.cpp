@@ -4,4 +4,5 @@
 
 // Explicit instantiation
 
-template class specfem::writer::wavefield<specfem::IO::HDF5>;
+template class specfem::writer::wavefield<
+    specfem::IO::HDF5<specfem::IO::write> >;

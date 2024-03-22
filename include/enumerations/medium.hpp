@@ -1,70 +1,62 @@
 #ifndef _ENUMERATIONS_MEDIUM_HPP_
 #define _ENUMERATIONS_MEDIUM_HPP_
 
+#include "enumerations/dimension.hpp"
 #include "specfem_enums.hpp"
 
 namespace specfem {
-namespace enums {
+
 namespace element {
 
-/**
- * @namespace medium property of the element
- *
- */
-namespace medium {
-/**
- * @brief Elastic medium
- *
- */
-class elastic {
-public:
-  /**
-   * @brief constexpr defining the type of the element
-   *
-   */
-  constexpr static specfem::enums::element::type value =
-      specfem::enums::element::type::elastic;
-  /**
-   * @brief Number of components for this medium
-   *
-   */
-  constexpr static int components = 2;
+constexpr int ntypes = 2; ///< Number of element types
 
-  /**
-   * @brief Convert the medium to a string
-   *
-   */
-  __inline__ static std::string to_string() { return "Elastic"; }
+enum class medium_tag {
+  elastic,    ///< Elastic medium
+  acoustic,   ///< Acoustic medium
+  poroelastic ///< Poroelastic medium
 };
 
-/**
- * @brief Acoustic medium
- *
- */
-class acoustic {
-public:
-  /**
-   * @brief constexpr defining the type of the element
-   *
-   */
-  constexpr static specfem::enums::element::type value =
-      specfem::enums::element::type::acoustic;
-  /**
-   * @brief constexpr defining number of components for this medium.
-   *
-   */
-  constexpr static int components = 1;
+enum class property_tag {
+  isotropic, ///< Isotropic medium
+  stacey     ///< Stacey medium
+};
+} // namespace element
 
-  /**
-   * @brief Convert the medium to a string
-   *
-   */
-  __inline__ static std::string to_string() { return "Acoustic"; }
+namespace medium {
+
+template <specfem::dimension::type Dimension,
+          specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag =
+              specfem::element::property_tag::isotropic>
+class medium;
+
+template <>
+class medium<specfem::dimension::type::dim2,
+             specfem::element::medium_tag::elastic,
+             specfem::element::property_tag::isotropic> {
+public:
+  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto medium_tag = specfem::element::medium_tag::elastic;
+  static constexpr auto property_tag =
+      specfem::element::property_tag::isotropic;
+  static constexpr int components = 2;
+  static std::string to_string() { return "Elastic, Isotropic"; }
+};
+
+template <>
+class medium<specfem::dimension::type::dim2,
+             specfem::element::medium_tag::acoustic,
+             specfem::element::property_tag::isotropic> {
+public:
+  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto medium_tag = specfem::element::medium_tag::acoustic;
+  static constexpr auto property_tag =
+      specfem::element::property_tag::isotropic;
+  static constexpr int components = 1;
+  static std::string to_string() { return "Acoustic, Isotropic"; }
 };
 
 } // namespace medium
-} // namespace element
-} // namespace enums
 } // namespace specfem
 
 #endif /* _ENUMERATIONS_MEDIUM_HPP_ */

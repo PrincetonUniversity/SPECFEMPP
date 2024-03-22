@@ -202,13 +202,27 @@ target_link_libraries(
 # )
 
 add_library(
+        reader
+        src/reader/wavefield.cpp
+        src/reader/seismogram.cpp
+)
+
+target_link_libraries(
+        reader
+        compute
+        IO
+)
+
+add_library(
         source_time_function
         src/source_time_function/dirac.cpp
         src/source_time_function/ricker.cpp
+        src/source_time_function/external.cpp
 )
 
 target_link_libraries(
         source_time_function
+        reader
         Kokkos::kokkos
         point
 )
@@ -218,6 +232,7 @@ add_library(
         src/source/source.cpp
         src/source/force_source.cpp
         src/source/moment_tensor_source.cpp
+        src/source/adjoint_source.cpp
         src/source/read_sources.cpp
 )
 
@@ -288,6 +303,16 @@ target_link_libraries(
         Kokkos::kokkos
 )
 
+add_library(coupled_interface
+        src/coupled_interface/coupled_interface.cpp
+)
+
+target_link_libraries(
+        coupled_interface
+        Kokkos::kokkos
+        compute
+)
+
 add_library(
         timescheme
         src/timescheme/timescheme.cpp
@@ -317,15 +342,15 @@ target_link_libraries(
 add_library(
         parameter_reader
         src/parameter_parser/run_setup.cpp
-        src/parameter_parser/solver/solver.cpp
-        src/parameter_parser/solver/time_marching.cpp
+        # src/parameter_parser/solver/solver.cpp
+        src/parameter_parser/time_scheme/time_scheme.cpp
         src/parameter_parser/database_configuration.cpp
         src/parameter_parser/header.cpp
         src/parameter_parser/quadrature.cpp
         src/parameter_parser/receivers.cpp
-        src/parameter_parser/seismogram.cpp
+        src/parameter_parser/writer/seismogram.cpp
         src/parameter_parser/setup.cpp
-        src/parameter_parser/wavefield.cpp
+        src/parameter_parser/writer/wavefield.cpp
 )
 
 target_link_libraries(
@@ -335,6 +360,7 @@ target_link_libraries(
         receiver_class
         yaml-cpp
         writer
+        reader
         Boost::filesystem
 )
 
@@ -354,6 +380,8 @@ target_link_libraries(
         parameter_reader
         receiver_class
         writer
+        reader
+        coupled_interface
         Boost::program_options
         ${HDF5_LIBRARIES}
 )

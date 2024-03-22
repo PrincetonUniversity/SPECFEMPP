@@ -6,8 +6,8 @@
 #include "interface_container.hpp"
 #include "specfem_mpi/interface.hpp"
 
-template <specfem::enums::element::type medium1,
-          specfem::enums::element::type medium2>
+template <specfem::element::medium_tag medium1,
+          specfem::element::medium_tag medium2>
 specfem::mesh::interface_container<
     medium1, medium2>::interface_container(const int num_interfaces,
                                            std::ifstream &stream,
@@ -31,9 +31,9 @@ specfem::mesh::interface_container<
   return;
 }
 
-template <specfem::enums::element::type medium1,
-          specfem::enums::element::type medium2>
-template <specfem::enums::element::type medium>
+template <specfem::element::medium_tag medium1,
+          specfem::element::medium_tag medium2>
+template <specfem::element::medium_tag medium>
 int specfem::mesh::interface_container<
     medium1, medium2>::get_spectral_elem_index(const int interface_index)
     const {

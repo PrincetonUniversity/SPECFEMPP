@@ -1,7 +1,7 @@
 #ifndef _ENUMS_BOUNDARY_CONDITIONS_STACEY_INTERFACE_HPP_
 #define _ENUMS_BOUNDARY_CONDITIONS_STACEY_INTERFACE_HPP_
 
-#include "stacey.hpp"
+// #include "stacey.hpp"
 #include "stacey2d_acoustic.hpp"
 #include "stacey2d_acoustic.tpp"
 #include "stacey2d_elastic.hpp"

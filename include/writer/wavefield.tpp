@@ -8,9 +8,7 @@
 template <typename OutputLibrary>
 specfem::writer::wavefield<OutputLibrary>::wavefield(
     const specfem::compute::assembly &assembly, const std::string output_folder)
-    : output_folder(output_folder),
-      elastic_field(assembly.fields.forward.elastic),
-      acoustic_field(assembly.fields.forward.acoustic) {}
+    : output_folder(output_folder), forward(assembly.fields.forward) {}
 
 template <typename OutputLibrary>
 void specfem::writer::wavefield<OutputLibrary>::write() {
@@ -20,13 +18,13 @@ void specfem::writer::wavefield<OutputLibrary>::write() {
   typename OutputLibrary::Group elastic = file.createGroup("/Elastic");
   typename OutputLibrary::Group acoustic = file.createGroup("/Acoustic");
 
-  elastic.createDataset("Displacement", elastic_field.field).write();
-  elastic.createDataset("Velocity", elastic_field.field_dot).write();
-  elastic.createDataset("Acceleration", elastic_field.field_dot_dot).write();
+  elastic.createDataset("Displacement", forward.elastic.field).write();
+  elastic.createDataset("Velocity", forward.elastic.field_dot).write();
+  elastic.createDataset("Acceleration", forward.elastic.field_dot_dot).write();
 
-  acoustic.createDataset("Potential", acoustic_field.field).write();
-  acoustic.createDataset("PotentialDot", acoustic_field.field_dot).write();
-  acoustic.createDataset("PotentialDotDot", acoustic_field.field_dot_dot)
+  acoustic.createDataset("Potential", forward.acoustic.field).write();
+  acoustic.createDataset("PotentialDot", forward.acoustic.field_dot).write();
+  acoustic.createDataset("PotentialDotDot", forward.acoustic.field_dot_dot)
       .write();
 }
 

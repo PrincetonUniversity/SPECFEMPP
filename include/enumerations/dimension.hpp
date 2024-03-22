@@ -4,44 +4,27 @@
 #include "specfem_enums.hpp"
 
 namespace specfem {
-namespace enums {
-namespace element {
-/**
- * @namespace dimensionality property of the element
- *
- */
 namespace dimension {
-/**
- * @brief 2D element
- *
- */
-class dim2 {
-public:
-  constexpr static int dim = 2; ///< Dimensionality of the element
 
-  /**
-   * @brief Convert the dimension to a string
-   *
-   */
-  __inline__ static std::string to_string() { return "2D"; }
-};
-/**
- * @brief 3D element
- *
- */
-class dim3 {
-public:
-  constexpr static int dim = 3; ///< Dimensionality of the element
+enum class type { dim2, dim3 };
 
-  /**
-   * @brief Convert the dimension to a string
-   *
-   */
-  __inline__ static std::string to_string() { return "3D"; }
+template <specfem::dimension::type DType> class dimension;
+
+template <> class dimension<specfem::dimension::type::dim2> {
+public:
+  static constexpr auto value = specfem::dimension::type::dim2;
+  static constexpr int dim = 2;
+  static std::string to_string() { return "2D"; }
 };
+
+template <> class dimension<specfem::dimension::type::dim3> {
+public:
+  static constexpr auto value = specfem::dimension::type::dim3;
+  static constexpr int dim = 3;
+  static std::string to_string() { return "3D"; }
+};
+
 } // namespace dimension
-} // namespace element
-} // namespace enums
 } // namespace specfem
 
 #endif /* _ENUMERATIONS_DIMENSION_HPP_ */

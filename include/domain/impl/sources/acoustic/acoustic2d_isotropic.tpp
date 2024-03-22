@@ -41,20 +41,16 @@ using field_type = Kokkos::Subview<
 
 template <int NGLL>
 KOKKOS_INLINE_FUNCTION void specfem::domain::impl::sources::source<
-    specfem::enums::element::dimension::dim2,
-    specfem::enums::element::medium::acoustic,
-    specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
-    specfem::enums::element::property::isotropic>::
+    specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
+    specfem::element::property_tag::isotropic,
+    specfem::enums::element::quadrature::static_quadrature_points<NGLL> >::
     compute_interaction(
         const type_real &stf,
-        const specfem::kokkos::array_type<type_real, 2>
-            &lagrange_interpolant,
-        const specfem::point::properties<medium_type::value,
-                                         property_type::value> &properties,
+        const specfem::kokkos::array_type<type_real, 2> &lagrange_interpolant,
         specfem::kokkos::array_type<type_real, medium_type::components>
             &acceleration) const {
 
-  acceleration[0] = lagrange_interpolant[0] * stf / properties.kappa;
+  acceleration[0] = lagrange_interpolant[0] * stf;
 
   return;
 }

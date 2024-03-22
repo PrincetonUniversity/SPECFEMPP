@@ -65,7 +65,7 @@ specfem::compute::impl::field_impl<medium>::field_impl(
 
   for (int ispec = 0; ispec < nspec; ++ispec) {
     // increase the count only if current element is of the medium type
-    if (element_type(ispec) == medium::value) {
+    if (element_type(ispec) == medium::medium_tag) {
       for (int iz = 0; iz < ngllz; ++iz) {
         for (int ix = 0; ix < ngllx; ++ix) {
           const int index = index_mapping(ispec, iz, ix); // get global index

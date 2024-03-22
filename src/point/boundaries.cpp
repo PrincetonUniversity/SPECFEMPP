@@ -4,7 +4,7 @@
 
 void specfem::point::boundary::update_boundary(
     const specfem::enums::boundaries::type &type,
-    const specfem::enums::element::boundary_tag &tag) {
+    const specfem::element::boundary_tag &tag) {
   if (type == specfem::enums::boundaries::type::TOP) {
     top = tag;
   } else if (type == specfem::enums::boundaries::type::BOTTOM) {
@@ -27,10 +27,10 @@ void specfem::point::boundary::update_boundary(
 }
 
 KOKKOS_FUNCTION
-bool specfem::point::is_on_boundary(
-    const specfem::enums::element::boundary_tag &tag,
-    const specfem::point::boundary &type, const int &iz, const int &ix,
-    const int &ngllz, const int &ngllx) {
+bool specfem::point::is_on_boundary(const specfem::element::boundary_tag &tag,
+                                    const specfem::point::boundary &type,
+                                    const int &iz, const int &ix,
+                                    const int &ngllz, const int &ngllx) {
 
   return (type.top == tag && iz == ngllz - 1) ||
          (type.bottom == tag && iz == 0) || (type.left == tag && ix == 0) ||

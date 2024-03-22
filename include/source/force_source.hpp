@@ -36,9 +36,9 @@ public:
    * @param dt Time increment in the simulation. Used to calculate dominant
    * frequecy of Dirac source.
    */
-  force(YAML::Node &Node, const type_real dt)
-      : angle(Node["angle"].as<type_real>()), specfem::sources::source(Node,
-                                                                       dt){};
+  force(YAML::Node &Node, const int nsteps, const type_real dt)
+      : angle(Node["angle"].as<type_real>()), specfem::sources::source(
+                                                  Node, nsteps, dt){};
   /**
    * @brief User output
    *

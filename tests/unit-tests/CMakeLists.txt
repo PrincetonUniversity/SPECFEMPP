@@ -268,6 +268,7 @@ target_link_libraries(
   point
   edge
   algorithms
+  coupled_interface
   -lpthread -lm
 )
 

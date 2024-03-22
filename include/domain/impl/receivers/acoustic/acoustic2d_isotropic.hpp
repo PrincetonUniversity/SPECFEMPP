@@ -2,7 +2,7 @@
 #define DOMAIN_IMPL_RECEIVERS_ACOUSTIC2D_ISOTRPOIC_HPP_
 
 #include "constants.hpp"
-#include "domain/impl/receivers/acoustic/acoustic2d.hpp"
+// #include "domain/impl/receivers/acoustic/acoustic2d.hpp"
 #include "domain/impl/receivers/receiver.hpp"
 #include "enumerations/interface.hpp"
 #include <Kokkos_Core.hpp>
@@ -20,33 +20,28 @@ namespace receivers {
  */
 template <int NGLL>
 class receiver<
-    specfem::enums::element::dimension::dim2,
-    specfem::enums::element::medium::acoustic,
-    specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
-    specfem::enums::element::property::isotropic> {
+    specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
+    specfem::element::property_tag::isotropic,
+    specfem::enums::element::quadrature::static_quadrature_points<NGLL> > {
 
 public:
   /**
    * @name Typedefs
    */
   ///@{
-  /**
-   * @brief Dimension of the element
-   *
-   */
-  using dimension = specfem::enums::element::dimension::dim2;
-  /**
-   * @brief Medium of the element
-   *
-   */
-  using medium_type = specfem::enums::element::medium::acoustic;
+  using dimension =
+      specfem::dimension::dimension<specfem::dimension::type::dim2>;
+
+  using medium_type =
+      specfem::medium::medium<specfem::dimension::type::dim2,
+                              specfem::element::medium_tag::acoustic,
+                              specfem::element::property_tag::isotropic>;
   /**
    * @brief Number of Gauss-Lobatto-Legendre quadrature points
    */
   using quadrature_points_type =
       specfem::enums::element::quadrature::static_quadrature_points<NGLL>;
 
-  using property_type = specfem::enums::element::property::isotropic;
   /**
    * @brief Use the scratch view type from the quadrature points
    *
@@ -106,7 +101,8 @@ public:
   void get_field(
       const int iz, const int ix,
       const specfem::point::partial_derivatives2 partial_derivatives,
-      const specfem::point::properties<medium_type::value, property_type::value>
+      const specfem::point::properties<medium_type::medium_tag,
+                                       medium_type::property_tag>
           properties,
       const ScratchViewType<type_real, 1> hprime,
       const ScratchViewType<type_real, medium_type::components> active_field,

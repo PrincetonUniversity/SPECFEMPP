@@ -9,12 +9,12 @@
 
 namespace specfem {
 namespace IO {
-class HDF5 {
+template <typename OpType> class HDF5 {
 public:
-  using File = specfem::IO::impl::HDF5::File;
-  using Group = specfem::IO::impl::HDF5::Group;
+  using File = specfem::IO::impl::HDF5::File<OpType>;
+  using Group = specfem::IO::impl::HDF5::Group<OpType>;
   template <typename ViewType>
-  using Dataset = specfem::IO::impl::HDF5::Dataset<ViewType>;
+  using Dataset = specfem::IO::impl::HDF5::Dataset<ViewType, OpType>;
 };
 } // namespace IO
 } // namespace specfem
