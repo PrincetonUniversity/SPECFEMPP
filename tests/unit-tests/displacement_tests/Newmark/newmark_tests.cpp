@@ -180,8 +180,8 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     // Read sources
     //    if start time is not explicitly specified then t0 is determined using
     //    source frequencies and time shift
-    auto [sources, t0] =
-        specfem::sources::read_sources(sources_file, nsteps, dt);
+    auto [sources, t0] = specfem::sources::read_sources(
+        sources_file, nsteps, dt, setup.get_simulation_type());
 
     for (auto &source : sources) {
       if (mpi->main_proc())

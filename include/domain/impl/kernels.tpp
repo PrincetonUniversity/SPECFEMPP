@@ -170,41 +170,36 @@ void allocate_isotropic_sources(
                                                   medium_tag, property_tag,
                                                   qp_type> &isotropic_sources) {
 
-  const auto value = medium_tag;
-  // Create isotropic sources
-  const auto ispec_array = assembly.sources.h_ispec_array;
+  const auto &sources = assembly.sources;
+  const int nsources = sources.nsources;
 
-  // Count the number of sources within this medium
-  int nsources = 0;
-  for (int isource = 0; isource < ispec_array.extent(0); isource++) {
-    const int ispec = ispec_array(isource);
-    if (assembly.properties.h_element_types(ispec) == value) {
-      nsources++;
+  int nsources_in_this_domain = 0;
+  for (int isource = 0; isource < sources.nsources; isource++) {
+    if ((sources.source_medium_mapping(isource) == medium_tag) &&
+        (sources.source_wavefield_mapping(isource) == WavefieldType)) {
+      nsources_in_this_domain++;
     }
   }
 
   // Save the index for sources in this domain
-  specfem::kokkos::HostView1d<int> h_source_kernel_index_mapping(
-      "specfem::domain::domain::source_kernel_index_mapping", nsources);
-
-  specfem::kokkos::HostMirror1d<int> h_source_mapping(
-      "specfem::domain::domain::source_mapping", nsources);
+  specfem::kokkos::HostView1d<int> h_source_domain_index_mapping(
+      "specfem::domain::domain::h_source_domain_index_mapping",
+      nsources_in_this_domain);
 
   int index = 0;
-  for (int isource = 0; isource < ispec_array.extent(0); isource++) {
-    const int ispec = ispec_array(isource);
-    if (assembly.properties.h_element_types(ispec) == value) {
-      h_source_kernel_index_mapping(index) = ispec_array(isource);
-      h_source_mapping(index) = isource;
-      index++;
+  for (int isource = 0; isource < nsources; isource++) {
+    const int isources_domain = sources.source_domain_index_mapping(isource);
+    if (sources.source_medium_mapping(isource) == medium_tag &&
+        sources.source_wavefield_mapping(isource) == WavefieldType) {
+      h_source_domain_index_mapping(index) =
+          sources.source_domain_index_mapping(isource);
     }
   }
 
   // Allocate isotropic sources
   isotropic_sources = specfem::domain::impl::kernels::source_kernel<
       WavefieldType, DimensionType, medium_tag, property_tag, qp_type>(
-      assembly, h_source_kernel_index_mapping, h_source_mapping,
-      quadrature_points);
+      assembly, h_source_domain_index_mapping, quadrature_points);
 
   return;
 }

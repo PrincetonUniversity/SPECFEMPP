@@ -43,6 +43,9 @@ struct sources {
   specfem::kokkos::HostMirror1d<int> h_ispec_array; ///< Spectral element number
                                                     ///< where the source lies
                                                     ///< stored on host
+  specfem::kokkos::HostView1d<specfem::wavefield::type>
+      h_wavefield_type; ///< Type of wavefield that each source is associated
+                        ///< with
   /**
    * @brief Default constructor
    *

@@ -43,10 +43,14 @@ type_real specfem::forcing_function::Ricker::compute(type_real t) {
 
 void specfem::forcing_function::Ricker::compute_source_time_function(
     const type_real t0, const type_real dt, const int nsteps,
-    specfem::kokkos::HostView1d<type_real> source_time_function) {
+    specfem::kokkos::HostView2d<type_real> source_time_function) {
+
+  const int ncomponents = source_time_function.extent(1);
 
   for (int i = 0; i < nsteps; i++) {
-    source_time_function(i) = this->compute(t0 + i * dt);
+    for (int icomp = 0; icomp < ncomponents; ++icomp) {
+      source_time_function(i, icomp) = this->compute(t0 + i * dt);
+    }
   }
 }
 

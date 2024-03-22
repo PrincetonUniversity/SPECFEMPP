@@ -26,6 +26,19 @@ void specfem::sources::moment_tensor::compute_source_array(
   specfem::point::gcoord2 coord = specfem::point::gcoord2(this->x, this->z);
   auto lcoord = specfem::algorithms::locate_point(coord, mesh);
 
+  const auto el_type = properties.h_element_types(lcoord.ispec);
+
+  if (el_type == specfem::element::medium_tag::acoustic) {
+    throw std::runtime_error(
+        "Moment tensor source not implemented for acoustic medium");
+  }
+
+  const int ncomponents = source_array.extent(2);
+  if (ncomponents != 2) {
+    throw std::runtime_error(
+        "Moment tensor source requires 2 components for elastic medium");
+  }
+
   const auto xi = mesh.quadratures.gll.h_xi;
   const auto gamma = mesh.quadratures.gll.h_xi;
   const auto N = mesh.quadratures.gll.N;

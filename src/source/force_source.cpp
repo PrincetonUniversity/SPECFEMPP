@@ -29,6 +29,7 @@ void specfem::sources::force::compute_source_array(
   const auto N = mesh.quadratures.gll.N;
 
   const auto el_type = properties.h_element_types(lcoord.ispec);
+  const int ncomponents = source_array.extent(2);
 
   // Compute lagrange interpolants at the source location
   auto [hxi_source, hpxi_source] =
@@ -44,21 +45,30 @@ void specfem::sources::force::compute_source_array(
     for (int ix = 0; ix < N; ++ix) {
       hlagrange = hxi_source(ix) * hgamma_source(iz);
 
-      if (el_type == specfem::element::medium_tag::acoustic ||
-          (el_type == specfem::element::medium_tag::elastic &&
-           specfem::globals::simulation_wave == specfem::wave::sh)) {
+      if (el_type == specfem::element::medium_tag::acoustic) {
+        if (ncomponents != 1) {
+          throw std::runtime_error(
+              "Force source requires 1 component for acoustic medium");
+        }
         source_array(0, iz, ix) = hlagrange;
-        source_array(1, iz, ix) = 0;
-      } else if ((el_type == specfem::element::medium_tag::elastic &&
-                  specfem::globals::simulation_wave == specfem::wave::p_sv) ||
-                 el_type == specfem::element::medium_tag::poroelastic) {
-        source_array(0, iz, ix) =
-            std::sin(Kokkos::numbers::pi_v<type_real> / 180 * this->angle) *
-            hlagrange;
-        source_array(1, iz, ix) =
-            -1.0 *
-            std::cos(Kokkos::numbers::pi_v<type_real> / 180 * this->angle) *
-            hlagrange;
+      } else if ((el_type == specfem::element::medium_tag::elastic) ||
+                 (el_type == specfem::element::medium_tag::poroelastic)) {
+        if (ncomponents != 2) {
+          throw std::runtime_error(
+              "Force source requires 2 components for elastic medium");
+        }
+        if (specfem::globals::simulation_wave == specfem::wave::sh) {
+          source_array(0, iz, ix) = hlagrange;
+          source_array(1, iz, ix) = 0;
+        } else {
+          source_array(0, iz, ix) =
+              std::sin(Kokkos::numbers::pi_v<type_real> / 180 * this->angle) *
+              hlagrange;
+          source_array(1, iz, ix) =
+              -1.0 *
+              std::cos(Kokkos::numbers::pi_v<type_real> / 180 * this->angle) *
+              hlagrange;
+        }
       }
     }
   }

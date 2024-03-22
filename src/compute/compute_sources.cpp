@@ -1,5 +1,7 @@
 #include "algorithms/interface.hpp"
-#include "compute/interface.hpp"
+#include "compute/sources/impl/source_medium.hpp"
+#include "compute/sources/impl/source_medium.tpp"
+#include "compute/sources/sources.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "source/interface.hpp"
@@ -9,41 +11,69 @@
 #include <memory>
 #include <vector>
 
+// Forward declarations
+
+template class specfem::compute::impl::sources::source_medium<
+    specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic>;
+
+template class specfem::compute::impl::sources::source_medium<
+    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic>;
+
 specfem::compute::sources::sources(
     const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
     const specfem::compute::mesh &mesh,
     const specfem::compute::partial_derivatives &partial_derivatives,
     const specfem::compute::properties &properties, const type_real t0,
     const type_real dt, const int nsteps)
-    : source_array("specfem::compute::sources::source_array", sources.size(),
-                   ndim, mesh.quadratures.gll.N, mesh.quadratures.gll.N),
-      h_source_array(Kokkos::create_mirror_view(source_array)),
-      stf_array("specfem::compute::sources::stf_array", sources.size(), nsteps),
-      h_stf_array(Kokkos::create_mirror_view(stf_array)),
-      ispec_array("specfem::compute::sources::ispec_array", sources.size()),
-      h_ispec_array(Kokkos::create_mirror_view(ispec_array)) {
+    : nsources(sources.size()),
+      source_domain_index_mapping(
+          "specfem::sources::source_domain_index_mapping", sources.size()),
+      source_medium_mapping("specfem::sources::source_medium_mapping",
+                            sources.size()),
+      source_wavefield_mapping("specfem::sources::source_wavefield_mapping",
+                               sources.size()) {
+
+  const specfem::element::medium_tag acoustic =
+      specfem::element::medium_tag::acoustic;
+  const specfem::element::medium_tag elastic =
+      specfem::element::medium_tag::elastic;
+
+  std::vector<std::shared_ptr<specfem::sources::source> > acoustic_sources;
+  std::vector<std::shared_ptr<specfem::sources::source> > elastic_sources;
 
   for (int isource = 0; isource < sources.size(); isource++) {
-    auto sv_source_array = Kokkos::subview(
-        this->h_source_array, isource, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
-    sources[isource]->compute_source_array(mesh, partial_derivatives,
-                                           properties, sv_source_array);
-    auto sv_stf_array =
-        Kokkos::subview(this->h_stf_array, isource, Kokkos::ALL);
-    sources[isource]->compute_source_time_function(t0, dt, nsteps,
-                                                   sv_stf_array);
-    specfem::point::gcoord2 coord = specfem::point::gcoord2(
-        sources[isource]->get_x(), sources[isource]->get_z());
+    const auto &source = sources[isource];
 
-    auto lcoord = specfem::algorithms::locate_point(coord, mesh);
-    this->h_ispec_array(isource) = lcoord.ispec;
+    // Get local coordinate for the source
+    const type_real x = source->get_x();
+    const type_real z = source->get_z();
+    const specfem::point::gcoord2 coord = specfem::point::gcoord2(x, z);
+    const specfem::point::lcoord2 lcoord =
+        specfem::algorithms::locate_point(coord, mesh);
+    //-------------------------------------
+
+    if (properties.h_element_types(lcoord.ispec) == acoustic) {
+      acoustic_sources.push_back(source);
+      source_domain_index_mapping(isource) = acoustic_sources.size() - 1;
+      source_medium_mapping(isource) = acoustic;
+      source_wavefield_mapping(isource) = source->get_wavefield_type();
+    } else if (properties.h_element_types(lcoord.ispec) == elastic) {
+      elastic_sources.push_back(source);
+      source_domain_index_mapping(isource) = elastic_sources.size() - 1;
+      source_medium_mapping(isource) = elastic;
+      source_wavefield_mapping(isource) = source->get_wavefield_type();
+    } else {
+      throw std::runtime_error("Unknown medium type");
+    }
   }
 
-  Kokkos::deep_copy(source_array, h_source_array);
-  Kokkos::deep_copy(stf_array, h_stf_array);
-  Kokkos::deep_copy(ispec_array, h_ispec_array);
+  this->acoustic_sources = specfem::compute::impl::sources::source_medium<
+      specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic>(
+      acoustic_sources, mesh, partial_derivatives, properties, t0, dt, nsteps);
 
-  return;
+  this->elastic_sources = specfem::compute::impl::sources::source_medium<
+      specfem::dimension::type::dim2, specfem::element::medium_tag::elastic>(
+      elastic_sources, mesh, partial_derivatives, properties, t0, dt, nsteps);
 }
 
 // specfem::compute::sources::sources(

@@ -1,13 +1,5 @@
 
 #include "compute/assembly/assembly.hpp"
-#include "compute/boundaries/boundaries.hpp"
-#include "compute/compute_mesh.hpp"
-#include "compute/compute_partial_derivatives.hpp"
-#include "compute/compute_receivers.hpp"
-#include "compute/compute_sources.hpp"
-#include "compute/coupled_interfaces/coupled_interfaces.hpp"
-#include "compute/fields/fields.hpp"
-#include "compute/properties/interface.hpp"
 #include "mesh/mesh.hpp"
 
 specfem::compute::assembly::assembly(

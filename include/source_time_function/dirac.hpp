@@ -52,7 +52,7 @@ public:
 
   void compute_source_time_function(
       const type_real t0, const type_real dt, const int nsteps,
-      specfem::kokkos::HostView1d<type_real> source_time_function) override;
+      specfem::kokkos::DeviceView2d<type_real> source_time_function) override;
 
 private:
   int __nsteps;

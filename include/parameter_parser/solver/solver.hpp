@@ -23,6 +23,16 @@ public:
               std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
               const qp_type &quadrature) const;
 
+  inline specfem::simulation::type get_simulation_type() const {
+    if (this->simulation_type == "forward") {
+      return specfem::simulation::type::forward;
+    } else if (this->simulation_type == "combined") {
+      return specfem::simulation::type::combined;
+    } else {
+      throw std::runtime_error("Unknown simulation type");
+    }
+  }
+
 private:
   std::string simulation_type;
 };
