@@ -29,8 +29,7 @@ public:
   source_kernel() = default;
   source_kernel(
       const specfem::compute::assembly &assembly,
-      const specfem::kokkos::HostView1d<int> h_source_kernel_index_mapping,
-      const specfem::kokkos::HostView1d<int> h_source_mapping,
+      const specfem::kokkos::HostView1d<int> h_source_domain_index_mapping,
       const quadrature_point_type quadrature_points);
 
   void compute_source_interaction(const int timestep) const;
@@ -39,15 +38,15 @@ private:
   int nsources;
   specfem::compute::points points;
   specfem::compute::quadrature quadrature;
-  specfem::kokkos::DeviceView1d<int> source_kernel_index_mapping;
-  specfem::kokkos::HostMirror1d<int> h_source_kernel_index_mapping;
-  specfem::kokkos::DeviceView1d<int> source_mapping;
+  specfem::kokkos::DeviceView1d<int> source_domain_index_mapping;
+  specfem::kokkos::HostMirror1d<int> h_source_domain_index_mapping;
   Kokkos::View<int * [specfem::element::ntypes], Kokkos::LayoutLeft,
                specfem::kokkos::DevMemSpace>
       global_index_mapping;
   specfem::compute::properties properties;
   specfem::compute::impl::field_impl<medium_type> field;
-  specfem::compute::sources sources;
+  specfem::compute::impl::sources::source_medium<DimensionType, MediumTag>
+      sources;
   quadrature_point_type quadrature_points;
   specfem::domain::impl::sources::source<DimensionType, MediumTag, PropertyTag,
                                          quadrature_point_type>

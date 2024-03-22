@@ -14,17 +14,17 @@ template <specfem::wavefield::type WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, typename qp_type>
-specfem::domain::impl::kernels::source_kernel<WavefieldType, DimensionType,
-                                              MediumTag, PropertyTag, qp_type>::
-    source_kernel(
-        const specfem::compute::assembly &assembly,
-        const specfem::kokkos::HostView1d<int> h_source_kernel_index_mapping,
-        const specfem::kokkos::HostView1d<int> h_source_mapping,
-        const quadrature_point_type quadrature_points)
-    : nsources(h_source_kernel_index_mapping.extent(0)),
-      h_source_kernel_index_mapping(h_source_kernel_index_mapping),
+specfem::domain::impl::kernels::source_kernel<
+    WavefieldType, DimensionType, MediumTag, PropertyTag,
+    qp_type>::source_kernel(const specfem::compute::assembly &assembly,
+                            const specfem::kokkos::HostView1d<int>
+                                h_source_domain_index_mapping,
+                            const quadrature_point_type quadrature_points)
+    : nsources(h_source_domain_index_mapping.extent(0)),
+      h_source_domain_index_mapping(h_source_domain_index_mapping),
       points(assembly.mesh.points), quadrature(assembly.mesh.quadratures),
-      properties(assembly.properties), sources(assembly.sources),
+      properties(assembly.properties),
+      sources(assembly.sources.get_source_medium<MediumTag>()),
       quadrature_points(quadrature_points),
       global_index_mapping(assembly.fields.get_simulation_field<WavefieldType>()
                                .assembly_index_mapping),
@@ -35,7 +35,7 @@ specfem::domain::impl::kernels::source_kernel<WavefieldType, DimensionType,
       "specfem::domain::impl::kernels::element_kernel::check_properties",
       specfem::kokkos::HostRange(0, nsources),
       KOKKOS_LAMBDA(const int isource) {
-        const int ispec = h_source_kernel_index_mapping(isource);
+        const int ispec = sources.h_source_index_mapping(isource);
         if ((assembly.properties.h_element_types(ispec) !=
              medium_type::medium_tag) &&
             (assembly.properties.h_element_property(ispec) !=
@@ -46,17 +46,12 @@ specfem::domain::impl::kernels::source_kernel<WavefieldType, DimensionType,
 
   Kokkos::fence();
 
-  source_kernel_index_mapping = specfem::kokkos::DeviceView1d<int>(
+  source_domain_index_mapping = specfem::kokkos::DeviceView1d<int>(
       "specfem::domain::impl::kernels::element_kernel::element_kernel_index_"
       "mapping",
       nsources);
 
-  source_mapping = specfem::kokkos::DeviceView1d<int>(
-      "specfem::domain::impl::kernels::element_kernel::source_mapping",
-      nsources);
-
-  Kokkos::deep_copy(source_kernel_index_mapping, h_source_kernel_index_mapping);
-  Kokkos::deep_copy(source_mapping, h_source_mapping);
+  Kokkos::deep_copy(source_domain_index_mapping, h_source_domain_index_mapping);
 
   source = specfem::domain::impl::sources::source<
       DimensionType, MediumTag, PropertyTag, quadrature_point_type>();
@@ -85,9 +80,9 @@ void specfem::domain::impl::kernels::source_kernel<
           const specfem::kokkos::DeviceTeam::member_type &team_member) {
         int ngllx, ngllz;
         quadrature_points.get_ngll(&ngllx, &ngllz);
-        int isource_l = source_mapping(team_member.league_rank());
-        const int ispec_l =
-            source_kernel_index_mapping(team_member.league_rank());
+        const int isource_l =
+            source_domain_index_mapping(team_member.league_rank());
+        const int ispec_l = sources.source_index_mapping(isource_l);
 
         Kokkos::parallel_for(
             quadrature_points.template TeamThreadRange<specfem::enums::axes::z,
@@ -100,9 +95,10 @@ void specfem::domain::impl::kernels::source_kernel<
               int iglob_l = global_index_mapping(
                   iglob, static_cast<int>(medium_type::medium_tag));
 
-              specfem::kokkos::array_type<type_real, 2> lagrange_interpolant(
-                  sources.source_array(isource_l, 0, iz, ix),
-                  sources.source_array(isource_l, 1, iz, ix));
+              const specfem::kokkos::array_type<type_real,
+                                                medium_type::components>
+                  lagrange_interpolant(Kokkos::subview(
+                      sources.source_array, isource_l, iz, ix, Kokkos::ALL));
 
               // Source time function
               // For acoustic medium, forward simulation, divide by kappa
@@ -115,10 +111,18 @@ void specfem::domain::impl::kernels::source_kernel<
                       properties.load_device_properties<
                           medium_type::medium_tag, medium_type::property_tag>(
                           ispec_l, iz, ix);
-                  return sources.stf_array(isource_l, timestep) /
-                         point_properties.kappa;
+                  specfem::kokkos::array_type<type_real,
+                                              medium_type::components>
+                      stf(Kokkos::subview(sources.source_time_function,
+                                          timestep, isource_l, Kokkos::ALL));
+                  for (int i = 0; i < components; i++) {
+                    stf[i] = stf[i]/point_properties.kappa;
+                  }
+                  return stf;
                 } else {
-                  return sources.stf_array(isource_l, timestep);
+                  return specfem::kokkos::array_type<type_real, components>(
+                      Kokkos::subview(sources.source_time_function, timestep,
+                                      isource_l, Kokkos::ALL));
                 }
               }();
 

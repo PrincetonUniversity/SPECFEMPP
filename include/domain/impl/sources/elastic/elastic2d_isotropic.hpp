@@ -79,8 +79,10 @@ public:
    * the source
    */
   KOKKOS_INLINE_FUNCTION void compute_interaction(
-      const type_real &stf,
-      const specfem::kokkos::array_type<type_real, 2> &lagrange_interpolant,
+      const specfem::kokkos::array_type<type_real, medium_type::components>
+          &stf,
+      const specfem::kokkos::array_type<type_real, medium_type::components>
+          &lagrange_interpolant,
       specfem::kokkos::array_type<type_real, medium_type::components>
           &acceleration) const;
 };
