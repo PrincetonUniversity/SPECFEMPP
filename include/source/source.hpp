@@ -5,7 +5,7 @@
 #include "compute/compute_partial_derivatives.hpp"
 #include "compute/properties/properties.hpp"
 #include "constants.hpp"
-#include "enumerations/specfem_enums.hpp"
+#include "enumerations/wavefield.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "source_time_function/interface.hpp"
@@ -74,10 +74,12 @@ public:
 
   void compute_source_time_function(
       const type_real t0, const type_real dt, const int nsteps,
-      specfem::kokkos::HostView1d<type_real> source_time_function) const {
+      specfem::kokkos::HostView2d<type_real> source_time_function) const {
     return this->forcing_function->compute_source_time_function(
         t0, dt, nsteps, source_time_function);
   }
+
+  virtual specfem::wavefield::type get_wavefield_type() const = 0;
 
 protected:
   type_real x; ///< x-coordinate of source

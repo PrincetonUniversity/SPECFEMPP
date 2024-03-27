@@ -1,5 +1,5 @@
-#ifndef _SOURCES_ADJOINT_SOURCE_HPP_
-#define _SOURCES_ADJOINT_SOURCE_HPP_
+#ifndef _SPECFEM_SOURCES_EXTERNAL_HPP1_
+#define _SPECFEM_SOURCES_EXTERNAL_HPP1_
 
 #include "compute/compute_mesh.hpp"
 #include "compute/compute_partial_derivatives.hpp"
@@ -9,14 +9,14 @@
 
 namespace specfem {
 namespace sources {
-class adjoint_source : public source {
+class external : public source {
 public:
-  adjoint_source(){};
+  external(){};
 
-  adjoint_source(YAML::Node &Node, const int nsteps, const type_real dt)
-      : station_name(Node["station_name"].as<std::string>()),
-        network_name(Node["network_name"].as<std::string>()),
-        specfem::sources::source(Node, nsteps, dt){};
+  external(YAML::Node &Node, const int nsteps, const type_real dt,
+           const specfem::wavefield::type wavefield_type)
+      : wavefield_type(wavefield_type), specfem::sources::source(Node, nsteps,
+                                                                 dt){};
 
   void compute_source_array(
       const specfem::compute::mesh &mesh,
@@ -25,16 +25,15 @@ public:
       specfem::kokkos::HostView3d<type_real> source_array) override;
 
   specfem::wavefield::type get_wavefield_type() const override {
-    return specfem::wavefield::type::adjoint;
+    return wavefield_type;
   }
 
   std::string print() const override;
 
 private:
-  std::string station_name;
-  std::string network_name;
+  specfem::wavefield::type wavefield_type;
 };
 } // namespace sources
 } // namespace specfem
 
-#endif /* _SOURCES_ADJOINT_SOURCE_HPP_ */
+#endif /* _SPECFEM_SOURCES_EXTERNAL_HPP_ */

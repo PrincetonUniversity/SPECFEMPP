@@ -105,8 +105,9 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   //                   Read Sources and Receivers
   // --------------------------------------------------------------
   const int nsteps = setup.get_nsteps();
-  auto [sources, t0] =
-      specfem::sources::read_sources(source_filename, nsteps, setup.get_dt());
+  const specfem::simulation::type simulation_type = setup.get_simulation_type();
+  auto [sources, t0] = specfem::sources::read_sources(
+      source_filename, nsteps, setup.get_dt(), simulation_type);
 
   const auto stations_filename = setup.get_stations_file();
   const auto angle = setup.get_receiver_angle();
