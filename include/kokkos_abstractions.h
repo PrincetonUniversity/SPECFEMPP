@@ -572,6 +572,9 @@ template <typename T, int N> struct array_type {
   template <typename MemorySpace, typename Layout, typename MemoryTraits>
   KOKKOS_INLINE_FUNCTION
   array_type(const Kokkos::View<T *, Layout, MemorySpace, MemoryTraits> view) {
+#ifndef NDEBUG
+    assert(view.extent(0) == N);
+#endif
     for (int i = 0; i < N; ++i) {
       data[i] = view(i);
     }

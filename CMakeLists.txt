@@ -233,6 +233,7 @@ add_library(
         src/source/force_source.cpp
         src/source/moment_tensor_source.cpp
         src/source/adjoint_source.cpp
+        src/source/external.cpp
         src/source/read_sources.cpp
 )
 

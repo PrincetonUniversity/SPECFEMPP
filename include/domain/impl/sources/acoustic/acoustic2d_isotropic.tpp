@@ -45,12 +45,12 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::sources::source<
     specfem::element::property_tag::isotropic,
     specfem::enums::element::quadrature::static_quadrature_points<NGLL> >::
     compute_interaction(
-        const type_real &stf,
-        const specfem::kokkos::array_type<type_real, 2> &lagrange_interpolant,
+        const specfem::kokkos::array_type<type_real, 1> &stf,
+        const specfem::kokkos::array_type<type_real, 1> &lagrange_interpolant,
         specfem::kokkos::array_type<type_real, medium_type::components>
             &acceleration) const {
 
-  acceleration[0] = lagrange_interpolant[0] * stf;
+  acceleration[0] = lagrange_interpolant[0] * stf[0];
 
   return;
 }

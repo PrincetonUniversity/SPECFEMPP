@@ -159,12 +159,7 @@ public:
   }
 
   inline specfem::simulation::type get_simulation_type() const {
-    // Wavefield needs to always be defined for any simulation other than
-    // forward
-    if (!this->wavefield) {
-      return specfem::simulation::type::forward;
-    }
-    return this->wavefield->get_simulation_type();
+    return this->solver->get_simulation_type();
   }
 
   template <typename qp_type>

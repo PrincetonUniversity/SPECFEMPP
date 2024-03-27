@@ -6,12 +6,14 @@
 #include "compute_mesh.hpp"
 #include "compute_partial_derivatives.hpp"
 #include "compute_receivers.hpp"
-#include "compute_sources.hpp"
+// #include "compute_sources.hpp"
 // #include "coupled_interfaces.hpp"
 #include "assembly/assembly.hpp"
 #include "coupled_interfaces/coupled_interfaces.hpp"
 #include "coupled_interfaces/interface_container.hpp"
 #include "fields/fields.hpp"
 #include "properties/interface.hpp"
+#include "sources/impl/source_medium.hpp"
+#include "sources/sources.hpp"
 
 #endif

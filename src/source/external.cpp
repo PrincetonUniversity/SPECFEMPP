@@ -15,7 +15,7 @@
 #include "yaml-cpp/yaml.h"
 #include <cmath>
 
-void specfem::sources::force::compute_source_array(
+void specfem::sources::external::compute_source_array(
     const specfem::compute::mesh &mesh,
     const specfem::compute::partial_derivatives &partial_derivatives,
     const specfem::compute::properties &properties,
@@ -61,23 +61,18 @@ void specfem::sources::force::compute_source_array(
           source_array(0, iz, ix) = hlagrange;
           source_array(1, iz, ix) = 0;
         } else {
-          source_array(0, iz, ix) =
-              std::sin(Kokkos::numbers::pi_v<type_real> / 180 * this->angle) *
-              hlagrange;
-          source_array(1, iz, ix) =
-              -1.0 *
-              std::cos(Kokkos::numbers::pi_v<type_real> / 180 * this->angle) *
-              hlagrange;
+          source_array(0, iz, ix) = hlagrange;
+          source_array(1, iz, ix) = hlagrange;
         }
       }
     }
   }
 };
 
-std::string specfem::sources::force::print() const {
+std::string specfem::sources::external::print() const {
 
   std::ostringstream message;
-  message << "- Force Source: \n"
+  message << "- External Source: \n"
           << "    Source Location: \n"
           << "      x = " << type_real(this->x) << "\n"
           << "      z = " << type_real(this->z) << "\n"
