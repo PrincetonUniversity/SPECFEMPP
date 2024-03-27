@@ -33,7 +33,7 @@ void specfem::sources::moment_tensor::compute_source_array(
         "Moment tensor source not implemented for acoustic medium");
   }
 
-  const int ncomponents = source_array.extent(2);
+  const int ncomponents = source_array.extent(0);
   if (ncomponents != 2) {
     throw std::runtime_error(
         "Moment tensor source requires 2 components for elastic medium");

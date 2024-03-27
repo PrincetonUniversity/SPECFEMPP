@@ -10,7 +10,7 @@ specfem::forcing_function::external::external(const YAML::Node &external,
                                               const int nsteps,
                                               const type_real dt)
     : __nsteps(nsteps), __dt(dt),
-      __filename(external["filename"].as<std::string>()) {
+      __filename(external["stf-file"].as<std::string>()) {
 
   if ((external["format"].as<std::string>() == "ascii") ||
       (external["format"].as<std::string>() == "ASCII")) {
@@ -19,7 +19,9 @@ specfem::forcing_function::external::external(const YAML::Node &external,
     throw std::runtime_error("Only ASCII format is supported");
   }
 
-  std::vector<std::string> extentions = { "BXX.semd", "BXY.semd" };
+  std::vector<std::string> extentions = { ".BXX.semd", ".BXY.semd" };
+
+  int file_components = 0;
 
   // get t0 from file
   for (int icomp = 0; icomp < 2; ++icomp) {
@@ -35,8 +37,15 @@ specfem::forcing_function::external::external(const YAML::Node &external,
                                  " is not formatted correctly");
       }
       this->__t0 = time;
+      file_components++;
     }
     file.close();
+  }
+
+  if (file_components != 1) {
+    throw std::runtime_error(
+        "Wrong number for files found for external source: " +
+        this->__filename);
   }
 
   return;
@@ -50,9 +59,9 @@ void specfem::forcing_function::external::compute_source_time_function(
 
   const auto extention = [&ncomponents]() -> std::vector<std::string> {
     if (ncomponents == 2) {
-      return { "BXX.semd", "BXZ.semd" };
+      return { ".BXX.semd", ".BXZ.semd" };
     } else if (ncomponents == 1) {
-      return { "BXY.semd" };
+      return { ".BXY.semd" };
     } else {
       throw std::runtime_error("Invalid number of components");
     }
@@ -69,7 +78,7 @@ void specfem::forcing_function::external::compute_source_time_function(
   }
 
   for (int icomp = 0; icomp < ncomponents; ++icomp) {
-    specfem::kokkos::HostView2d<type_real> data("external", nsteps);
+    specfem::kokkos::HostView2d<type_real> data("external", nsteps, 2);
     specfem::reader::seismogram reader(
         this->__filename + extention[icomp],
         specfem::enums::seismogram::format::ascii, data);
