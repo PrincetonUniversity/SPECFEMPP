@@ -20,7 +20,7 @@ void specfem::reader::seismogram::read() {
 
   while (std::getline(file, line)) {
     std::istringstream iss(line);
-    type_real time, value;
+    double time, value;
     if (!(iss >> time >> value)) {
       throw std::runtime_error("Seismogram file " + filename +
                                " is not formatted correctly");
@@ -28,6 +28,7 @@ void specfem::reader::seismogram::read() {
 
     source_time_function(nsteps, 0) = time;
     source_time_function(nsteps, 1) = value;
+    nsteps++;
   }
 
   file.close();

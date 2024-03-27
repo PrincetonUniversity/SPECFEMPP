@@ -1,3 +1,5 @@
+#include "source/external.hpp"
+#include "source/force_source.hpp"
 #include "source/interface.hpp"
 #include "source/moment_tensor_source.hpp"
 #include "specfem_setup.hpp"
@@ -39,6 +41,9 @@ specfem::sources::read_sources(
     } else if (YAML::Node moment_tensor_source = N["moment-tensor"]) {
       sources.push_back(std::make_shared<specfem::sources::moment_tensor>(
           moment_tensor_source, nsteps, dt, source_wavefield_type));
+    } else if (YAML::Node external = N["user-defined"]) {
+      sources.push_back(std::make_shared<specfem::sources::external>(
+          external, nsteps, dt, source_wavefield_type));
     } else if (YAML::Node adjoint_source = N["adjoint-source"]) {
       sources.push_back(std::make_shared<specfem::sources::adjoint_source>(
           adjoint_source, nsteps, dt));
@@ -59,6 +64,7 @@ specfem::sources::read_sources(
   type_real t0 = std::numeric_limits<type_real>::max();
   for (auto &source : sources) {
     type_real cur_t0 = source->get_t0();
+    std::cout << cur_t0 << std::endl;
     if (cur_t0 < t0) {
       t0 = cur_t0;
     }

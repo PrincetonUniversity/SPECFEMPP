@@ -22,8 +22,8 @@ specfem::compute::impl::sources::source_medium<Dimension, Medium>::
                            sources.size(), medium_type::components),
       h_source_time_function(Kokkos::create_mirror_view(source_time_function)),
       source_array("specfem::sources::source_array", sources.size(),
-                   mesh.quadratures.gll.N, mesh.quadratures.gll.N,
-                   medium_type::components),
+                   medium_type::components, mesh.quadratures.gll.N,
+                   mesh.quadratures.gll.N),
       h_source_array(Kokkos::create_mirror_view(source_array)) {
 
   for (int isource = 0; isource < sources.size(); isource++) {

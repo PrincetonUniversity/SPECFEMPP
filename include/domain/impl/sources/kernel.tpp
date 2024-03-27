@@ -98,7 +98,7 @@ void specfem::domain::impl::kernels::source_kernel<
               const specfem::kokkos::array_type<type_real,
                                                 medium_type::components>
                   lagrange_interpolant(Kokkos::subview(
-                      sources.source_array, isource_l, iz, ix, Kokkos::ALL));
+                      sources.source_array, isource_l, Kokkos::ALL, iz, ix));
 
               // Source time function
               // For acoustic medium, forward simulation, divide by kappa
