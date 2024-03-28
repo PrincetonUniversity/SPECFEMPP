@@ -8,6 +8,7 @@
 // #include "compute/compute_sources.hpp"
 #include "compute/coupled_interfaces/coupled_interfaces.hpp"
 #include "compute/fields/fields.hpp"
+#include "compute/kernels/kernels.hpp"
 #include "compute/properties/interface.hpp"
 #include "compute/sources/sources.hpp"
 #include "enumerations/specfem_enums.hpp"
@@ -21,6 +22,7 @@ struct assembly {
   specfem::compute::mesh mesh;
   specfem::compute::partial_derivatives partial_derivatives;
   specfem::compute::properties properties;
+  specfem::compute::kernels kernels;
   specfem::compute::sources sources;
   specfem::compute::receivers receivers;
   specfem::compute::boundaries boundaries;
