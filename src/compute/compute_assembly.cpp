@@ -15,6 +15,8 @@ specfem::compute::assembly::assembly(
   this->partial_derivatives = specfem::compute::partial_derivatives(this->mesh);
   this->properties = specfem::compute::properties(
       this->mesh.nspec, this->mesh.ngllz, this->mesh.ngllx, mesh.materials);
+  this->kernels = specfem::compute::kernels(this->mesh.nspec, this->mesh.ngllz,
+                                            this->mesh.ngllx, mesh.materials);
   this->sources =
       specfem::compute::sources(sources, this->mesh, this->partial_derivatives,
                                 this->properties, t0, dt, max_timesteps);

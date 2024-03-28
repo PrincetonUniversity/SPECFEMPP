@@ -283,6 +283,7 @@ add_library(
         src/compute/compute_mesh.cpp
         src/compute/compute_partial_derivatives.cpp
         src/compute/compute_properties.cpp
+        src/compute/compute_kernels.cpp
         src/compute/compute_sources.cpp
         src/compute/compute_receivers.cpp
         src/compute/coupled_interfaces.cpp
