@@ -27,7 +27,7 @@ public:
   domain(const specfem::compute::assembly &assembly,
          const quadrature_points_type &quadrature_points)
       : field(assembly.fields.get_simulation_field<WavefieldType>()
-                  .template get_field<medium_type>()),
+                  .template get_field<MediumTag>()),
         specfem::domain::impl::kernels::kernels<
             WavefieldType, DimensionType, MediumTag, quadrature_points_type>(
             assembly, quadrature_points) {}
@@ -39,7 +39,8 @@ public:
   void divide_mass_matrix();
 
 private:
-  specfem::compute::impl::field_impl<medium_type> field; ///< Field object
+  specfem::compute::impl::field_impl<DimensionType, MediumTag>
+      field; ///< Field object
 };
 } // namespace domain
 

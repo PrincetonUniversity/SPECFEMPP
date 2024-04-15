@@ -43,8 +43,8 @@ public:
   specfem::kokkos::array_type<type_real, coupled_medium_type::components>
   load_field_elements(
       const int global_index,
-      const specfem::compute::impl::field_impl<coupled_medium_type> &field)
-      const;
+      const specfem::compute::impl::field_impl<DimensionType, CoupledMedium>
+          &field) const;
 };
 } // namespace edges
 } // namespace impl

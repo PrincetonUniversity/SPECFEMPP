@@ -32,17 +32,22 @@ specfem::compute::simulation_field<WavefieldType>::simulation_field(
     }
   }
 
-  auto acoustic_index = Kokkos::subview(h_assembly_index_mapping, Kokkos::ALL,
-                                        static_cast<int>(acoustic_type::medium_tag));
+  auto acoustic_index =
+      Kokkos::subview(h_assembly_index_mapping, Kokkos::ALL,
+                      static_cast<int>(acoustic_type::medium_tag));
 
-  auto elastic_index = Kokkos::subview(h_assembly_index_mapping, Kokkos::ALL,
-                                       static_cast<int>(elastic_type::medium_tag));
+  auto elastic_index =
+      Kokkos::subview(h_assembly_index_mapping, Kokkos::ALL,
+                      static_cast<int>(elastic_type::medium_tag));
 
-  elastic = specfem::compute::impl::field_impl<elastic_type>(mesh, properties,
-                                                             elastic_index);
+  elastic =
+      specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
+                                         specfem::element::medium_tag::elastic>(
+          mesh, properties, elastic_index);
 
-  acoustic = specfem::compute::impl::field_impl<acoustic_type>(mesh, properties,
-                                                               acoustic_index);
+  acoustic = specfem::compute::impl::field_impl<
+      specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic>(
+      mesh, properties, acoustic_index);
 
   Kokkos::deep_copy(assembly_index_mapping, h_assembly_index_mapping);
 

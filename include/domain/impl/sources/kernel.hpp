@@ -44,7 +44,7 @@ private:
                specfem::kokkos::DevMemSpace>
       global_index_mapping;
   specfem::compute::properties properties;
-  specfem::compute::impl::field_impl<medium_type> field;
+  specfem::compute::impl::field_impl<DimensionType, MediumTag> field;
   specfem::compute::impl::sources::source_medium<DimensionType, MediumTag>
       sources;
   quadrature_point_type quadrature_points;

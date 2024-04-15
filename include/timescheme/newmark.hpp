@@ -58,8 +58,12 @@ private:
   type_real deltat;
   type_real deltatover2;
   type_real deltasquareover2;
-  specfem::compute::impl::field_impl<elastic_type> elastic;
-  specfem::compute::impl::field_impl<acoustic_type> acoustic;
+  specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
+                                     specfem::element::medium_tag::elastic>
+      elastic;
+  specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
+                                     specfem::element::medium_tag::acoustic>
+      acoustic;
 };
 
 template <>
@@ -110,10 +114,18 @@ private:
   type_real deltat;
   type_real deltatover2;
   type_real deltasquareover2;
-  specfem::compute::impl::field_impl<elastic_type> adjoint_elastic;
-  specfem::compute::impl::field_impl<acoustic_type> adjoint_acoustic;
-  specfem::compute::impl::field_impl<elastic_type> backward_elastic;
-  specfem::compute::impl::field_impl<acoustic_type> backward_acoustic;
+  specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
+                                     specfem::element::medium_tag::elastic>
+      adjoint_elastic;
+  specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
+                                     specfem::element::medium_tag::acoustic>
+      adjoint_acoustic;
+  specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
+                                     specfem::element::medium_tag::elastic>
+      backward_elastic;
+  specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
+                                     specfem::element::medium_tag::acoustic>
+      backward_acoustic;
 };
 
 } // namespace time_scheme

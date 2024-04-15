@@ -28,7 +28,7 @@ specfem::domain::impl::kernels::receiver_kernel<
       partial_derivatives(assembly.partial_derivatives),
       properties(assembly.properties), receivers(assembly.receivers),
       field(assembly.fields.get_simulation_field<WavefieldType>()
-                .template get_field<medium_type>()),
+                .template get_field<MediumTag>()),
       global_index_mapping(assembly.fields.get_simulation_field<WavefieldType>()
                                .assembly_index_mapping),
       quadrature_points(quadrature_points) {

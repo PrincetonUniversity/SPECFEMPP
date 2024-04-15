@@ -13,13 +13,13 @@
 #include <Kokkos_Core.hpp>
 
 template <
-    specfem::wavefield::type WavefieldType, specfem::dimension::type dimension,
-    specfem::element::medium_tag medium,
-    specfem::element::property_tag property,
-    specfem::element::boundary_tag boundary, typename quadrature_points_type>
-specfem::domain::impl::kernels::element_kernel<WavefieldType, dimension, medium,
-                                               property, boundary,
-                                               quadrature_points_type>::
+    specfem::wavefield::type WavefieldType, specfem::dimension::type DimensionType,
+    specfem::element::medium_tag MediumTag,
+    specfem::element::property_tag PropertyTag,
+    specfem::element::boundary_tag BoundaryTag, typename quadrature_points_type>
+specfem::domain::impl::kernels::element_kernel<
+    WavefieldType, DimensionType, MediumTag, PropertyTag, BoundaryTag,
+    quadrature_points_type>::
     element_kernel(
         const specfem::compute::assembly &assembly,
         const specfem::kokkos::HostView1d<int> h_element_kernel_index_mapping,
@@ -34,7 +34,7 @@ specfem::domain::impl::kernels::element_kernel<WavefieldType, dimension, medium,
       global_index_mapping(assembly.fields.get_simulation_field<WavefieldType>()
                                .assembly_index_mapping),
       field(assembly.fields.get_simulation_field<WavefieldType>()
-                .template get_field<medium_type>()),
+                .template get_field<MediumTag>()),
       element(assembly, quadrature_points) {
 
   // Check if the elements being allocated to this kernel are of the correct
@@ -64,12 +64,13 @@ specfem::domain::impl::kernels::element_kernel<WavefieldType, dimension, medium,
   return;
 }
 
-template <specfem::wavefield::type WavefieldType,
-    specfem::dimension::type dimension, specfem::element::medium_tag medium,
-    specfem::element::property_tag property,
-    specfem::element::boundary_tag boundary, typename quadrature_points_type>
-void specfem::domain::impl::kernels::element_kernel<WavefieldType,
-    dimension, medium, property, boundary,
+template <
+    specfem::wavefield::type WavefieldType, specfem::dimension::type DimensionType,
+    specfem::element::medium_tag MediumTag,
+    specfem::element::property_tag PropertyTag,
+    specfem::element::boundary_tag BoundaryTag, typename quadrature_points_type>
+void specfem::domain::impl::kernels::element_kernel<
+    WavefieldType, DimensionType, MediumTag, PropertyTag, BoundaryTag,
     quadrature_points_type>::compute_mass_matrix() const {
   constexpr int components = medium_type::components;
 
@@ -134,13 +135,14 @@ void specfem::domain::impl::kernels::element_kernel<WavefieldType,
   return;
 }
 
-template <specfem::wavefield::type WavefieldType,
-    specfem::dimension::type dimension, specfem::element::medium_tag medium,
-    specfem::element::property_tag property,
-    specfem::element::boundary_tag boundary, typename quadrature_points_type>
+template <
+    specfem::wavefield::type WavefieldType, specfem::dimension::type DimensionType,
+    specfem::element::medium_tag MediumTag,
+    specfem::element::property_tag PropertyTag,
+    specfem::element::boundary_tag BoundaryTag, typename quadrature_points_type>
 template <specfem::enums::time_scheme::type time_scheme>
-void specfem::domain::impl::kernels::element_kernel<WavefieldType,
-    dimension, medium, property, boundary,
+void specfem::domain::impl::kernels::element_kernel<
+    WavefieldType, DimensionType, MediumTag, PropertyTag, BoundaryTag,
     quadrature_points_type>::mass_time_contribution(const type_real dt) const {
 
   constexpr int components = medium_type::components;
@@ -210,12 +212,13 @@ void specfem::domain::impl::kernels::element_kernel<WavefieldType,
   return;
 }
 
-template <specfem::wavefield::type WavefieldType,
-    specfem::dimension::type dimension, specfem::element::medium_tag medium,
-    specfem::element::property_tag property,
-    specfem::element::boundary_tag boundary, typename quadrature_points_type>
-void specfem::domain::impl::kernels::element_kernel<WavefieldType,
-    dimension, medium, property, boundary,
+template <
+    specfem::wavefield::type WavefieldType, specfem::dimension::type DimensionType,
+    specfem::element::medium_tag MediumTag,
+    specfem::element::property_tag PropertyTag,
+    specfem::element::boundary_tag BoundaryTag, typename quadrature_points_type>
+void specfem::domain::impl::kernels::element_kernel<
+    WavefieldType, DimensionType, MediumTag, PropertyTag, BoundaryTag,
     quadrature_points_type>::compute_stiffness_interaction() const {
 
   constexpr int components = medium_type::components;

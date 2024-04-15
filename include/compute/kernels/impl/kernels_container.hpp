@@ -10,7 +10,8 @@ namespace specfem {
 namespace compute {
 namespace impl {
 namespace kernels {
-template <specfem::element::medium_tag type, specfem::element::property_tag>
+template <specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag>
 class kernels_container;
 
 template <>

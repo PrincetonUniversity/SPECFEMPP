@@ -14,17 +14,20 @@ namespace domain {
 namespace impl {
 namespace kernels {
 
-template <
-    specfem::wavefield::type WavefieldType,
-    specfem::dimension::type DimensionType, specfem::element::medium_tag medium,
-    specfem::element::property_tag property,
-    specfem::element::boundary_tag boundary, typename quadrature_points_type>
+template <specfem::wavefield::type WavefieldType,
+          specfem::dimension::type DimensionType,
+          specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag,
+          specfem::element::boundary_tag BoundaryTag,
+          typename quadrature_points_type>
 class element_kernel {
 
 public:
   using dimension = specfem::dimension::dimension<DimensionType>;
-  using element_type = specfem::domain::impl::elements::element<
-      DimensionType, medium, property, boundary, quadrature_points_type>;
+  using element_type =
+      specfem::domain::impl::elements::element<DimensionType, MediumTag,
+                                               PropertyTag, BoundaryTag,
+                                               quadrature_points_type>;
   using medium_type = typename element_type::medium_type;
   using boundary_conditions_type =
       typename element_type::boundary_conditions_type;
@@ -57,7 +60,7 @@ private:
   specfem::compute::properties properties;
   specfem::compute::partial_derivatives partial_derivatives;
   specfem::kokkos::DeviceView1d<specfem::point::boundary> boundary_conditions;
-  specfem::compute::impl::field_impl<medium_type> field;
+  specfem::compute::impl::field_impl<DimensionType, MediumTag> field;
   quadrature_points_type quadrature_points;
   element_type element;
 };

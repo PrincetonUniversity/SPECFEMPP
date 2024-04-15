@@ -2,7 +2,16 @@
 
 specfem::compute::kernels::kernels(const int nspec, const int ngllz,
                                    const int ngllx,
-                                   const specfem::mesh::materials &materials) {
+                                   const specfem::mesh::materials &materials)
+    : nspec(nspec), ngllz(ngllz), ngllx(ngllx),
+      element_types("specfem::compute::properties::element_types", nspec),
+      h_element_types(Kokkos::create_mirror_view(element_types)),
+      property_index_mapping(
+          "specfem::compute::properties::property_index_mapping", nspec),
+      element_property("specfem::compute::properties::element_property", nspec),
+      h_element_property(Kokkos::create_mirror_view(element_property)),
+      h_property_index_mapping(
+          Kokkos::create_mirror_view(property_index_mapping)) {
   // compute total number of elastic and acoustic spectral elements
   int n_elastic;
   int n_acoustic;

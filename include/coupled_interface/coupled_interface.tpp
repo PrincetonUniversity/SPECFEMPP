@@ -13,8 +13,8 @@ template <specfem::wavefield::type WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag SelfMedium,
           specfem::element::medium_tag CoupledMedium>
-specfem::coupled_interface::coupled_interface<WavefieldType, DimensionType, SelfMedium,
-                                              CoupledMedium>::
+specfem::coupled_interface::coupled_interface<WavefieldType, DimensionType,
+                                              SelfMedium, CoupledMedium>::
     coupled_interface(const specfem::compute::assembly &assembly)
     : nedges(assembly.coupled_interfaces
                  .get_interface_container<SelfMedium, CoupledMedium>()
@@ -23,20 +23,21 @@ specfem::coupled_interface::coupled_interface<WavefieldType, DimensionType, Self
                          .get_interface_container<SelfMedium, CoupledMedium>()),
       points(assembly.mesh.points), quadrature(assembly.mesh.quadratures),
       partial_derivatives(assembly.partial_derivatives),
-      global_index_mapping(
-          assembly.fields.get_simulation_field<WavefieldType>().assembly_index_mapping),
-      self_field(
-          assembly.fields.get_simulation_field<WavefieldType>().template get_field<self_medium_type>()),
-      coupled_field(
-          assembly.fields.get_simulation_field<WavefieldType>().template get_field<coupled_medium_type>()),
+      global_index_mapping(assembly.fields.get_simulation_field<WavefieldType>()
+                               .assembly_index_mapping),
+      self_field(assembly.fields.get_simulation_field<WavefieldType>()
+                     .template get_field<SelfMedium>()),
+      coupled_field(assembly.fields.get_simulation_field<WavefieldType>()
+                        .template get_field<CoupledMedium>()),
       edge(assembly) {}
 
 template <specfem::wavefield::type WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag SelfMedium,
           specfem::element::medium_tag CoupledMedium>
-void specfem::coupled_interface::coupled_interface<WavefieldType,
-    DimensionType, SelfMedium, CoupledMedium>::compute_coupling() {
+void specfem::coupled_interface::coupled_interface<
+    WavefieldType, DimensionType, SelfMedium,
+    CoupledMedium>::compute_coupling() {
 
   if (this->nedges == 0)
     return;
