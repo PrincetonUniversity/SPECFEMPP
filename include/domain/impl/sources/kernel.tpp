@@ -29,7 +29,7 @@ specfem::domain::impl::kernels::source_kernel<
       global_index_mapping(assembly.fields.get_simulation_field<WavefieldType>()
                                .assembly_index_mapping),
       field(assembly.fields.get_simulation_field<WavefieldType>()
-                .template get_field<medium_type>()) {
+                .template get_field<MediumTag>()) {
 
   Kokkos::parallel_for(
       "specfem::domain::impl::kernels::element_kernel::check_properties",

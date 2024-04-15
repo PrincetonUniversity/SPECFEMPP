@@ -56,6 +56,21 @@ struct kernels {
     }
   }
 
+  template <specfem::element::medium_tag type,
+            specfem::element::property_tag property>
+  KOKKOS_FUNCTION auto get_kernels() const {
+    if constexpr ((type == specfem::element::medium_tag::elastic) &&
+                  (property == specfem::element::property_tag::isotropic)) {
+      return elastic_isotropic;
+    } else if constexpr ((type == specfem::element::medium_tag::acoustic) &&
+                         (property ==
+                          specfem::element::property_tag::isotropic)) {
+      return acoustic_isotropic;
+    } else {
+      static_assert("Material type not implemented");
+    }
+  }
+
   void sync_views() {
     Kokkos::deep_copy(h_element_types, element_types);
     Kokkos::deep_copy(h_property_index_mapping, property_index_mapping);

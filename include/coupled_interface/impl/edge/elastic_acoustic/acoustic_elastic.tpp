@@ -159,8 +159,9 @@ specfem::coupled_interface::impl::edges::edge<
     specfem::element::medium_tag::elastic>::
     load_field_elements(
         const int coupled_global_index,
-        const specfem::compute::impl::field_impl<coupled_medium_type>
-            &coupled_field) const {
+        const specfem::compute::impl::field_impl<
+            specfem::dimension::type::dim2,
+            specfem::element::medium_tag::elastic> &coupled_field) const {
 
   return specfem::kokkos::array_type<type_real, 2>(
       coupled_field.field(coupled_global_index, 0),

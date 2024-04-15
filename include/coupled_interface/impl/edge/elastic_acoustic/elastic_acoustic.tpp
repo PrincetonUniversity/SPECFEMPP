@@ -158,13 +158,13 @@
 template <>
 KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, 1>
 specfem::coupled_interface::impl::edges::edge<
-    specfem::dimension::type::dim2,
-    specfem::element::medium_tag::elastic,
+    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
     specfem::element::medium_tag::acoustic>::
     load_field_elements(
         const int coupled_global_index,
-        const specfem::compute::impl::field_impl<coupled_medium_type>
-            &coupled_field) const {
+        const specfem::compute::impl::field_impl<
+            specfem::dimension::type::dim2,
+            specfem::element::medium_tag::acoustic> &coupled_field) const {
   return specfem::kokkos::array_type<type_real, 1>(
       coupled_field.field_dot_dot(coupled_global_index, 0));
 }
@@ -172,8 +172,7 @@ specfem::coupled_interface::impl::edges::edge<
 template <>
 KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, 2>
 specfem::coupled_interface::impl::edges::edge<
-    specfem::dimension::type::dim2,
-    specfem::element::medium_tag::elastic,
+    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
     specfem::element::medium_tag::acoustic>::
     compute_coupling_terms(
         const specfem::kokkos::array_type<type_real, 2> &normal,

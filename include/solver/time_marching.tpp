@@ -75,7 +75,6 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
     time_scheme->apply_predictor_phase_backward(acoustic);
 
     backward_kernels.template update_wavefields<elastic>(backward_step);
-
     time_scheme->apply_corrector_phase_backward(elastic);
 
     backward_kernels.template update_wavefields<acoustic>(backward_step);
@@ -94,6 +93,7 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
     // frechet_kernels.compute_frechet_derivatives<elastic>(istep);
 
     if (time_scheme->compute_seismogram(istep)) {
+      // compute seismogram for backward time step
       backward_kernels.compute_seismograms(time_scheme->get_seismogram_step());
       time_scheme->increment_seismogram_step();
     }

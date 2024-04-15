@@ -9,11 +9,13 @@
 namespace specfem {
 namespace compute {
 namespace impl {
-template <typename medium> class field_impl {
+template <specfem::dimension::type DimensionType,
+          specfem::element::medium_tag MediumTag>
+class field_impl {
 public:
-  using medium_type = medium;
+  using medium_type = specfem::medium::medium<DimensionType, MediumTag>;
 
-  constexpr static int components = medium::components;
+  constexpr static int components = medium_type::components;
 
   field_impl() = default;
 
@@ -45,9 +47,10 @@ public:
 };
 } // namespace impl
 
-template <typename medium>
-void deep_copy(const impl::field_impl<medium> &dst,
-               const impl::field_impl<medium> &src) {
+template <specfem::dimension::type DimensionType,
+          specfem::element::medium_tag MediumTag>
+void deep_copy(impl::field_impl<DimensionType, MediumTag> &dst,
+               const impl::field_impl<DimensionType, MediumTag> &src) {
   Kokkos::deep_copy(dst.index_mapping, src.index_mapping);
   Kokkos::deep_copy(dst.h_index_mapping, src.h_index_mapping);
   Kokkos::deep_copy(dst.field, src.field);

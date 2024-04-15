@@ -46,8 +46,9 @@ private:
   Kokkos::View<int * [specfem::element::ntypes], Kokkos::LayoutLeft,
                specfem::kokkos::DevMemSpace>
       global_index_mapping;
-  specfem::compute::impl::field_impl<self_medium_type> self_field;
-  specfem::compute::impl::field_impl<coupled_medium_type> coupled_field;
+  specfem::compute::impl::field_impl<DimensionType, SelfMedium> self_field;
+  specfem::compute::impl::field_impl<DimensionType, CoupledMedium>
+      coupled_field;
   specfem::compute::interface_container<SelfMedium, CoupledMedium>
       interface_data; ///< Struct containing the coupling information.
   specfem::coupled_interface::impl::edges::edge<DimensionType, SelfMedium,

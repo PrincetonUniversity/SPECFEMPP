@@ -28,12 +28,13 @@ template <specfem::wavefield::type WavefieldType> struct simulation_field {
   simulation_field(const specfem::compute::mesh &mesh,
                    const specfem::compute::properties &properties);
 
-  template <typename medium>
-  KOKKOS_INLINE_FUNCTION specfem::compute::impl::field_impl<medium>
-  get_field() const {
-    if constexpr (std::is_same_v<medium, elastic_type>) {
+  template <specfem::element::medium_tag medium>
+  KOKKOS_INLINE_FUNCTION
+      specfem::compute::impl::field_impl<specfem::dimension::type::dim2, medium>
+      get_field() const {
+    if constexpr (medium == specfem::element::medium_tag::elastic) {
       return elastic;
-    } else if constexpr (std::is_same_v<medium, acoustic_type>) {
+    } else if constexpr (medium == specfem::element::medium_tag::acoustic) {
       return acoustic;
     } else {
       static_assert("medium type not supported");
@@ -61,8 +62,12 @@ template <specfem::wavefield::type WavefieldType> struct simulation_field {
   Kokkos::View<int * [specfem::element::ntypes], Kokkos::LayoutLeft,
                specfem::kokkos::HostMemSpace>
       h_assembly_index_mapping;
-  specfem::compute::impl::field_impl<elastic_type> elastic;
-  specfem::compute::impl::field_impl<acoustic_type> acoustic;
+  specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
+                                     specfem::element::medium_tag::elastic>
+      elastic;
+  specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
+                                     specfem::element::medium_tag::acoustic>
+      acoustic;
 };
 
 template <specfem::wavefield::type WavefieldType1,
