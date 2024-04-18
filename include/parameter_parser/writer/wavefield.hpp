@@ -11,11 +11,10 @@ namespace runtime_configuration {
 class wavefield {
 
 public:
-  wavefield(const std::string output_type, const std::string output_format,
-            const std::string output_folder,
+  wavefield(const std::string output_format, const std::string output_folder,
             const specfem::simulation::type type)
-      : output_type(output_type), output_format(output_format),
-        output_folder(output_folder), simulation_type(type) {}
+      : output_format(output_format), output_folder(output_folder),
+        simulation_type(type) {}
 
   wavefield(const YAML::Node &Node, const specfem::simulation::type type);
 
@@ -32,7 +31,6 @@ public:
 private:
   std::string output_format;                 ///< format of output file
   std::string output_folder;                 ///< Path to output folder
-  std::string output_type;                   ///< Type of output
   specfem::simulation::type simulation_type; ///< Type of simulation
 };
 } // namespace runtime_configuration

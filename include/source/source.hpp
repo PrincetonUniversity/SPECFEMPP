@@ -50,6 +50,8 @@ public:
    * @return value of t0
    */
   type_real get_t0() const { return forcing_function->get_t0(); }
+
+  type_real get_tshift() const { return forcing_function->get_tshift(); }
   /**
    * @brief Update the value of tshift for specfem::stf::stf object
    *

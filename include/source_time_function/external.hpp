@@ -36,6 +36,8 @@ public:
 
   type_real get_t0() const override { return this->__t0; }
 
+  type_real get_tshift() const override { return 0.0; }
+
 private:
   int __nsteps;
   type_real __t0;

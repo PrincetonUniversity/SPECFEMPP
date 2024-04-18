@@ -107,7 +107,8 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   const int nsteps = setup.get_nsteps();
   const specfem::simulation::type simulation_type = setup.get_simulation_type();
   auto [sources, t0] = specfem::sources::read_sources(
-      source_filename, nsteps, setup.get_dt(), simulation_type);
+      source_filename, nsteps, setup.get_t0(), setup.get_dt(), simulation_type);
+  setup.update_t0(t0); // Update t0 in case it was changed
 
   const auto stations_filename = setup.get_stations_file();
   const auto angle = setup.get_receiver_angle();
@@ -139,8 +140,6 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   // --------------------------------------------------------------
   //                   Instantiate Timescheme
   // --------------------------------------------------------------
-  setup.update_t0(t0);
-  t0 = setup.get_t0();
   const auto time_scheme = setup.instantiate_timescheme();
   if (mpi->main_proc())
     std::cout << *time_scheme << std::endl;
@@ -155,8 +154,9 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   mpi->cout("-------------------------------");
   const type_real dt = setup.get_dt();
   specfem::compute::assembly assembly(
-      mesh, quadrature, sources, receivers, setup.get_seismogram_types(), t0,
-      dt, nsteps, max_seismogram_time_step, setup.get_simulation_type());
+      mesh, quadrature, sources, receivers, setup.get_seismogram_types(),
+      setup.get_t0(), dt, nsteps, max_seismogram_time_step,
+      setup.get_simulation_type());
   time_scheme->link_assembly(assembly);
 
   // --------------------------------------------------------------

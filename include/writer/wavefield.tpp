@@ -26,6 +26,9 @@ void specfem::writer::wavefield<OutputLibrary>::write() {
   acoustic.createDataset("PotentialDot", forward.acoustic.field_dot).write();
   acoustic.createDataset("PotentialDotDot", forward.acoustic.field_dot_dot)
       .write();
+
+  std::cout << "Wavefield written to " << output_folder + "/ForwardWavefield"
+            << std::endl;
 }
 
 #endif /* SPEC_WAVEFIELD_WRITER_TPP */
