@@ -48,6 +48,8 @@ public:
    */
   type_real get_t0() const override { return this->__t0; }
 
+  type_real get_tshift() const override { return this->__tshift; }
+
   std::string print() const override;
 
   void compute_source_time_function(

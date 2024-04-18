@@ -13,8 +13,11 @@
 
 std::tuple<std::vector<std::shared_ptr<specfem::sources::source> >, type_real>
 specfem::sources::read_sources(
-    const std::string sources_file, const int nsteps, const type_real dt,
-    const specfem::simulation::type simulation_type) {
+    const std::string sources_file, const int nsteps, const type_real user_t0,
+    const type_real dt, const specfem::simulation::type simulation_type) {
+
+  const bool user_defined_start_time =
+      (std::abs(user_t0) > std::numeric_limits<type_real>::epsilon());
 
   const specfem::wavefield::type source_wavefield_type =
       [&simulation_type]() -> specfem::wavefield::type {
@@ -61,18 +64,34 @@ specfem::sources::read_sources(
     throw std::runtime_error(message.str());
   }
 
-  type_real t0 = std::numeric_limits<type_real>::max();
+  type_real min_t0 = std::numeric_limits<type_real>::max();
+  type_real min_tshift = std::numeric_limits<type_real>::max();
   for (auto &source : sources) {
     type_real cur_t0 = source->get_t0();
-    std::cout << cur_t0 << std::endl;
-    if (cur_t0 < t0) {
-      t0 = cur_t0;
+    type_real cur_tshift = source->get_tshift();
+    if (cur_t0 < min_t0) {
+      min_t0 = cur_t0;
+    }
+    if (cur_tshift < min_tshift) {
+      min_tshift = cur_tshift;
     }
   }
 
-  for (auto &source : sources) {
-    type_real cur_t0 = source->get_t0();
-    source->update_tshift(cur_t0 - t0);
+  type_real t0;
+  if (user_defined_start_time) {
+    if (user_t0 > min_t0 - min_tshift)
+      throw std::runtime_error("User defined start time is less than minimum "
+                               "required for stability");
+
+    t0 = user_t0;
+  } else {
+    // Update tshift for auto detected start time
+    for (auto &source : sources) {
+      type_real cur_t0 = source->get_t0();
+      source->update_tshift(cur_t0 - min_t0);
+    }
+
+    t0 = min_t0;
   }
 
   return std::make_tuple(sources, t0);

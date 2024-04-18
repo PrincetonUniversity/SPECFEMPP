@@ -38,6 +38,8 @@ public:
    */
   virtual type_real get_t0() const { return 0.0; }
 
+  virtual type_real get_tshift() const { return 0.0; }
+
   virtual std::string print() const = 0;
 
   // virtual void print(std::ostream &out) const;

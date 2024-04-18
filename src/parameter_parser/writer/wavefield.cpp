@@ -24,7 +24,6 @@ specfem::runtime_configuration::wavefield::wavefield(
 
   try {
     *this = specfem::runtime_configuration::wavefield(
-        Node["output-type"].as<std::string>(),
         Node["output-format"].as<std::string>(), output_folder, type);
   } catch (YAML::ParserException &e) {
     std::ostringstream message;
