@@ -107,16 +107,21 @@ void specfem::domain::impl::kernels::source_kernel<
                                specfem::wavefield::type::forward) &&
                               (MediumTag ==
                                specfem::element::medium_tag::acoustic)) {
-                  const auto point_properties =
-                      properties.load_device_properties<
-                          medium_type::medium_tag, medium_type::property_tag>(
-                          ispec_l, iz, ix);
+                  const auto point_properties = [&]()
+                      -> specfem::point::properties<MediumTag, PropertyTag> {
+                    specfem::point::index index(ispec_l, iz, ix);
+                    specfem::point::properties<MediumTag, PropertyTag>
+                        point_properties;
+                    specfem::compute::load_on_device(index, properties,
+                                                     point_properties);
+                    return point_properties;
+                  }();
                   specfem::kokkos::array_type<type_real,
                                               medium_type::components>
                       stf(Kokkos::subview(sources.source_time_function,
                                           timestep, isource_l, Kokkos::ALL));
                   for (int i = 0; i < components; i++) {
-                    stf[i] = stf[i]/point_properties.kappa;
+                    stf[i] = stf[i] / point_properties.kappa;
                   }
                   return stf;
                 } else {

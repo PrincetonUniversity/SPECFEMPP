@@ -190,9 +190,14 @@ void specfem::domain::impl::kernels::receiver_kernel<
                       ispec_l, iz, ix);
 
               const auto point_properties =
-                  properties.template load_device_properties<
-                      medium_type::medium_tag, medium_type::property_tag>(
-                      ispec_l, iz, ix);
+                  [&]() -> specfem::point::properties<MediumTag, PropertyTag> {
+                specfem::point::index index(ispec_l, iz, ix);
+                specfem::point::properties<MediumTag, PropertyTag>
+                    point_properties;
+                specfem::compute::load_on_device(index, properties,
+                                                 point_properties);
+                return point_properties;
+              }();
 
               const auto active_field = [&]() {
                 switch (seismogram_type_l) {
@@ -232,32 +237,6 @@ void specfem::domain::impl::kernels::receiver_kernel<
             Kokkos::subview(receivers.receiver_field, Kokkos::ALL, Kokkos::ALL,
                             iseis_l, ireceiver_l, isig_step, Kokkos::ALL);
 
-        const specfem::kokkos::array_type<type_real, 50> t_function(
-            sv_receiver_field(0, 0, 0), sv_receiver_field(0, 0, 1),
-            sv_receiver_field(0, 1, 0), sv_receiver_field(0, 1, 1),
-            sv_receiver_field(0, 2, 0), sv_receiver_field(0, 2, 1),
-            sv_receiver_field(0, 3, 0), sv_receiver_field(0, 3, 1),
-            sv_receiver_field(0, 4, 0), sv_receiver_field(0, 4, 1),
-            sv_receiver_field(1, 0, 0), sv_receiver_field(1, 0, 1),
-            sv_receiver_field(1, 1, 0), sv_receiver_field(1, 1, 1),
-            sv_receiver_field(1, 2, 0), sv_receiver_field(1, 2, 1),
-            sv_receiver_field(1, 3, 0), sv_receiver_field(1, 3, 1),
-            sv_receiver_field(1, 4, 0), sv_receiver_field(1, 4, 1),
-            sv_receiver_field(2, 0, 0), sv_receiver_field(2, 0, 1),
-            sv_receiver_field(2, 1, 0), sv_receiver_field(2, 1, 1),
-            sv_receiver_field(2, 2, 0), sv_receiver_field(2, 2, 1),
-            sv_receiver_field(2, 3, 0), sv_receiver_field(2, 3, 1),
-            sv_receiver_field(2, 4, 0), sv_receiver_field(2, 4, 1),
-            sv_receiver_field(3, 0, 0), sv_receiver_field(3, 0, 1),
-            sv_receiver_field(3, 1, 0), sv_receiver_field(3, 1, 1),
-            sv_receiver_field(3, 2, 0), sv_receiver_field(3, 2, 1),
-            sv_receiver_field(3, 3, 0), sv_receiver_field(3, 3, 1),
-            sv_receiver_field(3, 4, 0), sv_receiver_field(3, 4, 1),
-            sv_receiver_field(4, 0, 0), sv_receiver_field(4, 0, 1),
-            sv_receiver_field(4, 1, 0), sv_receiver_field(4, 1, 1),
-            sv_receiver_field(4, 2, 0), sv_receiver_field(4, 2, 1),
-            sv_receiver_field(4, 3, 0), sv_receiver_field(4, 3, 1),
-            sv_receiver_field(4, 4, 0), sv_receiver_field(4, 4, 1));
         const auto polynomial = Kokkos::subview(
             receivers.receiver_array, ireceiver_l, 0, Kokkos::ALL, Kokkos::ALL);
 
@@ -282,8 +261,8 @@ void specfem::domain::impl::kernels::receiver_kernel<
         });
 
         specfem::kokkos::array_type<type_real, 2> t_values(
-                receivers.seismogram(isig_step, iseis_l, ireceiver_l, 0),
-                receivers.seismogram(isig_step, iseis_l, ireceiver_l, 1));
+            receivers.seismogram(isig_step, iseis_l, ireceiver_l, 0),
+            receivers.seismogram(isig_step, iseis_l, ireceiver_l, 1));
 
         return;
 

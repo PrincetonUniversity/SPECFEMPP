@@ -6,6 +6,7 @@
 #include "impl/properties_container.hpp"
 #include "kokkos_abstractions.h"
 #include "material/interface.hpp"
+#include "point/coordinates.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <memory>
@@ -51,47 +52,127 @@ struct properties {
       specfem::element::property_tag::isotropic>
       acoustic_isotropic;
 
-  template <specfem::element::medium_tag type,
-            specfem::element::property_tag property>
-  KOKKOS_FUNCTION specfem::point::properties<type, property>
-  load_device_properties(const int ispec, const int iz, const int ix) const {
-    const int index = property_index_mapping(ispec);
+  // template <specfem::element::medium_tag type,
+  //           specfem::element::property_tag property>
+  // KOKKOS_FUNCTION specfem::point::properties<type, property>
+  // load_device_properties(const int ispec, const int iz, const int ix) const {
+  //   const int index = property_index_mapping(ispec);
 
-    if constexpr ((type == specfem::element::medium_tag::elastic) &&
-                  (property == specfem::element::property_tag::isotropic)) {
-      return elastic_isotropic.load_device_properties(index, iz, ix);
-    } else if constexpr ((type == specfem::element::medium_tag::acoustic) &&
-                         (property ==
-                          specfem::element::property_tag::isotropic)) {
-      return acoustic_isotropic.load_device_properties(index, iz, ix);
-    } else {
-      static_assert("Material type not implemented");
-    }
-  }
+  //   if constexpr ((type == specfem::element::medium_tag::elastic) &&
+  //                 (property == specfem::element::property_tag::isotropic)) {
+  //     return elastic_isotropic.load_device_properties(index, iz, ix);
+  //   } else if constexpr ((type == specfem::element::medium_tag::acoustic) &&
+  //                        (property ==
+  //                         specfem::element::property_tag::isotropic)) {
+  //     return acoustic_isotropic.load_device_properties(index, iz, ix);
+  //   } else {
+  //     static_assert("Material type not implemented");
+  //   }
+  // }
 
-  template <specfem::element::medium_tag type,
-            specfem::element::property_tag property>
-  specfem::point::properties<type, property>
-  load_host_properties(const int ispec, const int iz, const int ix) const {
-    const int index = h_property_index_mapping(ispec);
+  // template <specfem::element::medium_tag type,
+  //           specfem::element::property_tag property>
+  // specfem::point::properties<type, property>
+  // load_host_properties(const int ispec, const int iz, const int ix) const {
+  //   const int index = h_property_index_mapping(ispec);
 
-    if constexpr ((type == specfem::element::medium_tag::elastic) &&
-                  (property == specfem::element::property_tag::isotropic)) {
-      return elastic_isotropic.load_host_properties(index, iz, ix);
-    } else if constexpr ((type == specfem::element::medium_tag::acoustic) &&
-                         (property ==
-                          specfem::element::property_tag::isotropic)) {
-      return acoustic_isotropic.load_host_properties(index, iz, ix);
-    } else {
-      static_assert("Material type not implemented");
-    }
-  }
+  //   if constexpr ((type == specfem::element::medium_tag::elastic) &&
+  //                 (property == specfem::element::property_tag::isotropic)) {
+  //     return elastic_isotropic.load_host_properties(index, iz, ix);
+  //   } else if constexpr ((type == specfem::element::medium_tag::acoustic) &&
+  //                        (property ==
+  //                         specfem::element::property_tag::isotropic)) {
+  //     return acoustic_isotropic.load_host_properties(index, iz, ix);
+  //   } else {
+  //     static_assert("Material type not implemented");
+  //   }
+  // }
 
   properties() = default;
 
   properties(const int nspec, const int ngllz, const int ngllx,
              const specfem::mesh::materials &materials);
 };
+
+template <specfem::element::medium_tag type,
+          specfem::element::property_tag property>
+KOKKOS_FUNCTION void
+load_on_device(const specfem::point::index &lcoord,
+               const specfem::compute::properties &properties,
+               specfem::point::properties<type, property> &point_properties) {
+  const int ispec = lcoord.ispec;
+  const int iz = lcoord.iz;
+  const int ix = lcoord.ix;
+  const int index = properties.property_index_mapping(ispec);
+
+  if constexpr ((type == specfem::element::medium_tag::elastic) &&
+                (property == specfem::element::property_tag::isotropic)) {
+    point_properties =
+        properties.elastic_isotropic.load_device_properties(index, iz, ix);
+  } else if constexpr ((type == specfem::element::medium_tag::acoustic) &&
+                       (property ==
+                        specfem::element::property_tag::isotropic)) {
+    point_properties =
+        properties.acoustic_isotropic.load_device_properties(index, iz, ix);
+  } else {
+    static_assert("Material type not implemented");
+  }
+
+  return;
+}
+
+template <specfem::element::medium_tag type,
+          specfem::element::property_tag property>
+void load_on_host(
+    const specfem::point::index &lcoord,
+    const specfem::compute::properties &properties,
+    specfem::point::properties<type, property> &point_properties) {
+
+  const int ispec = lcoord.ispec;
+  const int iz = lcoord.iz;
+  const int ix = lcoord.ix;
+  const int index = properties.h_property_index_mapping(ispec);
+
+  if constexpr ((type == specfem::element::medium_tag::elastic) &&
+                (property == specfem::element::property_tag::isotropic)) {
+    point_properties =
+        properties.elastic_isotropic.load_host_properties(index, iz, ix);
+  } else if constexpr ((type == specfem::element::medium_tag::acoustic) &&
+                       (property ==
+                        specfem::element::property_tag::isotropic)) {
+    point_properties =
+        properties.acoustic_isotropic.load_host_properties(index, iz, ix);
+  } else {
+    static_assert("Material type not implemented");
+  }
+
+  return;
+}
+
+template <specfem::element::medium_tag type,
+          specfem::element::property_tag property>
+void update_on_host(
+    const specfem::point::index &lcoord,
+    const specfem::compute::properties &properties,
+    const specfem::point::properties<type, property> &point_properties) {
+  const int ispec = lcoord.ispec;
+  const int iz = lcoord.iz;
+  const int ix = lcoord.ix;
+  const int index = properties.h_property_index_mapping(ispec);
+
+  if constexpr ((type == specfem::element::medium_tag::elastic) &&
+                (property == specfem::element::property_tag::isotropic)) {
+    properties.elastic_isotropic.assign(index, iz, ix, point_properties);
+  } else if constexpr ((type == specfem::element::medium_tag::acoustic) &&
+                       (property ==
+                        specfem::element::property_tag::isotropic)) {
+    properties.acoustic_isotropic.assign(index, iz, ix, point_properties);
+  } else {
+    static_assert("Material type not implemented");
+  }
+
+  return;
+}
 
 } // namespace compute
 } // namespace specfem

@@ -28,6 +28,17 @@ struct gcoord2 {
   gcoord2(const type_real &x, const type_real &z) : x(x), z(z) {}
 };
 
+struct index {
+  int ispec;
+  int iz;
+  int ix;
+
+  index() = default;
+
+  index(const int &ispec, const int &iz, const int &ix)
+      : ispec(ispec), iz(iz), ix(ix) {}
+};
+
 type_real distance(const specfem::point::gcoord2 &p1,
                    const specfem::point::gcoord2 &p2);
 
