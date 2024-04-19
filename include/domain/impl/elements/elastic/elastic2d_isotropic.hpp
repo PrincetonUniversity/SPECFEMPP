@@ -87,14 +87,14 @@ public:
   void compute_mass_matrix_component(
       const specfem::point::properties<medium_type::medium_tag,
                                        medium_type::property_tag> &properties,
-      const specfem::point::partial_derivatives2 &partial_derivatives,
+      const specfem::point::partial_derivatives2<true> &partial_derivatives,
       specfem::kokkos::array_type<type_real, 2> &mass_matrix) const;
 
   template <specfem::enums::time_scheme::type time_scheme>
   KOKKOS_INLINE_FUNCTION void mass_time_contribution(
       const int &xz, const type_real &dt,
       const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
-      const specfem::point::partial_derivatives2 &partial_derivatives,
+      const specfem::point::partial_derivatives2<true> &partial_derivatives,
       const specfem::point::properties<medium_type::medium_tag,
                                        medium_type::property_tag> &properties,
       const specfem::point::boundary &boundary_type,
@@ -120,10 +120,12 @@ public:
    * @param dudzl Computed partial derivative of field \f$ \frac{\partial
    * \tilde{u}}{\partial z} \f$
    */
+  template <bool with_jacobian>
   KOKKOS_INLINE_FUNCTION void compute_gradient(
       const int xz, const ScratchViewType<type_real, 1> s_hprime,
       const ScratchViewType<type_real, medium_type::components> u,
-      const specfem::point::partial_derivatives2 &partial_derivatives,
+      const specfem::point::partial_derivatives2<with_jacobian>
+          &partial_derivatives,
       const specfem::point::boundary &boundary_type,
       specfem::kokkos::array_type<type_real, medium_type::components> &dudxl,
       specfem::kokkos::array_type<type_real, medium_type::components> &dudzl)
@@ -154,7 +156,7 @@ public:
           &dudxl,
       const specfem::kokkos::array_type<type_real, medium_type::components>
           &dudzl,
-      const specfem::point::partial_derivatives2 &partial_derivatives,
+      const specfem::point::partial_derivatives2<true> &partial_derivatives,
       const specfem::point::properties<medium_type::medium_tag,
                                        medium_type::property_tag> &properties,
       const specfem::point::boundary &boundary_type,
@@ -194,7 +196,7 @@ public:
       const ScratchViewType<type_real, medium_type::components>
           stress_integrand_gamma,
       const ScratchViewType<type_real, 1> s_hprimewgll,
-      const specfem::point::partial_derivatives2 &partial_derivatives,
+      const specfem::point::partial_derivatives2<true> &partial_derivatives,
       const specfem::point::properties<medium_type::medium_tag,
                                        medium_type::property_tag> &properties,
       const specfem::point::boundary &boundary_type,

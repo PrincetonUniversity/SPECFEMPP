@@ -185,13 +185,18 @@ void specfem::domain::impl::kernels::receiver_kernel<
             [=](const int xz) {
               int iz, ix;
               sub2ind(xz, ngllx, iz, ix);
+              const specfem::point::index index(ispec_l, iz, ix);
               const auto point_partial_derivatives =
-                  partial_derivatives.template load_device_derivatives<false>(
-                      ispec_l, iz, ix);
+                  [&]() -> specfem::point::partial_derivatives2<false> {
+                specfem::point::partial_derivatives2<false>
+                    point_partial_derivatives;
+                specfem::compute::load_on_device(index, partial_derivatives,
+                                                 point_partial_derivatives);
+                return point_partial_derivatives;
+              }();
 
               const auto point_properties =
                   [&]() -> specfem::point::properties<MediumTag, PropertyTag> {
-                specfem::point::index index(ispec_l, iz, ix);
                 specfem::point::properties<MediumTag, PropertyTag>
                     point_properties;
                 specfem::compute::load_on_device(index, properties,

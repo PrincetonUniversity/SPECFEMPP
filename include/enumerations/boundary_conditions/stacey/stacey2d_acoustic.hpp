@@ -80,7 +80,7 @@ public:
   KOKKOS_INLINE_FUNCTION void mass_time_contribution(
       const int &xz, const type_real &dt,
       const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
-      const specfem::point::partial_derivatives2 &partial_derivatives,
+      const specfem::point::partial_derivatives2<true> &partial_derivatives,
       const specfem::point::properties<medium_type::medium_tag,
                                        medium_type::property_tag> &properties,
       const specfem::point::boundary &boundary_type,
@@ -99,7 +99,7 @@ public:
   KOKKOS_INLINE_FUNCTION
   void enforce_gradient(
       const int &xz,
-      const specfem::point::partial_derivatives2 &partial_derivatives,
+      const specfem::point::partial_derivatives2<true> &partial_derivatives,
       const specfem::point::boundary &boundary_type,
       specfem::kokkos::array_type<type_real, medium_type::components> &df_dx,
       specfem::kokkos::array_type<type_real, medium_type::components> &df_dz)
@@ -118,7 +118,7 @@ public:
    */
   KOKKOS_INLINE_FUNCTION void enforce_stress(
       const int &xz,
-      const specfem::point::partial_derivatives2 &partial_derivatives,
+      const specfem::point::partial_derivatives2<true> &partial_derivatives,
       const specfem::point::properties<medium_type::medium_tag,
                                        medium_type::property_tag> &properties,
       const specfem::point::boundary &boundary_type,
@@ -143,7 +143,7 @@ public:
   KOKKOS_INLINE_FUNCTION void enforce_traction(
       const int &xz,
       const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
-      const specfem::point::partial_derivatives2 &partial_derivatives,
+      const specfem::point::partial_derivatives2<true> &partial_derivatives,
       const specfem::point::properties<medium_type::medium_tag,
                                        medium_type::property_tag> &properties,
       const specfem::point::boundary &boundary_type,

@@ -76,31 +76,111 @@ struct partial_derivatives {
    */
   void sync_views();
 
-  template <bool load_jacobian>
-  KOKKOS_INLINE_FUNCTION specfem::point::partial_derivatives2
-  load_device_derivatives(const int ispec, const int iz, const int ix) const {
-    if constexpr (load_jacobian) {
-      return { xix(ispec, iz, ix), gammax(ispec, iz, ix), xiz(ispec, iz, ix),
-               gammaz(ispec, iz, ix), jacobian(ispec, iz, ix) };
-    } else {
-      return { xix(ispec, iz, ix), gammax(ispec, iz, ix), xiz(ispec, iz, ix),
-               gammaz(ispec, iz, ix) };
-    }
-  };
+  // template <bool load_jacobian>
+  // KOKKOS_INLINE_FUNCTION specfem::point::partial_derivatives2
+  // load_device_derivatives(const int ispec, const int iz, const int ix) const
+  // {
+  //   if constexpr (load_jacobian) {
+  //     return { xix(ispec, iz, ix), gammax(ispec, iz, ix), xiz(ispec, iz, ix),
+  //              gammaz(ispec, iz, ix), jacobian(ispec, iz, ix) };
+  //   } else {
+  //     return { xix(ispec, iz, ix), gammax(ispec, iz, ix), xiz(ispec, iz, ix),
+  //              gammaz(ispec, iz, ix) };
+  //   }
+  // };
 
-  template <bool load_jacobian>
-  specfem::point::partial_derivatives2
-  load_host_derivatives(const int ispec, const int iz, const int ix) const {
-    if constexpr (load_jacobian) {
-      return { h_xix(ispec, iz, ix), h_gammax(ispec, iz, ix),
-               h_xiz(ispec, iz, ix), h_gammaz(ispec, iz, ix),
-               h_jacobian(ispec, iz, ix) };
-    } else {
-      return { h_xix(ispec, iz, ix), h_gammax(ispec, iz, ix),
-               h_xiz(ispec, iz, ix), h_gammaz(ispec, iz, ix) };
-    }
-  };
+  // template <bool load_jacobian>
+  // specfem::point::partial_derivatives2
+  // load_host_derivatives(const int ispec, const int iz, const int ix) const {
+  //   if constexpr (load_jacobian) {
+  //     return { h_xix(ispec, iz, ix), h_gammax(ispec, iz, ix),
+  //              h_xiz(ispec, iz, ix), h_gammaz(ispec, iz, ix),
+  //              h_jacobian(ispec, iz, ix) };
+  //   } else {
+  //     return { h_xix(ispec, iz, ix), h_gammax(ispec, iz, ix),
+  //              h_xiz(ispec, iz, ix), h_gammaz(ispec, iz, ix) };
+  //   }
+  // };
 };
+
+template <bool load_jacobian>
+KOKKOS_FUNCTION void load_on_device(
+    const specfem::point::index &index,
+    const specfem::compute::partial_derivatives &derivatives,
+    specfem::point::partial_derivatives2<load_jacobian> &partial_derivatives) {
+
+  const int ispec = index.ispec;
+  const int iz = index.iz;
+  const int ix = index.ix;
+
+  if constexpr (load_jacobian) {
+    partial_derivatives = { derivatives.xix(ispec, iz, ix),
+                            derivatives.gammax(ispec, iz, ix),
+                            derivatives.xiz(ispec, iz, ix),
+                            derivatives.gammaz(ispec, iz, ix),
+                            derivatives.jacobian(ispec, iz, ix) };
+  } else {
+    partial_derivatives = { derivatives.xix(ispec, iz, ix),
+                            derivatives.gammax(ispec, iz, ix),
+                            derivatives.xiz(ispec, iz, ix),
+                            derivatives.gammaz(ispec, iz, ix) };
+  }
+
+  return;
+}
+
+template <bool load_jacobian>
+void load_on_host(
+    const specfem::point::index &index,
+    const specfem::compute::partial_derivatives &derivatives,
+    specfem::point::partial_derivatives2<load_jacobian> &partial_derivatives) {
+
+  const int ispec = index.ispec;
+  const int iz = index.iz;
+  const int ix = index.ix;
+
+  if constexpr (load_jacobian) {
+    partial_derivatives = { derivatives.h_xix(ispec, iz, ix),
+                            derivatives.h_gammax(ispec, iz, ix),
+                            derivatives.h_xiz(ispec, iz, ix),
+                            derivatives.h_gammaz(ispec, iz, ix),
+                            derivatives.h_jacobian(ispec, iz, ix) };
+  } else {
+    partial_derivatives = { derivatives.h_xix(ispec, iz, ix),
+                            derivatives.h_gammax(ispec, iz, ix),
+                            derivatives.h_xiz(ispec, iz, ix),
+                            derivatives.h_gammaz(ispec, iz, ix) };
+  }
+
+  return;
+}
+
+template <bool load_jacobian>
+void update_on_host(const specfem::point::index &index,
+                    const specfem::compute::partial_derivatives &derivatives,
+                    const specfem::point::partial_derivatives2<load_jacobian>
+                        &partial_derivatives) {
+
+  const int ispec = index.ispec;
+  const int iz = index.iz;
+  const int ix = index.ix;
+
+  if constexpr (load_jacobian) {
+    derivatives.h_xix(ispec, iz, ix) = partial_derivatives.xix;
+    derivatives.h_gammax(ispec, iz, ix) = partial_derivatives.gammax;
+    derivatives.h_xiz(ispec, iz, ix) = partial_derivatives.xiz;
+    derivatives.h_gammaz(ispec, iz, ix) = partial_derivatives.gammaz;
+    derivatives.h_jacobian(ispec, iz, ix) = partial_derivatives.jacobian;
+  } else {
+    derivatives.h_xix(ispec, iz, ix) = partial_derivatives.xix;
+    derivatives.h_gammax(ispec, iz, ix) = partial_derivatives.gammax;
+    derivatives.h_xiz(ispec, iz, ix) = partial_derivatives.xiz;
+    derivatives.h_gammaz(ispec, iz, ix) = partial_derivatives.gammaz;
+  }
+
+  return;
+}
+
 } // namespace compute
 } // namespace specfem
 

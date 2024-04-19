@@ -100,7 +100,7 @@ public:
   KOKKOS_FUNCTION
   void get_field(
       const int iz, const int ix,
-      const specfem::point::partial_derivatives2 partial_derivatives,
+      const specfem::point::partial_derivatives2<false> partial_derivatives,
       const specfem::point::properties<medium_type::medium_tag,
                                        medium_type::property_tag>
           properties,

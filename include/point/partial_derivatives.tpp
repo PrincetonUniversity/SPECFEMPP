@@ -8,7 +8,7 @@
 
 template <>
 KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, 2>
-specfem::point::partial_derivatives2::compute_normal<
+specfem::point::partial_derivatives2<true>::impl_compute_normal<
     specfem::enums::edge::type::BOTTOM>() const {
   specfem::kokkos::array_type<type_real, 2> dn;
   dn[0] = -1.0 * this->gammax * this->jacobian;
@@ -18,7 +18,7 @@ specfem::point::partial_derivatives2::compute_normal<
 
 template <>
 KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, 2>
-specfem::point::partial_derivatives2::compute_normal<
+specfem::point::partial_derivatives2<true>::impl_compute_normal<
     specfem::enums::edge::type::TOP>() const {
   specfem::kokkos::array_type<type_real, 2> dn;
   dn[0] = this->gammax * this->jacobian;
@@ -28,7 +28,7 @@ specfem::point::partial_derivatives2::compute_normal<
 
 template <>
 KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, 2>
-specfem::point::partial_derivatives2::compute_normal<
+specfem::point::partial_derivatives2<true>::impl_compute_normal<
     specfem::enums::edge::type::LEFT>() const {
   specfem::kokkos::array_type<type_real, 2> dn;
   dn[0] = -1.0 * this->xix * this->jacobian;
@@ -38,7 +38,7 @@ specfem::point::partial_derivatives2::compute_normal<
 
 template <>
 KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, 2>
-specfem::point::partial_derivatives2::compute_normal<
+specfem::point::partial_derivatives2<true>::impl_compute_normal<
     specfem::enums::edge::type::RIGHT>() const {
   specfem::kokkos::array_type<type_real, 2> dn;
   dn[0] = this->xix * this->jacobian;
