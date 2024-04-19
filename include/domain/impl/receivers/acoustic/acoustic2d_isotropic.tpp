@@ -54,7 +54,7 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>>::
     get_field(
         const int iz, const int ix,
-        const specfem::point::partial_derivatives2 partial_derivatives,
+        const specfem::point::partial_derivatives2<false> partial_derivatives,
         const specfem::point::properties<medium_type::medium_tag, medium_type::property_tag> properties,
         const ScratchViewType<type_real, 1> hprime,
         const ScratchViewType<type_real, medium_type::components> active_field,

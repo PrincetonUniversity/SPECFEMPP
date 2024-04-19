@@ -32,7 +32,7 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
     compute_mass_matrix_component(
         const specfem::point::properties<medium_type::medium_tag,
                                          medium_type::property_tag> &properties,
-        const specfem::point::partial_derivatives2 &partial_derivatives,
+        const specfem::point::partial_derivatives2<true> &partial_derivatives,
         specfem::kokkos::array_type<type_real, 2> &mass_matrix) const {
 
   constexpr int components = medium_type::components;
@@ -57,7 +57,7 @@ specfem::domain::impl::elements::element<
     mass_time_contribution(
         const int &xz, const type_real &dt,
         const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
-        const specfem::point::partial_derivatives2 &partial_derivatives,
+        const specfem::point::partial_derivatives2<true> &partial_derivatives,
         const specfem::point::properties<medium_type::medium_tag,
                                          medium_type::property_tag> &properties,
         const specfem::point::boundary &boundary_type,
@@ -76,6 +76,7 @@ specfem::domain::impl::elements::element<
 }
 
 template <int NGLL, specfem::element::boundary_tag BC>
+template <bool with_jacobian>
 KOKKOS_INLINE_FUNCTION void
 specfem::domain::impl::elements::element<
     specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
@@ -84,7 +85,7 @@ specfem::domain::impl::elements::element<
     compute_gradient(
         const int xz, const ScratchViewType<type_real, 1> s_hprime,
         const ScratchViewType<type_real, medium_type::components> u,
-        const specfem::point::partial_derivatives2 &partial_derivatives,
+        const specfem::point::partial_derivatives2<with_jacobian> &partial_derivatives,
         const specfem::point::boundary &boundary_type,
         specfem::kokkos::array_type<type_real, medium_type::components> &dudxl,
         specfem::kokkos::array_type<type_real, medium_type::components> &dudzl)
@@ -139,7 +140,7 @@ specfem::domain::impl::elements::element<
             &dudxl,
         const specfem::kokkos::array_type<type_real, medium_type::components>
             &dudzl,
-        const specfem::point::partial_derivatives2 &partial_derivatives,
+        const specfem::point::partial_derivatives2<true> &partial_derivatives,
         const specfem::point::properties<medium_type::medium_tag,
                                          medium_type::property_tag> &properties,
         const specfem::point::boundary &boundary_type,
@@ -206,7 +207,7 @@ specfem::domain::impl::elements::element<
         const ScratchViewType<type_real, medium_type::components>
             stress_integrand_gamma,
         const ScratchViewType<type_real, 1> s_hprimewgll,
-        const specfem::point::partial_derivatives2 &partial_derivatives,
+        const specfem::point::partial_derivatives2<true> &partial_derivatives,
         const specfem::point::properties<medium_type::medium_tag,
                                          medium_type::property_tag> &properties,
         const specfem::point::boundary &boundary_type,

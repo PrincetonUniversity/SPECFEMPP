@@ -315,6 +315,18 @@ target_link_libraries(
         compute
 )
 
+# add_library(
+#         kernels
+#         src/kernels/kernels.cpp
+# )
+
+# target_link_libraries(
+#         kernels
+#         Kokkos::kokkos
+#         compute
+#         coupled_interface
+# )
+
 add_library(
         timescheme
         src/timescheme/timescheme.cpp

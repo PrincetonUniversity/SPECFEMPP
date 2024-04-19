@@ -101,9 +101,10 @@ void specfem::domain::impl::kernels::element_kernel<
               int iglob_l =
                   global_index_mapping(iglob, static_cast<int>(MediumTag));
 
+              const specfem::point::index index(ispec_l, iz, ix);
+
               const auto point_property =
                   [&]() -> specfem::point::properties<MediumTag, PropertyTag> {
-                specfem::point::index index(ispec_l, iz, ix);
                 specfem::point::properties<MediumTag, PropertyTag>
                     point_property;
 
@@ -113,8 +114,13 @@ void specfem::domain::impl::kernels::element_kernel<
               }();
 
               const auto point_partial_derivatives =
-                  partial_derivatives.load_device_derivatives<true>(ispec_l, iz,
-                                                                    ix);
+                  [&]() -> specfem::point::partial_derivatives2<true> {
+                specfem::point::partial_derivatives2<true>
+                    point_partial_derivatives;
+                specfem::compute::load_on_device(index, partial_derivatives,
+                                                 point_partial_derivatives);
+                return point_partial_derivatives;
+              }();
 
               specfem::kokkos::array_type<type_real, medium_type::components>
                   mass_matrix_element;
@@ -184,9 +190,10 @@ void specfem::domain::impl::kernels::element_kernel<
               int iglob_l =
                   global_index_mapping(iglob, static_cast<int>(MediumTag));
 
+              const specfem::point::index index(ispec_l, iz, ix);
+
               const auto point_property =
                   [&]() -> specfem::point::properties<MediumTag, PropertyTag> {
-                specfem::point::index index(ispec_l, iz, ix);
                 specfem::point::properties<MediumTag, PropertyTag>
                     point_property;
 
@@ -196,8 +203,13 @@ void specfem::domain::impl::kernels::element_kernel<
               }();
 
               const auto point_partial_derivatives =
-                  partial_derivatives.load_device_derivatives<true>(ispec_l, iz,
-                                                                    ix);
+                  [&]() -> specfem::point::partial_derivatives2<true> {
+                specfem::point::partial_derivatives2<true>
+                    point_partial_derivatives;
+                specfem::compute::load_on_device(index, partial_derivatives,
+                                                 point_partial_derivatives);
+                return point_partial_derivatives;
+              }();
 
               specfem::kokkos::array_type<type_real, medium_type::components>
                   mass_matrix_element;
@@ -342,9 +354,16 @@ void specfem::domain::impl::kernels::element_kernel<
               specfem::kokkos::array_type<type_real, medium_type::components>
                   dudzl;
 
+              const specfem::point::index index(ispec_l, iz, ix);
+
               const auto point_partial_derivatives =
-                  partial_derivatives.load_device_derivatives<true>(ispec_l, iz,
-                                                                    ix);
+                  [&]() -> specfem::point::partial_derivatives2<true> {
+                specfem::point::partial_derivatives2<true>
+                    point_partial_derivatives;
+                specfem::compute::load_on_device(index, partial_derivatives,
+                                                 point_partial_derivatives);
+                return point_partial_derivatives;
+              }();
 
               element.compute_gradient(xz, s_hprime, s_field,
                                        point_partial_derivatives,
@@ -357,7 +376,6 @@ void specfem::domain::impl::kernels::element_kernel<
 
               const auto point_property =
                   [&]() -> specfem::point::properties<MediumTag, PropertyTag> {
-                specfem::point::index index(ispec_l, iz, ix);
                 specfem::point::properties<MediumTag, PropertyTag>
                     point_property;
 
@@ -408,6 +426,8 @@ void specfem::domain::impl::kernels::element_kernel<
                    (tag == specfem::element::boundary_tag::
                                composite_stacey_dirichlet));
 
+              const specfem::point::index index(ispec_l, iz, ix);
+
               const auto velocity =
                   [&]() -> specfem::kokkos::array_type<type_real, components> {
                 if constexpr (flag) {
@@ -421,19 +441,22 @@ void specfem::domain::impl::kernels::element_kernel<
               }();
 
               const auto point_partial_derivatives =
-                  [&]() -> specfem::point::partial_derivatives2 {
+                  [&]() -> specfem::point::partial_derivatives2<true> {
                 if constexpr (flag) {
-                  return partial_derivatives.load_device_derivatives<true>(
-                      ispec_l, iz, ix);
+                  specfem::point::partial_derivatives2<true>
+                      point_partial_derivatives;
+                  specfem::compute::load_on_device(index, partial_derivatives,
+                                                   point_partial_derivatives);
+                  return point_partial_derivatives;
+
                 } else {
-                  return specfem::point::partial_derivatives2();
+                  return {};
                 }
               }();
 
               const auto point_property =
                   [&]() -> specfem::point::properties<MediumTag, PropertyTag> {
                 if constexpr (flag) {
-                  specfem::point::index index(ispec_l, iz, ix);
                   specfem::point::properties<MediumTag, PropertyTag>
                       point_property;
                   specfem::compute::load_on_device(index, properties,

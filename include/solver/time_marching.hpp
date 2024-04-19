@@ -3,6 +3,8 @@
 
 #include "coupled_interface/interface.hpp"
 #include "domain/interface.hpp"
+// #include "kernels/kernels.hpp"
+// #include "kernels/frechet_kernels.hpp"
 #include "enumerations/interface.hpp"
 #include "solver.hpp"
 #include "timescheme/interface.hpp"
@@ -49,12 +51,14 @@ public:
   void run() override;
 
 private:
+  // constexpr int NGLL = qp_type::NGLL;
   specfem::kernels::kernels<specfem::wavefield::type::adjoint, DimensionType,
                             qp_type>
       adjoint_kernels;
   specfem::kernels::kernels<specfem::wavefield::type::backward, DimensionType,
                             qp_type>
       backward_kernels;
+  // specfem::kernels::frechet_kernels<NGLL, DimensionType> frechet_kernels;
   specfem::compute::assembly assembly;
   std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme;
 };

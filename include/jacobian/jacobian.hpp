@@ -236,7 +236,7 @@ compute_inverted_derivatives(
     const specfem::kokkos::HostView2d<type_real> s_coorg, const int ngnod,
     const type_real xi, const type_real gamma);
 
-specfem::point::partial_derivatives2
+specfem::point::partial_derivatives2<true>
 compute_derivatives(const specfem::kokkos::HostTeam::member_type &teamMember,
                     const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
                     const int ngnod,

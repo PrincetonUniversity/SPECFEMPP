@@ -54,15 +54,16 @@ void specfem::sources::moment_tensor::compute_source_array(
   // Load
   specfem::kokkos::HostView2d<type_real> source_polynomial("source_polynomial",
                                                            N, N);
-  specfem::kokkos::HostView2d<specfem::point::partial_derivatives2>
+  specfem::kokkos::HostView2d<specfem::point::partial_derivatives2<false> >
       element_derivatives("element_derivatives", N, N);
 
   Kokkos::parallel_for(
       specfem::kokkos::HostMDrange<2>({ 0, 0 }, { N, N }),
       KOKKOS_LAMBDA(const int iz, const int ix) {
         type_real hlagrange = hxi_source(ix) * hgamma_source(iz);
-        auto derivatives = partial_derivatives.load_host_derivatives<false>(
-            lcoord.ispec, iz, ix);
+        const specfem::point::index index(lcoord.ispec, iz, ix);
+        specfem::point::partial_derivatives2<false> derivatives;
+        specfem::compute::load_on_host(index, partial_derivatives, derivatives);
         source_polynomial(iz, ix) = hlagrange;
         element_derivatives(iz, ix) = derivatives;
       });

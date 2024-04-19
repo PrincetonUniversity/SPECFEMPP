@@ -82,9 +82,13 @@ void specfem::coupled_interface::coupled_interface<
 
               // compute normal
               const auto normal =
-                  partial_derivatives
-                      .load_device_derivatives<true>(coupled_index, iz, ix)
-                      .compute_normal(coupled_edge_type);
+                  [&]() -> specfem::kokkos::array_type<type_real, 2> {
+                specfem::point::partial_derivatives2<true> point_derivatives;
+                specfem::point::index index(coupled_index, iz, ix);
+                specfem::compute::load_on_device(index, partial_derivatives,
+                                                 point_derivatives);
+                return point_derivatives.compute_normal(coupled_edge_type);
+              }();
 
               // get coupling field elements
               const int coupled_global_index = global_index_mapping(

@@ -18,7 +18,7 @@ KOKKOS_INLINE_FUNCTION void specfem::boundary::boundary<
     enforce_traction(
         const int &xz,
         const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
-        const specfem::point::partial_derivatives2 &partial_derivatives,
+        const specfem::point::partial_derivatives2<true> &partial_derivatives,
         const specfem::point::properties<
             medium_type::medium_tag, medium_type::property_tag> &properties,
         const specfem::point::boundary &boundary_type,

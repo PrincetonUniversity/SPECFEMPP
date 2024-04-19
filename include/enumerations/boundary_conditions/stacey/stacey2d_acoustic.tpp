@@ -34,7 +34,7 @@ KOKKOS_FUNCTION void newmark_mass_terms(
     const type_real &dt, const specfem::point::boundary &boundary_type,
     const specfem::element::boundary_tag &tag,
     const specfem::kokkos::array_type<type_real, 2> &weight,
-    const specfem::point::partial_derivatives2 &partial_derivatives,
+    const specfem::point::partial_derivatives2<true> &partial_derivatives,
     const specfem::point::properties<specfem::element::medium_tag::acoustic,
                                      property> &properties,
     specfem::kokkos::array_type<type_real, 1> &rmass_inverse) {
@@ -137,7 +137,7 @@ specfem::boundary::boundary<specfem::dimension::type::dim2,
     mass_time_contribution(
         const int &xz, const type_real &dt,
         const specfem::kokkos::array_type<type_real, 2> &weight,
-        const specfem::point::partial_derivatives2 &partial_derivatives,
+        const specfem::point::partial_derivatives2<true> &partial_derivatives,
         const specfem::point::properties<medium_type::medium_tag,
                                          medium_type::property_tag> &properties,
         const specfem::point::boundary &boundary_type,
@@ -179,7 +179,7 @@ specfem::boundary::boundary<specfem::dimension::type::dim2,
                             specfem::element::boundary_tag::stacey, qp_type>::
     enforce_traction(
         const int &xz, const specfem::kokkos::array_type<type_real, 2> &weight,
-        const specfem::point::partial_derivatives2 &partial_derivatives,
+        const specfem::point::partial_derivatives2<true> &partial_derivatives,
         const specfem::point::properties<medium_type::medium_tag,
                                          medium_type::property_tag> &properties,
         const specfem::point::boundary &boundary_type,
