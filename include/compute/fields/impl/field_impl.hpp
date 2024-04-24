@@ -25,17 +25,11 @@ public:
       Kokkos::View<int *, Kokkos::LayoutLeft, specfem::kokkos::HostMemSpace>
           assembly_index_mapping);
 
-  field_impl(const int nglob, const int nspec, const int ngllz,
-             const int ngllx);
+  field_impl(const int nglob);
 
   template <specfem::sync::kind sync> void sync_fields() const;
 
   int nglob;
-  int nspec;
-  int ngllz;
-  int ngllx;
-  specfem::kokkos::DeviceView3d<type_real> index_mapping;
-  specfem::kokkos::HostMirror3d<type_real> h_index_mapping;
   specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field;
   specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft> h_field;
   specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot;

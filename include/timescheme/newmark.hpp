@@ -43,8 +43,7 @@ public:
       const specfem::element::medium_tag tag) override{};
 
   void link_assembly(const specfem::compute::assembly &assembly) override {
-    elastic = assembly.fields.forward.elastic;
-    acoustic = assembly.fields.forward.acoustic;
+    field = assembly.fields.forward;
   }
 
   specfem::enums::time_scheme::type timescheme() const override {
@@ -58,12 +57,7 @@ private:
   type_real deltat;
   type_real deltatover2;
   type_real deltasquareover2;
-  specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
-                                     specfem::element::medium_tag::elastic>
-      elastic;
-  specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
-                                     specfem::element::medium_tag::acoustic>
-      acoustic;
+  specfem::compute::simulation_field<specfem::wavefield::type::forward> field;
 };
 
 template <>
@@ -97,10 +91,8 @@ public:
       const specfem::element::medium_tag tag) override;
 
   void link_assembly(const specfem::compute::assembly &assembly) override {
-    adjoint_elastic = assembly.fields.adjoint.elastic;
-    adjoint_acoustic = assembly.fields.adjoint.acoustic;
-    backward_elastic = assembly.fields.backward.elastic;
-    backward_acoustic = assembly.fields.backward.acoustic;
+    adjoint_field = assembly.fields.adjoint;
+    backward_field = assembly.fields.backward;
   }
 
   specfem::enums::time_scheme::type timescheme() const override {
@@ -114,18 +106,10 @@ private:
   type_real deltat;
   type_real deltatover2;
   type_real deltasquareover2;
-  specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
-                                     specfem::element::medium_tag::elastic>
-      adjoint_elastic;
-  specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
-                                     specfem::element::medium_tag::acoustic>
-      adjoint_acoustic;
-  specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
-                                     specfem::element::medium_tag::elastic>
-      backward_elastic;
-  specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
-                                     specfem::element::medium_tag::acoustic>
-      backward_acoustic;
+  specfem::compute::simulation_field<specfem::wavefield::type::adjoint>
+      adjoint_field;
+  specfem::compute::simulation_field<specfem::wavefield::type::backward>
+      backward_field;
 };
 
 } // namespace time_scheme
