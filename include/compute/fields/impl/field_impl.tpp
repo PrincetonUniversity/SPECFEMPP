@@ -5,35 +5,11 @@
 #include "kokkos_abstractions.h"
 #include <Kokkos_Core.hpp>
 
-namespace {
-int compute_nglob(const specfem::kokkos::HostView3d<int> index_mapping) {
-  const int nspec = index_mapping.extent(0);
-  const int ngllz = index_mapping.extent(1);
-  const int ngllx = index_mapping.extent(2);
-
-  int nglob;
-  Kokkos::parallel_reduce(
-      "specfem::utils::compute_nglob",
-      specfem::kokkos::HostMDrange<3>({ 0, 0, 0 }, { nspec, ngllz, ngllx }),
-      KOKKOS_LAMBDA(const int ispec, const int iz, const int ix, int &l_nglob) {
-        l_nglob = l_nglob > index_mapping(ispec, iz, ix)
-                      ? l_nglob
-                      : index_mapping(ispec, iz, ix);
-      },
-      Kokkos::Max<int>(nglob));
-
-  return nglob + 1;
-}
-} // namespace
-
 template <specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag>
 specfem::compute::impl::field_impl<DimensionType, MediumTag>::field_impl(
-    const int nglob, const int nspec, const int ngllz, const int ngllx)
-    : nglob(nglob), nspec(nspec),
-      index_mapping("specfem::compute::fields::index_mapping", nspec, ngllz,
-                    ngllx),
-      h_index_mapping(Kokkos::create_mirror_view(index_mapping)),
+    const int nglob)
+    : nglob(nglob),
       field("specfem::compute::fields::field", nglob, medium_type::components),
       h_field(Kokkos::create_mirror_view(field)),
       field_dot("specfem::compute::fields::field_dot", nglob,

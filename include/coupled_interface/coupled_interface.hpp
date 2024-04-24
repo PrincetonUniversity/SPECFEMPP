@@ -21,10 +21,6 @@ template <specfem::wavefield::type WavefieldType,
           specfem::element::medium_tag CoupledMedium>
 class coupled_interface {
 public:
-  using self_medium_type = specfem::medium::medium<DimensionType, SelfMedium>;
-  using coupled_medium_type =
-      specfem::medium::medium<DimensionType, CoupledMedium>;
-
   static_assert(SelfMedium != CoupledMedium,
                 "Error: self_medium cannot be equal to coupled_medium");
 
@@ -39,21 +35,20 @@ public:
   void compute_coupling();
 
 private:
+  using EdgeType =
+      specfem::coupled_interface::impl::edges::edge<DimensionType, SelfMedium,
+                                                    CoupledMedium>;
+  using CoupledPointFieldType = typename EdgeType::CoupledPointFieldType;
+  using SelfPointFieldType = typename EdgeType::SelfPointFieldType;
+
   int nedges; ///< Number of edges in the interface.
   specfem::compute::points points;
   specfem::compute::quadrature quadrature;
   specfem::compute::partial_derivatives partial_derivatives;
-  Kokkos::View<int * [specfem::element::ntypes], Kokkos::LayoutLeft,
-               specfem::kokkos::DevMemSpace>
-      global_index_mapping;
-  specfem::compute::impl::field_impl<DimensionType, SelfMedium> self_field;
-  specfem::compute::impl::field_impl<DimensionType, CoupledMedium>
-      coupled_field;
+  specfem::compute::simulation_field<WavefieldType> field;
   specfem::compute::interface_container<SelfMedium, CoupledMedium>
       interface_data; ///< Struct containing the coupling information.
-  specfem::coupled_interface::impl::edges::edge<DimensionType, SelfMedium,
-                                                CoupledMedium>
-      edge; ///< Edge class to implement coupling physics
+  EdgeType edge;      ///< Edge class to implement coupling physics
 };
 } // namespace coupled_interface
 } // namespace specfem

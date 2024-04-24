@@ -153,23 +153,9 @@
 // }
 
 template <>
-KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, 2>
-specfem::coupled_interface::impl::edges::edge<
-    specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
-    specfem::element::medium_tag::elastic>::
-    load_field_elements(
-        const int coupled_global_index,
-        const specfem::compute::impl::field_impl<
-            specfem::dimension::type::dim2,
-            specfem::element::medium_tag::elastic> &coupled_field) const {
-
-  return specfem::kokkos::array_type<type_real, 2>(
-      coupled_field.field(coupled_global_index, 0),
-      coupled_field.field(coupled_global_index, 1));
-}
-
-template <>
-KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, 1>
+KOKKOS_FUNCTION specfem::point::field<specfem::dimension::type::dim2,
+                                      specfem::element::medium_tag::acoustic,
+                                      false, false, true>
 specfem::coupled_interface::impl::edges::edge<
     specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
     specfem::element::medium_tag::elastic>::
@@ -177,8 +163,7 @@ specfem::coupled_interface::impl::edges::edge<
         const specfem::kokkos::array_type<type_real, 2> &normal,
         const specfem::kokkos::array_type<type_real, 2> &weights,
         const specfem::edge::interface &coupled_edge,
-        const specfem::kokkos::array_type<type_real, 2> &coupled_field_elements)
-        const {
+        const CoupledPointFieldType &coupled_field_elements) const {
 
   const type_real factor = [&]() -> type_real {
     switch (coupled_edge.type) {
@@ -197,9 +182,9 @@ specfem::coupled_interface::impl::edges::edge<
     }
   }();
 
-  return specfem::kokkos::array_type<type_real, 1>(
-      factor * (normal[0] * coupled_field_elements[0] +
-                normal[1] * coupled_field_elements[1]));
+  return { specfem::kokkos::array_type<type_real, 1>(
+      factor * (normal[0] * coupled_field_elements.displacement[0] +
+                normal[1] * coupled_field_elements.displacement[1])) };
 }
 
 #endif // _COUPLED_INTERFACE_IMPL_ACOUSTIC_ELASTIC_TPP

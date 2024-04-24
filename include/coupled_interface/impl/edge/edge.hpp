@@ -10,6 +10,55 @@ namespace coupled_interface {
 namespace impl {
 namespace edges {
 
+template <specfem::dimension::type DimensionType,
+          specfem::element::medium_tag SelfMedium,
+          specfem::element::medium_tag CoupledMedium>
+class edge_impl;
+
+template <>
+class edge_impl<specfem::dimension::type::dim2,
+                specfem::element::medium_tag::acoustic,
+                specfem::element::medium_tag::elastic> {
+
+public:
+  using self_medium_type =
+      specfem::medium::medium<specfem::dimension::type::dim2,
+                              specfem::element::medium_tag::acoustic>;
+  using coupled_medium_type =
+      specfem::medium::medium<specfem::dimension::type::dim2,
+                              specfem::element::medium_tag::elastic>;
+
+  using CoupledPointFieldType =
+      specfem::point::field<coupled_medium_type::dimension,
+                            coupled_medium_type::medium_tag, true, false,
+                            false>;
+  using SelfPointFieldType =
+      specfem::point::field<self_medium_type::dimension,
+                            self_medium_type::medium_tag, false, false, true>;
+};
+
+template <>
+class edge_impl<specfem::dimension::type::dim2,
+                specfem::element::medium_tag::elastic,
+                specfem::element::medium_tag::acoustic> {
+public:
+  using self_medium_type =
+      specfem::medium::medium<specfem::dimension::type::dim2,
+                              specfem::element::medium_tag::elastic>;
+  using coupled_medium_type =
+      specfem::medium::medium<specfem::dimension::type::dim2,
+                              specfem::element::medium_tag::acoustic>;
+
+  using CoupledPointFieldType =
+      specfem::point::field<coupled_medium_type::dimension,
+                            coupled_medium_type::medium_tag, false, false,
+                            true>;
+
+  using SelfPointFieldType =
+      specfem::point::field<self_medium_type::dimension,
+                            self_medium_type::medium_tag, false, false, true>;
+};
+
 /**
  * @brief Coupling edge class to define coupling physics between 2 domains.
  *
@@ -19,32 +68,34 @@ namespace edges {
 template <specfem::dimension::type DimensionType,
           specfem::element::medium_tag SelfMedium,
           specfem::element::medium_tag CoupledMedium>
-class edge {
+class edge : public edge_impl<DimensionType, SelfMedium, CoupledMedium> {
 
 public:
-  using self_medium_type = specfem::medium::medium<DimensionType, SelfMedium>;
-  using coupled_medium_type =
-      specfem::medium::medium<DimensionType, CoupledMedium>;
-
+  using SelfPointFieldType =
+      typename edge_impl<DimensionType, SelfMedium,
+                         CoupledMedium>::SelfPointFieldType;
+  using CoupledPointFieldType =
+      typename edge_impl<DimensionType, SelfMedium,
+                         CoupledMedium>::CoupledPointFieldType;
   edge(){};
 
   edge(const specfem::compute::assembly &assembly){};
 
   KOKKOS_FUNCTION
-  specfem::kokkos::array_type<type_real, self_medium_type::components>
-  compute_coupling_terms(
+  SelfPointFieldType compute_coupling_terms(
       const specfem::kokkos::array_type<type_real, 2> &normal,
       const specfem::kokkos::array_type<type_real, 2> &weights,
       const specfem::edge::interface &coupled_edge_type,
-      const specfem::kokkos::array_type<
-          type_real, coupled_medium_type::components> &field) const;
+      const CoupledPointFieldType &field) const;
 
-  KOKKOS_FUNCTION
-  specfem::kokkos::array_type<type_real, coupled_medium_type::components>
-  load_field_elements(
-      const int global_index,
-      const specfem::compute::impl::field_impl<DimensionType, CoupledMedium>
-          &field) const;
+  template <specfem::wavefield::type WaveFieldType>
+  KOKKOS_FUNCTION CoupledPointFieldType load_field_elements(
+      const specfem::point::index &index,
+      const specfem::compute::simulation_field<WaveFieldType> &field) const {
+    CoupledPointFieldType field_elements;
+    specfem::compute::load_on_device(index, field, field_elements);
+    return field_elements;
+  }
 };
 } // namespace edges
 } // namespace impl

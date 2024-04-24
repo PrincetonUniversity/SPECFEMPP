@@ -156,21 +156,9 @@
 // }
 
 template <>
-KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, 1>
-specfem::coupled_interface::impl::edges::edge<
-    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-    specfem::element::medium_tag::acoustic>::
-    load_field_elements(
-        const int coupled_global_index,
-        const specfem::compute::impl::field_impl<
-            specfem::dimension::type::dim2,
-            specfem::element::medium_tag::acoustic> &coupled_field) const {
-  return specfem::kokkos::array_type<type_real, 1>(
-      coupled_field.field_dot_dot(coupled_global_index, 0));
-}
-
-template <>
-KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, 2>
+KOKKOS_FUNCTION specfem::point::field<specfem::dimension::type::dim2,
+                                      specfem::element::medium_tag::elastic,
+                                      false, false, true>
 specfem::coupled_interface::impl::edges::edge<
     specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
     specfem::element::medium_tag::acoustic>::
@@ -178,7 +166,7 @@ specfem::coupled_interface::impl::edges::edge<
         const specfem::kokkos::array_type<type_real, 2> &normal,
         const specfem::kokkos::array_type<type_real, 2> &weights,
         const specfem::edge::interface &coupled_edge,
-        const specfem::kokkos::array_type<type_real, 1> &pressure) const {
+        const CoupledPointFieldType &coupled_field_elements) const {
 
   const type_real factor = [&]() -> type_real {
     switch (coupled_edge.type) {
@@ -197,8 +185,9 @@ specfem::coupled_interface::impl::edges::edge<
     }
   }();
 
-  return specfem::kokkos::array_type<type_real, 2>(
-      factor * normal[0] * pressure[0], factor * normal[1] * pressure[0]);
+  return { specfem::kokkos::array_type<type_real, 2>(
+      factor * normal[0] * coupled_field_elements.acceleration[0],
+      factor * normal[1] * coupled_field_elements.acceleration[0]) };
 }
 
 #endif // _COUPLED_INTERFACE_IMPL_ELASTIC_ACOUSTIC_EDGE_TPP

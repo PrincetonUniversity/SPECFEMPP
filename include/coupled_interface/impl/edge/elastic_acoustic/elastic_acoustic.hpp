@@ -30,6 +30,13 @@ public:
   using coupled_medium_type =
       specfem::medium::medium<specfem::dimension::type::dim2,
                               specfem::element::medium_tag::acoustic>;
+  using CoupledPointFieldType =
+      specfem::point::field<coupled_medium_type::dimension,
+                            coupled_medium_type::medium_tag, false, false,
+                            true>;
+  using SelfPointFieldType =
+      specfem::point::field<self_medium_type::dimension,
+                            self_medium_type::medium_tag, false, false, true>;
 
   edge(){};
 
@@ -61,10 +68,10 @@ public:
       const specfem::enums::edge::type &coupled_edge_type,
       const specfem::kokkos::array_type<type_real, 1> &pressure) const;
 
-  KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, 1> load_field_elements(
-      const int coupled_global_index,
-      const specfem::compute::impl::field_impl<coupled_medium_type>
-          &coupled_field) const;
+  template <specfem::wavefield::type WavefieldType>
+  KOKKOS_FUNCTION CoupledPointFieldType load_field_elements(
+      const specfem::point::index &index,
+      const specfem::compute::simulation_field<WavefieldType> &field) const;
 
 private:
   //   specfem::kokkos::DeviceView1d<int> acoustic_ispec; ///< Index of acoustic
