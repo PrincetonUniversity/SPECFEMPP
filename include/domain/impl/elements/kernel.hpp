@@ -54,13 +54,10 @@ private:
   specfem::compute::quadrature quadrature;
   specfem::kokkos::DeviceView1d<int> element_kernel_index_mapping;
   specfem::kokkos::HostMirror1d<int> h_element_kernel_index_mapping;
-  Kokkos::View<int * [specfem::element::ntypes], Kokkos::LayoutLeft,
-               specfem::kokkos::DevMemSpace>
-      global_index_mapping;
   specfem::compute::properties properties;
   specfem::compute::partial_derivatives partial_derivatives;
   specfem::kokkos::DeviceView1d<specfem::point::boundary> boundary_conditions;
-  specfem::compute::impl::field_impl<DimensionType, MediumTag> field;
+  specfem::compute::simulation_field<WavefieldType> field;
   quadrature_points_type quadrature_points;
   element_type element;
 };

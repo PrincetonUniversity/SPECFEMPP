@@ -26,10 +26,7 @@ specfem::domain::impl::kernels::source_kernel<
       properties(assembly.properties),
       sources(assembly.sources.get_source_medium<MediumTag>()),
       quadrature_points(quadrature_points),
-      global_index_mapping(assembly.fields.get_simulation_field<WavefieldType>()
-                               .assembly_index_mapping),
-      field(assembly.fields.get_simulation_field<WavefieldType>()
-                .template get_field<MediumTag>()) {
+      field(assembly.fields.get_simulation_field<WavefieldType>()) {
 
   Kokkos::parallel_for(
       "specfem::domain::impl::kernels::element_kernel::check_properties",
@@ -67,6 +64,8 @@ void specfem::domain::impl::kernels::source_kernel<
     qp_type>::compute_source_interaction(const int timestep) const {
 
   constexpr int components = medium_type::components;
+  using PointFieldType =
+      specfem::point::field<DimensionType, MediumTag, false, false, true, false>;
 
   if (nsources == 0)
     return;
@@ -91,9 +90,7 @@ void specfem::domain::impl::kernels::source_kernel<
             [=](const int xz) {
               int iz, ix;
               sub2ind(xz, ngllx, iz, ix);
-              int iglob = index_mapping(ispec_l, iz, ix);
-              int iglob_l = global_index_mapping(
-                  iglob, static_cast<int>(medium_type::medium_tag));
+              specfem::point::index index(ispec_l, iz, ix);
 
               const specfem::kokkos::array_type<type_real,
                                                 medium_type::components>
@@ -109,7 +106,6 @@ void specfem::domain::impl::kernels::source_kernel<
                                specfem::element::medium_tag::acoustic)) {
                   const auto point_properties = [&]()
                       -> specfem::point::properties<MediumTag, PropertyTag> {
-                    specfem::point::index index(ispec_l, iz, ix);
                     specfem::point::properties<MediumTag, PropertyTag>
                         point_properties;
                     specfem::compute::load_on_device(index, properties,
@@ -131,20 +127,12 @@ void specfem::domain::impl::kernels::source_kernel<
                 }
               }();
 
-              specfem::kokkos::array_type<type_real, components> acceleration;
+              PointFieldType acceleration;
 
               source.compute_interaction(stf, lagrange_interpolant,
-                                         acceleration);
+                                         acceleration.acceleration);
 
-#ifndef KOKKOS_ENABLE_CUDA
-#pragma unroll
-#endif
-              for (int i = 0; i < components; i++) {
-                Kokkos::single(Kokkos::PerThread(team_member), [&] {
-                  Kokkos::atomic_add(&field.field_dot_dot(iglob_l, i),
-                                     acceleration[i]);
-                });
-              }
+              specfem::compute::atomic_add_on_device(index, acceleration, field);
             });
       });
 

@@ -44,10 +44,7 @@ private:
   specfem::kokkos::DeviceView1d<int> receiver_kernel_index_mapping;
   specfem::kokkos::HostMirror1d<int> h_receiver_kernel_index_mapping;
   specfem::kokkos::DeviceView1d<int> receiver_mapping;
-  specfem::compute::impl::field_impl<DimensionType, MediumTag> field;
-  Kokkos::View<int * [specfem::element::ntypes], Kokkos::LayoutLeft,
-               specfem::kokkos::DevMemSpace>
-      global_index_mapping;
+  specfem::compute::simulation_field<WavefieldType> field;
   specfem::compute::receivers receivers;
   quadrature_points_type quadrature_points;
 

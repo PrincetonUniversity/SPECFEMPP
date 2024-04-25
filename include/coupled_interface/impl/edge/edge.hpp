@@ -30,11 +30,11 @@ public:
 
   using CoupledPointFieldType =
       specfem::point::field<coupled_medium_type::dimension,
-                            coupled_medium_type::medium_tag, true, false,
+                            coupled_medium_type::medium_tag, true, false, false,
                             false>;
-  using SelfPointFieldType =
-      specfem::point::field<self_medium_type::dimension,
-                            self_medium_type::medium_tag, false, false, true>;
+  using SelfPointFieldType = specfem::point::field<self_medium_type::dimension,
+                                                   self_medium_type::medium_tag,
+                                                   false, false, true, false>;
 };
 
 template <>
@@ -51,12 +51,12 @@ public:
 
   using CoupledPointFieldType =
       specfem::point::field<coupled_medium_type::dimension,
-                            coupled_medium_type::medium_tag, false, false,
-                            true>;
+                            coupled_medium_type::medium_tag, false, false, true,
+                            false>;
 
-  using SelfPointFieldType =
-      specfem::point::field<self_medium_type::dimension,
-                            self_medium_type::medium_tag, false, false, true>;
+  using SelfPointFieldType = specfem::point::field<self_medium_type::dimension,
+                                                   self_medium_type::medium_tag,
+                                                   false, false, true, false>;
 };
 
 /**

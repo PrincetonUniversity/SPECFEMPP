@@ -28,6 +28,18 @@ class element<
     specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
     specfem::element::property_tag::isotropic, BC,
     specfem::enums::element::quadrature::static_quadrature_points<NGLL> > {
+private:
+  constexpr static auto DimensionType = specfem::dimension::type::dim2;
+  constexpr static auto MediumTag = specfem::element::medium_tag::elastic;
+  using ElementQuadratureViewType = typename specfem::element::quadrature<
+      NGLL, DimensionType, specfem::kokkos::DevScratchSpace,
+      Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, true>::ViewType;
+  using ElementFieldViewType =
+      typename specfem::element::field<NGLL, DimensionType, MediumTag,
+                                       specfem::kokkos::DevScratchSpace,
+                                       Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+                                       true, true, true, false>::ViewType;
+
 public:
   using dimension =
       specfem::dimension::dimension<specfem::dimension::type::dim2>;
@@ -40,17 +52,6 @@ public:
   using boundary_conditions_type = specfem::boundary::boundary<
       specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
       specfem::element::property_tag::isotropic, BC, quadrature_points_type>;
-
-  /**
-   * @brief Use the scratch view type from the quadrature points
-   *
-   * @tparam T Type of the scratch view
-   * @tparam N Number of components
-   */
-  template <typename T, int N>
-  using ScratchViewType =
-      typename quadrature_points_type::template ScratchViewType<T, N>;
-  ///@}
 
   /**
    * @brief Default constructor
@@ -122,8 +123,8 @@ public:
    */
   template <bool with_jacobian>
   KOKKOS_INLINE_FUNCTION void compute_gradient(
-      const int xz, const ScratchViewType<type_real, 1> s_hprime,
-      const ScratchViewType<type_real, medium_type::components> u,
+      const int xz, const ElementQuadratureViewType s_hprime,
+      const ElementFieldViewType u,
       const specfem::point::partial_derivatives2<with_jacobian>
           &partial_derivatives,
       const specfem::point::boundary &boundary_type,
@@ -191,11 +192,9 @@ public:
   KOKKOS_INLINE_FUNCTION void compute_acceleration(
       const int &xz,
       const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
-      const ScratchViewType<type_real, medium_type::components>
-          stress_integrand_xi,
-      const ScratchViewType<type_real, medium_type::components>
-          stress_integrand_gamma,
-      const ScratchViewType<type_real, 1> s_hprimewgll,
+      const ElementFieldViewType stress_integrand_xi,
+      const ElementFieldViewType stress_integrand_gamma,
+      const ElementQuadratureViewType s_hprimewgll,
       const specfem::point::partial_derivatives2<true> &partial_derivatives,
       const specfem::point::properties<medium_type::medium_tag,
                                        medium_type::property_tag> &properties,

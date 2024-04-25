@@ -25,6 +25,20 @@ class receiver<
     specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
     specfem::element::property_tag::isotropic,
     specfem::enums::element::quadrature::static_quadrature_points<NGLL> > {
+private:
+  constexpr static auto DimensionType = specfem::dimension::type::dim2;
+  constexpr static auto MediumTag = specfem::element::medium_tag::elastic;
+
+  using ElementQuadratureViewType = typename specfem::element::quadrature<
+      NGLL, DimensionType, specfem::kokkos::DevScratchSpace,
+      Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, true>::ViewType;
+
+  using ElementFieldViewType =
+      typename specfem::element::field<NGLL, DimensionType, MediumTag,
+                                       specfem::kokkos::DevScratchSpace,
+                                       Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+                                       true, true, true, false>::ViewType;
+
 public:
   /**
    * @name Typedefs
@@ -45,16 +59,6 @@ public:
    */
   using quadrature_points_type =
       specfem::enums::element::quadrature::static_quadrature_points<NGLL>;
-
-  /**
-   * @brief Use the scratch view type from the quadrature points
-   *
-   * @tparam T Type of the scratch view
-   * @tparam N Number of components
-   */
-  template <typename T, int N>
-  using ScratchViewType =
-      typename quadrature_points_type::template ScratchViewType<T, N>;
 
   KOKKOS_FUNCTION receiver() = default;
 
@@ -106,8 +110,8 @@ public:
       const specfem::point::properties<medium_type::medium_tag,
                                        medium_type::property_tag>
           properties,
-      const ScratchViewType<type_real, 1> hprime,
-      const ScratchViewType<type_real, medium_type::components> active_field,
+      const ElementQuadratureViewType hprime,
+      const ElementFieldViewType active_field,
       Kokkos::View<type_real[2], Kokkos::LayoutStride,
                    specfem::kokkos::DevMemSpace>
           receiver_field) const;

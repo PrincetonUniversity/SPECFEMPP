@@ -155,7 +155,7 @@
 template <>
 KOKKOS_FUNCTION specfem::point::field<specfem::dimension::type::dim2,
                                       specfem::element::medium_tag::acoustic,
-                                      false, false, true>
+                                      false, false, true, false>
 specfem::coupled_interface::impl::edges::edge<
     specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
     specfem::element::medium_tag::elastic>::
