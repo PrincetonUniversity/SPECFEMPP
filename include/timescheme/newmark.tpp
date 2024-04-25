@@ -14,10 +14,12 @@ void corrector_phase_impl(
       specfem::medium::medium<specfem::dimension::type::dim2,
                               MediumType>::components;
   const int nglob = field.template get_nglob<MediumType>();
-  using LoadFieldType = specfem::point::field<specfem::dimension::type::dim2,
-                                              MediumType, false, false, true>;
-  using AddFieldType = specfem::point::field<specfem::dimension::type::dim2,
-                                             MediumType, false, true, false>;
+  using LoadFieldType =
+      specfem::point::field<specfem::dimension::type::dim2, MediumType, false,
+                            false, true, false>;
+  using AddFieldType =
+      specfem::point::field<specfem::dimension::type::dim2, MediumType, false,
+                            true, false, false>;
 
   Kokkos::parallel_for(
       "specfem::TimeScheme::Newmark::corrector_phase_impl",
@@ -48,12 +50,15 @@ void predictor_phase_impl(
       specfem::medium::medium<specfem::dimension::type::dim2,
                               MediumType>::components;
   const int nglob = field.template get_nglob<MediumType>();
-  using LoadFieldType = specfem::point::field<specfem::dimension::type::dim2,
-                                              MediumType, false, true, true>;
-  using AddFieldType = specfem::point::field<specfem::dimension::type::dim2,
-                                             MediumType, true, true, false>;
-  using StoreFieldType = specfem::point::field<specfem::dimension::type::dim2,
-                                               MediumType, false, false, true>;
+  using LoadFieldType =
+      specfem::point::field<specfem::dimension::type::dim2, MediumType, false,
+                            true, true, false>;
+  using AddFieldType =
+      specfem::point::field<specfem::dimension::type::dim2, MediumType, true,
+                            true, false, false>;
+  using StoreFieldType =
+      specfem::point::field<specfem::dimension::type::dim2, MediumType, false,
+                            false, true, false>;
 
   Kokkos::parallel_for(
       "specfem::TimeScheme::Newmark::predictor_phase_impl",
@@ -82,8 +87,8 @@ void predictor_phase_impl(
 
 // void corrector_phase_impl(
 //     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot,
-//     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot_dot,
-//     const type_real deltatover2) {
+//     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+//     field_dot_dot, const type_real deltatover2) {
 //   const int nglob = field_dot.extent(0);
 //   const int components = field_dot.extent(1);
 
@@ -100,9 +105,9 @@ void predictor_phase_impl(
 // void predictor_phase_impl(
 //     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field,
 //     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot,
-//     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot_dot,
-//     const type_real deltat, const type_real deltatover2,
-//     const type_real deltasquareover2) {
+//     specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
+//     field_dot_dot, const type_real deltat, const type_real deltatover2, const
+//     type_real deltasquareover2) {
 //   const int nglob = field.extent(0);
 //   const int components = field.extent(1);
 
@@ -183,9 +188,11 @@ void specfem::time_scheme::newmark<specfem::simulation::type::combined>::
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
 
   if (tag == elastic) {
-    corrector_phase_impl<elastic, wavefield>(backward_field, -1.0 * deltatover2);
+    corrector_phase_impl<elastic, wavefield>(backward_field,
+                                             -1.0 * deltatover2);
   } else if (tag == acoustic) {
-    corrector_phase_impl<acoustic, wavefield>(backward_field, -1.0 * deltatover2);
+    corrector_phase_impl<acoustic, wavefield>(backward_field,
+                                              -1.0 * deltatover2);
   } else {
     static_assert("medium type not supported");
   }
@@ -204,8 +211,8 @@ void specfem::time_scheme::newmark<specfem::simulation::type::combined>::
     predictor_phase_impl<elastic, wavefield>(adjoint_field, deltat, deltatover2,
                                              deltasquareover2);
   } else if (tag == acoustic) {
-    predictor_phase_impl<acoustic, wavefield>(adjoint_field, deltat, deltatover2,
-                                              deltasquareover2);
+    predictor_phase_impl<acoustic, wavefield>(adjoint_field, deltat,
+                                              deltatover2, deltasquareover2);
   } else {
     static_assert("medium type not supported");
   }
@@ -219,11 +226,11 @@ void specfem::time_scheme::newmark<specfem::simulation::type::combined>::
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
 
   if (tag == elastic) {
-    predictor_phase_impl<elastic, wavefield>(backward_field, -1.0 * deltat, -1.0 * deltatover2,
-                                             deltasquareover2);
+    predictor_phase_impl<elastic, wavefield>(
+        backward_field, -1.0 * deltat, -1.0 * deltatover2, deltasquareover2);
   } else if (tag == acoustic) {
-    predictor_phase_impl<acoustic, wavefield>(backward_field, -1.0 * deltat, -1.0 * deltatover2,
-                                              deltasquareover2);
+    predictor_phase_impl<acoustic, wavefield>(
+        backward_field, -1.0 * deltat, -1.0 * deltatover2, deltasquareover2);
   } else {
     static_assert("medium type not supported");
   }

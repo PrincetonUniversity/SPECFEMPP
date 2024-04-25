@@ -14,11 +14,6 @@ namespace {
 template <int NGLL>
 using StaticQuadraturePoints =
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>;
-
-template <int N, typename T>
-using StaticScratchViewType =
-    typename specfem::enums::element::quadrature::static_quadrature_points<
-        N>::template ScratchViewType<T>;
 } // namespace
 
 template <int NGLL, specfem::element::boundary_tag BC>
@@ -44,8 +39,7 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
 
 template <int NGLL, specfem::element::boundary_tag BC>
 template <specfem::enums::time_scheme::type time_scheme>
-KOKKOS_INLINE_FUNCTION void
-specfem::domain::impl::elements::element<
+KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
     specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
     specfem::element::property_tag::isotropic, BC,
     StaticQuadraturePoints<NGLL> >::
@@ -71,15 +65,15 @@ specfem::domain::impl::elements::element<
 
 template <int NGLL, specfem::element::boundary_tag BC>
 template <bool with_jacobian>
-KOKKOS_INLINE_FUNCTION void
-specfem::domain::impl::elements::element<
+KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
     specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
     specfem::element::property_tag::isotropic, BC,
     StaticQuadraturePoints<NGLL> >::
     compute_gradient(
-        const int xz, const ScratchViewType<type_real, 1> s_hprime,
-        const ScratchViewType<type_real, medium_type::components> field_chi,
-        const specfem::point::partial_derivatives2<with_jacobian> &partial_derivatives,
+        const int xz, const ElementQuadratureViewType s_hprime,
+        const ElementFieldViewType field_chi,
+        const specfem::point::partial_derivatives2<with_jacobian>
+            &partial_derivatives,
         const specfem::point::boundary &boundary_type,
         specfem::kokkos::array_type<type_real, medium_type::components>
             &dchidxl,
@@ -96,8 +90,8 @@ specfem::domain::impl::elements::element<
 #pragma unroll
 #endif
   for (int l = 0; l < NGLL; l++) {
-    dchi_dxi += s_hprime(ix, l, 0) * field_chi(iz, l, 0);
-    dchi_dgamma += s_hprime(iz, l, 0) * field_chi(l, ix, 0);
+    dchi_dxi += s_hprime(ix, l) * field_chi(iz, l, 0);
+    dchi_dgamma += s_hprime(iz, l) * field_chi(l, ix, 0);
   }
 
   // dchidx
@@ -115,8 +109,7 @@ specfem::domain::impl::elements::element<
 }
 
 template <int NGLL, specfem::element::boundary_tag BC>
-KOKKOS_INLINE_FUNCTION void
-specfem::domain::impl::elements::element<
+KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
     specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
     specfem::element::property_tag::isotropic, BC,
     StaticQuadraturePoints<NGLL> >::
@@ -158,19 +151,16 @@ specfem::domain::impl::elements::element<
 }
 
 template <int NGLL, specfem::element::boundary_tag BC>
-KOKKOS_INLINE_FUNCTION void
-specfem::domain::impl::elements::element<
+KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
     specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
     specfem::element::property_tag::isotropic, BC,
     StaticQuadraturePoints<NGLL> >::
     compute_acceleration(
         const int &xz,
         const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
-        const ScratchViewType<type_real, medium_type::components>
-            stress_integrand_xi,
-        const ScratchViewType<type_real, medium_type::components>
-            stress_integrand_gamma,
-        const ScratchViewType<type_real, medium_type::components> s_hprimewgll,
+        const ElementFieldViewType stress_integrand_xi,
+        const ElementFieldViewType stress_integrand_gamma,
+        const ElementQuadratureViewType s_hprimewgll,
         const specfem::point::partial_derivatives2<true> &partial_derivatives,
         const specfem::point::properties<medium_type::medium_tag,
                                          medium_type::property_tag> &properties,
@@ -193,8 +183,8 @@ specfem::domain::impl::elements::element<
 #pragma unroll
 #endif
   for (int l = 0; l < NGLL; l++) {
-    temp1l += s_hprimewgll(ix, l, 0) * stress_integrand_xi(iz, l, 0);
-    temp2l += s_hprimewgll(iz, l, 0) * stress_integrand_gamma(l, ix, 0);
+    temp1l += s_hprimewgll(ix, l) * stress_integrand_xi(iz, l, 0);
+    temp2l += s_hprimewgll(iz, l) * stress_integrand_gamma(l, ix, 0);
   }
 
   acceleration[0] = -1.0 * ((weight[1] * temp1l) + (weight[0] * temp2l));

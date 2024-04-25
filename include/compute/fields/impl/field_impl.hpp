@@ -45,8 +45,6 @@ template <specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag>
 void deep_copy(impl::field_impl<DimensionType, MediumTag> &dst,
                const impl::field_impl<DimensionType, MediumTag> &src) {
-  Kokkos::deep_copy(dst.index_mapping, src.index_mapping);
-  Kokkos::deep_copy(dst.h_index_mapping, src.h_index_mapping);
   Kokkos::deep_copy(dst.field, src.field);
   Kokkos::deep_copy(dst.h_field, src.h_field);
   Kokkos::deep_copy(dst.field_dot, src.field_dot);

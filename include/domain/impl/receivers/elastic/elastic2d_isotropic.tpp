@@ -39,8 +39,8 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
         const specfem::point::properties<medium_type::medium_tag,
                                          medium_type::property_tag>
             properties,
-        const ScratchViewType<type_real, 1> hprime,
-        const ScratchViewType<type_real, medium_type::components> active_field,
+        const ElementQuadratureViewType hprime,
+        const ElementFieldViewType active_field,
         Kokkos::View<type_real[2], Kokkos::LayoutStride,
                      specfem::kokkos::DevMemSpace>
             receiver_field) const {

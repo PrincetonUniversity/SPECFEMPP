@@ -165,17 +165,21 @@ template <specfem::wavefield::type WavefieldType,
 void specfem::domain::domain<WavefieldType, DimensionType, MediumTag,
                              qp_type>::divide_mass_matrix() {
   constexpr int components = medium_type::components;
-  const int nglob = field.nglob;
+  const int nglob = field.template get_nglob<MediumTag>();
+  using LoadFieldType =
+      specfem::point::field<DimensionType, MediumTag, false, false, true, true>;
+  using StoreFieldType = specfem::point::field<DimensionType, MediumTag, false,
+                                               false, true, false>;
 
   Kokkos::parallel_for(
       "specfem::domain::domain::divide_mass_matrix",
       specfem::kokkos::DeviceMDrange<2, Kokkos::Iterate::Left>(
           { 0, 0 }, { nglob, components }),
       KOKKOS_CLASS_LAMBDA(const int iglob, const int idim) {
-        type_real mass = field.mass_inverse(iglob, idim);
-        type_real acceleration = field.field_dot_dot(iglob, idim);
-        field.field_dot_dot(iglob, idim) =
-            field.field_dot_dot(iglob, idim) * field.mass_inverse(iglob, idim);
+        LoadFieldType load_field;
+        specfem::compute::load_on_device(iglob, field, load_field);
+        StoreFieldType store_field(load_field.divide_mass_matrix());
+        specfem::compute::store_on_device(iglob, store_field, field);
       });
 
   Kokkos::fence();
@@ -189,14 +193,18 @@ template <specfem::wavefield::type WavefieldType,
 void specfem::domain::domain<WavefieldType, DimensionType, MediumTag,
                              qp_type>::invert_mass_matrix() {
   constexpr int components = medium_type::components;
-  const int nglob = field.nglob;
+  const int nglob = field.template get_nglob<MediumTag>();
+  using PointFieldType =
+      specfem::point::field<DimensionType, MediumTag, false, false, false, true>;
 
   Kokkos::parallel_for(
       "specfem::domain::domain::invert_mass_matrix",
-      specfem::kokkos::DeviceMDrange<2, Kokkos::Iterate::Left>(
-          { 0, 0 }, { nglob, components }),
-      KOKKOS_CLASS_LAMBDA(const int iglob, const int idim) {
-        field.mass_inverse(iglob, idim) = 1.0 / field.mass_inverse(iglob, idim);
+      specfem::kokkos::DeviceRange(0, nglob),
+      KOKKOS_CLASS_LAMBDA(const int iglob) {
+        PointFieldType load_field;
+        specfem::compute::load_on_device(iglob, field, load_field);
+        PointFieldType store_field(load_field.invert_mass_matrix());
+        specfem::compute::store_on_device(iglob, store_field, field);
       });
 
   Kokkos::fence();

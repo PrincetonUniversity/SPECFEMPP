@@ -2,6 +2,7 @@
 #define _COMPUTE_FIELDS_SIMULATION_FIELD_HPP_
 
 #include "compute/fields/impl/field_impl.hpp"
+#include "element/field.hpp"
 #include "enumerations/medium.hpp"
 #include "enumerations/simulation.hpp"
 #include "enumerations/specfem_enums.hpp"
@@ -100,13 +101,13 @@ void deep_copy(simulation_field<WavefieldType1> &dst,
 
 template <specfem::wavefield::type WavefieldType,
           specfem::element::medium_tag MediumType, bool StoreDisplacement,
-          bool StoreVelocity, bool StoreAcceleration>
-KOKKOS_FUNCTION void
-load_on_device(const int iglob,
-               const specfem::compute::simulation_field<WavefieldType> &field,
-               specfem::point::field<specfem::dimension::type::dim2, MediumType,
-                                     StoreDisplacement, StoreVelocity,
-                                     StoreAcceleration> &point_field) {
+          bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix>
+KOKKOS_FUNCTION void load_on_device(
+    const int iglob,
+    const specfem::compute::simulation_field<WavefieldType> &field,
+    specfem::point::field<specfem::dimension::type::dim2, MediumType,
+                          StoreDisplacement, StoreVelocity, StoreAcceleration,
+                          StoreMassMatrix> &point_field) {
   const auto curr_field = [&]()
       -> specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
                                             MediumType> {
@@ -132,18 +133,23 @@ load_on_device(const int iglob,
         Kokkos::subview(curr_field.field_dot_dot, iglob, Kokkos::ALL);
   }
 
+  if constexpr (StoreMassMatrix) {
+    point_field.mass_matrix =
+        Kokkos::subview(curr_field.mass_inverse, iglob, Kokkos::ALL);
+  }
+
   return;
 }
 
 template <specfem::wavefield::type WavefieldType,
           specfem::element::medium_tag MediumType, bool StoreDisplacement,
-          bool StoreVelocity, bool StoreAcceleration>
+          bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix>
 void load_on_host(
     const int iglob,
     const specfem::compute::simulation_field<WavefieldType> &field,
     specfem::point::field<specfem::dimension::type::dim2, MediumType,
-                          StoreDisplacement, StoreVelocity, StoreAcceleration>
-        &point_field) {
+                          StoreDisplacement, StoreVelocity, StoreAcceleration,
+                          StoreMassMatrix> &point_field) {
 
   const auto curr_field = [&]()
       -> specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
@@ -172,19 +178,23 @@ void load_on_host(
         Kokkos::subview(curr_field.h_field_dot_dot, iglob, Kokkos::ALL);
   }
 
+  if constexpr (StoreMassMatrix) {
+    point_field.mass_matrix =
+        Kokkos::subview(curr_field.h_mass_inverse, iglob, Kokkos::ALL);
+  }
+
   return;
 }
 
 template <specfem::wavefield::type WavefieldType,
           specfem::element::medium_tag MediumType, bool StoreDisplacement,
-          bool StoreVelocity, bool StoreAcceleration>
-KOKKOS_FUNCTION void
-load_on_device(const specfem::point::index &index,
-               const specfem::compute::simulation_field<WavefieldType> &field,
-               specfem::point::field<specfem::dimension::type::dim2, MediumType,
-                                     StoreDisplacement, StoreVelocity,
-                                     StoreAcceleration> &point_field) {
-
+          bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix>
+KOKKOS_FUNCTION void load_on_device(
+    const specfem::point::index &index,
+    const specfem::compute::simulation_field<WavefieldType> &field,
+    specfem::point::field<specfem::dimension::type::dim2, MediumType,
+                          StoreDisplacement, StoreVelocity, StoreAcceleration,
+                          StoreMassMatrix> &point_field) {
   const int iglob = field.assembly_index_mapping(
       field.index_mapping(index.ispec, index.iz, index.ix),
       static_cast<int>(MediumType));
@@ -193,13 +203,13 @@ load_on_device(const specfem::point::index &index,
 
 template <specfem::wavefield::type WavefieldType,
           specfem::element::medium_tag MediumType, bool StoreDisplacement,
-          bool StoreVelocity, bool StoreAcceleration>
+          bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix>
 void load_on_host(
     const specfem::point::index &index,
     const specfem::compute::simulation_field<WavefieldType> &field,
     specfem::point::field<specfem::dimension::type::dim2, MediumType,
-                          StoreDisplacement, StoreVelocity, StoreAcceleration>
-        &point_field) {
+                          StoreDisplacement, StoreVelocity, StoreAcceleration,
+                          StoreMassMatrix> &point_field) {
 
   const int iglob = h_assembly_index_mapping(
       field.index_mapping(index.ispec, index.iz, index.ix),
@@ -209,12 +219,12 @@ void load_on_host(
 
 template <specfem::wavefield::type WavefieldType,
           specfem::element::medium_tag MediumType, bool StoreDisplacement,
-          bool StoreVelocity, bool StoreAcceleration>
+          bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix>
 KOKKOS_FUNCTION void store_on_device(
     const int iglob,
-    const specfem::point::field<specfem::dimension::type::dim2, MediumType,
-                                StoreDisplacement, StoreVelocity,
-                                StoreAcceleration> &point_field,
+    const specfem::point::field<
+        specfem::dimension::type::dim2, MediumType, StoreDisplacement,
+        StoreVelocity, StoreAcceleration, StoreMassMatrix> &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
 
   constexpr int components =
@@ -250,17 +260,23 @@ KOKKOS_FUNCTION void store_on_device(
     }
   }
 
+  if constexpr (StoreMassMatrix) {
+    for (int icomp = 0; icomp < components; ++icomp) {
+      curr_field.mass_inverse(iglob, icomp) = point_field.mass_matrix[icomp];
+    }
+  }
+
   return;
 }
 
 template <specfem::wavefield::type WavefieldType,
           specfem::element::medium_tag MediumType, bool StoreDisplacement,
-          bool StoreVelocity, bool StoreAcceleration>
+          bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix>
 void store_on_host(
     const int iglob,
-    const specfem::point::field<specfem::dimension::type::dim2, MediumType,
-                                StoreDisplacement, StoreVelocity,
-                                StoreAcceleration> &point_field,
+    const specfem::point::field<
+        specfem::dimension::type::dim2, MediumType, StoreDisplacement,
+        StoreVelocity, StoreAcceleration, StoreMassMatrix> &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
 
   constexpr int components =
@@ -297,17 +313,23 @@ void store_on_host(
     }
   }
 
+  if constexpr (StoreMassMatrix) {
+    for (int icomp = 0; icomp < components; ++icomp) {
+      curr_field.h_mass_inverse(iglob, icomp) = point_field.mass_matrix[icomp];
+    }
+  }
+
   return;
 }
 
 template <specfem::wavefield::type WavefieldType,
           specfem::element::medium_tag MediumType, bool StoreDisplacement,
-          bool StoreVelocity, bool StoreAcceleration>
+          bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix>
 KOKKOS_FUNCTION void store_on_device(
     const specfem::point::index &index,
-    const specfem::point::field<specfem::dimension::type::dim2, MediumType,
-                                StoreDisplacement, StoreVelocity,
-                                StoreAcceleration> &point_field,
+    const specfem::point::field<
+        specfem::dimension::type::dim2, MediumType, StoreDisplacement,
+        StoreVelocity, StoreAcceleration, StoreMassMatrix> &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
 
   const int iglob = field.assembly_index_mapping(
@@ -319,12 +341,12 @@ KOKKOS_FUNCTION void store_on_device(
 
 template <specfem::wavefield::type WavefieldType,
           specfem::element::medium_tag MediumType, bool StoreDisplacement,
-          bool StoreVelocity, bool StoreAcceleration>
+          bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix>
 void store_on_host(
     const specfem::point::index &index,
-    const specfem::point::field<specfem::dimension::type::dim2, MediumType,
-                                StoreDisplacement, StoreVelocity,
-                                StoreAcceleration> &point_field,
+    const specfem::point::field<
+        specfem::dimension::type::dim2, MediumType, StoreDisplacement,
+        StoreVelocity, StoreAcceleration, StoreMassMatrix> &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
 
   const int iglob = field.h_assembly_index_mapping(
@@ -336,12 +358,12 @@ void store_on_host(
 
 template <specfem::wavefield::type WavefieldType,
           specfem::element::medium_tag MediumType, bool StoreDisplacement,
-          bool StoreVelocity, bool StoreAcceleration>
+          bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix>
 KOKKOS_FUNCTION void add_on_device(
     const int iglob,
-    const specfem::point::field<specfem::dimension::type::dim2, MediumType,
-                                StoreDisplacement, StoreVelocity,
-                                StoreAcceleration> &point_field,
+    const specfem::point::field<
+        specfem::dimension::type::dim2, MediumType, StoreDisplacement,
+        StoreVelocity, StoreAcceleration, StoreMassMatrix> &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
 
   constexpr int components =
@@ -377,17 +399,23 @@ KOKKOS_FUNCTION void add_on_device(
     }
   }
 
+  if constexpr (StoreMassMatrix) {
+    for (int icomp = 0; icomp < components; ++icomp) {
+      curr_field.mass_inverse(iglob, icomp) += point_field.mass_matrix[icomp];
+    }
+  }
+
   return;
 }
 
 template <specfem::wavefield::type WavefieldType,
           specfem::element::medium_tag MediumType, bool StoreDisplacement,
-          bool StoreVelocity, bool StoreAcceleration>
+          bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix>
 void add_on_host(
     const int iglob,
-    const specfem::point::field<specfem::dimension::type::dim2, MediumType,
-                                StoreDisplacement, StoreVelocity,
-                                StoreAcceleration> &point_field,
+    const specfem::point::field<
+        specfem::dimension::type::dim2, MediumType, StoreDisplacement,
+        StoreVelocity, StoreAcceleration, StoreMassMatrix> &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
 
   constexpr int components =
@@ -424,17 +452,23 @@ void add_on_host(
     }
   }
 
+  if constexpr (StoreMassMatrix) {
+    for (int icomp = 0; icomp < components; ++icomp) {
+      curr_field.h_mass_inverse(iglob, icomp) += point_field.mass_matrix[icomp];
+    }
+  }
+
   return;
 }
 
 template <specfem::wavefield::type WavefieldType,
           specfem::element::medium_tag MediumType, bool StoreDisplacement,
-          bool StoreVelocity, bool StoreAcceleration>
+          bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix>
 KOKKOS_FUNCTION void add_on_device(
     const specfem::point::index &index,
-    const specfem::point::field<specfem::dimension::type::dim2, MediumType,
-                                StoreDisplacement, StoreVelocity,
-                                StoreAcceleration> &point_field,
+    const specfem::point::field<
+        specfem::dimension::type::dim2, MediumType, StoreDisplacement,
+        StoreVelocity, StoreAcceleration, StoreMassMatrix> &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
 
   const int iglob = field.assembly_index_mapping(
@@ -446,12 +480,12 @@ KOKKOS_FUNCTION void add_on_device(
 
 template <specfem::wavefield::type WavefieldType,
           specfem::element::medium_tag MediumType, bool StoreDisplacement,
-          bool StoreVelocity, bool StoreAcceleration>
+          bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix>
 void add_on_host(
     const specfem::point::index &index,
-    const specfem::point::field<specfem::dimension::type::dim2, MediumType,
-                                StoreDisplacement, StoreVelocity,
-                                StoreAcceleration> &point_field,
+    const specfem::point::field<
+        specfem::dimension::type::dim2, MediumType, StoreDisplacement,
+        StoreVelocity, StoreAcceleration, StoreMassMatrix> &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
 
   const int iglob = field.h_assembly_index_mapping(
@@ -465,12 +499,12 @@ void add_on_host(
 
 template <specfem::wavefield::type WavefieldType,
           specfem::element::medium_tag MediumType, bool StoreDisplacement,
-          bool StoreVelocity, bool StoreAcceleration>
+          bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix>
 KOKKOS_FUNCTION void atomic_add_on_device(
     const int iglob,
-    const specfem::point::field<specfem::dimension::type::dim2, MediumType,
-                                StoreDisplacement, StoreVelocity,
-                                StoreAcceleration> &point_field,
+    const specfem::point::field<
+        specfem::dimension::type::dim2, MediumType, StoreDisplacement,
+        StoreVelocity, StoreAcceleration, StoreMassMatrix> &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
 
   constexpr int components =
@@ -509,17 +543,24 @@ KOKKOS_FUNCTION void atomic_add_on_device(
     }
   }
 
+  if constexpr (StoreMassMatrix) {
+    for (int icomp = 0; icomp < components; ++icomp) {
+      Kokkos::atomic_add(&curr_field.mass_inverse(iglob, icomp),
+                         point_field.mass_matrix[icomp]);
+    }
+  }
+
   return;
 }
 
 template <specfem::wavefield::type WavefieldType,
           specfem::element::medium_tag MediumType, bool StoreDisplacement,
-          bool StoreVelocity, bool StoreAcceleration>
+          bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix>
 void atomic_add_on_host(
     const int iglob,
-    const specfem::point::field<specfem::dimension::type::dim2, MediumType,
-                                StoreDisplacement, StoreVelocity,
-                                StoreAcceleration> &point_field,
+    const specfem::point::field<
+        specfem::dimension::type::dim2, MediumType, StoreDisplacement,
+        StoreVelocity, StoreAcceleration, StoreMassMatrix> &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
 
   constexpr int components =
@@ -558,17 +599,24 @@ void atomic_add_on_host(
     }
   }
 
+  if constexpr (StoreMassMatrix) {
+    for (int icomp = 0; icomp < components; ++icomp) {
+      Kokkos::atomic_add(&curr_field.h_mass_inverse(iglob, icomp),
+                         point_field.mass_matrix[icomp]);
+    }
+  }
+
   return;
 }
 
 template <specfem::wavefield::type WavefieldType,
           specfem::element::medium_tag MediumType, bool StoreDisplacement,
-          bool StoreVelocity, bool StoreAcceleration>
+          bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix>
 KOKKOS_FUNCTION void atomic_add_on_device(
     const specfem::point::index &index,
-    const specfem::point::field<specfem::dimension::type::dim2, MediumType,
-                                StoreDisplacement, StoreVelocity,
-                                StoreAcceleration> &point_field,
+    const specfem::point::field<
+        specfem::dimension::type::dim2, MediumType, StoreDisplacement,
+        StoreVelocity, StoreAcceleration, StoreMassMatrix> &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
 
   const int iglob = field.assembly_index_mapping(
@@ -580,12 +628,12 @@ KOKKOS_FUNCTION void atomic_add_on_device(
 
 template <specfem::wavefield::type WavefieldType,
           specfem::element::medium_tag MediumType, bool StoreDisplacement,
-          bool StoreVelocity, bool StoreAcceleration>
+          bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix>
 void atomic_add_on_host(
     const specfem::point::index &index,
-    const specfem::point::field<specfem::dimension::type::dim2, MediumType,
-                                StoreDisplacement, StoreVelocity,
-                                StoreAcceleration> &point_field,
+    const specfem::point::field<
+        specfem::dimension::type::dim2, MediumType, StoreDisplacement,
+        StoreVelocity, StoreAcceleration, StoreMassMatrix> &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
 
   const int iglob = field.h_assembly_index_mapping(
@@ -595,6 +643,114 @@ void atomic_add_on_host(
   atomic_add_on_host(iglob, point_field, field);
 }
 
+template <specfem::wavefield::type WavefieldType, int NGLL,
+          specfem::element::medium_tag MediumType, typename MemberType,
+          typename MemorySpace, typename MemoryTraits, bool StoreDisplacement,
+          bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix,
+          std::enable_if_t<std::is_same_v<typename MemberType::execution_space::
+                                              scratch_memory_space,
+                                          MemorySpace>,
+                           bool> = true>
+KOKKOS_FUNCTION void load_on_device(
+    const MemberType &team, const int ispec,
+    const specfem::compute::simulation_field<WavefieldType> &field,
+    specfem::element::field<NGLL, specfem::dimension::type::dim2, MediumType,
+                            MemorySpace, MemoryTraits, StoreDisplacement,
+                            StoreVelocity, StoreAcceleration, StoreMassMatrix>
+        &element_field) {
+
+  constexpr int components =
+      specfem::medium::medium<specfem::dimension::type::dim2,
+                              MediumType>::components;
+
+  static_assert(std::is_same_v<typename MemberType::execution_space,
+                               specfem::kokkos::DevExecSpace>,
+                "This function should only be called with device execution "
+                "space");
+
+  Kokkos::parallel_for(
+      Kokkos::TeamThreadRange(team, NGLL * NGLL), [&](const int &xz) {
+        int iz, ix;
+        sub2ind(xz, NGLL, iz, ix);
+        const int iglob = field.assembly_index_mapping(
+            field.index_mapping(ispec, iz, ix), static_cast<int>(MediumType));
+
+        for (int icomp = 0; icomp < components; ++icomp) {
+          if constexpr (StoreDisplacement) {
+            element_field.displacement(iz, ix, icomp) =
+                field.elastic.field(iglob, icomp);
+          }
+          if constexpr (StoreVelocity) {
+            element_field.velocity(iz, ix, icomp) =
+                field.elastic.field_dot(iglob, icomp);
+          }
+          if constexpr (StoreAcceleration) {
+            element_field.acceleration(iz, ix, icomp) =
+                field.elastic.field_dot_dot(iglob, icomp);
+          }
+          if constexpr (StoreMassMatrix) {
+            element_field.mass_matrix(iz, ix, icomp) =
+                field.elastic.mass_inverse(iglob, icomp);
+          }
+        }
+      });
+
+  return;
+}
+
+template <specfem::wavefield::type WavefieldType, int NGLL,
+          specfem::element::medium_tag MediumType, typename MemberType,
+          typename MemorySpace, typename MemoryTraits, bool StoreDisplacement,
+          bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix,
+          std::enable_if_t<std::is_same_v<typename MemberType::execution_space::
+                                              scratch_memory_space,
+                                          MemorySpace>,
+                           bool> = true>
+void load_on_host(
+    const MemberType &team, const int ispec,
+    const specfem::compute::simulation_field<WavefieldType> &field,
+    specfem::element::field<NGLL, specfem::dimension::type::dim2, MediumType,
+                            MemorySpace, MemoryTraits, StoreDisplacement,
+                            StoreVelocity, StoreAcceleration, StoreMassMatrix>
+        &element_field) {
+
+  constexpr int components =
+      specfem::medium::medium<specfem::dimension::type::dim2,
+                              MediumType>::components;
+
+  static_assert(
+      std::is_same_v<typename MemberType::execution_space, Kokkos::HostSpace>,
+      "This function should only be called with host execution space");
+
+  Kokkos::parallel_for(
+      Kokkos::TeamThreadRange(team, NGLL * NGLL), [&](const int &xz) {
+        int iz, ix;
+        sub2ind(xz, NGLL, iz, ix);
+        const int iglob = field.h_assembly_index_mapping(
+            field.h_index_mapping(ispec, iz, ix), static_cast<int>(MediumType));
+
+        for (int icomp = 0; icomp < components; ++icomp) {
+          if constexpr (StoreDisplacement) {
+            element_field.displacement(iz, ix, icomp) =
+                field.elastic.h_field(iglob, icomp);
+          }
+          if constexpr (StoreVelocity) {
+            element_field.velocity(iz, ix, icomp) =
+                field.elastic.h_field_dot(iglob, icomp);
+          }
+          if constexpr (StoreAcceleration) {
+            element_field.acceleration(iz, ix, icomp) =
+                field.elastic.h_field_dot_dot(iglob, icomp);
+          }
+          if constexpr (StoreMassMatrix) {
+            element_field.mass_matrix(iz, ix, icomp) =
+                field.elastic.h_mass_inverse(iglob, icomp);
+          }
+        }
+      });
+
+  return;
+}
 } // namespace compute
 } // namespace specfem
 

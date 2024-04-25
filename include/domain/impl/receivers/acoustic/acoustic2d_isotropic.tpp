@@ -18,9 +18,10 @@
 //     receiver(const specfem::kokkos::DeviceView1d<type_real> sin_rec,
 //              const specfem::kokkos::DeviceView1d<type_real> cos_rec,
 //              const specfem::kokkos::DeviceView4d<type_real> receiver_array,
-//              const specfem::compute::partial_derivatives &partial_derivatives,
-//              const specfem::compute::properties &properties,
-//              specfem::kokkos::DeviceView6d<type_real> receiver_field)
+//              const specfem::compute::partial_derivatives
+//              &partial_derivatives, const specfem::compute::properties
+//              &properties, specfem::kokkos::DeviceView6d<type_real>
+//              receiver_field)
 //     : sin_rec(sin_rec), cos_rec(cos_rec), receiver_array(receiver_array),
 //       receiver_field(receiver_field) {
 
@@ -51,13 +52,15 @@ template <int NGLL>
 KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
     specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
     specfem::element::property_tag::isotropic,
-    specfem::enums::element::quadrature::static_quadrature_points<NGLL>>::
+    specfem::enums::element::quadrature::static_quadrature_points<NGLL> >::
     get_field(
         const int iz, const int ix,
         const specfem::point::partial_derivatives2<false> partial_derivatives,
-        const specfem::point::properties<medium_type::medium_tag, medium_type::property_tag> properties,
-        const ScratchViewType<type_real, 1> hprime,
-        const ScratchViewType<type_real, medium_type::components> active_field,
+        const specfem::point::properties<medium_type::medium_tag,
+                                         medium_type::property_tag>
+            properties,
+        const ElementQuadratureViewType hprime,
+        const ElementFieldViewType active_field,
         Kokkos::View<type_real[2], Kokkos::LayoutStride,
                      specfem::kokkos::DevMemSpace>
             receiver_field) const {
@@ -69,8 +72,8 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
 #pragma unroll
 #endif
   for (int l = 0; l < NGLL; l++) {
-    dchi_dxi += hprime(ix, l, 0) * active_field(iz, l, 0);
-    dchi_dgamma += hprime(iz, l, 0) * active_field(l, ix, 0);
+    dchi_dxi += hprime(ix, l) * active_field(iz, l, 0);
+    dchi_dgamma += hprime(iz, l) * active_field(l, ix, 0);
   }
 
   // dchidx
