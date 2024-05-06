@@ -171,7 +171,7 @@ KOKKOS_FUNCTION void load_on_device(
         if constexpr (StoreGLLQuadratureDerivatives) {
           element_quadrature.hprime_gll(iz, ix) = quadrature.gll.hprime(iz, ix);
           if constexpr (WeightTimesDerivatives) {
-            element_quadrature.hprimew_gll(iz, ix) =
+            element_quadrature.hprimew_gll(ix, iz) =
                 quadrature.gll.hprime(iz, ix) * quadrature.gll.weights(iz);
           }
         }

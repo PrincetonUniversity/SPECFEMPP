@@ -173,9 +173,7 @@ void specfem::domain::domain<WavefieldType, DimensionType, MediumTag,
 
   Kokkos::parallel_for(
       "specfem::domain::domain::divide_mass_matrix",
-      specfem::kokkos::DeviceMDrange<2, Kokkos::Iterate::Left>(
-          { 0, 0 }, { nglob, components }),
-      KOKKOS_CLASS_LAMBDA(const int iglob, const int idim) {
+      specfem::kokkos::DeviceRange(0, nglob), KOKKOS_CLASS_LAMBDA(const int iglob) {
         LoadFieldType load_field;
         specfem::compute::load_on_device(iglob, field, load_field);
         StoreFieldType store_field(load_field.divide_mass_matrix());
@@ -194,8 +192,8 @@ void specfem::domain::domain<WavefieldType, DimensionType, MediumTag,
                              qp_type>::invert_mass_matrix() {
   constexpr int components = medium_type::components;
   const int nglob = field.template get_nglob<MediumTag>();
-  using PointFieldType =
-      specfem::point::field<DimensionType, MediumTag, false, false, false, true>;
+  using PointFieldType = specfem::point::field<DimensionType, MediumTag, false,
+                                               false, false, true>;
 
   Kokkos::parallel_for(
       "specfem::domain::domain::invert_mass_matrix",

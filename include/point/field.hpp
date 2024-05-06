@@ -163,8 +163,8 @@ public:
   KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, components>
   divide_mass_matrix() const {
     specfem::kokkos::array_type<type_real, components> result;
-    for (int i = 0; i < components; i++) {
-      result[i] = acceleration[i] / mass_matrix[i];
+    for (int i = 0; i < components; ++i) {
+      result[i] = acceleration[i] * mass_matrix[i];
     }
     return result;
   }

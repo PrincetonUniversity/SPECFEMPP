@@ -242,7 +242,7 @@ void specfem::domain::impl::kernels::element_kernel<
       Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, true>;
   // Data structure used to field at GLL point - represents which field to
   // atomically update
-  using PointFieldType = specfem::point::field<DimensionType, MediumTag, false,
+  using PointAccelerationType = specfem::point::field<DimensionType, MediumTag, false,
                                                false, true, false>;
   using PointVelocityType =
       specfem::point::field<DimensionType, MediumTag, false, true, false, false>;
@@ -360,7 +360,7 @@ void specfem::domain::impl::kernels::element_kernel<
               const specfem::kokkos::array_type<type_real, dimension::dim>
                   weight(wgll(ix), wgll(iz));
 
-              PointFieldType acceleration;
+              PointAccelerationType acceleration;
 
               // Get velocity, partial derivatives, and properties
               // only if needed by the boundary condition
