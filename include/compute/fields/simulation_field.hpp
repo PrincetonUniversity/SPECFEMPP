@@ -242,26 +242,17 @@ KOKKOS_FUNCTION void store_on_device(
     }
   }();
 
-  if constexpr (StoreDisplacement) {
-    for (int icomp = 0; icomp < components; ++icomp) {
+  for (int icomp = 0; icomp < components; ++icomp) {
+    if constexpr (StoreDisplacement) {
       curr_field.field(iglob, icomp) = point_field.displacement[icomp];
     }
-  }
-
-  if constexpr (StoreVelocity) {
-    for (int icomp = 0; icomp < components; ++icomp) {
+    if constexpr (StoreVelocity) {
       curr_field.field_dot(iglob, icomp) = point_field.velocity[icomp];
     }
-  }
-
-  if constexpr (StoreAcceleration) {
-    for (int icomp = 0; icomp < components; ++icomp) {
+    if constexpr (StoreAcceleration) {
       curr_field.field_dot_dot(iglob, icomp) = point_field.acceleration[icomp];
     }
-  }
-
-  if constexpr (StoreMassMatrix) {
-    for (int icomp = 0; icomp < components; ++icomp) {
+    if constexpr (StoreMassMatrix) {
       curr_field.mass_inverse(iglob, icomp) = point_field.mass_matrix[icomp];
     }
   }
@@ -294,27 +285,18 @@ void store_on_host(
     }
   }();
 
-  if constexpr (StoreDisplacement) {
-    for (int icomp = 0; icomp < components; ++icomp) {
+  for (int icomp = 0; icomp < components; ++icomp) {
+    if constexpr (StoreDisplacement) {
       curr_field.h_field(iglob, icomp) = point_field.displacement[icomp];
     }
-  }
-
-  if constexpr (StoreVelocity) {
-    for (int icomp = 0; icomp < components; ++icomp) {
+    if constexpr (StoreVelocity) {
       curr_field.h_field_dot(iglob, icomp) = point_field.velocity[icomp];
     }
-  }
-
-  if constexpr (StoreAcceleration) {
-    for (int icomp = 0; icomp < components; ++icomp) {
+    if constexpr (StoreAcceleration) {
       curr_field.h_field_dot_dot(iglob, icomp) =
           point_field.acceleration[icomp];
     }
-  }
-
-  if constexpr (StoreMassMatrix) {
-    for (int icomp = 0; icomp < components; ++icomp) {
+    if constexpr (StoreMassMatrix) {
       curr_field.h_mass_inverse(iglob, icomp) = point_field.mass_matrix[icomp];
     }
   }
@@ -381,26 +363,17 @@ KOKKOS_FUNCTION void add_on_device(
     }
   }();
 
-  if constexpr (StoreDisplacement) {
-    for (int icomp = 0; icomp < components; ++icomp) {
+  for (int icomp = 0; icomp < components; ++icomp) {
+    if constexpr (StoreDisplacement) {
       curr_field.field(iglob, icomp) += point_field.displacement[icomp];
     }
-  }
-
-  if constexpr (StoreVelocity) {
-    for (int icomp = 0; icomp < components; ++icomp) {
+    if constexpr (StoreVelocity) {
       curr_field.field_dot(iglob, icomp) += point_field.velocity[icomp];
     }
-  }
-
-  if constexpr (StoreAcceleration) {
-    for (int icomp = 0; icomp < components; ++icomp) {
+    if constexpr (StoreAcceleration) {
       curr_field.field_dot_dot(iglob, icomp) += point_field.acceleration[icomp];
     }
-  }
-
-  if constexpr (StoreMassMatrix) {
-    for (int icomp = 0; icomp < components; ++icomp) {
+    if constexpr (StoreMassMatrix) {
       curr_field.mass_inverse(iglob, icomp) += point_field.mass_matrix[icomp];
     }
   }
@@ -433,27 +406,18 @@ void add_on_host(
     }
   }();
 
-  if constexpr (StoreDisplacement) {
-    for (int icomp = 0; icomp < components; ++icomp) {
+  for (int icomp = 0; icomp < components; ++icomp) {
+    if constexpr (StoreDisplacement) {
       curr_field.h_field(iglob, icomp) += point_field.displacement[icomp];
     }
-  }
-
-  if constexpr (StoreVelocity) {
-    for (int icomp = 0; icomp < components; ++icomp) {
+    if constexpr (StoreVelocity) {
       curr_field.h_field_dot(iglob, icomp) += point_field.velocity[icomp];
     }
-  }
-
-  if constexpr (StoreAcceleration) {
-    for (int icomp = 0; icomp < components; ++icomp) {
+    if constexpr (StoreAcceleration) {
       curr_field.h_field_dot_dot(iglob, icomp) +=
           point_field.acceleration[icomp];
     }
-  }
-
-  if constexpr (StoreMassMatrix) {
-    for (int icomp = 0; icomp < components; ++icomp) {
+    if constexpr (StoreMassMatrix) {
       curr_field.h_mass_inverse(iglob, icomp) += point_field.mass_matrix[icomp];
     }
   }
@@ -522,29 +486,20 @@ KOKKOS_FUNCTION void atomic_add_on_device(
     }
   }();
 
-  if constexpr (StoreDisplacement) {
-    for (int icomp = 0; icomp < components; ++icomp) {
+  for (int icomp = 0; icomp < components; ++icomp) {
+    if constexpr (StoreDisplacement) {
       Kokkos::atomic_add(&curr_field.field(iglob, icomp),
                          point_field.displacement[icomp]);
     }
-  }
-
-  if constexpr (StoreVelocity) {
-    for (int icomp = 0; icomp < components; ++icomp) {
+    if constexpr (StoreVelocity) {
       Kokkos::atomic_add(&curr_field.field_dot(iglob, icomp),
                          point_field.velocity[icomp]);
     }
-  }
-
-  if constexpr (StoreAcceleration) {
-    for (int icomp = 0; icomp < components; ++icomp) {
+    if constexpr (StoreAcceleration) {
       Kokkos::atomic_add(&curr_field.field_dot_dot(iglob, icomp),
                          point_field.acceleration[icomp]);
     }
-  }
-
-  if constexpr (StoreMassMatrix) {
-    for (int icomp = 0; icomp < components; ++icomp) {
+    if constexpr (StoreMassMatrix) {
       Kokkos::atomic_add(&curr_field.mass_inverse(iglob, icomp),
                          point_field.mass_matrix[icomp]);
     }
@@ -578,29 +533,20 @@ void atomic_add_on_host(
     }
   }();
 
-  if constexpr (StoreDisplacement) {
-    for (int icomp = 0; icomp < components; ++icomp) {
+  for (int icomp = 0; icomp < components; ++icomp) {
+    if constexpr (StoreDisplacement) {
       Kokkos::atomic_add(&curr_field.h_field(iglob, icomp),
                          point_field.displacement[icomp]);
     }
-  }
-
-  if constexpr (StoreVelocity) {
-    for (int icomp = 0; icomp < components; ++icomp) {
+    if constexpr (StoreVelocity) {
       Kokkos::atomic_add(&curr_field.h_field_dot(iglob, icomp),
                          point_field.velocity[icomp]);
     }
-  }
-
-  if constexpr (StoreAcceleration) {
-    for (int icomp = 0; icomp < components; ++icomp) {
+    if constexpr (StoreAcceleration) {
       Kokkos::atomic_add(&curr_field.h_field_dot_dot(iglob, icomp),
                          point_field.acceleration[icomp]);
     }
-  }
-
-  if constexpr (StoreMassMatrix) {
-    for (int icomp = 0; icomp < components; ++icomp) {
+    if constexpr (StoreMassMatrix) {
       Kokkos::atomic_add(&curr_field.h_mass_inverse(iglob, icomp),
                          point_field.mass_matrix[icomp]);
     }
@@ -668,6 +614,18 @@ KOKKOS_FUNCTION void load_on_device(
                 "This function should only be called with device execution "
                 "space");
 
+  const auto curr_field = [&]()
+      -> specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
+                                            MediumType> {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+      return field.elastic;
+    } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
+      return field.acoustic;
+    } else {
+      static_assert("medium type not supported");
+    }
+  }();
+
   Kokkos::parallel_for(
       Kokkos::TeamThreadRange(team, NGLL * NGLL), [&](const int &xz) {
         int iz, ix;
@@ -678,19 +636,19 @@ KOKKOS_FUNCTION void load_on_device(
         for (int icomp = 0; icomp < components; ++icomp) {
           if constexpr (StoreDisplacement) {
             element_field.displacement(iz, ix, icomp) =
-                field.elastic.field(iglob, icomp);
+                curr_field.field(iglob, icomp);
           }
           if constexpr (StoreVelocity) {
             element_field.velocity(iz, ix, icomp) =
-                field.elastic.field_dot(iglob, icomp);
+                curr_field.field_dot(iglob, icomp);
           }
           if constexpr (StoreAcceleration) {
             element_field.acceleration(iz, ix, icomp) =
-                field.elastic.field_dot_dot(iglob, icomp);
+                curr_field.field_dot_dot(iglob, icomp);
           }
           if constexpr (StoreMassMatrix) {
             element_field.mass_matrix(iz, ix, icomp) =
-                field.elastic.mass_inverse(iglob, icomp);
+                curr_field.mass_inverse(iglob, icomp);
           }
         }
       });
@@ -722,6 +680,18 @@ void load_on_host(
       std::is_same_v<typename MemberType::execution_space, Kokkos::HostSpace>,
       "This function should only be called with host execution space");
 
+  const auto curr_field = [&]()
+      -> specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
+                                            MediumType> {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+      return field.elastic;
+    } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
+      return field.acoustic;
+    } else {
+      static_assert("medium type not supported");
+    }
+  }();
+
   Kokkos::parallel_for(
       Kokkos::TeamThreadRange(team, NGLL * NGLL), [&](const int &xz) {
         int iz, ix;
@@ -732,19 +702,19 @@ void load_on_host(
         for (int icomp = 0; icomp < components; ++icomp) {
           if constexpr (StoreDisplacement) {
             element_field.displacement(iz, ix, icomp) =
-                field.elastic.h_field(iglob, icomp);
+                curr_field.h_field(iglob, icomp);
           }
           if constexpr (StoreVelocity) {
             element_field.velocity(iz, ix, icomp) =
-                field.elastic.h_field_dot(iglob, icomp);
+                curr_field.h_field_dot(iglob, icomp);
           }
           if constexpr (StoreAcceleration) {
             element_field.acceleration(iz, ix, icomp) =
-                field.elastic.h_field_dot_dot(iglob, icomp);
+                curr_field.h_field_dot_dot(iglob, icomp);
           }
           if constexpr (StoreMassMatrix) {
             element_field.mass_matrix(iz, ix, icomp) =
-                field.elastic.h_mass_inverse(iglob, icomp);
+                curr_field.h_mass_inverse(iglob, icomp);
           }
         }
       });
