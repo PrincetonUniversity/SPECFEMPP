@@ -8,31 +8,70 @@
 namespace specfem {
 namespace time_scheme {
 
-class RangeIterator {
+class BackwardIterator {
 public:
-  RangeIterator(int value) : value(value) {}
+  BackwardIterator(int value, type_real dt) : value(value), dt(dt) {}
 
-  int operator*() const { return value; }
-  RangeIterator &operator++() {
-    value++;
+  std::tuple<int, type_real> operator*() const { return { value, dt }; }
+  BackwardIterator &operator++() {
+    value--;
     return *this;
   }
-  bool operator!=(const RangeIterator &other) const { return value != *other; }
+
+  bool operator!=(const BackwardIterator &other) const {
+    const auto [other_value, other_dt] = *other;
+    return value != other_value;
+  }
 
 private:
   int value;
+  type_real dt;
 };
 
-class Range {
+class ForwardIterator {
 public:
-  Range(int end) : start_(0), end_(end) {}
-  Range(int start, int end) : start_(start), end_(end) {}
-  RangeIterator begin() const { return RangeIterator(start_); }
-  RangeIterator end() const { return RangeIterator(end_); }
+  ForwardIterator(int value, type_real dt) : value(value), dt(dt) {}
+
+  std::tuple<int, type_real> operator*() const { return { value, dt }; }
+  ForwardIterator &operator++() {
+    value++;
+    return *this;
+  }
+
+  bool operator!=(const ForwardIterator &other) const {
+    const auto [other_value, other_dt] = *other;
+    return value != other_value;
+  }
+
+private:
+  int value;
+  type_real dt;
+};
+
+class ForwardRange {
+public:
+  ForwardRange(int nsteps, const type_real dt)
+      : start_(0), end_(nsteps), dt(dt) {}
+  ForwardIterator begin() const { return ForwardIterator(start_, dt); }
+  ForwardIterator end() const { return ForwardIterator(end_, dt); }
 
 private:
   int start_;
   int end_;
+  type_real dt;
+};
+
+class BackwardRange {
+public:
+  BackwardRange(int nsteps, const type_real dt)
+      : start_(nsteps - 1), end_(-1), dt(dt) {}
+  BackwardIterator begin() const { return BackwardIterator(start_, dt); }
+  BackwardIterator end() const { return BackwardIterator(end_, dt); }
+
+private:
+  int start_;
+  int end_;
+  type_real dt;
 };
 
 /**
@@ -41,11 +80,13 @@ private:
  */
 class time_scheme {
 public:
-  time_scheme(const int nstep, const int nstep_between_samples)
+  time_scheme(const int nstep, const int nstep_between_samples,
+              const type_real dt)
       : nstep(nstep), nstep_between_samples(nstep_between_samples),
-        seismogram_timestep(0) {}
+        seismogram_timestep(0), dt(dt) {}
 
-  Range iterate() { return Range(nstep); }
+  ForwardRange iterate_forward() { return ForwardRange(nstep, dt); }
+  BackwardRange iterate_backward() { return BackwardRange(nstep, dt); }
   int get_max_timestep() { return nstep; }
   void increment_seismogram_step() { seismogram_timestep++; }
   bool compute_seismogram(const int istep) const {
@@ -81,6 +122,7 @@ private:
   int nstep;
   int seismogram_timestep;
   int nstep_between_samples;
+  type_real dt;
 };
 
 // /**

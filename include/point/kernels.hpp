@@ -30,13 +30,17 @@ struct kernels<specfem::element::medium_tag::acoustic,
                specfem::element::property_tag::isotropic> {
   type_real rho;
   type_real kappa;
+  type_real rho_prime;
+  type_real alpha;
 
   KOKKOS_FUNCTION
   kernels() = default;
 
   KOKKOS_FUNCTION
-  kernels(const type_real rho, const type_real kappa)
-      : rho(rho), kappa(kappa) {}
+  kernels(const type_real rho, const type_real kappa) : rho(rho), kappa(kappa) {
+    rho_prime = rho * kappa;
+    alpha = 2.0 * kappa;
+  }
 };
 
 } // namespace point

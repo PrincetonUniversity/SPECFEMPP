@@ -40,18 +40,48 @@ public:
         h_mu(Kokkos::create_mirror_view(mu)),
         h_kappa(Kokkos::create_mirror_view(kappa)) {}
 
-  KOKKOS_FUNCTION void update_kernels(
+  KOKKOS_INLINE_FUNCTION void load_device_kernels(
       const int ispec, const int iz, const int ix,
-      const specfem::point::kernels<value_type, property_type> &kernels) const {
+      specfem::point::kernels<value_type, property_type> &kernels) const {
+    kernels.rho = rho(ispec, iz, ix);
+    kernels.mu = mu(ispec, iz, ix);
+    kernels.kappa = kappa(ispec, iz, ix);
+  }
+
+  void load_host_kernels(
+      const int ispec, const int iz, const int ix,
+      specfem::point::kernels<value_type, property_type> &kernels) const {
+    kernels.rho = h_rho(ispec, iz, ix);
+    kernels.mu = h_mu(ispec, iz, ix);
+    kernels.kappa = h_kappa(ispec, iz, ix);
+  }
+
+  KOKKOS_INLINE_FUNCTION void update_kernels_on_device(
+      const int ispec, const int iz, const int ix,
+      const specfem::point::kernels<value_type, property_type> &kernels) {
     rho(ispec, iz, ix) = kernels.rho;
     mu(ispec, iz, ix) = kernels.mu;
     kappa(ispec, iz, ix) = kernels.kappa;
   }
 
-  void sync_views() {
+  void update_kernels_on_host(
+      const int ispec, const int iz, const int ix,
+      const specfem::point::kernels<value_type, property_type> &kernels) {
+    h_rho(ispec, iz, ix) = kernels.rho;
+    h_mu(ispec, iz, ix) = kernels.mu;
+    h_kappa(ispec, iz, ix) = kernels.kappa;
+  }
+
+  void copy_to_host() {
     Kokkos::deep_copy(h_rho, rho);
     Kokkos::deep_copy(h_mu, mu);
     Kokkos::deep_copy(h_kappa, kappa);
+  }
+
+  void copy_to_device() {
+    Kokkos::deep_copy(rho, h_rho);
+    Kokkos::deep_copy(mu, h_mu);
+    Kokkos::deep_copy(kappa, h_kappa);
   }
 };
 
@@ -87,20 +117,54 @@ public:
         h_rho_prime(Kokkos::create_mirror_view(rho_prime)),
         h_alpha(Kokkos::create_mirror_view(alpha)) {}
 
-  KOKKOS_FUNCTION void update_kernels(
+  KOKKOS_INLINE_FUNCTION void load_device_kernels(
       const int ispec, const int iz, const int ix,
-      const specfem::point::kernels<value_type, property_type> &kernels) const {
-    rho(ispec, iz, ix) = kernels.rho;
-    kappa(ispec, iz, ix) = kernels.kappa;
-    rho_prime(ispec, iz, ix) = kernels.rho * kernels.kappa;
-    alpha(ispec, iz, ix) = 2.0 * kernels.kappa;
+      specfem::point::kernels<value_type, property_type> &kernels) const {
+    kernels.rho = rho(ispec, iz, ix);
+    kernels.kappa = kappa(ispec, iz, ix);
+    kernels.rho_prime = rho_prime(ispec, iz, ix);
+    kernels.alpha = alpha(ispec, iz, ix);
   }
 
-  void sync_views() {
+  void load_host_kernels(
+      const int ispec, const int iz, const int ix,
+      specfem::point::kernels<value_type, property_type> &kernels) const {
+    kernels.rho = h_rho(ispec, iz, ix);
+    kernels.kappa = h_kappa(ispec, iz, ix);
+    kernels.rho_prime = h_rho_prime(ispec, iz, ix);
+    kernels.alpha = h_alpha(ispec, iz, ix);
+  }
+
+  KOKKOS_INLINE_FUNCTION void update_kernels_on_device(
+      const int ispec, const int iz, const int ix,
+      const specfem::point::kernels<value_type, property_type> &kernels) {
+    rho(ispec, iz, ix) = kernels.rho;
+    kappa(ispec, iz, ix) = kernels.kappa;
+    rho_prime(ispec, iz, ix) = kernels.rho_prime;
+    alpha(ispec, iz, ix) = kernels.alpha;
+  }
+
+  void update_kernels_on_host(
+      const int ispec, const int iz, const int ix,
+      const specfem::point::kernels<value_type, property_type> &kernels) {
+    h_rho(ispec, iz, ix) = kernels.rho;
+    h_kappa(ispec, iz, ix) = kernels.kappa;
+    h_rho_prime(ispec, iz, ix) = kernels.rho_prime;
+    h_alpha(ispec, iz, ix) = kernels.alpha;
+  }
+
+  void copy_to_host() {
     Kokkos::deep_copy(h_rho, rho);
     Kokkos::deep_copy(h_kappa, kappa);
     Kokkos::deep_copy(h_rho_prime, rho_prime);
     Kokkos::deep_copy(h_alpha, alpha);
+  }
+
+  void copy_to_device() {
+    Kokkos::deep_copy(rho, h_rho);
+    Kokkos::deep_copy(kappa, h_kappa);
+    Kokkos::deep_copy(rho_prime, h_rho_prime);
+    Kokkos::deep_copy(alpha, h_alpha);
   }
 };
 

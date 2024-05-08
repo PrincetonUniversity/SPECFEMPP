@@ -114,16 +114,16 @@ KOKKOS_FUNCTION void load_on_device(
   const int ix = index.ix;
 
   if constexpr (load_jacobian) {
-    partial_derivatives = { derivatives.xix(ispec, iz, ix),
-                            derivatives.gammax(ispec, iz, ix),
-                            derivatives.xiz(ispec, iz, ix),
-                            derivatives.gammaz(ispec, iz, ix),
-                            derivatives.jacobian(ispec, iz, ix) };
+    partial_derivatives.xix = derivatives.xix(ispec, iz, ix);
+    partial_derivatives.gammax = derivatives.gammax(ispec, iz, ix);
+    partial_derivatives.xiz = derivatives.xiz(ispec, iz, ix);
+    partial_derivatives.gammaz = derivatives.gammaz(ispec, iz, ix);
+    partial_derivatives.jacobian = derivatives.jacobian(ispec, iz, ix);
   } else {
-    partial_derivatives = { derivatives.xix(ispec, iz, ix),
-                            derivatives.gammax(ispec, iz, ix),
-                            derivatives.xiz(ispec, iz, ix),
-                            derivatives.gammaz(ispec, iz, ix) };
+    partial_derivatives.xix = derivatives.xix(ispec, iz, ix);
+    partial_derivatives.gammax = derivatives.gammax(ispec, iz, ix);
+    partial_derivatives.xiz = derivatives.xiz(ispec, iz, ix);
+    partial_derivatives.gammaz = derivatives.gammaz(ispec, iz, ix);
   }
 
   return;
@@ -140,16 +140,16 @@ void load_on_host(
   const int ix = index.ix;
 
   if constexpr (load_jacobian) {
-    partial_derivatives = { derivatives.h_xix(ispec, iz, ix),
-                            derivatives.h_gammax(ispec, iz, ix),
-                            derivatives.h_xiz(ispec, iz, ix),
-                            derivatives.h_gammaz(ispec, iz, ix),
-                            derivatives.h_jacobian(ispec, iz, ix) };
+    partial_derivatives.xix = derivatives.h_xix(ispec, iz, ix);
+    partial_derivatives.gammax = derivatives.h_gammax(ispec, iz, ix);
+    partial_derivatives.xiz = derivatives.h_xiz(ispec, iz, ix);
+    partial_derivatives.gammaz = derivatives.h_gammaz(ispec, iz, ix);
+    partial_derivatives.jacobian = derivatives.h_jacobian(ispec, iz, ix);
   } else {
-    partial_derivatives = { derivatives.h_xix(ispec, iz, ix),
-                            derivatives.h_gammax(ispec, iz, ix),
-                            derivatives.h_xiz(ispec, iz, ix),
-                            derivatives.h_gammaz(ispec, iz, ix) };
+    partial_derivatives.xix = derivatives.h_xix(ispec, iz, ix);
+    partial_derivatives.gammax = derivatives.h_gammax(ispec, iz, ix);
+    partial_derivatives.xiz = derivatives.h_xiz(ispec, iz, ix);
+    partial_derivatives.gammaz = derivatives.h_gammaz(ispec, iz, ix);
   }
 
   return;
