@@ -25,7 +25,7 @@ public:
 
   newmark(const int nstep, const int nstep_between_samples, const type_real dt,
           const type_real t0)
-      : time_scheme(nstep, nstep_between_samples), deltat(dt),
+      : time_scheme(nstep, nstep_between_samples, dt), deltat(dt),
         deltatover2(dt / 2.0), deltasquareover2(dt * dt / 2.0), t0(t0) {}
 
   void print(std::ostream &out) const override;
@@ -73,7 +73,7 @@ public:
 
   newmark(const int nstep, const int nstep_between_samples, const type_real dt,
           const type_real t0)
-      : time_scheme(nstep, nstep_between_samples), deltat(dt),
+      : time_scheme(nstep, nstep_between_samples, dt), deltat(dt),
         deltatover2(dt / 2.0), deltasquareover2(dt * dt / 2.0), t0(t0) {}
 
   void print(std::ostream &out) const override;

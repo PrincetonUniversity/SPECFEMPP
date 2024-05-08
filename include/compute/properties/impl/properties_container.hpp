@@ -46,23 +46,38 @@ struct properties_container<specfem::element::medium_tag::elastic,
                       ngllz, ngllx),
         h_lambdaplus2mu(Kokkos::create_mirror_view(lambdaplus2mu)) {}
 
-  KOKKOS_INLINE_FUNCTION specfem::point::properties<value_type, property_type>
-  load_device_properties(const int &ispec, const int &iz, const int &ix) const {
-    return specfem::point::properties<value_type, property_type>(
-        lambdaplus2mu(ispec, iz, ix), mu(ispec, iz, ix), rho(ispec, iz, ix));
+  KOKKOS_INLINE_FUNCTION void load_device_properties(
+      const int &ispec, const int &iz, const int &ix,
+      specfem::point::properties<value_type, property_type> &property) const {
+    property.rho = rho(ispec, iz, ix);
+    property.mu = mu(ispec, iz, ix);
+    property.lambdaplus2mu = lambdaplus2mu(ispec, iz, ix);
+    property.lambda = property.lambdaplus2mu - 2 * property.mu;
+    property.rho_vp = sqrt(property.rho * property.lambdaplus2mu);
+    property.rho_vs = sqrt(property.rho * property.mu);
   }
 
-  specfem::point::properties<value_type, property_type>
-  load_host_properties(const int &ispec, const int &iz, const int &ix) const {
-    return specfem::point::properties<value_type, property_type>(
-        h_lambdaplus2mu(ispec, iz, ix), h_mu(ispec, iz, ix),
-        h_rho(ispec, iz, ix));
+  void load_host_properties(
+      const int &ispec, const int &iz, const int &ix,
+      specfem::point::properties<value_type, property_type> &property) const {
+    property.rho = h_rho(ispec, iz, ix);
+    property.mu = h_mu(ispec, iz, ix);
+    property.lambdaplus2mu = h_lambdaplus2mu(ispec, iz, ix);
+    property.lambda = property.lambdaplus2mu - 2 * property.mu;
+    property.rho_vp = sqrt(property.rho * property.lambdaplus2mu);
+    property.rho_vs = sqrt(property.rho * property.mu);
   }
 
   void copy_to_device() {
     Kokkos::deep_copy(rho, h_rho);
     Kokkos::deep_copy(mu, h_mu);
     Kokkos::deep_copy(lambdaplus2mu, h_lambdaplus2mu);
+  }
+
+  void copy_to_host() {
+    Kokkos::deep_copy(h_rho, rho);
+    Kokkos::deep_copy(h_mu, mu);
+    Kokkos::deep_copy(h_lambdaplus2mu, lambdaplus2mu);
   }
 
   void assign(
@@ -107,24 +122,36 @@ struct properties_container<specfem::element::medium_tag::acoustic,
         kappa("specfem::compute::properties::kappa", nspec, ngllz, ngllx),
         h_kappa(Kokkos::create_mirror_view(kappa)) {}
 
-  KOKKOS_INLINE_FUNCTION specfem::point::properties<value_type, property_type>
-  load_device_properties(const int &ispec, const int &iz, const int &ix) const {
-    return specfem::point::properties<value_type, property_type>(
-        lambdaplus2mu_inverse(ispec, iz, ix), rho_inverse(ispec, iz, ix),
-        kappa(ispec, iz, ix));
+  KOKKOS_INLINE_FUNCTION void load_device_properties(
+      const int &ispec, const int &iz, const int &ix,
+      specfem::point::properties<value_type, property_type> &property) const {
+    property.rho_inverse = rho_inverse(ispec, iz, ix);
+    property.lambdaplus2mu_inverse = lambdaplus2mu_inverse(ispec, iz, ix);
+    property.kappa = kappa(ispec, iz, ix);
+    property.rho_vpinverse =
+        sqrt(property.rho_inverse * property.lambdaplus2mu_inverse);
   }
 
-  specfem::point::properties<value_type, property_type>
-  load_host_properties(const int &ispec, const int &iz, const int &ix) const {
-    return specfem::point::properties<value_type, property_type>(
-        h_lambdaplus2mu_inverse(ispec, iz, ix), h_rho_inverse(ispec, iz, ix),
-        h_kappa(ispec, iz, ix));
+  void load_host_properties(
+      const int &ispec, const int &iz, const int &ix,
+      specfem::point::properties<value_type, property_type> &property) const {
+    property.rho_inverse = h_rho_inverse(ispec, iz, ix);
+    property.lambdaplus2mu_inverse = h_lambdaplus2mu_inverse(ispec, iz, ix);
+    property.kappa = h_kappa(ispec, iz, ix);
+    property.rho_vpinverse =
+        sqrt(property.rho_inverse * property.lambdaplus2mu_inverse);
   }
 
   void copy_to_device() {
     Kokkos::deep_copy(rho_inverse, h_rho_inverse);
     Kokkos::deep_copy(lambdaplus2mu_inverse, h_lambdaplus2mu_inverse);
     Kokkos::deep_copy(kappa, h_kappa);
+  }
+
+  void copy_to_host() {
+    Kokkos::deep_copy(h_rho_inverse, rho_inverse);
+    Kokkos::deep_copy(h_lambdaplus2mu_inverse, lambdaplus2mu_inverse);
+    Kokkos::deep_copy(h_kappa, kappa);
   }
 
   void assign(

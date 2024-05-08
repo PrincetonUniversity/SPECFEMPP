@@ -107,13 +107,13 @@ load_on_device(const specfem::point::index &lcoord,
 
   if constexpr ((type == specfem::element::medium_tag::elastic) &&
                 (property == specfem::element::property_tag::isotropic)) {
-    point_properties =
-        properties.elastic_isotropic.load_device_properties(index, iz, ix);
+    properties.elastic_isotropic.load_device_properties(index, iz, ix,
+                                                        point_properties);
   } else if constexpr ((type == specfem::element::medium_tag::acoustic) &&
                        (property ==
                         specfem::element::property_tag::isotropic)) {
-    point_properties =
-        properties.acoustic_isotropic.load_device_properties(index, iz, ix);
+    properties.acoustic_isotropic.load_device_properties(index, iz, ix,
+                                                         point_properties);
   } else {
     static_assert("Material type not implemented");
   }
@@ -135,13 +135,13 @@ void load_on_host(
 
   if constexpr ((type == specfem::element::medium_tag::elastic) &&
                 (property == specfem::element::property_tag::isotropic)) {
-    point_properties =
-        properties.elastic_isotropic.load_host_properties(index, iz, ix);
+    properties.elastic_isotropic.load_host_properties(index, iz, ix,
+                                                      point_properties);
   } else if constexpr ((type == specfem::element::medium_tag::acoustic) &&
                        (property ==
                         specfem::element::property_tag::isotropic)) {
-    point_properties =
-        properties.acoustic_isotropic.load_host_properties(index, iz, ix);
+    properties.acoustic_isotropic.load_host_properties(index, iz, ix,
+                                                       point_properties);
   } else {
     static_assert("Material type not implemented");
   }
@@ -151,7 +151,7 @@ void load_on_host(
 
 template <specfem::element::medium_tag type,
           specfem::element::property_tag property>
-void update_on_host(
+void store_on_host(
     const specfem::point::index &lcoord,
     const specfem::compute::properties &properties,
     const specfem::point::properties<type, property> &point_properties) {

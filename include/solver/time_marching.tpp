@@ -18,7 +18,7 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
 
   const int nstep = time_scheme->get_max_timestep();
 
-  for (int istep : time_scheme->iterate()) {
+  for (const auto [istep, dt] : time_scheme->iterate_forward()) {
     time_scheme->apply_predictor_phase_forward(acoustic);
     time_scheme->apply_predictor_phase_forward(elastic);
 
@@ -58,26 +58,25 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
 
   const int nstep = time_scheme->get_max_timestep();
 
-  for (int istep : time_scheme->iterate()) {
-    const int backward_step = nstep - istep - 1;
+  for (const auto [istep, dt] : time_scheme->iterate_backward()) {
     // Adjoint time step
     time_scheme->apply_predictor_phase_forward(acoustic);
     time_scheme->apply_predictor_phase_forward(elastic);
 
-    adjoint_kernels.template update_wavefields<acoustic>(backward_step);
+    adjoint_kernels.template update_wavefields<acoustic>(istep);
     time_scheme->apply_corrector_phase_forward(acoustic);
 
-    adjoint_kernels.template update_wavefields<elastic>(backward_step);
+    adjoint_kernels.template update_wavefields<elastic>(istep);
     time_scheme->apply_corrector_phase_forward(elastic);
 
     // Backward time step
     time_scheme->apply_predictor_phase_backward(elastic);
     time_scheme->apply_predictor_phase_backward(acoustic);
 
-    backward_kernels.template update_wavefields<elastic>(backward_step);
+    backward_kernels.template update_wavefields<elastic>(istep);
     time_scheme->apply_corrector_phase_backward(elastic);
 
-    backward_kernels.template update_wavefields<acoustic>(backward_step);
+    backward_kernels.template update_wavefields<acoustic>(istep);
     time_scheme->apply_corrector_phase_backward(acoustic);
 
     // Copy read wavefield buffer to the backward wavefield
@@ -89,8 +88,7 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
                                   assembly.fields.buffer);
     }
 
-    // frechet_kernels.compute_frechet_derivatives<acoustic>(istep);
-    // frechet_kernels.compute_frechet_derivatives<elastic>(istep);
+    // frechet_kernels.compute_derivatives(dt)
 
     if (time_scheme->compute_seismogram(istep)) {
       // compute seismogram for backward time step
