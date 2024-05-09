@@ -684,18 +684,18 @@ template <typename T, int N> struct array_type {
     return sqrt(norm);
   }
 
-  KOKKOS_INLINE_FUNCTION static type_real dot(const array_type<T, N> &a,
-                                              const array_type<T, N> &b) {
+  //   KOKKOS_INLINE_FUNCTION static type_real dot(const array_type<T, N> &a,
+  //                                               const array_type<T, N> &b) {
 
-    type_real dot = 0.0;
-#ifdef KOKKOS_ENABLE_CUDA
-#pragma unroll
-#endif
-    for (int i = 0; i < N; ++i) {
-      dot += a[i] * b[i];
-    }
-    return dot;
-  }
+  //     type_real dot = 0.0;
+  // #ifdef KOKKOS_ENABLE_CUDA
+  // #pragma unroll
+  // #endif
+  //     for (int i = 0; i < N; ++i) {
+  //       dot += a[i] * b[i];
+  //     }
+  //     return dot;
+  //   }
 };
 
 /**

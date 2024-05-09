@@ -88,7 +88,7 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
                                   assembly.fields.buffer);
     }
 
-    // frechet_kernels.compute_derivatives(dt)
+    frechet_kernels.compute_derivatives(dt);
 
     if (time_scheme->compute_seismogram(istep)) {
       // compute seismogram for backward time step

@@ -21,10 +21,8 @@ struct field<NGLL, specfem::dimension::type::dim2, MediumTag, MemorySpace,
       specfem::medium::medium<specfem::dimension::type::dim2,
                               MediumTag>::components;
 
-  using ViewType =
-      Kokkos::View<type_real[NGLL][NGLL][components], Kokkos::LayoutRight,
-                   specfem::kokkos::DevMemSpace,
-                   Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+  using ViewType = Kokkos::View<type_real[NGLL][NGLL][components],
+                                Kokkos::LayoutRight, MemorySpace, MemoryTraits>;
 
   ViewType displacement;
   ViewType velocity;
@@ -56,10 +54,8 @@ struct field<NGLL, specfem::dimension::type::dim2, MediumTag, MemorySpace,
       specfem::medium::medium<specfem::dimension::type::dim2,
                               MediumTag>::components;
 
-  using ViewType =
-      Kokkos::View<type_real[NGLL][NGLL][components], Kokkos::LayoutRight,
-                   specfem::kokkos::DevMemSpace,
-                   Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+  using ViewType = Kokkos::View<type_real[NGLL][NGLL][components],
+                                Kokkos::LayoutRight, MemorySpace, MemoryTraits>;
 
   ViewType displacement;
 
@@ -83,10 +79,8 @@ struct field<NGLL, specfem::dimension::type::dim2, MediumTag, MemorySpace,
       specfem::medium::medium<specfem::dimension::type::dim2,
                               MediumTag>::components;
 
-  using ViewType =
-      Kokkos::View<type_real[NGLL][NGLL][components], Kokkos::LayoutRight,
-                   specfem::kokkos::DevMemSpace,
-                   Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+  using ViewType = Kokkos::View<type_real[NGLL][NGLL][components],
+                                Kokkos::LayoutRight, MemorySpace, MemoryTraits>;
 
   ViewType velocity;
 
@@ -110,10 +104,8 @@ struct field<NGLL, specfem::dimension::type::dim2, MediumTag, MemorySpace,
       specfem::medium::medium<specfem::dimension::type::dim2,
                               MediumTag>::components;
 
-  using ViewType =
-      Kokkos::View<type_real[NGLL][NGLL][components], Kokkos::LayoutRight,
-                   specfem::kokkos::DevMemSpace,
-                   Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+  using ViewType = Kokkos::View<type_real[NGLL][NGLL][components],
+                                Kokkos::LayoutRight, MemorySpace, MemoryTraits>;
 
   ViewType acceleration;
 
@@ -137,10 +129,8 @@ struct field<NGLL, specfem::dimension::type::dim3, MediumTag, MemorySpace,
       specfem::medium::medium<specfem::dimension::type::dim3,
                               MediumTag>::components;
 
-  using ViewType =
-      Kokkos::View<type_real[NGLL][NGLL][components], Kokkos::LayoutRight,
-                   specfem::kokkos::DevMemSpace,
-                   Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+  using ViewType = Kokkos::View<type_real[NGLL][NGLL][components],
+                                Kokkos::LayoutRight, MemorySpace, MemoryTraits>;
 
   ViewType displacement;
   ViewType velocity;
@@ -168,10 +158,8 @@ struct field<NGLL, specfem::dimension::type::dim3, MediumTag, MemorySpace,
       specfem::medium::medium<specfem::dimension::type::dim3,
                               MediumTag>::components;
 
-  using ViewType =
-      Kokkos::View<type_real[NGLL][NGLL][components], Kokkos::LayoutRight,
-                   specfem::kokkos::DevMemSpace,
-                   Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+  using ViewType = Kokkos::View<type_real[NGLL][NGLL][components],
+                                Kokkos::LayoutRight, MemorySpace, MemoryTraits>;
 
   ViewType displacement;
   ViewType acceleration;
@@ -200,10 +188,8 @@ struct field<NGLL, specfem::dimension::type::dim3, MediumTag, MemorySpace,
       specfem::medium::medium<specfem::dimension::type::dim3,
                               MediumTag>::components;
 
-  using ViewType =
-      Kokkos::View<type_real[NGLL][NGLL][components], Kokkos::LayoutRight,
-                   specfem::kokkos::DevMemSpace,
-                   Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+  using ViewType = Kokkos::View<type_real[NGLL][NGLL][components],
+                                Kokkos::LayoutRight, MemorySpace, MemoryTraits>;
 
   ViewType velocity;
   ViewType acceleration;
@@ -230,10 +216,8 @@ struct field<NGLL, specfem::dimension::type::dim3, MediumTag, MemorySpace,
       specfem::medium::medium<specfem::dimension::type::dim3,
                               MediumTag>::components;
 
-  using ViewType =
-      Kokkos::View<type_real[NGLL][NGLL][components], Kokkos::LayoutRight,
-                   specfem::kokkos::DevMemSpace,
-                   Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
+  using ViewType = Kokkos::View<type_real[NGLL][NGLL][components],
+                                Kokkos::LayoutRight, MemorySpace, MemoryTraits>;
 
   ViewType mass_matrix;
 
