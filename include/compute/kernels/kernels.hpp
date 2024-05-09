@@ -38,41 +38,6 @@ struct kernels {
   kernels(const int nspec, const int ngllz, const int ngllx,
           const specfem::mesh::materials &materials);
 
-  // template <specfem::element::medium_tag type,
-  //           specfem::element::property_tag property>
-  // KOKKOS_FUNCTION void
-  // update_kernels(const int ispec, const int iz, const int ix,
-  //                const specfem::point::kernels<type, property> &kernels)
-  //                const {
-  //   const int index = property_index_mapping(ispec);
-
-  //   if constexpr ((type == specfem::element::medium_tag::elastic) &&
-  //                 (property == specfem::element::property_tag::isotropic)) {
-  //     return elastic_isotropic.update_kernels(index, iz, ix, kernels);
-  //   } else if constexpr ((type == specfem::element::medium_tag::acoustic) &&
-  //                        (property ==
-  //                         specfem::element::property_tag::isotropic)) {
-  //     return acoustic_isotropic.update_kernels(index, iz, ix, kernels);
-  //   } else {
-  //     static_assert("Material type not implemented");
-  //   }
-  // }
-
-  // template <specfem::element::medium_tag type,
-  //           specfem::element::property_tag property>
-  // KOKKOS_FUNCTION auto get_kernels() const {
-  //   if constexpr ((type == specfem::element::medium_tag::elastic) &&
-  //                 (property == specfem::element::property_tag::isotropic)) {
-  //     return elastic_isotropic;
-  //   } else if constexpr ((type == specfem::element::medium_tag::acoustic) &&
-  //                        (property ==
-  //                         specfem::element::property_tag::isotropic)) {
-  //     return acoustic_isotropic;
-  //   } else {
-  //     static_assert("Material type not implemented");
-  //   }
-  // }
-
   void copy_to_host() {
     Kokkos::deep_copy(h_element_types, element_types);
     Kokkos::deep_copy(h_property_index_mapping, property_index_mapping);
@@ -131,8 +96,9 @@ void load_on_host(
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 void store_on_host(
-    const specfem::point::index &index, const kernels &kernels,
-    const specfem::point::kernels<MediumTag, PropertyTag> &point_kernels) {
+    const specfem::point::index &index,
+    const specfem::point::kernels<MediumTag, PropertyTag> &point_kernels,
+    kernels &kernels) {
   const int ispec = kernels.h_property_index_mapping(index.ispec);
   const int iz = index.iz;
   const int ix = index.ix;
@@ -156,8 +122,9 @@ void store_on_host(
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 KOKKOS_FUNCTION void store_on_device(
-    const specfem::point::index &index, const kernels &kernels,
-    const specfem::point::kernels<MediumTag, PropertyTag> &point_kernels) {
+    const specfem::point::index &index,
+    const specfem::point::kernels<MediumTag, PropertyTag> &point_kernels,
+    kernels &kernels) {
   const int ispec = kernels.property_index_mapping(index.ispec);
   const int iz = index.iz;
   const int ix = index.ix;

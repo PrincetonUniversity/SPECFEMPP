@@ -6,6 +6,7 @@
 #include "enumerations/medium.hpp"
 #include "enumerations/quadrature.hpp"
 #include "enumerations/specfem_enums.hpp"
+#include "algorithms/dot.hpp"
 #include "kokkos_abstractions.h"
 #include "stacey2d_elastic.hpp"
 #include <Kokkos_Core.hpp>
@@ -22,7 +23,7 @@ KOKKOS_FUNCTION void enforce_traction_boundary(
 
   auto jacobian1d = dn.l2_norm();
 
-  auto vn = specfem::kokkos::array_type<type_real, 2>::dot(dn, field_dot);
+  auto vn = specfem::algorithms::dot(dn, field_dot);
 
   specfem::kokkos::array_type<type_real, 2> traction;
 

@@ -328,6 +328,17 @@ target_link_libraries(
 # )
 
 add_library(
+        kernels
+        src/kernels/frechet_kernels.cpp
+)
+
+target_link_libraries(
+        kernels
+        Kokkos::kokkos
+        compute
+)
+
+add_library(
         timescheme
         src/timescheme/timescheme.cpp
         src/timescheme/newmark.cpp
@@ -375,6 +386,7 @@ target_link_libraries(
         yaml-cpp
         writer
         reader
+        kernels
         Boost::filesystem
 )
 
@@ -396,6 +408,7 @@ target_link_libraries(
         writer
         reader
         coupled_interface
+        kernels
         Boost::program_options
         ${HDF5_LIBRARIES}
 )
