@@ -224,6 +224,18 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
+  //                Write Kernels
+  // --------------------------------------------------------------
+  const auto kernel_writer = setup.instantiate_kernel_writer(assembly);
+  if (kernel_writer) {
+    mpi->cout("Writing kernel files:");
+    mpi->cout("-------------------------------");
+
+    kernel_writer->write();
+  }
+  // --------------------------------------------------------------
+
+  // --------------------------------------------------------------
   //                   Print End Message
   // --------------------------------------------------------------
   mpi->cout(print_end_message(start_time, solver_time));

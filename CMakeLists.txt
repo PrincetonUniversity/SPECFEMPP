@@ -94,6 +94,7 @@ add_library(
         IO
         src/IO/fortranio/fortran_io.cpp
         src/IO/HDF5/native_type.cpp
+        src/IO/ASCII/native_type.cpp
 )
 
 target_link_libraries(
@@ -355,6 +356,7 @@ add_library(
         writer
         src/writer/seismogram.cpp
         src/writer/wavefield.cpp
+        src/writer/kernel.cpp
 )
 
 target_link_libraries(
@@ -376,6 +378,7 @@ add_library(
         src/parameter_parser/writer/seismogram.cpp
         src/parameter_parser/setup.cpp
         src/parameter_parser/writer/wavefield.cpp
+        src/parameter_parser/writer/kernel.cpp
 )
 
 target_link_libraries(

@@ -120,6 +120,8 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
           this->wavefield = nullptr;
         }
 
+        this->kernel = nullptr;
+
         if (!at_least_one_writer) {
           throw std::runtime_error("Error in configuration file: at least one "
                                    "writer must be specified");
@@ -154,22 +156,31 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
       }
 
       if (const YAML::Node &n_writer = n_adjoint["writer"]) {
-        std::ostringstream message;
-        message << "************************************************\n"
-                << "Warning : Writer has been initialized for adjoint "
-                   "simulation. \n"
-                << "         This is generally nacessary for debugging "
-                   "purposes. \n"
-                << "         If this is a production run then reconsider if "
-                   "seismogram computation is needed. \n"
-                << "************************************************\n";
-        std::cout << message.str();
         if (const YAML::Node &n_seismogram = n_writer["seismogram"]) {
+          std::ostringstream message;
+          message
+              << "************************************************\n"
+              << "Warning : Seismogram writer has been initialized for adjoint "
+                 "simulation. \n"
+              << "         This is generally nacessary for debugging "
+                 "purposes. \n"
+              << "         If this is a production run then reconsider if "
+                 "seismogram computation is needed. \n"
+              << "************************************************\n";
+          std::cout << message.str();
           this->seismogram =
               std::make_unique<specfem::runtime_configuration::seismogram>(
                   n_seismogram);
         } else {
           this->seismogram = nullptr;
+        }
+
+        if (const YAML::Node &n_kernel = n_writer["kernels"]) {
+          this->kernel =
+              std::make_unique<specfem::runtime_configuration::kernel>(
+                  n_kernel, specfem::simulation::type::combined);
+        } else {
+          this->kernel = nullptr;
         }
       }
     }
