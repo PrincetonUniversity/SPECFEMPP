@@ -4,10 +4,9 @@
 #include "H5Cpp.h"
 #include "dataset.hpp"
 #include "datasetbase.hpp"
-// #include "datasetbase.tpp"
+#include "datasetbase.tpp"
 #include "IO/operators.hpp"
 #include "native_type.hpp"
-#include "native_type.tpp"
 #include "kokkos_abstractions.h"
 #include <string>
 

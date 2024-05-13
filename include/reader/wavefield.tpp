@@ -2,6 +2,7 @@
 #define SPECFEM_WAVEFIELD_READER_TPP
 
 #include "IO/HDF5/HDF5.hpp"
+#include "IO/ASCII/ASCII.hpp"
 #include "reader/wavefield.hpp"
 
 template <typename IOLibrary>

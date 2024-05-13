@@ -1,4 +1,5 @@
 #include "parameter_parser/writer/wavefield.hpp"
+#include "IO/ASCII/ASCII.hpp"
 #include "IO/HDF5/HDF5.hpp"
 #include "reader/reader.hpp"
 #include "reader/wavefield.hpp"
@@ -47,6 +48,10 @@ specfem::runtime_configuration::wavefield::instantiate_wavefield_writer(
         return std::make_shared<specfem::writer::wavefield<
             specfem::IO::HDF5<specfem::IO::write> > >(assembly,
                                                       this->output_folder);
+      } else if (this->output_format == "ASCII") {
+        return std::make_shared<specfem::writer::wavefield<
+            specfem::IO::ASCII<specfem::IO::write> > >(assembly,
+                                                       this->output_folder);
       } else {
         throw std::runtime_error("Unknown wavefield format");
       }
@@ -69,6 +74,10 @@ specfem::runtime_configuration::wavefield::instantiate_wavefield_reader(
         return std::make_shared<
             specfem::reader::wavefield<specfem::IO::HDF5<specfem::IO::read> > >(
             this->output_folder, assembly);
+      } else if (this->output_format == "ASCII") {
+        return std::make_shared<specfem::reader::wavefield<
+            specfem::IO::ASCII<specfem::IO::read> > >(this->output_folder,
+                                                      assembly);
       } else {
         throw std::runtime_error("Unknown wavefield format");
       }

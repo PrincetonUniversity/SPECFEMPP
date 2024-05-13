@@ -10,6 +10,7 @@
 #include "run_setup.hpp"
 #include "specfem_setup.hpp"
 #include "time_scheme/interface.hpp"
+#include "writer/kernel.hpp"
 #include "writer/seismogram.hpp"
 #include "writer/wavefield.hpp"
 #include "yaml-cpp/yaml.h"
@@ -158,6 +159,15 @@ public:
     }
   }
 
+  std::shared_ptr<specfem::writer::writer>
+  instantiate_kernel_writer(const specfem::compute::assembly &assembly) const {
+    if (this->kernel) {
+      return this->kernel->instantiate_kernel_writer(assembly);
+    } else {
+      return nullptr;
+    }
+  }
+
   inline specfem::simulation::type get_simulation_type() const {
     return this->solver->get_simulation_type();
   }
@@ -193,6 +203,7 @@ private:
   std::unique_ptr<specfem::runtime_configuration::wavefield>
       wavefield; ///< Pointer to
                  ///< wavefield object
+  std::unique_ptr<specfem::runtime_configuration::kernel> kernel;
   std::unique_ptr<specfem::runtime_configuration::database_configuration>
       databases; ///< Get database filenames
   std::unique_ptr<specfem::runtime_configuration::solver::solver>
