@@ -1,12 +1,12 @@
 #ifndef _ENUMS_BOUNDARY_CONDITIONS_STACEY2D_ELASTIC_TPP_
 #define _ENUMS_BOUNDARY_CONDITIONS_STACEY2D_ELASTIC_TPP_
 
+#include "algorithms/dot.hpp"
 #include "compute/interface.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "enumerations/quadrature.hpp"
 #include "enumerations/specfem_enums.hpp"
-#include "algorithms/dot.hpp"
 #include "kokkos_abstractions.h"
 #include "stacey2d_elastic.hpp"
 #include <Kokkos_Core.hpp>
@@ -142,11 +142,12 @@ KOKKOS_FUNCTION void newmark_mass_terms(
 //   return;
 // }
 
-template <specfem::element::property_tag property, typename qp_type>
+template <specfem::wavefield::type WavefieldType,
+          specfem::element::property_tag PropertyTag, typename qp_type>
 template <specfem::enums::time_scheme::type time_scheme>
 KOKKOS_INLINE_FUNCTION void
-specfem::boundary::boundary<specfem::dimension::type::dim2,
-                            specfem::element::medium_tag::elastic, property,
+specfem::boundary::boundary<WavefieldType, specfem::dimension::type::dim2,
+                            specfem::element::medium_tag::elastic, PropertyTag,
                             specfem::element::boundary_tag::stacey, qp_type>::
     mass_time_contribution(
         const int &xz, const type_real &dt,
@@ -185,10 +186,11 @@ specfem::boundary::boundary<specfem::dimension::type::dim2,
   return;
 }
 
-template <specfem::element::property_tag property, typename qp_type>
+template <specfem::wavefield::type WavefieldType,
+          specfem::element::property_tag PropertyTag, typename qp_type>
 KOKKOS_INLINE_FUNCTION void
-specfem::boundary::boundary<specfem::dimension::type::dim2,
-                            specfem::element::medium_tag::elastic, property,
+specfem::boundary::boundary<WavefieldType, specfem::dimension::type::dim2,
+                            specfem::element::medium_tag::elastic, PropertyTag,
                             specfem::element::boundary_tag::stacey, qp_type>::
     enforce_traction(
         const int &xz, const specfem::kokkos::array_type<type_real, 2> &weight,
@@ -196,8 +198,10 @@ specfem::boundary::boundary<specfem::dimension::type::dim2,
         const specfem::point::properties<medium_type::medium_tag,
                                          medium_type::property_tag> &properties,
         const specfem::point::boundary &boundary_type,
-        const specfem::kokkos::array_type<type_real, medium_type::components> &field_dot,
-        specfem::kokkos::array_type<type_real, medium_type::components> &field_dot_dot) const {
+        const specfem::kokkos::array_type<type_real, medium_type::components>
+            &field_dot,
+        specfem::kokkos::array_type<type_real, medium_type::components>
+            &field_dot_dot) const {
 
   // Check if the GLL point is on the boundary
   //--------------------------------------------------------------------------

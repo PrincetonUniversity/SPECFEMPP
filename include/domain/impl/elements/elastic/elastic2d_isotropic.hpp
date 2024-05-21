@@ -23,10 +23,12 @@ namespace elements {
  * @tparam BC Boundary conditions if void then neumann boundary conditions are
  * assumed
  */
-template <int NGLL, specfem::element::boundary_tag BC>
+template <int NGLL, specfem::wavefield::type WavefieldType,
+          specfem::element::boundary_tag BoundaryTag>
 class element<
-    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-    specfem::element::property_tag::isotropic, BC,
+    WavefieldType, specfem::dimension::type::dim2,
+    specfem::element::medium_tag::elastic,
+    specfem::element::property_tag::isotropic, BoundaryTag,
     specfem::enums::element::quadrature::static_quadrature_points<NGLL> > {
 private:
   constexpr static auto DimensionType = specfem::dimension::type::dim2;
@@ -49,9 +51,11 @@ public:
       specfem::medium::medium<specfem::dimension::type::dim2,
                               specfem::element::medium_tag::elastic,
                               specfem::element::property_tag::isotropic>;
-  using boundary_conditions_type = specfem::boundary::boundary<
-      specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-      specfem::element::property_tag::isotropic, BC, quadrature_points_type>;
+  using boundary_conditions_type =
+      specfem::boundary::boundary<WavefieldType, specfem::dimension::type::dim2,
+                                  specfem::element::medium_tag::elastic,
+                                  specfem::element::property_tag::isotropic,
+                                  BoundaryTag, quadrature_points_type>;
 
   /**
    * @brief Default constructor

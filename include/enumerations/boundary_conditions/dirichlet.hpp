@@ -23,17 +23,19 @@ namespace boundary {
  * @tparam qp_type Quadrature points object to define the quadrature points
  * either at compile time or run time.
  */
-template <specfem::element::medium_tag medium,
-          specfem::element::property_tag property, typename qp_type>
-class boundary<specfem::dimension::type::dim2, medium, property,
+template <specfem::wavefield::type WavefieldType,
+          specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag, typename qp_type>
+class boundary<WavefieldType, specfem::dimension::type::dim2, MediumTag,
+               PropertyTag,
                specfem::element::boundary_tag::acoustic_free_surface, qp_type> {
 public:
   using dimension =
       specfem::dimension::dimension<specfem::dimension::type::dim2>;
   using quadrature_points_type = qp_type; ///< Quadrature points type
   using medium_type =
-      specfem::medium::medium<specfem::dimension::type::dim2, medium,
-                              property>; ///< Medium type
+      specfem::medium::medium<specfem::dimension::type::dim2, MediumTag,
+                              PropertyTag>; ///< Medium type
 
   constexpr static specfem::element::boundary_tag value =
       specfem::element::boundary_tag::acoustic_free_surface; ///< boundary

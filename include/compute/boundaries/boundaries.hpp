@@ -28,6 +28,9 @@ struct boundaries {
   specfem::kokkos::HostMirror1d<specfem::point::boundary>
       h_boundary_types; ///< Host mirror of boundary types
 
+  //   specfem::compute::boundaries::impl::stacey_values<specfem::element::type::acoustic>
+  //       stacey; ///< Stacey boundary
+
   //   specfem::compute::impl::boundaries::boundary_container<
   //       specfem::enums::element::boundary_tag::acoustic_free_surface>
   //       acoustic_free_surface; ///< Acoustic free surface boundary

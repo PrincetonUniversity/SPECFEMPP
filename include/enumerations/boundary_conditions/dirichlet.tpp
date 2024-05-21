@@ -10,17 +10,18 @@
 #include "point/properties.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::element::medium_tag medium,
-          specfem::element::property_tag property, typename qp_type>
+template <specfem::wavefield::type WavefieldType,
+          specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag, typename qp_type>
 KOKKOS_INLINE_FUNCTION void specfem::boundary::boundary<
-    specfem::dimension::type::dim2, medium, property,
+    WavefieldType, specfem::dimension::type::dim2, MediumTag, PropertyTag,
     specfem::element::boundary_tag::acoustic_free_surface, qp_type>::
     enforce_traction(
         const int &xz,
         const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
         const specfem::point::partial_derivatives2<true> &partial_derivatives,
-        const specfem::point::properties<
-            medium_type::medium_tag, medium_type::property_tag> &properties,
+        const specfem::point::properties<medium_type::medium_tag,
+                                         medium_type::property_tag> &properties,
         const specfem::point::boundary &boundary_type,
         const specfem::kokkos::array_type<type_real, medium_type::components>
             &field_dot,

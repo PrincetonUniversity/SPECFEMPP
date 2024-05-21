@@ -24,10 +24,9 @@ class element_kernel {
 
 public:
   using dimension = specfem::dimension::dimension<DimensionType>;
-  using element_type =
-      specfem::domain::impl::elements::element<DimensionType, MediumTag,
-                                               PropertyTag, BoundaryTag,
-                                               quadrature_points_type>;
+  using element_type = specfem::domain::impl::elements::element<
+      WavefieldType, DimensionType, MediumTag, PropertyTag, BoundaryTag,
+      quadrature_points_type>;
   using medium_type = typename element_type::medium_type;
   using boundary_conditions_type =
       typename element_type::boundary_conditions_type;
