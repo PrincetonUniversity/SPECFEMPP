@@ -145,6 +145,58 @@ KOKKOS_FUNCTION void store_on_device(
   return;
 }
 
+template <specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag>
+KOKKOS_FUNCTION void add_on_device(
+    const specfem::point::index &index,
+    const specfem::point::kernels<MediumTag, PropertyTag> &point_kernels,
+    kernels &kernels) {
+
+  const int ispec = kernels.property_index_mapping(index.ispec);
+  const int iz = index.iz;
+  const int ix = index.ix;
+
+  if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
+                (PropertyTag == specfem::element::property_tag::isotropic)) {
+    kernels.elastic_isotropic.add_kernels_on_device(ispec, iz, ix,
+                                                    point_kernels);
+  } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
+                       (PropertyTag ==
+                        specfem::element::property_tag::isotropic)) {
+    kernels.acoustic_isotropic.add_kernels_on_device(ispec, iz, ix,
+                                                     point_kernels);
+  } else {
+    static_assert("Material type not implemented");
+  }
+
+  return;
+}
+
+template <specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag>
+void add_on_host(
+    const specfem::point::index &index,
+    const specfem::point::kernels<MediumTag, PropertyTag> &point_kernels,
+    kernels &kernels) {
+  const int ispec = kernels.h_property_index_mapping(index.ispec);
+  const int iz = index.iz;
+  const int ix = index.ix;
+
+  if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
+                (PropertyTag == specfem::element::property_tag::isotropic)) {
+    kernels.elastic_isotropic.add_kernels_on_host(ispec, iz, ix, point_kernels);
+  } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
+                       (PropertyTag ==
+                        specfem::element::property_tag::isotropic)) {
+    kernels.acoustic_isotropic.add_kernels_on_host(ispec, iz, ix,
+                                                   point_kernels);
+  } else {
+    static_assert("Material type not implemented");
+  }
+
+  return;
+}
+
 } // namespace compute
 } // namespace specfem
 

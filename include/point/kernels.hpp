@@ -16,13 +16,17 @@ struct kernels<specfem::element::medium_tag::elastic,
   type_real rho;
   type_real mu;
   type_real kappa;
+  type_real alpha;
+  type_real beta;
+  type_real rhop;
 
   KOKKOS_FUNCTION
   kernels() = default;
 
   KOKKOS_FUNCTION
-  kernels(const type_real rho, const type_real mu, const type_real kappa)
-      : rho(rho), mu(mu), kappa(kappa) {}
+  kernels(const type_real rho, const type_real mu, const type_real kappa,
+          const type_real rhop, const type_real alpha, const type_real beta)
+      : rho(rho), mu(mu), kappa(kappa), rhop(rhop), alpha(alpha), beta(beta) {}
 };
 
 template <>

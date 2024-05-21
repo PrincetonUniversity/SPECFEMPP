@@ -3,6 +3,7 @@
 
 #include "algorithms/dot.hpp"
 #include "specfem_setup.hpp"
+#include "element_kernel.hpp"
 
 template <>
 KOKKOS_FUNCTION specfem::point::kernels<
@@ -38,7 +39,7 @@ specfem::frechet_derivatives::impl::element_kernel<
                                backward_field.displacement) *
       1.0 / properties.kappa * dt;
 
-  return { kappa_kl, rho_kl };
+  return { rho_kl, kappa_kl };
 }
 
 #endif /* _FRECHET_DERIVATIVES_IMPL_ELEMENT_KERNEL_ACOUSTIC_ISOTROPIC_TPP */

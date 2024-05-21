@@ -43,9 +43,9 @@ void specfem::writer::kernel<OutputLibrary>::write() {
 
   assert(nelastic + nacoustic == nspec);
 
-  specfem::kokkos::HostView3d<int> xcoordinates_elastic("xcoordinates_elastic",
+  specfem::kokkos::HostView3d<type_real> xcoordinates_elastic("xcoordinates_elastic",
                                                         nelastic, ngllz, ngllx);
-  specfem::kokkos::HostView3d<int> zcoordinates_elastic("zcoordinates_elastic",
+  specfem::kokkos::HostView3d<type_real> zcoordinates_elastic("zcoordinates_elastic",
                                                         nelastic, ngllz, ngllx);
 
   int index = 0;
@@ -70,10 +70,13 @@ void specfem::writer::kernel<OutputLibrary>::write() {
   elastic.createDataset("rho", kernels.elastic_isotropic.h_rho).write();
   elastic.createDataset("mu", kernels.elastic_isotropic.h_mu).write();
   elastic.createDataset("kappa", kernels.elastic_isotropic.h_kappa).write();
+  elastic.createDataset("rhop", kernels.elastic_isotropic.h_rhop).write();
+  elastic.createDataset("alpha", kernels.elastic_isotropic.h_alpha).write();
+  elastic.createDataset("beta", kernels.elastic_isotropic.h_beta).write();
 
-  specfem::kokkos::HostView3d<int> xcoordinates_acoustic(
+  specfem::kokkos::HostView3d<type_real> xcoordinates_acoustic(
       "xcoordinates_acoustic", nacoustic, ngllz, ngllx);
-  specfem::kokkos::HostView3d<int> zcoordinates_acoustic(
+  specfem::kokkos::HostView3d<type_real> zcoordinates_acoustic(
       "zcoordinates_acoustic", nacoustic, ngllz, ngllx);
 
   index = 0;

@@ -11,7 +11,7 @@
 namespace specfem {
 namespace point {
 
-template <bool load_jacobian> struct partial_derivatives2;
+template <bool StoreJacobian> struct partial_derivatives2;
 
 template <> struct partial_derivatives2<false> {
   type_real xix;
