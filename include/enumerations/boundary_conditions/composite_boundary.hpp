@@ -13,17 +13,18 @@
 namespace specfem {
 namespace boundary {
 
-template <specfem::element::medium_tag medium,
-          specfem::element::property_tag property, typename qp_type>
-class boundary<specfem::dimension::type::dim2, medium, property,
-               specfem::element::boundary_tag::composite_stacey_dirichlet,
-               qp_type> {
+template <specfem::wavefield::type WavefieldType,
+          specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag, typename qp_type>
+class boundary<
+    WavefieldType, specfem::dimension::type::dim2, MediumTag, PropertyTag,
+    specfem::element::boundary_tag::composite_stacey_dirichlet, qp_type> {
 private:
   using stacey_type = typename specfem::boundary::boundary<
-      specfem::dimension::type::dim2, medium, property,
+      WavefieldType, specfem::dimension::type::dim2, MediumTag, PropertyTag,
       specfem::element::boundary_tag::stacey, qp_type>;
   using dirichlet_type = typename specfem::boundary::boundary<
-      specfem::dimension::type::dim2, medium, property,
+      WavefieldType, specfem::dimension::type::dim2, MediumTag, PropertyTag,
       specfem::element::boundary_tag::acoustic_free_surface, qp_type>;
 
 public:
@@ -31,8 +32,8 @@ public:
       specfem::dimension::dimension<specfem::dimension::type::dim2>;
   using quadrature_points_type = qp_type; ///< Quadrature points type
   using medium_type =
-      specfem::medium::medium<specfem::dimension::type::dim2, medium,
-                              property>; ///< Medium type
+      specfem::medium::medium<specfem::dimension::type::dim2, MediumTag,
+                              PropertyTag>; ///< Medium type
 
   constexpr static specfem::element::boundary_tag value =
       specfem::element::boundary_tag::composite_stacey_dirichlet; ///< boundary

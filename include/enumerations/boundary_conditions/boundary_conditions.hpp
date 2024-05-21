@@ -7,10 +7,11 @@
 
 namespace specfem {
 namespace boundary {
-template <specfem::dimension::type dimension,
-          specfem::element::medium_tag medium,
-          specfem::element::property_tag property,
-          specfem::element::boundary_tag BoundaryType,
+template <specfem::wavefield::type WavefieldType,
+          specfem::dimension::type DimensionType,
+          specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag,
+          specfem::element::boundary_tag BoundaryTag,
           typename quadrature_points_type>
 class boundary;
 } // namespace boundary

@@ -19,9 +19,10 @@ namespace boundary {
  * @tparam qp_type Quadrature points type for the boundary condition
  * (compile/run time)
  */
-template <specfem::element::property_tag property, typename qp_type>
-class boundary<specfem::dimension::type::dim2,
-               specfem::element::medium_tag::elastic, property,
+template <specfem::wavefield::type WavefieldType,
+          specfem::element::property_tag PropertyTag, typename qp_type>
+class boundary<WavefieldType, specfem::dimension::type::dim2,
+               specfem::element::medium_tag::elastic, PropertyTag,
                specfem::element::boundary_tag::stacey, qp_type> {
 public:
   using dimension =
@@ -30,7 +31,7 @@ public:
   using medium_type =
       specfem::medium::medium<specfem::dimension::type::dim2,
                               specfem::element::medium_tag::elastic,
-                              property>; ///< Medium type
+                              PropertyTag>; ///< Medium type
 
   constexpr static specfem::element::boundary_tag value =
       specfem::element::boundary_tag::stacey; ///< boundary tag

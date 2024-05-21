@@ -8,10 +8,12 @@ namespace domain {
 namespace impl {
 namespace elements {
 
-template <
-    specfem::dimension::type dimension, specfem::element::medium_tag medium,
-    specfem::element::property_tag property,
-    specfem::element::boundary_tag boundary, typename quadrature_points_type>
+template <specfem::wavefield::type WavefieldType,
+          specfem::dimension::type DimensionType,
+          specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag,
+          specfem::element::boundary_tag BoundaryTag,
+          typename quadrature_points_type>
 class element;
 
 } // namespace elements

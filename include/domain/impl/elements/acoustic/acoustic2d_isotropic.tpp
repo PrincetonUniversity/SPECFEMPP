@@ -16,10 +16,12 @@ using StaticQuadraturePoints =
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>;
 } // namespace
 
-template <int NGLL, specfem::element::boundary_tag BC>
+template <int NGLL, specfem::wavefield::type WavefieldType,
+          specfem::element::boundary_tag BoundaryTag>
 KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
-    specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
-    specfem::element::property_tag::isotropic, BC,
+    WavefieldType, specfem::dimension::type::dim2,
+    specfem::element::medium_tag::acoustic,
+    specfem::element::property_tag::isotropic, BoundaryTag,
     StaticQuadraturePoints<NGLL> >::
     compute_mass_matrix_component(
         const specfem::point::properties<medium_type::medium_tag,
@@ -37,11 +39,13 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
   return;
 }
 
-template <int NGLL, specfem::element::boundary_tag BC>
+template <int NGLL, specfem::wavefield::type WavefieldType,
+          specfem::element::boundary_tag BoundaryTag>
 template <specfem::enums::time_scheme::type time_scheme>
 KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
-    specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
-    specfem::element::property_tag::isotropic, BC,
+    WavefieldType, specfem::dimension::type::dim2,
+    specfem::element::medium_tag::acoustic,
+    specfem::element::property_tag::isotropic, BoundaryTag,
     StaticQuadraturePoints<NGLL> >::
     mass_time_contribution(
         const int &xz, const type_real &dt,
@@ -63,16 +67,18 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
   return;
 }
 
-template <int NGLL, specfem::element::boundary_tag BC>
-template <bool with_jacobian>
+template <int NGLL, specfem::wavefield::type WavefieldType,
+          specfem::element::boundary_tag BoundaryTag>
+template <bool StoreJacobian>
 KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
-    specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
-    specfem::element::property_tag::isotropic, BC,
+    WavefieldType, specfem::dimension::type::dim2,
+    specfem::element::medium_tag::acoustic,
+    specfem::element::property_tag::isotropic, BoundaryTag,
     StaticQuadraturePoints<NGLL> >::
     compute_gradient(
         const int xz, const ElementQuadratureViewType s_hprime,
         const ElementFieldViewType field_chi,
-        const specfem::point::partial_derivatives2<with_jacobian>
+        const specfem::point::partial_derivatives2<StoreJacobian>
             &partial_derivatives,
         const specfem::point::boundary &boundary_type,
         specfem::kokkos::array_type<type_real, medium_type::components>
@@ -108,10 +114,12 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
   return;
 }
 
-template <int NGLL, specfem::element::boundary_tag BC>
+template <int NGLL, specfem::wavefield::type WavefieldType,
+          specfem::element::boundary_tag BoundaryTag>
 KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
-    specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
-    specfem::element::property_tag::isotropic, BC,
+    WavefieldType, specfem::dimension::type::dim2,
+    specfem::element::medium_tag::acoustic,
+    specfem::element::property_tag::isotropic, BoundaryTag,
     StaticQuadraturePoints<NGLL> >::
     compute_stress(
         const int xz,
@@ -150,10 +158,12 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
   return;
 }
 
-template <int NGLL, specfem::element::boundary_tag BC>
+template <int NGLL, specfem::wavefield::type WavefieldType,
+          specfem::element::boundary_tag BoundaryTag>
 KOKKOS_INLINE_FUNCTION void specfem::domain::impl::elements::element<
-    specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
-    specfem::element::property_tag::isotropic, BC,
+    WavefieldType, specfem::dimension::type::dim2,
+    specfem::element::medium_tag::acoustic,
+    specfem::element::property_tag::isotropic, BoundaryTag,
     StaticQuadraturePoints<NGLL> >::
     compute_acceleration(
         const int &xz,
