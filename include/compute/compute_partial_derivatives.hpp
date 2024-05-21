@@ -129,17 +129,17 @@ KOKKOS_FUNCTION void load_on_device(
   return;
 }
 
-template <bool load_jacobian>
+template <bool StoreJacobian>
 void load_on_host(
     const specfem::point::index &index,
     const specfem::compute::partial_derivatives &derivatives,
-    specfem::point::partial_derivatives2<load_jacobian> &partial_derivatives) {
+    specfem::point::partial_derivatives2<StoreJacobian> &partial_derivatives) {
 
   const int ispec = index.ispec;
   const int iz = index.iz;
   const int ix = index.ix;
 
-  if constexpr (load_jacobian) {
+  if constexpr (StoreJacobian) {
     partial_derivatives.xix = derivatives.h_xix(ispec, iz, ix);
     partial_derivatives.gammax = derivatives.h_gammax(ispec, iz, ix);
     partial_derivatives.xiz = derivatives.h_xiz(ispec, iz, ix);
@@ -155,17 +155,17 @@ void load_on_host(
   return;
 }
 
-template <bool load_jacobian>
+template <bool StoreJacobian>
 void update_on_host(const specfem::point::index &index,
                     const specfem::compute::partial_derivatives &derivatives,
-                    const specfem::point::partial_derivatives2<load_jacobian>
+                    const specfem::point::partial_derivatives2<StoreJacobian>
                         &partial_derivatives) {
 
   const int ispec = index.ispec;
   const int iz = index.iz;
   const int ix = index.ix;
 
-  if constexpr (load_jacobian) {
+  if constexpr (StoreJacobian) {
     derivatives.h_xix(ispec, iz, ix) = partial_derivatives.xix;
     derivatives.h_gammax(ispec, iz, ix) = partial_derivatives.gammax;
     derivatives.h_xiz(ispec, iz, ix) = partial_derivatives.xiz;

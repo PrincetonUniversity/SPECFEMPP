@@ -2,9 +2,9 @@
 #define _FRECHET_DERIVATIVES_IMPL_FRECHLET_ELEMENT_TPP
 
 #include "algorithms/gradient.hpp"
-#include "element_kernel/element_kernel.hpp"
 #include "element_kernel/acoustic_isotropic.tpp"
 #include "element_kernel/elastic_isotropic.tpp"
+#include "element_kernel/element_kernel.hpp"
 #include "point/field.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -116,7 +116,7 @@ void specfem::frechet_derivatives::impl::frechet_elements<
             Kokkos::TeamThreadRange(team, NGLL * NGLL), [=](const int &xz) {
               int ix, iz;
               sub2ind(xz, NGLL, iz, ix);
-              const specfem::point::index index(ispec, ix, iz);
+              const specfem::point::index index(ispec, iz, ix);
               const AdjointPointFieldType adjoint_point_field = [&]() {
                 AdjointPointFieldType adjoint_point_field;
                 specfem::compute::load_on_device(index, adjoint_field,
@@ -147,7 +147,7 @@ void specfem::frechet_derivatives::impl::frechet_elements<
                     ix, iz, quadrature_element.hprime_gll,
                     adjoint_element_field.displacement,
                     point_partial_derivatives, dfield_dx, dfield_dz);
-                return PointFieldDerivativesType{ dfield_dx, dfield_dz };
+                return PointFieldDerivativesType(dfield_dx, dfield_dz);
               }();
 
               const auto backward_point_derivatives = [&]() {
@@ -157,24 +157,16 @@ void specfem::frechet_derivatives::impl::frechet_elements<
                     ix, iz, quadrature_element.hprime_gll,
                     backward_element_field.displacement,
                     point_partial_derivatives, dfield_dx, dfield_dz);
-                return PointFieldDerivativesType{ dfield_dx, dfield_dz };
+                return PointFieldDerivativesType(dfield_dx, dfield_dz);
               }();
 
               const auto point_properties =
                   [&]() -> specfem::point::properties<MediumTag, PropertyTag> {
-                if (MediumTag == specfem::element::medium_tag::elastic) {
-                  return {};
-                } else if (MediumTag ==
-                           specfem::element::medium_tag::acoustic) {
-                  specfem::point::properties<MediumTag, PropertyTag>
-                      point_properties;
-                  specfem::compute::load_on_device(index, properties,
-                                                   point_properties);
-                  return point_properties;
-                } else {
-                  static_assert("Medium not supported");
-                  return {};
-                }
+                specfem::point::properties<MediumTag, PropertyTag>
+                    point_properties;
+                specfem::compute::load_on_device(index, properties,
+                                                 point_properties);
+                return point_properties;
               }();
 
               const auto point_kernel =
@@ -183,7 +175,13 @@ void specfem::frechet_derivatives::impl::frechet_elements<
                       backward_point_field, adjoint_point_derivatives,
                       backward_point_derivatives, dt);
 
-              specfem::compute::store_on_device(index, point_kernel, kernels);
+              const auto point_kernel_debug = [&]() {
+                specfem::point::kernels<MediumTag, PropertyTag> point_kernel_debug;
+                specfem::compute::load_on_device(index, kernels, point_kernel_debug);
+                return point_kernel_debug;
+              }();
+
+              specfem::compute::add_on_device(index, point_kernel, kernels);
             });
       });
 
