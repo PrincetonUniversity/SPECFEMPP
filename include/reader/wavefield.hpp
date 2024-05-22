@@ -32,6 +32,7 @@ public:
 private:
   std::string output_folder; ///< Path to output folder
   specfem::compute::simulation_field<specfem::wavefield::type::buffer> buffer;
+  specfem::compute::boundary_values boundary_values;
 };
 
 } // namespace reader

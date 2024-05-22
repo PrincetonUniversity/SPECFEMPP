@@ -8,15 +8,20 @@
 template <typename OutputLibrary>
 specfem::writer::wavefield<OutputLibrary>::wavefield(
     const specfem::compute::assembly &assembly, const std::string output_folder)
-    : output_folder(output_folder), forward(assembly.fields.forward) {}
+    : output_folder(output_folder), forward(assembly.fields.forward),
+      boundary_values(assembly.boundary_values) {}
 
 template <typename OutputLibrary>
 void specfem::writer::wavefield<OutputLibrary>::write() {
+
+  boundary_values.sync_to_host();
 
   typename OutputLibrary::File file(output_folder + "/ForwardWavefield");
 
   typename OutputLibrary::Group elastic = file.createGroup("/Elastic");
   typename OutputLibrary::Group acoustic = file.createGroup("/Acoustic");
+  typename OutputLibrary::Group boundary = file.createGroup("/Boundary");
+  typename OutputLibrary::Group stacey = boundary.createGroup("/Stacey");
 
   elastic.createDataset("Displacement", forward.elastic.field).write();
   elastic.createDataset("Velocity", forward.elastic.field_dot).write();
@@ -25,6 +30,19 @@ void specfem::writer::wavefield<OutputLibrary>::write() {
   acoustic.createDataset("Potential", forward.acoustic.field).write();
   acoustic.createDataset("PotentialDot", forward.acoustic.field_dot).write();
   acoustic.createDataset("PotentialDotDot", forward.acoustic.field_dot_dot)
+      .write();
+
+  stacey
+      .createDataset("IndexMapping",
+                     boundary_values.stacey.h_property_index_mapping)
+      .write();
+  stacey
+      .createDataset("ElasticAcceleration",
+                     boundary_values.stacey.elastic.h_values)
+      .write();
+  stacey
+      .createDataset("AcousticAcceleration",
+                     boundary_values.stacey.acoustic.h_values)
       .write();
 
   std::cout << "Wavefield written to " << output_folder + "/ForwardWavefield"

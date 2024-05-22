@@ -27,6 +27,17 @@ void specfem::reader::wavefield<IOLibrary>::read() {
   acoustic.openDataset("Potential", buffer.acoustic.field).read();
   acoustic.openDataset("PotentialDot", buffer.acoustic.field_dot).read();
   acoustic.openDataset("PotentialDotDot", buffer.acoustic.field_dot_dot).read();
+
+  typename IOLibrary::Group boundary = file.openGroup("/Boundary");
+  typename IOLibrary::Group stacey = boundary.openGroup("/Stacey");
+
+  stacey.openDataset("IndexMapping", boundary_values.stacey.h_property_index_mapping)
+      .read();
+  stacey.openDataset("ElasticAcceleration", boundary_values.stacey.elastic.h_values)
+      .read();
+  stacey.openDataset("AcousticAcceleration", boundary_values.stacey.acoustic.h_values)
+      .read();
+
 }
 
 #endif /* SPECFEM_WAVEFIELD_READER_TPP */
