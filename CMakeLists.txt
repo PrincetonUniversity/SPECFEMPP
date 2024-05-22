@@ -290,6 +290,7 @@ add_library(
         src/compute/coupled_interfaces.cpp
         src/compute/compute_boundaries.cpp
         src/compute/compute_fields.cpp
+        src/compute/compute_boundary_values.cpp
         src/compute/compute_assembly.cpp
 )
 

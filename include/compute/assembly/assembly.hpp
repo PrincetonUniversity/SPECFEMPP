@@ -6,6 +6,7 @@
 #include "compute/compute_partial_derivatives.hpp"
 #include "compute/compute_receivers.hpp"
 // #include "compute/compute_sources.hpp"
+#include "compute/boundary_values/boundary_values.hpp"
 #include "compute/coupled_interfaces/coupled_interfaces.hpp"
 #include "compute/fields/fields.hpp"
 #include "compute/kernels/kernels.hpp"
@@ -28,6 +29,7 @@ struct assembly {
   specfem::compute::boundaries boundaries;
   specfem::compute::coupled_interfaces coupled_interfaces;
   specfem::compute::fields fields;
+  specfem::compute::boundary_values boundary_values;
 
   assembly(
       const specfem::mesh::mesh &mesh,
