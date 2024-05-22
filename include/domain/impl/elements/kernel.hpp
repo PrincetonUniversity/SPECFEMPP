@@ -40,7 +40,7 @@ public:
 
   void compute_mass_matrix() const;
 
-  void compute_stiffness_interaction() const;
+  void compute_stiffness_interaction(const int istep) const;
 
   template <specfem::enums::time_scheme::type time_scheme>
   void mass_time_contribution(const type_real dt) const;
@@ -57,6 +57,8 @@ private:
   specfem::compute::partial_derivatives partial_derivatives;
   specfem::kokkos::DeviceView1d<specfem::point::boundary> boundary_conditions;
   specfem::compute::simulation_field<WavefieldType> field;
+  specfem::compute::boundary_value_container<DimensionType, BoundaryTag>
+      boundary_values;
   quadrature_points_type quadrature_points;
   element_type element;
 };

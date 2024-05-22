@@ -9,6 +9,7 @@
 // #include "compute_sources.hpp"
 // #include "coupled_interfaces.hpp"
 #include "assembly/assembly.hpp"
+#include "boundary_values/boundary_values.hpp"
 #include "coupled_interfaces/coupled_interfaces.hpp"
 #include "coupled_interfaces/interface_container.hpp"
 #include "fields/fields.hpp"

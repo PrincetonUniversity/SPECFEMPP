@@ -22,6 +22,17 @@ public:
   boundary_values(const int nstep, const specfem::compute::mesh mesh,
                   const specfem::compute::properties properties,
                   const specfem::compute::boundaries boundaries);
+
+  template <specfem::element::boundary_tag BoundaryTag>
+  specfem::compute::boundary_value_container<specfem::dimension::type::dim2,
+                                             BoundaryTag>
+  get_container() const {
+    if constexpr (BoundaryTag == specfem::element::boundary_tag::stacey) {
+      return stacey;
+    } else {
+      return {};
+    }
+  }
 };
 } // namespace compute
 } // namespace specfem
