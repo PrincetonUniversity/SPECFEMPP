@@ -29,5 +29,7 @@ specfem::compute::assembly::assembly(
       this->mesh, this->properties, mesh.coupled_interfaces);
   this->fields =
       specfem::compute::fields(this->mesh, this->properties, simulation);
+  this->boundary_values = specfem::compute::boundary_values(
+      max_timesteps, this->mesh, this->properties, this->boundaries);
   return;
 }
