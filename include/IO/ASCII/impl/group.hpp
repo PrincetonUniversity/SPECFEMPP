@@ -52,6 +52,10 @@ public:
                                                                name, data);
   }
 
+  specfem::IO::impl::ASCII::Group<OpType> createGroup(const std::string &name) {
+    return specfem::IO::impl::ASCII::Group<OpType>(folder_path, name);
+  }
+
   ~Group() {}
 
 private:
@@ -81,6 +85,10 @@ public:
   openDataset(const std::string &name, const ViewType data) {
     return specfem::IO::impl::ASCII::Dataset<ViewType, OpType>(folder_path,
                                                                name, data);
+  }
+
+  specfem::IO::impl::ASCII::Group<OpType> openGroup(const std::string &name) {
+    return specfem::IO::impl::ASCII::Group<OpType>(folder_path, name);
   }
 
   ~Group() {}

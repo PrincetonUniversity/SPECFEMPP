@@ -18,10 +18,10 @@ template <specfem::wavefield::type WavefieldType,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag,
           typename quadrature_points_type>
-specfem::domain::impl::kernels::element_kernel<
+specfem::domain::impl::kernels::element_kernel_base<
     WavefieldType, DimensionType, MediumTag, PropertyTag, BoundaryTag,
     quadrature_points_type>::
-    element_kernel(
+    element_kernel_base(
         const specfem::compute::assembly &assembly,
         const specfem::kokkos::HostView1d<int> h_element_kernel_index_mapping,
         const quadrature_points_type &quadrature_points)
@@ -32,7 +32,6 @@ specfem::domain::impl::kernels::element_kernel<
       properties(assembly.properties),
       boundary_conditions(assembly.boundaries.boundary_types),
       quadrature_points(quadrature_points),
-      field(assembly.fields.get_simulation_field<WavefieldType>()),
       boundary_values(assembly.boundary_values.get_container<BoundaryTag>()),
       element(assembly, quadrature_points) {
 
@@ -67,9 +66,11 @@ template <specfem::wavefield::type WavefieldType,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag,
           typename quadrature_points_type>
-void specfem::domain::impl::kernels::element_kernel<
+void specfem::domain::impl::kernels::element_kernel_base<
     WavefieldType, DimensionType, MediumTag, PropertyTag, BoundaryTag,
-    quadrature_points_type>::compute_mass_matrix() const {
+    quadrature_points_type>::
+    compute_mass_matrix(
+        const specfem::compute::simulation_field<WavefieldType> &field) const {
   constexpr int components = medium_type::components;
   using PointMassType = specfem::point::field<DimensionType, MediumTag, false,
                                               false, false, true>;
@@ -144,9 +145,12 @@ template <specfem::wavefield::type WavefieldType,
           specfem::element::boundary_tag BoundaryTag,
           typename quadrature_points_type>
 template <specfem::enums::time_scheme::type time_scheme>
-void specfem::domain::impl::kernels::element_kernel<
+void specfem::domain::impl::kernels::element_kernel_base<
     WavefieldType, DimensionType, MediumTag, PropertyTag, BoundaryTag,
-    quadrature_points_type>::mass_time_contribution(const type_real dt) const {
+    quadrature_points_type>::
+    mass_time_contribution(
+        const type_real dt,
+        const specfem::compute::simulation_field<WavefieldType> &field) const {
 
   constexpr int components = medium_type::components;
   using PointMassType = specfem::point::field<DimensionType, MediumTag, false,
@@ -222,10 +226,12 @@ template <specfem::wavefield::type WavefieldType,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag,
           typename quadrature_points_type>
-void specfem::domain::impl::kernels::element_kernel<
+void specfem::domain::impl::kernels::element_kernel_base<
     WavefieldType, DimensionType, MediumTag, PropertyTag, BoundaryTag,
-    quadrature_points_type>::compute_stiffness_interaction(const int istep)
-    const {
+    quadrature_points_type>::
+    compute_stiffness_interaction(
+        const int istep,
+        const specfem::compute::simulation_field<WavefieldType> &field) const {
 
   constexpr int components = medium_type::components;
   // Number of quadrature points
@@ -449,6 +455,54 @@ void specfem::domain::impl::kernels::element_kernel<
   Kokkos::fence();
 
   return;
+}
+
+template <specfem::dimension::type DimensionType,
+          specfem::element::medium_tag MediumType,
+          specfem::element::property_tag PropertyTag,
+          typename quadrature_points_type>
+void specfem::domain::impl::kernels::element_kernel<
+    specfem::wavefield::type::backward, DimensionType, MediumType, PropertyTag,
+    specfem::element::boundary_tag::stacey,
+    quadrature_points_type>::compute_stiffness_interaction(const int istep)
+    const {
+
+  constexpr int components = medium_type::components;
+  // Number of quadrature points
+  using PointAccelerationType =
+      specfem::point::field<DimensionType, MediumType, false, false, true,
+                            false>;
+
+
+  Kokkos::parallel_for(
+      "specfem::domain::impl::kernels::elements::compute_stiffness_"
+      "interaction",
+      specfem::kokkos::DeviceTeam(this->nelements, NTHREADS, NLANES),
+      KOKKOS_CLASS_LAMBDA(
+          const specfem::kokkos::DeviceTeam::member_type &team_member) {
+        int ngllx, ngllz;
+        this->quadrature_points.get_ngll(&ngllx, &ngllz);
+        const auto ispec_l =
+            this->element_kernel_index_mapping(team_member.league_rank());
+
+        Kokkos::parallel_for(
+            this->quadrature_points.template TeamThreadRange<specfem::enums::axes::z,
+                                                       specfem::enums::axes::x>(
+                team_member),
+            [&](const int xz) {
+              int ix, iz;
+              sub2ind(xz, ngllx, iz, ix);
+
+              const specfem::point::index index(ispec_l, iz, ix);
+
+              PointAccelerationType acceleration;
+              specfem::compute::load_on_device(istep, index, this->boundary_values,
+                                               acceleration);
+
+              specfem::compute::atomic_add_on_device(index, acceleration,
+                                                     field);
+            });
+      });
 }
 
 #endif // _DOMAIN_IMPL_ELEMENTS_KERNEL_TPP

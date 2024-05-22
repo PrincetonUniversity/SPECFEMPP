@@ -32,6 +32,12 @@ public:
   boundary_value_container(const int nstep, const specfem::compute::mesh mesh,
                            const specfem::compute::properties properties,
                            const specfem::compute::boundaries boundaries);
+
+  void sync_to_host() {
+    Kokkos::deep_copy(h_property_index_mapping, property_index_mapping);
+    acoustic.sync_to_host();
+    elastic.sync_to_host();
+  }
 };
 
 template <specfem::dimension::type DimensionType,

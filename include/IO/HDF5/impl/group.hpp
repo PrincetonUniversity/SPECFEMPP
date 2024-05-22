@@ -25,11 +25,18 @@ public:
   Group(std::unique_ptr<H5::H5File> &file, const std::string &name)
       : group(std::make_unique<H5::Group>(file->createGroup(name))){};
 
+  Group(std::unique_ptr<H5::Group> &group, const std::string &name)
+      : group(std::make_unique<H5::Group>(group->createGroup(name))){};
+
   template <typename ViewType>
   specfem::IO::impl::HDF5::Dataset<ViewType, OpType>
   createDataset(const std::string &name, const ViewType data) {
     return specfem::IO::impl::HDF5::Dataset<ViewType, OpType>(group, name,
                                                               data);
+  }
+
+  specfem::IO::impl::HDF5::Group<OpType> createGroup(const std::string &name) {
+    return specfem::IO::impl::HDF5::Group<OpType>(group, name);
   }
 
   ~Group() { group->close(); }
@@ -45,11 +52,18 @@ public:
   Group(std::unique_ptr<H5::H5File> &file, const std::string &name)
       : group(std::make_unique<H5::Group>(file->openGroup(name))){};
 
+  Group(std::unique_ptr<H5::Group> &group, const std::string &name)
+      : group(std::make_unique<H5::Group>(group->openGroup(name))){};
+
   template <typename ViewType>
   specfem::IO::impl::HDF5::Dataset<ViewType, OpType>
   openDataset(const std::string &name, const ViewType data) {
     return specfem::IO::impl::HDF5::Dataset<ViewType, OpType>(group, name,
                                                               data);
+  }
+
+  specfem::IO::impl::HDF5::Group<OpType> openGroup(const std::string &name) {
+    return specfem::IO::impl::HDF5::Group<OpType>(group, name);
   }
 
   ~Group() { group->close(); }

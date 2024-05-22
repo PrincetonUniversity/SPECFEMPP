@@ -33,6 +33,8 @@ public:
       return {};
     }
   }
+
+  void sync_to_host() { stacey.sync_to_host(); }
 };
 } // namespace compute
 } // namespace specfem
