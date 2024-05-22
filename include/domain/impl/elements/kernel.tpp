@@ -33,6 +33,7 @@ specfem::domain::impl::kernels::element_kernel<
       boundary_conditions(assembly.boundaries.boundary_types),
       quadrature_points(quadrature_points),
       field(assembly.fields.get_simulation_field<WavefieldType>()),
+      boundary_values(assembly.boundary_values.get_container<BoundaryTag>()),
       element(assembly, quadrature_points) {
 
   // Check if the elements being allocated to this kernel are of the correct
@@ -223,7 +224,8 @@ template <specfem::wavefield::type WavefieldType,
           typename quadrature_points_type>
 void specfem::domain::impl::kernels::element_kernel<
     WavefieldType, DimensionType, MediumTag, PropertyTag, BoundaryTag,
-    quadrature_points_type>::compute_stiffness_interaction() const {
+    quadrature_points_type>::compute_stiffness_interaction(const int istep)
+    const {
 
   constexpr int components = medium_type::components;
   // Number of quadrature points
@@ -242,10 +244,11 @@ void specfem::domain::impl::kernels::element_kernel<
       Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, true>;
   // Data structure used to field at GLL point - represents which field to
   // atomically update
-  using PointAccelerationType = specfem::point::field<DimensionType, MediumTag, false,
-                                               false, true, false>;
-  using PointVelocityType =
-      specfem::point::field<DimensionType, MediumTag, false, true, false, false>;
+  using PointAccelerationType =
+      specfem::point::field<DimensionType, MediumTag, false, false, true,
+                            false>;
+  using PointVelocityType = specfem::point::field<DimensionType, MediumTag,
+                                                  false, true, false, false>;
 
   if (nelements == 0)
     return;
@@ -277,7 +280,8 @@ void specfem::domain::impl::kernels::element_kernel<
         ElementFieldType element_field(team_member);
         ElementQuadratureType element_quadrature(team_member);
         ElementFieldViewType s_stress_integrand_xi(team_member.team_scratch(0));
-        ElementFieldViewType s_stress_integrand_gamma(team_member.team_scratch(0));
+        ElementFieldViewType s_stress_integrand_gamma(
+            team_member.team_scratch(0));
 
         // ---------- Allocate shared views -------------------------------
         specfem::compute::load_on_device(team_member, quadrature,
@@ -415,6 +419,14 @@ void specfem::domain::impl::kernels::element_kernel<
                   element_quadrature.hprimew_gll, point_partial_derivatives,
                   point_property, point_boundary_type, velocity.velocity,
                   acceleration.acceleration);
+
+              if constexpr ((BoundaryTag ==
+                             specfem::element::boundary_tag::stacey) &&
+                            (WavefieldType ==
+                             specfem::wavefield::type::forward)) {
+                specfem::compute::store_on_device(istep, index, acceleration,
+                                                  boundary_values);
+              }
 
               specfem::compute::atomic_add_on_device(index, acceleration,
                                                      field);

@@ -49,10 +49,10 @@ KOKKOS_FUNCTION void load_on_device(
   const int iz = index.iz;
   const int ix = index.ix;
 
-  if (MediumType == specfem::element::medium_tag::acoustic) {
+  if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
     boundary_value_container.acoustic.load_on_device(istep, ispec, iz, ix,
                                                      acceleration);
-  } else if (MediumType == specfem::element::medium_tag::elastic) {
+  } else if constexpr (MediumType == specfem::element::medium_tag::elastic) {
     boundary_value_container.elastic.load_on_device(istep, ispec, iz, ix,
                                                     acceleration);
   }
@@ -65,20 +65,20 @@ template <specfem::dimension::type DimensionType,
           specfem::element::boundary_tag BoundaryTag>
 KOKKOS_FUNCTION void store_on_device(
     const int istep, const specfem::point::index index,
-    const specfem::compute::boundary_value_container<DimensionType, BoundaryTag>
-        &boundary_value_container,
     const specfem::point::field<DimensionType, MediumTag, false, false, true,
-                                false> &acceleration) {
+                                false> &acceleration,
+    const specfem::compute::boundary_value_container<DimensionType, BoundaryTag>
+        &boundary_value_container) {
 
   const int ispec =
       boundary_value_container.property_index_mapping(index.ispec);
   const int iz = index.iz;
   const int ix = index.ix;
 
-  if (MediumTag == specfem::element::medium_tag::acoustic) {
+  if constexpr (MediumTag == specfem::element::medium_tag::acoustic) {
     boundary_value_container.acoustic.store_on_device(istep, ispec, iz, ix,
                                                       acceleration);
-  } else if (MediumTag == specfem::element::medium_tag::elastic) {
+  } else if constexpr (MediumTag == specfem::element::medium_tag::elastic) {
     boundary_value_container.elastic.store_on_device(istep, ispec, iz, ix,
                                                      acceleration);
   }

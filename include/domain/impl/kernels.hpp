@@ -36,11 +36,11 @@ public:
     return;
   }
 
-  inline void compute_stiffness_interaction() const {
-    isotropic_elements.compute_stiffness_interaction();
-    isotropic_elements_dirichlet.compute_stiffness_interaction();
-    isotropic_elements_stacey.compute_stiffness_interaction();
-    isotropic_elements_stacey_dirichlet.compute_stiffness_interaction();
+  inline void compute_stiffness_interaction(const int istep) const {
+    isotropic_elements.compute_stiffness_interaction(istep);
+    isotropic_elements_dirichlet.compute_stiffness_interaction(istep);
+    isotropic_elements_stacey.compute_stiffness_interaction(istep);
+    isotropic_elements_stacey_dirichlet.compute_stiffness_interaction(istep);
     return;
   }
 

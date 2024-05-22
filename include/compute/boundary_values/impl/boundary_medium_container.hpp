@@ -42,10 +42,10 @@ public:
       specfem::kokkos::HostView1d<int> property_index_mapping);
 
   KOKKOS_FUNCTION
-  void load_on_device(const int istep, const int ispec, const int iz,
-                      const int ix,
-                      specfem::point::field<DimensionType, MediumTag, false,
-                                            false, true, false> &acceleration) {
+  void load_on_device(
+      const int istep, const int ispec, const int iz, const int ix,
+      specfem::point::field<DimensionType, MediumTag, false, false, true, false>
+          &acceleration) const {
 
 #ifdef KOKKOS_ENABLE_CUDA
 #pragma unroll
@@ -61,7 +61,7 @@ public:
   void store_on_device(
       const int istep, const int ispec, const int iz, const int ix,
       const specfem::point::field<DimensionType, MediumTag, false, false, true,
-                                  false> &acceleration) {
+                                  false> &acceleration) const {
 
 #ifdef KOKKOS_ENABLE_CUDA
 #pragma unroll

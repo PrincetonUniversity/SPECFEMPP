@@ -28,7 +28,7 @@ public:
     interface_kernels<WavefieldType, DimensionType,
                       MediumTag>::compute_coupling();
     domain.compute_source_interaction(istep);
-    domain.compute_stiffness_interaction();
+    domain.compute_stiffness_interaction(istep);
     domain.divide_mass_matrix();
   }
 
