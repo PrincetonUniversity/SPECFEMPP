@@ -9,19 +9,17 @@ template <specfem::dimension::type DimensionType,
 specfem::compute::boundary_value_container<DimensionType, BoundaryTag>::
     boundary_value_container(const int nstep, const specfem::compute::mesh mesh,
                              const specfem::compute::properties properties,
-                             const specfem::compute::boundaries boundaries) {
-
-  const int nspec = mesh.nspec;
-
-  property_index_mapping = specfem::kokkos::DeviceView1d<int>(
-      "specfem::compute::boundary_value_container::property_index_mapping",
-      nspec);
-  h_property_index_mapping = Kokkos::create_mirror_view(property_index_mapping);
+                             const specfem::compute::boundaries boundaries)
+    : property_index_mapping(
+          "specfem::compute::boundary_value_container::property_index_mapping",
+          mesh.nspec),
+      h_property_index_mapping(
+          Kokkos::create_mirror_view(property_index_mapping)) {
 
   Kokkos::parallel_for(
       "specfem::compute::boundary_value_container::initialize_property_index_"
       "mapping",
-      specfem::kokkos::HostRange(0, nspec), KOKKOS_LAMBDA(const int &ispec) {
+      specfem::kokkos::HostRange(0, mesh.nspec), KOKKOS_LAMBDA(const int &ispec) {
         h_property_index_mapping(ispec) = -1;
       });
 
