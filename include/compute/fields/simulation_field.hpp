@@ -43,10 +43,9 @@ template <specfem::wavefield::type WavefieldType> struct simulation_field {
   //   }
   // }
 
-  template <specfem::sync::kind sync> void sync_fields() {
-    elastic.sync_fields<sync>();
-    acoustic.sync_fields<sync>();
-  }
+  void copy_to_host() { sync_fields<specfem::sync::kind::DeviceToHost>(); }
+
+  void copy_to_device() { sync_fields<specfem::sync::kind::HostToDevice>(); }
 
   template <specfem::wavefield::type DestinationWavefieldType>
   void operator=(const simulation_field<DestinationWavefieldType> &rhs) {
@@ -86,6 +85,12 @@ template <specfem::wavefield::type WavefieldType> struct simulation_field {
   specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
                                      specfem::element::medium_tag::acoustic>
       acoustic;
+
+private:
+  template <specfem::sync::kind sync> void sync_fields() {
+    elastic.sync_fields<sync>();
+    acoustic.sync_fields<sync>();
+  }
 };
 
 template <specfem::wavefield::type WavefieldType1,

@@ -14,7 +14,8 @@ specfem::writer::wavefield<OutputLibrary>::wavefield(
 template <typename OutputLibrary>
 void specfem::writer::wavefield<OutputLibrary>::write() {
 
-  boundary_values.sync_to_host();
+  forward.copy_to_host();
+  boundary_values.copy_to_host();
 
   typename OutputLibrary::File file(output_folder + "/ForwardWavefield");
 
@@ -23,13 +24,13 @@ void specfem::writer::wavefield<OutputLibrary>::write() {
   typename OutputLibrary::Group boundary = file.createGroup("/Boundary");
   typename OutputLibrary::Group stacey = boundary.createGroup("/Stacey");
 
-  elastic.createDataset("Displacement", forward.elastic.field).write();
-  elastic.createDataset("Velocity", forward.elastic.field_dot).write();
-  elastic.createDataset("Acceleration", forward.elastic.field_dot_dot).write();
+  elastic.createDataset("Displacement", forward.elastic.h_field).write();
+  elastic.createDataset("Velocity", forward.elastic.h_field_dot).write();
+  elastic.createDataset("Acceleration", forward.elastic.h_field_dot_dot).write();
 
-  acoustic.createDataset("Potential", forward.acoustic.field).write();
-  acoustic.createDataset("PotentialDot", forward.acoustic.field_dot).write();
-  acoustic.createDataset("PotentialDotDot", forward.acoustic.field_dot_dot)
+  acoustic.createDataset("Potential", forward.acoustic.h_field).write();
+  acoustic.createDataset("PotentialDot", forward.acoustic.h_field_dot).write();
+  acoustic.createDataset("PotentialDotDot", forward.acoustic.h_field_dot_dot)
       .write();
 
   stacey

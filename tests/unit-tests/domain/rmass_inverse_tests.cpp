@@ -211,7 +211,7 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
       elastic_domain_static.invert_mass_matrix();
       acoustic_domain_static.invert_mass_matrix();
 
-      assembly.fields.sync_fields<specfem::sync::DeviceToHost>();
+      assembly.fields.copy_to_host();
 
       const int nglob = assembly.fields.forward.nglob;
 

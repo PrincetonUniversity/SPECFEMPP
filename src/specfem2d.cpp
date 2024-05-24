@@ -172,7 +172,7 @@ void execute(const std::string &parameter_file, const std::string &default_file,
 
     wavefield_reader->read();
     // Transfer the buffer field to device
-    assembly.fields.buffer.sync_fields<specfem::sync::kind::HostToDevice>();
+    assembly.fields.buffer.copy_to_device();
   }
   // --------------------------------------------------------------
 
