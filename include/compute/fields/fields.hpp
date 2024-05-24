@@ -34,11 +34,18 @@ struct fields {
     }
   }
 
-  template <specfem::sync::kind sync> void sync_fields() {
-    forward.sync_fields<sync>();
-    adjoint.sync_fields<sync>();
-    backward.sync_fields<sync>();
-    buffer.sync_fields<sync>();
+  void copy_to_device() {
+    buffer.copy_to_device();
+    forward.copy_to_device();
+    adjoint.copy_to_device();
+    backward.copy_to_device();
+  }
+
+  void copy_to_host() {
+    buffer.copy_to_host();
+    forward.copy_to_host();
+    adjoint.copy_to_host();
+    backward.copy_to_host();
   }
 
   specfem::compute::simulation_field<specfem::wavefield::type::buffer> buffer;

@@ -216,7 +216,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
 
       solver->run();
 
-      assembly.fields.sync_fields<specfem::sync::kind::DeviceToHost>();
+      assembly.fields.copy_to_host();
 
       const int nglob = assembly.fields.forward.nglob;
 

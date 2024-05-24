@@ -114,7 +114,7 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
   read_field(test_config.velocity_field, velocity_field, nglob, 2);
   read_field(test_config.acceleration_field, acceleration_field, nglob, 2);
 
-  assembly.fields.sync_fields<specfem::sync::kind::HostToDevice>();
+  assembly.fields.copy_to_device();
 
   specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
 
