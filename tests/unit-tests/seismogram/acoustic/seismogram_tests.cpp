@@ -104,10 +104,10 @@ TEST(SEISMOGRAM_TESTS, acoustic_seismograms_test) {
                                       stypes, 0, 0, 0, 1,
                                       setup.get_simulation_type());
 
-  const auto displacement_field = assembly.fields.forward.acoustic.field;
-  const auto velocity_field = assembly.fields.forward.acoustic.field_dot;
+  const auto displacement_field = assembly.fields.forward.acoustic.h_field;
+  const auto velocity_field = assembly.fields.forward.acoustic.h_field_dot;
   const auto acceleration_field =
-      assembly.fields.forward.acoustic.field_dot_dot;
+      assembly.fields.forward.acoustic.h_field_dot_dot;
 
   const int nglob = assembly.fields.forward.nglob;
 

@@ -30,18 +30,16 @@ specfem::domain::impl::kernels::receiver_kernel<
       field(assembly.fields.get_simulation_field<WavefieldType>()),
       quadrature_points(quadrature_points) {
 
-  Kokkos::parallel_for(
-      "specfem::domain::impl::kernels::element_kernel::check_properties",
-      specfem::kokkos::HostRange(0, nreceivers),
-      KOKKOS_LAMBDA(const int isource) {
-        const int ispec = h_receiver_kernel_index_mapping(isource);
-        if ((assembly.properties.h_element_types(ispec) !=
-             medium_type::medium_tag) &&
-            (assembly.properties.h_element_property(ispec) !=
-             medium_type::property_tag)) {
-          throw std::runtime_error("Invalid element detected in kernel");
-        }
-      });
+  // Check if the receiver element is of type being allocated
+  for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver) {
+    const int ispec = h_receiver_kernel_index_mapping(ireceiver);
+    if ((assembly.properties.h_element_types(ispec) !=
+         medium_type::medium_tag) &&
+        (assembly.properties.h_element_property(ispec) !=
+         medium_type::property_tag)) {
+      throw std::runtime_error("Invalid element detected in kernel");
+    }
+  }
 
   Kokkos::fence();
 
@@ -173,7 +171,7 @@ void specfem::domain::impl::kernels::receiver_kernel<
                       return element_field.acceleration;
                       break;
                     default:
-                      ASSERT(false, "seismogram not supported");
+                      DEVICE_ASSERT(false, "seismogram not supported");
                       return {};
                       break;
                     }

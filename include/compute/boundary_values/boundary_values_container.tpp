@@ -16,12 +16,9 @@ specfem::compute::boundary_value_container<DimensionType, BoundaryTag>::
       h_property_index_mapping(
           Kokkos::create_mirror_view(property_index_mapping)) {
 
-  Kokkos::parallel_for(
-      "specfem::compute::boundary_value_container::initialize_property_index_"
-      "mapping",
-      specfem::kokkos::HostRange(0, mesh.nspec), KOKKOS_LAMBDA(const int &ispec) {
-        h_property_index_mapping(ispec) = -1;
-      });
+  for (int ispec = 0; ispec < mesh.nspec; ++ispec) {
+    h_property_index_mapping(ispec) = -1;
+  }
 
   Kokkos::fence();
 

@@ -22,8 +22,8 @@ specfem::mesh::elements::tangential_elements::tangential_elements(
       this->y(inum) = 0.0;
     }
   } else {
-    this->x(1) = 0.0;
-    this->y(1) = 0.0;
+    this->x(0) = 0.0;
+    this->y(0) = 0.0;
   }
   return;
 }

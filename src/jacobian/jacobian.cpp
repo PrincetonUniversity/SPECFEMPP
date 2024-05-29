@@ -9,11 +9,8 @@ std::tuple<type_real, type_real> specfem::jacobian::compute_locations(
     const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
     const int ngnod, const type_real xi, const type_real gamma) {
 
-  assert(s_coorg.extent(0) == ndim);
-  assert(s_coorg.extent(1) == ngnod);
-
-  type_real xcor = 0.0;
-  type_real ycor = 0.0;
+  ASSERT(s_coorg.extent(0) == ndim, "Dimension mismatch");
+  ASSERT(s_coorg.extent(1) == ngnod, "Number of nodes mismatch");
 
   specfem::kokkos::HostView1d<type_real> shape2D =
       specfem::jacobian::define_shape_functions(xi, gamma, ngnod);
@@ -29,11 +26,8 @@ std::tuple<type_real, type_real> specfem::jacobian::compute_locations(
     const specfem::kokkos::HostView2d<type_real> coorg, const int ngnod,
     const type_real xi, const type_real gamma) {
 
-  assert(coorg.extent(0) == ndim);
-  assert(coorg.extent(1) == ngnod);
-
-  type_real xcor = 0.0;
-  type_real ycor = 0.0;
+  ASSERT(coorg.extent(0) == ndim, "Dimension mismatch");
+  ASSERT(coorg.extent(1) == ngnod, "Number of nodes mismatch");
 
   specfem::kokkos::HostView1d<type_real> shape2D =
       specfem::jacobian::define_shape_functions(xi, gamma, ngnod);
@@ -46,9 +40,9 @@ std::tuple<type_real, type_real> specfem::jacobian::compute_locations(
     const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
     const int ngnod, const specfem::kokkos::HostView1d<type_real> shape2D) {
 
-  assert(s_coorg.extent(0) == ndim);
-  assert(s_coorg.extent(1) == ngnod);
-  assert(shape2D.extent(0) == ngnod);
+  ASSERT(s_coorg.extent(0) == ndim, "Dimension mismatch");
+  ASSERT(s_coorg.extent(1) == ngnod, "Number of nodes mismatch");
+  ASSERT(shape2D.extent(0) == ngnod, "Number of nodes mismatch");
 
   type_real xcor = 0.0;
   type_real ycor = 0.0;
@@ -77,9 +71,9 @@ std::tuple<type_real, type_real> specfem::jacobian::compute_locations(
     const specfem::kokkos::HostView2d<type_real> s_coorg, const int ngnod,
     const specfem::kokkos::HostView1d<type_real> shape2D) {
 
-  assert(s_coorg.extent(0) == ndim);
-  assert(s_coorg.extent(1) == ngnod);
-  assert(shape2D.extent(0) == ngnod);
+  ASSERT(s_coorg.extent(0) == ndim, "Dimension mismatch");
+  ASSERT(s_coorg.extent(1) == ngnod, "Number of nodes mismatch");
+  ASSERT(shape2D.extent(0) == ngnod, "Number of nodes mismatch");
 
   type_real xcor = 0.0;
   type_real ycor = 0.0;
@@ -98,8 +92,8 @@ specfem::jacobian::compute_partial_derivatives(
     const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
     const int ngnod, const type_real xi, const type_real gamma) {
 
-  assert(s_coorg.extent(0) == ndim);
-  assert(s_coorg.extent(1) == ngnod);
+  ASSERT(s_coorg.extent(0) == ndim, "Dimension mismatch");
+  ASSERT(s_coorg.extent(1) == ngnod, "Number of nodes mismatch");
 
   type_real xxi = 0.0;
   type_real zxi = 0.0;
@@ -147,10 +141,10 @@ specfem::jacobian::compute_partial_derivatives(
     const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
     const int ngnod, const specfem::kokkos::HostView2d<type_real> dershape2D) {
 
-  assert(s_coorg.extent(0) == ndim);
-  assert(s_coorg.extent(1) == ngnod);
-  assert(dershape2D.extent(0) == ndim);
-  assert(dershape2D.extent(1) == ngnod);
+  ASSERT(s_coorg.extent(0) == ndim, "Dimension mismatch");
+  ASSERT(s_coorg.extent(1) == ngnod, "Number of nodes mismatch");
+  ASSERT(dershape2D.extent(0) == ndim, "Dimension mismatch");
+  ASSERT(dershape2D.extent(1) == ngnod, "Number of nodes mismatch");
 
   type_real xxi = 0.0;
   type_real zxi = 0.0;
@@ -194,8 +188,8 @@ specfem::jacobian::compute_partial_derivatives(
     const specfem::kokkos::HostView2d<type_real> s_coorg, const int ngnod,
     const type_real xi, const type_real gamma) {
 
-  assert(s_coorg.extent(0) == ndim);
-  assert(s_coorg.extent(1) == ngnod);
+  ASSERT(s_coorg.extent(0) == ndim, "Dimension mismatch");
+  ASSERT(s_coorg.extent(1) == ngnod, "Number of nodes mismatch");
 
   type_real xxi = 0.0;
   type_real zxi = 0.0;

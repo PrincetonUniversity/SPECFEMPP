@@ -92,21 +92,21 @@ specfem::mesh::boundaries::forcing_boundary::forcing_boundary(
       }
     }
   } else {
-    this->numacforcing(1) = 0;
-    this->typeacforcing(1) = 0;
-    this->ibegin_edge1(1) = 0;
-    this->ibegin_edge2(1) = 0;
-    this->ibegin_edge3(1) = 0;
-    this->ibegin_edge4(1) = 0;
-    this->iend_edge1(1) = 0;
-    this->iend_edge2(1) = 0;
-    this->iend_edge3(1) = 0;
-    this->iend_edge4(1) = 0;
-    this->ib_bottom(1) = 0;
-    this->ib_left(1) = 0;
-    this->ib_top(1) = 0;
-    this->ib_right(1) = 0;
-    this->codeacforcing(1, 1) = false;
+    this->numacforcing(0) = 0;
+    this->typeacforcing(0) = 0;
+    this->ibegin_edge1(0) = 0;
+    this->ibegin_edge2(0) = 0;
+    this->ibegin_edge3(0) = 0;
+    this->ibegin_edge4(0) = 0;
+    this->iend_edge1(0) = 0;
+    this->iend_edge2(0) = 0;
+    this->iend_edge3(0) = 0;
+    this->iend_edge4(0) = 0;
+    this->ib_bottom(0) = 0;
+    this->ib_left(0) = 0;
+    this->ib_top(0) = 0;
+    this->ib_right(0) = 0;
+    this->codeacforcing(0, 0) = false;
   }
   return;
 }

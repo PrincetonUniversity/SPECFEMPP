@@ -25,7 +25,6 @@ class element_kernel_base {
 public:
   inline int total_elements() const { return nelements; }
 
-protected:
   using dimension = specfem::dimension::dimension<DimensionType>;
   using element_type = specfem::domain::impl::elements::element<
       WavefieldType, DimensionType, MediumTag, PropertyTag, BoundaryTag,
@@ -53,6 +52,7 @@ protected:
       const type_real dt,
       const specfem::compute::simulation_field<WavefieldType> &field) const;
 
+protected:
   int nelements;
   specfem::compute::points points;
   specfem::compute::quadrature quadrature;

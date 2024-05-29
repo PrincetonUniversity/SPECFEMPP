@@ -1,5 +1,5 @@
-#ifndef _SPECFEM_SOURCES_EXTERNAL_HPP1_
-#define _SPECFEM_SOURCES_EXTERNAL_HPP1_
+#ifndef _SPECFEM_SOURCES_EXTERNAL_HPP_
+#define _SPECFEM_SOURCES_EXTERNAL_HPP_
 
 #include "compute/compute_mesh.hpp"
 #include "compute/compute_partial_derivatives.hpp"
@@ -10,6 +10,7 @@
 namespace specfem {
 namespace sources {
 class external : public source {
+
 public:
   external(){};
 

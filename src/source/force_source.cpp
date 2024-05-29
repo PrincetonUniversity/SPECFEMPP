@@ -72,7 +72,7 @@ void specfem::sources::force::compute_source_array(
       }
     }
   }
-};
+}
 
 std::string specfem::sources::force::print() const {
 

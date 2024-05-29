@@ -63,7 +63,7 @@ struct quadrature {
           h_weights(quadratures.gll.get_hw()),
           hprime(quadratures.gll.get_hprime()),
           h_hprime(quadratures.gll.get_hhprime()),
-          shape_functions(xi, xi, N, ngnod) {}
+          shape_functions(h_xi, h_xi, N, ngnod) {}
   };
 
   specfem::compute::quadrature::GLL gll; ///< GLL object

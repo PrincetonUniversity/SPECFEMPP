@@ -1,7 +1,4 @@
-#include "source/external.hpp"
-#include "source/force_source.hpp"
 #include "source/interface.hpp"
-#include "source/moment_tensor_source.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
 #include "yaml-cpp/yaml.h"
@@ -37,6 +34,11 @@ specfem::sources::read_sources(
   int nsources = yaml["number-of-sources"].as<int>();
   YAML::Node Node = yaml["sources"];
   assert(Node.IsSequence());
+
+  // Note: Make sure you name the YAML node different from the name of the
+  // source class Otherwise, the compiler will get confused and throw an error
+  // I've spent hours debugging this issue. It is very annoying since it only
+  // shows up on CUDA compiler
   for (auto N : Node) {
     if (YAML::Node force_source = N["force"]) {
       sources.push_back(std::make_shared<specfem::sources::force>(
@@ -44,12 +46,12 @@ specfem::sources::read_sources(
     } else if (YAML::Node moment_tensor_source = N["moment-tensor"]) {
       sources.push_back(std::make_shared<specfem::sources::moment_tensor>(
           moment_tensor_source, nsteps, dt, source_wavefield_type));
-    } else if (YAML::Node external = N["user-defined"]) {
+    } else if (YAML::Node external_source = N["user-defined"]) {
       sources.push_back(std::make_shared<specfem::sources::external>(
-          external, nsteps, dt, source_wavefield_type));
-    } else if (YAML::Node adjoint_source = N["adjoint-source"]) {
+          external_source, nsteps, dt, source_wavefield_type));
+    } else if (YAML::Node adjoint_node = N["adjoint-source"]) {
       sources.push_back(std::make_shared<specfem::sources::adjoint_source>(
-          adjoint_source, nsteps, dt));
+          adjoint_node, nsteps, dt));
     } else {
       throw std::runtime_error("Unknown source type");
     }

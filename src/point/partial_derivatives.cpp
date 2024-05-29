@@ -60,7 +60,7 @@ specfem::point::partial_derivatives2<true>::compute_normal(
   case specfem::enums::edge::type::RIGHT:
     return this->impl_compute_normal<specfem::enums::edge::type::RIGHT>();
   default:
-    ASSERT(false, "Invalid boundary type");
+    DEVICE_ASSERT(false, "Invalid boundary type");
     return specfem::kokkos::array_type<type_real, 2>();
   }
 }

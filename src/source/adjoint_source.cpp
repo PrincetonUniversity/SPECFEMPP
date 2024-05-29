@@ -54,7 +54,7 @@ void specfem::sources::adjoint_source::compute_source_array(
       }
     }
   }
-};
+}
 
 std::string specfem::sources::adjoint_source::print() const {
 

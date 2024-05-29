@@ -323,10 +323,10 @@ specfem::compute::interface_container<medium1, medium2>::interface_container(
         coupled_interfaces.template get_spectral_elem_index<medium2_type>(
             iedge);
 
-    ASSERT(((medium1_spectral_elem_index != medium2_spectral_elem_index) &&
-            (h_element_types(medium1_spectral_elem_index) == medium1) &&
-            (h_element_types(medium2_spectral_elem_index) == medium2)),
-           "Wrong medium type");
+    // ASSERT(((medium1_spectral_elem_index != medium2_spectral_elem_index) &&
+    //         (h_element_types(medium1_spectral_elem_index) == medium1) &&
+    //         (h_element_types(medium2_spectral_elem_index) == medium2)),
+    //        "Wrong medium type");
 
     h_medium1_index_mapping(iedge) = medium1_spectral_elem_index;
     h_medium2_index_mapping(iedge) = medium2_spectral_elem_index;

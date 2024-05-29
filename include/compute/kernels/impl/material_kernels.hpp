@@ -30,7 +30,6 @@ public:
     for (int ispec = 0; ispec < nspec; ++ispec) {
       const auto material_specification =
           materials.material_index_mapping(ispec);
-      const int index = material_specification.index;
       if ((material_specification.type == value_type) &&
           (material_specification.property == property_type)) {
         property_index_mapping(ispec) = count;

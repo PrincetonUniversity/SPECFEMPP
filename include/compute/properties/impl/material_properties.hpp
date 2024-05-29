@@ -30,7 +30,6 @@ struct material_property
     for (int ispec = 0; ispec < nspec; ++ispec) {
       const auto material_specification =
           materials.material_index_mapping(ispec);
-      const int index = material_specification.index;
 
       if ((material_specification.type == type) &&
           (material_specification.property == property)) {

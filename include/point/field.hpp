@@ -24,7 +24,10 @@ public:
   specfem::kokkos::array_type<type_real, components> velocity;
   specfem::kokkos::array_type<type_real, components> acceleration;
 
+  KOKKOS_FUNCTION
   field() = default;
+
+  KOKKOS_FUNCTION
   field(const specfem::kokkos::array_type<type_real, components> displacement,
         const specfem::kokkos::array_type<type_real, components> velocity,
         const specfem::kokkos::array_type<type_real, components> acceleration)
@@ -41,7 +44,10 @@ public:
 
   specfem::kokkos::array_type<type_real, components> displacement;
 
+  KOKKOS_FUNCTION
   field() = default;
+
+  KOKKOS_FUNCTION
   field(const specfem::kokkos::array_type<type_real, components> displacement)
       : displacement(displacement) {}
 };
@@ -55,7 +61,10 @@ public:
 
   specfem::kokkos::array_type<type_real, components> velocity;
 
+  KOKKOS_FUNCTION
   field() = default;
+
+  KOKKOS_FUNCTION
   field(const specfem::kokkos::array_type<type_real, components> velocity)
       : velocity(velocity) {}
 };
@@ -69,7 +78,10 @@ public:
 
   specfem::kokkos::array_type<type_real, components> acceleration;
 
+  KOKKOS_FUNCTION
   field() = default;
+
+  KOKKOS_FUNCTION
   field(const specfem::kokkos::array_type<type_real, components> acceleration)
       : acceleration(acceleration) {}
 };
@@ -84,7 +96,10 @@ public:
   specfem::kokkos::array_type<type_real, components> displacement;
   specfem::kokkos::array_type<type_real, components> velocity;
 
+  KOKKOS_FUNCTION
   field() = default;
+
+  KOKKOS_FUNCTION
   field(const specfem::kokkos::array_type<type_real, components> displacement,
         const specfem::kokkos::array_type<type_real, components> velocity)
       : displacement(displacement), velocity(velocity) {}
@@ -100,7 +115,10 @@ public:
   specfem::kokkos::array_type<type_real, components> displacement;
   specfem::kokkos::array_type<type_real, components> acceleration;
 
+  KOKKOS_FUNCTION
   field() = default;
+
+  KOKKOS_FUNCTION
   field(const specfem::kokkos::array_type<type_real, components> displacement,
         const specfem::kokkos::array_type<type_real, components> acceleration)
       : displacement(displacement), acceleration(acceleration) {}
@@ -116,7 +134,10 @@ public:
   specfem::kokkos::array_type<type_real, components> velocity;
   specfem::kokkos::array_type<type_real, components> acceleration;
 
+  KOKKOS_FUNCTION
   field() = default;
+
+  KOKKOS_FUNCTION
   field(const specfem::kokkos::array_type<type_real, components> velocity,
         const specfem::kokkos::array_type<type_real, components> acceleration)
       : velocity(velocity), acceleration(acceleration) {}
@@ -131,7 +152,10 @@ public:
 
   specfem::kokkos::array_type<type_real, components> mass_matrix;
 
+  KOKKOS_FUNCTION
   field() = default;
+
+  KOKKOS_FUNCTION
   field(const specfem::kokkos::array_type<type_real, components> mass_matrix)
       : mass_matrix(mass_matrix) {}
 
@@ -155,7 +179,10 @@ public:
   specfem::kokkos::array_type<type_real, components> acceleration;
   specfem::kokkos::array_type<type_real, components> mass_matrix;
 
+  KOKKOS_FUNCTION
   field() = default;
+
+  KOKKOS_FUNCTION
   field(const specfem::kokkos::array_type<type_real, components> acceleration,
         const specfem::kokkos::array_type<type_real, components> mass_matrix)
       : acceleration(acceleration), mass_matrix(mass_matrix) {}

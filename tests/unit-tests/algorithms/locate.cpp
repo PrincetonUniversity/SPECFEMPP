@@ -65,7 +65,7 @@ TEST(ALGORITHMS, locate_point) {
   Kokkos::parallel_for(
       specfem::kokkos::HostTeam(5, Kokkos::AUTO, Kokkos::AUTO)
           .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
-      KOKKOS_LAMBDA(const specfem::kokkos::HostTeam::member_type &team_member) {
+      [=](const specfem::kokkos::HostTeam::member_type &team_member) {
         const int i = team_member.league_rank();
 
         gcoord(i) = specfem::algorithms::locate_point(team_member,

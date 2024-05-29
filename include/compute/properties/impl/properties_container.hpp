@@ -80,9 +80,9 @@ struct properties_container<specfem::element::medium_tag::elastic,
     Kokkos::deep_copy(h_lambdaplus2mu, lambdaplus2mu);
   }
 
-  void assign(
-      const int ispec, const int iz, const int ix,
-      const specfem::point::properties<value_type, property_type> &property) {
+  void assign(const int ispec, const int iz, const int ix,
+              const specfem::point::properties<value_type, property_type>
+                  &property) const {
     h_rho(ispec, iz, ix) = property.rho;
     h_mu(ispec, iz, ix) = property.mu;
     h_lambdaplus2mu(ispec, iz, ix) = property.lambdaplus2mu;
@@ -154,9 +154,9 @@ struct properties_container<specfem::element::medium_tag::acoustic,
     Kokkos::deep_copy(h_kappa, kappa);
   }
 
-  void assign(
-      const int ispec, const int iz, const int ix,
-      const specfem::point::properties<value_type, property_type> &property) {
+  void assign(const int ispec, const int iz, const int ix,
+              const specfem::point::properties<value_type, property_type>
+                  &property) const {
     h_rho_inverse(ispec, iz, ix) = property.rho_inverse;
     h_lambdaplus2mu_inverse(ispec, iz, ix) = property.lambdaplus2mu_inverse;
     h_kappa(ispec, iz, ix) = property.kappa;

@@ -119,6 +119,7 @@ target_link_libraries(
   kokkos_environment
   yaml-cpp
   compare_arrays
+  Boost::filesystem
   # material_class
   -lpthread -lm
 )
@@ -137,6 +138,7 @@ target_link_libraries(
   kokkos_environment
   yaml-cpp
   compare_arrays
+  Boost::filesystem
   # material_class
   -lpthread -lm
 )
@@ -173,6 +175,7 @@ target_link_libraries(
   kokkos_environment
   yaml-cpp
   compare_arrays
+  Boost::filesystem
   # material_class
   -lpthread -lm
 )
@@ -191,6 +194,7 @@ target_link_libraries(
   kokkos_environment
   algorithms
   point
+  Boost::filesystem
 )
 
 add_executable(
@@ -206,6 +210,7 @@ target_link_libraries(
   mpi_environment
   kokkos_environment
   algorithms
+  Boost::filesystem
   point
 )
 
@@ -324,6 +329,7 @@ target_link_libraries(
   compare_arrays
   point
   edge
+  Boost::filesystem
   -lpthread -lm
 )
 

@@ -10,6 +10,7 @@ namespace specfem {
 namespace compute {
 namespace impl {
 namespace kernels {
+
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 class kernels_container;
@@ -21,6 +22,9 @@ public:
   constexpr static auto value_type = specfem::element::medium_tag::elastic;
   constexpr static auto property_type =
       specfem::element::property_tag::isotropic;
+  int nspec;
+  int ngllz;
+  int ngllx;
   specfem::kokkos::DeviceView3d<type_real> rho;
   specfem::kokkos::HostMirror3d<type_real> h_rho;
   specfem::kokkos::DeviceView3d<type_real> mu;
@@ -37,7 +41,8 @@ public:
   kernels_container() = default;
 
   kernels_container(const int nspec, const int ngllz, const int ngllx)
-      : rho("specfem::compute::impl::kernels::elastic::rho", nspec, ngllz,
+      : nspec(nspec), ngllz(ngllz), ngllx(ngllx),
+        rho("specfem::compute::impl::kernels::elastic::rho", nspec, ngllz,
             ngllx),
         mu("specfem::compute::impl::kernels::elastic::mu", nspec, ngllz, ngllx),
         kappa("specfem::compute::impl::kernels::elastic::kappa", nspec, ngllz,
@@ -55,18 +60,7 @@ public:
         h_alpha(Kokkos::create_mirror_view(alpha)),
         h_beta(Kokkos::create_mirror_view(beta)) {
 
-    Kokkos::parallel_for(
-        "specfem::compute::impl::kernels::elastic::initialize",
-        Kokkos::MDRangePolicy<Kokkos::Rank<3> >({ 0, 0, 0 },
-                                                { nspec, ngllz, ngllx }),
-        KOKKOS_LAMBDA(const int ispec, const int iz, const int ix) {
-          rho(ispec, iz, ix) = 0.0;
-          mu(ispec, iz, ix) = 0.0;
-          kappa(ispec, iz, ix) = 0.0;
-          rhop(ispec, iz, ix) = 0.0;
-          alpha(ispec, iz, ix) = 0.0;
-          beta(ispec, iz, ix) = 0.0;
-        });
+    initialize();
   }
 
   KOKKOS_INLINE_FUNCTION void load_device_kernels(
@@ -152,6 +146,21 @@ public:
     Kokkos::deep_copy(alpha, h_alpha);
     Kokkos::deep_copy(beta, h_beta);
   }
+
+  void initialize() {
+    Kokkos::parallel_for(
+        "specfem::compute::impl::kernels::elastic::initialize",
+        Kokkos::MDRangePolicy<Kokkos::Rank<3> >({ 0, 0, 0 },
+                                                { nspec, ngllz, ngllx }),
+        KOKKOS_CLASS_LAMBDA(const int ispec, const int iz, const int ix) {
+          this->rho(ispec, iz, ix) = 0.0;
+          this->mu(ispec, iz, ix) = 0.0;
+          this->kappa(ispec, iz, ix) = 0.0;
+          this->rhop(ispec, iz, ix) = 0.0;
+          this->alpha(ispec, iz, ix) = 0.0;
+          this->beta(ispec, iz, ix) = 0.0;
+        });
+  }
 };
 
 template <>
@@ -161,6 +170,9 @@ public:
   constexpr static auto value_type = specfem::element::medium_tag::acoustic;
   constexpr static auto property_type =
       specfem::element::property_tag::isotropic;
+  int nspec;
+  int ngllz;
+  int ngllx;
   specfem::kokkos::DeviceView3d<type_real> rho;
   specfem::kokkos::HostMirror3d<type_real> h_rho;
   specfem::kokkos::DeviceView3d<type_real> kappa;
@@ -173,7 +185,8 @@ public:
   kernels_container() = default;
 
   kernels_container(const int nspec, const int ngllz, const int ngllx)
-      : rho("specfem::compute::impl::kernels::acoustic::rho", nspec, ngllz,
+      : nspec(nspec), ngllz(ngllz), ngllx(ngllx),
+        rho("specfem::compute::impl::kernels::acoustic::rho", nspec, ngllz,
             ngllx),
         kappa("specfem::compute::impl::kernels::acoustic::kappa", nspec, ngllz,
               ngllx),
@@ -184,7 +197,10 @@ public:
         h_rho(Kokkos::create_mirror_view(rho)),
         h_kappa(Kokkos::create_mirror_view(kappa)),
         h_rho_prime(Kokkos::create_mirror_view(rho_prime)),
-        h_alpha(Kokkos::create_mirror_view(alpha)) {}
+        h_alpha(Kokkos::create_mirror_view(alpha)) {
+
+    initialize();
+  }
 
   KOKKOS_INLINE_FUNCTION void load_device_kernels(
       const int ispec, const int iz, const int ix,
@@ -252,6 +268,19 @@ public:
     Kokkos::deep_copy(kappa, h_kappa);
     Kokkos::deep_copy(rho_prime, h_rho_prime);
     Kokkos::deep_copy(alpha, h_alpha);
+  }
+
+  void initialize() {
+    Kokkos::parallel_for(
+        "specfem::compute::impl::kernels::acoustic::initialize",
+        Kokkos::MDRangePolicy<Kokkos::Rank<3> >({ 0, 0, 0 },
+                                                { nspec, ngllz, ngllx }),
+        KOKKOS_CLASS_LAMBDA(const int ispec, const int iz, const int ix) {
+          this->rho(ispec, iz, ix) = 0.0;
+          this->kappa(ispec, iz, ix) = 0.0;
+          this->rho_prime(ispec, iz, ix) = 0.0;
+          this->alpha(ispec, iz, ix) = 0.0;
+        });
   }
 };
 
