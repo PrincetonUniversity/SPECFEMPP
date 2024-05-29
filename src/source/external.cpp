@@ -67,7 +67,7 @@ void specfem::sources::external::compute_source_array(
       }
     }
   }
-};
+}
 
 std::string specfem::sources::external::print() const {
 

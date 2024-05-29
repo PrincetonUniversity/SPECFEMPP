@@ -37,18 +37,13 @@ specfem::domain::impl::kernels::element_kernel_base<
 
   // Check if the elements being allocated to this kernel are of the correct
   // type
-  Kokkos::parallel_for(
-      "specfem::domain::impl::kernels::element_kernel::check_properties",
-      specfem::kokkos::HostRange(0, nelements),
-      KOKKOS_LAMBDA(const int ielement) {
-        const int ispec = h_element_kernel_index_mapping(ielement);
-        if ((assembly.properties.h_element_types(ispec) != MediumTag) &&
-            (assembly.properties.h_element_property(ispec) != PropertyTag)) {
-          throw std::runtime_error("Invalid element detected in kernel");
-        }
-      });
-
-  Kokkos::fence();
+  for (int ispec = 0; ispec < nelements; ispec++) {
+    const int ielement = h_element_kernel_index_mapping(ispec);
+    if ((assembly.properties.h_element_types(ielement) != MediumTag) &&
+        (assembly.properties.h_element_property(ielement) != PropertyTag)) {
+      throw std::runtime_error("Invalid element detected in kernel");
+    }
+  }
 
   element_kernel_index_mapping = specfem::kokkos::DeviceView1d<int>(
       "specfem::domain::impl::kernels::element_kernel::element_kernel_index_"
@@ -362,7 +357,7 @@ void specfem::domain::impl::kernels::element_kernel_base<
             quadrature_points.template TeamThreadRange<specfem::enums::axes::z,
                                                        specfem::enums::axes::x>(
                 team_member),
-            [&](const int xz) {
+            [&, istep](const int xz) {
               int iz, ix;
               sub2ind(xz, ngllx, iz, ix);
               constexpr auto tag = boundary_conditions_type::value;
@@ -375,15 +370,19 @@ void specfem::domain::impl::kernels::element_kernel_base<
               // Get velocity, partial derivatives, and properties
               // only if needed by the boundary condition
               // ---------------------------------------------------------------
-              constexpr bool flag =
+              constexpr bool load_boundary_variables =
                   ((tag == specfem::element::boundary_tag::stacey) ||
                    (tag == specfem::element::boundary_tag::
                                composite_stacey_dirichlet));
 
+              constexpr bool store_boundary_values =
+                  ((BoundaryTag == specfem::element::boundary_tag::stacey) &&
+                   (WavefieldType == specfem::wavefield::type::forward));
+
               const specfem::point::index index(ispec_l, iz, ix);
 
               const auto velocity = [&]() -> PointVelocityType {
-                if constexpr (flag) {
+                if constexpr (load_boundary_variables) {
                   PointVelocityType velocity_l;
                   specfem::compute::load_on_device(index, field, velocity_l);
                   return velocity_l;
@@ -394,7 +393,7 @@ void specfem::domain::impl::kernels::element_kernel_base<
 
               const auto point_partial_derivatives =
                   [&]() -> specfem::point::partial_derivatives2<true> {
-                if constexpr (flag) {
+                if constexpr (load_boundary_variables) {
                   specfem::point::partial_derivatives2<true>
                       point_partial_derivatives;
                   specfem::compute::load_on_device(index, partial_derivatives,
@@ -408,7 +407,7 @@ void specfem::domain::impl::kernels::element_kernel_base<
 
               const auto point_property =
                   [&]() -> specfem::point::properties<MediumTag, PropertyTag> {
-                if constexpr (flag) {
+                if constexpr (load_boundary_variables) {
                   specfem::point::properties<MediumTag, PropertyTag>
                       point_property;
                   specfem::compute::load_on_device(index, properties,
@@ -426,10 +425,7 @@ void specfem::domain::impl::kernels::element_kernel_base<
                   point_property, point_boundary_type, velocity.velocity,
                   acceleration.acceleration);
 
-              if constexpr ((BoundaryTag ==
-                             specfem::element::boundary_tag::stacey) &&
-                            (WavefieldType ==
-                             specfem::wavefield::type::forward)) {
+              if constexpr (store_boundary_values) {
                 specfem::compute::store_on_device(istep, index, acceleration,
                                                   boundary_values);
               }
@@ -473,7 +469,6 @@ void specfem::domain::impl::kernels::element_kernel<
       specfem::point::field<DimensionType, MediumType, false, false, true,
                             false>;
 
-
   Kokkos::parallel_for(
       "specfem::domain::impl::kernels::elements::compute_stiffness_"
       "interaction",
@@ -486,9 +481,8 @@ void specfem::domain::impl::kernels::element_kernel<
             this->element_kernel_index_mapping(team_member.league_rank());
 
         Kokkos::parallel_for(
-            this->quadrature_points.template TeamThreadRange<specfem::enums::axes::z,
-                                                       specfem::enums::axes::x>(
-                team_member),
+            this->quadrature_points.template TeamThreadRange<
+                specfem::enums::axes::z, specfem::enums::axes::x>(team_member),
             [&](const int xz) {
               int ix, iz;
               sub2ind(xz, ngllx, iz, ix);
@@ -496,8 +490,8 @@ void specfem::domain::impl::kernels::element_kernel<
               const specfem::point::index index(ispec_l, iz, ix);
 
               PointAccelerationType acceleration;
-              specfem::compute::load_on_device(istep, index, this->boundary_values,
-                                               acceleration);
+              specfem::compute::load_on_device(
+                  istep, index, this->boundary_values, acceleration);
 
               specfem::compute::atomic_add_on_device(index, acceleration,
                                                      field);

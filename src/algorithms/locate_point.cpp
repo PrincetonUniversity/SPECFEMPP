@@ -120,8 +120,8 @@ specfem::point::lcoord2
 specfem::algorithms::locate_point(const specfem::point::gcoord2 &coordinates,
                                   const specfem::compute::mesh &mesh) {
 
-  const auto global_coordinates = mesh.points.coord;
-  const auto index_mapping = mesh.points.index_mapping;
+  const auto global_coordinates = mesh.points.h_coord;
+  const auto index_mapping = mesh.points.h_index_mapping;
   const auto xi = mesh.quadratures.gll.h_xi;
   const auto gamma = mesh.quadratures.gll.h_xi;
   const auto shape2D = mesh.quadratures.gll.shape_functions.h_shape2D;

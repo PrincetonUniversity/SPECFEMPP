@@ -151,7 +151,6 @@ specfem::mesh::IO::fortran::read_coorg_elements(std::ifstream &stream,
   int ipoin = 0;
 
   type_real coorgi, coorgj;
-  int buffer_length;
   specfem::kokkos::HostView2d<type_real> coorg("specfem::mesh::coorg", ndim,
                                                npgeo);
 

@@ -179,7 +179,7 @@ specfem::coupled_interface::impl::edges::edge<
       return -1.0 * weights[0];
       break;
     default:
-      ASSERT(false, "Invalid edge type");
+      DEVICE_ASSERT(false, "Invalid edge type");
       return 0.0;
       break;
     }

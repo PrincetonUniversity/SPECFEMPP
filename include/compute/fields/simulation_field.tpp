@@ -35,7 +35,7 @@ specfem::compute::simulation_field<WavefieldType>::simulation_field(
     const specfem::compute::mesh &mesh,
     const specfem::compute::properties &properties) {
 
-  nglob = compute_nglob(mesh.points.index_mapping);
+  nglob = compute_nglob(mesh.points.h_index_mapping);
 
   this->nspec = mesh.points.nspec;
   this->ngllz = mesh.points.ngllz;

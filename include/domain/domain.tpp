@@ -192,6 +192,8 @@ void specfem::domain::domain<WavefieldType, DimensionType, MediumTag,
                              qp_type>::invert_mass_matrix() {
   constexpr int components = medium_type::components;
   const int nglob = field.template get_nglob<MediumTag>();
+  std::cout << "Inverting mass matrix" << std::endl;
+  std::cout << "Number of global points: " << nglob << std::endl;
   using PointFieldType = specfem::point::field<DimensionType, MediumTag, false,
                                                false, false, true>;
 

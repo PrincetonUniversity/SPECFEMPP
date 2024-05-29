@@ -7,7 +7,7 @@ specfem::mesh::elements::axial_elements::axial_elements(const int nspec) {
       "specfem::mesh::axial_element::is_on_the_axis", nspec);
 
   for (int inum = 0; inum < nspec; inum++) {
-    this->is_on_the_axis(nspec) = false;
+    this->is_on_the_axis(inum) = false;
   }
 
   return;

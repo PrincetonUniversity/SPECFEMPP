@@ -1,5 +1,4 @@
-#ifndef _SOURCES_ADJOINT_SOURCE_HPP_
-#define _SOURCES_ADJOINT_SOURCE_HPP_
+#pragma once
 
 #include "compute/compute_mesh.hpp"
 #include "compute/compute_partial_derivatives.hpp"
@@ -10,6 +9,7 @@
 namespace specfem {
 namespace sources {
 class adjoint_source : public source {
+
 public:
   adjoint_source(){};
 
@@ -36,5 +36,3 @@ private:
 };
 } // namespace sources
 } // namespace specfem
-
-#endif /* _SOURCES_ADJOINT_SOURCE_HPP_ */

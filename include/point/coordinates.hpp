@@ -23,8 +23,10 @@ struct gcoord2 {
   type_real x;
   type_real z;
 
+  KOKKOS_FUNCTION
   gcoord2() = default;
 
+  KOKKOS_FUNCTION
   gcoord2(const type_real &x, const type_real &z) : x(x), z(z) {}
 };
 
@@ -33,12 +35,15 @@ struct index {
   int iz;
   int ix;
 
+  KOKKOS_FUNCTION
   index() = default;
 
+  KOKKOS_FUNCTION
   index(const int &ispec, const int &iz, const int &ix)
       : ispec(ispec), iz(iz), ix(ix) {}
 };
 
+KOKKOS_FUNCTION
 type_real distance(const specfem::point::gcoord2 &p1,
                    const specfem::point::gcoord2 &p2);
 

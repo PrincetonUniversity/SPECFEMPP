@@ -104,9 +104,10 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
                                       stypes, 0, 0, 0, 1,
                                       setup.get_simulation_type());
 
-  const auto displacement_field = assembly.fields.forward.elastic.field;
-  const auto velocity_field = assembly.fields.forward.elastic.field_dot;
-  const auto acceleration_field = assembly.fields.forward.elastic.field_dot_dot;
+  const auto displacement_field = assembly.fields.forward.elastic.h_field;
+  const auto velocity_field = assembly.fields.forward.elastic.h_field_dot;
+  const auto acceleration_field =
+      assembly.fields.forward.elastic.h_field_dot_dot;
 
   const int nglob = assembly.fields.forward.nglob;
 

@@ -59,7 +59,10 @@ void specfem::sources::moment_tensor::compute_source_array(
 
   Kokkos::parallel_for(
       specfem::kokkos::HostMDrange<2>({ 0, 0 }, { N, N }),
-      KOKKOS_LAMBDA(const int iz, const int ix) {
+      // Structured binding does not work with lambdas
+      // Workaround: capture by value
+      [=, hxi_source = hxi_source,
+       hgamma_source = hgamma_source](const int iz, const int ix) {
         type_real hlagrange = hxi_source(ix) * hgamma_source(iz);
         const specfem::point::index index(lcoord.ispec, iz, ix);
         specfem::point::partial_derivatives2<false> derivatives;
@@ -109,7 +112,7 @@ void specfem::sources::moment_tensor::compute_source_array(
       }
     }
   }
-};
+}
 
 std::string specfem::sources::moment_tensor::print() const {
   std::ostringstream message;

@@ -29,7 +29,7 @@ specfem::compute::impl::field_impl<DimensionType, MediumTag>::field_impl(
     Kokkos::View<int *, Kokkos::LayoutLeft, specfem::kokkos::HostMemSpace>
         assembly_index_mapping) {
 
-  const auto index_mapping = mesh.points.index_mapping;
+  const auto index_mapping = mesh.points.h_index_mapping;
   const auto element_type = properties.h_element_types;
   const int nspec = mesh.points.nspec;
   const int ngllz = mesh.points.ngllz;
@@ -67,7 +67,8 @@ specfem::compute::impl::field_impl<DimensionType, MediumTag>::field_impl(
   h_field_dot = specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>(
       Kokkos::create_mirror_view(field_dot));
   field_dot_dot = specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>(
-      "specfem::compute::fields::field_dot_dot", nglob, medium_type::components);
+      "specfem::compute::fields::field_dot_dot", nglob,
+      medium_type::components);
   h_field_dot_dot =
       specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>(
           Kokkos::create_mirror_view(field_dot_dot));
@@ -78,7 +79,7 @@ specfem::compute::impl::field_impl<DimensionType, MediumTag>::field_impl(
 
   Kokkos::parallel_for(
       "specfem::compute::fields::field_impl::initialize_field",
-      specfem::kokkos::HostRange(0, nglob), KOKKOS_LAMBDA(const int &iglob) {
+      specfem::kokkos::HostRange(0, nglob), [=](const int &iglob) {
         for (int icomp = 0; icomp < medium_type::components; ++icomp) {
           h_field(iglob, icomp) = 0.0;
           h_field_dot(iglob, icomp) = 0.0;
@@ -86,6 +87,8 @@ specfem::compute::impl::field_impl<DimensionType, MediumTag>::field_impl(
           h_mass_inverse(iglob, icomp) = 0.0;
         }
       });
+
+  Kokkos::fence();
 
   Kokkos::deep_copy(field, h_field);
   Kokkos::deep_copy(field_dot, h_field_dot);

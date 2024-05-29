@@ -5,6 +5,40 @@
 #include <Kokkos_Core.hpp>
 #include <memory>
 
+namespace {
+void compute_number_of_elements_per_medium(
+    const int nspec, const specfem::mesh::materials &materials,
+    const specfem::kokkos::HostView1d<specfem::element::medium_tag>
+        &h_element_types,
+    const specfem::kokkos::HostView1d<specfem::element::property_tag>
+        &h_element_property,
+    int &n_elastic, int &n_acoustic) {
+  Kokkos::parallel_reduce(
+      "specfem::compute::properties::compute_number_of_elements_per_medium",
+      specfem::kokkos::HostRange(0, nspec),
+      KOKKOS_LAMBDA(const int ispec, int &n_elastic, int &n_acoustic) {
+        if (materials.material_index_mapping(ispec).type ==
+            specfem::element::medium_tag::elastic) {
+          n_elastic++;
+          h_element_types(ispec) = specfem::element::medium_tag::elastic;
+          h_element_property(ispec) = specfem::element::property_tag::isotropic;
+        } else if (materials.material_index_mapping(ispec).type ==
+                   specfem::element::medium_tag::acoustic) {
+          n_acoustic++;
+          h_element_types(ispec) = specfem::element::medium_tag::acoustic;
+          h_element_property(ispec) = specfem::element::property_tag::isotropic;
+        }
+      },
+      n_elastic, n_acoustic);
+
+  if (n_elastic + n_acoustic != nspec)
+    throw std::runtime_error("Number of elements per medium does not match "
+                             "total number of elements");
+
+  return;
+}
+} // namespace
+
 specfem::compute::properties::properties(
     const int nspec, const int ngllz, const int ngllx,
     const specfem::mesh::materials &materials)
@@ -22,24 +56,9 @@ specfem::compute::properties::properties(
   int n_elastic;
   int n_acoustic;
 
-  Kokkos::parallel_reduce(
-      "specfem::compute::properties", this->nspec,
-      KOKKOS_LAMBDA(const int ispec, int &n_elastic, int &n_acoustic) {
-        if (materials.material_index_mapping(ispec).type ==
-            specfem::element::medium_tag::elastic) {
-          n_elastic++;
-          h_element_types(ispec) = specfem::element::medium_tag::elastic;
-          h_element_property(ispec) = specfem::element::property_tag::isotropic;
-        } else if (materials.material_index_mapping(ispec).type ==
-                   specfem::element::medium_tag::acoustic) {
-          n_acoustic++;
-          h_element_types(ispec) = specfem::element::medium_tag::acoustic;
-          h_element_property(ispec) = specfem::element::property_tag::isotropic;
-        }
-      },
-      n_elastic, n_acoustic);
-
-  assert(n_elastic + n_acoustic == nspec);
+  compute_number_of_elements_per_medium(nspec, materials, h_element_types,
+                                        h_element_property, n_elastic,
+                                        n_acoustic);
 
   acoustic_isotropic = specfem::compute::impl::properties::material_property<
       specfem::element::medium_tag::acoustic,

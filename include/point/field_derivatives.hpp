@@ -21,7 +21,10 @@ struct field_derivatives<specfem::dimension::type::dim2, MediumTag> {
   specfem::kokkos::array_type<type_real, components> du_dx;
   specfem::kokkos::array_type<type_real, components> du_dz;
 
+  KOKKOS_FUNCTION
   field_derivatives() = default;
+
+  KOKKOS_FUNCTION
   field_derivatives(
       const specfem::kokkos::array_type<type_real, components> du_dx,
       const specfem::kokkos::array_type<type_real, components> du_dz)
