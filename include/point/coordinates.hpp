@@ -13,8 +13,10 @@ struct lcoord2 {
   type_real xi;
   type_real gamma;
 
+  KOKKOS_FUNCTION
   lcoord2() = default;
 
+  KOKKOS_FUNCTION
   lcoord2(const int &ispec, const type_real &xi, const type_real &gamma)
       : ispec(ispec), xi(xi), gamma(gamma) {}
 };

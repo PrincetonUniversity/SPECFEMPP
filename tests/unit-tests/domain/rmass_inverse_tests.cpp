@@ -191,8 +191,6 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
 
       specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
 
-      std::cout << " Assembly set" << std::endl;
-
       specfem::domain::domain<
           specfem::wavefield::type::forward, specfem::dimension::type::dim2,
           specfem::element::medium_tag::elastic,
@@ -205,21 +203,19 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
           specfem::enums::element::quadrature::static_quadrature_points<5> >
           acoustic_domain_static(assembly, qp5);
 
-      std::cout << " Domain set" << std::endl;
-
       elastic_domain_static.template mass_time_contribution<
           specfem::enums::time_scheme::type::newmark>(setup.get_dt());
       acoustic_domain_static.template mass_time_contribution<
           specfem::enums::time_scheme::type::newmark>(setup.get_dt());
 
-      std::cout << " Mass time contribution set" << std::endl;
-
       elastic_domain_static.invert_mass_matrix();
       acoustic_domain_static.invert_mass_matrix();
 
-      std::cout << " Mass matrix inverted" << std::endl;
+      Kokkos::deep_copy(assembly.fields.forward.elastic.h_mass_inverse,
+                        assembly.fields.forward.elastic.mass_inverse);
 
-      assembly.fields.copy_to_host();
+      Kokkos::deep_copy(assembly.fields.forward.acoustic.h_mass_inverse,
+                        assembly.fields.forward.acoustic.mass_inverse);
 
       const int nglob = assembly.fields.forward.nglob;
 

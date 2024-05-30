@@ -77,9 +77,6 @@ specfem::mesh::boundaries::acoustic_free_surface::acoustic_free_surface(
   *this =
       specfem::mesh::boundaries::acoustic_free_surface(nelem_acoustic_surface);
 
-  std::cout << "neleme_acoustic_surface: " << nelem_acoustic_surface
-            << std::endl;
-
   if (nelem_acoustic_surface > 0) {
     for (int inum = 0; inum < nelem_acoustic_surface; inum++) {
       specfem::IO::fortran_read_line(stream, &acfree_edge);

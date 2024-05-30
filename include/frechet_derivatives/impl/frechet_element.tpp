@@ -5,6 +5,7 @@
 #include "element_kernel/acoustic_isotropic.tpp"
 #include "element_kernel/elastic_isotropic.tpp"
 #include "element_kernel/element_kernel.hpp"
+#include "compute/kernels/interface.hpp"
 #include "point/field.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -93,7 +94,7 @@ void specfem::frechet_derivatives::impl::frechet_elements<
       Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace>(nelements, Kokkos::AUTO,
                                                         Kokkos::AUTO)
           .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
-      KOKKOS_LAMBDA(
+      KOKKOS_CLASS_LAMBDA(
           const Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace>::member_type
               &team) {
         const int ielement = team.league_rank();
@@ -175,15 +176,11 @@ void specfem::frechet_derivatives::impl::frechet_elements<
                       backward_point_field, adjoint_point_derivatives,
                       backward_point_derivatives, dt);
 
-              const auto point_kernel_debug = [&]() {
-                specfem::point::kernels<MediumTag, PropertyTag> point_kernel_debug;
-                specfem::compute::load_on_device(index, kernels, point_kernel_debug);
-                return point_kernel_debug;
-              }();
-
               specfem::compute::add_on_device(index, point_kernel, kernels);
             });
       });
+
+  Kokkos::fence();
 
   return;
 }

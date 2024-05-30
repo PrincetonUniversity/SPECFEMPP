@@ -98,7 +98,7 @@ template <specfem::element::medium_tag MediumTag,
 void store_on_host(
     const specfem::point::index &index,
     const specfem::point::kernels<MediumTag, PropertyTag> &point_kernels,
-    kernels &kernels) {
+    const kernels &kernels) {
   const int ispec = kernels.h_property_index_mapping(index.ispec);
   const int iz = index.iz;
   const int ix = index.ix;
@@ -124,7 +124,7 @@ template <specfem::element::medium_tag MediumTag,
 KOKKOS_FUNCTION void store_on_device(
     const specfem::point::index &index,
     const specfem::point::kernels<MediumTag, PropertyTag> &point_kernels,
-    kernels &kernels) {
+    const kernels &kernels) {
   const int ispec = kernels.property_index_mapping(index.ispec);
   const int iz = index.iz;
   const int ix = index.ix;
@@ -150,7 +150,7 @@ template <specfem::element::medium_tag MediumTag,
 KOKKOS_FUNCTION void add_on_device(
     const specfem::point::index &index,
     const specfem::point::kernels<MediumTag, PropertyTag> &point_kernels,
-    kernels &kernels) {
+    const kernels &kernels) {
 
   const int ispec = kernels.property_index_mapping(index.ispec);
   const int iz = index.iz;
@@ -177,7 +177,7 @@ template <specfem::element::medium_tag MediumTag,
 void add_on_host(
     const specfem::point::index &index,
     const specfem::point::kernels<MediumTag, PropertyTag> &point_kernels,
-    kernels &kernels) {
+    const kernels &kernels) {
   const int ispec = kernels.h_property_index_mapping(index.ispec);
   const int iz = index.iz;
   const int ix = index.ix;

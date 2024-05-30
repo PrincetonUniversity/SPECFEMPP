@@ -8,9 +8,6 @@
 specfem::quadrature::quadratures
 specfem::runtime_configuration::quadrature::instantiate() {
 
-  std::cout << this->alpha << " " << this->beta << " " << this->ngll
-            << std::endl;
-
   specfem::quadrature::gll::gll gll(this->alpha, this->beta, this->ngll);
 
   std::cout << " Quadrature in X-dimension \n";

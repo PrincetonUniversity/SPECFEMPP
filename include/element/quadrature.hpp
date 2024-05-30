@@ -27,10 +27,11 @@ struct quadrature<NGLL, specfem::dimension::type::dim2, MemorySpace,
                                               scratch_memory_space,
                                           MemorySpace>::value,
                              int> = 0>
-  quadrature(const MemberType &team)
+  KOKKOS_FUNCTION quadrature(const MemberType &team)
       : hprime_gll(team.team_scratch(0)), hprimew_gll(team.team_scratch(0)) {}
 
-  quadrature(const ViewType &hprime_gll, const ViewType &hprimew_gll)
+  KOKKOS_FUNCTION quadrature(const ViewType &hprime_gll,
+                             const ViewType &hprimew_gll)
       : hprime_gll(hprime_gll), hprimew_gll(hprimew_gll) {}
 
   static int shmem_size() { return 2 * ViewType::shmem_size(); }
@@ -50,9 +51,11 @@ struct quadrature<NGLL, specfem::dimension::type::dim2, MemorySpace,
                                               scratch_memory_space,
                                           MemorySpace>::value,
                              int> = 0>
-  quadrature(const MemberType &team) : hprime_gll(team.team_scratch(0)) {}
+  KOKKOS_FUNCTION quadrature(const MemberType &team)
+      : hprime_gll(team.team_scratch(0)) {}
 
-  quadrature(const ViewType &hprime_gll) : hprime_gll(hprime_gll) {}
+  KOKKOS_FUNCTION quadrature(const ViewType &hprime_gll)
+      : hprime_gll(hprime_gll) {}
 
   static int shmem_size() { return ViewType::shmem_size(); }
 };

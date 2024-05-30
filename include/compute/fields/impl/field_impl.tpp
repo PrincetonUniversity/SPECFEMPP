@@ -107,12 +107,10 @@ void specfem::compute::impl::field_impl<DimensionType, MediumTag>::sync_fields()
     Kokkos::deep_copy(h_field, field);
     Kokkos::deep_copy(h_field_dot, field_dot);
     Kokkos::deep_copy(h_field_dot_dot, field_dot_dot);
-    Kokkos::deep_copy(h_mass_inverse, mass_inverse);
   } else if constexpr (sync == specfem::sync::kind::HostToDevice) {
     Kokkos::deep_copy(field, h_field);
     Kokkos::deep_copy(field_dot, h_field_dot);
     Kokkos::deep_copy(field_dot_dot, h_field_dot_dot);
-    Kokkos::deep_copy(mass_inverse, h_mass_inverse);
   }
 }
 

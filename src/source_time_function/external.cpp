@@ -73,8 +73,6 @@ void specfem::forcing_function::external::compute_source_time_function(
         "function does not match the simulation start time");
   }
 
-  std::cout << "dt: " << dt << " this->__dt: " << this->__dt << std::endl;
-
   if (std::abs(dt - this->__dt) > 1e-6) {
     throw std::runtime_error(
         "The time step of the external source time "

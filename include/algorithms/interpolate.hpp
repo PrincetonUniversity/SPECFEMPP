@@ -9,7 +9,7 @@ namespace specfem {
 namespace algorithms {
 
 template <typename T, typename MemorySpace>
-T interpolate_function(
+KOKKOS_FUNCTION T interpolate_function(
     const Kokkos::View<type_real **, specfem::kokkos::LayoutWrapper,
                        MemorySpace> &polynomial,
     const Kokkos::View<T **, specfem::kokkos::LayoutWrapper, MemorySpace>
@@ -31,7 +31,7 @@ T interpolate_function(
 }
 
 template <typename T, typename ExecSpace>
-T interpolate_function(
+KOKKOS_FUNCTION T interpolate_function(
     const typename Kokkos::TeamPolicy<ExecSpace>::member_type &team_member,
     const Kokkos::View<type_real **, specfem::kokkos::LayoutWrapper,
                        typename ExecSpace::memory_space> &polynomial,
@@ -55,7 +55,8 @@ T interpolate_function(
 
 template <int components, typename Layout, typename MemorySpace,
           typename MemoryTraits>
-specfem::kokkos::array_type<type_real, components> interpolate_function(
+KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, components>
+interpolate_function(
     const Kokkos::View<type_real **, specfem::kokkos::LayoutWrapper,
                        MemorySpace, MemoryTraits> &polynomial,
     const Kokkos::View<type_real **[components], Layout, MemorySpace,
@@ -80,7 +81,8 @@ specfem::kokkos::array_type<type_real, components> interpolate_function(
 
 template <int components, typename Layout, typename MemorySpace,
           typename MemoryTraits>
-specfem::kokkos::array_type<type_real, components> interpolate_function(
+KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, components>
+interpolate_function(
     const typename Kokkos::TeamPolicy<MemorySpace>::member_type &team_member,
     const Kokkos::View<type_real **, specfem::kokkos::LayoutWrapper,
                        MemorySpace, MemoryTraits> &polynomial,

@@ -19,15 +19,16 @@ void specfem::reader::wavefield<IOLibrary>::read() {
 
   typename IOLibrary::Group elastic = file.openGroup("/Elastic");
 
-  elastic.openDataset("Displacement", buffer.elastic.field).read();
-  elastic.openDataset("Velocity", buffer.elastic.field_dot).read();
-  elastic.openDataset("Acceleration", buffer.elastic.field_dot_dot).read();
+  elastic.openDataset("Displacement", buffer.elastic.h_field).read();
+  elastic.openDataset("Velocity", buffer.elastic.h_field_dot).read();
+  elastic.openDataset("Acceleration", buffer.elastic.h_field_dot_dot).read();
 
   typename IOLibrary::Group acoustic = file.openGroup("/Acoustic");
 
-  acoustic.openDataset("Potential", buffer.acoustic.field).read();
-  acoustic.openDataset("PotentialDot", buffer.acoustic.field_dot).read();
-  acoustic.openDataset("PotentialDotDot", buffer.acoustic.field_dot_dot).read();
+  acoustic.openDataset("Potential", buffer.acoustic.h_field).read();
+  acoustic.openDataset("PotentialDot", buffer.acoustic.h_field_dot).read();
+  acoustic.openDataset("PotentialDotDot", buffer.acoustic.h_field_dot_dot)
+      .read();
 
   typename IOLibrary::Group boundary = file.openGroup("/Boundary");
   typename IOLibrary::Group stacey = boundary.openGroup("/Stacey");
@@ -44,6 +45,9 @@ void specfem::reader::wavefield<IOLibrary>::read() {
       .openDataset("AcousticAcceleration",
                    boundary_values.stacey.acoustic.h_values)
       .read();
+
+  buffer.copy_to_device();
+  boundary_values.copy_to_device();
 }
 
 #endif /* SPECFEM_WAVEFIELD_READER_TPP */
