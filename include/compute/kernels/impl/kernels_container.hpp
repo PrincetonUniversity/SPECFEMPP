@@ -87,7 +87,7 @@ public:
 
   KOKKOS_INLINE_FUNCTION void update_kernels_on_device(
       const int ispec, const int iz, const int ix,
-      const specfem::point::kernels<value_type, property_type> &kernels) {
+      const specfem::point::kernels<value_type, property_type> &kernels) const {
     rho(ispec, iz, ix) = kernels.rho;
     mu(ispec, iz, ix) = kernels.mu;
     kappa(ispec, iz, ix) = kernels.kappa;
@@ -98,7 +98,7 @@ public:
 
   void update_kernels_on_host(
       const int ispec, const int iz, const int ix,
-      const specfem::point::kernels<value_type, property_type> &kernels) {
+      const specfem::point::kernels<value_type, property_type> &kernels) const {
     h_rho(ispec, iz, ix) = kernels.rho;
     h_mu(ispec, iz, ix) = kernels.mu;
     h_kappa(ispec, iz, ix) = kernels.kappa;
@@ -109,7 +109,7 @@ public:
 
   KOKKOS_INLINE_FUNCTION void add_kernels_on_device(
       const int ispec, const int iz, const int ix,
-      const specfem::point::kernels<value_type, property_type> &kernels) {
+      const specfem::point::kernels<value_type, property_type> &kernels) const {
     rho(ispec, iz, ix) += kernels.rho;
     mu(ispec, iz, ix) += kernels.mu;
     kappa(ispec, iz, ix) += kernels.kappa;
@@ -120,7 +120,7 @@ public:
 
   void add_kernels_on_host(
       const int ispec, const int iz, const int ix,
-      const specfem::point::kernels<value_type, property_type> &kernels) {
+      const specfem::point::kernels<value_type, property_type> &kernels) const {
     h_rho(ispec, iz, ix) += kernels.rho;
     h_mu(ispec, iz, ix) += kernels.mu;
     h_kappa(ispec, iz, ix) += kernels.kappa;
@@ -222,7 +222,7 @@ public:
 
   KOKKOS_INLINE_FUNCTION void update_kernels_on_device(
       const int ispec, const int iz, const int ix,
-      const specfem::point::kernels<value_type, property_type> &kernels) {
+      const specfem::point::kernels<value_type, property_type> &kernels) const {
     rho(ispec, iz, ix) = kernels.rho;
     kappa(ispec, iz, ix) = kernels.kappa;
     rho_prime(ispec, iz, ix) = kernels.rho_prime;
@@ -231,7 +231,7 @@ public:
 
   void update_kernels_on_host(
       const int ispec, const int iz, const int ix,
-      const specfem::point::kernels<value_type, property_type> &kernels) {
+      const specfem::point::kernels<value_type, property_type> &kernels) const {
     h_rho(ispec, iz, ix) = kernels.rho;
     h_kappa(ispec, iz, ix) = kernels.kappa;
     h_rho_prime(ispec, iz, ix) = kernels.rho_prime;
@@ -240,7 +240,7 @@ public:
 
   KOKKOS_INLINE_FUNCTION void add_kernels_on_device(
       const int ispec, const int iz, const int ix,
-      const specfem::point::kernels<value_type, property_type> &kernels) {
+      const specfem::point::kernels<value_type, property_type> &kernels) const {
     rho(ispec, iz, ix) += kernels.rho;
     kappa(ispec, iz, ix) += kernels.kappa;
     rho_prime(ispec, iz, ix) += kernels.rho_prime;
@@ -249,7 +249,7 @@ public:
 
   void add_kernels_on_host(
       const int ispec, const int iz, const int ix,
-      const specfem::point::kernels<value_type, property_type> &kernels) {
+      const specfem::point::kernels<value_type, property_type> &kernels) const {
     h_rho(ispec, iz, ix) += kernels.rho;
     h_kappa(ispec, iz, ix) += kernels.kappa;
     h_rho_prime(ispec, iz, ix) += kernels.rho_prime;

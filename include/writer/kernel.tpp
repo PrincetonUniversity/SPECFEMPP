@@ -29,8 +29,8 @@ void specfem::writer::kernel<OutputLibrary>::write() {
   int nacoustic = 0;
 
   Kokkos::parallel_reduce(
-      "specfem::writer::kernel", nspec,
-      KOKKOS_LAMBDA(const int ispec, int &nelastic, int &nacoustic) {
+      "specfem::writer::kernel", specfem::kokkos::HostRange(0, nspec),
+      [=](const int ispec, int &nelastic, int &nacoustic) {
         if (kernels.h_element_types(ispec) ==
             specfem::element::medium_tag::elastic) {
           nelastic++;
@@ -43,10 +43,10 @@ void specfem::writer::kernel<OutputLibrary>::write() {
 
   assert(nelastic + nacoustic == nspec);
 
-  specfem::kokkos::HostView3d<type_real> xcoordinates_elastic("xcoordinates_elastic",
-                                                        nelastic, ngllz, ngllx);
-  specfem::kokkos::HostView3d<type_real> zcoordinates_elastic("zcoordinates_elastic",
-                                                        nelastic, ngllz, ngllx);
+  specfem::kokkos::HostView3d<type_real> xcoordinates_elastic(
+      "xcoordinates_elastic", nelastic, ngllz, ngllx);
+  specfem::kokkos::HostView3d<type_real> zcoordinates_elastic(
+      "zcoordinates_elastic", nelastic, ngllz, ngllx);
 
   int index = 0;
 

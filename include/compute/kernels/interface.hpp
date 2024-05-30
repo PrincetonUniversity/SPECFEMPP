@@ -3,7 +3,7 @@
 
 #include "kernels.hpp"
 // #include "properties.tpp"
-#include "impl/material_properties.hpp"
-#include "impl/properties_container.hpp"
+#include "impl/kernels_container.hpp"
+#include "impl/material_kernels.hpp"
 
 #endif /* _COMPUTE_KERNELS_INTERFACE_HPP_ */

@@ -35,6 +35,8 @@ public:
   }
 
   void copy_to_host() { stacey.sync_to_host(); }
+
+  void copy_to_device() { stacey.sync_to_device(); }
 };
 } // namespace compute
 } // namespace specfem

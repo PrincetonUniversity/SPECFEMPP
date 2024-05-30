@@ -44,8 +44,8 @@ void allocate_elements(
   using medium_type =
       specfem::medium::medium<DimensionType, medium_tag, property_tag>;
   using boundary_conditions_type =
-      specfem::boundary::boundary<WavefieldType, DimensionType, medium_tag, property_tag,
-                                  boundary_tag, qp_type>;
+      specfem::boundary::boundary<WavefieldType, DimensionType, medium_tag,
+                                  property_tag, boundary_tag, qp_type>;
 
   const int nspec = assembly.mesh.nspec;
 
@@ -146,13 +146,18 @@ void allocate_elements(
   // Copy ispec_domain to device
   // Kokkos::deep_copy(ispec_domain, h_ispec_domain);
 
-  std::cout << "  - Element type: \n"
-            << "    - dimension           : " << dimension::to_string() << "\n"
-            << "    - Element type        : " << medium_type::to_string()
-            << "\n"
-            << "    - Boundary Conditions : "
-            << boundary_conditions_type::to_string() << "\n"
-            << "    - Number of elements  : " << nelements << "\n\n";
+  if constexpr (WavefieldType == specfem::wavefield::type::forward ||
+                WavefieldType == specfem::wavefield::type::adjoint) {
+
+    std::cout << "  - Element type: \n"
+              << "    - dimension           : " << dimension::to_string()
+              << "\n"
+              << "    - Element type        : " << medium_type::to_string()
+              << "\n"
+              << "    - Boundary Conditions : "
+              << boundary_conditions_type::to_string() << "\n"
+              << "    - Number of elements  : " << nelements << "\n\n";
+  }
 
   // Create isotropic acoustic surface elements
   elements = specfem::domain::impl::kernels::element_kernel<
@@ -358,10 +363,13 @@ specfem::domain::impl::kernels::kernels<
                     assembly.boundaries.h_boundary_tags(ispec));
   }
 
-  std::cout << " Element Statistics \n"
-            << "------------------------------\n"
-            << "- Types of elements in " << medium_type::to_string()
-            << " medium :\n\n";
+  if constexpr (WavefieldType == specfem::wavefield::type::forward ||
+                WavefieldType == specfem::wavefield::type::adjoint) {
+    std::cout << " Element Statistics \n"
+              << "------------------------------\n"
+              << "- Types of elements in " << medium_type::to_string()
+              << " medium :\n\n";
+  }
 
   // -----------------------------------------------------------
 

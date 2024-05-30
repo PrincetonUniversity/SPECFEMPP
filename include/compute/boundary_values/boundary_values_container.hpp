@@ -38,6 +38,12 @@ public:
     acoustic.sync_to_host();
     elastic.sync_to_host();
   }
+
+  void sync_to_device() {
+    Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);
+    acoustic.sync_to_device();
+    elastic.sync_to_device();
+  }
 };
 
 template <specfem::dimension::type DimensionType,

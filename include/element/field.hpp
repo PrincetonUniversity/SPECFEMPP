@@ -34,12 +34,12 @@ struct field<NGLL, specfem::dimension::type::dim2, MediumTag, MemorySpace,
                                               scratch_memory_space,
                                           MemorySpace>::value,
                              int> = 0>
-  field(const MemberType &team)
+  KOKKOS_FUNCTION field(const MemberType &team)
       : displacement(team.team_scratch(0)), velocity(team.team_scratch(0)),
         acceleration(team.team_scratch(0)) {}
 
-  field(const ViewType &displacement, const ViewType &velocity,
-        const ViewType &acceleration)
+  KOKKOS_FUNCTION field(const ViewType &displacement, const ViewType &velocity,
+                        const ViewType &acceleration)
       : displacement(displacement), velocity(velocity),
         acceleration(acceleration){};
 
@@ -64,9 +64,11 @@ struct field<NGLL, specfem::dimension::type::dim2, MediumTag, MemorySpace,
                                               scratch_memory_space,
                                           MemorySpace>::value,
                              int> = 0>
-  field(const MemberType &team) : displacement(team.team_scratch(0)) {}
+  KOKKOS_FUNCTION field(const MemberType &team)
+      : displacement(team.team_scratch(0)) {}
 
-  field(const ViewType &displacement) : displacement(displacement){};
+  KOKKOS_FUNCTION field(const ViewType &displacement)
+      : displacement(displacement){};
 
   static int shmem_size() { return ViewType::shmem_size(); }
 };
@@ -89,9 +91,10 @@ struct field<NGLL, specfem::dimension::type::dim2, MediumTag, MemorySpace,
                                               scratch_memory_space,
                                           MemorySpace>::value,
                              int> = 0>
-  field(const MemberType &team) : velocity(team.team_scratch(0)) {}
+  KOKKOS_FUNCTION field(const MemberType &team)
+      : velocity(team.team_scratch(0)) {}
 
-  field(const ViewType &velocity) : velocity(velocity){};
+  KOKKOS_FUNCTION field(const ViewType &velocity) : velocity(velocity){};
 
   static int shmem_size() { return ViewType::shmem_size(); }
 };
@@ -114,9 +117,11 @@ struct field<NGLL, specfem::dimension::type::dim2, MediumTag, MemorySpace,
                                               scratch_memory_space,
                                           MemorySpace>::value,
                              int> = 0>
-  field(const MemberType &team) : acceleration(team.team_scratch(0)) {}
+  KOKKOS_FUNCTION field(const MemberType &team)
+      : acceleration(team.team_scratch(0)) {}
 
-  field(const ViewType &acceleration) : acceleration(acceleration){};
+  KOKKOS_FUNCTION field(const ViewType &acceleration)
+      : acceleration(acceleration){};
 
   static int shmem_size() { return ViewType::shmem_size(); }
 };
@@ -140,10 +145,10 @@ struct field<NGLL, specfem::dimension::type::dim3, MediumTag, MemorySpace,
                                               scratch_memory_space,
                                           MemorySpace>::value,
                              int> = 0>
-  field(const MemberType &team)
+  KOKKOS_FUNCTION field(const MemberType &team)
       : displacement(team.team_scratch(0)), velocity(team.team_scratch(0)) {}
 
-  field(const ViewType &displacement, const ViewType &velocity)
+  KOKKOS_FUNCTION field(const ViewType &displacement, const ViewType &velocity)
       : displacement(displacement), velocity(velocity){};
 
   static int shmem_size() { return 2 * ViewType::shmem_size(); }
@@ -169,11 +174,12 @@ struct field<NGLL, specfem::dimension::type::dim3, MediumTag, MemorySpace,
                                               scratch_memory_space,
                                           MemorySpace>::value,
                              int> = 0>
-  field(const MemberType &team)
+  KOKKOS_FUNCTION field(const MemberType &team)
       : displacement(team.team_scratch(0)), acceleration(team.team_scratch(0)) {
   }
 
-  field(const ViewType &displacement, const ViewType &acceleration)
+  KOKKOS_FUNCTION field(const ViewType &displacement,
+                        const ViewType &acceleration)
       : displacement(displacement), acceleration(acceleration){};
 
   static int shmem_size() { return 2 * ViewType::shmem_size(); }
@@ -199,10 +205,10 @@ struct field<NGLL, specfem::dimension::type::dim3, MediumTag, MemorySpace,
                                               scratch_memory_space,
                                           MemorySpace>::value,
                              int> = 0>
-  field(const MemberType &team)
+  KOKKOS_FUNCTION field(const MemberType &team)
       : velocity(team.team_scratch(0)), acceleration(team.team_scratch(0)) {}
 
-  field(const ViewType &velocity, const ViewType &acceleration)
+  KOKKOS_FUNCTION field(const ViewType &velocity, const ViewType &acceleration)
       : velocity(velocity), acceleration(acceleration){};
 
   static int shmem_size() { return 2 * ViewType::shmem_size(); }
@@ -226,9 +232,11 @@ struct field<NGLL, specfem::dimension::type::dim3, MediumTag, MemorySpace,
                                               scratch_memory_space,
                                           MemorySpace>::value,
                              int> = 0>
-  field(const MemberType &team) : mass_matrix(team.team_scratch(0)) {}
+  KOKKOS_FUNCTION field(const MemberType &team)
+      : mass_matrix(team.team_scratch(0)) {}
 
-  field(const ViewType &mass_matrix) : mass_matrix(mass_matrix){};
+  KOKKOS_FUNCTION field(const ViewType &mass_matrix)
+      : mass_matrix(mass_matrix){};
 
   static int shmem_size() { return ViewType::shmem_size(); }
 };

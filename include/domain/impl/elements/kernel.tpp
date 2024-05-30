@@ -26,6 +26,9 @@ specfem::domain::impl::kernels::element_kernel_base<
         const specfem::kokkos::HostView1d<int> h_element_kernel_index_mapping,
         const quadrature_points_type &quadrature_points)
     : nelements(h_element_kernel_index_mapping.extent(0)),
+      element_kernel_index_mapping("specfem::domain::impl::kernels::element_"
+                                   "kernel_base::element_kernel_index_mapping",
+                                   nelements),
       h_element_kernel_index_mapping(h_element_kernel_index_mapping),
       points(assembly.mesh.points), quadrature(assembly.mesh.quadratures),
       partial_derivatives(assembly.partial_derivatives),
@@ -44,11 +47,6 @@ specfem::domain::impl::kernels::element_kernel_base<
       throw std::runtime_error("Invalid element detected in kernel");
     }
   }
-
-  element_kernel_index_mapping = specfem::kokkos::DeviceView1d<int>(
-      "specfem::domain::impl::kernels::element_kernel::element_kernel_index_"
-      "mapping",
-      nelements);
 
   Kokkos::deep_copy(element_kernel_index_mapping,
                     h_element_kernel_index_mapping);
@@ -294,8 +292,8 @@ void specfem::domain::impl::kernels::element_kernel_base<
         team_member.team_barrier();
 
         Kokkos::parallel_for(
-            quadrature_points.template TeamThreadRange<specfem::enums::axes::z,
-                                                       specfem::enums::axes::x>(
+            quadrature_points.template TeamThreadRange<specfem::enums::axes::x,
+                                                       specfem::enums::axes::z>(
                 team_member),
             [&](const int xz) {
               int ix, iz;
@@ -354,8 +352,8 @@ void specfem::domain::impl::kernels::element_kernel_base<
         team_member.team_barrier();
 
         Kokkos::parallel_for(
-            quadrature_points.template TeamThreadRange<specfem::enums::axes::z,
-                                                       specfem::enums::axes::x>(
+            quadrature_points.template TeamThreadRange<specfem::enums::axes::x,
+                                                       specfem::enums::axes::z>(
                 team_member),
             [&, istep](const int xz) {
               int iz, ix;
