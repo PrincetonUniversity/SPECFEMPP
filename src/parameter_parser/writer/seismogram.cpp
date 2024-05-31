@@ -8,11 +8,21 @@
 specfem::runtime_configuration::seismogram::seismogram(
     const YAML::Node &seismogram) {
 
-  boost::filesystem::path cwd = boost::filesystem::current_path();
-  std::string output_folder = cwd.string();
-  if (seismogram["output-folder"]) {
-    output_folder = seismogram["output-folder"].as<std::string>();
-  }
+  const std::string output_folder = [&]() {
+    if (seismogram["directory"]) {
+      return seismogram["directory"].as<std::string>();
+    } else {
+      return boost::filesystem::current_path().string();
+    }
+  }();
+
+  const std::string output_format = [&]() -> std::string {
+    if (seismogram["format"]) {
+      return seismogram["format"].as<std::string>();
+    } else {
+      return "ASCII";
+    }
+  }();
 
   if (!boost::filesystem::is_directory(
           boost::filesystem::path(output_folder))) {
@@ -21,16 +31,8 @@ specfem::runtime_configuration::seismogram::seismogram(
     throw std::runtime_error(message.str());
   }
 
-  try {
-    *this = specfem::runtime_configuration::seismogram(
-        seismogram["output-format"].as<std::string>(), output_folder);
-  } catch (YAML::ParserException &e) {
-    std::ostringstream message;
-
-    message << "Error reading seismogram config. \n" << e.what();
-
-    std::runtime_error(message.str());
-  }
+  *this =
+      specfem::runtime_configuration::seismogram(output_format, output_folder);
 
   return;
 }
@@ -43,7 +45,8 @@ specfem::runtime_configuration::seismogram::instantiate_seismogram_writer(
   const auto type = [&]() {
     if (this->output_format == "seismic_unix" || this->output_format == "su") {
       return specfem::enums::seismogram::format::seismic_unix;
-    } else if (this->output_format == "ascii") {
+    } else if (this->output_format == "ASCII" ||
+               this->output_format == "ascii") {
       return specfem::enums::seismogram::format::ascii;
     } else {
       throw std::runtime_error("Unknown seismogram format");

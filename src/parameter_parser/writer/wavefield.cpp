@@ -10,11 +10,21 @@
 specfem::runtime_configuration::wavefield::wavefield(
     const YAML::Node &Node, const specfem::simulation::type type) {
 
-  boost::filesystem::path cwd = boost::filesystem::current_path();
-  std::string output_folder = cwd.string();
-  if (Node["output-folder"]) {
-    output_folder = Node["output-folder"].as<std::string>();
-  }
+  const std::string output_format = [&]() -> std::string {
+    if (Node["format"]) {
+      return Node["format"].as<std::string>();
+    } else {
+      return "ASCII";
+    }
+  }();
+
+  const std::string output_folder = [&]() -> std::string {
+    if (Node["directory"]) {
+      return Node["directory"].as<std::string>();
+    } else {
+      return boost::filesystem::current_path().string();
+    }
+  }();
 
   if (!boost::filesystem::is_directory(
           boost::filesystem::path(output_folder))) {
@@ -23,16 +33,8 @@ specfem::runtime_configuration::wavefield::wavefield(
     throw std::runtime_error(message.str());
   }
 
-  try {
-    *this = specfem::runtime_configuration::wavefield(
-        Node["output-format"].as<std::string>(), output_folder, type);
-  } catch (YAML::ParserException &e) {
-    std::ostringstream message;
-
-    message << "Error reading wavefield config. \n" << e.what();
-
-    std::runtime_error(message.str());
-  }
+  *this = specfem::runtime_configuration::wavefield(output_format,
+                                                    output_folder, type);
 
   return;
 }
