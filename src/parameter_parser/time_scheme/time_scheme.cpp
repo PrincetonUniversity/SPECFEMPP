@@ -25,6 +25,11 @@ specfem::runtime_configuration::time_scheme::time_scheme::instantiate(
               << "Unknown simulation type.";
       throw std::runtime_error(message.str());
     }
+  } else {
+    std::ostringstream message;
+    message << "Error in time scheme instantiation. \n"
+            << "Unknown time scheme.";
+    throw std::runtime_error(message.str());
   }
 
   // User output

@@ -180,7 +180,11 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
               std::make_unique<specfem::runtime_configuration::kernel>(
                   n_kernel, specfem::simulation::type::combined);
         } else {
-          this->kernel = nullptr;
+          std::ostringstream message;
+          message << "Error reading adjoint writer configuration. \n"
+                  << "Kernel writer must be specified. \n";
+
+          throw std::runtime_error(message.str());
         }
       }
     }
