@@ -1,0 +1,6 @@
+adjoint_sources/*
+OUTPUT_FILES/*
+*.semd
+*.adj
+specfem_config.yaml
+source.yaml

@@ -151,6 +151,7 @@ subroutine read_parameter_file(imesher,BROADCAST_AFTER_READ)
          call bcast_all_singledp(xmax_param)
          call bcast_all_singlei(nx_param)
 
+         call bcast_all_singlel(STACEY_ABSORBING_CONDITIONS)
          call bcast_all_singlel(absorbbottom)
          call bcast_all_singlel(absorbright)
          call bcast_all_singlel(absorbtop)
@@ -158,6 +159,9 @@ subroutine read_parameter_file(imesher,BROADCAST_AFTER_READ)
          call bcast_all_singlei(nbregions)
       endif
    endif
+
+   ! derive additional settings/flags based on input parameters
+   call read_parameter_file_derive_flags()
 
    ! user output
    if (myrank == 0) then
@@ -197,6 +201,7 @@ subroutine read_parameter_file_init()
    xmax_param = 0.d0
    nx_param = 0
 
+   STACEY_ABSORBING_CONDITIONS = .false.
    absorbbottom = .false.
    absorbright = .false.
    absorbtop = .false.
@@ -480,6 +485,13 @@ subroutine read_parameter_file_only()
       if (err_occurred() /= 0) then
          some_parameters_missing_from_Par_file = .true.
          write(*,'(a)') 'nx                              = 80'
+         write(*,*)
+      endif
+
+      call read_value_logical_p(STACEY_ABSORBING_CONDITIONS, 'STACEY_ABSORBING_CONDITIONS')
+      if (err_occurred() /= 0) then
+         some_parameters_missing_from_Par_file = .true.
+         write(*,'(a)') 'STACEY_ABSORBING_CONDITIONS     = .true.'
          write(*,*)
       endif
 

@@ -12,9 +12,6 @@ namespace specfem {
 namespace forcing_function {
 class external : public stf {
 public:
-  external(const std::string &filename, const int nsteps, const type_real dt)
-      : __nsteps(nsteps), __dt(dt), __filename(filename) {}
-
   external(const YAML::Node &external, const int nsteps, const type_real dt);
 
   void compute_source_time_function(
@@ -30,7 +27,11 @@ public:
 
   std::string print() const override {
     std::stringstream ss;
-    ss << "External source time function: " << this->__filename;
+    ss << "External source time function: "
+       << "\n"
+       << "  X-component: " << this->x_component << "\n"
+       << "  Y-component: " << this->y_component << "\n"
+       << "  Z-component: " << this->z_component << "\n";
     return ss.str();
   }
 
@@ -43,7 +44,10 @@ private:
   type_real __t0;
   type_real __dt;
   specfem::enums::seismogram::format type;
-  std::string __filename;
+  int ncomponents;
+  std::string x_component = "";
+  std::string y_component = "";
+  std::string z_component = "";
 };
 } // namespace forcing_function
 } // namespace specfem

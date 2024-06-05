@@ -370,7 +370,7 @@ program adj_seismogram
          ! output
          print *,'component: ',comp(icomp)
 
-         filename = trim(adjoint_sources_folder)//trim(station_name(irec))//'.'// comp(icomp) // '.semd'
+         filename = trim(adjoint_sources_folder)//trim(station_name(irec))//'.'// comp(icomp) // '.adj'
          open(unit = 11, file = trim(filename),status='unknown',iostat=ier)
          if (ier /= 0) then
             print *,'Error opening file: ',trim(filename)
