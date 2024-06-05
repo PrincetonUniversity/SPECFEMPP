@@ -9,8 +9,7 @@
 specfem::forcing_function::external::external(const YAML::Node &external,
                                               const int nsteps,
                                               const type_real dt)
-    : __nsteps(nsteps), __dt(dt),
-      __filename(external["stf-file"].as<std::string>()) {
+    : __nsteps(nsteps), __dt(dt) {
 
   if ((external["format"].as<std::string>() == "ascii") ||
       (external["format"].as<std::string>() == "ASCII")) {
@@ -19,39 +18,49 @@ specfem::forcing_function::external::external(const YAML::Node &external,
     throw std::runtime_error("Only ASCII format is supported");
   }
 
-  std::vector<std::string> extentions = { ".BXX.semd", ".BXZ.semd" };
-
-  // get t0 from file
-  for (int icomp = 0; icomp < 2; ++icomp) {
-    int file_components = 0;
-    std::ifstream file(this->__filename + extentions[icomp]);
-    if (file.good()) {
-      // read the first line
-      std::string line;
-      std::getline(file, line);
-      std::istringstream iss(line);
-      type_real time, value;
-      if (!(iss >> time >> value)) {
-        throw std::runtime_error("Seismogram file " + this->__filename +
-                                 " is not formatted correctly");
-      }
-      this->__t0 = time;
-
-      std::getline(file, line);
-      std::istringstream iss2(line);
-      type_real time2, value2;
-      iss2 >> time2 >> value2;
-      this->__dt = time2 - time;
-      file.close();
-
-      file_components++;
+  if (const YAML::Node &stf = external["stf"]) {
+    if (stf["X-component"]) {
+      this->x_component = stf["X-component"].as<std::string>();
+      this->z_component = stf["Z-component"].as<std::string>();
+      this->ncomponents = 2;
+    } else if (stf["Y-component"]) {
+      this->y_component = stf["Y-component"].as<std::string>();
+      this->ncomponents = 1;
+    } else {
+      throw std::runtime_error("Error: External source time function requires "
+                               "at least one component");
     }
-    if (file_components != 1) {
-      throw std::runtime_error(
-          "External source time function file not found :" + this->__filename +
-          extentions[icomp]);
-    }
+  } else {
+    throw std::runtime_error("Error: External source time function requires "
+                             "at least one component");
   }
+
+  // Get t0 and dt from the file
+  const std::string filename =
+      (this->ncomponents == 2) ? this->x_component : this->y_component;
+
+  std::ifstream file(filename);
+  if (!file.good()) {
+    throw std::runtime_error("Error: External source time function file " +
+                             filename + " does not exist");
+  }
+
+  std::string line;
+  std::getline(file, line);
+  std::istringstream iss(line);
+  type_real time, value;
+  if (!(iss >> time >> value)) {
+    throw std::runtime_error("Seismogram file " + filename +
+                             " is not formatted correctly");
+  }
+  this->__t0 = time;
+
+  std::getline(file, line);
+  std::istringstream iss2(line);
+  type_real time2, value2;
+  iss2 >> time2 >> value2;
+  this->__dt = time2 - time;
+  file.close();
 
   return;
 }
@@ -79,31 +88,24 @@ void specfem::forcing_function::external::compute_source_time_function(
         "function does not match the simulation time step");
   }
 
-  const auto extention = [&ncomponents]() -> std::vector<std::string> {
-    if (ncomponents == 2) {
-      return { ".BXX.semd", ".BXZ.semd" };
-    } else if (ncomponents == 1) {
-      return { ".BXY.semd" };
-    } else {
-      throw std::runtime_error("Invalid number of components");
-    }
-  }();
+  std::vector<std::string> filename =
+      (ncomponents == 2)
+          ? std::vector<std::string>{ this->x_component, this->z_component }
+          : std::vector<std::string>{ this->y_component };
 
   // Check if files exist
   for (int icomp = 0; icomp < ncomponents; ++icomp) {
-    std::ifstream file(this->__filename + extention[icomp]);
+    std::ifstream file(filename[icomp]);
     if (!file.good()) {
       throw std::runtime_error("Error: External source time function file " +
-                               this->__filename + extention[icomp] +
-                               " does not exist");
+                               filename[icomp] + " does not exist");
     }
   }
 
   for (int icomp = 0; icomp < ncomponents; ++icomp) {
     specfem::kokkos::HostView2d<type_real> data("external", nsteps, 2);
     specfem::reader::seismogram reader(
-        this->__filename + extention[icomp],
-        specfem::enums::seismogram::format::ascii, data);
+        filename[icomp], specfem::enums::seismogram::format::ascii, data);
     reader.read();
     for (int i = 0; i < nsteps; i++) {
       source_time_function(i, icomp) = data(i, 1);

@@ -596,13 +596,14 @@ end subroutine save_databases_interfaces
 
 subroutine save_databases_absorbing()
 
-   use constants, only: IOUT
+   use constants, only: IOUT, IMAIN
    use shared_parameters, only: any_abs
    use part_unstruct_par, only: iproc
 
    implicit none
 
    ! 'List of absorbing elements (edge1 edge2 edge3 edge4 type):'
+   write(IMAIN, *) ' any_abs = ', any_abs
    if (any_abs) then
       ! writes out absorbing boundaries
       call write_abs_merge_database(IOUT, iproc, 2)
