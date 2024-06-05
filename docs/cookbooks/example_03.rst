@@ -277,7 +277,7 @@ With the above input files, we can run the forward simulation.
 Generating adjoint sources
 --------------------------
 
-The next step is to generate the adjoint sources. We can generate the adjoint sources using ``./xadj_seismogram`` utility which models Eq. 45 of [Tromp et al. 2005](https://doi.org/10.1111/j.1365-246X.2004.02453.x). The utility requires synthetic seismograms and does not depend on the observed data.
+The next step is to generate the adjoint sources. We can generate the adjoint sources using ``./xadj_seismogram`` utility which models Eq. 45 of `Tromp et al. 2005 <https://doi.org/10.1111/j.1365-246X.2004.02453.x>`_. The utility requires synthetic seismograms and does not depend on the observed data.
 
 .. code-block:: bash
 
