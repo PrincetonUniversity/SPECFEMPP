@@ -10,3 +10,4 @@ In this section, let us define a number "cookbooks" - examples / case studies sh
 
     example_01
     example_02
+    example_03
