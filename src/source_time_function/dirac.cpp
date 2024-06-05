@@ -21,7 +21,13 @@ specfem::forcing_function::Dirac::Dirac(
     YAML::Node &Dirac, const int nsteps, const type_real dt,
     const bool use_trick_for_better_pressure) {
   type_real f0 = 1.0 / (10.0 * dt);
-  type_real tshift = Dirac["tshift"].as<type_real>();
+  type_real tshift = [Dirac]() -> type_real {
+    if (Dirac["tshift"]) {
+      return Dirac["tshift"].as<type_real>();
+    } else {
+      return 0.0;
+    }
+  }();
   type_real factor = Dirac["factor"].as<type_real>();
 
   *this = specfem::forcing_function::Dirac(nsteps, dt, f0, tshift, factor,

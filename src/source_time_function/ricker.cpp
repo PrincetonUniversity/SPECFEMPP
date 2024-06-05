@@ -21,7 +21,13 @@ specfem::forcing_function::Ricker::Ricker(
     YAML::Node &Ricker, const int nsteps, const type_real dt,
     const bool use_trick_for_better_pressure) {
   type_real f0 = Ricker["f0"].as<type_real>();
-  type_real tshift = Ricker["tshift"].as<type_real>();
+  type_real tshift = [Ricker]() -> type_real {
+    if (Ricker["tshift"]) {
+      return Ricker["tshift"].as<type_real>();
+    } else {
+      return 0.0;
+    }
+  }();
   type_real factor = Ricker["factor"].as<type_real>();
 
   *this = specfem::forcing_function::Ricker(nsteps, dt, f0, tshift, factor,
