@@ -12,16 +12,21 @@ specfem::forcing_function::external::external(const YAML::Node &external,
     : __nsteps(nsteps), __dt(dt) {
 
   if ((external["format"].as<std::string>() == "ascii") ||
-      (external["format"].as<std::string>() == "ASCII")) {
+      (external["format"].as<std::string>() == "ASCII") ||
+      !external["format"]) {
     this->type = specfem::enums::seismogram::format::ascii;
   } else {
     throw std::runtime_error("Only ASCII format is supported");
   }
 
+  // Get the components from the file
+  // Atleast one component is required
   if (const YAML::Node &stf = external["stf"]) {
-    if (stf["X-component"]) {
-      this->x_component = stf["X-component"].as<std::string>();
-      this->z_component = stf["Z-component"].as<std::string>();
+    if (stf["X-component"] || stf["Z-component"]) {
+      this->x_component =
+          (stf["X-component"]) ? stf["X-component"].as<std::string>() : "";
+      this->z_component =
+          (stf["Z-component"]) ? stf["Z-component"].as<std::string>() : "";
       this->ncomponents = 2;
     } else if (stf["Y-component"]) {
       this->y_component = stf["Y-component"].as<std::string>();
@@ -36,8 +41,17 @@ specfem::forcing_function::external::external(const YAML::Node &external,
   }
 
   // Get t0 and dt from the file
-  const std::string filename =
-      (this->ncomponents == 2) ? this->x_component : this->y_component;
+  const std::string filename = [&]() -> std::string {
+    if (this->ncomponents == 2) {
+      if (this->x_component.empty()) {
+        return this->z_component;
+      } else {
+        return this->x_component;
+      }
+    } else {
+      return this->y_component;
+    }
+  }();
 
   std::ifstream file(filename);
   if (!file.good()) {
@@ -95,6 +109,10 @@ void specfem::forcing_function::external::compute_source_time_function(
 
   // Check if files exist
   for (int icomp = 0; icomp < ncomponents; ++icomp) {
+    // Skip empty filenames
+    if (filename[icomp].empty())
+      continue;
+
     std::ifstream file(filename[icomp]);
     if (!file.good()) {
       throw std::runtime_error("Error: External source time function file " +
@@ -102,7 +120,17 @@ void specfem::forcing_function::external::compute_source_time_function(
     }
   }
 
+  // set source time function to 0
+  for (int i = 0; i < nsteps; i++) {
+    for (int icomp = 0; icomp < ncomponents; ++icomp) {
+      source_time_function(i, icomp) = 0.0;
+    }
+  }
+
   for (int icomp = 0; icomp < ncomponents; ++icomp) {
+    if (filename[icomp].empty())
+      continue;
+
     specfem::kokkos::HostView2d<type_real> data("external", nsteps, 2);
     specfem::reader::seismogram reader(
         filename[icomp], specfem::enums::seismogram::format::ascii, data);

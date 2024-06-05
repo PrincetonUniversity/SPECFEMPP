@@ -38,7 +38,13 @@ public:
    */
   force(YAML::Node &Node, const int nsteps, const type_real dt,
         const specfem::wavefield::type wavefield_type)
-      : angle(Node["angle"].as<type_real>()),
+      : angle([](YAML::Node &Node) -> type_real {
+          if (Node["angle"]) {
+            return Node["angle"].as<type_real>();
+          } else {
+            return 0.0;
+          }
+        }(Node)),
         wavefield_type(wavefield_type), specfem::sources::source(Node, nsteps,
                                                                  dt){};
   /**
