@@ -154,7 +154,7 @@ Moment Tensor Source Description
 
 **possible values** : [YAML Node]
 
-**Description** : Definition of Ricker source :ref:`ricker_source_description
+**Description** : Definition of Ricker source :ref:`ricker_source_description`
 
 **Parameter Name** : ``sources.moment_tensor.External`` [optional]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
