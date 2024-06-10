@@ -24,15 +24,18 @@ struct properties_container<specfem::element::medium_tag::elastic,
   constexpr static auto property_type =
       specfem::element::property_tag::isotropic;
 
+  using ViewType = typename Kokkos::View<type_real ***, Kokkos::LayoutLeft,
+                                         Kokkos::DefaultExecutionSpace>;
+
   int nspec; ///< total number of acoustic spectral elements
   int ngllz; ///< number of quadrature points in z dimension
   int ngllx; ///< number of quadrature points in x dimension
-  specfem::kokkos::DeviceView3d<type_real> rho;
-  specfem::kokkos::HostMirror3d<type_real> h_rho;
-  specfem::kokkos::DeviceView3d<type_real> mu;
-  specfem::kokkos::HostMirror3d<type_real> h_mu;
-  specfem::kokkos::DeviceView3d<type_real> lambdaplus2mu;
-  specfem::kokkos::HostMirror3d<type_real> h_lambdaplus2mu;
+  ViewType rho;
+  ViewType::HostMirror h_rho;
+  ViewType mu;
+  ViewType::HostMirror h_mu;
+  ViewType lambdaplus2mu;
+  ViewType::HostMirror h_lambdaplus2mu;
 
   properties_container() = default;
 
@@ -97,15 +100,18 @@ struct properties_container<specfem::element::medium_tag::acoustic,
   constexpr static auto property_type =
       specfem::element::property_tag::isotropic;
 
+  using ViewType = typename Kokkos::View<type_real ***, Kokkos::LayoutLeft,
+                                         Kokkos::DefaultExecutionSpace>;
+
   int nspec; ///< total number of acoustic spectral elements
   int ngllz; ///< number of quadrature points in z dimension
   int ngllx; ///< number of quadrature points in x dimension
-  specfem::kokkos::DeviceView3d<type_real> rho_inverse;
-  specfem::kokkos::HostMirror3d<type_real> h_rho_inverse;
-  specfem::kokkos::DeviceView3d<type_real> lambdaplus2mu_inverse;
-  specfem::kokkos::HostMirror3d<type_real> h_lambdaplus2mu_inverse;
-  specfem::kokkos::DeviceView3d<type_real> kappa;
-  specfem::kokkos::HostMirror3d<type_real> h_kappa;
+  ViewType rho_inverse;
+  ViewType::HostMirror h_rho_inverse;
+  ViewType lambdaplus2mu_inverse;
+  ViewType::HostMirror h_lambdaplus2mu_inverse;
+  ViewType kappa;
+  ViewType::HostMirror h_kappa;
 
   properties_container() = default;
 

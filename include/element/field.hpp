@@ -21,6 +21,16 @@ struct field<NGLL, specfem::dimension::type::dim2, MediumTag, MemorySpace,
       specfem::medium::medium<specfem::dimension::type::dim2,
                               MediumTag>::components;
 
+  constexpr static auto medium_tag = MediumTag;
+  constexpr static auto dimension_type = specfem::dimension::type::dim2;
+  constexpr static int ngll = NGLL;
+  constexpr static bool store_displacement = true;
+  constexpr static bool store_velocity = true;
+  constexpr static bool store_acceleration = true;
+  constexpr static bool store_mass_matrix = false;
+
+  using memory_space = MemorySpace;
+
   using ViewType = Kokkos::View<type_real[NGLL][NGLL][components],
                                 Kokkos::LayoutRight, MemorySpace, MemoryTraits>;
 
@@ -54,6 +64,16 @@ struct field<NGLL, specfem::dimension::type::dim2, MediumTag, MemorySpace,
       specfem::medium::medium<specfem::dimension::type::dim2,
                               MediumTag>::components;
 
+  constexpr static auto medium_tag = MediumTag;
+  constexpr static auto dimension_type = specfem::dimension::type::dim2;
+  constexpr static int ngll = NGLL;
+  constexpr static bool store_displacement = true;
+  constexpr static bool store_velocity = false;
+  constexpr static bool store_acceleration = false;
+  constexpr static bool store_mass_matrix = false;
+
+  using memory_space = MemorySpace;
+
   using ViewType = Kokkos::View<type_real[NGLL][NGLL][components],
                                 Kokkos::LayoutRight, MemorySpace, MemoryTraits>;
 
@@ -81,6 +101,16 @@ struct field<NGLL, specfem::dimension::type::dim2, MediumTag, MemorySpace,
       specfem::medium::medium<specfem::dimension::type::dim2,
                               MediumTag>::components;
 
+  constexpr static auto medium_tag = MediumTag;
+  constexpr static auto dimension_type = specfem::dimension::type::dim2;
+  constexpr static int ngll = NGLL;
+  constexpr static bool store_displacement = false;
+  constexpr static bool store_velocity = true;
+  constexpr static bool store_acceleration = false;
+  constexpr static bool store_mass_matrix = false;
+
+  using memory_space = MemorySpace;
+
   using ViewType = Kokkos::View<type_real[NGLL][NGLL][components],
                                 Kokkos::LayoutRight, MemorySpace, MemoryTraits>;
 
@@ -106,6 +136,16 @@ struct field<NGLL, specfem::dimension::type::dim2, MediumTag, MemorySpace,
   static constexpr int components =
       specfem::medium::medium<specfem::dimension::type::dim2,
                               MediumTag>::components;
+
+  constexpr static auto medium_tag = MediumTag;
+  constexpr static auto dimension_type = specfem::dimension::type::dim2;
+  constexpr static int ngll = NGLL;
+  constexpr static bool store_displacement = false;
+  constexpr static bool store_velocity = false;
+  constexpr static bool store_acceleration = true;
+  constexpr static bool store_mass_matrix = false;
+
+  using memory_space = MemorySpace;
 
   using ViewType = Kokkos::View<type_real[NGLL][NGLL][components],
                                 Kokkos::LayoutRight, MemorySpace, MemoryTraits>;
@@ -133,6 +173,16 @@ struct field<NGLL, specfem::dimension::type::dim3, MediumTag, MemorySpace,
   static constexpr int components =
       specfem::medium::medium<specfem::dimension::type::dim3,
                               MediumTag>::components;
+
+  constexpr static auto medium_tag = MediumTag;
+  constexpr static auto dimension_type = specfem::dimension::type::dim2;
+  constexpr static int ngll = NGLL;
+  constexpr static bool store_displacement = true;
+  constexpr static bool store_velocity = true;
+  constexpr static bool store_acceleration = false;
+  constexpr static bool store_mass_matrix = false;
+
+  using memory_space = MemorySpace;
 
   using ViewType = Kokkos::View<type_real[NGLL][NGLL][components],
                                 Kokkos::LayoutRight, MemorySpace, MemoryTraits>;
@@ -162,6 +212,16 @@ struct field<NGLL, specfem::dimension::type::dim3, MediumTag, MemorySpace,
   static constexpr int components =
       specfem::medium::medium<specfem::dimension::type::dim3,
                               MediumTag>::components;
+
+  constexpr static auto medium_tag = MediumTag;
+  constexpr static auto dimension_type = specfem::dimension::type::dim2;
+  constexpr static int ngll = NGLL;
+  constexpr static bool store_displacement = true;
+  constexpr static bool store_velocity = false;
+  constexpr static bool store_acceleration = true;
+  constexpr static bool store_mass_matrix = false;
+
+  using memory_space = MemorySpace;
 
   using ViewType = Kokkos::View<type_real[NGLL][NGLL][components],
                                 Kokkos::LayoutRight, MemorySpace, MemoryTraits>;
@@ -194,6 +254,16 @@ struct field<NGLL, specfem::dimension::type::dim3, MediumTag, MemorySpace,
       specfem::medium::medium<specfem::dimension::type::dim3,
                               MediumTag>::components;
 
+  constexpr static auto medium_tag = MediumTag;
+  constexpr static auto dimension_type = specfem::dimension::type::dim2;
+  constexpr static int ngll = NGLL;
+  constexpr static bool store_displacement = false;
+  constexpr static bool store_velocity = true;
+  constexpr static bool store_acceleration = true;
+  constexpr static bool store_mass_matrix = false;
+
+  using memory_space = MemorySpace;
+
   using ViewType = Kokkos::View<type_real[NGLL][NGLL][components],
                                 Kokkos::LayoutRight, MemorySpace, MemoryTraits>;
 
@@ -221,6 +291,16 @@ struct field<NGLL, specfem::dimension::type::dim3, MediumTag, MemorySpace,
   static constexpr int components =
       specfem::medium::medium<specfem::dimension::type::dim3,
                               MediumTag>::components;
+
+  constexpr static auto medium_tag = MediumTag;
+  constexpr static auto dimension_type = specfem::dimension::type::dim2;
+  constexpr static int ngll = NGLL;
+  constexpr static bool store_displacement = false;
+  constexpr static bool store_velocity = false;
+  constexpr static bool store_acceleration = false;
+  constexpr static bool store_mass_matrix = true;
+
+  using memory_space = MemorySpace;
 
   using ViewType = Kokkos::View<type_real[NGLL][NGLL][components],
                                 Kokkos::LayoutRight, MemorySpace, MemoryTraits>;
