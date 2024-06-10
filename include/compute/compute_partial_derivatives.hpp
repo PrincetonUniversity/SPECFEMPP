@@ -19,35 +19,39 @@ namespace compute {
  *
  */
 struct partial_derivatives {
-  int nspec; ///< Number of spectral elements
-  int ngllz; ///< Number of quadrature points in z direction
-  int ngllx; ///< Number of quadrature points in x direction
-  specfem::kokkos::DeviceView3d<type_real> xix; ///< inverted partial derivates
-                                                ///< @xix stored on the device
-  specfem::kokkos::HostMirror3d<type_real> h_xix; ///< inverted partial
-                                                  ///< derivates @xix stored on
-                                                  ///< the host
-  specfem::kokkos::DeviceView3d<type_real> xiz; ///< inverted partial derivates
-                                                ///< @xiz stored on the device
-  specfem::kokkos::HostMirror3d<type_real> h_xiz;  ///< inverted partial
-                                                   ///< derivates @xiz stored on
-                                                   ///< the host
-  specfem::kokkos::DeviceView3d<type_real> gammax; ///< inverted partial
-                                                   ///< derivates @gammax
-                                                   ///< stored on device
-  specfem::kokkos::HostMirror3d<type_real> h_gammax; ///< inverted partial
-                                                     ///< derivates @gammax
-                                                     ///< stored on host
-  specfem::kokkos::DeviceView3d<type_real> gammaz;   ///< inverted partial
-                                                     ///< derivates @gammaz
-                                                     ///< stored on device
-  specfem::kokkos::HostMirror3d<type_real> h_gammaz; ///< inverted partial
-                                                     ///< derivates @gammaz
-                                                     ///< stored on host
-  specfem::kokkos::DeviceView3d<type_real> jacobian; ///< Jacobian values stored
-                                                     ///< on device
-  specfem::kokkos::HostMirror3d<type_real> h_jacobian; ///< Jacobian values
-                                                       ///< stored on host
+
+  using ViewType = typename Kokkos::View<type_real ***, Kokkos::LayoutLeft,
+                                         Kokkos::DefaultExecutionSpace>;
+
+  int nspec;                     ///< Number of spectral elements
+  int ngllz;                     ///< Number of quadrature points in z direction
+  int ngllx;                     ///< Number of quadrature points in x direction
+  ViewType xix;                  ///< inverted partial derivates
+                                 ///< @xix stored on the device
+  ViewType::HostMirror h_xix;    ///< inverted partial
+                                 ///< derivates @xix stored on
+                                 ///< the host
+  ViewType xiz;                  ///< inverted partial derivates
+                                 ///< @xiz stored on the device
+  ViewType::HostMirror h_xiz;    ///< inverted partial
+                                 ///< derivates @xiz stored on
+                                 ///< the host
+  ViewType gammax;               ///< inverted partial
+                                 ///< derivates @gammax
+                                 ///< stored on device
+  ViewType::HostMirror h_gammax; ///< inverted partial
+                                 ///< derivates @gammax
+                                 ///< stored on host
+  ViewType gammaz;               ///< inverted partial
+                                 ///< derivates @gammaz
+                                 ///< stored on device
+  ViewType::HostMirror h_gammaz; ///< inverted partial
+                                 ///< derivates @gammaz
+                                 ///< stored on host
+  ViewType jacobian;             ///< Jacobian values stored
+                                 ///< on device
+  ViewType::HostMirror h_jacobian; ///< Jacobian values
+                                   ///< stored on host
   /**
    * @brief Default constructor
    *

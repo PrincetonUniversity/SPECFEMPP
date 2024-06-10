@@ -2,11 +2,128 @@
 #define _ALGORITHMS_GRADIENT_HPP
 
 #include "kokkos_abstractions.h"
+#include "point/field_derivatives.hpp"
 #include "point/partial_derivatives.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
 namespace algorithms {
+
+template <typename MemberType, typename FieldType, typename QuadratureType,
+          typename CallbackFunctor,
+          std::enable_if_t<
+              Kokkos::SpaceAccessibility<
+                  typename MemberType::execution_space::scratch_memory_space,
+                  typename FieldType::memory_space>::accessible,
+              int> = 0>
+KOKKOS_FUNCTION void gradient(
+    const MemberType &team,
+    const Kokkos::View<
+        int *, typename MemberType::execution_space::memory_space> &indices,
+    const specfem::compute::partial_derivatives &partial_derivatives,
+    const QuadratureType &quadrature, const FieldType &f, const FieldType &g,
+    CallbackFunctor callback) {
+
+  constexpr auto MediumTag = FieldType::medium_tag;
+  constexpr auto DimensionType = FieldType::dimension_type;
+
+  using PointFieldDerivativesType =
+      specfem::point::field_derivatives<DimensionType, MediumTag>;
+
+  const int number_elements = indices.extent(0);
+
+  constexpr int NGLL = QuadratureType::ngll;
+
+  static_assert(QuadratureType::ngll == FieldType::ngll,
+                "The number of GLL points in the quadrature and field must "
+                "be the same");
+
+  static_assert(
+      std::is_invocable_v<CallbackFunctor, specfem::point::index,
+                          PointFieldDerivativesType, PointFieldDerivativesType>,
+      "CallbackFunctor must be invocable with the following signature: "
+      "void(const specfem::point::index, const "
+      "specfem::point::field_derivatives<DimensionType, MediumTag>, const "
+      "specfem::point::field_derivatives<DimensionType, MediumTag>)");
+
+  Kokkos::parallel_for(
+      Kokkos::TeamThreadRange(team, number_elements), [=](const int &ielement) {
+        const int ispec = indices(ielement);
+
+        for (int ix = 0; ix < NGLL; ++ix) {
+          for (int iz = 0; iz < NGLL; ++iz) {
+            specfem::point::index index(ispec, iz, ix);
+
+            type_real df_dxi[FieldType::components];
+            type_real df_dgamma[FieldType::components];
+
+            type_real dg_dxi[FieldType::components];
+            type_real dg_dgamma[FieldType::components];
+
+            for (int icomponent = 0; icomponent < FieldType::components;
+                 ++icomponent) {
+              df_dxi[icomponent] = 0.0;
+              df_dgamma[icomponent] = 0.0;
+
+              dg_dxi[icomponent] = 0.0;
+              dg_dgamma[icomponent] = 0.0;
+            }
+
+            for (int l = 0; l < NGLL; ++l) {
+              for (int icomponent = 0; icomponent < FieldType::components;
+                   ++icomponent) {
+                df_dxi[icomponent] +=
+                    quadrature.hprime_gll(ix, l) *
+                    f.displacement(ielement, icomponent, iz, l);
+                df_dgamma[icomponent] +=
+                    quadrature.hprime_gll(iz, l) *
+                    f.displacement(ielement, icomponent, l, ix);
+
+                dg_dxi[icomponent] +=
+                    quadrature.hprime_gll(ix, l) *
+                    g.displacement(ielement, icomponent, iz, l);
+                dg_dgamma[icomponent] +=
+                    quadrature.hprime_gll(iz, l) *
+                    g.displacement(ielement, icomponent, l, ix);
+              }
+            }
+
+            const auto point_partial_derivatives = [&]() {
+              specfem::point::partial_derivatives2<false> result;
+              specfem::compute::load_on_device(index, partial_derivatives,
+                                               result);
+              return result;
+            }();
+
+            PointFieldDerivativesType df;
+            PointFieldDerivativesType dg;
+
+            for (int icomponent = 0; icomponent < FieldType::components;
+                 ++icomponent) {
+              df.du_dx[icomponent] =
+                  point_partial_derivatives.xix * df_dxi[icomponent] +
+                  point_partial_derivatives.gammax * df_dgamma[icomponent];
+
+              df.du_dz[icomponent] =
+                  point_partial_derivatives.xiz * df_dxi[icomponent] +
+                  point_partial_derivatives.gammaz * df_dgamma[icomponent];
+
+              dg.du_dx[icomponent] =
+                  point_partial_derivatives.xix * dg_dxi[icomponent] +
+                  point_partial_derivatives.gammax * dg_dgamma[icomponent];
+
+              dg.du_dz[icomponent] =
+                  point_partial_derivatives.xiz * dg_dxi[icomponent] +
+                  point_partial_derivatives.gammaz * dg_dgamma[icomponent];
+            }
+
+            callback(index, df, dg);
+          }
+        }
+      });
+
+  return;
+}
 
 template <int NGLL, int components, typename Layout, typename MemorySpace,
           typename MemoryTraits>

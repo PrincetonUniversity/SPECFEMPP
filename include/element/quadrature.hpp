@@ -7,6 +7,24 @@
 
 namespace specfem {
 namespace element {
+
+namespace impl {
+template <int NGLL, specfem::dimension::type DimensionType,
+          typename MemorySpace, typename MemoryTraits,
+          bool StoreGLLQuadratureDerivatives, bool WeightTimesDerivatives>
+struct QuadratureTraits {
+public:
+  constexpr static int ngll = NGLL;
+  constexpr static auto dimension_type = DimensionType;
+  constexpr static bool store_gll_quadrature_derivatives =
+      StoreGLLQuadratureDerivatives;
+  constexpr static bool weight_times_derivatives = WeightTimesDerivatives;
+
+  using ViewType = Kokkos::View<type_real[NGLL][NGLL], Kokkos::LayoutRight,
+                                MemorySpace, MemoryTraits>;
+};
+} // namespace impl
+
 template <int NGLL, specfem::dimension::type DimensionType,
           typename MemorySpace, typename MemoryTraits,
           bool StoreGLLQuadratureDerivatives, bool WeightTimesDerivatives>
@@ -14,11 +32,14 @@ struct quadrature;
 
 template <int NGLL, typename MemorySpace, typename MemoryTraits>
 struct quadrature<NGLL, specfem::dimension::type::dim2, MemorySpace,
-                  MemoryTraits, true, true> {
+                  MemoryTraits, true, true>
+    : public impl::QuadratureTraits<NGLL, specfem::dimension::type::dim2,
+                                    MemorySpace, MemoryTraits, true, true> {
 
-  using ViewType = Kokkos::View<type_real[NGLL][NGLL], Kokkos::LayoutRight,
-                                MemorySpace, MemoryTraits>;
-
+  using ViewType =
+      typename impl::QuadratureTraits<NGLL, specfem::dimension::type::dim2,
+                                      MemorySpace, MemoryTraits, true,
+                                      true>::ViewType;
   ViewType hprime_gll;
   ViewType hprimew_gll;
 
@@ -39,11 +60,14 @@ struct quadrature<NGLL, specfem::dimension::type::dim2, MemorySpace,
 
 template <int NGLL, typename MemorySpace, typename MemoryTraits>
 struct quadrature<NGLL, specfem::dimension::type::dim2, MemorySpace,
-                  MemoryTraits, true, false> {
+                  MemoryTraits, true, false>
+    : public impl::QuadratureTraits<NGLL, specfem::dimension::type::dim2,
+                                    MemorySpace, MemoryTraits, true, false> {
 
-  using ViewType = Kokkos::View<type_real[NGLL][NGLL], Kokkos::LayoutRight,
-                                MemorySpace, MemoryTraits>;
-
+  using ViewType =
+      typename impl::QuadratureTraits<NGLL, specfem::dimension::type::dim2,
+                                      MemorySpace, MemoryTraits, true,
+                                      false>::ViewType;
   ViewType hprime_gll;
 
   template <typename MemberType,

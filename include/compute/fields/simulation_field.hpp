@@ -594,37 +594,41 @@ void atomic_add_on_host(
   atomic_add_on_host(iglob, point_field, field);
 }
 
-template <specfem::wavefield::type WavefieldType, int NGLL,
-          specfem::element::medium_tag MediumType, typename MemberType,
-          typename MemorySpace, typename MemoryTraits, bool StoreDisplacement,
-          bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix,
-          std::enable_if_t<std::is_same_v<typename MemberType::execution_space::
-                                              scratch_memory_space,
-                                          MemorySpace>,
+template <specfem::wavefield::type WavefieldType, typename MemberType,
+          typename FieldType,
+          std::enable_if_t<Kokkos::SpaceAccessibility<
+                               typename MemberType::execution_space,
+                               typename FieldType::memory_space>::accessible,
+                           bool> = true,
+          std::enable_if_t<FieldType::dimension_type ==
+                               specfem::dimension::type::dim2,
                            bool> = true>
-KOKKOS_FUNCTION void load_on_device(
-    const MemberType &team, const int ispec,
-    const specfem::compute::simulation_field<WavefieldType> &field,
-    specfem::element::field<NGLL, specfem::dimension::type::dim2, MediumType,
-                            MemorySpace, MemoryTraits, StoreDisplacement,
-                            StoreVelocity, StoreAcceleration, StoreMassMatrix>
-        &element_field) {
+KOKKOS_FUNCTION void
+load_on_device(const MemberType &team, const int ispec,
+               const specfem::compute::simulation_field<WavefieldType> &field,
+               FieldType &element_field) {
+
+  constexpr auto MediumTag = FieldType::medium_tag;
+  constexpr auto DimensionType = FieldType::dimension_type;
+  constexpr int NGLL = FieldType::ngll;
+  constexpr bool StoreDisplacement = FieldType::store_displacement;
+  constexpr bool StoreVelocity = FieldType::store_velocity;
+  constexpr bool StoreAcceleration = FieldType::store_acceleration;
+  constexpr bool StoreMassMatrix = FieldType::store_mass_matrix;
 
   constexpr int components =
-      specfem::medium::medium<specfem::dimension::type::dim2,
-                              MediumType>::components;
+      specfem::medium::medium<DimensionType, MediumTag>::components;
 
   static_assert(std::is_same_v<typename MemberType::execution_space,
                                specfem::kokkos::DevExecSpace>,
                 "This function should only be called with device execution "
                 "space");
 
-  const auto curr_field = [&]()
-      -> specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
-                                            MediumType> {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+  const auto curr_field = [&]() -> specfem::compute::impl::field_impl<
+                                    specfem::dimension::type::dim2, MediumTag> {
+    if constexpr (MediumTag == specfem::element::medium_tag::elastic) {
       return field.elastic;
-    } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
+    } else if constexpr (MediumTag == specfem::element::medium_tag::acoustic) {
       return field.acoustic;
     } else {
       static_assert("medium type not supported");
@@ -636,7 +640,7 @@ KOKKOS_FUNCTION void load_on_device(
         int iz, ix;
         sub2ind(xz, NGLL, iz, ix);
         const int iglob = field.assembly_index_mapping(
-            field.index_mapping(ispec, iz, ix), static_cast<int>(MediumType));
+            field.index_mapping(ispec, iz, ix), static_cast<int>(MediumTag));
 
         for (int icomp = 0; icomp < components; ++icomp) {
           if constexpr (StoreDisplacement) {
@@ -661,36 +665,40 @@ KOKKOS_FUNCTION void load_on_device(
   return;
 }
 
-template <specfem::wavefield::type WavefieldType, int NGLL,
-          specfem::element::medium_tag MediumType, typename MemberType,
-          typename MemorySpace, typename MemoryTraits, bool StoreDisplacement,
-          bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix,
-          std::enable_if_t<std::is_same_v<typename MemberType::execution_space::
-                                              scratch_memory_space,
-                                          MemorySpace>,
+template <specfem::wavefield::type WavefieldType, typename MemberType,
+          typename FieldType,
+          std::enable_if_t<Kokkos::SpaceAccessibility<
+                               typename MemberType::execution_space,
+                               typename FieldType::memory_space>::accessible,
+                           bool> = true,
+          std::enable_if_t<FieldType::dimension_type ==
+                               specfem::dimension::type::dim2,
                            bool> = true>
 void load_on_host(
     const MemberType &team, const int ispec,
     const specfem::compute::simulation_field<WavefieldType> &field,
-    specfem::element::field<NGLL, specfem::dimension::type::dim2, MediumType,
-                            MemorySpace, MemoryTraits, StoreDisplacement,
-                            StoreVelocity, StoreAcceleration, StoreMassMatrix>
-        &element_field) {
+    FieldType &element_field) {
+
+  constexpr auto MediumTag = FieldType::medium_tag;
+  constexpr auto DimensionType = FieldType::dimension_type;
+  constexpr int NGLL = FieldType::ngll;
+  constexpr bool StoreDisplacement = FieldType::store_displacement;
+  constexpr bool StoreVelocity = FieldType::store_velocity;
+  constexpr bool StoreAcceleration = FieldType::store_acceleration;
+  constexpr bool StoreMassMatrix = FieldType::store_mass_matrix;
 
   constexpr int components =
-      specfem::medium::medium<specfem::dimension::type::dim2,
-                              MediumType>::components;
+      specfem::medium::medium<DimensionType, MediumTag>::components;
 
   static_assert(
       std::is_same_v<typename MemberType::execution_space, Kokkos::HostSpace>,
       "This function should only be called with host execution space");
 
-  const auto curr_field = [&]()
-      -> specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
-                                            MediumType> {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+  const auto curr_field = [&]() -> specfem::compute::impl::field_impl<
+                                    specfem::dimension::type::dim2, MediumTag> {
+    if constexpr (MediumTag == specfem::element::medium_tag::elastic) {
       return field.elastic;
-    } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
+    } else if constexpr (MediumTag == specfem::element::medium_tag::acoustic) {
       return field.acoustic;
     } else {
       static_assert("medium type not supported");
@@ -702,7 +710,7 @@ void load_on_host(
         int iz, ix;
         sub2ind(xz, NGLL, iz, ix);
         const int iglob = field.h_assembly_index_mapping(
-            field.h_index_mapping(ispec, iz, ix), static_cast<int>(MediumType));
+            field.h_index_mapping(ispec, iz, ix), static_cast<int>(MediumTag));
 
         for (int icomp = 0; icomp < components; ++icomp) {
           if constexpr (StoreDisplacement) {
@@ -726,6 +734,173 @@ void load_on_host(
 
   return;
 }
+
+template <specfem::wavefield::type WavefieldType, typename MemberType,
+          typename ChunkField,
+          std::enable_if_t<Kokkos::SpaceAccessibility<
+                               typename MemberType::execution_space,
+                               typename ChunkField::memory_space>::accessible,
+                           bool> = true,
+          std::enable_if_t<ChunkField::dimension_type ==
+                               specfem::dimension::type::dim2,
+                           bool> = true>
+KOKKOS_FUNCTION void load_on_device(
+    const MemberType &team,
+    const Kokkos::View<int *,
+                       typename MemberType::execution_space::memory_space>
+        &element_indices,
+    const specfem::compute::simulation_field<WavefieldType> &field,
+    ChunkField &element_field) {
+
+  constexpr auto MediumTag = ChunkField::medium_tag;
+  constexpr auto DimensionType = ChunkField::dimension_type;
+  constexpr int NumElements = ChunkField::num_elements;
+  constexpr int NGLL = ChunkField::ngll;
+  constexpr bool StoreDisplacement = ChunkField::store_displacement;
+  constexpr bool StoreVelocity = ChunkField::store_velocity;
+  constexpr bool StoreAcceleration = ChunkField::store_acceleration;
+  constexpr bool StoreMassMatrix = ChunkField::store_mass_matrix;
+
+  constexpr int components =
+      specfem::medium::medium<specfem::dimension::type::dim2,
+                              MediumTag>::components;
+
+  static_assert(std::is_same_v<typename MemberType::execution_space,
+                               specfem::kokkos::DevExecSpace>,
+                "This function should only be called with device execution "
+                "space");
+
+  const int nelements = element_indices.extent(0);
+
+  ASSERT(nelements <= NumElements,
+         "Chunk element doesnt contain enough space for all elements");
+
+  const auto curr_field = [&]() -> specfem::compute::impl::field_impl<
+                                    specfem::dimension::type::dim2, MediumTag> {
+    if constexpr (MediumTag == specfem::element::medium_tag::elastic) {
+      return field.elastic;
+    } else if constexpr (MediumTag == specfem::element::medium_tag::acoustic) {
+      return field.acoustic;
+    } else {
+      static_assert("medium type not supported");
+    }
+  }();
+
+  Kokkos::parallel_for(
+      Kokkos::TeamThreadRange(team, nelements), [=](const int &ielement) {
+        const int ispec = element_indices(ielement);
+        for (int iz = 0; iz < NGLL; ++iz) {
+          for (int ix = 0; ix < NGLL; ++ix) {
+            const int iglob =
+                field.assembly_index_mapping(field.index_mapping(ispec, iz, ix),
+                                             static_cast<int>(MediumTag));
+            for (int icomp = 0; icomp < components; ++icomp) {
+              if constexpr (StoreDisplacement) {
+                element_field.displacement(ielement, icomp, iz, ix) =
+                    curr_field.field(iglob, icomp);
+              }
+              if constexpr (StoreVelocity) {
+                element_field.velocity(ielement, icomp, iz, ix) =
+                    curr_field.field_dot(iglob, icomp);
+              }
+              if constexpr (StoreAcceleration) {
+                element_field.acceleration(ielement, icomp, iz, ix) =
+                    curr_field.field_dot_dot(iglob, icomp);
+              }
+              if constexpr (StoreMassMatrix) {
+                element_field.mass_matrix(ielement, icomp, iz, ix) =
+                    curr_field.mass_inverse(iglob, icomp);
+              }
+            }
+          }
+        }
+      });
+
+  return;
+}
+
+template <specfem::wavefield::type WavefieldType, typename MemberType,
+          typename ChunkField,
+          std::enable_if_t<Kokkos::SpaceAccessibility<
+                               typename MemberType::execution_space,
+                               typename ChunkField::memory_space>::accessible,
+                           bool> = true,
+          std::enable_if_t<ChunkField::dimension_type ==
+                               specfem::dimension::type::dim2,
+                           bool> = true>
+void load_on_host(
+    const MemberType &team,
+    const Kokkos::View<int *,
+                       typename MemberType::execution_space::memory_space>
+        &element_indices,
+    const specfem::compute::simulation_field<WavefieldType> &field,
+    ChunkField &element_field) {
+
+  constexpr auto MediumTag = ChunkField::medium_tag;
+  constexpr auto DimensionType = ChunkField::dimension_type;
+  constexpr int NumElements = ChunkField::num_elements;
+  constexpr int NGLL = ChunkField::ngll;
+  constexpr bool StoreDisplacement = ChunkField::store_displacement;
+  constexpr bool StoreVelocity = ChunkField::store_velocity;
+  constexpr bool StoreAcceleration = ChunkField::store_acceleration;
+  constexpr bool StoreMassMatrix = ChunkField::store_mass_matrix;
+
+  constexpr int components =
+      specfem::medium::medium<DimensionType, MediumTag>::components;
+
+  static_assert(
+      std::is_same_v<typename MemberType::execution_space, Kokkos::HostSpace>,
+      "This function should only be called with host execution space");
+
+  const int nelements = element_indices.extent(0);
+
+  ASSERT(nelements <= NumElements,
+         "Chunk element doesnt contain enough space for all elements");
+
+  const auto curr_field = [&]() -> specfem::compute::impl::field_impl<
+                                    specfem::dimension::type::dim2, MediumTag> {
+    if constexpr (MediumTag == specfem::element::medium_tag::elastic) {
+      return field.elastic;
+    } else if constexpr (MediumTag == specfem::element::medium_tag::acoustic) {
+      return field.acoustic;
+    } else {
+      static_assert("medium type not supported");
+    }
+  }();
+
+  Kokkos::parallel_for(
+      Kokkos::TeamThreadRange(team, nelements), [&](const int ielement) {
+        const int ispec = element_indices(ielement);
+        for (int iz = 0; iz < NGLL; ++iz) {
+          for (int ix = 0; ix < NGLL; ++ix) {
+            const int iglob = field.h_assembly_index_mapping(
+                field.h_index_mapping(ispec, iz, ix),
+                static_cast<int>(MediumTag));
+            for (int icomp = 0; icomp < components; ++icomp) {
+              if constexpr (StoreDisplacement) {
+                element_field.displacement(ielement, icomp, iz, ix) =
+                    curr_field.h_field(iglob, icomp);
+              }
+              if constexpr (StoreVelocity) {
+                element_field.velocity(ielement, icomp, iz, ix) =
+                    curr_field.h_field_dot(iglob, icomp);
+              }
+              if constexpr (StoreAcceleration) {
+                element_field.acceleration(ielement, icomp, iz, ix) =
+                    curr_field.h_field_dot_dot(iglob, icomp);
+              }
+              if constexpr (StoreMassMatrix) {
+                element_field.mass_matrix(ielement, icomp, iz, ix) =
+                    curr_field.h_mass_inverse(iglob, icomp);
+              }
+            }
+          }
+        }
+      });
+
+  return;
+}
+
 } // namespace compute
 } // namespace specfem
 
