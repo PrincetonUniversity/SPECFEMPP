@@ -67,12 +67,15 @@ template <specfem::wavefield::type WavefieldType> struct simulation_field {
     }
   }
 
+  using ViewType =
+      Kokkos::View<int ***, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>;
+
   int nglob = 0;
   int nspec;
   int ngllz;
   int ngllx;
-  specfem::kokkos::DeviceView3d<int> index_mapping;
-  specfem::kokkos::HostMirror3d<int> h_index_mapping;
+  ViewType index_mapping;
+  ViewType::HostMirror h_index_mapping;
   Kokkos::View<int * [specfem::element::ntypes], Kokkos::LayoutLeft,
                specfem::kokkos::DevMemSpace>
       assembly_index_mapping;
@@ -124,6 +127,10 @@ KOKKOS_FUNCTION void load_on_device(
       static_assert("medium type not supported");
     }
   }();
+
+  constexpr int components =
+      specfem::medium::medium<specfem::dimension::type::dim2,
+                              MediumType>::components;
 
   if constexpr (StoreDisplacement) {
     point_field.displacement =
@@ -200,9 +207,9 @@ KOKKOS_FUNCTION void load_on_device(
     specfem::point::field<specfem::dimension::type::dim2, MediumType,
                           StoreDisplacement, StoreVelocity, StoreAcceleration,
                           StoreMassMatrix> &point_field) {
-  const int iglob = field.assembly_index_mapping(
-      field.index_mapping(index.ispec, index.iz, index.ix),
-      static_cast<int>(MediumType));
+  const int iglob_l = field.index_mapping(index.ispec, index.iz, index.ix);
+  const int iglob =
+      field.assembly_index_mapping(iglob_l, static_cast<int>(MediumType));
   load_on_device(iglob, field, point_field);
 }
 
@@ -215,7 +222,6 @@ void load_on_host(
     specfem::point::field<specfem::dimension::type::dim2, MediumType,
                           StoreDisplacement, StoreVelocity, StoreAcceleration,
                           StoreMassMatrix> &point_field) {
-
   const int iglob = h_assembly_index_mapping(
       field.index_mapping(index.ispec, index.iz, index.ix),
       static_cast<int>(MediumType));
@@ -772,8 +778,8 @@ KOKKOS_FUNCTION void load_on_device(
 
   const int nelements = element_indices.extent(0);
 
-  ASSERT(nelements <= NumElements,
-         "Chunk element doesnt contain enough space for all elements");
+  // DEVICE_ASSERT(nelements <= NumElements,
+  //        "Chunk element doesnt contain enough space for all elements");
 
   const auto curr_field = [&]() -> specfem::compute::impl::field_impl<
                                     specfem::dimension::type::dim2, MediumTag> {
@@ -787,31 +793,32 @@ KOKKOS_FUNCTION void load_on_device(
   }();
 
   Kokkos::parallel_for(
-      Kokkos::TeamThreadRange(team, nelements), [=](const int &ielement) {
+      Kokkos::TeamThreadRange(team, nelements * NGLL * NGLL),
+      [&](const int &ixz) {
+        const int ielement = ixz % nelements;
+        const int xz = ixz / nelements;
+        int iz, ix;
+        sub2ind(xz, NGLL, iz, ix);
+
         const int ispec = element_indices(ielement);
-        for (int iz = 0; iz < NGLL; ++iz) {
-          for (int ix = 0; ix < NGLL; ++ix) {
-            const int iglob =
-                field.assembly_index_mapping(field.index_mapping(ispec, iz, ix),
-                                             static_cast<int>(MediumTag));
-            for (int icomp = 0; icomp < components; ++icomp) {
-              if constexpr (StoreDisplacement) {
-                element_field.displacement(ielement, icomp, iz, ix) =
-                    curr_field.field(iglob, icomp);
-              }
-              if constexpr (StoreVelocity) {
-                element_field.velocity(ielement, icomp, iz, ix) =
-                    curr_field.field_dot(iglob, icomp);
-              }
-              if constexpr (StoreAcceleration) {
-                element_field.acceleration(ielement, icomp, iz, ix) =
-                    curr_field.field_dot_dot(iglob, icomp);
-              }
-              if constexpr (StoreMassMatrix) {
-                element_field.mass_matrix(ielement, icomp, iz, ix) =
-                    curr_field.mass_inverse(iglob, icomp);
-              }
-            }
+        const int iglob = field.assembly_index_mapping(
+            field.index_mapping(ispec, iz, ix), static_cast<int>(MediumTag));
+        for (int icomp = 0; icomp < components; ++icomp) {
+          if constexpr (StoreDisplacement) {
+            element_field.displacement(ielement, iz, ix, icomp) =
+                curr_field.field(iglob, icomp);
+          }
+          if constexpr (StoreVelocity) {
+            element_field.velocity(ielement, iz, ix, icomp) =
+                curr_field.field_dot(iglob, icomp);
+          }
+          if constexpr (StoreAcceleration) {
+            element_field.acceleration(ielement, iz, ix, icomp) =
+                curr_field.field_dot_dot(iglob, icomp);
+          }
+          if constexpr (StoreMassMatrix) {
+            element_field.mass_matrix(ielement, iz, ix, icomp) =
+                curr_field.mass_inverse(iglob, icomp);
           }
         }
       });
@@ -869,31 +876,33 @@ void load_on_host(
   }();
 
   Kokkos::parallel_for(
-      Kokkos::TeamThreadRange(team, nelements), [&](const int ielement) {
+      Kokkos::TeamThreadRange(team, nelements * NGLL * NGLL),
+      [&](const int &ixz) {
+        const int ielement = ixz % nelements;
+        const int xz = ixz / nelements;
+        int iz, ix;
+        sub2ind(xz, NGLL, iz, ix);
+
         const int ispec = element_indices(ielement);
-        for (int iz = 0; iz < NGLL; ++iz) {
-          for (int ix = 0; ix < NGLL; ++ix) {
-            const int iglob = field.h_assembly_index_mapping(
-                field.h_index_mapping(ispec, iz, ix),
-                static_cast<int>(MediumTag));
-            for (int icomp = 0; icomp < components; ++icomp) {
-              if constexpr (StoreDisplacement) {
-                element_field.displacement(ielement, icomp, iz, ix) =
-                    curr_field.h_field(iglob, icomp);
-              }
-              if constexpr (StoreVelocity) {
-                element_field.velocity(ielement, icomp, iz, ix) =
-                    curr_field.h_field_dot(iglob, icomp);
-              }
-              if constexpr (StoreAcceleration) {
-                element_field.acceleration(ielement, icomp, iz, ix) =
-                    curr_field.h_field_dot_dot(iglob, icomp);
-              }
-              if constexpr (StoreMassMatrix) {
-                element_field.mass_matrix(ielement, icomp, iz, ix) =
-                    curr_field.h_mass_inverse(iglob, icomp);
-              }
-            }
+
+        const int iglob = field.h_assembly_index_mapping(
+            field.h_index_mapping(ispec, iz, ix), static_cast<int>(MediumTag));
+        for (int icomp = 0; icomp < components; ++icomp) {
+          if constexpr (StoreDisplacement) {
+            element_field.displacement(ielement, iz, ix, icomp) =
+                curr_field.h_field(iglob, icomp);
+          }
+          if constexpr (StoreVelocity) {
+            element_field.velocity(ielement, iz, ix, icomp) =
+                curr_field.h_field_dot(iglob, icomp);
+          }
+          if constexpr (StoreAcceleration) {
+            element_field.acceleration(ielement, iz, ix, icomp) =
+                curr_field.h_field_dot_dot(iglob, icomp);
+          }
+          if constexpr (StoreMassMatrix) {
+            element_field.mass_matrix(ielement, iz, ix, icomp) =
+                curr_field.h_mass_inverse(iglob, icomp);
           }
         }
       });

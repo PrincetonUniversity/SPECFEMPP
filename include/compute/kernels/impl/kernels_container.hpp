@@ -25,18 +25,22 @@ public:
   int nspec;
   int ngllz;
   int ngllx;
-  specfem::kokkos::DeviceView3d<type_real> rho;
-  specfem::kokkos::HostMirror3d<type_real> h_rho;
-  specfem::kokkos::DeviceView3d<type_real> mu;
-  specfem::kokkos::HostMirror3d<type_real> h_mu;
-  specfem::kokkos::DeviceView3d<type_real> kappa;
-  specfem::kokkos::HostMirror3d<type_real> h_kappa;
-  specfem::kokkos::DeviceView3d<type_real> rhop;
-  specfem::kokkos::HostMirror3d<type_real> h_rhop;
-  specfem::kokkos::DeviceView3d<type_real> alpha;
-  specfem::kokkos::HostMirror3d<type_real> h_alpha;
-  specfem::kokkos::DeviceView3d<type_real> beta;
-  specfem::kokkos::HostMirror3d<type_real> h_beta;
+
+  using ViewType = Kokkos::View<type_real ***, Kokkos::LayoutLeft,
+                                Kokkos::DefaultExecutionSpace>;
+
+  ViewType rho;
+  ViewType::HostMirror h_rho;
+  ViewType mu;
+  ViewType::HostMirror h_mu;
+  ViewType kappa;
+  ViewType::HostMirror h_kappa;
+  ViewType rhop;
+  ViewType::HostMirror h_rhop;
+  ViewType alpha;
+  ViewType::HostMirror h_alpha;
+  ViewType beta;
+  ViewType::HostMirror h_beta;
 
   kernels_container() = default;
 
@@ -173,14 +177,17 @@ public:
   int nspec;
   int ngllz;
   int ngllx;
-  specfem::kokkos::DeviceView3d<type_real> rho;
-  specfem::kokkos::HostMirror3d<type_real> h_rho;
-  specfem::kokkos::DeviceView3d<type_real> kappa;
-  specfem::kokkos::HostMirror3d<type_real> h_kappa;
-  specfem::kokkos::DeviceView3d<type_real> rho_prime;
-  specfem::kokkos::HostMirror3d<type_real> h_rho_prime;
-  specfem::kokkos::DeviceView3d<type_real> alpha;
-  specfem::kokkos::HostMirror3d<type_real> h_alpha;
+
+  using ViewType = Kokkos::View<type_real ***, Kokkos::LayoutLeft,
+                                Kokkos::DefaultExecutionSpace>;
+  ViewType rho;
+  ViewType::HostMirror h_rho;
+  ViewType kappa;
+  ViewType::HostMirror h_kappa;
+  ViewType rho_prime;
+  ViewType::HostMirror h_rho_prime;
+  ViewType alpha;
+  ViewType::HostMirror h_alpha;
 
   kernels_container() = default;
 

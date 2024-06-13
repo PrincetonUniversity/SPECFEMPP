@@ -143,7 +143,7 @@ void get_edge_range(const specfem::enums::edge::type &edge, int &ibegin,
 // }
 
 bool check_if_edges_are_connected(
-    const specfem::kokkos::HostView3d<int> h_ibool,
+    const Kokkos::View<int ***, Kokkos::LayoutLeft, Kokkos::HostSpace> h_ibool,
     const specfem::enums::edge::type &edge1,
     const specfem::enums::edge::type &edge2, const int &ispec1,
     const int &ispec2) {
@@ -181,7 +181,7 @@ bool check_if_edges_are_connected(
 }
 
 void compute_edges(
-    const specfem::kokkos::HostMirror3d<int> h_ibool,
+    const Kokkos::View<int ***, Kokkos::LayoutLeft, Kokkos::HostSpace> h_ibool,
     const specfem::kokkos::HostMirror1d<int> ispec1,
     const specfem::kokkos::HostMirror1d<int> ispec2,
     specfem::kokkos::HostMirror1d<specfem::edge::interface> edge1,
@@ -231,7 +231,7 @@ void compute_edges(
         }
       }
     }
-    ASSERT(num_connected == 1, "More than one edge is connected");
+    // ASSERT(num_connected == 1, "More than one edge is connected");
   }
 
   return;

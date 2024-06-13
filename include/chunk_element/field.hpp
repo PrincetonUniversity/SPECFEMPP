@@ -26,7 +26,7 @@ public:
   constexpr static bool store_mass_matrix = StoreMassMatrix;
   constexpr static int ngll = NGLL;
 
-  using ViewType = Kokkos::View<type_real[NumElements][components][NGLL][NGLL],
+  using ViewType = Kokkos::View<type_real[NumElements][NGLL][NGLL][components],
                                 Kokkos::LayoutLeft, MemorySpace, MemoryTraits>;
 };
 } // namespace impl
