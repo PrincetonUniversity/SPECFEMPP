@@ -30,8 +30,9 @@ template <typename value_type, typename Layout> struct array1d {
 
   array1d(const int n1) : n1(n1), data("specfem::testing::array1d", n1) {}
 
+  template <typename Layout2>
   bool
-  operator==(const specfem::testing::array1d<value_type, Layout> &ref_array);
+  operator==(const specfem::testing::array1d<value_type, Layout2> &ref_array);
 };
 
 template <typename value_type, typename Layout> struct array2d {
@@ -49,8 +50,9 @@ template <typename value_type, typename Layout> struct array2d {
   array2d(const int n1, const int n2)
       : n1(n1), n2(n2), data("specfem::testing::array2d", n1, n2) {}
 
+  template <typename Layout2>
   bool
-  operator==(const specfem::testing::array2d<value_type, Layout> &ref_array);
+  operator==(const specfem::testing::array2d<value_type, Layout2> &ref_array);
 };
 
 template <typename value_type, typename Layout> struct array3d {
@@ -68,8 +70,9 @@ template <typename value_type, typename Layout> struct array3d {
   array3d(const int n1, const int n2, const int n3)
       : n1(n1), n2(n2), n3(n3), data("specfem::testing::array3d", n1, n2, n3) {}
 
+  template <typename Layout2>
   bool
-  operator==(const specfem::testing::array3d<value_type, Layout> &ref_array);
+  operator==(const specfem::testing::array3d<value_type, Layout2> &ref_array);
 };
 
 template <typename value_type, typename Layout>

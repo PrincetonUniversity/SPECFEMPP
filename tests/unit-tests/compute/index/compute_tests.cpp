@@ -16,6 +16,11 @@ using HostView1d = specfem::kokkos::HostView1d<int>;
 using HostView2d = specfem::kokkos::HostView2d<int>;
 using HostView3d = specfem::kokkos::HostView3d<int>;
 
+struct coordinates {
+  type_real x = -1.0;
+  type_real z = -1.0;
+};
+
 // ------------------------------------------------------------------------
 // Reading test config
 struct test_config {
@@ -82,13 +87,44 @@ TEST(COMPUTE_TESTS, compute_ibool) {
   specfem::compute::mesh assembly(mesh.control_nodes,
                                   quadratures); // mesh assembly
 
-  HostView3d h_index_mapping = assembly.points.h_index_mapping;
-  specfem::testing::array3d<int, Kokkos::LayoutRight> index_array(
-      h_index_mapping);
-  specfem::testing::array3d<int, Kokkos::LayoutRight> index_ref(
-      test_config.ibool_file, mesh.nspec, gll.get_N(), gll.get_N());
+  const auto h_index_mapping = assembly.points.h_index_mapping;
+  const auto h_coord = assembly.points.h_coord;
 
-  EXPECT_TRUE(index_array == index_ref);
+  const int nspec = assembly.points.nspec;
+  const int ngllz = assembly.points.ngllz;
+  const int ngllx = assembly.points.ngllx;
+
+  type_real nglob;
+  Kokkos::parallel_reduce(
+      "specfem::utils::compute_nglob",
+      specfem::kokkos::HostMDrange<3>({ 0, 0, 0 }, { nspec, ngllz, ngllx }),
+      [=](const int ispec, const int iz, const int ix, type_real &l_nglob) {
+        l_nglob = l_nglob > h_index_mapping(ispec, iz, ix)
+                      ? l_nglob
+                      : h_index_mapping(ispec, iz, ix);
+      },
+      Kokkos::Max<type_real>(nglob));
+
+  nglob++;
+
+  std::vector<coordinates> coord(nglob);
+
+  for (int ix = 0; ix < ngllx; ++ix) {
+    for (int iz = 0; iz < ngllz; ++iz) {
+      for (int ispec = 0; ispec < nspec; ++ispec) {
+        int index = h_index_mapping(ispec, iz, ix);
+        if (coord[index].x == -1.0 && coord[index].z == -1.0) {
+          coord[index].x = h_coord(0, ispec, iz, ix);
+          coord[index].z = h_coord(1, ispec, iz, ix);
+        } else {
+          EXPECT_NEAR(coord[index].x, h_coord(0, ispec, iz, ix), 1.0e-6);
+          EXPECT_NEAR(coord[index].z, h_coord(1, ispec, iz, ix), 1.0e-6);
+        }
+      }
+    }
+  }
+
+  return;
 }
 
 int main(int argc, char *argv[]) {

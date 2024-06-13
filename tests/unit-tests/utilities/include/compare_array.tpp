@@ -1,8 +1,8 @@
 #ifndef _UNIT_TESTS_COMPARE_ARRAY_TPP_
 #define _UNIT_TESTS_COMPARE_ARRAY_TPP_
 
-#include "compare_array.hpp"
 #include "IO/fortranio/interface.hpp"
+#include "compare_array.hpp"
 #include "kokkos_abstractions.h"
 #include <Kokkos_Core.hpp>
 #include <exception>
@@ -139,10 +139,19 @@ specfem::testing::array2d<value_type, Layout>::array2d(std::string &ref_file,
   std::ifstream stream;
   stream.open(ref_file);
 
-  for (int i1 = 0; i1 < n1; i1++) {
+  if constexpr (std::is_same_v<Layout, Kokkos::LayoutLeft>) {
+    for (int i1 = 0; i1 < n1; i1++) {
+      for (int i2 = 0; i2 < n2; i2++) {
+        specfem::IO::fortran_read_line(stream, &ref_value);
+        data(i1, i2) = ref_value;
+      }
+    }
+  } else if constexpr (std::is_same_v<Layout, Kokkos::LayoutRight>) {
     for (int i2 = 0; i2 < n2; i2++) {
-      specfem::IO::fortran_read_line(stream, &ref_value);
-      data(i1, i2) = ref_value;
+      for (int i1 = 0; i1 < n1; i1++) {
+        specfem::IO::fortran_read_line(stream, &ref_value);
+        data(i1, i2) = ref_value;
+      }
     }
   }
 
@@ -174,11 +183,22 @@ specfem::testing::array3d<value_type, Layout>::array3d(std::string &ref_file,
   std::ifstream stream;
   stream.open(ref_file);
 
-  for (int i1 = 0; i1 < n1; i1++) {
-    for (int i2 = 0; i2 < n2; i2++) {
-      for (int i3 = 0; i3 < n3; i3++) {
-        specfem::IO::fortran_read_line(stream, &ref_value);
-        data(i1, i2, i3) = ref_value;
+  if constexpr (std::is_same_v<Layout, Kokkos::LayoutLeft>) {
+    for (int i1 = 0; i1 < n1; i1++) {
+      for (int i2 = 0; i2 < n2; i2++) {
+        for (int i3 = 0; i3 < n3; i3++) {
+          specfem::IO::fortran_read_line(stream, &ref_value);
+          data(i1, i2, i3) = ref_value;
+        }
+      }
+    }
+  } else if constexpr (std::is_same_v<Layout, Kokkos::LayoutRight>) {
+    for (int i3 = 0; i3 < n3; i3++) {
+      for (int i2 = 0; i2 < n2; i2++) {
+        for (int i1 = 0; i1 < n1; i1++) {
+          specfem::IO::fortran_read_line(stream, &ref_value);
+          data(i1, i2, i3) = ref_value;
+        }
       }
     }
   }
@@ -232,9 +252,10 @@ bool specfem::testing::array3d<value_type, Layout>::equate(
   }
 }
 
-template <typename value_type, typename Layout>
-bool specfem::testing::array1d<value_type, Layout>::operator==(
-    const specfem::testing::array1d<value_type, Layout> &ref) {
+template <typename value_type, typename Layout1>
+template <typename Layout2>
+bool specfem::testing::array1d<value_type, Layout1>::operator==(
+    const specfem::testing::array1d<value_type, Layout2> &ref) {
 
   assert(this->data.extent(0) == ref.data.extent(0));
 
@@ -249,9 +270,10 @@ bool specfem::testing::array1d<value_type, Layout>::operator==(
   return true;
 }
 
-template <typename value_type, typename Layout>
-bool specfem::testing::array2d<value_type, Layout>::operator==(
-    const array2d<value_type, Layout> &ref) {
+template <typename value_type, typename Layout1>
+template <typename Layout2>
+bool specfem::testing::array2d<value_type, Layout1>::operator==(
+    const array2d<value_type, Layout2> &ref) {
 
   assert(this->data.extent(0) == ref.data.extent(0));
   assert(this->data.extent(1) == ref.data.extent(1));
@@ -270,9 +292,10 @@ bool specfem::testing::array2d<value_type, Layout>::operator==(
   return true;
 }
 
-template <typename value_type, typename Layout>
-bool specfem::testing::array3d<value_type, Layout>::operator==(
-    const array3d<value_type, Layout> &ref) {
+template <typename value_type, typename Layout1>
+template <typename Layout2>
+bool specfem::testing::array3d<value_type, Layout1>::operator==(
+    const array3d<value_type, Layout2> &ref) {
 
   assert(this->data.extent(0) == ref.data.extent(0));
   assert(this->data.extent(1) == ref.data.extent(1));
@@ -311,8 +334,8 @@ bool specfem::testing::compare_norm(
     computed_norm += std::abs(computed_array.data(i1));
   }
 
-  std::cout << "Error norm = " << error_norm << " computed norm = "
-            << computed_norm << std::endl;
+  std::cout << "Error norm = " << error_norm
+            << " computed norm = " << computed_norm << std::endl;
 
   return equate_norm(error_norm, computed_norm, tolerance);
 }
@@ -337,8 +360,8 @@ bool specfem::testing::compare_norm(
     }
   }
 
-  std::cout << "Error norm = " << error_norm << " computed norm = "
-            << computed_norm << std::endl;
+  std::cout << "Error norm = " << error_norm
+            << " computed norm = " << computed_norm << std::endl;
 
   return equate_norm(error_norm, computed_norm, tolerance);
 }
