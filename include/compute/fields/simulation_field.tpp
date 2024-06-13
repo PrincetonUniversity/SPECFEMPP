@@ -10,7 +10,8 @@
 #include <Kokkos_Core.hpp>
 
 namespace {
-int compute_nglob(const specfem::kokkos::HostView3d<int> index_mapping) {
+template <typename ViewType>
+int compute_nglob(const ViewType index_mapping) {
   const int nspec = index_mapping.extent(0);
   const int ngllz = index_mapping.extent(1);
   const int ngllx = index_mapping.extent(2);

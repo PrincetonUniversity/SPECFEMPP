@@ -98,17 +98,21 @@ struct points {
   int nspec; ///< Number of spectral elements
   int ngllz; ///< Number of quadrature points in z dimension
   int ngllx; ///< Number of quadrature points in x dimension
-  specfem::kokkos::DeviceView3d<int> index_mapping; ///< Global element
-                                                    ///< number for every
-                                                    ///< quadrature point
+
+  using ViewType =
+      Kokkos::View<int ***, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>;
+
+  ViewType index_mapping;                         ///< Global element
+                                                  ///< number for every
+                                                  ///< quadrature point
   specfem::kokkos::DeviceView4d<type_real> coord; ///< (x, z) for every distinct
                                                   ///< quadrature point
-  specfem::kokkos::HostMirror3d<int> h_index_mapping; ///< Global element
-                                                      ///< number for every
-                                                      ///< quadrature point
-  specfem::kokkos::HostMirror4d<type_real> h_coord;   ///< (x, z) for every
-                                                      ///< distinct quadrature
-                                                      ///< point
+  ViewType::HostMirror h_index_mapping;           ///< Global element
+                                                  ///< number for every
+                                                  ///< quadrature point
+  specfem::kokkos::HostMirror4d<type_real> h_coord; ///< (x, z) for every
+                                                    ///< distinct quadrature
+                                                    ///< point
   type_real xmin, xmax, zmin, zmax; ///< Min and max values of x and z
                                     ///< coordinates
 

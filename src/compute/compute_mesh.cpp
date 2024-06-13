@@ -51,7 +51,7 @@ specfem::compute::points assign_numbering(
   for (int ispec = 0; ispec < nspec; ispec++) {
     for (int iz = 0; iz < ngll; iz++) {
       for (int ix = 0; ix < ngll; ix++) {
-        int iloc = ispec * (ngllxz) + iz * ngll + ix;
+        int iloc = ix * nspec * ngll + iz * nspec + ispec;
         cart_cord[iloc].x = global_coordinates(ispec, iz, ix).x;
         cart_cord[iloc].z = global_coordinates(ispec, iz, ix).z;
         cart_cord[iloc].iloc = iloc;
@@ -105,9 +105,9 @@ specfem::compute::points assign_numbering(
   type_real xmax = std::numeric_limits<type_real>::min();
   type_real zmin = std::numeric_limits<type_real>::max();
   type_real zmax = std::numeric_limits<type_real>::min();
-  for (int ispec = 0; ispec < nspec; ispec++) {
+  for (int ix = 0; ix < ngll; ix++) {
     for (int iz = 0; iz < ngll; iz++) {
-      for (int ix = 0; ix < ngll; ix++) {
+      for (int ispec = 0; ispec < nspec; ispec++) {
         if (iglob_counted[copy_cart_cord[iloc].iglob] == -1) {
 
           const type_real x_cor = copy_cart_cord[iloc].x;
