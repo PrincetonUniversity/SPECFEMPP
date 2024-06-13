@@ -13,17 +13,18 @@ namespace parallel_config {
  * @tparam NumThreads Number of threads per team
  * @tparam VectorLanes Number of vector lanes per thread
  */
-template <int NumThreads, int VectorLanes> struct chunk_config {
+template <int ChunkSize, int NumThreads, int VectorLanes> struct chunk_config {
+  constexpr static int chunk_size = ChunkSize;     ///< Chunk size
   constexpr static int num_threads = NumThreads;   ///< Number of threads
   constexpr static int vector_lanes = VectorLanes; ///< Number of vector lanes
 };
 
 #ifdef KOKKOS_ENABLE_CUDA
 using default_chunk_config =
-    chunk_config<32, 1>; ///< Default chunk configuration for CUDA
+    chunk_config<32, 160, 1>; ///< Default chunk configuration for CUDA
 #else
 using default_chunk_config =
-    chunk_config<1, 1>; ///< Default chunk configuration for CPUs
+    chunk_config<1, 1, 1>; ///< Default chunk configuration for non-CUDA
 #endif
 } // namespace parallel_config
 } // namespace specfem

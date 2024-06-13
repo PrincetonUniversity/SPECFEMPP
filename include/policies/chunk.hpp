@@ -26,7 +26,8 @@ struct element_chunk : public Kokkos::TeamPolicy<PolicyTraits...> {
 public:
   constexpr static bool isChunkable = true; ///< Chunkable policy
   constexpr static bool isIterable = false; ///< Not iterable
-  constexpr static int ChunkSize = ParallelConfig::num_threads; ///< Chunk size
+  constexpr static int ChunkSize = ParallelConfig::chunk_size;   ///< Chunk size
+  constexpr static int NumThreads = ParallelConfig::num_threads; ///< Chunk size
   constexpr static int VectorLanes =
       ParallelConfig::vector_lanes; ///< Vector lanes
 
@@ -52,7 +53,7 @@ public:
   element_chunk(const ViewType &view)
       : elements(view),
         policy(view.extent(0) / ChunkSize + (view.extent(0) % ChunkSize != 0),
-               ChunkSize, VectorLanes) {
+               NumThreads, VectorLanes) {
     static_assert(ViewType::Rank == 1, "View must be rank 1");
   }
 
