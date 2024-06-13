@@ -70,7 +70,7 @@ void specfem::frechet_derivatives::impl::frechet_elements<
   using ParallelConfig = specfem::parallel_config::default_chunk_config;
 
   using ChunkElementFieldType = specfem::chunk_element::field<
-      ParallelConfig::num_threads, NGLL, DimensionType, MediumTag,
+      ParallelConfig::chunk_size, NGLL, DimensionType, MediumTag,
       specfem::kokkos::DevScratchSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>,
       true, false, false, false>;
 

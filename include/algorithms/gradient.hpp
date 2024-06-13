@@ -47,79 +47,88 @@ KOKKOS_FUNCTION void gradient(
       "specfem::point::field_derivatives<DimensionType, MediumTag>)");
 
   Kokkos::parallel_for(
-      Kokkos::TeamThreadRange(team, number_elements), [=](const int &ielement) {
+      Kokkos::TeamThreadRange(team, NGLL * NGLL * number_elements),
+      [=](const int &ixz) {
+        const int ielement = ixz % number_elements;
+        const int xz = ixz / number_elements;
+        int ix, iz;
+        sub2ind(xz, NGLL, iz, ix);
+
         const int ispec = indices(ielement);
 
-        for (int ix = 0; ix < NGLL; ++ix) {
-          for (int iz = 0; iz < NGLL; ++iz) {
-            specfem::point::index index(ispec, iz, ix);
+        specfem::point::index index(ispec, iz, ix);
 
-            type_real df_dxi[FieldType::components];
-            type_real df_dgamma[FieldType::components];
+        type_real df_dxi[FieldType::components];
+        type_real df_dgamma[FieldType::components];
 
-            type_real dg_dxi[FieldType::components];
-            type_real dg_dgamma[FieldType::components];
+        for (int icomponent = 0; icomponent < FieldType::components;
+             ++icomponent) {
+          df_dxi[icomponent] = 0.0;
+          df_dgamma[icomponent] = 0.0;
+          ;
+        }
 
-            for (int icomponent = 0; icomponent < FieldType::components;
-                 ++icomponent) {
-              df_dxi[icomponent] = 0.0;
-              df_dgamma[icomponent] = 0.0;
-
-              dg_dxi[icomponent] = 0.0;
-              dg_dgamma[icomponent] = 0.0;
-            }
-
-            for (int l = 0; l < NGLL; ++l) {
-              for (int icomponent = 0; icomponent < FieldType::components;
-                   ++icomponent) {
-                df_dxi[icomponent] +=
-                    quadrature.hprime_gll(ix, l) *
-                    f.displacement(ielement, icomponent, iz, l);
-                df_dgamma[icomponent] +=
-                    quadrature.hprime_gll(iz, l) *
-                    f.displacement(ielement, icomponent, l, ix);
-
-                dg_dxi[icomponent] +=
-                    quadrature.hprime_gll(ix, l) *
-                    g.displacement(ielement, icomponent, iz, l);
-                dg_dgamma[icomponent] +=
-                    quadrature.hprime_gll(iz, l) *
-                    g.displacement(ielement, icomponent, l, ix);
-              }
-            }
-
-            const auto point_partial_derivatives = [&]() {
-              specfem::point::partial_derivatives2<false> result;
-              specfem::compute::load_on_device(index, partial_derivatives,
-                                               result);
-              return result;
-            }();
-
-            PointFieldDerivativesType df;
-            PointFieldDerivativesType dg;
-
-            for (int icomponent = 0; icomponent < FieldType::components;
-                 ++icomponent) {
-              df.du_dx[icomponent] =
-                  point_partial_derivatives.xix * df_dxi[icomponent] +
-                  point_partial_derivatives.gammax * df_dgamma[icomponent];
-
-              df.du_dz[icomponent] =
-                  point_partial_derivatives.xiz * df_dxi[icomponent] +
-                  point_partial_derivatives.gammaz * df_dgamma[icomponent];
-
-              dg.du_dx[icomponent] =
-                  point_partial_derivatives.xix * dg_dxi[icomponent] +
-                  point_partial_derivatives.gammax * dg_dgamma[icomponent];
-
-              dg.du_dz[icomponent] =
-                  point_partial_derivatives.xiz * dg_dxi[icomponent] +
-                  point_partial_derivatives.gammaz * dg_dgamma[icomponent];
-            }
-
-            callback(index, df, dg);
+        for (int l = 0; l < NGLL; ++l) {
+          for (int icomponent = 0; icomponent < FieldType::components;
+               ++icomponent) {
+            df_dxi[icomponent] += quadrature.hprime_gll(ix, l) *
+                                  f.displacement(ielement, iz, l, icomponent);
+            df_dgamma[icomponent] +=
+                quadrature.hprime_gll(iz, l) *
+                f.displacement(ielement, l, ix, icomponent);
           }
         }
+
+        const auto point_partial_derivatives = [&]() {
+          specfem::point::partial_derivatives2<false> result;
+          specfem::compute::load_on_device(index, partial_derivatives, result);
+          return result;
+        }();
+
+        PointFieldDerivativesType df;
+
+        for (int icomponent = 0; icomponent < FieldType::components;
+             ++icomponent) {
+          df.du_dx[icomponent] =
+              point_partial_derivatives.xix * df_dxi[icomponent] +
+              point_partial_derivatives.gammax * df_dgamma[icomponent];
+
+          df.du_dz[icomponent] =
+              point_partial_derivatives.xiz * df_dxi[icomponent] +
+              point_partial_derivatives.gammaz * df_dgamma[icomponent];
+        }
+
+        for (int icomponent = 0; icomponent < FieldType::components;
+             ++icomponent) {
+          df_dxi[icomponent] = 0.0;
+          df_dgamma[icomponent] = 0.0;
+        }
+
+        for (int l = 0; l < NGLL; ++l) {
+          for (int icomponent = 0; icomponent < FieldType::components;
+               ++icomponent) {
+            df_dxi[icomponent] += quadrature.hprime_gll(ix, l) *
+                                  g.displacement(ielement, iz, l, icomponent);
+            df_dgamma[icomponent] +=
+                quadrature.hprime_gll(iz, l) *
+                g.displacement(ielement, l, ix, icomponent);
+          }
+        }
+
+        PointFieldDerivativesType dg;
+
+        for (int icomponent = 0; icomponent < FieldType::components;
+             ++icomponent) {
+          dg.du_dx[icomponent] =
+              point_partial_derivatives.xix * df_dxi[icomponent] +
+              point_partial_derivatives.gammax * df_dgamma[icomponent];
+
+          dg.du_dz[icomponent] =
+              point_partial_derivatives.xiz * df_dxi[icomponent] +
+              point_partial_derivatives.gammaz * df_dgamma[icomponent];
+        }
+
+        callback(index, df, dg);
       });
 
   return;
