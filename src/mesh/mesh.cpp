@@ -157,29 +157,21 @@ specfem::mesh::mesh::mesh(const std::string filename,
   mpi->cout("Number of material systems = " +
             std::to_string(this->materials.n_materials) + "\n\n");
 
-  for (int i = 0; i < this->materials.n_materials; i++) {
-    const auto material_index_mapping =
-        this->materials.material_index_mapping(i);
-    if ((material_index_mapping.type ==
-         specfem::element::medium_tag::elastic) &&
-        (material_index_mapping.property ==
-         specfem::element::property_tag::isotropic)) {
-      const auto material = std::get<specfem::material::material<
-          specfem::element::medium_tag::elastic,
-          specfem::element::property_tag::isotropic> >(this->materials[i]);
-      mpi->cout(material.print());
-    } else if ((material_index_mapping.type ==
-                specfem::element::medium_tag::acoustic) &&
-               (material_index_mapping.property ==
-                specfem::element::property_tag::isotropic)) {
-      const auto material = std::get<specfem::material::material<
-          specfem::element::medium_tag::acoustic,
-          specfem::element::property_tag::isotropic> >(this->materials[i]);
-      mpi->cout(material.print());
-    } else {
-      throw std::runtime_error("Material type not supported");
-    }
+  const auto l_elastic_isotropic =
+      this->materials.elastic_isotropic.material_properties;
+  const auto l_acoustic_isotropic =
+      this->materials.acoustic_isotropic.material_properties;
+
+  for (const auto material : l_elastic_isotropic) {
+    mpi->cout(material.print());
   }
+
+  for (const auto material : l_acoustic_isotropic) {
+    mpi->cout(material.print());
+  }
+
+  assert(l_elastic_isotropic.size() + l_acoustic_isotropic.size() ==
+         this->materials.n_materials);
 
   return;
 }

@@ -14,13 +14,6 @@ specfem::mesh::materials::material<type, property>::material(
     const std::vector<specfem::material::material<type, property> >
         &l_materials)
     : n_materials(n_materials),
-      material_properties("specfem::mesh::materials::material", n_materials) {
-
-  for (int i = 0; i < n_materials; i++) {
-    material_properties(i) = l_materials[i];
-  }
-
-  return;
-}
+      material_properties(l_materials) {}
 
 #endif /* end of include guard: _MESH_MATERIALS_TPP */

@@ -133,33 +133,43 @@ TEST(COMPUTE_TESTS, compute_elastic_properties) {
   specfem::compute::properties compute_properties(nspec, ngllz, ngllx,
                                                   mesh.materials);
 
-  Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace> h_rho =
-      compute_properties.elastic_isotropic.h_rho;
-  specfem::testing::array3d<type_real, Kokkos::LayoutLeft> rho_array(h_rho);
-
   specfem::testing::array3d<type_real, Kokkos::LayoutRight> rho_global(
       test_config.rho_file, nspec, ngllz, ngllx);
+  specfem::testing::array3d<type_real, Kokkos::LayoutRight> mu_global(
+      test_config.mu_file, nspec, ngllz, ngllx);
+  specfem::testing::array3d<type_real, Kokkos::LayoutRight> kappa_global(
+      test_config.kappa_file, nspec, ngllz, ngllx);
 
-  auto rho_local =
-      compact_global_array<specfem::element::medium_tag::elastic,
-                           specfem::element::property_tag::isotropic>(
-          rho_global, mesh.materials);
+  for (int ix = 0; ix < ngllx; ++ix) {
+    for (int iz = 0; iz < ngllz; ++iz) {
+      for (int ispec = 0; ispec < nspec; ++ispec) {
+        specfem::point::index index(ispec, iz, ix);
+        if (compute_properties.element_types(ispec) ==
+                specfem::element::medium_tag::elastic &&
+            compute_properties.element_property(ispec) ==
+                specfem::element::property_tag::isotropic) {
+          const auto properties =
+              [&]() -> specfem::point::properties<
+                        specfem::element::medium_tag::elastic,
+                        specfem::element::property_tag::isotropic> {
+            specfem::point::properties<
+                specfem::element::medium_tag::elastic,
+                specfem::element::property_tag::isotropic>
+                properties;
+            specfem::compute::load_on_host(index, compute_properties,
+                                           properties);
+            return properties;
+          }();
+          const auto kappa = properties.lambdaplus2mu - properties.mu;
+          EXPECT_FLOAT_EQ(properties.rho, rho_global.data(ispec, iz, ix));
+          EXPECT_FLOAT_EQ(properties.mu, mu_global.data(ispec, iz, ix));
+          EXPECT_FLOAT_EQ(kappa, kappa_global.data(ispec, iz, ix));
+        }
+      }
+    }
+  }
 
-  EXPECT_TRUE(rho_array == rho_local);
-
-  // specfem::kokkos::HostView3d<type_real, Kokkos::LayoutRight> h_mu =
-  //     compute_properties.elastic_isotropic.h_mu;
-  // specfem::testing::array3d<type_real, Kokkos::LayoutRight> mu_array(h_mu);
-
-  // specfem::testing::array3d<type_real, Kokkos::LayoutRight> mu_global(
-  //     test_config.mu_file, nspec, ngllz, ngllx);
-
-  // auto mu_local =
-  //     compact_global_array<specfem::element::medium_tag::elastic,
-  //                          specfem::element::property_tag::isotropic>(
-  //         mu_global, mesh.materials);
-
-  // EXPECT_TRUE(mu_array == mu_local);
+  return;
 }
 
 int main(int argc, char *argv[]) {
