@@ -30,10 +30,17 @@ public:
     // check if node acoustic_mass_matrix exists
     if (Node["acoustic_mass_matrix"])
       acoustic_mass_matrix = Node["acoustic_mass_matrix"].as<std::string>();
+
+    if (Node["index_mapping"]) {
+      index_mapping = Node["index_mapping"].as<std::string>();
+    } else {
+      throw std::runtime_error("Index mapping not provided for testing.");
+    }
   }
   std::string specfem_config;
   std::string elastic_mass_matrix = "NULL";
   std::string acoustic_mass_matrix = "NULL";
+  std::string index_mapping = "NULL";
 };
 
 struct configuration {
@@ -219,72 +226,117 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
 
       const int nglob = assembly.fields.forward.nglob;
 
-      // elastic_domain_static.sync_rmass_inverse(specfem::sync::DeviceToHost);
-      // acoustic_domain_static.sync_rmass_inverse(specfem::sync::DeviceToHost);
+      const int nspec = assembly.mesh.points.nspec;
+      const int ngllz = assembly.mesh.points.ngllz;
+      const int ngllx = assembly.mesh.points.ngllx;
+
+      const auto global_index_mapping = assembly.mesh.points.h_index_mapping;
+
+      if ((Test.database.acoustic_mass_matrix == "NULL") &&
+          (Test.database.elastic_mass_matrix == "NULL")) {
+        throw std::runtime_error(
+            "No mass matrix provided for testing. Please provide a mass matrix "
+            "for testing.");
+      }
 
       if (Test.database.elastic_mass_matrix != "NULL") {
-        specfem::kokkos::HostView2d<type_real, Kokkos::LayoutLeft>
-            h_mass_inverse = assembly.fields.forward.elastic.h_mass_inverse;
-
-        specfem::testing::array2d<type_real, Kokkos::LayoutLeft> mass_inverse(
-            h_mass_inverse);
-
-        specfem::testing::array2d<type_real, Kokkos::LayoutLeft>
+        specfem::testing::array2d<type_real, Kokkos::LayoutRight>
             h_mass_matrix_global(Test.database.elastic_mass_matrix, nglob, 2);
 
-        auto index_mapping = Kokkos::subview(
-            assembly.fields.forward.h_assembly_index_mapping, Kokkos::ALL(),
-            static_cast<int>(specfem::element::medium_tag::elastic));
+        specfem::testing::array3d<int, Kokkos::LayoutRight> index_mapping(
+            Test.database.index_mapping, nspec, ngllz, ngllx);
 
-        auto h_mass_matrix_local =
-            compact_array<specfem::element::medium_tag::elastic>(
-                h_mass_matrix_global, index_mapping);
+        type_real error_norm = 0.0;
+        type_real ref_norm = 0.0;
+
+        for (int ix = 0; ix < ngllx; ++ix) {
+          for (int iz = 0; iz < ngllz; ++iz) {
+            for (int ispec = 0; ispec < nspec; ++ispec) {
+              specfem::point::index index(ispec, iz, ix);
+              if (assembly.properties.element_types(ispec) ==
+                  specfem::element::medium_tag::elastic) {
+
+                constexpr int components = 2;
+                const auto point_field = [&]() {
+                  specfem::point::field<specfem::dimension::type::dim2,
+                                        specfem::element::medium_tag::elastic,
+                                        false, false, false, true>
+                      point_field;
+                  specfem::compute::load_on_host(index, assembly.fields.forward,
+                                                 point_field);
+                  return point_field;
+                }();
+
+                for (int icomp = 0; icomp < components; ++icomp) {
+                  const int iglob = index_mapping.data(ispec, iz, ix);
+                  const auto rmass_ref =
+                      h_mass_matrix_global.data(iglob, icomp);
+                  const auto rmass = point_field.mass_matrix[icomp];
+                  error_norm +=
+                      std::sqrt((rmass - rmass_ref) * (rmass - rmass_ref));
+                  ref_norm += std::sqrt(rmass_ref * rmass_ref);
+                }
+              }
+            }
+          }
+        }
 
         type_real tolerance = 1e-5;
 
-        ASSERT_TRUE(specfem::testing::compare_norm(
-            mass_inverse, h_mass_matrix_local, tolerance));
-
-        // specfem::testing::compare_norm(h_rmass_inverse_static,
-        //                                Test.database.elastic_mass_matrix,
-        //                                nglob, ndim, tolerance);
+        ASSERT_NEAR(error_norm / ref_norm, 0.0, tolerance);
       }
 
       if (Test.database.acoustic_mass_matrix != "NULL") {
-        specfem::kokkos::HostView1d<type_real, Kokkos::LayoutLeft>
-            h_rmass_inverse =
-                Kokkos::subview(assembly.fields.forward.acoustic.h_mass_inverse,
-                                Kokkos::ALL(), 0);
+        specfem::testing::array2d<type_real, Kokkos::LayoutRight>
+            h_mass_matrix_global(Test.database.acoustic_mass_matrix, nglob, 1);
 
-        specfem::testing::array1d<type_real, Kokkos::LayoutLeft> mass_inverse(
-            h_rmass_inverse);
+        specfem::testing::array3d<int, Kokkos::LayoutRight> index_mapping(
+            Test.database.index_mapping, nspec, ngllz, ngllx);
 
-        specfem::testing::array1d<type_real, Kokkos::LayoutLeft>
-            h_mass_matrix_global(Test.database.acoustic_mass_matrix, nglob);
+        type_real error_norm = 0.0;
+        type_real ref_norm = 0.0;
 
-        auto index_mapping = Kokkos::subview(
-            assembly.fields.forward.h_assembly_index_mapping, Kokkos::ALL(),
-            static_cast<int>(specfem::element::medium_tag::acoustic));
+        for (int ix = 0; ix < ngllx; ++ix) {
+          for (int iz = 0; iz < ngllz; ++iz) {
+            for (int ispec = 0; ispec < nspec; ++ispec) {
+              specfem::point::index index(ispec, iz, ix);
+              if (assembly.properties.element_types(ispec) ==
+                  specfem::element::medium_tag::acoustic) {
 
-        auto h_mass_matrix_local =
-            compact_array<specfem::element::medium_tag::acoustic>(
-                h_mass_matrix_global, index_mapping);
+                constexpr int components = 1;
+                const auto point_field = [&]() {
+                  specfem::point::field<specfem::dimension::type::dim2,
+                                        specfem::element::medium_tag::acoustic,
+                                        false, false, false, true>
+                      point_field;
+                  specfem::compute::load_on_host(index, assembly.fields.forward,
+                                                 point_field);
+                  return point_field;
+                }();
+
+                for (int icomp = 0; icomp < components; ++icomp) {
+                  const int iglob = index_mapping.data(ispec, iz, ix);
+                  const auto rmass_ref =
+                      h_mass_matrix_global.data(iglob, icomp);
+                  const auto rmass = point_field.mass_matrix[icomp];
+                  error_norm +=
+                      std::sqrt((rmass - rmass_ref) * (rmass - rmass_ref));
+                  ref_norm += std::sqrt(rmass_ref * rmass_ref);
+                }
+              }
+            }
+          }
+        }
 
         type_real tolerance = 1e-5;
 
-        ASSERT_TRUE(specfem::testing::compare_norm(
-            mass_inverse, h_mass_matrix_local, tolerance));
-
-        // specfem::testing::compare_norm(h_rmass_inverse_static,
-        //                                Test.database.acoustic_mass_matrix,
-        //                                nglob, tolerance);
+        ASSERT_NEAR(error_norm / ref_norm, 0.0, tolerance);
       }
 
       std::cout << "--------------------------------------------------\n"
                 << "\033[0;32m[PASSED]\033[0m Test: " << Test.name << "\n"
                 << "--------------------------------------------------\n\n"
                 << std::endl;
-
     } catch (const std::exception &e) {
       std::cout << " - Error: " << e.what() << std::endl;
       FAIL() << "--------------------------------------------------\n"
