@@ -222,7 +222,7 @@ void load_on_host(
     specfem::point::field<specfem::dimension::type::dim2, MediumType,
                           StoreDisplacement, StoreVelocity, StoreAcceleration,
                           StoreMassMatrix> &point_field) {
-  const int iglob = h_assembly_index_mapping(
+  const int iglob = field.h_assembly_index_mapping(
       field.index_mapping(index.ispec, index.iz, index.ix),
       static_cast<int>(MediumType));
   load_on_host(iglob, field, point_field);
