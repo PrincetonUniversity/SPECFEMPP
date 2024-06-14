@@ -11,52 +11,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-
-// ------------------------------------------------------------------------
-// Compact global arrays to local arrays
-
-namespace {
-template <specfem::element::medium_tag element_type,
-          specfem::element::property_tag property>
-specfem::testing::array3d<type_real, Kokkos::LayoutRight> compact_global_array(
-    const specfem::testing::array3d<type_real, Kokkos::LayoutRight>
-        &global_array,
-    const specfem::mesh::materials &materials) {
-  const int nspec = global_array.n1;
-  const int ngllz = global_array.n2;
-  const int ngllx = global_array.n3;
-
-  int count = 0;
-  for (int ispec = 0; ispec < nspec; ++ispec) {
-    auto &material_specification = materials.material_index_mapping(ispec);
-    if ((material_specification.type == element_type) &&
-        (material_specification.property == property)) {
-      count++;
-    }
-  }
-
-  specfem::testing::array3d<type_real, Kokkos::LayoutRight> local_array(
-      count, ngllz, ngllx);
-
-  count = 0;
-  for (int ispec = 0; ispec < nspec; ++ispec) {
-    auto &material_specification = materials.material_index_mapping(ispec);
-    if ((material_specification.type == element_type) &&
-        (material_specification.property == property)) {
-      for (int igllz = 0; igllz < ngllz; ++igllz) {
-        for (int igllx = 0; igllx < ngllx; ++igllx) {
-          local_array.data(count, igllz, igllx) =
-              global_array.data(ispec, igllz, igllx);
-        }
-      }
-      count++;
-    }
-  }
-
-  return local_array;
-}
-} // namespace
-
 // ------------------------------------------------------------------------
 // Reading test config
 struct test_config {
