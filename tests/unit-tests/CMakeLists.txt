@@ -197,22 +197,22 @@ target_link_libraries(
   Boost::filesystem
 )
 
-# add_executable(
-#   interpolate_function
-#   algorithms/interpolate_function.cpp
-# )
+add_executable(
+  interpolate_function
+  algorithms/interpolate_function.cpp
+)
 
-# target_link_libraries(
-#   interpolate_function
-#   mesh
-#   compute
-#   quadrature
-#   mpi_environment
-#   kokkos_environment
-#   algorithms
-#   Boost::filesystem
-#   point
-# )
+target_link_libraries(
+  interpolate_function
+  mesh
+  compute
+  quadrature
+  mpi_environment
+  kokkos_environment
+  algorithms
+  Boost::filesystem
+  point
+)
 
 # # add_executable(
 # #   source_location_tests
@@ -313,25 +313,25 @@ target_link_libraries(
   -lpthread -lm
 )
 
-# add_executable(
-#   compute_coupled_interfaces_tests
-#   compute/coupled_interfaces/coupled_interfaces_tests.cpp
-# )
+add_executable(
+  compute_coupled_interfaces_tests
+  compute/coupled_interfaces/coupled_interfaces_tests.cpp
+)
 
-# target_link_libraries(
-#   compute_coupled_interfaces_tests
-#   quadrature
-#   mesh
-#   yaml-cpp
-#   kokkos_environment
-#   mpi_environment
-#   compute
-#   compare_arrays
-#   point
-#   edge
-#   Boost::filesystem
-#   -lpthread -lm
-# )
+target_link_libraries(
+  compute_coupled_interfaces_tests
+  quadrature
+  mesh
+  yaml-cpp
+  kokkos_environment
+  mpi_environment
+  compute
+  compare_arrays
+  point
+  edge
+  Boost::filesystem
+  -lpthread -lm
+)
 
 # Link to gtest only if MPI is enabled
 if (NOT MPI_PARALLEL)
@@ -343,10 +343,10 @@ if (NOT MPI_PARALLEL)
   gtest_discover_tests(compute_partial_derivatives_tests)
   gtest_discover_tests(compute_elastic_tests)
   # # gtest_discover_tests(compute_acoustic_tests)
-  # gtest_discover_tests(compute_coupled_interfaces_tests)
+  gtest_discover_tests(compute_coupled_interfaces_tests)
   gtest_discover_tests(compute_tests)
   gtest_discover_tests(locate_point)
-  # gtest_discover_tests(interpolate_function)
+  gtest_discover_tests(interpolate_function)
   # gtest_discover_tests(rmass_inverse_tests)
   # gtest_discover_tests(displacement_newmark_tests)
   # gtest_discover_tests(seismogram_elastic_tests)
