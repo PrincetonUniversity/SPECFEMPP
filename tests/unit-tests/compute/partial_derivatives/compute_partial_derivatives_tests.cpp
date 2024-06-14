@@ -84,37 +84,38 @@ TEST(COMPUTE_TESTS, compute_partial_derivatives) {
   const int ngllz = compute_mesh.quadratures.gll.N;
   const int ngllx = compute_mesh.quadratures.gll.N;
 
-  Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace> h_xix =
-      partial_derivatives.h_xix;
-  specfem::testing::array3d<type_real, Kokkos::LayoutLeft> xix_array(
-      h_xix); // convert to array3d
   specfem::testing::array3d<type_real, Kokkos::LayoutRight> xix_ref(
       test_config.xix_file, nspec, ngllz, ngllx);
-  EXPECT_TRUE(xix_array == xix_ref);
+  specfem::testing::array3d<type_real, Kokkos::LayoutRight> gammax_ref(
+      test_config.gammax_file, nspec, ngllz, ngllx);
+  specfem::testing::array3d<type_real, Kokkos::LayoutRight> gammaz_ref(
+      test_config.gammaz_file, nspec, ngllz, ngllx);
+  specfem::testing::array3d<type_real, Kokkos::LayoutRight> jacobian_ref(
+      test_config.jacobian_file, nspec, ngllz, ngllx);
 
-  // specfem::kokkos::HostView3d<type_real> h_gammax =
-  //     partial_derivatives.h_gammax;
-  // specfem::testing::array3d<type_real, Kokkos::LayoutRight> gammax_array(
-  //     h_gammax); // convert to array3d
-  // specfem::testing::array3d<type_real, Kokkos::LayoutRight> gammax_ref(
-  //     test_config.gammax_file, nspec, ngllz, ngllx);
-  // EXPECT_TRUE(gammax_array == gammax_ref);
+  for (int ix = 0; ix < ngllx; ++ix) {
+    for (int iz = 0; iz < ngllz; ++iz) {
+      for (int ispec = 0; ispec < nspec; ++ispec) {
+        const specfem::point::index index(ispec, iz, ix);
+        const auto point_partial_derivatives =
+            [&]() -> specfem::point::partial_derivatives2<true> {
+          specfem::point::partial_derivatives2<true> point_partial_derivatives;
+          specfem::compute::load_on_host(index, partial_derivatives,
+                                         point_partial_derivatives);
+          return point_partial_derivatives;
+        }();
 
-  // specfem::kokkos::HostView3d<type_real> h_gammaz =
-  //     partial_derivatives.h_gammaz;
-  // specfem::testing::array3d<type_real, Kokkos::LayoutRight> gammaz_array(
-  //     h_gammaz); // convert to array3d
-  // specfem::testing::array3d<type_real, Kokkos::LayoutRight> gammaz_ref(
-  //     test_config.gammaz_file, nspec, ngllz, ngllx);
-  // EXPECT_TRUE(gammaz_array == gammaz_ref);
-
-  // specfem::kokkos::HostView3d<type_real> h_jacobian =
-  //     partial_derivatives.h_jacobian;
-  // specfem::testing::array3d<type_real, Kokkos::LayoutRight> jacobian_array(
-  //     h_jacobian); // convert to array3d
-  // specfem::testing::array3d<type_real, Kokkos::LayoutRight> jacobian_ref(
-  //     test_config.jacobian_file, nspec, ngllz, ngllx);
-  // EXPECT_TRUE(jacobian_array == jacobian_ref);
+        EXPECT_NEAR(point_partial_derivatives.xix, xix_ref.data(ispec, iz, ix),
+                    xix_ref.tol);
+        EXPECT_NEAR(point_partial_derivatives.gammax,
+                    gammax_ref.data(ispec, iz, ix), gammax_ref.tol);
+        EXPECT_NEAR(point_partial_derivatives.gammaz,
+                    gammaz_ref.data(ispec, iz, ix), gammaz_ref.tol);
+        EXPECT_NEAR(point_partial_derivatives.jacobian,
+                    jacobian_ref.data(ispec, iz, ix), jacobian_ref.tol);
+      }
+    }
+  }
 
   return;
 }
