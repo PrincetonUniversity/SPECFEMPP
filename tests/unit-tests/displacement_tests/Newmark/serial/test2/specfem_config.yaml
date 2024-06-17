@@ -9,6 +9,7 @@ parameters:
       Interfaces : None
       Sources : Force source (1)
       Boundary conditions : Neumann BCs on all edges
+      Debugging comment : This test tests acoustic compute_forces routine and dirichlet boundary conditions
 
   simulation-setup:
     ## quadrature setup
@@ -22,7 +23,7 @@ parameters:
         time-scheme:
           type: Newmark
           dt: 1.1e-3
-          nstep: 100
+          nstep: 300
 
     simulation-mode:
       forward:
@@ -32,11 +33,10 @@ parameters:
             output-folder: "."
 
   receivers:
-    stations-file: "../DATA/STATIONS"
+    stations-file: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test2/STATIONS"
     angle: 0.0
     seismogram-type:
       - displacement
-      - velocity
     nstep_between_samples: 1
 
   ## Runtime setup
