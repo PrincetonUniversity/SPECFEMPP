@@ -9,6 +9,7 @@ parameters:
       Interfaces : None
       Sources : Force source (1)
       Boundary conditions : Neumann BCs on all edges
+      Debugging comment : This test tests elastic compute_forces routine
 
   simulation-setup:
     ## quadrature setup
