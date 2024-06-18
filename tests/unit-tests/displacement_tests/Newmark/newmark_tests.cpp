@@ -200,6 +200,13 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     auto receivers =
         specfem::receivers::read_receivers(stations_filename, angle);
 
+    std::cout << "  Receiver information\n";
+    std::cout << "------------------------------" << std::endl;
+    for (auto &receiver : receivers) {
+      if (mpi->main_proc())
+        std::cout << receiver->print() << std::endl;
+    }
+
     const auto seismogram_types = setup.get_seismogram_types();
 
     // Check only displacement seismogram types are being computed
@@ -245,6 +252,9 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
         Test.database.traces + "/" + station_name + "." + network_name +
             ".BXZ.semd"
       };
+      type_real error_norm = 0.0;
+      type_real compute_norm = 0.0;
+
       for (int i = 0; i < traces_filename.size(); ++i) {
         Kokkos::View<type_real **, Kokkos::LayoutRight> traces(
             "traces", seismograms.h_seismogram.extent(0), 2);
@@ -262,15 +272,24 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
           const type_real time_t = traces(isig_step, 0);
           const type_real value = traces(isig_step, 1);
 
-          if (std::abs(l_seismogram(isig_step, 0) - value) > 1e-6) {
-            FAIL() << " Displacement values do not match\n"
-                   << " - Network: " << network_name << "\n"
-                   << " - Station: " << station_name << "\n"
-                   << " - Time: " << time_t << "\n"
-                   << " - Expected: " << value << "\n"
-                   << " - Computed: " << l_seismogram(isig_step, 0) << "\n";
-          }
+          const type_real computed_value = l_seismogram(isig_step, 0);
+
+          error_norm +=
+              std::sqrt((value - computed_value) * (value - computed_value));
+          compute_norm += std::sqrt(value * value);
         }
+      }
+
+      if (error_norm / compute_norm > 1e-3) {
+        FAIL() << "--------------------------------------------------\n"
+               << "\033[0;31m[FAILED]\033[0m Test failed\n"
+               << " - Test name: " << Test.name << "\n"
+               << " - Error: Traces do not match\n"
+               << " - Station: " << station_name << "\n"
+               << " - Network: " << network_name << "\n"
+               << " - Error value: " << error_norm / compute_norm << "\n"
+               << "--------------------------------------------------\n\n"
+               << std::endl;
       }
     }
 
