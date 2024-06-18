@@ -179,7 +179,7 @@ rec_normal_to_surface           = .false.        # base anglerec normal to surfa
 # first receiver set (repeat these 6 lines and adjust nreceiversets accordingly)
 nrec                            = 11            # number of receivers
 xdeb                            = 1450.d0        # first receiver x in meters
-zdeb                            = 2400   # first receiver z in meters
+zdeb                            = 2200   # first receiver z in meters
 xfin                            = 1575.d0        # last receiver x in meters (ignored if only one receiver)
 zfin                            = 3400   # last receiver z in meters (ignored if only one receiver)
 record_at_surface_same_vertical = .false.        # receivers inside the medium or at the surface
@@ -292,8 +292,8 @@ absorbleft                      = .false.
 
 # define the different regions of the model in the (nx,nz) spectral-element mesh
 nbregions                       = 2              # then set below the different regions and model number for each region
-1 144 1   54 1
-1 144 55 108 2
+1 144 1   54 2
+1 144 55 108 1
 
 #-----------------------------------------------------------
 #
