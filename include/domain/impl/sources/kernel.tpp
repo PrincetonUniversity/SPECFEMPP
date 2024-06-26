@@ -90,8 +90,8 @@ void specfem::domain::impl::kernels::source_kernel<
               sub2ind(xz, ngllx, iz, ix);
               specfem::point::index index(ispec_l, iz, ix);
 
-              const specfem::kokkos::array_type<type_real,
-                                                medium_type::components>
+              const specfem::datatype::ScalarPointViewType<
+                  type_real, medium_type::components>
                   lagrange_interpolant(Kokkos::subview(
                       sources.source_array, isource_l, Kokkos::ALL, iz, ix));
 
@@ -103,23 +103,24 @@ void specfem::domain::impl::kernels::source_kernel<
                               (MediumTag ==
                                specfem::element::medium_tag::acoustic)) {
                   const auto point_properties = [&]()
-                      -> specfem::point::properties<MediumTag, PropertyTag> {
-                    specfem::point::properties<MediumTag, PropertyTag>
+                      -> specfem::point::properties<DimensionType, MediumTag, PropertyTag> {
+                    specfem::point::properties<DimensionType, MediumTag, PropertyTag>
                         point_properties;
                     specfem::compute::load_on_device(index, properties,
                                                      point_properties);
                     return point_properties;
                   }();
-                  specfem::kokkos::array_type<type_real,
-                                              medium_type::components>
+                  specfem::datatype::ScalarPointViewType<
+                      type_real, medium_type::components>
                       stf(Kokkos::subview(sources.source_time_function,
                                           timestep, isource_l, Kokkos::ALL));
                   for (int i = 0; i < components; i++) {
-                    stf[i] = stf[i] / point_properties.kappa;
+                    stf(i) = stf(i) / point_properties.kappa;
                   }
                   return stf;
                 } else {
-                  return specfem::kokkos::array_type<type_real, components>(
+                  return specfem::datatype::ScalarPointViewType<
+                      type_real, medium_type::components>(
                       Kokkos::subview(sources.source_time_function, timestep,
                                       isource_l, Kokkos::ALL));
                 }

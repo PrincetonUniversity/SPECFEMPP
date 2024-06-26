@@ -79,11 +79,11 @@ public:
    * the source
    */
   KOKKOS_INLINE_FUNCTION void compute_interaction(
-      const specfem::kokkos::array_type<type_real, medium_type::components>
-          &stf,
-      const specfem::kokkos::array_type<type_real, medium_type::components>
-          &lagrange_interpolant,
-      specfem::kokkos::array_type<type_real, medium_type::components>
+      const specfem::datatype::ScalarPointViewType<
+          type_real, medium_type::components> &stf,
+      const specfem::datatype::ScalarPointViewType<
+          type_real, medium_type::components> &lagrange_interpolant,
+      specfem::datatype::ScalarPointViewType<type_real, medium_type::components>
           &acceleration) const;
 };
 } // namespace sources

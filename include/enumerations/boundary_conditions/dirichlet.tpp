@@ -18,15 +18,16 @@ KOKKOS_INLINE_FUNCTION void specfem::boundary::boundary<
     specfem::element::boundary_tag::acoustic_free_surface, qp_type>::
     enforce_traction(
         const int &xz,
-        const specfem::kokkos::array_type<type_real, dimension::dim> &weight,
+        const specfem::datatype::ScalarPointViewType<type_real, 2> &weight,
         const specfem::point::partial_derivatives2<true> &partial_derivatives,
-        const specfem::point::properties<medium_type::medium_tag,
+        const specfem::point::properties<specfem::dimension::type::dim2,
+                                         medium_type::medium_tag,
                                          medium_type::property_tag> &properties,
         const specfem::point::boundary &boundary_type,
-        const specfem::kokkos::array_type<type_real, medium_type::components>
-            &field_dot,
-        specfem::kokkos::array_type<type_real, medium_type::components>
-            &field_dot_dot) const {
+        const specfem::datatype::ScalarPointViewType<
+            type_real, medium_type::components> &field_dot,
+        specfem::datatype::ScalarPointViewType<
+            type_real, medium_type::components> &field_dot_dot) const {
 
   constexpr int components = medium_type::components;
   constexpr auto value_t = value;

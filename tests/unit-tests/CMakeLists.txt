@@ -250,6 +250,7 @@ target_link_libraries(
   compare_arrays
   point
   algorithms
+  domain
   -lpthread -lm
 )
 
@@ -274,6 +275,7 @@ target_link_libraries(
   edge
   algorithms
   coupled_interface
+  domain
   -lpthread -lm
 )
 
@@ -292,6 +294,7 @@ target_link_libraries(
   compute
   parameter_reader
   writer
+  domain
   -lpthread -lm
 )
 
@@ -310,6 +313,7 @@ target_link_libraries(
   compute
   parameter_reader
   writer
+  domain
   -lpthread -lm
 )
 

@@ -32,7 +32,8 @@ template <specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 KOKKOS_FUNCTION specfem::point::kernels<MediumTag, PropertyTag> element_kernel(
-    const specfem::point::properties<MediumTag, PropertyTag> &properties,
+    const specfem::point::properties<DimensionType, MediumTag, PropertyTag>
+        &properties,
     const AdjointPointFieldType<DimensionType, MediumTag> &adjoint_field,
     const BackwardPointFieldType<DimensionType, MediumTag> &backward_field,
     const PointFieldDerivativesType<DimensionType, MediumTag>

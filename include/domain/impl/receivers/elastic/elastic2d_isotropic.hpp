@@ -31,7 +31,7 @@ private:
 
   using ElementQuadratureViewType = typename specfem::element::quadrature<
       NGLL, DimensionType, specfem::kokkos::DevScratchSpace,
-      Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, true>::ViewType;
+      Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, false>::ViewType;
 
   using ElementFieldViewType =
       typename specfem::element::field<NGLL, DimensionType, MediumTag,
@@ -107,7 +107,8 @@ public:
   void get_field(
       const int iz, const int ix,
       const specfem::point::partial_derivatives2<false> partial_derivatives,
-      const specfem::point::properties<medium_type::medium_tag,
+      const specfem::point::properties<specfem::dimension::type::dim2,
+                                       medium_type::medium_tag,
                                        medium_type::property_tag>
           properties,
       const ElementQuadratureViewType hprime,

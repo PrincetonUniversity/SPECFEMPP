@@ -36,7 +36,7 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
     get_field(
         const int iz, const int ix,
         const specfem::point::partial_derivatives2<false> partial_derivatives,
-        const specfem::point::properties<medium_type::medium_tag,
+        const specfem::point::properties<specfem::dimension::type::dim2, medium_type::medium_tag,
                                          medium_type::property_tag>
             properties,
         const ElementQuadratureViewType hprime,

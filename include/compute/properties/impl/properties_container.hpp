@@ -20,6 +20,7 @@ template <>
 struct properties_container<specfem::element::medium_tag::elastic,
                             specfem::element::property_tag::isotropic> {
 
+  constexpr static auto dimension = specfem::dimension::type::dim2;
   constexpr static auto value_type = specfem::element::medium_tag::elastic;
   constexpr static auto property_type =
       specfem::element::property_tag::isotropic;
@@ -51,7 +52,8 @@ struct properties_container<specfem::element::medium_tag::elastic,
 
   KOKKOS_INLINE_FUNCTION void load_device_properties(
       const int &ispec, const int &iz, const int &ix,
-      specfem::point::properties<value_type, property_type> &property) const {
+      specfem::point::properties<dimension, value_type, property_type>
+          &property) const {
     property.rho = rho(ispec, iz, ix);
     property.mu = mu(ispec, iz, ix);
     property.lambdaplus2mu = lambdaplus2mu(ispec, iz, ix);
@@ -62,7 +64,8 @@ struct properties_container<specfem::element::medium_tag::elastic,
 
   void load_host_properties(
       const int &ispec, const int &iz, const int &ix,
-      specfem::point::properties<value_type, property_type> &property) const {
+      specfem::point::properties<dimension, value_type, property_type>
+          &property) const {
     property.rho = h_rho(ispec, iz, ix);
     property.mu = h_mu(ispec, iz, ix);
     property.lambdaplus2mu = h_lambdaplus2mu(ispec, iz, ix);
@@ -84,8 +87,8 @@ struct properties_container<specfem::element::medium_tag::elastic,
   }
 
   void assign(const int ispec, const int iz, const int ix,
-              const specfem::point::properties<value_type, property_type>
-                  &property) const {
+              const specfem::point::properties<dimension, value_type,
+                                               property_type> &property) const {
     h_rho(ispec, iz, ix) = property.rho;
     h_mu(ispec, iz, ix) = property.mu;
     h_lambdaplus2mu(ispec, iz, ix) = property.lambdaplus2mu;
@@ -96,6 +99,7 @@ template <>
 struct properties_container<specfem::element::medium_tag::acoustic,
                             specfem::element::property_tag::isotropic> {
 
+  constexpr static auto dimension = specfem::dimension::type::dim2;
   constexpr static auto value_type = specfem::element::medium_tag::acoustic;
   constexpr static auto property_type =
       specfem::element::property_tag::isotropic;
@@ -130,7 +134,8 @@ struct properties_container<specfem::element::medium_tag::acoustic,
 
   KOKKOS_INLINE_FUNCTION void load_device_properties(
       const int &ispec, const int &iz, const int &ix,
-      specfem::point::properties<value_type, property_type> &property) const {
+      specfem::point::properties<dimension, value_type, property_type>
+          &property) const {
     property.rho_inverse = rho_inverse(ispec, iz, ix);
     property.lambdaplus2mu_inverse = lambdaplus2mu_inverse(ispec, iz, ix);
     property.kappa = kappa(ispec, iz, ix);
@@ -140,7 +145,8 @@ struct properties_container<specfem::element::medium_tag::acoustic,
 
   void load_host_properties(
       const int &ispec, const int &iz, const int &ix,
-      specfem::point::properties<value_type, property_type> &property) const {
+      specfem::point::properties<dimension, value_type, property_type>
+          &property) const {
     property.rho_inverse = h_rho_inverse(ispec, iz, ix);
     property.lambdaplus2mu_inverse = h_lambdaplus2mu_inverse(ispec, iz, ix);
     property.kappa = h_kappa(ispec, iz, ix);
@@ -161,8 +167,8 @@ struct properties_container<specfem::element::medium_tag::acoustic,
   }
 
   void assign(const int ispec, const int iz, const int ix,
-              const specfem::point::properties<value_type, property_type>
-                  &property) const {
+              const specfem::point::properties<dimension, value_type,
+                                               property_type> &property) const {
     h_rho_inverse(ispec, iz, ix) = property.rho_inverse;
     h_lambdaplus2mu_inverse(ispec, iz, ix) = property.lambdaplus2mu_inverse;
     h_kappa(ispec, iz, ix) = property.kappa;

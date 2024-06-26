@@ -4,7 +4,6 @@
 #include "compute/interface.hpp"
 #include "coupled_interface/impl/edge/edge.hpp"
 // #include "coupled_interface/impl/edge/elastic_acoustic/elastic_acoustic.hpp"
-#include "domain/interface.hpp"
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "macros.hpp"
@@ -163,8 +162,8 @@ specfem::coupled_interface::impl::edges::edge<
     specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
     specfem::element::medium_tag::acoustic>::
     compute_coupling_terms(
-        const specfem::kokkos::array_type<type_real, 2> &normal,
-        const specfem::kokkos::array_type<type_real, 2> &weights,
+        const specfem::datatype::ScalarPointViewType<type_real, 2> &normal,
+        const specfem::datatype::ScalarPointViewType<type_real, 2> &weights,
         const specfem::edge::interface &coupled_edge,
         const CoupledPointFieldType &coupled_field_elements) const {
 
@@ -172,11 +171,11 @@ specfem::coupled_interface::impl::edges::edge<
     switch (coupled_edge.type) {
     case specfem::enums::edge::type::LEFT:
     case specfem::enums::edge::type::RIGHT:
-      return -1.0 * weights[1];
+      return -1.0 * weights(1);
       break;
     case specfem::enums::edge::type::BOTTOM:
     case specfem::enums::edge::type::TOP:
-      return -1.0 * weights[0];
+      return -1.0 * weights(0);
       break;
     default:
       DEVICE_ASSERT(false, "Invalid edge type");
@@ -185,9 +184,9 @@ specfem::coupled_interface::impl::edges::edge<
     }
   }();
 
-  return { specfem::kokkos::array_type<type_real, 2>(
-      factor * normal[0] * coupled_field_elements.acceleration[0],
-      factor * normal[1] * coupled_field_elements.acceleration[0]) };
+  return { specfem::datatype::ScalarPointViewType<type_real, 2>(
+      factor * normal(0) * coupled_field_elements.acceleration(0),
+      factor * normal(1) * coupled_field_elements.acceleration(0)) };
 }
 
 #endif // _COUPLED_INTERFACE_IMPL_ELASTIC_ACOUSTIC_EDGE_TPP

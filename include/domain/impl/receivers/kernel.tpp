@@ -150,8 +150,8 @@ void specfem::domain::impl::kernels::receiver_kernel<
               }();
 
               const auto point_properties =
-                  [&]() -> specfem::point::properties<MediumTag, PropertyTag> {
-                specfem::point::properties<MediumTag, PropertyTag>
+                  [&]() -> specfem::point::properties<DimensionType, MediumTag, PropertyTag> {
+                specfem::point::properties<DimensionType, MediumTag, PropertyTag>
                     point_properties;
                 specfem::compute::load_on_device(index, properties,
                                                  point_properties);
@@ -177,7 +177,7 @@ void specfem::domain::impl::kernels::receiver_kernel<
                     }
                   }();
 
-              const auto sv_receiver_field =
+              auto sv_receiver_field =
                   Kokkos::subview(receivers.receiver_field, iz, ix, iseis_l,
                                   ireceiver_l, isig_step, Kokkos::ALL);
 
@@ -205,15 +205,15 @@ void specfem::domain::impl::kernels::receiver_kernel<
         Kokkos::single(Kokkos::PerTeam(team_member), [=] {
           if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
             receivers.seismogram(isig_step, iseis_l, ireceiver_l, 0) =
-                receivers.cos_recs(ireceiver_l) * seismogram_components[0] +
-                receivers.sin_recs(ireceiver_l) * seismogram_components[1];
+                receivers.cos_recs(ireceiver_l) * seismogram_components(0) +
+                receivers.sin_recs(ireceiver_l) * seismogram_components(1);
             receivers.seismogram(isig_step, iseis_l, ireceiver_l, 1) =
-                receivers.sin_recs(ireceiver_l) * seismogram_components[0] +
-                receivers.cos_recs(ireceiver_l) * seismogram_components[1];
+                receivers.sin_recs(ireceiver_l) * seismogram_components(0) +
+                receivers.cos_recs(ireceiver_l) * seismogram_components(1);
           } else if (specfem::globals::simulation_wave == specfem::wave::sh) {
             receivers.seismogram(isig_step, iseis_l, ireceiver_l, 0) =
-                receivers.cos_recs(ireceiver_l) * seismogram_components[0] +
-                receivers.sin_recs(ireceiver_l) * seismogram_components[1];
+                receivers.cos_recs(ireceiver_l) * seismogram_components(0) +
+                receivers.sin_recs(ireceiver_l) * seismogram_components(1);
             receivers.seismogram(isig_step, iseis_l, ireceiver_l, 0) = 0;
           }
         });

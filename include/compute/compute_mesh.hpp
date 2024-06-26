@@ -154,66 +154,127 @@ struct mesh {
   specfem::point::lcoord2 locate(const specfem::point::gcoord2 &point);
 };
 
-template <int NGLL, typename MemberType, typename MemorySpace,
-          typename MemoryTraits, bool StoreGLLQuadratureDerivatives,
-          bool WeightTimesDerivatives,
-          std::enable_if_t<std::is_same_v<typename MemberType::execution_space::
-                                              scratch_memory_space,
-                                          MemorySpace>,
-                           int> = 0>
-KOKKOS_FUNCTION void load_on_device(
-    const MemberType &team, const specfem::compute::quadrature &quadrature,
-    const specfem::element::quadrature<
-        NGLL, specfem::dimension::type::dim2, MemorySpace, MemoryTraits,
-        StoreGLLQuadratureDerivatives, WeightTimesDerivatives>
-        &element_quadrature) {
+template <typename MemberType, typename ViewType>
+KOKKOS_FUNCTION void
+load_on_device(const MemberType &team,
+               const specfem::compute::quadrature &quadrature,
+               ViewType &element_quadrature) {
+
+  constexpr bool store_hprime_gll = ViewType::store_hprime_gll;
+
+  constexpr bool store_weight_times_hprime_gll =
+      ViewType::store_weight_times_hprime_gll;
+  constexpr int NGLL = ViewType::ngll;
+
+  static_assert(std::is_same_v<typename MemberType::execution_space,
+                               Kokkos::DefaultExecutionSpace>,
+                "Calling team must have a host execution space");
 
   Kokkos::parallel_for(
       Kokkos::TeamThreadRange(team, NGLL * NGLL), [=](const int &xz) {
         int ix, iz;
         sub2ind(xz, NGLL, iz, ix);
-        if constexpr (StoreGLLQuadratureDerivatives) {
+        if constexpr (store_hprime_gll) {
           element_quadrature.hprime_gll(iz, ix) = quadrature.gll.hprime(iz, ix);
-          if constexpr (WeightTimesDerivatives) {
-            element_quadrature.hprimew_gll(ix, iz) =
-                quadrature.gll.hprime(iz, ix) * quadrature.gll.weights(iz);
-          }
+        }
+        if constexpr (store_weight_times_hprime_gll) {
+          element_quadrature.hprime_wgll(ix, iz) =
+              quadrature.gll.hprime(iz, ix) * quadrature.gll.weights(iz);
+        }
+      });
+}
+
+template <typename MemberType, typename ViewType>
+void load_on_host(const MemberType &team,
+                  const specfem::compute::quadrature &quadrature,
+                  ViewType &element_quadrature) {
+
+  constexpr bool store_hprime_gll = ViewType::store_hprime_gll;
+  constexpr bool store_weight_times_hprime_gll =
+      ViewType::store_weight_times_hprime_gll;
+  constexpr int NGLL = ViewType::ngll;
+
+  Kokkos::parallel_for(
+      Kokkos::TeamThreadRange(team, NGLL * NGLL), [=](const int &xz) {
+        int ix, iz;
+        sub2ind(xz, NGLL, iz, ix);
+        if constexpr (store_hprime_gll) {
+          element_quadrature.hprime_gll(iz, ix) =
+              quadrature.gll.h_hprime(iz, ix);
+        }
+        if constexpr (store_weight_times_hprime_gll) {
+          element_quadrature.hprime_wgll(ix, iz) =
+              quadrature.gll.h_hprime(iz, ix) * quadrature.gll.h_weights(iz);
         }
       });
 
   return;
 }
 
-template <int NGLL, typename MemberType, typename MemorySpace,
-          typename MemoryTraits, bool StoreGLLQuadratureDerivatives,
-          bool WeightTimesDerivatives,
-          std::enable_if_t<std::is_same_v<typename MemberType::execution_space::
-                                              scratch_memory_space,
-                                          MemorySpace>,
-                           int> = 0>
-void load_on_host(
-    const MemberType &team, const specfem::compute::quadrature &quadrature,
-    specfem::element::quadrature<NGLL, specfem::dimension::type::dim2,
-                                 MemorySpace, MemoryTraits,
-                                 StoreGLLQuadratureDerivatives,
-                                 WeightTimesDerivatives> &element_quadrature) {
+// template <int NGLL, typename MemberType, typename MemorySpace,
+//           typename MemoryTraits, bool StoreGLLQuadratureDerivatives,
+//           bool WeightTimesDerivatives,
+//           std::enable_if_t<std::is_same_v<typename
+//           MemberType::execution_space::
+//                                               scratch_memory_space,
+//                                           MemorySpace>,
+//                            int> = 0>
+// KOKKOS_FUNCTION void load_on_device(
+//     const MemberType &team, const specfem::compute::quadrature &quadrature,
+//     const specfem::element::quadrature<
+//         NGLL, specfem::dimension::type::dim2, MemorySpace, MemoryTraits,
+//         StoreGLLQuadratureDerivatives, WeightTimesDerivatives>
+//         &element_quadrature) {
 
-  if constexpr (StoreGLLQuadratureDerivatives) {
-    Kokkos::deep_copy(element_quadrature.hprime_gll, quadrature.gll.h_hprime);
-  }
+//   Kokkos::parallel_for(
+//       Kokkos::TeamThreadRange(team, NGLL * NGLL), [=](const int &xz) {
+//         int ix, iz;
+//         sub2ind(xz, NGLL, iz, ix);
+//         if constexpr (StoreGLLQuadratureDerivatives) {
+//           element_quadrature.hprime_gll(iz, ix) = quadrature.gll.hprime(iz,
+//           ix); if constexpr (WeightTimesDerivatives) {
+//             element_quadrature.hprimew_gll(ix, iz) =
+//                 quadrature.gll.hprime(iz, ix) * quadrature.gll.weights(iz);
+//           }
+//         }
+//       });
 
-  if constexpr (WeightTimesDerivatives && StoreGLLQuadratureDerivatives) {
-    Kokkos::parallel_for(
-        Kokkos::TeamThreadRange(team, NGLL * NGLL), [=](const int &xz) {
-          int ix, iz;
-          sub2ind(xz, NGLL, iz, ix);
-          element_quadrature.hprimew_gll(iz, ix) =
-              quadrature.gll.h_hprime(iz, ix) * quadrature.gll.h_weights(iz);
-        });
-  }
+//   return;
+// }
 
-  return;
-}
+// template <int NGLL, typename MemberType, typename MemorySpace,
+//           typename MemoryTraits, bool StoreGLLQuadratureDerivatives,
+//           bool WeightTimesDerivatives,
+//           std::enable_if_t<std::is_same_v<typename
+//           MemberType::execution_space::
+//                                               scratch_memory_space,
+//                                           MemorySpace>,
+//                            int> = 0>
+// void load_on_host(
+//     const MemberType &team, const specfem::compute::quadrature &quadrature,
+//     specfem::element::quadrature<NGLL, specfem::dimension::type::dim2,
+//                                  MemorySpace, MemoryTraits,
+//                                  StoreGLLQuadratureDerivatives,
+//                                  WeightTimesDerivatives> &element_quadrature)
+//                                  {
+
+//   if constexpr (StoreGLLQuadratureDerivatives) {
+//     Kokkos::deep_copy(element_quadrature.hprime_gll,
+//     quadrature.gll.h_hprime);
+//   }
+
+//   if constexpr (WeightTimesDerivatives && StoreGLLQuadratureDerivatives) {
+//     Kokkos::parallel_for(
+//         Kokkos::TeamThreadRange(team, NGLL * NGLL), [=](const int &xz) {
+//           int ix, iz;
+//           sub2ind(xz, NGLL, iz, ix);
+//           element_quadrature.hprimew_gll(iz, ix) =
+//               quadrature.gll.h_hprime(iz, ix) * quadrature.gll.h_weights(iz);
+//         });
+//   }
+
+//   return;
+// }
 
 } // namespace compute
 } // namespace specfem
