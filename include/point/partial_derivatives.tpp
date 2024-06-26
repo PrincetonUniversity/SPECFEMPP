@@ -7,43 +7,35 @@
 #include "specfem_setup.hpp"
 
 template <>
-KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, 2>
+KOKKOS_INLINE_FUNCTION specfem::datatype::ScalarPointViewType<type_real, 2>
 specfem::point::partial_derivatives2<true>::impl_compute_normal<
     specfem::enums::edge::type::BOTTOM>() const {
-  specfem::kokkos::array_type<type_real, 2> dn;
-  dn[0] = -1.0 * this->gammax * this->jacobian;
-  dn[1] = -1.0 * this->gammaz * this->jacobian;
-  return dn;
+  return { static_cast<type_real>(-1.0 * this->gammax * this->jacobian),
+           static_cast<type_real>(-1.0 * this->gammaz * this->jacobian) };
 };
 
 template <>
-KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, 2>
+KOKKOS_INLINE_FUNCTION specfem::datatype::ScalarPointViewType<type_real, 2>
 specfem::point::partial_derivatives2<true>::impl_compute_normal<
     specfem::enums::edge::type::TOP>() const {
-  specfem::kokkos::array_type<type_real, 2> dn;
-  dn[0] = this->gammax * this->jacobian;
-  dn[1] = this->gammaz * this->jacobian;
-  return dn;
+  return { static_cast<type_real>(this->gammax * this->jacobian),
+           static_cast<type_real>(this->gammaz * this->jacobian) };
 };
 
 template <>
-KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, 2>
+KOKKOS_INLINE_FUNCTION specfem::datatype::ScalarPointViewType<type_real, 2>
 specfem::point::partial_derivatives2<true>::impl_compute_normal<
     specfem::enums::edge::type::LEFT>() const {
-  specfem::kokkos::array_type<type_real, 2> dn;
-  dn[0] = -1.0 * this->xix * this->jacobian;
-  dn[1] = -1.0 * this->xiz * this->jacobian;
-  return dn;
+  return { static_cast<type_real>(-1.0 * this->xix * this->jacobian),
+           static_cast<type_real>(-1.0 * this->xiz * this->jacobian) };
 };
 
 template <>
-KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, 2>
+KOKKOS_INLINE_FUNCTION specfem::datatype::ScalarPointViewType<type_real, 2>
 specfem::point::partial_derivatives2<true>::impl_compute_normal<
     specfem::enums::edge::type::RIGHT>() const {
-  specfem::kokkos::array_type<type_real, 2> dn;
-  dn[0] = this->xix * this->jacobian;
-  dn[1] = this->xiz * this->jacobian;
-  return dn;
+  return { static_cast<type_real>(this->xix * this->jacobian),
+           static_cast<type_real>(this->xiz * this->jacobian) };
 };
 
 #endif

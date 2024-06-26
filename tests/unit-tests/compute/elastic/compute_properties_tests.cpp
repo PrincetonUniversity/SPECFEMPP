@@ -104,9 +104,11 @@ TEST(COMPUTE_TESTS, compute_elastic_properties) {
                 specfem::element::property_tag::isotropic) {
           const auto properties =
               [&]() -> specfem::point::properties<
+                        specfem::dimension::type::dim2,
                         specfem::element::medium_tag::elastic,
                         specfem::element::property_tag::isotropic> {
             specfem::point::properties<
+                specfem::dimension::type::dim2,
                 specfem::element::medium_tag::elastic,
                 specfem::element::property_tag::isotropic>
                 properties;

@@ -104,7 +104,8 @@ public:
   void get_field(
       const int iz, const int ix,
       const specfem::point::partial_derivatives2<false> partial_derivatives,
-      const specfem::point::properties<medium_type::medium_tag,
+      const specfem::point::properties<specfem::dimension::type::dim2,
+                                       medium_type::medium_tag,
                                        medium_type::property_tag>
           properties,
       const ElementQuadratureViewType hprime,
@@ -113,38 +114,41 @@ public:
                    specfem::kokkos::DevMemSpace>
           receiver_field) const;
 
-  /**
-   * @brief Compute the seismogram components for a given receiver and
-   * seismogram
-   *
-   * @param ireceiver Index of the receiver
-   * @param iseis Index of the seismogram
-   * @param seismogram_type Type of the seismogram
-   * @param xz Index of the quadrature point
-   * @param isig_step Seismogram step. Seismograms step = current time step /
-   * seismogram sampling rate
-   * @param l_seismogram_components Local seismogram components
-   */
-  KOKKOS_FUNCTION
-  void compute_seismogram_components(
-      const int &ireceiver, const int &iseis,
-      const specfem::enums::seismogram::type &seismogram_type, const int &xz,
-      const int &isig_step,
-      specfem::kokkos::array_type<type_real, 2> &l_seismogram_components) const;
+  //   /**
+  //    * @brief Compute the seismogram components for a given receiver and
+  //    * seismogram
+  //    *
+  //    * @param ireceiver Index of the receiver
+  //    * @param iseis Index of the seismogram
+  //    * @param seismogram_type Type of the seismogram
+  //    * @param xz Index of the quadrature point
+  //    * @param isig_step Seismogram step. Seismograms step = current time step
+  //    /
+  //    * seismogram sampling rate
+  //    * @param l_seismogram_components Local seismogram components
+  //    */
+  //   KOKKOS_FUNCTION
+  //   void compute_seismogram_components(
+  //       const int &ireceiver, const int &iseis,
+  //       const specfem::enums::seismogram::type &seismogram_type, const int
+  //       &xz, const int &isig_step, specfem::kokkos::array_type<type_real, 2>
+  //       &l_seismogram_components) const;
 
-  /**
-   * @brief Store the computed seismogram components in the global seismogram
-   * view
-   *
-   * @param ireceiver Index of the receiver
-   * @param seismogram_components Local seismogram components
-   * @param receiver_seismogram Gloabl seismogram view
-   */
-  KOKKOS_FUNCTION
-  void compute_seismogram(
-      const int &ireceiver,
-      const specfem::kokkos::array_type<type_real, 2> &seismogram_components,
-      specfem::kokkos::DeviceView1d<type_real> receiver_seismogram) const;
+  //   /**
+  //    * @brief Store the computed seismogram components in the global
+  //    seismogram
+  //    * view
+  //    *
+  //    * @param ireceiver Index of the receiver
+  //    * @param seismogram_components Local seismogram components
+  //    * @param receiver_seismogram Gloabl seismogram view
+  //    */
+  //   KOKKOS_FUNCTION
+  //   void compute_seismogram(
+  //       const int &ireceiver,
+  //       const specfem::kokkos::array_type<type_real, 2>
+  //       &seismogram_components, specfem::kokkos::DeviceView1d<type_real>
+  //       receiver_seismogram) const;
 
 private:
   specfem::kokkos::DeviceView1d<type_real> sin_rec; ///< sin of the receiver

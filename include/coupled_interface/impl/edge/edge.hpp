@@ -2,6 +2,7 @@
 #define _COUPLED_INTERFACE_IMPL_EDGE_HPP
 
 #include "compute/coupled_interfaces.hpp"
+#include "compute/fields/simulation_field.hpp"
 #include "enumerations/interface.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -83,8 +84,8 @@ public:
 
   KOKKOS_FUNCTION
   SelfPointFieldType compute_coupling_terms(
-      const specfem::kokkos::array_type<type_real, 2> &normal,
-      const specfem::kokkos::array_type<type_real, 2> &weights,
+      const specfem::datatype::ScalarPointViewType<type_real, 2> &normal,
+      const specfem::datatype::ScalarPointViewType<type_real, 2> &weights,
       const specfem::edge::interface &coupled_edge_type,
       const CoupledPointFieldType &field) const;
 

@@ -126,17 +126,17 @@ void specfem::frechet_derivatives::impl::frechet_elements<
         // The Lambda function is is passed to the gradient algorithm
         // which is applied to gradient result for every quadrature point
         specfem::algorithms::gradient(
-            team, my_elements, partial_derivatives, quadrature_element,
-            adjoint_element_field, backward_element_field,
-            [&](const specfem::point::index &index,
-                const PointFieldDerivativesType &adjoint_point_derivatives,
-                const PointFieldDerivativesType &backward_point_derivatives) {
+            team, my_elements, partial_derivatives, quadrature_element.hprime_gll,
+            adjoint_element_field.displacement, backward_element_field.displacement,
+            [&](const int ielement, const specfem::point::index &index,
+                const typename PointFieldDerivativesType::ViewType &df,
+                const typename PointFieldDerivativesType::ViewType &dg) {
               // Load properties, adjoint field, and backward field
               // for the point
               // ------------------------------
               const auto point_properties =
-                  [&]() -> specfem::point::properties<MediumTag, PropertyTag> {
-                specfem::point::properties<MediumTag, PropertyTag>
+                  [&]() -> specfem::point::properties<DimensionType, MediumTag, PropertyTag> {
+                specfem::point::properties<DimensionType, MediumTag, PropertyTag>
                     point_properties;
                 specfem::compute::load_on_device(index, properties,
                                                  point_properties);
@@ -157,6 +157,9 @@ void specfem::frechet_derivatives::impl::frechet_elements<
                 return backward_point_field;
               }();
               // ------------------------------
+
+              const PointFieldDerivativesType adjoint_point_derivatives(df);
+              const PointFieldDerivativesType backward_point_derivatives(dg);
 
               // Compute the kernel for the point
               const auto point_kernel =

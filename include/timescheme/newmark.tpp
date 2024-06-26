@@ -30,7 +30,7 @@ void corrector_phase_impl(
         specfem::compute::load_on_device(iglob, field, load);
 
         for (int idim = 0; idim < components; ++idim) {
-          add.velocity[idim] += deltatover2 * load.acceleration[idim];
+          add.velocity(idim) += deltatover2 * load.acceleration(idim);
         }
 
         specfem::compute::add_on_device(iglob, add, field);
@@ -70,12 +70,12 @@ void predictor_phase_impl(
         specfem::compute::load_on_device(iglob, field, load);
 
         for (int idim = 0; idim < components; ++idim) {
-          add.displacement[idim] += deltat * load.velocity[idim] +
-                                    deltasquareover2 * load.acceleration[idim];
+          add.displacement(idim) += deltat * load.velocity(idim) +
+                                    deltasquareover2 * load.acceleration(idim);
 
-          add.velocity[idim] += deltatover2 * load.acceleration[idim];
+          add.velocity(idim) += deltatover2 * load.acceleration(idim);
 
-          store.acceleration[idim] = 0;
+          store.acceleration(idim) = 0;
         }
 
         specfem::compute::add_on_device(iglob, add, field);

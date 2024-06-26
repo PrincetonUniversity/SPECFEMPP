@@ -76,8 +76,7 @@ void specfem::coupled_interface::coupled_interface<
               specfem::point::index index(coupled_index, iz, ix);
 
               // compute normal
-              const auto normal =
-                  [&]() -> specfem::kokkos::array_type<type_real, 2> {
+              const auto normal = [&]() {
                 specfem::point::partial_derivatives2<true> point_derivatives;
                 specfem::compute::load_on_device(index, partial_derivatives,
                                                  point_derivatives);
@@ -88,8 +87,8 @@ void specfem::coupled_interface::coupled_interface<
               const auto coupled_field_elements =
                   edge.load_field_elements(index, field);
 
-              const specfem::kokkos::array_type<type_real, 2> weights(wgll(ix),
-                                                                      wgll(iz));
+              const specfem::datatype::ScalarPointViewType<type_real, 2>
+                  weights(wgll(ix), wgll(iz));
 
               const auto coupling_terms = edge.compute_coupling_terms(
                   normal, weights, coupled_edge_type, coupled_field_elements);

@@ -47,7 +47,7 @@ specfem::point::partial_derivatives2<false> specfem::point::operator*(
       lhs.xix * rhs, lhs.gammax * rhs, lhs.xiz * rhs, lhs.gammaz * rhs);
 }
 
-KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, 2>
+KOKKOS_FUNCTION specfem::datatype::ScalarPointViewType<type_real, 2>
 specfem::point::partial_derivatives2<true>::compute_normal(
     const specfem::enums::edge::type &type) const {
   switch (type) {
@@ -61,12 +61,12 @@ specfem::point::partial_derivatives2<true>::compute_normal(
     return this->impl_compute_normal<specfem::enums::edge::type::RIGHT>();
   default:
     DEVICE_ASSERT(false, "Invalid boundary type");
-    return specfem::kokkos::array_type<type_real, 2>();
+    return {};
   }
 }
 
 // compute_normal
-KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, 2>
+KOKKOS_FUNCTION specfem::datatype::ScalarPointViewType<type_real, 2>
 specfem::point::partial_derivatives2<true>::compute_normal(
     const specfem::edge::interface &interface) const {
   return this->compute_normal(interface.type);

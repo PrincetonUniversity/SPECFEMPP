@@ -1,9 +1,9 @@
 #ifndef _POINT_PARTIAL_DERIVATIVES_HPP
 #define _POINT_PARTIAL_DERIVATIVES_HPP
 
+#include "datatypes/point_view.hpp"
 #include "edge/interface.hpp"
 #include "enumerations/specfem_enums.hpp"
-#include "kokkos_abstractions.h"
 #include "macros.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -11,7 +11,7 @@
 namespace specfem {
 namespace point {
 
-template <bool StoreJacobian> struct partial_derivatives2;
+template <bool StoreJacobian = false> struct partial_derivatives2;
 
 template <> struct partial_derivatives2<false> {
   type_real xix;
@@ -76,18 +76,18 @@ struct partial_derivatives2<true> : public partial_derivatives2<false> {
   KOKKOS_FUNCTION
   partial_derivatives2(const partial_derivatives2<true> &rhs) = default;
 
-  KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, 2>
+  KOKKOS_FUNCTION specfem::datatype::ScalarPointViewType<type_real, 2>
   compute_normal(const specfem::enums::edge::type &type) const;
 
-  KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, 2>
+  KOKKOS_FUNCTION specfem::datatype::ScalarPointViewType<type_real, 2>
   compute_normal(const specfem::edge::interface &interface) const;
 
 private:
   template <specfem::enums::edge::type type>
-  KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, 2>
+  KOKKOS_INLINE_FUNCTION specfem::datatype::ScalarPointViewType<type_real, 2>
   impl_compute_normal() const {
     ASSERT(false, "Invalid boundary type");
-    return specfem::kokkos::array_type<type_real, 2>();
+    return {};
   };
 };
 

@@ -94,23 +94,28 @@ struct properties {
              const specfem::mesh::materials &materials);
 };
 
-template <specfem::element::medium_tag type,
-          specfem::element::property_tag property>
+template <specfem::dimension::type DimensionType,
+          specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag>
 KOKKOS_FUNCTION void
 load_on_device(const specfem::point::index &lcoord,
                const specfem::compute::properties &properties,
-               specfem::point::properties<type, property> &point_properties) {
+               specfem::point::properties<DimensionType, MediumTag, PropertyTag>
+                   &point_properties) {
   const int ispec = lcoord.ispec;
   const int iz = lcoord.iz;
   const int ix = lcoord.ix;
   const int index = properties.property_index_mapping(ispec);
 
-  if constexpr ((type == specfem::element::medium_tag::elastic) &&
-                (property == specfem::element::property_tag::isotropic)) {
+  static_assert(DimensionType == specfem::dimension::type::dim2,
+                "Only 2D properties are supported");
+
+  if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
+                (PropertyTag == specfem::element::property_tag::isotropic)) {
     properties.elastic_isotropic.load_device_properties(index, iz, ix,
                                                         point_properties);
-  } else if constexpr ((type == specfem::element::medium_tag::acoustic) &&
-                       (property ==
+  } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
+                       (PropertyTag ==
                         specfem::element::property_tag::isotropic)) {
     properties.acoustic_isotropic.load_device_properties(index, iz, ix,
                                                          point_properties);
@@ -121,24 +126,28 @@ load_on_device(const specfem::point::index &lcoord,
   return;
 }
 
-template <specfem::element::medium_tag type,
-          specfem::element::property_tag property>
-void load_on_host(
-    const specfem::point::index &lcoord,
-    const specfem::compute::properties &properties,
-    specfem::point::properties<type, property> &point_properties) {
+template <specfem::dimension::type DimensionType,
+          specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag>
+void load_on_host(const specfem::point::index &lcoord,
+                  const specfem::compute::properties &properties,
+                  specfem::point::properties<DimensionType, MediumTag,
+                                             PropertyTag> &point_properties) {
 
   const int ispec = lcoord.ispec;
   const int iz = lcoord.iz;
   const int ix = lcoord.ix;
   const int index = properties.h_property_index_mapping(ispec);
 
-  if constexpr ((type == specfem::element::medium_tag::elastic) &&
-                (property == specfem::element::property_tag::isotropic)) {
+  static_assert(DimensionType == specfem::dimension::type::dim2,
+                "Only 2D properties are supported");
+
+  if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
+                (PropertyTag == specfem::element::property_tag::isotropic)) {
     properties.elastic_isotropic.load_host_properties(index, iz, ix,
                                                       point_properties);
-  } else if constexpr ((type == specfem::element::medium_tag::acoustic) &&
-                       (property ==
+  } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
+                       (PropertyTag ==
                         specfem::element::property_tag::isotropic)) {
     properties.acoustic_isotropic.load_host_properties(index, iz, ix,
                                                        point_properties);
@@ -149,22 +158,27 @@ void load_on_host(
   return;
 }
 
-template <specfem::element::medium_tag type,
-          specfem::element::property_tag property>
+template <specfem::dimension::type DimensionType,
+          specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag>
 void store_on_host(
     const specfem::point::index &lcoord,
     const specfem::compute::properties &properties,
-    const specfem::point::properties<type, property> &point_properties) {
+    const specfem::point::properties<DimensionType, MediumTag, PropertyTag>
+        &point_properties) {
   const int ispec = lcoord.ispec;
   const int iz = lcoord.iz;
   const int ix = lcoord.ix;
   const int index = properties.h_property_index_mapping(ispec);
 
-  if constexpr ((type == specfem::element::medium_tag::elastic) &&
-                (property == specfem::element::property_tag::isotropic)) {
+  static_assert(DimensionType == specfem::dimension::type::dim2,
+                "Only 2D properties are supported");
+
+  if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
+                (PropertyTag == specfem::element::property_tag::isotropic)) {
     properties.elastic_isotropic.assign(index, iz, ix, point_properties);
-  } else if constexpr ((type == specfem::element::medium_tag::acoustic) &&
-                       (property ==
+  } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
+                       (PropertyTag ==
                         specfem::element::property_tag::isotropic)) {
     properties.acoustic_isotropic.assign(index, iz, ix, point_properties);
   } else {

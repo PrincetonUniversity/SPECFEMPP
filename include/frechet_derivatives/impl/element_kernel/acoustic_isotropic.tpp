@@ -2,8 +2,8 @@
 #define SPECFEM_FRECHET_DERIVATIVES_IMPL_ELEMENT_KERNEL_ACOUSTIC_ISOTROPIC_TPP
 
 #include "algorithms/dot.hpp"
-#include "specfem_setup.hpp"
 #include "element_kernel.hpp"
+#include "specfem_setup.hpp"
 
 template <>
 KOKKOS_FUNCTION specfem::point::kernels<
@@ -12,7 +12,7 @@ KOKKOS_FUNCTION specfem::point::kernels<
 specfem::frechet_derivatives::impl::element_kernel<
     specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
     specfem::element::property_tag::isotropic>(
-    const specfem::point::properties<specfem::element::medium_tag::acoustic,
+    const specfem::point::properties<specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
                                      specfem::element::property_tag::isotropic>
         &properties,
     const specfem::frechet_derivatives::impl::AdjointPointFieldType<
@@ -30,8 +30,8 @@ specfem::frechet_derivatives::impl::element_kernel<
     const type_real &dt) {
 
   const type_real rho_kl =
-      (adjoint_derivatives.du_dx[0] * backward_derivatives.du_dx[0] +
-       adjoint_derivatives.du_dz[0] * backward_derivatives.du_dz[0]) *
+      (adjoint_derivatives.du(0, 0) * backward_derivatives.du(0, 0) +
+       adjoint_derivatives.du(1, 0) * backward_derivatives.du(1, 0)) *
       properties.rho_inverse * dt;
 
   const type_real kappa_kl =

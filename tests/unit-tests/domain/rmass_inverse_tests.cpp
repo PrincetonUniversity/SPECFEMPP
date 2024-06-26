@@ -204,7 +204,7 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
                   const int iglob = index_mapping.data(ispec, iz, ix);
                   const auto rmass_ref =
                       h_mass_matrix_global.data(iglob, icomp);
-                  const auto rmass = point_field.mass_matrix[icomp];
+                  const auto rmass = point_field.mass_matrix(icomp);
                   error_norm +=
                       std::sqrt((rmass - rmass_ref) * (rmass - rmass_ref));
                   ref_norm += std::sqrt(rmass_ref * rmass_ref);
@@ -251,7 +251,7 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
                   const int iglob = index_mapping.data(ispec, iz, ix);
                   const auto rmass_ref =
                       h_mass_matrix_global.data(iglob, icomp);
-                  const auto rmass = point_field.mass_matrix[icomp];
+                  const auto rmass = point_field.mass_matrix(icomp);
                   error_norm +=
                       std::sqrt((rmass - rmass_ref) * (rmass - rmass_ref));
                   ref_norm += std::sqrt(rmass_ref * rmass_ref);

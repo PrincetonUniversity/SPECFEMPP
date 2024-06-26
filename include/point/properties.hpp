@@ -6,12 +6,14 @@
 namespace specfem {
 namespace point {
 
-template <specfem::element::medium_tag medium,
+template <specfem::dimension::type DimensionType,
+          specfem::element::medium_tag medium,
           specfem::element::property_tag property>
 struct properties {};
 
 template <>
-struct properties<specfem::element::medium_tag::elastic,
+struct properties<specfem::dimension::type::dim2,
+                  specfem::element::medium_tag::elastic,
                   specfem::element::property_tag::isotropic> {
   type_real lambdaplus2mu;
   type_real mu;
@@ -33,7 +35,8 @@ struct properties<specfem::element::medium_tag::elastic,
 };
 
 template <>
-struct properties<specfem::element::medium_tag::acoustic,
+struct properties<specfem::dimension::type::dim2,
+                  specfem::element::medium_tag::acoustic,
                   specfem::element::property_tag::isotropic> {
   type_real lambdaplus2mu_inverse;
   type_real rho_inverse;

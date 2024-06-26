@@ -13,7 +13,7 @@ KOKKOS_FUNCTION specfem::point::kernels<
 specfem::frechet_derivatives::impl::element_kernel<
     specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
     specfem::element::property_tag::isotropic>(
-    const specfem::point::properties<specfem::element::medium_tag::elastic,
+    const specfem::point::properties<specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
                                      specfem::element::property_tag::isotropic>
         &properties,
     const specfem::frechet_derivatives::impl::AdjointPointFieldType<
@@ -33,15 +33,15 @@ specfem::frechet_derivatives::impl::element_kernel<
   const type_real kappa = properties.lambdaplus2mu - properties.mu;
 
   if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
-    const type_real ad_dsxx = adjoint_derivatives.du_dx[0];
+    const type_real ad_dsxx = adjoint_derivatives.du(0, 0);
     const type_real ad_dsxz =
-        0.5 * (adjoint_derivatives.du_dx[1] + adjoint_derivatives.du_dz[0]);
-    const type_real ad_dszz = adjoint_derivatives.du_dz[1];
+        0.5 * (adjoint_derivatives.du(0, 1) + adjoint_derivatives.du(1, 0));
+    const type_real ad_dszz = adjoint_derivatives.du(1, 1);
 
-    const type_real b_dsxx = backward_derivatives.du_dx[0];
+    const type_real b_dsxx = backward_derivatives.du(0, 0);
     const type_real b_dsxz =
-        0.5 * (backward_derivatives.du_dx[1] + backward_derivatives.du_dz[0]);
-    const type_real b_dszz = backward_derivatives.du_dz[1];
+        0.5 * (backward_derivatives.du(0, 1) + backward_derivatives.du(1, 0));
+    const type_real b_dszz = backward_derivatives.du(1, 1);
 
     // const type_real kappa_kl =
     //     -1.0 * kappa * dt * ((ad_dsxx + ad_dszz) * (b_dsxx + b_dszz));
@@ -65,8 +65,8 @@ specfem::frechet_derivatives::impl::element_kernel<
 
     const type_real rhop_kl = rho_kl + kappa_kl + mu_kl;
 
-    const type_real beta_kl = 2.0 * (mu_kl - 4.0 / 3.0 * properties.mu /
-                                                 kappa * kappa_kl);
+    const type_real beta_kl =
+        2.0 * (mu_kl - 4.0 / 3.0 * properties.mu / kappa * kappa_kl);
 
     const type_real alpha_kl =
         2.0 * (1.0 + 4.0 / 3.0 * properties.mu / kappa) * kappa_kl;
@@ -76,8 +76,8 @@ specfem::frechet_derivatives::impl::element_kernel<
     const type_real kappa_kl = 0.0;
     const type_real mu_kl =
         -2.0 * properties.mu * dt * 0.5 *
-        specfem::algorithms::dot(adjoint_derivatives.du_dx,
-                                 backward_derivatives.du_dx);
+        (adjoint_derivatives.du(0, 0) * backward_derivatives.du(0, 0) +
+         adjoint_derivatives.du(1, 0) * backward_derivatives.du(1, 0));
     const type_real rho_kl =
         -1.0 * properties.rho * dt *
         specfem::algorithms::dot(adjoint_field.acceleration,

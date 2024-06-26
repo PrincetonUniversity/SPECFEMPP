@@ -307,6 +307,16 @@ target_link_libraries(
         Kokkos::kokkos
 )
 
+add_library(
+        domain
+        src/domain/impl/elements/element.cpp
+)
+
+target_link_libraries(
+        domain
+        Kokkos::kokkos
+)
+
 add_library(coupled_interface
         src/coupled_interface/coupled_interface.cpp
 )
@@ -411,6 +421,7 @@ target_link_libraries(
         receiver_class
         writer
         reader
+        domain
         coupled_interface
         kernels
         Boost::program_options

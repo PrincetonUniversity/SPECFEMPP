@@ -51,7 +51,7 @@ public:
 #pragma unroll
 #endif
     for (int icomp = 0; icomp < components; ++icomp) {
-      acceleration.acceleration[icomp] = values(ispec, iz, ix, istep, icomp);
+      acceleration.acceleration(icomp) = values(ispec, iz, ix, istep, icomp);
     }
 
     return;
@@ -67,7 +67,7 @@ public:
 #pragma unroll
 #endif
     for (int icomp = 0; icomp < components; ++icomp) {
-      values(ispec, iz, ix, istep, icomp) = acceleration.acceleration[icomp];
+      values(ispec, iz, ix, istep, icomp) = acceleration.acceleration(icomp);
     }
 
     return;

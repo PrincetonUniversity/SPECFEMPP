@@ -14,29 +14,29 @@
 namespace {
 KOKKOS_FUNCTION void enforce_traction_boundary(
     const type_real &weight,
-    const specfem::kokkos::array_type<type_real, 2> &dn,
-    const specfem::point::properties<specfem::element::medium_tag::elastic,
+    const specfem::datatype::ScalarPointViewType<type_real, 2> &dn,
+    const specfem::point::properties<specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
                                      specfem::element::property_tag::isotropic>
         &properties,
-    const specfem::kokkos::array_type<type_real, 2> &field_dot,
-    specfem::kokkos::array_type<type_real, 2> &field_dot_dot) {
+    const specfem::datatype::ScalarPointViewType<type_real, 2> &field_dot,
+    specfem::datatype::ScalarPointViewType<type_real, 2> &field_dot_dot) {
 
   auto jacobian1d = dn.l2_norm();
 
   auto vn = specfem::algorithms::dot(dn, field_dot);
 
-  specfem::kokkos::array_type<type_real, 2> traction;
+  type_real traction[2];
 
 #ifdef KOKKOS_ENABLE_CUDA
 #pragma unroll
 #endif
   for (int icomp = 0; icomp < 2; ++icomp)
-    traction[icomp] = ((vn * dn[icomp] / (jacobian1d * jacobian1d)) *
+    traction[icomp] = ((vn * dn(icomp) / (jacobian1d * jacobian1d)) *
                        (properties.rho_vp - properties.rho_vs)) +
-                      field_dot[icomp] * properties.rho_vs;
+                      field_dot(icomp) * properties.rho_vs;
 
-  field_dot_dot[0] += -1.0 * traction[0] * jacobian1d * weight;
-  field_dot_dot[1] += -1.0 * traction[1] * jacobian1d * weight;
+  field_dot_dot(0) += -1.0 * traction[0] * jacobian1d * weight;
+  field_dot_dot(1) += -1.0 * traction[1] * jacobian1d * weight;
 
   return;
 }
@@ -46,13 +46,13 @@ KOKKOS_FUNCTION void newmark_mass_terms(
     const int &ix, const int &iz, const int &ngllx, const int &ngllz,
     const type_real &dt, const specfem::point::boundary &boundary_type,
     const specfem::element::boundary_tag &tag,
-    const specfem::kokkos::array_type<type_real, 2> &weight,
+    const specfem::datatype::ScalarPointViewType<type_real, 2> &weight,
     const specfem::point::partial_derivatives2<true> &partial_derivatives,
-    const specfem::point::properties<specfem::element::medium_tag::elastic,
+    const specfem::point::properties<specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
                                      property> &properties,
-    specfem::kokkos::array_type<type_real, 2> &rmass_inverse) {
+    specfem::datatype::ScalarPointViewType<type_real, 2> &rmass_inverse) {
 
-  specfem::kokkos::array_type<type_real, 2> velocity(
+  specfem::datatype::ScalarPointViewType<type_real, 2> velocity(
       static_cast<type_real>(-1.0 * dt * 0.5));
 
   const specfem::enums::edge::type edge = [&]() -> specfem::enums::edge::type {
@@ -71,11 +71,11 @@ KOKKOS_FUNCTION void newmark_mass_terms(
     switch (edge) {
     case specfem::enums::edge::type::LEFT:
     case specfem::enums::edge::type::RIGHT:
-      return weight[1];
+      return weight(1);
       break;
     case specfem::enums::edge::type::TOP:
     case specfem::enums::edge::type::BOTTOM:
-      return weight[0];
+      return weight(0);
       break;
     default:
       return static_cast<type_real>(0.0);
@@ -151,12 +151,12 @@ specfem::boundary::boundary<WavefieldType, specfem::dimension::type::dim2,
                             specfem::element::boundary_tag::stacey, qp_type>::
     mass_time_contribution(
         const int &xz, const type_real &dt,
-        const specfem::kokkos::array_type<type_real, 2> &weight,
+        const specfem::datatype::ScalarPointViewType<type_real, 2> &weight,
         const specfem::point::partial_derivatives2<true> &partial_derivatives,
-        const specfem::point::properties<medium_type::medium_tag,
+        const specfem::point::properties<specfem::dimension::type::dim2, medium_type::medium_tag,
                                          medium_type::property_tag> &properties,
         const specfem::point::boundary &boundary_type,
-        specfem::kokkos::array_type<type_real, medium_type::components>
+        specfem::datatype::ScalarPointViewType<type_real, medium_type::components>
             &rmass_inverse) const {
 
   // Check if the GLL point is on the boundary
@@ -193,14 +193,14 @@ specfem::boundary::boundary<WavefieldType, specfem::dimension::type::dim2,
                             specfem::element::medium_tag::elastic, PropertyTag,
                             specfem::element::boundary_tag::stacey, qp_type>::
     enforce_traction(
-        const int &xz, const specfem::kokkos::array_type<type_real, 2> &weight,
+        const int &xz, const specfem::datatype::ScalarPointViewType<type_real, 2> &weight,
         const specfem::point::partial_derivatives2<true> &partial_derivatives,
-        const specfem::point::properties<medium_type::medium_tag,
+        const specfem::point::properties<specfem::dimension::type::dim2, medium_type::medium_tag,
                                          medium_type::property_tag> &properties,
         const specfem::point::boundary &boundary_type,
-        const specfem::kokkos::array_type<type_real, medium_type::components>
+        const specfem::datatype::ScalarPointViewType<type_real, medium_type::components>
             &field_dot,
-        specfem::kokkos::array_type<type_real, medium_type::components>
+        specfem::datatype::ScalarPointViewType<type_real, medium_type::components>
             &field_dot_dot) const {
 
   // Check if the GLL point is on the boundary
@@ -243,11 +243,11 @@ specfem::boundary::boundary<WavefieldType, specfem::dimension::type::dim2,
     switch (edge) {
     case specfem::enums::edge::type::LEFT:
     case specfem::enums::edge::type::RIGHT:
-      return weight[1];
+      return weight(1);
       break;
     case specfem::enums::edge::type::TOP:
     case specfem::enums::edge::type::BOTTOM:
-      return weight[0];
+      return weight(0);
       break;
     default:
       return static_cast<type_real>(0.0);
