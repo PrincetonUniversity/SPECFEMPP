@@ -225,7 +225,7 @@ void load_on_host(
 
   constexpr static auto MediumType = ViewType::medium_tag;
   const int iglob = field.h_assembly_index_mapping(
-      field.index_mapping(index.ispec, index.iz, index.ix),
+      field.h_index_mapping(index.ispec, index.iz, index.ix),
       static_cast<int>(MediumType));
 
   load_on_host(iglob, field, point_field);
@@ -338,7 +338,7 @@ void store_on_host(
   constexpr static int MediumType = ViewType::medium_tag;
 
   const int iglob = field.h_assembly_index_mapping(
-      field.index_mapping(index.ispec, index.iz, index.ix),
+      field.h_index_mapping(index.ispec, index.iz, index.ix),
       static_cast<int>(MediumType));
 
   store_on_host(iglob, point_field, field);
@@ -451,7 +451,7 @@ void add_on_host(
   constexpr static auto MediumType = ViewType::medium_tag;
 
   const int iglob = field.h_assembly_index_mapping(
-      field.index_mapping(index.ispec, index.iz, index.ix),
+      field.h_index_mapping(index.ispec, index.iz, index.ix),
       static_cast<int>(MediumType));
 
   add_on_host(iglob, point_field, field);
@@ -571,7 +571,7 @@ void atomic_add_on_host(
   constexpr static auto MediumType = ViewType::medium_tag;
 
   const int iglob = field.h_assembly_index_mapping(
-      field.index_mapping(index.ispec, index.iz, index.ix),
+      field.h_index_mapping(index.ispec, index.iz, index.ix),
       static_cast<int>(MediumType));
 
   atomic_add_on_host(iglob, point_field, field);
@@ -678,7 +678,7 @@ void load_on_host(
         int iz, ix;
         sub2ind(xz, NGLL, iz, ix);
         const int iglob = field.h_assembly_index_mapping(
-            field.index_mapping(ispec, iz, ix), static_cast<int>(MediumType));
+            field.h_index_mapping(ispec, iz, ix), static_cast<int>(MediumType));
 
         for (int icomp = 0; icomp < components; ++icomp) {
           if constexpr (StoreDisplacement) {
@@ -823,7 +823,7 @@ void load_on_host(
         sub2ind(xz, NGLL, iz, ix);
 
         const int iglob = field.h_assembly_index_mapping(
-            field.index_mapping(indices(ielement), iz, ix),
+            field.h_index_mapping(indices(ielement), iz, ix),
             static_cast<int>(MediumType));
 
         for (int icomp = 0; icomp < components; ++icomp) {

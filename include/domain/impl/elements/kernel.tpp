@@ -92,7 +92,7 @@ void specfem::domain::impl::kernels::element_kernel_base<
   Kokkos::parallel_for(
       "specfem::domain::impl::kernels::elements::compute_mass_matrix",
       chunk_policy.get_policy(),
-      KOKKOS_LAMBDA(const ChunkPolicyType::member_type &team) {
+      KOKKOS_CLASS_LAMBDA(const ChunkPolicyType::member_type &team) {
         const int team_index = team.league_rank();
         const auto my_elements = chunk_policy.league_chunk(team_index);
         const int num_elements = my_elements.extent(0);
@@ -109,15 +109,22 @@ void specfem::domain::impl::kernels::element_kernel_base<
 
               const specfem::point::index index(ispec, iz, ix);
 
+              // specfem::point::properties<DimensionType, MediumTag, PropertyTag>
+              //     point_property;
+
               const auto point_property =
-                  [&]() -> specfem::point::properties<DimensionType, MediumTag, PropertyTag> {
-                specfem::point::properties<DimensionType, MediumTag, PropertyTag>
+                  [&]() -> specfem::point::properties<DimensionType, MediumTag,
+                                                      PropertyTag> {
+                specfem::point::properties<DimensionType, MediumTag,
+                                           PropertyTag>
                     point_property;
 
                 specfem::compute::load_on_device(index, properties,
                                                  point_property);
                 return point_property;
               }();
+
+              // specfem::point::partial_derivatives2<true> point_partial_derivatives;
 
               const auto point_partial_derivatives =
                   [&]() -> specfem::point::partial_derivatives2<true> {
@@ -399,8 +406,8 @@ void specfem::domain::impl::kernels::element_kernel_base<
         team.team_barrier();
 
         specfem::algorithms::gradient(
-            team, my_elements, partial_derivatives, element_quadrature.hprime_gll,
-            element_field.displacement,
+            team, my_elements, partial_derivatives,
+            element_quadrature.hprime_gll, element_field.displacement,
             // Compute stresses using the gradients
             [&](const int ielement, const specfem::point::index &index,
                 const typename PointFieldDerivativesType::ViewType &du) {
@@ -414,8 +421,10 @@ void specfem::domain::impl::kernels::element_kernel_base<
               }();
 
               const auto point_property =
-                  [&]() -> specfem::point::properties<DimensionType, MediumTag, PropertyTag> {
-                specfem::point::properties<DimensionType, MediumTag, PropertyTag>
+                  [&]() -> specfem::point::properties<DimensionType, MediumTag,
+                                                      PropertyTag> {
+                specfem::point::properties<DimensionType, MediumTag,
+                                           PropertyTag>
                     point_property;
 
                 specfem::compute::load_on_device(index, properties,
@@ -445,8 +454,8 @@ void specfem::domain::impl::kernels::element_kernel_base<
             team, my_elements, partial_derivatives, wgll,
             element_quadrature.hprime_wgll, stress_integrand.F,
             [&](const int ielement, const specfem::point::index &index,
-                specfem::datatype::ScalarPointViewType<
-                    type_real, components> &result) {
+                specfem::datatype::ScalarPointViewType<type_real, components>
+                    &result) {
               for (int icomponent = 0; icomponent < components; icomponent++) {
                 result(icomponent) *= -1.0;
               }

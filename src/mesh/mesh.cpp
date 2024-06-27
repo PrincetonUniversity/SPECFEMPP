@@ -183,7 +183,7 @@ std::string specfem::mesh::mesh::print() const {
 
   Kokkos::parallel_reduce(
       "specfem::mesh::mesh::print", specfem::kokkos::HostRange(0, this->nspec),
-      [=](const int ispec, int &n_elastic, int &n_acoustic) {
+      KOKKOS_CLASS_LAMBDA(const int ispec, int &n_elastic, int &n_acoustic) {
         if (this->materials.material_index_mapping(ispec).type ==
             specfem::element::medium_tag::elastic) {
           n_elastic++;

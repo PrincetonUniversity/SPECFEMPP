@@ -98,9 +98,9 @@ TEST(COMPUTE_TESTS, compute_elastic_properties) {
     for (int iz = 0; iz < ngllz; ++iz) {
       for (int ispec = 0; ispec < nspec; ++ispec) {
         specfem::point::index index(ispec, iz, ix);
-        if (compute_properties.element_types(ispec) ==
+        if (compute_properties.h_element_types(ispec) ==
                 specfem::element::medium_tag::elastic &&
-            compute_properties.element_property(ispec) ==
+            compute_properties.h_element_property(ispec) ==
                 specfem::element::property_tag::isotropic) {
           const auto properties =
               [&]() -> specfem::point::properties<
