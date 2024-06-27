@@ -10,7 +10,7 @@ namespace specfem {
 namespace algorithms {
 
 template <typename T, typename MemorySpace>
-KOKKOS_FUNCTION T interpolate_function(
+T interpolate_function(
     const Kokkos::View<type_real **, specfem::kokkos::LayoutWrapper,
                        MemorySpace> &polynomial,
     const Kokkos::View<T **, specfem::kokkos::LayoutWrapper, MemorySpace>
@@ -56,7 +56,7 @@ KOKKOS_FUNCTION T interpolate_function(
 
 template <int components, typename Layout, typename MemorySpace,
           typename MemoryTraits>
-KOKKOS_FUNCTION specfem::datatype::ScalarPointViewType<type_real, components>
+specfem::datatype::ScalarPointViewType<type_real, components>
 interpolate_function(
     const Kokkos::View<type_real **, specfem::kokkos::LayoutWrapper,
                        MemorySpace, MemoryTraits> &polynomial,

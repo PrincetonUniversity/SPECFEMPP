@@ -256,8 +256,8 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
       type_real compute_norm = 0.0;
 
       for (int i = 0; i < traces_filename.size(); ++i) {
-        Kokkos::View<type_real **, Kokkos::LayoutRight> traces(
-            "traces", seismograms.h_seismogram.extent(0), 2);
+        Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+            traces("traces", seismograms.h_seismogram.extent(0), 2);
         specfem::reader::seismogram reader(
             traces_filename[i], specfem::enums::seismogram::format::ascii,
             traces);
@@ -280,7 +280,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
         }
       }
 
-      if (error_norm / compute_norm > 1e-3) {
+      if (error_norm / compute_norm > 1e-4) {
         FAIL() << "--------------------------------------------------\n"
                << "\033[0;31m[FAILED]\033[0m Test failed\n"
                << " - Test name: " << Test.name << "\n"

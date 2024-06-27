@@ -186,7 +186,7 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
           for (int iz = 0; iz < ngllz; ++iz) {
             for (int ispec = 0; ispec < nspec; ++ispec) {
               specfem::point::index index(ispec, iz, ix);
-              if (assembly.properties.element_types(ispec) ==
+              if (assembly.properties.h_element_types(ispec) ==
                   specfem::element::medium_tag::elastic) {
 
                 constexpr int components = 2;
@@ -216,6 +216,9 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
 
         type_real tolerance = 1e-5;
 
+        std::cout << "Error norm: " << error_norm << std::endl;
+        std::cout << "Ref norm: " << ref_norm << std::endl;
+
         ASSERT_NEAR(error_norm / ref_norm, 0.0, tolerance);
       }
 
@@ -233,7 +236,7 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
           for (int iz = 0; iz < ngllz; ++iz) {
             for (int ispec = 0; ispec < nspec; ++ispec) {
               specfem::point::index index(ispec, iz, ix);
-              if (assembly.properties.element_types(ispec) ==
+              if (assembly.properties.h_element_types(ispec) ==
                   specfem::element::medium_tag::acoustic) {
 
                 constexpr int components = 1;

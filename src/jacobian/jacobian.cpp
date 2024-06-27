@@ -53,13 +53,13 @@ std::tuple<type_real, type_real> specfem::jacobian::compute_locations(
 
   Kokkos::parallel_reduce(
       Kokkos::ThreadVectorRange(teamMember, ngnod),
-      [&](const int &in, type_real &update_xcor) {
+      [=](const int &in, type_real &update_xcor) {
         update_xcor += shape2D(in) * s_coorg(0, in);
       },
       xcor);
   Kokkos::parallel_reduce(
       Kokkos::ThreadVectorRange(teamMember, ngnod),
-      [&](const int &in, type_real &update_ycor) {
+      [=](const int &in, type_real &update_ycor) {
         update_ycor += shape2D(in) * s_coorg(1, in);
       },
       ycor);
@@ -109,25 +109,25 @@ specfem::jacobian::compute_partial_derivatives(
 
   Kokkos::parallel_reduce(
       Kokkos::ThreadVectorRange(teamMember, ngnod),
-      [&](const int &in, type_real &update_xxi) {
+      [=](const int &in, type_real &update_xxi) {
         update_xxi += dershape2D(0, in) * s_coorg(0, in);
       },
       xxi);
   Kokkos::parallel_reduce(
       Kokkos::ThreadVectorRange(teamMember, ngnod),
-      [&](const int &in, type_real &update_zxi) {
+      [=](const int &in, type_real &update_zxi) {
         update_zxi += dershape2D(0, in) * s_coorg(1, in);
       },
       zxi);
   Kokkos::parallel_reduce(
       Kokkos::ThreadVectorRange(teamMember, ngnod),
-      [&](const int &in, type_real &update_xgamma) {
+      [=](const int &in, type_real &update_xgamma) {
         update_xgamma += dershape2D(1, in) * s_coorg(0, in);
       },
       xgamma);
   Kokkos::parallel_reduce(
       Kokkos::ThreadVectorRange(teamMember, ngnod),
-      [&](const int &in, type_real &update_zgamma) {
+      [=](const int &in, type_real &update_zgamma) {
         update_zgamma += dershape2D(1, in) * s_coorg(1, in);
       },
       zgamma);
@@ -157,25 +157,25 @@ specfem::jacobian::compute_partial_derivatives(
 
   Kokkos::parallel_reduce(
       Kokkos::ThreadVectorRange(teamMember, ngnod),
-      [&](const int &in, type_real &update_xxi) {
+      [=](const int &in, type_real &update_xxi) {
         update_xxi += dershape2D(0, in) * s_coorg(0, in);
       },
       xxi);
   Kokkos::parallel_reduce(
       Kokkos::ThreadVectorRange(teamMember, ngnod),
-      [&](const int &in, type_real &update_zxi) {
+      [=](const int &in, type_real &update_zxi) {
         update_zxi += dershape2D(0, in) * s_coorg(1, in);
       },
       zxi);
   Kokkos::parallel_reduce(
       Kokkos::ThreadVectorRange(teamMember, ngnod),
-      [&](const int &in, type_real &update_xgamma) {
+      [=](const int &in, type_real &update_xgamma) {
         update_xgamma += dershape2D(1, in) * s_coorg(0, in);
       },
       xgamma);
   Kokkos::parallel_reduce(
       Kokkos::ThreadVectorRange(teamMember, ngnod),
-      [&](const int &in, type_real &update_zgamma) {
+      [=](const int &in, type_real &update_zgamma) {
         update_zgamma += dershape2D(1, in) * s_coorg(1, in);
       },
       zgamma);

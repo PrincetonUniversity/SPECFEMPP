@@ -227,6 +227,7 @@ struct VectorPointViewType
    * @param j
    * @return T&
    */
+  KOKKOS_INLINE_FUNCTION
   T &operator()(const int i, const int j) {
 #ifdef Kokkos_DEBUG_ENABLE_BOUNDS_CHECK
     assert(i < NumberOfDimensions);
@@ -242,6 +243,7 @@ struct VectorPointViewType
    * @param j
    * @return T&
    */
+  KOKKOS_INLINE_FUNCTION
   const T &operator()(const int i, const int j) const {
 #ifdef Kokkos_DEBUG_ENABLE_BOUNDS_CHECK
     assert(i < NumberOfDimensions);

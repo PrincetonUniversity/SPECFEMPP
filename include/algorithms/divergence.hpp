@@ -18,7 +18,7 @@ template <
                          typename MemberType::execution_space,
                          typename VectorFieldType::memory_space>::accessible,
                      int> = 0>
-void divergence(
+KOKKOS_FUNCTION void divergence(
     const MemberType &team,
     const Kokkos::View<
         int *, typename MemberType::execution_space::memory_space> &indices,
@@ -74,7 +74,7 @@ void divergence(
 
         for (int icomp = 0; icomp < components; ++icomp) {
           result(icomp) =
-              weights[ix] * temp1l[icomp] + weights[iz] * temp2l[icomp];
+              weights(iz) * temp1l[icomp] + weights(ix) * temp2l[icomp];
         }
 
         callback(ielement, index, result);

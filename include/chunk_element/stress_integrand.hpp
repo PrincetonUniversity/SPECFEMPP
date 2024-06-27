@@ -3,6 +3,7 @@
 #include "datatypes/chunk_element_view.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
+#include <Kokkos_Core.hpp>
 
 namespace specfem {
 namespace chunk_element {

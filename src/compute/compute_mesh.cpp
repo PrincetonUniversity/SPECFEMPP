@@ -254,7 +254,8 @@ specfem::compute::points specfem::compute::mesh::assemble() {
   Kokkos::parallel_for(
       specfem::kokkos::HostTeam(nspec, Kokkos::AUTO, Kokkos::AUTO)
           .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
-      [=](const specfem::kokkos::HostTeam::member_type teamMember) {
+      KOKKOS_CLASS_LAMBDA(
+          const specfem::kokkos::HostTeam::member_type teamMember) {
         const int ispec = teamMember.league_rank();
 
         //----- Load coorgx, coorgz in level 0 cache to be utilized later
@@ -271,7 +272,7 @@ specfem::compute::points specfem::compute::mesh::assemble() {
         //-----
 
         Kokkos::parallel_for(
-            Kokkos::TeamThreadRange(teamMember, ngllxz), [&](const int xz) {
+            Kokkos::TeamThreadRange(teamMember, ngllxz), [=](const int xz) {
               int ix, iz;
               sub2ind(xz, ngll, iz, ix);
               // Get x and y coordinates for (ix, iz) point
@@ -283,6 +284,8 @@ specfem::compute::points specfem::compute::mesh::assemble() {
               global_coordinates(ispec, iz, ix) = { xcor, zcor };
             });
       });
+
+  Kokkos::fence();
 
   return assign_numbering(global_coordinates);
 }
