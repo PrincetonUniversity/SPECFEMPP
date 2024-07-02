@@ -101,76 +101,88 @@ void specfem::frechet_derivatives::impl::frechet_elements<
   Kokkos::parallel_for(
       "specfem::frechet_derivatives::frechet_elements::compute",
       chunk_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
-      KOKKOS_CLASS_LAMBDA(const specfem::policy::element_chunk<
-          ParallelConfig, Kokkos::DefaultExecutionSpace>::member_type &team) {
-        const int team_index = team.league_rank();
-        const auto my_elements = chunk_policy.league_chunk(team_index);
-
+      KOKKOS_CLASS_LAMBDA(const ChunkPolicy::member_type &team) {
         // Allocate scratch memory
         ChunkElementFieldType adjoint_element_field(team);
         ChunkElementFieldType backward_element_field(team);
         ElementQuadratureType quadrature_element(team);
 
-        // Populate Scratch Views
-        specfem::compute::load_on_device(team, my_elements, adjoint_field,
-                                         adjoint_element_field);
-        specfem::compute::load_on_device(team, my_elements, backward_field,
-                                         backward_element_field);
         specfem::compute::load_on_device(team, quadrature, quadrature_element);
 
-        team.team_barrier();
+        for (int tile = 0; tile < ChunkPolicy::TileSize; tile += ChunkPolicy::ChunkSize) {
+          const int starting_element_index =
+              team.league_rank() * ChunkPolicy::TileSize + tile;
 
-        // Gernerate the Kernels
-        // We call the gradient algorith, which computes the gradient of
-        // adjoint and backward fields at each point in the element
-        // The Lambda function is is passed to the gradient algorithm
-        // which is applied to gradient result for every quadrature point
-        specfem::algorithms::gradient(
-            team, my_elements, partial_derivatives, quadrature_element.hprime_gll,
-            adjoint_element_field.displacement, backward_element_field.displacement,
-            [&](const int ielement, const specfem::point::index &index,
-                const typename PointFieldDerivativesType::ViewType &df,
-                const typename PointFieldDerivativesType::ViewType &dg) {
-              // Load properties, adjoint field, and backward field
-              // for the point
-              // ------------------------------
-              const auto point_properties =
-                  [&]() -> specfem::point::properties<DimensionType, MediumTag, PropertyTag> {
-                specfem::point::properties<DimensionType, MediumTag, PropertyTag>
-                    point_properties;
-                specfem::compute::load_on_device(index, properties,
-                                                 point_properties);
-                return point_properties;
-              }();
+          if (starting_element_index >= nelements) {
+            break;
+          }
 
-              const auto adjoint_point_field = [&]() {
-                AdjointPointFieldType adjoint_point_field;
-                specfem::compute::load_on_device(index, adjoint_field,
-                                                 adjoint_point_field);
-                return adjoint_point_field;
-              }();
+          const auto my_elements =
+              chunk_policy.league_chunk(starting_element_index);
 
-              const auto backward_point_field = [&]() {
-                BackwardPointFieldType backward_point_field;
-                specfem::compute::load_on_device(index, backward_field,
-                                                 backward_point_field);
-                return backward_point_field;
-              }();
-              // ------------------------------
+          // Populate Scratch Views
+          specfem::compute::load_on_device(team, my_elements, adjoint_field,
+                                           adjoint_element_field);
+          specfem::compute::load_on_device(team, my_elements, backward_field,
+                                           backward_element_field);
 
-              const PointFieldDerivativesType adjoint_point_derivatives(df);
-              const PointFieldDerivativesType backward_point_derivatives(dg);
+          team.team_barrier();
 
-              // Compute the kernel for the point
-              const auto point_kernel =
-                  specfem::frechet_derivatives::impl::element_kernel(
-                      point_properties, adjoint_point_field,
-                      backward_point_field, adjoint_point_derivatives,
-                      backward_point_derivatives, dt);
+          // Gernerate the Kernels
+          // We call the gradient algorith, which computes the gradient of
+          // adjoint and backward fields at each point in the element
+          // The Lambda function is is passed to the gradient algorithm
+          // which is applied to gradient result for every quadrature point
+          specfem::algorithms::gradient(
+              team, my_elements, partial_derivatives,
+              quadrature_element.hprime_gll, adjoint_element_field.displacement,
+              backward_element_field.displacement,
+              [&](const int ielement, const specfem::point::index &index,
+                  const typename PointFieldDerivativesType::ViewType &df,
+                  const typename PointFieldDerivativesType::ViewType &dg) {
+                // Load properties, adjoint field, and backward field
+                // for the point
+                // ------------------------------
+                const auto point_properties = [&]()
+                    -> specfem::point::properties<DimensionType, MediumTag,
+                                                  PropertyTag> {
+                  specfem::point::properties<DimensionType, MediumTag,
+                                             PropertyTag>
+                      point_properties;
+                  specfem::compute::load_on_device(index, properties,
+                                                   point_properties);
+                  return point_properties;
+                }();
 
-              // Update the kernel in the global memory
-              specfem::compute::add_on_device(index, point_kernel, kernels);
-            });
+                const auto adjoint_point_field = [&]() {
+                  AdjointPointFieldType adjoint_point_field;
+                  specfem::compute::load_on_device(index, adjoint_field,
+                                                   adjoint_point_field);
+                  return adjoint_point_field;
+                }();
+
+                const auto backward_point_field = [&]() {
+                  BackwardPointFieldType backward_point_field;
+                  specfem::compute::load_on_device(index, backward_field,
+                                                   backward_point_field);
+                  return backward_point_field;
+                }();
+                // ------------------------------
+
+                const PointFieldDerivativesType adjoint_point_derivatives(df);
+                const PointFieldDerivativesType backward_point_derivatives(dg);
+
+                // Compute the kernel for the point
+                const auto point_kernel =
+                    specfem::frechet_derivatives::impl::element_kernel(
+                        point_properties, adjoint_point_field,
+                        backward_point_field, adjoint_point_derivatives,
+                        backward_point_derivatives, dt);
+
+                // Update the kernel in the global memory
+                specfem::compute::add_on_device(index, point_kernel, kernels);
+              });
+        }
       });
 
   // Kokkos::parallel_for(
