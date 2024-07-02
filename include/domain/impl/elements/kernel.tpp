@@ -93,58 +93,71 @@ void specfem::domain::impl::kernels::element_kernel_base<
       "specfem::domain::impl::kernels::elements::compute_mass_matrix",
       chunk_policy.get_policy(),
       KOKKOS_CLASS_LAMBDA(const ChunkPolicyType::member_type &team) {
-        const int team_index = team.league_rank();
-        const auto my_elements = chunk_policy.league_chunk(team_index);
-        const int num_elements = my_elements.extent(0);
+        for (int tile = 0; tile < ChunkPolicyType::TileSize;
+             tile += ChunkPolicyType::ChunkSize) {
+          const int starting_element_index =
+              team.league_rank() * ChunkPolicyType::ChunkSize + tile;
 
-        Kokkos::parallel_for(
-            Kokkos::TeamThreadRange(team, num_elements * NGLL * NGLL),
-            [&](const int ixz) {
-              const int ielement = ixz % num_elements;
-              const int xz = ixz / num_elements;
-              int ix, iz;
-              sub2ind(xz, NGLL, iz, ix);
+          if (starting_element_index >= nelements) {
+            break;
+          }
 
-              const int ispec = my_elements(ielement);
+          const auto my_elements =
+              chunk_policy.league_chunk(starting_element_index);
+          const int num_elements = my_elements.extent(0);
 
-              const specfem::point::index index(ispec, iz, ix);
+          Kokkos::parallel_for(
+              Kokkos::TeamThreadRange(team, num_elements * NGLL * NGLL),
+              [&](const int ixz) {
+                const int ielement = ixz % num_elements;
+                const int xz = ixz / num_elements;
+                int ix, iz;
+                sub2ind(xz, NGLL, iz, ix);
 
-              // specfem::point::properties<DimensionType, MediumTag, PropertyTag>
-              //     point_property;
+                const int ispec = my_elements(ielement);
 
-              const auto point_property =
-                  [&]() -> specfem::point::properties<DimensionType, MediumTag,
-                                                      PropertyTag> {
-                specfem::point::properties<DimensionType, MediumTag,
-                                           PropertyTag>
-                    point_property;
+                const specfem::point::index index(ispec, iz, ix);
 
-                specfem::compute::load_on_device(index, properties,
-                                                 point_property);
-                return point_property;
-              }();
+                // specfem::point::properties<DimensionType, MediumTag,
+                // PropertyTag>
+                //     point_property;
 
-              // specfem::point::partial_derivatives2<true> point_partial_derivatives;
+                const auto point_property = [&]()
+                    -> specfem::point::properties<DimensionType, MediumTag,
+                                                  PropertyTag> {
+                  specfem::point::properties<DimensionType, MediumTag,
+                                             PropertyTag>
+                      point_property;
 
-              const auto point_partial_derivatives =
-                  [&]() -> specfem::point::partial_derivatives2<true> {
-                specfem::point::partial_derivatives2<true>
-                    point_partial_derivatives;
-                specfem::compute::load_on_device(index, partial_derivatives,
-                                                 point_partial_derivatives);
-                return point_partial_derivatives;
-              }();
+                  specfem::compute::load_on_device(index, properties,
+                                                   point_property);
+                  return point_property;
+                }();
 
-              PointMassType mass_matrix =
-                  specfem::domain::impl::elements::mass_matrix_component(
-                      point_property, point_partial_derivatives);
+                // specfem::point::partial_derivatives2<true>
+                // point_partial_derivatives;
 
-              for (int icomp = 0; icomp < components; icomp++) {
-                mass_matrix.mass_matrix(icomp) *= wgll(ix) * wgll(iz);
-              }
+                const auto point_partial_derivatives =
+                    [&]() -> specfem::point::partial_derivatives2<true> {
+                  specfem::point::partial_derivatives2<true>
+                      point_partial_derivatives;
+                  specfem::compute::load_on_device(index, partial_derivatives,
+                                                   point_partial_derivatives);
+                  return point_partial_derivatives;
+                }();
 
-              specfem::compute::atomic_add_on_device(index, mass_matrix, field);
-            });
+                PointMassType mass_matrix =
+                    specfem::domain::impl::elements::mass_matrix_component(
+                        point_property, point_partial_derivatives);
+
+                for (int icomp = 0; icomp < components; icomp++) {
+                  mass_matrix.mass_matrix(icomp) *= wgll(ix) * wgll(iz);
+                }
+
+                specfem::compute::atomic_add_on_device(index, mass_matrix,
+                                                       field);
+              });
+        }
       });
 
   Kokkos::fence();
@@ -392,79 +405,92 @@ void specfem::domain::impl::kernels::element_kernel_base<
       "specfem::frechet_derivatives::frechet_elements::compute",
       chunk_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
       KOKKOS_CLASS_LAMBDA(const ChunkPolicyType::member_type &team) {
-        const int team_index = team.league_rank();
-        const auto my_elements = chunk_policy.league_chunk(team_index);
-
         ChunkElementFieldType element_field(team);
         ElementQuadratureType element_quadrature(team);
         ChunkStressIntegrandType stress_integrand(team);
 
         specfem::compute::load_on_device(team, quadrature, element_quadrature);
-        specfem::compute::load_on_device(team, my_elements, field,
-                                         element_field);
+        for (int tile = 0; tile < ChunkPolicyType::TileSize;
+             tile += ChunkPolicyType::ChunkSize) {
+          const int starting_element_index =
+              team.league_rank() * ChunkPolicyType::ChunkSize + tile;
 
-        team.team_barrier();
+          if (starting_element_index >= nelements) {
+            break;
+          }
 
-        specfem::algorithms::gradient(
-            team, my_elements, partial_derivatives,
-            element_quadrature.hprime_gll, element_field.displacement,
-            // Compute stresses using the gradients
-            [&](const int ielement, const specfem::point::index &index,
-                const typename PointFieldDerivativesType::ViewType &du) {
-              const auto point_partial_derivatives =
-                  [&]() -> specfem::point::partial_derivatives2<false> {
-                specfem::point::partial_derivatives2<false>
-                    point_partial_derivatives;
-                specfem::compute::load_on_device(index, partial_derivatives,
-                                                 point_partial_derivatives);
-                return point_partial_derivatives;
-              }();
+          const auto my_elements =
+              chunk_policy.league_chunk(starting_element_index);
+          specfem::compute::load_on_device(team, my_elements, field,
+                                           element_field);
 
-              const auto point_property =
-                  [&]() -> specfem::point::properties<DimensionType, MediumTag,
-                                                      PropertyTag> {
-                specfem::point::properties<DimensionType, MediumTag,
-                                           PropertyTag>
-                    point_property;
+          team.team_barrier();
 
-                specfem::compute::load_on_device(index, properties,
-                                                 point_property);
-                return point_property;
-              }();
+          specfem::algorithms::gradient(
+              team, my_elements, partial_derivatives,
+              element_quadrature.hprime_gll, element_field.displacement,
+              // Compute stresses using the gradients
+              [&](const int ielement, const specfem::point::index &index,
+                  const typename PointFieldDerivativesType::ViewType &du) {
+                const auto point_partial_derivatives =
+                    [&]() -> specfem::point::partial_derivatives2<false> {
+                  specfem::point::partial_derivatives2<false>
+                      point_partial_derivatives;
+                  specfem::compute::load_on_device(index, partial_derivatives,
+                                                   point_partial_derivatives);
+                  return point_partial_derivatives;
+                }();
 
-              PointFieldDerivativesType field_derivatives(du);
+                const auto point_property = [&]()
+                    -> specfem::point::properties<DimensionType, MediumTag,
+                                                  PropertyTag> {
+                  specfem::point::properties<DimensionType, MediumTag,
+                                             PropertyTag>
+                      point_property;
 
-              const auto point_stress_integrand =
-                  specfem::domain::impl::elements::compute_stress_integrands(
-                      point_partial_derivatives, point_property,
-                      field_derivatives);
+                  specfem::compute::load_on_device(index, properties,
+                                                   point_property);
+                  return point_property;
+                }();
 
-              for (int icomponent = 0; icomponent < components; ++icomponent) {
-                for (int idim = 0; idim < NumberOfDimensions; ++idim) {
-                  stress_integrand.F(ielement, index.iz, index.ix, idim,
-                                     icomponent) =
-                      point_stress_integrand.F(idim, icomponent);
+                PointFieldDerivativesType field_derivatives(du);
+
+                const auto point_stress_integrand =
+                    specfem::domain::impl::elements::compute_stress_integrands(
+                        point_partial_derivatives, point_property,
+                        field_derivatives);
+
+                for (int icomponent = 0; icomponent < components;
+                     ++icomponent) {
+                  for (int idim = 0; idim < NumberOfDimensions; ++idim) {
+                    stress_integrand.F(ielement, index.iz, index.ix, idim,
+                                       icomponent) =
+                        point_stress_integrand.F(idim, icomponent);
+                  }
                 }
-              }
-            });
+              });
 
-        team.team_barrier();
+          team.team_barrier();
 
-        specfem::algorithms::divergence(
-            team, my_elements, partial_derivatives, wgll,
-            element_quadrature.hprime_wgll, stress_integrand.F,
-            [&](const int ielement, const specfem::point::index &index,
-                specfem::datatype::ScalarPointViewType<type_real, components>
-                    &result) {
-              for (int icomponent = 0; icomponent < components; icomponent++) {
-                result(icomponent) *= -1.0;
-              }
+          specfem::algorithms::divergence(
+              team, my_elements, partial_derivatives, wgll,
+              element_quadrature.hprime_wgll, stress_integrand.F,
+              [&](const int ielement, const specfem::point::index &index,
+                  specfem::datatype::ScalarPointViewType<type_real, components>
+                      &result) {
+                for (int icomponent = 0; icomponent < components;
+                     icomponent++) {
+                  result(icomponent) *= -1.0;
+                }
 
-              PointAccelerationType acceleration(result);
+                PointAccelerationType acceleration(result);
 
-              specfem::compute::atomic_add_on_device(index, acceleration,
-                                                     field);
-            });
+                specfem::compute::atomic_add_on_device(index, acceleration,
+                                                       field);
+              });
+
+          team.team_barrier();
+        }
       });
 
   Kokkos::fence();
