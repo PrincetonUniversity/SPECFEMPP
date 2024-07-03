@@ -26,7 +26,7 @@ using default_chunk_config =
     chunk_config<32, 32 * 20, 160, 1>; ///< Default chunk configuration for CUDA
 #else
 using default_chunk_config =
-    chunk_config<20, 20, 1, 1>; ///< Default chunk configuration for CPU
+    chunk_config<1, 20, 1, 1>; ///< Default chunk configuration for CPU
 #endif
 } // namespace parallel_config
 } // namespace specfem
