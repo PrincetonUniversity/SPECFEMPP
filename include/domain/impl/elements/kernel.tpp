@@ -96,7 +96,7 @@ void specfem::domain::impl::kernels::element_kernel_base<
         for (int tile = 0; tile < ChunkPolicyType::TileSize;
              tile += ChunkPolicyType::ChunkSize) {
           const int starting_element_index =
-              team.league_rank() * ChunkPolicyType::ChunkSize + tile;
+              team.league_rank() * ChunkPolicyType::TileSize + tile;
 
           if (starting_element_index >= nelements) {
             break;
@@ -413,7 +413,7 @@ void specfem::domain::impl::kernels::element_kernel_base<
         for (int tile = 0; tile < ChunkPolicyType::TileSize;
              tile += ChunkPolicyType::ChunkSize) {
           const int starting_element_index =
-              team.league_rank() * ChunkPolicyType::ChunkSize + tile;
+              team.league_rank() * ChunkPolicyType::TileSize + tile;
 
           if (starting_element_index >= nelements) {
             break;
@@ -476,14 +476,14 @@ void specfem::domain::impl::kernels::element_kernel_base<
               team, my_elements, partial_derivatives, wgll,
               element_quadrature.hprime_wgll, stress_integrand.F,
               [&](const int ielement, const specfem::point::index &index,
-                  specfem::datatype::ScalarPointViewType<type_real, components>
+                  const typename PointAccelerationType::ViewType
                       &result) {
+                PointAccelerationType acceleration(result);
+
                 for (int icomponent = 0; icomponent < components;
                      icomponent++) {
-                  result(icomponent) *= -1.0;
+                  acceleration.acceleration(icomponent) *= -1.0;
                 }
-
-                PointAccelerationType acceleration(result);
 
                 specfem::compute::atomic_add_on_device(index, acceleration,
                                                        field);
