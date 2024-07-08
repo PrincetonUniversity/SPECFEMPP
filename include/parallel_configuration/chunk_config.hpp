@@ -1,5 +1,6 @@
 #pragma once
 
+#include "constants.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -22,8 +23,20 @@ struct chunk_config {
 };
 
 #ifdef KOKKOS_ENABLE_CUDA
-using default_chunk_config =
-    chunk_config<32, 32 * 20, 160, 1>; ///< Default chunk configuration for CUDA
+constexpr static int chunk_size =
+    specfem::build_configuration::chunk::chunk_size;
+constexpr static int tile_size =
+    specfem::build_configuration::chunk::chunk_size *
+    specfem::build_configuration::chunk::num_chunks;
+constexpr static int num_threads =
+    specfem::build_configuration::chunk::num_threads;
+constexpr static int vector_lanes =
+    specfem::build_configuration::chunk::vector_lanes;
+using default_chunk_config = chunk_config<chunk_size, tile_size, num_threads,
+                                          vector_lanes>; ///< Default
+                                                         ///< chunk
+                                                         ///< configuration
+                                                         ///< for GPU
 #else
 using default_chunk_config =
     chunk_config<1, 20, 1, 1>; ///< Default chunk configuration for CPU

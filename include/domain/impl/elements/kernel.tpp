@@ -402,7 +402,7 @@ void specfem::domain::impl::kernels::element_kernel_base<
   ChunkPolicyType chunk_policy(element_kernel_index_mapping);
 
   Kokkos::parallel_for(
-      "specfem::frechet_derivatives::frechet_elements::compute",
+      "specfem::domain::impl::kernels::elements::compute_stiffness_interaction",
       chunk_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
       KOKKOS_CLASS_LAMBDA(const ChunkPolicyType::member_type &team) {
         ChunkElementFieldType element_field(team);
@@ -488,8 +488,6 @@ void specfem::domain::impl::kernels::element_kernel_base<
                 specfem::compute::atomic_add_on_device(index, acceleration,
                                                        field);
               });
-
-          team.team_barrier();
         }
       });
 
