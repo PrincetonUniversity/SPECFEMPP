@@ -11,11 +11,10 @@ namespace algorithms {
 template <typename MemberType, typename ViewType, typename QuadratureType,
           typename CallbackFunctor,
           std::enable_if_t<ViewType::isChunkViewType, int> = 0,
-          std::enable_if_t<
-              Kokkos::SpaceAccessibility<
-                  typename MemberType::execution_space::scratch_memory_space,
-                  typename ViewType::memory_space>::accessible,
-              int> = 0>
+          std::enable_if_t<Kokkos::SpaceAccessibility<
+                               typename MemberType::execution_space,
+                               typename ViewType::memory_space>::accessible,
+                           int> = 0>
 KOKKOS_FUNCTION void gradient(
     const MemberType &team,
     const Kokkos::View<
@@ -40,118 +39,121 @@ KOKKOS_FUNCTION void gradient(
       "specfem::kokkos::array_type<type_real, components>, const "
       "specfem::kokkos::array_type<type_real, components>)");
 
-  constexpr int ThreadTile = 1;
-  constexpr int NTiles = NGLL / ThreadTile + (NGLL % ThreadTile != 0);
-
   Kokkos::parallel_for(
-      Kokkos::TeamThreadRange(team, NTiles * NTiles * number_elements),
+      Kokkos::TeamThreadRange(team, NGLL * NGLL * number_elements),
       [=](const int &ixz) {
         const int ielement = ixz % number_elements;
         const int xz = ixz / number_elements;
-        const int iz = xz / NTiles * ThreadTile;
-        const int ix = xz % NTiles * ThreadTile;
+        const int iz = xz / NGLL;
+        const int ix = xz % NGLL;
 
         const int ispec = indices(ielement);
 
-        type_real df_dxi[components * ThreadTile * ThreadTile] = { 0.0 };
-        type_real df_dgamma[components * ThreadTile * ThreadTile] = { 0.0 };
+        type_real df_dxi[components] = { 0.0 };
+        type_real df_dgamma[components] = { 0.0 };
 
-        type_real l_f[ThreadTile] = { 0.0 };
-        type_real l_quad[ThreadTile] = { 0.0 };
+        specfem::point::index index(ispec, iz, ix);
 
-        for (int icomponent = 0; icomponent < components; ++icomponent) {
-          for (int l = 0; l < NGLL; ++l) {
-            for (int Tid = 0; Tid < ThreadTile; ++Tid) {
-              l_f[Tid] = (Tid + iz < NGLL)
-                             ? f(ielement, iz + Tid, l, icomponent)
-                             : 0.0;
-              l_quad[Tid] = (Tid + ix < NGLL) ? quadrature(ix + Tid, l) : 0.0;
-            }
+        // type_real l_f[ThreadTile] = { 0.0 };
+        // type_real l_quad[ThreadTile] = { 0.0 };
 
-            for (int Tiz = 0; Tiz < ThreadTile; ++Tiz) {
-              for (int Tix = 0; Tix < ThreadTile; ++Tix) {
-                df_dxi[icomponent * ThreadTile * ThreadTile + Tiz * ThreadTile +
-                       Tix] += l_quad[Tix] * l_f[Tiz];
-              }
-            }
+        // for (int icomponent = 0; icomponent < components; ++icomponent) {
+        //   for (int l = 0; l < NGLL; ++l) {
+        //     for (int Tid = 0; Tid < ThreadTile; ++Tid) {
+        //       l_f[Tid] = (Tid + iz < NGLL)
+        //                      ? f(ielement, iz + Tid, l, icomponent)
+        //                      : 0.0;
+        //       l_quad[Tid] = (Tid + ix < NGLL) ? quadrature(ix + Tid, l) :
+        //       0.0;
+        //     }
 
-            for (int Tid = 0; Tid < ThreadTile; ++Tid) {
-              l_f[Tid] = (Tid + ix < NGLL)
-                             ? f(ielement, l, ix + Tid, icomponent)
-                             : 0.0;
-              l_quad[Tid] = (Tid + iz < NGLL) ? quadrature(iz + Tid, l) : 0.0;
-            }
+        //     for (int Tiz = 0; Tiz < ThreadTile; ++Tiz) {
+        //       for (int Tix = 0; Tix < ThreadTile; ++Tix) {
+        //         df_dxi[icomponent * ThreadTile * ThreadTile + Tiz *
+        //         ThreadTile +
+        //                Tix] += l_quad[Tix] * l_f[Tiz];
+        //       }
+        //     }
 
-            for (int Tiz = 0; Tiz < ThreadTile; ++Tiz) {
-              for (int Tix = 0; Tix < ThreadTile; ++Tix) {
-                df_dgamma[icomponent * ThreadTile * ThreadTile +
-                          Tiz * ThreadTile + Tix] += l_quad[Tiz] * l_f[Tix];
-              }
-            }
-          }
-        }
+        //     for (int Tid = 0; Tid < ThreadTile; ++Tid) {
+        //       l_f[Tid] = (Tid + ix < NGLL)
+        //                      ? f(ielement, l, ix + Tid, icomponent)
+        //                      : 0.0;
+        //       l_quad[Tid] = (Tid + iz < NGLL) ? quadrature(iz + Tid, l) :
+        //       0.0;
+        //     }
 
-        for (int Tiz = 0; Tiz < ThreadTile; ++Tiz) {
-          for (int Tix = 0; Tix < ThreadTile; ++Tix) {
-            if (iz + Tiz < NGLL && ix + Tix < NGLL) {
-              const specfem::point::index index(ispec, iz + Tiz, ix + Tix);
-              const auto point_partial_derivatives = [&]() {
-                specfem::point::partial_derivatives2<false> result;
-                specfem::compute::load_on_device(index, partial_derivatives,
-                                                 result);
-                return result;
-              }();
-              VectorPointViewType df;
-              for (int icomponent = 0; icomponent < components; ++icomponent) {
-                df(0, icomponent) =
-                    df_dxi[icomponent * ThreadTile * ThreadTile +
-                           Tiz * ThreadTile + Tix] *
-                        point_partial_derivatives.xix +
-                    df_dgamma[icomponent * ThreadTile * ThreadTile +
-                              Tiz * ThreadTile + Tix] *
-                        point_partial_derivatives.gammax;
-
-                df(1, icomponent) =
-                    df_dxi[icomponent * ThreadTile * ThreadTile +
-                           Tiz * ThreadTile + Tix] *
-                        point_partial_derivatives.xiz +
-                    df_dgamma[icomponent * ThreadTile * ThreadTile +
-                              Tiz * ThreadTile + Tix] *
-                        point_partial_derivatives.gammaz;
-              }
-              callback(ielement, index, df);
-            }
-          }
-        }
-
-        // for (int l = 0; l < NGLL; ++l) {
-        //   for (int icomponent = 0; icomponent < components; ++icomponent) {
-        //     df_dxi[icomponent] +=
-        //         quadrature(ix, l) * f(ielement, iz, l, icomponent);
-        //     df_dgamma[icomponent] +=
-        //         quadrature(iz, l) * f(ielement, l, ix, icomponent);
+        //     for (int Tiz = 0; Tiz < ThreadTile; ++Tiz) {
+        //       for (int Tix = 0; Tix < ThreadTile; ++Tix) {
+        //         df_dgamma[icomponent * ThreadTile * ThreadTile +
+        //                   Tiz * ThreadTile + Tix] += l_quad[Tiz] * l_f[Tix];
+        //       }
+        //     }
         //   }
         // }
 
-        // const auto point_partial_derivatives = [&]() {
-        //   specfem::point::partial_derivatives2<false> result;
-        //   specfem::compute::load_on_device(index, partial_derivatives,
-        //   result); return result;
-        // }();
+        // for (int Tiz = 0; Tiz < ThreadTile; ++Tiz) {
+        //   for (int Tix = 0; Tix < ThreadTile; ++Tix) {
+        //     if (iz + Tiz < NGLL && ix + Tix < NGLL) {
+        //       const specfem::point::index index(ispec, iz + Tiz, ix + Tix);
+        //       const auto point_partial_derivatives = [&]() {
+        //         specfem::point::partial_derivatives2<false> result;
+        //         specfem::compute::load_on_device(index, partial_derivatives,
+        //                                          result);
+        //         return result;
+        //       }();
+        //       VectorPointViewType df;
+        //       for (int icomponent = 0; icomponent < components; ++icomponent)
+        //       {
+        //         df(0, icomponent) =
+        //             df_dxi[icomponent * ThreadTile * ThreadTile +
+        //                    Tiz * ThreadTile + Tix] *
+        //                 point_partial_derivatives.xix +
+        //             df_dgamma[icomponent * ThreadTile * ThreadTile +
+        //                       Tiz * ThreadTile + Tix] *
+        //                 point_partial_derivatives.gammax;
 
-        // VectorPointViewType df;
-
-        // for (int icomponent = 0; icomponent < components; ++icomponent) {
-        //   df(0, icomponent) =
-        //       point_partial_derivatives.xix * df_dxi[icomponent] +
-        //       point_partial_derivatives.gammax * df_dgamma[icomponent];
-
-        //   df(1, icomponent) =
-        //       point_partial_derivatives.xiz * df_dxi[icomponent] +
-        //       point_partial_derivatives.gammaz * df_dgamma[icomponent];
+        //         df(1, icomponent) =
+        //             df_dxi[icomponent * ThreadTile * ThreadTile +
+        //                    Tiz * ThreadTile + Tix] *
+        //                 point_partial_derivatives.xiz +
+        //             df_dgamma[icomponent * ThreadTile * ThreadTile +
+        //                       Tiz * ThreadTile + Tix] *
+        //                 point_partial_derivatives.gammaz;
+        //       }
+        //       callback(ielement, index, df);
+        //     }
+        //   }
         // }
 
-        // callback(ielement, index, df);
+        for (int l = 0; l < NGLL; ++l) {
+          for (int icomponent = 0; icomponent < components; ++icomponent) {
+            df_dxi[icomponent] +=
+                quadrature(ix, l) * f(ielement, iz, l, icomponent);
+            df_dgamma[icomponent] +=
+                quadrature(iz, l) * f(ielement, l, ix, icomponent);
+          }
+        }
+
+        const auto point_partial_derivatives = [&]() {
+          specfem::point::partial_derivatives2<false> result;
+          specfem::compute::load_on_device(index, partial_derivatives, result);
+          return result;
+        }();
+
+        VectorPointViewType df;
+
+        for (int icomponent = 0; icomponent < components; ++icomponent) {
+          df(0, icomponent) =
+              point_partial_derivatives.xix * df_dxi[icomponent] +
+              point_partial_derivatives.gammax * df_dgamma[icomponent];
+
+          df(1, icomponent) =
+              point_partial_derivatives.xiz * df_dxi[icomponent] +
+              point_partial_derivatives.gammaz * df_dgamma[icomponent];
+        }
+
+        callback(ielement, index, df);
       });
 
   return;
