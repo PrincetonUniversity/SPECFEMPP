@@ -47,25 +47,32 @@ public:
 };
 
 template <specfem::dimension::type DimensionType,
-          specfem::element::medium_tag MediumType,
-          specfem::element::boundary_tag BoundaryTag>
+          specfem::element::boundary_tag BoundaryTag, typename IndexType,
+          typename AccelerationType>
 KOKKOS_FUNCTION void load_on_device(
-    const int istep, const specfem::point::index index,
+    const int istep, const IndexType index,
     const specfem::compute::boundary_value_container<DimensionType, BoundaryTag>
         &boundary_value_container,
-    specfem::point::field<DimensionType, MediumType, false, false, true, false>
-        &acceleration) {
+    AccelerationType &acceleration) {
 
-  const int ispec =
-      boundary_value_container.property_index_mapping(index.ispec);
-  const int iz = index.iz;
-  const int ix = index.ix;
+  constexpr static auto MediumType = AccelerationType::medium_tag;
+
+  IndexType l_index = index;
+
+  static_assert(specfem::dimension::dimension<DimensionType>::dim ==
+                    AccelerationType::dimension,
+                "Number of dimensions must match");
+
+  static_assert(BoundaryTag == specfem::element::boundary_tag::stacey,
+                "Only Stacey boundary conditions are supported");
+
+  l_index.ispec = boundary_value_container.property_index_mapping(index.ispec);
 
   if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
-    boundary_value_container.acoustic.load_on_device(istep, ispec, iz, ix,
+    boundary_value_container.acoustic.load_on_device(istep, l_index,
                                                      acceleration);
   } else if constexpr (MediumType == specfem::element::medium_tag::elastic) {
-    boundary_value_container.elastic.load_on_device(istep, ispec, iz, ix,
+    boundary_value_container.elastic.load_on_device(istep, l_index,
                                                     acceleration);
   }
 
@@ -73,25 +80,30 @@ KOKKOS_FUNCTION void load_on_device(
 }
 
 template <specfem::dimension::type DimensionType,
-          specfem::element::medium_tag MediumTag,
-          specfem::element::boundary_tag BoundaryTag>
+          specfem::element::boundary_tag BoundaryTag, typename IndexType,
+          typename AccelerationType>
 KOKKOS_FUNCTION void store_on_device(
-    const int istep, const specfem::point::index index,
-    const specfem::point::field<DimensionType, MediumTag, false, false, true,
-                                false> &acceleration,
+    const int istep, const IndexType index,
+    const AccelerationType &acceleration,
     const specfem::compute::boundary_value_container<DimensionType, BoundaryTag>
         &boundary_value_container) {
 
-  const int ispec =
-      boundary_value_container.property_index_mapping(index.ispec);
-  const int iz = index.iz;
-  const int ix = index.ix;
+  constexpr static auto MediumTag = AccelerationType::medium_tag;
+
+  static_assert(DimensionType == AccelerationType::dimension_type,
+                "DimensionType must match AccelerationType::dimension_type");
+
+  static_assert(BoundaryTag == specfem::element::boundary_tag::stacey,
+                "Only Stacey boundary conditions are supported");
+
+  IndexType l_index = index;
+  l_index.ispec = boundary_value_container.property_index_mapping(index.ispec);
 
   if constexpr (MediumTag == specfem::element::medium_tag::acoustic) {
-    boundary_value_container.acoustic.store_on_device(istep, ispec, iz, ix,
+    boundary_value_container.acoustic.store_on_device(istep, l_index,
                                                       acceleration);
   } else if constexpr (MediumTag == specfem::element::medium_tag::elastic) {
-    boundary_value_container.elastic.store_on_device(istep, ispec, iz, ix,
+    boundary_value_container.elastic.store_on_device(istep, l_index,
                                                      acceleration);
   }
 

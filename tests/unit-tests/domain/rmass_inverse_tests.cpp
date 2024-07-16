@@ -193,7 +193,7 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
                 const auto point_field = [&]() {
                   specfem::point::field<specfem::dimension::type::dim2,
                                         specfem::element::medium_tag::elastic,
-                                        false, false, false, true>
+                                        false, false, false, true, false>
                       point_field;
                   specfem::compute::load_on_host(index, assembly.fields.forward,
                                                  point_field);
@@ -243,7 +243,7 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
                 const auto point_field = [&]() {
                   specfem::point::field<specfem::dimension::type::dim2,
                                         specfem::element::medium_tag::acoustic,
-                                        false, false, false, true>
+                                        false, false, false, true, false>
                       point_field;
                   specfem::compute::load_on_host(index, assembly.fields.forward,
                                                  point_field);

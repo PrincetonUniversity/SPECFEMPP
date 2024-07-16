@@ -10,7 +10,7 @@ namespace specfem {
 namespace point {
 
 template <specfem::dimension::type DimensionType,
-          specfem::element::medium_tag MediumTag>
+          specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct field_derivatives {
   static constexpr int components =
       specfem::medium::medium<DimensionType, MediumTag>::components;
@@ -18,8 +18,10 @@ struct field_derivatives {
   static constexpr int dimensions =
       specfem::dimension::dimension<DimensionType>::dim;
 
-  using ViewType =
-      specfem::datatype::VectorPointViewType<type_real, dimensions, components>;
+  using simd = specfem::datatype::simd<type_real, UseSIMD>;
+
+  using ViewType = specfem::datatype::VectorPointViewType<type_real, dimensions,
+                                                          components, UseSIMD>;
 
   ViewType du;
 

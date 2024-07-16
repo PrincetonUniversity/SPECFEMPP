@@ -41,11 +41,16 @@ public:
       const specfem::compute::boundaries boundaries,
       specfem::kokkos::HostView1d<int> property_index_mapping);
 
-  KOKKOS_FUNCTION
-  void load_on_device(
-      const int istep, const int ispec, const int iz, const int ix,
-      specfem::point::field<DimensionType, MediumTag, false, false, true, false>
-          &acceleration) const {
+  template <
+      typename AccelerationType,
+      typename std::enable_if_t<!AccelerationType::simd::using_simd, int> = 0>
+  KOKKOS_FUNCTION void load_on_device(const int istep,
+                                      const specfem::point::index &index,
+                                      AccelerationType &acceleration) const {
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
 
 #ifdef KOKKOS_ENABLE_CUDA
 #pragma unroll
@@ -57,11 +62,16 @@ public:
     return;
   }
 
-  KOKKOS_FUNCTION
-  void store_on_device(
-      const int istep, const int ispec, const int iz, const int ix,
-      const specfem::point::field<DimensionType, MediumTag, false, false, true,
-                                  false> &acceleration) const {
+  template <
+      typename AccelerationType,
+      typename std::enable_if_t<!AccelerationType::simd::using_simd, int> = 0>
+  KOKKOS_FUNCTION void store_on_device(const int istep,
+                                       const specfem::point::index &index,
+                                       const AccelerationType &acceleration) {
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
 
 #ifdef KOKKOS_ENABLE_CUDA
 #pragma unroll
@@ -69,6 +79,54 @@ public:
     for (int icomp = 0; icomp < components; ++icomp) {
       values(ispec, iz, ix, istep, icomp) = acceleration.acceleration(icomp);
     }
+
+    return;
+  }
+
+  template <
+      typename AccelerationType,
+      typename std::enable_if_t<AccelerationType::simd::using_simd, int> = 0>
+  KOKKOS_FUNCTION void load_on_device(const int istep,
+                                      const specfem::point::simd_index &index,
+                                      AccelerationType &acceleration) const {
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
+    using simd = typename AccelerationType::simd;
+    using mask_type = typename simd::mask_type;
+    using tag_type = typename simd::tag_type;
+
+    mask_type mask([&](std::size_t lane) { index.mask(lane); });
+
+    for (int icomp = 0; icomp < components; ++icomp)
+      Kokkos::Experimental::where(mask, acceleration.acceleration)
+          .copy_from(&values(ispec, iz, ix, istep, icomp), tag_type());
+
+    return;
+  }
+
+  template <
+      typename AccelerationType,
+      typename std::enable_if_t<AccelerationType::simd::using_simd, int> = 0>
+  KOKKOS_FUNCTION void store_on_device(const int istep,
+                                       const specfem::point::simd_index &index,
+                                       const AccelerationType &acceleration) {
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
+    using simd = typename AccelerationType::simd;
+    using mask_type = typename simd::mask_type;
+    using tag_type = typename simd::tag_type;
+
+    mask_type mask([&](std::size_t lane) { index.mask(lane); });
+
+    for (int icomp = 0; icomp < components; ++icomp)
+      Kokkos::Experimental::where(mask, acceleration.acceleration)
+          .copy_to(&values(ispec, iz, ix, istep, icomp), tag_type());
 
     return;
   }

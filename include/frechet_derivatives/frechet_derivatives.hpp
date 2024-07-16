@@ -5,6 +5,7 @@
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "impl/frechet_element.hpp"
+#include "impl/frechet_element.tpp"
 
 namespace specfem {
 namespace frechet_derivatives {

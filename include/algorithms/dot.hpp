@@ -6,11 +6,13 @@
 
 namespace specfem {
 namespace algorithms {
-template <int N>
-KOKKOS_INLINE_FUNCTION type_real
-dot(const specfem::datatype::ScalarPointViewType<type_real, N> &a,
-    const specfem::datatype::ScalarPointViewType<type_real, N> &b) {
-  type_real result = 0.0;
+template <int N, bool UseSIMD>
+KOKKOS_INLINE_FUNCTION
+    typename specfem::datatype::simd<type_real, UseSIMD>::datatype
+    dot(const specfem::datatype::ScalarPointViewType<type_real, N, UseSIMD> &a,
+        const specfem::datatype::ScalarPointViewType<type_real, N, UseSIMD>
+            &b) {
+  typename specfem::datatype::simd<type_real, UseSIMD>::datatype result{ 0.0 };
 #ifdef KOKKOS_ENABLE_CUDA
 #pragma unroll
 #endif

@@ -255,7 +255,7 @@ specfem::jacobian::compute_inverted_derivatives(
   return std::make_tuple(xix, gammax, xiz, gammaz);
 }
 
-specfem::point::partial_derivatives2<true>
+specfem::point::partial_derivatives2<false, true>
 specfem::jacobian::compute_derivatives(
     const specfem::kokkos::HostTeam::member_type &teamMember,
     const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
@@ -271,8 +271,8 @@ specfem::jacobian::compute_derivatives(
   type_real xiz = -xgamma / jacobian;
   type_real gammaz = xxi / jacobian;
 
-  return specfem::point::partial_derivatives2<true>(xix, gammax, xiz, gammaz,
-                                                    jacobian);
+  return specfem::point::partial_derivatives2<false, true>(xix, gammax, xiz,
+                                                           gammaz, jacobian);
 }
 
 std::tuple<type_real, type_real, type_real, type_real>

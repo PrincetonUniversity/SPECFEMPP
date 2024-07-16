@@ -157,13 +157,15 @@
 template <>
 KOKKOS_FUNCTION specfem::point::field<specfem::dimension::type::dim2,
                                       specfem::element::medium_tag::elastic,
-                                      false, false, true, false>
+                                      false, false, true, false, false>
 specfem::coupled_interface::impl::edges::edge<
     specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
     specfem::element::medium_tag::acoustic>::
     compute_coupling_terms(
-        const specfem::datatype::ScalarPointViewType<type_real, 2> &normal,
-        const specfem::datatype::ScalarPointViewType<type_real, 2> &weights,
+        const specfem::datatype::ScalarPointViewType<type_real, 2, using_simd>
+            &normal,
+        const specfem::datatype::ScalarPointViewType<type_real, 2, using_simd>
+            &weights,
         const specfem::edge::interface &coupled_edge,
         const CoupledPointFieldType &coupled_field_elements) const {
 
@@ -184,7 +186,7 @@ specfem::coupled_interface::impl::edges::edge<
     }
   }();
 
-  return { specfem::datatype::ScalarPointViewType<type_real, 2>(
+  return { specfem::datatype::ScalarPointViewType<type_real, 2, using_simd>(
       factor * normal(0) * coupled_field_elements.acceleration(0),
       factor * normal(1) * coupled_field_elements.acceleration(0)) };
 }

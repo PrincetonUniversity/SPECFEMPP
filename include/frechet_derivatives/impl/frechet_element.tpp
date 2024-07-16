@@ -4,8 +4,8 @@
 #include "algorithms/gradient.hpp"
 #include "chunk_element/field.hpp"
 #include "compute/kernels/interface.hpp"
-#include "element_kernel/acoustic_isotropic.tpp"
-#include "element_kernel/elastic_isotropic.tpp"
+#include "element_kernel/acoustic_isotropic.hpp"
+#include "element_kernel/elastic_isotropic.hpp"
 #include "element_kernel/element_kernel.hpp"
 #include "parallel_configuration/chunk_config.hpp"
 #include "point/field.hpp"
@@ -67,12 +67,14 @@ void specfem::frechet_derivatives::impl::frechet_elements<
     return;
   }
 
-  using ParallelConfig = specfem::parallel_config::default_chunk_config;
+  constexpr bool using_simd = true;
+  using simd = specfem::datatype::simd<type_real, using_simd>;
+  using ParallelConfig = specfem::parallel_config::default_chunk_config<simd>;
 
   using ChunkElementFieldType = specfem::chunk_element::field<
       ParallelConfig::chunk_size, NGLL, DimensionType, MediumTag,
       specfem::kokkos::DevScratchSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>,
-      true, false, false, false>;
+      true, false, false, false, using_simd>;
 
   using ElementQuadratureType = specfem::element::quadrature<
       NGLL, DimensionType, specfem::kokkos::DevScratchSpace,
@@ -80,14 +82,14 @@ void specfem::frechet_derivatives::impl::frechet_elements<
 
   using AdjointPointFieldType =
       specfem::point::field<DimensionType, MediumTag, false, false, true,
-                            false>;
+                            false, using_simd>;
 
   using BackwardPointFieldType =
       specfem::point::field<DimensionType, MediumTag, true, false, false,
-                            false>;
+                            false, using_simd>;
 
   using PointFieldDerivativesType =
-      specfem::point::field_derivatives<DimensionType, MediumTag>;
+      specfem::point::field_derivatives<DimensionType, MediumTag, using_simd>;
 
   int scratch_size = 2 * ChunkElementFieldType::shmem_size() +
                      ElementQuadratureType::shmem_size();
@@ -96,7 +98,7 @@ void specfem::frechet_derivatives::impl::frechet_elements<
       specfem::policy::element_chunk<ParallelConfig,
                                      Kokkos::DefaultExecutionSpace>;
 
-  ChunkPolicy chunk_policy(element_index);
+  ChunkPolicy chunk_policy(element_index, NGLL, NGLL);
 
   Kokkos::parallel_for(
       "specfem::frechet_derivatives::frechet_elements::compute",
@@ -117,13 +119,12 @@ void specfem::frechet_derivatives::impl::frechet_elements<
             break;
           }
 
-          const auto my_elements =
-              chunk_policy.league_chunk(starting_element_index);
+          const auto iterator = chunk_policy.league_iterator(starting_element_index);
 
           // Populate Scratch Views
-          specfem::compute::load_on_device(team, my_elements, adjoint_field,
+          specfem::compute::load_on_device(team, iterator, adjoint_field,
                                            adjoint_element_field);
-          specfem::compute::load_on_device(team, my_elements, backward_field,
+          specfem::compute::load_on_device(team, iterator, backward_field,
                                            backward_element_field);
 
           team.team_barrier();
@@ -134,20 +135,22 @@ void specfem::frechet_derivatives::impl::frechet_elements<
           // The Lambda function is is passed to the gradient algorithm
           // which is applied to gradient result for every quadrature point
           specfem::algorithms::gradient(
-              team, my_elements, partial_derivatives,
+              team, iterator, partial_derivatives,
               quadrature_element.hprime_gll, adjoint_element_field.displacement,
               backward_element_field.displacement,
-              [&](const int ielement, const specfem::point::index &index,
+              [&](const typename ChunkPolicy::iterator_type::index_type &iterator_index,
                   const typename PointFieldDerivativesType::ViewType &df,
                   const typename PointFieldDerivativesType::ViewType &dg) {
+
+                const auto index = iterator_index.index;
                 // Load properties, adjoint field, and backward field
                 // for the point
                 // ------------------------------
                 const auto point_properties = [&]()
                     -> specfem::point::properties<DimensionType, MediumTag,
-                                                  PropertyTag> {
+                                                  PropertyTag, using_simd> {
                   specfem::point::properties<DimensionType, MediumTag,
-                                             PropertyTag>
+                                             PropertyTag, using_simd>
                       point_properties;
                   specfem::compute::load_on_device(index, properties,
                                                    point_properties);

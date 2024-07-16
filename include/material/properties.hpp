@@ -43,7 +43,8 @@ public:
 
   properties() = default;
 
-  specfem::point::properties<dimension, type, property> get_properties() const {
+  specfem::point::properties<dimension, type, property, false>
+  get_properties() const {
     return { this->lambdaplus2mu, this->mu, this->density };
   }
 
@@ -106,7 +107,8 @@ public:
 
   properties() = default;
 
-  specfem::point::properties<dimension, type, property> get_properties() const {
+  specfem::point::properties<dimension, type, property, false>
+  get_properties() const {
     return { 1.0f / static_cast<type_real>(lambdaplus2mu),
              1.0f / static_cast<type_real>(density), this->kappa };
   }

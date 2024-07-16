@@ -39,15 +39,15 @@ using field_type = Kokkos::Subview<
 //   return;
 // }
 
-template <int NGLL>
+template <int NGLL, bool using_simd>
 KOKKOS_INLINE_FUNCTION void specfem::domain::impl::sources::source<
     specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
     specfem::element::property_tag::isotropic,
-    specfem::enums::element::quadrature::static_quadrature_points<NGLL> >::
+    specfem::enums::element::quadrature::static_quadrature_points<NGLL>, using_simd>::
     compute_interaction(
-        const specfem::datatype::ScalarPointViewType<type_real, 1> &stf,
-        const specfem::datatype::ScalarPointViewType<type_real, 1> &lagrange_interpolant,
-        specfem::datatype::ScalarPointViewType<type_real, medium_type::components>
+        const specfem::datatype::ScalarPointViewType<type_real, 1, using_simd> &stf,
+        const specfem::datatype::ScalarPointViewType<type_real, 1, using_simd> &lagrange_interpolant,
+        specfem::datatype::ScalarPointViewType<type_real, medium_type::components, using_simd>
             &acceleration) const {
 
   acceleration(0) = lagrange_interpolant(0) * stf(0);

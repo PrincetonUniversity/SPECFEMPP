@@ -10,7 +10,7 @@ namespace chunk_element {
 
 template <int NumberElements, int NGLL, specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag, typename MemorySpace,
-          typename MemoryTraits>
+          typename MemoryTraits, bool UseSIMD>
 struct stress_integrand {
 
   constexpr static int num_elements = NumberElements;
@@ -19,10 +19,12 @@ struct stress_integrand {
   constexpr static int components =
       specfem::medium::medium<DimensionType, MediumTag>::components;
 
+  using simd = specfem::datatype::simd<type_real, UseSIMD>;
+
   using ViewType =
       specfem::datatype::VectorChunkViewType<type_real, NumberElements, NGLL,
                                              components, dimension, MemorySpace,
-                                             MemoryTraits>;
+                                             MemoryTraits, UseSIMD>;
   ViewType F;
 
   KOKKOS_FUNCTION stress_integrand() = default;

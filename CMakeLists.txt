@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 option(MPI_PARALLEL "MPI enabled" OFF)
 option(BUILD_TESTS "Tests included" OFF)
 option(BUILD_EXAMPLES "Examples included" OFF)
+option(ENABLE_SIMD "Enable SIMD" OFF)
 set(CMAKE_BUILD_TYPE Release)
 set(CHUNK_SIZE 32)
 set(NUM_CHUNKS 1)
@@ -33,7 +34,7 @@ endif()
 include(FetchContent)
 FetchContent_Declare(
 kokkos
-URL https://github.com/kokkos/kokkos/archive/refs/tags/4.0.00.zip
+URL https://github.com/kokkos/kokkos/archive/refs/tags/4.3.01.zip
 )
 FetchContent_MakeAvailable(kokkos)
 
@@ -79,6 +80,8 @@ include_directories(include)
 include_directories(${CMAKE_BINARY_DIR})
 
 add_subdirectory(meshfem2d)
+
+add_definitions(-DENABLE_SIMD)
 
 # Build specfem2d libraries
 add_library(
@@ -220,6 +223,18 @@ target_link_libraries(
 )
 
 add_library(
+        algorithms
+        src/algorithms/locate_point.cpp
+)
+
+target_link_libraries(
+        algorithms
+        Kokkos::kokkos
+        jacobian
+        point
+)
+
+add_library(
         source_time_function
         src/source_time_function/dirac.cpp
         src/source_time_function/ricker.cpp
@@ -270,18 +285,6 @@ target_link_libraries(
         quadrature
         yaml-cpp
         Boost::boost
-)
-
-add_library(
-        algorithms
-        src/algorithms/locate_point.cpp
-)
-
-target_link_libraries(
-        algorithms
-        Kokkos::kokkos
-        jacobian
-        point
 )
 
 add_library(
@@ -345,6 +348,20 @@ target_link_libraries(
 # )
 
 add_library(
+        frechet_derivatives
+        src/frechet_derivatives/impl/element_kernel/elastic_isotropic.cpp
+        src/frechet_derivatives/impl/element_kernel/acoustic_isotropic.cpp
+        src/frechet_derivatives/impl/frechet_element.cpp
+        src/frechet_derivatives/frechet_derivatives.cpp
+)
+
+target_link_libraries(
+        frechet_derivatives
+        Kokkos::kokkos
+        point
+)
+
+add_library(
         kernels
         src/kernels/frechet_kernels.cpp
 )
@@ -353,6 +370,7 @@ target_link_libraries(
         kernels
         Kokkos::kokkos
         compute
+        frechet_derivatives
 )
 
 add_library(

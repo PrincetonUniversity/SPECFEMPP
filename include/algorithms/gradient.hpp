@@ -8,51 +8,53 @@
 
 namespace specfem {
 namespace algorithms {
-template <typename MemberType, typename ViewType, typename QuadratureType,
-          typename CallbackFunctor,
-          std::enable_if_t<ViewType::isChunkViewType, int> = 0,
-          std::enable_if_t<Kokkos::SpaceAccessibility<
-                               typename MemberType::execution_space,
-                               typename ViewType::memory_space>::accessible,
-                           int> = 0>
-KOKKOS_FUNCTION void gradient(
-    const MemberType &team,
-    const Kokkos::View<
-        int *, typename MemberType::execution_space::memory_space> &indices,
-    const specfem::compute::partial_derivatives &partial_derivatives,
-    const QuadratureType &quadrature, const ViewType &f,
-    CallbackFunctor callback) {
+template <typename MemberType, typename IteratorType, typename ViewType,
+          typename QuadratureType, typename CallbackFunctor,
+          std::enable_if_t<ViewType::isChunkViewType, int> = 0>
+KOKKOS_FUNCTION void
+gradient(const MemberType &team, const IteratorType &iterator,
+         const specfem::compute::partial_derivatives &partial_derivatives,
+         const QuadratureType &quadrature, const ViewType &f,
+         CallbackFunctor callback) {
   constexpr int components = ViewType::components;
-
-  const int number_elements = indices.extent(0);
+  constexpr bool using_simd = ViewType::simd::using_simd;
 
   constexpr int NGLL = ViewType::ngll;
 
   using VectorPointViewType =
-      specfem::datatype::VectorPointViewType<type_real, 2, components>;
+      specfem::datatype::VectorPointViewType<type_real, 2, components,
+                                             using_simd>;
+
+  using datatype = typename IteratorType::simd::datatype;
 
   static_assert(
-      std::is_invocable_v<CallbackFunctor, int, specfem::point::index,
+      std::is_same_v<typename IteratorType::simd, typename ViewType::simd>,
+      "IteratorType and ViewType must have the same simd type");
+
+  static_assert(
+      std::is_invocable_v<CallbackFunctor, typename IteratorType::index_type,
                           VectorPointViewType>,
       "CallbackFunctor must be invocable with the following signature: "
       "void(const int, const specfem::point::index, const "
       "specfem::kokkos::array_type<type_real, components>, const "
       "specfem::kokkos::array_type<type_real, components>)");
 
+  static_assert(
+      Kokkos::SpaceAccessibility<typename MemberType::execution_space,
+                                 typename ViewType::memory_space>::accessible,
+      "ViewType memory space is not accessible from the member execution "
+      "space");
+
   Kokkos::parallel_for(
-      Kokkos::TeamThreadRange(team, NGLL * NGLL * number_elements),
-      [=](const int &ixz) {
-        const int ielement = ixz % number_elements;
-        const int xz = ixz / number_elements;
-        const int iz = xz / NGLL;
-        const int ix = xz % NGLL;
+      Kokkos::TeamThreadRange(team, iterator.chunk_size()), [=](const int &i) {
+        const auto iterator_index = iterator(i);
+        const auto index = iterator_index.index;
+        const int ielement = iterator_index.ielement;
+        const int ix = index.ix;
+        const int iz = index.iz;
 
-        const int ispec = indices(ielement);
-
-        type_real df_dxi[components] = { 0.0 };
-        type_real df_dgamma[components] = { 0.0 };
-
-        specfem::point::index index(ispec, iz, ix);
+        datatype df_dxi[components] = { 0.0 };
+        datatype df_dgamma[components] = { 0.0 };
 
         // type_real l_f[ThreadTile] = { 0.0 };
         // type_real l_quad[ThreadTile] = { 0.0 };
@@ -136,7 +138,7 @@ KOKKOS_FUNCTION void gradient(
         }
 
         const auto point_partial_derivatives = [&]() {
-          specfem::point::partial_derivatives2<false> result;
+          specfem::point::partial_derivatives2<using_simd, false> result;
           specfem::compute::load_on_device(index, partial_derivatives, result);
           return result;
         }();
@@ -153,37 +155,37 @@ KOKKOS_FUNCTION void gradient(
               point_partial_derivatives.gammaz * df_dgamma[icomponent];
         }
 
-        callback(ielement, index, df);
+        callback(iterator_index, df);
       });
 
   return;
 }
 
-template <typename MemberType, typename ViewType, typename QuadratureType,
-          typename CallbackFunctor,
-          std::enable_if_t<ViewType::isChunkViewType, int> = 0,
-          std::enable_if_t<Kokkos::SpaceAccessibility<
-                               typename MemberType::execution_space,
-                               typename ViewType::memory_space>::accessible,
-                           int> = 0>
-KOKKOS_FUNCTION void gradient(
-    const MemberType &team,
-    const Kokkos::View<
-        int *, typename MemberType::execution_space::memory_space> &indices,
-    const specfem::compute::partial_derivatives &partial_derivatives,
-    const QuadratureType &quadrature, const ViewType &f, const ViewType &g,
-    CallbackFunctor callback) {
+template <typename MemberType, typename IteratorType, typename ViewType,
+          typename QuadratureType, typename CallbackFunctor,
+          std::enable_if_t<ViewType::isChunkViewType, int> = 0>
+KOKKOS_FUNCTION void
+gradient(const MemberType &team, const IteratorType &iterator,
+         const specfem::compute::partial_derivatives &partial_derivatives,
+         const QuadratureType &quadrature, const ViewType &f, const ViewType &g,
+         CallbackFunctor callback) {
   constexpr int components = ViewType::components;
-
-  const int number_elements = indices.extent(0);
+  constexpr bool using_simd = ViewType::simd::using_simd;
 
   constexpr int NGLL = ViewType::ngll;
 
   using VectorPointViewType =
-      specfem::datatype::VectorPointViewType<type_real, 2, components>;
+      specfem::datatype::VectorPointViewType<type_real, 2, components,
+                                             using_simd>;
+
+  using datatype = typename IteratorType::simd::datatype;
 
   static_assert(
-      std::is_invocable_v<CallbackFunctor, int, specfem::point::index,
+      std::is_same_v<typename IteratorType::simd, typename ViewType::simd>,
+      "IteratorType and ViewType must have the same simd type");
+
+  static_assert(
+      std::is_invocable_v<CallbackFunctor, typename IteratorType::index_type,
                           VectorPointViewType, VectorPointViewType>,
       "CallbackFunctor must be invocable with the following signature: "
       "void(const int, const specfem::point::index, const "
@@ -191,20 +193,22 @@ KOKKOS_FUNCTION void gradient(
       "const "
       "pecfem::datatype::VectorPointViewType<type_real, 2, components>)");
 
+  static_assert(
+      Kokkos::SpaceAccessibility<typename MemberType::execution_space,
+                                 typename ViewType::memory_space>::accessible,
+      "ViewType memory space is not accessible from the member execution "
+      "space");
+
   Kokkos::parallel_for(
-      Kokkos::TeamThreadRange(team, NGLL * NGLL * number_elements),
-      [=](const int &ixz) {
-        const int ielement = ixz % number_elements;
-        const int xz = ixz / number_elements;
-        int ix, iz;
-        sub2ind(xz, NGLL, iz, ix);
+      Kokkos::TeamThreadRange(team, iterator.chunk_size()), [=](const int &i) {
+        const auto iterator_index = iterator(i);
+        const auto index = iterator_index.index;
+        const int ielement = iterator_index.ielement;
+        const int ix = index.ix;
+        const int iz = index.iz;
 
-        const int ispec = indices(ielement);
-
-        specfem::point::index index(ispec, iz, ix);
-
-        type_real df_dxi[components];
-        type_real df_dgamma[components];
+        datatype df_dxi[components];
+        datatype df_dgamma[components];
 
         for (int icomponent = 0; icomponent < components; ++icomponent) {
           df_dxi[icomponent] = 0.0;
@@ -221,7 +225,7 @@ KOKKOS_FUNCTION void gradient(
         }
 
         const auto point_partial_derivatives = [&]() {
-          specfem::point::partial_derivatives2<false> result;
+          specfem::point::partial_derivatives2<using_simd, false> result;
           specfem::compute::load_on_device(index, partial_derivatives, result);
           return result;
         }();
@@ -264,7 +268,7 @@ KOKKOS_FUNCTION void gradient(
               point_partial_derivatives.gammaz * df_dgamma[icomponent];
         }
 
-        callback(ielement, index, df, dg);
+        callback(iterator_index, df, dg);
       });
 
   return;

@@ -43,7 +43,7 @@ struct material_property
 
             // Assign the material property to the property container
             auto point_property = material.get_properties();
-            this->assign(count, iz, ix, point_property);
+            this->assign(specfem::point::index(count, iz, ix), point_property);
           }
         }
         count++;

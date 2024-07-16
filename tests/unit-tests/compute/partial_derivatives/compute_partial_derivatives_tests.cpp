@@ -98,8 +98,9 @@ TEST(COMPUTE_TESTS, compute_partial_derivatives) {
       for (int ispec = 0; ispec < nspec; ++ispec) {
         const specfem::point::index index(ispec, iz, ix);
         const auto point_partial_derivatives =
-            [&]() -> specfem::point::partial_derivatives2<true> {
-          specfem::point::partial_derivatives2<true> point_partial_derivatives;
+            [&]() -> specfem::point::partial_derivatives2<false, true> {
+          specfem::point::partial_derivatives2<false, true>
+              point_partial_derivatives;
           specfem::compute::load_on_host(index, partial_derivatives,
                                          point_partial_derivatives);
           return point_partial_derivatives;
@@ -113,6 +114,39 @@ TEST(COMPUTE_TESTS, compute_partial_derivatives) {
                     gammaz_ref.data(ispec, iz, ix), gammaz_ref.tol);
         EXPECT_NEAR(point_partial_derivatives.jacobian,
                     jacobian_ref.data(ispec, iz, ix), jacobian_ref.tol);
+      }
+    }
+  }
+
+  for (int ix = 0; ix < ngllx; ++ix) {
+    for (int iz = 0; iz < ngllz; ++iz) {
+      constexpr static int vector_length =
+          specfem::datatype::simd<type_real, true>::size();
+
+      for (int ispec = 0; ispec < nspec; ispec += vector_length) {
+        const int num_elements =
+            (ispec + vector_length < nspec) ? vector_length : nspec - ispec;
+        const specfem::point::simd_index simd_index(ispec, num_elements, iz,
+                                                    ix);
+        const auto point_partial_derivatives =
+            [&]() -> specfem::point::partial_derivatives2<true, true> {
+          specfem::point::partial_derivatives2<true, true>
+              point_partial_derivatives;
+          specfem::compute::load_on_host(simd_index, partial_derivatives,
+                                         point_partial_derivatives);
+          return point_partial_derivatives;
+        }();
+
+        for (int i = 0; i < num_elements; ++i) {
+          EXPECT_NEAR(point_partial_derivatives.xix[i],
+                      xix_ref.data(ispec + i, iz, ix), xix_ref.tol);
+          EXPECT_NEAR(point_partial_derivatives.gammax[i],
+                      gammax_ref.data(ispec + i, iz, ix), gammax_ref.tol);
+          EXPECT_NEAR(point_partial_derivatives.gammaz[i],
+                      gammaz_ref.data(ispec + i, iz, ix), gammaz_ref.tol);
+          EXPECT_NEAR(point_partial_derivatives.jacobian[i],
+                      jacobian_ref.data(ispec + i, iz, ix), jacobian_ref.tol);
+        }
       }
     }
   }

@@ -58,7 +58,7 @@ specfem::domain::impl::kernels::receiver_kernel<
 
   receiver =
       specfem::domain::impl::receivers::receiver<DimensionType, MediumTag,
-                                                 PropertyTag, qp_type>();
+                                                 PropertyTag, qp_type, using_simd>();
 
   return;
 }
@@ -82,7 +82,7 @@ void specfem::domain::impl::kernels::receiver_kernel<
   constexpr int NGLL = quadrature_points_type::NGLL;
   using ElementFieldType = specfem::element::field<
       NGLL, DimensionType, MediumTag, specfem::kokkos::DevScratchSpace,
-      Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, true, true, false>;
+      Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, true, true, false, using_simd>;
 
   using ElementQuadratureType = specfem::element::quadrature<
       NGLL, DimensionType, specfem::kokkos::DevScratchSpace,
@@ -141,8 +141,8 @@ void specfem::domain::impl::kernels::receiver_kernel<
               sub2ind(xz, ngllx, iz, ix);
               const specfem::point::index index(ispec_l, iz, ix);
               const auto point_partial_derivatives =
-                  [&]() -> specfem::point::partial_derivatives2<false> {
-                specfem::point::partial_derivatives2<false>
+                  [&]() -> specfem::point::partial_derivatives2<using_simd, false> {
+                specfem::point::partial_derivatives2<using_simd, false>
                     point_partial_derivatives;
                 specfem::compute::load_on_device(index, partial_derivatives,
                                                  point_partial_derivatives);
@@ -150,8 +150,8 @@ void specfem::domain::impl::kernels::receiver_kernel<
               }();
 
               const auto point_properties =
-                  [&]() -> specfem::point::properties<DimensionType, MediumTag, PropertyTag> {
-                specfem::point::properties<DimensionType, MediumTag, PropertyTag>
+                  [&]() -> specfem::point::properties<DimensionType, MediumTag, PropertyTag, using_simd> {
+                specfem::point::properties<DimensionType, MediumTag, PropertyTag, using_simd>
                     point_properties;
                 specfem::compute::load_on_device(index, properties,
                                                  point_properties);

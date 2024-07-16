@@ -107,8 +107,10 @@ void deep_copy(simulation_field<WavefieldType1> &dst,
   specfem::compute::deep_copy(dst.acoustic, src.acoustic);
 }
 
-template <specfem::wavefield::type WavefieldType, typename ViewType,
-          std::enable_if_t<ViewType::isPointFieldType, int> = 0>
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
 KOKKOS_FUNCTION void
 load_on_device(const int iglob,
                const specfem::compute::simulation_field<WavefieldType> &field,
@@ -155,8 +157,142 @@ load_on_device(const int iglob,
   return;
 }
 
-template <specfem::wavefield::type WavefieldType, typename ViewType,
-          std::enable_if_t<ViewType::isPointFieldType, int> = 0>
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
+KOKKOS_FUNCTION void
+load_on_device(const int *iglob,
+               const specfem::compute::simulation_field<WavefieldType> &field,
+               ViewType &point_field) {
+
+  constexpr static bool StoreDisplacement = ViewType::store_displacement;
+  constexpr static bool StoreVelocity = ViewType::store_velocity;
+  constexpr static bool StoreAcceleration = ViewType::store_acceleration;
+  constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
+  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static int components = ViewType::components;
+
+  const auto curr_field = [&]()
+      -> specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
+                                            MediumType> {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+      return field.elastic;
+    } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
+      return field.acoustic;
+    } else {
+      static_assert("medium type not supported");
+    }
+  }();
+
+  for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
+    const int iglob_l = iglob[lane];
+    if (iglob_l >= field.nglob) {
+      return;
+    }
+
+    if constexpr (StoreDisplacement) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        point_field.displacement(icomp)[lane] =
+            curr_field.field(iglob_l, icomp);
+      }
+    }
+
+    if constexpr (StoreVelocity) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        point_field.velocity(icomp)[lane] =
+            curr_field.field_dot(iglob_l, icomp);
+      }
+    }
+
+    if constexpr (StoreAcceleration) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        point_field.acceleration(icomp)[lane] =
+            curr_field.field_dot_dot(iglob_l, icomp);
+      }
+    }
+
+    if constexpr (StoreMassMatrix) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        point_field.mass_matrix(icomp)[lane] =
+            curr_field.mass_inverse(iglob_l, icomp);
+      }
+    }
+  }
+
+  return;
+}
+
+#ifdef ENABLE_SIMD
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
+KOKKOS_FUNCTION void
+load_on_device(const specfem::datatype::simd<int, true>::datatype &iglob,
+               const specfem::compute::simulation_field<WavefieldType> &field,
+               ViewType &point_field) {
+
+  constexpr static bool StoreDisplacement = ViewType::store_displacement;
+  constexpr static bool StoreVelocity = ViewType::store_velocity;
+  constexpr static bool StoreAcceleration = ViewType::store_acceleration;
+  constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
+  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static int components = ViewType::components;
+
+  using mask_type = typename ViewType::simd::mask_type;
+  using tag_type = typename ViewType::simd::tag_type;
+
+  mask_type mask([&](std::size_t lane) { return iglob[lane] < field.nglob; });
+
+  const auto curr_field = [&]()
+      -> specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
+                                            MediumType> {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+      return field.elastic;
+    } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
+      return field.acoustic;
+    } else {
+      static_assert("medium type not supported");
+    }
+  }();
+
+  if constexpr (StoreDisplacement) {
+    for (int icomp = 0; icomp < components; ++icomp) {
+      Kokkos::Experimental::where(mask, point_field.displacement(icomp))
+          .copy_from(&curr_field.field(iglob, icomp), tag_type());
+    }
+  }
+
+  if constexpr (StoreVelocity) {
+    for (int icomp = 0; icomp < components; ++icomp) {
+      Kokkos::Experimental::where(mask, point_field.velocity(icomp))
+          .copy_from(&curr_field.field_dot(iglob, icomp), tag_type());
+    }
+  }
+
+  if constexpr (StoreAcceleration) {
+    for (int icomp = 0; icomp < components; ++icomp) {
+      Kokkos::Experimental::where(mask, point_field.acceleration(icomp))
+          .copy_from(&curr_field.field_dot_dot(iglob, icomp), tag_type());
+    }
+  }
+
+  if constexpr (StoreMassMatrix) {
+    for (int icomp = 0; icomp < components; ++icomp) {
+      Kokkos::Experimental::where(mask, point_field.mass_matrix(icomp))
+          .copy_from(&curr_field.mass_inverse(iglob, icomp), tag_type());
+    }
+  }
+
+  return;
+}
+#endif
+
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
 void load_on_host(
     const int iglob,
     const specfem::compute::simulation_field<WavefieldType> &field,
@@ -203,8 +339,142 @@ void load_on_host(
   return;
 }
 
-template <specfem::wavefield::type WavefieldType, typename ViewType,
-          std::enable_if_t<ViewType::isPointFieldType, int> = 0>
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    std::enable_if_t<ViewType::isPointFieldType && ViewType::simd::using_simd,
+                     int> = 0>
+void load_on_host(
+    const int *iglob,
+    const specfem::compute::simulation_field<WavefieldType> &field,
+    ViewType &point_field) {
+
+  constexpr static bool StoreDisplacement = ViewType::store_displacement;
+  constexpr static bool StoreVelocity = ViewType::store_velocity;
+  constexpr static bool StoreAcceleration = ViewType::store_acceleration;
+  constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
+  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static int components = ViewType::components;
+
+  const auto curr_field = [&]()
+      -> specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
+                                            MediumType> {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+      return field.elastic;
+    } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
+      return field.acoustic;
+    } else {
+      static_assert("medium type not supported");
+    }
+  }();
+
+  for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
+    const int iglob_l = iglob[lane];
+    if (iglob_l >= field.nglob) {
+      continue;
+    }
+
+    if constexpr (StoreDisplacement) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        point_field.displacement(icomp)[lane] =
+            curr_field.h_field(iglob_l, icomp);
+      }
+    }
+
+    if constexpr (StoreVelocity) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        point_field.velocity(icomp)[lane] =
+            curr_field.h_field_dot(iglob_l, icomp);
+      }
+    }
+
+    if constexpr (StoreAcceleration) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        point_field.acceleration(icomp)[lane] =
+            curr_field.h_field_dot_dot(iglob_l, icomp);
+      }
+    }
+
+    if constexpr (StoreMassMatrix) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        point_field.mass_matrix(icomp)[lane] =
+            curr_field.h_mass_inverse(iglob_l, icomp);
+      }
+    }
+  }
+
+  return;
+}
+
+#ifdef ENABLE_SIMD
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    std::enable_if_t<ViewType::isPointFieldType && ViewType::simd::using_simd,
+                     int> = 0>
+void load_on_host(
+    const specfem::datatype::simd<int, true>::datatype &iglob,
+    const specfem::compute::simulation_field<WavefieldType> &field,
+    ViewType &point_field) {
+
+  constexpr static bool StoreDisplacement = ViewType::store_displacement;
+  constexpr static bool StoreVelocity = ViewType::store_velocity;
+  constexpr static bool StoreAcceleration = ViewType::store_acceleration;
+  constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
+  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static int components = ViewType::components;
+
+  using mask_type = typename ViewType::simd::mask_type;
+  using tag_type = typename ViewType::simd::tag_type;
+
+  mask_type mask([&](std::size_t lane) { return iglob[lane] < field.nglob; });
+
+  const auto curr_field = [&]()
+      -> specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
+                                            MediumType> {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+      return field.elastic;
+    } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
+      return field.acoustic;
+    } else {
+      static_assert("medium type not supported");
+    }
+  }();
+
+  if constexpr (StoreDisplacement) {
+    for (int icomp = 0; icomp < components; ++icomp) {
+      Kokkos::Experimental::where(mask, point_field.displacement(icomp))
+          .copy_from(&curr_field.h_field(iglob, icomp), tag_type());
+    }
+  }
+
+  if constexpr (StoreVelocity) {
+    for (int icomp = 0; icomp < components; ++icomp) {
+      Kokkos::Experimental::where(mask, point_field.velocity(icomp))
+          .copy_from(&curr_field.h_field_dot(iglob, icomp), tag_type());
+    }
+  }
+
+  if constexpr (StoreAcceleration) {
+    for (int icomp = 0; icomp < components; ++icomp) {
+      Kokkos::Experimental::where(mask, point_field.acceleration(icomp))
+          .copy_from(&curr_field.h_field_dot_dot(iglob, icomp), tag_type());
+    }
+  }
+
+  if constexpr (StoreMassMatrix) {
+    for (int icomp = 0; icomp < components; ++icomp) {
+      Kokkos::Experimental::where(mask, point_field.mass_matrix(icomp))
+          .copy_from(&curr_field.h_mass_inverse(iglob, icomp), tag_type());
+    }
+  }
+
+  return;
+}
+#endif
+
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
 KOKKOS_FUNCTION void
 load_on_device(const specfem::point::index &index,
                const specfem::compute::simulation_field<WavefieldType> &field,
@@ -216,8 +486,31 @@ load_on_device(const specfem::point::index &index,
   load_on_device(iglob, field, point_field);
 }
 
-template <specfem::wavefield::type WavefieldType, typename ViewType,
-          std::enable_if_t<ViewType::isPointFieldType, int> = 0>
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
+KOKKOS_FUNCTION void
+load_on_device(const specfem::point::simd_index &index,
+               const specfem::compute::simulation_field<WavefieldType> &field,
+               ViewType &point_field) {
+  constexpr static auto MediumType = ViewType::medium_tag;
+  int iglob[ViewType::simd::size()];
+
+  for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
+    iglob[lane] =
+        (index.mask(std::size_t(lane)))
+            ? field.index_mapping(index.ispec + lane, index.iz, index.ix)
+            : field.nglob + 1;
+  }
+
+  load_on_device(iglob, field, point_field);
+}
+
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
 void load_on_host(
     const specfem::point::index &index,
     const specfem::compute::simulation_field<WavefieldType> &field,
@@ -231,8 +524,32 @@ void load_on_host(
   load_on_host(iglob, field, point_field);
 }
 
-template <specfem::wavefield::type WavefieldType, typename ViewType,
-          std::enable_if_t<ViewType::isPointFieldType, int> = 0>
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
+void load_on_host(
+    const specfem::point::simd_index &index,
+    const specfem::compute::simulation_field<WavefieldType> &field,
+    ViewType &point_field) {
+
+  constexpr static auto MediumType = ViewType::medium_tag;
+  int iglob[ViewType::simd::size()];
+
+  for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
+    iglob[lane] =
+        (index.mask(std::size_t(lane)))
+            ? field.h_index_mapping(index.ispec + lane, index.iz, index.ix)
+            : field.nglob + 1;
+  }
+
+  load_on_host(iglob, field, point_field);
+}
+
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
 KOKKOS_FUNCTION void store_on_device(
     const int iglob, const ViewType &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
@@ -272,8 +589,139 @@ KOKKOS_FUNCTION void store_on_device(
   return;
 }
 
-template <specfem::wavefield::type WavefieldType, typename ViewType,
-          std::enable_if_t<ViewType::isPointFieldType, int> = 0>
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
+KOKKOS_FUNCTION void store_on_device(
+    const int *iglob, const ViewType &point_field,
+    const specfem::compute::simulation_field<WavefieldType> &field) {
+
+  constexpr static bool StoreDisplacement = ViewType::store_displacement;
+  constexpr static bool StoreVelocity = ViewType::store_velocity;
+  constexpr static bool StoreAcceleration = ViewType::store_acceleration;
+  constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
+  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static int components = ViewType::components;
+
+  auto curr_field = [&]() -> specfem::compute::impl::field_impl<
+                              specfem::dimension::type::dim2, MediumType> {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+      return field.elastic;
+    } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
+      return field.acoustic;
+    } else {
+      static_assert("medium type not supported");
+    }
+  }();
+
+  for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
+    const int iglob_l = iglob[lane];
+    if (iglob_l >= field.nglob) {
+      continue;
+    }
+
+    if constexpr (StoreDisplacement) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        curr_field.field(iglob_l, icomp) =
+            point_field.displacement(icomp)[lane];
+      }
+    }
+
+    if constexpr (StoreVelocity) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        curr_field.field_dot(iglob_l, icomp) =
+            point_field.velocity(icomp)[lane];
+      }
+    }
+
+    if constexpr (StoreAcceleration) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        curr_field.field_dot_dot(iglob_l, icomp) =
+            point_field.acceleration(icomp)[lane];
+      }
+    }
+
+    if constexpr (StoreMassMatrix) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        curr_field.mass_inverse(iglob_l, icomp) =
+            point_field.mass_matrix(icomp)[lane];
+      }
+    }
+  }
+
+  return;
+}
+
+#ifdef ENABLE_SIMD
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
+KOKKOS_FUNCTION void store_on_device(
+    const specfem::datatype::simd<int, true>::datatype &iglob,
+    const ViewType &point_field,
+    const specfem::compute::simulation_field<WavefieldType> &field) {
+
+  constexpr static bool StoreDisplacement = ViewType::store_displacement;
+  constexpr static bool StoreVelocity = ViewType::store_velocity;
+  constexpr static bool StoreAcceleration = ViewType::store_acceleration;
+  constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
+  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static int components = ViewType::components;
+
+  using mask_type = typename ViewType::simd::mask_type;
+  using tag_type = typename ViewType::simd::tag_type;
+
+  mask_type mask([&](std::size_t lane) { return iglob[lane] < field.nglob; });
+
+  auto curr_field = [&]() -> specfem::compute::impl::field_impl<
+                              specfem::dimension::type::dim2, MediumType> {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+      return field.elastic;
+    } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
+      return field.acoustic;
+    } else {
+      static_assert("medium type not supported");
+    }
+  }();
+
+  if constexpr (StoreDisplacement) {
+    for (int icomp = 0; icomp < components; ++icomp) {
+      Kokkos::Experimental::where(mask, point_field.displacement(icomp))
+          .copy_to(&curr_field.h_field(iglob, icomp), tag_type());
+    }
+  }
+
+  if constexpr (StoreVelocity) {
+    for (int icomp = 0; icomp < components; ++icomp) {
+      Kokkos::Experimental::where(mask, point_field.velocity(icomp))
+          .copy_to(&curr_field.field_dot(iglob, icomp), tag_type());
+    }
+  }
+
+  if constexpr (StoreAcceleration) {
+    for (int icomp = 0; icomp < components; ++icomp) {
+      Kokkos::Experimental::where(mask, point_field.acceleration(icomp))
+          .copy_to(&curr_field.field_dot_dot(iglob, icomp), tag_type());
+    }
+  }
+
+  if constexpr (StoreMassMatrix) {
+    for (int icomp = 0; icomp < components; ++icomp) {
+      Kokkos::Experimental::where(mask, point_field.mass_matrix(icomp))
+          .copy_to(&curr_field.mass_inverse(iglob, icomp), tag_type());
+    }
+  }
+
+  return;
+}
+#endif
+
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
 void store_on_host(
     const int iglob, const ViewType &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
@@ -314,8 +762,139 @@ void store_on_host(
   return;
 }
 
-template <specfem::wavefield::type WavefieldType, typename ViewType,
-          std::enable_if_t<ViewType::isPointFieldType, int> = 0>
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
+void store_on_host(
+    const int *iglob, const ViewType &point_field,
+    const specfem::compute::simulation_field<WavefieldType> &field) {
+
+  constexpr static bool StoreDisplacement = ViewType::store_displacement;
+  constexpr static bool StoreVelocity = ViewType::store_velocity;
+  constexpr static bool StoreAcceleration = ViewType::store_acceleration;
+  constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
+  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static int components = ViewType::components;
+
+  auto curr_field = [&]() -> specfem::compute::impl::field_impl<
+                              specfem::dimension::type::dim2, MediumType> {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+      return field.elastic;
+    } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
+      return field.acoustic;
+    } else {
+      static_assert("medium type not supported");
+    }
+  }();
+
+  for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
+    const int iglob_l = iglob[lane];
+    if (iglob_l >= field.nglob) {
+      continue;
+    }
+
+    if constexpr (StoreDisplacement) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        curr_field.h_field(iglob_l, icomp) =
+            point_field.displacement(icomp)[lane];
+      }
+    }
+
+    if constexpr (StoreVelocity) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        curr_field.h_field_dot(iglob_l, icomp) =
+            point_field.velocity(icomp)[lane];
+      }
+    }
+
+    if constexpr (StoreAcceleration) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        curr_field.h_field_dot_dot(iglob_l, icomp) =
+            point_field.acceleration(icomp)[lane];
+      }
+    }
+
+    if constexpr (StoreMassMatrix) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        curr_field.h_mass_inverse(iglob_l, icomp) =
+            point_field.mass_matrix(icomp)[lane];
+      }
+    }
+  }
+
+  return;
+}
+
+#ifdef ENABLE_SIMD
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
+void store_on_host(
+    const specfem::datatype::simd<int, true>::datatype &iglob,
+    const ViewType &point_field,
+    const specfem::compute::simulation_field<WavefieldType> &field) {
+
+  constexpr static bool StoreDisplacement = ViewType::store_displacement;
+  constexpr static bool StoreVelocity = ViewType::store_velocity;
+  constexpr static bool StoreAcceleration = ViewType::store_acceleration;
+  constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
+  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static int components = ViewType::components;
+
+  using mask_type = typename ViewType::simd::mask_type;
+  using tag_type = typename ViewType::simd::tag_type;
+
+  mask_type mask([&](std::size_t lane) { return iglob[lane] < field.nglob; });
+
+  auto curr_field = [&]() -> specfem::compute::impl::field_impl<
+                              specfem::dimension::type::dim2, MediumType> {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+      return field.elastic;
+    } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
+      return field.acoustic;
+    } else {
+      static_assert("medium type not supported");
+    }
+  }();
+
+  if constexpr (StoreDisplacement) {
+    for (int icomp = 0; icomp < components; ++icomp) {
+      Kokkos::Experimental::where(mask, point_field.displacement(icomp))
+          .copy_to(&curr_field.h_field(iglob, icomp), tag_type());
+    }
+  }
+
+  if constexpr (StoreVelocity) {
+    for (int icomp = 0; icomp < components; ++icomp) {
+      Kokkos::Experimental::where(mask, point_field.velocity(icomp))
+          .copy_to(&curr_field.h_field_dot(iglob, icomp), tag_type());
+    }
+  }
+
+  if constexpr (StoreAcceleration) {
+    for (int icomp = 0; icomp < components; ++icomp) {
+      Kokkos::Experimental::where(mask, point_field.acceleration(icomp))
+          .copy_to(&curr_field.h_field_dot_dot(iglob, icomp), tag_type());
+    }
+  }
+
+  if constexpr (StoreMassMatrix) {
+    for (int icomp = 0; icomp < components; ++icomp) {
+      Kokkos::Experimental::where(mask, point_field.acceleration(icomp))
+          .copy_to(&curr_field.h_mass_matrix(iglob, icomp), tag_type());
+    }
+  }
+
+  return;
+}
+#endif
+
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
 KOKKOS_FUNCTION void store_on_device(
     const specfem::point::index &index, const ViewType &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
@@ -329,8 +908,31 @@ KOKKOS_FUNCTION void store_on_device(
   store_on_device(iglob, point_field, field);
 }
 
-template <specfem::wavefield::type WavefieldType, typename ViewType,
-          std::enable_if_t<ViewType::isPointFieldType, int> = 0>
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
+KOKKOS_FUNCTION void store_on_device(
+    const specfem::point::simd_index &index, const ViewType &point_field,
+    const specfem::compute::simulation_field<WavefieldType> &field) {
+
+  constexpr static int MediumType = ViewType::medium_tag;
+  int iglob[ViewType::simd::size()];
+
+  for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
+    iglob[lane] =
+        (index.mask(std::size_t(lane)))
+            ? field.index_mapping(index.ispec + lane, index.iz, index.ix)
+            : field.nglob + 1;
+  }
+
+  store_on_device(iglob, point_field, field);
+}
+
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
 void store_on_host(
     const specfem::point::index &index, const ViewType &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
@@ -344,8 +946,31 @@ void store_on_host(
   store_on_host(iglob, point_field, field);
 }
 
-template <specfem::wavefield::type WavefieldType, typename ViewType,
-          std::enable_if_t<ViewType::isPointFieldType, int> = 0>
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
+void store_on_host(
+    const specfem::point::simd_index &index, const ViewType &point_field,
+    const specfem::compute::simulation_field<WavefieldType> &field) {
+
+  constexpr static int MediumType = ViewType::medium_tag;
+  int iglob[ViewType::simd::size()];
+
+  for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
+    iglob[lane] =
+        (index.mask(std::size_t(lane)))
+            ? field.h_index_mapping(index.ispec + lane, index.iz, index.ix)
+            : field.nglob + 1;
+  }
+
+  store_on_host(iglob, point_field, field);
+}
+
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
 KOKKOS_FUNCTION void
 add_on_device(const int iglob, const ViewType &point_field,
               const specfem::compute::simulation_field<WavefieldType> &field) {
@@ -385,8 +1010,159 @@ add_on_device(const int iglob, const ViewType &point_field,
   return;
 }
 
-template <specfem::wavefield::type WavefieldType, typename ViewType,
-          std::enable_if_t<ViewType::isPointFieldType, int> = 0>
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
+KOKKOS_FUNCTION void
+add_on_device(const int *iglob, const ViewType &point_field,
+              const specfem::compute::simulation_field<WavefieldType> &field) {
+
+  constexpr static bool StoreDisplacement = ViewType::store_displacement;
+  constexpr static bool StoreVelocity = ViewType::store_velocity;
+  constexpr static bool StoreAcceleration = ViewType::store_acceleration;
+  constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
+  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static int components = ViewType::components;
+
+  auto curr_field = [&]() -> specfem::compute::impl::field_impl<
+                              specfem::dimension::type::dim2, MediumType> {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+      return field.elastic;
+    } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
+      return field.acoustic;
+    } else {
+      static_assert("medium type not supported");
+    }
+  }();
+
+  for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
+    const int iglob_l = iglob[lane];
+    if (iglob_l >= field.nglob) {
+      continue;
+    }
+
+    if constexpr (StoreDisplacement) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        curr_field.field(iglob_l, icomp) +=
+            point_field.displacement(icomp)[lane];
+      }
+    }
+
+    if constexpr (StoreVelocity) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        curr_field.field_dot(iglob_l, icomp) +=
+            point_field.velocity(icomp)[lane];
+      }
+    }
+
+    if constexpr (StoreAcceleration) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        curr_field.field_dot_dot(iglob_l, icomp) +=
+            point_field.acceleration(icomp)[lane];
+      }
+    }
+
+    if constexpr (StoreMassMatrix) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        curr_field.mass_inverse(iglob_l, icomp) +=
+            point_field.mass_matrix(icomp)[lane];
+      }
+    }
+  }
+
+  return;
+}
+
+#ifdef ENABLE_SIMD
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
+KOKKOS_FUNCTION void
+add_on_device(const specfem::datatype::simd<int, true>::datatype &iglob,
+              const ViewType &point_field,
+              const specfem::compute::simulation_field<WavefieldType> &field) {
+
+  constexpr static bool StoreDisplacement = ViewType::store_displacement;
+  constexpr static bool StoreVelocity = ViewType::store_velocity;
+  constexpr static bool StoreAcceleration = ViewType::store_acceleration;
+  constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
+  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static int components = ViewType::components;
+
+  using mask_type = typename ViewType::simd::mask_type;
+  using tag_type = typename ViewType::simd::tag_type;
+
+  mask_type mask([&](std::size_t lane) { return iglob[lane] < field.nglob; });
+
+  auto curr_field = [&]() -> specfem::compute::impl::field_impl<
+                              specfem::dimension::type::dim2, MediumType> {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+      return field.elastic;
+    } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
+      return field.acoustic;
+    } else {
+      static_assert("medium type not supported");
+    }
+  }();
+
+  if constexpr (StoreDisplacement) {
+    for (int icomp = 0; icomp < components; ++icomp) {
+      typename ViewType::simd::datatype lhs;
+      Kokkos::Experimental::where(mask, lhs).copy_from(
+          &curr_field.field(iglob, icomp), tag_type());
+
+      lhs += point_field.displacement(icomp);
+      Kokkos::Experimental::where(mask, lhs).copy_to(
+          &curr_field.field(iglob, icomp), tag_type());
+    }
+  }
+
+  if constexpr (StoreVelocity) {
+    for (int icomp = 0; icomp < components; ++icomp) {
+      typename ViewType::simd::datatype lhs;
+      Kokkos::Experimental::where(mask, lhs).copy_from(
+          &curr_field.field_dot(iglob, icomp), tag_type());
+
+      lhs += point_field.velocity(icomp);
+      Kokkos::Experimental::where(mask, lhs).copy_to(
+          &curr_field.field_dot(iglob, icomp), tag_type());
+    }
+  }
+
+  if constexpr (StoreAcceleration) {
+    for (int icomp = 0; icomp < components; ++icomp) {
+      typename ViewType::simd::datatype lhs;
+      Kokkos::Experimental::where(mask, lhs).copy_from(
+          &curr_field.field_dot_dot(iglob, icomp), tag_type());
+
+      lhs += point_field.acceleration(icomp);
+      Kokkos::Experimental::where(mask, lhs).copy_to(
+          &curr_field.field_dot_dot(iglob, icomp), tag_type());
+    }
+  }
+
+  if constexpr (StoreMassMatrix) {
+    for (int icomp = 0; icomp < components; ++icomp) {
+      typename ViewType::simd::datatype lhs;
+      Kokkos::Experimental::where(mask, lhs).copy_from(
+          &curr_field.mass_inverse(iglob, icomp), tag_type());
+
+      lhs += point_field.mass_matrix(icomp);
+      Kokkos::Experimental::where(mask, lhs).copy_to(
+          &curr_field.mass_inverse(iglob, icomp), tag_type());
+    }
+  }
+
+  return;
+}
+#endif
+
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
 void add_on_host(
     const int iglob, const ViewType &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
@@ -427,8 +1203,159 @@ void add_on_host(
   return;
 }
 
-template <specfem::wavefield::type WavefieldType, typename ViewType,
-          std::enable_if_t<ViewType::isPointFieldType, int> = 0>
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
+void add_on_host(
+    const int *iglob, const ViewType &point_field,
+    const specfem::compute::simulation_field<WavefieldType> &field) {
+
+  constexpr static bool StoreDisplacement = ViewType::store_displacement;
+  constexpr static bool StoreVelocity = ViewType::store_velocity;
+  constexpr static bool StoreAcceleration = ViewType::store_acceleration;
+  constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
+  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static int components = ViewType::components;
+
+  auto curr_field = [&]() -> specfem::compute::impl::field_impl<
+                              specfem::dimension::type::dim2, MediumType> {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+      return field.elastic;
+    } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
+      return field.acoustic;
+    } else {
+      static_assert("medium type not supported");
+    }
+  }();
+
+  for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
+    const int iglob_l = iglob[lane];
+    if (iglob_l >= field.nglob) {
+      continue;
+    }
+
+    if constexpr (StoreDisplacement) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        curr_field.h_field(iglob_l, icomp) +=
+            point_field.displacement(icomp)[lane];
+      }
+    }
+
+    if constexpr (StoreVelocity) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        curr_field.h_field_dot(iglob_l, icomp) +=
+            point_field.velocity(icomp)[lane];
+      }
+    }
+
+    if constexpr (StoreAcceleration) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        curr_field.h_field_dot_dot(iglob_l, icomp) +=
+            point_field.acceleration(icomp)[lane];
+      }
+    }
+
+    if constexpr (StoreMassMatrix) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        curr_field.h_mass_inverse(iglob_l, icomp) +=
+            point_field.mass_matrix(icomp)[lane];
+      }
+    }
+  }
+
+  return;
+}
+
+#ifdef ENABLE_SIMD
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
+void add_on_host(
+    const specfem::datatype::simd<int, true>::datatype &iglob,
+    const ViewType &point_field,
+    const specfem::compute::simulation_field<WavefieldType> &field) {
+
+  constexpr static bool StoreDisplacement = ViewType::store_displacement;
+  constexpr static bool StoreVelocity = ViewType::store_velocity;
+  constexpr static bool StoreAcceleration = ViewType::store_acceleration;
+  constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
+  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static int components = ViewType::components;
+
+  using mask_type = typename ViewType::simd::mask_type;
+  using tag_type = typename ViewType::simd::tag_type;
+
+  mask_type mask([&](std::size_t lane) { return iglob[lane] < field.nglob; });
+
+  auto curr_field = [&]() -> specfem::compute::impl::field_impl<
+                              specfem::dimension::type::dim2, MediumType> {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+      return field.elastic;
+    } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
+      return field.acoustic;
+    } else {
+      static_assert("medium type not supported");
+    }
+  }();
+
+  if constexpr (StoreDisplacement) {
+    for (int icomp = 0; icomp < components; ++icomp) {
+      typename ViewType::simd::datatype lhs;
+      Kokkos::Experimental::where(mask, lhs).copy_from(
+          &curr_field.h_field(iglob, icomp), tag_type());
+
+      lhs += point_field.displacement(icomp);
+      Kokkos::Experimental::where(mask, lhs).copy_to(
+          &curr_field.h_field(iglob, icomp), tag_type());
+    }
+  }
+
+  if constexpr (StoreVelocity) {
+    for (int icomp = 0; icomp < components; ++icomp) {
+      typename ViewType::simd::datatype lhs;
+      Kokkos::Experimental::where(mask, lhs).copy_from(
+          &curr_field.h_field_dot(iglob, icomp), tag_type());
+
+      lhs += point_field.velocity(icomp);
+      Kokkos::Experimental::where(mask, lhs).copy_to(
+          &curr_field.h_field_dot(iglob, icomp), tag_type());
+    }
+  }
+
+  if constexpr (StoreAcceleration) {
+    for (int icomp = 0; icomp < components; ++icomp) {
+      typename ViewType::simd::datatype lhs;
+      Kokkos::Experimental::where(mask, lhs).copy_from(
+          &curr_field.h_field_dot_dot(iglob, icomp), tag_type());
+
+      lhs += point_field.acceleration(icomp);
+      Kokkos::Experimental::where(mask, lhs).copy_to(
+          &curr_field.h_field_dot_dot(iglob, icomp), tag_type());
+    }
+  }
+
+  if constexpr (StoreMassMatrix) {
+    for (int icomp = 0; icomp < components; ++icomp) {
+      typename ViewType::simd::datatype lhs;
+      Kokkos::Experimental::where(mask, lhs).copy_from(
+          &curr_field.h_mass_inverse(iglob, icomp), tag_type());
+
+      lhs += point_field.mass_matrix(icomp);
+      Kokkos::Experimental::where(mask, lhs).copy_to(
+          &curr_field.h_mass_inverse(iglob, icomp), tag_type());
+    }
+  }
+
+  return;
+}
+#endif
+
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
 KOKKOS_FUNCTION void
 add_on_device(const specfem::point::index &index, const ViewType &point_field,
               const specfem::compute::simulation_field<WavefieldType> &field) {
@@ -442,8 +1369,32 @@ add_on_device(const specfem::point::index &index, const ViewType &point_field,
   add_on_device(iglob, point_field, field);
 }
 
-template <specfem::wavefield::type WavefieldType, typename ViewType,
-          std::enable_if_t<ViewType::isPointFieldType, int> = 0>
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
+KOKKOS_FUNCTION void
+add_on_device(const specfem::point::simd_index &index,
+              const ViewType &point_field,
+              const specfem::compute::simulation_field<WavefieldType> &field) {
+
+  constexpr static auto MediumType = ViewType::medium_tag;
+  int iglob[ViewType::simd::size()];
+
+  for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
+    iglob[lane] =
+        (index.mask(std::size_t(lane)))
+            ? field.index_mapping(index.ispec + lane, index.iz, index.ix)
+            : field.nglob + 1;
+  }
+
+  add_on_device(iglob, point_field, field);
+}
+
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
 void add_on_host(
     const specfem::point::index &index, const ViewType &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
@@ -457,8 +1408,31 @@ void add_on_host(
   add_on_host(iglob, point_field, field);
 }
 
-template <specfem::wavefield::type WavefieldType, typename ViewType,
-          std::enable_if_t<ViewType::isPointFieldType, int> = 0>
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
+void add_on_host(
+    const specfem::point::simd_index &index, const ViewType &point_field,
+    const specfem::compute::simulation_field<WavefieldType> &field) {
+
+  constexpr static auto MediumType = ViewType::medium_tag;
+  int iglob[ViewType::simd::size()];
+
+  for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
+    iglob[lane] =
+        (index.mask(std::size_t(lane)))
+            ? field.h_index_mapping(index.ispec + lane, index.iz, index.ix)
+            : field.nglob + 1;
+  }
+
+  add_on_host(iglob, point_field, field);
+}
+
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
 KOKKOS_FUNCTION void atomic_add_on_device(
     const int iglob, const ViewType &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
@@ -502,8 +1476,74 @@ KOKKOS_FUNCTION void atomic_add_on_device(
   return;
 }
 
-template <specfem::wavefield::type WavefieldType, typename ViewType,
-          std::enable_if_t<ViewType::isPointFieldType, int> = 0>
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
+KOKKOS_FUNCTION void atomic_add_on_device(
+    const int *iglob, const ViewType &point_field,
+    const specfem::compute::simulation_field<WavefieldType> &field) {
+
+  constexpr static bool StoreDisplacement = ViewType::store_displacement;
+  constexpr static bool StoreVelocity = ViewType::store_velocity;
+  constexpr static bool StoreAcceleration = ViewType::store_acceleration;
+  constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
+  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static int components = ViewType::components;
+
+  auto curr_field = [&]() -> specfem::compute::impl::field_impl<
+                              specfem::dimension::type::dim2, MediumType> {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+      return field.elastic;
+    } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
+      return field.acoustic;
+    } else {
+      static_assert("medium type not supported");
+    }
+  }();
+
+  for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
+    const int iglob_l = iglob[lane];
+    if (iglob_l >= field.nglob) {
+      continue;
+    }
+
+    if constexpr (StoreDisplacement) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        Kokkos::atomic_add(&curr_field.field(iglob_l, icomp),
+                           point_field.displacement(icomp)[lane]);
+      }
+    }
+
+    if constexpr (StoreVelocity) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        Kokkos::atomic_add(&curr_field.field_dot(iglob_l, icomp),
+                           point_field.velocity(icomp)[lane]);
+      }
+    }
+
+    if constexpr (StoreAcceleration) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        Kokkos::atomic_add(&curr_field.field_dot_dot(iglob_l, icomp),
+                           point_field.acceleration(icomp)[lane]);
+      }
+    }
+
+    if constexpr (StoreMassMatrix) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        Kokkos::atomic_add(&curr_field.mass_inverse(iglob_l, icomp),
+                           point_field.mass_matrix(icomp)[lane]);
+      }
+    }
+  }
+
+  return;
+}
+
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
 void atomic_add_on_host(
     const int iglob, const ViewType &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
@@ -547,8 +1587,74 @@ void atomic_add_on_host(
   return;
 }
 
-template <specfem::wavefield::type WavefieldType, typename ViewType,
-          std::enable_if_t<ViewType::isPointFieldType, int> = 0>
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
+void atomic_add_on_host(
+    const int *iglob, const ViewType &point_field,
+    const specfem::compute::simulation_field<WavefieldType> &field) {
+
+  constexpr static bool StoreDisplacement = ViewType::store_displacement;
+  constexpr static bool StoreVelocity = ViewType::store_velocity;
+  constexpr static bool StoreAcceleration = ViewType::store_acceleration;
+  constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
+  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static int components = ViewType::components;
+
+  auto curr_field = [&]() -> specfem::compute::impl::field_impl<
+                              specfem::dimension::type::dim2, MediumType> {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+      return field.elastic;
+    } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
+      return field.acoustic;
+    } else {
+      static_assert("medium type not supported");
+    }
+  }();
+
+  for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
+    const int iglob_l = iglob[lane];
+    if (iglob_l >= field.nglob) {
+      continue;
+    }
+
+    if constexpr (StoreDisplacement) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        Kokkos::atomic_add(&curr_field.h_field(iglob_l, icomp),
+                           point_field.displacement(icomp)[lane]);
+      }
+    }
+
+    if constexpr (StoreVelocity) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        Kokkos::atomic_add(&curr_field.h_field_dot(iglob_l, icomp),
+                           point_field.velocity(icomp)[lane]);
+      }
+    }
+
+    if constexpr (StoreAcceleration) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        Kokkos::atomic_add(&curr_field.h_field_dot_dot(iglob_l, icomp),
+                           point_field.acceleration(icomp)[lane]);
+      }
+    }
+
+    if constexpr (StoreMassMatrix) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        Kokkos::atomic_add(&curr_field.h_mass_inverse(iglob_l, icomp),
+                           point_field.mass_matrix(icomp)[lane]);
+      }
+    }
+  }
+
+  return;
+}
+
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
 KOKKOS_FUNCTION void atomic_add_on_device(
     const specfem::point::index &index, const ViewType &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
@@ -562,8 +1668,31 @@ KOKKOS_FUNCTION void atomic_add_on_device(
   atomic_add_on_device(iglob, point_field, field);
 }
 
-template <specfem::wavefield::type WavefieldType, typename ViewType,
-          std::enable_if_t<ViewType::isPointFieldType, int> = 0>
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
+KOKKOS_FUNCTION void atomic_add_on_device(
+    const specfem::point::simd_index &index, const ViewType &point_field,
+    const specfem::compute::simulation_field<WavefieldType> &field) {
+
+  constexpr static auto MediumType = ViewType::medium_tag;
+  int iglob[ViewType::simd::size()];
+
+  for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
+    iglob[lane] =
+        (index.mask(std::size_t(lane)))
+            ? field.index_mapping(index.ispec + lane, index.iz, index.ix)
+            : field.nglob + 1;
+  }
+
+  atomic_add_on_device(iglob, point_field, field);
+}
+
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
 void atomic_add_on_host(
     const specfem::point::index &index, const ViewType &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
@@ -577,9 +1706,32 @@ void atomic_add_on_host(
   atomic_add_on_host(iglob, point_field, field);
 }
 
-template <typename MemberType, specfem::wavefield::type WavefieldType,
-          typename ViewType,
-          std::enable_if_t<ViewType::isElementFieldType, int> = 0>
+template <
+    specfem::wavefield::type WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
+void atomic_add_on_host(
+    const specfem::point::simd_index &index, const ViewType &point_field,
+    const specfem::compute::simulation_field<WavefieldType> &field) {
+
+  constexpr static auto MediumType = ViewType::medium_tag;
+  int iglob[ViewType::simd::size()];
+
+  for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
+    iglob[lane] =
+        (index.mask(std::size_t(lane)))
+            ? field.h_index_mapping(index.ispec + lane, index.iz, index.ix)
+            : field.nglob + 1;
+  }
+
+  atomic_add_on_host(iglob, point_field, field);
+}
+
+template <
+    typename MemberType, specfem::wavefield::type WavefieldType,
+    typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isElementFieldType && !ViewType::simd::using_simd, int> = 0>
 KOKKOS_FUNCTION void
 load_on_device(const MemberType &team, const int ispec,
                const specfem::compute::simulation_field<WavefieldType> &field,
@@ -640,9 +1792,89 @@ load_on_device(const MemberType &team, const int ispec,
   return;
 }
 
-template <typename MemberType, specfem::wavefield::type WavefieldType,
-          typename ViewType,
-          std::enable_if_t<ViewType::isElementFieldType, int> = 0>
+// template <
+//     typename MemberType, specfem::wavefield::type WavefieldType,
+//     typename ViewType,
+//     typename std::enable_if_t<ViewType::isElementFieldType &&
+//     ViewType::simd::using_simd,
+//                      int> = 0>
+// KOKKOS_FUNCTION void
+// load_on_device(const MemberType &team, const int ispec,
+//                const specfem::compute::simulation_field<WavefieldType>
+//                &field, ViewType &element_field) {
+
+//   constexpr static bool StoreDisplacement = ViewType::store_displacement;
+//   constexpr static bool StoreVelocity = ViewType::store_velocity;
+//   constexpr static bool StoreAcceleration = ViewType::store_acceleration;
+//   constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
+//   constexpr static auto MediumType = ViewType::medium_tag;
+//   constexpr static int components = ViewType::components;
+
+//   constexpr static int NGLL = ViewType::ngll;
+
+//   static_assert(std::is_same_v<typename MemberType::execution_space,
+//                                Kokkos::DefaultExecutionSpace>,
+//                 "Calling team must have a device execution space");
+
+//   const auto curr_field = [&]()
+//       -> specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
+//                                             MediumType> {
+//     if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+//       return field.elastic;
+//     } else if constexpr (MediumType ==
+//     specfem::element::medium_tag::acoustic) {
+//       return field.acoustic;
+//     } else {
+//       static_assert("medium type not supported");
+//     }
+//   }();
+
+//   Kokkos::parallel_for(
+//       Kokkos::TeamThreadRange(team, NGLL * NGLL), [&](const int &xz) {
+//         for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
+//           if (ispec + lane >= field.nspec) {
+//             continue;
+//           }
+
+//           int iz, ix;
+//           sub2ind(xz, NGLL, iz, ix);
+//           const int iglob = field.assembly_index_mapping(
+//               field.index_mapping(ispec + lane, iz, ix),
+//               static_cast<int>(MediumType));
+
+//           if (iglob >= field.nglob) {
+//             continue;
+//           }
+
+//           for (int icomp = 0; icomp < components; ++icomp) {
+//             if constexpr (StoreDisplacement) {
+//               element_field.displacement(iz, ix, icomp)[lane] =
+//                   curr_field.field(iglob, icomp);
+//             }
+//             if constexpr (StoreVelocity) {
+//               element_field.velocity(iz, ix, icomp)[lane] =
+//                   curr_field.field_dot(iglob, icomp);
+//             }
+//             if constexpr (StoreAcceleration) {
+//               element_field.acceleration(iz, ix, icomp)[lane] =
+//                   curr_field.field_dot_dot(iglob, icomp);
+//             }
+//             if constexpr (StoreMassMatrix) {
+//               element_field.mass_matrix(iz, ix, icomp)[lane] =
+//                   curr_field.mass_inverse(iglob, icomp);
+//             }
+//           }
+//         }
+//       });
+
+//   return;
+// }
+
+template <
+    typename MemberType, specfem::wavefield::type WavefieldType,
+    typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isElementFieldType && !ViewType::simd::using_simd, int> = 0>
 void load_on_host(
     const MemberType &team, const int ispec,
     const specfem::compute::simulation_field<WavefieldType> &field,
@@ -703,16 +1935,93 @@ void load_on_host(
   return;
 }
 
-template <typename MemberType, specfem::wavefield::type WavefieldType,
-          typename ViewType,
-          std::enable_if_t<ViewType::isChunkFieldType, int> = 0>
-KOKKOS_FUNCTION void load_on_device(
-    const MemberType &team,
-    const Kokkos::View<int *, Kokkos::LayoutLeft,
-                       typename MemberType::execution_space::memory_space>
-        &indices,
-    const specfem::compute::simulation_field<WavefieldType> &field,
-    ViewType &chunk_field) {
+// template <
+//     typename MemberType, specfem::wavefield::type WavefieldType,
+//     typename ViewType,
+//     typename std::enable_if_t<ViewType::isElementFieldType &&
+//     ViewType::simd::using_simd,
+//                      int> = 0>
+// void load_on_host(
+//     const MemberType &team, const int ispec,
+//     const specfem::compute::simulation_field<WavefieldType> &field,
+//     ViewType &element_field) {
+
+//   constexpr static bool StoreDisplacement = ViewType::store_displacement;
+//   constexpr static bool StoreVelocity = ViewType::store_velocity;
+//   constexpr static bool StoreAcceleration = ViewType::store_acceleration;
+//   constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
+//   constexpr static auto MediumType = ViewType::medium_tag;
+//   constexpr static int components = ViewType::components;
+
+//   constexpr static int NGLL = ViewType::ngll;
+
+//   static_assert(
+//       std::is_same_v<typename MemberType::execution_space,
+//       Kokkos::HostSpace>, "Calling team must have a host execution space");
+
+//   const auto curr_field = [&]()
+//       -> specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
+//                                             MediumType> {
+//     if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+//       return field.elastic;
+//     } else if constexpr (MediumType ==
+//     specfem::element::medium_tag::acoustic) {
+//       return field.acoustic;
+//     } else {
+//       static_assert("medium type not supported");
+//     }
+//   }();
+
+//   Kokkos::parallel_for(
+//       Kokkos::TeamThreadRange(team, NGLL * NGLL), [&](const int &xz) {
+//         for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
+//           if (ispec + lane >= field.nspec) {
+//             continue;
+//           }
+
+//           int iz, ix;
+//           sub2ind(xz, NGLL, iz, ix);
+//           const int iglob = field.h_assembly_index_mapping(
+//               field.h_index_mapping(ispec + lane, iz, ix),
+//               static_cast<int>(MediumType));
+
+//           if (iglob >= field.nglob) {
+//             continue;
+//           }
+
+//           for (int icomp = 0; icomp < components; ++icomp) {
+//             if constexpr (StoreDisplacement) {
+//               element_field.displacement(iz, ix, icomp)[lane] =
+//                   curr_field.h_field(iglob, icomp);
+//             }
+//             if constexpr (StoreVelocity) {
+//               element_field.velocity(iz, ix, icomp)[lane] =
+//                   curr_field.h_field_dot(iglob, icomp);
+//             }
+//             if constexpr (StoreAcceleration) {
+//               element_field.acceleration(iz, ix, icomp)[lane] =
+//                   curr_field.h_field_dot_dot(iglob, icomp);
+//             }
+//             if constexpr (StoreMassMatrix) {
+//               element_field.mass_matrix(iz, ix, icomp)[lane] =
+//                   curr_field.h_mass_inverse(iglob, icomp);
+//             }
+//           }
+//         }
+//       });
+
+//   return;
+// }
+
+template <
+    typename MemberType, specfem::wavefield::type WavefieldType,
+    typename IteratorType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isChunkFieldType && !ViewType::simd::using_simd, int> = 0>
+KOKKOS_FUNCTION void
+load_on_device(const MemberType &team, const IteratorType &iterator,
+               const specfem::compute::simulation_field<WavefieldType> &field,
+               ViewType &chunk_field) {
 
   constexpr static bool StoreDisplacement = ViewType::store_displacement;
   constexpr static bool StoreVelocity = ViewType::store_velocity;
@@ -722,12 +2031,20 @@ KOKKOS_FUNCTION void load_on_device(
   constexpr static int components = ViewType::components;
 
   constexpr static int NGLL = ViewType::ngll;
+  constexpr static bool using_simd = ViewType::simd::using_simd;
 
-  const int number_element = indices.extent(0);
+  static_assert(
+      std::is_same_v<typename IteratorType::simd, typename ViewType::simd>,
+      "Iterator and View must have the same simd type");
 
   static_assert(std::is_same_v<typename MemberType::execution_space,
                                Kokkos::DefaultExecutionSpace>,
                 "Calling team must have a device execution space");
+
+  static_assert(
+      Kokkos::SpaceAccessibility<typename MemberType::execution_space,
+                                 typename ViewType::memory_space>::accessible,
+      "Calling team must have access to the memory space of the view");
 
   const auto curr_field = [&]()
       -> specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
@@ -742,16 +2059,15 @@ KOKKOS_FUNCTION void load_on_device(
   }();
 
   Kokkos::parallel_for(
-      Kokkos::TeamThreadRange(team, number_element * NGLL * NGLL),
-      [&](const int &ixz) {
-        const int ielement = ixz % number_element;
-        const int xz = ixz / number_element;
-        int iz, ix;
-        sub2ind(xz, NGLL, iz, ix);
+      Kokkos::TeamThreadRange(team, iterator.chunk_size()), [&](const int &i) {
+        const auto iterator_index = iterator(i);
+        const int ielement = iterator_index.ielement;
+        const int ispec = iterator_index.index.ispec;
+        const int iz = iterator_index.index.iz;
+        const int ix = iterator_index.index.ix;
 
         const int iglob = field.assembly_index_mapping(
-            field.index_mapping(indices(ielement), iz, ix),
-            static_cast<int>(MediumType));
+            field.index_mapping(ispec, iz, ix), static_cast<int>(MediumType));
 
         for (int icomp = 0; icomp < components; ++icomp) {
           if constexpr (StoreDisplacement) {
@@ -776,16 +2092,15 @@ KOKKOS_FUNCTION void load_on_device(
   return;
 }
 
-template <typename MemberType, specfem::wavefield::type WavefieldType,
-          typename ViewType,
-          std::enable_if_t<ViewType::isChunkFieldType, int> = 0>
-void load_on_host(
-    const MemberType &team,
-    const Kokkos::View<int *, Kokkos::LayoutLeft,
-                       typename MemberType::execution_space::memory_space>
-        &indices,
-    const specfem::compute::simulation_field<WavefieldType> &field,
-    ViewType &chunk_field) {
+template <
+    typename MemberType, specfem::wavefield::type WavefieldType,
+    typename IteratorType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isChunkFieldType && ViewType::simd::using_simd, int> = 0>
+KOKKOS_FUNCTION void
+load_on_device(const MemberType &team, const IteratorType &iterator,
+               const specfem::compute::simulation_field<WavefieldType> &field,
+               ViewType &chunk_field) {
 
   constexpr static bool StoreDisplacement = ViewType::store_displacement;
   constexpr static bool StoreVelocity = ViewType::store_velocity;
@@ -796,11 +2111,18 @@ void load_on_host(
 
   constexpr static int NGLL = ViewType::ngll;
 
-  const int number_element = indices.extent(0);
+  static_assert(
+      std::is_same_v<typename IteratorType::simd, typename ViewType::simd>,
+      "Iterator and View must have the same simd type");
 
   static_assert(
-      std::is_same_v<typename MemberType::execution_space, Kokkos::HostSpace>,
-      "Calling team must have a host execution space");
+      Kokkos::SpaceAccessibility<typename MemberType::execution_space,
+                                 typename ViewType::memory_space>::accessible,
+      "Calling team must have access to the memory space of the view");
+
+  static_assert(std::is_same_v<typename MemberType::execution_space,
+                               Kokkos::DefaultExecutionSpace>,
+                "Calling team must have a device execution space");
 
   const auto curr_field = [&]()
       -> specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
@@ -815,16 +2137,100 @@ void load_on_host(
   }();
 
   Kokkos::parallel_for(
-      Kokkos::TeamThreadRange(team, number_element * NGLL * NGLL),
-      [&](const int &ixz) {
-        const int ielement = ixz % number_element;
-        const int xz = ixz / number_element;
-        int iz, ix;
-        sub2ind(xz, NGLL, iz, ix);
+      Kokkos::TeamThreadRange(team, iterator.chunk_size()), [&](const int &i) {
+        const auto iterator_index = iterator(i);
+        const int ielement = iterator_index.ielement;
+        const int ispec = iterator_index.index.ispec;
+        const int iz = iterator_index.index.iz;
+        const int ix = iterator_index.index.ix;
+
+        for (int lane = 0; lane < IteratorType::simd::size(); ++lane) {
+          if (!iterator_index.index.mask(lane)) {
+            continue;
+          }
+
+          const int iglob = field.assembly_index_mapping(
+              field.index_mapping(ispec + lane, iz, ix),
+              static_cast<int>(MediumType));
+
+          for (int icomp = 0; icomp < components; ++icomp) {
+            if constexpr (StoreDisplacement) {
+              chunk_field.displacement(ielement, iz, ix, icomp)[lane] =
+                  curr_field.field(iglob, icomp);
+            }
+            if constexpr (StoreVelocity) {
+              chunk_field.velocity(ielement, iz, ix, icomp)[lane] =
+                  curr_field.field_dot(iglob, icomp);
+            }
+            if constexpr (StoreAcceleration) {
+              chunk_field.acceleration(ielement, iz, ix, icomp)[lane] =
+                  curr_field.field_dot_dot(iglob, icomp);
+            }
+            if constexpr (StoreMassMatrix) {
+              chunk_field.mass_matrix(ielement, iz, ix, icomp)[lane] =
+                  curr_field.mass_inverse(iglob, icomp);
+            }
+          }
+        }
+      });
+
+  return;
+}
+
+template <
+    typename MemberType, specfem::wavefield::type WavefieldType,
+    typename IteratorType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isChunkFieldType && !ViewType::simd::using_simd, int> = 0>
+void load_on_host(
+    const MemberType &team, const IteratorType &iterator,
+    const specfem::compute::simulation_field<WavefieldType> &field,
+    ViewType &chunk_field) {
+
+  constexpr static bool StoreDisplacement = ViewType::store_displacement;
+  constexpr static bool StoreVelocity = ViewType::store_velocity;
+  constexpr static bool StoreAcceleration = ViewType::store_acceleration;
+  constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
+  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static int components = ViewType::components;
+
+  constexpr static int NGLL = ViewType::ngll;
+
+  static_assert(
+      std::is_same_v<typename MemberType::execution_space, Kokkos::HostSpace>,
+      "Calling team must have a host execution space");
+
+  static_assert(
+      std::is_same_v<typename IteratorType::simd, typename ViewType::simd>,
+      "Iterator and View must have the same simd type");
+
+  static_assert(
+      Kokkos::SpaceAccessibility<typename MemberType::execution_space,
+                                 typename ViewType::memory_space>::accessible,
+      "Calling team must have access to the memory space of the view");
+
+  const auto curr_field = [&]()
+      -> specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
+                                            MediumType> {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+      return field.elastic;
+    } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
+      return field.acoustic;
+    } else {
+      static_assert("medium type not supported");
+    }
+  }();
+
+  Kokkos::parallel_for(
+      Kokkos::TeamThreadRange(team, iterator.chunk_size()), [&](const int &i) {
+        const auto iterator_index = iterator(i);
+        const int ielement = iterator_index.ielement;
+        const int ispec = iterator_index.index.ispec;
+        const int iz = iterator_index.index.iz;
+        const int ix = iterator_index.index.ix;
 
         const int iglob = field.h_assembly_index_mapping(
-            field.h_index_mapping(indices(ielement), iz, ix),
-            static_cast<int>(MediumType));
+            field.h_index_mapping(ispec, iz, ix), static_cast<int>(MediumType));
 
         for (int icomp = 0; icomp < components; ++icomp) {
           if constexpr (StoreDisplacement) {
@@ -841,6 +2247,91 @@ void load_on_host(
           if constexpr (StoreMassMatrix) {
             chunk_field.mass_matrix(ielement, iz, ix, icomp) =
                 curr_field.h_mass_inverse(iglob, icomp);
+          }
+        }
+      });
+
+  return;
+}
+
+template <
+    typename MemberType, specfem::wavefield::type WavefieldType,
+    typename IteratorType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isChunkFieldType && ViewType::simd::using_simd, int> = 0>
+void load_on_host(
+    const MemberType &team, const IteratorType &iterator,
+    const specfem::compute::simulation_field<WavefieldType> &field,
+    ViewType &chunk_field) {
+
+  constexpr static bool StoreDisplacement = ViewType::store_displacement;
+  constexpr static bool StoreVelocity = ViewType::store_velocity;
+  constexpr static bool StoreAcceleration = ViewType::store_acceleration;
+  constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
+  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static int components = ViewType::components;
+
+  constexpr static int NGLL = ViewType::ngll;
+
+  static_assert(
+      std::is_same_v<typename MemberType::execution_space, Kokkos::HostSpace>,
+      "Calling team must have a host execution space");
+
+  static_assert(
+      std::is_same_v<typename IteratorType::simd, typename ViewType::simd>,
+      "Iterator and View must have the same simd type");
+
+  static_assert(
+      Kokkos::SpaceAccessibility<typename MemberType::execution_space,
+                                 typename ViewType::memory_space>::accessible,
+      "Calling team must have access to the memory space of the view");
+
+  const auto curr_field = [&]()
+      -> specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
+                                            MediumType> {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+      return field.elastic;
+    } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
+      return field.acoustic;
+    } else {
+      static_assert("medium type not supported");
+    }
+  }();
+
+  Kokkos::parallel_for(
+      Kokkos::TeamThreadRange(team, iterator.chunk_size()), [&](const int &i) {
+        const auto iterator_index = iterator(i);
+        const int ielement = iterator_index.ielement;
+        const int ispec = iterator_index.index.ispec;
+        const int iz = iterator_index.index.iz;
+        const int ix = iterator_index.index.ix;
+
+        for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
+          if (!iterator_index.index.mask(lane)) {
+            continue;
+          }
+
+          const int iglob = field.h_assembly_index_mapping(
+              field.h_index_mapping(ispec + lane, iz, ix),
+              static_cast<int>(MediumType));
+
+          for (int icomp = 0; icomp < components; ++icomp) {
+            if constexpr (StoreDisplacement) {
+              chunk_field.displacement(ielement, iz, ix, icomp)[lane] =
+                  curr_field.h_field(iglob, icomp);
+            }
+            if constexpr (StoreVelocity) {
+              chunk_field.velocity(ielement, iz, ix, icomp)[lane] =
+                  curr_field.h_field_dot(iglob, icomp);
+            }
+            if constexpr (StoreAcceleration) {
+              chunk_field.acceleration(ielement, iz, ix, icomp)[lane] =
+                  curr_field.h_field_dot_dot(iglob, icomp);
+            }
+            if constexpr (StoreMassMatrix) {
+              chunk_field.mass_matrix(ielement, iz, ix, icomp)[lane] =
+                  curr_field.h_mass_inverse(iglob, icomp);
+            }
           }
         }
       });
