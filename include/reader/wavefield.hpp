@@ -2,7 +2,7 @@
 #define SPECFEM_READER_WAVEFIELD_HPP
 
 #include "compute/interface.hpp"
-#include "enumerations/interface.hpp"
+// #include "enumerations/interface.hpp"
 #include "reader/reader.hpp"
 
 namespace specfem {

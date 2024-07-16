@@ -6,14 +6,19 @@ namespace specfem {
 namespace datatype {
 
 template <typename T, int NumberOfElements, int NumberOfGLLPoints,
-          int Components, typename MemorySpace, typename MemoryTraits>
+          int Components, typename MemorySpace, typename MemoryTraits,
+          bool UseSIMD = false>
 struct ScalarChunkViewType
-    : public Kokkos::View<
-          T[NumberOfElements][NumberOfGLLPoints][NumberOfGLLPoints][Components],
-          Kokkos::LayoutLeft, MemorySpace, MemoryTraits> {
-  using type = Kokkos::View<
-      T[NumberOfElements][NumberOfGLLPoints][NumberOfGLLPoints][Components],
-      Kokkos::LayoutLeft, MemorySpace, MemoryTraits>;
+    : public Kokkos::View<typename specfem::datatype::simd<T, UseSIMD>::datatype
+                              [NumberOfElements][NumberOfGLLPoints]
+                              [NumberOfGLLPoints][Components],
+                          Kokkos::LayoutLeft, MemorySpace, MemoryTraits> {
+  using simd = specfem::datatype::simd<T, UseSIMD>;
+  using type =
+      Kokkos::View<typename simd::datatype[NumberOfElements][NumberOfGLLPoints]
+                                          [NumberOfGLLPoints][Components],
+                   Kokkos::LayoutLeft, MemorySpace, MemoryTraits>;
+  using value_type = typename type::value_type;
   constexpr static int nelements = NumberOfElements;
   constexpr static int ngll = NumberOfGLLPoints;
   constexpr static int components = Components;
@@ -30,23 +35,28 @@ struct ScalarChunkViewType
   template <typename ScratchMemorySpace>
   KOKKOS_FUNCTION ScalarChunkViewType(
       const ScratchMemorySpace &scratch_memory_space)
-      : Kokkos::View<T[NumberOfElements][NumberOfGLLPoints][NumberOfGLLPoints]
-                      [Components],
+      : Kokkos::View<value_type[NumberOfElements][NumberOfGLLPoints]
+                               [NumberOfGLLPoints][Components],
                      Kokkos::LayoutLeft, MemorySpace, MemoryTraits>(
             scratch_memory_space) {}
 };
 
 template <typename T, int NumberOfElements, int NumberOfGLLPoints,
           int Components, int NumberOfDimensions, typename MemorySpace,
-          typename MemoryTraits>
+          typename MemoryTraits, bool UseSIMD = false>
 struct VectorChunkViewType
-    : public Kokkos::View<T[NumberOfElements][NumberOfGLLPoints]
-                           [NumberOfGLLPoints][NumberOfDimensions][Components],
-                          Kokkos::LayoutLeft, MemorySpace, MemoryTraits> {
-  using type =
-      Kokkos::View<T[NumberOfElements][NumberOfGLLPoints][NumberOfGLLPoints]
-                    [NumberOfDimensions][Components],
-                   Kokkos::LayoutLeft, MemorySpace, MemoryTraits>;
+    : public Kokkos::View<
+          typename specfem::datatype::simd<T, UseSIMD>::datatype
+              [NumberOfElements][NumberOfGLLPoints][NumberOfGLLPoints]
+              [NumberOfDimensions][Components],
+          Kokkos::LayoutLeft, MemorySpace, MemoryTraits> {
+  using simd = specfem::datatype::simd<T, UseSIMD>;
+  using type = typename Kokkos::View<
+      typename simd::datatype[NumberOfElements][NumberOfGLLPoints]
+                             [NumberOfGLLPoints][NumberOfDimensions]
+                             [Components],
+      Kokkos::LayoutLeft, MemorySpace, MemoryTraits>;
+  using value_type = typename type::value_type;
   constexpr static int nelements = NumberOfElements;
   constexpr static int ngll = NumberOfGLLPoints;
   constexpr static int components = Components;
@@ -64,9 +74,10 @@ struct VectorChunkViewType
   template <typename ScratchMemorySpace>
   KOKKOS_FUNCTION VectorChunkViewType(
       const ScratchMemorySpace &scratch_memory_space)
-      : Kokkos::View<T[NumberOfElements][NumberOfGLLPoints][NumberOfGLLPoints]
+      : Kokkos::View<
+            value_type[NumberOfElements][NumberOfGLLPoints][NumberOfGLLPoints]
                       [NumberOfDimensions][Components],
-                     Kokkos::LayoutLeft, MemorySpace, MemoryTraits>(
+            Kokkos::LayoutLeft, MemorySpace, MemoryTraits>(
             scratch_memory_space) {}
 };
 

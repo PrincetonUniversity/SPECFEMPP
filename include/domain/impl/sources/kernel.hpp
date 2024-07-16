@@ -25,6 +25,7 @@ public:
       specfem::medium::medium<DimensionType, MediumTag, PropertyTag>;
 
   using quadrature_point_type = qp_type;
+  constexpr static bool using_simd = false;
 
   source_kernel() = default;
   source_kernel(
@@ -46,7 +47,7 @@ private:
       sources;
   quadrature_point_type quadrature_points;
   specfem::domain::impl::sources::source<DimensionType, MediumTag, PropertyTag,
-                                         quadrature_point_type>
+                                         quadrature_point_type, using_simd>
       source;
 };
 } // namespace kernels

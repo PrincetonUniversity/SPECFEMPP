@@ -1,5 +1,6 @@
 #pragma once
 
+#include "simd.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -14,9 +15,9 @@ namespace impl {
  * @tparam T array type
  * @tparam N size of array
  */
-template <typename T, int N> struct array1d {
-  using value_type = T;
-  T data[N]; ///< Data array
+template <typename T, int N, bool UseSIMD = false> struct array1d {
+  using value_type = typename specfem::datatype::simd<T, UseSIMD>::datatype;
+  value_type data[N]; ///< Data array
 
   template <typename... Args,
             typename std::enable_if<sizeof...(Args) == N, bool>::type = true>
@@ -24,7 +25,8 @@ template <typename T, int N> struct array1d {
 
   template <typename MemorySpace, typename Layout, typename MemoryTraits>
   KOKKOS_INLINE_FUNCTION
-  array1d(const Kokkos::View<T *, Layout, MemorySpace, MemoryTraits> view) {
+  array1d(const Kokkos::View<value_type *, Layout, MemorySpace, MemoryTraits>
+              view) {
 #ifndef NDEBUG
     assert(view.extent(0) == N);
 #endif
@@ -35,7 +37,8 @@ template <typename T, int N> struct array1d {
 
   template <typename MemorySpace, typename Layout, typename MemoryTraits>
   KOKKOS_INLINE_FUNCTION void
-  operator=(const Kokkos::View<T *, Layout, MemorySpace, MemoryTraits> view) {
+  operator=(const Kokkos::View<value_type *, Layout, MemorySpace, MemoryTraits>
+                view) {
 #ifndef NDEBUG
     assert(view.extent(0) == N);
 #endif
@@ -44,13 +47,13 @@ template <typename T, int N> struct array1d {
     }
   }
 
-  KOKKOS_INLINE_FUNCTION array1d(const T value) {
+  KOKKOS_INLINE_FUNCTION array1d(const value_type value) {
     for (int i = 0; i < N; ++i) {
       data[i] = value;
     }
   }
 
-  KOKKOS_INLINE_FUNCTION array1d(const T *values) {
+  KOKKOS_INLINE_FUNCTION array1d(const value_type *values) {
     for (int i = 0; i < N; ++i) {
       data[i] = values[i];
     }
@@ -62,7 +65,9 @@ template <typename T, int N> struct array1d {
    * @param i index
    * @return T& reference to the data array
    */
-  KOKKOS_INLINE_FUNCTION T &operator[](const int &i) { return data[i]; }
+  KOKKOS_INLINE_FUNCTION value_type &operator[](const int &i) {
+    return data[i];
+  }
 
   /**
    * @brief operator [] to access the data array
@@ -70,7 +75,7 @@ template <typename T, int N> struct array1d {
    * @param i index
    * @return const T& reference to the data array
    */
-  KOKKOS_INLINE_FUNCTION const T &operator[](const int &i) const {
+  KOKKOS_INLINE_FUNCTION const value_type &operator[](const int &i) const {
     return data[i];
   }
 
@@ -80,7 +85,8 @@ template <typename T, int N> struct array1d {
    * @param rhs right hand side array
    * @return array1d<T>& reference to the array
    */
-  KOKKOS_INLINE_FUNCTION array1d<T, N> &operator+=(const array1d<T, N> &rhs) {
+  KOKKOS_INLINE_FUNCTION array1d<value_type, N> &
+  operator+=(const array1d<value_type, N> &rhs) {
 #ifdef KOKKOS_ENABLE_CUDA
 #pragma unroll
 #endif
@@ -116,7 +122,7 @@ template <typename T, int N> struct array1d {
    *
    * @param other other array
    */
-  KOKKOS_INLINE_FUNCTION array1d(const array1d<T, N> &other) {
+  KOKKOS_INLINE_FUNCTION array1d(const array1d<value_type, N> &other) {
 #ifdef KOKKOS_ENABLE_CUDA
 #pragma unroll
 #endif
@@ -125,21 +131,21 @@ template <typename T, int N> struct array1d {
     }
   }
 
-  KOKKOS_INLINE_FUNCTION type_real l2_norm() const {
-    type_real norm = 0.0;
+  KOKKOS_INLINE_FUNCTION value_type l2_norm() const {
+    value_type norm = 0.0;
 #ifdef KOKKOS_ENABLE_CUDA
 #pragma unroll
 #endif
     for (int i = 0; i < N; ++i) {
       norm += data[i] * data[i];
     }
-    return sqrt(norm);
+    return Kokkos::sqrt(norm);
   }
 };
 } // namespace impl
 
-template <typename T, int N>
-struct ScalarPointViewType : public impl::array1d<T, N> {
+template <typename T, int N, bool UseSIMD>
+struct ScalarPointViewType : public impl::array1d<T, N, UseSIMD> {
   constexpr static int components = N;
   constexpr static bool isPointViewType = true;
   constexpr static bool isElementViewType = false;
@@ -147,40 +153,44 @@ struct ScalarPointViewType : public impl::array1d<T, N> {
   constexpr static bool isDomainViewType = false;
   constexpr static bool isScalarViewType = true;
   constexpr static bool isVectorViewType = false;
-  using type = impl::array1d<T, N>;
+  using type = impl::array1d<T, N, UseSIMD>;
+  using simd = specfem::datatype::simd<T, UseSIMD>;
+  using value_type = typename type::value_type;
 
   KOKKOS_INLINE_FUNCTION
   ScalarPointViewType() = default;
 
   KOKKOS_INLINE_FUNCTION
-  ScalarPointViewType(const T value) : impl::array1d<T, N>(value) {}
+  ScalarPointViewType(const value_type value)
+      : impl::array1d<T, N, UseSIMD>(value) {}
 
   KOKKOS_INLINE_FUNCTION
-  ScalarPointViewType(const T *values) : impl::array1d<T, N>(values) {}
+  ScalarPointViewType(const value_type *values)
+      : impl::array1d<T, N, UseSIMD>(values) {}
 
   template <typename MemorySpace, typename Layout, typename MemoryTraits>
   KOKKOS_INLINE_FUNCTION ScalarPointViewType(
-      const Kokkos::View<T *, Layout, MemorySpace, MemoryTraits> view)
-      : impl::array1d<T, N>(view) {}
+      const Kokkos::View<value_type *, Layout, MemorySpace, MemoryTraits> view)
+      : impl::array1d<T, N, UseSIMD>(view) {}
 
   template <typename... Args, typename Enable = typename std::enable_if<
                                   sizeof...(Args) == N>::type>
   KOKKOS_INLINE_FUNCTION ScalarPointViewType(const Args &...args)
-      : impl::array1d<T, N>(args...) {}
+      : impl::array1d<T, N, UseSIMD>(args...) {}
 
   KOKKOS_INLINE_FUNCTION
-  T &operator()(const int i) { return this->data[i]; }
+  value_type &operator()(const int i) { return this->data[i]; }
 
   KOKKOS_INLINE_FUNCTION
-  const T &operator()(const int i) const { return this->data[i]; }
+  const value_type &operator()(const int i) const { return this->data[i]; }
 
   KOKKOS_INLINE_FUNCTION
-  T &operator[](const int i) = delete;
+  value_type &operator[](const int i) = delete;
 };
 
-template <typename T, int NumberOfDimensions, int Components>
+template <typename T, int NumberOfDimensions, int Components, bool UseSIMD>
 struct VectorPointViewType
-    : public impl::array1d<T, NumberOfDimensions * Components> {
+    : public impl::array1d<T, NumberOfDimensions * Components, UseSIMD> {
   constexpr static int components = Components;
   constexpr static int dimensions = NumberOfDimensions;
   constexpr static bool isPointViewType = true;
@@ -190,22 +200,25 @@ struct VectorPointViewType
   constexpr static bool isScalarViewType = false;
   constexpr static bool isVectorViewType = true;
 
-  using type = impl::array1d<T, NumberOfDimensions * Components>;
+  using type = impl::array1d<T, NumberOfDimensions * Components, UseSIMD>;
+  using simd = specfem::datatype::simd<T, UseSIMD>;
+  using value_type = typename type::value_type;
 
   KOKKOS_INLINE_FUNCTION
   VectorPointViewType() = default;
 
   KOKKOS_INLINE_FUNCTION
-  VectorPointViewType(const T value)
-      : impl::array1d<T, NumberOfDimensions * Components>(value) {}
+  VectorPointViewType(const value_type value)
+      : impl::array1d<T, NumberOfDimensions * Components, UseSIMD>(value) {}
 
   KOKKOS_INLINE_FUNCTION
-  VectorPointViewType(const T *values)
-      : impl::array1d<T, NumberOfDimensions * Components>(values) {}
+  VectorPointViewType(const value_type *values)
+      : impl::array1d<T, NumberOfDimensions * Components, UseSIMD>(values) {}
 
   template <typename MemorySpace, typename Layout, typename MemoryTraits>
   KOKKOS_INLINE_FUNCTION VectorPointViewType(
-      const Kokkos::View<T **, Layout, MemorySpace, MemoryTraits> view) {
+      const Kokkos::View<value_type **, Layout, MemorySpace, MemoryTraits>
+          view) {
 #ifndef NDEBUG
     assert(view.extent(0) == NumberOfDimensions);
     assert(view.extent(1) == Components);
@@ -228,7 +241,7 @@ struct VectorPointViewType
    * @return T&
    */
   KOKKOS_INLINE_FUNCTION
-  T &operator()(const int i, const int j) {
+  value_type &operator()(const int i, const int j) {
 #ifdef Kokkos_DEBUG_ENABLE_BOUNDS_CHECK
     assert(i < NumberOfDimensions);
     assert(j < Components);
@@ -244,7 +257,7 @@ struct VectorPointViewType
    * @return T&
    */
   KOKKOS_INLINE_FUNCTION
-  const T &operator()(const int i, const int j) const {
+  const value_type &operator()(const int i, const int j) const {
 #ifdef Kokkos_DEBUG_ENABLE_BOUNDS_CHECK
     assert(i < NumberOfDimensions);
     assert(j < Components);
@@ -253,10 +266,10 @@ struct VectorPointViewType
   }
 
   KOKKOS_INLINE_FUNCTION
-  T &operator[](const int i) = delete;
+  value_type &operator[](const int i) = delete;
 
   KOKKOS_INLINE_FUNCTION
-  type_real l2_norm() const = delete;
+  value_type l2_norm() const = delete;
 };
 
 } // namespace datatype

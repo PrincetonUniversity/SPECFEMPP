@@ -22,6 +22,7 @@ class edge_impl<specfem::dimension::type::dim2,
                 specfem::element::medium_tag::elastic> {
 
 public:
+  constexpr static bool using_simd = false;
   using self_medium_type =
       specfem::medium::medium<specfem::dimension::type::dim2,
                               specfem::element::medium_tag::acoustic>;
@@ -32,10 +33,11 @@ public:
   using CoupledPointFieldType =
       specfem::point::field<coupled_medium_type::dimension,
                             coupled_medium_type::medium_tag, true, false, false,
-                            false>;
-  using SelfPointFieldType = specfem::point::field<self_medium_type::dimension,
-                                                   self_medium_type::medium_tag,
-                                                   false, false, true, false>;
+                            false, using_simd>;
+  using SelfPointFieldType =
+      specfem::point::field<self_medium_type::dimension,
+                            self_medium_type::medium_tag, false, false, true,
+                            false, using_simd>;
 };
 
 template <>
@@ -43,6 +45,7 @@ class edge_impl<specfem::dimension::type::dim2,
                 specfem::element::medium_tag::elastic,
                 specfem::element::medium_tag::acoustic> {
 public:
+  constexpr static bool using_simd = false;
   using self_medium_type =
       specfem::medium::medium<specfem::dimension::type::dim2,
                               specfem::element::medium_tag::elastic>;
@@ -53,11 +56,12 @@ public:
   using CoupledPointFieldType =
       specfem::point::field<coupled_medium_type::dimension,
                             coupled_medium_type::medium_tag, false, false, true,
-                            false>;
+                            false, using_simd>;
 
-  using SelfPointFieldType = specfem::point::field<self_medium_type::dimension,
-                                                   self_medium_type::medium_tag,
-                                                   false, false, true, false>;
+  using SelfPointFieldType =
+      specfem::point::field<self_medium_type::dimension,
+                            self_medium_type::medium_tag, false, false, true,
+                            false, using_simd>;
 };
 
 /**
@@ -72,6 +76,8 @@ template <specfem::dimension::type DimensionType,
 class edge : public edge_impl<DimensionType, SelfMedium, CoupledMedium> {
 
 public:
+  constexpr static bool using_simd =
+      edge_impl<DimensionType, SelfMedium, CoupledMedium>::using_simd;
   using SelfPointFieldType =
       typename edge_impl<DimensionType, SelfMedium,
                          CoupledMedium>::SelfPointFieldType;
@@ -84,8 +90,10 @@ public:
 
   KOKKOS_FUNCTION
   SelfPointFieldType compute_coupling_terms(
-      const specfem::datatype::ScalarPointViewType<type_real, 2> &normal,
-      const specfem::datatype::ScalarPointViewType<type_real, 2> &weights,
+      const specfem::datatype::ScalarPointViewType<type_real, 2, using_simd>
+          &normal,
+      const specfem::datatype::ScalarPointViewType<type_real, 2, using_simd>
+          &weights,
       const specfem::edge::interface &coupled_edge_type,
       const CoupledPointFieldType &field) const;
 

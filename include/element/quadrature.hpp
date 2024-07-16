@@ -54,81 +54,68 @@ template <typename ViewType> struct WeightTimesHPrimeGLL<ViewType, false> {
   using view_type = ViewType;
 };
 
-template <int NGLL, specfem::dimension::type DimensionType,
-          typename MemorySpace, typename MemoryTraits, bool StoreHPrimeGLL,
+template <typename ViewType, bool StoreHPrimeGLL,
           bool StoreWeightTimesHPrimeGLL>
-struct QuadratureTraits
-    : public GLLQuadrature<
-          Kokkos::View<type_real[NGLL][NGLL], Kokkos::LayoutRight, MemorySpace,
-                       MemoryTraits>,
-          StoreHPrimeGLL>,
-      public WeightTimesHPrimeGLL<
-          Kokkos::View<type_real[NGLL][NGLL], Kokkos::LayoutRight, MemorySpace,
-                       MemoryTraits>,
-          StoreWeightTimesHPrimeGLL> {
+struct ImplQuadratureTraits
+    : public GLLQuadrature<ViewType, StoreHPrimeGLL>,
+      public WeightTimesHPrimeGLL<ViewType, StoreWeightTimesHPrimeGLL> {
 public:
-  constexpr static int ngll = NGLL;
-  constexpr static int dimension =
-      specfem::dimension::dimension<DimensionType>::value;
   constexpr static bool store_hprime_gll = StoreHPrimeGLL;
   constexpr static bool store_weight_times_hprime_gll =
       StoreWeightTimesHPrimeGLL;
 
-  using memory_space = MemorySpace;
-
-  using ViewType = typename GLLQuadrature<
-      Kokkos::View<type_real[NGLL][NGLL], Kokkos::LayoutRight, MemorySpace,
-                   MemoryTraits>,
-      StoreHPrimeGLL>::view_type;
+  using view_type = ViewType;
 
 private:
-  KOKKOS_FUNCTION QuadratureTraits(const ViewType view, std::true_type,
-                                   std::false_type)
+  KOKKOS_FUNCTION ImplQuadratureTraits(const ViewType view, std::true_type,
+                                       std::false_type)
       : GLLQuadrature<ViewType, StoreHPrimeGLL>(view) {}
 
-  KOKKOS_FUNCTION QuadratureTraits(const ViewType view, std::false_type,
-                                   std::true_type)
+  KOKKOS_FUNCTION ImplQuadratureTraits(const ViewType view, std::false_type,
+                                       std::true_type)
       : WeightTimesHPrimeGLL<ViewType, StoreWeightTimesHPrimeGLL>(view) {}
 
-  KOKKOS_FUNCTION QuadratureTraits(const ViewType view1, const ViewType view2,
-                                   std::true_type, std::true_type)
+  KOKKOS_FUNCTION ImplQuadratureTraits(const ViewType view1,
+                                       const ViewType view2, std::true_type,
+                                       std::true_type)
       : GLLQuadrature<ViewType, StoreHPrimeGLL>(view1),
         WeightTimesHPrimeGLL<ViewType, StoreWeightTimesHPrimeGLL>(view2) {}
 
   template <typename MemberType>
-  KOKKOS_FUNCTION QuadratureTraits(const MemberType &team, std::true_type,
-                                   std::false_type)
+  KOKKOS_FUNCTION ImplQuadratureTraits(const MemberType &team, std::true_type,
+                                       std::false_type)
       : GLLQuadrature<ViewType, StoreHPrimeGLL>(team.team_scratch(0)) {}
 
   template <typename MemberType>
-  KOKKOS_FUNCTION QuadratureTraits(const MemberType &team, std::false_type,
-                                   std::true_type)
+  KOKKOS_FUNCTION ImplQuadratureTraits(const MemberType &team, std::false_type,
+                                       std::true_type)
       : WeightTimesHPrimeGLL<ViewType, StoreWeightTimesHPrimeGLL>(
             team.team_scratch(0)) {}
 
   template <typename MemberType>
-  KOKKOS_FUNCTION QuadratureTraits(const MemberType &team, std::true_type,
-                                   std::true_type)
+  KOKKOS_FUNCTION ImplQuadratureTraits(const MemberType &team, std::true_type,
+                                       std::true_type)
       : GLLQuadrature<ViewType, StoreHPrimeGLL>(team.team_scratch(0)),
         WeightTimesHPrimeGLL<ViewType, StoreWeightTimesHPrimeGLL>(
             team.team_scratch(0)) {}
 
 public:
-  KOKKOS_FUNCTION QuadratureTraits() = default;
+  KOKKOS_FUNCTION ImplQuadratureTraits() = default;
 
-  KOKKOS_FUNCTION QuadratureTraits(const ViewType &view)
-      : QuadratureTraits(
+  KOKKOS_FUNCTION ImplQuadratureTraits(const ViewType &view)
+      : ImplQuadratureTraits(
             view, std::integral_constant<bool, StoreHPrimeGLL>{},
             std::integral_constant<bool, StoreWeightTimesHPrimeGLL>{}) {}
 
-  KOKKOS_FUNCTION QuadratureTraits(const ViewType &view1, const ViewType &view2)
-      : QuadratureTraits(
+  KOKKOS_FUNCTION ImplQuadratureTraits(const ViewType &view1,
+                                       const ViewType &view2)
+      : ImplQuadratureTraits(
             view1, view2, std::integral_constant<bool, StoreHPrimeGLL>{},
             std::integral_constant<bool, StoreWeightTimesHPrimeGLL>{}) {}
 
   template <typename MemberType>
-  KOKKOS_FUNCTION QuadratureTraits(const MemberType &team)
-      : QuadratureTraits(
+  KOKKOS_FUNCTION ImplQuadratureTraits(const MemberType &team)
+      : ImplQuadratureTraits(
             team, std::integral_constant<bool, StoreHPrimeGLL>{},
             std::integral_constant<bool, StoreWeightTimesHPrimeGLL>{}) {}
 
@@ -138,6 +125,43 @@ public:
            ViewType::shmem_size();
   }
 };
+
+template <int NGLL, specfem::dimension::type DimensionType,
+          typename MemorySpace, typename MemoryTraits, bool StoreHPrimeGLL,
+          bool WeightTimesDerivatives>
+struct QuadratureTraits
+    : public ImplQuadratureTraits<
+          Kokkos::View<type_real[NGLL][NGLL], Kokkos::LayoutRight, MemorySpace,
+                       MemoryTraits>,
+          StoreHPrimeGLL, WeightTimesDerivatives> {
+
+  constexpr static int ngll = NGLL;
+  constexpr static int dimension =
+      specfem::dimension::dimension<DimensionType>::dim;
+  using ViewType = Kokkos::View<type_real[NGLL][NGLL], Kokkos::LayoutRight,
+                                MemorySpace, MemoryTraits>;
+
+  KOKKOS_FUNCTION QuadratureTraits() = default;
+
+  KOKKOS_FUNCTION QuadratureTraits(const ViewType &view)
+      : ImplQuadratureTraits<ViewType, StoreHPrimeGLL, WeightTimesDerivatives>(
+            view) {}
+
+  KOKKOS_FUNCTION QuadratureTraits(const ViewType &view1, const ViewType &view2)
+      : ImplQuadratureTraits<ViewType, StoreHPrimeGLL, WeightTimesDerivatives>(
+            view1, view2) {}
+
+  template <typename MemberType>
+  KOKKOS_FUNCTION QuadratureTraits(const MemberType &team)
+      : ImplQuadratureTraits<ViewType, StoreHPrimeGLL, WeightTimesDerivatives>(
+            team) {
+    static_assert(
+        Kokkos::SpaceAccessibility<typename MemberType::execution_space,
+                                   MemorySpace>::accessible,
+        "MemorySpace is not accessible from the execution space");
+  }
+};
+
 } // namespace impl
 
 template <int NGLL, specfem::dimension::type DimensionType,

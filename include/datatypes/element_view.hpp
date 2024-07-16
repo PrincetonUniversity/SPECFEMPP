@@ -4,14 +4,18 @@
 
 namespace specfem {
 namespace datatype {
-
 template <typename T, int NumberOfGLLPoints, int Components,
-          typename MemorySpace, typename MemoryTraits>
+          typename MemorySpace, typename MemoryTraits, bool UseSIMD = false>
 struct ScalarElementViewType
-    : public Kokkos::View<T[NumberOfGLLPoints][NumberOfGLLPoints][Components],
-                          Kokkos::LayoutLeft, MemorySpace, MemoryTraits> {
-  using type = Kokkos::View<T[NumberOfGLLPoints][NumberOfGLLPoints],
-                            Kokkos::LayoutLeft, MemorySpace, MemoryTraits>;
+    : public Kokkos::View<
+          typename specfem::datatype::simd<T, UseSIMD>::datatype
+              [NumberOfGLLPoints][NumberOfGLLPoints][Components],
+          Kokkos::LayoutLeft, MemorySpace, MemoryTraits> {
+  using simd = specfem::datatype::simd<T, UseSIMD>;
+  using type = Kokkos::View<
+      typename simd::datatype[NumberOfGLLPoints][NumberOfGLLPoints][Components],
+      Kokkos::LayoutLeft, MemorySpace, MemoryTraits>;
+  using value_type = typename type::value_type;
   constexpr static int ngll = NumberOfGLLPoints;
   constexpr static int components = Components;
   constexpr static bool isPointViewType = false;
@@ -24,27 +28,27 @@ struct ScalarElementViewType
   KOKKOS_FUNCTION
   ScalarElementViewType() = default;
 
-  KOKKOS_FUNCTION
-  ScalarElementViewType(const type_real *data_ptr)
-      : Kokkos::View<T[NumberOfGLLPoints][NumberOfGLLPoints][Components]>(
-            data_ptr) {}
-
   template <typename ScratchMemorySpace>
   KOKKOS_FUNCTION ScalarElementViewType(const ScratchMemorySpace &scratch_space)
-      : Kokkos::View<T[NumberOfGLLPoints][NumberOfGLLPoints][Components],
-                     Kokkos::LayoutLeft, MemorySpace, MemoryTraits>(
-            scratch_space) {}
+      : Kokkos::View<
+            value_type[NumberOfGLLPoints][NumberOfGLLPoints][Components],
+            Kokkos::LayoutLeft, MemorySpace, MemoryTraits>(scratch_space) {}
 };
 
 template <typename T, int NumberOfGLLPoints, int Components,
-          int NumberOfDimensions, typename MemorySpace, typename MemoryTraits>
+          int NumberOfDimensions, typename MemorySpace, typename MemoryTraits,
+          bool UseSIMD = false>
 struct VectorElementViewType
-    : public Kokkos::View<T[NumberOfGLLPoints][NumberOfGLLPoints]
-                           [NumberOfDimensions][Components],
+    : public Kokkos::View<typename specfem::datatype::simd<T, UseSIMD>::datatype
+                              [NumberOfGLLPoints][NumberOfGLLPoints]
+                              [NumberOfDimensions][Components],
                           Kokkos::LayoutLeft, MemorySpace, MemoryTraits> {
-  using type = Kokkos::View<
-      T[NumberOfGLLPoints][NumberOfGLLPoints][NumberOfDimensions][Components],
-      Kokkos::LayoutLeft, MemorySpace, MemoryTraits>;
+  using simd = specfem::datatype::simd<T, UseSIMD>;
+  using type =
+      Kokkos::View<typename simd::datatype[NumberOfGLLPoints][NumberOfGLLPoints]
+                                          [NumberOfDimensions][Components],
+                   Kokkos::LayoutLeft, MemorySpace, MemoryTraits>;
+  using value_type = typename type::value_type;
   constexpr static int ngll = NumberOfGLLPoints;
   constexpr static int components = Components;
   constexpr static int dimensions = NumberOfDimensions;
@@ -58,15 +62,10 @@ struct VectorElementViewType
   KOKKOS_FUNCTION
   VectorElementViewType() = default;
 
-  KOKKOS_FUNCTION
-  VectorElementViewType(const type_real *data_ptr)
-      : Kokkos::View<T[NumberOfGLLPoints][NumberOfGLLPoints][NumberOfDimensions]
-                      [Components]>(data_ptr) {}
-
   template <typename ScratchMemorySpace>
   KOKKOS_FUNCTION VectorElementViewType(const ScratchMemorySpace &scratch_space)
-      : Kokkos::View<T[NumberOfGLLPoints][NumberOfGLLPoints][NumberOfDimensions]
-                      [Components],
+      : Kokkos::View<value_type[NumberOfGLLPoints][NumberOfGLLPoints]
+                               [NumberOfDimensions][Components],
                      Kokkos::LayoutLeft, MemorySpace, MemoryTraits>(
             scratch_space) {}
 };

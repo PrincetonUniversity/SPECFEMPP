@@ -56,14 +56,15 @@ KOKKOS_FUNCTION T interpolate_function(
 
 template <int components, typename Layout, typename MemorySpace,
           typename MemoryTraits>
-specfem::datatype::ScalarPointViewType<type_real, components>
+specfem::datatype::ScalarPointViewType<type_real, components, false>
 interpolate_function(
     const Kokkos::View<type_real **, specfem::kokkos::LayoutWrapper,
                        MemorySpace, MemoryTraits> &polynomial,
     const Kokkos::View<type_real **[components], Layout, MemorySpace,
                        MemoryTraits> &function) {
 
-  using T = specfem::datatype::ScalarPointViewType<type_real, components>;
+  using T =
+      specfem::datatype::ScalarPointViewType<type_real, components, false>;
 
   const int N = polynomial.extent(0);
   T result(0.0);
@@ -82,7 +83,8 @@ interpolate_function(
 
 template <int components, typename Layout, typename MemorySpace,
           typename MemoryTraits>
-KOKKOS_FUNCTION specfem::datatype::ScalarPointViewType<type_real, components>
+KOKKOS_FUNCTION specfem::datatype::ScalarPointViewType<type_real, components,
+                                                       false>
 interpolate_function(
     const typename Kokkos::TeamPolicy<MemorySpace>::member_type &team_member,
     const Kokkos::View<type_real **, specfem::kokkos::LayoutWrapper,
@@ -90,7 +92,8 @@ interpolate_function(
     const Kokkos::View<type_real **[components], Layout, MemorySpace,
                        MemoryTraits> &function) {
 
-  using T = specfem::datatype::ScalarPointViewType<type_real, components>;
+  using T =
+      specfem::datatype::ScalarPointViewType<type_real, components, false>;
 
   const int N = polynomial.extent(0);
   T result(0.0);

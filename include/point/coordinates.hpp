@@ -45,6 +45,26 @@ struct index {
       : ispec(ispec), iz(iz), ix(ix) {}
 };
 
+struct simd_index {
+  int ispec;
+  int number_elements;
+  int iz;
+  int ix;
+
+  KOKKOS_FUNCTION
+  bool mask(const std::size_t &lane) const {
+    return int(lane) < number_elements;
+  }
+
+  KOKKOS_FUNCTION
+  simd_index() = default;
+
+  KOKKOS_FUNCTION
+  simd_index(const int &ispec, const int &number_elements, const int &iz,
+             const int &ix)
+      : ispec(ispec), number_elements(number_elements), iz(iz), ix(ix) {}
+};
+
 KOKKOS_FUNCTION
 type_real distance(const specfem::point::gcoord2 &p1,
                    const specfem::point::gcoord2 &p2);

@@ -14,12 +14,13 @@ void corrector_phase_impl(
       specfem::medium::medium<specfem::dimension::type::dim2,
                               MediumType>::components;
   const int nglob = field.template get_nglob<MediumType>();
+  constexpr bool using_simd = false;
   using LoadFieldType =
       specfem::point::field<specfem::dimension::type::dim2, MediumType, false,
-                            false, true, false>;
+                            false, true, false, using_simd>;
   using AddFieldType =
       specfem::point::field<specfem::dimension::type::dim2, MediumType, false,
-                            true, false, false>;
+                            true, false, false, using_simd>;
 
   Kokkos::parallel_for(
       "specfem::TimeScheme::Newmark::corrector_phase_impl",
@@ -50,15 +51,16 @@ void predictor_phase_impl(
       specfem::medium::medium<specfem::dimension::type::dim2,
                               MediumType>::components;
   const int nglob = field.template get_nglob<MediumType>();
+  constexpr bool using_simd = false;
   using LoadFieldType =
       specfem::point::field<specfem::dimension::type::dim2, MediumType, false,
-                            true, true, false>;
+                            true, true, false, using_simd>;
   using AddFieldType =
       specfem::point::field<specfem::dimension::type::dim2, MediumType, true,
-                            true, false, false>;
+                            true, false, false, using_simd>;
   using StoreFieldType =
       specfem::point::field<specfem::dimension::type::dim2, MediumType, false,
-                            false, true, false>;
+                            false, true, false, using_simd>;
 
   Kokkos::parallel_for(
       "specfem::TimeScheme::Newmark::predictor_phase_impl",

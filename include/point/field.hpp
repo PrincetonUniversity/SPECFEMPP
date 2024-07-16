@@ -75,90 +75,59 @@ template <typename ViewType> struct MassMatrix<ViewType, true> {
 
 template <typename ViewType> struct MassMatrix<ViewType, false> {};
 
-template <specfem::dimension::type DimensionType,
-          specfem::element::medium_tag MediumTag, bool StoreDisplacement,
-          bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix>
-struct FieldTraits
-    : public Displacement<
-          typename specfem::datatype::ScalarPointViewType<
-              type_real,
-              specfem::medium::medium<DimensionType, MediumTag>::components>,
-          StoreDisplacement>,
-      public Velocity<typename specfem::datatype::ScalarPointViewType<
-                          type_real, specfem::medium::medium<
-                                         DimensionType, MediumTag>::components>,
-                      StoreVelocity>,
-      public Acceleration<
-          typename specfem::datatype::ScalarPointViewType<
-              type_real,
-              specfem::medium::medium<DimensionType, MediumTag>::components>,
-          StoreAcceleration>,
-      public MassMatrix<
-          typename specfem::datatype::ScalarPointViewType<
-              type_real,
-              specfem::medium::medium<DimensionType, MediumTag>::components>,
-          StoreMassMatrix> {
-
-public:
-  constexpr static int components =
-      specfem::medium::medium<DimensionType, MediumTag>::components;
-  constexpr static auto medium_tag = MediumTag;
-  constexpr static auto dimension_type = DimensionType;
-  constexpr static bool store_displacement = StoreDisplacement;
-  constexpr static bool store_velocity = StoreVelocity;
-  constexpr static bool store_acceleration = StoreAcceleration;
-  constexpr static bool store_mass_matrix = StoreMassMatrix;
-
-  using ViewType =
-      typename specfem::datatype::ScalarPointViewType<type_real, components>;
-
-  constexpr static bool isChunkFieldType = ViewType::isChunkViewType;
-  constexpr static bool isPointFieldType = ViewType::isPointViewType;
-  constexpr static int isElementFieldType = ViewType::isElementViewType;
+template <typename ViewType, bool StoreDisplacement, bool StoreVelocity,
+          bool StoreAcceleration, bool StoreMassMatrix>
+struct ImplFieldTraits : public Displacement<ViewType, StoreDisplacement>,
+                         public Velocity<ViewType, StoreVelocity>,
+                         public Acceleration<ViewType, StoreAcceleration>,
+                         public MassMatrix<ViewType, StoreMassMatrix> {
 
 private:
   KOKKOS_FUNCTION
-  FieldTraits(const ViewType displacement, std::true_type, std::false_type,
-              std::false_type, std::false_type)
+  ImplFieldTraits(const ViewType displacement, std::true_type, std::false_type,
+                  std::false_type, std::false_type)
       : impl::Displacement<ViewType, StoreDisplacement>(displacement) {}
 
   KOKKOS_FUNCTION
-  FieldTraits(const ViewType velocity, std::false_type, std::true_type,
-              std::false_type, std::false_type)
+  ImplFieldTraits(const ViewType velocity, std::false_type, std::true_type,
+                  std::false_type, std::false_type)
       : impl::Velocity<ViewType, StoreVelocity>(velocity) {}
 
   KOKKOS_FUNCTION
-  FieldTraits(const ViewType acceleration, std::false_type, std::false_type,
-              std::true_type, std::false_type)
+  ImplFieldTraits(const ViewType acceleration, std::false_type, std::false_type,
+                  std::true_type, std::false_type)
       : impl::Acceleration<ViewType, StoreAcceleration>(acceleration) {}
 
   KOKKOS_FUNCTION
-  FieldTraits(const ViewType mass_matrix, std::false_type, std::false_type,
-              std::false_type, std::true_type)
+  ImplFieldTraits(const ViewType mass_matrix, std::false_type, std::false_type,
+                  std::false_type, std::true_type)
       : impl::MassMatrix<ViewType, StoreMassMatrix>(mass_matrix) {}
 
   KOKKOS_FUNCTION
-  FieldTraits(const ViewType displacement, const ViewType velocity,
-              std::true_type, std::true_type, std::false_type, std::false_type)
+  ImplFieldTraits(const ViewType displacement, const ViewType velocity,
+                  std::true_type, std::true_type, std::false_type,
+                  std::false_type)
       : impl::Displacement<ViewType, StoreDisplacement>(displacement),
         impl::Velocity<ViewType, StoreVelocity>(velocity) {}
 
   KOKKOS_FUNCTION
-  FieldTraits(const ViewType displacement, const ViewType acceleration,
-              std::true_type, std::false_type, std::true_type, std::false_type)
+  ImplFieldTraits(const ViewType displacement, const ViewType acceleration,
+                  std::true_type, std::false_type, std::true_type,
+                  std::false_type)
       : impl::Displacement<ViewType, StoreDisplacement>(displacement),
         impl::Acceleration<ViewType, StoreAcceleration>(acceleration) {}
 
   KOKKOS_FUNCTION
-  FieldTraits(const ViewType velocity, const ViewType acceleration,
-              std::false_type, std::true_type, std::true_type, std::false_type)
+  ImplFieldTraits(const ViewType velocity, const ViewType acceleration,
+                  std::false_type, std::true_type, std::true_type,
+                  std::false_type)
       : impl::Velocity<ViewType, StoreVelocity>(velocity),
         impl::Acceleration<ViewType, StoreAcceleration>(acceleration) {}
 
   KOKKOS_FUNCTION
-  FieldTraits(const ViewType displacement, const ViewType velocity,
-              const ViewType acceleration, std::true_type, std::true_type,
-              std::true_type, std::false_type)
+  ImplFieldTraits(const ViewType displacement, const ViewType velocity,
+                  const ViewType acceleration, std::true_type, std::true_type,
+                  std::true_type, std::false_type)
       : impl::Displacement<ViewType, StoreDisplacement>(displacement),
         impl::Velocity<ViewType, StoreVelocity>(velocity),
         impl::Acceleration<ViewType, StoreAcceleration>(acceleration) {}
@@ -190,30 +159,31 @@ private:
 
 public:
   KOKKOS_FUNCTION
-  FieldTraits() = default;
+  ImplFieldTraits() = default;
 
   KOKKOS_FUNCTION
-  FieldTraits(const ViewType view)
-      : FieldTraits(view, std::integral_constant<bool, StoreDisplacement>{},
-                    std::integral_constant<bool, StoreVelocity>{},
-                    std::integral_constant<bool, StoreAcceleration>{},
-                    std::integral_constant<bool, StoreMassMatrix>{}) {}
+  ImplFieldTraits(const ViewType view)
+      : ImplFieldTraits(view, std::integral_constant<bool, StoreDisplacement>{},
+                        std::integral_constant<bool, StoreVelocity>{},
+                        std::integral_constant<bool, StoreAcceleration>{},
+                        std::integral_constant<bool, StoreMassMatrix>{}) {}
 
   KOKKOS_FUNCTION
-  FieldTraits(const ViewType view1, const ViewType view2)
-      : FieldTraits(view1, view2,
-                    std::integral_constant<bool, StoreDisplacement>{},
-                    std::integral_constant<bool, StoreVelocity>{},
-                    std::integral_constant<bool, StoreAcceleration>{},
-                    std::integral_constant<bool, StoreMassMatrix>{}) {}
+  ImplFieldTraits(const ViewType view1, const ViewType view2)
+      : ImplFieldTraits(view1, view2,
+                        std::integral_constant<bool, StoreDisplacement>{},
+                        std::integral_constant<bool, StoreVelocity>{},
+                        std::integral_constant<bool, StoreAcceleration>{},
+                        std::integral_constant<bool, StoreMassMatrix>{}) {}
 
   KOKKOS_FUNCTION
-  FieldTraits(const ViewType view1, const ViewType view2, const ViewType view3)
-      : FieldTraits(view1, view2, view3,
-                    std::integral_constant<bool, StoreDisplacement>{},
-                    std::integral_constant<bool, StoreVelocity>{},
-                    std::integral_constant<bool, StoreAcceleration>{},
-                    std::integral_constant<bool, StoreMassMatrix>{}) {}
+  ImplFieldTraits(const ViewType view1, const ViewType view2,
+                  const ViewType view3)
+      : ImplFieldTraits(view1, view2, view3,
+                        std::integral_constant<bool, StoreDisplacement>{},
+                        std::integral_constant<bool, StoreVelocity>{},
+                        std::integral_constant<bool, StoreAcceleration>{},
+                        std::integral_constant<bool, StoreMassMatrix>{}) {}
 
   KOKKOS_FUNCTION
   ViewType divide_mass_matrix() const {
@@ -222,19 +192,76 @@ public:
   }
 };
 
+template <specfem::dimension::type DimensionType,
+          specfem::element::medium_tag MediumTag, bool StoreDisplacement,
+          bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix,
+          bool UseSIMD>
+struct FieldTraits
+    : public ImplFieldTraits<
+          specfem::datatype::ScalarPointViewType<
+              type_real,
+              specfem::medium::medium<DimensionType, MediumTag>::components,
+              UseSIMD>,
+          StoreDisplacement, StoreVelocity, StoreAcceleration,
+          StoreMassMatrix> {
+
+  using ViewType = specfem::datatype::ScalarPointViewType<
+      type_real, specfem::medium::medium<DimensionType, MediumTag>::components,
+      UseSIMD>;
+
+public:
+  KOKKOS_FUNCTION
+  FieldTraits() = default;
+
+  KOKKOS_FUNCTION
+  FieldTraits(const ViewType view)
+      : ImplFieldTraits<ViewType, StoreDisplacement, StoreVelocity,
+                        StoreAcceleration, StoreMassMatrix>(view) {}
+
+  KOKKOS_FUNCTION
+  FieldTraits(const ViewType view1, const ViewType view2)
+      : ImplFieldTraits<ViewType, StoreDisplacement, StoreVelocity,
+                        StoreAcceleration, StoreMassMatrix>(view1, view2) {}
+
+  KOKKOS_FUNCTION
+  FieldTraits(const ViewType view1, const ViewType view2, const ViewType view3)
+      : ImplFieldTraits<ViewType, StoreDisplacement, StoreVelocity,
+                        StoreAcceleration, StoreMassMatrix>(view1, view2,
+                                                            view3) {}
+};
+
 } // namespace impl
 
 template <specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumType, bool StoreDisplacement,
-          bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix>
-struct field : public impl::FieldTraits<DimensionType, MediumType,
-                                        StoreDisplacement, StoreVelocity,
-                                        StoreAcceleration, StoreMassMatrix> {
+          bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix,
+          bool UseSIMD>
+struct field
+    : public impl::FieldTraits<DimensionType, MediumType, StoreDisplacement,
+                               StoreVelocity, StoreAcceleration,
+                               StoreMassMatrix, UseSIMD> {
+
+public:
+  using simd = specfem::datatype::simd<type_real, UseSIMD>;
 
   using ViewType =
       typename impl::FieldTraits<DimensionType, MediumType, StoreDisplacement,
                                  StoreVelocity, StoreAcceleration,
-                                 StoreMassMatrix>::ViewType;
+                                 StoreMassMatrix, UseSIMD>::ViewType;
+
+  constexpr static int components = ViewType::components;
+  constexpr static int dimension =
+      specfem::dimension::dimension<DimensionType>::dim;
+  constexpr static auto medium_tag = MediumType;
+
+  constexpr static bool store_displacement = StoreDisplacement;
+  constexpr static bool store_velocity = StoreVelocity;
+  constexpr static bool store_acceleration = StoreAcceleration;
+  constexpr static bool store_mass_matrix = StoreMassMatrix;
+
+  constexpr static bool isChunkFieldType = ViewType::isChunkViewType;
+  constexpr static bool isPointFieldType = ViewType::isPointViewType;
+  constexpr static int isElementFieldType = ViewType::isElementViewType;
 
   KOKKOS_FUNCTION
   field() = default;
@@ -242,27 +269,20 @@ struct field : public impl::FieldTraits<DimensionType, MediumType,
   KOKKOS_FUNCTION
   field(const ViewType view)
       : impl::FieldTraits<DimensionType, MediumType, StoreDisplacement,
-                          StoreVelocity, StoreAcceleration, StoreMassMatrix>(
-            view) {}
+                          StoreVelocity, StoreAcceleration, StoreMassMatrix,
+                          UseSIMD>(view) {}
 
   KOKKOS_FUNCTION
   field(const ViewType view1, const ViewType view2)
       : impl::FieldTraits<DimensionType, MediumType, StoreDisplacement,
-                          StoreVelocity, StoreAcceleration, StoreMassMatrix>(
-            view1, view2) {}
+                          StoreVelocity, StoreAcceleration, StoreMassMatrix,
+                          UseSIMD>(view1, view2) {}
 
   KOKKOS_FUNCTION
   field(const ViewType view1, const ViewType view2, const ViewType view3)
       : impl::FieldTraits<DimensionType, MediumType, StoreDisplacement,
-                          StoreVelocity, StoreAcceleration, StoreMassMatrix>(
-            view1, view2, view3) {}
-
-  KOKKOS_FUNCTION
-  ViewType divide_mass_matrix() const {
-    return impl::FieldTraits<DimensionType, MediumType, StoreDisplacement,
-                             StoreVelocity, StoreAcceleration,
-                             StoreMassMatrix>::divide_mass_matrix();
-  }
+                          StoreVelocity, StoreAcceleration, StoreMassMatrix,
+                          UseSIMD>(view1, view2, view3) {}
 };
 
 // template <specfem::dimension::type DimensionType,

@@ -18,7 +18,7 @@ namespace sources {
 template <specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
-          typename quadrature_points_type>
+          typename quadrature_points_type, bool using_simd>
 class source;
 
 } // namespace sources

@@ -34,6 +34,8 @@ void specfem::coupled_interface::coupled_interface<
     WavefieldType, DimensionType, SelfMedium,
     CoupledMedium>::compute_coupling() {
 
+  constexpr bool using_simd = false;
+
   if (this->nedges == 0)
     return;
 
@@ -77,7 +79,7 @@ void specfem::coupled_interface::coupled_interface<
 
               // compute normal
               const auto normal = [&]() {
-                specfem::point::partial_derivatives2<true> point_derivatives;
+                specfem::point::partial_derivatives2<using_simd, true> point_derivatives;
                 specfem::compute::load_on_device(index, partial_derivatives,
                                                  point_derivatives);
                 return point_derivatives.compute_normal(coupled_edge_type);
@@ -87,7 +89,7 @@ void specfem::coupled_interface::coupled_interface<
               const auto coupled_field_elements =
                   edge.load_field_elements(index, field);
 
-              const specfem::datatype::ScalarPointViewType<type_real, 2>
+              const specfem::datatype::ScalarPointViewType<type_real, 2, using_simd>
                   weights(wgll(ix), wgll(iz));
 
               const auto coupling_terms = edge.compute_coupling_terms(

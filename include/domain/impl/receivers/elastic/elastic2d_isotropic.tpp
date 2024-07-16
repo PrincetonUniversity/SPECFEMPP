@@ -28,16 +28,16 @@
 //     : sin_rec(sin_rec), cos_rec(cos_rec), receiver_array(receiver_array),
 //       receiver_field(receiver_field) {}
 
-template <int NGLL>
+template <int NGLL, bool using_simd>
 KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
     specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
     specfem::element::property_tag::isotropic,
-    specfem::enums::element::quadrature::static_quadrature_points<NGLL> >::
+    specfem::enums::element::quadrature::static_quadrature_points<NGLL>, using_simd>::
     get_field(
         const int iz, const int ix,
-        const specfem::point::partial_derivatives2<false> partial_derivatives,
+        const specfem::point::partial_derivatives2<using_simd, false> partial_derivatives,
         const specfem::point::properties<specfem::dimension::type::dim2, medium_type::medium_tag,
-                                         medium_type::property_tag>
+                                         medium_type::property_tag, using_simd>
             properties,
         const ElementQuadratureViewType hprime,
         const ElementFieldViewType active_field,

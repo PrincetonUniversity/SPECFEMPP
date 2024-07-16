@@ -43,9 +43,9 @@ void allocate_elements(
   using dimension = specfem::dimension::dimension<DimensionType>;
   using medium_type =
       specfem::medium::medium<DimensionType, medium_tag, property_tag>;
-  using boundary_conditions_type =
-      specfem::boundary::boundary<WavefieldType, DimensionType, medium_tag,
-                                  property_tag, boundary_tag, qp_type>;
+  // using boundary_conditions_type =
+  //     specfem::boundary::boundary<WavefieldType, DimensionType, medium_tag,
+  //                                 property_tag, boundary_tag, qp_type>;
 
   const int nspec = assembly.mesh.nspec;
 
@@ -155,7 +155,7 @@ void allocate_elements(
               << "    - Element type        : " << medium_type::to_string()
               << "\n"
               << "    - Boundary Conditions : "
-              << boundary_conditions_type::to_string() << "\n"
+              // << boundary_conditions_type::to_string() << "\n"
               << "    - Number of elements  : " << nelements << "\n\n";
   }
 

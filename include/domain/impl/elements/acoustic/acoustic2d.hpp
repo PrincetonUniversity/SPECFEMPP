@@ -19,56 +19,30 @@ namespace elements {
 // Acoustic 2D isotropic specialization
 // stress_integrand = rho^{-1} * \sum_{i,k=1}^{2} \partial_i w^{\alpha\gamma}
 // \partial_i \chi
-template <>
+template <bool UseSIMD>
 KOKKOS_FUNCTION specfem::point::stress_integrand<
-    specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic>
-compute_stress_integrands<specfem::dimension::type::dim2,
-                          specfem::element::medium_tag::acoustic,
-                          specfem::element::property_tag::isotropic>(
-    const specfem::point::partial_derivatives2<false> &partial_derivatives,
+    specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
+    UseSIMD>
+impl_compute_stress_integrands(
+    const specfem::point::partial_derivatives2<UseSIMD, false>
+        &partial_derivatives,
     const specfem::point::properties<
         specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
-        specfem::element::property_tag::isotropic> &properties,
+        specfem::element::property_tag::isotropic, UseSIMD> &properties,
     const specfem::point::field_derivatives<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic>
-        &field_derivatives) {
+        specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
+        UseSIMD> &field_derivatives);
 
-  const auto &du = field_derivatives.du;
-  // Precompute the factor
-  type_real fac = properties.rho_inverse;
-
-  specfem::datatype::VectorPointViewType<type_real, 2, 1> F;
-
-  // Compute stress integrands 1 and 2
-  // Here it is extremely important that this seems at odds with
-  // equations (44) & (45) from Komatitsch and Tromp 2002 I. - Validation
-  // The equations are however missing dxi/dx, dxi/dz, dzeta/dx, dzeta/dz
-  // for the gradient of w^{\alpha\gamma}. In this->update_acceleration
-  // the weights for the integration and the interpolated values for the
-  // first derivatives of the lagrange polynomials are then collapsed
-  F(0, 0) = fac * (partial_derivatives.xix * du(0, 0) +
-                   partial_derivatives.xiz * du(1, 0));
-  F(1, 0) = fac * (partial_derivatives.gammax * du(0, 0) +
-                   partial_derivatives.gammaz * du(1, 0));
-
-  return { F };
-}
-
-template <>
+template <bool UseSIMD>
 KOKKOS_FUNCTION specfem::point::field<specfem::dimension::type::dim2,
                                       specfem::element::medium_tag::acoustic,
-                                      false, false, false, true>
-mass_matrix_component<specfem::dimension::type::dim2,
-                      specfem::element::medium_tag::acoustic,
-                      specfem::element::property_tag::isotropic>(
+                                      false, false, false, true, UseSIMD>
+impl_mass_matrix_component(
     const specfem::point::properties<
         specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
-        specfem::element::property_tag::isotropic> &properties,
-    const specfem::point::partial_derivatives2<true> &partial_derivatives) {
-
-  return specfem::datatype::ScalarPointViewType<type_real, 1>(
-      partial_derivatives.jacobian / properties.kappa);
-}
+        specfem::element::property_tag::isotropic, UseSIMD> &properties,
+    const specfem::point::partial_derivatives2<UseSIMD, true>
+        &partial_derivatives);
 
 } // namespace elements
 } // namespace impl

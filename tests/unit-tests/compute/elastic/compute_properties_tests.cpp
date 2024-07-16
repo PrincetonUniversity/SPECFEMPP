@@ -106,11 +106,11 @@ TEST(COMPUTE_TESTS, compute_elastic_properties) {
               [&]() -> specfem::point::properties<
                         specfem::dimension::type::dim2,
                         specfem::element::medium_tag::elastic,
-                        specfem::element::property_tag::isotropic> {
+                        specfem::element::property_tag::isotropic, false> {
             specfem::point::properties<
                 specfem::dimension::type::dim2,
                 specfem::element::medium_tag::elastic,
-                specfem::element::property_tag::isotropic>
+                specfem::element::property_tag::isotropic, false>
                 properties;
             specfem::compute::load_on_host(index, compute_properties,
                                            properties);
@@ -120,6 +120,47 @@ TEST(COMPUTE_TESTS, compute_elastic_properties) {
           EXPECT_FLOAT_EQ(properties.rho, rho_global.data(ispec, iz, ix));
           EXPECT_FLOAT_EQ(properties.mu, mu_global.data(ispec, iz, ix));
           EXPECT_FLOAT_EQ(kappa, kappa_global.data(ispec, iz, ix));
+        }
+      }
+    }
+  }
+
+  for (int ix = 0; ix < ngllx; ++ix) {
+    for (int iz = 0; iz < ngllz; ++iz) {
+      constexpr int vector_length =
+          specfem::datatype::simd<type_real, true>::size();
+
+      for (int ispec = 0; ispec < nspec; ispec += vector_length) {
+        const int num_elements =
+            (ispec + vector_length < nspec) ? vector_length : nspec - ispec;
+        const specfem::point::simd_index simd_index(ispec, num_elements, iz,
+                                                    ix);
+        if (compute_properties.h_element_types(ispec) ==
+                specfem::element::medium_tag::elastic &&
+            compute_properties.h_element_property(ispec) ==
+                specfem::element::property_tag::isotropic) {
+          const auto properties =
+              [&]() -> specfem::point::properties<
+                        specfem::dimension::type::dim2,
+                        specfem::element::medium_tag::elastic,
+                        specfem::element::property_tag::isotropic, true> {
+            specfem::point::properties<
+                specfem::dimension::type::dim2,
+                specfem::element::medium_tag::elastic,
+                specfem::element::property_tag::isotropic, true>
+                properties;
+            specfem::compute::load_on_host(simd_index, compute_properties,
+                                           properties);
+            return properties;
+          }();
+          const auto kappa = properties.lambdaplus2mu - properties.mu;
+          for (int i = 0; i < num_elements; ++i) {
+            EXPECT_FLOAT_EQ(properties.rho[i],
+                            rho_global.data(ispec + i, iz, ix));
+            EXPECT_FLOAT_EQ(properties.mu[i],
+                            mu_global.data(ispec + i, iz, ix));
+            EXPECT_FLOAT_EQ(kappa[i], kappa_global.data(ispec + i, iz, ix));
+          }
         }
       }
     }

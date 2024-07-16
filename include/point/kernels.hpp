@@ -1,49 +1,73 @@
 #ifndef _SPECFEM_POINT_KERNELS_HPP_
 #define _SPECFEM_POINT_KERNELS_HPP_
 
+#include "datatypes/simd.hpp"
 #include "enumerations/medium.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
 namespace point {
 template <specfem::element::medium_tag type,
-          specfem::element::property_tag property>
+          specfem::element::property_tag property, bool UseSIMD>
 struct kernels;
 
-template <>
+template <bool UseSIMD>
 struct kernels<specfem::element::medium_tag::elastic,
-               specfem::element::property_tag::isotropic> {
-  type_real rho;
-  type_real mu;
-  type_real kappa;
-  type_real alpha;
-  type_real beta;
-  type_real rhop;
+               specfem::element::property_tag::isotropic, UseSIMD> {
+public:
+  using simd = typename specfem::datatype::simd<type_real, UseSIMD>;
+
+private:
+  using value_type = typename simd::datatype;
+
+public:
+  constexpr static auto medium_tag = specfem::element::medium_tag::elastic;
+  constexpr static auto property_tag =
+      specfem::element::property_tag::isotropic;
+
+  value_type rho;
+  value_type mu;
+  value_type kappa;
+  value_type alpha;
+  value_type beta;
+  value_type rhop;
 
   KOKKOS_FUNCTION
   kernels() = default;
 
   KOKKOS_FUNCTION
-  kernels(const type_real rho, const type_real mu, const type_real kappa,
-          const type_real rhop, const type_real alpha, const type_real beta)
+  kernels(const value_type rho, const value_type mu, const value_type kappa,
+          const value_type rhop, const value_type alpha, const value_type beta)
       : rho(rho), mu(mu), kappa(kappa), rhop(rhop), alpha(alpha), beta(beta) {}
 };
 
-template <>
+template <bool UseSIMD>
 struct kernels<specfem::element::medium_tag::acoustic,
-               specfem::element::property_tag::isotropic> {
-  type_real rho;
-  type_real kappa;
-  type_real rho_prime;
-  type_real alpha;
+               specfem::element::property_tag::isotropic, UseSIMD> {
+public:
+  using simd = typename specfem::datatype::simd<type_real, UseSIMD>;
+
+  constexpr static auto medium_tag = specfem::element::medium_tag::acoustic;
+  constexpr static auto property_tag =
+      specfem::element::property_tag::isotropic;
+
+private:
+  using value_type = typename simd::datatype;
+
+public:
+  value_type rho;
+  value_type kappa;
+  value_type rho_prime;
+  value_type alpha;
 
   KOKKOS_FUNCTION
   kernels() = default;
 
   KOKKOS_FUNCTION
-  kernels(const type_real rho, const type_real kappa) : rho(rho), kappa(kappa) {
+  kernels(const value_type rho, const value_type kappa)
+      : rho(rho), kappa(kappa) {
     rho_prime = rho * kappa;
-    alpha = 2.0 * kappa;
+    alpha = static_cast<type_real>(2.0) * kappa;
   }
 };
 

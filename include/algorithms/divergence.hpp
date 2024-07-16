@@ -8,20 +8,13 @@
 namespace specfem {
 namespace algorithms {
 
-template <
-    typename MemberType, typename VectorFieldType, typename QuadratureType,
-    typename CallableType,
-    std::enable_if_t<(VectorFieldType::isChunkViewType &&
-                      VectorFieldType::isVectorViewType),
-                     int> = 0,
-    std::enable_if_t<Kokkos::SpaceAccessibility<
-                         typename MemberType::execution_space,
-                         typename VectorFieldType::memory_space>::accessible,
-                     int> = 0>
+template <typename MemberType, typename IteratorType, typename VectorFieldType,
+          typename QuadratureType, typename CallableType,
+          std::enable_if_t<(VectorFieldType::isChunkViewType &&
+                            VectorFieldType::isVectorViewType),
+                           int> = 0>
 KOKKOS_FUNCTION void divergence(
-    const MemberType &team,
-    const Kokkos::View<
-        int *, typename MemberType::execution_space::memory_space> &indices,
+    const MemberType &team, const IteratorType &iterator,
     const specfem::compute::partial_derivatives &partial_derivatives,
     const Kokkos::View<type_real *,
                        typename MemberType::execution_space::memory_space>
@@ -31,37 +24,32 @@ KOKKOS_FUNCTION void divergence(
 
   constexpr int components = VectorFieldType::components;
   constexpr int NGLL = VectorFieldType::ngll;
-  const int number_elements = indices.extent(0);
+  constexpr static bool using_simd = VectorFieldType::simd::using_simd;
 
   constexpr bool is_host_space =
       std::is_same<typename MemberType::execution_space::memory_space,
                    Kokkos::HostSpace>::value;
 
   using ScalarPointViewType =
-      specfem::datatype::ScalarPointViewType<type_real, components>;
+      specfem::datatype::ScalarPointViewType<type_real, components, using_simd>;
 
   static_assert(
-      std::is_invocable_v<CallableType, int, specfem::point::index,
+      std::is_invocable_v<CallableType, typename IteratorType::index_type,
                           ScalarPointViewType>,
       "CallableType must be invocable with arguments (int, "
       "specfem::point::index, "
       "specfem::datatype::ScalarPointViewType<type_real, components>)");
 
+  using datatype = typename IteratorType::simd::datatype;
+
   // Compute the integral
   Kokkos::parallel_for(
-      Kokkos::TeamThreadRange(team, NGLL * NGLL * number_elements),
-      [=](const int &ixz) {
-        const int ielement = ixz % number_elements;
-        const int xz = ixz / number_elements;
-        const int iz = xz / NGLL;
-        const int ix = xz % NGLL;
-
-        const int ispec = indices(ielement);
-
-        // type_real temp1l[components] = { 0.0 };
-        // type_real temp2l[components] = { 0.0 };
-
-        specfem::point::index index(ispec, iz, ix);
+      Kokkos::TeamThreadRange(team, iterator.chunk_size()), [&](const int i) {
+        const auto iterator_index = iterator(i);
+        const int ielement = iterator_index.ielement;
+        const int ispec = iterator_index.index.ispec;
+        const int iz = iterator_index.index.iz;
+        const int ix = iterator_index.index.ix;
 
         // type_real l_f[ThreadTile] = { 0.0 };
         // type_real l_quad[ThreadTile] = { 0.0 };
@@ -132,7 +120,7 @@ KOKKOS_FUNCTION void divergence(
         //   }
         // }
 
-        const type_real jacobian = [&]() {
+        const datatype jacobian = [&]() {
           if constexpr (is_host_space) {
             return partial_derivatives.h_jacobian(ispec, iz, ix);
           } else {
@@ -140,8 +128,8 @@ KOKKOS_FUNCTION void divergence(
           }
         }();
 
-        type_real temp1l[components] = { 0.0 };
-        type_real temp2l[components] = { 0.0 };
+        datatype temp1l[components] = { 0.0 };
+        datatype temp2l[components] = { 0.0 };
 
         for (int l = 0; l < NGLL; ++l) {
           for (int icomp = 0; icomp < components; ++icomp) {
@@ -159,7 +147,7 @@ KOKKOS_FUNCTION void divergence(
               weights(iz) * temp1l[icomp] + weights(ix) * temp2l[icomp];
         }
 
-        callback(ielement, index, result);
+        callback(iterator_index, result);
       });
 
   return;

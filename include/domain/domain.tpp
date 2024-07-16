@@ -166,10 +166,11 @@ void specfem::domain::domain<WavefieldType, DimensionType, MediumTag,
                              qp_type>::divide_mass_matrix() {
   constexpr int components = medium_type::components;
   const int nglob = field.template get_nglob<MediumTag>();
+  constexpr bool using_simd = false;
   using LoadFieldType =
-      specfem::point::field<DimensionType, MediumTag, false, false, true, true>;
+      specfem::point::field<DimensionType, MediumTag, false, false, true, true, using_simd>;
   using StoreFieldType = specfem::point::field<DimensionType, MediumTag, false,
-                                               false, true, false>;
+                                               false, true, false, using_simd>;
 
   Kokkos::parallel_for(
       "specfem::domain::domain::divide_mass_matrix",
@@ -192,8 +193,9 @@ void specfem::domain::domain<WavefieldType, DimensionType, MediumTag,
                              qp_type>::invert_mass_matrix() {
   constexpr int components = medium_type::components;
   const int nglob = field.template get_nglob<MediumTag>();
+  constexpr bool using_simd = false;
   using PointFieldType = specfem::point::field<DimensionType, MediumTag, false,
-                                               false, false, true>;
+                                               false, false, true, using_simd>;
 
   Kokkos::parallel_for(
       "specfem::domain::domain::invert_mass_matrix",
