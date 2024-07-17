@@ -50,6 +50,10 @@ specfem::sources::read_sources(
       sources.push_back(std::make_shared<specfem::sources::external>(
           external_source, nsteps, dt, source_wavefield_type));
     } else if (YAML::Node adjoint_node = N["adjoint-source"]) {
+      if (!adjoint_node["station_name"] || !adjoint_node["network_name"]) {
+        throw std::runtime_error(
+            "Station name and network name are required for adjoint source");
+      }
       sources.push_back(std::make_shared<specfem::sources::adjoint_source>(
           adjoint_node, nsteps, dt));
     } else {
