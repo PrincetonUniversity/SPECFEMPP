@@ -328,6 +328,8 @@ Now finally we can run the adjoint simulation. We use the same mesh database as 
                f0: 0.42
 
         - adjoint-source:
+            station_name: AA
+            network_name: S0001
             x: 150000
             z: 40000
             source_surf: false
@@ -338,7 +340,7 @@ Now finally we can run the adjoint simulation. We use the same mesh database as 
               format: ascii
               stf-file: /scratch/gpfs/rk9481/specfem2d_kokkos/examples/Tromp_2005/OUTPUT_FILES/AA.S0001
 
-2. To set up the a combined simulation, we need to replace the forward YAML node with a combined node.
+1. To set up the a combined simulation, we need to replace the forward YAML node with a combined node.
 
 .. code-block:: yaml
     :caption: combined YAML node

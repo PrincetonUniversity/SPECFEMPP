@@ -179,3 +179,102 @@ Moment Tensor Source Description
                 factor: 1e10
                 tshift: 0.0
                 f0: 1.0
+
+Adjoint Source Description
+==========================
+
+**Parameter Name** : ``sources.adjoint-source``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**dafault value** : None
+
+**possible values** : [YAML Node]
+
+**Description** : Definition of adjoint source
+
+**Parameter Name** : ``sources.adjoint-source.station_name``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**dafault value** : None
+
+**possible values** : [string]
+
+**Description** : Name of the station.
+
+**Parameter Name** : ``sources.adjoint-source.network_name``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**dafault value** : None
+
+**possible values** : [string]
+
+**Description** : Name of the network.
+
+**Parameter Name** : ``sources.adjoint-source.x``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**dafault value** : None
+
+**possible values** : [float]
+
+**Description** : X coordinate location of the adjoint source.
+
+**Parameter Name** : ``sources.adjoint-source.z``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**dafault value** : None
+
+**possible values** : [float]
+
+**Description** : Z coordinate location of the adjoint source.
+
+**Parameter Name** : ``sources.adjoint-source.angle`` [optional]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**dafault value** : 0.0
+
+**possible values** : [float]
+
+**Description** : Angle of the adjoint source.
+
+**Parameter Name** : ``sources.adjoint-source.Dirac`` [optional]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**dafault value** : None
+
+**possible values** : [YAML Node]
+
+**Description** : Definition of Dirac source :ref:`dirac_source_description`
+
+**Parameter Name** : ``sources.adjoint-source.Ricker`` [optional]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**dafault value** : None
+
+**possible values** : [YAML Node]
+
+**Description** : Definition of Ricker source :ref:`ricker_source_description`
+
+**Parameter Name** : ``sources.adjoint-source.External`` [optional]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**dafault value** : None
+
+**possible values** : [YAML Node]
+
+**Description** : Definition of External source :ref:`external_source_description`
+
+
+.. admonition:: Example
+
+    .. code-block:: yaml
+
+        adjoint-source:
+            station_name: AA
+            network_name: S0001
+            x: 0.0
+            z: 0.0
+            angle: 0.0
+            Dirac:
+                factor: 1e10
+                tshift: 0.0
