@@ -11,11 +11,11 @@ namespace algorithms {
 template <typename MemberType, typename IteratorType, typename ViewType,
           typename QuadratureType, typename CallbackFunctor,
           std::enable_if_t<ViewType::isChunkViewType, int> = 0>
-KOKKOS_FUNCTION void
-gradient(const MemberType &team, const IteratorType &iterator,
-         const specfem::compute::partial_derivatives &partial_derivatives,
-         const QuadratureType &quadrature, const ViewType &f,
-         CallbackFunctor callback) {
+__declspec(noinline) KOKKOS_FUNCTION void gradient(
+    const MemberType &team, const IteratorType &iterator,
+    const specfem::compute::partial_derivatives &partial_derivatives,
+    const QuadratureType &quadrature, const ViewType &f,
+    CallbackFunctor callback) {
   constexpr int components = ViewType::components;
   constexpr bool using_simd = ViewType::simd::using_simd;
 
@@ -127,7 +127,6 @@ gradient(const MemberType &team, const IteratorType &iterator,
         //     }
         //   }
         // }
-
         for (int l = 0; l < NGLL; ++l) {
           for (int icomponent = 0; icomponent < components; ++icomponent) {
             df_dxi[icomponent] +=
@@ -137,11 +136,14 @@ gradient(const MemberType &team, const IteratorType &iterator,
           }
         }
 
-        const auto point_partial_derivatives = [&]() {
-          specfem::point::partial_derivatives2<using_simd, false> result;
-          specfem::compute::load_on_device(index, partial_derivatives, result);
-          return result;
-        }();
+        // const specfem::point::partial_derivatives2<using_simd, false>
+        //     point_partial_derivatives{};
+
+        specfem::point::partial_derivatives2<using_simd, false>
+            point_partial_derivatives;
+
+        specfem::compute::load_on_device(index, partial_derivatives,
+                                         point_partial_derivatives);
 
         VectorPointViewType df;
 
