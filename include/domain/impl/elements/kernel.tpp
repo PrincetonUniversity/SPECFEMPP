@@ -438,26 +438,37 @@ void specfem::domain::impl::kernels::element_kernel_base<
                       &iterator_index,
                   const typename PointFieldDerivativesType::ViewType &du) {
                 const auto index = iterator_index.index;
-                const auto point_partial_derivatives = [&]()
-                    -> specfem::point::partial_derivatives2<using_simd, false> {
-                  specfem::point::partial_derivatives2<using_simd, false>
-                      point_partial_derivatives;
-                  specfem::compute::load_on_device(index, partial_derivatives,
-                                                   point_partial_derivatives);
-                  return point_partial_derivatives;
-                }();
 
-                const auto point_property = [&]()
-                    -> specfem::point::properties<DimensionType, MediumTag,
-                                                  PropertyTag, using_simd> {
-                  specfem::point::properties<DimensionType, MediumTag,
-                                             PropertyTag, using_simd>
-                      point_property;
+                specfem::point::partial_derivatives2<using_simd, false>
+                    point_partial_derivatives;
+                specfem::compute::load_on_device(index, partial_derivatives,
+                                                 point_partial_derivatives);
 
-                  specfem::compute::load_on_device(index, properties,
-                                                   point_property);
-                  return point_property;
-                }();
+                specfem::point::properties<DimensionType, MediumTag,
+                                                 PropertyTag, using_simd>
+                    point_property;
+                specfem::compute::load_on_device(index, properties,
+                                                 point_property);
+                // const auto point_partial_derivatives = [&]()
+                //     -> specfem::point::partial_derivatives2<using_simd, false> {
+                //   specfem::point::partial_derivatives2<using_simd, false>
+                //       point_partial_derivatives;
+                //   specfem::compute::load_on_device(index, partial_derivatives,
+                //                                    point_partial_derivatives);
+                //   return point_partial_derivatives;
+                // }();
+
+                // const auto point_property = [&]()
+                //     -> specfem::point::properties<DimensionType, MediumTag,
+                //                                   PropertyTag, using_simd> {
+                //   specfem::point::properties<DimensionType, MediumTag,
+                //                              PropertyTag, using_simd>
+                //       point_property;
+
+                //   specfem::compute::load_on_device(index, properties,
+                //                                    point_property);
+                //   return point_property;
+                // }();
 
                 PointFieldDerivativesType field_derivatives(du);
 
@@ -476,6 +487,18 @@ void specfem::domain::impl::kernels::element_kernel_base<
                         point_stress_integrand.F(idim, icomponent);
                   }
                 }
+
+                // typename specfem::datatype::simd<type_real, using_simd>::datatype
+                //     dummy = 0.0;
+
+                // for (int icomponent = 0; icomponent < components;
+                //      ++icomponent) {
+                //   for (int idim = 0; idim < NumberOfDimensions; ++idim) {
+                //     dummy += point_stress_integrand.F(idim, icomponent);
+                //   }
+                // }
+
+                // stress_integrand.F(0, 0, 0, 0, 0) = dummy;
               });
 
           team.team_barrier();
@@ -486,7 +509,7 @@ void specfem::domain::impl::kernels::element_kernel_base<
               [&](const typename ChunkPolicyType::iterator_type::index_type
                       &iterator_index,
                   const typename PointAccelerationType::ViewType &result) {
-                const auto index = iterator_index.index;
+                auto index = iterator_index.index;
                 PointAccelerationType acceleration(result);
 
                 for (int icomponent = 0; icomponent < components;

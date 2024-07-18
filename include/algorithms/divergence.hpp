@@ -13,7 +13,7 @@ template <typename MemberType, typename IteratorType, typename VectorFieldType,
           std::enable_if_t<(VectorFieldType::isChunkViewType &&
                             VectorFieldType::isVectorViewType),
                            int> = 0>
-KOKKOS_FUNCTION void divergence(
+__declspec(noinline) KOKKOS_FUNCTION void divergence(
     const MemberType &team, const IteratorType &iterator,
     const specfem::compute::partial_derivatives &partial_derivatives,
     const Kokkos::View<type_real *,
@@ -120,13 +120,9 @@ KOKKOS_FUNCTION void divergence(
         //   }
         // }
 
-        const datatype jacobian = [&]() {
-          if constexpr (is_host_space) {
-            return partial_derivatives.h_jacobian(ispec, iz, ix);
-          } else {
-            return partial_derivatives.jacobian(ispec, iz, ix);
-          }
-        }();
+        const datatype jacobian =
+            (is_host_space) ? partial_derivatives.h_jacobian(ispec, iz, ix)
+                            : partial_derivatives.jacobian(ispec, iz, ix);
 
         datatype temp1l[components] = { 0.0 };
         datatype temp2l[components] = { 0.0 };

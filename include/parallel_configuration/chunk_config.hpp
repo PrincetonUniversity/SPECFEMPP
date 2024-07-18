@@ -39,7 +39,7 @@ using default_chunk_config =
     chunk_config<chunk_size, tile_size, num_threads, vector_lanes, SIMDtype>;
 #else
 template <typename SIMDtype>
-using default_chunk_config = chunk_config<1, 20, 1, 1, SIMDtype>;
+using default_chunk_config = chunk_config<1, 1, 1, 1, SIMDtype>;
 #endif
 } // namespace parallel_config
 } // namespace specfem

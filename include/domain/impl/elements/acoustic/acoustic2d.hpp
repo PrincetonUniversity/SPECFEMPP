@@ -5,6 +5,7 @@
 #include "domain/impl/elements/element.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
+#include "point/field.hpp"
 #include "point/field_derivatives.hpp"
 #include "point/partial_derivatives.hpp"
 #include "point/properties.hpp"
