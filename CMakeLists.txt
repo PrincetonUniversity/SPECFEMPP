@@ -81,7 +81,10 @@ include_directories(${CMAKE_BINARY_DIR})
 
 add_subdirectory(meshfem2d)
 
-add_definitions(-DENABLE_SIMD)
+if (ENABLE_SIMD)
+        message("-- Enabling SIMD")
+        add_definitions(-DENABLE_SIMD)
+endif()
 
 # Build specfem2d libraries
 add_library(

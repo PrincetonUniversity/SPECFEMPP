@@ -46,7 +46,7 @@ __declspec(noinline) KOKKOS_FUNCTION void gradient(
       "space");
 
   Kokkos::parallel_for(
-      Kokkos::TeamThreadRange(team, iterator.chunk_size()), [=](const int &i) {
+      Kokkos::TeamThreadRange(team, iterator.chunk_size()), [&](const int &i) {
         const auto iterator_index = iterator(i);
         const auto index = iterator_index.index;
         const int ielement = iterator_index.ielement;

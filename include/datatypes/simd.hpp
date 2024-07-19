@@ -11,14 +11,14 @@ template <typename T, bool UseSIMD> struct simd;
 template <typename T> struct simd<T, false> {
   using datatype = T;
   constexpr static bool using_simd = false;
-  constexpr static bool size() { return 1; }
+  constexpr static int size() { return 1; }
 };
 
 #ifdef ENABLE_SIMD
 template <typename T> struct simd<T, true> {
   using datatype = Kokkos::Experimental::native_simd<T>;
   constexpr static bool using_simd = true;
-  constexpr static bool size() {
+  constexpr static int size() {
     return Kokkos::Experimental::native_simd<T>::size();
   }
   using mask_type = typename datatype::mask_type;
@@ -29,7 +29,7 @@ template <typename T> struct simd<T, true> {
   using datatype =
       Kokkos::Experimental::simd<T, Kokkos::Experimental::simd_abi::scalar>;
   constexpr static bool using_simd = true;
-  constexpr static bool size() {
+  constexpr static int size() {
     return Kokkos::Experimental::simd<
         T, Kokkos::Experimental::simd_abi::scalar>::size();
   }
