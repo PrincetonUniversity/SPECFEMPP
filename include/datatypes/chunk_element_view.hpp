@@ -12,12 +12,12 @@ struct ScalarChunkViewType
     : public Kokkos::View<typename specfem::datatype::simd<T, UseSIMD>::datatype
                               [NumberOfElements][NumberOfGLLPoints]
                               [NumberOfGLLPoints][Components],
-                          Kokkos::LayoutLeft, MemorySpace, MemoryTraits> {
+                          MemorySpace, MemoryTraits> {
   using simd = specfem::datatype::simd<T, UseSIMD>;
   using type =
       Kokkos::View<typename simd::datatype[NumberOfElements][NumberOfGLLPoints]
                                           [NumberOfGLLPoints][Components],
-                   Kokkos::LayoutLeft, MemorySpace, MemoryTraits>;
+                   MemorySpace, MemoryTraits>;
   using value_type = typename type::value_type;
   constexpr static int nelements = NumberOfElements;
   constexpr static int ngll = NumberOfGLLPoints;
@@ -37,8 +37,7 @@ struct ScalarChunkViewType
       const ScratchMemorySpace &scratch_memory_space)
       : Kokkos::View<value_type[NumberOfElements][NumberOfGLLPoints]
                                [NumberOfGLLPoints][Components],
-                     Kokkos::LayoutLeft, MemorySpace, MemoryTraits>(
-            scratch_memory_space) {}
+                     MemorySpace, MemoryTraits>(scratch_memory_space) {}
 };
 
 template <typename T, int NumberOfElements, int NumberOfGLLPoints,
@@ -49,13 +48,13 @@ struct VectorChunkViewType
           typename specfem::datatype::simd<T, UseSIMD>::datatype
               [NumberOfElements][NumberOfGLLPoints][NumberOfGLLPoints]
               [NumberOfDimensions][Components],
-          Kokkos::LayoutLeft, MemorySpace, MemoryTraits> {
+          MemorySpace, MemoryTraits> {
   using simd = specfem::datatype::simd<T, UseSIMD>;
   using type = typename Kokkos::View<
       typename simd::datatype[NumberOfElements][NumberOfGLLPoints]
                              [NumberOfGLLPoints][NumberOfDimensions]
                              [Components],
-      Kokkos::LayoutLeft, MemorySpace, MemoryTraits>;
+      MemorySpace, MemoryTraits>;
   using value_type = typename type::value_type;
   constexpr static int nelements = NumberOfElements;
   constexpr static int ngll = NumberOfGLLPoints;
@@ -77,8 +76,7 @@ struct VectorChunkViewType
       : Kokkos::View<
             value_type[NumberOfElements][NumberOfGLLPoints][NumberOfGLLPoints]
                       [NumberOfDimensions][Components],
-            Kokkos::LayoutLeft, MemorySpace, MemoryTraits>(
-            scratch_memory_space) {}
+            MemorySpace, MemoryTraits>(scratch_memory_space) {}
 };
 
 } // namespace datatype
