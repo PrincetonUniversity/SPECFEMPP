@@ -131,6 +131,8 @@ __declspec(noinline) KOKKOS_FUNCTION void divergence(
           for (int icomp = 0; icomp < components; ++icomp) {
             temp1l[icomp] +=
                 f(ielement, iz, l, 0, icomp) * hprimewgll(ix, l) * jacobian;
+          }
+          for (int icomp = 0; icomp < components; ++icomp) {
             temp2l[icomp] +=
                 f(ielement, l, ix, 1, icomp) * hprimewgll(iz, l) * jacobian;
           }

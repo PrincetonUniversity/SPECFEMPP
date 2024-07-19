@@ -1,6 +1,8 @@
 #ifndef MACROS_HPP
 #define MACROS_HPP
 
+#include <iostream>
+
 #ifndef NDEBUG
 #define ASSERT(condition, message)                                             \
   do {                                                                         \

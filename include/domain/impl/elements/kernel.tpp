@@ -479,9 +479,9 @@ void specfem::domain::impl::kernels::element_kernel_base<
 
                 const int ielement = iterator_index.ielement;
 
-                for (int icomponent = 0; icomponent < components;
-                     ++icomponent) {
-                  for (int idim = 0; idim < NumberOfDimensions; ++idim) {
+                for (int idim = 0; idim < NumberOfDimensions; ++idim) {
+                  for (int icomponent = 0; icomponent < components;
+                       ++icomponent) {
                     stress_integrand.F(ielement, index.iz, index.ix, idim,
                                        icomponent) =
                         point_stress_integrand.F(idim, icomponent);

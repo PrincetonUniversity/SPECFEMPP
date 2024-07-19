@@ -57,17 +57,25 @@ private:
 
   KOKKOS_INLINE_FUNCTION
   impl::index_type<false> operator()(const int i, std::false_type) const {
+#ifdef KOKKOS_ENABLE_CUDA
     int ielement = i % num_elements;
     int ispec = indices(ielement);
     int xz = i / num_elements;
     const int iz = xz % ngllz;
     const int ix = xz / ngllz;
+#else
+    const int ix = i % ngllx;
+    const int iz = (i / ngllx) % ngllz;
+    const int ielement = i / (ngllz * ngllx);
+    int ispec = indices(ielement);
+#endif
     return impl::index_type<false>(ielement,
                                    specfem::point::index(ispec, iz, ix));
   }
 
   KOKKOS_INLINE_FUNCTION
   impl::index_type<true> operator()(const int i, std::true_type) const {
+#ifdef KOKKOS_ENABLE_CUDA
     int ielement = i % num_elements;
     int simd_elements = (simd_size + ielement > indices.extent(0))
                             ? indices.extent(0) - ielement
@@ -76,6 +84,15 @@ private:
     int xz = i / num_elements;
     const int iz = xz % ngllz;
     const int ix = xz / ngllz;
+#else
+    const int ix = i % ngllx;
+    const int iz = (i / ngllx) % ngllz;
+    const int ielement = i / (ngllz * ngllx);
+    int simd_elements = (simd_size + ielement > indices.extent(0))
+                            ? indices.extent(0) - ielement
+                            : simd_size;
+    int ispec = indices(ielement);
+#endif
     return impl::index_type<true>(
         ielement, specfem::point::simd_index(ispec, simd_elements, iz, ix));
   }
