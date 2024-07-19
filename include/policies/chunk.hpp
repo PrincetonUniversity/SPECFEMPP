@@ -138,15 +138,15 @@ namespace policy {
 template <typename ParallelConfig, typename... PolicyTraits>
 struct element_chunk : public Kokkos::TeamPolicy<PolicyTraits...> {
 public:
-  constexpr static bool isChunkable = true; ///< Chunkable policy
-  constexpr static bool isIterable = false; ///< Not iterable
+  using simd = typename ParallelConfig::simd;    ///< SIMD configuration
+  constexpr static int simd_size = simd::size(); ///< SIMD vector size
+  constexpr static bool isChunkable = true;      ///< Chunkable policy
+  constexpr static bool isIterable = false;      ///< Not iterable
   constexpr static int ChunkSize = ParallelConfig::chunk_size;   ///< Chunk size
   constexpr static int NumThreads = ParallelConfig::num_threads; ///< Chunk size
   constexpr static int VectorLanes =
       ParallelConfig::vector_lanes;                          ///< Vector lanes
   constexpr static int TileSize = ParallelConfig::tile_size; ///< Tile size
-
-  using simd = typename ParallelConfig::simd; ///< SIMD configuration
 
   using PolicyType =
       Kokkos::TeamPolicy<PolicyTraits...>; ///< Kokkos::TeamPolicy type
@@ -170,7 +170,8 @@ public:
    * @param view View of elements to chunk
    */
   element_chunk(const ViewType &view, int ngllz, int ngllx)
-      : PolicyType(view.extent(0) / TileSize + (view.extent(0) % TileSize != 0),
+      : PolicyType(view.extent(0) / (TileSize * simd_size) +
+                       (view.extent(0) % (TileSize * simd_size) != 0),
                    NumThreads, VectorLanes),
         elements(view), ngllz(ngllz), ngllx(ngllx) {
 #if KOKKOS_VERSION < 40100
@@ -196,9 +197,9 @@ public:
   KOKKOS_INLINE_FUNCTION
   auto league_iterator(const int start_index) const {
     const int start = start_index;
-    const int end = (start + ChunkSize > elements.extent(0))
+    const int end = (start + ChunkSize * simd_size > elements.extent(0))
                         ? elements.extent(0)
-                        : start + ChunkSize;
+                        : start + ChunkSize * simd_size;
     const auto my_indices =
         Kokkos::subview(elements, Kokkos::make_pair(start, end));
     return specfem::iterator::chunk<ViewType, simd>(my_indices, ngllz, ngllx);

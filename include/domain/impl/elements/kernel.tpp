@@ -8,6 +8,8 @@
 #include "chunk_element/stress_integrand.hpp"
 #include "compute/interface.hpp"
 // #include "elastic/elastic2d.hpp"
+#include "acoustic/acoustic2d.tpp"
+#include "elastic/elastic2d.tpp"
 #include "element.hpp"
 #include "enumerations/interface.hpp"
 #include "enumerations/specfem_enums.hpp"
@@ -16,8 +18,6 @@
 #include "parallel_configuration/chunk_config.hpp"
 #include "policies/chunk.hpp"
 #include "quadrature/interface.hpp"
-#include "elastic/elastic2d.tpp"
-#include "acoustic/acoustic2d.tpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -358,6 +358,8 @@ void specfem::domain::impl::kernels::element_kernel_base<
 
   using simd = specfem::datatype::simd<type_real, using_simd>;
 
+  constexpr int simd_size = simd::size();
+
   using ParallelConfig = specfem::parallel_config::default_chunk_config<simd>;
   // Element field type - represents which fields to fetch from global field
   // struct
@@ -414,10 +416,10 @@ void specfem::domain::impl::kernels::element_kernel_base<
         ChunkStressIntegrandType stress_integrand(team);
 
         specfem::compute::load_on_device(team, quadrature, element_quadrature);
-        for (int tile = 0; tile < ChunkPolicyType::TileSize;
-             tile += ChunkPolicyType::ChunkSize) {
+        for (int tile = 0; tile < ChunkPolicyType::TileSize * simd_size;
+             tile += ChunkPolicyType::ChunkSize * simd_size) {
           const int starting_element_index =
-              team.league_rank() * ChunkPolicyType::TileSize + tile;
+              team.league_rank() * ChunkPolicyType::TileSize * simd_size + tile;
 
           if (starting_element_index >= nelements) {
             break;
@@ -445,15 +447,17 @@ void specfem::domain::impl::kernels::element_kernel_base<
                                                  point_partial_derivatives);
 
                 specfem::point::properties<DimensionType, MediumTag,
-                                                 PropertyTag, using_simd>
+                                           PropertyTag, using_simd>
                     point_property;
                 specfem::compute::load_on_device(index, properties,
                                                  point_property);
                 // const auto point_partial_derivatives = [&]()
-                //     -> specfem::point::partial_derivatives2<using_simd, false> {
+                //     -> specfem::point::partial_derivatives2<using_simd,
+                //     false> {
                 //   specfem::point::partial_derivatives2<using_simd, false>
                 //       point_partial_derivatives;
-                //   specfem::compute::load_on_device(index, partial_derivatives,
+                //   specfem::compute::load_on_device(index,
+                //   partial_derivatives,
                 //                                    point_partial_derivatives);
                 //   return point_partial_derivatives;
                 // }();
@@ -488,7 +492,8 @@ void specfem::domain::impl::kernels::element_kernel_base<
                   }
                 }
 
-                // typename specfem::datatype::simd<type_real, using_simd>::datatype
+                // typename specfem::datatype::simd<type_real,
+                // using_simd>::datatype
                 //     dummy = 0.0;
 
                 // for (int icomponent = 0; icomponent < components;
@@ -514,7 +519,8 @@ void specfem::domain::impl::kernels::element_kernel_base<
 
                 for (int icomponent = 0; icomponent < components;
                      icomponent++) {
-                  acceleration.acceleration(icomponent) *= static_cast<type_real>(-1.0);
+                  acceleration.acceleration(icomponent) *=
+                      static_cast<type_real>(-1.0);
                 }
 
                 specfem::compute::atomic_add_on_device(index, acceleration,

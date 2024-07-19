@@ -171,7 +171,7 @@ load_on_device(const MemberType &team,
                 "Calling team must have a host execution space");
 
   Kokkos::parallel_for(
-      Kokkos::TeamThreadRange(team, NGLL * NGLL), [=](const int &xz) {
+      Kokkos::TeamThreadRange(team, NGLL * NGLL), [&](const int &xz) {
         int ix, iz;
         sub2ind(xz, NGLL, iz, ix);
         if constexpr (store_hprime_gll) {
