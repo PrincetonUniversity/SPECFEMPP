@@ -110,10 +110,10 @@ struct partial_derivatives {
 template <typename PartialDerivativesType,
           typename std::enable_if_t<PartialDerivativesType::simd::using_simd,
                                     int> = 0>
-__declspec(noinline) KOKKOS_INLINE_FUNCTION void load_on_device(
-    const specfem::point::simd_index &index,
-    const specfem::compute::partial_derivatives &derivatives,
-    PartialDerivativesType &partial_derivatives) {
+NOINLINE KOKKOS_INLINE_FUNCTION void
+load_on_device(const specfem::point::simd_index &index,
+               const specfem::compute::partial_derivatives &derivatives,
+               PartialDerivativesType &partial_derivatives) {
 
   const int ispec = index.ispec;
   const int nspec = derivatives.nspec;

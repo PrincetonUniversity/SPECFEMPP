@@ -95,10 +95,10 @@ struct properties {
 };
 
 template <typename PropertiesType, typename IndexType>
-__declspec(noinline) KOKKOS_FUNCTION
-    void load_on_device(const IndexType &lcoord,
-                        const specfem::compute::properties &properties,
-                        PropertiesType &point_properties) {
+NOINLINE KOKKOS_FUNCTION void
+load_on_device(const IndexType &lcoord,
+               const specfem::compute::properties &properties,
+               PropertiesType &point_properties) {
   const int ispec = lcoord.ispec;
 
   IndexType l_index = lcoord;

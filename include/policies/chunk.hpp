@@ -186,7 +186,7 @@ public:
    *
    * @return PolicyType&  Reference to the policy
    */
-  inline PolicyType &get_policy() { return *this; }
+  inline const PolicyType &get_policy() const { return *this; }
 
   /**
    * @brief Get the chunk of elements for the team
