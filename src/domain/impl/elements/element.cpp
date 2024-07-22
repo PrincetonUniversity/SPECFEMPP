@@ -1,6 +1,6 @@
 #include "domain/impl/elements/element.hpp"
-// #include "domain/impl/elements/acoustic/acoustic2d.tpp"
-// #include "domain/impl/elements/elastic/elastic2d.tpp"
+#include "domain/impl/elements/acoustic/acoustic2d.tpp"
+#include "domain/impl/elements/elastic/elastic2d.tpp"
 #include "enumerations/medium.hpp"
 #include "point/field_derivatives.hpp"
 #include "point/partial_derivatives.hpp"

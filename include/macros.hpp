@@ -44,4 +44,17 @@
   } while (false)
 #endif // NDEBUG
 
+// if intel compiler
+#ifndef ENABLE_PROFILING
+#ifdef __INTEL_COMPILER
+#define NOINLINE __declspec(noinline)
+#elif __GNUC__
+#define NOINLINE __attribute__((noinline))
+#elif __CUDA__
+#define NOINLINE __noinline__
+#endif
+#else
+#define NOINLINE
+#endif
+
 #endif /* MACROS_HPP */

@@ -25,4 +25,4 @@ examples/*/Par_File
 *.ncu-rep
 .snakemake/
 autotuning/
-r*00*
+profiles

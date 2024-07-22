@@ -2,6 +2,8 @@
 #define _SPECFEM_TIMESCHEME_NEWMARK_TPP_
 
 #include "timescheme/newmark.hpp"
+#include "policies/range.hpp"
+#include "parallel_configuration/range_config.hpp"
 
 namespace {
 template <specfem::element::medium_tag MediumType,
@@ -14,7 +16,7 @@ void corrector_phase_impl(
       specfem::medium::medium<specfem::dimension::type::dim2,
                               MediumType>::components;
   const int nglob = field.template get_nglob<MediumType>();
-  constexpr bool using_simd = false;
+  constexpr bool using_simd = true;
   using LoadFieldType =
       specfem::point::field<specfem::dimension::type::dim2, MediumType, false,
                             false, true, false, using_simd>;
@@ -22,20 +24,47 @@ void corrector_phase_impl(
       specfem::point::field<specfem::dimension::type::dim2, MediumType, false,
                             true, false, false, using_simd>;
 
+  using ParallelConfig = specfem::parallel_config::default_range_config<
+      specfem::datatype::simd<type_real, using_simd> >;
+
+  using RangePolicyType =
+      specfem::policy::range<ParallelConfig, Kokkos::DefaultExecutionSpace>;
+
+  const RangePolicyType range_policy(nglob);
+
   Kokkos::parallel_for(
       "specfem::TimeScheme::Newmark::corrector_phase_impl",
-      specfem::kokkos::DeviceRange(0, nglob), KOKKOS_LAMBDA(const int iglob) {
+      range_policy.get_policy(), KOKKOS_LAMBDA(const int iglob) {
+        const auto iterator = range_policy.range_iterator(iglob);
+        const auto index = iterator(0);
+
         LoadFieldType load;
         AddFieldType add;
 
-        specfem::compute::load_on_device(iglob, field, load);
+        specfem::compute::load_on_device(index.index, field, load);
 
         for (int idim = 0; idim < components; ++idim) {
           add.velocity(idim) += deltatover2 * load.acceleration(idim);
         }
 
-        specfem::compute::add_on_device(iglob, add, field);
+        specfem::compute::add_on_device(index.index, add, field);
       });
+
+  // Kokkos::parallel_for(
+  //     "specfem::TimeScheme::Newmark::corrector_phase_impl",
+  //     specfem::kokkos::DeviceRange(0, nglob), KOKKOS_LAMBDA(const int iglob)
+  //     {
+  //       LoadFieldType load;
+  //       AddFieldType add;
+
+  //       specfem::compute::load_on_device(iglob, field, load);
+
+  //       for (int idim = 0; idim < components; ++idim) {
+  //         add.velocity(idim) += deltatover2 * load.acceleration(idim);
+  //       }
+
+  //       specfem::compute::add_on_device(iglob, add, field);
+  //     });
 
   return;
 }
@@ -51,7 +80,7 @@ void predictor_phase_impl(
       specfem::medium::medium<specfem::dimension::type::dim2,
                               MediumType>::components;
   const int nglob = field.template get_nglob<MediumType>();
-  constexpr bool using_simd = false;
+  constexpr bool using_simd = true;
   using LoadFieldType =
       specfem::point::field<specfem::dimension::type::dim2, MediumType, false,
                             true, true, false, using_simd>;
@@ -62,14 +91,25 @@ void predictor_phase_impl(
       specfem::point::field<specfem::dimension::type::dim2, MediumType, false,
                             false, true, false, using_simd>;
 
+  using ParallelConfig = specfem::parallel_config::default_range_config<
+      specfem::datatype::simd<type_real, using_simd> >;
+
+  using RangePolicyType =
+      specfem::policy::range<ParallelConfig, Kokkos::DefaultExecutionSpace>;
+
+  const RangePolicyType range_policy(nglob);
+
   Kokkos::parallel_for(
       "specfem::TimeScheme::Newmark::predictor_phase_impl",
-      specfem::kokkos::DeviceRange(0, nglob), KOKKOS_LAMBDA(const int iglob) {
+      range_policy.get_policy(), KOKKOS_LAMBDA(const int iglob) {
+        const auto iterator = range_policy.range_iterator(iglob);
+        const auto index = iterator(0);
+
         LoadFieldType load;
         AddFieldType add;
         StoreFieldType store;
 
-        specfem::compute::load_on_device(iglob, field, load);
+        specfem::compute::load_on_device(index.index, field, load);
 
         for (int idim = 0; idim < components; ++idim) {
           add.displacement(idim) += deltat * load.velocity(idim) +
@@ -80,9 +120,33 @@ void predictor_phase_impl(
           store.acceleration(idim) = 0;
         }
 
-        specfem::compute::add_on_device(iglob, add, field);
-        specfem::compute::store_on_device(iglob, store, field);
+        specfem::compute::add_on_device(index.index, add, field);
+        specfem::compute::store_on_device(index.index, store, field);
       });
+
+  // Kokkos::parallel_for(
+  //     "specfem::TimeScheme::Newmark::predictor_phase_impl",
+  //     specfem::kokkos::DeviceRange(0, nglob), KOKKOS_LAMBDA(const int iglob)
+  //     {
+  //       LoadFieldType load;
+  //       AddFieldType add;
+  //       StoreFieldType store;
+
+  //       specfem::compute::load_on_device(iglob, field, load);
+
+  //       for (int idim = 0; idim < components; ++idim) {
+  //         add.displacement(idim) += deltat * load.velocity(idim) +
+  //                                   deltasquareover2 *
+  //                                   load.acceleration(idim);
+
+  //         add.velocity(idim) += deltatover2 * load.acceleration(idim);
+
+  //         store.acceleration(idim) = 0;
+  //       }
+
+  //       specfem::compute::add_on_device(iglob, add, field);
+  //       specfem::compute::store_on_device(iglob, store, field);
+  //     });
 
   return;
 }
