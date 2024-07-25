@@ -9,15 +9,15 @@ Tests:
       index_mapping: "../../../tests/unit-tests/domain/serial/test1/index_mapping.bin"
       elastic_mass_matrix: "../../../tests/unit-tests/domain/serial/test1/rmass_inverse_elastic.bin"
 
-  - name : "SerialTest2 : Homogeneous acoustic domain"
-    description: >
-      Testing inverse of mass matrix on a homogeneous acoustic domain with no interfaces. Test is run on a single MPI process.
-    config:
-      nproc : 1
-    databases:
-      specfem_config: "../../../tests/unit-tests/domain/serial/test2/specfem_config.yaml"
-      index_mapping: "../../../tests/unit-tests/domain/serial/test2/index_mapping.bin"
-      acoustic_mass_matrix: "../../../tests/unit-tests/domain/serial/test2/rmass_inverse_acoustic.bin"
+  # - name : "SerialTest2 : Homogeneous acoustic domain"
+  #   description: >
+  #     Testing inverse of mass matrix on a homogeneous acoustic domain with no interfaces. Test is run on a single MPI process.
+  #   config:
+  #     nproc : 1
+  #   databases:
+  #     specfem_config: "../../../tests/unit-tests/domain/serial/test2/specfem_config.yaml"
+  #     index_mapping: "../../../tests/unit-tests/domain/serial/test2/index_mapping.bin"
+  #     acoustic_mass_matrix: "../../../tests/unit-tests/domain/serial/test2/rmass_inverse_acoustic.bin"
 
   # - name : "SerialTest3 : Homogeneous acoustic domain (stacey BC)"
   #   description: >

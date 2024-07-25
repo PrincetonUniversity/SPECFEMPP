@@ -933,7 +933,7 @@ NOINLINE KOKKOS_FUNCTION void store_on_device(
     const specfem::point::index &index, const ViewType &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
 
-  constexpr static int MediumType = ViewType::medium_tag;
+  constexpr static auto MediumType = ViewType::medium_tag;
 
   const int iglob = field.assembly_index_mapping(
       field.index_mapping(index.ispec, index.iz, index.ix),
@@ -950,7 +950,7 @@ NOINLINE KOKKOS_FUNCTION void store_on_device(
     const specfem::point::assembly_index &index, const ViewType &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
 
-  constexpr static int MediumType = ViewType::medium_tag;
+  constexpr static auto MediumType = ViewType::medium_tag;
 
   const int iglob = index.iglob;
 
@@ -965,7 +965,7 @@ NOINLINE KOKKOS_FUNCTION void store_on_device(
     const specfem::point::simd_index &index, const ViewType &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
 
-  constexpr static int MediumType = ViewType::medium_tag;
+  constexpr static auto MediumType = ViewType::medium_tag;
   int iglob[ViewType::simd::size()];
 
   for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
@@ -986,7 +986,7 @@ void store_on_host(
     const specfem::point::index &index, const ViewType &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
 
-  constexpr static int MediumType = ViewType::medium_tag;
+  constexpr static auto MediumType = ViewType::medium_tag;
 
   const int iglob = field.h_assembly_index_mapping(
       field.h_index_mapping(index.ispec, index.iz, index.ix),
@@ -1003,7 +1003,7 @@ void store_on_host(
     const specfem::point::assembly_index &index, const ViewType &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
 
-  constexpr static int MediumType = ViewType::medium_tag;
+  constexpr static auto MediumType = ViewType::medium_tag;
 
   const int iglob = index.iglob;
 
@@ -1018,7 +1018,7 @@ void store_on_host(
     const specfem::point::simd_index &index, const ViewType &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
 
-  constexpr static int MediumType = ViewType::medium_tag;
+  constexpr static auto MediumType = ViewType::medium_tag;
   int iglob[ViewType::simd::size()];
 
   for (int lane = 0; lane < ViewType::simd::size(); ++lane) {

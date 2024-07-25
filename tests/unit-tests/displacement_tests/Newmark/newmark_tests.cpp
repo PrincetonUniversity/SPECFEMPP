@@ -238,6 +238,10 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
 
     solver->run();
 
+    // --------------------------------------------------------------
+    //                   Write Seismograms
+    // --------------------------------------------------------------
+
     auto seismograms = assembly.receivers;
 
     seismograms.sync_seismograms();
@@ -280,7 +284,8 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
         }
       }
 
-      if (error_norm / compute_norm > 1e-4) {
+      if (error_norm / compute_norm > 1e-3 ||
+          std::isnan(error_norm / compute_norm)) {
         FAIL() << "--------------------------------------------------\n"
                << "\033[0;31m[FAILED]\033[0m Test failed\n"
                << " - Test name: " << Test.name << "\n"

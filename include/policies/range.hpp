@@ -83,16 +83,18 @@ public:
   range() = default;
 
   KOKKOS_FUNCTION range(const int range_size)
-      : PolicyType(0, range_size / simd_size + (range_size % simd_size != 0)) {}
+      : PolicyType(0, range_size / simd_size + (range_size % simd_size != 0)),
+        range_size(range_size) {}
 
   inline const PolicyType &get_policy() const { return *this; }
 
   KOKKOS_FUNCTION auto range_iterator(const int range_index) const {
+    const int starting_index = range_index * simd_size;
     const int number_elements = (range_index + simd_size < range_size)
                                     ? simd_size
                                     : range_size - range_index;
 
-    return iterator::range<simd>(range_index, number_elements);
+    return specfem::iterator::range<simd>(starting_index, number_elements);
   }
 
 private:

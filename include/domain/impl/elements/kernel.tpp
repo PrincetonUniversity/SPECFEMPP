@@ -84,6 +84,8 @@ void specfem::domain::impl::kernels::element_kernel_base<
   const auto wgll = quadrature.gll.weights;
 
   using simd = specfem::datatype::simd<type_real, using_simd>;
+
+  constexpr int simd_size = simd::size();
   using ParallelConfig = specfem::parallel_config::default_chunk_config<simd>;
 
   using ChunkPolicyType =
@@ -98,10 +100,10 @@ void specfem::domain::impl::kernels::element_kernel_base<
       "specfem::domain::impl::kernels::elements::compute_mass_matrix",
       chunk_policy.get_policy(),
       KOKKOS_CLASS_LAMBDA(const ChunkPolicyType::member_type &team) {
-        for (int tile = 0; tile < ChunkPolicyType::TileSize;
-             tile += ChunkPolicyType::ChunkSize) {
+        for (int tile = 0; tile < ChunkPolicyType::TileSize * simd_size;
+             tile += ChunkPolicyType::ChunkSize * simd_size) {
           const int starting_element_index =
-              team.league_rank() * ChunkPolicyType::TileSize + tile;
+              team.league_rank() * ChunkPolicyType::TileSize * simd_size + tile;
 
           if (starting_element_index >= nelements) {
             break;
