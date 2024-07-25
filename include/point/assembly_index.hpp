@@ -25,7 +25,7 @@ struct simd_assembly_index {
   simd_assembly_index() = default;
 
   KOKKOS_FUNCTION
-  simd_assembly_index(const int &number_points, const int &iglob)
+  simd_assembly_index(const int &iglob, const int &number_points)
       : number_points(number_points), iglob(iglob) {}
 };
 } // namespace point

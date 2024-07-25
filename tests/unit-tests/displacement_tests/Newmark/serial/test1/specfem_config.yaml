@@ -29,8 +29,8 @@ parameters:
       forward:
         writer:
           seismogram:
-            output-format: ascii
-            output-folder: "."
+            format: ascii
+            directory: "."
 
   receivers:
     stations-file: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test1/STATIONS"
