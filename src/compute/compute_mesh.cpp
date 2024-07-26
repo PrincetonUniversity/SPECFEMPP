@@ -1,4 +1,6 @@
 #include "compute/interface.hpp"
+#include "enumerations/boundary.hpp"
+#include "enumerations/medium.hpp"
 #include "jacobian/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
@@ -155,6 +157,7 @@ specfem::compute::points assign_numbering(
 } // namespace
 
 specfem::compute::control_nodes::control_nodes(
+    const specfem::compute::mesh_to_compute_mapping &mapping,
     const specfem::mesh::control_nodes &control_nodes)
     : ngnod(control_nodes.ngnod), nspec(control_nodes.nspec),
       index_mapping("specfem::compute::control_nodes::index_mapping",
@@ -168,7 +171,8 @@ specfem::compute::control_nodes::control_nodes(
       "specfem::compute::control_nodes::assign_index_mapping",
       specfem::kokkos::HostMDrange<2>({ 0, 0 }, { ngnod, nspec }),
       [=](const int in, const int ispec) {
-        const int index = control_nodes.knods(in, ispec);
+        const int ispec_mesh = mapping.compute_to_mesh(ispec);
+        const int index = control_nodes.knods(in, ispec_mesh);
         h_index_mapping(ispec, in) = index;
         h_coord(0, ispec, in) = control_nodes.coord(0, index);
         h_coord(1, ispec, in) = control_nodes.coord(1, index);
@@ -217,11 +221,103 @@ specfem::compute::shape_functions::shape_functions(
   return;
 }
 
-specfem::compute::mesh::mesh(
-    const specfem::mesh::control_nodes &control_nodes,
-    const specfem::quadrature::quadratures &quadratures)
-    : control_nodes(control_nodes), quadratures(quadratures, control_nodes) {
+specfem::compute::mesh_to_compute_mapping::mesh_to_compute_mapping(
+    const specfem::mesh::tags &tags)
+    : compute_to_mesh("specfem::compute::mesh_to_compute_mapping", tags.nspec),
+      mesh_to_compute("specfem::compute::mesh_to_compute_mapping", tags.nspec) {
 
+  const int nspec = tags.nspec;
+
+  std::vector<int> elastic_isotropic_ispec;
+  std::vector<int> acoustic_isotropic_ispec;
+  std::vector<int> free_surface_ispec;
+  std::vector<int> elastic_isotropic_stacey_ispec;
+  std::vector<int> acoustic_isotropic_stacey_ispec;
+  std::vector<int> acoustic_isotropic_stacey_dirichlet_ispec;
+
+  for (int ispec = 0; ispec < nspec; ispec++) {
+    const auto tag = tags.tags_container(ispec);
+    if (tag.medium_tag == specfem::element::medium_tag::elastic &&
+        tag.property_tag == specfem::element::property_tag::isotropic &&
+        tag.boundary_tag == specfem::element::boundary_tag::none) {
+      elastic_isotropic_ispec.push_back(ispec);
+    } else if (tag.medium_tag == specfem::element::medium_tag::acoustic &&
+               tag.property_tag == specfem::element::property_tag::isotropic &&
+               tag.boundary_tag == specfem::element::boundary_tag::none) {
+      acoustic_isotropic_ispec.push_back(ispec);
+    } else if (tag.medium_tag == specfem::element::medium_tag::acoustic &&
+               tag.property_tag == specfem::element::property_tag::isotropic &&
+               tag.boundary_tag ==
+                   specfem::element::boundary_tag::acoustic_free_surface) {
+      free_surface_ispec.push_back(ispec);
+    } else if (tag.medium_tag == specfem::element::medium_tag::elastic &&
+               tag.property_tag == specfem::element::property_tag::isotropic &&
+               tag.boundary_tag == specfem::element::boundary_tag::stacey) {
+      elastic_isotropic_stacey_ispec.push_back(ispec);
+    } else if (tag.medium_tag == specfem::element::medium_tag::acoustic &&
+               tag.property_tag == specfem::element::property_tag::isotropic &&
+               tag.boundary_tag == specfem::element::boundary_tag::stacey) {
+      acoustic_isotropic_stacey_ispec.push_back(ispec);
+    } else if (tag.medium_tag == specfem::element::medium_tag::acoustic &&
+               tag.property_tag == specfem::element::property_tag::isotropic &&
+               tag.boundary_tag ==
+                   specfem::element::boundary_tag::composite_stacey_dirichlet) {
+      acoustic_isotropic_stacey_dirichlet_ispec.push_back(ispec);
+    } else {
+      throw std::runtime_error("Unknown tag found in compute_to_mesh_ordering");
+    }
+  }
+
+  assert(elastic_isotropic_ispec.size() + acoustic_isotropic_ispec.size() +
+             free_surface_ispec.size() + elastic_isotropic_stacey_ispec.size() +
+             acoustic_isotropic_stacey_ispec.size() +
+             acoustic_isotropic_stacey_dirichlet_ispec.size() ==
+         nspec);
+
+  int ispec = 0;
+  for (const auto &ispecs : elastic_isotropic_ispec) {
+    compute_to_mesh(ispec) = ispecs;
+    mesh_to_compute(ispecs) = ispec;
+    ispec++;
+  }
+
+  for (const auto &ispecs : elastic_isotropic_stacey_ispec) {
+    compute_to_mesh(ispec) = ispecs;
+    mesh_to_compute(ispecs) = ispec;
+    ispec++;
+  }
+
+  for (const auto &ispecs : acoustic_isotropic_ispec) {
+    compute_to_mesh(ispec) = ispecs;
+    mesh_to_compute(ispecs) = ispec;
+    ispec++;
+  }
+
+  for (const auto &ispecs : acoustic_isotropic_stacey_ispec) {
+    compute_to_mesh(ispec) = ispecs;
+    mesh_to_compute(ispecs) = ispec;
+    ispec++;
+  }
+
+  for (const auto &ispecs : acoustic_isotropic_stacey_dirichlet_ispec) {
+    compute_to_mesh(ispec) = ispecs;
+    mesh_to_compute(ispecs) = ispec;
+    ispec++;
+  }
+
+  assert(ispec == nspec);
+}
+
+specfem::compute::mesh::mesh(
+    const specfem::mesh::tags &tags,
+    const specfem::mesh::control_nodes &m_control_nodes,
+    const specfem::quadrature::quadratures &m_quadratures)
+    : mapping(tags) {
+
+  this->control_nodes =
+      specfem::compute::control_nodes(this->mapping, m_control_nodes);
+  this->quadratures =
+      specfem::compute::quadrature(m_quadratures, m_control_nodes);
   nspec = this->control_nodes.nspec;
   ngllx = this->quadratures.gll.N;
   ngllz = this->quadratures.gll.N;
@@ -314,7 +410,8 @@ specfem::compute::points specfem::compute::mesh::assemble() {
 //   specfem::kokkos::HostView1d<qp> pcart_cord(
 //       "specfem::compute::compute::pcart_cord", nspec * ngllxz);
 //   int scratch_size =
-//       specfem::kokkos::HostScratchView2d<type_real>::shmem_size(ndim, ngnod);
+//       specfem::kokkos::HostScratchView2d<type_real>::shmem_size(ndim,
+//       ngnod);
 
 //   // Allocate shape functions
 //   Kokkos::parallel_for(
@@ -327,7 +424,8 @@ specfem::compute::points specfem::compute::mesh::assemble() {
 //         // Always use subviews inside parallel regions
 //         // ** Do not allocate views inside parallel regions **
 //         auto sv_shape2D = Kokkos::subview(shape2D, iz, ix, Kokkos::ALL);
-//         specfem::jacobian::define_shape_functions(sv_shape2D, ixxi, izgamma,
+//         specfem::jacobian::define_shape_functions(sv_shape2D, ixxi,
+//         izgamma,
 //                                                   ngnod);
 //       });
 
@@ -355,14 +453,16 @@ specfem::compute::points specfem::compute::mesh::assemble() {
 //         //-----
 
 //         Kokkos::parallel_for(
-//             Kokkos::TeamThreadRange(teamMember, ngllxz), [&](const int xz) {
+//             Kokkos::TeamThreadRange(teamMember, ngllxz), [&](const int xz)
+//             {
 //               int ix, iz;
 //               sub2ind(xz, ngllx, iz, ix);
 //               const int iloc = ispec * (ngllxz) + xz;
 
 //               // Get x and y coordinates for (ix, iz) point
 //               auto sv_shape2D = Kokkos::subview(shape2D, iz, ix,
-//               Kokkos::ALL); auto [xcor, ycor] = jacobian::compute_locations(
+//               Kokkos::ALL); auto [xcor, ycor] =
+//               jacobian::compute_locations(
 //                   teamMember, s_coorg, ngnod, sv_shape2D);
 //               // ------------
 //               // Hacky way of doing this (but nacessary), because

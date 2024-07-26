@@ -77,7 +77,8 @@ TEST(COMPUTE_TESTS, compute_partial_derivatives) {
 
   specfem::mesh::mesh mesh(test_config.database_filename, mpi);
 
-  specfem::compute::mesh compute_mesh(mesh.control_nodes, quadratures);
+  specfem::compute::mesh compute_mesh(mesh.tags, mesh.control_nodes,
+                                      quadratures);
   specfem::compute::partial_derivatives partial_derivatives(compute_mesh);
 
   const int nspec = compute_mesh.control_nodes.nspec;
@@ -105,15 +106,16 @@ TEST(COMPUTE_TESTS, compute_partial_derivatives) {
                                          point_partial_derivatives);
           return point_partial_derivatives;
         }();
+        const int ispec_mesh = compute_mesh.mapping.compute_to_mesh(ispec);
 
-        EXPECT_NEAR(point_partial_derivatives.xix, xix_ref.data(ispec, iz, ix),
-                    xix_ref.tol);
+        EXPECT_NEAR(point_partial_derivatives.xix,
+                    xix_ref.data(ispec_mesh, iz, ix), xix_ref.tol);
         EXPECT_NEAR(point_partial_derivatives.gammax,
-                    gammax_ref.data(ispec, iz, ix), gammax_ref.tol);
+                    gammax_ref.data(ispec_mesh, iz, ix), gammax_ref.tol);
         EXPECT_NEAR(point_partial_derivatives.gammaz,
-                    gammaz_ref.data(ispec, iz, ix), gammaz_ref.tol);
+                    gammaz_ref.data(ispec_mesh, iz, ix), gammaz_ref.tol);
         EXPECT_NEAR(point_partial_derivatives.jacobian,
-                    jacobian_ref.data(ispec, iz, ix), jacobian_ref.tol);
+                    jacobian_ref.data(ispec_mesh, iz, ix), jacobian_ref.tol);
       }
     }
   }
@@ -138,14 +140,16 @@ TEST(COMPUTE_TESTS, compute_partial_derivatives) {
         }();
 
         for (int i = 0; i < num_elements; ++i) {
+          const int ispec_mesh =
+              compute_mesh.mapping.compute_to_mesh(ispec + i);
           EXPECT_NEAR(point_partial_derivatives.xix[i],
-                      xix_ref.data(ispec + i, iz, ix), xix_ref.tol);
+                      xix_ref.data(ispec_mesh, iz, ix), xix_ref.tol);
           EXPECT_NEAR(point_partial_derivatives.gammax[i],
-                      gammax_ref.data(ispec + i, iz, ix), gammax_ref.tol);
+                      gammax_ref.data(ispec_mesh, iz, ix), gammax_ref.tol);
           EXPECT_NEAR(point_partial_derivatives.gammaz[i],
-                      gammaz_ref.data(ispec + i, iz, ix), gammaz_ref.tol);
+                      gammaz_ref.data(ispec_mesh, iz, ix), gammaz_ref.tol);
           EXPECT_NEAR(point_partial_derivatives.jacobian[i],
-                      jacobian_ref.data(ispec + i, iz, ix), jacobian_ref.tol);
+                      jacobian_ref.data(ispec_mesh, iz, ix), jacobian_ref.tol);
         }
       }
     }

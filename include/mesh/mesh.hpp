@@ -10,6 +10,7 @@
 #include "kokkos_abstractions.h"
 #include "materials/interface.hpp"
 // #include "material_indic/material_indic.hpp"
+#include "mesh/tags/tags.hpp"
 #include "mpi_interfaces/mpi_interfaces.hpp"
 #include "properties/properties.hpp"
 #include "specfem_mpi/interface.hpp"
@@ -38,12 +39,15 @@ struct mesh {
   //                                             ///< material information for
   //                                             ///< every spectral element
 
-  specfem::mesh::boundaries::absorbing_boundary abs_boundary; ///< Struct used
-                                                              ///< to store data
-                                                              ///< required to
-                                                              ///< implement
-                                                              ///< absorbing
-                                                              ///< boundary
+  // specfem::mesh::boundaries::absorbing_boundary abs_boundary; ///< Struct
+  // used
+  //                                                             ///< to store
+  //                                                             data
+  //                                                             ///< required
+  //                                                             to
+  //                                                             ///< implement
+  //                                                             ///< absorbing
+  //                                                             ///< boundary
 
   specfem::mesh::properties parameters; ///< Struct to store simulation launch
                                         ///< parameters
@@ -51,13 +55,19 @@ struct mesh {
   specfem::mesh::coupled_interfaces coupled_interfaces; ///< Struct to store
                                                         ///< coupled interfaces
 
-  specfem::mesh::boundaries::acoustic_free_surface
-      acfree_surface; ///< Struct used to store data required to implement
-                      ///< acoustic free surface
+  specfem::mesh::boundaries boundaries; ///< Struct to store information at the
+                                        ///< boundaries
 
-  specfem::mesh::boundaries::forcing_boundary
-      acforcing_boundary; ///< Struct used to store data required to implement
-                          ///< acoustic forcing boundary
+  // specfem::mesh::boundaries::acoustic_free_surface
+  //     acfree_surface; ///< Struct used to store data required to implement
+  //                     ///< acoustic free surface
+
+  // specfem::mesh::boundaries::forcing_boundary
+  //     acforcing_boundary; ///< Struct used to store data required to
+  //     implement
+  //                         ///< acoustic forcing boundary
+
+  specfem::mesh::tags tags; ///< Struct to store tags for every spectral element
 
   specfem::mesh::elements::tangential_elements tangential_nodes; ///< Defines
                                                                  ///< tangential

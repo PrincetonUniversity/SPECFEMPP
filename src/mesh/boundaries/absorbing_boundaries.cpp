@@ -4,7 +4,7 @@
 #include <Kokkos_Core.hpp>
 #include <vector>
 
-specfem::mesh::boundaries::absorbing_boundary::absorbing_boundary(
+specfem::mesh::absorbing_boundary::absorbing_boundary(
     const int num_abs_boundary_faces) {
   if (num_abs_boundary_faces > 0) {
     this->nelements = num_abs_boundary_faces;
@@ -117,7 +117,7 @@ find_corners(const specfem::kokkos::HostView1d<int> ispec_edge,
   return std::make_tuple(ispec_corners, type_corners);
 }
 
-specfem::mesh::boundaries::absorbing_boundary::absorbing_boundary(
+specfem::mesh::absorbing_boundary::absorbing_boundary(
     std::ifstream &stream, int num_abs_boundary_faces, const int nspec,
     const specfem::MPI::MPI *mpi) {
 

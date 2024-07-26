@@ -56,6 +56,16 @@ specfem::domain::impl::kernels::element_kernel_base<
     }
   }
 
+  // Assert that ispec of the elements is contiguous
+  for (int ispec = 0; ispec < nelements; ispec++) {
+    if (ispec != 0) {
+      if (h_element_kernel_index_mapping(ispec) !=
+          h_element_kernel_index_mapping(ispec - 1) + 1) {
+        throw std::runtime_error("Element index mapping is not contiguous");
+      }
+    }
+  }
+
   Kokkos::deep_copy(element_kernel_index_mapping,
                     h_element_kernel_index_mapping);
   return;

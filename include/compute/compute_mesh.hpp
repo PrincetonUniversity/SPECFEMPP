@@ -14,6 +14,25 @@
 namespace specfem {
 namespace compute {
 
+struct mesh_to_compute_mapping {
+  int nspec; ///< Number of spectral elements
+  /**
+   * @brief Mapping of spectral element index from C++ to legacy Fortran
+   *
+   * @code
+   *  index_mapping[ispec] = fortran_index - 1
+   * @endcode
+   *
+   */
+  specfem::kokkos::HostView1d<int> compute_to_mesh;
+
+  specfem::kokkos::HostView1d<int> mesh_to_compute;
+
+  mesh_to_compute_mapping() = default;
+
+  mesh_to_compute_mapping(const specfem::mesh::tags &tags);
+};
+
 struct shape_functions {
   int ngllz; ///< Number of quadrature points in z dimension
   int ngllx; ///< Number of quadrature points in x dimension
@@ -89,7 +108,8 @@ struct control_nodes {
   specfem::kokkos::HostMirror3d<type_real> h_coord;   ///< (x, z) for every
                                                       ///< distinct control node
 
-  control_nodes(const specfem::mesh::control_nodes &control_nodes);
+  control_nodes(const specfem::compute::mesh_to_compute_mapping &mapping,
+                const specfem::mesh::control_nodes &control_nodes);
 
   control_nodes() = default;
 };
@@ -132,19 +152,24 @@ struct points {
  *
  */
 struct mesh {
-  int nspec;                                     ///< Number of spectral
-                                                 ///< elements
-  int ngllz;                                     ///< Number of quadrature
-                                                 ///< points in z dimension
-  int ngllx;                                     ///< Number of quadrature
-                                                 ///< points in x dimension
-  specfem::compute::control_nodes control_nodes; ///< Control nodes
-  specfem::compute::points points;               ///< Quadrature points
-  specfem::compute::quadrature quadratures;      ///< Quadrature object
+  int nspec;                                         ///< Number of spectral
+                                                     ///< elements
+  int ngllz;                                         ///< Number of quadrature
+                                                     ///< points in z dimension
+  int ngllx;                                         ///< Number of quadrature
+                                                     ///< points in x dimension
+  specfem::compute::control_nodes control_nodes;     ///< Control nodes
+  specfem::compute::points points;                   ///< Quadrature points
+  specfem::compute::quadrature quadratures;          ///< Quadrature object
+  specfem::compute::mesh_to_compute_mapping mapping; ///< Mapping of spectral
+                                                     ///< element index between
+                                                     ///< mesh database ordering
+                                                     ///< and compute ordering
 
   mesh() = default;
 
-  mesh(const specfem::mesh::control_nodes &control_nodes,
+  mesh(const specfem::mesh::tags &tags,
+       const specfem::mesh::control_nodes &control_nodes,
        const specfem::quadrature::quadratures &quadratures);
 
   specfem::compute::points assemble();

@@ -50,6 +50,15 @@ specfem::frechet_derivatives::impl::frechet_elements<
     }
   }
 
+  // Assert that ispec of the elements is contiguous
+  for (int ispec = 0; ispec < nelements; ++ispec) {
+    if (ispec != 0) {
+      if (h_element_index(ispec) != h_element_index(ispec - 1) + 1) {
+        throw std::runtime_error("Element index is not contiguous");
+      }
+    }
+  }
+
   Kokkos::deep_copy(element_index, h_element_index);
 
   return;

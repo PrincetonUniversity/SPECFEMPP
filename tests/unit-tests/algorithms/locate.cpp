@@ -20,7 +20,7 @@ TEST(ALGORITHMS, locate_point) {
   specfem::quadrature::quadratures quadratures(gll);
 
   // Assemble
-  specfem::compute::mesh assembly(mesh.control_nodes, quadratures);
+  specfem::compute::mesh assembly(mesh.tags, mesh.control_nodes, quadratures);
 
   specfem::kokkos::HostView1d<specfem::point::gcoord2> coordinates_ref(
       "coordinates_ref", 5);
@@ -40,6 +40,10 @@ TEST(ALGORITHMS, locate_point) {
   lcoord_ref(2) = { 350, 0.5831E+00, -0.2247E+00 };
   lcoord_ref(3) = { 4549, 0.8980E+00, 0.4248E+00 };
   lcoord_ref(4) = { 700, -0.2744E+00, 0.3945E+00 };
+
+  for (int i = 0; i < 5; ++i) {
+    lcoord_ref(i).ispec = assembly.mapping.mesh_to_compute(lcoord_ref(i).ispec);
+  }
 
   // Test Serial implementations
 

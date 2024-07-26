@@ -1,7 +1,9 @@
 #ifndef _COMPUTE_PROPERTIES_IMPL_MATERIAL_PROPERTIES_HPP_
 #define _COMPUTE_PROPERTIES_IMPL_MATERIAL_PROPERTIES_HPP_
 
+#include "compute/compute_mesh.hpp"
 #include "mesh/materials/interface.hpp"
+#include "mesh/tags/tags.hpp"
 #include "properties_container.hpp"
 
 namespace specfem {
@@ -20,6 +22,8 @@ struct material_property
 
   material_property(
       const int nspec, const int n_element, const int ngllz, const int ngllx,
+      const specfem::compute::mesh_to_compute_mapping &mapping,
+      const specfem::mesh::tags &tags,
       const specfem::mesh::materials &materials,
       const specfem::kokkos::HostView1d<int> property_index_mapping)
       : specfem::compute::impl::properties::properties_container<type,
@@ -28,18 +32,17 @@ struct material_property
 
     int count = 0;
     for (int ispec = 0; ispec < nspec; ++ispec) {
-      const auto material_specification =
-          materials.material_index_mapping(ispec);
+      const int ispec_mesh = mapping.compute_to_mesh(ispec);
+      const auto &tag = tags.tags_container(ispec_mesh);
 
-      if ((material_specification.type == type) &&
-          (material_specification.property == property)) {
+      if ((tag.medium_tag == type) && (tag.property_tag == property)) {
         property_index_mapping(ispec) = count;
         for (int iz = 0; iz < ngllz; ++iz) {
           for (int ix = 0; ix < ngllx; ++ix) {
             // Get the material at index from mesh::materials
             auto material =
                 std::get<specfem::material::material<type, property> >(
-                    materials[ispec]);
+                    materials[ispec_mesh]);
 
             // Assign the material property to the property container
             auto point_property = material.get_properties();

@@ -186,6 +186,8 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
           for (int iz = 0; iz < ngllz; ++iz) {
             for (int ispec = 0; ispec < nspec; ++ispec) {
               specfem::point::index index(ispec, iz, ix);
+              const int ispec_mesh =
+                  assembly.mesh.mapping.compute_to_mesh(ispec);
               if (assembly.properties.h_element_types(ispec) ==
                   specfem::element::medium_tag::elastic) {
 
@@ -201,7 +203,7 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
                 }();
 
                 for (int icomp = 0; icomp < components; ++icomp) {
-                  const int iglob = index_mapping.data(ispec, iz, ix);
+                  const int iglob = index_mapping.data(ispec_mesh, iz, ix);
                   const auto rmass_ref =
                       h_mass_matrix_global.data(iglob, icomp);
                   const auto rmass = point_field.mass_matrix(icomp);
@@ -236,6 +238,8 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
           for (int iz = 0; iz < ngllz; ++iz) {
             for (int ispec = 0; ispec < nspec; ++ispec) {
               specfem::point::index index(ispec, iz, ix);
+              const int ispec_mesh =
+                  assembly.mesh.mapping.compute_to_mesh(ispec);
               if (assembly.properties.h_element_types(ispec) ==
                   specfem::element::medium_tag::acoustic) {
 
@@ -251,7 +255,7 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
                 }();
 
                 for (int icomp = 0; icomp < components; ++icomp) {
-                  const int iglob = index_mapping.data(ispec, iz, ix);
+                  const int iglob = index_mapping.data(ispec_mesh, iz, ix);
                   const auto rmass_ref =
                       h_mass_matrix_global.data(iglob, icomp);
                   const auto rmass = point_field.mass_matrix(icomp);

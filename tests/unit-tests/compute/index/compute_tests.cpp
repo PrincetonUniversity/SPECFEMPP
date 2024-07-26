@@ -84,7 +84,7 @@ TEST(COMPUTE_TESTS, compute_ibool) {
   specfem::mesh::mesh mesh(test_config.database_filename, mpi);
 
   // Setup compute structs
-  specfem::compute::mesh assembly(mesh.control_nodes,
+  specfem::compute::mesh assembly(mesh.tags, mesh.control_nodes,
                                   quadratures); // mesh assembly
 
   const auto h_index_mapping = assembly.points.h_index_mapping;
