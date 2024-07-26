@@ -6,7 +6,6 @@
 
 namespace specfem {
 namespace mesh {
-namespace boundaries {
 
 /**
  * Acoustic forcing boundary
@@ -124,7 +123,6 @@ struct forcing_boundary {
                    const int nspec, const specfem::MPI::MPI *mpi);
 };
 
-} // namespace boundaries
 } // namespace mesh
 } // namespace specfem
 

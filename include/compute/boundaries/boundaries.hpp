@@ -12,11 +12,11 @@ struct boundaries {
 
   boundaries() = default;
 
-  boundaries(
-      const int nspec, const specfem::compute::properties &properties,
-      const specfem::mesh::boundaries::absorbing_boundary &absorbing_boundaries,
-      const specfem::mesh::boundaries::acoustic_free_surface
-          &acoustic_free_surface);
+  boundaries(const int nspec,
+             const specfem::compute::mesh_to_compute_mapping &mapping,
+             const specfem::mesh::tags &tags,
+             const specfem::compute::properties &properties,
+             const specfem::mesh::boundaries &boundary);
 
   specfem::kokkos::DeviceView1d<specfem::element::boundary_tag_container>
       boundary_tags; ///< Boundary tags for each element

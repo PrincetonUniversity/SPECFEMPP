@@ -183,6 +183,7 @@ add_library(
         src/mesh/mpi_interfaces/mpi_interfaces.cpp
         src/mesh/materials/materials.cpp
         src/mesh/coupled_interfaces/coupled_interfaces.cpp
+        src/mesh/tags/tags.cpp
         src/mesh/mesh.cpp
 )
 

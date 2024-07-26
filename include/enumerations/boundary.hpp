@@ -123,6 +123,16 @@ public:
    */
   bool operator==(const boundary_tag &tag) const { return (tag == this->tag); }
 
+  bool operator!=(const boundary_tag &tag) const { return (tag != this->tag); }
+
+  bool operator==(const boundary_tag_container &rtag) const {
+    return (rtag.tag == this->tag);
+  }
+
+  bool operator!=(const boundary_tag_container &rtag) const {
+    return (rtag.tag != this->tag);
+  }
+
 private:
   boundary_tag tag = boundary_tag::none; ///< boundary tag
 };

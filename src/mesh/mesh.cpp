@@ -97,23 +97,24 @@ specfem::mesh::mesh::mesh(const std::string filename,
   specfem::IO::fortran_read_line(stream, &ninterfaces, &max_interface_size);
 
   try {
-    this->abs_boundary = specfem::mesh::boundaries::absorbing_boundary(
+    this->boundaries.absorbing_boundary = specfem::mesh::absorbing_boundary(
         stream, this->parameters.nelemabs, this->parameters.nspec, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
 
   try {
-    this->acforcing_boundary = specfem::mesh::boundaries::forcing_boundary(
+    this->boundaries.forcing_boundary = specfem::mesh::forcing_boundary(
         stream, this->parameters.nelem_acforcing, this->parameters.nspec, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
 
   try {
-    this->acfree_surface = specfem::mesh::boundaries::acoustic_free_surface(
-        stream, this->parameters.nelem_acoustic_surface,
-        this->control_nodes.knods, mpi);
+    this->boundaries.acoustic_free_surface =
+        specfem::mesh::acoustic_free_surface(
+            stream, this->parameters.nelem_acoustic_surface,
+            this->control_nodes.knods, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
@@ -172,6 +173,8 @@ specfem::mesh::mesh::mesh(const std::string filename,
 
   assert(l_elastic_isotropic.size() + l_acoustic_isotropic.size() ==
          this->materials.n_materials);
+
+  this->tags = specfem::mesh::tags(this->materials, this->boundaries);
 
   return;
 }

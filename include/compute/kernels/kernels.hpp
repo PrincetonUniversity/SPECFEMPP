@@ -36,7 +36,7 @@ struct kernels {
   kernels() = default;
 
   kernels(const int nspec, const int ngllz, const int ngllx,
-          const specfem::mesh::materials &materials);
+          const specfem::compute::properties &properties);
 
   void copy_to_host() {
     Kokkos::deep_copy(h_element_types, element_types);

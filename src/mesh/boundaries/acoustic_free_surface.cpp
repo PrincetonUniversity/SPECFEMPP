@@ -55,7 +55,7 @@ get_boundary_type(const int type, const int e1, const int e2,
   }
 }
 
-specfem::mesh::boundaries::acoustic_free_surface::acoustic_free_surface(
+specfem::mesh::acoustic_free_surface::acoustic_free_surface(
     const int nelem_acoustic_surface)
     : nelem_acoustic_surface(nelem_acoustic_surface) {
   if (nelem_acoustic_surface > 0) {
@@ -68,14 +68,13 @@ specfem::mesh::boundaries::acoustic_free_surface::acoustic_free_surface(
   return;
 }
 
-specfem::mesh::boundaries::acoustic_free_surface::acoustic_free_surface(
+specfem::mesh::acoustic_free_surface::acoustic_free_surface(
     std::ifstream &stream, const int &nelem_acoustic_surface,
     const specfem::kokkos::HostView2d<int> &knods,
     const specfem::MPI::MPI *mpi) {
 
   std::vector<int> acfree_edge(4, 0);
-  *this =
-      specfem::mesh::boundaries::acoustic_free_surface(nelem_acoustic_surface);
+  *this = specfem::mesh::acoustic_free_surface(nelem_acoustic_surface);
 
   if (nelem_acoustic_surface > 0) {
     for (int inum = 0; inum < nelem_acoustic_surface; inum++) {

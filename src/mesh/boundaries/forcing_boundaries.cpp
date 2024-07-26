@@ -5,7 +5,7 @@
 #include <Kokkos_Core.hpp>
 #include <vector>
 
-specfem::mesh::boundaries::forcing_boundary::forcing_boundary(
+specfem::mesh::forcing_boundary::forcing_boundary(
     const int nelement_acforcing) {
   if (nelement_acforcing > 0) {
     this->numacforcing = specfem::kokkos::HostView1d<int>(
@@ -111,7 +111,7 @@ specfem::mesh::boundaries::forcing_boundary::forcing_boundary(
   return;
 }
 
-specfem::mesh::boundaries::forcing_boundary::forcing_boundary(
+specfem::mesh::forcing_boundary::forcing_boundary(
     std::ifstream &stream, const int nelement_acforcing, const int nspec,
     const specfem::MPI::MPI *mpi) {
   bool codeacread1 = true, codeacread2 = true, codeacread3 = true,
@@ -119,7 +119,7 @@ specfem::mesh::boundaries::forcing_boundary::forcing_boundary(
   std::vector<int> iedgeread(8, 0);
   int numacread, typeacread;
 
-  *this = specfem::mesh::boundaries::forcing_boundary(nelement_acforcing);
+  *this = specfem::mesh::forcing_boundary(nelement_acforcing);
 
   if (nelement_acforcing > 0) {
     for (int inum = 0; inum < nelement_acforcing; inum++) {

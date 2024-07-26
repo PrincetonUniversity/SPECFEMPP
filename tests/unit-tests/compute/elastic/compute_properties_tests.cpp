@@ -84,8 +84,10 @@ TEST(COMPUTE_TESTS, compute_elastic_properties) {
   const int ngllz = gll.get_N();
   const int ngllx = gll.get_N();
 
-  specfem::compute::properties compute_properties(nspec, ngllz, ngllx,
-                                                  mesh.materials);
+  specfem::compute::mesh compute_mesh(mesh.tags, mesh.control_nodes,
+                                      quadratures);
+  specfem::compute::properties compute_properties(
+      nspec, ngllz, ngllx, compute_mesh.mapping, mesh.tags, mesh.materials);
 
   specfem::testing::array3d<type_real, Kokkos::LayoutRight> rho_global(
       test_config.rho_file, nspec, ngllz, ngllx);
@@ -116,10 +118,11 @@ TEST(COMPUTE_TESTS, compute_elastic_properties) {
                                            properties);
             return properties;
           }();
+          const int ispec_mesh = compute_mesh.mapping.compute_to_mesh(ispec);
           const auto kappa = properties.lambdaplus2mu - properties.mu;
-          EXPECT_FLOAT_EQ(properties.rho, rho_global.data(ispec, iz, ix));
-          EXPECT_FLOAT_EQ(properties.mu, mu_global.data(ispec, iz, ix));
-          EXPECT_FLOAT_EQ(kappa, kappa_global.data(ispec, iz, ix));
+          EXPECT_FLOAT_EQ(properties.rho, rho_global.data(ispec_mesh, iz, ix));
+          EXPECT_FLOAT_EQ(properties.mu, mu_global.data(ispec_mesh, iz, ix));
+          EXPECT_FLOAT_EQ(kappa, kappa_global.data(ispec_mesh, iz, ix));
         }
       }
     }
@@ -155,11 +158,13 @@ TEST(COMPUTE_TESTS, compute_elastic_properties) {
           }();
           const auto kappa = properties.lambdaplus2mu - properties.mu;
           for (int i = 0; i < num_elements; ++i) {
+            const int ispec_mesh =
+                compute_mesh.mapping.compute_to_mesh(ispec + i);
             EXPECT_FLOAT_EQ(properties.rho[i],
-                            rho_global.data(ispec + i, iz, ix));
+                            rho_global.data(ispec_mesh, iz, ix));
             EXPECT_FLOAT_EQ(properties.mu[i],
-                            mu_global.data(ispec + i, iz, ix));
-            EXPECT_FLOAT_EQ(kappa[i], kappa_global.data(ispec + i, iz, ix));
+                            mu_global.data(ispec_mesh, iz, ix));
+            EXPECT_FLOAT_EQ(kappa[i], kappa_global.data(ispec_mesh, iz, ix));
           }
         }
       }
