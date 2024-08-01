@@ -112,7 +112,8 @@ bool is_on_boundary(specfem::enums::boundaries::type type, int iz, int ix,
 // } // namespace
 
 specfem::compute::boundaries::boundaries(
-    const int nspec, const specfem::compute::mesh_to_compute_mapping &mapping,
+    const int nspec, const int ngllz, const int ngllx,
+    const specfem::compute::mesh_to_compute_mapping &mapping,
     const specfem::mesh::tags &tags,
     const specfem::compute::properties &properties,
     const specfem::mesh::boundaries &boundaries)
@@ -122,7 +123,7 @@ specfem::compute::boundaries::boundaries(
       h_boundary_tags(Kokkos::create_mirror_view(boundary_tags)),
       boundary_types("specfem::compute::boundaries::boundary_"
                      "types",
-                     nspec),
+                     nspec, ngllz, ngllx),
       h_boundary_types(Kokkos::create_mirror_view(boundary_types)) {
 
   // Tag the elements with the boundary tag and boundary type

@@ -293,6 +293,12 @@ specfem::compute::mesh_to_compute_mapping::mesh_to_compute_mapping(
     ispec++;
   }
 
+  for (const auto &ispecs : free_surface_ispec) {
+    compute_to_mesh(ispec) = ispecs;
+    mesh_to_compute(ispecs) = ispec;
+    ispec++;
+  }
+
   for (const auto &ispecs : acoustic_isotropic_stacey_ispec) {
     compute_to_mesh(ispec) = ispecs;
     mesh_to_compute(ispecs) = ispec;

@@ -13,7 +13,7 @@ struct boundaries {
 
   boundaries() = default;
 
-  boundaries(const int nspec,
+  boundaries(const int nspec, const int ngllz, const int ngllx,
              const specfem::compute::mesh_to_compute_mapping &mapping,
              const specfem::mesh::tags &tags,
              const specfem::compute::properties &properties,
