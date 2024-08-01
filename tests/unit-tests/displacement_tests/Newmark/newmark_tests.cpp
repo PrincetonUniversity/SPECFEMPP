@@ -221,6 +221,15 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
              << std::endl;
     }
 
+    if (receivers.size() == 0) {
+      FAIL() << "--------------------------------------------------\n"
+             << "\033[0;31m[FAILED]\033[0m Test failed\n"
+             << " - Test name: " << Test.name << "\n"
+             << " - Error: Stations file does not contain any receivers\n"
+             << "--------------------------------------------------\n\n"
+             << std::endl;
+    }
+
     specfem::compute::assembly assembly(mesh, quadratures, sources, receivers,
                                         seismogram_types, t0, setup.get_dt(),
                                         nsteps, it->get_max_seismogram_step(),
