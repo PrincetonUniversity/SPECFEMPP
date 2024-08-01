@@ -7,6 +7,26 @@
 #include "point/boundary.hpp"
 #include <vector>
 
+namespace {
+
+bool is_on_boundary(specfem::enums::boundaries::type type, int iz, int ix,
+                    int ngllz, int ngllx) {
+  return (type == specfem::enums::boundaries::type::TOP && iz == ngllz - 1) ||
+         (type == specfem::enums::boundaries::type::BOTTOM && iz == 0) ||
+         (type == specfem::enums::boundaries::type::LEFT && ix == 0) ||
+         (type == specfem::enums::boundaries::type::RIGHT && ix == ngllx - 1) ||
+         (type == specfem::enums::boundaries::type::BOTTOM_RIGHT && iz == 0 &&
+          ix == ngllx - 1) ||
+         (type == specfem::enums::boundaries::type::BOTTOM_LEFT && iz == 0 &&
+          ix == 0) ||
+         (type == specfem::enums::boundaries::type::TOP_RIGHT &&
+          iz == ngllz - 1 && ix == ngllx - 1) ||
+         (type == specfem::enums::boundaries::type::TOP_LEFT &&
+          iz == ngllz - 1 && ix == 0);
+}
+
+} // namespace
+
 // namespace {
 
 // // Every element is tagged with a boundary type
@@ -135,9 +155,15 @@ specfem::compute::boundaries::boundaries(
     const int ispec = absorbing_boundary.ispec(i);
     const int ispec_compute = mapping.mesh_to_compute(ispec);
     h_boundary_tags(ispec_compute) += specfem::element::boundary_tag::stacey;
-    h_boundary_types(ispec_compute)
-        .update_boundary(absorbing_boundary.type(i),
-                         specfem::element::boundary_tag::stacey);
+    for (int iz = 0; iz < properties.ngllz; ++iz) {
+      for (int ix = 0; ix < properties.ngllx; ++ix) {
+        if (is_on_boundary(absorbing_boundary.type(i), iz, ix, properties.ngllz,
+                           properties.ngllx)) {
+          h_boundary_types(ispec_compute, iz, ix) +=
+              specfem::element::boundary_tag::stacey;
+        }
+      }
+    }
   }
 
   const auto &acoustic_free_surface = boundaries.acoustic_free_surface;
@@ -151,9 +177,15 @@ specfem::compute::boundaries::boundaries(
     }
     h_boundary_tags(ispec_compute) +=
         specfem::element::boundary_tag::acoustic_free_surface;
-    h_boundary_types(ispec_compute)
-        .update_boundary(acoustic_free_surface.type(i),
-                         specfem::element::boundary_tag::acoustic_free_surface);
+    for (int iz = 0; iz < properties.ngllz; ++iz) {
+      for (int ix = 0; ix < properties.ngllx; ++ix) {
+        if (is_on_boundary(acoustic_free_surface.type(i), iz, ix,
+                           properties.ngllz, properties.ngllx)) {
+          h_boundary_types(ispec_compute, iz, ix) +=
+              specfem::element::boundary_tag::acoustic_free_surface;
+        }
+      }
+    }
   }
 
   for (int ispec = 0; ispec < nspec; ++ispec) {

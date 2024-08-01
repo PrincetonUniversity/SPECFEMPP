@@ -85,7 +85,6 @@ rule average_results:
 rule plot_results:
     input:
         results = "average_results.csv",
-        baseline = os.path.join(snakefile_dir, "rules/templates/fortran_baseline.csv")
     output:
         "average_results.png"
     run:
@@ -94,10 +93,17 @@ rule plot_results:
 
         ## Load csv files into pandas dataframes
         df_results = pd.read_csv(input.results)
-        df_baseline = pd.read_csv(input.baseline)
 
-        ## Merge the two dataframes on nxmax and nzmax
-        df_merged = pd.merge(df_results, df_baseline, on=['nxmax', 'nzmax'], suffixes=('_results', '_baseline'))
+        ## Create a new dataframe with nxmax, nzmax, solver_time, std_dev
+        df_merged = pd.DataFrame(columns=['nxmax', 'nzmax', 'solver_time_results', 'std_dev'])
+        for index, row in df_results.iterrows():
+            nxmax = row['nxmax']
+            nzmax = row['nzmax']
+            solver_time = row['solver_time']
+            std_dev = row['std_dev']
+            df_merged = pd.concat([df_merged,
+                                  pd.DataFrame([[nxmax, nzmax, solver_time, std_dev]],
+                                  columns=['nxmax', 'nzmax', 'solver_time_results', 'std_dev'])])
 
         ## Plot the results
         ## Xaxis is nxmax * nzmax and Yaxis is solver_time
@@ -110,12 +116,6 @@ rule plot_results:
                      marker='o',
                      color = "black",
                      label='Current Implementation')
-
-        plt.scatter(df_merged['nxmax'] * df_merged['nzmax'],
-                    df_merged['solver_time_baseline'],
-                    marker = "^",
-                    color='black',
-                    label='Baseline Implementation')
 
         plt.xlabel('Total number of spectral elements')
         plt.ylabel('Solver Time (s)')

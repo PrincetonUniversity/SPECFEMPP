@@ -121,9 +121,31 @@ public:
    * @param tag boundary tag to be checked
    * @return bool true if boundary container specifies the boundary tag
    */
-  bool operator==(const boundary_tag &tag) const { return (tag == this->tag); }
+  bool operator==(const boundary_tag &tag) const {
+    switch (tag) {
+    case boundary_tag::none:
+      return (this->tag == boundary_tag::none);
+      break;
+    case boundary_tag::acoustic_free_surface:
+      return (this->tag == boundary_tag::acoustic_free_surface ||
+              this->tag == boundary_tag::composite_stacey_dirichlet);
+      break;
+    case boundary_tag::stacey:
+      return (this->tag == boundary_tag::stacey ||
+              this->tag == boundary_tag::composite_stacey_dirichlet);
+      break;
+    case boundary_tag::composite_stacey_dirichlet:
+      return (this->tag == boundary_tag::composite_stacey_dirichlet);
+      break;
+    default:
+      throw std::runtime_error("Invalid boundary tag");
+      break;
+    }
+  }
 
-  bool operator!=(const boundary_tag &tag) const { return (tag != this->tag); }
+  bool operator!=(const boundary_tag &tag) const {
+    return !(this->operator==(tag));
+  }
 
   bool operator==(const boundary_tag_container &rtag) const {
     return (rtag.tag == this->tag);

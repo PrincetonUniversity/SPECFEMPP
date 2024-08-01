@@ -8,7 +8,6 @@
 #include "quadrature/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
-#include <vector>
 
 namespace specfem {
 namespace compute {
@@ -110,7 +109,7 @@ struct partial_derivatives {
 template <typename PartialDerivativesType,
           typename std::enable_if_t<PartialDerivativesType::simd::using_simd,
                                     int> = 0>
-NOINLINE KOKKOS_INLINE_FUNCTION void
+NOINLINE KOKKOS_FUNCTION void
 load_on_device(const specfem::point::simd_index &index,
                const specfem::compute::partial_derivatives &derivatives,
                PartialDerivativesType &partial_derivatives) {
@@ -145,7 +144,7 @@ load_on_device(const specfem::point::simd_index &index,
 template <typename PartialDerivativesType,
           typename std::enable_if_t<!PartialDerivativesType::simd::using_simd,
                                     int> = 0>
-KOKKOS_INLINE_FUNCTION void
+NOINLINE KOKKOS_FUNCTION void
 load_on_device(const specfem::point::index &index,
                const specfem::compute::partial_derivatives &derivatives,
                PartialDerivativesType &partial_derivatives) {

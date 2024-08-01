@@ -11,6 +11,7 @@ template <typename T, bool UseSIMD> struct simd;
 template <typename T> struct simd<T, false> {
   using datatype = T;
   constexpr static bool using_simd = false;
+  using mask_type = bool;
   KOKKOS_FUNCTION constexpr static int size() { return 1; }
 };
 
