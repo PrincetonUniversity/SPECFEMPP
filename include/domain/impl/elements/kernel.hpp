@@ -56,7 +56,7 @@ protected:
   specfem::kokkos::HostMirror1d<int> h_element_kernel_index_mapping;
   specfem::compute::properties properties;
   specfem::compute::partial_derivatives partial_derivatives;
-  specfem::kokkos::DeviceView1d<specfem::point::boundary> boundary_conditions;
+  specfem::compute::boundaries boundaries;
   specfem::compute::boundary_value_container<DimensionType, BoundaryTag>
       boundary_values;
   quadrature_points_type quadrature_points;

@@ -7,7 +7,7 @@ option(MPI_PARALLEL "MPI enabled" OFF)
 option(BUILD_TESTS "Tests included" OFF)
 option(BUILD_EXAMPLES "Examples included" OFF)
 option(ENABLE_SIMD "Enable SIMD" OFF)
-option(ENABLLE_PROFILING "Enable profiling" OFF)
+option(ENABLE_PROFILING "Enable profiling" OFF)
 # set(CMAKE_BUILD_TYPE Release)
 set(CHUNK_SIZE 32)
 set(NUM_CHUNKS 1)
@@ -87,7 +87,7 @@ if (ENABLE_SIMD)
         add_definitions(-DENABLE_SIMD)
 endif()
 
-if (ENABLLE_PROFILING)
+if (ENABLE_PROFILING)
         message("-- Enabling profiling")
         add_definitions(-DENABLE_PROFILING)
 endif()
@@ -125,7 +125,7 @@ add_library(
         point
         src/point/coordinates.cpp
         src/point/partial_derivatives.cpp
-        src/point/boundaries.cpp
+        # src/point/boundaries.cpp
 )
 
 target_link_libraries(
@@ -328,6 +328,15 @@ target_link_libraries(
 add_library(
         domain
         src/domain/impl/elements/element.cpp
+        src/domain/impl/boundary_conditions/none/none.cpp
+        src/domain/impl/boundary_conditions/none/print.cpp
+        src/domain/impl/boundary_conditions/dirichlet/dirichlet.cpp
+        src/domain/impl/boundary_conditions/dirichlet/print.cpp
+        src/domain/impl/boundary_conditions/stacey/stacey.cpp
+        src/domain/impl/boundary_conditions/stacey/print.cpp
+        src/domain/impl/boundary_conditions/composite_stacey_dirichlet/composite_stacey_dirichlet.cpp
+        src/domain/impl/boundary_conditions/composite_stacey_dirichlet/print.cpp
+        src/domain/impl/boundary_conditions/boundary_conditions.cpp
 )
 
 target_link_libraries(
@@ -434,6 +443,7 @@ target_link_libraries(
         writer
         reader
         kernels
+        domain
         Boost::filesystem
 )
 

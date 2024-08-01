@@ -9,6 +9,7 @@
 #include "compute/interface.hpp"
 // #include "elastic/elastic2d.hpp"
 #include "acoustic/acoustic2d.tpp"
+#include "domain/impl/boundary_conditions/boundary_conditions.hpp"
 #include "elastic/elastic2d.tpp"
 #include "element.hpp"
 #include "enumerations/interface.hpp"
@@ -41,8 +42,7 @@ specfem::domain::impl::kernels::element_kernel_base<
       h_element_kernel_index_mapping(h_element_kernel_index_mapping),
       points(assembly.mesh.points), quadrature(assembly.mesh.quadratures),
       partial_derivatives(assembly.partial_derivatives),
-      properties(assembly.properties),
-      boundary_conditions(assembly.boundaries.boundary_types),
+      properties(assembly.properties), boundaries(assembly.boundaries),
       quadrature_points(quadrature_points),
       boundary_values(assembly.boundary_values.get_container<BoundaryTag>()) {
 
@@ -101,6 +101,8 @@ void specfem::domain::impl::kernels::element_kernel_base<
   using ChunkPolicyType =
       specfem::policy::element_chunk<ParallelConfig,
                                      Kokkos::DefaultExecutionSpace>;
+
+  using PointBoundaryType = specfem::point::boundary<using_simd, BoundaryTag>;
 
   constexpr int NGLL = quadrature_points_type::NGLL;
 
@@ -165,6 +167,13 @@ void specfem::domain::impl::kernels::element_kernel_base<
                 for (int icomp = 0; icomp < components; icomp++) {
                   mass_matrix.mass_matrix(icomp) *= wgll(ix) * wgll(iz);
                 }
+
+                PointBoundaryType point_boundary;
+                specfem::compute::load_on_device(index, boundaries,
+                                                 point_boundary);
+
+                specfem::domain::impl::boundary_conditions::
+                    compute_mass_matrix_terms(point_boundary, mass_matrix);
 
                 specfem::compute::atomic_add_on_device(index, mass_matrix,
                                                        field);
@@ -399,6 +408,8 @@ void specfem::domain::impl::kernels::element_kernel_base<
       specfem::point::field<DimensionType, MediumTag, false, true, false, false,
                             using_simd>;
 
+  using PointBoundaryType = specfem::point::boundary<using_simd, BoundaryTag>;
+
   using PointFieldDerivativesType =
       specfem::point::field_derivatives<DimensionType, MediumTag, using_simd>;
 
@@ -534,6 +545,17 @@ void specfem::domain::impl::kernels::element_kernel_base<
                   acceleration.acceleration(icomponent) *=
                       static_cast<type_real>(-1.0);
                 }
+
+                PointVelocityType velocity;
+                specfem::compute::load_on_device(index, field, velocity);
+
+                PointBoundaryType point_boundary;
+                specfem::compute::load_on_device(index, boundaries,
+                                                 point_boundary);
+
+                specfem::domain::impl::boundary_conditions::
+                    apply_boundary_conditions(point_boundary, velocity,
+                                              acceleration);
 
                 specfem::compute::atomic_add_on_device(index, acceleration,
                                                        field);

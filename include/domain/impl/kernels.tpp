@@ -155,7 +155,9 @@ void allocate_elements(
               << "    - Element type        : " << medium_type::to_string()
               << "\n"
               << "    - Boundary Conditions : "
-              // << boundary_conditions_type::to_string() << "\n"
+              << specfem::domain::impl::boundary_conditions::print_boundary_tag<
+                     boundary_tag>()
+              << "\n"
               << "    - Number of elements  : " << nelements << "\n\n";
   }
 

@@ -1,0 +1,30 @@
+#pragma once
+
+#include "enumerations/boundary.hpp"
+#include <Kokkos_Core.hpp>
+
+namespace specfem {
+namespace domain {
+namespace impl {
+namespace boundary_conditions {
+
+using composite_stacey_dirichlet_type = std::integral_constant<
+    specfem::element::boundary_tag,
+    specfem::element::boundary_tag::composite_stacey_dirichlet>;
+
+template <typename PointBoundaryType, typename PointFieldType,
+          typename PointAccelerationType>
+KOKKOS_FUNCTION void impl_apply_boundary_conditions(
+    const composite_stacey_dirichlet_type &, const PointBoundaryType &boundary,
+    const PointFieldType &field, PointAccelerationType &acceleration);
+
+template <typename PointBoundaryType, typename PointFieldType,
+          typename PointAccelerationType>
+KOKKOS_FUNCTION void impl_compute_mass_matrix_terms(
+    const composite_stacey_dirichlet_type &, const PointBoundaryType &boundary,
+    const PointFieldType &field, PointAccelerationType &acceleration){};
+
+} // namespace boundary_conditions
+} // namespace impl
+} // namespace domain
+} // namespace specfem

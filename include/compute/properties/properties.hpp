@@ -5,6 +5,7 @@
 #include "impl/material_properties.hpp"
 #include "impl/properties_container.hpp"
 #include "kokkos_abstractions.h"
+#include "macros.hpp"
 #include "material/interface.hpp"
 #include "point/coordinates.hpp"
 #include "specfem_setup.hpp"

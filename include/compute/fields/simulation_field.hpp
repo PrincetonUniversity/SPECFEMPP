@@ -112,7 +112,7 @@ template <
     specfem::wavefield::type WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
-NOINLINE NOINLINE KOKKOS_FUNCTION void
+NOINLINE KOKKOS_FUNCTION void
 load_on_device(const int iglob,
                const specfem::compute::simulation_field<WavefieldType> &field,
                ViewType &point_field) {
