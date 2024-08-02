@@ -1,8 +1,44 @@
-number-of-sources: 1
+number-of-sources: 4
 sources:
   - force:
       x : 500.0
       z : 500.0
+      source_surf: false
+      angle : 0.0
+      vx : 0.0
+      vz : 0.0
+      Ricker:
+        factor: 1e10
+        tshift: 0.0
+        f0: 10.0
+
+  - force:
+      x : 3500.0
+      z : 500.0
+      source_surf: false
+      angle : 0.0
+      vx : 0.0
+      vz : 0.0
+      Ricker:
+        factor: 1e10
+        tshift: 0.0
+        f0: 10.0
+
+  - force:
+      x : 500.0
+      z : 2500.0
+      source_surf: false
+      angle : 0.0
+      vx : 0.0
+      vz : 0.0
+      Ricker:
+        factor: 1e10
+        tshift: 0.0
+        f0: 10.0
+
+  - force:
+      x : 3500.0
+      z : 2500.0
       source_surf: false
       angle : 0.0
       vx : 0.0

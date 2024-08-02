@@ -26,3 +26,4 @@ examples/*/Par_File
 .snakemake/
 autotuning/
 profiles
+.cache/

@@ -200,6 +200,7 @@ void allocate_isotropic_sources(
         sources.source_wavefield_mapping(isource) == WavefieldType) {
       h_source_domain_index_mapping(index) =
           sources.source_domain_index_mapping(isource);
+      index++;
     }
   }
 
