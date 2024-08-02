@@ -6,6 +6,8 @@
 #include "enumerations/specfem_enums.hpp"
 #include "macros.hpp"
 #include "point/boundary.hpp"
+#include <Kokkos_Core.hpp>
+#include <type_traits>
 
 namespace specfem {
 namespace compute {
