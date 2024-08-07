@@ -16,6 +16,7 @@ struct ScalarElementViewType
       typename simd::datatype[NumberOfGLLPoints][NumberOfGLLPoints][Components],
       Kokkos::LayoutLeft, MemorySpace, MemoryTraits>;
   using value_type = typename type::value_type;
+  using base_type = T;
   constexpr static int ngll = NumberOfGLLPoints;
   constexpr static int components = Components;
   constexpr static bool isPointViewType = false;
@@ -49,6 +50,7 @@ struct VectorElementViewType
                                           [NumberOfDimensions][Components],
                    Kokkos::LayoutLeft, MemorySpace, MemoryTraits>;
   using value_type = typename type::value_type;
+  using base_type = T;
   constexpr static int ngll = NumberOfGLLPoints;
   constexpr static int components = Components;
   constexpr static int dimensions = NumberOfDimensions;

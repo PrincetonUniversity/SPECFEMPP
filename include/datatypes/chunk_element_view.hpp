@@ -19,6 +19,7 @@ struct ScalarChunkViewType
                                           [NumberOfGLLPoints][Components],
                    MemorySpace, MemoryTraits>;
   using value_type = typename type::value_type;
+  using base_type = T;
   constexpr static int nelements = NumberOfElements;
   constexpr static int ngll = NumberOfGLLPoints;
   constexpr static int components = Components;
@@ -56,6 +57,7 @@ struct VectorChunkViewType
                              [Components],
       MemorySpace, MemoryTraits>;
   using value_type = typename type::value_type;
+  using base_type = T;
   constexpr static int nelements = NumberOfElements;
   constexpr static int ngll = NumberOfGLLPoints;
   constexpr static int components = Components;

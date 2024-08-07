@@ -21,9 +21,10 @@ specfem::compute::assembly::assembly(
                     this->properties, t0,         dt,
                     max_timesteps };
   this->receivers = { max_sig_step, receivers, stypes, this->mesh };
-  this->boundaries = { this->mesh.nspec,   this->mesh.ngllz, this->mesh.ngllx,
-                       this->mesh.mapping, mesh.tags,        this->properties,
-                       mesh.boundaries };
+  this->boundaries = { this->mesh.nspec,   this->mesh.ngllz,
+                       this->mesh.ngllx,   mesh,
+                       this->mesh.mapping, this->mesh.quadratures,
+                       this->properties,   this->partial_derivatives };
   this->coupled_interfaces = { this->mesh, this->properties,
                                mesh.coupled_interfaces };
   this->fields = { this->mesh, this->properties, simulation };

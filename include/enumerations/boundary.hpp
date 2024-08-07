@@ -1,6 +1,7 @@
 #ifndef _ENUMERATION_BOUNDARY_HPP_
 #define _ENUMERATION_BOUNDARY_HPP_
 
+#include <Kokkos_Core.hpp>
 #include <stdexcept>
 
 namespace specfem {
@@ -35,6 +36,7 @@ public:
    * @brief Construct a new boundary tag container object
    *
    */
+  KOKKOS_INLINE_FUNCTION
   boundary_tag_container(){};
 
   /**
@@ -44,6 +46,7 @@ public:
    *
    * @param tag boundary tag
    */
+  KOKKOS_INLINE_FUNCTION
   boundary_tag_container &operator=(const boundary_tag &tag) = delete;
 
   /**
@@ -54,6 +57,7 @@ public:
    *
    * @param rtag boundary tag to be added
    */
+  KOKKOS_INLINE_FUNCTION
   boundary_tag_container &operator+=(const boundary_tag &rtag) {
     switch (rtag) {
     case boundary_tag::none:
@@ -112,6 +116,11 @@ public:
     return *this;
   }
 
+  KOKKOS_INLINE_FUNCTION
+  void operator+=(const boundary_tag_container &rtag) {
+    this->operator+=(rtag.tag);
+  }
+
   /**
    * @brief Check if boundary tag container specifies a specific boundary tag
    *
@@ -121,6 +130,7 @@ public:
    * @param tag boundary tag to be checked
    * @return bool true if boundary container specifies the boundary tag
    */
+  KOKKOS_INLINE_FUNCTION
   bool operator==(const boundary_tag &tag) const {
     switch (tag) {
     case boundary_tag::none:
@@ -143,14 +153,17 @@ public:
     }
   }
 
+  KOKKOS_INLINE_FUNCTION
   bool operator!=(const boundary_tag &tag) const {
     return !(this->operator==(tag));
   }
 
+  KOKKOS_INLINE_FUNCTION
   bool operator==(const boundary_tag_container &rtag) const {
     return (rtag.tag == this->tag);
   }
 
+  KOKKOS_INLINE_FUNCTION
   bool operator!=(const boundary_tag_container &rtag) const {
     return (rtag.tag != this->tag);
   }

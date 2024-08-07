@@ -25,6 +25,57 @@ bool is_on_boundary(specfem::enums::boundaries::type type, int iz, int ix,
           iz == ngllz - 1 && ix == 0);
 }
 
+std::tuple<specfem::datatype::ScalarPointViewType<type_real, 2, false>,
+           type_real>
+get_edge_orientation(
+    specfem::enums::boundaries::type type,
+    const specfem::datatype::ScalarPointViewType<type_real, 2, false> &weights,
+    const specfem::point::partial_derivatives2<false, true>
+        &point_partial_derivatives) {
+
+  if (type == specfem::enums::boundaries::type::BOTTOM_LEFT)
+    return std::make_tuple(point_partial_derivatives.compute_normal(
+                               specfem::enums::edge::type::LEFT),
+                           weights(1));
+
+  if (type == specfem::enums::boundaries::type::BOTTOM_RIGHT)
+    return std::make_tuple(point_partial_derivatives.compute_normal(
+                               specfem::enums::edge::type::RIGHT),
+                           weights(1));
+
+  if (type == specfem::enums::boundaries::type::TOP_LEFT)
+    return std::make_tuple(point_partial_derivatives.compute_normal(
+                               specfem::enums::edge::type::LEFT),
+                           weights(1));
+
+  if (type == specfem::enums::boundaries::type::TOP_RIGHT)
+    return std::make_tuple(point_partial_derivatives.compute_normal(
+                               specfem::enums::edge::type::RIGHT),
+                           weights(1));
+
+  if (type == specfem::enums::boundaries::type::TOP)
+    return std::make_tuple(point_partial_derivatives.compute_normal(
+                               specfem::enums::edge::type::TOP),
+                           weights(0));
+
+  if (type == specfem::enums::boundaries::type::BOTTOM)
+    return std::make_tuple(point_partial_derivatives.compute_normal(
+                               specfem::enums::edge::type::BOTTOM),
+                           weights(0));
+
+  if (type == specfem::enums::boundaries::type::LEFT)
+    return std::make_tuple(point_partial_derivatives.compute_normal(
+                               specfem::enums::edge::type::LEFT),
+                           weights(1));
+
+  if (type == specfem::enums::boundaries::type::RIGHT)
+    return std::make_tuple(
+        point_partial_derivatives.compute_normal(specfem::enums::edge::RIGHT),
+        weights(1));
+
+  throw std::invalid_argument("Error: Unknown boundary type");
+}
+
 } // namespace
 
 // namespace {

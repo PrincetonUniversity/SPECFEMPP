@@ -1,90 +1,109 @@
 #ifndef _POINT_BOUNDARY_HPP
 #define _POINT_BOUNDARY_HPP
 
+#include "datatypes/point_view.hpp"
 #include "datatypes/simd.hpp"
 #include "enumerations/boundary.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
 namespace point {
+template <specfem::element::boundary_tag BoundaryTag, bool UseSIMD>
+struct boundary;
 
-template <bool UseSIMD, specfem::element::boundary_tag BoundaryTag>
-struct boundary {
-public:
-  constexpr static auto boundary_tag = BoundaryTag; ///< Boundary tag
-  constexpr static bool isPointBoundaryType =
-      true; ///< Is a point boundary type
-
-  using simd = specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD type
-
+template <bool UseSIMD>
+struct boundary<specfem::element::boundary_tag::none, UseSIMD> {
 private:
-  constexpr static int simd_size =
-      specfem::datatype::simd<type_real, UseSIMD>::size(); ///< SIMD size
+  using value_type = typename specfem::datatype::simd_like<
+      specfem::element::boundary_tag_container, type_real, UseSIMD>::datatype;
 
 public:
-  specfem::element::boundary_tag_container tags[simd_size]; ///< Boundary
-                                                            ///< tag
+  using simd = specfem::datatype::simd<type_real, UseSIMD>;
+  constexpr static auto boundary_tag = specfem::element::boundary_tag::none;
+  constexpr static bool isPointBoundaryType = true;
 
-  /**
-   * @brief Construct a new boundary object
-   *
-   */
-  KOKKOS_FUNCTION boundary() = default;
+  KOKKOS_FUNCTION
+  boundary() = default;
 
-  template <specfem::element::boundary_tag UTag>
-  KOKKOS_FUNCTION boundary(const boundary<UseSIMD, UTag> &other) {
-    for (int i = 0; i < simd_size; i++) {
-      tags[i] = other.tags[i];
-    }
-  }
-
-  // move constructor
-  template <specfem::element::boundary_tag UTag>
-  KOKKOS_FUNCTION boundary(boundary<UseSIMD, UTag> &&other)
-      : tags(std::move(other.tags)) {}
+  value_type tag;
 };
 
-// struct boundary {
-//   specfem::element::boundary_tag top =
-//       specfem::element::boundary_tag::none; ///< top boundary tag
-//   specfem::element::boundary_tag bottom =
-//       specfem::element::boundary_tag::none; ///< bottom boundary tag
-//   specfem::element::boundary_tag left =
-//       specfem::element::boundary_tag::none; ///< left boundary tag
-//   specfem::element::boundary_tag right =
-//       specfem::element::boundary_tag::none; ///< right boundary tag
-//   specfem::element::boundary_tag bottom_right =
-//       specfem::element::boundary_tag::none; ///< bottom right boundary
-//                                             ///< tag
-//   specfem::element::boundary_tag bottom_left =
-//       specfem::element::boundary_tag::none; ///< bottom left boundary tag
-//   specfem::element::boundary_tag top_right =
-//       specfem::element::boundary_tag::none; ///< top right boundary tag
-//   specfem::element::boundary_tag top_left =
-//       specfem::element::boundary_tag::none; ///< top left boundary tag
+template <bool UseSIMD>
+struct boundary<specfem::element::boundary_tag::acoustic_free_surface, UseSIMD>
+    : public boundary<specfem::element::boundary_tag::none, UseSIMD> {
+public:
+  using simd = specfem::datatype::simd<type_real, UseSIMD>;
+  constexpr static auto boundary_tag =
+      specfem::element::boundary_tag::acoustic_free_surface;
 
-//   /**
-//    * @brief Construct a new boundary types object
-//    *
-//    */
-//   KOKKOS_FUNCTION boundary() = default;
+  KOKKOS_FUNCTION
+  boundary() = default;
 
-//   /**
-//    * @brief Update the tag for a given boundary type
-//    *
-//    * @param type Type of the boundary to update - defines an edge or node
-//    * @param tag Tag to update the boundary with
-//    */
-//   void update_boundary(const specfem::enums::boundaries::type &type,
-//                        const specfem::element::boundary_tag &tag);
-// };
+  KOKKOS_FUNCTION
+  boundary(const specfem::point::boundary<
+           specfem::element::boundary_tag::composite_stacey_dirichlet, UseSIMD>
+               &boundary);
+};
 
-// KOKKOS_FUNCTION
-// bool is_on_boundary(const specfem::element::boundary_tag &tag,
-//                     const specfem::point::boundary &type, const int &iz,
-//                     const int &ix, const int &ngllz, const int &ngllx);
+template <bool UseSIMD>
+struct boundary<specfem::element::boundary_tag::stacey, UseSIMD>
+    : public boundary<specfem::element::boundary_tag::none, UseSIMD> {
+private:
+  using datatype =
+      typename specfem::datatype::simd<type_real, UseSIMD>::datatype;
+
+public:
+  using simd = specfem::datatype::simd<type_real, UseSIMD>;
+  constexpr static auto boundary_tag = specfem::element::boundary_tag::stacey;
+
+  KOKKOS_FUNCTION
+  boundary() = default;
+
+  KOKKOS_FUNCTION
+  boundary(const specfem::point::boundary<
+           specfem::element::boundary_tag::composite_stacey_dirichlet, UseSIMD>
+               &boundary);
+
+  datatype edge_weight = 0.0;
+  specfem::datatype::ScalarPointViewType<type_real, 2, UseSIMD> edge_normal = {
+    0.0, 0.0
+  };
+};
+
+template <bool UseSIMD>
+struct boundary<specfem::element::boundary_tag::composite_stacey_dirichlet,
+                UseSIMD>
+    : public boundary<specfem::element::boundary_tag::stacey, UseSIMD> {
+public:
+  using simd = specfem::datatype::simd<type_real, UseSIMD>;
+  constexpr static auto boundary_tag =
+      specfem::element::boundary_tag::composite_stacey_dirichlet;
+
+  KOKKOS_FUNCTION
+  boundary() = default;
+};
+
+template <bool UseSIMD>
+KOKKOS_FUNCTION
+specfem::point::boundary<specfem::element::boundary_tag::acoustic_free_surface,
+                         UseSIMD>::
+    boundary(const specfem::point::boundary<
+             specfem::element::boundary_tag::composite_stacey_dirichlet,
+             UseSIMD> &boundary) {
+  this->tag = boundary.tag;
+}
+
+template <bool UseSIMD>
+KOKKOS_FUNCTION
+specfem::point::boundary<specfem::element::boundary_tag::stacey, UseSIMD>::
+    boundary(const specfem::point::boundary<
+             specfem::element::boundary_tag::composite_stacey_dirichlet,
+             UseSIMD> &boundary) {
+  this->tag = boundary.tag;
+  this->edge_weight = boundary.edge_weight;
+  this->edge_normal = boundary.edge_normal;
+}
 
 } // namespace point
 } // namespace specfem
-
 #endif
