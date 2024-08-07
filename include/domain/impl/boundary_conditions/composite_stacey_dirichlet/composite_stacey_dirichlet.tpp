@@ -8,37 +8,38 @@
 #include "point/boundary.hpp"
 #include <Kokkos_Core.hpp>
 
-template <typename PointBoundaryType, typename PointFieldType,
-          typename PointAccelerationType>
+template <typename PointBoundaryType, typename PointPropertyType,
+          typename PointFieldType, typename PointAccelerationType>
 KOKKOS_FUNCTION void
 specfem::domain::impl::boundary_conditions::impl_apply_boundary_conditions(
     const composite_stacey_dirichlet_type &, const PointBoundaryType &boundary,
-    const PointFieldType &field, PointAccelerationType &acceleration) {
+    const PointPropertyType &property, const PointFieldType &field,
+    PointAccelerationType &acceleration) {
 
   static_assert(PointBoundaryType::boundary_tag ==
                     specfem::element::boundary_tag::composite_stacey_dirichlet,
                 "Boundary tag must be composite_stacey_dirichlet");
 
-  constexpr bool using_simd = PointBoundaryType::simd::using_simd;
-
-  const specfem::point::boundary<using_simd,
-                                 specfem::element::boundary_tag::stacey>
-      stacey_boundary(std::move(boundary));
+  const auto &stacey_boundary = static_cast<
+      const specfem::point::boundary<specfem::element::boundary_tag::stacey,
+                                     PointBoundaryType::simd::using_simd> &>(
+      boundary);
 
   impl_apply_boundary_conditions(
       std::integral_constant<specfem::element::boundary_tag,
                              specfem::element::boundary_tag::stacey>(),
-      stacey_boundary, field, acceleration);
+      stacey_boundary, property, field, acceleration);
 
-  const specfem::point::boundary<
-      using_simd, specfem::element::boundary_tag::acoustic_free_surface>
-      acoustic_free_surface_boundary(std::move(stacey_boundary));
+  const auto &acoustic_free_surface_boundary =
+      static_cast<const specfem::point::boundary<
+          specfem::element::boundary_tag::acoustic_free_surface,
+          PointBoundaryType::simd::using_simd> &>(boundary);
 
   impl_apply_boundary_conditions(
       std::integral_constant<
           specfem::element::boundary_tag,
           specfem::element::boundary_tag::acoustic_free_surface>(),
-      acoustic_free_surface_boundary, field, acceleration);
+      acoustic_free_surface_boundary, property, field, acceleration);
 
   return;
 }

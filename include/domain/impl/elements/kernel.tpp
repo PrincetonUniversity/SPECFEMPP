@@ -102,7 +102,7 @@ void specfem::domain::impl::kernels::element_kernel_base<
       specfem::policy::element_chunk<ParallelConfig,
                                      Kokkos::DefaultExecutionSpace>;
 
-  using PointBoundaryType = specfem::point::boundary<using_simd, BoundaryTag>;
+  using PointBoundaryType = specfem::point::boundary<BoundaryTag, using_simd>;
 
   constexpr int NGLL = quadrature_points_type::NGLL;
 
@@ -408,7 +408,7 @@ void specfem::domain::impl::kernels::element_kernel_base<
       specfem::point::field<DimensionType, MediumTag, false, true, false, false,
                             using_simd>;
 
-  using PointBoundaryType = specfem::point::boundary<using_simd, BoundaryTag>;
+  using PointBoundaryType = specfem::point::boundary<BoundaryTag, using_simd>;
 
   using PointFieldDerivativesType =
       specfem::point::field_derivatives<DimensionType, MediumTag, using_simd>;
@@ -546,6 +546,12 @@ void specfem::domain::impl::kernels::element_kernel_base<
                       static_cast<type_real>(-1.0);
                 }
 
+                specfem::point::properties<DimensionType, MediumTag,
+                                           PropertyTag, using_simd>
+                    point_property;
+                specfem::compute::load_on_device(index, properties,
+                                                 point_property);
+
                 PointVelocityType velocity;
                 specfem::compute::load_on_device(index, field, velocity);
 
@@ -554,8 +560,8 @@ void specfem::domain::impl::kernels::element_kernel_base<
                                                  point_boundary);
 
                 specfem::domain::impl::boundary_conditions::
-                    apply_boundary_conditions(point_boundary, velocity,
-                                              acceleration);
+                    apply_boundary_conditions(point_boundary, point_property,
+                                              velocity, acceleration);
 
                 specfem::compute::atomic_add_on_device(index, acceleration,
                                                        field);

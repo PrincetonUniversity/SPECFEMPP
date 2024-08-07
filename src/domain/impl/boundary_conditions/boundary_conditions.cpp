@@ -18,8 +18,14 @@ using PointAccelerationType =
     specfem::point::field<DimensionType, MediumTag, false, false, true, false,
                           UseSIMD>;
 
+template <specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag, bool UseSIMD>
+using PointPropertyType =
+    specfem::point::field<specfem::dimension::type::dim2, MediumTag, true,
+                          false, false, true, UseSIMD>;
+
 template <bool UseSIMD, specfem::element::boundary_tag BoundaryTag>
-using PointBoundaryType = specfem::point::boundary<UseSIMD, BoundaryTag>;
+using PointBoundaryType = specfem::point::boundary<BoundaryTag, UseSIMD>;
 } // namespace
 
 // None boundary conditions
@@ -27,11 +33,15 @@ using PointBoundaryType = specfem::point::boundary<UseSIMD, BoundaryTag>;
 template void
 specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
     PointBoundaryType<false, specfem::element::boundary_tag::none>,
+    PointPropertyType<specfem::element::medium_tag::acoustic,
+                      specfem::element::property_tag::isotropic, false>,
     PointVelocityType<false, specfem::dimension::type::dim2,
                       specfem::element::medium_tag::acoustic>,
     PointAccelerationType<false, specfem::dimension::type::dim2,
                           specfem::element::medium_tag::acoustic> >(
     const PointBoundaryType<false, specfem::element::boundary_tag::none> &,
+    const PointPropertyType<specfem::element::medium_tag::acoustic,
+                            specfem::element::property_tag::isotropic, false> &,
     const PointVelocityType<false, specfem::dimension::type::dim2,
                             specfem::element::medium_tag::acoustic> &,
     PointAccelerationType<false, specfem::dimension::type::dim2,
@@ -40,11 +50,15 @@ specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
 template void
 specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
     PointBoundaryType<true, specfem::element::boundary_tag::none>,
+    PointPropertyType<specfem::element::medium_tag::acoustic,
+                      specfem::element::property_tag::isotropic, true>,
     PointVelocityType<true, specfem::dimension::type::dim2,
                       specfem::element::medium_tag::acoustic>,
     PointAccelerationType<true, specfem::dimension::type::dim2,
                           specfem::element::medium_tag::acoustic> >(
     const PointBoundaryType<true, specfem::element::boundary_tag::none> &,
+    const PointPropertyType<specfem::element::medium_tag::acoustic,
+                            specfem::element::property_tag::isotropic, true> &,
     const PointVelocityType<true, specfem::dimension::type::dim2,
                             specfem::element::medium_tag::acoustic> &,
     PointAccelerationType<true, specfem::dimension::type::dim2,
@@ -53,11 +67,15 @@ specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
 template void
 specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
     PointBoundaryType<false, specfem::element::boundary_tag::none>,
+    PointPropertyType<specfem::element::medium_tag::elastic,
+                      specfem::element::property_tag::isotropic, false>,
     PointVelocityType<false, specfem::dimension::type::dim2,
                       specfem::element::medium_tag::elastic>,
     PointAccelerationType<false, specfem::dimension::type::dim2,
                           specfem::element::medium_tag::elastic> >(
     const PointBoundaryType<false, specfem::element::boundary_tag::none> &,
+    const PointPropertyType<specfem::element::medium_tag::elastic,
+                            specfem::element::property_tag::isotropic, false> &,
     const PointVelocityType<false, specfem::dimension::type::dim2,
                             specfem::element::medium_tag::elastic> &,
     PointAccelerationType<false, specfem::dimension::type::dim2,
@@ -66,11 +84,15 @@ specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
 template void
 specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
     PointBoundaryType<true, specfem::element::boundary_tag::none>,
+    PointPropertyType<specfem::element::medium_tag::elastic,
+                      specfem::element::property_tag::isotropic, true>,
     PointVelocityType<true, specfem::dimension::type::dim2,
                       specfem::element::medium_tag::elastic>,
     PointAccelerationType<true, specfem::dimension::type::dim2,
                           specfem::element::medium_tag::elastic> >(
     const PointBoundaryType<true, specfem::element::boundary_tag::none> &,
+    const PointPropertyType<specfem::element::medium_tag::elastic,
+                            specfem::element::property_tag::isotropic, true> &,
     const PointVelocityType<true, specfem::dimension::type::dim2,
                             specfem::element::medium_tag::elastic> &,
     PointAccelerationType<true, specfem::dimension::type::dim2,
@@ -83,12 +105,16 @@ template void
 specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
     PointBoundaryType<false,
                       specfem::element::boundary_tag::acoustic_free_surface>,
+    PointPropertyType<specfem::element::medium_tag::acoustic,
+                      specfem::element::property_tag::isotropic, false>,
     PointVelocityType<false, specfem::dimension::type::dim2,
                       specfem::element::medium_tag::acoustic>,
     PointAccelerationType<false, specfem::dimension::type::dim2,
                           specfem::element::medium_tag::acoustic> >(
     const PointBoundaryType<
         false, specfem::element::boundary_tag::acoustic_free_surface> &,
+    const PointPropertyType<specfem::element::medium_tag::acoustic,
+                            specfem::element::property_tag::isotropic, false> &,
     const PointVelocityType<false, specfem::dimension::type::dim2,
                             specfem::element::medium_tag::acoustic> &,
     PointAccelerationType<false, specfem::dimension::type::dim2,
@@ -98,12 +124,16 @@ template void
 specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
     PointBoundaryType<true,
                       specfem::element::boundary_tag::acoustic_free_surface>,
+    PointPropertyType<specfem::element::medium_tag::acoustic,
+                      specfem::element::property_tag::isotropic, true>,
     PointVelocityType<true, specfem::dimension::type::dim2,
                       specfem::element::medium_tag::acoustic>,
     PointAccelerationType<true, specfem::dimension::type::dim2,
                           specfem::element::medium_tag::acoustic> >(
     const PointBoundaryType<
         true, specfem::element::boundary_tag::acoustic_free_surface> &,
+    const PointPropertyType<specfem::element::medium_tag::acoustic,
+                            specfem::element::property_tag::isotropic, true> &,
     const PointVelocityType<true, specfem::dimension::type::dim2,
                             specfem::element::medium_tag::acoustic> &,
     PointAccelerationType<true, specfem::dimension::type::dim2,
@@ -115,11 +145,15 @@ specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
 template void
 specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
     PointBoundaryType<false, specfem::element::boundary_tag::stacey>,
+    PointPropertyType<specfem::element::medium_tag::acoustic,
+                      specfem::element::property_tag::isotropic, false>,
     PointVelocityType<false, specfem::dimension::type::dim2,
                       specfem::element::medium_tag::acoustic>,
     PointAccelerationType<false, specfem::dimension::type::dim2,
                           specfem::element::medium_tag::acoustic> >(
     const PointBoundaryType<false, specfem::element::boundary_tag::stacey> &,
+    const PointPropertyType<specfem::element::medium_tag::acoustic,
+                            specfem::element::property_tag::isotropic, false> &,
     const PointVelocityType<false, specfem::dimension::type::dim2,
                             specfem::element::medium_tag::acoustic> &,
     PointAccelerationType<false, specfem::dimension::type::dim2,
@@ -128,11 +162,15 @@ specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
 template void
 specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
     PointBoundaryType<true, specfem::element::boundary_tag::stacey>,
+    PointPropertyType<specfem::element::medium_tag::acoustic,
+                      specfem::element::property_tag::isotropic, true>,
     PointVelocityType<true, specfem::dimension::type::dim2,
                       specfem::element::medium_tag::acoustic>,
     PointAccelerationType<true, specfem::dimension::type::dim2,
                           specfem::element::medium_tag::acoustic> >(
     const PointBoundaryType<true, specfem::element::boundary_tag::stacey> &,
+    const PointPropertyType<specfem::element::medium_tag::acoustic,
+                            specfem::element::property_tag::isotropic, true> &,
     const PointVelocityType<true, specfem::dimension::type::dim2,
                             specfem::element::medium_tag::acoustic> &,
     PointAccelerationType<true, specfem::dimension::type::dim2,
@@ -141,11 +179,15 @@ specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
 template void
 specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
     PointBoundaryType<false, specfem::element::boundary_tag::stacey>,
+    PointPropertyType<specfem::element::medium_tag::elastic,
+                      specfem::element::property_tag::isotropic, false>,
     PointVelocityType<false, specfem::dimension::type::dim2,
                       specfem::element::medium_tag::elastic>,
     PointAccelerationType<false, specfem::dimension::type::dim2,
                           specfem::element::medium_tag::elastic> >(
     const PointBoundaryType<false, specfem::element::boundary_tag::stacey> &,
+    const PointPropertyType<specfem::element::medium_tag::elastic,
+                            specfem::element::property_tag::isotropic, false> &,
     const PointVelocityType<false, specfem::dimension::type::dim2,
                             specfem::element::medium_tag::elastic> &,
     PointAccelerationType<false, specfem::dimension::type::dim2,
@@ -154,11 +196,15 @@ specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
 template void
 specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
     PointBoundaryType<true, specfem::element::boundary_tag::stacey>,
+    PointPropertyType<specfem::element::medium_tag::elastic,
+                      specfem::element::property_tag::isotropic, true>,
     PointVelocityType<true, specfem::dimension::type::dim2,
                       specfem::element::medium_tag::elastic>,
     PointAccelerationType<true, specfem::dimension::type::dim2,
                           specfem::element::medium_tag::elastic> >(
     const PointBoundaryType<true, specfem::element::boundary_tag::stacey> &,
+    const PointPropertyType<specfem::element::medium_tag::elastic,
+                            specfem::element::property_tag::isotropic, true> &,
     const PointVelocityType<true, specfem::dimension::type::dim2,
                             specfem::element::medium_tag::elastic> &,
     PointAccelerationType<true, specfem::dimension::type::dim2,
@@ -172,12 +218,16 @@ template void
 specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
     PointBoundaryType<
         false, specfem::element::boundary_tag::composite_stacey_dirichlet>,
+    PointPropertyType<specfem::element::medium_tag::acoustic,
+                      specfem::element::property_tag::isotropic, false>,
     PointVelocityType<false, specfem::dimension::type::dim2,
                       specfem::element::medium_tag::acoustic>,
     PointAccelerationType<false, specfem::dimension::type::dim2,
                           specfem::element::medium_tag::acoustic> >(
     const PointBoundaryType<
         false, specfem::element::boundary_tag::composite_stacey_dirichlet> &,
+    const PointPropertyType<specfem::element::medium_tag::acoustic,
+                            specfem::element::property_tag::isotropic, false> &,
     const PointVelocityType<false, specfem::dimension::type::dim2,
                             specfem::element::medium_tag::acoustic> &,
     PointAccelerationType<false, specfem::dimension::type::dim2,
@@ -187,12 +237,16 @@ template void
 specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
     PointBoundaryType<
         true, specfem::element::boundary_tag::composite_stacey_dirichlet>,
+    PointPropertyType<specfem::element::medium_tag::acoustic,
+                      specfem::element::property_tag::isotropic, true>,
     PointVelocityType<true, specfem::dimension::type::dim2,
                       specfem::element::medium_tag::acoustic>,
     PointAccelerationType<true, specfem::dimension::type::dim2,
                           specfem::element::medium_tag::acoustic> >(
     const PointBoundaryType<
         true, specfem::element::boundary_tag::composite_stacey_dirichlet> &,
+    const PointPropertyType<specfem::element::medium_tag::acoustic,
+                            specfem::element::property_tag::isotropic, true> &,
     const PointVelocityType<true, specfem::dimension::type::dim2,
                             specfem::element::medium_tag::acoustic> &,
     PointAccelerationType<true, specfem::dimension::type::dim2,

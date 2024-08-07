@@ -17,6 +17,7 @@ namespace impl {
  */
 template <typename T, int N, bool UseSIMD = false> struct array1d {
   using value_type = typename specfem::datatype::simd<T, UseSIMD>::datatype;
+  using base_type = T;
   value_type data[N]; ///< Data array
 
   template <typename... Args,
@@ -156,6 +157,7 @@ struct ScalarPointViewType : public impl::array1d<T, N, UseSIMD> {
   using type = impl::array1d<T, N, UseSIMD>;
   using simd = specfem::datatype::simd<T, UseSIMD>;
   using value_type = typename type::value_type;
+  using base_type = T;
 
   KOKKOS_INLINE_FUNCTION
   ScalarPointViewType() = default;
@@ -199,6 +201,7 @@ struct VectorPointViewType
   constexpr static bool isDomainViewType = false;
   constexpr static bool isScalarViewType = false;
   constexpr static bool isVectorViewType = true;
+  using base_type = T;
 
   using type = impl::array1d<T, NumberOfDimensions * Components, UseSIMD>;
   using simd = specfem::datatype::simd<T, UseSIMD>;

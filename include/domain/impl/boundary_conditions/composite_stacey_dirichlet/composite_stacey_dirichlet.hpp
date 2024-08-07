@@ -12,11 +12,12 @@ using composite_stacey_dirichlet_type = std::integral_constant<
     specfem::element::boundary_tag,
     specfem::element::boundary_tag::composite_stacey_dirichlet>;
 
-template <typename PointBoundaryType, typename PointFieldType,
-          typename PointAccelerationType>
+template <typename PointBoundaryType, typename PointPropertyType,
+          typename PointFieldType, typename PointAccelerationType>
 KOKKOS_FUNCTION void impl_apply_boundary_conditions(
     const composite_stacey_dirichlet_type &, const PointBoundaryType &boundary,
-    const PointFieldType &field, PointAccelerationType &acceleration);
+    const PointPropertyType &property, const PointFieldType &field,
+    PointAccelerationType &acceleration);
 
 template <typename PointBoundaryType, typename PointFieldType,
           typename PointAccelerationType>

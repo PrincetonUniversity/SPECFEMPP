@@ -11,11 +11,21 @@ namespace boundary_conditions {
 using none_type = std::integral_constant<specfem::element::boundary_tag,
                                          specfem::element::boundary_tag::none>;
 
-template <typename PointBoundaryType, typename PointFieldType,
-          typename PointAccelerationType>
-KOKKOS_FORCEINLINE_FUNCTION void impl_apply_boundary_conditions(
-    const none_type &, const PointBoundaryType &boundary,
-    const PointFieldType &field, PointAccelerationType &acceleration){};
+template <typename PointBoundaryType, typename PointPropertyType,
+          typename PointFieldType, typename PointAccelerationType>
+KOKKOS_FUNCTION void impl_apply_boundary_conditions(const none_type &,
+                                                    const PointBoundaryType &,
+                                                    const PointPropertyType &,
+                                                    const PointFieldType &,
+                                                    PointAccelerationType &) {
+
+  static_assert(PointBoundaryType::boundary_tag ==
+                    specfem::element::boundary_tag::none,
+                "Boundary tag must be none");
+
+  // Do nothing
+  return;
+}
 
 } // namespace boundary_conditions
 } // namespace impl

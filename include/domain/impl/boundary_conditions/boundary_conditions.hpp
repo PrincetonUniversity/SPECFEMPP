@@ -5,17 +5,17 @@
 #include "enumerations/boundary.hpp"
 #include "none/none.hpp"
 #include "stacey/stacey.hpp"
+#include <type_traits>
 
 namespace specfem {
 namespace domain {
 namespace impl {
 namespace boundary_conditions {
-template <typename PointBoundaryType, typename PointFieldType,
-          typename PointAccelerationType>
-KOKKOS_FORCEINLINE_FUNCTION void
-apply_boundary_conditions(const PointBoundaryType &boundary,
-                          const PointFieldType &field,
-                          PointAccelerationType &acceleration) {
+template <typename PointBoundaryType, typename PointPropertyType,
+          typename PointFieldType, typename PointAccelerationType>
+KOKKOS_FORCEINLINE_FUNCTION void apply_boundary_conditions(
+    const PointBoundaryType &boundary, const PointPropertyType &property,
+    const PointFieldType &field, PointAccelerationType &acceleration) {
 
   static_assert(PointBoundaryType::isPointBoundaryType,
                 "PointBoundaryType must be a PointBoundaryType");
@@ -42,10 +42,12 @@ apply_boundary_conditions(const PointBoundaryType &boundary,
                      typename PointAccelerationType::simd>,
       "PointFieldType and PointAccelerationType must have the same SIMD type");
 
-  constexpr auto boundary_tag = PointBoundaryType::boundary_tag;
-  impl_apply_boundary_conditions(
-      std::integral_constant<specfem::element::boundary_tag, boundary_tag>(),
-      boundary, field, acceleration);
+  using boundary_tag_type =
+      std::integral_constant<specfem::element::boundary_tag,
+                             PointBoundaryType::boundary_tag>;
+
+  impl_apply_boundary_conditions(boundary_tag_type(), boundary, property, field,
+                                 acceleration);
 }
 
 template <typename PointBoundaryType, typename PointMassMatrixType>
