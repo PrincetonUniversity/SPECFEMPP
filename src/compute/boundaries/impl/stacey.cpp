@@ -159,13 +159,13 @@ specfem::compute::impl::boundaries::stacey::stacey(
   this->h_quadrature_point_boundary_tag =
       Kokkos::create_mirror_view(quadrature_point_boundary_tag);
 
-  this->h_edge_weight = EdgeWeightView("specfem::compute::impl::boundaries::"
-                                       "acoustic_free_surface::edge_weight",
-                                       total_indices, ngllz, ngllx);
+  this->edge_weight = EdgeWeightView("specfem::compute::impl::boundaries::"
+                                     "acoustic_free_surface::edge_weight",
+                                     total_indices, ngllz, ngllx);
 
-  this->h_edge_normal = EdgeNormalView("specfem::compute::impl::boundaries::"
-                                       "acoustic_free_surface::edge_normal",
-                                       total_indices, ngllz, ngllx, 2);
+  this->edge_normal = EdgeNormalView("specfem::compute::impl::boundaries::"
+                                     "acoustic_free_surface::edge_normal",
+                                     total_indices, ngllz, ngllx, 2);
 
   this->h_edge_weight = Kokkos::create_mirror_view(edge_weight);
   this->h_edge_normal = Kokkos::create_mirror_view(edge_normal);
@@ -175,6 +175,9 @@ specfem::compute::impl::boundaries::stacey::stacey(
     const int ispec_compute = mapping.mesh_to_compute(ispec);
     const auto type = sorted_type[i];
     const int local_index = boundary_index_mapping(ispec_compute);
+
+    element_boundary_tags(ispec_compute) +=
+        specfem::element::boundary_tag::stacey;
 
     for (int iz = 0; iz < ngllz; ++iz) {
       for (int ix = 0; ix < ngllx; ++ix) {
@@ -198,12 +201,6 @@ specfem::compute::impl::boundaries::stacey::stacey(
           this->h_edge_weight(local_index, iz, ix) = edge_weight;
           this->h_edge_normal(local_index, iz, ix, 0) = edge_normal[0];
           this->h_edge_normal(local_index, iz, ix, 1) = edge_normal[1];
-        } else {
-          this->h_quadrature_point_boundary_tag(local_index, iz, ix) +=
-              specfem::element::boundary_tag::none;
-          this->h_edge_weight(local_index, iz, ix) = 0.0;
-          this->h_edge_normal(local_index, iz, ix, 0) = 0.0;
-          this->h_edge_normal(local_index, iz, ix, 1) = 0.0;
         }
       }
     }

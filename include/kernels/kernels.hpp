@@ -13,10 +13,10 @@ template <specfem::wavefield::type WavefieldType,
 class kernels
     : public impl::domain_kernels<WavefieldType, DimensionType, qp_type> {
 public:
-  kernels(const specfem::compute::assembly &assembly,
+  kernels(const type_real dt, const specfem::compute::assembly &assembly,
           const qp_type &quadrature_points)
       : impl::domain_kernels<WavefieldType, DimensionType, qp_type>(
-            assembly, quadrature_points) {}
+            dt, assembly, quadrature_points) {}
 };
 
 } // namespace kernels

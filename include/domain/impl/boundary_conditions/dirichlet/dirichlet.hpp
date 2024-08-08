@@ -1,6 +1,7 @@
 #pragma once
 
 #include "enumerations/boundary.hpp"
+#include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <Kokkos_SIMD.hpp>
 
@@ -63,6 +64,21 @@ KOKKOS_FORCEINLINE_FUNCTION void impl_apply_boundary_conditions(
       acceleration.acceleration(icomp)[lane] = 0.0;
   }
 
+  return;
+};
+
+template <typename PointBoundaryType, typename PointPropertyType,
+          typename PointMassMatrixType>
+KOKKOS_FORCEINLINE_FUNCTION void impl_compute_mass_matrix_terms(
+    const acoustic_free_surface_type &, const type_real,
+    const PointBoundaryType &boundary, const PointPropertyType &,
+    PointMassMatrixType &mass_matrix) {
+
+  static_assert(PointBoundaryType::boundary_tag ==
+                    specfem::element::boundary_tag::acoustic_free_surface,
+                "Boundary tag must be acoustic_free_surface");
+
+  // Do nothing
   return;
 };
 

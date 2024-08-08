@@ -181,7 +181,7 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   // --------------------------------------------------------------
   specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
   std::shared_ptr<specfem::solver::solver> solver =
-      setup.instantiate_solver(assembly, time_scheme, qp5);
+      setup.instantiate_solver(dt, assembly, time_scheme, qp5);
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------

@@ -268,7 +268,7 @@ template <specfem::wavefield::type WavefieldType,
           specfem::element::medium_tag medium, typename qp_type>
 specfem::domain::impl::kernels::kernels<
     WavefieldType, DimensionType, medium,
-    qp_type>::kernels(const specfem::compute::assembly &assembly,
+    qp_type>::kernels(const type_real dt, const specfem::compute::assembly &assembly,
                       const qp_type &quadrature_points) {
 
   using medium_type = specfem::medium::medium<DimensionType, medium>;
@@ -403,7 +403,7 @@ specfem::domain::impl::kernels::kernels<
 
   // Compute mass matrices
 
-  this->compute_mass_matrix();
+  this->compute_mass_matrix(dt);
 
   return;
 }

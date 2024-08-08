@@ -50,10 +50,12 @@ KOKKOS_FORCEINLINE_FUNCTION void apply_boundary_conditions(
                                  acceleration);
 }
 
-template <typename PointBoundaryType, typename PointMassMatrixType>
+template <typename PointBoundaryType, typename PointPropertyType,
+          typename PointMassMatrixType>
 KOKKOS_FORCEINLINE_FUNCTION void
-compute_mass_matrix_terms(const PointBoundaryType &boundary,
-                          const PointMassMatrixType &mass_matrix) {
+compute_mass_matrix_terms(const type_real dt, const PointBoundaryType &boundary,
+                          const PointPropertyType &property,
+                          PointMassMatrixType &mass_matrix) {
 
   static_assert(PointBoundaryType::isPointBoundaryType,
                 "PointBoundaryType must be a PointBoundaryType");
@@ -63,6 +65,13 @@ compute_mass_matrix_terms(const PointBoundaryType &boundary,
 
   static_assert(PointMassMatrixType::store_mass_matrix,
                 "PointMassMatrixType must store mass matrix");
+
+  using boundary_tag_type =
+      std::integral_constant<specfem::element::boundary_tag,
+                             PointBoundaryType::boundary_tag>;
+
+  impl_compute_mass_matrix_terms(boundary_tag_type(), dt, boundary, property,
+                                 mass_matrix);
 
   return;
 }

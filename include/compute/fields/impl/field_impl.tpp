@@ -18,7 +18,8 @@ specfem::compute::impl::field_impl<DimensionType, MediumTag>::field_impl(
       field_dot_dot("specfem::compute::fields::field_dot_dot", nglob,
                     medium_type::components),
       h_field_dot_dot(Kokkos::create_mirror_view(field_dot_dot)),
-      mass_inverse("specfem::compute::fields::mass_inverse", nglob, nglob),
+      mass_inverse("specfem::compute::fields::mass_inverse", nglob,
+                   medium_type::components),
       h_mass_inverse(Kokkos::create_mirror_view(mass_inverse)) {}
 
 template <specfem::dimension::type DimensionType,

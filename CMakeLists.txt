@@ -335,8 +335,10 @@ add_library(
         src/domain/impl/boundary_conditions/dirichlet/dirichlet.cpp
         src/domain/impl/boundary_conditions/dirichlet/print.cpp
         src/domain/impl/boundary_conditions/stacey/stacey.cpp
+        src/domain/impl/boundary_conditions/stacey/mass_matrix.cpp
         src/domain/impl/boundary_conditions/stacey/print.cpp
         src/domain/impl/boundary_conditions/composite_stacey_dirichlet/composite_stacey_dirichlet.cpp
+        src/domain/impl/boundary_conditions/composite_stacey_dirichlet/mass_matrix.cpp
         src/domain/impl/boundary_conditions/composite_stacey_dirichlet/print.cpp
         src/domain/impl/boundary_conditions/boundary_conditions.cpp
 )

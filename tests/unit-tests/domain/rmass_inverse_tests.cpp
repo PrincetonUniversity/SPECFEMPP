@@ -131,17 +131,19 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
 
       specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
 
+      const type_real dt = setup.get_dt();
+
       specfem::domain::domain<
           specfem::wavefield::type::forward, specfem::dimension::type::dim2,
           specfem::element::medium_tag::elastic,
           specfem::enums::element::quadrature::static_quadrature_points<5> >
-          elastic_domain_static(assembly, qp5);
+          elastic_domain_static(dt, assembly, qp5);
 
       specfem::domain::domain<
           specfem::wavefield::type::forward, specfem::dimension::type::dim2,
           specfem::element::medium_tag::acoustic,
           specfem::enums::element::quadrature::static_quadrature_points<5> >
-          acoustic_domain_static(assembly, qp5);
+          acoustic_domain_static(dt, assembly, qp5);
 
       elastic_domain_static.template mass_time_contribution<
           specfem::enums::time_scheme::type::newmark>(setup.get_dt());
@@ -207,6 +209,13 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
                   const auto rmass_ref =
                       h_mass_matrix_global.data(iglob, icomp);
                   const auto rmass = point_field.mass_matrix(icomp);
+                  if (std::isnan(rmass)) {
+                    std::cout << "rmass: " << rmass << std::endl;
+                    std::cout << "rmass_ref: " << rmass_ref << std::endl;
+                    std::cout << "ispec: " << ispec << std::endl;
+                    std::cout << "iz: " << iz << std::endl;
+                    std::cout << "ix: " << ix << std::endl;
+                  }
                   error_norm +=
                       std::sqrt((rmass - rmass_ref) * (rmass - rmass_ref));
                   ref_norm += std::sqrt(rmass_ref * rmass_ref);
@@ -269,6 +278,9 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
         }
 
         type_real tolerance = 1e-5;
+
+        std::cout << "Error norm: " << error_norm << std::endl;
+        std::cout << "Ref norm: " << ref_norm << std::endl;
 
         ASSERT_NEAR(error_norm / ref_norm, 0.0, tolerance);
       }

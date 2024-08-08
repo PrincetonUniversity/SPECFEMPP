@@ -37,6 +37,7 @@ public:
       const quadrature_points_type &quadrature_points);
 
   void compute_mass_matrix(
+      const type_real dt,
       const specfem::compute::simulation_field<WavefieldType> &field) const;
 
   void compute_stiffness_interaction(
@@ -85,10 +86,10 @@ public:
                             PropertyTag, BoundaryTag, quadrature_points_type>(
             assembly, h_element_kernel_index_mapping, quadrature_points) {}
 
-  void compute_mass_matrix() const {
+  void compute_mass_matrix(const type_real dt) const {
     element_kernel_base<WavefieldType, DimensionType, MediumTag, PropertyTag,
                         BoundaryTag,
-                        quadrature_points_type>::compute_mass_matrix(field);
+                        quadrature_points_type>::compute_mass_matrix(dt, field);
   }
 
   void compute_stiffness_interaction(const int istep) const {
@@ -134,11 +135,11 @@ public:
                             quadrature_points_type>(
             assembly, h_element_kernel_index_mapping, quadrature_points) {}
 
-  void compute_mass_matrix() const {
+  void compute_mass_matrix(const type_real dt) const {
     element_kernel_base<specfem::wavefield::type::backward, DimensionType,
                         MediumTag, PropertyTag,
                         specfem::element::boundary_tag::stacey,
-                        quadrature_points_type>::compute_mass_matrix(field);
+                        quadrature_points_type>::compute_mass_matrix(dt, field);
   }
 
   template <specfem::enums::time_scheme::type time_scheme>
