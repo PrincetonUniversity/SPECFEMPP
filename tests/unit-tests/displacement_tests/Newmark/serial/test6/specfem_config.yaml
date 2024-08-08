@@ -22,7 +22,7 @@ parameters:
         type-of-simulation: forward
         time-scheme:
           type: Newmark
-          dt: 1.0e-3
+          dt: 1.1e-3
           nstep: 300
 
     simulation-mode:
@@ -33,11 +33,10 @@ parameters:
             output-folder: "."
 
   receivers:
-    stations-file: "../DATA/STATIONS"
+    stations-file: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test6/STATIONS"
     angle: 0.0
     seismogram-type:
       - displacement
-      - velocity
     nstep_between_samples: 1
 
   ## Runtime setup
