@@ -81,6 +81,7 @@ void specfem::domain::impl::kernels::element_kernel_base<
     WavefieldType, DimensionType, MediumTag, PropertyTag, BoundaryTag,
     quadrature_points_type>::
     compute_mass_matrix(
+        const type_real dt,
         const specfem::compute::simulation_field<WavefieldType> &field) const {
 
   constexpr bool using_simd = true;
@@ -173,7 +174,8 @@ void specfem::domain::impl::kernels::element_kernel_base<
                                                  point_boundary);
 
                 specfem::domain::impl::boundary_conditions::
-                    compute_mass_matrix_terms(point_boundary, mass_matrix);
+                    compute_mass_matrix_terms(dt, point_boundary,
+                                              point_property, mass_matrix);
 
                 specfem::compute::atomic_add_on_device(index, mass_matrix,
                                                        field);

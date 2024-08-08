@@ -22,7 +22,7 @@ public:
   using dimension = specfem::dimension::dimension<DimensionType>;
   kernels() = default;
 
-  kernels(const specfem::compute::assembly &assembly,
+  kernels(const type_real dt, const specfem::compute::assembly &assembly,
           const quadrature_point_type &quadrature_points);
 
   template <specfem::enums::time_scheme::type time_scheme>
@@ -44,11 +44,11 @@ public:
     return;
   }
 
-  inline void compute_mass_matrix() const {
-    isotropic_elements.compute_mass_matrix();
-    isotropic_elements_dirichlet.compute_mass_matrix();
-    isotropic_elements_stacey.compute_mass_matrix();
-    isotropic_elements_stacey_dirichlet.compute_mass_matrix();
+  inline void compute_mass_matrix(const type_real dt) const {
+    isotropic_elements.compute_mass_matrix(dt);
+    isotropic_elements_dirichlet.compute_mass_matrix(dt);
+    isotropic_elements_stacey.compute_mass_matrix(dt);
+    isotropic_elements_stacey_dirichlet.compute_mass_matrix(dt);
     return;
   }
 

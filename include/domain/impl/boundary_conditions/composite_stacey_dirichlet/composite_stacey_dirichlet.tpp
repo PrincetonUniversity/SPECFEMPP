@@ -43,3 +43,39 @@ specfem::domain::impl::boundary_conditions::impl_apply_boundary_conditions(
 
   return;
 }
+
+template <typename PointBoundaryType, typename PointPropertyType,
+          typename PointMassMatrixType>
+KOKKOS_FUNCTION void
+specfem::domain::impl::boundary_conditions::impl_compute_mass_matrix_terms(
+    const composite_stacey_dirichlet_type &, const type_real dt,
+    const PointBoundaryType &boundary, const PointPropertyType &property,
+    PointMassMatrixType &mass_matrix) {
+
+  static_assert(PointBoundaryType::boundary_tag ==
+                    specfem::element::boundary_tag::composite_stacey_dirichlet,
+                "Boundary tag must be composite_stacey_dirichlet");
+
+  const auto &stacey_boundary = static_cast<
+      const specfem::point::boundary<specfem::element::boundary_tag::stacey,
+                                     PointBoundaryType::simd::using_simd> &>(
+      boundary);
+
+  impl_compute_mass_matrix_terms(
+      std::integral_constant<specfem::element::boundary_tag,
+                             specfem::element::boundary_tag::stacey>(),
+      dt, stacey_boundary, property, mass_matrix);
+
+  const auto &acoustic_free_surface_boundary =
+      static_cast<const specfem::point::boundary<
+          specfem::element::boundary_tag::acoustic_free_surface,
+          PointBoundaryType::simd::using_simd> &>(boundary);
+
+  impl_compute_mass_matrix_terms(
+      std::integral_constant<
+          specfem::element::boundary_tag,
+          specfem::element::boundary_tag::acoustic_free_surface>(),
+      dt, acoustic_free_surface_boundary, property, mass_matrix);
+
+  return;
+}

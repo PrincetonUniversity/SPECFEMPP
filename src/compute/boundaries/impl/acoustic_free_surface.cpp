@@ -135,9 +135,6 @@ specfem::compute::impl::boundaries::acoustic_free_surface::
         if (is_on_boundary(type, iz, ix, ngllz, ngllx)) {
           quadrature_point_boundary_tag(index, iz, ix) +=
               specfem::element::boundary_tag::acoustic_free_surface;
-        } else {
-          quadrature_point_boundary_tag(index, iz, ix) +=
-              specfem::element::boundary_tag::none;
         }
       }
     }

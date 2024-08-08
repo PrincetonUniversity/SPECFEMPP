@@ -10,7 +10,7 @@
 
 template <typename qp_type>
 std::shared_ptr<specfem::solver::solver>
-specfem::runtime_configuration::solver::solver::instantiate(
+specfem::runtime_configuration::solver::solver::instantiate(const type_real dt,
     const specfem::compute::assembly &assembly,
     std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
     const qp_type &quadrature) const {
@@ -20,7 +20,7 @@ specfem::runtime_configuration::solver::solver::instantiate(
     std::cout << "-------------------------------\n";
     const auto kernels = specfem::kernels::kernels<specfem::wavefield::type::forward,
                                                    specfem::dimension::type::dim2, qp_type>(
-        assembly, quadrature);
+        dt, assembly, quadrature);
     return std::make_shared<
         specfem::solver::time_marching<specfem::simulation::type::forward,
                                        specfem::dimension::type::dim2, qp_type>>(
@@ -29,10 +29,10 @@ specfem::runtime_configuration::solver::solver::instantiate(
     std::cout << "Instantiating Kernels \n";
     std::cout << "-------------------------------\n";
     const auto adjoint_kernels = specfem::kernels::kernels<specfem::wavefield::type::adjoint,
-                                                   specfem::dimension::type::dim2, qp_type>(
+                                                   specfem::dimension::type::dim2, qp_type>(dt,
         assembly, quadrature);
     const auto backward_kernels = specfem::kernels::kernels<specfem::wavefield::type::backward,
-                                                   specfem::dimension::type::dim2, qp_type>(
+                                                   specfem::dimension::type::dim2, qp_type>(dt,
         assembly, quadrature);
     return std::make_shared<
         specfem::solver::time_marching<specfem::simulation::type::combined,

@@ -24,12 +24,12 @@ public:
   using quadrature_points_type = qp_type; ///< Type of quadrature points i.e.
                                           ///< static or dynamic
 
-  domain(const specfem::compute::assembly &assembly,
+  domain(const type_real dt, const specfem::compute::assembly &assembly,
          const quadrature_points_type &quadrature_points)
       : field(assembly.fields.get_simulation_field<WavefieldType>()),
         specfem::domain::impl::kernels::kernels<
             WavefieldType, DimensionType, MediumTag, quadrature_points_type>(
-            assembly, quadrature_points) {}
+            dt, assembly, quadrature_points) {}
 
   ~domain() = default;
 
