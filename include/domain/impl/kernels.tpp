@@ -17,14 +17,14 @@ struct element_tag {
 
   element_tag(const specfem::element::medium_tag &medium_tag,
               const specfem::element::property_tag &property_tag,
-              const specfem::element::boundary_tag_container &boundary_tag)
+              const specfem::element::boundary_tag &boundary_tag)
       : medium_tag(medium_tag), property_tag(property_tag),
         boundary_tag(boundary_tag) {}
 
   element_tag() = default;
 
   specfem::element::property_tag property_tag;
-  specfem::element::boundary_tag_container boundary_tag;
+  specfem::element::boundary_tag boundary_tag;
   specfem::element::medium_tag medium_tag;
 };
 
@@ -363,7 +363,7 @@ specfem::domain::impl::kernels::kernels<
     element_tags(ispec) =
         element_tag(assembly.properties.h_element_types(ispec),
                     assembly.properties.h_element_property(ispec),
-                    assembly.boundaries.h_boundary_tags(ispec));
+                    assembly.boundaries.boundary_tags(ispec));
   }
 
   if constexpr (WavefieldType == specfem::wavefield::type::forward ||

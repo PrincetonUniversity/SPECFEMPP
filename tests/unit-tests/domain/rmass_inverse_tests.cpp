@@ -114,8 +114,12 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
     // Set up GLL quadrature points
     auto quadratures = setup.instantiate_quadrature();
 
+    std::cout << "Reading mesh file: " << database_file << std::endl;
+
     // Read mesh generated MESHFEM
     specfem::mesh::mesh mesh(database_file, mpi);
+
+    std::cout << "Setting up sources and receivers" << std::endl;
 
     // Setup dummy sources and receivers for testing
     std::vector<std::shared_ptr<specfem::sources::source> > sources(0);
@@ -173,6 +177,9 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
             "No mass matrix provided for testing. Please provide a mass matrix "
             "for testing.");
       }
+
+      std::cout << "Checking mass matrix inversion for elastic medium " << nglob
+                << std::endl;
 
       if (Test.database.elastic_mass_matrix != "NULL") {
         specfem::testing::array2d<type_real, Kokkos::LayoutRight>

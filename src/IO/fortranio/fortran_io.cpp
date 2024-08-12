@@ -48,6 +48,7 @@ void specfem::IO::fortran_read_value(type_real *value, std::ifstream &stream,
   buffer_length -= fdouble;
   char *ivalue = new char[fdouble];
   if (buffer_length < 0) {
+    std::cout << "buffer_length: " << buffer_length << std::endl;
     throw std::runtime_error("Error reading fortran file");
   }
   stream.read(ivalue, fdouble);

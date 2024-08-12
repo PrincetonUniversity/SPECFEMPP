@@ -90,9 +90,9 @@ public:
 
   KOKKOS_FUNCTION auto range_iterator(const int range_index) const {
     const int starting_index = range_index * simd_size;
-    const int number_elements = (range_index + simd_size < range_size)
+    const int number_elements = (starting_index + simd_size < range_size)
                                     ? simd_size
-                                    : range_size - range_index;
+                                    : range_size - starting_index;
 
     return specfem::iterator::range<simd>(starting_index, number_elements);
   }

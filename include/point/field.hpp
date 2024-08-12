@@ -67,7 +67,7 @@ template <typename ViewType> struct MassMatrix<ViewType, true> {
   ViewType invert_mass_matrix() const {
     ViewType result;
     for (int i = 0; i < ViewType::components; ++i) {
-      result(i) = 1.0 / mass_matrix(i);
+      result(i) = static_cast<type_real>(1.0) / mass_matrix(i);
     }
     return result;
   }

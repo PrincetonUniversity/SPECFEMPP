@@ -268,11 +268,13 @@ specfem::compute::mesh_to_compute_mapping::mesh_to_compute_mapping(
     }
   }
 
-  assert(elastic_isotropic_ispec.size() + acoustic_isotropic_ispec.size() +
-             free_surface_ispec.size() + elastic_isotropic_stacey_ispec.size() +
-             acoustic_isotropic_stacey_ispec.size() +
-             acoustic_isotropic_stacey_dirichlet_ispec.size() ==
-         nspec);
+  const int total_nspecs =
+      elastic_isotropic_ispec.size() + acoustic_isotropic_ispec.size() +
+      free_surface_ispec.size() + elastic_isotropic_stacey_ispec.size() +
+      acoustic_isotropic_stacey_ispec.size() +
+      acoustic_isotropic_stacey_dirichlet_ispec.size();
+
+  assert(total_nspecs == nspec);
 
   int ispec = 0;
   for (const auto &ispecs : elastic_isotropic_ispec) {
@@ -317,9 +319,9 @@ specfem::compute::mesh_to_compute_mapping::mesh_to_compute_mapping(
 specfem::compute::mesh::mesh(
     const specfem::mesh::tags &tags,
     const specfem::mesh::control_nodes &m_control_nodes,
-    const specfem::quadrature::quadratures &m_quadratures)
-    : mapping(tags) {
+    const specfem::quadrature::quadratures &m_quadratures) {
 
+  this->mapping = specfem::compute::mesh_to_compute_mapping(tags);
   this->control_nodes =
       specfem::compute::control_nodes(this->mapping, m_control_nodes);
   this->quadratures =
@@ -328,7 +330,7 @@ specfem::compute::mesh::mesh(
   ngllx = this->quadratures.gll.N;
   ngllz = this->quadratures.gll.N;
 
-  points = this->assemble();
+  this->points = this->assemble();
 }
 
 specfem::compute::points specfem::compute::mesh::assemble() {

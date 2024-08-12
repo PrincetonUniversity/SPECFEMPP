@@ -9,21 +9,13 @@ specfem::mesh::tags::tags(const specfem::mesh::materials &materials,
       specfem::kokkos::HostView1d<specfem::mesh::impl::tags_container>(
           "specfem::mesh::tags::tags", this->nspec);
 
-  for (int ispec = 0; ispec < nspec; ispec++) {
-    const auto &material_specification =
-        materials.material_index_mapping(ispec);
-    const auto medium_tag = material_specification.type;
-    const auto property_tag = material_specification.property;
-
-    this->tags_container(ispec).medium_tag = medium_tag;
-    this->tags_container(ispec).property_tag = property_tag;
-  }
+  std::vector<specfem::element::boundary_tag_container> boundary_tag(
+      this->nspec);
 
   const auto &absorbing_boundary = boundaries.absorbing_boundary;
   for (int i = 0; i < absorbing_boundary.nelements; ++i) {
     const int ispec = absorbing_boundary.ispec(i);
-    this->tags_container(ispec).boundary_tag +=
-        specfem::element::boundary_tag::stacey;
+    boundary_tag[ispec] += specfem::element::boundary_tag::stacey;
   }
 
   const auto &acoustic_free_surface = boundaries.acoustic_free_surface;
@@ -35,7 +27,18 @@ specfem::mesh::tags::tags(const specfem::mesh::materials &materials,
       throw std::invalid_argument(
           "Error: Acoustic free surface boundary is not an acoustic element");
     }
-    this->tags_container(ispec).boundary_tag +=
+    boundary_tag[ispec] +=
         specfem::element::boundary_tag::acoustic_free_surface;
+  }
+
+  for (int ispec = 0; ispec < nspec; ispec++) {
+    const auto &material_specification =
+        materials.material_index_mapping(ispec);
+    const auto medium_tag = material_specification.type;
+    const auto property_tag = material_specification.property;
+
+    this->tags_container(ispec).medium_tag = medium_tag;
+    this->tags_container(ispec).property_tag = property_tag;
+    this->tags_container(ispec).boundary_tag = boundary_tag[ispec].get_tag();
   }
 }

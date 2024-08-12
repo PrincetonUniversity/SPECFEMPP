@@ -56,8 +56,7 @@ public:
          const specfem::compute::quadrature &quadrature,
          const specfem::compute::partial_derivatives &partial_derivatives,
          const Kokkos::View<int *, Kokkos::HostSpace> &boundary_index_mapping,
-         const Kokkos::View<specfem::element::boundary_tag_container *,
-                            Kokkos::HostSpace> &element_boundary_tags);
+         std::vector<specfem::element::boundary_tag_container> &boundary_tag);
 
   KOKKOS_INLINE_FUNCTION void load_on_device(
       const specfem::point::index &index,
