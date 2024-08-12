@@ -51,18 +51,10 @@ std::tuple<type_real, type_real> specfem::jacobian::compute_locations(
   // This is hacky way of doing this using double vector loops
   // Use multiple reducers once kokkos enables the feature
 
-  Kokkos::parallel_reduce(
-      Kokkos::ThreadVectorRange(teamMember, ngnod),
-      [=](const int &in, type_real &update_xcor) {
-        update_xcor += shape2D(in) * s_coorg(0, in);
-      },
-      xcor);
-  Kokkos::parallel_reduce(
-      Kokkos::ThreadVectorRange(teamMember, ngnod),
-      [=](const int &in, type_real &update_ycor) {
-        update_ycor += shape2D(in) * s_coorg(1, in);
-      },
-      ycor);
+  for (int in = 0; in < ngnod; in++) {
+    xcor += shape2D(in) * s_coorg(0, in);
+    ycor += shape2D(in) * s_coorg(1, in);
+  }
 
   return std::make_tuple(xcor, ycor);
 }

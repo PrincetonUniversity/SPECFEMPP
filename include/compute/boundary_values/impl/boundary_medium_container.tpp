@@ -21,7 +21,7 @@ specfem::compute::impl::boundary_medium_container<DimensionType, MediumType,
 
   for (int ispec = 0; ispec < nspec; ispec++) {
     if (properties.h_element_types(ispec) == MediumType &&
-        boundaries.h_boundary_tags(ispec) == BoundaryTag) {
+        boundaries.boundary_tags(ispec) == BoundaryTag) {
       property_index_mapping(ispec) = nelements;
       nelements++;
     }

@@ -17,10 +17,7 @@ struct boundaries {
 
   boundaries() = default;
 
-  specfem::kokkos::DeviceView1d<specfem::element::boundary_tag_container>
-      boundary_tags; ///< Boundary tags for each element
-  specfem::kokkos::HostMirror1d<specfem::element::boundary_tag_container>
-      h_boundary_tags; ///< Host mirror of boundary tags
+  specfem::kokkos::HostView1d<specfem::element::boundary_tag> boundary_tags;
 
   specfem::kokkos::DeviceView1d<int> acoustic_free_surface_index_mapping;
   specfem::kokkos::HostMirror1d<int> h_acoustic_free_surface_index_mapping;
