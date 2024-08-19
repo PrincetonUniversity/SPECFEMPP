@@ -29,7 +29,7 @@ struct gcoord2 {
   gcoord2() = default;
 
   KOKKOS_FUNCTION
-  gcoord2(const type_real &x, const type_real &z) : x(x), z(z) {}
+  gcoord2(const type_real x, const type_real z) : x(x), z(z) {}
 };
 
 struct index {

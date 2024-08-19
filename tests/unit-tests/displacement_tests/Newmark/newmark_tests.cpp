@@ -255,6 +255,19 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
 
     seismograms.sync_seismograms();
 
+    // --------------------------------------------------------------
+    //                   Write Seismograms
+    // --------------------------------------------------------------
+    const auto seismogram_writer =
+        setup.instantiate_seismogram_writer(assembly);
+    if (seismogram_writer) {
+      mpi->cout("Writing seismogram files:");
+      mpi->cout("-------------------------------");
+
+      seismogram_writer->write();
+    }
+    // --------------------------------------------------------------
+
     for (int irec = 0; irec < receivers.size(); ++irec) {
       const auto network_name = receivers[irec]->get_network_name();
       const auto station_name = receivers[irec]->get_station_name();

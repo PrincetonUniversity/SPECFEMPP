@@ -26,6 +26,8 @@ int compute_nglob(const ViewType index_mapping) {
     }
   }
 
+  std::cout << "nglob: " << nglob << std::endl;
+
   return nglob + 1;
 }
 } // namespace

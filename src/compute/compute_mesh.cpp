@@ -41,8 +41,8 @@ type_real get_tolerance(std::vector<qp> cart_cord, const int nspec,
   return 1e-6 * xtypdist;
 }
 
-specfem::compute::points assign_numbering(
-    specfem::kokkos::HostView3d<specfem::point::gcoord2> &global_coordinates) {
+specfem::compute::points
+assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates) {
 
   int nspec = global_coordinates.extent(0);
   int ngll = global_coordinates.extent(1);
@@ -54,8 +54,8 @@ specfem::compute::points assign_numbering(
     for (int iz = 0; iz < ngll; iz++) {
       for (int ix = 0; ix < ngll; ix++) {
         int iloc = ix * nspec * ngll + iz * nspec + ispec;
-        cart_cord[iloc].x = global_coordinates(ispec, iz, ix).x;
-        cart_cord[iloc].z = global_coordinates(ispec, iz, ix).z;
+        cart_cord[iloc].x = global_coordinates(ispec, iz, ix, 0);
+        cart_cord[iloc].z = global_coordinates(ispec, iz, ix, 1);
         cart_cord[iloc].iloc = iloc;
       }
     }
@@ -350,46 +350,66 @@ specfem::compute::points specfem::compute::mesh::assemble() {
   const int scratch_size =
       specfem::kokkos::HostScratchView2d<type_real>::shmem_size(ndim, ngnod);
 
-  specfem::kokkos::HostView3d<specfem::point::gcoord2> global_coordinates(
-      "specfem::compute::mesh::assemble::global_coordinates", nspec, ngll,
-      ngll);
+  specfem::kokkos::HostView4d<double> global_coordinates(
+      "specfem::compute::mesh::assemble::global_coordinates", nspec, ngll, ngll,
+      2);
 
-  // Compute the cartesian coordinates of the GLL points
-  Kokkos::parallel_for(
-      specfem::kokkos::HostTeam(nspec, Kokkos::AUTO, Kokkos::AUTO)
-          .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
-      KOKKOS_CLASS_LAMBDA(
-          const specfem::kokkos::HostTeam::member_type teamMember) {
-        const int ispec = teamMember.league_rank();
+  for (int ispec = 0; ispec < nspec; ispec++) {
+    for (int iz = 0; iz < ngll; iz++) {
+      for (int ix = 0; ix < ngll; ix++) {
+        auto shape_functions =
+            specfem::jacobian::define_shape_functions(xi(ix), gamma(iz), ngnod);
 
-        //----- Load coorgx, coorgz in level 0 cache to be utilized later
-        specfem::kokkos::HostScratchView2d<type_real> s_coord(
-            teamMember.team_scratch(0), ndim, ngnod);
+        double xcor = 0.0;
+        double zcor = 0.0;
 
-        Kokkos::parallel_for(Kokkos::TeamThreadRange(teamMember, ngnod),
-                             [&](const int in) {
-                               s_coord(0, in) = coord(0, ispec, in);
-                               s_coord(1, in) = coord(1, ispec, in);
-                             });
+        for (int in = 0; in < ngnod; in++) {
+          xcor += coord(0, ispec, in) * shape_functions(in);
+          zcor += coord(1, ispec, in) * shape_functions(in);
+        }
 
-        teamMember.team_barrier();
-        //-----
+        global_coordinates(ispec, iz, ix, 0) = xcor;
+        global_coordinates(ispec, iz, ix, 1) = zcor;
+      }
+    }
+  }
 
-        Kokkos::parallel_for(
-            Kokkos::TeamThreadRange(teamMember, ngllxz), [=](const int xz) {
-              int ix, iz;
-              sub2ind(xz, ngll, iz, ix);
-              // Get x and y coordinates for (ix, iz) point
-              auto sv_shape2D = Kokkos::subview(shape2D, iz, ix, Kokkos::ALL);
-              auto [xcor, zcor] = jacobian::compute_locations(
-                  teamMember, s_coord, ngnod, sv_shape2D);
-              // ------------
+  // // Compute the cartesian coordinates of the GLL points
+  // Kokkos::parallel_for(
+  //     specfem::kokkos::HostTeam(nspec, Kokkos::AUTO, Kokkos::AUTO)
+  //         .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
+  //     KOKKOS_CLASS_LAMBDA(
+  //         const specfem::kokkos::HostTeam::member_type teamMember) {
+  //       const int ispec = teamMember.league_rank();
 
-              global_coordinates(ispec, iz, ix) = { xcor, zcor };
-            });
-      });
+  //       //----- Load coorgx, coorgz in level 0 cache to be utilized later
+  //       specfem::kokkos::HostScratchView2d<type_real> s_coord(
+  //           teamMember.team_scratch(0), ndim, ngnod);
 
-  Kokkos::fence();
+  //       Kokkos::parallel_for(Kokkos::TeamThreadRange(teamMember, ngnod),
+  //                            [&](const int in) {
+  //                              s_coord(0, in) = coord(0, ispec, in);
+  //                              s_coord(1, in) = coord(1, ispec, in);
+  //                            });
+
+  //       teamMember.team_barrier();
+  //       //-----
+
+  //       Kokkos::parallel_for(
+  //           Kokkos::TeamThreadRange(teamMember, ngllxz), [=](const int xz) {
+  //             int ix, iz;
+  //             sub2ind(xz, ngll, iz, ix);
+  //             // Get x and y coordinates for (ix, iz) point
+  //             auto sv_shape2D = Kokkos::subview(shape2D, iz, ix,
+  //             Kokkos::ALL); auto [xcor, zcor] = jacobian::compute_locations(
+  //                 teamMember, s_coord, ngnod, sv_shape2D);
+  //             // ------------
+
+  //             global_coordinates(ispec, iz, ix) = { xcor, zcor };
+  //           });
+  //     });
+
+  // Kokkos::fence();
 
   return assign_numbering(global_coordinates);
 }
