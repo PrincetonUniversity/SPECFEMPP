@@ -1,7 +1,8 @@
-#ifndef _COMPUTE_COUPLED_INTERFACES_HPP
-#define _COMPUTE_COUPLED_INTERFACES_HPP
+#pragma once
 
 #include "compute/compute_mesh.hpp"
+#include "compute/compute_partial_derivatives.hpp"
+#include "compute/coupled_interfaces/interface_container.hpp"
 #include "compute/properties/properties.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "interface_container.hpp"
@@ -14,9 +15,11 @@ struct coupled_interfaces {
   coupled_interfaces() = default;
 
   coupled_interfaces(
-      const specfem::compute::mesh &mesh,
+      const specfem::mesh::mesh &mesh, const specfem::compute::points &points,
+      const specfem::compute::quadrature &quadrature,
+      const specfem::compute::partial_derivatives &partial_derivatives,
       const specfem::compute::properties &properties,
-      const specfem::mesh::coupled_interfaces &coupled_interfaces);
+      const specfem::compute::mesh_to_compute_mapping &mapping);
 
   template <specfem::element::medium_tag medium1,
             specfem::element::medium_tag medium2>
@@ -39,5 +42,3 @@ struct coupled_interfaces {
 };
 } // namespace compute
 } // namespace specfem
-
-#endif

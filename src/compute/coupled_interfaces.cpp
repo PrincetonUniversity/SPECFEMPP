@@ -528,14 +528,17 @@
 //               coupled_interfaces.acoustic_poroelastic)) {}
 
 specfem::compute::coupled_interfaces::coupled_interfaces(
-    const specfem::compute::mesh &mesh,
+    const specfem::mesh::mesh &mesh, const specfem::compute::points &points,
+    const specfem::compute::quadrature &quadrature,
+    const specfem::compute::partial_derivatives &partial_derivatives,
     const specfem::compute::properties &properties,
-    const specfem::mesh::coupled_interfaces &coupled_interfaces)
-    : elastic_acoustic(mesh, properties, coupled_interfaces.elastic_acoustic),
-      elastic_poroelastic(mesh, properties,
-                          coupled_interfaces.elastic_poroelastic),
-      acoustic_poroelastic(mesh, properties,
-                           coupled_interfaces.acoustic_poroelastic) {}
+    const specfem::compute::mesh_to_compute_mapping &mapping)
+    : elastic_acoustic(mesh, points, quadrature, partial_derivatives,
+                       properties, mapping),
+      elastic_poroelastic(mesh, points, quadrature, partial_derivatives,
+                          properties, mapping),
+      acoustic_poroelastic(mesh, points, quadrature, partial_derivatives,
+                           properties, mapping) {}
 
 // Explicit template instantiation
 
@@ -594,99 +597,3 @@ specfem::compute::coupled_interfaces::get_interface_container<
     specfem::element::medium_tag::acoustic>() const;
 
 // Explicit template member function instantiation
-
-template KOKKOS_FUNCTION int
-specfem::compute::interface_container<specfem::element::medium_tag::elastic,
-                                      specfem::element::medium_tag::acoustic>::
-    load_device_index_mapping<specfem::element::medium_tag::elastic>(
-        const int iedge) const;
-
-template KOKKOS_FUNCTION int
-specfem::compute::interface_container<specfem::element::medium_tag::acoustic,
-                                      specfem::element::medium_tag::elastic>::
-    load_device_index_mapping<specfem::element::medium_tag::acoustic>(
-        const int iedge) const;
-
-template KOKKOS_FUNCTION int
-specfem::compute::interface_container<specfem::element::medium_tag::elastic,
-                                      specfem::element::medium_tag::acoustic>::
-    load_device_index_mapping<specfem::element::medium_tag::acoustic>(
-        const int iedge) const;
-
-template KOKKOS_FUNCTION int
-specfem::compute::interface_container<specfem::element::medium_tag::acoustic,
-                                      specfem::element::medium_tag::elastic>::
-    load_device_index_mapping<specfem::element::medium_tag::elastic>(
-        const int iedge) const;
-
-template int
-specfem::compute::interface_container<specfem::element::medium_tag::elastic,
-                                      specfem::element::medium_tag::acoustic>::
-    load_host_index_mapping<specfem::element::medium_tag::elastic>(
-        const int iedge) const;
-
-template int
-specfem::compute::interface_container<specfem::element::medium_tag::acoustic,
-                                      specfem::element::medium_tag::elastic>::
-    load_host_index_mapping<specfem::element::medium_tag::acoustic>(
-        const int iedge) const;
-
-template int
-specfem::compute::interface_container<specfem::element::medium_tag::elastic,
-                                      specfem::element::medium_tag::acoustic>::
-    load_host_index_mapping<specfem::element::medium_tag::acoustic>(
-        const int iedge) const;
-
-template int
-specfem::compute::interface_container<specfem::element::medium_tag::acoustic,
-                                      specfem::element::medium_tag::elastic>::
-    load_host_index_mapping<specfem::element::medium_tag::elastic>(
-        const int iedge) const;
-
-template KOKKOS_FUNCTION specfem::edge::interface specfem::compute::
-    interface_container<specfem::element::medium_tag::elastic,
-                        specfem::element::medium_tag::acoustic>::
-        load_device_edge_type<specfem::element::medium_tag::elastic>(
-            const int iedge) const;
-
-template KOKKOS_FUNCTION specfem::edge::interface specfem::compute::
-    interface_container<specfem::element::medium_tag::acoustic,
-                        specfem::element::medium_tag::elastic>::
-        load_device_edge_type<specfem::element::medium_tag::acoustic>(
-            const int iedge) const;
-
-template specfem::edge::interface specfem::compute::interface_container<
-    specfem::element::medium_tag::elastic,
-    specfem::element::medium_tag::acoustic>::
-    load_host_edge_type<specfem::element::medium_tag::elastic>(
-        const int iedge) const;
-
-template specfem::edge::interface specfem::compute::interface_container<
-    specfem::element::medium_tag::acoustic,
-    specfem::element::medium_tag::elastic>::
-    load_host_edge_type<specfem::element::medium_tag::acoustic>(
-        const int iedge) const;
-
-template KOKKOS_FUNCTION specfem::edge::interface specfem::compute::
-    interface_container<specfem::element::medium_tag::elastic,
-                        specfem::element::medium_tag::acoustic>::
-        load_device_edge_type<specfem::element::medium_tag::acoustic>(
-            const int iedge) const;
-
-template KOKKOS_FUNCTION specfem::edge::interface specfem::compute::
-    interface_container<specfem::element::medium_tag::acoustic,
-                        specfem::element::medium_tag::elastic>::
-        load_device_edge_type<specfem::element::medium_tag::elastic>(
-            const int iedge) const;
-
-template specfem::edge::interface specfem::compute::interface_container<
-    specfem::element::medium_tag::elastic,
-    specfem::element::medium_tag::acoustic>::
-    load_host_edge_type<specfem::element::medium_tag::acoustic>(
-        const int iedge) const;
-
-template specfem::edge::interface specfem::compute::interface_container<
-    specfem::element::medium_tag::acoustic,
-    specfem::element::medium_tag::elastic>::
-    load_host_edge_type<specfem::element::medium_tag::elastic>(
-        const int iedge) const;

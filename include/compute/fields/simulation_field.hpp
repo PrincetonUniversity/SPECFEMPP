@@ -15,7 +15,6 @@
 
 namespace specfem {
 namespace compute {
-
 template <specfem::wavefield::type WavefieldType> struct simulation_field {
 
   using elastic_type =
@@ -163,7 +162,7 @@ template <
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
 NOINLINE KOKKOS_FUNCTION void
-load_on_device(const int *iglob,
+load_on_device(const typename ViewType::simd::mask_type &mask, const int *iglob,
                const specfem::compute::simulation_field<WavefieldType> &field,
                ViewType &point_field) {
 
@@ -187,10 +186,11 @@ load_on_device(const int *iglob,
   }();
 
   for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
-    const int iglob_l = iglob[lane];
-    if (iglob_l >= field.nglob) {
-      return;
+    if (!mask[lane]) {
+      continue;
     }
+
+    const int iglob_l = iglob[lane];
 
     if constexpr (StoreDisplacement) {
       for (int icomp = 0; icomp < components; ++icomp) {
@@ -345,7 +345,7 @@ template <
     std::enable_if_t<ViewType::isPointFieldType && ViewType::simd::using_simd,
                      int> = 0>
 void load_on_host(
-    const int *iglob,
+    const typename ViewType::simd::mask_type &mask, const int *iglob,
     const specfem::compute::simulation_field<WavefieldType> &field,
     ViewType &point_field) {
 
@@ -369,10 +369,11 @@ void load_on_host(
   }();
 
   for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
-    const int iglob_l = iglob[lane];
-    if (iglob_l >= field.nglob) {
+    if (!mask[lane]) {
       continue;
     }
+
+    const int iglob_l = iglob[lane];
 
     if constexpr (StoreDisplacement) {
       for (int icomp = 0; icomp < components; ++icomp) {
@@ -511,14 +512,20 @@ load_on_device(const specfem::point::simd_index &index,
   constexpr static auto MediumType = ViewType::medium_tag;
   int iglob[ViewType::simd::size()];
 
+  using mask_type = typename ViewType::simd::mask_type;
+
+  mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+
   for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
     iglob[lane] =
         (index.mask(std::size_t(lane)))
-            ? field.index_mapping(index.ispec + lane, index.iz, index.ix)
+            ? field.assembly_index_mapping(
+                  field.index_mapping(index.ispec + lane, index.iz, index.ix),
+                  static_cast<int>(MediumType))
             : field.nglob + 1;
   }
 
-  load_on_device(iglob, field, point_field);
+  load_on_device(mask, iglob, field, point_field);
 }
 
 template <
@@ -564,14 +571,20 @@ void load_on_host(
   constexpr static auto MediumType = ViewType::medium_tag;
   int iglob[ViewType::simd::size()];
 
+  using mask_type = typename ViewType::simd::mask_type;
+
+  mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+
   for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
     iglob[lane] =
         (index.mask(std::size_t(lane)))
-            ? field.h_index_mapping(index.ispec + lane, index.iz, index.ix)
+            ? field.h_assembly_index_mapping(
+                  field.h_index_mapping(index.ispec + lane, index.iz, index.ix),
+                  static_cast<int>(MediumType))
             : field.nglob + 1;
   }
 
-  load_on_host(iglob, field, point_field);
+  load_on_host(mask, iglob, field, point_field);
 }
 
 template <
@@ -623,7 +636,8 @@ template <
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
 NOINLINE KOKKOS_FUNCTION void store_on_device(
-    const int *iglob, const ViewType &point_field,
+    const typename ViewType::simd::mask_type &mask, const int *iglob,
+    const ViewType &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
 
   constexpr static bool StoreDisplacement = ViewType::store_displacement;
@@ -646,10 +660,11 @@ NOINLINE KOKKOS_FUNCTION void store_on_device(
   }();
 
   for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
-    const int iglob_l = iglob[lane];
-    if (iglob_l >= field.nglob) {
+    if (!mask[lane]) {
       continue;
     }
+
+    const int iglob_l = iglob[lane];
 
     if constexpr (StoreDisplacement) {
       for (int icomp = 0; icomp < components; ++icomp) {
@@ -799,7 +814,8 @@ template <
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
 void store_on_host(
-    const int *iglob, const ViewType &point_field,
+    const typename ViewType::simd::mask_type &mask, const int *iglob,
+    const ViewType &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
 
   constexpr static bool StoreDisplacement = ViewType::store_displacement;
@@ -822,10 +838,11 @@ void store_on_host(
   }();
 
   for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
-    const int iglob_l = iglob[lane];
-    if (iglob_l >= field.nglob) {
+    if (!mask[lane]) {
       continue;
     }
+
+    const int iglob_l = iglob[lane];
 
     if constexpr (StoreDisplacement) {
       for (int icomp = 0; icomp < components; ++icomp) {
@@ -968,14 +985,20 @@ NOINLINE KOKKOS_FUNCTION void store_on_device(
   constexpr static auto MediumType = ViewType::medium_tag;
   int iglob[ViewType::simd::size()];
 
+  using mask_type = typename ViewType::simd::mask_type;
+
+  mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+
   for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
     iglob[lane] =
         (index.mask(std::size_t(lane)))
-            ? field.index_mapping(index.ispec + lane, index.iz, index.ix)
+            ? field.assembly_index_mapping(
+                  field.index_mapping(index.ispec + lane, index.iz, index.ix),
+                  static_cast<int>(MediumType))
             : field.nglob + 1;
   }
 
-  store_on_device(iglob, point_field, field);
+  store_on_device(mask, iglob, point_field, field);
 }
 
 template <
@@ -1021,6 +1044,10 @@ void store_on_host(
   constexpr static auto MediumType = ViewType::medium_tag;
   int iglob[ViewType::simd::size()];
 
+  using mask_type = typename ViewType::simd::mask_type;
+
+  mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+
   for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
     iglob[lane] =
         (index.mask(std::size_t(lane)))
@@ -1028,7 +1055,7 @@ void store_on_host(
             : field.nglob + 1;
   }
 
-  store_on_host(iglob, point_field, field);
+  store_on_host(mask, iglob, point_field, field);
 }
 
 template <
@@ -1080,7 +1107,8 @@ template <
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
 NOINLINE KOKKOS_FUNCTION void
-add_on_device(const int *iglob, const ViewType &point_field,
+add_on_device(const typename ViewType::simd::mask_type &mask, const int *iglob,
+              const ViewType &point_field,
               const specfem::compute::simulation_field<WavefieldType> &field) {
 
   constexpr static bool StoreDisplacement = ViewType::store_displacement;
@@ -1103,10 +1131,11 @@ add_on_device(const int *iglob, const ViewType &point_field,
   }();
 
   for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
-    const int iglob_l = iglob[lane];
-    if (iglob_l >= field.nglob) {
+    if (!mask[lane]) {
       continue;
     }
+
+    const int iglob_l = iglob[lane];
 
     if constexpr (StoreDisplacement) {
       for (int icomp = 0; icomp < components; ++icomp) {
@@ -1276,7 +1305,8 @@ template <
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
 void add_on_host(
-    const int *iglob, const ViewType &point_field,
+    const typename ViewType::simd::mask_type &mask, const int *iglob,
+    const ViewType &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
 
   constexpr static bool StoreDisplacement = ViewType::store_displacement;
@@ -1299,10 +1329,11 @@ void add_on_host(
   }();
 
   for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
-    const int iglob_l = iglob[lane];
-    if (iglob_l >= field.nglob) {
+    if (!mask[lane]) {
       continue;
     }
+
+    const int iglob_l = iglob[lane];
 
     if constexpr (StoreDisplacement) {
       for (int icomp = 0; icomp < components; ++icomp) {
@@ -1467,14 +1498,20 @@ add_on_device(const specfem::point::simd_index &index,
   constexpr static auto MediumType = ViewType::medium_tag;
   int iglob[ViewType::simd::size()];
 
+  using mask_type = typename ViewType::simd::mask_type;
+
+  mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+
   for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
     iglob[lane] =
         (index.mask(std::size_t(lane)))
-            ? field.index_mapping(index.ispec + lane, index.iz, index.ix)
+            ? field.assembly_index_mapping(
+                  field.index_mapping(index.ispec + lane, index.iz, index.ix),
+                  static_cast<int>(MediumType))
             : field.nglob + 1;
   }
 
-  add_on_device(iglob, point_field, field);
+  add_on_device(mask, iglob, point_field, field);
 }
 
 template <
@@ -1520,6 +1557,10 @@ void add_on_host(
   constexpr static auto MediumType = ViewType::medium_tag;
   int iglob[ViewType::simd::size()];
 
+  using mask_type = typename ViewType::simd::mask_type;
+
+  mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+
   for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
     iglob[lane] =
         (index.mask(std::size_t(lane)))
@@ -1527,7 +1568,7 @@ void add_on_host(
             : field.nglob + 1;
   }
 
-  add_on_host(iglob, point_field, field);
+  add_on_host(mask, iglob, point_field, field);
 }
 
 template <
@@ -1583,7 +1624,8 @@ template <
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
 NOINLINE KOKKOS_FUNCTION void atomic_add_on_device(
-    const int *iglob, const ViewType &point_field,
+    const typename ViewType::simd::mask_type &mask, const int *iglob,
+    const ViewType &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
 
   constexpr static bool StoreDisplacement = ViewType::store_displacement;
@@ -1606,10 +1648,11 @@ NOINLINE KOKKOS_FUNCTION void atomic_add_on_device(
   }();
 
   for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
-    const int iglob_l = iglob[lane];
-    if (iglob_l >= field.nglob) {
+    if (!mask[lane]) {
       continue;
     }
+
+    const int iglob_l = iglob[lane];
 
     if constexpr (StoreDisplacement) {
       for (int icomp = 0; icomp < components; ++icomp) {
@@ -1696,7 +1739,8 @@ template <
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
 void atomic_add_on_host(
-    const int *iglob, const ViewType &point_field,
+    const typename ViewType::simd::mask_type &mask, const int *iglob,
+    const ViewType &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
 
   constexpr static bool StoreDisplacement = ViewType::store_displacement;
@@ -1719,10 +1763,11 @@ void atomic_add_on_host(
   }();
 
   for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
-    const int iglob_l = iglob[lane];
-    if (iglob_l >= field.nglob) {
+    if (!mask[lane]) {
       continue;
     }
+
+    const int iglob_l = iglob[lane];
 
     if constexpr (StoreDisplacement) {
       for (int icomp = 0; icomp < components; ++icomp) {
@@ -1784,14 +1829,20 @@ NOINLINE KOKKOS_FUNCTION void atomic_add_on_device(
   constexpr static auto MediumType = ViewType::medium_tag;
   int iglob[ViewType::simd::size()];
 
+  using mask_type = typename ViewType::simd::mask_type;
+
+  mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+
   for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
     iglob[lane] =
         (index.mask(std::size_t(lane)))
-            ? field.index_mapping(index.ispec + lane, index.iz, index.ix)
+            ? field.assembly_index_mapping(
+                  field.index_mapping(index.ispec + lane, index.iz, index.ix),
+                  static_cast<int>(MediumType))
             : field.nglob + 1;
   }
 
-  atomic_add_on_device(iglob, point_field, field);
+  atomic_add_on_device(mask, iglob, point_field, field);
 }
 
 template <
@@ -1822,6 +1873,10 @@ void atomic_add_on_host(
   constexpr static auto MediumType = ViewType::medium_tag;
   int iglob[ViewType::simd::size()];
 
+  using mask_type = typename ViewType::simd::mask_type;
+
+  mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+
   for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
     iglob[lane] =
         (index.mask(std::size_t(lane)))
@@ -1829,7 +1884,7 @@ void atomic_add_on_host(
             : field.nglob + 1;
   }
 
-  atomic_add_on_host(iglob, point_field, field);
+  atomic_add_on_host(mask, iglob, point_field, field);
 }
 
 template <

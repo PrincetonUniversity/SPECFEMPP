@@ -25,8 +25,12 @@ specfem::compute::assembly::assembly(
                        this->mesh.ngllx,   mesh,
                        this->mesh.mapping, this->mesh.quadratures,
                        this->properties,   this->partial_derivatives };
-  this->coupled_interfaces = { this->mesh, this->properties,
-                               mesh.coupled_interfaces };
+  this->coupled_interfaces = { mesh,
+                               this->mesh.points,
+                               this->mesh.quadratures,
+                               this->partial_derivatives,
+                               this->properties,
+                               this->mesh.mapping };
   this->fields = { this->mesh, this->properties, simulation };
   this->boundary_values = { max_timesteps, this->mesh, this->properties,
                             this->boundaries };
