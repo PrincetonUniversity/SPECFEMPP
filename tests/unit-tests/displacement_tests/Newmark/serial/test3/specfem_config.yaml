@@ -12,6 +12,8 @@ parameters:
       Interfaces : Acoustic-elastic interface (1) (orientation horizontal with acoustic domain on top)
       Sources : Force source (1)
       Boundary conditions : Neumann BCs on all edges
+      Debugging comments: This tests checks coupling acoustic-elastic interface implementation.
+                          The orientation of the interface is horizontal with acoustic domain on top.
 
   simulation-setup:
     ## quadrature setup
@@ -24,22 +26,21 @@ parameters:
         type-of-simulation: forward
         time-scheme:
           type: Newmark
-          dt: 1.90e-3
-          nstep: 100
+          dt: 0.85e-3
+          nstep: 600
 
     simulation-mode:
       forward:
         writer:
           seismogram:
-            output-format: ascii
-            output-folder: "."
+            format: ascii
+            directory: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test3/results"
 
   receivers:
-    stations-file: "../DATA/STATIONS"
+    stations-file: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test3/STATIONS"
     angle: 0.0
     seismogram-type:
       - displacement
-      - velocity
     nstep_between_samples: 1
 
   ## Runtime setup

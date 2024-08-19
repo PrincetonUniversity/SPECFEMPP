@@ -10,21 +10,23 @@
 #include <Kokkos_Core.hpp>
 
 namespace {
-int compute_nglob(const specfem::kokkos::HostView3d<int> index_mapping) {
+template <typename ViewType>
+int compute_nglob(const ViewType index_mapping) {
   const int nspec = index_mapping.extent(0);
   const int ngllz = index_mapping.extent(1);
   const int ngllx = index_mapping.extent(2);
 
-  int nglob;
-  Kokkos::parallel_reduce(
-      "specfem::utils::compute_nglob",
-      specfem::kokkos::HostMDrange<3>({ 0, 0, 0 }, { nspec, ngllz, ngllx }),
-      KOKKOS_LAMBDA(const int ispec, const int iz, const int ix, int &l_nglob) {
-        l_nglob = l_nglob > index_mapping(ispec, iz, ix)
-                      ? l_nglob
-                      : index_mapping(ispec, iz, ix);
-      },
-      Kokkos::Max<int>(nglob));
+  int nglob = -1;
+  // compute max value stored in index_mapping
+  for (int ispec = 0; ispec < nspec; ispec++) {
+    for (int igllz = 0; igllz < ngllz; igllz++) {
+      for (int igllx = 0; igllx < ngllx; igllx++) {
+        nglob = std::max(nglob, index_mapping(ispec, igllz, igllx));
+      }
+    }
+  }
+
+  std::cout << "nglob: " << nglob << std::endl;
 
   return nglob + 1;
 }

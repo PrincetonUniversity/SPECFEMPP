@@ -58,7 +58,7 @@ specfem::domain::impl::kernels::receiver_kernel<
 
   receiver =
       specfem::domain::impl::receivers::receiver<DimensionType, MediumTag,
-                                                 PropertyTag, qp_type>();
+                                                 PropertyTag, qp_type, using_simd>();
 
   return;
 }
@@ -82,7 +82,7 @@ void specfem::domain::impl::kernels::receiver_kernel<
   constexpr int NGLL = quadrature_points_type::NGLL;
   using ElementFieldType = specfem::element::field<
       NGLL, DimensionType, MediumTag, specfem::kokkos::DevScratchSpace,
-      Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, true, true, false>;
+      Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, true, true, false, using_simd>;
 
   using ElementQuadratureType = specfem::element::quadrature<
       NGLL, DimensionType, specfem::kokkos::DevScratchSpace,
@@ -141,8 +141,8 @@ void specfem::domain::impl::kernels::receiver_kernel<
               sub2ind(xz, ngllx, iz, ix);
               const specfem::point::index index(ispec_l, iz, ix);
               const auto point_partial_derivatives =
-                  [&]() -> specfem::point::partial_derivatives2<false> {
-                specfem::point::partial_derivatives2<false>
+                  [&]() -> specfem::point::partial_derivatives2<using_simd, false> {
+                specfem::point::partial_derivatives2<using_simd, false>
                     point_partial_derivatives;
                 specfem::compute::load_on_device(index, partial_derivatives,
                                                  point_partial_derivatives);
@@ -150,8 +150,8 @@ void specfem::domain::impl::kernels::receiver_kernel<
               }();
 
               const auto point_properties =
-                  [&]() -> specfem::point::properties<MediumTag, PropertyTag> {
-                specfem::point::properties<MediumTag, PropertyTag>
+                  [&]() -> specfem::point::properties<DimensionType, MediumTag, PropertyTag, using_simd> {
+                specfem::point::properties<DimensionType, MediumTag, PropertyTag, using_simd>
                     point_properties;
                 specfem::compute::load_on_device(index, properties,
                                                  point_properties);
@@ -177,7 +177,7 @@ void specfem::domain::impl::kernels::receiver_kernel<
                     }
                   }();
 
-              const auto sv_receiver_field =
+              auto sv_receiver_field =
                   Kokkos::subview(receivers.receiver_field, iz, ix, iseis_l,
                                   ireceiver_l, isig_step, Kokkos::ALL);
 
@@ -205,15 +205,15 @@ void specfem::domain::impl::kernels::receiver_kernel<
         Kokkos::single(Kokkos::PerTeam(team_member), [=] {
           if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
             receivers.seismogram(isig_step, iseis_l, ireceiver_l, 0) =
-                receivers.cos_recs(ireceiver_l) * seismogram_components[0] +
-                receivers.sin_recs(ireceiver_l) * seismogram_components[1];
+                receivers.cos_recs(ireceiver_l) * seismogram_components(0) +
+                receivers.sin_recs(ireceiver_l) * seismogram_components(1);
             receivers.seismogram(isig_step, iseis_l, ireceiver_l, 1) =
-                receivers.sin_recs(ireceiver_l) * seismogram_components[0] +
-                receivers.cos_recs(ireceiver_l) * seismogram_components[1];
+                receivers.sin_recs(ireceiver_l) * seismogram_components(0) +
+                receivers.cos_recs(ireceiver_l) * seismogram_components(1);
           } else if (specfem::globals::simulation_wave == specfem::wave::sh) {
             receivers.seismogram(isig_step, iseis_l, ireceiver_l, 0) =
-                receivers.cos_recs(ireceiver_l) * seismogram_components[0] +
-                receivers.sin_recs(ireceiver_l) * seismogram_components[1];
+                receivers.cos_recs(ireceiver_l) * seismogram_components(0) +
+                receivers.sin_recs(ireceiver_l) * seismogram_components(1);
             receivers.seismogram(isig_step, iseis_l, ireceiver_l, 0) = 0;
           }
         });

@@ -36,7 +36,7 @@ struct kernels {
   kernels() = default;
 
   kernels(const int nspec, const int ngllz, const int ngllx,
-          const specfem::mesh::materials &materials);
+          const specfem::compute::properties &properties);
 
   void copy_to_host() {
     Kokkos::deep_copy(h_element_types, element_types);
@@ -46,23 +46,25 @@ struct kernels {
   }
 };
 
-template <specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag>
-KOKKOS_FUNCTION void
-load_on_device(const specfem::point::index &index, const kernels &kernels,
-               specfem::point::kernels<MediumTag, PropertyTag> &point_kernels) {
+template <typename PointKernelType, typename IndexType>
+KOKKOS_FUNCTION void load_on_device(const IndexType &index,
+                                    const kernels &kernels,
+                                    PointKernelType &point_kernels) {
   const int ispec = kernels.property_index_mapping(index.ispec);
-  const int iz = index.iz;
-  const int ix = index.ix;
+
+  constexpr auto MediumTag = PointKernelType::medium_tag;
+  constexpr auto PropertyTag = PointKernelType::property_tag;
+
+  IndexType l_index = index;
+  l_index.ispec = ispec;
 
   if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
                 (PropertyTag == specfem::element::property_tag::isotropic)) {
-    kernels.elastic_isotropic.load_device_kernels(ispec, iz, ix, point_kernels);
+    kernels.elastic_isotropic.load_device_kernels(l_index, point_kernels);
   } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
                        (PropertyTag ==
                         specfem::element::property_tag::isotropic)) {
-    kernels.acoustic_isotropic.load_device_kernels(ispec, iz, ix,
-                                                   point_kernels);
+    kernels.acoustic_isotropic.load_device_kernels(l_index, point_kernels);
   } else {
     static_assert("Material type not implemented");
   }
@@ -70,22 +72,24 @@ load_on_device(const specfem::point::index &index, const kernels &kernels,
   return;
 }
 
-template <specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag>
-void load_on_host(
-    const specfem::point::index &index, const kernels &kernels,
-    specfem::point::kernels<MediumTag, PropertyTag> &point_kernels) {
+template <typename PointKernelType, typename IndexType>
+void load_on_host(const IndexType &index, const kernels &kernels,
+                  PointKernelType &point_kernels) {
   const int ispec = kernels.h_property_index_mapping(index.ispec);
-  const int iz = index.iz;
-  const int ix = index.ix;
+
+  constexpr auto MediumTag = PointKernelType::medium_tag;
+  constexpr auto PropertyTag = PointKernelType::property_tag;
+
+  IndexType l_index = index;
+  l_index.ispec = ispec;
 
   if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
                 (PropertyTag == specfem::element::property_tag::isotropic)) {
-    kernels.elastic_isotropic.load_host_kernels(ispec, iz, ix, point_kernels);
+    kernels.elastic_isotropic.load_host_kernels(l_index, point_kernels);
   } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
                        (PropertyTag ==
                         specfem::element::property_tag::isotropic)) {
-    kernels.acoustic_isotropic.load_host_kernels(ispec, iz, ix, point_kernels);
+    kernels.acoustic_isotropic.load_host_kernels(l_index, point_kernels);
   } else {
     static_assert("Material type not implemented");
   }
@@ -93,25 +97,24 @@ void load_on_host(
   return;
 }
 
-template <specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag>
-void store_on_host(
-    const specfem::point::index &index,
-    const specfem::point::kernels<MediumTag, PropertyTag> &point_kernels,
-    const kernels &kernels) {
+template <typename PointKernelType, typename IndexType>
+void store_on_host(const IndexType &index, const PointKernelType &point_kernels,
+                   const kernels &kernels) {
   const int ispec = kernels.h_property_index_mapping(index.ispec);
-  const int iz = index.iz;
-  const int ix = index.ix;
+
+  constexpr auto MediumTag = PointKernelType::medium_tag;
+  constexpr auto PropertyTag = PointKernelType::property_tag;
+
+  IndexType l_index = index;
+  l_index.ispec = ispec;
 
   if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
                 (PropertyTag == specfem::element::property_tag::isotropic)) {
-    kernels.elastic_isotropic.update_kernels_on_host(ispec, iz, ix,
-                                                     point_kernels);
+    kernels.elastic_isotropic.update_kernels_on_host(l_index, point_kernels);
   } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
                        (PropertyTag ==
                         specfem::element::property_tag::isotropic)) {
-    kernels.acoustic_isotropic.update_kernels_on_host(ispec, iz, ix,
-                                                      point_kernels);
+    kernels.acoustic_isotropic.update_kernels_on_host(l_index, point_kernels);
   } else {
     static_assert("Material type not implemented");
   }
@@ -119,25 +122,25 @@ void store_on_host(
   return;
 }
 
-template <specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag>
-KOKKOS_FUNCTION void store_on_device(
-    const specfem::point::index &index,
-    const specfem::point::kernels<MediumTag, PropertyTag> &point_kernels,
-    const kernels &kernels) {
+template <typename PointKernelType, typename IndexType>
+KOKKOS_FUNCTION void store_on_device(const IndexType &index,
+                                     const PointKernelType &point_kernels,
+                                     const kernels &kernels) {
   const int ispec = kernels.property_index_mapping(index.ispec);
-  const int iz = index.iz;
-  const int ix = index.ix;
+
+  constexpr auto MediumTag = PointKernelType::medium_tag;
+  constexpr auto PropertyTag = PointKernelType::property_tag;
+
+  IndexType l_index = index;
+  l_index.ispec = ispec;
 
   if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
                 (PropertyTag == specfem::element::property_tag::isotropic)) {
-    kernels.elastic_isotropic.update_kernels_on_device(ispec, iz, ix,
-                                                       point_kernels);
+    kernels.elastic_isotropic.update_kernels_on_device(l_index, point_kernels);
   } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
                        (PropertyTag ==
                         specfem::element::property_tag::isotropic)) {
-    kernels.acoustic_isotropic.update_kernels_on_device(ispec, iz, ix,
-                                                        point_kernels);
+    kernels.acoustic_isotropic.update_kernels_on_device(l_index, point_kernels);
   } else {
     static_assert("Material type not implemented");
   }
@@ -145,26 +148,26 @@ KOKKOS_FUNCTION void store_on_device(
   return;
 }
 
-template <specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag>
-KOKKOS_FUNCTION void add_on_device(
-    const specfem::point::index &index,
-    const specfem::point::kernels<MediumTag, PropertyTag> &point_kernels,
-    const kernels &kernels) {
+template <typename IndexType, typename PointKernelType>
+KOKKOS_FUNCTION void add_on_device(const IndexType &index,
+                                   const PointKernelType &point_kernels,
+                                   const kernels &kernels) {
 
   const int ispec = kernels.property_index_mapping(index.ispec);
-  const int iz = index.iz;
-  const int ix = index.ix;
+
+  constexpr auto MediumTag = PointKernelType::medium_tag;
+  constexpr auto PropertyTag = PointKernelType::property_tag;
+
+  IndexType l_index = index;
+  l_index.ispec = ispec;
 
   if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
                 (PropertyTag == specfem::element::property_tag::isotropic)) {
-    kernels.elastic_isotropic.add_kernels_on_device(ispec, iz, ix,
-                                                    point_kernels);
+    kernels.elastic_isotropic.add_kernels_on_device(l_index, point_kernels);
   } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
                        (PropertyTag ==
                         specfem::element::property_tag::isotropic)) {
-    kernels.acoustic_isotropic.add_kernels_on_device(ispec, iz, ix,
-                                                     point_kernels);
+    kernels.acoustic_isotropic.add_kernels_on_device(l_index, point_kernels);
   } else {
     static_assert("Material type not implemented");
   }
@@ -172,24 +175,24 @@ KOKKOS_FUNCTION void add_on_device(
   return;
 }
 
-template <specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag>
-void add_on_host(
-    const specfem::point::index &index,
-    const specfem::point::kernels<MediumTag, PropertyTag> &point_kernels,
-    const kernels &kernels) {
+template <typename IndexType, typename PointKernelType>
+void add_on_host(const IndexType &index, const PointKernelType &point_kernels,
+                 const kernels &kernels) {
   const int ispec = kernels.h_property_index_mapping(index.ispec);
-  const int iz = index.iz;
-  const int ix = index.ix;
+
+  constexpr auto MediumTag = PointKernelType::medium_tag;
+  constexpr auto PropertyTag = PointKernelType::property_tag;
+
+  IndexType l_index = index;
+  l_index.ispec = ispec;
 
   if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
                 (PropertyTag == specfem::element::property_tag::isotropic)) {
-    kernels.elastic_isotropic.add_kernels_on_host(ispec, iz, ix, point_kernels);
+    kernels.elastic_isotropic.add_kernels_on_host(l_index, point_kernels);
   } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
                        (PropertyTag ==
                         specfem::element::property_tag::isotropic)) {
-    kernels.acoustic_isotropic.add_kernels_on_host(ispec, iz, ix,
-                                                   point_kernels);
+    kernels.acoustic_isotropic.add_kernels_on_host(l_index, point_kernels);
   } else {
     static_assert("Material type not implemented");
   }

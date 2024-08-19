@@ -8,6 +8,7 @@
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"
 #include "quadrature/interface.hpp"
+#include "reader/seismogram.hpp"
 #include "solver/interface.hpp"
 #include "timescheme/interface.hpp"
 #include "yaml-cpp/yaml.h"
@@ -18,22 +19,18 @@
 namespace test_config {
 struct database {
 public:
-  database()
-      : specfem_config(""), elastic_domain_field("NULL"),
-        acoustic_domain_field("NULL"){};
+  database() : specfem_config(""), traces(""){};
   database(const YAML::Node &Node) {
     specfem_config = Node["specfem_config"].as<std::string>();
     // check if node elastic_domain_field exists
-    if (Node["elastic_domain_field"])
-      elastic_domain_field = Node["elastic_domain_field"].as<std::string>();
-
-    // check if node acoustic_domain_field exists
-    if (Node["acoustic_domain_field"])
-      acoustic_domain_field = Node["acoustic_domain_field"].as<std::string>();
+    if (Node["traces"]) {
+      traces = Node["traces"].as<std::string>();
+    } else {
+      throw std::runtime_error("Traces not found for the test");
+    }
   }
   std::string specfem_config;
-  std::string elastic_domain_field = "NULL";
-  std::string acoustic_domain_field = "NULL";
+  std::string traces;
 };
 
 struct configuration {
@@ -54,7 +51,12 @@ public:
     configuration = test_config::configuration(config);
 
     YAML::Node database_node = Node["databases"];
-    database = test_config::database(database_node);
+    try {
+      database = test_config::database(database_node);
+    } catch (std::runtime_error &e) {
+      throw std::runtime_error("Error in test configuration: " + name + "\n" +
+                               e.what());
+    }
     return;
   }
 
@@ -193,12 +195,45 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     // Instantiate the solver and timescheme
     auto it = setup.instantiate_timescheme();
 
-    std::vector<std::shared_ptr<specfem::receivers::receiver> > receivers(0);
-    std::vector<specfem::enums::seismogram::type> seismogram_types(0);
+    const auto stations_filename = setup.get_stations_file();
+    const auto angle = setup.get_receiver_angle();
+    auto receivers =
+        specfem::receivers::read_receivers(stations_filename, angle);
+
+    std::cout << "  Receiver information\n";
+    std::cout << "------------------------------" << std::endl;
+    for (auto &receiver : receivers) {
+      if (mpi->main_proc())
+        std::cout << receiver->print() << std::endl;
+    }
+
+    const auto seismogram_types = setup.get_seismogram_types();
+
+    // Check only displacement seismogram types are being computed
+    if (seismogram_types.size() != 1 ||
+        seismogram_types[0] != specfem::enums::seismogram::type::displacement) {
+      FAIL() << "--------------------------------------------------\n"
+             << "\033[0;31m[FAILED]\033[0m Test failed\n"
+             << " - Test name: " << Test.name << "\n"
+             << " - Error: Only displacement seismograms are checked\n"
+             << "          Configuration file contains other seismogram types\n"
+             << "--------------------------------------------------\n\n"
+             << std::endl;
+    }
+
+    if (receivers.size() == 0) {
+      FAIL() << "--------------------------------------------------\n"
+             << "\033[0;31m[FAILED]\033[0m Test failed\n"
+             << " - Test name: " << Test.name << "\n"
+             << " - Error: Stations file does not contain any receivers\n"
+             << "--------------------------------------------------\n\n"
+             << std::endl;
+    }
 
     specfem::compute::assembly assembly(mesh, quadratures, sources, receivers,
                                         seismogram_types, t0, setup.get_dt(),
-                                        nsteps, 0, setup.get_simulation_type());
+                                        nsteps, it->get_max_seismogram_step(),
+                                        setup.get_simulation_type());
 
     it->link_assembly(assembly);
 
@@ -206,86 +241,89 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     if (mpi->main_proc())
       std::cout << *it << std::endl;
 
-    // Instantiate domain classes
+    specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
+    std::shared_ptr<specfem::solver::solver> solver =
+        setup.instantiate_solver(setup.get_dt(), assembly, it, qp5);
 
-    try {
+    solver->run();
 
-      specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
+    // --------------------------------------------------------------
+    //                   Write Seismograms
+    // --------------------------------------------------------------
 
-      const auto solver = setup.instantiate_solver(assembly, it, qp5);
+    auto seismograms = assembly.receivers;
 
-      solver->run();
+    seismograms.sync_seismograms();
 
-      assembly.fields.copy_to_host();
+    // --------------------------------------------------------------
+    //                   Write Seismograms
+    // --------------------------------------------------------------
+    const auto seismogram_writer =
+        setup.instantiate_seismogram_writer(assembly);
+    if (seismogram_writer) {
+      mpi->cout("Writing seismogram files:");
+      mpi->cout("-------------------------------");
 
-      const int nglob = assembly.fields.forward.nglob;
-
-      if (Test.database.elastic_domain_field != "NULL") {
-
-        specfem::kokkos::HostView2d<type_real, Kokkos::LayoutLeft>
-            h_elastic_field = assembly.fields.forward.elastic.h_field;
-
-        specfem::testing::array2d<type_real, Kokkos::LayoutLeft> displacement(
-            h_elastic_field);
-
-        specfem::testing::array2d<type_real, Kokkos::LayoutLeft>
-            displacement_global(Test.database.elastic_domain_field, nglob, 2);
-
-        auto index_mapping = Kokkos::subview(
-            assembly.fields.forward.h_assembly_index_mapping, Kokkos::ALL(),
-            static_cast<int>(specfem::element::medium_tag::elastic));
-
-        auto displacement_ref =
-            compact_array<specfem::element::medium_tag::elastic>(
-                displacement_global, index_mapping);
-
-        type_real tolerance = 0.01;
-
-        ASSERT_TRUE(specfem::testing::compare_norm(
-            displacement, displacement_ref, tolerance));
-      }
-
-      if (Test.database.acoustic_domain_field != "NULL") {
-        specfem::kokkos::HostView1d<type_real, Kokkos::LayoutLeft>
-            h_acoustic_field = Kokkos::subview(
-                assembly.fields.forward.acoustic.h_field, Kokkos::ALL(), 0);
-
-        specfem::testing::array1d<type_real, Kokkos::LayoutLeft> potential(
-            h_acoustic_field);
-
-        specfem::testing::array1d<type_real, Kokkos::LayoutLeft>
-            potential_global(Test.database.acoustic_domain_field, nglob);
-
-        auto index_mapping = Kokkos::subview(
-            assembly.fields.forward.h_assembly_index_mapping, Kokkos::ALL(),
-            static_cast<int>(specfem::element::medium_tag::acoustic));
-
-        auto potential_ref =
-            compact_array<specfem::element::medium_tag::acoustic>(
-                potential_global, index_mapping);
-
-        type_real tolerance = 0.01;
-
-        ASSERT_TRUE(specfem::testing::compare_norm(potential, potential_ref,
-                                                   tolerance));
-      }
-
-      std::cout << "--------------------------------------------------\n"
-                << "\033[0;32m[PASSED]\033[0m Test: " << Test.name << "\n"
-                << "--------------------------------------------------\n\n"
-                << std::endl;
-
-    } catch (std::runtime_error &e) {
-      std::cout << " - Error: " << e.what() << std::endl;
-      FAIL() << "--------------------------------------------------\n"
-             << "\033[0;31m[FAILED]\033[0m Test failed\n"
-             << " - Test name: " << Test.name << "\n"
-             << " - Number of MPI processors: "
-             << Test.configuration.number_of_processors << "\n"
-             << " - Error: " << e.what() << "\n"
-             << "--------------------------------------------------\n\n"
-             << std::endl;
+      seismogram_writer->write();
     }
+    // --------------------------------------------------------------
+
+    for (int irec = 0; irec < receivers.size(); ++irec) {
+      const auto network_name = receivers[irec]->get_network_name();
+      const auto station_name = receivers[irec]->get_station_name();
+
+      const std::vector<std::string> traces_filename = {
+        Test.database.traces + "/" + station_name + "." + network_name +
+            ".BXX.semd",
+        Test.database.traces + "/" + station_name + "." + network_name +
+            ".BXZ.semd"
+      };
+      type_real error_norm = 0.0;
+      type_real compute_norm = 0.0;
+
+      for (int i = 0; i < traces_filename.size(); ++i) {
+        Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+            traces("traces", seismograms.h_seismogram.extent(0), 2);
+        specfem::reader::seismogram reader(
+            traces_filename[i], specfem::enums::seismogram::format::ascii,
+            traces);
+        reader.read();
+
+        const auto l_seismogram = Kokkos::subview(
+            seismograms.h_seismogram, Kokkos::ALL(), Kokkos::ALL(), irec, i);
+
+        const int nsig_steps = l_seismogram.extent(0);
+
+        for (int isig_step = 0; isig_step < nsig_steps; ++isig_step) {
+          const type_real time_t = traces(isig_step, 0);
+          const type_real value = traces(isig_step, 1);
+
+          const type_real computed_value = l_seismogram(isig_step, 0);
+
+          error_norm +=
+              std::sqrt((value - computed_value) * (value - computed_value));
+          compute_norm += std::sqrt(value * value);
+        }
+      }
+
+      if (error_norm / compute_norm > 1e-3 ||
+          std::isnan(error_norm / compute_norm)) {
+        FAIL() << "--------------------------------------------------\n"
+               << "\033[0;31m[FAILED]\033[0m Test failed\n"
+               << " - Test name: " << Test.name << "\n"
+               << " - Error: Traces do not match\n"
+               << " - Station: " << station_name << "\n"
+               << " - Network: " << network_name << "\n"
+               << " - Error value: " << error_norm / compute_norm << "\n"
+               << "--------------------------------------------------\n\n"
+               << std::endl;
+      }
+    }
+
+    std::cout << "--------------------------------------------------\n"
+              << "\033[0;32m[PASSED]\033[0m Test name: " << Test.name << "\n"
+              << "--------------------------------------------------\n\n"
+              << std::endl;
   }
 }
 

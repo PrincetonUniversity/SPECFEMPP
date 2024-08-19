@@ -97,23 +97,24 @@ specfem::mesh::mesh::mesh(const std::string filename,
   specfem::IO::fortran_read_line(stream, &ninterfaces, &max_interface_size);
 
   try {
-    this->abs_boundary = specfem::mesh::boundaries::absorbing_boundary(
+    this->boundaries.absorbing_boundary = specfem::mesh::absorbing_boundary(
         stream, this->parameters.nelemabs, this->parameters.nspec, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
 
   try {
-    this->acforcing_boundary = specfem::mesh::boundaries::forcing_boundary(
+    this->boundaries.forcing_boundary = specfem::mesh::forcing_boundary(
         stream, this->parameters.nelem_acforcing, this->parameters.nspec, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
 
   try {
-    this->acfree_surface = specfem::mesh::boundaries::acoustic_free_surface(
-        stream, this->parameters.nelem_acoustic_surface,
-        this->control_nodes.knods, mpi);
+    this->boundaries.acoustic_free_surface =
+        specfem::mesh::acoustic_free_surface(
+            stream, this->parameters.nelem_acoustic_surface,
+            this->control_nodes.knods, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
@@ -157,29 +158,23 @@ specfem::mesh::mesh::mesh(const std::string filename,
   mpi->cout("Number of material systems = " +
             std::to_string(this->materials.n_materials) + "\n\n");
 
-  for (int i = 0; i < this->materials.n_materials; i++) {
-    const auto material_index_mapping =
-        this->materials.material_index_mapping(i);
-    if ((material_index_mapping.type ==
-         specfem::element::medium_tag::elastic) &&
-        (material_index_mapping.property ==
-         specfem::element::property_tag::isotropic)) {
-      const auto material = std::get<specfem::material::material<
-          specfem::element::medium_tag::elastic,
-          specfem::element::property_tag::isotropic> >(this->materials[i]);
-      mpi->cout(material.print());
-    } else if ((material_index_mapping.type ==
-                specfem::element::medium_tag::acoustic) &&
-               (material_index_mapping.property ==
-                specfem::element::property_tag::isotropic)) {
-      const auto material = std::get<specfem::material::material<
-          specfem::element::medium_tag::acoustic,
-          specfem::element::property_tag::isotropic> >(this->materials[i]);
-      mpi->cout(material.print());
-    } else {
-      throw std::runtime_error("Material type not supported");
-    }
+  const auto l_elastic_isotropic =
+      this->materials.elastic_isotropic.material_properties;
+  const auto l_acoustic_isotropic =
+      this->materials.acoustic_isotropic.material_properties;
+
+  for (const auto material : l_elastic_isotropic) {
+    mpi->cout(material.print());
   }
+
+  for (const auto material : l_acoustic_isotropic) {
+    mpi->cout(material.print());
+  }
+
+  assert(l_elastic_isotropic.size() + l_acoustic_isotropic.size() ==
+         this->materials.n_materials);
+
+  this->tags = specfem::mesh::tags(this->materials, this->boundaries);
 
   return;
 }
@@ -191,7 +186,7 @@ std::string specfem::mesh::mesh::print() const {
 
   Kokkos::parallel_reduce(
       "specfem::mesh::mesh::print", specfem::kokkos::HostRange(0, this->nspec),
-      [=](const int ispec, int &n_elastic, int &n_acoustic) {
+      KOKKOS_CLASS_LAMBDA(const int ispec, int &n_elastic, int &n_acoustic) {
         if (this->materials.material_index_mapping(ispec).type ==
             specfem::element::medium_tag::elastic) {
           n_elastic++;

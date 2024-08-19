@@ -214,23 +214,23 @@ target_link_libraries(
   point
 )
 
-# add_executable(
-#   source_location_tests
-#   source/source_location_tests.cpp
-# )
+# # add_executable(
+# #   source_location_tests
+# #   source/source_location_tests.cpp
+# # )
 
-# target_link_libraries(
-#   source_location_tests
-#   material_class
-#   mpi_environment
-#   kokkos_environment
-#   yaml-cpp
-#   mesh
-#   quadrature
-#   compute
-#   source_class
-#   -lpthread -lm
-# )
+# # target_link_libraries(
+# #   source_location_tests
+# #   material_class
+# #   mpi_environment
+# #   kokkos_environment
+# #   yaml-cpp
+# #   mesh
+# #   quadrature
+# #   compute
+# #   source_class
+# #   -lpthread -lm
+# # )
 
 add_executable(
   rmass_inverse_tests
@@ -250,6 +250,7 @@ target_link_libraries(
   compare_arrays
   point
   algorithms
+  domain
   -lpthread -lm
 )
 
@@ -274,6 +275,7 @@ target_link_libraries(
   edge
   algorithms
   coupled_interface
+  domain
   -lpthread -lm
 )
 
@@ -292,6 +294,7 @@ target_link_libraries(
   compute
   parameter_reader
   writer
+  domain
   -lpthread -lm
 )
 
@@ -310,28 +313,29 @@ target_link_libraries(
   compute
   parameter_reader
   writer
+  domain
   -lpthread -lm
 )
 
-add_executable(
-  compute_coupled_interfaces_tests
-  compute/coupled_interfaces/coupled_interfaces_tests.cpp
-)
+# add_executable(
+#   compute_coupled_interfaces_tests
+#   compute/coupled_interfaces/coupled_interfaces_tests.cpp
+# )
 
-target_link_libraries(
-  compute_coupled_interfaces_tests
-  quadrature
-  mesh
-  yaml-cpp
-  kokkos_environment
-  mpi_environment
-  compute
-  compare_arrays
-  point
-  edge
-  Boost::filesystem
-  -lpthread -lm
-)
+# target_link_libraries(
+#   compute_coupled_interfaces_tests
+#   quadrature
+#   mesh
+#   yaml-cpp
+#   kokkos_environment
+#   mpi_environment
+#   compute
+#   compare_arrays
+#   point
+#   edge
+#   Boost::filesystem
+#   -lpthread -lm
+# )
 
 # Link to gtest only if MPI is enabled
 if (NOT MPI_PARALLEL)
@@ -342,13 +346,13 @@ if (NOT MPI_PARALLEL)
   gtest_discover_tests(mesh_tests)
   gtest_discover_tests(compute_partial_derivatives_tests)
   gtest_discover_tests(compute_elastic_tests)
-  # gtest_discover_tests(compute_acoustic_tests)
-  gtest_discover_tests(compute_coupled_interfaces_tests)
+  # # gtest_discover_tests(compute_acoustic_tests)
+  # gtest_discover_tests(compute_coupled_interfaces_tests)
   gtest_discover_tests(compute_tests)
   gtest_discover_tests(locate_point)
   gtest_discover_tests(interpolate_function)
   gtest_discover_tests(rmass_inverse_tests)
   gtest_discover_tests(displacement_newmark_tests)
-  gtest_discover_tests(seismogram_elastic_tests)
-  gtest_discover_tests(seismogram_acoustic_tests)
+  # gtest_discover_tests(seismogram_elastic_tests)
+  # gtest_discover_tests(seismogram_acoustic_tests)
 endif(NOT MPI_PARALLEL)

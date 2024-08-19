@@ -14,9 +14,10 @@ namespace receivers {
  *
  * @tparam properties Properties of the receiver
  */
-template <
-    specfem::dimension::type dimension, specfem::element::medium_tag medium,
-    specfem::element::property_tag property, typename quadrature_points_type>
+template <specfem::dimension::type dimension,
+          specfem::element::medium_tag medium,
+          specfem::element::property_tag property,
+          typename quadrature_points_type, bool using_simd>
 class receiver;
 
 } // namespace receivers

@@ -1,6 +1,8 @@
 #ifndef _FRECHET_DERIVATIVES_IMPL_ELEMENT_KERNEL_ELEMENT_KERNEL_HPP
 #define _FRECHET_DERIVATIVES_IMPL_ELEMENT_KERNEL_ELEMENT_KERNEL_HPP
 
+#include "acoustic_isotropic.hpp"
+#include "elastic_isotropic.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "point/field.hpp"
@@ -14,32 +16,25 @@ namespace frechet_derivatives {
 namespace impl {
 
 template <specfem::dimension::type DimensionType,
-          specfem::element::medium_tag MediumTag>
-using AdjointPointFieldType =
-    specfem::point::field<DimensionType, MediumTag, false, false, true, false>;
-
-template <specfem::dimension::type DimensionType,
-          specfem::element::medium_tag MediumTag>
-using BackwardPointFieldType =
-    specfem::point::field<DimensionType, MediumTag, true, false, false, false>;
-
-template <specfem::dimension::type DimensionType,
-          specfem::element::medium_tag MediumTag>
-using PointFieldDerivativesType =
-    specfem::point::field_derivatives<DimensionType, MediumTag>;
-
-template <specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag>
-KOKKOS_FUNCTION specfem::point::kernels<MediumTag, PropertyTag> element_kernel(
-    const specfem::point::properties<MediumTag, PropertyTag> &properties,
-    const AdjointPointFieldType<DimensionType, MediumTag> &adjoint_field,
-    const BackwardPointFieldType<DimensionType, MediumTag> &backward_field,
-    const PointFieldDerivativesType<DimensionType, MediumTag>
+          specfem::element::property_tag PropertyTag, bool UseSIMD>
+KOKKOS_FUNCTION specfem::point::kernels<MediumTag, PropertyTag, UseSIMD>
+element_kernel(
+    const specfem::point::properties<DimensionType, MediumTag, PropertyTag,
+                                     UseSIMD> &properties,
+    const specfem::point::field<DimensionType, MediumTag, false, false, true,
+                                false, UseSIMD> &adjoint_field,
+    const specfem::point::field<DimensionType, MediumTag, true, false, false,
+                                false, UseSIMD> &backward_field,
+    const specfem::point::field_derivatives<DimensionType, MediumTag, UseSIMD>
         &adjoint_derivatives,
-    const PointFieldDerivativesType<DimensionType, MediumTag>
+    const specfem::point::field_derivatives<DimensionType, MediumTag, UseSIMD>
         &backward_derivatives,
-    const type_real &dt);
+    const type_real &dt) {
+  return impl_compute_element_kernel(properties, adjoint_field, backward_field,
+                                     adjoint_derivatives, backward_derivatives,
+                                     dt);
+}
 
 } // namespace impl
 } // namespace frechet_derivatives

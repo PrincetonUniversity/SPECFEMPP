@@ -29,7 +29,7 @@ struct gcoord2 {
   gcoord2() = default;
 
   KOKKOS_FUNCTION
-  gcoord2(const type_real &x, const type_real &z) : x(x), z(z) {}
+  gcoord2(const type_real x, const type_real z) : x(x), z(z) {}
 };
 
 struct index {
@@ -43,6 +43,26 @@ struct index {
   KOKKOS_FUNCTION
   index(const int &ispec, const int &iz, const int &ix)
       : ispec(ispec), iz(iz), ix(ix) {}
+};
+
+struct simd_index {
+  int ispec;
+  int number_elements;
+  int iz;
+  int ix;
+
+  KOKKOS_FUNCTION
+  bool mask(const std::size_t &lane) const {
+    return int(lane) < number_elements;
+  }
+
+  KOKKOS_FUNCTION
+  simd_index() = default;
+
+  KOKKOS_FUNCTION
+  simd_index(const int &ispec, const int &number_elements, const int &iz,
+             const int &ix)
+      : ispec(ispec), number_elements(number_elements), iz(iz), ix(ix) {}
 };
 
 KOKKOS_FUNCTION

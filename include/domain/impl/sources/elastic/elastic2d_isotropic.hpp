@@ -20,11 +20,12 @@ namespace sources {
  * @tparam NGLL Number of Gauss-Lobatto-Legendre quadrature points defined at
  * compile time
  */
-template <int NGLL>
+template <int NGLL, bool using_simd>
 class source<
     specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
     specfem::element::property_tag::isotropic,
-    specfem::enums::element::quadrature::static_quadrature_points<NGLL> > {
+    specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
+    using_simd> {
 
 public:
   /**
@@ -79,12 +80,12 @@ public:
    * the source
    */
   KOKKOS_INLINE_FUNCTION void compute_interaction(
-      const specfem::kokkos::array_type<type_real, medium_type::components>
-          &stf,
-      const specfem::kokkos::array_type<type_real, medium_type::components>
-          &lagrange_interpolant,
-      specfem::kokkos::array_type<type_real, medium_type::components>
-          &acceleration) const;
+      const specfem::datatype::ScalarPointViewType<
+          type_real, medium_type::components, using_simd> &stf,
+      const specfem::datatype::ScalarPointViewType<
+          type_real, medium_type::components, using_simd> &lagrange_interpolant,
+      specfem::datatype::ScalarPointViewType<type_real, medium_type::components,
+                                             using_simd> &acceleration) const;
 };
 } // namespace sources
 } // namespace impl

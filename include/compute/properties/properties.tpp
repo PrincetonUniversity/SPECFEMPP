@@ -22,7 +22,7 @@ specfem::compute::properties::material_property<
     const int index = material_specification.index;
     if ((material_specification.type == type) &&
         (material_specification.property == property)) {
-      property_index_mapping(ispec) = count;
+      h_property_index_mapping(ispec) = count;
       for (int iz = 0; iz < ngllz; ++iz) {
         for (int ix = 0; ix < ngllx; ++ix) {
           // Get the material at index from mesh::materials

@@ -17,14 +17,14 @@ struct element_tag {
 
   element_tag(const specfem::element::medium_tag &medium_tag,
               const specfem::element::property_tag &property_tag,
-              const specfem::element::boundary_tag_container &boundary_tag)
+              const specfem::element::boundary_tag &boundary_tag)
       : medium_tag(medium_tag), property_tag(property_tag),
         boundary_tag(boundary_tag) {}
 
   element_tag() = default;
 
   specfem::element::property_tag property_tag;
-  specfem::element::boundary_tag_container boundary_tag;
+  specfem::element::boundary_tag boundary_tag;
   specfem::element::medium_tag medium_tag;
 };
 
@@ -43,9 +43,9 @@ void allocate_elements(
   using dimension = specfem::dimension::dimension<DimensionType>;
   using medium_type =
       specfem::medium::medium<DimensionType, medium_tag, property_tag>;
-  using boundary_conditions_type =
-      specfem::boundary::boundary<WavefieldType, DimensionType, medium_tag,
-                                  property_tag, boundary_tag, qp_type>;
+  // using boundary_conditions_type =
+  //     specfem::boundary::boundary<WavefieldType, DimensionType, medium_tag,
+  //                                 property_tag, boundary_tag, qp_type>;
 
   const int nspec = assembly.mesh.nspec;
 
@@ -155,7 +155,9 @@ void allocate_elements(
               << "    - Element type        : " << medium_type::to_string()
               << "\n"
               << "    - Boundary Conditions : "
-              << boundary_conditions_type::to_string() << "\n"
+              << specfem::domain::impl::boundary_conditions::print_boundary_tag<
+                     boundary_tag>()
+              << "\n"
               << "    - Number of elements  : " << nelements << "\n\n";
   }
 
@@ -198,6 +200,7 @@ void allocate_isotropic_sources(
         sources.source_wavefield_mapping(isource) == WavefieldType) {
       h_source_domain_index_mapping(index) =
           sources.source_domain_index_mapping(isource);
+      index++;
     }
   }
 
@@ -265,7 +268,7 @@ template <specfem::wavefield::type WavefieldType,
           specfem::element::medium_tag medium, typename qp_type>
 specfem::domain::impl::kernels::kernels<
     WavefieldType, DimensionType, medium,
-    qp_type>::kernels(const specfem::compute::assembly &assembly,
+    qp_type>::kernels(const type_real dt, const specfem::compute::assembly &assembly,
                       const qp_type &quadrature_points) {
 
   using medium_type = specfem::medium::medium<DimensionType, medium>;
@@ -360,7 +363,7 @@ specfem::domain::impl::kernels::kernels<
     element_tags(ispec) =
         element_tag(assembly.properties.h_element_types(ispec),
                     assembly.properties.h_element_property(ispec),
-                    assembly.boundaries.h_boundary_tags(ispec));
+                    assembly.boundaries.boundary_tags(ispec));
   }
 
   if constexpr (WavefieldType == specfem::wavefield::type::forward ||
@@ -400,7 +403,7 @@ specfem::domain::impl::kernels::kernels<
 
   // Compute mass matrices
 
-  this->compute_mass_matrix();
+  this->compute_mass_matrix(dt);
 
   return;
 }

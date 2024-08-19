@@ -23,6 +23,7 @@ public:
   using medium_type =
       specfem::medium::medium<DimensionType, MediumTag, PropertyTag>;
   using quadrature_points_type = qp_type;
+  constexpr static bool using_simd = false;
 
   receiver_kernel() = default;
 
@@ -49,7 +50,7 @@ private:
   quadrature_points_type quadrature_points;
 
   specfem::domain::impl::receivers::receiver<
-      DimensionType, MediumTag, PropertyTag, quadrature_points_type>
+      DimensionType, MediumTag, PropertyTag, quadrature_points_type, using_simd>
       receiver;
 };
 } // namespace kernels

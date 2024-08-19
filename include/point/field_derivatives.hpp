@@ -1,6 +1,7 @@
 #ifndef _POINT_FIELD_DERIVATIVES_HPP
 #define _POINT_FIELD_DERIVATIVES_HPP
 
+#include "datatypes/point_view.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "kokkos_abstractions.h"
@@ -9,26 +10,24 @@ namespace specfem {
 namespace point {
 
 template <specfem::dimension::type DimensionType,
-          specfem::element::medium_tag MediumTag>
-struct field_derivatives;
+          specfem::element::medium_tag MediumTag, bool UseSIMD>
+struct field_derivatives {
+  static constexpr int components =
+      specfem::medium::medium<DimensionType, MediumTag>::components;
 
-template <specfem::element::medium_tag MediumTag>
-struct field_derivatives<specfem::dimension::type::dim2, MediumTag> {
+  static constexpr int dimensions =
+      specfem::dimension::dimension<DimensionType>::dim;
 
-  constexpr static int components =
-      specfem::medium::medium<specfem::dimension::type::dim2,
-                              MediumTag>::components;
-  specfem::kokkos::array_type<type_real, components> du_dx;
-  specfem::kokkos::array_type<type_real, components> du_dz;
+  using simd = specfem::datatype::simd<type_real, UseSIMD>;
 
-  KOKKOS_FUNCTION
-  field_derivatives() = default;
+  using ViewType = specfem::datatype::VectorPointViewType<type_real, dimensions,
+                                                          components, UseSIMD>;
 
-  KOKKOS_FUNCTION
-  field_derivatives(
-      const specfem::kokkos::array_type<type_real, components> du_dx,
-      const specfem::kokkos::array_type<type_real, components> du_dz)
-      : du_dx(du_dx), du_dz(du_dz) {}
+  ViewType du;
+
+  KOKKOS_FUNCTION field_derivatives() = default;
+
+  KOKKOS_FUNCTION field_derivatives(const ViewType &du) : du(du) {}
 };
 
 } // namespace point

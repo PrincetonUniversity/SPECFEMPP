@@ -14,10 +14,10 @@ template <specfem::wavefield::type WavefieldType,
           specfem::dimension::type DimensionType, typename qp_type>
 class domain_kernels {
 public:
-  domain_kernels(const specfem::compute::assembly &assembly,
+  domain_kernels(const type_real dt, const specfem::compute::assembly &assembly,
                  const qp_type &quadrature_points)
-      : elastic_kernels(assembly, quadrature_points),
-        acoustic_kernels(assembly, quadrature_points) {}
+      : elastic_kernels(dt, assembly, quadrature_points),
+        acoustic_kernels(dt, assembly, quadrature_points) {}
 
   void prepare_wavefields();
 

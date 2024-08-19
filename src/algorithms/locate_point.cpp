@@ -39,9 +39,10 @@ rough_location(const specfem::point::gcoord2 &global,
   return std::make_tuple(ix_selected, iz_selected, ispec_selected);
 }
 
-std::vector<int>
-get_best_candidates(const int ispec_guess,
-                    const specfem::kokkos::HostView3d<int> index_mapping) {
+std::vector<int> get_best_candidates(
+    const int ispec_guess,
+    const Kokkos::View<int ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
+        index_mapping) {
 
   const int nspec = index_mapping.extent(0);
   const int ngllx = index_mapping.extent(1);

@@ -7,7 +7,6 @@
 
 namespace specfem {
 namespace mesh {
-namespace boundaries {
 
 struct acoustic_free_surface {
   acoustic_free_surface(){};
@@ -26,7 +25,6 @@ struct acoustic_free_surface {
   specfem::kokkos::HostView1d<specfem::enums::boundaries::type>
       type; ///< Type of the boundary
 };
-} // namespace boundaries
 } // namespace mesh
 } // namespace specfem
 
