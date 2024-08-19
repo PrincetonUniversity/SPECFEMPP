@@ -1,4 +1,6 @@
 #include "compute/interface.hpp"
+#include "enumerations/boundary.hpp"
+#include "enumerations/medium.hpp"
 #include "jacobian/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
@@ -39,8 +41,8 @@ type_real get_tolerance(std::vector<qp> cart_cord, const int nspec,
   return 1e-6 * xtypdist;
 }
 
-specfem::compute::points assign_numbering(
-    specfem::kokkos::HostView3d<specfem::point::gcoord2> &global_coordinates) {
+specfem::compute::points
+assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates) {
 
   int nspec = global_coordinates.extent(0);
   int ngll = global_coordinates.extent(1);
@@ -51,9 +53,9 @@ specfem::compute::points assign_numbering(
   for (int ispec = 0; ispec < nspec; ispec++) {
     for (int iz = 0; iz < ngll; iz++) {
       for (int ix = 0; ix < ngll; ix++) {
-        int iloc = ispec * (ngllxz) + iz * ngll + ix;
-        cart_cord[iloc].x = global_coordinates(ispec, iz, ix).x;
-        cart_cord[iloc].z = global_coordinates(ispec, iz, ix).z;
+        int iloc = ix * nspec * ngll + iz * nspec + ispec;
+        cart_cord[iloc].x = global_coordinates(ispec, iz, ix, 0);
+        cart_cord[iloc].z = global_coordinates(ispec, iz, ix, 1);
         cart_cord[iloc].iloc = iloc;
       }
     }
@@ -105,9 +107,9 @@ specfem::compute::points assign_numbering(
   type_real xmax = std::numeric_limits<type_real>::min();
   type_real zmin = std::numeric_limits<type_real>::max();
   type_real zmax = std::numeric_limits<type_real>::min();
-  for (int ispec = 0; ispec < nspec; ispec++) {
+  for (int ix = 0; ix < ngll; ix++) {
     for (int iz = 0; iz < ngll; iz++) {
-      for (int ix = 0; ix < ngll; ix++) {
+      for (int ispec = 0; ispec < nspec; ispec++) {
         if (iglob_counted[copy_cart_cord[iloc].iglob] == -1) {
 
           const type_real x_cor = copy_cart_cord[iloc].x;
@@ -155,6 +157,7 @@ specfem::compute::points assign_numbering(
 } // namespace
 
 specfem::compute::control_nodes::control_nodes(
+    const specfem::compute::mesh_to_compute_mapping &mapping,
     const specfem::mesh::control_nodes &control_nodes)
     : ngnod(control_nodes.ngnod), nspec(control_nodes.nspec),
       index_mapping("specfem::compute::control_nodes::index_mapping",
@@ -168,7 +171,8 @@ specfem::compute::control_nodes::control_nodes(
       "specfem::compute::control_nodes::assign_index_mapping",
       specfem::kokkos::HostMDrange<2>({ 0, 0 }, { ngnod, nspec }),
       [=](const int in, const int ispec) {
-        const int index = control_nodes.knods(in, ispec);
+        const int ispec_mesh = mapping.compute_to_mesh(ispec);
+        const int index = control_nodes.knods(in, ispec_mesh);
         h_index_mapping(ispec, in) = index;
         h_coord(0, ispec, in) = control_nodes.coord(0, index);
         h_coord(1, ispec, in) = control_nodes.coord(1, index);
@@ -217,16 +221,116 @@ specfem::compute::shape_functions::shape_functions(
   return;
 }
 
-specfem::compute::mesh::mesh(
-    const specfem::mesh::control_nodes &control_nodes,
-    const specfem::quadrature::quadratures &quadratures)
-    : control_nodes(control_nodes), quadratures(quadratures, control_nodes) {
+specfem::compute::mesh_to_compute_mapping::mesh_to_compute_mapping(
+    const specfem::mesh::tags &tags)
+    : compute_to_mesh("specfem::compute::mesh_to_compute_mapping", tags.nspec),
+      mesh_to_compute("specfem::compute::mesh_to_compute_mapping", tags.nspec) {
 
+  const int nspec = tags.nspec;
+
+  std::vector<int> elastic_isotropic_ispec;
+  std::vector<int> acoustic_isotropic_ispec;
+  std::vector<int> free_surface_ispec;
+  std::vector<int> elastic_isotropic_stacey_ispec;
+  std::vector<int> acoustic_isotropic_stacey_ispec;
+  std::vector<int> acoustic_isotropic_stacey_dirichlet_ispec;
+
+  for (int ispec = 0; ispec < nspec; ispec++) {
+    const auto tag = tags.tags_container(ispec);
+    if (tag.medium_tag == specfem::element::medium_tag::elastic &&
+        tag.property_tag == specfem::element::property_tag::isotropic &&
+        tag.boundary_tag == specfem::element::boundary_tag::none) {
+      elastic_isotropic_ispec.push_back(ispec);
+    } else if (tag.medium_tag == specfem::element::medium_tag::acoustic &&
+               tag.property_tag == specfem::element::property_tag::isotropic &&
+               tag.boundary_tag == specfem::element::boundary_tag::none) {
+      acoustic_isotropic_ispec.push_back(ispec);
+    } else if (tag.medium_tag == specfem::element::medium_tag::acoustic &&
+               tag.property_tag == specfem::element::property_tag::isotropic &&
+               tag.boundary_tag ==
+                   specfem::element::boundary_tag::acoustic_free_surface) {
+      free_surface_ispec.push_back(ispec);
+    } else if (tag.medium_tag == specfem::element::medium_tag::elastic &&
+               tag.property_tag == specfem::element::property_tag::isotropic &&
+               tag.boundary_tag == specfem::element::boundary_tag::stacey) {
+      elastic_isotropic_stacey_ispec.push_back(ispec);
+    } else if (tag.medium_tag == specfem::element::medium_tag::acoustic &&
+               tag.property_tag == specfem::element::property_tag::isotropic &&
+               tag.boundary_tag == specfem::element::boundary_tag::stacey) {
+      acoustic_isotropic_stacey_ispec.push_back(ispec);
+    } else if (tag.medium_tag == specfem::element::medium_tag::acoustic &&
+               tag.property_tag == specfem::element::property_tag::isotropic &&
+               tag.boundary_tag ==
+                   specfem::element::boundary_tag::composite_stacey_dirichlet) {
+      acoustic_isotropic_stacey_dirichlet_ispec.push_back(ispec);
+    } else {
+      throw std::runtime_error("Unknown tag found in compute_to_mesh_ordering");
+    }
+  }
+
+  const int total_nspecs =
+      elastic_isotropic_ispec.size() + acoustic_isotropic_ispec.size() +
+      free_surface_ispec.size() + elastic_isotropic_stacey_ispec.size() +
+      acoustic_isotropic_stacey_ispec.size() +
+      acoustic_isotropic_stacey_dirichlet_ispec.size();
+
+  assert(total_nspecs == nspec);
+
+  int ispec = 0;
+  for (const auto &ispecs : elastic_isotropic_ispec) {
+    compute_to_mesh(ispec) = ispecs;
+    mesh_to_compute(ispecs) = ispec;
+    ispec++;
+  }
+
+  for (const auto &ispecs : elastic_isotropic_stacey_ispec) {
+    compute_to_mesh(ispec) = ispecs;
+    mesh_to_compute(ispecs) = ispec;
+    ispec++;
+  }
+
+  for (const auto &ispecs : acoustic_isotropic_ispec) {
+    compute_to_mesh(ispec) = ispecs;
+    mesh_to_compute(ispecs) = ispec;
+    ispec++;
+  }
+
+  for (const auto &ispecs : free_surface_ispec) {
+    compute_to_mesh(ispec) = ispecs;
+    mesh_to_compute(ispecs) = ispec;
+    ispec++;
+  }
+
+  for (const auto &ispecs : acoustic_isotropic_stacey_ispec) {
+    compute_to_mesh(ispec) = ispecs;
+    mesh_to_compute(ispecs) = ispec;
+    ispec++;
+  }
+
+  for (const auto &ispecs : acoustic_isotropic_stacey_dirichlet_ispec) {
+    compute_to_mesh(ispec) = ispecs;
+    mesh_to_compute(ispecs) = ispec;
+    ispec++;
+  }
+
+  assert(ispec == nspec);
+}
+
+specfem::compute::mesh::mesh(
+    const specfem::mesh::tags &tags,
+    const specfem::mesh::control_nodes &m_control_nodes,
+    const specfem::quadrature::quadratures &m_quadratures) {
+
+  this->mapping = specfem::compute::mesh_to_compute_mapping(tags);
+  this->control_nodes =
+      specfem::compute::control_nodes(this->mapping, m_control_nodes);
+  this->quadratures =
+      specfem::compute::quadrature(m_quadratures, m_control_nodes);
   nspec = this->control_nodes.nspec;
   ngllx = this->quadratures.gll.N;
   ngllz = this->quadratures.gll.N;
 
-  points = this->assemble();
+  this->points = this->assemble();
 }
 
 specfem::compute::points specfem::compute::mesh::assemble() {
@@ -246,43 +350,66 @@ specfem::compute::points specfem::compute::mesh::assemble() {
   const int scratch_size =
       specfem::kokkos::HostScratchView2d<type_real>::shmem_size(ndim, ngnod);
 
-  specfem::kokkos::HostView3d<specfem::point::gcoord2> global_coordinates(
-      "specfem::compute::mesh::assemble::global_coordinates", nspec, ngll,
-      ngll);
+  specfem::kokkos::HostView4d<double> global_coordinates(
+      "specfem::compute::mesh::assemble::global_coordinates", nspec, ngll, ngll,
+      2);
 
-  // Compute the cartesian coordinates of the GLL points
-  Kokkos::parallel_for(
-      specfem::kokkos::HostTeam(nspec, Kokkos::AUTO, Kokkos::AUTO)
-          .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
-      [=](const specfem::kokkos::HostTeam::member_type teamMember) {
-        const int ispec = teamMember.league_rank();
+  for (int ispec = 0; ispec < nspec; ispec++) {
+    for (int iz = 0; iz < ngll; iz++) {
+      for (int ix = 0; ix < ngll; ix++) {
+        auto shape_functions =
+            specfem::jacobian::define_shape_functions(xi(ix), gamma(iz), ngnod);
 
-        //----- Load coorgx, coorgz in level 0 cache to be utilized later
-        specfem::kokkos::HostScratchView2d<type_real> s_coord(
-            teamMember.team_scratch(0), ndim, ngnod);
+        double xcor = 0.0;
+        double zcor = 0.0;
 
-        Kokkos::parallel_for(Kokkos::TeamThreadRange(teamMember, ngnod),
-                             [&](const int in) {
-                               s_coord(0, in) = coord(0, ispec, in);
-                               s_coord(1, in) = coord(1, ispec, in);
-                             });
+        for (int in = 0; in < ngnod; in++) {
+          xcor += coord(0, ispec, in) * shape_functions(in);
+          zcor += coord(1, ispec, in) * shape_functions(in);
+        }
 
-        teamMember.team_barrier();
-        //-----
+        global_coordinates(ispec, iz, ix, 0) = xcor;
+        global_coordinates(ispec, iz, ix, 1) = zcor;
+      }
+    }
+  }
 
-        Kokkos::parallel_for(
-            Kokkos::TeamThreadRange(teamMember, ngllxz), [&](const int xz) {
-              int ix, iz;
-              sub2ind(xz, ngll, iz, ix);
-              // Get x and y coordinates for (ix, iz) point
-              auto sv_shape2D = Kokkos::subview(shape2D, iz, ix, Kokkos::ALL);
-              auto [xcor, zcor] = jacobian::compute_locations(
-                  teamMember, s_coord, ngnod, sv_shape2D);
-              // ------------
+  // // Compute the cartesian coordinates of the GLL points
+  // Kokkos::parallel_for(
+  //     specfem::kokkos::HostTeam(nspec, Kokkos::AUTO, Kokkos::AUTO)
+  //         .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
+  //     KOKKOS_CLASS_LAMBDA(
+  //         const specfem::kokkos::HostTeam::member_type teamMember) {
+  //       const int ispec = teamMember.league_rank();
 
-              global_coordinates(ispec, iz, ix) = { xcor, zcor };
-            });
-      });
+  //       //----- Load coorgx, coorgz in level 0 cache to be utilized later
+  //       specfem::kokkos::HostScratchView2d<type_real> s_coord(
+  //           teamMember.team_scratch(0), ndim, ngnod);
+
+  //       Kokkos::parallel_for(Kokkos::TeamThreadRange(teamMember, ngnod),
+  //                            [&](const int in) {
+  //                              s_coord(0, in) = coord(0, ispec, in);
+  //                              s_coord(1, in) = coord(1, ispec, in);
+  //                            });
+
+  //       teamMember.team_barrier();
+  //       //-----
+
+  //       Kokkos::parallel_for(
+  //           Kokkos::TeamThreadRange(teamMember, ngllxz), [=](const int xz) {
+  //             int ix, iz;
+  //             sub2ind(xz, ngll, iz, ix);
+  //             // Get x and y coordinates for (ix, iz) point
+  //             auto sv_shape2D = Kokkos::subview(shape2D, iz, ix,
+  //             Kokkos::ALL); auto [xcor, zcor] = jacobian::compute_locations(
+  //                 teamMember, s_coord, ngnod, sv_shape2D);
+  //             // ------------
+
+  //             global_coordinates(ispec, iz, ix) = { xcor, zcor };
+  //           });
+  //     });
+
+  // Kokkos::fence();
 
   return assign_numbering(global_coordinates);
 }
@@ -311,7 +438,8 @@ specfem::compute::points specfem::compute::mesh::assemble() {
 //   specfem::kokkos::HostView1d<qp> pcart_cord(
 //       "specfem::compute::compute::pcart_cord", nspec * ngllxz);
 //   int scratch_size =
-//       specfem::kokkos::HostScratchView2d<type_real>::shmem_size(ndim, ngnod);
+//       specfem::kokkos::HostScratchView2d<type_real>::shmem_size(ndim,
+//       ngnod);
 
 //   // Allocate shape functions
 //   Kokkos::parallel_for(
@@ -324,7 +452,8 @@ specfem::compute::points specfem::compute::mesh::assemble() {
 //         // Always use subviews inside parallel regions
 //         // ** Do not allocate views inside parallel regions **
 //         auto sv_shape2D = Kokkos::subview(shape2D, iz, ix, Kokkos::ALL);
-//         specfem::jacobian::define_shape_functions(sv_shape2D, ixxi, izgamma,
+//         specfem::jacobian::define_shape_functions(sv_shape2D, ixxi,
+//         izgamma,
 //                                                   ngnod);
 //       });
 
@@ -352,14 +481,16 @@ specfem::compute::points specfem::compute::mesh::assemble() {
 //         //-----
 
 //         Kokkos::parallel_for(
-//             Kokkos::TeamThreadRange(teamMember, ngllxz), [&](const int xz) {
+//             Kokkos::TeamThreadRange(teamMember, ngllxz), [&](const int xz)
+//             {
 //               int ix, iz;
 //               sub2ind(xz, ngllx, iz, ix);
 //               const int iloc = ispec * (ngllxz) + xz;
 
 //               // Get x and y coordinates for (ix, iz) point
 //               auto sv_shape2D = Kokkos::subview(shape2D, iz, ix,
-//               Kokkos::ALL); auto [xcor, ycor] = jacobian::compute_locations(
+//               Kokkos::ALL); auto [xcor, ycor] =
+//               jacobian::compute_locations(
 //                   teamMember, s_coorg, ngnod, sv_shape2D);
 //               // ------------
 //               // Hacky way of doing this (but nacessary), because

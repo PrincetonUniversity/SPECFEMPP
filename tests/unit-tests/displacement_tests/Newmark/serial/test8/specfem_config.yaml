@@ -3,13 +3,13 @@ parameters:
 
   header:
     ## Header information is used for logging. It is good practice to give your simulations explicit names
-    title: Homogeneous elastic domain with composite stacey dirichlet BCs  # name for your simulation
+    title: Homogeneous elastic domain with stacey & dirichlet BCs  # name for your simulation
     # A detailed description for your simulation
     description: |
       Material systems : Elastic domain (1)
       Interfaces : None
-      Sources : Force source (1)
-      Boundary conditions : Stacey BCs on (bottom, left, right) and Dirichlet BCs on tops
+      Sources : Force source (4)
+      Boundary conditions : Dirichlet BCs on top, Stacy BCs on all other edges
 
   simulation-setup:
     ## quadrature setup
@@ -19,11 +19,10 @@ parameters:
     ## Solver setup
     solver:
       time-marching:
-        type-of-simulation: forward
         time-scheme:
           type: Newmark
-          dt: 1.65e-3
-          nstep: 600
+          dt: 1.1e-3
+          nstep: 300
 
     simulation-mode:
       forward:
@@ -33,11 +32,10 @@ parameters:
             output-folder: "."
 
   receivers:
-    stations-file: "../DATA/STATIONS"
+    stations-file: "/scratch/gpfs/rk9481/specfem2d_kokkos/tests/unit-tests/displacement_tests/Newmark/serial/test8/STATIONS"
     angle: 0.0
     seismogram-type:
       - displacement
-      - velocity
     nstep_between_samples: 1
 
   ## Runtime setup
@@ -47,5 +45,5 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test8/database.bin"
-    source-file: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test8/source.yaml"
+    mesh-database: "/scratch/gpfs/rk9481/specfem2d_kokkos/tests/unit-tests/displacement_tests/Newmark/serial/test8/database.bin"
+    source-file: "/scratch/gpfs/rk9481/specfem2d_kokkos/tests/unit-tests/displacement_tests/Newmark/serial/test8/source.yaml"

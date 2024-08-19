@@ -23,6 +23,7 @@ examples/*/Par_File
 *.sqlite
 *.nsys-rep
 *.ncu-rep
-.snakemake*
-autotuning*
-*snakemake*
+.snakemake/
+autotuning/
+profiles
+.cache/

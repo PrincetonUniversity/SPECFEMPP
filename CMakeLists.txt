@@ -6,6 +6,13 @@ set(CMAKE_CXX_STANDARD 17)
 option(MPI_PARALLEL "MPI enabled" OFF)
 option(BUILD_TESTS "Tests included" OFF)
 option(BUILD_EXAMPLES "Examples included" OFF)
+option(ENABLE_SIMD "Enable SIMD" OFF)
+option(ENABLE_PROFILING "Enable profiling" OFF)
+# set(CMAKE_BUILD_TYPE Release)
+set(CHUNK_SIZE 32)
+set(NUM_CHUNKS 1)
+set(NUM_THREADS 160)
+set(NUM_VECTOR_LANES 1)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
         set(CMAKE_CXX_FLAGS "-fp-model=precise")
@@ -28,7 +35,7 @@ endif()
 include(FetchContent)
 FetchContent_Declare(
 kokkos
-URL https://github.com/kokkos/kokkos/archive/refs/tags/4.0.00.zip
+URL https://github.com/kokkos/kokkos/archive/refs/tags/4.3.01.zip
 )
 FetchContent_MakeAvailable(kokkos)
 
@@ -75,6 +82,16 @@ include_directories(${CMAKE_BINARY_DIR})
 
 add_subdirectory(meshfem2d)
 
+if (ENABLE_SIMD)
+        message("-- Enabling SIMD")
+        add_definitions(-DENABLE_SIMD)
+endif()
+
+if (ENABLE_PROFILING)
+        message("-- Enabling profiling")
+        add_definitions(-DENABLE_PROFILING)
+endif()
+
 # Build specfem2d libraries
 add_library(
         quadrature
@@ -108,7 +125,7 @@ add_library(
         point
         src/point/coordinates.cpp
         src/point/partial_derivatives.cpp
-        src/point/boundaries.cpp
+        # src/point/boundaries.cpp
 )
 
 target_link_libraries(
@@ -166,6 +183,7 @@ add_library(
         src/mesh/mpi_interfaces/mpi_interfaces.cpp
         src/mesh/materials/materials.cpp
         src/mesh/coupled_interfaces/coupled_interfaces.cpp
+        src/mesh/tags/tags.cpp
         src/mesh/mesh.cpp
 )
 
@@ -212,6 +230,18 @@ target_link_libraries(
         reader
         compute
         IO
+)
+
+add_library(
+        algorithms
+        src/algorithms/locate_point.cpp
+)
+
+target_link_libraries(
+        algorithms
+        Kokkos::kokkos
+        jacobian
+        point
 )
 
 add_library(
@@ -268,18 +298,6 @@ target_link_libraries(
 )
 
 add_library(
-        algorithms
-        src/algorithms/locate_point.cpp
-)
-
-target_link_libraries(
-        algorithms
-        Kokkos::kokkos
-        jacobian
-        point
-)
-
-add_library(
         compute
         src/compute/compute_mesh.cpp
         src/compute/compute_partial_derivatives.cpp
@@ -288,7 +306,9 @@ add_library(
         src/compute/compute_sources.cpp
         src/compute/compute_receivers.cpp
         src/compute/coupled_interfaces.cpp
-        src/compute/compute_boundaries.cpp
+        src/compute/boundaries/impl/acoustic_free_surface.cpp
+        src/compute/boundaries/impl/stacey.cpp
+        src/compute/boundaries/boundaries.cpp
         src/compute/compute_fields.cpp
         src/compute/compute_boundary_values.cpp
         src/compute/compute_assembly.cpp
@@ -304,6 +324,27 @@ target_link_libraries(
         point
         edge
         receiver_class
+        Kokkos::kokkos
+)
+
+add_library(
+        domain
+        src/domain/impl/elements/element.cpp
+        src/domain/impl/boundary_conditions/none/none.cpp
+        src/domain/impl/boundary_conditions/none/print.cpp
+        src/domain/impl/boundary_conditions/dirichlet/dirichlet.cpp
+        src/domain/impl/boundary_conditions/dirichlet/print.cpp
+        src/domain/impl/boundary_conditions/stacey/stacey.cpp
+        src/domain/impl/boundary_conditions/stacey/mass_matrix.cpp
+        src/domain/impl/boundary_conditions/stacey/print.cpp
+        src/domain/impl/boundary_conditions/composite_stacey_dirichlet/composite_stacey_dirichlet.cpp
+        src/domain/impl/boundary_conditions/composite_stacey_dirichlet/mass_matrix.cpp
+        src/domain/impl/boundary_conditions/composite_stacey_dirichlet/print.cpp
+        src/domain/impl/boundary_conditions/boundary_conditions.cpp
+)
+
+target_link_libraries(
+        domain
         Kokkos::kokkos
 )
 
@@ -330,6 +371,20 @@ target_link_libraries(
 # )
 
 add_library(
+        frechet_derivatives
+        src/frechet_derivatives/impl/element_kernel/elastic_isotropic.cpp
+        src/frechet_derivatives/impl/element_kernel/acoustic_isotropic.cpp
+        src/frechet_derivatives/impl/frechet_element.cpp
+        src/frechet_derivatives/frechet_derivatives.cpp
+)
+
+target_link_libraries(
+        frechet_derivatives
+        Kokkos::kokkos
+        point
+)
+
+add_library(
         kernels
         src/kernels/frechet_kernels.cpp
 )
@@ -338,6 +393,7 @@ target_link_libraries(
         kernels
         Kokkos::kokkos
         compute
+        frechet_derivatives
 )
 
 add_library(
@@ -391,6 +447,7 @@ target_link_libraries(
         writer
         reader
         kernels
+        domain
         Boost::filesystem
 )
 
@@ -411,6 +468,7 @@ target_link_libraries(
         receiver_class
         writer
         reader
+        domain
         coupled_interface
         kernels
         Boost::program_options

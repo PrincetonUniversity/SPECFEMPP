@@ -19,6 +19,7 @@ template <>
 class properties<specfem::element::medium_tag::elastic,
                  specfem::element::property_tag::isotropic> {
 public:
+  constexpr static auto dimension = specfem::dimension::type::dim2;
   constexpr static auto type = specfem::element::medium_tag::elastic;
   constexpr static auto property = specfem::element::property_tag::isotropic;
 
@@ -42,7 +43,8 @@ public:
 
   properties() = default;
 
-  specfem::point::properties<type, property> get_properties() const {
+  specfem::point::properties<dimension, type, property, false>
+  get_properties() const {
     return { this->lambdaplus2mu, this->mu, this->density };
   }
 
@@ -86,6 +88,7 @@ class properties<specfem::element::medium_tag::acoustic,
                  specfem::element::property_tag::isotropic> {
 
 public:
+  constexpr static auto dimension = specfem::dimension::type::dim2;
   constexpr static auto type = specfem::element::medium_tag::acoustic;
   constexpr static auto property = specfem::element::property_tag::isotropic;
 
@@ -104,7 +107,8 @@ public:
 
   properties() = default;
 
-  specfem::point::properties<type, property> get_properties() const {
+  specfem::point::properties<dimension, type, property, false>
+  get_properties() const {
     return { 1.0f / static_cast<type_real>(lambdaplus2mu),
              1.0f / static_cast<type_real>(density), this->kappa };
   }

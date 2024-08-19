@@ -7,7 +7,6 @@
 
 namespace specfem {
 namespace mesh {
-namespace boundaries {
 /**
  * Absorbing boundary conditions
  *
@@ -52,7 +51,6 @@ struct absorbing_boundary {
   absorbing_boundary(std::ifstream &stream, int num_abs_boundary_faces,
                      const int nspec, const specfem::MPI::MPI *mpi);
 };
-} // namespace boundaries
 } // namespace mesh
 } // namespace specfem
 

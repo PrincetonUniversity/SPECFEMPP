@@ -37,7 +37,7 @@ struct materials {
             specfem::element::property_tag property>
   struct material {
     int n_materials; ///< Number of elements
-    specfem::kokkos::HostView1d<specfem::material::material<type, property> >
+    std::vector<specfem::material::material<type, property> >
         material_properties; ///< Material properties
 
     material() = default;

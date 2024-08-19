@@ -58,6 +58,10 @@ specfem::compute::receivers::receivers(
                                       receivers[irec]->get_z() };
     auto lcoord = specfem::algorithms::locate_point(coord, mesh);
 
+    std::cout << "ispec = " << lcoord.ispec << std::endl;
+    std::cout << "xi = " << lcoord.xi << std::endl;
+    std::cout << "gamma = " << lcoord.gamma << std::endl;
+
     this->h_ispec_array(irec) = lcoord.ispec;
     const auto angle = receivers[irec]->get_angle();
 

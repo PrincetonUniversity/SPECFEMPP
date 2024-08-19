@@ -6,16 +6,25 @@
 
 namespace specfem {
 namespace algorithms {
-template <int N>
-KOKKOS_INLINE_FUNCTION type_real
-dot(const specfem::kokkos::array_type<type_real, N> &a,
-    const specfem::kokkos::array_type<type_real, N> &b) {
-  type_real result = 0.0;
+template <typename ScalarPointViewType>
+KOKKOS_INLINE_FUNCTION typename ScalarPointViewType::value_type
+dot(const ScalarPointViewType &a, const ScalarPointViewType &b) {
+
+  static_assert(ScalarPointViewType::isPointViewType,
+                "Invalid ViewType: not a PointViewType");
+
+  static_assert(ScalarPointViewType::isScalarViewType,
+                "Invalid ViewType: not a ScalarViewType");
+
+  using value_type = typename ScalarPointViewType::value_type;
+  constexpr int N = ScalarPointViewType::components;
+  value_type result{ 0.0 };
+
 #ifdef KOKKOS_ENABLE_CUDA
 #pragma unroll
 #endif
   for (int i = 0; i < N; ++i) {
-    result += a[i] * b[i];
+    result += a(i) * b(i);
   }
   return result;
 }

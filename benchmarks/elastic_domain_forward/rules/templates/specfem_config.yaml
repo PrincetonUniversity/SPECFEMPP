@@ -1,0 +1,50 @@
+parameters:
+
+  header:
+    ## Header information is used for logging. It is good practice to give your simulations explicit names
+    title: Isotropic Elastic simulation # name for your simulation
+    # A detailed description for your simulation
+    description: |
+      Material systems : Elastic domain (1)
+      Interfaces : None
+      Sources : Force source (1)
+      Boundary conditions : Neumann BCs on all edges
+      Debugging comment : This test tests elastic compute_forces routine
+
+  simulation-setup:
+    ## quadrature setup
+    quadrature:
+      quadrature-type: GLL4
+
+    ## Solver setup
+    solver:
+      time-marching:
+        type-of-simulation: forward
+        time-scheme:
+          type: Newmark
+          dt: 1.1e-5
+          nstep: 300
+
+    simulation-mode:
+      forward:
+        writer:
+          seismogram:
+            format: ascii
+            directory: "{work_directory}/seismograms"
+
+  receivers:
+    stations-file: "{stations_file}"
+    angle: 0.0
+    seismogram-type:
+      - displacement
+    nstep_between_samples: 1
+
+  ## Runtime setup
+  run-setup:
+    number-of-processors: 1
+    number-of-runs: 1
+
+  ## databases
+  databases:
+    mesh-database: "{mesh_database}"
+    source-file: "{source_file}"

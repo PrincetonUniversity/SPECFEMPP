@@ -2,6 +2,7 @@
 #define _COMPUTE_PROPERTIES_IMPL_HPP
 
 #include "point/interface.hpp"
+#include <Kokkos_SIMD.hpp>
 
 namespace specfem {
 namespace compute {
@@ -20,19 +21,23 @@ template <>
 struct properties_container<specfem::element::medium_tag::elastic,
                             specfem::element::property_tag::isotropic> {
 
+  constexpr static auto dimension = specfem::dimension::type::dim2;
   constexpr static auto value_type = specfem::element::medium_tag::elastic;
   constexpr static auto property_type =
       specfem::element::property_tag::isotropic;
 
+  using ViewType = typename Kokkos::View<type_real ***, Kokkos::LayoutLeft,
+                                         Kokkos::DefaultExecutionSpace>;
+
   int nspec; ///< total number of acoustic spectral elements
   int ngllz; ///< number of quadrature points in z dimension
   int ngllx; ///< number of quadrature points in x dimension
-  specfem::kokkos::DeviceView3d<type_real> rho;
-  specfem::kokkos::HostMirror3d<type_real> h_rho;
-  specfem::kokkos::DeviceView3d<type_real> mu;
-  specfem::kokkos::HostMirror3d<type_real> h_mu;
-  specfem::kokkos::DeviceView3d<type_real> lambdaplus2mu;
-  specfem::kokkos::HostMirror3d<type_real> h_lambdaplus2mu;
+  ViewType rho;
+  ViewType::HostMirror h_rho;
+  ViewType mu;
+  ViewType::HostMirror h_mu;
+  ViewType lambdaplus2mu;
+  ViewType::HostMirror h_lambdaplus2mu;
 
   properties_container() = default;
 
@@ -46,9 +51,24 @@ struct properties_container<specfem::element::medium_tag::elastic,
                       ngllz, ngllx),
         h_lambdaplus2mu(Kokkos::create_mirror_view(lambdaplus2mu)) {}
 
-  KOKKOS_INLINE_FUNCTION void load_device_properties(
-      const int &ispec, const int &iz, const int &ix,
-      specfem::point::properties<value_type, property_type> &property) const {
+  template <
+      typename PointProperties,
+      typename std::enable_if_t<!PointProperties::simd::using_simd, int> = 0>
+  KOKKOS_INLINE_FUNCTION void
+  load_device_properties(const specfem::point::index &index,
+                         PointProperties &property) const {
+
+    static_assert(PointProperties::dimension == dimension,
+                  "Dimension mismatch");
+    static_assert(PointProperties::medium_tag == value_type,
+                  "Medium tag mismatch");
+    static_assert(PointProperties::property_tag == property_type,
+                  "Property tag mismatch");
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
     property.rho = rho(ispec, iz, ix);
     property.mu = mu(ispec, iz, ix);
     property.lambdaplus2mu = lambdaplus2mu(ispec, iz, ix);
@@ -57,15 +77,100 @@ struct properties_container<specfem::element::medium_tag::elastic,
     property.rho_vs = sqrt(property.rho * property.mu);
   }
 
-  void load_host_properties(
-      const int &ispec, const int &iz, const int &ix,
-      specfem::point::properties<value_type, property_type> &property) const {
+  template <
+      typename PointProperties,
+      typename std::enable_if_t<PointProperties::simd::using_simd, int> = 0>
+  KOKKOS_INLINE_FUNCTION void
+  load_device_properties(const specfem::point::simd_index &index,
+                         PointProperties &property) const {
+
+    static_assert(PointProperties::dimension == dimension,
+                  "Dimension mismatch");
+    static_assert(PointProperties::medium_tag == value_type,
+                  "Medium tag mismatch");
+    static_assert(PointProperties::property_tag == property_type,
+                  "Property tag mismatch");
+
+    using simd = typename PointProperties::simd;
+    using mask_type = typename simd::mask_type;
+    using tag_type = typename simd::tag_type;
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
+    mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+
+    Kokkos::Experimental::where(mask, property.rho)
+        .copy_from(&rho(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, property.mu)
+        .copy_from(&mu(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, property.lambdaplus2mu)
+        .copy_from(&lambdaplus2mu(ispec, iz, ix), tag_type());
+
+    property.lambda = property.lambdaplus2mu - 2 * property.mu;
+    property.rho_vp = Kokkos::sqrt(property.rho * property.lambdaplus2mu);
+    property.rho_vs = Kokkos::sqrt(property.rho * property.mu);
+  }
+
+  template <
+      typename PointProperties,
+      typename std::enable_if_t<!PointProperties::simd::using_simd, int> = 0>
+  void load_host_properties(const specfem::point::index &index,
+                            PointProperties &property) const {
+
+    static_assert(PointProperties::dimension == dimension,
+                  "Dimension mismatch");
+    static_assert(PointProperties::medium_tag == value_type,
+                  "Medium tag mismatch");
+    static_assert(PointProperties::property_tag == property_type,
+                  "Property tag mismatch");
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
     property.rho = h_rho(ispec, iz, ix);
     property.mu = h_mu(ispec, iz, ix);
     property.lambdaplus2mu = h_lambdaplus2mu(ispec, iz, ix);
     property.lambda = property.lambdaplus2mu - 2 * property.mu;
     property.rho_vp = sqrt(property.rho * property.lambdaplus2mu);
     property.rho_vs = sqrt(property.rho * property.mu);
+  }
+
+  template <
+      typename PointProperties,
+      typename std::enable_if_t<PointProperties::simd::using_simd, int> = 0>
+  void load_host_properties(const specfem::point::simd_index &index,
+                            PointProperties &property) const {
+
+    static_assert(PointProperties::dimension == dimension,
+                  "Dimension mismatch");
+    static_assert(PointProperties::medium_tag == value_type,
+                  "Medium tag mismatch");
+    static_assert(PointProperties::property_tag == property_type,
+                  "Property tag mismatch");
+
+    using simd = typename PointProperties::simd;
+    using mask_type = typename simd::mask_type;
+    using tag_type = typename simd::tag_type;
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
+    mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+
+    Kokkos::Experimental::where(mask, property.rho)
+        .copy_from(&h_rho(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, property.mu)
+        .copy_from(&h_mu(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, property.lambdaplus2mu)
+        .copy_from(&h_lambdaplus2mu(ispec, iz, ix), tag_type());
+
+    property.lambda = property.lambdaplus2mu - 2 * property.mu;
+    property.rho_vp = Kokkos::sqrt(property.rho * property.lambdaplus2mu);
+    property.rho_vs = Kokkos::sqrt(property.rho * property.mu);
   }
 
   void copy_to_device() {
@@ -80,12 +185,57 @@ struct properties_container<specfem::element::medium_tag::elastic,
     Kokkos::deep_copy(h_lambdaplus2mu, lambdaplus2mu);
   }
 
-  void assign(const int ispec, const int iz, const int ix,
-              const specfem::point::properties<value_type, property_type>
-                  &property) const {
+  template <
+      typename PointProperties,
+      typename std::enable_if_t<!PointProperties::simd::using_simd, int> = 0>
+  void assign(const specfem::point::index &index,
+              const PointProperties &property) const {
+
+    static_assert(PointProperties::dimension == dimension,
+                  "Dimension mismatch");
+    static_assert(PointProperties::medium_tag == value_type,
+                  "Medium tag mismatch");
+    static_assert(PointProperties::property_tag == property_type,
+                  "Property tag mismatch");
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
     h_rho(ispec, iz, ix) = property.rho;
     h_mu(ispec, iz, ix) = property.mu;
     h_lambdaplus2mu(ispec, iz, ix) = property.lambdaplus2mu;
+  }
+
+  template <
+      typename PointProperties,
+      typename std::enable_if_t<PointProperties::simd::using_simd, int> = 0>
+  void assign(const specfem::point::simd_index &index,
+              const PointProperties &property) const {
+
+    static_assert(PointProperties::dimension == dimension,
+                  "Dimension mismatch");
+    static_assert(PointProperties::medium_tag == value_type,
+                  "Medium tag mismatch");
+    static_assert(PointProperties::property_tag == property_type,
+                  "Property tag mismatch");
+
+    using simd = typename PointProperties::simd;
+    using mask_type = typename simd::mask_type;
+    using tag_type = typename simd::tag_type;
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
+    mask_type mask([&, this](std::size_t lane) { return index.mask(lane); });
+
+    Kokkos::Experimental::where(mask, property.rho)
+        .copy_to(&h_rho(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, property.mu)
+        .copy_to(&h_mu(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, property.lambdaplus2mu)
+        .copy_to(&h_lambdaplus2mu(ispec, iz, ix), tag_type());
   }
 };
 
@@ -93,19 +243,23 @@ template <>
 struct properties_container<specfem::element::medium_tag::acoustic,
                             specfem::element::property_tag::isotropic> {
 
+  constexpr static auto dimension = specfem::dimension::type::dim2;
   constexpr static auto value_type = specfem::element::medium_tag::acoustic;
   constexpr static auto property_type =
       specfem::element::property_tag::isotropic;
 
+  using ViewType = typename Kokkos::View<type_real ***, Kokkos::LayoutLeft,
+                                         Kokkos::DefaultExecutionSpace>;
+
   int nspec; ///< total number of acoustic spectral elements
   int ngllz; ///< number of quadrature points in z dimension
   int ngllx; ///< number of quadrature points in x dimension
-  specfem::kokkos::DeviceView3d<type_real> rho_inverse;
-  specfem::kokkos::HostMirror3d<type_real> h_rho_inverse;
-  specfem::kokkos::DeviceView3d<type_real> lambdaplus2mu_inverse;
-  specfem::kokkos::HostMirror3d<type_real> h_lambdaplus2mu_inverse;
-  specfem::kokkos::DeviceView3d<type_real> kappa;
-  specfem::kokkos::HostMirror3d<type_real> h_kappa;
+  ViewType rho_inverse;
+  ViewType::HostMirror h_rho_inverse;
+  ViewType lambdaplus2mu_inverse;
+  ViewType::HostMirror h_lambdaplus2mu_inverse;
+  ViewType kappa;
+  ViewType::HostMirror h_kappa;
 
   properties_container() = default;
 
@@ -122,9 +276,24 @@ struct properties_container<specfem::element::medium_tag::acoustic,
         kappa("specfem::compute::properties::kappa", nspec, ngllz, ngllx),
         h_kappa(Kokkos::create_mirror_view(kappa)) {}
 
-  KOKKOS_INLINE_FUNCTION void load_device_properties(
-      const int &ispec, const int &iz, const int &ix,
-      specfem::point::properties<value_type, property_type> &property) const {
+  template <
+      typename PointProperties,
+      typename std::enable_if_t<!PointProperties::simd::using_simd, int> = 0>
+  KOKKOS_INLINE_FUNCTION void
+  load_device_properties(const specfem::point::index &index,
+                         PointProperties &property) const {
+
+    static_assert(PointProperties::dimension == dimension,
+                  "Dimension mismatch");
+    static_assert(PointProperties::medium_tag == value_type,
+                  "Medium tag mismatch");
+    static_assert(PointProperties::property_tag == property_type,
+                  "Property tag mismatch");
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
     property.rho_inverse = rho_inverse(ispec, iz, ix);
     property.lambdaplus2mu_inverse = lambdaplus2mu_inverse(ispec, iz, ix);
     property.kappa = kappa(ispec, iz, ix);
@@ -132,14 +301,97 @@ struct properties_container<specfem::element::medium_tag::acoustic,
         sqrt(property.rho_inverse * property.lambdaplus2mu_inverse);
   }
 
-  void load_host_properties(
-      const int &ispec, const int &iz, const int &ix,
-      specfem::point::properties<value_type, property_type> &property) const {
+  template <
+      typename PointProperties,
+      typename std::enable_if_t<PointProperties::simd::using_simd, int> = 0>
+  KOKKOS_INLINE_FUNCTION void
+  load_device_properties(const specfem::point::simd_index &index,
+                         PointProperties &property) const {
+
+    static_assert(PointProperties::dimension == dimension,
+                  "Dimension mismatch");
+    static_assert(PointProperties::medium_tag == value_type,
+                  "Medium tag mismatch");
+    static_assert(PointProperties::property_tag == property_type,
+                  "Property tag mismatch");
+
+    using simd = typename PointProperties::simd;
+    using mask_type = typename simd::mask_type;
+    using tag_type = typename simd::tag_type;
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
+    mask_type mask([&, this](std::size_t lane) { return index.mask(lane); });
+
+    Kokkos::Experimental::where(mask, property.rho_inverse)
+        .copy_from(&rho_inverse(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, property.lambdaplus2mu_inverse)
+        .copy_from(&lambdaplus2mu_inverse(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, property.kappa)
+        .copy_from(&kappa(ispec, iz, ix), tag_type());
+
+    property.rho_vpinverse =
+        Kokkos::sqrt(property.rho_inverse * property.lambdaplus2mu_inverse);
+  }
+
+  template <
+      typename PointProperties,
+      typename std::enable_if_t<!PointProperties::simd::using_simd, int> = 0>
+  void load_host_properties(const specfem::point::index &index,
+                            PointProperties &property) const {
+
+    static_assert(PointProperties::dimension == dimension,
+                  "Dimension mismatch");
+    static_assert(PointProperties::medium_tag == value_type,
+                  "Medium tag mismatch");
+    static_assert(PointProperties::property_tag == property_type,
+                  "Property tag mismatch");
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
     property.rho_inverse = h_rho_inverse(ispec, iz, ix);
     property.lambdaplus2mu_inverse = h_lambdaplus2mu_inverse(ispec, iz, ix);
     property.kappa = h_kappa(ispec, iz, ix);
     property.rho_vpinverse =
         sqrt(property.rho_inverse * property.lambdaplus2mu_inverse);
+  }
+
+  template <
+      typename PointProperties,
+      typename std::enable_if_t<PointProperties::simd::using_simd, int> = 0>
+  void load_host_properties(const specfem::point::simd_index &index,
+                            PointProperties &property) const {
+
+    static_assert(PointProperties::dimension == dimension,
+                  "Dimension mismatch");
+    static_assert(PointProperties::medium_tag == value_type,
+                  "Medium tag mismatch");
+    static_assert(PointProperties::property_tag == property_type,
+                  "Property tag mismatch");
+
+    using simd = typename PointProperties::simd;
+    using mask_type = typename simd::mask_type;
+    using tag_type = typename simd::tag_type;
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
+    mask_type mask([&, this](std::size_t lane) { return index.mask(lane); });
+
+    Kokkos::Experimental::where(mask, property.rho_inverse)
+        .copy_from(&h_rho_inverse(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, property.lambdaplus2mu_inverse)
+        .copy_from(&h_lambdaplus2mu_inverse(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, property.kappa)
+        .copy_from(&h_kappa(ispec, iz, ix), tag_type());
+
+    property.rho_vpinverse =
+        Kokkos::sqrt(property.rho_inverse * property.lambdaplus2mu_inverse);
   }
 
   void copy_to_device() {
@@ -154,12 +406,57 @@ struct properties_container<specfem::element::medium_tag::acoustic,
     Kokkos::deep_copy(h_kappa, kappa);
   }
 
-  void assign(const int ispec, const int iz, const int ix,
-              const specfem::point::properties<value_type, property_type>
-                  &property) const {
+  template <
+      typename PointProperties,
+      typename std::enable_if_t<!PointProperties::simd::using_simd, int> = 0>
+  void assign(const specfem::point::index &index,
+              const PointProperties &property) const {
+
+    static_assert(PointProperties::dimension == dimension,
+                  "Dimension mismatch");
+    static_assert(PointProperties::medium_tag == value_type,
+                  "Medium tag mismatch");
+    static_assert(PointProperties::property_tag == property_type,
+                  "Property tag mismatch");
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
     h_rho_inverse(ispec, iz, ix) = property.rho_inverse;
     h_lambdaplus2mu_inverse(ispec, iz, ix) = property.lambdaplus2mu_inverse;
     h_kappa(ispec, iz, ix) = property.kappa;
+  }
+
+  template <
+      typename PointProperties,
+      typename std::enable_if_t<PointProperties::simd::using_simd, int> = 0>
+  void assign(const specfem::point::simd_index &index,
+              const PointProperties &property) const {
+
+    static_assert(PointProperties::dimension == dimension,
+                  "Dimension mismatch");
+    static_assert(PointProperties::medium_tag == value_type,
+                  "Medium tag mismatch");
+    static_assert(PointProperties::property_tag == property_type,
+                  "Property tag mismatch");
+
+    using simd = typename PointProperties::simd;
+    using mask_type = typename simd::mask_type;
+    using tag_type = typename simd::tag_type;
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
+    mask_type mask([&, this](std::size_t lane) { return index.mask(lane); });
+
+    Kokkos::Experimental::where(mask, property.rho_inverse)
+        .copy_to(&h_rho_inverse(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, property.lambdaplus2mu_inverse)
+        .copy_to(&h_lambdaplus2mu_inverse(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, property.kappa)
+        .copy_to(&h_kappa(ispec, iz, ix), tag_type());
   }
 };
 

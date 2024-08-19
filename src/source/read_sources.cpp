@@ -39,16 +39,21 @@ specfem::sources::read_sources(
   // source class Otherwise, the compiler will get confused and throw an error
   // I've spent hours debugging this issue. It is very annoying since it only
   // shows up on CUDA compiler
+  int number_of_sources = 0;
+  int number_of_adjoint_sources = 0;
   for (auto N : Node) {
     if (YAML::Node force_source = N["force"]) {
       sources.push_back(std::make_shared<specfem::sources::force>(
           force_source, nsteps, dt, source_wavefield_type));
+      number_of_sources++;
     } else if (YAML::Node moment_tensor_source = N["moment-tensor"]) {
       sources.push_back(std::make_shared<specfem::sources::moment_tensor>(
           moment_tensor_source, nsteps, dt, source_wavefield_type));
+      number_of_sources++;
     } else if (YAML::Node external_source = N["user-defined"]) {
       sources.push_back(std::make_shared<specfem::sources::external>(
           external_source, nsteps, dt, source_wavefield_type));
+      number_of_sources++;
     } else if (YAML::Node adjoint_node = N["adjoint-source"]) {
       if (!adjoint_node["station_name"] || !adjoint_node["network_name"]) {
         throw std::runtime_error(
@@ -56,9 +61,25 @@ specfem::sources::read_sources(
       }
       sources.push_back(std::make_shared<specfem::sources::adjoint_source>(
           adjoint_node, nsteps, dt));
+      number_of_adjoint_sources++;
     } else {
       throw std::runtime_error("Unknown source type");
     }
+  }
+
+  if (number_of_sources == 0) {
+    throw std::runtime_error("No sources found in the sources file");
+  }
+
+  if (simulation_type == specfem::simulation::type::combined &&
+      number_of_adjoint_sources == 0) {
+    throw std::runtime_error("No adjoint sources found in the sources file");
+  }
+
+  if (simulation_type == specfem::simulation::type::forward &&
+      number_of_adjoint_sources > 0) {
+    throw std::runtime_error("Adjoint sources found in the sources file for "
+                             "forward simulation");
   }
 
   if (sources.size() != nsources) {

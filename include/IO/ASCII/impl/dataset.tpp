@@ -12,7 +12,7 @@ template <typename ViewType, typename OpType>
 const int specfem::IO::impl::ASCII::Dataset<ViewType, OpType>::rank =
     ViewType::rank;
 #else
-template <typename ViewType>
+template <typename ViewType, typename OpType>
 const int specfem::IO::impl::ASCII::Dataset<ViewType, OpType>::rank =
     ViewType::rank();
 #endif

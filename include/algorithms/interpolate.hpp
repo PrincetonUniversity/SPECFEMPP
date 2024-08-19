@@ -1,6 +1,7 @@
 #ifndef _ALGORITHMS_INTERPOLATE_HPP
 #define _ALGORITHMS_INTERPOLATE_HPP
 
+#include "datatypes/point_view.hpp"
 #include "kokkos_abstractions.h"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -9,7 +10,7 @@ namespace specfem {
 namespace algorithms {
 
 template <typename T, typename MemorySpace>
-KOKKOS_FUNCTION T interpolate_function(
+T interpolate_function(
     const Kokkos::View<type_real **, specfem::kokkos::LayoutWrapper,
                        MemorySpace> &polynomial,
     const Kokkos::View<T **, specfem::kokkos::LayoutWrapper, MemorySpace>
@@ -55,14 +56,15 @@ KOKKOS_FUNCTION T interpolate_function(
 
 template <int components, typename Layout, typename MemorySpace,
           typename MemoryTraits>
-KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, components>
+specfem::datatype::ScalarPointViewType<type_real, components, false>
 interpolate_function(
     const Kokkos::View<type_real **, specfem::kokkos::LayoutWrapper,
                        MemorySpace, MemoryTraits> &polynomial,
     const Kokkos::View<type_real **[components], Layout, MemorySpace,
                        MemoryTraits> &function) {
 
-  using T = specfem::kokkos::array_type<type_real, components>;
+  using T =
+      specfem::datatype::ScalarPointViewType<type_real, components, false>;
 
   const int N = polynomial.extent(0);
   T result(0.0);
@@ -81,7 +83,8 @@ interpolate_function(
 
 template <int components, typename Layout, typename MemorySpace,
           typename MemoryTraits>
-KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, components>
+KOKKOS_FUNCTION specfem::datatype::ScalarPointViewType<type_real, components,
+                                                       false>
 interpolate_function(
     const typename Kokkos::TeamPolicy<MemorySpace>::member_type &team_member,
     const Kokkos::View<type_real **, specfem::kokkos::LayoutWrapper,
@@ -89,7 +92,8 @@ interpolate_function(
     const Kokkos::View<type_real **[components], Layout, MemorySpace,
                        MemoryTraits> &function) {
 
-  using T = specfem::kokkos::array_type<type_real, components>;
+  using T =
+      specfem::datatype::ScalarPointViewType<type_real, components, false>;
 
   const int N = polynomial.extent(0);
   T result(0.0);
@@ -100,7 +104,7 @@ interpolate_function(
         int iz, ix;
         sub2ind(xz, N, iz, ix);
         for (int icomponent = 0; icomponent < components; ++icomponent) {
-          sum[icomponent] += polynomial(iz, ix) * function(iz, ix, icomponent);
+          sum(icomponent) += polynomial(iz, ix) * function(iz, ix, icomponent);
         }
       },
       specfem::kokkos::Sum<T>(result));

@@ -10,6 +10,8 @@
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
 #include "specfem_setup.hpp"
+#include "parallel_configuration/range_config.hpp"
+#include "policies/range.hpp"
 #include <Kokkos_Core.hpp>
 #include <Kokkos_ScatterView.hpp>
 
@@ -166,18 +168,30 @@ void specfem::domain::domain<WavefieldType, DimensionType, MediumTag,
                              qp_type>::divide_mass_matrix() {
   constexpr int components = medium_type::components;
   const int nglob = field.template get_nglob<MediumTag>();
-  using LoadFieldType =
-      specfem::point::field<DimensionType, MediumTag, false, false, true, true>;
+  constexpr bool using_simd = true;
+  using LoadFieldType = specfem::point::field<DimensionType, MediumTag, false,
+                                              false, true, true, using_simd>;
   using StoreFieldType = specfem::point::field<DimensionType, MediumTag, false,
-                                               false, true, false>;
+                                               false, true, false, using_simd>;
+
+  using ParallelConfig = specfem::parallel_config::default_range_config<
+      specfem::datatype::simd<type_real, using_simd> >;
+
+  using RangePolicy = specfem::policy::range<ParallelConfig, Kokkos::DefaultExecutionSpace>;
+
+  RangePolicy range(nglob);
 
   Kokkos::parallel_for(
       "specfem::domain::domain::divide_mass_matrix",
-      specfem::kokkos::DeviceRange(0, nglob), KOKKOS_CLASS_LAMBDA(const int iglob) {
+      range.get_policy(),
+      KOKKOS_CLASS_LAMBDA(const int iglob) {
+        const auto iterator = range.range_iterator(iglob);
+        const auto index = iterator(0);
+
         LoadFieldType load_field;
-        specfem::compute::load_on_device(iglob, field, load_field);
+        specfem::compute::load_on_device(index.index, field, load_field);
         StoreFieldType store_field(load_field.divide_mass_matrix());
-        specfem::compute::store_on_device(iglob, store_field, field);
+        specfem::compute::store_on_device(index.index, store_field, field);
       });
 
   Kokkos::fence();
@@ -192,17 +206,28 @@ void specfem::domain::domain<WavefieldType, DimensionType, MediumTag,
                              qp_type>::invert_mass_matrix() {
   constexpr int components = medium_type::components;
   const int nglob = field.template get_nglob<MediumTag>();
+  constexpr bool using_simd = true;
   using PointFieldType = specfem::point::field<DimensionType, MediumTag, false,
-                                               false, false, true>;
+                                               false, false, true, using_simd>;
+
+  using ParallelConfig = specfem::parallel_config::default_range_config<
+      specfem::datatype::simd<type_real, using_simd> >;
+
+  using RangePolicy = specfem::policy::range<ParallelConfig, Kokkos::DefaultExecutionSpace>;
+
+  RangePolicy range(nglob);
 
   Kokkos::parallel_for(
-      "specfem::domain::domain::invert_mass_matrix",
-      specfem::kokkos::DeviceRange(0, nglob),
+      "specfem::domain::domain::divide_mass_matrix",
+      range.get_policy(),
       KOKKOS_CLASS_LAMBDA(const int iglob) {
+        const auto iterator = range.range_iterator(iglob);
+        const auto index = iterator(0);
+
         PointFieldType load_field;
-        specfem::compute::load_on_device(iglob, field, load_field);
+        specfem::compute::load_on_device(index.index, field, load_field);
         PointFieldType store_field(load_field.invert_mass_matrix());
-        specfem::compute::store_on_device(iglob, store_field, field);
+        specfem::compute::store_on_device(index.index, store_field, field);
       });
 
   Kokkos::fence();

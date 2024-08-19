@@ -14,6 +14,25 @@
 namespace specfem {
 namespace compute {
 
+struct mesh_to_compute_mapping {
+  int nspec; ///< Number of spectral elements
+  /**
+   * @brief Mapping of spectral element index from C++ to legacy Fortran
+   *
+   * @code
+   *  index_mapping[ispec] = fortran_index - 1
+   * @endcode
+   *
+   */
+  specfem::kokkos::HostView1d<int> compute_to_mesh;
+
+  specfem::kokkos::HostView1d<int> mesh_to_compute;
+
+  mesh_to_compute_mapping() = default;
+
+  mesh_to_compute_mapping(const specfem::mesh::tags &tags);
+};
+
 struct shape_functions {
   int ngllz; ///< Number of quadrature points in z dimension
   int ngllx; ///< Number of quadrature points in x dimension
@@ -89,7 +108,8 @@ struct control_nodes {
   specfem::kokkos::HostMirror3d<type_real> h_coord;   ///< (x, z) for every
                                                       ///< distinct control node
 
-  control_nodes(const specfem::mesh::control_nodes &control_nodes);
+  control_nodes(const specfem::compute::mesh_to_compute_mapping &mapping,
+                const specfem::mesh::control_nodes &control_nodes);
 
   control_nodes() = default;
 };
@@ -98,17 +118,21 @@ struct points {
   int nspec; ///< Number of spectral elements
   int ngllz; ///< Number of quadrature points in z dimension
   int ngllx; ///< Number of quadrature points in x dimension
-  specfem::kokkos::DeviceView3d<int> index_mapping; ///< Global element
-                                                    ///< number for every
-                                                    ///< quadrature point
+
+  using ViewType =
+      Kokkos::View<int ***, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>;
+
+  ViewType index_mapping;                         ///< Global element
+                                                  ///< number for every
+                                                  ///< quadrature point
   specfem::kokkos::DeviceView4d<type_real> coord; ///< (x, z) for every distinct
                                                   ///< quadrature point
-  specfem::kokkos::HostMirror3d<int> h_index_mapping; ///< Global element
-                                                      ///< number for every
-                                                      ///< quadrature point
-  specfem::kokkos::HostMirror4d<type_real> h_coord;   ///< (x, z) for every
-                                                      ///< distinct quadrature
-                                                      ///< point
+  ViewType::HostMirror h_index_mapping;           ///< Global element
+                                                  ///< number for every
+                                                  ///< quadrature point
+  specfem::kokkos::HostMirror4d<type_real> h_coord; ///< (x, z) for every
+                                                    ///< distinct quadrature
+                                                    ///< point
   type_real xmin, xmax, zmin, zmax; ///< Min and max values of x and z
                                     ///< coordinates
 
@@ -128,19 +152,24 @@ struct points {
  *
  */
 struct mesh {
-  int nspec;                                     ///< Number of spectral
-                                                 ///< elements
-  int ngllz;                                     ///< Number of quadrature
-                                                 ///< points in z dimension
-  int ngllx;                                     ///< Number of quadrature
-                                                 ///< points in x dimension
-  specfem::compute::control_nodes control_nodes; ///< Control nodes
-  specfem::compute::points points;               ///< Quadrature points
-  specfem::compute::quadrature quadratures;      ///< Quadrature object
+  int nspec;                                         ///< Number of spectral
+                                                     ///< elements
+  int ngllz;                                         ///< Number of quadrature
+                                                     ///< points in z dimension
+  int ngllx;                                         ///< Number of quadrature
+                                                     ///< points in x dimension
+  specfem::compute::control_nodes control_nodes;     ///< Control nodes
+  specfem::compute::points points;                   ///< Quadrature points
+  specfem::compute::quadrature quadratures;          ///< Quadrature object
+  specfem::compute::mesh_to_compute_mapping mapping; ///< Mapping of spectral
+                                                     ///< element index between
+                                                     ///< mesh database ordering
+                                                     ///< and compute ordering
 
   mesh() = default;
 
-  mesh(const specfem::mesh::control_nodes &control_nodes,
+  mesh(const specfem::mesh::tags &tags,
+       const specfem::mesh::control_nodes &control_nodes,
        const specfem::quadrature::quadratures &quadratures);
 
   specfem::compute::points assemble();
@@ -150,66 +179,127 @@ struct mesh {
   specfem::point::lcoord2 locate(const specfem::point::gcoord2 &point);
 };
 
-template <int NGLL, typename MemberType, typename MemorySpace,
-          typename MemoryTraits, bool StoreGLLQuadratureDerivatives,
-          bool WeightTimesDerivatives,
-          std::enable_if_t<std::is_same_v<typename MemberType::execution_space::
-                                              scratch_memory_space,
-                                          MemorySpace>,
-                           int> = 0>
-KOKKOS_FUNCTION void load_on_device(
-    const MemberType &team, const specfem::compute::quadrature &quadrature,
-    const specfem::element::quadrature<
-        NGLL, specfem::dimension::type::dim2, MemorySpace, MemoryTraits,
-        StoreGLLQuadratureDerivatives, WeightTimesDerivatives>
-        &element_quadrature) {
+template <typename MemberType, typename ViewType>
+KOKKOS_FUNCTION void
+load_on_device(const MemberType &team,
+               const specfem::compute::quadrature &quadrature,
+               ViewType &element_quadrature) {
+
+  constexpr bool store_hprime_gll = ViewType::store_hprime_gll;
+
+  constexpr bool store_weight_times_hprime_gll =
+      ViewType::store_weight_times_hprime_gll;
+  constexpr int NGLL = ViewType::ngll;
+
+  static_assert(std::is_same_v<typename MemberType::execution_space,
+                               Kokkos::DefaultExecutionSpace>,
+                "Calling team must have a host execution space");
+
+  Kokkos::parallel_for(
+      Kokkos::TeamThreadRange(team, NGLL * NGLL), [&](const int &xz) {
+        int ix, iz;
+        sub2ind(xz, NGLL, iz, ix);
+        if constexpr (store_hprime_gll) {
+          element_quadrature.hprime_gll(iz, ix) = quadrature.gll.hprime(iz, ix);
+        }
+        if constexpr (store_weight_times_hprime_gll) {
+          element_quadrature.hprime_wgll(ix, iz) =
+              quadrature.gll.hprime(iz, ix) * quadrature.gll.weights(iz);
+        }
+      });
+}
+
+template <typename MemberType, typename ViewType>
+void load_on_host(const MemberType &team,
+                  const specfem::compute::quadrature &quadrature,
+                  ViewType &element_quadrature) {
+
+  constexpr bool store_hprime_gll = ViewType::store_hprime_gll;
+  constexpr bool store_weight_times_hprime_gll =
+      ViewType::store_weight_times_hprime_gll;
+  constexpr int NGLL = ViewType::ngll;
 
   Kokkos::parallel_for(
       Kokkos::TeamThreadRange(team, NGLL * NGLL), [=](const int &xz) {
         int ix, iz;
         sub2ind(xz, NGLL, iz, ix);
-        if constexpr (StoreGLLQuadratureDerivatives) {
-          element_quadrature.hprime_gll(iz, ix) = quadrature.gll.hprime(iz, ix);
-          if constexpr (WeightTimesDerivatives) {
-            element_quadrature.hprimew_gll(ix, iz) =
-                quadrature.gll.hprime(iz, ix) * quadrature.gll.weights(iz);
-          }
+        if constexpr (store_hprime_gll) {
+          element_quadrature.hprime_gll(iz, ix) =
+              quadrature.gll.h_hprime(iz, ix);
+        }
+        if constexpr (store_weight_times_hprime_gll) {
+          element_quadrature.hprime_wgll(ix, iz) =
+              quadrature.gll.h_hprime(iz, ix) * quadrature.gll.h_weights(iz);
         }
       });
 
   return;
 }
 
-template <int NGLL, typename MemberType, typename MemorySpace,
-          typename MemoryTraits, bool StoreGLLQuadratureDerivatives,
-          bool WeightTimesDerivatives,
-          std::enable_if_t<std::is_same_v<typename MemberType::execution_space::
-                                              scratch_memory_space,
-                                          MemorySpace>,
-                           int> = 0>
-void load_on_host(
-    const MemberType &team, const specfem::compute::quadrature &quadrature,
-    specfem::element::quadrature<NGLL, specfem::dimension::type::dim2,
-                                 MemorySpace, MemoryTraits,
-                                 StoreGLLQuadratureDerivatives,
-                                 WeightTimesDerivatives> &element_quadrature) {
+// template <int NGLL, typename MemberType, typename MemorySpace,
+//           typename MemoryTraits, bool StoreGLLQuadratureDerivatives,
+//           bool WeightTimesDerivatives,
+//           std::enable_if_t<std::is_same_v<typename
+//           MemberType::execution_space::
+//                                               scratch_memory_space,
+//                                           MemorySpace>,
+//                            int> = 0>
+// KOKKOS_FUNCTION void load_on_device(
+//     const MemberType &team, const specfem::compute::quadrature &quadrature,
+//     const specfem::element::quadrature<
+//         NGLL, specfem::dimension::type::dim2, MemorySpace, MemoryTraits,
+//         StoreGLLQuadratureDerivatives, WeightTimesDerivatives>
+//         &element_quadrature) {
 
-  if constexpr (StoreGLLQuadratureDerivatives) {
-    Kokkos::deep_copy(element_quadrature.hprime_gll, quadrature.gll.h_hprime);
-  }
+//   Kokkos::parallel_for(
+//       Kokkos::TeamThreadRange(team, NGLL * NGLL), [=](const int &xz) {
+//         int ix, iz;
+//         sub2ind(xz, NGLL, iz, ix);
+//         if constexpr (StoreGLLQuadratureDerivatives) {
+//           element_quadrature.hprime_gll(iz, ix) = quadrature.gll.hprime(iz,
+//           ix); if constexpr (WeightTimesDerivatives) {
+//             element_quadrature.hprimew_gll(ix, iz) =
+//                 quadrature.gll.hprime(iz, ix) * quadrature.gll.weights(iz);
+//           }
+//         }
+//       });
 
-  if constexpr (WeightTimesDerivatives && StoreGLLQuadratureDerivatives) {
-    Kokkos::parallel_for(
-        Kokkos::TeamThreadRange(team, NGLL * NGLL), [=](const int &xz) {
-          int ix, iz;
-          sub2ind(xz, NGLL, iz, ix);
-          element_quadrature.hprimew_gll(iz, ix) =
-              quadrature.gll.h_hprime(iz, ix) * quadrature.gll.h_weights(iz);
-        });
-  }
+//   return;
+// }
 
-  return;
-}
+// template <int NGLL, typename MemberType, typename MemorySpace,
+//           typename MemoryTraits, bool StoreGLLQuadratureDerivatives,
+//           bool WeightTimesDerivatives,
+//           std::enable_if_t<std::is_same_v<typename
+//           MemberType::execution_space::
+//                                               scratch_memory_space,
+//                                           MemorySpace>,
+//                            int> = 0>
+// void load_on_host(
+//     const MemberType &team, const specfem::compute::quadrature &quadrature,
+//     specfem::element::quadrature<NGLL, specfem::dimension::type::dim2,
+//                                  MemorySpace, MemoryTraits,
+//                                  StoreGLLQuadratureDerivatives,
+//                                  WeightTimesDerivatives> &element_quadrature)
+//                                  {
+
+//   if constexpr (StoreGLLQuadratureDerivatives) {
+//     Kokkos::deep_copy(element_quadrature.hprime_gll,
+//     quadrature.gll.h_hprime);
+//   }
+
+//   if constexpr (WeightTimesDerivatives && StoreGLLQuadratureDerivatives) {
+//     Kokkos::parallel_for(
+//         Kokkos::TeamThreadRange(team, NGLL * NGLL), [=](const int &xz) {
+//           int ix, iz;
+//           sub2ind(xz, NGLL, iz, ix);
+//           element_quadrature.hprimew_gll(iz, ix) =
+//               quadrature.gll.h_hprime(iz, ix) * quadrature.gll.h_weights(iz);
+//         });
+//   }
+
+//   return;
+// }
 
 } // namespace compute
 } // namespace specfem

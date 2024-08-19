@@ -3,6 +3,7 @@
 
 #include "enumerations/medium.hpp"
 #include "kokkos_abstractions.h"
+#include "point/coordinates.hpp"
 #include "point/kernels.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -25,18 +26,22 @@ public:
   int nspec;
   int ngllz;
   int ngllx;
-  specfem::kokkos::DeviceView3d<type_real> rho;
-  specfem::kokkos::HostMirror3d<type_real> h_rho;
-  specfem::kokkos::DeviceView3d<type_real> mu;
-  specfem::kokkos::HostMirror3d<type_real> h_mu;
-  specfem::kokkos::DeviceView3d<type_real> kappa;
-  specfem::kokkos::HostMirror3d<type_real> h_kappa;
-  specfem::kokkos::DeviceView3d<type_real> rhop;
-  specfem::kokkos::HostMirror3d<type_real> h_rhop;
-  specfem::kokkos::DeviceView3d<type_real> alpha;
-  specfem::kokkos::HostMirror3d<type_real> h_alpha;
-  specfem::kokkos::DeviceView3d<type_real> beta;
-  specfem::kokkos::HostMirror3d<type_real> h_beta;
+
+  using ViewType = Kokkos::View<type_real ***, Kokkos::LayoutLeft,
+                                Kokkos::DefaultExecutionSpace>;
+
+  ViewType rho;
+  ViewType::HostMirror h_rho;
+  ViewType mu;
+  ViewType::HostMirror h_mu;
+  ViewType kappa;
+  ViewType::HostMirror h_kappa;
+  ViewType rhop;
+  ViewType::HostMirror h_rhop;
+  ViewType alpha;
+  ViewType::HostMirror h_alpha;
+  ViewType beta;
+  ViewType::HostMirror h_beta;
 
   kernels_container() = default;
 
@@ -63,9 +68,20 @@ public:
     initialize();
   }
 
-  KOKKOS_INLINE_FUNCTION void load_device_kernels(
-      const int ispec, const int iz, const int ix,
-      specfem::point::kernels<value_type, property_type> &kernels) const {
+  template <
+      typename PointKernelType,
+      typename std::enable_if_t<!PointKernelType::simd::using_simd, int> = 0>
+  KOKKOS_INLINE_FUNCTION void
+  load_device_kernels(const specfem::point::index &index,
+                      PointKernelType &kernels) const {
+
+    static_assert(PointKernelType::medium_tag == value_type);
+    static_assert(PointKernelType::property_tag == property_type);
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
     kernels.rho = rho(ispec, iz, ix);
     kernels.mu = mu(ispec, iz, ix);
     kernels.kappa = kappa(ispec, iz, ix);
@@ -74,9 +90,53 @@ public:
     kernels.beta = beta(ispec, iz, ix);
   }
 
-  void load_host_kernels(
-      const int ispec, const int iz, const int ix,
-      specfem::point::kernels<value_type, property_type> &kernels) const {
+  template <
+      typename PointKernelType,
+      typename std::enable_if_t<PointKernelType::simd::using_simd, int> = 0>
+  KOKKOS_INLINE_FUNCTION void
+  load_device_kernels(const specfem::point::simd_index &index,
+                      PointKernelType &kernels) const {
+
+    static_assert(PointKernelType::medium_tag == value_type);
+    static_assert(PointKernelType::property_tag == property_type);
+
+    using simd_type = typename PointKernelType::simd::datatype;
+    using mask_type = typename PointKernelType::simd::mask_type;
+    using tag_type = typename PointKernelType::simd::tag_type;
+
+    mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
+    Kokkos::Experimental::where(mask, kernels.rho)
+        .copy_from(&rho(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, kernels.mu)
+        .copy_from(&mu(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, kernels.kappa)
+        .copy_from(&kappa(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, kernels.rhop)
+        .copy_from(&rhop(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, kernels.alpha)
+        .copy_from(&alpha(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, kernels.beta)
+        .copy_from(&beta(ispec, iz, ix), tag_type());
+  }
+
+  template <
+      typename PointKernelType,
+      typename std::enable_if_t<!PointKernelType::simd::using_simd, int> = 0>
+  void load_host_kernels(specfem::point::index &index,
+                         PointKernelType kernels) const {
+
+    static_assert(PointKernelType::medium_tag == value_type);
+    static_assert(PointKernelType::property_tag == property_type);
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
     kernels.rho = h_rho(ispec, iz, ix);
     kernels.mu = h_mu(ispec, iz, ix);
     kernels.kappa = h_kappa(ispec, iz, ix);
@@ -85,9 +145,53 @@ public:
     kernels.beta = h_beta(ispec, iz, ix);
   }
 
-  KOKKOS_INLINE_FUNCTION void update_kernels_on_device(
-      const int ispec, const int iz, const int ix,
-      const specfem::point::kernels<value_type, property_type> &kernels) const {
+  template <
+      typename PointKernelType,
+      typename std::enable_if_t<PointKernelType::simd::using_simd, int> = 0>
+  void load_host_kernels(specfem::point::simd_index &index,
+                         PointKernelType kernels) const {
+
+    static_assert(PointKernelType::medium_tag == value_type);
+    static_assert(PointKernelType::property_tag == property_type);
+
+    using simd_type = typename PointKernelType::simd::datatype;
+    using mask_type = typename PointKernelType::simd::mask_type;
+    using tag_type = typename PointKernelType::simd::tag_type;
+
+    mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
+    Kokkos::Experimental::where(mask, kernels.rho)
+        .copy_from(&h_rho(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, kernels.mu)
+        .copy_from(&h_mu(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, kernels.kappa)
+        .copy_from(&h_kappa(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, kernels.rhop)
+        .copy_from(&h_rhop(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, kernels.alpha)
+        .copy_from(&h_alpha(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, kernels.beta)
+        .copy_from(&h_beta(ispec, iz, ix), tag_type());
+  }
+
+  template <
+      typename PointKernelType,
+      typename std::enable_if_t<!PointKernelType::simd::using_simd, int> = 0>
+  KOKKOS_INLINE_FUNCTION void
+  update_kernels_on_device(const specfem::point::index &index,
+                           const PointKernelType &kernels) const {
+
+    static_assert(PointKernelType::medium_tag == value_type);
+    static_assert(PointKernelType::property_tag == property_type);
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
     rho(ispec, iz, ix) = kernels.rho;
     mu(ispec, iz, ix) = kernels.mu;
     kappa(ispec, iz, ix) = kernels.kappa;
@@ -96,9 +200,53 @@ public:
     beta(ispec, iz, ix) = kernels.beta;
   }
 
-  void update_kernels_on_host(
-      const int ispec, const int iz, const int ix,
-      const specfem::point::kernels<value_type, property_type> &kernels) const {
+  template <
+      typename PointKernelType,
+      typename std::enable_if_t<PointKernelType::simd::using_simd, int> = 0>
+  KOKKOS_INLINE_FUNCTION void
+  update_kernels_on_device(const specfem::point::simd_index &index,
+                           const PointKernelType &kernels) const {
+
+    static_assert(PointKernelType::medium_tag == value_type);
+    static_assert(PointKernelType::property_tag == property_type);
+
+    using simd_type = typename PointKernelType::simd::datatype;
+    using mask_type = typename PointKernelType::simd::mask_type;
+    using tag_type = typename PointKernelType::simd::tag_type;
+
+    mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
+    Kokkos::Experimental::where(mask, kernels.rho)
+        .copy_to(&rho(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, kernels.mu)
+        .copy_to(&mu(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, kernels.kappa)
+        .copy_to(&kappa(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, kernels.rhop)
+        .copy_to(&rhop(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, kernels.alpha)
+        .copy_to(&alpha(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, kernels.beta)
+        .copy_to(&beta(ispec, iz, ix), tag_type());
+  }
+
+  template <
+      typename PointKernelType,
+      typename std::enable_if_t<!PointKernelType::simd::using_simd, int> = 0>
+  void update_kernels_on_host(const specfem::point::index &index,
+                              const PointKernelType &kernels) const {
+
+    static_assert(PointKernelType::medium_tag == value_type);
+    static_assert(PointKernelType::property_tag == property_type);
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
     h_rho(ispec, iz, ix) = kernels.rho;
     h_mu(ispec, iz, ix) = kernels.mu;
     h_kappa(ispec, iz, ix) = kernels.kappa;
@@ -107,9 +255,53 @@ public:
     h_beta(ispec, iz, ix) = kernels.beta;
   }
 
-  KOKKOS_INLINE_FUNCTION void add_kernels_on_device(
-      const int ispec, const int iz, const int ix,
-      const specfem::point::kernels<value_type, property_type> &kernels) const {
+  template <
+      typename PointKernelType,
+      typename std::enable_if_t<PointKernelType::simd::using_simd, int> = 0>
+  void update_kernels_on_host(const specfem::point::simd_index &index,
+                              const PointKernelType &kernels) const {
+
+    static_assert(PointKernelType::medium_tag == value_type);
+    static_assert(PointKernelType::property_tag == property_type);
+
+    using simd_type = typename PointKernelType::simd::datatype;
+    using mask_type = typename PointKernelType::simd::mask_type;
+    using tag_type = typename PointKernelType::simd::tag_type;
+
+    mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
+    Kokkos::Experimental::where(mask, kernels.rho)
+        .copy_to(&h_rho(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, kernels.mu)
+        .copy_to(&h_mu(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, kernels.kappa)
+        .copy_to(&h_kappa(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, kernels.rhop)
+        .copy_to(&h_rhop(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, kernels.alpha)
+        .copy_to(&h_alpha(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, kernels.beta)
+        .copy_to(&h_beta(ispec, iz, ix), tag_type());
+  }
+
+  template <
+      typename PointKernelType,
+      typename std::enable_if_t<!PointKernelType::simd::using_simd, int> = 0>
+  KOKKOS_INLINE_FUNCTION void
+  add_kernels_on_device(const specfem::point::index &index,
+                        const PointKernelType &kernels) const {
+
+    static_assert(PointKernelType::medium_tag == value_type);
+    static_assert(PointKernelType::property_tag == property_type);
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
     rho(ispec, iz, ix) += kernels.rho;
     mu(ispec, iz, ix) += kernels.mu;
     kappa(ispec, iz, ix) += kernels.kappa;
@@ -118,15 +310,142 @@ public:
     beta(ispec, iz, ix) += kernels.beta;
   }
 
-  void add_kernels_on_host(
-      const int ispec, const int iz, const int ix,
-      const specfem::point::kernels<value_type, property_type> &kernels) const {
+  template <
+      typename PointKernelType,
+      typename std::enable_if_t<PointKernelType::simd::using_simd, int> = 0>
+  KOKKOS_INLINE_FUNCTION void
+  add_kernels_on_device(const specfem::point::simd_index &index,
+                        const PointKernelType &kernels) const {
+
+    static_assert(PointKernelType::medium_tag == value_type);
+    static_assert(PointKernelType::property_tag == property_type);
+
+    using simd_type = typename PointKernelType::simd::datatype;
+    using mask_type = typename PointKernelType::simd::mask_type;
+    using tag_type = typename PointKernelType::simd::tag_type;
+
+    mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
+    simd_type lhs;
+
+    Kokkos::Experimental::where(mask, lhs).copy_from(&rho(ispec, iz, ix),
+                                                     tag_type());
+    lhs += kernels.rho;
+    Kokkos::Experimental::where(mask, lhs).copy_to(&rho(ispec, iz, ix),
+                                                   tag_type());
+
+    Kokkos::Experimental::where(mask, lhs).copy_from(&mu(ispec, iz, ix),
+                                                     tag_type());
+    lhs += kernels.mu;
+    Kokkos::Experimental::where(mask, lhs).copy_to(&mu(ispec, iz, ix),
+                                                   tag_type());
+
+    Kokkos::Experimental::where(mask, lhs).copy_from(&kappa(ispec, iz, ix),
+                                                     tag_type());
+    lhs += kernels.kappa;
+    Kokkos::Experimental::where(mask, lhs).copy_to(&kappa(ispec, iz, ix),
+                                                   tag_type());
+
+    Kokkos::Experimental::where(mask, lhs).copy_from(&rhop(ispec, iz, ix),
+                                                     tag_type());
+    lhs += kernels.rhop;
+    Kokkos::Experimental::where(mask, lhs).copy_to(&rhop(ispec, iz, ix),
+                                                   tag_type());
+
+    Kokkos::Experimental::where(mask, lhs).copy_from(&alpha(ispec, iz, ix),
+                                                     tag_type());
+    lhs += kernels.alpha;
+    Kokkos::Experimental::where(mask, lhs).copy_to(&alpha(ispec, iz, ix),
+                                                   tag_type());
+
+    Kokkos::Experimental::where(mask, lhs).copy_from(&beta(ispec, iz, ix),
+                                                     tag_type());
+    lhs += kernels.beta;
+    Kokkos::Experimental::where(mask, lhs).copy_to(&beta(ispec, iz, ix),
+                                                   tag_type());
+  }
+
+  template <
+      typename PointKernelType,
+      typename std::enable_if_t<!PointKernelType::simd::using_simd, int> = 0>
+  void add_kernels_on_host(const specfem::point::index &index,
+                           const PointKernelType &kernels) const {
+
+    static_assert(PointKernelType::medium_tag == value_type);
+    static_assert(PointKernelType::property_tag == property_type);
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
     h_rho(ispec, iz, ix) += kernels.rho;
     h_mu(ispec, iz, ix) += kernels.mu;
     h_kappa(ispec, iz, ix) += kernels.kappa;
     h_rhop(ispec, iz, ix) += kernels.rhop;
     h_alpha(ispec, iz, ix) += kernels.alpha;
     h_beta(ispec, iz, ix) += kernels.beta;
+  }
+
+  template <
+      typename PointKernelType,
+      typename std::enable_if_t<PointKernelType::simd::using_simd, int> = 0>
+  void add_kernels_on_host(const specfem::point::simd_index &index,
+                           const PointKernelType &kernels) const {
+
+    static_assert(PointKernelType::medium_tag == value_type);
+    static_assert(PointKernelType::property_tag == property_type);
+
+    using simd_type = typename PointKernelType::simd::datatype;
+    using mask_type = typename PointKernelType::simd::mask_type;
+    using tag_type = typename PointKernelType::simd::tag_type;
+
+    mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
+    simd_type lhs;
+
+    Kokkos::Experimental::where(mask, lhs).copy_from(&h_rho(ispec, iz, ix),
+                                                     tag_type());
+    lhs += kernels.rho;
+    Kokkos::Experimental::where(mask, lhs).copy_to(&h_rho(ispec, iz, ix),
+                                                   tag_type());
+
+    Kokkos::Experimental::where(mask, lhs).copy_from(&h_mu(ispec, iz, ix),
+                                                     tag_type());
+    lhs += kernels.mu;
+    Kokkos::Experimental::where(mask, lhs).copy_to(&h_mu(ispec, iz, ix),
+                                                   tag_type());
+
+    Kokkos::Experimental::where(mask, lhs).copy_from(&h_kappa(ispec, iz, ix),
+                                                     tag_type());
+    lhs += kernels.kappa;
+    Kokkos::Experimental::where(mask, lhs).copy_to(&h_kappa(ispec, iz, ix),
+                                                   tag_type());
+
+    Kokkos::Experimental::where(mask, lhs).copy_from(&h_rhop(ispec, iz, ix),
+                                                     tag_type());
+    lhs += kernels.rhop;
+    Kokkos::Experimental::where(mask, lhs).copy_to(&h_rhop(ispec, iz, ix),
+                                                   tag_type());
+
+    Kokkos::Experimental::where(mask, lhs).copy_from(&h_alpha(ispec, iz, ix),
+                                                     tag_type());
+    lhs += kernels.alpha;
+    Kokkos::Experimental::where(mask, lhs).copy_to(&h_alpha(ispec, iz, ix),
+                                                   tag_type());
+
+    Kokkos::Experimental::where(mask, lhs).copy_from(&h_beta(ispec, iz, ix),
+                                                     tag_type());
+    lhs += kernels.beta;
+    Kokkos::Experimental::where(mask, lhs).copy_to(&h_beta(ispec, iz, ix),
+                                                   tag_type());
   }
 
   void copy_to_host() {
@@ -173,14 +492,17 @@ public:
   int nspec;
   int ngllz;
   int ngllx;
-  specfem::kokkos::DeviceView3d<type_real> rho;
-  specfem::kokkos::HostMirror3d<type_real> h_rho;
-  specfem::kokkos::DeviceView3d<type_real> kappa;
-  specfem::kokkos::HostMirror3d<type_real> h_kappa;
-  specfem::kokkos::DeviceView3d<type_real> rho_prime;
-  specfem::kokkos::HostMirror3d<type_real> h_rho_prime;
-  specfem::kokkos::DeviceView3d<type_real> alpha;
-  specfem::kokkos::HostMirror3d<type_real> h_alpha;
+
+  using ViewType = Kokkos::View<type_real ***, Kokkos::LayoutLeft,
+                                Kokkos::DefaultExecutionSpace>;
+  ViewType rho;
+  ViewType::HostMirror h_rho;
+  ViewType kappa;
+  ViewType::HostMirror h_kappa;
+  ViewType rho_prime;
+  ViewType::HostMirror h_rho_prime;
+  ViewType alpha;
+  ViewType::HostMirror h_alpha;
 
   kernels_container() = default;
 
@@ -202,58 +524,332 @@ public:
     initialize();
   }
 
-  KOKKOS_INLINE_FUNCTION void load_device_kernels(
-      const int ispec, const int iz, const int ix,
-      specfem::point::kernels<value_type, property_type> &kernels) const {
+  template <
+      typename PointKernelType,
+      typename std::enable_if_t<!PointKernelType::simd::using_simd, int> = 0>
+  KOKKOS_INLINE_FUNCTION void
+  load_device_kernels(const specfem::point::index &index,
+                      PointKernelType &kernels) const {
+
+    static_assert(PointKernelType::medium_tag == value_type);
+    static_assert(PointKernelType::property_tag == property_type);
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
     kernels.rho = rho(ispec, iz, ix);
     kernels.kappa = kappa(ispec, iz, ix);
     kernels.rho_prime = rho_prime(ispec, iz, ix);
     kernels.alpha = alpha(ispec, iz, ix);
   }
 
-  void load_host_kernels(
-      const int ispec, const int iz, const int ix,
-      specfem::point::kernels<value_type, property_type> &kernels) const {
+  template <
+      typename PointKernelType,
+      typename std::enable_if_t<PointKernelType::simd::using_simd, int> = 0>
+  KOKKOS_INLINE_FUNCTION void
+  load_device_kernels(const specfem::point::simd_index &index,
+                      PointKernelType &kernels) const {
+
+    static_assert(PointKernelType::medium_tag == value_type);
+    static_assert(PointKernelType::property_tag == property_type);
+
+    using simd_type = typename PointKernelType::simd::datatype;
+    using mask_type = typename PointKernelType::simd::mask_type;
+    using tag_type = typename PointKernelType::simd::tag_type;
+
+    mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
+    Kokkos::Experimental::where(mask, kernels.rho)
+        .copy_from(&rho(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, kernels.kappa)
+        .copy_from(&kappa(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, kernels.rho_prime)
+        .copy_from(&rho_prime(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, kernels.alpha)
+        .copy_from(&alpha(ispec, iz, ix), tag_type());
+  }
+
+  template <
+      typename PointKernelType,
+      typename std::enable_if_t<!PointKernelType::simd::using_simd, int> = 0>
+  void load_host_kernels(const specfem::point::index &index,
+                         PointKernelType kernels) const {
+
+    static_assert(PointKernelType::medium_tag == value_type);
+    static_assert(PointKernelType::property_tag == property_type);
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
     kernels.rho = h_rho(ispec, iz, ix);
     kernels.kappa = h_kappa(ispec, iz, ix);
     kernels.rho_prime = h_rho_prime(ispec, iz, ix);
     kernels.alpha = h_alpha(ispec, iz, ix);
   }
 
-  KOKKOS_INLINE_FUNCTION void update_kernels_on_device(
-      const int ispec, const int iz, const int ix,
-      const specfem::point::kernels<value_type, property_type> &kernels) const {
+  template <
+      typename PointKernelType,
+      typename std::enable_if_t<PointKernelType::simd::using_simd, int> = 0>
+  void load_host_kernels(const specfem::point::simd_index &index,
+                         PointKernelType kernels) const {
+
+    static_assert(PointKernelType::medium_tag == value_type);
+    static_assert(PointKernelType::property_tag == property_type);
+
+    using simd_type = typename PointKernelType::simd::datatype;
+    using mask_type = typename PointKernelType::simd::mask_type;
+    using tag_type = typename PointKernelType::simd::tag_type;
+
+    mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
+    Kokkos::Experimental::where(mask, kernels.rho)
+        .copy_from(&h_rho(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, kernels.kappa)
+        .copy_from(&h_kappa(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, kernels.rho_prime)
+        .copy_from(&h_rho_prime(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, kernels.alpha)
+        .copy_from(&h_alpha(ispec, iz, ix), tag_type());
+  }
+
+  template <
+      typename PointKernelType,
+      typename std::enable_if_t<!PointKernelType::simd::using_simd, int> = 0>
+  KOKKOS_INLINE_FUNCTION void
+  update_kernels_on_device(const specfem::point::index &index,
+                           const PointKernelType &kernels) const {
+
+    static_assert(PointKernelType::medium_tag == value_type);
+    static_assert(PointKernelType::property_tag == property_type);
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
     rho(ispec, iz, ix) = kernels.rho;
     kappa(ispec, iz, ix) = kernels.kappa;
     rho_prime(ispec, iz, ix) = kernels.rho_prime;
     alpha(ispec, iz, ix) = kernels.alpha;
   }
 
-  void update_kernels_on_host(
-      const int ispec, const int iz, const int ix,
-      const specfem::point::kernels<value_type, property_type> &kernels) const {
+  template <
+      typename PointKernelType,
+      typename std::enable_if_t<PointKernelType::simd::using_simd, int> = 0>
+  KOKKOS_INLINE_FUNCTION void
+  update_kernels_on_device(const specfem::point::simd_index &index,
+                           const PointKernelType &kernels) const {
+
+    static_assert(PointKernelType::medium_tag == value_type);
+    static_assert(PointKernelType::property_tag == property_type);
+
+    using simd_type = typename PointKernelType::simd::datatype;
+    using mask_type = typename PointKernelType::simd::mask_type;
+    using tag_type = typename PointKernelType::simd::tag_type;
+
+    mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
+    Kokkos::Experimental::where(mask, kernels.rho)
+        .copy_to(&rho(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, kernels.kappa)
+        .copy_to(&kappa(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, kernels.rho_prime)
+        .copy_to(&rho_prime(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, kernels.alpha)
+        .copy_to(&alpha(ispec, iz, ix), tag_type());
+  }
+
+  template <
+      typename PointKernelType,
+      typename std::enable_if_t<!PointKernelType::simd::using_simd, int> = 0>
+  void update_kernels_on_host(const specfem::point::index &index,
+                              const PointKernelType &kernels) const {
+
+    static_assert(PointKernelType::medium_tag == value_type);
+    static_assert(PointKernelType::property_tag == property_type);
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
     h_rho(ispec, iz, ix) = kernels.rho;
     h_kappa(ispec, iz, ix) = kernels.kappa;
     h_rho_prime(ispec, iz, ix) = kernels.rho_prime;
     h_alpha(ispec, iz, ix) = kernels.alpha;
   }
 
-  KOKKOS_INLINE_FUNCTION void add_kernels_on_device(
-      const int ispec, const int iz, const int ix,
-      const specfem::point::kernels<value_type, property_type> &kernels) const {
+  template <
+      typename PointKernelType,
+      typename std::enable_if_t<PointKernelType::simd::using_simd, int> = 0>
+  void update_kernels_on_host(const specfem::point::simd_index &index,
+                              const PointKernelType &kernels) const {
+
+    static_assert(PointKernelType::medium_tag == value_type);
+    static_assert(PointKernelType::property_tag == property_type);
+
+    using simd_type = typename PointKernelType::simd::datatype;
+    using mask_type = typename PointKernelType::simd::mask_type;
+    using tag_type = typename PointKernelType::simd::tag_type;
+
+    mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
+    Kokkos::Experimental::where(mask, kernels.rho)
+        .copy_to(&h_rho(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, kernels.kappa)
+        .copy_to(&h_kappa(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, kernels.rho_prime)
+        .copy_to(&h_rho_prime(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, kernels.alpha)
+        .copy_to(&h_alpha(ispec, iz, ix), tag_type());
+  }
+
+  template <
+      typename PointKernelType,
+      typename std::enable_if_t<!PointKernelType::simd::using_simd, int> = 0>
+  KOKKOS_INLINE_FUNCTION void
+  add_kernels_on_device(const specfem::point::index &index,
+                        const PointKernelType &kernels) const {
+
+    static_assert(PointKernelType::medium_tag == value_type);
+    static_assert(PointKernelType::property_tag == property_type);
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
     rho(ispec, iz, ix) += kernels.rho;
     kappa(ispec, iz, ix) += kernels.kappa;
     rho_prime(ispec, iz, ix) += kernels.rho_prime;
     alpha(ispec, iz, ix) += kernels.alpha;
   }
 
-  void add_kernels_on_host(
-      const int ispec, const int iz, const int ix,
-      const specfem::point::kernels<value_type, property_type> &kernels) const {
+  template <
+      typename PointKernelType,
+      typename std::enable_if_t<PointKernelType::simd::using_simd, int> = 0>
+  KOKKOS_INLINE_FUNCTION void
+  add_kernels_on_device(const specfem::point::simd_index &index,
+                        const PointKernelType &kernels) const {
+
+    static_assert(PointKernelType::medium_tag == value_type);
+    static_assert(PointKernelType::property_tag == property_type);
+
+    using simd_type = typename PointKernelType::simd::datatype;
+    using mask_type = typename PointKernelType::simd::mask_type;
+    using tag_type = typename PointKernelType::simd::tag_type;
+
+    mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
+    simd_type lhs;
+
+    Kokkos::Experimental::where(mask, lhs).copy_from(&rho(ispec, iz, ix),
+                                                     tag_type());
+    lhs += kernels.rho;
+    Kokkos::Experimental::where(mask, lhs).copy_to(&rho(ispec, iz, ix),
+                                                   tag_type());
+
+    Kokkos::Experimental::where(mask, lhs).copy_from(&kappa(ispec, iz, ix),
+                                                     tag_type());
+    lhs += kernels.kappa;
+    Kokkos::Experimental::where(mask, lhs).copy_to(&kappa(ispec, iz, ix),
+                                                   tag_type());
+
+    Kokkos::Experimental::where(mask, lhs).copy_from(&rho_prime(ispec, iz, ix),
+                                                     tag_type());
+    lhs += kernels.rho_prime;
+    Kokkos::Experimental::where(mask, lhs).copy_to(&rho_prime(ispec, iz, ix),
+                                                   tag_type());
+
+    Kokkos::Experimental::where(mask, lhs).copy_from(&alpha(ispec, iz, ix),
+                                                     tag_type());
+    lhs += kernels.alpha;
+    Kokkos::Experimental::where(mask, lhs).copy_to(&alpha(ispec, iz, ix),
+                                                   tag_type());
+  }
+
+  template <
+      typename PointKernelType,
+      typename std::enable_if_t<!PointKernelType::simd::using_simd, int> = 0>
+  void add_kernels_on_host(const specfem::point::index &index,
+                           const PointKernelType &kernels) const {
+
+    static_assert(PointKernelType::medium_tag == value_type);
+    static_assert(PointKernelType::property_tag == property_type);
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
     h_rho(ispec, iz, ix) += kernels.rho;
     h_kappa(ispec, iz, ix) += kernels.kappa;
     h_rho_prime(ispec, iz, ix) += kernels.rho_prime;
     h_alpha(ispec, iz, ix) += kernels.alpha;
+  }
+
+  template <
+      typename PointKernelType,
+      typename std::enable_if_t<PointKernelType::simd::using_simd, int> = 0>
+  void add_kernels_on_host(const specfem::point::simd_index &index,
+                           const PointKernelType &kernels) const {
+
+    static_assert(PointKernelType::medium_tag == value_type);
+    static_assert(PointKernelType::property_tag == property_type);
+
+    using simd_type = typename PointKernelType::simd::datatype;
+    using mask_type = typename PointKernelType::simd::mask_type;
+    using tag_type = typename PointKernelType::simd::tag_type;
+
+    mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
+    simd_type lhs;
+
+    Kokkos::Experimental::where(mask, lhs).copy_from(&h_rho(ispec, iz, ix),
+                                                     tag_type());
+    lhs += kernels.rho;
+    Kokkos::Experimental::where(mask, lhs).copy_to(&h_rho(ispec, iz, ix),
+                                                   tag_type());
+
+    Kokkos::Experimental::where(mask, lhs).copy_from(&h_kappa(ispec, iz, ix),
+                                                     tag_type());
+    lhs += kernels.kappa;
+    Kokkos::Experimental::where(mask, lhs).copy_to(&h_kappa(ispec, iz, ix),
+                                                   tag_type());
+
+    Kokkos::Experimental::where(mask, lhs).copy_from(
+        &h_rho_prime(ispec, iz, ix), tag_type());
+    lhs += kernels.rho_prime;
+    Kokkos::Experimental::where(mask, lhs).copy_to(&h_rho_prime(ispec, iz, ix),
+                                                   tag_type());
+
+    Kokkos::Experimental::where(mask, lhs).copy_from(&h_alpha(ispec, iz, ix),
+                                                     tag_type());
+    lhs += kernels.alpha;
+    Kokkos::Experimental::where(mask, lhs).copy_to(&h_alpha(ispec, iz, ix),
+                                                   tag_type());
   }
 
   void copy_to_host() {

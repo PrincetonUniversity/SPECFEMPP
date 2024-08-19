@@ -32,23 +32,28 @@
 //   return;
 // }
 
-template <int NGLL>
+template <int NGLL, bool using_simd>
 KOKKOS_INLINE_FUNCTION void specfem::domain::impl::sources::source<
     specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
     specfem::element::property_tag::isotropic,
-    specfem::enums::element::quadrature::static_quadrature_points<NGLL> >::
+    specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
+    using_simd>::
     compute_interaction(
-        const specfem::kokkos::array_type<type_real, 2> &stf,
-        const specfem::kokkos::array_type<type_real, 2> &lagrange_interpolant,
-        specfem::kokkos::array_type<type_real, medium_type::components>
-            &acceleration) const {
+        const specfem::datatype::ScalarPointViewType<
+            type_real, medium_type::components, using_simd> &stf,
+        const specfem::datatype::ScalarPointViewType<
+            type_real, medium_type::components, using_simd>
+            &lagrange_interpolant,
+        specfem::datatype::ScalarPointViewType<
+            type_real, medium_type::components, using_simd> &acceleration)
+        const {
 
   if constexpr (specfem::globals::simulation_wave == specfem::wave::p_sv) {
-    acceleration[0] = lagrange_interpolant[0] * stf[0];
-    acceleration[1] = lagrange_interpolant[1] * stf[1];
+    acceleration(0) = lagrange_interpolant(0) * stf(0);
+    acceleration(1) = lagrange_interpolant(1) * stf(1);
   } else if constexpr (specfem::globals::simulation_wave == specfem::wave::sh) {
-    acceleration[0] = lagrange_interpolant[0] * stf[0];
-    acceleration[1] = 0;
+    acceleration(0) = lagrange_interpolant(0) * stf(0);
+    acceleration(1) = 0;
   }
 
   return;

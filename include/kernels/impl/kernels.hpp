@@ -19,9 +19,9 @@ class kernels
     : public interface_kernels<WavefieldType, DimensionType, MediumTag> {
 
 public:
-  kernels(const specfem::compute::assembly &assembly,
+  kernels(const type_real dt, const specfem::compute::assembly &assembly,
           const qp_type &quadrature_points)
-      : domain(assembly, quadrature_points),
+      : domain(dt, assembly, quadrature_points),
         interface_kernels<WavefieldType, DimensionType, MediumTag>(assembly) {}
 
   inline void update_wavefields(const int istep) {

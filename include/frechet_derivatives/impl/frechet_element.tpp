@@ -2,11 +2,14 @@
 #define _FRECHET_DERIVATIVES_IMPL_FRECHLET_ELEMENT_TPP
 
 #include "algorithms/gradient.hpp"
-#include "element_kernel/acoustic_isotropic.tpp"
-#include "element_kernel/elastic_isotropic.tpp"
-#include "element_kernel/element_kernel.hpp"
+#include "chunk_element/field.hpp"
 #include "compute/kernels/interface.hpp"
+#include "element_kernel/acoustic_isotropic.hpp"
+#include "element_kernel/elastic_isotropic.hpp"
+#include "element_kernel/element_kernel.hpp"
+#include "parallel_configuration/chunk_config.hpp"
 #include "point/field.hpp"
+#include "policies/chunk.hpp"
 #include <Kokkos_Core.hpp>
 
 template <int NGLL, specfem::dimension::type DimensionType,
@@ -47,6 +50,15 @@ specfem::frechet_derivatives::impl::frechet_elements<
     }
   }
 
+  // Assert that ispec of the elements is contiguous
+  for (int ispec = 0; ispec < nelements; ++ispec) {
+    if (ispec != 0) {
+      if (h_element_index(ispec) != h_element_index(ispec - 1) + 1) {
+        throw std::runtime_error("Element index is not contiguous");
+      }
+    }
+  }
+
   Kokkos::deep_copy(element_index, h_element_index);
 
   return;
@@ -64,12 +76,14 @@ void specfem::frechet_derivatives::impl::frechet_elements<
     return;
   }
 
-  constexpr int components =
-      specfem::medium::medium<DimensionType, MediumTag>::components;
+  constexpr bool using_simd = true;
+  using simd = specfem::datatype::simd<type_real, using_simd>;
+  using ParallelConfig = specfem::parallel_config::default_chunk_config<simd>;
 
-  using ElementFieldType = specfem::element::field<
-      NGLL, DimensionType, MediumTag, specfem::kokkos::DevScratchSpace,
-      Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, false, false, false>;
+  using ChunkElementFieldType = specfem::chunk_element::field<
+      ParallelConfig::chunk_size, NGLL, DimensionType, MediumTag,
+      specfem::kokkos::DevScratchSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+      true, false, false, false, using_simd>;
 
   using ElementQuadratureType = specfem::element::quadrature<
       NGLL, DimensionType, specfem::kokkos::DevScratchSpace,
@@ -77,108 +91,206 @@ void specfem::frechet_derivatives::impl::frechet_elements<
 
   using AdjointPointFieldType =
       specfem::point::field<DimensionType, MediumTag, false, false, true,
-                            false>;
+                            false, using_simd>;
 
   using BackwardPointFieldType =
       specfem::point::field<DimensionType, MediumTag, true, false, false,
-                            false>;
+                            false, using_simd>;
 
   using PointFieldDerivativesType =
-      specfem::point::field_derivatives<DimensionType, MediumTag>;
+      specfem::point::field_derivatives<DimensionType, MediumTag, using_simd>;
 
-  int scratch_size =
-      2 * ElementFieldType::shmem_size() + ElementQuadratureType::shmem_size();
+  int scratch_size = 2 * ChunkElementFieldType::shmem_size() +
+                     ElementQuadratureType::shmem_size();
+
+  using ChunkPolicy =
+      specfem::policy::element_chunk<ParallelConfig,
+                                     Kokkos::DefaultExecutionSpace>;
+
+  ChunkPolicy chunk_policy(element_index, NGLL, NGLL);
 
   Kokkos::parallel_for(
-      "specfem::frechet_derivatives::frechet_derivatives::compute",
-      Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace>(nelements, Kokkos::AUTO,
-                                                        Kokkos::AUTO)
-          .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
-      KOKKOS_CLASS_LAMBDA(
-          const Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace>::member_type
-              &team) {
-        const int ielement = team.league_rank();
-        const int ispec = element_index(ielement);
-
+      "specfem::frechet_derivatives::frechet_elements::compute",
+      chunk_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
+      KOKKOS_CLASS_LAMBDA(const ChunkPolicy::member_type &team) {
         // Allocate scratch memory
-        ElementFieldType adjoint_element_field(team);
-        ElementFieldType backward_element_field(team);
+        ChunkElementFieldType adjoint_element_field(team);
+        ChunkElementFieldType backward_element_field(team);
         ElementQuadratureType quadrature_element(team);
 
-        // Populate Scratch Views
-        specfem::compute::load_on_device(team, ispec, adjoint_field,
-                                         adjoint_element_field);
-        specfem::compute::load_on_device(team, ispec, backward_field,
-                                         backward_element_field);
         specfem::compute::load_on_device(team, quadrature, quadrature_element);
 
-        // Compute gradients
-        Kokkos::parallel_for(
-            Kokkos::TeamThreadRange(team, NGLL * NGLL), [=](const int &xz) {
-              int ix, iz;
-              sub2ind(xz, NGLL, iz, ix);
-              const specfem::point::index index(ispec, iz, ix);
-              const AdjointPointFieldType adjoint_point_field = [&]() {
-                AdjointPointFieldType adjoint_point_field;
-                specfem::compute::load_on_device(index, adjoint_field,
-                                                 adjoint_point_field);
-                return adjoint_point_field;
-              }();
+        for (int tile = 0; tile < ChunkPolicy::TileSize; tile += ChunkPolicy::ChunkSize) {
+          const int starting_element_index =
+              team.league_rank() * ChunkPolicy::TileSize + tile;
 
-              const BackwardPointFieldType backward_point_field = [&]() {
-                BackwardPointFieldType backward_point_field;
-                specfem::compute::load_on_device(index, backward_field,
-                                                 backward_point_field);
-                return backward_point_field;
-              }();
+          if (starting_element_index >= nelements) {
+            break;
+          }
 
-              const auto point_partial_derivatives =
-                  [&]() -> specfem::point::partial_derivatives2<false> {
-                specfem::point::partial_derivatives2<false>
-                    point_partial_derivatives;
-                specfem::compute::load_on_device(index, partial_derivatives,
-                                                 point_partial_derivatives);
-                return point_partial_derivatives;
-              }();
+          const auto iterator = chunk_policy.league_iterator(starting_element_index);
 
-              const auto adjoint_point_derivatives = [&]() {
-                specfem::kokkos::array_type<type_real, components> dfield_dx;
-                specfem::kokkos::array_type<type_real, components> dfield_dz;
-                specfem::algorithms::gradient(
-                    ix, iz, quadrature_element.hprime_gll,
-                    adjoint_element_field.displacement,
-                    point_partial_derivatives, dfield_dx, dfield_dz);
-                return PointFieldDerivativesType(dfield_dx, dfield_dz);
-              }();
+          // Populate Scratch Views
+          specfem::compute::load_on_device(team, iterator, adjoint_field,
+                                           adjoint_element_field);
+          specfem::compute::load_on_device(team, iterator, backward_field,
+                                           backward_element_field);
 
-              const auto backward_point_derivatives = [&]() {
-                specfem::kokkos::array_type<type_real, components> dfield_dx;
-                specfem::kokkos::array_type<type_real, components> dfield_dz;
-                specfem::algorithms::gradient(
-                    ix, iz, quadrature_element.hprime_gll,
-                    backward_element_field.displacement,
-                    point_partial_derivatives, dfield_dx, dfield_dz);
-                return PointFieldDerivativesType(dfield_dx, dfield_dz);
-              }();
+          team.team_barrier();
 
-              const auto point_properties =
-                  [&]() -> specfem::point::properties<MediumTag, PropertyTag> {
-                specfem::point::properties<MediumTag, PropertyTag>
-                    point_properties;
-                specfem::compute::load_on_device(index, properties,
-                                                 point_properties);
-                return point_properties;
-              }();
+          // Gernerate the Kernels
+          // We call the gradient algorith, which computes the gradient of
+          // adjoint and backward fields at each point in the element
+          // The Lambda function is is passed to the gradient algorithm
+          // which is applied to gradient result for every quadrature point
+          specfem::algorithms::gradient(
+              team, iterator, partial_derivatives,
+              quadrature_element.hprime_gll, adjoint_element_field.displacement,
+              backward_element_field.displacement,
+              [&](const typename ChunkPolicy::iterator_type::index_type &iterator_index,
+                  const typename PointFieldDerivativesType::ViewType &df,
+                  const typename PointFieldDerivativesType::ViewType &dg) {
 
-              const auto point_kernel =
-                  specfem::frechet_derivatives::impl::element_kernel(
-                      point_properties, adjoint_point_field,
-                      backward_point_field, adjoint_point_derivatives,
-                      backward_point_derivatives, dt);
+                const auto index = iterator_index.index;
+                // Load properties, adjoint field, and backward field
+                // for the point
+                // ------------------------------
+                const auto point_properties = [&]()
+                    -> specfem::point::properties<DimensionType, MediumTag,
+                                                  PropertyTag, using_simd> {
+                  specfem::point::properties<DimensionType, MediumTag,
+                                             PropertyTag, using_simd>
+                      point_properties;
+                  specfem::compute::load_on_device(index, properties,
+                                                   point_properties);
+                  return point_properties;
+                }();
 
-              specfem::compute::add_on_device(index, point_kernel, kernels);
-            });
+                const auto adjoint_point_field = [&]() {
+                  AdjointPointFieldType adjoint_point_field;
+                  specfem::compute::load_on_device(index, adjoint_field,
+                                                   adjoint_point_field);
+                  return adjoint_point_field;
+                }();
+
+                const auto backward_point_field = [&]() {
+                  BackwardPointFieldType backward_point_field;
+                  specfem::compute::load_on_device(index, backward_field,
+                                                   backward_point_field);
+                  return backward_point_field;
+                }();
+                // ------------------------------
+
+                const PointFieldDerivativesType adjoint_point_derivatives(df);
+                const PointFieldDerivativesType backward_point_derivatives(dg);
+
+                // Compute the kernel for the point
+                const auto point_kernel =
+                    specfem::frechet_derivatives::impl::element_kernel(
+                        point_properties, adjoint_point_field,
+                        backward_point_field, adjoint_point_derivatives,
+                        backward_point_derivatives, dt);
+
+                // Update the kernel in the global memory
+                specfem::compute::add_on_device(index, point_kernel, kernels);
+              });
+        }
       });
+
+  // Kokkos::parallel_for(
+  //     "specfem::frechet_derivatives::frechet_derivatives::compute",
+  //     Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace>(nelements,
+  //     Kokkos::AUTO,
+  //                                                       Kokkos::AUTO)
+  //         .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
+  //     KOKKOS_CLASS_LAMBDA(
+  //         const
+  //         Kokkos::TeamPolicy<Kokkos::DefaultExecutionSpace>::member_type
+  //             &team) {
+  //       const int ielement = team.league_rank();
+  //       const int ispec = element_index(ielement);
+
+  //       // Allocate scratch memory
+  //       ElementFieldType adjoint_element_field(team);
+  //       ElementFieldType backward_element_field(team);
+  //       ElementQuadratureType quadrature_element(team);
+
+  //       // Populate Scratch Views
+  //       specfem::compute::load_on_device(team, ispec, adjoint_field,
+  //                                        adjoint_element_field);
+  //       specfem::compute::load_on_device(team, ispec, backward_field,
+  //                                        backward_element_field);
+  //       specfem::compute::load_on_device(team, quadrature,
+  //       quadrature_element);
+
+  //       // Compute gradients
+  //       Kokkos::parallel_for(
+  //           Kokkos::TeamThreadRange(team, NGLL * NGLL), [=](const int &xz) {
+  //             int ix, iz;
+  //             sub2ind(xz, NGLL, iz, ix);
+  //             const specfem::point::index index(ispec, iz, ix);
+  //             const AdjointPointFieldType adjoint_point_field = [&]() {
+  //               AdjointPointFieldType adjoint_point_field;
+  //               specfem::compute::load_on_device(index, adjoint_field,
+  //                                                adjoint_point_field);
+  //               return adjoint_point_field;
+  //             }();
+
+  //             const BackwardPointFieldType backward_point_field = [&]() {
+  //               BackwardPointFieldType backward_point_field;
+  //               specfem::compute::load_on_device(index, backward_field,
+  //                                                backward_point_field);
+  //               return backward_point_field;
+  //             }();
+
+  //             const auto point_partial_derivatives =
+  //                 [&]() -> specfem::point::partial_derivatives2<false> {
+  //               specfem::point::partial_derivatives2<false>
+  //                   point_partial_derivatives;
+  //               specfem::compute::load_on_device(index, partial_derivatives,
+  //                                                point_partial_derivatives);
+  //               return point_partial_derivatives;
+  //             }();
+
+  //             const auto adjoint_point_derivatives = [&]() {
+  //               specfem::kokkos::array_type<type_real, components> dfield_dx;
+  //               specfem::kokkos::array_type<type_real, components> dfield_dz;
+  //               specfem::algorithms::gradient(
+  //                   ix, iz, quadrature_element.hprime_gll,
+  //                   adjoint_element_field.displacement,
+  //                   point_partial_derivatives, dfield_dx, dfield_dz);
+  //               return PointFieldDerivativesType(dfield_dx, dfield_dz);
+  //             }();
+
+  //             const auto backward_point_derivatives = [&]() {
+  //               specfem::kokkos::array_type<type_real, components> dfield_dx;
+  //               specfem::kokkos::array_type<type_real, components> dfield_dz;
+  //               specfem::algorithms::gradient(
+  //                   ix, iz, quadrature_element.hprime_gll,
+  //                   backward_element_field.displacement,
+  //                   point_partial_derivatives, dfield_dx, dfield_dz);
+  //               return PointFieldDerivativesType(dfield_dx, dfield_dz);
+  //             }();
+
+  //             const auto point_properties =
+  //                 [&]() -> specfem::point::properties<MediumTag, PropertyTag>
+  //                 {
+  //               specfem::point::properties<MediumTag, PropertyTag>
+  //                   point_properties;
+  //               specfem::compute::load_on_device(index, properties,
+  //                                                point_properties);
+  //               return point_properties;
+  //             }();
+
+  //             const auto point_kernel =
+  //                 specfem::frechet_derivatives::impl::element_kernel(
+  //                     point_properties, adjoint_point_field,
+  //                     backward_point_field, adjoint_point_derivatives,
+  //                     backward_point_derivatives, dt);
+
+  //             specfem::compute::add_on_device(index, point_kernel, kernels);
+  //           });
+  //     });
 
   Kokkos::fence();
 

@@ -15,7 +15,7 @@
 template <typename ViewType, typename OpType>
 const int specfem::IO::impl::HDF5::Dataset<ViewType, OpType>::rank = ViewType::rank;
 #else
-template <typename ViewType>
+template <typename ViewType, typename OpType>
 const int specfem::IO::impl::HDF5::Dataset<ViewType, OpType>::rank = ViewType::rank();
 #endif
 

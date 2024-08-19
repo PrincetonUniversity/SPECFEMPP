@@ -2,8 +2,6 @@
 #define DOMAIN_IMPL_ELEMENTS_KERNEL_HPP
 
 #include "compute/interface.hpp"
-#include "domain/impl/elements/acoustic/interface.hpp"
-#include "domain/impl/elements/elastic/interface.hpp"
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
@@ -26,12 +24,10 @@ public:
   inline int total_elements() const { return nelements; }
 
   using dimension = specfem::dimension::dimension<DimensionType>;
-  using element_type = specfem::domain::impl::elements::element<
-      WavefieldType, DimensionType, MediumTag, PropertyTag, BoundaryTag,
-      quadrature_points_type>;
-  using medium_type = typename element_type::medium_type;
-  using boundary_conditions_type =
-      typename element_type::boundary_conditions_type;
+  // using element_type = specfem::domain::impl::elements::element<
+  //     WavefieldType, DimensionType, MediumTag, PropertyTag, BoundaryTag,
+  //     quadrature_points_type>;
+  using medium_type = specfem::medium::medium<DimensionType, MediumTag>;
   using qp_type = quadrature_points_type;
 
   element_kernel_base() = default;
@@ -41,6 +37,7 @@ public:
       const quadrature_points_type &quadrature_points);
 
   void compute_mass_matrix(
+      const type_real dt,
       const specfem::compute::simulation_field<WavefieldType> &field) const;
 
   void compute_stiffness_interaction(
@@ -50,7 +47,7 @@ public:
   template <specfem::enums::time_scheme::type time_scheme>
   void mass_time_contribution(
       const type_real dt,
-      const specfem::compute::simulation_field<WavefieldType> &field) const;
+      const specfem::compute::simulation_field<WavefieldType> &field) const {};
 
 protected:
   int nelements;
@@ -60,11 +57,11 @@ protected:
   specfem::kokkos::HostMirror1d<int> h_element_kernel_index_mapping;
   specfem::compute::properties properties;
   specfem::compute::partial_derivatives partial_derivatives;
-  specfem::kokkos::DeviceView1d<specfem::point::boundary> boundary_conditions;
+  specfem::compute::boundaries boundaries;
   specfem::compute::boundary_value_container<DimensionType, BoundaryTag>
       boundary_values;
   quadrature_points_type quadrature_points;
-  element_type element;
+  // element_type element;
 };
 
 template <specfem::wavefield::type WavefieldType,
@@ -89,10 +86,10 @@ public:
                             PropertyTag, BoundaryTag, quadrature_points_type>(
             assembly, h_element_kernel_index_mapping, quadrature_points) {}
 
-  void compute_mass_matrix() const {
+  void compute_mass_matrix(const type_real dt) const {
     element_kernel_base<WavefieldType, DimensionType, MediumTag, PropertyTag,
                         BoundaryTag,
-                        quadrature_points_type>::compute_mass_matrix(field);
+                        quadrature_points_type>::compute_mass_matrix(dt, field);
   }
 
   void compute_stiffness_interaction(const int istep) const {
@@ -125,15 +122,6 @@ class element_kernel<
                                  quadrature_points_type> {
 
 public:
-  using dimension = specfem::dimension::dimension<DimensionType>;
-  using element_type = specfem::domain::impl::elements::element<
-      specfem::wavefield::type::backward, DimensionType, MediumTag, PropertyTag,
-      specfem::element::boundary_tag::stacey, quadrature_points_type>;
-  using medium_type = typename element_type::medium_type;
-  using boundary_conditions_type =
-      typename element_type::boundary_conditions_type;
-  using qp_type = quadrature_points_type;
-
   element_kernel() = default;
   element_kernel(
       const specfem::compute::assembly &assembly,
@@ -147,11 +135,11 @@ public:
                             quadrature_points_type>(
             assembly, h_element_kernel_index_mapping, quadrature_points) {}
 
-  void compute_mass_matrix() const {
+  void compute_mass_matrix(const type_real dt) const {
     element_kernel_base<specfem::wavefield::type::backward, DimensionType,
                         MediumTag, PropertyTag,
                         specfem::element::boundary_tag::stacey,
-                        quadrature_points_type>::compute_mass_matrix(field);
+                        quadrature_points_type>::compute_mass_matrix(dt, field);
   }
 
   template <specfem::enums::time_scheme::type time_scheme>
