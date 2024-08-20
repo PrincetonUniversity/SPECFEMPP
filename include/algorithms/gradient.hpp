@@ -65,7 +65,8 @@ gradient(const MemberType &team, const IteratorType &iterator,
           }
         }
 
-        specfem::point::partial_derivatives2<using_simd, false>
+        specfem::point::partial_derivatives<specfem::dimension::type::dim2,
+                                            false, using_simd>
             point_partial_derivatives;
 
         specfem::compute::load_on_device(index, partial_derivatives,
@@ -153,7 +154,9 @@ gradient(const MemberType &team, const IteratorType &iterator,
         }
 
         const auto point_partial_derivatives = [&]() {
-          specfem::point::partial_derivatives2<using_simd, false> result;
+          specfem::point::partial_derivatives<specfem::dimension::type::dim2,
+                                              false, using_simd>
+              result;
           specfem::compute::load_on_device(index, partial_derivatives, result);
           return result;
         }();

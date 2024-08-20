@@ -141,8 +141,9 @@ void specfem::domain::impl::kernels::receiver_kernel<
               sub2ind(xz, ngllx, iz, ix);
               const specfem::point::index index(ispec_l, iz, ix);
               const auto point_partial_derivatives =
-                  [&]() -> specfem::point::partial_derivatives2<using_simd, false> {
-                specfem::point::partial_derivatives2<using_simd, false>
+                  [&]() {
+                    specfem::point::partial_derivatives<DimensionType, false,
+                                                        using_simd>
                     point_partial_derivatives;
                 specfem::compute::load_on_device(index, partial_derivatives,
                                                  point_partial_derivatives);

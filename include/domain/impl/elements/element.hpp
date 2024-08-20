@@ -31,7 +31,7 @@ template <specfem::dimension::type DimensionType,
 KOKKOS_FUNCTION
     specfem::point::stress_integrand<DimensionType, MediumTag, UseSIMD>
     compute_stress_integrands(
-        const specfem::point::partial_derivatives2<UseSIMD, false>
+        const specfem::point::partial_derivatives<DimensionType, false, UseSIMD>
             &partial_derivatives,
         const specfem::point::properties<DimensionType, MediumTag, PropertyTag,
                                          UseSIMD> &properties,
@@ -49,7 +49,7 @@ KOKKOS_FUNCTION specfem::point::field<DimensionType, MediumTag, false, false,
 mass_matrix_component(
     const specfem::point::properties<DimensionType, MediumTag, PropertyTag,
                                      UseSIMD> &properties,
-    const specfem::point::partial_derivatives2<UseSIMD, true>
+    const specfem::point::partial_derivatives<DimensionType, true, UseSIMD>
         &partial_derivatives) {
   return impl_mass_matrix_component(properties, partial_derivatives);
 }

@@ -7,15 +7,14 @@ KOKKOS_FUNCTION KOKKOS_FUNCTION specfem::point::stress_integrand<
     specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
     UseSIMD>
 specfem::domain::impl::elements::impl_compute_stress_integrands(
-    const specfem::point::partial_derivatives2<UseSIMD, false>
-        &partial_derivatives,
+    const specfem::point::partial_derivatives<
+        specfem::dimension::type::dim2, false, UseSIMD> &partial_derivatives,
     const specfem::point::properties<
         specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
         specfem::element::property_tag::isotropic, UseSIMD> &properties,
     const specfem::point::field_derivatives<
         specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
         UseSIMD> &field_derivatives) {
-
 
   const auto &du = field_derivatives.du;
   // Precompute the factor
@@ -46,8 +45,8 @@ specfem::domain::impl::elements::impl_mass_matrix_component(
     const specfem::point::properties<
         specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
         specfem::element::property_tag::isotropic, UseSIMD> &properties,
-    const specfem::point::partial_derivatives2<UseSIMD, true>
-        &partial_derivatives) {
+    const specfem::point::partial_derivatives<
+        specfem::dimension::type::dim2, true, UseSIMD> &partial_derivatives) {
 
   return specfem::datatype::ScalarPointViewType<type_real, 1, UseSIMD>(
       partial_derivatives.jacobian / properties.kappa);

@@ -98,9 +98,9 @@ TEST(COMPUTE_TESTS, compute_partial_derivatives) {
     for (int iz = 0; iz < ngllz; ++iz) {
       for (int ispec = 0; ispec < nspec; ++ispec) {
         const specfem::point::index index(ispec, iz, ix);
-        const auto point_partial_derivatives =
-            [&]() -> specfem::point::partial_derivatives2<false, true> {
-          specfem::point::partial_derivatives2<false, true>
+        const auto point_partial_derivatives = [&]() {
+          specfem::point::partial_derivatives<specfem::dimension::type::dim2,
+                                              true, false>
               point_partial_derivatives;
           specfem::compute::load_on_host(index, partial_derivatives,
                                          point_partial_derivatives);
@@ -130,9 +130,9 @@ TEST(COMPUTE_TESTS, compute_partial_derivatives) {
             (ispec + vector_length < nspec) ? vector_length : nspec - ispec;
         const specfem::point::simd_index simd_index(ispec, num_elements, iz,
                                                     ix);
-        const auto point_partial_derivatives =
-            [&]() -> specfem::point::partial_derivatives2<true, true> {
-          specfem::point::partial_derivatives2<true, true>
+        const auto point_partial_derivatives = [&]() {
+          specfem::point::partial_derivatives<specfem::dimension::type::dim2,
+                                              true, true>
               point_partial_derivatives;
           specfem::compute::load_on_host(simd_index, partial_derivatives,
                                          point_partial_derivatives);
