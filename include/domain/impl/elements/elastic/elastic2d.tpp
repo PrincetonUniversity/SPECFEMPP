@@ -4,10 +4,11 @@
 
 template <bool UseSIMD>
 KOKKOS_FUNCTION specfem::point::stress_integrand<
-    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic, UseSIMD>
+    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+    UseSIMD>
 specfem::domain::impl::elements::impl_compute_stress_integrands(
-    const specfem::point::partial_derivatives2<UseSIMD, false>
-        &partial_derivatives,
+    const specfem::point::partial_derivatives<
+        specfem::dimension::type::dim2, false, UseSIMD> &partial_derivatives,
     const specfem::point::properties<
         specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
         specfem::element::property_tag::isotropic, UseSIMD> &properties,
@@ -15,7 +16,8 @@ specfem::domain::impl::elements::impl_compute_stress_integrands(
         specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
         UseSIMD> &field_derivatives) {
 
-  using datatype = typename specfem::datatype::simd<type_real, UseSIMD>::datatype;
+  using datatype =
+      typename specfem::datatype::simd<type_real, UseSIMD>::datatype;
   const auto &du = field_derivatives.du;
 
   datatype sigma_xx, sigma_zz, sigma_xz;
@@ -60,10 +62,12 @@ template <bool UseSIMD>
 KOKKOS_FUNCTION specfem::point::field<specfem::dimension::type::dim2,
                                       specfem::element::medium_tag::elastic,
                                       false, false, false, true, UseSIMD>
-specfem::domain::impl::elements::impl_mass_matrix_component(const specfem::point::properties<
+specfem::domain::impl::elements::impl_mass_matrix_component(
+    const specfem::point::properties<
         specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
         specfem::element::property_tag::isotropic, UseSIMD> &properties,
-    const specfem::point::partial_derivatives2<UseSIMD, true> &partial_derivatives) {
+    const specfem::point::partial_derivatives<
+        specfem::dimension::type::dim2, true, UseSIMD> &partial_derivatives) {
 
   if constexpr (specfem::globals::simulation_wave == specfem::wave::p_sv) {
     return specfem::datatype::ScalarPointViewType<type_real, 2, UseSIMD>(

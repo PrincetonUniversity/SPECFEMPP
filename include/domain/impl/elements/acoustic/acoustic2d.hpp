@@ -25,8 +25,8 @@ KOKKOS_FUNCTION specfem::point::stress_integrand<
     specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
     UseSIMD>
 impl_compute_stress_integrands(
-    const specfem::point::partial_derivatives2<UseSIMD, false>
-        &partial_derivatives,
+    const specfem::point::partial_derivatives<
+        specfem::dimension::type::dim2, false, UseSIMD> &partial_derivatives,
     const specfem::point::properties<
         specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
         specfem::element::property_tag::isotropic, UseSIMD> &properties,
@@ -42,8 +42,8 @@ impl_mass_matrix_component(
     const specfem::point::properties<
         specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
         specfem::element::property_tag::isotropic, UseSIMD> &properties,
-    const specfem::point::partial_derivatives2<UseSIMD, true>
-        &partial_derivatives);
+    const specfem::point::partial_derivatives<
+        specfem::dimension::type::dim2, true, UseSIMD> &partial_derivatives);
 
 } // namespace elements
 } // namespace impl

@@ -26,7 +26,8 @@ bool is_on_boundary(specfem::enums::boundaries::type type, int iz, int ix,
 std::tuple<std::array<type_real, 2>, type_real> get_boundary_edge_and_weight(
     specfem::enums::boundaries::type type,
     const std::array<type_real, 2> &weights,
-    const specfem::point::partial_derivatives2<false, true>
+    const specfem::point::partial_derivatives<specfem::dimension::type::dim2,
+                                              true, false>
         &point_partial_derivatives) {
 
   if (type == specfem::enums::boundaries::type::BOTTOM_LEFT ||
@@ -201,7 +202,8 @@ specfem::compute::impl::boundaries::stacey::stacey(
             std::array<type_real, 2> weights = { quadrature.gll.h_weights(ix),
                                                  quadrature.gll.h_weights(iz) };
             specfem::point::index index(ispec_compute, iz, ix);
-            specfem::point::partial_derivatives2<false, true>
+            specfem::point::partial_derivatives<specfem::dimension::type::dim2,
+                                                true, false>
                 point_partial_derivatives;
             specfem::compute::load_on_host(index, partial_derivatives,
                                            point_partial_derivatives);

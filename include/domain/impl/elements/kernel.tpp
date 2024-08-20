@@ -152,10 +152,13 @@ void specfem::domain::impl::kernels::element_kernel_base<
                 // specfem::point::partial_derivatives2<true>
                 // point_partial_derivatives;
 
-                const auto point_partial_derivatives = [&]()
-                    -> specfem::point::partial_derivatives2<using_simd, true> {
-                  specfem::point::partial_derivatives2<using_simd, true>
-                      point_partial_derivatives;
+                using PointPartialDerivativesType =
+                    specfem::point::partial_derivatives<DimensionType, true,
+                                                        using_simd>;
+
+                const auto point_partial_derivatives =
+                    [&]() -> PointPartialDerivativesType {
+                  PointPartialDerivativesType point_partial_derivatives;
                   specfem::compute::load_on_device(index, partial_derivatives,
                                                    point_partial_derivatives);
                   return point_partial_derivatives;
@@ -466,7 +469,8 @@ void specfem::domain::impl::kernels::element_kernel_base<
                   const typename PointFieldDerivativesType::ViewType &du) {
                 const auto index = iterator_index.index;
 
-                specfem::point::partial_derivatives2<using_simd, false>
+                specfem::point::partial_derivatives<DimensionType, false,
+                                                    using_simd>
                     point_partial_derivatives;
                 specfem::compute::load_on_device(index, partial_derivatives,
                                                  point_partial_derivatives);

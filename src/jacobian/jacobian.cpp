@@ -1,8 +1,5 @@
 #include "jacobian/interface.hpp"
-#include "kokkos_abstractions.h"
-#include "point/interface.hpp"
-#include "specfem_setup.hpp"
-#include <Kokkos_Core.hpp>
+#include "macros.hpp"
 
 std::tuple<type_real, type_real> specfem::jacobian::compute_locations(
     const specfem::kokkos::HostTeam::member_type &teamMember,
@@ -247,7 +244,7 @@ specfem::jacobian::compute_inverted_derivatives(
   return std::make_tuple(xix, gammax, xiz, gammaz);
 }
 
-specfem::point::partial_derivatives2<false, true>
+specfem::point::partial_derivatives<specfem::dimension::type::dim2, true, false>
 specfem::jacobian::compute_derivatives(
     const specfem::kokkos::HostTeam::member_type &teamMember,
     const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
@@ -263,8 +260,9 @@ specfem::jacobian::compute_derivatives(
   type_real xiz = -xgamma / jacobian;
   type_real gammaz = xxi / jacobian;
 
-  return specfem::point::partial_derivatives2<false, true>(xix, gammax, xiz,
-                                                           gammaz, jacobian);
+  return specfem::point::partial_derivatives<specfem::dimension::type::dim2,
+                                             true, false>(xix, gammax, xiz,
+                                                          gammaz, jacobian);
 }
 
 std::tuple<type_real, type_real, type_real, type_real>

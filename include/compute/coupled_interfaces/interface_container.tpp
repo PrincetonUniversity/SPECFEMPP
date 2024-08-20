@@ -364,15 +364,20 @@ compute_edge_factors_and_normals(
   std::vector<std::array<type_real, 2> > edge_normal(ngll);
 
   for (int ipoint = 0; ipoint < ngll; ipoint++) {
+
+    using PointPartialDerivativesType =
+        specfem::point::partial_derivatives<specfem::dimension::type::dim2,
+                                            true, false>;
+
     const auto [i1, j1] = edge1_points[ipoint];
     const specfem::point::index edge1_index(ispec1, j1, i1);
-    specfem::point::partial_derivatives2<false, true> edge1_derivatives;
+    PointPartialDerivativesType edge1_derivatives;
     specfem::compute::load_on_host(edge1_index, partial_derivatives,
                                    edge1_derivatives);
 
     const auto [i2, j2] = edge2_points[ipoint];
     const specfem::point::index edge2_index(ispec2, j2, i2);
-    specfem::point::partial_derivatives2<false, true> edge2_derivatives;
+    PointPartialDerivativesType edge2_derivatives;
     specfem::compute::load_on_host(edge2_index, partial_derivatives,
                                    edge2_derivatives);
 

@@ -1,39 +1,85 @@
-#ifndef _POINT_PARTIAL_DERIVATIVES_HPP
-#define _POINT_PARTIAL_DERIVATIVES_HPP
+#pragma once
 
 #include "datatypes/point_view.hpp"
-#include "edge/interface.hpp"
+#include "enumerations/dimension.hpp"
 #include "enumerations/specfem_enums.hpp"
-#include "macros.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
 namespace point {
 
-template <bool UseSIMD, bool StoreJacobian> struct partial_derivatives2;
+/**
+ * @brief Store spatial derivatives of the basis functions at a quadrature point
+ *
+ * @tparam DimensionType Dimension of the spectral element
+ * @tparam StoreJacobian Boolean indicating whether to store the Jacobian
+ * @tparam UseSIMD Boolean indicating whether to use SIMD
+ */
+template <specfem::dimension::type DimensionType, bool StoreJacobian,
+          bool UseSIMD>
+struct partial_derivatives;
 
-template <bool UseSIMD> struct partial_derivatives2<UseSIMD, false> {
+/**
+ * @brief Template specialization for 2D spectral elements without storing the
+ * Jacobian
+ *
+ * @tparam UseSIMD Boolean indicating whether to use SIMD
+ */
+template <bool UseSIMD>
+struct partial_derivatives<specfem::dimension::type::dim2, false, UseSIMD> {
 
-  using simd = specfem::datatype::simd<type_real, UseSIMD>;
-  using value_type = typename simd::datatype;
+  /**
+   * @name Typedefs
+   *
+   */
+  ///@{
+  using simd = specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD data type
+  using value_type =
+      typename simd::datatype; ///< Datatype for storing values. Is a scalar if
+                               ///< UseSIMD is false, otherwise is a SIMD
+                               ///< vector.
   constexpr static bool store_jacobian = false;
+  constexpr static auto dimension = specfem::dimension::type::dim2;
+  ///@}
 
-  value_type xix;
-  value_type gammax;
-  value_type xiz;
-  value_type gammaz;
+  value_type xix;    ///< @xix
+  value_type gammax; ///< @gammax
+  value_type xiz;    ///< @xiz
+  value_type gammaz; ///< @gammaz
 
+  /**
+   * @name Constructors
+   *
+   */
+  ///@{
+  /**
+   * @brief Default constructor
+   *
+   */
   KOKKOS_FUNCTION
-  partial_derivatives2() = default;
+  partial_derivatives() = default;
 
+  /**
+   * @brief Constructor with values
+   *
+   * @param xix @xix
+   * @param gammax @gammax
+   * @param xiz @xiz
+   * @param gammaz @gammaz
+   */
   KOKKOS_FUNCTION
-  partial_derivatives2(const value_type &xix, const value_type &gammax,
-                       const value_type &xiz, const value_type &gammaz)
+  partial_derivatives(const value_type &xix, const value_type &gammax,
+                      const value_type &xiz, const value_type &gammaz)
       : xix(xix), gammax(gammax), xiz(xiz), gammaz(gammaz) {}
 
+  /**
+   * @brief Constructor with constant value
+   *
+   * @param constant Value to initialize all members to
+   */
   KOKKOS_FUNCTION
-  partial_derivatives2(const value_type constant)
+  partial_derivatives(const value_type constant)
       : xix(constant), gammax(constant), xiz(constant), gammaz(constant) {}
 
   KOKKOS_FUNCTION
@@ -46,29 +92,74 @@ template <bool UseSIMD> struct partial_derivatives2<UseSIMD, false> {
   }
 };
 
+/**
+ * @brief Template specialization for 2D spectral elements with storing the
+ * Jacobian
+ *
+ * @tparam UseSIMD Boolean indicating whether to use SIMD
+ */
 template <bool UseSIMD>
-struct partial_derivatives2<UseSIMD, true>
-    : public partial_derivatives2<UseSIMD, false> {
+struct partial_derivatives<specfem::dimension::type::dim2, true, UseSIMD>
+    : public partial_derivatives<specfem::dimension::type::dim2, false,
+                                 UseSIMD> {
 
-  using simd = specfem::datatype::simd<type_real, UseSIMD>;
-  using value_type = typename simd::datatype;
+  /**
+   * @name Typedefs
+   *
+   */
+  ///@{
+  using simd = specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD data type
+  using value_type = typename simd::datatype; ///< Datatype for storing values.
+                                              ///< Is a scalar if UseSIMD is
+                                              ///< false, otherwise is a SIMD
+                                              ///< vector.
   constexpr static bool store_jacobian = true;
+  constexpr static auto dimension = specfem::dimension::type::dim2;
+  ///@}
 
-  value_type jacobian;
+  value_type jacobian; ///< Jacobian
 
+  /**
+   * @name Constructors
+   *
+   */
+  ///@{
+
+  /**
+   * @brief Default constructor
+   *
+   */
   KOKKOS_FUNCTION
-  partial_derivatives2() = default;
+  partial_derivatives() = default;
 
+  /**
+   * @brief Constructor with values
+   *
+   * @param xix @xix
+   * @param gammax @gammax
+   * @param xiz @xiz
+   * @param gammaz @gammaz
+   * @param jacobian Jacobian
+   */
   KOKKOS_FUNCTION
-  partial_derivatives2(const value_type &xix, const value_type &gammax,
-                       const value_type &xiz, const value_type &gammaz,
-                       const value_type &jacobian)
-      : partial_derivatives2<UseSIMD, false>(xix, gammax, xiz, gammaz),
+  partial_derivatives(const value_type &xix, const value_type &gammax,
+                      const value_type &xiz, const value_type &gammaz,
+                      const value_type &jacobian)
+      : partial_derivatives<specfem::dimension::type::dim2, false, UseSIMD>(
+            xix, gammax, xiz, gammaz),
         jacobian(jacobian) {}
 
+  /**
+   * @brief Constructor with constant value
+   *
+   * @param constant Value to initialize all members to
+   */
   KOKKOS_FUNCTION
-  partial_derivatives2(const value_type constant)
-      : partial_derivatives2<UseSIMD, false>(constant), jacobian(constant) {}
+  partial_derivatives(const value_type constant)
+      : partial_derivatives<specfem::dimension::type::dim2, false, UseSIMD>(
+            constant),
+        jacobian(constant) {}
+  ///@}
 
   KOKKOS_FUNCTION
   void init() {
@@ -80,11 +171,22 @@ struct partial_derivatives2<UseSIMD, true>
     return;
   }
 
+  /**
+   * @name Member functions
+   *
+   */
+  ///@{
+
+  /**
+   * @brief Compute the normal vector at a quadrature point
+   *
+   * @param type Type of edge (bottom, top, left, right)
+   * @return specfem::datatype::ScalarPointViewType<type_real, 2, UseSIMD>
+   * Normal vector
+   */
   KOKKOS_FUNCTION specfem::datatype::ScalarPointViewType<type_real, 2, UseSIMD>
   compute_normal(const specfem::enums::edge::type &type) const;
-
-  KOKKOS_FUNCTION specfem::datatype::ScalarPointViewType<type_real, 2, UseSIMD>
-  compute_normal(const specfem::edge::interface &interface) const;
+  ///@}
 
 private:
   KOKKOS_INLINE_FUNCTION
@@ -120,73 +222,25 @@ private:
   };
 };
 
-// struct partial_derivatives2 {
-//   type_real xix;
-//   type_real gammax;
-//   type_real xiz;
-//   type_real gammaz;
-//   type_real jacobian;
-
-//   KOKKOS_FUNCTION
-//   partial_derivatives2() = default;
-
-//   KOKKOS_FUNCTION
-//   partial_derivatives2(const type_real &xix, const type_real &gammax,
-//                        const type_real &xiz, const type_real &gammaz)
-//       : xix(xix), gammax(gammax), xiz(xiz), gammaz(gammaz) {}
-
-//   KOKKOS_FUNCTION
-//   partial_derivatives2(const type_real &xix, const type_real &gammax,
-//                        const type_real &xiz, const type_real &gammaz,
-//                        const type_real &jacobian)
-//       : xix(xix), gammax(gammax), xiz(xiz), gammaz(gammaz),
-//       jacobian(jacobian) {
-//   }
-
-//   KOKKOS_FUNCTION
-//   partial_derivatives2(const type_real constant)
-//       : xix(constant), gammax(constant), xiz(constant), gammaz(constant) {}
-
-//   KOKKOS_FUNCTION
-//   void init() {
-//     this->xix = 0.0;
-//     this->gammax = 0.0;
-//     this->xiz = 0.0;
-//     this->gammaz = 0.0;
-//     return;
-//   }
-
-//   KOKKOS_FUNCTION
-//   partial_derivatives2(const partial_derivatives2 &rhs) = default;
-
-//   template <specfem::enums::edge::type type>
-//   KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, 2>
-//   compute_normal() const {
-//     ASSERT(false, "Invalid boundary type");
-//     return specfem::kokkos::array_type<type_real, 2>();
-//   };
-
-//   KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, 2>
-//   compute_normal(const specfem::enums::edge::type &type) const;
-
-//   KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, 2>
-//   compute_normal(const specfem::edge::interface &interface) const;
-// };
-
 // operator+
-template <bool UseSIMD>
-KOKKOS_FUNCTION specfem::point::partial_derivatives2<UseSIMD, false>
-operator+(const partial_derivatives2<UseSIMD, false> &lhs,
-          const partial_derivatives2<UseSIMD, false> &rhs) {
-  return specfem::point::partial_derivatives2<UseSIMD, false>(
-      lhs.xix + rhs.xix, lhs.gammax + rhs.gammax, lhs.xiz + rhs.xiz,
-      lhs.gammaz + rhs.gammaz);
+template <typename PointPartialDerivativesType,
+          typename std::enable_if_t<
+              !PointPartialDerivativesType::store_jacobian, int> = 0>
+KOKKOS_FUNCTION PointPartialDerivativesType
+operator+(const PointPartialDerivativesType &lhs,
+          const PointPartialDerivativesType &rhs) {
+  return PointPartialDerivativesType(lhs.xix + rhs.xix, lhs.gammax + rhs.gammax,
+                                     lhs.xiz + rhs.xiz,
+                                     lhs.gammaz + rhs.gammaz);
 }
+
 // operator+=
-template <bool UseSIMD>
-KOKKOS_FUNCTION specfem::point::partial_derivatives2<UseSIMD, false>
-operator+=(partial_derivatives2<UseSIMD, false> &lhs,
-           const partial_derivatives2<UseSIMD, false> &rhs) {
+template <typename PointPartialDerivativesType,
+          typename std::enable_if_t<
+              !PointPartialDerivativesType::store_jacobian, int> = 0>
+KOKKOS_FUNCTION PointPartialDerivativesType &
+operator+=(PointPartialDerivativesType &lhs,
+           const PointPartialDerivativesType &rhs) {
   lhs.xix += rhs.xix;
   lhs.gammax += rhs.gammax;
   lhs.xiz += rhs.xiz;
@@ -195,23 +249,23 @@ operator+=(partial_derivatives2<UseSIMD, false> &lhs,
 }
 
 // operator*
-template <bool UseSIMD>
-KOKKOS_FUNCTION specfem::point::partial_derivatives2<UseSIMD, false>
-operator*(const type_real &lhs,
-          const partial_derivatives2<UseSIMD, false> &rhs) {
-  return specfem::point::partial_derivatives2<UseSIMD, false>(
-      lhs * rhs.xix, lhs * rhs.gammax, lhs * rhs.xiz, lhs * rhs.gammaz);
+template <typename PointPartialDerivativesType,
+          typename std::enable_if_t<
+              !PointPartialDerivativesType::store_jacobian, int> = 0>
+KOKKOS_FUNCTION PointPartialDerivativesType
+operator*(const PointPartialDerivativesType &lhs, const type_real &rhs) {
+  return PointPartialDerivativesType(lhs.xix * rhs, lhs.gammax * rhs,
+                                     lhs.xiz * rhs, lhs.gammaz * rhs);
 }
 
 // operator*
-template <bool UseSIMD>
-KOKKOS_FUNCTION specfem::point::partial_derivatives2<UseSIMD, false>
-operator*(const partial_derivatives2<UseSIMD, false> &lhs,
-          const type_real &rhs) {
-  return specfem::point::partial_derivatives2<UseSIMD, false>(
-      lhs.xix * rhs, lhs.gammax * rhs, lhs.xiz * rhs, lhs.gammaz * rhs);
+template <typename PointPartialDerivativesType,
+          typename std::enable_if_t<
+              !PointPartialDerivativesType::store_jacobian, int> = 0>
+KOKKOS_FUNCTION PointPartialDerivativesType
+operator*(const type_real &lhs, const PointPartialDerivativesType &rhs) {
+  return PointPartialDerivativesType(lhs * rhs.xix, lhs * rhs.gammax,
+                                     lhs * rhs.xiz, lhs * rhs.gammaz);
 }
 } // namespace point
 } // namespace specfem
-
-#endif
