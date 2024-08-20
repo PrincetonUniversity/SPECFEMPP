@@ -3,7 +3,7 @@
 
 // Explicit template instantiation
 template KOKKOS_FUNCTION specfem::point::kernels<
-    specfem::element::medium_tag::acoustic,
+    specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
     specfem::element::property_tag::isotropic, false>
 specfem::frechet_derivatives::impl::impl_compute_element_kernel<false>(
     const specfem::point::properties<
@@ -24,7 +24,7 @@ specfem::frechet_derivatives::impl::impl_compute_element_kernel<false>(
     const type_real &dt);
 
 template KOKKOS_FUNCTION specfem::point::kernels<
-    specfem::element::medium_tag::acoustic,
+    specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
     specfem::element::property_tag::isotropic, true>
 specfem::frechet_derivatives::impl::impl_compute_element_kernel<true>(
     const specfem::point::properties<
