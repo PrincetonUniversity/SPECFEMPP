@@ -7,7 +7,7 @@
 #include "specfem_setup.hpp"
 
 template <bool UseSIMD>
-KOKKOS_FUNCTION specfem::point::kernels<
+KOKKOS_FUNCTION specfem::point::kernels<specfem::dimension::type::dim2,
     specfem::element::medium_tag::elastic,
     specfem::element::property_tag::isotropic, UseSIMD>
 specfem::frechet_derivatives::impl::impl_compute_element_kernel(

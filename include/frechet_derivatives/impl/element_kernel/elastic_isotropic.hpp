@@ -13,7 +13,7 @@ namespace impl {
 
 template <bool UseSIMD>
 KOKKOS_FUNCTION specfem::point::kernels<
-    specfem::element::medium_tag::elastic,
+    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
     specfem::element::property_tag::isotropic, UseSIMD>
 impl_compute_element_kernel(
     const specfem::point::properties<

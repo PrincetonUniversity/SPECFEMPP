@@ -1,5 +1,4 @@
-#ifndef _SPECFEM_COMPUTE_KERNELS_IMPL_KERNELS_CONTAINER_HPP_
-#define _SPECFEM_COMPUTE_KERNELS_IMPL_KERNELS_CONTAINER_HPP_
+#pragma once
 
 #include "enumerations/medium.hpp"
 #include "kokkos_abstractions.h"
@@ -128,7 +127,7 @@ public:
       typename PointKernelType,
       typename std::enable_if_t<!PointKernelType::simd::using_simd, int> = 0>
   void load_host_kernels(specfem::point::index &index,
-                         PointKernelType kernels) const {
+                         PointKernelType &kernels) const {
 
     static_assert(PointKernelType::medium_tag == value_type);
     static_assert(PointKernelType::property_tag == property_type);
@@ -149,7 +148,7 @@ public:
       typename PointKernelType,
       typename std::enable_if_t<PointKernelType::simd::using_simd, int> = 0>
   void load_host_kernels(specfem::point::simd_index &index,
-                         PointKernelType kernels) const {
+                         PointKernelType &kernels) const {
 
     static_assert(PointKernelType::medium_tag == value_type);
     static_assert(PointKernelType::property_tag == property_type);
@@ -540,7 +539,7 @@ public:
 
     kernels.rho = rho(ispec, iz, ix);
     kernels.kappa = kappa(ispec, iz, ix);
-    kernels.rho_prime = rho_prime(ispec, iz, ix);
+    kernels.rhop = rho_prime(ispec, iz, ix);
     kernels.alpha = alpha(ispec, iz, ix);
   }
 
@@ -568,7 +567,7 @@ public:
         .copy_from(&rho(ispec, iz, ix), tag_type());
     Kokkos::Experimental::where(mask, kernels.kappa)
         .copy_from(&kappa(ispec, iz, ix), tag_type());
-    Kokkos::Experimental::where(mask, kernels.rho_prime)
+    Kokkos::Experimental::where(mask, kernels.rhop)
         .copy_from(&rho_prime(ispec, iz, ix), tag_type());
     Kokkos::Experimental::where(mask, kernels.alpha)
         .copy_from(&alpha(ispec, iz, ix), tag_type());
@@ -578,7 +577,7 @@ public:
       typename PointKernelType,
       typename std::enable_if_t<!PointKernelType::simd::using_simd, int> = 0>
   void load_host_kernels(const specfem::point::index &index,
-                         PointKernelType kernels) const {
+                         PointKernelType &kernels) const {
 
     static_assert(PointKernelType::medium_tag == value_type);
     static_assert(PointKernelType::property_tag == property_type);
@@ -589,7 +588,7 @@ public:
 
     kernels.rho = h_rho(ispec, iz, ix);
     kernels.kappa = h_kappa(ispec, iz, ix);
-    kernels.rho_prime = h_rho_prime(ispec, iz, ix);
+    kernels.rhop = h_rho_prime(ispec, iz, ix);
     kernels.alpha = h_alpha(ispec, iz, ix);
   }
 
@@ -597,7 +596,7 @@ public:
       typename PointKernelType,
       typename std::enable_if_t<PointKernelType::simd::using_simd, int> = 0>
   void load_host_kernels(const specfem::point::simd_index &index,
-                         PointKernelType kernels) const {
+                         PointKernelType &kernels) const {
 
     static_assert(PointKernelType::medium_tag == value_type);
     static_assert(PointKernelType::property_tag == property_type);
@@ -616,7 +615,7 @@ public:
         .copy_from(&h_rho(ispec, iz, ix), tag_type());
     Kokkos::Experimental::where(mask, kernels.kappa)
         .copy_from(&h_kappa(ispec, iz, ix), tag_type());
-    Kokkos::Experimental::where(mask, kernels.rho_prime)
+    Kokkos::Experimental::where(mask, kernels.rhop)
         .copy_from(&h_rho_prime(ispec, iz, ix), tag_type());
     Kokkos::Experimental::where(mask, kernels.alpha)
         .copy_from(&h_alpha(ispec, iz, ix), tag_type());
@@ -638,7 +637,7 @@ public:
 
     rho(ispec, iz, ix) = kernels.rho;
     kappa(ispec, iz, ix) = kernels.kappa;
-    rho_prime(ispec, iz, ix) = kernels.rho_prime;
+    rho_prime(ispec, iz, ix) = kernels.rhop;
     alpha(ispec, iz, ix) = kernels.alpha;
   }
 
@@ -666,7 +665,7 @@ public:
         .copy_to(&rho(ispec, iz, ix), tag_type());
     Kokkos::Experimental::where(mask, kernels.kappa)
         .copy_to(&kappa(ispec, iz, ix), tag_type());
-    Kokkos::Experimental::where(mask, kernels.rho_prime)
+    Kokkos::Experimental::where(mask, kernels.rhop)
         .copy_to(&rho_prime(ispec, iz, ix), tag_type());
     Kokkos::Experimental::where(mask, kernels.alpha)
         .copy_to(&alpha(ispec, iz, ix), tag_type());
@@ -687,7 +686,7 @@ public:
 
     h_rho(ispec, iz, ix) = kernels.rho;
     h_kappa(ispec, iz, ix) = kernels.kappa;
-    h_rho_prime(ispec, iz, ix) = kernels.rho_prime;
+    h_rho_prime(ispec, iz, ix) = kernels.rhop;
     h_alpha(ispec, iz, ix) = kernels.alpha;
   }
 
@@ -714,7 +713,7 @@ public:
         .copy_to(&h_rho(ispec, iz, ix), tag_type());
     Kokkos::Experimental::where(mask, kernels.kappa)
         .copy_to(&h_kappa(ispec, iz, ix), tag_type());
-    Kokkos::Experimental::where(mask, kernels.rho_prime)
+    Kokkos::Experimental::where(mask, kernels.rhop)
         .copy_to(&h_rho_prime(ispec, iz, ix), tag_type());
     Kokkos::Experimental::where(mask, kernels.alpha)
         .copy_to(&h_alpha(ispec, iz, ix), tag_type());
@@ -736,7 +735,7 @@ public:
 
     rho(ispec, iz, ix) += kernels.rho;
     kappa(ispec, iz, ix) += kernels.kappa;
-    rho_prime(ispec, iz, ix) += kernels.rho_prime;
+    rho_prime(ispec, iz, ix) += kernels.rhop;
     alpha(ispec, iz, ix) += kernels.alpha;
   }
 
@@ -776,7 +775,7 @@ public:
 
     Kokkos::Experimental::where(mask, lhs).copy_from(&rho_prime(ispec, iz, ix),
                                                      tag_type());
-    lhs += kernels.rho_prime;
+    lhs += kernels.rhop;
     Kokkos::Experimental::where(mask, lhs).copy_to(&rho_prime(ispec, iz, ix),
                                                    tag_type());
 
@@ -802,7 +801,7 @@ public:
 
     h_rho(ispec, iz, ix) += kernels.rho;
     h_kappa(ispec, iz, ix) += kernels.kappa;
-    h_rho_prime(ispec, iz, ix) += kernels.rho_prime;
+    h_rho_prime(ispec, iz, ix) += kernels.rhop;
     h_alpha(ispec, iz, ix) += kernels.alpha;
   }
 
@@ -841,7 +840,7 @@ public:
 
     Kokkos::Experimental::where(mask, lhs).copy_from(
         &h_rho_prime(ispec, iz, ix), tag_type());
-    lhs += kernels.rho_prime;
+    lhs += kernels.rhop;
     Kokkos::Experimental::where(mask, lhs).copy_to(&h_rho_prime(ispec, iz, ix),
                                                    tag_type());
 
@@ -884,5 +883,3 @@ public:
 } // namespace impl
 } // namespace compute
 } // namespace specfem
-
-#endif /* _SPECFEM_COMPUTE_KERNELS_IMPL_KERNELS_CONTAINER_HPP_ */
