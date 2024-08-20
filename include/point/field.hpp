@@ -1,19 +1,17 @@
-#ifndef _POINT_FIELD_HPP_
-#define _POINT_FIELD_HPP_
+#pragma once
 
 #include "datatypes/point_view.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
-#include "kokkos_abstractions.h"
+#include <Kokkos_Core.hpp>
 
 namespace specfem {
 namespace point {
 
 namespace impl {
-template <typename ViewType, bool StoreDisplacement> struct Displacement;
-
-template <typename ViewType> struct Displacement<ViewType, true> {
-  ViewType displacement;
+template <typename ViewType, bool StoreDisplacement> struct Displacement {
+  ViewType displacement; ///< Displacement at the quadrature point. Defined when
+                         ///< StoreDisplacement is true.
 
   KOKKOS_FUNCTION
   Displacement() = default;
@@ -24,10 +22,9 @@ template <typename ViewType> struct Displacement<ViewType, true> {
 
 template <typename ViewType> struct Displacement<ViewType, false> {};
 
-template <typename ViewType, bool StoreVelocity> struct Velocity;
-
-template <typename ViewType> struct Velocity<ViewType, true> {
-  ViewType velocity;
+template <typename ViewType, bool StoreVelocity> struct Velocity {
+  ViewType velocity; ///< Velocity at the quadrature point. Defined when
+                     ///< StoreVelocity is true.
 
   KOKKOS_FUNCTION
   Velocity() = default;
@@ -38,10 +35,9 @@ template <typename ViewType> struct Velocity<ViewType, true> {
 
 template <typename ViewType> struct Velocity<ViewType, false> {};
 
-template <typename ViewType, bool StoreAcceleration> struct Acceleration;
-
-template <typename ViewType> struct Acceleration<ViewType, true> {
-  ViewType acceleration;
+template <typename ViewType, bool StoreAcceleration> struct Acceleration {
+  ViewType acceleration; ///< Acceleration at the quadrature point. Defined when
+                         ///< StoreAcceleration is true.
 
   KOKKOS_FUNCTION
   Acceleration() = default;
@@ -52,10 +48,9 @@ template <typename ViewType> struct Acceleration<ViewType, true> {
 
 template <typename ViewType> struct Acceleration<ViewType, false> {};
 
-template <typename ViewType, bool StoreMassMatrix> struct MassMatrix;
-
-template <typename ViewType> struct MassMatrix<ViewType, true> {
-  ViewType mass_matrix;
+template <typename ViewType, bool StoreMassMatrix> struct MassMatrix {
+  ViewType mass_matrix; ///< Mass matrix at the quadrature point. Defined when
+                        ///< StoreMassMatrix is true.
 
   KOKKOS_FUNCTION
   MassMatrix() = default;
@@ -63,6 +58,13 @@ template <typename ViewType> struct MassMatrix<ViewType, true> {
   KOKKOS_FUNCTION
   MassMatrix(const ViewType mass_matrix) : mass_matrix(mass_matrix) {}
 
+  /**
+   * @brief Invert mass matrix
+   *
+   * This function is enabled when StoreMassMatrix is true.
+   *
+   * @return ViewType
+   */
   KOKKOS_FUNCTION
   ViewType invert_mass_matrix() const {
     ViewType result;
@@ -77,7 +79,7 @@ template <typename ViewType> struct MassMatrix<ViewType, false> {};
 
 template <typename ViewType, bool StoreDisplacement, bool StoreVelocity,
           bool StoreAcceleration, bool StoreMassMatrix>
-struct ImplFieldTraits : public Displacement<ViewType, StoreDisplacement>,
+struct ImplFieldTraits : public Displacement<ViewType, true>,
                          public Velocity<ViewType, StoreVelocity>,
                          public Acceleration<ViewType, StoreAcceleration>,
                          public MassMatrix<ViewType, StoreMassMatrix> {
@@ -185,6 +187,14 @@ public:
                         std::integral_constant<bool, StoreAcceleration>{},
                         std::integral_constant<bool, StoreMassMatrix>{}) {}
 
+  /**
+   * @brief Divide acceleration by mass matrix
+   *
+   * This function is enabled when StoreAcceleration and StoreMassMatrix are
+   * true.
+   *
+   * @return ViewType Acceleration divided by mass matrix
+   */
   KOKKOS_FUNCTION
   ViewType divide_mass_matrix() const {
     return divide_mass_matrix(std::integral_constant<bool, StoreAcceleration>{},
@@ -232,6 +242,22 @@ public:
 
 } // namespace impl
 
+/**
+ * @brief Point field type to store displacement, velocity, acceleration and
+ mass
+ * matrix at a quadrature point
+ *
+ * @tparam DimensionType Dimension of the element where the quadrature point is
+ * located
+ * @tparam MediumType Medium type of the element where the quadrature point is
+ * located
+ * @tparam StoreDisplacement Store displacement at the quadrature point
+ * @tparam StoreVelocity Store velocity at the quadrature point
+ * @tparam StoreAcceleration Store acceleration at the quadrature point
+ * @tparam StoreMassMatrix Store mass matrix at the quadrature point
+ * @tparam UseSIMD Boolean to enable SIMD operations
+ *
+ */
 template <specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumType, bool StoreDisplacement,
           bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix,
@@ -242,243 +268,124 @@ struct field
                                StoreMassMatrix, UseSIMD> {
 
 public:
-  using simd = specfem::datatype::simd<type_real, UseSIMD>;
+  /**
+   * @name Typedefs
+   *
+   */
+  ///@{
+  using simd = specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD type
+  using ViewType = typename impl::FieldTraits<
+      DimensionType, MediumType, StoreDisplacement, StoreVelocity,
+      StoreAcceleration, StoreMassMatrix, UseSIMD>::ViewType; ///< Underlying
+                                                              ///< datatype used
+                                                              ///< to store the
+                                                              ///< field
+  ///@}
 
-  using ViewType =
-      typename impl::FieldTraits<DimensionType, MediumType, StoreDisplacement,
-                                 StoreVelocity, StoreAcceleration,
-                                 StoreMassMatrix, UseSIMD>::ViewType;
-
-  constexpr static int components = ViewType::components;
+  /**
+   * @name Compile time constants
+   *
+   */
+  ///@{
+  constexpr static int components =
+      ViewType::components; ///< Number of field components for specified medium
   constexpr static int dimension =
-      specfem::dimension::dimension<DimensionType>::dim;
-  constexpr static auto medium_tag = MediumType;
+      specfem::dimension::dimension<DimensionType>::dim; ///< Number of
+                                                         ///< dimensions
+                                                         ///< associated with
+                                                         ///< the DimensionType
+  constexpr static auto medium_tag =
+      MediumType; ///< Medium type of the element where the quadrature point is
+                  ///< located
 
-  constexpr static bool store_displacement = StoreDisplacement;
-  constexpr static bool store_velocity = StoreVelocity;
-  constexpr static bool store_acceleration = StoreAcceleration;
-  constexpr static bool store_mass_matrix = StoreMassMatrix;
+  constexpr static bool store_displacement =
+      StoreDisplacement; ///< Store displacement at the quadrature point
+  constexpr static bool store_velocity =
+      StoreVelocity; ///< Store velocity at the quadrature point
+  constexpr static bool store_acceleration =
+      StoreAcceleration; ///< Store acceleration at the quadrature point
+  constexpr static bool store_mass_matrix =
+      StoreMassMatrix; ///< Store mass matrix at the quadrature point
 
-  constexpr static bool isChunkFieldType = ViewType::isChunkViewType;
-  constexpr static bool isPointFieldType = ViewType::isPointViewType;
-  constexpr static int isElementFieldType = ViewType::isElementViewType;
+  constexpr static bool isChunkFieldType =
+      ViewType::isChunkViewType; ///< Check if the field is a chunk field type
+                                 ///< (false)
+  constexpr static bool isPointFieldType =
+      ViewType::isPointViewType; ///< Check if the field is a point field type
+                                 ///< (true)
+  constexpr static bool isElementFieldType =
+      ViewType::isElementViewType; ///< Check if the field is an element field
+                                   ///< type (false)
+  ///@}
 
+  /**
+   * @name Constructors
+   *
+   */
+  ///@{
+  /**
+   * @brief Default constructor
+   *
+   */
   KOKKOS_FUNCTION
   field() = default;
 
+  /**
+   * @brief Construct new point field object with single view type.
+   *
+   * This constructore is enabled when only one of StoreDisplacement,
+   * StoreVelocity, StoreAcceleration, StoreMassMatrix is true.
+   *
+   * @param view View associated with field type defined by the template
+   * parameters
+   */
   KOKKOS_FUNCTION
   field(const ViewType view)
       : impl::FieldTraits<DimensionType, MediumType, StoreDisplacement,
                           StoreVelocity, StoreAcceleration, StoreMassMatrix,
                           UseSIMD>(view) {}
 
+  /**
+   * @brief Construct new point field object with two view types.
+   *
+   * This constructor is enabled when two of StoreDisplacement, StoreVelocity,
+   * and StoreAcceleration are true.
+   *
+   * @param view1
+   * displacement view
+   * @code if ((StoreDisplacement && StoreVelocity == true) ||
+   * (StoreDisplacement && StoreAcceleration == true)) @endcode.
+   *  velocity view
+   * if @code (StoreVelocity && StoreAcceleration == true) @endcode
+   * @param view2
+   * velocity view
+   * if @code (StoreDisplacement && StoreVelocity == true) @endcode.
+   * acceleration view
+   * if @code (StoreDisplacement && StoreAcceleration == true) || StoreVelocity
+   * && StoreAcceleration == true) @endcode
+   */
   KOKKOS_FUNCTION
   field(const ViewType view1, const ViewType view2)
       : impl::FieldTraits<DimensionType, MediumType, StoreDisplacement,
                           StoreVelocity, StoreAcceleration, StoreMassMatrix,
                           UseSIMD>(view1, view2) {}
 
+  /**
+   * @brief Construct new point field object with three view types.
+   *
+   * This constructor is enabled when StoreDisplacement, StoreVelocity, and
+   * StoreAcceleration are true.
+   * @param view1 displacement view
+   * @param view2 velocity view
+   * @param view3 acceleration view
+   */
   KOKKOS_FUNCTION
   field(const ViewType view1, const ViewType view2, const ViewType view3)
       : impl::FieldTraits<DimensionType, MediumType, StoreDisplacement,
                           StoreVelocity, StoreAcceleration, StoreMassMatrix,
                           UseSIMD>(view1, view2, view3) {}
+  ///@}
 };
-
-// template <specfem::dimension::type DimensionType,
-//           specfem::element::medium_tag MediumType>
-// struct field<DimensionType, MediumType, true, true, true, false>
-//     : public impl::FieldTraits<DimensionType, MediumType, true, true, true,
-//                                false> {
-
-//   using ViewType = typename impl::FieldTraits<DimensionType, MediumType,
-//   true,
-//                                               true, true, false>::ViewType;
-
-//   ViewType displacement;
-//   ViewType velocity;
-//   ViewType acceleration;
-
-//   KOKKOS_FUNCTION
-//   field() = default;
-
-//   KOKKOS_FUNCTION
-//   field(const ViewType displacement, const ViewType velocity,
-//         const ViewType acceleration)
-//       : displacement(displacement), velocity(velocity),
-//         acceleration(acceleration) {}
-// };
-
-// template <specfem::dimension::type DimensionType,
-//           specfem::element::medium_tag MediumType>
-// struct field<DimensionType, MediumType, true, false, false, false> {
-// public:
-//   static constexpr int components =
-//       specfem::medium::medium<DimensionType, MediumType>::components;
-
-//   specfem::kokkos::array_type<type_real, components> displacement;
-
-//   KOKKOS_FUNCTION
-//   field() = default;
-
-//   KOKKOS_FUNCTION
-//   field(const specfem::kokkos::array_type<type_real, components>
-//   displacement)
-//       : displacement(displacement) {}
-// };
-
-// template <specfem::dimension::type DimensionType,
-//           specfem::element::medium_tag MediumType>
-// struct field<DimensionType, MediumType, false, true, false, false> {
-// public:
-//   static constexpr int components =
-//       specfem::medium::medium<DimensionType, MediumType>::components;
-
-//   specfem::kokkos::array_type<type_real, components> velocity;
-
-//   KOKKOS_FUNCTION
-//   field() = default;
-
-//   KOKKOS_FUNCTION
-//   field(const specfem::kokkos::array_type<type_real, components> velocity)
-//       : velocity(velocity) {}
-// };
-
-// template <specfem::dimension::type DimensionType,
-//           specfem::element::medium_tag MediumType>
-// struct field<DimensionType, MediumType, false, false, true, false> {
-// public:
-//   static constexpr int components =
-//       specfem::medium::medium<DimensionType, MediumType>::components;
-
-//   specfem::kokkos::array_type<type_real, components> acceleration;
-
-//   KOKKOS_FUNCTION
-//   field() = default;
-
-//   KOKKOS_FUNCTION
-//   field(const specfem::kokkos::array_type<type_real, components>
-//   acceleration)
-//       : acceleration(acceleration) {}
-// };
-
-// template <specfem::dimension::type DimensionType,
-//           specfem::element::medium_tag MediumType>
-// struct field<DimensionType, MediumType, true, true, false, false> {
-// public:
-//   static constexpr int components =
-//       specfem::medium::medium<DimensionType, MediumType>::components;
-
-//   specfem::kokkos::array_type<type_real, components> displacement;
-//   specfem::kokkos::array_type<type_real, components> velocity;
-
-//   KOKKOS_FUNCTION
-//   field() = default;
-
-//   KOKKOS_FUNCTION
-//   field(const specfem::kokkos::array_type<type_real, components>
-//   displacement,
-//         const specfem::kokkos::array_type<type_real, components> velocity)
-//       : displacement(displacement), velocity(velocity) {}
-// };
-
-// template <specfem::dimension::type DimensionType,
-//           specfem::element::medium_tag MediumType>
-// struct field<DimensionType, MediumType, true, false, true, false> {
-// public:
-//   static constexpr int components =
-//       specfem::medium::medium<DimensionType, MediumType>::components;
-
-//   specfem::kokkos::array_type<type_real, components> displacement;
-//   specfem::kokkos::array_type<type_real, components> acceleration;
-
-//   KOKKOS_FUNCTION
-//   field() = default;
-
-//   KOKKOS_FUNCTION
-//   field(const specfem::kokkos::array_type<type_real, components>
-//   displacement,
-//         const specfem::kokkos::array_type<type_real, components>
-//         acceleration)
-//       : displacement(displacement), acceleration(acceleration) {}
-// };
-
-// template <specfem::dimension::type DimensionType,
-//           specfem::element::medium_tag MediumType>
-// struct field<DimensionType, MediumType, false, true, true, false> {
-// public:
-//   static constexpr int components =
-//       specfem::medium::medium<DimensionType, MediumType>::components;
-
-//   specfem::kokkos::array_type<type_real, components> velocity;
-//   specfem::kokkos::array_type<type_real, components> acceleration;
-
-//   KOKKOS_FUNCTION
-//   field() = default;
-
-//   KOKKOS_FUNCTION
-//   field(const specfem::kokkos::array_type<type_real, components> velocity,
-//         const specfem::kokkos::array_type<type_real, components>
-//         acceleration)
-//       : velocity(velocity), acceleration(acceleration) {}
-// };
-
-// template <specfem::dimension::type DimensionType,
-//           specfem::element::medium_tag MediumType>
-// struct field<DimensionType, MediumType, false, false, false, true> {
-// public:
-//   static constexpr int components =
-//       specfem::medium::medium<DimensionType, MediumType>::components;
-
-//   specfem::kokkos::array_type<type_real, components> mass_matrix;
-
-//   KOKKOS_FUNCTION
-//   field() = default;
-
-//   KOKKOS_FUNCTION
-//   field(const specfem::kokkos::array_type<type_real, components> mass_matrix)
-//       : mass_matrix(mass_matrix) {}
-
-//   KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, components>
-//   invert_mass_matrix() const {
-//     specfem::kokkos::array_type<type_real, components> result;
-//     for (int i = 0; i < components; i++) {
-//       result[i] = 1.0 / mass_matrix[i];
-//     }
-//     return result;
-//   }
-// };
-
-// template <specfem::dimension::type DimensionType,
-//           specfem::element::medium_tag MediumType>
-// struct field<DimensionType, MediumType, false, false, true, true> {
-// public:
-//   static constexpr int components =
-//       specfem::medium::medium<DimensionType, MediumType>::components;
-
-//   specfem::kokkos::array_type<type_real, components> acceleration;
-//   specfem::kokkos::array_type<type_real, components> mass_matrix;
-
-//   KOKKOS_FUNCTION
-//   field() = default;
-
-//   KOKKOS_FUNCTION
-//   field(const specfem::kokkos::array_type<type_real, components>
-//   acceleration,
-//         const specfem::kokkos::array_type<type_real, components> mass_matrix)
-//       : acceleration(acceleration), mass_matrix(mass_matrix) {}
-
-//   KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, components>
-//   divide_mass_matrix() const {
-//     specfem::kokkos::array_type<type_real, components> result;
-//     for (int i = 0; i < components; ++i) {
-//       result[i] = acceleration[i] * mass_matrix[i];
-//     }
-//     return result;
-//   }
-// };
 
 } // namespace point
 } // namespace specfem
-
-#endif
