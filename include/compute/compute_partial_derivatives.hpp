@@ -109,10 +109,10 @@ struct partial_derivatives {
 template <typename PartialDerivativesType,
           typename std::enable_if_t<PartialDerivativesType::simd::using_simd,
                                     int> = 0>
-NOINLINE KOKKOS_FUNCTION void
-load_on_device(const specfem::point::simd_index &index,
-               const specfem::compute::partial_derivatives &derivatives,
-               PartialDerivativesType &partial_derivatives) {
+NOINLINE KOKKOS_FUNCTION void load_on_device(
+    const specfem::point::simd_index<PartialDerivativesType::dimension> &index,
+    const specfem::compute::partial_derivatives &derivatives,
+    PartialDerivativesType &partial_derivatives) {
 
   const int ispec = index.ispec;
   const int nspec = derivatives.nspec;
@@ -144,10 +144,10 @@ load_on_device(const specfem::point::simd_index &index,
 template <typename PartialDerivativesType,
           typename std::enable_if_t<!PartialDerivativesType::simd::using_simd,
                                     int> = 0>
-NOINLINE KOKKOS_FUNCTION void
-load_on_device(const specfem::point::index &index,
-               const specfem::compute::partial_derivatives &derivatives,
-               PartialDerivativesType &partial_derivatives) {
+NOINLINE KOKKOS_FUNCTION void load_on_device(
+    const specfem::point::index<PartialDerivativesType::dimension> &index,
+    const specfem::compute::partial_derivatives &derivatives,
+    PartialDerivativesType &partial_derivatives) {
 
   const int ispec = index.ispec;
   const int iz = index.iz;
@@ -167,9 +167,10 @@ load_on_device(const specfem::point::index &index,
 template <typename PartialDerivativesType,
           typename std::enable_if_t<PartialDerivativesType::simd::using_simd,
                                     int> = 0>
-void load_on_host(const specfem::point::simd_index &index,
-                  const specfem::compute::partial_derivatives &derivatives,
-                  PartialDerivativesType &partial_derivatives) {
+void load_on_host(
+    const specfem::point::simd_index<PartialDerivativesType::dimension> &index,
+    const specfem::compute::partial_derivatives &derivatives,
+    PartialDerivativesType &partial_derivatives) {
 
   const int ispec = index.ispec;
   const int nspec = derivatives.nspec;
@@ -201,9 +202,10 @@ void load_on_host(const specfem::point::simd_index &index,
 template <typename PartialDerivativesType,
           typename std::enable_if_t<!PartialDerivativesType::simd::using_simd,
                                     int> = 0>
-void load_on_host(const specfem::point::index &index,
-                  const specfem::compute::partial_derivatives &derivatives,
-                  PartialDerivativesType &partial_derivatives) {
+void load_on_host(
+    const specfem::point::index<PartialDerivativesType::dimension> &index,
+    const specfem::compute::partial_derivatives &derivatives,
+    PartialDerivativesType &partial_derivatives) {
 
   const int ispec = index.ispec;
   const int iz = index.iz;
@@ -223,9 +225,10 @@ void load_on_host(const specfem::point::index &index,
 template <typename PartialDerivativesType,
           typename std::enable_if_t<PartialDerivativesType::simd::using_simd,
                                     int> = 0>
-void store_on_host(const specfem::point::simd_index &index,
-                   const specfem::compute::partial_derivatives &derivatives,
-                   const PartialDerivativesType &partial_derivatives) {
+void store_on_host(
+    const specfem::point::simd_index<PartialDerivativesType::dimension> &index,
+    const specfem::compute::partial_derivatives &derivatives,
+    const PartialDerivativesType &partial_derivatives) {
 
   const int ispec = index.ispec;
   const int nspec = derivatives.nspec;
@@ -257,9 +260,10 @@ void store_on_host(const specfem::point::simd_index &index,
 template <typename PartialDerivativesType,
           typename std::enable_if_t<!PartialDerivativesType::simd::using_simd,
                                     int> = 0>
-void store_on_host(const specfem::point::index &index,
-                   const specfem::compute::partial_derivatives &derivatives,
-                   const PartialDerivativesType &partial_derivatives) {
+void store_on_host(
+    const specfem::point::index<PartialDerivativesType::dimension> &index,
+    const specfem::compute::partial_derivatives &derivatives,
+    const PartialDerivativesType &partial_derivatives) {
 
   const int ispec = index.ispec;
   const int iz = index.iz;

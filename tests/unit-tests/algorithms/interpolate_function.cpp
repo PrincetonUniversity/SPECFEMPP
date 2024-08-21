@@ -51,7 +51,8 @@ TEST(ALGORITHMS, interpolate_function) {
   for (int iz = 0; iz < N; ++iz) {
     for (int ix = 0; ix < N; ++ix) {
       polynomial(iz, ix) = hxi(ix) * hgamma(iz);
-      specfem::point::lcoord2 lcoord = { ispec_target, gamma(iz), xi(ix) };
+      specfem::point::local_coordinates<specfem::dimension::type::dim2>
+          lcoord = { ispec_target, gamma(iz), xi(ix) };
       auto gcoord = specfem::algorithms::locate_point(lcoord, assembly);
 
       function(iz, ix) = function1(gcoord.x, gcoord.z);
@@ -61,8 +62,8 @@ TEST(ALGORITHMS, interpolate_function) {
   auto function_interpolated =
       specfem::algorithms::interpolate_function(polynomial, function);
 
-  const specfem::point::lcoord2 lcoord = { ispec_target, gamma_target,
-                                           xi_target };
+  const specfem::point::local_coordinates<specfem::dimension::type::dim2>
+      lcoord = { ispec_target, gamma_target, xi_target };
   auto gcoord = specfem::algorithms::locate_point(lcoord, assembly);
 
   type_real function_value = function1(gcoord.x, gcoord.z);

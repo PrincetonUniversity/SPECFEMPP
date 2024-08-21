@@ -201,7 +201,8 @@ specfem::compute::impl::boundaries::stacey::stacey(
             // Compute edge normal and edge weight
             std::array<type_real, 2> weights = { quadrature.gll.h_weights(ix),
                                                  quadrature.gll.h_weights(iz) };
-            specfem::point::index index(ispec_compute, iz, ix);
+            specfem::point::index<specfem::dimension::type::dim2> index(
+                ispec_compute, iz, ix);
             specfem::point::partial_derivatives<specfem::dimension::type::dim2,
                                                 true, false>
                 point_partial_derivatives;

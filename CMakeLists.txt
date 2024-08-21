@@ -125,7 +125,6 @@ add_library(
         point
         src/point/coordinates.cpp
         src/point/partial_derivatives.cpp
-        # src/point/boundaries.cpp
 )
 
 target_link_libraries(

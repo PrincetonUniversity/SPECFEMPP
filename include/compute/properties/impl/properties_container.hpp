@@ -55,7 +55,7 @@ struct properties_container<specfem::element::medium_tag::elastic,
       typename PointProperties,
       typename std::enable_if_t<!PointProperties::simd::using_simd, int> = 0>
   KOKKOS_INLINE_FUNCTION void
-  load_device_properties(const specfem::point::index &index,
+  load_device_properties(const specfem::point::index<dimension> &index,
                          PointProperties &property) const {
 
     static_assert(PointProperties::dimension == dimension,
@@ -81,7 +81,7 @@ struct properties_container<specfem::element::medium_tag::elastic,
       typename PointProperties,
       typename std::enable_if_t<PointProperties::simd::using_simd, int> = 0>
   KOKKOS_INLINE_FUNCTION void
-  load_device_properties(const specfem::point::simd_index &index,
+  load_device_properties(const specfem::point::simd_index<dimension> &index,
                          PointProperties &property) const {
 
     static_assert(PointProperties::dimension == dimension,
@@ -116,7 +116,7 @@ struct properties_container<specfem::element::medium_tag::elastic,
   template <
       typename PointProperties,
       typename std::enable_if_t<!PointProperties::simd::using_simd, int> = 0>
-  void load_host_properties(const specfem::point::index &index,
+  void load_host_properties(const specfem::point::index<dimension> &index,
                             PointProperties &property) const {
 
     static_assert(PointProperties::dimension == dimension,
@@ -141,7 +141,7 @@ struct properties_container<specfem::element::medium_tag::elastic,
   template <
       typename PointProperties,
       typename std::enable_if_t<PointProperties::simd::using_simd, int> = 0>
-  void load_host_properties(const specfem::point::simd_index &index,
+  void load_host_properties(const specfem::point::simd_index<dimension> &index,
                             PointProperties &property) const {
 
     static_assert(PointProperties::dimension == dimension,
@@ -188,7 +188,7 @@ struct properties_container<specfem::element::medium_tag::elastic,
   template <
       typename PointProperties,
       typename std::enable_if_t<!PointProperties::simd::using_simd, int> = 0>
-  void assign(const specfem::point::index &index,
+  void assign(const specfem::point::index<dimension> &index,
               const PointProperties &property) const {
 
     static_assert(PointProperties::dimension == dimension,
@@ -210,7 +210,7 @@ struct properties_container<specfem::element::medium_tag::elastic,
   template <
       typename PointProperties,
       typename std::enable_if_t<PointProperties::simd::using_simd, int> = 0>
-  void assign(const specfem::point::simd_index &index,
+  void assign(const specfem::point::simd_index<dimension> &index,
               const PointProperties &property) const {
 
     static_assert(PointProperties::dimension == dimension,
@@ -280,7 +280,7 @@ struct properties_container<specfem::element::medium_tag::acoustic,
       typename PointProperties,
       typename std::enable_if_t<!PointProperties::simd::using_simd, int> = 0>
   KOKKOS_INLINE_FUNCTION void
-  load_device_properties(const specfem::point::index &index,
+  load_device_properties(const specfem::point::index<dimension> &index,
                          PointProperties &property) const {
 
     static_assert(PointProperties::dimension == dimension,
@@ -305,7 +305,7 @@ struct properties_container<specfem::element::medium_tag::acoustic,
       typename PointProperties,
       typename std::enable_if_t<PointProperties::simd::using_simd, int> = 0>
   KOKKOS_INLINE_FUNCTION void
-  load_device_properties(const specfem::point::simd_index &index,
+  load_device_properties(const specfem::point::simd_index<dimension> &index,
                          PointProperties &property) const {
 
     static_assert(PointProperties::dimension == dimension,
@@ -339,7 +339,7 @@ struct properties_container<specfem::element::medium_tag::acoustic,
   template <
       typename PointProperties,
       typename std::enable_if_t<!PointProperties::simd::using_simd, int> = 0>
-  void load_host_properties(const specfem::point::index &index,
+  void load_host_properties(const specfem::point::index<dimension> &index,
                             PointProperties &property) const {
 
     static_assert(PointProperties::dimension == dimension,
@@ -363,7 +363,7 @@ struct properties_container<specfem::element::medium_tag::acoustic,
   template <
       typename PointProperties,
       typename std::enable_if_t<PointProperties::simd::using_simd, int> = 0>
-  void load_host_properties(const specfem::point::simd_index &index,
+  void load_host_properties(const specfem::point::simd_index<dimension> &index,
                             PointProperties &property) const {
 
     static_assert(PointProperties::dimension == dimension,
@@ -409,7 +409,7 @@ struct properties_container<specfem::element::medium_tag::acoustic,
   template <
       typename PointProperties,
       typename std::enable_if_t<!PointProperties::simd::using_simd, int> = 0>
-  void assign(const specfem::point::index &index,
+  void assign(const specfem::point::index<dimension> &index,
               const PointProperties &property) const {
 
     static_assert(PointProperties::dimension == dimension,
@@ -431,7 +431,7 @@ struct properties_container<specfem::element::medium_tag::acoustic,
   template <
       typename PointProperties,
       typename std::enable_if_t<PointProperties::simd::using_simd, int> = 0>
-  void assign(const specfem::point::simd_index &index,
+  void assign(const specfem::point::simd_index<dimension> &index,
               const PointProperties &property) const {
 
     static_assert(PointProperties::dimension == dimension,

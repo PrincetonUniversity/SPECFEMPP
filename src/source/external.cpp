@@ -21,7 +21,8 @@ void specfem::sources::external::compute_source_array(
     const specfem::compute::properties &properties,
     specfem::kokkos::HostView3d<type_real> source_array) {
 
-  specfem::point::gcoord2 coord = specfem::point::gcoord2(this->x, this->z);
+  specfem::point::global_coordinates<specfem::dimension::type::dim2> coord(
+      this->x, this->z);
   auto lcoord = specfem::algorithms::locate_point(coord, mesh);
 
   const auto xi = mesh.quadratures.gll.h_xi;

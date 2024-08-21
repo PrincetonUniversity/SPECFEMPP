@@ -54,13 +54,10 @@ specfem::compute::receivers::receivers(
         this->h_receiver_array, irec, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
     receivers[irec]->compute_receiver_array(mesh, sv_receiver_array);
 
-    specfem::point::gcoord2 coord = { receivers[irec]->get_x(),
-                                      receivers[irec]->get_z() };
+    specfem::point::global_coordinates<specfem::dimension::type::dim2> coord = {
+      receivers[irec]->get_x(), receivers[irec]->get_z()
+    };
     auto lcoord = specfem::algorithms::locate_point(coord, mesh);
-
-    std::cout << "ispec = " << lcoord.ispec << std::endl;
-    std::cout << "xi = " << lcoord.xi << std::endl;
-    std::cout << "gamma = " << lcoord.gamma << std::endl;
 
     this->h_ispec_array(irec) = lcoord.ispec;
     const auto angle = receivers[irec]->get_angle();

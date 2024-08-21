@@ -104,7 +104,7 @@ void specfem::frechet_derivatives::impl::frechet_elements<
                      ElementQuadratureType::shmem_size();
 
   using ChunkPolicy =
-      specfem::policy::element_chunk<ParallelConfig,
+      specfem::policy::element_chunk<ParallelConfig, DimensionType,
                                      Kokkos::DefaultExecutionSpace>;
 
   ChunkPolicy chunk_policy(element_index, NGLL, NGLL);
@@ -112,7 +112,7 @@ void specfem::frechet_derivatives::impl::frechet_elements<
   Kokkos::parallel_for(
       "specfem::frechet_derivatives::frechet_elements::compute",
       chunk_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
-      KOKKOS_CLASS_LAMBDA(const ChunkPolicy::member_type &team) {
+      KOKKOS_CLASS_LAMBDA(const typename ChunkPolicy::member_type &team) {
         // Allocate scratch memory
         ChunkElementFieldType adjoint_element_field(team);
         ChunkElementFieldType backward_element_field(team);

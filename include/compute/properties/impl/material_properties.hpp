@@ -17,6 +17,7 @@ struct material_property
           type, property> {
   constexpr static auto value_type = type;
   constexpr static auto property_type = property;
+  constexpr static auto dimension = specfem::dimension::type::dim2;
 
   material_property() = default;
 
@@ -46,7 +47,8 @@ struct material_property
 
             // Assign the material property to the property container
             auto point_property = material.get_properties();
-            this->assign(specfem::point::index(count, iz, ix), point_property);
+            this->assign(specfem::point::index<dimension>(count, iz, ix),
+                         point_property);
           }
         }
         count++;

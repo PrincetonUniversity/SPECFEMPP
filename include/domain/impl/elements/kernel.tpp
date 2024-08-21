@@ -100,7 +100,7 @@ void specfem::domain::impl::kernels::element_kernel_base<
   using ParallelConfig = specfem::parallel_config::default_chunk_config<simd>;
 
   using ChunkPolicyType =
-      specfem::policy::element_chunk<ParallelConfig,
+      specfem::policy::element_chunk<ParallelConfig, DimensionType,
                                      Kokkos::DefaultExecutionSpace>;
 
   using PointBoundaryType = specfem::point::boundary<BoundaryTag, using_simd>;
@@ -112,7 +112,7 @@ void specfem::domain::impl::kernels::element_kernel_base<
   Kokkos::parallel_for(
       "specfem::domain::impl::kernels::elements::compute_mass_matrix",
       chunk_policy.get_policy(),
-      KOKKOS_CLASS_LAMBDA(const ChunkPolicyType::member_type &team) {
+      KOKKOS_CLASS_LAMBDA(const typename ChunkPolicyType::member_type &team) {
         for (int tile = 0; tile < ChunkPolicyType::TileSize * simd_size;
              tile += ChunkPolicyType::ChunkSize * simd_size) {
           const int starting_element_index =
@@ -430,7 +430,7 @@ void specfem::domain::impl::kernels::element_kernel_base<
                      ElementQuadratureType::shmem_size();
 
   using ChunkPolicyType =
-      specfem::policy::element_chunk<ParallelConfig,
+      specfem::policy::element_chunk<ParallelConfig, DimensionType,
                                      Kokkos::DefaultExecutionSpace>;
 
   ChunkPolicyType chunk_policy(element_kernel_index_mapping, NGLL, NGLL);
@@ -438,7 +438,7 @@ void specfem::domain::impl::kernels::element_kernel_base<
   Kokkos::parallel_for(
       "specfem::domain::impl::kernels::elements::compute_stiffness_interaction",
       chunk_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
-      KOKKOS_CLASS_LAMBDA(const ChunkPolicyType::member_type &team) {
+      KOKKOS_CLASS_LAMBDA(const typename ChunkPolicyType::member_type &team) {
         ChunkElementFieldType element_field(team);
         ElementQuadratureType element_quadrature(team);
         ChunkStressIntegrandType stress_integrand(team);
@@ -825,7 +825,7 @@ void specfem::domain::impl::kernels::element_kernel<
               int ix, iz;
               sub2ind(xz, ngllx, iz, ix);
 
-              const specfem::point::index index(ispec_l, iz, ix);
+              const specfem::point::index<DimensionType> index(ispec_l, iz, ix);
 
               PointAccelerationType acceleration;
               specfem::compute::load_on_device(

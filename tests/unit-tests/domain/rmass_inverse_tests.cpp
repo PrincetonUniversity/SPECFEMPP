@@ -194,7 +194,8 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
         for (int ix = 0; ix < ngllx; ++ix) {
           for (int iz = 0; iz < ngllz; ++iz) {
             for (int ispec = 0; ispec < nspec; ++ispec) {
-              specfem::point::index index(ispec, iz, ix);
+              specfem::point::index<specfem::dimension::type::dim2> index(
+                  ispec, iz, ix);
               const int ispec_mesh =
                   assembly.mesh.mapping.compute_to_mesh(ispec);
               if (assembly.properties.h_element_types(ispec) ==
@@ -253,7 +254,8 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
         for (int ix = 0; ix < ngllx; ++ix) {
           for (int iz = 0; iz < ngllz; ++iz) {
             for (int ispec = 0; ispec < nspec; ++ispec) {
-              specfem::point::index index(ispec, iz, ix);
+              specfem::point::index<specfem::dimension::type::dim2> index(
+                  ispec, iz, ix);
               const int ispec_mesh =
                   assembly.mesh.mapping.compute_to_mesh(ispec);
               if (assembly.properties.h_element_types(ispec) ==

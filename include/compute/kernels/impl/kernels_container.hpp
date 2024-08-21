@@ -70,9 +70,9 @@ public:
   template <
       typename PointKernelType,
       typename std::enable_if_t<!PointKernelType::simd::using_simd, int> = 0>
-  KOKKOS_INLINE_FUNCTION void
-  load_device_kernels(const specfem::point::index &index,
-                      PointKernelType &kernels) const {
+  KOKKOS_INLINE_FUNCTION void load_device_kernels(
+      const specfem::point::index<PointKernelType::dimension> &index,
+      PointKernelType &kernels) const {
 
     static_assert(PointKernelType::medium_tag == value_type);
     static_assert(PointKernelType::property_tag == property_type);
@@ -92,9 +92,9 @@ public:
   template <
       typename PointKernelType,
       typename std::enable_if_t<PointKernelType::simd::using_simd, int> = 0>
-  KOKKOS_INLINE_FUNCTION void
-  load_device_kernels(const specfem::point::simd_index &index,
-                      PointKernelType &kernels) const {
+  KOKKOS_INLINE_FUNCTION void load_device_kernels(
+      const specfem::point::simd_index<PointKernelType::dimension> &index,
+      PointKernelType &kernels) const {
 
     static_assert(PointKernelType::medium_tag == value_type);
     static_assert(PointKernelType::property_tag == property_type);
@@ -126,8 +126,9 @@ public:
   template <
       typename PointKernelType,
       typename std::enable_if_t<!PointKernelType::simd::using_simd, int> = 0>
-  void load_host_kernels(specfem::point::index &index,
-                         PointKernelType &kernels) const {
+  void
+  load_host_kernels(specfem::point::index<PointKernelType::dimension> &index,
+                    PointKernelType &kernels) const {
 
     static_assert(PointKernelType::medium_tag == value_type);
     static_assert(PointKernelType::property_tag == property_type);
@@ -147,8 +148,9 @@ public:
   template <
       typename PointKernelType,
       typename std::enable_if_t<PointKernelType::simd::using_simd, int> = 0>
-  void load_host_kernels(specfem::point::simd_index &index,
-                         PointKernelType &kernels) const {
+  void load_host_kernels(
+      specfem::point::simd_index<PointKernelType::dimension> &index,
+      PointKernelType &kernels) const {
 
     static_assert(PointKernelType::medium_tag == value_type);
     static_assert(PointKernelType::property_tag == property_type);
@@ -180,9 +182,9 @@ public:
   template <
       typename PointKernelType,
       typename std::enable_if_t<!PointKernelType::simd::using_simd, int> = 0>
-  KOKKOS_INLINE_FUNCTION void
-  update_kernels_on_device(const specfem::point::index &index,
-                           const PointKernelType &kernels) const {
+  KOKKOS_INLINE_FUNCTION void update_kernels_on_device(
+      const specfem::point::index<PointKernelType::dimension> &index,
+      const PointKernelType &kernels) const {
 
     static_assert(PointKernelType::medium_tag == value_type);
     static_assert(PointKernelType::property_tag == property_type);
@@ -202,9 +204,9 @@ public:
   template <
       typename PointKernelType,
       typename std::enable_if_t<PointKernelType::simd::using_simd, int> = 0>
-  KOKKOS_INLINE_FUNCTION void
-  update_kernels_on_device(const specfem::point::simd_index &index,
-                           const PointKernelType &kernels) const {
+  KOKKOS_INLINE_FUNCTION void update_kernels_on_device(
+      const specfem::point::simd_index<PointKernelType::dimension> &index,
+      const PointKernelType &kernels) const {
 
     static_assert(PointKernelType::medium_tag == value_type);
     static_assert(PointKernelType::property_tag == property_type);
@@ -236,8 +238,9 @@ public:
   template <
       typename PointKernelType,
       typename std::enable_if_t<!PointKernelType::simd::using_simd, int> = 0>
-  void update_kernels_on_host(const specfem::point::index &index,
-                              const PointKernelType &kernels) const {
+  void update_kernels_on_host(
+      const specfem::point::index<PointKernelType::dimension> &index,
+      const PointKernelType &kernels) const {
 
     static_assert(PointKernelType::medium_tag == value_type);
     static_assert(PointKernelType::property_tag == property_type);
@@ -257,8 +260,9 @@ public:
   template <
       typename PointKernelType,
       typename std::enable_if_t<PointKernelType::simd::using_simd, int> = 0>
-  void update_kernels_on_host(const specfem::point::simd_index &index,
-                              const PointKernelType &kernels) const {
+  void update_kernels_on_host(
+      const specfem::point::simd_index<PointKernelType::dimension> &index,
+      const PointKernelType &kernels) const {
 
     static_assert(PointKernelType::medium_tag == value_type);
     static_assert(PointKernelType::property_tag == property_type);
@@ -290,9 +294,9 @@ public:
   template <
       typename PointKernelType,
       typename std::enable_if_t<!PointKernelType::simd::using_simd, int> = 0>
-  KOKKOS_INLINE_FUNCTION void
-  add_kernels_on_device(const specfem::point::index &index,
-                        const PointKernelType &kernels) const {
+  KOKKOS_INLINE_FUNCTION void add_kernels_on_device(
+      const specfem::point::index<PointKernelType::dimension> &index,
+      const PointKernelType &kernels) const {
 
     static_assert(PointKernelType::medium_tag == value_type);
     static_assert(PointKernelType::property_tag == property_type);
@@ -312,9 +316,9 @@ public:
   template <
       typename PointKernelType,
       typename std::enable_if_t<PointKernelType::simd::using_simd, int> = 0>
-  KOKKOS_INLINE_FUNCTION void
-  add_kernels_on_device(const specfem::point::simd_index &index,
-                        const PointKernelType &kernels) const {
+  KOKKOS_INLINE_FUNCTION void add_kernels_on_device(
+      const specfem::point::simd_index<PointKernelType::dimension> &index,
+      const PointKernelType &kernels) const {
 
     static_assert(PointKernelType::medium_tag == value_type);
     static_assert(PointKernelType::property_tag == property_type);
@@ -371,8 +375,9 @@ public:
   template <
       typename PointKernelType,
       typename std::enable_if_t<!PointKernelType::simd::using_simd, int> = 0>
-  void add_kernels_on_host(const specfem::point::index &index,
-                           const PointKernelType &kernels) const {
+  void add_kernels_on_host(
+      const specfem::point::index<PointKernelType::dimension> &index,
+      const PointKernelType &kernels) const {
 
     static_assert(PointKernelType::medium_tag == value_type);
     static_assert(PointKernelType::property_tag == property_type);
@@ -392,8 +397,9 @@ public:
   template <
       typename PointKernelType,
       typename std::enable_if_t<PointKernelType::simd::using_simd, int> = 0>
-  void add_kernels_on_host(const specfem::point::simd_index &index,
-                           const PointKernelType &kernels) const {
+  void add_kernels_on_host(
+      const specfem::point::simd_index<PointKernelType::dimension> &index,
+      const PointKernelType &kernels) const {
 
     static_assert(PointKernelType::medium_tag == value_type);
     static_assert(PointKernelType::property_tag == property_type);
@@ -526,9 +532,9 @@ public:
   template <
       typename PointKernelType,
       typename std::enable_if_t<!PointKernelType::simd::using_simd, int> = 0>
-  KOKKOS_INLINE_FUNCTION void
-  load_device_kernels(const specfem::point::index &index,
-                      PointKernelType &kernels) const {
+  KOKKOS_INLINE_FUNCTION void load_device_kernels(
+      const specfem::point::index<PointKernelType::dimension> &index,
+      PointKernelType &kernels) const {
 
     static_assert(PointKernelType::medium_tag == value_type);
     static_assert(PointKernelType::property_tag == property_type);
@@ -546,9 +552,9 @@ public:
   template <
       typename PointKernelType,
       typename std::enable_if_t<PointKernelType::simd::using_simd, int> = 0>
-  KOKKOS_INLINE_FUNCTION void
-  load_device_kernels(const specfem::point::simd_index &index,
-                      PointKernelType &kernels) const {
+  KOKKOS_INLINE_FUNCTION void load_device_kernels(
+      const specfem::point::simd_index<PointKernelType::dimension> &index,
+      PointKernelType &kernels) const {
 
     static_assert(PointKernelType::medium_tag == value_type);
     static_assert(PointKernelType::property_tag == property_type);
@@ -576,8 +582,9 @@ public:
   template <
       typename PointKernelType,
       typename std::enable_if_t<!PointKernelType::simd::using_simd, int> = 0>
-  void load_host_kernels(const specfem::point::index &index,
-                         PointKernelType &kernels) const {
+  void load_host_kernels(
+      const specfem::point::index<PointKernelType::dimension> &index,
+      PointKernelType &kernels) const {
 
     static_assert(PointKernelType::medium_tag == value_type);
     static_assert(PointKernelType::property_tag == property_type);
@@ -595,8 +602,9 @@ public:
   template <
       typename PointKernelType,
       typename std::enable_if_t<PointKernelType::simd::using_simd, int> = 0>
-  void load_host_kernels(const specfem::point::simd_index &index,
-                         PointKernelType &kernels) const {
+  void load_host_kernels(
+      const specfem::point::simd_index<PointKernelType::dimension> &index,
+      PointKernelType &kernels) const {
 
     static_assert(PointKernelType::medium_tag == value_type);
     static_assert(PointKernelType::property_tag == property_type);
@@ -624,9 +632,9 @@ public:
   template <
       typename PointKernelType,
       typename std::enable_if_t<!PointKernelType::simd::using_simd, int> = 0>
-  KOKKOS_INLINE_FUNCTION void
-  update_kernels_on_device(const specfem::point::index &index,
-                           const PointKernelType &kernels) const {
+  KOKKOS_INLINE_FUNCTION void update_kernels_on_device(
+      const specfem::point::index<PointKernelType::dimension> &index,
+      const PointKernelType &kernels) const {
 
     static_assert(PointKernelType::medium_tag == value_type);
     static_assert(PointKernelType::property_tag == property_type);
@@ -644,9 +652,9 @@ public:
   template <
       typename PointKernelType,
       typename std::enable_if_t<PointKernelType::simd::using_simd, int> = 0>
-  KOKKOS_INLINE_FUNCTION void
-  update_kernels_on_device(const specfem::point::simd_index &index,
-                           const PointKernelType &kernels) const {
+  KOKKOS_INLINE_FUNCTION void update_kernels_on_device(
+      const specfem::point::simd_index<PointKernelType::dimension> &index,
+      const PointKernelType &kernels) const {
 
     static_assert(PointKernelType::medium_tag == value_type);
     static_assert(PointKernelType::property_tag == property_type);
@@ -674,8 +682,9 @@ public:
   template <
       typename PointKernelType,
       typename std::enable_if_t<!PointKernelType::simd::using_simd, int> = 0>
-  void update_kernels_on_host(const specfem::point::index &index,
-                              const PointKernelType &kernels) const {
+  void update_kernels_on_host(
+      const specfem::point::index<PointKernelType::dimension> &index,
+      const PointKernelType &kernels) const {
 
     static_assert(PointKernelType::medium_tag == value_type);
     static_assert(PointKernelType::property_tag == property_type);
@@ -693,8 +702,9 @@ public:
   template <
       typename PointKernelType,
       typename std::enable_if_t<PointKernelType::simd::using_simd, int> = 0>
-  void update_kernels_on_host(const specfem::point::simd_index &index,
-                              const PointKernelType &kernels) const {
+  void update_kernels_on_host(
+      const specfem::point::simd_index<PointKernelType::dimension> &index,
+      const PointKernelType &kernels) const {
 
     static_assert(PointKernelType::medium_tag == value_type);
     static_assert(PointKernelType::property_tag == property_type);
@@ -722,9 +732,9 @@ public:
   template <
       typename PointKernelType,
       typename std::enable_if_t<!PointKernelType::simd::using_simd, int> = 0>
-  KOKKOS_INLINE_FUNCTION void
-  add_kernels_on_device(const specfem::point::index &index,
-                        const PointKernelType &kernels) const {
+  KOKKOS_INLINE_FUNCTION void add_kernels_on_device(
+      const specfem::point::index<PointKernelType::dimension> &index,
+      const PointKernelType &kernels) const {
 
     static_assert(PointKernelType::medium_tag == value_type);
     static_assert(PointKernelType::property_tag == property_type);
@@ -742,9 +752,9 @@ public:
   template <
       typename PointKernelType,
       typename std::enable_if_t<PointKernelType::simd::using_simd, int> = 0>
-  KOKKOS_INLINE_FUNCTION void
-  add_kernels_on_device(const specfem::point::simd_index &index,
-                        const PointKernelType &kernels) const {
+  KOKKOS_INLINE_FUNCTION void add_kernels_on_device(
+      const specfem::point::simd_index<PointKernelType::dimension> &index,
+      const PointKernelType &kernels) const {
 
     static_assert(PointKernelType::medium_tag == value_type);
     static_assert(PointKernelType::property_tag == property_type);
@@ -789,8 +799,9 @@ public:
   template <
       typename PointKernelType,
       typename std::enable_if_t<!PointKernelType::simd::using_simd, int> = 0>
-  void add_kernels_on_host(const specfem::point::index &index,
-                           const PointKernelType &kernels) const {
+  void add_kernels_on_host(
+      const specfem::point::index<PointKernelType::dimension> &index,
+      const PointKernelType &kernels) const {
 
     static_assert(PointKernelType::medium_tag == value_type);
     static_assert(PointKernelType::property_tag == property_type);
@@ -808,8 +819,9 @@ public:
   template <
       typename PointKernelType,
       typename std::enable_if_t<PointKernelType::simd::using_simd, int> = 0>
-  void add_kernels_on_host(const specfem::point::simd_index &index,
-                           const PointKernelType &kernels) const {
+  void add_kernels_on_host(
+      const specfem::point::simd_index<PointKernelType::dimension> &index,
+      const PointKernelType &kernels) const {
 
     static_assert(PointKernelType::medium_tag == value_type);
     static_assert(PointKernelType::property_tag == property_type);

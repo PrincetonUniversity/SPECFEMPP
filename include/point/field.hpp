@@ -289,11 +289,9 @@ public:
   ///@{
   constexpr static int components =
       ViewType::components; ///< Number of field components for specified medium
-  constexpr static int dimension =
-      specfem::dimension::dimension<DimensionType>::dim; ///< Number of
-                                                         ///< dimensions
-                                                         ///< associated with
-                                                         ///< the DimensionType
+  constexpr static auto dimension = DimensionType; ///< Dimension of the element
+                                                   ///< where the quadrature
+                                                   ///< point is located
   constexpr static auto medium_tag =
       MediumType; ///< Medium type of the element where the quadrature point is
                   ///< located

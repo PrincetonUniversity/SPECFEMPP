@@ -47,9 +47,9 @@ specfem::compute::sources::sources(
     // Get local coordinate for the source
     const type_real x = source->get_x();
     const type_real z = source->get_z();
-    const specfem::point::gcoord2 coord = specfem::point::gcoord2(x, z);
-    const specfem::point::lcoord2 lcoord =
-        specfem::algorithms::locate_point(coord, mesh);
+    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
+        coord(x, z);
+    const auto lcoord = specfem::algorithms::locate_point(coord, mesh);
     //-------------------------------------
 
     if (properties.h_element_types(lcoord.ispec) == acoustic) {

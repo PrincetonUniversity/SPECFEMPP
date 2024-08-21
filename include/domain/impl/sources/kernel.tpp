@@ -88,7 +88,7 @@ void specfem::domain::impl::kernels::source_kernel<
             [=](const int xz) {
               int iz, ix;
               sub2ind(xz, ngllx, iz, ix);
-              specfem::point::index index(ispec_l, iz, ix);
+              specfem::point::index<DimensionType> index(ispec_l, iz, ix);
 
               const specfem::datatype::ScalarPointViewType<
                   type_real, medium_type::components, using_simd>

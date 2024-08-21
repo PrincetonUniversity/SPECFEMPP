@@ -218,12 +218,14 @@ bool check_if_edges_are_connected(const specfem::compute::points points,
   // Check that the distance every point on the edges is small
   for (int ipoint = 0; ipoint < ngll; ipoint++) {
     const auto [i1, j1] = edge1_points[ipoint];
-    const specfem::point::gcoord2 self_coordinates(h_coord(0, ispec1, j1, i1),
-                                                   h_coord(1, ispec1, j1, i1));
+    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
+        self_coordinates(h_coord(0, ispec1, j1, i1),
+                         h_coord(1, ispec1, j1, i1));
 
     const auto [i2, j2] = edge2_points[ipoint];
-    const specfem::point::gcoord2 coupled_coordinates(
-        h_coord(0, ispec2, j2, i2), h_coord(1, ispec2, j2, i2));
+    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
+        coupled_coordinates(h_coord(0, ispec2, j2, i2),
+                            h_coord(1, ispec2, j2, i2));
 
     // Check that the distance between the two points is small
     type_real distance =
@@ -321,13 +323,17 @@ bool check_if_edges_are_connected(const specfem::compute::points points,
 //       // Get ipoint along the edge in element1
 //       int i1, j1;
 //       specfem::edge::locate_point_on_self_edge(ipoint, edge1l, j1, i1);
-//       const specfem::point::gcoord2 self_coordinates(
+//       const
+//       specfem::point::global_coordinates<specfem::dimension::type::dim2>
+//       self_coordinates(
 //           coordinates(0, ispec1l, j1, i1), coordinates(1, ispec1l, j1, i1));
 
 //       // Get ipoint along the edge in element2
 //       int i2, j2;
 //       specfem::edge::locate_point_on_coupled_edge(ipoint, edge2l, j2, i2);
-//       const specfem::point::gcoord2 coupled_coordinates(
+//       const
+//       specfem::point::global_coordinates<specfem::dimension::type::dim2>
+//       coupled_coordinates(
 //           coordinates(0, ispec2l, j2, i2), coordinates(1, ispec2l, j2, i2));
 
 //       // Check that the distance between the two points is small
@@ -358,8 +364,10 @@ compute_edge_factors_and_normals(
         "Number of points on edge1 and edge2 are different");
   }
 
-  std::vector<specfem::point::index> medium1_index(ngll);
-  std::vector<specfem::point::index> medium2_index(ngll);
+  std::vector<specfem::point::index<specfem::dimension::type::dim2> >
+      medium1_index(ngll);
+  std::vector<specfem::point::index<specfem::dimension::type::dim2> >
+      medium2_index(ngll);
   std::vector<type_real> edge_factor(ngll);
   std::vector<std::array<type_real, 2> > edge_normal(ngll);
 
@@ -370,13 +378,13 @@ compute_edge_factors_and_normals(
                                             true, false>;
 
     const auto [i1, j1] = edge1_points[ipoint];
-    const specfem::point::index edge1_index(ispec1, j1, i1);
+    const specfem::point::index<specfem::dimension::type::dim2> edge1_index(ispec1, j1, i1);
     PointPartialDerivativesType edge1_derivatives;
     specfem::compute::load_on_host(edge1_index, partial_derivatives,
                                    edge1_derivatives);
 
     const auto [i2, j2] = edge2_points[ipoint];
-    const specfem::point::index edge2_index(ispec2, j2, i2);
+    const specfem::point::index<specfem::dimension::type::dim2> edge2_index(ispec2, j2, i2);
     PointPartialDerivativesType edge2_derivatives;
     specfem::compute::load_on_host(edge2_index, partial_derivatives,
                                    edge2_derivatives);
@@ -410,8 +418,8 @@ compute_edge_factors_and_normals(
 
     edge_normal[ipoint][0] = edge1_normal(0);
     edge_normal[ipoint][1] = edge1_normal(1);
-    medium1_index[ipoint] = specfem::point::index(ispec1, j1, i1);
-    medium2_index[ipoint] = specfem::point::index(ispec2, j2, i2);
+    medium1_index[ipoint] = { ispec1, j1, i1 };
+    medium2_index[ipoint] = { ispec2, j2, i2 };
   }
 
   return { edge_factor, edge_normal };

@@ -478,7 +478,7 @@ template <
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
 NOINLINE KOKKOS_FUNCTION void
-load_on_device(const specfem::point::index &index,
+load_on_device(const specfem::point::index<ViewType::dimension> &index,
                const specfem::compute::simulation_field<WavefieldType> &field,
                ViewType &point_field) {
   constexpr static auto MediumType = ViewType::medium_tag;
@@ -506,7 +506,7 @@ template <
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
 NOINLINE KOKKOS_FUNCTION void
-load_on_device(const specfem::point::simd_index &index,
+load_on_device(const specfem::point::simd_index<ViewType::dimension> &index,
                const specfem::compute::simulation_field<WavefieldType> &field,
                ViewType &point_field) {
   constexpr static auto MediumType = ViewType::medium_tag;
@@ -533,7 +533,7 @@ template <
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
 void load_on_host(
-    const specfem::point::index &index,
+    const specfem::point::index<ViewType::dimension> &index,
     const specfem::compute::simulation_field<WavefieldType> &field,
     ViewType &point_field) {
 
@@ -564,7 +564,7 @@ template <
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
 void load_on_host(
-    const specfem::point::simd_index &index,
+    const specfem::point::simd_index<ViewType::dimension> &index,
     const specfem::compute::simulation_field<WavefieldType> &field,
     ViewType &point_field) {
 
@@ -947,7 +947,8 @@ template <
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
 NOINLINE KOKKOS_FUNCTION void store_on_device(
-    const specfem::point::index &index, const ViewType &point_field,
+    const specfem::point::index<ViewType::dimension> &index,
+    const ViewType &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
 
   constexpr static auto MediumType = ViewType::medium_tag;
@@ -979,7 +980,8 @@ template <
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
 NOINLINE KOKKOS_FUNCTION void store_on_device(
-    const specfem::point::simd_index &index, const ViewType &point_field,
+    const specfem::point::simd_index<ViewType::dimension> &index,
+    const ViewType &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
 
   constexpr static auto MediumType = ViewType::medium_tag;
@@ -1006,7 +1008,8 @@ template <
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
 void store_on_host(
-    const specfem::point::index &index, const ViewType &point_field,
+    const specfem::point::index<ViewType::dimension> &index,
+    const ViewType &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
 
   constexpr static auto MediumType = ViewType::medium_tag;
@@ -1038,7 +1041,8 @@ template <
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
 void store_on_host(
-    const specfem::point::simd_index &index, const ViewType &point_field,
+    const specfem::point::simd_index<ViewType::dimension> &index,
+    const ViewType &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
 
   constexpr static auto MediumType = ViewType::medium_tag;
@@ -1458,7 +1462,8 @@ template <
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
 NOINLINE KOKKOS_FUNCTION void
-add_on_device(const specfem::point::index &index, const ViewType &point_field,
+add_on_device(const specfem::point::index<ViewType::dimension> &index,
+              const ViewType &point_field,
               const specfem::compute::simulation_field<WavefieldType> &field) {
 
   constexpr static auto MediumType = ViewType::medium_tag;
@@ -1491,7 +1496,7 @@ template <
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
 NOINLINE KOKKOS_FUNCTION void
-add_on_device(const specfem::point::simd_index &index,
+add_on_device(const specfem::point::simd_index<ViewType::dimension> &index,
               const ViewType &point_field,
               const specfem::compute::simulation_field<WavefieldType> &field) {
 
@@ -1519,7 +1524,8 @@ template <
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
 void add_on_host(
-    const specfem::point::index &index, const ViewType &point_field,
+    const specfem::point::index<ViewType::dimension> &index,
+    const ViewType &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
 
   constexpr static auto MediumType = ViewType::medium_tag;
@@ -1551,7 +1557,8 @@ template <
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
 void add_on_host(
-    const specfem::point::simd_index &index, const ViewType &point_field,
+    const specfem::point::simd_index<ViewType::dimension> &index,
+    const ViewType &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
 
   constexpr static auto MediumType = ViewType::medium_tag;
@@ -1806,7 +1813,8 @@ template <
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
 NOINLINE KOKKOS_FUNCTION void atomic_add_on_device(
-    const specfem::point::index &index, const ViewType &point_field,
+    const specfem::point::index<ViewType::dimension> &index,
+    const ViewType &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
 
   constexpr static auto MediumType = ViewType::medium_tag;
@@ -1823,7 +1831,8 @@ template <
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
 NOINLINE KOKKOS_FUNCTION void atomic_add_on_device(
-    const specfem::point::simd_index &index, const ViewType &point_field,
+    const specfem::point::simd_index<ViewType::dimension> &index,
+    const ViewType &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
 
   constexpr static auto MediumType = ViewType::medium_tag;
@@ -1850,7 +1859,8 @@ template <
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
 void atomic_add_on_host(
-    const specfem::point::index &index, const ViewType &point_field,
+    const specfem::point::index<ViewType::dimension> &index,
+    const ViewType &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
 
   constexpr static auto MediumType = ViewType::medium_tag;
@@ -1867,7 +1877,8 @@ template <
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
 void atomic_add_on_host(
-    const specfem::point::simd_index &index, const ViewType &point_field,
+    const specfem::point::simd_index<ViewType::dimension> &index,
+    const ViewType &point_field,
     const specfem::compute::simulation_field<WavefieldType> &field) {
 
   constexpr static auto MediumType = ViewType::medium_tag;
@@ -2596,7 +2607,7 @@ void load_on_host(
 //           specfem::element::medium_tag MediumType, bool StoreDisplacement,
 //           bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix>
 // NOINLINE KOKKOS_FUNCTION void load_on_device(
-//     const specfem::point::index &index,
+//     const specfem::point::index<ViewType::dimension> &index,
 //     const specfem::compute::simulation_field<WavefieldType> &field,
 //     specfem::point::field<specfem::dimension::type::dim2, MediumType,
 //                           StoreDisplacement, StoreVelocity,
@@ -2611,7 +2622,7 @@ void load_on_host(
 //           specfem::element::medium_tag MediumType, bool StoreDisplacement,
 //           bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix>
 // void load_on_host(
-//     const specfem::point::index &index,
+//     const specfem::point::index<ViewType::dimension> &index,
 //     const specfem::compute::simulation_field<WavefieldType> &field,
 //     specfem::point::field<specfem::dimension::type::dim2, MediumType,
 //                           StoreDisplacement, StoreVelocity,
@@ -2717,7 +2728,7 @@ void load_on_host(
 //           specfem::element::medium_tag MediumType, bool StoreDisplacement,
 //           bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix>
 // NOINLINE KOKKOS_FUNCTION void store_on_device(
-//     const specfem::point::index &index,
+//     const specfem::point::index<ViewType::dimension> &index,
 //     const specfem::point::field<
 //         specfem::dimension::type::dim2, MediumType, StoreDisplacement,
 //         StoreVelocity, StoreAcceleration, StoreMassMatrix> &point_field,
@@ -2734,7 +2745,7 @@ void load_on_host(
 //           specfem::element::medium_tag MediumType, bool StoreDisplacement,
 //           bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix>
 // void store_on_host(
-//     const specfem::point::index &index,
+//     const specfem::point::index<ViewType::dimension> &index,
 //     const specfem::point::field<
 //         specfem::dimension::type::dim2, MediumType, StoreDisplacement,
 //         StoreVelocity, StoreAcceleration, StoreMassMatrix> &point_field,
@@ -2843,7 +2854,7 @@ void load_on_host(
 //           specfem::element::medium_tag MediumType, bool StoreDisplacement,
 //           bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix>
 // NOINLINE KOKKOS_FUNCTION void add_on_device(
-//     const specfem::point::index &index,
+//     const specfem::point::index<ViewType::dimension> &index,
 //     const specfem::point::field<
 //         specfem::dimension::type::dim2, MediumType, StoreDisplacement,
 //         StoreVelocity, StoreAcceleration, StoreMassMatrix> &point_field,
@@ -2860,7 +2871,7 @@ void load_on_host(
 //           specfem::element::medium_tag MediumType, bool StoreDisplacement,
 //           bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix>
 // void add_on_host(
-//     const specfem::point::index &index,
+//     const specfem::point::index<ViewType::dimension> &index,
 //     const specfem::point::field<
 //         specfem::dimension::type::dim2, MediumType, StoreDisplacement,
 //         StoreVelocity, StoreAcceleration, StoreMassMatrix> &point_field,
@@ -2975,7 +2986,7 @@ void load_on_host(
 //           specfem::element::medium_tag MediumType, bool StoreDisplacement,
 //           bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix>
 // NOINLINE KOKKOS_FUNCTION void atomic_add_on_device(
-//     const specfem::point::index &index,
+//     const specfem::point::index<ViewType::dimension> &index,
 //     const specfem::point::field<
 //         specfem::dimension::type::dim2, MediumType, StoreDisplacement,
 //         StoreVelocity, StoreAcceleration, StoreMassMatrix> &point_field,
@@ -2992,7 +3003,7 @@ void load_on_host(
 //           specfem::element::medium_tag MediumType, bool StoreDisplacement,
 //           bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix>
 // void atomic_add_on_host(
-//     const specfem::point::index &index,
+//     const specfem::point::index<ViewType::dimension> &index,
 //     const specfem::point::field<
 //         specfem::dimension::type::dim2, MediumType, StoreDisplacement,
 //         StoreVelocity, StoreAcceleration, StoreMassMatrix> &point_field,

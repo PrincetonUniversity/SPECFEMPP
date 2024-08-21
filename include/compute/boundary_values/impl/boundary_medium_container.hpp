@@ -17,10 +17,12 @@ template <specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
           specfem::element::boundary_tag BoundaryTag>
 class boundary_medium_container {
-public:
+private:
   constexpr static int components =
       specfem::medium::medium<DimensionType, MediumTag>::components;
+  constexpr static auto dimension = DimensionType;
 
+public:
   using value_type =
       Kokkos::View<type_real ****[components], Kokkos::LayoutLeft,
                    Kokkos::DefaultExecutionSpace>;
@@ -44,9 +46,9 @@ public:
   template <
       typename AccelerationType,
       typename std::enable_if_t<!AccelerationType::simd::using_simd, int> = 0>
-  KOKKOS_FUNCTION void load_on_device(const int istep,
-                                      const specfem::point::index &index,
-                                      AccelerationType &acceleration) const {
+  KOKKOS_FUNCTION void
+  load_on_device(const int istep, const specfem::point::index<dimension> &index,
+                 AccelerationType &acceleration) const {
 
     const int ispec = index.ispec;
     const int iz = index.iz;
@@ -65,9 +67,10 @@ public:
   template <
       typename AccelerationType,
       typename std::enable_if_t<!AccelerationType::simd::using_simd, int> = 0>
-  KOKKOS_FUNCTION void store_on_device(const int istep,
-                                       const specfem::point::index &index,
-                                       const AccelerationType &acceleration) {
+  KOKKOS_FUNCTION void
+  store_on_device(const int istep,
+                  const specfem::point::index<dimension> &index,
+                  const AccelerationType &acceleration) {
 
     const int ispec = index.ispec;
     const int iz = index.iz;
@@ -86,9 +89,10 @@ public:
   template <
       typename AccelerationType,
       typename std::enable_if_t<AccelerationType::simd::using_simd, int> = 0>
-  KOKKOS_FUNCTION void load_on_device(const int istep,
-                                      const specfem::point::simd_index &index,
-                                      AccelerationType &acceleration) const {
+  KOKKOS_FUNCTION void
+  load_on_device(const int istep,
+                 const specfem::point::simd_index<dimension> &index,
+                 AccelerationType &acceleration) const {
 
     const int ispec = index.ispec;
     const int iz = index.iz;
@@ -110,9 +114,10 @@ public:
   template <
       typename AccelerationType,
       typename std::enable_if_t<AccelerationType::simd::using_simd, int> = 0>
-  KOKKOS_FUNCTION void store_on_device(const int istep,
-                                       const specfem::point::simd_index &index,
-                                       const AccelerationType &acceleration) {
+  KOKKOS_FUNCTION void
+  store_on_device(const int istep,
+                  const specfem::point::simd_index<dimension> &index,
+                  const AccelerationType &acceleration) {
 
     const int ispec = index.ispec;
     const int iz = index.iz;

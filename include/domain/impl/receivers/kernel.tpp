@@ -139,7 +139,7 @@ void specfem::domain::impl::kernels::receiver_kernel<
             [=](const int xz) {
               int iz, ix;
               sub2ind(xz, ngllx, iz, ix);
-              const specfem::point::index index(ispec_l, iz, ix);
+              const specfem::point::index<DimensionType> index(ispec_l, iz, ix);
               const auto point_partial_derivatives =
                   [&]() {
                     specfem::point::partial_derivatives<DimensionType, false,
