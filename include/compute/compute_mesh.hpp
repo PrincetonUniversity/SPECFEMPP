@@ -174,9 +174,13 @@ struct mesh {
 
   specfem::compute::points assemble();
 
-  specfem::point::gcoord2 locate(const specfem::point::lcoord2 &point);
+  specfem::point::global_coordinates<specfem::dimension::type::dim2>
+  locate(const specfem::point::local_coordinates<specfem::dimension::type::dim2>
+             &point);
 
-  specfem::point::lcoord2 locate(const specfem::point::gcoord2 &point);
+  specfem::point::local_coordinates<specfem::dimension::type::dim2> locate(
+      const specfem::point::global_coordinates<specfem::dimension::type::dim2>
+          &point);
 };
 
 template <typename MemberType, typename ViewType>

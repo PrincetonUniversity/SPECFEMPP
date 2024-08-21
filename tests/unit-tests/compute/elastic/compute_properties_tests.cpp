@@ -99,7 +99,8 @@ TEST(COMPUTE_TESTS, compute_elastic_properties) {
   for (int ix = 0; ix < ngllx; ++ix) {
     for (int iz = 0; iz < ngllz; ++iz) {
       for (int ispec = 0; ispec < nspec; ++ispec) {
-        specfem::point::index index(ispec, iz, ix);
+        specfem::point::index<specfem::dimension::type::dim2> index(ispec, iz,
+                                                                    ix);
         if (compute_properties.h_element_types(ispec) ==
                 specfem::element::medium_tag::elastic &&
             compute_properties.h_element_property(ispec) ==
@@ -136,8 +137,8 @@ TEST(COMPUTE_TESTS, compute_elastic_properties) {
       for (int ispec = 0; ispec < nspec; ispec += vector_length) {
         const int num_elements =
             (ispec + vector_length < nspec) ? vector_length : nspec - ispec;
-        const specfem::point::simd_index simd_index(ispec, num_elements, iz,
-                                                    ix);
+        const specfem::point::simd_index<specfem::dimension::type::dim2>
+            simd_index(ispec, num_elements, iz, ix);
         if (compute_properties.h_element_types(ispec) ==
                 specfem::element::medium_tag::elastic &&
             compute_properties.h_element_property(ispec) ==

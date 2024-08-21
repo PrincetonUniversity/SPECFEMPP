@@ -9,20 +9,28 @@ namespace iterator {
 
 namespace impl {
 
-struct index_type {
+template <specfem::dimension::type DimensionType> struct index_type;
 
+template <> struct index_type<specfem::dimension::type::dim2> {
+
+  constexpr static auto dimension = specfem::dimension::type::dim2;
   const int iedge;
-  specfem::point::index self_index;
-  specfem::point::index coupled_index;
+  specfem::point::index<dimension> self_index;
+  specfem::point::index<dimension> coupled_index;
 
   KOKKOS_INLINE_FUNCTION
-  index_type(const int iedge, const specfem::point::index &self_index,
-             const specfem::point::index &coupled_index)
+  index_type(const int iedge,
+             const specfem::point::index<dimension> &self_index,
+             const specfem::point::index<dimension> &coupled_index)
       : iedge(iedge), self_index(self_index), coupled_index(coupled_index) {}
 };
 } // namespace impl
 
-struct edge {
+template <specfem::dimension::type DimensionType> struct edge;
+
+template <> struct edge<specfem::dimension::type::dim2> {
+
+  constexpr static auto dimension = specfem::dimension::type::dim2;
   int iedge;
   int self_element;
   int coupled_element;
@@ -42,29 +50,27 @@ struct edge {
   int edge_size() const { return npoints; }
 
   KOKKOS_INLINE_FUNCTION
-  impl::index_type operator()(const int i) const {
+  impl::index_type<dimension> operator()(const int i) const {
     const auto self_index = this->self_index(i);
     const auto coupled_index = this->coupled_index(i);
-    return impl::index_type(iedge, self_index, coupled_index);
+    return impl::index_type<dimension>(iedge, self_index, coupled_index);
   }
 
 private:
   KOKKOS_INLINE_FUNCTION
-  specfem::point::index self_index(const int ipoint) const {
+  specfem::point::index<dimension> self_index(const int ipoint) const {
     switch (self_edge) {
     case specfem::enums::edge::type::BOTTOM:
-      return specfem::point::index(self_element, 0, ipoint);
+      return { self_element, 0, ipoint };
       break;
     case specfem::enums::edge::type::TOP:
-      return specfem::point::index(self_element, npoints - 1,
-                                   npoints - 1 - ipoint);
+      return { self_element, npoints - 1, npoints - 1 - ipoint };
       break;
     case specfem::enums::edge::type::LEFT:
-      return specfem::point::index(self_element, ipoint, 0);
+      return { self_element, ipoint, 0 };
       break;
     case specfem::enums::edge::type::RIGHT:
-      return specfem::point::index(self_element, npoints - 1 - ipoint,
-                                   npoints - 1);
+      return { self_element, npoints - 1 - ipoint, npoints - 1 };
       break;
     default:
       DEVICE_ASSERT(false, "Invalid edge type");
@@ -72,20 +78,19 @@ private:
   }
 
   KOKKOS_INLINE_FUNCTION
-  specfem::point::index coupled_index(const int ipoint) const {
+  specfem::point::index<dimension> coupled_index(const int ipoint) const {
     switch (coupled_edge) {
     case specfem::enums::edge::type::BOTTOM:
-      return specfem::point::index(coupled_element, 0, npoints - 1 - ipoint);
+      return { coupled_element, 0, npoints - 1 - ipoint };
       break;
     case specfem::enums::edge::type::TOP:
-      return specfem::point::index(coupled_element, npoints - 1, ipoint);
+      return { coupled_element, npoints - 1, ipoint };
       break;
     case specfem::enums::edge::type::LEFT:
-      return specfem::point::index(coupled_element, npoints - 1 - ipoint,
-                                   npoints - 1);
+      return { coupled_element, npoints - 1 - ipoint, npoints - 1 };
       break;
     case specfem::enums::edge::type::RIGHT:
-      return specfem::point::index(coupled_element, ipoint, 0);
+      return { coupled_element, ipoint, 0 };
       break;
     default:
       DEVICE_ASSERT(false, "Invalid edge type");
@@ -97,11 +102,12 @@ private:
 
 namespace policy {
 
-template <typename... PolicyTraits>
+template <specfem::dimension::type DimensionType, typename... PolicyTraits>
 struct element_edge : public Kokkos::TeamPolicy<PolicyTraits...> {
 public:
   constexpr static bool isChunkPolicy = false;
   constexpr static bool isRangePolicy = false;
+  constexpr static auto dimension = DimensionType;
 
   using PolicyType = Kokkos::TeamPolicy<PolicyTraits...>;
 
@@ -143,9 +149,9 @@ public:
 
   KOKKOS_INLINE_FUNCTION
   auto league_iterator(const int iedge) const {
-    return specfem::iterator::edge(iedge, self_indices(iedge),
-                                   coupled_indices(iedge), self_edges(iedge),
-                                   coupled_edges(iedge), npoints);
+    return specfem::iterator::edge<dimension>(
+        iedge, self_indices(iedge), coupled_indices(iedge), self_edges(iedge),
+        coupled_edges(iedge), npoints);
   }
 
 private:

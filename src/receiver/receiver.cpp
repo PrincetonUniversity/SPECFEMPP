@@ -12,8 +12,10 @@ void specfem::receivers::receiver::compute_receiver_array(
     // const specfem::compute::properties &properties,
     specfem::kokkos::HostView3d<type_real> receiver_array) {
 
-  specfem::point::gcoord2 gcoord = { this->x, this->z };
-  specfem::point::lcoord2 lcoord =
+  specfem::point::global_coordinates<specfem::dimension::type::dim2> gcoord = {
+    this->x, this->z
+  };
+  specfem::point::local_coordinates<specfem::dimension::type::dim2> lcoord =
       specfem::algorithms::locate_point(gcoord, mesh);
 
   const auto xi = mesh.quadratures.gll.h_xi;

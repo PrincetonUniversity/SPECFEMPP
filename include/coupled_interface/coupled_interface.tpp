@@ -35,7 +35,7 @@ void specfem::coupled_interface::coupled_interface<
     return;
 
   using EdgePolicyType =
-      specfem::policy::element_edge<Kokkos::DefaultExecutionSpace>;
+      specfem::policy::element_edge<DimensionType, Kokkos::DefaultExecutionSpace>;
 
   const auto edge_factor = this->interface_data.get_edge_factor();
   const auto edge_normal = this->interface_data.get_edge_normal();

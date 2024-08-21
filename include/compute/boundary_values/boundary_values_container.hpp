@@ -59,8 +59,7 @@ KOKKOS_FUNCTION void load_on_device(
 
   IndexType l_index = index;
 
-  static_assert(specfem::dimension::dimension<DimensionType>::dim ==
-                    AccelerationType::dimension,
+  static_assert(DimensionType == AccelerationType::dimension,
                 "Number of dimensions must match");
 
   static_assert(BoundaryTag == specfem::element::boundary_tag::stacey,
@@ -90,7 +89,7 @@ KOKKOS_FUNCTION void store_on_device(
 
   constexpr static auto MediumTag = AccelerationType::medium_tag;
 
-  static_assert(DimensionType == AccelerationType::dimension_type,
+  static_assert(DimensionType == AccelerationType::dimension,
                 "DimensionType must match AccelerationType::dimension_type");
 
   static_assert(BoundaryTag == specfem::element::boundary_tag::stacey,

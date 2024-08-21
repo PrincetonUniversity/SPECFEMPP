@@ -8,33 +8,40 @@ namespace specfem {
 namespace iterator {
 
 namespace impl {
-template <bool UseSIMD> struct index_type;
+template <bool UseSIMD, specfem::dimension::type DimensionType>
+struct index_type;
 
-template <> struct index_type<true> {
+template <> struct index_type<true, specfem::dimension::type::dim2> {
+  constexpr static auto dimension = specfem::dimension::type::dim2;
   int ielement;
-  specfem::point::simd_index index;
+  specfem::point::simd_index<dimension> index;
 
   KOKKOS_INLINE_FUNCTION
-  index_type(const int ielement, const specfem::point::simd_index index)
+  index_type(const int ielement,
+             const specfem::point::simd_index<dimension> index)
       : ielement(ielement), index(index) {}
 };
 
-template <> struct index_type<false> {
+template <> struct index_type<false, specfem::dimension::type::dim2> {
+  constexpr static auto dimension = specfem::dimension::type::dim2;
   int ielement;
-  specfem::point::index index;
+  specfem::point::index<dimension> index;
 
   KOKKOS_INLINE_FUNCTION
-  index_type(const int ielement, const specfem::point::index index)
+  index_type(const int ielement, const specfem::point::index<dimension> index)
       : ielement(ielement), index(index){};
 };
 } // namespace impl
 
-template <typename ViewType, typename SIMDType> class chunk {
+template <typename ViewType, specfem::dimension::type DimensionType,
+          typename SIMDType>
+class chunk {
 public:
   using simd = SIMDType;
   constexpr static bool using_simd = simd::using_simd;
   constexpr static int simd_size = simd::size();
-  using index_type = typename impl::index_type<simd::using_simd>;
+  constexpr static auto dimension = DimensionType;
+  using index_type = typename impl::index_type<simd::using_simd, dimension>;
 
 private:
   ViewType indices;
@@ -56,7 +63,8 @@ private:
         ngllx(ngllx) {}
 
   KOKKOS_INLINE_FUNCTION
-  impl::index_type<false> operator()(const int i, std::false_type) const {
+  impl::index_type<false, dimension> operator()(const int i,
+                                                std::false_type) const {
 #ifdef KOKKOS_ENABLE_CUDA
     int ielement = i % num_elements;
     int ispec = indices(ielement);
@@ -69,12 +77,13 @@ private:
     const int ielement = i / (ngllz * ngllx);
     int ispec = indices(ielement);
 #endif
-    return impl::index_type<false>(ielement,
-                                   specfem::point::index(ispec, iz, ix));
+    return impl::index_type<false, dimension>(
+        ielement, specfem::point::index<dimension>(ispec, iz, ix));
   }
 
   KOKKOS_INLINE_FUNCTION
-  impl::index_type<true> operator()(const int i, std::true_type) const {
+  impl::index_type<true, dimension> operator()(const int i,
+                                               std::true_type) const {
 #ifdef KOKKOS_ENABLE_CUDA
     int ielement = i % num_elements;
     int simd_elements = (simd_size + ielement > indices.extent(0))
@@ -93,8 +102,9 @@ private:
                             : simd_size;
     int ispec = indices(ielement);
 #endif
-    return impl::index_type<true>(
-        ielement, specfem::point::simd_index(ispec, simd_elements, iz, ix));
+    return impl::index_type<true, dimension>(
+        ielement,
+        specfem::point::simd_index<dimension>(ispec, simd_elements, iz, ix));
   }
 
 public:
@@ -135,7 +145,8 @@ namespace policy {
  * members.
  * @tparam PolicyTraits Traits for the Kokkos::TeamPolicy
  */
-template <typename ParallelConfig, typename... PolicyTraits>
+template <typename ParallelConfig, specfem::dimension::type DimensionType,
+          typename... PolicyTraits>
 struct element_chunk : public Kokkos::TeamPolicy<PolicyTraits...> {
 public:
   using simd = typename ParallelConfig::simd;    ///< SIMD configuration
@@ -147,6 +158,7 @@ public:
   constexpr static int VectorLanes =
       ParallelConfig::vector_lanes;                          ///< Vector lanes
   constexpr static int TileSize = ParallelConfig::tile_size; ///< Tile size
+  constexpr static auto dimension = DimensionType;           ///< Dimension type
 
   using PolicyType =
       Kokkos::TeamPolicy<PolicyTraits...>; ///< Kokkos::TeamPolicy type
@@ -162,7 +174,7 @@ public:
                                                                    ///< elements
 
   using iterator_type =
-      specfem::iterator::chunk<ViewType, simd>; ///< Iterator type
+      specfem::iterator::chunk<ViewType, dimension, simd>; ///< Iterator type
 
   /**
    * @brief Construct a new element chunk policy
@@ -195,14 +207,15 @@ public:
    * @return auto  Kokkos::subview of the elements for the team
    */
   KOKKOS_INLINE_FUNCTION
-  auto league_iterator(const int start_index) const {
+  iterator_type league_iterator(const int start_index) const {
     const int start = start_index;
     const int end = (start + ChunkSize * simd_size > elements.extent(0))
                         ? elements.extent(0)
                         : start + ChunkSize * simd_size;
     const auto my_indices =
         Kokkos::subview(elements, Kokkos::make_pair(start, end));
-    return specfem::iterator::chunk<ViewType, simd>(my_indices, ngllz, ngllx);
+    return specfem::iterator::chunk<ViewType, dimension, simd>(my_indices,
+                                                               ngllz, ngllx);
   }
 
 private:

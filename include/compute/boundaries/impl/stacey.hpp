@@ -18,6 +18,8 @@ struct stacey {
 private:
   constexpr static auto boundary_tag =
       specfem::element::boundary_tag::stacey; ///< Boundary tag
+  constexpr static auto dimension =
+      specfem::dimension::type::dim2; ///< Dimension
 
 public:
   using BoundaryTagView =
@@ -59,7 +61,7 @@ public:
          std::vector<specfem::element::boundary_tag_container> &boundary_tag);
 
   KOKKOS_INLINE_FUNCTION void load_on_device(
-      const specfem::point::index &index,
+      const specfem::point::index<dimension> &index,
       specfem::point::boundary<boundary_tag, false> &boundary) const {
 
     boundary.tag +=
@@ -73,7 +75,7 @@ public:
   }
 
   KOKKOS_INLINE_FUNCTION void load_on_device(
-      const specfem::point::index &index,
+      const specfem::point::index<dimension> &index,
       specfem::point::boundary<
           specfem::element::boundary_tag::composite_stacey_dirichlet, false>
           &boundary) const {
@@ -89,7 +91,7 @@ public:
   }
 
   KOKKOS_INLINE_FUNCTION void
-  load_on_device(const specfem::point::simd_index &index,
+  load_on_device(const specfem::point::simd_index<dimension> &index,
                  specfem::point::boundary<boundary_tag, true> &boundary) const {
 
     using simd = typename specfem::datatype::simd<type_real, true>;
@@ -119,7 +121,7 @@ public:
   }
 
   KOKKOS_INLINE_FUNCTION void load_on_device(
-      const specfem::point::simd_index &index,
+      const specfem::point::simd_index<dimension> &index,
       specfem::point::boundary<
           specfem::element::boundary_tag::composite_stacey_dirichlet, true>
           &boundary) const {
@@ -151,7 +153,7 @@ public:
   }
 
   inline void
-  load_on_host(const specfem::point::index &index,
+  load_on_host(const specfem::point::index<dimension> &index,
                specfem::point::boundary<boundary_tag, false> &boundary) const {
     boundary.tag +=
         h_quadrature_point_boundary_tag(index.ispec, index.iz, index.ix);
@@ -165,7 +167,7 @@ public:
   }
 
   inline void load_on_host(
-      const specfem::point::index &index,
+      const specfem::point::index<dimension> &index,
       specfem::point::boundary<
           specfem::element::boundary_tag::composite_stacey_dirichlet, false>
           &boundary) const {
@@ -181,7 +183,7 @@ public:
   }
 
   inline void
-  load_on_host(const specfem::point::simd_index &index,
+  load_on_host(const specfem::point::simd_index<dimension> &index,
                specfem::point::boundary<boundary_tag, true> &boundary) const {
 
     using simd = typename specfem::datatype::simd<type_real, true>;
@@ -213,7 +215,7 @@ public:
   }
 
   inline void load_on_host(
-      const specfem::point::simd_index &index,
+      const specfem::point::simd_index<dimension> &index,
       specfem::point::boundary<
           specfem::element::boundary_tag::composite_stacey_dirichlet, true>
           &boundary) const {

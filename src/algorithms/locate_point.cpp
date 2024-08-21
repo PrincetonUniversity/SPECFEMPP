@@ -5,9 +5,10 @@
 
 namespace {
 
-std::tuple<int, int, int>
-rough_location(const specfem::point::gcoord2 &global,
-               const specfem::kokkos::HostView4d<type_real> coord) {
+std::tuple<int, int, int> rough_location(
+    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
+        &global,
+    const specfem::kokkos::HostView4d<type_real> coord) {
 
   /***
    *  Roughly locate closest quadrature point to the source
@@ -23,8 +24,8 @@ rough_location(const specfem::point::gcoord2 &global,
   for (int ispec = 0; ispec < nspec; ispec++) {
     for (int j = 0; j < ngllz; j++) {
       for (int i = 0; i < ngllx; i++) {
-        const specfem::point::gcoord2 cart_coord = { coord(0, ispec, j, i),
-                                                     coord(1, ispec, j, i) };
+        const specfem::point::global_coordinates<specfem::dimension::type::dim2>
+            cart_coord = { coord(0, ispec, j, i), coord(1, ispec, j, i) };
         const type_real distance = specfem::point::distance(global, cart_coord);
         if (distance < dist_min) {
           ispec_selected = ispec;
@@ -79,10 +80,11 @@ std::vector<int> get_best_candidates(
   return ispec_candidates;
 }
 
-std::tuple<type_real, type_real>
-get_best_location(const specfem::point::gcoord2 &global,
-                  const specfem::kokkos::HostView2d<type_real> s_coord,
-                  type_real xi, type_real gamma) {
+std::tuple<type_real, type_real> get_best_location(
+    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
+        &global,
+    const specfem::kokkos::HostView2d<type_real> s_coord, type_real xi,
+    type_real gamma) {
 
   const int ngnod = s_coord.extent(1);
 
@@ -117,9 +119,11 @@ get_best_location(const specfem::point::gcoord2 &global,
 
 } // namespace
 
-specfem::point::lcoord2
-specfem::algorithms::locate_point(const specfem::point::gcoord2 &coordinates,
-                                  const specfem::compute::mesh &mesh) {
+specfem::point::local_coordinates<specfem::dimension::type::dim2>
+specfem::algorithms::locate_point(
+    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
+        &coordinates,
+    const specfem::compute::mesh &mesh) {
 
   const auto global_coordinates = mesh.points.h_coord;
   const auto index_mapping = mesh.points.h_index_mapping;
@@ -161,7 +165,8 @@ specfem::algorithms::locate_point(const specfem::point::gcoord2 &coordinates,
     // compute the distance
     auto [x, z] = jacobian::compute_locations(s_coord, mesh.control_nodes.ngnod,
                                               xi_guess, gamma_guess);
-    const specfem::point::gcoord2 cart_coord = { x, z };
+    const specfem::point::global_coordinates<specfem::dimension::type::dim2>
+        cart_coord = { x, z };
 
     type_real dist = specfem::point::distance(coordinates, cart_coord);
 
@@ -179,9 +184,11 @@ specfem::algorithms::locate_point(const specfem::point::gcoord2 &coordinates,
   return { ispec_selected_source, xi_source, gamma_source };
 }
 
-specfem::point::gcoord2
-specfem::algorithms::locate_point(const specfem::point::lcoord2 &coordinate,
-                                  const specfem::compute::mesh &mesh) {
+specfem::point::global_coordinates<specfem::dimension::type::dim2>
+specfem::algorithms::locate_point(
+    const specfem::point::local_coordinates<specfem::dimension::type::dim2>
+        &coordinate,
+    const specfem::compute::mesh &mesh) {
 
   const int ispec = coordinate.ispec;
   const type_real xi = coordinate.xi;
@@ -201,9 +208,11 @@ specfem::algorithms::locate_point(const specfem::point::lcoord2 &coordinate,
   return { x, z };
 }
 
-specfem::point::gcoord2 specfem::algorithms::locate_point(
+specfem::point::global_coordinates<specfem::dimension::type::dim2>
+specfem::algorithms::locate_point(
     const specfem::kokkos::HostTeam::member_type &team_member,
-    const specfem::point::lcoord2 &coordinate,
+    const specfem::point::local_coordinates<specfem::dimension::type::dim2>
+        &coordinate,
     const specfem::compute::mesh &mesh) {
 
   const int ispec = coordinate.ispec;
