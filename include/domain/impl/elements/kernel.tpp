@@ -103,7 +103,7 @@ void specfem::domain::impl::kernels::element_kernel_base<
       specfem::policy::element_chunk<ParallelConfig, DimensionType,
                                      Kokkos::DefaultExecutionSpace>;
 
-  using PointBoundaryType = specfem::point::boundary<BoundaryTag, using_simd>;
+  using PointBoundaryType = specfem::point::boundary<BoundaryTag, DimensionType, using_simd>;
 
   constexpr int NGLL = quadrature_points_type::NGLL;
 
@@ -413,7 +413,8 @@ void specfem::domain::impl::kernels::element_kernel_base<
       specfem::point::field<DimensionType, MediumTag, false, true, false, false,
                             using_simd>;
 
-  using PointBoundaryType = specfem::point::boundary<BoundaryTag, using_simd>;
+  using PointBoundaryType = specfem::point::boundary<BoundaryTag, DimensionType,
+                                                      using_simd>;
 
   using PointFieldDerivativesType =
       specfem::point::field_derivatives<DimensionType, MediumTag, using_simd>;

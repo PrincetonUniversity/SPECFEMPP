@@ -25,7 +25,9 @@ using PointPropertyType =
                                PropertyTag, UseSIMD>;
 
 template <bool UseSIMD, specfem::element::boundary_tag BoundaryTag>
-using PointBoundaryType = specfem::point::boundary<BoundaryTag, UseSIMD>;
+using PointBoundaryType =
+    specfem::point::boundary<BoundaryTag, specfem::dimension::type::dim2,
+                             UseSIMD>;
 } // namespace
 
 template void

@@ -45,20 +45,10 @@ public:
       const Kokkos::View<int *, Kokkos::HostSpace> &boundary_index_mapping,
       std::vector<specfem::element::boundary_tag_container> &boundary_tag);
 
-  KOKKOS_INLINE_FUNCTION void load_on_device(
-      const specfem::point::index<dimension> &index,
-      specfem::point::boundary<boundary_tag, false> &boundary) const {
-
-    boundary.tag +=
-        quadrature_point_boundary_tag(index.ispec, index.iz, index.ix);
-    return;
-  }
-
-  KOKKOS_INLINE_FUNCTION void load_on_device(
-      const specfem::point::index<dimension> &index,
-      specfem::point::boundary<
-          specfem::element::boundary_tag::composite_stacey_dirichlet, false>
-          &boundary) const {
+  KOKKOS_INLINE_FUNCTION void
+  load_on_device(const specfem::point::index<dimension> &index,
+                 specfem::point::boundary<boundary_tag, dimension, false>
+                     &boundary) const {
 
     boundary.tag +=
         quadrature_point_boundary_tag(index.ispec, index.iz, index.ix);
@@ -66,31 +56,19 @@ public:
   }
 
   KOKKOS_INLINE_FUNCTION void
-  load_on_device(const specfem::point::simd_index<dimension> &index,
-                 specfem::point::boundary<boundary_tag, true> &boundary) const {
+  load_on_device(const specfem::point::index<dimension> &index,
+                 specfem::point::boundary<
+                     specfem::element::boundary_tag::composite_stacey_dirichlet,
+                     dimension, false> &boundary) const {
 
-    using simd = typename specfem::datatype::simd<type_real, true>;
-
-    using mask_type = typename simd::mask_type;
-    using tag_type = typename simd::tag_type;
-
-    mask_type mask([&](std::size_t lane) { return index.mask(lane); });
-
-    for (int lane = 0; lane < mask_type::size(); ++lane) {
-      if (index.mask(lane)) {
-        boundary.tag[lane] += quadrature_point_boundary_tag(index.ispec + lane,
-                                                            index.iz, index.ix);
-      }
-    }
-
+    boundary.tag +=
+        quadrature_point_boundary_tag(index.ispec, index.iz, index.ix);
     return;
   }
 
   KOKKOS_INLINE_FUNCTION void load_on_device(
       const specfem::point::simd_index<dimension> &index,
-      specfem::point::boundary<
-          specfem::element::boundary_tag::composite_stacey_dirichlet, true>
-          &boundary) const {
+      specfem::point::boundary<boundary_tag, dimension, true> &boundary) const {
 
     using simd = typename specfem::datatype::simd<type_real, true>;
 
@@ -109,28 +87,51 @@ public:
     return;
   }
 
+  KOKKOS_INLINE_FUNCTION void
+  load_on_device(const specfem::point::simd_index<dimension> &index,
+                 specfem::point::boundary<
+                     specfem::element::boundary_tag::composite_stacey_dirichlet,
+                     dimension, true> &boundary) const {
+
+    using simd = typename specfem::datatype::simd<type_real, true>;
+
+    using mask_type = typename simd::mask_type;
+    using tag_type = typename simd::tag_type;
+
+    mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+
+    for (int lane = 0; lane < mask_type::size(); ++lane) {
+      if (index.mask(lane)) {
+        boundary.tag[lane] += quadrature_point_boundary_tag(index.ispec + lane,
+                                                            index.iz, index.ix);
+      }
+    }
+
+    return;
+  }
+
+  inline void load_on_host(const specfem::point::index<dimension> &index,
+                           specfem::point ::boundary<boundary_tag, dimension,
+                                                     false> &boundary) const {
+    boundary.tag +=
+        h_quadrature_point_boundary_tag(index.ispec, index.iz, index.ix);
+    return;
+  }
+
   inline void
   load_on_host(const specfem::point::index<dimension> &index,
-               specfem::point ::boundary<boundary_tag, false> &boundary) const {
+               specfem::point::boundary<
+                   specfem::element::boundary_tag::composite_stacey_dirichlet,
+                   dimension, false> &boundary) const {
+
     boundary.tag +=
         h_quadrature_point_boundary_tag(index.ispec, index.iz, index.ix);
     return;
   }
 
   inline void load_on_host(
-      const specfem::point::index<dimension> &index,
-      specfem::point::boundary<
-          specfem::element::boundary_tag::composite_stacey_dirichlet, false>
-          &boundary) const {
-
-    boundary.tag +=
-        h_quadrature_point_boundary_tag(index.ispec, index.iz, index.ix);
-    return;
-  }
-
-  inline void
-  load_on_host(const specfem::point::simd_index<dimension> &index,
-               specfem::point::boundary<boundary_tag, true> &boundary) const {
+      const specfem::point::simd_index<dimension> &index,
+      specfem::point::boundary<boundary_tag, dimension, true> &boundary) const {
 
     using simd = typename specfem::datatype::simd<type_real, true>;
 
@@ -146,11 +147,11 @@ public:
     return;
   }
 
-  inline void load_on_host(
-      const specfem::point::simd_index<dimension> &index,
-      specfem::point::boundary<
-          specfem::element::boundary_tag::composite_stacey_dirichlet, true>
-          &boundary) const {
+  inline void
+  load_on_host(const specfem::point::simd_index<dimension> &index,
+               specfem::point::boundary<
+                   specfem::element::boundary_tag::composite_stacey_dirichlet,
+                   dimension, true> &boundary) const {
 
     using simd = typename specfem::datatype::simd<type_real, true>;
 
