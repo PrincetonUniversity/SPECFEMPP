@@ -10,10 +10,9 @@ namespace chunk_element {
 
 namespace impl {
 
-template <typename ViewType, bool StoreDisplacement> struct Displacement;
-
-template <typename ViewType> struct Displacement<ViewType, true> {
-  ViewType displacement;
+template <typename ViewType, bool StoreDisplacement> struct Displacement {
+  ViewType displacement; ///< Displacement for every quadrature point within the
+                         ///< chunk. Defined if StoreDisplacement is true.
 
   KOKKOS_FUNCTION Displacement() = default;
 
@@ -27,10 +26,9 @@ template <typename ViewType> struct Displacement<ViewType, true> {
 
 template <typename ViewType> struct Displacement<ViewType, false> {};
 
-template <typename ViewType, bool StoreVelocity> struct Velocity;
-
-template <typename ViewType> struct Velocity<ViewType, true> {
-  ViewType velocity;
+template <typename ViewType, bool StoreVelocity> struct Velocity {
+  ViewType velocity; ///< Velocity for every quadrature point within the chunk.
+                     ///< Defined if StoreVelocity is true.
 
   KOKKOS_FUNCTION Velocity() = default;
 
@@ -43,10 +41,9 @@ template <typename ViewType> struct Velocity<ViewType, true> {
 
 template <typename ViewType> struct Velocity<ViewType, false> {};
 
-template <typename ViewType, bool StoreAcceleration> struct Acceleration;
-
-template <typename ViewType> struct Acceleration<ViewType, true> {
-  ViewType acceleration;
+template <typename ViewType, bool StoreAcceleration> struct Acceleration {
+  ViewType acceleration; ///< Acceleration for every quadrature point within the
+                         ///< chunk. Defined if StoreAcceleration is true.
 
   KOKKOS_FUNCTION Acceleration() = default;
 
@@ -60,10 +57,9 @@ template <typename ViewType> struct Acceleration<ViewType, true> {
 
 template <typename ViewType> struct Acceleration<ViewType, false> {};
 
-template <typename ViewType, bool StoreMassMatrix> struct MassMatrix;
-
-template <typename ViewType> struct MassMatrix<ViewType, true> {
-  ViewType mass_matrix;
+template <typename ViewType, bool StoreMassMatrix> struct MassMatrix {
+  ViewType mass_matrix; ///< Mass matrix for every quadrature point within the
+                        ///< chunk. Defined if StoreMassMatrix is true.
 
   KOKKOS_FUNCTION MassMatrix() = default;
 
@@ -222,7 +218,12 @@ public:
                         std::integral_constant<bool, StoreAcceleration>{},
                         std::integral_constant<bool, StoreMassMatrix>{}) {}
 
-  static int shmem_size() {
+  /**
+   * @brief Get the amount memory in bytes required for shared memory
+   *
+   * @return int  Amount of shared memory required
+   */
+  constexpr static int shmem_size() {
     return (static_cast<int>(StoreDisplacement) +
             static_cast<int>(StoreVelocity) +
             static_cast<int>(StoreAcceleration) +
@@ -273,6 +274,24 @@ struct FieldTraits
 };
 } // namespace impl
 
+/**
+ * @brief Chunk field class for storing displacement, velocity, acceleration,
+ * and mass matrix within a chunk of elements.
+ *
+ * @tparam NumElements Number of elements in the chunk
+ * @tparam NGLL Number of Gauss-Lobatto-Legendre points
+ * @tparam DimensionType Dimension of the elements within the chunk
+ * @tparam MediumTag Medium tag for the elements within the chunk
+ * @tparam MemorySpace Memory space for the views
+ * @tparam MemoryTraits Memory traits for the views
+ * @tparam StoreDisplacement Boolean to indicate if displacement should be
+ * stored
+ * @tparam StoreVelocity Boolean to indicate if velocity should be stored
+ * @tparam StoreAcceleration Boolean to indicate if acceleration should be
+ * stored
+ * @tparam StoreMassMatrix Boolean to indicate if mass matrix should be stored
+ * @tparam UseSIMD Boolean to indicate to use SIMD instructions
+ */
 template <int NumElements, int NGLL, specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag, typename MemorySpace,
           typename MemoryTraits, bool StoreDisplacement, bool StoreVelocity,
@@ -284,43 +303,124 @@ struct field
                                StoreMassMatrix, UseSIMD> {
 
 public:
+  /**
+   * @name Typedefs
+   *
+   */
+  ///@{
+
+  /**
+   * @brief Underlying View type used to store the field data.
+   */
   using ViewType =
       typename impl::FieldTraits<NumElements, NGLL, DimensionType, MediumTag,
                                  MemorySpace, MemoryTraits, StoreDisplacement,
                                  StoreVelocity, StoreAcceleration,
                                  StoreMassMatrix, UseSIMD>::ViewType;
+  using memory_space = MemorySpace; ///< Memory space for the views
+  using simd = specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD type
 
-  constexpr static int components = ViewType::components;
-  constexpr static auto medium_tag = MediumTag;
-  constexpr static int dimension =
-      specfem::dimension::dimension<DimensionType>::dim;
-  constexpr static int num_elements = NumElements;
-  constexpr static int ngll = NGLL;
+  ///@}
 
-  constexpr static bool store_displacement = StoreDisplacement;
-  constexpr static bool store_velocity = StoreVelocity;
-  constexpr static bool store_acceleration = StoreAcceleration;
-  constexpr static bool store_mass_matrix = StoreMassMatrix;
+  /**
+   * @name Compile-time constants
+   *
+   */
+  ///@{
+  constexpr static int components = ViewType::components; ///< Number of
+                                                          ///< components
+  constexpr static auto medium_tag = MediumTag; ///< Medium tag for the
+                                                ///< elements within the chunk
+  constexpr static auto dimension =
+      DimensionType; ///< Dimension of the
+                     ///< elements within the chunk
+  constexpr static int num_elements = NumElements; ///< Number of elements in
+                                                   ///< the chunk
+  constexpr static int ngll = NGLL; ///< Number of Gauss-Lobatto-Legendre
+                                    ///< points
 
-  constexpr static bool isChunkFieldType = true;
-  constexpr static bool isPointFieldType = false;
-  constexpr static bool isElementFieldType = false;
+  constexpr static bool store_displacement =
+      StoreDisplacement; ///< Boolean to indicate if displacement should be
+                         ///< stored
+  constexpr static bool store_velocity = StoreVelocity; ///< Boolean to indicate
+                                                        ///< if velocity should
+                                                        ///< be stored
+  constexpr static bool store_acceleration =
+      StoreAcceleration;                                     ///< Boolean to
+                                                             ///< indicate if
+                                                             ///< acceleration
+                                                             ///< should be
+                                                             ///< stored
+  constexpr static bool store_mass_matrix = StoreMassMatrix; ///< Boolean to
+                                                             ///< indicate if
+                                                             ///< mass matrix
+                                                             ///< should be
+                                                             ///< stored
 
-  using memory_space = MemorySpace;
-  using simd = specfem::datatype::simd<type_real, UseSIMD>;
+  constexpr static bool isChunkFieldType = true;  ///< Boolean to indicate if
+                                                  ///< this is a chunk field
+  constexpr static bool isPointFieldType = false; ///< Boolean to indicate if
+                                                  ///< this is a point field
+  constexpr static bool isElementFieldType =
+      false; ///< Boolean to indicate if
+             ///< this is an element field
+  ///@}
 
+  /**
+   * @name Constructors
+   *
+   */
+  ///@{
+
+  /**
+   * @brief Constructor a new chunk field with a single view.
+   *
+   * Enabled when only one of StoreDisplacement, StoreVelocity,
+   * StoreAcceleration, or StoreMassMatrix is true.
+   *
+   * @param view View to initialize the field with.
+   */
   KOKKOS_FUNCTION field(const ViewType &view)
       : impl::FieldTraits<NumElements, NGLL, DimensionType, MediumTag,
                           MemorySpace, MemoryTraits, StoreDisplacement,
                           StoreVelocity, StoreAcceleration, StoreMassMatrix,
                           UseSIMD>(view) {}
 
+  /**
+   * @brief Constructor a new chunk field with two views.
+   *
+   * Enabled when only two of StoreDisplacement, StoreVelocity, or
+   * StoreAcceleration are true.
+   *
+   * @param view1
+   * displacement view
+   * @code if ((StoreDisplacement && StoreVelocity == true) ||
+   * (StoreDisplacement && StoreAcceleration == true)) @endcode.
+   *  velocity view
+   * if @code (StoreVelocity && StoreAcceleration == true) @endcode
+   * @param view2
+   * velocity view
+   * if @code (StoreDisplacement && StoreVelocity == true) @endcode.
+   * acceleration view
+   * if @code (StoreDisplacement && StoreAcceleration == true) || StoreVelocity
+   * && StoreAcceleration == true) @endcode
+   */
   KOKKOS_FUNCTION field(const ViewType &view1, const ViewType &view2)
       : impl::FieldTraits<NumElements, NGLL, DimensionType, MediumTag,
                           MemorySpace, MemoryTraits, StoreDisplacement,
                           StoreVelocity, StoreAcceleration, StoreMassMatrix,
                           UseSIMD>(view1, view2) {}
 
+  /**
+   * @brief Constructor a new chunk field with three views.
+   *
+   * Enabled when StoreDisplacement, StoreVelocity, and StoreAcceleration are
+   * true.
+   *
+   * @param view1 Displacement view
+   * @param view2  Velocity view
+   * @param view3  Acceleration view
+   */
   KOKKOS_FUNCTION field(const ViewType &view1, const ViewType &view2,
                         const ViewType &view3)
       : impl::FieldTraits<NumElements, NGLL, DimensionType, MediumTag,
@@ -328,6 +428,13 @@ public:
                           StoreVelocity, StoreAcceleration, StoreMassMatrix,
                           UseSIMD>(view1, view2, view3) {}
 
+  /**
+   * @brief Construct a new chunk field object using within a Scratch Memory
+   * Space
+   *
+   * @tparam MemberType Kokkos Team Member Type
+   * @param team Kokkos Team Member where the field will be allocated
+   */
   template <typename MemberType>
   KOKKOS_FUNCTION field(const MemberType &team)
       : impl::FieldTraits<NumElements, NGLL, DimensionType, MediumTag,
@@ -339,81 +446,7 @@ public:
                                    MemorySpace>::accessible,
         "MemorySpace is not accessible from the execution space");
   }
+  ///@}
 };
-
-// template <int NumElements, int NGLL, specfem::dimension::type DimensionType,
-//           specfem::element::medium_tag MediumTag, typename MemorySpace,
-//           typename MemoryTraits>
-// struct field<NumElements, NGLL, DimensionType, MediumTag, MemorySpace,
-//              MemoryTraits, true, true, true, false>
-//     : public impl::FieldTraits<NumElements, NGLL, DimensionType, MediumTag,
-//                                MemorySpace, MemoryTraits, true, true, true,
-//                                false> {
-
-//   using memory_space = MemorySpace;
-
-//   using ViewType =
-//       typename impl::FieldTraits<NumElements, NGLL, DimensionType, MediumTag,
-//                                  MemorySpace, MemoryTraits, true, true, true,
-//                                  false>::ViewType;
-
-//   ViewType displacement;
-//   ViewType velocity;
-//   ViewType acceleration;
-
-//   // Enable only if the memory space is scratch space
-//   template <typename MemberType,
-//             std::enable_if_t<std::is_same<typename
-//             MemberType::execution_space::
-//                                               scratch_memory_space,
-//                                           MemorySpace>::value,
-//                              int> = 0>
-//   KOKKOS_FUNCTION field(const MemberType &team)
-//       : displacement(team.team_scratch(0)), velocity(team.team_scratch(0)),
-//         acceleration(team.team_scratch(0)) {}
-
-//   KOKKOS_FUNCTION field(const ViewType &displacement, const ViewType
-//   &velocity,
-//                         const ViewType &acceleration)
-//       : displacement(displacement), velocity(velocity),
-//         acceleration(acceleration) {};
-
-//   static int shmem_size() { return 3 * ViewType::shmem_size(); }
-// };
-
-// template <int NumElements, int NGLL, specfem::dimension::type DimensionType,
-//           specfem::element::medium_tag MediumTag, typename MemorySpace,
-//           typename MemoryTraits>
-// struct field<NumElements, NGLL, DimensionType, MediumTag, MemorySpace,
-//              MemoryTraits, true, false, false, false>
-//     : public impl::FieldTraits<NumElements, NGLL, DimensionType, MediumTag,
-//                                MemorySpace, MemoryTraits, true, false, false,
-//                                false> {
-
-//   using memory_space = MemorySpace;
-
-//   using ViewType =
-//       typename impl::FieldTraits<NumElements, NGLL, DimensionType, MediumTag,
-//                                  MemorySpace, MemoryTraits, true, false,
-//                                  false, false>::ViewType::type;
-
-//   ViewType displacement;
-
-//   // Enable only if the memory space is scratch space
-//   template <typename MemberType,
-//             std::enable_if_t<std::is_same<typename
-//             MemberType::execution_space::
-//                                               scratch_memory_space,
-//                                           MemorySpace>::value,
-//                              int> = 0>
-//   KOKKOS_FUNCTION field(const MemberType &team)
-//       : displacement(team.team_scratch(0)) {}
-
-//   KOKKOS_FUNCTION field(const ViewType &displacement)
-//       : displacement(displacement) {};
-
-//   static int shmem_size() { return ViewType::shmem_size(); }
-// };
-
 } // namespace chunk_element
 } // namespace specfem
