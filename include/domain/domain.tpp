@@ -183,7 +183,7 @@ void specfem::domain::domain<WavefieldType, DimensionType, MediumTag,
 
   Kokkos::parallel_for(
       "specfem::domain::domain::divide_mass_matrix",
-      range.get_policy(),
+      static_cast<typename RangePolicy::policy_type&>(range),
       KOKKOS_CLASS_LAMBDA(const int iglob) {
         const auto iterator = range.range_iterator(iglob);
         const auto index = iterator(0);
@@ -211,15 +211,15 @@ void specfem::domain::domain<WavefieldType, DimensionType, MediumTag,
                                                false, false, true, using_simd>;
 
   using ParallelConfig = specfem::parallel_config::default_range_config<
-      specfem::datatype::simd<type_real, using_simd> >;
+      specfem::datatype::simd<type_real, using_simd>, Kokkos::DefaultExecutionSpace>;
 
-  using RangePolicy = specfem::policy::range<ParallelConfig, Kokkos::DefaultExecutionSpace>;
+  using RangePolicy = specfem::policy::range<ParallelConfig>;
 
   RangePolicy range(nglob);
 
   Kokkos::parallel_for(
       "specfem::domain::domain::divide_mass_matrix",
-      range.get_policy(),
+      static_cast<typename RangePolicy::policy_type &>(range),
       KOKKOS_CLASS_LAMBDA(const int iglob) {
         const auto iterator = range.range_iterator(iglob);
         const auto index = iterator(0);
