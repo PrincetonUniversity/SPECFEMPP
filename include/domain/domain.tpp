@@ -175,9 +175,9 @@ void specfem::domain::domain<WavefieldType, DimensionType, MediumTag,
                                                false, true, false, using_simd>;
 
   using ParallelConfig = specfem::parallel_config::default_range_config<
-      specfem::datatype::simd<type_real, using_simd> >;
+      specfem::datatype::simd<type_real, using_simd>, Kokkos::DefaultExecutionSpace >;
 
-  using RangePolicy = specfem::policy::range<ParallelConfig, Kokkos::DefaultExecutionSpace>;
+  using RangePolicy = specfem::policy::range<ParallelConfig>;
 
   RangePolicy range(nglob);
 
