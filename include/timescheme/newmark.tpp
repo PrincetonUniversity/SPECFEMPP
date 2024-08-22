@@ -1,9 +1,9 @@
 #ifndef _SPECFEM_TIMESCHEME_NEWMARK_TPP_
 #define _SPECFEM_TIMESCHEME_NEWMARK_TPP_
 
-#include "timescheme/newmark.hpp"
-#include "policies/range.hpp"
 #include "parallel_configuration/range_config.hpp"
+#include "policies/range.hpp"
+#include "timescheme/newmark.hpp"
 
 namespace {
 template <specfem::element::medium_tag MediumType,
@@ -25,16 +25,17 @@ void corrector_phase_impl(
                             true, false, false, using_simd>;
 
   using ParallelConfig = specfem::parallel_config::default_range_config<
-      specfem::datatype::simd<type_real, using_simd> >;
+      specfem::datatype::simd<type_real, using_simd>,
+      Kokkos::DefaultExecutionSpace>;
 
-  using RangePolicyType =
-      specfem::policy::range<ParallelConfig, Kokkos::DefaultExecutionSpace>;
+  using RangePolicyType = specfem::policy::range<ParallelConfig>;
 
-  const RangePolicyType range_policy(nglob);
+  RangePolicyType range_policy(nglob);
 
   Kokkos::parallel_for(
       "specfem::TimeScheme::Newmark::corrector_phase_impl",
-      range_policy.get_policy(), KOKKOS_LAMBDA(const int iglob) {
+      static_cast<typename RangePolicyType::policy_type &>(range_policy),
+      KOKKOS_LAMBDA(const int iglob) {
         const auto iterator = range_policy.range_iterator(iglob);
         const auto index = iterator(0);
 
@@ -92,16 +93,17 @@ void predictor_phase_impl(
                             false, true, false, using_simd>;
 
   using ParallelConfig = specfem::parallel_config::default_range_config<
-      specfem::datatype::simd<type_real, using_simd> >;
+      specfem::datatype::simd<type_real, using_simd>,
+      Kokkos::DefaultExecutionSpace>;
 
-  using RangePolicyType =
-      specfem::policy::range<ParallelConfig, Kokkos::DefaultExecutionSpace>;
+  using RangePolicyType = specfem::policy::range<ParallelConfig>;
 
-  const RangePolicyType range_policy(nglob);
+  RangePolicyType range_policy(nglob);
 
   Kokkos::parallel_for(
       "specfem::TimeScheme::Newmark::predictor_phase_impl",
-      range_policy.get_policy(), KOKKOS_LAMBDA(const int iglob) {
+      static_cast<typename RangePolicyType::policy_type &>(range_policy),
+      KOKKOS_LAMBDA(const int iglob) {
         const auto iterator = range_policy.range_iterator(iglob);
         const auto index = iterator(0);
 
