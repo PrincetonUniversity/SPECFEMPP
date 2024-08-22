@@ -78,7 +78,8 @@ void specfem::frechet_derivatives::impl::frechet_elements<
 
   constexpr bool using_simd = true;
   using simd = specfem::datatype::simd<type_real, using_simd>;
-  using ParallelConfig = specfem::parallel_config::default_chunk_config<simd>;
+  using ParallelConfig = specfem::parallel_config::default_chunk_config<
+      DimensionType, simd, Kokkos::DefaultExecutionSpace>;
 
   using ChunkElementFieldType = specfem::chunk_element::field<
       ParallelConfig::chunk_size, NGLL, DimensionType, MediumTag,
@@ -90,12 +91,12 @@ void specfem::frechet_derivatives::impl::frechet_elements<
       Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, false>;
 
   using AdjointPointFieldType =
-      specfem::point::field<DimensionType, MediumTag, false, false, true,
-                            false, using_simd>;
+      specfem::point::field<DimensionType, MediumTag, false, false, true, false,
+                            using_simd>;
 
   using BackwardPointFieldType =
-      specfem::point::field<DimensionType, MediumTag, true, false, false,
-                            false, using_simd>;
+      specfem::point::field<DimensionType, MediumTag, true, false, false, false,
+                            using_simd>;
 
   using PointFieldDerivativesType =
       specfem::point::field_derivatives<DimensionType, MediumTag, using_simd>;
@@ -103,9 +104,7 @@ void specfem::frechet_derivatives::impl::frechet_elements<
   int scratch_size = 2 * ChunkElementFieldType::shmem_size() +
                      ElementQuadratureType::shmem_size();
 
-  using ChunkPolicy =
-      specfem::policy::element_chunk<ParallelConfig, DimensionType,
-                                     Kokkos::DefaultExecutionSpace>;
+  using ChunkPolicy = specfem::policy::element_chunk<ParallelConfig>;
 
   ChunkPolicy chunk_policy(element_index, NGLL, NGLL);
 
@@ -120,15 +119,17 @@ void specfem::frechet_derivatives::impl::frechet_elements<
 
         specfem::compute::load_on_device(team, quadrature, quadrature_element);
 
-        for (int tile = 0; tile < ChunkPolicy::TileSize; tile += ChunkPolicy::ChunkSize) {
+        for (int tile = 0; tile < ChunkPolicy::tile_size;
+             tile += ChunkPolicy::chunk_size) {
           const int starting_element_index =
-              team.league_rank() * ChunkPolicy::TileSize + tile;
+              team.league_rank() * ChunkPolicy::tile_size + tile;
 
           if (starting_element_index >= nelements) {
             break;
           }
 
-          const auto iterator = chunk_policy.league_iterator(starting_element_index);
+          const auto iterator =
+              chunk_policy.league_iterator(starting_element_index);
 
           // Populate Scratch Views
           specfem::compute::load_on_device(team, iterator, adjoint_field,
@@ -147,10 +148,10 @@ void specfem::frechet_derivatives::impl::frechet_elements<
               team, iterator, partial_derivatives,
               quadrature_element.hprime_gll, adjoint_element_field.displacement,
               backward_element_field.displacement,
-              [&](const typename ChunkPolicy::iterator_type::index_type &iterator_index,
+              [&](const typename ChunkPolicy::iterator_type::index_type
+                      &iterator_index,
                   const typename PointFieldDerivativesType::ViewType &df,
                   const typename PointFieldDerivativesType::ViewType &dg) {
-
                 const auto index = iterator_index.index;
                 // Load properties, adjoint field, and backward field
                 // for the point
