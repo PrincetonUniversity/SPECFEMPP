@@ -6,40 +6,55 @@
 namespace specfem {
 namespace parallel_config {
 /**
- * @brief Parallel configuration for chunk policy
+ * @brief Parallel configuration for chunk policy.
  *
- * This policy is to be used along with element_chunk policy. It specifies the
- * number of threads (ChunkSize) and the number of vector lanes.
- *
- * @tparam NumThreads Number of threads per team
- * @tparam VectorLanes Number of vector lanes per thread
+ * @tparam DimensionType Dimension type of the elements within a chunk.
+ * @tparam ChunkSize Number of elements within a chunk.
+ * @tparam TileSize Tile size for chunk policy.
+ * @tparam NumThreads Number of threads within a team.
+ * @tparam VectorLanes Number of vector lanes.
+ * @tparam SIMD SIMD type to use simd operations. @ref specfem::datatypes::simd
  */
-template <int ChunkSize, int TileSize, int NumThreads, int VectorLanes,
-          typename SIMDtype>
+template <specfem::dimension::type DimensionType, int ChunkSize, int TileSize,
+          int NumThreads, int VectorLanes, typename SIMD,
+          typename ExecutionSpace>
 struct chunk_config {
   constexpr static int num_threads = NumThreads;   ///< Number of threads
   constexpr static int vector_lanes = VectorLanes; ///< Number of vector lanes
   constexpr static int tile_size = TileSize;       ///< Tile size
-  constexpr static int chunk_size = ChunkSize;
-  using simd = SIMDtype; ///< SIMD type
+  constexpr static int chunk_size = ChunkSize;     ///< Chunk size
+  using simd = SIMD;                               ///< SIMD type
+  using execution_space = ExecutionSpace;          ///< Execution space
+  constexpr static auto dimension =
+      DimensionType; ///< Dimension type of the elements within chunk.
 };
 
+/**
+ * @brief Default chunk configuration to use based on Dimension, SIMD type and
+ * Execution space.
+ *
+ * Defines chunk size, tile size, number of threads, number of vector lanes
+ * defaults for @ref specfem::parallel_config::chunk_config
+ *
+ * @tparam DimensionType Dimension type of the elements within a chunk.
+ * @tparam SIMD SIMD type to use simd operations. @ref specfem::datatypes::simd
+ * @tparam ExecutionSpace Execution space for the policy.
+ */
+template <specfem::dimension::type DimensionType, typename SIMD,
+          typename ExecutionSpace>
+struct default_chunk_config;
+
 #ifdef KOKKOS_ENABLE_CUDA
-constexpr static int chunk_size =
-    specfem::build_configuration::chunk::chunk_size;
-constexpr static int tile_size =
-    specfem::build_configuration::chunk::chunk_size *
-    specfem::build_configuration::chunk::num_chunks;
-constexpr static int num_threads =
-    specfem::build_configuration::chunk::num_threads;
-constexpr static int vector_lanes =
-    specfem::build_configuration::chunk::vector_lanes;
-template <typename SIMDtype>
-using default_chunk_config =
-    chunk_config<chunk_size, tile_size, num_threads, vector_lanes, SIMDtype>;
-#else
-template <typename SIMDtype>
-using default_chunk_config = chunk_config<1, 1, 1, 1, SIMDtype>;
+template <typename SIMD>
+struct default_chunk_config<specfem::dimension::type::dim2, SIMD, Kokkos::Cuda>
+    : chunk_config<specfem::dimension::type::dim2, 32, 32, 160, 1, SIMD,
+                   Kokkos::Cuda> {};
 #endif
+
+template <typename SIMD>
+struct default_chunk_config<specfem::dimension::type::dim2, SIMD,
+                            Kokkos::Serial>
+    : chunk_config<specfem::dimension::type::dim2, 1, 1, 1, 1, SIMD,
+                   Kokkos::Serial> {};
 } // namespace parallel_config
 } // namespace specfem

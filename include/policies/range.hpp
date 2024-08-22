@@ -165,6 +165,10 @@ public:
    *
    */
   ///@{
+  constexpr static bool isKokkosRangePolicy =
+      true; ///< Indicates that this is a Kokkos range policy
+  constexpr static bool isKokkosTeamPolicy =
+      false; ///< Indicates that this is not a Kokkos team policy
   constexpr static bool isPointPolicy =
       true; ///< Indicates that this is a quadrature point policy
   constexpr static bool isEdgePolicy =
@@ -173,7 +177,7 @@ public:
       false; ///< Indicates that this is not a element face policy
   constexpr static bool isElementPolicy =
       false; ///< Indicates that this is not an element policy
-  constexpr static int ChunkSize =
+  constexpr static int chunk_size =
       1; ///< Number of chunks a range can be divided into. Indices within a
          ///< chunk are processed serially in a single thread.
   ///@}

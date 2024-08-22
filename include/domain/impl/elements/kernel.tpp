@@ -97,13 +97,13 @@ void specfem::domain::impl::kernels::element_kernel_base<
   using simd = specfem::datatype::simd<type_real, using_simd>;
 
   constexpr int simd_size = simd::size();
-  using ParallelConfig = specfem::parallel_config::default_chunk_config<simd>;
+  using ParallelConfig = specfem::parallel_config::default_chunk_config<
+      DimensionType, simd, Kokkos::DefaultExecutionSpace>;
 
-  using ChunkPolicyType =
-      specfem::policy::element_chunk<ParallelConfig, DimensionType,
-                                     Kokkos::DefaultExecutionSpace>;
+  using ChunkPolicyType = specfem::policy::element_chunk<ParallelConfig>;
 
-  using PointBoundaryType = specfem::point::boundary<BoundaryTag, DimensionType, using_simd>;
+  using PointBoundaryType =
+      specfem::point::boundary<BoundaryTag, DimensionType, using_simd>;
 
   constexpr int NGLL = quadrature_points_type::NGLL;
 
@@ -111,12 +111,13 @@ void specfem::domain::impl::kernels::element_kernel_base<
 
   Kokkos::parallel_for(
       "specfem::domain::impl::kernels::elements::compute_mass_matrix",
-      chunk_policy.get_policy(),
+      static_cast<typename ChunkPolicyType::policy_type&>(chunk_policy),
       KOKKOS_CLASS_LAMBDA(const typename ChunkPolicyType::member_type &team) {
-        for (int tile = 0; tile < ChunkPolicyType::TileSize * simd_size;
-             tile += ChunkPolicyType::ChunkSize * simd_size) {
+        for (int tile = 0; tile < ChunkPolicyType::tile_size * simd_size;
+             tile += ChunkPolicyType::chunk_size * simd_size) {
           const int starting_element_index =
-              team.league_rank() * ChunkPolicyType::TileSize * simd_size + tile;
+              team.league_rank() * ChunkPolicyType::tile_size * simd_size +
+              tile;
 
           if (starting_element_index >= nelements) {
             break;
@@ -386,7 +387,8 @@ void specfem::domain::impl::kernels::element_kernel_base<
 
   constexpr int simd_size = simd::size();
 
-  using ParallelConfig = specfem::parallel_config::default_chunk_config<simd>;
+  using ParallelConfig = specfem::parallel_config::default_chunk_config<
+      DimensionType, simd, Kokkos::DefaultExecutionSpace>;
   // Element field type - represents which fields to fetch from global field
   // struct
   using ChunkElementFieldType = specfem::chunk_element::field<
@@ -413,8 +415,8 @@ void specfem::domain::impl::kernels::element_kernel_base<
       specfem::point::field<DimensionType, MediumTag, false, true, false, false,
                             using_simd>;
 
-  using PointBoundaryType = specfem::point::boundary<BoundaryTag, DimensionType,
-                                                      using_simd>;
+  using PointBoundaryType =
+      specfem::point::boundary<BoundaryTag, DimensionType, using_simd>;
 
   using PointFieldDerivativesType =
       specfem::point::field_derivatives<DimensionType, MediumTag, using_simd>;
@@ -431,8 +433,7 @@ void specfem::domain::impl::kernels::element_kernel_base<
                      ElementQuadratureType::shmem_size();
 
   using ChunkPolicyType =
-      specfem::policy::element_chunk<ParallelConfig, DimensionType,
-                                     Kokkos::DefaultExecutionSpace>;
+      specfem::policy::element_chunk<ParallelConfig>;
 
   ChunkPolicyType chunk_policy(element_kernel_index_mapping, NGLL, NGLL);
 
@@ -445,10 +446,10 @@ void specfem::domain::impl::kernels::element_kernel_base<
         ChunkStressIntegrandType stress_integrand(team);
 
         specfem::compute::load_on_device(team, quadrature, element_quadrature);
-        for (int tile = 0; tile < ChunkPolicyType::TileSize * simd_size;
-             tile += ChunkPolicyType::ChunkSize * simd_size) {
+        for (int tile = 0; tile < ChunkPolicyType::tile_size * simd_size;
+             tile += ChunkPolicyType::chunk_size * simd_size) {
           const int starting_element_index =
-              team.league_rank() * ChunkPolicyType::TileSize * simd_size + tile;
+              team.league_rank() * ChunkPolicyType::tile_size * simd_size + tile;
 
           if (starting_element_index >= nelements) {
             break;
