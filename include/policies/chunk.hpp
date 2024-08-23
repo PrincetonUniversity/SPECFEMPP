@@ -16,22 +16,22 @@ namespace impl {
  * @tparam DimensionType Dimension type of the elements within this iterator.
  */
 template <bool UseSIMD, specfem::dimension::type DimensionType>
-struct index_type;
+struct chunk_index_type;
 
 /**
  * @brief Template specialization when using SIMD.
  *
  */
 template <specfem::dimension::type DimensionType>
-struct index_type<true, DimensionType> {
+struct chunk_index_type<true, DimensionType> {
   constexpr static auto dimension = DimensionType; ///< Dimension type
   int ielement; ///< Element index within the iterator range
   specfem::point::simd_index<dimension> index; ///< SIMD index of the quadrature
                                                ///< point(s)
 
   KOKKOS_INLINE_FUNCTION
-  index_type(const int ielement,
-             const specfem::point::simd_index<dimension> index)
+  chunk_index_type(const int ielement,
+                   const specfem::point::simd_index<dimension> index)
       : ielement(ielement), index(index) {}
 };
 
@@ -40,13 +40,14 @@ struct index_type<true, DimensionType> {
  *
  */
 template <specfem::dimension::type DimensionType>
-struct index_type<false, DimensionType> {
+struct chunk_index_type<false, DimensionType> {
   constexpr static auto dimension = DimensionType; ///< Dimension type
   int ielement; ///< Element index within the iterator range
   specfem::point::index<dimension> index; ///< Index of the quadrature point
 
   KOKKOS_INLINE_FUNCTION
-  index_type(const int ielement, const specfem::point::index<dimension> index)
+  chunk_index_type(const int ielement,
+                   const specfem::point::index<dimension> index)
       : ielement(ielement), index(index){};
 };
 } // namespace impl
@@ -61,14 +62,22 @@ struct index_type<false, DimensionType> {
  */
 template <typename ViewType, specfem::dimension::type DimensionType,
           typename SIMD>
-class chunk {
+class chunk;
+
+/**
+ * @brief Template specialization for 2D elements.
+ *
+ */
+template <typename ViewType, typename SIMD>
+class chunk<ViewType, specfem::dimension::type::dim2, SIMD> {
 public:
   /**
    * @name Compile-time constants
    *
    */
   ///@{
-  constexpr static auto dimension = DimensionType;
+  constexpr static auto dimension =
+      specfem::dimension::type::dim2; ///< Dimension type
   ///@}
 
   /**
@@ -78,7 +87,8 @@ public:
   ///@{
   using simd = SIMD; ///< SIMD type
   using index_type =
-      typename impl::index_type<simd::using_simd, dimension>; ///< Index type
+      typename impl::chunk_index_type<simd::using_simd, dimension>; ///< Index
+                                                                    ///< type
   ///@}
 
 private:
@@ -104,8 +114,8 @@ private:
         ngllx(ngllx) {}
 
   KOKKOS_INLINE_FUNCTION
-  impl::index_type<false, dimension> operator()(const int i,
-                                                std::false_type) const {
+  impl::chunk_index_type<false, dimension> operator()(const int i,
+                                                      std::false_type) const {
 #ifdef KOKKOS_ENABLE_CUDA
     int ielement = i % num_elements;
     int ispec = indices(ielement);
@@ -118,13 +128,13 @@ private:
     const int ielement = i / (ngllz * ngllx);
     int ispec = indices(ielement);
 #endif
-    return impl::index_type<false, dimension>(
+    return impl::chunk_index_type<false, dimension>(
         ielement, specfem::point::index<dimension>(ispec, iz, ix));
   }
 
   KOKKOS_INLINE_FUNCTION
-  impl::index_type<true, dimension> operator()(const int i,
-                                               std::true_type) const {
+  impl::chunk_index_type<true, dimension> operator()(const int i,
+                                                     std::true_type) const {
 #ifdef KOKKOS_ENABLE_CUDA
     int ielement = i % num_elements;
     int simd_elements = (simd_size + ielement > indices.extent(0))
@@ -143,7 +153,7 @@ private:
                             : simd_size;
     int ispec = indices(ielement);
 #endif
-    return impl::index_type<true, dimension>(
+    return impl::chunk_index_type<true, dimension>(
         ielement,
         specfem::point::simd_index<dimension>(ispec, simd_elements, iz, ix));
   }
@@ -242,7 +252,20 @@ public:
       ParallelConfig::vector_lanes;                           ///< Vector lanes
   constexpr static int tile_size = ParallelConfig::tile_size; ///< Tile size
   constexpr static auto dimension =
-      ParallelConfig::dimension; ///< Dimension type
+      ParallelConfig::dimension;               ///< Dimension type
+  constexpr static bool isPointPolicy = false; ///< Indicates whether this is a
+                                               ///< point policy or not
+  constexpr static bool isEdgePolicy = false;  ///< Indicates whether this is an
+                                               ///< edge policy or not
+  constexpr static bool isFacePolicy = false;  ///< Indicates whether this is a
+                                               ///< face policy or not
+  constexpr static bool isElementPolicy =
+      true; ///< Indicates whether this is an
+  ///< element policy or not
+  constexpr static bool isKokkosRangePolicy =
+      false; ///< Indicates that this is a Kokkos range policy
+  constexpr static bool isKokkosTeamPolicy =
+      true; ///< Indicates that this is a Kokkos team policy
   ///@}
 
 private:

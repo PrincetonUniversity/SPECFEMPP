@@ -15,6 +15,7 @@ Example Usage
 -------------
 
 .. code-block:: cpp
+    :linenos:
 
     #include "mesh/mesh.hpp"
     #include "compute/assembly.hpp"
