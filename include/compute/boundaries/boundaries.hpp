@@ -13,32 +13,94 @@
 
 namespace specfem {
 namespace compute {
+/**
+ * @brief Boundary condition information for every quadrature point in finite
+ * element mesh
+ *
+ */
 struct boundaries {
 
-  boundaries() = default;
+private:
+  using IndexViewType = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
+  using BoundaryViewType =
+      Kokkos::View<specfem::element::boundary_tag *,
+                   Kokkos::HostSpace>; //< Underlying view type to store
+                                       // boundary tags
 
-  specfem::kokkos::HostView1d<specfem::element::boundary_tag> boundary_tags;
+public:
+  BoundaryViewType boundary_tags; ///< Boundary tags for every element in the
+                                  ///< mesh
 
-  specfem::kokkos::DeviceView1d<int> acoustic_free_surface_index_mapping;
-  specfem::kokkos::HostMirror1d<int> h_acoustic_free_surface_index_mapping;
+  IndexViewType acoustic_free_surface_index_mapping;
+  IndexViewType::HostMirror h_acoustic_free_surface_index_mapping;
 
-  specfem::kokkos::DeviceView1d<int> stacey_index_mapping;
-  specfem::kokkos::HostMirror1d<int> h_stacey_index_mapping;
+  IndexViewType stacey_index_mapping;
+  IndexViewType::HostMirror h_stacey_index_mapping;
 
   specfem::compute::impl::boundaries::acoustic_free_surface
       acoustic_free_surface; ///< Acoustic free surface boundary
 
   specfem::compute::impl::boundaries::stacey stacey; ///< Stacey boundary
 
+  /**
+   * @name Constructors
+   *
+   */
+  ///@{
+
+  /**
+   * @brief Default constructor
+   *
+   */
+  boundaries() = default;
+
+  /**
+   * @brief Compute boundary conditions properties for every quadrature point in
+   * the mesh
+   *
+   * @param nspec Number of spectral elements
+   * @param ngllz Number of GLL points in z direction
+   * @param ngllx Number of GLL points in x direction
+   * @param mesh Finite element mesh information
+   * @param mapping mapping between mesh and compute indexing
+   * @param quadrature Finite element quadrature information
+   * @param properties Material properties for every quadrature point
+   * @param partial_derivatives Partial derivatives of basis functions at every
+   * quadrature point
+   */
   boundaries(const int nspec, const int ngllz, const int ngllx,
              const specfem::mesh::mesh &mesh,
              const specfem::compute::mesh_to_compute_mapping &mapping,
              const specfem::compute::quadrature &quadrature,
              const specfem::compute::properties &properties,
              const specfem::compute::partial_derivatives &partial_derivatives);
+  ///@}
 };
 
-template <typename IndexType, typename PointBoundaryType>
+/**
+ * @defgroup BoundaryConditionDataAccess
+ *
+ */
+
+/**
+ * @brief Load boundary condition information for a quadrature point on the
+ * device
+ *
+ * @ingroup BoundaryConditionDataAccess
+ *
+ * @tparam IndexType Index type. Needs to be of @ref specfem::point::index or
+ * @ref specfem::point::simd_index
+ * @tparam PointBoundaryType Point boundary type. Needs to be of @ref
+ * specfem::point::boundary
+ * @param index Index of the quadrature point
+ * @param boundaries Boundary condition information for every quadrature point
+ * @param boundary Boundary condition information for a given quadrature point
+ * (output)
+ */
+template <typename IndexType, typename PointBoundaryType,
+          typename std::enable_if<PointBoundaryType::simd::using_simd ==
+                                      IndexType::using_simd,
+                                  int>::type = 0>
 KOKKOS_INLINE_FUNCTION void
 load_on_device(const IndexType &index,
                const specfem::compute::boundaries &boundaries,
@@ -76,7 +138,24 @@ load_on_device(const IndexType &index,
   return;
 }
 
-template <typename IndexType, typename PointBoundaryType>
+/**
+ * @brief Load boundary condition information for a quadrature point on the host
+ *
+ * @ingroup BoundaryConditionDataAccess
+ *
+ * @tparam IndexType Index type. Needs to be of @ref specfem::point::index or
+ * @ref specfem::point::simd_index
+ * @tparam PointBoundaryType Point boundary type. Needs to be of @ref
+ * specfem::point::boundary
+ * @param index Index of the quadrature point
+ * @param boundaries Boundary condition information for every quadrature point
+ * @param boundary Boundary condition information for a given quadrature point
+ * (output)
+ */
+template <typename IndexType, typename PointBoundaryType,
+          typename std::enable_if<PointBoundaryType::simd::using_simd ==
+                                      IndexType::using_simd,
+                                  int>::type = 0>
 inline void load_on_host(const IndexType &index,
                          const specfem::compute::boundaries &boundaries,
                          PointBoundaryType &boundary) {
