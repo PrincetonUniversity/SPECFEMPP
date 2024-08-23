@@ -43,8 +43,7 @@ private:
   specfem::kokkos::HostMirror1d<int> h_source_domain_index_mapping;
   specfem::compute::properties properties;
   specfem::compute::simulation_field<WavefieldType> field;
-  specfem::compute::impl::sources::source_medium<DimensionType, MediumTag>
-      sources;
+  specfem::compute::source_medium<DimensionType, MediumTag> sources;
   quadrature_point_type quadrature_points;
   specfem::domain::impl::sources::source<DimensionType, MediumTag, PropertyTag,
                                          quadrature_point_type, using_simd>
