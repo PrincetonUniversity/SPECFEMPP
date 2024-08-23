@@ -17,91 +17,101 @@ namespace specfem {
 namespace compute {
 
 /**
- * @brief Material properties stored at every quadrature point
+ * @brief Material properties at every quadrature point in the finite element
+ * mesh
  *
  */
 struct properties {
+private:
+  using IndexViewType = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
+  using MediumTagViewType =
+      Kokkos::View<specfem::element::medium_tag *,
+                   Kokkos::DefaultExecutionSpace>; ///< Underlying view type to
+                                                   ///< store medium tags
+  using PropertyTagViewType =
+      Kokkos::View<specfem::element::property_tag *,
+                   Kokkos::DefaultExecutionSpace>; ///< Underlying view type to
+                                                   ///< store property tags
 
+public:
   int nspec; ///< total number of spectral elements
   int ngllz; ///< number of quadrature points in z dimension
   int ngllx; ///< number of quadrature points in x dimension
-  specfem::kokkos::DeviceView1d<int> property_index_mapping;   ///< Mapping of
-                                                               ///< spectral
-                                                               ///< element to
-                                                               ///< material
-                                                               ///< properties
-  specfem::kokkos::HostMirror1d<int> h_property_index_mapping; ///< Mapping of
-                                                               ///< spectral
-                                                               ///< element to
-                                                               ///< material
-                                                               ///< properties
-  specfem::kokkos::DeviceView1d<specfem::element::medium_tag>
-      element_types; ///< Element types
-  specfem::kokkos::DeviceView1d<specfem::element::property_tag>
-      element_property; ///< Element properties
-  specfem::kokkos::HostMirror1d<specfem::element::medium_tag>
-      h_element_types; ///< Element types
-  specfem::kokkos::HostMirror1d<specfem::element::property_tag>
-      h_element_property; ///< Element properties
+  IndexViewType property_index_mapping;
+  IndexViewType::HostMirror h_property_index_mapping;
+  MediumTagViewType element_types;      ///< Medium Tag for every spectral
+                                        ///< element
+  PropertyTagViewType element_property; ///< Property Tag for every spectral
+                                        ///< element
+  MediumTagViewType::HostMirror h_element_types;      ///< Host mirror of
+                                                      ///< @ref element_types
+  PropertyTagViewType::HostMirror h_element_property; ///< Host mirror of
+                                                      ///< @ref element_property
 
   specfem::compute::impl::properties::material_property<
       specfem::element::medium_tag::elastic,
       specfem::element::property_tag::isotropic>
-      elastic_isotropic;
+      elastic_isotropic; ///< Elastic isotropic material properties
   specfem::compute::impl::properties::material_property<
       specfem::element::medium_tag::acoustic,
       specfem::element::property_tag::isotropic>
-      acoustic_isotropic;
+      acoustic_isotropic; ///< Acoustic isotropic material properties
 
-  // template <specfem::element::medium_tag type,
-  //           specfem::element::property_tag property>
-  // KOKKOS_FUNCTION specfem::point::properties<type, property>
-  // load_device_properties(const int ispec, const int iz, const int ix) const {
-  //   const int index = property_index_mapping(ispec);
+  /**
+   * @name Constructors
+   */
+  ///@{
 
-  //   if constexpr ((type == specfem::element::medium_tag::elastic) &&
-  //                 (property == specfem::element::property_tag::isotropic)) {
-  //     return elastic_isotropic.load_device_properties(index, iz, ix);
-  //   } else if constexpr ((type == specfem::element::medium_tag::acoustic) &&
-  //                        (property ==
-  //                         specfem::element::property_tag::isotropic)) {
-  //     return acoustic_isotropic.load_device_properties(index, iz, ix);
-  //   } else {
-  //     static_assert("Material type not implemented");
-  //   }
-  // }
-
-  // template <specfem::element::medium_tag type,
-  //           specfem::element::property_tag property>
-  // specfem::point::properties<type, property>
-  // load_host_properties(const int ispec, const int iz, const int ix) const {
-  //   const int index = h_property_index_mapping(ispec);
-
-  //   if constexpr ((type == specfem::element::medium_tag::elastic) &&
-  //                 (property == specfem::element::property_tag::isotropic)) {
-  //     return elastic_isotropic.load_host_properties(index, iz, ix);
-  //   } else if constexpr ((type == specfem::element::medium_tag::acoustic) &&
-  //                        (property ==
-  //                         specfem::element::property_tag::isotropic)) {
-  //     return acoustic_isotropic.load_host_properties(index, iz, ix);
-  //   } else {
-  //     static_assert("Material type not implemented");
-  //   }
-  // }
-
+  /**
+   * @brief Default constructor
+   *
+   */
   properties() = default;
 
+  /**
+   * @brief Construct a new properties object from mesh information
+   *
+   * @param nspec Number of spectral elements
+   * @param ngllz Number of quadrature points in z direction
+   * @param ngllx Number of quadrature points in x direction
+   * @param mapping Mapping of spectral element index from mesh to assembly
+   * @param tags Element Tags for every spectral element
+   * @param materials Material properties for every spectral element
+   */
   properties(const int nspec, const int ngllz, const int ngllx,
              const specfem::compute::mesh_to_compute_mapping &mapping,
              const specfem::mesh::tags &tags,
              const specfem::mesh::materials &materials);
+
+  ///@}
 };
 
-template <typename PropertiesType, typename IndexType>
+/**
+ * @defgroup ComputePropertiesDataAccess
+ */
+
+/**
+ * @brief Load the material properties at a given quadrature point on the device
+ *
+ * @ingroup ComputePropertiesDataAccess
+ *
+ * @tparam PointPropertiesType Point properties type. Needs to be of @ref
+ * specfem::point::properties
+ * @tparam IndexType Index type. Needs to be of @ref specfem::point::index or
+ * @ref specfem::point::simd_index
+ * @param lcoord Index of the quadrature point
+ * @param properties Material properties container
+ * @param point_properties Material properties at the given quadrature point
+ * (output)
+ */
+template <typename PointPropertiesType, typename IndexType,
+          typename std::enable_if_t<IndexType::using_simd ==
+                                        PointPropertiesType::simd::using_simd,
+                                    int> = 0>
 NOINLINE KOKKOS_FUNCTION void
 load_on_device(const IndexType &lcoord,
                const specfem::compute::properties &properties,
-               PropertiesType &point_properties) {
+               PointPropertiesType &point_properties) {
   const int ispec = lcoord.ispec;
 
   IndexType l_index = lcoord;
@@ -110,9 +120,9 @@ load_on_device(const IndexType &lcoord,
 
   l_index.ispec = index;
 
-  constexpr auto MediumTag = PropertiesType::medium_tag;
-  constexpr auto PropertyTag = PropertiesType::property_tag;
-  constexpr auto DimensionType = PropertiesType::dimension;
+  constexpr auto MediumTag = PointPropertiesType::medium_tag;
+  constexpr auto PropertyTag = PointPropertiesType::property_tag;
+  constexpr auto DimensionType = PointPropertiesType::dimension;
 
   static_assert(DimensionType == specfem::dimension::type::dim2,
                 "Only 2D properties are supported");
@@ -131,10 +141,27 @@ load_on_device(const IndexType &lcoord,
   }
 }
 
-template <typename PropertiesType, typename IndexType>
+/**
+ * @brief Store the material properties at a given quadrature point on the
+ * device
+ *
+ * @ingroup ComputePropertiesDataAccess
+ *
+ * @tparam PointPropertiesType Point properties type. Needs to be of @ref
+ * specfem::point::properties
+ * @tparam IndexType Index type. Needs to be of @ref specfem::point::index or
+ * @ref specfem::point::simd_index
+ * @param lcoord Index of the quadrature point
+ * @param properties Material properties container
+ * @param point_properties Material properties at the given quadrature point
+ */
+template <typename PointPropertiesType, typename IndexType,
+          typename std::enable_if_t<IndexType::using_simd ==
+                                        PointPropertiesType::simd::using_simd,
+                                    int> = 0>
 void load_on_host(const IndexType &lcoord,
                   const specfem::compute::properties &properties,
-                  PropertiesType &point_properties) {
+                  PointPropertiesType &point_properties) {
   const int ispec = lcoord.ispec;
 
   IndexType l_index = lcoord;
@@ -143,9 +170,9 @@ void load_on_host(const IndexType &lcoord,
 
   l_index.ispec = index;
 
-  constexpr auto MediumTag = PropertiesType::medium_tag;
-  constexpr auto PropertyTag = PropertiesType::property_tag;
-  constexpr auto DimensionType = PropertiesType::dimension;
+  constexpr auto MediumTag = PointPropertiesType::medium_tag;
+  constexpr auto PropertyTag = PointPropertiesType::property_tag;
+  constexpr auto DimensionType = PointPropertiesType::dimension;
 
   static_assert(DimensionType == specfem::dimension::type::dim2,
                 "Only 2D properties are supported");
@@ -164,10 +191,26 @@ void load_on_host(const IndexType &lcoord,
   }
 }
 
-template <typename PropertiesType, typename IndexType>
+/**
+ * @brief Store the material properties at a given quadrature point on the host
+ *
+ * @ingroup ComputePropertiesDataAccess
+ *
+ * @tparam PointPropertiesType Point properties type. Needs to be of @ref
+ * specfem::point::properties
+ * @tparam IndexType Index type. Needs to be of @ref specfem::point::index or
+ * @ref specfem::point::simd_index
+ * @param lcoord Index of the quadrature point
+ * @param properties Material properties container
+ * @param point_properties Material properties at the given quadrature point
+ */
+template <typename PointPropertiesType, typename IndexType,
+          typename std::enable_if_t<IndexType::using_simd ==
+                                        PointPropertiesType::simd::using_simd,
+                                    int> = 0>
 void store_on_host(const IndexType &lcoord,
                    const specfem::compute::properties &properties,
-                   const PropertiesType &point_properties) {
+                   const PointPropertiesType &point_properties) {
   const int ispec = lcoord.ispec;
 
   const int index = properties.h_property_index_mapping(ispec);
@@ -176,9 +219,9 @@ void store_on_host(const IndexType &lcoord,
 
   l_index.ispec = index;
 
-  constexpr auto MediumTag = PropertiesType::medium_tag;
-  constexpr auto PropertyTag = PropertiesType::property_tag;
-  constexpr auto DimensionType = PropertiesType::dimension;
+  constexpr auto MediumTag = PointPropertiesType::medium_tag;
+  constexpr auto PropertyTag = PointPropertiesType::property_tag;
+  constexpr auto DimensionType = PointPropertiesType::dimension;
 
   static_assert(DimensionType == specfem::dimension::type::dim2,
                 "Only 2D properties are supported");
@@ -194,106 +237,6 @@ void store_on_host(const IndexType &lcoord,
     static_assert("Material type not implemented");
   }
 }
-
-// template <specfem::dimension::type DimensionType,
-//           specfem::element::medium_tag MediumTag,
-//           specfem::element::property_tag PropertyTag>
-// KOKKOS_FUNCTION void
-// load_on_device(const specfem::point::index &lcoord,
-//                const specfem::compute::properties &properties,
-//                specfem::point::properties<DimensionType, MediumTag,
-//                PropertyTag>
-//                    &point_properties) {
-//   const int ispec = lcoord.ispec;
-//   const int iz = lcoord.iz;
-//   const int ix = lcoord.ix;
-//   const int index = properties.property_index_mapping(ispec);
-
-//   static_assert(DimensionType == specfem::dimension::type::dim2,
-//                 "Only 2D properties are supported");
-
-//   if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
-//                 (PropertyTag == specfem::element::property_tag::isotropic)) {
-//     properties.elastic_isotropic.load_device_properties(index, iz, ix,
-//                                                         point_properties);
-//   } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic)
-//   &&
-//                        (PropertyTag ==
-//                         specfem::element::property_tag::isotropic)) {
-//     properties.acoustic_isotropic.load_device_properties(index, iz, ix,
-//                                                          point_properties);
-//   } else {
-//     static_assert("Material type not implemented");
-//   }
-
-//   return;
-// }
-
-// template <specfem::dimension::type DimensionType,
-//           specfem::element::medium_tag MediumTag,
-//           specfem::element::property_tag PropertyTag>
-// void load_on_host(const specfem::point::index &lcoord,
-//                   const specfem::compute::properties &properties,
-//                   specfem::point::properties<DimensionType, MediumTag,
-//                                              PropertyTag> &point_properties)
-//                                              {
-
-//   const int ispec = lcoord.ispec;
-//   const int iz = lcoord.iz;
-//   const int ix = lcoord.ix;
-//   const int index = properties.h_property_index_mapping(ispec);
-
-//   static_assert(DimensionType == specfem::dimension::type::dim2,
-//                 "Only 2D properties are supported");
-
-//   if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
-//                 (PropertyTag == specfem::element::property_tag::isotropic)) {
-//     properties.elastic_isotropic.load_host_properties(index, iz, ix,
-//                                                       point_properties);
-//   } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic)
-//   &&
-//                        (PropertyTag ==
-//                         specfem::element::property_tag::isotropic)) {
-//     properties.acoustic_isotropic.load_host_properties(index, iz, ix,
-//                                                        point_properties);
-//   } else {
-//     static_assert("Material type not implemented");
-//   }
-
-//   return;
-// }
-
-// template <specfem::dimension::type DimensionType,
-//           specfem::element::medium_tag MediumTag,
-//           specfem::element::property_tag PropertyTag>
-// void store_on_host(
-//     const specfem::point::index &lcoord,
-//     const specfem::compute::properties &properties,
-//     const specfem::point::properties<DimensionType, MediumTag, PropertyTag>
-//         &point_properties) {
-//   const int ispec = lcoord.ispec;
-//   const int iz = lcoord.iz;
-//   const int ix = lcoord.ix;
-//   const int index = properties.h_property_index_mapping(ispec);
-
-//   static_assert(DimensionType == specfem::dimension::type::dim2,
-//                 "Only 2D properties are supported");
-
-//   if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
-//                 (PropertyTag == specfem::element::property_tag::isotropic)) {
-//     properties.elastic_isotropic.assign(index, iz, ix, point_properties);
-//   } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic)
-//   &&
-//                        (PropertyTag ==
-//                         specfem::element::property_tag::isotropic)) {
-//     properties.acoustic_isotropic.assign(index, iz, ix, point_properties);
-//   } else {
-//     static_assert("Material type not implemented");
-//   }
-
-//   return;
-// }
-
 } // namespace compute
 } // namespace specfem
 

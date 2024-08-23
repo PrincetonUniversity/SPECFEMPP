@@ -97,6 +97,9 @@ template <> struct index<specfem::dimension::type::dim2> {
   int ix;    ///< Index of the quadrature point in the x direction within the
              ///< spectral element
 
+  constexpr static bool using_simd =
+      false; ///< Flag to indicate that SIMD is not being used
+
   /**
    * @brief Default constructor
    *
@@ -144,6 +147,9 @@ template <> struct simd_index<specfem::dimension::type::dim2> {
           ///< the spectral element
   int ix; ///< Index of the quadrature point in the x direction within
           ///< the spectral element
+
+  constexpr static bool using_simd =
+      true; ///< Flag to indicate that SIMD is being used
 
   /**
    * @brief Default constructor
