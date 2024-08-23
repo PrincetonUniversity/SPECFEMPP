@@ -1,6 +1,7 @@
 #pragma once
 
 #include "impl/compute_coupling.hpp"
+#include "parallel_configuration/edge_config.hpp"
 #include "policies/edge.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -34,8 +35,10 @@ void specfem::coupled_interface::coupled_interface<
   if (this->nedges == 0)
     return;
 
-  using EdgePolicyType =
-      specfem::policy::element_edge<DimensionType, Kokkos::DefaultExecutionSpace>;
+  using ParallelConfig = specfem::parallel_config::default_edge_config<
+      DimensionType, Kokkos::DefaultExecutionSpace>;
+
+  using EdgePolicyType = specfem::policy::element_edge<ParallelConfig>;
 
   const auto edge_factor = this->interface_data.get_edge_factor();
   const auto edge_normal = this->interface_data.get_edge_normal();
@@ -46,12 +49,13 @@ void specfem::coupled_interface::coupled_interface<
   const auto [self_edge_type, coupled_edge_type] =
       this->interface_data.get_edge_type();
 
-  const EdgePolicyType edge_policy(self_index_mapping, coupled_index_mapping,
+  EdgePolicyType edge_policy(self_index_mapping, coupled_index_mapping,
                                    self_edge_type, coupled_edge_type,
                                    this->npoints);
 
   Kokkos::parallel_for(
-      "specfem::coupled_interfaces::compute_coupling", edge_policy.get_policy(),
+      "specfem::coupled_interfaces::compute_coupling",
+      static_cast<typename EdgePolicyType::policy_type &>(edge_policy),
       KOKKOS_LAMBDA(const typename EdgePolicyType::member_type &team_member) {
         const auto iterator =
             edge_policy.league_iterator(team_member.league_rank());
