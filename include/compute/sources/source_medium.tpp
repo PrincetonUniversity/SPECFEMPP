@@ -1,5 +1,4 @@
-#ifndef _COMPUTE_SOURCES_IMPL_SOURCE_MEDIUM_TPP
-#define _COMPUTE_SOURCES_IMPL_SOURCE_MEDIUM_TPP
+#pragma once
 
 #include "algorithms/locate_point.hpp"
 #include "point/coordinates.hpp"
@@ -8,7 +7,7 @@
 
 template <specfem::dimension::type Dimension,
           specfem::element::medium_tag Medium>
-specfem::compute::impl::sources::source_medium<Dimension, Medium>::
+specfem::compute::source_medium<Dimension, Medium>::
     source_medium(
         const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
         const specfem::compute::mesh &mesh,
@@ -19,10 +18,10 @@ specfem::compute::impl::sources::source_medium<Dimension, Medium>::
                            sources.size()),
       h_source_index_mapping(Kokkos::create_mirror_view(source_index_mapping)),
       source_time_function("specfem::sources::source_time_function", nsteps,
-                           sources.size(), medium_type::components),
+                           sources.size(), components),
       h_source_time_function(Kokkos::create_mirror_view(source_time_function)),
       source_array("specfem::sources::source_array", sources.size(),
-                   medium_type::components, mesh.quadratures.gll.N,
+                   components, mesh.quadratures.gll.N,
                    mesh.quadratures.gll.N),
       h_source_array(Kokkos::create_mirror_view(source_array)) {
 
@@ -48,5 +47,3 @@ specfem::compute::impl::sources::source_medium<Dimension, Medium>::
 
   return;
 }
-
-#endif /* _COMPUTE_SOURCES_IMPL_SOURCE_MEDIUM_TPP */

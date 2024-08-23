@@ -14,7 +14,7 @@
 #include "coupled_interfaces/interface_container.hpp"
 #include "fields/fields.hpp"
 #include "properties/interface.hpp"
-#include "sources/impl/source_medium.hpp"
+#include "sources/source_medium.hpp"
 #include "sources/sources.hpp"
 
 #endif
