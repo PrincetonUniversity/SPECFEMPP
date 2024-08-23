@@ -18,19 +18,53 @@
 #include "source/interface.hpp"
 
 namespace specfem {
+/**
+ * @brief Compute namespace defines data structures used to store data related
+ * to finite element assembly.
+ *
+ * The data is organized in a manner that makes it effiecient to access when
+ * computing finite element compute kernels.
+ *
+ */
 namespace compute {
+/**
+ * @brief Finite element assembly data
+ *
+ */
 struct assembly {
-  specfem::compute::mesh mesh;
-  specfem::compute::partial_derivatives partial_derivatives;
-  specfem::compute::properties properties;
-  specfem::compute::kernels kernels;
-  specfem::compute::sources sources;
-  specfem::compute::receivers receivers;
-  specfem::compute::boundaries boundaries;
-  specfem::compute::coupled_interfaces coupled_interfaces;
-  specfem::compute::fields fields;
-  specfem::compute::boundary_values boundary_values;
+  specfem::compute::mesh mesh; ///< Properties of the assembled mesh
+  specfem::compute::partial_derivatives partial_derivatives; ///< Partial
+                                                             ///< derivatives of
+                                                             ///< the basis
+                                                             ///< functions
+  specfem::compute::properties properties; ///< Material properties
+  specfem::compute::kernels kernels; ///< Frechet derivatives (Misfit kernels)
+  specfem::compute::sources sources; ///< Source information
+  specfem::compute::receivers receivers;   ///< Receiver information
+  specfem::compute::boundaries boundaries; ///< Boundary conditions
+  specfem::compute::coupled_interfaces coupled_interfaces; ///< Coupled
+                                                           ///< interfaces
+                                                           ///< between 2
+                                                           ///< mediums
+  specfem::compute::fields fields; ///< Displacement, velocity, and acceleration
+                                   ///< fields
+  specfem::compute::boundary_values boundary_values; ///< Field values at the
+                                                     ///< boundaries
 
+  /**
+   * @brief Generate a finite element assembly
+   *
+   * @param mesh Finite element mesh as read from mesher
+   * @param quadratures Quadrature points and weights
+   * @param sources Source information
+   * @param receivers Receiver information
+   * @param stypes Types of seismograms
+   * @param t0 Start time of simulation
+   * @param dt Time step
+   * @param max_timesteps Maximum number of time steps
+   * @param max_sig_step Maximum number of siesmogram time steps
+   * @param simulation Type of simulation (forward, adjoint, etc.)
+   */
   assembly(
       const specfem::mesh::mesh &mesh,
       const specfem::quadrature::quadratures &quadratures,
