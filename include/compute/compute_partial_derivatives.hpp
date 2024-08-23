@@ -53,7 +53,7 @@ public:
 
   partial_derivatives(const int nspec, const int ngllz, const int ngllx);
   /**
-   * @brief Constructor to allocate and assign views
+   * @brief Construct a new partial derivatives object from mesh information
    *
    * @param mesh Mesh information
    */
@@ -71,23 +71,10 @@ public:
  *
  */
 
-/**
- * @brief Load the partial derivatives at a given quadrature point on the
- * device.
- *
- * @ingroup ComputePartialDerivativesDataAccess
- *
- * @tparam PointPartialDerivativesType Point type. Needs to be of @ref
- * specfem::point::partial_derivatives
- * @param index Index of the quadrature point
- * @param derivatives Partial derivatives container
- * @param partial_derivatives Partial derivatives at the given quadrature point
- * (output)
- */
 template <typename PointPartialDerivativesType,
           typename std::enable_if_t<
               PointPartialDerivativesType::simd::using_simd, int> = 0>
-NOINLINE KOKKOS_FUNCTION void load_on_device(
+NOINLINE KOKKOS_FUNCTION void impl_load_on_device(
     const specfem::point::simd_index<PointPartialDerivativesType::dimension>
         &index,
     const specfem::compute::partial_derivatives &derivatives,
@@ -121,23 +108,10 @@ NOINLINE KOKKOS_FUNCTION void load_on_device(
   }
 }
 
-/**
- * @brief Load the partial derivatives at a given quadrature point on the
- * device.
- *
- * @ingroup ComputePartialDerivativesDataAccess
- *
- * @tparam PointPartialDerivativesType Point type. Needs to be of @ref
- * specfem::point::partial_derivatives
- * @param index Index of the quadrature point
- * @param derivatives Partial derivatives container
- * @param partial_derivatives Partial derivatives at the given quadrature point
- * (output)
- */
 template <typename PointPartialDerivativesType,
           typename std::enable_if_t<
               !PointPartialDerivativesType::simd::using_simd, int> = 0>
-NOINLINE KOKKOS_FUNCTION void load_on_device(
+NOINLINE KOKKOS_FUNCTION void impl_load_on_device(
     const specfem::point::index<PointPartialDerivativesType::dimension> &index,
     const specfem::compute::partial_derivatives &derivatives,
     PointPartialDerivativesType &partial_derivatives) {
@@ -158,25 +132,13 @@ NOINLINE KOKKOS_FUNCTION void load_on_device(
   }
 }
 
-/**
- * @brief Load the partial derivatives at a given quadrature point on the host.
- *
- * @ingroup ComputePartialDerivativesDataAccess
- *
- * @tparam PointPointPartialDerivativesType Point type. Needs to be of @ref
- * specfem::point::partial_derivatives
- * @param index Index of the quadrature point
- * @param derivatives Partial derivatives container
- * @param partial_derivatives Partial derivatives at the given quadrature point
- * (output)
- */
 template <typename PointPointPartialDerivativesType,
           typename std::enable_if_t<
               PointPointPartialDerivativesType::simd::using_simd, int> = 0>
-void load_on_host(const specfem::point::simd_index<
-                      PointPointPartialDerivativesType::dimension> &index,
-                  const specfem::compute::partial_derivatives &derivatives,
-                  PointPointPartialDerivativesType &partial_derivatives) {
+void impl_load_on_host(const specfem::point::simd_index<
+                           PointPointPartialDerivativesType::dimension> &index,
+                       const specfem::compute::partial_derivatives &derivatives,
+                       PointPointPartialDerivativesType &partial_derivatives) {
 
   const int ispec = index.ispec;
   const int nspec = derivatives.nspec;
@@ -206,22 +168,10 @@ void load_on_host(const specfem::point::simd_index<
   }
 }
 
-/**
- * @brief Load the partial derivatives at a given quadrature point on the host
- *
- * @ingroup ComputePartialDerivativesDataAccess
- *
- * @tparam PointPartialDerivativesType Point type. Needs to be of @ref
- * specfem::point::partial_derivatives
- * @param index Index of the quadrature point
- * @param derivatives Partial derivatives container
- * @param partial_derivatives Partial derivatives at the given quadrature point
- * (output)
- */
 template <typename PointPartialDerivativesType,
           typename std::enable_if_t<
               !PointPartialDerivativesType::simd::using_simd, int> = 0>
-void load_on_host(
+void impl_load_on_host(
     const specfem::point::index<PointPartialDerivativesType::dimension> &index,
     const specfem::compute::partial_derivatives &derivatives,
     PointPartialDerivativesType &partial_derivatives) {
@@ -242,21 +192,10 @@ void load_on_host(
   }
 }
 
-/**
- * @brief Store the partial derivatives at a given quadrature point on the host
- *
- * @ingroup ComputePartialDerivativesDataAccess
- *
- * @tparam PointPartialDerivativesType Point type. Needs to be of @ref
- * specfem::point::partial_derivatives
- * @param index Index of the quadrature point
- * @param derivatives Partial derivatives container
- * @param partial_derivatives Partial derivatives at the given quadrature point
- */
 template <typename PointPartialDerivativesType,
           typename std::enable_if_t<
               PointPartialDerivativesType::simd::using_simd, int> = 0>
-void store_on_host(
+void impl_store_on_host(
     const specfem::point::simd_index<PointPartialDerivativesType::dimension>
         &index,
     const specfem::compute::partial_derivatives &derivatives,
@@ -290,21 +229,10 @@ void store_on_host(
   }
 }
 
-/**
- * @brief Store the partial derivatives at a given quadrature point on the host
- *
- * @ingroup ComputePartialDerivativesDataAccess
- *
- * @tparam PointPartialDerivativesType Point type. Needs to be of @ref
- * specfem::point::partial_derivatives
- * @param index Index of the quadrature point
- * @param derivatives Partial derivatives container
- * @param partial_derivatives Partial derivatives at the given quadrature point
- */
 template <typename PointPartialDerivativesType,
           typename std::enable_if_t<
               !PointPartialDerivativesType::simd::using_simd, int> = 0>
-void store_on_host(
+void impl_store_on_host(
     const specfem::point::index<PointPartialDerivativesType::dimension> &index,
     const specfem::compute::partial_derivatives &derivatives,
     const PointPartialDerivativesType &partial_derivatives) {
@@ -323,6 +251,81 @@ void store_on_host(
   if constexpr (StoreJacobian) {
     derivatives.h_jacobian(ispec, iz, ix) = partial_derivatives.jacobian;
   }
+}
+
+/**
+ * @brief Load the partial derivatives at a given quadrature point on the device
+ *
+ * @ingroup ComputePartialDerivativesDataAccess
+ *
+ * @tparam PointPartialDerivativesType Point partial derivatives type. Needs to
+ * be of @ref specfem::point::partial_derivatives
+ * @tparam IndexType Index type. Needs to be of @ref specfem::point::index or
+ * @ref specfem::point::simd_index
+ * @param index Index of the quadrature point
+ * @param derivatives Partial derivatives container
+ * @param partial_derivatives Partial derivatives at the given quadrature point
+ */
+template <
+    typename PointPartialDerivativesType, typename IndexType,
+    typename std::enable_if_t<IndexType::using_simd ==
+                                  PointPartialDerivativesType::simd::using_simd,
+                              int> = 0>
+KOKKOS_INLINE_FUNCTION void
+load_on_device(const IndexType &index,
+               const specfem::compute::partial_derivatives &derivatives,
+               PointPartialDerivativesType &partial_derivatives) {
+  impl_load_on_device(index, derivatives, partial_derivatives);
+}
+
+/**
+ * @brief Store the partial derivatives at a given quadrature point on the
+ * device
+ *
+ * @ingroup ComputePartialDerivativesDataAccess
+ *
+ * @tparam PointPartialDerivativesType Point partial derivatives type. Needs to
+ * be of @ref specfem::point::partial_derivatives
+ * @tparam IndexType Index type. Needs to be of @ref specfem::point::index or
+ * @ref specfem::point::simd_index
+ * @param index Index of the quadrature point
+ * @param derivatives Partial derivatives container
+ * @param partial_derivatives Partial derivatives at the given quadrature point
+ */
+template <
+    typename PointPartialDerivativesType, typename IndexType,
+    typename std::enable_if_t<IndexType::using_simd ==
+                                  PointPartialDerivativesType::simd::using_simd,
+                              int> = 0>
+void load_on_host(const IndexType &index,
+                  const specfem::compute::partial_derivatives &derivatives,
+                  PointPartialDerivativesType &partial_derivatives) {
+  impl_load_on_host(index, derivatives, partial_derivatives);
+}
+
+/**
+ * @brief Store the partial derivatives at a given quadrature point on the
+ * device
+ *
+ * @ingroup ComputePartialDerivativesDataAccess
+ *
+ * @tparam PointPartialDerivativesType Point partial derivatives type. Needs to
+ * be of @ref specfem::point::partial_derivatives
+ * @tparam IndexType Index type. Needs to be of @ref specfem::point::index or
+ * @ref specfem::point::simd_index
+ * @param index Index of the quadrature point
+ * @param derivatives Partial derivatives container
+ * @param partial_derivatives Partial derivatives at the given quadrature point
+ */
+template <
+    typename PointPartialDerivativesType, typename IndexType,
+    typename std::enable_if_t<IndexType::using_simd ==
+                                  PointPartialDerivativesType::simd::using_simd,
+                              int> = 0>
+void store_on_host(const IndexType &index,
+                   const specfem::compute::partial_derivatives &derivatives,
+                   const PointPartialDerivativesType &partial_derivatives) {
+  impl_store_on_host(index, derivatives, partial_derivatives);
 }
 } // namespace compute
 } // namespace specfem
