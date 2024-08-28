@@ -1,5 +1,4 @@
-#ifndef _COMPUTE_HPP
-#define _COMPUTE_HPP
+#pragma once
 
 // #include "compute/compute_quadrature.hpp"
 #include "element/quadrature.hpp"
@@ -14,25 +13,33 @@
 namespace specfem {
 namespace compute {
 
+/**
+ * @brief Mapping between spectral element indexing within @ref
+ * specfem::mesh::mesh and @ref specfem::compute::mesh
+ *
+ * We reorder the mesh to enable better memory access patterns when computing
+ * forces.
+ *
+ */
 struct mesh_to_compute_mapping {
   int nspec; ///< Number of spectral elements
-  /**
-   * @brief Mapping of spectral element index from C++ to legacy Fortran
-   *
-   * @code
-   *  index_mapping[ispec] = fortran_index - 1
-   * @endcode
-   *
-   */
-  specfem::kokkos::HostView1d<int> compute_to_mesh;
-
-  specfem::kokkos::HostView1d<int> mesh_to_compute;
+  specfem::kokkos::HostView1d<int> compute_to_mesh; ///< Mapping from compute
+                                                    ///< ordering to mesh
+                                                    ///< ordering
+  specfem::kokkos::HostView1d<int> mesh_to_compute; ///< Mapping from mesh
+                                                    ///< ordering to compute
+                                                    ///< ordering
 
   mesh_to_compute_mapping() = default;
 
   mesh_to_compute_mapping(const specfem::mesh::tags &tags);
 };
 
+/**
+ * @brief Shape function and their derivatives for every control node within the
+ * mesh
+ *
+ */
 struct shape_functions {
   int ngllz; ///< Number of quadrature points in z dimension
   int ngllx; ///< Number of quadrature points in x dimension
@@ -60,6 +67,10 @@ struct shape_functions {
   shape_functions() = default;
 };
 
+/**
+ * @brief Information about the integration quadratures
+ *
+ */
 struct quadrature {
   struct GLL {
     int N; ///< Number of quadrature points
@@ -85,7 +96,7 @@ struct quadrature {
           shape_functions(h_xi, h_xi, N, ngnod) {}
   };
 
-  specfem::compute::quadrature::GLL gll; ///< GLL object
+  specfem::compute::quadrature::GLL gll; ///< GLL quadrature
 
   quadrature() = default;
 
@@ -94,6 +105,10 @@ struct quadrature {
       : gll(quadratures, control_nodes.ngnod) {}
 };
 
+/**
+ * @brief Spectral element control nodes
+ *
+ */
 struct control_nodes {
   int nspec; ///< Number of spectral elements
   int ngnod; ///< Number of control nodes
@@ -114,6 +129,10 @@ struct control_nodes {
   control_nodes() = default;
 };
 
+/**
+ * @brief Spectral element assembly information
+ *
+ */
 struct points {
   int nspec; ///< Number of spectral elements
   int ngllz; ///< Number of quadrature points in z dimension
@@ -122,7 +141,7 @@ struct points {
   using ViewType =
       Kokkos::View<int ***, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>;
 
-  ViewType index_mapping;                         ///< Global element
+  ViewType index_mapping;                         ///< Global index
                                                   ///< number for every
                                                   ///< quadrature point
   specfem::kokkos::DeviceView4d<type_real> coord; ///< (x, z) for every distinct
@@ -174,15 +193,47 @@ struct mesh {
 
   specfem::compute::points assemble();
 
+  /**
+   * @brief Compute the global coordinates for a point given its local
+   * coordinates
+   *
+   * @param point Local coordinates
+   * @return specfem::point::global_coordinates<specfem::dimension::type::dim2>
+   * Global coordinates
+   */
   specfem::point::global_coordinates<specfem::dimension::type::dim2>
   locate(const specfem::point::local_coordinates<specfem::dimension::type::dim2>
              &point);
 
+  /**
+   * @brief Compute the local coordinates for a point given its global
+   * coordinates
+   *
+   * @param point Global coordinates
+   * @return specfem::point::local_coordinates<specfem::dimension::type::dim2>
+   * Local coordinates
+   */
   specfem::point::local_coordinates<specfem::dimension::type::dim2> locate(
       const specfem::point::global_coordinates<specfem::dimension::type::dim2>
           &point);
 };
 
+/**
+ * @defgroup QuadratureDataAccess
+ *
+ */
+
+/**
+ * @brief Load quadrature data for a spectral element on the device
+ *
+ * @ingroup QuadratureDataAccess
+ *
+ * @tparam MemberType Member type. Needs to be a Kokkos::TeamPolicy member type
+ * @tparam ViewType View type. Needs to be of @ref specfem::element::quadrature
+ * @param team Team member
+ * @param quadrature Quadrature data
+ * @param element_quadrature Quadrature data for the element (output)
+ */
 template <typename MemberType, typename ViewType>
 KOKKOS_FUNCTION void
 load_on_device(const MemberType &team,
@@ -213,6 +264,17 @@ load_on_device(const MemberType &team,
       });
 }
 
+/**
+ * @brief Load quadrature data for a spectral element on the host
+ *
+ * @ingroup QuadratureDataAccess
+ *
+ * @tparam MemberType Member type. Needs to be a Kokkos::TeamPolicy member type
+ * @tparam ViewType View type. Needs to be of @ref specfem::element::quadrature
+ * @param team Team member
+ * @param quadrature Quadrature data
+ * @param element_quadrature Quadrature data for the element (output)
+ */
 template <typename MemberType, typename ViewType>
 void load_on_host(const MemberType &team,
                   const specfem::compute::quadrature &quadrature,
@@ -240,72 +302,5 @@ void load_on_host(const MemberType &team,
   return;
 }
 
-// template <int NGLL, typename MemberType, typename MemorySpace,
-//           typename MemoryTraits, bool StoreGLLQuadratureDerivatives,
-//           bool WeightTimesDerivatives,
-//           std::enable_if_t<std::is_same_v<typename
-//           MemberType::execution_space::
-//                                               scratch_memory_space,
-//                                           MemorySpace>,
-//                            int> = 0>
-// KOKKOS_FUNCTION void load_on_device(
-//     const MemberType &team, const specfem::compute::quadrature &quadrature,
-//     const specfem::element::quadrature<
-//         NGLL, specfem::dimension::type::dim2, MemorySpace, MemoryTraits,
-//         StoreGLLQuadratureDerivatives, WeightTimesDerivatives>
-//         &element_quadrature) {
-
-//   Kokkos::parallel_for(
-//       Kokkos::TeamThreadRange(team, NGLL * NGLL), [=](const int &xz) {
-//         int ix, iz;
-//         sub2ind(xz, NGLL, iz, ix);
-//         if constexpr (StoreGLLQuadratureDerivatives) {
-//           element_quadrature.hprime_gll(iz, ix) = quadrature.gll.hprime(iz,
-//           ix); if constexpr (WeightTimesDerivatives) {
-//             element_quadrature.hprimew_gll(ix, iz) =
-//                 quadrature.gll.hprime(iz, ix) * quadrature.gll.weights(iz);
-//           }
-//         }
-//       });
-
-//   return;
-// }
-
-// template <int NGLL, typename MemberType, typename MemorySpace,
-//           typename MemoryTraits, bool StoreGLLQuadratureDerivatives,
-//           bool WeightTimesDerivatives,
-//           std::enable_if_t<std::is_same_v<typename
-//           MemberType::execution_space::
-//                                               scratch_memory_space,
-//                                           MemorySpace>,
-//                            int> = 0>
-// void load_on_host(
-//     const MemberType &team, const specfem::compute::quadrature &quadrature,
-//     specfem::element::quadrature<NGLL, specfem::dimension::type::dim2,
-//                                  MemorySpace, MemoryTraits,
-//                                  StoreGLLQuadratureDerivatives,
-//                                  WeightTimesDerivatives> &element_quadrature)
-//                                  {
-
-//   if constexpr (StoreGLLQuadratureDerivatives) {
-//     Kokkos::deep_copy(element_quadrature.hprime_gll,
-//     quadrature.gll.h_hprime);
-//   }
-
-//   if constexpr (WeightTimesDerivatives && StoreGLLQuadratureDerivatives) {
-//     Kokkos::parallel_for(
-//         Kokkos::TeamThreadRange(team, NGLL * NGLL), [=](const int &xz) {
-//           int ix, iz;
-//           sub2ind(xz, NGLL, iz, ix);
-//           element_quadrature.hprimew_gll(iz, ix) =
-//               quadrature.gll.h_hprime(iz, ix) * quadrature.gll.h_weights(iz);
-//         });
-//   }
-
-//   return;
-// }
-
 } // namespace compute
 } // namespace specfem
-
-#endif
