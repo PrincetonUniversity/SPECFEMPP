@@ -15,6 +15,9 @@ template class specfem::compute::simulation_field<
 template class specfem::compute::simulation_field<
     specfem::wavefield::type::backward>;
 
+template class specfem::compute::simulation_field<
+    specfem::wavefield::type::buffer>;
+
 specfem::compute::fields::fields(const specfem::compute::mesh &mesh,
                                  const specfem::compute::properties &properties,
                                  const specfem::simulation::type simulation)

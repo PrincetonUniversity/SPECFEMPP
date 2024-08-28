@@ -1,5 +1,4 @@
-#ifndef _COMPUTE_FIELDS_FIELDS_HPP_
-#define _COMPUTE_FIELDS_FIELDS_HPP_
+#pragma once
 
 #include "compute/compute_mesh.hpp"
 #include "compute/properties/interface.hpp"
@@ -10,14 +9,41 @@
 
 namespace specfem {
 namespace compute {
+/**
+ * @brief Store fields within the simulation
+ *
+ */
 struct fields {
 
+  /**
+   * @name Constructors
+   *
+   */
+  ///@{
+  /**
+   * @brief Default constructor
+   *
+   */
   fields() = default;
 
+  /**
+   * @brief Contruct fields from an assembled mesh
+   *
+   * @param mesh Assembled mesh
+   * @param properties Material properties
+   * @param simulation Current simulation type
+   */
   fields(const specfem::compute::mesh &mesh,
          const specfem::compute::properties &properties,
          const specfem::simulation::type simulation);
+  ///@}
 
+  /**
+   * @brief Get the simulation field object
+   *
+   * @tparam fieldtype Field type
+   * @return specfem::compute::simulation_field<fieldtype> Simulation field
+   */
   template <specfem::wavefield::type fieldtype>
   KOKKOS_INLINE_FUNCTION specfem::compute::simulation_field<fieldtype>
   get_simulation_field() const {
@@ -34,6 +60,10 @@ struct fields {
     }
   }
 
+  /**
+   * @brief Copy fields to the device
+   *
+   */
   void copy_to_device() {
     buffer.copy_to_device();
     forward.copy_to_device();
@@ -41,6 +71,10 @@ struct fields {
     backward.copy_to_device();
   }
 
+  /**
+   * @brief Copy fields to the host
+   *
+   */
   void copy_to_host() {
     buffer.copy_to_host();
     forward.copy_to_host();
@@ -48,14 +82,16 @@ struct fields {
     backward.copy_to_host();
   }
 
-  specfem::compute::simulation_field<specfem::wavefield::type::buffer> buffer;
-  specfem::compute::simulation_field<specfem::wavefield::type::forward> forward;
-  specfem::compute::simulation_field<specfem::wavefield::type::adjoint> adjoint;
+  specfem::compute::simulation_field<specfem::wavefield::type::buffer>
+      buffer; ///< Buffer field. Generally used for temporary storage for
+              ///< adjoint fields read from disk
+  specfem::compute::simulation_field<specfem::wavefield::type::forward>
+      forward; ///< Forward field
+  specfem::compute::simulation_field<specfem::wavefield::type::adjoint>
+      adjoint; ///< Adjoint field
   specfem::compute::simulation_field<specfem::wavefield::type::backward>
-      backward;
+      backward; ///< Backward field
 };
 
 } // namespace compute
 } // namespace specfem
-
-#endif /* _COMPUTE_FIELDS_FIELDS_HPP_ */
