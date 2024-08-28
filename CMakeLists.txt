@@ -308,7 +308,7 @@ add_library(
         src/compute/boundaries/impl/acoustic_free_surface.cpp
         src/compute/boundaries/impl/stacey.cpp
         src/compute/boundaries/boundaries.cpp
-        src/compute/compute_fields.cpp
+        src/compute/fields/fields.cpp
         src/compute/compute_boundary_values.cpp
         src/compute/compute_assembly.cpp
 )
