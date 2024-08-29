@@ -1,5 +1,6 @@
 #pragma once
 
+#include "simd.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
