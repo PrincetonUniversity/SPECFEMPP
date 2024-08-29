@@ -1,7 +1,7 @@
 #ifndef _SPECFEM_TIMESCHEME_NEWMARK_HPP_
 #define _SPECFEM_TIMESCHEME_NEWMARK_HPP_
 
-#include "domain/interface.hpp"
+#include "domain/domain.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "specfem_setup.hpp"
 #include "timescheme.hpp"

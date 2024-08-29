@@ -1,7 +1,7 @@
 #ifndef _SPECFEM_SOLVER_TIME_MARCHING_TPP
 #define _SPECFEM_SOLVER_TIME_MARCHING_TPP
 
-#include "domain/interface.hpp"
+#include "domain/domain.hpp"
 #include "solver.hpp"
 #include "time_marching.hpp"
 #include "timescheme/interface.hpp"
@@ -14,7 +14,7 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
   constexpr auto elastic = specfem::element::medium_tag::elastic;
 
-  kernels.initialize(time_scheme->timescheme(), time_scheme->get_timestep());
+  kernels.initialize(time_scheme->get_timestep());
 
   const int nstep = time_scheme->get_max_timestep();
 
@@ -51,10 +51,8 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
   constexpr auto elastic = specfem::element::medium_tag::elastic;
 
-  adjoint_kernels.initialize(time_scheme->timescheme(),
-                             time_scheme->get_timestep());
-  backward_kernels.initialize(time_scheme->timescheme(),
-                              time_scheme->get_timestep());
+  adjoint_kernels.initialize(time_scheme->get_timestep());
+  backward_kernels.initialize(time_scheme->get_timestep());
 
   const int nstep = time_scheme->get_max_timestep();
 

@@ -1,5 +1,4 @@
-#ifndef _DOMAIN_IMPL_SOURCES_KERNEL_HPP
-#define _DOMAIN_IMPL_SOURCES_KERNEL_HPP
+#pragma once
 
 #include "compute/interface.hpp"
 #include "domain/impl/sources/acoustic/interface.hpp"
@@ -53,5 +52,3 @@ private:
 } // namespace impl
 } // namespace domain
 } // namespace specfem
-
-#endif // _DOMAIN_IMPL_SOURCES_KERNEL_HPP

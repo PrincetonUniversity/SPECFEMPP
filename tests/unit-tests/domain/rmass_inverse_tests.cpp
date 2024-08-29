@@ -3,7 +3,7 @@
 #include "../utilities/include/interface.hpp"
 #include "compute/interface.hpp"
 #include "constants.hpp"
-#include "domain/interface.hpp"
+#include "domain/domain.hpp"
 #include "material/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"
@@ -148,11 +148,6 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
           specfem::element::medium_tag::acoustic,
           specfem::enums::element::quadrature::static_quadrature_points<5> >
           acoustic_domain_static(dt, assembly, qp5);
-
-      elastic_domain_static.template mass_time_contribution<
-          specfem::enums::time_scheme::type::newmark>(setup.get_dt());
-      acoustic_domain_static.template mass_time_contribution<
-          specfem::enums::time_scheme::type::newmark>(setup.get_dt());
 
       elastic_domain_static.invert_mass_matrix();
       acoustic_domain_static.invert_mass_matrix();

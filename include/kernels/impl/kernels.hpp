@@ -32,11 +32,6 @@ public:
     domain.divide_mass_matrix();
   }
 
-  inline void initialize_newmark(const type_real &dt) {
-    domain.template mass_time_contribution<
-        specfem::enums::time_scheme::type::newmark>(dt);
-  }
-
   inline void invert_mass_matrix() { domain.invert_mass_matrix(); }
 
   inline void compute_seismograms(const int &isig_step) {

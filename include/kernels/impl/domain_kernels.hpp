@@ -30,12 +30,7 @@ public:
     }
   }
 
-  void initialize(const specfem::enums::time_scheme::type time_scheme,
-                  const type_real &dt) {
-    if (time_scheme == specfem::enums::time_scheme::type::newmark) {
-      elastic_kernels.initialize_newmark(dt);
-      acoustic_kernels.initialize_newmark(dt);
-    }
+  void initialize(const type_real &dt) {
 
     elastic_kernels.invert_mass_matrix();
     acoustic_kernels.invert_mass_matrix();

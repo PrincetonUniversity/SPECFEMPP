@@ -2,7 +2,7 @@
 #define _SPECFEM_SOLVER_TIME_MARCHING_HPP
 
 #include "coupled_interface/interface.hpp"
-#include "domain/interface.hpp"
+#include "domain/domain.hpp"
 #include "enumerations/interface.hpp"
 #include "kernels/frechet_kernels.hpp"
 #include "kernels/kernels.hpp"
