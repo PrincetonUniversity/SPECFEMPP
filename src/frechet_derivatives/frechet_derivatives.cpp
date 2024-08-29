@@ -2,13 +2,13 @@
 
 // Explicit template instantiation
 template class specfem::frechet_derivatives::frechet_derivatives<
-    5, specfem::dimension::type::dim2, specfem::element::medium_tag::elastic>;
+    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic, 5>;
 
 template class specfem::frechet_derivatives::frechet_derivatives<
-    5, specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic>;
+    specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic, 5>;
 
 template class specfem::frechet_derivatives::frechet_derivatives<
-    8, specfem::dimension::type::dim2, specfem::element::medium_tag::elastic>;
+    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic, 8>;
 
 template class specfem::frechet_derivatives::frechet_derivatives<
-    8, specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic>;
+    specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic, 8>;
