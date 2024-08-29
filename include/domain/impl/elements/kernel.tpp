@@ -2,16 +2,13 @@
 
 #include "algorithms/divergence.hpp"
 #include "algorithms/gradient.hpp"
-#include "chunk_element/field.hpp"
-#include "chunk_element/stress_integrand.hpp"
 #include "compute/assembly/assembly.hpp"
 #include "domain/impl/boundary_conditions/boundary_conditions.hpp"
 #include "element.hpp"
-#include "enumerations/interface.hpp"
+#include "enumerations/dimension.hpp"
+#include "enumerations/medium.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "kernel.hpp"
-#include "parallel_configuration/chunk_config.hpp"
-#include "policies/chunk.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -70,34 +67,18 @@ void specfem::domain::impl::kernels::element_kernel_base<
     NGLL>::compute_mass_matrix(const type_real dt,
                                const specfem::compute::simulation_field<
                                    WavefieldType> &field) const {
-
-  constexpr bool using_simd = true;
-  constexpr int components =
-      specfem::medium::medium<dimension, medium_tag>::components;
-  using PointMassType = specfem::point::field<DimensionType, MediumTag, false,
-                                              false, false, true, using_simd>;
-
   if (nelements == 0)
     return;
 
   const auto wgll = quadrature.gll.weights;
 
-  using simd = specfem::datatype::simd<type_real, using_simd>;
-
   constexpr int simd_size = simd::size();
-  using ParallelConfig = specfem::parallel_config::default_chunk_config<
-      DimensionType, simd, Kokkos::DefaultExecutionSpace>;
 
-  using ChunkPolicyType = specfem::policy::element_chunk<ParallelConfig>;
-
-  using PointBoundaryType =
-      specfem::point::boundary<BoundaryTag, DimensionType, using_simd>;
-
-  ChunkPolicyType chunk_policy(element_kernel_index_mapping, ngll, ngll);
+  ChunkPolicyType chunk_policy(element_kernel_index_mapping, NGLL, NGLL);
 
   Kokkos::parallel_for(
       "specfem::domain::impl::kernels::elements::compute_mass_matrix",
-      static_cast<typename ChunkPolicyType::policy_type &>(chunk_policy),
+      static_cast<const typename ChunkPolicyType::policy_type &>(chunk_policy),
       KOKKOS_CLASS_LAMBDA(const typename ChunkPolicyType::member_type &team) {
         for (int tile = 0; tile < ChunkPolicyType::tile_size * simd_size;
              tile += ChunkPolicyType::chunk_size * simd_size) {
@@ -120,28 +101,13 @@ void specfem::domain::impl::kernels::element_kernel_base<
                 const int ix = iterator_index.index.ix;
                 const int iz = iterator_index.index.iz;
 
-                // specfem::point::properties<DimensionType, MediumTag,
-                // PropertyTag>
-                //     point_property;
-
-                const auto point_property = [&]()
-                    -> specfem::point::properties<DimensionType, MediumTag,
-                                                  PropertyTag, using_simd> {
-                  specfem::point::properties<DimensionType, MediumTag,
-                                             PropertyTag, using_simd>
-                      point_property;
+                const auto point_property = [&]() -> PointPropertyType {
+                  PointPropertyType point_property;
 
                   specfem::compute::load_on_device(index, properties,
                                                    point_property);
                   return point_property;
                 }();
-
-                // specfem::point::partial_derivatives2<true>
-                // point_partial_derivatives;
-
-                using PointPartialDerivativesType =
-                    specfem::point::partial_derivatives<DimensionType, true,
-                                                        using_simd>;
 
                 const auto point_partial_derivatives =
                     [&]() -> PointPartialDerivativesType {
@@ -189,51 +155,6 @@ void specfem::domain::impl::kernels::element_kernel_base<
         const int istep,
         const specfem::compute::simulation_field<WavefieldType> &field) const {
 
-  constexpr int NumberOfDimensions =
-      specfem::dimension::dimension<dimension>::dim;
-  constexpr int components =
-      specfem::medium::medium<dimension, medium_tag>::components;
-  // Number of quadrature points
-  constexpr bool using_simd = true;
-
-  using simd = specfem::datatype::simd<type_real, using_simd>;
-
-  constexpr int simd_size = simd::size();
-
-  using ParallelConfig = specfem::parallel_config::default_chunk_config<
-      DimensionType, simd, Kokkos::DefaultExecutionSpace>;
-  // Element field type - represents which fields to fetch from global field
-  // struct
-  using ChunkElementFieldType = specfem::chunk_element::field<
-      ParallelConfig::chunk_size, ngll, DimensionType, MediumTag,
-      specfem::kokkos::DevScratchSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>,
-      true, false, false, false, using_simd>;
-
-  using ChunkStressIntegrandType = specfem::chunk_element::stress_integrand<
-      ParallelConfig::chunk_size, ngll, DimensionType, MediumTag,
-      specfem::kokkos::DevScratchSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>,
-      using_simd>;
-
-  // Quadrature type - represents data structure used to store element
-  // quadrature
-  using ElementQuadratureType = specfem::element::quadrature<
-      ngll, specfem::dimension::type::dim2, specfem::kokkos::DevScratchSpace,
-      Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, true>;
-  // Data structure used to field at GLL point - represents which field to
-  // atomically update
-  using PointAccelerationType =
-      specfem::point::field<DimensionType, MediumTag, false, false, true, false,
-                            using_simd>;
-  using PointVelocityType =
-      specfem::point::field<DimensionType, MediumTag, false, true, false, false,
-                            using_simd>;
-
-  using PointBoundaryType =
-      specfem::point::boundary<BoundaryTag, DimensionType, using_simd>;
-
-  using PointFieldDerivativesType =
-      specfem::point::field_derivatives<DimensionType, MediumTag, using_simd>;
-
   if (nelements == 0)
     return;
 
@@ -245,9 +166,9 @@ void specfem::domain::impl::kernels::element_kernel_base<
                      ChunkStressIntegrandType::shmem_size() +
                      ElementQuadratureType::shmem_size();
 
-  using ChunkPolicyType = specfem::policy::element_chunk<ParallelConfig>;
-
   ChunkPolicyType chunk_policy(element_kernel_index_mapping, NGLL, NGLL);
+
+  constexpr int simd_size = simd::size();
 
   Kokkos::parallel_for(
       "specfem::domain::impl::kernels::elements::compute_stiffness_interaction",
@@ -284,15 +205,11 @@ void specfem::domain::impl::kernels::element_kernel_base<
                   const typename PointFieldDerivativesType::ViewType &du) {
                 const auto index = iterator_index.index;
 
-                specfem::point::partial_derivatives<DimensionType, false,
-                                                    using_simd>
-                    point_partial_derivatives;
+                PointPartialDerivativesType point_partial_derivatives;
                 specfem::compute::load_on_device(index, partial_derivatives,
                                                  point_partial_derivatives);
 
-                specfem::point::properties<DimensionType, MediumTag,
-                                           PropertyTag, using_simd>
-                    point_property;
+                PointPropertyType point_property;
                 specfem::compute::load_on_device(index, properties,
                                                  point_property);
 
@@ -305,7 +222,7 @@ void specfem::domain::impl::kernels::element_kernel_base<
 
                 const int ielement = iterator_index.ielement;
 
-                for (int idim = 0; idim < NumberOfDimensions; ++idim) {
+                for (int idim = 0; idim < num_dimensions; ++idim) {
                   for (int icomponent = 0; icomponent < components;
                        ++icomponent) {
                     stress_integrand.F(ielement, index.iz, index.ix, idim,
@@ -332,9 +249,7 @@ void specfem::domain::impl::kernels::element_kernel_base<
                       static_cast<type_real>(-1.0);
                 }
 
-                specfem::point::properties<DimensionType, MediumTag,
-                                           PropertyTag, using_simd>
-                    point_property;
+                PointPropertyType point_property;
                 specfem::compute::load_on_device(index, properties,
                                                  point_property);
 

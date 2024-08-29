@@ -1,8 +1,17 @@
 #pragma once
 
+#include "chunk_element/field.hpp"
+#include "chunk_element/stress_integrand.hpp"
 #include "compute/interface.hpp"
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
+#include "parallel_configuration/chunk_config.hpp"
+#include "point/boundary.hpp"
+#include "point/field.hpp"
+#include "point/field_derivatives.hpp"
+#include "point/properties.hpp"
+#include "point/stress_integrand.hpp"
+#include "policies/chunk.hpp"
 #include "quadrature/interface.hpp"
 #include "specfem_setup.hpp"
 
@@ -10,6 +19,72 @@ namespace specfem {
 namespace domain {
 namespace impl {
 namespace kernels {
+/**
+ * @brief Datatypes used in the kernels
+ */
+template <specfem::wavefield::type WavefieldType,
+          specfem::dimension::type DimensionType,
+          specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag,
+          specfem::element::boundary_tag BoundaryTag, int NGLL>
+class KernelDatatypes {
+public:
+  constexpr static auto wavefield_type = WavefieldType;
+  constexpr static auto dimension = DimensionType;
+  constexpr static auto medium_tag = MediumTag;
+  constexpr static auto property_tag = PropertyTag;
+  constexpr static auto boundary_tag = BoundaryTag;
+  constexpr static int ngll = NGLL;
+  constexpr static bool using_simd = true;
+
+  using simd = specfem::datatype::simd<type_real, using_simd>;
+  using ParallelConfig = specfem::parallel_config::default_chunk_config<
+      DimensionType, simd, Kokkos::DefaultExecutionSpace>;
+
+  using ChunkPolicyType = specfem::policy::element_chunk<ParallelConfig>;
+
+  using PointBoundaryType =
+      specfem::point::boundary<BoundaryTag, DimensionType, using_simd>;
+
+  constexpr static int num_dimensions =
+      specfem::dimension::dimension<dimension>::dim;
+  constexpr static int components =
+      specfem::medium::medium<dimension, medium_tag>::components;
+
+  using ChunkElementFieldType = specfem::chunk_element::field<
+      ParallelConfig::chunk_size, ngll, DimensionType, MediumTag,
+      specfem::kokkos::DevScratchSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+      true, false, false, false, using_simd>;
+
+  using ChunkStressIntegrandType = specfem::chunk_element::stress_integrand<
+      ParallelConfig::chunk_size, ngll, DimensionType, MediumTag,
+      specfem::kokkos::DevScratchSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+      using_simd>;
+
+  using ElementQuadratureType = specfem::element::quadrature<
+      ngll, specfem::dimension::type::dim2, specfem::kokkos::DevScratchSpace,
+      Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, true>;
+
+  using PointAccelerationType =
+      specfem::point::field<DimensionType, MediumTag, false, false, true, false,
+                            using_simd>;
+  using PointVelocityType =
+      specfem::point::field<DimensionType, MediumTag, false, true, false, false,
+                            using_simd>;
+
+  using PointFieldDerivativesType =
+      specfem::point::field_derivatives<DimensionType, MediumTag, using_simd>;
+
+  using PointMassType = specfem::point::field<DimensionType, MediumTag, false,
+                                              false, false, true, using_simd>;
+
+  using PointPropertyType =
+      specfem::point::properties<dimension, medium_tag, property_tag,
+                                 using_simd>;
+
+  using PointPartialDerivativesType =
+      specfem::point::partial_derivatives<dimension, true, using_simd>;
+};
 
 template <specfem::wavefield::type WavefieldType,
           specfem::dimension::type DimensionType,
@@ -17,6 +92,27 @@ template <specfem::wavefield::type WavefieldType,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag, int NGLL>
 class element_kernel_base {
+private:
+  /// Datatypes used in the kernels
+  using datatypes = KernelDatatypes<WavefieldType, DimensionType, MediumTag,
+                                    PropertyTag, BoundaryTag, NGLL>;
+  using simd = typename datatypes::simd;
+  using ChunkPolicyType = typename datatypes::ChunkPolicyType;
+  using PointBoundaryType = typename datatypes::PointBoundaryType;
+  using ChunkElementFieldType = typename datatypes::ChunkElementFieldType;
+  using ChunkStressIntegrandType = typename datatypes::ChunkStressIntegrandType;
+  using ElementQuadratureType = typename datatypes::ElementQuadratureType;
+  using PointAccelerationType = typename datatypes::PointAccelerationType;
+  using PointVelocityType = typename datatypes::PointVelocityType;
+  using PointFieldDerivativesType =
+      typename datatypes::PointFieldDerivativesType;
+  using PointMassType = typename datatypes::PointMassType;
+  using PointPropertyType = typename datatypes::PointPropertyType;
+  using PointPartialDerivativesType =
+      typename datatypes::PointPartialDerivativesType;
+
+  constexpr static int components = datatypes::components;
+  constexpr static int num_dimensions = datatypes::num_dimensions;
 
 public:
   /**
@@ -35,6 +131,7 @@ public:
   constexpr static int ngll = NGLL;
   ///@}
 
+public:
   /**
    * @brief Get the total number of elements in this kernel
    *
