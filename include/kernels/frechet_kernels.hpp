@@ -9,7 +9,7 @@
 namespace specfem {
 namespace kernels {
 
-template <int NGLL, specfem::dimension::type DimensionType>
+template <specfem::dimension::type DimensionType, int NGLL>
 class frechet_kernels {
 public:
   frechet_kernels(const specfem::compute::assembly &assembly)
@@ -22,11 +22,11 @@ public:
 
 private:
   specfem::frechet_derivatives::frechet_derivatives<
-      NGLL, DimensionType, specfem::element::medium_tag::elastic>
+      DimensionType, specfem::element::medium_tag::elastic, NGLL>
       elastic_elements;
 
   specfem::frechet_derivatives::frechet_derivatives<
-      NGLL, DimensionType, specfem::element::medium_tag::acoustic>
+      DimensionType, specfem::element::medium_tag::acoustic, NGLL>
       acoustic_elements;
 };
 

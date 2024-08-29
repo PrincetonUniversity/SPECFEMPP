@@ -2,22 +2,15 @@
 #define _FRECHET_DERIVATIVES_IMPL_FRECHLET_ELEMENT_TPP
 
 #include "algorithms/gradient.hpp"
-#include "chunk_element/field.hpp"
-#include "compute/kernels/interface.hpp"
-#include "element_kernel/acoustic_isotropic.hpp"
-#include "element_kernel/elastic_isotropic.hpp"
 #include "element_kernel/element_kernel.hpp"
-#include "parallel_configuration/chunk_config.hpp"
-#include "point/field.hpp"
-#include "policies/chunk.hpp"
 #include <Kokkos_Core.hpp>
 
-template <int NGLL, specfem::dimension::type DimensionType,
+template <specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag>
+          specfem::element::property_tag PropertyTag, int NGLL>
 specfem::frechet_derivatives::impl::frechet_elements<
-    NGLL, DimensionType, MediumTag,
-    PropertyTag>::frechet_elements(const specfem::compute::assembly &assembly)
+    DimensionType, MediumTag, PropertyTag,
+    NGLL>::frechet_elements(const specfem::compute::assembly &assembly)
     : adjoint_field(assembly.fields.adjoint),
       backward_field(assembly.fields.backward), kernels(assembly.kernels),
       properties(assembly.properties), quadrature(assembly.mesh.quadratures),
@@ -64,11 +57,11 @@ specfem::frechet_derivatives::impl::frechet_elements<
   return;
 }
 
-template <int NGLL, specfem::dimension::type DimensionType,
+template <specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag>
+          specfem::element::property_tag PropertyTag, int NGLL>
 void specfem::frechet_derivatives::impl::frechet_elements<
-    NGLL, DimensionType, MediumTag, PropertyTag>::compute(const type_real &dt) {
+    DimensionType, MediumTag, PropertyTag, NGLL>::compute(const type_real &dt) {
 
   const int nelements = element_index.extent(0);
 
@@ -76,35 +69,8 @@ void specfem::frechet_derivatives::impl::frechet_elements<
     return;
   }
 
-  constexpr bool using_simd = true;
-  using simd = specfem::datatype::simd<type_real, using_simd>;
-  using ParallelConfig = specfem::parallel_config::default_chunk_config<
-      DimensionType, simd, Kokkos::DefaultExecutionSpace>;
-
-  using ChunkElementFieldType = specfem::chunk_element::field<
-      ParallelConfig::chunk_size, NGLL, DimensionType, MediumTag,
-      specfem::kokkos::DevScratchSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>,
-      true, false, false, false, using_simd>;
-
-  using ElementQuadratureType = specfem::element::quadrature<
-      NGLL, DimensionType, specfem::kokkos::DevScratchSpace,
-      Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, false>;
-
-  using AdjointPointFieldType =
-      specfem::point::field<DimensionType, MediumTag, false, false, true, false,
-                            using_simd>;
-
-  using BackwardPointFieldType =
-      specfem::point::field<DimensionType, MediumTag, true, false, false, false,
-                            using_simd>;
-
-  using PointFieldDerivativesType =
-      specfem::point::field_derivatives<DimensionType, MediumTag, using_simd>;
-
   int scratch_size = 2 * ChunkElementFieldType::shmem_size() +
                      ElementQuadratureType::shmem_size();
-
-  using ChunkPolicy = specfem::policy::element_chunk<ParallelConfig>;
 
   ChunkPolicy chunk_policy(element_index, NGLL, NGLL);
 
@@ -156,12 +122,8 @@ void specfem::frechet_derivatives::impl::frechet_elements<
                 // Load properties, adjoint field, and backward field
                 // for the point
                 // ------------------------------
-                const auto point_properties = [&]()
-                    -> specfem::point::properties<DimensionType, MediumTag,
-                                                  PropertyTag, using_simd> {
-                  specfem::point::properties<DimensionType, MediumTag,
-                                             PropertyTag, using_simd>
-                      point_properties;
+                const auto point_properties = [&]() -> PointPropertiesType {
+                  PointPropertiesType point_properties;
                   specfem::compute::load_on_device(index, properties,
                                                    point_properties);
                   return point_properties;

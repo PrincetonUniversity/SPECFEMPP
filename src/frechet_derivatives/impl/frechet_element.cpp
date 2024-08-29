@@ -3,17 +3,17 @@
 
 // Explicit template instantiation
 template class specfem::frechet_derivatives::impl::frechet_elements<
-    5, specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-    specfem::element::property_tag::isotropic>;
+    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+    specfem::element::property_tag::isotropic, 5>;
 
 template class specfem::frechet_derivatives::impl::frechet_elements<
-    5, specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
-    specfem::element::property_tag::isotropic>;
+    specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
+    specfem::element::property_tag::isotropic, 5>;
 
 template class specfem::frechet_derivatives::impl::frechet_elements<
-    8, specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-    specfem::element::property_tag::isotropic>;
+    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+    specfem::element::property_tag::isotropic, 8>;
 
 template class specfem::frechet_derivatives::impl::frechet_elements<
-    8, specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
-    specfem::element::property_tag::isotropic>;
+    specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
+    specfem::element::property_tag::isotropic, 8>;

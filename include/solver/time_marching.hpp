@@ -59,7 +59,7 @@ private:
   specfem::kernels::kernels<specfem::wavefield::type::backward, DimensionType,
                             qp_type>
       backward_kernels;
-  specfem::kernels::frechet_kernels<NGLL, DimensionType> frechet_kernels;
+  specfem::kernels::frechet_kernels<DimensionType, NGLL> frechet_kernels;
   specfem::compute::assembly assembly;
   std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme;
 };
