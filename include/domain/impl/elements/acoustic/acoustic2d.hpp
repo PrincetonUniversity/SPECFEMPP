@@ -1,8 +1,5 @@
-#ifndef _DOMAIN_ACOUSTIC_ELEMENTS2D_HPP
-#define _DOMAIN_ACOUSTIC_ELEMENTS2D_HPP
+#pragma once
 
-#include "../element.hpp"
-#include "domain/impl/elements/element.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "point/field.hpp"
@@ -49,5 +46,3 @@ impl_mass_matrix_component(
 } // namespace impl
 } // namespace domain
 } // namespace specfem
-
-#endif

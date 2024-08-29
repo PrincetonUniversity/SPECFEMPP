@@ -1,15 +1,7 @@
-#ifndef _DOMAIN_KERNELS_TPP
-#define _DOMAIN_KERNELS_TPP
+#pragma once
 
-#include "compute/interface.hpp"
-#include "domain/impl/elements/interface.hpp"
-#include "domain/impl/receivers/interface.hpp"
-#include "domain/impl/sources/interface.hpp"
-#include "enumerations/interface.hpp"
+#include "boundary_conditions/boundary_conditions.hpp"
 #include "kernels.hpp"
-#include "kokkos_abstractions.h"
-#include "macros.hpp"
-#include "quadrature/interface.hpp"
 
 namespace {
 /// Struct to tag each element
@@ -28,24 +20,20 @@ struct element_tag {
   specfem::element::medium_tag medium_tag;
 };
 
-template <specfem::wavefield::type WavefieldType,
-          specfem::dimension::type DimensionType,
-          specfem::element::medium_tag medium_tag,
-          specfem::element::property_tag property_tag,
-          specfem::element::boundary_tag boundary_tag, typename qp_type>
+template <typename ElementType>
 void allocate_elements(
-    const specfem::compute::assembly &assembly, qp_type quadrature_points,
+    const specfem::compute::assembly &assembly,
     const specfem::kokkos::HostView1d<element_tag> element_tags,
-    specfem::domain::impl::kernels::element_kernel<
-        WavefieldType, DimensionType, medium_tag, property_tag, boundary_tag,
-        qp_type> &elements) {
+    ElementType &elements) {
 
-  using dimension = specfem::dimension::dimension<DimensionType>;
+  constexpr auto wavefield_type = ElementType::wavefield_type;
+  constexpr auto medium_tag = ElementType::medium_tag;
+  constexpr auto property_tag = ElementType::property_tag;
+  constexpr auto boundary_tag = ElementType::boundary_tag;
+
+  using dimension = specfem::dimension::dimension<ElementType::dimension>;
   using medium_type =
-      specfem::medium::medium<DimensionType, medium_tag, property_tag>;
-  // using boundary_conditions_type =
-  //     specfem::boundary::boundary<WavefieldType, DimensionType, medium_tag,
-  //                                 property_tag, boundary_tag, qp_type>;
+      specfem::medium::medium<ElementType::dimension, medium_tag, property_tag>;
 
   const int nspec = assembly.mesh.nspec;
 
@@ -85,69 +73,8 @@ void allocate_elements(
     }
   }
 
-  // // assert that boundary_conditions ispec matches with calculated ispec
-  // if constexpr (((boundary_tag == specfem::enums::element::boundary_tag::
-  //                                     acoustic_free_surface) &&
-  //                (medium_tag == specfem::enums::element::type::acoustic))) {
-  //   ASSERT(
-  //       nelements == boundary_conditions.acoustic_free_surface.nelements,
-  //       "nelements = " << nelements << " nelem_acoustic_surface = "
-  //                      <<
-  //                      boundary_conditions.acoustic_free_surface.nelements);
-  //   for (int i = 0; i < nelements; i++) {
-  //     ASSERT(h_ispec_domain(i) ==
-  //                boundary_conditions.acoustic_free_surface.h_ispec(i),
-  //            "Error: computing ispec for acoustic free surface elements");
-  //   }
-  // }
-
-  // // assert that boundary_conditions ispec matches with calculated ispec
-  // if constexpr ((boundary_tag ==
-  //                specfem::enums::element::boundary_tag::stacey) &&
-  //               (medium_tag == specfem::enums::element::type::acoustic)) {
-  //   ASSERT(nelements == boundary_conditions.stacey.acoustic.nelements,
-  //          "nelements = " << nelements << " nelements = "
-  //                         << boundary_conditions.stacey.acoustic.nelements);
-  //   for (int i = 0; i < nelements; i++) {
-  //     ASSERT(h_ispec_domain(i) ==
-  //                boundary_conditions.stacey.acoustic.h_ispec(i),
-  //            "Error: computing ispec for stacey elements");
-  //   }
-  // } else if constexpr ((boundary_tag ==
-  //                       specfem::enums::element::boundary_tag::stacey) &&
-  //                      (medium_tag ==
-  //                      specfem::enums::element::type::elastic)) {
-  //   ASSERT(nelements == boundary_conditions.stacey.elastic.nelements,
-  //          "nelements = " << nelements << " nelements = "
-  //                         << boundary_conditions.stacey.elastic.nelements);
-  //   for (int i = 0; i < nelements; i++) {
-  //     ASSERT(h_ispec_domain(i) ==
-  //     boundary_conditions.stacey.elastic.h_ispec(i),
-  //            "Error: computing ispec for stacey elements");
-  //   }
-  // }
-
-  // // assert that boundary_conditions ispec matches with calculated ispec
-  // if constexpr ((boundary_tag == specfem::enums::element::boundary_tag::
-  //                                    composite_stacey_dirichlet) &&
-  //               (medium_tag == specfem::enums::element::type::acoustic)) {
-  //   ASSERT(nelements ==
-  //              boundary_conditions.composite_stacey_dirichlet.nelements,
-  //          "nelements = "
-  //              << nelements << " nelements = "
-  //              << boundary_conditions.composite_stacey_dirichlet.nelements);
-  //   for (int i = 0; i < nelements; i++) {
-  //     ASSERT(h_ispec_domain(i) ==
-  //                boundary_conditions.composite_stacey_dirichlet.h_ispec(i),
-  //            "Error: computing ispec for stacey dirichlet elements");
-  //   }
-  // }
-
-  // Copy ispec_domain to device
-  // Kokkos::deep_copy(ispec_domain, h_ispec_domain);
-
-  if constexpr (WavefieldType == specfem::wavefield::type::forward ||
-                WavefieldType == specfem::wavefield::type::adjoint) {
+  if constexpr (wavefield_type == specfem::wavefield::type::forward ||
+                wavefield_type == specfem::wavefield::type::adjoint) {
 
     std::cout << "  - Element type: \n"
               << "    - dimension           : " << dimension::to_string()
@@ -162,9 +89,7 @@ void allocate_elements(
   }
 
   // Create isotropic acoustic surface elements
-  elements = specfem::domain::impl::kernels::element_kernel<
-      WavefieldType, DimensionType, medium_tag, property_tag, boundary_tag,
-      qp_type>(assembly, h_ispec_domain, quadrature_points);
+  elements = { assembly, h_ispec_domain };
 }
 
 template <specfem::wavefield::type WavefieldType,
@@ -266,97 +191,16 @@ void allocate_isotropic_receivers(
 template <specfem::wavefield::type WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag medium, typename qp_type>
-specfem::domain::impl::kernels::kernels<
-    WavefieldType, DimensionType, medium,
-    qp_type>::kernels(const type_real dt, const specfem::compute::assembly &assembly,
-                      const qp_type &quadrature_points) {
+specfem::domain::impl::kernels::
+    kernels<WavefieldType, DimensionType, medium, qp_type>::kernels(
+        const type_real dt, const specfem::compute::assembly &assembly,
+        const qp_type &quadrature_points) {
 
   using medium_type = specfem::medium::medium<DimensionType, medium>;
 
   const int nspec = assembly.mesh.nspec;
   specfem::kokkos::HostView1d<element_tag> element_tags(
       "specfem::domain::domain::element_tag", nspec);
-  // -----------------------------------------------------------
-  // Start by tagging different elements
-  // -----------------------------------------------------------
-  // creating a context here for memory management
-  // {
-  //   // find medium type for every element
-  //   specfem::kokkos::HostView1d<specfem::enums::element::type> ielement_type(
-  //       "specfem::domain::impl::kernels::kernels::ielement_type", nspec);
-
-  //   for (int ispec = 0; ispec < nspec; ispec++) {
-  //     ielement_type(ispec) = properties.h_ispec_type(ispec);
-  //   }
-
-  //   // at start we consider every element is isotropic
-  //   specfem::kokkos::HostView1d<specfem::enums::element::property_tag>
-  //       ielement_property(
-  //           "specfem::domain::impl::kernels::kernels::ielement_property",
-  //           nspec);
-
-  //   for (int ispec = 0; ispec < nspec; ispec++) {
-  //     ielement_property(ispec) =
-  //         specfem::enums::element::property_tag::isotropic;
-  //   }
-
-  //   // at start we consider every element is not on the boundary
-  //   specfem::kokkos::HostView1d<specfem::enums::element::boundary_tag_container>
-  //       ielement_boundary(
-  //           "specfem::domain::impl::kernels::kernels::ielement_boundary",
-  //           nspec);
-
-  //   const auto &stacey = boundary_conditions.stacey;
-  //   // mark stacey elements
-  //   if (stacey.nelements > 0) {
-  //     if (stacey.acoustic.nelements > 0) {
-  //       for (int i = 0; i < stacey.acoustic.nelements; i++) {
-  //         const int ispec = stacey.acoustic.h_ispec(i);
-  //         ielement_boundary(ispec) +=
-  //             specfem::enums::element::boundary_tag::stacey;
-  //       }
-  //     }
-
-  //     if (stacey.elastic.nelements > 0) {
-  //       for (int i = 0; i < stacey.elastic.nelements; i++) {
-  //         const int ispec = stacey.elastic.h_ispec(i);
-  //         ielement_boundary(ispec) +=
-  //             specfem::enums::element::boundary_tag::stacey;
-  //       }
-  //     }
-  //   }
-
-  //   const auto &acoustic_free_surface =
-  //       boundary_conditions.acoustic_free_surface;
-
-  //   // mark acoustic free surface elements
-  //   if (acoustic_free_surface.nelements > 0) {
-  //     for (int i = 0; i < acoustic_free_surface.nelements; i++) {
-  //       const int ispec = acoustic_free_surface.h_ispec(i);
-  //       ielement_boundary(ispec) +=
-  //           specfem::enums::element::boundary_tag::acoustic_free_surface;
-  //     }
-  //   }
-
-  //   const auto &composite_stacey_dirichlet =
-  //       boundary_conditions.composite_stacey_dirichlet;
-
-  //   // mark composite stacey dirichlet elements
-  //   if (composite_stacey_dirichlet.nelements > 0) {
-  //     for (int i = 0; i < composite_stacey_dirichlet.nelements; i++) {
-  //       const int ispec = composite_stacey_dirichlet.h_ispec(i);
-  //       ielement_boundary(ispec) +=
-  //           specfem::enums::element::boundary_tag::composite_stacey_dirichlet;
-  //     }
-  //   }
-
-  //   // mark every element type
-  //   for (int ispec = 0; ispec < nspec; ispec++) {
-  //     element_tags(ispec) =
-  //         element_tag(ielement_type(ispec), ielement_property(ispec),
-  //                     ielement_boundary(ispec));
-  //   }
-  // }
 
   // -----------------------------------------------------------
   for (int ispec = 0; ispec < nspec; ispec++) {
@@ -377,20 +221,17 @@ specfem::domain::impl::kernels::kernels<
   // -----------------------------------------------------------
 
   // Allocate isotropic elements with dirichlet boundary conditions
-  allocate_elements(assembly, quadrature_points, element_tags,
-                    isotropic_elements_dirichlet);
+  allocate_elements(assembly, element_tags, isotropic_elements_dirichlet);
 
   // Allocate isotropic elements with stacey boundary conditions
-  allocate_elements(assembly, quadrature_points, element_tags,
-                    isotropic_elements_stacey);
+  allocate_elements(assembly, element_tags, isotropic_elements_stacey);
 
   // Allocate isotropic elements with stacey dirichlet boundary conditions
-  allocate_elements(assembly, quadrature_points, element_tags,
+  allocate_elements(assembly, element_tags,
                     isotropic_elements_stacey_dirichlet);
 
   // Allocate isotropic elements
-  allocate_elements(assembly, quadrature_points, element_tags,
-                    isotropic_elements);
+  allocate_elements(assembly, element_tags, isotropic_elements);
 
   // Allocate isotropic sources
 
@@ -407,5 +248,3 @@ specfem::domain::impl::kernels::kernels<
 
   return;
 }
-
-#endif // _DOMAIN_KERNELS_TPP

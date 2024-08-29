@@ -1,11 +1,9 @@
-#ifndef _DOMAIN_ELASTIC_ELEMENTS2D_HPP
-#define _DOMAIN_ELASTIC_ELEMENTS2D_HPP
+#pragma once
 
-#include "../element.hpp"
-#include "domain/impl/elements/element.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "globals.h"
+#include "point/field.hpp"
 #include "point/field_derivatives.hpp"
 #include "point/partial_derivatives.hpp"
 #include "point/properties.hpp"
@@ -47,5 +45,3 @@ impl_mass_matrix_component(
 } // namespace impl
 } // namespace domain
 } // namespace specfem
-
-#endif

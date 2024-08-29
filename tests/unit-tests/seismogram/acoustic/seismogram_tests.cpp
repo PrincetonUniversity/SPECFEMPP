@@ -4,7 +4,7 @@
 #include "IO/fortranio/interface.hpp"
 #include "compute/interface.hpp"
 #include "constants.hpp"
-#include "domain/interface.hpp"
+#include "domain/domain.hpp"
 #include "material/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"
