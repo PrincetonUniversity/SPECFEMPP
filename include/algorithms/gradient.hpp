@@ -8,6 +8,33 @@
 
 namespace specfem {
 namespace algorithms {
+
+/**
+ * @defgroup AlgorithmsGradient
+ *
+ */
+
+/**
+ * @brief Compute the gradient of a scalar field f using the spectral element
+ * formulation (eqn: 29 in Komatitsch and Tromp, 1999)
+ *
+ * @ingroup AlgorithmsGradient
+ *
+ * @tparam MemberType Kokkos team member type
+ * @tparam IteratorType Iterator type (Chunk iterator)
+ * @tparam ViewType Field view type (Chunk view)
+ * @tparam QuadratureType Quadrature view type
+ * @tparam CallbackFunctor Callback functor type
+ * @param team Kokkos team member
+ * @param iterator Chunk iterator
+ * @param partial_derivatives Partial derivatives of basis functions
+ * @param quadrature Integration quadrature
+ * @param f Field to compute the gradient of
+ * @param callback Callback functor. Callback signature must be:
+ * @code void(const typename IteratorType::index_type, const
+ * specfem::datatype::VectorPointViewType<type_real, 2, ViewType::components>)
+ * @endcode
+ */
 template <typename MemberType, typename IteratorType, typename ViewType,
           typename QuadratureType, typename CallbackFunctor,
           std::enable_if_t<ViewType::isChunkViewType, int> = 0>
@@ -26,6 +53,9 @@ gradient(const MemberType &team, const IteratorType &iterator,
                                              using_simd>;
 
   using datatype = typename IteratorType::simd::datatype;
+
+  static_assert(ViewType::isScalarViewType,
+                "ViewType must be a scalar field view type");
 
   static_assert(
       std::is_same_v<typename IteratorType::simd, typename ViewType::simd>,
@@ -90,6 +120,30 @@ gradient(const MemberType &team, const IteratorType &iterator,
   return;
 }
 
+/**
+ * @brief Compute the gradient of a field f & g using the spectral element
+ * formulation (eqn: 29 in Komatitsch and Tromp, 1999)
+ *
+ * @ingroup AlgorithmsGradient
+ *
+ * @tparam MemberType Kokkos team member type
+ * @tparam IteratorType Iterator type (Chunk iterator)
+ * @tparam ViewType Field view type (Chunk view)
+ * @tparam QuadratureType Quadrature view type
+ * @tparam CallbackFunctor Callback functor type
+ * @param team Kokkos team member
+ * @param iterator Chunk iterator
+ * @param partial_derivatives Partial derivatives of basis functions
+ * @param quadrature Integration quadrature
+ * @param f Field to compute the gradient of
+ * @param g Field to compute the gradient of
+ * @param callback Callback functor. Callback signature must be:
+ * @code void(const typename IteratorType::index_type, const
+ * specfem::datatype::VectorPointViewType<type_real, 2, ViewType::components>,
+ * const specfem::datatype::VectorPointViewType<type_real, 2,
+ * ViewType::components>)
+ * @endcode
+ */
 template <typename MemberType, typename IteratorType, typename ViewType,
           typename QuadratureType, typename CallbackFunctor,
           std::enable_if_t<ViewType::isChunkViewType, int> = 0>
@@ -106,6 +160,9 @@ gradient(const MemberType &team, const IteratorType &iterator,
   using VectorPointViewType =
       specfem::datatype::VectorPointViewType<type_real, 2, components,
                                              using_simd>;
+
+  static_assert(ViewType::isScalarViewType,
+                "ViewType must be a scalar field view type");
 
   using datatype = typename IteratorType::simd::datatype;
 
