@@ -187,6 +187,7 @@ At this point, it is worthwhile to note few key parameters within the ``PAR_FILE
 
     interfacesfile = topography_file.dat
 
+.. _homogeneous-medium-flat-topography-topography-file:
 
 Topography file
 ~~~~~~~~~~~~~~~~~

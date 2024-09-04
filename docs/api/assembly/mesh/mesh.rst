@@ -1,5 +1,5 @@
 
-.. _compute_mesh:
+.. _assembly_mesh:
 
 Mesh Assembly
 =============

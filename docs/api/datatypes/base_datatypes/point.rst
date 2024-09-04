@@ -1,4 +1,6 @@
 
+.. _datatype_base_point:
+
 Point View Types
 ================
 
