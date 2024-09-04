@@ -1,4 +1,6 @@
 
+.. _datatype_point_partial_derivatives:
+
 Point Spatial Derivatives
 ==========================
 

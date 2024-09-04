@@ -1,4 +1,6 @@
 
+.. _sources_api:
+
 Sources API
 =================
 

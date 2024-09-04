@@ -1,5 +1,5 @@
 
-.. _point_properties:
+.. _datatype_point_material_properties:
 
 Point Properties
 ================
