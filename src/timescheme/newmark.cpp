@@ -1,6 +1,5 @@
 #include "timescheme/newmark.tpp"
 #include "specfem_setup.hpp"
-#include "timescheme/interface.hpp"
 #include <ostream>
 
 // Explicit template instantiation

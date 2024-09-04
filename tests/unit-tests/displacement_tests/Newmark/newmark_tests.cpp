@@ -10,7 +10,7 @@
 #include "quadrature/interface.hpp"
 #include "reader/seismogram.hpp"
 #include "solver/interface.hpp"
-#include "timescheme/interface.hpp"
+#include "timescheme/timescheme.hpp"
 #include "yaml-cpp/yaml.h"
 
 // ------------------------------------- //

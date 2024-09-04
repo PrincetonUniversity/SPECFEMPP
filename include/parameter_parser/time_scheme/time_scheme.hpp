@@ -1,8 +1,7 @@
-#ifndef _PARAMETER_TIME_MARCHING_HPP
-#define _PARAMETER_TIME_MARCHING_HPP
+#pragma once
 
 #include "specfem_setup.hpp"
-#include "timescheme/interface.hpp"
+#include "timescheme/newmark.hpp"
 #include "yaml-cpp/yaml.h"
 #include <tuple>
 
@@ -77,5 +76,3 @@ private:
 } // namespace time_scheme
 } // namespace runtime_configuration
 } // namespace specfem
-
-#endif

@@ -123,3 +123,8 @@ Implemeting the Time Scheme
 
         Kokkos::fence();
     }
+
+Implementation within SPECFEM++
+--------------------------------
+
+The implemetation details of the time-scheme within SPECFEM++ can be found :ref:`here <timescheme>`.`

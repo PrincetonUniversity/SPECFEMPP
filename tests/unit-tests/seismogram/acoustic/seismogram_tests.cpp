@@ -11,7 +11,7 @@
 #include "quadrature/interface.hpp"
 #include "receiver/interface.hpp"
 #include "solver/interface.hpp"
-#include "timescheme/interface.hpp"
+#include "timescheme/timescheme.hpp"
 #include "yaml-cpp/yaml.h"
 
 // ----- Parse test config ------------- //

@@ -3,7 +3,7 @@
 
 #include "compute/interface.hpp"
 #include "solver/solver.hpp"
-#include "timescheme/interface.hpp"
+#include "timescheme/newmark.hpp"
 #include <memory>
 #include <string>
 

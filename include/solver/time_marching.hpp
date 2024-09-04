@@ -7,7 +7,7 @@
 #include "kernels/frechet_kernels.hpp"
 #include "kernels/kernels.hpp"
 #include "solver.hpp"
-#include "timescheme/interface.hpp"
+#include "timescheme/newmark.hpp"
 
 namespace specfem {
 namespace solver {
