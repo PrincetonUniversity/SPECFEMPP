@@ -1,5 +1,5 @@
+#include "timescheme/timescheme.hpp"
 #include "specfem_setup.hpp"
-#include "timescheme/interface.hpp"
 #include <ostream>
 
 std::ostream &

@@ -40,9 +40,7 @@ namespace algorithms {
  */
 template <typename MemberType, typename IteratorType, typename VectorFieldType,
           typename QuadratureType, typename CallableType,
-          std::enable_if_t<(VectorFieldType::isChunkViewType &&
-                            VectorFieldType::isVectorViewType),
-                           int> = 0>
+          std::enable_if_t<(VectorFieldType::isChunkViewType), int> = 0>
 NOINLINE KOKKOS_FUNCTION void divergence(
     const MemberType &team, const IteratorType &iterator,
     const specfem::compute::partial_derivatives &partial_derivatives,
@@ -63,7 +61,7 @@ NOINLINE KOKKOS_FUNCTION void divergence(
   using ScalarPointViewType =
       specfem::datatype::ScalarPointViewType<type_real, components, using_simd>;
 
-  static_assert(ViewType::isVectorViewType,
+  static_assert(VectorFieldType::isVectorViewType,
                 "ViewType must be a vector field view type");
 
   static_assert(

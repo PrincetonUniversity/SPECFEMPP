@@ -10,7 +10,7 @@
 #include "source/interface.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
-#include "timescheme/interface.hpp"
+#include "timescheme/timescheme.hpp"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
 #include <boost/program_options.hpp>

@@ -4,7 +4,7 @@
 #include "kernels/kernels.hpp"
 #include "solver.hpp"
 #include "solver/time_marching.hpp"
-#include "timescheme/interface.hpp"
+#include "timescheme/newmark.hpp"
 #include <iostream>
 #include <memory>
 

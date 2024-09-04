@@ -222,3 +222,8 @@ Next, lets implement ``compute_stiffness_interaction`` kernel.
         Kokkos::fence();
 
     };
+
+Implemetation within SPECFEM++
+------------------------------
+
+The implemetation of compute kernels within SPECFEM++ can be found :ref:`here <kernels_domain>`.

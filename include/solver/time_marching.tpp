@@ -4,7 +4,7 @@
 #include "domain/domain.hpp"
 #include "solver.hpp"
 #include "time_marching.hpp"
-#include "timescheme/interface.hpp"
+#include "timescheme/newmark.hpp"
 #include <Kokkos_Core.hpp>
 
 template <specfem::dimension::type DimensionType, typename qp_type>
