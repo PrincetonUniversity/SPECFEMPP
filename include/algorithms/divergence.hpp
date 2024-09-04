@@ -8,6 +8,36 @@
 namespace specfem {
 namespace algorithms {
 
+/**
+ * @defgroup AlgorithmsDivergence
+ *
+ */
+
+/**
+ * @brief Compute the divergence of a vector field f using the spectral element
+ * formulation (eqn: A7 in Komatitsch and Tromp, 1999)
+ *
+ * @ingroup AlgorithmsDivergence
+ *
+ *
+ * @tparam MemberType Kokkos team member type
+ * @tparam IteratorType Iterator type (Chunk iterator)
+ * @tparam MemberType Kokkos team member type
+ * @tparam IteratorType Iterator type (Chunk iterator)
+ * @tparam VectorFieldType Vector field view type (Chunk view)
+ * @tparam QuadratureType Quadrature view type
+ * @tparam CallableType Callback functor type
+ * @param team Kokkos team member
+ * @param iterator Chunk iterator
+ * @param partial_derivatives Partial derivatives of basis functions
+ * @param weights Weights for the quadrature
+ * @param hprimewgll Integration quadrature
+ * @param f Field to compute the divergence of
+ * @param callback Callback functor. Callback signature must be:
+ * @code void(const typename IteratorType::index_type, const
+ * specfem::datatype::ScalarPointViewType<type_real, ViewType::components>)
+ * @endcode
+ */
 template <typename MemberType, typename IteratorType, typename VectorFieldType,
           typename QuadratureType, typename CallableType,
           std::enable_if_t<(VectorFieldType::isChunkViewType &&
@@ -32,6 +62,9 @@ NOINLINE KOKKOS_FUNCTION void divergence(
 
   using ScalarPointViewType =
       specfem::datatype::ScalarPointViewType<type_real, components, using_simd>;
+
+  static_assert(ViewType::isVectorViewType,
+                "ViewType must be a vector field view type");
 
   static_assert(
       std::is_invocable_v<CallableType, typename IteratorType::index_type,

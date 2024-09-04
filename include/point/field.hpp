@@ -238,6 +238,12 @@ public:
       : ImplFieldTraits<ViewType, StoreDisplacement, StoreVelocity,
                         StoreAcceleration, StoreMassMatrix>(view1, view2,
                                                             view3) {}
+
+  template <ViewType::base_type... Args>
+  KOKKOS_FUNCTION FieldTraits(Args... args)
+      : ImplFieldTraits<ViewType, StoreDisplacement, StoreVelocity,
+                        StoreAcceleration, StoreMassMatrix>(
+            ViewType(std::forward<Args>(args)...)) {}
 };
 
 } // namespace impl
@@ -382,6 +388,12 @@ public:
       : impl::FieldTraits<DimensionType, MediumType, StoreDisplacement,
                           StoreVelocity, StoreAcceleration, StoreMassMatrix,
                           UseSIMD>(view1, view2, view3) {}
+
+  template <ViewType::base_type... Args>
+  KOKKOS_FUNCTION field(Args... args)
+      : impl::FieldTraits<ViewType, StoreDisplacement, StoreVelocity,
+                          StoreAcceleration, StoreMassMatrix>(
+            ViewType(std::forward<Args>(args)...)) {}
   ///@}
 };
 
