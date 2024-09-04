@@ -6,7 +6,7 @@
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"
 #include "receiver/interface.hpp"
-#include "solver/interface.hpp"
+#include "solver/solver.hpp"
 #include "source/interface.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
