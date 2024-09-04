@@ -414,6 +414,18 @@ target_link_libraries(
 )
 
 add_library(
+        solver
+        src/solver/time_marching.cpp
+)
+
+target_link_libraries(
+        solver
+        Kokkos::kokkos
+        timescheme
+        domain
+)
+
+add_library(
         writer
         src/writer/seismogram.cpp
         src/writer/wavefield.cpp
@@ -452,6 +464,7 @@ target_link_libraries(
         reader
         kernels
         domain
+        solver
         Boost::filesystem
 )
 
@@ -475,6 +488,7 @@ target_link_libraries(
         domain
         coupled_interface
         kernels
+        solver
         Boost::program_options
         ${HDF5_LIBRARIES}
 )

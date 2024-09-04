@@ -1,5 +1,4 @@
-#ifndef _SOLVER_HPP
-#define _SOLVER_HPP
+#pragma once
 
 namespace specfem {
 namespace solver {
@@ -26,5 +25,3 @@ public:
 
 } // namespace solver
 } // namespace specfem
-
-#endif

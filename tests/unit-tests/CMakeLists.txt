@@ -276,6 +276,7 @@ target_link_libraries(
   algorithms
   coupled_interface
   domain
+  solver
   -lpthread -lm
 )
 
@@ -295,6 +296,7 @@ target_link_libraries(
   parameter_reader
   writer
   domain
+  solver
   -lpthread -lm
 )
 
@@ -314,6 +316,7 @@ target_link_libraries(
   parameter_reader
   writer
   domain
+  solver
   -lpthread -lm
 )
 
