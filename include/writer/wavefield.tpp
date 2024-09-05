@@ -1,5 +1,4 @@
-#ifndef SPEC_WAVEFIELD_WRITER_TPP
-#define SPEC_WAVEFIELD_WRITER_TPP
+#pragma once
 
 #include "compute/interface.hpp"
 #include "enumerations/interface.hpp"
@@ -49,5 +48,3 @@ void specfem::writer::wavefield<OutputLibrary>::write() {
   std::cout << "Wavefield written to " << output_folder + "/ForwardWavefield"
             << std::endl;
 }
-
-#endif /* SPEC_WAVEFIELD_WRITER_TPP */

@@ -24,7 +24,13 @@ class Dataset : public DatasetBase<OpType> {
 public:
   // static_assert(ViewType::is_contiguous, "ViewType must be contiguous");
 
-  const static int rank = ViewType::rank; ///< Rank of the View
+#if KOKKOS_VERSION < 40100
+  constexpr static int rank = ViewType::rank;
+  ; ///< Rank of the View
+#else
+  constexpr static int rank = ViewType::rank(); ///< Rank of the View
+#endif
+
   using value_type =
       typename ViewType::non_const_value_type; ///< Underlying type
   using native_type =

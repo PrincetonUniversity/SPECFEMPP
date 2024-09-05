@@ -1,5 +1,4 @@
-#ifndef SPECFEM_WAVEFIELD_READER_TPP
-#define SPECFEM_WAVEFIELD_READER_TPP
+#pragma once
 
 #include "IO/ASCII/ASCII.hpp"
 #include "IO/HDF5/HDF5.hpp"
@@ -49,5 +48,3 @@ void specfem::reader::wavefield<IOLibrary>::read() {
   buffer.copy_to_device();
   boundary_values.copy_to_device();
 }
-
-#endif /* SPECFEM_WAVEFIELD_READER_TPP */

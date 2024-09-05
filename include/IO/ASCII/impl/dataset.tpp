@@ -6,17 +6,6 @@
 #include <Kokkos_Core.hpp>
 #include "kokkos_abstractions.h"
 
-// check if Kokkos version is < 4.1
-#if KOKKOS_VERSION < 40100
-template <typename ViewType, typename OpType>
-const int specfem::IO::impl::ASCII::Dataset<ViewType, OpType>::rank =
-    ViewType::rank;
-#else
-template <typename ViewType, typename OpType>
-const int specfem::IO::impl::ASCII::Dataset<ViewType, OpType>::rank =
-    ViewType::rank();
-#endif
-
 template <typename ViewType, typename OpType>
 specfem::IO::impl::ASCII::Dataset<ViewType, OpType>::Dataset(
     boost::filesystem::path &folder_name, const std::string &name,
