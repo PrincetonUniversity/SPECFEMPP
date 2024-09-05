@@ -7,6 +7,8 @@ Fields
 .. doxygenstruct:: specfem::compute::fields
     :members:
 
+.. _assembly_simulation_field:
+
 Simulation Field
 ^^^^^^^^^^^^^^^^
 

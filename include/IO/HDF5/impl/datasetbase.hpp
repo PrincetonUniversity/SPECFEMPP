@@ -103,60 +103,6 @@ private:
   std::unique_ptr<H5::DataSet> dataset;
   std::unique_ptr<H5::DataSpace> dataspace;
 };
-
-// template <> class DatasetBase<specfem::IO::read> {
-// protected:
-//   template <typename AtomType>
-//   DatasetBase(std::unique_ptr<H5::H5File> &file, const std::string &name,
-//               const int rank, const hsize_t *dims, const AtomType &type)
-//       : dataset(std::make_unique<H5::DataSet>(file->openDataSet(name))) {
-//     dataspace = std::make_unique<H5::DataSpace>(dataset->getSpace());
-
-//     AtomType check_type = dataset->getDataType();
-
-//     hsize_t check_dims[rank];
-//     dataspace->getSimpleExtentDims(check_dims);
-
-//     for (int i = 0; i < rank; ++i) {
-//       if (check_dims[i] != dims[i]) {
-//         throw std::runtime_error("Dimensions of dataset do not match
-//         view");
-//       }
-//     }
-//   }
-
-//   DatasetBase(std::unique_ptr<H5::Group> &group, const std::string &name,
-//               const int rank, const hsize_t *dims)
-//       : dataset(std::make_unique<H5::DataSet>(group->openDataSet(name))) {
-//     dataspace = std::make_unique<H5::DataSpace>(dataset->getSpace());
-
-//     hsize_t check_dims[rank];
-//     dataspace->getSimpleExtentDims(check_dims);
-
-//     for (int i = 0; i < rank; ++i) {
-//       if (check_dims[i] != dims[i]) {
-//         throw std::runtime_error("Dimensions of dataset do not match
-//         view");
-//       }
-//     }
-//   }
-
-//   template <typename value_type> void read(value_type *data) {
-//     dataset->read(data,
-//                   specfem::IO::impl::HDF5::native_type<value_type>::type());
-//   }
-
-//   void close() {
-//     dataset->close();
-//     dataspace->close();
-//   }
-
-//   ~DatasetBase() { close(); }
-
-// private:
-//   std::unique_ptr<H5::DataSet> dataset;
-//   std::unique_ptr<H5::DataSpace> dataspace;
-// };
 } // namespace HDF5
 } // namespace impl
 } // namespace IO

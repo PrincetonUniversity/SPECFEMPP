@@ -1,5 +1,5 @@
 
-.. _tutorials:
+.. _tutorial1:
 
 Writing a Spectral Element Solver for Wave Propagation
 ======================================================
