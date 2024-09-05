@@ -17,12 +17,32 @@ namespace ASCII {
 template <typename OpType> class Group;
 template <typename ViewType, typename OpType> class Dataset;
 
+/**
+ * @brief SPECFEM++ ASCII File implementation
+ *
+ *
+ * @tparam OpType Operation type (read/write)
+ */
 template <typename OpType> class File;
 
+/**
+ * @brief Template specialization for write operation
+ *
+ */
 template <> class File<specfem::IO::write> {
 public:
-  using OpType = specfem::IO::write;
+  using OpType = specfem::IO::write; ///< Operation type
 
+  /**
+   * @name Constructors
+   *
+   */
+  ///@{
+  /**
+   * @brief Construct a new ASCII File object with the given name
+   *
+   * @param name Name of the folder
+   */
   File(const std::string &name) : folder_path(name) {
     // Delete the folder if it exists
     if (boost::filesystem::exists(folder_path)) {
@@ -42,8 +62,22 @@ public:
     }
   }
 
+  /**
+   * @brief Construct a new ASCII File object with the given name
+   *
+   * @param name Name of the folder
+   */
   File(const char *name) : File(std::string(name)) {}
+  ///@}
 
+  /**
+   * @brief Create a new dataset within the file
+   *
+   * @tparam ViewType Kokkos view type of the data
+   * @param name Name of the dataset
+   * @param data Data to write
+   * @return specfem::IO::impl::ASCII::Dataset<ViewType, OpType> Dataset object
+   */
   template <typename ViewType>
   specfem::IO::impl::ASCII::Dataset<ViewType, OpType>
   createDataset(const std::string &name, const ViewType data) {
@@ -51,6 +85,12 @@ public:
                                                                name, data);
   }
 
+  /**
+   * @brief Create a new group within the file
+   *
+   * @param name Name of the group
+   * @return specfem::IO::impl::ASCII::Group<OpType> Group object
+   */
   specfem::IO::impl::ASCII::Group<OpType> createGroup(const std::string &name) {
     return specfem::IO::impl::ASCII::Group<OpType>(folder_path, name);
   }
@@ -58,19 +98,48 @@ public:
   ~File() {}
 
 private:
-  boost::filesystem::path folder_path;
+  boost::filesystem::path folder_path; ///< Path to the folder
 };
 
+/**
+ * @brief Template specialization for read operation
+ *
+ */
 template <> class File<specfem::IO::read> {
 public:
-  using OpType = specfem::IO::read;
+  using OpType = specfem::IO::read; ///< Operation type
 
+  /**
+   * @name Constructors
+   *
+   */
+  ///@{
+  /**
+   * @brief Read the ASCII file with the given name
+   *
+   * @param name Name of the folder
+   */
   File(const std::string &name) : folder_path(name) {
     if (!boost::filesystem::exists(folder_path)) {
       throw std::runtime_error("ERROR : Folder " + name + " does not exist.");
     }
   }
 
+  /**
+   * @brief Read the ASCII file with the given name
+   *
+   * @param name Name of the folder
+   */
+  File(const char *name) : File(std::string(name)) {}
+  ///@}
+  /**
+   * @brief Open an existing dataset within the file
+   *
+   * @tparam ViewType Kokkos view type of the data
+   * @param name Name of the dataset
+   * @param data Data to be read
+   * @return specfem::IO::impl::ASCII::Dataset<ViewType, OpType> Dataset object
+   */
   template <typename ViewType>
   specfem::IO::impl::ASCII::Dataset<ViewType, OpType>
   openDataset(const std::string &name, const ViewType data) {
@@ -78,6 +147,12 @@ public:
                                                                name, data);
   }
 
+  /**
+   * @brief Open an existing group within the file
+   *
+   * @param name Name of the group
+   * @return specfem::IO::impl::ASCII::Group<OpType> Group object
+   */
   specfem::IO::impl::ASCII::Group<OpType> openGroup(const std::string &name) {
     return specfem::IO::impl::ASCII::Group<OpType>(folder_path, name);
   }
@@ -85,7 +160,7 @@ public:
   ~File() {}
 
 private:
-  boost::filesystem::path folder_path;
+  boost::filesystem::path folder_path; ///< Path to the folder
 };
 } // namespace ASCII
 } // namespace impl
