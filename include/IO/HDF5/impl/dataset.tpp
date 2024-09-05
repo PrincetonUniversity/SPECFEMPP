@@ -9,17 +9,7 @@
 #include "kokkos_abstractions.h"
 #include "native_type.hpp"
 #include <string>
-
-// check if Kokkos version is < 4.1
-#if KOKKOS_VERSION < 40100
-template <typename ViewType, typename OpType>
-const int specfem::IO::impl::HDF5::Dataset<ViewType, OpType>::rank =
-    ViewType::rank;
-#else
-template <typename ViewType, typename OpType>
-const int specfem::IO::impl::HDF5::Dataset<ViewType, OpType>::rank =
-    ViewType::rank();
-#endif
+#include <type_traits>
 
 template <typename ViewType, typename OpType>
 specfem::IO::impl::HDF5::Dataset<ViewType, OpType>::Dataset(
@@ -53,9 +43,6 @@ specfem::IO::impl::HDF5::Dataset<ViewType, OpType>::Dataset(
 
 template <typename ViewType, typename OpType>
 void specfem::IO::impl::HDF5::Dataset<ViewType, OpType>::write() {
-  static_assert(std::is_same_v<OpType, specfem::IO::write>,
-                "Write operation not supported for the OpType");
-
   if (std::is_same_v<MemSpace, specfem::kokkos::HostMemSpace>) {
     DatasetBase<OpType>::write(data.data());
   } else if (std::is_same_v<MemSpace, specfem::kokkos::DevMemSpace>) {
@@ -70,9 +57,6 @@ void specfem::IO::impl::HDF5::Dataset<ViewType, OpType>::write() {
 
 template <typename ViewType, typename OpType>
 void specfem::IO::impl::HDF5::Dataset<ViewType, OpType>::read() {
-  static_assert(std::is_same_v<OpType, specfem::IO::write>,
-                "Read operation not supported for the OpType");
-
   if (std::is_same_v<MemSpace, specfem::kokkos::HostMemSpace>) {
     DatasetBase<OpType>::read(data.data());
   } else if (std::is_same_v<MemSpace, specfem::kokkos::DevMemSpace>) {

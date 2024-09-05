@@ -1,5 +1,4 @@
-#ifndef SPECFEM_WAVEFIELD_WRITER_HPP
-#define SPECFEM_WAVEFIELD_WRITER_HPP
+#pragma once
 
 #include "compute/interface.hpp"
 #include "enumerations/interface.hpp"
@@ -57,5 +56,3 @@ private:
 };
 } // namespace writer
 } // namespace specfem
-
-#endif /* SPECFEM_WAVEFIELD_WRITER_HPP */

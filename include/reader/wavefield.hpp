@@ -1,5 +1,4 @@
-#ifndef SPECFEM_READER_WAVEFIELD_HPP
-#define SPECFEM_READER_WAVEFIELD_HPP
+#pragma once
 
 #include "compute/interface.hpp"
 // #include "enumerations/interface.hpp"
@@ -41,5 +40,3 @@ private:
 
 } // namespace reader
 } // namespace specfem
-
-#endif /* SPECFEM_READER_WAVEFIELD_HPP */
