@@ -1,8 +1,7 @@
-#ifndef _COMPUTE_PROPERTIES_IMPL_MATERIAL_PROPERTIES_HPP_
-#define _COMPUTE_PROPERTIES_IMPL_MATERIAL_PROPERTIES_HPP_
+#pragma once
 
 #include "compute/compute_mesh.hpp"
-#include "mesh/materials/interface.hpp"
+#include "mesh/materials/materials.hpp"
 #include "mesh/tags/tags.hpp"
 #include "properties_container.hpp"
 
@@ -66,5 +65,3 @@ struct material_property
 } // namespace impl
 } // namespace compute
 } // namespace specfem
-
-#endif /* _COMPUTE_PROPERTIES_IMPL_MATERIAL_PROPERTIES_HPP_ */

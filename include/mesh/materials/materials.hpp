@@ -1,5 +1,4 @@
-#ifndef _MATERIAL_INDIC_HPP
-#define _MATERIAL_INDIC_HPP
+#pragma once
 
 #include "kokkos_abstractions.h"
 #include "material/material.hpp"
@@ -8,6 +7,10 @@
 
 namespace specfem {
 namespace mesh {
+/**
+ * @brief Material properties information
+ *
+ */
 struct materials {
 
   struct material_specification {
@@ -61,6 +64,10 @@ struct materials {
       acoustic_isotropic; ///< Acoustic isotropic material properties
 
   /**
+   * @name Constructors
+   */
+  ///@{
+  /**
    * @brief Default constructor
    *
    */
@@ -86,7 +93,14 @@ struct materials {
   materials(std::ifstream &stream, const int numat, const int nspec,
             const specfem::kokkos::HostView2d<int> knods,
             const specfem::MPI::MPI *mpi);
+  ///@}
 
+  /**
+   * @brief Overloaded operator to access material properties
+   *
+   * @param index Index of material properties
+   * @return std::variant Material properties
+   */
   std::variant<
       specfem::material::material<specfem::element::medium_tag::elastic,
                                   specfem::element::property_tag::isotropic>,
@@ -96,5 +110,3 @@ struct materials {
 };
 } // namespace mesh
 } // namespace specfem
-
-#endif
