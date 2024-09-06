@@ -2,7 +2,6 @@
 #include "../../MPI_environment.hpp"
 #include "../../utilities/include/interface.hpp"
 #include "compute/interface.hpp"
-#include "material/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "quadrature/interface.hpp"
 #include "yaml-cpp/yaml.h"
