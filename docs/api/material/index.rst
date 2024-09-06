@@ -1,21 +1,23 @@
-Materials Class API
+
+.. _materials:
+
+Material Properties
 ===================
 
-Materials Class is used to store material information for every material in the mesh.
-
-.. toctree::
-    :maxdepth: 1
-
 .. doxygenclass:: specfem::material::material
-    :members:
-    :undoc-members:
-    :private-members:
+   :members:
 
-Types of Materials Implemented
------------------------------
 
-.. toctree::
-    :maxdepth: 1
+Implementation Details
+----------------------
 
-    acoustic_material
-    elastic_material
+.. doxygenclass:: specfem::material::properties
+   :members:
+
+.. doxygenclass:: specfem::material::properties< specfem::element::medium_tag::elastic, specfem::element::property_tag::isotropic >
+   :members:
+   :private-members:
+
+.. doxygenclass:: specfem::material::properties< specfem::element::medium_tag::acoustic, specfem::element::property_tag::isotropic >
+   :members:
+   :private-members:
