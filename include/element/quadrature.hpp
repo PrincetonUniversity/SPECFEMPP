@@ -2,6 +2,7 @@
 
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
+#include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

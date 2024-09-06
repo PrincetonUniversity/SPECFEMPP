@@ -1,14 +1,12 @@
-.. _specfem_enumerations::
+.. _enumerations::
 
 Enumerations
-************
-
-Enumerations are used to define template parameters for different objects.
+============
 
 .. toctree::
     :maxdepth: 1
 
-    element/element_enumeration
-    axes/axes_enumeration
-    coupling/coupling_enumerations
-    seismogram/seismogram_enumeration
+    dimension/index
+    element/index
+    simulation/index
+    wavefield/index
