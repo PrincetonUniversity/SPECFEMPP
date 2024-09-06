@@ -6,11 +6,9 @@
 
 namespace specfem {
 namespace mesh {
-
 /**
- * Acoustic forcing boundary
+ * @brief Forcing boundary information
  *
- * TODO : Document on how is this struct used in the code.
  */
 struct forcing_boundary {
   specfem::kokkos::HostView1d<int> numacforcing;  ///< ispec value for the the

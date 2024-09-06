@@ -14,13 +14,13 @@ specfem::mesh::tags::tags(const specfem::mesh::materials &materials,
 
   const auto &absorbing_boundary = boundaries.absorbing_boundary;
   for (int i = 0; i < absorbing_boundary.nelements; ++i) {
-    const int ispec = absorbing_boundary.ispec(i);
+    const int ispec = absorbing_boundary.index_mapping(i);
     boundary_tag[ispec] += specfem::element::boundary_tag::stacey;
   }
 
   const auto &acoustic_free_surface = boundaries.acoustic_free_surface;
   for (int i = 0; i < acoustic_free_surface.nelem_acoustic_surface; ++i) {
-    const int ispec = acoustic_free_surface.ispec_acoustic_surface(i);
+    const int ispec = acoustic_free_surface.index_mapping(i);
     const auto &material_specification =
         materials.material_index_mapping(ispec);
     if (material_specification.type != specfem::element::medium_tag::acoustic) {

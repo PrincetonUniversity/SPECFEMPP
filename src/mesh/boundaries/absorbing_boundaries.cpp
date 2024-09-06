@@ -8,10 +8,12 @@ specfem::mesh::absorbing_boundary::absorbing_boundary(
     const int num_abs_boundary_faces) {
   if (num_abs_boundary_faces > 0) {
     this->nelements = num_abs_boundary_faces;
-    this->ispec = specfem::kokkos::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ispec", num_abs_boundary_faces);
-    this->type = specfem::kokkos::HostView1d<specfem::enums::boundaries::type>(
-        "specfem::mesh::absorbing_boundary::type", num_abs_boundary_faces);
+    this->index_mapping = Kokkos::View<int *, Kokkos::HostSpace>(
+        "specfem::mesh::absorbing_boundary::index_mapping",
+        num_abs_boundary_faces);
+    this->type =
+        Kokkos::View<specfem::enums::boundaries::type *, Kokkos::HostSpace>(
+            "specfem::mesh::absorbing_boundary::type", num_abs_boundary_faces);
   } else {
     this->nelements = 0;
   }
@@ -172,21 +174,21 @@ specfem::mesh::absorbing_boundary::absorbing_boundary(
 
     this->nelements = nelements;
 
-    this->ispec = specfem::kokkos::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ispec", nelements);
+    this->index_mapping = Kokkos::View<int *, Kokkos::HostSpace>(
+        "specfem::mesh::absorbing_boundary::index_mapping", nelements);
 
-    this->type = specfem::kokkos::HostView1d<specfem::enums::boundaries::type>(
-        "specfem::mesh::absorbing_boundary::type", nelements);
-
+    this->type =
+        Kokkos::View<specfem::enums::boundaries::type *, Kokkos::HostSpace>(
+            "specfem::mesh::absorbing_boundary::type", nelements);
     // Populate ispec and type arrays
 
     for (int inum = 0; inum < ispec_edge.extent(0); inum++) {
-      this->ispec(inum) = ispec_edge(inum);
+      this->index_mapping(inum) = ispec_edge(inum);
       this->type(inum) = type_edge(inum);
     }
 
     for (int inum = 0; inum < ispec_corners.extent(0); inum++) {
-      this->ispec(inum + ispec_edge.extent(0)) = ispec_corners(inum);
+      this->index_mapping(inum + ispec_edge.extent(0)) = ispec_corners(inum);
       this->type(inum + ispec_edge.extent(0)) = type_corners(inum);
     }
   } else {

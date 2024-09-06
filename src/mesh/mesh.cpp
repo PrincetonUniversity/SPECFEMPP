@@ -3,6 +3,7 @@
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
 #include "material/interface.hpp"
+#include "mesh/IO/fortran/read_mesh_database.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -97,27 +98,38 @@ specfem::mesh::mesh::mesh(const std::string filename,
   specfem::IO::fortran_read_line(stream, &ninterfaces, &max_interface_size);
 
   try {
-    this->boundaries.absorbing_boundary = specfem::mesh::absorbing_boundary(
-        stream, this->parameters.nelemabs, this->parameters.nspec, mpi);
+    this->boundaries = specfem::mesh::boundaries(
+        stream, this->parameters.nspec, this->parameters.nelemabs,
+        this->parameters.nelem_acforcing,
+        this->parameters.nelem_acoustic_surface, this->control_nodes.knods,
+        mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
 
-  try {
-    this->boundaries.forcing_boundary = specfem::mesh::forcing_boundary(
-        stream, this->parameters.nelem_acforcing, this->parameters.nspec, mpi);
-  } catch (std::runtime_error &e) {
-    throw;
-  }
+  // try {
+  //   this->boundaries.absorbing_boundary = specfem::mesh::absorbing_boundary(
+  //       stream, this->parameters.nelemabs, this->parameters.nspec, mpi);
+  // } catch (std::runtime_error &e) {
+  //   throw;
+  // }
 
-  try {
-    this->boundaries.acoustic_free_surface =
-        specfem::mesh::acoustic_free_surface(
-            stream, this->parameters.nelem_acoustic_surface,
-            this->control_nodes.knods, mpi);
-  } catch (std::runtime_error &e) {
-    throw;
-  }
+  // try {
+  //   this->boundaries.forcing_boundary = specfem::mesh::forcing_boundary(
+  //       stream, this->parameters.nelem_acforcing, this->parameters.nspec,
+  //       mpi);
+  // } catch (std::runtime_error &e) {
+  //   throw;
+  // }
+
+  // try {
+  //   this->boundaries.acoustic_free_surface =
+  //       specfem::mesh::acoustic_free_surface(
+  //           stream, this->parameters.nelem_acoustic_surface,
+  //           this->control_nodes.knods, mpi);
+  // } catch (std::runtime_error &e) {
+  //   throw;
+  // }
 
   try {
     this->coupled_interfaces = specfem::mesh::coupled_interfaces(

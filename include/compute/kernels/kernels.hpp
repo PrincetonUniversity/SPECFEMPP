@@ -1,9 +1,8 @@
-#ifndef _SPECFEM_COMPUTE_KERNELS_HPP_
-#define _SPECFEM_COMPUTE_KERNELS_HPP_
+#pragma once
 
 #include "enumerations/medium.hpp"
 #include "impl/material_kernels.hpp"
-#include "mesh/materials/interface.hpp"
+#include "mesh/materials/materials.hpp"
 #include "point/coordinates.hpp"
 #include "point/kernels.hpp"
 #include <Kokkos_Core.hpp>
@@ -345,5 +344,3 @@ void add_on_host(const IndexType &index, const PointKernelType &point_kernels,
 
 } // namespace compute
 } // namespace specfem
-
-#endif /* _SPECFEM_COMPUTE_KERNELS_HPP_ */

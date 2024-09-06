@@ -8,17 +8,40 @@
 
 namespace specfem {
 namespace mesh {
+/**
+ * @brief Struct to store tags for every spectral element
+ *
+ */
 struct tags {
-  int nspec;
-  specfem::kokkos::HostView1d<specfem::mesh::impl::tags_container>
-      tags_container;
+  int nspec; ///< Total number of spectral elements
+  Kokkos::View<specfem::mesh::impl::tags_container *, Kokkos::HostSpace>
+      tags_container; ///< Tags container
 
+  /**
+   * @name Constructors
+   */
+  ///@{
+  /**
+   * @brief Contrust tags object
+   *
+   */
   tags(const int nspec) : tags_container("specfem::mesh::tags::tags", nspec) {}
 
+  /**
+   * @brief Default constructor
+   *
+   */
   tags() = default;
 
+  /**
+   * @brief Construct tags from mesh data
+   *
+   * @param materials Material properties
+   * @param boundaries Boundary information
+   */
   tags(const specfem::mesh::materials &materials,
        const specfem::mesh::boundaries &boundaries);
+  ///@}
 };
 } // namespace mesh
 } // namespace specfem

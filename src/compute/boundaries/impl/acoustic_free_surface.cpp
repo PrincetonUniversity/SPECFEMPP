@@ -55,7 +55,7 @@ specfem::compute::impl::boundaries::acoustic_free_surface::
   std::map<int, std::vector<int> > ispec_to_acoustic_surface;
 
   for (int i = 0; i < nelements; ++i) {
-    const int ispec_mesh = acoustic_free_surface.ispec_acoustic_surface(i);
+    const int ispec_mesh = acoustic_free_surface.index_mapping(i);
     const int ispec_compute = mapping.mesh_to_compute(ispec_mesh);
     if (ispec_to_acoustic_surface.find(ispec_compute) ==
         ispec_to_acoustic_surface.end()) {

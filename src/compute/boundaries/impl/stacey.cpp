@@ -98,7 +98,7 @@ specfem::compute::impl::boundaries::stacey::stacey(
   std::map<int, std::vector<int> > ispec_to_stacey;
 
   for (int i = 0; i < nelements; ++i) {
-    const int ispec_mesh = stacey.ispec(i);
+    const int ispec_mesh = stacey.index_mapping(i);
     const int ispec_compute = mapping.mesh_to_compute(ispec_mesh);
     if (ispec_to_stacey.find(ispec_compute) == ispec_to_stacey.end()) {
       ispec_to_stacey[ispec_compute] = { i };
