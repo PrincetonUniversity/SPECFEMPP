@@ -1,6 +1,6 @@
 #include "compute/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "material/interface.hpp"
+#include "material/material.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <memory>

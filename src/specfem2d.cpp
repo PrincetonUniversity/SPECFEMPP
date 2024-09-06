@@ -2,7 +2,6 @@
 // #include "coupled_interface/interface.hpp"
 // #include "domain/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "material/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"
 #include "receiver/interface.hpp"

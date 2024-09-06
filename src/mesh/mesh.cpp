@@ -2,7 +2,7 @@
 #include "IO/fortranio/interface.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
-#include "material/interface.hpp"
+#include "material/material.hpp"
 #include "mesh/IO/fortran/read_mesh_database.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
