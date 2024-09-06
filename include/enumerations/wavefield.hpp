@@ -1,10 +1,11 @@
-#ifndef SPECFEM_ENUMERATIONS_WAVEFIELD_HPP
-#define SPECFEM_ENUMERATIONS_WAVEFIELD_HPP
+#pragma once
 
 namespace specfem {
 namespace wavefield {
+/**
+ * @brief Wavefield type enumeration
+ *
+ */
 enum class type { forward, adjoint, backward, buffer };
-}
+} // namespace wavefield
 } // namespace specfem
-
-#endif // SPECFEM_ENUMERATIONS_WAVEFIELD_HPP

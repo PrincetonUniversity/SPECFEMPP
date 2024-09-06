@@ -1,26 +1,30 @@
-#ifndef _ENUMERATION_BOUNDARY_HPP_
-#define _ENUMERATION_BOUNDARY_HPP_
+#pragma once
 
 #include <Kokkos_Core.hpp>
 #include <stdexcept>
 
 namespace specfem {
 namespace element {
+/**
+ * @brief Boundary tag enumeration
+ *
+ */
 enum class boundary_tag {
   // primary boundaries
-  none,                  ///< no boundary
-  acoustic_free_surface, ///< free surface boundary for acoustic elements
-  stacey,                ///< stacey boundary for elements
+  none,
+  acoustic_free_surface,
+  stacey,
 
   // composite boundaries
-  composite_stacey_dirichlet ///< composite boundary for acoustic elements
+  composite_stacey_dirichlet
 };
 
 /**
  * @brief Container class to store boundary tags
  *
- * Rule of 5 needs to be implemented for this class. operator= is explicitly
- * deleted to avoid accidental assignment of boundary tags
+ * Boundary tag container is used to store boundary tag at a specific quadrature
+ * point. The container-type is needed to handle composite boundaries.
+ *
  *
  */
 class boundary_tag_container {
@@ -51,9 +55,6 @@ public:
 
   /**
    * @brief Update boundary tag container with new tag
-   *
-   * This function checks if a boundary can be of composite type and returns the
-   * correct tags
    *
    * @param rtag boundary tag to be added
    */
@@ -116,15 +117,18 @@ public:
     return *this;
   }
 
+  /**
+   * @brief Update boundary tag container with new tag
+   *
+   * @param rtag boundary tag container to be added
+   */
   KOKKOS_INLINE_FUNCTION
   void operator+=(const boundary_tag_container &rtag) {
     this->operator+=(rtag.tag);
   }
 
   /**
-   * @brief Check if boundary tag container specifies a specific boundary tag
-   *
-   * This function checks if a boundary container specifies a specific boundary
+   * @brief Check if boundary tag container is equivalent to a specific boundary
    * tag
    *
    * @param tag boundary tag to be checked
@@ -153,16 +157,39 @@ public:
     }
   }
 
+  /**
+   * @brief Check if boundary tag container is not equivalent to a specific
+   * boundary tag
+   *
+   * @param rtag boundary tag to be checked
+   * @return bool true if boundary container is not equivalent to the boundary
+   * tag
+   */
   KOKKOS_INLINE_FUNCTION
   bool operator!=(const boundary_tag &tag) const {
     return !(this->operator==(tag));
   }
 
+  /**
+   * @brief Check if boundary tag container is equivalent to another boundary
+   * tag container
+   *
+   * @param rtag boundary tag container to be checked
+   * @return bool true if boundary container equivalent to the boundary tag
+   */
   KOKKOS_INLINE_FUNCTION
   bool operator==(const boundary_tag_container &rtag) const {
     return (rtag.tag == this->tag);
   }
 
+  /**
+   * @brief Check if boundary tag container is not equivalent to another
+   * boundary tag container
+   *
+   * @param rtag boundary tag container to be checked
+   * @return bool true if boundary container is not equivalent to the boundary
+   * tag
+   */
   KOKKOS_INLINE_FUNCTION
   bool operator!=(const boundary_tag_container &rtag) const {
     return (rtag.tag != this->tag);
@@ -173,5 +200,3 @@ private:
 };
 } // namespace element
 } // namespace specfem
-
-#endif /* _ENUMERATION_BOUNDARY_HPP_ */

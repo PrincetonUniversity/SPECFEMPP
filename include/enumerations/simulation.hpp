@@ -1,11 +1,11 @@
-#ifndef _ENUMERATIONS_SIMULATION_HPP_
-#define _ENUMERATIONS_SIMULATION_HPP_
-
-#include "specfem_enums.hpp"
+#pragma once
 
 namespace specfem {
 namespace simulation {
-
+/**
+ * @brief Simulation type enumeration
+ *
+ */
 enum class type { forward, combined };
 
 template <specfem::simulation::type SimulationType> class simulation;
@@ -24,5 +24,3 @@ public:
 
 } // namespace simulation
 } // namespace specfem
-
-#endif /* _ENUMERATIONS_SIMULATION_HPP_ */
