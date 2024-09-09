@@ -99,6 +99,12 @@ Table below shows various features available and tested in this package on vario
       - ✔
       -
 
+    * - Adjoint Simulations
+      - ✔
+      - ✔
+      - ✔
+      -
+
     * - **Time Schemes**
       -
       -
