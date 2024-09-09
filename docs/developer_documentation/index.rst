@@ -12,4 +12,4 @@ SPECFEM++ tries to follow best practices to keep the code readable, maintainable
     build_requirements
     style
     tests
-    SPECFEM_architecture/architecture
+    tuorials/index
