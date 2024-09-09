@@ -145,6 +145,7 @@ private:
       break;
     default:
       DEVICE_ASSERT(false, "Invalid edge type");
+      return { 0, 0, 0 };
     }
   }
 
@@ -165,6 +166,7 @@ private:
       break;
     default:
       DEVICE_ASSERT(false, "Invalid edge type");
+      return { 0, 0, 0 };
     }
   }
 };

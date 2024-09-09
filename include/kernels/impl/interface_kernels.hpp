@@ -2,7 +2,7 @@
 #define _SPECFEM_KERNELS_IMPL_INTERFACE_KERNELS_HPP
 
 #include "compute/interface.hpp"
-#include "coupled_interface/interface.hpp"
+#include "coupled_interface/coupled_interface.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "enumerations/simulation.hpp"
