@@ -44,19 +44,39 @@ public:
 
 } // namespace impl
 
+/**
+ * @brief Compute kernels to compute the coupling terms between two domains.
+ *
+ * @tparam WavefieldType Wavefield type on which the coupling is computed.
+ * @tparam DimensionType Dimension of the element on which the coupling is
+ * computed.
+ * @tparam SelfMedium Medium type of the primary domain.
+ * @tparam CoupledMedium Medium type of the coupled domain.
+ */
 template <specfem::wavefield::type WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag SelfMedium,
           specfem::element::medium_tag CoupledMedium>
 class coupled_interface {
-public:
-  using CoupledPointFieldType =
-      typename impl::coupled_interface<DimensionType, SelfMedium,
-                                       CoupledMedium>::CoupledPointFieldType;
+private:
+  using CoupledPointFieldType = typename impl::coupled_interface<
+      DimensionType, SelfMedium,
+      CoupledMedium>::CoupledPointFieldType; ///< Point field type of the
+                                             ///< coupled domain.
 
-  using SelfPointFieldType =
-      typename impl::coupled_interface<DimensionType, SelfMedium,
-                                       CoupledMedium>::SelfPointFieldType;
+  using SelfPointFieldType = typename impl::coupled_interface<
+      DimensionType, SelfMedium,
+      CoupledMedium>::SelfPointFieldType; ///< Point field type of the primary
+                                          ///< domain.
+
+public:
+  constexpr static auto self_medium =
+      SelfMedium; ///< Medium of the primary domain.
+  constexpr static auto coupled_medium =
+      CoupledMedium; ///< Medium of the coupled domain.
+  constexpr static auto dimension =
+      DimensionType; ///< Dimension of the element.
+  constexpr static auto wavefield = WavefieldType; ///< Wavefield type.
 
   static_assert(SelfMedium != CoupledMedium,
                 "Error: self_medium cannot be equal to coupled_medium");
@@ -67,8 +87,21 @@ public:
                   CoupledMedium == specfem::element::medium_tag::acoustic)),
                 "Only acoustic-elastic coupling is supported at the moment.");
 
+  /**
+   * @name Constructor
+   */
+  ///@{
+  /**
+   * @brief Construct a new coupled interface object.
+   *
+   * @param assembly Assembly object containing the mesh information.
+   */
   coupled_interface(const specfem::compute::assembly &assembly);
+  ///@}
 
+  /**
+   * @name Compute coupling
+   */
   void compute_coupling();
 
 private:
@@ -76,65 +109,8 @@ private:
   int npoints; ///< Number of quadrature points in the interface.
   specfem::compute::interface_container<SelfMedium, CoupledMedium>
       interface_data; ///< Struct containing the coupling information.
-  specfem::compute::simulation_field<WavefieldType> field;
+  specfem::compute::simulation_field<WavefieldType> field; ///< Wavefield
+                                                           ///< object.
 };
 } // namespace coupled_interface
 } // namespace specfem
-
-// #ifndef _COUPLED_INTERFACE_HPP_
-// #define _COUPLED_INTERFACE_HPP_
-
-// #include "compute/interface.hpp"
-// #include "enumerations/interface.hpp"
-// #include "impl/edge/interface.hpp"
-// #include "kokkos_abstractions.h"
-// #include "specfem_setup.hpp"
-
-// namespace specfem {
-// namespace coupled_interface {
-// /**
-//  * @brief Class to compute the coupling between two domains.
-//  *
-//  * @tparam self_domain_type Primary domain of the interface.
-//  * @tparam coupled_domain_type Coupled domain of the interface.
-//  */
-// template <specfem::wavefield::type WavefieldType,
-//           specfem::dimension::type DimensionType,
-//           specfem::element::medium_tag SelfMedium,
-//           specfem::element::medium_tag CoupledMedium>
-// class coupled_interface {
-// public:
-//   static_assert(SelfMedium != CoupledMedium,
-//                 "Error: self_medium cannot be equal to coupled_medium");
-
-//   static_assert(((SelfMedium == specfem::element::medium_tag::acoustic &&
-//                   CoupledMedium == specfem::element::medium_tag::elastic) ||
-//                  (SelfMedium == specfem::element::medium_tag::elastic &&
-//                   CoupledMedium == specfem::element::medium_tag::acoustic)),
-//                 "Only acoustic-elastic coupling is supported at the
-//                 moment.");
-
-//   coupled_interface(const specfem::compute::assembly &assembly);
-
-//   void compute_coupling();
-
-// private:
-//   using EdgeType =
-//       specfem::coupled_interface::impl::edges::edge<DimensionType,
-//       SelfMedium,
-//                                                     CoupledMedium>;
-//   using CoupledPointFieldType = typename EdgeType::CoupledPointFieldType;
-//   using SelfPointFieldType = typename EdgeType::SelfPointFieldType;
-
-//   int nedges; ///< Number of edges in the interface.
-//   specfem::compute::points points;
-//   specfem::compute::quadrature quadrature;
-//   specfem::compute::partial_derivatives partial_derivatives;
-//   specfem::compute::simulation_field<WavefieldType> field;
-//   specfem::compute::interface_container<SelfMedium, CoupledMedium>
-//       interface_data; ///< Struct containing the coupling information.
-//   EdgeType edge;      ///< Edge class to implement coupling physics
-// };
-// } // namespace coupled_interface
-// } // namespace specfem
-// #endif // _COUPLED_INTERFACES_HPP_
