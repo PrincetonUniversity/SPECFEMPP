@@ -5,8 +5,8 @@ description = "Kokkos implementation of SpecFEM2D code"
 authors = ["Your Name <you@example.com>"]
 
 [tool.poetry.dependencies]
-python = ">=3.7,<4.0"
-pre-commit = "^=2.19.0"
+python = ">=3.12,<4.0"
+pre-commit = "^2.19.0"
 clang-format = "^14.0.6"
 sphinx-rtd-theme = "^1.0.0"
 breathe = "^4.34.0"
