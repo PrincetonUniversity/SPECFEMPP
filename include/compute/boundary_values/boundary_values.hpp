@@ -19,6 +19,11 @@ public:
       specfem::dimension::type::dim2, specfem::element::boundary_tag::stacey>
       stacey;
 
+  specfem::compute::boundary_value_container<
+      specfem::dimension::type::dim2,
+      specfem::element::boundary_tag::composite_stacey_dirichlet>
+      composite_stacey_dirichlet;
+
   boundary_values(const int nstep, const specfem::compute::mesh mesh,
                   const specfem::compute::properties properties,
                   const specfem::compute::boundaries boundaries);
@@ -29,14 +34,23 @@ public:
   get_container() const {
     if constexpr (BoundaryTag == specfem::element::boundary_tag::stacey) {
       return stacey;
+    } else if constexpr (BoundaryTag == specfem::element::boundary_tag::
+                                            composite_stacey_dirichlet) {
+      return composite_stacey_dirichlet;
     } else {
       return {};
     }
   }
 
-  void copy_to_host() { stacey.sync_to_host(); }
+  void copy_to_host() {
+    stacey.sync_to_host();
+    composite_stacey_dirichlet.sync_to_host();
+  }
 
-  void copy_to_device() { stacey.sync_to_device(); }
+  void copy_to_device() {
+    stacey.sync_to_device();
+    composite_stacey_dirichlet.sync_to_device();
+  }
 };
 } // namespace compute
 } // namespace specfem

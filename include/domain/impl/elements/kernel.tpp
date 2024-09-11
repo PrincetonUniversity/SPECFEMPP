@@ -264,6 +264,12 @@ void specfem::domain::impl::kernels::element_kernel_base<
                     apply_boundary_conditions(point_boundary, point_property,
                                               velocity, acceleration);
 
+                // Store boundary values for reconstruction during adjoint
+                // simulations. The function does nothing if the boundary tag is
+                // not stacey
+                specfem::compute::store_on_device(istep, index, acceleration,
+                                                  boundary_values);
+
                 specfem::compute::atomic_add_on_device(index, acceleration,
                                                        field);
               });

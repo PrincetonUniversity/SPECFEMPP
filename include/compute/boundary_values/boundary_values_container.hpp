@@ -17,6 +17,9 @@ template <specfem::dimension::type DimensionType,
 class boundary_value_container {
 
 public:
+  constexpr static auto dimension = DimensionType;
+  constexpr static auto boundary_tag = BoundaryTag;
+
   specfem::kokkos::DeviceView1d<int> property_index_mapping;
   specfem::kokkos::HostMirror1d<int> h_property_index_mapping;
 
@@ -46,54 +49,39 @@ public:
   }
 };
 
-template <specfem::dimension::type DimensionType,
-          specfem::element::boundary_tag BoundaryTag, typename IndexType,
-          typename AccelerationType>
-KOKKOS_FUNCTION void load_on_device(
-    const int istep, const IndexType index,
-    const specfem::compute::boundary_value_container<DimensionType, BoundaryTag>
-        &boundary_value_container,
-    AccelerationType &acceleration) {
-
-  constexpr static auto MediumType = AccelerationType::medium_tag;
-
-  IndexType l_index = index;
-
-  static_assert(DimensionType == AccelerationType::dimension,
-                "Number of dimensions must match");
-
-  static_assert(BoundaryTag == specfem::element::boundary_tag::stacey,
-                "Only Stacey boundary conditions are supported");
-
-  l_index.ispec = boundary_value_container.property_index_mapping(index.ispec);
-
-  if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
-    boundary_value_container.acoustic.load_on_device(istep, l_index,
-                                                     acceleration);
-  } else if constexpr (MediumType == specfem::element::medium_tag::elastic) {
-    boundary_value_container.elastic.load_on_device(istep, l_index,
-                                                    acceleration);
-  }
-
+template <typename IndexType, typename AccelerationType,
+          typename BoundaryValueContainerType,
+          typename std::enable_if_t<
+              ((BoundaryValueContainerType::boundary_tag ==
+                specfem::element::boundary_tag::none) ||
+               (BoundaryValueContainerType::boundary_tag ==
+                specfem::element::boundary_tag::acoustic_free_surface)),
+              int> = 0>
+KOKKOS_INLINE_FUNCTION void
+store_on_device(const int istep, const IndexType index,
+                const AccelerationType &acceleration,
+                const BoundaryValueContainerType &boundary_value_container) {
   return;
 }
 
-template <specfem::dimension::type DimensionType,
-          specfem::element::boundary_tag BoundaryTag, typename IndexType,
-          typename AccelerationType>
-KOKKOS_FUNCTION void store_on_device(
-    const int istep, const IndexType index,
-    const AccelerationType &acceleration,
-    const specfem::compute::boundary_value_container<DimensionType, BoundaryTag>
-        &boundary_value_container) {
+template <typename IndexType, typename AccelerationType,
+          typename BoundaryValueContainerType,
+          typename std::enable_if_t<
+              ((BoundaryValueContainerType::boundary_tag ==
+                specfem::element::boundary_tag::stacey) ||
+               (BoundaryValueContainerType::boundary_tag ==
+                specfem::element::boundary_tag::composite_stacey_dirichlet)),
+              int> = 0>
+KOKKOS_FUNCTION void
+store_on_device(const int istep, const IndexType index,
+                const AccelerationType &acceleration,
+                const BoundaryValueContainerType &boundary_value_container) {
 
   constexpr static auto MediumTag = AccelerationType::medium_tag;
 
-  static_assert(DimensionType == AccelerationType::dimension,
-                "DimensionType must match AccelerationType::dimension_type");
-
-  static_assert(BoundaryTag == specfem::element::boundary_tag::stacey,
-                "Only Stacey boundary conditions are supported");
+  static_assert(
+      (BoundaryValueContainerType::dimension == AccelerationType::dimension),
+      "DimensionType must match AccelerationType::dimension_type");
 
   IndexType l_index = index;
   l_index.ispec = boundary_value_container.property_index_mapping(index.ispec);
@@ -104,6 +92,37 @@ KOKKOS_FUNCTION void store_on_device(
   } else if constexpr (MediumTag == specfem::element::medium_tag::elastic) {
     boundary_value_container.elastic.store_on_device(istep, l_index,
                                                      acceleration);
+  }
+
+  return;
+}
+
+template <typename IndexType, typename AccelerationType,
+          typename BoundaryValueContainerType,
+          typename std::enable_if_t<BoundaryValueContainerType::boundary_tag ==
+                                        specfem::element::boundary_tag::stacey,
+                                    int> = 0>
+KOKKOS_FUNCTION void
+load_on_device(const int istep, const IndexType index,
+               const BoundaryValueContainerType &boundary_value_container,
+               AccelerationType &acceleration) {
+
+  constexpr static auto MediumType = AccelerationType::medium_tag;
+
+  IndexType l_index = index;
+
+  static_assert(BoundaryValueContainerType::DimensionType ==
+                    AccelerationType::dimension,
+                "Number of dimensions must match");
+
+  l_index.ispec = boundary_value_container.property_index_mapping(index.ispec);
+
+  if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
+    boundary_value_container.acoustic.load_on_device(istep, l_index,
+                                                     acceleration);
+  } else if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+    boundary_value_container.elastic.load_on_device(istep, l_index,
+                                                    acceleration);
   }
 
   return;
