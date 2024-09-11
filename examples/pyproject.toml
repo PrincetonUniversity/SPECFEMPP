@@ -8,6 +8,7 @@ authors = ["Rohit Kakodkar <kakodkar.rohit@gmail.com>"]
 python = "^3.12"
 snakemake = "^8.14.0"
 obspy = "^1.4.0"
+snakemake-executor-plugin-slurm = "^0.10.0"
 
 [tool.poetry.dev-dependencies]
 
