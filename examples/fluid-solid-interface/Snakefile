@@ -9,6 +9,7 @@ rule generate_mesh:
     output:
         database = "OUTPUT_FILES/database.bin",
         stations = "OUTPUT_FILES/STATIONS"
+    localrule: True
     shell:
         '''
             mkdir -p OUTPUT_FILES
@@ -28,10 +29,17 @@ rule run_solver:
             network_name=["AA"],
             component=["BXX", "BXZ"])
 
+    resources:
+        nodes=1,
+        tasks=1,
+        cpus_per_task=1,
+        runtime=10,
+
     shell:
         '''
             module purge
             module load boost/1.73.0
+            mkdir -p OUTPUT_FILES/results
             echo "Hostname: $(hostname)" > output.log
             ./../../build/specfem2d -p {input.config} >> output.log
         '''
@@ -44,6 +52,7 @@ rule plot_seismogram:
             component=["BXX", "BXZ"])
     output:
         traces = "OUTPUT_FILES/results/plot.png"
+    localrule: True
     run:
         import glob
         import os
