@@ -70,7 +70,7 @@ public:
   KOKKOS_FUNCTION void
   store_on_device(const int istep,
                   const specfem::point::index<dimension> &index,
-                  const AccelerationType &acceleration) {
+                  const AccelerationType &acceleration) const {
 
     const int ispec = index.ispec;
     const int iz = index.iz;
@@ -102,10 +102,10 @@ public:
     using mask_type = typename simd::mask_type;
     using tag_type = typename simd::tag_type;
 
-    mask_type mask([&](std::size_t lane) { index.mask(lane); });
+    mask_type mask([&](std::size_t lane) { return index.mask(lane); });
 
     for (int icomp = 0; icomp < components; ++icomp)
-      Kokkos::Experimental::where(mask, acceleration.acceleration)
+      Kokkos::Experimental::where(mask, acceleration.acceleration(icomp))
           .copy_from(&values(ispec, iz, ix, istep, icomp), tag_type());
 
     return;
@@ -117,7 +117,7 @@ public:
   KOKKOS_FUNCTION void
   store_on_device(const int istep,
                   const specfem::point::simd_index<dimension> &index,
-                  const AccelerationType &acceleration) {
+                  const AccelerationType &acceleration) const {
 
     const int ispec = index.ispec;
     const int iz = index.iz;
@@ -127,10 +127,10 @@ public:
     using mask_type = typename simd::mask_type;
     using tag_type = typename simd::tag_type;
 
-    mask_type mask([&](std::size_t lane) { index.mask(lane); });
+    mask_type mask([&](std::size_t lane) { return index.mask(lane); });
 
     for (int icomp = 0; icomp < components; ++icomp)
-      Kokkos::Experimental::where(mask, acceleration.acceleration)
+      Kokkos::Experimental::where(mask, acceleration.acceleration(icomp))
           .copy_to(&values(ispec, iz, ix, istep, icomp), tag_type());
 
     return;
