@@ -99,9 +99,12 @@ store_on_device(const int istep, const IndexType index,
 
 template <typename IndexType, typename AccelerationType,
           typename BoundaryValueContainerType,
-          typename std::enable_if_t<BoundaryValueContainerType::boundary_tag ==
-                                        specfem::element::boundary_tag::stacey,
-                                    int> = 0>
+          typename std::enable_if_t<
+              ((BoundaryValueContainerType::boundary_tag ==
+                specfem::element::boundary_tag::stacey) ||
+               (BoundaryValueContainerType::boundary_tag ==
+                specfem::element::boundary_tag::composite_stacey_dirichlet)),
+              int> = 0>
 KOKKOS_FUNCTION void
 load_on_device(const int istep, const IndexType index,
                const BoundaryValueContainerType &boundary_value_container,
@@ -111,9 +114,9 @@ load_on_device(const int istep, const IndexType index,
 
   IndexType l_index = index;
 
-  static_assert(BoundaryValueContainerType::DimensionType ==
-                    AccelerationType::dimension,
-                "Number of dimensions must match");
+  static_assert(
+      (BoundaryValueContainerType::dimension == AccelerationType::dimension),
+      "Number of dimensions must match");
 
   l_index.ispec = boundary_value_container.property_index_mapping(index.ispec);
 

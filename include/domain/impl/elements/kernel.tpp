@@ -264,11 +264,14 @@ void specfem::domain::impl::kernels::element_kernel_base<
                     apply_boundary_conditions(point_boundary, point_property,
                                               velocity, acceleration);
 
-                // Store boundary values for reconstruction during adjoint
-                // simulations. The function does nothing if the boundary tag is
-                // not stacey
-                specfem::compute::store_on_device(istep, index, acceleration,
-                                                  boundary_values);
+                // Store forward boundary values for reconstruction during
+                // adjoint simulations. The function does nothing if the
+                // boundary tag is not stacey
+                if constexpr (WavefieldType ==
+                              specfem::wavefield::type::forward) {
+                  specfem::compute::store_on_device(istep, index, acceleration,
+                                                    boundary_values);
+                }
 
                 specfem::compute::atomic_add_on_device(index, acceleration,
                                                        field);
@@ -279,6 +282,56 @@ void specfem::domain::impl::kernels::element_kernel_base<
   Kokkos::fence();
 
   return;
+}
+
+template <specfem::dimension::type DimensionType,
+          specfem::element::medium_tag MediumType,
+          specfem::element::property_tag PropertyTag, int NGLL>
+void specfem::domain::impl::kernels::element_kernel<
+    specfem::wavefield::type::backward, DimensionType, MediumType, PropertyTag,
+    specfem::element::boundary_tag::stacey,
+    NGLL>::compute_stiffness_interaction(const int istep) const {
+
+  if (this->nelements == 0)
+    return;
+
+  ChunkPolicyType chunk_policy(this->element_kernel_index_mapping, NGLL, NGLL);
+
+  constexpr int simd_size = simd::size();
+
+  Kokkos::parallel_for(
+      "specfem::domain::impl::kernels::elements::compute_stiffness_"
+      "interaction",
+      static_cast<const typename ChunkPolicyType::policy_type &>(chunk_policy),
+      KOKKOS_CLASS_LAMBDA(const typename ChunkPolicyType::member_type &team) {
+        for (int tile = 0; tile < ChunkPolicyType::tile_size * simd_size;
+             tile += ChunkPolicyType::chunk_size * simd_size) {
+          const int starting_element_index =
+              team.league_rank() * ChunkPolicyType::tile_size * simd_size +
+              tile;
+
+          if (starting_element_index >= this->nelements) {
+            break;
+          }
+
+          const auto iterator =
+              chunk_policy.league_iterator(starting_element_index);
+
+          Kokkos::parallel_for(
+              Kokkos::TeamThreadRange(team, iterator.chunk_size()),
+              [&](const int i) {
+                const auto iterator_index = iterator(i);
+                const auto index = iterator_index.index;
+
+                PointAccelerationType acceleration;
+                specfem::compute::load_on_device(
+                    istep, index, this->boundary_values, acceleration);
+
+                specfem::compute::atomic_add_on_device(index, acceleration,
+                                                       this->field);
+              });
+        }
+      });
 }
 
 // template <specfem::dimension::type DimensionType,

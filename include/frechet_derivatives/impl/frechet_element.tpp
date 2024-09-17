@@ -74,6 +74,8 @@ void specfem::frechet_derivatives::impl::frechet_elements<
 
   ChunkPolicy chunk_policy(element_index, NGLL, NGLL);
 
+  constexpr int simd_size = simd::size();
+
   Kokkos::parallel_for(
       "specfem::frechet_derivatives::frechet_elements::compute",
       chunk_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
@@ -85,10 +87,11 @@ void specfem::frechet_derivatives::impl::frechet_elements<
 
         specfem::compute::load_on_device(team, quadrature, quadrature_element);
 
-        for (int tile = 0; tile < ChunkPolicy::tile_size;
-             tile += ChunkPolicy::chunk_size) {
+        for (int tile = 0; tile < ChunkPolicy::tile_size * simd_size;
+             tile += ChunkPolicy::chunk_size * simd_size) {
           const int starting_element_index =
-              team.league_rank() * ChunkPolicy::tile_size + tile;
+              team.league_rank() * ChunkPolicy::tile_size * simd_size +
+              tile;
 
           if (starting_element_index >= nelements) {
             break;
