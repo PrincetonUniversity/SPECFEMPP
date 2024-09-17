@@ -46,7 +46,7 @@ AXISYM                          = .false.
 PARTITIONING_TYPE               = 3              # SCOTCH = 3, ascending order (very bad idea) = 1
 
 # number of control nodes per element (4 or 9)
-NGNOD                           = 4
+NGNOD                           = 9
 
 # creates/reads a binary database that allows to skip all time consuming setup steps in initialization
 # 0 = does not read/create database
