@@ -259,6 +259,48 @@ class element_kernel<specfem::wavefield::type::backward, DimensionType,
                                  DimensionType, MediumTag, PropertyTag,
                                  specfem::element::boundary_tag::stacey, NGLL> {
 
+private:
+  /// Datatypes used in the kernels
+  using datatypes =
+      KernelDatatypes<specfem::wavefield::type::backward, DimensionType,
+                      MediumTag, PropertyTag,
+                      specfem::element::boundary_tag::stacey, NGLL>;
+  using simd = typename datatypes::simd;
+  using ChunkPolicyType = typename datatypes::ChunkPolicyType;
+  using PointBoundaryType = typename datatypes::PointBoundaryType;
+  using ChunkElementFieldType = typename datatypes::ChunkElementFieldType;
+  using ChunkStressIntegrandType = typename datatypes::ChunkStressIntegrandType;
+  using ElementQuadratureType = typename datatypes::ElementQuadratureType;
+  using PointAccelerationType = typename datatypes::PointAccelerationType;
+  using PointVelocityType = typename datatypes::PointVelocityType;
+  using PointFieldDerivativesType =
+      typename datatypes::PointFieldDerivativesType;
+  using PointMassType = typename datatypes::PointMassType;
+  using PointPropertyType = typename datatypes::PointPropertyType;
+  using PointPartialDerivativesType =
+      typename datatypes::PointPartialDerivativesType;
+
+  constexpr static int components = datatypes::components;
+  constexpr static int num_dimensions = datatypes::num_dimensions;
+
+public:
+  /**
+   * @name Compile-time constants
+   *
+   */
+  ///@{
+  constexpr static auto wavefield_type =
+      specfem::wavefield::type::backward; ///< Type of wavefield
+  constexpr static auto dimension =
+      DimensionType;                            ///< Dimension of the elements
+  constexpr static auto medium_tag = MediumTag; ///< Medium tag of the elements
+  constexpr static auto property_tag =
+      PropertyTag; ///< Property tag of the elements
+  constexpr static auto boundary_tag =
+      specfem::element::boundary_tag::stacey; ///< Boundary tag of the elements
+  constexpr static int ngll = NGLL;
+  ///@}
+
 public:
   element_kernel() = default;
   element_kernel(
@@ -278,7 +320,7 @@ public:
                         NGLL>::compute_mass_matrix(dt, field);
   }
 
-  void compute_stiffness_interaction(const int istep) const {};
+  void compute_stiffness_interaction(const int istep) const;
 
 private:
   specfem::compute::simulation_field<specfem::wavefield::type::backward> field;

@@ -79,7 +79,7 @@ template <typename ViewType> struct MassMatrix<ViewType, false> {};
 
 template <typename ViewType, bool StoreDisplacement, bool StoreVelocity,
           bool StoreAcceleration, bool StoreMassMatrix>
-struct ImplFieldTraits : public Displacement<ViewType, true>,
+struct ImplFieldTraits : public Displacement<ViewType, StoreDisplacement>,
                          public Velocity<ViewType, StoreVelocity>,
                          public Acceleration<ViewType, StoreAcceleration>,
                          public MassMatrix<ViewType, StoreMassMatrix> {
