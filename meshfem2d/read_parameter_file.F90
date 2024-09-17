@@ -603,8 +603,8 @@ subroutine check_parameters()
       call stop_the_code('Error invalid partitioning method')
    endif
 
-   if (NGNOD /= 4 .and. NGNOD /= 9) &
-      call stop_the_code('NGNOD should be either 4 or 9!')
+   if ( NGNOD /= 9) &
+      call stop_the_code('NGNOD should be 9!')
 
    ! reads in material definitions
    if (nbmodels <= 0) &
