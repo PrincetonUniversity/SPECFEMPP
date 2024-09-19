@@ -1,7 +1,7 @@
 
 rule all:
     input:
-        kernels = "OUTPUT_FILES/Kernels.h5"
+        kernels = "OUTPUT_FILES/Kernels.png"
 
 rule generate_mesh:
     input: "Par_File"
@@ -130,7 +130,7 @@ rule adjoint_configuration:
                 "combined": {
                     "writer": {
                         "kernels": {
-                            "format": "HDF5",
+                            "format": "ASCII",
                             "directory": "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/OUTPUT_FILES"
                         }
                     },
@@ -156,10 +156,10 @@ rule adjoint_configuration:
 
         adjoint_source = {
             "adjoint-source": {
-                "station-name": "AA",
-                "network-name": "S0001",
-                "x": 150000,
-                "y": 40000,
+                "station_name": "AA",
+                "network_name": "S0001",
+                "x": 150000.0,
+                "z": 40000.0,
                 "source-surf": False,
                 "angle": 0.0,
                 "vx": 0.0,
@@ -195,7 +195,7 @@ rule adjoint_simulation:
             component=["BXX", "BXZ"])
 
     output:
-        kernels = "OUTPUT_FILES/Kernels.h5"
+        kernels = directory("OUTPUT_FILES/Kernels")
 
     resources:
         nodes=1,

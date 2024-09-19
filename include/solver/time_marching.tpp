@@ -90,7 +90,7 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
 
     if (time_scheme->compute_seismogram(istep)) {
       // compute seismogram for backward time step
-      adjoint_kernels.compute_seismograms(time_scheme->get_seismogram_step());
+      backward_kernels.compute_seismograms(time_scheme->get_seismogram_step());
       time_scheme->increment_seismogram_step();
     }
 
