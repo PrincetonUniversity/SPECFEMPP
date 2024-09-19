@@ -1,7 +1,11 @@
 #ifndef _SPECFEM_WRITER_KERNEL_TPP
 #define _SPECFEM_WRITER_KERNEL_TPP
 
+#include "compute/assembly/assembly.hpp"
+#include "enumerations/dimension.hpp"
+#include "enumerations/medium.hpp"
 #include "kokkos_abstractions.h"
+#include "point/kernels.hpp"
 #include "writer/kernel.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -14,11 +18,13 @@ specfem::writer::kernel<OutputLibrary>::kernel(
 template <typename OutputLibrary>
 void specfem::writer::kernel<OutputLibrary>::write() {
 
+  using DomainView =
+      Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace>;
+
   kernels.copy_to_host();
 
   typename OutputLibrary::File file(output_folder + "/Kernels");
 
-  typename OutputLibrary::Group elastic = file.createGroup("/Elastic");
   typename OutputLibrary::Group acoustic = file.createGroup("/Acoustic");
 
   const int nspec = mesh.points.nspec;
@@ -43,66 +49,105 @@ void specfem::writer::kernel<OutputLibrary>::write() {
 
   assert(nelastic + nacoustic == nspec);
 
-  specfem::kokkos::HostView3d<type_real> xcoordinates_elastic(
-      "xcoordinates_elastic", nelastic, ngllz, ngllx);
-  specfem::kokkos::HostView3d<type_real> zcoordinates_elastic(
-      "zcoordinates_elastic", nelastic, ngllz, ngllx);
+  {
+    typename OutputLibrary::Group elastic = file.createGroup("/Elastic");
 
-  int index = 0;
+    DomainView x("xcoordinates_elastic", nelastic, ngllz, ngllx);
+    DomainView z("zcoordinates_elastic", nelastic, ngllz, ngllx);
 
-  for (int ispec = 0; ispec < nspec; ispec++) {
-    if (kernels.h_element_types(ispec) ==
-        specfem::element::medium_tag::elastic) {
-      for (int iz = 0; iz < ngllz; iz++) {
-        for (int ix = 0; ix < ngllx; ix++) {
-          xcoordinates_elastic(index, iz, ix) =
-              mesh.points.h_coord(0, ispec, iz, ix);
-          zcoordinates_elastic(index, iz, ix) =
-              mesh.points.h_coord(1, ispec, iz, ix);
+    DomainView rho("rho", nelastic, ngllz, ngllx);
+    DomainView mu("mu", nelastic, ngllz, ngllx);
+    DomainView kappa("kappa", nelastic, ngllz, ngllx);
+    DomainView rhop("rhop", nelastic, ngllz, ngllx);
+    DomainView alpha("alpha", nelastic, ngllz, ngllx);
+    DomainView beta("beta", nelastic, ngllz, ngllx);
+
+    int i = 0;
+
+    for (int ispec = 0; ispec < nspec; ispec++) {
+      if (kernels.h_element_types(ispec) ==
+          specfem::element::medium_tag::elastic) {
+        for (int iz = 0; iz < ngllz; iz++) {
+          for (int ix = 0; ix < ngllx; ix++) {
+            x(i, iz, ix) = mesh.points.h_coord(0, ispec, iz, ix);
+            z(i, iz, ix) = mesh.points.h_coord(1, ispec, iz, ix);
+            const specfem::point::index<specfem::dimension::type::dim2> index(
+                ispec, iz, ix);
+            specfem::point::kernels<specfem::dimension::type::dim2,
+                                    specfem::element::medium_tag::elastic,
+                                    specfem::element::property_tag::isotropic,
+                                    false>
+                point_kernels;
+
+            specfem::compute::load_on_host(index, kernels, point_kernels);
+
+            rho(i, iz, ix) = point_kernels.rho;
+            mu(i, iz, ix) = point_kernels.mu;
+            kappa(i, iz, ix) = point_kernels.kappa;
+            rhop(i, iz, ix) = point_kernels.rhop;
+            alpha(i, iz, ix) = point_kernels.alpha;
+            beta(i, iz, ix) = point_kernels.beta;
+          }
         }
+        i++;
       }
-      index++;
     }
+
+    elastic.createDataset("X", x).write();
+    elastic.createDataset("Z", z).write();
+    elastic.createDataset("rho", rho).write();
+    elastic.createDataset("mu", mu).write();
+    elastic.createDataset("kappa", kappa).write();
+    elastic.createDataset("rhop", rhop).write();
+    elastic.createDataset("alpha", alpha).write();
+    elastic.createDataset("beta", beta).write();
   }
 
-  elastic.createDataset("X", xcoordinates_elastic).write();
-  elastic.createDataset("Z", zcoordinates_elastic).write();
-  elastic.createDataset("rho", kernels.elastic_isotropic.h_rho).write();
-  elastic.createDataset("mu", kernels.elastic_isotropic.h_mu).write();
-  elastic.createDataset("kappa", kernels.elastic_isotropic.h_kappa).write();
-  elastic.createDataset("rhop", kernels.elastic_isotropic.h_rhop).write();
-  elastic.createDataset("alpha", kernels.elastic_isotropic.h_alpha).write();
-  elastic.createDataset("beta", kernels.elastic_isotropic.h_beta).write();
+  {
+    DomainView x("xcoordinates_acoustic", nacoustic, ngllz, ngllx);
+    DomainView z("zcoordinates_acoustic", nacoustic, ngllz, ngllx);
 
-  specfem::kokkos::HostView3d<type_real> xcoordinates_acoustic(
-      "xcoordinates_acoustic", nacoustic, ngllz, ngllx);
-  specfem::kokkos::HostView3d<type_real> zcoordinates_acoustic(
-      "zcoordinates_acoustic", nacoustic, ngllz, ngllx);
+    DomainView rho("rho", nacoustic, ngllz, ngllx);
+    DomainView kappa("kappa", nacoustic, ngllz, ngllx);
+    DomainView rho_prime("rho_prime", nacoustic, ngllz, ngllx);
+    DomainView alpha("alpha", nacoustic, ngllz, ngllx);
 
-  index = 0;
+    int i = 0;
 
-  for (int ispec = 0; ispec < nspec; ispec++) {
-    if (kernels.h_element_types(ispec) ==
-        specfem::element::medium_tag::acoustic) {
-      for (int iz = 0; iz < ngllz; iz++) {
-        for (int ix = 0; ix < ngllx; ix++) {
-          xcoordinates_acoustic(index, iz, ix) =
-              mesh.points.h_coord(0, ispec, iz, ix);
-          zcoordinates_acoustic(index, iz, ix) =
-              mesh.points.h_coord(1, ispec, iz, ix);
+    for (int ispec = 0; ispec < nspec; ispec++) {
+      if (kernels.h_element_types(ispec) ==
+          specfem::element::medium_tag::acoustic) {
+        for (int iz = 0; iz < ngllz; iz++) {
+          for (int ix = 0; ix < ngllx; ix++) {
+            x(i, iz, ix) = mesh.points.h_coord(0, ispec, iz, ix);
+            z(i, iz, ix) = mesh.points.h_coord(1, ispec, iz, ix);
+            const specfem::point::index<specfem::dimension::type::dim2> index(
+                ispec, iz, ix);
+            specfem::point::kernels<specfem::dimension::type::dim2,
+                                    specfem::element::medium_tag::acoustic,
+                                    specfem::element::property_tag::isotropic,
+                                    false>
+                point_kernels;
+
+            specfem::compute::load_on_host(index, kernels, point_kernels);
+
+            rho(i, iz, ix) = point_kernels.rho;
+            kappa(i, iz, ix) = point_kernels.kappa;
+            rho_prime(i, iz, ix) = point_kernels.rhop;
+            alpha(i, iz, ix) = point_kernels.alpha;
+          }
         }
+        i++;
       }
-      index++;
     }
-  }
 
-  acoustic.createDataset("X", xcoordinates_acoustic).write();
-  acoustic.createDataset("Z", zcoordinates_acoustic).write();
-  acoustic.createDataset("rho", kernels.acoustic_isotropic.h_rho).write();
-  acoustic.createDataset("kappa", kernels.acoustic_isotropic.h_kappa).write();
-  acoustic.createDataset("rho_prime", kernels.acoustic_isotropic.h_rho_prime)
-      .write();
-  acoustic.createDataset("alpha", kernels.acoustic_isotropic.h_alpha).write();
+    acoustic.createDataset("X", x).write();
+    acoustic.createDataset("Z", z).write();
+    acoustic.createDataset("rho", rho).write();
+    acoustic.createDataset("kappa", kappa).write();
+    acoustic.createDataset("rho_prime", rho_prime).write();
+    acoustic.createDataset("alpha", alpha).write();
+  }
 
   std::cout << "Kernels written to " << output_folder << "/Kernels"
             << std::endl;
