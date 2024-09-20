@@ -1,4 +1,7 @@
 
+SPECFEM_BIN = "specfem2d"
+MESHFEM_BIN = "xmeshfem2D"
+
 rule all:
     input:
         plot = "OUTPUT_FILES/results/plot.png"
@@ -13,7 +16,7 @@ rule generate_mesh:
     shell:
         '''
             mkdir -p OUTPUT_FILES
-            ./../../build/xmeshfem2D -p {input}
+            {MESHFEM_BIN} -p {input}
         '''
 
 rule run_solver:
@@ -41,7 +44,7 @@ rule run_solver:
             module load boost/1.73.0
             mkdir -p OUTPUT_FILES/results
             echo "Hostname: $(hostname)" > output.log
-            ./../../build/specfem2d -p {input.config} >> output.log
+            {SPECFEM_BIN} -p {input.config} >> output.log
         '''
 
 rule plot_seismogram:
