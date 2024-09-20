@@ -4,7 +4,7 @@
 
 The examples use [snakemake](https://snakemake.readthedocs.io/en/stable/) to run the simulation workflow. Snakemake is a workflow management system that allows you to define the rules of your workflow in a Snakefile. Every example has its own Snakefile that defines the steps involved in running that example.
 
-**Make sure you've installed SPECFEM++ with examples enabled (-D ENABLE_EXAMPLES=ON)**
+**Make sure you've installed SPECFEM++ with examples enabled (-D ENABLE_EXAMPLES=ON) and add the build directory to your `PATH`**
 
 ## Running the examples
 
