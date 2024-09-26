@@ -30,7 +30,7 @@ using PointBoundaryType =
                              UseSIMD>;
 } // namespace
 
-template void
+template KOKKOS_FUNCTION void
 specfem::domain::impl::boundary_conditions::impl_apply_boundary_conditions<
     PointBoundaryType<
         false, specfem::element::boundary_tag::composite_stacey_dirichlet>,
@@ -51,7 +51,7 @@ specfem::domain::impl::boundary_conditions::impl_apply_boundary_conditions<
     PointAccelerationType<false, specfem::dimension::type::dim2,
                           specfem::element::medium_tag::acoustic> &);
 
-template void
+template KOKKOS_FUNCTION void
 specfem::domain::impl::boundary_conditions::impl_apply_boundary_conditions<
     PointBoundaryType<
         true, specfem::element::boundary_tag::composite_stacey_dirichlet>,
@@ -73,7 +73,7 @@ specfem::domain::impl::boundary_conditions::impl_apply_boundary_conditions<
                           specfem::element::medium_tag::acoustic> &);
 
 // Elastic Composite Stacey Dirichlet Boundary Conditions
-template void
+template KOKKOS_FUNCTION void
 specfem::domain::impl::boundary_conditions::impl_apply_boundary_conditions<
     PointBoundaryType<
         false, specfem::element::boundary_tag::composite_stacey_dirichlet>,
@@ -94,7 +94,7 @@ specfem::domain::impl::boundary_conditions::impl_apply_boundary_conditions<
     PointAccelerationType<false, specfem::dimension::type::dim2,
                           specfem::element::medium_tag::elastic> &);
 
-template void
+template KOKKOS_FUNCTION void
 specfem::domain::impl::boundary_conditions::impl_apply_boundary_conditions<
     PointBoundaryType<
         true, specfem::element::boundary_tag::composite_stacey_dirichlet>,

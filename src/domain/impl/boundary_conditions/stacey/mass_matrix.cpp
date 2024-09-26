@@ -24,7 +24,7 @@ using PointMassMatrixType =
                           false, false, true, UseSIMD>;
 } // namespace
 
-template void
+template KOKKOS_FUNCTION void
 specfem::domain::impl::boundary_conditions::impl_compute_mass_matrix_terms<
     PointBoundaryType<specfem::element::boundary_tag::stacey, false>,
     PointPropertyType<specfem::element::medium_tag::acoustic,
@@ -37,7 +37,7 @@ specfem::domain::impl::boundary_conditions::impl_compute_mass_matrix_terms<
                             specfem::element::property_tag::isotropic, false> &,
     PointMassMatrixType<specfem::element::medium_tag::acoustic, false> &);
 
-template void
+template KOKKOS_FUNCTION void
 specfem::domain::impl::boundary_conditions::impl_compute_mass_matrix_terms<
     PointBoundaryType<specfem::element::boundary_tag::stacey, true>,
     PointPropertyType<specfem::element::medium_tag::acoustic,
@@ -51,7 +51,7 @@ specfem::domain::impl::boundary_conditions::impl_compute_mass_matrix_terms<
     PointMassMatrixType<specfem::element::medium_tag::acoustic, true> &);
 
 // Elastic
-template void
+template KOKKOS_FUNCTION void
 specfem::domain::impl::boundary_conditions::impl_compute_mass_matrix_terms<
     PointBoundaryType<specfem::element::boundary_tag::stacey, false>,
     PointPropertyType<specfem::element::medium_tag::elastic,
@@ -64,7 +64,7 @@ specfem::domain::impl::boundary_conditions::impl_compute_mass_matrix_terms<
                             specfem::element::property_tag::isotropic, false> &,
     PointMassMatrixType<specfem::element::medium_tag::elastic, false> &);
 
-template void
+template KOKKOS_FUNCTION void
 specfem::domain::impl::boundary_conditions::impl_compute_mass_matrix_terms<
     PointBoundaryType<specfem::element::boundary_tag::stacey, true>,
     PointPropertyType<specfem::element::medium_tag::elastic,

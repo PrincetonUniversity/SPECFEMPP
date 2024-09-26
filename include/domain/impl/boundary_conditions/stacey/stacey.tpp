@@ -43,7 +43,9 @@ impl_enforce_traction(const acoustic_type &, const isotropic_type &,
                     specfem::element::property_tag::isotropic,
                 "Property tag must be isotropic");
 
-  if (boundary.tag != PointBoundaryType::boundary_tag)
+  constexpr static auto tag = PointBoundaryType::boundary_tag;
+
+  if (boundary.tag != tag)
     return;
 
   const auto factor = boundary.edge_weight * boundary.edge_normal.l2_norm();
@@ -120,7 +122,9 @@ impl_enforce_traction(const elastic_type &, const isotropic_type &,
                     specfem::element::property_tag::isotropic,
                 "Property tag must be isotropic");
 
-  if (boundary.tag != PointBoundaryType::boundary_tag)
+  constexpr static auto tag = PointBoundaryType::boundary_tag;
+
+  if (boundary.tag != tag)
     return;
 
   const auto vn =

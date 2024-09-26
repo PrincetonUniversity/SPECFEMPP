@@ -11,8 +11,7 @@ rule define_specfem_config:
     params:
         mesh_database = os.path.join(mesh_output_folder, "database.bin"),
         source_file = os.path.join(snakefile_dir, "rules/templates/sources.yaml"),
-        stations_file = os.path.join(mesh_output_folder, "STATIONS"),
-        build_dir = os.path.join(work_directory, "build_elastic_domain_forward"),
+        stations_file = os.path.join(mesh_output_folder, "STATIONS")
         work_directory = f"{work_directory}"
 
     localrule:
@@ -34,8 +33,7 @@ rule run_simulation:
     input:
         specfem_config = os.path.join(work_directory, "specfem_config.yaml"),
         mesh_database = os.path.join(mesh_output_folder, "database.bin"),
-        stations = os.path.join(mesh_output_folder, "STATIONS"),
-        build_dir = f"{build_dir}"
+        stations = os.path.join(mesh_output_folder, "STATIONS")
 
     params:
         work_directory = f"{work_directory}"
@@ -56,5 +54,5 @@ rule run_simulation:
             module load boost/1.73.0
             mkdir -p {params.work_directory}/seismograms
             echo "Hostname: $(hostname)" > {output.log}
-            {input.build_dir}/specfem2d -p {input.specfem_config} >> {output.log}
+            specfem2d -p {input.specfem_config} >> {output.log}
         '''

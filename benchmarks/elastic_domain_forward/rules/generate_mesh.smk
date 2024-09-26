@@ -41,8 +41,7 @@ rule define_par_file:
 rule generate_mesh:
     input:
         par_file = os.path.join(work_directory, "mesh.par"),
-        interfaces = os.path.join(work_directory, "topography.dat"),
-        build_dir = f"{build_dir}"
+        interfaces = os.path.join(work_directory, "topography.dat")
 
     output:
         database = os.path.join(mesh_output_folder, "database.bin"),
@@ -53,5 +52,5 @@ rule generate_mesh:
 
     shell:
         '''
-            {input.build_dir}/xmeshfem2D -p {input.par_file}
+            xmeshfem2D -p {input.par_file}
         '''

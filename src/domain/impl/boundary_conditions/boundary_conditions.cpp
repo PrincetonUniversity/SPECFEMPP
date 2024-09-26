@@ -5,6 +5,7 @@
 #include "domain/impl/boundary_conditions/stacey/stacey.hpp"
 #include "point/boundary.hpp"
 #include "point/field.hpp"
+#include "point/properties.hpp"
 
 namespace {
 template <bool UseSIMD, specfem::dimension::type DimensionType,
@@ -21,8 +22,8 @@ using PointAccelerationType =
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool UseSIMD>
 using PointPropertyType =
-    specfem::point::field<specfem::dimension::type::dim2, MediumTag, true,
-                          false, false, true, UseSIMD>;
+    specfem::point::properties<specfem::dimension::type::dim2, MediumTag,
+                               PropertyTag, UseSIMD>;
 
 template <bool UseSIMD, specfem::element::boundary_tag BoundaryTag>
 using PointBoundaryType =
@@ -32,7 +33,7 @@ using PointBoundaryType =
 
 // None boundary conditions
 // -----------------------------------------------------------------------------
-template void
+template KOKKOS_FUNCTION void
 specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
     PointBoundaryType<false, specfem::element::boundary_tag::none>,
     PointPropertyType<specfem::element::medium_tag::acoustic,
@@ -49,7 +50,7 @@ specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
     PointAccelerationType<false, specfem::dimension::type::dim2,
                           specfem::element::medium_tag::acoustic> &);
 
-template void
+template KOKKOS_FUNCTION void
 specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
     PointBoundaryType<true, specfem::element::boundary_tag::none>,
     PointPropertyType<specfem::element::medium_tag::acoustic,
@@ -66,7 +67,7 @@ specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
     PointAccelerationType<true, specfem::dimension::type::dim2,
                           specfem::element::medium_tag::acoustic> &);
 
-template void
+template KOKKOS_FUNCTION void
 specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
     PointBoundaryType<false, specfem::element::boundary_tag::none>,
     PointPropertyType<specfem::element::medium_tag::elastic,
@@ -83,7 +84,7 @@ specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
     PointAccelerationType<false, specfem::dimension::type::dim2,
                           specfem::element::medium_tag::elastic> &);
 
-template void
+template KOKKOS_FUNCTION void
 specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
     PointBoundaryType<true, specfem::element::boundary_tag::none>,
     PointPropertyType<specfem::element::medium_tag::elastic,
@@ -103,7 +104,7 @@ specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
 
 // Acoustic free surface boundary conditions
 // -----------------------------------------------------------------------------
-template void
+template KOKKOS_FUNCTION void
 specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
     PointBoundaryType<false,
                       specfem::element::boundary_tag::acoustic_free_surface>,
@@ -122,7 +123,7 @@ specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
     PointAccelerationType<false, specfem::dimension::type::dim2,
                           specfem::element::medium_tag::acoustic> &);
 
-template void
+template KOKKOS_FUNCTION void
 specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
     PointBoundaryType<true,
                       specfem::element::boundary_tag::acoustic_free_surface>,
@@ -144,7 +145,7 @@ specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
 
 // Stacey boundary conditions
 // -----------------------------------------------------------------------------
-template void
+template KOKKOS_FUNCTION void
 specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
     PointBoundaryType<false, specfem::element::boundary_tag::stacey>,
     PointPropertyType<specfem::element::medium_tag::acoustic,
@@ -161,7 +162,7 @@ specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
     PointAccelerationType<false, specfem::dimension::type::dim2,
                           specfem::element::medium_tag::acoustic> &);
 
-template void
+template KOKKOS_FUNCTION void
 specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
     PointBoundaryType<true, specfem::element::boundary_tag::stacey>,
     PointPropertyType<specfem::element::medium_tag::acoustic,
@@ -178,7 +179,7 @@ specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
     PointAccelerationType<true, specfem::dimension::type::dim2,
                           specfem::element::medium_tag::acoustic> &);
 
-template void
+template KOKKOS_FUNCTION void
 specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
     PointBoundaryType<false, specfem::element::boundary_tag::stacey>,
     PointPropertyType<specfem::element::medium_tag::elastic,
@@ -195,7 +196,7 @@ specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
     PointAccelerationType<false, specfem::dimension::type::dim2,
                           specfem::element::medium_tag::elastic> &);
 
-template void
+template KOKKOS_FUNCTION void
 specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
     PointBoundaryType<true, specfem::element::boundary_tag::stacey>,
     PointPropertyType<specfem::element::medium_tag::elastic,
@@ -216,7 +217,7 @@ specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
 
 // Composite Stacey Dirichlet boundary conditions
 // -----------------------------------------------------------------------------
-template void
+template KOKKOS_FUNCTION void
 specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
     PointBoundaryType<
         false, specfem::element::boundary_tag::composite_stacey_dirichlet>,
@@ -235,7 +236,7 @@ specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
     PointAccelerationType<false, specfem::dimension::type::dim2,
                           specfem::element::medium_tag::acoustic> &);
 
-template void
+template KOKKOS_FUNCTION void
 specfem::domain::impl::boundary_conditions::apply_boundary_conditions<
     PointBoundaryType<
         true, specfem::element::boundary_tag::composite_stacey_dirichlet>,

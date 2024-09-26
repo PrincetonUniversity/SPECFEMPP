@@ -23,11 +23,13 @@ KOKKOS_FORCEINLINE_FUNCTION void impl_apply_boundary_conditions(
     const PointPropertyType &, const PointFieldType &,
     PointAccelerationType &acceleration) {
 
+  constexpr static auto tag = PointBoundaryType::boundary_tag;
+
   static_assert(PointBoundaryType::boundary_tag ==
                     specfem::element::boundary_tag::acoustic_free_surface,
                 "Boundary tag must be acoustic_free_surface");
 
-  if (boundary.tag != PointBoundaryType::boundary_tag)
+  if (boundary.tag != tag)
     return;
 
   constexpr int components = PointFieldType::components;

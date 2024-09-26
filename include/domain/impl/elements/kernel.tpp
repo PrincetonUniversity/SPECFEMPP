@@ -237,7 +237,7 @@ void specfem::domain::impl::kernels::element_kernel_base<
           specfem::algorithms::divergence(
               team, iterator, partial_derivatives, wgll,
               element_quadrature.hprime_wgll, stress_integrand.F,
-              [&](const typename ChunkPolicyType::iterator_type::index_type
+              [&, istep = istep](const typename ChunkPolicyType::iterator_type::index_type
                       &iterator_index,
                   const typename PointAccelerationType::ViewType &result) {
                 auto index = iterator_index.index;
