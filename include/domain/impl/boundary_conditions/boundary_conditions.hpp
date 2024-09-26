@@ -5,6 +5,7 @@
 #include "enumerations/boundary.hpp"
 #include "none/none.hpp"
 #include "stacey/stacey.hpp"
+#include <Kokkos_Core.hpp>
 #include <type_traits>
 
 namespace specfem {

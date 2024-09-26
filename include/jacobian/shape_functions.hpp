@@ -18,9 +18,9 @@ namespace jacobian {
  * @return specfem::kokkos::HostView1d<type_real> View defining the shape
  * function
  */
-specfem::kokkos::HostView1d<type_real>
-define_shape_functions(const type_real xi, const type_real gamma,
-                       const int ngod);
+std::vector<type_real> define_shape_functions(const type_real xi,
+                                              const type_real gamma,
+                                              const int ngod);
 /**
  * @brief Derivates of shape function at a particular point
  *
@@ -33,7 +33,7 @@ define_shape_functions(const type_real xi, const type_real gamma,
  * of shape function (\f$ \partial N/\partial \xi \f$, \f$ \partial N/\partial
  * \gamma \f$)
  */
-specfem::kokkos::HostView2d<type_real>
+std::vector<std::vector<type_real> >
 define_shape_functions_derivatives(const type_real xi, const type_real gamma,
                                    const int ngod);
 

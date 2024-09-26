@@ -364,8 +364,8 @@ specfem::compute::points specfem::compute::mesh::assemble() {
         double zcor = 0.0;
 
         for (int in = 0; in < ngnod; in++) {
-          xcor += coord(0, ispec, in) * shape_functions(in);
-          zcor += coord(1, ispec, in) * shape_functions(in);
+          xcor += coord(0, ispec, in) * shape_functions[in];
+          zcor += coord(1, ispec, in) * shape_functions[in];
         }
 
         global_coordinates(ispec, iz, ix, 0) = xcor;

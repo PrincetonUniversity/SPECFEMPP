@@ -18,7 +18,7 @@ void compute_number_of_elements_per_medium(
   Kokkos::parallel_reduce(
       "specfem::compute::properties::compute_number_of_elements_per_medium",
       specfem::kokkos::HostRange(0, nspec),
-      KOKKOS_LAMBDA(const int ispec, int &n_elastic, int &n_acoustic) {
+      [=](const int ispec, int &n_elastic, int &n_acoustic) {
         const int ispec_mesh = mapping.compute_to_mesh(ispec);
         if (tags.tags_container(ispec_mesh).medium_tag ==
             specfem::element::medium_tag::elastic) {

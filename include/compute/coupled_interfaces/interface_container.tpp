@@ -396,8 +396,8 @@ compute_edge_factors_and_normals(
       throw std::runtime_error("Edge normals need to be opposite in direction");
     }
 
-    const std::array<type_real, 2> weights = { quadrature.gll.weights(i1),
-                                               quadrature.gll.weights(j1) };
+    const std::array<type_real, 2> weights = { quadrature.gll.h_weights(i1),
+                                               quadrature.gll.h_weights(j1) };
 
     edge_factor[ipoint] = [&]() {
       switch (edge1) {

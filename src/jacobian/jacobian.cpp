@@ -9,8 +9,7 @@ std::tuple<type_real, type_real> specfem::jacobian::compute_locations(
   ASSERT(s_coorg.extent(0) == ndim, "Dimension mismatch");
   ASSERT(s_coorg.extent(1) == ngnod, "Number of nodes mismatch");
 
-  specfem::kokkos::HostView1d<type_real> shape2D =
-      specfem::jacobian::define_shape_functions(xi, gamma, ngnod);
+  auto shape2D = specfem::jacobian::define_shape_functions(xi, gamma, ngnod);
 
   // FIXME:: Multi reduction is not yet implemented in kokkos
   // This is hacky way of doing this using double vector loops
@@ -26,8 +25,7 @@ std::tuple<type_real, type_real> specfem::jacobian::compute_locations(
   ASSERT(coorg.extent(0) == ndim, "Dimension mismatch");
   ASSERT(coorg.extent(1) == ngnod, "Number of nodes mismatch");
 
-  specfem::kokkos::HostView1d<type_real> shape2D =
-      specfem::jacobian::define_shape_functions(xi, gamma, ngnod);
+  auto shape2D = specfem::jacobian::define_shape_functions(xi, gamma, ngnod);
 
   return specfem::jacobian::compute_locations(coorg, ngnod, shape2D);
 }
@@ -35,11 +33,11 @@ std::tuple<type_real, type_real> specfem::jacobian::compute_locations(
 std::tuple<type_real, type_real> specfem::jacobian::compute_locations(
     const specfem::kokkos::HostTeam::member_type &teamMember,
     const specfem::kokkos::HostScratchView2d<type_real> s_coorg,
-    const int ngnod, const specfem::kokkos::HostView1d<type_real> shape2D) {
+    const int ngnod, const std::vector<type_real> shape2D) {
 
   ASSERT(s_coorg.extent(0) == ndim, "Dimension mismatch");
   ASSERT(s_coorg.extent(1) == ngnod, "Number of nodes mismatch");
-  ASSERT(shape2D.extent(0) == ngnod, "Number of nodes mismatch");
+  ASSERT(shape2D.size() == ngnod, "Number of nodes mismatch");
 
   type_real xcor = 0.0;
   type_real ycor = 0.0;
@@ -49,8 +47,8 @@ std::tuple<type_real, type_real> specfem::jacobian::compute_locations(
   // Use multiple reducers once kokkos enables the feature
 
   for (int in = 0; in < ngnod; in++) {
-    xcor += shape2D(in) * s_coorg(0, in);
-    ycor += shape2D(in) * s_coorg(1, in);
+    xcor += shape2D[in] * s_coorg(0, in);
+    ycor += shape2D[in] * s_coorg(1, in);
   }
 
   return std::make_tuple(xcor, ycor);
@@ -58,18 +56,18 @@ std::tuple<type_real, type_real> specfem::jacobian::compute_locations(
 
 std::tuple<type_real, type_real> specfem::jacobian::compute_locations(
     const specfem::kokkos::HostView2d<type_real> s_coorg, const int ngnod,
-    const specfem::kokkos::HostView1d<type_real> shape2D) {
+    const std::vector<type_real> shape2D) {
 
   ASSERT(s_coorg.extent(0) == ndim, "Dimension mismatch");
   ASSERT(s_coorg.extent(1) == ngnod, "Number of nodes mismatch");
-  ASSERT(shape2D.extent(0) == ngnod, "Number of nodes mismatch");
+  ASSERT(shape2D.size() == ngnod, "Number of nodes mismatch");
 
   type_real xcor = 0.0;
   type_real ycor = 0.0;
 
   for (int in = 0; in < ngnod; in++) {
-    xcor += shape2D(in) * s_coorg(0, in);
-    ycor += shape2D(in) * s_coorg(1, in);
+    xcor += shape2D[in] * s_coorg(0, in);
+    ycor += shape2D[in] * s_coorg(1, in);
   }
 
   return std::make_tuple(xcor, ycor);
@@ -89,7 +87,7 @@ specfem::jacobian::compute_partial_derivatives(
   type_real xgamma = 0.0;
   type_real zgamma = 0.0;
 
-  specfem::kokkos::HostView2d<type_real> dershape2D =
+  const auto dershape2D =
       specfem::jacobian::define_shape_functions_derivatives(xi, gamma, ngnod);
 
   // FIXME:: Multi reduction is not yet implemented in kokkos
@@ -99,25 +97,25 @@ specfem::jacobian::compute_partial_derivatives(
   Kokkos::parallel_reduce(
       Kokkos::ThreadVectorRange(teamMember, ngnod),
       [=](const int &in, type_real &update_xxi) {
-        update_xxi += dershape2D(0, in) * s_coorg(0, in);
+        update_xxi += dershape2D[0][in] * s_coorg(0, in);
       },
       xxi);
   Kokkos::parallel_reduce(
       Kokkos::ThreadVectorRange(teamMember, ngnod),
       [=](const int &in, type_real &update_zxi) {
-        update_zxi += dershape2D(0, in) * s_coorg(1, in);
+        update_zxi += dershape2D[0][in] * s_coorg(1, in);
       },
       zxi);
   Kokkos::parallel_reduce(
       Kokkos::ThreadVectorRange(teamMember, ngnod),
       [=](const int &in, type_real &update_xgamma) {
-        update_xgamma += dershape2D(1, in) * s_coorg(0, in);
+        update_xgamma += dershape2D[1][in] * s_coorg(0, in);
       },
       xgamma);
   Kokkos::parallel_reduce(
       Kokkos::ThreadVectorRange(teamMember, ngnod),
       [=](const int &in, type_real &update_zgamma) {
-        update_zgamma += dershape2D(1, in) * s_coorg(1, in);
+        update_zgamma += dershape2D[1][in] * s_coorg(1, in);
       },
       zgamma);
 
@@ -185,14 +183,14 @@ specfem::jacobian::compute_partial_derivatives(
   type_real xgamma = 0.0;
   type_real zgamma = 0.0;
 
-  specfem::kokkos::HostView2d<type_real> dershape2D =
+  const auto dershape2D =
       specfem::jacobian::define_shape_functions_derivatives(xi, gamma, ngnod);
 
   for (int in = 0; in < ngnod; in++) {
-    xxi += dershape2D(0, in) * s_coorg(0, in);
-    zxi += dershape2D(0, in) * s_coorg(1, in);
-    xgamma += dershape2D(1, in) * s_coorg(0, in);
-    zgamma += dershape2D(1, in) * s_coorg(1, in);
+    xxi += dershape2D[0][in] * s_coorg(0, in);
+    zxi += dershape2D[0][in] * s_coorg(1, in);
+    xgamma += dershape2D[1][in] * s_coorg(0, in);
+    zgamma += dershape2D[1][in] * s_coorg(1, in);
   }
 
   return std::make_tuple(xxi, zxi, xgamma, zgamma);

@@ -130,7 +130,7 @@ specfem::compute::impl::boundaries::acoustic_free_surface::
       for (int iz = 0; iz < ngllz; ++iz) {
         for (int ix = 0; ix < ngllx; ++ix) {
           if (is_on_boundary(type, iz, ix, ngllz, ngllx)) {
-            quadrature_point_boundary_tag(index_compute, iz, ix) +=
+            this->h_quadrature_point_boundary_tag(index_compute, iz, ix) +=
                 specfem::element::boundary_tag::acoustic_free_surface;
           }
         }

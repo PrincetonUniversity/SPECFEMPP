@@ -75,7 +75,7 @@ public:
         this->tag = boundary_tag::composite_stacey_dirichlet;
         break;
       default:
-        throw std::runtime_error("Invalid boundary tag");
+        Kokkos::abort("Invalid boundary tag");
         break;
       }
       break;
@@ -91,7 +91,7 @@ public:
       case boundary_tag::composite_stacey_dirichlet:
         break;
       default:
-        throw std::runtime_error("Invalid boundary tag");
+        Kokkos::abort("Invalid boundary tag");
         break;
       }
       break;
@@ -105,12 +105,12 @@ public:
       case boundary_tag::composite_stacey_dirichlet:
         break;
       default:
-        throw std::runtime_error("Invalid boundary tag");
+        Kokkos::abort("Invalid boundary tag");
         break;
       }
       break;
     default:
-      throw std::runtime_error("Invalid boundary tag");
+      Kokkos::abort("Invalid boundary tag");
       break;
     }
 
@@ -152,7 +152,7 @@ public:
       return (this->tag == boundary_tag::composite_stacey_dirichlet);
       break;
     default:
-      throw std::runtime_error("Invalid boundary tag");
+      Kokkos::abort("Invalid boundary tag");
       break;
     }
   }

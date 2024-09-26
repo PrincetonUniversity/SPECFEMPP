@@ -50,13 +50,12 @@ void specfem::coupled_interface::coupled_interface<
       this->interface_data.get_edge_type();
 
   EdgePolicyType edge_policy(self_index_mapping, coupled_index_mapping,
-                                   self_edge_type, coupled_edge_type,
-                                   this->npoints);
+                             self_edge_type, coupled_edge_type, this->npoints);
 
   Kokkos::parallel_for(
       "specfem::coupled_interfaces::compute_coupling",
       static_cast<typename EdgePolicyType::policy_type &>(edge_policy),
-      KOKKOS_LAMBDA(const typename EdgePolicyType::member_type &team_member) {
+      KOKKOS_CLASS_LAMBDA(const typename EdgePolicyType::member_type &team_member) {
         const auto iterator =
             edge_policy.league_iterator(team_member.league_rank());
 
@@ -74,7 +73,7 @@ void specfem::coupled_interface::coupled_interface<
                          edge_normal(1, iedge, ipoint));
 
               CoupledPointFieldType coupled_field;
-              specfem::compute::load_on_device(coupled_index, field,
+              specfem::compute::load_on_device(coupled_index, this->field,
                                                coupled_field);
 
               SelfPointFieldType acceleration;
@@ -82,7 +81,7 @@ void specfem::coupled_interface::coupled_interface<
                   factor, normal, coupled_field, acceleration);
 
               specfem::compute::atomic_add_on_device(self_index, acceleration,
-                                                     field);
+                                                     this->field);
             });
       });
 }
