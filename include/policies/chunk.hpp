@@ -120,8 +120,8 @@ private:
     int ielement = i % num_elements;
     int ispec = indices(ielement);
     int xz = i / num_elements;
-    const int iz = xz % ngllz;
-    const int ix = xz / ngllz;
+    const int iz = xz / ngllz;
+    const int ix = xz % ngllz;
 #else
     const int ix = i % ngllx;
     const int iz = (i / ngllx) % ngllz;
@@ -142,8 +142,8 @@ private:
                             : simd_size;
     int ispec = indices(ielement);
     int xz = i / num_elements;
-    const int iz = xz % ngllz;
-    const int ix = xz / ngllz;
+    const int iz = xz / ngllz;
+    const int ix = xz % ngllz;
 #else
     const int ix = i % ngllx;
     const int iz = (i / ngllx) % ngllz;

@@ -74,7 +74,7 @@ public:
 template <typename PointPartialDerivativesType,
           typename std::enable_if_t<
               PointPartialDerivativesType::simd::using_simd, int> = 0>
-NOINLINE KOKKOS_FUNCTION void impl_load_on_device(
+KOKKOS_FORCEINLINE_FUNCTION void impl_load_on_device(
     const specfem::point::simd_index<PointPartialDerivativesType::dimension>
         &index,
     const specfem::compute::partial_derivatives &derivatives,
@@ -111,7 +111,7 @@ NOINLINE KOKKOS_FUNCTION void impl_load_on_device(
 template <typename PointPartialDerivativesType,
           typename std::enable_if_t<
               !PointPartialDerivativesType::simd::using_simd, int> = 0>
-NOINLINE KOKKOS_FUNCTION void impl_load_on_device(
+KOKKOS_FORCEINLINE_FUNCTION void impl_load_on_device(
     const specfem::point::index<PointPartialDerivativesType::dimension> &index,
     const specfem::compute::partial_derivatives &derivatives,
     PointPartialDerivativesType &partial_derivatives) {
@@ -135,10 +135,11 @@ NOINLINE KOKKOS_FUNCTION void impl_load_on_device(
 template <typename PointPointPartialDerivativesType,
           typename std::enable_if_t<
               PointPointPartialDerivativesType::simd::using_simd, int> = 0>
-void impl_load_on_host(const specfem::point::simd_index<
-                           PointPointPartialDerivativesType::dimension> &index,
-                       const specfem::compute::partial_derivatives &derivatives,
-                       PointPointPartialDerivativesType &partial_derivatives) {
+inline void
+impl_load_on_host(const specfem::point::simd_index<
+                      PointPointPartialDerivativesType::dimension> &index,
+                  const specfem::compute::partial_derivatives &derivatives,
+                  PointPointPartialDerivativesType &partial_derivatives) {
 
   const int ispec = index.ispec;
   const int nspec = derivatives.nspec;
@@ -171,7 +172,7 @@ void impl_load_on_host(const specfem::point::simd_index<
 template <typename PointPartialDerivativesType,
           typename std::enable_if_t<
               !PointPartialDerivativesType::simd::using_simd, int> = 0>
-void impl_load_on_host(
+inline void impl_load_on_host(
     const specfem::point::index<PointPartialDerivativesType::dimension> &index,
     const specfem::compute::partial_derivatives &derivatives,
     PointPartialDerivativesType &partial_derivatives) {
@@ -195,7 +196,7 @@ void impl_load_on_host(
 template <typename PointPartialDerivativesType,
           typename std::enable_if_t<
               PointPartialDerivativesType::simd::using_simd, int> = 0>
-void impl_store_on_host(
+inline void impl_store_on_host(
     const specfem::point::simd_index<PointPartialDerivativesType::dimension>
         &index,
     const specfem::compute::partial_derivatives &derivatives,
@@ -232,7 +233,7 @@ void impl_store_on_host(
 template <typename PointPartialDerivativesType,
           typename std::enable_if_t<
               !PointPartialDerivativesType::simd::using_simd, int> = 0>
-void impl_store_on_host(
+inline void impl_store_on_host(
     const specfem::point::index<PointPartialDerivativesType::dimension> &index,
     const specfem::compute::partial_derivatives &derivatives,
     const PointPartialDerivativesType &partial_derivatives) {
@@ -271,7 +272,7 @@ template <
     typename std::enable_if_t<IndexType::using_simd ==
                                   PointPartialDerivativesType::simd::using_simd,
                               int> = 0>
-KOKKOS_INLINE_FUNCTION void
+KOKKOS_FORCEINLINE_FUNCTION void
 load_on_device(const IndexType &index,
                const specfem::compute::partial_derivatives &derivatives,
                PointPartialDerivativesType &partial_derivatives) {
@@ -297,9 +298,10 @@ template <
     typename std::enable_if_t<IndexType::using_simd ==
                                   PointPartialDerivativesType::simd::using_simd,
                               int> = 0>
-void load_on_host(const IndexType &index,
-                  const specfem::compute::partial_derivatives &derivatives,
-                  PointPartialDerivativesType &partial_derivatives) {
+inline void
+load_on_host(const IndexType &index,
+             const specfem::compute::partial_derivatives &derivatives,
+             PointPartialDerivativesType &partial_derivatives) {
   impl_load_on_host(index, derivatives, partial_derivatives);
 }
 
@@ -322,9 +324,10 @@ template <
     typename std::enable_if_t<IndexType::using_simd ==
                                   PointPartialDerivativesType::simd::using_simd,
                               int> = 0>
-void store_on_host(const IndexType &index,
-                   const specfem::compute::partial_derivatives &derivatives,
-                   const PointPartialDerivativesType &partial_derivatives) {
+inline void
+store_on_host(const IndexType &index,
+              const specfem::compute::partial_derivatives &derivatives,
+              const PointPartialDerivativesType &partial_derivatives) {
   impl_store_on_host(index, derivatives, partial_derivatives);
 }
 } // namespace compute

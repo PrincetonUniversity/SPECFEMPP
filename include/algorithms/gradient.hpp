@@ -38,7 +38,7 @@ namespace algorithms {
 template <typename MemberType, typename IteratorType, typename ViewType,
           typename QuadratureType, typename CallbackFunctor,
           std::enable_if_t<ViewType::isChunkViewType, int> = 0>
-NOINLINE KOKKOS_FUNCTION void
+KOKKOS_FORCEINLINE_FUNCTION void
 gradient(const MemberType &team, const IteratorType &iterator,
          const specfem::compute::partial_derivatives &partial_derivatives,
          const QuadratureType &quadrature, const ViewType &f,
@@ -78,10 +78,10 @@ gradient(const MemberType &team, const IteratorType &iterator,
   Kokkos::parallel_for(
       Kokkos::TeamThreadRange(team, iterator.chunk_size()), [&](const int &i) {
         const auto iterator_index = iterator(i);
-        const auto index = iterator_index.index;
-        const int ielement = iterator_index.ielement;
-        const int ix = index.ix;
-        const int iz = index.iz;
+        const auto &index = iterator_index.index;
+        const int &ielement = iterator_index.ielement;
+        const int &ix = index.ix;
+        const int &iz = index.iz;
 
         datatype df_dxi[components] = { 0.0 };
         datatype df_dgamma[components] = { 0.0 };
@@ -147,7 +147,7 @@ gradient(const MemberType &team, const IteratorType &iterator,
 template <typename MemberType, typename IteratorType, typename ViewType,
           typename QuadratureType, typename CallbackFunctor,
           std::enable_if_t<ViewType::isChunkViewType, int> = 0>
-NOINLINE KOKKOS_FUNCTION void
+KOKKOS_FORCEINLINE_FUNCTION void
 gradient(const MemberType &team, const IteratorType &iterator,
          const specfem::compute::partial_derivatives &partial_derivatives,
          const QuadratureType &quadrature, const ViewType &f, const ViewType &g,
@@ -188,10 +188,10 @@ gradient(const MemberType &team, const IteratorType &iterator,
   Kokkos::parallel_for(
       Kokkos::TeamThreadRange(team, iterator.chunk_size()), [=](const int &i) {
         const auto iterator_index = iterator(i);
-        const auto index = iterator_index.index;
-        const int ielement = iterator_index.ielement;
-        const int ix = index.ix;
-        const int iz = index.iz;
+        const auto &index = iterator_index.index;
+        const int &ielement = iterator_index.ielement;
+        const int &ix = index.ix;
+        const int &iz = index.iz;
 
         datatype df_dxi[components];
         datatype df_dgamma[components];
@@ -210,13 +210,12 @@ gradient(const MemberType &team, const IteratorType &iterator,
           }
         }
 
-        const auto point_partial_derivatives = [&]() {
-          specfem::point::partial_derivatives<specfem::dimension::type::dim2,
-                                              false, using_simd>
-              result;
-          specfem::compute::load_on_device(index, partial_derivatives, result);
-          return result;
-        }();
+        specfem::point::partial_derivatives<specfem::dimension::type::dim2,
+                                            false, using_simd>
+            point_partial_derivatives;
+
+        specfem::compute::load_on_device(index, partial_derivatives,
+                                         point_partial_derivatives);
 
         VectorPointViewType df;
 

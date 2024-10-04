@@ -108,7 +108,7 @@ template <typename PointPropertiesType, typename IndexType,
           typename std::enable_if_t<IndexType::using_simd ==
                                         PointPropertiesType::simd::using_simd,
                                     int> = 0>
-NOINLINE KOKKOS_FUNCTION void
+KOKKOS_FORCEINLINE_FUNCTION void
 load_on_device(const IndexType &lcoord,
                const specfem::compute::properties &properties,
                PointPropertiesType &point_properties) {

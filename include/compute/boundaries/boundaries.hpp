@@ -101,7 +101,7 @@ template <typename IndexType, typename PointBoundaryType,
           typename std::enable_if<PointBoundaryType::simd::using_simd ==
                                       IndexType::using_simd,
                                   int>::type = 0>
-KOKKOS_INLINE_FUNCTION void
+KOKKOS_FORCEINLINE_FUNCTION void
 load_on_device(const IndexType &index,
                const specfem::compute::boundaries &boundaries,
                PointBoundaryType &boundary) {
