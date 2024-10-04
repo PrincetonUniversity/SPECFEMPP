@@ -10,9 +10,9 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
-NOINLINE KOKKOS_FUNCTION void impl_load_on_device(const int iglob,
-                                                  const WavefieldType &field,
-                                                  ViewType &point_field) {
+KOKKOS_FORCEINLINE_FUNCTION void impl_load_on_device(const int iglob,
+                                                     const WavefieldType &field,
+                                                     ViewType &point_field) {
 
   constexpr static bool StoreDisplacement = ViewType::store_displacement;
   constexpr static bool StoreVelocity = ViewType::store_velocity;
@@ -33,23 +33,31 @@ NOINLINE KOKKOS_FUNCTION void impl_load_on_device(const int iglob,
   }();
 
   if constexpr (StoreDisplacement) {
-    point_field.displacement =
-        Kokkos::subview(curr_field.field, iglob, Kokkos::ALL);
+    for (int icomp = 0; icomp < ViewType::components; ++icomp) {
+      point_field.displacement(icomp) =
+          curr_field.field(iglob, icomp);
+    }
   }
 
   if constexpr (StoreVelocity) {
-    point_field.velocity =
-        Kokkos::subview(curr_field.field_dot, iglob, Kokkos::ALL);
+    for (int icomp = 0; icomp < ViewType::components; ++icomp) {
+      point_field.velocity(icomp) =
+          curr_field.field_dot(iglob, icomp);
+    }
   }
 
   if constexpr (StoreAcceleration) {
-    point_field.acceleration =
-        Kokkos::subview(curr_field.field_dot_dot, iglob, Kokkos::ALL);
+    for (int icomp = 0; icomp < ViewType::components; ++icomp) {
+      point_field.acceleration(icomp) =
+          curr_field.field_dot_dot(iglob, icomp);
+    }
   }
 
   if constexpr (StoreMassMatrix) {
-    point_field.mass_matrix =
-        Kokkos::subview(curr_field.mass_inverse, iglob, Kokkos::ALL);
+    for (int icomp = 0; icomp < ViewType::components; ++icomp) {
+      point_field.mass_matrix(icomp) =
+          curr_field.mass_inverse(iglob, icomp);
+    }
   }
 
   return;
@@ -59,7 +67,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
-NOINLINE KOKKOS_FUNCTION void
+KOKKOS_FORCEINLINE_FUNCTION void
 impl_load_on_device(const typename ViewType::simd::mask_type &mask,
                     const int *iglob, const WavefieldType &field,
                     ViewType &point_field) {
@@ -126,7 +134,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
-NOINLINE KOKKOS_FUNCTION void
+KOKKOS_FORCEINLINE_FUNCTION void
 impl_load_on_device(const specfem::point::simd_assembly_index &index,
                     const WavefieldType &field, ViewType &point_field) {
 
@@ -191,7 +199,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
-void impl_load_on_host(const int iglob, const WavefieldType &field,
+inline void impl_load_on_host(const int iglob, const WavefieldType &field,
                        ViewType &point_field) {
 
   constexpr static bool StoreDisplacement = ViewType::store_displacement;
@@ -213,23 +221,31 @@ void impl_load_on_host(const int iglob, const WavefieldType &field,
   }();
 
   if constexpr (StoreDisplacement) {
-    point_field.displacement =
-        Kokkos::subview(curr_field.h_field, iglob, Kokkos::ALL);
+    for (int icomp = 0; icomp < ViewType::components; ++icomp) {
+      point_field.displacement(icomp) =
+          curr_field.h_field(iglob, icomp);
+    }
   }
 
   if constexpr (StoreVelocity) {
-    point_field.velocity =
-        Kokkos::subview(curr_field.h_field_dot, iglob, Kokkos::ALL);
+    for (int icomp = 0; icomp < ViewType::components; ++icomp) {
+      point_field.velocity(icomp) =
+          curr_field.h_field_dot(iglob, icomp);
+    }
   }
 
   if constexpr (StoreAcceleration) {
-    point_field.acceleration =
-        Kokkos::subview(curr_field.h_field_dot_dot, iglob, Kokkos::ALL);
+    for (int icomp = 0; icomp < ViewType::components; ++icomp) {
+      point_field.acceleration(icomp) =
+          curr_field.h_field_dot_dot(iglob, icomp);
+    }
   }
 
   if constexpr (StoreMassMatrix) {
-    point_field.mass_matrix =
-        Kokkos::subview(curr_field.h_mass_inverse, iglob, Kokkos::ALL);
+    for (int icomp = 0; icomp < ViewType::components; ++icomp) {
+      point_field.mass_matrix(icomp) =
+          curr_field.h_mass_inverse(iglob, icomp);
+    }
   }
 
   return;
@@ -239,7 +255,7 @@ template <
     typename WavefieldType, typename ViewType,
     std::enable_if_t<ViewType::isPointFieldType && ViewType::simd::using_simd,
                      int> = 0>
-void impl_load_on_host(const typename ViewType::simd::mask_type &mask,
+inline void impl_load_on_host(const typename ViewType::simd::mask_type &mask,
                        const int *iglob, const WavefieldType &field,
                        ViewType &point_field) {
 
@@ -305,7 +321,7 @@ template <
     typename WavefieldType, typename ViewType,
     std::enable_if_t<ViewType::isPointFieldType && ViewType::simd::using_simd,
                      int> = 0>
-void impl_load_on_host(const specfem::point::simd_assembly_index &index,
+inline void impl_load_on_host(const specfem::point::simd_assembly_index &index,
                        const WavefieldType &field, ViewType &point_field) {
 
   constexpr static bool StoreDisplacement = ViewType::store_displacement;
@@ -369,7 +385,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
-NOINLINE KOKKOS_FUNCTION void
+KOKKOS_FORCEINLINE_FUNCTION void
 impl_load_on_device(const specfem::point::index<ViewType::dimension> &index,
                     const WavefieldType &field, ViewType &point_field) {
   constexpr static auto MediumType = ViewType::medium_tag;
@@ -383,7 +399,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
-NOINLINE KOKKOS_FUNCTION void
+KOKKOS_FORCEINLINE_FUNCTION void
 impl_load_on_device(const specfem::point::assembly_index &index,
                     const WavefieldType &field, ViewType &point_field) {
   constexpr static auto MediumType = ViewType::medium_tag;
@@ -395,7 +411,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
-NOINLINE KOKKOS_FUNCTION void impl_load_on_device(
+KOKKOS_FORCEINLINE_FUNCTION void impl_load_on_device(
     const specfem::point::simd_index<ViewType::dimension> &index,
     const WavefieldType &field, ViewType &point_field) {
   constexpr static auto MediumType = ViewType::medium_tag;
@@ -421,7 +437,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
-void impl_load_on_host(const specfem::point::index<ViewType::dimension> &index,
+inline void impl_load_on_host(const specfem::point::index<ViewType::dimension> &index,
                        const WavefieldType &field, ViewType &point_field) {
 
   constexpr static auto MediumType = ViewType::medium_tag;
@@ -436,7 +452,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
-void impl_load_on_host(const specfem::point::assembly_index &index,
+inline void impl_load_on_host(const specfem::point::assembly_index &index,
                        const WavefieldType &field, ViewType &point_field) {
 
   constexpr static auto MediumType = ViewType::medium_tag;
@@ -448,7 +464,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
-void impl_load_on_host(
+inline void impl_load_on_host(
     const specfem::point::simd_index<ViewType::dimension> &index,
     const WavefieldType &field, ViewType &point_field) {
 
@@ -475,9 +491,9 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
-NOINLINE KOKKOS_FUNCTION void impl_store_on_device(const int iglob,
-                                                   const ViewType &point_field,
-                                                   const WavefieldType &field) {
+KOKKOS_FORCEINLINE_FUNCTION void
+impl_store_on_device(const int iglob, const ViewType &point_field,
+                     const WavefieldType &field) {
 
   constexpr static bool StoreDisplacement = ViewType::store_displacement;
   constexpr static bool StoreVelocity = ViewType::store_velocity;
@@ -519,7 +535,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
-NOINLINE KOKKOS_FUNCTION void
+KOKKOS_FORCEINLINE_FUNCTION void
 impl_store_on_device(const typename ViewType::simd::mask_type &mask,
                      const int *iglob, const ViewType &point_field,
                      const WavefieldType &field) {
@@ -586,7 +602,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
-NOINLINE KOKKOS_FUNCTION void
+KOKKOS_FORCEINLINE_FUNCTION void
 impl_store_on_device(const specfem::point::simd_assembly_index &index,
                      const ViewType &point_field, const WavefieldType &field) {
 
@@ -651,7 +667,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
-void impl_store_on_host(const int iglob, const ViewType &point_field,
+inline void impl_store_on_host(const int iglob, const ViewType &point_field,
                         const WavefieldType &field) {
 
   constexpr static bool StoreDisplacement = ViewType::store_displacement;
@@ -695,7 +711,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
-void impl_store_on_host(const typename ViewType::simd::mask_type &mask,
+inline void impl_store_on_host(const typename ViewType::simd::mask_type &mask,
                         const int *iglob, const ViewType &point_field,
                         const WavefieldType &field) {
 
@@ -761,7 +777,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
-void impl_store_on_host(const specfem::point::simd_assembly_index &index,
+inline void impl_store_on_host(const specfem::point::simd_assembly_index &index,
                         const ViewType &point_field,
                         const WavefieldType &field) {
 
@@ -826,7 +842,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
-NOINLINE KOKKOS_FUNCTION void
+KOKKOS_FORCEINLINE_FUNCTION void
 impl_store_on_device(const specfem::point::index<ViewType::dimension> &index,
                      const ViewType &point_field, const WavefieldType &field) {
 
@@ -843,7 +859,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
-NOINLINE KOKKOS_FUNCTION void
+KOKKOS_FORCEINLINE_FUNCTION void
 impl_store_on_device(const specfem::point::assembly_index &index,
                      const ViewType &point_field, const WavefieldType &field) {
 
@@ -858,7 +874,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
-NOINLINE KOKKOS_FUNCTION void impl_store_on_device(
+KOKKOS_FORCEINLINE_FUNCTION void impl_store_on_device(
     const specfem::point::simd_index<ViewType::dimension> &index,
     const ViewType &point_field, const WavefieldType &field) {
 
@@ -885,7 +901,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
-void impl_store_on_host(const specfem::point::index<ViewType::dimension> &index,
+inline void impl_store_on_host(const specfem::point::index<ViewType::dimension> &index,
                         const ViewType &point_field,
                         const WavefieldType &field) {
 
@@ -902,7 +918,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
-void impl_store_on_host(const specfem::point::assembly_index &index,
+inline void impl_store_on_host(const specfem::point::assembly_index &index,
                         const ViewType &point_field,
                         const WavefieldType &field) {
 
@@ -917,7 +933,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
-void impl_store_on_host(
+inline void impl_store_on_host(
     const specfem::point::simd_index<ViewType::dimension> &index,
     const ViewType &point_field, const WavefieldType &field) {
 
@@ -942,9 +958,9 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
-NOINLINE KOKKOS_FUNCTION void impl_add_on_device(const int iglob,
-                                                 const ViewType &point_field,
-                                                 const WavefieldType &field) {
+KOKKOS_FORCEINLINE_FUNCTION void
+impl_add_on_device(const int iglob, const ViewType &point_field,
+                   const WavefieldType &field) {
 
   constexpr static bool StoreDisplacement = ViewType::store_displacement;
   constexpr static bool StoreVelocity = ViewType::store_velocity;
@@ -986,7 +1002,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
-NOINLINE KOKKOS_FUNCTION void
+KOKKOS_FORCEINLINE_FUNCTION void
 impl_add_on_device(const typename ViewType::simd::mask_type &mask,
                    const int *iglob, const ViewType &point_field,
                    const WavefieldType &field) {
@@ -1053,7 +1069,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
-NOINLINE KOKKOS_FUNCTION void
+KOKKOS_FORCEINLINE_FUNCTION void
 impl_add_on_device(const specfem::point::simd_assembly_index &index,
                    const ViewType &point_field, const WavefieldType &field) {
 
@@ -1138,7 +1154,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
-void impl_add_on_host(const int iglob, const ViewType &point_field,
+inline void impl_add_on_host(const int iglob, const ViewType &point_field,
                       const WavefieldType &field) {
 
   constexpr static bool StoreDisplacement = ViewType::store_displacement;
@@ -1182,7 +1198,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
-void impl_add_on_host(const typename ViewType::simd::mask_type &mask,
+inline void impl_add_on_host(const typename ViewType::simd::mask_type &mask,
                       const int *iglob, const ViewType &point_field,
                       const WavefieldType &field) {
 
@@ -1248,7 +1264,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
-void impl_add_on_host(const specfem::point::simd_assembly_index &index,
+inline void impl_add_on_host(const specfem::point::simd_assembly_index &index,
                       const ViewType &point_field, const WavefieldType &field) {
 
   constexpr static bool StoreDisplacement = ViewType::store_displacement;
@@ -1332,7 +1348,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
-NOINLINE KOKKOS_FUNCTION void
+KOKKOS_FORCEINLINE_FUNCTION void
 impl_add_on_device(const specfem::point::index<ViewType::dimension> &index,
                    const ViewType &point_field, const WavefieldType &field) {
 
@@ -1349,7 +1365,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
-NOINLINE KOKKOS_FUNCTION void
+KOKKOS_FORCEINLINE_FUNCTION void
 impl_add_on_device(const specfem::point::assembly_index &index,
                    const ViewType &point_field, const WavefieldType &field) {
 
@@ -1364,7 +1380,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
-NOINLINE KOKKOS_FUNCTION void
+KOKKOS_FORCEINLINE_FUNCTION void
 impl_add_on_device(const specfem::point::simd_index<ViewType::dimension> &index,
                    const ViewType &point_field, const WavefieldType &field) {
 
@@ -1391,7 +1407,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
-void impl_add_on_host(const specfem::point::index<ViewType::dimension> &index,
+inline void impl_add_on_host(const specfem::point::index<ViewType::dimension> &index,
                       const ViewType &point_field, const WavefieldType &field) {
 
   constexpr static auto MediumType = ViewType::medium_tag;
@@ -1407,7 +1423,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
-void impl_add_on_host(const specfem::point::assembly_index &index,
+inline void impl_add_on_host(const specfem::point::assembly_index &index,
                       const ViewType &point_field, const WavefieldType &field) {
 
   constexpr static auto MediumType = ViewType::medium_tag;
@@ -1421,7 +1437,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
-void impl_add_on_host(
+inline void impl_add_on_host(
     const specfem::point::simd_index<ViewType::dimension> &index,
     const ViewType &point_field, const WavefieldType &field) {
 
@@ -1446,7 +1462,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
-NOINLINE KOKKOS_FUNCTION void
+KOKKOS_FORCEINLINE_FUNCTION void
 impl_atomic_add_on_device(const int iglob, const ViewType &point_field,
                           const WavefieldType &field) {
 
@@ -1494,7 +1510,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
-NOINLINE KOKKOS_FUNCTION void
+KOKKOS_FORCEINLINE_FUNCTION void
 impl_atomic_add_on_device(const typename ViewType::simd::mask_type &mask,
                           const int *iglob, const ViewType &point_field,
                           const WavefieldType &field) {
@@ -1561,7 +1577,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
-void impl_atomic_add_on_host(const int iglob, const ViewType &point_field,
+inline void impl_atomic_add_on_host(const int iglob, const ViewType &point_field,
                              const WavefieldType &field) {
 
   constexpr static bool StoreDisplacement = ViewType::store_displacement;
@@ -1608,7 +1624,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
-void impl_atomic_add_on_host(const typename ViewType::simd::mask_type &mask,
+inline void impl_atomic_add_on_host(const typename ViewType::simd::mask_type &mask,
                              const int *iglob, const ViewType &point_field,
                              const WavefieldType &field) {
 
@@ -1674,7 +1690,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
-NOINLINE KOKKOS_FUNCTION void impl_atomic_add_on_device(
+KOKKOS_FORCEINLINE_FUNCTION void impl_atomic_add_on_device(
     const specfem::point::index<ViewType::dimension> &index,
     const ViewType &point_field, const WavefieldType &field) {
 
@@ -1691,7 +1707,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
-NOINLINE KOKKOS_FUNCTION void impl_atomic_add_on_device(
+KOKKOS_FORCEINLINE_FUNCTION void impl_atomic_add_on_device(
     const specfem::point::simd_index<ViewType::dimension> &index,
     const ViewType &point_field, const WavefieldType &field) {
 
@@ -1718,7 +1734,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
-void impl_atomic_add_on_host(
+inline void impl_atomic_add_on_host(
     const specfem::point::index<ViewType::dimension> &index,
     const ViewType &point_field, const WavefieldType &field) {
 
@@ -1735,7 +1751,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
-void impl_atomic_add_on_host(
+inline void impl_atomic_add_on_host(
     const specfem::point::simd_index<ViewType::dimension> &index,
     const ViewType &point_field, const WavefieldType &field) {
 
@@ -1760,7 +1776,7 @@ template <
     typename MemberType, typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isElementFieldType && !ViewType::simd::using_simd, int> = 0>
-NOINLINE KOKKOS_FUNCTION void
+KOKKOS_FORCEINLINE_FUNCTION void
 impl_load_on_device(const MemberType &team, const int ispec,
                     const WavefieldType &field, ViewType &element_field) {
 
@@ -1823,7 +1839,7 @@ template <
     typename MemberType, typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isElementFieldType && !ViewType::simd::using_simd, int> = 0>
-void impl_load_on_host(const MemberType &team, const int ispec,
+inline void impl_load_on_host(const MemberType &team, const int ispec,
                        const WavefieldType &field, ViewType &element_field) {
 
   constexpr static bool StoreDisplacement = ViewType::store_displacement;
@@ -1886,7 +1902,7 @@ template <
     typename ViewType,
     typename std::enable_if_t<
         ViewType::isChunkFieldType && !ViewType::simd::using_simd, int> = 0>
-NOINLINE KOKKOS_FUNCTION void
+KOKKOS_FORCEINLINE_FUNCTION void
 impl_load_on_device(const MemberType &team, const IteratorType &iterator,
                     const WavefieldType &field, ViewType &chunk_field) {
 
@@ -1964,7 +1980,7 @@ template <
     typename ViewType,
     typename std::enable_if_t<
         ViewType::isChunkFieldType && ViewType::simd::using_simd, int> = 0>
-NOINLINE KOKKOS_FUNCTION void
+KOKKOS_FORCEINLINE_FUNCTION void
 impl_load_on_device(const MemberType &team, const IteratorType &iterator,
                     const WavefieldType &field, ViewType &chunk_field) {
 
@@ -2048,7 +2064,7 @@ template <
     typename ViewType,
     typename std::enable_if_t<
         ViewType::isChunkFieldType && !ViewType::simd::using_simd, int> = 0>
-void impl_load_on_host(const MemberType &team, const IteratorType &iterator,
+inline void impl_load_on_host(const MemberType &team, const IteratorType &iterator,
                        const WavefieldType &field, ViewType &chunk_field) {
 
   constexpr static bool StoreDisplacement = ViewType::store_displacement;
@@ -2123,7 +2139,7 @@ template <
     typename ViewType,
     typename std::enable_if_t<
         ViewType::isChunkFieldType && ViewType::simd::using_simd, int> = 0>
-void impl_load_on_host(const MemberType &team, const IteratorType &iterator,
+inline void impl_load_on_host(const MemberType &team, const IteratorType &iterator,
                        const WavefieldType &field, ViewType &chunk_field) {
 
   constexpr static bool StoreDisplacement = ViewType::store_displacement;

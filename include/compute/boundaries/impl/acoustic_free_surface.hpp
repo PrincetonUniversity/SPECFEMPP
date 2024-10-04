@@ -45,7 +45,7 @@ public:
       const Kokkos::View<int *, Kokkos::HostSpace> &boundary_index_mapping,
       std::vector<specfem::element::boundary_tag_container> &boundary_tag);
 
-  KOKKOS_INLINE_FUNCTION void
+  KOKKOS_FORCEINLINE_FUNCTION void
   load_on_device(const specfem::point::index<dimension> &index,
                  specfem::point::boundary<boundary_tag, dimension, false>
                      &boundary) const {
@@ -55,7 +55,7 @@ public:
     return;
   }
 
-  KOKKOS_INLINE_FUNCTION void
+  KOKKOS_FORCEINLINE_FUNCTION void
   load_on_device(const specfem::point::index<dimension> &index,
                  specfem::point::boundary<
                      specfem::element::boundary_tag::composite_stacey_dirichlet,
@@ -66,7 +66,7 @@ public:
     return;
   }
 
-  KOKKOS_INLINE_FUNCTION void load_on_device(
+  KOKKOS_FORCEINLINE_FUNCTION void load_on_device(
       const specfem::point::simd_index<dimension> &index,
       specfem::point::boundary<boundary_tag, dimension, true> &boundary) const {
 
@@ -87,7 +87,7 @@ public:
     return;
   }
 
-  KOKKOS_INLINE_FUNCTION void
+  KOKKOS_FORCEINLINE_FUNCTION void
   load_on_device(const specfem::point::simd_index<dimension> &index,
                  specfem::point::boundary<
                      specfem::element::boundary_tag::composite_stacey_dirichlet,

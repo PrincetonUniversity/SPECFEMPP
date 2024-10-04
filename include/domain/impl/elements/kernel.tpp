@@ -203,7 +203,7 @@ void specfem::domain::impl::kernels::element_kernel_base<
               [&](const typename ChunkPolicyType::iterator_type::index_type
                       &iterator_index,
                   const typename PointFieldDerivativesType::ViewType &du) {
-                const auto index = iterator_index.index;
+                const auto &index = iterator_index.index;
 
                 PointPartialDerivativesType point_partial_derivatives;
                 specfem::compute::load_on_device(index, partial_derivatives,
@@ -220,11 +220,11 @@ void specfem::domain::impl::kernels::element_kernel_base<
                         point_partial_derivatives, point_property,
                         field_derivatives);
 
-                const int ielement = iterator_index.ielement;
+                const int &ielement = iterator_index.ielement;
 
-                for (int idim = 0; idim < num_dimensions; ++idim) {
-                  for (int icomponent = 0; icomponent < components;
-                       ++icomponent) {
+                for (int icomponent = 0; icomponent < components;
+                     ++icomponent) {
+                  for (int idim = 0; idim < num_dimensions; ++idim) {
                     stress_integrand.F(ielement, index.iz, index.ix, idim,
                                        icomponent) =
                         point_stress_integrand.F(idim, icomponent);
@@ -240,11 +240,11 @@ void specfem::domain::impl::kernels::element_kernel_base<
               [&, istep = istep](const typename ChunkPolicyType::iterator_type::index_type
                       &iterator_index,
                   const typename PointAccelerationType::ViewType &result) {
-                auto index = iterator_index.index;
+                const auto &index = iterator_index.index;
                 PointAccelerationType acceleration(result);
 
                 for (int icomponent = 0; icomponent < components;
-                     icomponent++) {
+                     ++icomponent) {
                   acceleration.acceleration(icomponent) *=
                       static_cast<type_real>(-1.0);
                 }

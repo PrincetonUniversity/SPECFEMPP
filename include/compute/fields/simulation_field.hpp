@@ -90,7 +90,7 @@ public:
    * @return int Number of global degrees of freedom
    */
   template <specfem::element::medium_tag MediumType>
-  KOKKOS_INLINE_FUNCTION int get_nglob() const {
+  KOKKOS_FORCEINLINE_FUNCTION int get_nglob() const {
     if constexpr (MediumType == specfem::element::medium_tag::elastic) {
       return elastic.nglob;
     } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
@@ -157,9 +157,9 @@ void deep_copy(simulation_field<WavefieldType1> &dst,
  * @param point_field Point field to store the field values (output)
  */
 template <typename IndexType, typename WavefieldContainer, typename ViewType>
-KOKKOS_INLINE_FUNCTION void load_on_device(const IndexType &index,
-                                           const WavefieldContainer &field,
-                                           ViewType &point_field) {
+KOKKOS_FORCEINLINE_FUNCTION void load_on_device(const IndexType &index,
+                                                const WavefieldContainer &field,
+                                                ViewType &point_field) {
   impl_load_on_device(index, field, point_field);
 }
 
@@ -201,9 +201,9 @@ inline void load_on_host(const IndexType &index,
  * @param field Wavefield container
  */
 template <typename IndexType, typename WavefieldContainer, typename ViewType>
-KOKKOS_INLINE_FUNCTION void store_on_device(const IndexType &index,
-                                            const ViewType &point_field,
-                                            const WavefieldContainer &field) {
+KOKKOS_FORCEINLINE_FUNCTION void
+store_on_device(const IndexType &index, const ViewType &point_field,
+                const WavefieldContainer &field) {
   impl_store_on_device(index, point_field, field);
 }
 
@@ -244,9 +244,9 @@ inline void store_on_host(const IndexType &index, const ViewType &point_field,
  * @param field Wavefield container
  */
 template <typename IndexType, typename WavefieldContainer, typename ViewType>
-KOKKOS_INLINE_FUNCTION void add_on_device(const IndexType &index,
-                                          const ViewType &point_field,
-                                          const WavefieldContainer &field) {
+KOKKOS_FORCEINLINE_FUNCTION void
+add_on_device(const IndexType &index, const ViewType &point_field,
+              const WavefieldContainer &field) {
   impl_add_on_device(index, point_field, field);
 }
 
@@ -287,7 +287,7 @@ inline void add_on_host(const IndexType &index, const ViewType &point_field,
  * @param field Wavefield container
  */
 template <typename IndexType, typename WavefieldContainer, typename ViewType>
-KOKKOS_INLINE_FUNCTION void
+KOKKOS_FORCEINLINE_FUNCTION void
 atomic_add_on_device(const IndexType &index, const ViewType &point_field,
                      const WavefieldContainer &field) {
   impl_atomic_add_on_device(index, point_field, field);
@@ -330,7 +330,7 @@ inline void atomic_add_on_host(const IndexType &index,
  * @param element_field Element field to store the field values (output)
  */
 template <typename MemberType, typename WavefieldContainer, typename ViewType>
-KOKKOS_INLINE_FUNCTION void
+KOKKOS_FORCEINLINE_FUNCTION void
 load_on_device(const MemberType &member, const int &index,
                const WavefieldContainer &field, ViewType &element_field) {
   impl_load_on_device(member, index, field, element_field);
@@ -375,7 +375,7 @@ inline void load_on_host(const MemberType &member, const int &index,
  */
 template <typename MemberType, typename ChunkIteratorType,
           typename WavefieldContainer, typename ViewType>
-KOKKOS_INLINE_FUNCTION void
+KOKKOS_FORCEINLINE_FUNCTION void
 load_on_device(const MemberType &member, const ChunkIteratorType &iterator,
                const WavefieldContainer &field, ViewType &chunk_field) {
   impl_load_on_device(member, iterator, field, chunk_field);
