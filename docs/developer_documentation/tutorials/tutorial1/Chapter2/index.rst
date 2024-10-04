@@ -40,7 +40,7 @@ Next we will read the sources and receivers generated in :ref:`Chapter1`.
 
 .. code:: cpp
 
-    #include "sources/sources.hpp"
+    #include "source/source.hpp"
     #include "receivers/receivers.hpp"
     #include "specfem_setup.hpp"
     #include <iostream>
