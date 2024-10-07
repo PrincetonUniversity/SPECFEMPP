@@ -51,14 +51,12 @@ rule forward_configuration:
                     }
                 }
 
-                with open(input.config, "r") as f:
-                    config = yaml.safe_load(f)
+        with open(input.config, "r") as f:
+            config = yaml.safe_load(f)
 
-                    ## Add forward node to the simulation setup
-                config["parameters"]["simulation-setup"].update(forward)
-                config["parameters"]["databases"][
-            "source-file"
-        ] = "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/forward_source.yaml"
+            ## Add forward node to the simulation setup
+        config["parameters"]["simulation-setup"].update(forward)
+        config["parameters"]["databases"]["source-file"] = "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/forward_source.yaml"
 
         with open(output.config, "w") as f:
             yaml.safe_dump(config, f)
@@ -153,14 +151,12 @@ rule adjoint_configuration:
                     }
                 }
 
-                with open(input.config, "r") as f:
-                    config = yaml.safe_load(f)
+        with open(input.config, "r") as f:
+            config = yaml.safe_load(f)
 
-                    ## Add adjoint node to the simulation setup
-                config["parameters"]["simulation-setup"].update(adjoint)
-                config["parameters"]["databases"][
-            "source-file"
-        ] = "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/adjoint_source.yaml"
+            ## Add adjoint node to the simulation setup
+        config["parameters"]["simulation-setup"].update(adjoint)
+        config["parameters"]["databases"]["source-file"] = "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/adjoint_source.yaml"
 
         with open(output.config, "w") as f:
             yaml.safe_dump(config, f)
