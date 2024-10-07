@@ -23,7 +23,7 @@ After installing the dependencies, you can run the examples by running the follo
 
 ```bash
 
-cd homogeneous-medium-flat-topography
+cd <example directory>
 
 # run the example
 poetry run snakemake -j 1

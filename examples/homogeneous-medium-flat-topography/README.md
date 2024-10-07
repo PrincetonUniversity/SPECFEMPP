@@ -2,28 +2,38 @@
 
 In this example we simulate wave propagation through a 2-dimensional homogeneous medium.
 
-## Generating the mesh
+## Running the examples
 
-To generate the mesh for the homogeneous media we need a parameter file, `Par_File`, a topography file, `topography_file.dat`, and the mesher executible, `xmeshfem2D`, which should have been compiled during the installation process.
+To run the examples, you first need to install poetry following these [instructions](https://python-poetry.org/docs/#installation). Once you've done so, you can install the dependencies for the examples by running the following command in the current directory:
 
->  Currently, we still use a mesher that was developed for the original [SPECFEM2D](https://specfem2d.readthedocs.io/en/latest/03_mesh_generation/) code. More details on the meshing process can be found [here](https://specfem2d.readthedocs.io/en/latest/03_mesh_generation/).
+```bash
+# verify poetry is installed
+poetry --version
 
-## Running the mesher
-
-To execute the mesher run
-
-```
-    ./xmeshfem2D -p <PATH TO PAR_FILE>
-```
-
-> Make sure either your are in the build directory of SPECFEM2D kokkos or the build directory is added to your ``PATH``.
-
-Note the path of the database file and :ref:`stations_file` generated after successfully running the mesher.
-
-## Running the solver
-
-Finally, to run the SPECFEM2D kokkos solver
+# install dependencies
+poetry install
 
 ```
-    ./specfem2d -p <PATH TO specfem_config.yaml>
+
+After installing the dependencies, you can run the examples by running the following command within the example directory you want to run:
+
+```bash
+
+# run the example
+poetry run snakemake -j 1
+
+# or to run the example on a slurm cluster
+poetry run snakemake --executor slurm -j 1
+
+```
+
+## Cleaning up
+
+To clean up the example directory, you can run the following command in the directory of the example you want to clean up:
+
+```bash
+
+# clean up the example
+poetry run snakemake clean
+
 ```
