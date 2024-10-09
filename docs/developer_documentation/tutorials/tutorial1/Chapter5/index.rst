@@ -9,6 +9,8 @@ We briefly discussed the concept of data-types in :ref:`Chapter4` - where we def
 Index Types
 -----------
 
+Indices are used to reference a quadrature point within the mesh. Naturally, a quadrature point can be referenced in 2 ways - 1. by referencing its through its element ``(ispec, iz, ix)`` or 2. by referencing it directly within an assembled mesh ``(iglob)``. For each of these cases, we also define their SIMD (single instructions multiple data) counterparts that refer to multiple quadrature points at once - 1. SIMD index and 2. SIMD assembly index. SIMD indices enable us to perform vectorized operations on multiple quadrature points at once.
+
 1. :ref:`Index <point_index>`
 2. :ref:`SIMD index <point_simd_index>`
 3. :ref:`Assembly index <point_assembly_index>`
@@ -18,6 +20,16 @@ Elementary Data Types
 ---------------------
 
 We begin with defining elementary datatype. Since SPECFEM++ is an extension of a finite element method, we would naturally want to define basic data types that resemble the mesh heirarchy i.e. quadrature points, elements and chunks of elements.
+
+.. admonition:: Feature request
+    :class: hint
+
+    We need the following elementary data types to be defined in SPECFEM++:
+
+    1. Edge element (datatype for storing values at quadrature points on a 1D edge)
+    2. Chunk edge element (datatype for storing values at quadrature points on a chunk of 1D edges)
+
+    If you'd like to work on this, please see `issue tracker <https://github.com/PrincetonUniversity/SPECFEMPP/issues/111>_` for more details.
 
 1. :ref:`Point datatype <datatype_base_point>`
 2. :ref:`Element datatype <datatype_base_element>`
@@ -34,7 +46,7 @@ Point Data Types
 1. :ref:`Spatial Derivatives <datatype_point_partial_derivatives>`
 2. :ref:`Material Properties <datatype_point_material_properties>`
 3. :ref:`Wavefield <point_field>`
-4. :ref:`Misfit Kernels <point_kernel>`
+4. :ref:`Misfit Kernels <point_kernels>`
 5. :ref:`Derivatives of wavefield <point_field_derivatives>`
 6. :ref:`Boundary Conditions <point_boundary>`
 7. :ref:`Global Coordinates <point_global_coordinates>`
@@ -50,4 +62,4 @@ Chunk Element Data Types
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 1. :ref:`Wavefield <chunk_element_field>`
-2. :ref:`Stress Integrands <chunk_element_stress_integrands>`
+2. :ref:`Stress Integrand <chunk_element_stress_integrand>`

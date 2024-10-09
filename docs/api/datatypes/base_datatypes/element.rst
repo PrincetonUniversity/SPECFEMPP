@@ -1,4 +1,6 @@
 
+.. _datatype_base_element:
+
 Element View Types
 ==================
 

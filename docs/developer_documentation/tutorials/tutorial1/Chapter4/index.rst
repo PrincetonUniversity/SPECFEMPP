@@ -1,15 +1,15 @@
 
 .. _Chapter4:
 
-Understanding ``specfem::compute::assembly``
+Chapter 4: Understanding assembly C++ struct
 ============================================
 
-For the purpose of this tutorial, we will need to understand how the data is organized in the assembly and the functions that are available to access that data.
+Within SPECFEM++, we utilize the abstraction of data containers, to store the data required, and data access functions, to interface with the data containers. The concept of data containers allows us to group items that are related to each other into single data structures, whereas data access functions allow us to group data items that are generally accessed together into container specific data-types, improving cache locality and reducing memory access times. The concept also allows us to separate the data storage from the computation, making the interface more self-consistent, modular, and easier to maintain.
 
 Data Containers
 ---------------
 
-The assembly divided into a set of data containers, primarily implemeted as C++ structs. These containers store the data required for computation of wavefield evolution in a cache friendly manner. To elaborate, let us consider the data container used to store spatial derivatives of basis functions (:math:`\partial \xi / \partial x`, :math:`\partial \xi / \partial y`, :math:`\partial \gamma / \partial x`, :math:`\partial \gamma / \partial y`).
+The assembly divided into a set of data containers, primarily implemeted as C++ structs. These containers store the data required for computation of wavefield evolution. To elaborate, let us consider the data container used to store spatial derivatives of basis functions (:math:`\partial \xi / \partial x`, :math:`\partial \xi / \partial y`, :math:`\partial \gamma / \partial x`, :math:`\partial \gamma / \partial y`).
 
 .. code:: cpp
 
@@ -53,9 +53,9 @@ To interface with the data containers, it would be useful to define a set of fun
     KOKKOS_FUNCTION void load_on_device(const IndexType &index, const ContainerType &container,
                                         PointAccessType &point);
 
-Data access functions allow us to group data items that are generally accessed together within a single data structure, improving cache locality and reducing memory access times.
+Data access functions allow us to group data items that are generally accessed together into container specific data-types, improving cache locality and reducing memory access times.
 
-The following example shows how to define a data access function for loading spatial derivatives from the data container for a given index. ``point_partial_derivatives`` is a struct that holds the spatial derivatives at a given point. Since we generally require all the spatial derivatives at a given point, loading them into a single struct improves cache locality.
+The following example shows how to define a data access function for loading spatial derivatives from the data container for a given quadrature point. ``point_partial_derivatives`` is a struct that holds the spatial derivatives at a given point. Since we generally require all the spatial derivatives at a given point, loading them into a single struct improves cache locality.
 
 .. code:: cpp
 
@@ -87,12 +87,23 @@ The following example shows how to define a data access function for loading spa
 Data Containers and Access Functions in SPECFEM++
 -------------------------------------------------
 
+.. admonition:: Feature request
+    :class: hint
+
+    We need to define data access functions for the following data containers:
+
+    1. Sources
+    2. Receivers
+    3. Coupled interfaces
+
+    If you'd like to work on this, please see `issue tracker <https://github.com/PrincetonUniversity/SPECFEMPP/issues/110>_` for more details.
+
 1. :ref:`Assembled mesh information <assembly_mesh>`
 2. :ref:`Partial derivatives <assembly_partial_derivatives>`
-3. :ref:`Material properties <assembly_material_properties>`
+3. :ref:`Material properties <assembly_properties>`
 4. :ref:`Wavefield <assembly_fields>`
 5. :ref:`Misfit Kernels <assembly_kernels>`
 6. :ref:`Coupled Interfaces <assembly_coupled_interfaces>`
-7. :ref:`Boundary Conditions <assembly_boundary>`
-8. :ref:`Source Information <assembly_sources>`
-9. :ref:`Receiver Information <assembly_receivers>`
+8. :ref:`Boundary Conditions <assembly_boundary>`
+9. :ref:`Source Information <assembly_sources>`
+10. :ref:`Receiver Information <assembly_receivers>`

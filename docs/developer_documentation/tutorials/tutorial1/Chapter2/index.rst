@@ -4,16 +4,16 @@
 Chapter 2: Reading the mesh, solver and receivers
 =================================================
 
-In this chapter, we will read the mesh, solver and receivers generated in :ref:`Chapter1`.
+In this chapter, we will read the mesh, solver and receivers generated in :ref:`Chapter 1 <Chapter1>`.
 
 Reading the mesh
 ----------------
 
-The mesh generated in :ref:`Chapter1` is stored in the ``OUTPUT_FILES`` directory.
+The mesh generated in :ref:`Chapter1 <Chapter1>` is stored in the ``OUTPUT_FILES`` directory.
 
 .. note::
 
-    To read the mesh we will use SPECFEM++ :ref:`mesh reader <mesh_io>`.
+    To read the mesh we will use SPECFEM++ :ref:`mesh reader <mesh>`.
 
 .. code:: cpp
 
@@ -21,9 +21,13 @@ The mesh generated in :ref:`Chapter1` is stored in the ``OUTPUT_FILES`` director
     #include "specfem_mpi/specfem_mpi.hpp"
 
     int main(int argc, char **argv) {
+        // Initialize MPI
+        // The current SPECFEM++ implementation does not use MPI,
+        // but we will initialize it for forward compatibility.
         specfem::MPI::MPI *mpi = new specfem::MPI::MPI(&argc, &argv);
         const std::string database_filename = "OUTPUT_FILES/database.bin";
 
+        // We read and store the mesh within the mesh C++ struct.
         const specfem::mesh::mesh mesh(database_filename, mpi);
 
         return 0;
@@ -32,7 +36,7 @@ The mesh generated in :ref:`Chapter1` is stored in the ``OUTPUT_FILES`` director
 Reading the sources and receivers
 ---------------------------------
 
-Next we will read the sources and receivers generated in :ref:`Chapter1`.
+Next we will read the sources and receivers generated in :ref:`Chapter1 <Chapter1>`.
 
 .. note::
 
@@ -51,11 +55,12 @@ Next we will read the sources and receivers generated in :ref:`Chapter1`.
 
         // The source time function requires the starting time (t0) and the time step (dt)
         const type_real t0 = 0.0; /// type_real is defined in specfem_setup.hpp
-        const type_real dt = 1e-3;
-        const int nsteps = 1000;
+        const type_real dt = 1e-3; /// Time step
+        const int nsteps = 1000; // Number of time steps
         const type_real angle = 0.0; /// Station angle
         const auto simulation_type = specfem::simulation::type::forward;
 
+        // Read the sources and receivers
         const auto sources = specfem::sources::read_sources(sources_filename, nsteps, t0, dt, simulation_type);
         const auto receivers = specfem::receivers::read_receivers(receivers_filename, angle);
 
@@ -69,7 +74,7 @@ Next we will read the sources and receivers generated in :ref:`Chapter1`.
         return 0;
     }
 
-Since we'd be using the simulation parameters often during this whole tutorial, we can define them in a struct and pass it around.
+Since we'd be using the simulation parameters often during this whole tutorial, we can define them in a struct and pass it around. Eventually, in :ref:`Chapter 12 <Chapter12>`, we will replace this struct and configure the simulation using a YAML file.
 
 .. code:: cpp
 
@@ -90,7 +95,7 @@ Lastly, we will need the integration quadrature to compute the evolution of the 
 
 .. note::
 
-    Refer :ref:`Quadrature API <quadrature_api>` for more details.
+    Refer :ref:`Quadrature <quadrature_api>` for more details.
 
 .. code:: cpp
 
