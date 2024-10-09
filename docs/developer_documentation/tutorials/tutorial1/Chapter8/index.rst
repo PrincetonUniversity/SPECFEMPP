@@ -73,7 +73,7 @@ In particular, we will implement 2 kernels - 1. Compute the interaction of stiff
 
 .. note::
 
-    Have a look at the :ref:`Chapter5` for more details on the data-types defined in ``KernelDatatypes``.
+    Have a look at the :ref:`Chapter 5 <Chapter5>` for more details on the data-types defined in ``KernelDatatypes``.
 
 Implementing the kernels
 ------------------------
@@ -112,8 +112,8 @@ Next, lets implement ``compute_stiffness_interaction`` kernel.
 
     KOKKOS_FUNCTION
     stress_integrand stiffness_component(
-        const partial_derivatives &partial_derivatives,
-        const property &property,
+        const point_partial_derivatives &point_partial_derivatives,
+        const point_property &point_property,
         const field_derivatives &du) {
 
             stress_integrand F;
@@ -188,7 +188,7 @@ Next, lets implement ``compute_stiffness_interaction`` kernel.
                             // ...
 
                             const auto stress =
-                                stiffness_component(partial_derivatives, properties, du);
+                                stiffness_component(point_partial_derivatives, point_properties, du);
 
                             for (int idim = 0; idim < num_dimensions; ++idim) {
                                 for (int icomponent = 0; icomponent < components;

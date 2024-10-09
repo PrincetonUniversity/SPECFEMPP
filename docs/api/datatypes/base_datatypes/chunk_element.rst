@@ -1,4 +1,6 @@
 
+.. _datatype_base_chunk_element:
+
 Chunk Element View Types
 ========================
 
