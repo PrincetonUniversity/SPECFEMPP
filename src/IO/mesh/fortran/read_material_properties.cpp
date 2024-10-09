@@ -6,6 +6,12 @@
 #include <memory>
 #include <vector>
 
+
+namespace specfem {
+namespace IO {
+namespace mesh {
+namespace fortran {
+
 struct input_holder {
   // Struct to hold temporary variables read from database file
   type_real val0, val1, val2, val3, val4, val5, val6, val7, val8, val9, val10,
@@ -13,8 +19,8 @@ struct input_holder {
   int n, indic;
 };
 
-std::vector<std::shared_ptr<specfem::material::material> >
-specfem::mesh::IO::fortran::read_material_properties(
+std::vector<std::shared_ptr<specfem::material::material>>
+read_material_properties(
     std::ifstream &stream, const int numat, const specfem::MPI::MPI *mpi) {
 
   input_holder read_values;
@@ -80,3 +86,8 @@ specfem::mesh::IO::fortran::read_material_properties(
 
   return materials;
 }
+
+} // namespace fortran
+} // namespace mesh
+} // namespace IO
+} // namespace specfem

@@ -18,7 +18,12 @@ struct tangential_elements {
   specfem::kokkos::HostView1d<type_real> x, y;
   tangential_elements(){};
   tangential_elements(const int nnodes_tangential_curve);
-  tangential_elements(std::ifstream &stream, const int nnodes_tangential_curve);
+  
+  /**
+   * @brief Construct a new tangential elements object
+   * 
+   */
+  tangential_elements
 };
 } // namespace elements
 } // namespace mesh

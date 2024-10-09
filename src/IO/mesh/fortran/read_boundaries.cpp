@@ -1,0 +1,234 @@
+#include "mesh/boundaries/boundaries.hpp"
+#include "mesh/boundaries/absorbing_boundaries.hpp"
+#include "mesh/boundaries/acoustic_free_surface.hpp"
+#include "mesh/boundaries/forcing_boundaries.hpp"
+#include "IO/mesh/fortran/read_boundaries.hpp"
+#include "IO/fortranio/interface.hpp"
+#include "specfem_mpi/interface.hpp"
+#include "utilities/interface.hpp"
+#include "utilities.cpp" 
+#include <Kokkos_Core.hpp>
+#include <vector>
+
+namespace specfem {
+namespace IO {
+namespace mesh {
+namespace fortran {
+
+  specfem::mesh::absorbing_boundary 
+  read_absorbing_boundaries(
+    std::ifstream &stream, int num_abs_boundary_faces, const int nspec, 
+    const specfem::MPI::MPI *mpi) {
+
+    // Create base instance of the absorbing boundary
+    specfem::mesh::absorbing_boundary absorbing_boundary(num_abs_boundary_faces);
+
+    // I have to do this because std::vector<bool> is a fake container type that
+    // causes issues when getting a reference
+    bool codeabsread1 = true, codeabsread2 = true, codeabsread3 = true,
+        codeabsread4 = true;
+    std::vector<int> iedgeread(8, 0);
+    int numabsread, typeabsread;
+    if (num_abs_boundary_faces < 0) {
+      mpi->cout("Warning: read in negative nelemabs resetting to 0!");
+      num_abs_boundary_faces = 0;
+    }
+
+    specfem::kokkos::HostView1d<specfem::enums::boundaries::type> type_edge(
+        "specfem::mesh::absorbing_boundary::type_edge", num_abs_boundary_faces);
+
+    specfem::kokkos::HostView1d<int> ispec_edge(
+        "specfem::mesh::absorbing_boundary::ispec_edge", num_abs_boundary_faces);
+
+    if (num_abs_boundary_faces > 0) {
+      for (int inum = 0; inum < num_abs_boundary_faces; inum++) {
+        specfem::IO::fortran_read_line(stream, &numabsread, &codeabsread1,
+                                      &codeabsread2, &codeabsread3,
+                                      &codeabsread4, &typeabsread, &iedgeread);
+        if (numabsread < 1 || numabsread > nspec)
+          throw std::runtime_error("Wrong absorbing element number");
+        ispec_edge(inum) = numabsread - 1;
+        std::vector<bool> codeabsread = { codeabsread1, codeabsread2,
+                                          codeabsread3, codeabsread4 };
+        if (std::count(codeabsread.begin(), codeabsread.end(), true) != 1) {
+          throw std::runtime_error("must have one and only one absorbing edge "
+                                  "per absorbing line cited");
+        }
+        if (codeabsread1)
+          type_edge(inum) = specfem::enums::boundaries::type::BOTTOM;
+
+        if (codeabsread2)
+          type_edge(inum) = specfem::enums::boundaries::type::RIGHT;
+
+        if (codeabsread3)
+          type_edge(inum) = specfem::enums::boundaries::type::TOP;
+
+        if (codeabsread4)
+          type_edge(inum) = specfem::enums::boundaries::type::LEFT;
+      }
+
+      // Find corner elements
+      auto [ispec_corners, type_corners] = specfem::mesh::absorbing_boundaries::find_corners(ispec_edge, type_edge);
+
+      const int nelements = ispec_corners.extent(0) + ispec_edge.extent(0);
+
+      absorbing_boundary.nelements = nelements;
+
+      absorbing_boundary.index_mapping = Kokkos::View<int *, Kokkos::HostSpace>(
+          "specfem::mesh::absorbing_boundary::index_mapping", nelements);
+
+      absorbing_boundary.type =
+          Kokkos::View<specfem::enums::boundaries::type *, Kokkos::HostSpace>(
+              "specfem::mesh::absorbing_boundary::type", nelements);
+      // Populate ispec and type arrays
+
+      for (int inum = 0; inum < ispec_edge.extent(0); inum++) {
+        absorbing_boundary.index_mapping(inum) = ispec_edge(inum);
+        absorbing_boundary.type(inum) = type_edge(inum);
+      }
+
+      for (int inum = 0; inum < ispec_corners.extent(0); inum++) {
+        absorbing_boundary.index_mapping(inum + ispec_edge.extent(0)) = ispec_corners(inum);
+        absorbing_boundary.type(inum + ispec_edge.extent(0)) = type_corners(inum);
+      }
+    } else {
+      absorbing_boundary.nelements = 0;
+    }
+
+    return absorbing_boundary;
+  }
+
+  using view_type =
+    Kokkos::Subview<specfem::kokkos::HostView2d<int>,
+                    std::remove_const_t<decltype(Kokkos::ALL)>, int>;
+
+  /**
+   * @brief Get the type of boundary
+   *
+   * @param type int indicating if the boundary is edge of node
+   * @param e1 control node index for the starting node of the if the boundary is
+   * edge else control node index of the node if the boundary is node
+   * @param e2 control node index for the ending node of the if the boundary is
+   * edge
+   * @return specfem::enums::boundaries::type type of the boundary
+   */
+  specfem::enums::boundaries::type
+  get_boundary_type(const int type, const int e1, const int e2,
+                    const view_type &control_nodes) {
+    // if this is a node type
+    if (type == 1) {
+      if (e1 == control_nodes(0)) {
+        return specfem::enums::boundaries::type::BOTTOM_LEFT;
+      } else if (e1 == control_nodes(1)) {
+        return specfem::enums::boundaries::type::BOTTOM_RIGHT;
+      } else if (e1 == control_nodes(2)) {
+        return specfem::enums::boundaries::type::TOP_RIGHT;
+      } else if (e1 == control_nodes(3)) {
+        return specfem::enums::boundaries::type::TOP_LEFT;
+      } else {
+        throw std::invalid_argument(
+            "Error: Could not generate type of acoustic free surface boundary");
+      }
+    } else {
+      if ((e1 == control_nodes(0) && e2 == control_nodes(1)) ||
+          (e1 == control_nodes(1) && e2 == control_nodes(0))) {
+        return specfem::enums::boundaries::type::BOTTOM;
+      } else if ((e1 == control_nodes(0) && e2 == control_nodes(3)) ||
+                (e1 == control_nodes(3) && e2 == control_nodes(0))) {
+        return specfem::enums::boundaries::type::LEFT;
+      } else if ((e1 == control_nodes(1) && e2 == control_nodes(2)) ||
+                (e1 == control_nodes(2) && e2 == control_nodes(1))) {
+        return specfem::enums::boundaries::type::RIGHT;
+      } else if ((e1 == control_nodes(2) && e2 == control_nodes(3)) ||
+                (e1 == control_nodes(3) && e2 == control_nodes(2))) {
+        return specfem::enums::boundaries::type::TOP;
+      } else {
+        throw std::invalid_argument(
+            "Error: Could not generate type of acoustic free surface boundary");
+      }
+    }
+  }
+
+  specfem::mesh::acoustic_free_surface 
+  read_acoustic_free_surface(std::ifstream &stream,
+                        const int &nelem_acoustic_surface,
+                        const Kokkos::View<int **, Kokkos::HostSpace> knods,
+                        const specfem::MPI::MPI *mpi) {
+
+    std::vector<int> acfree_edge(4, 0);
+    specfem::mesh::acoustic_free_surface acoustic_free_surface(nelem_acoustic_surface);
+
+    if (nelem_acoustic_surface > 0) {
+      for (int inum = 0; inum < nelem_acoustic_surface; inum++) {
+        specfem::IO::fortran_read_line(stream, &acfree_edge);
+        acoustic_free_surface.index_mapping(inum) = acfree_edge[0] - 1;
+        const auto control_nodes =
+            Kokkos::subview(knods, Kokkos::ALL, acoustic_free_surface.index_mapping(inum));
+        acoustic_free_surface.type(inum) = get_boundary_type(acfree_edge[1], acfree_edge[2] - 1,
+                                            acfree_edge[3] - 1, control_nodes);
+      }
+    }
+
+    mpi->sync_all();
+
+    return acoustic_free_surface;
+  }
+
+
+  specfem::mesh::forcing_boundary read_forcing_boundaries(
+    std::ifstream &stream, const int nelement_acforcing, const int nspec,
+    const specfem::MPI::MPI *mpi) {
+
+    bool codeacread1 = true, codeacread2 = true, 
+         codeacread3 = true, codeacread4 = true;
+    std::vector<int> iedgeread(8, 0);
+    int numacread, typeacread;
+
+    specfem::mesh::forcing_boundary forcing_boundary(nelement_acforcing);
+
+    if (nelement_acforcing > 0) {
+      for (int inum = 0; inum < nelement_acforcing; inum++) {
+        specfem::IO::fortran_read_line(stream, &numacread, &codeacread1,
+                                      &codeacread2, &codeacread3, &codeacread4,
+                                      &typeacread, &iedgeread);
+        std::vector<bool> codeacread(4, false);
+        if (numacread < 1 || numacread > nspec) {
+          std::runtime_error("Wrong absorbing element number");
+        }
+        forcing_boundary.numacforcing(inum) = numacread - 1;
+        forcing_boundary.typeacforcing(inum) = typeacread;
+        codeacread[0] = codeacread1;
+        codeacread[1] = codeacread2;
+        codeacread[2] = codeacread3;
+        codeacread[3] = codeacread4;
+        if (std::count(codeacread.begin(), codeacread.end(), true) != 1) {
+          throw std::runtime_error("must have one and only one acoustic forcing "
+                                  "per acoustic forcing line cited");
+        }
+        forcing_boundary.codeacforcing(inum, 0) = codeacread[0];
+        forcing_boundary.codeacforcing(inum, 1) = codeacread[1];
+        forcing_boundary.codeacforcing(inum, 2) = codeacread[2];
+        forcing_boundary.codeacforcing(inum, 3) = codeacread[3];
+        forcing_boundary.ibegin_edge1(inum) = iedgeread[0];
+        forcing_boundary.iend_edge1(inum) = iedgeread[1];
+        forcing_boundary.ibegin_edge2(inum) = iedgeread[2];
+        forcing_boundary.iend_edge2(inum) = iedgeread[3];
+        forcing_boundary.ibegin_edge3(inum) = iedgeread[4];
+        forcing_boundary.iend_edge3(inum) = iedgeread[5];
+        forcing_boundary.ibegin_edge4(inum) = iedgeread[6];
+        forcing_boundary.iend_edge4(inum) = iedgeread[7];
+      }
+    }
+
+    // populate ib_bottom, ib_top, ib_left, ib_right arrays
+    calculate_ib(forcing_boundary.codeacforcing,forcing_boundary.ib_bottom, 
+                 forcing_boundary.ib_top, forcing_boundary.ib_left, 
+                 forcing_boundary.ib_right, nelement_acforcing);
+
+    return forcing_boundary;
+  }
+
+} // namespace fortran
+} // namespace mesh
+} // namespace IO
+} // namespace specfem

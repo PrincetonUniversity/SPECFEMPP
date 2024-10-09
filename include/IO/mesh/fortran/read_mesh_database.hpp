@@ -13,8 +13,8 @@ namespace specfem {
  * Helper routines to read fortran binary database
  *
  */
-namespace mesh {
 namespace IO {
+namespace mesh {
 namespace fortran {
 
 /**
@@ -53,7 +53,6 @@ read_mesh_database_attenuation(std::ifstream &stream,
                                const specfem::MPI::MPI *mpi);
 } // namespace fortran
 } // namespace IO
-} // namespace mesh
 } // namespace specfem
 
 #endif
