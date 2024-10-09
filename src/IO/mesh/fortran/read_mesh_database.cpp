@@ -9,7 +9,12 @@
 #include <iostream>
 #include <tuple>
 
-std::tuple<int, int, int> specfem::mesh::IO::fortran::read_mesh_database_header(
+namespace specfem {
+namespace IO {
+namespace mesh {
+namespace fortran {
+
+std::tuple<int, int, int> read_mesh_database_header(
     std::ifstream &stream, const specfem::MPI::MPI *mpi) {
   // This subroutine reads header values of the database which are skipped
   std::string dummy_s;
@@ -144,15 +149,15 @@ std::tuple<int, int, int> specfem::mesh::IO::fortran::read_mesh_database_header(
 }
 
 specfem::kokkos::HostView2d<type_real>
-specfem::mesh::IO::fortran::read_coorg_elements(std::ifstream &stream,
-                                                const int npgeo,
-                                                const specfem::MPI::MPI *mpi) {
+read_coorg_elements(
+    std::ifstream &stream, const int npgeo, 
+    const specfem::MPI::MPI *mpi) {
 
   int ipoin = 0;
 
   type_real coorgi, coorgj;
-  specfem::kokkos::HostView2d<type_real> coorg("specfem::mesh::coorg", ndim,
-                                               npgeo);
+  specfem::kokkos::HostView2d<type_real> 
+  coorg("specfem::mesh::coorg", ndim, npgeo);
 
   for (int i = 0; i < npgeo; i++) {
     specfem::IO::fortran_read_line(stream, &ipoin, &coorgi, &coorgj);
@@ -169,7 +174,7 @@ specfem::mesh::IO::fortran::read_coorg_elements(std::ifstream &stream,
 }
 
 std::tuple<int, type_real, bool>
-specfem::mesh::IO::fortran::read_mesh_database_attenuation(
+read_mesh_database_attenuation(
     std::ifstream &stream, const specfem::MPI::MPI *mpi) {
 
   int n_sls;
@@ -187,3 +192,8 @@ specfem::mesh::IO::fortran::read_mesh_database_attenuation(
   return std::make_tuple(n_sls, attenuation_f0_reference,
                          read_velocities_at_f0);
 }
+
+} // namespace fortran
+} // namespace mesh
+} // namespace IO
+} // namespace specfem

@@ -29,17 +29,8 @@ struct interface_container {
    */
   interface_container(){};
 
-  /**
-   * @brief Constructor to read and assign values from fortran binary database
-   * file
-   *
-   * @param num_interfaces Number of interfaces
-   * @param stream Stream object for fortran binary file buffered to coupled
-   * interfaces section
-   * @param mpi Pointer to MPI object
-   */
-  interface_container(const int num_interfaces, std::ifstream &stream,
-                      const specfem::MPI::MPI *mpi);
+  interface_container(const int num_interfaces) {};
+  
   ///@}
 
   int num_interfaces = 0; ///< Number of edges within this interface

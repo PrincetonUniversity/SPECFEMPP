@@ -9,8 +9,8 @@
 #include <vector>
 
 namespace specfem {
-namespace mesh {
 namespace IO {
+namespace mesh {
 namespace fortran {
 
 /**
@@ -26,8 +26,9 @@ namespace fortran {
 std::vector<std::shared_ptr<specfem::material::material> >
 read_material_properties(std::ifstream &stream, const int numat,
                          const specfem::MPI::MPI *mpi);
+                         
 } // namespace fortran
-} // namespace IO
 } // namespace mesh
+} // namespace IO
 } // namespace specfem
 #endif
