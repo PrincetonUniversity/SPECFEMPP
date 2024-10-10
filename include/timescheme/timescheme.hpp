@@ -134,6 +134,7 @@ public:
    * for (const auto [istep, dt] : ts.iterate_backward()) {
    *   const auto time = istep * dt; /// Computing the current time
    * }
+   * @endcode
    */
   impl::BackwardRange iterate_backward() {
     return impl::BackwardRange(nstep, dt);
