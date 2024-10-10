@@ -1,8 +1,8 @@
 
 .. _tutorial2_Chapter1:
 
-Understanding stored fields
-===========================
+Chapter1 : Understanding stored fields
+======================================
 
 Let's start by understanding how the fields are stored in SPECFEM++. The ``fields`` C++ struct stores 4 types of wavefields:
 

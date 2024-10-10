@@ -59,4 +59,4 @@ The writer class is templated on the output library. Since, all the IO libraries
 SPECFEM++ Implementation Details
 --------------------------------
 
-The actual SPECFEM++ implementation details can be found :ref:`here <IO_wavefield_writer>`.
+The actual SPECFEM++ implementation details can be found :ref:`here <IO_write_wavefield>`.

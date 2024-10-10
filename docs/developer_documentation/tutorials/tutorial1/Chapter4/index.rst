@@ -96,7 +96,7 @@ Data Containers and Access Functions in SPECFEM++
     2. Receivers
     3. Coupled interfaces
 
-    If you'd like to work on this, please see `issue tracker <https://github.com/PrincetonUniversity/SPECFEMPP/issues/110>_` for more details.
+    If you'd like to work on this, please see `issue tracker <https://github.com/PrincetonUniversity/SPECFEMPP/issues/110>`_ for more details.
 
 1. :ref:`Assembled mesh information <assembly_mesh>`
 2. :ref:`Partial derivatives <assembly_partial_derivatives>`
@@ -104,6 +104,6 @@ Data Containers and Access Functions in SPECFEM++
 4. :ref:`Wavefield <assembly_fields>`
 5. :ref:`Misfit Kernels <assembly_kernels>`
 6. :ref:`Coupled Interfaces <assembly_coupled_interfaces>`
-8. :ref:`Boundary Conditions <assembly_boundary>`
-9. :ref:`Source Information <assembly_sources>`
-10. :ref:`Receiver Information <assembly_receivers>`
+7. :ref:`Boundary Conditions <assembly_boundary>`
+8. :ref:`Source Information <assembly_sources>`
+9. :ref:`Receiver Information <assembly_receivers>`

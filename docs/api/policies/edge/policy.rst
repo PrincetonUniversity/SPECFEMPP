@@ -6,5 +6,5 @@ Edge Policy
 
 Policy to iterator over shared edges between elements in a mesh.
 
-.. doxygenstruct:: specfem::policy::edge
+.. doxygenclass:: specfem::policy::element_edge
     :members:

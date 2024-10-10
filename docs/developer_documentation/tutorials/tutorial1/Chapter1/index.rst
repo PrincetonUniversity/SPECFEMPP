@@ -192,6 +192,6 @@ Now that we have the mesh and receiver locations, we can define the sources. We 
 Final mesh
 ----------
 
-.. image:: gridfile.ps
-    :alt: gridfile.ps
+.. image:: gridfile.png
+    :alt: gridfile.png
     :align: center
