@@ -8,8 +8,6 @@ The ``TimeScheme`` class provides methods to compute the time evolution of a wav
 
 .. doxygenclass:: specfem::time_scheme::time_scheme
    :members:
-   :undoc-members:
-   :private-members:
 
 Types of Time Schemes
 ---------------------

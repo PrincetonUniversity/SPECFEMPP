@@ -19,7 +19,7 @@ Finite Element Assembly
     2. Receivers
     3. Coupled interfaces
 
-    If you'd like to work on this, please see `issue tracker <https://github.com/PrincetonUniversity/SPECFEMPP/issues/110>_` for more details.
+    If you'd like to work on this, please see `issue tracker <https://github.com/PrincetonUniversity/SPECFEMPP/issues/110>`_ for more details.
 
 .. toctree::
     :maxdepth: 1

@@ -10,13 +10,38 @@
 namespace specfem {
 namespace runtime_configuration {
 namespace solver {
-
+/**
+ * @brief Solver class to instantiate the correct solver based on the simulation
+ * parameters
+ *
+ */
 class solver {
 public:
+  /**
+   * @brief Construct a new solver object
+   *
+   * @param simulation_type Type of the simulation (forward or combined)
+   */
   solver(const char *simulation_type) : simulation_type(simulation_type) {}
+  /**
+   * @brief Construct a new solver object
+   *
+   * @param simulation_type Type of the simulation (forward or combined)
+   */
   solver(const std::string simulation_type)
       : simulation_type(simulation_type) {}
 
+  /**
+   * @brief Instantiate the solver based on the simulation parameters
+   *
+   * @tparam qp_type Quadrature points type defining compile time or runtime
+   * quadrature points
+   * @param dt Time step
+   * @param assembly Assembly object
+   * @param time_scheme Time scheme object
+   * @param quadrature Quadrature points object
+   * @return std::shared_ptr<specfem::solver::solver> Solver object
+   */
   template <typename qp_type>
   std::shared_ptr<specfem::solver::solver>
   instantiate(const type_real dt, const specfem::compute::assembly &assembly,
@@ -34,7 +59,7 @@ public:
   }
 
 private:
-  std::string simulation_type;
+  std::string simulation_type; ///< Type of the simulation (forward or combined)
 };
 } // namespace solver
 } // namespace runtime_configuration

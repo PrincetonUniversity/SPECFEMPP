@@ -163,6 +163,7 @@ Table below shows various features available and tested in this package on vario
     * needed for consistent HTML-PDF-EPUB chapters
     */
    section#getting-started,
+   section#user-documentation,
    section#cookbooks,
    section#contribution,
    section#api-documentation,
@@ -180,7 +181,7 @@ Getting Started
     :maxdepth: 1
     :hidden:
 
-    getting-started/index
+    getting_started/index
     cookbooks/index
 
 User Documentation
