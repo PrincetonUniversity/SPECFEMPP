@@ -1,7 +1,7 @@
 Wave propagration through fluid-solid interface
 ===============================================
 
-This example simulates the fluid-solid example with flat ocean bottom from `Komatitsch et. al. <https://doi.org/10.1190/1.1444758>`_. This example demonstrates the use of the ``xmeshfem2D`` mesher to generate interface between 2 conforming material systems and the setting up absorbing boundary conditions.
+This `example <https://github.com/PrincetonUniversity/SPECFEMPP/tree/main/examples/fluid-solid-interface>_` simulates the fluid-solid example with flat ocean bottom from `Komatitsch et. al. <https://doi.org/10.1190/1.1444758>`_. This example demonstrates the use of the ``xmeshfem2D`` mesher to generate interface between 2 conforming material systems and the setting up absorbing boundary conditions.
 
 Meshing the domain
 ------------------

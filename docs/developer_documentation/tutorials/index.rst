@@ -2,7 +2,7 @@
 Tutorials
 =========
 
-Developer tutorials are designed to help you undestand SPECEFM++ code architecture and how to extend the code base.
+Developer tutorials are designed to help you undestand SPECEFM++ code architecture.
 
 .. toctree::
     :maxdepth: 1
