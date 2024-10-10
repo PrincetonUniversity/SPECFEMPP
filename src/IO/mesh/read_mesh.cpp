@@ -12,10 +12,7 @@
 #include <memory>
 #include <vector>
 
-namespace specfem {
-namespace IO {
-
-specfem::mesh::mesh read_mesh(const std::string filename,
+specfem::mesh::mesh specfem::IO::read_mesh(const std::string filename,
                               const specfem::MPI::MPI *mpi) {
 
   std::ifstream stream;
@@ -146,15 +143,15 @@ specfem::mesh::mesh read_mesh(const std::string filename,
   }
 
   try {
-    this->tangential_nodes = specfem::mesh::elements::tangential_elements(
-        stream, this->parameters.nnodes_tangential_curve);
+    mesh->tangential_nodes = specfem::IO::mesh::fortran::read_elements::read_tangential_elements(
+        stream, mesh->parameters.nnodes_tangential_curve);
   } catch (std::runtime_error &e) {
     throw;
   }
 
   try {
-    this->axial_nodes = specfem::mesh::elements::axial_elements(
-        stream, this->parameters.nelem_on_the_axis, this->nspec, mpi);
+    mesh->axial_nodes = specfem::IO::mesh::fortran::read_elements::axial_elements(
+        stream, mesh->parameters.nelem_on_the_axis, mesh->nspec, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
@@ -173,12 +170,12 @@ specfem::mesh::mesh read_mesh(const std::string filename,
             "------------------------------");
 
   mpi->cout("Number of material systems = " +
-            std::to_string(this->materials.n_materials) + "\n\n");
+            std::to_string(mesh->materials.n_materials) + "\n\n");
 
   const auto l_elastic_isotropic =
-      this->materials.elastic_isotropic.material_properties;
+      mesh->materials.elastic_isotropic.material_properties;
   const auto l_acoustic_isotropic =
-      this->materials.acoustic_isotropic.material_properties;
+      mesh->materials.acoustic_isotropic.material_properties;
 
   for (const auto material : l_elastic_isotropic) {
     mpi->cout(material.print());
@@ -191,7 +188,7 @@ specfem::mesh::mesh read_mesh(const std::string filename,
   assert(l_elastic_isotropic.size() + l_acoustic_isotropic.size() ==
          this->materials.n_materials);
 
-  this->tags = specfem::mesh::tags(this->materials, this->boundaries);
+  mesh->tags = specfem::mesh::tags(mesh->materials, mesh->boundaries);
 
   return;
 }
@@ -228,6 +225,3 @@ std::string specfem::mesh::mesh::print() const {
 
   return message.str();
 }
-
-} // namespace IO
-} // namespace specfem

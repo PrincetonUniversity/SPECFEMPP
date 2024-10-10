@@ -1,5 +1,6 @@
 #include "IO/mesh/fortran/read_interfaces.hpp"
 #include "interface_container.hpp"
+#include "mesh/coupled_interfaces/coupled_interfaces.hpp"
 #include "specfem_mpi/interface.hpp"
 
 namespace specfem {
@@ -10,7 +11,7 @@ namespace fortran {
   template <specfem::element::medium_tag medium1,
             specfem::element::medium_tag medium2>
   specfem::mesh::interface_container<medium1, medium2>
-  read_interface(
+  read_interfaces(
       const int num_interfaces, std::ifstream &stream, 
       const specfem::MPI::MPI *mpi) {
 
@@ -57,7 +58,8 @@ namespace fortran {
       specfem::element::medium_tag::poroelastic
     >(num_interfaces_elastic_poroelastic, stream, mpi);
     
-    return coupled_interfaces(elastic_acoustic, acoustic_poroelastic, elastic_poroelastic);
+    return specfem::mesh::coupled_interfaces(
+      elastic_acoustic, acoustic_poroelastic, elastic_poroelastic);
   }
 
 

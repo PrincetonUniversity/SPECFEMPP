@@ -1,12 +1,9 @@
 #include "mesh/properties/properties.hpp"
 #include "IO/fortranio/interface.hpp"
+#include "IO/mesh/fortran/read_properties.hpp"
 
-namespace specfem {
-namespace IO {
-namespace mesh {
-namespace fortran {
 
-specfem::mesh::properties read_roperties(std::ifstream &stream,
+specfem::mesh::properties specfem::IO::mesh::fortran::read_properties(std::ifstream &stream,
                                       const specfem::MPI::MPI *mpi) {
   // ---------------------------------------------------------------------
   // reading mesh properties
@@ -55,8 +52,3 @@ specfem::mesh::properties read_roperties(std::ifstream &stream,
     nelem_on_the_axis, plot_lowerleft_corner_only);
 
 }
-
-} // namespace fortran
-} // namespace mesh
-} // namespace IO
-} // namespace specfem
