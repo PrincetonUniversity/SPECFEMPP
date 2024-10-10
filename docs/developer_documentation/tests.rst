@@ -5,7 +5,7 @@ Tests
 
 The following tests are enabled within SPECFEM++ project:
 
-1. **Partial compilation checks (github actions)**: These tests are run on every push to the repository. This check tests if the code can be copiled using GNU compilers in serial mode. The goal is to ensure current push doesn't break the compilation. These tests would run on forks of this repository. Ulitmately, the hope is that end developer commits their changes to local fork at regualar intervals which would reduce compilation errors during development process.
+1. **Partial compilation checks (github actions)**: These tests are run on every push to the repository. This check tests if the code can be copiled using GNU compilers in serial mode. The goal is to ensure current push doesn't break the compilation. These tests would run on forks of this repository. Ultimately, the hope is that end developer commits their changes to local fork at regualar intervals which would reduce compilation errors during development process.
 
 2. **Partial unit tests (github actions)**: These tests are run on every push to the repository. The tests are run in a serial mode using GNU compilers. The goal is to ensure current push doesn't break the unit tests. These tests would run on forks of this repository. Ulitmately, the hope is that end developer commits their changes to local fork at regualar intervals which would reduce unit test errors during development process.
 
