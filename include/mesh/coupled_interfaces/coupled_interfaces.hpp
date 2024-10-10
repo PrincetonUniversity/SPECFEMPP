@@ -38,10 +38,9 @@ public:
     specfem::mesh::interface_container<
       specfem::element::medium_tag::elastic,
       specfem::element::medium_tag::poroelastic
-    > elastic_poroelastic){} :
-    elastic_acoustic(elastic_acoustic)
-    acoustic_poroelastic(acoustic_poroelastic)
-    elastic_poroelastic(elastic_poroelastic);
+    > elastic_poroelastic) : elastic_acoustic(elastic_acoustic),
+    acoustic_poroelastic(acoustic_poroelastic),
+    elastic_poroelastic(elastic_poroelastic) {};
   ///@}
 
   /**

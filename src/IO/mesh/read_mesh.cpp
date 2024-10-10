@@ -3,7 +3,13 @@
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
 #include "material/material.hpp"
-#include "mesh/IO/fortran/read_mesh_database.hpp"
+#include "IO/mesh/read_mesh.hpp"
+#include "IO/mesh/fortran/read_mesh_database.hpp"
+#include "IO/mesh/fortran/read_material_properties.hpp"
+#include "IO/mesh/fortran/read_interfaces.hpp"
+#include "IO/mesh/fortran/read_boundaries.hpp"
+#include "IO/mesh/fortran/read_elements.hpp"
+#include "IO/mesh/fortran/read_material_properties.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -24,7 +30,7 @@ specfem::mesh::mesh specfem::IO::read_mesh(const std::string filename,
 
   try {
     auto [nspec, npgeo, nproc] =
-        specfem::mesh::IO::fortran::read_mesh_database_header(stream, mpi);
+        specfem::IO::mesh::fortran::read_mesh_database_header(stream, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
@@ -33,7 +39,7 @@ specfem::mesh::mesh specfem::IO::read_mesh(const std::string filename,
   specfem::mesh::mesh mesh();
 
   try {
-    auto mesh->control_nodes.coord = specfem::mesh::IO::fortran::read_coorg_elements(
+    auto mesh->control_nodes.coord = specfem::IO::mesh::fortran::read_coorg_elements(
         stream, npgeo, mpi);
   } catch (std::runtime_error &e) {
     throw;
@@ -223,5 +229,5 @@ std::string specfem::mesh::mesh::print() const {
       << n_acoustic << "\n"
       << "Total number of geometric points : " << this->npgeo << "\n";
 
-  return message.str();
+  return mesh;
 }

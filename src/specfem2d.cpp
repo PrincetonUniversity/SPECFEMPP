@@ -8,6 +8,7 @@
 #include "solver/solver.hpp"
 #include "source/interface.hpp"
 #include "specfem_mpi/interface.hpp"
+#include "IO/mesh/read_mesh.hpp"
 #include "specfem_setup.hpp"
 #include "timescheme/timescheme.hpp"
 #include "yaml-cpp/yaml.h"
@@ -97,7 +98,7 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   //                   Read mesh and materials
   // --------------------------------------------------------------
   const auto quadrature = setup.instantiate_quadrature();
-  const specfem::mesh::mesh mesh(database_filename, mpi);
+  const specfem::mesh::mesh specfem::IO::read_mesh(database_filename, mpi);
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
