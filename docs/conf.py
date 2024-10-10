@@ -76,7 +76,7 @@ html_theme = "furo"
 #     "titles_only": False,
 # }
 # html_logo = ''
-# github_url = ''
+github_url = "https://github.com/PrincetonUniversity/SPECFEMPP"
 # html_baseurl = ''
 
 # Add any paths that contain custom static files (such as style sheets) here,
