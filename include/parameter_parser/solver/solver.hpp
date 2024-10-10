@@ -48,6 +48,11 @@ public:
               std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
               const qp_type &quadrature) const;
 
+  /**
+   * @brief Get the type of the simulation (forward or combined)
+   *
+   * @return specfem::simulation::type Type of the simulation
+   */
   inline specfem::simulation::type get_simulation_type() const {
     if (this->simulation_type == "forward") {
       return specfem::simulation::type::forward;
