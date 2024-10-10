@@ -1,3 +1,5 @@
+#pragma once
+
 #include "mesh/properties/properties.hpp"
 #include "IO/fortranio/interface.hpp"
 

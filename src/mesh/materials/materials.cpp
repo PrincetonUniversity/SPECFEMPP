@@ -4,18 +4,10 @@
 #include "mesh/materials/materials.tpp"
 #include <vector>
 
-namespace {
+// Anonymous namespace to hide internal functions, and help the compiler.
 
-constexpr auto elastic = specfem::element::medium_tag::elastic;
-constexpr auto isotropic = specfem::element::property_tag::isotropic;
-constexpr auto acoustic = specfem::element::medium_tag::acoustic;
 
-struct input_holder {
-  // Struct to hold temporary variables read from database file
-  type_real val0, val1, val2, val3, val4, val5, val6, val7, val8, val9, val10,
-      val11, val12;
-  int n, indic;
-};
+
 
 std::vector<specfem::mesh::materials::material_specification> read_materials(
     std::ifstream &stream, const int numat,
@@ -129,46 +121,6 @@ std::vector<specfem::mesh::materials::material_specification> read_materials(
   return index_mapping;
 }
 
-void read_material_indices(
-    std::ifstream &stream, const int nspec, const int numat,
-    const std::vector<specfem::mesh::materials::material_specification>
-        &index_mapping,
-    const specfem::kokkos::HostView1d<
-        specfem::mesh::materials::material_specification>
-        material_index_mapping,
-    const specfem::kokkos::HostView2d<int> knods,
-    const specfem::MPI::MPI *mpi) {
-
-  const int ngnod = knods.extent(0);
-  int n, kmato_read, pml_read;
-
-  std::vector<int> knods_read(ngnod, -1);
-
-  for (int ispec = 0; ispec < nspec; ispec++) {
-    // format: #element_id  #material_id #node_id1 #node_id2 #...
-    specfem::IO::fortran_read_line(stream, &n, &kmato_read, &knods_read,
-                                   &pml_read);
-
-    if (n < 1 || n > nspec) {
-      throw std::runtime_error("Error reading material indices");
-    }
-
-    if (kmato_read < 1 || kmato_read > numat) {
-      throw std::runtime_error("Error reading material indices");
-    }
-
-    for (int i = 0; i < ngnod; i++) {
-      if (knods_read[i] == 0)
-        throw std::runtime_error("Error reading knods (node_id) values");
-
-      knods(i, n - 1) = knods_read[i] - 1;
-    }
-
-    material_index_mapping(n - 1) = index_mapping[kmato_read - 1];
-  }
-
-  return;
-}
 } // namespace
 
 // specfem::mesh::material_ind::material_ind(const int nspec, const int ngnod) {

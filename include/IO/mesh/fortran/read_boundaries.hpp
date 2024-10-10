@@ -1,3 +1,5 @@
+#pragma once
+
 #include "mesh/boundaries/boundaries.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "mesh/boundaries/absorbing_boundaries.hpp"

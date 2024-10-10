@@ -19,11 +19,6 @@ struct tangential_elements {
   tangential_elements(){};
   tangential_elements(const int nnodes_tangential_curve);
   
-  /**
-   * @brief Construct a new tangential elements object
-   * 
-   */
-  tangential_elements
 };
 } // namespace elements
 } // namespace mesh

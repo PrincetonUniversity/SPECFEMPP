@@ -1,5 +1,4 @@
-#ifndef _READ_MESH_DATABASE_HPP
-#define _READ_MESH_DATABASE_HPP
+#pragma once
 
 #include "kokkos_abstractions.h"
 #include "specfem_mpi/interface.hpp"
@@ -55,4 +54,3 @@ read_mesh_database_attenuation(std::ifstream &stream,
 } // namespace IO
 } // namespace specfem
 
-#endif

@@ -1,17 +1,13 @@
 #include "IO/mesh/fortran/read_interfaces.hpp"
-#include "interface_container.hpp"
 #include "mesh/coupled_interfaces/coupled_interfaces.hpp"
+#include "mesh/coupled_interfaces/interface_container.hpp"
 #include "specfem_mpi/interface.hpp"
 
-namespace specfem {
-namespace IO {
-namespace mesh {
-namespace fortran {
 
   template <specfem::element::medium_tag medium1,
             specfem::element::medium_tag medium2>
   specfem::mesh::interface_container<medium1, medium2>
-  read_interfaces(
+  specfem::IO::mesh::fortran::read_interfaces(
       const int num_interfaces, std::ifstream &stream, 
       const specfem::MPI::MPI *mpi) {
 
@@ -21,6 +17,7 @@ namespace fortran {
     int medium1_ispec_l, medium2_ispec_l;
 
     specfem::mesh::interface_container<medium1, medium2> interface(num_interfaces);
+
     interface.medium1_index_mapping("medium1_index_mapping", num_interfaces);
     interface.medium2_index_mapping("medium2_index_mapping", num_interfaces);
 
@@ -33,6 +30,38 @@ namespace fortran {
 
     return interface;
   }
+
+  // Explicit instantiation of the template function for the different medium interfaces
+  // elastic/acoustic
+  template specfem::mesh::interface_container<
+    specfem::element::medium_tag::elastic, 
+    specfem::element::medium_tag::acoustic
+  > specfem::IO::mesh::fortran::read_interfaces<
+    specfem::element::medium_tag::elastic, 
+    specfem::element::medium_tag::acoustic
+    >(const int num_interfaces, std::ifstream &stream, 
+      const specfem::MPI::MPI *mpi) {};
+
+  // acoustic/poroelastic
+  template specfem::mesh::interface_container<
+    specfem::element::medium_tag::acoustic, 
+    specfem::element::medium_tag::poroelastic
+  > specfem::IO::mesh::fortran::read_interfaces<
+    specfem::element::medium_tag::acoustic, 
+    specfem::element::medium_tag::poroelastic
+  >(const int num_interfaces, std::ifstream &stream, 
+      const specfem::MPI::MPI *mpi) {};
+
+  // elastic/poroelastic
+  template specfem::mesh::interface_container<
+    specfem::element::medium_tag::elastic, 
+    specfem::element::medium_tag::poroelastic
+  > specfem::IO::mesh::fortran::read_interfaces<
+    specfem::element::medium_tag::elastic, 
+    specfem::element::medium_tag::poroelastic
+  >(const int num_interfaces, std::ifstream &stream, 
+      const specfem::MPI::MPI *mpi) {};
+
 
   specfem::mesh::coupled_interfaces
   read_coupled_interfaces (
