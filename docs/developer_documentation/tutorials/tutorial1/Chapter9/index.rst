@@ -38,10 +38,8 @@ The time-scheme is divided into 2 phases: 1. Predictor phase and 2. Corrector ph
 .. math::
 
     \begin{align*}
-    u^{n+1} &= u^n + \Delta t v^n + \frac{1}{2} \Delta t^2 a^n
-
-    v^{n+1} &= v^n + \frac{1}{2} \Delta t a^n
-
+    u^{n+1} &= u^n + \Delta t v^n + \frac{1}{2} \Delta t^2 a^n \\
+    v^{n+1} &= v^n + \frac{1}{2} \Delta t a^n \\
     M u^{n+1} + C v^{n+1} + K u^{n+1} &= F^{n+1}
     \end{align*}
 
@@ -49,9 +47,7 @@ Here, the 3rd equation is the discretized form of the equation of motion solved 
 
 .. math::
 
-    \begin{align*}
-    v^{n} &= v^n + \frac{1}{2} \Delta t a^{n+1}
-    \end{align*}
+    v^{n} = v^n + \frac{1}{2} \Delta t a^{n+1}
 
 Implemeting the Time Scheme
 ---------------------------
