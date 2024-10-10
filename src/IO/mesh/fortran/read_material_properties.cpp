@@ -1,16 +1,11 @@
-#include "mesh/IO/fortran/read_material_properties.hpp"
 #include "fortranio/interface.hpp"
-#include "material/interface.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "utilities/interface.hpp"
+#include "material/material.hpp"
+#include "mesh/IO/fortran/read_material_properties.hpp"
 #include <memory>
 #include <vector>
 
-
-namespace specfem {
-namespace IO {
-namespace mesh {
-namespace fortran {
 
 struct input_holder {
   // Struct to hold temporary variables read from database file
@@ -20,7 +15,7 @@ struct input_holder {
 };
 
 std::vector<std::shared_ptr<specfem::material::material>>
-read_material_properties(
+specfem::IO::mesh::fortran::read_material_properties(
     std::ifstream &stream, const int numat, const specfem::MPI::MPI *mpi) {
 
   input_holder read_values;
@@ -86,8 +81,3 @@ read_material_properties(
 
   return materials;
 }
-
-} // namespace fortran
-} // namespace mesh
-} // namespace IO
-} // namespace specfem

@@ -9,12 +9,9 @@
 #include <iostream>
 #include <tuple>
 
-namespace specfem {
-namespace IO {
-namespace mesh {
-namespace fortran {
 
-std::tuple<int, int, int> read_mesh_database_header(
+
+std::tuple<int, int, int> specfem::IO::mesh::fortran::read_mesh_database_header(
     std::ifstream &stream, const specfem::MPI::MPI *mpi) {
   // This subroutine reads header values of the database which are skipped
   std::string dummy_s;
@@ -192,8 +189,3 @@ read_mesh_database_attenuation(
   return std::make_tuple(n_sls, attenuation_f0_reference,
                          read_velocities_at_f0);
 }
-
-} // namespace fortran
-} // namespace mesh
-} // namespace IO
-} // namespace specfem
