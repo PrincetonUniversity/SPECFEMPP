@@ -34,7 +34,7 @@ parameters:
         writer:
           seismogram:
             format: ascii
-            directory: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test3/results"
+            directory: "."
 
   receivers:
     stations-file: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test3/STATIONS"
