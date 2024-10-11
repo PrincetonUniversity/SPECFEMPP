@@ -1,55 +1,41 @@
-#ifndef _DOMAIN_KERNELS_TPP
-#define _DOMAIN_KERNELS_TPP
+#pragma once
 
-#include "compute/interface.hpp"
-#include "domain/impl/elements/interface.hpp"
-#include "domain/impl/receivers/interface.hpp"
-#include "domain/impl/sources/interface.hpp"
-#include "enumerations/interface.hpp"
+#include "boundary_conditions/boundary_conditions.hpp"
 #include "kernels.hpp"
-#include "kokkos_abstractions.h"
-#include "macros.hpp"
-#include "quadrature/interface.hpp"
 
 namespace {
 /// Struct to tag each element
 struct element_tag {
 
-  element_tag(
-      const specfem::enums::element::type &medium_tag,
-      const specfem::enums::element::property_tag &property_tag,
-      const specfem::enums::element::boundary_tag_container &boundary_tag)
+  element_tag(const specfem::element::medium_tag &medium_tag,
+              const specfem::element::property_tag &property_tag,
+              const specfem::element::boundary_tag &boundary_tag)
       : medium_tag(medium_tag), property_tag(property_tag),
         boundary_tag(boundary_tag) {}
 
   element_tag() = default;
 
-  specfem::enums::element::property_tag property_tag;
-  specfem::enums::element::boundary_tag_container boundary_tag;
-  specfem::enums::element::type medium_tag;
+  specfem::element::property_tag property_tag;
+  specfem::element::boundary_tag boundary_tag;
+  specfem::element::medium_tag medium_tag;
 };
 
-template <class medium, class qp_type, class property, class BC>
+template <typename ElementType>
 void allocate_elements(
-    const specfem::kokkos::DeviceView3d<int> ibool,
+    const specfem::compute::assembly &assembly,
     const specfem::kokkos::HostView1d<element_tag> element_tags,
-    const specfem::compute::partial_derivatives &partial_derivatives,
-    const specfem::compute::properties &properties,
-    const specfem::compute::boundaries &boundary_conditions,
-    specfem::quadrature::quadrature *quadx,
-    specfem::quadrature::quadrature *quadz, qp_type quadrature_points,
-    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field,
-    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot,
-    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot_dot,
-    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> mass_matrix,
-    specfem::domain::impl::kernels::element_kernel<medium, qp_type, property,
-                                                   BC> &elements) {
+    ElementType &elements) {
 
-  constexpr auto boundary_tag = BC::value;
-  constexpr auto medium_tag = medium::value;
-  constexpr auto property_tag = property::value;
+  constexpr auto wavefield_type = ElementType::wavefield_type;
+  constexpr auto medium_tag = ElementType::medium_tag;
+  constexpr auto property_tag = ElementType::property_tag;
+  constexpr auto boundary_tag = ElementType::boundary_tag;
 
-  const int nspec = partial_derivatives.xix.extent(0);
+  using dimension = specfem::dimension::dimension<ElementType::dimension>;
+  using medium_type =
+      specfem::medium::medium<ElementType::dimension, medium_tag, property_tag>;
+
+  const int nspec = assembly.mesh.nspec;
 
   // count number of elements in this domain
   int nelements = 0;
@@ -60,9 +46,9 @@ void allocate_elements(
 
       // make sure acoustic free surface elements are acoustic
       if (element_tags(ispec).boundary_tag ==
-          specfem::enums::element::boundary_tag::acoustic_free_surface) {
+          specfem::element::boundary_tag::acoustic_free_surface) {
         if (element_tags(ispec).medium_tag !=
-            specfem::enums::element::type::acoustic) {
+            specfem::element::medium_tag::acoustic) {
           throw std::runtime_error("Error: acoustic free surface boundary "
                                    "condition found non acoustic element");
         }
@@ -87,337 +73,178 @@ void allocate_elements(
     }
   }
 
-  // assert that boundary_conditions ispec matches with calculated ispec
-  if constexpr (((boundary_tag == specfem::enums::element::boundary_tag::
-                                      acoustic_free_surface) &&
-                 (medium_tag == specfem::enums::element::type::acoustic))) {
-    ASSERT(
-        nelements == boundary_conditions.acoustic_free_surface.nelements,
-        "nelements = " << nelements << " nelem_acoustic_surface = "
-                       << boundary_conditions.acoustic_free_surface.nelements);
-    for (int i = 0; i < nelements; i++) {
-      ASSERT(h_ispec_domain(i) ==
-                 boundary_conditions.acoustic_free_surface.h_ispec(i),
-             "Error: computing ispec for acoustic free surface elements");
-    }
+  if constexpr (wavefield_type == specfem::wavefield::type::forward ||
+                wavefield_type == specfem::wavefield::type::adjoint) {
+
+    std::cout << "  - Element type: \n"
+              << "    - dimension           : " << dimension::to_string()
+              << "\n"
+              << "    - Element type        : " << medium_type::to_string()
+              << "\n"
+              << "    - Boundary Conditions : "
+              << specfem::domain::impl::boundary_conditions::print_boundary_tag<
+                     boundary_tag>()
+              << "\n"
+              << "    - Number of elements  : " << nelements << "\n\n";
   }
-
-  // assert that boundary_conditions ispec matches with calculated ispec
-  if constexpr ((boundary_tag ==
-                 specfem::enums::element::boundary_tag::stacey) &&
-                (medium_tag == specfem::enums::element::type::acoustic)) {
-    ASSERT(nelements == boundary_conditions.stacey.acoustic.nelements,
-           "nelements = " << nelements << " nelements = "
-                          << boundary_conditions.stacey.acoustic.nelements);
-    for (int i = 0; i < nelements; i++) {
-      ASSERT(h_ispec_domain(i) ==
-                 boundary_conditions.stacey.acoustic.h_ispec(i),
-             "Error: computing ispec for stacey elements");
-    }
-  } else if constexpr ((boundary_tag ==
-                        specfem::enums::element::boundary_tag::stacey) &&
-                       (medium_tag == specfem::enums::element::type::elastic)) {
-    ASSERT(nelements == boundary_conditions.stacey.elastic.nelements,
-           "nelements = " << nelements << " nelements = "
-                          << boundary_conditions.stacey.elastic.nelements);
-    for (int i = 0; i < nelements; i++) {
-      ASSERT(h_ispec_domain(i) == boundary_conditions.stacey.elastic.h_ispec(i),
-             "Error: computing ispec for stacey elements");
-    }
-  }
-
-  // assert that boundary_conditions ispec matches with calculated ispec
-  if constexpr ((boundary_tag == specfem::enums::element::boundary_tag::
-                                     composite_stacey_dirichlet) &&
-                (medium_tag == specfem::enums::element::type::acoustic)) {
-    ASSERT(nelements ==
-               boundary_conditions.composite_stacey_dirichlet.nelements,
-           "nelements = "
-               << nelements << " nelements = "
-               << boundary_conditions.composite_stacey_dirichlet.nelements);
-    for (int i = 0; i < nelements; i++) {
-      ASSERT(h_ispec_domain(i) ==
-                 boundary_conditions.composite_stacey_dirichlet.h_ispec(i),
-             "Error: computing ispec for stacey dirichlet elements");
-    }
-  }
-
-  // Copy ispec_domain to device
-  Kokkos::deep_copy(ispec_domain, h_ispec_domain);
-
-  std::cout << "  - Element type: \n"
-            << "    - dimension           : "
-            << specfem::enums::element::dimension::dim2::to_string() << "\n"
-            << "    - property            : " << property::to_string() << "\n"
-            << "    - Boundary Conditions : " << BC::to_string() << "\n"
-            << "    - Number of elements  : " << nelements << "\n\n";
 
   // Create isotropic acoustic surface elements
-  elements = specfem::domain::impl::kernels::element_kernel<medium, qp_type,
-                                                            property, BC>(
-      ibool, ispec_domain, partial_derivatives, properties, boundary_conditions,
-      quadx, quadz, quadrature_points, field, field_dot, field_dot_dot,
-      mass_matrix);
+  elements = { assembly, h_ispec_domain };
 }
 
-template <class medium, class qp_type>
+template <specfem::wavefield::type WavefieldType,
+          specfem::dimension::type DimensionType,
+          specfem::element::medium_tag medium_tag,
+          specfem::element::property_tag property_tag, typename qp_type>
 void allocate_isotropic_sources(
-    const specfem::kokkos::DeviceView3d<int> ibool,
-    const specfem::compute::properties &properties,
-    const specfem::compute::sources &sources, qp_type quadrature_points,
-    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot_dot,
-    specfem::domain::impl::kernels::source_kernel<
-        medium, qp_type, specfem::enums::element::property::isotropic>
-        &isotropic_sources) {
+    const specfem::compute::assembly &assembly, qp_type quadrature_points,
+    specfem::domain::impl::kernels::source_kernel<WavefieldType, DimensionType,
+                                                  medium_tag, property_tag,
+                                                  qp_type> &isotropic_sources) {
 
-  const auto value = medium::value;
+  const auto &sources = assembly.sources;
+  const int nsources = sources.nsources;
 
-  // Create isotropic sources
-
-  const auto ispec_array = sources.h_ispec_array;
-  int nsources = 0;
-  for (int isource = 0; isource < ispec_array.extent(0); isource++) {
-    if (properties.h_ispec_type(ispec_array(isource)) == value) {
-      nsources++;
+  int nsources_in_this_domain = 0;
+  for (int isource = 0; isource < sources.nsources; isource++) {
+    if ((sources.source_medium_mapping(isource) == medium_tag) &&
+        (sources.source_wavefield_mapping(isource) == WavefieldType)) {
+      nsources_in_this_domain++;
     }
   }
 
-  specfem::kokkos::DeviceView1d<int> ispec_sources(
-      "specfem::domain::domain::ispec_sources", nsources);
-
-  specfem::kokkos::HostMirror1d<int> h_ispec_sources =
-      Kokkos::create_mirror_view(ispec_sources);
-
-  specfem::kokkos::DeviceView1d<int> isource_array(
-      "specfem::domain::domain::isource_array", nsources);
-
-  specfem::kokkos::HostMirror1d<int> h_isource_array =
-      Kokkos::create_mirror_view(isource_array);
+  // Save the index for sources in this domain
+  specfem::kokkos::HostView1d<int> h_source_domain_index_mapping(
+      "specfem::domain::domain::h_source_domain_index_mapping",
+      nsources_in_this_domain);
 
   int index = 0;
-  for (int isource = 0; isource < ispec_array.extent(0); isource++) {
-    if (properties.h_ispec_type(ispec_array(isource)) == value) {
-      h_ispec_sources(index) = ispec_array(isource);
-      h_isource_array(index) = isource;
+  for (int isource = 0; isource < nsources; isource++) {
+    const int isources_domain = sources.source_domain_index_mapping(isource);
+    if (sources.source_medium_mapping(isource) == medium_tag &&
+        sources.source_wavefield_mapping(isource) == WavefieldType) {
+      h_source_domain_index_mapping(index) =
+          sources.source_domain_index_mapping(isource);
       index++;
     }
   }
 
-  Kokkos::deep_copy(ispec_sources, h_ispec_sources);
-  Kokkos::deep_copy(isource_array, h_isource_array);
-
+  // Allocate isotropic sources
   isotropic_sources = specfem::domain::impl::kernels::source_kernel<
-      medium, qp_type, specfem::enums::element::property::isotropic>(
-      ibool, ispec_sources, isource_array, properties, sources,
-      quadrature_points, field_dot_dot);
+      WavefieldType, DimensionType, medium_tag, property_tag, qp_type>(
+      assembly, h_source_domain_index_mapping, quadrature_points);
 
   return;
 }
 
-template <class medium, class qp_type>
+template <specfem::wavefield::type WavefieldType,
+          specfem::dimension::type DimensionType,
+          specfem::element::medium_tag medium_tag,
+          specfem::element::property_tag property_tag, typename qp_type>
 void allocate_isotropic_receivers(
-    const specfem::kokkos::DeviceView3d<int> ibool,
-    const specfem::compute::partial_derivatives &partial_derivatives,
-    const specfem::compute::properties &properties,
-    const specfem::compute::receivers &receivers,
-    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field,
-    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot,
-    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot_dot,
-    specfem::quadrature::quadrature *quadx,
-    specfem::quadrature::quadrature *quadz, qp_type quadrature_points,
+    const specfem::compute::assembly &assembly, qp_type quadrature_points,
     specfem::domain::impl::kernels::receiver_kernel<
-        medium, qp_type, specfem::enums::element::property::isotropic>
+        WavefieldType, DimensionType, medium_tag, property_tag, qp_type>
         &isotropic_receivers) {
 
-  const auto value = medium::value;
+  const auto value = medium_tag;
 
-  // Create isotropic receivers
+  // Create isotropic sources
+  const auto ispec_array = assembly.receivers.h_ispec_array;
 
-  const auto ispec_array = receivers.h_ispec_array;
+  // Count the number of sources within this medium
   int nreceivers = 0;
   for (int ireceiver = 0; ireceiver < ispec_array.extent(0); ireceiver++) {
-    if (properties.h_ispec_type(ispec_array(ireceiver)) == value) {
+    const int ispec = ispec_array(ireceiver);
+    if (assembly.properties.h_element_types(ispec) == value) {
       nreceivers++;
     }
   }
 
-  specfem::kokkos::DeviceView1d<int> ispec_receivers(
-      "specfem::domain::domain::ispec_receivers", nreceivers);
+  // Save the index for sources in this domain
+  specfem::kokkos::HostView1d<int> h_receiver_kernel_index_mapping(
+      "specfem::domain::domain::receiver_kernel_index_mapping", nreceivers);
 
-  specfem::kokkos::HostMirror1d<int> h_ispec_receivers =
-      Kokkos::create_mirror_view(ispec_receivers);
-
-  specfem::kokkos::DeviceView1d<int> ireceiver_array(
-      "specfem::domain::domain::ireceiver_array", nreceivers);
-
-  specfem::kokkos::HostMirror1d<int> h_ireceiver_array =
-      Kokkos::create_mirror_view(ireceiver_array);
+  specfem::kokkos::HostMirror1d<int> h_receiver_mapping(
+      "specfem::domain::domain::receiver_mapping", nreceivers);
 
   int index = 0;
   for (int ireceiver = 0; ireceiver < ispec_array.extent(0); ireceiver++) {
-    if (properties.h_ispec_type(ispec_array(ireceiver)) == value) {
-      h_ispec_receivers(index) = ispec_array(ireceiver);
-      h_ireceiver_array(index) = ireceiver;
+    const int ispec = ispec_array(ireceiver);
+    if (assembly.properties.h_element_types(ispec) == value) {
+      h_receiver_kernel_index_mapping(index) = ispec_array(ireceiver);
+      h_receiver_mapping(index) = ireceiver;
       index++;
     }
   }
 
-  Kokkos::deep_copy(ispec_receivers, h_ispec_receivers);
-  Kokkos::deep_copy(ireceiver_array, h_ireceiver_array);
-
+  // Allocate isotropic sources
   isotropic_receivers = specfem::domain::impl::kernels::receiver_kernel<
-      medium, qp_type, specfem::enums::element::property::isotropic>(
-      ibool, ispec_receivers, ireceiver_array, partial_derivatives, properties,
-      receivers, field, field_dot, field_dot_dot, quadx, quadz,
+      WavefieldType, DimensionType, medium_tag, property_tag, qp_type>(
+      assembly, h_receiver_kernel_index_mapping, h_receiver_mapping,
       quadrature_points);
 
   return;
 }
 } // namespace
 
-template <class medium, class qp_type>
-specfem::domain::impl::kernels::kernels<medium, qp_type>::kernels(
-    const specfem::kokkos::DeviceView3d<int> ibool,
-    const specfem::compute::partial_derivatives &partial_derivatives,
-    const specfem::compute::properties &properties,
-    const specfem::compute::boundaries &boundary_conditions,
-    const specfem::compute::sources &sources,
-    const specfem::compute::receivers &receivers,
-    specfem::quadrature::quadrature *quadx,
-    specfem::quadrature::quadrature *quadz, qp_type quadrature_points,
-    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field,
-    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot,
-    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot_dot,
-    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> mass_matrix) {
+template <specfem::wavefield::type WavefieldType,
+          specfem::dimension::type DimensionType,
+          specfem::element::medium_tag medium, typename qp_type>
+specfem::domain::impl::kernels::
+    kernels<WavefieldType, DimensionType, medium, qp_type>::kernels(
+        const type_real dt, const specfem::compute::assembly &assembly,
+        const qp_type &quadrature_points) {
 
-  const int nspec = ibool.extent(0);
+  using medium_type = specfem::medium::medium<DimensionType, medium>;
+
+  const int nspec = assembly.mesh.nspec;
   specfem::kokkos::HostView1d<element_tag> element_tags(
       "specfem::domain::domain::element_tag", nspec);
+
   // -----------------------------------------------------------
-  // Start by tagging different elements
-  // -----------------------------------------------------------
-  // creating a context here for memory management
-  {
-    // find medium type for every element
-    specfem::kokkos::HostView1d<specfem::enums::element::type> ielement_type(
-        "specfem::domain::impl::kernels::kernels::ielement_type", nspec);
-
-    for (int ispec = 0; ispec < nspec; ispec++) {
-      ielement_type(ispec) = properties.h_ispec_type(ispec);
-    }
-
-    // at start we consider every element is isotropic
-    specfem::kokkos::HostView1d<specfem::enums::element::property_tag>
-        ielement_property(
-            "specfem::domain::impl::kernels::kernels::ielement_property",
-            nspec);
-
-    for (int ispec = 0; ispec < nspec; ispec++) {
-      ielement_property(ispec) =
-          specfem::enums::element::property_tag::isotropic;
-    }
-
-    // at start we consider every element is not on the boundary
-    specfem::kokkos::HostView1d<specfem::enums::element::boundary_tag_container>
-        ielement_boundary(
-            "specfem::domain::impl::kernels::kernels::ielement_boundary",
-            nspec);
-
-    const auto &stacey = boundary_conditions.stacey;
-    // mark stacey elements
-    if (stacey.nelements > 0) {
-      if (stacey.acoustic.nelements > 0) {
-        for (int i = 0; i < stacey.acoustic.nelements; i++) {
-          const int ispec = stacey.acoustic.h_ispec(i);
-          ielement_boundary(ispec) +=
-              specfem::enums::element::boundary_tag::stacey;
-        }
-      }
-
-      if (stacey.elastic.nelements > 0) {
-        for (int i = 0; i < stacey.elastic.nelements; i++) {
-          const int ispec = stacey.elastic.h_ispec(i);
-          ielement_boundary(ispec) +=
-              specfem::enums::element::boundary_tag::stacey;
-        }
-      }
-    }
-
-    const auto &acoustic_free_surface =
-        boundary_conditions.acoustic_free_surface;
-
-    // mark acoustic free surface elements
-    if (acoustic_free_surface.nelements > 0) {
-      for (int i = 0; i < acoustic_free_surface.nelements; i++) {
-        const int ispec = acoustic_free_surface.h_ispec(i);
-        ielement_boundary(ispec) +=
-            specfem::enums::element::boundary_tag::acoustic_free_surface;
-      }
-    }
-
-    const auto &composite_stacey_dirichlet =
-        boundary_conditions.composite_stacey_dirichlet;
-
-    // mark composite stacey dirichlet elements
-    if (composite_stacey_dirichlet.nelements > 0) {
-      for (int i = 0; i < composite_stacey_dirichlet.nelements; i++) {
-        const int ispec = composite_stacey_dirichlet.h_ispec(i);
-        ielement_boundary(ispec) +=
-            specfem::enums::element::boundary_tag::composite_stacey_dirichlet;
-      }
-    }
-
-    // mark every element type
-    for (int ispec = 0; ispec < nspec; ispec++) {
-      element_tags(ispec) =
-          element_tag(ielement_type(ispec), ielement_property(ispec),
-                      ielement_boundary(ispec));
-    }
+  for (int ispec = 0; ispec < nspec; ispec++) {
+    element_tags(ispec) =
+        element_tag(assembly.properties.h_element_types(ispec),
+                    assembly.properties.h_element_property(ispec),
+                    assembly.boundaries.boundary_tags(ispec));
   }
 
-  std::cout << " Element Statistics \n"
-            << "------------------------------\n"
-            << "- Types of elements in " << medium::to_string()
-            << " medium :\n\n";
+  if constexpr (WavefieldType == specfem::wavefield::type::forward ||
+                WavefieldType == specfem::wavefield::type::adjoint) {
+    std::cout << " Element Statistics \n"
+              << "------------------------------\n"
+              << "- Types of elements in " << medium_type::to_string()
+              << " medium :\n\n";
+  }
 
   // -----------------------------------------------------------
 
   // Allocate isotropic elements with dirichlet boundary conditions
-  allocate_elements(ibool, element_tags, partial_derivatives, properties,
-                    boundary_conditions, quadx, quadz, quadrature_points, field,
-                    field_dot, field_dot_dot, mass_matrix,
-                    isotropic_elements_dirichlet);
+  allocate_elements(assembly, element_tags, isotropic_elements_dirichlet);
 
   // Allocate isotropic elements with stacey boundary conditions
-  allocate_elements(ibool, element_tags, partial_derivatives, properties,
-                    boundary_conditions, quadx, quadz, quadrature_points, field,
-                    field_dot, field_dot_dot, mass_matrix,
-                    isotropic_elements_stacey);
+  allocate_elements(assembly, element_tags, isotropic_elements_stacey);
 
   // Allocate isotropic elements with stacey dirichlet boundary conditions
-  allocate_elements(ibool, element_tags, partial_derivatives, properties,
-                    boundary_conditions, quadx, quadz, quadrature_points, field,
-                    field_dot, field_dot_dot, mass_matrix,
+  allocate_elements(assembly, element_tags,
                     isotropic_elements_stacey_dirichlet);
 
   // Allocate isotropic elements
-
-  allocate_elements(ibool, element_tags, partial_derivatives, properties,
-                    boundary_conditions, quadx, quadz, quadrature_points, field,
-                    field_dot, field_dot_dot, mass_matrix, isotropic_elements);
+  allocate_elements(assembly, element_tags, isotropic_elements);
 
   // Allocate isotropic sources
 
-  allocate_isotropic_sources(ibool, properties, sources, quadrature_points,
-                             field_dot_dot, isotropic_sources);
+  allocate_isotropic_sources(assembly, quadrature_points, isotropic_sources);
 
   // Allocate isotropic receivers
 
-  allocate_isotropic_receivers(
-      ibool, partial_derivatives, properties, receivers, field, field_dot,
-      field_dot_dot, quadx, quadz, quadrature_points, isotropic_receivers);
+  allocate_isotropic_receivers(assembly, quadrature_points,
+                               isotropic_receivers);
+
+  // Compute mass matrices
+
+  this->compute_mass_matrix(dt);
 
   return;
 }
-
-#endif // _DOMAIN_KERNELS_TPP

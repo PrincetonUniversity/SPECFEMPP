@@ -5,6 +5,7 @@
 #include "receiver/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
+#include <string>
 #include <vector>
 
 namespace specfem {
@@ -16,6 +17,9 @@ namespace compute {
  *
  */
 struct receivers {
+  int nreceivers;                         ///< Number of receivers
+  std::vector<std::string> network_names; ///< Network names of the receivers
+  std::vector<std::string> station_names; ///< Station names of the receivers
   specfem::kokkos::DeviceView4d<type_real> receiver_array;   ///< Array to store
                                                              ///< lagrange
                                                              ///< interpolants
@@ -72,24 +76,31 @@ struct receivers {
   specfem::kokkos::HostMirror1d<specfem::enums::seismogram::type>
       h_seismogram_types; ///< Types of seismograms to be calculated stored on
                           ///< the host
-  specfem::kokkos::DeviceView6d<type_real> receiver_field;   ///< Receiver field
-                                                             ///< inside the
-                                                             ///< element where
-                                                             ///< receiver is
-                                                             ///< located stored
-                                                             ///< on the device
-  specfem::kokkos::HostMirror6d<type_real> h_receiver_field; ///< Receiver field
-                                                             ///< inside the
-                                                             ///< element where
-                                                             ///< receiver is
-                                                             ///< located stored
-                                                             ///< on the host
+  Kokkos::View<type_real *****[2], Kokkos::LayoutLeft,
+               specfem::kokkos::DevMemSpace>
+      receiver_field; ///< Receiver field
+                      ///< inside the
+                      ///< element where
+                      ///< receiver is
+                      ///< located stored
+                      ///< on the device
+  Kokkos::View<type_real *****[2], Kokkos::LayoutLeft,
+               specfem::kokkos::DevMemSpace>::HostMirror
+      h_receiver_field; ///< Receiver field
+                        ///< inside the
+                        ///< element where
+                        ///< receiver is
+                        ///< located stored
+                        ///< on the host
 
   /**
    * @brief Default constructor
    *
    */
   receivers(){};
+
+  receivers(const int nreceivers, const int max_sig_step, const int N,
+            const int n_seis_types);
   /**
    * @brief Constructor to allocate and assign views
    *
@@ -99,13 +110,11 @@ struct receivers {
    * @param quadz Quadrature object in z dimension
    * @param mpi Pointer to the MPI object
    */
-  receivers(const std::vector<std::shared_ptr<specfem::receivers::receiver> >
+  receivers(const int max_sig_step,
+            const std::vector<std::shared_ptr<specfem::receivers::receiver> >
                 &receivers,
             const std::vector<specfem::enums::seismogram::type> &stypes,
-            const specfem::quadrature::quadrature *quadx,
-            const specfem::quadrature::quadrature *quadz, const type_real xmax,
-            const type_real xmin, const type_real zmax, const type_real zmin,
-            const int max_sig_step, specfem::MPI::MPI *mpi);
+            const specfem::compute::mesh &mesh);
   /**
    * @brief Sync views within this struct from host to device
    *

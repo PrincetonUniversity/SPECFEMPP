@@ -1,4 +1,4 @@
-#include "fortranio/interface.hpp"
+#include "IO/fortranio/interface.hpp"
 #include "mesh/elements/elements.hpp"
 #include "specfem_mpi/interface.hpp"
 
@@ -22,8 +22,8 @@ specfem::mesh::elements::tangential_elements::tangential_elements(
       this->y(inum) = 0.0;
     }
   } else {
-    this->x(1) = 0.0;
-    this->y(1) = 0.0;
+    this->x(0) = 0.0;
+    this->y(0) = 0.0;
   }
   return;
 }
@@ -34,12 +34,12 @@ specfem::mesh::elements::tangential_elements::tangential_elements(
 
   *this = specfem::mesh::elements::tangential_elements(nnodes_tangential_curve);
 
-  specfem::fortran_IO::fortran_read_line(stream, &this->force_normal_to_surface,
-                                         &this->rec_normal_to_surface);
+  specfem::IO::fortran_read_line(stream, &this->force_normal_to_surface,
+                                 &this->rec_normal_to_surface);
 
   if (nnodes_tangential_curve > 0) {
     for (int inum = 0; inum < nnodes_tangential_curve; inum++) {
-      specfem::fortran_IO::fortran_read_line(stream, &xread, &yread);
+      specfem::IO::fortran_read_line(stream, &xread, &yread);
       this->x(inum) = xread;
       this->y(inum) = yread;
     }

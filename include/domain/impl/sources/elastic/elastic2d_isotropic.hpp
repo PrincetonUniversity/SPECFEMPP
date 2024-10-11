@@ -2,7 +2,7 @@
 #define _DOMAIN_SOURCE_ELASTIC_ISOTROPIC2D_HPP
 
 #include "compute/interface.hpp"
-#include "domain/impl/sources/elastic/elastic2d.hpp"
+// #include "domain/impl/sources/elastic/elastic2d.hpp"
 #include "domain/impl/sources/source.hpp"
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
@@ -20,28 +20,25 @@ namespace sources {
  * @tparam NGLL Number of Gauss-Lobatto-Legendre quadrature points defined at
  * compile time
  */
-template <int NGLL>
+template <int NGLL, bool using_simd>
 class source<
-    specfem::enums::element::dimension::dim2,
-    specfem::enums::element::medium::elastic,
+    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+    specfem::element::property_tag::isotropic,
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
-    specfem::enums::element::property::isotropic> {
+    using_simd> {
 
 public:
   /**
    * @name Typedefs
    */
   ///@{
-  /**
-   * @brief Dimension of the element
-   *
-   */
-  using dimension = specfem::enums::element::dimension::dim2;
-  /**
-   * @brief Medium of the element
-   *
-   */
-  using medium_type = specfem::enums::element::medium::elastic;
+  using dimension =
+      specfem::dimension::dimension<specfem::dimension::type::dim2>;
+  using medium_type =
+      specfem::medium::medium<specfem::dimension::type::dim2,
+                              specfem::element::medium_tag::elastic,
+                              specfem::element::property_tag::isotropic>;
+
   /**
    * @brief Number of Gauss-Lobatto-Legendre quadrature points
    */
@@ -61,14 +58,15 @@ public:
    */
   KOKKOS_FUNCTION source(const source &) = default;
 
-  /**
-   * @brief Construct a new elemental source object
-   *
-   * @param source_array Source array containing pre-computed lagrange
-   * interpolants
-   */
-  KOKKOS_FUNCTION source(const specfem::compute::properties &properties,
-                         specfem::kokkos::DeviceView4d<type_real> source_array);
+  //   /**
+  //    * @brief Construct a new elemental source object
+  //    *
+  //    * @param source_array Source array containing pre-computed lagrange
+  //    * interpolants
+  //    */
+  //   KOKKOS_FUNCTION source(const specfem::compute::properties &properties,
+  //                          specfem::kokkos::DeviceView4d<type_real>
+  //                          source_array);
 
   /**
    * @brief Compute the interaction of the source with the medium computed at
@@ -82,17 +80,12 @@ public:
    * the source
    */
   KOKKOS_INLINE_FUNCTION void compute_interaction(
-      const int &isource, const int &ispec, const int &xz,
-      const type_real &stf_value,
-      specfem::kokkos::array_type<type_real, medium_type::components>
-          &acceleration) const;
-
-private:
-  specfem::kokkos::DeviceView4d<type_real> source_array; ///< Source array
-                                                         ///< containing
-                                                         ///< pre-computed
-                                                         ///< lagrange
-                                                         ///< interpolants
+      const specfem::datatype::ScalarPointViewType<
+          type_real, medium_type::components, using_simd> &stf,
+      const specfem::datatype::ScalarPointViewType<
+          type_real, medium_type::components, using_simd> &lagrange_interpolant,
+      specfem::datatype::ScalarPointViewType<type_real, medium_type::components,
+                                             using_simd> &acceleration) const;
 };
 } // namespace sources
 } // namespace impl

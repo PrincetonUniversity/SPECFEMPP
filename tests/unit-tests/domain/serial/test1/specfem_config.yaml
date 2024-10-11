@@ -8,10 +8,7 @@ parameters:
   simulation-setup:
     ## quadrature setup
     quadrature:
-      alpha: 0.0
-      beta: 0.0
-      ngllx: 5
-      ngllz: 5
+      quadrature-type: GLL4
 
     ## Solver setup
     solver:
@@ -21,6 +18,13 @@ parameters:
           type: Newmark
           dt: 1e-3
           nstep: 1600
+
+    simulation-mode:
+      forward:
+        writer:
+          seismogram:
+            output-format: ascii
+            output-folder: "."
 
   receivers:
     stations-file: "../DATA/STATIONS"
@@ -38,7 +42,3 @@ parameters:
   databases:
     mesh-database: "../../../tests/unit-tests/domain/serial/test1/database.bin"
     source-file: "../../../tests/unit-tests/domain/serial/test1/source.yaml"
-
-  seismogram:
-    seismogram-format: ascii
-    output-folder: "."

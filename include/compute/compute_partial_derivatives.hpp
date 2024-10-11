@@ -4,157 +4,333 @@
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
 #include "macros.hpp"
+#include "point/interface.hpp"
 #include "quadrature/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
-#include <vector>
 
 namespace specfem {
 namespace compute {
 /**
- * @brief Partial derivates matrices required to compute integrals
- *
- * The matrices are stored in (ispec, iz, ix) format
+ * @brief Partial derivatives of the basis functions at every quadrature point
  *
  */
 struct partial_derivatives {
-  specfem::kokkos::DeviceView3d<type_real> xix; ///< inverted partial derivates
-                                                ///< @xix stored on the device
-  specfem::kokkos::HostMirror3d<type_real> h_xix; ///< inverted partial
-                                                  ///< derivates @xix stored on
-                                                  ///< the host
-  specfem::kokkos::DeviceView3d<type_real> xiz; ///< inverted partial derivates
-                                                ///< @xiz stored on the device
-  specfem::kokkos::HostMirror3d<type_real> h_xiz;  ///< inverted partial
-                                                   ///< derivates @xiz stored on
-                                                   ///< the host
-  specfem::kokkos::DeviceView3d<type_real> gammax; ///< inverted partial
-                                                   ///< derivates @gammax
-                                                   ///< stored on device
-  specfem::kokkos::HostMirror3d<type_real> h_gammax; ///< inverted partial
-                                                     ///< derivates @gammax
-                                                     ///< stored on host
-  specfem::kokkos::DeviceView3d<type_real> gammaz;   ///< inverted partial
-                                                     ///< derivates @gammaz
-                                                     ///< stored on device
-  specfem::kokkos::HostMirror3d<type_real> h_gammaz; ///< inverted partial
-                                                     ///< derivates @gammaz
-                                                     ///< stored on host
-  specfem::kokkos::DeviceView3d<type_real> jacobian; ///< Jacobian values stored
-                                                     ///< on device
-  specfem::kokkos::HostMirror3d<type_real> h_jacobian; ///< Jacobian values
-                                                       ///< stored on host
+
+private:
+  using ViewType =
+      typename Kokkos::View<type_real ***, Kokkos::LayoutLeft,
+                            Kokkos::DefaultExecutionSpace>; ///< Underlying view
+                                                            ///< type used to
+                                                            ///< store data
+
+public:
+  int nspec; ///< Number of spectral elements
+  int ngllz; ///< Number of quadrature points in z direction
+  int ngllx; ///< Number of quadrature points in x direction
+
+  ViewType xix;                    ///< @xix
+  ViewType::HostMirror h_xix;      ///< Host mirror of @xix
+  ViewType xiz;                    ///< @xiz
+  ViewType::HostMirror h_xiz;      ///< Host mirror of @xiz
+  ViewType gammax;                 ///< @gammax
+  ViewType::HostMirror h_gammax;   ///< Host mirror of @gammax
+  ViewType gammaz;                 ///< @gammaz
+  ViewType::HostMirror h_gammaz;   ///< Host mirror of @gammaz
+  ViewType jacobian;               ///< Jacobian
+  ViewType::HostMirror h_jacobian; ///< Host mirror of Jacobian
+
+  /**
+   * @name Constructors
+   *
+   */
+  ///@{
   /**
    * @brief Default constructor
    *
    */
-  partial_derivatives(){};
-  /**
-   * @brief Constructor to allocate views
-   *
-   * @param nspec Number of spectral elements
-   * @param ngllz Number of quadrature points in z direction
-   * @param ngllx Number of quadrature points in x direction
-   */
+  partial_derivatives() = default;
+
   partial_derivatives(const int nspec, const int ngllz, const int ngllx);
   /**
-   * @brief Constructor to allocate and assign views
+   * @brief Construct a new partial derivatives object from mesh information
    *
-   * @param coorg (x,z) for every spectral element control node
-   * @param knods Global control element number for every control node
-   * @param quadx Quadrature object in x dimension
-   * @param quadz Quadrature object in z dimension
+   * @param mesh Mesh information
    */
-  partial_derivatives(const specfem::kokkos::HostView2d<type_real> coorg,
-                      const specfem::kokkos::HostView2d<int> knods,
-                      const specfem::quadrature::quadrature *quadx,
-                      const specfem::quadrature::quadrature *quadz);
-  /**
-   * @brief Helper routine to sync views within this struct
-   *
-   */
+  partial_derivatives(const specfem::compute::mesh &mesh);
+  ///@}
+
   void sync_views();
 };
 
 /**
- * @brief Struct to store the partial derivatives of the element at a given
- * quadrature point
+ * @defgroup ComputePartialDerivativesDataAccess
+ *
+ * @brief Functions to load and store partial derivatives at a given quadrature
+ * point
  *
  */
-struct element_partial_derivatives {
-  type_real xix;
-  type_real gammax;
-  type_real xiz;
-  type_real gammaz;
-  type_real jacobian;
 
-  KOKKOS_FUNCTION
-  element_partial_derivatives() = default;
+template <typename PointPartialDerivativesType,
+          typename std::enable_if_t<
+              PointPartialDerivativesType::simd::using_simd, int> = 0>
+KOKKOS_FORCEINLINE_FUNCTION void impl_load_on_device(
+    const specfem::point::simd_index<PointPartialDerivativesType::dimension>
+        &index,
+    const specfem::compute::partial_derivatives &derivatives,
+    PointPartialDerivativesType &partial_derivatives) {
 
-  KOKKOS_FUNCTION
-  element_partial_derivatives(const type_real &xix, const type_real &gammax,
-                              const type_real &xiz, const type_real &gammaz)
-      : xix(xix), gammax(gammax), xiz(xiz), gammaz(gammaz) {}
+  const int ispec = index.ispec;
+  const int nspec = derivatives.nspec;
+  const int iz = index.iz;
+  const int ix = index.ix;
 
-  KOKKOS_FUNCTION
-  element_partial_derivatives(const type_real &xix, const type_real &gammax,
-                              const type_real &xiz, const type_real &gammaz,
-                              const type_real &jacobian)
-      : xix(xix), gammax(gammax), xiz(xiz), gammaz(gammaz), jacobian(jacobian) {
+  using simd = typename PointPartialDerivativesType::simd;
+  using mask_type = typename simd::mask_type;
+  using tag_type = typename simd::tag_type;
+
+  constexpr static bool StoreJacobian =
+      PointPartialDerivativesType::store_jacobian;
+
+  mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+
+  Kokkos::Experimental::where(mask, partial_derivatives.xix)
+      .copy_from(&derivatives.xix(ispec, iz, ix), tag_type());
+  Kokkos::Experimental::where(mask, partial_derivatives.gammax)
+      .copy_from(&derivatives.gammax(ispec, iz, ix), tag_type());
+  Kokkos::Experimental::where(mask, partial_derivatives.xiz)
+      .copy_from(&derivatives.xiz(ispec, iz, ix), tag_type());
+  Kokkos::Experimental::where(mask, partial_derivatives.gammaz)
+      .copy_from(&derivatives.gammaz(ispec, iz, ix), tag_type());
+  if constexpr (StoreJacobian) {
+    Kokkos::Experimental::where(mask, partial_derivatives.jacobian)
+        .copy_from(&derivatives.jacobian(ispec, iz, ix), tag_type());
   }
+}
 
-  // KOKKOS_FUNCTION specfem::kokkos::array_type<type_real, 2>
-  // specfem::compute::element_partial_derivatives::compute_normal(
-  //     const specfem::enums::boundaries::type type) const;
+template <typename PointPartialDerivativesType,
+          typename std::enable_if_t<
+              !PointPartialDerivativesType::simd::using_simd, int> = 0>
+KOKKOS_FORCEINLINE_FUNCTION void impl_load_on_device(
+    const specfem::point::index<PointPartialDerivativesType::dimension> &index,
+    const specfem::compute::partial_derivatives &derivatives,
+    PointPartialDerivativesType &partial_derivatives) {
 
-  template <specfem::enums::boundaries::type type>
-  KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, 2>
-  compute_normal() const {
-    ASSERT(false, "Invalid boundary type");
-    return specfem::kokkos::array_type<type_real, 2>();
-  };
-};
+  const int ispec = index.ispec;
+  const int iz = index.iz;
+  const int ix = index.ix;
+
+  constexpr static bool StoreJacobian =
+      PointPartialDerivativesType::store_jacobian;
+
+  partial_derivatives.xix = derivatives.xix(ispec, iz, ix);
+  partial_derivatives.gammax = derivatives.gammax(ispec, iz, ix);
+  partial_derivatives.xiz = derivatives.xiz(ispec, iz, ix);
+  partial_derivatives.gammaz = derivatives.gammaz(ispec, iz, ix);
+  if constexpr (StoreJacobian) {
+    partial_derivatives.jacobian = derivatives.jacobian(ispec, iz, ix);
+  }
+}
+
+template <typename PointPointPartialDerivativesType,
+          typename std::enable_if_t<
+              PointPointPartialDerivativesType::simd::using_simd, int> = 0>
+inline void
+impl_load_on_host(const specfem::point::simd_index<
+                      PointPointPartialDerivativesType::dimension> &index,
+                  const specfem::compute::partial_derivatives &derivatives,
+                  PointPointPartialDerivativesType &partial_derivatives) {
+
+  const int ispec = index.ispec;
+  const int nspec = derivatives.nspec;
+  const int iz = index.iz;
+  const int ix = index.ix;
+
+  constexpr static bool StoreJacobian =
+      PointPointPartialDerivativesType::store_jacobian;
+
+  using simd = typename PointPointPartialDerivativesType::simd;
+  using mask_type = typename simd::mask_type;
+  using tag_type = typename simd::tag_type;
+
+  mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+
+  Kokkos::Experimental::where(mask, partial_derivatives.xix)
+      .copy_from(&derivatives.h_xix(ispec, iz, ix), tag_type());
+  Kokkos::Experimental::where(mask, partial_derivatives.gammax)
+      .copy_from(&derivatives.h_gammax(ispec, iz, ix), tag_type());
+  Kokkos::Experimental::where(mask, partial_derivatives.xiz)
+      .copy_from(&derivatives.h_xiz(ispec, iz, ix), tag_type());
+  Kokkos::Experimental::where(mask, partial_derivatives.gammaz)
+      .copy_from(&derivatives.h_gammaz(ispec, iz, ix), tag_type());
+  if constexpr (StoreJacobian) {
+    Kokkos::Experimental::where(mask, partial_derivatives.jacobian)
+        .copy_from(&derivatives.h_jacobian(ispec, iz, ix), tag_type());
+  }
+}
+
+template <typename PointPartialDerivativesType,
+          typename std::enable_if_t<
+              !PointPartialDerivativesType::simd::using_simd, int> = 0>
+inline void impl_load_on_host(
+    const specfem::point::index<PointPartialDerivativesType::dimension> &index,
+    const specfem::compute::partial_derivatives &derivatives,
+    PointPartialDerivativesType &partial_derivatives) {
+
+  const int ispec = index.ispec;
+  const int iz = index.iz;
+  const int ix = index.ix;
+
+  constexpr static bool StoreJacobian =
+      PointPartialDerivativesType::store_jacobian;
+
+  partial_derivatives.xix = derivatives.h_xix(ispec, iz, ix);
+  partial_derivatives.gammax = derivatives.h_gammax(ispec, iz, ix);
+  partial_derivatives.xiz = derivatives.h_xiz(ispec, iz, ix);
+  partial_derivatives.gammaz = derivatives.h_gammaz(ispec, iz, ix);
+  if constexpr (StoreJacobian) {
+    partial_derivatives.jacobian = derivatives.h_jacobian(ispec, iz, ix);
+  }
+}
+
+template <typename PointPartialDerivativesType,
+          typename std::enable_if_t<
+              PointPartialDerivativesType::simd::using_simd, int> = 0>
+inline void impl_store_on_host(
+    const specfem::point::simd_index<PointPartialDerivativesType::dimension>
+        &index,
+    const specfem::compute::partial_derivatives &derivatives,
+    const PointPartialDerivativesType &partial_derivatives) {
+
+  const int ispec = index.ispec;
+  const int nspec = derivatives.nspec;
+  const int iz = index.iz;
+  const int ix = index.ix;
+
+  constexpr static bool StoreJacobian =
+      PointPartialDerivativesType::store_jacobian;
+
+  using simd = typename PointPartialDerivativesType::simd;
+  using mask_type = typename simd::mask_type;
+  using tag_type = typename simd::tag_type;
+
+  mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+
+  Kokkos::Experimental::where(mask, partial_derivatives.xix)
+      .copy_to(&derivatives.h_xix(ispec, iz, ix), tag_type());
+  Kokkos::Experimental::where(mask, partial_derivatives.gammax)
+      .copy_to(&derivatives.h_gammax(ispec, iz, ix), tag_type());
+  Kokkos::Experimental::where(mask, partial_derivatives.xiz)
+      .copy_to(&derivatives.h_xiz(ispec, iz, ix), tag_type());
+  Kokkos::Experimental::where(mask, partial_derivatives.gammaz)
+      .copy_to(&derivatives.h_gammaz(ispec, iz, ix), tag_type());
+  if constexpr (StoreJacobian) {
+    Kokkos::Experimental::where(mask, partial_derivatives.jacobian)
+        .copy_to(&derivatives.h_jacobian(ispec, iz, ix), tag_type());
+  }
+}
+
+template <typename PointPartialDerivativesType,
+          typename std::enable_if_t<
+              !PointPartialDerivativesType::simd::using_simd, int> = 0>
+inline void impl_store_on_host(
+    const specfem::point::index<PointPartialDerivativesType::dimension> &index,
+    const specfem::compute::partial_derivatives &derivatives,
+    const PointPartialDerivativesType &partial_derivatives) {
+
+  const int ispec = index.ispec;
+  const int iz = index.iz;
+  const int ix = index.ix;
+
+  constexpr static bool StoreJacobian =
+      PointPartialDerivativesType::store_jacobian;
+
+  derivatives.h_xix(ispec, iz, ix) = partial_derivatives.xix;
+  derivatives.h_gammax(ispec, iz, ix) = partial_derivatives.gammax;
+  derivatives.h_xiz(ispec, iz, ix) = partial_derivatives.xiz;
+  derivatives.h_gammaz(ispec, iz, ix) = partial_derivatives.gammaz;
+  if constexpr (StoreJacobian) {
+    derivatives.h_jacobian(ispec, iz, ix) = partial_derivatives.jacobian;
+  }
+}
+
+/**
+ * @brief Load the partial derivatives at a given quadrature point on the device
+ *
+ * @ingroup ComputePartialDerivativesDataAccess
+ *
+ * @tparam PointPartialDerivativesType Point partial derivatives type. Needs to
+ * be of @ref specfem::point::partial_derivatives
+ * @tparam IndexType Index type. Needs to be of @ref specfem::point::index or
+ * @ref specfem::point::simd_index
+ * @param index Index of the quadrature point
+ * @param derivatives Partial derivatives container
+ * @param partial_derivatives Partial derivatives at the given quadrature point
+ */
+template <
+    typename PointPartialDerivativesType, typename IndexType,
+    typename std::enable_if_t<IndexType::using_simd ==
+                                  PointPartialDerivativesType::simd::using_simd,
+                              int> = 0>
+KOKKOS_FORCEINLINE_FUNCTION void
+load_on_device(const IndexType &index,
+               const specfem::compute::partial_derivatives &derivatives,
+               PointPartialDerivativesType &partial_derivatives) {
+  impl_load_on_device(index, derivatives, partial_derivatives);
+}
+
+/**
+ * @brief Store the partial derivatives at a given quadrature point on the
+ * device
+ *
+ * @ingroup ComputePartialDerivativesDataAccess
+ *
+ * @tparam PointPartialDerivativesType Point partial derivatives type. Needs to
+ * be of @ref specfem::point::partial_derivatives
+ * @tparam IndexType Index type. Needs to be of @ref specfem::point::index or
+ * @ref specfem::point::simd_index
+ * @param index Index of the quadrature point
+ * @param derivatives Partial derivatives container
+ * @param partial_derivatives Partial derivatives at the given quadrature point
+ */
+template <
+    typename PointPartialDerivativesType, typename IndexType,
+    typename std::enable_if_t<IndexType::using_simd ==
+                                  PointPartialDerivativesType::simd::using_simd,
+                              int> = 0>
+inline void
+load_on_host(const IndexType &index,
+             const specfem::compute::partial_derivatives &derivatives,
+             PointPartialDerivativesType &partial_derivatives) {
+  impl_load_on_host(index, derivatives, partial_derivatives);
+}
+
+/**
+ * @brief Store the partial derivatives at a given quadrature point on the
+ * device
+ *
+ * @ingroup ComputePartialDerivativesDataAccess
+ *
+ * @tparam PointPartialDerivativesType Point partial derivatives type. Needs to
+ * be of @ref specfem::point::partial_derivatives
+ * @tparam IndexType Index type. Needs to be of @ref specfem::point::index or
+ * @ref specfem::point::simd_index
+ * @param index Index of the quadrature point
+ * @param derivatives Partial derivatives container
+ * @param partial_derivatives Partial derivatives at the given quadrature point
+ */
+template <
+    typename PointPartialDerivativesType, typename IndexType,
+    typename std::enable_if_t<IndexType::using_simd ==
+                                  PointPartialDerivativesType::simd::using_simd,
+                              int> = 0>
+inline void
+store_on_host(const IndexType &index,
+              const specfem::compute::partial_derivatives &derivatives,
+              const PointPartialDerivativesType &partial_derivatives) {
+  impl_store_on_host(index, derivatives, partial_derivatives);
+}
 } // namespace compute
 } // namespace specfem
-
-template <>
-KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, 2>
-specfem::compute::element_partial_derivatives::compute_normal<
-    specfem::enums::boundaries::type::BOTTOM>() const {
-  specfem::kokkos::array_type<type_real, 2> dn;
-  dn[0] = -1.0 * this->gammax * this->jacobian;
-  dn[1] = -1.0 * this->gammaz * this->jacobian;
-  return dn;
-};
-
-template <>
-KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, 2>
-specfem::compute::element_partial_derivatives::compute_normal<
-    specfem::enums::boundaries::type::TOP>() const {
-  specfem::kokkos::array_type<type_real, 2> dn;
-  dn[0] = this->gammax * this->jacobian;
-  dn[1] = this->gammaz * this->jacobian;
-  return dn;
-};
-
-template <>
-KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, 2>
-specfem::compute::element_partial_derivatives::compute_normal<
-    specfem::enums::boundaries::type::LEFT>() const {
-  specfem::kokkos::array_type<type_real, 2> dn;
-  dn[0] = -1.0 * this->xix * this->jacobian;
-  dn[1] = -1.0 * this->xiz * this->jacobian;
-  return dn;
-};
-
-template <>
-KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, 2>
-specfem::compute::element_partial_derivatives::compute_normal<
-    specfem::enums::boundaries::type::RIGHT>() const {
-  specfem::kokkos::array_type<type_real, 2> dn;
-  dn[0] = this->xix * this->jacobian;
-  dn[1] = this->xiz * this->jacobian;
-  return dn;
-};
 
 #endif

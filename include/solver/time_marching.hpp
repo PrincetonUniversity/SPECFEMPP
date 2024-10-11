@@ -1,83 +1,119 @@
-#ifndef _TIME_MARCHING_HPP
-#define _TIME_MARCHING_HPP
+#pragma once
 
-#include "coupled_interface/interface.hpp"
-#include "domain/interface.hpp"
-#include "enumerations/interface.hpp"
+#include "coupled_interface/coupled_interface.hpp"
+#include "enumerations/dimension.hpp"
+#include "enumerations/simulation.hpp"
+#include "enumerations/wavefield.hpp"
+#include "kernels/frechet_kernels.hpp"
+#include "kernels/kernels.hpp"
 #include "solver.hpp"
-#include "timescheme/interface.hpp"
+#include "timescheme/newmark.hpp"
 
 namespace specfem {
 namespace solver {
 /**
- * @brief Time marching solver class
+ * @brief Time marching solver
  *
- * Implements a forward time marching scheme given a time scheme and domains.
- * Currently only acoustic and elastic domains are supported.
- *
- * @tparam qp_type Type defining number of quadrature points either at compile
- * time or run time
+ * @tparam Simulation Type of the simulation (forward or combined)
+ * @tparam DimensionType Dimension of the simulation (2D or 3D)
+ * @tparam qp_type Quadrature points type defining compile time or runtime
+ * quadrature points
  */
-template <typename qp_type>
-class time_marching : public specfem::solver::solver {
+template <specfem::simulation::type Simulation,
+          specfem::dimension::type DimensionType, typename qp_type>
+class time_marching;
 
+/**
+ * @brief Time marching solver for forward simulation
+ */
+template <specfem::dimension::type DimensionType, typename qp_type>
+class time_marching<specfem::simulation::type::forward, DimensionType, qp_type>
+    : public solver {
 public:
   /**
-   * @brief Construct a new time marching solver object
+   * @name Constructors
    *
-   * @param acoustic_domain domain object template specialized for acoustic
-   * media
-   * @param elastic_domain domain object template specialized for elastic media
-   * @param it Pointer to time scheme object (it stands for iterator)
+   */
+  ///@{
+
+  /**
+   * @brief Construct a new time marching solver
+   *
+   * @param kernels Computational kernels
+   * @param time_scheme Time scheme
    */
   time_marching(
-      specfem::domain::domain<specfem::enums::element::medium::acoustic,
-                              qp_type> &acoustic_domain,
-      specfem::domain::domain<specfem::enums::element::medium::elastic, qp_type>
-          &elastic_domain,
-      specfem::coupled_interface::coupled_interface<
-          specfem::domain::domain<specfem::enums::element::medium::acoustic,
-                                  qp_type>,
-          specfem::domain::domain<specfem::enums::element::medium::elastic,
-                                  qp_type> > &acoustic_elastic_interface,
-      specfem::coupled_interface::coupled_interface<
-          specfem::domain::domain<specfem::enums::element::medium::elastic,
-                                  qp_type>,
-          specfem::domain::domain<specfem::enums::element::medium::acoustic,
-                                  qp_type> > &elastic_acoustic_interface,
-      std::shared_ptr<specfem::TimeScheme::TimeScheme> it)
-      : acoustic_domain(acoustic_domain), elastic_domain(elastic_domain),
-        acoustic_elastic_interface(acoustic_elastic_interface),
-        elastic_acoustic_interface(elastic_acoustic_interface), it(it){};
+      const specfem::kernels::kernels<specfem::wavefield::type::forward,
+                                      DimensionType, qp_type> &kernels,
+      const std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme)
+      : kernels(kernels), time_scheme(time_scheme) {}
+
+  ///@}
+
   /**
-   * @brief Run time-marching solver algorithm
-   *
+   * @brief Run the time marching solver
    */
   void run() override;
 
 private:
-  specfem::domain::domain<specfem::enums::element::medium::acoustic, qp_type>
-      acoustic_domain; ///< Acoustic domain
-  specfem::domain::domain<specfem::enums::element::medium::elastic, qp_type>
-      elastic_domain; ///< Acoustic domain
-  specfem::coupled_interface::coupled_interface<
-      specfem::domain::domain<specfem::enums::element::medium::acoustic,
-                              qp_type>,
-      specfem::domain::domain<specfem::enums::element::medium::elastic,
-                              qp_type> >
-      acoustic_elastic_interface; /// Acoustic elastic interface
-  specfem::coupled_interface::coupled_interface<
-      specfem::domain::domain<specfem::enums::element::medium::elastic,
-                              qp_type>,
-      specfem::domain::domain<specfem::enums::element::medium::acoustic,
-                              qp_type> >
-      elastic_acoustic_interface; /// Elastic acoustic interface
-  std::shared_ptr<specfem::TimeScheme::TimeScheme>
-      it; ///< Pointer to
-          ///< spectem::TimeScheme::TimeScheme
-          ///< class
+  specfem::kernels::kernels<specfem::wavefield::type::forward, DimensionType,
+                            qp_type>
+      kernels; ///< Computational kernels
+  std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme; ///< Time
+                                                                  ///< scheme
+};
+
+/**
+ * @brief Time marching solver for combined adjoint and backward simulations
+ */
+template <specfem::dimension::type DimensionType, typename qp_type>
+class time_marching<specfem::simulation::type::combined, DimensionType, qp_type>
+    : public solver {
+public:
+  /**
+   * @name Constructors
+   *
+   */
+  ///@{
+
+  /**
+   * @brief Construct a new time marching solver
+   *
+   * @param assembly Spectral element assembly object
+   * @param adjoint_kernels Adjoint computational kernels
+   * @param backward_kernels Backward computational kernels
+   * @param time_scheme Time scheme
+   */
+  time_marching(
+      const specfem::compute::assembly &assembly,
+      const specfem::kernels::kernels<specfem::wavefield::type::adjoint,
+                                      DimensionType, qp_type> &adjoint_kernels,
+      const specfem::kernels::kernels<specfem::wavefield::type::backward,
+                                      DimensionType, qp_type> &backward_kernels,
+      const std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme)
+      : assembly(assembly), adjoint_kernels(adjoint_kernels),
+        frechet_kernels(assembly), backward_kernels(backward_kernels),
+        time_scheme(time_scheme) {}
+  ///@}
+
+  /**
+   * @brief Run the time marching solver
+   */
+  void run() override;
+
+private:
+  constexpr static int NGLL = qp_type::NGLL;
+  specfem::kernels::kernels<specfem::wavefield::type::adjoint, DimensionType,
+                            qp_type>
+      adjoint_kernels; ///< Adjoint computational kernels
+  specfem::kernels::kernels<specfem::wavefield::type::backward, DimensionType,
+                            qp_type>
+      backward_kernels; ///< Backward computational kernels
+  specfem::kernels::frechet_kernels<DimensionType, NGLL>
+      frechet_kernels;                 ///< Misfit kernels
+  specfem::compute::assembly assembly; ///< Spectral element assembly object
+  std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme; ///< Time
+                                                                  ///< scheme
 };
 } // namespace solver
 } // namespace specfem
-
-#endif

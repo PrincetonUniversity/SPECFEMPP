@@ -39,9 +39,9 @@ Receivers section defines receiver information required to calculate seismograms
 
 **default value** : None
 
-**possible values** : [List of string]
+**possible values** : [YAML list]
 
-**documentation** : Type of seismograms to be written. The types can be any of displacement, velocity and acceleration. For example, the snippet below will instantiate a writer for to output displacement and velocity seismogram at every station.
+**documentation** : Type of seismograms to be written.
 
 .. code:: yaml
 
@@ -57,3 +57,15 @@ Receivers section defines receiver information required to calculate seismograms
 **possible values** : [int]
 
 **documentation** : Number of time steps between sampling the wavefield at station locations for writing seismogram.
+
+.. admoniiton:: Example receivers section
+
+    .. code:: yaml
+
+        receivers:
+            stations-file: /path/to/stations_file
+            angle: 0.0
+            seismogram-type:
+                - velocity
+                - displacement
+            nstep_between_samples: 1

@@ -1,8 +1,7 @@
 #include "../../Kokkos_Environment.hpp"
 #include "../../MPI_environment.hpp"
-#include "../../utilities/include/compare_array.h"
+#include "../../utilities/include/interface.hpp"
 #include "compute/interface.hpp"
-#include "material/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "quadrature/interface.hpp"
 #include "yaml-cpp/yaml.h"
@@ -72,41 +71,91 @@ TEST(COMPUTE_TESTS, compute_partial_derivatives) {
   test_config test_config = get_test_config(config_filename, mpi);
 
   // Set up GLL quadrature points
-  specfem::quadrature::quadrature *gllx =
-      new specfem::quadrature::gll::gll(0.0, 0.0, 5);
-  specfem::quadrature::quadrature *gllz =
-      new specfem::quadrature::gll::gll(0.0, 0.0, 5);
-  std::vector<std::shared_ptr<specfem::material::material> > materials;
+  specfem::quadrature::gll::gll gll(0.0, 0.0, 5);
+  specfem::quadrature::quadratures quadratures(gll);
 
-  specfem::mesh::mesh mesh(test_config.database_filename, materials, mpi);
+  specfem::mesh::mesh mesh(test_config.database_filename, mpi);
 
-  specfem::compute::partial_derivatives partial_derivatives(
-      mesh.coorg, mesh.material_ind.knods, gllx, gllz);
+  specfem::compute::mesh compute_mesh(mesh.tags, mesh.control_nodes,
+                                      quadratures);
+  specfem::compute::partial_derivatives partial_derivatives(compute_mesh);
 
-  specfem::kokkos::HostView3d<type_real> h_xix = partial_derivatives.h_xix;
-  EXPECT_NO_THROW(specfem::testing::test_array(
-      h_xix, test_config.xix_file, mesh.nspec, gllz->get_N(), gllx->get_N()));
-  // EXPECT_NO_THROW(specfem::testing::test_array(
-  //     partial_derivatives.xiz, test_config.xiz_file, mesh.nspec,
-  //     gllz.get_N(), gllx.get_N()));
+  const int nspec = compute_mesh.control_nodes.nspec;
+  const int ngllz = compute_mesh.quadratures.gll.N;
+  const int ngllx = compute_mesh.quadratures.gll.N;
 
-  specfem::kokkos::HostView3d<type_real> h_gammax =
-      partial_derivatives.h_gammax;
-  EXPECT_NO_THROW(
-      specfem::testing::test_array(h_gammax, test_config.gammax_file,
-                                   mesh.nspec, gllz->get_N(), gllx->get_N()));
+  specfem::testing::array3d<type_real, Kokkos::LayoutRight> xix_ref(
+      test_config.xix_file, nspec, ngllz, ngllx);
+  specfem::testing::array3d<type_real, Kokkos::LayoutRight> gammax_ref(
+      test_config.gammax_file, nspec, ngllz, ngllx);
+  specfem::testing::array3d<type_real, Kokkos::LayoutRight> gammaz_ref(
+      test_config.gammaz_file, nspec, ngllz, ngllx);
+  specfem::testing::array3d<type_real, Kokkos::LayoutRight> jacobian_ref(
+      test_config.jacobian_file, nspec, ngllz, ngllx);
 
-  specfem::kokkos::HostView3d<type_real> h_gammaz =
-      partial_derivatives.h_gammaz;
-  EXPECT_NO_THROW(
-      specfem::testing::test_array(h_gammaz, test_config.gammaz_file,
-                                   mesh.nspec, gllz->get_N(), gllx->get_N()));
+  for (int ix = 0; ix < ngllx; ++ix) {
+    for (int iz = 0; iz < ngllz; ++iz) {
+      for (int ispec = 0; ispec < nspec; ++ispec) {
+        const specfem::point::index<specfem::dimension::type::dim2> index(
+            ispec, iz, ix);
+        const auto point_partial_derivatives = [&]() {
+          specfem::point::partial_derivatives<specfem::dimension::type::dim2,
+                                              true, false>
+              point_partial_derivatives;
+          specfem::compute::load_on_host(index, partial_derivatives,
+                                         point_partial_derivatives);
+          return point_partial_derivatives;
+        }();
+        const int ispec_mesh = compute_mesh.mapping.compute_to_mesh(ispec);
 
-  specfem::kokkos::HostView3d<type_real> h_jacobian =
-      partial_derivatives.h_jacobian;
-  EXPECT_NO_THROW(
-      specfem::testing::test_array(h_jacobian, test_config.jacobian_file,
-                                   mesh.nspec, gllz->get_N(), gllx->get_N()));
+        EXPECT_NEAR(point_partial_derivatives.xix,
+                    xix_ref.data(ispec_mesh, iz, ix), xix_ref.tol);
+        EXPECT_NEAR(point_partial_derivatives.gammax,
+                    gammax_ref.data(ispec_mesh, iz, ix), gammax_ref.tol);
+        EXPECT_NEAR(point_partial_derivatives.gammaz,
+                    gammaz_ref.data(ispec_mesh, iz, ix), gammaz_ref.tol);
+        EXPECT_NEAR(point_partial_derivatives.jacobian,
+                    jacobian_ref.data(ispec_mesh, iz, ix), jacobian_ref.tol);
+      }
+    }
+  }
+
+  for (int ix = 0; ix < ngllx; ++ix) {
+    for (int iz = 0; iz < ngllz; ++iz) {
+      constexpr static int vector_length =
+          specfem::datatype::simd<type_real, true>::size();
+
+      for (int ispec = 0; ispec < nspec; ispec += vector_length) {
+        const int num_elements =
+            (ispec + vector_length < nspec) ? vector_length : nspec - ispec;
+        const specfem::point::simd_index<specfem::dimension::type::dim2>
+            simd_index(ispec, num_elements, iz, ix);
+        const auto point_partial_derivatives = [&]() {
+          specfem::point::partial_derivatives<specfem::dimension::type::dim2,
+                                              true, true>
+              point_partial_derivatives;
+          specfem::compute::load_on_host(simd_index, partial_derivatives,
+                                         point_partial_derivatives);
+          return point_partial_derivatives;
+        }();
+
+        for (int i = 0; i < num_elements; ++i) {
+          const int ispec_mesh =
+              compute_mesh.mapping.compute_to_mesh(ispec + i);
+          EXPECT_NEAR(point_partial_derivatives.xix[i],
+                      xix_ref.data(ispec_mesh, iz, ix), xix_ref.tol);
+          EXPECT_NEAR(point_partial_derivatives.gammax[i],
+                      gammax_ref.data(ispec_mesh, iz, ix), gammax_ref.tol);
+          EXPECT_NEAR(point_partial_derivatives.gammaz[i],
+                      gammaz_ref.data(ispec_mesh, iz, ix), gammaz_ref.tol);
+          EXPECT_NEAR(point_partial_derivatives.jacobian[i],
+                      jacobian_ref.data(ispec_mesh, iz, ix), jacobian_ref.tol);
+        }
+      }
+    }
+  }
+
+  return;
 }
 
 int main(int argc, char *argv[]) {

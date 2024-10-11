@@ -1,61 +1,73 @@
-#ifndef _PARAMETER_SOLVER_HPP
-#define _PARAMETER_SOLVER_HPP
+#ifndef _SPECFEM_RUNTIME_CONFIGURATION_SOLVER_SOLVER_HPP_
+#define _SPECFEM_RUNTIME_CONFIGURATION_SOLVER_SOLVER_HPP_
 
-#include "specfem_setup.hpp"
-#include "timescheme/interface.hpp"
-#include "yaml-cpp/yaml.h"
-#include <tuple>
+#include "compute/interface.hpp"
+#include "solver/solver.hpp"
+#include "timescheme/newmark.hpp"
+#include <memory>
+#include <string>
 
 namespace specfem {
 namespace runtime_configuration {
 namespace solver {
 /**
- * @brief Solver class instantiates solver object which defines solution
- * algorithm for the Spectral Element Method
- *
- * @note Currently solver class is not implemented. Hence the solver class only
- * instantiates a timescheme object (In the future this class will only be
- * specific to time-marching (explicit) SEMs).
+ * @brief Solver class to instantiate the correct solver based on the simulation
+ * parameters
  *
  */
 class solver {
-
 public:
   /**
-   * @brief Instantiate the Timescheme
+   * @brief Construct a new solver object
    *
-   * @return specfem::TimeScheme::TimeScheme* Pointer to the TimeScheme object
-   * used in the solver algorithm
+   * @param simulation_type Type of the simulation (forward or combined)
    */
-  virtual std::shared_ptr<specfem::TimeScheme::TimeScheme>
-  instantiate(const int nstep_between_samples);
+  solver(const char *simulation_type) : simulation_type(simulation_type) {}
   /**
-   * @brief Update simulation start time.
+   * @brief Construct a new solver object
    *
-   * If user has not defined start time then we need to update the simulation
-   * start time based on source frequencies and time shift
-   *
-   * @note This might be specific to only time-marching solvers
-   *
-   * @param t0 Simulation start time
+   * @param simulation_type Type of the simulation (forward or combined)
    */
-  virtual void update_t0(type_real t0){};
+  solver(const std::string simulation_type)
+      : simulation_type(simulation_type) {}
+
   /**
-   * @brief Get the value of time increment
+   * @brief Instantiate the solver based on the simulation parameters
    *
-   * @return type_real value of time increment
+   * @tparam qp_type Quadrature points type defining compile time or runtime
+   * quadrature points
+   * @param dt Time step
+   * @param assembly Assembly object
+   * @param time_scheme Time scheme object
+   * @param quadrature Quadrature points object
+   * @return std::shared_ptr<specfem::solver::solver> Solver object
    */
-  virtual type_real get_dt() const {
-    throw std::runtime_error("Solver not instantiated properly");
-    return 0.0;
-  };
-  virtual type_real get_t0() const {
-    throw std::runtime_error("Solver not instantiated properly");
-    return 0.0;
-  };
+  template <typename qp_type>
+  std::shared_ptr<specfem::solver::solver>
+  instantiate(const type_real dt, const specfem::compute::assembly &assembly,
+              std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
+              const qp_type &quadrature) const;
+
+  /**
+   * @brief Get the type of the simulation (forward or combined)
+   *
+   * @return specfem::simulation::type Type of the simulation
+   */
+  inline specfem::simulation::type get_simulation_type() const {
+    if (this->simulation_type == "forward") {
+      return specfem::simulation::type::forward;
+    } else if (this->simulation_type == "combined") {
+      return specfem::simulation::type::combined;
+    } else {
+      throw std::runtime_error("Unknown simulation type");
+    }
+  }
+
+private:
+  std::string simulation_type; ///< Type of the simulation (forward or combined)
 };
 } // namespace solver
 } // namespace runtime_configuration
 } // namespace specfem
 
-#endif
+#endif /* _SPECFEM_RUNTIME_CONFIGURATION_SOLVER_SOLVER_HPP_ */

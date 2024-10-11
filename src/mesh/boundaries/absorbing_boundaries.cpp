@@ -1,17 +1,19 @@
-#include "fortranio/interface.hpp"
+#include "IO/fortranio/interface.hpp"
 #include "mesh/boundaries/boundaries.hpp"
 #include "specfem_mpi/interface.hpp"
 #include <Kokkos_Core.hpp>
 #include <vector>
 
-specfem::mesh::boundaries::absorbing_boundary::absorbing_boundary(
+specfem::mesh::absorbing_boundary::absorbing_boundary(
     const int num_abs_boundary_faces) {
   if (num_abs_boundary_faces > 0) {
     this->nelements = num_abs_boundary_faces;
-    this->ispec = specfem::kokkos::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ispec", num_abs_boundary_faces);
-    this->type = specfem::kokkos::HostView1d<specfem::enums::boundaries::type>(
-        "specfem::mesh::absorbing_boundary::type", num_abs_boundary_faces);
+    this->index_mapping = Kokkos::View<int *, Kokkos::HostSpace>(
+        "specfem::mesh::absorbing_boundary::index_mapping",
+        num_abs_boundary_faces);
+    this->type =
+        Kokkos::View<specfem::enums::boundaries::type *, Kokkos::HostSpace>(
+            "specfem::mesh::absorbing_boundary::type", num_abs_boundary_faces);
   } else {
     this->nelements = 0;
   }
@@ -117,7 +119,7 @@ find_corners(const specfem::kokkos::HostView1d<int> ispec_edge,
   return std::make_tuple(ispec_corners, type_corners);
 }
 
-specfem::mesh::boundaries::absorbing_boundary::absorbing_boundary(
+specfem::mesh::absorbing_boundary::absorbing_boundary(
     std::ifstream &stream, int num_abs_boundary_faces, const int nspec,
     const specfem::MPI::MPI *mpi) {
 
@@ -140,9 +142,9 @@ specfem::mesh::boundaries::absorbing_boundary::absorbing_boundary(
 
   if (num_abs_boundary_faces > 0) {
     for (int inum = 0; inum < num_abs_boundary_faces; inum++) {
-      specfem::fortran_IO::fortran_read_line(
-          stream, &numabsread, &codeabsread1, &codeabsread2, &codeabsread3,
-          &codeabsread4, &typeabsread, &iedgeread);
+      specfem::IO::fortran_read_line(stream, &numabsread, &codeabsread1,
+                                     &codeabsread2, &codeabsread3,
+                                     &codeabsread4, &typeabsread, &iedgeread);
       if (numabsread < 1 || numabsread > nspec)
         throw std::runtime_error("Wrong absorbing element number");
       ispec_edge(inum) = numabsread - 1;
@@ -172,21 +174,21 @@ specfem::mesh::boundaries::absorbing_boundary::absorbing_boundary(
 
     this->nelements = nelements;
 
-    this->ispec = specfem::kokkos::HostView1d<int>(
-        "specfem::mesh::absorbing_boundary::ispec", nelements);
+    this->index_mapping = Kokkos::View<int *, Kokkos::HostSpace>(
+        "specfem::mesh::absorbing_boundary::index_mapping", nelements);
 
-    this->type = specfem::kokkos::HostView1d<specfem::enums::boundaries::type>(
-        "specfem::mesh::absorbing_boundary::type", nelements);
-
+    this->type =
+        Kokkos::View<specfem::enums::boundaries::type *, Kokkos::HostSpace>(
+            "specfem::mesh::absorbing_boundary::type", nelements);
     // Populate ispec and type arrays
 
     for (int inum = 0; inum < ispec_edge.extent(0); inum++) {
-      this->ispec(inum) = ispec_edge(inum);
+      this->index_mapping(inum) = ispec_edge(inum);
       this->type(inum) = type_edge(inum);
     }
 
     for (int inum = 0; inum < ispec_corners.extent(0); inum++) {
-      this->ispec(inum + ispec_edge.extent(0)) = ispec_corners(inum);
+      this->index_mapping(inum + ispec_edge.extent(0)) = ispec_corners(inum);
       this->type(inum + ispec_edge.extent(0)) = type_corners(inum);
     }
   } else {

@@ -34,3 +34,11 @@ Parameter definitions
 **possible values**: [string]
 
 **documentation**: Location of source file (yaml) defining the location of sources
+
+.. admonition:: Example of databases section
+
+    .. code-block:: yaml
+
+        databases:
+            mesh-database: /path/to/mesh_database.bin
+            source-file: /path/to/source_file.yaml

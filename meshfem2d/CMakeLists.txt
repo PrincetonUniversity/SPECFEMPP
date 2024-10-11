@@ -206,3 +206,8 @@ add_custom_command(
 add_custom_target(meshfem2D_exec ALL
 	DEPENDS meshfem2D
 )
+
+add_custom_target(xadj_seismogram ALL
+    COMMAND ${CMAKE_Fortran_COMPILER} ${FCFLAGS_f90} -o ${CMAKE_BINARY_DIR}/xadj_seismogram ${CMAKE_CURRENT_SOURCE_DIR}/adj_seismogram.f90
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/adj_seismogram.f90
+)

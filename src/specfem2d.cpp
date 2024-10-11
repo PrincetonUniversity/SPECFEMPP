@@ -1,16 +1,15 @@
 #include "compute/interface.hpp"
-#include "coupled_interface/interface.hpp"
-#include "domain/interface.hpp"
+// #include "coupled_interface/interface.hpp"
+// #include "domain/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "material/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"
 #include "receiver/interface.hpp"
-#include "solver/interface.hpp"
+#include "solver/solver.hpp"
 #include "source/interface.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
-#include "timescheme/interface.hpp"
+#include "timescheme/timescheme.hpp"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
 #include <boost/program_options.hpp>
@@ -85,61 +84,34 @@ int parse_args(int argc, char **argv,
 void execute(const std::string &parameter_file, const std::string &default_file,
              specfem::MPI::MPI *mpi) {
 
-  // log start time
+  // --------------------------------------------------------------
+  //                    Read parameter file
+  // --------------------------------------------------------------
   auto start_time = std::chrono::high_resolution_clock::now();
-
   specfem::runtime_configuration::setup setup(parameter_file, default_file);
   const auto [database_filename, source_filename] = setup.get_databases();
-
   mpi->cout(setup.print_header(start_time));
+  // --------------------------------------------------------------
 
-  // Set up GLL quadrature points
-  auto [gllx, gllz] = setup.instantiate_quadrature();
+  // --------------------------------------------------------------
+  //                   Read mesh and materials
+  // --------------------------------------------------------------
+  const auto quadrature = setup.instantiate_quadrature();
+  const specfem::mesh::mesh mesh(database_filename, mpi);
+  // --------------------------------------------------------------
 
-  // Read mesh generated MESHFEM
-  std::vector<std::shared_ptr<specfem::material::material> > materials;
-  specfem::mesh::mesh mesh(database_filename, materials, mpi);
-
-  // Read sources
-  //    if start time is not explicitly specified then t0 is determined using
-  //    source frequencies and time shift
-  auto [sources, t0] =
-      specfem::sources::read_sources(source_filename, setup.get_dt(), mpi);
+  // --------------------------------------------------------------
+  //                   Read Sources and Receivers
+  // --------------------------------------------------------------
+  const int nsteps = setup.get_nsteps();
+  const specfem::simulation::type simulation_type = setup.get_simulation_type();
+  auto [sources, t0] = specfem::sources::read_sources(
+      source_filename, nsteps, setup.get_t0(), setup.get_dt(), simulation_type);
+  setup.update_t0(t0); // Update t0 in case it was changed
 
   const auto stations_filename = setup.get_stations_file();
   const auto angle = setup.get_receiver_angle();
   auto receivers = specfem::receivers::read_receivers(stations_filename, angle);
-
-  // Generate compute structs to be used by the solver
-  specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
-                                    gllz);
-  specfem::compute::partial_derivatives partial_derivatives(
-      mesh.coorg, mesh.material_ind.knods, gllx, gllz);
-  specfem::compute::properties material_properties(
-      mesh.material_ind.kmato, materials, mesh.nspec, gllx->get_N(),
-      gllz->get_N());
-  specfem::compute::coupled_interfaces::coupled_interfaces coupled_interfaces(
-      compute.h_ibool, compute.coordinates.coord,
-      material_properties.h_ispec_type, mesh.coupled_interfaces);
-  specfem::compute::boundaries boundary_conditions(
-      mesh.material_ind.kmato, materials, mesh.acfree_surface,
-      mesh.abs_boundary);
-
-  // Print spectral element information
-  mpi->cout(mesh.print(materials));
-
-  // Locate the sources
-  for (auto &source : sources)
-    source->locate(compute.coordinates.coord, compute.h_ibool, gllx->get_hxi(),
-                   gllz->get_hxi(), mesh.nproc, mesh.coorg,
-                   mesh.material_ind.knods, mesh.npgeo,
-                   material_properties.h_ispec_type, mpi);
-
-  for (auto &receiver : receivers)
-    receiver->locate(compute.coordinates.coord, compute.h_ibool,
-                     gllx->get_hxi(), gllz->get_hxi(), mesh.nproc, mesh.coorg,
-                     mesh.material_ind.knods, mesh.npgeo,
-                     material_properties.h_ispec_type, mpi);
 
   mpi->cout("Source Information:");
   mpi->cout("-------------------------------");
@@ -153,6 +125,7 @@ void execute(const std::string &parameter_file, const std::string &default_file,
 
   mpi->cout("Receiver Information:");
   mpi->cout("-------------------------------");
+
   if (mpi->main_proc()) {
     std::cout << "Number of receivers : " << receivers.size() << "\n"
               << std::endl;
@@ -161,63 +134,59 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   for (auto &receiver : receivers) {
     mpi->cout(receiver->print());
   }
+  // --------------------------------------------------------------
 
-  // Update solver intialization time
-  setup.update_t0(-1.0 * t0);
+  // --------------------------------------------------------------
+  //                   Instantiate Timescheme
+  // --------------------------------------------------------------
+  const auto time_scheme = setup.instantiate_timescheme();
+  if (mpi->main_proc())
+    std::cout << *time_scheme << std::endl;
 
-  // Instantiate the solver and timescheme
-  auto it = setup.instantiate_solver();
+  const int max_seismogram_time_step = time_scheme->get_max_seismogram_step();
+  // --------------------------------------------------------------
 
-  // Setup solver compute struct
+  // --------------------------------------------------------------
+  //                   Generate Assembly
+  // --------------------------------------------------------------
+  mpi->cout("Generating assembly:");
+  mpi->cout("-------------------------------");
+  const type_real dt = setup.get_dt();
+  specfem::compute::assembly assembly(
+      mesh, quadrature, sources, receivers, setup.get_seismogram_types(),
+      setup.get_t0(), dt, nsteps, max_seismogram_time_step,
+      setup.get_simulation_type());
+  time_scheme->link_assembly(assembly);
 
-  const type_real xmax = compute.coordinates.xmax;
-  const type_real xmin = compute.coordinates.xmin;
-  const type_real zmax = compute.coordinates.zmax;
-  const type_real zmin = compute.coordinates.zmin;
+  // --------------------------------------------------------------
 
-  specfem::compute::sources compute_sources(sources, gllx, gllz, xmax, xmin,
-                                            zmax, zmin, mpi);
+  // --------------------------------------------------------------
+  //                   Read wavefields
+  // --------------------------------------------------------------
 
-  specfem::compute::receivers compute_receivers(
-      receivers, setup.get_seismogram_types(), gllx, gllz, xmax, xmin, zmax,
-      zmin, it->get_max_seismogram_step(), mpi);
+  const auto wavefield_reader = setup.instantiate_wavefield_reader(assembly);
+  if (wavefield_reader) {
+    mpi->cout("Reading wavefield files:");
+    mpi->cout("-------------------------------");
 
-  // Instantiate domain classes
-  const int nglob = specfem::utilities::compute_nglob(compute.h_ibool);
+    wavefield_reader->read();
+    // Transfer the buffer field to device
+    assembly.fields.buffer.copy_to_device();
+  }
+  // --------------------------------------------------------------
 
+  // --------------------------------------------------------------
+  //                   Instantiate Solver
+  // --------------------------------------------------------------
   specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
-  specfem::domain::domain<
-      specfem::enums::element::medium::acoustic,
-      specfem::enums::element::quadrature::static_quadrature_points<5> >
-      acoustic_domain_static(nglob, qp5, &compute, material_properties,
-                             partial_derivatives, boundary_conditions,
-                             compute_sources, compute_receivers, gllx, gllz);
-  specfem::domain::domain<
-      specfem::enums::element::medium::elastic,
-      specfem::enums::element::quadrature::static_quadrature_points<5> >
-      elastic_domain_static(nglob, qp5, &compute, material_properties,
-                            partial_derivatives, boundary_conditions,
-                            compute_sources, compute_receivers, gllx, gllz);
-
-  // Instantiate coupled interfaces
-  specfem::coupled_interface::coupled_interface acoustic_elastic_interface(
-      acoustic_domain_static, elastic_domain_static, coupled_interfaces, qp5,
-      partial_derivatives, compute.ibool, gllx->get_w(), gllz->get_w());
-
-  specfem::coupled_interface::coupled_interface elastic_acoustic_interface(
-      elastic_domain_static, acoustic_domain_static, coupled_interfaces, qp5,
-      partial_derivatives, compute.ibool, gllx->get_w(), gllz->get_w());
-
-  // Instantiate the writer
-  auto writer =
-      setup.instantiate_seismogram_writer(receivers, compute_receivers);
-
   std::shared_ptr<specfem::solver::solver> solver =
-      std::make_shared<specfem::solver::time_marching<
-          specfem::enums::element::quadrature::static_quadrature_points<5> > >(
-          acoustic_domain_static, elastic_domain_static,
-          acoustic_elastic_interface, elastic_acoustic_interface, it);
+      setup.instantiate_solver(dt, assembly, time_scheme, qp5);
+  // --------------------------------------------------------------
 
+  // --------------------------------------------------------------
+  //                   Execute Solver
+  // --------------------------------------------------------------
+  // Time the solver
   mpi->cout("Executing time loop:");
   mpi->cout("-------------------------------");
 
@@ -227,19 +196,49 @@ void execute(const std::string &parameter_file, const std::string &default_file,
 
   std::chrono::duration<double> solver_time =
       solver_end_time - solver_start_time;
+  // --------------------------------------------------------------
 
-  // Write only if a writer object has been defined
-  if (writer) {
+  // --------------------------------------------------------------
+  //                   Write Seismograms
+  // --------------------------------------------------------------
+  const auto seismogram_writer = setup.instantiate_seismogram_writer(assembly);
+  if (seismogram_writer) {
     mpi->cout("Writing seismogram files:");
     mpi->cout("-------------------------------");
 
-    writer->write();
+    seismogram_writer->write();
   }
+  // --------------------------------------------------------------
 
-  mpi->cout("Cleaning up:");
-  mpi->cout("-------------------------------");
+  // --------------------------------------------------------------
+  //                  Write Forward Wavefields
+  // --------------------------------------------------------------
+  const auto wavefield_writer = setup.instantiate_wavefield_writer(assembly);
+  if (wavefield_writer) {
+    mpi->cout("Writing wavefield files:");
+    mpi->cout("-------------------------------");
 
+    wavefield_writer->write();
+  }
+  // --------------------------------------------------------------
+
+  // --------------------------------------------------------------
+  //                Write Kernels
+  // --------------------------------------------------------------
+  const auto kernel_writer = setup.instantiate_kernel_writer(assembly);
+  if (kernel_writer) {
+    mpi->cout("Writing kernel files:");
+    mpi->cout("-------------------------------");
+
+    kernel_writer->write();
+  }
+  // --------------------------------------------------------------
+
+  // --------------------------------------------------------------
+  //                   Print End Message
+  // --------------------------------------------------------------
   mpi->cout(print_end_message(start_time, solver_time));
+  // --------------------------------------------------------------
 
   return;
 }

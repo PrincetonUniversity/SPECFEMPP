@@ -19,4 +19,15 @@ enum type {
 
 } // namespace specfem
 
+namespace specfem {
+namespace build_configuration {
+namespace chunk {
+constexpr static int chunk_size = @CHUNK_SIZE@;
+constexpr static int num_chunks = @NUM_CHUNKS@;
+constexpr static int num_threads = @NUM_THREADS@;
+constexpr static int vector_lanes = @NUM_VECTOR_LANES@;
+}
+}
+}
+
 #endif

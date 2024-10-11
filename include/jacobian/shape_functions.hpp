@@ -18,8 +18,9 @@ namespace jacobian {
  * @return specfem::kokkos::HostView1d<type_real> View defining the shape
  * function
  */
-specfem::kokkos::HostView1d<type_real>
-define_shape_functions(const double xi, const double gamma, const int ngod);
+std::vector<type_real> define_shape_functions(const type_real xi,
+                                              const type_real gamma,
+                                              const int ngod);
 /**
  * @brief Derivates of shape function at a particular point
  *
@@ -32,8 +33,8 @@ define_shape_functions(const double xi, const double gamma, const int ngod);
  * of shape function (\f$ \partial N/\partial \xi \f$, \f$ \partial N/\partial
  * \gamma \f$)
  */
-specfem::kokkos::HostView2d<type_real>
-define_shape_functions_derivatives(const double xi, const double gamma,
+std::vector<std::vector<type_real> >
+define_shape_functions_derivatives(const type_real xi, const type_real gamma,
                                    const int ngod);
 
 /**
@@ -45,7 +46,7 @@ define_shape_functions_derivatives(const double xi, const double gamma,
  * @param shape2D View defining the shape function (updated by this function)
  */
 void define_shape_functions(specfem::kokkos::HostView1d<type_real> shape2D,
-                            const double xi, const double gamma,
+                            const type_real xi, const type_real gamma,
                             const int ngod);
 /**
  * @brief Derivates of shape function at a particular point
@@ -58,8 +59,8 @@ void define_shape_functions(specfem::kokkos::HostView1d<type_real> shape2D,
  * \f$) (updated by this function)
  */
 void define_shape_functions_derivatives(
-    specfem::kokkos::HostView2d<type_real> dershape2D, const double xi,
-    const double gamma, const int ngod);
+    specfem::kokkos::HostView2d<type_real> dershape2D, const type_real xi,
+    const type_real gamma, const int ngod);
 } // namespace jacobian
 } // namespace specfem
 
