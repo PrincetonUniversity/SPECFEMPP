@@ -3,12 +3,16 @@
 
 #include "database_configuration.hpp"
 #include "header.hpp"
+#include "parameter_parser/solver/interface.hpp"
 #include "quadrature.hpp"
+#include "reader/reader.hpp"
 #include "receivers.hpp"
 #include "run_setup.hpp"
-#include "seismogram.hpp"
-#include "solver/interface.hpp"
 #include "specfem_setup.hpp"
+#include "time_scheme/interface.hpp"
+#include "writer/kernel.hpp"
+#include "writer/seismogram.hpp"
+#include "writer/wavefield.hpp"
 #include "yaml-cpp/yaml.h"
 #include <memory>
 #include <tuple>
@@ -39,47 +43,46 @@ public:
    * @return std::tuple<specfem::quadrature::quadrature,
    * specfem::quadrature::quadrature> Quadrature objects in x and z dimensions
    */
-  std::tuple<specfem::quadrature::quadrature *,
-             specfem::quadrature::quadrature *>
-  instantiate_quadrature() {
+  specfem::quadrature::quadratures instantiate_quadrature() const {
     return this->quadrature->instantiate();
   }
-  /**
-   * @brief Instantiate the Timescheme
-   *
-   * @return specfem::TimeScheme::TimeScheme* Pointer to the TimeScheme
-   object
-   * used in the solver algorithm
-   */
-  std::shared_ptr<specfem::TimeScheme::TimeScheme> instantiate_solver() {
-    auto it =
-        this->solver->instantiate(this->receivers->get_nstep_between_samples());
-
-    return it;
+  // /**
+  //  * @brief Instantiate the Timescheme
+  //  *
+  //  * @return specfem::TimeScheme::TimeScheme* Pointer to the TimeScheme
+  //  object
+  //  * used in the solver algorithm
+  //  */
+  std::shared_ptr<specfem::time_scheme::time_scheme>
+  instantiate_timescheme() const {
+    return this->time_scheme->instantiate(
+        this->receivers->get_nstep_between_samples());
   }
-  /**
-   * @brief Update simulation start time.
-   *
-   * If user has not defined start time then we need to update the simulation
-   * start time based on source frequencies and time shift
-   *
-   * @note This might be specific to only time-marching solvers
-   *
-   * @param t0 Simulation start time
-   */
-  void update_t0(type_real t0) { this->solver->update_t0(t0); }
+  // /**
+  //  * @brief Update simulation start time.
+  //  *
+  //  * If user has not defined start time then we need to update the simulation
+  //  * start time based on source frequencies and time shift
+  //  *
+  //  * @note This might be specific to only time-marching solvers
+  //  *
+  //  * @param t0 Simulation start time
+  //  */
+  void update_t0(type_real t0) { this->time_scheme->update_t0(t0); }
+
+  type_real get_t0() const { return this->time_scheme->get_t0(); }
   /**
    * @brief Log the header and description of the simulation
    */
-  std::string
-  print_header(std::chrono::time_point<std::chrono::high_resolution_clock> now);
+  std::string print_header(
+      const std::chrono::time_point<std::chrono::high_resolution_clock> now);
 
   /**
    * @brief Get delta time value
    *
    * @return type_real
    */
-  type_real get_dt() const { return solver->get_dt(); }
+  type_real get_dt() const { return time_scheme->get_dt(); }
 
   /**
    * @brief Get the path to mesh database and source yaml file
@@ -120,34 +123,72 @@ public:
   /**
    * @brief Instantiate a seismogram writer object
    *
-   * @param receivers Vector of pointers to receiver objects used to
-   instantiate
-   * the writer
-   * @param compute_receivers Pointer to specfem::compute::receivers struct
+   * @param receivers Pointer to specfem::compute::receivers struct
    used
    * to instantiate the writer
    * @return specfem::writer::writer* Pointer to an instantiated writer
    object
    */
   std::shared_ptr<specfem::writer::writer> instantiate_seismogram_writer(
-      std::vector<std::shared_ptr<specfem::receivers::receiver> > &receivers,
-      specfem::compute::receivers &compute_receivers) const {
+      const specfem::compute::assembly &assembly) const {
     if (this->seismogram) {
       return this->seismogram->instantiate_seismogram_writer(
-          receivers, compute_receivers, this->solver->get_dt(),
-          this->solver->get_t0(), this->receivers->get_nstep_between_samples());
+          assembly.receivers, this->time_scheme->get_dt(),
+          this->time_scheme->get_t0(),
+          this->receivers->get_nstep_between_samples());
     } else {
-      return NULL;
+      return nullptr;
     }
   }
+
+  std::shared_ptr<specfem::writer::writer> instantiate_wavefield_writer(
+      const specfem::compute::assembly &assembly) const {
+    if (this->wavefield) {
+      return this->wavefield->instantiate_wavefield_writer(assembly);
+    } else {
+      return nullptr;
+    }
+  }
+
+  std::shared_ptr<specfem::reader::reader> instantiate_wavefield_reader(
+      const specfem::compute::assembly &assembly) const {
+    if (this->wavefield) {
+      return this->wavefield->instantiate_wavefield_reader(assembly);
+    } else {
+      return nullptr;
+    }
+  }
+
+  std::shared_ptr<specfem::writer::writer>
+  instantiate_kernel_writer(const specfem::compute::assembly &assembly) const {
+    if (this->kernel) {
+      return this->kernel->instantiate_kernel_writer(assembly);
+    } else {
+      return nullptr;
+    }
+  }
+
+  inline specfem::simulation::type get_simulation_type() const {
+    return this->solver->get_simulation_type();
+  }
+
+  template <typename qp_type>
+  std::shared_ptr<specfem::solver::solver> instantiate_solver(
+      const type_real dt, const specfem::compute::assembly &assembly,
+      std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
+      const qp_type &quadrature) const {
+    return this->solver->instantiate(dt, assembly, time_scheme, quadrature);
+  }
+
+  int get_nsteps() const { return this->time_scheme->get_nsteps(); }
 
 private:
   std::unique_ptr<specfem::runtime_configuration::header> header; ///< Pointer
                                                                   ///< to header
                                                                   ///< object
-  std::unique_ptr<specfem::runtime_configuration::solver::solver>
-      solver; ///< Pointer to solver
-              ///< object
+  std::unique_ptr<specfem::runtime_configuration::time_scheme::time_scheme>
+      time_scheme; ///< Pointer to solver
+                   ///< object
   std::unique_ptr<specfem::runtime_configuration::run_setup>
       run_setup; ///< Pointer to
                  ///< run_setup object
@@ -159,8 +200,14 @@ private:
   std::unique_ptr<specfem::runtime_configuration::seismogram>
       seismogram; ///< Pointer to
                   ///< seismogram object
+  std::unique_ptr<specfem::runtime_configuration::wavefield>
+      wavefield; ///< Pointer to
+                 ///< wavefield object
+  std::unique_ptr<specfem::runtime_configuration::kernel> kernel;
   std::unique_ptr<specfem::runtime_configuration::database_configuration>
       databases; ///< Get database filenames
+  std::unique_ptr<specfem::runtime_configuration::solver::solver>
+      solver; ///< Pointer to solver object
 };
 } // namespace runtime_configuration
 } // namespace specfem

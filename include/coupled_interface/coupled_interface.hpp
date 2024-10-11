@@ -1,92 +1,116 @@
-#ifndef _COUPLED_INTERFACE_HPP_
-#define _COUPLED_INTERFACE_HPP_
+#pragma once
 
-#include "compute/interface.hpp"
-#include "enumerations/interface.hpp"
-#include "impl/edge/interface.hpp"
-#include "kokkos_abstractions.h"
-#include "specfem_setup.hpp"
+#include "compute/assembly/assembly.hpp"
+#include "enumerations/dimension.hpp"
+#include "enumerations/medium.hpp"
 
 namespace specfem {
 namespace coupled_interface {
-/**
- * @brief Class to compute the coupling between two domains.
- *
- * @tparam self_domain_type Primary domain of the interface.
- * @tparam coupled_domain_type Coupled domain of the interface.
- */
-template <class self_domain_type, class coupled_domain_type>
-class coupled_interface {
+
+namespace impl {
+
+template <specfem::dimension::type DimensionType,
+          specfem::element::medium_tag SelfMedium,
+          specfem::element::medium_tag CoupledMedium>
+class coupled_interface;
+
+template <specfem::dimension::type DimensionType>
+class coupled_interface<DimensionType, specfem::element::medium_tag::acoustic,
+                        specfem::element::medium_tag::elastic> {
 public:
+  using CoupledPointFieldType =
+      specfem::point::field<DimensionType,
+                            specfem::element::medium_tag::elastic, true, false,
+                            false, false, false>;
+  using SelfPointFieldType =
+      specfem::point::field<DimensionType,
+                            specfem::element::medium_tag::acoustic, false,
+                            false, true, false, false>;
+};
+
+template <specfem::dimension::type DimensionType>
+class coupled_interface<DimensionType, specfem::element::medium_tag::elastic,
+                        specfem::element::medium_tag::acoustic> {
+public:
+  using CoupledPointFieldType =
+      specfem::point::field<DimensionType,
+                            specfem::element::medium_tag::acoustic, false,
+                            false, true, false, false>;
+  using SelfPointFieldType =
+      specfem::point::field<DimensionType,
+                            specfem::element::medium_tag::elastic, false, false,
+                            true, false, false>;
+};
+
+} // namespace impl
+
+/**
+ * @brief Compute kernels to compute the coupling terms between two domains.
+ *
+ * @tparam WavefieldType Wavefield type on which the coupling is computed.
+ * @tparam DimensionType Dimension of the element on which the coupling is
+ * computed.
+ * @tparam SelfMedium Medium type of the primary domain.
+ * @tparam CoupledMedium Medium type of the coupled domain.
+ */
+template <specfem::wavefield::type WavefieldType,
+          specfem::dimension::type DimensionType,
+          specfem::element::medium_tag SelfMedium,
+          specfem::element::medium_tag CoupledMedium>
+class coupled_interface {
+private:
+  using CoupledPointFieldType = typename impl::coupled_interface<
+      DimensionType, SelfMedium,
+      CoupledMedium>::CoupledPointFieldType; ///< Point field type of the
+                                             ///< coupled domain.
+
+  using SelfPointFieldType = typename impl::coupled_interface<
+      DimensionType, SelfMedium,
+      CoupledMedium>::SelfPointFieldType; ///< Point field type of the primary
+                                          ///< domain.
+
+public:
+  constexpr static auto self_medium =
+      SelfMedium; ///< Medium of the primary domain.
+  constexpr static auto coupled_medium =
+      CoupledMedium; ///< Medium of the coupled domain.
+  constexpr static auto dimension =
+      DimensionType; ///< Dimension of the element.
+  constexpr static auto wavefield = WavefieldType; ///< Wavefield type.
+
+  static_assert(SelfMedium != CoupledMedium,
+                "Error: self_medium cannot be equal to coupled_medium");
+
+  static_assert(((SelfMedium == specfem::element::medium_tag::acoustic &&
+                  CoupledMedium == specfem::element::medium_tag::elastic) ||
+                 (SelfMedium == specfem::element::medium_tag::elastic &&
+                  CoupledMedium == specfem::element::medium_tag::acoustic)),
+                "Only acoustic-elastic coupling is supported at the moment.");
+
   /**
-   * @brief Typedefs
-   *
+   * @name Constructor
    */
   ///@{
   /**
-   * @brief Self medium type.
+   * @brief Construct a new coupled interface object.
    *
+   * @param assembly Assembly object containing the mesh information.
    */
-  using self_medium = typename self_domain_type::medium_type;
-  /**
-   * @brief Coupled medium type.
-   *
-   */
-  using coupled_medium = typename coupled_domain_type::medium_type;
-  /**
-   * @brief Quadrature points object to define the quadrature points either at
-   * compile time or run time.
-   *
-   */
-  using quadrature_points_type =
-      typename self_domain_type::quadrature_points_type;
+  coupled_interface(const specfem::compute::assembly &assembly);
   ///@}
 
   /**
-   * @brief Construct a new coupled interface object
-   *
-   * @param self_domain Primary domain of the interface.
-   * @param coupled_domain Coupled domain of the interface.
-   * @param coupled_interfaces struct containing the coupling information.
-   * @param quadrature_points A quadrature points object defining the quadrature
-   * points either at compile time or run time.
-   * @param partial_derivatives struct containing the partial derivatives.
-   * @param ibool Global index of the GLL points.
-   * @param wxgll weights for the GLL quadrature points in the x direction.
-   * @param wzgll weights for the GLL quadrature points in the z direction.
-   */
-  coupled_interface(
-      self_domain_type &self_domain, coupled_domain_type &coupled_domain,
-      const specfem::compute::coupled_interfaces::coupled_interfaces
-          &coupled_interfaces,
-      const quadrature_points_type &quadrature_points,
-      const specfem::compute::partial_derivatives &partial_derivatives,
-      const specfem::kokkos::DeviceView3d<int> ibool,
-      const specfem::kokkos::DeviceView1d<type_real> wxgll,
-      const specfem::kokkos::DeviceView1d<type_real> wzgll);
-
-  /**
-   * @brief Compute the coupling between the primary and coupled domains.
-   *
+   * @name Compute coupling
    */
   void compute_coupling();
 
 private:
-  int nedges; ///< Number of edges in the interface.
-  specfem::kokkos::DeviceView1d<specfem::enums::edge::type>
-      self_edge; ///< Orientation of the edge of the primary domain.
-  specfem::kokkos::DeviceView1d<specfem::enums::edge::type>
-      coupled_edge; ///< Orientation of the edge of the coupled domain.
-  self_domain_type self_domain;       ///< Primary domain of the interface.
-  coupled_domain_type coupled_domain; ///< Coupled domain of the interface.
-  quadrature_points_type quadrature_points; ///< Quadrature points object to
-                                            ///< define the quadrature points
-                                            ///< either at compile time or run
-                                            ///< time.
-  specfem::coupled_interface::impl::edges::edge<self_domain_type,
-                                                coupled_domain_type>
-      edge; ///< Edge class to implement coupling physics
+  int nedges;  ///< Number of edges in the interface.
+  int npoints; ///< Number of quadrature points in the interface.
+  specfem::compute::interface_container<SelfMedium, CoupledMedium>
+      interface_data; ///< Struct containing the coupling information.
+  specfem::compute::simulation_field<WavefieldType> field; ///< Wavefield
+                                                           ///< object.
 };
 } // namespace coupled_interface
 } // namespace specfem
-#endif // _COUPLED_INTERFACES_HPP_

@@ -1,0 +1,30 @@
+#ifndef SPECFEM_IO_HDF5_IMPL_NATIVE_TYPE_HPP
+#define SPECFEM_IO_HDF5_IMPL_NATIVE_TYPE_HPP
+
+#ifndef NO_HDF5
+#include "H5Cpp.h"
+#else
+#include <stdexcept>
+#endif
+
+namespace specfem {
+namespace IO {
+namespace impl {
+namespace HDF5 {
+
+#ifdef NO_HDF5
+template <typename T> struct native_type {
+  static T type() {
+    throw std::runtime_error("SPECFEM++ was not compiled with HDF5 support");
+    return T();
+  }
+};
+#else
+template <typename T> struct native_type {};
+#endif
+} // namespace HDF5
+} // namespace impl
+} // namespace IO
+} // namespace specfem
+
+#endif

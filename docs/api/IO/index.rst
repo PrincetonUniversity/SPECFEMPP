@@ -6,5 +6,6 @@ Input/Output modules
     :maxdepth: 2
 
     fortran_io
-    mesh/index
+    Library/index
     writer/index
+    reader/index

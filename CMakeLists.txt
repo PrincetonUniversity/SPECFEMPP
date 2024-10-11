@@ -3,9 +3,17 @@ cmake_minimum_required(VERSION 3.17.5)
 project(specfem2d_kokkos VERSION 0.1.0)
 
 set(CMAKE_CXX_STANDARD 17)
+option(HDF5_CXX_BUILD "Build HDF5 C++" ON)
 option(MPI_PARALLEL "MPI enabled" OFF)
 option(BUILD_TESTS "Tests included" OFF)
 option(BUILD_EXAMPLES "Examples included" OFF)
+option(ENABLE_SIMD "Enable SIMD" OFF)
+option(ENABLE_PROFILING "Enable profiling" OFF)
+# set(CMAKE_BUILD_TYPE Release)
+set(CHUNK_SIZE 32)
+set(NUM_CHUNKS 1)
+set(NUM_THREADS 160)
+set(NUM_VECTOR_LANES 1)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
         set(CMAKE_CXX_FLAGS "-fp-model=precise")
@@ -28,7 +36,7 @@ endif()
 include(FetchContent)
 FetchContent_Declare(
 kokkos
-URL https://github.com/kokkos/kokkos/archive/refs/tags/4.0.00.zip
+URL https://github.com/kokkos/kokkos/archive/refs/tags/4.3.01.zip
 )
 FetchContent_MakeAvailable(kokkos)
 
@@ -51,12 +59,34 @@ else ()
         message(STATUS "    LIBSO: ${Boost_LIBRARIES}")
 endif()
 
+# Install HDF5 as a dependency if not found
+find_package(HDF5 COMPONENTS CXX)
+
+if (NOT ${HDF5_FOUND})
+        message("-- HDF5 not found. Building without HDF5.")
+        set(HDF5_CXX_BUILD OFF)
+else ()
+        message(STATUS "    LIB:   ${HDF5_LIBRARIES}")
+        message(STATUS "    INC:   ${HDF5_INCLUDE_DIRS}")
+        message(STATUS "    LIBSO: ${HDF5_CXX_LIBRARIES}")
+endif()
+
 configure_file(constants.hpp.in constants.hpp)
 
 include_directories(include)
 include_directories(${CMAKE_BINARY_DIR})
 
 add_subdirectory(meshfem2d)
+
+if (ENABLE_SIMD)
+        message("-- Enabling SIMD")
+        add_definitions(-DENABLE_SIMD)
+endif()
+
+if (ENABLE_PROFILING)
+        message("-- Enabling profiling")
+        add_definitions(-DENABLE_PROFILING)
+endif()
 
 # Build specfem2d libraries
 add_library(
@@ -74,13 +104,50 @@ target_link_libraries(
 )
 
 add_library(
-        fortranio
-        src/fortranio/fortran_io.cpp
+        IO
+        src/IO/fortranio/fortran_io.cpp
+        src/IO/HDF5/native_type.cpp
+        src/IO/ASCII/native_type.cpp
+)
+
+if (NOT HDF5_CXX_BUILD)
+        target_compile_definitions(
+                IO
+                PUBLIC -DNO_HDF5
+        )
+
+        target_link_libraries(
+                IO
+                Boost::boost
+                Kokkos::kokkos
+        )
+else()
+        target_link_libraries(
+                IO
+                ${HDF5_LIBRARIES}
+                Boost::boost
+                Kokkos::kokkos
+        )
+endif()
+
+add_library(
+        point
+        src/point/coordinates.cpp
+        src/point/partial_derivatives.cpp
 )
 
 target_link_libraries(
-        fortranio
-        Boost::boost
+        point
+        Kokkos::kokkos
+)
+
+add_library(
+        edge
+        src/edge/interface.cpp
+)
+
+target_link_libraries(
+        edge
         Kokkos::kokkos
 )
 
@@ -99,22 +166,21 @@ else()
         message("-- Compiling SPECFEM without MPI")
 endif(MPI_PARALLEL)
 
-add_library(
-        material_class
-        src/material/elastic_material.cpp
-        src/material/acoustic_material.cpp
-)
+# add_library(
+#         material_class
+#         src/material/elastic_isotropic_material.cpp
+#         src/material/acoustic_isotropic_material.cpp
+# )
 
-target_link_libraries(
-        material_class
-        Kokkos::kokkos
-        specfem_mpi
-)
+# target_link_libraries(
+#         material_class
+#         Kokkos::kokkos
+#         specfem_mpi
+# )
 
 add_library(
         mesh
         src/mesh/IO/fortran/read_mesh_database.cpp
-        src/mesh/IO/fortran/read_material_properties.cpp
         src/mesh/boundaries/forcing_boundaries.cpp
         src/mesh/boundaries/absorbing_boundaries.cpp
         src/mesh/boundaries/acoustic_free_surface.cpp
@@ -122,10 +188,10 @@ add_library(
         src/mesh/elements/axial_elements.cpp
         src/mesh/properties/properties.cpp
         src/mesh/mpi_interfaces/mpi_interfaces.cpp
-        src/mesh/material_indic/material_indic.cpp
-        src/mesh/coupled_interfaces/elastic_acoustic.cpp
-        src/mesh/coupled_interfaces/elastic_poroelastic.cpp
-        src/mesh/coupled_interfaces/acoustic_poroelastic.cpp
+        src/mesh/materials/materials.cpp
+        src/mesh/coupled_interfaces/interface_container.cpp
+        src/mesh/coupled_interfaces/coupled_interfaces.cpp
+        src/mesh/tags/tags.cpp
         src/mesh/mesh.cpp
 )
 
@@ -133,8 +199,8 @@ target_link_libraries(
         mesh
         Kokkos::kokkos
         specfem_mpi
-        material_class
-        fortranio
+        # material_class
+        IO
         yaml-cpp
 )
 
@@ -147,29 +213,57 @@ add_library(
 target_link_libraries(
         jacobian
         Kokkos::kokkos
+        point
 )
 
+# add_library(
+#         utilities
+#         src/utilities/utilities.cpp
+# )
+
+# target_link_libraries(
+#         utilities
+#         jacobian
+#         Kokkos::kokkos
+#         specfem_mpi
+# )
+
 add_library(
-        utilities
-        src/utilities/utilities.cpp
+        reader
+        src/reader/wavefield.cpp
+        src/reader/seismogram.cpp
 )
 
 target_link_libraries(
-        utilities
-        jacobian
+        reader
+        compute
+        IO
+)
+
+add_library(
+        algorithms
+        src/algorithms/locate_point.cpp
+)
+
+target_link_libraries(
+        algorithms
         Kokkos::kokkos
-        specfem_mpi
+        jacobian
+        point
 )
 
 add_library(
         source_time_function
         src/source_time_function/dirac.cpp
         src/source_time_function/ricker.cpp
+        src/source_time_function/external.cpp
 )
 
 target_link_libraries(
         source_time_function
+        reader
         Kokkos::kokkos
+        point
 )
 
 add_library(
@@ -177,6 +271,8 @@ add_library(
         src/source/source.cpp
         src/source/force_source.cpp
         src/source/moment_tensor_source.cpp
+        src/source/adjoint_source.cpp
+        src/source/external.cpp
         src/source/read_sources.cpp
 )
 
@@ -184,10 +280,12 @@ target_link_libraries(
         source_class
         Kokkos::kokkos
         specfem_mpi
-        utilities
+        # utilities
         quadrature
         source_time_function
         yaml-cpp
+        point
+        algorithms
         Boost::boost
 )
 
@@ -201,7 +299,7 @@ target_link_libraries(
         receiver_class
         specfem_mpi
         Kokkos::kokkos
-        utilities
+        # utilities
         quadrature
         yaml-cpp
         Boost::boost
@@ -209,23 +307,106 @@ target_link_libraries(
 
 add_library(
         compute
-        src/compute/compute.cpp
+        src/compute/compute_mesh.cpp
         src/compute/compute_partial_derivatives.cpp
         src/compute/compute_properties.cpp
+        src/compute/compute_kernels.cpp
         src/compute/compute_sources.cpp
         src/compute/compute_receivers.cpp
         src/compute/coupled_interfaces.cpp
-        src/compute/compute_boundaries.cpp
+        src/compute/boundaries/impl/acoustic_free_surface.cpp
+        src/compute/boundaries/impl/stacey.cpp
+        src/compute/boundaries/boundaries.cpp
+        src/compute/fields/fields.cpp
+        src/compute/compute_boundary_values.cpp
+        src/compute/compute_assembly.cpp
 )
 
 target_link_libraries(
         compute
         quadrature
-        material_class
+        mesh
+        # material_class
         source_class
         jacobian
+        point
+        edge
         receiver_class
         Kokkos::kokkos
+)
+
+add_library(
+        domain
+        src/domain/impl/boundary_conditions/none/none.cpp
+        src/domain/impl/boundary_conditions/none/print.cpp
+        src/domain/impl/boundary_conditions/dirichlet/dirichlet.cpp
+        src/domain/impl/boundary_conditions/dirichlet/print.cpp
+        src/domain/impl/boundary_conditions/stacey/stacey.cpp
+        src/domain/impl/boundary_conditions/stacey/mass_matrix.cpp
+        src/domain/impl/boundary_conditions/stacey/print.cpp
+        src/domain/impl/boundary_conditions/composite_stacey_dirichlet/composite_stacey_dirichlet.cpp
+        src/domain/impl/boundary_conditions/composite_stacey_dirichlet/mass_matrix.cpp
+        src/domain/impl/boundary_conditions/composite_stacey_dirichlet/print.cpp
+        src/domain/impl/boundary_conditions/boundary_conditions.cpp
+        src/domain/impl/elements/acoustic/acoustic2d.cpp
+        src/domain/impl/elements/elastic/elastic2d.cpp
+        src/domain/impl/elements/element.cpp
+        src/domain/impl/elements/kernel.cpp
+        src/domain/impl/kernels.cpp
+        src/domain/domain.cpp
+)
+
+target_link_libraries(
+        domain
+        Kokkos::kokkos
+)
+
+add_library(coupled_interface
+        src/coupled_interface/coupled_interface.cpp
+)
+
+target_link_libraries(
+        coupled_interface
+        Kokkos::kokkos
+        compute
+)
+
+# add_library(
+#         kernels
+#         src/kernels/kernels.cpp
+# )
+
+# target_link_libraries(
+#         kernels
+#         Kokkos::kokkos
+#         compute
+#         coupled_interface
+# )
+
+add_library(
+        frechet_derivatives
+        src/frechet_derivatives/impl/element_kernel/elastic_isotropic.cpp
+        src/frechet_derivatives/impl/element_kernel/acoustic_isotropic.cpp
+        src/frechet_derivatives/impl/frechet_element.cpp
+        src/frechet_derivatives/frechet_derivatives.cpp
+)
+
+target_link_libraries(
+        frechet_derivatives
+        Kokkos::kokkos
+        point
+)
+
+add_library(
+        kernels
+        src/kernels/frechet_kernels.cpp
+)
+
+target_link_libraries(
+        kernels
+        Kokkos::kokkos
+        compute
+        frechet_derivatives
 )
 
 add_library(
@@ -242,28 +423,44 @@ target_link_libraries(
 )
 
 add_library(
+        solver
+        src/solver/time_marching.cpp
+)
+
+target_link_libraries(
+        solver
+        Kokkos::kokkos
+        timescheme
+        domain
+)
+
+add_library(
         writer
         src/writer/seismogram.cpp
+        src/writer/wavefield.cpp
+        src/writer/kernel.cpp
 )
 
 target_link_libraries(
         writer
         compute
         receiver_class
+        IO
 )
 
 add_library(
         parameter_reader
         src/parameter_parser/run_setup.cpp
-        src/parameter_parser/solver/solver.cpp
-        src/parameter_parser/solver/time_marching.cpp
+        # src/parameter_parser/solver/solver.cpp
+        src/parameter_parser/time_scheme/time_scheme.cpp
         src/parameter_parser/database_configuration.cpp
         src/parameter_parser/header.cpp
         src/parameter_parser/quadrature.cpp
         src/parameter_parser/receivers.cpp
-        src/parameter_parser/seismogram.cpp
-        src/parameter_parser/writer.cpp
+        src/parameter_parser/writer/seismogram.cpp
         src/parameter_parser/setup.cpp
+        src/parameter_parser/writer/wavefield.cpp
+        src/parameter_parser/writer/kernel.cpp
 )
 
 target_link_libraries(
@@ -273,6 +470,10 @@ target_link_libraries(
         receiver_class
         yaml-cpp
         writer
+        reader
+        kernels
+        domain
+        solver
         Boost::filesystem
 )
 
@@ -283,7 +484,6 @@ add_executable(
 
 target_link_libraries(
         specfem2d
-        material_class
         specfem_mpi
         Kokkos::kokkos
         mesh
@@ -293,6 +493,11 @@ target_link_libraries(
         parameter_reader
         receiver_class
         writer
+        reader
+        domain
+        coupled_interface
+        kernels
+        solver
         Boost::program_options
 )
 

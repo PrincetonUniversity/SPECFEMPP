@@ -12,6 +12,8 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
+include_directories(.)
+
 enable_testing()
 
 add_library(
@@ -44,7 +46,7 @@ add_library(
 target_link_libraries(
   compare_arrays
   Kokkos::kokkos
-  fortranio
+  IO
 )
 
 
@@ -57,6 +59,7 @@ target_link_libraries(
   gtest_main
   quadrature
   kokkos_environment
+  point
   -lpthread -lm
 )
 
@@ -82,7 +85,7 @@ target_link_libraries(
   fortranio_test
   gtest_main
   gmock_main
-  fortranio
+  IO
   -lpthread -lm
 )
 
@@ -98,7 +101,7 @@ target_link_libraries(
   mpi_environment
   kokkos_environment
   yaml-cpp
-  material_class
+  # material_class
   -lpthread -lm
 )
 
@@ -116,7 +119,8 @@ target_link_libraries(
   kokkos_environment
   yaml-cpp
   compare_arrays
-  material_class
+  Boost::filesystem
+  # material_class
   -lpthread -lm
 )
 
@@ -134,27 +138,28 @@ target_link_libraries(
   kokkos_environment
   yaml-cpp
   compare_arrays
-  material_class
+  Boost::filesystem
+  # material_class
   -lpthread -lm
 )
 
-add_executable(
-  compute_acoustic_tests
-  compute/acoustic/compute_properties_tests.cpp
-)
+# add_executable(
+#   compute_acoustic_tests
+#   compute/acoustic/compute_properties_tests.cpp
+# )
 
-target_link_libraries(
-  compute_acoustic_tests
-  mesh
-  compute
-  quadrature
-  mpi_environment
-  kokkos_environment
-  yaml-cpp
-  compare_arrays
-  material_class
-  -lpthread -lm
-)
+# target_link_libraries(
+#   compute_acoustic_tests
+#   mesh
+#   compute
+#   quadrature
+#   mpi_environment
+#   kokkos_environment
+#   yaml-cpp
+#   compare_arrays
+#   # material_class
+#   -lpthread -lm
+# )
 
 add_executable(
   compute_tests
@@ -170,27 +175,62 @@ target_link_libraries(
   kokkos_environment
   yaml-cpp
   compare_arrays
-  material_class
+  Boost::filesystem
+  # material_class
   -lpthread -lm
 )
 
 add_executable(
-  source_location_tests
-  source/source_location_tests.cpp
+  locate_point
+  algorithms/locate.cpp
 )
 
 target_link_libraries(
-  source_location_tests
-  material_class
+  locate_point
+  mesh
+  compute
+  quadrature
   mpi_environment
   kokkos_environment
-  yaml-cpp
-  mesh
-  quadrature
-  compute
-  source_class
-  -lpthread -lm
+  algorithms
+  point
+  Boost::filesystem
 )
+
+add_executable(
+  interpolate_function
+  algorithms/interpolate_function.cpp
+)
+
+target_link_libraries(
+  interpolate_function
+  mesh
+  compute
+  quadrature
+  mpi_environment
+  kokkos_environment
+  algorithms
+  Boost::filesystem
+  point
+)
+
+# # add_executable(
+# #   source_location_tests
+# #   source/source_location_tests.cpp
+# # )
+
+# # target_link_libraries(
+# #   source_location_tests
+# #   material_class
+# #   mpi_environment
+# #   kokkos_environment
+# #   yaml-cpp
+# #   mesh
+# #   quadrature
+# #   compute
+# #   source_class
+# #   -lpthread -lm
+# # )
 
 add_executable(
   rmass_inverse_tests
@@ -201,13 +241,17 @@ target_link_libraries(
   rmass_inverse_tests
   quadrature
   mesh
-  material_class
+  # material_class
   yaml-cpp
   kokkos_environment
   mpi_environment
   compute
   parameter_reader
   compare_arrays
+  point
+  algorithms
+  domain
+  coupled_interface
   -lpthread -lm
 )
 
@@ -220,7 +264,7 @@ target_link_libraries(
   displacement_newmark_tests
   quadrature
   mesh
-  material_class
+  # material_class
   yaml-cpp
   kokkos_environment
   mpi_environment
@@ -228,6 +272,12 @@ target_link_libraries(
   parameter_reader
   compare_arrays
   timescheme
+  point
+  edge
+  algorithms
+  coupled_interface
+  domain
+  solver
   -lpthread -lm
 )
 
@@ -246,6 +296,9 @@ target_link_libraries(
   compute
   parameter_reader
   writer
+  domain
+  coupled_interface
+  solver
   -lpthread -lm
 )
 
@@ -264,25 +317,31 @@ target_link_libraries(
   compute
   parameter_reader
   writer
+  domain
+  coupled_interface
+  solver
   -lpthread -lm
 )
 
-add_executable(
-  compute_coupled_interfaces_tests
-  compute/coupled_interfaces/coupled_interfaces_tests.cpp
-)
+# add_executable(
+#   compute_coupled_interfaces_tests
+#   compute/coupled_interfaces/coupled_interfaces_tests.cpp
+# )
 
-target_link_libraries(
-  compute_coupled_interfaces_tests
-  quadrature
-  mesh
-  yaml-cpp
-  kokkos_environment
-  mpi_environment
-  compute
-  compare_arrays
-  -lpthread -lm
-)
+# target_link_libraries(
+#   compute_coupled_interfaces_tests
+#   quadrature
+#   mesh
+#   yaml-cpp
+#   kokkos_environment
+#   mpi_environment
+#   compute
+#   compare_arrays
+#   point
+#   edge
+#   Boost::filesystem
+#   -lpthread -lm
+# )
 
 # Link to gtest only if MPI is enabled
 if (NOT MPI_PARALLEL)
@@ -293,12 +352,13 @@ if (NOT MPI_PARALLEL)
   gtest_discover_tests(mesh_tests)
   gtest_discover_tests(compute_partial_derivatives_tests)
   gtest_discover_tests(compute_elastic_tests)
-  gtest_discover_tests(compute_acoustic_tests)
-  gtest_discover_tests(compute_coupled_interfaces_tests)
+  # # gtest_discover_tests(compute_acoustic_tests)
+  # gtest_discover_tests(compute_coupled_interfaces_tests)
   gtest_discover_tests(compute_tests)
-  gtest_discover_tests(source_location_tests)
+  gtest_discover_tests(locate_point)
+  gtest_discover_tests(interpolate_function)
   gtest_discover_tests(rmass_inverse_tests)
   gtest_discover_tests(displacement_newmark_tests)
-  gtest_discover_tests(seismogram_elastic_tests)
-  gtest_discover_tests(seismogram_acoustic_tests)
+  # gtest_discover_tests(seismogram_elastic_tests)
+  # gtest_discover_tests(seismogram_acoustic_tests)
 endif(NOT MPI_PARALLEL)

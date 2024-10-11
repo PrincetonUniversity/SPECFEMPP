@@ -1,5 +1,4 @@
-#ifndef _DOMAIN_IMPL_SOURCES_KERNEL_HPP
-#define _DOMAIN_IMPL_SOURCES_KERNEL_HPP
+#pragma once
 
 #include "compute/interface.hpp"
 #include "domain/impl/sources/acoustic/interface.hpp"
@@ -14,40 +13,42 @@ namespace domain {
 namespace impl {
 namespace kernels {
 
-template <class medium, class qp_type, typename... elemental_properties>
+template <specfem::wavefield::type WavefieldType,
+          specfem::dimension::type DimensionType,
+          specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag, typename qp_type>
 class source_kernel {
 public:
-  using dimension = specfem::enums::element::dimension::dim2;
-  using medium_type = medium;
+  using dimension = specfem::dimension::dimension<DimensionType>;
+  using medium_type =
+      specfem::medium::medium<DimensionType, MediumTag, PropertyTag>;
+
   using quadrature_point_type = qp_type;
+  constexpr static bool using_simd = false;
 
   source_kernel() = default;
-  source_kernel(const specfem::kokkos::DeviceView3d<int> ibool,
-                const specfem::kokkos::DeviceView1d<int> ispec,
-                const specfem::kokkos::DeviceView1d<int> isource,
-                const specfem::compute::properties &properties,
-                const specfem::compute::sources &sources,
-                quadrature_point_type quadrature_points,
-                specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
-                    field_dot_dot);
+  source_kernel(
+      const specfem::compute::assembly &assembly,
+      const specfem::kokkos::HostView1d<int> h_source_domain_index_mapping,
+      const quadrature_point_type quadrature_points);
 
-  void compute_source_interaction(const type_real timeval) const;
+  void compute_source_interaction(const int timestep) const;
 
 private:
-  specfem::kokkos::DeviceView1d<int> ispec;
-  specfem::kokkos::DeviceView3d<int> ibool;
-  specfem::kokkos::DeviceView1d<int> isource;
-  specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot_dot;
-  specfem::kokkos::DeviceView1d<specfem::forcing_function::stf_storage>
-      stf_array;
+  int nsources;
+  specfem::compute::points points;
+  specfem::compute::quadrature quadrature;
+  specfem::kokkos::DeviceView1d<int> source_domain_index_mapping;
+  specfem::kokkos::HostMirror1d<int> h_source_domain_index_mapping;
+  specfem::compute::properties properties;
+  specfem::compute::simulation_field<WavefieldType> field;
+  specfem::compute::source_medium<DimensionType, MediumTag> sources;
   quadrature_point_type quadrature_points;
-  specfem::domain::impl::sources::source<
-      dimension, medium_type, quadrature_point_type, elemental_properties...>
+  specfem::domain::impl::sources::source<DimensionType, MediumTag, PropertyTag,
+                                         quadrature_point_type, using_simd>
       source;
 };
 } // namespace kernels
 } // namespace impl
 } // namespace domain
 } // namespace specfem
-
-#endif // _DOMAIN_IMPL_SOURCES_KERNEL_HPP

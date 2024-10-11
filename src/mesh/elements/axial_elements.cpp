@@ -1,4 +1,4 @@
-#include "fortranio/interface.hpp"
+#include "IO/fortranio/interface.hpp"
 #include "mesh/elements/elements.hpp"
 #include "specfem_mpi/interface.hpp"
 
@@ -7,7 +7,7 @@ specfem::mesh::elements::axial_elements::axial_elements(const int nspec) {
       "specfem::mesh::axial_element::is_on_the_axis", nspec);
 
   for (int inum = 0; inum < nspec; inum++) {
-    this->is_on_the_axis(nspec) = false;
+    this->is_on_the_axis(inum) = false;
   }
 
   return;
@@ -20,7 +20,7 @@ specfem::mesh::elements::axial_elements::axial_elements(
 
   *this = specfem::mesh::elements::axial_elements(nspec);
   for (int inum = 0; inum < nelem_on_the_axis; inum++) {
-    specfem::fortran_IO::fortran_read_line(stream, &ispec);
+    specfem::IO::fortran_read_line(stream, &ispec);
     if (ispec < 0 || ispec > nspec - 1)
       throw std::runtime_error(
           "ispec out of range when reading axial elements");

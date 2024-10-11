@@ -1,4 +1,4 @@
-#include "parameter_parser/interface.hpp"
+#include "parameter_parser/setup.hpp"
 #include "yaml-cpp/yaml.h"
 #include <chrono>
 #include <ctime>
@@ -88,28 +88,122 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
     throw std::runtime_error(message.str());
   }
 
-  try {
-    this->seismogram =
-        std::make_unique<specfem::runtime_configuration::seismogram>(
-            runtime_config["seismogram"]);
-  } catch (YAML::InvalidNode &e) {
-    YAML::Node seismogram;
-    seismogram["seismogram-format"] = "ascii";
-    std::string folder_name = "results";
-    create_folder_if_not_exists(folder_name);
-    seismogram["output-folder"] = folder_name;
-    this->seismogram =
-        std::make_unique<specfem::runtime_configuration::seismogram>(
-            seismogram);
+  // Read simulation mode node
+  specfem::simulation::type simulation;
+  if (const YAML::Node &n_simulation_mode =
+          simulation_setup["simulation-mode"]) {
+    int number_of_simulation_modes = 0;
+    if (const YAML::Node &n_forward = n_simulation_mode["forward"]) {
+      this->solver =
+          std::make_unique<specfem::runtime_configuration::solver::solver>(
+              "forward");
+      simulation = specfem::simulation::type::forward;
+      number_of_simulation_modes++;
+      bool at_least_one_writer = false; // check if at least one writer is
+                                        // specified
+      if (const YAML::Node &n_writer = n_forward["writer"]) {
+        if (const YAML::Node &n_seismogram = n_writer["seismogram"]) {
+          at_least_one_writer = true;
+          this->seismogram =
+              std::make_unique<specfem::runtime_configuration::seismogram>(
+                  n_seismogram);
+        } else {
+          this->seismogram = nullptr;
+        }
+
+        if (const YAML::Node &n_wavefield = n_writer["wavefield"]) {
+          at_least_one_writer = true;
+          this->wavefield =
+              std::make_unique<specfem::runtime_configuration::wavefield>(
+                  n_wavefield, specfem::simulation::type::forward);
+        } else {
+          this->wavefield = nullptr;
+        }
+
+        this->kernel = nullptr;
+
+        if (!at_least_one_writer) {
+          throw std::runtime_error("Error in configuration file: at least one "
+                                   "writer must be specified");
+        }
+      } else {
+        throw std::runtime_error("Error in configuration file: at least one "
+                                 "writer must be specified");
+      }
+    }
+
+    if (const YAML::Node &n_adjoint = n_simulation_mode["combined"]) {
+      this->solver =
+          std::make_unique<specfem::runtime_configuration::solver::solver>(
+              "combined");
+      number_of_simulation_modes++;
+      simulation = specfem::simulation::type::combined;
+      if (const YAML::Node &n_reader = n_adjoint["reader"]) {
+        if (const YAML::Node &n_wavefield = n_reader["wavefield"]) {
+          this->wavefield =
+              std::make_unique<specfem::runtime_configuration::wavefield>(
+                  n_wavefield, specfem::simulation::type::combined);
+        } else {
+          std::ostringstream message;
+          message << "Error reading adjoint reader configuration. \n"
+                  << "Wavefield reader must be specified. \n";
+          throw std::runtime_error(message.str());
+        }
+      } else {
+        std::ostringstream message;
+        message << "Error reading adjoint reader configuration. \n";
+        throw std::runtime_error(message.str());
+      }
+
+      if (const YAML::Node &n_writer = n_adjoint["writer"]) {
+        if (const YAML::Node &n_seismogram = n_writer["seismogram"]) {
+          std::ostringstream message;
+          message
+              << "************************************************\n"
+              << "Warning : Seismogram writer has been initialized for adjoint "
+                 "simulation. \n"
+              << "         This is generally nacessary for debugging "
+                 "purposes. \n"
+              << "         If this is a production run then reconsider if "
+                 "seismogram computation is needed. \n"
+              << "************************************************\n";
+          std::cout << message.str();
+          this->seismogram =
+              std::make_unique<specfem::runtime_configuration::seismogram>(
+                  n_seismogram);
+        } else {
+          this->seismogram = nullptr;
+        }
+
+        if (const YAML::Node &n_kernel = n_writer["kernels"]) {
+          this->kernel =
+              std::make_unique<specfem::runtime_configuration::kernel>(
+                  n_kernel, specfem::simulation::type::combined);
+        } else {
+          std::ostringstream message;
+          message << "Error reading adjoint writer configuration. \n"
+                  << "Kernel writer must be specified. \n";
+
+          throw std::runtime_error(message.str());
+        }
+      }
+    }
+
+    if (number_of_simulation_modes != 1) {
+      throw std::runtime_error("Error in configuration file: exactly one "
+                               "simulation mode must be specified");
+    }
+  } else {
+    throw std::runtime_error("Error reading specfem simulation mode.");
   }
 
   try {
     const YAML::Node &n_time_marching = n_solver["time-marching"];
     const YAML::Node &n_timescheme = n_time_marching["time-scheme"];
 
-    this->solver =
-        std::make_unique<specfem::runtime_configuration::solver::time_marching>(
-            n_timescheme);
+    this->time_scheme = std::make_unique<
+        specfem::runtime_configuration::time_scheme::time_scheme>(n_timescheme,
+                                                                  simulation);
   } catch (YAML::InvalidNode &e) {
     std::ostringstream message;
     message << "Error reading specfem solver configuration. \n" << e.what();
@@ -118,12 +212,12 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
 }
 
 std::string specfem::runtime_configuration::setup::print_header(
-    std::chrono::time_point<std::chrono::high_resolution_clock> now) {
+    const std::chrono::time_point<std::chrono::high_resolution_clock> now) {
 
   std::ostringstream message;
 
   // convert now to string form
-  std::time_t c_now = std::chrono::system_clock::to_time_t(now);
+  const std::time_t c_now = std::chrono::system_clock::to_time_t(now);
 
   message << "================================================\n"
           << "              SPECFEM2D SIMULATION\n"

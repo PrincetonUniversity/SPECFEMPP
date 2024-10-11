@@ -5,14 +5,20 @@ description = "Kokkos implementation of SpecFEM2D code"
 authors = ["Your Name <you@example.com>"]
 
 [tool.poetry.dependencies]
-python = ">=3.7,<4.0"
-pre-commit = "^=2.19.0"
+python = ">=3.12,<4.0"
+pre-commit = "^2.19.0"
 clang-format = "^14.0.6"
 sphinx-rtd-theme = "^1.0.0"
+furo = ">=2024.8.6"
 breathe = "^4.34.0"
 sphinx-sitemap = "^2.2.0"
+ruff = ">=0.6.7"
 
 [tool.poetry.dev-dependencies]
+
+[tool.snakefmt]
+line_length = 90
+include = '\.smk$|^Snakefile|\.py|^Snakefile.in$'
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

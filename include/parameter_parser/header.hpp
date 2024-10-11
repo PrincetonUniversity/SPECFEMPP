@@ -36,13 +36,13 @@ public:
    *
    * @return std::string title of the simulation
    */
-  std::string get_title() { return this->title; }
+  std::string get_title() const { return this->title; }
   /**
    * @brief Get the description
    *
    * @return std::string description of the simulation
    */
-  std::string get_description() { return this->description; }
+  std::string get_description() const { return this->description; }
 
   friend std::ostream &operator<<(std::ostream &out, header &header);
 

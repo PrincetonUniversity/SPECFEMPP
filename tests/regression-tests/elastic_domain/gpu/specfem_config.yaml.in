@@ -18,11 +18,17 @@ parameters:
     ## Solver setup
     solver:
       time-marching:
-        type-of-simulation: forward
         time-scheme:
           type: Newmark
           dt: 1.1e-5
           nstep: 1600
+
+    simulation-mode:
+      forward:
+        writer:
+          seismogram:
+            format: ascii
+            directory: "@CMAKE_SOURCE_DIR@/tests/regression-tests/elastic_domain/gpu/results"
 
   receivers:
     stations-file: "@CMAKE_SOURCE_DIR@/tests/regression-tests/elastic_domain/gpu/STATIONS"

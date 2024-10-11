@@ -3,5 +3,6 @@
 
 #include "gll/interface.hpp"
 #include "quadrature.hpp"
+#include "quadratures.hpp"
 
 #endif

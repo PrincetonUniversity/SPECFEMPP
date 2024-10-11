@@ -1,13 +1,11 @@
 
-Writer API
-==========
+Writer
+======
 
 The ``writer`` class provides interfaces to write simulation data as output files.
 
 .. doxygenclass:: specfem::writer::writer
    :members:
-   :undoc-members:
-   :private-members:
 
 Types of writers
 ----------------
@@ -16,3 +14,4 @@ Types of writers
     :maxdepth: 1
 
     seismogram_writer
+    wavefield

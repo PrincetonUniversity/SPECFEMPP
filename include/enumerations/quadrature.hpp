@@ -161,9 +161,11 @@ public:
  *
  * @tparam NGLL Number of quadrature points
  */
-template <int NGLL> class static_quadrature_points {
+template <int NumberOfGLLPoints> class static_quadrature_points {
 
 public:
+  constexpr static int NGLL =
+      NumberOfGLLPoints; ///< Number of quadrature points
   /**
    * @brief Scratch memory space type
    *

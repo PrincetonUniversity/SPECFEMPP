@@ -1,47 +1,50 @@
-#ifndef _ENUMERATIONS_DIMENSION_HPP_
-#define _ENUMERATIONS_DIMENSION_HPP_
+#pragma once
 
-#include "specfem_enums.hpp"
+#include <string>
 
 namespace specfem {
-namespace enums {
-namespace element {
-/**
- * @namespace dimensionality property of the element
- *
- */
 namespace dimension {
+
 /**
- * @brief 2D element
+ * @brief Dimension type enumeration
  *
  */
-class dim2 {
-public:
-  constexpr static int dim = 2; ///< Dimensionality of the element
+enum class type { dim2, dim3 };
 
-  /**
-   * @brief Convert the dimension to a string
-   *
-   */
-  __inline__ static std::string to_string() { return "2D"; }
-};
 /**
- * @brief 3D element
+ * @brief Dimension
+ *
+ * @tparam DimensionType dimension type enumeration
+ */
+template <specfem::dimension::type DimensionType> class dimension;
+
+/**
+ * @brief 2D dimension specialization
  *
  */
-class dim3 {
+template <> class dimension<specfem::dimension::type::dim2> {
 public:
-  constexpr static int dim = 3; ///< Dimensionality of the element
-
-  /**
-   * @brief Convert the dimension to a string
-   *
-   */
-  __inline__ static std::string to_string() { return "3D"; }
+  static constexpr auto value =
+      specfem::dimension::type::dim2; ///< dimension type
+  static constexpr int dim = 2;       ///< Number of dimensions
+  static std::string to_string() {
+    return "2D";
+  } ///< Convert dimension to string
 };
+
+/**
+ * @brief 3D dimension specialization
+ *
+ */
+template <> class dimension<specfem::dimension::type::dim3> {
+public:
+  static constexpr auto value =
+      specfem::dimension::type::dim3; ///< dimension type
+  static constexpr int dim = 3;       ///< Number of dimensions
+  static std::string to_string() {
+    return "3D";
+  } ///< Convert dimension to string
+};
+
 } // namespace dimension
-} // namespace element
-} // namespace enums
 } // namespace specfem
-
-#endif /* _ENUMERATIONS_DIMENSION_HPP_ */

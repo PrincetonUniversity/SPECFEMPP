@@ -1,8 +1,4 @@
-#ifndef _SOLVER_HPP
-#define _SOLVER_HPP
-
-#include "domain/interface.hpp"
-#include "timescheme/interface.hpp"
+#pragma once
 
 namespace specfem {
 namespace solver {
@@ -29,5 +25,3 @@ public:
 
 } // namespace solver
 } // namespace specfem
-
-#endif

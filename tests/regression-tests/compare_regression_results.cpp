@@ -1,6 +1,7 @@
 #include "specfem_setup.hpp"
 #include "yaml-cpp/yaml.h"
 #include <boost/program_options.hpp>
+#include <iostream>
 
 boost::program_options::options_description define_args() {
   namespace po = boost::program_options;
