@@ -40,9 +40,17 @@ struct default_edge_config<specfem::dimension::type::dim2, Kokkos::Cuda>
     : edge_config<specfem::dimension::type::dim2, 32, 1, Kokkos::Cuda> {};
 #endif
 
+#ifdef KOKKOS_ENABLE_OPENMP
+template <>
+struct default_edge_config<specfem::dimension::type::dim2, Kokkos::OpenMP>
+    : edge_config<specfem::dimension::type::dim2, 1, 1, Kokkos::OpenMP> {};
+#endif
+
+#ifdef KOKKOS_ENABLE_SERIAL
 template <>
 struct default_edge_config<specfem::dimension::type::dim2, Kokkos::Serial>
     : edge_config<specfem::dimension::type::dim2, 1, 1, Kokkos::Serial> {};
+#endif
 
 } // namespace parallel_config
 } // namespace specfem
