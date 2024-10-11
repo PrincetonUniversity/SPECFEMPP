@@ -18,10 +18,7 @@ namespace HDF5 {
 #ifdef NO_HDF5
 template <typename OpType> class Group {
 public:
-  Group(std::unique_ptr<H5::H5File> &file, const std::string &name) {
-    throw std::runtime_error("SPECFEM++ was not compiled with HDF5 support");
-  }
-  Group(std::unique_ptr<H5::Group> &group, const std::string &name) {
+  template <typename... Args> Group(Args &&...args) {
     throw std::runtime_error("SPECFEM++ was not compiled with HDF5 support");
   }
 
