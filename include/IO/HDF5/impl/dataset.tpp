@@ -10,6 +10,7 @@
 #include "datasetbase.hpp"
 #include "kokkos_abstractions.h"
 #include "native_type.hpp"
+#include "native_type.tpp"
 #include <string>
 #include <type_traits>
 
