@@ -1,7 +1,10 @@
 #ifndef SPECFEM_IO_HDF5_IMPL_DATASET_HPP
 #define SPECFEM_IO_HDF5_IMPL_DATASET_HPP
 
+#ifndef NO_HDF5
 #include "H5Cpp.h"
+#endif
+
 #include "datasetbase.hpp"
 #include <memory>
 #include <string>
@@ -11,6 +14,27 @@ namespace IO {
 namespace impl {
 namespace HDF5 {
 
+#ifdef NO_HDF5
+// Error message if HDF5 is not available
+template <typename ViewType, typename OpType> class Dataset {
+public:
+  using value_type = typename ViewType::non_const_value_type;
+  using MemSpace = typename ViewType::memory_space;
+  using native_type = void;
+
+  template <typename... Args> Dataset(Args &&...args) {
+    throw std::runtime_error("SPECFEM++ was not compiled with HDF5 support");
+  }
+
+  void write() {
+    throw std::runtime_error("SPECFEM++ was not compiled with HDF5 support");
+  }
+
+  void read() {
+    throw std::runtime_error("SPECFEM++ was not compiled with HDF5 support");
+  }
+};
+#else
 // Forward declaration
 template <typename OpType> class Group;
 template <typename OpType> class File;
@@ -86,6 +110,7 @@ public:
 private:
   ViewType data; ///< Data to be written/read
 };
+#endif
 } // namespace HDF5
 } // namespace impl
 } // namespace IO

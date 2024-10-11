@@ -1,7 +1,10 @@
 #ifndef SPECFEM_IO_HDF5_IMPL_FILE_HPP
 #define SPECFEM_IO_HDF5_IMPL_FILE_HPP
 
+#ifndef NO_HDF5
 #include "H5Cpp.h"
+#endif
+
 #include "IO/operators.hpp"
 #include "dataset.hpp"
 #include "group.hpp"
@@ -12,6 +15,39 @@ namespace specfem {
 namespace IO {
 namespace impl {
 namespace HDF5 {
+
+#ifdef NO_HDF5
+template <typename OpType> class File {
+public:
+  File(const std::string &name) {
+    throw std::runtime_error("SPECFEM++ was not compiled with HDF5 support");
+  }
+  File(const char *name) {
+    throw std::runtime_error("SPECFEM++ was not compiled with HDF5 support");
+  }
+
+  template <typename ViewType>
+  specfem::IO::impl::HDF5::Dataset<ViewType, OpType>
+  createDataset(const std::string &name, const ViewType data) {
+    throw std::runtime_error("SPECFEM++ was not compiled with HDF5 support");
+  }
+
+  specfem::IO::impl::HDF5::Group<OpType> createGroup(const std::string &name) {
+    throw std::runtime_error("SPECFEM++ was not compiled with HDF5 support");
+  }
+
+  template <typename ViewType>
+  specfem::IO::impl::HDF5::Dataset<ViewType, OpType>
+  openDataset(const std::string &name, const ViewType data) {
+    throw std::runtime_error("SPECFEM++ was not compiled with HDF5 support");
+  }
+
+  specfem::IO::impl::HDF5::Group<OpType> openGroup(const std::string &name) {
+    throw std::runtime_error("SPECFEM++ was not compiled with HDF5 support");
+  }
+};
+
+#else
 
 // Forward declaration
 template <typename OpType> class Group;
@@ -142,6 +178,9 @@ public:
 private:
   std::unique_ptr<H5::H5File> file; ///< pointer to HDF5 file object
 };
+
+#endif
+
 } // namespace HDF5
 } // namespace impl
 } // namespace IO

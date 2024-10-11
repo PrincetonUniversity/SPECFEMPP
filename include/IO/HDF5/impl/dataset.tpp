@@ -1,7 +1,10 @@
 #ifndef SPECFEM_IO_HDF5_IMPL_DATASET_TPP
 #define SPECFEM_IO_HDF5_IMPL_DATASET_TPP
 
+#ifndef NO_HDF5
 #include "H5Cpp.h"
+#endif
+
 #include "IO/operators.hpp"
 #include "dataset.hpp"
 #include "datasetbase.hpp"
@@ -11,6 +14,7 @@
 #include <string>
 #include <type_traits>
 
+#ifndef NO_HDF5
 template <typename ViewType, typename OpType>
 specfem::IO::impl::HDF5::Dataset<ViewType, OpType>::Dataset(
     std::unique_ptr<H5::H5File> &file, const std::string &name,
@@ -68,5 +72,6 @@ void specfem::IO::impl::HDF5::Dataset<ViewType, OpType>::read() {
     throw std::runtime_error("Unknown memory space");
   }
 }
+#endif
 
 #endif

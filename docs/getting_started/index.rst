@@ -18,7 +18,7 @@ Compiler Versions
 
 .. note::
 
-    The following compilers are supported and tested by Kokkos. In theory, SPECFEM++ should work with any of these compiler versions. However we have not tested all of them and cannot guarantee the same. If you have issues compiling with a compiler versions listed below, please create an `issue on GitHub <https://github.com/PrincetonUniversity/specfem2d_kokkos/issues/new?assignees=&labels=&projects=&template=bug_report.md&title=>`_`.
+    The following compilers are supported and tested by Kokkos. In theory, SPECFEM++ should work with any of these compiler versions. However we have not tested all of them and cannot guarantee the same. If you have issues compiling with a compiler versions listed below, please create an `issue on GitHub <https://github.com/PrincetonUniversity/specfem2d_kokkos/issues/new?assignees=&labels=&projects=&template=bug_report.md&title=>`_.
 
 .. list-table::
     :widths: 30 35 35
@@ -67,7 +67,7 @@ Dependencies
 * Kokkos: required
 * Boost: required
 * YAML-CPP: required
-* HDF5: required
+* HDF5: optional
 
 Download SPECFEM++
 ------------------

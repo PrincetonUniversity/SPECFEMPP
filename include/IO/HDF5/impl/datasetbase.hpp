@@ -1,7 +1,10 @@
 #ifndef SPECFEM_IO_HDF5_IMPL_DATASETBASE_HPP
 #define SPECFEM_IO_HDF5_IMPL_DATASETBASE_HPP
 
+#ifndef NO_HDF5
 #include "H5Cpp.h"
+#endif
+
 #include "IO/operators.hpp"
 #include "native_type.hpp"
 #include <memory>
@@ -11,6 +14,8 @@ namespace specfem {
 namespace IO {
 namespace impl {
 namespace HDF5 {
+
+#ifndef NO_HDF5
 template <typename OpType> class DatasetBase;
 
 template <> class DatasetBase<specfem::IO::write> {
@@ -103,6 +108,7 @@ private:
   std::unique_ptr<H5::DataSet> dataset;
   std::unique_ptr<H5::DataSpace> dataspace;
 };
+#endif
 } // namespace HDF5
 } // namespace impl
 } // namespace IO
