@@ -3,6 +3,7 @@
 
 #ifndef NO_HDF5
 #include "H5Cpp.h"
+#include <stdexcept>
 #endif
 
 namespace specfem {
@@ -14,6 +15,7 @@ namespace HDF5 {
 template <typename T> struct native_type {
   static T type() {
     throw std::runtime_error("SPECFEM++ was not compiled with HDF5 support");
+    return T();
   }
 };
 #else
