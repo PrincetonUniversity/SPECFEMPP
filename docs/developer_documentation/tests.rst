@@ -64,5 +64,3 @@ The following tests are enabled within SPECFEM++ project:
    +------------------------------+--------------------+---------------------+
    | Intel 2020.2.0 (OpenMP)      |         ✓          |          ✘          |
    +------------------------------+--------------------+---------------------+
-
-5. **Regression tests (Jenkins)**: These tests are run on every pull request to the repository. The tests ensure that the current pull request doesn't degrade the performance of the code. If you're are first time contributor, then an admin would have to approve your request to run these tests. The pull request would be merged only if these tests pass.
