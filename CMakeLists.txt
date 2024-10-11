@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.17.5)
 project(specfem2d_kokkos VERSION 0.1.0)
 
 set(CMAKE_CXX_STANDARD 17)
+option(HDF5_CXX_BUILD "Build HDF5 C++" ON)
 option(MPI_PARALLEL "MPI enabled" OFF)
 option(BUILD_TESTS "Tests included" OFF)
 option(BUILD_EXAMPLES "Examples included" OFF)
@@ -62,13 +63,8 @@ endif()
 find_package(HDF5 COMPONENTS CXX)
 
 if (NOT ${HDF5_FOUND})
-        message("-- HDF5 not found. Installing HDF5.")
-        include(FetchContent)
-        FetchContent_Declare(
-                hdf5
-                URL https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.12/hdf5-1.12.0/src/hdf5-1.12.0.tar.gz
-        )
-        FetchContent_MakeAvailable(hdf5)
+        message("-- HDF5 not found. Building without HDF5.")
+        set(HDF5_CXX_BUILD OFF)
 else ()
         message(STATUS "    LIB:   ${HDF5_LIBRARIES}")
         message(STATUS "    INC:   ${HDF5_INCLUDE_DIRS}")
@@ -114,12 +110,25 @@ add_library(
         src/IO/ASCII/native_type.cpp
 )
 
-target_link_libraries(
-        IO
-        Boost::boost
-        Kokkos::kokkos
-        ${HDF5_LIBRARIES}
-)
+if (NOT HDF5_CXX_BUILD)
+        target_compile_definitions(
+                IO
+                PUBLIC -DNO_HDF5
+        )
+
+        target_link_libraries(
+                IO
+                Boost::boost
+                Kokkos::kokkos
+        )
+else()
+        target_link_libraries(
+                IO
+                ${HDF5_LIBRARIES}
+                Boost::boost
+                Kokkos::kokkos
+        )
+endif()
 
 add_library(
         point
@@ -490,7 +499,6 @@ target_link_libraries(
         kernels
         solver
         Boost::program_options
-        ${HDF5_LIBRARIES}
 )
 
 # Include tests

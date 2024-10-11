@@ -236,7 +236,7 @@ Now that we have the mesh database, we can run the forward simulation. Lets set 
 
 There are several few critical parameters within the input file that we need to pay attention to:
 
-1. Saving the forward wavefield: Computing frechet derivatives at time @:math:`\tau` requires the adjoint wavefield at time @:math:`\tau` and the forward wavefield at time @:math:`T-\tau`. This would require saving the forward wavefield at every time step during the forward run. However, this can be memory intensive and slow down the simulation. To avoid this, we reconstruct the forward wavefield during the adjoint simulation. This is done by saving the wavefield at the last time step of the forward simulation and running the solver in reverse during the adjoint simulation. The combination of forward and adjoint simulations is called combined simulation within SPECFEM++.
+1. Saving the forward wavefield: Computing frechet derivatives at time :math:`\tau` requires the adjoint wavefield at time :math:`\tau` and the forward wavefield at time :math:`T-\tau`. This would require saving the forward wavefield at every time step during the forward run. However, this can be memory intensive and slow down the simulation. To avoid this, we reconstruct the forward wavefield during the adjoint simulation. This is done by saving the wavefield at the last time step of the forward simulation and running the solver in reverse during the adjoint simulation. The combination of forward and adjoint simulations is called combined simulation within SPECFEM++.
 
 To store the wavefield at the last time step, we need to set the following parameters in the input file:
 

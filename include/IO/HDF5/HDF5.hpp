@@ -1,6 +1,9 @@
 #pragma once
 
+#ifndef NO_HDF5
 #include "H5Cpp.h"
+#endif
+
 #include "IO/HDF5/impl/dataset.hpp"
 #include "IO/HDF5/impl/dataset.tpp"
 #include "IO/HDF5/impl/file.hpp"

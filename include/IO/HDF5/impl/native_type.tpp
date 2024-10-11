@@ -1,10 +1,14 @@
 #ifndef SPECFEM_IO_HDF5_IMPL_NATIVE_TYPE_TPP
 #define SPECFEM_IO_HDF5_IMPL_NATIVE_TYPE_TPP
 
+#ifndef NO_HDF5
 #include "H5Cpp.h"
+#endif
+
 #include "native_type.hpp"
 #include <iostream>
 
+#ifndef NO_HDF5
 template <> struct specfem::IO::impl::HDF5::native_type<int> {
   static H5::IntType& type() {
     static H5::IntType type(H5::PredType::NATIVE_INT);
@@ -108,5 +112,6 @@ template <> struct specfem::IO::impl::HDF5::native_type<bool> {
     return type;
   }
 };
+#endif
 
 #endif
