@@ -3,6 +3,7 @@
 
 #ifndef NO_HDF5
 #include "H5Cpp.h"
+#else
 #include <stdexcept>
 #endif
 
