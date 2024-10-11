@@ -51,10 +51,20 @@ struct default_chunk_config<specfem::dimension::type::dim2, SIMD, Kokkos::Cuda>
                    Kokkos::Cuda> {};
 #endif
 
+#ifdef KOKKOS_ENABLE_OPENMP
+template <typename SIMD>
+struct default_chunk_config<specfem::dimension::type::dim2, SIMD,
+                            Kokkos::OpenMP>
+    : chunk_config<specfem::dimension::type::dim2, 1, 1, 1, 1, SIMD,
+                   Kokkos::OpenMP> {};
+#endif
+
+#ifdef KOKKOS_ENABLE_SERIAL
 template <typename SIMD>
 struct default_chunk_config<specfem::dimension::type::dim2, SIMD,
                             Kokkos::Serial>
     : chunk_config<specfem::dimension::type::dim2, 1, 1, 1, 1, SIMD,
                    Kokkos::Serial> {};
+#endif
 } // namespace parallel_config
 } // namespace specfem
