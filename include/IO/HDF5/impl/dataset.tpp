@@ -8,7 +8,6 @@
 #include "IO/operators.hpp"
 #include "dataset.hpp"
 #include "datasetbase.hpp"
-#include "datasetbase.tpp"
 #include "kokkos_abstractions.h"
 #include "native_type.hpp"
 #include <string>
