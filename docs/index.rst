@@ -1,3 +1,7 @@
+
+.. meta::
+  :hide-toc:
+
 SPECFEM++ - A modular and portable spectral-element code for seismic wave propagation
 =====================================================================================
 
