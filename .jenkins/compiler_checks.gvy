@@ -117,32 +117,26 @@ pipeline{
                                     CMAKE_HOST_NAME = """${sh(
                                                             returnStdout: true,
                                                             script: 'cut -d";" -f1 <<<"${HostSpace}"'
-                                                            f1 <<<"${HostSpace}"'
                                                         ).trim()}"""
                                     CMAKE_HOST_FLAGS = """${sh(
                                                             returnStdout: true,
                                                             script: 'cut -d";" -f2 <<<"${HostSpace}"'
-                                                            f2 <<<"${HostSpace}"'
                                                         ).trim()}"""
                                     CMAKE_DEVICE_NAME = """${sh(
                                                             returnStdout: true,
                                                             script: 'cut -d";" -f1 <<<"${DeviceSpace}"'
-                                                            f1 <<<"${DeviceSpace}"'
                                                         ).trim()}"""
                                     CMAKE_DEVICE_FLAGS = """${sh(
                                                             returnStdout: true,
                                                             script: 'cut -d";" -f2 <<<"${DeviceSpace}"'
-                                                            f2 <<<"${DeviceSpace}"'
                                                         ).trim()}"""
                                     SIMD_NAME = """${sh(
                                                             returnStdout: true,
                                                             script: 'cut -d";" -f1 <<<"${SIMD}"'
-                                                            f1 <<<"${SIMD}"'
                                                         ).trim()}"""
                                     SIMD_FLAGS = """${sh(
                                                             returnStdout: true,
                                                             script: 'cut -d";" -f2 <<<"${SIMD}"'
-                                                            f2 <<<"${SIMD}"'
                                                         ).trim()}"""
                                 }
                                 stages {
