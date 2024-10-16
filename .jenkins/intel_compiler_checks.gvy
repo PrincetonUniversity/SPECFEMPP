@@ -33,7 +33,7 @@ pipeline{
                         environment {
                             INTEL_COMPILER_NAME = """${sh(
                                                     returnStdout: true,
-                                                    script: 'cut -d";" <<<"${IntelCompiler}"'
+                                                    script: 'cut -d";" -f1 <<<"${IntelCompiler}"'
                                                 ).trim()}"""
                             INTEL_MODULE = """${sh(
                                                     returnStdout: true,
