@@ -64,8 +64,8 @@ pipeline{
                                     sh """
                                         module load boost/1.73.0
                                         module load ${GNU_COMPILER_MODULE}
-                                        cmake3 -S . -B build_cpu_{GNU_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.GIT_COMMIT} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${SIMD_FLAGS}
-                                        cmake3 --build build_cpu_{GNU_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.GIT_COMMIT}
+                                        cmake3 -S . -B build_cpu_${GNU_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.GIT_COMMIT} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${SIMD_FLAGS}
+                                        cmake3 --build build_cpu_${GNU_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.GIT_COMMIT}
                                     """
                                     echo ' Build completed '
                                 }
@@ -74,7 +74,7 @@ pipeline{
                         post {
                             always {
                                 echo ' Cleaning '
-                                sh "rm -rf build_cpu_{GNU_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.GIT_COMMIT}"
+                                sh "rm -rf build_cpu_${GNU_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.GIT_COMMIT}"
                             }
                         }
                     }
