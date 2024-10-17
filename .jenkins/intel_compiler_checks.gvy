@@ -17,7 +17,7 @@ pipeline{
                 axes {
                     axis{
                         name 'IntelCompiler'
-                        values 'ICC2022;intel/2022.2.0'; 'ICC2024;intel/2024.4.2'
+                        values 'ICC2022;intel/2022.2.0', 'ICC2024;intel/2024.4.2'
                     }
                     axis{
                         name 'HostSpace'
