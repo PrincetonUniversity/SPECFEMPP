@@ -25,7 +25,7 @@ pipeline{
                     }
                     axis{
                         name 'HostSpace'
-                        values 'SERIAL;-DKokkos_ENABLE_SERIAL=ON -DKokkos_ENABLE_ATOMICS_BYPASS=ON', 'OPENMP;-DKokkos_ENABLE_OPENMP=ON'
+                        values 'SERIAL;-DKokkos_ENABLE_SERIAL=ON -DKokkos_ENABLE_ATOMICS_BYPASS=ON;-n 1', 'OPENMP;-DKokkos_ENABLE_OPENMP=ON;-n 10'
                     }
                 }
                 stages {
@@ -48,6 +48,10 @@ pipeline{
                                                     returnStdout: true,
                                                     script: 'cut -d";" -f2 <<<"${HostSpace}"'
                                                 ).trim()}"""
+                            HOST_RUN_FLAGS = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'cut -d";" -f3 <<<"${HostSpace}"'
+                                                ).trim()}"""
                             SIMD_NAME = """${sh(
                                                     returnStdout: true,
                                                     script: 'cut -d";" -f1 <<<"${SIMD}"'
@@ -64,10 +68,22 @@ pipeline{
                                     sh """
                                         module load boost/1.73.0
                                         module load ${GNU_COMPILER_MODULE}
-                                        cmake3 -S . -B build_cpu_${GNU_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.GIT_COMMIT} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${SIMD_FLAGS}
+                                        cmake3 -S . -B build_cpu_${GNU_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.GIT_COMMIT} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${SIMD_FLAGS} -DBUILD_TESTS=ON
                                         cmake3 --build build_cpu_${GNU_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.GIT_COMMIT}
                                     """
                                     echo ' Build completed '
+                                }
+                            }
+                            stage (' Test '){
+                                steps {
+                                    echo ' Testing '
+                                    sh """
+                                        module load boost/1.73.0
+                                        module load ${GNU_COMPILER_MODULE}
+                                        cd build_cpu_${GNU_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.GIT_COMMIT}/tests/unit-tests
+                                        srun -N 1 -t 00:20:00 ${HOST_RUN_FLAGS} --constraint=skylake bash -c 'export OMP_PROC_BIND=spread; export OMP_THREADS=places; ctest --verbose;'
+                                    """
+                                    echo ' Testing completed '
                                 }
                             }
                         }
