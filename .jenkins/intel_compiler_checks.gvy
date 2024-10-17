@@ -17,7 +17,7 @@ pipeline{
                 axes {
                     axis{
                         name 'IntelCompiler'
-                        values 'ICC2022;intel/2022.2.0', 'ICC2024;intel/2024.4.2'
+                        values 'ICC2022;intel/2022.2.0', 'ICC2024;intel/2024.0.2'
                     }
                     axis{
                         name 'HostSpace'
@@ -25,7 +25,7 @@ pipeline{
                     }
                     axis{
                         name 'SIMD'
-                        values 'SIMD_NONE;-DENABLE_SIMD=OFF', 'SIMD_NATIVE;-DENABLE_SIMD=ON -DKokkos_ARCH_NATIVE=ON'
+                        values 'SIMD_NONE;-DENABLE_SIMD=OFF'
                     }
                 }
                 stages {
@@ -69,7 +69,7 @@ pipeline{
                                         module load ${INTEL_MODULE}
                                         export CC=icx
                                         export CXX=icpx
-                                        cmake3 -S . -B build_cpu_${INTEL_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.GIT_COMMIT} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${SIMD_FLAGS}
+                                        cmake3 -S . -B build_cpu_${INTEL_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.GIT_COMMIT} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${SIMD_FLAGS} -D BUILD_TESTS=ON
                                         cmake3 --build build_cpu_${INTEL_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.GIT_COMMIT}
                                     """
                                     echo ' Build completed '
