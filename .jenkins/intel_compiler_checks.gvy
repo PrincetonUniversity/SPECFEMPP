@@ -17,7 +17,7 @@ pipeline{
                 axes {
                     axis{
                         name 'IntelCompiler'
-                        values 'ICC2022;intel/2022.2.0'
+                        values 'ICC2022;intel/2022.2.0'; 'ICC2024;intel/2024.4.2'
                     }
                     axis{
                         name 'HostSpace'
@@ -46,6 +46,10 @@ pipeline{
                             CMAKE_HOST_FLAGS = """${sh(
                                                     returnStdout: true,
                                                     script: 'cut -d";" -f2 <<<"${HostSpace}"'
+                                                ).trim()}"""
+                            HOST_RUN_FLAGS = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'cut -d";" -f3 <<<"${HostSpace}"'
                                                 ).trim()}"""
                             SIMD_NAME = """${sh(
                                                     returnStdout: true,
