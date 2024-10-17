@@ -21,11 +21,11 @@ pipeline{
                     }
                     axis{
                         name 'HostSpace'
-                        values 'SERIAL;-DKokkos_ENABLE_SERIAL=ON', 'OPENMP;-DKokkos_ENABLE_OPENMP=ON'
+                        values 'SERIAL;-DKokkos_ENABLE_SERIAL=ON;-n 1', 'OPENMP;-DKokkos_ENABLE_OPENMP=ON;-n 10'
                     }
                     axis{
                         name 'DeviceSpace'
-                        values 'CUDA_AMPERE80;-DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON', 'CUDA_VOLTA70;-DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_VOLTA70=ON'
+                        values 'CUDA_AMPERE80;-DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON;--gres=gpu:1 --constraint=a100', 'CUDA_VOLTA70;-DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_VOLTA70=ON;--gres=gpu:1 --constraint=v100'
                     }
                     axis{
                         name 'SIMD'
@@ -51,6 +51,10 @@ pipeline{
                                                     returnStdout: true,
                                                     script: 'cut -d";" -f2 <<<"${HostSpace}"'
                                                 ).trim()}"""
+                            HOST_RUN_FLAGS = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'cut -d";" -f3 <<<"${HostSpace}"'
+                                                ).trim()}"""
                             CMAKE_DEVICE_NAME = """${sh(
                                                     returnStdout: true,
                                                     script: 'cut -d";" -f1 <<<"${DeviceSpace}"'
@@ -58,6 +62,10 @@ pipeline{
                             CMAKE_DEVICE_FLAGS = """${sh(
                                                     returnStdout: true,
                                                     script: 'cut -d";" -f2 <<<"${DeviceSpace}"'
+                                                ).trim()}"""
+                            DEVICE_RUN_FLAGS = """${sh(
+                                                    returnStdout: true,
+                                                    script: 'cut -d";" -f3 <<<"${DeviceSpace}"'
                                                 ).trim()}"""
                             SIMD_NAME = """${sh(
                                                     returnStdout: true,
@@ -79,6 +87,18 @@ pipeline{
                                         cmake3 --build build_cuda_${CUDA_COMPILER_NAME}_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${SIMD_NAME}_${env.GIT_COMMIT}
                                     """
                                     echo ' Build completed '
+                                }
+                            }
+                            stage (' Test '){
+                                steps {
+                                    echo ' Testing '
+                                    sh """
+                                        module load boost/1.73.0
+                                        module load ${GNU_COMPILER_MODULE}
+                                        cd build_cpu_${GNU_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.GIT_COMMIT}/tests/unit-tests
+                                        srun -N 1 -t 00:20:00 ${HOST_RUN_FLAGS} ${DEVICE_RUN_FLAGS} bash -c 'export OMP_PROC_BIND=spread; export OMP_THREADS=places; ctest --verbose;'
+                                    """
+                                    echo ' Testing completed '
                                 }
                             }
                         }
