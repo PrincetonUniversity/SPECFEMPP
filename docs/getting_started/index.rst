@@ -112,7 +112,7 @@ SPECFEM++ inherits several architecure specific cmake configuration keywords fro
 .. code-block:: bash
 
     # cd into SPECFEM root directory
-    cmake -S . -B build -D CMAKE_BUILD_TYPE=Release -D BUILD_TESTS=ON -D ENABLE_SIMD=ON -D Kokkos_ENABLE_OPENMP=ON -D Kokkos_ARCH_NATIVE=ON -D Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION=ON -D Kokkos_ENABLE_ATOMICS_BYPASS=ON
+    cmake -S . -B build -D CMAKE_BUILD_TYPE=Release -D BUILD_TESTS=ON -D ENABLE_SIMD=ON -D Kokkos_ENABLE_OPENMP=ON -D Kokkos_ARCH_NATIVE=ON -D Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION=ON
     cmake --build build
 
 * CUDA version (needs cudatoolkit >= 11.7)
@@ -125,7 +125,7 @@ SPECFEM++ inherits several architecure specific cmake configuration keywords fro
 
 .. note::
 
-    Specify the architecture flag ``-D Kokkos_ARCH_<architecture>`` based on the GPU architecture you are using. For example, for NVIDIA Ampere architecture, use ``-D Kokkos_ARCH_AMPERE80=ON``.
+    Specify the architecture flag ``-D Kokkos_ARCH_<architecture>`` based on the GPU architecture you are using. For example, for NVIDIA Ampere architecture, use ``-D Kokkos_ARCH_AMPERE80=ON``. See `Kokkos documentation <https://kokkos.org/kokkos-core-wiki/keywords.html>`_ for more information.
 
 Adding SPECFEM to PATH
 ----------------------
