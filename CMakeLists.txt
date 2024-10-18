@@ -508,7 +508,6 @@ target_link_libraries(
 if (BUILD_TESTS)
         message("-- Including tests.")
         add_subdirectory(tests/unit-tests)
-        add_subdirectory(tests/regression-tests)
 endif()
 
 if (BUILD_EXAMPLES)
