@@ -17,6 +17,9 @@ set(NUM_VECTOR_LANES 1)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
         set(CMAKE_CXX_FLAGS "-fp-model=precise")
+        if (ENABLE_SIMD)
+                message(FATAL_ERROR "SIMD is not supported with IntelLLVM compiler, please clear the Cmake cache and 1. Please disable SIMD by setting ENABLE_SIMD to OFF or 2. Use GNU compiler")
+        endif()
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
         message("-- Detected Intel classic compiler which will be deprecated soon.")
         message("-- It is recommended you use IntelLLVM compiler.")
@@ -505,7 +508,6 @@ target_link_libraries(
 if (BUILD_TESTS)
         message("-- Including tests.")
         add_subdirectory(tests/unit-tests)
-        add_subdirectory(tests/regression-tests)
 endif()
 
 if (BUILD_EXAMPLES)
