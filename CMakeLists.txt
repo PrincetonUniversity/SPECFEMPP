@@ -501,6 +501,95 @@ target_link_libraries(
         Boost::program_options
 )
 
+
+
+# add_library(
+#         event_marching
+# )
+# target_link_libraries(
+#         event_marching
+#         quadrature
+#         kernels
+#         domain
+#         solver
+# )
+
+add_library(
+        _util
+        src/_util/build_demo_assembly.cpp
+)
+
+target_link_libraries(
+        _util
+        quadrature
+        IO
+        point
+        edge
+        specfem_mpi
+        mesh
+        jacobian
+        reader
+        algorithms
+        source_time_function
+        source_class
+        receiver_class
+        compute
+        domain
+        coupled_interface
+        frechet_derivatives
+        kernels
+        timescheme
+        solver
+        writer
+        yaml-cpp
+        Boost::filesystem
+)
+
+
+add_library(
+        adjacency_graph
+        src/adjacency_graph/adjacency_graph.cpp
+)
+
+target_link_libraries(
+        adjacency_graph
+        mesh
+        compute
+        domain
+        kernels
+)
+
+add_executable(
+        specfem2d_eventmarcher
+        src/specfem2d_eventmarcher.cpp
+)
+
+
+#TODO verify which libs we actually need.
+target_link_libraries(
+        specfem2d_eventmarcher
+        adjacency_graph
+        # event_marching
+        specfem_mpi
+        Kokkos::kokkos
+        mesh
+        quadrature
+        compute
+        source_class
+        parameter_reader
+        receiver_class
+        writer
+        reader
+        coupled_interface
+        frechet_derivatives
+        timescheme
+        kernels
+        domain
+        solver
+        Boost::program_options
+        _util
+)
+
 # Include tests
 if (BUILD_TESTS)
         message("-- Including tests.")

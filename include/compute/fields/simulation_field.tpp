@@ -44,6 +44,14 @@ specfem::compute::simulation_field<WavefieldType>::simulation_field(
   this->index_mapping = mesh.points.index_mapping;
   this->h_index_mapping = mesh.points.h_index_mapping;
 
+  this->set_assembly_index_mappings(mesh,properties);
+}
+
+
+template <specfem::wavefield::type WavefieldType>
+void specfem::compute::simulation_field<WavefieldType>::set_assembly_index_mappings(
+    const specfem::compute::mesh &mesh,
+    const specfem::compute::properties &properties){
   assembly_index_mapping =
       Kokkos::View<int * [specfem::element::ntypes], Kokkos::LayoutLeft,
                    specfem::kokkos::DevMemSpace>(
@@ -78,6 +86,4 @@ specfem::compute::simulation_field<WavefieldType>::simulation_field(
       mesh, properties, acoustic_index);
 
   Kokkos::deep_copy(assembly_index_mapping, h_assembly_index_mapping);
-
-  return;
 }
