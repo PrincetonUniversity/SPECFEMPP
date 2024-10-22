@@ -25,7 +25,7 @@ pipeline{
                     }
                     axis{
                         name 'SIMD'
-                        values 'SIMD_NONE;-DENABLE_SIMD=OFF'
+                        values 'SIMD_NONE;-DENABLE_SIMD=OFF', 'SIMD_NATIVE;-DENABLE_SIMD=ON -DKokkos_ARCH_NATIVE=ON -DKokkos_ENABLE_AGGRESSIVE_VECTORIZATION=ON'
                     }
                 }
                 stages {

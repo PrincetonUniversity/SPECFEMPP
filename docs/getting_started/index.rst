@@ -21,10 +21,6 @@ The following table lists the versions of compilers that are supported by SPECFE
   - Tested: The compiler versions that are tested for stability.
   - Supported by Kokkos: The compiler versions that are supported by Kokkos. We have not tested these versions for SPECFEM++, but in theory they should work.
 
-.. warning::
-
-    SIMD extentions currently do not work the IntelLLVM compiler. Please see `this issue <https://github.com/PrincetonUniversity/SPECFEMPP/issues/116>`_ for more information.
-
 .. list-table::
     :widths: 19 27 27 27
     :header-rows: 1
