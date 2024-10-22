@@ -377,13 +377,15 @@ compute_edge_factors_and_normals(
                                             true, false>;
 
     const auto [i1, j1] = edge1_points[ipoint];
-    const specfem::point::index<specfem::dimension::type::dim2> edge1_index(ispec1, j1, i1);
+    const specfem::point::index<specfem::dimension::type::dim2> edge1_index(
+        ispec1, j1, i1);
     PointPartialDerivativesType edge1_derivatives;
     specfem::compute::load_on_host(edge1_index, partial_derivatives,
                                    edge1_derivatives);
 
     const auto [i2, j2] = edge2_points[ipoint];
-    const specfem::point::index<specfem::dimension::type::dim2> edge2_index(ispec2, j2, i2);
+    const specfem::point::index<specfem::dimension::type::dim2> edge2_index(
+        ispec2, j2, i2);
     PointPartialDerivativesType edge2_derivatives;
     specfem::compute::load_on_host(edge2_index, partial_derivatives,
                                    edge2_derivatives);
@@ -391,8 +393,10 @@ compute_edge_factors_and_normals(
     const auto edge1_normal = edge1_derivatives.compute_normal(edge1);
     const auto edge2_normal = edge2_derivatives.compute_normal(edge2);
 
-    if (std::abs(edge1_normal(0) + edge2_normal(0)) > 1.e-10 &&
-        std::abs(edge1_normal(1) + edge2_normal(1)) > 1.e-10) {
+    if ((std::abs(edge1_normal(0) + edge2_normal(0)) >
+         1.e-4 * (std::abs(edge1_normal(0) - edge2_normal(0)) / 2)) &&
+        (std::abs(edge1_normal(1) + edge2_normal(1)) >
+         1.e-4 * (std::abs(edge1_normal(1) - edge2_normal(1)) / 2))) {
       throw std::runtime_error("Edge normals need to be opposite in direction");
     }
 
