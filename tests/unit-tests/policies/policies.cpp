@@ -165,7 +165,6 @@ execute_chunk_element_policy(const int nspec, const int ngllz,
 
   Kokkos::fence();
 
-  constexpr bool using_simd = PolicyType::simd::using_simd;
   constexpr int simd_size = PolicyType::simd::size();
 
   Kokkos::parallel_for(
@@ -190,6 +189,7 @@ execute_chunk_element_policy(const int nspec, const int ngllz,
                 const auto ispec = iterator_index.index.ispec;
                 const int ix = iterator_index.index.ix;
                 const int iz = iterator_index.index.iz;
+                constexpr bool using_simd = PolicyType::simd::using_simd;
 
                 if constexpr (using_simd) {
                   using mask_type = typename PolicyType::simd::mask_type;
@@ -276,8 +276,10 @@ protected:
 };
 
 TEST_F(POLICIES, RangePolicy) {
-  for (auto [Test, nglob, nspec] : *this) {
-
+  for (auto parameters : *this) {
+    const auto Test = std::get<0>(parameters);
+    const auto nglob = std::get<1>(parameters);
+    const auto nspec = std::get<2>(parameters);
     const int ngllz = 5;
     const int ngllx = 5;
 
@@ -322,7 +324,10 @@ TEST_F(POLICIES, RangePolicy) {
 }
 
 TEST_F(POLICIES, ChunkElementPolicy) {
-  for (auto [Test, nglob, nspec] : *this) {
+  for (auto parameters : *this) {
+    const auto Test = std::get<0>(parameters);
+    const auto nglob = std::get<1>(parameters);
+    const auto nspec = std::get<2>(parameters);
 
     const int ngllz = 5;
     const int ngllx = 5;
