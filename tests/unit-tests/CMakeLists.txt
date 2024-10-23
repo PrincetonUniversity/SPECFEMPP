@@ -214,6 +214,23 @@ target_link_libraries(
   point
 )
 
+add_executable(
+  range_policy
+  policies/RangePolicy.cpp
+)
+
+target_link_libraries(
+  range_policy
+  mesh
+  source_class
+  receiver_class
+  kokkos_environment
+  mpi_environment
+  yaml-cpp
+  -lpthread -lm
+)
+
+
 # # add_executable(
 # #   source_location_tests
 # #   source/source_location_tests.cpp
@@ -355,6 +372,7 @@ if (NOT MPI_PARALLEL)
   # # gtest_discover_tests(compute_acoustic_tests)
   # gtest_discover_tests(compute_coupled_interfaces_tests)
   gtest_discover_tests(compute_tests)
+  gtest_discover_tests(range_policy)
   gtest_discover_tests(locate_point)
   gtest_discover_tests(interpolate_function)
   gtest_discover_tests(rmass_inverse_tests)
