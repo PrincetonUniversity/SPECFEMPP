@@ -6,6 +6,7 @@
 #include "kernels/kernels.hpp"
 
 #include "event_marching/event_marcher.hpp"
+#include "event_marching/timemarching_wrapper.hpp"
 #include "_util/rewrite_simfield.hpp"
 
 
@@ -45,9 +46,6 @@ void execute(specfem::MPI::MPI *mpi){
   std::cout << "\n\n\n\n\n\n\n\n\n" << std::flush;
 #endif
 
-  auto timescheme = std::make_shared<specfem::time_scheme::newmark<specfem::simulation::type::forward>>(
-    params.get_numsteps(), 1, params.get_dt(), params.get_t0()
-  );
 
   specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
   auto kernels = specfem::kernels::kernels<
@@ -55,14 +53,31 @@ void execute(specfem::MPI::MPI *mpi){
           specfem::dimension::type::dim2,
           specfem::enums::element::quadrature::static_quadrature_points<5>
           >(params.get_dt(),assembly,qp5);
+
+
+  auto timescheme = std::make_shared<specfem::time_scheme::newmark<specfem::simulation::type::forward>>(
+    params.get_numsteps(), 1, params.get_dt(), params.get_t0()
+  );
+  timescheme->link_assembly(assembly);
   
-  auto marcher = specfem::event_marching::event_marcher<specfem::simulation::type::forward, specfem::dimension::type::dim2,
-          specfem::enums::element::quadrature::static_quadrature_points<5>>(kernels);
+  auto marcher = specfem::event_marching::event_marcher();
+  auto time_stepping = specfem::solver::time_marching<specfem::simulation::type::forward,
+                                               specfem::dimension::type::dim2,
+                                               specfem::enums::element::quadrature::static_quadrature_points<5>>
+        (kernels,timescheme);
+  
 
+  auto timemarching_wrapper = specfem::event_marching::timemarching_wrapper<
+          specfem::simulation::type::forward, specfem::dimension::type::dim2,
+          specfem::enums::element::quadrature::static_quadrature_points<5>>(time_stepping);
 
+  //TODO mechanism to register wrapper into marcher (populate marcher events).
+  //TODO marcher logic
+
+  time_stepping.init_kernels();
   marcher.run();
 
-  // timescheme->link_assembly(assembly);
+  
   // auto solver = specfem::solver::time_marching<specfem::simulation::type::forward,
   //                                              specfem::dimension::type::dim2,
   //                                              specfem::enums::element::quadrature::static_quadrature_points<5>>

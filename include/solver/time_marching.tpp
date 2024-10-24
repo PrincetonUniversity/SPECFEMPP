@@ -7,6 +7,12 @@
 #include "timescheme/newmark.hpp"
 #include <Kokkos_Core.hpp>
 
+
+template <specfem::dimension::type DimensionType, typename qp_type>
+void specfem::solver::time_marching<specfem::simulation::type::forward,
+                                    DimensionType, qp_type>::init_kernels(){
+  kernels.initialize(time_scheme->get_timestep());
+}
 template <specfem::dimension::type DimensionType, typename qp_type>
 void specfem::solver::time_marching<specfem::simulation::type::forward,
                                     DimensionType, qp_type>::run() {
@@ -14,7 +20,7 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
   constexpr auto elastic = specfem::element::medium_tag::elastic;
 
-  kernels.initialize(time_scheme->get_timestep());
+  init_kernels();
 
   const int nstep = time_scheme->get_max_timestep();
 
@@ -46,13 +52,18 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
 
 template <specfem::dimension::type DimensionType, typename qp_type>
 void specfem::solver::time_marching<specfem::simulation::type::combined,
+                                    DimensionType, qp_type>::init_kernels(){
+  adjoint_kernels.initialize(time_scheme->get_timestep());
+  backward_kernels.initialize(time_scheme->get_timestep());
+}
+template <specfem::dimension::type DimensionType, typename qp_type>
+void specfem::solver::time_marching<specfem::simulation::type::combined,
                                     DimensionType, qp_type>::run() {
 
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
   constexpr auto elastic = specfem::element::medium_tag::elastic;
 
-  adjoint_kernels.initialize(time_scheme->get_timestep());
-  backward_kernels.initialize(time_scheme->get_timestep());
+  init_kernels();
 
   const int nstep = time_scheme->get_max_timestep();
 

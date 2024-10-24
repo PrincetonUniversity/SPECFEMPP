@@ -55,6 +55,8 @@ public:
    */
   void run() override;
 
+  void init_kernels();
+
 private:
   specfem::kernels::kernels<specfem::wavefield::type::forward, DimensionType,
                             qp_type>
@@ -100,6 +102,8 @@ public:
    * @brief Run the time marching solver
    */
   void run() override;
+  
+  void init_kernels();
 
 private:
   constexpr static int NGLL = qp_type::NGLL;

@@ -8,11 +8,12 @@
 namespace specfem{
 namespace event_marching{
 
-template <specfem::dimension::type DimensionType, typename qp_type>
-void event_marcher<specfem::simulation::type::forward,
-          DimensionType,qp_type>::run(){
+void event_marcher::run(){
 
 }
+
+
+
 
 }
 }
