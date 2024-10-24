@@ -1,0 +1,73 @@
+Tests:
+  # Test 1:
+  - name : "Test 1: Multiple of simd_size"
+    description: >
+      Testing range policy with a range that is a multiple of simd_size.
+    config:
+      nproc : 1
+    parameters:
+      nglob : 80000
+      nspec : 8000
+  # Test 2:
+  - name : "Test 2: N * simd_size + 1"
+    description: >
+      Testing range policy with a range that is N * simd_size + 1.
+    config:
+      nproc : 1
+    parameters:
+      nglob : 80001
+      nspec : 8001
+  # Test 3:
+  - name : "Test 3: N * simd_size + 2"
+    description: >
+      Testing range policy with a range that is N * simd_size + 2.
+    config:
+      nproc : 1
+    parameters:
+      nglob : 80002
+      nspec : 8002
+  # Test 4:
+  - name : "Test 4: N * simd_size + 3"
+    description: >
+      Testing range policy with a range that is N * simd_size + 3.
+    config:
+      nproc : 1
+    parameters:
+      nglob : 80003
+      nspec : 8003
+  # Test 5:
+  - name : "Test 5: N * simd_size + 4"
+    description: >
+      Testing range policy with a range that is N * simd_size + 4.
+    config:
+      nproc : 1
+    parameters:
+      nglob : 80004
+      nspec : 8004
+  # Test 6:
+  - name : "Test 6: N * simd_size + 5"
+    description: >
+      Testing range policy with a range that is N * simd_size + 5.
+    config:
+      nproc : 1
+    parameters:
+      nglob : 80005
+      nspec : 8005
+  # Test 7:
+  - name : "Test 7: N * simd_size + 6"
+    description: >
+      Testing range policy with a range that is N * simd_size + 6.
+    config:
+      nproc : 1
+    parameters:
+      nglob : 80006
+      nspec : 8006
+  # Test 8:
+  - name : "Test 8: N * simd_size + 7"
+    description: >
+      Testing range policy with a range that is N * simd_size + 7.
+    config:
+      nproc : 1
+    parameters:
+      nglob : 80007
+      nspec : 8007
