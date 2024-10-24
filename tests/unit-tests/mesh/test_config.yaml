@@ -1,28 +1,46 @@
 Tests:
   # Test 1:
-  - name : "SerialTest1 : Homogeneous elastic domain"
+  - name : "Test 1: Simple mesh with flat topography"
     description: >
-      Serial mesh IO test. Homogeneous elastic domain.
+      Testing mesh reader on a simple mesh with flat topography.
     config:
       nproc : 1
     databases:
       - processor : 0
-        filename : "../../../tests/unit-tests/mesh/serial/test1/database.bin"
+        filename : "../../../tests/unit-tests/data/mesh/simple_mesh_flat_topography/database.bin"
   # Test 2:
-  - name : "SerialTest2 : Homogeneous acoustic domain"
+  - name : "Test 2: Simple mesh with curved topography"
     description: >
-      Serial mesh IO test. Homogeneous acoustic domain.
+      Testing mesh reader on a simple mesh with curved topography.
     config:
       nproc : 1
     databases:
       - processor : 0
-        filename : "../../../tests/unit-tests/mesh/serial/test2/database.bin"
+        filename : "../../../tests/unit-tests/data/mesh/simple_mesh_curved_topography/database.bin"
   # Test 3:
-  - name : "SerialTest3 : Heterogeneous elastic acoustic domain"
+  - name : "Test 3: Simple mesh with flat ocean bottom"
     description: >
-      Serial mesh IO test. Heterogeneous elastic acoustic domain.
+      Testing mesh reader on a simple mesh with flat ocean bottom. Fluid-solid interface is at the ocean bottom.
     config:
       nproc : 1
     databases:
       - processor : 0
-        filename : "../../../tests/unit-tests/mesh/serial/test3/database.bin"
+        filename : "../../../tests/unit-tests/data/mesh/fluid_solid_mesh_flat_ocean_bottom/database.bin"
+  # Test 4:
+  - name : "Test 4: Simple mesh with curved ocean bottom"
+    description: >
+      Testing mesh reader on a simple mesh with curved ocean bottom. Fluid-solid interface is at the ocean bottom.
+    config:
+      nproc : 1
+    databases:
+      - processor : 0
+        filename : "../../../tests/unit-tests/data/mesh/fluid_solid_mesh_curved_ocean_bottom/database.bin"
+  # Test 5:
+  - name : "Test 5: Gmesh Example"
+    description: >
+      Testing mesh reader on a Gmesh example mesh.
+    config:
+      nproc : 1
+    databases:
+      - processor : 0
+        filename : "../../../tests/unit-tests/data/mesh/Gmesh_Example_Stacey/database.bin"

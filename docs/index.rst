@@ -1,5 +1,22 @@
+
+.. meta::
+  :hide-toc:
+
 SPECFEM++ - A modular and portable spectral-element code for seismic wave propagation
 =====================================================================================
+
+.. image:: https://jenkins.princeton.edu/buildStatus/icon?job=SpecFEM_KOKKOS%2FGNU+Compiler&build=last&subject=GCC%20Build
+    :alt: GCC Build
+
+.. image:: https://jenkins.princeton.edu/buildStatus/icon?job=SpecFEM_KOKKOS%2FIntel_Compiler_Checks&build=last&subject=IntelLLVM%20Build
+    :alt: IntelLLVM Build
+
+.. image:: https://jenkins.princeton.edu/buildStatus/icon?job=SpecFEM_KOKKOS%2FNVIDIA_Compiler_Checks&build=last&subject=NVIDIA%20Build
+   :alt: NVIDIA Build
+
+.. image:: https://img.shields.io/badge/License-GPLv3-blue.svg
+    :target: https://github.com/PrincetonUniversity/SPECFEMPP/blob/main/LICENSE
+    :alt: License
 
 .. admonition:: Community Project
 

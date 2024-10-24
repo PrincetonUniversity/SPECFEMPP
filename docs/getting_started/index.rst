@@ -16,45 +16,54 @@ Build system
 Compiler Versions
 ~~~~~~~~~~~~~~~~~
 
-.. note::
-
-    The following compilers are supported and tested by Kokkos. In theory, SPECFEM++ should work with any of these compiler versions. However we have not tested all of them and cannot guarantee the same. If you have issues compiling with a compiler versions listed below, please create an `issue on GitHub <https://github.com/PrincetonUniversity/specfem2d_kokkos/issues/new?assignees=&labels=&projects=&template=bug_report.md&title=>`_.
+The following table lists the versions of compilers that are supported by SPECFEM++:
+  - Recommended: The compiler versions that are tested for performance and stability.
+  - Tested: The compiler versions that are tested for stability.
+  - Supported by Kokkos: The compiler versions that are supported by Kokkos. We have not tested these versions for SPECFEM++, but in theory they should work.
 
 .. list-table::
-    :widths: 30 35 35
+    :widths: 19 27 27 27
     :header-rows: 1
     :align: center
 
     * - Compiler
-      - Minimum version
-      - Primary tested versions
+      - Recommended
+      - Tested
+      - Supported by Kokkos
 
-    * * GCC
-      * 8.2.0
+    * * GNU
+      * 8.5.0
+      * 8.5.0, 13.2.1
       * 8.4.0, latest
 
-    * * Clang
-      * 8.0.0
-      * 8.0.0, latest
-
     * * IntelLLVM
-      * 2021.1.1
-      * 2023.0.0
+      * 2024.0.2
+      * 2022.2.0, 2024.0.2
+      * 2021.1.1, 2023.0.0
 
     * * NVCC
-      * 11.0
+      * 12.6
+      * 11.7, 12.6
       * 11.0, 11.6, 11.7
 
+    * * Clang
+      * Not Tested
+      * Not Tested
+      * 8.0.0, latest
+
     * * NVC++
-      * 22.3
-      * 22.9
+      * Not Tested
+      * Not Tested
+      * 22.3, 22.9
 
     * * ROCM
-      * 5.2.0
+      * Not Tested
+      * Not Tested
       * 5.2.0
 
     * * ARM/Clang
-      * 20.1
+      * Not Tested
+      * Not Tested
       * 20.1
 
 Dependencies
@@ -99,7 +108,7 @@ SPECFEM++ inherits several architecure specific cmake configuration keywords fro
 .. code-block:: bash
 
     # cd into SPECFEM root directory
-    cmake -S . -B build -D CMAKE_BUILD_TYPE=Release -D BUILD_TESTS=ON -D ENABLE_SIMD=ON -D Kokkos_ENABLE_OPENMP=ON -D Kokkos_ARCH_NATIVE=ON -D Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION=ON -D Kokkos_ENABLE_ATOMICS_BYPASS=ON
+    cmake -S . -B build -D CMAKE_BUILD_TYPE=Release -D BUILD_TESTS=ON -D ENABLE_SIMD=ON -D Kokkos_ENABLE_OPENMP=ON -D Kokkos_ARCH_NATIVE=ON -D Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION=ON
     cmake --build build
 
 * CUDA version (needs cudatoolkit >= 11.7)
@@ -112,7 +121,7 @@ SPECFEM++ inherits several architecure specific cmake configuration keywords fro
 
 .. note::
 
-    Specify the architecture flag ``-D Kokkos_ARCH_<architecture>`` based on the GPU architecture you are using. For example, for NVIDIA Ampere architecture, use ``-D Kokkos_ARCH_AMPERE80=ON``.
+    Specify the architecture flag ``-D Kokkos_ARCH_<architecture>`` based on the GPU architecture you are using. For example, for NVIDIA Ampere architecture, use ``-D Kokkos_ARCH_AMPERE80=ON``. See `Kokkos documentation <https://kokkos.org/kokkos-core-wiki/keywords.html>`_ for more information.
 
 Adding SPECFEM to PATH
 ----------------------

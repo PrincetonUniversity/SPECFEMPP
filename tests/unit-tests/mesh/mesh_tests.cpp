@@ -90,22 +90,29 @@ TEST(MESH_TESTS, fortran_binary_reader) {
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
   std::string config_filename =
       "../../../tests/unit-tests/mesh/test_config.yaml";
-  std::vector<test_configuration::Test> tests;
-  parse_test_config(YAML::LoadFile(config_filename), tests);
+  std::vector<test_configuration::Test> Tests;
+  parse_test_config(YAML::LoadFile(config_filename), Tests);
 
-  for (auto test : tests) {
-    std::cout << "Executing test: " << test.description << std::endl;
+  for (auto Test : Tests) {
+    std::cout << "-------------------------------------------------------\n"
+              << "\033[0;32m[RUNNING]\033[0m Test: " << Test.name << "\n"
+              << "-------------------------------------------------------\n\n"
+              << std::endl;
     try {
       specfem::mesh::mesh mesh(
-          test.databases.filenames[test.configuration.processors - 1], mpi);
-      std::cout << " - Test passed\n" << std::endl;
+          Test.databases.filenames[Test.configuration.processors - 1], mpi);
+      std::cout << "--------------------------------------------------\n"
+                << "\033[0;32m[PASSED]\033[0m Test name: " << Test.name << "\n"
+                << "--------------------------------------------------\n\n"
+                << std::endl;
     } catch (std::runtime_error &e) {
       std::cout << " - Error: " << e.what() << std::endl;
-      FAIL() << " Test failed\n"
-             << " - Test name: " << test.name << "\n"
-             << " - Number of MPI processors: " << test.configuration.processors
-             << "\n"
-             << " - Error: " << e.what() << std::endl;
+      FAIL() << "--------------------------------------------------\n"
+             << "\033[0;31m[FAILED]\033[0m Test failed\n"
+             << " - Test name: " << Test.name << "\n"
+             << " - Error: " << e.what() << "\n"
+             << "--------------------------------------------------\n\n"
+             << std::endl;
     }
   }
   SUCCEED();

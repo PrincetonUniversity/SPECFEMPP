@@ -1,0 +1,2 @@
+ Error read interface file in meshfem2D
+ Error detected, aborting MPI... proc            0
