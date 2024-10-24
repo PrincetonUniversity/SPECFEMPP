@@ -227,6 +227,7 @@ target_link_libraries(
   kokkos_environment
   mpi_environment
   yaml-cpp
+  Boost::filesystem
   -lpthread -lm
 )
 
