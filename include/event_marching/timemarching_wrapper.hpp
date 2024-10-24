@@ -23,6 +23,7 @@ public:
   specfem::solver::time_marching<Simulation, DimensionType, qp_type> time_marcher;
 private:
   specfem::event_marching::event_marcher* registration;
+  int istep;
 
 };
 
@@ -34,9 +35,11 @@ public:
 
   timemarching_wrapper(specfem::solver::time_marching<specfem::simulation::type::forward,
         DimensionType, qp_type>& time_marcher
-  ): registration(nullptr), time_marcher(time_marcher) {}
+  ): registration(nullptr), time_marcher(time_marcher), istep(0) {}
   void set_forward_predictor_precedence(specfem::element::medium_tag medium, precedence p);
   void set_forward_corrector_precedence(specfem::element::medium_tag medium, precedence p);
+  void set_wavefield_update_precedence(specfem::element::medium_tag medium, precedence p);
+  void set_seismogram_update_precedence(precedence p);
 
   void load_into_marcher_main_events(specfem::event_marching::event_marcher& marcher);
   void unload_from_marcher_main_events();
@@ -44,15 +47,15 @@ public:
   specfem::solver::time_marching<specfem::simulation::type::forward, DimensionType, qp_type> time_marcher;
 private:
   specfem::event_marching::event_marcher* registration;
+  int istep;
 
   std::unordered_map<specfem::element::medium_tag, specfem::event_marching::event>
       forward_predictor_events;
   std::unordered_map<specfem::element::medium_tag, specfem::event_marching::event>
       forward_corrector_events;
   std::unordered_map<specfem::element::medium_tag, specfem::event_marching::event>
-      update_wavefield_event;
-  std::unordered_map<specfem::element::medium_tag, specfem::event_marching::event>
-      seismogram_update_event;
+      update_wavefield_events;
+  specfem::event_marching::event seismogram_update_event;
 
 };
 

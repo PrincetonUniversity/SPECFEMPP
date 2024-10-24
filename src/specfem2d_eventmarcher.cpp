@@ -72,8 +72,17 @@ void execute(specfem::MPI::MPI *mpi){
           specfem::enums::element::quadrature::static_quadrature_points<5>>(time_stepping);
 
   //TODO mechanism to register wrapper into marcher (populate marcher events).
-  //TODO marcher logic
+  constexpr auto acoustic = specfem::element::medium_tag::acoustic;
+  constexpr auto elastic = specfem::element::medium_tag::elastic;
+  timemarching_wrapper.set_forward_predictor_precedence(acoustic,0);
+  timemarching_wrapper.set_forward_predictor_precedence(elastic,0.01);
+  timemarching_wrapper.set_wavefield_update_precedence(acoustic,1);
+  timemarching_wrapper.set_forward_corrector_precedence(acoustic,2);
+  timemarching_wrapper.set_wavefield_update_precedence(elastic,3);
+  timemarching_wrapper.set_forward_corrector_precedence(elastic,4);
+  timemarching_wrapper.set_seismogram_update_precedence(5);
 
+  timemarching_wrapper.load_into_marcher_main_events(marcher);
   time_stepping.init_kernels();
   marcher.run();
 

@@ -56,6 +56,7 @@ public:
   void run() override;
 
   void init_kernels();
+  void seismogram_update(int istep);
 
 private:
   specfem::kernels::kernels<specfem::wavefield::type::forward, DimensionType,
@@ -104,6 +105,7 @@ public:
   void run() override;
   
   void init_kernels();
+  void seismogram_update(int istep);
 
 private:
   constexpr static int NGLL = qp_type::NGLL;

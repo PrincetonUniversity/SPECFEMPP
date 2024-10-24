@@ -7,7 +7,9 @@
 #include "kernels/kernels.hpp"
 #include "solver/solver.hpp"
 
-
+#include <functional>
+#include <vector>
+#include <utility>
 
 //event_marching namespace expects these to exist:
 namespace specfem {
@@ -22,13 +24,14 @@ typedef float precedence;
 
 // style for event callbacks (if this is good TBD):
 // takes invoker (event_marcher that calls the event), but returns a success state
-typedef int (*event_call)();
+//typedef int (*event_call)();
+typedef std::function<int()> event_call;
 
 
 // event defaults.
 constexpr precedence DEFAULT_EVENT_PRECEDENCE = 0;
 int _DEFAULT_EVENT_CALL(){return 0;}
-constexpr event_call DEFAULT_EVENT_CALL = _DEFAULT_EVENT_CALL;
+const event_call DEFAULT_EVENT_CALL = []() {return 0;};
 }
 }
 
@@ -55,8 +58,9 @@ private:
   //these are to be called without any invokers/interrupts.
   std::vector<specfem::event_marching::event> main_events;
 
-  //
-  std::vector<std::tuple<specfem::event_marching::event,bool>> queued_registration;
+  //<event to manage, true: add / false: remove>
+  std::vector<std::pair<specfem::event_marching::event,bool>> queued_registration;
+  void process_registrations();
 };
 
 
