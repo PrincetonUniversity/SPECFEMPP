@@ -103,6 +103,7 @@ execute_range_policy(const int nglob) {
         const auto index = iterator(0);
 
         constexpr bool using_simd = PolicyType::simd::using_simd;
+        const auto l_test_view = test_view;
 
         if constexpr (using_simd) {
           using mask_type = typename PolicyType::simd::mask_type;
@@ -112,13 +113,13 @@ execute_range_policy(const int nglob) {
           using datatype = typename PolicyType::simd::datatype;
           datatype data;
           Kokkos::Experimental::where(mask, data)
-              .copy_from(&test_view(index.index.iglob), tag_type());
+              .copy_from(&l_test_view(index.index.iglob), tag_type());
 
           data += static_cast<type_real>(1);
           Kokkos::Experimental::where(mask, data)
-              .copy_to(&test_view(index.index.iglob), tag_type());
+              .copy_to(&l_test_view(index.index.iglob), tag_type());
         } else if constexpr (!using_simd) {
-          test_view(index.index.iglob) += 1;
+          l_test_view(index.index.iglob) += 1;
         }
       });
 
@@ -190,6 +191,7 @@ execute_chunk_element_policy(const int nspec, const int ngllz,
                 const int ix = iterator_index.index.ix;
                 const int iz = iterator_index.index.iz;
                 constexpr bool using_simd = PolicyType::simd::using_simd;
+                const auto l_test_view = test_view;
 
                 if constexpr (using_simd) {
                   using mask_type = typename PolicyType::simd::mask_type;
@@ -200,13 +202,13 @@ execute_chunk_element_policy(const int nspec, const int ngllz,
                   using datatype = typename PolicyType::simd::datatype;
                   datatype data;
                   Kokkos::Experimental::where(mask, data)
-                      .copy_from(&test_view(ispec, iz, ix), tag_type());
+                      .copy_from(&l_test_view(ispec, iz, ix), tag_type());
 
                   data += static_cast<type_real>(1);
                   Kokkos::Experimental::where(mask, data)
-                      .copy_to(&test_view(ispec, iz, ix), tag_type());
+                      .copy_to(&l_test_view(ispec, iz, ix), tag_type());
                 } else if constexpr (!using_simd) {
-                  test_view(ispec, iz, ix) += 1;
+                  l_test_view(ispec, iz, ix) += 1;
                 }
               });
         }
