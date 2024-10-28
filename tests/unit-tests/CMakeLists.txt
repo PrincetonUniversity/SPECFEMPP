@@ -181,6 +181,25 @@ target_link_libraries(
 )
 
 add_executable(
+  assembly_tests
+  assembly/runner.cpp
+  assembly/kernels.cpp
+)
+
+target_link_libraries(
+  assembly_tests
+  mesh
+  compute
+  quadrature
+  mpi_environment
+  kokkos_environment
+  yaml-cpp
+  Boost::filesystem
+  -lpthread -lm
+)
+
+
+add_executable(
   locate_point
   algorithms/locate.cpp
 )

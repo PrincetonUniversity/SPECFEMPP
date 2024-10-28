@@ -84,6 +84,13 @@ public:
     elastic_isotropic.copy_to_host();
     acoustic_isotropic.copy_to_host();
   }
+
+  void copy_to_device() {
+    Kokkos::deep_copy(element_types, h_element_types);
+    Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);
+    elastic_isotropic.copy_to_device();
+    acoustic_isotropic.copy_to_device();
+  }
 };
 
 /**

@@ -19,10 +19,11 @@ template <bool UseSIMD> struct range_index_type;
  *
  */
 template <> struct range_index_type<false> {
-  specfem::point::assembly_index index; ///< Assembly index
+  specfem::point::assembly_index<false> index; ///< Assembly index
 
   KOKKOS_INLINE_FUNCTION
-  range_index_type(const specfem::point::assembly_index index) : index(index) {}
+  range_index_type(const specfem::point::assembly_index<false> index)
+      : index(index) {}
 };
 
 /**
@@ -72,7 +73,7 @@ private:
   KOKKOS_INLINE_FUNCTION
   impl::range_index_type<false> operator()(const int i, std::false_type) const {
     return impl::range_index_type<false>(
-        specfem::point::assembly_index{ starting_index });
+        specfem::point::assembly_index<false>{ starting_index });
   }
 
   KOKKOS_INLINE_FUNCTION

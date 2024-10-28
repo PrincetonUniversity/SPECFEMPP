@@ -400,7 +400,7 @@ template <
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
-impl_load_on_device(const specfem::point::assembly_index &index,
+impl_load_on_device(const specfem::point::assembly_index<false> &index,
                     const WavefieldType &field, ViewType &point_field) {
   constexpr static auto MediumType = ViewType::medium_tag;
   const int iglob = index.iglob;
@@ -452,7 +452,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
-inline void impl_load_on_host(const specfem::point::assembly_index &index,
+inline void impl_load_on_host(const specfem::point::assembly_index<false> &index,
                        const WavefieldType &field, ViewType &point_field) {
 
   constexpr static auto MediumType = ViewType::medium_tag;
@@ -860,7 +860,7 @@ template <
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
-impl_store_on_device(const specfem::point::assembly_index &index,
+impl_store_on_device(const specfem::point::assembly_index<false> &index,
                      const ViewType &point_field, const WavefieldType &field) {
 
   constexpr static auto MediumType = ViewType::medium_tag;
@@ -918,7 +918,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
-inline void impl_store_on_host(const specfem::point::assembly_index &index,
+inline void impl_store_on_host(const specfem::point::assembly_index<false> &index,
                         const ViewType &point_field,
                         const WavefieldType &field) {
 
@@ -1366,7 +1366,7 @@ template <
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
-impl_add_on_device(const specfem::point::assembly_index &index,
+impl_add_on_device(const specfem::point::assembly_index<false> &index,
                    const ViewType &point_field, const WavefieldType &field) {
 
   constexpr static auto MediumType = ViewType::medium_tag;
@@ -1423,7 +1423,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
-inline void impl_add_on_host(const specfem::point::assembly_index &index,
+inline void impl_add_on_host(const specfem::point::assembly_index<false> &index,
                       const ViewType &point_field, const WavefieldType &field) {
 
   constexpr static auto MediumType = ViewType::medium_tag;
