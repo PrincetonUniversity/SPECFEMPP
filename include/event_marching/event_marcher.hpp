@@ -8,8 +8,10 @@
 #include "solver/solver.hpp"
 
 #include <functional>
+#include <forward_list>
 #include <vector>
 #include <utility>
+#include <cmath>
 
 //event_marching namespace expects these to exist:
 namespace specfem {
@@ -30,6 +32,8 @@ typedef std::function<int()> event_call;
 
 // event defaults.
 constexpr precedence DEFAULT_EVENT_PRECEDENCE = 0;
+constexpr precedence PRECEDENCE_BEFORE_INIT = -INFINITY;
+constexpr precedence PRECEDENCE_AFTER_END = INFINITY;
 int _DEFAULT_EVENT_CALL(){return 0;}
 const event_call DEFAULT_EVENT_CALL = []() {return 0;};
 }
@@ -43,24 +47,40 @@ namespace event_marching {
 
 
 
-
-
-class event_marcher: public specfem::solver::solver {
+class event_marcher{
 public:
-  event_marcher(){}
+  event_marcher(): _current_step(events.before_begin()),
+        _current_precedence(specfem::event_marching::PRECEDENCE_BEFORE_INIT){}
 
-  void run();
+  int march_events();
+  int march_events(int num_steps);
 
-  void register_main_event(specfem::event_marching::event event);
-  void unregister_main_event(specfem::event_marching::event event);
+  void register_event(specfem::event_marching::event* event);
+  void unregister_event(specfem::event_marching::event* event);
 
-private:
+  precedence current_precedence();
+  void set_current_precedence(precedence p);
+
+protected:
   //these are to be called without any invokers/interrupts.
-  std::vector<specfem::event_marching::event> main_events;
+  std::forward_list<specfem::event_marching::event*> events;
 
   //<event to manage, true: add / false: remove>
-  std::vector<std::pair<specfem::event_marching::event,bool>> queued_registration;
+  std::vector<std::pair<specfem::event_marching::event*,bool>> queued_event_registration;
   void process_registrations();
+
+  std::forward_list<specfem::event_marching::event*>::iterator current_step();
+
+private:
+  std::forward_list<specfem::event_marching::event*>::iterator _current_step;
+  precedence _current_precedence;
+};
+
+class event_system: public specfem::solver::solver, public specfem::event_marching::event_marcher {
+public:
+  event_system(){}
+
+  void run();
 };
 
 

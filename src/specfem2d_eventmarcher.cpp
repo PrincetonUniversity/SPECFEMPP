@@ -6,7 +6,7 @@
 #include "kernels/kernels.hpp"
 
 #include "event_marching/event_marcher.hpp"
-#include "event_marching/timemarching_wrapper.hpp"
+#include "event_marching/timescheme_wrapper.hpp"
 #include "_util/rewrite_simfield.hpp"
 
 
@@ -55,36 +55,35 @@ void execute(specfem::MPI::MPI *mpi){
           >(params.get_dt(),assembly,qp5);
 
 
-  auto timescheme = std::make_shared<specfem::time_scheme::newmark<specfem::simulation::type::forward>>(
+  auto timescheme = specfem::time_scheme::newmark<specfem::simulation::type::forward>(
     params.get_numsteps(), 1, params.get_dt(), params.get_t0()
   );
-  timescheme->link_assembly(assembly);
+  timescheme.link_assembly(assembly);
   
-  auto marcher = specfem::event_marching::event_marcher();
-  auto time_stepping = specfem::solver::time_marching<specfem::simulation::type::forward,
-                                               specfem::dimension::type::dim2,
-                                               specfem::enums::element::quadrature::static_quadrature_points<5>>
-        (kernels,timescheme);
+  auto event_system = specfem::event_marching::event_system();
   
 
-  auto timemarching_wrapper = specfem::event_marching::timemarching_wrapper<
-          specfem::simulation::type::forward, specfem::dimension::type::dim2,
-          specfem::enums::element::quadrature::static_quadrature_points<5>>(time_stepping);
+  auto timescheme_wrapper = specfem::event_marching::timescheme_wrapper(timescheme);
 
   //TODO mechanism to register wrapper into marcher (populate marcher events).
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
   constexpr auto elastic = specfem::element::medium_tag::elastic;
-  timemarching_wrapper.set_forward_predictor_precedence(acoustic,0);
-  timemarching_wrapper.set_forward_predictor_precedence(elastic,0.01);
-  timemarching_wrapper.set_wavefield_update_precedence(acoustic,1);
-  timemarching_wrapper.set_forward_corrector_precedence(acoustic,2);
-  timemarching_wrapper.set_wavefield_update_precedence(elastic,3);
-  timemarching_wrapper.set_forward_corrector_precedence(elastic,4);
-  timemarching_wrapper.set_seismogram_update_precedence(5);
+  timescheme_wrapper.set_forward_predictor_event(acoustic,0);
+  timescheme_wrapper.set_forward_predictor_event(elastic,0.01);
+  timescheme_wrapper.set_wavefield_update_event<acoustic>(kernels,1);
+  timescheme_wrapper.set_forward_corrector_event(acoustic,2);
+  timescheme_wrapper.set_wavefield_update_event<elastic>(kernels,3);
+  timescheme_wrapper.set_forward_corrector_event(elastic,4);
+  timescheme_wrapper.set_seismogram_update_event<specfem::wavefield::type::forward>(kernels,5);
 
-  timemarching_wrapper.load_into_marcher_main_events(marcher);
-  time_stepping.init_kernels();
-  marcher.run();
+  timescheme_wrapper.register_under_marcher(&event_system);
+
+
+  specfem::event_marching::arbitrary_call_event reset_timer([&]() {event_system.set_current_precedence(0); return 0;},1);
+  event_system.register_event(&reset_timer);
+
+  kernels.initialize(timescheme.get_timestep());
+  event_system.run();
 
   
   // auto solver = specfem::solver::time_marching<specfem::simulation::type::forward,

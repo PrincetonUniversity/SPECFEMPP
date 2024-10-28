@@ -7,20 +7,6 @@
 #include "timescheme/newmark.hpp"
 #include <Kokkos_Core.hpp>
 
-
-template <specfem::dimension::type DimensionType, typename qp_type>
-void specfem::solver::time_marching<specfem::simulation::type::forward,
-                                    DimensionType, qp_type>::init_kernels(){
-  kernels.initialize(time_scheme->get_timestep());
-}
-template <specfem::dimension::type DimensionType, typename qp_type>
-void specfem::solver::time_marching<specfem::simulation::type::forward,
-                                    DimensionType, qp_type>::seismogram_update(const int istep){
-  if (time_scheme->compute_seismogram(istep)) {
-      kernels.compute_seismograms(time_scheme->get_seismogram_step());
-      time_scheme->increment_seismogram_step();
-    }
-}
 template <specfem::dimension::type DimensionType, typename qp_type>
 void specfem::solver::time_marching<specfem::simulation::type::forward,
                                     DimensionType, qp_type>::run() {
@@ -28,7 +14,7 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
   constexpr auto elastic = specfem::element::medium_tag::elastic;
 
-  init_kernels();
+  kernels.initialize(time_scheme->get_timestep());
 
   const int nstep = time_scheme->get_max_timestep();
 
@@ -42,7 +28,10 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
     kernels.template update_wavefields<elastic>(istep);
     time_scheme->apply_corrector_phase_forward(elastic);
 
-    seismogram_update(istep);
+    if (time_scheme->compute_seismogram(istep)) {
+      kernels.compute_seismograms(time_scheme->get_seismogram_step());
+      time_scheme->increment_seismogram_step();
+    }
 
     if (istep % 10 == 0) {
       std::cout << "Progress : executed " << istep << " steps of " << nstep
@@ -57,28 +46,13 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
 
 template <specfem::dimension::type DimensionType, typename qp_type>
 void specfem::solver::time_marching<specfem::simulation::type::combined,
-                                    DimensionType, qp_type>::init_kernels(){
-  adjoint_kernels.initialize(time_scheme->get_timestep());
-  backward_kernels.initialize(time_scheme->get_timestep());
-}
-
-template <specfem::dimension::type DimensionType, typename qp_type>
-void specfem::solver::time_marching<specfem::simulation::type::combined,
-                                    DimensionType, qp_type>::seismogram_update(const int istep){
-    if (time_scheme->compute_seismogram(istep)) {
-      // compute seismogram for backward time step
-      backward_kernels.compute_seismograms(time_scheme->get_seismogram_step());
-      time_scheme->increment_seismogram_step();
-    }
-}
-template <specfem::dimension::type DimensionType, typename qp_type>
-void specfem::solver::time_marching<specfem::simulation::type::combined,
                                     DimensionType, qp_type>::run() {
 
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
   constexpr auto elastic = specfem::element::medium_tag::elastic;
 
-  init_kernels();
+  adjoint_kernels.initialize(time_scheme->get_timestep());
+  backward_kernels.initialize(time_scheme->get_timestep());
 
   const int nstep = time_scheme->get_max_timestep();
 
@@ -114,7 +88,11 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
 
     frechet_kernels.compute_derivatives(dt);
 
-    seismogram_update(istep);
+    if (time_scheme->compute_seismogram(istep)) {
+      // compute seismogram for backward time step
+      backward_kernels.compute_seismograms(time_scheme->get_seismogram_step());
+      time_scheme->increment_seismogram_step();
+    }
 
     if (istep % 10 == 0) {
       std::cout << "Progress : executed " << istep << " steps of " << nstep
