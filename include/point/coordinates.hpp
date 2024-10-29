@@ -83,14 +83,16 @@ template <> struct global_coordinates<specfem::dimension::type::dim2> {
  *
  * @tparam DimensionType Dimension of the element where the quadrature point is
  * located
+ * @tparam using_simd Flag to indicate if this is a simd index
  */
-template <specfem::dimension::type DimensionType> struct index;
+template <specfem::dimension::type DimensionType, bool using_simd = false>
+struct index;
 
 /**
  * @brief Template specialization for 2D elements
  *
  */
-template <> struct index<specfem::dimension::type::dim2> {
+template <> struct index<specfem::dimension::type::dim2, false> {
   int ispec; ///< Index of the spectral element
   int iz;    ///< Index of the quadrature point in the z direction within the
              ///< spectral element
@@ -122,24 +124,12 @@ template <> struct index<specfem::dimension::type::dim2> {
 };
 
 /**
- * @brief Struct to store the SIMD indices associated with a quadrature point
- *
- * SIMD indices are used to access data into SIMD vector. Generally,
- * you'd pass the SIMD index to a @c load_on_device or @c load_on_host function
- * to load data from the device or host memory into the SIMD vector.
- *
- * @tparam DimensionType Dimension of the element where the quadrature point is
- * located
- */
-template <specfem::dimension::type DimensionType> struct simd_index;
-
-/**
  * @brief Template specialization for 2D elements
  *
  * @copydoc simd_index
  *
  */
-template <> struct simd_index<specfem::dimension::type::dim2> {
+template <> struct index<specfem::dimension::type::dim2, true> {
   int ispec; ///< Index associated with the spectral element at the start
              ///< of the SIMD vector
   int number_elements; ///< Number of elements stored in the SIMD vector
@@ -156,7 +146,7 @@ template <> struct simd_index<specfem::dimension::type::dim2> {
    *
    */
   KOKKOS_FUNCTION
-  simd_index() = default;
+  index() = default;
 
   /**
    * @brief Construct a new simd index object
@@ -169,8 +159,8 @@ template <> struct simd_index<specfem::dimension::type::dim2> {
    * spectral element
    */
   KOKKOS_FUNCTION
-  simd_index(const int &ispec, const int &number_elements, const int &iz,
-             const int &ix)
+  index(const int &ispec, const int &number_elements, const int &iz,
+        const int &ix)
       : ispec(ispec), number_elements(number_elements), iz(iz), ix(ix) {}
 
   /**
@@ -185,6 +175,15 @@ template <> struct simd_index<specfem::dimension::type::dim2> {
     return int(lane) < number_elements;
   }
 };
+
+/**
+ * @brief Alias for the simd index
+ *
+ * @tparam DimensionType Dimension of the element where the quadrature point is
+ * located
+ */
+template <specfem::dimension::type DimensionType>
+using simd_index = index<DimensionType, true>;
 
 /**
  * @brief Distance between two global coordinates

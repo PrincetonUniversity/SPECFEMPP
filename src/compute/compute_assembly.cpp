@@ -16,7 +16,7 @@ specfem::compute::assembly::assembly(
   this->properties = { this->mesh.nspec,   this->mesh.ngllz, this->mesh.ngllx,
                        this->mesh.mapping, mesh.tags,        mesh.materials };
   this->kernels = { this->mesh.nspec, this->mesh.ngllz, this->mesh.ngllx,
-                    this->properties };
+                    this->mesh.mapping, mesh.tags };
   this->sources = { sources,          this->mesh, this->partial_derivatives,
                     this->properties, t0,         dt,
                     max_timesteps };

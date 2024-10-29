@@ -1,14 +1,10 @@
 #include "../Kokkos_Environment.hpp"
 #include "../MPI_environment.hpp"
-#include "compute/assembly/assembly.hpp"
-#include "mesh/mesh.hpp"
+#include "datatypes/simd.hpp"
 #include "parallel_configuration/chunk_config.hpp"
 #include "parallel_configuration/range_config.hpp"
 #include "policies/chunk.hpp"
 #include "policies/range.hpp"
-#include "quadrature/quadratures.hpp"
-#include "receiver/receiver.hpp"
-#include "source/source.hpp"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
 #include <fstream>
