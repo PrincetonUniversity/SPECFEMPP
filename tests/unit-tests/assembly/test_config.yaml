@@ -39,13 +39,13 @@ Tests:
       mesh : "../../../tests/unit-tests/data/mesh/fluid_solid_mesh_curved_ocean_bottom/database.bin"
       sources : "../../../tests/unit-tests/data/mesh/fluid_solid_mesh_curved_ocean_bottom/sources.yaml"
       stations : "../../../tests/unit-tests/data/mesh/fluid_solid_mesh_curved_ocean_bottom/STATIONS"
-  # # Test 5:
-  # - name : "Test 5: Gmesh Example"
-  #   description: >
-  #     Testing mesh reader on a Gmesh example mesh.
-  #   config:
-  #     nproc : 1
-  #   databases:
-  #     mesh : "../../../tests/unit-tests/data/mesh/Gmesh_Example_Stacey/database.bin"
-  #     sources : "../../../tests/unit-tests/data/mesh/Gmesh_Example_Stacey/sources.yaml"
-  #     stations : "../../../tests/unit-tests/data/mesh/Gmesh_Example_Stacey/STATIONS"
+  # Test 5:
+  - name : "Test 5: Gmesh Example"
+    description: >
+      Testing mesh reader on a Gmesh example mesh.
+    config:
+      nproc : 1
+    databases:
+      mesh : "../../../tests/unit-tests/data/mesh/Gmesh_Example_Stacey/database.bin"
+      sources : "../../../tests/unit-tests/data/mesh/Gmesh_Example_Stacey/sources.yaml"
+      stations : "../../../tests/unit-tests/data/mesh/Gmesh_Example_Stacey/STATIONS"
