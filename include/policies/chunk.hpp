@@ -1,5 +1,7 @@
 #pragma once
 
+#include "enumerations/dimension.hpp"
+#include "point/coordinates.hpp"
 #include <Kokkos_Core.hpp>
 #include <string>
 #include <type_traits>

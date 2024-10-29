@@ -181,6 +181,25 @@ target_link_libraries(
 )
 
 add_executable(
+  assembly_tests
+  assembly/runner.cpp
+  assembly/kernels.cpp
+)
+
+target_link_libraries(
+  assembly_tests
+  mesh
+  compute
+  quadrature
+  mpi_environment
+  kokkos_environment
+  yaml-cpp
+  Boost::filesystem
+  -lpthread -lm
+)
+
+
+add_executable(
   locate_point
   algorithms/locate.cpp
 )
@@ -373,6 +392,7 @@ if (NOT MPI_PARALLEL)
   # # gtest_discover_tests(compute_acoustic_tests)
   # gtest_discover_tests(compute_coupled_interfaces_tests)
   gtest_discover_tests(compute_tests)
+  gtest_discover_tests(assembly_tests)
   gtest_discover_tests(policies)
   gtest_discover_tests(locate_point)
   gtest_discover_tests(interpolate_function)

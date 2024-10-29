@@ -8,11 +8,18 @@ namespace point {
 /**
  * @brief Struct to store the assembled index for a quadrature point
  *
+ * @tparam using_simd Flag to indicate if this is a simd index
+ */
+template <bool using_simd = false> struct assembly_index;
+
+/**
+ * @brief Struct to store the assembled index for a quadrature point
+ *
  * This struct stores a 1D index that corresponds to a global numbering of the
  * quadrature point within the mesh.
  *
  */
-struct assembly_index {
+template <> struct assembly_index<false> {
   int iglob; ///< Global index number of the quadrature point
 
   /**
@@ -45,7 +52,7 @@ struct assembly_index {
  * using SIMD instructions.
  *
  */
-struct simd_assembly_index {
+template <> struct assembly_index<true> {
   int number_points; ///< Number of points in the SIMD vector
   int iglob;         ///< Global index number of the quadrature point
 
@@ -67,7 +74,7 @@ struct simd_assembly_index {
    *
    */
   KOKKOS_FUNCTION
-  simd_assembly_index() = default;
+  assembly_index() = default;
 
   /**
    * @brief Constructor with values
@@ -76,9 +83,15 @@ struct simd_assembly_index {
    * @param number_points Number of points in the SIMD vector
    */
   KOKKOS_FUNCTION
-  simd_assembly_index(const int &iglob, const int &number_points)
+  assembly_index(const int &iglob, const int &number_points)
       : number_points(number_points), iglob(iglob) {}
   ///@}
 };
+
+/**
+ * @brief Type alias for the SIMD assembly index
+ *
+ */
+using simd_assembly_index = assembly_index<true>;
 } // namespace point
 } // namespace specfem
