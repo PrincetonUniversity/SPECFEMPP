@@ -165,9 +165,11 @@ get_point_kernel(
 }
 
 template <specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag, bool using_simd>
-void check_to_value(const specfem::compute::kernels kernels, const auto &ispecs,
-                    const auto &values_to_store) {
+          specfem::element::property_tag PropertyTag, bool using_simd,
+          typename IndexViewType, typename ValueViewType>
+void check_to_value(const specfem::compute::kernels kernels,
+                    const IndexViewType &ispecs,
+                    const ValueViewType &values_to_store) {
   const int nspec = kernels.nspec;
   const int ngllx = kernels.ngllx;
   const int ngllz = kernels.ngllz;
@@ -220,10 +222,10 @@ void check_to_value(const specfem::compute::kernels kernels, const auto &ispecs,
 
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool Store, bool Add,
-          bool using_simd>
+          bool using_simd, typename IndexViewType, typename ValueViewType>
 void execute_store_or_add(specfem::compute::kernels &kernels,
-                          const int element_size, const auto &ispecs,
-                          const auto &values_to_store) {
+                          const int element_size, const IndexViewType &ispecs,
+                          const ValueViewType &values_to_store) {
 
   const int nspec = kernels.nspec;
   const int ngllx = kernels.ngllx;
@@ -236,10 +238,12 @@ void execute_store_or_add(specfem::compute::kernels &kernels,
 
   Kokkos::parallel_for(
       "check_store_on_device",
-      Kokkos::MDRangePolicy<Kokkos::Rank<3> >({ 0, 0, 0 }, { N, ngllz, ngllx }),
+      Kokkos::MDRangePolicy<Kokkos::DefaultExecutionSpace, Kokkos::Rank<3> >(
+          { 0, 0, 0 }, { N, ngllz, ngllx }),
       KOKKOS_LAMBDA(const int &i, const int &iz, const int &ix) {
         const int ielement = ispecs(i);
         constexpr int simd_size = PointType::simd::size();
+        auto &kernels_l = kernels;
         const int n_simd_elements =
             (simd_size + i > element_size) ? element_size - i : simd_size;
 
@@ -248,9 +252,9 @@ void execute_store_or_add(specfem::compute::kernels &kernels,
         const type_real value = values_to_store(i);
         PointType point(value);
         if constexpr (Store) {
-          specfem::compute::store_on_device(index, point, kernels);
+          specfem::compute::store_on_device(index, point, kernels_l);
         } else if constexpr (Add) {
-          specfem::compute::add_on_device(index, point, kernels);
+          specfem::compute::add_on_device(index, point, kernels_l);
         }
       });
 
@@ -302,6 +306,7 @@ void check_store_and_add(specfem::compute::kernels &kernels) {
   ispecs_h(N - 1) = elements[element_size - 5]; // check when simd is not full
 
   Kokkos::deep_copy(ispecs, ispecs_h);
+  Kokkos::deep_copy(values_to_store, values_to_store_h);
 
   execute_store_or_add<MediumTag, PropertyTag, true, false, using_simd>(
       kernels, element_size, ispecs, values_to_store);
@@ -468,7 +473,7 @@ void test_kernels(specfem::compute::assembly &assembly) {
       kernels);
 }
 
-TEST_F(ASSEMBLY, kernels_store_and_add) {
+TEST_F(ASSEMBLY, kernels_device_functions) {
   for (auto parameters : *this) {
     const auto Test = std::get<0>(parameters);
     auto assembly = std::get<1>(parameters);
