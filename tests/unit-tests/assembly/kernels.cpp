@@ -180,13 +180,9 @@ void check_to_value(const specfem::compute::kernels kernels,
   const auto element_properties = kernels.h_element_property;
 
   for (int ispec = 0; ispec < nspec; ispec++) {
-    for (int iz = 0; iz < ngllz; iz++) {
-      for (int ix = 0; ix < ngllx; ix++) {
-        if (element_types(ispec) == MediumTag &&
-            element_properties(ispec) == PropertyTag) {
-          elements.push_back(ispec);
-        }
-      }
+    if ((element_types(ispec) == MediumTag) &&
+        (element_properties(ispec) == PropertyTag)) {
+      elements.push_back(ispec);
     }
   }
 
@@ -197,8 +193,9 @@ void check_to_value(const specfem::compute::kernels kernels,
     for (int iz = 0; iz < ngllz; iz++) {
       for (int ix = 0; ix < ngllx; ix++) {
         const int ielement = ispecs(i);
-        const int n_simd_elements =
-            (simd_size + i > elements.size()) ? elements.size() - i : simd_size;
+        const int n_simd_elements = (simd_size + ielement > elements.size())
+                                        ? elements.size() - ielement
+                                        : simd_size;
         for (int j = 0; j < n_simd_elements; j++) {
           const auto point_kernel = get_point_kernel<MediumTag, PropertyTag>(
               ielement + j, iz, ix, kernels);
@@ -244,8 +241,9 @@ void execute_store_or_add(specfem::compute::kernels &kernels,
         const int ielement = ispecs(i);
         constexpr int simd_size = PointType::simd::size();
         auto &kernels_l = kernels;
-        const int n_simd_elements =
-            (simd_size + i > element_size) ? element_size - i : simd_size;
+        const int n_simd_elements = (simd_size + ielement > element_size)
+                                        ? element_size - ielement
+                                        : simd_size;
 
         const auto index =
             get_index<using_simd>(ielement, n_simd_elements, iz, ix);
@@ -276,8 +274,8 @@ void check_store_and_add(specfem::compute::kernels &kernels) {
   const auto element_properties = kernels.h_element_property;
 
   for (int ispec = 0; ispec < nspec; ispec++) {
-    if (element_types(ispec) == MediumTag &&
-        element_properties(ispec) == PropertyTag) {
+    if ((element_types(ispec) == MediumTag) &&
+        (element_properties(ispec) == PropertyTag)) {
       elements.push_back(ispec);
     }
   }
@@ -337,8 +335,8 @@ void check_load_on_device(specfem::compute::kernels &kernels) {
   const auto element_properties = kernels.h_element_property;
 
   for (int ispec = 0; ispec < nspec; ispec++) {
-    if (element_types(ispec) == MediumTag &&
-        element_properties(ispec) == PropertyTag) {
+    if ((element_types(ispec) == MediumTag) &&
+        (element_properties(ispec) == PropertyTag)) {
       elements.push_back(ispec);
     }
   }
@@ -381,8 +379,9 @@ void check_load_on_device(specfem::compute::kernels &kernels) {
       KOKKOS_LAMBDA(const int &i, const int &iz, const int &ix) {
         const int ielement = ispecs(i);
         constexpr int simd_size = PointType::simd::size();
-        const int n_simd_elements =
-            (simd_size + i > element_size) ? element_size - i : simd_size;
+        const int n_simd_elements = (simd_size + ielement > element_size)
+                                        ? element_size - ielement
+                                        : simd_size;
 
         const auto index =
             get_index<using_simd>(ielement, n_simd_elements, iz, ix);
@@ -401,8 +400,9 @@ void check_load_on_device(specfem::compute::kernels &kernels) {
         const auto &point_kernel = h_point_kernels(iz, ix, i);
         const int ielement = ispecs_h(i);
         constexpr int simd_size = PointType::simd::size();
-        const int n_simd_elements =
-            (simd_size + i > element_size) ? element_size - i : simd_size;
+        const int n_simd_elements = (simd_size + ielement > element_size)
+                                        ? element_size - ielement
+                                        : simd_size;
         const type_real value_l = values_to_store_h(i);
         if constexpr (using_simd) {
           for (int lane = 0; lane < n_simd_elements; lane++) {

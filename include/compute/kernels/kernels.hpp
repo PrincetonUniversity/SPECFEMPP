@@ -63,15 +63,17 @@ public:
   kernels() = default;
 
   /**
-   * @brief Construct a new kernels object from assembly information
+   * @brief Construct a new kernels object
    *
    * @param nspec Total number of spectral elements
    * @param ngllz Number of quadrature points in z dimension
    * @param ngllx Number of quadrature points in x dimension
-   * @param properties Material properties. Used to access element tags.
+   * @param mapping mesh to compute mapping
+   * @param tags Tags for every element in spectral element mesh
    */
   kernels(const int nspec, const int ngllz, const int ngllx,
-          const specfem::compute::properties &properties);
+          const specfem::compute::mesh_to_compute_mapping &mapping,
+          const specfem::mesh::tags &tags);
   ///@}
 
   /**
@@ -80,6 +82,7 @@ public:
    */
   void copy_to_host() {
     Kokkos::deep_copy(h_element_types, element_types);
+    Kokkos::deep_copy(h_element_property, element_property);
     Kokkos::deep_copy(h_property_index_mapping, property_index_mapping);
     elastic_isotropic.copy_to_host();
     acoustic_isotropic.copy_to_host();
@@ -87,6 +90,7 @@ public:
 
   void copy_to_device() {
     Kokkos::deep_copy(element_types, h_element_types);
+    Kokkos::deep_copy(element_property, h_element_property);
     Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);
     elastic_isotropic.copy_to_device();
     acoustic_isotropic.copy_to_device();
