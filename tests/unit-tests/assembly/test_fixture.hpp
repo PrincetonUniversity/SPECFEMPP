@@ -13,12 +13,13 @@
 #include <yaml-cpp/yaml.h>
 
 template <bool using_simd>
-specfem::point::index<specfem::dimension::type::dim2, using_simd>
-get_index(const int ielement, const int num_elements, const int iz,
-          const int ix);
+KOKKOS_FUNCTION
+    specfem::point::index<specfem::dimension::type::dim2, using_simd>
+    get_index(const int ielement, const int num_elements, const int iz,
+              const int ix);
 
 template <>
-specfem::point::index<specfem::dimension::type::dim2, true>
+KOKKOS_FUNCTION specfem::point::index<specfem::dimension::type::dim2, true>
 get_index<true>(const int ielement, const int num_elements, const int iz,
                 const int ix) {
   return specfem::point::simd_index<specfem::dimension::type::dim2>(
@@ -26,7 +27,7 @@ get_index<true>(const int ielement, const int num_elements, const int iz,
 }
 
 template <>
-specfem::point::index<specfem::dimension::type::dim2, false>
+KOKKOS_FUNCTION specfem::point::index<specfem::dimension::type::dim2, false>
 get_index<false>(const int ielement, const int num_elements, const int iz,
                  const int ix) {
   return specfem::point::index<specfem::dimension::type::dim2>(ielement, iz,
