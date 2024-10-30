@@ -460,6 +460,7 @@ add_library(
         src/parameter_parser/writer/seismogram.cpp
         src/parameter_parser/setup.cpp
         src/parameter_parser/writer/wavefield.cpp
+        src/parameter_parser/writer/plot_wavefield.cpp
         src/parameter_parser/writer/kernel.cpp
 )
 
