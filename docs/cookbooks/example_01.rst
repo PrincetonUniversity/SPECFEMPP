@@ -1,4 +1,4 @@
-.. homogeneous_example::
+.. _homogeneous_example::
 
 Wave propagration through homogeneous media
 ===========================================
