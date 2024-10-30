@@ -244,7 +244,7 @@ Defining sources
 
 Next we define the sources using a YAML file. For full description on parameters used to define sources refer :ref:`source_description`.
 
-.. code:: yaml
+.. code-block:: yaml
     :linenos:
     :caption: single_source.yaml
 
@@ -324,7 +324,7 @@ At this point lets focus on a few sections in this file:
 
 - Configure the solver using ``simulation-setup`` section.
 
-.. code:: yaml
+.. code-block:: yaml
 
     simulation-setup:
       ## quadrature setup
@@ -350,7 +350,7 @@ At this point lets focus on a few sections in this file:
 
 - Define the path to the meshfem generated database file using the ``mesh-database`` parameter and the path to source description file using ``source-file`` parameter. Relevant parameter values:
 
-.. code:: yaml
+.. code-block:: yaml
 
     ## databases
     databases:
@@ -359,7 +359,7 @@ At this point lets focus on a few sections in this file:
 
 - It is good practice to have distinct header section for you simulation. These sections will be printed to standard output during runtime helping the you to distinguish between runs using standard strings. Relevant paramter values
 
-.. code:: yaml
+.. code-block:: yaml
 
     header:
       ## Header information is used for logging. It is good practice to give your simulations explicit names
