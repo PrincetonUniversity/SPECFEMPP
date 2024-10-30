@@ -1,6 +1,6 @@
 
-Wavefield Writer Parameters
-===========================
+Wavefield Writer/Reader Parameters
+==================================
 
-.. doxygenclass:: specfem::runtime_configuration::wavefield_writer
+.. doxygenclass:: specfem::runtime_configuration::wavefield
     :members:
