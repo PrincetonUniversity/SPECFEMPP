@@ -60,11 +60,11 @@ Parameter file
     rec_normal_to_surface           = .false.        # base anglerec normal to surface (external mesh and curve file needed)
 
     # first receiver set (repeat these 6 lines and adjust nreceiversets accordingly)
-    nrec                            = 110            # number of receivers
-    xdeb                            = 2500.d0        # first receiver x in meters
-    zdeb                            = 2933.33333d0   # first receiver z in meters
-    xfin                            = 6000.d0        # last receiver x in meters (ignored if only one receiver)
-    zfin                            = 2933.33333d0   # last receiver z in meters (ignored if only one receiver)
+    nrec                            = 11            # number of receivers
+    xdeb                            = 1450.d0        # first receiver x in meters
+    zdeb                            = 2400   # first receiver z in meters
+    xfin                            = 1575.d0        # last receiver x in meters (ignored if only one receiver)
+    zfin                            = 3400   # last receiver z in meters (ignored if only one receiver)
     record_at_surface_same_vertical = .false.        # receivers inside the medium or at the surface
 
     # filename to store stations file
@@ -125,6 +125,8 @@ Parameter file
     xmax                            = 6400.d0        # abscissa of right side of the model
     nx                              = 144            # number of elements along X
 
+    STACEY_ABSORBING_BOUNDARY       = .true.        # use Stacey absorbing boundary conditions
+
     # absorbing boundary parameters (see absorbing_conditions above)
     absorbbottom                    = .true.
     absorbright                     = .true.
@@ -150,7 +152,7 @@ Parameter file
   - Firstly, ``nbmodels`` defines the number of material systems in the simulation domain.
   - We then define the velocity model for each material system using the following format: ``model_number rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0``.
 
-- We define stacey absorbing boundary conditions on all the edges of the domain using the ``absorbbottom``, ``absorbright``, ``absorbtop`` and ``absorbleft`` parameters.
+- We define stacey absorbing boundary conditions on all the edges of the domain using the ``STACEY_ABSORBING_BOUNDARY``, ``absorbbottom``, ``absorbright``, ``absorbtop`` and ``absorbleft`` parameters.
 
 Defining the topography of the domain
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -248,21 +250,20 @@ To run the solver, we first need to define a configuration file ``specfem_config
 
       header:
         ## Header information is used for logging. It is good practice to give your simulations explicit names
-        title: Heterogeneous acoustic-elastic medium with 1 acoustic-elastic interface # name for your simulation
+        title: Heterogeneous acoustic-elastic medium with 1 acoustic-elastic interface (orientation horizontal)  # name for your simulation
         # A detailed description for your simulation
         description: |
           Material systems : Elastic domain (1), Acoustic domain (1)
-          Interfaces : Acoustic-elastic interface (1)
+          Interfaces : Acoustic-elastic interface (1) (orientation horizontal with acoustic domain on top)
           Sources : Force source (1)
           Boundary conditions : Neumann BCs on all edges
+          Debugging comments: This tests checks coupling acoustic-elastic interface implementation.
+                              The orientation of the interface is horizontal with acoustic domain on top.
 
       simulation-setup:
         ## quadrature setup
         quadrature:
-          alpha: 0.0
-          beta: 0.0
-          ngllx: 5
-          ngllz: 5
+          quadrature-type: GLL4
 
         ## Solver setup
         solver:
@@ -271,14 +272,20 @@ To run the solver, we first need to define a configuration file ``specfem_config
             time-scheme:
               type: Newmark
               dt: 0.85e-3
-              nstep: 800
+              nstep: 600
+
+        simulation-mode:
+          forward:
+            writer:
+              seismogram:
+                format: ascii
+                directory: "<output-directory-to-store-synthetic_seismograms>"
 
       receivers:
-        stations-file: <Location of Stations file>
+        stations-file: <Location to stations file>
         angle: 0.0
         seismogram-type:
           - displacement
-          - velocity
         nstep_between_samples: 1
 
       ## Runtime setup
@@ -288,9 +295,5 @@ To run the solver, we first need to define a configuration file ``specfem_config
 
       ## databases
       databases:
-        mesh-database: <Location to mesh database file>
+        mesh-database: <Location to database file>
         source-file: <Location to source file>
-
-      seismogram:
-        seismogram-format: ascii
-        output-folder: "."
