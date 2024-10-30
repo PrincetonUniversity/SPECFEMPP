@@ -131,3 +131,25 @@ Finally, once compiled you could run SPECFEM++ from inside the build directory, 
 .. code-block:: bash
 
     export PATH=${PATH}:<location to build directory>
+
+Running the solver
+------------------
+
+Lets run a simple example to test the installation. We will use the ``example\homogeneous-medium-flat-topography`` directory in the SPECFEM++ repository. The example directory contains a mesh of a homogeneous half-space with a single source and neumann boundary conditions.
+
+.. note::
+
+  A detailed description of the example can be found within :ref:`this cookbook <homogeneous_example>`
+
+.. code-block:: bash
+
+  cd examples/homogeneous-medium-flat-topography
+  ./xmeshfem2D -p Par_file
+
+This will generate the mesh files. Next, we will run the solver using
+
+.. code-block:: bash
+
+  ./specfem2d -p specfem_config.yaml
+
+This will run the solver and generate synthetic seismograms at the receiver locations specified in ``STATIONS`` file.
