@@ -1,4 +1,4 @@
-.. _Tromp_Tape_Liu_2005::
+.. _Tromp_Tape_Liu_2005:
 
 Adjoint Simulations and Banana Donut Kernels
 ============================================
