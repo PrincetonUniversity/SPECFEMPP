@@ -120,6 +120,15 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
           this->wavefield = nullptr;
         }
 
+        if (const YAML::Node &n_plotter = n_writer["display"]) {
+          at_least_one_writer = true;
+          this->plot_wavefield =
+              std::make_unique<specfem::runtime_configuration::plot_wavefield>(
+                  n_plotter);
+        } else {
+          this->plot_wavefield = nullptr;
+        }
+
         this->kernel = nullptr;
 
         if (!at_least_one_writer) {
@@ -185,6 +194,14 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
                   << "Kernel writer must be specified. \n";
 
           throw std::runtime_error(message.str());
+        }
+
+        if (const YAML::Node &n_plotter = n_writer["display"]) {
+          this->plot_wavefield =
+              std::make_unique<specfem::runtime_configuration::plot_wavefield>(
+                  n_plotter);
+        } else {
+          this->plot_wavefield = nullptr;
         }
       }
     }

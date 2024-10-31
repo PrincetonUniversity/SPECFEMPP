@@ -11,6 +11,7 @@
 #include "specfem_setup.hpp"
 #include "time_scheme/interface.hpp"
 #include "writer/kernel.hpp"
+#include "writer/plot_wavefield.hpp"
 #include "writer/seismogram.hpp"
 #include "writer/wavefield.hpp"
 #include "yaml-cpp/yaml.h"
@@ -159,6 +160,15 @@ public:
     }
   }
 
+  std::shared_ptr<specfem::writer::writer> instantiate_wavefield_plotter(
+      const specfem::compute::assembly &assembly) const {
+    if (this->plot_wavefield) {
+      return this->plot_wavefield->instantiate_wavefield_plotter(assembly);
+    } else {
+      return nullptr;
+    }
+  }
+
   std::shared_ptr<specfem::writer::writer>
   instantiate_kernel_writer(const specfem::compute::assembly &assembly) const {
     if (this->kernel) {
@@ -203,6 +213,9 @@ private:
   std::unique_ptr<specfem::runtime_configuration::wavefield>
       wavefield; ///< Pointer to
                  ///< wavefield object
+  std::unique_ptr<specfem::runtime_configuration::plot_wavefield>
+      plot_wavefield; ///< Pointer to
+                      ///< plot_wavefield object
   std::unique_ptr<specfem::runtime_configuration::kernel> kernel;
   std::unique_ptr<specfem::runtime_configuration::database_configuration>
       databases; ///< Get database filenames
