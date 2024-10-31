@@ -29,20 +29,20 @@ template <typename TimeScheme>
 void timescheme_wrapper<TimeScheme>::set_forward_predictor_event(
       specfem::element::medium_tag medium, precedence p){
   time_stepper.unregister_event(forward_predictor_events[medium].get());
-  
+
   forward_predictor_events[medium] = std::make_unique<specfem::event_marching::forward_predictor_event<TimeScheme>>(*this,medium,p);
   time_stepper.register_event(forward_predictor_events[medium].get());
-  
+
 }
 
 template <typename TimeScheme>
 void timescheme_wrapper<TimeScheme>::set_forward_corrector_event(
       specfem::element::medium_tag medium, precedence p){
   time_stepper.unregister_event(forward_corrector_events[medium].get());
-  
+
   forward_corrector_events[medium] = std::make_unique<specfem::event_marching::forward_corrector_event<TimeScheme>>(*this,medium,p);
   time_stepper.register_event(forward_corrector_events[medium].get());
-  
+
 }
 
 template <typename TimeScheme>
@@ -57,7 +57,7 @@ void timescheme_wrapper<TimeScheme>::set_wavefield_update_event(
       specfem::event_marching::wavefield_update_event<TimeScheme,medium,WaveFieldType,DimensionType,qp_type>>
       (*this,kernels,p);
   time_stepper.register_event(wavefield_update_events[medium].get());
-  
+
 }
 
 template <typename TimeScheme>
@@ -66,13 +66,13 @@ template <specfem::wavefield::type WaveFieldType,
 void timescheme_wrapper<TimeScheme>::set_seismogram_update_event(
       specfem::kernels::kernels<WaveFieldType, DimensionType, qp_type> &kernels, precedence p){
   time_stepper.unregister_event(seismogram_update_events[WaveFieldType].get());
-  
+
   seismogram_update_events[WaveFieldType] = std::make_unique<
       specfem::event_marching::seismogram_update_event<TimeScheme,WaveFieldType,DimensionType,qp_type>>
       (*this,kernels,p);
 
   time_stepper.register_event(seismogram_update_events[WaveFieldType].get());
-  
+
 }
 
 

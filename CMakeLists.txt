@@ -517,6 +517,7 @@ target_link_libraries(
 add_library(
         _util
         src/_util/build_demo_assembly.cpp
+        src/_util/edge_storages.cpp
 )
 
 target_link_libraries(

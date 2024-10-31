@@ -41,7 +41,7 @@ void event_marcher::process_registrations(){
   }
   queued_event_registration.clear();
 
-  
+
 }
 
 precedence event_marcher::current_precedence(){
@@ -56,21 +56,35 @@ precedence event_marcher::current_precedence(){
 }
 void event_marcher::set_current_precedence(precedence p){
   _current_precedence = p;
+  if(_current_step == events.end() || _current_precedence < (*_current_step)->get_precedence()){
+    _current_step = events.begin();
+  }
 }
 
 std::forward_list<specfem::event_marching::event*>::iterator event_marcher::current_step(){
+  // std::cout << "current_step(" << _current_precedence;
   process_registrations();
   if(_current_step == events.end()){
+    // std::cout << " @end)\n";
     return _current_step;
   }
-  if(_current_precedence < (*_current_step)->get_precedence()){
+  if(_current_step == events.before_begin()){
+    // std::cout << " @before_begin -> reset iter";
+    _current_step = events.begin();
+  }else if(_current_precedence < (*_current_step)->get_precedence()){
     //_current_precedence was modified.
+    // std::cout << " < "<<(*_current_step)->get_precedence()<< "->reset iter";
     _current_step = events.begin();
   }
   while(_current_step != events.end() && _current_precedence > (*_current_step)->get_precedence()){
     _current_step++;
   }
+  if(_current_step == events.end()){
+    _current_precedence = specfem::event_marching::PRECEDENCE_AFTER_END;
+    return _current_step;
+  }
   _current_precedence = (*_current_step)->get_precedence();
+  // std::cout << "->"<<_current_precedence<<")\n";
   return _current_step;
 }
 
@@ -86,6 +100,7 @@ int event_marcher::march_events(){
     //event registration may have changed, so *it may be undefined; re-issue
     it = current_step();
     if(it == events.end()){
+      _current_precedence = specfem::event_marching::PRECEDENCE_AFTER_END;
       return call_return;
     }
     //this will happen most of the time; if step was removed; then current_step() would be next
@@ -93,6 +108,7 @@ int event_marcher::march_events(){
       it++;
     }
     if(it == events.end()){
+      _current_precedence = specfem::event_marching::PRECEDENCE_AFTER_END;
       return call_return;
     }
     _current_precedence = (*it)->get_precedence();
@@ -100,7 +116,7 @@ int event_marcher::march_events(){
 }
 int event_marcher::march_events(int num_steps){
   while(num_steps > 0){
-    
+
     process_registrations();
 
     num_steps--;
