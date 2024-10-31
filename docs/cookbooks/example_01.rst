@@ -1,4 +1,4 @@
-.. homogeneous_example::
+.. _homogeneous_example:
 
 Wave propagration through homogeneous media
 ===========================================
@@ -151,6 +151,8 @@ Parameter File
     xmax                            = 4000.d0        # abscissa of right side of the model
     nx                              = 80             # number of elements along X
 
+    STACEY_ABSORBING_CONDITIONS     = .false.
+
     # absorbing boundary parameters (see absorbing_conditions above)
     absorbbottom                    = .false.
     absorbright                     = .false.
@@ -242,7 +244,7 @@ Defining sources
 
 Next we define the sources using a YAML file. For full description on parameters used to define sources refer :ref:`source_description`.
 
-.. code:: yaml
+.. code-block:: yaml
     :linenos:
     :caption: single_source.yaml
 
@@ -289,11 +291,17 @@ Now that we have generated a mesh and defined the sources, we need to set up the
         ## Solver setup
         solver:
           time-marching:
-            type-of-simulation: forward
             time-scheme:
               type: Newmark
               dt: 1.1e-3
               nstep: 1600
+
+        simulation-mode:
+          forward:
+            writer:
+              seismogram:
+                format: "ascii"
+                directory: <output-folder-to-store-synthetic-seismograms>
 
       receivers:
         stations-file: <PATH TO STATIONS FILE>
@@ -301,10 +309,6 @@ Now that we have generated a mesh and defined the sources, we need to set up the
         seismogram-type:
           - velocity
         nstep_between_samples: 1
-
-      seismogram:
-        seismogram-format: ascii
-        output-folder: <PATH TO DIRECTORY FOR STORING OUTPUTS>
 
       ## Runtime setup
       run-setup:
@@ -318,26 +322,44 @@ Now that we have generated a mesh and defined the sources, we need to set up the
 
 At this point lets focus on a few sections in this file:
 
+- Configure the solver using ``simulation-setup`` section.
+
+.. code-block:: yaml
+
+    simulation-setup:
+      ## quadrature setup
+      quadrature:
+        quadrature-type: GLL4
+      ## Solver setup
+      solver:
+        time-marching:
+          time-scheme:
+            type: Newmark
+            dt: 1.1e-3
+            nstep: 1600
+      simulation-mode:
+        forward:
+          writer:
+            seismogram:
+              format: "ascii"
+              directory: <output-folder-to-store-synthetic-seismograms>
+
+* We first define the integration quadrature to be used in the simulation. At this moment, the code supports a 4th order Gauss-Lobatto-Legendre quadrature with 5 GLL points (``GLL4``) & a 7th order Gauss-Lobatto-Legendre quadrature with 8 GLL points (``GLL7``).
+* Define the solver scheme using the ``time-scheme`` parameter.
+* Define the simulation mode to be forward and the output format for synthetic seismograms seismograms.
+
 - Define the path to the meshfem generated database file using the ``mesh-database`` parameter and the path to source description file using ``source-file`` parameter. Relevant parameter values:
 
-.. code:: yaml
+.. code-block:: yaml
 
     ## databases
     databases:
       mesh-database: <PATH TO MESHFEM DATABASE FILE>
       source-file: <PATH TO SOURCES YAML FILE>
 
-- Define the path to :ref:`stations_file` and a directory to store output. If an output directory is not specified the seismogram outputs will be stored in the current working directory. Relevant parameter values:
-
-.. code:: yaml
-
-    seismogram:
-      stations-file: <PATH TO STATIONS FILE>
-      output-folder: <PATH TO DIRECTORY FOR STORING OUTPUTS>
-
 - It is good practice to have distinct header section for you simulation. These sections will be printed to standard output during runtime helping the you to distinguish between runs using standard strings. Relevant paramter values
 
-.. code:: yaml
+.. code-block:: yaml
 
     header:
       ## Header information is used for logging. It is good practice to give your simulations explicit names

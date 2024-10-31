@@ -1,4 +1,4 @@
-.. Tromp_Tape_Liu_2005::
+.. _Tromp_Tape_Liu_2005:
 
 Adjoint Simulations and Banana Donut Kernels
 ============================================
@@ -125,6 +125,8 @@ Setting up the Mesh
     xmax                            = 200000.d0      # abscissa of right side of the model
     nx                              = 80             # number of elements along X
 
+    STACEY_ABSORBING_CONDITIONS    = .true.
+
     # absorbing boundary parameters (see absorbing_conditions above)
     absorbbottom                    = .true.
     absorbright                     = .false.
@@ -180,7 +182,7 @@ Running the forward simulation
 Now that we have the mesh database, we can run the forward simulation. Lets set up the runtime behaviour of the solver using the following input file.
 
 .. code-block:: yaml
-    :caption: specfem-config.yaml
+    :caption: forward-config.yaml
 
     parameters:
 
@@ -212,12 +214,12 @@ Now that we have the mesh database, we can run the forward simulation. Lets set 
                 forward:
                     writer:
                         wavefield:
-                            output-format: HDF5
-                            output-folder: <output folder name>
+                            format: HDF5
+                            directory: <output folder name>
 
                         seismogram:
-                            output-format: ascii # output seismograms in HDF5 format
-                            output-folder: <output folder name>
+                            format: ascii # output seismograms in HDF5 format
+                            directory: <output folder name>
 
         receivers:
             stations-file: <Location to stations file>
@@ -244,8 +246,8 @@ To store the wavefield at the last time step, we need to set the following param
 
     writer:
         wavefield:
-            output-format: HDF5
-            output-folder: <output folder name>
+            format: HDF5
+            directory: <output folder name>
 
 2. Saving the synthetics: We need to save the synthetics at the receiver locations. It is import that we save the synthetics in ASCII format for displacement seismograms.
 
@@ -272,14 +274,14 @@ With the above input files, we can run the forward simulation.
 
 .. code:: bash
 
-    ./specfem2d -p <specfem-config.yaml>
+    ./specfem2d -p <forward-config.yaml>
 
 Generating adjoint sources
 --------------------------
 
 The next step is to generate the adjoint sources. We can generate the adjoint sources using ``./xadj_seismogram`` utility which models Eq. 45 of `Tromp et al. 2005 <https://doi.org/10.1111/j.1365-246X.2004.02453.x>`_. The utility requires synthetic seismograms and does not depend on the observed data.
 
-.. code-block:: bash
+.. code:: bash
 
     ./xadj_seismogram <window start time> <window end time> <station_name> <synthetics folder> <adjoint sources folder> <adjoint component>
 
@@ -340,7 +342,69 @@ Now finally we can run the adjoint simulation. We use the same mesh database as 
               format: ascii
               stf-file: /scratch/gpfs/rk9481/specfem2d_kokkos/examples/Tromp_2005/OUTPUT_FILES/AA.S0001
 
-1. To set up the a combined simulation, we need to replace the forward YAML node with a combined node.
+1. Set up the configuration file for the adjoint simulation.
+
+.. code-block:: yaml
+    :caption: adjoint-config.yaml
+
+
+.. code-block:: yaml
+    :caption: specfem-config.yaml
+
+    parameters:
+
+        header:
+            title: "Tromp-Tape-Liu (GJI 2005)"
+            description: |
+            Material systems : Elastic domain (1)
+            Interfaces : None
+            Sources : Force source (1)
+            Boundary conditions : Free surface (1)
+            Mesh : 2D Cartesian grid (1)
+            Receiver : Displacement seismogram (1)
+            Output : Wavefield at the last time step (1)
+            Output : Seismograms in ASCII format (1)
+
+        simulation-setup:
+            quadrature:
+                quadrature-type: GLL4
+
+            solver:
+                time-marching:
+                    time-scheme:
+                    type: Newmark
+                    dt: 0.02
+                    nstep: 3000
+                    t0: 8.0
+
+            simulation-mode:
+                combined:
+                    reader:
+                        wavefield:
+                            format: HDF5
+                            directory: <Directory containing the forward wavefield>
+
+                    writer:
+                        kernels:
+                            format: ASCII
+                            directory: <Directory to store the kernels>
+
+        receivers:
+            stations-file: <Location to stations file>
+            angle: 0.0
+            seismogram-type:
+                - displacement
+            nstep_between_samples: 1
+
+        run-setup:
+            number-of-processors: 1
+            number-of-runs: 1
+
+        databases:
+            mesh-database: <Location to mesh database>
+            source-file: <Location to sources file>
+
+Note the change to the ``simulation-mode`` section, where we've replaced the forward ``section`` with the ``combined`` section. The ``combined`` section requires a ``reader`` section defining where the forward wavefield was stored during the forward simulation and a ``writer`` section defining where the kernels are to be stored.
 
 .. code-block:: yaml
     :caption: combined YAML node
@@ -360,7 +424,7 @@ With the above input files, we can run the adjoint simulation.
 
 .. code:: bash
 
-    ./specfem2d -p <specfem-config.yaml>
+    ./specfem2d -p <adjoint-config.yaml>
 
 The kernels are stored in the directory specified in the input file. We can now plot the kernels to visualize the banana donut kernels.
 
@@ -368,6 +432,10 @@ Visualizing the kernels
 ------------------------
 
 Lastly if the kernels are stored in ASCII format, we can use numpy to read the kernels and plot them.
+
+.. note::
+
+    An python code for reading ASCII kernels and plotting them is provided `here <https://github.com/PrincetonUniversity/SPECFEMPP/blob/latest/examples/Tromp_2005/plot.py>`_.
 
 .. figure:: ../../examples/Tromp_2005/Reference_Kernels/Kernels.png
     :alt: Kernels

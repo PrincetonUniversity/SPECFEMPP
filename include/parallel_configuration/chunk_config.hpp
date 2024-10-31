@@ -1,6 +1,7 @@
 #pragma once
 
 #include "constants.hpp"
+#include "enumerations/dimension.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

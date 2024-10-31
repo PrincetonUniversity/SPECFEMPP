@@ -21,16 +21,13 @@ SPECFEM++ is a complete re-write of SPECFEM suite of packages (SPECFEM2D, SPECFE
 
 The online documentation for SPECFEM++ is located [here](https://specfem2d-kokkos.readthedocs.io/en/latest/index.html#)
 
-## Installation
+## Getting Started with SPECFEM++
 
+Follow the [Getting Started Guide](https://specfem2d-kokkos.readthedocs.io/en/latest/getting_started/index.html) to install SPECFEM++ on your system and run the solver.
 
-Completer installation instructions are located in the [online documentation](https://specfem2d-kokkos.readthedocs.io/en/latest/user_documentation/index.html)
+## Examples
 
-## Running SPECFEM++
-
-Intructions on how to run SPECFEM++ can be found [here](https://specfem2d-kokkos.readthedocs.io/en/latest/user_documentation/index.html).
-
-For use case examples of running the software please see [cookbooks](https://specfem2d-kokkos.readthedocs.io/en/latest/cookbooks/index.html)
+We recommend starting with the [cookbook examples](https://specfem2d-kokkos.readthedocs.io/en/latest/cookbooks/index.html) to learn how to customize the solver for your use case.
 
 ## Contributing to SPECFEM++
 

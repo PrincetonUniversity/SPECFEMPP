@@ -82,6 +82,15 @@ public:
   kernels() = default;
 
   /**
+   * @brief single value constructor
+   *
+   */
+  KOKKOS_FUNCTION
+  kernels(const value_type value)
+      : rho(value), mu(value), kappa(value), alpha(value), beta(value),
+        rhop(value) {}
+
+  /**
    * @brief Constructor
    *
    * @param rho \f$ K_{\rho} \f$
@@ -95,6 +104,34 @@ public:
   kernels(const value_type rho, const value_type mu, const value_type kappa,
           const value_type rhop, const value_type alpha, const value_type beta)
       : rho(rho), mu(mu), kappa(kappa), rhop(rhop), alpha(alpha), beta(beta) {}
+
+  ///@}
+
+  /**
+   * @brief Equality operator
+   *
+   */
+  KOKKOS_FUNCTION
+  bool operator==(const kernels &rhs) const {
+    return rho == rhs.rho && mu == rhs.mu && kappa == rhs.kappa &&
+           rhop == rhs.rhop && alpha == rhs.alpha && beta == rhs.beta;
+  }
+
+  /**
+   * @brief Inequality operator
+   *
+   */
+  KOKKOS_FUNCTION
+  bool operator!=(const kernels &rhs) const { return !(*this == rhs); }
+
+  KOKKOS_FUNCTION
+  bool operator==(const value_type value) {
+    return rho == value && mu == value && kappa == value && rhop == value &&
+           alpha == value && beta == value;
+  }
+
+  KOKKOS_FUNCTION
+  bool operator!=(const value_type value) { return !(*this == value); }
 };
 
 /**
@@ -156,6 +193,14 @@ public:
   kernels() = default;
 
   /**
+   * @brief single value constructor
+   *
+   */
+  KOKKOS_FUNCTION
+  kernels(const value_type value)
+      : rho(value), kappa(value), rhop(value), alpha(value) {}
+
+  /**
    * @brief Constructor
    *
    * @param rho \f$ K_{\rho} \f$
@@ -168,6 +213,31 @@ public:
     alpha = static_cast<type_real>(2.0) * kappa;
   }
   ///@}
+
+  /**
+   * @brief Equality operator
+   *
+   */
+  KOKKOS_FUNCTION
+  bool operator==(const kernels &rhs) const {
+    return rho == rhs.rho && kappa == rhs.kappa && rhop == rhs.rhop &&
+           alpha == rhs.alpha;
+  }
+
+  /**
+   * @brief Inequality operator
+   *
+   */
+  KOKKOS_FUNCTION
+  bool operator!=(const kernels &rhs) const { return !(*this == rhs); }
+
+  KOKKOS_FUNCTION
+  bool operator==(const value_type value) {
+    return rho == value && kappa == value && rhop == value && alpha == value;
+  }
+
+  KOKKOS_FUNCTION
+  bool operator!=(const value_type value) { return !(*this == value); }
 };
 
 } // namespace point
