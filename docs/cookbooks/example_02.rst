@@ -164,7 +164,7 @@ Parameter file
     xmax                            = 6400.d0        # abscissa of right side of the model
     nx                              = 144            # number of elements along X
 
-    STACEY_ABSORBING_BOUNDARY       = .true.        # use Stacey absorbing boundary conditions
+    STACEY_ABSORBING_CONDITIONS       = .true.        # use Stacey absorbing boundary conditions
 
     # absorbing boundary parameters (see absorbing_conditions above)
     absorbbottom                    = .true.
