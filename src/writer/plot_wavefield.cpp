@@ -2,6 +2,13 @@
 #include "writer/plot_wavefield.hpp"
 #include "compute/assembly/assembly.hpp"
 #include "enumerations/display.hpp"
+
+#ifdef NO_VTK
+
+#include <sstream>
+
+#else
+
 #include <boost/filesystem.hpp>
 #include <vtkActor.h>
 #include <vtkBiQuadraticQuad.h>
@@ -18,6 +25,21 @@
 #include <vtkSmartPointer.h>
 #include <vtkUnstructuredGrid.h>
 #include <vtkWindowToImageFilter.h>
+
+#endif // NO_VTK
+
+#ifdef NO_VTK
+
+void specfem::writer::plot_wavefield::write() {
+  std::ostringstream message;
+  message
+      << "Display section is not enabled, since SPECFEM++ was built without "
+         "VTK\n"
+      << "Please install VTK and rebuild SPECFEM++ with -DVTK_DIR=/path/to/vtk";
+  throw std::runtime_error(message.str());
+}
+
+#else
 
 namespace {
 
@@ -164,3 +186,5 @@ void specfem::writer::plot_wavefield::write() {
     throw std::runtime_error("Unsupported output format");
   }
 }
+
+#endif // NO_VTK
