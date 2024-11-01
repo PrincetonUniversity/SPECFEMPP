@@ -37,6 +37,8 @@ Now let's create the necessary directories to store the input files and output a
 
     mkdir -p OUTPUT_FILES
     mkdir -p OUTPUT_FILES/seismograms
+    mkdir -p OUTPUT_FILES/kernels
+    mkdir -p OUTPUT_FILES/adjoint_sources
 
     touch forward_config.yaml
     touch forward_sources.yaml
@@ -158,7 +160,7 @@ Setting up the Mesh
     #-----------------------------------------------------------
 
     # file containing interfaces for internal mesh
-    interfacesfile                  = topography.dat
+    interfacesfile                  = topography_file.dat
 
     # geometry of the model (origin lower-left corner = 0,0) and mesh description
     xmin                            = 0.d0           # abscissa of left side of the model
@@ -189,7 +191,7 @@ Setting up the Mesh
     output_grid_ASCII               = .false.        # dump the grid in an ASCII text file consisting of a set of X,Y,Z points or not
 
 .. code-block:: bash
-    :caption: topography.dat
+    :caption: topography_file.dat
 
     # number of interfaces
     2
@@ -222,7 +224,7 @@ Running the forward simulation
 Now that we have the mesh database, we can run the forward simulation. Lets set up the runtime behaviour of the solver using the following input file.
 
 .. code-block:: yaml
-    :caption: forward-config.yaml
+    :caption: forward_config.yaml
 
     parameters:
 
@@ -296,25 +298,25 @@ Lastly we define the source:
 .. code-block:: yaml
     :caption: sources.yaml
 
-      number-of-sources: 1
-      sources:
-        - force:
-            x: 50000
-            z: 40000
-            source_surf: false
-            angle: 270.0
-            vx: 0.0
-            vz: 0.0
-            Ricker:
-              factor: 0.75e+10
-              tshift: 0.0
-              f0: 0.42
+   number-of-sources: 1
+   sources:
+     - force:
+         x: 50000
+         z: 40000
+         source_surf: false
+         angle: 270.0
+         vx: 0.0
+         vz: 0.0
+         Ricker:
+           factor: 0.75e+10
+           tshift: 0.0
+           f0: 0.42
 
 With the above input files, we can run the forward simulation.
 
 .. code:: bash
 
-    specfem2d -p forward-config.yaml
+    specfem2d -p forward_config.yaml
 
 Generating adjoint sources
 --------------------------
@@ -323,7 +325,7 @@ The next step is to generate the adjoint sources. We can generate the adjoint so
 
 .. code:: bash
 
-    ./xadj_seismogram <window start time> <window end time> <station_name> <synthetics folder> <adjoint sources folder> <adjoint component>
+    xadj_seismogram <window start time> <window end time> <station_name> <synthetics folder> <adjoint sources folder> <adjoint component>
 
 Command line arguments:
 
@@ -343,67 +345,73 @@ For the current simulation we will use window start time = 27.0 and window end t
 
 .. code:: bash
 
-    ./xadj_seismogram 27.0 32.0 1 OUTPUT_FILES/seismograms OUTPUT_FILES/adjoint_sources 1
+    xadj_seismogram 27.0 32.0 S0001AA OUTPUT_FILES/seismograms/ OUTPUT_FILES/adjoint_sources/ 1
 
 Running the adjoint simulation
 ------------------------------
 
 Now finally we can run the adjoint simulation. We use the same mesh database as the forward run and the adjoint sources generated in the previous step. The input file for the adjoint simulation is similar to the forward simulation with the following changes:
 
-1. The adjoint sources are added to the sources file. The adjoint sources require an external source time function generated during the previous step.
+1. The adjoint sources are added to the sources file.
 
 .. code-block:: yaml
     :caption: sources.yaml
 
-    number-of-sources: 2
-    sources:
-         - force:
-             x: 50000
-             z: 40000
-             source_surf: false
-             angle: 270.0
-             vx: 0.0
-             vz: 0.0
-             Ricker:
-               factor: 0.75e+10
-               tshift: 0.0
-               f0: 0.42
+   number-of-sources: 2
+   sources:
+   - force:
+       x: 50000
+       z: 40000
+       source_surf: false
+       angle: 270.0
+       vx: 0.0
+       vz: 0.0
+       Ricker:
+         factor: 0.75e+10
+         tshift: 0.0
+         f0: 0.42
 
-        - adjoint-source:
-            station_name: AA
-            network_name: S0001
-            x: 150000
-            z: 40000
-            source_surf: false
-            angle: 0.0
-            vx: 0.0
-            vz: 0.0
-            External:
-              format: ascii
-              stf-file: OUTPUT_FILES/adjoint_sources/AA.S0001
+   - adjoint-source:
+       station_name: AA
+       network_name: S0001
+       x: 150000
+       z: 40000
+       source_surf: false
+       angle: 0.0
+       vx: 0.0
+       vz: 0.0
+       External:
+         format: ascii
+         stf:
+           X-component: OUTPUT_FILES/adjoint_sources/S0001AA.BXX.adj
+           Z-component: OUTPUT_FILES/adjoint_sources/S0001AA.BXZ.adj
+
+The adjoint sources require an external source time function generated during the previous step. The source time function is stored as a trace in ASCII format. Where the ``BXX`` is the X-component of the adjoint source and ``BXZ`` is the Z-component of the adjoint source.
+
+.. code-block:: yaml
+
+    stf:
+      X-component: OUTPUT_FILES/adjoint_sources/S0001AA.BXX.adj
+      Z-component: OUTPUT_FILES/adjoint_sources/S0001AA.BXZ.adj
 
 1. Set up the configuration file for the adjoint simulation.
 
 .. code-block:: yaml
-    :caption: adjoint-config.yaml
-
-
-.. code-block:: yaml
-    :caption: specfem-config.yaml
+    :caption: adjoint_config.yaml
 
     parameters:
 
         header:
             title: "Tromp-Tape-Liu (GJI 2005)"
             description: |
-            Material systems : Elastic domain (1)
-            Interfaces : None
-            Sources : Force source (1)
-            Boundary conditions : Free surface (1)
-            Mesh : 2D Cartesian grid (1)
-            Receiver : Displacement seismogram (1)
-            Output : Wavefield at the last time step (1)
-            Output : Seismograms in ASCII format (1)
+               Material systems : Elastic domain (1)
+               Interfaces : None
+               Sources : Force source (1)
+               Boundary conditions : Free surface (1)
+               Mesh : 2D Cartesian grid (1)
+               Receiver : Displacement seismogram (1)
+               Output : Wavefield at the last time step (1)
+               Output : Seismograms in ASCII format (1)
 
         simulation-setup:
             quadrature:
@@ -412,10 +420,10 @@ Now finally we can run the adjoint simulation. We use the same mesh database as 
             solver:
                 time-marching:
                     time-scheme:
-                    type: Newmark
-                    dt: 0.02
-                    nstep: 3000
-                    t0: 8.0
+                       type: Newmark
+                       dt: 0.02
+                       nstep: 3000
+                       t0: 8.0
 
             simulation-mode:
                 combined:
@@ -464,7 +472,7 @@ With the above input files, we can run the adjoint simulation.
 
 .. code:: bash
 
-    specfe2d -p adjoint-config.yaml
+    specfem2d -p adjoint_config.yaml
 
 The kernels are stored in the directory specified in the input file. We can now plot the kernels to visualize the banana donut kernels.
 
