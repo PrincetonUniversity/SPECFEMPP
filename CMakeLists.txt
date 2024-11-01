@@ -49,29 +49,17 @@ FetchContent_MakeAvailable(yaml)
 
 include_directories(BEFORE SYSTEM ${yaml_BINARY_DIR} ${yaml_SOURCE_DIR}/include)
 
-# # Add VTK as a dependency using FetchContent_Declare
-# FetchContent_Declare(
-#         vtk
-#         GIT_REPOSITORY https://gitlab.kitware.com/vtk/vtk.git
-#         GIT_TAG v9.3.1
-# )
-# FetchContent_MakeAvailable(vtk)
-
 find_package(VTK COMPONENTS
   CommonColor
   CommonCore
-  FiltersSources
-  InteractionStyle
-  RenderingContextOpenGL2
-  RenderingCore
-  RenderingFreeType
-  RenderingGL2PSOpenGL2
-  RenderingOpenGL2
 )
 
-message(STATUS "    LIB:   ${VTK_LIBRARIES}")
-message(STATUS "    INC:   ${VTK_INCLUDE_DIRS}")
-message(STATUS "    LIBSO: ${VTK_LIBRARIES}")
+if (NOT VTK_FOUND)
+  message("VTK not found: ${VTK_NOT_FOUND_MESSAGE}")
+  set(VTK_CXX_BUILD OFF)
+else ()
+  message(STATUS "    VTK:   ${VTK_LIBRARIES}")
+endif()
 
 
 # Try finding boost and if not found install.
@@ -468,13 +456,27 @@ add_library(
         src/writer/plot_wavefield.cpp
 )
 
-target_link_libraries(
-        writer
-        compute
-        receiver_class
-        IO
-        ${VTK_LIBRARIES}
-)
+if (NOT VTK_CXX_BUILD)
+        target_compile_definitions(
+                writer
+                PUBLIC -DNO_VTK
+        )
+
+        target_link_libraries(
+                writer
+                compute
+                receiver_class
+                IO
+        )
+else ()
+        target_link_libraries(
+                writer
+                compute
+                receiver_class
+                IO
+                ${VTK_LIBRARIES}
+        )
+endif()
 
 add_library(
         parameter_reader
