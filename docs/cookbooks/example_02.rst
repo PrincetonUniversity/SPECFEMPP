@@ -3,6 +3,45 @@ Wave propagration through fluid-solid interface
 
 This `example <https://github.com/PrincetonUniversity/SPECFEMPP/tree/main/examples/fluid-solid-interface>`_ simulates the fluid-solid example with flat ocean bottom from `Komatitsch et. al. <https://doi.org/10.1190/1.1444758>`_. This example demonstrates the use of the ``xmeshfem2D`` mesher to generate interface between 2 conforming material systems and the setting up absorbing boundary conditions.
 
+Setting up the workspace
+-------------------------
+
+Let's start by creating a workspace from where we can run this example.
+
+.. code-block:: bash
+
+    mkdir -p ~/specfempp-examples/fluid-solid-interface
+    cd ~/specfempp-examples/fluid-solid-interface
+
+We also need to check that the SPECFEM++ build directory is added to the ``PATH``.
+
+.. code:: bash
+
+    which specfem2d
+
+If the above command returns a path to the ``specfem2d`` executable, then the build directory is added to the ``PATH``. If not, you need to add the build directory to the ``PATH`` using the following command.
+
+.. code:: bash
+
+    export PATH=$PATH:<PATH TO SPECFEM++ BUILD DIRECTORY>
+
+.. note::
+
+    Make sure to replace ``<PATH TO SPECFEM++ BUILD DIRECTORY>`` with the actual path to the SPECFEM++ build directory on your system.
+
+Now let's create the necessary directories to store the input files and output artifacts.
+
+.. code:: bash
+
+    mkdir -p OUTPUT_FILES
+    mkdir -p OUTPUT_FILES/seismograms
+
+    touch specfem_config.yaml
+    touch single_source.yaml
+    touch topography_file.dat
+    touch Par_File
+
+
 Meshing the domain
 ------------------
 
@@ -26,7 +65,7 @@ Parameter file
     NPROC                           = 1              # number of processes
 
     # Output folder to store mesh related files
-    OUTPUT_FILES                   = <Location to store output artifacts>
+    OUTPUT_FILES                   = OUTPUT_FILES
 
     #-----------------------------------------------------------
     #
@@ -38,10 +77,10 @@ Parameter file
     PARTITIONING_TYPE               = 3              # SCOTCH = 3, ascending order (very bad idea) = 1
 
     # number of control nodes per element (4 or 9)
-    NGNOD                           = 4
+    NGNOD                           = 9
 
     # location to store the mesh
-    database_filename               = <Output file to store the mesh generated>
+    database_filename               = OUTPUT_FILES/database.bin
 
     #-----------------------------------------------------------
     #
@@ -68,7 +107,7 @@ Parameter file
     record_at_surface_same_vertical = .false.        # receivers inside the medium or at the surface
 
     # filename to store stations file
-    stations_filename              = <Location to stations file>
+    stations_filename              = OUTPUT_FILES/STATIONS
 
     #-----------------------------------------------------------
     #
@@ -118,7 +157,7 @@ Parameter file
     #-----------------------------------------------------------
 
     # file containing interfaces for internal mesh
-    interfacesfile                  = <Location to topography file>
+    interfacesfile                  = topography_file.dat
 
     # geometry of the model (origin lower-left corner = 0,0) and mesh description
     xmin                            = 0.d0           # abscissa of left side of the model
@@ -207,7 +246,7 @@ To execute the mesher run
 
 .. code:: bash
 
-    ./xmeshfem2D -p <PATH TO PAR_FILE>
+    xmeshfem2D -p Par_File
 
 .. note::
 
@@ -279,10 +318,10 @@ To run the solver, we first need to define a configuration file ``specfem_config
             writer:
               seismogram:
                 format: ascii
-                directory: "<output-directory-to-store-synthetic_seismograms>"
+                directory: OUTPUT_FILES/seismograms
 
       receivers:
-        stations-file: <Location to stations file>
+        stations-file: OUTPUT_FILES/STATIONS
         angle: 0.0
         seismogram-type:
           - displacement
@@ -295,5 +334,11 @@ To run the solver, we first need to define a configuration file ``specfem_config
 
       ## databases
       databases:
-        mesh-database: <Location to database file>
-        source-file: <Location to source file>
+        mesh-database: OUTPUT_FILES/database.bin
+        source-file: single_source.yaml
+
+With the configuration file in place, we can run the solver using the following command
+
+.. code:: bash
+
+    specfem2d -p specfem_config.yaml
