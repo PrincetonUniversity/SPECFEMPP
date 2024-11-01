@@ -58,7 +58,7 @@ Receivers section defines receiver information required to calculate seismograms
 
 **documentation** : Number of time steps between sampling the wavefield at station locations for writing seismogram.
 
-.. admoniiton:: Example receivers section
+.. admonition:: Example receivers section
 
     .. code-block:: yaml
 
