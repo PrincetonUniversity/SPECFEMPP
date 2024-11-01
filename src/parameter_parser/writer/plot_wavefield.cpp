@@ -29,17 +29,26 @@ specfem::runtime_configuration::plot_wavefield::plot_wavefield(
     throw std::runtime_error(message.str());
   }
 
-  const std::string wavefield_type = [&]() -> std::string {
-    if (Node["type"]) {
-      return Node["type"].as<std::string>();
+  const std::string component = [&]() -> std::string {
+    if (Node["component"]) {
+      return Node["component"].as<std::string>();
     } else {
       throw std::runtime_error(
-          "Display type not specified in plotter configuration");
+          "Wavefield component not specified in the display section");
+    }
+  }();
+
+  const std::string wavefield_type = [&]() -> std::string {
+    if (Node["wavefield_type"]) {
+      return Node["wavefield_type"].as<std::string>();
+    } else {
+      throw std::runtime_error(
+          "Wavefield type not specified in the display section");
     }
   }();
 
   *this = specfem::runtime_configuration::plot_wavefield(
-      output_format, output_folder, wavefield_type);
+      output_format, output_folder, component, wavefield_type);
 
   return;
 }
@@ -58,18 +67,37 @@ specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
     }
   }();
 
-  const auto wavefield_type = [&]() {
-    if (this->wavefield_type == "displacement") {
-      return specfem::display::wavefield::displacement;
-    } else if (this->wavefield_type == "velocity") {
-      return specfem::display::wavefield::velocity;
-    } else if (this->wavefield_type == "acceleration") {
-      return specfem::display::wavefield::acceleration;
+  const auto component = [&]() {
+    if (this->component == "displacement_x") {
+      return specfem::display::wavefield::displacement_x;
+    } else if (this->component == "displacement_z") {
+      return specfem::display::wavefield::displacement_z;
+    } else if (this->component == "velocity_x") {
+      return specfem::display::wavefield::velocity_x;
+    } else if (this->component == "velocity_z") {
+      return specfem::display::wavefield::velocity_z;
+    } else if (this->component == "acceleration_x") {
+      return specfem::display::wavefield::acceleration_x;
+    } else if (this->component == "acceleration_z") {
+      return specfem::display::wavefield::acceleration_z;
+    } else if (this->component == "pressure") {
+      return specfem::display::wavefield::pressure;
     } else {
-      throw std::runtime_error("Unknown wavefield type");
+      throw std::runtime_error(
+          "Unknown wavefield component in the display section");
+    }
+  }();
+
+  const auto wavefield = [&]() {
+    if (this->wavefield_type == "forward") {
+      return specfem::wavefield::type::forward;
+    } else if (this->wavefield_type == "adjoint") {
+      return specfem::wavefield::type::adjoint;
+    } else {
+      throw std::runtime_error("Unknown wavefield type in the display section");
     }
   }();
 
   return std::make_shared<specfem::writer::plot_wavefield>(
-      assembly, output_format, wavefield_type, this->output_folder);
+      assembly, output_format, component, wavefield, this->output_folder);
 }

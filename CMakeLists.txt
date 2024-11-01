@@ -4,6 +4,7 @@ project(specfem2d_kokkos VERSION 0.1.0)
 
 set(CMAKE_CXX_STANDARD 17)
 option(HDF5_CXX_BUILD "Build HDF5 C++" ON)
+option(VTK_CXX_BUILD "Build VTK C++" ON)
 option(MPI_PARALLEL "MPI enabled" OFF)
 option(BUILD_TESTS "Tests included" OFF)
 option(BUILD_EXAMPLES "Examples included" OFF)
@@ -47,6 +48,31 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(yaml)
 
 include_directories(BEFORE SYSTEM ${yaml_BINARY_DIR} ${yaml_SOURCE_DIR}/include)
+
+# # Add VTK as a dependency using FetchContent_Declare
+# FetchContent_Declare(
+#         vtk
+#         GIT_REPOSITORY https://gitlab.kitware.com/vtk/vtk.git
+#         GIT_TAG v9.3.1
+# )
+# FetchContent_MakeAvailable(vtk)
+
+find_package(VTK COMPONENTS
+  CommonColor
+  CommonCore
+  FiltersSources
+  InteractionStyle
+  RenderingContextOpenGL2
+  RenderingCore
+  RenderingFreeType
+  RenderingGL2PSOpenGL2
+  RenderingOpenGL2
+)
+
+message(STATUS "    LIB:   ${VTK_LIBRARIES}")
+message(STATUS "    INC:   ${VTK_INCLUDE_DIRS}")
+message(STATUS "    LIBSO: ${VTK_LIBRARIES}")
+
 
 # Try finding boost and if not found install.
 find_package(Boost 1.73.0 COMPONENTS program_options filesystem system)
@@ -439,6 +465,7 @@ add_library(
         src/writer/seismogram.cpp
         src/writer/wavefield.cpp
         src/writer/kernel.cpp
+        src/writer/plot_wavefield.cpp
 )
 
 target_link_libraries(
@@ -446,6 +473,7 @@ target_link_libraries(
         compute
         receiver_class
         IO
+        ${VTK_LIBRARIES}
 )
 
 add_library(
