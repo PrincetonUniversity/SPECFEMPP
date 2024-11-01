@@ -144,12 +144,12 @@ Lets run a simple example to test the installation. We will use the ``example\ho
 .. code-block:: bash
 
   cd examples/homogeneous-medium-flat-topography
-  ./xmeshfem2D -p Par_file
+  xmeshfem2D -p Par_file
 
 This will generate the mesh files. Next, we will run the solver using
 
 .. code-block:: bash
 
-  ./specfem2d -p specfem_config.yaml
+  specfem2d -p specfem_config.yaml
 
 This will run the solver and generate synthetic seismograms at the receiver locations specified in ``STATIONS`` file.
