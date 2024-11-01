@@ -72,7 +72,7 @@ void construct_demo_mesh(
   for (int ielemz = 0; ielemz < nelemz; ielemz++) {
     offsets[ielemz] = 0; // for now just set zero offsets
     if (ielemz % 2 == 0) {
-      // offsets[ielemz] = 0.5;
+      offsets[ielemz] = 0.5;
     }
   }
 

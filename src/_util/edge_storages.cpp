@@ -2,6 +2,7 @@
 #define __UTIL_EDGE_STORAGES_CPP_
 
 #include "_util/edge_storages.hpp"
+#include <array>
 #include <cmath>
 #include <iostream>
 
@@ -18,6 +19,7 @@ edge_storage<ngll, datacapacity>::edge_storage(const std::vector<edge> edges)
   for (int i = 0; i < n_edges; i++) {
     h_edge_data_container(i).parent = edges[i];
   }
+  Kokkos::deep_copy(edge_data_container, h_edge_data_container);
 }
 
 template <int ngll, int datacapacity>
@@ -31,14 +33,14 @@ void edge_storage<ngll, datacapacity>::foreach_edge_on_host(
 
 template <int ngll, int datacapacity>
 void edge_storage<ngll, datacapacity>::foreach_intersection_on_host(
-    const std::function<void(edge_intersection &,
+    const std::function<void(edge_intersection<ngll> &,
                              edge_data<ngll, datacapacity> &,
                              edge_data<ngll, datacapacity> &)> &func) {
   if (!intersections_built) {
     build_intersections_on_host();
   }
   for (int i = 0; i < n_intersections; i++) {
-    edge_intersection &ei = h_intersection_container(i);
+    edge_intersection<ngll> &ei = h_intersection_container(i);
     func(ei, h_edge_data_container(ei.a_ref_ind),
          h_edge_data_container(ei.b_ref_ind));
   }
@@ -62,7 +64,7 @@ void edge_storage<ngll, datacapacity>::foreach_intersection_on_host(
 template <int ngll, int datacapacity>
 bool intersect(edge_data<ngll, datacapacity> &a,
                edge_data<ngll, datacapacity> &b,
-               edge_intersection &intersection) {
+               edge_intersection<ngll> &intersection) {
 #define intersect_eps 1e-5
 #define intersect_eps2 (intersect_eps * intersect_eps)
   quadrature_rule gll = gen_GLL(ngll);
@@ -162,6 +164,22 @@ bool intersect(edge_data<ngll, datacapacity> &a,
       intersection.b_param_end =
           (z1a + intersection.a_param_end * z2a - z1b) / z2b;
     }
+    // populate mortar transfer functions (due to linearity, we do not need
+    // locate_point())
+    type_real t_samples[ngll];
+    for (int i = 0; i < a.ngll; i++) {
+      t_samples[i] = 0.5 * ((1 - gll.t[i]) * intersection.a_param_start +
+                            (1 + gll.t[i]) * intersection.a_param_end);
+    }
+    gll.sample_L(intersection.a_mortar_trans, t_samples, a.ngll);
+    for (int i = 0; i < b.ngll; i++) {
+      t_samples[i] = 0.5 * ((1 - gll.t[i]) * intersection.b_param_start +
+                            (1 + gll.t[i]) * intersection.b_param_end);
+    }
+    gll.sample_L(intersection.b_mortar_trans, t_samples, b.ngll);
+    intersection.ngll = ngll;
+    intersection.a_ngll = a.ngll;
+    intersection.b_ngll = b.ngll;
     return true;
   }
   // not parallel, so intersection has zero measure (single point).
@@ -172,8 +190,8 @@ bool intersect(edge_data<ngll, datacapacity> &a,
 
 template <int ngll, int datacapacity>
 void edge_storage<ngll, datacapacity>::build_intersections_on_host() {
-  std::vector<edge_intersection> intersections;
-  edge_intersection intersection;
+  std::vector<edge_intersection<ngll> > intersections;
+  edge_intersection<ngll> intersection;
   // foreach unordered pair (edge[i], edge[j]), j != i
   for (int i = 0; i < n_edges; i++) {
     for (int j = i + 1; j < n_edges; j++) {
@@ -202,8 +220,9 @@ void edge_storage<ngll, datacapacity>::build_intersections_on_host() {
     }
   }
   n_intersections = intersections.size();
-  intersection_container = specfem::kokkos::DeviceView1d<edge_intersection>(
-      "_util::edge_manager::edge_storage::edge_data", n_intersections);
+  intersection_container =
+      specfem::kokkos::DeviceView1d<edge_intersection<ngll> >(
+          "_util::edge_manager::edge_storage::edge_data", n_intersections);
   h_intersection_container = Kokkos::create_mirror_view(intersection_container);
   for (int i = 0; i < n_intersections; i++) {
     h_intersection_container(i) = intersections[i];
@@ -289,6 +308,45 @@ quadrature_rule gen_GLL(int ngll) {
 
   throw std::runtime_error("gen_GLL only supports ngll=5 right now.");
 }
+
+template <int ngllcapacity>
+void quadrature_rule::sample_L(type_real buf[][ngllcapacity], type_real *t_vals,
+                               int t_size) {
+  for (int it = 0; it < t_size; it++) { // foreach t
+    type_real tpow = 1;
+    // reset accum
+    for (int iL = 0; iL < nquad; iL++) {
+      buf[it][iL] = 0;
+    }
+    for (int ipow = 0; ipow < nquad; ipow++) {
+      // buf += L_{:,ipow} * t^ipow
+      for (int iL = 0; iL < nquad; iL++) {
+        buf[it][iL] += tpow * L[iL * nquad + ipow];
+      }
+      tpow *= t_vals[it];
+    }
+  }
+}
+
+template <int ngllcapacity>
+type_real edge_intersection<ngllcapacity>::a_to_mortar(int mortar_index,
+                                                       type_real *quantity) {
+  type_real val = 0;
+  for (int i = 0; i < a_ngll; i++) {
+    val += a_mortar_trans[mortar_index][i] * quantity[i];
+  }
+  return val;
+}
+template <int ngllcapacity>
+type_real edge_intersection<ngllcapacity>::b_to_mortar(int mortar_index,
+                                                       type_real *quantity) {
+  type_real val = 0;
+  for (int i = 0; i < b_ngll; i++) {
+    val += b_mortar_trans[mortar_index][i] * quantity[i];
+  }
+  return val;
+}
+
 } // namespace edge_manager
 } // namespace _util
 

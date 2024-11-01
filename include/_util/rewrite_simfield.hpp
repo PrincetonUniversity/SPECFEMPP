@@ -67,7 +67,7 @@ void remap_with_disconts(
                           assembly.mesh.ngllx, assembly.mesh.mapping,
                           mesh.tags,           mesh.materials };
   assembly.kernels = { assembly.mesh.nspec, assembly.mesh.ngllz,
-                       assembly.mesh.ngllx, assembly.properties };
+                       assembly.mesh.ngllx, assembly.mesh.mapping, mesh.tags };
   assembly.sources = { sources,
                        assembly.mesh,
                        assembly.partial_derivatives,
