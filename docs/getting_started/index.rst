@@ -130,7 +130,7 @@ Finally, once compiled you could run SPECFEM++ from inside the build directory, 
 
 .. code-block:: bash
 
-    export PATH=${PATH}:<location to build directory>
+    export $PATH=$(pwd)/build:$PATH
 
 Running the solver
 ------------------
