@@ -43,7 +43,7 @@ Receivers section defines receiver information required to calculate seismograms
 
 **documentation** : Type of seismograms to be written.
 
-.. code:: yaml
+.. code-block:: yaml
 
     seismogram-type:
         - velocity
@@ -60,7 +60,7 @@ Receivers section defines receiver information required to calculate seismograms
 
 .. admoniiton:: Example receivers section
 
-    .. code:: yaml
+    .. code-block:: yaml
 
         receivers:
             stations-file: /path/to/stations_file

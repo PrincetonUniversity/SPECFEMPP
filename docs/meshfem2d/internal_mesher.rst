@@ -30,6 +30,13 @@ Internal Meshing
 
 **Type**: ``int``
 
+**Parameter Name**: ``STACEY_ABSORBING_CONDITIONS``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Description**: If ``True``, Stacey absorbing boundary conditions are used.
+
+**Type**: ``logical``
+
 **Parameter Name**: ``absorbbottom``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
