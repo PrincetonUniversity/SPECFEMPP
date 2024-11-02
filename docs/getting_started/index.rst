@@ -87,6 +87,7 @@ Get the latest version of the package:
 .. code-block:: bash
 
     git clone git@github.com:PrincetonUniversity/SPECFEMPP.git
+    cd SPECFEMPP
     git submodule init
     git submodule update
 
