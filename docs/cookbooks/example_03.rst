@@ -483,7 +483,7 @@ Lastly if the kernels are stored in ASCII format, we can use numpy to read the k
 
 .. note::
 
-    An python code for reading ASCII kernels and plotting them is provided `here <https://github.com/PrincetonUniversity/SPECFEMPP/blob/latest/examples/Tromp_2005/plot.py>`_.
+    An python code for reading ASCII kernels and plotting them is provided `here <https://github.com/PrincetonUniversity/SPECFEMPP/blob/main/examples/Tromp_2005/plot.py>`_.
 
 .. figure:: ../../examples/Tromp_2005/Reference_Kernels/Kernels.png
     :alt: Kernels
