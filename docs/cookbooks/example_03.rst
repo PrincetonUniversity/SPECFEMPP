@@ -296,21 +296,21 @@ To store the wavefield at the last time step, we need to set the following param
 Lastly we define the source:
 
 .. code-block:: yaml
-    :caption: sources.yaml
+    :caption: forward_sources.yaml
 
-   number-of-sources: 1
-   sources:
-     - force:
-         x: 50000
-         z: 40000
-         source_surf: false
-         angle: 270.0
-         vx: 0.0
-         vz: 0.0
-         Ricker:
-           factor: 0.75e+10
-           tshift: 0.0
-           f0: 0.42
+    number-of-sources: 1
+    sources:
+        - force:
+            x: 50000
+            z: 40000
+            source_surf: false
+            angle: 270.0
+            vx: 0.0
+            vz: 0.0
+            Ricker:
+              factor: 0.75e+10
+              tshift: 0.0
+              f0: 0.42
 
 With the above input files, we can run the forward simulation.
 
@@ -355,36 +355,36 @@ Now finally we can run the adjoint simulation. We use the same mesh database as 
 1. The adjoint sources are added to the sources file.
 
 .. code-block:: yaml
-    :caption: sources.yaml
+    :caption: adjoint_sources.yaml
 
-   number-of-sources: 2
-   sources:
-   - force:
-       x: 50000
-       z: 40000
-       source_surf: false
-       angle: 270.0
-       vx: 0.0
-       vz: 0.0
-       Ricker:
-         factor: 0.75e+10
-         tshift: 0.0
-         f0: 0.42
+    number-of-sources: 2
+    sources:
+        - force:
+            x: 50000
+            z: 40000
+            source_surf: false
+            angle: 270.0
+            vx: 0.0
+            vz: 0.0
+            Ricker:
+                factor: 0.75e+10
+                tshift: 0.0
+                f0: 0.42
 
-   - adjoint-source:
-       station_name: AA
-       network_name: S0001
-       x: 150000
-       z: 40000
-       source_surf: false
-       angle: 0.0
-       vx: 0.0
-       vz: 0.0
-       External:
-         format: ascii
-         stf:
-           X-component: OUTPUT_FILES/adjoint_sources/S0001AA.BXX.adj
-           Z-component: OUTPUT_FILES/adjoint_sources/S0001AA.BXZ.adj
+        - adjoint-source:
+            station_name: AA
+            network_name: S0001
+            x: 150000
+            z: 40000
+            source_surf: false
+            angle: 0.0
+            vx: 0.0
+            vz: 0.0
+            External:
+                format: ascii
+                stf:
+                    X-component: OUTPUT_FILES/adjoint_sources/S0001AA.BXX.adj
+                    Z-component: OUTPUT_FILES/adjoint_sources/S0001AA.BXZ.adj
 
 The adjoint sources require an external source time function generated during the previous step. The source time function is stored as a trace in ASCII format. Where the ``BXX`` is the X-component of the adjoint source and ``BXZ`` is the Z-component of the adjoint source.
 

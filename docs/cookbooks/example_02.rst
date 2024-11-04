@@ -252,7 +252,7 @@ To execute the mesher run
 
     Make sure either your are in the build directory of SPECFEM2D kokkos or the build directory is added to your ``PATH``.
 
-Note the path of the database file and :ref:`stations_file` generated after successfully running the mesher.
+Note the path of the database file and a stations file generated after successfully running the mesher.
 
 Defining the source
 ~~~~~~~~~~~~~~~~~~~
