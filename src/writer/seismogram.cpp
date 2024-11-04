@@ -1,31 +1,29 @@
 #include "compute/interface.hpp"
-#include "receiver/interface.hpp"
 #include "writer/interface.hpp"
 #include <fstream>
 
 void specfem::writer::seismogram::write() {
 
-  const int n_receivers = this->receivers.size();
-  const int nsig_types = this->compute_receivers.h_seismogram_types.extent(0);
-  const int nsig_steps = this->compute_receivers.h_seismogram.extent(0);
-  const auto h_seismogram = this->compute_receivers.h_seismogram;
+  const int nsig_types = this->receivers.h_seismogram_types.extent(0);
+  const int nsig_steps = this->receivers.h_seismogram.extent(0);
+  const auto h_seismogram = this->receivers.h_seismogram;
   const type_real dt = this->dt;
   const type_real t0 = this->t0;
   const type_real nstep_between_samples = this->nstep_between_samples;
 
-  this->compute_receivers.sync_seismograms();
+  this->receivers.sync_seismograms();
 
   std::cout << "output folder : " << this->output_folder << "\n";
 
   switch (this->type) {
   case specfem::enums::seismogram::ascii:
     // Open stream
-    for (int irec = 0; irec < n_receivers; irec++) {
-      std::string network_name = receivers[irec]->get_network_name();
-      std::string station_name = receivers[irec]->get_station_name();
+    for (int irec = 0; irec < nreceivers; irec++) {
+      std::string network_name = receivers.network_names[irec];
+      std::string station_name = receivers.station_names[irec];
       for (int isig = 0; isig < nsig_types; isig++) {
         std::vector<std::string> filename;
-        auto stype = this->compute_receivers.h_seismogram_types(isig);
+        auto stype = this->receivers.h_seismogram_types(isig);
         switch (stype) {
         case specfem::enums::seismogram::type::displacement:
           filename = { this->output_folder + "/" + network_name + station_name +

@@ -7,18 +7,18 @@ API documentation
     :maxdepth: 2
     :glob:
 
-    kokkos_abstractions
-    namespace/index
+    enumerations/index
     quadrature/index
     material/index
-    IO/index
+    mesh/index
     sources/index
     receivers/index
-    compute/index
-    enumerations/index
-    domain/index
-    boundary_conditions/index
-    coupling_physics/index
+    datatypes/index
+    assembly/index
+    policies/index
+    operators/index
+    compute_kernels/index
+    coupling_physics/coupled_interface
     timescheme/index
     solver/index
     setup_parameters/index

@@ -1,5 +1,5 @@
 #include "mesh/boundaries/acoustic_free_surface.hpp"
-#include "fortranio/interface.hpp"
+#include "IO/fortranio/interface.hpp"
 #include "specfem_mpi/interface.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -55,34 +55,35 @@ get_boundary_type(const int type, const int e1, const int e2,
   }
 }
 
-specfem::mesh::boundaries::acoustic_free_surface::acoustic_free_surface(
+specfem::mesh::acoustic_free_surface::acoustic_free_surface(
     const int nelem_acoustic_surface)
     : nelem_acoustic_surface(nelem_acoustic_surface) {
   if (nelem_acoustic_surface > 0) {
-    this->ispec_acoustic_surface = specfem::kokkos::HostView1d<int>(
-        "specfem::mesh::acoustic_free_surface::ispec_acoustic_surface",
+    this->index_mapping = Kokkos::View<int *, Kokkos::HostSpace>(
+        "specfem::mesh::acoustic_free_surface::index_mapping",
         nelem_acoustic_surface);
-    this->type = specfem::kokkos::HostView1d<specfem::enums::boundaries::type>(
-        "specfem::mesh::acoustic_free_surface::type", nelem_acoustic_surface);
+    this->type =
+        Kokkos::View<specfem::enums::boundaries::type *, Kokkos::HostSpace>(
+            "specfem::mesh::acoustic_free_surface::type",
+            nelem_acoustic_surface);
   }
   return;
 }
 
-specfem::mesh::boundaries::acoustic_free_surface::acoustic_free_surface(
+specfem::mesh::acoustic_free_surface::acoustic_free_surface(
     std::ifstream &stream, const int &nelem_acoustic_surface,
-    const specfem::kokkos::HostView2d<int> &knods,
+    const Kokkos::View<int **, Kokkos::HostSpace> knods,
     const specfem::MPI::MPI *mpi) {
 
   std::vector<int> acfree_edge(4, 0);
-  *this =
-      specfem::mesh::boundaries::acoustic_free_surface(nelem_acoustic_surface);
+  *this = specfem::mesh::acoustic_free_surface(nelem_acoustic_surface);
 
   if (nelem_acoustic_surface > 0) {
     for (int inum = 0; inum < nelem_acoustic_surface; inum++) {
-      specfem::fortran_IO::fortran_read_line(stream, &acfree_edge);
-      this->ispec_acoustic_surface(inum) = acfree_edge[0] - 1;
-      const auto control_nodes = Kokkos::subview(
-          knods, Kokkos::ALL, this->ispec_acoustic_surface(inum));
+      specfem::IO::fortran_read_line(stream, &acfree_edge);
+      this->index_mapping(inum) = acfree_edge[0] - 1;
+      const auto control_nodes =
+          Kokkos::subview(knods, Kokkos::ALL, this->index_mapping(inum));
       this->type(inum) = get_boundary_type(acfree_edge[1], acfree_edge[2] - 1,
                                            acfree_edge[3] - 1, control_nodes);
     }

@@ -4,18 +4,25 @@
 #include "specfem_setup.hpp"
 #include <cmath>
 
-void specfem::sources::source::check_locations(const type_real xmin,
-                                               const type_real xmax,
-                                               const type_real zmin,
-                                               const type_real zmax,
-                                               const specfem::MPI::MPI *mpi) {
-  specfem::utilities::check_locations(this->get_x(), this->get_z(), xmin, xmax,
-                                      zmin, zmax, mpi);
-}
+specfem::sources::source::source(YAML::Node &Node, const int nsteps,
+                                 const type_real dt)
+    : x(Node["x"].as<type_real>()), z(Node["z"].as<type_real>()) {
 
-std::ostream &
-specfem::sources::operator<<(std::ostream &out,
-                             const specfem::sources::source &source) {
-  source.print(out);
-  return out;
+  // Read source time function
+  if (YAML::Node Dirac = Node["Dirac"]) {
+    this->forcing_function = std::make_unique<specfem::forcing_function::Dirac>(
+        Dirac, nsteps, dt, false);
+  } else if (YAML::Node Ricker = Node["Ricker"]) {
+    this->forcing_function =
+        std::make_unique<specfem::forcing_function::Ricker>(Ricker, nsteps, dt,
+                                                            false);
+  } else if (YAML::Node external = Node["External"]) {
+    this->forcing_function =
+        std::make_unique<specfem::forcing_function::external>(external, nsteps,
+                                                              dt);
+  } else {
+    throw std::runtime_error("Error: source time function not recognized");
+  }
+
+  return;
 }

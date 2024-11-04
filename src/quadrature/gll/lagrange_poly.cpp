@@ -80,8 +80,6 @@ HostView2d specfem::quadrature::gll::Lagrange::compute_jacobi_derivatives_GLJ(
   int degpoly = nglj - 1;
   for (int i = 0; i < nglj; i++) {
     for (int j = 0; j < nglj; j++) {
-      std::cout << gll_library::pnglj(xiglj(i), degpoly) << " " << xiglj(i)
-                << std::endl;
       if (j == 0 && i == 0) {
         hprimeBar_ii(i, j) = -1.0 * static_cast<type_real>(degpoly) *
                              (static_cast<type_real>(degpoly) + 2.0) / 6.0;
@@ -200,8 +198,6 @@ void specfem::quadrature::gll::Lagrange::compute_jacobi_derivatives_GLJ(
   int degpoly = nglj - 1;
   for (int i = 0; i < nglj; i++) {
     for (int j = 0; j < nglj; j++) {
-      std::cout << gll_library::pnglj(xiglj(i), degpoly) << " " << xiglj(i)
-                << std::endl;
       if (j == 0 && i == 0) {
         hprimeBar_ii(i, j) = -1.0 * static_cast<type_real>(degpoly) *
                              (static_cast<type_real>(degpoly) + 2.0) / 6.0;

@@ -1,5 +1,5 @@
 #include "mesh/mpi_interfaces/mpi_interfaces.hpp"
-#include "fortranio/interface.hpp"
+#include "IO/fortranio/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "specfem_mpi/interface.hpp"
 #include <tuple>
@@ -69,8 +69,7 @@ specfem::mesh::interfaces::interface::interface(std::ifstream &stream,
   // read number of interfaces
   // Where these 2 values are written needs to change in new database format
   int ninterfaces, max_interface_size;
-  specfem::fortran_IO::fortran_read_line(stream, &ninterfaces,
-                                         &max_interface_size);
+  specfem::IO::fortran_read_line(stream, &ninterfaces, &max_interface_size);
 
   // mpi->cout("Number of interaces = " + std::to_string(ninterfaces));
 
@@ -91,9 +90,8 @@ specfem::mesh::interfaces::interface::interface(std::ifstream &stream,
     //     process_interface_id = rank of (neighbor) process to share MPI
     //     interface with number_of_elements_on_interface = number of interface
     //     elements
-    specfem::fortran_IO::fortran_read_line(
-        stream, &this->my_neighbors(num_interface),
-        &this->my_nelmnts_neighbors(num_interface));
+    specfem::IO::fortran_read_line(stream, &this->my_neighbors(num_interface),
+                                   &this->my_nelmnts_neighbors(num_interface));
     // loops over interface elements
     for (int ie = 0; ie < this->my_nelmnts_neighbors(num_interface); ie++) {
       //   format: #(1)spectral_element_id  #(2)interface_type  #(3)node_id1
@@ -102,7 +100,7 @@ specfem::mesh::interfaces::interface::interface(std::ifstream &stream,
       //   interface types:
       //       1  -  corner point only
       //       2  -  element edge
-      specfem::fortran_IO::fortran_read_line(
+      specfem::IO::fortran_read_line(
           stream, &this->my_interfaces(num_interface, ie, 0),
           &this->my_interfaces(num_interface, ie, 1),
           &this->my_interfaces(num_interface, ie, 2),

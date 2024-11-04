@@ -1,8 +1,7 @@
 #include "../../Kokkos_Environment.hpp"
 #include "../../MPI_environment.hpp"
-#include "../../utilities/include/compare_array.h"
+#include "../../utilities/include/interface.hpp"
 #include "compute/interface.hpp"
-#include "material/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "quadrature/interface.hpp"
 #include "yaml-cpp/yaml.h"
@@ -11,7 +10,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-
 // ------------------------------------------------------------------------
 // Reading test config
 struct test_config {
@@ -74,49 +72,106 @@ TEST(COMPUTE_TESTS, compute_elastic_properties) {
   test_config test_config = get_test_config(config_filename, mpi);
 
   // Set up GLL quadrature points
-  specfem::quadrature::quadrature *gllx =
-      new specfem::quadrature::gll::gll(0.0, 0.0, 5);
-  specfem::quadrature::quadrature *gllz =
-      new specfem::quadrature::gll::gll(0.0, 0.0, 5);
-  std::vector<std::shared_ptr<specfem::material::material> > materials;
+  specfem::quadrature::gll::gll gll(0.0, 0.0, 5);
+  specfem::quadrature::quadratures quadratures(gll);
 
-  specfem::mesh::mesh mesh(test_config.database_filename, materials, mpi);
+  specfem::mesh::mesh mesh(test_config.database_filename, mpi);
 
-  specfem::compute::properties properties(mesh.material_ind.kmato, materials,
-                                          mesh.nspec, gllz->get_N(),
-                                          gllx->get_N());
+  std::cout << mesh.print() << std::endl;
 
-  specfem::kokkos::HostView3d<type_real, Kokkos::LayoutRight> h_rho =
-      properties.h_rho;
-  EXPECT_NO_THROW(specfem::testing::test_array(
-      h_rho, test_config.rho_file, mesh.nspec, gllz->get_N(), gllx->get_N()));
+  const int nspec = mesh.nspec;
+  const int ngllz = gll.get_N();
+  const int ngllx = gll.get_N();
 
-  specfem::kokkos::HostView3d<type_real, Kokkos::LayoutRight> h_kappa =
-      properties.h_kappa;
-  EXPECT_NO_THROW(specfem::testing::test_array(h_kappa, test_config.kappa_file,
-                                               mesh.nspec, gllz->get_N(),
-                                               gllx->get_N()));
+  specfem::compute::mesh compute_mesh(mesh.tags, mesh.control_nodes,
+                                      quadratures);
+  specfem::compute::properties compute_properties(
+      nspec, ngllz, ngllx, compute_mesh.mapping, mesh.tags, mesh.materials);
 
-  specfem::kokkos::HostView3d<type_real, Kokkos::LayoutRight> h_mu =
-      properties.h_mu;
-  EXPECT_NO_THROW(specfem::testing::test_array(
-      h_mu, test_config.mu_file, mesh.nspec, gllz->get_N(), gllx->get_N()));
+  specfem::testing::array3d<type_real, Kokkos::LayoutRight> rho_global(
+      test_config.rho_file, nspec, ngllz, ngllx);
+  specfem::testing::array3d<type_real, Kokkos::LayoutRight> mu_global(
+      test_config.mu_file, nspec, ngllz, ngllx);
+  specfem::testing::array3d<type_real, Kokkos::LayoutRight> kappa_global(
+      test_config.kappa_file, nspec, ngllz, ngllx);
 
-  EXPECT_NO_THROW(
-      specfem::testing::test_array(properties.rho_vp, test_config.rho_vp_file,
-                                   mesh.nspec, gllz->get_N(), gllx->get_N()));
+  for (int ix = 0; ix < ngllx; ++ix) {
+    for (int iz = 0; iz < ngllz; ++iz) {
+      for (int ispec = 0; ispec < nspec; ++ispec) {
+        specfem::point::index<specfem::dimension::type::dim2> index(ispec, iz,
+                                                                    ix);
+        if (compute_properties.h_element_types(ispec) ==
+                specfem::element::medium_tag::elastic &&
+            compute_properties.h_element_property(ispec) ==
+                specfem::element::property_tag::isotropic) {
+          const auto properties =
+              [&]() -> specfem::point::properties<
+                        specfem::dimension::type::dim2,
+                        specfem::element::medium_tag::elastic,
+                        specfem::element::property_tag::isotropic, false> {
+            specfem::point::properties<
+                specfem::dimension::type::dim2,
+                specfem::element::medium_tag::elastic,
+                specfem::element::property_tag::isotropic, false>
+                properties;
+            specfem::compute::load_on_host(index, compute_properties,
+                                           properties);
+            return properties;
+          }();
+          const int ispec_mesh = compute_mesh.mapping.compute_to_mesh(ispec);
+          const auto kappa = properties.lambdaplus2mu - properties.mu;
+          EXPECT_FLOAT_EQ(properties.rho, rho_global.data(ispec_mesh, iz, ix));
+          EXPECT_FLOAT_EQ(properties.mu, mu_global.data(ispec_mesh, iz, ix));
+          EXPECT_FLOAT_EQ(kappa, kappa_global.data(ispec_mesh, iz, ix));
+        }
+      }
+    }
+  }
 
-  EXPECT_NO_THROW(
-      specfem::testing::test_array(properties.rho_vs, test_config.rho_vs_file,
-                                   mesh.nspec, gllz->get_N(), gllx->get_N()));
+  for (int ix = 0; ix < ngllx; ++ix) {
+    for (int iz = 0; iz < ngllz; ++iz) {
+      constexpr int vector_length =
+          specfem::datatype::simd<type_real, true>::size();
 
-  EXPECT_NO_THROW(
-      specfem::testing::test_array(properties.qkappa, test_config.qkappa_file,
-                                   mesh.nspec, gllz->get_N(), gllx->get_N()));
+      for (int ispec = 0; ispec < nspec; ispec += vector_length) {
+        const int num_elements =
+            (ispec + vector_length < nspec) ? vector_length : nspec - ispec;
+        const specfem::point::simd_index<specfem::dimension::type::dim2>
+            simd_index(ispec, num_elements, iz, ix);
+        if (compute_properties.h_element_types(ispec) ==
+                specfem::element::medium_tag::elastic &&
+            compute_properties.h_element_property(ispec) ==
+                specfem::element::property_tag::isotropic) {
+          const auto properties =
+              [&]() -> specfem::point::properties<
+                        specfem::dimension::type::dim2,
+                        specfem::element::medium_tag::elastic,
+                        specfem::element::property_tag::isotropic, true> {
+            specfem::point::properties<
+                specfem::dimension::type::dim2,
+                specfem::element::medium_tag::elastic,
+                specfem::element::property_tag::isotropic, true>
+                properties;
+            specfem::compute::load_on_host(simd_index, compute_properties,
+                                           properties);
+            return properties;
+          }();
+          const auto kappa = properties.lambdaplus2mu - properties.mu;
+          for (int i = 0; i < num_elements; ++i) {
+            const int ispec_mesh =
+                compute_mesh.mapping.compute_to_mesh(ispec + i);
+            EXPECT_FLOAT_EQ(properties.rho[i],
+                            rho_global.data(ispec_mesh, iz, ix));
+            EXPECT_FLOAT_EQ(properties.mu[i],
+                            mu_global.data(ispec_mesh, iz, ix));
+            EXPECT_FLOAT_EQ(kappa[i], kappa_global.data(ispec_mesh, iz, ix));
+          }
+        }
+      }
+    }
+  }
 
-  EXPECT_NO_THROW(specfem::testing::test_array(properties.qmu,
-                                               test_config.qmu_file, mesh.nspec,
-                                               gllz->get_N(), gllx->get_N()));
+  return;
 }
 
 int main(int argc, char *argv[]) {

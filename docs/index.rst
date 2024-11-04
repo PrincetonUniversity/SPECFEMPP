@@ -1,9 +1,26 @@
+
+.. meta::
+  :hide-toc:
+
 SPECFEM++ - A modular and portable spectral-element code for seismic wave propagation
 =====================================================================================
 
+.. image:: https://jenkins.princeton.edu/buildStatus/icon?job=SpecFEM_KOKKOS%2FGNU+Compiler&build=last&subject=GCC%20Build
+    :alt: GCC Build
+
+.. image:: https://jenkins.princeton.edu/buildStatus/icon?job=SpecFEM_KOKKOS%2FIntel_Compiler_Checks&build=last&subject=IntelLLVM%20Build
+    :alt: IntelLLVM Build
+
+.. image:: https://jenkins.princeton.edu/buildStatus/icon?job=SpecFEM_KOKKOS%2FNVIDIA_Compiler_Checks&build=last&subject=NVIDIA%20Build
+   :alt: NVIDIA Build
+
+.. image:: https://img.shields.io/badge/License-GPLv3-blue.svg
+    :target: https://github.com/PrincetonUniversity/SPECFEMPP/blob/main/LICENSE
+    :alt: License
+
 .. admonition:: Community Project
 
-    SPECFEM++ is a community project. We welcome contributions from everyone. Please see :ref:`developer documentation` sections for more details.
+    SPECFEM++ is a community project. We welcome contributions from everyone. Please see contribution section for more details.
 
 .. admonition:: Under Development
 
@@ -99,6 +116,12 @@ Table below shows various features available and tested in this package on vario
       - ✔
       -
 
+    * - Adjoint Simulations
+      - ✔
+      - ✔
+      - ✔
+      -
+
     * - **Time Schemes**
       -
       -
@@ -156,15 +179,27 @@ Table below shows various features available and tested in this package on vario
    /* front page: hide chapter titles
     * needed for consistent HTML-PDF-EPUB chapters
     */
+   section#getting-started,
    section#user-documentation,
    section#cookbooks,
-   section#contribution-guidelines,
+   section#contribution,
    section#api-documentation,
    section#benchmarks,
    section#community {
        display:none;
    }
    </style>
+
+Getting Started
+---------------
+
+.. toctree::
+    :caption: GETTING STARTED
+    :maxdepth: 1
+    :hidden:
+
+    getting_started/index
+    cookbooks/index
 
 User Documentation
 ------------------
@@ -174,30 +209,23 @@ User Documentation
     :maxdepth: 1
     :hidden:
 
-    user_documentation/index
     meshfem2d/index
     parameter_documentation/index
     source_description/index
 
-Cookbooks
----------
+Contribution
+------------
 
 .. toctree::
-    :caption: COOKBOOKS
+    :caption: CONTRIBUTION
     :maxdepth: 1
     :hidden:
 
-    cookbooks/index
-
-Contribution Guidelines
------------------------
-
-.. toctree::
-    :caption: CONTRIBUTION GUIDELINES
-    :maxdepth: 1
-    :hidden:
-
-    developer_documentation/index
+    developer_documentation/style
+    developer_documentation/git_workflow
+    developer_documentation/build_requirements
+    developer_documentation/tests
+    developer_documentation/tutorials/index
 
 Community
 ---------
@@ -219,7 +247,7 @@ Benchmarks
     :maxdepth: 1
     :hidden:
 
-    benchmarks/benchmarks.rst
+    Forward simulations <https://github.com/PrincetonUniversity/SPECFEMPP-benchmarks/blob/main/forward_simulations/README.md>
 
 API Documentation
 -----------------

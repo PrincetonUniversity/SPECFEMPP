@@ -15,6 +15,7 @@ Parameter Description
 ---------------------
 
 .. toctree::
+    :maxdepth: 1
 
     header
     meshing_parameters
