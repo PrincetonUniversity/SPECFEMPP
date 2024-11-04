@@ -96,4 +96,4 @@ The region is described using a string.
     - ``nxmax``: Integer value describing the x-coordinate of the spectral element at the top right corner of the region.
     - ``nzmin``: Integer value describing the z-coordinate of the spectral element at the bottom left corner of the region.
     - ``nzmax``: Integer value describing the z-coordinate of the spectral element at the top right corner of the region.
-    - ``material_number``: Integer value describing the type of material in the region. This value references the material number in the :ref:`velocity_model` section.
+    - ``material_number``: Integer value describing the type of material in the region. This value references the material number in the ``velocity_model``.

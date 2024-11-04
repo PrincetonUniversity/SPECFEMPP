@@ -1,3 +1,4 @@
 breathe
 furo
+sphinx-copybutton
 sphinx-sitemap

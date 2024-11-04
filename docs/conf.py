@@ -43,6 +43,7 @@ extensions = [
     "sphinx_sitemap",
     "sphinx.ext.inheritance_diagram",
     "breathe",
+    "sphinx_copybutton",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
