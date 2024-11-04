@@ -5,7 +5,7 @@ Receivers section defines receiver information required to calculate seismograms
 
 .. note::
 
-    Please note that the :ref:`stations_file` is generated using SPECFEM2D mesh generator i.e. xmeshfem2d
+    Please note that the ``stations_file`` is generated using SPECFEM2D mesh generator i.e. xmeshfem2d
 
 **Parameter Name** : ``receivers``
 -----------------------------------
@@ -23,7 +23,7 @@ Receivers section defines receiver information required to calculate seismograms
 
 **possible values** : [string]
 
-**documentation** : Path to :ref:`stations_file`
+**documentation** : Path to ``stations_file``
 
 **Parameter Name** : ``receivers.angle``
 ******************************************************
@@ -39,11 +39,11 @@ Receivers section defines receiver information required to calculate seismograms
 
 **default value** : None
 
-**possible values** : [List of string]
+**possible values** : [YAML list]
 
-**documentation** : Type of seismograms to be written. The types can be any of displacement, velocity and acceleration. For example, the snippet below will instantiate a writer for to output displacement and velocity seismogram at every station.
+**documentation** : Type of seismograms to be written.
 
-.. code:: yaml
+.. code-block:: yaml
 
     seismogram-type:
         - velocity
@@ -57,3 +57,15 @@ Receivers section defines receiver information required to calculate seismograms
 **possible values** : [int]
 
 **documentation** : Number of time steps between sampling the wavefield at station locations for writing seismogram.
+
+.. admonition:: Example receivers section
+
+    .. code-block:: yaml
+
+        receivers:
+            stations-file: /path/to/stations_file
+            angle: 0.0
+            seismogram-type:
+                - velocity
+                - displacement
+            nstep_between_samples: 1

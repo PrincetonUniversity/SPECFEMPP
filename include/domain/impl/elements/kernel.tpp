@@ -1,138 +1,142 @@
-#ifndef _DOMAIN_IMPL_ELEMENTS_KERNEL_TPP
-#define _DOMAIN_IMPL_ELEMENTS_KERNEL_TPP
+#pragma once
 
-#include "compute/interface.hpp"
-#include "domain/impl/elements/acoustic/interface.hpp"
-#include "domain/impl/elements/elastic/interface.hpp"
-#include "enumerations/interface.hpp"
+#include "algorithms/divergence.hpp"
+#include "algorithms/gradient.hpp"
+#include "compute/assembly/assembly.hpp"
+#include "domain/impl/boundary_conditions/boundary_conditions.hpp"
+#include "element.hpp"
+#include "enumerations/dimension.hpp"
+#include "enumerations/medium.hpp"
+#include "enumerations/specfem_enums.hpp"
 #include "kernel.hpp"
-#include "kokkos_abstractions.h"
-#include "quadrature/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
-namespace {
-// Do not pull velocity from global memory
-template <int components, specfem::enums::element::boundary_tag tag>
-KOKKOS_INLINE_FUNCTION specfem::kokkos::array_type<type_real, components>
-get_velocity(
-    const int &iglob,
-    specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot) {
+template <specfem::wavefield::type WavefieldType,
+          specfem::dimension::type DimensionType,
+          specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag,
+          specfem::element::boundary_tag BoundaryTag, int NGLL>
+specfem::domain::impl::kernels::element_kernel_base<
+    WavefieldType, DimensionType, MediumTag, PropertyTag, BoundaryTag,
+    NGLL>::element_kernel_base(const specfem::compute::assembly &assembly,
+                               const specfem::kokkos::HostView1d<int>
+                                   h_element_kernel_index_mapping)
+    : nelements(h_element_kernel_index_mapping.extent(0)),
+      element_kernel_index_mapping("specfem::domain::impl::kernels::element_"
+                                   "kernel_base::element_kernel_index_mapping",
+                                   nelements),
+      h_element_kernel_index_mapping(h_element_kernel_index_mapping),
+      points(assembly.mesh.points), quadrature(assembly.mesh.quadratures),
+      partial_derivatives(assembly.partial_derivatives),
+      properties(assembly.properties), boundaries(assembly.boundaries),
+      boundary_values(assembly.boundary_values.get_container<BoundaryTag>()) {
 
-  specfem::kokkos::array_type<type_real, components> velocity;
-
-  // check if we need the velocity for computing the acceleration
-  constexpr bool flag =
-      ((tag == specfem::enums::element::boundary_tag::stacey) ||
-       (tag ==
-        specfem::enums::element::boundary_tag::composite_stacey_dirichlet));
-
-  // Only get velocity from global memory for stacey boundary
-  if constexpr (flag) {
-    for (int icomponent = 0; icomponent < components; ++icomponent)
-      velocity[icomponent] = field_dot(iglob, icomponent);
-  } else {
-    for (int icomponent = 0; icomponent < components; ++icomponent)
-      velocity[icomponent] = 0.0;
+  // Check if the elements being allocated to this kernel are of the correct
+  // type
+  for (int ispec = 0; ispec < nelements; ispec++) {
+    const int ielement = h_element_kernel_index_mapping(ispec);
+    if ((assembly.properties.h_element_types(ielement) != MediumTag) &&
+        (assembly.properties.h_element_property(ielement) != PropertyTag)) {
+      throw std::runtime_error("Invalid element detected in kernel");
+    }
   }
 
-  return velocity;
-};
-} // namespace
+  // Assert that ispec of the elements is contiguous
+  for (int ispec = 0; ispec < nelements; ispec++) {
+    if (ispec != 0) {
+      if (h_element_kernel_index_mapping(ispec) !=
+          h_element_kernel_index_mapping(ispec - 1) + 1) {
+        throw std::runtime_error("Element index mapping is not contiguous");
+      }
+    }
+  }
 
-template <class medium, class qp_type, class property, class BC>
-specfem::domain::impl::kernels::element_kernel<medium, qp_type, property, BC>::
-    element_kernel(
-        const specfem::kokkos::DeviceView3d<int> ibool,
-        const specfem::kokkos::DeviceView1d<int> ispec,
-        const specfem::compute::partial_derivatives &partial_derivatives,
-        const specfem::compute::properties &properties,
-        const specfem::compute::boundaries &boundary_conditions,
-        specfem::quadrature::quadrature *quadx,
-        specfem::quadrature::quadrature *quadz, qp_type quadrature_points,
-        specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field,
-        specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> field_dot,
-        specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
-            field_dot_dot,
-        specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>
-            mass_matrix)
-    : ibool(ibool), ispec(ispec), quadx(quadx), quadz(quadz),
-      quadrature_points(quadrature_points), field(field), field_dot(field_dot),
-      field_dot_dot(field_dot_dot), mass_matrix(mass_matrix) {
-
-#ifndef NDEBUG
-  assert(field.extent(1) == medium::components);
-  assert(field_dot_dot.extent(1) == medium::components);
-  assert(mass_matrix.extent(1) == medium::components);
-#endif
-
-  static_assert(std::is_same_v<medium, typename BC::medium_type>,
-                "Boundary conditions should have the same medium type as the "
-                "element kernel");
-  static_assert(std::is_same_v<dimension, typename BC::dimension>,
-                "Boundary conditions should have the same dimension as the "
-                "element kernel");
-  static_assert(std::is_same_v<qp_type, typename BC::quadrature_points_type>,
-                "Boundary conditions should have the same quadrature point "
-                "type as the element kernel");
-  static_assert(std::is_same_v<property, typename BC::property_type>,
-                "Boundary conditions should have the same property as the "
-                "element kernel");
-
-  element = specfem::domain::impl::elements::element<
-      dimension, medium_type, quadrature_point_type, property, BC>(
-      partial_derivatives, properties, boundary_conditions, quadrature_points);
+  Kokkos::deep_copy(element_kernel_index_mapping,
+                    h_element_kernel_index_mapping);
   return;
 }
 
-template <class medium, class qp_type, class property, class BC>
-void specfem::domain::impl::kernels::element_kernel<
-    medium, qp_type, property, BC>::compute_mass_matrix() const {
-
-  constexpr int components = medium::components;
-  const int nelements = ispec.extent(0);
-
+template <specfem::wavefield::type WavefieldType,
+          specfem::dimension::type DimensionType,
+          specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag,
+          specfem::element::boundary_tag BoundaryTag, int NGLL>
+void specfem::domain::impl::kernels::element_kernel_base<
+    WavefieldType, DimensionType, MediumTag, PropertyTag, BoundaryTag,
+    NGLL>::compute_mass_matrix(const type_real dt,
+                               const specfem::compute::simulation_field<
+                                   WavefieldType> &field) const {
   if (nelements == 0)
     return;
 
-  const auto wxgll = this->quadx->get_w();
-  const auto wzgll = this->quadz->get_w();
+  const auto wgll = quadrature.gll.weights;
+
+  constexpr int simd_size = simd::size();
+
+  ChunkPolicyType chunk_policy(element_kernel_index_mapping, NGLL, NGLL);
 
   Kokkos::parallel_for(
-      "specfem::domain::kernes::elements::compute_mass_matrix",
-      specfem::kokkos::DeviceTeam(ispec.extent(0), Kokkos::AUTO, 1),
-      KOKKOS_CLASS_LAMBDA(
-          const specfem::kokkos::DeviceTeam::member_type &team_member) {
-        int ngllx, ngllz;
-        quadrature_points.get_ngll(&ngllx, &ngllz);
-        const auto ispec_l = ispec(team_member.league_rank());
+      "specfem::domain::impl::kernels::elements::compute_mass_matrix",
+      static_cast<const typename ChunkPolicyType::policy_type &>(chunk_policy),
+      KOKKOS_CLASS_LAMBDA(const typename ChunkPolicyType::member_type &team) {
+        for (int tile = 0; tile < ChunkPolicyType::tile_size * simd_size;
+             tile += ChunkPolicyType::chunk_size * simd_size) {
+          const int starting_element_index =
+              team.league_rank() * ChunkPolicyType::tile_size * simd_size +
+              tile;
 
-        Kokkos::parallel_for(
-            quadrature_points.template TeamThreadRange<specfem::enums::axes::x,
-                                                       specfem::enums::axes::z>(
-                team_member),
-            [&](const int xz) {
-              int ix, iz;
-              sub2ind(xz, ngllx, iz, ix);
-              int iglob = ibool(ispec_l, iz, ix);
+          if (starting_element_index >= nelements) {
+            break;
+          }
 
-              specfem::kokkos::array_type<type_real, medium_type::components>
-                  mass_matrix_element;
+          const auto iterator =
+              chunk_policy.league_iterator(starting_element_index);
 
-              element.compute_mass_matrix_component(ispec_l, xz,
-                                                    mass_matrix_element);
+          Kokkos::parallel_for(
+              Kokkos::TeamThreadRange(team, iterator.chunk_size()),
+              [&](const int i) {
+                const auto iterator_index = iterator(i);
+                const auto index = iterator_index.index;
+                const int ix = iterator_index.index.ix;
+                const int iz = iterator_index.index.iz;
 
-#ifdef KOKKOS_ENABLE_CUDA
-#pragma unroll
-#endif
-              for (int icomponent = 0; icomponent < components; icomponent++) {
-                Kokkos::single(Kokkos::PerThread(team_member), [&]() {
-                  Kokkos::atomic_add(&mass_matrix(iglob, icomponent),
-                                     wxgll(ix) * wzgll(iz) *
-                                         mass_matrix_element[icomponent]);
-                });
-              }
-            });
+                const auto point_property = [&]() -> PointPropertyType {
+                  PointPropertyType point_property;
+
+                  specfem::compute::load_on_device(index, properties,
+                                                   point_property);
+                  return point_property;
+                }();
+
+                const auto point_partial_derivatives =
+                    [&]() -> PointPartialDerivativesType {
+                  PointPartialDerivativesType point_partial_derivatives;
+                  specfem::compute::load_on_device(index, partial_derivatives,
+                                                   point_partial_derivatives);
+                  return point_partial_derivatives;
+                }();
+
+                PointMassType mass_matrix =
+                    specfem::domain::impl::elements::mass_matrix_component(
+                        point_property, point_partial_derivatives);
+
+                for (int icomp = 0; icomp < components; icomp++) {
+                  mass_matrix.mass_matrix(icomp) *= wgll(ix) * wgll(iz);
+                }
+
+                PointBoundaryType point_boundary;
+                specfem::compute::load_on_device(index, boundaries,
+                                                 point_boundary);
+
+                specfem::domain::impl::boundary_conditions::
+                    compute_mass_matrix_terms(dt, point_boundary,
+                                              point_property, mass_matrix);
+
+                specfem::compute::atomic_add_on_device(index, mass_matrix,
+                                                       field);
+              });
+        }
       });
 
   Kokkos::fence();
@@ -140,269 +144,139 @@ void specfem::domain::impl::kernels::element_kernel<
   return;
 }
 
-template <class medium, class qp_type, class property, class BC>
-template <specfem::enums::time_scheme::type time_scheme>
-void specfem::domain::impl::kernels::element_kernel<
-    medium, qp_type, property, BC>::mass_time_contribution(const type_real dt)
-    const {
-
-  constexpr int components = medium::components;
-  const int nelements = ispec.extent(0);
-
-  if (nelements == 0)
-    return;
-
-  const auto wxgll = this->quadx->get_w();
-  const auto wzgll = this->quadz->get_w();
-
-  Kokkos::parallel_for(
-      "specfem::domain::kernes::elements::add_mass_matrix_contribution",
-      specfem::kokkos::DeviceTeam(ispec.extent(0), Kokkos::AUTO, 1),
-      KOKKOS_CLASS_LAMBDA(
-          const specfem::kokkos::DeviceTeam::member_type &team_member) {
-        int ngllx, ngllz;
-        quadrature_points.get_ngll(&ngllx, &ngllz);
-        const auto ielement = team_member.league_rank();
-        const auto ispec_l = ispec(ielement);
-
-        Kokkos::parallel_for(
-            quadrature_points.template TeamThreadRange<specfem::enums::axes::x,
-                                                       specfem::enums::axes::z>(
-                team_member),
-            [&](const int xz) {
-              int ix, iz;
-              sub2ind(xz, ngllx, iz, ix);
-              int iglob = ibool(ispec_l, iz, ix);
-
-              specfem::kokkos::array_type<type_real, medium_type::components>
-                  mass_matrix_element;
-
-              specfem::kokkos::array_type<type_real, dimension::dim> weight;
-
-              weight[0] = wxgll(ix);
-              weight[1] = wzgll(iz);
-
-              element.template mass_time_contribution<time_scheme>(
-                  ispec_l, ielement, xz, dt, weight, mass_matrix_element);
-
-#ifdef KOKKOS_ENABLE_CUDA
-#pragma unroll
-#endif
-              for (int icomponent = 0; icomponent < components; ++icomponent) {
-                const type_real __mass_matrix = mass_matrix(iglob, icomponent);
-                Kokkos::single(Kokkos::PerThread(team_member), [&]() {
-                  Kokkos::atomic_add(&mass_matrix(iglob, icomponent),
-                                     mass_matrix_element[icomponent]);
-                });
-              }
-            });
-      });
-
-  Kokkos::fence();
-  return;
-}
-
-template <class medium, class qp_type, class property, class BC>
-void specfem::domain::impl::kernels::element_kernel<
-    medium, qp_type, property, BC>::compute_stiffness_interaction() const {
-
-  constexpr int components = medium::components;
-  const int nelements = ispec.extent(0);
+template <specfem::wavefield::type WavefieldType,
+          specfem::dimension::type DimensionType,
+          specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag,
+          specfem::element::boundary_tag BoundaryTag, int NGLL>
+void specfem::domain::impl::kernels::element_kernel_base<
+    WavefieldType, DimensionType, MediumTag, PropertyTag, BoundaryTag, NGLL>::
+    compute_stiffness_interaction(
+        const int istep,
+        const specfem::compute::simulation_field<WavefieldType> &field) const {
 
   if (nelements == 0)
     return;
 
-  const auto hprime_xx = this->quadx->get_hprime();
-  const auto hprime_zz = this->quadz->get_hprime();
-  const auto wxgll = this->quadx->get_w();
-  const auto wzgll = this->quadz->get_w();
+  const auto hprime = quadrature.gll.hprime;
+  const auto wgll = quadrature.gll.weights;
+  const auto index_mapping = points.index_mapping;
 
-  // s_hprime_xx, s_hprimewgll_xx
-  int scratch_size =
-      2 * quadrature_points.template shmem_size<
-              type_real, 1, specfem::enums::axes::x, specfem::enums::axes::x>();
+  int scratch_size = ChunkElementFieldType::shmem_size() +
+                     ChunkStressIntegrandType::shmem_size() +
+                     ElementQuadratureType::shmem_size();
 
-  // s_hprime_zz, s_hprimewgll_zz
-  scratch_size +=
-      2 * quadrature_points.template shmem_size<
-              type_real, 1, specfem::enums::axes::z, specfem::enums::axes::z>();
+  ChunkPolicyType chunk_policy(element_kernel_index_mapping, NGLL, NGLL);
 
-  // s_field, s_stress_integrand_xi, s_stress_integrand_gamma
-  scratch_size +=
-      3 *
-      quadrature_points
-          .template shmem_size<type_real, components, specfem::enums::axes::x,
-                               specfem::enums::axes::z>();
-
-  // s_iglob
-  scratch_size +=
-      quadrature_points.template shmem_size<int, 1, specfem::enums::axes::x,
-                                            specfem::enums::axes::z>();
+  constexpr int simd_size = simd::size();
 
   Kokkos::parallel_for(
       "specfem::domain::impl::kernels::elements::compute_stiffness_interaction",
-      specfem::kokkos::DeviceTeam(nelements, NTHREADS, NLANES)
-          .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
-      KOKKOS_CLASS_LAMBDA(
-          const specfem::kokkos::DeviceTeam::member_type &team_member) {
-        int ngllx, ngllz;
-        quadrature_points.get_ngll(&ngllx, &ngllz);
-        const auto ielement = team_member.league_rank();
-        const auto ispec_l = ispec(ielement);
+      chunk_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
+      KOKKOS_CLASS_LAMBDA(const typename ChunkPolicyType::member_type &team) {
+        ChunkElementFieldType element_field(team);
+        ElementQuadratureType element_quadrature(team);
+        ChunkStressIntegrandType stress_integrand(team);
 
-        // Instantiate shared views
-        // ---------------------------------------------------------------
-        auto s_hprime_xx = quadrature_points.template ScratchView<
-            type_real, 1, specfem::enums::axes::x, specfem::enums::axes::x>(
-            team_member.team_scratch(0));
-        auto s_hprime_zz = quadrature_points.template ScratchView<
-            type_real, 1, specfem::enums::axes::z, specfem::enums::axes::z>(
-            team_member.team_scratch(0));
-        auto s_hprimewgll_xx = quadrature_points.template ScratchView<
-            type_real, 1, specfem::enums::axes::x, specfem::enums::axes::x>(
-            team_member.team_scratch(0));
-        auto s_hprimewgll_zz = quadrature_points.template ScratchView<
-            type_real, 1, specfem::enums::axes::z, specfem::enums::axes::z>(
-            team_member.team_scratch(0));
+        specfem::compute::load_on_device(team, quadrature, element_quadrature);
+        for (int tile = 0; tile < ChunkPolicyType::tile_size * simd_size;
+             tile += ChunkPolicyType::chunk_size * simd_size) {
+          const int starting_element_index =
+              team.league_rank() * ChunkPolicyType::tile_size * simd_size +
+              tile;
 
-        auto s_field =
-            quadrature_points.template ScratchView<type_real, components,
-                                                   specfem::enums::axes::z,
-                                                   specfem::enums::axes::x>(
-                team_member.team_scratch(0));
-        auto s_stress_integrand_xi =
-            quadrature_points.template ScratchView<type_real, components,
-                                                   specfem::enums::axes::z,
-                                                   specfem::enums::axes::x>(
-                team_member.team_scratch(0));
-        auto s_stress_integrand_gamma =
-            quadrature_points.template ScratchView<type_real, components,
-                                                   specfem::enums::axes::z,
-                                                   specfem::enums::axes::x>(
-                team_member.team_scratch(0));
-        auto s_iglob = quadrature_points.template ScratchView<
-            int, 1, specfem::enums::axes::z, specfem::enums::axes::x>(
-            team_member.team_scratch(0));
+          if (starting_element_index >= nelements) {
+            break;
+          }
 
-        // ---------- Allocate shared views -------------------------------
-        Kokkos::parallel_for(
-            quadrature_points.template TeamThreadRange<specfem::enums::axes::x,
-                                                       specfem::enums::axes::x>(
-                team_member),
-            [&](const int xz) {
-              int iz, ix;
-              sub2ind(xz, ngllx, iz, ix);
-              s_hprime_xx(iz, ix, 0) = hprime_xx(iz, ix);
-              s_hprimewgll_xx(ix, iz, 0) = wxgll(iz) * hprime_xx(iz, ix);
-            });
+          const auto iterator =
+              chunk_policy.league_iterator(starting_element_index);
+          specfem::compute::load_on_device(team, iterator, field,
+                                           element_field);
 
-        Kokkos::parallel_for(
-            quadrature_points.template TeamThreadRange<specfem::enums::axes::z,
-                                                       specfem::enums::axes::z>(
-                team_member),
-            [&](const int xz) {
-              int iz, ix;
-              sub2ind(xz, ngllz, iz, ix);
-              s_hprime_zz(iz, ix, 0) = hprime_zz(iz, ix);
-              s_hprimewgll_zz(ix, iz, 0) = wzgll(iz) * hprime_zz(iz, ix);
-            });
+          team.team_barrier();
 
-        Kokkos::parallel_for(
-            quadrature_points.template TeamThreadRange<specfem::enums::axes::z,
-                                                       specfem::enums::axes::x>(
-                team_member),
-            [&](const int xz) {
-              int iz, ix;
-              sub2ind(xz, ngllx, iz, ix);
-              const int iglob = ibool(ispec_l, iz, ix);
-              s_iglob(iz, ix, 0) = iglob;
-#ifdef KOKKOS_ENABLE_CUDA
-#pragma unroll
-#endif
-              for (int icomponent = 0; icomponent < components; ++icomponent) {
-                s_field(iz, ix, icomponent) = field(iglob, icomponent);
-                s_stress_integrand_xi(iz, ix, icomponent) = 0.0;
-                s_stress_integrand_gamma(iz, ix, icomponent) = 0.0;
-              }
-            });
+          specfem::algorithms::gradient(
+              team, iterator, partial_derivatives,
+              element_quadrature.hprime_gll, element_field.displacement,
+              // Compute stresses using the gradients
+              [&](const typename ChunkPolicyType::iterator_type::index_type
+                      &iterator_index,
+                  const typename PointFieldDerivativesType::ViewType &du) {
+                const auto &index = iterator_index.index;
 
-        // ------------------------------------------------------------------
+                PointPartialDerivativesType point_partial_derivatives;
+                specfem::compute::load_on_device(index, partial_derivatives,
+                                                 point_partial_derivatives);
 
-        team_member.team_barrier();
+                PointPropertyType point_property;
+                specfem::compute::load_on_device(index, properties,
+                                                 point_property);
 
-        Kokkos::parallel_for(
-            quadrature_points.template TeamThreadRange<specfem::enums::axes::z,
-                                                       specfem::enums::axes::x>(
-                team_member),
-            [&](const int xz) {
-              int ix, iz;
-              sub2ind(xz, ngllx, iz, ix);
+                PointFieldDerivativesType field_derivatives(du);
 
-              specfem::kokkos::array_type<type_real, medium_type::components>
-                  dudxl;
-              specfem::kokkos::array_type<type_real, medium_type::components>
-                  dudzl;
+                const auto point_stress_integrand =
+                    specfem::domain::impl::elements::compute_stress_integrands(
+                        point_partial_derivatives, point_property,
+                        field_derivatives);
 
-              element.compute_gradient(ispec_l, ielement, xz, s_hprime_xx,
-                                       s_hprime_zz, s_field, dudxl, dudzl);
+                const int &ielement = iterator_index.ielement;
 
-              specfem::kokkos::array_type<type_real, medium_type::components>
-                  stress_integrand_xi;
-              specfem::kokkos::array_type<type_real, medium_type::components>
-                  stress_integrand_gamma;
+                for (int icomponent = 0; icomponent < components;
+                     ++icomponent) {
+                  for (int idim = 0; idim < num_dimensions; ++idim) {
+                    stress_integrand.F(ielement, index.iz, index.ix, idim,
+                                       icomponent) =
+                        point_stress_integrand.F(idim, icomponent);
+                  }
+                }
+              });
 
-              element.compute_stress(ispec_l, ielement, xz, dudxl, dudzl,
-                                     stress_integrand_xi,
-                                     stress_integrand_gamma);
-#ifdef KOKKOS_ENABLE_CUDA
-#pragma unroll
-#endif
-              for (int icomponent = 0; icomponent < components; ++icomponent) {
-                s_stress_integrand_xi(iz, ix, icomponent) =
-                    stress_integrand_xi[icomponent];
-                s_stress_integrand_gamma(iz, ix, icomponent) =
-                    stress_integrand_gamma[icomponent];
-              }
-            });
+          team.team_barrier();
 
-        team_member.team_barrier();
+          specfem::algorithms::divergence(
+              team, iterator, partial_derivatives, wgll,
+              element_quadrature.hprime_wgll, stress_integrand.F,
+              [&, istep = istep](const typename ChunkPolicyType::iterator_type::index_type
+                      &iterator_index,
+                  const typename PointAccelerationType::ViewType &result) {
+                const auto &index = iterator_index.index;
+                PointAccelerationType acceleration(result);
 
-        Kokkos::parallel_for(
-            quadrature_points.template TeamThreadRange<specfem::enums::axes::z,
-                                                       specfem::enums::axes::x>(
-                team_member),
-            [&](const int xz) {
-              int iz, ix;
-              sub2ind(xz, ngllx, iz, ix);
+                for (int icomponent = 0; icomponent < components;
+                     ++icomponent) {
+                  acceleration.acceleration(icomponent) *=
+                      static_cast<type_real>(-1.0);
+                }
 
-              const int iglob = s_iglob(iz, ix, 0);
-              specfem::kokkos::array_type<type_real, dimension::dim> weight;
+                PointPropertyType point_property;
+                specfem::compute::load_on_device(index, properties,
+                                                 point_property);
 
-              weight[0] = wxgll(ix);
-              weight[1] = wzgll(iz);
+                PointVelocityType velocity;
+                specfem::compute::load_on_device(index, field, velocity);
 
-              specfem::kokkos::array_type<type_real, medium_type::components>
-                  acceleration;
+                PointBoundaryType point_boundary;
+                specfem::compute::load_on_device(index, boundaries,
+                                                 point_boundary);
 
-              // only get velocity from global memory for stacey boundary
-              auto velocity =
-                  get_velocity<components, BC::value>(iglob, field_dot);
+                specfem::domain::impl::boundary_conditions::
+                    apply_boundary_conditions(point_boundary, point_property,
+                                              velocity, acceleration);
 
-              element.compute_acceleration(
-                  ispec_l, ielement, xz, weight, s_stress_integrand_xi,
-                  s_stress_integrand_gamma, s_hprimewgll_xx, s_hprimewgll_zz,
-                  velocity, acceleration);
+                // Store forward boundary values for reconstruction during
+                // adjoint simulations. The function does nothing if the
+                // boundary tag is not stacey
+                if constexpr (WavefieldType ==
+                              specfem::wavefield::type::forward) {
+                  specfem::compute::store_on_device(istep, index, acceleration,
+                                                    boundary_values);
+                }
 
-#ifdef KOKKOS_ENABLE_CUDA
-#pragma unroll
-#endif
-              for (int icomponent = 0; icomponent < components; ++icomponent) {
-                Kokkos::single(Kokkos::PerThread(team_member), [&]() {
-                  Kokkos::atomic_add(&field_dot_dot(iglob, icomponent),
-                                     acceleration[icomponent]);
-                });
-              }
-            });
+                specfem::compute::atomic_add_on_device(index, acceleration,
+                                                       field);
+              });
+        }
       });
 
   Kokkos::fence();
@@ -410,4 +284,52 @@ void specfem::domain::impl::kernels::element_kernel<
   return;
 }
 
-#endif // _DOMAIN_IMPL_ELEMENTS_KERNEL_TPP
+template <specfem::dimension::type DimensionType,
+          specfem::element::medium_tag MediumType,
+          specfem::element::property_tag PropertyTag, int NGLL>
+void specfem::domain::impl::kernels::element_kernel<
+    specfem::wavefield::type::backward, DimensionType, MediumType, PropertyTag,
+    specfem::element::boundary_tag::stacey,
+    NGLL>::compute_stiffness_interaction(const int istep) const {
+
+  if (this->nelements == 0)
+    return;
+
+  ChunkPolicyType chunk_policy(this->element_kernel_index_mapping, NGLL, NGLL);
+
+  constexpr int simd_size = simd::size();
+
+  Kokkos::parallel_for(
+      "specfem::domain::impl::kernels::elements::compute_stiffness_"
+      "interaction",
+      static_cast<const typename ChunkPolicyType::policy_type &>(chunk_policy),
+      KOKKOS_CLASS_LAMBDA(const typename ChunkPolicyType::member_type &team) {
+        for (int tile = 0; tile < ChunkPolicyType::tile_size * simd_size;
+             tile += ChunkPolicyType::chunk_size * simd_size) {
+          const int starting_element_index =
+              team.league_rank() * ChunkPolicyType::tile_size * simd_size +
+              tile;
+
+          if (starting_element_index >= this->nelements) {
+            break;
+          }
+
+          const auto iterator =
+              chunk_policy.league_iterator(starting_element_index);
+
+          Kokkos::parallel_for(
+              Kokkos::TeamThreadRange(team, iterator.chunk_size()),
+              [&](const int i) {
+                const auto iterator_index = iterator(i);
+                const auto index = iterator_index.index;
+
+                PointAccelerationType acceleration;
+                specfem::compute::load_on_device(
+                    istep, index, this->boundary_values, acceleration);
+
+                specfem::compute::atomic_add_on_device(index, acceleration,
+                                                       this->field);
+              });
+        }
+      });
+}

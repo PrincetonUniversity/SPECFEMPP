@@ -6,5 +6,3 @@ Methods to read quadrature information from configuration file and instantiate q
 
 .. doxygenclass:: specfem::runtime_configuration::quadrature
     :members:
-    :undoc-members:
-    :private-members:

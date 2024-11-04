@@ -1,4 +1,6 @@
 
+.. _quadrature_api:
+
 Quadrature API
 ===================
 

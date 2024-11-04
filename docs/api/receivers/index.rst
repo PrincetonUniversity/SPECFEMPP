@@ -1,4 +1,6 @@
 
+.. _receivers_api:
+
 Receiver API
 =================
 

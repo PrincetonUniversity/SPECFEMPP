@@ -1,13 +1,13 @@
 
-Solver API
-=================
+.. _solver:
+
+Solver
+======
 
 The ``solver`` class provides interfaces to describe the solver algorithm.
 
 .. doxygenclass:: specfem::solver::solver
    :members:
-   :undoc-members:
-   :private-members:
 
 Types of solvers
 ----------------

@@ -1,9 +1,47 @@
-.. homogeneous_example::
+.. _homogeneous_example:
 
 Wave propagration through homogeneous media
 ===========================================
 
-In this example we simulate wave propagation through a 2-dimensional homogeneous medium.
+In this `example <https://github.com/PrincetonUniversity/SPECFEMPP/tree/main/examples/homogeneous-medium-flat-topography>`_ we simulate wave propagation through a 2-dimensional homogeneous medium.
+
+Setting up your workspace
+--------------------------
+
+Let's start by creating a workspace from where we can run this example.
+
+.. code-block:: bash
+
+    mkdir -p ~/specfempp-examples/homogeneous-medium-flat-topography
+    cd ~/specfempp-examples/homogeneous-medium-flat-topography
+
+We also need to check that the SPECFEM++ build directory is added to the ``PATH``.
+
+.. code:: bash
+
+    which specfem2d
+
+If the above command returns a path to the ``specfem2d`` executable, then the build directory is added to the ``PATH``. If not, you need to add the build directory to the ``PATH`` using the following command.
+
+.. code:: bash
+
+    export PATH=$PATH:<PATH TO SPECFEM++ BUILD DIRECTORY>
+
+.. note::
+
+    Make sure to replace ``<PATH TO SPECFEM++ BUILD DIRECTORY>`` with the actual path to the SPECFEM++ build directory on your system.
+
+Now let's create the necessary directories to store the input files and output artifacts.
+
+.. code:: bash
+
+    mkdir -p OUTPUT_FILES
+    mkdir -p OUTPUT_FILES/seismograms
+
+    touch specfem_config.yaml
+    touch single_source.yaml
+    touch topography_file.dat
+    touch Par_File
 
 Generating a mesh
 -----------------
@@ -34,7 +72,7 @@ Parameter File
     NPROC                           = 1              # number of processes
 
     # Output folder to store mesh related files
-    OUTPUT_FILES                   = <Location to store output artifacts>
+    OUTPUT_FILES                   = OUTPUT_FILES
 
 
     #-----------------------------------------------------------
@@ -50,7 +88,7 @@ Parameter File
     NGNOD                           = 9
 
     # location to store the mesh
-    database_filename               = <Output file to store the mesh generated>
+    database_filename               = OUTPUT_FILES/database.bin
 
     #-----------------------------------------------------------
     #
@@ -86,7 +124,7 @@ Parameter File
 
 
     # filename to store stations file
-    stations_filename              = <Location to stations file>
+    stations_filename              = OUTPUT_FILES/STATIONS
 
     #-----------------------------------------------------------
     #
@@ -144,12 +182,14 @@ Parameter File
     #-----------------------------------------------------------
 
     # file containing interfaces for internal mesh
-    interfacesfile                  = <Location to topography file>
+    interfacesfile                  = topography_file.dat
 
     # geometry of the model (origin lower-left corner = 0,0) and mesh description
     xmin                            = 0.d0           # abscissa of left side of the model
     xmax                            = 4000.d0        # abscissa of right side of the model
     nx                              = 80             # number of elements along X
+
+    STACEY_ABSORBING_CONDITIONS     = .false.
 
     # absorbing boundary parameters (see absorbing_conditions above)
     absorbbottom                    = .false.
@@ -187,6 +227,7 @@ At this point, it is worthwhile to note few key parameters within the ``PAR_FILE
 
     interfacesfile = topography_file.dat
 
+.. _homogeneous-medium-flat-topography-topography-file:
 
 Topography file
 ~~~~~~~~~~~~~~~~~
@@ -228,20 +269,20 @@ To execute the mesher run
 
 .. code:: bash
 
-    ./xmeshfem2D -p <PATH TO PAR_FILE>
+    xmeshfem2D -p Par_File
 
-.. note::
+Check the mesher generated files in the ``OUTPUT_FILES`` directory.
 
-    Make sure either your are in the build directory of SPECFEM++ or the build directory is added to your ``PATH``.
+.. code:: bash
 
-Note the path of the database file and :ref:`stations_file` generated after successfully running the mesher.
+    ls -ltr OUTPUT_FILES
 
 Defining sources
 ----------------
 
 Next we define the sources using a YAML file. For full description on parameters used to define sources refer :ref:`source_description`.
 
-.. code:: yaml
+.. code-block:: yaml
     :linenos:
     :caption: single_source.yaml
 
@@ -288,22 +329,24 @@ Now that we have generated a mesh and defined the sources, we need to set up the
         ## Solver setup
         solver:
           time-marching:
-            type-of-simulation: forward
             time-scheme:
               type: Newmark
               dt: 1.1e-3
               nstep: 1600
 
+        simulation-mode:
+          forward:
+            writer:
+              seismogram:
+                format: "ascii"
+                directory: OUTPUT_FILES/seismograms
+
       receivers:
-        stations-file: <PATH TO STATIONS FILE>
+        stations-file: OUTPUT_FILES/STATIONS
         angle: 0.0
         seismogram-type:
           - velocity
         nstep_between_samples: 1
-
-      seismogram:
-        seismogram-format: ascii
-        output-folder: <PATH TO DIRECTORY FOR STORING OUTPUTS>
 
       ## Runtime setup
       run-setup:
@@ -312,31 +355,49 @@ Now that we have generated a mesh and defined the sources, we need to set up the
 
       ## databases
       databases:
-        mesh-database: <PATH TO MESHFEM DATABASE FILE>
-        source-file: <PATH TO SOURCES YAML FILE>
+        mesh-database: OUTPUT_FILES/database.bin
+        source-file: single_source.yaml
 
 At this point lets focus on a few sections in this file:
 
+- Configure the solver using ``simulation-setup`` section.
+
+.. code-block:: yaml
+
+    simulation-setup:
+      ## quadrature setup
+      quadrature:
+        quadrature-type: GLL4
+      ## Solver setup
+      solver:
+        time-marching:
+          time-scheme:
+            type: Newmark
+            dt: 1.1e-3
+            nstep: 1600
+      simulation-mode:
+        forward:
+          writer:
+            seismogram:
+              format: "ascii"
+              directory: OUTPUT_FILES/seismograms
+
+* We first define the integration quadrature to be used in the simulation. At this moment, the code supports a 4th order Gauss-Lobatto-Legendre quadrature with 5 GLL points (``GLL4``) & a 7th order Gauss-Lobatto-Legendre quadrature with 8 GLL points (``GLL7``).
+* Define the solver scheme using the ``time-scheme`` parameter.
+* Define the simulation mode to be forward and the output format for synthetic seismograms seismograms.
+
 - Define the path to the meshfem generated database file using the ``mesh-database`` parameter and the path to source description file using ``source-file`` parameter. Relevant parameter values:
 
-.. code:: yaml
+.. code-block:: yaml
 
     ## databases
     databases:
-      mesh-database: <PATH TO MESHFEM DATABASE FILE>
-      source-file: <PATH TO SOURCES YAML FILE>
-
-- Define the path to :ref:`stations_file` and a directory to store output. If an output directory is not specified the seismogram outputs will be stored in the current working directory. Relevant parameter values:
-
-.. code:: yaml
-
-    seismogram:
-      stations-file: <PATH TO STATIONS FILE>
-      output-folder: <PATH TO DIRECTORY FOR STORING OUTPUTS>
+      mesh-database: OUTPUT_FILES/database.bin
+      source-file: single_source.yaml
 
 - It is good practice to have distinct header section for you simulation. These sections will be printed to standard output during runtime helping the you to distinguish between runs using standard strings. Relevant paramter values
 
-.. code:: yaml
+.. code-block:: yaml
 
     header:
       ## Header information is used for logging. It is good practice to give your simulations explicit names
@@ -355,7 +416,7 @@ Finally, to run the SPECFEM++ solver
 
 .. code:: bash
 
-    ./specfem2d -p <PATH TO specfem_config.yaml>
+    specfem2d -p specfem_config.yaml
 
 .. note::
 
@@ -387,11 +448,11 @@ Let us now plot the traces generated by the solver using ``obspy``. This version
 
         return stream
 
-    directory = ## PATH TO DIRECTORY WHERE SEISMOGRAMS ARE STORED
+    directory = OUTPUT_FILES/seismograms
     stream = get_traces(directory)
     stream.plot(size=(800, 1000))
 
-.. figure:: ../../examples/homogeneous-medium-flat-topography/traces.svg
+.. figure:: ../../examples/homogeneous-medium-flat-topography/traces.png
    :alt: Traces
    :width: 800
    :align: center

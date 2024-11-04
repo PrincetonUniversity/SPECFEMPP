@@ -2,6 +2,7 @@
 #define _RUNTIME_CONFIGURATION_RECEIVERS_HPP
 
 #include "constants.hpp"
+#include "enumerations/specfem_enums.hpp"
 #include "yaml-cpp/yaml.h"
 #include <string>
 

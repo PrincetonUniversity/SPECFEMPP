@@ -15,7 +15,11 @@ namespace sources {
  *
  * @tparam properties Properties of the source
  */
-template <class... properties> class source {};
+template <specfem::dimension::type DimensionType,
+          specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag,
+          typename quadrature_points_type, bool using_simd>
+class source;
 
 } // namespace sources
 } // namespace impl

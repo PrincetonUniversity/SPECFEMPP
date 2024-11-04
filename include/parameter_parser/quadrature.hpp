@@ -22,11 +22,10 @@ public:
    * specfem::quadrature::quadrature class
    * @param beta beta value used to instantiate a
    * specfem::quadrature::quadrature class
-   * @param ngllx number of quadrature points in x-dimension
-   * @param ngllz number of quadrature points in z-dimension
+   * @param ngllx number of quadrature points
    */
-  quadrature(type_real alpha, type_real beta, int ngllx, int ngllz)
-      : alpha(alpha), beta(beta), ngllx(ngllx), ngllz(ngllz){};
+  quadrature(type_real alpha, type_real beta, int ngll)
+      : alpha(alpha), beta(beta), ngll(ngll){};
   /**
    * @brief Construct a new quadrature object
    *
@@ -46,17 +45,14 @@ public:
    * @return std::tuple<specfem::quadrature::quadrature,
    * specfem::quadrature::quadrature> Quadrature objects in x and z dimensions
    */
-  std::tuple<specfem::quadrature::quadrature *,
-             specfem::quadrature::quadrature *>
-  instantiate();
+  specfem::quadrature::quadratures instantiate();
 
 private:
   type_real alpha; ///< alpha value used to instantiate a
                    ///< specfem::quadrature::quadrature class
   type_real beta;  ///< beta value used to instantiate a
                    ///< specfem::quadrature::quadrature class
-  int ngllx;       ///< number of quadrature points in x-dimension
-  int ngllz;       ///< number of quadrature points in z-dimension
+  int ngll;        ///< number of quadrature points
 };
 
 } // namespace runtime_configuration

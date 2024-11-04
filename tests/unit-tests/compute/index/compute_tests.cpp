@@ -1,8 +1,7 @@
 #include "../../Kokkos_Environment.hpp"
 #include "../../MPI_environment.hpp"
-#include "../../utilities/include/compare_array.h"
+#include "../../utilities/include/interface.hpp"
 #include "compute/interface.hpp"
-#include "material/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "quadrature/interface.hpp"
 #include "yaml-cpp/yaml.h"
@@ -11,6 +10,15 @@
 #include <memory>
 #include <string>
 #include <vector>
+
+using HostView1d = specfem::kokkos::HostView1d<int>;
+using HostView2d = specfem::kokkos::HostView2d<int>;
+using HostView3d = specfem::kokkos::HostView3d<int>;
+
+struct coordinates {
+  type_real x = -1.0;
+  type_real z = -1.0;
+};
 
 // ------------------------------------------------------------------------
 // Reading test config
@@ -62,27 +70,60 @@ TEST(COMPUTE_TESTS, compute_ibool) {
 
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
 
-  std::cout << "Hello -2" << std::endl;
   std::string config_filename =
       "../../../tests/unit-tests/compute/index/test_config.yml";
   test_config test_config = get_test_config(config_filename, mpi);
 
   // Set up GLL quadrature points
-  specfem::quadrature::quadrature *gllx =
-      new specfem::quadrature::gll::gll(0.0, 0.0, 5);
-  specfem::quadrature::quadrature *gllz =
-      new specfem::quadrature::gll::gll(0.0, 0.0, 5);
-  std::vector<std::shared_ptr<specfem::material::material> > materials;
+  specfem::quadrature::gll::gll gll(0.0, 0.0, 5);
 
-  specfem::mesh::mesh mesh(test_config.database_filename, materials, mpi);
+  specfem::quadrature::quadratures quadratures(gll);
 
-  specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
-                                    gllz);
+  // Read mesh generated MESHFEM
+  specfem::mesh::mesh mesh(test_config.database_filename, mpi);
 
-  specfem::kokkos::HostView3d<int> h_ibool = compute.h_ibool;
-  EXPECT_NO_THROW(specfem::testing::test_array(h_ibool, test_config.ibool_file,
-                                               mesh.nspec, gllz->get_N(),
-                                               gllx->get_N()));
+  // Setup compute structs
+  specfem::compute::mesh assembly(mesh.tags, mesh.control_nodes,
+                                  quadratures); // mesh assembly
+
+  const auto h_index_mapping = assembly.points.h_index_mapping;
+  const auto h_coord = assembly.points.h_coord;
+
+  const int nspec = assembly.points.nspec;
+  const int ngllz = assembly.points.ngllz;
+  const int ngllx = assembly.points.ngllx;
+
+  type_real nglob;
+  Kokkos::parallel_reduce(
+      "specfem::utils::compute_nglob",
+      specfem::kokkos::HostMDrange<3>({ 0, 0, 0 }, { nspec, ngllz, ngllx }),
+      [=](const int ispec, const int iz, const int ix, type_real &l_nglob) {
+        l_nglob = l_nglob > h_index_mapping(ispec, iz, ix)
+                      ? l_nglob
+                      : h_index_mapping(ispec, iz, ix);
+      },
+      Kokkos::Max<type_real>(nglob));
+
+  nglob++;
+
+  std::vector<coordinates> coord(nglob);
+
+  for (int ix = 0; ix < ngllx; ++ix) {
+    for (int iz = 0; iz < ngllz; ++iz) {
+      for (int ispec = 0; ispec < nspec; ++ispec) {
+        int index = h_index_mapping(ispec, iz, ix);
+        if (coord[index].x == -1.0 && coord[index].z == -1.0) {
+          coord[index].x = h_coord(0, ispec, iz, ix);
+          coord[index].z = h_coord(1, ispec, iz, ix);
+        } else {
+          EXPECT_NEAR(coord[index].x, h_coord(0, ispec, iz, ix), 1.0e-6);
+          EXPECT_NEAR(coord[index].z, h_coord(1, ispec, iz, ix), 1.0e-6);
+        }
+      }
+    }
+  }
+
+  return;
 }
 
 int main(int argc, char *argv[]) {

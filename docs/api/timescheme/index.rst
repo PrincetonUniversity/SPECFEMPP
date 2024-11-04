@@ -1,13 +1,13 @@
 
+.. _timescheme:
+
 Time Scheme API
 ================
 
 The ``TimeScheme`` class provides methods to compute the time evolution of a wavefield.
 
-.. doxygenclass:: specfem::TimeScheme::TimeScheme
+.. doxygenclass:: specfem::time_scheme::time_scheme
    :members:
-   :undoc-members:
-   :private-members:
 
 Types of Time Schemes
 ---------------------

@@ -1,11 +1,11 @@
-#ifndef _MATERIAL_HPP
-#define _MATERIAL_HPP
+#pragma once
 
-#include "constants.hpp"
+#include "acoustic_properties.hpp"
+#include "elastic_properties.hpp"
 #include "enumerations/specfem_enums.hpp"
-#include "specfem_mpi/interface.hpp"
+#include "point/properties.hpp"
+#include "properties.hpp"
 #include "specfem_setup.hpp"
-#include "utilities/interface.hpp"
 #include <ostream>
 #include <tuple>
 
@@ -13,45 +13,52 @@ namespace specfem {
 namespace material {
 
 /**
- * @brief Base material class
+ * @brief Material properties for a given medium and property
  *
+ * @tparam MediumTag Medium tag for the material
+ * @tparam PropertyTag Property tag for the material
  */
-class material {
+template <specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag>
+class material : public specfem::material::properties<MediumTag, PropertyTag> {
 public:
+  constexpr static auto medium_tag = MediumTag;     ///< Medium tag
+  constexpr static auto property_tag = PropertyTag; ///< Property tag
+
+  /**
+   * @name Constructors
+   */
+  ///@{
+
   /**
    * @brief Construct a new material object
    *
    */
-  material(){};
-  /**
-   * @brief Get the properties of the material
-   *
-   * @return utilities::return_holder Struct containing the properties of the
-   * material
-   */
-  virtual utilities::return_holder get_properties() const {
-    utilities::return_holder holder{};
-    return holder;
-  };
-  /**
-   * @brief Get the type of the material
-   *
-   * @return specfem::enums::element::type The type of the material
-   */
-  virtual specfem::enums::element::type get_ispec_type() const {
-    throw std::runtime_error("Material is not assigned properly");
-    return specfem::enums::element::type::elastic;
-  };
+  material() = default;
 
   /**
-   * @brief Print material information to the console
+   * @brief Construct a new material object
    *
-   * @return std::string String containing the material information
+   * @tparam Args Arguments to forward to the properties constructor
+   * @param args Properties of the material (density, wave speeds, etc.)
    */
-  virtual std::string print() const { return ""; }
+  template <typename... Args>
+  material(Args &&...args)
+      : specfem::material::properties<MediumTag, PropertyTag>(
+            std::forward<Args>(args)...) {}
+  ///@}
+
+  ~material() = default;
+
+  /**
+   * @brief Get the medium tag of the material
+   *
+   * @return constexpr specfem::element::medium_tag Medium tag
+   */
+  constexpr specfem::element::medium_tag get_type() const {
+    return medium_tag;
+  };
 };
 
 } // namespace material
 } // namespace specfem
-
-#endif
