@@ -216,7 +216,7 @@ With the above input files, we can run the mesher to generate the mesh database.
 
 .. code:: bash
 
-    xmeshfem2D -p Par_file
+    xmeshfem2D -p Par_File
 
 Running the forward simulation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -321,7 +321,7 @@ With the above input files, we can run the forward simulation.
 Generating adjoint sources
 --------------------------
 
-The next step is to generate the adjoint sources. We can generate the adjoint sources using ``./xadj_seismogram`` utility which models Eq. 45 of `Tromp et al. 2005 <https://doi.org/10.1111/j.1365-246X.2004.02453.x>`_. The utility requires synthetic seismograms and does not depend on the observed data.
+The next step is to generate the adjoint sources. In this example, we are computing sensitivity kernels for travel-time measurements. The adjoint source required for this kernel is defined by Eq. 45 of `Tromp et al. 2005 <https://doi.org/10.1111/j.1365-246X.2004.02453.x>`_, and relies only the synthetic velocity seismogram. Here we use the utility ``xadj_seismogram``, which computes this adjoint source from the displacement synthetics computed during forward run i.e. by numerically differentiating the displacements.
 
 .. code:: bash
 
