@@ -50,8 +50,15 @@ FetchContent_MakeAvailable(yaml)
 include_directories(BEFORE SYSTEM ${yaml_BINARY_DIR} ${yaml_SOURCE_DIR}/include)
 
 find_package(VTK COMPONENTS
-  CommonColor
-  CommonCore
+CommonColor
+CommonCore
+FiltersSources
+InteractionStyle
+RenderingContextOpenGL2
+RenderingCore
+RenderingFreeType
+RenderingGL2PSOpenGL2
+RenderingOpenGL2
 )
 
 if (NOT VTK_FOUND)
