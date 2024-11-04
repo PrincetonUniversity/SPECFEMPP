@@ -263,7 +263,6 @@ We define the source location and the source time function in the source file.
 
 .. code-block:: yaml
     :caption: single_source.yaml
-    :linenos:
 
     number-of-sources: 1
     sources:
@@ -285,7 +284,6 @@ Running the simulation
 To run the solver, we first need to define a configuration file ``specfem_config.yaml``.
 
 .. code-block:: yaml
-    :linenos:
     :caption: specfem_config.yaml
 
     parameters:
