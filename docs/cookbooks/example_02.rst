@@ -51,6 +51,7 @@ Parameter file
 ~~~~~~~~~~~~~
 
 .. code-block:: bash
+    :caption: Par_File
 
     #-----------------------------------------------------------
     #
@@ -199,6 +200,7 @@ Defining the topography of the domain
 We define the topography of the domain using the following topography file
 
 .. code-block:: bash
+    :caption: topography_file.dat
 
     #
     # number of interfaces
@@ -260,6 +262,7 @@ Defining the source
 We define the source location and the source time function in the source file.
 
 .. code-block:: yaml
+    :caption: single_source.yaml
     :linenos:
 
     number-of-sources: 1

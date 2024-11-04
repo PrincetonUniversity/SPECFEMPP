@@ -127,11 +127,11 @@ SPECFEM++ inherits several architecure specific cmake configuration keywords fro
 Adding SPECFEM to PATH
 ----------------------
 
-Finally, once compiled you could run SPECFEM++ from inside the build directory, by running the executible ``./specfem``. However, we recommend you add SPECFEM++ build directory to your ``PATH`` using
+Finally, once compiled you could run SPECFEM++ from inside the build directory, by running the executible ``./specfem2d``. However, we recommend you add SPECFEM++ build directory to your ``PATH`` using
 
 .. code-block:: bash
 
-    export $PATH=$(pwd)/build:$PATH
+    export PATH=$(pwd)/build:$PATH
 
 Running the solver
 ------------------
@@ -145,7 +145,7 @@ Lets run a simple example to test the installation. We will use the ``example\ho
 .. code-block:: bash
 
   cd examples/homogeneous-medium-flat-topography
-  xmeshfem2D -p Par_file
+  xmeshfem2D -p Par_File
 
 This will generate the mesh files. Next, we will run the solver using
 

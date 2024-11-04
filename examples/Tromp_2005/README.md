@@ -1,6 +1,6 @@
 # Wave propagation through homogeneous medium with no interfaces
 
-This example reproduces the results from Fig 9 of [Tromp et al. 2005](https://doi.org/10.1111/j.1365-246X.2004.02453.x).
+This example reproduces the results from Fig 9 of [Tromp et al. 2005](https://doi.org/10.1111/j.1365-246X.2004.02453.x). For a step-by-step guide on this example, please refer to the [documentation](https://specfem2d-kokkos.readthedocs.io/en/latest/cookbooks/example_03.html).
 
 ## Running the examples
 
