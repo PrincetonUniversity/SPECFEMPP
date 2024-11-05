@@ -460,7 +460,8 @@ program adj_seismogram
 
    ! user output
    print *,'*************************'
-   print *,'The input files (AA.S****.BXX/BXY/BXZ.adj) needed to run the adjoint simulation are in folder SEM/'
+   print *, 'The input files (AA.S****.BXX/BXY/BXZ.adj) needed to run the adjoint simulation are in folder ',&
+             trim(adjoint_sources_folder)
    print *,'*************************'
 
 end program adj_seismogram
