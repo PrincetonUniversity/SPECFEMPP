@@ -29,10 +29,10 @@ public:
    * acceleration)
    */
   plot_wavefield(const std::string output_format,
-                 const std::string output_folder,
+                 const std::string output_folder, const std::string component,
                  const std::string wavefield_type)
       : output_format(output_format), output_folder(output_folder),
-        wavefield_type(wavefield_type) {}
+        component(component), wavefield_type(wavefield_type) {}
 
   /**
    * @brief Construct a new plotter configuration object from YAML node
@@ -55,6 +55,7 @@ public:
 private:
   std::string output_format;  ///< format of output file
   std::string output_folder;  ///< Path to output folder
+  std::string component;      ///< Component of the wavefield to plot
   std::string wavefield_type; ///< Type of wavefield to plot
 };
 } // namespace runtime_configuration
