@@ -51,6 +51,7 @@ Parameter file
 ~~~~~~~~~~~~~
 
 .. code-block:: bash
+    :caption: Par_File
 
     #-----------------------------------------------------------
     #
@@ -199,6 +200,7 @@ Defining the topography of the domain
 We define the topography of the domain using the following topography file
 
 .. code-block:: bash
+    :caption: topography_file.dat
 
     #
     # number of interfaces
@@ -260,7 +262,7 @@ Defining the source
 We define the source location and the source time function in the source file.
 
 .. code-block:: yaml
-    :linenos:
+    :caption: single_source.yaml
 
     number-of-sources: 1
     sources:
@@ -282,7 +284,6 @@ Running the simulation
 To run the solver, we first need to define a configuration file ``specfem_config.yaml``.
 
 .. code-block:: yaml
-    :linenos:
     :caption: specfem_config.yaml
 
     parameters:
