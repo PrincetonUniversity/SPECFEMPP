@@ -117,7 +117,7 @@ SPECFEM++ inherits several architecure specific cmake configuration keywords fro
 .. code-block:: bash
 
     # cd into SPECFEM root directory
-    cmake3 -S . -B build -D CMAKE_BUILD_TYPE=Release -D BUILD_TESTS=ON -D Kokkos_ENABLE_CUDA=ON -D Kokkos_ARCH_<architecture>=ON -D BUILD_EXAMPLES=ON
+    cmake3 -S . -B build -D CMAKE_BUILD_TYPE=Release -D BUILD_TESTS=ON -D Kokkos_ENABLE_CUDA=ON -D Kokkos_ARCH_<architecture>=ON
     cmake --build build
 
 .. note::
