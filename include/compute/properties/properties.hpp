@@ -16,6 +16,17 @@
 namespace specfem {
 namespace compute {
 
+namespace impl {
+class elements_of_type {
+  bool computed;
+  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>
+      elements;
+  Kokkos::View<int *, Kokkos::LayoutLeft,
+               Kokkos::DefaultExecutionSpace>::HostMirror h_elements;
+  elements_of_type() : computed(false) {}
+};
+} // namespace impl
+
 /**
  * @brief Material properties at every quadrature point in the finite element
  * mesh
@@ -84,6 +95,59 @@ public:
              const specfem::mesh::materials &materials);
 
   ///@}
+
+  /**
+   * @brief Get the indices of elements of a given type as a view on the device
+   *
+   * @param medium Medium tag of the elements
+   * @return Kokkos::View<int *, Kokkos::LayoutLeft,
+   * Kokkos::DefaultExecutionSpace> View of the indices of elements of the given
+   * type
+   */
+  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>
+  get_elements_on_device(const specfem::element::medium_tag medium) const;
+
+  /**
+   * @brief Get the indices of elements of a given type as a view on the device
+   *
+   * @param medium Medium tag of the elements
+   * @param property Property tag of the elements
+   * @return Kokkos::View<int *, Kokkos::LayoutLeft,
+   * Kokkos::DefaultExecutionSpace> View of the indices of elements of the given
+   * type
+   */
+  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>
+  get_elements_on_device(const specfem::element::medium_tag medium,
+                         const specfem::element::property_tag property) const;
+
+  /**
+   * @brief Get the indices of elements of a given type as a view on the host
+   *
+   * @param medium Medium tag of the elements
+   * @return Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace> View of
+   * the indices of elements of the given type
+   */
+  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace>
+  get_elements_on_host(const specfem::element::medium_tag medium) const;
+
+  /**
+   * @brief Get the indices of elements of a given type as a view on the host
+   *
+   * @param medium Medium tag of the elements
+   * @param property Property tag of the elements
+   * @return Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace> View of
+   * the indices of elements of the given type
+   */
+  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace>
+  get_elements_on_host(const specfem::element::medium_tag medium,
+                       const specfem::element::property_tag property) const;
+
+private:
+  // Stores the indices of elements of a given type
+  impl::elements_of_type elastic_isotropic_elements;
+  impl::elements_of_type acoustic_isotropic_elements;
+  impl::elements_of_type elastic_elements;
+  impl::elements_of_type acoustic_elements;
 };
 
 /**
