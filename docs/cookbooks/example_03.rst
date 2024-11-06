@@ -231,14 +231,14 @@ Now that we have the mesh database, we can run the forward simulation. Lets set 
         header:
             title: "Tromp-Tape-Liu (GJI 2005)"
             description: |
-            Material systems : Elastic domain (1)
-            Interfaces : None
-            Sources : Force source (1)
-            Boundary conditions : Free surface (1)
-            Mesh : 2D Cartesian grid (1)
-            Receiver : Displacement seismogram (1)
-            Output : Wavefield at the last time step (1)
-            Output : Seismograms in ASCII format (1)
+                Material systems : Elastic domain (1)
+                Interfaces : None
+                Sources : Force source (1)
+                Boundary conditions : Free surface (1)
+                Mesh : 2D Cartesian grid (1)
+                Receiver : Displacement seismogram (1)
+                Output : Wavefield at the last time step (1)
+                Output : Seismograms in ASCII format (1)
 
         simulation-setup:
             quadrature:
