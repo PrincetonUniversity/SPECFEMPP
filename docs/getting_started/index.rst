@@ -87,6 +87,7 @@ Get the latest version of the package:
 .. code-block:: bash
 
     git clone git@github.com:PrincetonUniversity/SPECFEMPP.git
+    cd SPECFEMPP
     git submodule init
     git submodule update
 
@@ -116,7 +117,7 @@ SPECFEM++ inherits several architecure specific cmake configuration keywords fro
 .. code-block:: bash
 
     # cd into SPECFEM root directory
-    cmake3 -S . -B build_gpu -D CMAKE_BUILD_TYPE=Release -D BUILD_TESTS=ON -D Kokkos_ENABLE_CUDA=ON -D Kokkos_ARCH_<architecture>=ON -D BUILD_EXAMPLES=ON -D CMAKE_VERBOSE_MAKEFILE=ON
+    cmake3 -S . -B build -D CMAKE_BUILD_TYPE=Release -D BUILD_TESTS=ON -D Kokkos_ENABLE_CUDA=ON -D Kokkos_ARCH_<architecture>=ON
     cmake --build build
 
 .. note::
@@ -126,11 +127,11 @@ SPECFEM++ inherits several architecure specific cmake configuration keywords fro
 Adding SPECFEM to PATH
 ----------------------
 
-Finally, once compiled you could run SPECFEM++ from inside the build directory, by running the executible ``./specfem``. However, we recommend you add SPECFEM++ build directory to your ``PATH`` using
+Finally, once compiled you could run SPECFEM++ from inside the build directory, by running the executible ``./specfem2d``. However, we recommend you add SPECFEM++ build directory to your ``PATH`` using
 
 .. code-block:: bash
 
-    export PATH=${PATH}:<location to build directory>
+    export PATH=$(pwd)/build:$PATH
 
 Running the solver
 ------------------
@@ -144,12 +145,14 @@ Lets run a simple example to test the installation. We will use the ``example\ho
 .. code-block:: bash
 
   cd examples/homogeneous-medium-flat-topography
-  ./xmeshfem2D -p Par_file
+  mkdir -p OUTPUT_FILES
+  xmeshfem2D -p Par_File
 
 This will generate the mesh files. Next, we will run the solver using
 
 .. code-block:: bash
 
-  ./specfem2d -p specfem_config.yaml
+  mkdir -p OUTPUT_FILES/results
+  specfem2d -p specfem_config.yaml
 
 This will run the solver and generate synthetic seismograms at the receiver locations specified in ``STATIONS`` file.

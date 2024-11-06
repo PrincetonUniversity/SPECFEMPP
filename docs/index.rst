@@ -140,19 +140,19 @@ Table below shows various features available and tested in this package on vario
       -
       -
 
-    * - displacement
+    * - Displacement
       - ✔
       - ✔
       - ✔
       -
 
-    * - velocity
+    * - Velocity
       - ✔
       - ✔
       - ✔
       -
 
-    * - acceleration
+    * - Acceleration
       - ✔
       - ✔
       - ✔

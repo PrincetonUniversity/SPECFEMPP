@@ -597,10 +597,8 @@ if (BUILD_TESTS)
         add_subdirectory(tests/unit-tests)
 endif()
 
-if (BUILD_EXAMPLES)
-        message("-- Including examples.")
-        add_subdirectory(examples)
-endif()
+message("-- Including examples.")
+add_subdirectory(examples)
 
 # Doxygen
 
