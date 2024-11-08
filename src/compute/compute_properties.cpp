@@ -97,12 +97,13 @@ specfem::compute::properties::properties(
 
 Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace>
 specfem::compute::properties::get_elements_on_host(
-    const specfem::element::medium_tag medium) const {
-  const auto &elements = [&]() -> impl::elements_of_type & {
+    const specfem::element::medium_tag medium) {
+
+  auto &elements = [&]() -> impl::elements_of_type & {
     if (medium == specfem::element::medium_tag::elastic) {
-      return elastic_elements;
+      return this->elastic_elements;
     } else if (medium == specfem::element::medium_tag::acoustic) {
-      return acoustic_elements;
+      return this->acoustic_elements;
     } else {
       throw std::runtime_error("Unknown medium tag");
     }
@@ -142,12 +143,13 @@ specfem::compute::properties::get_elements_on_host(
 }
 
 Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>
-get_elements_on_device(const specfem::element::medium_tag medium) const {
-  const auto &elements = [&]() {
+specfem::compute::properties::get_elements_on_device(
+    const specfem::element::medium_tag medium) {
+  auto &elements = [&]() -> impl::elements_of_type & {
     if (medium == specfem::element::medium_tag::elastic) {
-      return elastic_elements;
+      return this->elastic_elements;
     } else if (medium == specfem::element::medium_tag::acoustic) {
-      return acoustic_elements;
+      return this->acoustic_elements;
     } else {
       throw std::runtime_error("Unknown medium tag");
     }
@@ -168,8 +170,8 @@ get_elements_on_device(const specfem::element::medium_tag medium) const {
 Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace>
 specfem::compute::properties::get_elements_on_host(
     const specfem::element::medium_tag medium,
-    const specfem::element::property_tag property) const {
-  const auto &elements = [&]() -> impl::elements_of_type & {
+    const specfem::element::property_tag property) {
+  auto &elements = [&]() -> impl::elements_of_type & {
     if (medium == specfem::element::medium_tag::elastic) {
       if (property == specfem::element::property_tag::isotropic) {
         return elastic_isotropic_elements;
@@ -221,9 +223,10 @@ specfem::compute::properties::get_elements_on_host(
 }
 
 Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>
-get_elements_on_device(const specfem::element::medium_tag medium,
-                       const specfem::element::property_tag property) const {
-  const auto &elements = [&]() {
+specfem::compute::properties::get_elements_on_device(
+    const specfem::element::medium_tag medium,
+    const specfem::element::property_tag property) {
+  auto &elements = [&]() -> impl::elements_of_type & {
     if (medium == specfem::element::medium_tag::elastic) {
       if (property == specfem::element::property_tag::isotropic) {
         return elastic_isotropic_elements;

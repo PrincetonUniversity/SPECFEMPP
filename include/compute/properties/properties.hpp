@@ -18,6 +18,7 @@ namespace compute {
 
 namespace impl {
 class elements_of_type {
+public:
   bool computed;
   Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>
       elements;
@@ -105,7 +106,7 @@ public:
    * type
    */
   Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>
-  get_elements_on_device(const specfem::element::medium_tag medium) const;
+  get_elements_on_device(const specfem::element::medium_tag medium);
 
   /**
    * @brief Get the indices of elements of a given type as a view on the device
@@ -118,7 +119,7 @@ public:
    */
   Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>
   get_elements_on_device(const specfem::element::medium_tag medium,
-                         const specfem::element::property_tag property) const;
+                         const specfem::element::property_tag property);
 
   /**
    * @brief Get the indices of elements of a given type as a view on the host
@@ -128,7 +129,7 @@ public:
    * the indices of elements of the given type
    */
   Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace>
-  get_elements_on_host(const specfem::element::medium_tag medium) const;
+  get_elements_on_host(const specfem::element::medium_tag medium);
 
   /**
    * @brief Get the indices of elements of a given type as a view on the host
@@ -140,7 +141,7 @@ public:
    */
   Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace>
   get_elements_on_host(const specfem::element::medium_tag medium,
-                       const specfem::element::property_tag property) const;
+                       const specfem::element::property_tag property);
 
 private:
   // Stores the indices of elements of a given type

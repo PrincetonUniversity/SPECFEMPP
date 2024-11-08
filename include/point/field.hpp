@@ -207,16 +207,17 @@ template <specfem::dimension::type DimensionType,
           bool StoreVelocity, bool StoreAcceleration, bool StoreMassMatrix,
           bool UseSIMD>
 struct FieldTraits
-    : public ImplFieldTraits<
-          specfem::datatype::ScalarPointViewType<
-              type_real,
-              specfem::medium::medium<DimensionType, MediumTag>::components,
-              UseSIMD>,
-          StoreDisplacement, StoreVelocity, StoreAcceleration,
-          StoreMassMatrix> {
+    : public ImplFieldTraits<specfem::datatype::ScalarPointViewType<
+                                 type_real,
+                                 specfem::element::attributes<
+                                     DimensionType, MediumTag>::components(),
+                                 UseSIMD>,
+                             StoreDisplacement, StoreVelocity,
+                             StoreAcceleration, StoreMassMatrix> {
 
   using ViewType = specfem::datatype::ScalarPointViewType<
-      type_real, specfem::medium::medium<DimensionType, MediumTag>::components,
+      type_real,
+      specfem::element::attributes<DimensionType, MediumTag>::components(),
       UseSIMD>;
 
 public:

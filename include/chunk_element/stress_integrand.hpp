@@ -44,15 +44,17 @@ public:
       NumberElements; ///< Number of elements in the chunk.
   constexpr static auto dimension =
       DimensionType; ///< Dimension type for elements.
-  constexpr static int components =
-      specfem::medium::medium<DimensionType,
-                              MediumTag>::components; ///< Number of components.
-                                                      ///@}
+  ///@}
 
 private:
   constexpr static int num_dimensions =
-      specfem::dimension::dimension<DimensionType>::dim; ///< Number of
-                                                         ///< dimensions.
+      specfem::element::attributes<DimensionType,
+                                   MediumTag>::dimension(); ///< Number of
+  ///< dimensions.
+  constexpr static int components =
+      specfem::element::attributes<DimensionType,
+                                   MediumTag>::components(); ///< Number of
+                                                             ///< components.
 
 public:
   /**
