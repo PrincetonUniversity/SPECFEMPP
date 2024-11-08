@@ -47,9 +47,9 @@ public:
       specfem::point::boundary<BoundaryTag, DimensionType, using_simd>;
 
   constexpr static int num_dimensions =
-      specfem::dimension::dimension<dimension>::dim;
+      specfem::element::attributes<DimensionType, MediumTag>::dimension();
   constexpr static int components =
-      specfem::medium::medium<dimension, medium_tag>::components;
+      specfem::element::attributes<DimensionType, MediumTag>::components();
 
   using ChunkElementFieldType = specfem::chunk_element::field<
       ParallelConfig::chunk_size, ngll, DimensionType, MediumTag,

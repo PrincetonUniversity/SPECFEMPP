@@ -22,13 +22,6 @@ namespace compute {
  */
 template <specfem::wavefield::type WavefieldType> struct simulation_field {
 private:
-  using elastic_type =
-      specfem::medium::medium<specfem::dimension::type::dim2,
-                              specfem::element::medium_tag::elastic>;
-
-  using acoustic_type =
-      specfem::medium::medium<specfem::dimension::type::dim2,
-                              specfem::element::medium_tag::acoustic>;
   using ViewType =
       Kokkos::View<int ***, Kokkos::LayoutLeft,
                    Kokkos::DefaultExecutionSpace>; ///< Underlying view type to

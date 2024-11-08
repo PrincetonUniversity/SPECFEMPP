@@ -9,6 +9,7 @@
 #include "enumerations/medium.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "kernel.hpp"
+#include "medium/medium.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -215,10 +216,10 @@ void specfem::domain::impl::kernels::element_kernel_base<
 
                 PointFieldDerivativesType field_derivatives(du);
 
-                const auto point_stress_integrand =
-                    specfem::domain::impl::elements::compute_stress_integrands(
-                        point_partial_derivatives, point_property,
-                        field_derivatives);
+                const auto point_stress = specfem::medium::compute_stress(
+                    point_property, field_derivatives);
+
+                const auto F = point_stress * point_partial_derivatives;
 
                 const int &ielement = iterator_index.ielement;
 
@@ -226,8 +227,7 @@ void specfem::domain::impl::kernels::element_kernel_base<
                      ++icomponent) {
                   for (int idim = 0; idim < num_dimensions; ++idim) {
                     stress_integrand.F(ielement, index.iz, index.ix, idim,
-                                       icomponent) =
-                        point_stress_integrand.F(idim, icomponent);
+                                       icomponent) = F(idim, icomponent);
                   }
                 }
               });
@@ -237,7 +237,8 @@ void specfem::domain::impl::kernels::element_kernel_base<
           specfem::algorithms::divergence(
               team, iterator, partial_derivatives, wgll,
               element_quadrature.hprime_wgll, stress_integrand.F,
-              [&, istep = istep](const typename ChunkPolicyType::iterator_type::index_type
+              [&, istep = istep](
+                  const typename ChunkPolicyType::iterator_type::index_type
                       &iterator_index,
                   const typename PointAccelerationType::ViewType &result) {
                 const auto &index = iterator_index.index;

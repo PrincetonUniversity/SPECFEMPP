@@ -1,5 +1,7 @@
 #pragma once
 
+#include "dimension.hpp"
+
 namespace specfem {
 namespace wavefield {
 /**

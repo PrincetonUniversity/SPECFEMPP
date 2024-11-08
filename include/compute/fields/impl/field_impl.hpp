@@ -13,9 +13,8 @@ template <specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag>
 class field_impl {
 public:
-  using medium_type = specfem::medium::medium<DimensionType, MediumTag>;
-
-  constexpr static int components = medium_type::components;
+  constexpr static int components =
+      specfem::element::attributes<DimensionType, MediumTag>::components();
 
   field_impl() = default;
 

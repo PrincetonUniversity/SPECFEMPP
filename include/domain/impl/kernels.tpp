@@ -33,7 +33,7 @@ void allocate_elements(
 
   using dimension = specfem::dimension::dimension<ElementType::dimension>;
   using medium_type =
-      specfem::medium::medium<ElementType::dimension, medium_tag, property_tag>;
+      specfem::element::attributes<ElementType::dimension, medium_tag>;
 
   const int nspec = assembly.mesh.nspec;
 
@@ -79,7 +79,8 @@ void allocate_elements(
     std::cout << "  - Element type: \n"
               << "    - dimension           : " << dimension::to_string()
               << "\n"
-              << "    - Element type        : " << medium_type::to_string()
+              << "    - Element type        : " << specfem::element::to_string(
+                                                     medium_tag, property_tag)
               << "\n"
               << "    - Boundary Conditions : "
               << specfem::domain::impl::boundary_conditions::print_boundary_tag<
@@ -196,8 +197,6 @@ specfem::domain::impl::kernels::
         const type_real dt, const specfem::compute::assembly &assembly,
         const qp_type &quadrature_points) {
 
-  using medium_type = specfem::medium::medium<DimensionType, medium>;
-
   const int nspec = assembly.mesh.nspec;
   specfem::kokkos::HostView1d<element_tag> element_tags(
       "specfem::domain::domain::element_tag", nspec);
@@ -214,7 +213,7 @@ specfem::domain::impl::kernels::
                 WavefieldType == specfem::wavefield::type::adjoint) {
     std::cout << " Element Statistics \n"
               << "------------------------------\n"
-              << "- Types of elements in " << medium_type::to_string()
+              << "- Types of elements in " << specfem::element::to_string(medium)
               << " medium :\n\n";
   }
 

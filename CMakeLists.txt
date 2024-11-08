@@ -163,6 +163,11 @@ target_link_libraries(
 )
 
 add_library(
+        enumerations
+        src/enumerations/medium.cpp
+)
+
+add_library(
         edge
         src/edge/interface.cpp
 )
@@ -340,7 +345,7 @@ add_library(
         src/compute/boundaries/boundaries.cpp
         src/compute/fields/fields.cpp
         src/compute/compute_boundary_values.cpp
-        src/compute/compute_assembly.cpp
+        src/compute/assembly/assembly.cpp
 )
 
 target_link_libraries(
@@ -380,6 +385,7 @@ add_library(
 target_link_libraries(
         domain
         Kokkos::kokkos
+        enumerations
 )
 
 add_library(coupled_interface
