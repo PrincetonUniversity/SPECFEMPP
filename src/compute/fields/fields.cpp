@@ -58,7 +58,7 @@ specfem::compute::fields::fields(const specfem::compute::mesh &mesh,
       buffer([&]() -> specfem::compute::simulation_field<
                        specfem::wavefield::type::buffer> {
         if (simulation == specfem::simulation::type::forward) {
-          return {};
+          return { mesh, properties };
         } else if (simulation == specfem::simulation::type::combined) {
           return { mesh, properties };
         } else {

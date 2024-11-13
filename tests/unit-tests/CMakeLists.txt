@@ -182,8 +182,10 @@ target_link_libraries(
 
 add_executable(
   assembly_tests
+  assembly/test_fixture/test_fixture.cpp
   assembly/runner.cpp
-  assembly/kernels.cpp
+  assembly/kernels/kernels.cpp
+  assembly/compute_wavefield/compute_wavefield.cpp
 )
 
 target_link_libraries(
