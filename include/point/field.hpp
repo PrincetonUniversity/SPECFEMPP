@@ -159,6 +159,42 @@ private:
                   "Acceleration and mass matrix are not stored");
   }
 
+  KOKKOS_FUNCTION typename ViewType::value_type &
+  operator()(const int i, std::true_type, std::false_type, std::false_type,
+             std::false_type) {
+    return this->displacement(i);
+  }
+
+  KOKKOS_FUNCTION typename ViewType::value_type &
+  operator()(const int i, std::false_type, std::true_type, std::false_type,
+             std::false_type) {
+    return this->velocity(i);
+  }
+
+  KOKKOS_FUNCTION typename ViewType::value_type &
+  operator()(const int i, std::false_type, std::false_type, std::true_type,
+             std::false_type) {
+    return this->acceleration(i);
+  }
+
+  KOKKOS_FUNCTION const typename ViewType::value_type &
+  operator()(const int i, std::true_type, std::false_type, std::false_type,
+             std::false_type) const {
+    return this->displacement(i);
+  }
+
+  KOKKOS_FUNCTION const typename ViewType::value_type &
+  operator()(const int i, std::false_type, std::true_type, std::false_type,
+             std::false_type) const {
+    return this->velocity(i);
+  }
+
+  KOKKOS_FUNCTION const typename ViewType::value_type &
+  operator()(const int i, std::false_type, std::false_type, std::true_type,
+             std::false_type) const {
+    return this->acceleration(i);
+  }
+
 public:
   KOKKOS_FUNCTION
   ImplFieldTraits() = default;
@@ -186,6 +222,21 @@ public:
                         std::integral_constant<bool, StoreVelocity>{},
                         std::integral_constant<bool, StoreAcceleration>{},
                         std::integral_constant<bool, StoreMassMatrix>{}) {}
+
+  KOKKOS_FUNCTION typename ViewType::value_type &operator()(const int i) {
+    return operator()(i, std::integral_constant<bool, StoreDisplacement>{},
+                      std::integral_constant<bool, StoreVelocity>{},
+                      std::integral_constant<bool, StoreAcceleration>{},
+                      std::integral_constant<bool, StoreMassMatrix>{});
+  }
+
+  KOKKOS_FUNCTION const typename ViewType::value_type &
+  operator()(const int i) const {
+    return operator()(i, std::integral_constant<bool, StoreDisplacement>{},
+                      std::integral_constant<bool, StoreVelocity>{},
+                      std::integral_constant<bool, StoreAcceleration>{},
+                      std::integral_constant<bool, StoreMassMatrix>{});
+  }
 
   /**
    * @brief Divide acceleration by mass matrix

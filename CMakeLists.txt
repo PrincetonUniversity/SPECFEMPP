@@ -346,6 +346,7 @@ add_library(
         src/compute/fields/fields.cpp
         src/compute/compute_boundary_values.cpp
         src/compute/assembly/assembly.cpp
+        src/compute/assembly/compute_wavefield.cpp
 )
 
 target_link_libraries(
