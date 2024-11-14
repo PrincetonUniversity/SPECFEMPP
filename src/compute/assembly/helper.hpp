@@ -12,6 +12,7 @@
 #include "point/field_derivatives.hpp"
 #include "point/properties.hpp"
 #include "policies/chunk.hpp"
+#include <Kokkos_Core.hpp>
 
 namespace impl {
 template <specfem::element::medium_tag MediumTag,
@@ -69,7 +70,7 @@ public:
   constexpr static auto component = Component;
   constexpr static auto ngll = NGLL;
   using field_parameters = field_type_parameters<medium_tag, component>;
-  helper(specfem::compute::assembly &assembly,
+  helper(specfem::compute::assembly assembly,
          Kokkos::View<type_real ****, Kokkos::LayoutLeft,
                       Kokkos::DefaultExecutionSpace>
              wavefield_on_entire_grid)
@@ -90,6 +91,12 @@ public:
     const auto elements =
         assembly.properties.get_elements_on_device(medium_tag, property_tag);
 
+    const int nelements = elements.extent(0);
+
+    if (nelements == 0) {
+      return;
+    }
+
     using PointFieldType =
         specfem::point::field<specfem::dimension::type::dim2, medium_tag,
                               field_parameters::store_displacement,
@@ -106,7 +113,6 @@ public:
     using ChunkPolicyType = specfem::policy::element_chunk<ParallelConfig>;
 
     ChunkPolicyType chunk_policy(elements, ngllz, ngllx);
-    const int nelements = elements.extent(0);
 
     Kokkos::parallel_for(
         "specfem::domain::impl::kernels::elements::compute_mass_matrix",
@@ -150,7 +156,7 @@ public:
   }
 
 private:
-  specfem::compute::assembly &assembly;
+  const specfem::compute::assembly assembly;
   Kokkos::View<type_real ****, Kokkos::LayoutLeft,
                Kokkos::DefaultExecutionSpace>
       wavefield_on_entire_grid;
@@ -167,7 +173,7 @@ public:
   constexpr static auto ngll = NGLL;
   using field_parameters =
       field_type_parameters<specfem::element::medium_tag::acoustic, Component>;
-  helper(specfem::compute::assembly &assembly,
+  helper(specfem::compute::assembly assembly,
          Kokkos::View<type_real ****, Kokkos::LayoutLeft,
                       Kokkos::DefaultExecutionSpace>
              wavefield_on_entire_grid)
@@ -187,6 +193,10 @@ public:
     const auto elements =
         assembly.properties.get_elements_on_device(medium_tag, property_tag);
     const int nelements = elements.extent(0);
+
+    if (nelements == 0) {
+      return;
+    }
 
     constexpr auto num_components = field_parameters::num_components;
 
@@ -293,7 +303,7 @@ public:
   }
 
 private:
-  specfem::compute::assembly &assembly;
+  const specfem::compute::assembly assembly;
   Kokkos::View<type_real ****, Kokkos::LayoutLeft,
                Kokkos::DefaultExecutionSpace>
       wavefield_on_entire_grid;

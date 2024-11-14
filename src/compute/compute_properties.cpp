@@ -97,161 +97,96 @@ specfem::compute::properties::properties(
 
 Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace>
 specfem::compute::properties::get_elements_on_host(
-    const specfem::element::medium_tag medium) {
-
-  auto &elements = [&]() -> impl::elements_of_type & {
-    if (medium == specfem::element::medium_tag::elastic) {
-      return this->elastic_elements;
-    } else if (medium == specfem::element::medium_tag::acoustic) {
-      return this->acoustic_elements;
-    } else {
-      throw std::runtime_error("Unknown medium tag");
-    }
-  }();
-
-  if (elements.computed)
-    return elements.h_elements;
+    const specfem::element::medium_tag medium) const {
 
   const int nspec = this->nspec;
 
   int nelements = 0;
   for (int ispec = 0; ispec < nspec; ispec++) {
-    if (element_types(ispec) == medium) {
+    if (h_element_types(ispec) == medium) {
       nelements++;
     }
   }
 
-  elements.elements =
-      Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace>(
-          "specfem::compute::properties::get_elements_on_host", nelements);
-
-  elements.h_elements = Kokkos::create_mirror_view(elements.elements);
+  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace> elements(
+      "specfem::compute::properties::get_elements_on_host", nelements);
 
   nelements = 0;
   for (int ispec = 0; ispec < nspec; ispec++) {
-    if (element_types(ispec) == medium) {
-      elements.h_elements(nelements) = ispec;
+    if (h_element_types(ispec) == medium) {
+      elements(nelements) = ispec;
       nelements++;
     }
   }
 
-  Kokkos::deep_copy(elements.elements, elements.h_elements);
-
-  elements.computed = true;
-
-  return elements.h_elements;
+  return elements;
 }
 
 Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>
 specfem::compute::properties::get_elements_on_device(
-    const specfem::element::medium_tag medium) {
-  auto &elements = [&]() -> impl::elements_of_type & {
-    if (medium == specfem::element::medium_tag::elastic) {
-      return this->elastic_elements;
-    } else if (medium == specfem::element::medium_tag::acoustic) {
-      return this->acoustic_elements;
-    } else {
-      throw std::runtime_error("Unknown medium tag");
-    }
-  }();
-
-  if (elements.computed)
-    return elements.elements;
+    const specfem::element::medium_tag medium) const {
 
   // If the elements have not been computed, compute them.
   // The elements need to be computed in serial on the host.
   // This function computes the host elements on host and then
   // copies them to the device.
-  const auto dummy = this->get_elements_on_host(medium);
+  const auto host_elements = this->get_elements_on_host(medium);
 
-  return elements.elements;
+  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>
+      elements("specfem::compute::properties::get_elements_on_device",
+               host_elements.extent(0));
+
+  Kokkos::deep_copy(elements, host_elements);
+
+  return elements;
 }
 
 Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace>
 specfem::compute::properties::get_elements_on_host(
     const specfem::element::medium_tag medium,
-    const specfem::element::property_tag property) {
-  auto &elements = [&]() -> impl::elements_of_type & {
-    if (medium == specfem::element::medium_tag::elastic) {
-      if (property == specfem::element::property_tag::isotropic) {
-        return elastic_isotropic_elements;
-      } else {
-        throw std::runtime_error("Unknown property tag");
-      }
-    } else if (medium == specfem::element::medium_tag::acoustic) {
-      if (property == specfem::element::property_tag::isotropic) {
-        return acoustic_isotropic_elements;
-      } else {
-        throw std::runtime_error("Unknown property tag");
-      }
-    } else {
-      throw std::runtime_error("Unknown medium tag");
-    }
-  }();
-
-  if (elements.computed)
-    return elements.h_elements;
+    const specfem::element::property_tag property) const {
 
   const int nspec = this->nspec;
 
   int nelements = 0;
   for (int ispec = 0; ispec < nspec; ispec++) {
-    if (element_types(ispec) == medium && element_property(ispec) == property) {
+    if (h_element_types(ispec) == medium &&
+        h_element_property(ispec) == property) {
       nelements++;
     }
   }
 
-  elements.elements =
-      Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace>(
-          "specfem::compute::properties::get_elements_on_host", nelements);
-
-  elements.h_elements = Kokkos::create_mirror_view(elements.elements);
+  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace> elements(
+      "specfem::compute::properties::get_elements_on_host", nelements);
 
   nelements = 0;
   for (int ispec = 0; ispec < nspec; ispec++) {
-    if (element_types(ispec) == medium && element_property(ispec) == property) {
-      elements.h_elements(nelements) = ispec;
+    if (h_element_types(ispec) == medium &&
+        h_element_property(ispec) == property) {
+      elements(nelements) = ispec;
       nelements++;
     }
   }
 
-  Kokkos::deep_copy(elements.elements, elements.h_elements);
-
-  elements.computed = true;
-
-  return elements.h_elements;
+  return elements;
 }
 
 Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>
 specfem::compute::properties::get_elements_on_device(
     const specfem::element::medium_tag medium,
-    const specfem::element::property_tag property) {
-  auto &elements = [&]() -> impl::elements_of_type & {
-    if (medium == specfem::element::medium_tag::elastic) {
-      if (property == specfem::element::property_tag::isotropic) {
-        return elastic_isotropic_elements;
-      } else {
-        throw std::runtime_error("Unknown property tag");
-      }
-    } else if (medium == specfem::element::medium_tag::acoustic) {
-      if (property == specfem::element::property_tag::isotropic) {
-        return acoustic_isotropic_elements;
-      } else {
-        throw std::runtime_error("Unknown property tag");
-      }
-    } else {
-      throw std::runtime_error("Unknown medium tag");
-    }
-  }();
-
-  if (elements.computed)
-    return elements.elements;
+    const specfem::element::property_tag property) const {
 
   // If the elements have not been computed, compute them.
   // The elements need to be computed in serial on the host.
   // This function computes the host elements on host and then
   // copies them to the device.
-  const auto dummy = this->get_elements_on_host(medium, property);
+  const auto host_elements = this->get_elements_on_host(medium, property);
 
-  return elements.elements;
+  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>
+      elements("specfem::compute::properties::get_elements_on_device",
+               host_elements.extent(0));
+
+  Kokkos::deep_copy(elements, host_elements);
+
+  return elements;
 }
