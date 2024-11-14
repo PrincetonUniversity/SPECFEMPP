@@ -15,13 +15,6 @@ namespace writer {
 template <typename OutputLibrary> class wavefield : public writer {
 
 public:
-  using elastic_type =
-      specfem::medium::medium<specfem::dimension::type::dim2,
-                              specfem::element::medium_tag::elastic>;
-  using acoustic_type =
-      specfem::medium::medium<specfem::dimension::type::dim2,
-                              specfem::element::medium_tag::acoustic>;
-
   /**
    * @name Constructors
    *

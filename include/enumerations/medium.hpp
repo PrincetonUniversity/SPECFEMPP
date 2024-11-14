@@ -18,66 +18,35 @@ enum class medium_tag { elastic, acoustic, poroelastic };
  *
  */
 enum class property_tag { isotropic };
-} // namespace element
 
-namespace medium {
-
-/**
- * @brief Medium
- *
- * @tparam Dimension dimension type
- * @tparam MediumTag medium tag
- * @tparam PropertyTag property tag
- */
 template <specfem::dimension::type Dimension,
-          specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag =
-              specfem::element::property_tag::isotropic>
-class medium;
+          specfem::element::medium_tag MediumTag>
+class attributes;
 
-/**
- * @brief 2D Elastic, Isotropic medium specialization
- *
- */
 template <>
-class medium<specfem::dimension::type::dim2,
-             specfem::element::medium_tag::elastic,
-             specfem::element::property_tag::isotropic> {
+class attributes<specfem::dimension::type::dim2,
+                 specfem::element::medium_tag::elastic> {
+
 public:
-  static constexpr auto dimension =
-      specfem::dimension::type::dim2; ///< dimension type
-  static constexpr auto medium_tag =
-      specfem::element::medium_tag::elastic; ///< medium tag
-  static constexpr auto property_tag =
-      specfem::element::property_tag::isotropic; ///< property tag
-  static constexpr int components =
-      2; ///< Number of components for the field inside the medium
-  static std::string to_string() {
-    return "Elastic, Isotropic";
-  } ///< Convert medium to string
+  constexpr static int dimension() { return 2; }
+
+  constexpr static int components() { return 2; }
 };
 
-/**
- * @brief 2D Acoustic, Isotropic medium specialization
- *
- */
 template <>
-class medium<specfem::dimension::type::dim2,
-             specfem::element::medium_tag::acoustic,
-             specfem::element::property_tag::isotropic> {
+class attributes<specfem::dimension::type::dim2,
+                 specfem::element::medium_tag::acoustic> {
+
 public:
-  static constexpr auto dimension =
-      specfem::dimension::type::dim2; ///< dimension type
-  static constexpr auto medium_tag =
-      specfem::element::medium_tag::acoustic; ///< medium tag
-  static constexpr auto property_tag =
-      specfem::element::property_tag::isotropic; ///< property tag
-  static constexpr int components =
-      1; ///< Number of components for the field inside the medium
-  static std::string to_string() {
-    return "Acoustic, Isotropic";
-  } ///< Convert medium to string
+  constexpr static int dimension() { return 2; }
+
+  constexpr static int components() { return 1; }
 };
 
-} // namespace medium
+const std::string to_string(const medium_tag &medium,
+                            const property_tag &property_tag);
+
+const std::string to_string(const medium_tag &medium);
+
+} // namespace element
 } // namespace specfem

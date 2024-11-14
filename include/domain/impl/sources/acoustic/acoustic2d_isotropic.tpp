@@ -47,8 +47,7 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::sources::source<
     compute_interaction(
         const specfem::datatype::ScalarPointViewType<type_real, 1, using_simd> &stf,
         const specfem::datatype::ScalarPointViewType<type_real, 1, using_simd> &lagrange_interpolant,
-        specfem::datatype::ScalarPointViewType<type_real, medium_type::components, using_simd>
-            &acceleration) const {
+        specfem::datatype::ScalarPointViewType<type_real, components, using_simd> &acceleration) const {
 
   acceleration(0) = lagrange_interpolant(0) * stf(0);
 

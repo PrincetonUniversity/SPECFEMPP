@@ -43,11 +43,45 @@ void specfem::writer::plot_wavefield::write() {
 
 namespace {
 
-vtkSmartPointer<vtkUnstructuredGrid>
-get_wavefield_on_vtk_grid(const specfem::compute::assembly &assembly,
-                          const specfem::display::wavefield &component) {
+vtkSmartPointer<vtkUnstructuredGrid> get_wavefield_on_vtk_grid(
+    specfem::compute::assembly &assembly, const specfem::wavefield::type type,
+    const specfem::display::wavefield &display_component) {
 
-  const auto &wavefield = assembly.generate_wavefield_on_entire_grid(component);
+  const auto component = [&display_component]() {
+    if (display_component == specfem::display::wavefield::displacement_x ||
+        display_component == specfem::display::wavefield::displacement_z) {
+      return specfem::wavefield::component::displacement;
+    } else if (display_component == specfem::display::wavefield::velocity_x ||
+               display_component == specfem::display::wavefield::velocity_z) {
+      return specfem::wavefield::component::velocity;
+    } else if (display_component ==
+                   specfem::display::wavefield::acceleration_x ||
+               display_component ==
+                   specfem::display::wavefield::acceleration_z) {
+      return specfem::wavefield::component::acceleration;
+    } else {
+      throw std::runtime_error("Unsupported component");
+    }
+  }();
+
+  const int plot_index = [&display_component]() {
+    if (display_component == specfem::display::wavefield::displacement_x ||
+        display_component == specfem::display::wavefield::velocity_x ||
+        display_component == specfem::display::wavefield::acceleration_x) {
+      return 0;
+    } else if (display_component ==
+                   specfem::display::wavefield::displacement_z ||
+               display_component == specfem::display::wavefield::velocity_z ||
+               display_component ==
+                   specfem::display::wavefield::acceleration_z) {
+      return 1;
+    } else {
+      throw std::runtime_error("Unsupported component");
+    }
+  }();
+
+  const auto &wavefield =
+      assembly.generate_wavefield_on_entire_grid(type, component);
   const auto &coordinates = assembly.mesh.points.h_coord;
 
   const int ncells = wavefield.extent(0);
@@ -67,13 +101,14 @@ get_wavefield_on_vtk_grid(const specfem::compute::assembly &assembly,
     // Bottom Corner
     points->SetPoint(icell * ncells + 0, coordinates(icell, 0, 0, 0), 0.0,
                      coordinates(icell, 0, 0, 1));
-    scalars->SetTuple1(icell * ncells + 0, wavefield(icell, 0, 0));
+    scalars->SetTuple1(icell * ncells + 0, wavefield(icell, 0, 0, plot_index));
     biquad->GetPointIds()->SetId(0, icell * ncells + 0);
 
     // Bottom Right
     points->SetPoint(icell * ncells + 1, coordinates(icell, 0, ngllx - 1, 0),
                      0.0, coordinates(icell, 0, ngllx - 1, 1));
-    scalars->SetTuple1(icell * ncells + 1, wavefield(icell, 0, ngllx - 1));
+    scalars->SetTuple1(icell * ncells + 1,
+                       wavefield(icell, 0, ngllx - 1, plot_index));
     biquad->GetPointIds()->SetId(1, icell * ncells + 1);
 
     // Top Right
@@ -81,19 +116,21 @@ get_wavefield_on_vtk_grid(const specfem::compute::assembly &assembly,
                      coordinates(icell, ngllz - 1, ngllx - 1, 0), 0.0,
                      coordinates(icell, ngllz - 1, ngllx - 1, 1));
     scalars->SetTuple1(icell * ncells + 2,
-                       wavefield(icell, ngllz - 1, ngllx - 1));
+                       wavefield(icell, ngllz - 1, ngllx - 1, plot_index));
     biquad->GetPointIds()->SetId(2, icell * ncells + 2);
 
     // Top Left
     points->SetPoint(icell * ncells + 3, coordinates(icell, ngllz - 1, 0, 0),
                      0.0, coordinates(icell, ngllz - 1, 0, 1));
-    scalars->SetTuple1(icell * ncells + 3, wavefield(icell, ngllz - 1, 0));
+    scalars->SetTuple1(icell * ncells + 3,
+                       wavefield(icell, ngllz - 1, 0, plot_index));
     biquad->GetPointIds()->SetId(3, icell * ncells + 3);
 
     // Bottom middle
     points->SetPoint(icell * ncells + 4, coordinates(icell, 0, ngllx / 2, 0),
                      0.0, coordinates(icell, 0, ngllx / 2, 1));
-    scalars->SetTuple1(icell * ncells + 4, wavefield(icell, 0, ngllx / 2));
+    scalars->SetTuple1(icell * ncells + 4,
+                       wavefield(icell, 0, ngllx / 2, plot_index));
     biquad->GetPointIds()->SetId(4, icell * ncells + 4);
 
     // Right middle
@@ -101,7 +138,7 @@ get_wavefield_on_vtk_grid(const specfem::compute::assembly &assembly,
                      coordinates(icell, ngllz / 2, ngllx - 1, 0), 0.0,
                      coordinates(icell, ngllz / 2, ngllx - 1, 1));
     scalars->SetTuple1(icell * ncells + 5,
-                       wavefield(icell, ngllz / 2, ngllx - 1));
+                       wavefield(icell, ngllz / 2, ngllx - 1, plot_index));
     biquad->GetPointIds()->SetId(5, icell * ncells + 5);
 
     // Top middle
@@ -109,13 +146,14 @@ get_wavefield_on_vtk_grid(const specfem::compute::assembly &assembly,
                      coordinates(icell, ngllz - 1, ngllx / 2, 0), 0.0,
                      coordinates(icell, ngllz - 1, ngllx / 2, 1));
     scalars->SetTuple1(icell * ncells + 6,
-                       wavefield(icell, ngllz - 1, ngllx / 2));
+                       wavefield(icell, ngllz - 1, ngllx / 2, plot_index));
     biquad->GetPointIds()->SetId(6, icell * ncells + 6);
 
     // Left middle
     points->SetPoint(icell * ncells + 7, coordinates(icell, ngllz / 2, 0, 0),
                      0.0, coordinates(icell, ngllz / 2, 0, 1));
-    scalars->SetTuple1(icell * ncells + 7, wavefield(icell, ngllz / 2, 0));
+    scalars->SetTuple1(icell * ncells + 7,
+                       wavefield(icell, ngllz / 2, 0, plot_index));
     biquad->GetPointIds()->SetId(7, icell * ncells + 7);
 
     // Center
@@ -123,7 +161,7 @@ get_wavefield_on_vtk_grid(const specfem::compute::assembly &assembly,
                      coordinates(icell, ngllz / 2, ngllx / 2, 0), 0.0,
                      coordinates(icell, ngllz / 2, ngllx / 2, 1));
     scalars->SetTuple1(icell * ncells + 8,
-                       wavefield(icell, ngllz / 2, ngllx / 2));
+                       wavefield(icell, ngllz / 2, ngllx / 2, plot_index));
     biquad->GetPointIds()->SetId(8, icell * ncells + 8);
     unstructured_grid->InsertNextCell(biquad->GetCellType(),
                                       biquad->GetPointIds());
@@ -138,8 +176,8 @@ get_wavefield_on_vtk_grid(const specfem::compute::assembly &assembly,
 
 void specfem::writer::plot_wavefield::write() {
 
-  const auto unstructured_grid =
-      get_wavefield_on_vtk_grid(this->assembly, this->component);
+  const auto unstructured_grid = get_wavefield_on_vtk_grid(
+      this->assembly, this->wavefield, this->component);
 
   // Plot a contour plot of the wavefield
   auto contour = vtkSmartPointer<vtkContourFilter>::New();

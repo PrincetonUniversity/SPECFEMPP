@@ -10,7 +10,6 @@ template <specfem::wavefield::type WavefieldType,
           specfem::element::medium_tag MediumTag, typename qp_type>
 void specfem::domain::domain<WavefieldType, DimensionType, MediumTag,
                              qp_type>::divide_mass_matrix() {
-  constexpr int components = medium_type::components;
   const int nglob = field.template get_nglob<MediumTag>();
   constexpr bool using_simd = true;
   using LoadFieldType = specfem::point::field<DimensionType, MediumTag, false,
@@ -49,7 +48,6 @@ template <specfem::wavefield::type WavefieldType,
           specfem::element::medium_tag MediumTag, typename qp_type>
 void specfem::domain::domain<WavefieldType, DimensionType, MediumTag,
                              qp_type>::invert_mass_matrix() {
-  constexpr int components = medium_type::components;
   const int nglob = field.template get_nglob<MediumTag>();
   constexpr bool using_simd = true;
   using PointFieldType = specfem::point::field<DimensionType, MediumTag, false,

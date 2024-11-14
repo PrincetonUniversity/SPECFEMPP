@@ -82,17 +82,14 @@ struct assembly {
    * This field can be used to generate a plot of the wavefield
    *
    * @param component Component of the wavefield to map
-   * @return Kokkos::View<type_real ***, Kokkos::LayoutRight, Kokkos::HostSpace>
+   * @return Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
    * Wavefield mapped on the entire grid. Dimensions of the view are nspec,
    * ngllz, ngllx
    */
-  Kokkos::View<type_real ***, Kokkos::LayoutRight, Kokkos::HostSpace>
+  Kokkos::View<type_real ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
   generate_wavefield_on_entire_grid(
-      const specfem::display::wavefield &component) const {
-    // dummy implementation
-    return Kokkos::View<type_real ***, Kokkos::LayoutRight, Kokkos::HostSpace>(
-        "result", mesh.nspec, mesh.ngllz, mesh.ngllx);
-  };
+      const specfem::wavefield::type wavefield,
+      const specfem::wavefield::component component);
 };
 
 } // namespace compute

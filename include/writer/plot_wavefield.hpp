@@ -33,10 +33,10 @@ public:
   void write() override;
 
 private:
-  specfem::display::format output_format;
-  specfem::display::wavefield component;
-  specfem::wavefield::type wavefield;
-  boost::filesystem::path output_folder;
+  const specfem::display::format output_format;
+  const specfem::display::wavefield component;
+  const specfem::wavefield::type wavefield;
+  const boost::filesystem::path output_folder;
   specfem::compute::assembly assembly;
 };
 } // namespace writer
