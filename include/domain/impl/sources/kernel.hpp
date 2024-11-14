@@ -19,9 +19,13 @@ template <specfem::wavefield::type WavefieldType,
           specfem::element::property_tag PropertyTag, typename qp_type>
 class source_kernel {
 public:
-  using dimension = specfem::dimension::dimension<DimensionType>;
-  using medium_type =
-      specfem::medium::medium<DimensionType, MediumTag, PropertyTag>;
+  constexpr static int num_dimensions =
+      specfem::element::attributes<DimensionType, MediumTag>::dimension();
+  constexpr static int components =
+      specfem::element::attributes<DimensionType, MediumTag>::components();
+  constexpr static auto medium_tag = MediumTag;
+  constexpr static auto property_tag = PropertyTag;
+  constexpr static auto dimension = DimensionType;
 
   using quadrature_point_type = qp_type;
   constexpr static bool using_simd = false;
@@ -44,7 +48,7 @@ private:
   specfem::compute::simulation_field<WavefieldType> field;
   specfem::compute::source_medium<DimensionType, MediumTag> sources;
   quadrature_point_type quadrature_points;
-  specfem::domain::impl::sources::source<DimensionType, MediumTag, PropertyTag,
+  specfem::domain::impl::sources::source<dimension, medium_tag, property_tag,
                                          quadrature_point_type, using_simd>
       source;
 };

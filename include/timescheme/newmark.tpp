@@ -6,22 +6,21 @@
 #include "timescheme/newmark.hpp"
 
 namespace {
-template <specfem::element::medium_tag MediumType,
+template <specfem::element::medium_tag MediumTag,
           specfem::wavefield::type WavefieldType>
 void corrector_phase_impl(
     const specfem::compute::simulation_field<WavefieldType> &field,
     const type_real deltatover2) {
 
   constexpr int components =
-      specfem::medium::medium<specfem::dimension::type::dim2,
-                              MediumType>::components;
-  const int nglob = field.template get_nglob<MediumType>();
+      specfem::element::attributes<specfem::dimension::type::dim2, MediumTag>::components();
+  const int nglob = field.template get_nglob<MediumTag>();
   constexpr bool using_simd = true;
   using LoadFieldType =
-      specfem::point::field<specfem::dimension::type::dim2, MediumType, false,
+      specfem::point::field<specfem::dimension::type::dim2, MediumTag, false,
                             false, true, false, using_simd>;
   using AddFieldType =
-      specfem::point::field<specfem::dimension::type::dim2, MediumType, false,
+      specfem::point::field<specfem::dimension::type::dim2, MediumTag, false,
                             true, false, false, using_simd>;
 
   using ParallelConfig = specfem::parallel_config::default_range_config<
@@ -70,7 +69,7 @@ void corrector_phase_impl(
   return;
 }
 
-template <specfem::element::medium_tag MediumType,
+template <specfem::element::medium_tag MediumTag,
           specfem::wavefield::type WavefieldType>
 void predictor_phase_impl(
     const specfem::compute::simulation_field<WavefieldType> &field,
@@ -78,18 +77,18 @@ void predictor_phase_impl(
     const type_real deltasquareover2) {
 
   constexpr int components =
-      specfem::medium::medium<specfem::dimension::type::dim2,
-                              MediumType>::components;
-  const int nglob = field.template get_nglob<MediumType>();
+      specfem::element::attributes<specfem::dimension::type::dim2,
+                              MediumTag>::components();
+  const int nglob = field.template get_nglob<MediumTag>();
   constexpr bool using_simd = true;
   using LoadFieldType =
-      specfem::point::field<specfem::dimension::type::dim2, MediumType, false,
+      specfem::point::field<specfem::dimension::type::dim2, MediumTag, false,
                             true, true, false, using_simd>;
   using AddFieldType =
-      specfem::point::field<specfem::dimension::type::dim2, MediumType, true,
+      specfem::point::field<specfem::dimension::type::dim2, MediumTag, true,
                             true, false, false, using_simd>;
   using StoreFieldType =
-      specfem::point::field<specfem::dimension::type::dim2, MediumType, false,
+      specfem::point::field<specfem::dimension::type::dim2, MediumTag, false,
                             false, true, false, using_simd>;
 
   using ParallelConfig = specfem::parallel_config::default_range_config<

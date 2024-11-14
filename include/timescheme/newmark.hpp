@@ -23,13 +23,6 @@ template <>
 class newmark<specfem::simulation::type::forward> : public time_scheme {
 
 public:
-  using elastic_type =
-      specfem::medium::medium<specfem::dimension::type::dim2,
-                              specfem::element::medium_tag::elastic>;
-  using acoustic_type =
-      specfem::medium::medium<specfem::dimension::type::dim2,
-                              specfem::element::medium_tag::acoustic>;
-
   constexpr static auto simulation_type =
       specfem::wavefield::type::forward; ///< Wavefield tag
 
@@ -134,14 +127,6 @@ class newmark<specfem::simulation::type::combined> : public time_scheme {
 public:
   constexpr static auto simulation_type =
       specfem::simulation::type::combined; ///< Wavefield tag
-
-  using elastic_type =
-      specfem::medium::medium<specfem::dimension::type::dim2,
-                              specfem::element::medium_tag::elastic>;
-  using acoustic_type =
-      specfem::medium::medium<specfem::dimension::type::dim2,
-                              specfem::element::medium_tag::acoustic>;
-
   /**
    * @name Constructors
    */

@@ -32,9 +32,9 @@ specfem::domain::impl::kernels::source_kernel<
   for (int isource = 0; isource < nsources; isource++) {
     const int ispec = sources.h_source_index_mapping(isource);
     if ((assembly.properties.h_element_types(ispec) !=
-         medium_type::medium_tag) &&
+         medium_tag) &&
         (assembly.properties.h_element_property(ispec) !=
-         medium_type::property_tag)) {
+         property_tag)) {
       throw std::runtime_error("Invalid element detected in kernel");
     }
   }
@@ -49,7 +49,7 @@ specfem::domain::impl::kernels::source_kernel<
   Kokkos::deep_copy(source_domain_index_mapping, h_source_domain_index_mapping);
 
   source = specfem::domain::impl::sources::source<
-      DimensionType, MediumTag, PropertyTag, quadrature_point_type, using_simd>();
+      dimension, medium_tag, property_tag, quadrature_point_type, using_simd>();
   return;
 }
 
@@ -61,8 +61,7 @@ void specfem::domain::impl::kernels::source_kernel<
     WavefieldType, DimensionType, MediumTag, PropertyTag,
     qp_type>::compute_source_interaction(const int timestep) const {
 
-  constexpr int components = medium_type::components;
-  using PointFieldType = specfem::point::field<DimensionType, MediumTag, false,
+  using PointFieldType = specfem::point::field<dimension, medium_tag, false,
                                                false, true, false, using_simd>;
 
   if (nsources == 0)
@@ -91,13 +90,13 @@ void specfem::domain::impl::kernels::source_kernel<
               specfem::point::index<DimensionType> index(ispec_l, iz, ix);
 
               const specfem::datatype::ScalarPointViewType<
-                  type_real, medium_type::components, using_simd>
+                  type_real, components, using_simd>
                   lagrange_interpolant(Kokkos::subview(
                       sources.source_array, isource_l, Kokkos::ALL, iz, ix));
 
               // Source time function
               // For acoustic medium, forward simulation, divide by kappa
-              const auto stf = [&, timestep, components]() {
+              const auto stf = [&, timestep]() {
                 if constexpr ((WavefieldType ==
                                specfem::wavefield::type::forward) &&
                               (MediumTag ==
@@ -113,7 +112,7 @@ void specfem::domain::impl::kernels::source_kernel<
                     return point_properties;
                   }();
                   specfem::datatype::ScalarPointViewType<
-                      type_real, medium_type::components, using_simd>
+                      type_real, components, using_simd>
                       stf(Kokkos::subview(sources.source_time_function,
                                           timestep, isource_l, Kokkos::ALL));
                   for (int i = 0; i < components; i++) {
@@ -122,7 +121,7 @@ void specfem::domain::impl::kernels::source_kernel<
                   return stf;
                 } else {
                   return specfem::datatype::ScalarPointViewType<
-                      type_real, medium_type::components, using_simd>(
+                      type_real, components, using_simd>(
                       Kokkos::subview(sources.source_time_function, timestep,
                                       isource_l, Kokkos::ALL));
                 }
