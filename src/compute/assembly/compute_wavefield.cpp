@@ -8,7 +8,7 @@ template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
           specfem::wavefield::component Component>
 void get_wavefield_on_entire_grid(
-    specfem::compute::assembly &assembly,
+    const specfem::compute::assembly &assembly,
     Kokkos::View<type_real ****, Kokkos::LayoutLeft,
                  Kokkos::DefaultExecutionSpace>
         wavefield_on_entire_grid) {
