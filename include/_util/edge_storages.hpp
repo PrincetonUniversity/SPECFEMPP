@@ -81,9 +81,11 @@ public:
                                edge_data<ngll, datacapacity> &,
                                edge_data<ngll, datacapacity> &)> &func);
   void build_intersections_on_host();
+  edge_data<ngll, datacapacity> &get_edge_on_host(int edge);
+  edge_intersection<ngll> &get_intersection_on_host(int intersection);
 
-  int num_edges() { return n_edges; }
-  int num_intersections() { return n_intersections; }
+  int num_edges() const { return n_edges; }
+  int num_intersections() const { return n_intersections; }
 
 private:
   int n_edges;
@@ -104,4 +106,6 @@ private:
 
 } // namespace edge_manager
 } // namespace _util
+
+#include "_util/edge_storages.tpp"
 #endif

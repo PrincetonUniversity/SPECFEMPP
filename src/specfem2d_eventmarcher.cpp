@@ -10,9 +10,10 @@
 #define _EVENT_MARCHER_DUMPS_
 #define _stepwise_simfield_dump_ std::string("dump/simfield")
 #define _index_change_dump_ std::string("dump/indexchange")
+#define _stepwise_edge_dump_ std::string("dump/edgedata")
 
 #include "_util/dump_simfield.hpp"
-#include "_util/edge_storages.cpp"
+#include "_util/edge_storages.hpp"
 #include "_util/rewrite_simfield.hpp"
 #include "event_marching/event_marcher.hpp"
 #include "event_marching/timescheme_wrapper.hpp"
@@ -36,6 +37,7 @@ void execute(specfem::MPI::MPI *mpi) {
 #ifdef _EVENT_MARCHER_DUMPS_
   _util::init_dirs(_stepwise_simfield_dump_);
   _util::init_dirs(_index_change_dump_);
+  _util::init_dirs(_stepwise_edge_dump_);
 
   _util::dump_simfield(_index_change_dump_ + "/prior_remap.dat",
                        assembly.fields.forward, assembly.mesh.points);
@@ -172,11 +174,30 @@ void execute(specfem::MPI::MPI *mpi) {
 #define EDGEIND_FIELDNDERIV 6
 #define EDGEIND_SPEEDPARAM 8
 #define EDGEIND_SHAPENDERIV 9
+#define EDGEIND_FLUXTOTAL 14
+#define EDGEIND_FLUX1 15
+#define EDGEIND_FLUX2 16
+#define EDGEIND_FLUX3 17
 
 #define data_capacity 20
 #define edge_capacity 5
   _util::edge_manager::edge_storage<edge_capacity, data_capacity>
       dg_edge_storage(dg_edges);
+
+  specfem::event_marching::arbitrary_call_event output_edges(
+      [&]() {
+        int istep = timescheme_wrapper.get_istep();
+        if (istep % _DUMP_INTERVAL_ == 0) {
+          _util::dump_edge_container(_stepwise_edge_dump_ + "/d" +
+                                         std::to_string(istep) + ".dat",
+                                     dg_edge_storage);
+        }
+        return 0;
+      },
+      -0.1);
+#ifdef _EVENT_MARCHER_DUMPS_
+  event_system.register_event(&output_edges);
+#endif
   dg_edge_storage.foreach_edge_on_host(
       [&](_util::edge_manager::edge_data<edge_capacity, data_capacity> &e) {
         using PointPartialDerivativesType =
@@ -341,7 +362,7 @@ void execute(specfem::MPI::MPI *mpi) {
                 dfdxi[icomp] += assembly.mesh.quadratures.gll.h_hprime(ix, k) *
                                 disp.displacement(0);
                 index_ = specfem::point::index<specfem::dimension::type::dim2>(
-                    ispec, iz, k);
+                    ispec, k, ix);
                 specfem::compute::load_on_host(index_, assembly.fields.forward,
                                                disp);
                 dfdga[icomp] += assembly.mesh.quadratures.gll.h_hprime(iz, k) *
@@ -407,9 +428,14 @@ void execute(specfem::MPI::MPI *mpi) {
                   assembly.properties.h_element_types(a_ispec);
               specfem::element::medium_tag b_medium =
                   assembly.properties.h_element_types(b_ispec);
-              if (a.data[EDGEIND_FIELD][2] > 0.2) {
+              if ((a_ispec == 88 || b_ispec == 88) &&
+                  timescheme_wrapper.get_istep() == 1000) {
                 intersect.a_to_mortar(1, a.data[EDGEIND_FIELDNDERIV]);
               }
+              type_real a_scale_dS =
+                  0.5 * (intersect.a_param_end - intersect.a_param_start);
+              type_real b_scale_dS =
+                  0.5 * (intersect.b_param_end - intersect.b_param_start);
               if (a_medium == specfem::element::medium_tag::acoustic &&
                   b_medium == specfem::element::medium_tag::acoustic) {
                 for (int a_ishape = 0; a_ishape < a.ngll; a_ishape++) {
@@ -419,6 +445,9 @@ void execute(specfem::MPI::MPI *mpi) {
                   //     - a*np.einsum("j,j,ji->i",JW,u-u_,v)
                   // )
                   type_real flux = 0;
+                  type_real f1 = 0;
+                  type_real f2 = 0;
+                  type_real f3 = 0;
                   for (int iquad = 0; iquad < gll.nquad; iquad++) {
                     type_real c = intersect.a_to_mortar(
                         iquad, a.data[EDGEIND_SPEEDPARAM]);
@@ -431,8 +460,21 @@ void execute(specfem::MPI::MPI *mpi) {
                                intersect.b_to_mortar(
                                    iquad, b.data[EDGEIND_SPEEDPARAM]) *
                                    intersect.b_to_mortar(
-                                       iquad, b.data[EDGEIND_FIELDNDERIV]));
-                    flux += gll.w[iquad] *
+                                       iquad, b.data[EDGEIND_FIELDNDERIV]) *
+                                   (b_scale_dS / a_scale_dS));
+
+                    f1 += a_scale_dS * gll.w[iquad] * 0.5 *
+                          intersect.a_to_mortar(
+                              iquad, a.data[EDGEIND_SHAPENDERIV + a_ishape]) *
+                          c * u_jmp;
+                    f2 += a_scale_dS * gll.w[iquad] *
+                          intersect.a_to_mortar(iquad, a.data[EDGEIND_DS]) *
+                          intersect.a_mortar_trans[iquad][a_ishape] * (cdu_avg);
+                    f3 += a_scale_dS * gll.w[iquad] *
+                          intersect.a_to_mortar(iquad, a.data[EDGEIND_DS]) *
+                          intersect.a_mortar_trans[iquad][a_ishape] *
+                          (-intersect.relax_param * u_jmp);
+                    flux += a_scale_dS * gll.w[iquad] *
                             (0.5 *
                                  intersect.a_to_mortar(
                                      iquad,
@@ -442,13 +484,31 @@ void execute(specfem::MPI::MPI *mpi) {
                                  intersect.a_mortar_trans[iquad][a_ishape] *
                                  (cdu_avg - intersect.relax_param * u_jmp));
                   }
+                  a.data[EDGEIND_FLUXTOTAL][a_ishape] = flux;
+                  a.data[EDGEIND_FLUX1][a_ishape] = f1;
+                  a.data[EDGEIND_FLUX2][a_ishape] = f2;
+                  a.data[EDGEIND_FLUX3][a_ishape] = f3;
                   PointAcousticAccel accel;
                   specfem::point::index<specfem::dimension::type::dim2> index(
                       a_ispec, 0, 0);
                   point_from_id(index.ix, index.iz, a.parent.bdry, a_ishape);
-                  accel.acceleration = flux;
-                  specfem::compute::atomic_add_on_device(
-                      index, accel, assembly.fields.forward);
+                  specfem::point::boundary<
+                      specfem::element::boundary_tag::acoustic_free_surface,
+                      specfem::dimension::type::dim2, false>
+                      point_boundary;
+                  specfem::compute::load_on_device(index, assembly.boundaries,
+                                                   point_boundary);
+          // if(point_boundary.tag !=
+          // specfem::element::boundary_tag::acoustic_free_surface){
+          // printf("[%d,%d,%d],",index.ispec,index.iz,index.ix);
+#define AFSCHECK(x) (abs(x - 0) < 1e-8 || abs(x - 1) < 1e-8)
+                  if (!(AFSCHECK(a.x[0]) ||
+                        AFSCHECK(a.x[a.ngll - 1]))) { // hack solution for AFS
+                                                      // bdry check
+                    accel.acceleration = flux;
+                    specfem::compute::atomic_add_on_device(
+                        index, accel, assembly.fields.forward);
+                  }
                 }
                 for (int b_ishape = 0; b_ishape < b.ngll; b_ishape++) {
                   // flux += (
@@ -457,6 +517,9 @@ void execute(specfem::MPI::MPI *mpi) {
                   //     - a*np.einsum("j,j,ji->i",JW,u-u_,v)
                   // )
                   type_real flux = 0;
+                  type_real f1 = 0;
+                  type_real f2 = 0;
+                  type_real f3 = 0;
                   for (int iquad = 0; iquad < gll.nquad; iquad++) {
                     type_real c = intersect.b_to_mortar(
                         iquad, b.data[EDGEIND_SPEEDPARAM]);
@@ -469,8 +532,20 @@ void execute(specfem::MPI::MPI *mpi) {
                                intersect.a_to_mortar(
                                    iquad, a.data[EDGEIND_SPEEDPARAM]) *
                                    intersect.a_to_mortar(
-                                       iquad, a.data[EDGEIND_FIELDNDERIV]));
-                    flux += gll.w[iquad] *
+                                       iquad, a.data[EDGEIND_FIELDNDERIV]) *
+                                   (a_scale_dS / b_scale_dS));
+                    f1 += b_scale_dS * gll.w[iquad] * 0.5 *
+                          intersect.b_to_mortar(
+                              iquad, b.data[EDGEIND_SHAPENDERIV + b_ishape]) *
+                          c * u_jmp;
+                    f2 += b_scale_dS * gll.w[iquad] *
+                          intersect.b_to_mortar(iquad, b.data[EDGEIND_DS]) *
+                          intersect.b_mortar_trans[iquad][b_ishape] * (cdu_avg);
+                    f3 += b_scale_dS * gll.w[iquad] *
+                          intersect.b_to_mortar(iquad, b.data[EDGEIND_DS]) *
+                          intersect.b_mortar_trans[iquad][b_ishape] *
+                          (-intersect.relax_param * u_jmp);
+                    flux += b_scale_dS * gll.w[iquad] *
                             (0.5 *
                                  intersect.b_to_mortar(
                                      iquad,
@@ -480,13 +555,30 @@ void execute(specfem::MPI::MPI *mpi) {
                                  intersect.b_mortar_trans[iquad][b_ishape] *
                                  (cdu_avg - intersect.relax_param * u_jmp));
                   }
+                  b.data[EDGEIND_FLUXTOTAL][b_ishape] = flux;
+                  b.data[EDGEIND_FLUX1][b_ishape] = f1;
+                  b.data[EDGEIND_FLUX2][b_ishape] = f2;
+                  b.data[EDGEIND_FLUX3][b_ishape] = f3;
                   PointAcousticAccel accel;
                   specfem::point::index<specfem::dimension::type::dim2> index(
                       b_ispec, 0, 0);
                   point_from_id(index.ix, index.iz, b.parent.bdry, b_ishape);
-                  accel.acceleration = flux;
-                  specfem::compute::atomic_add_on_device(
-                      index, accel, assembly.fields.forward);
+                  specfem::point::boundary<
+                      specfem::element::boundary_tag::acoustic_free_surface,
+                      specfem::dimension::type::dim2, false>
+                      point_boundary;
+                  specfem::compute::load_on_device(index, assembly.boundaries,
+                                                   point_boundary);
+                  // if(point_boundary.tag !=
+                  // specfem::element::boundary_tag::acoustic_free_surface){
+                  // printf("[%d,%d,%d],",index.ispec,index.iz,index.ix);
+                  if (!(AFSCHECK(b.x[0]) ||
+                        AFSCHECK(b.x[b.ngll - 1]))) { // hack solution for AFS
+                                                      // bdry check
+                    accel.acceleration = flux;
+                    specfem::compute::atomic_add_on_device(
+                        index, accel, assembly.fields.forward);
+                  }
                 }
 
               } else {

@@ -1,5 +1,5 @@
-#ifndef __UTIL_EDGE_STORAGES_CPP_
-#define __UTIL_EDGE_STORAGES_CPP_
+#ifndef __UTIL_EDGE_STORAGES_TPP_
+#define __UTIL_EDGE_STORAGES_TPP_
 
 #include "_util/edge_storages.hpp"
 #include <array>
@@ -8,6 +8,18 @@
 
 namespace _util {
 namespace edge_manager {
+
+template <int ngll, int datacapacity>
+edge_data<ngll,datacapacity>& edge_storage<ngll, datacapacity>::get_edge_on_host(int edge){
+  return h_edge_data_container(edge);
+}
+template <int ngll, int datacapacity>
+edge_intersection<ngll>& edge_storage<ngll, datacapacity>::get_intersection_on_host(int intersection){
+  if(!intersections_built){
+    build_intersections_on_host();
+  }
+  return h_intersection_container(intersection);
+}
 
 template <int ngll, int datacapacity>
 edge_storage<ngll, datacapacity>::edge_storage(const std::vector<edge> edges)

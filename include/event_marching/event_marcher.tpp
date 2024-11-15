@@ -61,19 +61,29 @@ void event_marcher::set_current_precedence(precedence p){
   }
 }
 
+// #define EVENT_MARCHER_VERBOSE
+
 std::forward_list<specfem::event_marching::event*>::iterator event_marcher::current_step(){
-  // std::cout << "current_step(" << _current_precedence;
+#ifdef EVENT_MARCHER_VERBOSE
+  std::cout << "(current_step = " << _current_precedence;
+#endif
   process_registrations();
   if(_current_step == events.end()){
-    // std::cout << " @end)\n";
+#ifdef EVENT_MARCHER_VERBOSE
+    std::cout << " @end)";
+#endif
     return _current_step;
   }
   if(_current_step == events.before_begin()){
-    // std::cout << " @before_begin -> reset iter";
+#ifdef EVENT_MARCHER_VERBOSE
+    std::cout << " @before_begin -> reset iter";
+#endif
     _current_step = events.begin();
   }else if(_current_precedence < (*_current_step)->get_precedence()){
     //_current_precedence was modified.
-    // std::cout << " < "<<(*_current_step)->get_precedence()<< "->reset iter";
+#ifdef EVENT_MARCHER_VERBOSE
+    std::cout << " < "<<(*_current_step)->get_precedence()<< " ->reset iter";
+#endif
     _current_step = events.begin();
   }
   while(_current_step != events.end() && _current_precedence > (*_current_step)->get_precedence()){
@@ -84,7 +94,9 @@ std::forward_list<specfem::event_marching::event*>::iterator event_marcher::curr
     return _current_step;
   }
   _current_precedence = (*_current_step)->get_precedence();
-  // std::cout << "->"<<_current_precedence<<")\n";
+#ifdef EVENT_MARCHER_VERBOSE
+  std::cout << " -> "<<_current_precedence<<")";
+#endif
   return _current_step;
 }
 
@@ -96,22 +108,33 @@ int event_marcher::march_events(){
   while(true){
     auto event = *it;
     int call_return = event->call();
-    // std::cout << "event @ "<< event->get_precedence() <<": " << call_return << "\n";
+#ifdef EVENT_MARCHER_VERBOSE
+    std::cout << "event @ "<< event->get_precedence() <<" (ret = " << call_return << ")";
+#endif
     //event registration may have changed, so *it may be undefined; re-issue
     it = current_step();
     if(it == events.end()){
       _current_precedence = specfem::event_marching::PRECEDENCE_AFTER_END;
+#ifdef EVENT_MARCHER_VERBOSE
+    std::cout << " was unregistered during call; prec -> "<<_current_precedence << "\n";
+#endif
       return call_return;
     }
     //this will happen most of the time; if step was removed; then current_step() would be next
     if(*it == event){
+      _current_step++;
       it++;
+#ifdef EVENT_MARCHER_VERBOSE
+    std::cout << " standard inc";
+#endif
     }
     if(it == events.end()){
-      _current_precedence = specfem::event_marching::PRECEDENCE_AFTER_END;
       return call_return;
     }
-    _current_precedence = (*it)->get_precedence();
+    _current_precedence = (*_current_step)->get_precedence();
+#ifdef EVENT_MARCHER_VERBOSE
+    std::cout << " -> " << _current_precedence << "\n";
+#endif
   }
 }
 int event_marcher::march_events(int num_steps){

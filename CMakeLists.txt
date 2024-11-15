@@ -517,7 +517,6 @@ target_link_libraries(
 add_library(
         _util
         src/_util/build_demo_assembly.cpp
-        src/_util/edge_storages.cpp
 )
 
 target_link_libraries(
@@ -589,6 +588,30 @@ target_link_libraries(
         solver
         Boost::program_options
         _util
+)
+
+add_executable(
+        sf2d_export_forward_domain
+        src/specfem2d_viewdomain.cpp
+)
+
+target_link_libraries(
+        sf2d_export_forward_domain
+        specfem_mpi
+        Kokkos::kokkos
+        mesh
+        quadrature
+        compute
+        source_class
+        parameter_reader
+        receiver_class
+        writer
+        reader
+        domain
+        coupled_interface
+        kernels
+        solver
+        Boost::program_options
 )
 
 # Include tests
