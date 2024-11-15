@@ -84,6 +84,10 @@ void specfem::domain::impl::kernels::receiver_kernel<
       NGLL, DimensionType, MediumTag, specfem::kokkos::DevScratchSpace,
       Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, true, true, false, using_simd>;
 
+  using Aux2ComponentFieldType = specfem::element::field<
+      NGLL, DimensionType, specfem::element::medium_tag::elastic, specfem::kokkos::DevScratchSpace,
+      Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, false, false, false, using_simd>;
+
   using ElementQuadratureType = specfem::element::quadrature<
       NGLL, DimensionType, specfem::kokkos::DevScratchSpace,
       Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, false>;
@@ -95,7 +99,7 @@ void specfem::domain::impl::kernels::receiver_kernel<
     return;
 
   int scratch_size =
-      ElementFieldType::shmem_size() + ElementQuadratureType::shmem_size();
+      ElementFieldType::shmem_size() + ElementQuadratureType::shmem_size() + Aux2ComponentFieldType::shmem_size();
 
   Kokkos::parallel_for(
       "specfem::domain::domain::compute_seismogram",
@@ -118,6 +122,7 @@ void specfem::domain::impl::kernels::receiver_kernel<
         // ----------------------------------------------------------------
         ElementFieldType element_field(team_member);
         ElementQuadratureType element_quadrature(team_member);
+        Aux2ComponentFieldType aux_field(team_member);
 
         // Allocate shared views
         // ----------------------------------------------------------------
@@ -171,6 +176,9 @@ void specfem::domain::impl::kernels::receiver_kernel<
                     case specfem::enums::seismogram::type::acceleration:
                       return element_field.acceleration;
                       break;
+                    case specfem::enums::seismogram::type::pressure:
+                      return element_field.displacement;
+                      break;
                     default:
                       DEVICE_ASSERT(false, "seismogram not supported");
                       return {};
@@ -186,9 +194,109 @@ void specfem::domain::impl::kernels::receiver_kernel<
                                  point_properties,
                                  element_quadrature.hprime_gll, active_field,
                                  sv_receiver_field);
-            });
+              if(seismogram_type_l == specfem::enums::seismogram::type::pressure){
+                //for pressure, we need to compute -kappa * div(s)
+                //so we store displacement into auxfield so we can overwrite
+                //sv_receiver_field
 
+                #ifndef KOKKOS_ENABLE_CUDA
+                #pragma unroll
+                #endif
+                for (int l = 0; l < specfem::dimension::dimension<DimensionType>::dim; l++) {
+                  aux_field.displacement(iz,ix,l) = sv_receiver_field(l);
+                }
+              }
+            });
         team_member.team_barrier();
+
+        if(seismogram_type_l == specfem::enums::seismogram::type::pressure){
+          // we stored displacement into auxfield, and we need to compute -kappa * div(s)
+          // algorithms::divergence might work, but it seems to take a chunk_policy,
+          // which we don't have right now.
+
+          Kokkos::parallel_for(
+            quadrature_points.template TeamThreadRange<specfem::enums::axes::z,
+                                                       specfem::enums::axes::x>(
+                team_member),
+            [=](const int xz) {
+              int iz, ix;
+              sub2ind(xz, ngllx, iz, ix);
+              const specfem::point::index<DimensionType> index(ispec_l, iz, ix);
+              const auto point_partial_derivatives =
+                  [&]() {
+                    specfem::point::partial_derivatives<DimensionType, false,
+                                                        using_simd>
+                    point_partial_derivatives;
+                specfem::compute::load_on_device(index, partial_derivatives,
+                                                 point_partial_derivatives);
+                return point_partial_derivatives;
+              }();
+
+              const auto point_properties =
+                  [&]() -> specfem::point::properties<DimensionType, MediumTag, PropertyTag, using_simd> {
+                specfem::point::properties<DimensionType, MediumTag, PropertyTag, using_simd>
+                    point_properties;
+                specfem::compute::load_on_device(index, properties,
+                                                 point_properties);
+                return point_properties;
+              }();
+
+
+              //bulk modulus
+              const type_real kappa = [&]() -> type_real {
+                if constexpr (MediumTag == specfem::element::medium_tag::acoustic){
+                  return point_properties.kappa;
+                }else if constexpr (MediumTag == specfem::element::medium_tag::elastic){
+                  //we may also need an isotropic if statement?
+                  return point_properties.lambdaplus2mu;
+                }else{
+                  static_assert(false, "include/domain/impl/receivers/kernel.tpp: unknown medium to retrieve kappa!");
+                  return 0;
+                }
+              }();
+
+              auto sv_receiver_field =
+                  Kokkos::subview(receivers.receiver_field, iz, ix, iseis_l,
+                                  ireceiver_l, isig_step, Kokkos::ALL);
+
+              // Compute gradient
+              type_real dsx_dxi = 0.0;
+              type_real dsx_dgamma = 0.0;
+              type_real dsz_dxi = 0.0;
+              type_real dsz_dgamma = 0.0;
+
+#ifndef KOKKOS_ENABLE_CUDA
+#pragma unroll
+#endif
+              for (int l = 0; l < NGLL; l++) {
+                dsx_dxi += element_quadrature.hprime_gll(ix, l) * aux_field.displacement(iz, l, 0);
+                dsz_dxi += element_quadrature.hprime_gll(ix, l) * aux_field.displacement(iz, l, 0);
+                dsx_dgamma += element_quadrature.hprime_gll(iz, l) * aux_field.displacement(l, ix, 0);
+                dsz_dgamma += element_quadrature.hprime_gll(iz, l) * aux_field.displacement(l, ix, 0);
+              }
+
+              //take divergence
+              type_real divs = (
+                // dsx_dx
+                (dsx_dxi * point_partial_derivatives.xix +
+                dsx_dgamma * point_partial_derivatives.gammax)
+                + // dsz_dz
+                (dsz_dxi * point_partial_derivatives.xiz +
+                dsz_dgamma * point_partial_derivatives.gammaz)
+              );
+
+              sv_receiver_field(0) = - kappa * divs;
+
+
+#ifndef KOKKOS_ENABLE_CUDA
+#pragma unroll
+#endif
+              for (int l = 1; l < specfem::dimension::dimension<DimensionType>::dim; l++) {
+                sv_receiver_field(l) = 0; //clear other components
+              }
+            });
+          team_member.team_barrier();
+        }
 
         // compute seismograms components
         //-------------------------------------------------------------------
