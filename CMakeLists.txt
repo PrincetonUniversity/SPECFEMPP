@@ -467,27 +467,34 @@ add_library(
         src/writer/seismogram.cpp
         src/writer/wavefield.cpp
         src/writer/kernel.cpp
-        src/writer/plot_wavefield.cpp
+)
+
+target_link_libraries(
+        writer
+        compute
+        receiver_class
+        IO
+)
+
+add_library(
+        plotter
+        src/plotter/plot_wavefield.cpp
 )
 
 if (NOT VTK_CXX_BUILD)
         target_compile_definitions(
-                writer
+                plotter
                 PUBLIC -DNO_VTK
         )
 
         target_link_libraries(
-                writer
+                plotter
                 compute
-                receiver_class
-                IO
         )
 else ()
         target_link_libraries(
-                writer
+                plotter
                 compute
-                receiver_class
-                IO
                 ${VTK_LIBRARIES}
         )
 endif()
@@ -538,6 +545,7 @@ target_link_libraries(
         parameter_reader
         receiver_class
         writer
+        plotter
         reader
         domain
         coupled_interface
