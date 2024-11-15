@@ -291,6 +291,7 @@ target_link_libraries(
   algorithms
   domain
   coupled_interface
+  plotter
   -lpthread -lm
 )
 
@@ -317,6 +318,7 @@ target_link_libraries(
   coupled_interface
   domain
   solver
+  plotter
   -lpthread -lm
 )
 
@@ -335,6 +337,7 @@ target_link_libraries(
   compute
   parameter_reader
   writer
+  plotter
   domain
   coupled_interface
   solver
@@ -356,6 +359,7 @@ target_link_libraries(
   compute
   parameter_reader
   writer
+  plotter
   domain
   coupled_interface
   solver
