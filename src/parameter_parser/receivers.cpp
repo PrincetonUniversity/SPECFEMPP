@@ -27,6 +27,8 @@ specfem::runtime_configuration::receivers::receivers(const YAML::Node &Node) {
       this->stypes.push_back(specfem::enums::seismogram::type::velocity);
     } else if (seismogram_type.as<std::string>() == "acceleration") {
       this->stypes.push_back(specfem::enums::seismogram::type::acceleration);
+    } else if (seismogram_type.as<std::string>() == "pressure") {
+      this->stypes.push_back(specfem::enums::seismogram::type::pressure);
     } else {
       std::ostringstream message;
 
