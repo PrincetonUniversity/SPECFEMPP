@@ -2,7 +2,7 @@
 
 #include "compute/assembly/assembly.hpp"
 #include "enumerations/display.hpp"
-#include "writer/writer.hpp"
+#include "plotter/plotter.hpp"
 #include "yaml-cpp/yaml.h"
 #include <string>
 
@@ -30,9 +30,10 @@ public:
    */
   plot_wavefield(const std::string output_format,
                  const std::string output_folder, const std::string component,
-                 const std::string wavefield_type)
+                 const std::string wavefield_type, const int time_interval)
       : output_format(output_format), output_folder(output_folder),
-        component(component), wavefield_type(wavefield_type) {}
+        component(component), wavefield_type(wavefield_type),
+        time_interval(time_interval) {}
 
   /**
    * @brief Construct a new plotter configuration object from YAML node
@@ -49,7 +50,7 @@ public:
    * @return std::shared_ptr<specfem::writer::writer> Pointer to an instantiated
    * plotter object
    */
-  std::shared_ptr<specfem::writer::writer> instantiate_wavefield_plotter(
+  std::shared_ptr<specfem::plotter::plotter> instantiate_wavefield_plotter(
       const specfem::compute::assembly &assembly) const;
 
 private:
@@ -57,6 +58,7 @@ private:
   std::string output_folder;  ///< Path to output folder
   std::string component;      ///< Component of the wavefield to plot
   std::string wavefield_type; ///< Type of wavefield to plot
+  int time_interval;          ///< Time interval for plotting
 };
 } // namespace runtime_configuration
 } // namespace specfem

@@ -1,6 +1,6 @@
 #include "parameter_parser/writer/plot_wavefield.hpp"
-#include "writer/plot_wavefield.hpp"
-#include "writer/writer.hpp"
+#include "plotter/plot_wavefield.hpp"
+#include "plotter/plotter.hpp"
 #include <boost/filesystem.hpp>
 
 specfem::runtime_configuration::plot_wavefield::plot_wavefield(
@@ -47,13 +47,22 @@ specfem::runtime_configuration::plot_wavefield::plot_wavefield(
     }
   }();
 
+  const int time_interval = [&]() -> int {
+    if (Node["time_interval"]) {
+      return Node["time_interval"].as<int>();
+    } else {
+      throw std::runtime_error(
+          "Time interval not specified in the display section");
+    }
+  }();
+
   *this = specfem::runtime_configuration::plot_wavefield(
-      output_format, output_folder, component, wavefield_type);
+      output_format, output_folder, component, wavefield_type, time_interval);
 
   return;
 }
 
-std::shared_ptr<specfem::writer::writer>
+std::shared_ptr<specfem::plotter::plotter>
 specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
     const specfem::compute::assembly &assembly) const {
 
@@ -68,18 +77,12 @@ specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
   }();
 
   const auto component = [&]() {
-    if (this->component == "displacement_x") {
-      return specfem::display::wavefield::displacement_x;
-    } else if (this->component == "displacement_z") {
-      return specfem::display::wavefield::displacement_z;
-    } else if (this->component == "velocity_x") {
-      return specfem::display::wavefield::velocity_x;
-    } else if (this->component == "velocity_z") {
-      return specfem::display::wavefield::velocity_z;
-    } else if (this->component == "acceleration_x") {
-      return specfem::display::wavefield::acceleration_x;
-    } else if (this->component == "acceleration_z") {
-      return specfem::display::wavefield::acceleration_z;
+    if (this->component == "displacement") {
+      return specfem::display::wavefield::displacement;
+    } else if (this->component == "velocity") {
+      return specfem::display::wavefield::velocity;
+    } else if (this->component == "acceleration") {
+      return specfem::display::wavefield::acceleration;
     } else if (this->component == "pressure") {
       return specfem::display::wavefield::pressure;
     } else {
@@ -98,6 +101,7 @@ specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
     }
   }();
 
-  return std::make_shared<specfem::writer::plot_wavefield>(
-      assembly, output_format, component, wavefield, this->output_folder);
+  return std::make_shared<specfem::plotter::plot_wavefield>(
+      assembly, output_format, component, wavefield, time_interval,
+      this->output_folder);
 }
