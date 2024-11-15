@@ -34,7 +34,7 @@
 
 #ifdef NO_VTK
 
-void specfem::plotter::plot_wavefield::write() {
+void specfem::plotter::plot_wavefield::plot() {
   std::ostringstream message;
   message
       << "Display section is not enabled, since SPECFEM++ was built without "
