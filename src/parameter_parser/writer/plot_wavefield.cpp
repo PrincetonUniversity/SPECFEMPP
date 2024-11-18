@@ -71,6 +71,8 @@ specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
       return specfem::display::format::PNG;
     } else if (this->output_format == "JPG") {
       return specfem::display::format::JPG;
+    } else if (this->output_format == "on_screen") {
+      return specfem::display::format::on_screen;
     } else {
       throw std::runtime_error("Unknown plotter format");
     }
