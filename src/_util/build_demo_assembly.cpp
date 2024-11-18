@@ -52,7 +52,8 @@ namespace demo_assembly {
 void construct_demo_mesh(
     specfem::mesh::mesh &mesh, const specfem::quadrature::quadratures &quad,
     const int nelemx, const int nelemz,
-    std::vector<specfem::adjacency_graph::adjacency_pointer> &removals) {
+    std::vector<specfem::adjacency_graph::adjacency_pointer> &removals,
+    int demo_construct_mode) {
   constexpr int NDIM = 2;
   constexpr type_real eps2 = 1e-12; // epsilon^2 for
 
@@ -71,8 +72,11 @@ void construct_demo_mesh(
   std::vector<long double> offsets(nelemz);
   for (int ielemz = 0; ielemz < nelemz; ielemz++) {
     offsets[ielemz] = 0; // for now just set zero offsets
-    if (ielemz % 2 == 0) {
-      offsets[ielemz] = 0.5;
+
+    if (demo_construct_mode = 1) { // mode == 1: half shifts every other one.
+      if (ielemz % 2 == 0) {
+        offsets[ielemz] = 0.5;
+      }
     }
   }
 
@@ -230,21 +234,26 @@ void construct_demo_mesh(
 
 void construct_demo_mesh(
     specfem::mesh::mesh &mesh, const specfem::quadrature::quadratures &quad,
-    std::vector<specfem::adjacency_graph::adjacency_pointer> &removals) {
-  _util::demo_assembly::construct_demo_mesh(mesh, quad, 10, 10, removals);
+    std::vector<specfem::adjacency_graph::adjacency_pointer> &removals,
+    int demo_construct_mode) {
+  _util::demo_assembly::construct_demo_mesh(mesh, quad, 10, 10, removals,
+                                            demo_construct_mode);
 }
 
 void construct_demo_mesh(specfem::mesh::mesh &mesh,
                          const specfem::quadrature::quadratures &quad,
-                         const int nelemx, const int nelemz) {
+                         const int nelemx, const int nelemz,
+                         int demo_construct_mode) {
   std::vector<specfem::adjacency_graph::adjacency_pointer> removals;
   _util::demo_assembly::construct_demo_mesh(mesh, quad, nelemx, nelemz,
-                                            removals);
+                                            removals, demo_construct_mode);
 }
 void construct_demo_mesh(specfem::mesh::mesh &mesh,
-                         const specfem::quadrature::quadratures &quad) {
+                         const specfem::quadrature::quadratures &quad,
+                         int demo_construct_mode) {
   std::vector<specfem::adjacency_graph::adjacency_pointer> removals;
-  _util::demo_assembly::construct_demo_mesh(mesh, quad, removals);
+  _util::demo_assembly::construct_demo_mesh(mesh, quad, removals,
+                                            demo_construct_mode);
 }
 
 } // namespace demo_assembly

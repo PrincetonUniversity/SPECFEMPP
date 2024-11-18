@@ -35,6 +35,18 @@ edge_storage<ngll, datacapacity>::edge_storage(const std::vector<edge> edges)
 }
 
 template <int ngll, int datacapacity>
+void edge_storage<ngll, datacapacity>::initialize_intersection_data(int capacity){
+  if (!intersections_built){
+    build_intersections_on_host();
+  }
+  intersection_data = specfem::kokkos::DeviceView2d<type_real>(
+              "_util::edge_manager::edge_storage::edge_data", n_intersections, capacity);
+  h_intersection_data = Kokkos::create_mirror_view(intersection_data);
+
+  intersection_data_built = true;
+}
+
+template <int ngll, int datacapacity>
 void edge_storage<ngll, datacapacity>::foreach_edge_on_host(
     const std::function<void(edge_data<ngll, datacapacity> &)> &func) {
   for (int i = 0; i < n_edges; i++) {
@@ -58,6 +70,26 @@ void edge_storage<ngll, datacapacity>::foreach_intersection_on_host(
   }
   Kokkos::deep_copy(intersection_container, h_intersection_container);
   Kokkos::deep_copy(edge_data_container, h_edge_data_container);
+}
+
+template <int ngll, int datacapacity>
+void edge_storage<ngll, datacapacity>::foreach_intersection_on_host(
+    const std::function<void(edge_intersection<ngll> &,
+                              edge_data<ngll, datacapacity> &,
+                              edge_data<ngll, datacapacity> &,
+          decltype(Kokkos::subview(std::declval<specfem::kokkos::HostView2d<type_real>>(), 1u, Kokkos::ALL)))> &func){
+
+  if (!intersection_data_built) {
+    throw std::runtime_error("Attempting a foreach_intersection_on_host() with data access before the intersections array was built!");
+  }
+  for (int i = 0; i < n_intersections; i++) {
+    edge_intersection<ngll> &ei = h_intersection_container(i);
+    func(ei, h_edge_data_container(ei.a_ref_ind),
+         h_edge_data_container(ei.b_ref_ind), Kokkos::subview(h_intersection_data,i,Kokkos::ALL));
+  }
+  Kokkos::deep_copy(intersection_container, h_intersection_container);
+  Kokkos::deep_copy(edge_data_container, h_edge_data_container);
+  Kokkos::deep_copy(intersection_data, h_intersection_data);
 }
 
 /**

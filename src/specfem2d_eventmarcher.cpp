@@ -5,6 +5,7 @@
 #include "solver/time_marching.hpp"
 #include "timescheme/newmark.hpp"
 
+// #define FORCE_INTO_CONTINUOUS
 #define _RELAX_PARAM_COEF_ 40
 
 #define _EVENT_MARCHER_DUMPS_
@@ -29,9 +30,18 @@ void execute(specfem::MPI::MPI *mpi) {
   // https://specfem2d-kokkos.readthedocs.io/en/adjoint-simulations/developer_documentation/tutorials/tutorial1/Chapter2/index.html
 
   std::vector<specfem::adjacency_graph::adjacency_pointer> edge_removals;
+#ifdef FORCE_INTO_CONTINUOUS
   auto params =
       _util::demo_assembly::simulation_params().dt(1e-3).tmax(5).use_demo_mesh(
-          edge_removals);
+          0,
+          edge_removals); // construct-mode == 0 (no shifts)
+  edge_removals.clear();
+#else
+  auto params =
+      _util::demo_assembly::simulation_params().dt(1e-3).tmax(5).use_demo_mesh(
+          1,
+          edge_removals); // construct-mode == 1
+#endif
   specfem::compute::assembly assembly = params.build_assembly();
 
 #ifdef _EVENT_MARCHER_DUMPS_
@@ -48,7 +58,9 @@ void execute(specfem::MPI::MPI *mpi) {
     edge_removals[i].elem =
         assembly.mesh.mapping.mesh_to_compute(edge_removals[i].elem);
   }
+#ifndef FORCE_INTO_CONTINUOUS
   remap_with_disconts(assembly, params, edge_removals);
+#endif
 
 #ifdef _EVENT_MARCHER_DUMPS_
   _util::dump_simfield(_index_change_dump_ + "/post_remap.dat",
@@ -174,13 +186,24 @@ void execute(specfem::MPI::MPI *mpi) {
 #define EDGEIND_FIELDNDERIV 6
 #define EDGEIND_SPEEDPARAM 8
 #define EDGEIND_SHAPENDERIV 9
-#define EDGEIND_FLUXTOTAL 14
-#define EDGEIND_FLUX1 15
-#define EDGEIND_FLUX2 16
-#define EDGEIND_FLUX3 17
+#define EDGEIND_BDRY_TYPE 14
 
 #define data_capacity 20
 #define edge_capacity 5
+#define INTERIND_FLUXTOTAL_A 0
+#define INTERIND_FLUX1_A (qp5.NGLL)
+#define INTERIND_FLUX2_A (qp5.NGLL * 2)
+#define INTERIND_FLUX3_A (qp5.NGLL * 3)
+#define INTERIND_FLUXTOTAL_B (qp5.NGLL * 4)
+#define INTERIND_FLUX1_B (qp5.NGLL * 5)
+#define INTERIND_FLUX2_B (qp5.NGLL * 6)
+#define INTERIND_FLUX3_B (qp5.NGLL * 7)
+#define INTERIND_UJMP (qp5.NGLL * 8)
+#define INTERIND_DU_AVG (qp5.NGLL * 9)
+#define INTERIND_ACCEL_INCLUDE_A (qp5.NGLL * 10)
+#define INTERIND_ACCEL_INCLUDE_B (qp5.NGLL * 11)
+
+#define intersect_data_capacity (qp5.NGLL * (12))
   _util::edge_manager::edge_storage<edge_capacity, data_capacity>
       dg_edge_storage(dg_edges);
 
@@ -198,72 +221,84 @@ void execute(specfem::MPI::MPI *mpi) {
 #ifdef _EVENT_MARCHER_DUMPS_
   event_system.register_event(&output_edges);
 #endif
-  dg_edge_storage.foreach_edge_on_host(
-      [&](_util::edge_manager::edge_data<edge_capacity, data_capacity> &e) {
-        using PointPartialDerivativesType =
-            specfem::point::partial_derivatives<specfem::dimension::type::dim2,
-                                                true, false>;
-        e.ngll = qp5.NGLL;
-        int ix, iz;
-        int ispec = e.parent.id;
-        for (int i = 0; i < qp5.NGLL; i++) {
-          point_from_id(ix, iz, e.parent.bdry, i);
-          e.x[i] = assembly.mesh.points.coord(0, ispec, iz, ix);
-          e.z[i] = assembly.mesh.points.coord(1, ispec, iz, ix);
-          specfem::point::index<specfem::dimension::type::dim2> index(ispec, iz,
-                                                                      ix);
+  dg_edge_storage.foreach_edge_on_host([&](_util::edge_manager::edge_data<
+                                           edge_capacity, data_capacity> &e) {
+    using PointPartialDerivativesType =
+        specfem::point::partial_derivatives<specfem::dimension::type::dim2,
+                                            true, false>;
+    e.ngll = qp5.NGLL;
+    int ix, iz;
+    int ispec = e.parent.id;
+    for (int i = 0; i < qp5.NGLL; i++) {
+      point_from_id(ix, iz, e.parent.bdry, i);
+      e.x[i] = assembly.mesh.points.coord(0, ispec, iz, ix);
+      e.z[i] = assembly.mesh.points.coord(1, ispec, iz, ix);
+      specfem::point::index<specfem::dimension::type::dim2> index(ispec, iz,
+                                                                  ix);
 
-          PointPartialDerivativesType ppd;
-          specfem::compute::load_on_host(index, assembly.partial_derivatives,
-                                         ppd);
-          // type_real dvdxi = assembly.mesh.quadratures.h_hprime(ix,ix);
-          // type_real dvdga = assembly.mesh.quadratures.h_hprime(iz,iz);
-          // type_real dvdx = dvdxi * ppd.xix +
-          //                  dvdga * ppd.gammax;
-          // type_real dvdz = dvdxi * ppd.xiz +
-          //                  dvdga * ppd.gammaz;
-          type_real det = 1 / fabs(ppd.xix * ppd.gammaz - ppd.xiz * ppd.gammax);
-          type_real nx, nz;
-          switch (e.parent.bdry) {
-          case specfem::enums::edge::type::RIGHT:
-            nx = ppd.xix;
-            nz = ppd.xiz;
-            break;
-          case specfem::enums::edge::type::TOP:
-            nx = ppd.gammax;
-            nz = ppd.gammaz;
-            break;
-          case specfem::enums::edge::type::LEFT:
-            nx = -ppd.xix;
-            nz = -ppd.xiz;
-            break;
-          case specfem::enums::edge::type::BOTTOM:
-            nx = -ppd.gammax;
-            nz = -ppd.gammaz;
-            break;
-          }
-          e.data[EDGEIND_NX][i] = nx;
-          e.data[EDGEIND_NZ][i] = nz;
-          e.data[EDGEIND_DET][i] = det;
-          e.data[EDGEIND_DS][i] = sqrt(nx * nx + nz * nz) * det; // dS
-          for (int ishape = 0; ishape < e.ngll; ishape++) {
-            int ixshape, izshape;
-            point_from_id(ixshape, izshape, e.parent.bdry, ishape);
-            // v = L_{ixshape}(x) L_{izshape}(z);
-            // hprime(i,j) = L_j'(t_i)
-            type_real dvdxi =
-                assembly.mesh.quadratures.gll.h_hprime(ix, ixshape) *
-                (iz == izshape);
-            type_real dvdga =
-                assembly.mesh.quadratures.gll.h_hprime(iz, izshape) *
-                (ix == ixshape);
-            type_real dvdx = dvdxi * ppd.xix + dvdga * ppd.gammax;
-            type_real dvdz = dvdxi * ppd.xiz + dvdga * ppd.gammaz;
-            e.data[EDGEIND_SHAPENDERIV + ishape][i] =
-                (dvdx * nx + dvdz * nz) * det;
-          }
-        }
-      });
+      PointPartialDerivativesType ppd;
+      specfem::compute::load_on_host(index, assembly.partial_derivatives, ppd);
+      // type_real dvdxi = assembly.mesh.quadratures.h_hprime(ix,ix);
+      // type_real dvdga = assembly.mesh.quadratures.h_hprime(iz,iz);
+      // type_real dvdx = dvdxi * ppd.xix +
+      //                  dvdga * ppd.gammax;
+      // type_real dvdz = dvdxi * ppd.xiz +
+      //                  dvdga * ppd.gammaz;
+      type_real det = 1 / fabs(ppd.xix * ppd.gammaz - ppd.xiz * ppd.gammax);
+      type_real nx, nz;
+      switch (e.parent.bdry) {
+      case specfem::enums::edge::type::RIGHT:
+        nx = ppd.xix;
+        nz = ppd.xiz;
+        break;
+      case specfem::enums::edge::type::TOP:
+        nx = ppd.gammax;
+        nz = ppd.gammaz;
+        break;
+      case specfem::enums::edge::type::LEFT:
+        nx = -ppd.xix;
+        nz = -ppd.xiz;
+        break;
+      case specfem::enums::edge::type::BOTTOM:
+        nx = -ppd.gammax;
+        nz = -ppd.gammaz;
+        break;
+      }
+      e.data[EDGEIND_NX][i] = nx;
+      e.data[EDGEIND_NZ][i] = nz;
+      e.data[EDGEIND_DET][i] = det;
+      e.data[EDGEIND_DS][i] = sqrt(nx * nx + nz * nz) * det; // dS
+      for (int ishape = 0; ishape < e.ngll; ishape++) {
+        int ixshape, izshape;
+        point_from_id(ixshape, izshape, e.parent.bdry, ishape);
+        // v = L_{ixshape}(x) L_{izshape}(z);
+        // hprime(i,j) = L_j'(t_i)
+        type_real dvdxi = assembly.mesh.quadratures.gll.h_hprime(ix, ixshape) *
+                          (iz == izshape);
+        type_real dvdga = assembly.mesh.quadratures.gll.h_hprime(iz, izshape) *
+                          (ix == ixshape);
+        type_real dvdx = dvdxi * ppd.xix + dvdga * ppd.gammax;
+        type_real dvdz = dvdxi * ppd.xiz + dvdga * ppd.gammaz;
+        e.data[EDGEIND_SHAPENDERIV + ishape][i] = (dvdx * nx + dvdz * nz) * det;
+      }
+      e.data[EDGEIND_BDRY_TYPE][i] =
+          (type_real)assembly.boundaries.boundary_tags(ispec);
+      specfem::point::boundary<specfem::element::boundary_tag::none,
+                               specfem::dimension::type::dim2, false>
+          bdnone;
+      specfem::compute::load_on_host(index, assembly.boundaries, bdnone);
+      e.data[EDGEIND_BDRY_TYPE + 1][i] =
+          (type_real)(bdnone.tag == specfem::element::boundary_tag::none);
+      specfem::point::boundary<
+          specfem::element::boundary_tag::acoustic_free_surface,
+          specfem::dimension::type::dim2, false>
+          bdafs;
+      specfem::compute::load_on_host(index, assembly.boundaries, bdafs);
+      e.data[EDGEIND_BDRY_TYPE + 2][i] =
+          (type_real)(bdafs.tag ==
+                      specfem::element::boundary_tag::acoustic_free_surface);
+    }
+  });
   auto spec_charlen2 = [&](int ispec) {
     type_real lx1 =
         assembly.mesh.points.coord(0, ispec, 0, 0) -
@@ -311,6 +346,8 @@ void execute(specfem::MPI::MPI *mpi) {
               "Mortar Flux: medium combination not supported.");
         }
       });
+
+  dg_edge_storage.initialize_intersection_data(intersect_data_capacity);
 
   specfem::event_marching::arbitrary_call_event store_boundaryvals(
       [&]() {
@@ -402,8 +439,10 @@ void execute(specfem::MPI::MPI *mpi) {
             [&](_util::edge_manager::edge_intersection<edge_capacity>
                     &intersect,
                 _util::edge_manager::edge_data<edge_capacity, data_capacity> &a,
-                _util::edge_manager::edge_data<edge_capacity, data_capacity>
-                    &b) {
+                _util::edge_manager::edge_data<edge_capacity, data_capacity> &b,
+                decltype(Kokkos::subview(
+                    std::declval<specfem::kokkos::HostView2d<type_real> >(), 1u,
+                    Kokkos::ALL)) data_view) {
               using PointAcoustic =
                   specfem::point::field<specfem::dimension::type::dim2,
                                         specfem::element::medium_tag::acoustic,
@@ -462,13 +501,14 @@ void execute(specfem::MPI::MPI *mpi) {
                                    intersect.b_to_mortar(
                                        iquad, b.data[EDGEIND_FIELDNDERIV]) *
                                    (b_scale_dS / a_scale_dS));
+                    data_view[INTERIND_UJMP + iquad] = u_jmp;
+                    data_view[INTERIND_DU_AVG + iquad] = cdu_avg;
 
                     f1 += a_scale_dS * gll.w[iquad] * 0.5 *
                           intersect.a_to_mortar(
                               iquad, a.data[EDGEIND_SHAPENDERIV + a_ishape]) *
                           c * u_jmp;
                     f2 += a_scale_dS * gll.w[iquad] *
-                          intersect.a_to_mortar(iquad, a.data[EDGEIND_DS]) *
                           intersect.a_mortar_trans[iquad][a_ishape] * (cdu_avg);
                     f3 += a_scale_dS * gll.w[iquad] *
                           intersect.a_to_mortar(iquad, a.data[EDGEIND_DS]) *
@@ -480,14 +520,15 @@ void execute(specfem::MPI::MPI *mpi) {
                                      iquad,
                                      a.data[EDGEIND_SHAPENDERIV + a_ishape]) *
                                  c * u_jmp +
-                             intersect.a_to_mortar(iquad, a.data[EDGEIND_DS]) *
-                                 intersect.a_mortar_trans[iquad][a_ishape] *
-                                 (cdu_avg - intersect.relax_param * u_jmp));
+                             intersect.a_mortar_trans[iquad][a_ishape] *
+                                 (cdu_avg - intersect.a_to_mortar(
+                                                iquad, a.data[EDGEIND_DS]) *
+                                                intersect.relax_param * u_jmp));
                   }
-                  a.data[EDGEIND_FLUXTOTAL][a_ishape] = flux;
-                  a.data[EDGEIND_FLUX1][a_ishape] = f1;
-                  a.data[EDGEIND_FLUX2][a_ishape] = f2;
-                  a.data[EDGEIND_FLUX3][a_ishape] = f3;
+                  data_view[INTERIND_FLUXTOTAL_A + a_ishape] = flux;
+                  data_view[INTERIND_FLUX1_A + a_ishape] = f1;
+                  data_view[INTERIND_FLUX2_A + a_ishape] = f2;
+                  data_view[INTERIND_FLUX3_A + a_ishape] = f3;
                   PointAcousticAccel accel;
                   specfem::point::index<specfem::dimension::type::dim2> index(
                       a_ispec, 0, 0);
@@ -502,12 +543,15 @@ void execute(specfem::MPI::MPI *mpi) {
           // specfem::element::boundary_tag::acoustic_free_surface){
           // printf("[%d,%d,%d],",index.ispec,index.iz,index.ix);
 #define AFSCHECK(x) (abs(x - 0) < 1e-8 || abs(x - 1) < 1e-8)
-                  if (!(AFSCHECK(a.x[0]) ||
-                        AFSCHECK(a.x[a.ngll - 1]))) { // hack solution for AFS
-                                                      // bdry check
+                  if (!(AFSCHECK(a.x[a_ishape]) ||
+                        AFSCHECK(a.z[a_ishape]))) { // hack solution for AFS
+                                                    // bdry check
                     accel.acceleration = flux;
                     specfem::compute::atomic_add_on_device(
                         index, accel, assembly.fields.forward);
+                    data_view[INTERIND_ACCEL_INCLUDE_A + a_ishape] = 0;
+                  } else {
+                    data_view[INTERIND_ACCEL_INCLUDE_A + a_ishape] = 1;
                   }
                 }
                 for (int b_ishape = 0; b_ishape < b.ngll; b_ishape++) {
@@ -539,7 +583,6 @@ void execute(specfem::MPI::MPI *mpi) {
                               iquad, b.data[EDGEIND_SHAPENDERIV + b_ishape]) *
                           c * u_jmp;
                     f2 += b_scale_dS * gll.w[iquad] *
-                          intersect.b_to_mortar(iquad, b.data[EDGEIND_DS]) *
                           intersect.b_mortar_trans[iquad][b_ishape] * (cdu_avg);
                     f3 += b_scale_dS * gll.w[iquad] *
                           intersect.b_to_mortar(iquad, b.data[EDGEIND_DS]) *
@@ -551,14 +594,15 @@ void execute(specfem::MPI::MPI *mpi) {
                                      iquad,
                                      b.data[EDGEIND_SHAPENDERIV + b_ishape]) *
                                  c * u_jmp +
-                             intersect.b_to_mortar(iquad, b.data[EDGEIND_DS]) *
-                                 intersect.b_mortar_trans[iquad][b_ishape] *
-                                 (cdu_avg - intersect.relax_param * u_jmp));
+                             intersect.b_mortar_trans[iquad][b_ishape] *
+                                 (cdu_avg - intersect.b_to_mortar(
+                                                iquad, b.data[EDGEIND_DS]) *
+                                                intersect.relax_param * u_jmp));
                   }
-                  b.data[EDGEIND_FLUXTOTAL][b_ishape] = flux;
-                  b.data[EDGEIND_FLUX1][b_ishape] = f1;
-                  b.data[EDGEIND_FLUX2][b_ishape] = f2;
-                  b.data[EDGEIND_FLUX3][b_ishape] = f3;
+                  data_view[INTERIND_FLUXTOTAL_B + b_ishape] = flux;
+                  data_view[INTERIND_FLUX1_B + b_ishape] = f1;
+                  data_view[INTERIND_FLUX2_B + b_ishape] = f2;
+                  data_view[INTERIND_FLUX3_B + b_ishape] = f3;
                   PointAcousticAccel accel;
                   specfem::point::index<specfem::dimension::type::dim2> index(
                       b_ispec, 0, 0);
@@ -572,12 +616,15 @@ void execute(specfem::MPI::MPI *mpi) {
                   // if(point_boundary.tag !=
                   // specfem::element::boundary_tag::acoustic_free_surface){
                   // printf("[%d,%d,%d],",index.ispec,index.iz,index.ix);
-                  if (!(AFSCHECK(b.x[0]) ||
-                        AFSCHECK(b.x[b.ngll - 1]))) { // hack solution for AFS
-                                                      // bdry check
+                  if (!(AFSCHECK(b.x[b_ishape]) ||
+                        AFSCHECK(b.z[b_ishape]))) { // hack solution for AFS
+                                                    // bdry check
                     accel.acceleration = flux;
                     specfem::compute::atomic_add_on_device(
                         index, accel, assembly.fields.forward);
+                    data_view[INTERIND_ACCEL_INCLUDE_B + b_ishape] = 0;
+                  } else {
+                    data_view[INTERIND_ACCEL_INCLUDE_B + b_ishape] = 1;
                   }
                 }
 

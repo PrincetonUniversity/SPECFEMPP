@@ -80,12 +80,27 @@ public:
       const std::function<void(edge_intersection<ngll> &,
                                edge_data<ngll, datacapacity> &,
                                edge_data<ngll, datacapacity> &)> &func);
+  void foreach_intersection_on_host(
+      const std::function<
+          void(edge_intersection<ngll> &, edge_data<ngll, datacapacity> &,
+               edge_data<ngll, datacapacity> &,
+               decltype(Kokkos::subview(
+                   std::declval<specfem::kokkos::HostView2d<type_real> >(), 1u,
+                   Kokkos::ALL)))> &func);
   void build_intersections_on_host();
   edge_data<ngll, datacapacity> &get_edge_on_host(int edge);
   edge_intersection<ngll> &get_intersection_on_host(int intersection);
 
   int num_edges() const { return n_edges; }
   int num_intersections() const { return n_intersections; }
+  specfem::kokkos::HostView2d<type_real> &get_intersection_data_on_host() {
+    if (!intersection_data_built) {
+      throw std::runtime_error("Attempting a get_intersection_data_on_host() "
+                               "before the intersections array was built!");
+    }
+    return h_intersection_data;
+  }
+  void initialize_intersection_data(int capacity);
 
 private:
   int n_edges;
@@ -102,6 +117,10 @@ private:
       intersection_container;
   specfem::kokkos::HostView1d<edge_intersection<ngll> >
       h_intersection_container;
+
+  bool intersection_data_built;
+  specfem::kokkos::DeviceView2d<type_real> intersection_data;
+  specfem::kokkos::HostView2d<type_real> h_intersection_data;
 };
 
 } // namespace edge_manager

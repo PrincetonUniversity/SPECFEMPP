@@ -54,17 +54,21 @@ namespace demo_assembly {
 void construct_demo_mesh(
     specfem::mesh::mesh &mesh, const specfem::quadrature::quadratures &quad,
     const int nelemx, const int nelemz,
-    std::vector<specfem::adjacency_graph::adjacency_pointer> &removals);
+    std::vector<specfem::adjacency_graph::adjacency_pointer> &removals,
+    int demo_construct_mode);
 
 void construct_demo_mesh(
     specfem::mesh::mesh &mesh, const specfem::quadrature::quadratures &quad,
-    std::vector<specfem::adjacency_graph::adjacency_pointer> &removals);
+    std::vector<specfem::adjacency_graph::adjacency_pointer> &removals,
+    int demo_construct_mode);
 
 void construct_demo_mesh(specfem::mesh::mesh &mesh,
                          const specfem::quadrature::quadratures &quad,
-                         const int nelemx, const int nelemz);
+                         const int nelemx, const int nelemz,
+                         int demo_construct_mode);
 void construct_demo_mesh(specfem::mesh::mesh &mesh,
-                         const specfem::quadrature::quadratures &quad);
+                         const specfem::quadrature::quadratures &quad,
+                         int demo_construct_mode);
 
 const auto _default_quadrature = []() {
   /// Gauss-Lobatto-Legendre quadrature with 5 GLL points
@@ -138,14 +142,15 @@ struct simulation_params {
     _seismogram_types.push_back(type);
     return *this;
   }
-  simulation_params &use_demo_mesh() {
-    construct_demo_mesh(_mesh, _quadratures);
+  simulation_params &use_demo_mesh(int demo_construct_mode) {
+    construct_demo_mesh(_mesh, _quadratures, demo_construct_mode);
     needs_mesh_update = false;
     return *this;
   }
   simulation_params &use_demo_mesh(
+      int demo_construct_mode,
       std::vector<specfem::adjacency_graph::adjacency_pointer> &removals) {
-    construct_demo_mesh(_mesh, _quadratures, removals);
+    construct_demo_mesh(_mesh, _quadratures, removals, demo_construct_mode);
     needs_mesh_update = false;
     return *this;
   }

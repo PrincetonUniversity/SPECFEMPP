@@ -175,6 +175,9 @@ void dump_edge_container(
   _stream_view<type_real, 2>(dump, intersect_floatdat);
   dump << "intersect_mortartrans";
   _stream_view<type_real, 4>(dump, mortar_trans);
+  dump << "intersect_data";
+  _stream_view<type_real, 2>(dump,
+                             edge_storage.get_intersection_data_on_host());
   dump.close();
 }
 
@@ -241,6 +244,10 @@ void dump_simfield(
   _stream_view<type_real, 2>(dump, simfield.acoustic.h_field_dot_dot);
   dump << "elastic_field_ddot";
   _stream_view<type_real, 2>(dump, simfield.elastic.h_field_dot_dot);
+  dump << "acoustic_mass_inverse";
+  _stream_view<type_real, 2>(dump, simfield.acoustic.h_mass_inverse);
+  dump << "elastic_mass_inverse";
+  _stream_view<type_real, 2>(dump, simfield.elastic.h_mass_inverse);
   // //dump edge values
   // dump << "edge_values_x";
   // _stream_view<type_real,4>(dump,simfield.h_edge_values_x);
