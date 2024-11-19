@@ -22,20 +22,7 @@ struct acoustic_free_surface {
   acoustic_free_surface(){};
 
   acoustic_free_surface(const int nelem_acoustic_surface);
-  /**
-   * @brief Constructor to read and assign values from fortran binary database
-   * file
-   *
-   * @param stream Stream object for fortran binary file buffered to absorbing
-   * boundary section
-   * @param nelem_acoustic_surface Number of absorbing boundary faces
-   * @param knods Spectral element node connectivity
-   * @param mpi Pointer to MPI object
-   */
-  acoustic_free_surface(std::ifstream &stream,
-                        const int &nelem_acoustic_surface,
-                        const Kokkos::View<int **, Kokkos::HostSpace> knods,
-                        const specfem::MPI::MPI *mpi);
+
   ///@}
 
   int nelem_acoustic_surface; ///< Number of elements on the acoustic free

@@ -78,21 +78,11 @@ struct materials {
    * @param nspec Number of spectral elements
    * @param ngnod Number of control nodes per spectral element
    */
-  materials(const int nspec, const int ngnod);
-  /**
-   * @brief Constructor used to allocate and assign views from fortran database
-   * file
-   *
-   * @param stream Stream object for fortran binary file buffered to material
-   * definition section
-   * @param ngnod Number of control nodes per spectral element
-   * @param nspec Number of spectral elements
-   * @param numat Total number of different materials
-   * @param mpi Pointer to a MPI object
-   */
-  materials(std::ifstream &stream, const int numat, const int nspec,
-            const specfem::kokkos::HostView2d<int> knods,
-            const specfem::MPI::MPI *mpi);
+  materials(const int nspec, const int numat)
+      : n_materials(numat),
+        material_index_mapping("specfem::mesh::material_index_mapping",
+                               nspec){};
+
   ///@}
 
   /**
