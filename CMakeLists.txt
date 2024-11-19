@@ -108,6 +108,13 @@ add_library(
         src/IO/fortranio/fortran_io.cpp
         src/IO/HDF5/native_type.cpp
         src/IO/ASCII/native_type.cpp
+        src/IO/mesh/read_mesh.cpp
+        src/IO/mesh/fortran/read_boundaries.cpp
+        src/IO/mesh/fortran/read_elements.cpp
+        src/IO/mesh/fortran/read_material_properties.cpp
+        src/IO/mesh/fortran/read_mesh_database.cpp
+        src/IO/mesh/fortran/read_interfaces.cpp
+        src/IO/mesh/fortran/read_properties.cpp
 )
 
 if (NOT HDF5_CXX_BUILD)
@@ -180,13 +187,11 @@ endif(MPI_PARALLEL)
 
 add_library(
         mesh
-        src/mesh/IO/fortran/read_mesh_database.cpp
         src/mesh/boundaries/forcing_boundaries.cpp
         src/mesh/boundaries/absorbing_boundaries.cpp
         src/mesh/boundaries/acoustic_free_surface.cpp
         src/mesh/elements/tangential_elements.cpp
         src/mesh/elements/axial_elements.cpp
-        src/mesh/properties/properties.cpp
         src/mesh/mpi_interfaces/mpi_interfaces.cpp
         src/mesh/materials/materials.cpp
         src/mesh/coupled_interfaces/interface_container.cpp
@@ -482,6 +487,8 @@ add_executable(
         src/specfem2d.cpp
 )
 
+
+
 target_link_libraries(
         specfem2d
         specfem_mpi
@@ -499,6 +506,31 @@ target_link_libraries(
         kernels
         solver
         Boost::program_options
+)
+
+add_executable(
+        homo2d
+        examples/homogeneous-medium-flat-topography/homo2d.cpp
+)
+
+target_link_libraries(
+        homo2d
+        specfem_mpi
+        Kokkos::kokkos
+        mesh
+        quadrature
+        compute
+        source_class
+        parameter_reader
+        receiver_class
+        writer
+        reader
+        domain
+        coupled_interface
+        kernels
+        solver
+        Boost::program_options
+        ${HDF5_LIBRARIES}
 )
 
 # Include tests
