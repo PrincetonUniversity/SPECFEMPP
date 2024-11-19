@@ -3,8 +3,9 @@
 #include "IO/mesh/fortran/read_properties.hpp"
 
 
-specfem::mesh::properties specfem::IO::mesh::fortran::read_properties(std::ifstream &stream,
-                                      const specfem::MPI::MPI *mpi) {
+specfem::mesh::properties 
+specfem::IO::mesh::fortran::read_properties(
+  std::ifstream &stream, const specfem::MPI::MPI *mpi) {
   // ---------------------------------------------------------------------
   // reading mesh properties
 
@@ -23,8 +24,8 @@ specfem::mesh::properties specfem::IO::mesh::fortran::read_properties(std::ifstr
   int nelem_on_the_axis;       ///< Number of axial elements
   bool plot_lowerleft_corner_only;
 
-  specfem::IO::fortran_read_line(stream, numat, ngnod, nspec, pointsdisp,
-                                 plot_lowerleft_corner_only);
+  specfem::IO::fortran_read_line(stream, &numat, &ngnod, &nspec, &pointsdisp,
+                                 &plot_lowerleft_corner_only);
 
   // ---------------------------------------------------------------------
   if (ngnod != 9) {
@@ -36,10 +37,10 @@ specfem::mesh::properties specfem::IO::mesh::fortran::read_properties(std::ifstr
   }
 
   specfem::IO::fortran_read_line(
-    stream, nelemabs, nelem_acforcing,
-    nelem_acoustic_surface, num_fluid_solid_edges,
-    num_fluid_poro_edges, num_solid_poro_edges,
-    nnodes_tangential_curve, nelem_on_the_axis);
+    stream, &nelemabs, &nelem_acforcing,
+    &nelem_acoustic_surface, &num_fluid_solid_edges,
+    &num_fluid_poro_edges, &num_solid_poro_edges,
+    &nnodes_tangential_curve, &nelem_on_the_axis);
   // ----------------------------------------------------------------------
 
   mpi->sync_all();

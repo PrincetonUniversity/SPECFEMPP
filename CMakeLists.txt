@@ -118,7 +118,7 @@ add_library(
         src/IO/mesh/fortran/read_material_properties.cpp
         src/IO/mesh/fortran/read_mesh_database.cpp
         src/IO/mesh/fortran/read_interfaces.cpp
-
+        src/IO/mesh/fortran/read_properties.cpp
 )
 
 target_link_libraries(

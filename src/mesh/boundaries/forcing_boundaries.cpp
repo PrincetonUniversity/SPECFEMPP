@@ -1,7 +1,6 @@
 #include "IO/fortranio/interface.hpp"
 #include "mesh/boundaries/boundaries.hpp"
 #include "specfem_mpi/interface.hpp"
-#include "utilities.cpp"
 #include <Kokkos_Core.hpp>
 #include <vector>
 

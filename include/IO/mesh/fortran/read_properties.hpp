@@ -2,6 +2,7 @@
 
 #include "mesh/properties/properties.hpp"
 #include "IO/fortranio/interface.hpp"
+#include "specfem_mpi/interface.hpp"
 
 namespace specfem {
 namespace IO {
@@ -15,8 +16,8 @@ namespace fortran {
 * @param mpi MPI object
 * @return specfem::mesh::properties
 */
-specfem::mesh::properties read_properties(std::ifstream &stream,
-                                      const specfem::MPI::MPI *mpi) {};
+specfem::mesh::properties read_properties(std::ifstream &stream, 
+const specfem::MPI::MPI *mpi);
 
 } // namespace fortran
 } // namespace mesh

@@ -1,13 +1,12 @@
-#include "IO/fortranio/fortran_io.hpp"
-#include "specfem_mpi/interface.hpp"
-#include "utilities/interface.hpp"
+#include "IO/mesh/fortran/read_material_properties.hpp"
 #include "mesh/materials/materials.hpp"
-#include "mesh/IO/fortran/read_material_properties.hpp"
+#include "IO/fortranio/interface.hpp"
+#include "utilities/interface.hpp"
+#include "specfem_mpi/interface.hpp"
 #include <memory>
 #include <vector>
 
 namespace {
-
 constexpr auto elastic = specfem::element::medium_tag::elastic;
 constexpr auto isotropic = specfem::element::property_tag::isotropic;
 constexpr auto acoustic = specfem::element::medium_tag::acoustic;
@@ -174,66 +173,31 @@ void read_material_indices(
   return;
 }
 
+} // namespace
 
-void read_material_indices(
-    std::ifstream &stream, const int nspec, const int numat,
-    const std::vector<specfem::mesh::materials::material_specification>
-        &index_mapping,
-    const specfem::kokkos::HostView1d<
-        specfem::mesh::materials::material_specification>
-        material_index_mapping,
-    const specfem::kokkos::HostView2d<int> knods,
-    const specfem::MPI::MPI *mpi) {
-
-  const int ngnod = knods.extent(0);
-  int n, kmato_read, pml_read;
-
-  std::vector<int> knods_read(ngnod, -1);
-
-  for (int ispec = 0; ispec < nspec; ispec++) {
-    // format: #element_id  #material_id #node_id1 #node_id2 #...
-    specfem::IO::fortran_read_line(stream, &n, &kmato_read, &knods_read,
-                                   &pml_read);
-
-    if (n < 1 || n > nspec) {
-      throw std::runtime_error("Error reading material indices");
-    }
-
-    if (kmato_read < 1 || kmato_read > numat) {
-      throw std::runtime_error("Error reading material indices");
-    }
-
-    for (int i = 0; i < ngnod; i++) {
-      if (knods_read[i] == 0)
-        throw std::runtime_error("Error reading knods (node_id) values");
-
-      knods(i, n - 1) = knods_read[i] - 1;
-    }
-
-    material_index_mapping(n - 1) = index_mapping[kmato_read - 1];
-  }
-
-  return;
-}
-
-specfem::mesh::materials specfem::IO:mesh:fortran::read_material_properties(
+specfem::mesh::materials 
+specfem::IO::mesh::fortran::read_material_properties(
     std::ifstream &stream, const int numat, const int nspec,
-    const specfem::kokkos::HostView2d<int> knods, const specfem::MPI::MPI *mpi)
-    : n_materials(numat),
-      material_index_mapping("specfem::mesh::material_index_mapping", nspec) {
-
-  specfem:mesh::materials materials(nspec, knods);
+    const specfem::kokkos::HostView2d<int> knods, const specfem::MPI::MPI *mpi){
+ 
+  // Create materials instances
+  specfem::mesh::materials materials(nspec, numat);
 
   // Read material properties
-  auto index_mapping = read_materials(stream, numat, materials.elastic_isotropic,
-                                      materials.acoustic_isotropic, mpi);
+  auto index_mapping = read_materials(
+    stream, numat, 
+    materials.elastic_isotropic,
+    materials.acoustic_isotropic, 
+    mpi);
 
   // Read material indices
-  read_material_indices(stream, nspec, numat, index_mapping,
-                        materials.material_index_mapping, knods, mpi);
+  read_material_indices(
+    stream, nspec, numat, 
+    index_mapping,
+    materials.material_index_mapping, 
+    knods, mpi);
 
   return materials;
 }
 
 
-} // namespace

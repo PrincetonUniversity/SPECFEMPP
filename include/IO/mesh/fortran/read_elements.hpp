@@ -19,7 +19,7 @@ namespace fortran {
  * 
  */
 specfem::mesh::elements::tangential_elements read_tangential_elements(
-    std::ifstream &stream, const int nnodes_tangential_curve) {};
+    std::ifstream &stream, const int nnodes_tangential_curve);
 
 
 /**
@@ -34,7 +34,7 @@ specfem::mesh::elements::tangential_elements read_tangential_elements(
  */
 specfem::mesh::elements::axial_elements read_axial_elements(
     std::ifstream &stream, const int nelem_on_the_axis, const int nspec,
-    const specfem::MPI::MPI *mpi) {};
+    const specfem::MPI::MPI *mpi);
 
 } // namespace fortran
 } // namespace mesh
