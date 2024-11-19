@@ -10,6 +10,7 @@
 #include "kokkos_abstractions.h"
 #include "material/material.hpp"
 #include "mesh/mesh.hpp"
+#include "mesh/tags/tags.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -200,7 +201,7 @@ specfem::mesh::mesh specfem::IO::read_mesh(const std::string filename,
   assert(l_elastic_isotropic.size() + l_acoustic_isotropic.size() ==
          materials.n_materials);
 
-  auto tags = specfem::mesh::tags(materials, boundaries);
+  specfem::mesh::tags tags(materials, boundaries);
 
   return specfem::mesh::mesh(npgeo, nspec, nproc, control_nodes, parameters,
                              coupled_interfaces, boundaries, tags,

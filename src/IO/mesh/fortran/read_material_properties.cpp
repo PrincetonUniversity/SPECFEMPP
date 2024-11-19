@@ -1,12 +1,13 @@
 #include "IO/mesh/fortran/read_material_properties.hpp"
 #include "IO/fortranio/interface.hpp"
-#include "mesh/materials/materials.hpp"
+// #include "mesh/materials/materials.hpp"
+#include "mesh/materials/materials.tpp"
 #include "specfem_mpi/interface.hpp"
 #include "utilities/interface.hpp"
 #include <memory>
 #include <vector>
 
-namespace {
+// namespace {
 constexpr auto elastic = specfem::element::medium_tag::elastic;
 constexpr auto isotropic = specfem::element::property_tag::isotropic;
 constexpr auto acoustic = specfem::element::medium_tag::acoustic;
@@ -172,7 +173,7 @@ void read_material_indices(
   return;
 }
 
-} // namespace
+// } // namespace
 
 specfem::mesh::materials specfem::IO::mesh::fortran::read_material_properties(
     std::ifstream &stream, const int numat, const int nspec,
@@ -180,16 +181,15 @@ specfem::mesh::materials specfem::IO::mesh::fortran::read_material_properties(
     const specfem::MPI::MPI *mpi) {
 
   // Create materials instances
-  specfem::mesh::materials materials(nspec, numat);
+  specfem::mesh::materials material(nspec, numat);
 
   // Read material properties
-  auto index_mapping =
-      read_materials(stream, numat, materials.elastic_isotropic,
-                     materials.acoustic_isotropic, mpi);
+  auto index_mapping = read_materials(stream, numat, material.elastic_isotropic,
+                                      material.acoustic_isotropic, mpi);
 
   // Read material indices
   read_material_indices(stream, nspec, numat, index_mapping,
-                        materials.material_index_mapping, knods, mpi);
+                        material.material_index_mapping, knods, mpi);
 
-  return materials;
+  return material;
 }
