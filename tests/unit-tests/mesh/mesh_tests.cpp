@@ -1,5 +1,6 @@
 #include "../Kokkos_Environment.hpp"
 #include "../MPI_environment.hpp"
+#include "IO/mesh/read_mesh.hpp"
 #include "mesh/mesh.hpp"
 #include "yaml-cpp/yaml.h"
 #include <fstream>

@@ -6,7 +6,9 @@
 namespace specfem {
 
 namespace iterator {
+
 namespace impl {
+
 /**
  * @brief Index type for the range iterator.
  *
@@ -19,7 +21,7 @@ template <bool UseSIMD> struct range_index_type;
  *
  */
 template <> struct range_index_type<false> {
-  specfem::point::assembly_index<false> index; ///< Assembly index
+  specfem::point::assembly_index index; ///< Assembly index
 
   KOKKOS_INLINE_FUNCTION
   range_index_type(const specfem::point::assembly_index<false> index)
@@ -37,6 +39,7 @@ template <> struct range_index_type<true> {
   range_index_type(const specfem::point::simd_assembly_index index)
       : index(index) {}
 };
+
 } // namespace impl
 
 /**
@@ -52,6 +55,7 @@ template <> struct range_index_type<true> {
  * @tparam SIMD type to generate a SIMD index.
  */
 template <typename SIMD> struct range {
+
 private:
   int starting_index; ///< Starting index for the iterator range.
   int number_points;  ///< Number of points in the iterator range. Equal to or
@@ -60,12 +64,23 @@ private:
   constexpr static bool using_simd = SIMD::using_simd;
   constexpr static int simd_size = SIMD::size();
 
+  // --- SIMD
+  // Range constructor for simd execution
   KOKKOS_INLINE_FUNCTION
   range(const int starting_index, const int number_points, std::true_type)
       : starting_index(starting_index),
         number_points((number_points < simd_size) ? number_points : simd_size) {
   }
 
+  // range_index_type operator for simd execution
+  KOKKOS_INLINE_FUNCTION
+  impl::range_index_type<true> operator()(const int i, std::true_type) const {
+    return impl::range_index_type<true>(
+        specfem::point::simd_assembly_index{ starting_index, number_points });
+  }
+
+  // --- NON-SIMD
+  // Range constructor for non-simd execution
   KOKKOS_INLINE_FUNCTION
   range(const int starting_index, const int number_points, std::false_type)
       : starting_index(starting_index), number_points(number_points) {}
@@ -74,12 +89,6 @@ private:
   impl::range_index_type<false> operator()(const int i, std::false_type) const {
     return impl::range_index_type<false>(
         specfem::point::assembly_index<false>{ starting_index });
-  }
-
-  KOKKOS_INLINE_FUNCTION
-  impl::range_index_type<true> operator()(const int i, std::true_type) const {
-    return impl::range_index_type<true>(
-        specfem::point::simd_assembly_index{ starting_index, number_points });
   }
 
 public:

@@ -9,25 +9,10 @@
 template <specfem::element::medium_tag medium1,
           specfem::element::medium_tag medium2>
 specfem::mesh::interface_container<
-    medium1, medium2>::interface_container(const int num_interfaces,
-                                           std::ifstream &stream,
-                                           const specfem::MPI::MPI *mpi)
+    medium1, medium2>::interface_container(const int num_interfaces)
     : num_interfaces(num_interfaces),
       medium1_index_mapping("medium1_index_mapping", num_interfaces),
       medium2_index_mapping("medium2_index_mapping", num_interfaces) {
-
-  if (!num_interfaces)
-    return;
-
-  int medium1_ispec_l, medium2_ispec_l;
-
-  for (int i = 0; i < num_interfaces; i++) {
-    specfem::IO::fortran_read_line(stream, &medium2_ispec_l,
-                                           &medium1_ispec_l);
-    medium1_index_mapping(i) = medium1_ispec_l - 1;
-    medium2_index_mapping(i) = medium2_ispec_l - 1;
-  }
-
   return;
 }
 
