@@ -100,7 +100,7 @@ TEST(MESH_TESTS, fortran_binary_reader) {
               << "-------------------------------------------------------\n\n"
               << std::endl;
     try {
-      specfem::mesh::mesh mesh(
+      specfem::IO::read_mesh(
           Test.databases.filenames[Test.configuration.processors - 1], mpi);
       std::cout << "--------------------------------------------------\n"
                 << "\033[0;32m[PASSED]\033[0m Test name: " << Test.name << "\n"

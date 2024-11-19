@@ -508,31 +508,6 @@ target_link_libraries(
         Boost::program_options
 )
 
-add_executable(
-        homo2d
-        examples/homogeneous-medium-flat-topography/homo2d.cpp
-)
-
-target_link_libraries(
-        homo2d
-        specfem_mpi
-        Kokkos::kokkos
-        mesh
-        quadrature
-        compute
-        source_class
-        parameter_reader
-        receiver_class
-        writer
-        reader
-        domain
-        coupled_interface
-        kernels
-        solver
-        Boost::program_options
-        ${HDF5_LIBRARIES}
-)
-
 # Include tests
 if (BUILD_TESTS)
         message("-- Including tests.")
