@@ -1,6 +1,7 @@
 #include "../../Kokkos_Environment.hpp"
 #include "../../MPI_environment.hpp"
 #include "../../utilities/include/interface.hpp"
+#include "IO/mesh/read_mesh.hpp"
 #include "compute/interface.hpp"
 #include "constants.hpp"
 #include "domain/domain.hpp"
@@ -174,7 +175,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     const auto quadratures = setup.instantiate_quadrature();
 
     // Read mesh generated MESHFEM
-    specfem::mesh::mesh mesh(database_file, mpi);
+    specfem::mesh::mesh mesh = specfem::IO::read_mesh(database_file, mpi);
     const type_real dt = setup.get_dt();
     const int nsteps = setup.get_nsteps();
 

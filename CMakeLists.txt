@@ -137,6 +137,11 @@ else()
         )
 endif()
 
+target_link_libraries(
+  IO
+  mesh
+)
+
 add_library(
         point
         src/point/coordinates.cpp
