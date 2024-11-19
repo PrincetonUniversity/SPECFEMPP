@@ -61,42 +61,71 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
                                          medium_type::property_tag, using_simd>
             properties,
         const ElementQuadratureViewType hprime,
-        const ElementFieldViewType active_field,
+        const ElementFieldType element_field,
+        const specfem::enums::seismogram::type seismo_type,
         Kokkos::View<type_real[2], Kokkos::LayoutStride,
                      specfem::kokkos::DevMemSpace>
             receiver_field) const {
 
-  type_real dchi_dxi = 0.0;
-  type_real dchi_dgamma = 0.0;
+  if(seismo_type == specfem::enums::seismogram::type::displacement
+  || seismo_type == specfem::enums::seismogram::type::velocity
+  || seismo_type == specfem::enums::seismogram::type::acceleration){
+
+    const auto active_field = [&]() ->
+      typename ElementFieldType::ViewType {
+        switch (seismo_type) {
+        case specfem::enums::seismogram::type::displacement:
+          return element_field.displacement;
+          break;
+        case specfem::enums::seismogram::type::velocity:
+          return element_field.velocity;
+          break;
+        case specfem::enums::seismogram::type::acceleration:
+          return element_field.acceleration;
+          break;
+        default:
+          DEVICE_ASSERT(false, "seismogram not supported");
+          return {};
+          break;
+        }
+      }();
+    type_real dchi_dxi = 0.0;
+    type_real dchi_dgamma = 0.0;
 
 #ifndef KOKKOS_ENABLE_CUDA
 #pragma unroll
 #endif
-  for (int l = 0; l < NGLL; l++) {
-    dchi_dxi += hprime(ix, l) * active_field(iz, l, 0);
-    dchi_dgamma += hprime(iz, l) * active_field(l, ix, 0);
-  }
+    for (int l = 0; l < NGLL; l++) {
+      dchi_dxi += hprime(ix, l) * active_field(iz, l, 0);
+      dchi_dgamma += hprime(iz, l) * active_field(l, ix, 0);
+    }
 
-  // dchidx
-  type_real fieldx = (dchi_dxi * partial_derivatives.xix +
-                      dchi_dgamma * partial_derivatives.gammax);
+    // dchidx
+    type_real fieldx = (dchi_dxi * partial_derivatives.xix +
+                        dchi_dgamma * partial_derivatives.gammax);
 
-  // dchidz
-  type_real fieldz = (dchi_dxi * partial_derivatives.xiz +
-                      dchi_dgamma * partial_derivatives.gammaz);
+    // dchidz
+    type_real fieldz = (dchi_dxi * partial_derivatives.xiz +
+                        dchi_dgamma * partial_derivatives.gammaz);
 
-  // Receiver field is probably not the best way of storing this, since this
-  // would require global memory accesses. A better way for doing this would be
-  // create register array and the store the values there. However, post
-  // simulation people might require the field stored inside an element where a
-  // receiver is located. If the number of receivers << nspec - hopefully this
-  // shouldn't be a bottleneck.
-  if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
-    receiver_field(0) = fieldx * properties.rho_inverse;
-    receiver_field(1) = fieldz * properties.rho_inverse;
-  } else if (specfem::globals::simulation_wave == specfem::wave::sh) {
-    receiver_field(0) = fieldx * properties.rho_inverse;
+    // Receiver field is probably not the best way of storing this, since this
+    // would require global memory accesses. A better way for doing this would be
+    // create register array and the store the values there. However, post
+    // simulation people might require the field stored inside an element where a
+    // receiver is located. If the number of receivers << nspec - hopefully this
+    // shouldn't be a bottleneck.
+    if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
+      receiver_field(0) = fieldx * properties.rho_inverse;
+      receiver_field(1) = fieldz * properties.rho_inverse;
+    } else if (specfem::globals::simulation_wave == specfem::wave::sh) {
+      receiver_field(0) = fieldx * properties.rho_inverse;
+      receiver_field(1) = 0;
+    }
+  }else if(seismo_type == specfem::enums::seismogram::type::pressure){
+    receiver_field(0) = - element_field.acceleration(iz,ix,0);
     receiver_field(1) = 0;
+  }else{
+    DEVICE_ASSERT(false, "seismogram not supported");
   }
 
   return;
