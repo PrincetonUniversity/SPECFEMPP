@@ -1,5 +1,4 @@
-#ifndef _READ_MESH_DATABASE_HPP
-#define _READ_MESH_DATABASE_HPP
+#pragma once
 
 #include "kokkos_abstractions.h"
 #include "specfem_mpi/interface.hpp"
@@ -9,12 +8,8 @@
 #include <tuple>
 
 namespace specfem {
-/**
- * Helper routines to read fortran binary database
- *
- */
-namespace mesh {
 namespace IO {
+namespace mesh {
 namespace fortran {
 
 /**
@@ -52,8 +47,6 @@ std::tuple<int, type_real, bool>
 read_mesh_database_attenuation(std::ifstream &stream,
                                const specfem::MPI::MPI *mpi);
 } // namespace fortran
-} // namespace IO
 } // namespace mesh
+} // namespace IO
 } // namespace specfem
-
-#endif

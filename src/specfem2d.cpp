@@ -1,6 +1,13 @@
 #include "compute/interface.hpp"
 // #include "coupled_interface/interface.hpp"
 // #include "domain/interface.hpp"
+#include "IO/mesh/fortran/read_boundaries.hpp"
+#include "IO/mesh/fortran/read_elements.hpp"
+#include "IO/mesh/fortran/read_interfaces.hpp"
+#include "IO/mesh/fortran/read_material_properties.hpp"
+#include "IO/mesh/fortran/read_mesh_database.hpp"
+#include "IO/mesh/fortran/read_properties.hpp"
+#include "IO/mesh/read_mesh.hpp"
 #include "kokkos_abstractions.h"
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"
@@ -97,7 +104,8 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   //                   Read mesh and materials
   // --------------------------------------------------------------
   const auto quadrature = setup.instantiate_quadrature();
-  const specfem::mesh::mesh mesh(database_filename, mpi);
+  const specfem::mesh::mesh mesh =
+      specfem::IO::read_mesh(database_filename, mpi);
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
