@@ -1,6 +1,7 @@
 #include "../Kokkos_Environment.hpp"
 #include "../MPI_environment.hpp"
 #include "mesh/mesh.hpp"
+#include "IO/mesh/read_mesh.hpp"
 #include "yaml-cpp/yaml.h"
 #include <fstream>
 #include <iostream>
@@ -96,7 +97,7 @@ TEST(MESH_TESTS, fortran_binary_reader) {
   for (auto test : tests) {
     std::cout << "Executing test: " << test.description << std::endl;
     try {
-      specfem::mesh::mesh mesh(
+      specfem::mesh::mesh mesh = specfem::IO::read_mesh(
           test.databases.filenames[test.configuration.processors - 1], mpi);
       std::cout << " - Test passed\n" << std::endl;
     } catch (std::runtime_error &e) {

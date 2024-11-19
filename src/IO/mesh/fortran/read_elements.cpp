@@ -30,10 +30,10 @@ specfem::mesh::elements::tangential_elements specfem::IO::mesh::fortran::read_ta
     std::ifstream &stream, const int nnodes_tangential_curve) {
   type_real xread, yread;
 
-  specfem::mesh::elements::tangential_elements tangential_elements(nnodes_tangential_curve);
+  auto tangential_elements = specfem::mesh::elements::tangential_elements(nnodes_tangential_curve);
 
-  specfem::IO::fortran_read_line(stream, tangential_elements.force_normal_to_surface,
-                                 tangential_elements.rec_normal_to_surface);
+  specfem::IO::fortran_read_line(stream, &tangential_elements.force_normal_to_surface,
+                                 &tangential_elements.rec_normal_to_surface);
 
   if (nnodes_tangential_curve > 0) {
     for (int inum = 0; inum < nnodes_tangential_curve; inum++) {

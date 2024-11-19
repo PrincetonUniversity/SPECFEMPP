@@ -36,9 +36,11 @@ struct boundaries {
    * @param forcing_boundary forcing boundary
    */
   boundaries(const specfem::mesh::absorbing_boundary &absorbing_boundary,
-             const specfem::mesh::acoustic_free_surface &acoustic_free_surface)
+             const specfem::mesh::acoustic_free_surface &acoustic_free_surface,
+             const specfem::mesh::forcing_boundary &forcing_boundary)
       : absorbing_boundary(absorbing_boundary),
-        acoustic_free_surface(acoustic_free_surface) {}
+        acoustic_free_surface(acoustic_free_surface),
+        forcing_boundary(forcing_boundary) {}
 
   ///@}
 };

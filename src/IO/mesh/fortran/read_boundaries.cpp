@@ -7,8 +7,139 @@
 #include <vector>
 
 
+
+
+static std::tuple<
+    specfem::kokkos::HostView1d<int>,
+    specfem::kokkos::HostView1d<specfem::enums::boundaries::type> >
+find_corners(const specfem::kokkos::HostView1d<int> ispec_edge,
+             const specfem::kokkos::HostView1d<specfem::enums::boundaries::type>
+                 type_edge) {
+
+  int ncorner = 0;
+  int num_abs_boundary_faces = ispec_edge.extent(0);
+  for (int inum = 0; inum < num_abs_boundary_faces; inum++) {
+    if (type_edge(inum) == specfem::enums::boundaries::type::BOTTOM) {
+      for (int inum_duplicate = 0; inum_duplicate < num_abs_boundary_faces;
+           inum_duplicate++) {
+        if (inum != inum_duplicate) {
+          if (ispec_edge(inum) == ispec_edge(inum_duplicate)) {
+            if (type_edge(inum) == specfem::enums::boundaries::type::LEFT) {
+              ncorner++;
+            }
+            if (type_edge(inum) == specfem::enums::boundaries::type::RIGHT) {
+              ncorner++;
+            }
+          }
+        }
+      }
+      if (type_edge(inum) == specfem::enums::boundaries::type::TOP) {
+        for (int inum_duplicate = 0; inum_duplicate < num_abs_boundary_faces;
+             inum_duplicate++) {
+          if (inum != inum_duplicate) {
+            if (ispec_edge(inum) == ispec_edge(inum_duplicate)) {
+              if (type_edge(inum) == specfem::enums::boundaries::type::LEFT) {
+                ncorner++;
+              }
+              if (type_edge(inum) == specfem::enums::boundaries::type::RIGHT) {
+                ncorner++;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  specfem::kokkos::HostView1d<int> ispec_corners(
+      "specfem:IO::mesh::fortran::read_boundaries::find_corners::ispec_corners", ncorner);
+
+  specfem::kokkos::HostView1d<specfem::enums::boundaries::type> type_corners(
+      "specfem:IO::mesh::fortran::read_boundaries::find_corners::type_corners", ncorner);
+
+  int icorner = 0;
+
+  for (int inum = 0; inum < num_abs_boundary_faces; inum++) {
+    if (type_edge(inum) == specfem::enums::boundaries::type::BOTTOM) {
+      for (int inum_duplicate = 0; inum_duplicate < num_abs_boundary_faces;
+           inum_duplicate++) {
+        if (inum != inum_duplicate) {
+          if (ispec_edge(inum) == ispec_edge(inum_duplicate)) {
+            if (type_edge(inum) == specfem::enums::boundaries::type::LEFT) {
+              ispec_corners(icorner) = ispec_edge(inum);
+              type_corners(icorner) =
+                  specfem::enums::boundaries::type::BOTTOM_LEFT;
+              icorner++;
+            }
+            if (type_edge(inum) == specfem::enums::boundaries::type::RIGHT) {
+              ispec_corners(icorner) = ispec_edge(inum);
+              type_corners(icorner) =
+                  specfem::enums::boundaries::type::BOTTOM_RIGHT;
+              icorner++;
+            }
+          }
+        }
+      }
+      if (type_edge(inum) == specfem::enums::boundaries::type::TOP) {
+        for (int inum_duplicate = 0; inum_duplicate < num_abs_boundary_faces;
+             inum_duplicate++) {
+          if (inum != inum_duplicate) {
+            if (ispec_edge(inum) == ispec_edge(inum_duplicate)) {
+              if (type_edge(inum) == specfem::enums::boundaries::type::LEFT) {
+                ispec_corners(icorner) = ispec_edge(inum);
+                type_corners(icorner) =
+                    specfem::enums::boundaries::type::TOP_LEFT;
+                icorner++;
+              }
+              if (type_edge(inum) == specfem::enums::boundaries::type::RIGHT) {
+                ispec_corners(icorner) = ispec_edge(inum);
+                type_corners(icorner) =
+                    specfem::enums::boundaries::type::TOP_RIGHT;
+                icorner++;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return std::make_tuple(ispec_corners, type_corners);
+}
+
+
+inline void calculate_ib(const specfem::kokkos::HostView2d<bool> code,
+                         specfem::kokkos::HostView1d<int> ib_bottom,
+                         specfem::kokkos::HostView1d<int> ib_top,
+                         specfem::kokkos::HostView1d<int> ib_left,
+                         specfem::kokkos::HostView1d<int> ib_right,
+                         const int nelements) {
+
+  int nspec_left = 0, nspec_right = 0, nspec_top = 0, nspec_bottom = 0;
+  for (int inum = 0; inum < nelements; inum++) {
+    if (code(inum, 0)) {
+      ib_bottom(inum) = nspec_bottom;
+      nspec_bottom++;
+    } else if (code(inum, 1)) {
+      ib_right(inum) = nspec_right;
+      nspec_right++;
+    } else if (code(inum, 2)) {
+      ib_top(inum) = nspec_top;
+      nspec_top++;
+    } else if (code(inum, 3)) {
+      ib_left(inum) = nspec_left;
+      nspec_left++;
+    } else {
+      throw std::runtime_error("Incorrect acoustic boundary element type read");
+    }
+  }
+
+  assert(nspec_left + nspec_right + nspec_bottom + nspec_top == nelements);
+}
+
+
 specfem::mesh::absorbing_boundary 
-specfem::IO::mesh::fortran::read_absorbing_boundaries(
+read_absorbing_boundaries(
   std::ifstream &stream, int num_abs_boundary_faces, const int nspec, 
   const specfem::MPI::MPI *mpi) {
 
@@ -167,7 +298,8 @@ read_acoustic_free_surface(std::ifstream &stream,
 }
 
 
-specfem::mesh::forcing_boundary read_forcing_boundaries(
+specfem::mesh::forcing_boundary 
+read_forcing_boundaries(
   std::ifstream &stream, const int nelement_acforcing, const int nspec,
   const specfem::MPI::MPI *mpi) {
 
@@ -221,131 +353,25 @@ specfem::mesh::forcing_boundary read_forcing_boundaries(
 }
 
 
+specfem::mesh::boundaries
+specfem::IO::mesh::fortran::read_boundaries(
+  std::ifstream &stream, const int nspec, const int n_absorbing,
+             const int n_acoustic_surface, const int n_acforcing,
+             const Kokkos::View<int **, Kokkos::HostSpace> knods,
+             const specfem::MPI::MPI *mpi) {
 
-static std::tuple<
-    specfem::kokkos::HostView1d<int>,
-    specfem::kokkos::HostView1d<specfem::enums::boundaries::type> >
-find_corners(const specfem::kokkos::HostView1d<int> ispec_edge,
-             const specfem::kokkos::HostView1d<specfem::enums::boundaries::type>
-                 type_edge) {
+  // Read absorbing boundaries
+  auto absorbing_boundary = read_absorbing_boundaries(
+      stream, n_absorbing, nspec, mpi);
 
-  int ncorner = 0;
-  int num_abs_boundary_faces = ispec_edge.extent(0);
-  for (int inum = 0; inum < num_abs_boundary_faces; inum++) {
-    if (type_edge(inum) == specfem::enums::boundaries::type::BOTTOM) {
-      for (int inum_duplicate = 0; inum_duplicate < num_abs_boundary_faces;
-           inum_duplicate++) {
-        if (inum != inum_duplicate) {
-          if (ispec_edge(inum) == ispec_edge(inum_duplicate)) {
-            if (type_edge(inum) == specfem::enums::boundaries::type::LEFT) {
-              ncorner++;
-            }
-            if (type_edge(inum) == specfem::enums::boundaries::type::RIGHT) {
-              ncorner++;
-            }
-          }
-        }
-      }
-      if (type_edge(inum) == specfem::enums::boundaries::type::TOP) {
-        for (int inum_duplicate = 0; inum_duplicate < num_abs_boundary_faces;
-             inum_duplicate++) {
-          if (inum != inum_duplicate) {
-            if (ispec_edge(inum) == ispec_edge(inum_duplicate)) {
-              if (type_edge(inum) == specfem::enums::boundaries::type::LEFT) {
-                ncorner++;
-              }
-              if (type_edge(inum) == specfem::enums::boundaries::type::RIGHT) {
-                ncorner++;
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+  // Read acoustic free surface
+  auto acoustic_free_surface = read_acoustic_free_surface(
+      stream, n_acoustic_surface, knods, mpi);
 
-  specfem::kokkos::HostView1d<int> ispec_corners(
-      "specfem:IO::mesh::fortran::read_boundaries::find_corners::ispec_corners", ncorner);
+  // Read forcing boundaries
+  auto forcing_boundary = read_forcing_boundaries(
+      stream, n_acforcing, nspec, mpi);
 
-  specfem::kokkos::HostView1d<specfem::enums::boundaries::type> type_corners(
-      "specfem:IO::mesh::fortran::read_boundaries::find_corners::type_corners", ncorner);
-
-  int icorner = 0;
-
-  for (int inum = 0; inum < num_abs_boundary_faces; inum++) {
-    if (type_edge(inum) == specfem::enums::boundaries::type::BOTTOM) {
-      for (int inum_duplicate = 0; inum_duplicate < num_abs_boundary_faces;
-           inum_duplicate++) {
-        if (inum != inum_duplicate) {
-          if (ispec_edge(inum) == ispec_edge(inum_duplicate)) {
-            if (type_edge(inum) == specfem::enums::boundaries::type::LEFT) {
-              ispec_corners(icorner) = ispec_edge(inum);
-              type_corners(icorner) =
-                  specfem::enums::boundaries::type::BOTTOM_LEFT;
-              icorner++;
-            }
-            if (type_edge(inum) == specfem::enums::boundaries::type::RIGHT) {
-              ispec_corners(icorner) = ispec_edge(inum);
-              type_corners(icorner) =
-                  specfem::enums::boundaries::type::BOTTOM_RIGHT;
-              icorner++;
-            }
-          }
-        }
-      }
-      if (type_edge(inum) == specfem::enums::boundaries::type::TOP) {
-        for (int inum_duplicate = 0; inum_duplicate < num_abs_boundary_faces;
-             inum_duplicate++) {
-          if (inum != inum_duplicate) {
-            if (ispec_edge(inum) == ispec_edge(inum_duplicate)) {
-              if (type_edge(inum) == specfem::enums::boundaries::type::LEFT) {
-                ispec_corners(icorner) = ispec_edge(inum);
-                type_corners(icorner) =
-                    specfem::enums::boundaries::type::TOP_LEFT;
-                icorner++;
-              }
-              if (type_edge(inum) == specfem::enums::boundaries::type::RIGHT) {
-                ispec_corners(icorner) = ispec_edge(inum);
-                type_corners(icorner) =
-                    specfem::enums::boundaries::type::TOP_RIGHT;
-                icorner++;
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  return std::make_tuple(ispec_corners, type_corners);
-}
-
-
-inline void calculate_ib(const specfem::kokkos::HostView2d<bool> code,
-                         specfem::kokkos::HostView1d<int> ib_bottom,
-                         specfem::kokkos::HostView1d<int> ib_top,
-                         specfem::kokkos::HostView1d<int> ib_left,
-                         specfem::kokkos::HostView1d<int> ib_right,
-                         const int nelements) {
-
-  int nspec_left = 0, nspec_right = 0, nspec_top = 0, nspec_bottom = 0;
-  for (int inum = 0; inum < nelements; inum++) {
-    if (code(inum, 0)) {
-      ib_bottom(inum) = nspec_bottom;
-      nspec_bottom++;
-    } else if (code(inum, 1)) {
-      ib_right(inum) = nspec_right;
-      nspec_right++;
-    } else if (code(inum, 2)) {
-      ib_top(inum) = nspec_top;
-      nspec_top++;
-    } else if (code(inum, 3)) {
-      ib_left(inum) = nspec_left;
-      nspec_left++;
-    } else {
-      throw std::runtime_error("Incorrect acoustic boundary element type read");
-    }
-  }
-
-  assert(nspec_left + nspec_right + nspec_bottom + nspec_top == nelements);
-}
+  return specfem::mesh::boundaries(
+    absorbing_boundary, acoustic_free_surface, forcing_boundary);
+} 

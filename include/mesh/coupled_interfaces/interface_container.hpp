@@ -29,7 +29,7 @@ struct interface_container {
    */
   interface_container(){};
 
-  interface_container(const int num_interfaces) {};
+  interface_container(const int num_interfaces);
   
   ///@}
 

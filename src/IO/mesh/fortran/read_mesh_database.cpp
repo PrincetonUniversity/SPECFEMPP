@@ -146,7 +146,7 @@ std::tuple<int, int, int> specfem::IO::mesh::fortran::read_mesh_database_header(
 }
 
 specfem::kokkos::HostView2d<type_real>
-read_coorg_elements(
+specfem::IO::mesh::fortran::read_coorg_elements(
     std::ifstream &stream, const int npgeo, 
     const specfem::MPI::MPI *mpi) {
 
@@ -171,7 +171,7 @@ read_coorg_elements(
 }
 
 std::tuple<int, type_real, bool>
-read_mesh_database_attenuation(
+specfem::IO::mesh::fortran::read_mesh_database_attenuation(
     std::ifstream &stream, const specfem::MPI::MPI *mpi) {
 
   int n_sls;

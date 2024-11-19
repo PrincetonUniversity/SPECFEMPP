@@ -1,7 +1,7 @@
 #pragma once
 
-// #include "mesh/materials/materials.hpp"
-// #include "specfem_mpi/interface.hpp"
+#include "mesh/materials/materials.hpp"
+#include "specfem_mpi/interface.hpp"
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -25,11 +25,12 @@ namespace fortran {
 
 specfem::mesh::materials
 read_material_properties(std::ifstream &stream, const int numat,
+                         const int nspec,
+                         const specfem::kokkos::HostView2d<int> knods,
                          const specfem::MPI::MPI *mpi);
-                         
+
 } // namespace fortran
 } // namespace mesh
 } // namespace IO
 } // namespace specfem
-
 

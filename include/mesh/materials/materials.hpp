@@ -78,7 +78,9 @@ struct materials {
    * @param nspec Number of spectral elements
    * @param ngnod Number of control nodes per spectral element
    */
-  materials(const int nspec, const int ngnod);
+  materials(
+    const int nspec, const int numat) : 
+    n_materials(numat),  material_index_mapping("specfem::mesh::material_index_mapping", nspec) {};
  
   ///@}
 
