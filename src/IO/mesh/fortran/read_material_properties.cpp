@@ -1,6 +1,7 @@
 #include "IO/mesh/fortran/read_material_properties.hpp"
 #include "IO/fortranio/interface.hpp"
-#include "mesh/materials/materials.hpp"
+// #include "mesh/materials/materials.hpp"
+#include "mesh/materials/materials.tpp"
 #include "specfem_mpi/interface.hpp"
 #include "utilities/interface.hpp"
 #include <memory>
@@ -184,12 +185,12 @@ specfem::mesh::materials specfem::IO::mesh::fortran::read_material_properties(
 
   // Read material properties
   auto index_mapping =
-      read_materials(stream, numat, materials.elastic_isotropic,
-                     materials.acoustic_isotropic, mpi);
+      ::read_materials(stream, numat, materials.elastic_isotropic,
+                       materials.acoustic_isotropic, mpi);
 
   // Read material indices
-  read_material_indices(stream, nspec, numat, index_mapping,
-                        materials.material_index_mapping, knods, mpi);
+  ::read_material_indices(stream, nspec, numat, index_mapping,
+                          materials.material_index_mapping, knods, mpi);
 
   return materials;
 }

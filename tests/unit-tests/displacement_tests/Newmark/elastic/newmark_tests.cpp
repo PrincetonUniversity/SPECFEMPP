@@ -1,6 +1,7 @@
 #include "../../../Kokkos_Environment.hpp"
 #include "../../../MPI_environment.hpp"
 #include "../../../utilities/include/compare_array.h"
+#include "IO/mesh/read_mesh.hpp"
 #include "compute/interface.hpp"
 #include "constants.hpp"
 #include "domain/interface.hpp"
@@ -62,7 +63,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
 
   // Read mesh generated MESHFEM
   std::vector<specfem::material::material *> materials;
-  specfem::mesh::mesh mesh(database_file, materials, mpi);
+  specfem::mesh::mesh mesh = specfem::IO::read_mesh(database_file, mpi);
 
   // Read sources
   //    if start time is not explicitly specified then t0 is determined using

@@ -32,8 +32,7 @@ read_mesh_database_header(std::ifstream &stream, const specfem::MPI::MPI *mpi);
  * section
  * @param npgeo Total number of control nodes in simulation box
  * @param mpi Pointer to MPI object
- * @return specfem::kokkos::HostView2d<type_real> coorg values as read from
- * fortran binary database file
+ * @return std::tuple<int, int, int>  nspec, npgeo, nproc values read from
  */
 specfem::kokkos::HostView2d<type_real>
 read_coorg_elements(std::ifstream &stream, const int npgeo,
