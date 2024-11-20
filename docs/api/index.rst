@@ -16,6 +16,7 @@ API documentation
     datatypes/index
     assembly/index
     policies/index
+    IO/index
     operators/index
     compute_kernels/index
     coupling_physics/coupled_interface

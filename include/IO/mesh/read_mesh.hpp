@@ -12,6 +12,7 @@ namespace IO {
  *
  * @param filename Fortran binary database filename
  * @param mpi pointer to MPI object to manage communication
+ * @return specfem::mesh::mesh Specfem mesh object
  */
 specfem::mesh::mesh read_mesh(const std::string filename,
                               const specfem::MPI::MPI *mpi);
