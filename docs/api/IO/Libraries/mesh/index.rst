@@ -28,5 +28,6 @@ functions are called in the order of appearance in the code:
 
 .. doxygenfunction:: specfem::IO::mesh::fortran::read_axial_elements
 
-.. doxygenclass:: specfem::mesh::tags
-  :members:
+Finally, we add tags to the :cpp:struct:`specfem::mesh::mesh` using the
+:cpp:struct:`specfem::mesh::tags` struct. The description of which can be found
+here: :ref:`mesh_tags`.
