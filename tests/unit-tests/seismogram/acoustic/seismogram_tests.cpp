@@ -2,6 +2,7 @@
 #include "../../MPI_environment.hpp"
 // #include "../../utilities/include/compare_array.h"
 #include "IO/fortranio/interface.hpp"
+#include "IO/mesh/read_mesh.hpp"
 #include "compute/interface.hpp"
 #include "constants.hpp"
 #include "domain/domain.hpp"
@@ -90,7 +91,7 @@ TEST(SEISMOGRAM_TESTS, acoustic_seismograms_test) {
   const auto quadratures = setup.instantiate_quadrature();
 
   // Read mesh generated MESHFEM
-  specfem::mesh::mesh mesh(database_file, mpi);
+  specfem::mesh::mesh mesh = specfem::IO::read_mesh(database_file, mpi);
 
   std::vector<std::shared_ptr<specfem::sources::source> > sources(0);
 

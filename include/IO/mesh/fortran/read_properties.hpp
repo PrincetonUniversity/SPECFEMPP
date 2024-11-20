@@ -14,7 +14,7 @@ namespace fortran {
  *
  * @param stream Input stream
  * @param mpi MPI object
- * @return specfem::mesh::properties
+ * @return specfem::mesh::properties Property object
  */
 specfem::mesh::properties read_properties(std::ifstream &stream,
                                           const specfem::MPI::MPI *mpi);

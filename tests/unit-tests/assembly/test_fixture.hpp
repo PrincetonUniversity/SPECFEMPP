@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../MPI_environment.hpp"
+#include "IO/mesh/read_mesh.hpp"
 #include "compute/assembly/assembly.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "mesh/mesh.hpp"
@@ -145,7 +146,7 @@ protected:
     for (auto &Test : Tests) {
       const auto [database_file, sources_file, stations_file] =
           Test.get_databases();
-      specfem::mesh::mesh mesh(database_file, mpi);
+      specfem::mesh::mesh mesh = specfem::IO::read_mesh(database_file, mpi);
 
       const auto [sources, t0] = specfem::sources::read_sources(
           sources_file, 0, 0, 0, specfem::simulation::type::forward);

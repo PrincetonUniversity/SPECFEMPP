@@ -6,9 +6,7 @@
 namespace specfem {
 
 namespace iterator {
-
 namespace impl {
-
 /**
  * @brief Index type for the range iterator.
  *
@@ -21,7 +19,7 @@ template <bool UseSIMD> struct range_index_type;
  *
  */
 template <> struct range_index_type<false> {
-  specfem::point::assembly_index index; ///< Assembly index
+  specfem::point::assembly_index<false> index; ///< Assembly index
 
   KOKKOS_INLINE_FUNCTION
   range_index_type(const specfem::point::assembly_index<false> index)
