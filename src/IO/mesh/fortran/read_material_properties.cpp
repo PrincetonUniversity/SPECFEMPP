@@ -181,16 +181,16 @@ specfem::mesh::materials specfem::IO::mesh::fortran::read_material_properties(
     const specfem::MPI::MPI *mpi) {
 
   // Create materials instances
-  specfem::mesh::materials material(nspec, numat);
+  specfem::mesh::materials materials(nspec, numat);
 
   // Read material properties
   auto index_mapping =
-      ::read_materials(stream, numat, material.elastic_isotropic,
-                       material.acoustic_isotropic, mpi);
+      ::read_materials(stream, numat, materials.elastic_isotropic,
+                       materials.acoustic_isotropic, mpi);
 
   // Read material indices
   ::read_material_indices(stream, nspec, numat, index_mapping,
-                          material.material_index_mapping, knods, mpi);
+                          materials.material_index_mapping, knods, mpi);
 
-  return material;
+  return materials;
 }

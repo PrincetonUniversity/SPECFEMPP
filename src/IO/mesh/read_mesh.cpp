@@ -45,14 +45,10 @@ specfem::mesh::mesh specfem::IO::read_mesh(const std::string filename,
     throw;
   }
 
-  std::cout << "nspec = " << mesh.nspec << std::endl;
-  std::cout << "npgeo = " << mesh.npgeo << std::endl;
-  std::cout << "nproc = " << mesh.nproc << std::endl;
-
   // Mesh class to be populated from the database file.
   try {
-    mesh.control_nodes.coord =
-        specfem::IO::mesh::fortran::read_coorg_elements(stream, npgeo, mpi);
+    mesh.control_nodes.coord = specfem::IO::mesh::fortran::read_coorg_elements(
+        stream, mesh.npgeo, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
@@ -83,7 +79,7 @@ specfem::mesh::mesh specfem::IO::read_mesh(const std::string filename,
 
   try {
     mesh.materials = specfem::IO::mesh::fortran::read_material_properties(
-        stream, mesh.nspec, mesh.parameters.numat, mesh.control_nodes.knods,
+        stream, mesh.parameters.numat, mesh.nspec, mesh.control_nodes.knods,
         mpi);
   } catch (std::runtime_error &e) {
     throw;
@@ -205,7 +201,7 @@ specfem::mesh::mesh specfem::IO::read_mesh(const std::string filename,
   assert(l_elastic_isotropic.size() + l_acoustic_isotropic.size() ==
          mesh.materials.n_materials);
 
-  specfem::mesh::tags tags(mesh.materials, mesh.boundaries);
+  mesh.tags = specfem::mesh::tags(mesh.materials, mesh.boundaries);
 
   return mesh;
 }
