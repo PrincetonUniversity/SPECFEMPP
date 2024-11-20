@@ -17,59 +17,62 @@
 #include <algorithm>
 #include <limits>
 #include <memory>
+#include <tuple>
 #include <vector>
 
 specfem::mesh::mesh specfem::IO::read_mesh(const std::string filename,
                                            const specfem::MPI::MPI *mpi) {
 
+  // Declaring empty mesh objects
+  specfem::mesh::mesh mesh;
+
+  // Open the database file
   std::ifstream stream;
   stream.open(filename);
-  int nspec, npgeo, nproc;
-
-  specfem::mesh::control_nodes control_nodes;
-  specfem::mesh::properties parameters;
-  specfem::mesh::materials materials;
-  specfem::mesh::boundaries boundaries;
-  specfem::mesh::elements::axial_elements axial_nodes;
-  specfem::mesh::elements::tangential_elements tangential_nodes;
-  specfem::mesh::coupled_interfaces coupled_interfaces;
 
   if (!stream.is_open()) {
     throw std::runtime_error("Could not open database file");
   }
+  int nspec, npgeo, nproc;
 
   try {
-    auto [nspec, npgeo, nproc] =
+    std::tie(nspec, npgeo, nproc) =
         specfem::IO::mesh::fortran::read_mesh_database_header(stream, mpi);
+    mesh.nspec = nspec;
+    mesh.npgeo = npgeo;
+    mesh.nproc = nproc;
   } catch (std::runtime_error &e) {
     throw;
   }
 
+  std::cout << "nspec = " << mesh.nspec << std::endl;
+  std::cout << "npgeo = " << mesh.npgeo << std::endl;
+  std::cout << "nproc = " << mesh.nproc << std::endl;
+
   // Mesh class to be populated from the database file.
   try {
-
-    control_nodes.coord =
+    mesh.control_nodes.coord =
         specfem::IO::mesh::fortran::read_coorg_elements(stream, npgeo, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
 
   try {
-    auto parameters = specfem::IO::mesh::fortran::read_properties(stream, mpi);
+    mesh.parameters = specfem::IO::mesh::fortran::read_properties(stream, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
 
-  control_nodes.ngnod = parameters.ngnod;
-  control_nodes.nspec = nspec;
-  control_nodes.knods = specfem::kokkos::HostView2d<int>(
-      "specfem::mesh::knods", parameters.ngnod, nspec);
+  mesh.control_nodes.ngnod = mesh.parameters.ngnod;
+  mesh.control_nodes.nspec = mesh.nspec;
+  mesh.control_nodes.knods = specfem::kokkos::HostView2d<int>(
+      "specfem::mesh::knods", mesh.parameters.ngnod, mesh.nspec);
 
-  int nspec_all = mpi->reduce(parameters.nspec, specfem::MPI::sum);
+  int nspec_all = mpi->reduce(mesh.parameters.nspec, specfem::MPI::sum);
   int nelem_acforcing_all =
-      mpi->reduce(parameters.nelem_acforcing, specfem::MPI::sum);
+      mpi->reduce(mesh.parameters.nelem_acforcing, specfem::MPI::sum);
   int nelem_acoustic_surface_all =
-      mpi->reduce(parameters.nelem_acoustic_surface, specfem::MPI::sum);
+      mpi->reduce(mesh.parameters.nelem_acoustic_surface, specfem::MPI::sum);
 
   try {
     auto [n_sls, attenuation_f0_reference, read_velocities_at_f0] =
@@ -79,8 +82,9 @@ specfem::mesh::mesh specfem::IO::read_mesh(const std::string filename,
   }
 
   try {
-    auto materials = specfem::IO::mesh::fortran::read_material_properties(
-        stream, nspec, parameters.numat, control_nodes.knods, mpi);
+    mesh.materials = specfem::IO::mesh::fortran::read_material_properties(
+        stream, mesh.nspec, mesh.parameters.numat, mesh.control_nodes.knods,
+        mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
@@ -112,10 +116,10 @@ specfem::mesh::mesh specfem::IO::read_mesh(const std::string filename,
   specfem::IO::fortran_read_line(stream, &ninterfaces, &max_interface_size);
 
   try {
-    auto boundaries = specfem::IO::mesh::fortran::read_boundaries(
-        stream, parameters.nspec, parameters.nelemabs,
-        parameters.nelem_acoustic_surface, parameters.nelem_acforcing,
-        control_nodes.knods, mpi);
+    mesh.boundaries = specfem::IO::mesh::fortran::read_boundaries(
+        stream, mesh.parameters.nspec, mesh.parameters.nelemabs,
+        mesh.parameters.nelem_acoustic_surface, mesh.parameters.nelem_acforcing,
+        mesh.control_nodes.knods, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
@@ -145,26 +149,26 @@ specfem::mesh::mesh specfem::IO::read_mesh(const std::string filename,
   // }
 
   try {
-    auto coupled_interfaces =
+    mesh.coupled_interfaces =
         specfem::IO::mesh::fortran::read_coupled_interfaces(
-            stream, parameters.num_fluid_solid_edges,
-            parameters.num_fluid_poro_edges, parameters.num_solid_poro_edges,
-            mpi);
+            stream, mesh.parameters.num_fluid_solid_edges,
+            mesh.parameters.num_fluid_poro_edges,
+            mesh.parameters.num_solid_poro_edges, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
 
   try {
-    auto tangential_nodes =
+    mesh.tangential_nodes =
         specfem::IO::mesh::fortran::read_tangential_elements(
-            stream, parameters.nnodes_tangential_curve);
+            stream, mesh.parameters.nnodes_tangential_curve);
   } catch (std::runtime_error &e) {
     throw;
   }
 
   try {
-    auto axial_nodes = specfem::IO::mesh::fortran::read_axial_elements(
-        stream, parameters.nelem_on_the_axis, nspec, mpi);
+    mesh.axial_nodes = specfem::IO::mesh::fortran::read_axial_elements(
+        stream, mesh.parameters.nelem_on_the_axis, mesh.nspec, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
@@ -183,12 +187,12 @@ specfem::mesh::mesh specfem::IO::read_mesh(const std::string filename,
             "------------------------------");
 
   mpi->cout("Number of material systems = " +
-            std::to_string(materials.n_materials) + "\n\n");
+            std::to_string(mesh.materials.n_materials) + "\n\n");
 
   const auto l_elastic_isotropic =
-      materials.elastic_isotropic.material_properties;
+      mesh.materials.elastic_isotropic.material_properties;
   const auto l_acoustic_isotropic =
-      materials.acoustic_isotropic.material_properties;
+      mesh.materials.acoustic_isotropic.material_properties;
 
   for (const auto material : l_elastic_isotropic) {
     mpi->cout(material.print());
@@ -199,11 +203,9 @@ specfem::mesh::mesh specfem::IO::read_mesh(const std::string filename,
   }
 
   assert(l_elastic_isotropic.size() + l_acoustic_isotropic.size() ==
-         materials.n_materials);
+         mesh.materials.n_materials);
 
-  specfem::mesh::tags tags(materials, boundaries);
+  specfem::mesh::tags tags(mesh.materials, mesh.boundaries);
 
-  return specfem::mesh::mesh(npgeo, nspec, nproc, control_nodes, parameters,
-                             coupled_interfaces, boundaries, tags,
-                             tangential_nodes, axial_nodes, materials);
+  return mesh;
 }
