@@ -39,5 +39,6 @@ The snippet below shows how to use these modules to write and read a Kokkos::Vie
 .. toctree::
     :maxdepth: 1
 
+    mesh/index
     ASCII/index
     HDF5/index
