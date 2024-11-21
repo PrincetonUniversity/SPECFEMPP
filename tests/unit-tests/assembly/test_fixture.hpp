@@ -148,7 +148,7 @@ protected:
           Test.get_databases();
       specfem::mesh::mesh mesh = specfem::IO::read_mesh(database_file, mpi);
 
-      const auto [sources, t0] = specfem::sources::read_sources(
+      const auto [sources, t0] = specfem::IO::read_sources(
           sources_file, 0, 0, 0, specfem::simulation::type::forward);
 
       const auto receivers =
