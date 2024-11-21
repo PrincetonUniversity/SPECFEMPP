@@ -69,7 +69,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
   //    if start time is not explicitly specified then t0 is determined using
   //    source frequencies and time shift
   auto [sources, t0] =
-      specfem::sources::read_sources(sources_file, setup.get_dt(), mpi);
+      specfem::IO::read_sources(sources_file, setup.get_dt(), mpi);
 
   // Generate compute structs to be used by the solver
   specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
