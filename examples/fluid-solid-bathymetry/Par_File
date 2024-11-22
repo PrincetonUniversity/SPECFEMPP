@@ -5,7 +5,7 @@
 #-----------------------------------------------------------
 
 # title of job
-title                           = bath_10936816_P0009
+title                           = fluid-solid-bathymetry
 
 # parameters concerning partitioning
 NPROC                           = 1              # number of processes
@@ -117,7 +117,7 @@ interfacesfile                  = topography_file.dat
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0             # abscissa of left side of the model
 xmax                            = 2.000d+04        # abscissa of right side of the model
-nx                              = 500              # number of elements along X
+nx                              = 250              # number of elements along X
 
 STACEY_ABSORBING_CONDITIONS       = .true.        # use Stacey absorbing boundary conditions
 
@@ -129,8 +129,8 @@ absorbleft                      = .true.
 
 # define the different regions of the model in the (nx,nz) spectral-element mesh
 nbregions                       = 2              # then set below the different regions and model number for each region
-1 500 1   124 1
-1 500 125 240 2
+1 250 1   62  1
+1 250 63  120 2
 
 #-----------------------------------------------------------
 #
