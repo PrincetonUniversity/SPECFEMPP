@@ -12,21 +12,26 @@
 #include <boost/filesystem.hpp>
 #include <vtkActor.h>
 #include <vtkBiQuadraticQuad.h>
+#include <vtkCellData.h>
 #include <vtkDataSetMapper.h>
 #include <vtkExtractEdges.h>
 #include <vtkFloatArray.h>
 #include <vtkGraphicsFactory.h>
 #include <vtkJPEGWriter.h>
+#include <vtkLookupTable.h>
 #include <vtkNamedColors.h>
+#include <vtkOpenGLRenderWindow.h>
 #include <vtkPNGWriter.h>
 #include <vtkPointData.h>
 #include <vtkPoints.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkProperty.h>
+#include <vtkQuad.h>
 #include <vtkRenderWindow.h>
 #include <vtkRenderWindowInteractor.h>
 #include <vtkRenderer.h>
 #include <vtkSmartPointer.h>
+#include <vtkUnsignedCharArray.h>
 #include <vtkUnstructuredGrid.h>
 #include <vtkWindowToImageFilter.h>
 
@@ -46,6 +51,73 @@ void specfem::plotter::plot_wavefield::plot() {
 #else
 
 namespace {
+
+// Sigmoid function centered at 0.0
+double sigmoid(double x) { return (1 / (1 + std::exp(-100 * x)) - 0.5) * 1.5; }
+
+// Maps different materials to different colors
+vtkSmartPointer<vtkDataSetMapper>
+map_materials_with_color(const specfem::compute::assembly &assembly) {
+
+  const auto &properties = assembly.properties;
+
+  const std::unordered_map<specfem::element::medium_tag, std::array<int, 3> >
+      material_colors = {
+        { specfem::element::medium_tag::elastic, // sienna color
+          { 160, 82, 45 } },
+        { specfem::element::medium_tag::acoustic, // aqua color
+          { 0, 255, 255 } },
+      };
+
+  const auto &coordinates = assembly.mesh.points.h_coord;
+  const int nspec = assembly.mesh.nspec;
+  const int ngllx = assembly.mesh.ngllx;
+  const int ngllz = assembly.mesh.ngllz;
+
+  const int cell_points = 4;
+
+  const std::array<int, cell_points> z_index = { 0, ngllz - 1, ngllz - 1, 0 };
+  const std::array<int, cell_points> x_index = { 0, 0, ngllx - 1, ngllx - 1 };
+
+  auto points = vtkSmartPointer<vtkPoints>::New();
+
+  auto cells = vtkSmartPointer<vtkCellArray>::New();
+
+  auto colors = vtkSmartPointer<vtkUnsignedCharArray>::New();
+  colors->SetNumberOfComponents(3);
+  colors->SetName("Colors");
+
+  for (int icell = 0; icell < nspec; ++icell) {
+    for (int i = 0; i < cell_points; ++i) {
+      points->InsertNextPoint(coordinates(0, icell, z_index[i], x_index[i]),
+                              coordinates(1, icell, z_index[i], x_index[i]),
+                              0.0);
+    }
+    auto quad = vtkSmartPointer<vtkQuad>::New();
+    for (int i = 0; i < cell_points; ++i) {
+      quad->GetPointIds()->SetId(i, icell * cell_points + i);
+    }
+    cells->InsertNextCell(quad);
+
+    const auto material = properties.h_element_types(icell);
+    const auto color = material_colors.at(material);
+    unsigned char color_uc[3] = { static_cast<unsigned char>(color[0]),
+                                  static_cast<unsigned char>(color[1]),
+                                  static_cast<unsigned char>(color[2]) };
+    colors->InsertNextTypedTuple(color_uc);
+  }
+
+  auto unstructured_grid = vtkSmartPointer<vtkUnstructuredGrid>::New();
+  unstructured_grid->SetPoints(points);
+  unstructured_grid->SetCells(VTK_QUAD, cells);
+
+  unstructured_grid->GetCellData()->SetScalars(colors);
+
+  auto mapper = vtkSmartPointer<vtkDataSetMapper>::New();
+  mapper->SetInputData(unstructured_grid);
+
+  return mapper;
+}
 
 vtkSmartPointer<vtkUnstructuredGrid> get_wavefield_on_vtk_grid(
     specfem::compute::assembly &assembly, const specfem::wavefield::type type,
@@ -127,9 +199,17 @@ void specfem::plotter::plot_wavefield::plot() {
 
   auto colors = vtkSmartPointer<vtkNamedColors>::New();
 
-  vtkSmartPointer<vtkGraphicsFactory> graphics_factory;
-  graphics_factory->SetOffScreenOnlyMode(1);
-  graphics_factory->SetUseMesaClasses(1);
+  if (this->output_format != specfem::display::format::on_screen) {
+    vtkSmartPointer<vtkGraphicsFactory> graphics_factory;
+    graphics_factory->SetOffScreenOnlyMode(1);
+    graphics_factory->SetUseMesaClasses(1);
+  }
+
+  auto material_mapper = map_materials_with_color(this->assembly);
+
+  // Create an actor
+  auto material_actor = vtkSmartPointer<vtkActor>::New();
+  material_actor->SetMapper(material_mapper);
 
   const auto unstructured_grid = get_wavefield_on_vtk_grid(
       this->assembly, this->wavefield, this->component);
@@ -139,9 +219,24 @@ void specfem::plotter::plot_wavefield::plot() {
 
   unstructured_grid->GetPointData()->GetScalars()->GetRange(range);
 
+  // create a lookup table to map cell data to colors. The range is from
+  // range[0] to range[1]
+  vtkSmartPointer<vtkLookupTable> lut = vtkSmartPointer<vtkLookupTable>::New();
+  lut->SetNumberOfTableValues(256);
+  lut->SetRange(range[0], range[1]);
+  lut->Build();
+
+  // set color gradient from white to black
+  for (int i = 0; i < 256; ++i) {
+    double t = static_cast<double>(i) / 255.0;
+    double transparency = sigmoid(t);
+    lut->SetTableValue(i, 1.0 - t, 1.0 - t, 1.0 - t, transparency);
+  }
+
+  // Create a mapper
   auto mapper = vtkSmartPointer<vtkDataSetMapper>::New();
   mapper->SetInputData(unstructured_grid);
-
+  mapper->SetLookupTable(lut);
   mapper->SetScalarRange(range[0], range[1]);
   mapper->SetScalarModeToUsePointData();
   mapper->SetColorModeToMapScalars();
@@ -164,45 +259,61 @@ void specfem::plotter::plot_wavefield::plot() {
   vtkSmartPointer<vtkActor> outlineActor = vtkSmartPointer<vtkActor>::New();
   outlineActor->SetMapper(outlineMapper);
   outlineActor->GetProperty()->SetColor(colors->GetColor3d("Black").GetData());
-  outlineActor->GetProperty()->SetLineWidth(1.0);
+  outlineActor->GetProperty()->SetLineWidth(0.5);
 
   // Create a renderer
   auto renderer = vtkSmartPointer<vtkRenderer>::New();
-  renderer->AddActor(actor);
+  renderer->AddActor(material_actor);
   renderer->AddActor(outlineActor);
+  renderer->AddActor(actor);
   renderer->SetBackground(colors->GetColor3d("White").GetData());
   renderer->ResetCamera();
 
-  // Create a render window
-  auto render_window = vtkSmartPointer<vtkRenderWindow>::New();
-  render_window->SetOffScreenRendering(1);
-  render_window->AddRenderer(renderer);
-  render_window->SetSize(1280, 1280);
-  render_window->SetWindowName("Wavefield");
+  if (this->output_format != specfem::display::format::on_screen) {
+    // Create a render window
+    auto render_window = vtkSmartPointer<vtkRenderWindow>::New();
+    render_window->SetOffScreenRendering(1);
+    render_window->AddRenderer(renderer);
+    render_window->SetSize(1280, 1280);
+    render_window->SetWindowName("Wavefield");
+    auto image_filter = vtkSmartPointer<vtkWindowToImageFilter>::New();
+    image_filter->SetInput(render_window);
+    image_filter->Update();
 
-  auto image_filter = vtkSmartPointer<vtkWindowToImageFilter>::New();
-  image_filter->SetInput(render_window);
-  image_filter->Update();
-
-  // Save the plot
-  if (this->output_format == specfem::display::format::PNG) {
-    const auto filename =
-        this->output_folder /
-        ("wavefield" + std::to_string(this->m_istep) + ".png");
-    auto writer = vtkSmartPointer<vtkPNGWriter>::New();
-    writer->SetFileName(filename.string().c_str());
-    writer->SetInputConnection(image_filter->GetOutputPort());
-    writer->Write();
-  } else if (this->output_format == specfem::display::format::JPG) {
-    const auto filename =
-        this->output_folder /
-        ("wavefield" + std::to_string(this->m_istep) + ".jpg");
-    auto writer = vtkSmartPointer<vtkJPEGWriter>::New();
-    writer->SetFileName(filename.string().c_str());
-    writer->SetInputConnection(image_filter->GetOutputPort());
-    writer->Write();
+    // Save the plot
+    if (this->output_format == specfem::display::format::PNG) {
+      const auto filename =
+          this->output_folder /
+          ("wavefield" + std::to_string(this->m_istep) + ".png");
+      auto writer = vtkSmartPointer<vtkPNGWriter>::New();
+      writer->SetFileName(filename.string().c_str());
+      writer->SetInputConnection(image_filter->GetOutputPort());
+      writer->Write();
+    } else if (this->output_format == specfem::display::format::JPG) {
+      const auto filename =
+          this->output_folder /
+          ("wavefield" + std::to_string(this->m_istep) + ".jpg");
+      auto writer = vtkSmartPointer<vtkJPEGWriter>::New();
+      writer->SetFileName(filename.string().c_str());
+      writer->SetInputConnection(image_filter->GetOutputPort());
+      writer->Write();
+    } else {
+      throw std::runtime_error("Unsupported output format");
+    }
   } else {
-    throw std::runtime_error("Unsupported output format");
+    // Create a render window interactor
+    auto render_window = vtkSmartPointer<vtkOpenGLRenderWindow>::New();
+    render_window->AddRenderer(renderer);
+    render_window->SetSize(1280, 1280);
+    render_window->SetWindowName("Wavefield");
+
+    auto render_window_interactor =
+        vtkSmartPointer<vtkRenderWindowInteractor>::New();
+    render_window_interactor->SetRenderWindow(render_window);
+
+    // Start the event loop
+    render_window->Render();
+    render_window_interactor->Start();
   }
 }
 
