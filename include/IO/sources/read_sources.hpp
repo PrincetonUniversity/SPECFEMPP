@@ -2,7 +2,7 @@
 #define _READ_SOURCES_HPP
 
 #include "enumerations/simulation.hpp"
-#include "sources/source.hpp"
+#include "source/interface.hpp"
 #include <memory>
 
 namespace specfem {
