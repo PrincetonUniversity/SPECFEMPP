@@ -2,7 +2,7 @@
 // #include "coupled_interface/interface.hpp"
 // #include "domain/interface.hpp"
 #include "IO/mesh/read_mesh.hpp"
-#include "IO/sources/read_mesh.hpp"
+#include "IO/sources/read_sources.hpp"
 #include "kokkos_abstractions.h"
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"

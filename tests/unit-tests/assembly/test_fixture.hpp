@@ -2,6 +2,7 @@
 
 #include "../MPI_environment.hpp"
 #include "IO/mesh/read_mesh.hpp"
+#include "IO/sources/read_sources.hpp"
 #include "compute/assembly/assembly.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "mesh/mesh.hpp"
