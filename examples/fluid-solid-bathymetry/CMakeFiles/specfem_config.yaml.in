@@ -31,10 +31,10 @@ parameters:
         writer:
           seismogram:
             format: ascii
-            directory: OUTPUT_FILES/seismograms
+            directory: @CMAKE_SOURCE_DIR@/examples/fluid-solid-bathymetry/OUTPUT_FILES/seismograms
 
   receivers:
-    stations-file: OUTPUT_FILES/STATIONS
+    stations-file: @CMAKE_SOURCE_DIR@/examples/fluid-solid-bathymetry/OUTPUT_FILES/STATIONS
     angle: 0.0
     seismogram-type:
       - displacement
@@ -48,5 +48,5 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: OUTPUT_FILES/database.bin
-    source-file: line_sources.yaml
+    mesh-database: @CMAKE_SOURCE_DIR@/examples/fluid-solid-bathymetry/OUTPUT_FILES/database.bin
+    source-file: @CMAKE_SOURCE_DIR@/examples/fluid-solid-bathymetry/line_sources.yaml
