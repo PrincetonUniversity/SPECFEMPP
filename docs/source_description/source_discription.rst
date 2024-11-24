@@ -169,7 +169,7 @@ Moment Tensor Source Description
 
     .. code-block:: yaml
 
-        moment_tensor:
+        moment-tensor:
             x: 0.0
             z: 0.0
             Mxx: 1e10
