@@ -10,7 +10,7 @@ namespace wavefield {
  */
 enum class type { forward, adjoint, backward, buffer };
 
-enum class component { displacement, velocity, acceleration };
+enum class component { displacement, velocity, acceleration, pressure };
 
 template <specfem::dimension::type DimensionType,
           specfem::wavefield::component Component>
