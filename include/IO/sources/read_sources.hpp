@@ -2,11 +2,11 @@
 #define _READ_SOURCES_HPP
 
 #include "enumerations/simulation.hpp"
-#include "source.hpp"
+#include "source/interface.hpp"
 #include <memory>
 
 namespace specfem {
-namespace sources {
+namespace IO {
 /**
  * @brief Read sources file written in .yml format
  *
@@ -23,7 +23,7 @@ read_sources(const std::string sources_file, const int nsteps,
              const type_real user_t0, const type_real dt,
              const specfem::simulation::type simulation_type);
 
-} // namespace sources
+} // namespace IO
 } // namespace specfem
 
 #endif
