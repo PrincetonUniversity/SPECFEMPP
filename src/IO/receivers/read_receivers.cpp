@@ -1,3 +1,4 @@
+#include "IO/receivers/read_receivers.hpp"
 #include "receiver/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"

@@ -116,7 +116,7 @@ add_library(
         src/IO/mesh/fortran/read_interfaces.cpp
         src/IO/mesh/fortran/read_properties.cpp
         src/IO/sources/read_sources.cpp
-        # src/IO/receivers/read_receivers.cpp
+        src/IO/receivers/read_receivers.cpp
 )
 
 if (NOT HDF5_CXX_BUILD)
@@ -147,6 +147,11 @@ target_link_libraries(
 target_link_libraries(
   IO
   source_class
+)
+
+target_link_libraries(
+  IO
+  receiver_class
 )
 
 add_library(
@@ -317,7 +322,6 @@ target_link_libraries(
 add_library(
         receiver_class
         src/receiver/receiver.cpp
-        src/receiver/read_receiver.cpp
 )
 
 target_link_libraries(

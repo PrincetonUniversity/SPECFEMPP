@@ -3,7 +3,7 @@
 // #include "../../utilities/include/compare_array.h"
 #include "IO/fortranio/interface.hpp"
 #include "IO/mesh/read_mesh.hpp"
-#include "IO/receivers/read_receiver.hpp"
+#include "IO/receivers/read_receivers.hpp"
 #include "compute/interface.hpp"
 #include "constants.hpp"
 #include "domain/domain.hpp"
