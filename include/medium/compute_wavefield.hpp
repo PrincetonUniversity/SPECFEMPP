@@ -5,7 +5,33 @@
 
 namespace specfem {
 namespace medium {
-
+/**
+ * @brief Compute the values of wavefield of a given component within a spectral
+ * element.
+ *
+ * This function computes the wavefield values given the intrinsic field values
+ * within that element. For example, for elastic medium  when the wavefield
+ * component is pressure, the function computes the pressure values from the
+ * displacement field values.
+ *
+ * @tparam MediumTag The medium tag of the element
+ * @tparam PropertyTag The property tag of the element
+ * @tparam MemberType The kokkos team policy member type
+ * @tparam IteratorType The iterator type @ref specfem::iterator::chunk
+ * @tparam ChunkFieldType Chunk field type that stores the intrinsic field
+ * values
+ * @tparam QuadratureType The quadrature type that stores the lagrange
+ * polynomial values
+ * @tparam WavefieldViewType The wavefield view type (output)
+ * @param team The kokkos team policy member
+ * @param iterator The iterator to iterate over all the GLL points
+ * @param assembly SPECFEM++ assembly object
+ * @param quadrature The quadrature object containing lagrange polynomial values
+ * @param field Instrinsic field values
+ * @param wavefield_component The wavefield component to compute
+ * @param wavefield_on_entire_grid The wavefield view to store the computed
+ * values
+ */
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, typename MemberType,
           typename IteratorType, typename ChunkFieldType,
@@ -31,9 +57,18 @@ compute_wavefield(const MemberType &team, const IteratorType &iterator,
   static_assert(ChunkFieldType::medium_tag == MediumTag,
                 "field type needs to have the same medium tag as the function");
 
-  impl_compute_wavefield<MediumTag, PropertyTag>(
-      team, iterator, assembly, quadrature, field, wavefield_component,
-      wavefield_on_entire_grid);
+  using dimension_dispatch =
+      std::integral_constant<specfem::dimension::type,
+                             specfem::dimension::type::dim2>;
+  using medium_dispatch =
+      std::integral_constant<specfem::element::medium_tag, MediumTag>;
+  using property_dispatch =
+      std::integral_constant<specfem::element::property_tag, PropertyTag>;
+
+  impl_compute_wavefield(dimension_dispatch(), medium_dispatch(),
+                         property_dispatch(), team, iterator, assembly,
+                         quadrature, field, wavefield_component,
+                         wavefield_on_entire_grid);
 }
 
 } // namespace medium
