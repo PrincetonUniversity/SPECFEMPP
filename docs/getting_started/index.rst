@@ -51,6 +51,11 @@ The following table lists the versions of compilers that are supported by SPECFE
       * Not Tested
       * 8.0.0, latest
 
+    * * Apple Clang
+      * 16.0.0 (MacOS Sequoia)
+      * Not Tested
+      * 8.0.0, latest
+
     * * NVC++
       * Not Tested
       * Not Tested
