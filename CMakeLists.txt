@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.17.5)
 
-project(specfem2d_kokkos VERSION 0.1.0)
+project(SPECFEMPP VERSION 0.1.0)
 
 set(CMAKE_CXX_STANDARD 17)
 option(HDF5_CXX_BUILD "Build HDF5 C++" ON)

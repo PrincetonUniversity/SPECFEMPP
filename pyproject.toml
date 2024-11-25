@@ -1,8 +1,42 @@
-[tool.poetry]
+[build-system]
+requires = ["scikit-build-core>=0.10", "pybind11"]
+build-backend = "scikit_build_core.build"
+
+[project]
 name = "SPECFEMPP"
 version = "0.1.0"
 description = "Kokkos implementation of SpecFEM2D code"
-authors = ["Rohit R Kakodkar <rohit_kakodkar@princeton.edu>", "Lucas Sawade <lsawade@princeton.edu>", "Congyue Cui <ccui@princeton.edu>"]
+readme = "README.md"
+authors = [
+  { name = "Rohit R Kakodkar", email = "rohit_kakodkar@princeton.edu" },
+  { name = "Lucas Sawade", email = "lsawade@princeton.edu" },
+  { name = "Congyue Cui", email = "ccui@princeton.edu" }
+]
+requires-python = ">=3.9"
+# classifiers = [
+#   "Development Status :: 4 - Beta",
+#   "License :: OSI Approved :: MIT License",
+#   "Programming Language :: Python :: 3 :: Only",
+#   "Programming Language :: Python :: 3.7",
+#   "Programming Language :: Python :: 3.8",
+#   "Programming Language :: Python :: 3.9",
+#   "Programming Language :: Python :: 3.10",
+#   "Programming Language :: Python :: 3.11",
+#   "Programming Language :: Python :: 3.12",
+#   "Programming Language :: Python :: 3.13",
+# ]
+
+[tool.scikit-build]
+cmake.define.CMAKE_BUILD_TYPE = "Release"
+cmake.define.BUILD_TESTS = "ON"
+cmake.define.ENABLE_SIMD = "ON"
+cmake.define.ENABLE_ATOMICS_BYPASS = "ON"
+# cmake.define.Kokkos_ENABLE_OPENMP = "ON"
+cmake.define.Kokkos_ARCH_NATIVE = "ON"
+cmake.define.Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION = "ON"
+build-dir = "./build"
+
+[tool.poetry]
 package-mode = false
 
 [tool.poetry.dependencies]
@@ -24,7 +58,3 @@ ruff = ">=0.6.7"
 [tool.snakefmt]
 line_length = 90
 include = '\.smk$|^Snakefile|\.py|^Snakefile.in$'
-
-[build-system]
-requires = ["scikit-build-core>=0.10", "pybind11"]
-build-backend = "scikit_build_core.build"
