@@ -533,3 +533,7 @@ if (DOXYGEN_FOUND)
 else (DOXYGEN_FOUND)
   message("Doxygen need to be installed to generate the doxygen documentation")
 endif (DOXYGEN_FOUND)
+
+if (SPECFEMPP_ENABLE_PYTHON)
+    install(TARGETS specfem2d DESTINATION ${SKBUILD_SCRIPTS_DIR})
+endif (SPECFEMPP_ENABLE_PYTHON)
