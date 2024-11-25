@@ -2,6 +2,7 @@
 #include "../../MPI_environment.hpp"
 #include "../../utilities/include/interface.hpp"
 #include "IO/mesh/read_mesh.hpp"
+#include "IO/receivers/read_receivers.hpp"
 #include "compute/interface.hpp"
 #include "constants.hpp"
 #include "domain/domain.hpp"
@@ -197,8 +198,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
 
     const auto stations_filename = setup.get_stations_file();
     const auto angle = setup.get_receiver_angle();
-    auto receivers =
-        specfem::receivers::read_receivers(stations_filename, angle);
+    auto receivers = specfem::IO::read_receivers(stations_filename, angle);
 
     std::cout << "  Receiver information\n";
     std::cout << "------------------------------" << std::endl;

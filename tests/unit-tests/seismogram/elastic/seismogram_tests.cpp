@@ -3,6 +3,7 @@
 // #include "../../utilities/include/compare_array.h"
 #include "IO/fortranio/interface.hpp"
 #include "IO/mesh/read_mesh.hpp"
+#include "IO/receivers/read_receiver.hpp"
 #include "compute/interface.hpp"
 #include "constants.hpp"
 #include "domain/domain.hpp"
@@ -97,7 +98,7 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
 
   const auto angle = setup.get_receiver_angle();
   const auto stations_filename = setup.get_stations_file();
-  auto receivers = specfem::receivers::read_receivers(stations_filename, angle);
+  auto receivers = specfem::IO::read_receivers(stations_filename, angle);
   const auto stypes = setup.get_seismogram_types();
 
   specfem::compute::assembly assembly(mesh, quadratures, sources, receivers,

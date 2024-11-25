@@ -2,6 +2,7 @@
 
 #include "../MPI_environment.hpp"
 #include "IO/mesh/read_mesh.hpp"
+#include "IO/receivers/read_receivers.hpp"
 #include "compute/assembly/assembly.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "mesh/mesh.hpp"
@@ -151,8 +152,7 @@ protected:
       const auto [sources, t0] = specfem::sources::read_sources(
           sources_file, 0, 0, 0, specfem::simulation::type::forward);
 
-      const auto receivers =
-          specfem::receivers::read_receivers(stations_file, 0);
+      const auto receivers = specfem::IO::read_receivers(stations_file, 0);
 
       std::vector<specfem::enums::seismogram::type> seismogram_types = {
         specfem::enums::seismogram::type::displacement

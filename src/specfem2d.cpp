@@ -1,13 +1,8 @@
 #include "compute/interface.hpp"
 // #include "coupled_interface/interface.hpp"
 // #include "domain/interface.hpp"
-#include "IO/mesh/fortran/read_boundaries.hpp"
-#include "IO/mesh/fortran/read_elements.hpp"
-#include "IO/mesh/fortran/read_interfaces.hpp"
-#include "IO/mesh/fortran/read_material_properties.hpp"
-#include "IO/mesh/fortran/read_mesh_database.hpp"
-#include "IO/mesh/fortran/read_properties.hpp"
 #include "IO/mesh/read_mesh.hpp"
+#include "IO/receivers/read_receivers.hpp"
 #include "kokkos_abstractions.h"
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"
@@ -119,7 +114,7 @@ void execute(const std::string &parameter_file, const std::string &default_file,
 
   const auto stations_filename = setup.get_stations_file();
   const auto angle = setup.get_receiver_angle();
-  auto receivers = specfem::receivers::read_receivers(stations_filename, angle);
+  auto receivers = specfem::IO::read_receivers(stations_filename, angle);
 
   mpi->cout("Source Information:");
   mpi->cout("-------------------------------");
