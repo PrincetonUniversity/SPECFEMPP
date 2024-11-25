@@ -2,9 +2,11 @@
 
 #include "acoustic_isotropic2d/acoustic_isotropic2d.hpp"
 #include "elastic_isotropic2d/elastic_isotropic2d.hpp"
+#include <Kokkos_Core.hpp>
 
 namespace specfem {
 namespace medium {
+
 /**
  * @brief Compute the values of wavefield of a given component within a spectral
  * element.
@@ -14,15 +16,18 @@ namespace medium {
  * component is pressure, the function computes the pressure values from the
  * displacement field values.
  *
+ *
+ * @ingroup MediumPhysics
+ *
  * @tparam MediumTag The medium tag of the element
  * @tparam PropertyTag The property tag of the element
  * @tparam MemberType The kokkos team policy member type
- * @tparam IteratorType The iterator type @ref specfem::iterator::chunk
+ * @tparam IteratorType The iterator type specfem::iterator::chunk
  * @tparam ChunkFieldType Chunk field type that stores the intrinsic field
- * values
+ * values specfem::chunk_element::field
  * @tparam QuadratureType The quadrature type that stores the lagrange
- * polynomial values
- * @tparam WavefieldViewType The wavefield view type (output)
+ * polynomial values specfem::element::quadrature
+ * @tparam WavefieldViewType 4 dimensional Kokkos view (output)
  * @param team The kokkos team policy member
  * @param iterator The iterator to iterate over all the GLL points
  * @param assembly SPECFEM++ assembly object
