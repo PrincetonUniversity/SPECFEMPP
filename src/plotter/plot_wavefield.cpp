@@ -130,6 +130,8 @@ vtkSmartPointer<vtkUnstructuredGrid> get_wavefield_on_vtk_grid(
       return specfem::wavefield::component::velocity;
     } else if (display_component == specfem::display::wavefield::acceleration) {
       return specfem::wavefield::component::acceleration;
+    } else if (display_component == specfem::display::wavefield::pressure) {
+      return specfem::wavefield::component::pressure;
     } else {
       throw std::runtime_error("Unsupported component");
     }
@@ -173,11 +175,17 @@ vtkSmartPointer<vtkUnstructuredGrid> get_wavefield_on_vtk_grid(
       points->InsertNextPoint(coordinates(0, icell, z_index[i], x_index[i]),
                               coordinates(1, icell, z_index[i], x_index[i]),
                               0.0);
-      scalars->InsertNextValue(
-          std::sqrt((wavefield(icell, z_index[i], x_index[i], 0) *
-                     wavefield(icell, z_index[i], x_index[i], 0)) +
-                    (wavefield(icell, z_index[i], x_index[i], 1) *
-                     wavefield(icell, z_index[i], x_index[i], 1))));
+      if (component == specfem::wavefield::component::pressure) {
+        scalars->InsertNextValue(
+            std::sqrt(wavefield(icell, z_index[i], x_index[i], 0) *
+                      wavefield(icell, z_index[i], x_index[i], 0)));
+      } else {
+        scalars->InsertNextValue(
+            std::sqrt((wavefield(icell, z_index[i], x_index[i], 0) *
+                       wavefield(icell, z_index[i], x_index[i], 0)) +
+                      (wavefield(icell, z_index[i], x_index[i], 1) *
+                       wavefield(icell, z_index[i], x_index[i], 1))));
+      }
     }
     auto quad = vtkSmartPointer<vtkBiQuadraticQuad>::New();
     for (int i = 0; i < cell_points; ++i) {
@@ -264,7 +272,7 @@ void specfem::plotter::plot_wavefield::plot() {
   // Create a renderer
   auto renderer = vtkSmartPointer<vtkRenderer>::New();
   renderer->AddActor(material_actor);
-  renderer->AddActor(outlineActor);
+  // renderer->AddActor(outlineActor);
   renderer->AddActor(actor);
   renderer->SetBackground(colors->GetColor3d("White").GetData());
   renderer->ResetCamera();
