@@ -113,38 +113,16 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
     //https://specfem2d-kokkos.readthedocs.io/en/devel/api/datatypes/field_derivatives/point.html#_CPPv4N7specfem5point17field_derivatives2duE
     // tells us that fhe first index is the derivative index
 #define du(i,j) (i==0? (j==0? dsx_dx:dsz_dx):(j==0? dsx_dz:dsz_dz))
+    // the unneeded strain components should be omitted at compile time?
 
-    // WET code... should this be refactored with
-    //   include/domain/impl/elements/elastic/elastic2d.tpp   ?
+    // https://github.com/SPECFEM/specfem2d/blob/98741db1a0c8082ca57364f5b17ea95df6cbf1c2/src/specfem2D/compute_pressure.f90#L398
+    // pressure = - trace(sigma) / 3 = -kappa * trace(epsilon)
 
-    type_real sigma_xx, sigma_zz, sigma_xz;
-    if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
-      // P_SV case
-      // sigma_xx
-      sigma_xx =
-          properties.lambdaplus2mu * du(0, 0) + properties.lambda * du(1, 1);
-
-      // sigma_zz
-      sigma_zz =
-          properties.lambdaplus2mu * du(1, 1) + properties.lambda * du(0, 0);
-
-      // sigma_xz
-      sigma_xz = properties.mu * (du(0, 1) + du(1, 0));
-    } else if (specfem::globals::simulation_wave == specfem::wave::sh) {
-      // SH-case
-      // sigma_xx
-      sigma_xx = properties.mu * du(0, 0); // would be sigma_xy in
-                                          // CPU-version
-
-      // sigma_xz
-      sigma_xz = properties.mu * du(1, 0); // sigma_zy
-    }
+    //precomputing kappa may be helpful.
+    receiver_field(0) = - (properties.lambda + (2.0/3.0)*properties.mu)*(dsx_dx + dsz_dz);
+    receiver_field(1) = 0;
 
 #undef du
-    // https://github.com/SPECFEM/specfem2d/blob/98741db1a0c8082ca57364f5b17ea95df6cbf1c2/src/specfem2D/compute_pressure.f90#L398
-    // pressure = - trace(sigma) / 3
-    receiver_field(0) = - (sigma_xx + sigma_zz)/3.0;
-    receiver_field(1) = 0;
   }else{
     DEVICE_ASSERT(false, "seismogram not supported");
   }
