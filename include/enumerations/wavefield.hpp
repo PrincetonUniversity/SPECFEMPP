@@ -10,7 +10,7 @@ namespace wavefield {
  */
 enum class type { forward, adjoint, backward, buffer };
 
-enum class component { displacement, velocity, acceleration };
+enum class component { displacement, velocity, acceleration, pressure };
 
 template <specfem::dimension::type DimensionType,
           specfem::wavefield::component Component>
@@ -41,6 +41,15 @@ public:
   static constexpr auto dimension = specfem::dimension::type::dim2;
   static constexpr auto component = specfem::wavefield::component::acceleration;
   static constexpr int num_components = 2;
+};
+
+template <>
+class wavefield<specfem::dimension::type::dim2,
+                specfem::wavefield::component::pressure> {
+public:
+  static constexpr auto dimension = specfem::dimension::type::dim2;
+  static constexpr auto component = specfem::wavefield::component::pressure;
+  static constexpr int num_components = 1;
 };
 
 } // namespace wavefield

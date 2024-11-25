@@ -5,9 +5,9 @@
 namespace {
 
 template <specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag,
-          specfem::wavefield::component Component>
+          specfem::element::property_tag PropertyTag>
 void get_wavefield_on_entire_grid(
+    const specfem::wavefield::component component,
     const specfem::compute::assembly &assembly,
     Kokkos::View<type_real ****, Kokkos::LayoutLeft,
                  Kokkos::DefaultExecutionSpace>
@@ -17,13 +17,13 @@ void get_wavefield_on_entire_grid(
   const int ngllz = assembly.mesh.ngllz;
 
   if (ngllx == 5 && ngllz == 5) {
-    impl::helper<MediumTag, PropertyTag, Component, 5> helper(
-        assembly, wavefield_on_entire_grid);
-    helper();
+    impl::helper<MediumTag, PropertyTag, 5> helper(assembly,
+                                                   wavefield_on_entire_grid);
+    helper(component);
   } else if (ngllx == 8 && ngllz == 8) {
-    impl::helper<MediumTag, PropertyTag, Component, 8> helper(
-        assembly, wavefield_on_entire_grid);
-    helper();
+    impl::helper<MediumTag, PropertyTag, 8> helper(assembly,
+                                                   wavefield_on_entire_grid);
+    helper(component);
   } else {
     throw std::runtime_error("Number of quadrature points not supported");
   }
@@ -45,6 +45,8 @@ specfem::compute::assembly::generate_wavefield_on_entire_grid(
       return 2;
     } else if (component == specfem::wavefield::component::acceleration) {
       return 2;
+    } else if (component == specfem::wavefield::component::pressure) {
+      return 1;
     } else {
       throw std::runtime_error("Wavefield component not supported");
     }
@@ -69,36 +71,13 @@ specfem::compute::assembly::generate_wavefield_on_entire_grid(
   const auto h_wavefield_on_entire_grid =
       Kokkos::create_mirror_view(wavefield_on_entire_grid);
 
-  if (component == specfem::wavefield::component::displacement) {
-    get_wavefield_on_entire_grid<specfem::element::medium_tag::elastic,
-                                 specfem::element::property_tag::isotropic,
-                                 specfem::wavefield::component::displacement>(
-        *this, wavefield_on_entire_grid);
-    get_wavefield_on_entire_grid<specfem::element::medium_tag::acoustic,
-                                 specfem::element::property_tag::isotropic,
-                                 specfem::wavefield::component::displacement>(
-        *this, wavefield_on_entire_grid);
-  } else if (component == specfem::wavefield::component::velocity) {
-    get_wavefield_on_entire_grid<specfem::element::medium_tag::elastic,
-                                 specfem::element::property_tag::isotropic,
-                                 specfem::wavefield::component::velocity>(
-        *this, wavefield_on_entire_grid);
-    get_wavefield_on_entire_grid<specfem::element::medium_tag::acoustic,
-                                 specfem::element::property_tag::isotropic,
-                                 specfem::wavefield::component::velocity>(
-        *this, wavefield_on_entire_grid);
-  } else if (component == specfem::wavefield::component::acceleration) {
-    get_wavefield_on_entire_grid<specfem::element::medium_tag::elastic,
-                                 specfem::element::property_tag::isotropic,
-                                 specfem::wavefield::component::acceleration>(
-        *this, wavefield_on_entire_grid);
-    get_wavefield_on_entire_grid<specfem::element::medium_tag::acoustic,
-                                 specfem::element::property_tag::isotropic,
-                                 specfem::wavefield::component::acceleration>(
-        *this, wavefield_on_entire_grid);
-  } else {
-    throw std::runtime_error("Wavefield component not supported");
-  }
+  get_wavefield_on_entire_grid<specfem::element::medium_tag::elastic,
+                               specfem::element::property_tag::isotropic>(
+      component, *this, wavefield_on_entire_grid);
+
+  get_wavefield_on_entire_grid<specfem::element::medium_tag::acoustic,
+                               specfem::element::property_tag::isotropic>(
+      component, *this, wavefield_on_entire_grid);
 
   Kokkos::deep_copy(h_wavefield_on_entire_grid, wavefield_on_entire_grid);
 

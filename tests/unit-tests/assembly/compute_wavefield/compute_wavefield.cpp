@@ -70,7 +70,7 @@ void test_compute_wavefield(specfem::compute::assembly &assembly) {
                            specfem::wavefield::type::forward>(assembly);
   } catch (std::exception &e) {
     std::ostringstream message;
-    message << "Error in computing displacement wavefield: \n\t" << e.what();
+    message << "Error in computing velocity wavefield: \n\t" << e.what();
     throw std::runtime_error(message.str());
   }
 
@@ -79,7 +79,16 @@ void test_compute_wavefield(specfem::compute::assembly &assembly) {
                            specfem::wavefield::type::forward>(assembly);
   } catch (std::exception &e) {
     std::ostringstream message;
-    message << "Error in computing displacement wavefield: \n\t" << e.what();
+    message << "Error in computing acceleration wavefield: \n\t" << e.what();
+    throw std::runtime_error(message.str());
+  }
+
+  try {
+    test_compute_wavefield<specfem::wavefield::component::pressure,
+                           specfem::wavefield::type::forward>(assembly);
+  } catch (std::exception &e) {
+    std::ostringstream message;
+    message << "Error in computing pressure wavefield: \n\t" << e.what();
     throw std::runtime_error(message.str());
   }
 }
