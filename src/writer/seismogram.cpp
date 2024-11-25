@@ -45,7 +45,7 @@ void specfem::writer::seismogram::write() {
           break;
         case specfem::enums::seismogram::type::pressure:
           filename = { this->output_folder + "/" + network_name + station_name +
-                       "BX" + ".semp" }; // TODO get the right name
+                       "PRE" + ".semp" };
           break;
         }
 

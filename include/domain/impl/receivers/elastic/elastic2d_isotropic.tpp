@@ -100,14 +100,50 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
       dsz_dxi += hprime(ix, l) * element_field.displacement(iz, l, 1);
       dsz_dgamma += hprime(iz, l) * element_field.displacement(l, ix, 1);
     }
+    type_real dsx_dx, dsx_dz, dsz_dx, dsz_dz;
+    dsx_dx = dsx_dxi    * partial_derivatives.xix +
+             dsx_dgamma * partial_derivatives.gammax;
+    dsx_dz = dsx_dxi    * partial_derivatives.xiz +
+             dsx_dgamma * partial_derivatives.gammaz;
+    dsz_dx = dsz_dxi    * partial_derivatives.xix +
+             dsz_dgamma * partial_derivatives.gammax;
+    dsz_dz = dsz_dxi    * partial_derivatives.xiz +
+             dsz_dgamma * partial_derivatives.gammaz;
 
-    // -kappa * (dsxdx + dszdz)
-    receiver_field(0) = -properties.lambdaplus2mu * (
-      (dsx_dxi * partial_derivatives.xix +
-                        dsx_dgamma * partial_derivatives.gammax)
-    +(dsz_dxi * partial_derivatives.xiz +
-                        dsz_dgamma * partial_derivatives.gammaz)
-    );
+    //https://specfem2d-kokkos.readthedocs.io/en/devel/api/datatypes/field_derivatives/point.html#_CPPv4N7specfem5point17field_derivatives2duE
+    // tells us that fhe first index is the derivative index
+#define du(i,j) (i==0? (j==0? dsx_dx:dsz_dx):(j==0? dsx_dz:dsz_dz))
+
+    // WET code... should this be refactored with
+    //   include/domain/impl/elements/elastic/elastic2d.tpp   ?
+
+    type_real sigma_xx, sigma_zz, sigma_xz;
+    if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
+      // P_SV case
+      // sigma_xx
+      sigma_xx =
+          properties.lambdaplus2mu * du(0, 0) + properties.lambda * du(1, 1);
+
+      // sigma_zz
+      sigma_zz =
+          properties.lambdaplus2mu * du(1, 1) + properties.lambda * du(0, 0);
+
+      // sigma_xz
+      sigma_xz = properties.mu * (du(0, 1) + du(1, 0));
+    } else if (specfem::globals::simulation_wave == specfem::wave::sh) {
+      // SH-case
+      // sigma_xx
+      sigma_xx = properties.mu * du(0, 0); // would be sigma_xy in
+                                          // CPU-version
+
+      // sigma_xz
+      sigma_xz = properties.mu * du(1, 0); // sigma_zy
+    }
+
+#undef du
+    // https://github.com/SPECFEM/specfem2d/blob/98741db1a0c8082ca57364f5b17ea95df6cbf1c2/src/specfem2D/compute_pressure.f90#L398
+    // pressure = - trace(sigma) / 3
+    receiver_field(0) = - (sigma_xx + sigma_zz)/3.0;
     receiver_field(1) = 0;
   }else{
     DEVICE_ASSERT(false, "seismogram not supported");
