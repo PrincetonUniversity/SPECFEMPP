@@ -107,7 +107,7 @@ add_library(
         IO
         src/IO/fortranio/fortran_io.cpp
         src/IO/HDF5/native_type.cpp
-        # src/IO/ASCII/native_type.cpp
+        src/IO/ASCII/native_type.cpp
         src/IO/mesh/read_mesh.cpp
         src/IO/mesh/fortran/read_boundaries.cpp
         src/IO/mesh/fortran/read_elements.cpp
@@ -138,21 +138,6 @@ else()
                 Kokkos::kokkos
         )
 endif()
-
-target_link_libraries(
-  IO
-  mesh
-)
-
-target_link_libraries(
-  IO
-  source_class
-)
-
-target_link_libraries(
-  IO
-  receiver_class
-)
 
 add_library(
         point
@@ -204,11 +189,13 @@ endif(MPI_PARALLEL)
 
 add_library(
         mesh
+        src/mesh/IO/fortran/read_mesh_database.cpp
         src/mesh/boundaries/forcing_boundaries.cpp
         src/mesh/boundaries/absorbing_boundaries.cpp
         src/mesh/boundaries/acoustic_free_surface.cpp
         src/mesh/elements/tangential_elements.cpp
         src/mesh/elements/axial_elements.cpp
+        src/mesh/properties/properties.cpp
         src/mesh/mpi_interfaces/mpi_interfaces.cpp
         src/mesh/materials/materials.cpp
         src/mesh/coupled_interfaces/interface_container.cpp
@@ -222,6 +209,7 @@ target_link_libraries(
         Kokkos::kokkos
         specfem_mpi
         # material_class
+        IO
         yaml-cpp
 )
 
@@ -250,25 +238,15 @@ target_link_libraries(
 # )
 
 add_library(
-        read_seismogram
-        src/reader/seismogram.cpp
-)
-
-target_link_libraries(
-        read_seismogram
-        Kokkos::kokkos
-        )
-
-add_library(
         reader
         src/reader/wavefield.cpp
+        src/reader/seismogram.cpp
 )
 
 target_link_libraries(
         reader
         compute
         IO
-        read_seismogram
 )
 
 add_library(
@@ -292,7 +270,7 @@ add_library(
 
 target_link_libraries(
         source_time_function
-        read_seismogram
+        reader
         Kokkos::kokkos
         point
 )
@@ -304,6 +282,7 @@ add_library(
         src/source/moment_tensor_source.cpp
         src/source/adjoint_source.cpp
         src/source/external.cpp
+        src/source/read_sources.cpp
 )
 
 target_link_libraries(
@@ -322,6 +301,7 @@ target_link_libraries(
 add_library(
         receiver_class
         src/receiver/receiver.cpp
+        src/receiver/read_receiver.cpp
 )
 
 target_link_libraries(
@@ -510,8 +490,6 @@ add_executable(
         specfem2d
         src/specfem2d.cpp
 )
-
-
 
 target_link_libraries(
         specfem2d
