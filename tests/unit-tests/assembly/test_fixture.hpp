@@ -3,6 +3,7 @@
 #include "../MPI_environment.hpp"
 #include "IO/mesh/read_mesh.hpp"
 #include "IO/receivers/read_receivers.hpp"
+#include "IO/sources/read_sources.hpp"
 #include "compute/assembly/assembly.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "mesh/mesh.hpp"
@@ -149,7 +150,7 @@ protected:
           Test.get_databases();
       specfem::mesh::mesh mesh = specfem::IO::read_mesh(database_file, mpi);
 
-      const auto [sources, t0] = specfem::sources::read_sources(
+      const auto [sources, t0] = specfem::IO::read_sources(
           sources_file, 0, 0, 0, specfem::simulation::type::forward);
 
       const auto receivers = specfem::IO::read_receivers(stations_file, 0);

@@ -107,7 +107,7 @@ add_library(
         IO
         src/IO/fortranio/fortran_io.cpp
         src/IO/HDF5/native_type.cpp
-        src/IO/ASCII/native_type.cpp
+        # src/IO/ASCII/native_type.cpp
         src/IO/mesh/read_mesh.cpp
         src/IO/mesh/fortran/read_boundaries.cpp
         src/IO/mesh/fortran/read_elements.cpp
@@ -115,6 +115,8 @@ add_library(
         src/IO/mesh/fortran/read_mesh_database.cpp
         src/IO/mesh/fortran/read_interfaces.cpp
         src/IO/mesh/fortran/read_properties.cpp
+        src/IO/sources/read_sources.cpp
+        # src/IO/receivers/read_receivers.cpp
 )
 
 if (NOT HDF5_CXX_BUILD)
@@ -140,6 +142,11 @@ endif()
 target_link_libraries(
   IO
   mesh
+)
+
+target_link_libraries(
+  IO
+  source_class
 )
 
 add_library(
@@ -210,7 +217,6 @@ target_link_libraries(
         Kokkos::kokkos
         specfem_mpi
         # material_class
-        IO
         yaml-cpp
 )
 
@@ -239,15 +245,25 @@ target_link_libraries(
 # )
 
 add_library(
+        read_seismogram
+        src/reader/seismogram.cpp
+)
+
+target_link_libraries(
+        read_seismogram
+        Kokkos::kokkos
+        )
+
+add_library(
         reader
         src/reader/wavefield.cpp
-        src/reader/seismogram.cpp
 )
 
 target_link_libraries(
         reader
         compute
         IO
+        read_seismogram
 )
 
 add_library(
@@ -271,7 +287,7 @@ add_library(
 
 target_link_libraries(
         source_time_function
-        reader
+        read_seismogram
         Kokkos::kokkos
         point
 )
@@ -283,7 +299,6 @@ add_library(
         src/source/moment_tensor_source.cpp
         src/source/adjoint_source.cpp
         src/source/external.cpp
-        src/source/read_sources.cpp
 )
 
 target_link_libraries(

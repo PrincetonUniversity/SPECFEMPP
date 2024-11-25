@@ -65,7 +65,7 @@ TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
   // Read sources
   //    if start time is not explicitly specified then t0 is determined using
   //    source frequencies and time shift
-  auto [sources, t0] = specfem::sources::read_sources(sources_file, 1e-5, mpi);
+  auto [sources, t0] = specfem::IO::read_sources(sources_file, 1e-5, mpi);
 
   // Generate compute structs to be used by the solver
   specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
