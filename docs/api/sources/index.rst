@@ -19,8 +19,3 @@ Types of sources
 
     force_source
     moment_tensor_source
-
-Auxiliary functions
--------------------
-
-.. doxygenfunction:: specfem::sources::read_sources

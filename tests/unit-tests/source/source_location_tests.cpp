@@ -167,7 +167,7 @@ TEST(SOURCE_LOCATION_TESTS, compute_source_locations) {
 
   // read sources file
   auto [sources, t0] =
-      specfem::sources::read_sources(test_config.sources_file, 1.0, mpi);
+      specfem::IO::read_sources(test_config.sources_file, 1.0, mpi);
 
   // setup compute struct for future use
   specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
