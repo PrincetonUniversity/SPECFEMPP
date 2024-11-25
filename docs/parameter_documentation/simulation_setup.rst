@@ -242,7 +242,7 @@ Parameter definitions
 **documentation** : Output folder for the wavefield
 
 **Parameter Name** : ``simulation-setup.simulation-mode.forward.writer.display`` [optional]
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+*******************************************************************************************
 
 **default value** : None
 
