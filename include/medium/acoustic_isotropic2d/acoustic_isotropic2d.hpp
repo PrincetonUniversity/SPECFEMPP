@@ -33,22 +33,20 @@ impl_compute_stress(
   return { T };
 }
 
-template <specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag, typename MemberType,
-          typename IteratorType, typename ChunkFieldType,
-          typename QuadratureType, typename WavefieldViewType,
-          std::enable_if_t<
-              ((IteratorType::dimension == specfem::dimension::type::dim2) &&
-               (MediumTag == specfem::element::medium_tag::acoustic) &&
-               (PropertyTag == specfem::element::property_tag::isotropic)),
-              int> = 0>
-KOKKOS_FUNCTION void
-impl_compute_wavefield(const MemberType &team, const IteratorType &iterator,
-                       const specfem::compute::assembly &assembly,
-                       const QuadratureType &quadrature,
-                       const ChunkFieldType &field,
-                       const specfem::wavefield::component wavefield_component,
-                       WavefieldViewType wavefield) {
+template <typename MemberType, typename IteratorType, typename ChunkFieldType,
+          typename QuadratureType, typename WavefieldViewType>
+KOKKOS_FUNCTION void impl_compute_wavefield(
+    const std::integral_constant<specfem::dimension::type,
+                                 specfem::dimension::type::dim2>,
+    const std::integral_constant<specfem::element::medium_tag,
+                                 specfem::element::medium_tag::acoustic>,
+    const std::integral_constant<specfem::element::property_tag,
+                                 specfem::element::property_tag::isotropic>,
+    const MemberType &team, const IteratorType &iterator,
+    const specfem::compute::assembly &assembly,
+    const QuadratureType &quadrature, const ChunkFieldType &field,
+    const specfem::wavefield::component wavefield_component,
+    WavefieldViewType wavefield) {
 
   using FieldDerivativesType =
       specfem::point::field_derivatives<specfem::dimension::type::dim2,

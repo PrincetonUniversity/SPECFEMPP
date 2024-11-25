@@ -8,48 +8,6 @@
 #include "point/coordinates.hpp"
 #include "point/field.hpp"
 
-namespace impl {
-template <specfem::element::medium_tag MediumTag,
-          specfem::wavefield::component Component>
-class field_type_parameters;
-
-template <specfem::element::medium_tag MediumTag>
-class field_type_parameters<MediumTag,
-                            specfem::wavefield::component::displacement> {
-public:
-  constexpr static auto medium_tag = MediumTag;
-  constexpr static auto store_displacement = true;
-  constexpr static auto store_velocity = false;
-  constexpr static auto store_acceleration = false;
-  constexpr static auto store_mass_matrix = false;
-  constexpr static auto num_components = 2;
-};
-
-template <specfem::element::medium_tag MediumTag>
-class field_type_parameters<MediumTag,
-                            specfem::wavefield::component::velocity> {
-public:
-  constexpr static auto medium_tag = MediumTag;
-  constexpr static auto store_displacement = false;
-  constexpr static auto store_velocity = true;
-  constexpr static auto store_acceleration = false;
-  constexpr static auto store_mass_matrix = false;
-  constexpr static auto num_components = 2;
-};
-
-template <specfem::element::medium_tag MediumTag>
-class field_type_parameters<MediumTag,
-                            specfem::wavefield::component::acceleration> {
-public:
-  constexpr static auto medium_tag = MediumTag;
-  constexpr static auto store_displacement = false;
-  constexpr static auto store_velocity = false;
-  constexpr static auto store_acceleration = true;
-  constexpr static auto store_mass_matrix = false;
-  constexpr static auto num_components = 2;
-};
-} // namespace impl
-
 template <specfem::wavefield::component component,
           specfem::wavefield::type type, specfem::element::medium_tag medium,
           specfem::element::property_tag property>
@@ -63,18 +21,14 @@ void generate_data(specfem::compute::assembly &assembly,
 
   const auto elements =
       assembly.properties.get_elements_on_host(medium, property);
-  using field_parameters = impl::field_type_parameters<medium, component>;
 
   constexpr int num_components =
       specfem::element::attributes<specfem::dimension::type::dim2,
                                    medium>::components();
 
   using PointFieldType =
-      specfem::point::field<specfem::dimension::type::dim2, medium,
-                            field_parameters::store_displacement,
-                            field_parameters::store_velocity,
-                            field_parameters::store_acceleration,
-                            field_parameters::store_mass_matrix, false>;
+      specfem::point::field<specfem::dimension::type::dim2, medium, true, true,
+                            true, false, false>;
 
   using IndexType =
       specfem::point::index<specfem::dimension::type::dim2, false>;
@@ -94,7 +48,9 @@ void generate_data(specfem::compute::assembly &assembly,
       PointFieldType point_field;
 
       for (int ic = 0; ic < num_components; ic++) {
-        point_field(ic) = 1.0;
+        point_field.displacement(ic) = 1.0;
+        point_field.velocity(ic) = 1.0;
+        point_field.acceleration(ic) = 1.0;
       }
 
       specfem::compute::store_on_host(index, point_field, field);

@@ -49,22 +49,20 @@ impl_compute_stress(
   return { T };
 }
 
-template <specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag, typename MemberType,
-          typename IteratorType, typename ChunkFieldType,
-          typename QuadratureType, typename WavefieldViewType,
-          std::enable_if_t<
-              ((IteratorType::dimension == specfem::dimension::type::dim2) &&
-               (MediumTag == specfem::element::medium_tag::elastic) &&
-               (PropertyTag == specfem::element::property_tag::isotropic)),
-              int> = 0>
-KOKKOS_FUNCTION void
-impl_compute_wavefield(const MemberType &team, const IteratorType &iterator,
-                       const specfem::compute::assembly &assembly,
-                       const QuadratureType &quadrature,
-                       const ChunkFieldType &field,
-                       const specfem::wavefield::component wavefield_component,
-                       WavefieldViewType wavefield) {
+template <typename MemberType, typename IteratorType, typename ChunkFieldType,
+          typename QuadratureType, typename WavefieldViewType>
+KOKKOS_FUNCTION void impl_compute_wavefield(
+    const std::integral_constant<specfem::dimension::type,
+                                 specfem::dimension::type::dim2>,
+    const std::integral_constant<specfem::element::medium_tag,
+                                 specfem::element::medium_tag::elastic>,
+    const std::integral_constant<specfem::element::property_tag,
+                                 specfem::element::property_tag::isotropic>,
+    const MemberType &team, const IteratorType &iterator,
+    const specfem::compute::assembly &assembly,
+    const QuadratureType &quadrature, const ChunkFieldType &field,
+    const specfem::wavefield::component wavefield_component,
+    WavefieldViewType wavefield) {
 
   using FieldDerivativesType =
       specfem::point::field_derivatives<specfem::dimension::type::dim2,
@@ -86,7 +84,7 @@ impl_compute_wavefield(const MemberType &team, const IteratorType &iterator,
                specfem::wavefield::component::acceleration) {
       return field.acceleration;
     } else if (wavefield_component == specfem::wavefield::component::pressure) {
-      return field.acceleration;
+      return field.displacement;
     } else {
       Kokkos::abort("component not supported");
     }
