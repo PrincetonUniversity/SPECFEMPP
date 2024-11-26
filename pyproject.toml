@@ -1,8 +1,27 @@
-[tool.poetry]
-name = "specfem2d_kokkos"
+[build-system]
+requires = ["scikit-build-core>=0.10", "pybind11"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "SPECFEMPP"
 version = "0.1.0"
 description = "Kokkos implementation of SpecFEM2D code"
-authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+authors = [
+  { name = "Rohit R Kakodkar", email = "rohit_kakodkar@princeton.edu" },
+  { name = "Lucas Sawade", email = "lsawade@princeton.edu" },
+  { name = "Congyue Cui", email = "ccui@princeton.edu" }
+]
+requires-python = ">=3.9"
+
+[tool.scikit-build]
+cmake.define.CMAKE_BUILD_TYPE = "Release"
+cmake.define.BUILD_TESTS = "ON"
+cmake.define.SPECFEMPP_ENABLE_PYTHON = "ON"
+build-dir = "./build"
+
+[tool.poetry]
+package-mode = false
 
 [tool.poetry.dependencies]
 python = ">=3.12,<4.0"
@@ -23,7 +42,3 @@ ruff = ">=0.6.7"
 [tool.snakefmt]
 line_length = 90
 include = '\.smk$|^Snakefile|\.py|^Snakefile.in$'
-
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
