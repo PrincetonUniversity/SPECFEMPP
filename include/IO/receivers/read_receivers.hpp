@@ -1,7 +1,7 @@
 #ifndef _READ_RECEIVER_HPP
 #define _READ_RECEIVER_HPP
 
-#include "receiver.hpp"
+#include "receiver/interface.hpp"
 #include "specfem_setup.hpp"
 #include <vector>
 

@@ -3,12 +3,10 @@
 Mesh Reader
 ===========
 
-.. doxygenfunction:: specfem::IO::read_mesh
 
-
-The above function reads the fortran binary mesh database and the following
-functions are called in the order of appearance in the code:
-
+The below functions are helper functions for the Fortran binary mesh database
+reader. The functions are called in :cpp:func:`specfem::IO::read_mesh`
+in sequential order and faciliate the reading of the mesh database.
 
 .. doxygenfunction:: specfem::IO::mesh::fortran::read_mesh_database_header
 
