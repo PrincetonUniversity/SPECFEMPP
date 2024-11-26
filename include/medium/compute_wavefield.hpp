@@ -11,6 +11,7 @@ namespace medium {
  * @brief Compute the values of wavefield of a given component within a spectral
  * element.
  *
+ *
  * This function computes the wavefield values given the intrinsic field values
  * within that element. For example, for elastic medium  when the wavefield
  * component is pressure, the function computes the pressure values from the
@@ -41,7 +42,7 @@ template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, typename MemberType,
           typename IteratorType, typename ChunkFieldType,
           typename QuadratureType, typename WavefieldViewType>
-KOKKOS_INLINE_FUNCTION void
+KOKKOS_INLINE_FUNCTION auto
 compute_wavefield(const MemberType &team, const IteratorType &iterator,
                   const specfem::compute::assembly &assembly,
                   const QuadratureType &quadrature, const ChunkFieldType &field,
@@ -74,6 +75,8 @@ compute_wavefield(const MemberType &team, const IteratorType &iterator,
                          property_dispatch(), team, iterator, assembly,
                          quadrature, field, wavefield_component,
                          wavefield_on_entire_grid);
+
+  return;
 }
 
 } // namespace medium
