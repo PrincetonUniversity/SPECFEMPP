@@ -21,6 +21,7 @@
 #include <vector>
 #ifdef SPECFEMPP_ENABLE_PYTHON
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 #define STRINGIFY(x) #x
 #define MACRO_STRINGIFY(x) STRINGIFY(x)
 #endif
@@ -250,35 +251,40 @@ void execute(const std::string &parameter_file, const std::string &default_file,
 
 #ifdef SPECFEMPP_ENABLE_PYTHON
 
-int add(int i, int j) { return i + j; }
-
 namespace py = pybind11;
+
+void run(py::str parameters_file) {
+  int argc = 0;
+  char **argv = NULL;
+  // Initialize MPI
+  specfem::MPI::MPI *mpi = new specfem::MPI::MPI(&argc, &argv);
+  // Initialize Kokkos
+  Kokkos::initialize(argc, argv);
+  {
+    execute(parameters_file.cast<std::string>(),
+            parameters_file.cast<std::string>(), mpi);
+  }
+  // Finalize Kokkos
+  Kokkos::finalize();
+  // Finalize MPI
+  delete mpi;
+}
 
 PYBIND11_MODULE(_core, m) {
     m.doc() = R"pbdoc(
-        Pybind11 example plugin
+        SPECfem++ core module
         -----------------------
 
-        .. currentmodule:: scikit_build_example
+        .. currentmodule:: specfempp
 
         .. autosummary::
            :toctree: _generate
 
-           add
-           subtract
+           run
     )pbdoc";
 
-    m.def("add", &add, R"pbdoc(
-        Add two numbers
-
-        Some other explanation about the add function.
-    )pbdoc");
-
-    m.def("subtract", [](int i, int j) {
-    return i - j; }, R"pbdoc(
-        Subtract two numbers
-
-        Some other explanation about the subtract function.
+    m.def("run", &run, R"pbdoc(
+        Execute the main SPECFEM++ workflow.
     )pbdoc");
 
 #ifdef VERSION_INFO
