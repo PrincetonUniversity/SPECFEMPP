@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.17.5)
 
-project(specfem2d_kokkos VERSION 0.1.0)
+project(SPECFEMPP VERSION 0.1.0)
 
 set(CMAKE_CXX_STANDARD 17)
 option(HDF5_CXX_BUILD "Build HDF5 C++" ON)
@@ -533,3 +533,8 @@ if (DOXYGEN_FOUND)
 else (DOXYGEN_FOUND)
   message("Doxygen need to be installed to generate the doxygen documentation")
 endif (DOXYGEN_FOUND)
+
+if (SPECFEMPP_ENABLE_PYTHON)
+    install(TARGETS specfem2d DESTINATION ${SKBUILD_SCRIPTS_DIR})
+    install(FILES ${CMAKE_BINARY_DIR}/xmeshfem2D DESTINATION ${SKBUILD_SCRIPTS_DIR} PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE)
+endif (SPECFEMPP_ENABLE_PYTHON)
