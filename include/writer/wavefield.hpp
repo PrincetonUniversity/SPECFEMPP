@@ -40,7 +40,8 @@ public:
 
 private:
   std::string output_folder; ///< Path to output folder
-  specfem::compute::simulation_field<specfem::wavefield::type::forward>
+  specfem::compute::simulation_field<
+      specfem::wavefield::simulation_field::forward>
       forward;                                       ///< Forward wavefield
   specfem::compute::boundary_values boundary_values; ///< Boundary values used
                                                      ///< for backward

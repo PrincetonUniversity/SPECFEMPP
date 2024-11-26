@@ -13,7 +13,7 @@
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::wavefield::type WavefieldType,
+template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
@@ -58,7 +58,7 @@ specfem::domain::impl::kernels::element_kernel_base<
   return;
 }
 
-template <specfem::wavefield::type WavefieldType,
+template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
@@ -145,7 +145,7 @@ void specfem::domain::impl::kernels::element_kernel_base<
   return;
 }
 
-template <specfem::wavefield::type WavefieldType,
+template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
@@ -269,7 +269,7 @@ void specfem::domain::impl::kernels::element_kernel_base<
                 // adjoint simulations. The function does nothing if the
                 // boundary tag is not stacey
                 if constexpr (WavefieldType ==
-                              specfem::wavefield::type::forward) {
+                              specfem::wavefield::simulation_field::forward) {
                   specfem::compute::store_on_device(istep, index, acceleration,
                                                     boundary_values);
                 }
@@ -289,7 +289,7 @@ template <specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumType,
           specfem::element::property_tag PropertyTag, int NGLL>
 void specfem::domain::impl::kernels::element_kernel<
-    specfem::wavefield::type::backward, DimensionType, MediumType, PropertyTag,
+    specfem::wavefield::simulation_field::backward, DimensionType, MediumType, PropertyTag,
     specfem::element::boundary_tag::stacey,
     NGLL>::compute_stiffness_interaction(const int istep) const {
 

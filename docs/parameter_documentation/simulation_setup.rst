@@ -250,25 +250,25 @@ Parameter definitions
 
 **documentation** : Plot the wavefield during the forward simulation
 
-**Parameter Name** : ``simulation-setup.simulation-mode.forward.writer.display.format``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+**Parameter Name** : ``simulation-setup.simulation-mode.forward.writer.display.format`` [optional]
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**default value** : None
+**default value** : PNG
 
 **possible values** : [PNG, JPG, on_screen]
 
 **documentation** : Output format for resulting plots
 
-**Parameter Name** : ``simulation-setup.simulation-mode.forward.writer.display.directory``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+**Parameter Name** : ``simulation-setup.simulation-mode.forward.writer.display.directory`` [optional]
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**default value** : None
+**default value** : Current working directory
 
 **possible values** : [string]
 
 **documentation** : Output folder for the plots (not applicable for on_screen)
 
-**Parameter Name** : ``simulation-setup.simulation-mode.forward.writer.display.component``
+**Parameter Name** : ``simulation-setup.simulation-mode.forward.writer.display.field``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **default value** : None
@@ -277,8 +277,8 @@ Parameter definitions
 
 **documentation** : Component of the wavefield to be plotted
 
-**Parameter Name** : ``simulation-setup.simulation-mode.forward.writer.display.wavefield_type``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+**Parameter Name** : ``simulation-setup.simulation-mode.forward.writer.display.simulation-field``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **default value** : None
 
@@ -286,7 +286,7 @@ Parameter definitions
 
 **documentation** : Type of wavefield to be plotted
 
-**Parameter Name** : ``simulation-setup.simulation-mode.forward.writer.display.time_interval``
+**Parameter Name** : ``simulation-setup.simulation-mode.forward.writer.display.time-interval``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **default value** : None
@@ -313,9 +313,9 @@ Parameter definitions
                     display:
                         format: PNG
                         directory: /path/to/output/folder
-                        component: displacement
-                        wavefield_type: forward
-                        time_interval: 10
+                        field: displacement
+                        simulation-field: forward
+                        time-interval: 10
 
 
 .. Note::
@@ -439,25 +439,25 @@ Parameter definitions
 
 **documentation** : Plot the wavefield during the forward simulation
 
-**Parameter Name** : ``simulation-setup.simulation-mode.forward.writer.display.format``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+**Parameter Name** : ``simulation-setup.simulation-mode.forward.writer.display.format`` [optional]
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**default value** : None
+**default value** : PNG
 
 **possible values** : [PNG, JPG, on_screen]
 
 **documentation** : Output format for resulting plots
 
-**Parameter Name** : ``simulation-setup.simulation-mode.forward.writer.display.directory``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+**Parameter Name** : ``simulation-setup.simulation-mode.forward.writer.display.directory`` [optional]
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**default value** : None
+**default value** : Current working directory
 
 **possible values** : [string]
 
 **documentation** : Output folder for the plots (not applicable for on_screen)
 
-**Parameter Name** : ``simulation-setup.simulation-mode.forward.writer.display.component``
+**Parameter Name** : ``simulation-setup.simulation-mode.forward.writer.display.field``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **default value** : None
@@ -466,8 +466,8 @@ Parameter definitions
 
 **documentation** : Component of the wavefield to be plotted
 
-**Parameter Name** : ``simulation-setup.simulation-mode.forward.writer.display.wavefield_type``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+**Parameter Name** : ``simulation-setup.simulation-mode.forward.writer.display.simulation-field``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **default value** : None
 
@@ -475,7 +475,7 @@ Parameter definitions
 
 **documentation** : Type of wavefield to be plotted
 
-**Parameter Name** : ``simulation-setup.simulation-mode.forward.writer.display.time_interval``
+**Parameter Name** : ``simulation-setup.simulation-mode.forward.writer.display.time-interval``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **default value** : None
@@ -504,9 +504,9 @@ Parameter definitions
                 display:
                     format: PNG
                     directory: /path/to/output/folder
-                    component: displacement
-                    wavefield_type: adjoint
-                    time_interval: 10
+                    field: displacement
+                    simulation-field: adjoint
+                    time-interval: 10
 
 .. Note::
 

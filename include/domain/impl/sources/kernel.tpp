@@ -10,7 +10,7 @@
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::wavefield::type WavefieldType,
+template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, typename qp_type>
@@ -53,7 +53,7 @@ specfem::domain::impl::kernels::source_kernel<
   return;
 }
 
-template <specfem::wavefield::type WavefieldType,
+template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, typename qp_type>
@@ -98,7 +98,7 @@ void specfem::domain::impl::kernels::source_kernel<
               // For acoustic medium, forward simulation, divide by kappa
               const auto stf = [&, timestep]() {
                 if constexpr ((WavefieldType ==
-                               specfem::wavefield::type::forward) &&
+                               specfem::wavefield::simulation_field::forward) &&
                               (MediumTag ==
                                specfem::element::medium_tag::acoustic)) {
                   const auto point_properties = [&]()

@@ -120,18 +120,19 @@ map_materials_with_color(const specfem::compute::assembly &assembly) {
 }
 
 vtkSmartPointer<vtkUnstructuredGrid> get_wavefield_on_vtk_grid(
-    specfem::compute::assembly &assembly, const specfem::wavefield::type type,
+    specfem::compute::assembly &assembly,
+    const specfem::wavefield::simulation_field type,
     const specfem::display::wavefield &display_component) {
 
   const auto component = [&display_component]() {
     if (display_component == specfem::display::wavefield::displacement) {
-      return specfem::wavefield::component::displacement;
+      return specfem::wavefield::type::displacement;
     } else if (display_component == specfem::display::wavefield::velocity) {
-      return specfem::wavefield::component::velocity;
+      return specfem::wavefield::type::velocity;
     } else if (display_component == specfem::display::wavefield::acceleration) {
-      return specfem::wavefield::component::acceleration;
+      return specfem::wavefield::type::acceleration;
     } else if (display_component == specfem::display::wavefield::pressure) {
-      return specfem::wavefield::component::pressure;
+      return specfem::wavefield::type::pressure;
     } else {
       throw std::runtime_error("Unsupported component");
     }
@@ -175,7 +176,7 @@ vtkSmartPointer<vtkUnstructuredGrid> get_wavefield_on_vtk_grid(
       points->InsertNextPoint(coordinates(0, icell, z_index[i], x_index[i]),
                               coordinates(1, icell, z_index[i], x_index[i]),
                               0.0);
-      if (component == specfem::wavefield::component::pressure) {
+      if (component == specfem::wavefield::type::pressure) {
         scalars->InsertNextValue(
             std::sqrt(wavefield(icell, z_index[i], x_index[i], 0) *
                       wavefield(icell, z_index[i], x_index[i], 0)));

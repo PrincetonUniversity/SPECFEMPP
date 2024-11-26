@@ -88,8 +88,8 @@ struct assembly {
    */
   Kokkos::View<type_real ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
   generate_wavefield_on_entire_grid(
-      const specfem::wavefield::type wavefield,
-      const specfem::wavefield::component component);
+      const specfem::wavefield::simulation_field wavefield,
+      const specfem::wavefield::type component);
 };
 
 } // namespace compute

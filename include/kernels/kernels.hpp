@@ -8,7 +8,7 @@
 
 namespace specfem {
 namespace kernels {
-template <specfem::wavefield::type WavefieldType,
+template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType, typename qp_type>
 class kernels
     : public impl::domain_kernels<WavefieldType, DimensionType, qp_type> {

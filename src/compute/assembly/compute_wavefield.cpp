@@ -7,7 +7,7 @@ namespace {
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 void get_wavefield_on_entire_grid(
-    const specfem::wavefield::component component,
+    const specfem::wavefield::type component,
     const specfem::compute::assembly &assembly,
     Kokkos::View<type_real ****, Kokkos::LayoutLeft,
                  Kokkos::DefaultExecutionSpace>
@@ -35,17 +35,17 @@ void get_wavefield_on_entire_grid(
 
 Kokkos::View<type_real ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
 specfem::compute::assembly::generate_wavefield_on_entire_grid(
-    const specfem::wavefield::type wavefield,
-    const specfem::wavefield::component component) {
+    const specfem::wavefield::simulation_field wavefield,
+    const specfem::wavefield::type component) {
 
   const int ncomponents = [&]() -> int {
-    if (component == specfem::wavefield::component::displacement) {
+    if (component == specfem::wavefield::type::displacement) {
       return 2;
-    } else if (component == specfem::wavefield::component::velocity) {
+    } else if (component == specfem::wavefield::type::velocity) {
       return 2;
-    } else if (component == specfem::wavefield::component::acceleration) {
+    } else if (component == specfem::wavefield::type::acceleration) {
       return 2;
-    } else if (component == specfem::wavefield::component::pressure) {
+    } else if (component == specfem::wavefield::type::pressure) {
       return 1;
     } else {
       throw std::runtime_error("Wavefield component not supported");
@@ -53,11 +53,11 @@ specfem::compute::assembly::generate_wavefield_on_entire_grid(
   }();
 
   // Copy the required wavefield into the buffer
-  if (wavefield == specfem::wavefield::type::forward) {
+  if (wavefield == specfem::wavefield::simulation_field::forward) {
     specfem::compute::deep_copy(this->fields.buffer, this->fields.forward);
-  } else if (wavefield == specfem::wavefield::type::adjoint) {
+  } else if (wavefield == specfem::wavefield::simulation_field::adjoint) {
     specfem::compute::deep_copy(this->fields.buffer, this->fields.adjoint);
-  } else if (wavefield == specfem::wavefield::type::backward) {
+  } else if (wavefield == specfem::wavefield::simulation_field::backward) {
     specfem::compute::deep_copy(this->fields.buffer, this->fields.backward);
   } else {
     throw std::runtime_error("Wavefield type not supported");

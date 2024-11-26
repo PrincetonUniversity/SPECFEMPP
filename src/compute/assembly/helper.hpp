@@ -34,7 +34,7 @@ public:
     }
   }
 
-  void operator()(const specfem::wavefield::component wavefield_type) {
+  void operator()(const specfem::wavefield::type wavefield_type) {
     const auto buffer = assembly.fields.buffer;
 
     const int nspec = assembly.mesh.nspec;
@@ -124,12 +124,12 @@ private:
 
 // namespace impl {
 // template <specfem::element::medium_tag MediumTag,
-//           specfem::wavefield::component Component>
+//           specfem::wavefield::type Component>
 // class field_type_parameters;
 
 // template <specfem::element::medium_tag MediumTag>
 // class field_type_parameters<MediumTag,
-//                             specfem::wavefield::component::displacement> {
+//                             specfem::wavefield::type::displacement> {
 // public:
 //   constexpr static auto medium_tag = MediumTag;
 //   constexpr static auto store_displacement = true;
@@ -141,7 +141,7 @@ private:
 
 // template <specfem::element::medium_tag MediumTag>
 // class field_type_parameters<MediumTag,
-//                             specfem::wavefield::component::velocity> {
+//                             specfem::wavefield::type::velocity> {
 // public:
 //   constexpr static auto medium_tag = MediumTag;
 //   constexpr static auto store_displacement = false;
@@ -153,7 +153,7 @@ private:
 
 // template <specfem::element::medium_tag MediumTag>
 // class field_type_parameters<MediumTag,
-//                             specfem::wavefield::component::acceleration> {
+//                             specfem::wavefield::type::acceleration> {
 // public:
 //   constexpr static auto medium_tag = MediumTag;
 //   constexpr static auto store_displacement = false;
@@ -165,11 +165,11 @@ private:
 
 // template <specfem::element::medium_tag MediumTag,
 //           specfem::element::property_tag PropertyTag,
-//           specfem::wavefield::component Component, int NGLL>
+//           specfem::wavefield::type Component, int NGLL>
 // class helper;
 
 // template <specfem::element::property_tag PropertyTag,
-//           specfem::wavefield::component Component, int NGLL>
+//           specfem::wavefield::type Component, int NGLL>
 // class helper<specfem::element::medium_tag::elastic, PropertyTag, Component,
 //              NGLL> {
 // public:
@@ -273,7 +273,7 @@ private:
 // };
 
 // template <specfem::element::property_tag PropertyTag,
-//           specfem::wavefield::component Component, int NGLL>
+//           specfem::wavefield::type Component, int NGLL>
 // class helper<specfem::element::medium_tag::acoustic, PropertyTag, Component,
 //              NGLL> {
 // public:
@@ -374,13 +374,13 @@ private:
 
 //             const auto &active_field = [&]() {
 //               if constexpr (Component ==
-//                             specfem::wavefield::component::displacement) {
+//                             specfem::wavefield::type::displacement) {
 //                 return field.displacement;
 //               } else if constexpr (Component ==
-//                                    specfem::wavefield::component::velocity) {
+//                                    specfem::wavefield::type::velocity) {
 //                 return field.velocity;
 //               } else if constexpr (Component ==
-//               specfem::wavefield::component::
+//               specfem::wavefield::type::
 //                                                     acceleration) {
 //                 return field.acceleration;
 //               } else {
