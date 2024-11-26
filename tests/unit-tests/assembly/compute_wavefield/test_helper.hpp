@@ -19,12 +19,12 @@
 #include "point/coordinates.hpp"
 #include "point/field.hpp"
 
-template <specfem::wavefield::component component,
+template <specfem::wavefield::type component,
           specfem::element::medium_tag medium,
           specfem::element::property_tag property>
 class test_helper;
 
-template <specfem::wavefield::component component>
+template <specfem::wavefield::type component>
 class test_helper<component, specfem::element::medium_tag::elastic,
                   specfem::element::property_tag::isotropic> {
 
@@ -39,7 +39,7 @@ public:
 
     constexpr static int num_components =
         specfem::wavefield::wavefield<specfem::dimension::type::dim2,
-                                      component>::num_components;
+                                      component>::num_components();
 
     const int ngllz = assembly.mesh.ngllz;
     const int ngllx = assembly.mesh.ngllx;
@@ -75,7 +75,7 @@ private:
 };
 
 template <>
-class test_helper<specfem::wavefield::component::pressure,
+class test_helper<specfem::wavefield::type::pressure,
                   specfem::element::medium_tag::elastic,
                   specfem::element::property_tag::isotropic> {
 public:
@@ -89,7 +89,7 @@ public:
 
     constexpr static int num_components = specfem::wavefield::wavefield<
         specfem::dimension::type::dim2,
-        specfem::wavefield::component::pressure>::num_components;
+        specfem::wavefield::type::pressure>::num_components();
 
     const int ngllz = assembly.mesh.ngllz;
     const int ngllx = assembly.mesh.ngllx;
@@ -138,7 +138,7 @@ private:
   specfem::compute::assembly &assembly;
 };
 
-template <specfem::wavefield::component component>
+template <specfem::wavefield::type component>
 class test_helper<component, specfem::element::medium_tag::acoustic,
                   specfem::element::property_tag::isotropic> {
 
@@ -153,7 +153,7 @@ public:
 
     constexpr static int num_components =
         specfem::wavefield::wavefield<specfem::dimension::type::dim2,
-                                      component>::num_components;
+                                      component>::num_components();
 
     const int ngllz = assembly.mesh.ngllz;
     const int ngllx = assembly.mesh.ngllx;
@@ -201,7 +201,7 @@ private:
 };
 
 template <>
-class test_helper<specfem::wavefield::component::pressure,
+class test_helper<specfem::wavefield::type::pressure,
                   specfem::element::medium_tag::acoustic,
                   specfem::element::property_tag::isotropic> {
 
@@ -216,7 +216,7 @@ public:
 
     constexpr static int num_components = specfem::wavefield::wavefield<
         specfem::dimension::type::dim2,
-        specfem::wavefield::component::pressure>::num_components;
+        specfem::wavefield::type::pressure>::num_components();
 
     const int ngllz = assembly.mesh.ngllz;
     const int ngllx = assembly.mesh.ngllx;

@@ -45,7 +45,7 @@ KOKKOS_INLINE_FUNCTION void
 compute_wavefield(const MemberType &team, const IteratorType &iterator,
                   const specfem::compute::assembly &assembly,
                   const QuadratureType &quadrature, const ChunkFieldType &field,
-                  const specfem::wavefield::component &wavefield_component,
+                  const specfem::wavefield::type &wavefield_component,
                   WavefieldViewType wavefield_on_entire_grid) {
 
   static_assert(ChunkFieldType::isChunkFieldType,

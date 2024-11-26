@@ -37,7 +37,7 @@ public:
    * frequecy of Dirac source.
    */
   force(YAML::Node &Node, const int nsteps, const type_real dt,
-        const specfem::wavefield::type wavefield_type)
+        const specfem::wavefield::simulation_field wavefield_type)
       : angle([](YAML::Node &Node) -> type_real {
           if (Node["angle"]) {
             return Node["angle"].as<type_real>();
@@ -59,14 +59,15 @@ public:
       const specfem::compute::properties &properties,
       specfem::kokkos::HostView3d<type_real> source_array) override;
 
-  specfem::wavefield::type get_wavefield_type() const override {
+  specfem::wavefield::simulation_field get_wavefield_type() const override {
     return wavefield_type;
   }
 
 private:
-  type_real angle;                         ///< Angle of force source
-  specfem::wavefield::type wavefield_type; ///< Type of wavefield on which the
-                                           ///< source acts
+  type_real angle; ///< Angle of force source
+  specfem::wavefield::simulation_field wavefield_type; ///< Type of wavefield on
+                                                       ///< which the source
+                                                       ///< acts
 };
 } // namespace sources
 } // namespace specfem

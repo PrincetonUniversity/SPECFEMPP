@@ -7,7 +7,7 @@
 
 namespace {
 template <specfem::element::medium_tag MediumTag,
-          specfem::wavefield::type WavefieldType>
+          specfem::wavefield::simulation_field WavefieldType>
 void corrector_phase_impl(
     const specfem::compute::simulation_field<WavefieldType> &field,
     const type_real deltatover2) {
@@ -70,7 +70,7 @@ void corrector_phase_impl(
 }
 
 template <specfem::element::medium_tag MediumTag,
-          specfem::wavefield::type WavefieldType>
+          specfem::wavefield::simulation_field WavefieldType>
 void predictor_phase_impl(
     const specfem::compute::simulation_field<WavefieldType> &field,
     const type_real deltat, const type_real deltatover2,
@@ -197,7 +197,7 @@ void predictor_phase_impl(
 void specfem::time_scheme::newmark<specfem::simulation::type::forward>::
     apply_corrector_phase_forward(const specfem::element::medium_tag tag) {
 
-  constexpr auto wavefield = specfem::wavefield::type::forward;
+  constexpr auto wavefield = specfem::wavefield::simulation_field::forward;
   constexpr auto elastic = specfem::element::medium_tag::elastic;
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
 
@@ -215,7 +215,7 @@ void specfem::time_scheme::newmark<specfem::simulation::type::forward>::
 void specfem::time_scheme::newmark<specfem::simulation::type::forward>::
     apply_predictor_phase_forward(const specfem::element::medium_tag tag) {
 
-  constexpr auto wavefield = specfem::wavefield::type::forward;
+  constexpr auto wavefield = specfem::wavefield::simulation_field::forward;
   constexpr auto elastic = specfem::element::medium_tag::elastic;
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
 
@@ -233,7 +233,7 @@ void specfem::time_scheme::newmark<specfem::simulation::type::forward>::
 
 void specfem::time_scheme::newmark<specfem::simulation::type::combined>::
     apply_corrector_phase_forward(const specfem::element::medium_tag tag) {
-  constexpr auto wavefield = specfem::wavefield::type::adjoint;
+  constexpr auto wavefield = specfem::wavefield::simulation_field::adjoint;
   constexpr auto elastic = specfem::element::medium_tag::elastic;
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
 
@@ -250,7 +250,7 @@ void specfem::time_scheme::newmark<specfem::simulation::type::combined>::
 
 void specfem::time_scheme::newmark<specfem::simulation::type::combined>::
     apply_corrector_phase_backward(const specfem::element::medium_tag tag) {
-  constexpr auto wavefield = specfem::wavefield::type::backward;
+  constexpr auto wavefield = specfem::wavefield::simulation_field::backward;
   constexpr auto elastic = specfem::element::medium_tag::elastic;
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
 
@@ -270,7 +270,7 @@ void specfem::time_scheme::newmark<specfem::simulation::type::combined>::
 void specfem::time_scheme::newmark<specfem::simulation::type::combined>::
     apply_predictor_phase_forward(const specfem::element::medium_tag tag) {
 
-  constexpr auto wavefield = specfem::wavefield::type::adjoint;
+  constexpr auto wavefield = specfem::wavefield::simulation_field::adjoint;
   constexpr auto elastic = specfem::element::medium_tag::elastic;
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
 
@@ -288,7 +288,7 @@ void specfem::time_scheme::newmark<specfem::simulation::type::combined>::
 
 void specfem::time_scheme::newmark<specfem::simulation::type::combined>::
     apply_predictor_phase_backward(const specfem::element::medium_tag tag) {
-  constexpr auto wavefield = specfem::wavefield::type::backward;
+  constexpr auto wavefield = specfem::wavefield::simulation_field::backward;
   constexpr auto elastic = specfem::element::medium_tag::elastic;
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
 

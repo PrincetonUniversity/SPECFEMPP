@@ -61,7 +61,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
     const MemberType &team, const IteratorType &iterator,
     const specfem::compute::assembly &assembly,
     const QuadratureType &quadrature, const ChunkFieldType &field,
-    const specfem::wavefield::component wavefield_component,
+    const specfem::wavefield::type wavefield_component,
     WavefieldViewType wavefield) {
 
   using FieldDerivativesType =
@@ -76,21 +76,20 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
   const auto &properties = assembly.properties;
 
   const auto &active_field = [&]() {
-    if (wavefield_component == specfem::wavefield::component::displacement) {
+    if (wavefield_component == specfem::wavefield::type::displacement) {
       return field.displacement;
-    } else if (wavefield_component == specfem::wavefield::component::velocity) {
+    } else if (wavefield_component == specfem::wavefield::type::velocity) {
       return field.velocity;
-    } else if (wavefield_component ==
-               specfem::wavefield::component::acceleration) {
+    } else if (wavefield_component == specfem::wavefield::type::acceleration) {
       return field.acceleration;
-    } else if (wavefield_component == specfem::wavefield::component::pressure) {
+    } else if (wavefield_component == specfem::wavefield::type::pressure) {
       return field.displacement;
     } else {
       Kokkos::abort("component not supported");
     }
   }();
 
-  if (wavefield_component == specfem::wavefield::component::pressure) {
+  if (wavefield_component == specfem::wavefield::type::pressure) {
 
     specfem::algorithms::gradient(
         team, iterator, assembly.partial_derivatives, quadrature.hprime_gll,

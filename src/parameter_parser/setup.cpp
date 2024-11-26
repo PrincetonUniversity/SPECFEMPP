@@ -121,11 +121,11 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
         }
 
         if (const YAML::Node &n_plotter = n_writer["display"]) {
-          if (n_plotter["wavefield_type"] &&
-              n_plotter["wavefield_type"].as<std::string>() != "forward") {
+          if ((n_plotter["simulation-field"] &&
+               n_plotter["simulation-field"].as<std::string>() != "forward")) {
             std::ostringstream message;
             message << "Error: Plotting a "
-                    << n_plotter["wavefield_type"].as<std::string>()
+                    << n_plotter["simulation-field"].as<std::string>()
                     << " wavefield in forward simulation mode. \n";
             throw std::runtime_error(message.str());
           }
@@ -206,8 +206,8 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
         }
 
         if (const YAML::Node &n_plotter = n_writer["display"]) {
-          if (n_plotter["wavefield_type"] &&
-              n_plotter["wavefield_type"].as<std::string>() == "forward") {
+          if (n_plotter["simulation-field"] &&
+              n_plotter["simulation-field"].as<std::string>() == "forward") {
             std::ostringstream message;
             message << "Error: Plotting a forward wavefield in combined "
                     << "simulation mode. \n";

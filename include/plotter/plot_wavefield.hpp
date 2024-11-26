@@ -30,7 +30,7 @@ public:
   plot_wavefield(const specfem::compute::assembly &assembly,
                  const specfem::display::format &output_format,
                  const specfem::display::wavefield &component,
-                 const specfem::wavefield::type &wavefield,
+                 const specfem::wavefield::simulation_field &wavefield,
                  const int &time_interval,
                  const boost::filesystem::path &output_folder)
       : plotter(time_interval), output_format(output_format),
@@ -55,9 +55,10 @@ public:
 private:
   const specfem::display::format output_format; ///< Output format of the plot
   const specfem::display::wavefield component;  ///< Component of the wavefield
-  const specfem::wavefield::type wavefield;     ///< Type of wavefield to plot
-  const boost::filesystem::path output_folder;  ///< Path to output folder
-  specfem::compute::assembly assembly;          ///< Assembly object
+  const specfem::wavefield::simulation_field wavefield; ///< Type of wavefield
+                                                        ///< to plot
+  const boost::filesystem::path output_folder; ///< Path to output folder
+  specfem::compute::assembly assembly;         ///< Assembly object
 };
 } // namespace plotter
 } // namespace specfem

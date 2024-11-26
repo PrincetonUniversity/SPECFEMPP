@@ -8,8 +8,9 @@
 #include "point/coordinates.hpp"
 #include "point/field.hpp"
 
-template <specfem::wavefield::component component,
-          specfem::wavefield::type type, specfem::element::medium_tag medium,
+template <specfem::wavefield::type component,
+          specfem::wavefield::simulation_field type,
+          specfem::element::medium_tag medium,
           specfem::element::property_tag property>
 void generate_data(specfem::compute::assembly &assembly,
                    std::vector<int> &ispecs) {
@@ -60,8 +61,8 @@ void generate_data(specfem::compute::assembly &assembly,
   field.copy_to_device();
 }
 
-template <specfem::wavefield::component component,
-          specfem::wavefield::type type>
+template <specfem::wavefield::type component,
+          specfem::wavefield::simulation_field type>
 std::vector<int> generate_data(specfem::compute::assembly &assembly) {
 
   std::vector<int> ispecs;
