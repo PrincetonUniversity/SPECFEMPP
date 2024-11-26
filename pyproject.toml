@@ -16,12 +16,7 @@ requires-python = ">=3.9"
 
 [tool.scikit-build]
 cmake.define.CMAKE_BUILD_TYPE = "Release"
-cmake.define.BUILD_TESTS = "OFF"
-cmake.define.ENABLE_SIMD = "ON"
-cmake.define.ENABLE_ATOMICS_BYPASS = "ON"
-cmake.define.Kokkos_ENABLE_OPENMP = "OFF"
-cmake.define.Kokkos_ARCH_NATIVE = "ON"
-cmake.define.Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION = "ON"
+cmake.define.BUILD_TESTS = "ON"
 cmake.define.SPECFEMPP_ENABLE_PYTHON = "ON"
 build-dir = "./build"
 
