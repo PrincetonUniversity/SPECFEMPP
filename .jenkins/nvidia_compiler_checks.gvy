@@ -83,8 +83,8 @@ pipeline{
                                     sh """
                                         module load boost/1.73.0
                                         module load ${CUDA_MODULE}
-                                        cmake3 -S . -B build_cuda_${CUDA_COMPILER_NAME}_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${SIMD_NAME}_${env.GIT_COMMIT} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS} ${SIMD_FLAGS} -D BUILD_TESTS=ON
-                                        cmake3 --build build_cuda_${CUDA_COMPILER_NAME}_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${SIMD_NAME}_${env.GIT_COMMIT}
+                                        cmake3 -S . -B build_cuda_${CUDA_COMPILER_NAME}_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${SIMD_NAME}_${env.BUILD_TAG} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${CMAKE_DEVICE_FLAGS} ${SIMD_FLAGS} -D BUILD_TESTS=ON
+                                        cmake3 --build build_cuda_${CUDA_COMPILER_NAME}_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
                                     """
                                     echo ' Build completed '
                                 }
@@ -95,7 +95,7 @@ pipeline{
                                     sh """
                                         module load boost/1.73.0
                                         module load ${CUDA_MODULE}
-                                        cd build_cuda_${CUDA_COMPILER_NAME}_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${SIMD_NAME}_${env.GIT_COMMIT}/tests/unit-tests
+                                        cd build_cuda_${CUDA_COMPILER_NAME}_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${SIMD_NAME}_${env.BUILD_TAG}/tests/unit-tests
                                         srun -N 1 -t 00:20:00 ${HOST_RUN_FLAGS} ${DEVICE_RUN_FLAGS} bash -c 'export OMP_PROC_BIND=spread; export OMP_THREADS=places; ctest --verbose;'
                                     """
                                     echo ' Testing completed '
@@ -105,7 +105,7 @@ pipeline{
                         post {
                             always {
                                 echo ' Cleaning '
-                                sh "rm -rf build_cuda_${CUDA_COMPILER_NAME}_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${SIMD_NAME}_${env.GIT_COMMIT}"
+                                sh "rm -rf build_cuda_${CUDA_COMPILER_NAME}_${CMAKE_HOST_NAME}_${CMAKE_DEVICE_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
                             }
                         }
                     }
