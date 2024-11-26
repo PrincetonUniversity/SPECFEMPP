@@ -1,6 +1,9 @@
 #include "compute/interface.hpp"
 // #include "coupled_interface/interface.hpp"
 // #include "domain/interface.hpp"
+#include "IO/mesh/read_mesh.hpp"
+#include "IO/receivers/read_receivers.hpp"
+#include "IO/sources/read_sources.hpp"
 #include "kokkos_abstractions.h"
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"
@@ -97,7 +100,8 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   //                   Read mesh and materials
   // --------------------------------------------------------------
   const auto quadrature = setup.instantiate_quadrature();
-  const specfem::mesh::mesh mesh(database_filename, mpi);
+  const specfem::mesh::mesh mesh =
+      specfem::IO::read_mesh(database_filename, mpi);
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
@@ -105,13 +109,13 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   // --------------------------------------------------------------
   const int nsteps = setup.get_nsteps();
   const specfem::simulation::type simulation_type = setup.get_simulation_type();
-  auto [sources, t0] = specfem::sources::read_sources(
+  auto [sources, t0] = specfem::IO::read_sources(
       source_filename, nsteps, setup.get_t0(), setup.get_dt(), simulation_type);
   setup.update_t0(t0); // Update t0 in case it was changed
 
   const auto stations_filename = setup.get_stations_file();
   const auto angle = setup.get_receiver_angle();
-  auto receivers = specfem::receivers::read_receivers(stations_filename, angle);
+  auto receivers = specfem::IO::read_receivers(stations_filename, angle);
 
   mpi->cout("Source Information:");
   mpi->cout("-------------------------------");

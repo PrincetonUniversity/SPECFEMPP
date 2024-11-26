@@ -1,3 +1,4 @@
+#include "IO/receivers/read_receivers.hpp"
 #include "receiver/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
@@ -8,8 +9,8 @@
 #include <vector>
 
 std::vector<std::shared_ptr<specfem::receivers::receiver> >
-specfem::receivers::read_receivers(const std::string stations_file,
-                                   const type_real angle) {
+specfem::IO::read_receivers(const std::string stations_file,
+                            const type_real angle) {
 
   boost::char_separator<char> sep(" ");
   std::vector<std::shared_ptr<specfem::receivers::receiver> > receivers;
