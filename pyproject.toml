@@ -3,7 +3,7 @@ requires = ["scikit-build-core>=0.10", "pybind11"]
 build-backend = "scikit_build_core.build"
 
 [project]
-name = "SPECFEMPP"
+name = "specfempp"
 version = "0.1.0"
 description = "Kokkos implementation of SpecFEM2D code"
 readme = "README.md"
@@ -17,6 +17,7 @@ requires-python = ">=3.9"
 [tool.scikit-build]
 cmake.define.CMAKE_BUILD_TYPE = "Release"
 cmake.define.BUILD_TESTS = "ON"
+cmake.define.SPECFEMPP_USE_SKBUILD = "ON"
 cmake.define.SPECFEMPP_ENABLE_PYTHON = "ON"
 build-dir = "./build"
 
