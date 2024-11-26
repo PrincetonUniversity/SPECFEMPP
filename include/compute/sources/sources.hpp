@@ -69,7 +69,7 @@ struct sources {
   specfem::kokkos::HostView1d<specfem::element::medium_tag>
       source_medium_mapping; ///< Medium type for every spectral element where
                              ///< source is located
-  specfem::kokkos::HostView1d<specfem::wavefield::type>
+  specfem::kokkos::HostView1d<specfem::wavefield::simulation_field>
       source_wavefield_mapping; ///< Wavefield type on which any source acts
   specfem::compute::source_medium<specfem::dimension::type::dim2,
                                   specfem::element::medium_tag::acoustic>

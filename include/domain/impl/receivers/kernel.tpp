@@ -10,7 +10,7 @@
 #include "quadrature/interface.hpp"
 #include "specfem_setup.hpp"
 
-template <specfem::wavefield::type WavefieldType,
+template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, typename qp_type>
@@ -63,7 +63,7 @@ specfem::domain::impl::kernels::receiver_kernel<
   return;
 }
 
-template <specfem::wavefield::type WavefieldType,
+template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, typename qp_type>

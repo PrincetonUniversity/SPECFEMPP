@@ -73,8 +73,8 @@ void allocate_elements(
     }
   }
 
-  if constexpr (wavefield_type == specfem::wavefield::type::forward ||
-                wavefield_type == specfem::wavefield::type::adjoint) {
+  if constexpr (wavefield_type == specfem::wavefield::simulation_field::forward ||
+                wavefield_type == specfem::wavefield::simulation_field::adjoint) {
 
     std::cout << "  - Element type: \n"
               << "    - dimension           : " << dimension::to_string()
@@ -93,7 +93,7 @@ void allocate_elements(
   elements = { assembly, h_ispec_domain };
 }
 
-template <specfem::wavefield::type WavefieldType,
+template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag medium_tag,
           specfem::element::property_tag property_tag, typename qp_type>
@@ -138,7 +138,7 @@ void allocate_isotropic_sources(
   return;
 }
 
-template <specfem::wavefield::type WavefieldType,
+template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag medium_tag,
           specfem::element::property_tag property_tag, typename qp_type>
@@ -189,7 +189,7 @@ void allocate_isotropic_receivers(
 }
 } // namespace
 
-template <specfem::wavefield::type WavefieldType,
+template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag medium, typename qp_type>
 specfem::domain::impl::kernels::
@@ -209,8 +209,8 @@ specfem::domain::impl::kernels::
                     assembly.boundaries.boundary_tags(ispec));
   }
 
-  if constexpr (WavefieldType == specfem::wavefield::type::forward ||
-                WavefieldType == specfem::wavefield::type::adjoint) {
+  if constexpr (WavefieldType == specfem::wavefield::simulation_field::forward ||
+                WavefieldType == specfem::wavefield::simulation_field::adjoint) {
     std::cout << " Element Statistics \n"
               << "------------------------------\n"
               << "- Types of elements in " << specfem::element::to_string(medium)

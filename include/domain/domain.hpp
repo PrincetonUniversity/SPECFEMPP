@@ -19,7 +19,7 @@ namespace domain {
  * @tparam qp_type Type of quadrature points i.e. static or dynamic (will be
  * deprecated soon)
  */
-template <specfem::wavefield::type WavefieldType,
+template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag, typename qp_type>
 class domain : public specfem::domain::impl::kernels::kernels<

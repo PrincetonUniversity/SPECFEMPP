@@ -14,6 +14,10 @@ specfem::runtime_configuration::plot_wavefield::plot_wavefield(
     }
   }();
 
+  if (output_format == "on_screen") {
+    throw std::runtime_error("On screen plotting not supported");
+  }
+
   const std::string output_folder = [&]() -> std::string {
     if (Node["directory"]) {
       return Node["directory"].as<std::string>();
@@ -30,26 +34,26 @@ specfem::runtime_configuration::plot_wavefield::plot_wavefield(
   }
 
   const std::string component = [&]() -> std::string {
-    if (Node["component"]) {
-      return Node["component"].as<std::string>();
+    if (Node["field"]) {
+      return Node["field"].as<std::string>();
     } else {
       throw std::runtime_error(
-          "Wavefield component not specified in the display section");
+          "Plotting wavefield not specified in the display section");
     }
   }();
 
   const std::string wavefield_type = [&]() -> std::string {
-    if (Node["wavefield_type"]) {
-      return Node["wavefield_type"].as<std::string>();
+    if (Node["simulation-field"]) {
+      return Node["simulation-field"].as<std::string>();
     } else {
       throw std::runtime_error(
-          "Wavefield type not specified in the display section");
+          "Simulation field type not specified in the display section");
     }
   }();
 
   const int time_interval = [&]() -> int {
-    if (Node["time_interval"]) {
-      return Node["time_interval"].as<int>();
+    if (Node["time-interval"]) {
+      return Node["time-interval"].as<int>();
     } else {
       throw std::runtime_error(
           "Time interval not specified in the display section");
@@ -95,9 +99,9 @@ specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
 
   const auto wavefield = [&]() {
     if (this->wavefield_type == "forward") {
-      return specfem::wavefield::type::forward;
+      return specfem::wavefield::simulation_field::forward;
     } else if (this->wavefield_type == "adjoint") {
-      return specfem::wavefield::type::adjoint;
+      return specfem::wavefield::simulation_field::adjoint;
     } else {
       throw std::runtime_error("Unknown wavefield type in the display section");
     }

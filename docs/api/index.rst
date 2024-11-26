@@ -17,6 +17,7 @@ API documentation
     assembly/index
     policies/index
     operators/index
+    medium/index
     compute_kernels/index
     coupling_physics/coupled_interface
     timescheme/index

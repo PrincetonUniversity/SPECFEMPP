@@ -1,9 +1,9 @@
 #include "domain/impl/elements/kernel.hpp"
 #include "domain/impl/elements/kernel.tpp"
 
-constexpr static auto forward = specfem::wavefield::type::forward;
-constexpr static auto adjoint = specfem::wavefield::type::adjoint;
-constexpr static auto backward = specfem::wavefield::type::backward;
+constexpr static auto forward = specfem::wavefield::simulation_field::forward;
+constexpr static auto adjoint = specfem::wavefield::simulation_field::adjoint;
+constexpr static auto backward = specfem::wavefield::simulation_field::backward;
 
 constexpr static auto dim2 = specfem::dimension::type::dim2;
 

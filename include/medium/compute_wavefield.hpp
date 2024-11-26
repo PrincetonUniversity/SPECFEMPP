@@ -2,27 +2,33 @@
 
 #include "acoustic_isotropic2d/acoustic_isotropic2d.hpp"
 #include "elastic_isotropic2d/elastic_isotropic2d.hpp"
+#include <Kokkos_Core.hpp>
 
 namespace specfem {
 namespace medium {
+
 /**
  * @brief Compute the values of wavefield of a given component within a spectral
  * element.
+ *
  *
  * This function computes the wavefield values given the intrinsic field values
  * within that element. For example, for elastic medium  when the wavefield
  * component is pressure, the function computes the pressure values from the
  * displacement field values.
  *
+ *
+ * @ingroup MediumPhysics
+ *
  * @tparam MediumTag The medium tag of the element
  * @tparam PropertyTag The property tag of the element
  * @tparam MemberType The kokkos team policy member type
- * @tparam IteratorType The iterator type @ref specfem::iterator::chunk
+ * @tparam IteratorType The iterator type specfem::iterator::chunk
  * @tparam ChunkFieldType Chunk field type that stores the intrinsic field
- * values
+ * values specfem::chunk_element::field
  * @tparam QuadratureType The quadrature type that stores the lagrange
- * polynomial values
- * @tparam WavefieldViewType The wavefield view type (output)
+ * polynomial values specfem::element::quadrature
+ * @tparam WavefieldViewType 4 dimensional Kokkos view (output)
  * @param team The kokkos team policy member
  * @param iterator The iterator to iterate over all the GLL points
  * @param assembly SPECFEM++ assembly object
@@ -36,11 +42,11 @@ template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, typename MemberType,
           typename IteratorType, typename ChunkFieldType,
           typename QuadratureType, typename WavefieldViewType>
-KOKKOS_INLINE_FUNCTION void
+KOKKOS_INLINE_FUNCTION auto
 compute_wavefield(const MemberType &team, const IteratorType &iterator,
                   const specfem::compute::assembly &assembly,
                   const QuadratureType &quadrature, const ChunkFieldType &field,
-                  const specfem::wavefield::component &wavefield_component,
+                  const specfem::wavefield::type &wavefield_component,
                   WavefieldViewType wavefield_on_entire_grid) {
 
   static_assert(ChunkFieldType::isChunkFieldType,
@@ -69,6 +75,8 @@ compute_wavefield(const MemberType &team, const IteratorType &iterator,
                          property_dispatch(), team, iterator, assembly,
                          quadrature, field, wavefield_component,
                          wavefield_on_entire_grid);
+
+  return;
 }
 
 } // namespace medium

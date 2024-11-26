@@ -2,12 +2,19 @@
 
 #include "acoustic_isotropic2d/acoustic_isotropic2d.hpp"
 #include "elastic_isotropic2d/elastic_isotropic2d.hpp"
+#include <Kokkos_Core.hpp>
 
 namespace specfem {
 namespace medium {
 
 /**
+ * @defgroup MediumPhysics
+ */
+
+/**
  * @brief Compute the stress tensor at a quadrature point
+ *
+ * @ingroup MediumPhysics
  *
  * @tparam PointPropertiesType Material properties at the quadrature point
  * specfem::point::properties
