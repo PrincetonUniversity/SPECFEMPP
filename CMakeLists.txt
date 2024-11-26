@@ -555,7 +555,7 @@ endif (SPECFEMPP_USE_SKBUILD)
 if (SPECFEMPP_ENABLE_PYTHON)
     find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
     find_package(pybind11 CONFIG REQUIRED)
-    python_add_library(_core MODULE src/specfem2d_py.cpp WITH_SOABI)
+    python_add_library(_core MODULE src/specfem2d.cpp WITH_SOABI)
     target_link_libraries(
         _core PRIVATE
         specfem_mpi
@@ -575,6 +575,7 @@ if (SPECFEMPP_ENABLE_PYTHON)
         Boost::program_options
         pybind11::headers
     )
+    target_compile_definitions(_core PRIVATE SPECFEMPP_ENABLE_PYTHON)
     target_compile_definitions(_core PRIVATE VERSION_INFO=${PROJECT_VERSION})
     install(TARGETS _core DESTINATION specfempp)
 endif (SPECFEMPP_ENABLE_PYTHON)
