@@ -81,7 +81,7 @@ public:
         t0, dt, nsteps, source_time_function);
   }
 
-  virtual specfem::wavefield::type get_wavefield_type() const = 0;
+  virtual specfem::wavefield::simulation_field get_wavefield_type() const = 0;
 
 protected:
   type_real x; ///< x-coordinate of source

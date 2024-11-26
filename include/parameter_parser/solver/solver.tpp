@@ -18,7 +18,7 @@ specfem::runtime_configuration::solver::solver::instantiate(const type_real dt,
   if (this->simulation_type == "forward") {
     std::cout << "Instantiating Kernels \n";
     std::cout << "-------------------------------\n";
-    const auto kernels = specfem::kernels::kernels<specfem::wavefield::type::forward,
+    const auto kernels = specfem::kernels::kernels<specfem::wavefield::simulation_field::forward,
                                                    specfem::dimension::type::dim2, qp_type>(
         dt, assembly, quadrature);
     return std::make_shared<
@@ -28,10 +28,10 @@ specfem::runtime_configuration::solver::solver::instantiate(const type_real dt,
   } else if (this->simulation_type == "combined") {
     std::cout << "Instantiating Kernels \n";
     std::cout << "-------------------------------\n";
-    const auto adjoint_kernels = specfem::kernels::kernels<specfem::wavefield::type::adjoint,
+    const auto adjoint_kernels = specfem::kernels::kernels<specfem::wavefield::simulation_field::adjoint,
                                                    specfem::dimension::type::dim2, qp_type>(dt,
         assembly, quadrature);
-    const auto backward_kernels = specfem::kernels::kernels<specfem::wavefield::type::backward,
+    const auto backward_kernels = specfem::kernels::kernels<specfem::wavefield::simulation_field::backward,
                                                    specfem::dimension::type::dim2, qp_type>(dt,
         assembly, quadrature);
     return std::make_shared<

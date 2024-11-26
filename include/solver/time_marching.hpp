@@ -45,8 +45,9 @@ public:
    * @param time_scheme Time scheme
    */
   time_marching(
-      const specfem::kernels::kernels<specfem::wavefield::type::forward,
-                                      DimensionType, qp_type> &kernels,
+      const specfem::kernels::kernels<
+          specfem::wavefield::simulation_field::forward, DimensionType, qp_type>
+          &kernels,
       const std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
       const std::vector<std::shared_ptr<specfem::plotter::plotter> > &plotters)
       : kernels(kernels), time_scheme(time_scheme), plotters(plotters) {}
@@ -59,7 +60,8 @@ public:
   void run() override;
 
 private:
-  specfem::kernels::kernels<specfem::wavefield::type::forward, DimensionType,
+  specfem::kernels::kernels<specfem::wavefield::simulation_field::forward,
+                            DimensionType,
                             qp_type>
       kernels; ///< Computational kernels
   std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme; ///< Time
@@ -92,10 +94,12 @@ public:
    */
   time_marching(
       const specfem::compute::assembly &assembly,
-      const specfem::kernels::kernels<specfem::wavefield::type::adjoint,
-                                      DimensionType, qp_type> &adjoint_kernels,
-      const specfem::kernels::kernels<specfem::wavefield::type::backward,
-                                      DimensionType, qp_type> &backward_kernels,
+      const specfem::kernels::kernels<
+          specfem::wavefield::simulation_field::adjoint, DimensionType, qp_type>
+          &adjoint_kernels,
+      const specfem::kernels::kernels<
+          specfem::wavefield::simulation_field::backward, DimensionType,
+          qp_type> &backward_kernels,
       const std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
       const std::vector<std::shared_ptr<specfem::plotter::plotter> > &plotters)
       : assembly(assembly), adjoint_kernels(adjoint_kernels),
@@ -111,10 +115,12 @@ public:
 
 private:
   constexpr static int NGLL = qp_type::NGLL;
-  specfem::kernels::kernels<specfem::wavefield::type::adjoint, DimensionType,
+  specfem::kernels::kernels<specfem::wavefield::simulation_field::adjoint,
+                            DimensionType,
                             qp_type>
       adjoint_kernels; ///< Adjoint computational kernels
-  specfem::kernels::kernels<specfem::wavefield::type::backward, DimensionType,
+  specfem::kernels::kernels<specfem::wavefield::simulation_field::backward,
+                            DimensionType,
                             qp_type>
       backward_kernels; ///< Backward computational kernels
   specfem::kernels::frechet_kernels<DimensionType, NGLL>

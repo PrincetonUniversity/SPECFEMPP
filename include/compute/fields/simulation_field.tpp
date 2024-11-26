@@ -28,7 +28,7 @@ template <typename ViewType> int compute_nglob(const ViewType index_mapping) {
 }
 } // namespace
 
-template <specfem::wavefield::type WavefieldType>
+template <specfem::wavefield::simulation_field WavefieldType>
 specfem::compute::simulation_field<WavefieldType>::simulation_field(
     const specfem::compute::mesh &mesh,
     const specfem::compute::properties &properties) {

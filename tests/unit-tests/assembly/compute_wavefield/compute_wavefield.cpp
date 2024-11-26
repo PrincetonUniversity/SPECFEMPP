@@ -11,7 +11,7 @@
 #include <stdexcept>
 #include <vector>
 
-template <specfem::wavefield::component component>
+template <specfem::wavefield::type component>
 void test_element_wavefield(
     const int ispec,
     const Kokkos::View<type_real ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
@@ -40,8 +40,8 @@ void test_element_wavefield(
   }
 }
 
-template <specfem::wavefield::component component,
-          specfem::wavefield::type type>
+template <specfem::wavefield::type component,
+          specfem::wavefield::simulation_field type>
 void test_compute_wavefield(specfem::compute::assembly &assembly) {
 
   const auto ispecs = generate_data<component, type>(assembly);
@@ -57,8 +57,9 @@ void test_compute_wavefield(specfem::compute::assembly &assembly) {
 void test_compute_wavefield(specfem::compute::assembly &assembly) {
 
   try {
-    test_compute_wavefield<specfem::wavefield::component::displacement,
-                           specfem::wavefield::type::forward>(assembly);
+    test_compute_wavefield<specfem::wavefield::type::displacement,
+                           specfem::wavefield::simulation_field::forward>(
+        assembly);
   } catch (std::exception &e) {
     std::ostringstream message;
     message << "Error in computing displacement wavefield: \n\t" << e.what();
@@ -66,8 +67,9 @@ void test_compute_wavefield(specfem::compute::assembly &assembly) {
   }
 
   try {
-    test_compute_wavefield<specfem::wavefield::component::velocity,
-                           specfem::wavefield::type::forward>(assembly);
+    test_compute_wavefield<specfem::wavefield::type::velocity,
+                           specfem::wavefield::simulation_field::forward>(
+        assembly);
   } catch (std::exception &e) {
     std::ostringstream message;
     message << "Error in computing velocity wavefield: \n\t" << e.what();
@@ -75,8 +77,9 @@ void test_compute_wavefield(specfem::compute::assembly &assembly) {
   }
 
   try {
-    test_compute_wavefield<specfem::wavefield::component::acceleration,
-                           specfem::wavefield::type::forward>(assembly);
+    test_compute_wavefield<specfem::wavefield::type::acceleration,
+                           specfem::wavefield::simulation_field::forward>(
+        assembly);
   } catch (std::exception &e) {
     std::ostringstream message;
     message << "Error in computing acceleration wavefield: \n\t" << e.what();
@@ -84,8 +87,9 @@ void test_compute_wavefield(specfem::compute::assembly &assembly) {
   }
 
   try {
-    test_compute_wavefield<specfem::wavefield::component::pressure,
-                           specfem::wavefield::type::forward>(assembly);
+    test_compute_wavefield<specfem::wavefield::type::pressure,
+                           specfem::wavefield::simulation_field::forward>(
+        assembly);
   } catch (std::exception &e) {
     std::ostringstream message;
     message << "Error in computing pressure wavefield: \n\t" << e.what();
