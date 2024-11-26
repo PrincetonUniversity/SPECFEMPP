@@ -1,7 +1,6 @@
-#ifndef _READ_MATERIAL_PROPERTIES_HPP
-#define _READ_MATERIAL_PROPERTIES_HPP
+#pragma once
 
-#include "material/interface.hpp"
+#include "mesh/materials/materials.hpp"
 #include "specfem_mpi/interface.hpp"
 #include <fstream>
 #include <iostream>
@@ -9,8 +8,8 @@
 #include <vector>
 
 namespace specfem {
-namespace mesh {
 namespace IO {
+namespace mesh {
 namespace fortran {
 
 /**
@@ -23,11 +22,12 @@ namespace fortran {
  * @return std::vector<specfem::material *> Pointer to material objects read
  * from the database file
  */
-std::vector<std::shared_ptr<specfem::material::material> >
-read_material_properties(std::ifstream &stream, const int numat,
-                         const specfem::MPI::MPI *mpi);
+
+specfem::mesh::materials read_material_properties(
+    std::ifstream &stream, const int numat, const int nspec,
+    const specfem::kokkos::HostView2d<int> knods, const specfem::MPI::MPI *mpi);
+
 } // namespace fortran
-} // namespace IO
 } // namespace mesh
+} // namespace IO
 } // namespace specfem
-#endif

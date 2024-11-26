@@ -34,18 +34,6 @@ struct absorbing_boundary {
 
   absorbing_boundary(const int num_abs_boundaries_faces);
 
-  /**
-   * @brief Constructor to read and assign values from fortran binary database
-   * file
-   *
-   * @param stream Stream object for fortran binary file buffered to absorbing
-   * boundary section
-   * @param num_abs_boundary_faces Number of absorbing boundary faces
-   * @param nspec Number of spectral elements
-   * @param mpi Pointer to MPI object
-   */
-  absorbing_boundary(std::ifstream &stream, int num_abs_boundary_faces,
-                     const int nspec, const specfem::MPI::MPI *mpi);
   ///@}
 };
 } // namespace mesh
