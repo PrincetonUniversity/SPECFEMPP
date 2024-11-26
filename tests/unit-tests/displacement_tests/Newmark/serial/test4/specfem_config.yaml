@@ -41,6 +41,9 @@ parameters:
     angle: 0.0
     seismogram-type:
       - displacement
+      - velocity
+      - acceleration
+      - pressure
     nstep_between_samples: 1
 
   ## Runtime setup
