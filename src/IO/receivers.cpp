@@ -1,8 +1,11 @@
+// Internal Includes
 #include "IO/interface.hpp"
 #include "receiver/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
 #include "yaml-cpp/yaml.h"
+
+// External Includes
 #include <boost/tokenizer.hpp>
 #include <fstream>
 #include <string>
