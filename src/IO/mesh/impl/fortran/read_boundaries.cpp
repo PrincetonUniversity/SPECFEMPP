@@ -1,4 +1,4 @@
-#include "IO/mesh/fortran/read_boundaries.hpp"
+#include "IO/mesh/impl/fortran/read_boundaries.hpp"
 #include "IO/fortranio/interface.hpp"
 #include "mesh/boundaries/boundaries.hpp"
 #include "specfem_mpi/interface.hpp"
@@ -49,11 +49,13 @@ find_corners(const specfem::kokkos::HostView1d<int> ispec_edge,
   }
 
   specfem::kokkos::HostView1d<int> ispec_corners(
-      "specfem:IO::mesh::fortran::read_boundaries::find_corners::ispec_corners",
+      "specfem:IO::mesh::impl::fortran::read_boundaries::find_corners::ispec_"
+      "corners",
       ncorner);
 
   specfem::kokkos::HostView1d<specfem::enums::boundaries::type> type_corners(
-      "specfem:IO::mesh::fortran::read_boundaries::find_corners::type_corners",
+      "specfem:IO::mesh::impl::fortran::read_boundaries::find_corners::type_"
+      "corners",
       ncorner);
 
   int icorner = 0;
@@ -349,7 +351,7 @@ read_forcing_boundaries(std::ifstream &stream, const int nelement_acforcing,
   return forcing_boundary;
 }
 
-specfem::mesh::boundaries specfem::IO::mesh::fortran::read_boundaries(
+specfem::mesh::boundaries specfem::IO::mesh::impl::fortran::read_boundaries(
     std::ifstream &stream, const int nspec, const int n_absorbing,
     const int n_acoustic_surface, const int n_acforcing,
     const Kokkos::View<int **, Kokkos::HostSpace> knods,

@@ -7,6 +7,7 @@
 namespace specfem {
 namespace IO {
 namespace mesh {
+namespace impl {
 namespace fortran {
 
 template <specfem::element::medium_tag medium1,
@@ -30,6 +31,7 @@ specfem::mesh::coupled_interfaces read_coupled_interfaces(
     const int num_interfaces_elastic_poroelastic, const specfem::MPI::MPI *mpi);
 
 } // namespace fortran
+} // namespace impl
 } // namespace mesh
 } // namespace IO
 } // namespace specfem

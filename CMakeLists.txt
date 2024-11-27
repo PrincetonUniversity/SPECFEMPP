@@ -130,12 +130,12 @@ add_library(
         src/IO/HDF5/native_type.cpp
         # src/IO/ASCII/native_type.cpp
         src/IO/mesh/read_mesh.cpp
-        src/IO/mesh/fortran/read_boundaries.cpp
-        src/IO/mesh/fortran/read_elements.cpp
-        src/IO/mesh/fortran/read_material_properties.cpp
-        src/IO/mesh/fortran/read_mesh_database.cpp
-        src/IO/mesh/fortran/read_interfaces.cpp
-        src/IO/mesh/fortran/read_properties.cpp
+        src/IO/mesh/impl/fortran/read_boundaries.cpp
+        src/IO/mesh/impl/fortran/read_elements.cpp
+        src/IO/mesh/impl/fortran/read_material_properties.cpp
+        src/IO/mesh/impl/fortran/read_mesh_database.cpp
+        src/IO/mesh/impl/fortran/read_interfaces.cpp
+        src/IO/mesh/impl/fortran/read_properties.cpp
         src/IO/sources/read_sources.cpp
         src/IO/receivers/read_receivers.cpp
 )
