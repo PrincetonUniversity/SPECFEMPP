@@ -1,7 +1,7 @@
 #include "../../Kokkos_Environment.hpp"
 #include "../../MPI_environment.hpp"
 #include "../../utilities/include/interface.hpp"
-#include "IO/mesh/read_mesh.hpp"
+#include "IO/interface.hpp"
 #include "compute/interface.hpp"
 #include "quadrature/interface.hpp"
 #include "yaml-cpp/yaml.h"
