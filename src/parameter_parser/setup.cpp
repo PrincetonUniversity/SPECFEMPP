@@ -245,7 +245,7 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
 }
 
 std::string specfem::runtime_configuration::setup::print_header(
-    const std::chrono::time_point<std::chrono::high_resolution_clock> now) {
+    const std::chrono::time_point<std::chrono::system_clock> now) {
 
   std::ostringstream message;
 

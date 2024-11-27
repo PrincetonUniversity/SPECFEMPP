@@ -2,7 +2,7 @@
 .. _Chapter1:
 
 Chapter 1: Generating the mesh, sources and receivers
-====================================================
+=====================================================
 
 Before we start writing the solver, we need to generate an hexahedral mesh, and define our sources and receivers. To do this we will use the Fortran package ``MESHFEM2D``.
 
@@ -11,7 +11,7 @@ Before we start writing the solver, we need to generate an hexahedral mesh, and 
     Since ``MESHFEM2D`` is a dependency for SPECFEM++, it is should already be installed as part of the SPECFEM++ installation.
 
 Defining the MESHFEM2D Parameter File
---------------------------------------
+-------------------------------------
 
 Let us generate a Hex mesh for 2D elastic domain using the following parameter file. You will also need a topography file to define the surface topography of the mesh, see :ref:`Topgraphy File <homogeneous-medium-flat-topography-topography-file>`
 

@@ -75,8 +75,8 @@ public:
   /**
    * @brief Log the header and description of the simulation
    */
-  std::string print_header(
-      const std::chrono::time_point<std::chrono::high_resolution_clock> now);
+  std::string
+  print_header(const std::chrono::time_point<std::chrono::system_clock> now);
 
   /**
    * @brief Get delta time value

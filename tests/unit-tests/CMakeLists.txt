@@ -101,6 +101,7 @@ target_link_libraries(
   mpi_environment
   kokkos_environment
   yaml-cpp
+  IO
   # material_class
   -lpthread -lm
 )
@@ -175,6 +176,7 @@ target_link_libraries(
   kokkos_environment
   yaml-cpp
   compare_arrays
+  IO
   Boost::filesystem
   # material_class
   -lpthread -lm
@@ -194,6 +196,7 @@ target_link_libraries(
   compute
   quadrature
   mpi_environment
+  IO
   kokkos_environment
   yaml-cpp
   Boost::filesystem
@@ -215,6 +218,7 @@ target_link_libraries(
   kokkos_environment
   algorithms
   point
+  IO
   Boost::filesystem
 )
 
@@ -231,6 +235,7 @@ target_link_libraries(
   mpi_environment
   kokkos_environment
   algorithms
+  IO
   Boost::filesystem
   point
 )
@@ -290,6 +295,7 @@ target_link_libraries(
   point
   algorithms
   domain
+  IO
   coupled_interface
   plotter
   -lpthread -lm

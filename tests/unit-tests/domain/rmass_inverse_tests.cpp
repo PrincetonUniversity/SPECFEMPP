@@ -1,6 +1,7 @@
 #include "../Kokkos_Environment.hpp"
 #include "../MPI_environment.hpp"
 #include "../utilities/include/interface.hpp"
+#include "IO/mesh/read_mesh.hpp"
 #include "compute/interface.hpp"
 #include "constants.hpp"
 #include "domain/domain.hpp"
@@ -116,7 +117,7 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
     std::cout << "Reading mesh file: " << database_file << std::endl;
 
     // Read mesh generated MESHFEM
-    specfem::mesh::mesh mesh(database_file, mpi);
+    specfem::mesh::mesh mesh = specfem::IO::read_mesh(database_file, mpi);
 
     std::cout << "Setting up sources and receivers" << std::endl;
 

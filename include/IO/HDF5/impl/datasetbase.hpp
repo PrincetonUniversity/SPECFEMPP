@@ -60,7 +60,7 @@ protected:
               const int rank, const hsize_t *dims, const AtomType &type)
       : dataset(std::make_unique<H5::DataSet>(file->openDataSet(name))) {
 
-    if (dataset->getDataType() != type) {
+    if (!(dataset->getDataType() == type)) {
       throw std::runtime_error("Type of dataset does not match view");
     }
 
@@ -78,7 +78,7 @@ protected:
   DatasetBase(std::unique_ptr<H5::Group> &group, const std::string &name,
               const int rank, const hsize_t *dims, const AtomType &type)
       : dataset(std::make_unique<H5::DataSet>(group->openDataSet(name))) {
-    if (dataset->getDataType() != type) {
+    if (!(dataset->getDataType() == type)) {
       throw std::runtime_error("Type of dataset does not match view");
     }
 
