@@ -120,8 +120,8 @@ TEST(SEISMOGRAM_TESTS, acoustic_seismograms_test) {
   specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
 
   specfem::domain::domain<
-      specfem::wavefield::type::forward, specfem::dimension::type::dim2,
-      specfem::element::medium_tag::acoustic,
+      specfem::wavefield::simulation_field::forward,
+      specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
       specfem::enums::element::quadrature::static_quadrature_points<5> >
       acoustic_domain_static(setup.get_dt(), assembly, qp5);
 

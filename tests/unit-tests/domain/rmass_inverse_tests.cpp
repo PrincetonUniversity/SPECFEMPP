@@ -138,13 +138,14 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
       const type_real dt = setup.get_dt();
 
       specfem::domain::domain<
-          specfem::wavefield::type::forward, specfem::dimension::type::dim2,
-          specfem::element::medium_tag::elastic,
+          specfem::wavefield::simulation_field::forward,
+          specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
           specfem::enums::element::quadrature::static_quadrature_points<5> >
           elastic_domain_static(dt, assembly, qp5);
 
       specfem::domain::domain<
-          specfem::wavefield::type::forward, specfem::dimension::type::dim2,
+          specfem::wavefield::simulation_field::forward,
+          specfem::dimension::type::dim2,
           specfem::element::medium_tag::acoustic,
           specfem::enums::element::quadrature::static_quadrature_points<5> >
           acoustic_domain_static(dt, assembly, qp5);

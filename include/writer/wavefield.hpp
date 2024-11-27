@@ -15,13 +15,6 @@ namespace writer {
 template <typename OutputLibrary> class wavefield : public writer {
 
 public:
-  using elastic_type =
-      specfem::medium::medium<specfem::dimension::type::dim2,
-                              specfem::element::medium_tag::elastic>;
-  using acoustic_type =
-      specfem::medium::medium<specfem::dimension::type::dim2,
-                              specfem::element::medium_tag::acoustic>;
-
   /**
    * @name Constructors
    *
@@ -47,7 +40,8 @@ public:
 
 private:
   std::string output_folder; ///< Path to output folder
-  specfem::compute::simulation_field<specfem::wavefield::type::forward>
+  specfem::compute::simulation_field<
+      specfem::wavefield::simulation_field::forward>
       forward;                                       ///< Forward wavefield
   specfem::compute::boundary_values boundary_values; ///< Boundary values used
                                                      ///< for backward
