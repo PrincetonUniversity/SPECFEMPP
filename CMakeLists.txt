@@ -129,7 +129,9 @@ add_library(
         src/IO/fortranio/fortran_io.cpp
         src/IO/HDF5/native_type.cpp
         # src/IO/ASCII/native_type.cpp
-        src/IO/interface.cpp
+        src/IO/sources.cpp
+        src/IO/receivers.cpp
+        src/IO/mesh.cpp
         src/IO/mesh/impl/fortran/read_boundaries.cpp
         src/IO/mesh/impl/fortran/read_elements.cpp
         src/IO/mesh/impl/fortran/read_material_properties.cpp
