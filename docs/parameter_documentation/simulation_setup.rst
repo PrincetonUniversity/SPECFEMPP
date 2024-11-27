@@ -78,14 +78,14 @@ Parameter definitions
 
     1. Using predefined quadrature type
 
-    .. code:: yaml
+    .. code-block:: yaml
 
         quadrature:
             quadrature-type: GLL4
 
     2. Using individual parameters
 
-    .. code:: yaml
+    .. code-block:: yaml
 
         quadrature:
             alpha: 0.0
@@ -150,7 +150,7 @@ Parameter definitions
 
 .. admonition:: Example for defining time-marching Newmark solver
 
-    .. code:: yaml
+    .. code-block:: yaml
 
         solver:
             time-marching:
@@ -297,7 +297,7 @@ Parameter definitions
 
 .. admonition:: Example for defining a forward simulation node
 
-    .. code:: yaml
+    .. code-block:: yaml
 
         simulation-mode:
             forward:
@@ -486,7 +486,7 @@ Parameter definitions
 
 .. admonition:: Example for defining a combined simulation node
 
-    .. code:: yaml
+    .. code-block:: yaml
 
         simulation-mode:
             combined:

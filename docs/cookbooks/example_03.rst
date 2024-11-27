@@ -1,9 +1,51 @@
-.. Tromp_Tape_Liu_2005::
+.. _Tromp_Tape_Liu_2005:
 
 Adjoint Simulations and Banana Donut Kernels
 ============================================
 
 This `example <https://github.com/PrincetonUniversity/SPECFEMPP/tree/main/examples/Tromp_2005>`_ demonstrates how to setup forward and adjoint simulations to compute the banana donut kernels. We will reproduce the results from Fig 9 of `Tromp et al. 2005 <https://doi.org/10.1111/j.1365-246X.2004.02453.x>`_.
+
+Setting up the workspace
+-------------------------
+
+Let's start by creating a workspace from where we can run this example.
+
+.. code-block:: bash
+
+    mkdir -p ~/specfempp-examples/Tromp_2005
+    cd ~/specfempp-examples/Tromp_2005
+
+We also need to check that the SPECFEM++ build directory is added to the ``PATH``.
+
+.. code:: bash
+
+    which specfem2d
+
+If the above command returns a path to the ``specfem2d`` executable, then the build directory is added to the ``PATH``. If not, you need to add the build directory to the ``PATH`` using the following command.
+
+.. code:: bash
+
+    export PATH=$PATH:<PATH TO SPECFEM++ BUILD DIRECTORY>
+
+.. note::
+
+    Make sure to replace ``<PATH TO SPECFEM++ BUILD DIRECTORY>`` with the actual path to the SPECFEM++ build directory on your system.
+
+Now let's create the necessary directories to store the input files and output artifacts.
+
+.. code:: bash
+
+    mkdir -p OUTPUT_FILES
+    mkdir -p OUTPUT_FILES/seismograms
+    mkdir -p OUTPUT_FILES/kernels
+    mkdir -p OUTPUT_FILES/adjoint_sources
+
+    touch forward_config.yaml
+    touch forward_sources.yaml
+    touch adjoint_config.yaml
+    touch adjoint_sources.yaml
+    touch topography_file.dat
+    touch Par_File
 
 Setting up the forward simulation
 ---------------------------------
@@ -26,7 +68,7 @@ Setting up the Mesh
     # parameters concerning partitioning
     NPROC                           = 1              # number of processes
     # Output folder to store mesh related files
-    OUTPUT_FILES                   = <Location to store output artifacts>
+    OUTPUT_FILES                   = OUTPUT_FILES
     #-----------------------------------------------------------
     #
     # Mesh
@@ -35,9 +77,9 @@ Setting up the Mesh
     # Partitioning algorithm for decompose_mesh
     PARTITIONING_TYPE               = 3              # SCOTCH = 3, ascending order (very bad idea) = 1
     # number of control nodes per element (4 or 9)
-    NGNOD                           = 4
+    NGNOD                           = 9
     # location to store the mesh
-    database_filename               = <Output file to store the mesh generated>
+    database_filename               = OUTPUT_FILES/database.bin
     #-----------------------------------------------------------
     #
     # Receivers
@@ -60,7 +102,7 @@ Setting up the Mesh
     record_at_surface_same_vertical = .false.        # receivers inside the medium or at the surface
 
     # filename to store stations file
-    stations_filename              = <Location to stations file>
+    stations_filename              = OUTPUT_FILES/STATIONS
 
     #-----------------------------------------------------------
     #
@@ -118,17 +160,19 @@ Setting up the Mesh
     #-----------------------------------------------------------
 
     # file containing interfaces for internal mesh
-    interfacesfile                  = <Location to topography file>
+    interfacesfile                  = topography_file.dat
 
     # geometry of the model (origin lower-left corner = 0,0) and mesh description
     xmin                            = 0.d0           # abscissa of left side of the model
     xmax                            = 200000.d0      # abscissa of right side of the model
     nx                              = 80             # number of elements along X
 
+    STACEY_ABSORBING_CONDITIONS    = .true.
+
     # absorbing boundary parameters (see absorbing_conditions above)
     absorbbottom                    = .true.
-    absorbright                     = .false.
-    absorbtop                       = .true.
+    absorbright                     = .true.
+    absorbtop                       = .false.
     absorbleft                      = .true.
 
     # define the different regions of the model in the (nx,nz) spectral-element mesh
@@ -147,7 +191,7 @@ Setting up the Mesh
     output_grid_ASCII               = .false.        # dump the grid in an ASCII text file consisting of a set of X,Y,Z points or not
 
 .. code-block:: bash
-    :caption: topography.dat
+    :caption: topography_file.dat
 
     # number of interfaces
     2
@@ -172,7 +216,7 @@ With the above input files, we can run the mesher to generate the mesh database.
 
 .. code:: bash
 
-    ./xmeshfem2D -p <PATH TO PAR_FILE>
+    xmeshfem2D -p Par_File
 
 Running the forward simulation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -180,21 +224,21 @@ Running the forward simulation
 Now that we have the mesh database, we can run the forward simulation. Lets set up the runtime behaviour of the solver using the following input file.
 
 .. code-block:: yaml
-    :caption: specfem-config.yaml
+    :caption: forward_config.yaml
 
     parameters:
 
         header:
             title: "Tromp-Tape-Liu (GJI 2005)"
             description: |
-            Material systems : Elastic domain (1)
-            Interfaces : None
-            Sources : Force source (1)
-            Boundary conditions : Free surface (1)
-            Mesh : 2D Cartesian grid (1)
-            Receiver : Displacement seismogram (1)
-            Output : Wavefield at the last time step (1)
-            Output : Seismograms in ASCII format (1)
+                Material systems : Elastic domain (1)
+                Interfaces : None
+                Sources : Force source (1)
+                Boundary conditions : Free surface (1)
+                Mesh : 2D Cartesian grid (1)
+                Receiver : Displacement seismogram (1)
+                Output : Wavefield at the last time step (1)
+                Output : Seismograms in ASCII format (1)
 
         simulation-setup:
             quadrature:
@@ -203,24 +247,24 @@ Now that we have the mesh database, we can run the forward simulation. Lets set 
             solver:
                 time-marching:
                     time-scheme:
-                    type: Newmark
-                    dt: 0.02
-                    nstep: 3000
-                    t0: 8.0
+                        type: Newmark
+                        dt: 0.02
+                        nstep: 3000
+                        t0: 8.0
 
             simulation-mode:
                 forward:
                     writer:
                         wavefield:
-                            output-format: HDF5
-                            output-folder: <output folder name>
+                            format: HDF5
+                            directory: OUTPUT_FILES
 
                         seismogram:
-                            output-format: ascii # output seismograms in HDF5 format
-                            output-folder: <output folder name>
+                            format: ascii # output seismograms in HDF5 format
+                            directory: OUTPUT_FILES/seismograms
 
         receivers:
-            stations-file: <Location to stations file>
+            stations-file: OUTPUT_FILES/STATIONS
             angle: 0.0
             seismogram-type:
                 - displacement
@@ -231,8 +275,8 @@ Now that we have the mesh database, we can run the forward simulation. Lets set 
             number-of-runs: 1
 
         databases:
-            mesh-database: <Location to mesh database>
-            source-file: <Location to sources file>
+            mesh-database: OUTPUT_FILES/database.bin
+            source-file: forward_sources.yaml
 
 There are several few critical parameters within the input file that we need to pay attention to:
 
@@ -244,18 +288,18 @@ To store the wavefield at the last time step, we need to set the following param
 
     writer:
         wavefield:
-            output-format: HDF5
-            output-folder: <output folder name>
+            format: HDF5
+            directory: OUTPUT_FILES
 
-2. Saving the synthetics: We need to save the synthetics at the receiver locations. It is import that we save the synthetics in ASCII format for displacement seismograms.
+1. Saving the synthetics: We need to save the synthetics at the receiver locations. It is import that we save the synthetics in ASCII format for displacement seismograms.
 
 Lastly we define the source:
 
 .. code-block:: yaml
-    :caption: sources.yaml
+    :caption: forward_sources.yaml
 
-      number-of-sources: 1
-      sources:
+    number-of-sources: 1
+    sources:
         - force:
             x: 50000
             z: 40000
@@ -272,16 +316,16 @@ With the above input files, we can run the forward simulation.
 
 .. code:: bash
 
-    ./specfem2d -p <specfem-config.yaml>
+    specfem2d -p forward_config.yaml
 
 Generating adjoint sources
 --------------------------
 
-The next step is to generate the adjoint sources. We can generate the adjoint sources using ``./xadj_seismogram`` utility which models Eq. 45 of `Tromp et al. 2005 <https://doi.org/10.1111/j.1365-246X.2004.02453.x>`_. The utility requires synthetic seismograms and does not depend on the observed data.
+The next step is to generate the adjoint sources. In this example, we are computing sensitivity kernels for travel-time measurements. The adjoint source required for this kernel is defined by Eq. 45 of `Tromp et al. 2005 <https://doi.org/10.1111/j.1365-246X.2004.02453.x>`_, and relies only the synthetic velocity seismogram. Here we use the utility ``xadj_seismogram``, which computes this adjoint source from the displacement synthetics computed during forward run i.e. by numerically differentiating the displacements.
 
-.. code-block:: bash
+.. code:: bash
 
-    ./xadj_seismogram <window start time> <window end time> <station_name> <synthetics folder> <adjoint sources folder> <adjoint component>
+    xadj_seismogram <window start time> <window end time> <station_name> <synthetics folder> <adjoint sources folder> <adjoint component>
 
 Command line arguments:
 
@@ -301,31 +345,31 @@ For the current simulation we will use window start time = 27.0 and window end t
 
 .. code:: bash
 
-    ./xadj_seismogram 27.0 32.0 1 <Location to observed seismograms> <Location to synthetics> <Location to adjoint sources> 1
+    xadj_seismogram 27.0 32.0 S0001AA OUTPUT_FILES/seismograms/ OUTPUT_FILES/adjoint_sources/ 1
 
 Running the adjoint simulation
 ------------------------------
 
 Now finally we can run the adjoint simulation. We use the same mesh database as the forward run and the adjoint sources generated in the previous step. The input file for the adjoint simulation is similar to the forward simulation with the following changes:
 
-1. The adjoint sources are added to the sources file. The adjoint sources require an external source time function generated during the previous step.
+1. The adjoint sources are added to the sources file.
 
 .. code-block:: yaml
-    :caption: sources.yaml
+    :caption: adjoint_sources.yaml
 
     number-of-sources: 2
     sources:
-         - force:
-             x: 50000
-             z: 40000
-             source_surf: false
-             angle: 270.0
-             vx: 0.0
-             vz: 0.0
-             Ricker:
-               factor: 0.75e+10
-               tshift: 0.0
-               f0: 0.42
+        - force:
+            x: 50000
+            z: 40000
+            source_surf: false
+            angle: 270.0
+            vx: 0.0
+            vz: 0.0
+            Ricker:
+                factor: 0.75e+10
+                tshift: 0.0
+                f0: 0.42
 
         - adjoint-source:
             station_name: AA
@@ -337,10 +381,78 @@ Now finally we can run the adjoint simulation. We use the same mesh database as 
             vx: 0.0
             vz: 0.0
             External:
-              format: ascii
-              stf-file: /scratch/gpfs/rk9481/specfem2d_kokkos/examples/Tromp_2005/OUTPUT_FILES/AA.S0001
+                format: ascii
+                stf:
+                    X-component: OUTPUT_FILES/adjoint_sources/S0001AA.BXX.adj
+                    Z-component: OUTPUT_FILES/adjoint_sources/S0001AA.BXZ.adj
 
-1. To set up the a combined simulation, we need to replace the forward YAML node with a combined node.
+The adjoint sources require an external source time function generated during the previous step. The source time function is stored as a trace in ASCII format. Where the ``BXX`` is the X-component of the adjoint source and ``BXZ`` is the Z-component of the adjoint source.
+
+.. code-block:: yaml
+
+    stf:
+      X-component: OUTPUT_FILES/adjoint_sources/S0001AA.BXX.adj
+      Z-component: OUTPUT_FILES/adjoint_sources/S0001AA.BXZ.adj
+
+1. Set up the configuration file for the adjoint simulation.
+
+.. code-block:: yaml
+    :caption: adjoint_config.yaml
+
+    parameters:
+
+        header:
+            title: "Tromp-Tape-Liu (GJI 2005)"
+            description: |
+               Material systems : Elastic domain (1)
+               Interfaces : None
+               Sources : Force source (1)
+               Boundary conditions : Free surface (1)
+               Mesh : 2D Cartesian grid (1)
+               Receiver : Displacement seismogram (1)
+               Output : Wavefield at the last time step (1)
+               Output : Seismograms in ASCII format (1)
+
+        simulation-setup:
+            quadrature:
+                quadrature-type: GLL4
+
+            solver:
+                time-marching:
+                    time-scheme:
+                       type: Newmark
+                       dt: 0.02
+                       nstep: 3000
+                       t0: 8.0
+
+            simulation-mode:
+                combined:
+                    reader:
+                        wavefield:
+                            format: HDF5
+                            directory: OUTPUT_FILES
+
+                    writer:
+                        kernels:
+                            format: ASCII
+                            directory: OUTPUT_FILES/kernels
+
+        receivers:
+            stations-file: OUTPUT_FILES/STATIONS
+            angle: 0.0
+            seismogram-type:
+                - displacement
+            nstep_between_samples: 1
+
+        run-setup:
+            number-of-processors: 1
+            number-of-runs: 1
+
+        databases:
+            mesh-database: OUTPUT_FILES/database.bin
+            source-file: adjoint_sources.yaml
+
+Note the change to the ``simulation-mode`` section, where we've replaced the forward ``section`` with the ``combined`` section. The ``combined`` section requires a ``reader`` section defining where the forward wavefield was stored during the forward simulation and a ``writer`` section defining where the kernels are to be stored.
 
 .. code-block:: yaml
     :caption: combined YAML node
@@ -349,18 +461,18 @@ Now finally we can run the adjoint simulation. We use the same mesh database as 
         reader:
             wavefield:
                 format: HDF5
-                directory: <Directory containing the forward wavefield>
+                directory: OUTPUT_FILES
 
         writer:
             kernels:
                 format: ASCII
-                directory: <Directory to store the kernels>
+                directory: OUTPUT_FILES/kernels
 
 With the above input files, we can run the adjoint simulation.
 
 .. code:: bash
 
-    ./specfem2d -p <specfem-config.yaml>
+    specfem2d -p adjoint_config.yaml
 
 The kernels are stored in the directory specified in the input file. We can now plot the kernels to visualize the banana donut kernels.
 
@@ -368,6 +480,10 @@ Visualizing the kernels
 ------------------------
 
 Lastly if the kernels are stored in ASCII format, we can use numpy to read the kernels and plot them.
+
+.. note::
+
+    An python code for reading ASCII kernels and plotting them is provided `here <https://github.com/PrincetonUniversity/SPECFEMPP/blob/main/examples/Tromp_2005/plot.py>`_.
 
 .. figure:: ../../examples/Tromp_2005/Reference_Kernels/Kernels.png
     :alt: Kernels

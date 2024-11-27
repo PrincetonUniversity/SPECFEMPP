@@ -3,6 +3,45 @@ Wave propagration through fluid-solid interface
 
 This `example <https://github.com/PrincetonUniversity/SPECFEMPP/tree/main/examples/fluid-solid-interface>`_ simulates the fluid-solid example with flat ocean bottom from `Komatitsch et. al. <https://doi.org/10.1190/1.1444758>`_. This example demonstrates the use of the ``xmeshfem2D`` mesher to generate interface between 2 conforming material systems and the setting up absorbing boundary conditions.
 
+Setting up the workspace
+-------------------------
+
+Let's start by creating a workspace from where we can run this example.
+
+.. code-block:: bash
+
+    mkdir -p ~/specfempp-examples/fluid-solid-interface
+    cd ~/specfempp-examples/fluid-solid-interface
+
+We also need to check that the SPECFEM++ build directory is added to the ``PATH``.
+
+.. code:: bash
+
+    which specfem2d
+
+If the above command returns a path to the ``specfem2d`` executable, then the build directory is added to the ``PATH``. If not, you need to add the build directory to the ``PATH`` using the following command.
+
+.. code:: bash
+
+    export PATH=$PATH:<PATH TO SPECFEM++ BUILD DIRECTORY>
+
+.. note::
+
+    Make sure to replace ``<PATH TO SPECFEM++ BUILD DIRECTORY>`` with the actual path to the SPECFEM++ build directory on your system.
+
+Now let's create the necessary directories to store the input files and output artifacts.
+
+.. code:: bash
+
+    mkdir -p OUTPUT_FILES
+    mkdir -p OUTPUT_FILES/seismograms
+
+    touch specfem_config.yaml
+    touch single_source.yaml
+    touch topography_file.dat
+    touch Par_File
+
+
 Meshing the domain
 ------------------
 
@@ -12,6 +51,7 @@ Parameter file
 ~~~~~~~~~~~~~
 
 .. code-block:: bash
+    :caption: Par_File
 
     #-----------------------------------------------------------
     #
@@ -26,7 +66,7 @@ Parameter file
     NPROC                           = 1              # number of processes
 
     # Output folder to store mesh related files
-    OUTPUT_FILES                   = <Location to store output artifacts>
+    OUTPUT_FILES                   = OUTPUT_FILES
 
     #-----------------------------------------------------------
     #
@@ -38,10 +78,10 @@ Parameter file
     PARTITIONING_TYPE               = 3              # SCOTCH = 3, ascending order (very bad idea) = 1
 
     # number of control nodes per element (4 or 9)
-    NGNOD                           = 4
+    NGNOD                           = 9
 
     # location to store the mesh
-    database_filename               = <Output file to store the mesh generated>
+    database_filename               = OUTPUT_FILES/database.bin
 
     #-----------------------------------------------------------
     #
@@ -60,15 +100,15 @@ Parameter file
     rec_normal_to_surface           = .false.        # base anglerec normal to surface (external mesh and curve file needed)
 
     # first receiver set (repeat these 6 lines and adjust nreceiversets accordingly)
-    nrec                            = 110            # number of receivers
-    xdeb                            = 2500.d0        # first receiver x in meters
-    zdeb                            = 2933.33333d0   # first receiver z in meters
-    xfin                            = 6000.d0        # last receiver x in meters (ignored if only one receiver)
-    zfin                            = 2933.33333d0   # last receiver z in meters (ignored if only one receiver)
+    nrec                            = 11            # number of receivers
+    xdeb                            = 1450.d0        # first receiver x in meters
+    zdeb                            = 2400   # first receiver z in meters
+    xfin                            = 1575.d0        # last receiver x in meters (ignored if only one receiver)
+    zfin                            = 3400   # last receiver z in meters (ignored if only one receiver)
     record_at_surface_same_vertical = .false.        # receivers inside the medium or at the surface
 
     # filename to store stations file
-    stations_filename              = <Location to stations file>
+    stations_filename              = OUTPUT_FILES/STATIONS
 
     #-----------------------------------------------------------
     #
@@ -118,12 +158,14 @@ Parameter file
     #-----------------------------------------------------------
 
     # file containing interfaces for internal mesh
-    interfacesfile                  = <Location to topography file>
+    interfacesfile                  = topography_file.dat
 
     # geometry of the model (origin lower-left corner = 0,0) and mesh description
     xmin                            = 0.d0           # abscissa of left side of the model
     xmax                            = 6400.d0        # abscissa of right side of the model
     nx                              = 144            # number of elements along X
+
+    STACEY_ABSORBING_CONDITIONS       = .true.        # use Stacey absorbing boundary conditions
 
     # absorbing boundary parameters (see absorbing_conditions above)
     absorbbottom                    = .true.
@@ -150,14 +192,15 @@ Parameter file
   - Firstly, ``nbmodels`` defines the number of material systems in the simulation domain.
   - We then define the velocity model for each material system using the following format: ``model_number rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0``.
 
-- We define stacey absorbing boundary conditions on all the edges of the domain using the ``absorbbottom``, ``absorbright``, ``absorbtop`` and ``absorbleft`` parameters.
+- We define stacey absorbing boundary conditions on all the edges of the domain using the ``STACEY_ABSORBING_BOUNDARY``, ``absorbbottom``, ``absorbright``, ``absorbtop`` and ``absorbleft`` parameters.
 
 Defining the topography of the domain
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 We define the topography of the domain using the following topography file
 
-.. code:: bash
+.. code-block:: bash
+    :caption: topography_file.dat
 
     #
     # number of interfaces
@@ -205,21 +248,21 @@ To execute the mesher run
 
 .. code:: bash
 
-    ./xmeshfem2D -p <PATH TO PAR_FILE>
+    xmeshfem2D -p Par_File
 
 .. note::
 
     Make sure either your are in the build directory of SPECFEM2D kokkos or the build directory is added to your ``PATH``.
 
-Note the path of the database file and :ref:`stations_file` generated after successfully running the mesher.
+Note the path of the database file and a stations file generated after successfully running the mesher.
 
 Defining the source
 ~~~~~~~~~~~~~~~~~~~
 
 We define the source location and the source time function in the source file.
 
-.. code:: yaml
-    :linenos:
+.. code-block:: yaml
+    :caption: single_source.yaml
 
     number-of-sources: 1
     sources:
@@ -241,28 +284,26 @@ Running the simulation
 To run the solver, we first need to define a configuration file ``specfem_config.yaml``.
 
 .. code-block:: yaml
-    :linenos:
     :caption: specfem_config.yaml
 
     parameters:
 
       header:
         ## Header information is used for logging. It is good practice to give your simulations explicit names
-        title: Heterogeneous acoustic-elastic medium with 1 acoustic-elastic interface # name for your simulation
+        title: Heterogeneous acoustic-elastic medium with 1 acoustic-elastic interface (orientation horizontal)  # name for your simulation
         # A detailed description for your simulation
         description: |
           Material systems : Elastic domain (1), Acoustic domain (1)
-          Interfaces : Acoustic-elastic interface (1)
+          Interfaces : Acoustic-elastic interface (1) (orientation horizontal with acoustic domain on top)
           Sources : Force source (1)
           Boundary conditions : Neumann BCs on all edges
+          Debugging comments: This tests checks coupling acoustic-elastic interface implementation.
+                              The orientation of the interface is horizontal with acoustic domain on top.
 
       simulation-setup:
         ## quadrature setup
         quadrature:
-          alpha: 0.0
-          beta: 0.0
-          ngllx: 5
-          ngllz: 5
+          quadrature-type: GLL4
 
         ## Solver setup
         solver:
@@ -271,14 +312,20 @@ To run the solver, we first need to define a configuration file ``specfem_config
             time-scheme:
               type: Newmark
               dt: 0.85e-3
-              nstep: 800
+              nstep: 600
+
+        simulation-mode:
+          forward:
+            writer:
+              seismogram:
+                format: ascii
+                directory: OUTPUT_FILES/seismograms
 
       receivers:
-        stations-file: <Location of Stations file>
+        stations-file: OUTPUT_FILES/STATIONS
         angle: 0.0
         seismogram-type:
           - displacement
-          - velocity
         nstep_between_samples: 1
 
       ## Runtime setup
@@ -288,9 +335,11 @@ To run the solver, we first need to define a configuration file ``specfem_config
 
       ## databases
       databases:
-        mesh-database: <Location to mesh database file>
-        source-file: <Location to source file>
+        mesh-database: OUTPUT_FILES/database.bin
+        source-file: single_source.yaml
 
-      seismogram:
-        seismogram-format: ascii
-        output-folder: "."
+With the configuration file in place, we can run the solver using the following command
+
+.. code:: bash
+
+    specfem2d -p specfem_config.yaml

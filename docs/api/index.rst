@@ -16,6 +16,7 @@ API documentation
     datatypes/index
     assembly/index
     policies/index
+    IO/index
     operators/index
     medium/index
     compute_kernels/index

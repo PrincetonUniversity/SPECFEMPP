@@ -22,7 +22,7 @@ Meshing Parameters
 **Description**: Number of control nodes per element.
 
 **Type**: ``int``
-    - Supported values: `4` or `9`
+    - Supported values: ``9``
 
 **Parameter Name**: ``database_filename``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

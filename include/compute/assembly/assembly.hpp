@@ -63,7 +63,7 @@ struct assembly {
    * @param t0 Start time of simulation
    * @param dt Time step
    * @param max_timesteps Maximum number of time steps
-   * @param max_sig_step Maximum number of siesmogram time steps
+   * @param max_sig_step Maximum number of seismogram time steps
    * @param simulation Type of simulation (forward, adjoint, etc.)
    */
   assembly(

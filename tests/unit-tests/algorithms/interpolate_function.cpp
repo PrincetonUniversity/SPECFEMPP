@@ -1,3 +1,4 @@
+#include "IO/mesh/read_mesh.hpp"
 #include "Kokkos_Environment.hpp"
 #include "MPI_environment.hpp"
 #include "algorithms/interpolate.hpp"
@@ -20,7 +21,7 @@ TEST(ALGORITHMS, interpolate_function) {
 
   // Read Mesh database
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
-  specfem::mesh::mesh mesh(database_file, mpi);
+  specfem::mesh::mesh mesh = specfem::IO::read_mesh(database_file, mpi);
 
   constexpr int N = 5;
 

@@ -1,6 +1,9 @@
 #include "compute/interface.hpp"
 // #include "coupled_interface/interface.hpp"
 // #include "domain/interface.hpp"
+#include "IO/mesh/read_mesh.hpp"
+#include "IO/receivers/read_receivers.hpp"
+#include "IO/sources/read_sources.hpp"
 #include "kokkos_abstractions.h"
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"
@@ -21,14 +24,14 @@
 #include <vector>
 // Specfem2d driver
 
-std::string print_end_message(
-    std::chrono::time_point<std::chrono::high_resolution_clock> start_time,
-    std::chrono::duration<double> solver_time) {
+std::string
+print_end_message(std::chrono::time_point<std::chrono::system_clock> start_time,
+                  std::chrono::duration<double> solver_time) {
   std::ostringstream message;
   // current date/time based on current system
-  const auto now = std::chrono::high_resolution_clock::now();
+  const auto now = std::chrono::system_clock::now();
 
-  std::time_t c_now = std::chrono::high_resolution_clock::to_time_t(now);
+  std::time_t c_now = std::chrono::system_clock::to_time_t(now);
 
   std::chrono::duration<double> diff = now - start_time;
 
@@ -87,7 +90,7 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   // --------------------------------------------------------------
   //                    Read parameter file
   // --------------------------------------------------------------
-  auto start_time = std::chrono::high_resolution_clock::now();
+  auto start_time = std::chrono::system_clock::now();
   specfem::runtime_configuration::setup setup(parameter_file, default_file);
   const auto [database_filename, source_filename] = setup.get_databases();
   mpi->cout(setup.print_header(start_time));
@@ -97,7 +100,8 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   //                   Read mesh and materials
   // --------------------------------------------------------------
   const auto quadrature = setup.instantiate_quadrature();
-  const specfem::mesh::mesh mesh(database_filename, mpi);
+  const specfem::mesh::mesh mesh =
+      specfem::IO::read_mesh(database_filename, mpi);
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
@@ -105,13 +109,13 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   // --------------------------------------------------------------
   const int nsteps = setup.get_nsteps();
   const specfem::simulation::type simulation_type = setup.get_simulation_type();
-  auto [sources, t0] = specfem::sources::read_sources(
+  auto [sources, t0] = specfem::IO::read_sources(
       source_filename, nsteps, setup.get_t0(), setup.get_dt(), simulation_type);
   setup.update_t0(t0); // Update t0 in case it was changed
 
   const auto stations_filename = setup.get_stations_file();
   const auto angle = setup.get_receiver_angle();
-  auto receivers = specfem::receivers::read_receivers(stations_filename, angle);
+  auto receivers = specfem::IO::read_receivers(stations_filename, angle);
 
   mpi->cout("Source Information:");
   mpi->cout("-------------------------------");
@@ -198,9 +202,9 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   mpi->cout("Executing time loop:");
   mpi->cout("-------------------------------");
 
-  const auto solver_start_time = std::chrono::high_resolution_clock::now();
+  const auto solver_start_time = std::chrono::system_clock::now();
   solver->run();
-  const auto solver_end_time = std::chrono::high_resolution_clock::now();
+  const auto solver_end_time = std::chrono::system_clock::now();
 
   std::chrono::duration<double> solver_time =
       solver_end_time - solver_start_time;

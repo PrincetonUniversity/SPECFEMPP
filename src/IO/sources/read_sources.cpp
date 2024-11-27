@@ -1,3 +1,4 @@
+#include "IO/sources/read_sources.hpp"
 #include "source/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"
@@ -9,9 +10,9 @@
 #include <vector>
 
 std::tuple<std::vector<std::shared_ptr<specfem::sources::source> >, type_real>
-specfem::sources::read_sources(
-    const std::string sources_file, const int nsteps, const type_real user_t0,
-    const type_real dt, const specfem::simulation::type simulation_type) {
+specfem::IO::read_sources(const std::string sources_file, const int nsteps,
+                          const type_real user_t0, const type_real dt,
+                          const specfem::simulation::type simulation_type) {
 
   const bool user_defined_start_time =
       (std::abs(user_t0) > std::numeric_limits<type_real>::epsilon());

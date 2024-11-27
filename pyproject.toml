@@ -1,14 +1,19 @@
 [tool.poetry]
-name = "specfem2d_kokkos"
+name = "SPECFEMPP"
 version = "0.1.0"
 description = "Kokkos implementation of SpecFEM2D code"
 authors = ["Your Name <you@example.com>"]
+package-mode = false
 
 [tool.poetry.dependencies]
 python = ">=3.12,<4.0"
 pre-commit = "^2.19.0"
 clang-format = "^14.0.6"
 sphinx-rtd-theme = "^1.0.0"
+doc8 = ">=0.3.6"
+rstcheck = ">=6.2.4"
+restructuredtext-lint = ">=1.4.0"
+sphinx-copybutton = "^0.4.0"
 furo = ">=2024.8.6"
 breathe = "^4.34.0"
 sphinx-sitemap = "^2.2.0"
