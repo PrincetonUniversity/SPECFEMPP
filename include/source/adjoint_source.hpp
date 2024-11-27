@@ -24,8 +24,8 @@ public:
       const specfem::compute::properties &properties,
       specfem::kokkos::HostView3d<type_real> source_array) override;
 
-  specfem::wavefield::type get_wavefield_type() const override {
-    return specfem::wavefield::type::adjoint;
+  specfem::wavefield::simulation_field get_wavefield_type() const override {
+    return specfem::wavefield::simulation_field::adjoint;
   }
 
   std::string print() const override;

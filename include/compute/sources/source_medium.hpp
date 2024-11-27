@@ -34,9 +34,12 @@ private:
                                                    ///< store source arrays
 
   constexpr static int components =
-      specfem::medium::medium<Dimension, Medium>::components; ///< Number of
-                                                              ///< components in
-                                                              ///< the medium
+      specfem::element::attributes<Dimension,
+                                   Medium>::components(); ///< Number
+                                                          ///< of
+                                                          ///< components
+                                                          ///< in the
+                                                          ///< medium
 
 public:
   /**

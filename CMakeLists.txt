@@ -4,6 +4,7 @@ project(specfem2d_kokkos VERSION 0.1.0)
 
 set(CMAKE_CXX_STANDARD 17)
 option(HDF5_CXX_BUILD "Build HDF5 C++" ON)
+option(VTK_CXX_BUILD "Build VTK C++" ON)
 option(MPI_PARALLEL "MPI enabled" OFF)
 option(BUILD_TESTS "Tests included" OFF)
 option(BUILD_EXAMPLES "Examples included" OFF)
@@ -47,6 +48,26 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(yaml)
 
 include_directories(BEFORE SYSTEM ${yaml_BINARY_DIR} ${yaml_SOURCE_DIR}/include)
+
+find_package(VTK COMPONENTS
+CommonColor
+CommonCore
+FiltersSources
+InteractionStyle
+RenderingContextOpenGL2
+RenderingCore
+RenderingFreeType
+RenderingGL2PSOpenGL2
+RenderingOpenGL2
+)
+
+if (NOT VTK_FOUND)
+  message("VTK not found: ${VTK_NOT_FOUND_MESSAGE}")
+  set(VTK_CXX_BUILD OFF)
+else ()
+  message(STATUS "    VTK:   ${VTK_LIBRARIES}")
+endif()
+
 
 # Try finding boost and if not found install.
 find_package(Boost 1.73.0 COMPONENTS program_options filesystem system)
@@ -153,6 +174,11 @@ add_library(
 target_link_libraries(
         point
         Kokkos::kokkos
+)
+
+add_library(
+        enumerations
+        src/enumerations/medium.cpp
 )
 
 add_library(
@@ -338,7 +364,8 @@ add_library(
         src/compute/boundaries/boundaries.cpp
         src/compute/fields/fields.cpp
         src/compute/compute_boundary_values.cpp
-        src/compute/compute_assembly.cpp
+        src/compute/assembly/assembly.cpp
+        src/compute/assembly/compute_wavefield.cpp
 )
 
 target_link_libraries(
@@ -378,6 +405,7 @@ add_library(
 target_link_libraries(
         domain
         Kokkos::kokkos
+        enumerations
 )
 
 add_library(coupled_interface
@@ -468,6 +496,29 @@ target_link_libraries(
 )
 
 add_library(
+        plotter
+        src/plotter/plot_wavefield.cpp
+)
+
+if (NOT VTK_CXX_BUILD)
+        target_compile_definitions(
+                plotter
+                PUBLIC -DNO_VTK
+        )
+
+        target_link_libraries(
+                plotter
+                compute
+        )
+else ()
+        target_link_libraries(
+                plotter
+                compute
+                ${VTK_LIBRARIES}
+        )
+endif()
+
+add_library(
         parameter_reader
         src/parameter_parser/run_setup.cpp
         # src/parameter_parser/solver/solver.cpp
@@ -479,6 +530,7 @@ add_library(
         src/parameter_parser/writer/seismogram.cpp
         src/parameter_parser/setup.cpp
         src/parameter_parser/writer/wavefield.cpp
+        src/parameter_parser/writer/plot_wavefield.cpp
         src/parameter_parser/writer/kernel.cpp
 )
 
@@ -514,6 +566,7 @@ target_link_libraries(
         parameter_reader
         receiver_class
         writer
+        plotter
         reader
         domain
         coupled_interface
