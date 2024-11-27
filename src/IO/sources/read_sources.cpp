@@ -17,13 +17,13 @@ specfem::IO::read_sources(const std::string sources_file, const int nsteps,
   const bool user_defined_start_time =
       (std::abs(user_t0) > std::numeric_limits<type_real>::epsilon());
 
-  const specfem::wavefield::type source_wavefield_type =
-      [&simulation_type]() -> specfem::wavefield::type {
+  const specfem::wavefield::simulation_field source_wavefield_type =
+      [&simulation_type]() -> specfem::wavefield::simulation_field {
     switch (simulation_type) {
     case specfem::simulation::type::forward:
-      return specfem::wavefield::type::forward;
+      return specfem::wavefield::simulation_field::forward;
     case specfem::simulation::type::combined:
-      return specfem::wavefield::type::backward;
+      return specfem::wavefield::simulation_field::backward;
     default:
       throw std::runtime_error("Unknown simulation type");
     }

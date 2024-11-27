@@ -180,11 +180,19 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
+  //                   Instantiate plotter
+  // --------------------------------------------------------------
+  std::vector<std::shared_ptr<specfem::plotter::plotter> > plotters;
+  const auto wavefield_plotter = setup.instantiate_wavefield_plotter(assembly);
+  plotters.push_back(wavefield_plotter);
+  // --------------------------------------------------------------
+
+  // --------------------------------------------------------------
   //                   Instantiate Solver
   // --------------------------------------------------------------
   specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
   std::shared_ptr<specfem::solver::solver> solver =
-      setup.instantiate_solver(dt, assembly, time_scheme, qp5);
+      setup.instantiate_solver(dt, assembly, time_scheme, qp5, plotters);
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------

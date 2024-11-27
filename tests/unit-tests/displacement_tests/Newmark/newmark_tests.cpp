@@ -244,7 +244,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
 
     specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
     std::shared_ptr<specfem::solver::solver> solver =
-        setup.instantiate_solver(setup.get_dt(), assembly, it, qp5);
+        setup.instantiate_solver(setup.get_dt(), assembly, it, qp5, {});
 
     solver->run();
 

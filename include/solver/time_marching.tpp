@@ -33,6 +33,12 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
       time_scheme->increment_seismogram_step();
     }
 
+    for (const auto &plotter : plotters) {
+      if (plotter && plotter->should_plot(istep)) {
+        plotter->plot();
+      }
+    }
+
     if (istep % 10 == 0) {
       std::cout << "Progress : executed " << istep << " steps of " << nstep
                 << " steps" << std::endl;
@@ -92,6 +98,12 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
       // compute seismogram for backward time step
       backward_kernels.compute_seismograms(time_scheme->get_seismogram_step());
       time_scheme->increment_seismogram_step();
+    }
+
+    for (const auto &plotter : plotters) {
+      if (plotter && plotter->should_plot(istep)) {
+        plotter->plot();
+      }
     }
 
     if (istep % 10 == 0) {

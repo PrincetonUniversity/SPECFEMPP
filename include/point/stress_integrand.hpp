@@ -35,9 +35,9 @@ struct stress_integrand {
    */
   ///@{
   constexpr static int dimension =
-      specfem::dimension::dimension<DimensionType>::dim;
+      specfem::element::attributes<DimensionType, MediumTag>::dimension();
   constexpr static int components =
-      specfem::medium::medium<DimensionType, MediumTag>::components;
+      specfem::element::attributes<DimensionType, MediumTag>::components();
   ///@}
 
   /**
