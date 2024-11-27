@@ -1,5 +1,5 @@
 from __future__ import annotations
 
-from ._core import __doc__, __version__, run
+from ._core import __doc__, __version__, _run
 
-__all__ = ["__doc__", "__version__", "run"]
+__all__ = ["__doc__", "__version__", "_run"]
