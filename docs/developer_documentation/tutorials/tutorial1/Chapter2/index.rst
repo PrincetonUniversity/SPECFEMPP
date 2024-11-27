@@ -44,7 +44,7 @@ Next we will read the sources and receivers generated in :ref:`Chapter1 <Chapter
 
 .. code:: cpp
 
-    #include "sources/sources.hpp"
+    #include "source/source.hpp"
     #include "receivers/receivers.hpp"
     #include "specfem_setup.hpp"
     #include <iostream>
@@ -61,7 +61,7 @@ Next we will read the sources and receivers generated in :ref:`Chapter1 <Chapter
         const auto simulation_type = specfem::simulation::type::forward;
 
         // Read the sources and receivers
-        const auto sources = specfem::sources::read_sources(sources_filename, nsteps, t0, dt, simulation_type);
+        const auto sources = specfem::IO::sources::read_sources(sources_filename, nsteps, t0, dt, simulation_type);
         const auto receivers = specfem::receivers::read_receivers(receivers_filename, angle);
 
         // Output source information

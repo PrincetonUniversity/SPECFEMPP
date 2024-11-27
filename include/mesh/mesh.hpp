@@ -58,13 +58,19 @@ struct mesh {
    */
   mesh(){};
 
-  /**
-   * @brief Construct mesh from a fortran binary database file
-   *
-   * @param filename Fortran binary database filename
-   * @param mpi pointer to MPI object to manage communication
-   */
-  mesh(const std::string filename, const specfem::MPI::MPI *mpi);
+  mesh(const int npgeo, const int nspec, const int nproc,
+       const specfem::mesh::control_nodes &control_nodes,
+       const specfem::mesh::properties &parameters,
+       const specfem::mesh::coupled_interfaces &coupled_interfaces,
+       const specfem::mesh::boundaries &boundaries,
+       const specfem::mesh::tags &tags,
+       const specfem::mesh::elements::tangential_elements &tangential_nodes,
+       const specfem::mesh::elements::axial_elements &axial_nodes,
+       const specfem::mesh::materials &materials)
+      : npgeo(npgeo), nspec(nspec), nproc(nproc), control_nodes(control_nodes),
+        parameters(parameters), coupled_interfaces(coupled_interfaces),
+        boundaries(boundaries), tags(tags), tangential_nodes(tangential_nodes),
+        axial_nodes(axial_nodes), materials(materials){};
   ///@}
 
   std::string print() const;

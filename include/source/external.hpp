@@ -15,7 +15,7 @@ public:
   external(){};
 
   external(YAML::Node &Node, const int nsteps, const type_real dt,
-           const specfem::wavefield::type wavefield_type)
+           const specfem::wavefield::simulation_field wavefield_type)
       : wavefield_type(wavefield_type), specfem::sources::source(Node, nsteps,
                                                                  dt){};
 
@@ -25,14 +25,14 @@ public:
       const specfem::compute::properties &properties,
       specfem::kokkos::HostView3d<type_real> source_array) override;
 
-  specfem::wavefield::type get_wavefield_type() const override {
+  specfem::wavefield::simulation_field get_wavefield_type() const override {
     return wavefield_type;
   }
 
   std::string print() const override;
 
 private:
-  specfem::wavefield::type wavefield_type;
+  specfem::wavefield::simulation_field wavefield_type;
 };
 } // namespace sources
 } // namespace specfem

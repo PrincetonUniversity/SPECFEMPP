@@ -241,6 +241,60 @@ Parameter definitions
 
 **documentation** : Output folder for the wavefield
 
+**Parameter Name** : ``simulation-setup.simulation-mode.forward.writer.display`` [optional]
+*******************************************************************************************
+
+**default value** : None
+
+**possible values** : [YAML Node]
+
+**documentation** : Plot the wavefield during the forward simulation
+
+**Parameter Name** : ``simulation-setup.simulation-mode.forward.writer.display.format`` [optional]
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**default value** : PNG
+
+**possible values** : [PNG, JPG, on_screen]
+
+**documentation** : Output format for resulting plots
+
+**Parameter Name** : ``simulation-setup.simulation-mode.forward.writer.display.directory`` [optional]
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**default value** : Current working directory
+
+**possible values** : [string]
+
+**documentation** : Output folder for the plots (not applicable for on_screen)
+
+**Parameter Name** : ``simulation-setup.simulation-mode.forward.writer.display.field``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**default value** : None
+
+**possible values** : [displacement, velocity, acceleration, pressure]
+
+**documentation** : Component of the wavefield to be plotted
+
+**Parameter Name** : ``simulation-setup.simulation-mode.forward.writer.display.simulation-field``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**default value** : None
+
+**possible values** : [forward]
+
+**documentation** : Type of wavefield to be plotted
+
+**Parameter Name** : ``simulation-setup.simulation-mode.forward.writer.display.time-interval``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**default value** : None
+
+**possible values** : [int]
+
+**documentation** : Time step interval for plotting the wavefield
+
 .. admonition:: Example for defining a forward simulation node
 
     .. code-block:: yaml
@@ -255,6 +309,14 @@ Parameter definitions
                     wavefield:
                         format: HDF5
                         directory: /path/to/output/folder
+
+                    display:
+                        format: PNG
+                        directory: /path/to/output/folder
+                        field: displacement
+                        simulation-field: forward
+                        time-interval: 10
+
 
 .. Note::
 
@@ -368,6 +430,60 @@ Parameter definitions
 
 **documentation** : Output folder for the kernels
 
+**Parameter Name** : ``simulation-setup.simulation-mode.forward.writer.display`` [optional]
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**default value** : None
+
+**possible values** : [YAML Node]
+
+**documentation** : Plot the wavefield during the forward simulation
+
+**Parameter Name** : ``simulation-setup.simulation-mode.forward.writer.display.format`` [optional]
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**default value** : PNG
+
+**possible values** : [PNG, JPG, on_screen]
+
+**documentation** : Output format for resulting plots
+
+**Parameter Name** : ``simulation-setup.simulation-mode.forward.writer.display.directory`` [optional]
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**default value** : Current working directory
+
+**possible values** : [string]
+
+**documentation** : Output folder for the plots (not applicable for on_screen)
+
+**Parameter Name** : ``simulation-setup.simulation-mode.forward.writer.display.field``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**default value** : None
+
+**possible values** : [displacement, velocity, acceleration, pressure]
+
+**documentation** : Component of the wavefield to be plotted
+
+**Parameter Name** : ``simulation-setup.simulation-mode.forward.writer.display.simulation-field``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**default value** : None
+
+**possible values** : [adjoint, backward]
+
+**documentation** : Type of wavefield to be plotted
+
+**Parameter Name** : ``simulation-setup.simulation-mode.forward.writer.display.time-interval``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**default value** : None
+
+**possible values** : [int]
+
+**documentation** : Time step interval for plotting the wavefield
+
 .. admonition:: Example for defining a combined simulation node
 
     .. code-block:: yaml
@@ -384,6 +500,13 @@ Parameter definitions
                     kernels:
                         format: HDF5
                         directory: /path/to/output/folder
+
+                display:
+                    format: PNG
+                    directory: /path/to/output/folder
+                    field: displacement
+                    simulation-field: adjoint
+                    time-interval: 10
 
 .. Note::
 

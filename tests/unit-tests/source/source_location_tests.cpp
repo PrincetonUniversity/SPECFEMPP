@@ -1,5 +1,6 @@
 #include "../Kokkos_Environment.hpp"
 #include "../MPI_environment.hpp"
+#include "IO/mesh/read_mesh.hpp"
 #include "compute/interface.hpp"
 #include "material/interface.hpp"
 #include "mesh/mesh.hpp"
@@ -161,11 +162,12 @@ TEST(SOURCE_LOCATION_TESTS, compute_source_locations) {
 
   // Read mesh for binary database for the test
   std::vector<std::shared_ptr<specfem::material::material> > materials;
-  specfem::mesh::mesh mesh(test_config.database_file, materials, mpi);
+  specfem::mesh::mesh mesh =
+      specfem::IO::read_mesh(test_config.database_file, mpi);
 
   // read sources file
   auto [sources, t0] =
-      specfem::sources::read_sources(test_config.sources_file, 1.0, mpi);
+      specfem::IO::read_sources(test_config.sources_file, 1.0, mpi);
 
   // setup compute struct for future use
   specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,

@@ -9,10 +9,11 @@
 #include "enumerations/medium.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "kernel.hpp"
+#include "medium/medium.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::wavefield::type WavefieldType,
+template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
@@ -57,7 +58,7 @@ specfem::domain::impl::kernels::element_kernel_base<
   return;
 }
 
-template <specfem::wavefield::type WavefieldType,
+template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
@@ -144,7 +145,7 @@ void specfem::domain::impl::kernels::element_kernel_base<
   return;
 }
 
-template <specfem::wavefield::type WavefieldType,
+template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
@@ -215,10 +216,10 @@ void specfem::domain::impl::kernels::element_kernel_base<
 
                 PointFieldDerivativesType field_derivatives(du);
 
-                const auto point_stress_integrand =
-                    specfem::domain::impl::elements::compute_stress_integrands(
-                        point_partial_derivatives, point_property,
-                        field_derivatives);
+                const auto point_stress = specfem::medium::compute_stress(
+                    point_property, field_derivatives);
+
+                const auto F = point_stress * point_partial_derivatives;
 
                 const int &ielement = iterator_index.ielement;
 
@@ -226,8 +227,7 @@ void specfem::domain::impl::kernels::element_kernel_base<
                      ++icomponent) {
                   for (int idim = 0; idim < num_dimensions; ++idim) {
                     stress_integrand.F(ielement, index.iz, index.ix, idim,
-                                       icomponent) =
-                        point_stress_integrand.F(idim, icomponent);
+                                       icomponent) = F(idim, icomponent);
                   }
                 }
               });
@@ -237,7 +237,8 @@ void specfem::domain::impl::kernels::element_kernel_base<
           specfem::algorithms::divergence(
               team, iterator, partial_derivatives, wgll,
               element_quadrature.hprime_wgll, stress_integrand.F,
-              [&, istep = istep](const typename ChunkPolicyType::iterator_type::index_type
+              [&, istep = istep](
+                  const typename ChunkPolicyType::iterator_type::index_type
                       &iterator_index,
                   const typename PointAccelerationType::ViewType &result) {
                 const auto &index = iterator_index.index;
@@ -268,7 +269,7 @@ void specfem::domain::impl::kernels::element_kernel_base<
                 // adjoint simulations. The function does nothing if the
                 // boundary tag is not stacey
                 if constexpr (WavefieldType ==
-                              specfem::wavefield::type::forward) {
+                              specfem::wavefield::simulation_field::forward) {
                   specfem::compute::store_on_device(istep, index, acceleration,
                                                     boundary_values);
                 }
@@ -288,7 +289,7 @@ template <specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumType,
           specfem::element::property_tag PropertyTag, int NGLL>
 void specfem::domain::impl::kernels::element_kernel<
-    specfem::wavefield::type::backward, DimensionType, MediumType, PropertyTag,
+    specfem::wavefield::simulation_field::backward, DimensionType, MediumType, PropertyTag,
     specfem::element::boundary_tag::stacey,
     NGLL>::compute_stiffness_interaction(const int istep) const {
 
