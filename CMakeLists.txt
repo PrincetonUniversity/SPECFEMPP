@@ -37,7 +37,7 @@ endif()
 include(FetchContent)
 FetchContent_Declare(
 kokkos
-URL https://github.com/kokkos/kokkos/archive/refs/tags/4.3.01.zip
+URL https://github.com/kokkos/kokkos/archive/refs/tags/4.5.00.tar.gz
 )
 FetchContent_MakeAvailable(kokkos)
 
