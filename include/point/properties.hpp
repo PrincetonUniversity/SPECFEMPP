@@ -35,6 +35,7 @@ struct properties<specfem::dimension::type::dim2,
    *
    */
   ///@{
+  constexpr static bool is_point_properties = true;
   using simd = specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD type
   constexpr static auto dimension = specfem::dimension::type::dim2;
   constexpr static auto medium_tag = specfem::element::medium_tag::elastic;
@@ -110,6 +111,7 @@ struct properties<specfem::dimension::type::dim2,
    *
    */
   ///@{
+  constexpr static bool is_point_properties = true;
   using simd = specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD type
   constexpr static auto dimension = specfem::dimension::type::dim2;
   constexpr static auto medium_tag = specfem::element::medium_tag::acoustic;

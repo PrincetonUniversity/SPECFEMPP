@@ -6,8 +6,10 @@
 #include "enumerations/wavefield.hpp"
 #include "kernels/frechet_kernels.hpp"
 #include "kernels/kernels.hpp"
+#include "plotter/plotter.hpp"
 #include "solver.hpp"
 #include "timescheme/newmark.hpp"
+#include "timescheme/timescheme.hpp"
 
 namespace specfem {
 namespace solver {
@@ -43,10 +45,12 @@ public:
    * @param time_scheme Time scheme
    */
   time_marching(
-      const specfem::kernels::kernels<specfem::wavefield::type::forward,
-                                      DimensionType, qp_type> &kernels,
-      const std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme)
-      : kernels(kernels), time_scheme(time_scheme) {}
+      const specfem::kernels::kernels<
+          specfem::wavefield::simulation_field::forward, DimensionType, qp_type>
+          &kernels,
+      const std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
+      const std::vector<std::shared_ptr<specfem::plotter::plotter> > &plotters)
+      : kernels(kernels), time_scheme(time_scheme), plotters(plotters) {}
 
   ///@}
 
@@ -56,11 +60,15 @@ public:
   void run() override;
 
 private:
-  specfem::kernels::kernels<specfem::wavefield::type::forward, DimensionType,
+  specfem::kernels::kernels<specfem::wavefield::simulation_field::forward,
+                            DimensionType,
                             qp_type>
       kernels; ///< Computational kernels
   std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme; ///< Time
                                                                   ///< scheme
+  std::vector<std::shared_ptr<specfem::plotter::plotter> >
+      plotters; ///< Plotter
+                ///< objects
 };
 
 /**
@@ -86,27 +94,33 @@ public:
    */
   time_marching(
       const specfem::compute::assembly &assembly,
-      const specfem::kernels::kernels<specfem::wavefield::type::adjoint,
-                                      DimensionType, qp_type> &adjoint_kernels,
-      const specfem::kernels::kernels<specfem::wavefield::type::backward,
-                                      DimensionType, qp_type> &backward_kernels,
-      const std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme)
+      const specfem::kernels::kernels<
+          specfem::wavefield::simulation_field::adjoint, DimensionType, qp_type>
+          &adjoint_kernels,
+      const specfem::kernels::kernels<
+          specfem::wavefield::simulation_field::backward, DimensionType,
+          qp_type> &backward_kernels,
+      const std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
+      const std::vector<std::shared_ptr<specfem::plotter::plotter> > &plotters)
       : assembly(assembly), adjoint_kernels(adjoint_kernels),
         frechet_kernels(assembly), backward_kernels(backward_kernels),
-        time_scheme(time_scheme) {}
+        time_scheme(time_scheme), plotters(plotters) {}
   ///@}
 
   /**
-   * @brief Run the time marching solver
+   * @brief
+   *
    */
   void run() override;
 
 private:
   constexpr static int NGLL = qp_type::NGLL;
-  specfem::kernels::kernels<specfem::wavefield::type::adjoint, DimensionType,
+  specfem::kernels::kernels<specfem::wavefield::simulation_field::adjoint,
+                            DimensionType,
                             qp_type>
       adjoint_kernels; ///< Adjoint computational kernels
-  specfem::kernels::kernels<specfem::wavefield::type::backward, DimensionType,
+  specfem::kernels::kernels<specfem::wavefield::simulation_field::backward,
+                            DimensionType,
                             qp_type>
       backward_kernels; ///< Backward computational kernels
   specfem::kernels::frechet_kernels<DimensionType, NGLL>
@@ -114,6 +128,9 @@ private:
   specfem::compute::assembly assembly; ///< Spectral element assembly object
   std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme; ///< Time
                                                                   ///< scheme
+  std::vector<std::shared_ptr<specfem::plotter::plotter> >
+      plotters; ///< Plotter
+                ///< objects
 };
 } // namespace solver
 } // namespace specfem

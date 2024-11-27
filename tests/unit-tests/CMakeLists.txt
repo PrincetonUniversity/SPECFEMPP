@@ -184,8 +184,10 @@ target_link_libraries(
 
 add_executable(
   assembly_tests
+  assembly/test_fixture/test_fixture.cpp
   assembly/runner.cpp
-  assembly/kernels.cpp
+  assembly/kernels/kernels.cpp
+  assembly/compute_wavefield/compute_wavefield.cpp
 )
 
 target_link_libraries(
@@ -295,6 +297,7 @@ target_link_libraries(
   domain
   IO
   coupled_interface
+  plotter
   -lpthread -lm
 )
 
@@ -321,6 +324,7 @@ target_link_libraries(
   coupled_interface
   domain
   solver
+  plotter
   -lpthread -lm
 )
 
@@ -339,6 +343,7 @@ target_link_libraries(
   compute
   parameter_reader
   writer
+  plotter
   domain
   coupled_interface
   solver
@@ -360,6 +365,7 @@ target_link_libraries(
   compute
   parameter_reader
   writer
+  plotter
   domain
   coupled_interface
   solver

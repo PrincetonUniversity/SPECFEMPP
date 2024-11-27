@@ -23,15 +23,8 @@ template <>
 class newmark<specfem::simulation::type::forward> : public time_scheme {
 
 public:
-  using elastic_type =
-      specfem::medium::medium<specfem::dimension::type::dim2,
-                              specfem::element::medium_tag::elastic>;
-  using acoustic_type =
-      specfem::medium::medium<specfem::dimension::type::dim2,
-                              specfem::element::medium_tag::acoustic>;
-
   constexpr static auto simulation_type =
-      specfem::wavefield::type::forward; ///< Wavefield tag
+      specfem::wavefield::simulation_field::forward; ///< Wavefield tag
 
   /**
    * @name Constructors
@@ -120,7 +113,8 @@ private:
   type_real deltat; ///< Time increment
   type_real deltatover2;
   type_real deltasquareover2;
-  specfem::compute::simulation_field<specfem::wavefield::type::forward>
+  specfem::compute::simulation_field<
+      specfem::wavefield::simulation_field::forward>
       field; ///< forward wavefield
 };
 
@@ -134,14 +128,6 @@ class newmark<specfem::simulation::type::combined> : public time_scheme {
 public:
   constexpr static auto simulation_type =
       specfem::simulation::type::combined; ///< Wavefield tag
-
-  using elastic_type =
-      specfem::medium::medium<specfem::dimension::type::dim2,
-                              specfem::element::medium_tag::elastic>;
-  using acoustic_type =
-      specfem::medium::medium<specfem::dimension::type::dim2,
-                              specfem::element::medium_tag::acoustic>;
-
   /**
    * @name Constructors
    */
@@ -230,9 +216,11 @@ private:
   type_real deltat; ///< Time increment
   type_real deltatover2;
   type_real deltasquareover2;
-  specfem::compute::simulation_field<specfem::wavefield::type::adjoint>
+  specfem::compute::simulation_field<
+      specfem::wavefield::simulation_field::adjoint>
       adjoint_field; ///< adjoint wavefield
-  specfem::compute::simulation_field<specfem::wavefield::type::backward>
+  specfem::compute::simulation_field<
+      specfem::wavefield::simulation_field::backward>
       backward_field; ///< backward wavefield
 };
 

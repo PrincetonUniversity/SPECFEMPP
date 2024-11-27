@@ -1,10 +1,10 @@
+#include "../test_fixture/test_fixture.hpp"
 #include "datatypes/simd.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "parallel_configuration/chunk_config.hpp"
 #include "policies/chunk.hpp"
 #include "specfem_setup.hpp"
-#include "test_fixture.hpp"
 #include <gtest/gtest.h>
 
 template <specfem::element::medium_tag MediumTag,
