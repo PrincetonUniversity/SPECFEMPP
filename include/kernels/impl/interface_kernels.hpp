@@ -10,12 +10,12 @@
 namespace specfem {
 namespace kernels {
 namespace impl {
-template <specfem::wavefield::type WavefieldType,
+template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag>
 class interface_kernels;
 
-template <specfem::wavefield::type WavefieldType,
+template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType>
 class interface_kernels<WavefieldType, DimensionType,
                         specfem::element::medium_tag::elastic> {
@@ -34,7 +34,7 @@ private:
       elastic_acoustic_interface;
 };
 
-template <specfem::wavefield::type WavefieldType,
+template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType>
 class interface_kernels<WavefieldType, DimensionType,
                         specfem::element::medium_tag::acoustic> {

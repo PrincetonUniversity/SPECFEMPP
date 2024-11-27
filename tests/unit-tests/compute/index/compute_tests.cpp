@@ -1,6 +1,7 @@
 #include "../../Kokkos_Environment.hpp"
 #include "../../MPI_environment.hpp"
 #include "../../utilities/include/interface.hpp"
+#include "IO/mesh/read_mesh.hpp"
 #include "compute/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "quadrature/interface.hpp"
@@ -80,7 +81,8 @@ TEST(COMPUTE_TESTS, compute_ibool) {
   specfem::quadrature::quadratures quadratures(gll);
 
   // Read mesh generated MESHFEM
-  specfem::mesh::mesh mesh(test_config.database_filename, mpi);
+  specfem::mesh::mesh mesh =
+      specfem::IO::read_mesh(test_config.database_filename, mpi);
 
   // Setup compute structs
   specfem::compute::mesh assembly(mesh.tags, mesh.control_nodes,

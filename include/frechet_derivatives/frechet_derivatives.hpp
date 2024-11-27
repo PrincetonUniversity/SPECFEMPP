@@ -20,8 +20,14 @@ template <specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag, int NGLL>
 class frechet_derivatives {
 public:
-  using dimension = specfem::dimension::dimension<DimensionType>;
-  using medium_type = specfem::medium::medium<DimensionType, MediumTag>;
+  constexpr static auto dimension = DimensionType; ///< Dimension of the domain
+  constexpr static auto medium_tag = MediumTag;    ///< Medium tag
+
+  constexpr static int num_dimensions =
+      specfem::element::attributes<DimensionType, MediumTag>::dimension();
+  constexpr static int components =
+      specfem::element::attributes<DimensionType, MediumTag>::components();
+  constexpr static int ngll = NGLL;
 
   /**
    * @name Constructor

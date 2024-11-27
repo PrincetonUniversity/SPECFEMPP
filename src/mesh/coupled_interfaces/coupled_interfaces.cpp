@@ -2,15 +2,18 @@
 #include "mesh/coupled_interfaces/interface_container.hpp"
 #include "mesh/coupled_interfaces/interface_container.tpp"
 
-specfem::mesh::coupled_interfaces::coupled_interfaces::coupled_interfaces(
-    std::ifstream &stream, const int num_interfaces_elastic_acoustic,
-    const int num_interfaces_acoustic_poroelastic,
-    const int num_interfaces_elastic_poroelastic, const specfem::MPI::MPI *mpi)
-    : elastic_acoustic(num_interfaces_elastic_acoustic, stream, mpi),
-      acoustic_poroelastic(num_interfaces_acoustic_poroelastic, stream, mpi),
-      elastic_poroelastic(num_interfaces_elastic_poroelastic, stream, mpi) {
-  return;
-}
+// specfem::mesh::coupled_interfaces::coupled_interfaces(
+//     specfem::mesh::interface_container<specfem::element::medium_tag::elastic,
+//                                        specfem::element::medium_tag::acoustic>
+//         elastic_acoustic,
+//     specfem::mesh::interface_container<
+//         specfem::element::medium_tag::acoustic,
+//         specfem::element::medium_tag::poroelastic>
+//         acoustic_poroelastic,
+//     specfem::mesh::interface_container<
+//         specfem::element::medium_tag::elastic,
+//         specfem::element::medium_tag::poroelastic>
+//         elastic_poroelastic) {}
 
 template <specfem::element::medium_tag medium1,
           specfem::element::medium_tag medium2>

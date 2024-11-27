@@ -25,25 +25,22 @@ public:
    */
   coupled_interfaces()
       : elastic_acoustic(), acoustic_poroelastic(), elastic_poroelastic(){};
-  /**
-   * @brief Constructor to read and assign values from fortran binary database
-   * file
-   *
-   * @param stream Stream object for fortran binary file buffered to coupled
-   * interfaces section
-   * @param num_interfaces_elastic_acoustic Number of elastic-acoustic
-   * interfaces
-   * @param num_interfaces_acoustic_poroelastic Number of acoustic-poroelastic
-   * interfaces
-   * @param num_interfaces_elastic_poroelastic Number of elastic-poroelastic
-   * interfaces
-   * @param mpi Pointer to MPI object
-   */
-  coupled_interfaces(std::ifstream &stream,
-                     const int num_interfaces_elastic_acoustic,
-                     const int num_interfaces_acoustic_poroelastic,
-                     const int num_interfaces_elastic_poroelastic,
-                     const specfem::MPI::MPI *mpi);
+
+  coupled_interfaces(
+      specfem::mesh::interface_container<specfem::element::medium_tag::elastic,
+                                         specfem::element::medium_tag::acoustic>
+          elastic_acoustic,
+      specfem::mesh::interface_container<
+          specfem::element::medium_tag::acoustic,
+          specfem::element::medium_tag::poroelastic>
+          acoustic_poroelastic,
+      specfem::mesh::interface_container<
+          specfem::element::medium_tag::elastic,
+          specfem::element::medium_tag::poroelastic>
+          elastic_poroelastic)
+      : elastic_acoustic(elastic_acoustic),
+        acoustic_poroelastic(acoustic_poroelastic),
+        elastic_poroelastic(elastic_poroelastic){};
   ///@}
 
   /**

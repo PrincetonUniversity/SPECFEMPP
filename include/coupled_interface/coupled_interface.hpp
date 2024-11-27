@@ -53,7 +53,7 @@ public:
  * @tparam SelfMedium Medium type of the primary domain.
  * @tparam CoupledMedium Medium type of the coupled domain.
  */
-template <specfem::wavefield::type WavefieldType,
+template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag SelfMedium,
           specfem::element::medium_tag CoupledMedium>
