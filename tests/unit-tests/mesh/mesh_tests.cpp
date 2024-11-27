@@ -1,6 +1,6 @@
 #include "../Kokkos_Environment.hpp"
 #include "../MPI_environment.hpp"
-#include "IO/mesh/fortran/read_mesh_database.hpp"
+#include "IO/mesh/impl/fortran/read_mesh_database.hpp"
 #include "IO/mesh/read_mesh.hpp"
 #include "mesh/mesh.hpp"
 #include "yaml-cpp/yaml.h"
@@ -108,7 +108,8 @@ TEST(MESH_TESTS, fortran_binary_reader_header) {
       stream.open(Test.databases.filenames[Test.configuration.processors - 1]);
 
       auto [nspec, npgeo, nproc] =
-          specfem::IO::mesh::fortran::read_mesh_database_header(stream, mpi);
+          specfem::IO::mesh::impl::fortran::read_mesh_database_header(stream,
+                                                                      mpi);
       stream.close();
       std::cout << "nspec = " << nspec << std::endl;
       std::cout << "npgeo = " << npgeo << std::endl;

@@ -1,14 +1,13 @@
-#include "IO/mesh/fortran/read_elements.hpp"
+#include "IO/mesh/impl/fortran/read_elements.hpp"
 #include "IO/fortranio/interface.hpp"
 #include "mesh/elements/axial_elements.hpp"
 #include "mesh/elements/tangential_elements.hpp"
 #include "specfem_mpi/interface.hpp"
 
 specfem::mesh::elements::axial_elements
-specfem::IO::mesh::fortran::read_axial_elements(std::ifstream &stream,
-                                                const int nelem_on_the_axis,
-                                                const int nspec,
-                                                const specfem::MPI::MPI *mpi) {
+specfem::IO::mesh::impl::fortran::read_axial_elements(
+    std::ifstream &stream, const int nelem_on_the_axis, const int nspec,
+    const specfem::MPI::MPI *mpi) {
 
   int ispec;
 
@@ -26,7 +25,7 @@ specfem::IO::mesh::fortran::read_axial_elements(std::ifstream &stream,
 }
 
 specfem::mesh::elements::tangential_elements
-specfem::IO::mesh::fortran::read_tangential_elements(
+specfem::IO::mesh::impl::fortran::read_tangential_elements(
     std::ifstream &stream, const int nnodes_tangential_curve) {
   type_real xread, yread;
 

@@ -1,11 +1,11 @@
 #include "IO/mesh/read_mesh.hpp"
 #include "IO/fortranio/interface.hpp"
-#include "IO/mesh/fortran/read_boundaries.hpp"
-#include "IO/mesh/fortran/read_elements.hpp"
-#include "IO/mesh/fortran/read_interfaces.hpp"
-#include "IO/mesh/fortran/read_material_properties.hpp"
-#include "IO/mesh/fortran/read_mesh_database.hpp"
-#include "IO/mesh/fortran/read_properties.hpp"
+#include "IO/mesh/impl/fortran/read_boundaries.hpp"
+#include "IO/mesh/impl/fortran/read_elements.hpp"
+#include "IO/mesh/impl/fortran/read_interfaces.hpp"
+#include "IO/mesh/impl/fortran/read_material_properties.hpp"
+#include "IO/mesh/impl/fortran/read_mesh_database.hpp"
+#include "IO/mesh/impl/fortran/read_properties.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
 #include "material/material.hpp"
@@ -37,7 +37,8 @@ specfem::mesh::mesh specfem::IO::read_mesh(const std::string filename,
 
   try {
     std::tie(nspec, npgeo, nproc) =
-        specfem::IO::mesh::fortran::read_mesh_database_header(stream, mpi);
+        specfem::IO::mesh::impl::fortran::read_mesh_database_header(stream,
+                                                                    mpi);
     mesh.nspec = nspec;
     mesh.npgeo = npgeo;
     mesh.nproc = nproc;
@@ -47,14 +48,16 @@ specfem::mesh::mesh specfem::IO::read_mesh(const std::string filename,
 
   // Mesh class to be populated from the database file.
   try {
-    mesh.control_nodes.coord = specfem::IO::mesh::fortran::read_coorg_elements(
-        stream, mesh.npgeo, mpi);
+    mesh.control_nodes.coord =
+        specfem::IO::mesh::impl::fortran::read_coorg_elements(stream,
+                                                              mesh.npgeo, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
 
   try {
-    mesh.parameters = specfem::IO::mesh::fortran::read_properties(stream, mpi);
+    mesh.parameters =
+        specfem::IO::mesh::impl::fortran::read_properties(stream, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
@@ -72,13 +75,14 @@ specfem::mesh::mesh specfem::IO::read_mesh(const std::string filename,
 
   try {
     auto [n_sls, attenuation_f0_reference, read_velocities_at_f0] =
-        specfem::IO::mesh::fortran::read_mesh_database_attenuation(stream, mpi);
+        specfem::IO::mesh::impl::fortran::read_mesh_database_attenuation(stream,
+                                                                         mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
 
   try {
-    mesh.materials = specfem::IO::mesh::fortran::read_material_properties(
+    mesh.materials = specfem::IO::mesh::impl::fortran::read_material_properties(
         stream, mesh.parameters.numat, mesh.nspec, mesh.control_nodes.knods,
         mpi);
   } catch (std::runtime_error &e) {
@@ -112,7 +116,7 @@ specfem::mesh::mesh specfem::IO::read_mesh(const std::string filename,
   specfem::IO::fortran_read_line(stream, &ninterfaces, &max_interface_size);
 
   try {
-    mesh.boundaries = specfem::IO::mesh::fortran::read_boundaries(
+    mesh.boundaries = specfem::IO::mesh::impl::fortran::read_boundaries(
         stream, mesh.parameters.nspec, mesh.parameters.nelemabs,
         mesh.parameters.nelem_acoustic_surface, mesh.parameters.nelem_acforcing,
         mesh.control_nodes.knods, mpi);
@@ -146,7 +150,7 @@ specfem::mesh::mesh specfem::IO::read_mesh(const std::string filename,
 
   try {
     mesh.coupled_interfaces =
-        specfem::IO::mesh::fortran::read_coupled_interfaces(
+        specfem::IO::mesh::impl::fortran::read_coupled_interfaces(
             stream, mesh.parameters.num_fluid_solid_edges,
             mesh.parameters.num_fluid_poro_edges,
             mesh.parameters.num_solid_poro_edges, mpi);
@@ -156,14 +160,14 @@ specfem::mesh::mesh specfem::IO::read_mesh(const std::string filename,
 
   try {
     mesh.tangential_nodes =
-        specfem::IO::mesh::fortran::read_tangential_elements(
+        specfem::IO::mesh::impl::fortran::read_tangential_elements(
             stream, mesh.parameters.nnodes_tangential_curve);
   } catch (std::runtime_error &e) {
     throw;
   }
 
   try {
-    mesh.axial_nodes = specfem::IO::mesh::fortran::read_axial_elements(
+    mesh.axial_nodes = specfem::IO::mesh::impl::fortran::read_axial_elements(
         stream, mesh.parameters.nelem_on_the_axis, mesh.nspec, mpi);
   } catch (std::runtime_error &e) {
     throw;
