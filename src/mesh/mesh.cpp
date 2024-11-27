@@ -1,6 +1,4 @@
 #include "mesh/mesh.hpp"
-#include "IO/fortranio/interface.hpp"
-#include "IO/mesh/fortran/read_mesh_database.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
 #include "material/material.hpp"

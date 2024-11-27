@@ -11,6 +11,7 @@
 namespace specfem {
 namespace IO {
 namespace mesh {
+namespace impl {
 namespace fortran {
 
 // /**
@@ -70,6 +71,7 @@ read_boundaries(std::ifstream &stream, const int nspec, const int n_absorbing,
                 const specfem::MPI::MPI *mpi);
 
 } // namespace fortran
+} // namespace impl
 } // namespace mesh
 } // namespace IO
 } // namespace specfem

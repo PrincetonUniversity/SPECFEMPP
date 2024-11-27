@@ -10,6 +10,7 @@
 namespace specfem {
 namespace IO {
 namespace mesh {
+namespace impl {
 namespace fortran {
 
 /**
@@ -46,6 +47,7 @@ std::tuple<int, type_real, bool>
 read_mesh_database_attenuation(std::ifstream &stream,
                                const specfem::MPI::MPI *mpi);
 } // namespace fortran
+} // namespace impl
 } // namespace mesh
 } // namespace IO
 } // namespace specfem

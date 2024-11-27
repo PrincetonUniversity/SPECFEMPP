@@ -1,4 +1,4 @@
-#include "IO/mesh/fortran/read_material_properties.hpp"
+#include "IO/mesh/impl/fortran/read_material_properties.hpp"
 #include "IO/fortranio/interface.hpp"
 // #include "mesh/materials/materials.hpp"
 #include "mesh/materials/materials.tpp"
@@ -175,7 +175,8 @@ void read_material_indices(
 
 } // namespace
 
-specfem::mesh::materials specfem::IO::mesh::fortran::read_material_properties(
+specfem::mesh::materials
+specfem::IO::mesh::impl::fortran::read_material_properties(
     std::ifstream &stream, const int numat, const int nspec,
     const specfem::kokkos::HostView2d<int> knods,
     const specfem::MPI::MPI *mpi) {
