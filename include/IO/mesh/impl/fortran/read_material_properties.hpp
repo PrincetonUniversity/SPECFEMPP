@@ -10,6 +10,7 @@
 namespace specfem {
 namespace IO {
 namespace mesh {
+namespace impl {
 namespace fortran {
 
 /**
@@ -28,6 +29,7 @@ specfem::mesh::materials read_material_properties(
     const specfem::kokkos::HostView2d<int> knods, const specfem::MPI::MPI *mpi);
 
 } // namespace fortran
+} // namespace impl
 } // namespace mesh
 } // namespace IO
 } // namespace specfem

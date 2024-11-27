@@ -7,6 +7,7 @@
 namespace specfem {
 namespace IO {
 namespace mesh {
+namespace impl {
 namespace fortran {
 
 /*
@@ -20,6 +21,7 @@ specfem::mesh::properties read_properties(std::ifstream &stream,
                                           const specfem::MPI::MPI *mpi);
 
 } // namespace fortran
+} // namespace impl
 } // namespace mesh
 } // namespace IO
 } // namespace specfem

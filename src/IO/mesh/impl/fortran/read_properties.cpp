@@ -1,10 +1,9 @@
-#include "IO/mesh/fortran/read_properties.hpp"
+#include "IO/mesh/impl/fortran/read_properties.hpp"
 #include "IO/fortranio/interface.hpp"
 #include "mesh/properties/properties.hpp"
 
-specfem::mesh::properties
-specfem::IO::mesh::fortran::read_properties(std::ifstream &stream,
-                                            const specfem::MPI::MPI *mpi) {
+specfem::mesh::properties specfem::IO::mesh::impl::fortran::read_properties(
+    std::ifstream &stream, const specfem::MPI::MPI *mpi) {
   // ---------------------------------------------------------------------
   // reading mesh properties
 
