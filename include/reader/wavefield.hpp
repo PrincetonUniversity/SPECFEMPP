@@ -30,7 +30,8 @@ public:
 
 private:
   std::string output_folder; ///< Path to output folder
-  specfem::compute::simulation_field<specfem::wavefield::type::buffer>
+  specfem::compute::simulation_field<
+      specfem::wavefield::simulation_field::buffer>
       buffer; ///< Buffer wavefield to store the data
   specfem::compute::boundary_values boundary_values; ///< Boundary values used
                                                      ///< for backward

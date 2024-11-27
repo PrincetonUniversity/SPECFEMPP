@@ -105,9 +105,11 @@ private:
                                                     ///< this kernel
   specfem::kokkos::HostMirror1d<int> h_element_index; ///< Host mirror of
                                                       ///< element_index
-  specfem::compute::simulation_field<specfem::wavefield::type::adjoint>
+  specfem::compute::simulation_field<
+      specfem::wavefield::simulation_field::adjoint>
       adjoint_field; ///< Adjoint field
-  specfem::compute::simulation_field<specfem::wavefield::type::backward>
+  specfem::compute::simulation_field<
+      specfem::wavefield::simulation_field::backward>
       backward_field;                      ///< Backward field
   specfem::compute::kernels kernels;       ///< Misfit kernels
   specfem::compute::quadrature quadrature; ///< Integration quadrature

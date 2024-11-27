@@ -9,17 +9,14 @@ template <specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag>
 specfem::compute::impl::field_impl<DimensionType, MediumTag>::field_impl(
     const int nglob)
-    : nglob(nglob),
-      field("specfem::compute::fields::field", nglob, medium_type::components),
+    : nglob(nglob), field("specfem::compute::fields::field", nglob, components),
       h_field(Kokkos::create_mirror_view(field)),
-      field_dot("specfem::compute::fields::field_dot", nglob,
-                medium_type::components),
+      field_dot("specfem::compute::fields::field_dot", nglob, components),
       h_field_dot(Kokkos::create_mirror_view(field_dot)),
       field_dot_dot("specfem::compute::fields::field_dot_dot", nglob,
-                    medium_type::components),
+                    components),
       h_field_dot_dot(Kokkos::create_mirror_view(field_dot_dot)),
-      mass_inverse("specfem::compute::fields::mass_inverse", nglob,
-                   medium_type::components),
+      mass_inverse("specfem::compute::fields::mass_inverse", nglob, components),
       h_mass_inverse(Kokkos::create_mirror_view(mass_inverse)) {}
 
 template <specfem::dimension::type DimensionType,
@@ -59,34 +56,33 @@ specfem::compute::impl::field_impl<DimensionType, MediumTag>::field_impl(
   nglob = count;
 
   field = specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>(
-      "specfem::compute::fields::field", nglob, medium_type::components);
+      "specfem::compute::fields::field", nglob, components);
   h_field = specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>(
       Kokkos::create_mirror_view(field));
   field_dot = specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>(
-      "specfem::compute::fields::field_dot", nglob, medium_type::components);
+      "specfem::compute::fields::field_dot", nglob, components);
   h_field_dot = specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>(
       Kokkos::create_mirror_view(field_dot));
   field_dot_dot = specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>(
-      "specfem::compute::fields::field_dot_dot", nglob,
-      medium_type::components);
+      "specfem::compute::fields::field_dot_dot", nglob, components);
   h_field_dot_dot =
       specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>(
           Kokkos::create_mirror_view(field_dot_dot));
   mass_inverse = specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft>(
-      "specfem::compute::fields::mass_inverse", nglob, medium_type::components);
+      "specfem::compute::fields::mass_inverse", nglob, components);
   h_mass_inverse = specfem::kokkos::HostMirror2d<type_real, Kokkos::LayoutLeft>(
       Kokkos::create_mirror_view(mass_inverse));
 
-  Kokkos::parallel_for(
-      "specfem::compute::fields::field_impl::initialize_field",
-      specfem::kokkos::HostRange(0, nglob), [=](const int &iglob) {
-        for (int icomp = 0; icomp < medium_type::components; ++icomp) {
-          h_field(iglob, icomp) = 0.0;
-          h_field_dot(iglob, icomp) = 0.0;
-          h_field_dot_dot(iglob, icomp) = 0.0;
-          h_mass_inverse(iglob, icomp) = 0.0;
-        }
-      });
+  Kokkos::parallel_for("specfem::compute::fields::field_impl::initialize_field",
+                       specfem::kokkos::HostRange(0, nglob),
+                       [=](const int &iglob) {
+                         for (int icomp = 0; icomp < components; ++icomp) {
+                           h_field(iglob, icomp) = 0.0;
+                           h_field_dot(iglob, icomp) = 0.0;
+                           h_field_dot_dot(iglob, icomp) = 0.0;
+                           h_mass_inverse(iglob, icomp) = 0.0;
+                         }
+                       });
 
   Kokkos::fence();
 

@@ -13,31 +13,31 @@ std::shared_ptr<specfem::solver::solver>
 specfem::runtime_configuration::solver::solver::instantiate(const type_real dt,
     const specfem::compute::assembly &assembly,
     std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
-    const qp_type &quadrature) const {
+    const qp_type &quadrature, const std::vector<std::shared_ptr<specfem::plotter::plotter> > &plotters) const {
 
   if (this->simulation_type == "forward") {
     std::cout << "Instantiating Kernels \n";
     std::cout << "-------------------------------\n";
-    const auto kernels = specfem::kernels::kernels<specfem::wavefield::type::forward,
+    const auto kernels = specfem::kernels::kernels<specfem::wavefield::simulation_field::forward,
                                                    specfem::dimension::type::dim2, qp_type>(
         dt, assembly, quadrature);
     return std::make_shared<
         specfem::solver::time_marching<specfem::simulation::type::forward,
                                        specfem::dimension::type::dim2, qp_type>>(
-        kernels, time_scheme);
+        kernels, time_scheme, plotters);
   } else if (this->simulation_type == "combined") {
     std::cout << "Instantiating Kernels \n";
     std::cout << "-------------------------------\n";
-    const auto adjoint_kernels = specfem::kernels::kernels<specfem::wavefield::type::adjoint,
+    const auto adjoint_kernels = specfem::kernels::kernels<specfem::wavefield::simulation_field::adjoint,
                                                    specfem::dimension::type::dim2, qp_type>(dt,
         assembly, quadrature);
-    const auto backward_kernels = specfem::kernels::kernels<specfem::wavefield::type::backward,
+    const auto backward_kernels = specfem::kernels::kernels<specfem::wavefield::simulation_field::backward,
                                                    specfem::dimension::type::dim2, qp_type>(dt,
         assembly, quadrature);
     return std::make_shared<
         specfem::solver::time_marching<specfem::simulation::type::combined,
                                        specfem::dimension::type::dim2, qp_type>>(
-        assembly, adjoint_kernels, backward_kernels, time_scheme);
+        assembly, adjoint_kernels, backward_kernels, time_scheme, plotters);
   } else {
     throw std::runtime_error("Simulation type not recognized");
   }
