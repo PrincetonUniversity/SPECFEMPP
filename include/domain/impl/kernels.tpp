@@ -33,7 +33,7 @@ void allocate_elements(
 
   using dimension = specfem::dimension::dimension<ElementType::dimension>;
   using medium_type =
-      specfem::medium::medium<ElementType::dimension, medium_tag, property_tag>;
+      specfem::element::attributes<ElementType::dimension, medium_tag>;
 
   const int nspec = assembly.mesh.nspec;
 
@@ -73,13 +73,14 @@ void allocate_elements(
     }
   }
 
-  if constexpr (wavefield_type == specfem::wavefield::type::forward ||
-                wavefield_type == specfem::wavefield::type::adjoint) {
+  if constexpr (wavefield_type == specfem::wavefield::simulation_field::forward ||
+                wavefield_type == specfem::wavefield::simulation_field::adjoint) {
 
     std::cout << "  - Element type: \n"
               << "    - dimension           : " << dimension::to_string()
               << "\n"
-              << "    - Element type        : " << medium_type::to_string()
+              << "    - Element type        : " << specfem::element::to_string(
+                                                     medium_tag, property_tag)
               << "\n"
               << "    - Boundary Conditions : "
               << specfem::domain::impl::boundary_conditions::print_boundary_tag<
@@ -92,7 +93,7 @@ void allocate_elements(
   elements = { assembly, h_ispec_domain };
 }
 
-template <specfem::wavefield::type WavefieldType,
+template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag medium_tag,
           specfem::element::property_tag property_tag, typename qp_type>
@@ -137,7 +138,7 @@ void allocate_isotropic_sources(
   return;
 }
 
-template <specfem::wavefield::type WavefieldType,
+template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag medium_tag,
           specfem::element::property_tag property_tag, typename qp_type>
@@ -188,15 +189,13 @@ void allocate_isotropic_receivers(
 }
 } // namespace
 
-template <specfem::wavefield::type WavefieldType,
+template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag medium, typename qp_type>
 specfem::domain::impl::kernels::
     kernels<WavefieldType, DimensionType, medium, qp_type>::kernels(
         const type_real dt, const specfem::compute::assembly &assembly,
         const qp_type &quadrature_points) {
-
-  using medium_type = specfem::medium::medium<DimensionType, medium>;
 
   const int nspec = assembly.mesh.nspec;
   specfem::kokkos::HostView1d<element_tag> element_tags(
@@ -210,11 +209,11 @@ specfem::domain::impl::kernels::
                     assembly.boundaries.boundary_tags(ispec));
   }
 
-  if constexpr (WavefieldType == specfem::wavefield::type::forward ||
-                WavefieldType == specfem::wavefield::type::adjoint) {
+  if constexpr (WavefieldType == specfem::wavefield::simulation_field::forward ||
+                WavefieldType == specfem::wavefield::simulation_field::adjoint) {
     std::cout << " Element Statistics \n"
               << "------------------------------\n"
-              << "- Types of elements in " << medium_type::to_string()
+              << "- Types of elements in " << specfem::element::to_string(medium)
               << " medium :\n\n";
   }
 

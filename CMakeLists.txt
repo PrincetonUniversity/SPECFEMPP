@@ -4,6 +4,7 @@ project(specfem2d_kokkos VERSION 0.1.0)
 
 set(CMAKE_CXX_STANDARD 17)
 option(HDF5_CXX_BUILD "Build HDF5 C++" ON)
+option(VTK_CXX_BUILD "Build VTK C++" ON)
 option(MPI_PARALLEL "MPI enabled" OFF)
 option(BUILD_TESTS "Tests included" OFF)
 option(BUILD_EXAMPLES "Examples included" OFF)
@@ -47,6 +48,26 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(yaml)
 
 include_directories(BEFORE SYSTEM ${yaml_BINARY_DIR} ${yaml_SOURCE_DIR}/include)
+
+find_package(VTK COMPONENTS
+CommonColor
+CommonCore
+FiltersSources
+InteractionStyle
+RenderingContextOpenGL2
+RenderingCore
+RenderingFreeType
+RenderingGL2PSOpenGL2
+RenderingOpenGL2
+)
+
+if (NOT VTK_FOUND)
+  message("VTK not found: ${VTK_NOT_FOUND_MESSAGE}")
+  set(VTK_CXX_BUILD OFF)
+else ()
+  message(STATUS "    VTK:   ${VTK_LIBRARIES}")
+endif()
+
 
 # Try finding boost and if not found install.
 find_package(Boost 1.73.0 COMPONENTS program_options filesystem system)
@@ -107,7 +128,16 @@ add_library(
         IO
         src/IO/fortranio/fortran_io.cpp
         src/IO/HDF5/native_type.cpp
-        src/IO/ASCII/native_type.cpp
+        # src/IO/ASCII/native_type.cpp
+        src/IO/mesh/read_mesh.cpp
+        src/IO/mesh/impl/fortran/read_boundaries.cpp
+        src/IO/mesh/impl/fortran/read_elements.cpp
+        src/IO/mesh/impl/fortran/read_material_properties.cpp
+        src/IO/mesh/impl/fortran/read_mesh_database.cpp
+        src/IO/mesh/impl/fortran/read_interfaces.cpp
+        src/IO/mesh/impl/fortran/read_properties.cpp
+        src/IO/sources/read_sources.cpp
+        src/IO/receivers/read_receivers.cpp
 )
 
 if (NOT HDF5_CXX_BUILD)
@@ -130,6 +160,21 @@ else()
         )
 endif()
 
+target_link_libraries(
+  IO
+  mesh
+)
+
+target_link_libraries(
+  IO
+  source_class
+)
+
+target_link_libraries(
+  IO
+  receiver_class
+)
+
 add_library(
         point
         src/point/coordinates.cpp
@@ -139,6 +184,11 @@ add_library(
 target_link_libraries(
         point
         Kokkos::kokkos
+)
+
+add_library(
+        enumerations
+        src/enumerations/medium.cpp
 )
 
 add_library(
@@ -180,14 +230,12 @@ endif(MPI_PARALLEL)
 
 add_library(
         mesh
-        src/mesh/IO/fortran/read_mesh_database.cpp
         src/mesh/boundaries/forcing_boundaries.cpp
         src/mesh/boundaries/absorbing_boundaries.cpp
         src/mesh/boundaries/acoustic_free_surface.cpp
         src/mesh/elements/tangential_elements.cpp
         src/mesh/elements/axial_elements.cpp
-        src/mesh/properties/properties.cpp
-        src/mesh/mpi_interfaces/mpi_interfaces.cpp
+        # src/mesh/mpi_interfaces/mpi_interfaces.cpp
         src/mesh/materials/materials.cpp
         src/mesh/coupled_interfaces/interface_container.cpp
         src/mesh/coupled_interfaces/coupled_interfaces.cpp
@@ -200,7 +248,6 @@ target_link_libraries(
         Kokkos::kokkos
         specfem_mpi
         # material_class
-        IO
         yaml-cpp
 )
 
@@ -229,15 +276,25 @@ target_link_libraries(
 # )
 
 add_library(
+        read_seismogram
+        src/reader/seismogram.cpp
+)
+
+target_link_libraries(
+        read_seismogram
+        Kokkos::kokkos
+        )
+
+add_library(
         reader
         src/reader/wavefield.cpp
-        src/reader/seismogram.cpp
 )
 
 target_link_libraries(
         reader
         compute
         IO
+        read_seismogram
 )
 
 add_library(
@@ -261,7 +318,7 @@ add_library(
 
 target_link_libraries(
         source_time_function
-        reader
+        read_seismogram
         Kokkos::kokkos
         point
 )
@@ -273,7 +330,6 @@ add_library(
         src/source/moment_tensor_source.cpp
         src/source/adjoint_source.cpp
         src/source/external.cpp
-        src/source/read_sources.cpp
 )
 
 target_link_libraries(
@@ -292,7 +348,6 @@ target_link_libraries(
 add_library(
         receiver_class
         src/receiver/receiver.cpp
-        src/receiver/read_receiver.cpp
 )
 
 target_link_libraries(
@@ -319,7 +374,8 @@ add_library(
         src/compute/boundaries/boundaries.cpp
         src/compute/fields/fields.cpp
         src/compute/compute_boundary_values.cpp
-        src/compute/compute_assembly.cpp
+        src/compute/assembly/assembly.cpp
+        src/compute/assembly/compute_wavefield.cpp
 )
 
 target_link_libraries(
@@ -359,6 +415,7 @@ add_library(
 target_link_libraries(
         domain
         Kokkos::kokkos
+        enumerations
 )
 
 add_library(coupled_interface
@@ -449,6 +506,29 @@ target_link_libraries(
 )
 
 add_library(
+        plotter
+        src/plotter/plot_wavefield.cpp
+)
+
+if (NOT VTK_CXX_BUILD)
+        target_compile_definitions(
+                plotter
+                PUBLIC -DNO_VTK
+        )
+
+        target_link_libraries(
+                plotter
+                compute
+        )
+else ()
+        target_link_libraries(
+                plotter
+                compute
+                ${VTK_LIBRARIES}
+        )
+endif()
+
+add_library(
         parameter_reader
         src/parameter_parser/run_setup.cpp
         # src/parameter_parser/solver/solver.cpp
@@ -460,6 +540,7 @@ add_library(
         src/parameter_parser/writer/seismogram.cpp
         src/parameter_parser/setup.cpp
         src/parameter_parser/writer/wavefield.cpp
+        src/parameter_parser/writer/plot_wavefield.cpp
         src/parameter_parser/writer/kernel.cpp
 )
 
@@ -482,6 +563,8 @@ add_executable(
         src/specfem2d.cpp
 )
 
+
+
 target_link_libraries(
         specfem2d
         specfem_mpi
@@ -493,6 +576,7 @@ target_link_libraries(
         parameter_reader
         receiver_class
         writer
+        plotter
         reader
         domain
         coupled_interface

@@ -40,12 +40,12 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::sources::source<
     using_simd>::
     compute_interaction(
         const specfem::datatype::ScalarPointViewType<
-            type_real, medium_type::components, using_simd> &stf,
+            type_real, components, using_simd> &stf,
         const specfem::datatype::ScalarPointViewType<
-            type_real, medium_type::components, using_simd>
+            type_real, components, using_simd>
             &lagrange_interpolant,
         specfem::datatype::ScalarPointViewType<
-            type_real, medium_type::components, using_simd> &acceleration)
+            type_real, components, using_simd> &acceleration)
         const {
 
   if constexpr (specfem::globals::simulation_wave == specfem::wave::p_sv) {

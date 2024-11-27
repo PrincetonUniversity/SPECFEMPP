@@ -22,7 +22,7 @@ namespace kernels {
 /**
  * @brief Datatypes used in the kernels
  */
-template <specfem::wavefield::type WavefieldType,
+template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
@@ -47,9 +47,9 @@ public:
       specfem::point::boundary<BoundaryTag, DimensionType, using_simd>;
 
   constexpr static int num_dimensions =
-      specfem::dimension::dimension<dimension>::dim;
+      specfem::element::attributes<DimensionType, MediumTag>::dimension();
   constexpr static int components =
-      specfem::medium::medium<dimension, medium_tag>::components;
+      specfem::element::attributes<DimensionType, MediumTag>::components();
 
   using ChunkElementFieldType = specfem::chunk_element::field<
       ParallelConfig::chunk_size, ngll, DimensionType, MediumTag,
@@ -86,7 +86,7 @@ public:
       specfem::point::partial_derivatives<dimension, true, using_simd>;
 };
 
-template <specfem::wavefield::type WavefieldType,
+template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
@@ -187,7 +187,7 @@ protected:
  * @tparam NGLL Number of GLL points in each dimension for the elements within
  * this kernel
  */
-template <specfem::wavefield::type WavefieldType,
+template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
@@ -252,18 +252,18 @@ private:
 template <specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, int NGLL>
-class element_kernel<specfem::wavefield::type::backward, DimensionType,
-                     MediumTag, PropertyTag,
+class element_kernel<specfem::wavefield::simulation_field::backward,
+                     DimensionType, MediumTag, PropertyTag,
                      specfem::element::boundary_tag::stacey, NGLL>
-    : public element_kernel_base<specfem::wavefield::type::backward,
+    : public element_kernel_base<specfem::wavefield::simulation_field::backward,
                                  DimensionType, MediumTag, PropertyTag,
                                  specfem::element::boundary_tag::stacey, NGLL> {
 
 private:
   /// Datatypes used in the kernels
   using datatypes =
-      KernelDatatypes<specfem::wavefield::type::backward, DimensionType,
-                      MediumTag, PropertyTag,
+      KernelDatatypes<specfem::wavefield::simulation_field::backward,
+                      DimensionType, MediumTag, PropertyTag,
                       specfem::element::boundary_tag::stacey, NGLL>;
   using simd = typename datatypes::simd;
   using ChunkPolicyType = typename datatypes::ChunkPolicyType;
@@ -290,7 +290,7 @@ public:
    */
   ///@{
   constexpr static auto wavefield_type =
-      specfem::wavefield::type::backward; ///< Type of wavefield
+      specfem::wavefield::simulation_field::backward; ///< Type of wavefield
   constexpr static auto dimension =
       DimensionType;                            ///< Dimension of the elements
   constexpr static auto medium_tag = MediumTag; ///< Medium tag of the elements
@@ -306,16 +306,16 @@ public:
   element_kernel(
       const specfem::compute::assembly &assembly,
       const specfem::kokkos::HostView1d<int> h_element_kernel_index_mapping)
-      : field(assembly.fields
-                  .get_simulation_field<specfem::wavefield::type::backward>()),
-        element_kernel_base<specfem::wavefield::type::backward, DimensionType,
-                            MediumTag, PropertyTag,
+      : field(assembly.fields.get_simulation_field<
+              specfem::wavefield::simulation_field::backward>()),
+        element_kernel_base<specfem::wavefield::simulation_field::backward,
+                            DimensionType, MediumTag, PropertyTag,
                             specfem::element::boundary_tag::stacey, NGLL>(
             assembly, h_element_kernel_index_mapping) {}
 
   void compute_mass_matrix(const type_real dt) const {
-    element_kernel_base<specfem::wavefield::type::backward, DimensionType,
-                        MediumTag, PropertyTag,
+    element_kernel_base<specfem::wavefield::simulation_field::backward,
+                        DimensionType, MediumTag, PropertyTag,
                         specfem::element::boundary_tag::stacey,
                         NGLL>::compute_mass_matrix(dt, field);
   }
@@ -323,7 +323,9 @@ public:
   void compute_stiffness_interaction(const int istep) const;
 
 private:
-  specfem::compute::simulation_field<specfem::wavefield::type::backward> field;
+  specfem::compute::simulation_field<
+      specfem::wavefield::simulation_field::backward>
+      field;
 };
 
 } // namespace kernels

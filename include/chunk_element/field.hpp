@@ -237,16 +237,16 @@ template <int NumElements, int NGLL, specfem::dimension::type DimensionType,
           typename MemoryTraits, bool StoreDisplacement, bool StoreVelocity,
           bool StoreAcceleration, bool StoreMassMatrix, bool UseSIMD>
 struct FieldTraits
-    : public ImplFieldTraits<
-          specfem::datatype::ScalarChunkViewType<
-              type_real, NumElements, NGLL,
-              specfem::medium::medium<DimensionType, MediumTag>::components,
-              MemorySpace, MemoryTraits, UseSIMD>,
-          StoreDisplacement, StoreVelocity, StoreAcceleration,
-          StoreMassMatrix> {
+    : public ImplFieldTraits<specfem::datatype::ScalarChunkViewType<
+                                 type_real, NumElements, NGLL,
+                                 specfem::element::attributes<
+                                     DimensionType, MediumTag>::components(),
+                                 MemorySpace, MemoryTraits, UseSIMD>,
+                             StoreDisplacement, StoreVelocity,
+                             StoreAcceleration, StoreMassMatrix> {
 
   constexpr static int components =
-      specfem::medium::medium<DimensionType, MediumTag>::components;
+      specfem::element::attributes<DimensionType, MediumTag>::components();
 
   using ViewType =
       specfem::datatype::ScalarChunkViewType<type_real, NumElements, NGLL,
