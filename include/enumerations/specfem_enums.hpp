@@ -81,6 +81,8 @@ namespace time_scheme {
 enum class type {
   newmark, ///< Newmark time scheme
 };
+
 } // namespace time_scheme
+
 } // namespace enums
 } // namespace specfem

@@ -1,8 +1,9 @@
 [tool.poetry]
-name = "specfem2d_kokkos"
+name = "SPECFEMPP"
 version = "0.1.0"
 description = "Kokkos implementation of SpecFEM2D code"
 authors = ["Your Name <you@example.com>"]
+package-mode = false
 
 [tool.poetry.dependencies]
 python = ">=3.12,<4.0"

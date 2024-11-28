@@ -12,6 +12,7 @@
 #include "compute/kernels/kernels.hpp"
 #include "compute/properties/interface.hpp"
 #include "compute/sources/sources.hpp"
+#include "enumerations/display.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "mesh/mesh.hpp"
 #include "receiver/interface.hpp"
@@ -62,7 +63,7 @@ struct assembly {
    * @param t0 Start time of simulation
    * @param dt Time step
    * @param max_timesteps Maximum number of time steps
-   * @param max_sig_step Maximum number of siesmogram time steps
+   * @param max_sig_step Maximum number of seismogram time steps
    * @param simulation Type of simulation (forward, adjoint, etc.)
    */
   assembly(
@@ -74,6 +75,21 @@ struct assembly {
       const std::vector<specfem::enums::seismogram::type> &stypes,
       const type_real t0, const type_real dt, const int max_timesteps,
       const int max_sig_step, const specfem::simulation::type simulation);
+
+  /**
+   * @brief Maps the component of wavefield on the entire spectral element grid
+   *
+   * This field can be used to generate a plot of the wavefield
+   *
+   * @param component Component of the wavefield to map
+   * @return Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
+   * Wavefield mapped on the entire grid. Dimensions of the view are nspec,
+   * ngllz, ngllx
+   */
+  Kokkos::View<type_real ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
+  generate_wavefield_on_entire_grid(
+      const specfem::wavefield::simulation_field wavefield,
+      const specfem::wavefield::type component);
 };
 
 } // namespace compute
