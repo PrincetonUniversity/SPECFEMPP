@@ -8,6 +8,7 @@ firebase*.yml
 *.out
 debug.sh
 output.log
+output.txt
 results/
 timing.sh
 examples/*/*_config.yaml

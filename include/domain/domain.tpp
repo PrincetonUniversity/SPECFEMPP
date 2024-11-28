@@ -5,12 +5,11 @@
 #include "policies/range.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::wavefield::type WavefieldType,
+template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag, typename qp_type>
 void specfem::domain::domain<WavefieldType, DimensionType, MediumTag,
                              qp_type>::divide_mass_matrix() {
-  constexpr int components = medium_type::components;
   const int nglob = field.template get_nglob<MediumTag>();
   constexpr bool using_simd = true;
   using LoadFieldType = specfem::point::field<DimensionType, MediumTag, false,
@@ -44,12 +43,11 @@ void specfem::domain::domain<WavefieldType, DimensionType, MediumTag,
   return;
 }
 
-template <specfem::wavefield::type WavefieldType,
+template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag, typename qp_type>
 void specfem::domain::domain<WavefieldType, DimensionType, MediumTag,
                              qp_type>::invert_mass_matrix() {
-  constexpr int components = medium_type::components;
   const int nglob = field.template get_nglob<MediumTag>();
   constexpr bool using_simd = true;
   using PointFieldType = specfem::point::field<DimensionType, MediumTag, false,

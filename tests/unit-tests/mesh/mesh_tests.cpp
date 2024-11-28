@@ -1,5 +1,7 @@
 #include "../Kokkos_Environment.hpp"
 #include "../MPI_environment.hpp"
+#include "IO/mesh/impl/fortran/read_mesh_database.hpp"
+#include "IO/mesh/read_mesh.hpp"
 #include "mesh/mesh.hpp"
 #include "yaml-cpp/yaml.h"
 #include <fstream>
@@ -80,6 +82,61 @@ void parse_test_config(const YAML::Node &yaml,
 
 /**
  *
+ * Check if we can read fortran binary files correctly. TEST one just reading
+ * the header
+ *
+ * This test should be run on single and multiple nodes
+ *
+ */
+TEST(MESH_TESTS, fortran_binary_reader_header) {
+
+  specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
+  std::string config_filename =
+      "../../../tests/unit-tests/mesh/test_config.yaml";
+  std::vector<test_configuration::Test> Tests;
+  parse_test_config(YAML::LoadFile(config_filename), Tests);
+  int nspec, npgeo, nproc;
+
+  for (auto Test : Tests) {
+    std::cout << "-------------------------------------------------------\n"
+              << "\033[0;32m[RUNNING]\033[0m Test: " << Test.name << "\n"
+              << "-------------------------------------------------------\n\n"
+              << std::endl;
+    try {
+
+      std::ifstream stream;
+      stream.open(Test.databases.filenames[Test.configuration.processors - 1]);
+
+      auto [nspec, npgeo, nproc] =
+          specfem::IO::mesh::impl::fortran::read_mesh_database_header(stream,
+                                                                      mpi);
+      stream.close();
+      std::cout << "nspec = " << nspec << std::endl;
+      std::cout << "npgeo = " << npgeo << std::endl;
+      std::cout << "nproc = " << nproc << std::endl;
+
+      std::cout << "--------------------------------------------------\n"
+                << "\033[0;32m[PASSED]\033[0m Test name: " << Test.name << "\n"
+                << "--------------------------------------------------\n\n"
+                << std::endl;
+    } catch (std::runtime_error &e) {
+      std::cout << " - Error: " << e.what() << std::endl;
+      FAIL() << "--------------------------------------------------\n"
+             << "\033[0;31m[FAILED]\033[0m Test failed\n"
+             << " - Test name: " << Test.name << "\n"
+             << " - Error: " << e.what() << "\n"
+             << "--------------------------------------------------\n\n"
+             << std::endl;
+    }
+  }
+  SUCCEED();
+  return;
+}
+
+// ---------------------------------------------------------------------------
+
+/**
+ *
  * Check if we can read fortran binary files correctly.
  *
  * This test should be run on single and multiple nodes
@@ -99,7 +156,7 @@ TEST(MESH_TESTS, fortran_binary_reader) {
               << "-------------------------------------------------------\n\n"
               << std::endl;
     try {
-      specfem::mesh::mesh mesh(
+      specfem::IO::read_mesh(
           Test.databases.filenames[Test.configuration.processors - 1], mpi);
       std::cout << "--------------------------------------------------\n"
                 << "\033[0;32m[PASSED]\033[0m Test name: " << Test.name << "\n"

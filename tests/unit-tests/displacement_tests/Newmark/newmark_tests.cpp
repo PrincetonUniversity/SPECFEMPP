@@ -1,6 +1,9 @@
 #include "../../Kokkos_Environment.hpp"
 #include "../../MPI_environment.hpp"
 #include "../../utilities/include/interface.hpp"
+#include "IO/mesh/read_mesh.hpp"
+#include "IO/receivers/read_receivers.hpp"
+#include "IO/sources/read_sources.hpp"
 #include "compute/interface.hpp"
 #include "constants.hpp"
 #include "domain/domain.hpp"
@@ -174,14 +177,14 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     const auto quadratures = setup.instantiate_quadrature();
 
     // Read mesh generated MESHFEM
-    specfem::mesh::mesh mesh(database_file, mpi);
+    specfem::mesh::mesh mesh = specfem::IO::read_mesh(database_file, mpi);
     const type_real dt = setup.get_dt();
     const int nsteps = setup.get_nsteps();
 
     // Read sources
     //    if start time is not explicitly specified then t0 is determined using
     //    source frequencies and time shift
-    auto [sources, t0] = specfem::sources::read_sources(
+    auto [sources, t0] = specfem::IO::read_sources(
         sources_file, nsteps, setup.get_t0(), dt, setup.get_simulation_type());
 
     for (auto &source : sources) {
@@ -196,8 +199,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
 
     const auto stations_filename = setup.get_stations_file();
     const auto angle = setup.get_receiver_angle();
-    auto receivers =
-        specfem::receivers::read_receivers(stations_filename, angle);
+    auto receivers = specfem::IO::read_receivers(stations_filename, angle);
 
     std::cout << "  Receiver information\n";
     std::cout << "------------------------------" << std::endl;
@@ -232,7 +234,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
 
     specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
     std::shared_ptr<specfem::solver::solver> solver =
-        setup.instantiate_solver(setup.get_dt(), assembly, it, qp5);
+        setup.instantiate_solver(setup.get_dt(), assembly, it, qp5, {});
 
     solver->run();
 

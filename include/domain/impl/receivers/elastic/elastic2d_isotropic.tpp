@@ -33,21 +33,19 @@ KOKKOS_INLINE_FUNCTION void specfem::domain::impl::receivers::receiver<
     specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
     specfem::element::property_tag::isotropic,
     specfem::enums::element::quadrature::static_quadrature_points<NGLL>,
-    using_simd>::
-    get_field(const int iz, const int ix,
-              const specfem::point::partial_derivatives<
-                  specfem::dimension::type::dim2, false, using_simd>
-                  partial_derivatives,
-              const specfem::point::properties<
-                  specfem::dimension::type::dim2, medium_type::medium_tag,
-                  medium_type::property_tag, using_simd>
-                  properties,
-              const ElementQuadratureViewType hprime,
-              const ElementFieldType element_field,
-              const specfem::enums::seismogram::type seismo_type,
-              Kokkos::View<type_real[2], Kokkos::LayoutStride,
-                           specfem::kokkos::DevMemSpace>
-                  receiver_field) const {
+    using_simd>::get_field(const int iz, const int ix,
+                           const specfem::point::partial_derivatives<
+                               dimension, false, using_simd>
+                               partial_derivatives,
+                           const specfem::point::properties<
+                               dimension, medium_tag, property_tag, using_simd>
+                               properties,
+                           const ElementQuadratureViewType hprime,
+                           const ElementFieldType element_field,
+                           const specfem::enums::seismogram::type seismo_type,
+                           Kokkos::View<type_real[2], Kokkos::LayoutStride,
+                                        specfem::kokkos::DevMemSpace>
+                               receiver_field) const {
 
   if(seismo_type == specfem::enums::seismogram::type::displacement
   || seismo_type == specfem::enums::seismogram::type::velocity

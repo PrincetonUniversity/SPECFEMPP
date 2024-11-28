@@ -13,15 +13,19 @@ namespace domain {
 namespace impl {
 namespace kernels {
 
-template <specfem::wavefield::type WavefieldType,
+template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, typename qp_type>
 class receiver_kernel {
 public:
-  using dimension = specfem::dimension::dimension<DimensionType>;
-  using medium_type =
-      specfem::medium::medium<DimensionType, MediumTag, PropertyTag>;
+  constexpr static int num_dimensions =
+      specfem::element::attributes<DimensionType, MediumTag>::dimension();
+  constexpr static int components =
+      specfem::element::attributes<DimensionType, MediumTag>::components();
+  constexpr static auto medium_tag = MediumTag;
+  constexpr static auto property_tag = PropertyTag;
+  constexpr static auto dimension = DimensionType;
   using quadrature_points_type = qp_type;
   constexpr static bool using_simd = false;
 
