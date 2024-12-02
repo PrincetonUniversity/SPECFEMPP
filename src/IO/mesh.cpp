@@ -8,7 +8,7 @@
 #include "IO/mesh/impl/fortran/read_material_properties.hpp"
 #include "IO/mesh/impl/fortran/read_mesh_database.hpp"
 #include "IO/mesh/impl/fortran/read_properties.hpp"
-#include "enumerations/specfem_enums.hpp"
+#include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "material/material.hpp"
 #include "mesh/tags/tags.hpp"

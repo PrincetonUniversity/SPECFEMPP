@@ -5,6 +5,7 @@
 #include "coupled_interfaces/coupled_interfaces.hpp"
 #include "elements/axial_elements.hpp"
 #include "elements/tangential_elements.hpp"
+#include "enumerations/interface.hpp"
 #include "materials/materials.hpp"
 #include "mesh/tags/tags.hpp"
 #include "properties/properties.hpp"
@@ -24,7 +25,8 @@ struct mesh {
   int npgeo; ///< Total number of spectral element control nodes
   int nspec; ///< Total number of spectral elements
   int nproc; ///< Total number of processors
-  specfem::mesh::control_nodes control_nodes; ///< Defines control nodes
+  specfem::mesh::control_nodes<specfem::dimension::type::dim2>
+      control_nodes; ///< Defines control nodes
 
   specfem::mesh::properties parameters; ///< Struct to store simulation launch
                                         ///< parameters (never used)
@@ -59,7 +61,8 @@ struct mesh {
   mesh(){};
 
   mesh(const int npgeo, const int nspec, const int nproc,
-       const specfem::mesh::control_nodes &control_nodes,
+       const specfem::mesh::control_nodes<specfem::dimension::type::dim2>
+           &control_nodes,
        const specfem::mesh::properties &parameters,
        const specfem::mesh::coupled_interfaces &coupled_interfaces,
        const specfem::mesh::boundaries &boundaries,
