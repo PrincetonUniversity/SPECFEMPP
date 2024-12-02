@@ -21,6 +21,7 @@
 #include <vector>
 #ifdef SPECFEMPP_ENABLE_PYTHON
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 #define STRINGIFY(x) #x
 #define MACRO_STRINGIFY(x) STRINGIFY(x)
 #endif
@@ -248,50 +249,7 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   return;
 }
 
-#ifdef SPECFEMPP_ENABLE_PYTHON
-
-int add(int i, int j) { return i + j; }
-
-namespace py = pybind11;
-
-PYBIND11_MODULE(_core, m) {
-    m.doc() = R"pbdoc(
-        Pybind11 example plugin
-        -----------------------
-
-        .. currentmodule:: scikit_build_example
-
-        .. autosummary::
-           :toctree: _generate
-
-           add
-           subtract
-    )pbdoc";
-
-    m.def("add", &add, R"pbdoc(
-        Add two numbers
-
-        Some other explanation about the add function.
-    )pbdoc");
-
-    m.def("subtract", [](int i, int j) {
-    return i - j; }, R"pbdoc(
-        Subtract two numbers
-
-        Some other explanation about the subtract function.
-    )pbdoc");
-
-#ifdef VERSION_INFO
-    m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
-#else
-    m.attr("__version__") = "dev";
-#endif
-}
-
-#endif
-
-int main(int argc, char **argv) {
-
+int run(int argc, char **argv) {
   // Initialize MPI
   specfem::MPI::MPI *mpi = new specfem::MPI::MPI(&argc, &argv);
   // Initialize Kokkos
@@ -311,3 +269,55 @@ int main(int argc, char **argv) {
   delete mpi;
   return 0;
 }
+
+#ifdef SPECFEMPP_ENABLE_PYTHON
+
+namespace py = pybind11;
+
+int _run(py::list argv_py) {
+  // parse argc and argv from Python
+  int argc = argv_py.size();
+  char **argv = new char *[argc];
+
+  for (size_t i = 0; i < argc; i++) {
+    std::string str =
+        argv_py[i].cast<std::string>(); // Convert Python string to std::string
+    argv[i] =
+        new char[str.length() + 1]; // Allocate memory for each C-style string
+    std::strcpy(argv[i], str.c_str()); // Copy the string content
+  }
+
+  int return_code = run(argc, argv);
+
+  delete[] argv;
+
+  return return_code;
+}
+
+PYBIND11_MODULE(_core, m) {
+    m.doc() = R"pbdoc(
+        SPECfem++ core module
+        -----------------------
+
+        .. currentmodule:: specfempp
+
+        .. autosummary::
+           :toctree: _generate
+
+           _run
+    )pbdoc";
+
+    m.def("_run", &_run, R"pbdoc(
+        Execute the main SPECFEM++ workflow.
+    )pbdoc");
+
+#ifdef VERSION_INFO
+    m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
+#else
+    m.attr("__version__") = "dev";
+#endif
+}
+
+#endif
+
+int main(int argc, char **argv) { return run(argc, argv); }
