@@ -1,6 +1,7 @@
 #ifndef _MESH_CONTROL_NODES_HPP
 #define _MESH_CONTROL_NODES_HPP
 
+#include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "specfem_setup.hpp"
 
@@ -11,7 +12,9 @@ namespace mesh {
  * @brief Control node information
  *
  */
-struct control_nodes {
+template <specfem::dimension::type DimensionType> struct control_nodes;
+
+template <> struct control_nodes<specfem::dimension::type::dim2> {
   using ViewType = Kokkos::View<type_real **, Kokkos::HostSpace>;
 
   int ngnod; ///< Number of control nodes
