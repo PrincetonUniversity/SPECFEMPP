@@ -15,8 +15,11 @@ namespace mesh {
 template <specfem::dimension::type DimensionType> struct control_nodes;
 
 template <> struct control_nodes<specfem::dimension::type::dim2> {
-  using ViewType = Kokkos::View<type_real **, Kokkos::HostSpace>;
 
+  // Use 'specfem::dimension::type::dim2' explicitly here
+  constexpr static auto dimension = specfem::dimension::type::dim2;
+
+  using ViewType = Kokkos::View<type_real **, Kokkos::HostSpace>;
   int ngnod; ///< Number of control nodes
   int nspec; ///< Number of spectral elements
   Kokkos::View<int **, Kokkos::HostSpace> knods; ///< Control node indices
