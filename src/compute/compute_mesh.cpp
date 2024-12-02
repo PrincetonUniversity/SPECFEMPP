@@ -1,6 +1,5 @@
 #include "compute/interface.hpp"
-#include "enumerations/boundary.hpp"
-#include "enumerations/medium.hpp"
+#include "enumerations/interface.hpp"
 #include "jacobian/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
@@ -222,7 +221,7 @@ specfem::compute::shape_functions::shape_functions(
 }
 
 specfem::compute::mesh_to_compute_mapping::mesh_to_compute_mapping(
-    const specfem::mesh::tags &tags)
+    const specfem::mesh::tags<specfem::dimension::type::dim2> &tags)
     : compute_to_mesh("specfem::compute::mesh_to_compute_mapping", tags.nspec),
       mesh_to_compute("specfem::compute::mesh_to_compute_mapping", tags.nspec) {
 
@@ -317,7 +316,7 @@ specfem::compute::mesh_to_compute_mapping::mesh_to_compute_mapping(
 }
 
 specfem::compute::mesh::mesh(
-    const specfem::mesh::tags &tags,
+    const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
     const specfem::mesh::control_nodes &m_control_nodes,
     const specfem::quadrature::quadratures &m_quadratures) {
 
