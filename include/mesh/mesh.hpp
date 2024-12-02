@@ -32,8 +32,9 @@ struct mesh {
   specfem::mesh::coupled_interfaces coupled_interfaces; ///< Struct to store
                                                         ///< coupled interfaces
 
-  specfem::mesh::boundaries boundaries; ///< Struct to store information at the
-                                        ///< boundaries
+  specfem::mesh::boundaries<specfem::dimension::type::dim2>
+      boundaries; ///< Struct to store information at the
+                  ///< boundaries
 
   specfem::mesh::tags tags; ///< Struct to store tags for every spectral element
 
@@ -62,7 +63,8 @@ struct mesh {
        const specfem::mesh::control_nodes &control_nodes,
        const specfem::mesh::properties &parameters,
        const specfem::mesh::coupled_interfaces &coupled_interfaces,
-       const specfem::mesh::boundaries &boundaries,
+       const specfem::mesh::boundaries<specfem::dimension::type::dim2>
+           &boundaries,
        const specfem::mesh::tags &tags,
        const specfem::mesh::elements::tangential_elements &tangential_nodes,
        const specfem::mesh::elements::axial_elements &axial_nodes,
