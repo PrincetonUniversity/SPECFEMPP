@@ -5,6 +5,7 @@
 #include "coupled_interfaces/coupled_interfaces.hpp"
 #include "elements/axial_elements.hpp"
 #include "elements/tangential_elements.hpp"
+#include "enumerations/dimension.hpp"
 #include "materials/materials.hpp"
 #include "mesh/tags/tags.hpp"
 #include "properties/properties.hpp"
@@ -35,7 +36,10 @@ struct mesh {
   specfem::mesh::boundaries boundaries; ///< Struct to store information at the
                                         ///< boundaries
 
-  specfem::mesh::tags tags; ///< Struct to store tags for every spectral element
+  specfem::mesh::tags<specfem::dimension::type::dim2> tags; ///< Struct to store
+                                                            ///< tags for every
+                                                            ///< spectral
+                                                            ///< element
 
   specfem::mesh::elements::tangential_elements tangential_nodes; ///< Defines
                                                                  ///< tangential
@@ -63,7 +67,7 @@ struct mesh {
        const specfem::mesh::properties &parameters,
        const specfem::mesh::coupled_interfaces &coupled_interfaces,
        const specfem::mesh::boundaries &boundaries,
-       const specfem::mesh::tags &tags,
+       const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
        const specfem::mesh::elements::tangential_elements &tangential_nodes,
        const specfem::mesh::elements::axial_elements &axial_nodes,
        const specfem::mesh::materials &materials)

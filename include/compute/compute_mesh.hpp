@@ -32,7 +32,8 @@ struct mesh_to_compute_mapping {
 
   mesh_to_compute_mapping() = default;
 
-  mesh_to_compute_mapping(const specfem::mesh::tags &tags);
+  mesh_to_compute_mapping(
+      const specfem::mesh::tags<specfem::dimension::type::dim2> &tags);
 };
 
 /**
@@ -187,7 +188,7 @@ struct mesh {
 
   mesh() = default;
 
-  mesh(const specfem::mesh::tags &tags,
+  mesh(const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
        const specfem::mesh::control_nodes &control_nodes,
        const specfem::quadrature::quadratures &quadratures);
 
