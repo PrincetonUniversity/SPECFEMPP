@@ -8,7 +8,7 @@
 #include "enumerations/interface.hpp"
 #include "materials/materials.hpp"
 #include "mesh/tags/tags.hpp"
-#include "properties/properties.hpp"
+#include "parameters/parameters.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -28,8 +28,9 @@ struct mesh {
   specfem::mesh::control_nodes<specfem::dimension::type::dim2>
       control_nodes; ///< Defines control nodes
 
-  specfem::mesh::properties parameters; ///< Struct to store simulation launch
-                                        ///< parameters (never used)
+  specfem::mesh::parameters<specfem::dimension::type::dim2>
+      parameters; ///< Struct to store simulation launch
+                  ///< parameters (never used)
 
   specfem::mesh::coupled_interfaces coupled_interfaces; ///< Struct to store
                                                         ///< coupled interfaces
@@ -66,7 +67,8 @@ struct mesh {
   mesh(const int npgeo, const int nspec, const int nproc,
        const specfem::mesh::control_nodes<specfem::dimension::type::dim2>
            &control_nodes,
-       const specfem::mesh::properties &parameters,
+       const specfem::mesh::parameters<specfem::dimension::type::dim2>
+           &parameters,
        const specfem::mesh::coupled_interfaces &coupled_interfaces,
        const specfem::mesh::boundaries &boundaries,
        const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
