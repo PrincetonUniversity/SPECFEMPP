@@ -1,5 +1,6 @@
 #pragma once
 
+#include "enumerations/dimension.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "specfem_mpi/specfem_mpi.hpp"
 
@@ -8,8 +9,19 @@ namespace mesh {
 /**
  * @brief Acoustic free surface boundary information
  *
+ * @tparam DimensionType Dimension type for the mesh
  */
-struct acoustic_free_surface {
+template <specfem::dimension::type DimensionType> struct acoustic_free_surface;
+
+/**
+ * @brief Acoustic free surface boundary information
+ *
+ */
+template <> struct acoustic_free_surface<specfem::dimension::type::dim2> {
+
+  constexpr static auto dimension =
+      specfem::dimension::type::dim2; ///< Dimension
+                                      ///< type
   /**
    * @name Constructors
    *
