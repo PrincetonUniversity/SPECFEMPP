@@ -13,7 +13,7 @@
 #include "compute/properties/interface.hpp"
 #include "compute/sources/sources.hpp"
 #include "enumerations/display.hpp"
-#include "enumerations/specfem_enums.hpp"
+#include "enumerations/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "receiver/interface.hpp"
 #include "source/interface.hpp"
@@ -67,7 +67,7 @@ struct assembly {
    * @param simulation Type of simulation (forward, adjoint, etc.)
    */
   assembly(
-      const specfem::mesh::mesh &mesh,
+      const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
       const specfem::quadrature::quadratures &quadratures,
       const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
       const std::vector<std::shared_ptr<specfem::receivers::receiver> >

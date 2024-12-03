@@ -5,6 +5,7 @@
 #include "compute/coupled_interfaces/interface_container.hpp"
 #include "compute/properties/properties.hpp"
 #include "edge/interface.hpp"
+#include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "mesh/coupled_interfaces/coupled_interfaces.hpp"
 #include "mesh/coupled_interfaces/interface_container.hpp"
@@ -514,7 +515,7 @@ template <specfem::element::medium_tag MediumTag1,
           specfem::element::medium_tag MediumTag2>
 specfem::compute::interface_container<MediumTag1, MediumTag2>::
     interface_container(
-        const specfem::mesh::mesh &mesh, const specfem::compute::points &points,
+        const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh, const specfem::compute::points &points,
         const specfem::compute::quadrature &quadratures,
         const specfem::compute::partial_derivatives &partial_derivatives,
         const specfem::compute::properties &properties,
