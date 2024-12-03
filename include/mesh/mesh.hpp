@@ -39,14 +39,16 @@ struct mesh {
 
   specfem::mesh::tags tags; ///< Struct to store tags for every spectral element
 
-  specfem::mesh::elements::tangential_elements tangential_nodes; ///< Defines
-                                                                 ///< tangential
-                                                                 ///< nodes
-                                                                 ///< (never
-                                                                 ///< used)
+  specfem::mesh::elements::tangential_elements<specfem::dimension::type::dim2>
+      tangential_nodes; ///< Defines
+                        ///< tangential
+                        ///< nodes
+                        ///< (never
+                        ///< used)
 
-  specfem::mesh::elements::axial_elements axial_nodes; ///< Defines axial nodes
-                                                       ///< (never used)
+  specfem::mesh::elements::axial_elements<specfem::dimension::type::dim2>
+      axial_nodes;                    ///< Defines axial nodes
+                                      ///< (never used)
   specfem::mesh::materials materials; ///< Defines material properties
 
   /**
@@ -67,8 +69,10 @@ struct mesh {
        const specfem::mesh::coupled_interfaces &coupled_interfaces,
        const specfem::mesh::boundaries &boundaries,
        const specfem::mesh::tags &tags,
-       const specfem::mesh::elements::tangential_elements &tangential_nodes,
-       const specfem::mesh::elements::axial_elements &axial_nodes,
+       const specfem::mesh::elements::tangential_elements<
+           specfem::dimension::type::dim2> &tangential_nodes,
+       const specfem::mesh::elements::axial_elements<
+           specfem::dimension::type::dim2> &axial_nodes,
        const specfem::mesh::materials &materials)
       : npgeo(npgeo), nspec(nspec), nproc(nproc), control_nodes(control_nodes),
         parameters(parameters), coupled_interfaces(coupled_interfaces),
