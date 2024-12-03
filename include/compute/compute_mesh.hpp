@@ -102,7 +102,8 @@ struct quadrature {
   quadrature() = default;
 
   quadrature(const specfem::quadrature::quadratures &quadratures,
-             const specfem::mesh::control_nodes &control_nodes)
+             const specfem::mesh::control_nodes<specfem::dimension::type::dim2>
+                 &control_nodes)
       : gll(quadratures, control_nodes.ngnod) {}
 };
 
@@ -124,8 +125,10 @@ struct control_nodes {
   specfem::kokkos::HostMirror3d<type_real> h_coord;   ///< (x, z) for every
                                                       ///< distinct control node
 
-  control_nodes(const specfem::compute::mesh_to_compute_mapping &mapping,
-                const specfem::mesh::control_nodes &control_nodes);
+  control_nodes(
+      const specfem::compute::mesh_to_compute_mapping &mapping,
+      const specfem::mesh::control_nodes<specfem::dimension::type::dim2>
+          &control_nodes);
 
   control_nodes() = default;
 };
@@ -189,7 +192,8 @@ struct mesh {
   mesh() = default;
 
   mesh(const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
-       const specfem::mesh::control_nodes &control_nodes,
+       const specfem::mesh::control_nodes<specfem::dimension::type::dim2>
+           &control_nodes,
        const specfem::quadrature::quadratures &quadratures);
 
   specfem::compute::points assemble();
