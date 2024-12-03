@@ -12,9 +12,14 @@ namespace mesh {
  * @tparam Medium1 Medium type 1
  * @tparam Medium2 Medium type 2
  */
+template <specfem::dimension::type DimensionType,
+          specfem::element::medium_tag Medium1,
+          specfem::element::medium_tag Medium2>
+struct interface_container;
+
 template <specfem::element::medium_tag Medium1,
           specfem::element::medium_tag Medium2>
-struct interface_container {
+struct interface_container<specfem::dimension::type::dim2, Medium1, Medium2> {
   constexpr static auto medium1_tag = Medium1; ///< Medium 1 tag
   constexpr static auto medium2_tag = Medium2; ///< Medium 2 tag
 
@@ -51,5 +56,12 @@ struct interface_container {
   template <specfem::element::medium_tag medium>
   int get_spectral_elem_index(const int interface_index) const;
 };
+
+// template<specfem::element::medium_tag Medium1,
+//          specfem::element::medium_tag Medium2>
+// struct interface_container<specfem::dimension::type::dim3, Medium1, Medium2>
+// {
+
+// };
 } // namespace mesh
 } // namespace specfem
