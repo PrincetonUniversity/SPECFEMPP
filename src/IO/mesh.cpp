@@ -23,11 +23,12 @@
 #include <tuple>
 #include <vector>
 
-specfem::mesh::mesh specfem::IO::read_mesh(const std::string filename,
-                                           const specfem::MPI::MPI *mpi) {
+specfem::mesh::mesh<specfem::dimension::type::dim2>
+specfem::IO::read_mesh(const std::string filename,
+                       const specfem::MPI::MPI *mpi) {
 
   // Declaring empty mesh objects
-  specfem::mesh::mesh mesh;
+  specfem::mesh::mesh<specfem::dimension::type::dim2> mesh;
 
   // Open the database file
   std::ifstream stream;

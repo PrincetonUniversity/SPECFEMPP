@@ -20,41 +20,48 @@ namespace mesh {
  * @brief Struct to store information about the mesh read from the database
  *
  */
-struct mesh {
+template <specfem::dimension::type DimensionType> struct mesh;
+
+template <> struct mesh<specfem::dimension::type::dim2> {
+
+  constexpr static auto dimension =
+      specfem::dimension::type::dim2; ///< Dimension
 
   int npgeo; ///< Total number of spectral element control nodes
   int nspec; ///< Total number of spectral elements
   int nproc; ///< Total number of processors
-  specfem::mesh::control_nodes<specfem::dimension::type::dim2>
-      control_nodes; ///< Defines control nodes
+  specfem::mesh::control_nodes<dimension> control_nodes; ///< Defines control
+                                                         ///< nodes
 
-  specfem::mesh::parameters<specfem::dimension::type::dim2>
-      parameters; ///< Struct to store simulation launch
-                  ///< parameters (never used)
+  specfem::mesh::parameters<dimension> parameters; ///< Struct to store
+                                                   ///< simulation launch
+                                                   ///< parameters (never used)
 
-  specfem::mesh::coupled_interfaces<specfem::dimension::type::dim2>
+  specfem::mesh::coupled_interfaces<dimension>
       coupled_interfaces; ///< Struct to store
                           ///< coupled interfaces
 
-  specfem::mesh::boundaries<specfem::dimension::type::dim2>
-      boundaries; ///< Struct to store information at the
-                  ///< boundaries
+  specfem::mesh::boundaries<dimension> boundaries; ///< Struct to store
+                                                   ///< information at the
+                                                   ///< boundaries
 
-  specfem::mesh::tags<specfem::dimension::type::dim2> tags; ///< Struct to store
-                                                            ///< tags for every
-                                                            ///< spectral
-                                                            ///< element
+  specfem::mesh::tags<dimension> tags; ///< Struct to store
+                                       ///< tags for every
+                                       ///< spectral
+                                       ///< element
 
-  specfem::mesh::elements::tangential_elements<specfem::dimension::type::dim2>
+  specfem::mesh::elements::tangential_elements<dimension>
       tangential_nodes; ///< Defines
                         ///< tangential
                         ///< nodes
                         ///< (never
                         ///< used)
 
-  specfem::mesh::elements::axial_elements<specfem::dimension::type::dim2>
-      axial_nodes;                    ///< Defines axial nodes
-                                      ///< (never used)
+  specfem::mesh::elements::axial_elements<dimension> axial_nodes; ///< Defines
+                                                                  ///< axial
+                                                                  ///< nodes
+                                                                  ///< (never
+                                                                  ///< used)
   specfem::mesh::materials materials; ///< Defines material properties
 
   /**
