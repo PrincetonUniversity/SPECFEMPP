@@ -208,7 +208,8 @@ specfem::mesh::mesh specfem::IO::read_mesh(const std::string filename,
   assert(l_elastic_isotropic.size() + l_acoustic_isotropic.size() ==
          mesh.materials.n_materials);
 
-  mesh.tags = specfem::mesh::tags(mesh.materials, mesh.boundaries);
+  mesh.tags = specfem::mesh::tags<specfem::dimension::type::dim2>(
+      mesh.materials, mesh.boundaries);
 
   return mesh;
 }
