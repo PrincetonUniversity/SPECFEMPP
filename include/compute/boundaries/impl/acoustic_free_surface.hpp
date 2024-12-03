@@ -39,7 +39,8 @@ public:
 
   acoustic_free_surface(
       const int nspec, const int ngllz, const int ngllx,
-      const specfem::mesh::acoustic_free_surface &acoustic_free_surface,
+      const specfem::mesh::acoustic_free_surface<specfem::dimension::type::dim2>
+          &acoustic_free_surface,
       const specfem::compute::mesh_to_compute_mapping &mapping,
       const specfem::compute::properties &properties,
       const Kokkos::View<int *, Kokkos::HostSpace> &boundary_index_mapping,

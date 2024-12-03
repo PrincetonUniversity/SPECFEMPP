@@ -7,7 +7,7 @@
 #include "elements/tangential_elements.hpp"
 #include "materials/materials.hpp"
 #include "mesh/tags/tags.hpp"
-#include "properties/properties.hpp"
+#include "parameters/parameters.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -26,15 +26,17 @@ struct mesh {
   int nproc; ///< Total number of processors
   specfem::mesh::control_nodes control_nodes; ///< Defines control nodes
 
-  specfem::mesh::properties parameters; ///< Struct to store simulation launch
-                                        ///< parameters (never used)
+  specfem::mesh::parameters<specfem::dimension::type::dim2>
+      parameters; ///< Struct to store simulation launch
+                  ///< parameters (never used)
 
   specfem::mesh::coupled_interfaces<specfem::dimension::type::dim2>
       coupled_interfaces; ///< Struct to store
                           ///< coupled interfaces
 
-  specfem::mesh::boundaries boundaries; ///< Struct to store information at the
-                                        ///< boundaries
+  specfem::mesh::boundaries<specfem::dimension::type::dim2>
+      boundaries; ///< Struct to store information at the
+                  ///< boundaries
 
   specfem::mesh::tags tags; ///< Struct to store tags for every spectral element
 
