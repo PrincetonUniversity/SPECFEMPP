@@ -74,6 +74,7 @@ How to compute forces and stresses in the medium.
 
 ## Create Examples
 
+From `specfem2d`:
 - Anisotropic_zinc_crystals
 - Anisotropy_isotropy
 
