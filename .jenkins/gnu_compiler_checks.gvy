@@ -5,13 +5,6 @@ pipeline{
         }
     }
     stages{
-        stage( ' Load git modules ' ){
-            steps {
-                echo ' Getting git submodules '
-                sh 'git submodule init'
-                sh 'git submodule update'
-            }
-        }
         stage(' GNU Host Compiler Check '){
             matrix {
                 axes {
@@ -62,6 +55,26 @@ pipeline{
                                                 ).trim()}"""
                         }
                         stages {
+                            stage (' Copy source to workdir '){
+                                steps {
+                                    echo ' Copying source to workdir '
+                                    sh """
+                                        cp -r . workdir_cpu_${GNU_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
+                                        cd workdir_cpu_${GNU_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
+                                    """
+                                    echo ' Copy completed '
+                                }
+                            }
+                            stage (' Initialize git modules '){
+                                steps {
+                                    echo ' Initializing git modules '
+                                    sh """
+                                        git submodule init
+                                        git submodule update
+                                    """
+                                    echo ' Initialization completed '
+                                }
+                            }
                             stage (' Build '){
                                 steps {
                                     echo "Building ${CMAKE_HOST_FLAGS} ${SIMD_FLAGS} with ${GNU_COMPILER_NAME}"
