@@ -1,8 +1,9 @@
-#include "IO/mesh/impl/fortran/read_properties.hpp"
+#include "IO/mesh/impl/fortran/read_parameters.hpp"
 #include "IO/fortranio/interface.hpp"
-#include "mesh/properties/properties.hpp"
+#include "mesh/parameters/parameters.hpp"
 
-specfem::mesh::properties specfem::IO::mesh::impl::fortran::read_properties(
+specfem::mesh::parameters<specfem::dimension::type::dim2>
+specfem::IO::mesh::impl::fortran::read_mesh_parameters(
     std::ifstream &stream, const specfem::MPI::MPI *mpi) {
   // ---------------------------------------------------------------------
   // reading mesh properties
@@ -42,9 +43,17 @@ specfem::mesh::properties specfem::IO::mesh::impl::fortran::read_properties(
 
   mpi->sync_all();
 
-  return specfem::mesh::properties(
-      numat, ngnod, nspec, pointsdisp, nelemabs, nelem_acforcing,
-      nelem_acoustic_surface, num_fluid_solid_edges, num_fluid_poro_edges,
-      num_solid_poro_edges, nnodes_tangential_curve, nelem_on_the_axis,
-      plot_lowerleft_corner_only);
+  return { numat,
+           ngnod,
+           nspec,
+           pointsdisp,
+           nelemabs,
+           nelem_acforcing,
+           nelem_acoustic_surface,
+           num_fluid_solid_edges,
+           num_fluid_poro_edges,
+           num_solid_poro_edges,
+           nnodes_tangential_curve,
+           nelem_on_the_axis,
+           plot_lowerleft_corner_only };
 }
