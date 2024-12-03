@@ -1,21 +1,29 @@
 #ifndef _MESH_PROPERTIES_HPP
 #define _MESH_PROPERTIES_HPP
 
+#include "enumerations/dimension.hpp"
 #include "specfem_mpi/interface.hpp"
 
 namespace specfem {
 
 namespace mesh {
 /**
- * @brief Mesh properties
+ * @brief Mesh parameters
  *
- * Mesh properties stores meta-data used to allocate other structs within the
- * Mesh interface.
+ * @tparam DimensionType Dimension type for the mesh (2D or 3D)
  */
-struct properties {
-  int numat;           ///< Total number of different materials
-  int ngnod;           ///< Number of control nodes
-  int nspec;           ///< Number of spectral elements
+template <specfem::dimension::type DimensionType> struct parameters;
+
+/**
+ * @brief Template specialization for 2D mesh parameters
+ */
+template <> struct parameters<specfem::dimension::type::dim2> {
+  constexpr static auto dimension =
+      specfem::dimension::type::dim2; ///< Dimension
+                                      ///< type
+  int numat;                          ///< Total number of different materials
+  int ngnod;                          ///< Number of control nodes
+  int nspec;                          ///< Number of spectral elements
   int pointsdisp;      // Total number of points to display (Only used for
                        // visualization)
   int nelemabs;        ///< Number of elements on absorbing boundary
@@ -32,7 +40,7 @@ struct properties {
    * @brief Default constructor
    *
    */
-  properties(){};
+  parameters(){};
 
   /**
    * @brief Construct a properties object
@@ -52,7 +60,7 @@ struct properties {
    * @param plot_lowerleft_corner_only Flag to plot only lower left corner
    */
 
-  properties(const int numat, const int ngnod, const int nspec,
+  parameters(const int numat, const int ngnod, const int nspec,
              const int pointsdisp, const int nelemabs,
              const int nelem_acforcing, const int nelem_acoustic_surface,
              const int num_fluid_solid_edges, const int num_fluid_poro_edges,

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "IO/fortranio/interface.hpp"
-#include "mesh/properties/properties.hpp"
+#include "mesh/parameters/parameters.hpp"
 #include "specfem_mpi/interface.hpp"
 
 namespace specfem {
@@ -11,14 +11,15 @@ namespace impl {
 namespace fortran {
 
 /*
- * @brief Read properties from mesh database
+ * @brief Read paramters from 2D mesh database
  *
  * @param stream Input stream
  * @param mpi MPI object
- * @return specfem::mesh::properties Property object
+ * @return specfem::mesh::parameters<specfem::dimension::type::dim2> Mesh
+ * parameters
  */
-specfem::mesh::properties read_properties(std::ifstream &stream,
-                                          const specfem::MPI::MPI *mpi);
+specfem::mesh::parameters<specfem::dimension::type::dim2>
+read_mesh_parameters(std::ifstream &stream, const specfem::MPI::MPI *mpi);
 
 } // namespace fortran
 } // namespace impl
