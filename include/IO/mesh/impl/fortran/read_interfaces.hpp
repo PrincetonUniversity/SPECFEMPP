@@ -10,9 +10,10 @@ namespace mesh {
 namespace impl {
 namespace fortran {
 
-template <specfem::element::medium_tag medium1,
+template <specfem::dimension::type DimensionType,
+          specfem::element::medium_tag medium1,
           specfem::element::medium_tag medium2>
-specfem::mesh::interface_container<medium1, medium2>
+specfem::mesh::interface_container<DimensionType, medium1, medium2>
 read_interfaces(const int num_interfaces, std::ifstream &stream,
                 const specfem::MPI::MPI *mpi);
 
@@ -25,10 +26,12 @@ read_interfaces(const int num_interfaces, std::ifstream &stream,
  * @param mpi
  * @return specfem::mesh::coupled_interfaces
  */
-specfem::mesh::coupled_interfaces read_coupled_interfaces(
-    std::ifstream &stream, const int num_interfaces_elastic_acoustic,
-    const int num_interfaces_acoustic_poroelastic,
-    const int num_interfaces_elastic_poroelastic, const specfem::MPI::MPI *mpi);
+specfem::mesh::coupled_interfaces<specfem::dimension::type::dim2>
+read_coupled_interfaces(std::ifstream &stream,
+                        const int num_interfaces_elastic_acoustic,
+                        const int num_interfaces_acoustic_poroelastic,
+                        const int num_interfaces_elastic_poroelastic,
+                        const specfem::MPI::MPI *mpi);
 
 } // namespace fortran
 } // namespace impl

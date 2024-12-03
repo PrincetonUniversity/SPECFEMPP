@@ -32,8 +32,9 @@ struct mesh {
       parameters; ///< Struct to store simulation launch
                   ///< parameters (never used)
 
-  specfem::mesh::coupled_interfaces coupled_interfaces; ///< Struct to store
-                                                        ///< coupled interfaces
+  specfem::mesh::coupled_interfaces<specfem::dimension::type::dim2>
+      coupled_interfaces; ///< Struct to store
+                          ///< coupled interfaces
 
   specfem::mesh::boundaries<specfem::dimension::type::dim2>
       boundaries; ///< Struct to store information at the
@@ -70,7 +71,8 @@ struct mesh {
            &control_nodes,
        const specfem::mesh::parameters<specfem::dimension::type::dim2>
            &parameters,
-       const specfem::mesh::coupled_interfaces &coupled_interfaces,
+       const specfem::mesh::coupled_interfaces<specfem::dimension::type::dim2>
+           &coupled_interfaces,
        const specfem::mesh::boundaries<specfem::dimension::type::dim2>
            &boundaries,
        const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
