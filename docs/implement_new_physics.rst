@@ -1,7 +1,9 @@
-Implementing new physics
-========================
+Implementing new physics -- Example (Anisotropy)
+================================================
 
-Glossary for original specfem Devs
+Glossary for original specfem devs
+----------------------------------
+
 
 Create new material class
 -------------------------
@@ -32,6 +34,12 @@ Create Medium class
 
 How to compute forces and stresses in the medium.
 medium/elastic_isotropic/elasticisotropic.hpp
+
+Create Examples
+---------------
+
+- Anisotropic_zinc_crystals
+- Anisotropy_isotropy
 
 
 Kernels for the medium
