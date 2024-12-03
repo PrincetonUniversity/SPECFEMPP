@@ -61,10 +61,12 @@ struct mesh {
 
   mesh(const int npgeo, const int nspec, const int nproc,
        const specfem::mesh::control_nodes &control_nodes,
-       const specfem::mesh::properties &parameters,
+       const specfem::mesh::parameters<specfem::dimension::type::dim2>
+           &parameters,
        const specfem::mesh::coupled_interfaces<specfem::dimension::type::dim2>
            &coupled_interfaces,
-       const specfem::mesh::boundaries &boundaries,
+       const specfem::mesh::boundaries<specfem::dimension::type::dim2>
+           &boundaries,
        const specfem::mesh::tags &tags,
        const specfem::mesh::elements::tangential_elements &tangential_nodes,
        const specfem::mesh::elements::axial_elements &axial_nodes,
