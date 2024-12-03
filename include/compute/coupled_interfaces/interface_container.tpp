@@ -521,7 +521,7 @@ specfem::compute::interface_container<MediumTag1, MediumTag2>::
         const specfem::compute::mesh_to_compute_mapping &mapping) {
 
   const auto interface_container =
-      std::get<specfem::mesh::interface_container<MediumTag1, MediumTag2> >(
+      std::get<specfem::mesh::interface_container<specfem::dimension::type::dim2, MediumTag1, MediumTag2> >(
           mesh.coupled_interfaces.get<MediumTag1, MediumTag2>());
 
   int num_interfaces = interface_container.num_interfaces;

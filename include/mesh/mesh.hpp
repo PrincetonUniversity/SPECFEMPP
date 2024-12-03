@@ -29,8 +29,9 @@ struct mesh {
   specfem::mesh::properties parameters; ///< Struct to store simulation launch
                                         ///< parameters (never used)
 
-  specfem::mesh::coupled_interfaces coupled_interfaces; ///< Struct to store
-                                                        ///< coupled interfaces
+  specfem::mesh::coupled_interfaces<specfem::dimension::type::dim2>
+      coupled_interfaces; ///< Struct to store
+                          ///< coupled interfaces
 
   specfem::mesh::boundaries boundaries; ///< Struct to store information at the
                                         ///< boundaries
@@ -61,7 +62,8 @@ struct mesh {
   mesh(const int npgeo, const int nspec, const int nproc,
        const specfem::mesh::control_nodes &control_nodes,
        const specfem::mesh::properties &parameters,
-       const specfem::mesh::coupled_interfaces &coupled_interfaces,
+       const specfem::mesh::coupled_interfaces<specfem::dimension::type::dim2>
+           &coupled_interfaces,
        const specfem::mesh::boundaries &boundaries,
        const specfem::mesh::tags &tags,
        const specfem::mesh::elements::tangential_elements &tangential_nodes,
