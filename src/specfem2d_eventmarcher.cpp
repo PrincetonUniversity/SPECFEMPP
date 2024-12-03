@@ -6,12 +6,14 @@
 #include "timescheme/newmark.hpp"
 
 // #define FORCE_INTO_CONTINUOUS
+// #define USE_DEMO_MESH
 #define _RELAX_PARAM_COEF_ 40
 
 #define _EVENT_MARCHER_DUMPS_
 #define _stepwise_simfield_dump_ std::string("dump/simfield")
 #define _index_change_dump_ std::string("dump/indexchange")
 #define _stepwise_edge_dump_ std::string("dump/edgedata")
+#define _PARAMETER_FILENAME_ std::string("specfem_config.yaml")
 
 #include "_util/dump_simfield.hpp"
 #include "_util/edge_storages.hpp"
@@ -24,12 +26,15 @@
 #include <string>
 
 #define _DUMP_INTERVAL_ 5
+_util::demo_assembly::simulation_params
+load_parameters(const std::string &parameter_file, specfem::MPI::MPI *mpi);
 
 void execute(specfem::MPI::MPI *mpi) {
   // TODO sources / receivers
   // https://specfem2d-kokkos.readthedocs.io/en/adjoint-simulations/developer_documentation/tutorials/tutorial1/Chapter2/index.html
 
   std::vector<specfem::adjacency_graph::adjacency_pointer> edge_removals;
+#ifdef USE_DEMO_MESH
 #ifdef FORCE_INTO_CONTINUOUS
   auto params =
       _util::demo_assembly::simulation_params().dt(1e-3).tmax(5).use_demo_mesh(
@@ -41,6 +46,9 @@ void execute(specfem::MPI::MPI *mpi) {
       _util::demo_assembly::simulation_params().dt(1e-3).tmax(5).use_demo_mesh(
           1,
           edge_removals); // construct-mode == 1
+#endif
+#else
+  auto params = load_parameters(_PARAMETER_FILENAME_, mpi);
 #endif
   specfem::compute::assembly assembly = params.build_assembly();
 
@@ -341,6 +349,38 @@ void execute(specfem::MPI::MPI *mpi) {
               _RELAX_PARAM_COEF_ * rho_inv_max /
               sqrt(std::max(spec_charlen2(a_ispec), spec_charlen2(b_ispec)));
 
+        } else if (a_medium == specfem::element::medium_tag::elastic &&
+                   b_medium == specfem::element::medium_tag::acoustic) {
+          // swap a and b
+          int tmpi;
+          type_real tmpr;
+#define swpi(a, b)                                                             \
+  {                                                                            \
+    tmpi = a;                                                                  \
+    a = b;                                                                     \
+    b = tmpi;                                                                  \
+  }
+#define swpr(a, b)                                                             \
+  {                                                                            \
+    tmpr = a;                                                                  \
+    a = b;                                                                     \
+    b = tmpr;                                                                  \
+  }
+          swpi(intersect.a_ref_ind, intersect.b_ref_ind)
+              swpi(intersect.a_ngll, intersect.b_ngll)
+                  swpr(intersect.a_param_start, intersect.b_param_start)
+                      swpr(intersect.a_param_end,
+                           intersect.b_param_end) for (int igll1 = 0;
+                                                       igll1 < edge_capacity;
+                                                       igll1++) {
+            for (int igll2 = 0; igll2 < edge_capacity; igll2++) {
+              swpr(intersect.a_mortar_trans[igll1][igll2],
+                   intersect.b_mortar_trans[igll1][igll2])
+            }
+          }
+
+#undef swpi
+#undef swpr
         } else {
           throw std::runtime_error(
               "Mortar Flux: medium combination not supported.");
@@ -433,7 +473,272 @@ void execute(specfem::MPI::MPI *mpi) {
       0.9);
   timescheme_wrapper.time_stepper.register_event(&store_boundaryvals);
 
-  specfem::event_marching::arbitrary_call_event mortar_flux(
+  const auto h_is_bdry_at_pt =
+      [&](const specfem::point::index<specfem::dimension::type::dim2> index,
+          specfem::element::boundary_tag tag) -> bool {
+    specfem::point::boundary<
+        specfem::element::boundary_tag::acoustic_free_surface,
+        specfem::dimension::type::dim2, false>
+        point_boundary_afs;
+    specfem::point::boundary<specfem::element::boundary_tag::none,
+                             specfem::dimension::type::dim2, false>
+        point_boundary_none;
+    specfem::point::boundary<specfem::element::boundary_tag::stacey,
+                             specfem::dimension::type::dim2, false>
+        point_boundary_stacey;
+    specfem::point::boundary<
+        specfem::element::boundary_tag::composite_stacey_dirichlet,
+        specfem::dimension::type::dim2, false>
+        point_boundary_composite;
+    switch (assembly.boundaries.boundary_tags(index.ispec)) {
+    case specfem::element::boundary_tag::acoustic_free_surface:
+      specfem::compute::load_on_device(index, assembly.boundaries,
+                                       point_boundary_afs);
+      return point_boundary_afs.tag == tag;
+    case specfem::element::boundary_tag::none:
+      specfem::compute::load_on_device(index, assembly.boundaries,
+                                       point_boundary_none);
+      return point_boundary_none.tag == tag;
+    case specfem::element::boundary_tag::stacey:
+      specfem::compute::load_on_device(index, assembly.boundaries,
+                                       point_boundary_stacey);
+      return point_boundary_stacey.tag == tag;
+    case specfem::element::boundary_tag::composite_stacey_dirichlet:
+      specfem::compute::load_on_device(index, assembly.boundaries,
+                                       point_boundary_composite);
+      return point_boundary_composite.tag == tag;
+    default:
+      throw std::runtime_error(
+          "h_is_bdry_at_pt: unknown assembly.boundaries.boundary_tags(ispec) "
+          "value!");
+      return false;
+    }
+  };
+
+  specfem::event_marching::arbitrary_call_event mortar_flux_acoustic(
+      [&]() {
+        dg_edge_storage.foreach_intersection_on_host(
+            [&](_util::edge_manager::edge_intersection<edge_capacity>
+                    &intersect,
+                _util::edge_manager::edge_data<edge_capacity, data_capacity> &a,
+                _util::edge_manager::edge_data<edge_capacity, data_capacity> &b,
+                decltype(Kokkos::subview(
+                    std::declval<specfem::kokkos::HostView2d<type_real> >(), 1u,
+                    Kokkos::ALL)) data_view) {
+              using PointAcoustic =
+                  specfem::point::field<specfem::dimension::type::dim2,
+                                        specfem::element::medium_tag::acoustic,
+                                        true, false, false, false, false>;
+              using PointElastic =
+                  specfem::point::field<specfem::dimension::type::dim2,
+                                        specfem::element::medium_tag::elastic,
+                                        true, false, false, false, false>;
+              using PointAcousticAccel =
+                  specfem::point::field<specfem::dimension::type::dim2,
+                                        specfem::element::medium_tag::acoustic,
+                                        false, false, true, false, false>;
+              using PointElasticAccel =
+                  specfem::point::field<specfem::dimension::type::dim2,
+                                        specfem::element::medium_tag::elastic,
+                                        false, false, true, false, false>;
+              _util::edge_manager::quadrature_rule gll =
+                  _util::edge_manager::gen_GLL(intersect.ngll);
+              int a_ispec = a.parent.id;
+              int b_ispec = b.parent.id;
+              specfem::element::medium_tag a_medium =
+                  assembly.properties.h_element_types(a_ispec);
+              specfem::element::medium_tag b_medium =
+                  assembly.properties.h_element_types(b_ispec);
+              type_real a_scale_dS =
+                  0.5 * (intersect.a_param_end - intersect.a_param_start);
+              type_real b_scale_dS =
+                  0.5 * (intersect.b_param_end - intersect.b_param_start);
+              // currently, edge_manager assumes any acoustic - x boundaries
+              // have acoustic on the a-side.
+              if (a_medium == specfem::element::medium_tag::acoustic) {
+                if (b_medium == specfem::element::medium_tag::acoustic) {
+                  for (int a_ishape = 0; a_ishape < a.ngll; a_ishape++) {
+                    // flux += (
+                    //       np.einsum("j,j,j,ji->i",JW,u-u_,c/2,dv)
+                    //     + np.einsum("j,ji,j->i",JW,v,0.5*(c*du+c_*du_))
+                    //     - a*np.einsum("j,j,ji->i",JW,u-u_,v)
+                    // )
+                    type_real flux = 0;
+                    type_real f1 = 0;
+                    type_real f2 = 0;
+                    type_real f3 = 0;
+                    for (int iquad = 0; iquad < gll.nquad; iquad++) {
+                      type_real c = intersect.a_to_mortar(
+                          iquad, a.data[EDGEIND_SPEEDPARAM]);
+                      type_real u_jmp =
+                          intersect.a_to_mortar(iquad, a.data[EDGEIND_FIELD]) -
+                          intersect.b_to_mortar(iquad, b.data[EDGEIND_FIELD]);
+                      type_real cdu_avg =
+                          0.5 * (c * intersect.a_to_mortar(
+                                         iquad, a.data[EDGEIND_FIELDNDERIV]) -
+                                 intersect.b_to_mortar(
+                                     iquad, b.data[EDGEIND_SPEEDPARAM]) *
+                                     intersect.b_to_mortar(
+                                         iquad, b.data[EDGEIND_FIELDNDERIV]) *
+                                     (b_scale_dS / a_scale_dS));
+                      data_view[INTERIND_UJMP + iquad] = u_jmp;
+                      data_view[INTERIND_DU_AVG + iquad] = cdu_avg;
+
+                      f1 += a_scale_dS * gll.w[iquad] * 0.5 *
+                            intersect.a_to_mortar(
+                                iquad, a.data[EDGEIND_SHAPENDERIV + a_ishape]) *
+                            c * u_jmp;
+                      f2 += a_scale_dS * gll.w[iquad] *
+                            intersect.a_mortar_trans[iquad][a_ishape] *
+                            (cdu_avg);
+                      f3 += a_scale_dS * gll.w[iquad] *
+                            intersect.a_to_mortar(iquad, a.data[EDGEIND_DS]) *
+                            intersect.a_mortar_trans[iquad][a_ishape] *
+                            (-intersect.relax_param * u_jmp);
+                      flux +=
+                          a_scale_dS * gll.w[iquad] *
+                          (0.5 *
+                               intersect.a_to_mortar(
+                                   iquad,
+                                   a.data[EDGEIND_SHAPENDERIV + a_ishape]) *
+                               c * u_jmp +
+                           intersect.a_mortar_trans[iquad][a_ishape] *
+                               (cdu_avg - intersect.a_to_mortar(
+                                              iquad, a.data[EDGEIND_DS]) *
+                                              intersect.relax_param * u_jmp));
+                    }
+                    data_view[INTERIND_FLUXTOTAL_A + a_ishape] = flux;
+                    data_view[INTERIND_FLUX1_A + a_ishape] = f1;
+                    data_view[INTERIND_FLUX2_A + a_ishape] = f2;
+                    data_view[INTERIND_FLUX3_A + a_ishape] = f3;
+                    PointAcousticAccel accel;
+                    specfem::point::index<specfem::dimension::type::dim2> index(
+                        a_ispec, 0, 0);
+                    point_from_id(index.ix, index.iz, a.parent.bdry, a_ishape);
+                    if (h_is_bdry_at_pt(index,
+                                        specfem::element::boundary_tag::none)) {
+                      accel.acceleration = flux;
+                      specfem::compute::atomic_add_on_device(
+                          index, accel, assembly.fields.forward);
+                      data_view[INTERIND_ACCEL_INCLUDE_A + a_ishape] = 0;
+                    } else {
+                      data_view[INTERIND_ACCEL_INCLUDE_A + a_ishape] = 1;
+                    }
+                  }
+                  for (int b_ishape = 0; b_ishape < b.ngll; b_ishape++) {
+                    // flux += (
+                    //       np.einsum("j,j,j,ji->i",JW,u-u_,c/2,dv)
+                    //     + np.einsum("j,ji,j->i",JW,v,0.5*(c*du+c_*du_))
+                    //     - a*np.einsum("j,j,ji->i",JW,u-u_,v)
+                    // )
+                    type_real flux = 0;
+                    type_real f1 = 0;
+                    type_real f2 = 0;
+                    type_real f3 = 0;
+                    for (int iquad = 0; iquad < gll.nquad; iquad++) {
+                      type_real c = intersect.b_to_mortar(
+                          iquad, b.data[EDGEIND_SPEEDPARAM]);
+                      type_real u_jmp =
+                          intersect.b_to_mortar(iquad, b.data[EDGEIND_FIELD]) -
+                          intersect.a_to_mortar(iquad, a.data[EDGEIND_FIELD]);
+                      type_real cdu_avg =
+                          0.5 * (c * intersect.b_to_mortar(
+                                         iquad, b.data[EDGEIND_FIELDNDERIV]) -
+                                 intersect.a_to_mortar(
+                                     iquad, a.data[EDGEIND_SPEEDPARAM]) *
+                                     intersect.a_to_mortar(
+                                         iquad, a.data[EDGEIND_FIELDNDERIV]) *
+                                     (a_scale_dS / b_scale_dS));
+                      f1 += b_scale_dS * gll.w[iquad] * 0.5 *
+                            intersect.b_to_mortar(
+                                iquad, b.data[EDGEIND_SHAPENDERIV + b_ishape]) *
+                            c * u_jmp;
+                      f2 += b_scale_dS * gll.w[iquad] *
+                            intersect.b_mortar_trans[iquad][b_ishape] *
+                            (cdu_avg);
+                      f3 += b_scale_dS * gll.w[iquad] *
+                            intersect.b_to_mortar(iquad, b.data[EDGEIND_DS]) *
+                            intersect.b_mortar_trans[iquad][b_ishape] *
+                            (-intersect.relax_param * u_jmp);
+                      flux +=
+                          b_scale_dS * gll.w[iquad] *
+                          (0.5 *
+                               intersect.b_to_mortar(
+                                   iquad,
+                                   b.data[EDGEIND_SHAPENDERIV + b_ishape]) *
+                               c * u_jmp +
+                           intersect.b_mortar_trans[iquad][b_ishape] *
+                               (cdu_avg - intersect.b_to_mortar(
+                                              iquad, b.data[EDGEIND_DS]) *
+                                              intersect.relax_param * u_jmp));
+                    }
+                    data_view[INTERIND_FLUXTOTAL_B + b_ishape] = flux;
+                    data_view[INTERIND_FLUX1_B + b_ishape] = f1;
+                    data_view[INTERIND_FLUX2_B + b_ishape] = f2;
+                    data_view[INTERIND_FLUX3_B + b_ishape] = f3;
+                    PointAcousticAccel accel;
+                    specfem::point::index<specfem::dimension::type::dim2> index(
+                        b_ispec, 0, 0);
+                    point_from_id(index.ix, index.iz, b.parent.bdry, b_ishape);
+                    if (h_is_bdry_at_pt(index,
+                                        specfem::element::boundary_tag::none)) {
+                      accel.acceleration = flux;
+                      specfem::compute::atomic_add_on_device(
+                          index, accel, assembly.fields.forward);
+                      data_view[INTERIND_ACCEL_INCLUDE_B + b_ishape] = 0;
+                    } else {
+                      data_view[INTERIND_ACCEL_INCLUDE_B + b_ishape] = 1;
+                    }
+                  }
+
+                } else if (b_medium == specfem::element::medium_tag::elastic) {
+                  throw std::runtime_error(
+                      "Mortar Flux: medium combination not supported.");
+                  for (int a_ishape = 0; a_ishape < a.ngll; a_ishape++) {
+                    // flux = JW * v * s.n
+                    type_real flux = 0;
+                    for (int iquad = 0; iquad < gll.nquad; iquad++) {
+                      type_real sn_dSb =
+                          ( // yes this is not optimized.
+                              intersect.b_to_mortar(iquad,
+                                                    b.data[EDGEIND_FIELD]) *
+                                  intersect.b_to_mortar(iquad,
+                                                        b.data[EDGEIND_NX]) +
+                              intersect.b_to_mortar(iquad,
+                                                    b.data[EDGEIND_FIELD + 1]) *
+                                  intersect.b_to_mortar(iquad,
+                                                        b.data[EDGEIND_NZ])) *
+                          intersect.b_to_mortar(iquad, b.data[EDGEIND_DET]);
+                      flux += b_scale_dS * gll.w[iquad] * sn_dSb *
+                              intersect.a_mortar_trans[iquad][a_ishape];
+                    }
+                    data_view[INTERIND_FLUXTOTAL_A + a_ishape] = flux;
+                    PointAcousticAccel accel;
+                    specfem::point::index<specfem::dimension::type::dim2> index(
+                        a_ispec, 0, 0);
+                    point_from_id(index.ix, index.iz, a.parent.bdry, a_ishape);
+                    if (h_is_bdry_at_pt(index,
+                                        specfem::element::boundary_tag::none)) {
+                      accel.acceleration = flux;
+                      specfem::compute::atomic_add_on_device(
+                          index, accel, assembly.fields.forward);
+                      data_view[INTERIND_ACCEL_INCLUDE_A + a_ishape] = 0;
+                    } else {
+                      data_view[INTERIND_ACCEL_INCLUDE_A + a_ishape] = 1;
+                    }
+                  }
+                } else {
+                  throw std::runtime_error(
+                      "Mortar Flux: medium combination not supported.");
+                }
+              }
+            });
+        return 0;
+      },
+      0.91);
+  timescheme_wrapper.time_stepper.register_event(&mortar_flux_acoustic);
+
+  specfem::event_marching::arbitrary_call_event mortar_flux_elastic(
       [&]() {
         dg_edge_storage.foreach_intersection_on_host(
             [&](_util::edge_manager::edge_intersection<edge_capacity>
@@ -475,168 +780,202 @@ void execute(specfem::MPI::MPI *mpi) {
                   0.5 * (intersect.a_param_end - intersect.a_param_start);
               type_real b_scale_dS =
                   0.5 * (intersect.b_param_end - intersect.b_param_start);
-              if (a_medium == specfem::element::medium_tag::acoustic &&
-                  b_medium == specfem::element::medium_tag::acoustic) {
-                for (int a_ishape = 0; a_ishape < a.ngll; a_ishape++) {
-                  // flux += (
-                  //       np.einsum("j,j,j,ji->i",JW,u-u_,c/2,dv)
-                  //     + np.einsum("j,ji,j->i",JW,v,0.5*(c*du+c_*du_))
-                  //     - a*np.einsum("j,j,ji->i",JW,u-u_,v)
-                  // )
-                  type_real flux = 0;
-                  type_real f1 = 0;
-                  type_real f2 = 0;
-                  type_real f3 = 0;
-                  for (int iquad = 0; iquad < gll.nquad; iquad++) {
-                    type_real c = intersect.a_to_mortar(
-                        iquad, a.data[EDGEIND_SPEEDPARAM]);
-                    type_real u_jmp =
-                        intersect.a_to_mortar(iquad, a.data[EDGEIND_FIELD]) -
-                        intersect.b_to_mortar(iquad, b.data[EDGEIND_FIELD]);
-                    type_real cdu_avg =
-                        0.5 * (c * intersect.a_to_mortar(
-                                       iquad, a.data[EDGEIND_FIELDNDERIV]) -
-                               intersect.b_to_mortar(
-                                   iquad, b.data[EDGEIND_SPEEDPARAM]) *
-                                   intersect.b_to_mortar(
-                                       iquad, b.data[EDGEIND_FIELDNDERIV]) *
-                                   (b_scale_dS / a_scale_dS));
-                    data_view[INTERIND_UJMP + iquad] = u_jmp;
-                    data_view[INTERIND_DU_AVG + iquad] = cdu_avg;
+              if (b_medium == specfem::element::medium_tag::elastic) {
+                if (a_medium == specfem::element::medium_tag::elastic) {
+                  throw std::runtime_error(
+                      "Mortar Flux: elastic-elastic not yet supported.");
+                  for (int a_ishape = 0; a_ishape < a.ngll; a_ishape++) {
+                    // flux += (
+                    //       np.einsum("j,j,j,ji->i",JW,u-u_,c/2,dv)
+                    //     + np.einsum("j,ji,j->i",JW,v,0.5*(c*du+c_*du_))
+                    //     - a*np.einsum("j,j,ji->i",JW,u-u_,v)
+                    // )
+                    type_real flux = 0;
+                    type_real f1 = 0;
+                    type_real f2 = 0;
+                    type_real f3 = 0;
+                    for (int iquad = 0; iquad < gll.nquad; iquad++) {
+                      type_real c = intersect.a_to_mortar(
+                          iquad, a.data[EDGEIND_SPEEDPARAM]);
+                      type_real u_jmp =
+                          intersect.a_to_mortar(iquad, a.data[EDGEIND_FIELD]) -
+                          intersect.b_to_mortar(iquad, b.data[EDGEIND_FIELD]);
+                      type_real cdu_avg =
+                          0.5 * (c * intersect.a_to_mortar(
+                                         iquad, a.data[EDGEIND_FIELDNDERIV]) -
+                                 intersect.b_to_mortar(
+                                     iquad, b.data[EDGEIND_SPEEDPARAM]) *
+                                     intersect.b_to_mortar(
+                                         iquad, b.data[EDGEIND_FIELDNDERIV]) *
+                                     (b_scale_dS / a_scale_dS));
+                      data_view[INTERIND_UJMP + iquad] = u_jmp;
+                      data_view[INTERIND_DU_AVG + iquad] = cdu_avg;
 
-                    f1 += a_scale_dS * gll.w[iquad] * 0.5 *
-                          intersect.a_to_mortar(
-                              iquad, a.data[EDGEIND_SHAPENDERIV + a_ishape]) *
-                          c * u_jmp;
-                    f2 += a_scale_dS * gll.w[iquad] *
-                          intersect.a_mortar_trans[iquad][a_ishape] * (cdu_avg);
-                    f3 += a_scale_dS * gll.w[iquad] *
-                          intersect.a_to_mortar(iquad, a.data[EDGEIND_DS]) *
-                          intersect.a_mortar_trans[iquad][a_ishape] *
-                          (-intersect.relax_param * u_jmp);
-                    flux += a_scale_dS * gll.w[iquad] *
-                            (0.5 *
-                                 intersect.a_to_mortar(
-                                     iquad,
-                                     a.data[EDGEIND_SHAPENDERIV + a_ishape]) *
-                                 c * u_jmp +
-                             intersect.a_mortar_trans[iquad][a_ishape] *
-                                 (cdu_avg - intersect.a_to_mortar(
-                                                iquad, a.data[EDGEIND_DS]) *
-                                                intersect.relax_param * u_jmp));
+                      f1 += a_scale_dS * gll.w[iquad] * 0.5 *
+                            intersect.a_to_mortar(
+                                iquad, a.data[EDGEIND_SHAPENDERIV + a_ishape]) *
+                            c * u_jmp;
+                      f2 += a_scale_dS * gll.w[iquad] *
+                            intersect.a_mortar_trans[iquad][a_ishape] *
+                            (cdu_avg);
+                      f3 += a_scale_dS * gll.w[iquad] *
+                            intersect.a_to_mortar(iquad, a.data[EDGEIND_DS]) *
+                            intersect.a_mortar_trans[iquad][a_ishape] *
+                            (-intersect.relax_param * u_jmp);
+                      flux +=
+                          a_scale_dS * gll.w[iquad] *
+                          (0.5 *
+                               intersect.a_to_mortar(
+                                   iquad,
+                                   a.data[EDGEIND_SHAPENDERIV + a_ishape]) *
+                               c * u_jmp +
+                           intersect.a_mortar_trans[iquad][a_ishape] *
+                               (cdu_avg - intersect.a_to_mortar(
+                                              iquad, a.data[EDGEIND_DS]) *
+                                              intersect.relax_param * u_jmp));
+                    }
+                    data_view[INTERIND_FLUXTOTAL_A + a_ishape] = flux;
+                    data_view[INTERIND_FLUX1_A + a_ishape] = f1;
+                    data_view[INTERIND_FLUX2_A + a_ishape] = f2;
+                    data_view[INTERIND_FLUX3_A + a_ishape] = f3;
+                    PointAcousticAccel accel;
+                    specfem::point::index<specfem::dimension::type::dim2> index(
+                        a_ispec, 0, 0);
+                    point_from_id(index.ix, index.iz, a.parent.bdry, a_ishape);
+                    if (h_is_bdry_at_pt(index,
+                                        specfem::element::boundary_tag::none)) {
+                      accel.acceleration = flux;
+                      specfem::compute::atomic_add_on_device(
+                          index, accel, assembly.fields.forward);
+                      data_view[INTERIND_ACCEL_INCLUDE_A + a_ishape] = 0;
+                    } else {
+                      data_view[INTERIND_ACCEL_INCLUDE_A + a_ishape] = 1;
+                    }
                   }
-                  data_view[INTERIND_FLUXTOTAL_A + a_ishape] = flux;
-                  data_view[INTERIND_FLUX1_A + a_ishape] = f1;
-                  data_view[INTERIND_FLUX2_A + a_ishape] = f2;
-                  data_view[INTERIND_FLUX3_A + a_ishape] = f3;
-                  PointAcousticAccel accel;
+                  for (int b_ishape = 0; b_ishape < b.ngll; b_ishape++) {
+                    // flux += (
+                    //       np.einsum("j,j,j,ji->i",JW,u-u_,c/2,dv)
+                    //     + np.einsum("j,ji,j->i",JW,v,0.5*(c*du+c_*du_))
+                    //     - a*np.einsum("j,j,ji->i",JW,u-u_,v)
+                    // )
+                    type_real flux = 0;
+                    type_real f1 = 0;
+                    type_real f2 = 0;
+                    type_real f3 = 0;
+                    for (int iquad = 0; iquad < gll.nquad; iquad++) {
+                      type_real c = intersect.b_to_mortar(
+                          iquad, b.data[EDGEIND_SPEEDPARAM]);
+                      type_real u_jmp =
+                          intersect.b_to_mortar(iquad, b.data[EDGEIND_FIELD]) -
+                          intersect.a_to_mortar(iquad, a.data[EDGEIND_FIELD]);
+                      type_real cdu_avg =
+                          0.5 * (c * intersect.b_to_mortar(
+                                         iquad, b.data[EDGEIND_FIELDNDERIV]) -
+                                 intersect.a_to_mortar(
+                                     iquad, a.data[EDGEIND_SPEEDPARAM]) *
+                                     intersect.a_to_mortar(
+                                         iquad, a.data[EDGEIND_FIELDNDERIV]) *
+                                     (a_scale_dS / b_scale_dS));
+                      f1 += b_scale_dS * gll.w[iquad] * 0.5 *
+                            intersect.b_to_mortar(
+                                iquad, b.data[EDGEIND_SHAPENDERIV + b_ishape]) *
+                            c * u_jmp;
+                      f2 += b_scale_dS * gll.w[iquad] *
+                            intersect.b_mortar_trans[iquad][b_ishape] *
+                            (cdu_avg);
+                      f3 += b_scale_dS * gll.w[iquad] *
+                            intersect.b_to_mortar(iquad, b.data[EDGEIND_DS]) *
+                            intersect.b_mortar_trans[iquad][b_ishape] *
+                            (-intersect.relax_param * u_jmp);
+                      flux +=
+                          b_scale_dS * gll.w[iquad] *
+                          (0.5 *
+                               intersect.b_to_mortar(
+                                   iquad,
+                                   b.data[EDGEIND_SHAPENDERIV + b_ishape]) *
+                               c * u_jmp +
+                           intersect.b_mortar_trans[iquad][b_ishape] *
+                               (cdu_avg - intersect.b_to_mortar(
+                                              iquad, b.data[EDGEIND_DS]) *
+                                              intersect.relax_param * u_jmp));
+                    }
+                    data_view[INTERIND_FLUXTOTAL_B + b_ishape] = flux;
+                    data_view[INTERIND_FLUX1_B + b_ishape] = f1;
+                    data_view[INTERIND_FLUX2_B + b_ishape] = f2;
+                    data_view[INTERIND_FLUX3_B + b_ishape] = f3;
+                    PointAcousticAccel accel;
+                    specfem::point::index<specfem::dimension::type::dim2> index(
+                        b_ispec, 0, 0);
+                    point_from_id(index.ix, index.iz, b.parent.bdry, b_ishape);
+                    if (h_is_bdry_at_pt(index,
+                                        specfem::element::boundary_tag::none)) {
+                      accel.acceleration = flux;
+                      specfem::compute::atomic_add_on_device(
+                          index, accel, assembly.fields.forward);
+                      data_view[INTERIND_ACCEL_INCLUDE_B + b_ishape] = 0;
+                    } else {
+                      data_view[INTERIND_ACCEL_INCLUDE_B + b_ishape] = 1;
+                    }
+                  }
+
+                } else if (a_medium == specfem::element::medium_tag::acoustic) {
+                  throw std::runtime_error(
+                      "Mortar Flux: medium combination not supported.");
+                  type_real a_accel[edge_capacity];
+                  PointAcousticAccel a_accel_f;
                   specfem::point::index<specfem::dimension::type::dim2> index(
                       a_ispec, 0, 0);
-                  point_from_id(index.ix, index.iz, a.parent.bdry, a_ishape);
-                  specfem::point::boundary<
-                      specfem::element::boundary_tag::acoustic_free_surface,
-                      specfem::dimension::type::dim2, false>
-                      point_boundary;
-                  specfem::compute::load_on_device(index, assembly.boundaries,
-                                                   point_boundary);
-          // if(point_boundary.tag !=
-          // specfem::element::boundary_tag::acoustic_free_surface){
-          // printf("[%d,%d,%d],",index.ispec,index.iz,index.ix);
-#define AFSCHECK(x) (abs(x - 0) < 1e-8 || abs(x - 1) < 1e-8)
-                  if (!(AFSCHECK(a.x[a_ishape]) ||
-                        AFSCHECK(a.z[a_ishape]))) { // hack solution for AFS
-                                                    // bdry check
-                    accel.acceleration = flux;
-                    specfem::compute::atomic_add_on_device(
-                        index, accel, assembly.fields.forward);
-                    data_view[INTERIND_ACCEL_INCLUDE_A + a_ishape] = 0;
-                  } else {
-                    data_view[INTERIND_ACCEL_INCLUDE_A + a_ishape] = 1;
+                  for (int a_ishape = 0; a_ishape < a.ngll; a_ishape++) {
+                    point_from_id(index.ix, index.iz, a.parent.bdry, a_ishape);
+                    specfem::compute::load_on_device(
+                        index, assembly.fields.forward, a_accel_f);
+                    a_accel[a_ishape] = a_accel_f.acceleration(0);
                   }
+                  for (int b_ishape = 0; b_ishape < b.ngll; b_ishape++) {
+                    // flux = JW * v * chi_tt
+                    type_real flux_x = 0;
+                    type_real flux_z = 0;
+                    for (int iquad = 0; iquad < gll.nquad; iquad++) {
+                      type_real chitt_v_Ja =
+                          intersect.a_to_mortar(iquad, a.data[EDGEIND_DET]) *
+                          intersect.a_to_mortar(iquad, a_accel) *
+                          intersect.b_mortar_trans[iquad][b_ishape];
+                      flux_x +=
+                          a_scale_dS * gll.w[iquad] *
+                          intersect.a_to_mortar(iquad, a.data[EDGEIND_NX]) *
+                          chitt_v_Ja;
+                      flux_z +=
+                          a_scale_dS * gll.w[iquad] *
+                          intersect.a_to_mortar(iquad, a.data[EDGEIND_NZ]) *
+                          chitt_v_Ja;
+                    }
+                    data_view[INTERIND_FLUXTOTAL_B + b_ishape] = flux_x;
+                    PointElasticAccel accel;
+                    index =
+                        specfem::point::index<specfem::dimension::type::dim2>(
+                            b_ispec, 0, 0);
+                    point_from_id(index.ix, index.iz, b.parent.bdry, b_ishape);
+                    if (h_is_bdry_at_pt(index,
+                                        specfem::element::boundary_tag::none)) {
+                      accel.acceleration(0) = flux_x;
+                      accel.acceleration(1) = flux_z;
+                      specfem::compute::atomic_add_on_device(
+                          index, accel, assembly.fields.forward);
+                      data_view[INTERIND_ACCEL_INCLUDE_B + b_ishape] = 0;
+                    } else {
+                      data_view[INTERIND_ACCEL_INCLUDE_B + b_ishape] = 1;
+                    }
+                  }
+                } else {
+                  throw std::runtime_error(
+                      "Mortar Flux: medium combination not supported.");
                 }
-                for (int b_ishape = 0; b_ishape < b.ngll; b_ishape++) {
-                  // flux += (
-                  //       np.einsum("j,j,j,ji->i",JW,u-u_,c/2,dv)
-                  //     + np.einsum("j,ji,j->i",JW,v,0.5*(c*du+c_*du_))
-                  //     - a*np.einsum("j,j,ji->i",JW,u-u_,v)
-                  // )
-                  type_real flux = 0;
-                  type_real f1 = 0;
-                  type_real f2 = 0;
-                  type_real f3 = 0;
-                  for (int iquad = 0; iquad < gll.nquad; iquad++) {
-                    type_real c = intersect.b_to_mortar(
-                        iquad, b.data[EDGEIND_SPEEDPARAM]);
-                    type_real u_jmp =
-                        intersect.b_to_mortar(iquad, b.data[EDGEIND_FIELD]) -
-                        intersect.a_to_mortar(iquad, a.data[EDGEIND_FIELD]);
-                    type_real cdu_avg =
-                        0.5 * (c * intersect.b_to_mortar(
-                                       iquad, b.data[EDGEIND_FIELDNDERIV]) -
-                               intersect.a_to_mortar(
-                                   iquad, a.data[EDGEIND_SPEEDPARAM]) *
-                                   intersect.a_to_mortar(
-                                       iquad, a.data[EDGEIND_FIELDNDERIV]) *
-                                   (a_scale_dS / b_scale_dS));
-                    f1 += b_scale_dS * gll.w[iquad] * 0.5 *
-                          intersect.b_to_mortar(
-                              iquad, b.data[EDGEIND_SHAPENDERIV + b_ishape]) *
-                          c * u_jmp;
-                    f2 += b_scale_dS * gll.w[iquad] *
-                          intersect.b_mortar_trans[iquad][b_ishape] * (cdu_avg);
-                    f3 += b_scale_dS * gll.w[iquad] *
-                          intersect.b_to_mortar(iquad, b.data[EDGEIND_DS]) *
-                          intersect.b_mortar_trans[iquad][b_ishape] *
-                          (-intersect.relax_param * u_jmp);
-                    flux += b_scale_dS * gll.w[iquad] *
-                            (0.5 *
-                                 intersect.b_to_mortar(
-                                     iquad,
-                                     b.data[EDGEIND_SHAPENDERIV + b_ishape]) *
-                                 c * u_jmp +
-                             intersect.b_mortar_trans[iquad][b_ishape] *
-                                 (cdu_avg - intersect.b_to_mortar(
-                                                iquad, b.data[EDGEIND_DS]) *
-                                                intersect.relax_param * u_jmp));
-                  }
-                  data_view[INTERIND_FLUXTOTAL_B + b_ishape] = flux;
-                  data_view[INTERIND_FLUX1_B + b_ishape] = f1;
-                  data_view[INTERIND_FLUX2_B + b_ishape] = f2;
-                  data_view[INTERIND_FLUX3_B + b_ishape] = f3;
-                  PointAcousticAccel accel;
-                  specfem::point::index<specfem::dimension::type::dim2> index(
-                      b_ispec, 0, 0);
-                  point_from_id(index.ix, index.iz, b.parent.bdry, b_ishape);
-                  specfem::point::boundary<
-                      specfem::element::boundary_tag::acoustic_free_surface,
-                      specfem::dimension::type::dim2, false>
-                      point_boundary;
-                  specfem::compute::load_on_device(index, assembly.boundaries,
-                                                   point_boundary);
-                  // if(point_boundary.tag !=
-                  // specfem::element::boundary_tag::acoustic_free_surface){
-                  // printf("[%d,%d,%d],",index.ispec,index.iz,index.ix);
-                  if (!(AFSCHECK(b.x[b_ishape]) ||
-                        AFSCHECK(b.z[b_ishape]))) { // hack solution for AFS
-                                                    // bdry check
-                    accel.acceleration = flux;
-                    specfem::compute::atomic_add_on_device(
-                        index, accel, assembly.fields.forward);
-                    data_view[INTERIND_ACCEL_INCLUDE_B + b_ishape] = 0;
-                  } else {
-                    data_view[INTERIND_ACCEL_INCLUDE_B + b_ishape] = 1;
-                  }
-                }
-
-              } else {
-                throw std::runtime_error(
-                    "Mortar Flux: medium combination not supported.");
               }
             });
         return 0;
       },
-      0.91);
-  timescheme_wrapper.time_stepper.register_event(&mortar_flux);
+      1.1);
+  timescheme_wrapper.time_stepper.register_event(&mortar_flux_elastic);
 
   // init kernels needs to happen as of time_marcher
   kernels.initialize(timescheme.get_timestep());
@@ -648,6 +987,149 @@ void execute(specfem::MPI::MPI *mpi) {
 #undef data_capacity
 }
 
+// includes for load_parameters from specfem2d.cpp
+#include "compute/interface.hpp"
+// #include "coupled_interface/interface.hpp"
+// #include "domain/interface.hpp"
+#include "kokkos_abstractions.h"
+#include "mesh/mesh.hpp"
+#include "parameter_parser/interface.hpp"
+#include "receiver/interface.hpp"
+#include "solver/solver.hpp"
+#include "source/interface.hpp"
+#include "specfem_mpi/interface.hpp"
+#include "specfem_setup.hpp"
+#include "timescheme/timescheme.hpp"
+#include "yaml-cpp/yaml.h"
+#include <Kokkos_Core.hpp>
+#include <boost/program_options.hpp>
+#include <chrono>
+#include <ctime>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
+_util::demo_assembly::simulation_params
+load_parameters(const std::string &parameter_file, specfem::MPI::MPI *mpi) {
+  const std::string &default_file = __default_file__;
+
+  // --------------------------------------------------------------
+  //                    Read parameter file
+  // --------------------------------------------------------------
+  auto start_time = std::chrono::high_resolution_clock::now();
+  specfem::runtime_configuration::setup setup(parameter_file, default_file);
+  const auto [database_filename, source_filename] = setup.get_databases();
+  mpi->cout(setup.print_header(start_time));
+  // --------------------------------------------------------------
+
+  // --------------------------------------------------------------
+  //                   Read mesh and materials
+  // --------------------------------------------------------------
+  const auto quadrature = setup.instantiate_quadrature();
+  const specfem::mesh::mesh mesh(database_filename, mpi);
+  // --------------------------------------------------------------
+
+  // --------------------------------------------------------------
+  //                   Read Sources and Receivers
+  // --------------------------------------------------------------
+  const int nsteps = setup.get_nsteps();
+  const specfem::simulation::type simulation_type = setup.get_simulation_type();
+  auto [sources, t0] = specfem::sources::read_sources(
+      source_filename, nsteps, setup.get_t0(), setup.get_dt(), simulation_type);
+  setup.update_t0(t0); // Update t0 in case it was changed
+
+  const auto stations_filename = setup.get_stations_file();
+  const auto angle = setup.get_receiver_angle();
+  auto receivers = specfem::receivers::read_receivers(stations_filename, angle);
+
+  mpi->cout("Source Information:");
+  mpi->cout("-------------------------------");
+  if (mpi->main_proc()) {
+    std::cout << "Number of sources : " << sources.size() << "\n" << std::endl;
+  }
+
+  for (auto &source : sources) {
+    mpi->cout(source->print());
+  }
+
+  mpi->cout("Receiver Information:");
+  mpi->cout("-------------------------------");
+
+  if (mpi->main_proc()) {
+    std::cout << "Number of receivers : " << receivers.size() << "\n"
+              << std::endl;
+  }
+
+  for (auto &receiver : receivers) {
+    mpi->cout(receiver->print());
+  }
+  // --------------------------------------------------------------
+
+  // --------------------------------------------------------------
+  //                   Instantiate Timescheme
+  // --------------------------------------------------------------
+  const auto time_scheme = setup.instantiate_timescheme();
+  if (mpi->main_proc())
+    std::cout << *time_scheme << std::endl;
+
+  const int max_seismogram_time_step = time_scheme->get_max_seismogram_step();
+  // --------------------------------------------------------------
+
+  // --------------------------------------------------------------
+  //                   Generate Assembly
+  // --------------------------------------------------------------
+  mpi->cout("Generating assembly:");
+  mpi->cout("-------------------------------");
+  const type_real dt = setup.get_dt();
+  specfem::compute::assembly assembly(
+      mesh, quadrature, sources, receivers, setup.get_seismogram_types(),
+      setup.get_t0(), dt, nsteps, max_seismogram_time_step,
+      setup.get_simulation_type());
+  time_scheme->link_assembly(assembly);
+
+  // --------------------------------------------------------------
+
+  // --------------------------------------------------------------
+  //                   Read wavefields
+  // --------------------------------------------------------------
+
+  const auto wavefield_reader = setup.instantiate_wavefield_reader(assembly);
+  if (wavefield_reader) {
+    mpi->cout("Reading wavefield files:");
+    mpi->cout("-------------------------------");
+
+    wavefield_reader->read();
+    // Transfer the buffer field to device
+    assembly.fields.buffer.copy_to_device();
+  }
+  // --------------------------------------------------------------
+
+  // --------------------------------------------------------------
+  //                   Instantiate Solver
+  // --------------------------------------------------------------
+  specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
+  std::shared_ptr<specfem::solver::solver> solver =
+      setup.instantiate_solver(dt, assembly, time_scheme, qp5);
+  // --------------------------------------------------------------
+
+  // --------------------------------------------------------------
+  //                   Execute Solver
+  // --------------------------------------------------------------
+  // Time the solver
+
+  return _util::demo_assembly::simulation_params()
+      .dt(dt)
+      .nsteps(nsteps)
+      .t0(setup.get_t0())
+      .simulation_type(setup.get_simulation_type())
+      .mesh(mesh)
+      .quadrature(quadrature)
+      .set_sources(sources)
+      .set_receivers(receivers)
+      .set_seismogram_types(setup.get_seismogram_types())
+      .nseismogram_steps(max_seismogram_time_step);
+}
 int main(int argc, char **argv) {
 
   // Initialize MPI

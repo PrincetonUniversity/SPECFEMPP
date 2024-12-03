@@ -127,7 +127,7 @@ bool intersect(edge_data<ngll, datacapacity> &a,
       za += a.z[j] * gll.L[j * ngll + i];
       zb += b.z[j] * gll.L[j * ngll + i];
     }
-    if (abs(xa) > 1e-4 || abs(xb) > 1e-4 || abs(za) > 1e-4 || abs(zb) > 1e-4) {
+    if (fabs(xa) > 1e-4 || fabs(xb) > 1e-4 || fabs(za) > 1e-4 || fabs(zb) > 1e-4) {
       std::cout << "t^" << i << " term fail\n";
       std::cout << "  a x-deriv " << xa << " from "
                 << "[";
@@ -197,7 +197,7 @@ bool intersect(edge_data<ngll, datacapacity> &a,
     }
 
     // a param -> b param (a1 + ta*a2 = b1 + tb*b2)
-    if (abs(x2b) > abs(z2b)) {
+    if (fabs(x2b) > fabs(z2b)) {
       intersection.b_param_start =
           (x1a + intersection.a_param_start * x2a - x1b) / x2b;
       intersection.b_param_end =

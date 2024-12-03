@@ -91,7 +91,8 @@ struct simulation_params {
             std::vector<std::shared_ptr<specfem::receivers::receiver> >()),
         _seismogram_types(std::vector<specfem::enums::seismogram::type>()),
         _nseismogram_steps(0), _t0_adj_prio(0), _dt_adj_prio(1),
-        _tmax_adj_prio(2), _nstep_adj_prio(3), needs_mesh_update(true) {}
+        _tmax_adj_prio(2), _nstep_adj_prio(3), needs_mesh_update(true),
+        overwrite_nseismo_steps(true) {}
 
   simulation_params &t0(type_real val) {
     _t0 = val;
@@ -111,6 +112,11 @@ struct simulation_params {
   simulation_params &nsteps(int val) {
     _nsteps = val;
     _update_timevars(3);
+    return *this;
+  }
+  simulation_params &nseismogram_steps(int val) {
+    overwrite_nseismo_steps = false;
+    _nseismogram_steps = val;
     return *this;
   }
   simulation_params &simulation_type(specfem::simulation::type val) {
@@ -133,13 +139,28 @@ struct simulation_params {
     return *this;
   }
   simulation_params &
+  set_sources(std::vector<std::shared_ptr<specfem::sources::source> > sources) {
+    _sources = sources;
+    return *this;
+  }
+  simulation_params &
   add_receiver(std::shared_ptr<specfem::receivers::receiver> receiver) {
     _receivers.push_back(receiver);
+    return *this;
+  }
+  simulation_params &set_receivers(
+      std::vector<std::shared_ptr<specfem::receivers::receiver> > receivers) {
+    _receivers = receivers;
     return *this;
   }
   simulation_params &
   add_seismogram_type(specfem::enums::seismogram::type type) {
     _seismogram_types.push_back(type);
+    return *this;
+  }
+  simulation_params &
+  set_seismogram_types(std::vector<specfem::enums::seismogram::type> seismos) {
+    _seismogram_types = seismos;
     return *this;
   }
   simulation_params &use_demo_mesh(int demo_construct_mode) {
@@ -185,6 +206,7 @@ private:
   int8_t _dt_adj_prio;
   int8_t _tmax_adj_prio;
   int8_t _nstep_adj_prio;
+  bool overwrite_nseismo_steps;
   void _update_timevars(int set_ind) {
     int8_t set_prio_prev =
         (set_ind == 0)
