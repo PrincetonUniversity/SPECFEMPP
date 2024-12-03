@@ -7,7 +7,7 @@
 #include "IO/mesh/impl/fortran/read_interfaces.hpp"
 #include "IO/mesh/impl/fortran/read_material_properties.hpp"
 #include "IO/mesh/impl/fortran/read_mesh_database.hpp"
-#include "IO/mesh/impl/fortran/read_properties.hpp"
+#include "IO/mesh/impl/fortran/read_parameters.hpp"
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "material/material.hpp"
@@ -60,7 +60,7 @@ specfem::mesh::mesh specfem::IO::read_mesh(const std::string filename,
 
   try {
     mesh.parameters =
-        specfem::IO::mesh::impl::fortran::read_properties(stream, mpi);
+        specfem::IO::mesh::impl::fortran::read_mesh_parameters(stream, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
