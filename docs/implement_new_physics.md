@@ -52,17 +52,18 @@ Files that need updating
 
 - [ ] Add new material `load_device_properties` to `compute/properties/properties.hpp`
 - [ ] Add new material `load_host_properties` to `compute/properties/properties.hpp`
+- [ ] Add new material property containers and corresponding `load_device_
 
 > **_NOTE:_** It's really the
 `specfem::compute::properties::material_property<type, property>::medium_property()`
-> constructor defined in `include/compute/properties/properties.tpp` that assigns
-> properties to the GLL points.
+> constructor defined in `include/compute/properties/impl/material_properties.tpp`
+> that assigns properties to the GLL points from the input mesh.
 
 We need to hold different properties and update the corresponding
 `load_on_device` function.
 `compute/properties/impl/properties_container.hpp`
 
-- [ ] Add new material property containers and corresponding `load_d
+
 
 
 ## Create Medium class
