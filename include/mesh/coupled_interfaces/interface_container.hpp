@@ -20,6 +20,8 @@ struct interface_container;
 template <specfem::element::medium_tag Medium1,
           specfem::element::medium_tag Medium2>
 struct interface_container<specfem::dimension::type::dim2, Medium1, Medium2> {
+  constexpr static auto dimension =
+      specfem::dimension::type::dim2;          ///< Dimension
   constexpr static auto medium1_tag = Medium1; ///< Medium 1 tag
   constexpr static auto medium2_tag = Medium2; ///< Medium 2 tag
 

@@ -15,6 +15,7 @@ namespace mesh {
 template <typename specfem::dimension::type DimensionType>
 struct coupled_interfaces {
 public:
+  constexpr static auto dimension = DimensionType; ///< Dimension
   /**
    * @name Constructors
    *
