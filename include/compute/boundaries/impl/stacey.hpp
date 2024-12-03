@@ -53,7 +53,8 @@ public:
   stacey() = default;
 
   stacey(const int nspec, const int ngllz, const int ngllx,
-         const specfem::mesh::absorbing_boundary &stacey,
+         const specfem::mesh::absorbing_boundary<specfem::dimension::type::dim2>
+             &stacey,
          const specfem::compute::mesh_to_compute_mapping &mapping,
          const specfem::compute::quadrature &quadrature,
          const specfem::compute::partial_derivatives &partial_derivatives,
