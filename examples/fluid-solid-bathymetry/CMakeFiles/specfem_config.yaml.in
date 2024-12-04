@@ -33,6 +33,13 @@ parameters:
             format: ascii
             directory: @CMAKE_SOURCE_DIR@/examples/fluid-solid-bathymetry/OUTPUT_FILES/seismograms
 
+          display:
+            format: PNG
+            directory: @CMAKE_SOURCE_DIR@/examples/fluid-solid-bathymetry/OUTPUT_FILES/display
+            field: displacement
+            simulation-field: forward
+            time-interval: 100
+
   receivers:
     stations-file: @CMAKE_SOURCE_DIR@/examples/fluid-solid-bathymetry/OUTPUT_FILES/STATIONS
     angle: 0.0
