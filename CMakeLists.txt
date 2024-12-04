@@ -7,7 +7,7 @@ option(HDF5_CXX_BUILD "Build HDF5 C++" ON)
 option(VTK_CXX_BUILD "Build VTK C++" ON)
 option(MPI_PARALLEL "MPI enabled" OFF)
 option(BUILD_TESTS "Tests included" OFF)
-option(BUILD_EXAMPLES "Examples included" OFF)
+option(BUILD_EXAMPLES "Examples included" ON)
 option(ENABLE_SIMD "Enable SIMD" OFF)
 option(ENABLE_PROFILING "Enable profiling" OFF)
 # set(CMAKE_BUILD_TYPE Release)
@@ -129,15 +129,15 @@ add_library(
         src/IO/fortranio/fortran_io.cpp
         src/IO/HDF5/native_type.cpp
         # src/IO/ASCII/native_type.cpp
-        src/IO/mesh/read_mesh.cpp
+        src/IO/sources.cpp
+        src/IO/receivers.cpp
+        src/IO/mesh.cpp
         src/IO/mesh/impl/fortran/read_boundaries.cpp
         src/IO/mesh/impl/fortran/read_elements.cpp
         src/IO/mesh/impl/fortran/read_material_properties.cpp
         src/IO/mesh/impl/fortran/read_mesh_database.cpp
         src/IO/mesh/impl/fortran/read_interfaces.cpp
-        src/IO/mesh/impl/fortran/read_properties.cpp
-        src/IO/sources/read_sources.cpp
-        src/IO/receivers/read_receivers.cpp
+        src/IO/mesh/impl/fortran/read_parameters.cpp
 )
 
 if (NOT HDF5_CXX_BUILD)
@@ -163,15 +163,7 @@ endif()
 target_link_libraries(
   IO
   mesh
-)
-
-target_link_libraries(
-  IO
   source_class
-)
-
-target_link_libraries(
-  IO
   receiver_class
 )
 
@@ -591,8 +583,10 @@ if (BUILD_TESTS)
         add_subdirectory(tests/unit-tests)
 endif()
 
-message("-- Including examples.")
-add_subdirectory(examples)
+if (BUILD_EXAMPLES)
+        message("-- Including examples.")
+        add_subdirectory(examples)
+endif()
 
 # Doxygen
 

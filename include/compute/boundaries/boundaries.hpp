@@ -3,7 +3,7 @@
 
 #include "compute/compute_mesh.hpp"
 #include "compute/properties/properties.hpp"
-#include "enumerations/specfem_enums.hpp"
+#include "enumerations/interface.hpp"
 #include "impl/acoustic_free_surface.hpp"
 #include "impl/stacey.hpp"
 #include "macros.hpp"
@@ -69,7 +69,7 @@ public:
    * quadrature point
    */
   boundaries(const int nspec, const int ngllz, const int ngllx,
-             const specfem::mesh::mesh &mesh,
+             const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
              const specfem::compute::mesh_to_compute_mapping &mapping,
              const specfem::compute::quadrature &quadrature,
              const specfem::compute::properties &properties,

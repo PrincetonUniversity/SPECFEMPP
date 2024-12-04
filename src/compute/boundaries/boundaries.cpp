@@ -1,9 +1,9 @@
-
 #include "compute/boundaries/boundaries.hpp"
+#include "enumerations/interface.hpp"
 
 specfem::compute::boundaries::boundaries(
     const int nspec, const int ngllz, const int ngllx,
-    const specfem::mesh::mesh &mesh,
+    const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::compute::mesh_to_compute_mapping &mapping,
     const specfem::compute::quadrature &quadrature,
     const specfem::compute::properties &properties,

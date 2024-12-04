@@ -21,7 +21,7 @@ namespace seismogram {
  * @brief Seismogram type enumeration
  *
  */
-enum class type { displacement, velocity, acceleration };
+enum class type { displacement, velocity, acceleration, pressure };
 
 /**
  * @brief Output format of seismogram enumeration

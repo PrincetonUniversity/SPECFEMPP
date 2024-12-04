@@ -528,7 +528,8 @@
 //               coupled_interfaces.acoustic_poroelastic)) {}
 
 specfem::compute::coupled_interfaces::coupled_interfaces(
-    const specfem::mesh::mesh &mesh, const specfem::compute::points &points,
+    const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
+    const specfem::compute::points &points,
     const specfem::compute::quadrature &quadrature,
     const specfem::compute::partial_derivatives &partial_derivatives,
     const specfem::compute::properties &properties,
