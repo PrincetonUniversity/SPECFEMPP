@@ -83,10 +83,6 @@ void specfem::domain::impl::kernels::receiver_kernel<
       NGLL, DimensionType, MediumTag, specfem::kokkos::DevScratchSpace,
       Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, true, true, false, using_simd>;
 
-  using Aux2ComponentFieldType = specfem::element::field<
-      NGLL, DimensionType, specfem::element::medium_tag::elastic, specfem::kokkos::DevScratchSpace,
-      Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, false, false, false, using_simd>;
-
   using ElementQuadratureType = specfem::element::quadrature<
       NGLL, DimensionType, specfem::kokkos::DevScratchSpace,
       Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, false>;
