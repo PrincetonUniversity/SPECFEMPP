@@ -13,7 +13,7 @@ template class specfem::compute::impl::kernels::material_kernels<
 namespace {
 void compute_number_of_elements_per_medium(
     const int nspec, const specfem::compute::mesh_to_compute_mapping &mapping,
-    const specfem::mesh::tags &tags,
+    const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
     const specfem::kokkos::HostView1d<specfem::element::medium_tag>
         &h_element_types,
     const specfem::kokkos::HostView1d<specfem::element::property_tag>
@@ -62,7 +62,7 @@ void compute_number_of_elements_per_medium(
 specfem::compute::kernels::kernels(
     const int nspec, const int ngllz, const int ngllx,
     const specfem::compute::mesh_to_compute_mapping &mapping,
-    const specfem::mesh::tags &tags)
+    const specfem::mesh::tags<specfem::dimension::type::dim2> &tags)
     : nspec(nspec), ngllz(ngllz), ngllx(ngllx),
       element_types("specfem::compute::properties::element_types", nspec),
       h_element_types(Kokkos::create_mirror_view(element_types)),

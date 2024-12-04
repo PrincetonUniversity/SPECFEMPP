@@ -92,14 +92,14 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   specfem::runtime_configuration::setup setup(parameter_file, default_file);
   const auto [database_filename, source_filename] = setup.get_databases();
   mpi->cout(setup.print_header(start_time));
+
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
   //                   Read mesh and materials
   // --------------------------------------------------------------
   const auto quadrature = setup.instantiate_quadrature();
-  const specfem::mesh::mesh mesh =
-      specfem::IO::read_mesh(database_filename, mpi);
+  const auto mesh = specfem::IO::read_mesh(database_filename, mpi);
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------

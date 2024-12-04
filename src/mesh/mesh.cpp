@@ -1,5 +1,5 @@
 #include "mesh/mesh.hpp"
-#include "enumerations/specfem_enums.hpp"
+#include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "material/material.hpp"
 #include "specfem_mpi/interface.hpp"
@@ -10,7 +10,7 @@
 #include <memory>
 #include <vector>
 
-std::string specfem::mesh::mesh::print() const {
+std::string specfem::mesh::mesh<specfem::dimension::type::dim2>::print() const {
 
   int n_elastic;
   int n_acoustic;

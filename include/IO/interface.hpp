@@ -1,5 +1,6 @@
 #pragma once
 
+#include "enumerations/interface.hpp"
 #include "enumerations/simulation.hpp"
 #include "mesh/mesh.hpp"
 #include "receiver/interface.hpp"
@@ -19,8 +20,8 @@ namespace IO {
  * @return specfem::mesh::mesh Specfem mesh object
  *
  */
-specfem::mesh::mesh read_mesh(const std::string filename,
-                              const specfem::MPI::MPI *mpi);
+specfem::mesh::mesh<specfem::dimension::type::dim2>
+read_mesh(const std::string filename, const specfem::MPI::MPI *mpi);
 
 /**
  * @brief Read receiver station file

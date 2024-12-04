@@ -7,7 +7,7 @@
 #include "IO/mesh/impl/fortran/read_interfaces.hpp"
 #include "IO/mesh/impl/fortran/read_material_properties.hpp"
 #include "IO/mesh/impl/fortran/read_mesh_database.hpp"
-#include "IO/mesh/impl/fortran/read_properties.hpp"
+#include "IO/mesh/impl/fortran/read_parameters.hpp"
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "material/material.hpp"
@@ -23,11 +23,12 @@
 #include <tuple>
 #include <vector>
 
-specfem::mesh::mesh specfem::IO::read_mesh(const std::string filename,
-                                           const specfem::MPI::MPI *mpi) {
+specfem::mesh::mesh<specfem::dimension::type::dim2>
+specfem::IO::read_mesh(const std::string filename,
+                       const specfem::MPI::MPI *mpi) {
 
   // Declaring empty mesh objects
-  specfem::mesh::mesh mesh;
+  specfem::mesh::mesh<specfem::dimension::type::dim2> mesh;
 
   // Open the database file
   std::ifstream stream;
@@ -60,7 +61,7 @@ specfem::mesh::mesh specfem::IO::read_mesh(const std::string filename,
 
   try {
     mesh.parameters =
-        specfem::IO::mesh::impl::fortran::read_properties(stream, mpi);
+        specfem::IO::mesh::impl::fortran::read_mesh_parameters(stream, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
@@ -208,7 +209,8 @@ specfem::mesh::mesh specfem::IO::read_mesh(const std::string filename,
   assert(l_elastic_isotropic.size() + l_acoustic_isotropic.size() ==
          mesh.materials.n_materials);
 
-  mesh.tags = specfem::mesh::tags(mesh.materials, mesh.boundaries);
+  mesh.tags = specfem::mesh::tags<specfem::dimension::type::dim2>(
+      mesh.materials, mesh.boundaries);
 
   return mesh;
 }
