@@ -83,6 +83,10 @@ void specfem::domain::impl::kernels::receiver_kernel<
       NGLL, DimensionType, MediumTag, specfem::kokkos::DevScratchSpace,
       Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, true, true, false, using_simd>;
 
+  using Aux2ComponentFieldType = specfem::element::field<
+      NGLL, DimensionType, specfem::element::medium_tag::elastic, specfem::kokkos::DevScratchSpace,
+      Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, false, false, false, using_simd>;
+
   using ElementQuadratureType = specfem::element::quadrature<
       NGLL, DimensionType, specfem::kokkos::DevScratchSpace,
       Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, false>;
@@ -158,35 +162,15 @@ void specfem::domain::impl::kernels::receiver_kernel<
                 return point_properties;
               }();
 
-              const auto active_field = [&]() ->
-                  typename ElementFieldType::ViewType {
-                    switch (seismogram_type_l) {
-                    case specfem::enums::seismogram::type::displacement:
-                      return element_field.displacement;
-                      break;
-                    case specfem::enums::seismogram::type::velocity:
-                      return element_field.velocity;
-                      break;
-                    case specfem::enums::seismogram::type::acceleration:
-                      return element_field.acceleration;
-                      break;
-                    default:
-                      DEVICE_ASSERT(false, "seismogram not supported");
-                      return {};
-                      break;
-                    }
-                  }();
-
               auto sv_receiver_field =
                   Kokkos::subview(receivers.receiver_field, iz, ix, iseis_l,
                                   ireceiver_l, isig_step, Kokkos::ALL);
 
               receiver.get_field(iz, ix, point_partial_derivatives,
                                  point_properties,
-                                 element_quadrature.hprime_gll, active_field,
+                                 element_quadrature.hprime_gll, element_field, seismogram_type_l,
                                  sv_receiver_field);
             });
-
         team_member.team_barrier();
 
         // compute seismograms components
