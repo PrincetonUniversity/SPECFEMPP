@@ -137,7 +137,7 @@ add_library(
         src/IO/mesh/impl/fortran/read_material_properties.cpp
         src/IO/mesh/impl/fortran/read_mesh_database.cpp
         src/IO/mesh/impl/fortran/read_interfaces.cpp
-        src/IO/mesh/impl/fortran/read_properties.cpp
+        src/IO/mesh/impl/fortran/read_parameters.cpp
 )
 
 if (NOT HDF5_CXX_BUILD)

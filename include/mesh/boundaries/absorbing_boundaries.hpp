@@ -1,5 +1,6 @@
 #pragma once
 
+#include "enumerations/dimension.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "specfem_mpi/specfem_mpi.hpp"
 
@@ -8,8 +9,19 @@ namespace mesh {
 /**
  * @brief Absorbing boundary information
  *
+ * @tparam DimensionType Dimension type for the mesh
  */
-struct absorbing_boundary {
+template <specfem::dimension::type DimensionType> struct absorbing_boundary;
+
+/**
+ * @brief Absorbing boundary information
+ *
+ */
+template <> struct absorbing_boundary<specfem::dimension::type::dim2> {
+
+  constexpr static auto dimension =
+      specfem::dimension::type::dim2; ///< Dimension
+                                      ///< type
 
   int nelements; ///< Number of elements on the absorbing boundary
 

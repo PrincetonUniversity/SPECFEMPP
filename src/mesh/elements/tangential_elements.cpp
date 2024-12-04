@@ -1,9 +1,10 @@
 #include "IO/fortranio/interface.hpp"
+#include "enumerations/interface.hpp"
 #include "mesh/elements/elements.hpp"
 #include "specfem_mpi/interface.hpp"
 
-specfem::mesh::elements::tangential_elements::tangential_elements(
-    const int nnodes_tangential_curve) {
+specfem::mesh::elements::tangential_elements<specfem::dimension::type::dim2>::
+    tangential_elements(const int nnodes_tangential_curve) {
   if (nnodes_tangential_curve > 0) {
     this->x = specfem::kokkos::HostView1d<type_real>(
         "specfem::mesh::tangential_nodes::x", nnodes_tangential_curve);
