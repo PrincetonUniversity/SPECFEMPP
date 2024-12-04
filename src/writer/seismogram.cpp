@@ -43,6 +43,10 @@ void specfem::writer::seismogram::write() {
                        this->output_folder + "/" + network_name + station_name +
                            "BXZ" + ".sema" };
           break;
+        case specfem::enums::seismogram::type::pressure:
+          filename = { this->output_folder + "/" + network_name + station_name +
+                       "PRE" + ".semp" };
+          break;
         }
 
         for (int iorientation = 0; iorientation < filename.size();

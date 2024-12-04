@@ -1,7 +1,10 @@
 #include "mesh/tags/tags.hpp"
+#include "enumerations/dimension.hpp"
 
-specfem::mesh::tags::tags(const specfem::mesh::materials &materials,
-                          const specfem::mesh::boundaries &boundaries) {
+specfem::mesh::tags<specfem::dimension::type::dim2>::tags(
+    const specfem::mesh::materials &materials,
+    const specfem::mesh::boundaries<specfem::dimension::type::dim2>
+        &boundaries) {
 
   this->nspec = materials.material_index_mapping.extent(0);
 

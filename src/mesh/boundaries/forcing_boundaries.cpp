@@ -4,8 +4,8 @@
 #include <Kokkos_Core.hpp>
 #include <vector>
 
-specfem::mesh::forcing_boundary::forcing_boundary(
-    const int nelement_acforcing) {
+specfem::mesh::forcing_boundary<specfem::dimension::type::dim2>::
+    forcing_boundary(const int nelement_acforcing) {
 
   if (nelement_acforcing > 0) {
     this->numacforcing = specfem::kokkos::HostView1d<int>(

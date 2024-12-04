@@ -1,7 +1,5 @@
 #include "test_fixture.hpp"
-#include "IO/mesh/read_mesh.hpp"
-#include "IO/receivers/read_receivers.hpp"
-#include "IO/sources/read_sources.hpp"
+#include "IO/interface.hpp"
 #include "test_fixture.tpp"
 
 // ------------------------------------------------------------------------
