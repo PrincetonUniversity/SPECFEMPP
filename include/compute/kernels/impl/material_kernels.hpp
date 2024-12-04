@@ -2,7 +2,7 @@
 #define _SPECFEM_COMPUTE_KERNELS_IMPL_MATERIAL_KERNELS_HPP_
 
 #include "compute/properties/properties.hpp"
-#include "enumerations/medium.hpp"
+#include "enumerations/interface.hpp"
 #include "kernels_container.hpp"
 #include "kokkos_abstractions.h"
 #include <Kokkos_Core.hpp>
@@ -23,7 +23,7 @@ public:
   material_kernels(
       const int nspec, const int n_element, const int ngllz, const int ngllx,
       const specfem::compute::mesh_to_compute_mapping &mapping,
-      const specfem::mesh::tags &tags,
+      const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
       const specfem::kokkos::HostView1d<int> property_index_mapping)
       : specfem::compute::impl::kernels::kernels_container<value_type,
                                                            property_type>(

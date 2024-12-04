@@ -1,9 +1,9 @@
-
 #include "compute/assembly/assembly.hpp"
+#include "enumerations/interface.hpp"
 #include "mesh/mesh.hpp"
 
 specfem::compute::assembly::assembly(
-    const specfem::mesh::mesh &mesh,
+    const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
     const specfem::quadrature::quadratures &quadratures,
     const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
     const std::vector<std::shared_ptr<specfem::receivers::receiver> >

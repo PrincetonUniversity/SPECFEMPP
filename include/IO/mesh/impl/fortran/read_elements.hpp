@@ -1,5 +1,6 @@
 #pragma once
 
+#include "enumerations/interface.hpp"
 #include "mesh/elements/axial_elements.hpp"
 #include "mesh/elements/tangential_elements.hpp"
 #include "specfem_mpi/interface.hpp"
@@ -18,7 +19,7 @@ namespace fortran {
  * @return specfem::mesh::elements::tangential_elements
  *
  */
-specfem::mesh::elements::tangential_elements
+specfem::mesh::elements::tangential_elements<specfem::dimension::type::dim2>
 read_tangential_elements(std::ifstream &stream,
                          const int nnodes_tangential_curve);
 
@@ -32,7 +33,7 @@ read_tangential_elements(std::ifstream &stream,
  * @return specfem::mesh::elements::axial_elements
  *
  */
-specfem::mesh::elements::axial_elements
+specfem::mesh::elements::axial_elements<specfem::dimension::type::dim2>
 read_axial_elements(std::ifstream &stream, const int nelem_on_the_axis,
                     const int nspec, const specfem::MPI::MPI *mpi);
 

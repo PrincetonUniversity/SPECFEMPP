@@ -7,7 +7,7 @@ option(HDF5_CXX_BUILD "Build HDF5 C++" ON)
 option(VTK_CXX_BUILD "Build VTK C++" ON)
 option(MPI_PARALLEL "MPI enabled" OFF)
 option(BUILD_TESTS "Tests included" OFF)
-option(BUILD_EXAMPLES "Examples included" OFF)
+option(BUILD_EXAMPLES "Examples included" ON)
 option(ENABLE_SIMD "Enable SIMD" OFF)
 option(ENABLE_PROFILING "Enable profiling" OFF)
 # set(CMAKE_BUILD_TYPE Release)
@@ -137,7 +137,7 @@ add_library(
         src/IO/mesh/impl/fortran/read_material_properties.cpp
         src/IO/mesh/impl/fortran/read_mesh_database.cpp
         src/IO/mesh/impl/fortran/read_interfaces.cpp
-        src/IO/mesh/impl/fortran/read_properties.cpp
+        src/IO/mesh/impl/fortran/read_parameters.cpp
 )
 
 if (NOT HDF5_CXX_BUILD)
@@ -583,8 +583,10 @@ if (BUILD_TESTS)
         add_subdirectory(tests/unit-tests)
 endif()
 
-message("-- Including examples.")
-add_subdirectory(examples)
+if (BUILD_EXAMPLES)
+        message("-- Including examples.")
+        add_subdirectory(examples)
+endif()
 
 # Doxygen
 
