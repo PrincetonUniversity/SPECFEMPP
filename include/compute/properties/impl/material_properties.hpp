@@ -1,6 +1,7 @@
 #pragma once
 
 #include "compute/compute_mesh.hpp"
+#include "enumerations/interface.hpp"
 #include "mesh/materials/materials.hpp"
 #include "mesh/tags/tags.hpp"
 #include "properties_container.hpp"
@@ -23,7 +24,7 @@ struct material_property
   material_property(
       const int nspec, const int n_element, const int ngllz, const int ngllx,
       const specfem::compute::mesh_to_compute_mapping &mapping,
-      const specfem::mesh::tags &tags,
+      const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
       const specfem::mesh::materials &materials,
       const specfem::kokkos::HostView1d<int> property_index_mapping)
       : specfem::compute::impl::properties::properties_container<type,
