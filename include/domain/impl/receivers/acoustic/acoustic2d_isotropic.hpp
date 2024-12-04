@@ -35,10 +35,11 @@ private:
       NGLL, dimension, specfem::kokkos::DevScratchSpace,
       Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, true>::ViewType;
 
-  using ElementFieldViewType = typename specfem::element::field<
-      NGLL, dimension, medium_tag, specfem::kokkos::DevScratchSpace,
-      Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, true, true, false,
-      using_simd>::ViewType;
+  using ElementFieldType =
+      typename specfem::element::field<NGLL, dimension, medium_tag,
+                                       specfem::kokkos::DevScratchSpace,
+                                       Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+                                       true, true, true, false, using_simd>;
 
 public:
   /**
@@ -111,7 +112,8 @@ public:
                                        using_simd>
           properties,
       const ElementQuadratureViewType hprime,
-      const ElementFieldViewType active_field,
+      const ElementFieldType active_field,
+      const specfem::enums::seismogram::type seismo_type,
       Kokkos::View<type_real[2], Kokkos::LayoutStride,
                    specfem::kokkos::DevMemSpace>
           receiver_field) const;
