@@ -245,17 +245,6 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     seismograms.sync_seismograms();
 
     // --------------------------------------------------------------
-    //                   Write Seismograms
-    // --------------------------------------------------------------
-    const auto seismogram_writer =
-        setup.instantiate_seismogram_writer(assembly);
-    if (seismogram_writer) {
-      mpi->cout("Writing seismogram files:");
-      mpi->cout("-------------------------------");
-
-      seismogram_writer->write();
-    }
-    // --------------------------------------------------------------
 
     for (int irec = 0; irec < receivers.size(); ++irec) {
       const auto network_name = receivers[irec]->get_network_name();
@@ -296,10 +285,9 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
           FAIL() << "--------------------------------------------------\n"
                  << "\033[0;31m[FAILED]\033[0m Test failed\n"
                  << " - Test name: " << Test.name << "\n"
-                 << " - Error: Traces do not match\n"
+                 << " - Error: Unknown seismogram type\n"
                  << " - Station: " << station_name << "\n"
                  << " - Network: " << network_name << "\n"
-                 << " - Seismogram Type: \033[0;31mUnknown\033[0m\n"
                  << "--------------------------------------------------\n\n"
                  << std::endl;
           break;
@@ -332,25 +320,6 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
             compute_norm += std::sqrt(value * value);
           }
         }
-        // #define _ZERO_ (1e-20)
-        //         if (compute_norm <= _ZERO_){
-        //           if(error_norm > _ZERO_){
-        //             FAIL() <<
-        //             "--------------------------------------------------\n"
-        //                   << "\033[0;31m[FAILED]\033[0m Test failed\n"
-        //                   << " - Test name: " << Test.name << "\n"
-        //                   << " - Error: Traces do not match\n"
-        //                   << " - Station: " << station_name << "\n"
-        //                   << " - Network: " << network_name << "\n"
-        //                   << " - Seismogram Type: " << stype_name << "\n"
-        //                   << " - Error value != 0: " << error_norm << "( >
-        //                   "<< _ZERO_ <<")\n"
-        //                   <<
-        //                   "--------------------------------------------------\n\n"
-        //                   << std::endl;
-        //           }
-        // #undef _ZERO_
-        //         }else
         if (error_norm / compute_norm > 1e-3 ||
             std::isnan(error_norm / compute_norm)) {
           FAIL() << "--------------------------------------------------\n"
