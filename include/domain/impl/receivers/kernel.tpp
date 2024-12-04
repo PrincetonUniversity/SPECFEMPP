@@ -10,7 +10,7 @@
 #include "quadrature/interface.hpp"
 #include "specfem_setup.hpp"
 
-template <specfem::wavefield::type WavefieldType,
+template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, typename qp_type>
@@ -34,9 +34,9 @@ specfem::domain::impl::kernels::receiver_kernel<
   for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver) {
     const int ispec = h_receiver_kernel_index_mapping(ireceiver);
     if ((assembly.properties.h_element_types(ispec) !=
-         medium_type::medium_tag) &&
+         medium_tag) &&
         (assembly.properties.h_element_property(ispec) !=
-         medium_type::property_tag)) {
+         property_tag)) {
       throw std::runtime_error("Invalid element detected in kernel");
     }
   }
@@ -63,7 +63,7 @@ specfem::domain::impl::kernels::receiver_kernel<
   return;
 }
 
-template <specfem::wavefield::type WavefieldType,
+template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, typename qp_type>
@@ -78,7 +78,6 @@ void specfem::domain::impl::kernels::receiver_kernel<
   // within the element. Scratch views speed up this computation by limiting
   // global memory accesses.
 
-  constexpr int components = medium_type::components;
   constexpr int NGLL = quadrature_points_type::NGLL;
   using ElementFieldType = specfem::element::field<
       NGLL, DimensionType, MediumTag, specfem::kokkos::DevScratchSpace,
@@ -159,35 +158,15 @@ void specfem::domain::impl::kernels::receiver_kernel<
                 return point_properties;
               }();
 
-              const auto active_field = [&]() ->
-                  typename ElementFieldType::ViewType {
-                    switch (seismogram_type_l) {
-                    case specfem::enums::seismogram::type::displacement:
-                      return element_field.displacement;
-                      break;
-                    case specfem::enums::seismogram::type::velocity:
-                      return element_field.velocity;
-                      break;
-                    case specfem::enums::seismogram::type::acceleration:
-                      return element_field.acceleration;
-                      break;
-                    default:
-                      DEVICE_ASSERT(false, "seismogram not supported");
-                      return {};
-                      break;
-                    }
-                  }();
-
               auto sv_receiver_field =
                   Kokkos::subview(receivers.receiver_field, iz, ix, iseis_l,
                                   ireceiver_l, isig_step, Kokkos::ALL);
 
               receiver.get_field(iz, ix, point_partial_derivatives,
                                  point_properties,
-                                 element_quadrature.hprime_gll, active_field,
+                                 element_quadrature.hprime_gll, element_field, seismogram_type_l,
                                  sv_receiver_field);
             });
-
         team_member.team_barrier();
 
         // compute seismograms components

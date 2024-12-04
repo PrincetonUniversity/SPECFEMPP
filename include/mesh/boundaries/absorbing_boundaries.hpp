@@ -1,5 +1,6 @@
 #pragma once
 
+#include "enumerations/dimension.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "specfem_mpi/specfem_mpi.hpp"
 
@@ -8,8 +9,19 @@ namespace mesh {
 /**
  * @brief Absorbing boundary information
  *
+ * @tparam DimensionType Dimension type for the mesh
  */
-struct absorbing_boundary {
+template <specfem::dimension::type DimensionType> struct absorbing_boundary;
+
+/**
+ * @brief Absorbing boundary information
+ *
+ */
+template <> struct absorbing_boundary<specfem::dimension::type::dim2> {
+
+  constexpr static auto dimension =
+      specfem::dimension::type::dim2; ///< Dimension
+                                      ///< type
 
   int nelements; ///< Number of elements on the absorbing boundary
 
@@ -34,18 +46,6 @@ struct absorbing_boundary {
 
   absorbing_boundary(const int num_abs_boundaries_faces);
 
-  /**
-   * @brief Constructor to read and assign values from fortran binary database
-   * file
-   *
-   * @param stream Stream object for fortran binary file buffered to absorbing
-   * boundary section
-   * @param num_abs_boundary_faces Number of absorbing boundary faces
-   * @param nspec Number of spectral elements
-   * @param mpi Pointer to MPI object
-   */
-  absorbing_boundary(std::ifstream &stream, int num_abs_boundary_faces,
-                     const int nspec, const specfem::MPI::MPI *mpi);
   ///@}
 };
 } // namespace mesh

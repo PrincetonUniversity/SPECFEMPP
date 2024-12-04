@@ -1,5 +1,6 @@
 #pragma once
 
+#include "enumerations/dimension.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "specfem_mpi/specfem_mpi.hpp"
 
@@ -8,8 +9,19 @@ namespace mesh {
 /**
  * @brief Acoustic free surface boundary information
  *
+ * @tparam DimensionType Dimension type for the mesh
  */
-struct acoustic_free_surface {
+template <specfem::dimension::type DimensionType> struct acoustic_free_surface;
+
+/**
+ * @brief Acoustic free surface boundary information
+ *
+ */
+template <> struct acoustic_free_surface<specfem::dimension::type::dim2> {
+
+  constexpr static auto dimension =
+      specfem::dimension::type::dim2; ///< Dimension
+                                      ///< type
   /**
    * @name Constructors
    *
@@ -22,20 +34,7 @@ struct acoustic_free_surface {
   acoustic_free_surface(){};
 
   acoustic_free_surface(const int nelem_acoustic_surface);
-  /**
-   * @brief Constructor to read and assign values from fortran binary database
-   * file
-   *
-   * @param stream Stream object for fortran binary file buffered to absorbing
-   * boundary section
-   * @param nelem_acoustic_surface Number of absorbing boundary faces
-   * @param knods Spectral element node connectivity
-   * @param mpi Pointer to MPI object
-   */
-  acoustic_free_surface(std::ifstream &stream,
-                        const int &nelem_acoustic_surface,
-                        const Kokkos::View<int **, Kokkos::HostSpace> knods,
-                        const specfem::MPI::MPI *mpi);
+
   ///@}
 
   int nelem_acoustic_surface; ///< Number of elements on the acoustic free

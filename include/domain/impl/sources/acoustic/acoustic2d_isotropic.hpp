@@ -32,12 +32,16 @@ public:
    * @name Typedefs
    */
   ///@{
-  using dimension =
-      specfem::dimension::dimension<specfem::dimension::type::dim2>;
-  using medium_type =
-      specfem::medium::medium<specfem::dimension::type::dim2,
-                              specfem::element::medium_tag::acoustic,
-                              specfem::element::property_tag::isotropic>;
+  constexpr static int num_dimensions = specfem::element::attributes<
+      specfem::dimension::type::dim2,
+      specfem::element::medium_tag::acoustic>::dimension();
+  constexpr static int components = specfem::element::attributes<
+      specfem::dimension::type::dim2,
+      specfem::element::medium_tag::acoustic>::components();
+  constexpr static auto medium_tag = specfem::element::medium_tag::acoustic;
+  constexpr static auto property_tag =
+      specfem::element::property_tag::isotropic;
+  constexpr static auto dimension = specfem::dimension::type::dim2;
 
   using quadrature_points_type =
       specfem::enums::element::quadrature::static_quadrature_points<NGLL>;
@@ -78,12 +82,12 @@ public:
    * the source
    */
   KOKKOS_INLINE_FUNCTION void compute_interaction(
+      const specfem::datatype::ScalarPointViewType<type_real, components,
+                                                   using_simd> &source_array,
       const specfem::datatype::ScalarPointViewType<
-          type_real, medium_type::components, using_simd> &stf,
-      const specfem::datatype::ScalarPointViewType<
-          type_real, medium_type::components, using_simd> &lagrange_interpolant,
-      specfem::datatype::ScalarPointViewType<type_real, medium_type::components,
-                                             using_simd> &acceleration) const;
+          type_real, components, using_simd> &lagrange_interpolants,
+      specfem::datatype::ScalarPointViewType<type_real, components, using_simd>
+          &acceleration) const;
 };
 } // namespace sources
 } // namespace impl

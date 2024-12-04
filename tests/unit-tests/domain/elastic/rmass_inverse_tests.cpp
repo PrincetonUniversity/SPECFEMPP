@@ -1,6 +1,7 @@
 #include "../../Kokkos_Environment.hpp"
 #include "../../MPI_environment.hpp"
 #include "../../utilities/include/compare_array.h"
+#include "IO/interface.hpp"
 #include "compute/interface.hpp"
 #include "constants.hpp"
 #include "domain/interface.hpp"
@@ -59,12 +60,12 @@ TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
 
   // Read mesh generated MESHFEM
   std::vector<specfem::material::material *> materials;
-  specfem::mesh::mesh mesh(database_file, materials, mpi);
+  specfem::mesh::mesh mesh = specfem::IO::read_mesh(database_file, mpi);
 
   // Read sources
   //    if start time is not explicitly specified then t0 is determined using
   //    source frequencies and time shift
-  auto [sources, t0] = specfem::sources::read_sources(sources_file, 1e-5, mpi);
+  auto [sources, t0] = specfem::IO::read_sources(sources_file, 1e-5, mpi);
 
   // Generate compute structs to be used by the solver
   specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,
