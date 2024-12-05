@@ -10,6 +10,7 @@ option(BUILD_TESTS "Tests included" OFF)
 option(BUILD_EXAMPLES "Examples included" ON)
 option(ENABLE_SIMD "Enable SIMD" OFF)
 option(ENABLE_PROFILING "Enable profiling" OFF)
+
 # set(CMAKE_BUILD_TYPE Release)
 set(CHUNK_SIZE 32)
 set(NUM_CHUNKS 1)
@@ -22,6 +23,12 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
         message("-- Detected Intel classic compiler which will be deprecated soon.")
         message("-- It is recommended you use IntelLLVM compiler.")
         set(CMAKE_CXX_FLAGS "-diag-disable=10441 -fp-model=precise")
+endif()
+
+# Check if MacOS
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(__APPLE__ TRUE)
+    message("-- macOS detected -- setting __APPLE__ TRUE")
 endif()
 
 if (DEFINED Kokkos_ENABLE_CUDA)
@@ -502,6 +509,8 @@ add_library(
         plotter
         src/plotter/plot_wavefield.cpp
 )
+
+target_compile_definitions(plotter PRIVATE __APPLE__)
 
 if (NOT VTK_CXX_BUILD)
         target_compile_definitions(
