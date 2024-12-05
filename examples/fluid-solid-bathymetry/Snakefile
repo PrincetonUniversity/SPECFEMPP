@@ -4,24 +4,7 @@ MESHFEM_BIN = "xmeshfem2D"
 
 rule all:
     input:
-        displacement_siesmograms=expand(
-            "OUTPUT_FILES/results/{station_name}{network_name}{component}.semd",
-            station_name=[
-                "S0001",
-                "S0002",
-            ],
-            network_name=["AA"],
-            component=["BXX", "BXZ"],
-        ),
-        pressure_siesmograms=expand(
-            "OUTPUT_FILES/results/{station_name}{network_name}{component}.semd",
-            station_name=[
-                "S0001",
-                "S0002",
-            ],
-            network_name=["AA"],
-            component=["PRE"],
-        ),
+        plot="OUTPUT_FILES/results/plot.png",
     localrule: True
 
 rule generate_mesh:
@@ -91,7 +74,7 @@ rule run_simulation:
         nodes=1,
         tasks=1,
         cpus_per_task=1,
-        runtime=30,
+        runtime=40,
     shell:
         """
             module purge
@@ -101,6 +84,61 @@ rule run_simulation:
             echo "Hostname: $(hostname)" > output.log
             {SPECFEM_BIN} -p {input.specfem_config} >> output.log
         """
+
+rule plot_seismogram:
+    input:
+        displacement_siesmograms=expand(
+            "OUTPUT_FILES/results/{station_name}{network_name}{component}.semd",
+            station_name=[
+                "S0001",
+                "S0002",
+            ],
+            network_name=["AA"],
+            component=["BXX", "BXZ"],
+        ),
+        pressure_siesmograms=expand(
+            "OUTPUT_FILES/results/{station_name}{network_name}{component}.semd",
+            station_name=[
+                "S0001",
+                "S0002",
+            ],
+            network_name=["AA"],
+            component=["PRE"],
+        ),
+    output:
+        traces="OUTPUT_FILES/results/plot.png",
+    localrule: True
+    run:
+        import glob
+        import os
+        import numpy as np
+        import obspy
+
+
+        def get_traces(directory):
+            traces = []
+            files = glob.glob(directory + "/*.sem*")
+            ## iterate over all seismograms
+            for filename in files:
+                station_name = os.path.splitext(filename)[0]
+                station_name = station_name.split("/")[-1]
+                trace = np.loadtxt(filename, delimiter=" ")
+                starttime = trace[0, 0]
+                dt = trace[1, 0] - trace[0, 0]
+                traces.append(
+                    obspy.Trace(
+                        trace[:, 1],
+                        {"network": station_name, "starttime": starttime, "delta": dt},
+                    )
+                )
+
+            stream = obspy.Stream(traces)
+
+            return stream
+
+
+        stream = get_traces("OUTPUT_FILES/results")
+        stream.plot(size=(800, 1000)).savefig(output.traces)
 
 rule clean:
     localrule: True
