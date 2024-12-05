@@ -20,7 +20,7 @@
 #include <vtkJPEGWriter.h>
 #include <vtkLookupTable.h>
 #include <vtkNamedColors.h>
-#include <vtkOpenGLRenderWindow.h>
+#include <vtkCocoaRenderWindow.h>
 #include <vtkPNGWriter.h>
 #include <vtkPointData.h>
 #include <vtkPoints.h>
@@ -311,7 +311,7 @@ void specfem::plotter::plot_wavefield::plot() {
     }
   } else {
     // Create a render window interactor
-    auto render_window = vtkSmartPointer<vtkOpenGLRenderWindow>::New();
+    auto render_window = vtkSmartPointer<vtkCocoaRenderWindow>::New();
     render_window->AddRenderer(renderer);
     render_window->SetSize(1280, 1280);
     render_window->SetWindowName("Wavefield");

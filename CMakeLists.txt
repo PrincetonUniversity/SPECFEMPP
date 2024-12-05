@@ -61,6 +61,7 @@ RenderingGL2PSOpenGL2
 RenderingOpenGL2
 )
 
+
 if (NOT VTK_FOUND)
   message("VTK not found: ${VTK_NOT_FOUND_MESSAGE}")
   set(VTK_CXX_BUILD OFF)
@@ -517,7 +518,8 @@ else ()
                 plotter
                 compute
                 ${VTK_LIBRARIES}
-        )
+                )
+        
 endif()
 
 add_library(
