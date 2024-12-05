@@ -7,6 +7,7 @@
 
 // #define FORCE_INTO_CONTINUOUS
 // #define USE_DEMO_MESH
+// #define SET_INITIAL_CONDITION
 #define _RELAX_PARAM_COEF_ 40
 
 #define _EVENT_MARCHER_DUMPS_
@@ -49,8 +50,9 @@ void execute(specfem::MPI::MPI *mpi) {
 #endif
 #else
   auto params = load_parameters(_PARAMETER_FILENAME_, mpi);
+
 #endif
-  specfem::compute::assembly assembly = params.build_assembly();
+  std::shared_ptr<specfem::compute::assembly> assembly = params.get_assembly();
 
 #ifdef _EVENT_MARCHER_DUMPS_
   _util::init_dirs(_stepwise_simfield_dump_);
@@ -58,33 +60,36 @@ void execute(specfem::MPI::MPI *mpi) {
   _util::init_dirs(_stepwise_edge_dump_);
 
   _util::dump_simfield(_index_change_dump_ + "/prior_remap.dat",
-                       assembly.fields.forward, assembly.mesh.points);
+                       assembly->fields.forward, assembly->mesh.points);
 #endif
 
   // convert to compute indices
   for (int i = 0; i < edge_removals.size(); i++) {
     edge_removals[i].elem =
-        assembly.mesh.mapping.mesh_to_compute(edge_removals[i].elem);
+        assembly->mesh.mapping.mesh_to_compute(edge_removals[i].elem);
   }
 #ifndef FORCE_INTO_CONTINUOUS
-  remap_with_disconts(assembly, params, edge_removals);
+  remap_with_disconts(*assembly, params, edge_removals);
 #endif
 
 #ifdef _EVENT_MARCHER_DUMPS_
   _util::dump_simfield(_index_change_dump_ + "/post_remap.dat",
-                       assembly.fields.forward, assembly.mesh.points);
+                       assembly->fields.forward, assembly->mesh.points);
 #endif
 
   specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
   auto kernels = specfem::kernels::kernels<
-      specfem::wavefield::type::forward, specfem::dimension::type::dim2,
+      specfem::wavefield::simulation_field::forward,
+      specfem::dimension::type::dim2,
       specfem::enums::element::quadrature::static_quadrature_points<5> >(
-      params.get_dt(), assembly, qp5);
+      params.get_dt(), *assembly, qp5);
 
   auto timescheme =
       specfem::time_scheme::newmark<specfem::simulation::type::forward>(
           params.get_numsteps(), 1, params.get_dt(), params.get_t0());
-  timescheme.link_assembly(assembly);
+  timescheme.link_assembly(*assembly);
+
+  params.set_plotters_from_runtime_configuration();
 
   auto event_system = specfem::event_marching::event_system();
 
@@ -99,9 +104,9 @@ void execute(specfem::MPI::MPI *mpi) {
   timescheme_wrapper.set_forward_corrector_event(acoustic, 2);
   timescheme_wrapper.set_wavefield_update_event<elastic>(kernels, 3);
   timescheme_wrapper.set_forward_corrector_event(elastic, 4);
-  timescheme_wrapper
-      .set_seismogram_update_event<specfem::wavefield::type::forward>(kernels,
-                                                                      5);
+  timescheme_wrapper.set_seismogram_update_event<
+      specfem::wavefield::simulation_field::forward>(kernels, 5);
+  timescheme_wrapper.set_plotter_update_event(params.get_plotters(), 5.1);
 
   timescheme_wrapper.register_under_marcher(&event_system);
 
@@ -119,8 +124,8 @@ void execute(specfem::MPI::MPI *mpi) {
         int istep = timescheme_wrapper.get_istep();
         if (istep % _DUMP_INTERVAL_ == 0) {
           _util::dump_simfield_per_step(istep, _stepwise_simfield_dump_ + "/d",
-                                        assembly.fields.forward,
-                                        assembly.mesh.points);
+                                        assembly->fields.forward,
+                                        assembly->mesh.points);
         }
         return 0;
       },
@@ -129,12 +134,13 @@ void execute(specfem::MPI::MPI *mpi) {
   event_system.register_event(&output_fields);
 #endif
 
+#ifdef SET_INITIAL_CONDITION
 #define _IC_SIG 0.05
 #define _IC_CENTER_X 0.3
 #define _IC_CENTER_Z 0.6
   // initial condition
   set_field_disp<acoustic>(
-      assembly.fields.forward, assembly.mesh, [](type_real x, type_real z) {
+      assembly->fields.forward, assembly->mesh, [](type_real x, type_real z) {
         x -= _IC_CENTER_X;
         z -= _IC_CENTER_Z;
         return (type_real)exp(-(x * x + z * z) / (2.0 * _IC_SIG * _IC_SIG));
@@ -142,6 +148,7 @@ void execute(specfem::MPI::MPI *mpi) {
 #undef _IC_SIG
 #undef _IC_CENTER_X
 #undef _IC_CENTER_Z
+#endif
 
   // just populate dg_edges with edge_removals.
   auto edge_from_id = [&](const int8_t id) {
@@ -239,15 +246,15 @@ void execute(specfem::MPI::MPI *mpi) {
     int ispec = e.parent.id;
     for (int i = 0; i < qp5.NGLL; i++) {
       point_from_id(ix, iz, e.parent.bdry, i);
-      e.x[i] = assembly.mesh.points.coord(0, ispec, iz, ix);
-      e.z[i] = assembly.mesh.points.coord(1, ispec, iz, ix);
+      e.x[i] = assembly->mesh.points.coord(0, ispec, iz, ix);
+      e.z[i] = assembly->mesh.points.coord(1, ispec, iz, ix);
       specfem::point::index<specfem::dimension::type::dim2> index(ispec, iz,
                                                                   ix);
 
       PointPartialDerivativesType ppd;
-      specfem::compute::load_on_host(index, assembly.partial_derivatives, ppd);
-      // type_real dvdxi = assembly.mesh.quadratures.h_hprime(ix,ix);
-      // type_real dvdga = assembly.mesh.quadratures.h_hprime(iz,iz);
+      specfem::compute::load_on_host(index, assembly->partial_derivatives, ppd);
+      // type_real dvdxi = assembly->mesh.quadratures.h_hprime(ix,ix);
+      // type_real dvdga = assembly->mesh.quadratures.h_hprime(iz,iz);
       // type_real dvdx = dvdxi * ppd.xix +
       //                  dvdga * ppd.gammax;
       // type_real dvdz = dvdxi * ppd.xiz +
@@ -281,27 +288,27 @@ void execute(specfem::MPI::MPI *mpi) {
         point_from_id(ixshape, izshape, e.parent.bdry, ishape);
         // v = L_{ixshape}(x) L_{izshape}(z);
         // hprime(i,j) = L_j'(t_i)
-        type_real dvdxi = assembly.mesh.quadratures.gll.h_hprime(ix, ixshape) *
+        type_real dvdxi = assembly->mesh.quadratures.gll.h_hprime(ix, ixshape) *
                           (iz == izshape);
-        type_real dvdga = assembly.mesh.quadratures.gll.h_hprime(iz, izshape) *
+        type_real dvdga = assembly->mesh.quadratures.gll.h_hprime(iz, izshape) *
                           (ix == ixshape);
         type_real dvdx = dvdxi * ppd.xix + dvdga * ppd.gammax;
         type_real dvdz = dvdxi * ppd.xiz + dvdga * ppd.gammaz;
         e.data[EDGEIND_SHAPENDERIV + ishape][i] = (dvdx * nx + dvdz * nz) * det;
       }
       e.data[EDGEIND_BDRY_TYPE][i] =
-          (type_real)assembly.boundaries.boundary_tags(ispec);
+          (type_real)assembly->boundaries.boundary_tags(ispec);
       specfem::point::boundary<specfem::element::boundary_tag::none,
                                specfem::dimension::type::dim2, false>
           bdnone;
-      specfem::compute::load_on_host(index, assembly.boundaries, bdnone);
+      specfem::compute::load_on_host(index, assembly->boundaries, bdnone);
       e.data[EDGEIND_BDRY_TYPE + 1][i] =
           (type_real)(bdnone.tag == specfem::element::boundary_tag::none);
       specfem::point::boundary<
           specfem::element::boundary_tag::acoustic_free_surface,
           specfem::dimension::type::dim2, false>
           bdafs;
-      specfem::compute::load_on_host(index, assembly.boundaries, bdafs);
+      specfem::compute::load_on_host(index, assembly->boundaries, bdafs);
       e.data[EDGEIND_BDRY_TYPE + 2][i] =
           (type_real)(bdafs.tag ==
                       specfem::element::boundary_tag::acoustic_free_surface);
@@ -309,15 +316,15 @@ void execute(specfem::MPI::MPI *mpi) {
   });
   auto spec_charlen2 = [&](int ispec) {
     type_real lx1 =
-        assembly.mesh.points.coord(0, ispec, 0, 0) -
-        assembly.mesh.points.coord(0, ispec, qp5.NGLL - 1, qp5.NGLL - 1);
+        assembly->mesh.points.coord(0, ispec, 0, 0) -
+        assembly->mesh.points.coord(0, ispec, qp5.NGLL - 1, qp5.NGLL - 1);
     type_real lz1 =
-        assembly.mesh.points.coord(1, ispec, 0, 0) -
-        assembly.mesh.points.coord(1, ispec, qp5.NGLL - 1, qp5.NGLL - 1);
-    type_real lx2 = assembly.mesh.points.coord(0, ispec, qp5.NGLL - 1, 0) -
-                    assembly.mesh.points.coord(0, ispec, 0, qp5.NGLL - 1);
-    type_real lz2 = assembly.mesh.points.coord(1, ispec, qp5.NGLL - 1, 0) -
-                    assembly.mesh.points.coord(1, ispec, 0, qp5.NGLL - 1);
+        assembly->mesh.points.coord(1, ispec, 0, 0) -
+        assembly->mesh.points.coord(1, ispec, qp5.NGLL - 1, qp5.NGLL - 1);
+    type_real lx2 = assembly->mesh.points.coord(0, ispec, qp5.NGLL - 1, 0) -
+                    assembly->mesh.points.coord(0, ispec, 0, qp5.NGLL - 1);
+    type_real lz2 = assembly->mesh.points.coord(1, ispec, qp5.NGLL - 1, 0) -
+                    assembly->mesh.points.coord(1, ispec, 0, qp5.NGLL - 1);
     return std::max(lx1 * lx1 + lz1 * lz1, lx2 * lx2 + lz2 * lz2);
   };
   dg_edge_storage.foreach_intersection_on_host(
@@ -327,22 +334,22 @@ void execute(specfem::MPI::MPI *mpi) {
         int a_ispec = a.parent.id;
         int b_ispec = b.parent.id;
         specfem::element::medium_tag a_medium =
-            assembly.properties.h_element_types(a_ispec);
+            assembly->properties.h_element_types(a_ispec);
         specfem::element::medium_tag b_medium =
-            assembly.properties.h_element_types(b_ispec);
+            assembly->properties.h_element_types(b_ispec);
         if (a_medium == specfem::element::medium_tag::acoustic &&
             b_medium == specfem::element::medium_tag::acoustic) {
           type_real rho_inv_max = 0;
           for (int iz = 0; iz < qp5.NGLL; iz++) {
             for (int ix = 0; ix < qp5.NGLL; ix++) {
-              rho_inv_max =
-                  std::max(rho_inv_max,
-                           assembly.properties.acoustic_isotropic.h_rho_inverse(
-                               a_ispec, iz, ix));
-              rho_inv_max =
-                  std::max(rho_inv_max,
-                           assembly.properties.acoustic_isotropic.h_rho_inverse(
-                               b_ispec, iz, ix));
+              rho_inv_max = std::max(
+                  rho_inv_max,
+                  assembly->properties.acoustic_isotropic.h_rho_inverse(
+                      a_ispec, iz, ix));
+              rho_inv_max = std::max(
+                  rho_inv_max,
+                  assembly->properties.acoustic_isotropic.h_rho_inverse(
+                      b_ispec, iz, ix));
             }
           }
           intersect.relax_param =
@@ -366,13 +373,11 @@ void execute(specfem::MPI::MPI *mpi) {
     a = b;                                                                     \
     b = tmpr;                                                                  \
   }
-          swpi(intersect.a_ref_ind, intersect.b_ref_ind)
-              swpi(intersect.a_ngll, intersect.b_ngll)
-                  swpr(intersect.a_param_start, intersect.b_param_start)
-                      swpr(intersect.a_param_end,
-                           intersect.b_param_end) for (int igll1 = 0;
-                                                       igll1 < edge_capacity;
-                                                       igll1++) {
+          swpi(intersect.a_ref_ind, intersect.b_ref_ind);
+          swpi(intersect.a_ngll, intersect.b_ngll);
+          swpr(intersect.a_param_start, intersect.b_param_start);
+          swpr(intersect.a_param_end, intersect.b_param_end);
+          for (int igll1 = 0; igll1 < edge_capacity; igll1++) {
             for (int igll2 = 0; igll2 < edge_capacity; igll2++) {
               swpr(intersect.a_mortar_trans[igll1][igll2],
                    intersect.b_mortar_trans[igll1][igll2])
@@ -413,13 +418,13 @@ void execute(specfem::MPI::MPI *mpi) {
                                                                         iz, ix);
 
             PointPartialDerivativesType ppd;
-            specfem::compute::load_on_host(index, assembly.partial_derivatives,
+            specfem::compute::load_on_host(index, assembly->partial_derivatives,
                                            ppd);
             int ncomp;
             std::vector<type_real> dfdxi;
             std::vector<type_real> dfdga;
             specfem::element::medium_tag medium =
-                assembly.properties.h_element_types(ispec);
+                assembly->properties.h_element_types(ispec);
             if (medium == specfem::element::medium_tag::acoustic) {
               PointAcoustic disp;
               constexpr int medium_ID =
@@ -428,26 +433,26 @@ void execute(specfem::MPI::MPI *mpi) {
               dfdxi = std::vector<type_real>(ncomp, 0);
               dfdga = std::vector<type_real>(ncomp, 0);
               int icomp = 0;
-              specfem::compute::load_on_host(index, assembly.fields.forward,
+              specfem::compute::load_on_host(index, assembly->fields.forward,
                                              disp);
               e.data[EDGEIND_FIELD][i] = disp.displacement(0);
               for (int k = 0; k < qp5.NGLL; k++) {
                 specfem::point::index<specfem::dimension::type::dim2> index_(
                     ispec, iz, k);
-                specfem::compute::load_on_host(index_, assembly.fields.forward,
+                specfem::compute::load_on_host(index_, assembly->fields.forward,
                                                disp);
-                dfdxi[icomp] += assembly.mesh.quadratures.gll.h_hprime(ix, k) *
+                dfdxi[icomp] += assembly->mesh.quadratures.gll.h_hprime(ix, k) *
                                 disp.displacement(0);
                 index_ = specfem::point::index<specfem::dimension::type::dim2>(
                     ispec, k, ix);
-                specfem::compute::load_on_host(index_, assembly.fields.forward,
+                specfem::compute::load_on_host(index_, assembly->fields.forward,
                                                disp);
-                dfdga[icomp] += assembly.mesh.quadratures.gll.h_hprime(iz, k) *
+                dfdga[icomp] += assembly->mesh.quadratures.gll.h_hprime(iz, k) *
                                 disp.displacement(0);
               }
               e.data[EDGEIND_SPEEDPARAM][i] =
-                  assembly.properties.acoustic_isotropic.h_rho_inverse(ispec,
-                                                                       iz, ix);
+                  assembly->properties.acoustic_isotropic.h_rho_inverse(ispec,
+                                                                        iz, ix);
             } else {
               throw std::runtime_error(
                   "Flux edge-storage: medium not supported.");
@@ -490,26 +495,26 @@ void execute(specfem::MPI::MPI *mpi) {
         specfem::element::boundary_tag::composite_stacey_dirichlet,
         specfem::dimension::type::dim2, false>
         point_boundary_composite;
-    switch (assembly.boundaries.boundary_tags(index.ispec)) {
+    switch (assembly->boundaries.boundary_tags(index.ispec)) {
     case specfem::element::boundary_tag::acoustic_free_surface:
-      specfem::compute::load_on_device(index, assembly.boundaries,
+      specfem::compute::load_on_device(index, assembly->boundaries,
                                        point_boundary_afs);
       return point_boundary_afs.tag == tag;
     case specfem::element::boundary_tag::none:
-      specfem::compute::load_on_device(index, assembly.boundaries,
+      specfem::compute::load_on_device(index, assembly->boundaries,
                                        point_boundary_none);
       return point_boundary_none.tag == tag;
     case specfem::element::boundary_tag::stacey:
-      specfem::compute::load_on_device(index, assembly.boundaries,
+      specfem::compute::load_on_device(index, assembly->boundaries,
                                        point_boundary_stacey);
       return point_boundary_stacey.tag == tag;
     case specfem::element::boundary_tag::composite_stacey_dirichlet:
-      specfem::compute::load_on_device(index, assembly.boundaries,
+      specfem::compute::load_on_device(index, assembly->boundaries,
                                        point_boundary_composite);
       return point_boundary_composite.tag == tag;
     default:
       throw std::runtime_error(
-          "h_is_bdry_at_pt: unknown assembly.boundaries.boundary_tags(ispec) "
+          "h_is_bdry_at_pt: unknown assembly->boundaries.boundary_tags(ispec) "
           "value!");
       return false;
     }
@@ -546,9 +551,9 @@ void execute(specfem::MPI::MPI *mpi) {
               int a_ispec = a.parent.id;
               int b_ispec = b.parent.id;
               specfem::element::medium_tag a_medium =
-                  assembly.properties.h_element_types(a_ispec);
+                  assembly->properties.h_element_types(a_ispec);
               specfem::element::medium_tag b_medium =
-                  assembly.properties.h_element_types(b_ispec);
+                  assembly->properties.h_element_types(b_ispec);
               type_real a_scale_dS =
                   0.5 * (intersect.a_param_end - intersect.a_param_start);
               type_real b_scale_dS =
@@ -619,7 +624,7 @@ void execute(specfem::MPI::MPI *mpi) {
                                         specfem::element::boundary_tag::none)) {
                       accel.acceleration = flux;
                       specfem::compute::atomic_add_on_device(
-                          index, accel, assembly.fields.forward);
+                          index, accel, assembly->fields.forward);
                       data_view[INTERIND_ACCEL_INCLUDE_A + a_ishape] = 0;
                     } else {
                       data_view[INTERIND_ACCEL_INCLUDE_A + a_ishape] = 1;
@@ -684,7 +689,7 @@ void execute(specfem::MPI::MPI *mpi) {
                                         specfem::element::boundary_tag::none)) {
                       accel.acceleration = flux;
                       specfem::compute::atomic_add_on_device(
-                          index, accel, assembly.fields.forward);
+                          index, accel, assembly->fields.forward);
                       data_view[INTERIND_ACCEL_INCLUDE_B + b_ishape] = 0;
                     } else {
                       data_view[INTERIND_ACCEL_INCLUDE_B + b_ishape] = 1;
@@ -721,7 +726,7 @@ void execute(specfem::MPI::MPI *mpi) {
                                         specfem::element::boundary_tag::none)) {
                       accel.acceleration = flux;
                       specfem::compute::atomic_add_on_device(
-                          index, accel, assembly.fields.forward);
+                          index, accel, assembly->fields.forward);
                       data_view[INTERIND_ACCEL_INCLUDE_A + a_ishape] = 0;
                     } else {
                       data_view[INTERIND_ACCEL_INCLUDE_A + a_ishape] = 1;
@@ -769,9 +774,9 @@ void execute(specfem::MPI::MPI *mpi) {
               int a_ispec = a.parent.id;
               int b_ispec = b.parent.id;
               specfem::element::medium_tag a_medium =
-                  assembly.properties.h_element_types(a_ispec);
+                  assembly->properties.h_element_types(a_ispec);
               specfem::element::medium_tag b_medium =
-                  assembly.properties.h_element_types(b_ispec);
+                  assembly->properties.h_element_types(b_ispec);
               if ((a_ispec == 88 || b_ispec == 88) &&
                   timescheme_wrapper.get_istep() == 1000) {
                 intersect.a_to_mortar(1, a.data[EDGEIND_FIELDNDERIV]);
@@ -846,7 +851,7 @@ void execute(specfem::MPI::MPI *mpi) {
                                         specfem::element::boundary_tag::none)) {
                       accel.acceleration = flux;
                       specfem::compute::atomic_add_on_device(
-                          index, accel, assembly.fields.forward);
+                          index, accel, assembly->fields.forward);
                       data_view[INTERIND_ACCEL_INCLUDE_A + a_ishape] = 0;
                     } else {
                       data_view[INTERIND_ACCEL_INCLUDE_A + a_ishape] = 1;
@@ -911,7 +916,7 @@ void execute(specfem::MPI::MPI *mpi) {
                                         specfem::element::boundary_tag::none)) {
                       accel.acceleration = flux;
                       specfem::compute::atomic_add_on_device(
-                          index, accel, assembly.fields.forward);
+                          index, accel, assembly->fields.forward);
                       data_view[INTERIND_ACCEL_INCLUDE_B + b_ishape] = 0;
                     } else {
                       data_view[INTERIND_ACCEL_INCLUDE_B + b_ishape] = 1;
@@ -928,7 +933,7 @@ void execute(specfem::MPI::MPI *mpi) {
                   for (int a_ishape = 0; a_ishape < a.ngll; a_ishape++) {
                     point_from_id(index.ix, index.iz, a.parent.bdry, a_ishape);
                     specfem::compute::load_on_device(
-                        index, assembly.fields.forward, a_accel_f);
+                        index, assembly->fields.forward, a_accel_f);
                     a_accel[a_ishape] = a_accel_f.acceleration(0);
                   }
                   for (int b_ishape = 0; b_ishape < b.ngll; b_ishape++) {
@@ -960,7 +965,7 @@ void execute(specfem::MPI::MPI *mpi) {
                       accel.acceleration(0) = flux_x;
                       accel.acceleration(1) = flux_z;
                       specfem::compute::atomic_add_on_device(
-                          index, accel, assembly.fields.forward);
+                          index, accel, assembly->fields.forward);
                       data_view[INTERIND_ACCEL_INCLUDE_B + b_ishape] = 0;
                     } else {
                       data_view[INTERIND_ACCEL_INCLUDE_B + b_ishape] = 1;
@@ -977,6 +982,22 @@ void execute(specfem::MPI::MPI *mpi) {
       1.1);
   timescheme_wrapper.time_stepper.register_event(&mortar_flux_elastic);
 
+  specfem::event_marching::arbitrary_call_event write_outputs_at_end(
+      [&]() {
+        params.set_writers_from_runtime_configuration();
+        for (auto writer : params.get_writers()) {
+          if (writer) {
+            mpi->cout("Writing Output:");
+            mpi->cout("-------------------------------");
+
+            writer->write();
+          }
+        }
+        return 0;
+      },
+      2);
+  event_system.register_event(&write_outputs_at_end);
+
   // init kernels needs to happen as of time_marcher
   kernels.initialize(timescheme.get_timestep());
 
@@ -991,6 +1012,7 @@ void execute(specfem::MPI::MPI *mpi) {
 #include "compute/interface.hpp"
 // #include "coupled_interface/interface.hpp"
 // #include "domain/interface.hpp"
+#include "IO/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"
@@ -1009,25 +1031,28 @@ void execute(specfem::MPI::MPI *mpi) {
 #include <stdexcept>
 #include <string>
 #include <vector>
+// Specfem2d driver
 
 _util::demo_assembly::simulation_params
 load_parameters(const std::string &parameter_file, specfem::MPI::MPI *mpi) {
-  const std::string &default_file = __default_file__;
-
   // --------------------------------------------------------------
   //                    Read parameter file
   // --------------------------------------------------------------
-  auto start_time = std::chrono::high_resolution_clock::now();
-  specfem::runtime_configuration::setup setup(parameter_file, default_file);
+  auto start_time = std::chrono::system_clock::now();
+  std::shared_ptr<specfem::runtime_configuration::setup> setup_ptr =
+      std::make_shared<specfem::runtime_configuration::setup>(parameter_file,
+                                                              __default_file__);
+#define setup (*setup_ptr)
   const auto [database_filename, source_filename] = setup.get_databases();
   mpi->cout(setup.print_header(start_time));
+
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
   //                   Read mesh and materials
   // --------------------------------------------------------------
   const auto quadrature = setup.instantiate_quadrature();
-  const specfem::mesh::mesh mesh(database_filename, mpi);
+  const auto mesh = specfem::IO::read_mesh(database_filename, mpi);
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
@@ -1035,13 +1060,13 @@ load_parameters(const std::string &parameter_file, specfem::MPI::MPI *mpi) {
   // --------------------------------------------------------------
   const int nsteps = setup.get_nsteps();
   const specfem::simulation::type simulation_type = setup.get_simulation_type();
-  auto [sources, t0] = specfem::sources::read_sources(
+  auto [sources, t0] = specfem::IO::read_sources(
       source_filename, nsteps, setup.get_t0(), setup.get_dt(), simulation_type);
   setup.update_t0(t0); // Update t0 in case it was changed
 
   const auto stations_filename = setup.get_stations_file();
   const auto angle = setup.get_receiver_angle();
-  auto receivers = specfem::receivers::read_receivers(stations_filename, angle);
+  auto receivers = specfem::IO::read_receivers(stations_filename, angle);
 
   mpi->cout("Source Information:");
   mpi->cout("-------------------------------");
@@ -1103,32 +1128,23 @@ load_parameters(const std::string &parameter_file, specfem::MPI::MPI *mpi) {
     // Transfer the buffer field to device
     assembly.fields.buffer.copy_to_device();
   }
-  // --------------------------------------------------------------
 
-  // --------------------------------------------------------------
-  //                   Instantiate Solver
-  // --------------------------------------------------------------
-  specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
-  std::shared_ptr<specfem::solver::solver> solver =
-      setup.instantiate_solver(dt, assembly, time_scheme, qp5);
-  // --------------------------------------------------------------
+  _util::demo_assembly::simulation_params params;
 
-  // --------------------------------------------------------------
-  //                   Execute Solver
-  // --------------------------------------------------------------
-  // Time the solver
-
-  return _util::demo_assembly::simulation_params()
-      .dt(dt)
+  params.dt(dt)
       .nsteps(nsteps)
       .t0(setup.get_t0())
       .simulation_type(setup.get_simulation_type())
       .mesh(mesh)
       .quadrature(quadrature)
-      .set_sources(sources)
-      .set_receivers(receivers)
-      .set_seismogram_types(setup.get_seismogram_types())
-      .nseismogram_steps(max_seismogram_time_step);
+      .sources(sources)
+      .receivers(receivers)
+      .seismogram_types(setup.get_seismogram_types())
+      .nseismogram_steps(max_seismogram_time_step)
+      .assembly(assembly)
+      .runtime_configuration(setup_ptr);
+#undef setup
+  return params;
 }
 int main(int argc, char **argv) {
 

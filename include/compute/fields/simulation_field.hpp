@@ -94,10 +94,6 @@ public:
     }
   }
 
-  void
-  set_assembly_index_mappings(const specfem::compute::mesh &mesh,
-                              const specfem::compute::properties &properties);
-
   int nglob = 0; ///< Number of global degrees of freedom
   int nspec;     ///< Number of spectral elements
   int ngllz;     ///< Number of quadrature points in z direction

@@ -50,8 +50,9 @@ namespace _util {
 namespace demo_assembly {
 
 void construct_demo_mesh(
-    specfem::mesh::mesh &mesh, const specfem::quadrature::quadratures &quad,
-    const int nelemx, const int nelemz,
+    specfem::mesh::mesh<DimensionType> &mesh,
+    const specfem::quadrature::quadratures &quad, const int nelemx,
+    const int nelemz,
     std::vector<specfem::adjacency_graph::adjacency_pointer> &removals,
     int demo_construct_mode) {
   constexpr int NDIM = 2;
@@ -159,10 +160,10 @@ void construct_demo_mesh(
   const int num_abs_faces = 0;
   const int num_free_surf = 2 * (nelemx + nelemz);
 
-  mesh.control_nodes =
-      specfem::mesh::control_nodes(NDIM, mesh.nspec, ngnod, mesh.npgeo);
-  specfem::mesh::absorbing_boundary bdry_abs(num_abs_faces);
-  specfem::mesh::acoustic_free_surface bdry_afs(num_free_surf);
+  mesh.control_nodes = specfem::mesh::control_nodes<DimensionType>(
+      NDIM, mesh.nspec, ngnod, mesh.npgeo);
+  specfem::mesh::absorbing_boundary<DimensionType> bdry_abs(num_abs_faces);
+  specfem::mesh::acoustic_free_surface<DimensionType> bdry_afs(num_free_surf);
 
   int i_free_surf = 0;
 
@@ -226,21 +227,25 @@ void construct_demo_mesh(
     }
   }
 
-  mesh.boundaries = specfem::mesh::boundaries(bdry_abs, bdry_afs);
-  mesh.coupled_interfaces = specfem::mesh::coupled_interfaces();
+  specfem::mesh::forcing_boundary<DimensionType> bdry_forcing(0);
+  mesh.boundaries = specfem::mesh::boundaries<DimensionType>(bdry_abs, bdry_afs,
+                                                             bdry_forcing);
+  mesh.coupled_interfaces = specfem::mesh::coupled_interfaces<DimensionType>();
 
-  mesh.tags = specfem::mesh::tags(mesh.materials, mesh.boundaries);
+  mesh.tags =
+      specfem::mesh::tags<DimensionType>(mesh.materials, mesh.boundaries);
 }
 
 void construct_demo_mesh(
-    specfem::mesh::mesh &mesh, const specfem::quadrature::quadratures &quad,
+    specfem::mesh::mesh<DimensionType> &mesh,
+    const specfem::quadrature::quadratures &quad,
     std::vector<specfem::adjacency_graph::adjacency_pointer> &removals,
     int demo_construct_mode) {
   _util::demo_assembly::construct_demo_mesh(mesh, quad, 10, 10, removals,
                                             demo_construct_mode);
 }
 
-void construct_demo_mesh(specfem::mesh::mesh &mesh,
+void construct_demo_mesh(specfem::mesh::mesh<DimensionType> &mesh,
                          const specfem::quadrature::quadratures &quad,
                          const int nelemx, const int nelemz,
                          int demo_construct_mode) {
@@ -248,7 +253,7 @@ void construct_demo_mesh(specfem::mesh::mesh &mesh,
   _util::demo_assembly::construct_demo_mesh(mesh, quad, nelemx, nelemz,
                                             removals, demo_construct_mode);
 }
-void construct_demo_mesh(specfem::mesh::mesh &mesh,
+void construct_demo_mesh(specfem::mesh::mesh<DimensionType> &mesh,
                          const specfem::quadrature::quadratures &quad,
                          int demo_construct_mode) {
   std::vector<specfem::adjacency_graph::adjacency_pointer> removals;

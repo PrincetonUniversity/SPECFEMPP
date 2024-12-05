@@ -37,7 +37,7 @@ public:
 };
 
 template <typename TimeScheme, specfem::element::medium_tag medium,
-          specfem::wavefield::type WaveFieldType,
+          specfem::wavefield::simulation_field WaveFieldType,
           specfem::dimension::type DimensionType, typename qp_type>
 class wavefield_update_event : public timescheme_wrapper_event<TimeScheme> {
 public:
@@ -98,7 +98,8 @@ private:
   specfem::element::medium_tag medium;
 };
 
-template <typename TimeScheme, specfem::wavefield::type WaveFieldType,
+template <typename TimeScheme,
+          specfem::wavefield::simulation_field WaveFieldType,
           specfem::dimension::type DimensionType, typename qp_type>
 class seismogram_update_event : public timescheme_wrapper_event<TimeScheme> {
 public:
@@ -126,6 +127,31 @@ private:
   specfem::kernels::kernels<WaveFieldType, DimensionType, qp_type> &kernels;
 };
 
+template <typename TimeScheme>
+class plotter_update_event : public timescheme_wrapper_event<TimeScheme> {
+public:
+  plotter_update_event(
+      timescheme_wrapper<TimeScheme> &wrapper,
+      std::vector<std::shared_ptr<specfem::plotter::plotter> > &plotters,
+      specfem::event_marching::precedence p)
+      : plotters(plotters),
+        specfem::event_marching::timescheme_wrapper_event<TimeScheme>(wrapper,
+                                                                      p) {}
+
+  int call() {
+    int istep = timescheme_wrapper_event<TimeScheme>::wrapper.get_istep();
+    for (const auto &plotter : plotters) {
+      if (plotter && plotter->should_plot(istep)) {
+        plotter->plot();
+      }
+    }
+    return 0;
+  }
+
+private:
+  std::vector<std::shared_ptr<specfem::plotter::plotter> > &plotters;
+};
+
 template <typename TimeScheme> class timescheme_wrapper {
 public:
   timescheme_wrapper(TimeScheme &timescheme)
@@ -137,16 +163,20 @@ public:
                                    precedence p);
 
   template <specfem::element::medium_tag medium,
-            specfem::wavefield::type WaveFieldType,
+            specfem::wavefield::simulation_field WaveFieldType,
             specfem::dimension::type DimensionType, typename qp_type>
   void set_wavefield_update_event(
       specfem::kernels::kernels<WaveFieldType, DimensionType, qp_type> &kernels,
       precedence p);
 
-  template <specfem::wavefield::type WaveFieldType,
+  template <specfem::wavefield::simulation_field WaveFieldType,
             specfem::dimension::type DimensionType, typename qp_type>
   void set_seismogram_update_event(
       specfem::kernels::kernels<WaveFieldType, DimensionType, qp_type> &kernels,
+      precedence p);
+
+  void set_plotter_update_event(
+      std::vector<std::shared_ptr<specfem::plotter::plotter> > &plotters,
       precedence p);
 
   void register_under_marcher(specfem::event_marching::event_marcher *marcher);
@@ -189,10 +219,13 @@ private:
           specfem::event_marching::timescheme_wrapper_event<TimeScheme> > >
       wavefield_update_events;
   std::unordered_map<
-      specfem::wavefield::type,
+      specfem::wavefield::simulation_field,
       std::unique_ptr<
           specfem::event_marching::timescheme_wrapper_event<TimeScheme> > >
       seismogram_update_events;
+  std::unique_ptr<
+      specfem::event_marching::timescheme_wrapper_event<TimeScheme> >
+      plotter_update_event;
 
   // this event gets called by this stepper's parent
   specfem::event_marching::timescheme_step_event<TimeScheme> step_event;

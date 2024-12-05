@@ -16,7 +16,8 @@
 void remap_with_disconts(
     specfem::compute::assembly &assembly,
     _util::demo_assembly::simulation_params &params,
-    const std::vector<specfem::adjacency_graph::adjacency_pointer> &removals) {
+    std::vector<specfem::adjacency_graph::adjacency_pointer> &removals,
+    bool disconnect_different_media = true) {
 
   // specfem::compute::simulation_field<WavefieldType> & field =
   // assembly.fields;
@@ -31,6 +32,28 @@ void remap_with_disconts(
 #ifdef _EVENT_MARCHER_DUMPS_
   _util::dump_adjacency_graph(_index_change_dump_ + "/prior_graph.dat", graph);
 #endif
+
+  auto mesh = params.get_mesh();
+  const auto are_same_mats = [&](int a_ispec, int b_ispec) -> bool {
+    const int a_ispec_mesh = assembly.mesh.mapping.compute_to_mesh(a_ispec);
+    const int b_ispec_mesh = assembly.mesh.mapping.compute_to_mesh(b_ispec);
+    const auto &a_matspec = mesh.materials.material_index_mapping(a_ispec_mesh);
+    const auto &b_matspec = mesh.materials.material_index_mapping(b_ispec_mesh);
+    return a_matspec.type == b_matspec.type &&
+           a_matspec.property == b_matspec.property &&
+           a_matspec.index == b_matspec.index;
+  };
+  if (disconnect_different_media) {
+    for (int ispec = 0; ispec < assembly.mesh.nspec; ++ispec) {
+      for (int iedge = 0; iedge < 4; iedge++) {
+        specfem::adjacency_graph::adjacency_pointer adj =
+            graph.get_adjacency(ispec, iedge);
+        if (adj.is_active() && !are_same_mats(ispec, adj.elem)) {
+          removals.push_back(adj);
+        }
+      }
+    }
+  }
 
   // remove edges
   for (int i = 0; i < removals.size(); i++) {
@@ -52,7 +75,6 @@ void remap_with_disconts(
   assembly.mesh.points.index_mapping = index_mapping;
   assembly.mesh.points.h_index_mapping = h_index_mapping;
 
-  auto mesh = params.get_mesh();
   auto sources = params.get_sources();
   auto receivers = params.get_receivers();
   auto stypes = params.get_seismogram_types();
@@ -93,7 +115,7 @@ void remap_with_disconts(
 
 // TODO change return type to allow for 2+ component media
 template <specfem::element::medium_tag MediumTag,
-          specfem::wavefield::type WavefieldType>
+          specfem::wavefield::simulation_field WavefieldType>
 void set_field_disp(
     specfem::compute::simulation_field<WavefieldType> &field,
     const specfem::compute::mesh &mesh,

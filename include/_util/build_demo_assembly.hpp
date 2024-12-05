@@ -11,13 +11,16 @@
 #include "compute/interface.hpp"
 // #include "coupled_interface/interface.hpp"
 // #include "domain/interface.hpp"
+#include "IO/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "mesh/mesh.hpp"
-// #include "parameter_parser/interface.hpp"
+#include "parameter_parser/interface.hpp"
 #include "receiver/interface.hpp"
+#include "solver/solver.hpp"
 #include "source/interface.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
+#include "timescheme/timescheme.hpp"
 #include "yaml-cpp/yaml.h"
 #include <Kokkos_Core.hpp>
 #include <boost/program_options.hpp>
@@ -50,23 +53,26 @@
 
 namespace _util {
 namespace demo_assembly {
-
+constexpr specfem::dimension::type DimensionType =
+    specfem::dimension::type::dim2;
 void construct_demo_mesh(
-    specfem::mesh::mesh &mesh, const specfem::quadrature::quadratures &quad,
-    const int nelemx, const int nelemz,
+    specfem::mesh::mesh<DimensionType> &mesh,
+    const specfem::quadrature::quadratures &quad, const int nelemx,
+    const int nelemz,
     std::vector<specfem::adjacency_graph::adjacency_pointer> &removals,
     int demo_construct_mode);
 
 void construct_demo_mesh(
-    specfem::mesh::mesh &mesh, const specfem::quadrature::quadratures &quad,
+    specfem::mesh::mesh<DimensionType> &mesh,
+    const specfem::quadrature::quadratures &quad,
     std::vector<specfem::adjacency_graph::adjacency_pointer> &removals,
     int demo_construct_mode);
 
-void construct_demo_mesh(specfem::mesh::mesh &mesh,
+void construct_demo_mesh(specfem::mesh::mesh<DimensionType> &mesh,
                          const specfem::quadrature::quadratures &quad,
                          const int nelemx, const int nelemz,
                          int demo_construct_mode);
-void construct_demo_mesh(specfem::mesh::mesh &mesh,
+void construct_demo_mesh(specfem::mesh::mesh<DimensionType> &mesh,
                          const specfem::quadrature::quadratures &quad,
                          int demo_construct_mode);
 
@@ -85,14 +91,10 @@ struct simulation_params {
   simulation_params()
       : _t0(0), _dt(1), _tmax(0), _nsteps(0),
         _simulation_type(specfem::simulation::type::forward),
-        _mesh(specfem::mesh::mesh()), _quadratures(_default_quadrature()),
-        _sources(std::vector<std::shared_ptr<specfem::sources::source> >()),
-        _receivers(
-            std::vector<std::shared_ptr<specfem::receivers::receiver> >()),
-        _seismogram_types(std::vector<specfem::enums::seismogram::type>()),
-        _nseismogram_steps(0), _t0_adj_prio(0), _dt_adj_prio(1),
-        _tmax_adj_prio(2), _nstep_adj_prio(3), needs_mesh_update(true),
-        overwrite_nseismo_steps(true) {}
+        _mesh(specfem::mesh::mesh<DimensionType>()),
+        _quadratures(_default_quadrature()), _nseismogram_steps(0),
+        _t0_adj_prio(0), _dt_adj_prio(1), _tmax_adj_prio(2), _nstep_adj_prio(3),
+        needs_mesh_update(true), overwrite_nseismo_steps(true) {}
 
   simulation_params &t0(type_real val) {
     _t0 = val;
@@ -123,7 +125,7 @@ struct simulation_params {
     _simulation_type = val;
     return *this;
   }
-  simulation_params &mesh(specfem::mesh::mesh val) {
+  simulation_params &mesh(specfem::mesh::mesh<DimensionType> val) {
     _mesh = val;
     needs_mesh_update = false;
     return *this;
@@ -139,7 +141,7 @@ struct simulation_params {
     return *this;
   }
   simulation_params &
-  set_sources(std::vector<std::shared_ptr<specfem::sources::source> > sources) {
+  sources(std::vector<std::shared_ptr<specfem::sources::source> > sources) {
     _sources = sources;
     return *this;
   }
@@ -148,7 +150,7 @@ struct simulation_params {
     _receivers.push_back(receiver);
     return *this;
   }
-  simulation_params &set_receivers(
+  simulation_params &receivers(
       std::vector<std::shared_ptr<specfem::receivers::receiver> > receivers) {
     _receivers = receivers;
     return *this;
@@ -159,8 +161,42 @@ struct simulation_params {
     return *this;
   }
   simulation_params &
-  set_seismogram_types(std::vector<specfem::enums::seismogram::type> seismos) {
+  seismogram_types(std::vector<specfem::enums::seismogram::type> seismos) {
     _seismogram_types = seismos;
+    return *this;
+  }
+  simulation_params &
+  add_plotter(std::shared_ptr<specfem::plotter::plotter> plotter) {
+    _plotters.push_back(plotter);
+    return *this;
+  }
+  simulation_params &
+  plotters(std::vector<std::shared_ptr<specfem::plotter::plotter> > plotters) {
+    _plotters = plotters;
+    return *this;
+  }
+  simulation_params &
+  add_writer(std::shared_ptr<specfem::writer::writer> writer) {
+    _writers.push_back(writer);
+    return *this;
+  }
+  simulation_params &
+  writers(std::vector<std::shared_ptr<specfem::writer::writer> > writers) {
+    _writers = writers;
+    return *this;
+  }
+  simulation_params &assembly(specfem::compute::assembly assembly) {
+    _assembly = std::make_shared<specfem::compute::assembly>(assembly);
+    return *this;
+  }
+  simulation_params &
+  assembly(std::shared_ptr<specfem::compute::assembly> assembly) {
+    _assembly = assembly;
+    return *this;
+  }
+  simulation_params &runtime_configuration(
+      std::shared_ptr<specfem::runtime_configuration::setup> runtime_config) {
+    _runtime_config = runtime_config;
     return *this;
   }
   simulation_params &use_demo_mesh(int demo_construct_mode) {
@@ -175,17 +211,42 @@ struct simulation_params {
     needs_mesh_update = false;
     return *this;
   }
+  void set_plotters_from_runtime_configuration() {
+    _plotters.clear();
+    if (_runtime_config) {
+      _plotters.push_back(
+          _runtime_config->instantiate_wavefield_plotter(*_assembly));
+    }
+  }
+  void set_writers_from_runtime_configuration() {
+    _writers.clear();
+    if (_runtime_config) {
+      _writers.push_back(
+          _runtime_config->instantiate_seismogram_writer(*_assembly));
+      _writers.push_back(
+          _runtime_config->instantiate_wavefield_writer(*_assembly));
+      _writers.push_back(
+          _runtime_config->instantiate_kernel_writer(*_assembly));
+    }
+  }
+
   int get_numsteps() { return _nsteps; }
   int get_num_seismogram_steps() { return _nseismogram_steps; }
   type_real get_t0() { return _t0; }
   type_real get_dt() { return _dt; }
   type_real get_tmax() { return _tmax; }
-  specfem::mesh::mesh &get_mesh() { return _mesh; }
+  specfem::mesh::mesh<DimensionType> &get_mesh() { return _mesh; }
   std::vector<std::shared_ptr<specfem::sources::source> > &get_sources() {
     return _sources;
   }
   std::vector<std::shared_ptr<specfem::receivers::receiver> > &get_receivers() {
     return _receivers;
+  }
+  std::vector<std::shared_ptr<specfem::plotter::plotter> > &get_plotters() {
+    return _plotters;
+  }
+  std::vector<std::shared_ptr<specfem::writer::writer> > &get_writers() {
+    return _writers;
   }
 
   std::vector<specfem::enums::seismogram::type> &get_seismogram_types() {
@@ -193,11 +254,17 @@ struct simulation_params {
   }
   specfem::simulation::type get_simulation_type() { return _simulation_type; }
 
-  specfem::compute::assembly build_assembly() {
-    specfem::compute::assembly assembly(
+  std::shared_ptr<specfem::compute::assembly> get_assembly() {
+    if (!_assembly) {
+      build_assembly();
+    }
+    return _assembly;
+  }
+
+  void build_assembly() {
+    _assembly = std::make_shared<specfem::compute::assembly>(
         _mesh, _quadratures, _sources, _receivers, _seismogram_types, _t0, _dt,
         _nsteps, _nseismogram_steps, _simulation_type);
-    return assembly;
   }
 
 private:
@@ -252,15 +319,19 @@ private:
   int _nsteps;
   specfem::simulation::type _simulation_type;
 
-  specfem::mesh::mesh _mesh;
+  specfem::mesh::mesh<DimensionType> _mesh;
   specfem::quadrature::quadratures _quadratures;
   std::vector<std::shared_ptr<specfem::sources::source> > _sources;
   std::vector<std::shared_ptr<specfem::receivers::receiver> > _receivers;
   std::vector<specfem::enums::seismogram::type> _seismogram_types;
+  std::vector<std::shared_ptr<specfem::plotter::plotter> > _plotters;
+  std::vector<std::shared_ptr<specfem::writer::writer> > _writers;
   int _nseismogram_steps; // TODO this is max_sig_step; verify that this
                           // actually is nseismo_steps
 
   bool needs_mesh_update;
+  std::shared_ptr<specfem::compute::assembly> _assembly;
+  std::shared_ptr<specfem::runtime_configuration::setup> _runtime_config;
 };
 
 } // namespace demo_assembly

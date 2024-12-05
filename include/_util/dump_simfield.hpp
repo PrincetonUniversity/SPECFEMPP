@@ -215,7 +215,7 @@ void dump_adjacency_graph(
   dump.close();
 }
 
-template <specfem::wavefield::type WavefieldType>
+template <specfem::wavefield::simulation_field WavefieldType>
 void dump_simfield(
     const std::string &filename,
     const specfem::compute::simulation_field<WavefieldType> &simfield,
@@ -256,7 +256,7 @@ void dump_simfield(
 
   dump.close();
 }
-template <specfem::wavefield::type WavefieldType>
+template <specfem::wavefield::simulation_field WavefieldType>
 void dump_simfield_per_step(
     const int istep, const std::string &filename,
     const specfem::compute::simulation_field<WavefieldType> &simfield,
