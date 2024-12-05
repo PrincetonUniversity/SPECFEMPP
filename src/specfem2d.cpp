@@ -277,7 +277,7 @@ namespace py = pybind11;
 int _run(py::list argv_py) {
   // parse argc and argv from Python
   int argc = argv_py.size();
-  char **argv = new char *[argc];
+  char **argv = new char *[argc + 1];
 
   for (size_t i = 0; i < argc; i++) {
     std::string str =
@@ -287,7 +287,13 @@ int _run(py::list argv_py) {
     std::strcpy(argv[i], str.c_str()); // Copy the string content
   }
 
+  argv[argc] = nullptr; // Null-terminate argv following the specification
+
   int return_code = run(argc, argv);
+
+  for (int i = 0; i < argc; i++) {
+    delete[] argv[i]; // Free each individual string
+  }
 
   delete[] argv;
 
