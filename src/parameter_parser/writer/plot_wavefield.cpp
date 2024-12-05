@@ -14,9 +14,9 @@ specfem::runtime_configuration::plot_wavefield::plot_wavefield(
     }
   }();
 
-  if (output_format == "on_screen") {
-    throw std::runtime_error("On screen plotting not supported");
-  }
+  // if (output_format == "on_screen") {
+  //   throw std::runtime_error("On screen plotting not supported");
+  // }
 
   const std::string output_folder = [&]() -> std::string {
     if (Node["directory"]) {
