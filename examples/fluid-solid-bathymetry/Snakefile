@@ -1,0 +1,111 @@
+SPECFEM_BIN = "specfem2d"
+MESHFEM_BIN = "xmeshfem2D"
+
+
+rule all:
+    input:
+        displacement_siesmograms=expand(
+            "OUTPUT_FILES/results/{station_name}{network_name}{component}.semd",
+            station_name=[
+                "S0001",
+                "S0002",
+            ],
+            network_name=["AA"],
+            component=["BXX", "BXZ"],
+        ),
+        pressure_siesmograms=expand(
+            "OUTPUT_FILES/results/{station_name}{network_name}{component}.semd",
+            station_name=[
+                "S0001",
+                "S0002",
+            ],
+            network_name=["AA"],
+            component=["PRE"],
+        ),
+    localrule: True
+
+rule generate_mesh:
+    input:
+        "Par_File",
+    output:
+        database="OUTPUT_FILES/database.bin",
+        stations="OUTPUT_FILES/STATIONS",
+    localrule: True
+    shell:
+        """
+            mkdir -p OUTPUT_FILES
+            {MESHFEM_BIN} -p {input}
+        """
+
+rule generate_line_sources:
+    input:
+        jinja_file = "line_sources.yaml.j2",
+        jinja_variables = "jinja_variables.yaml",
+    output:
+        source_file = "line_sources.yaml",
+    localrule: True
+    run:
+        import jinja2
+        import yaml
+
+        def generate_sources():
+            # read jinja2 variables yaml file
+            with open(input.jinja_variables, 'r') as f:
+                jinja_vars = yaml.safe_load(f)
+
+            with open(input.jinja_file, 'r') as f:
+                template = jinja2.Template(f.read())
+
+            variables = jinja_vars['variables']
+            with open(output.source_file, 'w') as f:
+                f.write(template.render(variables))
+
+        generate_sources()
+
+rule run_simulation:
+    input:
+        database="OUTPUT_FILES/database.bin",
+        stations="OUTPUT_FILES/STATIONS",
+        line_sources="line_sources.yaml",
+        specfem_config="specfem_config.yaml",
+    output:
+        displacement_siesmograms=expand(
+            "OUTPUT_FILES/results/{station_name}{network_name}{component}.semd",
+            station_name=[
+                "S0001",
+                "S0002",
+            ],
+            network_name=["AA"],
+            component=["BXX", "BXZ"],
+        ),
+        pressure_siesmograms=expand(
+            "OUTPUT_FILES/results/{station_name}{network_name}{component}.semd",
+            station_name=[
+                "S0001",
+                "S0002",
+            ],
+            network_name=["AA"],
+            component=["PRE"],
+        ),
+    resources:
+        nodes=1,
+        tasks=1,
+        cpus_per_task=1,
+        runtime=30,
+    shell:
+        """
+            module purge
+            module load boost/1.73.0
+            mkdir -p OUTPUT_FILES/results
+            mkdir -p OUTPUT_FILES/display
+            echo "Hostname: $(hostname)" > output.log
+            {SPECFEM_BIN} -p {input.specfem_config} >> output.log
+        """
+
+rule clean:
+    localrule: True
+    shell:
+        """
+            rm -rf OUTPUT_FILES
+            rm -f line_sources.yaml
+        """

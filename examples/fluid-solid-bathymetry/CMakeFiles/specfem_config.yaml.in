@@ -31,7 +31,7 @@ parameters:
         writer:
           seismogram:
             format: ascii
-            directory: @CMAKE_SOURCE_DIR@/examples/fluid-solid-bathymetry/OUTPUT_FILES/seismograms
+            directory: @CMAKE_SOURCE_DIR@/examples/fluid-solid-bathymetry/OUTPUT_FILES/results
 
           display:
             format: PNG
