@@ -259,7 +259,94 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   return;
 }
 
-int run(int argc, char **argv) {
+#ifdef SPECFEMPP_ENABLE_PYTHON
+
+namespace py = pybind11;
+
+// global MPI variable for Python
+specfem::MPI::MPI *_py_mpi = NULL;
+
+bool _initialize(py::list py_argv) {
+  if (_py_mpi != NULL) {
+    return false;
+  }
+  // parse argc and argv from Python
+  int argc = py_argv.size();
+  char **argv = new char *[argc + 1];
+
+  for (size_t i = 0; i < argc; i++) {
+    std::string str =
+        py_argv[i].cast<std::string>(); // Convert Python string to std::string
+    argv[i] =
+        new char[str.length() + 1]; // Allocate memory for each C-style string
+    std::strcpy(argv[i], str.c_str()); // Copy the string content
+  }
+
+  // Null-terminate argv following the specification
+  argv[argc] = nullptr; 
+  // Initialize MPI
+  _py_mpi = new specfem::MPI::MPI(&argc, &argv);
+  // Initialize Kokkos
+  Kokkos::initialize(argc, argv);
+
+  return true;
+}
+
+bool _execute(const std::string &parameter_file, const std::string &default_file) {
+  if (_py_mpi == NULL) {
+    return false;
+  }
+  execute(parameter_file, default_file.size() > 0 ? default_file : __default_file__, _py_mpi);
+  return true;
+}
+
+bool _finalize() {
+  if (_py_mpi != NULL) {
+    // Finalize Kokkos
+    Kokkos::finalize();
+    // Finalize MPI
+    delete _py_mpi;
+    _py_mpi = NULL;
+    return true;
+  }
+  return false;
+}
+
+PYBIND11_MODULE(_core, m) {
+    m.doc() = R"pbdoc(
+        SPECfem++ core module
+        -----------------------
+
+        .. currentmodule:: specfempp
+
+        .. autosummary::
+           :toctree: _generate
+
+           _run
+    )pbdoc";
+
+    m.def("initialize", &_initialize, R"pbdoc(
+        Initialize SPECFEM++.
+    )pbdoc");
+
+    m.def("execute", &_execute, R"pbdoc(
+        Execute the main SPECFEM++ workflow.
+    )pbdoc");
+
+    m.def("finalize", &_finalize, R"pbdoc(
+        Finalize SPECFEM++.
+    )pbdoc");
+
+#ifdef VERSION_INFO
+    m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
+#else
+    m.attr("__version__") = "dev";
+#endif
+}
+
+#endif
+
+int main(int argc, char **argv) { 
   // Initialize MPI
   specfem::MPI::MPI *mpi = new specfem::MPI::MPI(&argc, &argv);
   // Initialize Kokkos
@@ -279,61 +366,3 @@ int run(int argc, char **argv) {
   delete mpi;
   return 0;
 }
-
-#ifdef SPECFEMPP_ENABLE_PYTHON
-
-namespace py = pybind11;
-
-int _run(py::list argv_py) {
-  // parse argc and argv from Python
-  int argc = argv_py.size();
-  char **argv = new char *[argc + 1];
-
-  for (size_t i = 0; i < argc; i++) {
-    std::string str =
-        argv_py[i].cast<std::string>(); // Convert Python string to std::string
-    argv[i] =
-        new char[str.length() + 1]; // Allocate memory for each C-style string
-    std::strcpy(argv[i], str.c_str()); // Copy the string content
-  }
-
-  argv[argc] = nullptr; // Null-terminate argv following the specification
-
-  int return_code = run(argc, argv);
-
-  for (int i = 0; i < argc; i++) {
-    delete[] argv[i]; // Free each individual string
-  }
-
-  delete[] argv;
-
-  return return_code;
-}
-
-PYBIND11_MODULE(_core, m) {
-    m.doc() = R"pbdoc(
-        SPECfem++ core module
-        -----------------------
-
-        .. currentmodule:: specfempp
-
-        .. autosummary::
-           :toctree: _generate
-
-           _run
-    )pbdoc";
-
-    m.def("_run", &_run, R"pbdoc(
-        Execute the main SPECFEM++ workflow.
-    )pbdoc");
-
-#ifdef VERSION_INFO
-    m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
-#else
-    m.attr("__version__") = "dev";
-#endif
-}
-
-#endif
-
-int main(int argc, char **argv) { return run(argc, argv); }
