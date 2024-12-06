@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.17.5)
 
-project(specfem2d_kokkos VERSION 0.1.0)
+project(SPECFEMPP VERSION 0.1.0)
 
 set(CMAKE_CXX_STANDARD 17)
 option(HDF5_CXX_BUILD "Build HDF5 C++" ON)
@@ -10,19 +10,33 @@ option(BUILD_TESTS "Tests included" OFF)
 option(BUILD_EXAMPLES "Examples included" ON)
 option(ENABLE_SIMD "Enable SIMD" OFF)
 option(ENABLE_PROFILING "Enable profiling" OFF)
+option(SPECFEMPP_ENABLE_PYTHON "Enable Python binding" OFF)
 # set(CMAKE_BUILD_TYPE Release)
 set(CHUNK_SIZE 32)
 set(NUM_CHUNKS 1)
 set(NUM_THREADS 160)
 set(NUM_VECTOR_LANES 1)
 
-if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
-        set(CMAKE_CXX_FLAGS "-fp-model=precise")
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
-        message("-- Detected Intel classic compiler which will be deprecated soon.")
-        message("-- It is recommended you use IntelLLVM compiler.")
-        set(CMAKE_CXX_FLAGS "-diag-disable=10441 -fp-model=precise")
-endif()
+if (SPECFEMPP_ENABLE_PYTHON)
+    message("-- Adding -fPIC flag for Python binding.")
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
+            set(CMAKE_CXX_FLAGS "-fp-model=precise -fPIC")
+    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+            message("-- Detected Intel classic compiler which will be deprecated soon.")
+            message("-- It is recommended you use IntelLLVM compiler.")
+            set(CMAKE_CXX_FLAGS "-diag-disable=10441 -fp-model=precise -fPIC")
+    else()
+            set(CMAKE_CXX_FLAGS "-fPIC")
+    endif()
+else (SPECFEMPP_ENABLE_PYTHON)
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
+            set(CMAKE_CXX_FLAGS "-fp-model=precise")
+    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+            message("-- Detected Intel classic compiler which will be deprecated soon.")
+            message("-- It is recommended you use IntelLLVM compiler.")
+            set(CMAKE_CXX_FLAGS "-diag-disable=10441 -fp-model=precise")
+    endif()
+endif (SPECFEMPP_ENABLE_PYTHON)
 
 if (DEFINED Kokkos_ENABLE_CUDA)
         if (Kokkos_ENABLE_CUDA)
@@ -611,3 +625,36 @@ if (DOXYGEN_FOUND)
 else (DOXYGEN_FOUND)
   message("Doxygen need to be installed to generate the doxygen documentation")
 endif (DOXYGEN_FOUND)
+
+if (SPECFEMPP_USE_SKBUILD AND EXISTS ${SKBUILD_SCRIPTS_DIR})
+    install(TARGETS specfem2d DESTINATION ${SKBUILD_SCRIPTS_DIR})
+    install(FILES ${CMAKE_BINARY_DIR}/xmeshfem2D DESTINATION ${SKBUILD_SCRIPTS_DIR} PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE)
+endif ()
+
+if (SPECFEMPP_ENABLE_PYTHON)
+    find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
+    find_package(pybind11 CONFIG REQUIRED)
+    python_add_library(_core MODULE src/specfem2d.cpp WITH_SOABI)
+    target_link_libraries(
+        _core PRIVATE
+        specfem_mpi
+        Kokkos::kokkos
+        mesh
+        quadrature
+        compute
+        source_class
+        parameter_reader
+        receiver_class
+        writer
+        reader
+        domain
+        coupled_interface
+        kernels
+        solver
+        Boost::program_options
+        pybind11::headers
+    )
+    target_compile_definitions(_core PRIVATE SPECFEMPP_ENABLE_PYTHON)
+    target_compile_definitions(_core PRIVATE VERSION_INFO=${PROJECT_VERSION})
+    install(TARGETS _core DESTINATION specfempp_core)
+endif (SPECFEMPP_ENABLE_PYTHON)
