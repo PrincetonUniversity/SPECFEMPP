@@ -29,6 +29,9 @@ endif()
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(__APPLE__ TRUE)
     message("-- macOS detected -- setting __APPLE__ TRUE")
+else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(__APPLE__ FALSE)
+    message("-- macOS not detected -- setting __APPLE__ FALSE")
 endif()
 
 if (DEFINED Kokkos_ENABLE_CUDA)
@@ -510,7 +513,10 @@ add_library(
         src/plotter/plot_wavefield.cpp
 )
 
-target_compile_definitions(plotter PRIVATE __APPLE__)
+# Only define the __APPLE__ compile definition if it is defined
+if (__APPLE__)
+  target_compile_definitions(plotter PRIVATE __APPLE__)
+endif(__APPLE__)
 
 if (NOT VTK_CXX_BUILD)
         target_compile_definitions(
@@ -528,7 +534,7 @@ else ()
                 compute
                 ${VTK_LIBRARIES}
                 )
-        
+
 endif()
 
 add_library(
