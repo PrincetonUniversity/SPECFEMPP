@@ -52,17 +52,8 @@ rule run_simulation:
         line_sources="line_sources.yaml",
         specfem_config="specfem_config.yaml",
     output:
-        displacement_siesmograms=expand(
-            "OUTPUT_FILES/results/{station_name}{network_name}{component}.semd",
-            station_name=[
-                "S0001",
-                "S0002",
-            ],
-            network_name=["AA"],
-            component=["BXX", "BXZ"],
-        ),
         pressure_siesmograms=expand(
-            "OUTPUT_FILES/results/{station_name}{network_name}{component}.semd",
+            "OUTPUT_FILES/results/{station_name}{network_name}{component}.semp",
             station_name=[
                 "S0001",
                 "S0002",
@@ -87,17 +78,8 @@ rule run_simulation:
 
 rule plot_seismogram:
     input:
-        displacement_siesmograms=expand(
-            "OUTPUT_FILES/results/{station_name}{network_name}{component}.semd",
-            station_name=[
-                "S0001",
-                "S0002",
-            ],
-            network_name=["AA"],
-            component=["BXX", "BXZ"],
-        ),
         pressure_siesmograms=expand(
-            "OUTPUT_FILES/results/{station_name}{network_name}{component}.semd",
+            "OUTPUT_FILES/results/{station_name}{network_name}{component}.semp",
             station_name=[
                 "S0001",
                 "S0002",
@@ -114,6 +96,9 @@ rule plot_seismogram:
         import numpy as np
         import obspy
 
+        # Set matplotlib gui off
+        import matplotlib
+        matplotlib.use("Agg")
 
         def get_traces(directory):
             traces = []
