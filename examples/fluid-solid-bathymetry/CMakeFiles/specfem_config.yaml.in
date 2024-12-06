@@ -9,8 +9,6 @@ parameters:
       Interfaces : Acoustic-elastic interface (1) (orientation horizontal with acoustic domain on top)
       Sources : Moment-tensor (234)
       Boundary conditions : Neumann BCs on all edges
-      Debugging comments: This tests checks coupling acoustic-elastic interface implementation.
-                          The orientation of the interface is horizontal with acoustic domain on top.
 
   simulation-setup:
     ## quadrature setup
@@ -44,7 +42,6 @@ parameters:
     stations-file: @CMAKE_SOURCE_DIR@/examples/fluid-solid-bathymetry/OUTPUT_FILES/STATIONS
     angle: 0.0
     seismogram-type:
-      - displacement
       - pressure
     nstep_between_samples: 10
 
