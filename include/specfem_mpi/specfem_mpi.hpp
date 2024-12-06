@@ -18,7 +18,10 @@ namespace MPI {
  * Incase specfem is compiled without MPI then I need placeholders for reducer
  * types
  */
-enum reduce_type { sum = MPI_SUM, min = MPI_MIN, max = MPI_MAX };
+using reduce_type = MPI_Op;
+const static reduce_type sum = MPI_SUM;
+const static reduce_type min = MPI_MIN;
+const static reduce_type max = MPI_MAX;
 #else
 /**
  * @brief MPI reducer type
@@ -224,8 +227,9 @@ public:
   void bcast(double &val, int root) const;
 
 private:
-  int world_size; ///< total number of MPI processes
-  int my_rank;    ///< rank of my process
+  int world_size;  ///< total number of MPI processes
+  int my_rank;     ///< rank of my process
+  int extern_init; ///< flag to check if MPI was initialized outside SPECFEM
 #ifdef MPI_PARALLEL
   MPI_Comm comm; ///< MPI communicator
 #endif
