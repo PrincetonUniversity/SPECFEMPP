@@ -1,6 +1,7 @@
 #include "../../Kokkos_Environment.hpp"
 #include "../../MPI_environment.hpp"
 #include "../../utilities/include/interface.hpp"
+#include "IO/interface.hpp"
 #include "compute/interface.hpp"
 #include "edge/interface.hpp"
 #include "material/interface.hpp"
@@ -177,7 +178,8 @@ TEST(COMPUTE_TESTS, coupled_interfaces_tests) {
     std::cout << "Executing test: " << Test.name << std::endl;
 
     // Read mesh generated MESHFEM
-    specfem::mesh::mesh mesh(Test.databases.mesh.database_filename, mpi);
+    specfem::mesh::mesh mesh =
+        specfem::IO::read_mesh(Test.databases.mesh.database_filename, mpi);
 
     // Generate compute structs to be used by the solver
     specfem::compute::mesh assembly(mesh.control_nodes, quadratures);

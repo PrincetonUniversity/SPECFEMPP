@@ -26,30 +26,33 @@ class receiver<
     using_simd> {
 
 private:
-  constexpr static auto DimensionType = specfem::dimension::type::dim2;
-  constexpr static auto MediumTag = specfem::element::medium_tag::acoustic;
+  constexpr static auto dimension = specfem::dimension::type::dim2;
+  constexpr static auto medium_tag = specfem::element::medium_tag::acoustic;
+  constexpr static auto property_tag =
+      specfem::element::property_tag::isotropic;
 
   using ElementQuadratureViewType = typename specfem::element::quadrature<
-      NGLL, DimensionType, specfem::kokkos::DevScratchSpace,
+      NGLL, dimension, specfem::kokkos::DevScratchSpace,
       Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, true>::ViewType;
 
-  using ElementFieldViewType = typename specfem::element::field<
-      NGLL, DimensionType, MediumTag, specfem::kokkos::DevScratchSpace,
-      Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, true, true, false,
-      using_simd>::ViewType;
+  using ElementFieldType =
+      typename specfem::element::field<NGLL, dimension, medium_tag,
+                                       specfem::kokkos::DevScratchSpace,
+                                       Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+                                       true, true, true, false, using_simd>;
 
 public:
   /**
    * @name Typedefs
    */
   ///@{
-  using dimension =
-      specfem::dimension::dimension<specfem::dimension::type::dim2>;
+  constexpr static int num_dimensions =
+      specfem::element::attributes<dimension, medium_tag>::dimension();
 
-  using medium_type =
-      specfem::medium::medium<specfem::dimension::type::dim2,
-                              specfem::element::medium_tag::acoustic,
-                              specfem::element::property_tag::isotropic>;
+  constexpr static int components =
+      specfem::element::attributes<dimension, medium_tag>::components();
+  ///@}
+
   /**
    * @brief Number of Gauss-Lobatto-Legendre quadrature points
    */
@@ -101,19 +104,19 @@ public:
    * @param hprime_zz Derivates of Lagrange interpolants in the z direction
    */
   KOKKOS_FUNCTION
-  void get_field(const int iz, const int ix,
-                 const specfem::point::partial_derivatives<DimensionType, false,
-                                                           using_simd>
-                     partial_derivatives,
-                 const specfem::point::properties<
-                     specfem::dimension::type::dim2, medium_type::medium_tag,
-                     medium_type::property_tag, using_simd>
-                     properties,
-                 const ElementQuadratureViewType hprime,
-                 const ElementFieldViewType active_field,
-                 Kokkos::View<type_real[2], Kokkos::LayoutStride,
-                              specfem::kokkos::DevMemSpace>
-                     receiver_field) const;
+  void get_field(
+      const int iz, const int ix,
+      const specfem::point::partial_derivatives<dimension, false, using_simd>
+          partial_derivatives,
+      const specfem::point::properties<dimension, medium_tag, property_tag,
+                                       using_simd>
+          properties,
+      const ElementQuadratureViewType hprime,
+      const ElementFieldType active_field,
+      const specfem::enums::seismogram::type seismo_type,
+      Kokkos::View<type_real[2], Kokkos::LayoutStride,
+                   specfem::kokkos::DevMemSpace>
+          receiver_field) const;
 
   //   /**
   //    * @brief Compute the seismogram components for a given receiver and

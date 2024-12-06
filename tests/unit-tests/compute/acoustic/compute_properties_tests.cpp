@@ -1,6 +1,7 @@
 #include "../../Kokkos_Environment.hpp"
 #include "../../MPI_environment.hpp"
 #include "../../utilities/include/interface.hpp"
+#include "IO/interface.hpp"
 #include "compute/interface.hpp"
 #include "material/interface.hpp"
 #include "mesh/mesh.hpp"
@@ -121,7 +122,8 @@ TEST(COMPUTE_TESTS, compute_acoustic_properties) {
   specfem::quadrature::gll::gll gll(0.0, 0.0, 5);
   specfem::quadrature::quadratures quadratures(gll);
 
-  specfem::mesh::mesh mesh(test_config.database_filename, mpi);
+  specfem::mesh::mesh mesh =
+      specfem::IO::read_mesh(test_config.database_filename, mpi);
 
   const int nspec = mesh.nspec;
   const int ngllz = gll.get_N();

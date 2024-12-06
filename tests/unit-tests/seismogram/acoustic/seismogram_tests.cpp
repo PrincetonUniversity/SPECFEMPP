@@ -2,6 +2,7 @@
 #include "../../MPI_environment.hpp"
 // #include "../../utilities/include/compare_array.h"
 #include "IO/fortranio/interface.hpp"
+#include "IO/interface.hpp"
 #include "compute/interface.hpp"
 #include "constants.hpp"
 #include "domain/domain.hpp"
@@ -90,13 +91,13 @@ TEST(SEISMOGRAM_TESTS, acoustic_seismograms_test) {
   const auto quadratures = setup.instantiate_quadrature();
 
   // Read mesh generated MESHFEM
-  specfem::mesh::mesh mesh(database_file, mpi);
+  specfem::mesh::mesh mesh = specfem::IO::read_mesh(database_file, mpi);
 
   std::vector<std::shared_ptr<specfem::sources::source> > sources(0);
 
   const auto angle = setup.get_receiver_angle();
   const auto stations_filename = setup.get_stations_file();
-  auto receivers = specfem::receivers::read_receivers(stations_filename, angle);
+  auto receivers = specfem::IO::read_receivers(stations_filename, angle);
   const auto stypes = setup.get_seismogram_types();
 
   specfem::compute::assembly assembly(mesh, quadratures, sources, receivers,
@@ -119,8 +120,8 @@ TEST(SEISMOGRAM_TESTS, acoustic_seismograms_test) {
   specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
 
   specfem::domain::domain<
-      specfem::wavefield::type::forward, specfem::dimension::type::dim2,
-      specfem::element::medium_tag::acoustic,
+      specfem::wavefield::simulation_field::forward,
+      specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
       specfem::enums::element::quadrature::static_quadrature_points<5> >
       acoustic_domain_static(setup.get_dt(), assembly, qp5);
 

@@ -21,7 +21,7 @@ namespace seismogram {
  * @brief Seismogram type enumeration
  *
  */
-enum class type { displacement, velocity, acceleration };
+enum class type { displacement, velocity, acceleration, pressure };
 
 /**
  * @brief Output format of seismogram enumeration
@@ -81,6 +81,8 @@ namespace time_scheme {
 enum class type {
   newmark, ///< Newmark time scheme
 };
+
 } // namespace time_scheme
+
 } // namespace enums
 } // namespace specfem

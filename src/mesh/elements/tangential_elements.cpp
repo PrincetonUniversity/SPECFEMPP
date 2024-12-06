@@ -1,9 +1,10 @@
 #include "IO/fortranio/interface.hpp"
+#include "enumerations/interface.hpp"
 #include "mesh/elements/elements.hpp"
 #include "specfem_mpi/interface.hpp"
 
-specfem::mesh::elements::tangential_elements::tangential_elements(
-    const int nnodes_tangential_curve) {
+specfem::mesh::elements::tangential_elements<specfem::dimension::type::dim2>::
+    tangential_elements(const int nnodes_tangential_curve) {
   if (nnodes_tangential_curve > 0) {
     this->x = specfem::kokkos::HostView1d<type_real>(
         "specfem::mesh::tangential_nodes::x", nnodes_tangential_curve);
@@ -25,28 +26,5 @@ specfem::mesh::elements::tangential_elements::tangential_elements(
     this->x(0) = 0.0;
     this->y(0) = 0.0;
   }
-  return;
-}
-
-specfem::mesh::elements::tangential_elements::tangential_elements(
-    std::ifstream &stream, const int nnodes_tangential_curve) {
-  type_real xread, yread;
-
-  *this = specfem::mesh::elements::tangential_elements(nnodes_tangential_curve);
-
-  specfem::IO::fortran_read_line(stream, &this->force_normal_to_surface,
-                                 &this->rec_normal_to_surface);
-
-  if (nnodes_tangential_curve > 0) {
-    for (int inum = 0; inum < nnodes_tangential_curve; inum++) {
-      specfem::IO::fortran_read_line(stream, &xread, &yread);
-      this->x(inum) = xread;
-      this->y(inum) = yread;
-    }
-  } else {
-    this->force_normal_to_surface = false;
-    this->rec_normal_to_surface = false;
-  }
-
   return;
 }
