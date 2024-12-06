@@ -24,7 +24,3 @@ ruff = ">=0.6.7"
 [tool.snakefmt]
 line_length = 90
 include = '\.smk$|^Snakefile|\.py|^Snakefile.in$'
-
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
