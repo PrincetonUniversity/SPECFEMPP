@@ -21,12 +21,6 @@ endif()
 
 message("-- CFLAGS: ${CFLAGS}")
 
-# Check if MacOS
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(MACOSX TRUE)
-    message("-- macOS detected")
-endif()
-
 # Check if Clang
 if (CMAKE_C_COMPILER_ID MATCHES "Clang")
     set(CLANG TRUE)
@@ -34,7 +28,9 @@ if (CMAKE_C_COMPILER_ID MATCHES "Clang")
 endif()
 
 # Fix for macos and clang include files... sometimes I hate mac.
-if (MACOSX AND CLANG)
+# If we are on macOS the __APPLE__ variable is defined in the CMakeLists.txt file
+# in the main directory.
+if (__APPLE__ AND CLANG)
     message("-- Fixing include files for macOS and Clang")
     set (FCFLAGS_f90 "${FCFLAGS_f90}")
     # In the future, we can use the following line to add the flags to the compiler
