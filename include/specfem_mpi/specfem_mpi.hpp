@@ -19,9 +19,9 @@ namespace MPI {
  * types
  */
 using reduce_type = MPI_Op;
-const static MPI_Op sum = MPI_SUM;
-const static MPI_Op min = MPI_MIN;
-const static MPI_Op max = MPI_MAX;
+const static reduce_type sum = MPI_SUM;
+const static reduce_type min = MPI_MIN;
+const static reduce_type max = MPI_MAX;
 #else
 /**
  * @brief MPI reducer type
