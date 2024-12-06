@@ -1,0 +1,12 @@
+number-of-sources: 1
+sources:
+    - moment-tensor:
+        x: 2.000e+02
+        z: 7.200e+02
+        Mxx: 1.000
+        Mzz: 1.000
+        Mxz: 0
+        Ricker:
+            factor: 9.836e-10
+            tshift: 0
+            f0: 1.000
