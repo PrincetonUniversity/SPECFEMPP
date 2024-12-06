@@ -1,6 +1,3 @@
 [submodule "boost-cmake"]
 	path = boost-cmake
 	url = https://github.com/Orphis/boost-cmake.git
-[submodule "python/specfempp"]
-	path = python/specfempp
-	url = https://github.com/PrincetonUniversity/specfempp-py.git
