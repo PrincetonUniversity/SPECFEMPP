@@ -101,6 +101,7 @@ target_link_libraries(
   mpi_environment
   kokkos_environment
   yaml-cpp
+  IO
   # material_class
   -lpthread -lm
 )
@@ -175,6 +176,7 @@ target_link_libraries(
   kokkos_environment
   yaml-cpp
   compare_arrays
+  IO
   Boost::filesystem
   # material_class
   -lpthread -lm
@@ -182,8 +184,10 @@ target_link_libraries(
 
 add_executable(
   assembly_tests
+  assembly/test_fixture/test_fixture.cpp
   assembly/runner.cpp
-  assembly/kernels.cpp
+  assembly/kernels/kernels.cpp
+  assembly/compute_wavefield/compute_wavefield.cpp
 )
 
 target_link_libraries(
@@ -192,6 +196,7 @@ target_link_libraries(
   compute
   quadrature
   mpi_environment
+  IO
   kokkos_environment
   yaml-cpp
   Boost::filesystem
@@ -213,6 +218,7 @@ target_link_libraries(
   kokkos_environment
   algorithms
   point
+  IO
   Boost::filesystem
 )
 
@@ -229,6 +235,7 @@ target_link_libraries(
   mpi_environment
   kokkos_environment
   algorithms
+  IO
   Boost::filesystem
   point
 )
@@ -288,7 +295,9 @@ target_link_libraries(
   point
   algorithms
   domain
+  IO
   coupled_interface
+  plotter
   -lpthread -lm
 )
 
@@ -315,6 +324,7 @@ target_link_libraries(
   coupled_interface
   domain
   solver
+  plotter
   -lpthread -lm
 )
 
@@ -333,6 +343,7 @@ target_link_libraries(
   compute
   parameter_reader
   writer
+  plotter
   domain
   coupled_interface
   solver
@@ -354,6 +365,7 @@ target_link_libraries(
   compute
   parameter_reader
   writer
+  plotter
   domain
   coupled_interface
   solver

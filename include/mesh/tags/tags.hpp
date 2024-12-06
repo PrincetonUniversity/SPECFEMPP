@@ -12,7 +12,13 @@ namespace mesh {
  * @brief Struct to store tags for every spectral element
  *
  */
-struct tags {
+template <specfem::dimension::type DimensionType> struct tags;
+
+template <> struct tags<specfem::dimension::type::dim2> {
+
+  constexpr static auto dimension =
+      specfem::dimension::type::dim2; ///< Dimension
+
   int nspec; ///< Total number of spectral elements
   Kokkos::View<specfem::mesh::impl::tags_container *, Kokkos::HostSpace>
       tags_container; ///< Tags container
@@ -40,7 +46,8 @@ struct tags {
    * @param boundaries Boundary information
    */
   tags(const specfem::mesh::materials &materials,
-       const specfem::mesh::boundaries &boundaries);
+       const specfem::mesh::boundaries<specfem::dimension::type::dim2>
+           &boundaries);
   ///@}
 };
 } // namespace mesh

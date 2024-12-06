@@ -11,6 +11,7 @@
 #include "specfem_setup.hpp"
 #include "time_scheme/interface.hpp"
 #include "writer/kernel.hpp"
+#include "writer/plot_wavefield.hpp"
 #include "writer/seismogram.hpp"
 #include "writer/wavefield.hpp"
 #include "yaml-cpp/yaml.h"
@@ -74,8 +75,8 @@ public:
   /**
    * @brief Log the header and description of the simulation
    */
-  std::string print_header(
-      const std::chrono::time_point<std::chrono::high_resolution_clock> now);
+  std::string
+  print_header(const std::chrono::time_point<std::chrono::system_clock> now);
 
   /**
    * @brief Get delta time value
@@ -159,6 +160,15 @@ public:
     }
   }
 
+  std::shared_ptr<specfem::plotter::plotter> instantiate_wavefield_plotter(
+      const specfem::compute::assembly &assembly) const {
+    if (this->plot_wavefield) {
+      return this->plot_wavefield->instantiate_wavefield_plotter(assembly);
+    } else {
+      return nullptr;
+    }
+  }
+
   std::shared_ptr<specfem::writer::writer>
   instantiate_kernel_writer(const specfem::compute::assembly &assembly) const {
     if (this->kernel) {
@@ -176,8 +186,11 @@ public:
   std::shared_ptr<specfem::solver::solver> instantiate_solver(
       const type_real dt, const specfem::compute::assembly &assembly,
       std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
-      const qp_type &quadrature) const {
-    return this->solver->instantiate(dt, assembly, time_scheme, quadrature);
+      const qp_type &quadrature,
+      const std::vector<std::shared_ptr<specfem::plotter::plotter> > &plotters)
+      const {
+    return this->solver->instantiate(dt, assembly, time_scheme, quadrature,
+                                     plotters);
   }
 
   int get_nsteps() const { return this->time_scheme->get_nsteps(); }
@@ -203,6 +216,9 @@ private:
   std::unique_ptr<specfem::runtime_configuration::wavefield>
       wavefield; ///< Pointer to
                  ///< wavefield object
+  std::unique_ptr<specfem::runtime_configuration::plot_wavefield>
+      plot_wavefield; ///< Pointer to
+                      ///< plot_wavefield object
   std::unique_ptr<specfem::runtime_configuration::kernel> kernel;
   std::unique_ptr<specfem::runtime_configuration::database_configuration>
       databases; ///< Get database filenames

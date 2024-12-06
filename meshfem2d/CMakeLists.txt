@@ -11,7 +11,45 @@ unset(WITH_SCOTCH)
 enable_language(Fortran)
 enable_language(C)
 
+# Set the C compiler
 set(FCFLAGS_f90 -g -O2 -fbacktrace)
+
+# Check if CFLAGS is defined
+if (DEFINED ENV{CFLAGS})
+    set(CFLAGS "$ENV{CFLAGS}")
+endif()
+
+message("-- CFLAGS: ${CFLAGS}")
+
+# Check if MacOS
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(MACOSX TRUE)
+    message("-- macOS detected")
+endif()
+
+# Check if Clang
+if (CMAKE_C_COMPILER_ID MATCHES "Clang")
+    set(CLANG TRUE)
+    message("-- Detected usage of clang on macOS")
+endif()
+
+# Fix for macos and clang include files... sometimes I hate mac.
+if (MACOSX AND CLANG)
+    message("-- Fixing include files for macOS and Clang")
+    set (FCFLAGS_f90 "${FCFLAGS_f90}")
+    # In the future, we can use the following line to add the flags to the compiler
+    # add_compile_options($<$<COMPILE_LANGUAGE:C>:-isysroot/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk>)
+    # set (CFLAGS "${CFLAGS})
+    # Right now we can use the following line to add the flags to the compiler
+    if (DEFINED CFLAGS)
+      set(CFLAGS "$ENV{CFLAGS} -isysroot/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk")
+    else()
+      set(CFLAGS "-isysroot/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk")
+    endif()
+endif()
+
+message("-- CFLAGS: ${CFLAGS}")
+
 
 ## ========= MACROS =========
 # define macro wrapper on custom command

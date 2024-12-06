@@ -20,15 +20,9 @@ namespace compute {
  *
  * @tparam WavefieldType Wavefield type.
  */
-template <specfem::wavefield::type WavefieldType> struct simulation_field {
+template <specfem::wavefield::simulation_field WavefieldType>
+struct simulation_field {
 private:
-  using elastic_type =
-      specfem::medium::medium<specfem::dimension::type::dim2,
-                              specfem::element::medium_tag::elastic>;
-
-  using acoustic_type =
-      specfem::medium::medium<specfem::dimension::type::dim2,
-                              specfem::element::medium_tag::acoustic>;
   using ViewType =
       Kokkos::View<int ***, Kokkos::LayoutLeft,
                    Kokkos::DefaultExecutionSpace>; ///< Underlying view type to
@@ -74,7 +68,7 @@ public:
    * @tparam DestinationWavefieldType Destination wavefield type
    * @param rhs Simulation field to copy from
    */
-  template <specfem::wavefield::type DestinationWavefieldType>
+  template <specfem::wavefield::simulation_field DestinationWavefieldType>
   void operator=(const simulation_field<DestinationWavefieldType> &rhs) {
     this->nglob = rhs.nglob;
     this->assembly_index_mapping = rhs.assembly_index_mapping;
@@ -126,8 +120,8 @@ private:
   }
 };
 
-template <specfem::wavefield::type WavefieldType1,
-          specfem::wavefield::type WavefieldType2>
+template <specfem::wavefield::simulation_field WavefieldType1,
+          specfem::wavefield::simulation_field WavefieldType2>
 void deep_copy(simulation_field<WavefieldType1> &dst,
                const simulation_field<WavefieldType2> &src) {
   dst.nglob = src.nglob;

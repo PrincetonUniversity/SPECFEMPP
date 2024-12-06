@@ -37,7 +37,7 @@ public:
    * written in .yml format
    */
   moment_tensor(YAML::Node &Node, const int nsteps, const type_real dt,
-                const specfem::wavefield::type wavefield_type)
+                const specfem::wavefield::simulation_field wavefield_type)
       : Mxx(Node["Mxx"].as<type_real>()), Mzz(Node["Mzz"].as<type_real>()),
         Mxz(Node["Mxz"].as<type_real>()),
         wavefield_type(wavefield_type), specfem::sources::source(Node, nsteps,
@@ -54,16 +54,17 @@ public:
       const specfem::compute::properties &properties,
       specfem::kokkos::HostView3d<type_real> source_array) override;
 
-  specfem::wavefield::type get_wavefield_type() const override {
+  specfem::wavefield::simulation_field get_wavefield_type() const override {
     return wavefield_type;
   }
 
 private:
-  type_real Mxx;                           ///< Mxx for the source
-  type_real Mxz;                           ///< Mxz for the source
-  type_real Mzz;                           ///< Mzz for the source
-  specfem::wavefield::type wavefield_type; ///< Type of wavefield on which the
-                                           ///< source acts
+  type_real Mxx;                                       ///< Mxx for the source
+  type_real Mxz;                                       ///< Mxz for the source
+  type_real Mzz;                                       ///< Mzz for the source
+  specfem::wavefield::simulation_field wavefield_type; ///< Type of wavefield on
+                                                       ///< which the source
+                                                       ///< acts
 };
 } // namespace sources
 } // namespace specfem

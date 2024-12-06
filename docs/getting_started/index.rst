@@ -51,6 +51,11 @@ The following table lists the versions of compilers that are supported by SPECFE
       * Not Tested
       * 8.0.0, latest
 
+    * * Apple Clang
+      * 16.0.0 (MacOS Sequoia)
+      * Not Tested
+      * 8.0.0, latest
+
     * * NVC++
       * Not Tested
       * Not Tested
@@ -71,7 +76,9 @@ Dependencies
 
 .. note::
 
-    If any of the following dependencies are not found in your ``PATH``, the build process will download and install them automatically. This will increase the build time and does require an active internet connection.
+    If any of the following dependencies are not found in your ``PATH``,
+    the build process will download and install them automatically. This will
+    increase the build time and does require an active internet connection.
 
 * Kokkos: required
 * Boost: required
@@ -94,7 +101,9 @@ Get the latest version of the package:
 Build recipes
 -------------
 
-SPECFEM++ inherits several architecure specific cmake configuration keywords from `Kokkos <https://kokkos.github.io/kokkos-core-wiki/keywords.html>`_. Below are the recommended build recipes for different architectures:
+SPECFEM++ inherits several architecure specific cmake configuration keywords
+from `Kokkos <https://kokkos.github.io/kokkos-core-wiki/keywords.html>`_.
+Below are the recommended build recipes for different architectures:
 
 * CPU Serial version
 
@@ -122,12 +131,18 @@ SPECFEM++ inherits several architecure specific cmake configuration keywords fro
 
 .. note::
 
-    Specify the architecture flag ``-D Kokkos_ARCH_<architecture>`` based on the GPU architecture you are using. For example, for NVIDIA Ampere architecture, use ``-D Kokkos_ARCH_AMPERE80=ON``. See `Kokkos documentation <https://kokkos.org/kokkos-core-wiki/keywords.html>`_ for more information.
+    Specify the architecture flag ``-D Kokkos_ARCH_<architecture>`` based on
+    the GPU architecture you are using. For example, for NVIDIA Ampere
+    architecture, use ``-D Kokkos_ARCH_AMPERE80=ON``. See
+    `Kokkos documentation <https://kokkos.org/kokkos-core-wiki/keywords.html>`_
+    for more information.
 
 Adding SPECFEM to PATH
 ----------------------
 
-Finally, once compiled you could run SPECFEM++ from inside the build directory, by running the executible ``./specfem2d``. However, we recommend you add SPECFEM++ build directory to your ``PATH`` using
+Finally, once compiled you could run SPECFEM++ from inside the build directory,
+by running the executible ``./specfem2d``. However, we recommend you add
+SPECFEM++ build directory to your ``PATH`` using
 
 .. code-block:: bash
 
@@ -136,11 +151,15 @@ Finally, once compiled you could run SPECFEM++ from inside the build directory, 
 Running the solver
 ------------------
 
-Lets run a simple example to test the installation. We will use the ``example\homogeneous-medium-flat-topography`` directory in the SPECFEM++ repository. The example directory contains a mesh of a homogeneous half-space with a single source and neumann boundary conditions.
+Lets run a simple example to test the installation. We will use the
+``example\homogeneous-medium-flat-topography`` directory in the SPECFEM++
+repository. The example directory contains a mesh of a homogeneous half-space
+with a single source and neumann boundary conditions.
 
 .. note::
 
-  A detailed description of the example can be found within :ref:`this cookbook <homogeneous_example>`
+  A detailed description of the example can be found within
+  :ref:`this cookbook <homogeneous_example>`
 
 .. code-block:: bash
 
@@ -155,4 +174,5 @@ This will generate the mesh files. Next, we will run the solver using
   mkdir -p OUTPUT_FILES/results
   specfem2d -p specfem_config.yaml
 
-This will run the solver and generate synthetic seismograms at the receiver locations specified in ``STATIONS`` file.
+This will run the solver and generate synthetic seismograms at the receiver
+locations specified in ``STATIONS`` file.

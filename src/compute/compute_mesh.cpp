@@ -1,6 +1,5 @@
 #include "compute/interface.hpp"
-#include "enumerations/boundary.hpp"
-#include "enumerations/medium.hpp"
+#include "enumerations/interface.hpp"
 #include "jacobian/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
@@ -158,7 +157,8 @@ assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates) {
 
 specfem::compute::control_nodes::control_nodes(
     const specfem::compute::mesh_to_compute_mapping &mapping,
-    const specfem::mesh::control_nodes &control_nodes)
+    const specfem::mesh::control_nodes<specfem::dimension::type::dim2>
+        &control_nodes)
     : ngnod(control_nodes.ngnod), nspec(control_nodes.nspec),
       index_mapping("specfem::compute::control_nodes::index_mapping",
                     control_nodes.nspec, control_nodes.ngnod),
@@ -222,7 +222,7 @@ specfem::compute::shape_functions::shape_functions(
 }
 
 specfem::compute::mesh_to_compute_mapping::mesh_to_compute_mapping(
-    const specfem::mesh::tags &tags)
+    const specfem::mesh::tags<specfem::dimension::type::dim2> &tags)
     : compute_to_mesh("specfem::compute::mesh_to_compute_mapping", tags.nspec),
       mesh_to_compute("specfem::compute::mesh_to_compute_mapping", tags.nspec) {
 
@@ -317,8 +317,9 @@ specfem::compute::mesh_to_compute_mapping::mesh_to_compute_mapping(
 }
 
 specfem::compute::mesh::mesh(
-    const specfem::mesh::tags &tags,
-    const specfem::mesh::control_nodes &m_control_nodes,
+    const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
+    const specfem::mesh::control_nodes<specfem::dimension::type::dim2>
+        &m_control_nodes,
     const specfem::quadrature::quadratures &m_quadratures) {
 
   this->mapping = specfem::compute::mesh_to_compute_mapping(tags);

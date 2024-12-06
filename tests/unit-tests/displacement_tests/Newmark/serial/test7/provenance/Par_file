@@ -142,7 +142,7 @@ write_moving_sources_database   = .false.
 
 # receiver set parameters for recording stations (i.e. recording points)
 # seismotype : record 1=displ 2=veloc 3=accel 4=pressure 5=curl of displ 6=the fluid potential
-seismotype                      = 1              # several values can be chosen. For example : 1,2,4
+seismotype                      = 1,2,3,4              # several values can be chosen. For example : 1,2,4
 
 # interval in time steps for writing of seismograms
 # every how many time steps we save the seismograms
@@ -375,7 +375,7 @@ tangential_detection_curve_file = ./DATA/courbe_eros_nodes  # file containing th
 #-----------------------------------------------------------
 
 # file containing interfaces for internal mesh
-interfacesfile                  = ./interfaces_simple_topo_flat.dat
+interfacesfile = ./topography.dat
 
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0           # abscissa of left side of the model
