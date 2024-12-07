@@ -299,11 +299,13 @@ bool _initialize(py::list py_argv) {
   return true;
 }
 
-bool _execute(const std::string &parameter_file, const std::string &default_file) {
+bool _execute(const std::string &parameter_file,
+              const std::string &default_file) {
   if (_py_mpi == NULL) {
     return false;
   }
-  execute(parameter_file, default_file.size() > 0 ? default_file : __default_file__, _py_mpi);
+  execute(parameter_file,
+          default_file.size() > 0 ? default_file : __default_file__, _py_mpi);
   return true;
 }
 
@@ -354,22 +356,22 @@ PYBIND11_MODULE(_core, m) {
 #endif
 
 int main(int argc, char **argv) {
-  // Initialize MPI
-  specfem::MPI::MPI *mpi = new specfem::MPI::MPI(&argc, &argv);
-  // Initialize Kokkos
-  Kokkos::initialize(argc, argv);
-  {
-    boost::program_options::variables_map vm;
-    if (parse_args(argc, argv, vm)) {
-      const std::string parameters_file =
-          vm["parameters_file"].as<std::string>();
-      const std::string default_file = vm["default_file"].as<std::string>();
-      execute(parameters_file, default_file, mpi);
+    // Initialize MPI
+    specfem::MPI::MPI *mpi = new specfem::MPI::MPI(&argc, &argv);
+    // Initialize Kokkos
+    Kokkos::initialize(argc, argv);
+    {
+      boost::program_options::variables_map vm;
+      if (parse_args(argc, argv, vm)) {
+        const std::string parameters_file =
+            vm["parameters_file"].as<std::string>();
+        const std::string default_file = vm["default_file"].as<std::string>();
+        execute(parameters_file, default_file, mpi);
+      }
     }
-  }
-  // Finalize Kokkos
-  Kokkos::finalize();
-  // Finalize MPI
-  delete mpi;
-  return 0;
+    // Finalize Kokkos
+    Kokkos::finalize();
+    // Finalize MPI
+    delete mpi;
+    return 0;
 }
