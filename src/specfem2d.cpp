@@ -283,11 +283,18 @@ bool _initialize(py::list py_argv) {
   }
 
   // Null-terminate argv following the specification
-  argv[argc] = nullptr; 
+  argv[argc] = nullptr;
   // Initialize MPI
   _py_mpi = new specfem::MPI::MPI(&argc, &argv);
   // Initialize Kokkos
   Kokkos::initialize(argc, argv);
+
+  // free argv
+  for (int i = 0; i < argc; i++) {
+    delete[] argv[i]; // Free each individual string
+  }
+
+  delete[] argv;
 
   return true;
 }
@@ -346,7 +353,7 @@ PYBIND11_MODULE(_core, m) {
 
 #endif
 
-int main(int argc, char **argv) { 
+int main(int argc, char **argv) {
   // Initialize MPI
   specfem::MPI::MPI *mpi = new specfem::MPI::MPI(&argc, &argv);
   // Initialize Kokkos
