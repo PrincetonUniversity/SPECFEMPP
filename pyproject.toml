@@ -17,7 +17,7 @@ requires-python = ">=3.12"
 [project.optional-dependencies]
 dev = [
   "pre-commit~=2.19.0",
-  "clang-format~=14.0.6",
+  "clang-format~=15.0.6",
   "ruff>=0.6.7"
 ]
 
@@ -45,7 +45,7 @@ package-mode = false
 [tool.poetry.dependencies]
 python = ">=3.12,<4.0"
 pre-commit = "^2.19.0"
-clang-format = "^14.0.6"
+clang-format = "^15.0.6"
 sphinx-rtd-theme = "^1.0.0"
 doc8 = ">=0.3.6"
 rstcheck = ">=6.2.4"
