@@ -21,9 +21,16 @@ void create_folder_if_not_exists(const std::string &folder_name) {
 }
 
 specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
-                                             const std::string &default_file) {
-  YAML::Node parameter_yaml = YAML::LoadFile(parameter_file);
-  YAML::Node default_yaml = YAML::LoadFile(default_file);
+                                             const std::string &default_file,
+                                             const bool &binding_python) {
+  YAML::Node parameter_yaml, default_yaml;
+  if (binding_python) {
+    parameter_yaml = YAML::Load(parameter_file);
+    default_yaml = YAML::Load(default_file);
+  } else {
+    parameter_yaml = YAML::LoadFile(parameter_file);
+    default_yaml = YAML::LoadFile(default_file);
+  }
 
   const YAML::Node &runtime_config = parameter_yaml["parameters"];
   const YAML::Node &default_config = default_yaml["default-parameters"];
