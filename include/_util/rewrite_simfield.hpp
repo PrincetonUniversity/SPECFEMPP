@@ -13,6 +13,43 @@
 #include <Kokkos_Core.hpp>
 #include <functional>
 
+#include "mesh/coupled_interfaces/interface_container.hpp"
+template <specfem::dimension::type DimensionType,
+          specfem::element::medium_tag Medium1,
+          specfem::element::medium_tag Medium2>
+void clear_couplings(specfem::mesh::interface_container<DimensionType, Medium1,
+                                                        Medium2> &container,
+                     specfem::compute::mesh_to_compute_mapping &mapping,
+                     specfem::adjacency_graph::adjacency_graph<4> &graph) {
+  int placement = 0;
+  for (int i = 0; i < container.num_interfaces; i++) {
+    int aspec = container.medium1_index_mapping(i);
+    int bspec = container.medium2_index_mapping(i);
+    int aspec_compute = mapping.mesh_to_compute(aspec);
+    int bspec_compute = mapping.mesh_to_compute(bspec);
+    // int elem0 = graph.get_adjacency(aspec_compute,0).elem;
+    // int elem1 = graph.get_adjacency(aspec_compute,1).elem;
+    // int elem2 = graph.get_adjacency(aspec_compute,2).elem;
+    // int elem3 = graph.get_adjacency(aspec_compute,3).elem;
+    // check if they are adjacent
+    if (graph.get_adjacency(aspec_compute, 0).elem == bspec_compute ||
+        graph.get_adjacency(aspec_compute, 1).elem == bspec_compute ||
+        graph.get_adjacency(aspec_compute, 2).elem == bspec_compute ||
+        graph.get_adjacency(aspec_compute, 3).elem == bspec_compute) {
+      // they are, so don't copy
+      //  removals ++;
+    } else {
+      // not, so copy over
+      container.medium1_index_mapping(placement) = aspec;
+      container.medium2_index_mapping(placement) = bspec;
+      placement++;
+    }
+  }
+  container.num_interfaces = placement;
+  Kokkos::resize(container.medium1_index_mapping, placement);
+  Kokkos::resize(container.medium2_index_mapping, placement);
+}
+
 void remap_with_disconts(
     specfem::compute::assembly &assembly,
     _util::demo_assembly::simulation_params &params,
@@ -56,6 +93,12 @@ void remap_with_disconts(
   }
 
   // remove edges
+  clear_couplings(mesh.coupled_interfaces.elastic_acoustic,
+                  assembly.mesh.mapping, graph);
+  clear_couplings(mesh.coupled_interfaces.elastic_poroelastic,
+                  assembly.mesh.mapping, graph);
+  clear_couplings(mesh.coupled_interfaces.acoustic_poroelastic,
+                  assembly.mesh.mapping, graph);
   for (int i = 0; i < removals.size(); i++) {
     graph.form_adjacency(removals[i], null_adj);
   }

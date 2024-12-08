@@ -8,7 +8,8 @@
 // #define FORCE_INTO_CONTINUOUS
 // #define USE_DEMO_MESH
 // #define SET_INITIAL_CONDITION
-#define _RELAX_PARAM_COEF_ 40
+#define _RELAX_PARAM_COEF_ACOUSTIC_ 40
+#define _RELAX_PARAM_COEF_ELASTIC_ 40
 
 #define _EVENT_MARCHER_DUMPS_
 #define _stepwise_simfield_dump_ std::string("dump/simfield")
@@ -69,7 +70,7 @@ void execute(specfem::MPI::MPI *mpi) {
         assembly->mesh.mapping.mesh_to_compute(edge_removals[i].elem);
   }
 #ifndef FORCE_INTO_CONTINUOUS
-  remap_with_disconts(*assembly, params, edge_removals);
+  remap_with_disconts(*assembly, params, edge_removals, true);
 #endif
 
 #ifdef _EVENT_MARCHER_DUMPS_
@@ -331,6 +332,14 @@ void execute(specfem::MPI::MPI *mpi) {
       [&](_util::edge_manager::edge_intersection<edge_capacity> &intersect,
           _util::edge_manager::edge_data<edge_capacity, data_capacity> &a,
           _util::edge_manager::edge_data<edge_capacity, data_capacity> &b) {
+        using AcousticProperties = specfem::point::properties<
+            specfem::dimension::type::dim2,
+            specfem::element::medium_tag::acoustic,
+            specfem::element::property_tag::isotropic, false>;
+        using ElasticProperties = specfem::point::properties<
+            specfem::dimension::type::dim2,
+            specfem::element::medium_tag::elastic,
+            specfem::element::property_tag::isotropic, false>;
         int a_ispec = a.parent.id;
         int b_ispec = b.parent.id;
         specfem::element::medium_tag a_medium =
@@ -340,20 +349,22 @@ void execute(specfem::MPI::MPI *mpi) {
         if (a_medium == specfem::element::medium_tag::acoustic &&
             b_medium == specfem::element::medium_tag::acoustic) {
           type_real rho_inv_max = 0;
+          AcousticProperties props;
           for (int iz = 0; iz < qp5.NGLL; iz++) {
             for (int ix = 0; ix < qp5.NGLL; ix++) {
-              rho_inv_max = std::max(
-                  rho_inv_max,
-                  assembly->properties.acoustic_isotropic.h_rho_inverse(
-                      a_ispec, iz, ix));
-              rho_inv_max = std::max(
-                  rho_inv_max,
-                  assembly->properties.acoustic_isotropic.h_rho_inverse(
-                      b_ispec, iz, ix));
+              specfem::point::index<specfem::dimension::type::dim2> index(
+                  a_ispec, iz, ix);
+              specfem::compute::load_on_host(index, assembly->properties,
+                                             props);
+              rho_inv_max = std::max(rho_inv_max, props.rho_inverse);
+              index.ispec = b_ispec;
+              specfem::compute::load_on_host(index, assembly->properties,
+                                             props);
+              rho_inv_max = std::max(rho_inv_max, props.rho_inverse);
             }
           }
           intersect.relax_param =
-              _RELAX_PARAM_COEF_ * rho_inv_max /
+              _RELAX_PARAM_COEF_ACOUSTIC_ * rho_inv_max /
               sqrt(std::max(spec_charlen2(a_ispec), spec_charlen2(b_ispec)));
 
         } else if (a_medium == specfem::element::medium_tag::elastic &&
@@ -386,6 +397,30 @@ void execute(specfem::MPI::MPI *mpi) {
 
 #undef swpi
 #undef swpr
+        } else if (a_medium == specfem::element::medium_tag::acoustic &&
+                   b_medium == specfem::element::medium_tag::elastic) {
+          // this elif here just to branch away from the fail case
+        } else if (a_medium == specfem::element::medium_tag::elastic &&
+                   b_medium == specfem::element::medium_tag::elastic) {
+          ElasticProperties props;
+
+          type_real speed_param_max = 0;
+          for (int iz = 0; iz < qp5.NGLL; iz++) {
+            for (int ix = 0; ix < qp5.NGLL; ix++) {
+              specfem::point::index<specfem::dimension::type::dim2> index(
+                  a_ispec, iz, ix);
+              specfem::compute::load_on_host(index, assembly->properties,
+                                             props);
+              speed_param_max = std::max(speed_param_max, props.lambdaplus2mu);
+              index.ispec = b_ispec;
+              specfem::compute::load_on_host(index, assembly->properties,
+                                             props);
+              speed_param_max = std::max(speed_param_max, props.lambdaplus2mu);
+            }
+          }
+          intersect.relax_param =
+              _RELAX_PARAM_COEF_ELASTIC_ * speed_param_max /
+              sqrt(std::max(spec_charlen2(a_ispec), spec_charlen2(b_ispec)));
         } else {
           throw std::runtime_error(
               "Mortar Flux: medium combination not supported.");
@@ -410,6 +445,15 @@ void execute(specfem::MPI::MPI *mpi) {
               specfem::point::field<specfem::dimension::type::dim2,
                                     specfem::element::medium_tag::elastic, true,
                                     false, false, false, false>;
+
+          using AcousticProperties = specfem::point::properties<
+              specfem::dimension::type::dim2,
+              specfem::element::medium_tag::acoustic,
+              specfem::element::property_tag::isotropic, false>;
+          using ElasticProperties = specfem::point::properties<
+              specfem::dimension::type::dim2,
+              specfem::element::medium_tag::elastic,
+              specfem::element::property_tag::isotropic, false>;
           int ix, iz;
           int ispec = e.parent.id;
           for (int i = 0; i < qp5.NGLL; i++) {
@@ -427,28 +471,61 @@ void execute(specfem::MPI::MPI *mpi) {
                 assembly->properties.h_element_types(ispec);
             if (medium == specfem::element::medium_tag::acoustic) {
               PointAcoustic disp;
+              AcousticProperties props;
               constexpr int medium_ID =
                   static_cast<int>(specfem::element::medium_tag::acoustic);
               ncomp = 1;
               dfdxi = std::vector<type_real>(ncomp, 0);
               dfdga = std::vector<type_real>(ncomp, 0);
-              int icomp = 0;
               specfem::compute::load_on_host(index, assembly->fields.forward,
                                              disp);
+              specfem::compute::load_on_host(index, assembly->properties,
+                                             props);
               e.data[EDGEIND_FIELD][i] = disp.displacement(0);
+              e.data[EDGEIND_SPEEDPARAM][i] = props.rho_inverse;
               for (int k = 0; k < qp5.NGLL; k++) {
                 specfem::point::index<specfem::dimension::type::dim2> index_(
                     ispec, iz, k);
                 specfem::compute::load_on_host(index_, assembly->fields.forward,
                                                disp);
-                dfdxi[icomp] += assembly->mesh.quadratures.gll.h_hprime(ix, k) *
-                                disp.displacement(0);
+                dfdxi[0] += assembly->mesh.quadratures.gll.h_hprime(ix, k) *
+                            disp.displacement(0);
                 index_ = specfem::point::index<specfem::dimension::type::dim2>(
                     ispec, k, ix);
                 specfem::compute::load_on_host(index_, assembly->fields.forward,
                                                disp);
-                dfdga[icomp] += assembly->mesh.quadratures.gll.h_hprime(iz, k) *
-                                disp.displacement(0);
+                dfdga[0] += assembly->mesh.quadratures.gll.h_hprime(iz, k) *
+                            disp.displacement(0);
+              }
+            } else if (medium == specfem::element::medium_tag::elastic) {
+              PointElastic disp;
+              ncomp = 2;
+              constexpr int medium_ID =
+                  static_cast<int>(specfem::element::medium_tag::elastic);
+              dfdxi = std::vector<type_real>(ncomp, 0);
+              dfdga = std::vector<type_real>(ncomp, 0);
+              specfem::compute::load_on_host(index, assembly->fields.forward,
+                                             disp);
+
+              e.data[EDGEIND_FIELD][i] = disp.displacement(0);
+              e.data[EDGEIND_FIELD + 1][i] = disp.displacement(1);
+              for (int k = 0; k < qp5.NGLL; k++) {
+                specfem::point::index<specfem::dimension::type::dim2> index_(
+                    ispec, iz, k);
+                specfem::compute::load_on_host(index_, assembly->fields.forward,
+                                               disp);
+                dfdxi[0] += assembly->mesh.quadratures.gll.h_hprime(ix, k) *
+                            disp.displacement(0);
+                dfdxi[1] += assembly->mesh.quadratures.gll.h_hprime(ix, k) *
+                            disp.displacement(1);
+                index_ = specfem::point::index<specfem::dimension::type::dim2>(
+                    ispec, k, ix);
+                specfem::compute::load_on_host(index_, assembly->fields.forward,
+                                               disp);
+                dfdga[0] += assembly->mesh.quadratures.gll.h_hprime(iz, k) *
+                            disp.displacement(0);
+                dfdga[1] += assembly->mesh.quadratures.gll.h_hprime(iz, k) *
+                            disp.displacement(1);
               }
               e.data[EDGEIND_SPEEDPARAM][i] =
                   assembly->properties.acoustic_isotropic.h_rho_inverse(ispec,
@@ -697,14 +774,18 @@ void execute(specfem::MPI::MPI *mpi) {
                   }
 
                 } else if (b_medium == specfem::element::medium_tag::elastic) {
-                  throw std::runtime_error(
-                      "Mortar Flux: medium combination not supported.");
+                  // if(a_ispec == 82 && (a.data[EDGEIND_FIELD][0] > 0.001 ||
+                  // a.data[EDGEIND_FIELD][4] > 0.001)){
+                  if (a_ispec == 53 && timescheme_wrapper.get_istep() == 6) {
+                    intersect.b_to_mortar(
+                        0, b.data[EDGEIND_FIELD]); // place breakpoint here
+                  }
                   for (int a_ishape = 0; a_ishape < a.ngll; a_ishape++) {
                     // flux = JW * v * s.n
                     type_real flux = 0;
                     for (int iquad = 0; iquad < gll.nquad; iquad++) {
                       type_real sn_dSb =
-                          ( // yes this is not optimized.
+                          -( // yes this is not optimized.
                               intersect.b_to_mortar(iquad,
                                                     b.data[EDGEIND_FIELD]) *
                                   intersect.b_to_mortar(iquad,
@@ -738,6 +819,7 @@ void execute(specfem::MPI::MPI *mpi) {
                 }
               }
             });
+        assembly->fields.forward.copy_to_device();
         return 0;
       },
       0.91);
@@ -779,7 +861,8 @@ void execute(specfem::MPI::MPI *mpi) {
                   assembly->properties.h_element_types(b_ispec);
               if ((a_ispec == 88 || b_ispec == 88) &&
                   timescheme_wrapper.get_istep() == 1000) {
-                intersect.a_to_mortar(1, a.data[EDGEIND_FIELDNDERIV]);
+                intersect.a_to_mortar(
+                    1, a.data[EDGEIND_FIELDNDERIV]); // place breakpoint here
               }
               type_real a_scale_dS =
                   0.5 * (intersect.a_param_end - intersect.a_param_start);
@@ -924,8 +1007,11 @@ void execute(specfem::MPI::MPI *mpi) {
                   }
 
                 } else if (a_medium == specfem::element::medium_tag::acoustic) {
-                  throw std::runtime_error(
-                      "Mortar Flux: medium combination not supported.");
+                  if (a_ispec == 82 && (a.data[EDGEIND_FIELD][0] > 0.001 ||
+                                        a.data[EDGEIND_FIELD][4] > 0.001)) {
+                    intersect.b_to_mortar(
+                        0, b.data[EDGEIND_FIELD]); // place breakpoint here
+                  }
                   type_real a_accel[edge_capacity];
                   PointAcousticAccel a_accel_f;
                   specfem::point::index<specfem::dimension::type::dim2> index(
@@ -942,7 +1028,7 @@ void execute(specfem::MPI::MPI *mpi) {
                     type_real flux_z = 0;
                     for (int iquad = 0; iquad < gll.nquad; iquad++) {
                       type_real chitt_v_Ja =
-                          intersect.a_to_mortar(iquad, a.data[EDGEIND_DET]) *
+                          -intersect.a_to_mortar(iquad, a.data[EDGEIND_DET]) *
                           intersect.a_to_mortar(iquad, a_accel) *
                           intersect.b_mortar_trans[iquad][b_ishape];
                       flux_x +=
@@ -954,7 +1040,7 @@ void execute(specfem::MPI::MPI *mpi) {
                           intersect.a_to_mortar(iquad, a.data[EDGEIND_NZ]) *
                           chitt_v_Ja;
                     }
-                    data_view[INTERIND_FLUXTOTAL_B + b_ishape] = flux_x;
+                    data_view[INTERIND_FLUXTOTAL_B + b_ishape] = flux_z;
                     PointElasticAccel accel;
                     index =
                         specfem::point::index<specfem::dimension::type::dim2>(
@@ -977,6 +1063,7 @@ void execute(specfem::MPI::MPI *mpi) {
                 }
               }
             });
+        assembly->fields.forward.copy_to_device();
         return 0;
       },
       1.1);

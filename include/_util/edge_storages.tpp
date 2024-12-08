@@ -109,125 +109,186 @@ template <int ngll, int datacapacity>
 bool intersect(edge_data<ngll, datacapacity> &a,
                edge_data<ngll, datacapacity> &b,
                edge_intersection<ngll> &intersection) {
-#define intersect_eps 1e-5
+#define intersect_eps 1e-3
 #define intersect_eps2 (intersect_eps * intersect_eps)
   quadrature_rule gll = gen_GLL(ngll);
 
-  // make sure second derivative is zero and ngll is correct
+  // make sure ngll is correct
   if (a.ngll != ngll || b.ngll != ngll) {
     throw std::runtime_error(
         "bool intersect(edge_data,edge_data,edge_intersection): ngll different "
         "from expected.");
   }
-  for (int i = 2; i < ngll; i++) {
-    type_real xa = 0, xb = 0, za = 0, zb = 0;
-    for (int j = 0; j < ngll; j++) {
-      xa += a.x[j] * gll.L[j * ngll + i];
-      xb += b.x[j] * gll.L[j * ngll + i];
-      za += a.z[j] * gll.L[j * ngll + i];
-      zb += b.z[j] * gll.L[j * ngll + i];
-    }
-    if (fabs(xa) > 1e-4 || fabs(xb) > 1e-4 || fabs(za) > 1e-4 || fabs(zb) > 1e-4) {
-      std::cout << "t^" << i << " term fail\n";
-      std::cout << "  a x-deriv " << xa << " from "
-                << "[";
-      for (int j = 0; j < ngll; j++) {
-        std::cout << a.x[j] << ", ";
-      }
-      std::cout << "]\n";
-      std::cout << "  a z-deriv " << za << " from "
-                << "[";
-      for (int j = 0; j < ngll; j++) {
-        std::cout << a.z[j] << ", ";
-      }
-      std::cout << "]\n";
-      std::cout << "  b x-deriv " << xb << " from "
-                << "[";
-      for (int j = 0; j < ngll; j++) {
-        std::cout << b.x[j] << ", ";
-      }
-      std::cout << "]\n";
-      std::cout << "  b z-deriv " << zb << " from "
-                << "[";
-      for (int j = 0; j < ngll; j++) {
-        std::cout << b.z[j] << ", ";
-      }
-      std::cout << "]\n";
-      throw std::runtime_error(
-          "bool intersect(edge_data,edge_data,edge_intersection) currently "
-          "supports only linear segments.");
-    }
-  }
-  // center (param = 0)
-  type_real x1a = 0.5 * (a.x[ngll - 1] + a.x[0]);
-  type_real z1a = 0.5 * (a.z[ngll - 1] + a.z[0]);
-  type_real x1b = 0.5 * (b.x[ngll - 1] + b.x[0]);
-  type_real z1b = 0.5 * (b.z[ngll - 1] + b.z[0]);
-  // deriv
-  type_real x2a = 0.5 * (a.x[ngll - 1] - a.x[0]);
-  type_real z2a = 0.5 * (a.z[ngll - 1] - a.z[0]);
-  type_real x2b = 0.5 * (b.x[ngll - 1] - b.x[0]);
-  type_real z2b = 0.5 * (b.z[ngll - 1] - b.z[0]);
-  type_real cross = x2a * z2b - x2b * z2a;
+  //maybe do an AABB check for performance? the box can be precomputed per edge.
 
-  if (cross * cross / ((x2a * x2a + z2a * z2a) * (x2b * x2b + z2b * z2b)) <
-      1e-8) {
-    // sin^2 theta < 1e-8, so parallel; orth project points to find distance
-    // between lines
+
+  //approximate edges as linear segments
+  constexpr int subdivisions = 10;
+  constexpr type_real h = 2.0/subdivisions;
+
+  type_real ax[subdivisions+1];
+  type_real bx[subdivisions+1];
+  type_real az[subdivisions+1];
+  type_real bz[subdivisions+1];
+
+  for(int i = 0; i < subdivisions+1; i++){
+    ax[i] = gll.interpolate(a.x, i*h);
+    az[i] = gll.interpolate(a.z, i*h);
+    bx[i] = gll.interpolate(b.x, i*h);
+    bz[i] = gll.interpolate(b.z, i*h);
+  }
+
+  const auto line_intersection = [&gll](type_real ax0, type_real az0, type_real ax1, type_real az1,
+                type_real bx0, type_real bz0, type_real bx1, type_real bz1,
+                type_real& alow, type_real& ahigh, type_real& blow, type_real& bhigh) -> bool {
+    type_real adx = ax1-ax0;
+    type_real bdx = bx1-bx0;
+    type_real adz = az1-az0;
+    type_real bdz = bz1-bz0;
+    type_real cross = adx * bdz - bdx * adz;
+    type_real sin2 = cross * cross / ((adx * adx + adz * adz) * (bdx * bdx + bdz * bdz));
+    if (sin2 > 1e-2){
+      //not parallel, but there is an interval for which the lines are within eps distance
+      //parameters where intersections occur: use cramer's rule
+      type_real c1 = bx0-ax0;
+      type_real c2 = bz0-az0;
+      type_real ta = (bdz*c1 - bdx*c2)/cross;
+      type_real tb = (adz*c1 - adx*c2)/cross;
+
+      //this is the distance from the intersection where the lines are intersect_eps distance apart
+      type_real permitted_dist = intersect_eps / sqrt(2 - 2*sqrt(1 - sin2));
+      //and the distance in parameter space to achieve that:
+      type_real a_shift = permitted_dist / sqrt(adx*adx + adz*adz);
+      type_real b_shift = permitted_dist / sqrt(bdx*bdx + bdz*bdz);
+      alow = std::max((type_real)0.0, ta - a_shift);
+      blow = std::max((type_real)0.0, tb - b_shift);
+      ahigh = std::min((type_real)1.0, ta + a_shift);
+      bhigh = std::min((type_real)1.0, tb + b_shift);
+
+      return true;
+    }
+    // sin^2 theta <= eps, so parallel; orth project points to find distance between lines
+
+
+    //(a0-b0) - ad( (a0 - b0) . (ad)/|ad|^2 )
+
+    // initial_point_deviation . a_direction
     type_real dot_over_mag2 =
-        ((x1a - x1b) * x2a + (z1a - z1b) * z2a) / (x2a * x2a + z2a * z2a);
-    type_real orthx = (x1a - x1b) - x2a * dot_over_mag2;
-    type_real orthz = (z1a - z1b) - z2a * dot_over_mag2;
-    //(a1-b1) - a2( (a1 - b1) . (a2)/|a2|^2 )
+        ((ax0 - bx0) * adx + (az0 - bz0) * adz) / (adx * adx + adz * adz);
+    //proj initial_point_deviation perp to {a_direction}
+    type_real orthx = (ax0 - bx0) - adx * dot_over_mag2;
+    type_real orthz = (az0 - bz0) - adz * dot_over_mag2;
+
     if (orthx * orthx + orthz * orthz > intersect_eps2) {
       // distance between lines is greater than eps, so no intersection
       return false;
     }
-    // map b endpoints into a parameter
-    type_real tb1 =
-        ((b.x[0] - x1a) * x2a + (b.z[0] - x1a) * z2a) / (x2a * x2a + z2a * z2a);
-    type_real tb2 =
-        ((b.x[ngll - 1] - x1a) * x2a + (b.z[ngll - 1] - x1a) * z2a) /
-        (x2a * x2a + z2a * z2a);
-    intersection.a_param_start = std::max((type_real)-1.0, std::min(tb1, tb2));
-    intersection.a_param_end = std::min((type_real)1.0, std::max(tb1, tb2));
-    if (intersection.a_param_end - intersection.a_param_start < intersect_eps) {
-      // intersection is of (reference coordinate) length < eps.
-      return false;
-    }
 
-    // a param -> b param (a1 + ta*a2 = b1 + tb*b2)
-    if (fabs(x2b) > fabs(z2b)) {
-      intersection.b_param_start =
-          (x1a + intersection.a_param_start * x2a - x1b) / x2b;
-      intersection.b_param_end =
-          (x1a + intersection.a_param_end * x2a - x1b) / x2b;
+    //the lines intersect. Find start and end parameters. We use [0,1] for parameter
+    // (a0 + ad*ta = b0 + bd*tb)
+
+
+    // find (a0 + ad*tb0 ~ b0) and (a0 + ad*tb0 ~ b1): do a projection
+    type_real tb0 = ((bx0 - ax0) * adx + (bz0 - az0) * adz) / (adx * adx + adz * adz);
+    type_real tb1 = ((bx1 - ax0) * adx + (bz1 - az0) * adz) / (adx * adx + adz * adz);
+
+    alow = std::max((type_real)0.0, std::min(tb0, tb1));
+    ahigh = std::min((type_real)1.0, std::max(tb0, tb1));
+
+    //we have an intersection. Set blow,bhigh and return true
+
+    if (fabs(bdx) > fabs(bdz)) {
+      blow = (ax0 + alow * adx - bx0) / bdx;
+      bhigh = (ax0 + ahigh * adx - bx0) / bdx;
     } else {
-      intersection.b_param_start =
-          (z1a + intersection.a_param_start * z2a - z1b) / z2b;
-      intersection.b_param_end =
-          (z1a + intersection.a_param_end * z2a - z1b) / z2b;
+      blow = (az0 + alow * adz - bz0) / bdz;
+      bhigh = (az0 + ahigh * adz - bz0) / bdz;
     }
-    // populate mortar transfer functions (due to linearity, we do not need
-    // locate_point())
-    type_real t_samples[ngll];
-    for (int i = 0; i < a.ngll; i++) {
-      t_samples[i] = 0.5 * ((1 - gll.t[i]) * intersection.a_param_start +
-                            (1 + gll.t[i]) * intersection.a_param_end);
-    }
-    gll.sample_L(intersection.a_mortar_trans, t_samples, a.ngll);
-    for (int i = 0; i < b.ngll; i++) {
-      t_samples[i] = 0.5 * ((1 - gll.t[i]) * intersection.b_param_start +
-                            (1 + gll.t[i]) * intersection.b_param_end);
-    }
-    gll.sample_L(intersection.b_mortar_trans, t_samples, b.ngll);
-    intersection.ngll = ngll;
-    intersection.a_ngll = a.ngll;
-    intersection.b_ngll = b.ngll;
     return true;
+  };
+
+  float a_param_start = 1, a_param_end = -1;
+  float b_param_start = 1, b_param_end = -1;
+
+
+
+  //this is O(n^2) check. this really needs to be optimized
+  float alow,ahigh,blow,bhigh;
+  for(int ia = 0; ia < subdivisions; ia++){
+    for(int ib = 0; ib < subdivisions; ib++){
+      if (line_intersection(ax[ia],az[ia],ax[ia+1],az[ia+1],
+                           bx[ib],bz[ib],bx[ib+1],bz[ib+1],
+                           alow,ahigh,blow,bhigh)){
+        //push out parameters. We assume intersection is convex
+        a_param_start = std::min(a_param_start, (ia+alow)*h-1);
+        a_param_end = std::max(a_param_end, (ia+ahigh)*h-1);
+        b_param_start = std::min(b_param_start, (ib+blow)*h-1);
+        b_param_end = std::max(b_param_end, (ib+bhigh)*h-1);
+      }
+    }
   }
-  // not parallel, so intersection has zero measure (single point).
-  return false;
+  if(a_param_end - a_param_start < intersect_eps && b_param_end - b_param_start < intersect_eps){
+    //intersection (within segments) is too small
+    return false;
+  }
+  intersection.a_param_start = a_param_start;
+  intersection.a_param_end = a_param_end;
+  intersection.b_param_start = b_param_start;
+  intersection.b_param_end = b_param_end;
+
+  // populate mortar transfer functions by computing reference parameters for even spacing
+  type_real t_samples[ngll];
+
+  //this uses the linear approximations, but we should consider a different scheme (locate_point?)
+  type_real a_len = 0, b_len = 0;
+  type_real a_sublens[subdivisions];
+  type_real b_sublens[subdivisions];
+  for(int i = 0; i < subdivisions; i++){
+    type_real dx = ax[i+1] - ax[i];
+    type_real dz = az[i+1] - az[i];
+    a_sublens[i] = h*sqrt(dx*dx + dz*dz);
+    a_len += a_sublens[i];
+    dx = bx[i+1] - bx[i];
+    dz = bz[i+1] - bz[i];
+    b_sublens[i] = h*sqrt(dx*dx + dz*dz);
+    b_len += b_sublens[i];
+  }
+
+  //even spacing is len_desired = i * len * (t+1)/2
+  //find parameters int_-1^{t_desired} |dr|  = len_desired
+  type_real len_inc = a_sublens[0];
+  int segment = 1;
+  for (int i = 0; i < ngll; i++) {
+    type_real len_desired = 0.5*(1+gll.t[i])*a_len;
+    while(len_inc < len_desired){
+      len_inc += a_sublens[segment];
+      segment++;
+    }
+    // len_inc = len_desired + delta
+    // t_desired = h*segment - delta/sublen[segment-1] - 1
+    // since h * segment -> len_inc, and we use linear approx
+    t_samples[i] = h*(segment + (len_desired - len_inc)/a_sublens[segment-1]) - 1;
+  }
+  gll.sample_L(intersection.a_mortar_trans, t_samples, ngll);
+
+
+  len_inc = b_sublens[0];
+  segment = 1;
+  for (int i = 0; i < ngll; i++) {
+    type_real len_desired = 0.5*(1+gll.t[i])*b_len;
+    while(len_inc < len_desired){
+      len_inc += b_sublens[segment];
+      segment++;
+    }
+    // len_inc = len_desired + delta
+    // t_desired = h*segment + delta/sublen[segment-1]
+    t_samples[i] = h*(segment + (len_desired - len_inc)/b_sublens[segment-1]) - 1;
+  }
+  gll.sample_L(intersection.b_mortar_trans, t_samples, ngll);
+  intersection.ngll = ngll;
+  intersection.a_ngll = a.ngll;
+  intersection.b_ngll = b.ngll;
+  return true;
 #undef intersect_eps2
 #undef intersect_eps
 }
