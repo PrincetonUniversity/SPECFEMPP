@@ -37,7 +37,8 @@ public:
    * @param default_file Path to a YAML file to be used to instantiate default
    * parameters
    */
-  setup(const std::string &parameter_file, const std::string &default_file);
+  setup(const std::string &parameter_file, const std::string &default_file,
+        const bool &binding_python = true);
   /**
    * @brief Instantiate quadrature objects in x and z dimensions
    *
