@@ -88,20 +88,14 @@ int parse_args(int argc, char **argv,
   return 1;
 }
 
-void execute(const std::string &parameter_file, const std::string &default_file,
+void execute(const YAML::Node &parameter_dict, const YAML::Node &default_dict,
              specfem::MPI::MPI *mpi) {
 
   // --------------------------------------------------------------
   //                    Read parameter file
   // --------------------------------------------------------------
   auto start_time = std::chrono::system_clock::now();
-  specfem::runtime_configuration::setup setup(parameter_file, default_file,
-#ifdef SPECFEMPP_BINDING_PYTHON
-                                              true
-#else
-                                              false
-#endif
-  );
+  specfem::runtime_configuration::setup setup(parameter_dict, default_dict);
   const auto [database_filename, source_filename] = setup.get_databases();
   mpi->cout(setup.print_header(start_time));
 
@@ -310,7 +304,9 @@ bool _execute(const std::string &parameter_string,
   if (_py_mpi == NULL) {
     return false;
   }
-  execute(parameter_string, default_string, _py_mpi);
+  const YAML::Node parameter_dict = YAML::Load(parameter_string);
+  const YAML::Node default_dict = YAML::Load(default_string);
+  execute(parameter_dict, default_dict, _py_mpi);
   return true;
 }
 
@@ -373,7 +369,9 @@ int main(int argc, char **argv) {
       const std::string parameters_file =
           vm["parameters_file"].as<std::string>();
       const std::string default_file = vm["default_file"].as<std::string>();
-      execute(parameters_file, default_file, mpi);
+      const YAML::Node parameter_dict = YAML::LoadFile(parameters_file);
+      const YAML::Node default_dict = YAML::LoadFile(default_file);
+      execute(parameter_dict, default_dict, mpi);
     }
   }
   // Finalize Kokkos
