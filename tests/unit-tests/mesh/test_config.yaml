@@ -44,3 +44,14 @@ Tests:
     databases:
       - processor : 0
         filename : "../../../tests/unit-tests/data/mesh/Gmesh_Example_Stacey/database.bin"
+
+
+# Test 6:
+  - name : "Test 6: Homogeneous Elastic Anisotropic Material"
+    description: >
+      Testing the reading of a homogeneous elastic anisotropic material.
+    config:
+      nproc : 1
+    databases:
+      - processor : 0
+        filename : "../../../tests/unit-tests/data/mesh/homogeneous_elastic_anisotropic/database.bin"
