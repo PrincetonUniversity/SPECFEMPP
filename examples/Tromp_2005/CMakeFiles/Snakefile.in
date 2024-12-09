@@ -229,6 +229,10 @@ rule plot_kernels:
     run:
         from plot import plot_kernels
 
+        # Set matplotlib gui off
+        import matplotlib
+        matplotlib.use("Agg")
+
         plot_kernels(input.kernels, output.plot)
 
 

@@ -84,7 +84,7 @@ Force Source Description
 Moment Tensor Source Description
 ================================
 
-**Parameter Name** : ``sources.moment_tensor``
+**Parameter Name** : ``sources.moment-tensor``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : None
@@ -93,7 +93,7 @@ Moment Tensor Source Description
 
 **Description** : Definition of moment tensor source
 
-**Parameter Name** : ``sources.moment_tensor.x``
+**Parameter Name** : ``sources.moment-tensor.x``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : None
@@ -102,7 +102,7 @@ Moment Tensor Source Description
 
 **Description** : X coordinate location of the moment tensor source.
 
-**Parameter Name** : ``sources.moment_tensor.z``
+**Parameter Name** : ``sources.moment-tensor.z``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : None
@@ -111,7 +111,7 @@ Moment Tensor Source Description
 
 **Description** : Z coordinate location of the moment tensor source.
 
-**Parameter Name** : ``sources.moment_tensor.Mxx``
+**Parameter Name** : ``sources.moment-tensor.Mxx``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : None
@@ -120,7 +120,7 @@ Moment Tensor Source Description
 
 **Description** : Mxx moment tensor component.
 
-**Parameter Name** : ``sources.moment_tensor.Mzz``
+**Parameter Name** : ``sources.moment-tensor.Mzz``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : None
@@ -129,7 +129,7 @@ Moment Tensor Source Description
 
 **Description** : Mzz moment tensor component.
 
-**Parameter Name** : ``sources.moment_tensor.Mxz``
+**Parameter Name** : ``sources.moment-tensor.Mxz``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : None
@@ -138,7 +138,7 @@ Moment Tensor Source Description
 
 **Description** : Mxz moment tensor component.
 
-**Parameter Name** : ``sources.moment_tensor.Dirac`` [optional]
+**Parameter Name** : ``sources.moment-tensor.Dirac`` [optional]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : None
@@ -147,7 +147,7 @@ Moment Tensor Source Description
 
 **Description** : Definition of Dirac source :ref:`dirac_source_description`
 
-**Parameter Name** : ``sources.moment_tensor.Ricker`` [optional]
+**Parameter Name** : ``sources.moment-tensor.Ricker`` [optional]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : None
@@ -156,7 +156,7 @@ Moment Tensor Source Description
 
 **Description** : Definition of Ricker source :ref:`ricker_source_description`
 
-**Parameter Name** : ``sources.moment_tensor.External`` [optional]
+**Parameter Name** : ``sources.moment-tensor.External`` [optional]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : None
@@ -169,7 +169,7 @@ Moment Tensor Source Description
 
     .. code-block:: yaml
 
-        moment_tensor:
+        moment-tensor:
             x: 0.0
             z: 0.0
             Mxx: 1e10

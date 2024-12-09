@@ -1,0 +1,28 @@
+number-of-sources: {{ number_of_sources_x + number_of_sources_z }}
+sources:
+{% for i in range(number_of_sources_x) %}
+    - moment-tensor:
+        x: {{ 2.000e+2 + i * 1.000e+2 }}
+        z: {{ 7.200e+2 }}
+        Mxx: 1.0
+        Mzz: 1.0
+        Mxz: 0.0
+        angle: 0.0
+        Ricker:
+            factor: 9.836e-10
+            tshift: {{ 0.0 + i * 5.309e-03 }}
+            f0: 1.0
+{% endfor %}
+{% for i in range(number_of_sources_z) %}
+    - moment-tensor:
+        x: {{ 2.000e+2 }}
+        z: {{ 8.200e+2 + i * 1.000e+2 }}
+        Mxx: 1.0
+        Mzz: 1.0
+        Mxz: 0.0
+        angle: 0.0
+        Ricker:
+            factor: 1.805e-10
+            tshift: {{ 2.893e-02 * (i + 1) }}
+            f0: 1.0
+{% endfor %}
