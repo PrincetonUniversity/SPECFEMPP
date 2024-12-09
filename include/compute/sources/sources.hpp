@@ -1,5 +1,4 @@
-#ifndef _COMPUTE_SOURCES_2_HPP
-#define _COMPUTE_SOURCES_2_HPP
+#pragma once
 
 #include "compute/compute_mesh.hpp"
 #include "compute/compute_partial_derivatives.hpp"
@@ -13,7 +12,22 @@
 namespace specfem {
 namespace compute {
 struct sources {
+private:
+  using IndexViewType =
+      Kokkos::View<int *, Kokkos::DefaultExecutionSpace>; ///< Underlying view
+                                                          ///< type to store
+                                                          ///< indices
+  using MediumTagViewType =
+      Kokkos::View<specfem::element::medium_tag *,
+                   Kokkos::DefaultExecutionSpace>; ///< Underlying view type to
+                                                   ///< store medium tags
 
+  using WavefieldTagViewType =
+      Kokkos::View<specfem::wavefield::simulation_field *,
+                   Kokkos::DefaultExecutionSpace>; ///< Underlying view type to
+                                                   ///< store wavefield tags
+
+public:
   /**
    * @name Constructors
    *
@@ -45,40 +59,215 @@ struct sources {
   ///@}
 
   /**
-   * @brief Get the information on sources for a given medium
+   * @brief Get the indices of spectral elements for all sources of a given
+   * medium and wavefield type on the host
    *
-   * @tparam Medium Medium type
-   * @return specfem::compute::impl::sources::source_medium<
-   * specfem::dimension::type::dim2, Medium>  Source information for the medium
+   * @param medium Medium tag of the sources
+   * @param wavefield Wavefield tag of the sources
+   * @return Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> View of the
+   * indices of sources of the given type
    */
-  template <specfem::element::medium_tag Medium>
-  inline specfem::compute::source_medium<specfem::dimension::type::dim2, Medium>
-  get_source_medium() const {
-    if constexpr (Medium == specfem::element::medium_tag::acoustic) {
-      return acoustic_sources;
-    } else if constexpr (Medium == specfem::element::medium_tag::elastic) {
-      return elastic_sources;
-    } else {
-      static_assert("Invalid medium type");
-    }
+  Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> get_elements_on_host(
+      const specfem::element::medium_tag medium,
+      const specfem::wavefield::simulation_field wavefield) const;
+
+  /**
+   * @brief Get the indices of spectral elements for all sources of a given
+   * medium and wavefield type on the device
+   *
+   * @param medium Medium tag of the sources
+   * @param wavefield Wavefield tag of the sources
+   * @return Kokkos::View<int *, Kokkos::DefaultExecutionSpace> View of the
+   * indices of sources of the given type
+   */
+  Kokkos::View<int *, Kokkos::DefaultExecutionSpace> get_elements_on_device(
+      const specfem::element::medium_tag medium,
+      const specfem::wavefield::simulation_field wavefield) const;
+
+  /**
+   * @brief Update the current time step
+   *
+   * The timestep is used when accessing the source time function using
+   * `load_on_device` functions
+   *
+   * @param timestep Current time step
+   */
+  void update_timestep(const int timestep) { this->timestep = timestep; }
+
+private:
+  int nspec;                                 ///< Number of spectral elements
+  IndexViewType source_domain_index_mapping; ///< Mapping for every spectral
+                                             ///< element where source is
+                                             ///< located to local index within
+                                             ///< source_medium
+  IndexViewType::HostMirror
+      h_source_domain_index_mapping; ///< Host mirror of
+                                     ///< source_domain_index_mapping
+  MediumTagViewType medium_types;    ///< Medium type for every spectral element
+  MediumTagViewType::HostMirror h_medium_types; ///< Host mirror of
+                                                ///< medium_types
+  WavefieldTagViewType wavefield_type; ///< Wavefield on which source is
+                                       ///< applied
+  WavefieldTagViewType::HostMirror h_wavefield_types; ///< Host mirror of
+                                                      ///< wavefield_type
+  specfem::compute::impl::source_medium<specfem::dimension::type::dim2,
+                                        specfem::element::medium_tag::acoustic>
+      acoustic_sources; ///< Information for sources within acoustic medium
+  specfem::compute::impl::source_medium<specfem::dimension::type::dim2,
+                                        specfem::element::medium_tag::elastic>
+      elastic_sources; ///< Information for sources within elastic medium
+  int timestep;        ///< Current time step
+
+  template <specfem::element::medium_tag MediumTag,
+            specfem::wavefield::simulation_field WavefieldType>
+  friend KOKKOS_INLINE_FUNCTION void load_on_device(
+      const specfem::point::index<specfem::dimension::type::dim2, false> index,
+      const specfem::compute::sources &sources,
+      specfem::point::source<specfem::dimension::type::dim2, MediumTag,
+                             WavefieldType> &point_source);
+
+  template <specfem::element::medium_tag MediumTag,
+            specfem::wavefield::simulation_field WavefieldType>
+  friend void load_on_host(
+      const specfem::point::index<specfem::dimension::type::dim2, false> index,
+      const specfem::compute::sources &sources,
+      specfem::point::source<specfem::dimension::type::dim2, MediumTag,
+                             WavefieldType> &point_source);
+};
+
+/**
+ * @brief Load source information on device at the given index
+ *
+ * Loads source information on device at the given index. Make sure you set the
+ * correct timestep using `sources.update_timestep` before calling this
+ * function.
+ *
+ * @tparam IndexType Point index type @ref specfem::point::index
+ * @tparam PointSourceType Point source type @ref specfem::point::source
+ * @param index Spectral element index to load source information
+ * @param sources Source information for the domain
+ * @param point_source Point source object to load source information into
+ */
+template <typename IndexType, typename PointSourceType>
+KOKKOS_INLINE_FUNCTION void
+load_on_device(const IndexType index, const specfem::compute::sources &sources,
+               PointSourceType &point_source) {
+
+  static_assert(IndexType::simd::using_simd == false,
+                "IndexType must not use SIMD when loading sources");
+
+  static_assert(
+      PointSourceType::is_point_source,
+      "PointSourceType must be a point source type specfem::point::source");
+
+  static_assert(PointSourceType::dimension == specfem::dimension::type::dim2,
+                "PointSourceType must be a 2D point source type");
+
+  static_assert(IndexType::dimension == specfem::dimension::type::dim2,
+                "IndexType must be a 2D index type");
+
+  static_assert(
+      ((PointSourceType::medium_tag ==
+        specfem::element::medium_tag::acoustic) ||
+       (PointSourceType::medium_tag == specfem::element::medium_tag::elastic)),
+      "PointSourceType must be an acoustic or elastic point source");
+
+#ifndef NDEBUG
+  if (sources.medium_types(index.ispec) != PointSourceType::medium_tag) {
+    Kokkos::abort("Invalid medium detected in source");
   }
 
-  int nsources; ///< Number of sources
-  specfem::kokkos::HostView1d<int>
-      source_domain_index_mapping; ///< Spectral element index for every source
-  specfem::kokkos::HostView1d<specfem::element::medium_tag>
-      source_medium_mapping; ///< Medium type for every spectral element where
-                             ///< source is located
-  specfem::kokkos::HostView1d<specfem::wavefield::simulation_field>
-      source_wavefield_mapping; ///< Wavefield type on which any source acts
-  specfem::compute::source_medium<specfem::dimension::type::dim2,
-                                  specfem::element::medium_tag::acoustic>
-      acoustic_sources; ///< Information for sources within acoustic medium
-  specfem::compute::source_medium<specfem::dimension::type::dim2,
-                                  specfem::element::medium_tag::elastic>
-      elastic_sources; ///< Information for sources within elastic medium
-};
+  if (sources.wavefield_types(index.ispec) != PointSourceType::wavefield_tag) {
+    Kokkos::abort("Invalid wavefield type detected in source");
+  }
+
+  // Checks if the spectral element index is out of bounds
+  if (index.ispec >= sources.nspec) {
+    Kokkos::abort("Invalid spectral element index detected in source");
+  }
+
+  // Checks if the spectral element has a source associated with it
+  if (sources.source_domain_index_mapping(index.ispec) < 0) {
+    Kokkos::abort("Invalid spectral element index detected in source");
+  }
+#endif
+
+  IndexType lcoord = index;
+  lcoord.ispec = sources.source_domain_index_mapping(index.ispec);
+
+  if constexpr (PointSourceType::medium_tag ==
+                specfem::element::medium_tag::acoustic) {
+    sources.acoustic_sources.load_on_device(sources.timestep, lcoord,
+                                            point_source);
+  } else if constexpr (PointSourceType::medium_tag ==
+                       specfem::element::medium_tag::elastic) {
+    sources.elastic_sources.load_on_device(sources.timestep, lcoord,
+                                           point_source);
+  }
+
+  return;
+}
+
+template <typename IndexType, typename PointSourceType>
+void load_on_host(const IndexType index,
+                  const specfem::compute::sources &sources,
+                  PointSourceType &point_source) {
+
+  static_assert(IndexType::simd::using_simd == false,
+                "IndexType must not use SIMD when loading sources");
+
+  static_assert(
+      PointSourceType::is_point_source,
+      "PointSourceType must be a point source type specfem::point::source");
+
+  static_assert(PointSourceType::dimension == specfem::dimension::type::dim2,
+                "PointSourceType must be a 2D point source type");
+
+  static_assert(IndexType::dimension == specfem::dimension::type::dim2,
+                "IndexType must be a 2D index type");
+
+  static_assert(
+      ((PointSourceType::medium_tag ==
+        specfem::element::medium_tag::acoustic) ||
+       (PointSourceType::medium_tag == specfem::element::medium_tag::elastic)),
+      "PointSourceType must be an acoustic or elastic point source");
+
+#ifndef NDEBUG
+  if (sources.h_medium_types(index.ispec) != PointSourceType::medium_tag) {
+    Kokkos::abort("Invalid medium detected in source");
+  }
+
+  if (sources.h_wavefield_types(index.ispec) !=
+      PointSourceType::wavefield_tag) {
+    Kokkos::abort("Invalid wavefield type detected in source");
+  }
+
+  // Checks if the spectral element index is out of bounds
+  if (index.ispec >= sources.nspec) {
+    Kokkos::abort("Invalid spectral element index detected in source");
+  }
+
+  // Checks if the spectral element has a source associated with it
+  if (sources.h_source_domain_index_mapping(index.ispec) < 0) {
+    Kokkos::abort("Invalid spectral element index detected in source");
+  }
+#endif
+
+  IndexType lcoord = index;
+  lcoord.ispec = sources.h_source_domain_index_mapping(index.ispec);
+
+  if constexpr (PointSourceType::medium_tag ==
+                specfem::element::medium_tag::acoustic) {
+    sources.acoustic_sources.load_on_host(sources.timestep, lcoord,
+                                          point_source);
+  } else if constexpr (PointSourceType::medium_tag ==
+                       specfem::element::medium_tag::elastic) {
+    sources.elastic_sources.load_on_host(sources.timestep, lcoord,
+                                         point_source);
+  }
+
+  return;
+}
+
 } // namespace compute
 } // namespace specfem
-
-#endif /* _COMPUTE_SOURCES_2_HPP */
