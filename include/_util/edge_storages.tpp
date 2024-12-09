@@ -165,6 +165,11 @@ bool intersect(edge_data<ngll, datacapacity> &a,
       ahigh = std::min((type_real)1.0, ta + a_shift);
       bhigh = std::min((type_real)1.0, tb + b_shift);
 
+    //confirm that the intersection occurs inside the segments
+      if(ahigh - alow <= 0 || bhigh - blow <= 0){
+        return false;
+      }
+
       return true;
     }
     // sin^2 theta <= eps, so parallel; orth project points to find distance between lines
@@ -194,6 +199,11 @@ bool intersect(edge_data<ngll, datacapacity> &a,
 
     alow = std::max((type_real)0.0, std::min(tb0, tb1));
     ahigh = std::min((type_real)1.0, std::max(tb0, tb1));
+
+    //confirm that the intersection occurs inside the segment
+    if(ahigh - alow <= 0){
+      return false;
+    }
 
     //we have an intersection. Set blow,bhigh and return true
 
