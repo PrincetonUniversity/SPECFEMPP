@@ -133,6 +133,22 @@ private:
       const specfem::compute::sources &sources,
       specfem::point::source<specfem::dimension::type::dim2, MediumTag,
                              WavefieldType> &point_source);
+
+  template <specfem::element::medium_tag MediumTag,
+            specfem::wavefield::simulation_field WavefieldType>
+  friend KOKKOS_INLINE_FUNCTION void store_on_device(
+      const specfem::point::index<specfem::dimension::type::dim2, false> index,
+      const specfem::point::source<specfem::dimension::type::dim2, MediumTag,
+                                   WavefieldType> &point_source,
+      specfem::compute::sources &sources);
+
+  template <specfem::element::medium_tag MediumTag,
+            specfem::wavefield::simulation_field WavefieldType>
+  friend void store_on_host(
+      const specfem::point::index<specfem::dimension::type::dim2, false> index,
+      const specfem::point::source<specfem::dimension::type::dim2, MediumTag,
+                                   WavefieldType> &point_source,
+      specfem::compute::sources &sources);
 };
 
 /**
@@ -264,6 +280,122 @@ void load_on_host(const IndexType index,
                        specfem::element::medium_tag::elastic) {
     sources.elastic_sources.load_on_host(sources.timestep, lcoord,
                                          point_source);
+  }
+
+  return;
+}
+
+template <typename IndexType, typename PointSourceType>
+KOKKOS_INLINE_FUNCTION void
+store_on_device(const IndexType index, const PointSourceType &point_source,
+                specfem::compute::sources &sources) {
+
+  static_assert(IndexType::simd::using_simd == false,
+                "IndexType must not use SIMD when storing sources");
+
+  static_assert(
+      PointSourceType::is_point_source,
+      "PointSourceType must be a point source type specfem::point::source");
+
+  static_assert(PointSourceType::dimension == specfem::dimension::type::dim2,
+                "PointSourceType must be a 2D point source type");
+
+  static_assert(IndexType::dimension == specfem::dimension::type::dim2,
+                "IndexType must be a 2D index type");
+
+  static_assert(
+      ((PointSourceType::medium_tag ==
+        specfem::element::medium_tag::acoustic) ||
+       (PointSourceType::medium_tag == specfem::element::medium_tag::elastic)),
+      "PointSourceType must be an acoustic or elastic point source");
+
+#ifndef NDEBUG
+  if (sources.medium_types(index.ispec) != PointSourceType::medium_tag) {
+    Kokkos::abort("Invalid medium detected in source");
+  }
+
+  if (sources.wavefield_types(index.ispec) != PointSourceType::wavefield_tag) {
+    Kokkos::abort("Invalid wavefield type detected in source");
+  }
+
+  // Checks if the spectral element index is out of bounds
+  if (index.ispec >= sources.nspec) {
+    Kokkos::abort("Invalid spectral element index detected in source");
+  }
+
+  // Checks if the spectral element has a source associated with it
+  if (sources.source_domain_index_mapping(index.ispec) < 0) {
+    Kokkos::abort("Invalid spectral element index detected in source");
+  }
+#endif
+
+  IndexType lcoord = index;
+  lcoord.ispec = sources.source_domain_index_mapping(index.ispec);
+
+  if constexpr (PointSourceType::medium_tag ==
+                specfem::element::medium_tag::acoustic) {
+    sources.acoustic_sources.store_on_device(lcoord, point_source);
+  } else if constexpr (PointSourceType::medium_tag ==
+                       specfem::element::medium_tag::elastic) {
+    sources.elastic_sources.store_on_device(lcoord, point_source);
+  }
+
+  return;
+}
+
+template <typename IndexType, typename PointSourceType>
+void store_on_host(const IndexType index, const PointSourceType &point_source,
+                   specfem::compute::sources &sources) {
+
+  static_assert(IndexType::simd::using_simd == false,
+                "IndexType must not use SIMD when storing sources");
+
+  static_assert(
+      PointSourceType::is_point_source,
+      "PointSourceType must be a point source type specfem::point::source");
+
+  static_assert(PointSourceType::dimension == specfem::dimension::type::dim2,
+                "PointSourceType must be a 2D point source type");
+
+  static_assert(IndexType::dimension == specfem::dimension::type::dim2,
+                "IndexType must be a 2D index type");
+
+  static_assert(
+      ((PointSourceType::medium_tag ==
+        specfem::element::medium_tag::acoustic) ||
+       (PointSourceType::medium_tag == specfem::element::medium_tag::elastic)),
+      "PointSourceType must be an acoustic or elastic point source");
+
+#ifndef NDEBUG
+  if (sources.h_medium_types(index.ispec) != PointSourceType::medium_tag) {
+    Kokkos::abort("Invalid medium detected in source");
+  }
+
+  if (sources.h_wavefield_types(index.ispec) !=
+      PointSourceType::wavefield_tag) {
+    Kokkos::abort("Invalid wavefield type detected in source");
+  }
+
+  // Checks if the spectral element index is out of bounds
+  if (index.ispec >= sources.nspec) {
+    Kokkos::abort("Invalid spectral element index detected in source");
+  }
+
+  // Checks if the spectral element has a source associated with it
+  if (sources.h_source_domain_index_mapping(index.ispec) < 0) {
+    Kokkos::abort("Invalid spectral element index detected in source");
+  }
+#endif
+
+  IndexType lcoord = index;
+  lcoord.ispec = sources.h_source_domain_index_mapping(index.ispec);
+
+  if constexpr (PointSourceType::medium_tag ==
+                specfem::element::medium_tag::acoustic) {
+    sources.acoustic_sources.store_on_host(lcoord, point_source);
+  } else if constexpr (PointSourceType::medium_tag ==
+                       specfem::element::medium_tag::elastic) {
+    sources.elastic_sources.store_on_host(lcoord, point_source);
   }
 
   return;
