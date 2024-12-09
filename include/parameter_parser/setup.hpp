@@ -87,6 +87,15 @@ public:
   type_real get_dt() const { return time_scheme->get_dt(); }
 
   /**
+   * @brief Get the number of time steps between seismogram sampling
+   *
+   * @return type_real
+   */
+  type_real get_nstep_between_samples() const {
+    return receivers->get_nstep_between_samples();
+  }
+
+  /**
    * @brief Get the path to mesh database and source yaml file
    *
    * @return std::tuple<std::string, std::string> std::tuple specifying the path

@@ -99,6 +99,7 @@ def get_default_par(*keys):
 
 def execute():
     """Execute the simulation."""
+
     _load_default()
     _execute(
         yaml.dump(_runtime_config, sort_keys=False),
