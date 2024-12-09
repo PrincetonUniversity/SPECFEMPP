@@ -38,6 +38,15 @@ else (SPECFEMPP_ENABLE_PYTHON)
     endif()
 endif (SPECFEMPP_ENABLE_PYTHON)
 
+# Check if MacOS
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(__APPLE__ TRUE)
+    message("-- macOS detected -- setting __APPLE__ TRUE")
+else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(__APPLE__ FALSE)
+    message("-- macOS not detected -- setting __APPLE__ FALSE")
+endif()
+
 if (DEFINED Kokkos_ENABLE_CUDA)
         if (Kokkos_ENABLE_CUDA)
                 # message("Setting CUDA variables")
@@ -74,6 +83,7 @@ RenderingFreeType
 RenderingGL2PSOpenGL2
 RenderingOpenGL2
 )
+
 
 if (NOT VTK_FOUND)
   message("VTK not found: ${VTK_NOT_FOUND_MESSAGE}")
@@ -516,6 +526,11 @@ add_library(
         src/plotter/plot_wavefield.cpp
 )
 
+# Only define the __APPLE__ compile definition if it is defined
+if (__APPLE__)
+  target_compile_definitions(plotter PRIVATE __APPLE__)
+endif(__APPLE__)
+
 if (NOT VTK_CXX_BUILD)
         target_compile_definitions(
                 plotter
@@ -531,7 +546,8 @@ else ()
                 plotter
                 compute
                 ${VTK_LIBRARIES}
-        )
+                )
+
 endif()
 
 add_library(

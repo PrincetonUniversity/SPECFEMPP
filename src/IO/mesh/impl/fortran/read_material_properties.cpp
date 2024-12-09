@@ -23,6 +23,7 @@ std::vector<specfem::mesh::materials::material_specification> read_materials(
     std::ifstream &stream, const int numat,
     specfem::mesh::materials::material<elastic, isotropic> &elastic_isotropic,
     specfem::mesh::materials::material<acoustic, isotropic> &acoustic_isotropic,
+    
     const specfem::MPI::MPI *mpi) {
 
   input_holder read_values;
