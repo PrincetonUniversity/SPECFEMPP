@@ -21,10 +21,19 @@
 #include <string>
 #include <vector>
 #ifdef SPECFEMPP_BINDING_PYTHON
+#include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #define STRINGIFY(x) #x
 #define MACRO_STRINGIFY(x) STRINGIFY(x)
+// global MPI variable for Python
+specfem::MPI::MPI *_py_mpi = nullptr;
+// global assembly object for Python
+specfem::compute::assembly *_py_assembly = nullptr;
+type_real _py_dt;
+type_real _py_t0;
+int _py_nstep_between_samples;
+std::vector<std::string> _py_trace_names;
 #endif
 // Specfem2d driver
 
@@ -218,6 +227,18 @@ void execute(const std::string &parameter_file, const std::string &default_file,
 
   std::chrono::duration<double> solver_time =
       solver_end_time - solver_start_time;
+#ifdef SPECFEMPP_BINDING_PYTHON
+  // save assembly to global variable
+  _py_assembly = &assembly;
+  _py_dt = setup.get_dt();
+  _py_t0 = setup.get_t0();
+  _py_nstep_between_samples = setup.get_nstep_between_samples();
+  for (int irec = 0; irec < receivers.size(); irec++) {
+    std::string network_name = receivers[irec]->get_network_name();
+    std::string station_name = receivers[irec]->get_station_name();
+    _py_trace_names.push_back(network_name + "." + station_name);
+  }
+#else  // SPECFEMPP_BINDING_PYTHON
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
@@ -254,6 +275,7 @@ void execute(const std::string &parameter_file, const std::string &default_file,
 
     kernel_writer->write();
   }
+#endif // SPECFEMPP_BINDING_PYTHON
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
@@ -268,9 +290,6 @@ void execute(const std::string &parameter_file, const std::string &default_file,
 #ifdef SPECFEMPP_BINDING_PYTHON
 
 namespace py = pybind11;
-
-// global MPI variable for Python
-specfem::MPI::MPI *_py_mpi = NULL;
 
 bool _initialize(py::list py_argv) {
   if (_py_mpi != NULL) {
@@ -307,24 +326,87 @@ bool _initialize(py::list py_argv) {
 
 bool _execute(const std::string &parameter_string,
               const std::string &default_string) {
-  if (_py_mpi == NULL) {
+  if (_py_mpi == nullptr) {
     return false;
   }
+  delete _py_assembly;
   execute(parameter_string, default_string, _py_mpi);
   return true;
 }
 
 bool _finalize() {
-  if (_py_mpi != NULL) {
+  if (_py_mpi != nullptr) {
     // Finalize Kokkos
     Kokkos::finalize();
     // Finalize MPI
     delete _py_mpi;
-    _py_mpi = NULL;
+    _py_mpi = nullptr;
     return true;
   }
   return false;
 }
+
+py::dict get_seismograms(specfem::compute::assembly *_py_assembly) {
+  py::dict seismograms;
+  if (_py_assembly == nullptr) {
+    return seismograms;
+  }
+
+  const auto &receivers = _py_assembly->receivers;
+  const auto &nreceivers = receivers.nreceivers;
+
+  const int nsig_types = receivers.h_seismogram_types.extent(0);
+  const int nsig_steps = receivers.h_seismogram.extent(0);
+
+  _py_assembly->receivers.sync_seismograms();
+
+  // auto t = std::vector<type_real>(nsig_steps);
+  auto t = py::array_t<type_real>(nsig_steps);
+  auto t_buf = t.mutable_unchecked<1>();
+  for (int isig_step = 0; isig_step < nsig_steps; isig_step++) {
+    t_buf(isig_step) = isig_step * _py_dt * _py_nstep_between_samples + _py_t0;
+  }
+  seismograms["__time__"] = t;
+
+  for (int irec = 0; irec < nreceivers; irec++) {
+    std::string station_name = _py_trace_names[irec];
+    for (int isig = 0; isig < nsig_types; isig++) {
+      std::vector<std::string> filename;
+      auto stype = receivers.h_seismogram_types(isig);
+      switch (stype) {
+      case specfem::enums::seismogram::type::displacement:
+        filename = { station_name + ".BXX" + ".semd",
+                     station_name + ".BXZ" + ".semd" };
+        break;
+      case specfem::enums::seismogram::type::velocity:
+        filename = { station_name + ".BXX" + ".semv",
+                     station_name + ".BXZ" + ".semv" };
+        break;
+      case specfem::enums::seismogram::type::acceleration:
+        filename = { station_name + ".BXX" + ".sema",
+                     station_name + ".BXZ" + ".sema" };
+        break;
+      case specfem::enums::seismogram::type::pressure:
+        filename = { station_name + ".PRE" + ".semp" };
+        break;
+      }
+
+      for (int iorientation = 0; iorientation < filename.size();
+           iorientation++) {
+        auto seis = py::array_t<type_real>(nsig_steps);
+        auto seis_buf = seis.mutable_unchecked<1>();
+        for (int isig_step = 0; isig_step < nsig_steps; isig_step++) {
+          seis_buf(isig_step) =
+              receivers.h_seismogram(isig_step, isig, irec, iorientation);
+        }
+        seismograms[filename[iorientation].c_str()] = seis;
+      }
+    }
+  }
+  return seismograms;
+}
+
+py::dict _get_seismograms() { return get_seismograms(_py_assembly); }
 
 PYBIND11_MODULE(_core, m) {
     m.doc() = R"pbdoc(
@@ -349,6 +431,10 @@ PYBIND11_MODULE(_core, m) {
 
     m.def("_finalize", &_finalize, R"pbdoc(
         Finalize SPECFEM++.
+    )pbdoc");
+
+    m.def("get_seismograms", &_get_seismograms, R"pbdoc(
+        Get seismograms.
     )pbdoc");
 
     m.attr("_default_file_path") = __default_file__;
