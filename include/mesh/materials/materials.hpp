@@ -59,6 +59,11 @@ struct materials {
                                      specfem::element::property_tag::isotropic>
       elastic_isotropic; ///< Elastic isotropic material properties
 
+  specfem::mesh::materials::material<
+      specfem::element::medium_tag::elastic,
+      specfem::element::property_tag::anisotropic>
+      elastic_anisotropic; ///< Elastic anisotropic material properties
+
   specfem::mesh::materials::material<specfem::element::medium_tag::acoustic,
                                      specfem::element::property_tag::isotropic>
       acoustic_isotropic; ///< Acoustic isotropic material properties
@@ -94,6 +99,8 @@ struct materials {
   std::variant<
       specfem::material::material<specfem::element::medium_tag::elastic,
                                   specfem::element::property_tag::isotropic>,
+      specfem::material::material<specfem::element::medium_tag::elastic,
+                                  specfem::element::property_tag::anisotropic>,
       specfem::material::material<specfem::element::medium_tag::acoustic,
                                   specfem::element::property_tag::isotropic> >
   operator[](const int index) const;
