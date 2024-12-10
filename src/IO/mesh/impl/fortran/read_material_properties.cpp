@@ -8,8 +8,6 @@
 #include <memory>
 #include <vector>
 
-namespace {
-
 // Define some constants for the material properties
 constexpr auto elastic = specfem::element::medium_tag::elastic;
 constexpr auto isotropic = specfem::element::property_tag::isotropic;
@@ -229,7 +227,6 @@ void read_material_indices(
   return;
 }
 
-} // namespace
 
 specfem::mesh::materials
 specfem::IO::mesh::impl::fortran::read_material_properties(
@@ -241,7 +238,7 @@ specfem::IO::mesh::impl::fortran::read_material_properties(
   specfem::mesh::materials materials(nspec, numat);
 
   // Read material properties
-  auto index_mapping = ::read_materials(
+  auto index_mapping = read_materials(
       stream, numat, materials.elastic_isotropic, materials.acoustic_isotropic,
       materials.elastic_anisotropic, mpi);
 
