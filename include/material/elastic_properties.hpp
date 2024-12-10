@@ -195,7 +195,8 @@ public:
             << "      c23 : " << this->c23 << "\n"
             << "      c25 : " << this->c25 << "\n"
             << "      Qkappa : " << this->Qkappa << "\n"
-            << "      Qmu : " << this->Qmu << "\n" return message.str();
+            << "      Qmu : " << this->Qmu << "\n";
+    return message.str();
   }
 
 private:
