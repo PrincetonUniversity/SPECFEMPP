@@ -227,7 +227,6 @@ void read_material_indices(
   return;
 }
 
-
 specfem::mesh::materials
 specfem::IO::mesh::impl::fortran::read_material_properties(
     std::ifstream &stream, const int numat, const int nspec,
@@ -243,8 +242,8 @@ specfem::IO::mesh::impl::fortran::read_material_properties(
       materials.elastic_anisotropic, mpi);
 
   // Read material indices
-  ::read_material_indices(stream, nspec, numat, index_mapping,
-                          materials.material_index_mapping, knods, mpi);
+  read_material_indices(stream, nspec, numat, index_mapping,
+                        materials.material_index_mapping, knods, mpi);
 
   return materials;
 }
