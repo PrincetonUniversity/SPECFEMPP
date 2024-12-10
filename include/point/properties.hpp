@@ -132,7 +132,7 @@ struct properties<specfem::dimension::type::dim2,
   value_type c25; ///< @f$ c_{25} @f$
   ///@}
 
-  type_real rho; ///< Density @f$ \rho @f$
+  value_type rho; ///< Density @f$ \rho @f$
 
 private:
   KOKKOS_FUNCTION
