@@ -176,7 +176,7 @@ public:
    */
   inline specfem::point::properties<dimension, medium_tag, property_tag, false>
   get_properties() const {
-    return { c11, c13, c15, c33, c35, c55, c12, c23, c25 };
+    return { c11, c13, c15, c33, c35, c55, c12, c23, c25, density };
   }
 
   inline std::string print() const {
