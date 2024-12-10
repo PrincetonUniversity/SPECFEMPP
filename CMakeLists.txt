@@ -526,11 +526,6 @@ add_library(
         src/plotter/plot_wavefield.cpp
 )
 
-# Only define the __APPLE__ compile definition if it is defined
-if (__APPLE__)
-  target_compile_definitions(plotter PRIVATE __APPLE__)
-endif(__APPLE__)
-
 if (NOT VTK_CXX_BUILD)
         target_compile_definitions(
                 plotter
@@ -548,6 +543,10 @@ else ()
                 ${VTK_LIBRARIES}
                 )
 
+        # Only define the __APPLE__ compile definition if it is defined
+        if (__APPLE__)
+        target_compile_definitions(plotter PRIVATE __APPLE__)
+        endif(__APPLE__)
 endif()
 
 add_library(
