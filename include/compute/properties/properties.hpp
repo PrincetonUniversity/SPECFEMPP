@@ -53,6 +53,10 @@ public:
       specfem::element::property_tag::isotropic>
       elastic_isotropic; ///< Elastic isotropic material properties
   specfem::compute::impl::properties::material_property<
+      specfem::element::medium_tag::elastic,
+      specfem::element::property_tag::anisotropic>
+      elastic_anisotropic; ///< Elastic anisotropic material properties
+  specfem::compute::impl::properties::material_property<
       specfem::element::medium_tag::acoustic,
       specfem::element::property_tag::isotropic>
       acoustic_isotropic; ///< Acoustic isotropic material properties
@@ -177,6 +181,11 @@ load_on_device(const IndexType &lcoord,
                 (PropertyTag == specfem::element::property_tag::isotropic)) {
     properties.elastic_isotropic.load_device_properties(l_index,
                                                         point_properties);
+  } else if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
+                       (PropertyTag ==
+                        specfem::element::property_tag::anisotropic)) {
+    properties.elastic_anisotropic.load_device_properties(l_index,
+                                                          point_properties);
   } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
                        (PropertyTag ==
                         specfem::element::property_tag::isotropic)) {
@@ -227,6 +236,11 @@ void load_on_host(const IndexType &lcoord,
                 (PropertyTag == specfem::element::property_tag::isotropic)) {
     properties.elastic_isotropic.load_host_properties(l_index,
                                                       point_properties);
+  } else if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
+                       (PropertyTag ==
+                        specfem::element::property_tag::anisotropic)) {
+    properties.elastic_anisotropic.load_host_properties(l_index,
+                                                        point_properties);
   } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
                        (PropertyTag ==
                         specfem::element::property_tag::isotropic)) {
@@ -275,6 +289,10 @@ void store_on_host(const IndexType &lcoord,
   if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
                 (PropertyTag == specfem::element::property_tag::isotropic)) {
     properties.elastic_isotropic.assign(l_index, point_properties);
+  } else if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
+                       (PropertyTag ==
+                        specfem::element::property_tag::anisotropic)) {
+    properties.elastic_anisotropic.assign(l_index, point_properties);
   } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
                        (PropertyTag ==
                         specfem::element::property_tag::isotropic)) {
