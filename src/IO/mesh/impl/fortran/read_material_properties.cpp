@@ -106,8 +106,8 @@ std::vector<specfem::mesh::materials::material_specification> read_materials(
 
         index_mapping[i] = specfem::mesh::materials::material_specification(
             specfem::element::medium_tag::acoustic,
-            specfem::element::property_tag::isotropic,
-            index_acoustic_isotropic);
+            specfem::element::property_tag::isotropic, index_acoustic_isotropic,
+            read_values.n - 1);
 
         index_acoustic_isotropic++;
 
@@ -130,7 +130,8 @@ std::vector<specfem::mesh::materials::material_specification> read_materials(
 
         index_mapping[i] = specfem::mesh::materials::material_specification(
             specfem::element::medium_tag::elastic,
-            specfem::element::property_tag::isotropic, index_elastic_isotropic);
+            specfem::element::property_tag::isotropic, index_elastic_isotropic,
+            read_values.n - 1);
 
         index_elastic_isotropic++;
       }
@@ -161,7 +162,7 @@ std::vector<specfem::mesh::materials::material_specification> read_materials(
       index_mapping[i] = specfem::mesh::materials::material_specification(
           specfem::element::medium_tag::elastic,
           specfem::element::property_tag::anisotropic,
-          index_elastic_anisotropic);
+          index_elastic_anisotropic, read_values.n - 1);
 
       index_elastic_anisotropic++;
 
@@ -170,7 +171,9 @@ std::vector<specfem::mesh::materials::material_specification> read_materials(
     }
   }
 
-  assert(l_elastic_isotropic.size() + l_acoustic_isotropic.size() == numat);
+  assert(l_elastic_isotropic.size() + l_acoustic_isotropic.size() +
+             l_elastic_anisotropic.size() ==
+         numat);
 
   elastic_isotropic = specfem::mesh::materials::material<elastic, isotropic>(
       l_elastic_isotropic.size(), l_elastic_isotropic);
