@@ -89,9 +89,16 @@ target_link_libraries(
   -lpthread -lm
 )
 
+# add_executable(
+#   mesh_tests
+#   mesh/mesh_tests.cpp
+# )
+
 add_executable(
   mesh_tests
-  mesh/mesh_tests.cpp
+  mesh/test_fixture/test_fixture.cpp
+  mesh/materials/materials.cpp
+  mesh/runner.cpp
 )
 
 target_link_libraries(
