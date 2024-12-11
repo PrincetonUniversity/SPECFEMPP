@@ -1,0 +1,23 @@
+#
+# number of interfaces
+#
+ 2
+#
+# for each interface below, we give the number of points and then x,z for each point
+#
+#
+# interface number 1 (bottom of the mesh)
+#
+ 2
+ 0 0
+ 5000 0
+#
+# interface number 2
+#
+ 2
+    0 3000
+ 5000 3000
+#
+# layer number 3 (top layer)
+#
+ 60

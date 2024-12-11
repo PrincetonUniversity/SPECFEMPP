@@ -17,7 +17,7 @@ enum class medium_tag { elastic, acoustic, poroelastic };
  * @brief Property tag enumeration
  *
  */
-enum class property_tag { isotropic };
+enum class property_tag { isotropic, anisotropic };
 
 template <specfem::dimension::type Dimension,
           specfem::element::medium_tag MediumTag>

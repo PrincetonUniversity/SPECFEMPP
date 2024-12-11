@@ -5,7 +5,9 @@
 #include "properties.hpp"
 #include "specfem_setup.hpp"
 #include <exception>
+#include <iostream>
 #include <ostream>
+#include <sstream>
 
 namespace specfem {
 namespace material {
@@ -50,6 +52,35 @@ public:
           "negative or null values of Q attenuation factor not allowed; set "
           "them equal to 9999 to indicate no attenuation");
     }
+  }
+
+  /**
+   * @brief Check if 2 materials have the same properties
+   *
+   * @param other Material to compare with
+   * @return true If the materials have the same properties
+   */
+  bool operator==(const properties<specfem::element::medium_tag::acoustic,
+                                   specfem::element::property_tag::isotropic>
+                      &other) const {
+
+    return (std::abs(this->density - other.density) < 1e-6 &&
+            std::abs(this->cp - other.cp) < 1e-6 &&
+            std::abs(this->Qkappa - other.Qkappa) < 1e-6 &&
+            std::abs(this->Qmu - other.Qmu) < 1e-6 &&
+            std::abs(this->compaction_grad - other.compaction_grad) < 1e-6);
+  }
+
+  /**
+   * @brief Check if 2 materials have different properties
+   *
+   * @param other Material to compare with
+   * @return true If the materials have different properties
+   */
+  bool operator!=(const properties<specfem::element::medium_tag::acoustic,
+                                   specfem::element::property_tag::isotropic>
+                      &other) const {
+    return !(*this == other);
   }
 
   /**
