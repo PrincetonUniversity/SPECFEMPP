@@ -74,7 +74,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
 
   using PointPropertyType = specfem::point::properties<
       specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-      specfem::element::property_tag::isotropic, false>;
+      specfem::element::property_tag::anisotropic, false>;
 
   const auto &properties = assembly.properties;
 
@@ -93,6 +93,25 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
   }();
 
   if (wavefield_component == specfem::wavefield::type::pressure) {
+    
+
+    // over all elements and GLL points
+    Kokkos::parallel_for(
+      Kokkos::TeamThreadRange(team, iterator.chunk_size()), [&](const int &i) {
+        const auto iterator_index = iterator(i);
+        const auto &index = iterator_index.index;
+
+        // Load the properties
+        PointPropertyType point_property;
+        specfem::compute::load_on_device(index, properties, point_property);
+
+        // cannot compute pressure for an anisotropic material if c12 or c23 are zero
+        if (point_property.c12 < 1.e-7 || point_property.c23 < 1.e-7) {
+          Kokkos::abort("C_12 or C_23 are zero, cannot compute pressure. Check your material properties. Or, deactivate the pressure computation.");
+        }
+
+      });
+
 
     specfem::algorithms::gradient(
         team, iterator, assembly.partial_derivatives, quadrature.hprime_gll,
