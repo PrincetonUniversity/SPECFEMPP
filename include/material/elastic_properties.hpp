@@ -5,7 +5,9 @@
 #include "properties.hpp"
 #include "specfem_setup.hpp"
 #include <exception>
+#include <iostream>
 #include <ostream>
+#include <sstream>
 
 namespace specfem {
 namespace material {
@@ -64,6 +66,36 @@ public:
   properties() = default;
 
   ///@}
+
+  /**
+   * @brief Check if 2 materials have the same properties
+   *
+   * @param other Material to compare with
+   * @return true If the materials have the same properties
+   */
+  bool operator==(const properties<specfem::element::medium_tag::elastic,
+                                   specfem::element::property_tag::isotropic>
+                      &other) const {
+
+    return (std::abs(this->density - other.density) < 1e-6 &&
+            std::abs(this->cp - other.cp) < 1e-6 &&
+            std::abs(this->cs - other.cs) < 1e-6 &&
+            std::abs(this->Qkappa - other.Qkappa) < 1e-6 &&
+            std::abs(this->Qmu - other.Qmu) < 1e-6 &&
+            std::abs(this->compaction_grad - other.compaction_grad) < 1e-6);
+  }
+
+  /**
+   * @brief Check if 2 materials have different properties
+   *
+   * @param other Material to compare with
+   * @return true If the materials have different properties
+   */
+  bool operator!=(const properties<specfem::element::medium_tag::elastic,
+                                   specfem::element::property_tag::isotropic>
+                      &other) const {
+    return !(*this == other);
+  }
 
   /**
    * @brief Get the material properties
@@ -168,6 +200,41 @@ public:
   properties() = default;
 
   ///@}
+
+  /**
+   * @brief Check if 2 materials have the same properties
+   *
+   * @param other Material to compare with
+   * @return true If the materials have the same properties
+   */
+  bool operator==(const properties<specfem::element::medium_tag::elastic,
+                                   specfem::element::property_tag::anisotropic>
+                      &other) const {
+    return (std::abs(this->density - other.density) < 1e-6 &&
+            std::abs(this->c11 - other.c11) < 1e-6 &&
+            std::abs(this->c13 - other.c13) < 1e-6 &&
+            std::abs(this->c15 - other.c15) < 1e-6 &&
+            std::abs(this->c33 - other.c33) < 1e-6 &&
+            std::abs(this->c35 - other.c35) < 1e-6 &&
+            std::abs(this->c55 - other.c55) < 1e-6 &&
+            std::abs(this->c12 - other.c12) < 1e-6 &&
+            std::abs(this->c23 - other.c23) < 1e-6 &&
+            std::abs(this->c25 - other.c25) < 1e-6 &&
+            std::abs(this->Qkappa - other.Qkappa) < 1e-6 &&
+            std::abs(this->Qmu - other.Qmu) < 1e-6);
+  }
+
+  /**
+   * @brief Check if 2 materials have different properties
+   *
+   * @param other Material to compare with
+   * @return true If the materials have different properties
+   */
+  bool operator!=(const properties<specfem::element::medium_tag::elastic,
+                                   specfem::element::property_tag::anisotropic>
+                      &other) const {
+    return !(*this == other);
+  }
 
   /**
    * @brief Get the material properties
