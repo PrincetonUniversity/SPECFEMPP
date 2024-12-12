@@ -132,7 +132,9 @@ struct properties<specfem::dimension::type::dim2,
   value_type c25; ///< @f$ c_{25} @f$
   ///@}
 
-  value_type rho; ///< Density @f$ \rho @f$
+  value_type rho;    ///< Density @f$ \rho @f$
+  value_type rho_vp; ///< P-wave velocity @f$ \rho v_p @f$
+  value_type rho_vs; ///< S-wave velocity @f$ \rho v_s @f$
 
 private:
   KOKKOS_FUNCTION
@@ -142,7 +144,8 @@ private:
              const value_type &c12, const value_type &c23,
              const value_type &c25, const value_type &rho, std::false_type)
       : c11(c11), c13(c13), c15(c15), c33(c33), c35(c35), c55(c55), c12(c12),
-        c23(c23), c25(c25) {}
+        c23(c23), c25(c25), rho(rho), rho_vp(sqrt(rho * c33)),
+        rho_vs(sqrt(rho * c55)) {}
 
   KOKKOS_FUNCTION
   properties(const value_type &c11, const value_type &c13,
@@ -151,7 +154,8 @@ private:
              const value_type &c12, const value_type &c23,
              const value_type &c25, const value_type &rho, std::true_type)
       : c11(c11), c13(c13), c15(c15), c33(c33), c35(c35), c55(c55), c12(c12),
-        c23(c23), c25(c25), rho(rho) {}
+        c23(c23), c25(c25), rho(rho), rho_vp(Kokkos::sqrt(rho * c33)),
+        rho_vs(Kokkos::sqrt(rho * c55)) {}
 
 public:
   KOKKOS_FUNCTION
