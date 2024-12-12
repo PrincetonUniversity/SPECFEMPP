@@ -73,15 +73,16 @@ void allocate_elements(
     }
   }
 
-  if constexpr (wavefield_type == specfem::wavefield::simulation_field::forward ||
-                wavefield_type == specfem::wavefield::simulation_field::adjoint) {
+  if constexpr (wavefield_type ==
+                    specfem::wavefield::simulation_field::forward ||
+                wavefield_type ==
+                    specfem::wavefield::simulation_field::adjoint) {
 
     std::cout << "  - Element type: \n"
               << "    - dimension           : " << dimension::to_string()
               << "\n"
-              << "    - Element type        : " << specfem::element::to_string(
-                                                     medium_tag, property_tag)
-              << "\n"
+              << "    - Element type        : "
+              << specfem::element::to_string(medium_tag, property_tag) << "\n"
               << "    - Boundary Conditions : "
               << specfem::domain::impl::boundary_conditions::print_boundary_tag<
                      boundary_tag>()
@@ -190,12 +191,12 @@ void allocate_isotropic_receivers(
 } // namespace
 
 template <specfem::wavefield::simulation_field WavefieldType,
-          specfem::dimension::type DimensionType,
-          specfem::element::medium_tag medium, typename qp_type>
-specfem::domain::impl::kernels::
-    kernels<WavefieldType, DimensionType, medium, qp_type>::kernels(
-        const type_real dt, const specfem::compute::assembly &assembly,
-        const qp_type &quadrature_points) {
+          specfem::dimension::type DimensionType, typename qp_type>
+specfem::domain::impl::kernels::kernels<
+    WavefieldType, DimensionType, specfem::element::medium_tag::elastic,
+    qp_type>::kernels(const type_real dt,
+                      const specfem::compute::assembly &assembly,
+                      const qp_type &quadrature_points) {
 
   const int nspec = assembly.mesh.nspec;
   specfem::kokkos::HostView1d<element_tag> element_tags(
@@ -209,12 +210,86 @@ specfem::domain::impl::kernels::
                     assembly.boundaries.boundary_tags(ispec));
   }
 
-  if constexpr (WavefieldType == specfem::wavefield::simulation_field::forward ||
-                WavefieldType == specfem::wavefield::simulation_field::adjoint) {
+  if constexpr (WavefieldType ==
+                    specfem::wavefield::simulation_field::forward ||
+                WavefieldType ==
+                    specfem::wavefield::simulation_field::adjoint) {
     std::cout << " Element Statistics \n"
               << "------------------------------\n"
-              << "- Types of elements in " << specfem::element::to_string(medium)
-              << " medium :\n\n";
+              << "- Types of elements in elastic medium :\n\n";
+  }
+
+  // -----------------------------------------------------------
+
+  // Allocate isotropic elements with dirichlet boundary conditions
+  allocate_elements(assembly, element_tags, isotropic_elements_dirichlet);
+
+  // Allocate aniostropic elements with dirichlet boundary conditions
+  allocate_elements(assembly, element_tags, anisotropic_elements_dirichlet);
+
+  // Allocate isotropic elements with stacey boundary conditions
+  allocate_elements(assembly, element_tags, isotropic_elements_stacey);
+
+  // Allocate anisotropic elements with stacey boundary conditions
+  allocate_elements(assembly, element_tags, anisotropic_elements_stacey);
+
+  // Allocate isotropic elements with stacey dirichlet boundary conditions
+  allocate_elements(assembly, element_tags,
+                    isotropic_elements_stacey_dirichlet);
+
+  // Allocate anisotropic elements with stacey dirichlet boundary conditions
+  allocate_elements(assembly, element_tags,
+                    anisotropic_elements_stacey_dirichlet);
+
+  // Allocate isotropic elements
+  allocate_elements(assembly, element_tags, isotropic_elements);
+
+  // Allocate anisotropic elements
+  allocate_elements(assembly, element_tags, anisotropic_elements);
+
+  // Allocate isotropic sources
+
+  allocate_isotropic_sources(assembly, quadrature_points, isotropic_sources);
+
+  // Allocate isotropic receivers
+
+  allocate_isotropic_receivers(assembly, quadrature_points,
+                               isotropic_receivers);
+
+  // Compute mass matrices
+
+  this->compute_mass_matrix(dt);
+
+  return;
+}
+
+template <specfem::wavefield::simulation_field WavefieldType,
+          specfem::dimension::type DimensionType, typename qp_type>
+specfem::domain::impl::kernels::kernels<
+    WavefieldType, DimensionType, specfem::element::medium_tag::acoustic,
+    qp_type>::kernels(const type_real dt,
+                      const specfem::compute::assembly &assembly,
+                      const qp_type &quadrature_points) {
+
+  const int nspec = assembly.mesh.nspec;
+  specfem::kokkos::HostView1d<element_tag> element_tags(
+      "specfem::domain::domain::element_tag", nspec);
+
+  // -----------------------------------------------------------
+  for (int ispec = 0; ispec < nspec; ispec++) {
+    element_tags(ispec) =
+        element_tag(assembly.properties.h_element_types(ispec),
+                    assembly.properties.h_element_property(ispec),
+                    assembly.boundaries.boundary_tags(ispec));
+  }
+
+  if constexpr (WavefieldType ==
+                    specfem::wavefield::simulation_field::forward ||
+                WavefieldType ==
+                    specfem::wavefield::simulation_field::adjoint) {
+    std::cout << " Element Statistics \n"
+              << "------------------------------\n"
+              << "- Types of elements in acoustic medium :\n\n";
   }
 
   // -----------------------------------------------------------
