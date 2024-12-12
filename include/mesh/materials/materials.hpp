@@ -17,6 +17,7 @@ struct materials {
     specfem::element::medium_tag type;       ///< Type of element
     specfem::element::property_tag property; ///< Property of element
     int index;                               ///< Index of material property
+    int database_index; ///< Index of material property in the database
 
     /**
      * @brief Default constructor
@@ -32,8 +33,10 @@ struct materials {
      * @param index Index of material property
      */
     material_specification(specfem::element::medium_tag type,
-                           specfem::element::property_tag property, int index)
-        : type(type), property(property), index(index) {}
+                           specfem::element::property_tag property, int index,
+                           int database_index)
+        : type(type), property(property), index(index),
+          database_index(database_index){};
   };
 
   template <specfem::element::medium_tag type,
