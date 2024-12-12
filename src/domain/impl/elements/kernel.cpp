@@ -11,6 +11,7 @@ constexpr static auto elastic = specfem::element::medium_tag::elastic;
 constexpr static auto acoustic = specfem::element::medium_tag::acoustic;
 
 constexpr static auto isotropic = specfem::element::property_tag::isotropic;
+constexpr static auto anisotropic = specfem::element::property_tag::anisotropic;
 
 constexpr static auto dirichlet =
     specfem::element::boundary_tag::acoustic_free_surface;
@@ -79,8 +80,12 @@ constexpr static auto composite_stacey_dirichlet =
 
 GENERATE_KERNELS(elastic, isotropic, 5)
 
+GENERATE_KERNELS(elastic, anisotropic, 5)
+
 GENERATE_KERNELS(acoustic, isotropic, 5)
 
 GENERATE_KERNELS(elastic, isotropic, 8)
+
+GENERATE_KERNELS(elastic, anisotropic, 8)
 
 GENERATE_KERNELS(acoustic, isotropic, 8)
