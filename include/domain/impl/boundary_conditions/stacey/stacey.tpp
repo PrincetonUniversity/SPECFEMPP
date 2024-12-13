@@ -25,6 +25,7 @@ using anisotropic_type =
     std::integral_constant<specfem::element::property_tag,
                            specfem::element::property_tag::anisotropic>;
 
+// Elastic Isotropic Stacey Boundary Conditions not using SIMD types
 template <
     typename PointBoundaryType, typename PointPropertyType,
     typename PointFieldType, typename ViewType,
@@ -62,6 +63,7 @@ impl_enforce_traction(const acoustic_type &, const isotropic_type &,
   return;
 }
 
+// Elastic Isotropic Stacey Boundary Conditions using SIMD types
 template <
     typename PointBoundaryType, typename PointPropertyType,
     typename PointFieldType, typename ViewType,
@@ -104,6 +106,7 @@ impl_enforce_traction(const acoustic_type &, const isotropic_type &,
   return;
 }
 
+// Elastic Isotropic Stacey Boundary Conditions not using SIMD types
 template <
     typename PointBoundaryType, typename PointPropertyType,
     typename PointFieldType, typename ViewType,
@@ -155,6 +158,7 @@ impl_enforce_traction(const elastic_type &, const isotropic_type &,
   return;
 }
 
+// Elastic Isotropic Stacey Boundary Conditions using SIMD types
 template <
     typename PointBoundaryType, typename PointPropertyType,
     typename PointFieldType, typename ViewType,
@@ -214,6 +218,7 @@ impl_enforce_traction(const elastic_type &, const isotropic_type &,
   return;
 }
 
+// Elastic Anisotropic stacey boundary conditions not using SIMD typess
 template <
     typename PointBoundaryType, typename PointPropertyType,
     typename PointFieldType, typename ViewType,
@@ -266,6 +271,7 @@ impl_enforce_traction(const elastic_type &, const anisotropic_type &,
   return;
 }
 
+// Elastic Anisotropic Stacey Boundary Conditions using SIMD types
 template <
     typename PointBoundaryType, typename PointPropertyType,
     typename PointFieldType, typename ViewType,
@@ -286,7 +292,7 @@ impl_enforce_traction(const elastic_type &, const anisotropic_type &,
 
   static_assert(PointPropertyType::property_tag ==
                     specfem::element::property_tag::anisotropic,
-                "Property tag must be isotropic");
+                "Property tag must be anisotropic");
 
   constexpr int components = PointFieldType::components;
   constexpr auto tag = PointBoundaryType::boundary_tag;
