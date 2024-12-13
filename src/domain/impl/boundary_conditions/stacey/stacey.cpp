@@ -102,3 +102,41 @@ specfem::domain::impl::boundary_conditions::impl_apply_boundary_conditions<
                             specfem::element::medium_tag::elastic> &,
     PointAccelerationType<true, specfem::dimension::type::dim2,
                           specfem::element::medium_tag::elastic> &);
+
+template KOKKOS_FUNCTION void
+specfem::domain::impl::boundary_conditions::impl_apply_boundary_conditions<
+    PointBoundaryType<false, specfem::element::boundary_tag::stacey>,
+    PointPropertyType<specfem::element::medium_tag::elastic,
+                      specfem::element::property_tag::anisotropic, false>,
+    PointVelocityType<false, specfem::dimension::type::dim2,
+                      specfem::element::medium_tag::elastic>,
+    PointAccelerationType<false, specfem::dimension::type::dim2,
+                          specfem::element::medium_tag::elastic> >(
+    const specfem::domain::impl::boundary_conditions::stacey_type &,
+    const PointBoundaryType<false, specfem::element::boundary_tag::stacey> &,
+    const PointPropertyType<specfem::element::medium_tag::elastic,
+                            specfem::element::property_tag::anisotropic, false>
+        &,
+    const PointVelocityType<false, specfem::dimension::type::dim2,
+                            specfem::element::medium_tag::elastic> &,
+    PointAccelerationType<false, specfem::dimension::type::dim2,
+                          specfem::element::medium_tag::elastic> &);
+
+template KOKKOS_FUNCTION void
+specfem::domain::impl::boundary_conditions::impl_apply_boundary_conditions<
+    PointBoundaryType<true, specfem::element::boundary_tag::stacey>,
+    PointPropertyType<specfem::element::medium_tag::elastic,
+                      specfem::element::property_tag::anisotropic, true>,
+    PointVelocityType<true, specfem::dimension::type::dim2,
+                      specfem::element::medium_tag::elastic>,
+    PointAccelerationType<true, specfem::dimension::type::dim2,
+                          specfem::element::medium_tag::elastic> >(
+    const specfem::domain::impl::boundary_conditions::stacey_type &,
+    const PointBoundaryType<true, specfem::element::boundary_tag::stacey> &,
+    const PointPropertyType<specfem::element::medium_tag::elastic,
+                            specfem::element::property_tag::anisotropic, true>
+        &,
+    const PointVelocityType<true, specfem::dimension::type::dim2,
+                            specfem::element::medium_tag::elastic> &,
+    PointAccelerationType<true, specfem::dimension::type::dim2,
+                          specfem::element::medium_tag::elastic> &);
