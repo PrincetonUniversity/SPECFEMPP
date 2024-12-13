@@ -58,14 +58,14 @@ specfem::domain::impl::elements::impl_compute_stress_integrands(
   return { F };
 }
 
-template <bool UseSIMD>
+template <bool UseSIMD, specfem::element::property_tag PropertyTag>
 KOKKOS_FUNCTION specfem::point::field<specfem::dimension::type::dim2,
                                       specfem::element::medium_tag::elastic,
                                       false, false, false, true, UseSIMD>
 specfem::domain::impl::elements::impl_mass_matrix_component(
     const specfem::point::properties<
         specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-        specfem::element::property_tag::isotropic, UseSIMD> &properties,
+        PropertyTag, UseSIMD> &properties,
     const specfem::point::partial_derivatives<
         specfem::dimension::type::dim2, true, UseSIMD> &partial_derivatives) {
 
