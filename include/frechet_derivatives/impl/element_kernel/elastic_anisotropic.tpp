@@ -1,18 +1,18 @@
 #pragma once
 
 #include "algorithms/dot.hpp"
-#include "elastic_isotropic.hpp"
+#include "elastic_anisotropic.hpp"
 #include "globals.h"
 #include "specfem_setup.hpp"
 
 template <bool UseSIMD>
 KOKKOS_FUNCTION specfem::point::kernels<specfem::dimension::type::dim2,
     specfem::element::medium_tag::elastic,
-    specfem::element::property_tag::isotropic, UseSIMD>
+    specfem::element::property_tag::anisotropic, UseSIMD>
 specfem::frechet_derivatives::impl::impl_compute_element_kernel(
     const specfem::point::properties<
         specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-        specfem::element::property_tag::isotropic, UseSIMD> &properties,
+        specfem::element::property_tag::anisotropic, UseSIMD> &properties,
     const specfem::point::field<specfem::dimension::type::dim2,
                                 specfem::element::medium_tag::elastic, false,
                                 false, true, false, UseSIMD> &adjoint_field,
@@ -33,23 +33,18 @@ specfem::frechet_derivatives::impl::impl_compute_element_kernel(
   const datatype kappa = properties.lambdaplus2mu - properties.mu;
 
   if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
-
-    // Compute the gradient of the adjoint field
     const datatype ad_dsxx = adjoint_derivatives.du(0, 0);
     const datatype ad_dsxz =
         static_cast<type_real>(0.5) *
         (adjoint_derivatives.du(0, 1) + adjoint_derivatives.du(1, 0));
     const datatype ad_dszz = adjoint_derivatives.du(1, 1);
 
-    // Compute the gradient of the backward field
     const datatype b_dsxx = backward_derivatives.du(0, 0);
     const datatype b_dsxz =
         static_cast<type_real>(0.5) *
         (backward_derivatives.du(0, 1) + backward_derivatives.du(1, 0));
     const datatype b_dszz = backward_derivatives.du(1, 1);
 
-    // what's this?
-    // --------------------------------------
     // const type_real kappa_kl =
     //     -1.0 * kappa * dt * ((ad_dsxx + ad_dszz) * (b_dsxx + b_dszz));
     // const type_real mu_kl = -2.0 * properties.mu * dt *
@@ -59,43 +54,24 @@ specfem::frechet_derivatives::impl::impl_compute_element_kernel(
     //     -1.0 * properties.rho * dt *
     //     (specfem::algorithms::dot(adjoint_field.acceleration,
     //                               backward_field.displacement));
-    // --------------------------------------
 
-    // In the papers we use dagger for the notation of the adjoint wavefield
-    // here I'm using #
-
-    // Part of Tromp et al. 2005, Eq 18
-    // div(s#) * div(s)
     datatype kappa_kl = (ad_dsxx + ad_dszz) * (b_dsxx + b_dszz);
-
-    // Part of Tromp et al. 2005, Eq 17
-    // [eps+ : eps] - 1/3 [div (s#) * div(s)]
-    // I am not clear on how we get to this form.
     datatype mu_kl = (ad_dsxx * b_dsxx + ad_dszz * b_dszz +
                       static_cast<type_real>(2.0) * ad_dsxz * b_dsxz -
                       static_cast<type_real>(1.0 / 3.0) * kappa_kl);
-
-    // This notation/naming is confusing with respect to the physics.
-    // Should be forward.acceleration dotted with adjoint displacement
-    // See Tromp et al. 2005, Equation 14.
     datatype rho_kl = specfem::algorithms::dot(adjoint_field.acceleration,
                                                backward_field.displacement);
 
-    // Finishing the kernels
     kappa_kl = static_cast<type_real>(-1.0) * kappa * dt * kappa_kl;
     mu_kl = static_cast<type_real>(-2.0) * properties.mu * dt * mu_kl;
     rho_kl = static_cast<type_real>(-1.0) * properties.rho * dt * rho_kl;
 
-    // rho' kernel, first term in Equation 20
     const datatype rhop_kl = rho_kl + kappa_kl + mu_kl;
 
-    // beta (shear wave) kernel, second term in Equation 20
     const datatype beta_kl = static_cast<type_real>(2.0) *
                              (mu_kl - static_cast<type_real>(4.0 / 3.0) *
                                           properties.mu / kappa * kappa_kl);
 
-    // alpha (compressional wave) kernel, third and last term in Eq. 20
-    // of Tromp et al 2005.
     const datatype alpha_kl =
         static_cast<type_real>(2.0) *
         (static_cast<type_real>(1.0) +
