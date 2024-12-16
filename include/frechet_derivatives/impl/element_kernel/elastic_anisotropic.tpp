@@ -45,59 +45,38 @@ specfem::frechet_derivatives::impl::impl_compute_element_kernel(
         (backward_derivatives.du(0, 1) + backward_derivatives.du(1, 0));
     const datatype b_dszz = backward_derivatives.du(1, 1);
 
-    // const type_real kappa_kl =
-    //     -1.0 * kappa * dt * ((ad_dsxx + ad_dszz) * (b_dsxx + b_dszz));
-    // const type_real mu_kl = -2.0 * properties.mu * dt *
-    //                         (ad_dsxx * b_dsxx + ad_dszz * b_dszz +
-    //                          2.0 * ad_dsxz * b_dsxz - 1.0 / 3.0 * kappa_kl);
-    // const type_real rho_kl =
-    //     -1.0 * properties.rho * dt *
-    //     (specfem::algorithms::dot(adjoint_field.acceleration,
-    //                               backward_field.displacement));
-
-    datatype kappa_kl = (ad_dsxx + ad_dszz) * (b_dsxx + b_dszz);
-    datatype mu_kl = (ad_dsxx * b_dsxx + ad_dszz * b_dszz +
-                      static_cast<type_real>(2.0) * ad_dsxz * b_dsxz -
-                      static_cast<type_real>(1.0 / 3.0) * kappa_kl);
+    // rho kernel
     datatype rho_kl = specfem::algorithms::dot(adjoint_field.acceleration,
                                                backward_field.displacement);
 
-    kappa_kl = static_cast<type_real>(-1.0) * kappa * dt * kappa_kl;
-    mu_kl = static_cast<type_real>(-2.0) * properties.mu * dt * mu_kl;
-    rho_kl = static_cast<type_real>(-1.0) * properties.rho * dt * rho_kl;
+    // Inner part of the 2-D version of Equation 15 in Tromp et al. 2005
+    // That is \eps_{jk} \eps_{lm}
+    datatype c11_kl = ad_dsxx * b_dsxx;
+    datatype c13_kl = ad_dsxx * b_dszz + ad_dszz * b_dsxx;
+    datatype c15_kl = 2 * (
+          ad_dsxx * static_cast<type_real>(0.5) * (b_dsxz + b_dszx)
+        + static_cast<type_real>(0.5) * (ad_dsxz + ad_dszx) * b_dsxx);
+    datatype c33_kl = ad_dszz * b_dszz;
+    datatype c35_kl = 2 * ( static_cast<type_real>(0.5) * (b_dsxz + b_dszx) * ad_dszz
+                 + static_cast<type_real>(0.5) * (ad_dsxz + ad_dszx) * b_dszz);
+    datatype c55_kl = 4 * static_cast<type_real>(0.5) * (ad_dsxz + ad_dszx) ;
+               * static_cast<type_real>(0.5) * (b_dsxz + b_dszx);
 
-    const datatype rhop_kl = rho_kl + kappa_kl + mu_kl;
+    //
+    const rho_kl = static_cast<type_real>(-1.0) * properties.rho * dt * rho_kl;
+    const c11_kl = static_cast<type_real>(-1.0) * c11_kl * properties.c11 * dt;
+    const c13_kl = static_cast<type_real>(-1.0) * c13_kl * properties.c13 * dt;
+    const c15_kl = static_cast<type_real>(-1.0) * c15_kl * properties.c15 * dt;
+    const c33_kl = static_cast<type_real>(-1.0) * c33_kl * properties.c33 * dt;
+    const c35_kl = static_cast<type_real>(-1.0) * c35_kl * properties.c35 * dt;
+    const c55_kl = static_cast<type_real>(-1.0) * c55_kl * properties.c55 * dt;
 
-    const datatype beta_kl = static_cast<type_real>(2.0) *
-                             (mu_kl - static_cast<type_real>(4.0 / 3.0) *
-                                          properties.mu / kappa * kappa_kl);
-
-    const datatype alpha_kl =
-        static_cast<type_real>(2.0) *
-        (static_cast<type_real>(1.0) +
-         static_cast<type_real>(4.0 / 3.0) * properties.mu / kappa) *
-        kappa_kl;
-
-    return { rho_kl, mu_kl, kappa_kl, rhop_kl, alpha_kl, beta_kl };
+    return { rho_kl, c11_kl, c13_kl, c15_kl, c33_kl, c35_kl, c55_kl };
   } else if (specfem::globals::simulation_wave == specfem::wave::sh) {
-    const datatype kappa_kl = 0.0;
-    const datatype mu_kl =
-        static_cast<type_real>(-2.0) * properties.mu * dt *
-        static_cast<type_real>(0.5) *
-        (adjoint_derivatives.du(0, 0) * backward_derivatives.du(0, 0) +
-         adjoint_derivatives.du(1, 0) * backward_derivatives.du(1, 0));
-    const datatype rho_kl =
-        static_cast<type_real>(-1.0) * properties.rho * dt *
-        specfem::algorithms::dot(adjoint_field.acceleration,
-                                 backward_field.displacement);
-
-    const datatype rhop_kl = rho_kl + kappa_kl + mu_kl;
-    const datatype alpha_kl = 0.0;
-    const datatype beta_kl = static_cast<type_real>(2.0) * mu_kl;
-
-    return { rho_kl, mu_kl, kappa_kl, rhop_kl, alpha_kl, beta_kl };
+    static_assert("Full anisotropic kernels for SH waves are not supported yet.");
+    return { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
   } else {
     static_assert("Simulation wave not supported");
-    return { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+    return { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
   }
 }
