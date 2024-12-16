@@ -2,7 +2,8 @@
 #include "frechet_derivatives/impl/element_kernel/elastic_isotropic.tpp"
 
 // Explicit template instantiation
-
+// Specification for this template is:
+// -
 template KOKKOS_FUNCTION specfem::point::kernels<
     specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
     specfem::element::property_tag::isotropic, false>

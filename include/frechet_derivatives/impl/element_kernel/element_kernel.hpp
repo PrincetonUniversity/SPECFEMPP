@@ -1,7 +1,7 @@
-#ifndef _FRECHET_DERIVATIVES_IMPL_ELEMENT_KERNEL_ELEMENT_KERNEL_HPP
-#define _FRECHET_DERIVATIVES_IMPL_ELEMENT_KERNEL_ELEMENT_KERNEL_HPP
+#pragma once
 
 #include "acoustic_isotropic.hpp"
+#include "elastic_anisotropic.hpp"
 #include "elastic_isotropic.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
@@ -40,5 +40,3 @@ KOKKOS_FUNCTION
 } // namespace impl
 } // namespace frechet_derivatives
 } // namespace specfem
-
-#endif /* _FRECHET_DERIVATIVES_IMPL_ELEMENT_KERNEL_ELEMENT_KERNEL_HPP */

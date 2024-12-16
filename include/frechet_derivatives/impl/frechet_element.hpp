@@ -1,5 +1,4 @@
-#ifndef _FRECHET_DERIVATIVES_IMPL_FRECHLET_ELEMENT_HPP
-#define _FRECHET_DERIVATIVES_IMPL_FRECHLET_ELEMENT_HPP
+#pragma once
 
 #include "chunk_element/field.hpp"
 #include "compute/assembly/assembly.hpp"
@@ -122,5 +121,3 @@ private:
 } // namespace impl
 } // namespace frechet_derivatives
 } // namespace specfem
-
-#endif /* _FRECHET_DERIVATIVES_IMPL_FRECHLET_ELEMENT_HPP */

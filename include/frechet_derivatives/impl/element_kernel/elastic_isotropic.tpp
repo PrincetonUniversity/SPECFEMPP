@@ -70,7 +70,11 @@ specfem::frechet_derivatives::impl::impl_compute_element_kernel(
 
     // Part of Tromp et al. 2005, Eq 17
     // [eps+ : eps] - 1/3 [div (s#) * div(s)]
-    // I am not clear on how we get to this form.
+    // I am not clear on how we get to the following form but from the
+    // GPU cuda code from the fortran code I assume that there is an
+    // assumption being made that eps#_i * eps_j = eps#_j * eps_i in the
+    // isotropic case due to the symmetry of the voigt notation stiffness
+    // matrix. Since x
     datatype mu_kl = (ad_dsxx * b_dsxx + ad_dszz * b_dszz +
                       static_cast<type_real>(2.0) * ad_dsxz * b_dsxz -
                       static_cast<type_real>(1.0 / 3.0) * kappa_kl);
