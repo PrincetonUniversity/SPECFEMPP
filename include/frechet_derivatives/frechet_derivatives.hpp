@@ -35,7 +35,7 @@ public:
   ///@{
 
   /**
-   * @brief Construct a Freclet Derivatives kernels from spectral element
+   * @brief Construct a Frechet Derivatives kernels from spectral element
    * assembly
    *
    * @param assembly Spectral element assembly

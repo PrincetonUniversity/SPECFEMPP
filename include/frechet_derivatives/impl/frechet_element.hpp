@@ -1,5 +1,4 @@
 #pragma once
-
 #include "chunk_element/field.hpp"
 #include "compute/assembly/assembly.hpp"
 #include "parallel_configuration/chunk_config.hpp"

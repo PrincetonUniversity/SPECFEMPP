@@ -1,5 +1,4 @@
 #pragma once
-
 #include "acoustic_isotropic.hpp"
 #include "elastic_anisotropic.hpp"
 #include "elastic_isotropic.hpp"

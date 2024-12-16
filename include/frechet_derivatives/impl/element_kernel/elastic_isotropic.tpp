@@ -30,6 +30,10 @@ specfem::frechet_derivatives::impl::impl_compute_element_kernel(
   using datatype =
       typename specfem::datatype::simd<type_real, UseSIMD>::datatype;
 
+  static_assert(specfem::globals::simulation_wave == specfem::wave::p_sv ||
+                specfem::globals::simulation_wave == specfem::wave::sh,
+                "Only P-SV and SH waves are supported.");
+
   const datatype kappa = properties.lambdaplus2mu - properties.mu;
 
   if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
@@ -177,8 +181,5 @@ specfem::frechet_derivatives::impl::impl_compute_element_kernel(
     const datatype beta_kl = static_cast<type_real>(2.0) * mu_kl;
 
     return { rho_kl, mu_kl, kappa_kl, rhop_kl, alpha_kl, beta_kl };
-  } else {
-    static_assert("Simulation wave not supported");
-    return { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
   }
 }

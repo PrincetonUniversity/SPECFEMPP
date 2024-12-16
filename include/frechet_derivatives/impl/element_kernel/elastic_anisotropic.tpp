@@ -30,6 +30,10 @@ specfem::frechet_derivatives::impl::impl_compute_element_kernel(
   using datatype =
       typename specfem::datatype::simd<type_real, UseSIMD>::datatype;
 
+  static_assert(specfem::globals::simulation_wave == specfem::wave::p_sv ||
+                specfem::globals::simulation_wave == specfem::wave::sh,
+                "Only P-SV and SH waves are supported.");
+
   if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
 
     /*
@@ -140,13 +144,8 @@ specfem::frechet_derivatives::impl::impl_compute_element_kernel(
     - c44
     - c45/c54 (symmetric)
     */
-    static_assert("Fully anisotropic kernel for SH wave not supported.");
-
 
     return { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
 
-  } else {
-    static_assert("Simulation wave not supported");
-    return { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
   }
 }
