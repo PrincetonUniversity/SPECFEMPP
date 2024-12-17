@@ -515,12 +515,6 @@ public:
   ViewType::HostMirror h_c35;
   ViewType c55;
   ViewType::HostMirror h_c55;
-  ViewType c12;
-  ViewType::HostMirror h_c12;
-  ViewType c23;
-  ViewType::HostMirror h_c23;
-  ViewType c25;
-  ViewType::HostMirror h_c25;
 
   kernels_container() = default;
 
@@ -530,8 +524,6 @@ public:
         h_rho(Kokkos::create_mirror_view(rho)),
         c11("specfem::compute::properties::c11", nspec, ngllz, ngllx),
         h_c11(Kokkos::create_mirror_view(c11)),
-        c12("specfem::compute::properties::c12", nspec, ngllz, ngllx),
-        h_c12(Kokkos::create_mirror_view(c12)),
         c13("specfem::compute::properties::c13", nspec, ngllz, ngllx),
         h_c13(Kokkos::create_mirror_view(c13)),
         c15("specfem::compute::properties::c15", nspec, ngllz, ngllx),
@@ -541,11 +533,7 @@ public:
         c35("specfem::compute::properties::c35", nspec, ngllz, ngllx),
         h_c35(Kokkos::create_mirror_view(c35)),
         c55("specfem::compute::properties::c55", nspec, ngllz, ngllx),
-        h_c55(Kokkos::create_mirror_view(c55)),
-        c23("specfem::compute::properties::c23", nspec, ngllz, ngllx),
-        h_c23(Kokkos::create_mirror_view(c23)),
-        c25("specfem::compute::properties::c25", nspec, ngllz, ngllx),
-        h_c25(Kokkos::create_mirror_view(c25)) {
+        h_c55(Kokkos::create_mirror_view(c55)) {
 
     initialize();
   }
@@ -566,14 +554,11 @@ public:
 
     kernels.rho = rho(ispec, iz, ix);
     kernels.c11 = c11(ispec, iz, ix);
-    kernels.c12 = c12(ispec, iz, ix);
     kernels.c13 = c13(ispec, iz, ix);
     kernels.c15 = c15(ispec, iz, ix);
     kernels.c33 = c33(ispec, iz, ix);
     kernels.c35 = c35(ispec, iz, ix);
     kernels.c55 = c55(ispec, iz, ix);
-    kernels.c23 = c23(ispec, iz, ix);
-    kernels.c25 = c25(ispec, iz, ix);
   }
 
   template <
@@ -600,8 +585,6 @@ public:
         .copy_from(&rho(ispec, iz, ix), tag_type());
     Kokkos::Experimental::where(mask, kernels.c11)
         .copy_from(&c11(ispec, iz, ix), tag_type());
-    Kokkos::Experimental::where(mask, kernels.c12)
-        .copy_from(&c12(ispec, iz, ix), tag_type());
     Kokkos::Experimental::where(mask, kernels.c13)
         .copy_from(&c13(ispec, iz, ix), tag_type());
     Kokkos::Experimental::where(mask, kernels.c15)
@@ -612,10 +595,6 @@ public:
         .copy_from(&c35(ispec, iz, ix), tag_type());
     Kokkos::Experimental::where(mask, kernels.c55)
         .copy_from(&c55(ispec, iz, ix), tag_type());
-    Kokkos::Experimental::where(mask, kernels.c23)
-        .copy_from(&c23(ispec, iz, ix), tag_type());
-    Kokkos::Experimental::where(mask, kernels.c25)
-        .copy_from(&c25(ispec, iz, ix), tag_type());
   }
 
   template <
@@ -634,14 +613,11 @@ public:
 
     kernels.rho = h_rho(ispec, iz, ix);
     kernels.c11 = h_c11(ispec, iz, ix);
-    kernels.c12 = h_c12(ispec, iz, ix);
     kernels.c13 = h_c13(ispec, iz, ix);
     kernels.c15 = h_c15(ispec, iz, ix);
     kernels.c33 = h_c33(ispec, iz, ix);
     kernels.c35 = h_c35(ispec, iz, ix);
     kernels.c55 = h_c55(ispec, iz, ix);
-    kernels.c23 = h_c23(ispec, iz, ix);
-    kernels.c25 = h_c25(ispec, iz, ix);
   }
 
   template <
@@ -678,10 +654,6 @@ public:
         .copy_from(&h_c35(ispec, iz, ix), tag_type());
     Kokkos::Experimental::where(mask, kernels.c55)
         .copy_from(&h_c55(ispec, iz, ix), tag_type());
-    Kokkos::Experimental::where(mask, kernels.c23)
-        .copy_from(&h_c23(ispec, iz, ix), tag_type());
-    Kokkos::Experimental::where(mask, kernels.c25)
-        .copy_from(&h_c25(ispec, iz, ix), tag_type());
   }
 
   template <
@@ -705,8 +677,6 @@ public:
     c33(ispec, iz, ix) = kernels.c33;
     c35(ispec, iz, ix) = kernels.c35;
     c55(ispec, iz, ix) = kernels.c55;
-    c23(ispec, iz, ix) = kernels.c23;
-    c25(ispec, iz, ix) = kernels.c25;
   }
 
   template <
@@ -743,10 +713,6 @@ public:
         .copy_to(&c35(ispec, iz, ix), tag_type());
     Kokkos::Experimental::where(mask, kernels.c55)
         .copy_to(&c55(ispec, iz, ix), tag_type());
-    Kokkos::Experimental::where(mask, kernels.c23)
-        .copy_to(&c23(ispec, iz, ix), tag_type());
-    Kokkos::Experimental::where(mask, kernels.c25)
-        .copy_to(&c25(ispec, iz, ix), tag_type());
   }
 
   template <
@@ -770,8 +736,6 @@ public:
     h_c33(ispec, iz, ix) = kernels.c33;
     h_c35(ispec, iz, ix) = kernels.c35;
     h_c55(ispec, iz, ix) = kernels.c55;
-    h_c23(ispec, iz, ix) = kernels.c23;
-    h_c25(ispec, iz, ix) = kernels.c25;
   }
 
   template <
@@ -807,10 +771,6 @@ public:
         .copy_to(&h_c35(ispec, iz, ix), tag_type());
     Kokkos::Experimental::where(mask, kernels.c55)
         .copy_to(&h_c55(ispec, iz, ix), tag_type());
-    Kokkos::Experimental::where(mask, kernels.c23)
-        .copy_to(&h_c23(ispec, iz, ix), tag_type());
-    Kokkos::Experimental::where(mask, kernels.c25)
-        .copy_to(&h_c25(ispec, iz, ix), tag_type());
   }
 
   template <
@@ -829,14 +789,11 @@ public:
 
     rho(ispec, iz, ix) += kernels.rho;
     c11(ispec, iz, ix) += kernels.c11;
-    c12(ispec, iz, ix) += kernels.c12;
     c13(ispec, iz, ix) += kernels.c13;
     c15(ispec, iz, ix) += kernels.c15;
     c33(ispec, iz, ix) += kernels.c33;
     c35(ispec, iz, ix) += kernels.c35;
     c55(ispec, iz, ix) += kernels.c55;
-    c23(ispec, iz, ix) += kernels.c23;
-    c25(ispec, iz, ix) += kernels.c25;
   }
 
   template <
@@ -873,12 +830,6 @@ public:
     Kokkos::Experimental::where(mask, lhs).copy_to(&c11(ispec, iz, ix),
                                                    tag_type());
 
-    Kokkos::Experimental::where(mask, lhs).copy_from(&c12(ispec, iz, ix),
-                                                     tag_type());
-    lhs += kernels.c12;
-    Kokkos::Experimental::where(mask, lhs).copy_to(&c12(ispec, iz, ix),
-                                                   tag_type());
-
     Kokkos::Experimental::where(mask, lhs).copy_from(&c13(ispec, iz, ix),
                                                      tag_type());
     lhs += kernels.c13;
@@ -908,18 +859,6 @@ public:
     lhs += kernels.c55;
     Kokkos::Experimental::where(mask, lhs).copy_to(&c55(ispec, iz, ix),
                                                    tag_type());
-
-    Kokkos::Experimental::where(mask, lhs).copy_from(&c23(ispec, iz, ix),
-                                                     tag_type());
-    lhs += kernels.c23;
-    Kokkos::Experimental::where(mask, lhs).copy_to(&c23(ispec, iz, ix),
-                                                   tag_type());
-
-    Kokkos::Experimental::where(mask, lhs).copy_from(&c25(ispec, iz, ix),
-                                                     tag_type());
-    lhs += kernels.c25;
-    Kokkos::Experimental::where(mask, lhs).copy_to(&c25(ispec, iz, ix),
-                                                   tag_type());
   }
 
   template <
@@ -938,14 +877,11 @@ public:
 
     h_rho(ispec, iz, ix) += kernels.rho;
     h_c11(ispec, iz, ix) += kernels.c11;
-    h_c12(ispec, iz, ix) += kernels.c12;
     h_c13(ispec, iz, ix) += kernels.c13;
     h_c15(ispec, iz, ix) += kernels.c15;
     h_c33(ispec, iz, ix) += kernels.c33;
     h_c35(ispec, iz, ix) += kernels.c35;
     h_c55(ispec, iz, ix) += kernels.c55;
-    h_c23(ispec, iz, ix) += kernels.c23;
-    h_c25(ispec, iz, ix) += kernels.c25;
   }
 
   template <
@@ -982,12 +918,6 @@ public:
     Kokkos::Experimental::where(mask, lhs).copy_to(&h_c11(ispec, iz, ix),
                                                    tag_type());
 
-    Kokkos::Experimental::where(mask, lhs).copy_from(&h_c12(ispec, iz, ix),
-                                                     tag_type());
-    lhs += kernels.c12;
-    Kokkos::Experimental::where(mask, lhs).copy_to(&h_c12(ispec, iz, ix),
-                                                   tag_type());
-
     Kokkos::Experimental::where(mask, lhs).copy_from(&h_c13(ispec, iz, ix),
                                                      tag_type());
     lhs += kernels.c13;
@@ -1017,18 +947,6 @@ public:
     lhs += kernels.c55;
     Kokkos::Experimental::where(mask, lhs).copy_to(&h_c55(ispec, iz, ix),
                                                    tag_type());
-
-    Kokkos::Experimental::where(mask, lhs).copy_from(&h_c23(ispec, iz, ix),
-                                                     tag_type());
-    lhs += kernels.c23;
-    Kokkos::Experimental::where(mask, lhs).copy_to(&h_c23(ispec, iz, ix),
-                                                   tag_type());
-
-    Kokkos::Experimental::where(mask, lhs).copy_from(&h_c25(ispec, iz, ix),
-                                                     tag_type());
-    lhs += kernels.c25;
-    Kokkos::Experimental::where(mask, lhs).copy_to(&h_c25(ispec, iz, ix),
-                                                   tag_type());
   }
 
   void copy_to_host() {
@@ -1039,8 +957,6 @@ public:
     Kokkos::deep_copy(h_c33, c33);
     Kokkos::deep_copy(h_c35, c35);
     Kokkos::deep_copy(h_c55, c55);
-    Kokkos::deep_copy(h_c23, c23);
-    Kokkos::deep_copy(h_c25, c25);
   }
 
   void copy_to_device() {
@@ -1051,8 +967,6 @@ public:
     Kokkos::deep_copy(c33, h_c33);
     Kokkos::deep_copy(c35, h_c35);
     Kokkos::deep_copy(c55, h_c55);
-    Kokkos::deep_copy(c23, h_c23);
-    Kokkos::deep_copy(c25, h_c25);
   }
 
   void initialize() {
@@ -1063,14 +977,11 @@ public:
         KOKKOS_CLASS_LAMBDA(const int ispec, const int iz, const int ix) {
           this->rho(ispec, iz, ix) = 0.0;
           this->c11(ispec, iz, ix) = 0.0;
-          this->c12(ispec, iz, ix) = 0.0;
           this->c13(ispec, iz, ix) = 0.0;
           this->c15(ispec, iz, ix) = 0.0;
           this->c33(ispec, iz, ix) = 0.0;
           this->c35(ispec, iz, ix) = 0.0;
           this->c55(ispec, iz, ix) = 0.0;
-          this->c23(ispec, iz, ix) = 0.0;
-          this->c25(ispec, iz, ix) = 0.0;
         });
   }
 };
