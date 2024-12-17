@@ -51,9 +51,6 @@ std::string get_error_message(
   message << "\t\tc33 = " << point_kernel.c33 << "\n";
   message << "\t\tc35 = " << point_kernel.c35 << "\n";
   message << "\t\tc55 = " << point_kernel.c55 << "\n";
-  message << "\t\tc12 = " << point_kernel.c33 << "\n";
-  message << "\t\tc23 = " << point_kernel.c35 << "\n";
-  message << "\t\tc25 = " << point_kernel.c55 << "\n";
 
   return message.str();
 }
@@ -165,9 +162,6 @@ get_point_kernel(const int ispec, const int iz, const int ix,
   point_kernel.c33 = elastic_anisotropic.h_c33(ispec_l, iz, ix);
   point_kernel.c35 = elastic_anisotropic.h_c35(ispec_l, iz, ix);
   point_kernel.c55 = elastic_anisotropic.h_c55(ispec_l, iz, ix);
-  point_kernel.c12 = elastic_anisotropic.h_c12(ispec_l, iz, ix);
-  point_kernel.c23 = elastic_anisotropic.h_c23(ispec_l, iz, ix);
-  point_kernel.c25 = elastic_anisotropic.h_c25(ispec_l, iz, ix);
 
   return point_kernel;
 }
@@ -193,9 +187,6 @@ get_point_kernel(
   point_kernel_l.c33 = point_kernel.c33[lane];
   point_kernel_l.c35 = point_kernel.c35[lane];
   point_kernel_l.c55 = point_kernel.c55[lane];
-  point_kernel_l.c12 = point_kernel.c12[lane];
-  point_kernel_l.c23 = point_kernel.c23[lane];
-  point_kernel_l.c25 = point_kernel.c25[lane];
 
   return point_kernel_l;
 }
