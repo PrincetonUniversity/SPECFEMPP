@@ -74,7 +74,8 @@ void specfem::writer::kernel<OutputLibrary>::write() {
 
     for (int ispec = 0; ispec < nspec; ispec++) {
       if (kernels.h_element_types(ispec) ==
-          specfem::element::medium_tag::elastic) {
+          specfem::element::medium_tag::elastic &&
+          kernels.h_element_property(ispec) == specfem::element::property_tag::isotropic) {
         for (int iz = 0; iz < ngllz; iz++) {
           for (int ix = 0; ix < ngllx; ix++) {
             x(i, iz, ix) = mesh.points.h_coord(0, ispec, iz, ix);
@@ -129,7 +130,8 @@ void specfem::writer::kernel<OutputLibrary>::write() {
 
     for (int ispec = 0; ispec < nspec; ispec++) {
       if (kernels.h_element_types(ispec) ==
-          specfem::element::medium_tag::elastic) {
+          specfem::element::medium_tag::elastic &&
+          kernels.h_element_property(ispec) == specfem::element::property_tag::anisotropic) {
         for (int iz = 0; iz < ngllz; iz++) {
           for (int ix = 0; ix < ngllx; ix++) {
             x(i, iz, ix) = mesh.points.h_coord(0, ispec, iz, ix);
