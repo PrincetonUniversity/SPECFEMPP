@@ -58,6 +58,7 @@ specfem::domain::impl::kernels::element_kernel_base<
   return;
 }
 
+
 template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
