@@ -109,6 +109,30 @@ public:
  */
 
 /**
+  * @brief Returns the material_kernel for a given medium and property
+  *
+  */
+template <specfem::element::medium_tag MediumTag, specfem::element::property_tag PropertyTag>
+  const specfem::compute::impl::kernels::material_kernels<
+      MediumTag,
+      PropertyTag>& get_medium(const kernels &kernels) {
+      if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
+              (PropertyTag == specfem::element::property_tag::isotropic)) {
+        return kernels.elastic_isotropic;
+      } else if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
+                          (PropertyTag ==
+                            specfem::element::property_tag::anisotropic)) {
+        return kernels.elastic_anisotropic;
+      } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
+                          (PropertyTag ==
+                            specfem::element::property_tag::isotropic)) {
+        return kernels.acoustic_isotropic;
+      } else {
+        static_assert("Material type not implemented");
+      }
+}
+
+/**
  * @brief Load misfit kernels for a given quadrature point on the device
  *
  * @ingroup ComputeKernelsDataAccess
@@ -136,20 +160,7 @@ KOKKOS_FUNCTION void load_on_device(const IndexType &index,
   IndexType l_index = index;
   l_index.ispec = ispec;
 
-  if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
-                (PropertyTag == specfem::element::property_tag::isotropic)) {
-    kernels.elastic_isotropic.load_device_kernels(l_index, point_kernels);
-  } else if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
-                       (PropertyTag ==
-                        specfem::element::property_tag::anisotropic)) {
-    kernels.elastic_anisotropic.load_device_kernels(l_index, point_kernels);
-  } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
-                       (PropertyTag ==
-                        specfem::element::property_tag::isotropic)) {
-    kernels.acoustic_isotropic.load_device_kernels(l_index, point_kernels);
-  } else {
-    static_assert("Material type not implemented");
-  }
+  get_medium<MediumTag, PropertyTag>(kernels).load_device_kernels(l_index, point_kernels);
 
   return;
 }
@@ -181,20 +192,7 @@ void load_on_host(const IndexType &index, const kernels &kernels,
   IndexType l_index = index;
   l_index.ispec = ispec;
 
-  if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
-                (PropertyTag == specfem::element::property_tag::isotropic)) {
-    kernels.elastic_isotropic.load_host_kernels(l_index, point_kernels);
-  } else if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
-                       (PropertyTag ==
-                        specfem::element::property_tag::anisotropic)) {
-    kernels.elastic_anisotropic.load_host_kernels(l_index, point_kernels);
-  } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
-                       (PropertyTag ==
-                        specfem::element::property_tag::isotropic)) {
-    kernels.acoustic_isotropic.load_host_kernels(l_index, point_kernels);
-  } else {
-    static_assert("Material type not implemented");
-  }
+  get_medium<MediumTag, PropertyTag>(kernels).load_host_kernels(l_index, point_kernels);
 
   return;
 }
@@ -226,20 +224,7 @@ void store_on_host(const IndexType &index, const PointKernelType &point_kernels,
   IndexType l_index = index;
   l_index.ispec = ispec;
 
-  if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
-                (PropertyTag == specfem::element::property_tag::isotropic)) {
-    kernels.elastic_isotropic.update_kernels_on_host(l_index, point_kernels);
-  } else if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
-                       (PropertyTag ==
-                        specfem::element::property_tag::anisotropic)) {
-    kernels.elastic_anisotropic.update_kernels_on_host(l_index, point_kernels);
-  } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
-                       (PropertyTag ==
-                        specfem::element::property_tag::isotropic)) {
-    kernels.acoustic_isotropic.update_kernels_on_host(l_index, point_kernels);
-  } else {
-    static_assert("Material type not implemented");
-  }
+  get_medium<MediumTag, PropertyTag>(kernels).update_kernels_on_host(l_index, point_kernels);
 
   return;
 }
@@ -272,21 +257,7 @@ KOKKOS_FUNCTION void store_on_device(const IndexType &index,
   IndexType l_index = index;
   l_index.ispec = ispec;
 
-  if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
-                (PropertyTag == specfem::element::property_tag::isotropic)) {
-    kernels.elastic_isotropic.update_kernels_on_device(l_index, point_kernels);
-  } else if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
-                       (PropertyTag ==
-                        specfem::element::property_tag::anisotropic)) {
-    kernels.elastic_anisotropic.update_kernels_on_device(l_index,
-                                                         point_kernels);
-  } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
-                       (PropertyTag ==
-                        specfem::element::property_tag::isotropic)) {
-    kernels.acoustic_isotropic.update_kernels_on_device(l_index, point_kernels);
-  } else {
-    static_assert("Material type not implemented");
-  }
+  get_medium<MediumTag, PropertyTag>(kernels).update_kernels_on_device(l_index, point_kernels);
 
   return;
 }
@@ -321,20 +292,7 @@ KOKKOS_FUNCTION void add_on_device(const IndexType &index,
   IndexType l_index = index;
   l_index.ispec = ispec;
 
-  if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
-                (PropertyTag == specfem::element::property_tag::isotropic)) {
-    kernels.elastic_isotropic.add_kernels_on_device(l_index, point_kernels);
-  } else if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
-                       (PropertyTag ==
-                        specfem::element::property_tag::anisotropic)) {
-    kernels.elastic_anisotropic.add_kernels_on_device(l_index, point_kernels);
-  } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
-                       (PropertyTag ==
-                        specfem::element::property_tag::isotropic)) {
-    kernels.acoustic_isotropic.add_kernels_on_device(l_index, point_kernels);
-  } else {
-    static_assert("Material type not implemented");
-  }
+  get_medium<MediumTag, PropertyTag>(kernels).add_kernels_on_device(l_index, point_kernels);
 
   return;
 }
@@ -367,20 +325,7 @@ void add_on_host(const IndexType &index, const PointKernelType &point_kernels,
   IndexType l_index = index;
   l_index.ispec = ispec;
 
-  if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
-                (PropertyTag == specfem::element::property_tag::isotropic)) {
-    kernels.elastic_isotropic.add_kernels_on_host(l_index, point_kernels);
-  } else if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
-                       (PropertyTag ==
-                        specfem::element::property_tag::anisotropic)) {
-    kernels.elastic_anisotropic.add_kernels_on_host(l_index, point_kernels);
-  } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
-                       (PropertyTag ==
-                        specfem::element::property_tag::isotropic)) {
-    kernels.acoustic_isotropic.add_kernels_on_host(l_index, point_kernels);
-  } else {
-    static_assert("Material type not implemented");
-  }
+  get_medium<MediumTag, PropertyTag>(kernels).add_kernels_on_host(l_index, point_kernels);
 
   return;
 }
