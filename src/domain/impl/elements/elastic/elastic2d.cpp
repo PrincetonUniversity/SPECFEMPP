@@ -47,3 +47,23 @@ specfem::domain::impl::elements::impl_mass_matrix_component(
         specfem::element::property_tag::isotropic, true> &,
     const specfem::point::partial_derivatives<specfem::dimension::type::dim2,
                                               true, true> &);
+
+template specfem::point::field<specfem::dimension::type::dim2,
+                               specfem::element::medium_tag::elastic, false,
+                               false, false, true, false>
+specfem::domain::impl::elements::impl_mass_matrix_component(
+    const specfem::point::properties<
+        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+        specfem::element::property_tag::anisotropic, false> &,
+    const specfem::point::partial_derivatives<specfem::dimension::type::dim2,
+                                              true, false> &);
+
+template specfem::point::field<specfem::dimension::type::dim2,
+                               specfem::element::medium_tag::elastic, false,
+                               false, false, true, true>
+specfem::domain::impl::elements::impl_mass_matrix_component(
+    const specfem::point::properties<
+        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+        specfem::element::property_tag::anisotropic, true> &,
+    const specfem::point::partial_derivatives<specfem::dimension::type::dim2,
+                                              true, true> &);

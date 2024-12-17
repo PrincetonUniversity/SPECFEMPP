@@ -88,3 +88,37 @@ specfem::domain::impl::boundary_conditions::impl_compute_mass_matrix_terms<
     const PointPropertyType<specfem::element::medium_tag::elastic,
                             specfem::element::property_tag::isotropic, true> &,
     PointMassMatrixType<specfem::element::medium_tag::elastic, true> &);
+
+template void
+specfem::domain::impl::boundary_conditions::impl_compute_mass_matrix_terms<
+    PointBoundaryType<
+        specfem::element::boundary_tag::composite_stacey_dirichlet, false>,
+    PointPropertyType<specfem::element::medium_tag::elastic,
+                      specfem::element::property_tag::anisotropic, false>,
+    PointMassMatrixType<specfem::element::medium_tag::elastic, false> >(
+    const specfem::domain::impl::boundary_conditions::
+        composite_stacey_dirichlet_type &,
+    const type_real dt,
+    const PointBoundaryType<
+        specfem::element::boundary_tag::composite_stacey_dirichlet, false> &,
+    const PointPropertyType<specfem::element::medium_tag::elastic,
+                            specfem::element::property_tag::anisotropic, false>
+        &,
+    PointMassMatrixType<specfem::element::medium_tag::elastic, false> &);
+
+template void
+specfem::domain::impl::boundary_conditions::impl_compute_mass_matrix_terms<
+    PointBoundaryType<
+        specfem::element::boundary_tag::composite_stacey_dirichlet, true>,
+    PointPropertyType<specfem::element::medium_tag::elastic,
+                      specfem::element::property_tag::anisotropic, true>,
+    PointMassMatrixType<specfem::element::medium_tag::elastic, true> >(
+    const specfem::domain::impl::boundary_conditions::
+        composite_stacey_dirichlet_type &,
+    const type_real dt,
+    const PointBoundaryType<
+        specfem::element::boundary_tag::composite_stacey_dirichlet, true> &,
+    const PointPropertyType<specfem::element::medium_tag::elastic,
+                            specfem::element::property_tag::anisotropic, true>
+        &,
+    PointMassMatrixType<specfem::element::medium_tag::elastic, true> &);

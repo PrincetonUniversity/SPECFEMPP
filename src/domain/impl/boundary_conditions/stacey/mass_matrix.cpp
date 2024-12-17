@@ -76,3 +76,31 @@ specfem::domain::impl::boundary_conditions::impl_compute_mass_matrix_terms<
     const PointPropertyType<specfem::element::medium_tag::elastic,
                             specfem::element::property_tag::isotropic, true> &,
     PointMassMatrixType<specfem::element::medium_tag::elastic, true> &);
+
+template KOKKOS_FUNCTION void
+specfem::domain::impl::boundary_conditions::impl_compute_mass_matrix_terms<
+    PointBoundaryType<specfem::element::boundary_tag::stacey, false>,
+    PointPropertyType<specfem::element::medium_tag::elastic,
+                      specfem::element::property_tag::anisotropic, false>,
+    PointMassMatrixType<specfem::element::medium_tag::elastic, false> >(
+    const specfem::domain::impl::boundary_conditions::stacey_type &,
+    const type_real dt,
+    const PointBoundaryType<specfem::element::boundary_tag::stacey, false> &,
+    const PointPropertyType<specfem::element::medium_tag::elastic,
+                            specfem::element::property_tag::anisotropic, false>
+        &,
+    PointMassMatrixType<specfem::element::medium_tag::elastic, false> &);
+
+template KOKKOS_FUNCTION void
+specfem::domain::impl::boundary_conditions::impl_compute_mass_matrix_terms<
+    PointBoundaryType<specfem::element::boundary_tag::stacey, true>,
+    PointPropertyType<specfem::element::medium_tag::elastic,
+                      specfem::element::property_tag::anisotropic, true>,
+    PointMassMatrixType<specfem::element::medium_tag::elastic, true> >(
+    const specfem::domain::impl::boundary_conditions::stacey_type &,
+    const type_real dt,
+    const PointBoundaryType<specfem::element::boundary_tag::stacey, true> &,
+    const PointPropertyType<specfem::element::medium_tag::elastic,
+                            specfem::element::property_tag::anisotropic, true>
+        &,
+    PointMassMatrixType<specfem::element::medium_tag::elastic, true> &);

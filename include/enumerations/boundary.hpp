@@ -1,23 +1,11 @@
 #pragma once
 
+#include "medium.hpp"
 #include <Kokkos_Core.hpp>
 #include <stdexcept>
 
 namespace specfem {
 namespace element {
-/**
- * @brief Boundary tag enumeration
- *
- */
-enum class boundary_tag {
-  // primary boundaries
-  none,
-  acoustic_free_surface,
-  stacey,
-
-  // composite boundaries
-  composite_stacey_dirichlet
-};
 
 /**
  * @brief Container class to store boundary tags

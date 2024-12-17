@@ -25,7 +25,7 @@ parameters:
           t0: 8.0
 
   receivers:
-    stations-file: "/scratch/gpfs/rk9481/specfem2d_kokkos/examples/Tromp_2005/OUTPUT_FILES/STATIONS"
+    stations-file: "/Users/lsawade/SPECFEMPP/examples/Tromp_2005/OUTPUT_FILES/STATIONS"
     angle: 0.0
     seismogram-type:
       - displacement
@@ -36,5 +36,5 @@ parameters:
     number-of-runs: 1
 
   databases:
-    mesh-database: "/scratch/gpfs/rk9481/specfem2d_kokkos/examples/Tromp_2005/OUTPUT_FILES/database.bin"
-    source-file: "/scratch/gpfs/rk9481/specfem2d_kokkos/examples/Tromp_2005/source.yaml"
+    mesh-database: "/Users/lsawade/SPECFEMPP/examples/Tromp_2005/OUTPUT_FILES/database.bin"
+    source-file: "/Users/lsawade/SPECFEMPP/examples/Tromp_2005/source.yaml"

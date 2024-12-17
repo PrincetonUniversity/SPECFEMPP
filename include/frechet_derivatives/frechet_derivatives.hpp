@@ -35,13 +35,13 @@ public:
   ///@{
 
   /**
-   * @brief Construct a Freclet Derivatives kernels from spectral element
+   * @brief Construct a Frechet Derivatives kernels from spectral element
    * assembly
    *
    * @param assembly Spectral element assembly
    */
   frechet_derivatives(const specfem::compute::assembly &assembly)
-      : isotropic_elements(assembly) {}
+      : isotropic_elements(assembly), anisotropic_elements(assembly) {}
 
   ///@}
 
@@ -57,6 +57,11 @@ private:
       DimensionType, MediumTag, specfem::element::property_tag::isotropic, NGLL>
       isotropic_elements; ///< Frechet derivatives kernels for isotropic
                           ///< elements
+
+  specfem::frechet_derivatives::impl::frechet_elements<
+      DimensionType, MediumTag, specfem::element::property_tag::isotropic, NGLL>
+      anisotropic_elements; ///< Frechet derivatives kernels for isotropic
+                            ///< elements
 };
 } // namespace frechet_derivatives
 } // namespace specfem

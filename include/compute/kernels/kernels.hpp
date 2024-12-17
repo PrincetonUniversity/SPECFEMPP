@@ -47,6 +47,11 @@ public:
       elastic_isotropic; ///< Elastic isotropic material kernels
 
   specfem::compute::impl::kernels::material_kernels<
+      specfem::element::medium_tag::elastic,
+      specfem::element::property_tag::anisotropic>
+      elastic_anisotropic; ///< Elastic isotropic material kernels
+
+  specfem::compute::impl::kernels::material_kernels<
       specfem::element::medium_tag::acoustic,
       specfem::element::property_tag::isotropic>
       acoustic_isotropic; ///< Acoustic isotropic material kernels
@@ -85,6 +90,7 @@ public:
     Kokkos::deep_copy(h_element_property, element_property);
     Kokkos::deep_copy(h_property_index_mapping, property_index_mapping);
     elastic_isotropic.copy_to_host();
+    elastic_anisotropic.copy_to_host();
     acoustic_isotropic.copy_to_host();
   }
 
@@ -93,6 +99,7 @@ public:
     Kokkos::deep_copy(element_property, h_element_property);
     Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);
     elastic_isotropic.copy_to_device();
+    elastic_anisotropic.copy_to_device();
     acoustic_isotropic.copy_to_device();
   }
 };
@@ -132,6 +139,10 @@ KOKKOS_FUNCTION void load_on_device(const IndexType &index,
   if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
                 (PropertyTag == specfem::element::property_tag::isotropic)) {
     kernels.elastic_isotropic.load_device_kernels(l_index, point_kernels);
+  } else if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
+                       (PropertyTag ==
+                        specfem::element::property_tag::anisotropic)) {
+    kernels.elastic_anisotropic.load_device_kernels(l_index, point_kernels);
   } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
                        (PropertyTag ==
                         specfem::element::property_tag::isotropic)) {
@@ -173,6 +184,10 @@ void load_on_host(const IndexType &index, const kernels &kernels,
   if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
                 (PropertyTag == specfem::element::property_tag::isotropic)) {
     kernels.elastic_isotropic.load_host_kernels(l_index, point_kernels);
+  } else if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
+                       (PropertyTag ==
+                        specfem::element::property_tag::anisotropic)) {
+    kernels.elastic_anisotropic.load_host_kernels(l_index, point_kernels);
   } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
                        (PropertyTag ==
                         specfem::element::property_tag::isotropic)) {
@@ -214,6 +229,10 @@ void store_on_host(const IndexType &index, const PointKernelType &point_kernels,
   if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
                 (PropertyTag == specfem::element::property_tag::isotropic)) {
     kernels.elastic_isotropic.update_kernels_on_host(l_index, point_kernels);
+  } else if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
+                       (PropertyTag ==
+                        specfem::element::property_tag::anisotropic)) {
+    kernels.elastic_anisotropic.update_kernels_on_host(l_index, point_kernels);
   } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
                        (PropertyTag ==
                         specfem::element::property_tag::isotropic)) {
@@ -256,6 +275,11 @@ KOKKOS_FUNCTION void store_on_device(const IndexType &index,
   if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
                 (PropertyTag == specfem::element::property_tag::isotropic)) {
     kernels.elastic_isotropic.update_kernels_on_device(l_index, point_kernels);
+  } else if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
+                       (PropertyTag ==
+                        specfem::element::property_tag::anisotropic)) {
+    kernels.elastic_anisotropic.update_kernels_on_device(l_index,
+                                                         point_kernels);
   } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
                        (PropertyTag ==
                         specfem::element::property_tag::isotropic)) {
@@ -300,6 +324,10 @@ KOKKOS_FUNCTION void add_on_device(const IndexType &index,
   if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
                 (PropertyTag == specfem::element::property_tag::isotropic)) {
     kernels.elastic_isotropic.add_kernels_on_device(l_index, point_kernels);
+  } else if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
+                       (PropertyTag ==
+                        specfem::element::property_tag::anisotropic)) {
+    kernels.elastic_anisotropic.add_kernels_on_device(l_index, point_kernels);
   } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
                        (PropertyTag ==
                         specfem::element::property_tag::isotropic)) {
@@ -342,6 +370,10 @@ void add_on_host(const IndexType &index, const PointKernelType &point_kernels,
   if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
                 (PropertyTag == specfem::element::property_tag::isotropic)) {
     kernels.elastic_isotropic.add_kernels_on_host(l_index, point_kernels);
+  } else if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
+                       (PropertyTag ==
+                        specfem::element::property_tag::anisotropic)) {
+    kernels.elastic_anisotropic.add_kernels_on_host(l_index, point_kernels);
   } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
                        (PropertyTag ==
                         specfem::element::property_tag::isotropic)) {

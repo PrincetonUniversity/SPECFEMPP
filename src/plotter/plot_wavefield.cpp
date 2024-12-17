@@ -22,9 +22,9 @@
 #include <vtkLookupTable.h>
 #include <vtkNamedColors.h>
 #ifdef __APPLE__
-  #include <vtkCocoaRenderWindow.h>
+#include <vtkCocoaRenderWindow.h>
 #else
-  #include <vtkOpenGLRenderWindow.h>
+#include <vtkOpenGLRenderWindow.h>
 #endif
 #include <vtkPNGWriter.h>
 #include <vtkPointData.h>
@@ -314,12 +314,12 @@ void specfem::plotter::plot_wavefield::plot() {
       throw std::runtime_error("Unsupported output format");
     }
   } else {
-    // Create a render window interactor
-    #ifdef __APPLE__
-      auto render_window = vtkSmartPointer<vtkCocoaRenderWindow>::New();
-    #else
-      auto render_window = vtkSmartPointer<vtkOpenGLRenderWindow>::New();
-    #endif
+// Create a render window interactor
+#ifdef __APPLE__
+    auto render_window = vtkSmartPointer<vtkCocoaRenderWindow>::New();
+#else
+    auto render_window = vtkSmartPointer<vtkOpenGLRenderWindow>::New();
+#endif
     render_window->AddRenderer(renderer);
     render_window->SetSize(1280, 1280);
     render_window->SetWindowName("Wavefield");

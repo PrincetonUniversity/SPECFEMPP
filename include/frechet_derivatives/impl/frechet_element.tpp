@@ -1,5 +1,4 @@
-#ifndef _FRECHET_DERIVATIVES_IMPL_FRECHLET_ELEMENT_TPP
-#define _FRECHET_DERIVATIVES_IMPL_FRECHLET_ELEMENT_TPP
+#pragma once
 
 #include "algorithms/gradient.hpp"
 #include "element_kernel/element_kernel.hpp"
@@ -262,5 +261,3 @@ void specfem::frechet_derivatives::impl::frechet_elements<
 
   return;
 }
-
-#endif /* _FRECHET_DERIVATIVES_IMPL_FRECHLET_ELEMENT_TPP */
