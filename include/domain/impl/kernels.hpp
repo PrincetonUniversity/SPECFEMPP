@@ -70,7 +70,6 @@ public:
    */
   inline void compute_source_interaction(const int timestep) const {
     isotropic_sources.compute_source_interaction(timestep);
-    anisotropic_sources.compute_source_interaction(timestep);
     return;
   }
 
@@ -162,12 +161,6 @@ private:
   source_kernel<DimensionType, isotropic> isotropic_sources; ///< Source kernels
                                                              ///< for isotropic
                                                              ///< elements
-
-  source_kernel<DimensionType, anisotropic>
-      anisotropic_sources; ///< Source
-                           ///< kernels for
-                           ///< anisotropic
-                           ///< elements
 
   receiver_kernel<DimensionType, isotropic>
       isotropic_receivers; ///< Kernels for computing seismograms within
