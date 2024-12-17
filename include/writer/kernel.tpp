@@ -41,12 +41,12 @@ void specfem::writer::kernel<OutputLibrary>::write() {
         if (kernels.h_element_types(ispec) ==
             specfem::element::medium_tag::elastic &&
             kernels.h_element_property(ispec) ==
-            specfem::element::property_tag::isotropic) {  
+            specfem::element::property_tag::isotropic) {
           n_elastic_isotropic++;
         } else if (kernels.h_element_types(ispec) ==
             specfem::element::medium_tag::elastic &&
             kernels.h_element_property(ispec) ==
-            specfem::element::property_tag::anisotropic) {  
+            specfem::element::property_tag::anisotropic) {
           n_elastic_anisotropic++;
         } else if (kernels.h_element_types(ispec) ==
                    specfem::element::medium_tag::acoustic) {
