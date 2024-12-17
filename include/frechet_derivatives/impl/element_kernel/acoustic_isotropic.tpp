@@ -1,6 +1,4 @@
-#ifndef SPECFEM_FRECHET_DERIVATIVES_IMPL_ELEMENT_KERNEL_ACOUSTIC_ISOTROPIC_TPP
-#define SPECFEM_FRECHET_DERIVATIVES_IMPL_ELEMENT_KERNEL_ACOUSTIC_ISOTROPIC_TPP
-
+#pragma once
 #include "acoustic_isotropic.hpp"
 #include "algorithms/dot.hpp"
 #include "specfem_setup.hpp"
@@ -42,5 +40,3 @@ specfem::frechet_derivatives::impl::impl_compute_element_kernel(
 
   return { rho_kl, kappa_kl };
 }
-
-#endif /* _FRECHET_DERIVATIVES_IMPL_ELEMENT_KERNEL_ACOUSTIC_ISOTROPIC_TPP */
