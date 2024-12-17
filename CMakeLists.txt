@@ -459,6 +459,7 @@ target_link_libraries(
 add_library(
         frechet_derivatives
         src/frechet_derivatives/impl/element_kernel/elastic_isotropic.cpp
+        src/frechet_derivatives/impl/element_kernel/elastic_anisotropic.cpp
         src/frechet_derivatives/impl/element_kernel/acoustic_isotropic.cpp
         src/frechet_derivatives/impl/frechet_element.cpp
         src/frechet_derivatives/frechet_derivatives.cpp
