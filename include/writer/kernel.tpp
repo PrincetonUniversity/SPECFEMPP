@@ -119,14 +119,11 @@ void specfem::writer::kernel<OutputLibrary>::write() {
 
     DomainView rho("rho", n_elastic_anisotropic, ngllz, ngllx);
     DomainView c11("c11", n_elastic_anisotropic, ngllz, ngllx);
-    DomainView c12("c12", n_elastic_anisotropic, ngllz, ngllx);
     DomainView c13("c13", n_elastic_anisotropic, ngllz, ngllx);
     DomainView c15("c15", n_elastic_anisotropic, ngllz, ngllx);
     DomainView c33("c33", n_elastic_anisotropic, ngllz, ngllx);
     DomainView c35("c35", n_elastic_anisotropic, ngllz, ngllx);
     DomainView c55("c55", n_elastic_anisotropic, ngllz, ngllx);
-    DomainView c23("c23", n_elastic_anisotropic, ngllz, ngllx);
-    DomainView c25("c25", n_elastic_anisotropic, ngllz, ngllx);
 
     int i = 0;
 
@@ -149,14 +146,11 @@ void specfem::writer::kernel<OutputLibrary>::write() {
 
             rho(i, iz, ix) = point_kernels.rho;
             c11(i, iz, ix) = point_kernels.c11;
-            c12(i, iz, ix) = point_kernels.c12;
             c13(i, iz, ix) = point_kernels.c13;
             c15(i, iz, ix) = point_kernels.c15;
             c33(i, iz, ix) = point_kernels.c33;
             c35(i, iz, ix) = point_kernels.c35;
             c55(i, iz, ix) = point_kernels.c55;
-            c23(i, iz, ix) = point_kernels.c23;
-            c25(i, iz, ix) = point_kernels.c25;
           }
         }
         i++;
@@ -167,14 +161,11 @@ void specfem::writer::kernel<OutputLibrary>::write() {
     elastic.createDataset("Z", z).write();
     elastic.createDataset("rho", rho).write();
     elastic.createDataset("c11", c11).write();
-    elastic.createDataset("c12", c12).write();
     elastic.createDataset("c13", c13).write();
     elastic.createDataset("c15", c15).write();
     elastic.createDataset("c33", c33).write();
     elastic.createDataset("c35", c35).write();
     elastic.createDataset("c55", c55).write();
-    elastic.createDataset("c23", c23).write();
-    elastic.createDataset("c25", c25).write();
   }
 
   {
