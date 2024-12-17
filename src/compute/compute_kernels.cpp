@@ -94,13 +94,15 @@ specfem::compute::kernels::kernels(
 
   elastic_isotropic = specfem::compute::impl::kernels::material_kernels<
       specfem::element::medium_tag::elastic,
-      specfem::element::property_tag::isotropic>(
-      nspec, n_elastic_isotropic, ngllz, ngllx, mapping, tags, h_property_index_mapping);
+      specfem::element::property_tag::isotropic>(nspec, n_elastic_isotropic,
+                                                 ngllz, ngllx, mapping, tags,
+                                                 h_property_index_mapping);
 
   elastic_anisotropic = specfem::compute::impl::kernels::material_kernels<
       specfem::element::medium_tag::elastic,
-      specfem::element::property_tag::anisotropic>(
-      nspec, n_elastic_anisotropic, ngllz, ngllx, mapping, tags, h_property_index_mapping);
+      specfem::element::property_tag::anisotropic>(nspec, n_elastic_anisotropic,
+                                                   ngllz, ngllx, mapping, tags,
+                                                   h_property_index_mapping);
 
   Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);
   Kokkos::deep_copy(element_types, h_element_types);
