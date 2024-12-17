@@ -60,8 +60,8 @@ void specfem::writer::kernel<OutputLibrary>::write() {
   {
     typename OutputLibrary::Group elastic = file.createGroup("/ElasticIsotropic");
 
-    DomainView x("xcoordinates_elastic", n_elastic_isotropic, ngllz, ngllx);
-    DomainView z("zcoordinates_elastic", n_elastic_isotropic, ngllz, ngllx);
+    DomainView x("xcoordinates_elastic_isotropic", n_elastic_isotropic, ngllz, ngllx);
+    DomainView z("zcoordinates_elastic_isotropic", n_elastic_isotropic, ngllz, ngllx);
 
     DomainView rho("rho", n_elastic_isotropic, ngllz, ngllx);
     DomainView mu("mu", n_elastic_isotropic, ngllz, ngllx);
@@ -114,8 +114,8 @@ void specfem::writer::kernel<OutputLibrary>::write() {
   {
     typename OutputLibrary::Group elastic = file.createGroup("/ElasticAnisotropic");
 
-    DomainView x("xcoordinates_elastic", n_elastic_anisotropic, ngllz, ngllx);
-    DomainView z("zcoordinates_elastic", n_elastic_anisotropic, ngllz, ngllx);
+    DomainView x("xcoordinates_elastic_anisotropic", n_elastic_anisotropic, ngllz, ngllx);
+    DomainView z("zcoordinates_elastic_anisotropic", n_elastic_anisotropic, ngllz, ngllx);
 
     DomainView rho("rho", n_elastic_anisotropic, ngllz, ngllx);
     DomainView c11("c11", n_elastic_anisotropic, ngllz, ngllx);
