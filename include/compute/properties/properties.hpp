@@ -141,27 +141,28 @@ public:
  */
 
 /**
-  * @brief Returns the material_kernel for a given medium and property
-  *
-  */
-template <specfem::element::medium_tag MediumTag, specfem::element::property_tag PropertyTag>
-  const specfem::compute::impl::properties::material_property<
-      MediumTag,
-      PropertyTag>& get_medium(const properties &properties) {
-      if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
-              (PropertyTag == specfem::element::property_tag::isotropic)) {
-        return properties.elastic_isotropic;
-      } else if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
-                          (PropertyTag ==
-                            specfem::element::property_tag::anisotropic)) {
-        return properties.elastic_anisotropic;
-      } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
-                          (PropertyTag ==
-                            specfem::element::property_tag::isotropic)) {
-        return properties.acoustic_isotropic;
-      } else {
-        static_assert("Material type not implemented");
-      }
+ * @brief Returns the material_kernel for a given medium and property
+ *
+ */
+template <specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag>
+const specfem::compute::impl::properties::material_property<MediumTag,
+                                                            PropertyTag> &
+get_medium(const properties &properties) {
+  if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
+                (PropertyTag == specfem::element::property_tag::isotropic)) {
+    return properties.elastic_isotropic;
+  } else if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
+                       (PropertyTag ==
+                        specfem::element::property_tag::anisotropic)) {
+    return properties.elastic_anisotropic;
+  } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
+                       (PropertyTag ==
+                        specfem::element::property_tag::isotropic)) {
+    return properties.acoustic_isotropic;
+  } else {
+    static_assert("Material type not implemented");
+  }
 }
 
 /**
@@ -201,7 +202,8 @@ load_on_device(const IndexType &lcoord,
   static_assert(DimensionType == specfem::dimension::type::dim2,
                 "Only 2D properties are supported");
 
-  get_medium<MediumTag, PropertyTag>(properties).load_device_properties(l_index, point_properties);
+  get_medium<MediumTag, PropertyTag>(properties)
+      .load_device_properties(l_index, point_properties);
 }
 
 /**
@@ -240,7 +242,8 @@ void load_on_host(const IndexType &lcoord,
   static_assert(DimensionType == specfem::dimension::type::dim2,
                 "Only 2D properties are supported");
 
-  get_medium<MediumTag, PropertyTag>(properties).load_host_properties(l_index, point_properties);
+  get_medium<MediumTag, PropertyTag>(properties)
+      .load_host_properties(l_index, point_properties);
 }
 
 /**
@@ -278,7 +281,8 @@ void store_on_host(const IndexType &lcoord,
   static_assert(DimensionType == specfem::dimension::type::dim2,
                 "Only 2D properties are supported");
 
-  get_medium<MediumTag, PropertyTag>(properties).assign(l_index, point_properties);
+  get_medium<MediumTag, PropertyTag>(properties)
+      .assign(l_index, point_properties);
 }
 } // namespace compute
 } // namespace specfem
