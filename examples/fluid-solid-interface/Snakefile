@@ -91,6 +91,10 @@ rule plot_seismogram:
         import numpy as np
         import obspy
 
+        # Set matplotlib gui off
+        import matplotlib
+        matplotlib.use("Agg")
+
 
         def get_traces(directory):
             traces = []
