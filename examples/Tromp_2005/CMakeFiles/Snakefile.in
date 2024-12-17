@@ -49,7 +49,7 @@ rule forward_configuration:
                             }
                         }
                     }
-                }
+        }
 
         with open(input.config, "r") as f:
             config = yaml.safe_load(f)
@@ -57,6 +57,8 @@ rule forward_configuration:
             ## Add forward node to the simulation setup
         config["parameters"]["simulation-setup"].update(forward)
         config["parameters"]["databases"]["source-file"] = "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/forward_source.yaml"
+        config["parameters"]["receivers"]["stations-file"] = "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/OUTPUT_FILES/STATIONS"
+        config["parameters"]["databases"]["mesh-database"] = "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/OUTPUT_FILES/database.bin"
 
         with open(output.config, "w") as f:
             yaml.safe_dump(config, f)
@@ -90,8 +92,8 @@ rule forward_simulation:
         runtime=10,
     shell:
         """
-            module purge
-            module load boost/1.73.0
+            # module purge
+            # module load boost/1.73.0
             mkdir -p OUTPUT_FILES/results
             echo "Hostname: $(hostname)" > output.log
             {SPECFEM_BIN} -p {input.config} >> output.log
@@ -157,6 +159,7 @@ rule adjoint_configuration:
             ## Add adjoint node to the simulation setup
         config["parameters"]["simulation-setup"].update(adjoint)
         config["parameters"]["databases"]["source-file"] = "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/adjoint_source.yaml"
+        config["parameters"]["databases"]["mesh-database"] = "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/OUTPUT_FILES/database.bin"
 
         with open(output.config, "w") as f:
             yaml.safe_dump(config, f)
@@ -212,8 +215,8 @@ rule adjoint_simulation:
         runtime=10,
     shell:
         """
-            module purge
-            module load boost/1.73.0
+            # module purge
+            # module load boost/1.73.0
             mkdir -p OUTPUT_FILES/results
             echo "Hostname: $(hostname)" > output.log
             {SPECFEM_BIN} -p {input.config} >> output.log
@@ -228,7 +231,8 @@ rule plot_kernels:
         plot="OUTPUT_FILES/Kernels.png",
     run:
         from plot import plot_kernels
-
+        import matplotlib
+        matplotlib.use('agg')
         plot_kernels(input.kernels, output.plot)
 
 
