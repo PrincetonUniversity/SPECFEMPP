@@ -7,13 +7,17 @@
 
 specfem::MPI::MPI::MPI(int *argc, char ***argv) {
 #ifdef MPI_PARALLEL
-  MPI_Init(argc, argv);
+  MPI_Initialized(&this->extern_init);
+  if (!this->extern_init) {
+    MPI_Init(argc, argv);
+  }
   this->comm = MPI_COMM_WORLD;
   MPI_Comm_size(this->comm, &this->world_size);
   MPI_Comm_rank(this->comm, &this->my_rank);
 #else
   this->world_size = 1;
   this->my_rank = 0;
+  this->extern_init = 0;
 #endif
 }
 
@@ -25,7 +29,9 @@ void specfem::MPI::MPI::sync_all() const {
 
 specfem::MPI::MPI::~MPI() {
 #ifdef MPI_PARALLEL
-  MPI_Finalize();
+  if (!this->extern_init) {
+    MPI_Finalize();
+  }
 #endif
 }
 

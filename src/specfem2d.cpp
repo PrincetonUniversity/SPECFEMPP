@@ -20,6 +20,12 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#ifdef SPECFEMPP_ENABLE_PYTHON
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+#define STRINGIFY(x) #x
+#define MACRO_STRINGIFY(x) STRINGIFY(x)
+#endif
 // Specfem2d driver
 
 std::string
@@ -253,8 +259,7 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   return;
 }
 
-int main(int argc, char **argv) {
-
+int run(int argc, char **argv) {
   // Initialize MPI
   specfem::MPI::MPI *mpi = new specfem::MPI::MPI(&argc, &argv);
   // Initialize Kokkos
@@ -274,3 +279,61 @@ int main(int argc, char **argv) {
   delete mpi;
   return 0;
 }
+
+#ifdef SPECFEMPP_ENABLE_PYTHON
+
+namespace py = pybind11;
+
+int _run(py::list argv_py) {
+  // parse argc and argv from Python
+  int argc = argv_py.size();
+  char **argv = new char *[argc + 1];
+
+  for (size_t i = 0; i < argc; i++) {
+    std::string str =
+        argv_py[i].cast<std::string>(); // Convert Python string to std::string
+    argv[i] =
+        new char[str.length() + 1]; // Allocate memory for each C-style string
+    std::strcpy(argv[i], str.c_str()); // Copy the string content
+  }
+
+  argv[argc] = nullptr; // Null-terminate argv following the specification
+
+  int return_code = run(argc, argv);
+
+  for (int i = 0; i < argc; i++) {
+    delete[] argv[i]; // Free each individual string
+  }
+
+  delete[] argv;
+
+  return return_code;
+}
+
+PYBIND11_MODULE(_core, m) {
+    m.doc() = R"pbdoc(
+        SPECfem++ core module
+        -----------------------
+
+        .. currentmodule:: specfempp
+
+        .. autosummary::
+           :toctree: _generate
+
+           _run
+    )pbdoc";
+
+    m.def("_run", &_run, R"pbdoc(
+        Execute the main SPECFEM++ workflow.
+    )pbdoc");
+
+#ifdef VERSION_INFO
+    m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
+#else
+    m.attr("__version__") = "dev";
+#endif
+}
+
+#endif
+
+int main(int argc, char **argv) { return run(argc, argv); }

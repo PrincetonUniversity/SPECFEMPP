@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.17.5)
 
-project(specfem2d_kokkos VERSION 0.1.0)
+project(SPECFEMPP VERSION 0.1.0)
 
 set(CMAKE_CXX_STANDARD 17)
 option(HDF5_CXX_BUILD "Build HDF5 C++" ON)
@@ -10,18 +10,41 @@ option(BUILD_TESTS "Tests included" OFF)
 option(BUILD_EXAMPLES "Examples included" ON)
 option(ENABLE_SIMD "Enable SIMD" OFF)
 option(ENABLE_PROFILING "Enable profiling" OFF)
+option(SPECFEMPP_ENABLE_PYTHON "Enable Python binding" OFF)
 # set(CMAKE_BUILD_TYPE Release)
 set(CHUNK_SIZE 32)
 set(NUM_CHUNKS 1)
 set(NUM_THREADS 160)
 set(NUM_VECTOR_LANES 1)
 
-if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
-        set(CMAKE_CXX_FLAGS "-fp-model=precise")
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
-        message("-- Detected Intel classic compiler which will be deprecated soon.")
-        message("-- It is recommended you use IntelLLVM compiler.")
-        set(CMAKE_CXX_FLAGS "-diag-disable=10441 -fp-model=precise")
+if (SPECFEMPP_ENABLE_PYTHON)
+    message("-- Adding -fPIC flag for Python binding.")
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
+            set(CMAKE_CXX_FLAGS "-fp-model=precise -fPIC")
+    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+            message("-- Detected Intel classic compiler which will be deprecated soon.")
+            message("-- It is recommended you use IntelLLVM compiler.")
+            set(CMAKE_CXX_FLAGS "-diag-disable=10441 -fp-model=precise -fPIC")
+    else()
+            set(CMAKE_CXX_FLAGS "-fPIC")
+    endif()
+else (SPECFEMPP_ENABLE_PYTHON)
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
+            set(CMAKE_CXX_FLAGS "-fp-model=precise")
+    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+            message("-- Detected Intel classic compiler which will be deprecated soon.")
+            message("-- It is recommended you use IntelLLVM compiler.")
+            set(CMAKE_CXX_FLAGS "-diag-disable=10441 -fp-model=precise")
+    endif()
+endif (SPECFEMPP_ENABLE_PYTHON)
+
+# Check if MacOS
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(__APPLE__ TRUE)
+    message("-- macOS detected -- setting __APPLE__ TRUE")
+else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(__APPLE__ FALSE)
+    message("-- macOS not detected -- setting __APPLE__ FALSE")
 endif()
 
 if (DEFINED Kokkos_ENABLE_CUDA)
@@ -60,6 +83,7 @@ RenderingFreeType
 RenderingGL2PSOpenGL2
 RenderingOpenGL2
 )
+
 
 if (NOT VTK_FOUND)
   message("VTK not found: ${VTK_NOT_FOUND_MESSAGE}")
@@ -385,16 +409,6 @@ target_link_libraries(
 
 add_library(
         domain
-        src/domain/impl/boundary_conditions/none/none.cpp
-        src/domain/impl/boundary_conditions/none/print.cpp
-        src/domain/impl/boundary_conditions/dirichlet/dirichlet.cpp
-        src/domain/impl/boundary_conditions/dirichlet/print.cpp
-        src/domain/impl/boundary_conditions/stacey/stacey.cpp
-        src/domain/impl/boundary_conditions/stacey/mass_matrix.cpp
-        src/domain/impl/boundary_conditions/stacey/print.cpp
-        src/domain/impl/boundary_conditions/composite_stacey_dirichlet/composite_stacey_dirichlet.cpp
-        src/domain/impl/boundary_conditions/composite_stacey_dirichlet/mass_matrix.cpp
-        src/domain/impl/boundary_conditions/composite_stacey_dirichlet/print.cpp
         src/domain/impl/boundary_conditions/boundary_conditions.cpp
         src/domain/impl/elements/acoustic/acoustic2d.cpp
         src/domain/impl/elements/elastic/elastic2d.cpp
@@ -408,6 +422,7 @@ target_link_libraries(
         domain
         Kokkos::kokkos
         enumerations
+        Boost::boost
 )
 
 add_library(coupled_interface
@@ -420,32 +435,6 @@ target_link_libraries(
         compute
 )
 
-# add_library(
-#         kernels
-#         src/kernels/kernels.cpp
-# )
-
-# target_link_libraries(
-#         kernels
-#         Kokkos::kokkos
-#         compute
-#         coupled_interface
-# )
-
-add_library(
-        frechet_derivatives
-        src/frechet_derivatives/impl/element_kernel/elastic_isotropic.cpp
-        src/frechet_derivatives/impl/element_kernel/acoustic_isotropic.cpp
-        src/frechet_derivatives/impl/frechet_element.cpp
-        src/frechet_derivatives/frechet_derivatives.cpp
-)
-
-target_link_libraries(
-        frechet_derivatives
-        Kokkos::kokkos
-        point
-)
-
 add_library(
         kernels
         src/kernels/frechet_kernels.cpp
@@ -455,7 +444,6 @@ target_link_libraries(
         kernels
         Kokkos::kokkos
         compute
-        frechet_derivatives
 )
 
 add_library(
@@ -481,6 +469,7 @@ target_link_libraries(
         Kokkos::kokkos
         timescheme
         domain
+        kernels
 )
 
 add_library(
@@ -517,7 +506,12 @@ else ()
                 plotter
                 compute
                 ${VTK_LIBRARIES}
-        )
+                )
+
+        # Only define the __APPLE__ compile definition if it is defined
+        if (__APPLE__)
+        target_compile_definitions(plotter PRIVATE __APPLE__)
+        endif(__APPLE__)
 endif()
 
 add_library(
@@ -611,3 +605,36 @@ if (DOXYGEN_FOUND)
 else (DOXYGEN_FOUND)
   message("Doxygen need to be installed to generate the doxygen documentation")
 endif (DOXYGEN_FOUND)
+
+if (SPECFEMPP_USE_SKBUILD AND EXISTS ${SKBUILD_SCRIPTS_DIR})
+    install(TARGETS specfem2d DESTINATION ${SKBUILD_SCRIPTS_DIR})
+    install(FILES ${CMAKE_BINARY_DIR}/xmeshfem2D DESTINATION ${SKBUILD_SCRIPTS_DIR} PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE)
+endif ()
+
+if (SPECFEMPP_ENABLE_PYTHON)
+    find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
+    find_package(pybind11 CONFIG REQUIRED)
+    python_add_library(_core MODULE src/specfem2d.cpp WITH_SOABI)
+    target_link_libraries(
+        _core PRIVATE
+        specfem_mpi
+        Kokkos::kokkos
+        mesh
+        quadrature
+        compute
+        source_class
+        parameter_reader
+        receiver_class
+        writer
+        reader
+        domain
+        coupled_interface
+        kernels
+        solver
+        Boost::program_options
+        pybind11::headers
+    )
+    target_compile_definitions(_core PRIVATE SPECFEMPP_ENABLE_PYTHON)
+    target_compile_definitions(_core PRIVATE VERSION_INFO=${PROJECT_VERSION})
+    install(TARGETS _core DESTINATION specfempp_core)
+endif (SPECFEMPP_ENABLE_PYTHON)
