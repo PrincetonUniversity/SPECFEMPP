@@ -452,8 +452,8 @@ add_library(
         src/frechet_derivatives/impl/element_kernel/elastic_isotropic.cpp
         src/frechet_derivatives/impl/element_kernel/elastic_anisotropic.cpp
         src/frechet_derivatives/impl/element_kernel/acoustic_isotropic.cpp
-        src/frechet_derivatives/impl/frechet_element.cpp
-        src/frechet_derivatives/frechet_derivatives.cpp
+        # src/frechet_derivatives/impl/frechet_element.cpp
+        # src/frechet_derivatives/frechet_derivatives.cpp
 )
 
 target_link_libraries(
@@ -497,6 +497,7 @@ target_link_libraries(
         Kokkos::kokkos
         timescheme
         domain
+        kernels
 )
 
 add_library(
