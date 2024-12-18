@@ -72,6 +72,12 @@ void specfem::writer::kernel<OutputLibrary>::write() {
 
     int i = 0;
 
+    // const auto element_indices = kernels.get_elements_on_host();
+
+    // for (auto ispec: element_indices) {
+      
+    // }
+
     for (int ispec = 0; ispec < nspec; ispec++) {
       if (kernels.h_element_types(ispec) ==
           specfem::element::medium_tag::elastic &&

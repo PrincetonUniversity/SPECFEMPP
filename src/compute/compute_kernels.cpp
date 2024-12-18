@@ -110,3 +110,99 @@ specfem::compute::kernels::kernels(
 
   return;
 }
+
+Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace>
+specfem::compute::kernels::get_elements_on_host(
+    const specfem::element::medium_tag medium) const {
+
+  const int nspec = this->nspec;
+
+  int nelements = 0;
+  for (int ispec = 0; ispec < nspec; ispec++) {
+    if (h_element_types(ispec) == medium) {
+      nelements++;
+    }
+  }
+
+  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace> elements(
+      "specfem::compute::properties::get_elements_on_host", nelements);
+
+  nelements = 0;
+  for (int ispec = 0; ispec < nspec; ispec++) {
+    if (h_element_types(ispec) == medium) {
+      elements(nelements) = ispec;
+      nelements++;
+    }
+  }
+
+  return elements;
+}
+
+Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>
+specfem::compute::kernels::get_elements_on_device(
+    const specfem::element::medium_tag medium) const {
+
+  // If the elements have not been computed, compute them.
+  // The elements need to be computed in serial on the host.
+  // This function computes the host elements on host and then
+  // copies them to the device.
+  const auto host_elements = this->get_elements_on_host(medium);
+
+  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>
+      elements("specfem::compute::properties::get_elements_on_device",
+               host_elements.extent(0));
+
+  Kokkos::deep_copy(elements, host_elements);
+
+  return elements;
+}
+
+Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace>
+specfem::compute::kernels::get_elements_on_host(
+    const specfem::element::medium_tag medium,
+    const specfem::element::property_tag property) const {
+
+  const int nspec = this->nspec;
+
+  int nelements = 0;
+  for (int ispec = 0; ispec < nspec; ispec++) {
+    if (h_element_types(ispec) == medium &&
+        h_element_property(ispec) == property) {
+      nelements++;
+    }
+  }
+
+  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace> elements(
+      "specfem::compute::properties::get_elements_on_host", nelements);
+
+  nelements = 0;
+  for (int ispec = 0; ispec < nspec; ispec++) {
+    if (h_element_types(ispec) == medium &&
+        h_element_property(ispec) == property) {
+      elements(nelements) = ispec;
+      nelements++;
+    }
+  }
+
+  return elements;
+}
+
+Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>
+specfem::compute::kernels::get_elements_on_device(
+    const specfem::element::medium_tag medium,
+    const specfem::element::property_tag property) const {
+
+  // If the elements have not been computed, compute them.
+  // The elements need to be computed in serial on the host.
+  // This function computes the host elements on host and then
+  // copies them to the device.
+  const auto host_elements = this->get_elements_on_host(medium, property);
+
+  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>
+      elements("specfem::compute::properties::get_elements_on_device",
+               host_elements.extent(0));
+
+  Kokkos::deep_copy(elements, host_elements);
+
+  return elements;
+}
