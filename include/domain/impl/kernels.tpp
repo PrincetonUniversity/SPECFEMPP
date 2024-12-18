@@ -82,10 +82,10 @@ void allocate_elements(
               << "    - dimension           : " << dimension::to_string()
               << "\n"
               << "    - Element type        : "
-              << specfem::element::to_string(medium_tag, property_tag) << "\n"
-              << "    - Boundary Conditions : "
-              << specfem::domain::impl::boundary_conditions::print_boundary_tag<
-                     boundary_tag>()
+              << specfem::element::to_string(medium_tag, property_tag, boundary_tag) << "\n"
+              // << "    - Boundary Conditions : "
+              // << specfem::domain::impl::boundary_conditions::print_boundary_tag<
+              //        boundary_tag>()
               << "\n"
               << "    - Number of elements  : " << nelements << "\n\n";
   }
@@ -225,10 +225,10 @@ specfem::domain::impl::kernels::kernels<
   // -----------------------------------------------------------
 
   // Allocate isotropic elements with dirichlet boundary conditions
-  allocate_elements(assembly, element_tags, isotropic_elements_dirichlet);
+  // allocate_elements(assembly, element_tags, isotropic_elements_dirichlet);
 
   // Allocate aniostropic elements with dirichlet boundary conditions
-  allocate_elements(assembly, element_tags, anisotropic_elements_dirichlet);
+  // allocate_elements(assembly, element_tags, anisotropic_elements_dirichlet);
 
   // Allocate isotropic elements with stacey boundary conditions
   allocate_elements(assembly, element_tags, isotropic_elements_stacey);
@@ -237,12 +237,12 @@ specfem::domain::impl::kernels::kernels<
   allocate_elements(assembly, element_tags, anisotropic_elements_stacey);
 
   // Allocate isotropic elements with stacey dirichlet boundary conditions
-  allocate_elements(assembly, element_tags,
-                    isotropic_elements_stacey_dirichlet);
+  // allocate_elements(assembly, element_tags,
+  //                   isotropic_elements_stacey_dirichlet);
 
   // Allocate anisotropic elements with stacey dirichlet boundary conditions
-  allocate_elements(assembly, element_tags,
-                    anisotropic_elements_stacey_dirichlet);
+  // allocate_elements(assembly, element_tags,
+  //                   anisotropic_elements_stacey_dirichlet);
 
   // Allocate isotropic elements
   allocate_elements(assembly, element_tags, isotropic_elements);

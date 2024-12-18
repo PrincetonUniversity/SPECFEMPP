@@ -409,16 +409,6 @@ target_link_libraries(
 
 add_library(
         domain
-        src/domain/impl/boundary_conditions/none/none.cpp
-        src/domain/impl/boundary_conditions/none/print.cpp
-        src/domain/impl/boundary_conditions/dirichlet/dirichlet.cpp
-        src/domain/impl/boundary_conditions/dirichlet/print.cpp
-        src/domain/impl/boundary_conditions/stacey/stacey.cpp
-        src/domain/impl/boundary_conditions/stacey/mass_matrix.cpp
-        src/domain/impl/boundary_conditions/stacey/print.cpp
-        src/domain/impl/boundary_conditions/composite_stacey_dirichlet/composite_stacey_dirichlet.cpp
-        src/domain/impl/boundary_conditions/composite_stacey_dirichlet/mass_matrix.cpp
-        src/domain/impl/boundary_conditions/composite_stacey_dirichlet/print.cpp
         src/domain/impl/boundary_conditions/boundary_conditions.cpp
         src/domain/impl/elements/acoustic/acoustic2d.cpp
         src/domain/impl/elements/elastic/elastic2d.cpp
@@ -432,6 +422,7 @@ target_link_libraries(
         domain
         Kokkos::kokkos
         enumerations
+        Boost::boost
 )
 
 add_library(coupled_interface
