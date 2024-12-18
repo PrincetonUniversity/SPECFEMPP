@@ -4,7 +4,7 @@ MESHFEM_BIN = "xmeshfem2D"
 
 rule all:
     input:
-        plot="@CMAKE_SOURCE_DIR@/examples/anisotropic-crystal/OUTPUT_FILES/results/plot.png",
+        plot="OUTPUT_FILES/results/plot.png",
     localrule: True
 
 
@@ -169,6 +169,7 @@ rule plot_seismogram:
         import numpy as np
         import obspy
         import matplotlib
+        import matplotlib.pyplot as plt
         matplotlib.use("agg")
 
         def get_traces(directory):
@@ -194,7 +195,18 @@ rule plot_seismogram:
 
 
         stream = get_traces("OUTPUT_FILES/results")
-        stream.plot(size=(800, 1000)).savefig(output.traces)
+
+        N_traces = len(stream)
+        Amax = stream.max()
+        plt.figure(figsize=(6, 8))
+
+        for i, trace in enumerate(stream):
+            print(i, trace.id)
+            plt.plot(trace.times('matplotlib'), trace.data + i * Amax,
+                     label=f"{trace.stats.network}.{trace.stats.station}")
+
+        plt.savefig(output.traces, dpi=300)
+        plt.close('all')
 
 
 rule clean:
