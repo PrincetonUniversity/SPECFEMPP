@@ -7,7 +7,7 @@
 #include "point/field_derivatives.hpp"
 #include "policies/chunk.hpp"
 #include "algorithms/gradient.hpp"
-#include "frechet_derivatives/impl/element_kernel/element_kernel.hpp"
+#include "medium/frechet_derivatives.hpp"
 #include <Kokkos_Core.hpp>
 
 template <specfem::dimension::type DimensionType, int NGLL>
@@ -145,7 +145,7 @@ void specfem::kernels::frechet_kernels<DimensionType, NGLL>::compute_material_de
 
                 // Compute the kernel for the point
                 const auto point_kernel =
-                    specfem::frechet_derivatives::impl::element_kernel(
+                    specfem::medium::compute_frechet_derivatives(
                         point_properties, adjoint_point_field,
                         backward_point_field, adjoint_point_derivatives,
                         backward_point_derivatives, dt);
