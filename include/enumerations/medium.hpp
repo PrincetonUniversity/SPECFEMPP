@@ -60,6 +60,10 @@ public:
 };
 
 const std::string to_string(const medium_tag &medium,
+                            const property_tag &property_tag,
+                            const boundary_tag &boundary_tag);
+
+const std::string to_string(const medium_tag &medium,
                             const property_tag &property_tag);
 
 const std::string to_string(const medium_tag &medium);
