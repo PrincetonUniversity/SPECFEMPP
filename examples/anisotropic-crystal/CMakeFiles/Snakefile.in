@@ -197,11 +197,10 @@ rule plot_seismogram:
         stream = get_traces("OUTPUT_FILES/results")
 
         N_traces = len(stream)
-        Amax = stream.max()
+        Amax = np.max(stream.max())
         plt.figure(figsize=(6, 8))
 
         for i, trace in enumerate(stream):
-            print(i, trace.id)
             plt.plot(trace.times('matplotlib'), trace.data + i * Amax,
                      label=f"{trace.stats.network}.{trace.stats.station}")
 
