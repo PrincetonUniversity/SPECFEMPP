@@ -1,5 +1,6 @@
 #include "compute/interface.hpp"
 #include "enumerations/interface.hpp"
+#include "enumerations/material_definitions.hpp"
 #include "jacobian/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
