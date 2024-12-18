@@ -96,6 +96,81 @@ public:
   ///@}
 };
 
+template <bool UseSIMD>
+struct properties<specfem::dimension::type::dim2,
+                  specfem::element::medium_tag::elastic,
+                  specfem::element::property_tag::anisotropic, UseSIMD> {
+
+  /**
+   * @name Typedefs
+   *
+   */
+  ///@{
+  constexpr static bool is_point_properties = true;
+  using simd = specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD type
+  constexpr static auto dimension = specfem::dimension::type::dim2;
+  constexpr static auto medium_tag = specfem::element::medium_tag::elastic;
+  constexpr static auto property_tag =
+      specfem::element::property_tag::anisotropic;
+  using value_type =
+      typename simd::datatype; ///< Value type to store properties
+  ///@}
+
+  /**
+   * @name Elastic constants
+   *
+   */
+  ///@{
+  value_type c11; ///< @f$ c_{11} @f$
+  value_type c13; ///< @f$ c_{13} @f$
+  value_type c15; ///< @f$ c_{15} @f$
+  value_type c33; ///< @f$ c_{33} @f$
+  value_type c35; ///< @f$ c_{35} @f$
+  value_type c55; ///< @f$ c_{55} @f$
+  value_type c12; ///< @f$ c_{12} @f$
+  value_type c23; ///< @f$ c_{23} @f$
+  value_type c25; ///< @f$ c_{25} @f$
+  ///@}
+
+  value_type rho;    ///< Density @f$ \rho @f$
+  value_type rho_vp; ///< P-wave velocity @f$ \rho v_p @f$
+  value_type rho_vs; ///< S-wave velocity @f$ \rho v_s @f$
+
+private:
+  KOKKOS_FUNCTION
+  properties(const value_type &c11, const value_type &c13,
+             const value_type &c15, const value_type &c33,
+             const value_type &c35, const value_type &c55,
+             const value_type &c12, const value_type &c23,
+             const value_type &c25, const value_type &rho, std::false_type)
+      : c11(c11), c13(c13), c15(c15), c33(c33), c35(c35), c55(c55), c12(c12),
+        c23(c23), c25(c25), rho(rho), rho_vp(sqrt(rho * c33)),
+        rho_vs(sqrt(rho * c55)) {}
+
+  KOKKOS_FUNCTION
+  properties(const value_type &c11, const value_type &c13,
+             const value_type &c15, const value_type &c33,
+             const value_type &c35, const value_type &c55,
+             const value_type &c12, const value_type &c23,
+             const value_type &c25, const value_type &rho, std::true_type)
+      : c11(c11), c13(c13), c15(c15), c33(c33), c35(c35), c55(c55), c12(c12),
+        c23(c23), c25(c25), rho(rho), rho_vp(Kokkos::sqrt(rho * c33)),
+        rho_vs(Kokkos::sqrt(rho * c55)) {}
+
+public:
+  KOKKOS_FUNCTION
+  properties() = default;
+
+  KOKKOS_FUNCTION
+  properties(const value_type &c11, const value_type &c13,
+             const value_type &c15, const value_type &c33,
+             const value_type &c35, const value_type &c55,
+             const value_type &c12, const value_type &c23,
+             const value_type &c25, const type_real &rho)
+      : properties(c11, c13, c15, c33, c35, c55, c12, c23, c25, rho,
+                   std::integral_constant<bool, UseSIMD>{}) {}
+};
+
 /**
  * @brief Template specialization for 2D isotropic acoustic media
  *
