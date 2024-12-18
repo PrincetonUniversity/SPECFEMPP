@@ -75,6 +75,10 @@ specfem::compute::assembly::generate_wavefield_on_entire_grid(
                                specfem::element::property_tag::isotropic>(
       component, *this, wavefield_on_entire_grid);
 
+  get_wavefield_on_entire_grid<specfem::element::medium_tag::elastic,
+                               specfem::element::property_tag::anisotropic>(
+      component, *this, wavefield_on_entire_grid);
+
   get_wavefield_on_entire_grid<specfem::element::medium_tag::acoustic,
                                specfem::element::property_tag::isotropic>(
       component, *this, wavefield_on_entire_grid);
