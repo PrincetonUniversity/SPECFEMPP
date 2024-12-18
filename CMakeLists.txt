@@ -437,33 +437,6 @@ target_link_libraries(
         compute
 )
 
-# add_library(
-#         kernels
-#         src/kernels/kernels.cpp
-# )
-
-# target_link_libraries(
-#         kernels
-#         Kokkos::kokkos
-#         compute
-#         coupled_interface
-# )
-
-add_library(
-        frechet_derivatives
-        src/frechet_derivatives/impl/element_kernel/elastic_isotropic.cpp
-        src/frechet_derivatives/impl/element_kernel/elastic_anisotropic.cpp
-        src/frechet_derivatives/impl/element_kernel/acoustic_isotropic.cpp
-        # src/frechet_derivatives/impl/frechet_element.cpp
-        # src/frechet_derivatives/frechet_derivatives.cpp
-)
-
-target_link_libraries(
-        frechet_derivatives
-        Kokkos::kokkos
-        point
-)
-
 add_library(
         kernels
         src/kernels/frechet_kernels.cpp
@@ -473,7 +446,6 @@ target_link_libraries(
         kernels
         Kokkos::kokkos
         compute
-        frechet_derivatives
 )
 
 add_library(
