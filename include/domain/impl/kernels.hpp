@@ -37,12 +37,12 @@ public:
   inline void compute_stiffness_interaction(const int istep) const {
     isotropic_elements.compute_stiffness_interaction(istep);
     anisotropic_elements.compute_stiffness_interaction(istep);
-    isotropic_elements_dirichlet.compute_stiffness_interaction(istep);
-    anisotropic_elements_dirichlet.compute_stiffness_interaction(istep);
+    // isotropic_elements_dirichlet.compute_stiffness_interaction(istep);
+    // anisotropic_elements_dirichlet.compute_stiffness_interaction(istep);
     isotropic_elements_stacey.compute_stiffness_interaction(istep);
     anisotropic_elements_stacey.compute_stiffness_interaction(istep);
-    isotropic_elements_stacey_dirichlet.compute_stiffness_interaction(istep);
-    anisotropic_elements_stacey_dirichlet.compute_stiffness_interaction(istep);
+    // isotropic_elements_stacey_dirichlet.compute_stiffness_interaction(istep);
+    // anisotropic_elements_stacey_dirichlet.compute_stiffness_interaction(istep);
     return;
   }
 
@@ -54,12 +54,12 @@ public:
   inline void compute_mass_matrix(const type_real dt) const {
     isotropic_elements.compute_mass_matrix(dt);
     anisotropic_elements.compute_mass_matrix(dt);
-    isotropic_elements_dirichlet.compute_mass_matrix(dt);
-    anisotropic_elements_dirichlet.compute_mass_matrix(dt);
+    // isotropic_elements_dirichlet.compute_mass_matrix(dt);
+    // anisotropic_elements_dirichlet.compute_mass_matrix(dt);
     isotropic_elements_stacey.compute_mass_matrix(dt);
     anisotropic_elements_stacey.compute_mass_matrix(dt);
-    isotropic_elements_stacey_dirichlet.compute_mass_matrix(dt);
-    anisotropic_elements_stacey_dirichlet.compute_mass_matrix(dt);
+    // isotropic_elements_stacey_dirichlet.compute_mass_matrix(dt);
+    // anisotropic_elements_stacey_dirichlet.compute_mass_matrix(dt);
     return;
   }
 
@@ -125,38 +125,43 @@ private:
   element_kernel<DimensionType, isotropic, none>
       isotropic_elements; ///< Stiffness kernels for isotropic elements
 
-  element_kernel<DimensionType, isotropic, dirichlet>
-      isotropic_elements_dirichlet; ///< Stiffness kernels for isotropic
-                                    ///< elements with Dirichlet boundary
-                                    ///< conditions
+  //   element_kernel<DimensionType, isotropic, dirichlet>
+  //       isotropic_elements_dirichlet; ///< Stiffness kernels for isotropic
+  //                                     ///< elements with Dirichlet boundary
+  //                                     ///< conditions
 
   element_kernel<DimensionType, isotropic, stacey>
       isotropic_elements_stacey; ///< Stiffness kernels for isotropic elements
                                  ///< with Stacey boundary conditions
 
-  element_kernel<DimensionType, isotropic, composite_stacey_dirichlet>
-      isotropic_elements_stacey_dirichlet; ///< Stiffness kernels for isotropic
-                                           ///< elements with Stacey and
-                                           ///< Dirichlet boundary conditions on
-                                           ///< the same element
+  //   element_kernel<DimensionType, isotropic, composite_stacey_dirichlet>
+  //       isotropic_elements_stacey_dirichlet; ///< Stiffness kernels for
+  //       isotropic
+  //                                            ///< elements with Stacey and
+  //                                            ///< Dirichlet boundary
+  //                                            conditions on
+  //                                            ///< the same element
 
   element_kernel<DimensionType, anisotropic, none>
       anisotropic_elements; ///< Stiffness kernels for anisotropic elements
 
-  element_kernel<DimensionType, anisotropic, dirichlet>
-      anisotropic_elements_dirichlet; ///< Stiffness kernels for anisotropic
-                                      ///< elements with Dirichlet boundary
-                                      ///< conditions
+  //   element_kernel<DimensionType, anisotropic, dirichlet>
+  //       anisotropic_elements_dirichlet; ///< Stiffness kernels for
+  //       anisotropic
+  //                                       ///< elements with Dirichlet boundary
+  //                                       ///< conditions
 
   element_kernel<DimensionType, anisotropic, stacey>
       anisotropic_elements_stacey; ///< Stiffness kernels for anisotropic
   ///< elements with Stacey boundary conditions
 
-  element_kernel<DimensionType, anisotropic, composite_stacey_dirichlet>
-      anisotropic_elements_stacey_dirichlet; ///< Stiffness kernels for
-                                             ///< anisotropic elements with
-                                             ///< Stacey and Dirichlet boundary
-                                             ///< conditions on the same element
+  //   element_kernel<DimensionType, anisotropic, composite_stacey_dirichlet>
+  //       anisotropic_elements_stacey_dirichlet; ///< Stiffness kernels for
+  //                                              ///< anisotropic elements with
+  //                                              ///< Stacey and Dirichlet
+  //                                              boundary
+  //                                              ///< conditions on the same
+  //                                              element
 
   source_kernel<DimensionType, isotropic> isotropic_sources; ///< Source kernels
                                                              ///< for isotropic
