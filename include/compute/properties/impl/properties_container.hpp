@@ -321,6 +321,7 @@ struct properties_container<specfem::element::medium_tag::elastic,
     const int iz = index.iz;
     const int ix = index.ix;
 
+    property.rho = rho(ispec, iz, ix);
     property.c11 = c11(ispec, iz, ix);
     property.c12 = c12(ispec, iz, ix);
     property.c13 = c13(ispec, iz, ix);
