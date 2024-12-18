@@ -230,9 +230,9 @@ specfem::compute::mesh_to_compute_mapping::mesh_to_compute_mapping(
   const int nspec = tags.nspec;
 
   constexpr auto element_types = specfem::element::element_types();
-  constexpr int total_medium_tags = element_types.size();
+  constexpr int total_element_types = element_types.size();
 
-  std::array<std::vector<int>, total_medium_tags> element_type_ispec;
+  std::array<std::vector<int>, total_element_types> element_type_ispec;
   int total_counted = 0;
 
   for (int i = 0; i < total_element_types; i++) {
