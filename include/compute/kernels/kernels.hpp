@@ -5,6 +5,7 @@
 #include "mesh/materials/materials.hpp"
 #include "point/coordinates.hpp"
 #include "point/kernels.hpp"
+#include "compute/compute_element_info.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -14,33 +15,8 @@ namespace compute {
  * finite element mesh
  *
  */
-struct kernels {
-private:
-  using IndexViewType = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
-  using MediumTagViewType =
-      Kokkos::View<specfem::element::medium_tag *,
-                   Kokkos::DefaultExecutionSpace>; ///< Underlying view type to
-                                                   ///< store medium tags
-  using PropertyTagViewType =
-      Kokkos::View<specfem::element::property_tag *,
-                   Kokkos::DefaultExecutionSpace>; ///< Underlying view type to
-                                                   ///< store property tags
-
+struct kernels: public element_info {
 public:
-  int nspec; ///< total number of spectral elements
-  int ngllz; ///< number of quadrature points in z dimension
-  int ngllx; ///< number of quadrature points in x dimension
-  MediumTagViewType element_types; ///< Medium tag for every spectral element
-  PropertyTagViewType element_property; ///< Property tag for every spectral
-                                        ///< element
-  MediumTagViewType::HostMirror h_element_types;      ///< Host mirror of @ref
-                                                      ///< element_types
-  PropertyTagViewType::HostMirror h_element_property; ///< Host mirror of @ref
-                                                      ///< element_property
-
-  IndexViewType property_index_mapping;
-  IndexViewType::HostMirror h_property_index_mapping;
-
   specfem::compute::impl::kernels::material_kernels<
       specfem::element::medium_tag::elastic,
       specfem::element::property_tag::isotropic>
@@ -86,68 +62,18 @@ public:
    *
    */
   void copy_to_host() {
-    Kokkos::deep_copy(h_element_types, element_types);
-    Kokkos::deep_copy(h_element_property, element_property);
-    Kokkos::deep_copy(h_property_index_mapping, property_index_mapping);
+    element_info::copy_to_host();
     elastic_isotropic.copy_to_host();
     elastic_anisotropic.copy_to_host();
     acoustic_isotropic.copy_to_host();
   }
 
   void copy_to_device() {
-    Kokkos::deep_copy(element_types, h_element_types);
-    Kokkos::deep_copy(element_property, h_element_property);
-    Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);
+    element_info::copy_to_device();
     elastic_isotropic.copy_to_device();
     elastic_anisotropic.copy_to_device();
     acoustic_isotropic.copy_to_device();
   }
-
-  /**
-   * @brief Get the indices of elements of a given type as a view on the device
-   *
-   * @param medium Medium tag of the elements
-   * @return Kokkos::View<int *, Kokkos::LayoutLeft,
-   * Kokkos::DefaultExecutionSpace> View of the indices of elements of the given
-   * type
-   */
-  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>
-  get_elements_on_device(const specfem::element::medium_tag medium) const;
-
-  /**
-   * @brief Get the indices of elements of a given type as a view on the device
-   *
-   * @param medium Medium tag of the elements
-   * @param property Property tag of the elements
-   * @return Kokkos::View<int *, Kokkos::LayoutLeft,
-   * Kokkos::DefaultExecutionSpace> View of the indices of elements of the given
-   * type
-   */
-  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>
-  get_elements_on_device(const specfem::element::medium_tag medium,
-                         const specfem::element::property_tag property) const;
-
-  /**
-   * @brief Get the indices of elements of a given type as a view on the host
-   *
-   * @param medium Medium tag of the elements
-   * @return Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace> View of
-   * the indices of elements of the given type
-   */
-  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace>
-  get_elements_on_host(const specfem::element::medium_tag medium) const;
-
-  /**
-   * @brief Get the indices of elements of a given type as a view on the host
-   *
-   * @param medium Medium tag of the elements
-   * @param property Property tag of the elements
-   * @return Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace> View of
-   * the indices of elements of the given type
-   */
-  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace>
-  get_elements_on_host(const specfem::element::medium_tag medium,
-                       const specfem::element::property_tag property) const;
 };
 
 /**
