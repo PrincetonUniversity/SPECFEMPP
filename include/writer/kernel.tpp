@@ -70,41 +70,34 @@ void specfem::writer::kernel<OutputLibrary>::write() {
     DomainView alpha("alpha", n_elastic_isotropic, ngllz, ngllx);
     DomainView beta("beta", n_elastic_isotropic, ngllz, ngllx);
 
-    int i = 0;
+    const auto element_indices = kernels.get_elements_on_host(
+        specfem::element::medium_tag::elastic,
+        specfem::element::property_tag::isotropic);
+    const int nelements = element_indices.size();
 
-    // const auto element_indices = kernels.get_elements_on_host();
+    for (int i = 0; i < nelements; i++) {
+      const int ispec = element_indices(i);
+      for (int iz = 0; iz < ngllz; iz++) {
+        for (int ix = 0; ix < ngllx; ix++) {
+          x(i, iz, ix) = mesh.points.h_coord(0, ispec, iz, ix);
+          z(i, iz, ix) = mesh.points.h_coord(1, ispec, iz, ix);
+          const specfem::point::index<specfem::dimension::type::dim2> index(
+              ispec, iz, ix);
+          specfem::point::kernels<specfem::dimension::type::dim2,
+                                  specfem::element::medium_tag::elastic,
+                                  specfem::element::property_tag::isotropic,
+                                  false>
+              point_kernels;
 
-    // for (auto ispec: element_indices) {
-      
-    // }
+          specfem::compute::load_on_host(index, kernels, point_kernels);
 
-    for (int ispec = 0; ispec < nspec; ispec++) {
-      if (kernels.h_element_types(ispec) ==
-          specfem::element::medium_tag::elastic &&
-          kernels.h_element_property(ispec) == specfem::element::property_tag::isotropic) {
-        for (int iz = 0; iz < ngllz; iz++) {
-          for (int ix = 0; ix < ngllx; ix++) {
-            x(i, iz, ix) = mesh.points.h_coord(0, ispec, iz, ix);
-            z(i, iz, ix) = mesh.points.h_coord(1, ispec, iz, ix);
-            const specfem::point::index<specfem::dimension::type::dim2> index(
-                ispec, iz, ix);
-            specfem::point::kernels<specfem::dimension::type::dim2,
-                                    specfem::element::medium_tag::elastic,
-                                    specfem::element::property_tag::isotropic,
-                                    false>
-                point_kernels;
-
-            specfem::compute::load_on_host(index, kernels, point_kernels);
-
-            rho(i, iz, ix) = point_kernels.rho;
-            mu(i, iz, ix) = point_kernels.mu;
-            kappa(i, iz, ix) = point_kernels.kappa;
-            rhop(i, iz, ix) = point_kernels.rhop;
-            alpha(i, iz, ix) = point_kernels.alpha;
-            beta(i, iz, ix) = point_kernels.beta;
-          }
+          rho(i, iz, ix) = point_kernels.rho;
+          mu(i, iz, ix) = point_kernels.mu;
+          kappa(i, iz, ix) = point_kernels.kappa;
+          rhop(i, iz, ix) = point_kernels.rhop;
+          alpha(i, iz, ix) = point_kernels.alpha;
+          beta(i, iz, ix) = point_kernels.beta;
         }
-        i++;
       }
     }
 
@@ -132,36 +125,35 @@ void specfem::writer::kernel<OutputLibrary>::write() {
     DomainView c35("c35", n_elastic_anisotropic, ngllz, ngllx);
     DomainView c55("c55", n_elastic_anisotropic, ngllz, ngllx);
 
-    int i = 0;
+    const auto element_indices = kernels.get_elements_on_host(
+        specfem::element::medium_tag::elastic,
+        specfem::element::property_tag::anisotropic);
+    const int nelements = element_indices.size();
 
-    for (int ispec = 0; ispec < nspec; ispec++) {
-      if (kernels.h_element_types(ispec) ==
-          specfem::element::medium_tag::elastic &&
-          kernels.h_element_property(ispec) == specfem::element::property_tag::anisotropic) {
-        for (int iz = 0; iz < ngllz; iz++) {
-          for (int ix = 0; ix < ngllx; ix++) {
-            x(i, iz, ix) = mesh.points.h_coord(0, ispec, iz, ix);
-            z(i, iz, ix) = mesh.points.h_coord(1, ispec, iz, ix);
-            const specfem::point::index<specfem::dimension::type::dim2> index(
-                ispec, iz, ix);
-            specfem::point::kernels<specfem::dimension::type::dim2,
-                                    specfem::element::medium_tag::elastic,
-                                    specfem::element::property_tag::anisotropic,
-                                    false>
-                point_kernels;
+    for (int i = 0; i < nelements; i++) {
+      const int ispec = element_indices(i);
+      for (int iz = 0; iz < ngllz; iz++) {
+        for (int ix = 0; ix < ngllx; ix++) {
+          x(i, iz, ix) = mesh.points.h_coord(0, ispec, iz, ix);
+          z(i, iz, ix) = mesh.points.h_coord(1, ispec, iz, ix);
+          const specfem::point::index<specfem::dimension::type::dim2> index(
+              ispec, iz, ix);
+          specfem::point::kernels<specfem::dimension::type::dim2,
+                                  specfem::element::medium_tag::elastic,
+                                  specfem::element::property_tag::anisotropic,
+                                  false>
+              point_kernels;
 
-            specfem::compute::load_on_host(index, kernels, point_kernels);
+          specfem::compute::load_on_host(index, kernels, point_kernels);
 
-            rho(i, iz, ix) = point_kernels.rho;
-            c11(i, iz, ix) = point_kernels.c11;
-            c13(i, iz, ix) = point_kernels.c13;
-            c15(i, iz, ix) = point_kernels.c15;
-            c33(i, iz, ix) = point_kernels.c33;
-            c35(i, iz, ix) = point_kernels.c35;
-            c55(i, iz, ix) = point_kernels.c55;
-          }
+          rho(i, iz, ix) = point_kernels.rho;
+          c11(i, iz, ix) = point_kernels.c11;
+          c13(i, iz, ix) = point_kernels.c13;
+          c15(i, iz, ix) = point_kernels.c15;
+          c33(i, iz, ix) = point_kernels.c33;
+          c35(i, iz, ix) = point_kernels.c35;
+          c55(i, iz, ix) = point_kernels.c55;
         }
-        i++;
       }
     }
 
@@ -185,32 +177,30 @@ void specfem::writer::kernel<OutputLibrary>::write() {
     DomainView rho_prime("rho_prime", n_acoustic, ngllz, ngllx);
     DomainView alpha("alpha", n_acoustic, ngllz, ngllx);
 
-    int i = 0;
+    const auto element_indices = kernels.get_elements_on_host(specfem::element::medium_tag::acoustic);
+    const int nelements = element_indices.size();
 
-    for (int ispec = 0; ispec < nspec; ispec++) {
-      if (kernels.h_element_types(ispec) ==
-          specfem::element::medium_tag::acoustic) {
-        for (int iz = 0; iz < ngllz; iz++) {
-          for (int ix = 0; ix < ngllx; ix++) {
-            x(i, iz, ix) = mesh.points.h_coord(0, ispec, iz, ix);
-            z(i, iz, ix) = mesh.points.h_coord(1, ispec, iz, ix);
-            const specfem::point::index<specfem::dimension::type::dim2> index(
-                ispec, iz, ix);
-            specfem::point::kernels<specfem::dimension::type::dim2,
-                                    specfem::element::medium_tag::acoustic,
-                                    specfem::element::property_tag::isotropic,
-                                    false>
-                point_kernels;
+    for (int i = 0; i < nelements; i++) {
+      const int ispec = element_indices(i);
+      for (int iz = 0; iz < ngllz; iz++) {
+        for (int ix = 0; ix < ngllx; ix++) {
+          x(i, iz, ix) = mesh.points.h_coord(0, ispec, iz, ix);
+          z(i, iz, ix) = mesh.points.h_coord(1, ispec, iz, ix);
+          const specfem::point::index<specfem::dimension::type::dim2> index(
+              ispec, iz, ix);
+          specfem::point::kernels<specfem::dimension::type::dim2,
+                                  specfem::element::medium_tag::elastic,
+                                  specfem::element::property_tag::isotropic,
+                                  false>
+              point_kernels;
 
-            specfem::compute::load_on_host(index, kernels, point_kernels);
+          specfem::compute::load_on_host(index, kernels, point_kernels);
 
-            rho(i, iz, ix) = point_kernels.rho;
-            kappa(i, iz, ix) = point_kernels.kappa;
-            rho_prime(i, iz, ix) = point_kernels.rhop;
-            alpha(i, iz, ix) = point_kernels.alpha;
-          }
+          rho(i, iz, ix) = point_kernels.rho;
+          kappa(i, iz, ix) = point_kernels.kappa;
+          rho_prime(i, iz, ix) = point_kernels.rhop;
+          alpha(i, iz, ix) = point_kernels.alpha;
         }
-        i++;
       }
     }
 
