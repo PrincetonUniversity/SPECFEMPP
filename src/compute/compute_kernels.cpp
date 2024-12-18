@@ -18,21 +18,27 @@ void compute_number_of_elements_per_medium(
         &h_element_types,
     const specfem::kokkos::HostView1d<specfem::element::property_tag>
         &h_element_property,
-    int &n_elastic, int &n_acoustic) {
+    int &n_elastic_isotropic, int &n_elastic_anisotropic, int &n_acoustic) {
 
   Kokkos::parallel_reduce(
       "specfem::compute::properties::compute_number_of_elements_per_medium",
       specfem::kokkos::HostRange(0, nspec),
-      [=](const int ispec, int &n_elastic, int &n_acoustic) {
+      [=](const int ispec, int &n_elastic_isotropic, int &n_elastic_anisotropic,
+          int &n_acoustic) {
         const int ispec_mesh = mapping.compute_to_mesh(ispec);
         if (tags.tags_container(ispec_mesh).medium_tag ==
             specfem::element::medium_tag::elastic) {
-          n_elastic++;
           h_element_types(ispec) = specfem::element::medium_tag::elastic;
           if (tags.tags_container(ispec_mesh).property_tag ==
               specfem::element::property_tag::isotropic) {
+            n_elastic_isotropic++;
             h_element_property(ispec) =
                 specfem::element::property_tag::isotropic;
+          } else if (tags.tags_container(ispec_mesh).property_tag ==
+                     specfem::element::property_tag::anisotropic) {
+            n_elastic_anisotropic++;
+            h_element_property(ispec) =
+                specfem::element::property_tag::anisotropic;
           } else {
             std::cout << "Unknown property tag: "
                       << "File: " << __FILE__ << " Line: " << __LINE__
@@ -55,9 +61,9 @@ void compute_number_of_elements_per_medium(
           }
         }
       },
-      n_elastic, n_acoustic);
+      n_elastic_isotropic, n_elastic_anisotropic, n_acoustic);
 
-  if (n_elastic + n_acoustic != nspec)
+  if (n_elastic_isotropic + n_elastic_anisotropic + n_acoustic != nspec)
     throw std::runtime_error("Number of elements per medium does not match "
                              "total number of elements");
 
@@ -79,12 +85,13 @@ specfem::compute::kernels::kernels(
       h_property_index_mapping(
           Kokkos::create_mirror_view(property_index_mapping)) {
   // compute total number of elastic and acoustic spectral elements
-  int n_elastic;
+  int n_elastic_isotropic;
+  int n_elastic_anisotropic;
   int n_acoustic;
 
   compute_number_of_elements_per_medium(nspec, mapping, tags, h_element_types,
-                                        h_element_property, n_elastic,
-                                        n_acoustic);
+                                        h_element_property, n_elastic_isotropic,
+                                        n_elastic_anisotropic, n_acoustic);
 
   acoustic_isotropic = specfem::compute::impl::kernels::material_kernels<
       specfem::element::medium_tag::acoustic,
@@ -93,8 +100,15 @@ specfem::compute::kernels::kernels(
 
   elastic_isotropic = specfem::compute::impl::kernels::material_kernels<
       specfem::element::medium_tag::elastic,
-      specfem::element::property_tag::isotropic>(
-      nspec, n_elastic, ngllz, ngllx, mapping, tags, h_property_index_mapping);
+      specfem::element::property_tag::isotropic>(nspec, n_elastic_isotropic,
+                                                 ngllz, ngllx, mapping, tags,
+                                                 h_property_index_mapping);
+
+  elastic_anisotropic = specfem::compute::impl::kernels::material_kernels<
+      specfem::element::medium_tag::elastic,
+      specfem::element::property_tag::anisotropic>(nspec, n_elastic_anisotropic,
+                                                   ngllz, ngllx, mapping, tags,
+                                                   h_property_index_mapping);
 
   Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);
   Kokkos::deep_copy(element_types, h_element_types);

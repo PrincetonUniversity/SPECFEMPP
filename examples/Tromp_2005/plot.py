@@ -5,14 +5,14 @@ from scipy.interpolate import griddata
 
 # Load the kernels
 def load_data(directory):
-    X = np.loadtxt(directory + "/Elastic/X.txt")
-    Z = np.loadtxt(directory + "/Elastic/Z.txt")
-    rho = np.loadtxt(directory + "/Elastic/rho.txt")
-    kappa = np.loadtxt(directory + "/Elastic/kappa.txt")
-    mu = np.loadtxt(directory + "/Elastic/mu.txt")
-    rhop = np.loadtxt(directory + "/Elastic/rhop.txt")
-    alpha = np.loadtxt(directory + "/Elastic/alpha.txt")
-    beta = np.loadtxt(directory + "/Elastic/beta.txt")
+    X = np.loadtxt(directory + "/ElasticIsotropic/X.txt")
+    Z = np.loadtxt(directory + "/ElasticIsotropic/Z.txt")
+    rho = np.loadtxt(directory + "/ElasticIsotropic/rho.txt")
+    kappa = np.loadtxt(directory + "/ElasticIsotropic/kappa.txt")
+    mu = np.loadtxt(directory + "/ElasticIsotropic/mu.txt")
+    rhop = np.loadtxt(directory + "/ElasticIsotropic/rhop.txt")
+    alpha = np.loadtxt(directory + "/ElasticIsotropic/alpha.txt")
+    beta = np.loadtxt(directory + "/ElasticIsotropic/beta.txt")
 
     return X, Z, rho, kappa, mu, rhop, alpha, beta
 
