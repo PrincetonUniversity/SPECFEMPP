@@ -143,13 +143,14 @@ template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag medium_tag,
           specfem::element::property_tag property_tag, typename qp_type>
-void allocate_isotropic_receivers(
-    const specfem::compute::assembly &assembly, qp_type quadrature_points,
-    specfem::domain::impl::kernels::receiver_kernel<
-        WavefieldType, DimensionType, medium_tag, property_tag, qp_type>
-        &isotropic_receivers) {
+void allocate_receivers(const specfem::compute::assembly &assembly,
+                        qp_type quadrature_points,
+                        specfem::domain::impl::kernels::receiver_kernel<
+                            WavefieldType, DimensionType, medium_tag,
+                            property_tag, qp_type> &receivers) {
 
-  const auto value = medium_tag;
+  const auto medium = medium_tag;
+  const auto property = property_tag;
 
   // Create isotropic sources
   const auto ispec_array = assembly.receivers.h_ispec_array;
@@ -158,7 +159,8 @@ void allocate_isotropic_receivers(
   int nreceivers = 0;
   for (int ireceiver = 0; ireceiver < ispec_array.extent(0); ireceiver++) {
     const int ispec = ispec_array(ireceiver);
-    if (assembly.properties.h_element_types(ispec) == value) {
+    if (assembly.properties.h_element_types(ispec) == medium &&
+        assembly.properties.h_element_property(ispec) == property) {
       nreceivers++;
     }
   }
@@ -173,7 +175,8 @@ void allocate_isotropic_receivers(
   int index = 0;
   for (int ireceiver = 0; ireceiver < ispec_array.extent(0); ireceiver++) {
     const int ispec = ispec_array(ireceiver);
-    if (assembly.properties.h_element_types(ispec) == value) {
+    if (assembly.properties.h_element_types(ispec) == medium &&
+        assembly.properties.h_element_property(ispec) == property) {
       h_receiver_kernel_index_mapping(index) = ispec_array(ireceiver);
       h_receiver_mapping(index) = ireceiver;
       index++;
@@ -181,7 +184,7 @@ void allocate_isotropic_receivers(
   }
 
   // Allocate isotropic sources
-  isotropic_receivers = specfem::domain::impl::kernels::receiver_kernel<
+  receivers = specfem::domain::impl::kernels::receiver_kernel<
       WavefieldType, DimensionType, medium_tag, property_tag, qp_type>(
       assembly, h_receiver_kernel_index_mapping, h_receiver_mapping,
       quadrature_points);
@@ -253,8 +256,11 @@ specfem::domain::impl::kernels::kernels<
 
   // Allocate isotropic receivers
 
-  allocate_isotropic_receivers(assembly, quadrature_points,
-                               isotropic_receivers);
+  allocate_receivers(assembly, quadrature_points, isotropic_receivers);
+
+  // Allocate anisotropic receivers
+
+  allocate_receivers(assembly, quadrature_points, anisotropic_receivers);
 
   // Compute mass matrices
 
@@ -313,7 +319,7 @@ specfem::domain::impl::kernels::kernels<
 
   // Allocate isotropic receivers
 
-  allocate_isotropic_receivers(assembly, quadrature_points,
+  allocate_receivers(assembly, quadrature_points,
                                isotropic_receivers);
 
   // Compute mass matrices
