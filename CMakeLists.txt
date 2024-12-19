@@ -121,7 +121,7 @@ configure_file(constants.hpp.in constants.hpp)
 include_directories(include)
 include_directories(${CMAKE_BINARY_DIR})
 
-add_subdirectory(meshfem2d)
+add_subdirectory(fortran/meshfem2d)
 
 if (ENABLE_SIMD)
         message("-- Enabling SIMD")
