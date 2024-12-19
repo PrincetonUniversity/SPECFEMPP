@@ -228,14 +228,14 @@ specfem::compute::mesh_to_compute_mapping::mesh_to_compute_mapping(
 
   const int nspec = tags.nspec;
 
-  constexpr auto medium_tags = specfem::element::medium_tags();
-  constexpr int total_medium_tags = medium_tags.size();
+  constexpr auto element_types = specfem::element::element_types();
+  constexpr int total_medium_tags = element_types.size();
 
   std::array<std::vector<int>, total_medium_tags> element_type_ispec;
   int total_counted = 0;
 
   for (int i = 0; i < total_medium_tags; i++) {
-    const auto [medium_tag, property_tag, boundary_tag] = medium_tags[i];
+    const auto [medium_tag, property_tag, boundary_tag] = element_types[i];
     for (int ispec = 0; ispec < nspec; ispec++) {
       const auto tag = tags.tags_container(ispec);
       if (tag.medium_tag == medium_tag && tag.property_tag == property_tag &&
