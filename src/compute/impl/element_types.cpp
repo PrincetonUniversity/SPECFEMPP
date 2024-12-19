@@ -12,7 +12,8 @@ specfem::compute::impl::element_types::element_types(
       property_tags("specfem::compute::properties::property_tags", nspec),
       h_property_tags(Kokkos::create_mirror_view(property_tags)),
       h_property_index_mapping(
-          Kokkos::create_mirror_view(property_index_mapping)) {
+          Kokkos::create_mirror_view(property_index_mapping),
+          boundary_tags("specfem::compute::boundaries::boundary_tags", nspec)) {
   Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);
   Kokkos::deep_copy(medium_tags, h_medium_tags);
   Kokkos::deep_copy(property_tags, h_property_tags);
@@ -74,8 +75,7 @@ specfem::compute::impl::element_types::get_elements_on_host(
 
   int nelements = 0;
   for (int ispec = 0; ispec < nspec; ispec++) {
-    if (h_medium_tags(ispec) == medium &&
-        h_property_tags(ispec) == property) {
+    if (h_medium_tags(ispec) == medium && h_property_tags(ispec) == property) {
       nelements++;
     }
   }
@@ -85,8 +85,7 @@ specfem::compute::impl::element_types::get_elements_on_host(
 
   nelements = 0;
   for (int ispec = 0; ispec < nspec; ispec++) {
-    if (h_medium_tags(ispec) == medium &&
-        h_property_tags(ispec) == property) {
+    if (h_medium_tags(ispec) == medium && h_property_tags(ispec) == property) {
       elements(nelements) = ispec;
       nelements++;
     }
@@ -111,6 +110,34 @@ specfem::compute::impl::element_types::get_elements_on_device(
                host_elements.extent(0));
 
   Kokkos::deep_copy(elements, host_elements);
+
+  return elements;
+}
+
+Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace>
+specfem::compute::impl::element_types::get_elements_on_host(
+    const specfem::element::medium_tag medium,
+    const specfem::element::boundary_tag boundary) const {
+
+  const int nspec = this->nspec;
+
+  int nelements = 0;
+  for (int ispec = 0; ispec < nspec; ispec++) {
+    if (h_medium_tags(ispec) == medium && boundary_tags(ispec) == boundary) {
+      nelements++;
+    }
+  }
+
+  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace> elements(
+      "specfem::compute::properties::get_elements_on_host", nelements);
+
+  nelements = 0;
+  for (int ispec = 0; ispec < nspec; ispec++) {
+    if (h_medium_tags(ispec) == medium && boundary_tags(ispec) == boundary) {
+      elements(nelements) = ispec;
+      nelements++;
+    }
+  }
 
   return elements;
 }
