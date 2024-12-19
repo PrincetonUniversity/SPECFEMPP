@@ -103,7 +103,7 @@ map_materials_with_color(const specfem::compute::assembly &assembly) {
     }
     cells->InsertNextCell(quad);
 
-    const auto material = properties.h_element_types(icell);
+    const auto material = properties.h_medium_tags(icell);
     const auto color = material_colors.at(material);
     unsigned char color_uc[3] = { static_cast<unsigned char>(color[0]),
                                   static_cast<unsigned char>(color[1]),

@@ -102,9 +102,9 @@ TEST(COMPUTE_TESTS, compute_elastic_properties) {
       for (int ispec = 0; ispec < nspec; ++ispec) {
         specfem::point::index<specfem::dimension::type::dim2> index(ispec, iz,
                                                                     ix);
-        if (compute_properties.h_element_types(ispec) ==
+        if (compute_properties.h_medium_tags(ispec) ==
                 specfem::element::medium_tag::elastic &&
-            compute_properties.h_element_property(ispec) ==
+            compute_properties.h_property_tags(ispec) ==
                 specfem::element::property_tag::isotropic) {
           const auto properties =
               [&]() -> specfem::point::properties<
@@ -140,9 +140,9 @@ TEST(COMPUTE_TESTS, compute_elastic_properties) {
             (ispec + vector_length < nspec) ? vector_length : nspec - ispec;
         const specfem::point::simd_index<specfem::dimension::type::dim2>
             simd_index(ispec, num_elements, iz, ix);
-        if (compute_properties.h_element_types(ispec) ==
+        if (compute_properties.h_medium_tags(ispec) ==
                 specfem::element::medium_tag::elastic &&
-            compute_properties.h_element_property(ispec) ==
+            compute_properties.h_property_tags(ispec) ==
                 specfem::element::property_tag::isotropic) {
           const auto properties =
               [&]() -> specfem::point::properties<

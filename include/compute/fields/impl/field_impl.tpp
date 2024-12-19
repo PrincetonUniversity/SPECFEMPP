@@ -28,7 +28,7 @@ specfem::compute::impl::field_impl<DimensionType, MediumTag>::field_impl(
         assembly_index_mapping) {
 
   const auto index_mapping = mesh.points.h_index_mapping;
-  const auto element_type = properties.h_element_types;
+  const auto element_type = properties.h_medium_tags;
   const int nspec = mesh.points.nspec;
   const int ngllz = mesh.points.ngllz;
   const int ngllx = mesh.points.ngllx;

@@ -33,9 +33,9 @@ specfem::domain::impl::kernels::receiver_kernel<
   // Check if the receiver element is of type being allocated
   for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver) {
     const int ispec = h_receiver_kernel_index_mapping(ireceiver);
-    if ((assembly.properties.h_element_types(ispec) !=
+    if ((assembly.properties.h_medium_tags(ispec) !=
          medium_tag) &&
-        (assembly.properties.h_element_property(ispec) !=
+        (assembly.properties.h_property_tags(ispec) !=
          property_tag)) {
       throw std::runtime_error("Invalid element detected in kernel");
     }

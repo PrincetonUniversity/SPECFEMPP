@@ -1,5 +1,7 @@
 #pragma once
 
+#include "compute/impl/element_types.hpp"
+#include "compute/impl/value_containers.hpp"
 #include "enumerations/medium.hpp"
 #include "impl/material_kernels.hpp"
 #include "mesh/materials/materials.hpp"
@@ -14,52 +16,15 @@ namespace compute {
  * finite element mesh
  *
  */
-struct kernels {
-private:
-  using IndexViewType = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
-  using MediumTagViewType =
-      Kokkos::View<specfem::element::medium_tag *,
-                   Kokkos::DefaultExecutionSpace>; ///< Underlying view type to
-                                                   ///< store medium tags
-  using PropertyTagViewType =
-      Kokkos::View<specfem::element::property_tag *,
-                   Kokkos::DefaultExecutionSpace>; ///< Underlying view type to
-                                                   ///< store property tags
-
+struct kernels : public impl::element_types,
+                 public impl::value_containers<
+                     specfem::compute::impl::kernels::material_kernels> {
 public:
-  int nspec; ///< total number of spectral elements
-  int ngllz; ///< number of quadrature points in z dimension
-  int ngllx; ///< number of quadrature points in x dimension
-  MediumTagViewType element_types; ///< Medium tag for every spectral element
-  PropertyTagViewType element_property; ///< Property tag for every spectral
-                                        ///< element
-  MediumTagViewType::HostMirror h_element_types;      ///< Host mirror of @ref
-                                                      ///< element_types
-  PropertyTagViewType::HostMirror h_element_property; ///< Host mirror of @ref
-                                                      ///< element_property
-
-  IndexViewType property_index_mapping;
-  IndexViewType::HostMirror h_property_index_mapping;
-
-  specfem::compute::impl::kernels::material_kernels<
-      specfem::element::medium_tag::elastic,
-      specfem::element::property_tag::isotropic>
-      elastic_isotropic; ///< Elastic isotropic material kernels
-
-  specfem::compute::impl::kernels::material_kernels<
-      specfem::element::medium_tag::elastic,
-      specfem::element::property_tag::anisotropic>
-      elastic_anisotropic; ///< Elastic isotropic material kernels
-
-  specfem::compute::impl::kernels::material_kernels<
-      specfem::element::medium_tag::acoustic,
-      specfem::element::property_tag::isotropic>
-      acoustic_isotropic; ///< Acoustic isotropic material kernels
-
   /**
    * @name Constructors
    *
    */
+
   ///@{
   /**
    * @brief Default constructor
@@ -86,97 +51,21 @@ public:
    *
    */
   void copy_to_host() {
-    Kokkos::deep_copy(h_element_types, element_types);
-    Kokkos::deep_copy(h_element_property, element_property);
-    Kokkos::deep_copy(h_property_index_mapping, property_index_mapping);
-    elastic_isotropic.copy_to_host();
-    elastic_anisotropic.copy_to_host();
-    acoustic_isotropic.copy_to_host();
+    impl::element_types::copy_to_host();
+    impl::value_containers<
+        specfem::compute::impl::kernels::material_kernels>::copy_to_host();
   }
 
   void copy_to_device() {
-    Kokkos::deep_copy(element_types, h_element_types);
-    Kokkos::deep_copy(element_property, h_element_property);
-    Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);
-    elastic_isotropic.copy_to_device();
-    elastic_anisotropic.copy_to_device();
-    acoustic_isotropic.copy_to_device();
+    impl::element_types::copy_to_device();
+    impl::value_containers<
+        specfem::compute::impl::kernels::material_kernels>::copy_to_device();
   }
-
-  /**
-   * @brief Get the indices of elements of a given type as a view on the device
-   *
-   * @param medium Medium tag of the elements
-   * @return Kokkos::View<int *, Kokkos::LayoutLeft,
-   * Kokkos::DefaultExecutionSpace> View of the indices of elements of the given
-   * type
-   */
-  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>
-  get_elements_on_device(const specfem::element::medium_tag medium) const;
-
-  /**
-   * @brief Get the indices of elements of a given type as a view on the device
-   *
-   * @param medium Medium tag of the elements
-   * @param property Property tag of the elements
-   * @return Kokkos::View<int *, Kokkos::LayoutLeft,
-   * Kokkos::DefaultExecutionSpace> View of the indices of elements of the given
-   * type
-   */
-  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>
-  get_elements_on_device(const specfem::element::medium_tag medium,
-                         const specfem::element::property_tag property) const;
-
-  /**
-   * @brief Get the indices of elements of a given type as a view on the host
-   *
-   * @param medium Medium tag of the elements
-   * @return Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace> View of
-   * the indices of elements of the given type
-   */
-  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace>
-  get_elements_on_host(const specfem::element::medium_tag medium) const;
-
-  /**
-   * @brief Get the indices of elements of a given type as a view on the host
-   *
-   * @param medium Medium tag of the elements
-   * @param property Property tag of the elements
-   * @return Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace> View of
-   * the indices of elements of the given type
-   */
-  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace>
-  get_elements_on_host(const specfem::element::medium_tag medium,
-                       const specfem::element::property_tag property) const;
 };
 
 /**
  * @defgroup ComputeKernelsDataAccess
  */
-
-/**
- * @brief Returns the material_kernel for a given medium and property
- *
- */
-template <specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag>
-const specfem::compute::impl::kernels::material_kernels<MediumTag, PropertyTag>
-    &get_medium(const kernels &kernels) {
-  if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
-                (PropertyTag == specfem::element::property_tag::isotropic)) {
-    return kernels.elastic_isotropic;
-  } else if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
-                       (PropertyTag ==
-                        specfem::element::property_tag::anisotropic)) {
-    return kernels.elastic_anisotropic;
-  } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
-                       (PropertyTag ==
-                        specfem::element::property_tag::isotropic)) {
-    return kernels.acoustic_isotropic;
-  } else {
-    static_assert("Material type not implemented");
-  }
-}
 
 /**
  * @brief Load misfit kernels for a given quadrature point on the device
@@ -206,7 +95,7 @@ KOKKOS_FUNCTION void load_on_device(const IndexType &index,
   IndexType l_index = index;
   l_index.ispec = ispec;
 
-  get_medium<MediumTag, PropertyTag>(kernels).load_device_kernels(
+  kernels.get_container<MediumTag, PropertyTag>().load_device_kernels(
       l_index, point_kernels);
 
   return;
@@ -239,8 +128,8 @@ void load_on_host(const IndexType &index, const kernels &kernels,
   IndexType l_index = index;
   l_index.ispec = ispec;
 
-  get_medium<MediumTag, PropertyTag>(kernels).load_host_kernels(l_index,
-                                                                point_kernels);
+  kernels.get_container<MediumTag, PropertyTag>().load_host_kernels(
+      l_index, point_kernels);
 
   return;
 }
@@ -272,7 +161,7 @@ void store_on_host(const IndexType &index, const PointKernelType &point_kernels,
   IndexType l_index = index;
   l_index.ispec = ispec;
 
-  get_medium<MediumTag, PropertyTag>(kernels).update_kernels_on_host(
+  kernels.get_container<MediumTag, PropertyTag>().update_kernels_on_host(
       l_index, point_kernels);
 
   return;
@@ -306,7 +195,7 @@ KOKKOS_FUNCTION void store_on_device(const IndexType &index,
   IndexType l_index = index;
   l_index.ispec = ispec;
 
-  get_medium<MediumTag, PropertyTag>(kernels).update_kernels_on_device(
+  kernels.get_container<MediumTag, PropertyTag>().update_kernels_on_device(
       l_index, point_kernels);
 
   return;
@@ -342,7 +231,7 @@ KOKKOS_FUNCTION void add_on_device(const IndexType &index,
   IndexType l_index = index;
   l_index.ispec = ispec;
 
-  get_medium<MediumTag, PropertyTag>(kernels).add_kernels_on_device(
+  kernels.get_container<MediumTag, PropertyTag>().add_kernels_on_device(
       l_index, point_kernels);
 
   return;
@@ -376,7 +265,7 @@ void add_on_host(const IndexType &index, const PointKernelType &point_kernels,
   IndexType l_index = index;
   l_index.ispec = ispec;
 
-  get_medium<MediumTag, PropertyTag>(kernels).add_kernels_on_host(
+  kernels.get_container<MediumTag, PropertyTag>().add_kernels_on_host(
       l_index, point_kernels);
 
   return;

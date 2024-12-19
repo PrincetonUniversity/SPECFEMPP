@@ -37,8 +37,8 @@ specfem::domain::impl::kernels::element_kernel_base<
   // type
   for (int ispec = 0; ispec < nelements; ispec++) {
     const int ielement = h_element_kernel_index_mapping(ispec);
-    if ((assembly.properties.h_element_types(ielement) != MediumTag) &&
-        (assembly.properties.h_element_property(ielement) != PropertyTag)) {
+    if ((assembly.properties.h_medium_tags(ielement) != MediumTag) &&
+        (assembly.properties.h_property_tags(ielement) != PropertyTag)) {
       throw std::runtime_error("Invalid element detected in kernel");
     }
   }
