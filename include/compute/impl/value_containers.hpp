@@ -1,7 +1,6 @@
 #pragma once
 
 #include "compute/impl/element_types.hpp"
-#include "compute/kernels/impl/material_kernels.hpp"
 
 namespace specfem {
 namespace compute {
