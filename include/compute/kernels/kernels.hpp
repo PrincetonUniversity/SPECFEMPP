@@ -1,11 +1,11 @@
 #pragma once
 
+#include "compute/compute_element_info.hpp"
 #include "enumerations/medium.hpp"
 #include "impl/material_kernels.hpp"
 #include "mesh/materials/materials.hpp"
 #include "point/coordinates.hpp"
 #include "point/kernels.hpp"
-#include "compute/compute_element_info.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -15,94 +15,20 @@ namespace compute {
  * finite element mesh
  *
  */
-struct kernels: public element_info {
+struct kernels
+    : public element_info<specfem::compute::impl::kernels::material_kernels> {
 public:
-  specfem::compute::impl::kernels::material_kernels<
-      specfem::element::medium_tag::elastic,
-      specfem::element::property_tag::isotropic>
-      elastic_isotropic; ///< Elastic isotropic material kernels
-
-  specfem::compute::impl::kernels::material_kernels<
-      specfem::element::medium_tag::elastic,
-      specfem::element::property_tag::anisotropic>
-      elastic_anisotropic; ///< Elastic isotropic material kernels
-
-  specfem::compute::impl::kernels::material_kernels<
-      specfem::element::medium_tag::acoustic,
-      specfem::element::property_tag::isotropic>
-      acoustic_isotropic; ///< Acoustic isotropic material kernels
-
   /**
    * @name Constructors
    *
    */
-  ///@{
-  /**
-   * @brief Default constructor
-   *
-   */
-  kernels() = default;
-
-  /**
-   * @brief Construct a new kernels object
-   *
-   * @param nspec Total number of spectral elements
-   * @param ngllz Number of quadrature points in z dimension
-   * @param ngllx Number of quadrature points in x dimension
-   * @param mapping mesh to compute mapping
-   * @param tags Tags for every element in spectral element mesh
-   */
-  kernels(const int nspec, const int ngllz, const int ngllx,
-          const specfem::compute::mesh_to_compute_mapping &mapping,
-          const specfem::mesh::tags<specfem::dimension::type::dim2> &tags);
-  ///@}
-
-  /**
-   * @brief Copy misfit kernel data to host
-   *
-   */
-  void copy_to_host() {
-    element_info::copy_to_host();
-    elastic_isotropic.copy_to_host();
-    elastic_anisotropic.copy_to_host();
-    acoustic_isotropic.copy_to_host();
-  }
-
-  void copy_to_device() {
-    element_info::copy_to_device();
-    elastic_isotropic.copy_to_device();
-    elastic_anisotropic.copy_to_device();
-    acoustic_isotropic.copy_to_device();
-  }
+  using element_info<
+      specfem::compute::impl::kernels::material_kernels>::element_info;
 };
 
 /**
  * @defgroup ComputeKernelsDataAccess
  */
-
-/**
- * @brief Returns the material_kernel for a given medium and property
- *
- */
-template <specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag>
-const specfem::compute::impl::kernels::material_kernels<MediumTag, PropertyTag>
-    &get_medium(const kernels &kernels) {
-  if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
-                (PropertyTag == specfem::element::property_tag::isotropic)) {
-    return kernels.elastic_isotropic;
-  } else if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
-                       (PropertyTag ==
-                        specfem::element::property_tag::anisotropic)) {
-    return kernels.elastic_anisotropic;
-  } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
-                       (PropertyTag ==
-                        specfem::element::property_tag::isotropic)) {
-    return kernels.acoustic_isotropic;
-  } else {
-    static_assert("Material type not implemented");
-  }
-}
 
 /**
  * @brief Load misfit kernels for a given quadrature point on the device
@@ -132,7 +58,7 @@ KOKKOS_FUNCTION void load_on_device(const IndexType &index,
   IndexType l_index = index;
   l_index.ispec = ispec;
 
-  get_medium<MediumTag, PropertyTag>(kernels).load_device_kernels(
+  kernels.get_medium<MediumTag, PropertyTag>().load_device_kernels(
       l_index, point_kernels);
 
   return;
@@ -165,7 +91,7 @@ void load_on_host(const IndexType &index, const kernels &kernels,
   IndexType l_index = index;
   l_index.ispec = ispec;
 
-  get_medium<MediumTag, PropertyTag>(kernels).load_host_kernels(l_index,
+  kernels.get_medium<MediumTag, PropertyTag>().load_host_kernels(l_index,
                                                                 point_kernels);
 
   return;
@@ -198,7 +124,7 @@ void store_on_host(const IndexType &index, const PointKernelType &point_kernels,
   IndexType l_index = index;
   l_index.ispec = ispec;
 
-  get_medium<MediumTag, PropertyTag>(kernels).update_kernels_on_host(
+  kernels.get_medium<MediumTag, PropertyTag>().update_kernels_on_host(
       l_index, point_kernels);
 
   return;
@@ -232,7 +158,7 @@ KOKKOS_FUNCTION void store_on_device(const IndexType &index,
   IndexType l_index = index;
   l_index.ispec = ispec;
 
-  get_medium<MediumTag, PropertyTag>(kernels).update_kernels_on_device(
+  kernels.get_medium<MediumTag, PropertyTag>().update_kernels_on_device(
       l_index, point_kernels);
 
   return;
@@ -268,7 +194,7 @@ KOKKOS_FUNCTION void add_on_device(const IndexType &index,
   IndexType l_index = index;
   l_index.ispec = ispec;
 
-  get_medium<MediumTag, PropertyTag>(kernels).add_kernels_on_device(
+  kernels.get_medium<MediumTag, PropertyTag>().add_kernels_on_device(
       l_index, point_kernels);
 
   return;
@@ -302,7 +228,7 @@ void add_on_host(const IndexType &index, const PointKernelType &point_kernels,
   IndexType l_index = index;
   l_index.ispec = ispec;
 
-  get_medium<MediumTag, PropertyTag>(kernels).add_kernels_on_host(
+  kernels.get_medium<MediumTag, PropertyTag>().add_kernels_on_host(
       l_index, point_kernels);
 
   return;

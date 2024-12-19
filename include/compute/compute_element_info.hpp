@@ -1,9 +1,10 @@
 #pragma once
 
+#include "compute/compute_mesh.hpp"
 #include "enumerations/medium.hpp"
 #include "mesh/materials/materials.hpp"
 #include "point/coordinates.hpp"
-#include "compute/compute_mesh.hpp"
+#include "kernels/impl/material_kernels.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -13,7 +14,9 @@ namespace compute {
  * finite element mesh
  *
  */
-struct element_info{
+template <template <specfem::element::medium_tag, specfem::element::property_tag>
+          class containers_type>
+struct element_info {
 protected:
   using IndexViewType = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
   using MediumTagViewType =
@@ -24,7 +27,7 @@ protected:
       Kokkos::View<specfem::element::property_tag *,
                    Kokkos::DefaultExecutionSpace>; ///< Underlying view type to
                                                    ///< store property tags
- 
+
 public:
   int nspec; ///< total number of spectral elements
   int ngllz; ///< number of quadrature points in z dimension
@@ -39,6 +42,21 @@ public:
 
   IndexViewType property_index_mapping;
   IndexViewType::HostMirror h_property_index_mapping;
+
+  containers_type<
+      specfem::element::medium_tag::elastic,
+      specfem::element::property_tag::isotropic>
+      elastic_isotropic; ///< Elastic isotropic material kernels
+
+  containers_type<
+      specfem::element::medium_tag::elastic,
+      specfem::element::property_tag::anisotropic>
+      elastic_anisotropic; ///< Elastic isotropic material kernels
+
+  containers_type<
+      specfem::element::medium_tag::acoustic,
+      specfem::element::property_tag::isotropic>
+      acoustic_isotropic; ///< Acoustic isotropic material kernels
 
   /**
    * @name Constructors
@@ -61,9 +79,33 @@ public:
    * @param tags Tags for every element in spectral element mesh
    */
   element_info(const int nspec, const int ngllz, const int ngllx,
-          const specfem::compute::mesh_to_compute_mapping &mapping,
-          const specfem::mesh::tags<specfem::dimension::type::dim2> &tags);
+               const specfem::compute::mesh_to_compute_mapping &mapping,
+               const specfem::mesh::tags<specfem::dimension::type::dim2> &tags);
   ///@}
+
+  /**
+  * @brief Returns the material_kernel for a given medium and property
+  *
+  */
+  template <specfem::element::medium_tag MediumTag,
+            specfem::element::property_tag PropertyTag>
+  const containers_type<MediumTag, PropertyTag>
+      &get_medium() const {
+    if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
+                  (PropertyTag == specfem::element::property_tag::isotropic)) {
+      return elastic_isotropic;
+    } else if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
+                        (PropertyTag ==
+                          specfem::element::property_tag::anisotropic)) {
+      return elastic_anisotropic;
+    } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
+                        (PropertyTag ==
+                          specfem::element::property_tag::isotropic)) {
+      return acoustic_isotropic;
+    } else {
+      static_assert("Material type not implemented");
+    }
+  }
 
   /**
    * @brief Copy misfit kernel data to host
@@ -73,12 +115,18 @@ public:
     Kokkos::deep_copy(h_element_types, element_types);
     Kokkos::deep_copy(h_element_property, element_property);
     Kokkos::deep_copy(h_property_index_mapping, property_index_mapping);
+    elastic_isotropic.copy_to_host();
+    elastic_anisotropic.copy_to_host();
+    acoustic_isotropic.copy_to_host();
   }
 
   void copy_to_device() {
     Kokkos::deep_copy(element_types, h_element_types);
     Kokkos::deep_copy(element_property, h_element_property);
     Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);
+    elastic_isotropic.copy_to_device();
+    elastic_anisotropic.copy_to_device();
+    acoustic_isotropic.copy_to_device();
   }
 
   /**
@@ -130,4 +178,3 @@ public:
 
 } // namespace compute
 } // namespace specfem
-
