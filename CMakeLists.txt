@@ -122,6 +122,7 @@ include_directories(include)
 include_directories(${CMAKE_BINARY_DIR})
 
 add_subdirectory(fortran/meshfem2d)
+add_subdirectory(fortran/meshfem3d/shared)
 
 if (ENABLE_SIMD)
         message("-- Enabling SIMD")
