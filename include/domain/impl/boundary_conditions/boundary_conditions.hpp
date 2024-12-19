@@ -77,8 +77,6 @@ compute_mass_matrix_terms(const type_real dt, const PointBoundaryType &boundary,
   return;
 }
 
-template <specfem::element::boundary_tag BoundaryTag>
-std::string print_boundary_tag();
 } // namespace boundary_conditions
 } // namespace impl
 } // namespace domain
