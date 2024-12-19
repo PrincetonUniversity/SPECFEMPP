@@ -158,7 +158,7 @@ void allocate_isotropic_receivers(
   int nreceivers = 0;
   for (int ireceiver = 0; ireceiver < ispec_array.extent(0); ireceiver++) {
     const int ispec = ispec_array(ireceiver);
-    if (assembly.properties.h_element_types(ispec) == value) {
+    if (assembly.properties.h_medium_tags(ispec) == value) {
       nreceivers++;
     }
   }
@@ -173,7 +173,7 @@ void allocate_isotropic_receivers(
   int index = 0;
   for (int ireceiver = 0; ireceiver < ispec_array.extent(0); ireceiver++) {
     const int ispec = ispec_array(ireceiver);
-    if (assembly.properties.h_element_types(ispec) == value) {
+    if (assembly.properties.h_medium_tags(ispec) == value) {
       h_receiver_kernel_index_mapping(index) = ispec_array(ireceiver);
       h_receiver_mapping(index) = ireceiver;
       index++;
@@ -205,8 +205,8 @@ specfem::domain::impl::kernels::kernels<
   // -----------------------------------------------------------
   for (int ispec = 0; ispec < nspec; ispec++) {
     element_tags(ispec) =
-        element_tag(assembly.properties.h_element_types(ispec),
-                    assembly.properties.h_element_property(ispec),
+        element_tag(assembly.properties.h_medium_tags(ispec),
+                    assembly.properties.h_property_tags(ispec),
                     assembly.boundaries.boundary_tags(ispec));
   }
 
@@ -278,8 +278,8 @@ specfem::domain::impl::kernels::kernels<
   // -----------------------------------------------------------
   for (int ispec = 0; ispec < nspec; ispec++) {
     element_tags(ispec) =
-        element_tag(assembly.properties.h_element_types(ispec),
-                    assembly.properties.h_element_property(ispec),
+        element_tag(assembly.properties.h_medium_tags(ispec),
+                    assembly.properties.h_property_tags(ispec),
                     assembly.boundaries.boundary_tags(ispec));
   }
 

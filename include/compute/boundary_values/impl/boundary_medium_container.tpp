@@ -20,7 +20,7 @@ specfem::compute::impl::boundary_medium_container<DimensionType, MediumType,
   const int nx = mesh.ngllx;
 
   for (int ispec = 0; ispec < nspec; ispec++) {
-    if (properties.h_element_types(ispec) == MediumType &&
+    if (properties.h_medium_tags(ispec) == MediumType &&
         boundaries.boundary_tags(ispec) == BoundaryTag) {
       property_index_mapping(ispec) = nelements;
       nelements++;

@@ -194,7 +194,7 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
                   ispec, iz, ix);
               const int ispec_mesh =
                   assembly.mesh.mapping.compute_to_mesh(ispec);
-              if (assembly.properties.h_element_types(ispec) ==
+              if (assembly.properties.h_medium_tags(ispec) ==
                   specfem::element::medium_tag::elastic) {
 
                 constexpr int components = 2;
@@ -254,7 +254,7 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
                   ispec, iz, ix);
               const int ispec_mesh =
                   assembly.mesh.mapping.compute_to_mesh(ispec);
-              if (assembly.properties.h_element_types(ispec) ==
+              if (assembly.properties.h_medium_tags(ispec) ==
                   specfem::element::medium_tag::acoustic) {
 
                 constexpr int components = 1;

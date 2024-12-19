@@ -39,14 +39,14 @@ public:
   int ngllx; ///< number of quadrature points in x dimension
   IndexViewType property_index_mapping;
   IndexViewType::HostMirror h_property_index_mapping;
-  MediumTagViewType element_types;      ///< Medium Tag for every spectral
+  MediumTagViewType medium_tags;      ///< Medium Tag for every spectral
                                         ///< element
-  PropertyTagViewType element_property; ///< Property Tag for every spectral
+  PropertyTagViewType property_tags; ///< Property Tag for every spectral
                                         ///< element
-  MediumTagViewType::HostMirror h_element_types;      ///< Host mirror of
-                                                      ///< @ref element_types
-  PropertyTagViewType::HostMirror h_element_property; ///< Host mirror of
-                                                      ///< @ref element_property
+  MediumTagViewType::HostMirror h_medium_tags;      ///< Host mirror of
+                                                      ///< @ref medium_tags
+  PropertyTagViewType::HostMirror h_property_tags; ///< Host mirror of
+                                                      ///< @ref property_tags
 
   specfem::compute::impl::properties::material_property<
       specfem::element::medium_tag::elastic,

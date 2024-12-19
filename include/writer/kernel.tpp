@@ -38,17 +38,17 @@ void specfem::writer::kernel<OutputLibrary>::write() {
   Kokkos::parallel_reduce(
       "specfem::writer::kernel", specfem::kokkos::HostRange(0, nspec),
       [=](const int ispec, int &n_elastic_isotropic, int &n_elastic_anisotropic, int &n_acoustic) {
-        if (kernels.h_element_types(ispec) ==
+        if (kernels.h_medium_tags(ispec) ==
             specfem::element::medium_tag::elastic &&
-            kernels.h_element_property(ispec) ==
+            kernels.h_property_tags(ispec) ==
             specfem::element::property_tag::isotropic) {
           n_elastic_isotropic++;
-        } else if (kernels.h_element_types(ispec) ==
+        } else if (kernels.h_medium_tags(ispec) ==
             specfem::element::medium_tag::elastic &&
-            kernels.h_element_property(ispec) ==
+            kernels.h_property_tags(ispec) ==
             specfem::element::property_tag::anisotropic) {
           n_elastic_anisotropic++;
-        } else if (kernels.h_element_types(ispec) ==
+        } else if (kernels.h_medium_tags(ispec) ==
                    specfem::element::medium_tag::acoustic) {
           n_acoustic++;
         }

@@ -55,11 +55,11 @@ constexpr auto material_systems() {
   return material_systems;
 }
 
-constexpr auto element_types() {
-  constexpr int total_element_types = 8;
+constexpr auto medium_tags() {
+  constexpr int total_medium_tags = 8;
   constexpr std::array<std::tuple<medium_tag, property_tag, boundary_tag>,
-                       total_element_types>
-      element_types{
+                       total_medium_tags>
+      medium_tags{
         std::make_tuple(medium_tag::elastic, property_tag::isotropic,
                         boundary_tag::none),
         std::make_tuple(medium_tag::elastic, property_tag::isotropic,
@@ -78,7 +78,7 @@ constexpr auto element_types() {
                         boundary_tag::composite_stacey_dirichlet)
       };
 
-  return element_types;
+  return medium_tags;
 }
 
 template <specfem::dimension::type Dimension,
