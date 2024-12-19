@@ -409,16 +409,6 @@ target_link_libraries(
 
 add_library(
         domain
-        src/domain/impl/boundary_conditions/none/none.cpp
-        src/domain/impl/boundary_conditions/none/print.cpp
-        src/domain/impl/boundary_conditions/dirichlet/dirichlet.cpp
-        src/domain/impl/boundary_conditions/dirichlet/print.cpp
-        src/domain/impl/boundary_conditions/stacey/stacey.cpp
-        src/domain/impl/boundary_conditions/stacey/mass_matrix.cpp
-        src/domain/impl/boundary_conditions/stacey/print.cpp
-        src/domain/impl/boundary_conditions/composite_stacey_dirichlet/composite_stacey_dirichlet.cpp
-        src/domain/impl/boundary_conditions/composite_stacey_dirichlet/mass_matrix.cpp
-        src/domain/impl/boundary_conditions/composite_stacey_dirichlet/print.cpp
         src/domain/impl/boundary_conditions/boundary_conditions.cpp
         src/domain/impl/elements/acoustic/acoustic2d.cpp
         src/domain/impl/elements/elastic/elastic2d.cpp
@@ -432,6 +422,7 @@ target_link_libraries(
         domain
         Kokkos::kokkos
         enumerations
+        Boost::boost
 )
 
 add_library(coupled_interface
@@ -444,33 +435,6 @@ target_link_libraries(
         compute
 )
 
-# add_library(
-#         kernels
-#         src/kernels/kernels.cpp
-# )
-
-# target_link_libraries(
-#         kernels
-#         Kokkos::kokkos
-#         compute
-#         coupled_interface
-# )
-
-add_library(
-        frechet_derivatives
-        src/frechet_derivatives/impl/element_kernel/elastic_isotropic.cpp
-        src/frechet_derivatives/impl/element_kernel/elastic_anisotropic.cpp
-        src/frechet_derivatives/impl/element_kernel/acoustic_isotropic.cpp
-        src/frechet_derivatives/impl/frechet_element.cpp
-        src/frechet_derivatives/frechet_derivatives.cpp
-)
-
-target_link_libraries(
-        frechet_derivatives
-        Kokkos::kokkos
-        point
-)
-
 add_library(
         kernels
         src/kernels/frechet_kernels.cpp
@@ -480,7 +444,6 @@ target_link_libraries(
         kernels
         Kokkos::kokkos
         compute
-        frechet_derivatives
 )
 
 add_library(
@@ -506,6 +469,7 @@ target_link_libraries(
         Kokkos::kokkos
         timescheme
         domain
+        kernels
 )
 
 add_library(

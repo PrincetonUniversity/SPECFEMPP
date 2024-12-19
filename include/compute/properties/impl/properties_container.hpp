@@ -331,6 +331,9 @@ struct properties_container<specfem::element::medium_tag::elastic,
     property.c55 = c55(ispec, iz, ix);
     property.c23 = c23(ispec, iz, ix);
     property.c25 = c25(ispec, iz, ix);
+
+    property.rho_vp = sqrt(property.rho * property.c33);
+    property.rho_vs = sqrt(property.rho * property.c55);
   }
 
   template <
@@ -377,6 +380,9 @@ struct properties_container<specfem::element::medium_tag::elastic,
         .copy_from(&c23(ispec, iz, ix), tag_type());
     Kokkos::Experimental::where(mask, property.c25)
         .copy_from(&c25(ispec, iz, ix), tag_type());
+
+    property.rho_vp = Kokkos::sqrt(property.rho * property.c33);
+    property.rho_vs = Kokkos::sqrt(property.rho * property.c55);
   }
 
   template <
@@ -407,6 +413,9 @@ struct properties_container<specfem::element::medium_tag::elastic,
     property.c55 = h_c55(ispec, iz, ix);
     property.c23 = h_c23(ispec, iz, ix);
     property.c25 = h_c25(ispec, iz, ix);
+
+    property.rho_vp = sqrt(property.rho * property.c33);
+    property.rho_vs = sqrt(property.rho * property.c55);
   }
 
   template <
@@ -451,6 +460,9 @@ struct properties_container<specfem::element::medium_tag::elastic,
         .copy_from(&h_c23(ispec, iz, ix), tag_type());
     Kokkos::Experimental::where(mask, property.c25)
         .copy_from(&h_c25(ispec, iz, ix), tag_type());
+
+    property.rho_vp = Kokkos::sqrt(property.rho * property.c33);
+    property.rho_vs = Kokkos::sqrt(property.rho * property.c55);
   }
 
   void copy_to_device() {
@@ -458,6 +470,7 @@ struct properties_container<specfem::element::medium_tag::elastic,
     Kokkos::deep_copy(c11, h_c11);
     Kokkos::deep_copy(c13, h_c13);
     Kokkos::deep_copy(c15, h_c15);
+    Kokkos::deep_copy(c12, h_c12);
     Kokkos::deep_copy(c33, h_c33);
     Kokkos::deep_copy(c35, h_c35);
     Kokkos::deep_copy(c55, h_c55);
@@ -470,6 +483,7 @@ struct properties_container<specfem::element::medium_tag::elastic,
     Kokkos::deep_copy(h_c11, c11);
     Kokkos::deep_copy(h_c13, c13);
     Kokkos::deep_copy(h_c15, c15);
+    Kokkos::deep_copy(h_c12, c12);
     Kokkos::deep_copy(h_c33, c33);
     Kokkos::deep_copy(h_c35, c35);
     Kokkos::deep_copy(h_c55, c55);
@@ -498,6 +512,7 @@ struct properties_container<specfem::element::medium_tag::elastic,
     h_c11(ispec, iz, ix) = property.c11;
     h_c13(ispec, iz, ix) = property.c13;
     h_c15(ispec, iz, ix) = property.c15;
+    h_c12(ispec, iz, ix) = property.c12;
     h_c33(ispec, iz, ix) = property.c33;
     h_c35(ispec, iz, ix) = property.c35;
     h_c55(ispec, iz, ix) = property.c55;
@@ -536,6 +551,8 @@ struct properties_container<specfem::element::medium_tag::elastic,
         .copy_to(&h_c13(ispec, iz, ix), tag_type());
     Kokkos::Experimental::where(mask, property.c15)
         .copy_to(&h_c15(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, property.c12)
+        .copy_to(&h_c12(ispec, iz, ix), tag_type());
     Kokkos::Experimental::where(mask, property.c33)
         .copy_to(&h_c33(ispec, iz, ix), tag_type());
     Kokkos::Experimental::where(mask, property.c35)
