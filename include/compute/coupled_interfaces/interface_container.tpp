@@ -545,10 +545,10 @@ specfem::compute::interface_container<MediumTag1, MediumTag2>::
     const int ispec1_compute = mapping.mesh_to_compute(ispec1_mesh);
     const int ispec2_compute = mapping.mesh_to_compute(ispec2_mesh);
 
-    if (!(((properties.h_element_types(ispec1_compute) == MediumTag1) &&
-           (properties.h_element_types(ispec2_compute) == MediumTag2)) ||
-          ((properties.h_element_types(ispec1_compute) == MediumTag2 &&
-            properties.h_element_types(ispec2_compute) == MediumTag1)))) {
+    if (!(((properties.h_medium_tags(ispec1_compute) == MediumTag1) &&
+           (properties.h_medium_tags(ispec2_compute) == MediumTag2)) ||
+          ((properties.h_medium_tags(ispec1_compute) == MediumTag2 &&
+            properties.h_medium_tags(ispec2_compute) == MediumTag1)))) {
 
       throw std::runtime_error(
           "Coupled Interfaces: Interface is not between the correct mediums");

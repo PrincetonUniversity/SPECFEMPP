@@ -4,19 +4,18 @@
 #include "enumerations/medium.hpp"
 #include "mesh/materials/materials.hpp"
 #include "point/coordinates.hpp"
-#include "kernels/impl/material_kernels.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
 namespace compute {
+
+namespace impl {
 /**
- * @brief Misfit kernels (Frechet derivatives) for every quadrature point in the
+ * @brief Element types for every quadrature point in the
  * finite element mesh
  *
  */
-template <template <specfem::element::medium_tag, specfem::element::property_tag>
-          class containers_type>
-struct element_info {
+struct element_types {
 protected:
   using IndexViewType = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
   using MediumTagViewType =
@@ -32,101 +31,50 @@ public:
   int nspec; ///< total number of spectral elements
   int ngllz; ///< number of quadrature points in z dimension
   int ngllx; ///< number of quadrature points in x dimension
-  MediumTagViewType element_types; ///< Medium tag for every spectral element
-  PropertyTagViewType element_property; ///< Property tag for every spectral
+  MediumTagViewType medium_tags; ///< Medium tag for every spectral element
+  PropertyTagViewType property_tags; ///< Property tag for every spectral
                                         ///< element
-  MediumTagViewType::HostMirror h_element_types;      ///< Host mirror of @ref
-                                                      ///< element_types
-  PropertyTagViewType::HostMirror h_element_property; ///< Host mirror of @ref
-                                                      ///< element_property
+  MediumTagViewType::HostMirror h_medium_tags;      ///< Host mirror of @ref
+                                                      ///< medium_tags
+  PropertyTagViewType::HostMirror h_property_tags; ///< Host mirror of @ref
+                                                      ///< property_tags
 
   IndexViewType property_index_mapping;
   IndexViewType::HostMirror h_property_index_mapping;
 
-  containers_type<
-      specfem::element::medium_tag::elastic,
-      specfem::element::property_tag::isotropic>
-      elastic_isotropic; ///< Elastic isotropic material kernels
-
-  containers_type<
-      specfem::element::medium_tag::elastic,
-      specfem::element::property_tag::anisotropic>
-      elastic_anisotropic; ///< Elastic isotropic material kernels
-
-  containers_type<
-      specfem::element::medium_tag::acoustic,
-      specfem::element::property_tag::isotropic>
-      acoustic_isotropic; ///< Acoustic isotropic material kernels
-
-  /**
-   * @name Constructors
-   *
-   */
-  ///@{
   /**
    * @brief Default constructor
    *
    */
-  element_info() = default;
+  element_types() = default;
 
   /**
-   * @brief Construct a new kernels object
+   * @brief Construct a new properties object from mesh information
    *
-   * @param nspec Total number of spectral elements
-   * @param ngllz Number of quadrature points in z dimension
-   * @param ngllx Number of quadrature points in x dimension
-   * @param mapping mesh to compute mapping
-   * @param tags Tags for every element in spectral element mesh
+   * @param nspec Number of spectral elements
+   * @param ngllz Number of quadrature points in z direction
+   * @param ngllx Number of quadrature points in x direction
+   * @param mapping Mapping of spectral element index from mesh to assembly
+   * @param tags Element Tags for every spectral element
    */
-  element_info(const int nspec, const int ngllz, const int ngllx,
-               const specfem::compute::mesh_to_compute_mapping &mapping,
-               const specfem::mesh::tags<specfem::dimension::type::dim2> &tags);
-  ///@}
-
-  /**
-  * @brief Returns the material_kernel for a given medium and property
-  *
-  */
-  template <specfem::element::medium_tag MediumTag,
-            specfem::element::property_tag PropertyTag>
-  const containers_type<MediumTag, PropertyTag>
-      &get_medium() const {
-    if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
-                  (PropertyTag == specfem::element::property_tag::isotropic)) {
-      return elastic_isotropic;
-    } else if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
-                        (PropertyTag ==
-                          specfem::element::property_tag::anisotropic)) {
-      return elastic_anisotropic;
-    } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
-                        (PropertyTag ==
-                          specfem::element::property_tag::isotropic)) {
-      return acoustic_isotropic;
-    } else {
-      static_assert("Material type not implemented");
-    }
-  }
+  element_types(const int nspec, const int ngllz, const int ngllx,
+             const specfem::compute::mesh_to_compute_mapping &mapping,
+             const specfem::mesh::tags<specfem::dimension::type::dim2> &tags);
 
   /**
    * @brief Copy misfit kernel data to host
    *
    */
   void copy_to_host() {
-    Kokkos::deep_copy(h_element_types, element_types);
-    Kokkos::deep_copy(h_element_property, element_property);
+    Kokkos::deep_copy(h_medium_tags, medium_tags);
+    Kokkos::deep_copy(h_property_tags, property_tags);
     Kokkos::deep_copy(h_property_index_mapping, property_index_mapping);
-    elastic_isotropic.copy_to_host();
-    elastic_anisotropic.copy_to_host();
-    acoustic_isotropic.copy_to_host();
   }
 
   void copy_to_device() {
-    Kokkos::deep_copy(element_types, h_element_types);
-    Kokkos::deep_copy(element_property, h_element_property);
+    Kokkos::deep_copy(medium_tags, h_medium_tags);
+    Kokkos::deep_copy(property_tags, h_property_tags);
     Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);
-    elastic_isotropic.copy_to_device();
-    elastic_anisotropic.copy_to_device();
-    acoustic_isotropic.copy_to_device();
   }
 
   /**
@@ -176,5 +124,6 @@ public:
                        const specfem::element::property_tag property) const;
 };
 
+} // namespace impl
 } // namespace compute
 } // namespace specfem

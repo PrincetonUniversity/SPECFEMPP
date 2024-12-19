@@ -1,6 +1,6 @@
 #pragma once
 
-#include "compute/compute_element_info.hpp"
+#include "compute/impl/value_containers.hpp"
 #include "enumerations/medium.hpp"
 #include "impl/material_kernels.hpp"
 #include "mesh/materials/materials.hpp"
@@ -15,15 +15,14 @@ namespace compute {
  * finite element mesh
  *
  */
-struct kernels
-    : public element_info<specfem::compute::impl::kernels::material_kernels> {
+struct kernels : public impl::value_containers<
+                     specfem::compute::impl::kernels::material_kernels> {
 public:
   /**
    * @name Constructors
    *
    */
-  using element_info<
-      specfem::compute::impl::kernels::material_kernels>::element_info;
+  using value_containers<impl::kernels::material_kernels>::value_containers;
 };
 
 /**
@@ -92,7 +91,7 @@ void load_on_host(const IndexType &index, const kernels &kernels,
   l_index.ispec = ispec;
 
   kernels.get_medium<MediumTag, PropertyTag>().load_host_kernels(l_index,
-                                                                point_kernels);
+                                                                 point_kernels);
 
   return;
 }

@@ -20,8 +20,8 @@ specfem::frechet_derivatives::impl::frechet_elements<
   // Count the number of elements that belong to this FE
   int nelements = 0;
   for (int ispec = 0; ispec < nspec; ++ispec) {
-    if ((assembly.properties.h_element_types(ispec) == MediumTag) &&
-        (assembly.properties.h_element_property(ispec) == PropertyTag)) {
+    if ((assembly.properties.h_medium_tags(ispec) == MediumTag) &&
+        (assembly.properties.h_property_tags(ispec) == PropertyTag)) {
       nelements++;
     }
   }
@@ -35,8 +35,8 @@ specfem::frechet_derivatives::impl::frechet_elements<
   // Fill the element index
   int ielement = 0;
   for (int ispec = 0; ispec < nspec; ++ispec) {
-    if ((assembly.properties.h_element_types(ispec) == MediumTag) &&
-        (assembly.properties.h_element_property(ispec) == PropertyTag)) {
+    if ((assembly.properties.h_medium_tags(ispec) == MediumTag) &&
+        (assembly.properties.h_property_tags(ispec) == PropertyTag)) {
       h_element_index(ielement) = ispec;
       ielement++;
     }

@@ -249,11 +249,11 @@ void check_to_value(const specfem::compute::kernels kernels,
 
   std::vector<int> elements;
 
-  const auto element_types = kernels.h_element_types;
-  const auto element_properties = kernels.h_element_property;
+  const auto medium_tags = kernels.h_medium_tags;
+  const auto element_properties = kernels.h_property_tags;
 
   for (int ispec = 0; ispec < nspec; ispec++) {
-    if ((element_types(ispec) == MediumTag) &&
+    if ((medium_tags(ispec) == MediumTag) &&
         (element_properties(ispec) == PropertyTag)) {
       elements.push_back(ispec);
     }
@@ -343,11 +343,11 @@ void check_store_and_add(specfem::compute::kernels &kernels) {
   const int ngllz = kernels.ngllz;
   std::vector<int> elements;
 
-  const auto element_types = kernels.h_element_types;
-  const auto element_properties = kernels.h_element_property;
+  const auto medium_tags = kernels.h_medium_tags;
+  const auto element_properties = kernels.h_property_tags;
 
   for (int ispec = 0; ispec < nspec; ispec++) {
-    if ((element_types(ispec) == MediumTag) &&
+    if ((medium_tags(ispec) == MediumTag) &&
         (element_properties(ispec) == PropertyTag)) {
       elements.push_back(ispec);
     }
@@ -404,11 +404,11 @@ void check_load_on_device(specfem::compute::kernels &kernels) {
   const int ngllz = kernels.ngllz;
   std::vector<int> elements;
 
-  const auto element_types = kernels.h_element_types;
-  const auto element_properties = kernels.h_element_property;
+  const auto medium_tags = kernels.h_medium_tags;
+  const auto element_properties = kernels.h_property_tags;
 
   for (int ispec = 0; ispec < nspec; ispec++) {
-    if ((element_types(ispec) == MediumTag) &&
+    if ((medium_tags(ispec) == MediumTag) &&
         (element_properties(ispec) == PropertyTag)) {
       elements.push_back(ispec);
     }
