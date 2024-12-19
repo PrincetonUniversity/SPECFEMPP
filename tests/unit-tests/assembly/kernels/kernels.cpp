@@ -250,11 +250,11 @@ void check_to_value(const specfem::compute::kernels kernels,
   std::vector<int> elements;
 
   const auto medium_tags = kernels.h_medium_tags;
-  const auto element_properties = kernels.h_property_tags;
+  const auto property_tags = kernels.h_property_tags;
 
   for (int ispec = 0; ispec < nspec; ispec++) {
     if ((medium_tags(ispec) == MediumTag) &&
-        (element_properties(ispec) == PropertyTag)) {
+        (property_tags(ispec) == PropertyTag)) {
       elements.push_back(ispec);
     }
   }
@@ -344,11 +344,11 @@ void check_store_and_add(specfem::compute::kernels &kernels) {
   std::vector<int> elements;
 
   const auto medium_tags = kernels.h_medium_tags;
-  const auto element_properties = kernels.h_property_tags;
+  const auto property_tags = kernels.h_property_tags;
 
   for (int ispec = 0; ispec < nspec; ispec++) {
     if ((medium_tags(ispec) == MediumTag) &&
-        (element_properties(ispec) == PropertyTag)) {
+        (property_tags(ispec) == PropertyTag)) {
       elements.push_back(ispec);
     }
   }
@@ -405,11 +405,11 @@ void check_load_on_device(specfem::compute::kernels &kernels) {
   std::vector<int> elements;
 
   const auto medium_tags = kernels.h_medium_tags;
-  const auto element_properties = kernels.h_property_tags;
+  const auto property_tags = kernels.h_property_tags;
 
   for (int ispec = 0; ispec < nspec; ispec++) {
     if ((medium_tags(ispec) == MediumTag) &&
-        (element_properties(ispec) == PropertyTag)) {
+        (property_tags(ispec) == PropertyTag)) {
       elements.push_back(ispec);
     }
   }
