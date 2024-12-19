@@ -20,7 +20,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
-#ifdef SPECFEMPP_ENABLE_PYTHON
+#ifdef SPECFEMPP_BINDING_PYTHON
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #define STRINGIFY(x) #x
@@ -88,14 +88,14 @@ int parse_args(int argc, char **argv,
   return 1;
 }
 
-void execute(const std::string &parameter_file, const std::string &default_file,
+void execute(const YAML::Node &parameter_dict, const YAML::Node &default_dict,
              specfem::MPI::MPI *mpi) {
 
   // --------------------------------------------------------------
   //                    Read parameter file
   // --------------------------------------------------------------
   auto start_time = std::chrono::system_clock::now();
-  specfem::runtime_configuration::setup setup(parameter_file, default_file);
+  specfem::runtime_configuration::setup setup(parameter_dict, default_dict);
   const auto [database_filename, source_filename] = setup.get_databases();
   mpi->cout(setup.print_header(start_time));
 
@@ -259,55 +259,67 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   return;
 }
 
-int run(int argc, char **argv) {
-  // Initialize MPI
-  specfem::MPI::MPI *mpi = new specfem::MPI::MPI(&argc, &argv);
-  // Initialize Kokkos
-  Kokkos::initialize(argc, argv);
-  {
-    boost::program_options::variables_map vm;
-    if (parse_args(argc, argv, vm)) {
-      const std::string parameters_file =
-          vm["parameters_file"].as<std::string>();
-      const std::string default_file = vm["default_file"].as<std::string>();
-      execute(parameters_file, default_file, mpi);
-    }
-  }
-  // Finalize Kokkos
-  Kokkos::finalize();
-  // Finalize MPI
-  delete mpi;
-  return 0;
-}
-
-#ifdef SPECFEMPP_ENABLE_PYTHON
+#ifdef SPECFEMPP_BINDING_PYTHON
 
 namespace py = pybind11;
 
-int _run(py::list argv_py) {
+// global MPI variable for Python
+specfem::MPI::MPI *_py_mpi = NULL;
+
+bool _initialize(py::list py_argv) {
+  if (_py_mpi != NULL) {
+    return false;
+  }
   // parse argc and argv from Python
-  int argc = argv_py.size();
+  int argc = py_argv.size();
   char **argv = new char *[argc + 1];
 
   for (size_t i = 0; i < argc; i++) {
     std::string str =
-        argv_py[i].cast<std::string>(); // Convert Python string to std::string
+        py_argv[i].cast<std::string>(); // Convert Python string to std::string
     argv[i] =
         new char[str.length() + 1]; // Allocate memory for each C-style string
     std::strcpy(argv[i], str.c_str()); // Copy the string content
   }
 
-  argv[argc] = nullptr; // Null-terminate argv following the specification
+  // Null-terminate argv following the specification
+  argv[argc] = nullptr;
+  // Initialize MPI
+  _py_mpi = new specfem::MPI::MPI(&argc, &argv);
+  // Initialize Kokkos
+  Kokkos::initialize(argc, argv);
 
-  int return_code = run(argc, argv);
-
+  // free argv
   for (int i = 0; i < argc; i++) {
     delete[] argv[i]; // Free each individual string
   }
 
   delete[] argv;
 
-  return return_code;
+  return true;
+}
+
+bool _execute(const std::string &parameter_string,
+              const std::string &default_string) {
+  if (_py_mpi == NULL) {
+    return false;
+  }
+  const YAML::Node parameter_dict = YAML::Load(parameter_string);
+  const YAML::Node default_dict = YAML::Load(default_string);
+  execute(parameter_dict, default_dict, _py_mpi);
+  return true;
+}
+
+bool _finalize() {
+  if (_py_mpi != NULL) {
+    // Finalize Kokkos
+    Kokkos::finalize();
+    // Finalize MPI
+    delete _py_mpi;
+    _py_mpi = NULL;
+    return true;
+  }
+  return false;
 }
 
 PYBIND11_MODULE(_core, m) {
@@ -323,9 +335,19 @@ PYBIND11_MODULE(_core, m) {
            _run
     )pbdoc";
 
-    m.def("_run", &_run, R"pbdoc(
+    m.def("_initialize", &_initialize, R"pbdoc(
+        Initialize SPECFEM++.
+    )pbdoc");
+
+    m.def("_execute", &_execute, R"pbdoc(
         Execute the main SPECFEM++ workflow.
     )pbdoc");
+
+    m.def("_finalize", &_finalize, R"pbdoc(
+        Finalize SPECFEM++.
+    )pbdoc");
+
+    m.attr("_default_file_path") = __default_file__;
 
 #ifdef VERSION_INFO
     m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
@@ -334,6 +356,29 @@ PYBIND11_MODULE(_core, m) {
 #endif
 }
 
-#endif
+#else // SPECFEMPP_BINDING_PYTHON
 
-int main(int argc, char **argv) { return run(argc, argv); }
+int main(int argc, char **argv) {
+  // Initialize MPI
+  specfem::MPI::MPI *mpi = new specfem::MPI::MPI(&argc, &argv);
+  // Initialize Kokkos
+  Kokkos::initialize(argc, argv);
+  {
+    boost::program_options::variables_map vm;
+    if (parse_args(argc, argv, vm)) {
+      const std::string parameters_file =
+          vm["parameters_file"].as<std::string>();
+      const std::string default_file = vm["default_file"].as<std::string>();
+      const YAML::Node parameter_dict = YAML::LoadFile(parameters_file);
+      const YAML::Node default_dict = YAML::LoadFile(default_file);
+      execute(parameter_dict, default_dict, mpi);
+    }
+  }
+  // Finalize Kokkos
+  Kokkos::finalize();
+  // Finalize MPI
+  delete mpi;
+  return 0;
+}
+
+#endif // SPECFEMPP_BINDING_PYTHON
