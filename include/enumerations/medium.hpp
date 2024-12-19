@@ -78,7 +78,7 @@ constexpr auto element_types() {
                         boundary_tag::composite_stacey_dirichlet)
       };
 
-  return medium_tags;
+  return element_types;
 }
 
 template <specfem::dimension::type Dimension,
