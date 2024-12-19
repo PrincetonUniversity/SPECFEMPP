@@ -1,0 +1,6 @@
+Snakefile
+specfem_config.yaml
+Par_file
+output.log
+OUTPUT_FILES
+.snakemake
