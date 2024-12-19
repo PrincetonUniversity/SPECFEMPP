@@ -26,18 +26,24 @@ protected:
       Kokkos::View<specfem::element::property_tag *,
                    Kokkos::DefaultExecutionSpace>; ///< Underlying view type to
                                                    ///< store property tags
+  using BoundaryViewType =
+      Kokkos::View<specfem::element::boundary_tag *,
+                   Kokkos::HostSpace>; //< Underlying view type to store
+                                       // boundary tags
 
 public:
-  int nspec; ///< total number of spectral elements
-  int ngllz; ///< number of quadrature points in z dimension
-  int ngllx; ///< number of quadrature points in x dimension
+  int nspec;                     ///< total number of spectral elements
+  int ngllz;                     ///< number of quadrature points in z dimension
+  int ngllx;                     ///< number of quadrature points in x dimension
   MediumTagViewType medium_tags; ///< Medium tag for every spectral element
   PropertyTagViewType property_tags; ///< Property tag for every spectral
-                                        ///< element
-  MediumTagViewType::HostMirror h_medium_tags;      ///< Host mirror of @ref
-                                                      ///< medium_tags
+                                     ///< element
+  BoundaryViewType boundary_tags;    ///< Boundary tags for every element in the
+                                     ///< mesh
+  MediumTagViewType::HostMirror h_medium_tags;     ///< Host mirror of @ref
+                                                   ///< medium_tags
   PropertyTagViewType::HostMirror h_property_tags; ///< Host mirror of @ref
-                                                      ///< property_tags
+                                                   ///< property_tags
 
   IndexViewType property_index_mapping;
   IndexViewType::HostMirror h_property_index_mapping;
@@ -57,9 +63,10 @@ public:
    * @param mapping Mapping of spectral element index from mesh to assembly
    * @param tags Element Tags for every spectral element
    */
-  element_types(const int nspec, const int ngllz, const int ngllx,
-             const specfem::compute::mesh_to_compute_mapping &mapping,
-             const specfem::mesh::tags<specfem::dimension::type::dim2> &tags);
+  element_types(
+      const int nspec, const int ngllz, const int ngllx,
+      const specfem::compute::mesh_to_compute_mapping &mapping,
+      const specfem::mesh::tags<specfem::dimension::type::dim2> &tags);
 
   /**
    * @brief Copy misfit kernel data to host
@@ -122,6 +129,18 @@ public:
   Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace>
   get_elements_on_host(const specfem::element::medium_tag medium,
                        const specfem::element::property_tag property) const;
+
+  /**
+   * @brief Get the indices of elements of a given type as a view on the host
+   *
+   * @param medium Medium tag of the elements
+   * @param boundary Boundary tag of the elements
+   * @return Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace> View of
+   * the indices of elements of the given type
+   */
+  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace>
+  get_elements_on_host(const specfem::element::medium_tag medium,
+                       const specfem::element::boundary_tag boundary) const;
 };
 
 } // namespace impl
