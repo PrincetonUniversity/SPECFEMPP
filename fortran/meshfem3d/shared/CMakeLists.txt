@@ -52,24 +52,26 @@ include_directories("${CMAKE_BINARY_DIR}/fortran/meshfem3d/shared")
 include_directories("${CMAKE_SOURCE_DIR}/fortran/meshfem3d/setup")
 
 
-add_library(shared_par shared_par.F90)
+add_library(constants shared_par.F90)
 
 # The module names are inconsistent with the file names...
-add_library(manager_hdf5 hdf5_manager.F90)
-add_library(kdtree_search search_kdtree.f90)
 add_library(safe_alloc_mod safe_alloc_mod.f90)
+add_library(kdtree_search search_kdtree.f90)
 add_library(shared_input_parameters shared_par.F90 "${SETUP}/constants.h")
 add_library(shared_compute_parameters shared_par.F90 "${SETUP}/constants.h")
 add_library(shared_parameters shared_par.F90 "${SETUP}/constants.h")
-add_library(attenuation_model get_attenuation_model.f90)
 
-target_link_libraries(manager_hdf5 constants)
 target_link_libraries(kdtree_search constants)
 target_link_libraries(safe_alloc_mod constants)
 target_link_libraries(shared_input_parameters constants)
 target_link_libraries(shared_compute_parameters constants)
 target_link_libraries(shared_parameters constants)
-target_link_libraries(attenuation_model constants)
+
+
+# add_library(manager_hdf5 hdf5_manager.F90)
+# add_library(attenuation_model get_attenuation_model.f90)
+# target_link_libraries(manager_hdf5 constants shared_par)
+# target_link_libraries(attenuation_model constants shared_par)
 
 if (ADIOS)
   add_library(adios_manager adios_manager.f90 "${SETUP}/constants.h")
