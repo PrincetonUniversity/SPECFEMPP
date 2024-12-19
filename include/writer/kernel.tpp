@@ -25,8 +25,6 @@ void specfem::writer::kernel<OutputLibrary>::write() {
 
   typename OutputLibrary::File file(output_folder + "/Kernels");
 
-  typename OutputLibrary::Group acoustic = file.createGroup("/Acoustic");
-
   const int nspec = mesh.points.nspec;
   const int ngllz = mesh.points.ngllz;
   const int ngllx = mesh.points.ngllx;
@@ -38,6 +36,11 @@ void specfem::writer::kernel<OutputLibrary>::write() {
   {
     typename OutputLibrary::Group elastic = file.createGroup("/ElasticIsotropic");
 
+    const auto element_indices = kernels.get_elements_on_host(
+        specfem::element::medium_tag::elastic,
+        specfem::element::property_tag::isotropic);
+    n_elastic_isotropic = element_indices.size();
+
     DomainView x("xcoordinates_elastic_isotropic", n_elastic_isotropic, ngllz, ngllx);
     DomainView z("zcoordinates_elastic_isotropic", n_elastic_isotropic, ngllz, ngllx);
 
@@ -47,11 +50,6 @@ void specfem::writer::kernel<OutputLibrary>::write() {
     DomainView rhop("rhop", n_elastic_isotropic, ngllz, ngllx);
     DomainView alpha("alpha", n_elastic_isotropic, ngllz, ngllx);
     DomainView beta("beta", n_elastic_isotropic, ngllz, ngllx);
-
-    const auto element_indices = kernels.get_elements_on_host(
-        specfem::element::medium_tag::elastic,
-        specfem::element::property_tag::isotropic);
-    n_elastic_isotropic = element_indices.size();
 
     for (int i = 0; i < n_elastic_isotropic; i++) {
       const int ispec = element_indices(i);
@@ -92,6 +90,11 @@ void specfem::writer::kernel<OutputLibrary>::write() {
   {
     typename OutputLibrary::Group elastic = file.createGroup("/ElasticAnisotropic");
 
+    const auto element_indices = kernels.get_elements_on_host(
+        specfem::element::medium_tag::elastic,
+        specfem::element::property_tag::anisotropic);
+    n_elastic_anisotropic = element_indices.size();
+
     DomainView x("xcoordinates_elastic_anisotropic", n_elastic_anisotropic, ngllz, ngllx);
     DomainView z("zcoordinates_elastic_anisotropic", n_elastic_anisotropic, ngllz, ngllx);
 
@@ -102,11 +105,6 @@ void specfem::writer::kernel<OutputLibrary>::write() {
     DomainView c33("c33", n_elastic_anisotropic, ngllz, ngllx);
     DomainView c35("c35", n_elastic_anisotropic, ngllz, ngllx);
     DomainView c55("c55", n_elastic_anisotropic, ngllz, ngllx);
-
-    const auto element_indices = kernels.get_elements_on_host(
-        specfem::element::medium_tag::elastic,
-        specfem::element::property_tag::anisotropic);
-    n_elastic_anisotropic = element_indices.size();
 
     for (int i = 0; i < n_elastic_anisotropic; i++) {
       const int ispec = element_indices(i);
@@ -147,6 +145,11 @@ void specfem::writer::kernel<OutputLibrary>::write() {
   }
 
   {
+    typename OutputLibrary::Group acoustic = file.createGroup("/Acoustic");
+
+    const auto element_indices = kernels.get_elements_on_host(specfem::element::medium_tag::acoustic);
+    n_acoustic = element_indices.size();
+
     DomainView x("xcoordinates_acoustic", n_acoustic, ngllz, ngllx);
     DomainView z("zcoordinates_acoustic", n_acoustic, ngllz, ngllx);
 
@@ -154,9 +157,6 @@ void specfem::writer::kernel<OutputLibrary>::write() {
     DomainView kappa("kappa", n_acoustic, ngllz, ngllx);
     DomainView rho_prime("rho_prime", n_acoustic, ngllz, ngllx);
     DomainView alpha("alpha", n_acoustic, ngllz, ngllx);
-
-    const auto element_indices = kernels.get_elements_on_host(specfem::element::medium_tag::acoustic);
-    n_acoustic = element_indices.size();
 
     for (int i = 0; i < n_acoustic; i++) {
       const int ispec = element_indices(i);

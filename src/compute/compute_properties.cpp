@@ -6,61 +6,6 @@
 #include <Kokkos_Core.hpp>
 #include <memory>
 
-namespace {
-void compute_number_of_elements_per_medium(
-    const int nspec, const specfem::compute::mesh_to_compute_mapping &mapping,
-    const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
-    const specfem::kokkos::HostView1d<specfem::element::medium_tag>
-        &h_medium_tags,
-    const specfem::kokkos::HostView1d<specfem::element::property_tag>
-        &h_property_tags,
-    int &n_elastic_isotropic, int &n_elastic_anisotropic, int &n_acoustic) {
-
-  Kokkos::parallel_reduce(
-      "specfem::compute::properties::compute_number_of_elements_per_medium",
-      specfem::kokkos::HostRange(0, nspec),
-      [=](const int ispec, int &n_elastic_isotropic, int &n_elastic_anisotropic,
-          int &n_acoustic) {
-        const int ispec_mesh = mapping.compute_to_mesh(ispec);
-        if (tags.tags_container(ispec_mesh).medium_tag ==
-            specfem::element::medium_tag::elastic) {
-          h_medium_tags(ispec) = specfem::element::medium_tag::elastic;
-          if (tags.tags_container(ispec_mesh).property_tag ==
-              specfem::element::property_tag::isotropic) {
-            n_elastic_isotropic++;
-            h_property_tags(ispec) =
-                specfem::element::property_tag::isotropic;
-          } else if (tags.tags_container(ispec_mesh).property_tag ==
-                     specfem::element::property_tag::anisotropic) {
-            n_elastic_anisotropic++;
-            h_property_tags(ispec) =
-                specfem::element::property_tag::anisotropic;
-          } else {
-            throw std::runtime_error("Unknown property tag");
-          }
-        } else if (tags.tags_container(ispec_mesh).medium_tag ==
-                   specfem::element::medium_tag::acoustic) {
-          n_acoustic++;
-          h_medium_tags(ispec) = specfem::element::medium_tag::acoustic;
-          if (tags.tags_container(ispec_mesh).property_tag ==
-              specfem::element::property_tag::isotropic) {
-            h_property_tags(ispec) =
-                specfem::element::property_tag::isotropic;
-          } else {
-            throw std::runtime_error("Unknown property tag");
-          }
-        }
-      },
-      n_elastic_isotropic, n_elastic_anisotropic, n_acoustic);
-
-  if (n_elastic_isotropic + n_elastic_anisotropic + n_acoustic != nspec)
-    throw std::runtime_error("Number of elements per medium does not match "
-                             "total number of elements");
-
-  return;
-}
-} // namespace
-
 specfem::compute::properties::properties(
     const int nspec, const int ngllz, const int ngllx,
     const specfem::compute::mesh_to_compute_mapping &mapping,
@@ -81,9 +26,9 @@ specfem::compute::properties::properties(
   int n_elastic_anisotropic;
   int n_acoustic;
 
-  compute_number_of_elements_per_medium(nspec, mapping, tags, h_medium_tags,
-                                        h_property_tags, n_elastic_isotropic,
-                                        n_elastic_anisotropic, n_acoustic);
+  specfem::compute::impl::compute_number_of_elements_per_medium(
+      nspec, mapping, tags, h_medium_tags, h_property_tags, n_elastic_isotropic,
+      n_elastic_anisotropic, n_acoustic);
 
   acoustic_isotropic = specfem::compute::impl::properties::material_property<
       specfem::element::medium_tag::acoustic,
@@ -165,8 +110,7 @@ specfem::compute::properties::get_elements_on_host(
 
   int nelements = 0;
   for (int ispec = 0; ispec < nspec; ispec++) {
-    if (h_medium_tags(ispec) == medium &&
-        h_property_tags(ispec) == property) {
+    if (h_medium_tags(ispec) == medium && h_property_tags(ispec) == property) {
       nelements++;
     }
   }
@@ -176,8 +120,7 @@ specfem::compute::properties::get_elements_on_host(
 
   nelements = 0;
   for (int ispec = 0; ispec < nspec; ispec++) {
-    if (h_medium_tags(ispec) == medium &&
-        h_property_tags(ispec) == property) {
+    if (h_medium_tags(ispec) == medium && h_property_tags(ispec) == property) {
       elements(nelements) = ispec;
       nelements++;
     }
