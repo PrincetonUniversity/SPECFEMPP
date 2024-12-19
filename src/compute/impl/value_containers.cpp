@@ -1,7 +1,6 @@
 #include "compute/impl/value_containers.hpp"
 
-namespace {
-void compute_number_of_elements_per_medium(
+void specfem::compute::impl::compute_number_of_elements_per_medium(
     const int nspec, const specfem::compute::mesh_to_compute_mapping &mapping,
     const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
     const specfem::kokkos::HostView1d<specfem::element::medium_tag>
@@ -11,7 +10,7 @@ void compute_number_of_elements_per_medium(
     int &n_elastic_isotropic, int &n_elastic_anisotropic, int &n_acoustic) {
 
   Kokkos::parallel_reduce(
-      "specfem::compute::properties::compute_number_of_elements_per_medium",
+      "specfem::compute::impl::compute_number_of_elements_per_medium",
       specfem::kokkos::HostRange(0, nspec),
       [=](const int ispec, int &n_elastic_isotropic, int &n_elastic_anisotropic,
           int &n_acoustic) {
@@ -22,8 +21,7 @@ void compute_number_of_elements_per_medium(
           if (tags.tags_container(ispec_mesh).property_tag ==
               specfem::element::property_tag::isotropic) {
             n_elastic_isotropic++;
-            h_property_tags(ispec) =
-                specfem::element::property_tag::isotropic;
+            h_property_tags(ispec) = specfem::element::property_tag::isotropic;
           } else if (tags.tags_container(ispec_mesh).property_tag ==
                      specfem::element::property_tag::anisotropic) {
             n_elastic_anisotropic++;
@@ -38,8 +36,7 @@ void compute_number_of_elements_per_medium(
           h_medium_tags(ispec) = specfem::element::medium_tag::acoustic;
           if (tags.tags_container(ispec_mesh).property_tag ==
               specfem::element::property_tag::isotropic) {
-            h_property_tags(ispec) =
-                specfem::element::property_tag::isotropic;
+            h_property_tags(ispec) = specfem::element::property_tag::isotropic;
           } else {
             throw std::runtime_error("Unknown property tag");
           }
@@ -53,42 +50,6 @@ void compute_number_of_elements_per_medium(
 
   return;
 }
-} // namespace
 
-template <template <specfem::element::medium_tag, specfem::element::property_tag>
-          class containers_type>
-specfem::compute::impl::value_containers<containers_type>::value_containers(
-    const int nspec, const int ngllz, const int ngllx,
-    const specfem::compute::mesh_to_compute_mapping &mapping,
-    const specfem::mesh::tags<specfem::dimension::type::dim2> &tags)
-    : specfem::compute::impl::element_types(nspec, ngllz, ngllx, mapping, tags) {
-  // compute total number of elastic and acoustic spectral elements
-  int n_elastic_isotropic;
-  int n_elastic_anisotropic;
-  int n_acoustic;
-
-  compute_number_of_elements_per_medium(nspec, mapping, tags, h_medium_tags,
-                                        h_property_tags, n_elastic_isotropic,
-                                        n_elastic_anisotropic, n_acoustic);
-
-  acoustic_isotropic = containers_type<
-      specfem::element::medium_tag::acoustic,
-      specfem::element::property_tag::isotropic>(
-      nspec, n_acoustic, ngllz, ngllx, mapping, tags, h_property_index_mapping);
-
-  elastic_isotropic = containers_type<
-      specfem::element::medium_tag::elastic,
-      specfem::element::property_tag::isotropic>(nspec, n_elastic_isotropic,
-                                                 ngllz, ngllx, mapping, tags,
-                                                 h_property_index_mapping);
-
-  elastic_anisotropic = containers_type<
-      specfem::element::medium_tag::elastic,
-      specfem::element::property_tag::anisotropic>(nspec, n_elastic_anisotropic,
-                                                   ngllz, ngllx, mapping, tags,
-                                                   h_property_index_mapping);
-
-  return;
-}
-
-template class specfem::compute::impl::value_containers<specfem::compute::impl::kernels::material_kernels>;
+template class specfem::compute::impl::value_containers<
+    specfem::compute::impl::kernels::material_kernels>;

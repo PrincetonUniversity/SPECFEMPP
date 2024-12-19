@@ -5,6 +5,7 @@ specfem::compute::impl::element_types::element_types(
     const specfem::compute::mesh_to_compute_mapping &mapping,
     const specfem::mesh::tags<specfem::dimension::type::dim2> &tags)
     : nspec(nspec), ngllz(ngllz), ngllx(ngllx),
+      boundary_tags("specfem::compute::boundaries::boundary_tags", nspec),
       medium_tags("specfem::compute::properties::medium_tags", nspec),
       h_medium_tags(Kokkos::create_mirror_view(medium_tags)),
       property_index_mapping(
@@ -12,8 +13,7 @@ specfem::compute::impl::element_types::element_types(
       property_tags("specfem::compute::properties::property_tags", nspec),
       h_property_tags(Kokkos::create_mirror_view(property_tags)),
       h_property_index_mapping(
-          Kokkos::create_mirror_view(property_index_mapping),
-          boundary_tags("specfem::compute::boundaries::boundary_tags", nspec)) {
+          Kokkos::create_mirror_view(property_index_mapping)) {
   Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);
   Kokkos::deep_copy(medium_tags, h_medium_tags);
   Kokkos::deep_copy(property_tags, h_property_tags);
