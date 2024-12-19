@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 
-message("-- Building meshfem3D along with this project")
-message("--     MESHFEM2D is build without MPI support")
-message("--     MESHFEM2D is build without SCOTCH support")
+message("-- Building meshfem3D/shared along with this project")
+message("--     meshfem3D/shared is build without MPI support")
+message("--     meshfem3D/shared is build without SCOTCH support")
 
 unset(WITH_MPI)
 unset(WITH_SCOTCH)
@@ -52,15 +52,15 @@ include_directories("${CMAKE_BINARY_DIR}/fortran/meshfem3d/shared")
 include_directories("${CMAKE_SOURCE_DIR}/fortran/meshfem3d/setup")
 
 
-add_library(constants shared_par.F90 "${SETUP}/constants.h")
+add_library(shared_par shared_par.F90)
 
 # The module names are inconsistent with the file names...
 add_library(manager_hdf5 hdf5_manager.F90)
 add_library(kdtree_search search_kdtree.f90)
 add_library(safe_alloc_mod safe_alloc_mod.f90)
-add_library(shared_input_parameters shared_par.F90)
-add_library(shared_compute_parameters shared_par.F90)
-add_library(shared_parameters shared_par.F90)
+add_library(shared_input_parameters shared_par.F90 "${SETUP}/constants.h")
+add_library(shared_compute_parameters shared_par.F90 "${SETUP}/constants.h")
+add_library(shared_parameters shared_par.F90 "${SETUP}/constants.h")
 add_library(attenuation_model get_attenuation_model.f90)
 
 target_link_libraries(manager_hdf5 constants)
@@ -118,12 +118,12 @@ foreach(SOURCEFILE ${SOURCEFILES})
   if (EXISTS "${SOURCEFILE}.${capitalf90}")
     message("-- Adding source file: ${SOURCEFILE}.${capitalf90}")
     add_library(${SOURCEFILE} ${SOURCEFILE}.${capitalf90})
-    target_link_libraries(${SOURCEFILE} shared_par)
+    target_link_libraries(${SOURCEFILE} shared_par constants)
   # else
   elseif(EXISTS "${SOURCEFILE}.${lowerc_f90}")
     message("-- Adding source file: ${SOURCEFILE}.${capitalf90}")
     add_library(${SOURCEFILE} ${SOURCEFILE}.${capitalf90})
-    target_link_libraries(${SOURCEFILE} shared_par)
+    target_link_libraries(${SOURCEFILE} shared_par constants)
   endif()
 
   endforeach()
@@ -138,6 +138,7 @@ set(CSOURCE_FILES
 foreach(CSOURCE_FILE ${CSOURCE_FILES})
   message("-- Adding source file: ${CSOURCE_FILE}.cc")
   add_library(${CSOURCE_FILE} ${CSOURCE_FILE}.c "${SETUP}/config.h")
+  target_link_libraries(${CSOURCE_FILE} shared_par constants)
 endforeach()
 
 	# write_c_binary.cc
