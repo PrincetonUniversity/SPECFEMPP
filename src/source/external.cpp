@@ -29,7 +29,7 @@ void specfem::sources::external::compute_source_array(
   const auto gamma = mesh.quadratures.gll.h_xi;
   const auto N = mesh.quadratures.gll.N;
 
-  const auto el_type = properties.h_element_types(lcoord.ispec);
+  const auto el_type = properties.h_medium_tags(lcoord.ispec);
   const int ncomponents = source_array.extent(0);
 
   // Compute lagrange interpolants at the source location

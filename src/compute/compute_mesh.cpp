@@ -1,5 +1,6 @@
 #include "compute/interface.hpp"
 #include "enumerations/interface.hpp"
+#include "enumerations/material_definitions.hpp"
 #include "jacobian/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
@@ -235,7 +236,8 @@ specfem::compute::mesh_to_compute_mapping::mesh_to_compute_mapping(
   int total_counted = 0;
 
   for (int i = 0; i < total_element_types; i++) {
-    const auto [medium_tag, property_tag, boundary_tag] = element_types[i];
+    const auto [dimension, medium_tag, property_tag, boundary_tag] =
+        element_types[i];
     for (int ispec = 0; ispec < nspec; ispec++) {
       const auto tag = tags.tags_container(ispec);
       if (tag.medium_tag == medium_tag && tag.property_tag == property_tag &&

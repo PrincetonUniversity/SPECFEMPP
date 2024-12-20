@@ -82,10 +82,10 @@ void allocate_elements(
               << "    - dimension           : " << dimension::to_string()
               << "\n"
               << "    - Element type        : "
-              << specfem::element::to_string(medium_tag, property_tag) << "\n"
-              << "    - Boundary Conditions : "
-              << specfem::domain::impl::boundary_conditions::print_boundary_tag<
-                     boundary_tag>()
+              << specfem::element::to_string(medium_tag, property_tag, boundary_tag) << "\n"
+              // << "    - Boundary Conditions : "
+              // << specfem::domain::impl::boundary_conditions::print_boundary_tag<
+              //        boundary_tag>()
               << "\n"
               << "    - Number of elements  : " << nelements << "\n\n";
   }
@@ -159,8 +159,8 @@ void allocate_receivers(const specfem::compute::assembly &assembly,
   int nreceivers = 0;
   for (int ireceiver = 0; ireceiver < ispec_array.extent(0); ireceiver++) {
     const int ispec = ispec_array(ireceiver);
-    if (assembly.properties.h_element_types(ispec) == medium &&
-        assembly.properties.h_element_property(ispec) == property) {
+    if (assembly.properties.h_medium_tags(ispec) == medium &&
+        assembly.properties.h_property_tags(ispec) == property) {
       nreceivers++;
     }
   }
@@ -175,8 +175,8 @@ void allocate_receivers(const specfem::compute::assembly &assembly,
   int index = 0;
   for (int ireceiver = 0; ireceiver < ispec_array.extent(0); ireceiver++) {
     const int ispec = ispec_array(ireceiver);
-    if (assembly.properties.h_element_types(ispec) == medium &&
-        assembly.properties.h_element_property(ispec) == property) {
+    if (assembly.properties.h_medium_tags(ispec) == medium &&
+        assembly.properties.h_property_tags(ispec) == property) {
       h_receiver_kernel_index_mapping(index) = ispec_array(ireceiver);
       h_receiver_mapping(index) = ireceiver;
       index++;
@@ -208,8 +208,8 @@ specfem::domain::impl::kernels::kernels<
   // -----------------------------------------------------------
   for (int ispec = 0; ispec < nspec; ispec++) {
     element_tags(ispec) =
-        element_tag(assembly.properties.h_element_types(ispec),
-                    assembly.properties.h_element_property(ispec),
+        element_tag(assembly.properties.h_medium_tags(ispec),
+                    assembly.properties.h_property_tags(ispec),
                     assembly.boundaries.boundary_tags(ispec));
   }
 
@@ -225,10 +225,10 @@ specfem::domain::impl::kernels::kernels<
   // -----------------------------------------------------------
 
   // Allocate isotropic elements with dirichlet boundary conditions
-  allocate_elements(assembly, element_tags, isotropic_elements_dirichlet);
+  // allocate_elements(assembly, element_tags, isotropic_elements_dirichlet);
 
   // Allocate aniostropic elements with dirichlet boundary conditions
-  allocate_elements(assembly, element_tags, anisotropic_elements_dirichlet);
+  // allocate_elements(assembly, element_tags, anisotropic_elements_dirichlet);
 
   // Allocate isotropic elements with stacey boundary conditions
   allocate_elements(assembly, element_tags, isotropic_elements_stacey);
@@ -237,12 +237,12 @@ specfem::domain::impl::kernels::kernels<
   allocate_elements(assembly, element_tags, anisotropic_elements_stacey);
 
   // Allocate isotropic elements with stacey dirichlet boundary conditions
-  allocate_elements(assembly, element_tags,
-                    isotropic_elements_stacey_dirichlet);
+  // allocate_elements(assembly, element_tags,
+  //                   isotropic_elements_stacey_dirichlet);
 
   // Allocate anisotropic elements with stacey dirichlet boundary conditions
-  allocate_elements(assembly, element_tags,
-                    anisotropic_elements_stacey_dirichlet);
+  // allocate_elements(assembly, element_tags,
+  //                   anisotropic_elements_stacey_dirichlet);
 
   // Allocate isotropic elements
   allocate_elements(assembly, element_tags, isotropic_elements);
@@ -284,8 +284,8 @@ specfem::domain::impl::kernels::kernels<
   // -----------------------------------------------------------
   for (int ispec = 0; ispec < nspec; ispec++) {
     element_tags(ispec) =
-        element_tag(assembly.properties.h_element_types(ispec),
-                    assembly.properties.h_element_property(ispec),
+        element_tag(assembly.properties.h_medium_tags(ispec),
+                    assembly.properties.h_property_tags(ispec),
                     assembly.boundaries.boundary_tags(ispec));
   }
 
