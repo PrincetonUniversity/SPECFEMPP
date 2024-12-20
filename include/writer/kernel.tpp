@@ -29,9 +29,9 @@ void specfem::writer::kernel<OutputLibrary>::write() {
   const int ngllz = mesh.points.ngllz;
   const int ngllx = mesh.points.ngllx;
 
-  int n_elastic_isotropic = 0;
-  int n_elastic_anisotropic = 0;
-  int n_acoustic = 0;
+  int n_elastic_isotropic;
+  int n_elastic_anisotropic;
+  int n_acoustic;
 
   {
     typename OutputLibrary::Group elastic = file.createGroup("/ElasticIsotropic");
