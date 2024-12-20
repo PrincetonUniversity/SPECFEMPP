@@ -166,6 +166,19 @@ void execute(const std::string &parameter_file, const std::string &default_file,
       setup.get_simulation_type());
   time_scheme->link_assembly(assembly);
 
+
+  // --------------------------------------------------------------
+  //                Write properties
+  // --------------------------------------------------------------
+  const auto property_writer = setup.instantiate_property_writer(assembly);
+  if (property_writer) {
+    mpi->cout("Writing kernel files:");
+    mpi->cout("-------------------------------");
+
+    property_writer->write();
+  }
+  // --------------------------------------------------------------
+
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------

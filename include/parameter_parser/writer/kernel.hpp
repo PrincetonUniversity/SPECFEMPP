@@ -1,5 +1,4 @@
-#ifndef _SPECFEM_RUNTIME_CONFIGURATION_KERNEL_HPP
-#define _SPECFEM_RUNTIME_CONFIGURATION_KERNEL_HPP
+#pragma once
 
 #include "compute/assembly/assembly.hpp"
 #include "reader/reader.hpp"
@@ -31,5 +30,3 @@ private:
 };
 } // namespace runtime_configuration
 } // namespace specfem
-
-#endif /* _SPECFEM_RUNTIME_CONFIGURATION_KERNEL_HPP */
