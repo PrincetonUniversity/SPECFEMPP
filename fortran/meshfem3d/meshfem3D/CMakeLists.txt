@@ -8,7 +8,6 @@ project(MESHFEM3D_MESHFEM3D LANGUAGES Fortran C)
 set(CMAKE_Fortran_STANDARD 95)
 set(CMAKE_Fortran_STANDARD_REQUIRED ON)
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/fortran/meshfem3d/modules)
 include_directories("${CMAKE_BINARY_DIR}/fortran/meshfem3d/modules")

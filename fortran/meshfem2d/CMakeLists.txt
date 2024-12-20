@@ -233,7 +233,7 @@ set( MESHFEM_OBJECTS
 
 add_custom_command(
 	OUTPUT meshfem2D
-	COMMAND ${CMAKE_Fortran_COMPILER} ${FCFLAGS_f90} -o ${CMAKE_BINARY_DIR}/xmeshfem2D ${MESHFEM_OBJECTS} ${MESHFEM_SHARED_OBJECTS}
+	COMMAND ${CMAKE_Fortran_COMPILER} ${FCFLAGS_f90} -o ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/xmeshfem2D ${MESHFEM_OBJECTS} ${MESHFEM_SHARED_OBJECTS}
 	DEPENDS ${MESHFEM_OBJECTS} ${MESHFEM_SHARED_OBJECTS}
 )
 
@@ -242,6 +242,6 @@ add_custom_target(meshfem2D_exec ALL
 )
 
 add_custom_target(xadj_seismogram ALL
-    COMMAND ${CMAKE_Fortran_COMPILER} ${FCFLAGS_f90} -o ${CMAKE_BINARY_DIR}/xadj_seismogram ${CMAKE_CURRENT_SOURCE_DIR}/adj_seismogram.f90
+    COMMAND ${CMAKE_Fortran_COMPILER} ${FCFLAGS_f90} -o ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/xadj_seismogram ${CMAKE_CURRENT_SOURCE_DIR}/adj_seismogram.f90
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/adj_seismogram.f90
 )
