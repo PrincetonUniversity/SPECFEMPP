@@ -180,6 +180,23 @@ constexpr auto element_types() {
 
 // Touch the following code at your own risk
 
+#define MAT_SYS_IN_TUPLE(s, elem, tuple)                                       \
+  BOOST_PP_IF(                                                                 \
+      BOOST_PP_EQUAL(BOOST_PP_TUPLE_SIZE(tuple), 3),                           \
+      BOOST_PP_IF(                                                             \
+          BOOST_PP_EQUAL(GET_ID(s, _, BOOST_PP_TUPLE_ELEM(0, tuple)),          \
+                         GET_ID(s, _, BOOST_PP_TUPLE_ELEM(0, elem))),          \
+          BOOST_PP_IF(                                                         \
+              BOOST_PP_EQUAL(GET_ID(s, _, BOOST_PP_TUPLE_ELEM(1, tuple)),      \
+                             GET_ID(s, _, BOOST_PP_TUPLE_ELEM(1, elem))),      \
+              BOOST_PP_IF(                                                     \
+                  BOOST_PP_EQUAL(GET_ID(s, _, BOOST_PP_TUPLE_ELEM(2, tuple)),  \
+                                 GET_ID(s, _, BOOST_PP_TUPLE_ELEM(2, elem))),  \
+                  1, 0),                                                       \
+              0),                                                              \
+          0),                                                                  \
+      0)
+
 #define ELEM_IN_TUPLE(s, elem, tuple)                                          \
   BOOST_PP_IF(                                                                 \
       BOOST_PP_EQUAL(BOOST_PP_TUPLE_SIZE(tuple), 4),                           \
@@ -203,6 +220,11 @@ constexpr auto element_types() {
 
 #define OP_OR(s, state, elem) BOOST_PP_OR(state, elem)
 
+#define MAT_SYS_IN_SEQUENCE(elem)                                              \
+  BOOST_PP_SEQ_FOLD_LEFT(                                                      \
+      OP_OR, 0,                                                                \
+      BOOST_PP_SEQ_TRANSFORM(MAT_SYS_IN_TUPLE, elem, MATERIAL_SYSTEMS))
+
 #define ELEM_IN_SEQUENCE(elem)                                                 \
   BOOST_PP_SEQ_FOLD_LEFT(                                                      \
       OP_OR, 0, BOOST_PP_SEQ_TRANSFORM(ELEM_IN_TUPLE, elem, ELEMENT_TYPES))
@@ -217,7 +239,14 @@ constexpr auto element_types() {
  */
 #define WHERE(...) (BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
 
-#define CALL_FOR_ONE_SEQUENCE(s, MACRO, elem)                                  \
+#define CALL_FOR_ONE_MATERIAL_SYSTEM(s, MACRO, elem)                           \
+  BOOST_PP_IF(MAT_SYS_IN_SEQUENCE((BOOST_PP_SEQ_ENUM(elem))), MACRO,           \
+              EMPTY_MACRO)                                                     \
+  (GET_TAG(s, _, BOOST_PP_TUPLE_ELEM(0, (BOOST_PP_SEQ_ENUM(elem)))),           \
+   GET_TAG(s, _, BOOST_PP_TUPLE_ELEM(1, (BOOST_PP_SEQ_ENUM(elem)))),           \
+   GET_TAG(s, _, BOOST_PP_TUPLE_ELEM(2, (BOOST_PP_SEQ_ENUM(elem)))))
+
+#define CALL_FOR_ONE_ELEMENT_TYPE(s, MACRO, elem)                              \
   BOOST_PP_IF(ELEM_IN_SEQUENCE((BOOST_PP_SEQ_ENUM(elem))), MACRO, EMPTY_MACRO) \
   (GET_TAG(s, _, BOOST_PP_TUPLE_ELEM(0, (BOOST_PP_SEQ_ENUM(elem)))),           \
    GET_TAG(s, _, BOOST_PP_TUPLE_ELEM(1, (BOOST_PP_SEQ_ENUM(elem)))),           \
@@ -252,7 +281,7 @@ constexpr auto element_types() {
  *
  */
 #define CALL_MACRO_FOR_ALL_ELEMENT_TYPES(MACRO, seq)                           \
-  BOOST_PP_SEQ_FOR_EACH(CALL_FOR_ONE_SEQUENCE, MACRO,                          \
+  BOOST_PP_SEQ_FOR_EACH(CALL_FOR_ONE_ELEMENT_TYPE, MACRO,                      \
                         BOOST_PP_SEQ_FOR_EACH_PRODUCT(CREATE_SEQ, seq))
 
 } // namespace element
