@@ -30,7 +30,7 @@ set(MESHFEM3D_SHARED_MODULE
   gll_library.f90
   hex_nodes.f90
   heap_sort.f90
-  init_openmp.f90
+  init_openmp.F90
   lagrange_poly.f90
   merge_sort.f90
   netlib_specfun_erf.f90
