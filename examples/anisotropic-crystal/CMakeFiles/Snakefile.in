@@ -95,15 +95,24 @@ rule plot_seismogram:
 
             ## iterate over all seismograms
             for filename in files:
-                station_name = os.path.splitext(filename)[0]
-                station_name = station_name.split("/")[-1]
+                station_id = os.path.splitext(filename)[0]
+                station_id = station_id.split("/")[-1]
+                network = station_id[5:7]
+                station = station_id[0:5]
+                location = "00"
+                component = station_id[7:10]
                 trace = np.loadtxt(filename, delimiter=" ")
                 starttime = trace[0, 0]
                 dt = trace[1, 0] - trace[0, 0]
                 traces.append(
                     obspy.Trace(
                         trace[:, 1],
-                        {"network": station_name, "starttime": starttime, "delta": dt},
+                        {"network": network,
+                         "station": station,
+                         "location": location,
+                         "channel": component,
+                         "starttime": starttime,
+                         "delta": dt},
                     )
                 )
 
@@ -116,11 +125,27 @@ rule plot_seismogram:
 
         N_traces = len(stream)
         Amax = np.max(stream.max())
-        plt.figure(figsize=(6, 8))
+        plt.figure(figsize=(8, 6))
 
-        for i, trace in enumerate(stream):
-            plt.plot(trace.times('matplotlib'), trace.data + i * Amax,
-                     label=f"{trace.stats.network}.{trace.stats.station}")
+        ticklabels = []
+        for i, tr in enumerate(stream):
+            if i == 0:
+              label = "Simulated"
+            else:
+              label = None
+
+            ticklabels.append(f"{tr.stats.station}")
+
+            plt.plot(tr.times('matplotlib'), tr.data/Amax + i, 'k-',
+                     label=label)
+
+        ax = plt.gca()
+        ax.set_yticks(np.arange(N_traces))
+        ax.set_yticklabels(ticklabels)
+        ax.set_title(f"{tr.stats.network}")
+        ax.set_xlabel("Time [s]")
+        ax.set_ylabel("Normalized amplitude")
+        plt.legend(frameon=False)
 
         plt.savefig(output.traces, dpi=300)
         plt.close('all')
