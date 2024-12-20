@@ -187,6 +187,29 @@ constexpr auto element_types() {
 
 #define CREATE_SEQ(r, elem) (elem)
 
+/**
+ * @brief Call a macro for all element types
+ *
+ * Invoking CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(MACRO, seq) will call MACRO for
+ * all element types listed in macro sequence @ref MATERIAL_SYSTEMS.
+ *
+ * @param MACRO The macro to be called. MACRO must have the following signature:
+ * MACRO(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, BOUNDARY_TAG)
+ *
+ * @param seq A sequence filter for element types. Sequences can be generated
+ * using the @ref WHERE macro.
+ *
+ * @code
+ *    #define CALL_FOO_ELASTIC(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG,
+ * BOUNDARY_TAG) \ foo<DIMENTION_TAG, MEDIUM_TAG, PROPERTY_TAG, BOUNDARY_TAG>();
+ *
+ *   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(CALL_FOO, WHERE(DIMENSION_TAG_DIM2)
+ * WHERE(MEDIUM_TAG_ELASTIC) WHERE(PROPERTY_TAG_ISOTROPIC,
+ * PROPERTY_TAG_ANISOTROPIC) WHERE(BOUNDARY_TAG_NONE, BOUNDARY_TAG_STACEY))
+ * @endcode
+ *
+ *
+ */
 #define CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(MACRO, seq)                        \
   BOOST_PP_SEQ_FOR_EACH(CALL_FOR_ONE_MATERIAL_SYSTEM, MACRO,                   \
                         BOOST_PP_SEQ_FOR_EACH_PRODUCT(CREATE_SEQ, seq))
