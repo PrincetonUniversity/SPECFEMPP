@@ -64,9 +64,42 @@ target_link_libraries(meshfem3D_shared_hdf5_module PRIVATE
   meshfem3D::shared_module
 )
 
+set(SHARED_ADIOS_MODULES adios_manager.F90)
+
+# This is not tested yet since ADIOS is not supported in the current version of
+# SPECFEMPP
+# ------------------------------------------------------------------------------
+if (ADIOS)
+  add_library(meshfem3D_adios_helpers_addons adios_helpers_addons.c)
+  add_library(meshfem3D::adios_helpers_addons ALIAS meshfem3D_adios_helpers_addons)
+  target_link_libraries(meshfem3D_adios_helpers_addons PRIVATE
+    meshfem3D::config
+  )
+
+  list(APPEND SHARED_ADIOS_MODULES
+    adios_helpers_definitions
+    adios_helpers_readers
+    adios_helpers_writers
+    adios_helpers
+  )
+endif(ADIOS)
+# ------------------------------------------------------------------------------
+
 add_library(meshfem3D_shared_adios_module
-    adios_manager.F90
+    ${SHARED_ADIOS_MODULES}
 )
+
+# This seems ugly, but it's the only way I could get the adios_helpers_addons
+# library to be linked in the right order.
+# This also definitely needs a link to the ADIOS library!
+# ------------------------------------------------------------------------------
+if (ADIOS)
+  target_link_libraries(meshfem3D_shared_adios_module PRIVATE
+    meshfem3D::adios_helpers_addons
+  )
+endif(ADIOS)
+# ------------------------------------------------------------------------------
+
 add_library(meshfem3D::shared_adios_module ALIAS meshfem3D_shared_adios_module)
 target_link_libraries(meshfem3D_shared_adios_module PRIVATE
   meshfem3D::constants

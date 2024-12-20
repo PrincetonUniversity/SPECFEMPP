@@ -13,6 +13,14 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/fortran/meshfem3d/modules)
 include_directories("${CMAKE_BINARY_DIR}/fortran/meshfem3d/modules")
 
+set(ADIOS "OFF" CACHE BOOL "Use ADIOS for I/O")
+
+if (ADIOS)
+  message(STATUS "ADIOS enabled for Meshfem3D Compilation")
+else(ADIOS)
+  message(STATUS "ADIOS disabled for Meshfem3D Compilation")
+endif(ADIOS)
+
 add_subdirectory(setup)
 add_subdirectory(shared)
 add_subdirectory(meshfem3d)

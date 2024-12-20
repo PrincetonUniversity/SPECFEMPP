@@ -39,6 +39,14 @@ set(MESHFEM3D_MESH_MODULE
     store_coords.f90
 )
 
+if (ADIOS)
+  message(STATUS "ADIOS enabled")
+  list(APPEND MESHFEM3D_MESH_MODULE
+          save_databases_adios.F90
+  )
+endif(ADIOS)
+
+
 add_library(meshfem3D_mesh_module meshfem3D_par.f90)
 add_library(meshfem3D::mesh_module ALIAS meshfem3D_mesh_module)
 target_link_libraries(meshfem3D_mesh_module PRIVATE meshfem3D::constants meshfem3D::shared_module)
@@ -76,3 +84,8 @@ target_link_libraries(xmeshfem3D PRIVATE
     meshfem3D::param_reader
     meshfem3D::version
 )
+if (ADIOS)
+  target_link_libraries(meshfem3D_mesh_hdf5_module PRIVATE
+    meshfem3D::shared_adios_module
+  )
+endif(ADIOS)
