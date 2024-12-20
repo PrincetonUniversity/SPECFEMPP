@@ -33,7 +33,7 @@ set(MESHFEM3D_MESH_MODULE
     get_wavefield_discontinuity.f90
     read_mesh_parameter_file.f90
     read_value_mesh_parameters.f90
-    save_databases.f90
+    save_databases.F90
     store_boundaries.f90
     store_coords.f90
 )
