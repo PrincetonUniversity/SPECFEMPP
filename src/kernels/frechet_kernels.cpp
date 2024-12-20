@@ -2,9 +2,11 @@
 #include "kernels/frechet_kernels.tpp"
 
 #define INSTANTIATION_MACRO(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)           \
+  /** instantiation for NGLL = 5     */                                        \
   template void specfem::kernels::frechet_kernels<DIMENSION_TAG, 5>::          \
       compute_material_derivatives<MEDIUM_TAG, PROPERTY_TAG>(                  \
           const type_real &);                                                  \
+  /** instantiation for NGLL = 8     */                                        \
   template void specfem::kernels::frechet_kernels<DIMENSION_TAG, 8>::          \
       compute_material_derivatives<MEDIUM_TAG, PROPERTY_TAG>(                  \
           const type_real &);
