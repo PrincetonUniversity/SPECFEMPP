@@ -379,6 +379,8 @@ target_link_libraries(
 add_library(
         compute
         src/compute/compute_mesh.cpp
+        src/compute/impl/element_types.cpp
+        src/compute/impl/value_containers.cpp
         src/compute/compute_partial_derivatives.cpp
         src/compute/compute_properties.cpp
         src/compute/compute_kernels.cpp
