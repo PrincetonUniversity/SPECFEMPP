@@ -17,8 +17,8 @@ set(MESHFEM3D_GENERATE_DATABASES_MODULE
   create_regions_mesh.f90
   fault_generate_databases.f90
   finalize_databases.f90
-  generate_databases_par.f90
-  generate_databases.F90
+  generate_databases_par.F90
+  generate_databases.f90
   get_absorbing_boundary.F90
   get_coupling_surfaces.f90
   get_model.F90
@@ -72,9 +72,9 @@ else(MPI_PARALLEL)
 endif(MPI_PARALLEL)
 
 # Create parameter library module
-add_library(meshfem3D_generate_databases_module generate_databases_par.f90)
+add_library(meshfem3D_generate_databases_module generate_databases_par.F90)
 add_library(meshfem3D::generate_databases_module ALIAS meshfem3D_generate_databases_module)
-target_link_libraries(meshfem3D_generate_databases_module PRIVATE meshfem3D::constants meshfem3D::shared_module)
+target_link_libraries(meshfem3D_generate_databases_module PRIVATE meshfem3D::constants meshfem3D::shared_module meshfem3D::shared)
 
 # Create HDF5 module
 message(STATUS "Creating HDF5 module using: ${MESHFEM3D_GEN_DB_HDF5_MODULE}")
