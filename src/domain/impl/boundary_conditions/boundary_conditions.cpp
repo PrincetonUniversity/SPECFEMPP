@@ -45,6 +45,7 @@ using boundary_type =
 
 #define INSTANTIATION_MACRO(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG,           \
                             BOUNDARY_TAG)                                      \
+  /** Template instantiation for SIMD=false */                                 \
   template KOKKOS_FUNCTION void                                                \
   specfem::domain::impl::boundary_conditions::impl_compute_mass_matrix_terms<  \
       PointBoundaryType<DIMENSION_TAG, BOUNDARY_TAG, false>,                   \
@@ -56,6 +57,7 @@ using boundary_type =
           &,                                                                   \
       PointMassMatrixType<DIMENSION_TAG, MEDIUM_TAG, false> &);                \
                                                                                \
+  /** Template instantiation for SIMD=true */                                  \
   template KOKKOS_FUNCTION void                                                \
   specfem::domain::impl::boundary_conditions::impl_compute_mass_matrix_terms<  \
       PointBoundaryType<DIMENSION_TAG, BOUNDARY_TAG, true>,                    \
@@ -77,6 +79,7 @@ CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
 
 #define INSTANTIATION_MACRO(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG,           \
                             BOUNDARY_TAG)                                      \
+  /** Template instantiation for SIMD=false */                                 \
   template KOKKOS_FUNCTION void                                                \
   specfem::domain::impl::boundary_conditions::impl_apply_boundary_conditions<  \
       PointBoundaryType<DIMENSION_TAG, BOUNDARY_TAG, false>,                   \
@@ -90,6 +93,7 @@ CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
       const PointVelocityType<DIMENSION_TAG, MEDIUM_TAG, false> &,             \
       PointAccelerationType<DIMENSION_TAG, MEDIUM_TAG, false> &);              \
                                                                                \
+  /** Template instantiation for SIMD=true */                                  \
   template KOKKOS_FUNCTION void                                                \
   specfem::domain::impl::boundary_conditions::impl_apply_boundary_conditions<  \
       PointBoundaryType<DIMENSION_TAG, BOUNDARY_TAG, true>,                    \
