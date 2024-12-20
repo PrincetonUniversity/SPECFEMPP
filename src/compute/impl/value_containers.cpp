@@ -28,6 +28,9 @@ void specfem::compute::impl::compute_number_of_elements_per_medium(
             h_property_tags(ispec) =
                 specfem::element::property_tag::anisotropic;
           } else {
+            std::cout << "Unknown property tag: "
+                      << "File: " << __FILE__ << " Line: " << __LINE__
+                      << std::endl;
             throw std::runtime_error("Unknown property tag");
           }
         } else if (tags.tags_container(ispec_mesh).medium_tag ==
@@ -38,6 +41,9 @@ void specfem::compute::impl::compute_number_of_elements_per_medium(
               specfem::element::property_tag::isotropic) {
             h_property_tags(ispec) = specfem::element::property_tag::isotropic;
           } else {
+            std::cout << "Unknown property tag: "
+                      << "File: " << __FILE__ << " Line: " << __LINE__
+                      << std::endl;
             throw std::runtime_error("Unknown property tag");
           }
         }
