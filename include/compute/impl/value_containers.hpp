@@ -44,7 +44,7 @@ struct value_containers {
    */
   template <specfem::element::medium_tag MediumTag,
             specfem::element::property_tag PropertyTag>
-  KOKKOS_INLINE_FUNCTION const containers_type<MediumTag, PropertyTag> &
+  KOKKOS_INLINE_FUNCTION constexpr containers_type<MediumTag, PropertyTag> const&
   get_container() const {
     if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
                   (PropertyTag == specfem::element::property_tag::isotropic)) {
