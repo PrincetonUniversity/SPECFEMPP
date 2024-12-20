@@ -21,5 +21,5 @@ endif(ADIOS)
 
 add_subdirectory(setup)
 add_subdirectory(shared)
-add_subdirectory(meshfem3d)
+add_subdirectory(meshfem3D)
 add_subdirectory(generate_databases)
