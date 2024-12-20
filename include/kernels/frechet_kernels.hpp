@@ -9,14 +9,32 @@
 namespace specfem {
 namespace kernels {
 
+/**
+ * @brief Compute kernels used to compute Frechet derivatives.
+ *
+ * @tparam DimensionType Dimension of the problem.
+ * @tparam NGLL Number of GLL points.
+ */
 template <specfem::dimension::type DimensionType, int NGLL>
 class frechet_kernels {
 public:
-  constexpr static auto dimension = DimensionType;
-  constexpr static auto ngll = NGLL;
+  constexpr static auto dimension =
+      DimensionType;                 ///< Dimension of the problem.
+  constexpr static auto ngll = NGLL; ///< Number of GLL points.
+
+  /**
+   * @brief Constructor.
+   *
+   * @param assembly Assembly object.
+   */
   frechet_kernels(const specfem::compute::assembly &assembly)
       : assembly(assembly) {}
 
+  /**
+   * @brief Compute the frechet derivatives at the current time step.
+   *
+   * @param dt Time interval.
+   */
   inline void compute_derivatives(const type_real &dt) {
 #define CALL_COMPUTE_MATERIAL_DERIVATIVES(DIMENSION_TAG, MEDIUM_TAG,           \
                                           PROPERTY_TAG)                        \
@@ -33,8 +51,15 @@ public:
   }
 
 private:
-  specfem::compute::assembly assembly;
+  specfem::compute::assembly assembly; ///< Assembly object.
 
+  /**
+   * @brief Compute the frechet derivatives for a particular material system.
+   *
+   * @tparam MediumTag Medium tag.
+   * @tparam PropertyTag Property tag.
+   * @param dt Time interval.
+   */
   template <specfem::element::medium_tag MediumTag,
             specfem::element::property_tag PropertyTag>
   void compute_material_derivatives(const type_real &dt);
