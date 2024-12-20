@@ -29,7 +29,7 @@ set(MESHFEM3D_MESH_MODULE
     get_flags_boundaries.f90
     get_MPI_cutplanes_eta.f90
     get_MPI_cutplanes_xi.f90
-    meshfem3D.f90
+    meshfem3D.F90
     get_wavefield_discontinuity.f90
     read_mesh_parameter_file.f90
     read_value_mesh_parameters.f90

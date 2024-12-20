@@ -17,7 +17,7 @@ set(MESHFEM3D_GENERATE_DATABASES_MODULE
   create_regions_mesh.f90
   fault_generate_databases.f90
   finalize_databases.f90
-  generate_databases_par.F90
+  generate_databases_par.f90
   generate_databases.f90
   get_absorbing_boundary.F90
   get_coupling_surfaces.f90
@@ -38,9 +38,9 @@ set(MESHFEM3D_GENERATE_DATABASES_MODULE
   model_salton_trough.f90
   model_tomography.f90
   parse_sep.c
-  pml_set_local_dampingcoeff
+  pml_set_local_dampingcoeff.f90
   read_parameters.f90
-  read_partition_files.F90
+  read_partition_files.f90
   save_arrays_solver.F90
   setup_color_perm.f90
   setup_mesh_adjacency.f90
@@ -105,7 +105,7 @@ target_link_libraries(meshfem3D_generate_databases PRIVATE
 )
 
 # Create executable
-add_executable(xgenerate_databases generate_databases.F90)
+add_executable(xgenerate_databases generate_databases.f90)
 target_link_libraries(xgenerate_databases PRIVATE
   meshfem3D::generate_databases_module
   meshfem3D::generate_databases_hdf5_module
