@@ -38,8 +38,9 @@ public:
   inline void compute_derivatives(const type_real &dt) {
 #define CALL_COMPUTE_MATERIAL_DERIVATIVES(DIMENSION_TAG, MEDIUM_TAG,           \
                                           PROPERTY_TAG)                        \
-  if constexpr (dimension == DIMENSION_TAG) {                                  \
-    compute_material_derivatives<MEDIUM_TAG, PROPERTY_TAG>(dt);                \
+  if constexpr (dimension == GET_TAG(DIMENSION_TAG)) {                         \
+    compute_material_derivatives<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)>(  \
+        dt);                                                                   \
   }
 
     CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(

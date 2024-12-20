@@ -48,8 +48,8 @@ namespace element {
                                                                ///< boundary
 /// @}
 
-#define GET_ID(s, data, elem) BOOST_PP_TUPLE_ELEM(0, elem)
-#define GET_TAG(s, data, elem) BOOST_PP_TUPLE_ELEM(1, elem)
+#define GET_ID(elem) BOOST_PP_TUPLE_ELEM(0, elem)
+#define GET_TAG(elem) BOOST_PP_TUPLE_ELEM(1, elem)
 
 /**
  * @brief Macro to generate a list of medium types
@@ -60,8 +60,8 @@ namespace element {
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC))
 
 #define MAKE_ARRAY_ELEM(s, data, elem)                                         \
-  std::make_tuple(GET_TAG(s, data, BOOST_PP_TUPLE_ELEM(0, elem)),              \
-                  GET_TAG(s, data, BOOST_PP_TUPLE_ELEM(1, elem)))
+  std::make_tuple(GET_TAG(BOOST_PP_TUPLE_ELEM(0, elem)),                       \
+                  GET_TAG(BOOST_PP_TUPLE_ELEM(1, elem)))
 
 #define MAKE_CONSTEXPR_ARRAY(seq)                                              \
   BOOST_PP_SEQ_ENUM(BOOST_PP_SEQ_TRANSFORM(MAKE_ARRAY_ELEM, _, seq))
@@ -98,9 +98,9 @@ constexpr auto medium_types() {
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC, PROPERTY_TAG_ISOTROPIC))
 
 #define MAKE_ARRAY_ELEM(s, data, elem)                                         \
-  std::make_tuple(GET_TAG(s, data, BOOST_PP_TUPLE_ELEM(0, elem)),              \
-                  GET_TAG(s, data, BOOST_PP_TUPLE_ELEM(1, elem)),              \
-                  GET_TAG(s, data, BOOST_PP_TUPLE_ELEM(2, elem)))
+  std::make_tuple(GET_TAG(BOOST_PP_TUPLE_ELEM(0, elem)),                       \
+                  GET_TAG(BOOST_PP_TUPLE_ELEM(1, elem)),                       \
+                  GET_TAG(BOOST_PP_TUPLE_ELEM(2, elem)))
 
 /**
  * @brief A constexpr function to generate a list of material systems within the
@@ -147,10 +147,10 @@ constexpr auto material_systems() {
                             PROPERTY_TAG_ANISOTROPIC, BOUNDARY_TAG_STACEY))
 
 #define MAKE_ARRAY_ELEM(s, data, elem)                                         \
-  std::make_tuple(GET_TAG(s, data, BOOST_PP_TUPLE_ELEM(0, elem)),              \
-                  GET_TAG(s, data, BOOST_PP_TUPLE_ELEM(1, elem)),              \
-                  GET_TAG(s, data, BOOST_PP_TUPLE_ELEM(2, elem)),              \
-                  GET_TAG(s, data, BOOST_PP_TUPLE_ELEM(3, elem)))
+  std::make_tuple(GET_TAG(BOOST_PP_TUPLE_ELEM(0, elem)),                       \
+                  GET_TAG(BOOST_PP_TUPLE_ELEM(1, elem)),                       \
+                  GET_TAG(BOOST_PP_TUPLE_ELEM(2, elem)),                       \
+                  GET_TAG(BOOST_PP_TUPLE_ELEM(3, elem)))
 
 /**
  * @brief A constexpr function to generate a list of element types within the
@@ -184,16 +184,15 @@ constexpr auto element_types() {
   BOOST_PP_IF(                                                                 \
       BOOST_PP_EQUAL(BOOST_PP_TUPLE_SIZE(tuple), 3),                           \
       BOOST_PP_IF(                                                             \
-          BOOST_PP_EQUAL(GET_ID(s, _, BOOST_PP_TUPLE_ELEM(0, tuple)),          \
-                         GET_ID(s, _, BOOST_PP_TUPLE_ELEM(0, elem))),          \
-          BOOST_PP_IF(                                                         \
-              BOOST_PP_EQUAL(GET_ID(s, _, BOOST_PP_TUPLE_ELEM(1, tuple)),      \
-                             GET_ID(s, _, BOOST_PP_TUPLE_ELEM(1, elem))),      \
-              BOOST_PP_IF(                                                     \
-                  BOOST_PP_EQUAL(GET_ID(s, _, BOOST_PP_TUPLE_ELEM(2, tuple)),  \
-                                 GET_ID(s, _, BOOST_PP_TUPLE_ELEM(2, elem))),  \
-                  1, 0),                                                       \
-              0),                                                              \
+          BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(0, tuple)),                \
+                         GET_ID(BOOST_PP_TUPLE_ELEM(0, elem))),                \
+          BOOST_PP_IF(BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(1, tuple)),    \
+                                     GET_ID(BOOST_PP_TUPLE_ELEM(1, elem))),    \
+                      BOOST_PP_IF(BOOST_PP_EQUAL(                              \
+                                      GET_ID(BOOST_PP_TUPLE_ELEM(2, tuple)),   \
+                                      GET_ID(BOOST_PP_TUPLE_ELEM(2, elem))),   \
+                                  1, 0),                                       \
+                      0),                                                      \
           0),                                                                  \
       0)
 
@@ -201,18 +200,18 @@ constexpr auto element_types() {
   BOOST_PP_IF(                                                                 \
       BOOST_PP_EQUAL(BOOST_PP_TUPLE_SIZE(tuple), 4),                           \
       BOOST_PP_IF(                                                             \
-          BOOST_PP_EQUAL(GET_ID(s, _, BOOST_PP_TUPLE_ELEM(0, tuple)),          \
-                         GET_ID(s, _, BOOST_PP_TUPLE_ELEM(0, elem))),          \
+          BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(0, tuple)),                \
+                         GET_ID(BOOST_PP_TUPLE_ELEM(0, elem))),                \
           BOOST_PP_IF(                                                         \
-              BOOST_PP_EQUAL(GET_ID(s, _, BOOST_PP_TUPLE_ELEM(1, tuple)),      \
-                             GET_ID(s, _, BOOST_PP_TUPLE_ELEM(1, elem))),      \
+              BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(1, tuple)),            \
+                             GET_ID(BOOST_PP_TUPLE_ELEM(1, elem))),            \
               BOOST_PP_IF(                                                     \
-                  BOOST_PP_EQUAL(GET_ID(s, _, BOOST_PP_TUPLE_ELEM(2, tuple)),  \
-                                 GET_ID(s, _, BOOST_PP_TUPLE_ELEM(2, elem))),  \
-                  BOOST_PP_IF(BOOST_PP_EQUAL(                                  \
-                                  GET_ID(s, _, BOOST_PP_TUPLE_ELEM(3, tuple)), \
-                                  GET_ID(s, _, BOOST_PP_TUPLE_ELEM(3, elem))), \
-                              1, 0),                                           \
+                  BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(2, tuple)),        \
+                                 GET_ID(BOOST_PP_TUPLE_ELEM(2, elem))),        \
+                  BOOST_PP_IF(                                                 \
+                      BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(3, tuple)),    \
+                                     GET_ID(BOOST_PP_TUPLE_ELEM(3, elem))),    \
+                      1, 0),                                                   \
                   0),                                                          \
               0),                                                              \
           0),                                                                  \
@@ -241,16 +240,16 @@ constexpr auto element_types() {
 #define CALL_FOR_ONE_MATERIAL_SYSTEM(s, MACRO, elem)                           \
   BOOST_PP_IF(MAT_SYS_IN_SEQUENCE((BOOST_PP_SEQ_ENUM(elem))), MACRO,           \
               EMPTY_MACRO)                                                     \
-  (GET_TAG(s, _, BOOST_PP_TUPLE_ELEM(0, (BOOST_PP_SEQ_ENUM(elem)))),           \
-   GET_TAG(s, _, BOOST_PP_TUPLE_ELEM(1, (BOOST_PP_SEQ_ENUM(elem)))),           \
-   GET_TAG(s, _, BOOST_PP_TUPLE_ELEM(2, (BOOST_PP_SEQ_ENUM(elem)))))
+  (BOOST_PP_TUPLE_ELEM(0, (BOOST_PP_SEQ_ENUM(elem))),                          \
+   BOOST_PP_TUPLE_ELEM(1, (BOOST_PP_SEQ_ENUM(elem))),                          \
+   BOOST_PP_TUPLE_ELEM(2, (BOOST_PP_SEQ_ENUM(elem))))
 
 #define CALL_FOR_ONE_ELEMENT_TYPE(s, MACRO, elem)                              \
   BOOST_PP_IF(ELEM_IN_SEQUENCE((BOOST_PP_SEQ_ENUM(elem))), MACRO, EMPTY_MACRO) \
-  (GET_TAG(s, _, BOOST_PP_TUPLE_ELEM(0, (BOOST_PP_SEQ_ENUM(elem)))),           \
-   GET_TAG(s, _, BOOST_PP_TUPLE_ELEM(1, (BOOST_PP_SEQ_ENUM(elem)))),           \
-   GET_TAG(s, _, BOOST_PP_TUPLE_ELEM(2, (BOOST_PP_SEQ_ENUM(elem)))),           \
-   GET_TAG(s, _, BOOST_PP_TUPLE_ELEM(3, (BOOST_PP_SEQ_ENUM(elem)))))
+  (BOOST_PP_TUPLE_ELEM(0, (BOOST_PP_SEQ_ENUM(elem))),                          \
+   BOOST_PP_TUPLE_ELEM(1, (BOOST_PP_SEQ_ENUM(elem))),                          \
+   BOOST_PP_TUPLE_ELEM(2, (BOOST_PP_SEQ_ENUM(elem))),                          \
+   BOOST_PP_TUPLE_ELEM(3, (BOOST_PP_SEQ_ENUM(elem))))
 
 #define EMPTY_MACRO(...)
 
@@ -269,12 +268,12 @@ constexpr auto element_types() {
  * using the @ref WHERE macro.
  *
  * @code
- *    #define CALL_FOO_ELASTIC(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG,
- * BOUNDARY_TAG) \ foo<DIMENTION_TAG, MEDIUM_TAG, PROPERTY_TAG, BOUNDARY_TAG>();
+ *    #define CALL_FOO_ELASTIC(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)
+ * \ foo<GET_TAG(DIMENTION_TAG), GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)>();
  *
  *   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(CALL_FOO, WHERE(DIMENSION_TAG_DIM2)
  * WHERE(MEDIUM_TAG_ELASTIC) WHERE(PROPERTY_TAG_ISOTROPIC,
- * PROPERTY_TAG_ANISOTROPIC) WHERE(BOUNDARY_TAG_NONE, BOUNDARY_TAG_STACEY))
+ * PROPERTY_TAG_ANISOTROPIC))
  * @endcode
  *
  *
@@ -297,7 +296,8 @@ constexpr auto element_types() {
  *
  * @code
  *    #define CALL_FOO_ELASTIC(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG,
- * BOUNDARY_TAG) \ foo<DIMENTION_TAG, MEDIUM_TAG, PROPERTY_TAG, BOUNDARY_TAG>();
+ * BOUNDARY_TAG) \ foo<GET_TAG(DIMENTION_TAG), GET_TAG(MEDIUM_TAG),
+ * GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG)>();
  *
  *   CALL_MACRO_FOR_ALL_ELEMENT_TYPES(CALL_FOO, WHERE(DIMENSION_TAG_DIM2)
  * WHERE(MEDIUM_TAG_ELASTIC) WHERE(PROPERTY_TAG_ISOTROPIC,
