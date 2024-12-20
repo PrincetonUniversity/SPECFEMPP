@@ -120,6 +120,15 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
           this->wavefield = nullptr;
         }
 
+        if (const YAML::Node &n_property = n_writer["model"]) {
+          at_least_one_writer = true;
+          this->property =
+              std::make_unique<specfem::runtime_configuration::property>(
+                  n_property);
+        } else {
+          this->property = nullptr;
+        }
+
         if (const YAML::Node &n_plotter = n_writer["display"]) {
           if ((n_plotter["simulation-field"] &&
                n_plotter["simulation-field"].as<std::string>() != "forward")) {

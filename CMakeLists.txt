@@ -479,6 +479,7 @@ add_library(
         src/writer/seismogram.cpp
         src/writer/wavefield.cpp
         src/writer/kernel.cpp
+        src/writer/property.cpp
 )
 
 target_link_libraries(
@@ -530,6 +531,7 @@ add_library(
         src/parameter_parser/writer/wavefield.cpp
         src/parameter_parser/writer/plot_wavefield.cpp
         src/parameter_parser/writer/kernel.cpp
+        src/parameter_parser/writer/property.cpp
 )
 
 target_link_libraries(
