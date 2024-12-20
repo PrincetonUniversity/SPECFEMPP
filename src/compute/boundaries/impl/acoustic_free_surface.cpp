@@ -218,7 +218,7 @@ specfem::compute::impl::boundaries::acoustic_free_surface::
   //   const auto type = sorted_type[i];
   //   const int index = boundary_index_mapping(ispec_compute);
   //   // Check acoustic free surface element is of acoustic type
-  //   if (properties.h_element_types(ispec_compute) !=
+  //   if (properties.h_medium_tags(ispec_compute) !=
   //       specfem::element::medium_tag::acoustic) {
   //     throw std::runtime_error(
   //         "Acoustic free surface element is not of acoustic type");
