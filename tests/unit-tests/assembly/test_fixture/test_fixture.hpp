@@ -78,8 +78,8 @@ protected:
         std::vector<std::shared_ptr<specfem::sources::source> > *p_sources,
         std::vector<std::shared_ptr<specfem::receivers::receiver> > *p_stations,
         specfem::compute::assembly *p_assembly)
-        : p_Test(p_Test), p_sources(p_sources), p_stations(p_stations),
-          p_assembly(p_assembly) {}
+        : p_Test(p_Test), p_mesh(p_mesh), p_sources(p_sources),
+          p_stations(p_stations), p_assembly(p_assembly) {}
 
     std::tuple<test_configuration::Test,
                specfem::mesh::mesh<specfem::dimension::type::dim2>,
