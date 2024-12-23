@@ -310,16 +310,6 @@ void load_on_host(const IndexType index,
 
 #undef SOURCE_MEDIUM_LOAD_ON_HOST
 
-  // if constexpr (PointSourceType::medium_tag ==
-  //               specfem::element::medium_tag::acoustic) {
-  //   sources.acoustic_sources.load_on_host(sources.timestep, lcoord,
-  //                                         point_source);
-  // } else if constexpr (PointSourceType::medium_tag ==
-  //                      specfem::element::medium_tag::elastic) {
-  //   sources.elastic_sources.load_on_host(sources.timestep, lcoord,
-  //                                        point_source);
-  // }
-
   return;
 }
 
@@ -398,14 +388,6 @@ store_on_device(const IndexType index, const PointSourceType &point_source,
 
 #undef SOURCE_MEDIUM_STORE_ON_DEVICE
 
-  // if constexpr (PointSourceType::medium_tag ==
-  //               specfem::element::medium_tag::acoustic) {
-  //   sources.acoustic_sources.store_on_device(lcoord, point_source);
-  // } else if constexpr (PointSourceType::medium_tag ==
-  //                      specfem::element::medium_tag::elastic) {
-  //   sources.elastic_sources.store_on_device(lcoord, point_source);
-  // }
-
   return;
 }
 
@@ -483,14 +465,6 @@ void store_on_host(const IndexType index, const PointSourceType &point_source,
       WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC))
 
 #undef SOURCE_MEDIUM_STORE_ON_HOST
-
-  // if constexpr (PointSourceType::medium_tag ==
-  //               specfem::element::medium_tag::acoustic) {
-  //   sources.acoustic_sources.store_on_host(lcoord, point_source);
-  // } else if constexpr (PointSourceType::medium_tag ==
-  //                      specfem::element::medium_tag::elastic) {
-  //   sources.elastic_sources.store_on_host(lcoord, point_source);
-  // }
 
   return;
 }
