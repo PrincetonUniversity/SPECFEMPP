@@ -141,14 +141,13 @@ private:
 
   template <typename IndexType, typename PointSourceType>
   friend KOKKOS_INLINE_FUNCTION void
-  store_on_device(const IndexType index,
-                  const specfem::compute::sources &sources,
-                  const PointSourceType &point_source);
+  store_on_device(const IndexType index, const PointSourceType &point_source,
+                  const specfem::compute::sources &sources);
 
   template <typename IndexType, typename PointSourceType>
   friend void store_on_host(const IndexType index,
-                            const specfem::compute::sources &sources,
-                            const PointSourceType &point_source);
+                            const PointSourceType &point_source,
+                            const specfem::compute::sources &sources);
 }; // namespace compute
 
 /**
@@ -330,9 +329,9 @@ void load_on_host(const IndexType index,
 template <typename IndexType, typename PointSourceType>
 KOKKOS_INLINE_FUNCTION void
 store_on_device(const IndexType index, const PointSourceType &point_source,
-                specfem::compute::sources &sources) {
+                const specfem::compute::sources &sources) {
 
-  static_assert(IndexType::simd::using_simd == false,
+  static_assert(IndexType::using_simd == false,
                 "IndexType must not use SIMD when storing sources");
 
   static_assert(
@@ -378,7 +377,7 @@ store_on_device(const IndexType index, const PointSourceType &point_source,
       sources                                                                  \
           .CREATE_VARIABLE_NAME(source, GET_NAME(DIMENSION_TAG),               \
                                 GET_NAME(MEDIUM_TAG))                          \
-          .store_on_device(lcoord, point_source);                              \
+          .store_on_device(sources.timestep, lcoord, point_source);            \
     }                                                                          \
   }
 
@@ -407,9 +406,9 @@ store_on_device(const IndexType index, const PointSourceType &point_source,
  */
 template <typename IndexType, typename PointSourceType>
 void store_on_host(const IndexType index, const PointSourceType &point_source,
-                   specfem::compute::sources &sources) {
+                   const specfem::compute::sources &sources) {
 
-  static_assert(IndexType::simd::using_simd == false,
+  static_assert(IndexType::using_simd == false,
                 "IndexType must not use SIMD when storing sources");
 
   static_assert(
@@ -456,7 +455,7 @@ void store_on_host(const IndexType index, const PointSourceType &point_source,
       sources                                                                  \
           .CREATE_VARIABLE_NAME(source, GET_NAME(DIMENSION_TAG),               \
                                 GET_NAME(MEDIUM_TAG))                          \
-          .store_on_host(lcoord, point_source);                                \
+          .store_on_host(sources.timestep, lcoord, point_source);              \
     }                                                                          \
   }
 
