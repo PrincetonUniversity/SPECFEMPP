@@ -48,10 +48,6 @@ struct source {
                                                      ///< source
                                                      ///< information
 
-  using AccelerationType =
-      specfem::point::field<dimension, medium_tag, false, false, true, false,
-                            false>; ///< Acceleration return type
-
   value_type stf;                  ///< Source time function
   value_type lagrange_interpolant; ///< Lagrange interpolant
 
@@ -67,19 +63,6 @@ struct source {
   KOKKOS_INLINE_FUNCTION source(const value_type &stf,
                                 const value_type &lagrange_interpolant)
       : stf(stf), lagrange_interpolant(lagrange_interpolant) {}
-
-  /**
-   * @brief Compute acceleration when source is applied to the wavefield
-   *
-   * @return value_type Acceleration at the quadrature point
-   */
-  KOKKOS_INLINE_FUNCTION AccelerationType compute_acceleration() const {
-    AccelerationType acceleration;
-    for (int i = 0; i < components; i++) {
-      acceleration.acceleration(i) = stf(i) * lagrange_interpolant(i);
-    }
-    return acceleration;
-  }
 };
 
 } // namespace point

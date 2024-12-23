@@ -65,6 +65,31 @@ impl_compute_frechet_derivatives(
   return { rho_kl, kappa_kl };
 }
 
+template <typename PointSourcesType, typename PointPropertiesType>
+KOKKOS_INLINE_FUNCTION auto impl_compute_source_contribution(
+    const std::integral_constant<specfem::dimension::type,
+                                 specfem::dimension::type::dim2>,
+    const std::integral_constant<specfem::element::medium_tag,
+                                 specfem::element::medium_tag::acoustic>,
+    const std::integral_constant<specfem::element::property_tag,
+                                 specfem::element::property_tag::isotropic>,
+    const PointSourcesType &point_source,
+    const PointPropertiesType &point_properties) {
+
+  using PointAccelerationType =
+      specfem::point::field<PointPropertiesType::dimension,
+                            PointPropertiesType::medium_tag, false, false, true,
+                            false, PointPropertiesType::simd::using_simd>;
+
+  PointAccelerationType result;
+
+  result.acceleration(0) = point_source.stf(0) *
+                           point_source.lagrange_interpolant(0) /
+                           point_properties.kappa;
+
+  return result;
+}
+
 template <typename MemberType, typename IteratorType, typename ChunkFieldType,
           typename QuadratureType, typename WavefieldViewType>
 KOKKOS_FUNCTION void impl_compute_wavefield(

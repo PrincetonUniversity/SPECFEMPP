@@ -7,8 +7,9 @@
 #include "enumerations/interface.hpp"
 #include "kernel.hpp"
 #include "kokkos_abstractions.h"
-#include "specfem_setup.hpp"
 #include "policies/chunk.hpp"
+#include "medium/compute_source.hpp"
+#include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
 template <specfem::wavefield::simulation_field WavefieldType,
@@ -18,7 +19,7 @@ template <specfem::wavefield::simulation_field WavefieldType,
 specfem::domain::impl::kernels::source_kernel<
     WavefieldType, DimensionType, MediumTag, PropertyTag,
     NGLL>::source_kernel(const specfem::compute::assembly &assembly)
-    : sources(assembly.sources),
+    : sources(assembly.sources), properties(assembly.properties),
       field(assembly.fields.get_simulation_field<WavefieldType>()) {
 
   this->elements = sources.get_elements_on_device(medium_tag, wavefield_tag);
@@ -43,11 +44,14 @@ void specfem::domain::impl::kernels::source_kernel<
   using PointSourcesType =
       specfem::point::source<dimension, medium_tag, wavefield_tag>;
 
+  using PointPropertiesType =
+      specfem::point::properties<dimension, medium_tag, property_tag, false>;
+
   using simd = specfem::datatype::simd<type_real, false>;
   constexpr int simd_size = simd::size();
 
-  using ParallelConfig =
-      specfem::parallel_config::default_chunk_config<dimension, simd, Kokkos::DefaultExecutionSpace>;
+  using ParallelConfig = specfem::parallel_config::default_chunk_config<
+      dimension, simd, Kokkos::DefaultExecutionSpace>;
 
   using ChunkPolicy = specfem::policy::element_chunk<ParallelConfig>;
 
@@ -60,8 +64,7 @@ void specfem::domain::impl::kernels::source_kernel<
         for (int tile = 0; tile < ChunkPolicy::tile_size * simd_size;
              tile += ChunkPolicy::chunk_size * simd_size) {
           const int starting_element_index =
-              team.league_rank() * ChunkPolicy::tile_size * simd_size +
-              tile;
+              team.league_rank() * ChunkPolicy::tile_size * simd_size + tile;
 
           if (starting_element_index >= nelements) {
             break;
@@ -79,7 +82,13 @@ void specfem::domain::impl::kernels::source_kernel<
                 PointSourcesType point_source;
                 specfem::compute::load_on_device(index, sources, point_source);
 
-                const auto acceleration = point_source.compute_acceleration();
+                PointPropertiesType point_properties;
+                specfem::compute::load_on_device(index, properties,
+                                                 point_properties);
+
+                const auto acceleration =
+                    specfem::medium::compute_source_contribution(
+                        point_source, point_properties);
 
                 specfem::compute::atomic_add_on_device(index, acceleration,
                                                        field);
