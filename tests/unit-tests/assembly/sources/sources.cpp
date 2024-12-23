@@ -1,5 +1,6 @@
 #include "compute/sources/sources.hpp"
 #include "../test_fixture/test_fixture.hpp"
+#include "algorithms/locate_point.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
@@ -153,6 +154,96 @@ void check_load(specfem::compute::assembly &assembly) {
   }
 }
 
+template <specfem::element::medium_tag MediumTag>
+void check_assembly_source_construction(
+    std::vector<std::shared_ptr<specfem::sources::source> > &sources,
+    specfem::compute::assembly &assembly) {
+
+  const int ngllz = assembly.mesh.ngllz;
+  const int ngllx = assembly.mesh.ngllx;
+
+  constexpr auto components =
+      specfem::element::attributes<specfem::dimension::type::dim2,
+                                   MediumTag>::components();
+
+  using PointSourceType =
+      specfem::point::source<specfem::dimension::type::dim2, MediumTag,
+                             specfem::wavefield::simulation_field::forward>;
+
+  for (auto &source : sources) {
+    specfem::point::global_coordinates<specfem::dimension::type::dim2> coord(
+        source->get_x(), source->get_z());
+
+    const auto lcoord = specfem::algorithms::locate_point(coord, assembly.mesh);
+
+    if (assembly.properties.h_medium_tags(lcoord.ispec) != MediumTag) {
+      continue;
+    }
+
+    Kokkos::View<type_real ***, Kokkos::DefaultExecutionSpace> source_array(
+        "source_array", components, assembly.mesh.ngllz, assembly.mesh.ngllx);
+
+    source->compute_source_array(assembly.mesh, assembly.partial_derivatives,
+                                 assembly.properties, source_array);
+    Kokkos::View<type_real **, Kokkos::DefaultExecutionSpace> stf("stf", 1,
+                                                                  components);
+
+    source->compute_source_time_function(1.0, 0.0, 1, stf);
+
+    for (int iz = 0; iz < ngllz; iz++) {
+      for (int ix = 0; ix < ngllx; ix++) {
+        specfem::point::index<specfem::dimension::type::dim2, false> index(
+            lcoord.ispec, iz, ix);
+        PointSourceType point;
+        specfem::compute::load_on_device(index, assembly.sources, point);
+
+        for (int ic = 0; ic < components; ic++) {
+          const auto lagrange_interpolant = point.lagrange_interpolant(ic);
+          const auto expected = source_array(ic, iz, ix);
+          if (lagrange_interpolant != expected) {
+            std::ostringstream message;
+            message << "Error in source computation: \n"
+                    << "  ispec = " << lcoord.ispec << "\n"
+                    << "  iz = " << iz << "\n"
+                    << "  ix = " << ix << "\n"
+                    << "  component = " << ic << "\n"
+                    << "  computed = " << lagrange_interpolant << "\n"
+                    << "  expected = " << expected;
+            throw std::runtime_error(message.str());
+          }
+        }
+
+        for (int ic = 0; ic < components; ic++) {
+          const auto computed_stf = point.stf(ic);
+          const auto expected_stf = stf(0, ic);
+          if (computed_stf != expected_stf) {
+            std::ostringstream message;
+            message << "Error in source computation: \n"
+                    << "  ispec = " << lcoord.ispec << "\n"
+                    << "  iz = " << iz << "\n"
+                    << "  ix = " << ix << "\n"
+                    << "  component = " << ic << "\n"
+                    << "  computed = " << computed_stf << "\n"
+                    << "  expected = " << expected_stf;
+            throw std::runtime_error(message.str());
+          }
+        }
+      }
+    }
+  }
+}
+
+void test_assembly_source_construction(
+    std::vector<std::shared_ptr<specfem::sources::source> > &sources,
+    specfem::compute::assembly &assembly) {
+
+  check_assembly_source_construction<specfem::element::medium_tag::elastic>(
+      sources, assembly);
+
+  check_assembly_source_construction<specfem::element::medium_tag::acoustic>(
+      sources, assembly);
+}
+
 void test_sources(specfem::compute::assembly &assembly) {
 
   check_store<specfem::dimension::type::dim2,
@@ -175,9 +266,11 @@ void test_sources(specfem::compute::assembly &assembly) {
 TEST_F(ASSEMBLY, sources) {
   for (auto parameters : *this) {
     const auto Test = std::get<0>(parameters);
+    auto sources = std::get<2>(parameters);
     specfem::compute::assembly assembly = std::get<4>(parameters);
 
     try {
+      test_assembly_source_construction(sources, assembly);
       test_sources(assembly);
 
       std::cout << "-------------------------------------------------------\n"
