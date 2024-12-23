@@ -176,13 +176,13 @@ constexpr auto element_types() {
 #define MEDIUM_IN_TUPLE(s, elem, tuple)                                        \
   BOOST_PP_IF(                                                                 \
       BOOST_PP_EQUAL(BOOST_PP_TUPLE_SIZE(tuple), 2),                           \
-      BOOST_PP_IF(BOOST_PP_EQUAL(GET_ID(s, _, BOOST_PP_TUPLE_ELEM(0, tuple)),  \
-                                 GET_ID(s, _, BOOST_PP_TUPLE_ELEM(0, elem))),  \
-                  BOOST_PP_IF(BOOST_PP_EQUAL(                                  \
-                                  GET_ID(s, _, BOOST_PP_TUPLE_ELEM(1, tuple)), \
-                                  GET_ID(s, _, BOOST_PP_TUPLE_ELEM(1, elem))), \
-                              1, 0),                                           \
-                  0),                                                          \
+      BOOST_PP_IF(                                                             \
+          BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(0, tuple)),                \
+                         GET_ID(BOOST_PP_TUPLE_ELEM(0, elem))),                \
+          BOOST_PP_IF(BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(1, tuple)),    \
+                                     GET_ID(BOOST_PP_TUPLE_ELEM(1, elem))),    \
+                      1, 0),                                                   \
+          0),                                                                  \
       0)
 
 #define MAT_SYS_IN_TUPLE(s, elem, tuple)                                       \

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
+#include "point/field.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -28,7 +29,7 @@ struct source {
   constexpr static bool is_point_source = true; ///< Boolean indicating whether
                                                 ///< the point type is a source
 
-  constexpr int components =
+  constexpr static int components =
       specfem::element::attributes<DimensionType,
                                    MediumTag>::components(); ///< Number
                                                              ///< of
@@ -54,6 +55,8 @@ struct source {
   value_type stf;                  ///< Source time function
   value_type lagrange_interpolant; ///< Lagrange interpolant
 
+  KOKKOS_INLINE_FUNCTION source() = default;
+
   /**
    * @brief Constructor
    *
@@ -77,7 +80,7 @@ struct source {
     }
     return acceleration;
   }
-}
+};
 
 } // namespace point
 } // namespace specfem

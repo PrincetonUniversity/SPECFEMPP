@@ -26,22 +26,20 @@ public:
   constexpr static auto medium_tag = MediumTag;
   constexpr static auto property_tag = PropertyTag;
   constexpr static auto dimension = DimensionType;
+  constexpr static auto wavefield_tag = WavefieldType;
 
-  using quadrature_point_type = qp_type;
   constexpr static bool using_simd = false;
 
   source_kernel() = default;
-  source_kernel(
-      const specfem::compute::assembly &assembly,
-      const specfem::kokkos::HostView1d<int> h_source_domain_index_mapping);
+  source_kernel(const specfem::compute::assembly &assembly);
 
-  void compute_source_interaction(const int timestep) const;
+  void compute_source_interaction(const int timestep);
 
 private:
   using IndexViewType = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
   IndexViewType elements;
   specfem::compute::sources sources;
-  specfem::compute::fields field;
+  specfem::compute::simulation_field<WavefieldType> field;
 };
 } // namespace kernels
 } // namespace impl

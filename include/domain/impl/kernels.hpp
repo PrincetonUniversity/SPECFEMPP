@@ -68,7 +68,7 @@ public:
    *
    * @param timestep Time step
    */
-  inline void compute_source_interaction(const int timestep) const {
+  inline void compute_source_interaction(const int timestep) {
     isotropic_sources.compute_source_interaction(timestep);
     return;
   }
@@ -114,7 +114,7 @@ private:
             specfem::element::property_tag property>
   using source_kernel = specfem::domain::impl::kernels::source_kernel<
       WavefieldType, DimensionType, elastic, property,
-      quadrature_point_type>; ///< Underlying source kernel data structure
+      NGLL>; ///< Underlying source kernel data structure
 
   template <specfem::dimension::type dimension,
             specfem::element::property_tag property>
@@ -220,7 +220,7 @@ public:
    *
    * @param timestep Time step
    */
-  inline void compute_source_interaction(const int timestep) const {
+  inline void compute_source_interaction(const int timestep) {
     isotropic_sources.compute_source_interaction(timestep);
     return;
   }
@@ -263,7 +263,7 @@ private:
             specfem::element::property_tag property>
   using source_kernel = specfem::domain::impl::kernels::source_kernel<
       WavefieldType, DimensionType, acoustic, property,
-      quadrature_point_type>; ///< Underlying source kernel data structure
+      NGLL>; ///< Underlying source kernel data structure
 
   template <specfem::dimension::type dimension,
             specfem::element::property_tag property>
