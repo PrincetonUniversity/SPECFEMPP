@@ -39,6 +39,7 @@ private:
   using IndexViewType = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
   IndexViewType elements;
   specfem::compute::sources sources;
+  specfem::compute::properties properties;
   specfem::compute::simulation_field<WavefieldType> field;
 };
 } // namespace kernels

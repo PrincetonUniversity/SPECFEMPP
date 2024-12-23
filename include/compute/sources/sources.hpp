@@ -191,6 +191,7 @@ load_on_device(const IndexType index, const specfem::compute::sources &sources,
 
 #ifndef NDEBUG
   // Checks if the spectral element index is out of bounds
+
   if (index.ispec >= sources.nspec) {
     Kokkos::abort("Invalid spectral element index detected in source");
   }

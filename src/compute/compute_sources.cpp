@@ -280,9 +280,11 @@ specfem::compute::sources::get_elements_on_host(
 
   int nsources = 0;
   for (int ispec = 0; ispec < nspec; ispec++) {
-    if ((medium_types(ispec) == medium) &&
-        (wavefield_types(ispec) == wavefield)) {
-      nsources++;
+    if (h_source_domain_index_mapping(ispec) >= 0) {
+      if ((h_medium_types(ispec) == medium) &&
+          (h_wavefield_types(ispec) == wavefield)) {
+        nsources++;
+      }
     }
   }
 
@@ -291,10 +293,12 @@ specfem::compute::sources::get_elements_on_host(
 
   int isource = 0;
   for (int ispec = 0; ispec < nspec; ispec++) {
-    if ((medium_types(ispec) == medium) &&
-        (wavefield_types(ispec) == wavefield)) {
-      indices(isource) = ispec;
-      isource++;
+    if (h_source_domain_index_mapping(ispec) >= 0) {
+      if ((h_medium_types(ispec) == medium) &&
+          (h_wavefield_types(ispec) == wavefield)) {
+        indices(isource) = ispec;
+        isource++;
+      }
     }
   }
 
