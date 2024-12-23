@@ -32,24 +32,24 @@ ASSEMBLY::ASSEMBLY() {
   for (auto &Test : Tests) {
     const auto [database_file, sources_file, stations_file] =
         Test.get_databases();
-    specfem::mesh::mesh mesh = specfem::IO::read_mesh(database_file, mpi);
+    const auto mesh = specfem::IO::read_mesh(database_file, mpi);
 
-    Meshes.push_back(mesh);
+    this->Meshes.push_back(mesh);
 
     const auto [sources, t0] = specfem::IO::read_sources(
         sources_file, 1, 0, 0, specfem::simulation::type::forward);
 
-    Sources.push_back(sources);
+    this->Sources.push_back(sources);
 
     const auto receivers = specfem::IO::read_receivers(stations_file, 0);
 
-    Stations.push_back(receivers);
+    this->Stations.push_back(receivers);
 
     std::vector<specfem::enums::seismogram::type> seismogram_types = {
       specfem::enums::seismogram::type::displacement
     };
 
-    assemblies.push_back(specfem::compute::assembly(
+    this->assemblies.push_back(specfem::compute::assembly(
         mesh, quadrature, sources, receivers, seismogram_types, t0, 0.0, 1, 1,
         specfem::simulation::type::forward));
   }
