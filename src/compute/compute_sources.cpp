@@ -28,7 +28,7 @@ std::vector<std::shared_ptr<specfem::sources::source> > sort_sources_per_medium(
     const type_real z = source->get_z();
     const specfem::point::global_coordinates<DimensionTag> coord(x, z);
     const auto lcoord = specfem::algorithms::locate_point(coord, mesh);
-    if (properties.h_element_types(lcoord.ispec) == MediumTag) {
+    if (properties.h_medium_tags(lcoord.ispec) == MediumTag) {
       sorted_sources.push_back(source);
     }
   }

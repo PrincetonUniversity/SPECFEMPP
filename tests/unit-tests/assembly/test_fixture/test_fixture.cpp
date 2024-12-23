@@ -35,7 +35,7 @@ ASSEMBLY::ASSEMBLY() {
     specfem::mesh::mesh mesh = specfem::IO::read_mesh(database_file, mpi);
 
     const auto [sources, t0] = specfem::IO::read_sources(
-        sources_file, 0, 0, 0, specfem::simulation::type::forward);
+        sources_file, 1, 0, 0, specfem::simulation::type::forward);
 
     const auto receivers = specfem::IO::read_receivers(stations_file, 0);
 
@@ -44,7 +44,7 @@ ASSEMBLY::ASSEMBLY() {
     };
 
     assemblies.push_back(specfem::compute::assembly(
-        mesh, quadrature, sources, receivers, seismogram_types, t0, 0, 0, 0,
+        mesh, quadrature, sources, receivers, seismogram_types, t0, 0.0, 1, 1,
         specfem::simulation::type::forward));
   }
 }
