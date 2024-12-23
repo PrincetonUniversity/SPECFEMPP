@@ -8,6 +8,7 @@
 #include "kernel.hpp"
 #include "kokkos_abstractions.h"
 #include "specfem_setup.hpp"
+#include "policies/chunk.hpp"
 #include <Kokkos_Core.hpp>
 
 template <specfem::wavefield::simulation_field WavefieldType,
@@ -16,11 +17,11 @@ template <specfem::wavefield::simulation_field WavefieldType,
           specfem::element::property_tag PropertyTag, int NGLL>
 specfem::domain::impl::kernels::source_kernel<
     WavefieldType, DimensionType, MediumTag, PropertyTag,
-    qp_type>::source_kernel(const specfem::compute::assembly &assembly)
+    NGLL>::source_kernel(const specfem::compute::assembly &assembly)
     : sources(assembly.sources),
       field(assembly.fields.get_simulation_field<WavefieldType>()) {
 
-  this->elements = sources.get_sources_on_device(medium_tag, wavefield_tag);
+  this->elements = sources.get_elements_on_device(medium_tag, wavefield_tag);
   return;
 }
 
@@ -30,7 +31,7 @@ template <specfem::wavefield::simulation_field WavefieldType,
           specfem::element::property_tag PropertyTag, int NGLL>
 void specfem::domain::impl::kernels::source_kernel<
     WavefieldType, DimensionType, MediumTag, PropertyTag,
-    qp_type>::compute_source_interaction(const int timestep) const {
+    NGLL>::compute_source_interaction(const int timestep) {
 
   sources.update_timestep(timestep);
 
@@ -40,25 +41,26 @@ void specfem::domain::impl::kernels::source_kernel<
     return;
 
   using PointSourcesType =
-      specfem::point::source<dimension, medium_tag, wavefield>;
+      specfem::point::source<dimension, medium_tag, wavefield_tag>;
 
   using simd = specfem::datatype::simd<type_real, false>;
+  constexpr int simd_size = simd::size();
 
   using ParallelConfig =
-      specfem::parallel_config::default_chunk_config<dimension, simd>;
+      specfem::parallel_config::default_chunk_config<dimension, simd, Kokkos::DefaultExecutionSpace>;
 
-  using ChunkPolicy = specfem::policy::chunk_policy<ParallelConfig>;
+  using ChunkPolicy = specfem::policy::element_chunk<ParallelConfig>;
 
-  ChunkPolicy chunk_policy(nelements, NGLL, NGLL);
+  ChunkPolicy chunk_policy(elements, NGLL, NGLL);
 
   Kokkos::parallel_for(
       "specfem::domain::impl::kernels::elements::compute_mass_matrix",
-      static_cast<const typename ChunkPolicyType::policy_type &>(chunk_policy),
-      KOKKOS_CLASS_LAMBDA(const typename ChunkPolicyType::member_type &team) {
-        for (int tile = 0; tile < ChunkPolicyType::tile_size * simd_size;
-             tile += ChunkPolicyType::chunk_size * simd_size) {
+      static_cast<const typename ChunkPolicy::policy_type &>(chunk_policy),
+      KOKKOS_CLASS_LAMBDA(const typename ChunkPolicy::member_type &team) {
+        for (int tile = 0; tile < ChunkPolicy::tile_size * simd_size;
+             tile += ChunkPolicy::chunk_size * simd_size) {
           const int starting_element_index =
-              team.league_rank() * ChunkPolicyType::tile_size * simd_size +
+              team.league_rank() * ChunkPolicy::tile_size * simd_size +
               tile;
 
           if (starting_element_index >= nelements) {

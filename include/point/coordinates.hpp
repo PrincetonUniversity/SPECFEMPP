@@ -100,7 +100,10 @@ template <> struct index<specfem::dimension::type::dim2, false> {
              ///< spectral element
 
   constexpr static bool using_simd =
-      false; ///< Flag to indicate that SIMD is not being used
+      false; ///< Flag to indicate that SIMD is not being used'
+
+  constexpr static auto dimension =
+      specfem::dimension::type::dim2; ///< Dimension type
 
   /**
    * @brief Default constructor
@@ -140,6 +143,9 @@ template <> struct index<specfem::dimension::type::dim2, true> {
 
   constexpr static bool using_simd =
       true; ///< Flag to indicate that SIMD is being used
+
+  constexpr static auto dimension =
+      specfem::dimension::type::dim2; ///< Dimension type
 
   /**
    * @brief Default constructor
