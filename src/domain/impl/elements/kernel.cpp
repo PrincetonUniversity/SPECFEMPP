@@ -11,29 +11,41 @@ constexpr static auto backward = specfem::wavefield::simulation_field::backward;
 #define INSTANTIATION_MACRO(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG,           \
                             BOUNDARY_TAG)                                      \
   template class specfem::domain::impl::kernels::element_kernel_base<          \
-      forward, DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, BOUNDARY_TAG, 5>;      \
+      forward, GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),                    \
+      GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG), 5>;                        \
   template class specfem::domain::impl::kernels::element_kernel_base<          \
-      adjoint, DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, BOUNDARY_TAG, 5>;      \
+      adjoint, GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),                    \
+      GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG), 5>;                        \
   template class specfem::domain::impl::kernels::element_kernel_base<          \
-      backward, DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, BOUNDARY_TAG, 5>;     \
+      backward, GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),                   \
+      GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG), 5>;                        \
   template class specfem::domain::impl::kernels::element_kernel_base<          \
-      forward, DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, BOUNDARY_TAG, 8>;      \
+      forward, GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),                    \
+      GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG), 8>;                        \
   template class specfem::domain::impl::kernels::element_kernel_base<          \
-      adjoint, DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, BOUNDARY_TAG, 8>;      \
+      adjoint, GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),                    \
+      GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG), 8>;                        \
   template class specfem::domain::impl::kernels::element_kernel_base<          \
-      backward, DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, BOUNDARY_TAG, 8>;     \
+      backward, GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),                   \
+      GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG), 8>;                        \
   template class specfem::domain::impl::kernels::element_kernel<               \
-      forward, DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, BOUNDARY_TAG, 5>;      \
+      forward, GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),                    \
+      GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG), 5>;                        \
   template class specfem::domain::impl::kernels::element_kernel<               \
-      adjoint, DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, BOUNDARY_TAG, 5>;      \
+      adjoint, GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),                    \
+      GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG), 5>;                        \
   template class specfem::domain::impl::kernels::element_kernel<               \
-      backward, DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, BOUNDARY_TAG, 5>;     \
+      backward, GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),                   \
+      GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG), 5>;                        \
   template class specfem::domain::impl::kernels::element_kernel<               \
-      forward, DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, BOUNDARY_TAG, 8>;      \
+      forward, GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),                    \
+      GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG), 8>;                        \
   template class specfem::domain::impl::kernels::element_kernel<               \
-      adjoint, DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, BOUNDARY_TAG, 8>;      \
+      adjoint, GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),                    \
+      GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG), 8>;                        \
   template class specfem::domain::impl::kernels::element_kernel<               \
-      backward, DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, BOUNDARY_TAG, 8>;
+      backward, GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),                   \
+      GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG), 8>;
 
 CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
     INSTANTIATION_MACRO,
