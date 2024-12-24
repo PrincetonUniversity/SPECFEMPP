@@ -26,7 +26,7 @@ public:
    * HDF5, and a folder if using ASCII)
    */
   property(const specfem::compute::assembly &assembly,
-         const std::string output_folder);
+           const std::string output_folder);
 
   /**
    * @brief write the property data to disk
@@ -35,8 +35,8 @@ public:
   void write() override;
 
 private:
-  std::string output_folder;         ///< Path to output folder
-  specfem::compute::mesh mesh;       ///< Mesh object
+  std::string output_folder;               ///< Path to output folder
+  specfem::compute::mesh mesh;             ///< Mesh object
   specfem::compute::properties properties; ///< Properties object
 };
 } // namespace writer

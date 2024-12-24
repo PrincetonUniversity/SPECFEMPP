@@ -18,8 +18,8 @@ public:
   instantiate_property_writer(const specfem::compute::assembly &assembly) const;
 
 private:
-  std::string output_format;                 ///< format of output file
-  std::string output_folder;                 ///< Path to output folder
+  std::string output_format; ///< format of output file
+  std::string output_folder; ///< Path to output folder
 };
 } // namespace runtime_configuration
 } // namespace specfem

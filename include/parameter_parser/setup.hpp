@@ -11,8 +11,8 @@
 #include "specfem_setup.hpp"
 #include "time_scheme/interface.hpp"
 #include "writer/kernel.hpp"
-#include "writer/property.hpp"
 #include "writer/plot_wavefield.hpp"
+#include "writer/property.hpp"
 #include "writer/seismogram.hpp"
 #include "writer/wavefield.hpp"
 #include "yaml-cpp/yaml.h"
@@ -170,8 +170,8 @@ public:
     }
   }
 
-  std::shared_ptr<specfem::writer::writer>
-  instantiate_property_writer(const specfem::compute::assembly &assembly) const {
+  std::shared_ptr<specfem::writer::writer> instantiate_property_writer(
+      const specfem::compute::assembly &assembly) const {
     if (this->property) {
       return this->property->instantiate_property_writer(assembly);
     } else {
