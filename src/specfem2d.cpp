@@ -163,15 +163,23 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   specfem::compute::assembly assembly(
       mesh, quadrature, sources, receivers, setup.get_seismogram_types(),
       setup.get_t0(), dt, nsteps, max_seismogram_time_step,
-      setup.get_simulation_type());
+      setup.get_simulation_type(), true);
   time_scheme->link_assembly(assembly);
 
   // --------------------------------------------------------------
-  //                Write properties
+  //                Read or Write properties
   // --------------------------------------------------------------
+  // const auto property_reader = setup.instantiate_property_reader(assembly);
+  // if (property_reader) {
+  //   mpi->cout("Reading model files:");
+  //   mpi->cout("-------------------------------");
+
+  //   property_reader->write();
+  //   return;
+  // }
   const auto property_writer = setup.instantiate_property_writer(assembly);
   if (property_writer) {
-    mpi->cout("Writing kernel files:");
+    mpi->cout("Writing model files:");
     mpi->cout("-------------------------------");
 
     property_writer->write();
