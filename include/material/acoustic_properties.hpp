@@ -98,8 +98,7 @@ public:
    */
   inline specfem::point::properties<dimension, medium_tag, property_tag, false>
   get_properties() const {
-    return { static_cast<type_real>(1.0) / static_cast<type_real>(kappa),
-             static_cast<type_real>(1.0) / static_cast<type_real>(density),
+    return { static_cast<type_real>(1.0) / static_cast<type_real>(density),
              this->kappa };
   }
 
