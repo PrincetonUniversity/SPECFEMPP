@@ -583,8 +583,8 @@ struct properties_container<specfem::element::medium_tag::acoustic,
   int ngllx; ///< number of quadrature points in x dimension
   ViewType rho_inverse;
   ViewType::HostMirror h_rho_inverse;
-  ViewType lambdaplus2mu_inverse;
-  ViewType::HostMirror h_lambdaplus2mu_inverse;
+  ViewType kappa_inverse;
+  ViewType::HostMirror h_kappa_inverse;
   ViewType kappa;
   ViewType::HostMirror h_kappa;
 
@@ -595,11 +595,9 @@ struct properties_container<specfem::element::medium_tag::acoustic,
         rho_inverse("specfem::compute::properties::rho_inverse", nspec, ngllz,
                     ngllx),
         h_rho_inverse(Kokkos::create_mirror_view(rho_inverse)),
-        lambdaplus2mu_inverse(
-            "specfem::compute::properties::lambdaplus2mu_inverse", nspec, ngllz,
-            ngllx),
-        h_lambdaplus2mu_inverse(
-            Kokkos::create_mirror_view(lambdaplus2mu_inverse)),
+        kappa_inverse("specfem::compute::properties::kappa_inverse", nspec,
+                      ngllz, ngllx),
+        h_kappa_inverse(Kokkos::create_mirror_view(kappa_inverse)),
         kappa("specfem::compute::properties::kappa", nspec, ngllz, ngllx),
         h_kappa(Kokkos::create_mirror_view(kappa)) {}
 
@@ -622,10 +620,10 @@ struct properties_container<specfem::element::medium_tag::acoustic,
     const int ix = index.ix;
 
     property.rho_inverse = rho_inverse(ispec, iz, ix);
-    property.lambdaplus2mu_inverse = lambdaplus2mu_inverse(ispec, iz, ix);
+    property.kappa_inverse = kappa_inverse(ispec, iz, ix);
     property.kappa = kappa(ispec, iz, ix);
     property.rho_vpinverse =
-        sqrt(property.rho_inverse * property.lambdaplus2mu_inverse);
+        sqrt(property.rho_inverse * property.kappa_inverse);
   }
 
   template <
@@ -654,13 +652,13 @@ struct properties_container<specfem::element::medium_tag::acoustic,
 
     Kokkos::Experimental::where(mask, property.rho_inverse)
         .copy_from(&rho_inverse(ispec, iz, ix), tag_type());
-    Kokkos::Experimental::where(mask, property.lambdaplus2mu_inverse)
-        .copy_from(&lambdaplus2mu_inverse(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, property.kappa_inverse)
+        .copy_from(&kappa_inverse(ispec, iz, ix), tag_type());
     Kokkos::Experimental::where(mask, property.kappa)
         .copy_from(&kappa(ispec, iz, ix), tag_type());
 
     property.rho_vpinverse =
-        Kokkos::sqrt(property.rho_inverse * property.lambdaplus2mu_inverse);
+        Kokkos::sqrt(property.rho_inverse * property.kappa_inverse);
   }
 
   template <
@@ -682,10 +680,10 @@ struct properties_container<specfem::element::medium_tag::acoustic,
     const int ix = index.ix;
 
     property.rho_inverse = h_rho_inverse(ispec, iz, ix);
-    property.lambdaplus2mu_inverse = h_lambdaplus2mu_inverse(ispec, iz, ix);
+    property.kappa_inverse = h_kappa_inverse(ispec, iz, ix);
     property.kappa = h_kappa(ispec, iz, ix);
     property.rho_vpinverse =
-        sqrt(property.rho_inverse * property.lambdaplus2mu_inverse);
+        sqrt(property.rho_inverse * property.kappa_inverse);
   }
 
   template <
@@ -714,24 +712,24 @@ struct properties_container<specfem::element::medium_tag::acoustic,
 
     Kokkos::Experimental::where(mask, property.rho_inverse)
         .copy_from(&h_rho_inverse(ispec, iz, ix), tag_type());
-    Kokkos::Experimental::where(mask, property.lambdaplus2mu_inverse)
-        .copy_from(&h_lambdaplus2mu_inverse(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, property.kappa_inverse)
+        .copy_from(&h_kappa_inverse(ispec, iz, ix), tag_type());
     Kokkos::Experimental::where(mask, property.kappa)
         .copy_from(&h_kappa(ispec, iz, ix), tag_type());
 
     property.rho_vpinverse =
-        Kokkos::sqrt(property.rho_inverse * property.lambdaplus2mu_inverse);
+        Kokkos::sqrt(property.rho_inverse * property.kappa_inverse);
   }
 
   void copy_to_device() {
     Kokkos::deep_copy(rho_inverse, h_rho_inverse);
-    Kokkos::deep_copy(lambdaplus2mu_inverse, h_lambdaplus2mu_inverse);
+    Kokkos::deep_copy(kappa_inverse, h_kappa_inverse);
     Kokkos::deep_copy(kappa, h_kappa);
   }
 
   void copy_to_host() {
     Kokkos::deep_copy(h_rho_inverse, rho_inverse);
-    Kokkos::deep_copy(h_lambdaplus2mu_inverse, lambdaplus2mu_inverse);
+    Kokkos::deep_copy(h_kappa_inverse, kappa_inverse);
     Kokkos::deep_copy(h_kappa, kappa);
   }
 
@@ -753,7 +751,7 @@ struct properties_container<specfem::element::medium_tag::acoustic,
     const int ix = index.ix;
 
     h_rho_inverse(ispec, iz, ix) = property.rho_inverse;
-    h_lambdaplus2mu_inverse(ispec, iz, ix) = property.lambdaplus2mu_inverse;
+    h_kappa_inverse(ispec, iz, ix) = property.kappa_inverse;
     h_kappa(ispec, iz, ix) = property.kappa;
   }
 
@@ -782,8 +780,8 @@ struct properties_container<specfem::element::medium_tag::acoustic,
 
     Kokkos::Experimental::where(mask, property.rho_inverse)
         .copy_to(&h_rho_inverse(ispec, iz, ix), tag_type());
-    Kokkos::Experimental::where(mask, property.lambdaplus2mu_inverse)
-        .copy_to(&h_lambdaplus2mu_inverse(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, property.kappa_inverse)
+        .copy_to(&h_kappa_inverse(ispec, iz, ix), tag_type());
     Kokkos::Experimental::where(mask, property.kappa)
         .copy_to(&h_kappa(ispec, iz, ix), tag_type());
   }
