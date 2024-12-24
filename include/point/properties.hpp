@@ -205,15 +205,15 @@ struct properties<specfem::dimension::type::dim2,
 
 private:
   KOKKOS_FUNCTION
-  properties(const value_type &kappa_inverse, const value_type &rho_inverse,
-             const value_type &kappa, std::false_type)
-      : kappa_inverse(kappa_inverse), rho_inverse(rho_inverse), kappa(kappa),
+  properties(const value_type &rho_inverse, const value_type &kappa,
+             std::false_type)
+      : kappa_inverse(1.0 / kappa), rho_inverse(rho_inverse), kappa(kappa),
         rho_vpinverse(sqrt(rho_inverse * kappa_inverse)) {}
 
   KOKKOS_FUNCTION
-  properties(const value_type &kappa_inverse, const value_type &rho_inverse,
-             const value_type &kappa, std::true_type)
-      : kappa_inverse(kappa_inverse), rho_inverse(rho_inverse), kappa(kappa),
+  properties(const value_type &rho_inverse, const value_type &kappa,
+             std::true_type)
+      : kappa_inverse(1.0 / kappa), rho_inverse(rho_inverse), kappa(kappa),
         rho_vpinverse(Kokkos::sqrt(rho_inverse * kappa_inverse)) {}
 
 public:
@@ -233,14 +233,12 @@ public:
   /**
    * @brief Construct a new properties object
    *
-   * @param kappa_inverse @f$ \frac{1}{\lambda + 2\mu} @f$
    * @param rho_inverse @f$ \frac{1}{\rho} @f$
    * @param kappa Bulk modulus @f$ \kappa @f$
    */
   KOKKOS_FUNCTION
-  properties(const value_type &kappa_inverse, const value_type &rho_inverse,
-             const value_type &kappa)
-      : properties(kappa_inverse, rho_inverse, kappa,
+  properties(const value_type &rho_inverse, const value_type &kappa)
+      : properties(rho_inverse, kappa,
                    std::integral_constant<bool, UseSIMD>{}) {}
   ///@}
 };
