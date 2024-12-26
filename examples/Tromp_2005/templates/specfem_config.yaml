@@ -38,7 +38,3 @@ parameters:
   databases:
     mesh-database: placeholder/for/path/to/database.bin
     source-file: placeholder/for/path/to/source.yaml
-    reader:
-      properties:
-        directory: GLL
-        format: ASCII
