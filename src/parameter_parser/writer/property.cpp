@@ -1,11 +1,13 @@
 #include "parameter_parser/writer/property.hpp"
 #include "IO/ASCII/ASCII.hpp"
 #include "IO/HDF5/HDF5.hpp"
+#include "reader/property.hpp"
 #include "writer/interface.hpp"
 #include "writer/property.hpp"
 #include <boost/filesystem.hpp>
 
-specfem::runtime_configuration::property::property(const YAML::Node &Node) {
+specfem::runtime_configuration::property::property(const YAML::Node &Node,
+                                                   const bool write_mode) {
 
   const std::string output_format = [&]() -> std::string {
     if (Node["format"]) {
@@ -26,12 +28,12 @@ specfem::runtime_configuration::property::property(const YAML::Node &Node) {
   if (!boost::filesystem::is_directory(
           boost::filesystem::path(output_folder))) {
     std::ostringstream message;
-    message << "Output folder : " << output_folder << " does not exist.";
+    message << "Model folder : " << output_folder << " does not exist.";
     throw std::runtime_error(message.str());
   }
 
-  *this =
-      specfem::runtime_configuration::property(output_format, output_folder);
+  *this = specfem::runtime_configuration::property(output_format, output_folder,
+                                                   write_mode);
 
   return;
 }
@@ -42,6 +44,9 @@ specfem::runtime_configuration::property::instantiate_property_writer(
 
   const std::shared_ptr<specfem::writer::writer> writer =
       [&]() -> std::shared_ptr<specfem::writer::writer> {
+    if (!this->write_mode) {
+      return nullptr;
+    }
     if (this->output_format == "HDF5") {
       return std::make_shared<
           specfem::writer::property<specfem::IO::HDF5<specfem::IO::write> > >(
@@ -56,4 +61,29 @@ specfem::runtime_configuration::property::instantiate_property_writer(
   }();
 
   return writer;
+}
+
+std::shared_ptr<specfem::reader::reader>
+specfem::runtime_configuration::property::instantiate_property_reader(
+    const specfem::compute::assembly &assembly) const {
+
+  const std::shared_ptr<specfem::reader::reader> reader =
+      [&]() -> std::shared_ptr<specfem::reader::reader> {
+    if (this->write_mode) {
+      return nullptr;
+    }
+    if (this->output_format == "HDF5") {
+      return std::make_shared<
+          specfem::reader::property<specfem::IO::HDF5<specfem::IO::read> > >(
+          assembly, this->output_folder);
+    } else if (this->output_format == "ASCII") {
+      return std::make_shared<
+          specfem::reader::property<specfem::IO::ASCII<specfem::IO::read> > >(
+          assembly, this->output_folder);
+    } else {
+      throw std::runtime_error("Unknown model format");
+    }
+  }();
+
+  return reader;
 }

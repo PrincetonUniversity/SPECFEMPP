@@ -304,6 +304,7 @@ target_link_libraries(
 add_library(
         reader
         src/reader/wavefield.cpp
+        src/reader/property.cpp
 )
 
 target_link_libraries(
