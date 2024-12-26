@@ -169,21 +169,23 @@ void execute(const std::string &parameter_file, const std::string &default_file,
   // --------------------------------------------------------------
   //                Read or Write properties
   // --------------------------------------------------------------
-  // const auto property_reader = setup.instantiate_property_reader(assembly);
-  // if (property_reader) {
-  //   mpi->cout("Reading model files:");
-  //   mpi->cout("-------------------------------");
-
-  //   property_reader->write();
-  //   return;
-  // }
   const auto property_writer = setup.instantiate_property_writer(assembly);
   if (property_writer) {
     mpi->cout("Writing model files:");
     mpi->cout("-------------------------------");
 
     property_writer->write();
+    return;
   }
+
+  const auto property_reader = setup.instantiate_property_reader(assembly);
+  if (property_reader) {
+    mpi->cout("Reading model files:");
+    mpi->cout("-------------------------------");
+
+    property_reader->read();
+  }
+
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------

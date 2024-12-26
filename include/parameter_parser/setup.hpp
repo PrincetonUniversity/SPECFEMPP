@@ -170,6 +170,15 @@ public:
     }
   }
 
+  std::shared_ptr<specfem::reader::reader> instantiate_property_reader(
+      const specfem::compute::assembly &assembly) const {
+    if (this->property) {
+      return this->property->instantiate_property_reader(assembly);
+    } else {
+      return nullptr;
+    }
+  }
+
   std::shared_ptr<specfem::writer::writer> instantiate_property_writer(
       const specfem::compute::assembly &assembly) const {
     if (this->property) {

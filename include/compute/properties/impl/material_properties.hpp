@@ -60,7 +60,9 @@ struct material_properties
 
     assert(count == n_element);
 
-    this->copy_to_device();
+    if (assign_material_property) {
+      this->copy_to_device();
+    }
 
     return;
   }

@@ -31,6 +31,8 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
   const YAML::Node &simulation_setup = runtime_config["simulation-setup"];
   const YAML::Node &n_solver = simulation_setup["solver"];
 
+  const YAML::Node &n_databases = runtime_config["databases"];
+
   try {
     this->header = std::make_unique<specfem::runtime_configuration::header>(
         runtime_config["header"]);
@@ -67,14 +69,23 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
 
   try {
     this->databases = std::make_unique<
-        specfem::runtime_configuration::database_configuration>(
-        runtime_config["databases"]);
+        specfem::runtime_configuration::database_configuration>(n_databases);
   } catch (YAML::InvalidNode &e) {
     std::ostringstream message;
 
     message << "Error reading specfem database configuration. \n" << e.what();
 
     throw std::runtime_error(message.str());
+  }
+
+  if (n_databases["writer"] && n_databases["writer"]["properties"]) {
+    this->property = std::make_unique<specfem::runtime_configuration::property>(
+        n_databases["writer"]["properties"], true);
+  } else if (n_databases["reader"] && n_databases["reader"]["properties"]) {
+    this->property = std::make_unique<specfem::runtime_configuration::property>(
+        n_databases["reader"]["properties"], false);
+  } else {
+    this->property = nullptr;
   }
 
   try {
@@ -118,15 +129,6 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
                   n_wavefield, specfem::simulation::type::forward);
         } else {
           this->wavefield = nullptr;
-        }
-
-        if (const YAML::Node &n_property = n_writer["model"]) {
-          at_least_one_writer = true;
-          this->property =
-              std::make_unique<specfem::runtime_configuration::property>(
-                  n_property);
-        } else {
-          this->property = nullptr;
         }
 
         if (const YAML::Node &n_plotter = n_writer["display"]) {
