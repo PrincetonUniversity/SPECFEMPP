@@ -19,6 +19,10 @@
 namespace specfem {
 namespace medium {
 
+/**
+ * @brief Template specialization for acoustic isotropic material properties
+ *
+ */
 template <>
 class properties<specfem::element::medium_tag::acoustic,
                  specfem::element::property_tag::isotropic> {
