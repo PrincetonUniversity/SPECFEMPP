@@ -4,14 +4,14 @@
 #include "elastic_anisotropic2d/elastic_anisotropic2d.hpp"
 #include "elastic_isotropic2d/elastic_isotropic2d.hpp"
 #include "enumerations/specfem_enums.hpp"
+#include "medium/properties.hpp"
 #include "point/properties.hpp"
-#include "properties.hpp"
 #include "specfem_setup.hpp"
 #include <ostream>
 #include <tuple>
 
 namespace specfem {
-namespace material {
+namespace medium {
 
 /**
  * @brief Material properties for a given medium and property
@@ -61,5 +61,5 @@ public:
   };
 };
 
-} // namespace material
+} // namespace medium
 } // namespace specfem

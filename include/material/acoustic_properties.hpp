@@ -10,12 +10,5 @@
 #include <sstream>
 
 namespace specfem {
-namespace material {
-
-/**
- * @brief Template specialization for acoustic isotropic material properties
- *
- */
-
-} // namespace material
+namespace material {} // namespace material
 } // namespace specfem

@@ -2,16 +2,27 @@
 
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
+#include "enumerations/specfem_enums.hpp"
 #include "enumerations/wavefield.hpp"
 #include "globals.h"
+#include "medium/properties.hpp"
 #include "point/field_derivatives.hpp"
 #include "point/properties.hpp"
 #include "point/stress.hpp"
+#include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
+#include <exception>
+#include <iostream>
+#include <ostream>
+#include <sstream>
 
 namespace specfem {
 namespace medium {
 
+/**
+ * @brief Template specialization for elastic isotropic material properties
+ *
+ */
 template <>
 class properties<specfem::element::medium_tag::elastic,
                  specfem::element::property_tag::isotropic> {
