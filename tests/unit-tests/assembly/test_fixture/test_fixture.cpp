@@ -45,7 +45,7 @@ ASSEMBLY::ASSEMBLY() {
 
     assemblies.push_back(specfem::compute::assembly(
         mesh, quadrature, sources, receivers, seismogram_types, t0, 0, 0, 0,
-        specfem::simulation::type::forward, true));
+        specfem::simulation::type::forward, false));
   }
 }
 

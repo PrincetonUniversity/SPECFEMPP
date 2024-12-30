@@ -51,7 +51,7 @@ struct properties
              const specfem::compute::mesh_to_compute_mapping &mapping,
              const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
              const specfem::mesh::materials &materials,
-             const bool &assign_material_property);
+             const bool &has_gll_model);
 
   ///@}
 

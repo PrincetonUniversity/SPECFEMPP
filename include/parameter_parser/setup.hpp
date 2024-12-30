@@ -123,6 +123,19 @@ public:
   }
 
   /**
+   * @brief Whether there is a GLL model to read from
+   *
+   * @return bool true if there is a GLL model to read from
+   */
+  bool has_gll_model() const {
+    if (this->property) {
+      return this->property->has_gll_model();
+    } else {
+      return false;
+    }
+  }
+
+  /**
    * @brief Instantiate a seismogram writer object
    *
    * @param receivers Pointer to specfem::compute::receivers struct

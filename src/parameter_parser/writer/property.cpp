@@ -87,3 +87,7 @@ specfem::runtime_configuration::property::instantiate_property_reader(
 
   return reader;
 }
+
+bool specfem::runtime_configuration::property::has_gll_model() const {
+  return !this->write_mode;
+}

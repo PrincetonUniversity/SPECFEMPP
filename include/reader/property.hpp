@@ -35,8 +35,8 @@ public:
   void read() override;
 
 private:
-  std::string input_folder;               ///< Path to output folder
+  std::string input_folder;                ///< Path to output folder
   specfem::compute::properties properties; ///< Properties object
 };
-} // namespace writer
+} // namespace reader
 } // namespace specfem
