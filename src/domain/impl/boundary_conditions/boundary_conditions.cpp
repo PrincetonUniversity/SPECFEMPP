@@ -48,26 +48,34 @@ using boundary_type =
   /** Template instantiation for SIMD=false */                                 \
   template KOKKOS_FUNCTION void                                                \
   specfem::domain::impl::boundary_conditions::impl_compute_mass_matrix_terms<  \
-      PointBoundaryType<DIMENSION_TAG, BOUNDARY_TAG, false>,                   \
-      PointPropertyType<DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, false>,       \
-      PointMassMatrixType<DIMENSION_TAG, MEDIUM_TAG, false> >(                 \
-      const boundary_type<BOUNDARY_TAG> &, const type_real dt,                 \
-      const PointBoundaryType<DIMENSION_TAG, BOUNDARY_TAG, false> &,           \
-      const PointPropertyType<DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, false>  \
-          &,                                                                   \
-      PointMassMatrixType<DIMENSION_TAG, MEDIUM_TAG, false> &);                \
+      PointBoundaryType<GET_TAG(DIMENSION_TAG), GET_TAG(BOUNDARY_TAG), false>, \
+      PointPropertyType<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),           \
+                        GET_TAG(PROPERTY_TAG), false>,                         \
+      PointMassMatrixType<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),         \
+                          false> >(                                            \
+      const boundary_type<GET_TAG(BOUNDARY_TAG)> &, const type_real dt,        \
+      const PointBoundaryType<GET_TAG(DIMENSION_TAG), GET_TAG(BOUNDARY_TAG),   \
+                              false> &,                                        \
+      const PointPropertyType<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),     \
+                              GET_TAG(PROPERTY_TAG), false> &,                 \
+      PointMassMatrixType<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG), false>  \
+          &);                                                                  \
                                                                                \
   /** Template instantiation for SIMD=true */                                  \
   template KOKKOS_FUNCTION void                                                \
   specfem::domain::impl::boundary_conditions::impl_compute_mass_matrix_terms<  \
-      PointBoundaryType<DIMENSION_TAG, BOUNDARY_TAG, true>,                    \
-      PointPropertyType<DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, true>,        \
-      PointMassMatrixType<DIMENSION_TAG, MEDIUM_TAG, true> >(                  \
-      const boundary_type<BOUNDARY_TAG> &, const type_real dt,                 \
-      const PointBoundaryType<DIMENSION_TAG, BOUNDARY_TAG, true> &,            \
-      const PointPropertyType<DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, true>   \
-          &,                                                                   \
-      PointMassMatrixType<DIMENSION_TAG, MEDIUM_TAG, true> &);
+      PointBoundaryType<GET_TAG(DIMENSION_TAG), GET_TAG(BOUNDARY_TAG), true>,  \
+      PointPropertyType<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),           \
+                        GET_TAG(PROPERTY_TAG), true>,                          \
+      PointMassMatrixType<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),         \
+                          true> >(                                             \
+      const boundary_type<GET_TAG(BOUNDARY_TAG)> &, const type_real dt,        \
+      const PointBoundaryType<GET_TAG(DIMENSION_TAG), GET_TAG(BOUNDARY_TAG),   \
+                              true> &,                                         \
+      const PointPropertyType<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),     \
+                              GET_TAG(PROPERTY_TAG), true> &,                  \
+      PointMassMatrixType<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG), true>   \
+          &);
 
 CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
     INSTANTIATION_MACRO,
@@ -82,30 +90,40 @@ CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
   /** Template instantiation for SIMD=false */                                 \
   template KOKKOS_FUNCTION void                                                \
   specfem::domain::impl::boundary_conditions::impl_apply_boundary_conditions<  \
-      PointBoundaryType<DIMENSION_TAG, BOUNDARY_TAG, false>,                   \
-      PointPropertyType<DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, false>,       \
-      PointVelocityType<DIMENSION_TAG, MEDIUM_TAG, false>,                     \
-      PointAccelerationType<DIMENSION_TAG, MEDIUM_TAG, false> >(               \
-      const boundary_type<BOUNDARY_TAG> &,                                     \
-      const PointBoundaryType<DIMENSION_TAG, BOUNDARY_TAG, false> &,           \
-      const PointPropertyType<DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, false>  \
-          &,                                                                   \
-      const PointVelocityType<DIMENSION_TAG, MEDIUM_TAG, false> &,             \
-      PointAccelerationType<DIMENSION_TAG, MEDIUM_TAG, false> &);              \
+      PointBoundaryType<GET_TAG(DIMENSION_TAG), GET_TAG(BOUNDARY_TAG), false>, \
+      PointPropertyType<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),           \
+                        GET_TAG(PROPERTY_TAG), false>,                         \
+      PointVelocityType<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG), false>,   \
+      PointAccelerationType<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),       \
+                            false> >(                                          \
+      const boundary_type<GET_TAG(BOUNDARY_TAG)> &,                            \
+      const PointBoundaryType<GET_TAG(DIMENSION_TAG), GET_TAG(BOUNDARY_TAG),   \
+                              false> &,                                        \
+      const PointPropertyType<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),     \
+                              GET_TAG(PROPERTY_TAG), false> &,                 \
+      const PointVelocityType<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),     \
+                              false> &,                                        \
+      PointAccelerationType<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),       \
+                            false> &);                                         \
                                                                                \
   /** Template instantiation for SIMD=true */                                  \
   template KOKKOS_FUNCTION void                                                \
   specfem::domain::impl::boundary_conditions::impl_apply_boundary_conditions<  \
-      PointBoundaryType<DIMENSION_TAG, BOUNDARY_TAG, true>,                    \
-      PointPropertyType<DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, true>,        \
-      PointVelocityType<DIMENSION_TAG, MEDIUM_TAG, true>,                      \
-      PointAccelerationType<DIMENSION_TAG, MEDIUM_TAG, true> >(                \
-      const boundary_type<BOUNDARY_TAG> &,                                     \
-      const PointBoundaryType<DIMENSION_TAG, BOUNDARY_TAG, true> &,            \
-      const PointPropertyType<DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, true>   \
-          &,                                                                   \
-      const PointVelocityType<DIMENSION_TAG, MEDIUM_TAG, true> &,              \
-      PointAccelerationType<DIMENSION_TAG, MEDIUM_TAG, true> &);
+      PointBoundaryType<GET_TAG(DIMENSION_TAG), GET_TAG(BOUNDARY_TAG), true>,  \
+      PointPropertyType<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),           \
+                        GET_TAG(PROPERTY_TAG), true>,                          \
+      PointVelocityType<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG), true>,    \
+      PointAccelerationType<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),       \
+                            true> >(                                           \
+      const boundary_type<GET_TAG(BOUNDARY_TAG)> &,                            \
+      const PointBoundaryType<GET_TAG(DIMENSION_TAG), GET_TAG(BOUNDARY_TAG),   \
+                              true> &,                                         \
+      const PointPropertyType<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),     \
+                              GET_TAG(PROPERTY_TAG), true> &,                  \
+      const PointVelocityType<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),     \
+                              true> &,                                         \
+      PointAccelerationType<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG), true> \
+          &);
 
 CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
     INSTANTIATION_MACRO,

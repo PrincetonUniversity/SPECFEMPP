@@ -52,12 +52,12 @@ specfem::compute::sources::sources(
     const auto lcoord = specfem::algorithms::locate_point(coord, mesh);
     //-------------------------------------
 
-    if (properties.h_element_types(lcoord.ispec) == acoustic) {
+    if (properties.h_medium_tags(lcoord.ispec) == acoustic) {
       acoustic_sources.push_back(source);
       source_domain_index_mapping(isource) = acoustic_sources.size() - 1;
       source_medium_mapping(isource) = acoustic;
       source_wavefield_mapping(isource) = source->get_wavefield_type();
-    } else if (properties.h_element_types(lcoord.ispec) == elastic) {
+    } else if (properties.h_medium_tags(lcoord.ispec) == elastic) {
       elastic_sources.push_back(source);
       source_domain_index_mapping(isource) = elastic_sources.size() - 1;
       source_medium_mapping(isource) = elastic;
