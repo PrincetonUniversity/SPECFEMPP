@@ -1,7 +1,7 @@
 #pragma once
 
 #include "acoustic_isotropic2d/source.hpp"
-#include "elastic_anisotropic2d/elastic_anisotropic2d.hpp"
+#include "elastic_anisotropic2d/source.hpp"
 #include "elastic_isotropic2d/source.hpp"
 #include <Kokkos_Core.hpp>
 

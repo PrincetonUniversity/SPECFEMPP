@@ -1,7 +1,7 @@
 #pragma once
 
 #include "acoustic_isotropic2d/properties.hpp"
-#include "elastic_anisotropic2d/elastic_anisotropic2d_properties.hpp"
+#include "elastic_anisotropic2d/properties.hpp"
 #include "elastic_isotropic2d/properties.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "point/properties.hpp"
