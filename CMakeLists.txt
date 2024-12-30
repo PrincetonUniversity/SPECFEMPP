@@ -232,17 +232,6 @@ else()
         message("-- Compiling SPECFEM without MPI")
 endif(MPI_PARALLEL)
 
-# add_library(
-#         material_class
-#         src/material/elastic_isotropic_material.cpp
-#         src/material/acoustic_isotropic_material.cpp
-# )
-
-# target_link_libraries(
-#         material_class
-#         Kokkos::kokkos
-#         specfem_mpi
-# )
 
 add_library(
         mesh
@@ -263,7 +252,6 @@ target_link_libraries(
         mesh
         Kokkos::kokkos
         specfem_mpi
-        # material_class
         yaml-cpp
 )
 
@@ -398,7 +386,6 @@ target_link_libraries(
         compute
         quadrature
         mesh
-        # material_class
         source_class
         jacobian
         point
