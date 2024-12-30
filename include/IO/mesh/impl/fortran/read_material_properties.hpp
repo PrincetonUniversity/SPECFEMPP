@@ -20,8 +20,8 @@ namespace fortran {
  * section
  * @param numat Number of materials to be read
  * @param mpi Pointer to MPI object
- * @return std::vector<specfem::material *> Pointer to material objects read
- * from the database file
+ * @return std::vector<specfem::medium::material *> Pointer to material objects
+ * read from the database file
  */
 
 specfem::mesh::materials read_material_properties(

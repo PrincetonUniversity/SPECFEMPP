@@ -7,6 +7,7 @@
 #include "globals.h"
 #include "medium/properties.hpp"
 #include "point/field_derivatives.hpp"
+#include "point/kernels.hpp"
 #include "point/properties.hpp"
 #include "point/stress.hpp"
 #include "specfem_setup.hpp"

@@ -1,7 +1,7 @@
 #include "compute/interface.hpp"
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "material/material.hpp"
+#include "medium/material.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 #include <memory>
