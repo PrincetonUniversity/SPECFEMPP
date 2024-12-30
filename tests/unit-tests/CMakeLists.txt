@@ -195,6 +195,7 @@ add_executable(
   assembly/runner.cpp
   assembly/kernels/kernels.cpp
   assembly/compute_wavefield/compute_wavefield.cpp
+  assembly/sources/sources.cpp
 )
 
 target_link_libraries(

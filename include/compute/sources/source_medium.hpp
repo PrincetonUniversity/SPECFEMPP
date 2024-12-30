@@ -7,6 +7,7 @@
 
 namespace specfem {
 namespace compute {
+namespace impl {
 /**
  * @brief Information about sources located within a medium
  *
@@ -92,6 +93,53 @@ public:
       h_source_time_function;   ///< Host mirror of source_time_function
   SourceArrayView source_array; ///< Lagrange interpolants for every source
   SourceArrayView::HostMirror h_source_array; ///< Host mirror of source_array
+
+  template <typename IndexType, typename PointSourceType>
+  KOKKOS_INLINE_FUNCTION void
+  load_on_device(const int timestep, const IndexType index,
+                 PointSourceType &point_source) const {
+    for (int component = 0; component < components; component++) {
+      point_source.stf(component) =
+          source_time_function(timestep, index.ispec, component);
+      point_source.lagrange_interpolant(component) =
+          source_array(index.ispec, component, index.iz, index.ix);
+    }
+  }
+
+  template <typename IndexType, typename PointSourceType>
+  KOKKOS_INLINE_FUNCTION void
+  store_on_device(const int timestep, const IndexType index,
+                  const PointSourceType &point_source) const {
+    for (int component = 0; component < components; component++) {
+      source_time_function(timestep, index.ispec, component) =
+          point_source.stf(component);
+      source_array(index.ispec, component, index.iz, index.ix) =
+          point_source.lagrange_interpolant(component);
+    }
+  }
+
+  template <typename IndexType, typename PointSourceType>
+  void load_on_host(const int timestep, const IndexType index,
+                    PointSourceType &point_source) const {
+    for (int component = 0; component < components; component++) {
+      point_source.stf(component) =
+          h_source_time_function(timestep, index.ispec, component);
+      point_source.lagrange_interpolant(component) =
+          h_source_array(index.ispec, component, index.iz, index.ix);
+    }
+  }
+
+  template <typename IndexType, typename PointSourceType>
+  void store_on_host(const int timestep, const IndexType index,
+                     const PointSourceType &point_source) const {
+    for (int component = 0; component < components; component++) {
+      h_source_time_function(timestep, index.ispec, component) =
+          point_source.stf(component);
+      h_source_array(index.ispec, component, index.iz, index.ix) =
+          point_source.lagrange_interpolant(component);
+    }
+  }
 };
+} // namespace impl
 } // namespace compute
 } // namespace specfem
