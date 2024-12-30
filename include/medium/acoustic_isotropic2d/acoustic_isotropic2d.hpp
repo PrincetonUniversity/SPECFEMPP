@@ -135,7 +135,8 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
                          [&](const int &i) {
                            const auto iterator_index = iterator(i);
                            const auto index = iterator_index.index;
-                           wavefield(index.ispec, index.iz, index.ix, 0) =
+                           wavefield(iterator_index.ielement, index.iz,
+                                     index.ix, 0) =
                                -1.0 * active_field(iterator_index.ielement,
                                                    index.iz, index.ix, 0);
                          });
@@ -158,8 +159,10 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
         const auto point_stress =
             impl_compute_stress(point_property, point_field_derivatives);
 
-        wavefield(index.ispec, index.iz, index.ix, 0) = point_stress.T(0, 0);
-        wavefield(index.ispec, index.iz, index.ix, 1) = point_stress.T(1, 0);
+        wavefield(iterator_index.ielement, index.iz, index.ix, 0) =
+            point_stress.T(0, 0);
+        wavefield(iterator_index.ielement, index.iz, index.ix, 1) =
+            point_stress.T(1, 0);
       });
 
   return;
