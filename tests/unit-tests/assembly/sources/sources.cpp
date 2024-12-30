@@ -154,7 +154,8 @@ void check_load(specfem::compute::assembly &assembly) {
   }
 }
 
-template <specfem::element::medium_tag MediumTag>
+template <specfem::dimension::type Dimension,
+          specfem::element::medium_tag MediumTag>
 void check_assembly_source_construction(
     std::vector<std::shared_ptr<specfem::sources::source> > &sources,
     specfem::compute::assembly &assembly) {
@@ -163,16 +164,15 @@ void check_assembly_source_construction(
   const int ngllx = assembly.mesh.ngllx;
 
   constexpr auto components =
-      specfem::element::attributes<specfem::dimension::type::dim2,
-                                   MediumTag>::components();
+      specfem::element::attributes<Dimension, MediumTag>::components();
 
   using PointSourceType =
-      specfem::point::source<specfem::dimension::type::dim2, MediumTag,
+      specfem::point::source<Dimension, MediumTag,
                              specfem::wavefield::simulation_field::forward>;
 
   for (auto &source : sources) {
-    specfem::point::global_coordinates<specfem::dimension::type::dim2> coord(
-        source->get_x(), source->get_z());
+    specfem::point::global_coordinates<Dimension> coord(source->get_x(),
+                                                        source->get_z());
 
     const auto lcoord = specfem::algorithms::locate_point(coord, assembly.mesh);
 
@@ -192,8 +192,7 @@ void check_assembly_source_construction(
 
     for (int iz = 0; iz < ngllz; iz++) {
       for (int ix = 0; ix < ngllx; ix++) {
-        specfem::point::index<specfem::dimension::type::dim2, false> index(
-            lcoord.ispec, iz, ix);
+        specfem::point::index<Dimension, false> index(lcoord.ispec, iz, ix);
         PointSourceType point;
         specfem::compute::load_on_device(index, assembly.sources, point);
 
@@ -237,30 +236,30 @@ void test_assembly_source_construction(
     std::vector<std::shared_ptr<specfem::sources::source> > &sources,
     specfem::compute::assembly &assembly) {
 
-  check_assembly_source_construction<specfem::element::medium_tag::elastic>(
+#define TEST_ASSEMBLY_SOURCE_CONSTRUCTION(Dimension, MediumTag)                \
+  check_assembly_source_construction<GET_TAG(Dimension), GET_TAG(MediumTag)>(  \
       sources, assembly);
 
-  check_assembly_source_construction<specfem::element::medium_tag::acoustic>(
-      sources, assembly);
+  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
+      TEST_ASSEMBLY_SOURCE_CONSTRUCTION,
+      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC))
+
+#undef TEST_ASSEMBLY_SOURCE_CONSTRUCTION
 }
 
 void test_sources(specfem::compute::assembly &assembly) {
 
-  check_store<specfem::dimension::type::dim2,
-              specfem::element::medium_tag::elastic,
-              specfem::wavefield::simulation_field::forward>(assembly);
-
-  check_load<specfem::dimension::type::dim2,
-             specfem::element::medium_tag::elastic,
+#define TEST_STORE_LOAD(Dimension, MediumTag)                                  \
+  check_store<GET_TAG(Dimension), GET_TAG(MediumTag),                          \
+              specfem::wavefield::simulation_field::forward>(assembly);        \
+  check_load<GET_TAG(Dimension), GET_TAG(MediumTag),                           \
              specfem::wavefield::simulation_field::forward>(assembly);
 
-  check_store<specfem::dimension::type::dim2,
-              specfem::element::medium_tag::acoustic,
-              specfem::wavefield::simulation_field::forward>(assembly);
+  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
+      TEST_STORE_LOAD,
+      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC))
 
-  check_load<specfem::dimension::type::dim2,
-             specfem::element::medium_tag::acoustic,
-             specfem::wavefield::simulation_field::forward>(assembly);
+#undef TEST_STORE_LOAD
 }
 
 TEST_F(ASSEMBLY, sources) {
