@@ -1,14 +1,7 @@
 #pragma once
 
-#include "algorithms/dot.hpp"
-#include "algorithms/gradient.hpp"
-#include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
-#include "enumerations/wavefield.hpp"
-#include "globals.h"
-#include "point/field_derivatives.hpp"
-#include "point/properties.hpp"
-#include "point/stress.hpp"
+#include "point/field.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
