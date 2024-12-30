@@ -5,7 +5,7 @@
 #include "compute/interface.hpp"
 #include "constants.hpp"
 #include "domain/interface.hpp"
-#include "material/interface.hpp"
+#include "medium/material.hpp"
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"
 #include "quadrature/interface.hpp"
@@ -62,7 +62,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
   auto [gllx, gllz] = setup.instantiate_quadrature();
 
   // Read mesh generated MESHFEM
-  std::vector<specfem::material::material *> materials;
+  std::vector<specfem::medium::material *> materials;
   specfem::mesh::mesh mesh = specfem::IO::read_mesh(database_file, mpi);
 
   // Read sources

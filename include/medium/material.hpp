@@ -20,7 +20,7 @@ namespace medium {
  */
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-class material : public specfem::material::properties<MediumTag, PropertyTag> {
+class material : public specfem::medium::properties<MediumTag, PropertyTag> {
 public:
   constexpr static auto medium_tag = MediumTag;     ///< Medium tag
   constexpr static auto property_tag = PropertyTag; ///< Property tag
@@ -44,7 +44,7 @@ public:
    */
   template <typename... Args>
   material(Args &&...args)
-      : specfem::material::properties<MediumTag, PropertyTag>(
+      : specfem::medium::properties<MediumTag, PropertyTag>(
             std::forward<Args>(args)...) {}
   ///@}
 
