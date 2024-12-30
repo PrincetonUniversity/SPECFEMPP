@@ -1,6 +1,6 @@
 #pragma once
 
-#include "enumerations/specfem_enums.hpp"
+#include "enumerations/medium.hpp"
 #include "medium/properties.hpp"
 #include "point/properties.hpp"
 #include "specfem_setup.hpp"
