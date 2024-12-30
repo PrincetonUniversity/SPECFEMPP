@@ -1,16 +1,18 @@
 #include "mesh/materials/materials.hpp"
 #include "IO/fortranio/interface.hpp"
+#include "enumerations/medium.hpp"
 #include "kokkos_abstractions.h"
+#include "medium/material.hpp"
 #include "mesh/materials/materials.tpp"
 #include <vector>
 
 std::variant<
-    specfem::material::material<specfem::element::medium_tag::elastic,
-                                specfem::element::property_tag::isotropic>,
-    specfem::material::material<specfem::element::medium_tag::elastic,
-                                specfem::element::property_tag::anisotropic>,
-    specfem::material::material<specfem::element::medium_tag::acoustic,
-                                specfem::element::property_tag::isotropic> >
+    specfem::medium::material<specfem::element::medium_tag::elastic,
+                              specfem::element::property_tag::isotropic>,
+    specfem::medium::material<specfem::element::medium_tag::elastic,
+                              specfem::element::property_tag::anisotropic>,
+    specfem::medium::material<specfem::element::medium_tag::acoustic,
+                              specfem::element::property_tag::isotropic> >
 specfem::mesh::materials::operator[](const int index) const {
 
   const auto &material_specification = this->material_index_mapping(index);

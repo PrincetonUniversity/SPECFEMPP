@@ -1,6 +1,7 @@
 #ifndef _COMPUTE_PARTIAL_DERIVATIVES_HPP
 #define _COMPUTE_PARTIAL_DERIVATIVES_HPP
 
+#include "compute/compute_mesh.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
 #include "macros.hpp"

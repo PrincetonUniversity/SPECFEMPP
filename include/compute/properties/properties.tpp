@@ -1,8 +1,7 @@
-#ifndef _COMPUTE_PROPERTIES_PROPERTIES_TPP_
-#define _COMPUTE_PROPERTIES_PROPERTIES_TPP_
-
+#pragma once
 #include "mesh/materials/interface.hpp"
 #include "properties.hpp"
+#include "medium/material.hpp"
 #include <Kokkos_Core.hpp>
 
 template <specfem::enums::element::type type,
@@ -27,7 +26,7 @@ specfem::compute::properties::material_property<
         for (int ix = 0; ix < ngllx; ++ix) {
           // Get the material at index from mesh::materials
           auto material =
-              std::get<specfem::material::material<type, property> >(
+              std::get<specfem::medium::material<type, property> >(
                   materials[index]);
           // Assign the material property to the property container
           auto point_property = material.get_property();

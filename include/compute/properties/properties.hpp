@@ -1,12 +1,11 @@
-#ifndef _COMPUTE_PROPERTIES_HPP
-#define _COMPUTE_PROPERTIES_HPP
+#pragma once
 
 #include "enumerations/specfem_enums.hpp"
 #include "impl/material_properties.hpp"
 #include "impl/properties_container.hpp"
 #include "kokkos_abstractions.h"
 #include "macros.hpp"
-#include "material/material.hpp"
+#include "medium/material.hpp"
 #include "point/coordinates.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -286,5 +285,3 @@ void store_on_host(const IndexType &lcoord,
 }
 } // namespace compute
 } // namespace specfem
-
-#endif

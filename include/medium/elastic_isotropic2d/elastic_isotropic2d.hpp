@@ -1,5 +1,6 @@
 #pragma once
 
+#include "compute/assembly/assembly.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "enumerations/specfem_enums.hpp"

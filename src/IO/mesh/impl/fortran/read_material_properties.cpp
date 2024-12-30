@@ -1,7 +1,7 @@
 #include "IO/mesh/impl/fortran/read_material_properties.hpp"
 #include "IO/fortranio/interface.hpp"
 #include "enumerations/interface.hpp"
-// #include "mesh/materials/materials.hpp"
+#include "medium/material.hpp"
 #include "mesh/materials/materials.tpp"
 #include "specfem_mpi/interface.hpp"
 #include "utilities/interface.hpp"
@@ -45,7 +45,7 @@ std::vector<specfem::mesh::materials::material_specification> read_materials(
     std::cout << "Number of material systems = " << numat << "\n\n";
 
   // Section for elastic isotropic
-  std::vector<specfem::material::material<elastic, isotropic> >
+  std::vector<specfem::medium::material<elastic, isotropic> >
       l_elastic_isotropic;
 
   l_elastic_isotropic.reserve(numat);
@@ -53,7 +53,7 @@ std::vector<specfem::mesh::materials::material_specification> read_materials(
   int index_elastic_isotropic = 0;
 
   // Section for elastic anisotropic
-  std::vector<specfem::material::material<elastic, anisotropic> >
+  std::vector<specfem::medium::material<elastic, anisotropic> >
       l_elastic_anisotropic;
 
   l_elastic_anisotropic.reserve(numat);
@@ -61,7 +61,7 @@ std::vector<specfem::mesh::materials::material_specification> read_materials(
   int index_elastic_anisotropic = 0;
 
   // Section for acoustic isotropic
-  std::vector<specfem::material::material<acoustic, isotropic> >
+  std::vector<specfem::medium::material<acoustic, isotropic> >
       l_acoustic_isotropic;
 
   l_acoustic_isotropic.reserve(numat);
@@ -96,7 +96,7 @@ std::vector<specfem::mesh::materials::material_specification> read_materials(
         const type_real Qkappa = read_values.val5;
         const type_real Qmu = read_values.val6;
 
-        specfem::material::material<acoustic, isotropic>
+        specfem::medium::material<acoustic, isotropic>
             acoustic_isotropic_holder(density, cp, Qkappa, Qmu,
                                       compaction_grad);
 
@@ -120,9 +120,8 @@ std::vector<specfem::mesh::materials::material_specification> read_materials(
         const type_real Qkappa = read_values.val5;
         const type_real Qmu = read_values.val6;
 
-        specfem::material::material<elastic, isotropic>
-            elastic_isotropic_holder(density, cs, cp, Qkappa, Qmu,
-                                     compaction_grad);
+        specfem::medium::material<elastic, isotropic> elastic_isotropic_holder(
+            density, cs, cp, Qkappa, Qmu, compaction_grad);
 
         elastic_isotropic_holder.print();
 
@@ -151,7 +150,7 @@ std::vector<specfem::mesh::materials::material_specification> read_materials(
       const type_real Qkappa = read_values.val11;
       const type_real Qmu = read_values.val12;
 
-      specfem::material::material<elastic, anisotropic>
+      specfem::medium::material<elastic, anisotropic>
           elastic_anisotropic_holder(density, c11, c13, c15, c33, c35, c55, c12,
                                      c23, c25, Qkappa, Qmu);
 
