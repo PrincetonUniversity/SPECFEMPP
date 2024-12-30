@@ -1,8 +1,8 @@
 #pragma once
 
 #include "enumerations/specfem_enums.hpp"
+#include "medium/properties.hpp"
 #include "point/properties.hpp"
-#include "properties.hpp"
 #include "specfem_setup.hpp"
 #include <exception>
 #include <iostream>
