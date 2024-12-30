@@ -640,7 +640,7 @@ if (SPECFEMPP_ENABLE_PYTHON)
         Boost::program_options
         pybind11::headers
     )
-    target_compile_definitions(_core PRIVATE SPECFEMPP_ENABLE_PYTHON)
+    target_compile_definitions(_core PRIVATE SPECFEMPP_BINDING_PYTHON)
     target_compile_definitions(_core PRIVATE VERSION_INFO=${PROJECT_VERSION})
     install(TARGETS _core DESTINATION specfempp_core)
 endif (SPECFEMPP_ENABLE_PYTHON)
