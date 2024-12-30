@@ -631,6 +631,7 @@ if (SPECFEMPP_ENABLE_PYTHON)
         parameter_reader
         receiver_class
         writer
+        plotter
         reader
         domain
         coupled_interface
