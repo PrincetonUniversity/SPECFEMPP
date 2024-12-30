@@ -7,7 +7,7 @@
 
 template <specfem::enums::element::type type,
           specfem::enums::element::property_tag property>
-specfem::compute::properties::material_property<
+specfem::compute::properties::material_properties<
     type, property>::medium_property(const int nspec, const int n_element,
                                      const int ngllz, const int ngllx,
                                      const specfem::mesh::materials &materials,

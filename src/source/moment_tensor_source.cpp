@@ -26,7 +26,7 @@ void specfem::sources::moment_tensor::compute_source_array(
       this->x, this->z);
   auto lcoord = specfem::algorithms::locate_point(coord, mesh);
 
-  const auto el_type = properties.h_element_types(lcoord.ispec);
+  const auto el_type = properties.h_medium_tags(lcoord.ispec);
 
   if (el_type == specfem::element::medium_tag::acoustic) {
     throw std::runtime_error(

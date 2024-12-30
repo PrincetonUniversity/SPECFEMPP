@@ -12,16 +12,16 @@ namespace impl {
 namespace properties {
 template <specfem::element::medium_tag type,
           specfem::element::property_tag property>
-struct material_property
+struct material_properties
     : public specfem::compute::impl::properties::properties_container<
           type, property> {
   constexpr static auto value_type = type;
   constexpr static auto property_type = property;
   constexpr static auto dimension = specfem::dimension::type::dim2;
 
-  material_property() = default;
+  material_properties() = default;
 
-  material_property(
+  material_properties(
       const int nspec, const int n_element, const int ngllz, const int ngllx,
       const specfem::compute::mesh_to_compute_mapping &mapping,
       const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,

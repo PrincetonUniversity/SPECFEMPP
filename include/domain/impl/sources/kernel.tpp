@@ -31,9 +31,9 @@ specfem::domain::impl::kernels::source_kernel<
   // Check if the source element is the type being allocated
   for (int isource = 0; isource < nsources; isource++) {
     const int ispec = sources.h_source_index_mapping(isource);
-    if ((assembly.properties.h_element_types(ispec) !=
+    if ((assembly.properties.h_medium_tags(ispec) !=
          medium_tag) &&
-        (assembly.properties.h_element_property(ispec) !=
+        (assembly.properties.h_property_tags(ispec) !=
          property_tag)) {
       throw std::runtime_error("Invalid element detected in kernel");
     }
