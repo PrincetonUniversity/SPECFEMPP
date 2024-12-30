@@ -100,7 +100,7 @@ void test_compute_wavefield(specfem::compute::assembly &assembly) {
 TEST_F(ASSEMBLY, compute_wavefield) {
   for (auto parameters : *this) {
     const auto Test = std::get<0>(parameters);
-    auto assembly = std::get<1>(parameters);
+    specfem::compute::assembly assembly = std::get<4>(parameters);
 
     try {
       test_compute_wavefield(assembly);
