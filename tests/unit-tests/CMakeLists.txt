@@ -109,7 +109,6 @@ target_link_libraries(
   kokkos_environment
   yaml-cpp
   IO
-  # material_class
   -lpthread -lm
 )
 
@@ -128,7 +127,6 @@ target_link_libraries(
   yaml-cpp
   compare_arrays
   Boost::filesystem
-  # material_class
   -lpthread -lm
 )
 
@@ -147,7 +145,6 @@ target_link_libraries(
   yaml-cpp
   compare_arrays
   Boost::filesystem
-  # material_class
   -lpthread -lm
 )
 
@@ -165,7 +162,6 @@ target_link_libraries(
 #   kokkos_environment
 #   yaml-cpp
 #   compare_arrays
-#   # material_class
 #   -lpthread -lm
 # )
 
@@ -185,7 +181,6 @@ target_link_libraries(
   compare_arrays
   IO
   Boost::filesystem
-  # material_class
   -lpthread -lm
 )
 
@@ -272,7 +267,6 @@ target_link_libraries(
 
 # # target_link_libraries(
 # #   source_location_tests
-# #   material_class
 # #   mpi_environment
 # #   kokkos_environment
 # #   yaml-cpp
@@ -292,7 +286,6 @@ target_link_libraries(
   rmass_inverse_tests
   quadrature
   mesh
-  # material_class
   yaml-cpp
   kokkos_environment
   mpi_environment
@@ -317,7 +310,6 @@ target_link_libraries(
   displacement_newmark_tests
   quadrature
   mesh
-  # material_class
   yaml-cpp
   kokkos_environment
   mpi_environment
