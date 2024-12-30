@@ -10,7 +10,7 @@
 #include <sstream>
 
 namespace specfem {
-namespace material {
+namespace medium {
 
 /**
  * @brief Template specialization for elastic isotropic material properties
@@ -281,5 +281,5 @@ private:
   type_real Qmu;     ///< Attenuation factor for shear modulus
 };
 
-} // namespace material
+} // namespace medium
 } // namespace specfem
