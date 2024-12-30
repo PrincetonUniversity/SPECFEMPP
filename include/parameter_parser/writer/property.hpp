@@ -22,6 +22,8 @@ public:
   std::shared_ptr<specfem::reader::reader>
   instantiate_property_reader(const specfem::compute::assembly &assembly) const;
 
+  bool has_gll_model() const;
+
 private:
   bool write_mode;           ///< True if writing, false if reading
   std::string output_format; ///< format of output file

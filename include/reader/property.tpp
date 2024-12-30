@@ -46,7 +46,7 @@ void specfem::reader::property<InputLibrary>::read() {
 
   {
     typename InputLibrary::Group acoustic = file.openGroup("/Acoustic");
-    
+
     acoustic.openDataset("rho_inverse", properties.acoustic_isotropic.h_rho_inverse).read();
     acoustic.openDataset("kappa", properties.acoustic_isotropic.h_kappa).read();
   }
