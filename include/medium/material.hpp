@@ -10,7 +10,7 @@
 #include <tuple>
 
 namespace specfem {
-namespace material {
+namespace medium {
 
 /**
  * @brief Material properties for a given medium and property
@@ -60,5 +60,5 @@ public:
   };
 };
 
-} // namespace material
+} // namespace medium
 } // namespace specfem
