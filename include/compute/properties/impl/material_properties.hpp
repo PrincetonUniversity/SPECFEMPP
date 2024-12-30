@@ -2,7 +2,6 @@
 
 #include "compute/compute_mesh.hpp"
 #include "enumerations/interface.hpp"
-#include "medium/material.hpp"
 #include "mesh/materials/materials.hpp"
 #include "mesh/tags/tags.hpp"
 #include "properties_container.hpp"
@@ -43,7 +42,7 @@ struct material_property
           for (int ix = 0; ix < ngllx; ++ix) {
             // Get the material at index from mesh::materials
             auto material =
-                std::get<specfem::medium::material<type, property> >(
+                std::get<specfem::material::material<type, property> >(
                     materials[ispec_mesh]);
 
             // Assign the material property to the property container
