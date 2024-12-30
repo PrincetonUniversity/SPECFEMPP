@@ -22,11 +22,13 @@ void create_folder_if_not_exists(const std::string &folder_name) {
 
 specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
                                              const std::string &default_file) {
-  YAML::Node parameter_yaml = YAML::LoadFile(parameter_file);
-  YAML::Node default_yaml = YAML::LoadFile(default_file);
+  setup(YAML::LoadFile(parameter_file), YAML::LoadFile(default_file));
+}
 
-  const YAML::Node &runtime_config = parameter_yaml["parameters"];
-  const YAML::Node &default_config = default_yaml["default-parameters"];
+specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict,
+                                             const YAML::Node &default_dict) {
+  const YAML::Node &runtime_config = parameter_dict["parameters"];
+  const YAML::Node &default_config = default_dict["default-parameters"];
 
   const YAML::Node &simulation_setup = runtime_config["simulation-setup"];
   const YAML::Node &n_solver = simulation_setup["solver"];
@@ -59,7 +61,7 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
     this->run_setup =
         std::make_unique<specfem::runtime_configuration::run_setup>(
             n_run_setup);
-  } else if (const YAML::Node &n_run_setup = default_yaml["run-setup"]) {
+  } else if (const YAML::Node &n_run_setup = default_dict["run-setup"]) {
     this->run_setup =
         std::make_unique<specfem::runtime_configuration::run_setup>(
             n_run_setup);
