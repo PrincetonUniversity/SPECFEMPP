@@ -1,7 +1,6 @@
 #ifndef _ALGORITHMS_GRADIENT_HPP
 #define _ALGORITHMS_GRADIENT_HPP
 
-#include "compute/compute_partial_derivatives.hpp"
 #include "kokkos_abstractions.h"
 #include "point/field_derivatives.hpp"
 #include "point/partial_derivatives.hpp"

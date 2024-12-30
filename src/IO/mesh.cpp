@@ -10,7 +10,7 @@
 #include "IO/mesh/impl/fortran/read_parameters.hpp"
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "medium/material.hpp"
+#include "material/material.hpp"
 #include "mesh/tags/tags.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
