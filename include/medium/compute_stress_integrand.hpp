@@ -1,10 +1,10 @@
 #pragma once
 
-#include "acoustic_isotropic2d/stress_integrand.tpp"
-#include "elastic_anisotropic2d/stress_integrand.tpp"
-#include "elastic_isotropic2d/stress_integrand.tpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
+#include "medium/2d/acoustic/isotropic/stress_integrand.tpp"
+#include "medium/2d/elastic/anisotropic/stress_integrand.tpp"
+#include "medium/2d/elastic/isotropic/stress_integrand.tpp"
 #include "point/field_derivatives.hpp"
 #include "point/partial_derivatives.hpp"
 #include "point/properties.hpp"
