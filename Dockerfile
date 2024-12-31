@@ -12,7 +12,7 @@ RUN echo "Installing CMake..." && \
     echo "====================" && \
     echo "" && \
     apt-get update && \
-    apt-get install -y cmake && \
+    apt-get install -y cmake=3.19 && \
     echo "Done."
 
 RUN echo "cmake version:" && \
