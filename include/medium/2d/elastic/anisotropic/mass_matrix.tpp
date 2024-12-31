@@ -2,6 +2,9 @@
 
 #include "mass_matrix.hpp"
 
+// The commented instantiation is identical to the isotropic case and
+// therefore not needed.
+
 // template <bool UseSIMD, specfem::element::property_tag PropertyTag>
 // KOKKOS_FUNCTION specfem::point::field<specfem::dimension::type::dim2,
 //                                       specfem::element::medium_tag::elastic,
