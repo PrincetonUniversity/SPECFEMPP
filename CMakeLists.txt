@@ -17,6 +17,12 @@ set(NUM_CHUNKS 1)
 set(NUM_THREADS 160)
 set(NUM_VECTOR_LANES 1)
 
+# Set binary output directories.
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/archive)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+
 if (SPECFEMPP_ENABLE_PYTHON)
     message("-- Adding -fPIC flag for Python binding.")
     if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
@@ -121,7 +127,8 @@ configure_file(constants.hpp.in constants.hpp)
 include_directories(include)
 include_directories(${CMAKE_BINARY_DIR})
 
-add_subdirectory(meshfem2d)
+add_subdirectory(fortran/meshfem2d)
+add_subdirectory(fortran/meshfem3d)
 
 if (ENABLE_SIMD)
         message("-- Enabling SIMD")
