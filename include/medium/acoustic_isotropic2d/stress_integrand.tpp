@@ -1,12 +1,12 @@
 #pragma once
 
-#include "acoustic2d.hpp"
+#include "stress_integrand.hpp"
 
 template <bool UseSIMD>
 KOKKOS_FUNCTION KOKKOS_FUNCTION specfem::point::stress_integrand<
     specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
     UseSIMD>
-specfem::domain::impl::elements::impl_compute_stress_integrands(
+specfem::medium::impl_compute_stress_integrands(
     const specfem::point::partial_derivatives<
         specfem::dimension::type::dim2, false, UseSIMD> &partial_derivatives,
     const specfem::point::properties<
@@ -35,19 +35,4 @@ specfem::domain::impl::elements::impl_compute_stress_integrands(
                    partial_derivatives.gammaz * du(1, 0));
 
   return { F };
-}
-
-template <bool UseSIMD>
-KOKKOS_FUNCTION specfem::point::field<specfem::dimension::type::dim2,
-                                      specfem::element::medium_tag::acoustic,
-                                      false, false, false, true, UseSIMD>
-specfem::domain::impl::elements::impl_mass_matrix_component(
-    const specfem::point::properties<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
-        specfem::element::property_tag::isotropic, UseSIMD> &properties,
-    const specfem::point::partial_derivatives<
-        specfem::dimension::type::dim2, true, UseSIMD> &partial_derivatives) {
-
-  return specfem::datatype::ScalarPointViewType<type_real, 1, UseSIMD>(
-      partial_derivatives.jacobian / properties.kappa);
 }
