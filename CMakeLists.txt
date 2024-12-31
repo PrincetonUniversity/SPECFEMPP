@@ -412,9 +412,9 @@ target_link_libraries(
 add_library(
         domain
         src/domain/impl/boundary_conditions/boundary_conditions.cpp
-        src/domain/impl/elements/acoustic/acoustic2d.cpp
-        src/domain/impl/elements/elastic/elastic2d.cpp
-        src/domain/impl/elements/element.cpp
+        # src/domain/impl/elements/acoustic/acoustic2d.cpp
+        # src/domain/impl/elements/elastic/elastic2d.cpp
+        # src/domain/impl/elements/element.cpp
         src/domain/impl/elements/kernel.cpp
         src/domain/impl/kernels.cpp
         src/domain/domain.cpp
@@ -425,6 +425,19 @@ target_link_libraries(
         Kokkos::kokkos
         enumerations
         Boost::boost
+)
+
+add_library(
+        medium
+        src/medium/compute_mass_matrix.cpp
+        src/medium/compute_stress_integrand.cpp
+)
+
+target_link_libraries(
+        medium
+        Kokkos::kokkos
+        compute
+        domain
 )
 
 add_library(coupled_interface
@@ -472,6 +485,7 @@ target_link_libraries(
         timescheme
         domain
         kernels
+        medium
 )
 
 add_library(
@@ -542,6 +556,7 @@ target_link_libraries(
         reader
         kernels
         domain
+        medium
         solver
         Boost::filesystem
 )
@@ -567,6 +582,7 @@ target_link_libraries(
         plotter
         reader
         domain
+        medium
         coupled_interface
         kernels
         solver
@@ -630,6 +646,7 @@ if (SPECFEMPP_ENABLE_PYTHON)
         writer
         reader
         domain
+        medium
         coupled_interface
         kernels
         solver

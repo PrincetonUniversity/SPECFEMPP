@@ -1,17 +1,18 @@
 #pragma once
+#pragma once
 
-#include "elastic2d.hpp"
+#include "stress_integrand.hpp"
 
 template <bool UseSIMD>
 KOKKOS_FUNCTION specfem::point::stress_integrand<
     specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
     UseSIMD>
-specfem::domain::impl::elements::impl_compute_stress_integrands(
+specfem::medium::impl_compute_stress_integrands(
     const specfem::point::partial_derivatives<
         specfem::dimension::type::dim2, false, UseSIMD> &partial_derivatives,
     const specfem::point::properties<
         specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-        specfem::element::property_tag::isotropic, UseSIMD> &properties,
+        specfem::element::property_tag::anisotropic, UseSIMD> &properties,
     const specfem::point::field_derivatives<
         specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
         UseSIMD> &field_derivatives) {
@@ -56,29 +57,4 @@ specfem::domain::impl::elements::impl_compute_stress_integrands(
             sigma_zz * partial_derivatives.gammaz;
 
   return { F };
-}
-
-template <bool UseSIMD, specfem::element::property_tag PropertyTag>
-KOKKOS_FUNCTION specfem::point::field<specfem::dimension::type::dim2,
-                                      specfem::element::medium_tag::elastic,
-                                      false, false, false, true, UseSIMD>
-specfem::domain::impl::elements::impl_mass_matrix_component(
-    const specfem::point::properties<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-        PropertyTag, UseSIMD> &properties,
-    const specfem::point::partial_derivatives<
-        specfem::dimension::type::dim2, true, UseSIMD> &partial_derivatives) {
-
-  if constexpr (specfem::globals::simulation_wave == specfem::wave::p_sv) {
-    return specfem::datatype::ScalarPointViewType<type_real, 2, UseSIMD>(
-        partial_derivatives.jacobian * properties.rho,
-        partial_derivatives.jacobian * properties.rho);
-  } else if constexpr (specfem::globals::simulation_wave == specfem::wave::sh) {
-    return specfem::datatype::ScalarPointViewType<type_real, 2, UseSIMD>(
-        partial_derivatives.jacobian * properties.rho, 0);
-  } else {
-    static_assert("Unknown wave type");
-    return specfem::datatype::ScalarPointViewType<type_real, 2, UseSIMD>(
-        0.0, 0.0); // dummy return
-  }
 }

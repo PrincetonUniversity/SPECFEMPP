@@ -4,7 +4,8 @@
 #include "algorithms/gradient.hpp"
 #include "compute/assembly/assembly.hpp"
 #include "domain/impl/boundary_conditions/boundary_conditions.hpp"
-#include "element.hpp"
+#include "medium/compute_stress_integrand.hpp"
+#include "medium/compute_mass_matrix.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "enumerations/specfem_enums.hpp"
@@ -120,7 +121,7 @@ void specfem::domain::impl::kernels::element_kernel_base<
                 }();
 
                 PointMassType mass_matrix =
-                    specfem::domain::impl::elements::mass_matrix_component(
+                    specfem::medium::mass_matrix_component(
                         point_property, point_partial_derivatives);
 
                 for (int icomp = 0; icomp < components; icomp++) {
