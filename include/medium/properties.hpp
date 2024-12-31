@@ -3,7 +3,7 @@
 #include "enumerations/medium.hpp"
 
 namespace specfem {
-namespace material {
+namespace medium {
 /**
  * @brief Material properties for a given medium and property
  *
@@ -13,5 +13,5 @@ namespace material {
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 class properties;
-} // namespace material
+} // namespace medium
 } // namespace specfem

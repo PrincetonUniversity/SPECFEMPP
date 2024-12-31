@@ -42,7 +42,7 @@ struct material_properties
           for (int ix = 0; ix < ngllx; ++ix) {
             // Get the material at index from mesh::materials
             auto material =
-                std::get<specfem::material::material<type, property> >(
+                std::get<specfem::medium::material<type, property> >(
                     materials[ispec_mesh]);
 
             // Assign the material property to the property container
