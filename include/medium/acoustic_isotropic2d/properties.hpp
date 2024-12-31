@@ -45,8 +45,7 @@ public:
              const type_real &Qkappa, const type_real &Qmu,
              const type_real &compaction_grad)
       : density(density), cp(cp), Qkappa(Qkappa), Qmu(Qmu),
-        compaction_grad(compaction_grad), lambdaplus2mu(density * cp * cp),
-        lambda(lambdaplus2mu), kappa(lambda) {
+        compaction_grad(compaction_grad), kappa(density * cp * cp) {
     if (this->Qkappa <= 0.0 || this->Qmu <= 0.0) {
       std::runtime_error(
           "negative or null values of Q attenuation factor not allowed; set "
@@ -99,9 +98,7 @@ public:
    */
   inline specfem::point::properties<dimension, medium_tag, property_tag, false>
   get_properties() const {
-    return { static_cast<type_real>(1.0) /
-                 static_cast<type_real>(lambdaplus2mu),
-             static_cast<type_real>(1.0) / static_cast<type_real>(density),
+    return { static_cast<type_real>(1.0) / static_cast<type_real>(density),
              this->kappa };
   }
 
@@ -114,7 +111,6 @@ public:
             << "      cp : " << this->cp << "\n"
             << "      kappa : " << this->kappa << "\n"
             << "      Qkappa : " << this->Qkappa << "\n"
-            << "      lambda : " << this->lambda << "\n"
             << "      youngs modulus : 0.0 \n"
             << "      poisson ratio :  0.5 \n";
 
@@ -127,8 +123,6 @@ private:
   type_real Qkappa;          ///< Attenuation factor for bulk modulus
   type_real Qmu;             ///< Attenuation factor for shear modulus
   type_real compaction_grad; ///< Compaction gradient
-  type_real lambdaplus2mu;   ///< Lame parameter
-  type_real lambda;          ///< Lame parameter
   type_real kappa;           ///< Bulk modulus
 };
 
