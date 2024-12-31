@@ -1,8 +1,8 @@
 #pragma once
 
-#include "acoustic_isotropic2d/stress.hpp"
-#include "elastic_anisotropic2d/stress.hpp"
-#include "elastic_isotropic2d/stress.hpp"
+#include "2d/acoustic/isotropic/compute_stress.hpp"
+#include "2d/elastic/anisotropic/compute_stress.hpp"
+#include "2d/elastic/isotropic/compute_stress.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
