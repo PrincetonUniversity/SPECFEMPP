@@ -105,7 +105,7 @@ endif()
 
 
 # Try finding boost and if not found install.
-find_package(Boost 1.78.0 COMPONENTS program_options filesystem system)
+find_package(Boost 1.73.0 COMPONENTS program_options filesystem system algorithm tokenizer)
 
 if (NOT ${Boost_FOUND})
     # Add boost lib sources
