@@ -59,8 +59,7 @@ public:
    * @return std::shared_ptr<specfem::reader::reader> Pointer to an instantiated
    * reader object
    */
-  std::shared_ptr<specfem::reader::reader> instantiate_wavefield_reader(
-      const specfem::compute::assembly &assembly) const;
+  std::shared_ptr<specfem::reader::reader> instantiate_wavefield_reader() const;
 
   inline specfem::simulation::type get_simulation_type() const {
     return this->simulation_type;

@@ -1,5 +1,6 @@
-#ifndef READER_READER_HPP
-#define READER_READER_HPP
+#pragma once
+
+#include "compute/assembly/assembly.hpp"
 
 namespace specfem {
 namespace reader {
@@ -13,9 +14,7 @@ public:
    * @brief Method to execute the read operation
    *
    */
-  virtual void read() = 0;
+  virtual void read(specfem::compute::assembly &assembly) = 0;
 };
 } // namespace reader
 } // namespace specfem
-
-#endif

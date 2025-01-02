@@ -174,10 +174,10 @@ public:
     }
   }
 
-  std::shared_ptr<specfem::reader::reader> instantiate_wavefield_reader(
-      const specfem::compute::assembly &assembly) const {
+  std::shared_ptr<specfem::reader::reader>
+  instantiate_wavefield_reader() const {
     if (this->wavefield) {
-      return this->wavefield->instantiate_wavefield_reader(assembly);
+      return this->wavefield->instantiate_wavefield_reader();
     } else {
       return nullptr;
     }
@@ -192,10 +192,9 @@ public:
     }
   }
 
-  std::shared_ptr<specfem::reader::reader> instantiate_property_reader(
-      const specfem::compute::assembly &assembly) const {
+  std::shared_ptr<specfem::reader::reader> instantiate_property_reader() const {
     if (this->property) {
-      return this->property->instantiate_property_reader(assembly);
+      return this->property->instantiate_property_reader();
     } else {
       return nullptr;
     }

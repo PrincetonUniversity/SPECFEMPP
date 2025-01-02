@@ -19,8 +19,7 @@ public:
   std::shared_ptr<specfem::writer::writer>
   instantiate_property_writer(const specfem::compute::assembly &assembly) const;
 
-  std::shared_ptr<specfem::reader::reader>
-  instantiate_property_reader(const specfem::compute::assembly &assembly) const;
+  std::shared_ptr<specfem::reader::reader> instantiate_property_reader() const;
 
   bool has_gll_model() const;
 

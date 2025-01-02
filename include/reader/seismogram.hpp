@@ -13,7 +13,7 @@ class external;
 namespace specfem {
 namespace reader {
 
-class seismogram : public reader {
+class seismogram {
 public:
   seismogram(){};
   seismogram(const char *filename,
@@ -26,7 +26,7 @@ public:
              specfem::kokkos::HostView2d<type_real> source_time_function)
       : filename(filename), type(type),
         source_time_function(source_time_function) {}
-  void read() override;
+  void read();
 
 private:
   std::string filename;
