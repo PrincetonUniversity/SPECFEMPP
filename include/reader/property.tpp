@@ -9,12 +9,11 @@
 #include <Kokkos_Core.hpp>
 
 template <typename InputLibrary>
-specfem::reader::property<InputLibrary>::property(
-    const specfem::compute::assembly &assembly, const std::string input_folder)
-    : input_folder(input_folder), properties(assembly.properties) {}
+specfem::reader::property<InputLibrary>::property(const std::string input_folder): input_folder(input_folder) {}
 
 template <typename InputLibrary>
-void specfem::reader::property<InputLibrary>::read() {
+void specfem::reader::property<InputLibrary>::read(specfem::compute::assembly &assembly) {
+  auto &properties = assembly.properties;
 
   using DomainView =
       Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace>;

@@ -66,8 +66,8 @@ specfem::runtime_configuration::wavefield::instantiate_wavefield_writer(
 }
 
 std::shared_ptr<specfem::reader::reader>
-specfem::runtime_configuration::wavefield::instantiate_wavefield_reader(
-    const specfem::compute::assembly &assembly) const {
+specfem::runtime_configuration::wavefield::instantiate_wavefield_reader()
+    const {
 
   const std::shared_ptr<specfem::reader::reader> reader =
       [&]() -> std::shared_ptr<specfem::reader::reader> {
@@ -75,11 +75,10 @@ specfem::runtime_configuration::wavefield::instantiate_wavefield_reader(
       if (this->output_format == "HDF5") {
         return std::make_shared<
             specfem::reader::wavefield<specfem::IO::HDF5<specfem::IO::read> > >(
-            this->output_folder, assembly);
+            this->output_folder);
       } else if (this->output_format == "ASCII") {
         return std::make_shared<specfem::reader::wavefield<
-            specfem::IO::ASCII<specfem::IO::read> > >(this->output_folder,
-                                                      assembly);
+            specfem::IO::ASCII<specfem::IO::read> > >(this->output_folder);
       } else {
         throw std::runtime_error("Unknown wavefield format");
       }

@@ -64,8 +64,7 @@ specfem::runtime_configuration::property::instantiate_property_writer(
 }
 
 std::shared_ptr<specfem::reader::reader>
-specfem::runtime_configuration::property::instantiate_property_reader(
-    const specfem::compute::assembly &assembly) const {
+specfem::runtime_configuration::property::instantiate_property_reader() const {
 
   const std::shared_ptr<specfem::reader::reader> reader =
       [&]() -> std::shared_ptr<specfem::reader::reader> {
@@ -75,11 +74,11 @@ specfem::runtime_configuration::property::instantiate_property_reader(
     if (this->output_format == "HDF5") {
       return std::make_shared<
           specfem::reader::property<specfem::IO::HDF5<specfem::IO::read> > >(
-          assembly, this->output_folder);
+          this->output_folder);
     } else if (this->output_format == "ASCII") {
       return std::make_shared<
           specfem::reader::property<specfem::IO::ASCII<specfem::IO::read> > >(
-          assembly, this->output_folder);
+          this->output_folder);
     } else {
       throw std::runtime_error("Unknown model format");
     }

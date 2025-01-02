@@ -178,12 +178,12 @@ void execute(const YAML::Node &parameter_dict, const YAML::Node &default_dict,
     return;
   }
 
-  const auto property_reader = setup.instantiate_property_reader(assembly);
+  const auto property_reader = setup.instantiate_property_reader();
   if (property_reader) {
     mpi->cout("Reading model files:");
     mpi->cout("-------------------------------");
 
-    property_reader->read();
+    property_reader->read(assembly);
   }
 
   // --------------------------------------------------------------
@@ -194,12 +194,12 @@ void execute(const YAML::Node &parameter_dict, const YAML::Node &default_dict,
   //                   Read wavefields
   // --------------------------------------------------------------
 
-  const auto wavefield_reader = setup.instantiate_wavefield_reader(assembly);
+  const auto wavefield_reader = setup.instantiate_wavefield_reader();
   if (wavefield_reader) {
     mpi->cout("Reading wavefield files:");
     mpi->cout("-------------------------------");
 
-    wavefield_reader->read();
+    wavefield_reader->read(assembly);
     // Transfer the buffer field to device
     assembly.fields.buffer.copy_to_device();
   }
