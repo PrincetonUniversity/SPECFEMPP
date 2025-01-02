@@ -4,6 +4,7 @@
 #include "2d/elastic/anisotropic/mass_matrix.tpp"
 #include "2d/elastic/isotropic/mass_matrix.tpp"
 #include "enumerations/dimension.hpp"
+#include "enumerations/material_definitions.hpp"
 #include "enumerations/medium.hpp"
 #include "point/field.hpp"
 #include "point/partial_derivatives.hpp"
