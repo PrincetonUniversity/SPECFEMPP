@@ -124,7 +124,7 @@ if (NOT ${Boost_FOUND})
     # Fetch boost from the Github release zip file to reduce download time
     FetchContent_Declare(
         Boost
-        URL https://github.com/boostorg/boost/releases/download/boost-${BOOST_VERSION}/boost-${BOOST_VERSION}-cmake.7z # downloading a zip release speeds up the download
+        URL https://github.com/boostorg/boost/releases/download/boost-${BOOST_VERSION}/boost-${BOOST_VERSION}-cmake.tar.gz # downloading a zip release speeds up the download
         USES_TERMINAL_DOWNLOAD True
         GIT_PROGRESS TRUE
         DOWNLOAD_NO_EXTRACT FALSE
