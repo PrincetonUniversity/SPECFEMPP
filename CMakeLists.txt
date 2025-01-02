@@ -438,6 +438,7 @@ target_link_libraries(
         Kokkos::kokkos
         compute
         domain
+        enumerations
 )
 
 add_library(coupled_interface

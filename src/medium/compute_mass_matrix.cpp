@@ -1,47 +1,30 @@
 #include "medium/compute_mass_matrix.hpp"
+#include "enumerations/dimension.hpp"
+#include "enumerations/material_definitions.hpp"
+#include "enumerations/medium.hpp"
 
 // This file only contains explicit template instantiations
 
-// dim2, elastic, isotropic, false
-template specfem::point::field<specfem::dimension::type::dim2,
-                               specfem::element::medium_tag::elastic, false,
-                               false, false, true, false>
-specfem::medium::impl_mass_matrix_component(
-    const specfem::point::properties<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-        specfem::element::property_tag::isotropic, false> &,
-    const specfem::point::partial_derivatives<specfem::dimension::type::dim2,
-                                              true, false> &);
+#define INSTANTIATION_MACRO(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)           \
+  template specfem::point::field<DIMENSION_TAG, MEDIUM_TAG, false, false,      \
+                                 false, true, false>                           \
+  specfem::medium::impl_mass_matrix_component(                                 \
+      const specfem::point::properties<DIMENSION_TAG, MEDIUM_TAG,              \
+                                       PROPERTY_TAG, false> &,                 \
+      const specfem::point::partial_derivatives<DIMENSION_TAG, true, false>    \
+          &);                                                                  \
+                                                                               \
+  template specfem::point::field<DIMENSION_TAG, MEDIUM_TAG, false, false,      \
+                                 false, true, true>                            \
+  specfem::medium::impl_mass_matrix_component(                                 \
+      const specfem::point::properties<DIMENSION_TAG, MEDIUM_TAG,              \
+                                       PROPERTY_TAG, false> &,                 \
+      const specfem::point::partial_derivatives<DIMENSION_TAG, true, true> &);
 
-// dim2, elastic, isotropic, true
-template specfem::point::field<specfem::dimension::type::dim2,
-                               specfem::element::medium_tag::elastic, false,
-                               false, false, true, true>
-specfem::medium::impl_mass_matrix_component(
-    const specfem::point::properties<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-        specfem::element::property_tag::isotropic, true> &,
-    const specfem::point::partial_derivatives<specfem::dimension::type::dim2,
-                                              true, true> &);
+CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(INSTANTIATION_MACRO,
+                                    WHERE(DIMENSION_TAG_DIM2)
+                                        WHERE(MEDIUM_TAG_ELASTIC)
+                                            WHERE(PROPERTY_TAG_ISOTROPIC,
+                                                  PROPERTY_TAG_ANISOTROPIC))
 
-// dim2, elastic, anisotropic, false
-template specfem::point::field<specfem::dimension::type::dim2,
-                               specfem::element::medium_tag::elastic, false,
-                               false, false, true, false>
-specfem::medium::impl_mass_matrix_component(
-    const specfem::point::properties<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-        specfem::element::property_tag::anisotropic, false> &,
-    const specfem::point::partial_derivatives<specfem::dimension::type::dim2,
-                                              true, false> &);
-
-// dim2, elastic, anisotropic, true
-template specfem::point::field<specfem::dimension::type::dim2,
-                               specfem::element::medium_tag::elastic, false,
-                               false, false, true, true>
-specfem::medium::impl_mass_matrix_component(
-    const specfem::point::properties<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-        specfem::element::property_tag::anisotropic, true> &,
-    const specfem::point::partial_derivatives<specfem::dimension::type::dim2,
-                                              true, true> &);
+#undef INSTANTIATION_MACRO
