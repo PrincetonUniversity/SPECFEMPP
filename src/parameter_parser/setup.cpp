@@ -22,7 +22,7 @@ void create_folder_if_not_exists(const std::string &folder_name) {
 
 specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
                                              const std::string &default_file) {
-  setup(YAML::LoadFile(parameter_file), YAML::LoadFile(default_file));
+  *this = setup(YAML::LoadFile(parameter_file), YAML::LoadFile(default_file));
 }
 
 specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict,
