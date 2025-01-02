@@ -109,7 +109,7 @@ find_package(Boost 1.73.0 COMPONENTS program_options filesystem system)
 
 if (NOT ${Boost_FOUND})
     # Add boost lib sources
-    set(BOOST_INCLUDE_LIBRARIES program_options filesystem system algorithm)
+    set(BOOST_INCLUDE_LIBRARIES program_options filesystem system algorithm tokenizer)
     set(BOOST_ENABLE_CMAKE ON)
     set(BOOST_ENABLE_MPI ON CACHE INTERNAL "Boost MPI Switch") # Assume outer variable
     set(BOOST_ENABLE_PYTHON OFF CACHE INTERNAL "Boost Python Switch") # Assume outer variable
@@ -216,6 +216,7 @@ if (NOT HDF5_CXX_BUILD)
         receiver_class
         Boost::filesystem
         Boost::algorithm
+        Boost::tokenizer
         Kokkos::kokkos)
 else()
     target_link_libraries(
@@ -225,6 +226,7 @@ else()
         receiver_class
         Boost::filesystem
         Boost::algorithm
+        Boost::tokenizer
         Kokkos::kokkos
         ${HDF5_LIBRARIES}
     )
