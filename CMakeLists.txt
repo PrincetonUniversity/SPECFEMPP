@@ -105,11 +105,13 @@ endif()
 
 
 # Try finding boost and if not found install.
-find_package(Boost 1.73.0 COMPONENTS program_options filesystem system algorithm tokenizer)
+find_package(Boost 1.73.0 COMPONENTS program_options filesystem system)
+
 
 if (NOT ${Boost_FOUND})
     # Add boost lib sources
     set(BOOST_INCLUDE_LIBRARIES program_options filesystem system algorithm tokenizer)
+    set(BOOST_LIBS Boost::program_options Boost::filesystem Boost::system Boost::algorithm Boost::tokenizer)
     set(BOOST_ENABLE_CMAKE ON)
     set(BOOST_ENABLE_MPI OFF CACHE INTERNAL "Boost MPI Switch") # Assume outer variable
     set(BOOST_ENABLE_PYTHON OFF CACHE INTERNAL "Boost Python Switch") # Assume outer variable
@@ -134,6 +136,7 @@ if (NOT ${Boost_FOUND})
 
 else()
     # Check which boost LIBRARY_DIRS to use
+    set(BOOST_LIBS Boost::boost Boost::program_options Boost::filesystem Boost::system)
     message(STATUS "Boost libs/ and incs/:")
     message(STATUS "    LIB:   ${Boost_LIBRARY_DIRS}")
     message(STATUS "    INC:   ${Boost_INCLUDE_DIRS}")
@@ -214,9 +217,7 @@ if (NOT HDF5_CXX_BUILD)
         mesh
         source_class
         receiver_class
-        Boost::filesystem
-        Boost::algorithm
-        Boost::tokenizer
+        ${BOOST_LIBS}
         Kokkos::kokkos)
 else()
     target_link_libraries(
@@ -224,9 +225,7 @@ else()
         mesh
         source_class
         receiver_class
-        Boost::filesystem
-        Boost::algorithm
-        Boost::tokenizer
+
         Kokkos::kokkos
         ${HDF5_LIBRARIES}
     )
@@ -400,7 +399,7 @@ target_link_libraries(
         yaml-cpp
         point
         algorithms
-        Boost::filesystem
+        ${BOOST_LIBS}
 )
 
 add_library(
@@ -415,7 +414,7 @@ target_link_libraries(
         # utilities
         quadrature
         yaml-cpp
-        Boost::filesystem
+        ${BOOST_LIBS}
 )
 
 add_library(
@@ -618,7 +617,7 @@ target_link_libraries(
         kernels
         domain
         solver
-        Boost::filesystem
+        ${BOOST_LIBS}
 )
 
 add_executable(
@@ -645,7 +644,7 @@ target_link_libraries(
         coupled_interface
         kernels
         solver
-        Boost::program_options
+        ${BOOST_LIBS}
 )
 
 # Include tests
@@ -708,7 +707,7 @@ if (SPECFEMPP_ENABLE_PYTHON)
         coupled_interface
         kernels
         solver
-        Boost::program_options
+        ${BOOST_LIBS}
         pybind11::headers
     )
     target_compile_definitions(_core PRIVATE SPECFEMPP_ENABLE_PYTHON)
