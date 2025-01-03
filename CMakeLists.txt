@@ -110,8 +110,9 @@ find_package(Boost 1.73.0 COMPONENTS program_options filesystem system)
 
 if (NOT ${Boost_FOUND})
     # Add boost lib sources
-    set(BOOST_INCLUDE_LIBRARIES program_options filesystem system algorithm tokenizer)
-    set(BOOST_LIBS Boost::program_options Boost::filesystem Boost::system Boost::algorithm Boost::tokenizer)
+    set(BOOST_INCLUDE_LIBRARIES program_options filesystem system algorithm tokenizer preprocessor)
+    set(BOOST_LIBS Boost::program_options Boost::filesystem Boost::system
+                   Boost::algorithm Boost::tokenizer Boost::preprocessor)
     set(BOOST_ENABLE_CMAKE ON)
     set(BOOST_ENABLE_MPI OFF CACHE INTERNAL "Boost MPI Switch") # Assume outer variable
     set(BOOST_ENABLE_PYTHON OFF CACHE INTERNAL "Boost Python Switch") # Assume outer variable
@@ -247,6 +248,12 @@ add_library(
         enumerations
         src/enumerations/medium.cpp
 )
+
+target_link_libraries(
+        enumerations
+        ${BOOST_LIBS}
+)
+
 
 add_library(
         edge
@@ -465,7 +472,6 @@ target_link_libraries(
         domain
         Kokkos::kokkos
         enumerations
-        Boost::boost
 )
 
 add_library(coupled_interface
