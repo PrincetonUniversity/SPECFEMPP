@@ -38,8 +38,7 @@ specfem::runtime_configuration::kernel::kernel(
 }
 
 std::shared_ptr<specfem::writer::writer>
-specfem::runtime_configuration::kernel::instantiate_kernel_writer(
-    const specfem::compute::assembly &assembly) const {
+specfem::runtime_configuration::kernel::instantiate_kernel_writer() const {
 
   const std::shared_ptr<specfem::writer::writer> writer =
       [&]() -> std::shared_ptr<specfem::writer::writer> {
@@ -47,11 +46,11 @@ specfem::runtime_configuration::kernel::instantiate_kernel_writer(
       if (this->output_format == "HDF5") {
         return std::make_shared<
             specfem::writer::kernel<specfem::IO::HDF5<specfem::IO::write> > >(
-            assembly, this->output_folder);
+            this->output_folder);
       } else if (this->output_format == "ASCII") {
         return std::make_shared<
             specfem::writer::kernel<specfem::IO::ASCII<specfem::IO::write> > >(
-            assembly, this->output_folder);
+            this->output_folder);
       } else {
         throw std::runtime_error("Unknown wavefield format");
       }

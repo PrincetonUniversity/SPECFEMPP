@@ -17,6 +17,8 @@ public:
   /**
    * @brief Method to execute the read operation
    *
+   * @param assembly Assembly object
+   *
    */
   virtual void read(specfem::compute::assembly &assembly) = 0;
 };

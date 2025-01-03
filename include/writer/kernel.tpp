@@ -10,13 +10,13 @@
 #include <Kokkos_Core.hpp>
 
 template <typename OutputLibrary>
-specfem::writer::kernel<OutputLibrary>::kernel(
-    const specfem::compute::assembly &assembly, const std::string output_folder)
-    : output_folder(output_folder), mesh(assembly.mesh),
-      kernels(assembly.kernels) {}
+specfem::writer::kernel<OutputLibrary>::kernel(const std::string output_folder)
+    : output_folder(output_folder) {}
 
 template <typename OutputLibrary>
-void specfem::writer::kernel<OutputLibrary>::write() {
+void specfem::writer::kernel<OutputLibrary>::write(specfem::compute::assembly &assembly) {
+  const auto &mesh = assembly.mesh;
+  auto &kernels = assembly.kernels;
 
   using DomainView =
       Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace>;

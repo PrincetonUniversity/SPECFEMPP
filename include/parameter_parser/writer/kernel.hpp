@@ -1,6 +1,6 @@
 #pragma once
 
-#include "compute/assembly/assembly.hpp"
+#include "enumerations/simulation.hpp"
 #include "reader/reader.hpp"
 #include "writer/writer.hpp"
 #include "yaml-cpp/yaml.h"
@@ -16,8 +16,7 @@ public:
 
   kernel(const YAML::Node &Node, const specfem::simulation::type type);
 
-  std::shared_ptr<specfem::writer::writer>
-  instantiate_kernel_writer(const specfem::compute::assembly &assembly) const;
+  std::shared_ptr<specfem::writer::writer> instantiate_kernel_writer() const;
 
   inline specfem::simulation::type get_simulation_type() const {
     return this->simulation_type;

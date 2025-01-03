@@ -21,23 +21,21 @@ public:
   /**
    * @brief Construct a writer object
    *
-   * @param assembly SPECFEM++ assembly
    * @param output_folder Path to output location (will be an .h5 file if using
    * HDF5, and a folder if using ASCII)
    */
-  property(const specfem::compute::assembly &assembly,
-           const std::string output_folder);
+  property(const std::string output_folder);
 
   /**
    * @brief write the property data to disk
    *
+   * @param assembly SPECFEM++ assembly
+   *
    */
-  void write() override;
+  void write(specfem::compute::assembly &assembly) override;
 
 private:
-  std::string output_folder;               ///< Path to output folder
-  specfem::compute::mesh mesh;             ///< Mesh object
-  specfem::compute::properties properties; ///< Properties object
+  std::string output_folder; ///< Path to output folder
 };
 } // namespace writer
 } // namespace specfem

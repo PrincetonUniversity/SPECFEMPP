@@ -46,8 +46,7 @@ public:
    * @return specfem::writer::writer* Pointer to an instantiated writer object
    */
   std::shared_ptr<specfem::writer::writer>
-  instantiate_seismogram_writer(const specfem::compute::receivers &receivers,
-                                const type_real dt, const type_real t0,
+  instantiate_seismogram_writer(const type_real dt, const type_real t0,
                                 const int nsteps_between_samples) const;
 
 private:
