@@ -10,9 +10,7 @@
 #include "specfem_setup.hpp"
 
 namespace specfem {
-namespace domain {
-namespace impl {
-namespace elements {
+namespace medium {
 
 // Acoustic 2D isotropic specialization
 // stress_integrand = rho^{-1} * \sum_{i,k=1}^{2} \partial_i w^{\alpha\gamma}
@@ -31,18 +29,5 @@ impl_compute_stress_integrands(
         specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
         UseSIMD> &field_derivatives);
 
-template <bool UseSIMD>
-KOKKOS_FUNCTION specfem::point::field<specfem::dimension::type::dim2,
-                                      specfem::element::medium_tag::acoustic,
-                                      false, false, false, true, UseSIMD>
-impl_mass_matrix_component(
-    const specfem::point::properties<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
-        specfem::element::property_tag::isotropic, UseSIMD> &properties,
-    const specfem::point::partial_derivatives<
-        specfem::dimension::type::dim2, true, UseSIMD> &partial_derivatives);
-
-} // namespace elements
-} // namespace impl
-} // namespace domain
+} // namespace medium
 } // namespace specfem
