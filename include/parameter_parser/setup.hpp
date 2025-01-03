@@ -132,19 +132,6 @@ public:
   }
 
   /**
-   * @brief Whether there is a GLL model to read from
-   *
-   * @return bool true if there is a GLL model to read from
-   */
-  bool has_gll_model() const {
-    if (this->property) {
-      return this->property->has_gll_model();
-    } else {
-      return false;
-    }
-  }
-
-  /**
    * @brief Instantiate a seismogram writer object
    *
    * @param receivers Pointer to specfem::compute::receivers struct
@@ -153,22 +140,21 @@ public:
    * @return specfem::writer::writer* Pointer to an instantiated writer
    object
    */
-  std::shared_ptr<specfem::writer::writer> instantiate_seismogram_writer(
-      const specfem::compute::assembly &assembly) const {
+  std::shared_ptr<specfem::writer::writer>
+  instantiate_seismogram_writer() const {
     if (this->seismogram) {
       return this->seismogram->instantiate_seismogram_writer(
-          assembly.receivers, this->time_scheme->get_dt(),
-          this->time_scheme->get_t0(),
+          this->time_scheme->get_dt(), this->time_scheme->get_t0(),
           this->receivers->get_nstep_between_samples());
     } else {
       return nullptr;
     }
   }
 
-  std::shared_ptr<specfem::writer::writer> instantiate_wavefield_writer(
-      const specfem::compute::assembly &assembly) const {
+  std::shared_ptr<specfem::writer::writer>
+  instantiate_wavefield_writer() const {
     if (this->wavefield) {
-      return this->wavefield->instantiate_wavefield_writer(assembly);
+      return this->wavefield->instantiate_wavefield_writer();
     } else {
       return nullptr;
     }
@@ -200,19 +186,17 @@ public:
     }
   }
 
-  std::shared_ptr<specfem::writer::writer> instantiate_property_writer(
-      const specfem::compute::assembly &assembly) const {
+  std::shared_ptr<specfem::writer::writer> instantiate_property_writer() const {
     if (this->property) {
-      return this->property->instantiate_property_writer(assembly);
+      return this->property->instantiate_property_writer();
     } else {
       return nullptr;
     }
   }
 
-  std::shared_ptr<specfem::writer::writer>
-  instantiate_kernel_writer(const specfem::compute::assembly &assembly) const {
+  std::shared_ptr<specfem::writer::writer> instantiate_kernel_writer() const {
     if (this->kernel) {
-      return this->kernel->instantiate_kernel_writer(assembly);
+      return this->kernel->instantiate_kernel_writer();
     } else {
       return nullptr;
     }

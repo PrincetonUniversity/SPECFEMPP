@@ -1,6 +1,5 @@
 #pragma once
 
-#include "compute/assembly/assembly.hpp"
 #include "reader/reader.hpp"
 #include "writer/writer.hpp"
 #include "yaml-cpp/yaml.h"
@@ -16,12 +15,9 @@ public:
 
   property(const YAML::Node &Node, const bool write_mode);
 
-  std::shared_ptr<specfem::writer::writer>
-  instantiate_property_writer(const specfem::compute::assembly &assembly) const;
+  std::shared_ptr<specfem::writer::writer> instantiate_property_writer() const;
 
   std::shared_ptr<specfem::reader::reader> instantiate_property_reader() const;
-
-  bool has_gll_model() const;
 
 private:
   bool write_mode;           ///< True if writing, false if reading

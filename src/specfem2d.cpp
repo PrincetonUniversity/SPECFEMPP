@@ -169,12 +169,12 @@ void execute(const YAML::Node &parameter_dict, const YAML::Node &default_dict,
   // --------------------------------------------------------------
   //                Read or Write properties
   // --------------------------------------------------------------
-  const auto property_writer = setup.instantiate_property_writer(assembly);
+  const auto property_writer = setup.instantiate_property_writer();
   if (property_writer) {
     mpi->cout("Writing model files:");
     mpi->cout("-------------------------------");
 
-    property_writer->write();
+    property_writer->write(assembly);
     return;
   }
 
@@ -239,36 +239,36 @@ void execute(const YAML::Node &parameter_dict, const YAML::Node &default_dict,
   // --------------------------------------------------------------
   //                   Write Seismograms
   // --------------------------------------------------------------
-  const auto seismogram_writer = setup.instantiate_seismogram_writer(assembly);
+  const auto seismogram_writer = setup.instantiate_seismogram_writer();
   if (seismogram_writer) {
     mpi->cout("Writing seismogram files:");
     mpi->cout("-------------------------------");
 
-    seismogram_writer->write();
+    seismogram_writer->write(assembly);
   }
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
   //                  Write Forward Wavefields
   // --------------------------------------------------------------
-  const auto wavefield_writer = setup.instantiate_wavefield_writer(assembly);
+  const auto wavefield_writer = setup.instantiate_wavefield_writer();
   if (wavefield_writer) {
     mpi->cout("Writing wavefield files:");
     mpi->cout("-------------------------------");
 
-    wavefield_writer->write();
+    wavefield_writer->write(assembly);
   }
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
   //                Write Kernels
   // --------------------------------------------------------------
-  const auto kernel_writer = setup.instantiate_kernel_writer(assembly);
+  const auto kernel_writer = setup.instantiate_kernel_writer();
   if (kernel_writer) {
     mpi->cout("Writing kernel files:");
     mpi->cout("-------------------------------");
 
-    kernel_writer->write();
+    kernel_writer->write(assembly);
   }
   // --------------------------------------------------------------
 

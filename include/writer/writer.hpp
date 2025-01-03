@@ -1,5 +1,10 @@
-#ifndef _WRITER_HPP
-#define _WRITER_HPP
+#pragma once
+
+namespace specfem {
+namespace compute {
+class assembly;
+}
+} // namespace specfem
 
 namespace specfem {
 namespace writer {
@@ -12,11 +17,11 @@ public:
   /**
    * @brief Method to execute the write operation
    *
+   * @param assembly Assembly object
+   *
    */
-  virtual void write(){};
+  virtual void write(specfem::compute::assembly &assembly){};
 };
 
 } // namespace writer
 } // namespace specfem
-
-#endif

@@ -20,8 +20,6 @@ public:
   /**
    * @brief Construct a new seismogram writer object
    *
-   * @param receivers Vector of pointers to specfem::receivers::receiver objects
-   * @param compute_receivers Pointer to specfem::compute::receivers object
    * @param type Format of the output file
    * @param output_folder path to output folder where results will be stored
    * @param dt Time interval between subsequent timesteps
@@ -29,31 +27,24 @@ public:
    * @param nstep_between_samples number of timesteps between seismogram
    * sampling (seismogram sampling frequency)
    */
-  seismogram(const specfem::compute::receivers &receivers,
-             const specfem::enums::seismogram::format type,
+  seismogram(const specfem::enums::seismogram::format type,
              const std::string output_folder, const type_real dt,
              const type_real t0, const int nstep_between_samples)
-      : nreceivers(receivers.nreceivers), receivers(receivers), type(type),
-        output_folder(output_folder), dt(dt), t0(t0),
+      : type(type), output_folder(output_folder), dt(dt), t0(t0),
         nstep_between_samples(nstep_between_samples){};
   /**
    * @brief Write seismograms
    *
+   * @param assembly Assembly object
+   *
    */
-  void write() override;
+  void write(specfem::compute::assembly &assembly) override;
 
 private:
-  int nreceivers;                          ///< Number of receivers
   specfem::enums::seismogram::format type; ///< Output format of the seismogram
                                            ///< file
   std::string output_folder; ///< Path to output folder where results will be
                              ///< stored
-  specfem::compute::receivers receivers; ///< Pointer to
-                                         ///< specfem::compute::receivers
-                                         ///< object. This object
-                                         ///< containes the view used
-                                         ///< to store calculated
-                                         ///< seismograms
   type_real dt;              ///< Time interval between subsequent timesteps
   type_real t0;              ///< Solver start time
   int nstep_between_samples; ///< number of timesteps between seismogram

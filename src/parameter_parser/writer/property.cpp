@@ -39,8 +39,7 @@ specfem::runtime_configuration::property::property(const YAML::Node &Node,
 }
 
 std::shared_ptr<specfem::writer::writer>
-specfem::runtime_configuration::property::instantiate_property_writer(
-    const specfem::compute::assembly &assembly) const {
+specfem::runtime_configuration::property::instantiate_property_writer() const {
 
   const std::shared_ptr<specfem::writer::writer> writer =
       [&]() -> std::shared_ptr<specfem::writer::writer> {
@@ -50,11 +49,11 @@ specfem::runtime_configuration::property::instantiate_property_writer(
     if (this->output_format == "HDF5") {
       return std::make_shared<
           specfem::writer::property<specfem::IO::HDF5<specfem::IO::write> > >(
-          assembly, this->output_folder);
+          this->output_folder);
     } else if (this->output_format == "ASCII") {
       return std::make_shared<
           specfem::writer::property<specfem::IO::ASCII<specfem::IO::write> > >(
-          assembly, this->output_folder);
+          this->output_folder);
     } else {
       throw std::runtime_error("Unknown model format");
     }
@@ -85,8 +84,4 @@ specfem::runtime_configuration::property::instantiate_property_reader() const {
   }();
 
   return reader;
-}
-
-bool specfem::runtime_configuration::property::has_gll_model() const {
-  return !this->write_mode;
 }
