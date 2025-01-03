@@ -2,9 +2,9 @@
 
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
-#include "medium/2d/acoustic/isotropic/stress_integrand.tpp"
-#include "medium/2d/elastic/anisotropic/stress_integrand.tpp"
-#include "medium/2d/elastic/isotropic/stress_integrand.tpp"
+#include "medium/dim2/acoustic/isotropic/stress_integrand.tpp"
+#include "medium/dim2/elastic/anisotropic/stress_integrand.tpp"
+#include "medium/dim2/elastic/isotropic/stress_integrand.tpp"
 #include "point/field_derivatives.hpp"
 #include "point/partial_derivatives.hpp"
 #include "point/properties.hpp"
