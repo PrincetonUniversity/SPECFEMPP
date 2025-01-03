@@ -1,8 +1,8 @@
 #pragma once
 
-#include "2d/acoustic/isotropic/properties.hpp"
-#include "2d/elastic/anisotropic/properties.hpp"
-#include "2d/elastic/isotropic/properties.hpp"
+#include "dim2/acoustic/isotropic/properties.hpp"
+#include "dim2/elastic/anisotropic/properties.hpp"
+#include "dim2/elastic/isotropic/properties.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "point/properties.hpp"
 #include "properties.hpp"

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "2d/acoustic/isotropic/frechet_derivative.hpp"
-#include "2d/elastic/anisotropic/frechet_derivative.hpp"
-#include "2d/elastic/isotropic/frechet_derivative.hpp"
+#include "dim2/acoustic/isotropic/frechet_derivative.hpp"
+#include "dim2/elastic/anisotropic/frechet_derivative.hpp"
+#include "dim2/elastic/isotropic/frechet_derivative.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

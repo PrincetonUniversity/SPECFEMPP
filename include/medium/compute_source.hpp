@@ -1,8 +1,8 @@
 #pragma once
 
-#include "2d/acoustic/isotropic/source.hpp"
-#include "2d/elastic/anisotropic/source.hpp"
-#include "2d/elastic/isotropic/source.hpp"
+#include "dim2/acoustic/isotropic/source.hpp"
+#include "dim2/elastic/anisotropic/source.hpp"
+#include "dim2/elastic/isotropic/source.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

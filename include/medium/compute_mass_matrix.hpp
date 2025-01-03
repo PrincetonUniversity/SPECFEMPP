@@ -1,8 +1,8 @@
 #pragma once
 
-#include "2d/acoustic/isotropic/mass_matrix.tpp"
-#include "2d/elastic/anisotropic/mass_matrix.tpp"
-#include "2d/elastic/isotropic/mass_matrix.tpp"
+#include "dim2/acoustic/isotropic/mass_matrix.tpp"
+#include "dim2/elastic/anisotropic/mass_matrix.tpp"
+#include "dim2/elastic/isotropic/mass_matrix.tpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/material_definitions.hpp"
 #include "enumerations/medium.hpp"

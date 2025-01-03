@@ -460,9 +460,6 @@ target_link_libraries(
 add_library(
         domain
         src/domain/impl/boundary_conditions/boundary_conditions.cpp
-        # src/domain/impl/elements/acoustic/acoustic2d.cpp
-        # src/domain/impl/elements/elastic/elastic2d.cpp
-        # src/domain/impl/elements/element.cpp
         src/domain/impl/elements/kernel.cpp
         src/domain/impl/kernels.cpp
         src/domain/domain.cpp
