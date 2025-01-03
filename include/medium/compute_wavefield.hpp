@@ -1,8 +1,8 @@
 #pragma once
 
-#include "acoustic_isotropic2d/wavefield.hpp"
-#include "elastic_anisotropic2d/wavefield.hpp"
-#include "elastic_isotropic2d/wavefield.hpp"
+#include "dim2/acoustic/isotropic/wavefield.hpp"
+#include "dim2/elastic/anisotropic/wavefield.hpp"
+#include "dim2/elastic/isotropic/wavefield.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {

@@ -140,7 +140,7 @@ impl_compute_frechet_derivatives(
     /*
     I realized that we need the rest of the stiffness matrix for the SH wave,
     which is probably why anisotropic sh kernels aren't really supported in the
-    speccfem2d fortran code. That would require a larger update to the
+    specfem2d fortran code. That would require a larger update to the
     anisotropic properties. I will leave this as a placeholder for now.
     Specifically, we need the following additional properties:
     - c44
