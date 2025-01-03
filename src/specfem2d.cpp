@@ -163,7 +163,7 @@ void execute(const YAML::Node &parameter_dict, const YAML::Node &default_dict,
   specfem::compute::assembly assembly(
       mesh, quadrature, sources, receivers, setup.get_seismogram_types(),
       setup.get_t0(), dt, nsteps, max_seismogram_time_step,
-      setup.get_simulation_type(), setup.has_gll_model());
+      setup.get_simulation_type(), setup.instantiate_property_reader());
   time_scheme->link_assembly(assembly);
 
   // --------------------------------------------------------------
@@ -178,13 +178,13 @@ void execute(const YAML::Node &parameter_dict, const YAML::Node &default_dict,
     return;
   }
 
-  const auto property_reader = setup.instantiate_property_reader();
-  if (property_reader) {
-    mpi->cout("Reading model files:");
-    mpi->cout("-------------------------------");
+  // const auto property_reader = setup.instantiate_property_reader();
+  // if (property_reader) {
+  //   mpi->cout("Reading model files:");
+  //   mpi->cout("-------------------------------");
 
-    property_reader->read(assembly);
-  }
+  //   property_reader->read(assembly);
+  // }
 
   // --------------------------------------------------------------
 

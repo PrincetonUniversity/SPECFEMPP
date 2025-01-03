@@ -222,7 +222,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     specfem::compute::assembly assembly(mesh, quadratures, sources, receivers,
                                         seismogram_types, t0, setup.get_dt(),
                                         nsteps, it->get_max_seismogram_step(),
-                                        setup.get_simulation_type(), false);
+                                        setup.get_simulation_type(), nullptr);
 
     it->link_assembly(assembly);
 

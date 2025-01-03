@@ -1,6 +1,10 @@
 #pragma once
 
-#include "compute/assembly/assembly.hpp"
+namespace specfem {
+namespace compute {
+class assembly;
+}
+} // namespace specfem
 
 namespace specfem {
 namespace reader {

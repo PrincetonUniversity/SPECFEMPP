@@ -15,6 +15,7 @@
 #include "enumerations/display.hpp"
 #include "enumerations/interface.hpp"
 #include "mesh/mesh.hpp"
+#include "reader/reader.hpp"
 #include "receiver/interface.hpp"
 #include "source/interface.hpp"
 
@@ -77,7 +78,7 @@ struct assembly {
       const std::vector<specfem::enums::seismogram::type> &stypes,
       const type_real t0, const type_real dt, const int max_timesteps,
       const int max_sig_step, const specfem::simulation::type simulation,
-      const bool has_gll_model);
+      const std::shared_ptr<specfem::reader::reader> &property_reader);
 
   /**
    * @brief Maps the component of wavefield on the entire spectral element grid
