@@ -23,11 +23,11 @@ If the above command returns a path to the ``specfem2d`` executable, then the bu
 
 .. code:: bash
 
-    export PATH=$PATH:<PATH TO SPECFEM++ BUILD DIRECTORY>
+    export PATH=$PATH:<PATH TO SPECFEM++ BUILD DIRECTORY/bin>
 
 .. note::
 
-    Make sure to replace ``<PATH TO SPECFEM++ BUILD DIRECTORY>`` with the actual path to the SPECFEM++ build directory on your system.
+    Make sure to replace ``<PATH TO SPECFEM++ BUILD DIRECTORY/bin>`` with the actual path to the SPECFEM++ build directory on your system.
 
 Now let's create the necessary directories to store the input files and output artifacts.
 
