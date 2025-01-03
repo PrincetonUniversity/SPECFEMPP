@@ -207,6 +207,11 @@ add_library(
         src/enumerations/medium.cpp
 )
 
+target_link_libraries(
+        enumerations
+        Boost::boost
+)
+
 add_library(
         edge
         src/edge/interface.cpp
