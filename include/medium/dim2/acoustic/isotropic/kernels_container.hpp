@@ -35,14 +35,10 @@ public:
 
   kernels_container(const int nspec, const int ngllz, const int ngllx)
       : nspec(nspec), ngllz(ngllz), ngllx(ngllx),
-        rho("specfem::compute::impl::kernels::acoustic::rho", nspec, ngllz,
-            ngllx),
-        kappa("specfem::compute::impl::kernels::acoustic::kappa", nspec, ngllz,
-              ngllx),
-        rho_prime("specfem::compute::impl::kernels::acoustic::rho_prime", nspec,
-                  ngllz, ngllx),
-        alpha("specfem::compute::impl::kernels::acoustic::alpha", nspec, ngllz,
-              ngllx),
+        rho("specfem::medium::acoustic::rho", nspec, ngllz, ngllx),
+        kappa("specfem::medium::acoustic::kappa", nspec, ngllz, ngllx),
+        rho_prime("specfem::medium::acoustic::rho_prime", nspec, ngllz, ngllx),
+        alpha("specfem::medium::acoustic::alpha", nspec, ngllz, ngllx),
         h_rho(Kokkos::create_mirror_view(rho)),
         h_kappa(Kokkos::create_mirror_view(kappa)),
         h_rho_prime(Kokkos::create_mirror_view(rho_prime)),
@@ -401,7 +397,7 @@ public:
 
   void initialize() {
     Kokkos::parallel_for(
-        "specfem::compute::impl::kernels::acoustic::initialize",
+        "specfem::medium::acoustic::initialize",
         Kokkos::MDRangePolicy<Kokkos::Rank<3> >({ 0, 0, 0 },
                                                 { nspec, ngllz, ngllx }),
         KOKKOS_CLASS_LAMBDA(const int ispec, const int iz, const int ix) {

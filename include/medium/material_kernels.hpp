@@ -23,8 +23,7 @@ public:
       const specfem::compute::mesh_to_compute_mapping &mapping,
       const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
       const specfem::kokkos::HostView1d<int> property_index_mapping)
-      : specfem::compute::impl::kernels::kernels_container<value_type,
-                                                           property_type>(
+      : specfem::medium::kernels_container<value_type, property_type>(
             n_element, ngllz, ngllx) {
     int count = 0;
     for (int ispec = 0; ispec < nspec; ++ispec) {
