@@ -11,6 +11,7 @@ on:
       - devel
     tags:
       - v*
+
 permissions:
   packages: write
 jobs:
