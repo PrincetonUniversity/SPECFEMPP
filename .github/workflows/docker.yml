@@ -9,6 +9,8 @@ on:
   pull_request:
     branches:
       - devel
+    tags:
+      - v*
 permissions:
   packages: write
 jobs:
