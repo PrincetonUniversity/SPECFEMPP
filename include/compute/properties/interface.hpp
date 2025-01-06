@@ -1,9 +1,5 @@
-#ifndef _COMPUTE_PROPERTIES_INTERFACE_HPP_
-#define _COMPUTE_PROPERTIES_INTERFACE_HPP_
+#pragma once
 
+#include "medium/material_properties.hpp"
+#include "medium/properties_container.hpp"
 #include "properties.hpp"
-// #include "properties.tpp"
-#include "impl/material_properties.hpp"
-#include "impl/properties_container.hpp"
-
-#endif /* _COMPUTE_PROPERTIES_INTERFACE_HPP_ */
