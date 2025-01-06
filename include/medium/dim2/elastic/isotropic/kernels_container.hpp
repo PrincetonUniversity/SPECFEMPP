@@ -40,17 +40,12 @@ public:
 
   kernels_container(const int nspec, const int ngllz, const int ngllx)
       : nspec(nspec), ngllz(ngllz), ngllx(ngllx),
-        rho("specfem::compute::impl::kernels::elastic::rho", nspec, ngllz,
-            ngllx),
-        mu("specfem::compute::impl::kernels::elastic::mu", nspec, ngllz, ngllx),
-        kappa("specfem::compute::impl::kernels::elastic::kappa", nspec, ngllz,
-              ngllx),
-        rhop("specfem::compute::impl::kernels::elastic::rhop", nspec, ngllz,
-             ngllx),
-        alpha("specfem::compute::impl::kernels::elastic::alpha", nspec, ngllz,
-              ngllx),
-        beta("specfem::compute::impl::kernels::elastic::beta", nspec, ngllz,
-             ngllx),
+        rho("specfem::medium::elastic::rho", nspec, ngllz, ngllx),
+        mu("specfem::medium::elastic::mu", nspec, ngllz, ngllx),
+        kappa("specfem::medium::elastic::kappa", nspec, ngllz, ngllx),
+        rhop("specfem::medium::elastic::rhop", nspec, ngllz, ngllx),
+        alpha("specfem::medium::elastic::alpha", nspec, ngllz, ngllx),
+        beta("specfem::medium::elastic::beta", nspec, ngllz, ngllx),
         h_rho(Kokkos::create_mirror_view(rho)),
         h_mu(Kokkos::create_mirror_view(mu)),
         h_kappa(Kokkos::create_mirror_view(kappa)),
@@ -467,7 +462,7 @@ public:
 
   void initialize() {
     Kokkos::parallel_for(
-        "specfem::compute::impl::kernels::elastic::initialize",
+        "specfem::medium::elastic::isotropic::initialize",
         Kokkos::MDRangePolicy<Kokkos::Rank<3> >({ 0, 0, 0 },
                                                 { nspec, ngllz, ngllx }),
         KOKKOS_CLASS_LAMBDA(const int ispec, const int iz, const int ix) {

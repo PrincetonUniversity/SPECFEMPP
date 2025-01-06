@@ -58,7 +58,7 @@ void specfem::compute::impl::compute_number_of_elements_per_medium(
 }
 
 // template class specfem::compute::impl::value_containers<
-//     specfem::compute::impl::kernels::material_kernels>;
+//     specfem::medium::material_kernels>;
 
 // template class specfem::compute::impl::value_containers<
 //     specfem::medium::material_properties>;

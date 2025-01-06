@@ -5,6 +5,9 @@
 #include "point/kernels.hpp"
 #include <Kokkos_Core.hpp>
 
+namespace specfem {
+namespace medium {
+
 template <>
 class kernels_container<specfem::element::medium_tag::elastic,
                         specfem::element::property_tag::anisotropic> {
@@ -489,7 +492,7 @@ public:
 
   void initialize() {
     Kokkos::parallel_for(
-        "specfem::compute::impl::kernels::elastic::initialize",
+        "specfem::medium::elastic::anisotropic::initialize",
         Kokkos::MDRangePolicy<Kokkos::Rank<3> >({ 0, 0, 0 },
                                                 { nspec, ngllz, ngllx }),
         KOKKOS_CLASS_LAMBDA(const int ispec, const int iz, const int ix) {
@@ -503,3 +506,6 @@ public:
         });
   }
 };
+
+} // namespace medium
+} // namespace specfem
