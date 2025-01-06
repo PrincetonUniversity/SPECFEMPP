@@ -6,12 +6,6 @@ on:
       - main
     tags:
       - v*
-  pull_request:
-    branches:
-      - devel
-    tags:
-      - v*
-
 permissions:
   packages: write
 jobs:
@@ -27,7 +21,6 @@ jobs:
         with:
           images: ghcr.io/PrincetonUniversity/SPECFEMPP
           tags: |
-            type=raw,event=branch,enable=${{ github.ref == format('refs/heads/{0}', 'issue-355') }}
             type=ref,event=branch,enable=${{ github.ref == format('refs/heads/{0}', 'devel') }}
             type=ref,event=tag
             type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'main') }}
@@ -37,10 +30,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Check tag
-        run: echo Tag for push is ${{ steps.meta.outputs.tags }}
-
       - name: Build container
         uses: docker/build-push-action@v5
         with:
