@@ -104,9 +104,13 @@ public:
             specfem::compute::load_on_device(team, iterator, buffer, field);
             team.team_barrier();
 
+            const auto sv_wavefield =
+                Kokkos::subview(wavefield_on_entire_grid, iterator.get_range(),
+                                Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
+
             specfem::medium::compute_wavefield<MediumTag, PropertyTag>(
                 team, iterator, assembly, quadrature, field, wavefield_type,
-                wavefield_on_entire_grid);
+                sv_wavefield);
           }
         });
 
