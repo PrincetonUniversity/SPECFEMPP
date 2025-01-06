@@ -36,6 +36,10 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check tag
+        run: echo Tag for push is ${{ steps.meta.outputs.tags }}
+
       - name: Build container
         uses: docker/build-push-action@v5
         with:
