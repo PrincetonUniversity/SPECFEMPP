@@ -1,5 +1,4 @@
-#ifndef _SPECFEM_COMPUTE_KERNELS_IMPL_MATERIAL_KERNELS_HPP_
-#define _SPECFEM_COMPUTE_KERNELS_IMPL_MATERIAL_KERNELS_HPP_
+#pragma once
 
 #include "compute/properties/properties.hpp"
 #include "enumerations/interface.hpp"
@@ -8,9 +7,8 @@
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
-namespace compute {
-namespace impl {
-namespace kernels {
+namespace medium {
+
 template <specfem::element::medium_tag type,
           specfem::element::property_tag property>
 class material_kernels : public kernels_container<type, property> {
@@ -41,9 +39,5 @@ public:
     assert(count == n_element);
   }
 };
-} // namespace kernels
-} // namespace impl
-} // namespace compute
+} // namespace medium
 } // namespace specfem
-
-#endif /* _SPECFEM_COMPUTE_KERNELS_IMPL_MATERIAL_KERNELS_HPP_ */
