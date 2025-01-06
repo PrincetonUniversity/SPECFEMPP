@@ -27,7 +27,7 @@ jobs:
         with:
           images: ghcr.io/PrincetonUniversity/SPECFEMPP
           tags: |
-            type=ref,event=branch,enable=${{ github.ref == format('refs/heads/{0}', 'issue-355') }}
+            type=raw,event=branch,enable=${{ github.ref == format('refs/heads/{0}', 'issue-355') }}
             type=ref,event=branch,enable=${{ github.ref == format('refs/heads/{0}', 'devel') }}
             type=ref,event=tag
             type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'main') }}
