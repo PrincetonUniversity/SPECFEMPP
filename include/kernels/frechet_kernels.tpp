@@ -7,7 +7,7 @@
 #include "point/field_derivatives.hpp"
 #include "policies/chunk.hpp"
 #include "algorithms/gradient.hpp"
-#include "medium/compute_frechet_derivatives.hpp"
+#include "medium/frechet_derivatives.hpp"
 #include <Kokkos_Core.hpp>
 
 template <specfem::dimension::type DimensionType, int NGLL>
