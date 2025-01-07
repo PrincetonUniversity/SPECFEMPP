@@ -194,6 +194,7 @@ add_executable(
   assembly/test_fixture/test_fixture.cpp
   assembly/runner.cpp
   assembly/kernels/kernels.cpp
+  assembly/properties/properties.cpp
   assembly/compute_wavefield/compute_wavefield.cpp
 )
 
