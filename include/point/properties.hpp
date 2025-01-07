@@ -66,7 +66,8 @@ private:
              const value_type &rho, std::true_type)
       : lambdaplus2mu(lambdaplus2mu), mu(mu), rho(rho),
         rho_vp(Kokkos::sqrt(rho * lambdaplus2mu)),
-        rho_vs(Kokkos::sqrt(rho * mu)), lambda(lambdaplus2mu - 2.0 * mu) {}
+        rho_vs(Kokkos::sqrt(rho * mu)),
+        lambda(lambdaplus2mu - ((value_type)2.0) * mu) {}
 
 public:
   /**
@@ -93,7 +94,40 @@ public:
              const value_type &rho)
       : properties(lambdaplus2mu, mu, rho,
                    std::integral_constant<bool, UseSIMD>{}) {}
+
+  /**
+   * @brief single value constructor
+   *
+   */
+  KOKKOS_FUNCTION
+  properties(const value_type value)
+      : properties(value, value, value,
+                   std::integral_constant<bool, UseSIMD>{}) {}
   ///@}
+
+  /**
+   * @brief Equality operator
+   *
+   */
+  KOKKOS_FUNCTION
+  bool operator==(const properties &rhs) const {
+    return rho == rhs.rho && mu == rhs.mu && lambdaplus2mu == rhs.lambdaplus2mu;
+  }
+
+  /**
+   * @brief Inequality operator
+   *
+   */
+  KOKKOS_FUNCTION
+  bool operator!=(const properties &rhs) const { return !(*this == rhs); }
+
+  KOKKOS_FUNCTION
+  bool operator==(const value_type value) {
+    return rho == value && mu == value && lambdaplus2mu == value;
+  }
+
+  KOKKOS_FUNCTION
+  bool operator!=(const value_type value) { return !(*this == value); }
 };
 
 template <bool UseSIMD>
@@ -169,6 +203,41 @@ public:
              const value_type &c25, const type_real &rho)
       : properties(c11, c13, c15, c33, c35, c55, c12, c23, c25, rho,
                    std::integral_constant<bool, UseSIMD>{}) {}
+
+  /**
+   * @brief single value constructor
+   *
+   */
+  KOKKOS_FUNCTION
+  properties(const value_type value)
+      : properties(value, value, value, value, value, value, value, value,
+                   value, value, std::integral_constant<bool, UseSIMD>{}) {}
+
+  /**
+   * @brief Equality operator
+   *
+   */
+  KOKKOS_FUNCTION
+  bool operator==(const properties &rhs) const {
+    return rho == rhs.rho && c11 == rhs.c11 && c13 == rhs.c13 &&
+           c15 == rhs.c15 && c33 == rhs.c33 && c35 == rhs.c35 && c55 == rhs.c55;
+  }
+
+  /**
+   * @brief Inequality operator
+   *
+   */
+  KOKKOS_FUNCTION
+  bool operator!=(const properties &rhs) const { return !(*this == rhs); }
+
+  KOKKOS_FUNCTION
+  bool operator==(const value_type value) {
+    return rho == value && c11 == value && c13 == value && c15 == value &&
+           c33 == value && c35 == value && c55 == value;
+  }
+
+  KOKKOS_FUNCTION
+  bool operator!=(const value_type value) { return !(*this == value); }
 };
 
 /**
@@ -213,8 +282,9 @@ private:
   KOKKOS_FUNCTION
   properties(const value_type &rho_inverse, const value_type &kappa,
              std::true_type)
-      : kappa_inverse(1.0 / kappa), rho_inverse(rho_inverse), kappa(kappa),
-        rho_vpinverse(Kokkos::sqrt(rho_inverse * kappa_inverse)) {}
+      : kappa_inverse(((value_type)1.0) / kappa), rho_inverse(rho_inverse),
+        kappa(kappa), rho_vpinverse(Kokkos::sqrt(rho_inverse * kappa_inverse)) {
+  }
 
 public:
   /**
@@ -240,7 +310,38 @@ public:
   properties(const value_type &rho_inverse, const value_type &kappa)
       : properties(rho_inverse, kappa,
                    std::integral_constant<bool, UseSIMD>{}) {}
+  /**
+   * @brief single value constructor
+   *
+   */
+  KOKKOS_FUNCTION
+  properties(const value_type value)
+      : properties(value, value, std::integral_constant<bool, UseSIMD>{}) {}
   ///@}
+
+  /**
+   * @brief Equality operator
+   *
+   */
+  KOKKOS_FUNCTION
+  bool operator==(const properties &rhs) const {
+    return rho_inverse == rhs.rho_inverse && kappa == rhs.kappa;
+  }
+
+  /**
+   * @brief Inequality operator
+   *
+   */
+  KOKKOS_FUNCTION
+  bool operator!=(const properties &rhs) const { return !(*this == rhs); }
+
+  KOKKOS_FUNCTION
+  bool operator==(const value_type value) {
+    return rho_inverse == value && kappa == value;
+  }
+
+  KOKKOS_FUNCTION
+  bool operator!=(const value_type value) { return !(*this == value); }
 };
 
 } // namespace point
