@@ -99,7 +99,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
                                 point_property.c23 * du(1, 1) +
                                 point_property.c25 * (du(1, 0) + du(0, 1));
 
-          wavefield(index.ispec, index.iz, index.ix, 0) =
+          wavefield(iterator_index.ielement, index.iz, index.ix, 0) =
               -1.0 * (sigma_xx + sigma_zz + sigma_yy) / 3.0;
         });
 
@@ -110,9 +110,9 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
       Kokkos::TeamThreadRange(team, iterator.chunk_size()), [&](const int &i) {
         const auto iterator_index = iterator(i);
         const auto &index = iterator_index.index;
-        wavefield(index.ispec, index.iz, index.ix, 0) =
+        wavefield(iterator_index.ielement, index.iz, index.ix, 0) =
             active_field(iterator_index.ielement, index.iz, index.ix, 0);
-        wavefield(index.ispec, index.iz, index.ix, 1) =
+        wavefield(iterator_index.ielement, index.iz, index.ix, 1) =
             active_field(iterator_index.ielement, index.iz, index.ix, 1);
       });
 
