@@ -1,7 +1,6 @@
 #pragma once
 
 #include "enumerations/specfem_enums.hpp"
-#include "point/seismogram.hpp"
 #include <Kokkos_Core.hpp>
 #include <memory>
 #include <receiver/receiver.hpp>
