@@ -1,16 +1,17 @@
 #include "../test_fixture/test_fixture.hpp"
+#include "IO/ASCII/ASCII.hpp"
 #include "datatypes/simd.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "parallel_configuration/chunk_config.hpp"
 #include "policies/chunk.hpp"
-#include "specfem_setup.hpp"
 #include "reader/property.hpp"
+#include "specfem_setup.hpp"
 #include "writer/property.hpp"
-#include "IO/ASCII/ASCII.hpp"
 #include <gtest/gtest.h>
 
-inline void error_message_header(std::ostringstream &message, const type_real &value, const int &mode) {
+inline void error_message_header(std::ostringstream &message,
+                                 const type_real &value, const int &mode) {
   if (mode == 0) {
     message << "\n\t Expected: " << value;
     message << "\n\t Got: \n";
@@ -291,7 +292,8 @@ void check_to_value(const specfem::compute::properties properties,
 
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-void check_compute_to_mesh(specfem::compute::assembly &assembly,
+void check_compute_to_mesh(
+    specfem::compute::assembly &assembly,
     const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh) {
   const auto &properties = assembly.properties;
   const auto &mapping = assembly.mesh.mapping;
@@ -318,7 +320,7 @@ void check_compute_to_mesh(specfem::compute::assembly &assembly,
   if (elements.size() < N) {
     return;
   }
-  
+
   const int element_size = elements.size();
   const int step = element_size / N;
 
@@ -332,19 +334,18 @@ void check_compute_to_mesh(specfem::compute::assembly &assembly,
     for (int iz = 0; iz < ngllz; iz++) {
       for (int ix = 0; ix < ngllx; ix++) {
         const int ielement = ispecs_h(i);
-        const auto point_property =
-            get_point_property<MediumTag, PropertyTag>(ielement, iz, ix,
-                                                        properties);
+        const auto point_property = get_point_property<MediumTag, PropertyTag>(
+            ielement, iz, ix, properties);
         const int ispec_mesh = mapping.compute_to_mesh(ielement);
         auto material =
-                std::get<specfem::material::material<MediumTag, PropertyTag> >(
-                    materials[ispec_mesh]);
+            std::get<specfem::material::material<MediumTag, PropertyTag> >(
+                materials[ispec_mesh]);
         auto value = material.get_properties();
         if (point_property != value) {
           std::ostringstream message;
 
-          message << "\n \t Error at ispec = " << ielement
-                  << ", iz = " << iz << ", ix = " << ix;
+          message << "\n \t Error at ispec = " << ielement << ", iz = " << iz
+                  << ", ix = " << ix;
 
           message << get_error_message(value, 0.0, 1);
           message << get_error_message(point_property, 0.0, 2);
@@ -540,23 +541,26 @@ void check_load_on_device(specfem::compute::properties &properties) {
   return;
 }
 
-void test_properties(specfem::compute::assembly &assembly, const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh) {
+void test_properties(
+    specfem::compute::assembly &assembly,
+    const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh) {
 
   auto &properties = assembly.properties;
 
   // stage 1: check if properties are correctly constructed from the assembly
   check_compute_to_mesh<specfem::element::medium_tag::elastic,
-                      specfem::element::property_tag::isotropic>(
-      assembly, mesh);
+                        specfem::element::property_tag::isotropic>(assembly,
+                                                                   mesh);
   check_compute_to_mesh<specfem::element::medium_tag::elastic,
-                      specfem::element::property_tag::anisotropic>(
-      assembly, mesh);
+                        specfem::element::property_tag::anisotropic>(assembly,
+                                                                     mesh);
   check_compute_to_mesh<specfem::element::medium_tag::acoustic,
-                      specfem::element::property_tag::isotropic>(
-      assembly, mesh);
-  
+                        specfem::element::property_tag::isotropic>(assembly,
+                                                                   mesh);
+
   // stage 2: write properties
-  specfem::writer::property<specfem::IO::ASCII<specfem::IO::write> > writer(".");
+  specfem::writer::property<specfem::IO::ASCII<specfem::IO::write> > writer(
+      ".");
   writer.write(assembly);
 
   // stage 3: modify properties and check store_on_host and load_on_device
@@ -614,22 +618,21 @@ void test_properties(specfem::compute::assembly &assembly, const specfem::mesh::
 
   // stage 5: check if properties are correctly written and read
   check_compute_to_mesh<specfem::element::medium_tag::elastic,
-                      specfem::element::property_tag::isotropic>(
-      assembly, mesh);
+                        specfem::element::property_tag::isotropic>(assembly,
+                                                                   mesh);
   check_compute_to_mesh<specfem::element::medium_tag::elastic,
-                      specfem::element::property_tag::anisotropic>(
-      assembly, mesh);
+                        specfem::element::property_tag::anisotropic>(assembly,
+                                                                     mesh);
   check_compute_to_mesh<specfem::element::medium_tag::acoustic,
-                      specfem::element::property_tag::isotropic>(
-      assembly, mesh);
+                        specfem::element::property_tag::isotropic>(assembly,
+                                                                   mesh);
 }
 
 TEST_F(ASSEMBLY, properties) {
   for (auto parameters : *this) {
     auto Test = std::get<0>(parameters);
     auto assembly = std::get<1>(parameters);
-    auto [database_file, sources_file, stations_file] =
-        Test.get_databases();
+    auto [database_file, sources_file, stations_file] = Test.get_databases();
     specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
     specfem::mesh::mesh mesh = specfem::IO::read_mesh(database_file, mpi);
 
