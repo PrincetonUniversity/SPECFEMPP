@@ -68,6 +68,8 @@ public:
       const specfem::compute::mesh_to_compute_mapping &mapping,
       const specfem::mesh::tags<specfem::dimension::type::dim2> &tags);
 
+  element_types(const element_types &) = default;
+
   /**
    * @brief Copy misfit kernel data to host
    *

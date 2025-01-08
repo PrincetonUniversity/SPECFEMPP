@@ -10,7 +10,9 @@ specfem::compute::assembly::assembly(
         &receivers,
     const std::vector<specfem::enums::seismogram::type> &stypes,
     const type_real t0, const type_real dt, const int max_timesteps,
-    const int max_sig_step, const specfem::simulation::type simulation) {
+    const int max_sig_step, const int nsteps_between_samples,
+    const specfem::simulation::type simulation) {
+
   this->mesh = { mesh.tags, mesh.control_nodes, quadratures };
   this->partial_derivatives = { this->mesh };
   this->properties = { this->mesh.nspec,   this->mesh.ngllz, this->mesh.ngllx,
@@ -20,7 +22,18 @@ specfem::compute::assembly::assembly(
   this->sources = { sources,          this->mesh, this->partial_derivatives,
                     this->properties, t0,         dt,
                     max_timesteps };
-  this->receivers = { max_sig_step, receivers, stypes, this->mesh };
+  this->receivers = { this->mesh.nspec,
+                      this->mesh.ngllz,
+                      this->mesh.ngllz,
+                      max_sig_step,
+                      dt,
+                      t0,
+                      nsteps_between_samples,
+                      receivers,
+                      stypes,
+                      this->mesh,
+                      mesh.tags,
+                      this->properties };
   this->boundaries = { this->mesh.nspec,   this->mesh.ngllz,
                        this->mesh.ngllx,   mesh,
                        this->mesh.mapping, this->mesh.quadratures,
