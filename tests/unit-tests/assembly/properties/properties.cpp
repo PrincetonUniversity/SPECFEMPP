@@ -5,25 +5,38 @@
 #include "parallel_configuration/chunk_config.hpp"
 #include "policies/chunk.hpp"
 #include "specfem_setup.hpp"
+#include "reader/property.hpp"
+#include "writer/property.hpp"
+#include "IO/ASCII/ASCII.hpp"
 #include <gtest/gtest.h>
+
+inline void error_message_header(std::ostringstream &message, const type_real &value, const int &mode) {
+  if (mode == 0) {
+    message << "\n\t Expected: " << value;
+    message << "\n\t Got: \n";
+  } else if (mode == 1) {
+    message << "\n\t Expected: ";
+  } else if (mode == 2) {
+    message << "\n\t Got: ";
+  }
+}
 
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd = false>
 std::string get_error_message(
     const specfem::point::properties<specfem::dimension::type::dim2, MediumTag,
                                      PropertyTag, false> &point_property,
-    const type_real value);
+    const type_real value, const int mode = 0);
 
 template <>
 std::string get_error_message(
     const specfem::point::properties<
         specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
         specfem::element::property_tag::isotropic, false> &point_property,
-    const type_real value) {
+    const type_real value, const int mode) {
   std::ostringstream message;
 
-  message << "\n\t Expected: " << value;
-  message << "\n\t Got: \n";
+  error_message_header(message, value, mode);
   message << "\t\trho = " << point_property.rho << "\n";
   message << "\t\tmu = " << point_property.mu << "\n";
   message << "\t\tkappa = " << point_property.lambdaplus2mu << "\n";
@@ -36,11 +49,10 @@ std::string get_error_message(
     const specfem::point::properties<
         specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
         specfem::element::property_tag::anisotropic, false> &point_property,
-    const type_real value) {
+    const type_real value, const int mode) {
   std::ostringstream message;
 
-  message << "\n\t Expected: " << value;
-  message << "\n\t Got: \n";
+  error_message_header(message, value, mode);
   message << "\t\trho = " << point_property.rho << "\n";
   message << "\t\tc11 = " << point_property.c11 << "\n";
   message << "\t\tc13 = " << point_property.c13 << "\n";
@@ -57,11 +69,10 @@ std::string get_error_message(
     const specfem::point::properties<
         specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
         specfem::element::property_tag::isotropic, false> &point_property,
-    const type_real value) {
+    const type_real value, const int mode) {
   std::ostringstream message;
 
-  message << "\n\t Expected: " << value;
-  message << "\n\t Got: \n";
+  error_message_header(message, value, mode);
   message << "\t\trho_inverse = " << point_property.rho_inverse << "\n";
   message << "\t\tkappa = " << point_property.kappa << "\n";
 
@@ -279,6 +290,73 @@ void check_to_value(const specfem::compute::properties properties,
 }
 
 template <specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag>
+void check_compute_to_mesh(specfem::compute::assembly &assembly,
+    const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh) {
+  const auto &properties = assembly.properties;
+  const auto &mapping = assembly.mesh.mapping;
+  const auto &materials = mesh.materials;
+
+  const int nspec = properties.nspec;
+  const int ngllx = properties.ngllx;
+  const int ngllz = properties.ngllz;
+  std::vector<int> elements;
+
+  const auto medium_tags = properties.h_medium_tags;
+  const auto property_tags = properties.h_property_tags;
+
+  for (int ispec = 0; ispec < nspec; ispec++) {
+    if ((medium_tags(ispec) == MediumTag) &&
+        (property_tags(ispec) == PropertyTag)) {
+      elements.push_back(ispec);
+    }
+  }
+
+  // Evaluate at N evenly spaced points
+  constexpr int N = 20;
+
+  if (elements.size() < N) {
+    return;
+  }
+  
+  const int element_size = elements.size();
+  const int step = element_size / N;
+
+  Kokkos::View<int[N], Kokkos::HostSpace> ispecs_h("ispecs_h", N);
+
+  for (int i = 0; i < N; i++) {
+    ispecs_h(i) = elements[i * step];
+  }
+
+  for (int i = 0; i < N; i++) {
+    for (int iz = 0; iz < ngllz; iz++) {
+      for (int ix = 0; ix < ngllx; ix++) {
+        const int ielement = ispecs_h(i);
+        const auto point_property =
+            get_point_property<MediumTag, PropertyTag>(ielement, iz, ix,
+                                                        properties);
+        const int ispec_mesh = mapping.compute_to_mesh(ielement);
+        auto material =
+                std::get<specfem::material::material<MediumTag, PropertyTag> >(
+                    materials[ispec_mesh]);
+        auto value = material.get_properties();
+        if (point_property != value) {
+          std::ostringstream message;
+
+          message << "\n \t Error at ispec = " << ielement
+                  << ", iz = " << iz << ", ix = " << ix;
+
+          message << get_error_message(value, 0.0, 1);
+          message << get_error_message(point_property, 0.0, 2);
+
+          throw std::runtime_error(message.str());
+        }
+      }
+    }
+  }
+}
+
+template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd>
 void check_store_on_host(specfem::compute::properties &properties) {
 
@@ -327,7 +405,6 @@ void check_store_on_host(specfem::compute::properties &properties) {
       for (int ix = 0; ix < ngllx; ix++) {
         const int ielement = ispecs_h(i);
         constexpr int simd_size = PointType::simd::size();
-        auto &properties_l = properties;
         const int n_simd_elements = (simd_size + ielement > element_size)
                                         ? element_size - ielement
                                         : simd_size;
@@ -336,7 +413,7 @@ void check_store_on_host(specfem::compute::properties &properties) {
             get_index<using_simd>(ielement, n_simd_elements, iz, ix);
         const type_real value = values_to_store_h(i);
         PointType point(value);
-        specfem::compute::store_on_host(index, properties_l, point);
+        specfem::compute::store_on_host(index, properties, point);
       }
     }
   }
@@ -463,10 +540,26 @@ void check_load_on_device(specfem::compute::properties &properties) {
   return;
 }
 
-void test_properties(specfem::compute::assembly &assembly) {
+void test_properties(specfem::compute::assembly &assembly, const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh) {
 
   auto &properties = assembly.properties;
 
+  // stage 1: check if properties are correctly constructed from the assembly
+  check_compute_to_mesh<specfem::element::medium_tag::elastic,
+                      specfem::element::property_tag::isotropic>(
+      assembly, mesh);
+  check_compute_to_mesh<specfem::element::medium_tag::elastic,
+                      specfem::element::property_tag::anisotropic>(
+      assembly, mesh);
+  check_compute_to_mesh<specfem::element::medium_tag::acoustic,
+                      specfem::element::property_tag::isotropic>(
+      assembly, mesh);
+  
+  // stage 2: write properties
+  specfem::writer::property<specfem::IO::ASCII<specfem::IO::write> > writer(".");
+  writer.write(assembly);
+
+  // stage 3: modify properties and check store_on_host and load_on_device
   check_store_on_host<specfem::element::medium_tag::elastic,
                       specfem::element::property_tag::isotropic, false>(
       properties);
@@ -514,15 +607,34 @@ void test_properties(specfem::compute::assembly &assembly) {
   check_load_on_device<specfem::element::medium_tag::acoustic,
                        specfem::element::property_tag::isotropic, true>(
       properties);
+
+  // stage 4: restore properties to initial value from disk
+  specfem::reader::property<specfem::IO::ASCII<specfem::IO::read> > reader(".");
+  reader.read(assembly);
+
+  // stage 5: check if properties are correctly written and read
+  check_compute_to_mesh<specfem::element::medium_tag::elastic,
+                      specfem::element::property_tag::isotropic>(
+      assembly, mesh);
+  check_compute_to_mesh<specfem::element::medium_tag::elastic,
+                      specfem::element::property_tag::anisotropic>(
+      assembly, mesh);
+  check_compute_to_mesh<specfem::element::medium_tag::acoustic,
+                      specfem::element::property_tag::isotropic>(
+      assembly, mesh);
 }
 
 TEST_F(ASSEMBLY, properties) {
   for (auto parameters : *this) {
-    const auto Test = std::get<0>(parameters);
+    auto Test = std::get<0>(parameters);
     auto assembly = std::get<1>(parameters);
+    auto [database_file, sources_file, stations_file] =
+        Test.get_databases();
+    specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
+    specfem::mesh::mesh mesh = specfem::IO::read_mesh(database_file, mpi);
 
     try {
-      test_properties(assembly);
+      test_properties(assembly, mesh);
 
       std::cout << "-------------------------------------------------------\n"
                 << "\033[0;32m[PASSED]\033[0m " << Test.name << "\n"

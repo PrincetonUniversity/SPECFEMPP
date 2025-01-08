@@ -200,6 +200,8 @@ add_executable(
 
 target_link_libraries(
   assembly_tests
+  reader
+  writer
   mesh
   compute
   quadrature
