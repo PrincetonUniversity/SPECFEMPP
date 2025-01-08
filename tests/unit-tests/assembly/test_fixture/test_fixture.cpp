@@ -50,8 +50,9 @@ ASSEMBLY::ASSEMBLY() {
     };
 
     this->assemblies.push_back(specfem::compute::assembly(
-        mesh, quadrature, sources, receivers, seismogram_types, 1.0, 0.0, 1, 1,
-        specfem::simulation::type::forward));
+        mesh, quadrature, sources, receivers, seismogram_types, /* t0 */ 1.0,
+        /* dt */ 0.0, /* nsteps */ 1, /* max_sig_steps */ 1,
+        /* nsteps_between_samples */ 1, specfem::simulation::type::forward));
   }
 }
 

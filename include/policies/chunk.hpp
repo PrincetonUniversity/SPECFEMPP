@@ -194,6 +194,14 @@ public:
   int chunk_size() const { return num_elements * ngllz * ngllx; }
 
   /**
+   * @brief Return the number of elements within this iterator.
+   *
+   * @return int Number of elements within this iterator
+   */
+  KOKKOS_FORCEINLINE_FUNCTION
+  int number_of_elements() const { return num_elements; }
+
+  /**
    * @brief Returns the index within this iterator at the i-th quadrature point.
    *
    * @param i Index of the quadrature point within this iterator.
