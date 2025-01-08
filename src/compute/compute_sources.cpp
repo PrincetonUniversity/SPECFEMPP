@@ -107,6 +107,10 @@ specfem::compute::sources::sources(
       if (lcoord.ispec < 0) {                                                  \
         throw std::runtime_error("Source is outside of the domain");           \
       }                                                                        \
+      if (h_source_domain_index_mapping(lcoord.ispec) >= 0) {                  \
+        throw std::runtime_error(                                              \
+            "Multiple sources are detected in the same element");              \
+      }                                                                        \
       h_source_domain_index_mapping(lcoord.ispec) = isource;                   \
       h_medium_types(lcoord.ispec) = GET_TAG(MEDIUM_TAG);                      \
       h_wavefield_types(lcoord.ispec) = source->get_wavefield_type();          \

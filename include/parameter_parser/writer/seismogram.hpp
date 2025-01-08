@@ -37,18 +37,10 @@ public:
   /**
    * @brief Instantiate a seismogram writer object
    *
-   * @param receivers Vector of pointers to receiver objects used to instantiate
-   * the writer
-   * @param compute_receivers Pointer to specfem::compute::receivers struct used
-   * to instantiate the writer
-   * @param dt Time interval between timesteps
-   * @param t0 Starting time of simulation
-   * @return specfem::writer::writer* Pointer to an instantiated writer object
+   * @param assembly Assembly object where recievers and seismograms are stored
    */
-  std::shared_ptr<specfem::writer::writer>
-  instantiate_seismogram_writer(const specfem::compute::receivers &receivers,
-                                const type_real dt, const type_real t0,
-                                const int nsteps_between_samples) const;
+  std::shared_ptr<specfem::writer::writer> instantiate_seismogram_writer(
+      const specfem::compute::assembly &assembly) const;
 
 private:
   std::string output_format; ///< format of output file
