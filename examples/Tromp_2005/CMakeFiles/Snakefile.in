@@ -231,8 +231,11 @@ rule plot_kernels:
         plot="OUTPUT_FILES/Kernels.png",
     run:
         from plot import plot_kernels
+
+        # Set matplotlib gui off
         import matplotlib
-        matplotlib.use('agg')
+        matplotlib.use("Agg")
+
         plot_kernels(input.kernels, output.plot)
 
 

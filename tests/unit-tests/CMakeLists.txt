@@ -7,10 +7,14 @@ include(FetchContent)
 FetchContent_Declare(
   googletest
   URL https://github.com/google/googletest/archive/609281088cfefc76f9d0ce82e1ff6c30cc3591e5.zip
+  DOWNLOAD_EXTRACT_TIMESTAMP FALSE
 )
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
+
+# Explicitly set binary output directory for tests
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests/unit-tests)
 
 include_directories(.)
 
@@ -196,6 +200,7 @@ add_executable(
   assembly/kernels/kernels.cpp
   assembly/properties/properties.cpp
   assembly/compute_wavefield/compute_wavefield.cpp
+  assembly/sources/sources.cpp
 )
 
 target_link_libraries(
