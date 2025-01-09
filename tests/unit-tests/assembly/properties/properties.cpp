@@ -2,6 +2,7 @@
 #include "IO/ASCII/ASCII.hpp"
 #include "datatypes/simd.hpp"
 #include "enumerations/dimension.hpp"
+#include "enumerations/material_definitions.hpp"
 #include "enumerations/medium.hpp"
 #include "parallel_configuration/chunk_config.hpp"
 #include "policies/chunk.hpp"
@@ -548,15 +549,14 @@ void test_properties(
   auto &properties = assembly.properties;
 
   // stage 1: check if properties are correctly constructed from the assembly
-  check_compute_to_mesh<specfem::element::medium_tag::elastic,
-                        specfem::element::property_tag::isotropic>(assembly,
-                                                                   mesh);
-  check_compute_to_mesh<specfem::element::medium_tag::elastic,
-                        specfem::element::property_tag::anisotropic>(assembly,
-                                                                     mesh);
-  check_compute_to_mesh<specfem::element::medium_tag::acoustic,
-                        specfem::element::property_tag::isotropic>(assembly,
-                                                                   mesh);
+#define TEST_COMPUTE_TO_MESH(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)          \
+  check_compute_to_mesh<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)>(assembly,  \
+                                                                    mesh);
+
+  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
+      TEST_COMPUTE_TO_MESH,
+      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
+          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
   // stage 2: write properties
   specfem::writer::property<specfem::IO::ASCII<specfem::IO::write> > writer(
@@ -564,68 +564,43 @@ void test_properties(
   writer.write(assembly);
 
   // stage 3: modify properties and check store_on_host and load_on_device
-  check_store_on_host<specfem::element::medium_tag::elastic,
-                      specfem::element::property_tag::isotropic, false>(
+#define CALL_TEST_LOAD_STORE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)          \
+  check_store_on_host<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), false>(      \
+      properties);                                                             \
+  check_load_on_device<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), false>(     \
+      properties);                                                             \
+  check_store_on_host<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), true>(       \
+      properties);                                                             \
+  check_load_on_device<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), true>(      \
       properties);
 
-  check_load_on_device<specfem::element::medium_tag::elastic,
-                       specfem::element::property_tag::isotropic, false>(
-      properties);
+  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
+      CALL_TEST_LOAD_STORE,
+      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
+          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
-  check_store_on_host<specfem::element::medium_tag::elastic,
-                      specfem::element::property_tag::isotropic, true>(
-      properties);
-
-  check_load_on_device<specfem::element::medium_tag::elastic,
-                       specfem::element::property_tag::isotropic, true>(
-      properties);
-
-  check_store_on_host<specfem::element::medium_tag::elastic,
-                      specfem::element::property_tag::anisotropic, false>(
-      properties);
-
-  check_load_on_device<specfem::element::medium_tag::elastic,
-                       specfem::element::property_tag::anisotropic, false>(
-      properties);
-
-  check_store_on_host<specfem::element::medium_tag::elastic,
-                      specfem::element::property_tag::anisotropic, true>(
-      properties);
-
-  check_load_on_device<specfem::element::medium_tag::elastic,
-                       specfem::element::property_tag::anisotropic, true>(
-      properties);
-
-  check_store_on_host<specfem::element::medium_tag::acoustic,
-                      specfem::element::property_tag::isotropic, false>(
-      properties);
-
-  check_load_on_device<specfem::element::medium_tag::acoustic,
-                       specfem::element::property_tag::isotropic, false>(
-      properties);
-
-  check_store_on_host<specfem::element::medium_tag::acoustic,
-                      specfem::element::property_tag::isotropic, true>(
-      properties);
-
-  check_load_on_device<specfem::element::medium_tag::acoustic,
-                       specfem::element::property_tag::isotropic, true>(
-      properties);
+#undef CALL_TEST_LOAD_STORE
 
   // stage 4: restore properties to initial value from disk
   specfem::reader::property<specfem::IO::ASCII<specfem::IO::read> > reader(".");
   reader.read(assembly);
 
   // stage 5: check if properties are correctly written and read
-  check_compute_to_mesh<specfem::element::medium_tag::elastic,
-                        specfem::element::property_tag::isotropic>(assembly,
-                                                                   mesh);
-  check_compute_to_mesh<specfem::element::medium_tag::elastic,
-                        specfem::element::property_tag::anisotropic>(assembly,
-                                                                     mesh);
-  check_compute_to_mesh<specfem::element::medium_tag::acoustic,
-                        specfem::element::property_tag::isotropic>(assembly,
-                                                                   mesh);
+  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
+      TEST_COMPUTE_TO_MESH,
+      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
+          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
+
+#undef TEST_COMPUTE_TO_MESH
+  // check_compute_to_mesh<specfem::element::medium_tag::elastic,
+  //                       specfem::element::property_tag::isotropic>(assembly,
+  //                                                                  mesh);
+  // check_compute_to_mesh<specfem::element::medium_tag::elastic,
+  //                       specfem::element::property_tag::anisotropic>(assembly,
+  //                                                                    mesh);
+  // check_compute_to_mesh<specfem::element::medium_tag::acoustic,
+  //                       specfem::element::property_tag::isotropic>(assembly,
+  //  mesh);
 }
 
 TEST_F(ASSEMBLY, properties) {
