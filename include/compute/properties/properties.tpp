@@ -1,19 +1,17 @@
-#ifndef _COMPUTE_PROPERTIES_PROPERTIES_TPP_
-#define _COMPUTE_PROPERTIES_PROPERTIES_TPP_
+#pragma once
 
-#include "mesh/materials/interface.hpp"
 #include "properties.hpp"
 #include <Kokkos_Core.hpp>
 
 template <specfem::enums::element::type type,
           specfem::enums::element::property_tag property>
-specfem::compute::properties::material_properties<
+specfem::medium::material_properties<
     type, property>::medium_property(const int nspec, const int n_element,
                                      const int ngllz, const int ngllx,
                                      const specfem::mesh::materials &materials,
                                      const specfem::kokkos::HostView1d<int>
                                          property_material_mapping)
-    : specfem::compute::properties::impl::properties_container<type, property>(
+    : specfem::medium::properties_container<type, property>(
           n_element, ngllz, ngllx) {
 
   int count = 0;
@@ -44,5 +42,3 @@ specfem::compute::properties::material_properties<
 
   return;
 }
-
-#endif /* _COMPUTE_PROPERTIES_PROPERTIES_TPP_ */
