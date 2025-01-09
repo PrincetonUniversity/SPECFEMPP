@@ -5,7 +5,7 @@
 #include "header.hpp"
 #include "parameter_parser/solver/interface.hpp"
 #include "quadrature.hpp"
-#include "reader/reader.hpp"
+#include "IO/reader.hpp"
 #include "receivers.hpp"
 #include "run_setup.hpp"
 #include "specfem_setup.hpp"
@@ -160,7 +160,7 @@ public:
     }
   }
 
-  std::shared_ptr<specfem::reader::reader>
+  std::shared_ptr<specfem::IO::reader>
   instantiate_wavefield_reader() const {
     if (this->wavefield) {
       return this->wavefield->instantiate_wavefield_reader();
@@ -178,7 +178,7 @@ public:
     }
   }
 
-  std::shared_ptr<specfem::reader::reader> instantiate_property_reader() const {
+  std::shared_ptr<specfem::IO::reader> instantiate_property_reader() const {
     if (this->property) {
       return this->property->instantiate_property_reader();
     } else {

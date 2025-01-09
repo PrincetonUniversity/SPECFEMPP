@@ -1,8 +1,8 @@
 #include "parameter_parser/writer/wavefield.hpp"
 #include "IO/ASCII/ASCII.hpp"
 #include "IO/HDF5/HDF5.hpp"
-#include "reader/reader.hpp"
-#include "reader/wavefield.hpp"
+#include "IO/reader.hpp"
+#include "IO/wavefield/reader.hpp"
 #include "writer/interface.hpp"
 #include "writer/wavefield.hpp"
 #include <boost/filesystem.hpp>
@@ -63,19 +63,19 @@ specfem::runtime_configuration::wavefield::instantiate_wavefield_writer()
   return writer;
 }
 
-std::shared_ptr<specfem::reader::reader>
+std::shared_ptr<specfem::IO::reader>
 specfem::runtime_configuration::wavefield::instantiate_wavefield_reader()
     const {
 
-  const std::shared_ptr<specfem::reader::reader> reader =
-      [&]() -> std::shared_ptr<specfem::reader::reader> {
+  const std::shared_ptr<specfem::IO::reader> reader =
+      [&]() -> std::shared_ptr<specfem::IO::reader> {
     if (this->simulation_type == specfem::simulation::type::combined) {
       if (this->output_format == "HDF5") {
         return std::make_shared<
-            specfem::reader::wavefield<specfem::IO::HDF5<specfem::IO::read> > >(
+            specfem::IO::wavefield_reader<specfem::IO::HDF5<specfem::IO::read> > >(
             this->output_folder);
       } else if (this->output_format == "ASCII") {
-        return std::make_shared<specfem::reader::wavefield<
+        return std::make_shared<specfem::IO::wavefield_reader<
             specfem::IO::ASCII<specfem::IO::read> > >(this->output_folder);
       } else {
         throw std::runtime_error("Unknown wavefield format");

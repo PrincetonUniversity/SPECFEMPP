@@ -1,7 +1,7 @@
 #include "parameter_parser/writer/property.hpp"
 #include "IO/ASCII/ASCII.hpp"
 #include "IO/HDF5/HDF5.hpp"
-#include "reader/property.hpp"
+#include "IO/property/reader.hpp"
 #include "writer/interface.hpp"
 #include "writer/property.hpp"
 #include <boost/filesystem.hpp>
@@ -62,21 +62,21 @@ specfem::runtime_configuration::property::instantiate_property_writer() const {
   return writer;
 }
 
-std::shared_ptr<specfem::reader::reader>
+std::shared_ptr<specfem::IO::reader>
 specfem::runtime_configuration::property::instantiate_property_reader() const {
 
-  const std::shared_ptr<specfem::reader::reader> reader =
-      [&]() -> std::shared_ptr<specfem::reader::reader> {
+  const std::shared_ptr<specfem::IO::reader> reader =
+      [&]() -> std::shared_ptr<specfem::IO::reader> {
     if (this->write_mode) {
       return nullptr;
     }
     if (this->output_format == "HDF5") {
       return std::make_shared<
-          specfem::reader::property<specfem::IO::HDF5<specfem::IO::read> > >(
+          specfem::IO::property_reader<specfem::IO::HDF5<specfem::IO::read> > >(
           this->output_folder);
     } else if (this->output_format == "ASCII") {
       return std::make_shared<
-          specfem::reader::property<specfem::IO::ASCII<specfem::IO::read> > >(
+          specfem::IO::property_reader<specfem::IO::ASCII<specfem::IO::read> > >(
           this->output_folder);
     } else {
       throw std::runtime_error("Unknown model format");

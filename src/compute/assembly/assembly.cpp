@@ -1,7 +1,7 @@
 #include "compute/assembly/assembly.hpp"
 #include "enumerations/interface.hpp"
 #include "mesh/mesh.hpp"
-#include "reader/reader.hpp"
+#include "IO/reader.hpp"
 
 specfem::compute::assembly::assembly(
     const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
@@ -12,7 +12,7 @@ specfem::compute::assembly::assembly(
     const std::vector<specfem::enums::seismogram::type> &stypes,
     const type_real t0, const type_real dt, const int max_timesteps,
     const int max_sig_step, const specfem::simulation::type simulation,
-    const std::shared_ptr<specfem::reader::reader> &property_reader) {
+    const std::shared_ptr<specfem::IO::reader> &property_reader) {
   this->mesh = { mesh.tags, mesh.control_nodes, quadratures };
   this->partial_derivatives = { this->mesh };
   this->properties = {

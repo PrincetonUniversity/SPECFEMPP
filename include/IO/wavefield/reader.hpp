@@ -2,16 +2,16 @@
 
 #include "compute/interface.hpp"
 // #include "enumerations/interface.hpp"
-#include "reader/reader.hpp"
+#include "IO/reader.hpp"
 
 namespace specfem {
-namespace reader {
+namespace IO {
 
 /**
  * @brief Reader to read wavefield data from disk
  *
  */
-template <typename IOLibrary> class wavefield : public reader {
+template <typename IOLibrary> class wavefield_reader : public reader {
 
 public:
   /**
@@ -19,7 +19,7 @@ public:
    *
    * @param output_folder Path to output folder or .h5 file
    */
-  wavefield(const std::string &output_folder);
+  wavefield_reader(const std::string &output_folder);
 
   /**
    * @brief Read the wavefield data from disk
@@ -33,5 +33,5 @@ private:
   std::string output_folder; ///< Path to output folder
 };
 
-} // namespace reader
+} // namespace IO
 } // namespace specfem

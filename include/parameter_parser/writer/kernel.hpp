@@ -1,7 +1,7 @@
 #pragma once
 
 #include "enumerations/simulation.hpp"
-#include "reader/reader.hpp"
+#include "IO/reader.hpp"
 #include "writer/writer.hpp"
 #include "yaml-cpp/yaml.h"
 
