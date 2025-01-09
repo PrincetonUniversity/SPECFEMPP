@@ -338,7 +338,7 @@ void check_compute_to_mesh(
             ielement, iz, ix, properties);
         const int ispec_mesh = mapping.compute_to_mesh(ielement);
         auto material =
-            std::get<specfem::material::material<MediumTag, PropertyTag> >(
+            std::get<specfem::medium::material<MediumTag, PropertyTag> >(
                 materials[ispec_mesh]);
         auto value = material.get_properties();
         if (point_property != value) {
@@ -631,10 +631,8 @@ void test_properties(
 TEST_F(ASSEMBLY, properties) {
   for (auto parameters : *this) {
     auto Test = std::get<0>(parameters);
-    auto assembly = std::get<1>(parameters);
-    auto [database_file, sources_file, stations_file] = Test.get_databases();
-    specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
-    specfem::mesh::mesh mesh = specfem::IO::read_mesh(database_file, mpi);
+    auto mesh = std::get<1>(parameters);
+    auto assembly = std::get<4>(parameters);
 
     try {
       test_properties(assembly, mesh);

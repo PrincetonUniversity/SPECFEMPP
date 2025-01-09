@@ -1,0 +1,56 @@
+parameters:
+
+  header:
+    ## Header information is used for logging. It is good practice to give your simulations explicit names
+    title: fluid-solid-bathymetry  # name for your simulation
+    # A detailed description for your simulation
+    description: |
+      Material systems : Elastic domain (1), Acoustic domain (1)
+      Interfaces : Acoustic-elastic interface (1) (orientation horizontal with acoustic domain on top)
+      Sources : Moment-tensor (234)
+      Boundary conditions : Neumann BCs on all edges
+
+  simulation-setup:
+    ## quadrature setup
+    quadrature:
+      quadrature-type: GLL4
+
+    ## Solver setup
+    solver:
+      time-marching:
+        type-of-simulation: forward
+        time-scheme:
+          type: Newmark
+          dt: 1.000e-3
+          nstep: 32500
+
+    simulation-mode:
+      forward:
+        writer:
+          seismogram:
+            format: ascii
+            directory: @CMAKE_SOURCE_DIR@/examples/fluid-solid-bathymetry/OUTPUT_FILES/results
+
+          display:
+            format: PNG
+            directory: @CMAKE_SOURCE_DIR@/examples/fluid-solid-bathymetry/OUTPUT_FILES/display
+            field: displacement
+            simulation-field: forward
+            time-interval: 100
+
+  receivers:
+    stations-file: @CMAKE_SOURCE_DIR@/examples/fluid-solid-bathymetry/OUTPUT_FILES/STATIONS
+    angle: 0.0
+    seismogram-type:
+      - pressure
+    nstep_between_samples: 10
+
+  ## Runtime setup
+  run-setup:
+    number-of-processors: 1
+    number-of-runs: 1
+
+  ## databases
+  databases:
+    mesh-database: @CMAKE_SOURCE_DIR@/examples/fluid-solid-bathymetry/OUTPUT_FILES/database.bin
+    source-file: @CMAKE_SOURCE_DIR@/examples/fluid-solid-bathymetry/line_sources.yaml

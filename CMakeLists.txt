@@ -17,6 +17,14 @@ set(NUM_CHUNKS 1)
 set(NUM_THREADS 160)
 set(NUM_VECTOR_LANES 1)
 
+# Set binary output directories.
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/archive)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+# For external modules that need to be built suppress build output
+set(FETCHCONTENT_QUIET TRUE)
+
 if (SPECFEMPP_BINDING_PYTHON)
     message("-- Adding -fPIC flag for Python binding.")
     if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
@@ -48,40 +56,43 @@ else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif()
 
 if (DEFINED Kokkos_ENABLE_CUDA)
-        if (Kokkos_ENABLE_CUDA)
-                # message("Setting CUDA variables")
-                set(Kokkos_ENABLE_CUDA_LAMBDA ON CACHE BOOL "Using CUDA Lambda by default")
-                set(Kokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE ON CACHE BOOL "Using CUDA Relocatable device by default")
-        endif()
+    if (Kokkos_ENABLE_CUDA)
+        # message("Setting CUDA variables")
+        set(Kokkos_ENABLE_CUDA_LAMBDA ON CACHE BOOL "Using CUDA Lambda by default")
+        set(Kokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE ON CACHE BOOL "Using CUDA Relocatable device by default")
+    endif()
 endif()
+
 
 # Install Kokkos as a dependency
 ## TODO: Add options for on utilizing in house builds
 include(FetchContent)
 FetchContent_Declare(
-kokkos
-URL https://github.com/kokkos/kokkos/archive/refs/tags/4.3.01.zip
+  kokkos
+  URL https://github.com/kokkos/kokkos/archive/refs/tags/4.3.01.zip
+  DOWNLOAD_EXTRACT_TIMESTAMP FALSE
 )
 FetchContent_MakeAvailable(kokkos)
 
 FetchContent_Declare(
         yaml
         URL https://github.com/jbeder/yaml-cpp/archive/refs/tags/0.8.0.tar.gz
+        DOWNLOAD_EXTRACT_TIMESTAMP FALSE
 )
 FetchContent_MakeAvailable(yaml)
 
 include_directories(BEFORE SYSTEM ${yaml_BINARY_DIR} ${yaml_SOURCE_DIR}/include)
 
 find_package(VTK COMPONENTS
-CommonColor
-CommonCore
-FiltersSources
-InteractionStyle
-RenderingContextOpenGL2
-RenderingCore
-RenderingFreeType
-RenderingGL2PSOpenGL2
-RenderingOpenGL2
+  CommonColor
+  CommonCore
+  FiltersSources
+  InteractionStyle
+  RenderingContextOpenGL2
+  RenderingCore
+  RenderingFreeType
+  RenderingGL2PSOpenGL2
+  RenderingOpenGL2
 )
 
 
@@ -96,41 +107,73 @@ endif()
 # Try finding boost and if not found install.
 find_package(Boost 1.73.0 COMPONENTS program_options filesystem system)
 
+
 if (NOT ${Boost_FOUND})
-        add_subdirectory(boost-cmake)
-else ()
-        message(STATUS "    LIB:   ${Boost_LIBRARY_DIRS}")
-        message(STATUS "    INC:   ${Boost_INCLUDE_DIRS}")
-        message(STATUS "    LIBSO: ${Boost_LIBRARIES}")
+    # Add boost lib sources
+    set(BOOST_INCLUDE_LIBRARIES program_options filesystem system algorithm tokenizer preprocessor)
+    set(BOOST_LIBS Boost::program_options Boost::filesystem Boost::system
+                   Boost::algorithm Boost::tokenizer Boost::preprocessor)
+    set(BOOST_ENABLE_CMAKE ON)
+    set(BOOST_ENABLE_MPI OFF CACHE INTERNAL "Boost MPI Switch") # Assume outer variable
+    set(BOOST_ENABLE_PYTHON OFF CACHE INTERNAL "Boost Python Switch") # Assume outer variable
+    set(BOOST_BUILD_TESTING OFF CACHE BOOL INTERNAL "Boost Test Switch") # Disable testing for boost
+    # The test flag is not really working... added it for completeness
+
+    # Download and extract the boost library from GitHub
+    set(BOOST_VERSION 1.87.0)
+    message(STATUS "Downloading and extracting boost (${BOOST_VERSION}) library sources. This will take <1 min.")
+    include(FetchContent)
+
+    # Fetch boost from the Github release zip file to reduce download time
+    FetchContent_Declare(
+        Boost
+        URL https://github.com/boostorg/boost/releases/download/boost-${BOOST_VERSION}/boost-${BOOST_VERSION}-cmake.tar.gz # downloading a zip release speeds up the download
+        USES_TERMINAL_DOWNLOAD True
+        GIT_PROGRESS TRUE
+        DOWNLOAD_NO_EXTRACT FALSE
+        DOWNLOAD_EXTRACT_TIMESTAMP FALSE
+    )
+    FetchContent_MakeAvailable(Boost)
+
+else()
+    # Check which boost LIBRARY_DIRS to use
+    set(BOOST_LIBS Boost::boost Boost::program_options Boost::filesystem Boost::system)
+    message(STATUS "Boost libs/ and incs/:")
+    message(STATUS "    LIB:   ${Boost_LIBRARY_DIRS}")
+    message(STATUS "    INC:   ${Boost_INCLUDE_DIRS}")
+    message(STATUS "    LIBSO: ${Boost_LIBRARIES}")
 endif()
 
 # Install HDF5 as a dependency if not found
 find_package(HDF5 COMPONENTS CXX)
 
 if (NOT ${HDF5_FOUND})
-        message("-- HDF5 not found. Building without HDF5.")
-        set(HDF5_CXX_BUILD OFF)
-else ()
-        message(STATUS "    LIB:   ${HDF5_LIBRARIES}")
-        message(STATUS "    INC:   ${HDF5_INCLUDE_DIRS}")
-        message(STATUS "    LIBSO: ${HDF5_CXX_LIBRARIES}")
+    message("-- HDF5 not found. Building without HDF5.")
+    set(HDF5_CXX_BUILD OFF)
+else()
+    message("HDF5 libs/ and incs/:.")
+    message(STATUS "    LIB:   ${HDF5_LIBRARIES}")
+    message(STATUS "    INC:   ${HDF5_INCLUDE_DIRS}")
+    message(STATUS "    LIBSO: ${HDF5_CXX_LIBRARIES}")
 endif()
+
 
 configure_file(constants.hpp.in constants.hpp)
 
 include_directories(include)
 include_directories(${CMAKE_BINARY_DIR})
 
-add_subdirectory(meshfem2d)
+add_subdirectory(fortran/meshfem2d)
+add_subdirectory(fortran/meshfem3d)
 
 if (ENABLE_SIMD)
-        message("-- Enabling SIMD")
-        add_definitions(-DENABLE_SIMD)
+    message("-- Enabling SIMD")
+    add_definitions(-DENABLE_SIMD)
 endif()
 
 if (ENABLE_PROFILING)
-        message("-- Enabling profiling")
-        add_definitions(-DENABLE_PROFILING)
+    message("-- Enabling profiling")
+    add_definitions(-DENABLE_PROFILING)
 endif()
 
 # Build specfem2d libraries
@@ -165,31 +208,30 @@ add_library(
 )
 
 if (NOT HDF5_CXX_BUILD)
-        target_compile_definitions(
-                IO
-                PUBLIC -DNO_HDF5
-        )
+    target_compile_definitions(
+        IO
+        PUBLIC -DNO_HDF5
+    )
 
-        target_link_libraries(
-                IO
-                Boost::boost
-                Kokkos::kokkos
-        )
+    target_link_libraries(
+        IO
+        mesh
+        source_class
+        receiver_class
+        ${BOOST_LIBS}
+        Kokkos::kokkos)
 else()
-        target_link_libraries(
-                IO
-                ${HDF5_LIBRARIES}
-                Boost::boost
-                Kokkos::kokkos
-        )
+    target_link_libraries(
+        IO
+        mesh
+        source_class
+        receiver_class
+
+        Kokkos::kokkos
+        ${HDF5_LIBRARIES}
+    )
 endif()
 
-target_link_libraries(
-  IO
-  mesh
-  source_class
-  receiver_class
-)
 
 add_library(
         point
@@ -206,6 +248,12 @@ add_library(
         enumerations
         src/enumerations/medium.cpp
 )
+
+target_link_libraries(
+        enumerations
+        ${BOOST_LIBS}
+)
+
 
 add_library(
         edge
@@ -359,7 +407,7 @@ target_link_libraries(
         yaml-cpp
         point
         algorithms
-        Boost::boost
+        ${BOOST_LIBS}
 )
 
 add_library(
@@ -374,7 +422,7 @@ target_link_libraries(
         # utilities
         quadrature
         yaml-cpp
-        Boost::boost
+        ${BOOST_LIBS}
 )
 
 add_library(
@@ -413,9 +461,6 @@ target_link_libraries(
 add_library(
         domain
         src/domain/impl/boundary_conditions/boundary_conditions.cpp
-        src/domain/impl/elements/acoustic/acoustic2d.cpp
-        src/domain/impl/elements/elastic/elastic2d.cpp
-        src/domain/impl/elements/element.cpp
         src/domain/impl/elements/kernel.cpp
         src/domain/impl/kernels.cpp
         src/domain/domain.cpp
@@ -425,7 +470,20 @@ target_link_libraries(
         domain
         Kokkos::kokkos
         enumerations
-        Boost::boost
+)
+
+add_library(
+        medium
+        src/medium/compute_mass_matrix.cpp
+        src/medium/compute_stress_integrand.cpp
+)
+
+target_link_libraries(
+        medium
+        Kokkos::kokkos
+        compute
+        domain
+        enumerations
 )
 
 add_library(coupled_interface
@@ -473,6 +531,7 @@ target_link_libraries(
         timescheme
         domain
         kernels
+        medium
 )
 
 add_library(
@@ -545,8 +604,9 @@ target_link_libraries(
         reader
         kernels
         domain
+        medium
         solver
-        Boost::filesystem
+        ${BOOST_LIBS}
 )
 
 add_executable(
@@ -570,10 +630,11 @@ target_link_libraries(
         plotter
         reader
         domain
+        medium
         coupled_interface
         kernels
         solver
-        Boost::program_options
+        ${BOOST_LIBS}
 )
 
 # Include tests
@@ -634,10 +695,11 @@ if (SPECFEMPP_BINDING_PYTHON)
         plotter
         reader
         domain
+        medium
         coupled_interface
         kernels
         solver
-        Boost::program_options
+        ${BOOST_LIBS}
         pybind11::headers
     )
     target_compile_definitions(_core PRIVATE SPECFEMPP_BINDING_PYTHON)
