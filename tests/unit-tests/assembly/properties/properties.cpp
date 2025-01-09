@@ -3,7 +3,6 @@
 #include "datatypes/simd.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/material_definitions.hpp"
-#include "enumerations/medium.hpp"
 #include "parallel_configuration/chunk_config.hpp"
 #include "policies/chunk.hpp"
 #include "reader/property.hpp"
@@ -564,7 +563,7 @@ void test_properties(
   writer.write(assembly);
 
   // stage 3: modify properties and check store_on_host and load_on_device
-#define CALL_TEST_LOAD_STORE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)          \
+#define TEST_STORE_AND_LOAD(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)           \
   check_store_on_host<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), false>(      \
       properties);                                                             \
   check_load_on_device<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), false>(     \
@@ -575,11 +574,11 @@ void test_properties(
       properties);
 
   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      CALL_TEST_LOAD_STORE,
+      TEST_STORE_AND_LOAD,
       WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
           WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
-#undef CALL_TEST_LOAD_STORE
+#undef TEST_STORE_AND_LOAD
 
   // stage 4: restore properties to initial value from disk
   specfem::reader::property<specfem::IO::ASCII<specfem::IO::read> > reader(".");
