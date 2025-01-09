@@ -97,44 +97,16 @@ void allocate_elements(
 template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag medium_tag,
-          specfem::element::property_tag property_tag, typename qp_type>
+          specfem::element::property_tag property_tag, int NGLL>
 void allocate_isotropic_sources(
-    const specfem::compute::assembly &assembly, qp_type quadrature_points,
+    const specfem::compute::assembly &assembly,
     specfem::domain::impl::kernels::source_kernel<WavefieldType, DimensionType,
-                                                  medium_tag, property_tag,
-                                                  qp_type> &isotropic_sources) {
-
-  const auto &sources = assembly.sources;
-  const int nsources = sources.nsources;
-
-  int nsources_in_this_domain = 0;
-  for (int isource = 0; isource < sources.nsources; isource++) {
-    if ((sources.source_medium_mapping(isource) == medium_tag) &&
-        (sources.source_wavefield_mapping(isource) == WavefieldType)) {
-      nsources_in_this_domain++;
-    }
-  }
-
-  // Save the index for sources in this domain
-  specfem::kokkos::HostView1d<int> h_source_domain_index_mapping(
-      "specfem::domain::domain::h_source_domain_index_mapping",
-      nsources_in_this_domain);
-
-  int index = 0;
-  for (int isource = 0; isource < nsources; isource++) {
-    const int isources_domain = sources.source_domain_index_mapping(isource);
-    if (sources.source_medium_mapping(isource) == medium_tag &&
-        sources.source_wavefield_mapping(isource) == WavefieldType) {
-      h_source_domain_index_mapping(index) =
-          sources.source_domain_index_mapping(isource);
-      index++;
-    }
-  }
+                                                  medium_tag, property_tag, NGLL> &isotropic_sources) {
 
   // Allocate isotropic sources
   isotropic_sources = specfem::domain::impl::kernels::source_kernel<
-      WavefieldType, DimensionType, medium_tag, property_tag, qp_type>(
-      assembly, h_source_domain_index_mapping, quadrature_points);
+      WavefieldType, DimensionType, medium_tag, property_tag, NGLL>(
+      assembly);
 
   return;
 }
@@ -252,7 +224,7 @@ specfem::domain::impl::kernels::kernels<
 
   // Allocate isotropic sources
 
-  allocate_isotropic_sources(assembly, quadrature_points, isotropic_sources);
+  allocate_isotropic_sources(assembly, isotropic_sources);
 
   // Allocate isotropic receivers
 
@@ -315,7 +287,7 @@ specfem::domain::impl::kernels::kernels<
 
   // Allocate isotropic sources
 
-  allocate_isotropic_sources(assembly, quadrature_points, isotropic_sources);
+  allocate_isotropic_sources(assembly, isotropic_sources);
 
   // Allocate isotropic receivers
 

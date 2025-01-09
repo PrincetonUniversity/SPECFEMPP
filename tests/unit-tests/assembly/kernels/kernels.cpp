@@ -565,7 +565,7 @@ void test_kernels(specfem::compute::assembly &assembly) {
 TEST_F(ASSEMBLY, kernels_device_functions) {
   for (auto parameters : *this) {
     const auto Test = std::get<0>(parameters);
-    auto assembly = std::get<1>(parameters);
+    specfem::compute::assembly assembly = std::get<4>(parameters);
 
     try {
       test_kernels(assembly);

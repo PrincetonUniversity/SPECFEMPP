@@ -1,7 +1,7 @@
 #pragma once
 
 #include "kokkos_abstractions.h"
-#include "material/material.hpp"
+#include "medium/material.hpp"
 #include "specfem_mpi/interface.hpp"
 #include <variant>
 
@@ -43,13 +43,13 @@ struct materials {
             specfem::element::property_tag property>
   struct material {
     int n_materials; ///< Number of elements
-    std::vector<specfem::material::material<type, property> >
+    std::vector<specfem::medium::material<type, property> >
         material_properties; ///< Material properties
 
     material() = default;
 
     material(const int n_materials,
-             const std::vector<specfem::material::material<type, property> >
+             const std::vector<specfem::medium::material<type, property> >
                  &l_material);
   };
 
@@ -100,12 +100,12 @@ struct materials {
    * @return std::variant Material properties
    */
   std::variant<
-      specfem::material::material<specfem::element::medium_tag::elastic,
-                                  specfem::element::property_tag::isotropic>,
-      specfem::material::material<specfem::element::medium_tag::elastic,
-                                  specfem::element::property_tag::anisotropic>,
-      specfem::material::material<specfem::element::medium_tag::acoustic,
-                                  specfem::element::property_tag::isotropic> >
+      specfem::medium::material<specfem::element::medium_tag::elastic,
+                                specfem::element::property_tag::isotropic>,
+      specfem::medium::material<specfem::element::medium_tag::elastic,
+                                specfem::element::property_tag::anisotropic>,
+      specfem::medium::material<specfem::element::medium_tag::acoustic,
+                                specfem::element::property_tag::isotropic> >
   operator[](const int index) const;
 };
 } // namespace mesh
