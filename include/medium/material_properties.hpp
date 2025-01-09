@@ -2,19 +2,17 @@
 
 #include "compute/compute_mesh.hpp"
 #include "enumerations/interface.hpp"
+#include "medium/properties_container.hpp"
 #include "mesh/materials/materials.hpp"
 #include "mesh/tags/tags.hpp"
-#include "properties_container.hpp"
 
 namespace specfem {
-namespace compute {
-namespace impl {
-namespace properties {
+namespace medium {
+
 template <specfem::element::medium_tag type,
           specfem::element::property_tag property>
 struct material_properties
-    : public specfem::compute::impl::properties::properties_container<
-          type, property> {
+    : public specfem::medium::properties_container<type, property> {
   constexpr static auto value_type = type;
   constexpr static auto property_type = property;
   constexpr static auto dimension = specfem::dimension::type::dim2;
@@ -27,9 +25,8 @@ struct material_properties
       const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
       const specfem::mesh::materials &materials,
       const specfem::kokkos::HostView1d<int> property_index_mapping)
-      : specfem::compute::impl::properties::properties_container<type,
-                                                                 property>(
-            n_element, ngllz, ngllx) {
+      : specfem::medium::properties_container<type, property>(n_element, ngllz,
+                                                              ngllx) {
 
     int count = 0;
     for (int ispec = 0; ispec < nspec; ++ispec) {
@@ -62,7 +59,6 @@ struct material_properties
     return;
   }
 };
-} // namespace properties
-} // namespace impl
-} // namespace compute
+
+} // namespace medium
 } // namespace specfem
