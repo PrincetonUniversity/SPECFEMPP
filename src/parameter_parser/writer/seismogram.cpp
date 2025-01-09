@@ -39,12 +39,12 @@ specfem::runtime_configuration::seismogram::seismogram(
 
 std::shared_ptr<specfem::writer::writer>
 specfem::runtime_configuration::seismogram::instantiate_seismogram_writer(
-    const specfem::compute::receivers &receivers, const type_real dt,
-    const type_real t0, const int nstep_between_samples) const {
+    const specfem::compute::assembly &assembly) const {
 
   const auto type = [&]() {
     if (this->output_format == "seismic_unix" || this->output_format == "su") {
       return specfem::enums::seismogram::format::seismic_unix;
+      throw std::runtime_error("Seismic Unix format not implemented yet");
     } else if (this->output_format == "ASCII" ||
                this->output_format == "ascii") {
       return specfem::enums::seismogram::format::ascii;
@@ -54,8 +54,8 @@ specfem::runtime_configuration::seismogram::instantiate_seismogram_writer(
   }();
 
   std::shared_ptr<specfem::writer::writer> writer =
-      std::make_shared<specfem::writer::seismogram>(
-          receivers, type, this->output_folder, dt, t0, nstep_between_samples);
+      std::make_shared<specfem::writer::seismogram>(output_folder, assembly,
+                                                    type);
 
   return writer;
 }

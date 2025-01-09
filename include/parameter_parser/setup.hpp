@@ -133,10 +133,7 @@ public:
   std::shared_ptr<specfem::writer::writer> instantiate_seismogram_writer(
       const specfem::compute::assembly &assembly) const {
     if (this->seismogram) {
-      return this->seismogram->instantiate_seismogram_writer(
-          assembly.receivers, this->time_scheme->get_dt(),
-          this->time_scheme->get_t0(),
-          this->receivers->get_nstep_between_samples());
+      return this->seismogram->instantiate_seismogram_writer(assembly);
     } else {
       return nullptr;
     }
