@@ -282,9 +282,9 @@ private:
   KOKKOS_FUNCTION
   properties(const value_type &rho_inverse, const value_type &kappa,
              std::true_type)
-      : kappa_inverse((static_cast<value_type>(1.0)) / kappa), rho_inverse(rho_inverse),
-        kappa(kappa), rho_vpinverse(Kokkos::sqrt(rho_inverse * kappa_inverse)) {
-  }
+      : kappa_inverse((static_cast<value_type>(1.0)) / kappa),
+        rho_inverse(rho_inverse), kappa(kappa),
+        rho_vpinverse(Kokkos::sqrt(rho_inverse * kappa_inverse)) {}
 
 public:
   /**
