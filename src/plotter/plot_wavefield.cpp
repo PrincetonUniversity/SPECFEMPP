@@ -10,6 +10,7 @@
 #else
 
 #include <boost/filesystem.hpp>
+#include <cmath>
 #include <vtkActor.h>
 #include <vtkBiQuadraticQuad.h>
 #include <vtkCellData.h>
@@ -182,8 +183,7 @@ vtkSmartPointer<vtkUnstructuredGrid> get_wavefield_on_vtk_grid(
                               0.0);
       if (component == specfem::wavefield::type::pressure) {
         scalars->InsertNextValue(
-            std::sqrt(wavefield(icell, z_index[i], x_index[i], 0) *
-                      wavefield(icell, z_index[i], x_index[i], 0)));
+            std::abs(wavefield(icell, z_index[i], x_index[i], 0)));
       } else {
         scalars->InsertNextValue(
             std::sqrt((wavefield(icell, z_index[i], x_index[i], 0) *

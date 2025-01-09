@@ -7,7 +7,7 @@
 
 template <specfem::dimension::type Dimension,
           specfem::element::medium_tag Medium>
-specfem::compute::source_medium<Dimension, Medium>::
+specfem::compute::impl::source_medium<Dimension, Medium>::
     source_medium(
         const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
         const specfem::compute::mesh &mesh,

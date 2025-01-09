@@ -4,20 +4,20 @@
 Material Properties
 ===================
 
-.. doxygenclass:: specfem::material::material
+.. doxygenclass:: specfem::medium::material
    :members:
 
 
 Implementation Details
 ----------------------
 
-.. doxygenclass:: specfem::material::properties
+.. doxygenclass:: specfem::medium::properties
    :members:
 
-.. doxygenclass:: specfem::material::properties< specfem::element::medium_tag::elastic, specfem::element::property_tag::isotropic >
+.. doxygenclass:: specfem::medium::properties< specfem::element::medium_tag::elastic, specfem::element::property_tag::isotropic >
    :members:
    :private-members:
 
-.. doxygenclass:: specfem::material::properties< specfem::element::medium_tag::acoustic, specfem::element::property_tag::isotropic >
+.. doxygenclass:: specfem::medium::properties< specfem::element::medium_tag::acoustic, specfem::element::property_tag::isotropic >
    :members:
    :private-members:
