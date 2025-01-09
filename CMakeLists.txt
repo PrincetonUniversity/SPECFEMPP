@@ -341,7 +341,7 @@ target_link_libraries(
 
 add_library(
         read_seismogram
-        src/reader/seismogram.cpp
+        src/IO/seismogram/reader.cpp
 )
 
 target_link_libraries(
@@ -351,8 +351,8 @@ target_link_libraries(
 
 add_library(
         reader
-        src/reader/wavefield.cpp
-        src/reader/property.cpp
+        src/IO/wavefield/reader.cpp
+        src/IO/property/reader.cpp
 )
 
 target_link_libraries(

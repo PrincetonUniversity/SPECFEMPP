@@ -1,7 +1,7 @@
 #pragma once
 
 #include "enumerations/simulation.hpp"
-#include "reader/reader.hpp"
+#include "IO/reader.hpp"
 #include "writer/writer.hpp"
 #include "yaml-cpp/yaml.h"
 
@@ -52,10 +52,10 @@ public:
   /**
    * @brief Instantiate a wavefield reader object
    *
-   * @return std::shared_ptr<specfem::reader::reader> Pointer to an instantiated
+   * @return std::shared_ptr<specfem::IO::reader> Pointer to an instantiated
    * reader object
    */
-  std::shared_ptr<specfem::reader::reader> instantiate_wavefield_reader() const;
+  std::shared_ptr<specfem::IO::reader> instantiate_wavefield_reader() const;
 
   inline specfem::simulation::type get_simulation_type() const {
     return this->simulation_type;
