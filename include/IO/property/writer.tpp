@@ -5,15 +5,15 @@
 #include "enumerations/medium.hpp"
 #include "kokkos_abstractions.h"
 #include "point/properties.hpp"
-#include "writer/property.hpp"
+#include "IO/property/writer.hpp"
 #include <Kokkos_Core.hpp>
 
 template <typename OutputLibrary>
-specfem::writer::property<OutputLibrary>::property(const std::string output_folder)
+specfem::IO::property_writer<OutputLibrary>::property_writer(const std::string output_folder)
     : output_folder(output_folder) {}
 
 template <typename OutputLibrary>
-void specfem::writer::property<OutputLibrary>::write(specfem::compute::assembly &assembly) {
+void specfem::IO::property_writer<OutputLibrary>::write(specfem::compute::assembly &assembly) {
   const auto &mesh = assembly.mesh;
   auto &properties = assembly.properties;
 

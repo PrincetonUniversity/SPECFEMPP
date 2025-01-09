@@ -1,20 +1,19 @@
-#ifndef _SEISMOGRAM_WRITER_HPP
-#define _SEISMOGRAM_WRITER_HPP
+#pragma once
 
 #include "compute/interface.hpp"
 #include "constants.hpp"
 #include "receiver/interface.hpp"
 #include "specfem_setup.hpp"
-#include "writer.hpp"
+#include "IO/writer.hpp"
 #include <vector>
 
 namespace specfem {
-namespace writer {
+namespace IO {
 /**
  * @brief Seismogram writer class to write seismogram to a file
  *
  */
-class seismogram : public writer {
+class seismogram_writer : public writer {
 
 public:
   /**
@@ -27,7 +26,7 @@ public:
    * @param nstep_between_samples number of timesteps between seismogram
    * sampling (seismogram sampling frequency)
    */
-  seismogram(const specfem::enums::seismogram::format type,
+  seismogram_writer(const specfem::enums::seismogram::format type,
              const std::string output_folder, const type_real dt,
              const type_real t0, const int nstep_between_samples)
       : type(type), output_folder(output_folder), dt(dt), t0(t0),
@@ -51,7 +50,5 @@ private:
                              ///< sampling (seismogram sampling frequency)
 };
 
-} // namespace writer
+} // namespace IO
 } // namespace specfem
-
-#endif

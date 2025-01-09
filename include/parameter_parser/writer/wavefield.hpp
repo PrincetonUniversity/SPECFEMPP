@@ -2,7 +2,7 @@
 
 #include "enumerations/simulation.hpp"
 #include "IO/reader.hpp"
-#include "writer/writer.hpp"
+#include "IO/writer.hpp"
 #include "yaml-cpp/yaml.h"
 
 namespace specfem {
@@ -44,10 +44,10 @@ public:
   /**
    * @brief Instantiate a wavefield writer object
    *
-   * @return std::shared_ptr<specfem::writer::writer> Pointer to an instantiated
+   * @return std::shared_ptr<specfem::IO::writer> Pointer to an instantiated
    * writer object
    */
-  std::shared_ptr<specfem::writer::writer> instantiate_wavefield_writer() const;
+  std::shared_ptr<specfem::IO::writer> instantiate_wavefield_writer() const;
 
   /**
    * @brief Instantiate a wavefield reader object

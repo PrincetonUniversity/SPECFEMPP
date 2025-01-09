@@ -1,6 +1,6 @@
 #include "parameter_parser/writer/seismogram.hpp"
 #include "constants.hpp"
-#include "writer/interface.hpp"
+#include "IO/seismogram/writer.hpp"
 #include "yaml-cpp/yaml.h"
 #include <boost/filesystem.hpp>
 #include <string>
@@ -37,7 +37,7 @@ specfem::runtime_configuration::seismogram::seismogram(
   return;
 }
 
-std::shared_ptr<specfem::writer::writer>
+std::shared_ptr<specfem::IO::writer>
 specfem::runtime_configuration::seismogram::instantiate_seismogram_writer(
     const type_real dt, const type_real t0,
     const int nstep_between_samples) const {
@@ -53,8 +53,8 @@ specfem::runtime_configuration::seismogram::instantiate_seismogram_writer(
     }
   }();
 
-  std::shared_ptr<specfem::writer::writer> writer =
-      std::make_shared<specfem::writer::seismogram>(
+  std::shared_ptr<specfem::IO::writer> writer =
+      std::make_shared<specfem::IO::seismogram_writer>(
           type, this->output_folder, dt, t0, nstep_between_samples);
 
   return writer;

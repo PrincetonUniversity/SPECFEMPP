@@ -2,8 +2,7 @@
 #include "IO/ASCII/ASCII.hpp"
 #include "IO/HDF5/HDF5.hpp"
 #include "IO/property/reader.hpp"
-#include "writer/interface.hpp"
-#include "writer/property.hpp"
+#include "IO/property/writer.hpp"
 #include <boost/filesystem.hpp>
 
 specfem::runtime_configuration::property::property(const YAML::Node &Node,
@@ -38,21 +37,21 @@ specfem::runtime_configuration::property::property(const YAML::Node &Node,
   return;
 }
 
-std::shared_ptr<specfem::writer::writer>
+std::shared_ptr<specfem::IO::writer>
 specfem::runtime_configuration::property::instantiate_property_writer() const {
 
-  const std::shared_ptr<specfem::writer::writer> writer =
-      [&]() -> std::shared_ptr<specfem::writer::writer> {
+  const std::shared_ptr<specfem::IO::writer> writer =
+      [&]() -> std::shared_ptr<specfem::IO::writer> {
     if (!this->write_mode) {
       return nullptr;
     }
     if (this->output_format == "HDF5") {
       return std::make_shared<
-          specfem::writer::property<specfem::IO::HDF5<specfem::IO::write> > >(
+          specfem::IO::property_writer<specfem::IO::HDF5<specfem::IO::write> > >(
           this->output_folder);
     } else if (this->output_format == "ASCII") {
       return std::make_shared<
-          specfem::writer::property<specfem::IO::ASCII<specfem::IO::write> > >(
+          specfem::IO::property_writer<specfem::IO::ASCII<specfem::IO::write> > >(
           this->output_folder);
     } else {
       throw std::runtime_error("Unknown model format");

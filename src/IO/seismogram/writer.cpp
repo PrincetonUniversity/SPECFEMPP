@@ -1,8 +1,8 @@
 #include "compute/interface.hpp"
-#include "writer/interface.hpp"
+#include "IO/seismogram/writer.hpp"
 #include <fstream>
 
-void specfem::writer::seismogram::write(specfem::compute::assembly &assembly) {
+void specfem::IO::seismogram_writer::write(specfem::compute::assembly &assembly) {
   auto &receivers = assembly.receivers;
   const auto &nreceivers = receivers.nreceivers;
 
