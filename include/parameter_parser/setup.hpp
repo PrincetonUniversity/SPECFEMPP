@@ -137,10 +137,10 @@ public:
    * @param receivers Pointer to specfem::compute::receivers struct
    used
    * to instantiate the writer
-   * @return specfem::writer::writer* Pointer to an instantiated writer
+   * @return specfem::IO::writer* Pointer to an instantiated writer
    object
    */
-  std::shared_ptr<specfem::writer::writer>
+  std::shared_ptr<specfem::IO::writer>
   instantiate_seismogram_writer() const {
     if (this->seismogram) {
       return this->seismogram->instantiate_seismogram_writer(
@@ -151,7 +151,7 @@ public:
     }
   }
 
-  std::shared_ptr<specfem::writer::writer>
+  std::shared_ptr<specfem::IO::writer>
   instantiate_wavefield_writer() const {
     if (this->wavefield) {
       return this->wavefield->instantiate_wavefield_writer();
@@ -186,7 +186,7 @@ public:
     }
   }
 
-  std::shared_ptr<specfem::writer::writer> instantiate_property_writer() const {
+  std::shared_ptr<specfem::IO::writer> instantiate_property_writer() const {
     if (this->property) {
       return this->property->instantiate_property_writer();
     } else {
@@ -194,7 +194,7 @@ public:
     }
   }
 
-  std::shared_ptr<specfem::writer::writer> instantiate_kernel_writer() const {
+  std::shared_ptr<specfem::IO::writer> instantiate_kernel_writer() const {
     if (this->kernel) {
       return this->kernel->instantiate_kernel_writer();
     } else {

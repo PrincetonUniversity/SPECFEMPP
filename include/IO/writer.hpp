@@ -7,7 +7,7 @@ class assembly;
 } // namespace specfem
 
 namespace specfem {
-namespace writer {
+namespace IO {
 /**
  * @brief Base writer class
  *

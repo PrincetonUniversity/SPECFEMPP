@@ -7,7 +7,7 @@
 #include "policies/chunk.hpp"
 #include "IO/property/reader.hpp"
 #include "specfem_setup.hpp"
-#include "writer/property.hpp"
+#include "IO/property/writer.hpp"
 #include <gtest/gtest.h>
 
 inline void error_message_header(std::ostringstream &message,
@@ -558,7 +558,7 @@ void test_properties(
           WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
   // stage 2: write properties
-  specfem::writer::property<specfem::IO::ASCII<specfem::IO::write> > writer(
+  specfem::IO::property_writer<specfem::IO::ASCII<specfem::IO::write> > writer(
       ".");
   writer.write(assembly);
 

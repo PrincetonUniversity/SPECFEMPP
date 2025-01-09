@@ -536,10 +536,10 @@ target_link_libraries(
 
 add_library(
         writer
-        src/writer/seismogram.cpp
-        src/writer/wavefield.cpp
-        src/writer/kernel.cpp
-        src/writer/property.cpp
+        src/IO/seismogram/writer.cpp
+        src/IO/wavefield/writer.cpp
+        src/IO/kernel/writer.cpp
+        src/IO/property/writer.cpp
 )
 
 target_link_libraries(
