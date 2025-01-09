@@ -1,5 +1,4 @@
-#ifndef _SPECFEM_COMPUTE_KERNELS_IMPL_MATERIAL_KERNELS_HPP_
-#define _SPECFEM_COMPUTE_KERNELS_IMPL_MATERIAL_KERNELS_HPP_
+#pragma once
 
 #include "compute/properties/properties.hpp"
 #include "enumerations/interface.hpp"
@@ -8,9 +7,8 @@
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
-namespace compute {
-namespace impl {
-namespace kernels {
+namespace medium {
+
 template <specfem::element::medium_tag type,
           specfem::element::property_tag property>
 class material_kernels : public kernels_container<type, property> {
@@ -25,8 +23,7 @@ public:
       const specfem::compute::mesh_to_compute_mapping &mapping,
       const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
       const specfem::kokkos::HostView1d<int> property_index_mapping)
-      : specfem::compute::impl::kernels::kernels_container<value_type,
-                                                           property_type>(
+      : specfem::medium::kernels_container<value_type, property_type>(
             n_element, ngllz, ngllx) {
     int count = 0;
     for (int ispec = 0; ispec < nspec; ++ispec) {
@@ -41,9 +38,5 @@ public:
     assert(count == n_element);
   }
 };
-} // namespace kernels
-} // namespace impl
-} // namespace compute
+} // namespace medium
 } // namespace specfem
-
-#endif /* _SPECFEM_COMPUTE_KERNELS_IMPL_MATERIAL_KERNELS_HPP_ */

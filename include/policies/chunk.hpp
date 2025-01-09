@@ -203,6 +203,17 @@ public:
   index_type operator()(const int i) const {
     return operator()(i, std::integral_constant<bool, using_simd>());
   }
+
+  /**
+   * @brief Get the range of spectral element indices within this iterator.
+   *
+   * @return Kokkos::pair<int, int> Range of spectral element indices within
+   * this iterator.
+   */
+  KOKKOS_INLINE_FUNCTION
+  Kokkos::pair<int, int> get_range() const {
+    return Kokkos::make_pair(indices(0), indices(num_elements - 1));
+  }
 };
 } // namespace iterator
 

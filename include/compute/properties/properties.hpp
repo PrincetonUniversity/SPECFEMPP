@@ -3,11 +3,11 @@
 #include "compute/impl/element_types.hpp"
 #include "compute/impl/value_containers.hpp"
 #include "enumerations/specfem_enums.hpp"
-#include "impl/material_properties.hpp"
-#include "impl/properties_container.hpp"
 #include "kokkos_abstractions.h"
 #include "macros.hpp"
 #include "medium/material.hpp"
+#include "medium/material_properties.hpp"
+#include "medium/properties_container.hpp"
 #include "point/coordinates.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -24,8 +24,7 @@ namespace compute {
  */
 struct properties
     : public impl::element_types,
-      public impl::value_containers<
-          specfem::compute::impl::properties::material_properties> {
+      public impl::value_containers<specfem::medium::material_properties> {
   /**
    * @name Constructors
    */
@@ -61,14 +60,14 @@ struct properties
    */
   void copy_to_host() {
     impl::element_types::copy_to_host();
-    impl::value_containers<specfem::compute::impl::properties::
-                               material_properties>::copy_to_host();
+    impl::value_containers<
+        specfem::medium::material_properties>::copy_to_host();
   }
 
   void copy_to_device() {
     impl::element_types::copy_to_device();
-    impl::value_containers<specfem::compute::impl::properties::
-                               material_properties>::copy_to_device();
+    impl::value_containers<
+        specfem::medium::material_properties>::copy_to_device();
   }
 };
 
