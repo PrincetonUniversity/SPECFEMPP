@@ -1,4 +1,3 @@
-//clang-format off
 ! setup/constants.h.  Generated from constants.h.in by configure.
 
 !
