@@ -66,8 +66,8 @@ struct assembly {
    * @param max_timesteps Maximum number of time steps
    * @param max_sig_step Maximum number of seismogram time steps
    * @param simulation Type of simulation (forward, adjoint, etc.)
-   * @param has_gll_model Whether a GLL model is present (skip material property
-   * assignment if true)
+   * @param property_reader Reader for GLL model (skip material property
+   * assignment if exists)
    */
   assembly(
       const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
