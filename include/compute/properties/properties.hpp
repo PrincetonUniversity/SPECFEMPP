@@ -45,6 +45,8 @@ struct properties
    * @param mapping Mapping of spectral element index from mesh to assembly
    * @param tags Element Tags for every spectral element
    * @param materials Material properties for every spectral element
+   * @param has_gll_model Whether a GLL model is present (skip material property
+   * assignment if true)
    */
   properties(const int nspec, const int ngllz, const int ngllx,
              const specfem::compute::mesh_to_compute_mapping &mapping,
