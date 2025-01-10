@@ -42,8 +42,8 @@ rule run_solver:
         runtime=10,
     shell:
         """
-            module purge
-            module load boost/1.73.0
+            # module purge
+            # module load boost/1.73.0
             mkdir -p OUTPUT_FILES/results
             echo "Hostname: $(hostname)" > output.log
             {SPECFEM_BIN} -p {input.config} >> output.log
@@ -67,6 +67,9 @@ rule plot_seismogram:
         import numpy as np
         import obspy
 
+        # Set matplotlib gui off
+        import matplotlib
+        matplotlib.use("Agg")
 
         def get_traces(directory):
             traces = []

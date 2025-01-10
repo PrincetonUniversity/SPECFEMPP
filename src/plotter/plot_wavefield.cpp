@@ -10,6 +10,7 @@
 #else
 
 #include <boost/filesystem.hpp>
+#include <cmath>
 #include <vtkActor.h>
 #include <vtkBiQuadraticQuad.h>
 #include <vtkCellData.h>
@@ -20,7 +21,11 @@
 #include <vtkJPEGWriter.h>
 #include <vtkLookupTable.h>
 #include <vtkNamedColors.h>
+#ifdef __APPLE__
+#include <vtkCocoaRenderWindow.h>
+#else
 #include <vtkOpenGLRenderWindow.h>
+#endif
 #include <vtkPNGWriter.h>
 #include <vtkPointData.h>
 #include <vtkPoints.h>
@@ -99,7 +104,7 @@ map_materials_with_color(const specfem::compute::assembly &assembly) {
     }
     cells->InsertNextCell(quad);
 
-    const auto material = properties.h_element_types(icell);
+    const auto material = properties.h_medium_tags(icell);
     const auto color = material_colors.at(material);
     unsigned char color_uc[3] = { static_cast<unsigned char>(color[0]),
                                   static_cast<unsigned char>(color[1]),
@@ -178,8 +183,7 @@ vtkSmartPointer<vtkUnstructuredGrid> get_wavefield_on_vtk_grid(
                               0.0);
       if (component == specfem::wavefield::type::pressure) {
         scalars->InsertNextValue(
-            std::sqrt(wavefield(icell, z_index[i], x_index[i], 0) *
-                      wavefield(icell, z_index[i], x_index[i], 0)));
+            std::abs(wavefield(icell, z_index[i], x_index[i], 0)));
       } else {
         scalars->InsertNextValue(
             std::sqrt((wavefield(icell, z_index[i], x_index[i], 0) *
@@ -310,8 +314,12 @@ void specfem::plotter::plot_wavefield::plot() {
       throw std::runtime_error("Unsupported output format");
     }
   } else {
-    // Create a render window interactor
+// Create a render window interactor
+#ifdef __APPLE__
+    auto render_window = vtkSmartPointer<vtkCocoaRenderWindow>::New();
+#else
     auto render_window = vtkSmartPointer<vtkOpenGLRenderWindow>::New();
+#endif
     render_window->AddRenderer(renderer);
     render_window->SetSize(1280, 1280);
     render_window->SetWindowName("Wavefield");

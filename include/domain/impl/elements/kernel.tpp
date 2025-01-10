@@ -4,7 +4,8 @@
 #include "algorithms/gradient.hpp"
 #include "compute/assembly/assembly.hpp"
 #include "domain/impl/boundary_conditions/boundary_conditions.hpp"
-#include "element.hpp"
+#include "medium/compute_stress_integrand.hpp"
+#include "medium/compute_mass_matrix.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "enumerations/specfem_enums.hpp"
@@ -37,8 +38,8 @@ specfem::domain::impl::kernels::element_kernel_base<
   // type
   for (int ispec = 0; ispec < nelements; ispec++) {
     const int ielement = h_element_kernel_index_mapping(ispec);
-    if ((assembly.properties.h_element_types(ielement) != MediumTag) &&
-        (assembly.properties.h_element_property(ielement) != PropertyTag)) {
+    if ((assembly.properties.h_medium_tags(ielement) != MediumTag) &&
+        (assembly.properties.h_property_tags(ielement) != PropertyTag)) {
       throw std::runtime_error("Invalid element detected in kernel");
     }
   }
@@ -57,6 +58,7 @@ specfem::domain::impl::kernels::element_kernel_base<
                     h_element_kernel_index_mapping);
   return;
 }
+
 
 template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
@@ -119,7 +121,7 @@ void specfem::domain::impl::kernels::element_kernel_base<
                 }();
 
                 PointMassType mass_matrix =
-                    specfem::domain::impl::elements::mass_matrix_component(
+                    specfem::medium::mass_matrix_component(
                         point_property, point_partial_derivatives);
 
                 for (int icomp = 0; icomp < components; icomp++) {

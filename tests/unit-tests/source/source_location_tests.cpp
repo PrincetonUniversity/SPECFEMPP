@@ -2,7 +2,7 @@
 #include "../MPI_environment.hpp"
 #include "IO/interface.hpp"
 #include "compute/interface.hpp"
-#include "material/interface.hpp"
+#include "medium/material.hpp"
 #include "mesh/mesh.hpp"
 #include "source/interface.hpp"
 #include "specfem_setup.hpp"
@@ -161,7 +161,7 @@ TEST(SOURCE_LOCATION_TESTS, compute_source_locations) {
       new specfem::quadrature::gll::gll(0.0, 0.0, 5);
 
   // Read mesh for binary database for the test
-  std::vector<std::shared_ptr<specfem::material::material> > materials;
+  std::vector<std::shared_ptr<specfem::medium::material> > materials;
   specfem::mesh::mesh mesh =
       specfem::IO::read_mesh(test_config.database_file, mpi);
 

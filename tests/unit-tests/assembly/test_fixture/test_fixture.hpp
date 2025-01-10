@@ -72,21 +72,34 @@ class ASSEMBLY : public ::testing::Test {
 protected:
   class Iterator {
   public:
-    Iterator(test_configuration::Test *p_Test,
-             specfem::compute::assembly *p_assembly)
-        : p_Test(p_Test), p_assembly(p_assembly) {}
+    Iterator(
+        test_configuration::Test *p_Test,
+        specfem::mesh::mesh<specfem::dimension::type::dim2> *p_mesh,
+        std::vector<std::shared_ptr<specfem::sources::source> > *p_sources,
+        std::vector<std::shared_ptr<specfem::receivers::receiver> > *p_stations,
+        specfem::compute::assembly *p_assembly)
+        : p_Test(p_Test), p_mesh(p_mesh), p_sources(p_sources),
+          p_stations(p_stations), p_assembly(p_assembly) {}
 
-    std::tuple<test_configuration::Test, specfem::compute::assembly>
+    std::tuple<test_configuration::Test,
+               specfem::mesh::mesh<specfem::dimension::type::dim2>,
+               std::vector<std::shared_ptr<specfem::sources::source> >,
+               std::vector<std::shared_ptr<specfem::receivers::receiver> >,
+               specfem::compute::assembly>
     operator*() {
       std::cout << "-------------------------------------------------------\n"
                 << "\033[0;32m[RUNNING]\033[0m " << p_Test->name << "\n"
                 << "-------------------------------------------------------\n\n"
                 << std::endl;
-      return std::make_tuple(*p_Test, *p_assembly);
+      return std::make_tuple(*p_Test, *p_mesh, *p_sources, *p_stations,
+                             *p_assembly);
     }
 
     Iterator &operator++() {
       ++p_Test;
+      ++p_mesh;
+      ++p_sources;
+      ++p_stations;
       ++p_assembly;
       return *this;
     }
@@ -97,17 +110,29 @@ protected:
 
   private:
     test_configuration::Test *p_Test;
+    specfem::mesh::mesh<specfem::dimension::type::dim2> *p_mesh;
+    std::vector<std::shared_ptr<specfem::sources::source> > *p_sources;
+    std::vector<std::shared_ptr<specfem::receivers::receiver> > *p_stations;
     specfem::compute::assembly *p_assembly;
   };
 
   ASSEMBLY();
 
-  Iterator begin() { return Iterator(&Tests[0], &assemblies[0]); }
+  Iterator begin() {
+    return Iterator(&Tests[0], &Meshes[0], &Sources[0], &Stations[0],
+                    &assemblies[0]);
+  }
 
   Iterator end() {
-    return Iterator(&Tests[Tests.size()], &assemblies[assemblies.size()]);
+    return Iterator(&Tests[Tests.size()], &Meshes[Meshes.size()],
+                    &Sources[Sources.size()], &Stations[Stations.size()],
+                    &assemblies[assemblies.size()]);
   }
 
   std::vector<test_configuration::Test> Tests;
+  std::vector<specfem::mesh::mesh<specfem::dimension::type::dim2> > Meshes;
+  std::vector<std::vector<std::shared_ptr<specfem::sources::source> > > Sources;
+  std::vector<std::vector<std::shared_ptr<specfem::receivers::receiver> > >
+      Stations;
   std::vector<specfem::compute::assembly> assemblies;
 };
