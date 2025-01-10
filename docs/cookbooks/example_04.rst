@@ -1,7 +1,7 @@
-Wave propagration through fluid-solid interface
+Wave propagration through anistoropic zinc crystal
 ===============================================
 
-This `example <https://github.com/PrincetonUniversity/SPECFEMPP/tree/main/examples/anisotropic-crystal>` we simulate wave propagation through a 2-dimensional anistoropic zinc crystal.
+This `example <https://github.com/PrincetonUniversity/SPECFEMPP/tree/main/examples/anisotropic-crystal>`_ we simulate wave propagation through a 2-dimensional anistoropic zinc crystal.
 
 Setting up the workspace
 -------------------------
@@ -34,7 +34,7 @@ Now let's create the necessary directories to store the input files and output a
 .. code:: bash
 
     mkdir -p OUTPUT_FILES
-    mkdir -p OUTPUT_FILES/seismograms
+    mkdir -p OUTPUT_FILES/results
 
     touch specfem_config.yaml
     touch single_source.yaml
@@ -311,7 +311,7 @@ To run the solver, we first need to define a configuration file ``specfem_config
           writer:
             seismogram:
               format: ascii
-              directory: "./OUTPUT_FILES/seismograms"
+              directory: "./OUTPUT_FILES/results"
 
     receivers:
       stations-file: "./OUTPUT_FILES/STATIONS"
@@ -338,12 +338,12 @@ With the configuration file in place, we can run the solver using the following 
     specfem2d -p specfem_config.yaml
 
 
-Visualizing the traces
+Visualizing the traces and wavefield
 ------------------------
 
-Lastly we can plot the traces stored in the ``OUTPUT_FILES/seismograms`` directory using the following python code.
+We can plot the traces stored in the ``OUTPUT_FILES/results`` directory using the following python code.
 
-.. code:: python
+.. code-block:: python
     :caption: plot.py
 
     import glob
@@ -393,7 +393,7 @@ Lastly we can plot the traces stored in the ``OUTPUT_FILES/seismograms`` directo
         return stream
 
 
-    stream = get_traces("OUTPUT_FILES/seismograms")
+    stream = get_traces("OUTPUT_FILES/results")
 
     N_traces = len(stream)
     Amax = np.max(stream.max())
@@ -421,3 +421,36 @@ Lastly we can plot the traces stored in the ``OUTPUT_FILES/seismograms`` directo
 
     plt.savefig('traces.png', dpi=300)
     plt.close('all')
+
+.. figure:: ../../examples/anisotropic-crystal/traces.png
+   :alt: Traces
+   :width: 800
+   :align: center
+
+   Traces.
+
+To plot the wavefield, build specfem with vtk library, then add a `display`` section in the `writer`` section of the configuration file. e.g.
+
+.. code-block:: yaml
+    :caption: specfem_config.yaml
+
+    simulation-mode:
+      forward:
+        writer:
+          seismogram:
+            format: ascii
+            directory: "./OUTPUT_FILES/results"
+
+          display:
+            format: PNG
+            directory: ./OUTPUT_FILES/results
+            field: displacement
+            simulation-field: forward
+            time-interval: 100
+
+.. figure:: ../../examples/anisotropic-crystal/wavefield1400.png
+   :alt: Wavefield
+   :width: 800
+   :align: center
+
+   Wavefield.
