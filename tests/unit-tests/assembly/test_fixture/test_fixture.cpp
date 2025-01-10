@@ -54,15 +54,3 @@ ASSEMBLY::ASSEMBLY() {
         specfem::simulation::type::forward));
   }
 }
-
-// Instantiate template functions
-
-template KOKKOS_FUNCTION
-    specfem::point::index<specfem::dimension::type::dim2, true>
-    get_index<true>(const int ielement, const int num_elements, const int iz,
-                    const int ix);
-
-template KOKKOS_FUNCTION
-    specfem::point::index<specfem::dimension::type::dim2, false>
-    get_index<false>(const int ielement, const int num_elements, const int iz,
-                     const int ix);
