@@ -1,3 +1,5 @@
+# This file will only work from clang-format 18 onwards, keeping it for future
+# clang-format update
 # ignore fortran header files in the fortran directory:
 ./meshfem2d/*.h
 ./meshfem3d/setup/*.h
