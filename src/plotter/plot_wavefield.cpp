@@ -22,9 +22,9 @@
 #include <vtkLookupTable.h>
 #include <vtkNamedColors.h>
 #ifdef __APPLE__
-  #include <vtkCocoaRenderWindow.h>
+#include <vtkCocoaRenderWindow.h>
 #else
-  #include <vtkOpenGLRenderWindow.h>
+#include <vtkOpenGLRenderWindow.h>
 #endif
 #include <vtkPNGWriter.h>
 #include <vtkPointData.h>
@@ -287,7 +287,7 @@ void specfem::plotter::plot_wavefield::plot() {
     auto render_window = vtkSmartPointer<vtkRenderWindow>::New();
     render_window->SetOffScreenRendering(1);
     render_window->AddRenderer(renderer);
-    render_window->SetSize(1280, 1280);
+    render_window->SetSize(2560, 2560);
     render_window->SetWindowName("Wavefield");
     auto image_filter = vtkSmartPointer<vtkWindowToImageFilter>::New();
     image_filter->SetInput(render_window);
@@ -314,14 +314,14 @@ void specfem::plotter::plot_wavefield::plot() {
       throw std::runtime_error("Unsupported output format");
     }
   } else {
-    // Create a render window interactor
-    #ifdef __APPLE__
-      auto render_window = vtkSmartPointer<vtkCocoaRenderWindow>::New();
-    #else
-      auto render_window = vtkSmartPointer<vtkOpenGLRenderWindow>::New();
-    #endif
+// Create a render window interactor
+#ifdef __APPLE__
+    auto render_window = vtkSmartPointer<vtkCocoaRenderWindow>::New();
+#else
+    auto render_window = vtkSmartPointer<vtkOpenGLRenderWindow>::New();
+#endif
     render_window->AddRenderer(renderer);
-    render_window->SetSize(1280, 1280);
+    render_window->SetSize(2560, 2560);
     render_window->SetWindowName("Wavefield");
 
     auto render_window_interactor =
