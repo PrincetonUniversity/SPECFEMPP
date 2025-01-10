@@ -3,6 +3,7 @@
 
 #include "dirac.hpp"
 #include "external.hpp"
+#include "gaussiander.hpp"
 #include "ricker.hpp"
 #include "source_time_function.hpp"
 
