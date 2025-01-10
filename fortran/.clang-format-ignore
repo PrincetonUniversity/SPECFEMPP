@@ -1,0 +1,5 @@
+# ignore fortran header files in the fortran directory:
+./meshfem2d/*.h
+./meshfem3d/setup/*.h
+./meshfem3d/shared/*.h
+./meshfem3d/meshfem3D/*.h
