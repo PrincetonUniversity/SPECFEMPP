@@ -30,7 +30,7 @@ rule run_solver:
         config="specfem_config.yaml",
     output:
         siesmograms=expand(
-            "OUTPUT_FILES/results/{station_name}{network_name}{component}.semd",
+            "OUTPUT_FILES/results/{station_name}.{network_name}.S2.{component}.semd",
             station_name=[
                 "S0001",
                 "S0002",
@@ -65,7 +65,7 @@ rule run_solver:
 rule plot_seismogram:
     input:
         trace_files=expand(
-            "OUTPUT_FILES/results/{station_name}{network_name}{component}.semd",
+            "OUTPUT_FILES/results/{station_name}.{network_name}.S2.{component}.semd",
             station_name=[
                 "S0001",
                 "S0002",
