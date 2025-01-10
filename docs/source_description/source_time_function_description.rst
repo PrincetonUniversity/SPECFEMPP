@@ -93,6 +93,56 @@ Ricker Source Time Function Description
             tshift: 0.0
             f0: 1.0
 
+.. _gaussiander_source_description:
+
+Gaussian Derivative Source Time Function Description
+=======================================
+
+**Parameter Name** : ``GaussianDer``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**dafault value** : None
+
+**possible values** : [YAML Node]
+
+**Description** : Definition of GaussianDer source time function
+
+**Parameter Name** : ``GaussianDer.factor``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**dafault value** : None
+
+**possible values** : [float]
+
+**Description** : Scaling factor for GaussianDer source time function
+
+**Parameter Name** : ``GaussianDer.tshift``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**dafault value** : 0.0
+
+**possible values** : [float]
+
+**Description** : Time shift for GaussianDer source time function
+
+**Parameter Name** : ``GaussianDer.f0``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**dafault value** : None
+
+**possible values** : [float]
+
+**Description** : Central frequency for GaussianDer source time function
+
+.. admonition:: Example
+
+    .. code-block:: yaml
+
+        GaussianDer:
+            factor: 1e10
+            tshift: 0.0
+            f0: 1.0
+
 .. _external_source_description:
 
 External Source Time Function Description
