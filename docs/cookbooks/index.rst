@@ -12,7 +12,10 @@ Cookbooks are a collection of examples that demonstrate how to use the package t
 .. toctree::
     :maxdepth: 1
 
-    example_01
-    example_02
-    example_03
-    example_05
+    homogeneous-medium/index.rst
+
+    fluid-solid-interface/index.rst
+    kernels-example-tromp-2005/index.rst
+
+
+.. cookbooks/solid-solid-interface/
