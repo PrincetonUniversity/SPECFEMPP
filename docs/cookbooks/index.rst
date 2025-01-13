@@ -15,3 +15,4 @@ Cookbooks are a collection of examples that demonstrate how to use the package t
     example_01
     example_02
     example_03
+    example_04
