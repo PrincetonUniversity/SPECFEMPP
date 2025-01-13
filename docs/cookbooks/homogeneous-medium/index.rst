@@ -59,7 +59,7 @@ Parameter File
 .. literalinclude:: Par_file
     :caption: Par_file
     :language: bash
-    :emphasize-lines: 10-11,123-124,
+    :emphasize-lines: 10-11,123-124
     :linenos:
 
 
@@ -85,35 +85,23 @@ At this point, it is worthwhile to note few key parameters within the
 Topography file
 ~~~~~~~~~~~~~~~~~
 
-.. code-block:: bash
+.. literalinclude:: topography_file.dat
     :caption: topography_file.dat
+    :language: bash
+    :emphasize-lines: 11-13
     :linenos:
 
-    #
-    # number of interfaces
-    #
-     2
-    #
-    # for each interface below, we give the number of points and then x,z for each point
-    #
-    #
-    # interface number 1 (bottom of the mesh)
-    #
-     2
-     0 0
-     5000 0
-    # interface number 2 (topography, top of the mesh)
-    #
-     2
-        0 3000
-     5000 3000
-    #
-    # for each layer, we give the number of spectral elements in the vertical direction
-    #
-    #
-    # layer number 1 (bottom layer)
-    #
-     60
+The topography file defines the interfaces in the mesh using points the, first
+number for interface 1 is the number of points on the interface, followed by the
+x and z coordinates of each point. So in this case, we have two interfaces - the
+bottom of the mesh and the topography. The bottom of the mesh is defined by two
+points (0,0) and (5000,0) and the topography is defined by two points (0,3000)
+and (5000,3000). The number of spectral elements in the vertical direction for
+each layer is also defined in this file. In this case, we have 60 spectral
+elements in the vertical direction. For a detailed description example with
+an interface that has complex topography refer to the fluid-solid bathymetry
+`example topography file here <https://github.com/PrincetonUniversity/SPECFEMPP/blob/devel/examples/fluid-solid-bathymetry/topography_file.dat>`_.
+
 
 Running ``xmeshfem2D``
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -135,132 +123,70 @@ Defining sources
 
 Next we define the sources using a YAML file. For full description on parameters used to define sources refer :ref:`source_description`.
 
-.. code-block:: yaml
-    :linenos:
+.. literalinclude:: single_source.yaml
     :caption: single_source.yaml
+    :language: yaml
+    :linenos:
+    :emphasize-lines: 4-5,10-13
 
-    number-of-sources: 1
-    sources:
-      - force:
-          x : 2500.0
-          z : 2500.0
-          source_surf: false
-          angle : 0.0
-          vx : 0.0
-          vz : 0.0
-          Ricker:
-            factor: 1e10
-            tshift: 0.0
-            f0: 10.0
+In this file, we define a single source at the center of the domain.
+The source is a force source with a source time function that is a Ricker
+wavelet with a peak frequency of 10 Hz.
 
 Configuring the solver
------------------------
+----------------------
 
-Now that we have generated a mesh and defined the sources, we need to set up the solver. To do this we define another YAML file ``specfem_config.yaml``. For full description on parameters used to define sources refer :ref:`parameter_documentation`.
+Now that we have generated a mesh and defined the sources, we need to set up the
+solver. To do this we define another YAML file ``specfem_config.yaml``. For full
+description on parameters used to define sources refer
+:ref:`parameter_documentation`.
 
-.. code-block:: yaml
-    :linenos:
+.. literalinclude:: specfem_config.yaml
     :caption: specfem_config.yaml
+    :language: yaml
+    :linenos:
+    :emphasize-lines:
 
-    parameters:
-
-      header:
-        ## Header information is used for logging. It is good practice to give your simulations explicit names
-        title: Isotropic Elastic simulation # name for your simulation
-        # A detailed description for your simulation
-        description: |
-          Material systems : Elastic domain (1)
-          Interfaces : None
-          Sources : Force source (1)
-          Boundary conditions : Neumann BCs on all edges
-
-      simulation-setup:
-        ## quadrature setup
-        quadrature:
-          quadrature-type: GLL4
-
-        ## Solver setup
-        solver:
-          time-marching:
-            time-scheme:
-              type: Newmark
-              dt: 1.1e-3
-              nstep: 1600
-
-        simulation-mode:
-          forward:
-            writer:
-              seismogram:
-                format: "ascii"
-                directory: OUTPUT_FILES/seismograms
-
-      receivers:
-        stations-file: OUTPUT_FILES/STATIONS
-        angle: 0.0
-        seismogram-type:
-          - velocity
-        nstep_between_samples: 1
-
-      ## Runtime setup
-      run-setup:
-        number-of-processors: 1
-        number-of-runs: 1
-
-      ## databases
-      databases:
-        mesh-database: OUTPUT_FILES/database.bin
-        source-file: single_source.yaml
 
 At this point lets focus on a few sections in this file:
 
 - Configure the solver using ``simulation-setup`` section.
 
-.. code-block:: yaml
+.. literalinclude:: specfem_config.yaml
+    :caption: specfem_config.yaml
+    :language: yaml
+    :linenos:
+    :lines: 14-32
 
-    simulation-setup:
-      ## quadrature setup
-      quadrature:
-        quadrature-type: GLL4
-      ## Solver setup
-      solver:
-        time-marching:
-          time-scheme:
-            type: Newmark
-            dt: 1.1e-3
-            nstep: 1600
-      simulation-mode:
-        forward:
-          writer:
-            seismogram:
-              format: "ascii"
-              directory: OUTPUT_FILES/seismograms
-
-* We first define the integration quadrature to be used in the simulation. At this moment, the code supports a 4th order Gauss-Lobatto-Legendre quadrature with 5 GLL points (``GLL4``) & a 7th order Gauss-Lobatto-Legendre quadrature with 8 GLL points (``GLL7``).
+* We first define the integration quadrature to be used in the simulation. At
+  this moment, the code supports a 4th order Gauss-Lobatto-Legendre quadrature
+  with 5 GLL points (``GLL4``) & a 7th order Gauss-Lobatto-Legendre quadrature
+  with 8 GLL points (``GLL7``).
 * Define the solver scheme using the ``time-scheme`` parameter.
-* Define the simulation mode to be forward and the output format for synthetic seismograms seismograms.
+* Define the simulation mode to be forward and the output format for synthetic
+  seismograms seismograms.
 
-- Define the path to the meshfem generated database file using the ``mesh-database`` parameter and the path to source description file using ``source-file`` parameter. Relevant parameter values:
+- Define the path to the meshfem generated database file using the
+  ``mesh-database`` parameter and the path to source description file using
+  ``source-file`` parameter. Relevant parameter values:
 
-.. code-block:: yaml
+.. literalinclude:: specfem_config.yaml
+    :caption: specfem_config.yaml
+    :language: yaml
+    :linenos:
+    :lines: 46-49
 
-    ## databases
-    databases:
-      mesh-database: OUTPUT_FILES/database.bin
-      source-file: single_source.yaml
 
-- It is good practice to have distinct header section for you simulation. These sections will be printed to standard output during runtime helping the you to distinguish between runs using standard strings. Relevant paramter values
+- It is good practice to have distinct header section for you simulation. These
+  sections will be printed to standard output during runtime helping the you to
+  distinguish between runs using standard strings. Relevant paramter values
 
-.. code-block:: yaml
+.. literalinclude:: specfem_config.yaml
+    :caption: specfem_config.yaml
+    :language: yaml
+    :linenos:
+    :lines: 3-12
 
-    header:
-      ## Header information is used for logging. It is good practice to give your simulations explicit names
-      title: Isotropic Elastic simulation # name for your simulation
-      # A detailed description for your simulation
-      description: |
-        Material systems : Elastic domain (1)
-        Interfaces : None
-        Sources : Force source (1)
-        Boundary conditions : Neumann BCs on all edges
 
 Running the solver
 -------------------
