@@ -45,7 +45,7 @@ Now let's create the necessary directories to store the input files and output a
 Meshing the domain
 ------------------
 
-We first start by generating a mesh for our simulation domain using ``xmeshfem2D``. To do this, we first define our simulation domain and the meshing parmeters in a parameter file.
+Let's start by defining a mesh with anisotropic domains using the following parameter file.
 
 Parameter file
 ~~~~~~~~~~~~~
@@ -190,16 +190,31 @@ Parameter file
   output_grid_ASCII               = .false.        # dump the grid in an ASCII text file consisting of a set of X,Y,Z points or not
 
 
-- We define the acoustic and elastic velocity models in the `Velocity and density models` section of the parameter file.
-  - Firstly, ``nbmodels`` defines the number of material systems in the simulation domain.
-  - We then define the velocity model for each material system using the following format: ``model_number rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0``.
+- Note the material string used to define an anisotropic velocity model.
 
-- We define stacey absorbing boundary conditions on all the edges of the domain using the ``STACEY_ABSORBING_BOUNDARY``, ``absorbbottom``, ``absorbright``, ``absorbtop`` and ``absorbleft`` parameters.
+.. code-block:: bash
+    :caption: Material string
+
+    #   anistoropic: model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 0 0 0
+    1 2 7100. 16.5d10 5.d10 0 6.2d10 0 3.96d10 0 0 0 0 0 0
+
+- The material string generates an anisotopic medium with the following properties
+
+  - Density: 7100.0 kg/m^3
+  - C11: 16.5e10 Pa
+  - C13: 5.0e10 Pa
+  - C15: 0.0 Pa
+  - C33: 6.2e10 Pa
+  - C35: 0.0 Pa
+  - C55: 3.96e10 Pa
+  - C12: 0.0 Pa
+  - C23: 0.0 Pa
+  - C25: 0.0 Pa
 
 Defining the topography of the domain
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-We define the topography of the domain using the following topography file
+Next, as in previous examples, we define the topography of the domain in the ``topoaniso.dat`` file.
 
 .. code-block:: bash
     :caption: topoaniso.dat
@@ -239,10 +254,6 @@ To execute the mesher run
 .. code:: bash
 
     xmeshfem2D -p Par_File
-
-.. note::
-
-    Make sure either your are in the build directory of SPECFEM2D kokkos or the build directory is added to your ``PATH``.
 
 Note the path of the database file and a stations file generated after successfully running the mesher.
 
@@ -313,6 +324,13 @@ To run the solver, we first need to define a configuration file ``specfem_config
               format: ascii
               directory: "./OUTPUT_FILES/results"
 
+          display:
+            format: PNG
+            directory: ./OUTPUT_FILES/results
+            field: displacement
+            simulation-field: forward
+            time-interval: 100
+
     receivers:
       stations-file: "./OUTPUT_FILES/STATIONS"
       angle: 0.0
@@ -330,8 +348,19 @@ To run the solver, we first need to define a configuration file ``specfem_config
       mesh-database: "./OUTPUT_FILES/database.bin"
       source-file: "./single_source.yaml"
 
+The solver file is familiar to the previous examples. However, we have added a ``display`` section to generate a wavefield snapshot at every 100th time step.
 
-With the configuration file in place, we can run the solver using the following command
+.. code-block:: yaml
+    :caption: display node
+
+    display:
+      format: PNG
+      directory: ./OUTPUT_FILES/results
+      field: displacement
+      simulation-field: forward
+      time-interval: 100
+
+Now we can run the solver using the following command.
 
 .. code:: bash
 
@@ -393,34 +422,8 @@ We can plot the traces stored in the ``OUTPUT_FILES/results`` directory using th
         return stream
 
 
-    stream = get_traces("OUTPUT_FILES/results")
-
-    N_traces = len(stream)
-    Amax = np.max(stream.max())
-    plt.figure(figsize=(8, 6))
-
-    ticklabels = []
-    for i, tr in enumerate(stream):
-        if i == 0:
-            label = "Simulated"
-        else:
-            label = None
-
-        ticklabels.append(f"{tr.stats.station}")
-
-        plt.plot(tr.times('matplotlib'), tr.data/Amax + i, 'k-',
-                    label=label)
-
-    ax = plt.gca()
-    ax.set_yticks(np.arange(N_traces))
-    ax.set_yticklabels(ticklabels)
-    ax.set_title(f"{tr.stats.network}")
-    ax.set_xlabel("Time [s]")
-    ax.set_ylabel("Normalized amplitude")
-    plt.legend(frameon=False)
-
-    plt.savefig('traces.png', dpi=300)
-    plt.close('all')
+    stream = get_traces("OUTPUT_FILES/results")å
+    stream.plot(size=(800, 1000))
 
 .. figure:: ../../examples/anisotropic-crystal/traces.png
    :alt: Traces
@@ -429,28 +432,9 @@ We can plot the traces stored in the ``OUTPUT_FILES/results`` directory using th
 
    Traces.
 
-To plot the wavefield, build specfem with vtk library, then add a `display`` section in the `writer`` section of the configuration file. e.g.
-
-.. code-block:: yaml
-    :caption: specfem_config.yaml
-
-    simulation-mode:
-      forward:
-        writer:
-          seismogram:
-            format: ascii
-            directory: "./OUTPUT_FILES/results"
-
-          display:
-            format: PNG
-            directory: ./OUTPUT_FILES/results
-            field: displacement
-            simulation-field: forward
-            time-interval: 100
-
 .. figure:: ../../examples/anisotropic-crystal/wavefield1400.png
    :alt: Wavefield
    :width: 800
    :align: center
 
-   Wavefield.
+   Wavefield snapshot at 1400th time-step.
