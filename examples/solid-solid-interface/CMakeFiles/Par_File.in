@@ -5,7 +5,7 @@
 #-----------------------------------------------------------
 
 # title of job
-title                           = Flat fluid/solid interface
+title                           = Flat solid/solid interface
 
 # parameters concerning partitioning
 NPROC                           = 1              # number of processes
