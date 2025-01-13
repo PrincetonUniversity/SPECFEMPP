@@ -72,7 +72,8 @@ At this point, it is worthwhile to note few key parameters within the
 .. literalinclude:: Par_File
     :language: bash
     :linenos:
-    :lines: 11
+    :start-at: NPROC
+    :end-at: NPROC
     :lineno-match:
 
 - The path to the topography file is provided using the ``interfacesfile``
@@ -81,7 +82,8 @@ At this point, it is worthwhile to note few key parameters within the
 .. literalinclude:: Par_File
     :language: bash
     :linenos:
-    :lines: 124
+    :start-at: interfacesfile
+    :end-at: interfacesfile
     :lineno-match:
 
 .. _homogeneous-medium-flat-topography-topography-file:
@@ -160,7 +162,8 @@ At this point lets focus on a few sections in this file:
     :caption: specfem_config.yaml
     :language: yaml
     :linenos:
-    :lines: 14-32
+    :start-at: simulation-setup
+    :end-at: directory: OUTPUT_FILES/seismograms
     :lineno-match:
 
 * We first define the integration quadrature to be used in the simulation. At
@@ -179,7 +182,8 @@ At this point lets focus on a few sections in this file:
     :caption: specfem_config.yaml
     :language: yaml
     :linenos:
-    :lines: 46-49
+    :start-at: databases:
+    :end-at: single_source.yaml
     :lineno-match:
 
 
@@ -191,7 +195,8 @@ At this point lets focus on a few sections in this file:
     :caption: specfem_config.yaml
     :language: yaml
     :linenos:
-    :lines: 3-12
+    :start-at: header:
+    :end-at: Boundary conditions
     :lineno-match:
 
 
