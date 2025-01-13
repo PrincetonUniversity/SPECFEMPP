@@ -1,20 +1,19 @@
-#ifndef _SPECFEM_WRITER_KERNEL_TPP
-#define _SPECFEM_WRITER_KERNEL_TPP
+#pragma once
 
 #include "compute/assembly/assembly.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "kokkos_abstractions.h"
 #include "point/kernels.hpp"
-#include "writer/kernel.hpp"
+#include "IO/kernel/writer.hpp"
 #include <Kokkos_Core.hpp>
 
 template <typename OutputLibrary>
-specfem::writer::kernel<OutputLibrary>::kernel(const std::string output_folder)
+specfem::IO::kernel_writer<OutputLibrary>::kernel_writer(const std::string output_folder)
     : output_folder(output_folder) {}
 
 template <typename OutputLibrary>
-void specfem::writer::kernel<OutputLibrary>::write(specfem::compute::assembly &assembly) {
+void specfem::IO::kernel_writer<OutputLibrary>::write(specfem::compute::assembly &assembly) {
   const auto &mesh = assembly.mesh;
   auto &kernels = assembly.kernels;
 
@@ -195,5 +194,3 @@ void specfem::writer::kernel<OutputLibrary>::write(specfem::compute::assembly &a
   std::cout << "Kernels written to " << output_folder << "/Kernels"
             << std::endl;
 }
-
-#endif /* _SPECFEM_WRITER_KERNEL_TPP */

@@ -1,12 +1,12 @@
-#include "writer/property.hpp"
+#include "IO/wavefield/writer.hpp"
 #include "IO/ASCII/ASCII.hpp"
 #include "IO/HDF5/HDF5.hpp"
-#include "writer/property.tpp"
+#include "IO/wavefield/writer.tpp"
 
 // Explicit instantiation
 
-template class specfem::writer::property<
+template class specfem::IO::wavefield_writer<
     specfem::IO::HDF5<specfem::IO::write> >;
 
-template class specfem::writer::property<
+template class specfem::IO::wavefield_writer<
     specfem::IO::ASCII<specfem::IO::write> >;

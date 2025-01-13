@@ -5,7 +5,7 @@
 #include "header.hpp"
 #include "parameter_parser/solver/interface.hpp"
 #include "quadrature.hpp"
-#include "reader/reader.hpp"
+#include "IO/reader.hpp"
 #include "receivers.hpp"
 #include "run_setup.hpp"
 #include "specfem_setup.hpp"
@@ -137,10 +137,10 @@ public:
    * @param receivers Pointer to specfem::compute::receivers struct
    used
    * to instantiate the writer
-   * @return specfem::writer::writer* Pointer to an instantiated writer
+   * @return specfem::IO::writer* Pointer to an instantiated writer
    object
    */
-  std::shared_ptr<specfem::writer::writer>
+  std::shared_ptr<specfem::IO::writer>
   instantiate_seismogram_writer() const {
     if (this->seismogram) {
       return this->seismogram->instantiate_seismogram_writer(
@@ -151,7 +151,7 @@ public:
     }
   }
 
-  std::shared_ptr<specfem::writer::writer>
+  std::shared_ptr<specfem::IO::writer>
   instantiate_wavefield_writer() const {
     if (this->wavefield) {
       return this->wavefield->instantiate_wavefield_writer();
@@ -160,7 +160,7 @@ public:
     }
   }
 
-  std::shared_ptr<specfem::reader::reader>
+  std::shared_ptr<specfem::IO::reader>
   instantiate_wavefield_reader() const {
     if (this->wavefield) {
       return this->wavefield->instantiate_wavefield_reader();
@@ -178,7 +178,7 @@ public:
     }
   }
 
-  std::shared_ptr<specfem::reader::reader> instantiate_property_reader() const {
+  std::shared_ptr<specfem::IO::reader> instantiate_property_reader() const {
     if (this->property) {
       return this->property->instantiate_property_reader();
     } else {
@@ -186,7 +186,7 @@ public:
     }
   }
 
-  std::shared_ptr<specfem::writer::writer> instantiate_property_writer() const {
+  std::shared_ptr<specfem::IO::writer> instantiate_property_writer() const {
     if (this->property) {
       return this->property->instantiate_property_writer();
     } else {
@@ -194,7 +194,7 @@ public:
     }
   }
 
-  std::shared_ptr<specfem::writer::writer> instantiate_kernel_writer() const {
+  std::shared_ptr<specfem::IO::writer> instantiate_kernel_writer() const {
     if (this->kernel) {
       return this->kernel->instantiate_kernel_writer();
     } else {

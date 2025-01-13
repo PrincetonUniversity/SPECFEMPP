@@ -1,7 +1,7 @@
 #pragma once
 
-#include "reader/reader.hpp"
-#include "writer/writer.hpp"
+#include "IO/reader.hpp"
+#include "IO/writer.hpp"
 #include "yaml-cpp/yaml.h"
 
 namespace specfem {
@@ -15,9 +15,9 @@ public:
 
   property(const YAML::Node &Node, const bool write_mode);
 
-  std::shared_ptr<specfem::writer::writer> instantiate_property_writer() const;
+  std::shared_ptr<specfem::IO::writer> instantiate_property_writer() const;
 
-  std::shared_ptr<specfem::reader::reader> instantiate_property_reader() const;
+  std::shared_ptr<specfem::IO::reader> instantiate_property_reader() const;
 
 private:
   bool write_mode;           ///< True if writing, false if reading
