@@ -5,14 +5,14 @@
 #include "enumerations/medium.hpp"
 #include "kokkos_abstractions.h"
 #include "point/properties.hpp"
-#include "reader/property.hpp"
+#include "IO/property/reader.hpp"
 #include <Kokkos_Core.hpp>
 
 template <typename InputLibrary>
-specfem::reader::property<InputLibrary>::property(const std::string input_folder): input_folder(input_folder) {}
+specfem::IO::property_reader<InputLibrary>::property_reader(const std::string input_folder): input_folder(input_folder) {}
 
 template <typename InputLibrary>
-void specfem::reader::property<InputLibrary>::read(specfem::compute::assembly &assembly) {
+void specfem::IO::property_reader<InputLibrary>::read(specfem::compute::assembly &assembly) {
   auto &properties = assembly.properties;
 
   using DomainView =

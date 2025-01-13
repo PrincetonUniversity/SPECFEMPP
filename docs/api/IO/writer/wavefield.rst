@@ -4,5 +4,5 @@
 Wavefield Writer
 ================
 
-.. doxygenclass:: specfem::writer::wavefield
+.. doxygenclass:: specfem::IO::wavefield_writer
     :members:

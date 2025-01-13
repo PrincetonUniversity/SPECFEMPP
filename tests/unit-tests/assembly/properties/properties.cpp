@@ -5,9 +5,9 @@
 #include "enumerations/material_definitions.hpp"
 #include "parallel_configuration/chunk_config.hpp"
 #include "policies/chunk.hpp"
-#include "reader/property.hpp"
+#include "IO/property/reader.hpp"
 #include "specfem_setup.hpp"
-#include "writer/property.hpp"
+#include "IO/property/writer.hpp"
 #include <gtest/gtest.h>
 
 inline void error_message_header(std::ostringstream &message,
@@ -558,7 +558,7 @@ void test_properties(
           WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
   // stage 2: write properties
-  specfem::writer::property<specfem::IO::ASCII<specfem::IO::write> > writer(
+  specfem::IO::property_writer<specfem::IO::ASCII<specfem::IO::write> > writer(
       ".");
   writer.write(assembly);
 
@@ -581,7 +581,7 @@ void test_properties(
 #undef TEST_STORE_AND_LOAD
 
   // stage 4: restore properties to initial value from disk
-  specfem::reader::property<specfem::IO::ASCII<specfem::IO::read> > reader(".");
+  specfem::IO::property_reader<specfem::IO::ASCII<specfem::IO::read> > reader(".");
   reader.read(assembly);
 
   // stage 5: check if properties are correctly written and read

@@ -341,7 +341,7 @@ target_link_libraries(
 
 add_library(
         read_seismogram
-        src/reader/seismogram.cpp
+        src/IO/seismogram/reader.cpp
 )
 
 target_link_libraries(
@@ -351,8 +351,8 @@ target_link_libraries(
 
 add_library(
         reader
-        src/reader/wavefield.cpp
-        src/reader/property.cpp
+        src/IO/wavefield/reader.cpp
+        src/IO/property/reader.cpp
 )
 
 target_link_libraries(
@@ -536,10 +536,10 @@ target_link_libraries(
 
 add_library(
         writer
-        src/writer/seismogram.cpp
-        src/writer/wavefield.cpp
-        src/writer/kernel.cpp
-        src/writer/property.cpp
+        src/IO/seismogram/writer.cpp
+        src/IO/wavefield/writer.cpp
+        src/IO/kernel/writer.cpp
+        src/IO/property/writer.cpp
 )
 
 target_link_libraries(

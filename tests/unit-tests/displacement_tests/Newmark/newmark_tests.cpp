@@ -8,7 +8,7 @@
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"
 #include "quadrature/interface.hpp"
-#include "reader/seismogram.hpp"
+#include "IO/seismogram/reader.hpp"
 #include "solver/solver.hpp"
 #include "timescheme/timescheme.hpp"
 #include "yaml-cpp/yaml.h"
@@ -299,7 +299,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
         for (int i = 0; i < traces_filename.size(); ++i) {
           Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
               traces("traces", seismograms.h_seismogram.extent(0), 2);
-          specfem::reader::seismogram reader(
+          specfem::IO::seismogram_reader reader(
               traces_filename[i], specfem::enums::seismogram::format::ascii,
               traces);
           reader.read();

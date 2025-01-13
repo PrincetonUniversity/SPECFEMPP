@@ -7,21 +7,20 @@ class assembly;
 } // namespace specfem
 
 namespace specfem {
-namespace writer {
+namespace IO {
 /**
- * @brief Base writer class
+ * @brief Base reader class
  *
  */
-class writer {
+class reader {
 public:
   /**
-   * @brief Method to execute the write operation
+   * @brief Method to execute the read operation
    *
    * @param assembly Assembly object
    *
    */
-  virtual void write(specfem::compute::assembly &assembly){};
+  virtual void read(specfem::compute::assembly &assembly) = 0;
 };
-
-} // namespace writer
+} // namespace IO
 } // namespace specfem
