@@ -10,12 +10,11 @@
 #include "medium/compute_frechet_derivatives.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::dimension::type DimensionType, int NGLL>
-template <specfem::element::medium_tag MediumTag,
+template <specfem::dimension::type DimensionType, int NGLL,
+          specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-void specfem::kernels::frechet_kernels<DimensionType, NGLL>::compute_material_derivatives(
-    const type_real &dt) {
-  auto &assembly = this->assembly;
+void specfem::kernels::impl::compute_material_derivatives(
+    const specfem::compute::assembly &assembly, const type_real &dt) {
   auto &properties = assembly.properties;
   auto &kernels = assembly.kernels;
   auto &adjoint_field = assembly.fields.adjoint;
@@ -38,7 +37,7 @@ void specfem::kernels::frechet_kernels<DimensionType, NGLL>::compute_material_de
       DimensionType, simd, Kokkos::DefaultExecutionSpace>;
 
   using ChunkElementFieldType = specfem::chunk_element::field<
-      ParallelConfig::chunk_size, ngll, DimensionType, MediumTag,
+      ParallelConfig::chunk_size, NGLL, DimensionType, MediumTag,
       specfem::kokkos::DevScratchSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>,
       true, false, false, false, using_simd>;
 
@@ -73,7 +72,7 @@ void specfem::kernels::frechet_kernels<DimensionType, NGLL>::compute_material_de
   Kokkos::parallel_for(
       "specfem::frechet_derivatives::frechet_elements::compute",
       chunk_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
-      KOKKOS_CLASS_LAMBDA(const typename ChunkPolicy::member_type &team) {
+      KOKKOS_LAMBDA(const typename ChunkPolicy::member_type &team) {
         // Allocate scratch memory
         ChunkElementFieldType adjoint_element_field(team);
         ChunkElementFieldType backward_element_field(team);
