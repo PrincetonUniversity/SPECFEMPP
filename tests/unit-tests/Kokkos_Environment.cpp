@@ -2,7 +2,7 @@
 #include <Kokkos_Core.hpp>
 
 void KokkosEnvironment::SetUp() {
-  char **argv;
+  char **argv = nullptr;
   int argc = 0;
   Kokkos::initialize(argc, argv);
 }
