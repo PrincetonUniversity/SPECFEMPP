@@ -194,7 +194,7 @@ target_link_libraries(
 add_library(
         IO
         src/IO/fortranio/fortran_io.cpp
-        src/IO/HDF5/native_type.cpp
+        # src/IO/HDF5/native_type.cpp
         # src/IO/ASCII/native_type.cpp
         src/IO/sources.cpp
         src/IO/receivers.cpp
