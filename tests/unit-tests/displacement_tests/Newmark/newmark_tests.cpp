@@ -8,7 +8,7 @@
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"
 #include "quadrature/interface.hpp"
-#include "reader/seismogram.hpp"
+#include "IO/seismogram/reader.hpp"
 #include "solver/solver.hpp"
 #include "timescheme/timescheme.hpp"
 #include "yaml-cpp/yaml.h"
@@ -222,7 +222,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     specfem::compute::assembly assembly(mesh, quadratures, sources, receivers,
                                         seismogram_types, t0, setup.get_dt(),
                                         nsteps, it->get_max_seismogram_step(),
-                                        setup.get_simulation_type());
+                                        setup.get_simulation_type(), nullptr);
 
     it->link_assembly(assembly);
 
@@ -299,7 +299,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
         for (int i = 0; i < traces_filename.size(); ++i) {
           Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
               traces("traces", seismograms.h_seismogram.extent(0), 2);
-          specfem::reader::seismogram reader(
+          specfem::IO::seismogram_reader reader(
               traces_filename[i], specfem::enums::seismogram::format::ascii,
               traces);
           reader.read();

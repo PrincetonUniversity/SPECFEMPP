@@ -1,9 +1,9 @@
-#include "reader/seismogram.hpp"
+#include "IO/seismogram/reader.hpp"
 #include <fstream>
 #include <tuple>
 #include <vector>
 
-void specfem::reader::seismogram::read() {
+void specfem::IO::seismogram_reader::read() {
 
   if (type != specfem::enums::seismogram::format::ascii) {
     throw std::runtime_error("Only ASCII format is supported");
