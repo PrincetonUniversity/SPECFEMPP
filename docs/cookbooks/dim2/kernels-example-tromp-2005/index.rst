@@ -245,11 +245,11 @@ Visualizing the kernels
 Lastly if the kernels are stored in ASCII format, we can use numpy to read the
 kernels and plot them.
 
-.. literalinclude:: ../../../examples/Tromp_2005/plot.py
+.. literalinclude:: ../../../../examples/Tromp_2005/plot.py
     :language: python
 
 
-.. figure:: ../../../examples/Tromp_2005/Reference_Kernels/Kernels.png
+.. figure:: ../../../../examples/Tromp_2005/Reference_Kernels/Kernels.png
     :alt: Kernels
     :width: 800
     :align: center
