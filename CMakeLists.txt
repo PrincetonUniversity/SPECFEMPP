@@ -216,6 +216,7 @@ if (NOT HDF5_CXX_BUILD)
         mesh
         source_class
         receiver_class
+        yaml-cpp
         ${BOOST_LIBS}
         Kokkos::kokkos)
 else()
@@ -224,8 +225,9 @@ else()
         mesh
         source_class
         receiver_class
-
         Kokkos::kokkos
+        yaml-cpp
+        ${BOOST_LIBS}
         ${HDF5_LIBRARIES}
     )
 endif()

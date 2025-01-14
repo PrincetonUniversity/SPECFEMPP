@@ -16,6 +16,14 @@ std::tuple<std::vector<std::shared_ptr<specfem::sources::source> >, type_real>
 specfem::IO::read_sources(const std::string sources_file, const int nsteps,
                           const type_real user_t0, const type_real dt,
                           const specfem::simulation::type simulation_type) {
+  return read_sources(YAML::LoadFile(sources_file), nsteps, user_t0, dt,
+                      simulation_type);
+}
+
+std::tuple<std::vector<std::shared_ptr<specfem::sources::source> >, type_real>
+specfem::IO::read_sources(const YAML::Node yaml, const int nsteps,
+                          const type_real user_t0, const type_real dt,
+                          const specfem::simulation::type simulation_type) {
 
   const bool user_defined_start_time =
       (std::abs(user_t0) > std::numeric_limits<type_real>::epsilon());
@@ -34,7 +42,6 @@ specfem::IO::read_sources(const std::string sources_file, const int nsteps,
 
   // read sources file
   std::vector<std::shared_ptr<specfem::sources::source> > sources;
-  YAML::Node yaml = YAML::LoadFile(sources_file);
   int nsources = yaml["number-of-sources"].as<int>();
   YAML::Node Node = yaml["sources"];
   assert(Node.IsSequence());
