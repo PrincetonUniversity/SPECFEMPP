@@ -9,10 +9,14 @@ Cookbooks are a collection of examples that demonstrate how to use the package t
 
     Make sure to install the dependencies before running the examples as mentioned in the README file within the example directory.
 
+
+2D Examples
+-----------
+
 .. toctree::
     :maxdepth: 1
 
-    homogeneous-medium/index.rst
-    solid-solid-interface/index.rst
-    fluid-solid-interface/index.rst
-    kernels-example-tromp-2005/index.rst
+    dim2/homogeneous-medium/index.rst
+    dim2/solid-solid-interface/index.rst
+    dim2/fluid-solid-interface/index.rst
+    dim2/kernels-example-tromp-2005/index.rst

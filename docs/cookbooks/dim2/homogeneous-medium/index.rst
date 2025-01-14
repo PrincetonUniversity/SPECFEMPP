@@ -233,7 +233,7 @@ them to ``obspy`` streams. The following code snippet shows how to do this.
     :language: python
 
 
-.. figure:: ../../../examples/homogeneous-medium-flat-topography/traces.png
+.. figure:: ../../../../examples/homogeneous-medium-flat-topography/traces.png
    :alt: Traces
    :width: 800
    :align: center
