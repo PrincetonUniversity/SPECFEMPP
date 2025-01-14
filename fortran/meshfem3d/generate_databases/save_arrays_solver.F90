@@ -25,11 +25,63 @@
 !
 !=====================================================================
 
+module save_arrays_module
+  implicit none
+  contains
+
+  subroutine save_global_arrays(nspec, array)
+
+    use constants, only: IOUT, CUSTOM_REAL
+
+    implicit none
+
+    integer, intent(in) :: nspec
+    integer :: ispec
+    real(kind=CUSTOM_REAL), dimension(:, :, :, :), intent(in) :: array
+
+    ! Check if the size of the array is correct
+    if (size(array, 4) /= nspec) then
+      write(*,*) 'Error: size of the array is not correct'
+      stop
+    endif
+
+    ! Save the array element by element
+    do ispec = 1, nspec
+      WRITE(IOUT) array(:, :, :, ispec)
+    end do
+
+  end subroutine save_global_arrays
+
+  subroutine save_global_arrays_with_components(nspec, array)
+
+      use constants, only: IOUT, CUSTOM_REAL
+
+      implicit none
+
+      integer, intent(in) :: nspec
+      integer :: ispec
+      real(kind=CUSTOM_REAL), dimension(:, :, :, :, :), intent(in) :: array
+
+      ! Check if the size of the array is correct
+      if (size(array, 5) /= nspec) then
+        write(*,*) 'Error: size of the array is not correct'
+        stop
+      endif
+
+      ! Save the array element by element
+      do ispec = 1, nspec
+        WRITE(IOUT) array(:, :, :, :, ispec)
+      end do
+
+  end subroutine save_global_arrays_with_components
+
+  end module save_arrays_module
 ! for external mesh
 
   subroutine save_arrays_solver_mesh()
 
   use constants, only: IMAIN,IOUT,myrank
+  use save_arrays_module, only: save_global_arrays, save_global_arrays_with_components
 
   use shared_parameters, only: ACOUSTIC_SIMULATION, ELASTIC_SIMULATION, POROELASTIC_SIMULATION, &
     APPROXIMATE_OCEAN_LOAD, SAVE_MESH_FILES, ANISOTROPY
@@ -86,12 +138,18 @@
   ! selects routine for file i/o format
   if (ADIOS_FOR_MESH) then
     ! ADIOS
-    call save_arrays_solver_mesh_adios()
+    ! call save_arrays_solver_mesh_adios()
+
+    print *, 'ADIOS is not supported for mesh databases'
+    stop
     ! all done
     return
   else if (HDF5_ENABLED) then
     ! HDF5
-    call save_arrays_solver_mesh_hdf5()
+    ! call save_arrays_solver_mesh_hdf5()
+
+    print *, 'HDF5 is not supported for mesh databases'
+    stop
     ! all done
     return
   else
@@ -122,7 +180,9 @@
   write(IOUT) nglob
   write(IOUT) nspec_irregular
 
-  write(IOUT) ibool
+  do i = 1, nspec
+    write(IOUT) ibool(:,:,:,i)
+  end do
 
   write(IOUT) xstore_unique
   write(IOUT) ystore_unique
@@ -132,19 +192,32 @@
   write(IOUT) xix_regular
   write(IOUT) jacobian_regular
 
-  write(IOUT) xixstore
-  write(IOUT) xiystore
-  write(IOUT) xizstore
-  write(IOUT) etaxstore
-  write(IOUT) etaystore
-  write(IOUT) etazstore
-  write(IOUT) gammaxstore
-  write(IOUT) gammaystore
-  write(IOUT) gammazstore
-  write(IOUT) jacobianstore
+  call save_global_arrays(nspec, xixstore)
+  call save_global_arrays(nspec, xiystore)
+  call save_global_arrays(nspec, xizstore)
+  call save_global_arrays(nspec, etaxstore)
+  call save_global_arrays(nspec, etaystore)
+  call save_global_arrays(nspec, etazstore)
+  call save_global_arrays(nspec, gammaxstore)
+  call save_global_arrays(nspec, gammaystore)
+  call save_global_arrays(nspec, gammazstore)
+  call save_global_arrays(nspec, jacobianstore)
 
-  write(IOUT) kappastore
-  write(IOUT) mustore
+  ! write(IOUT) xixstore
+  ! write(IOUT) xiystore
+  ! write(IOUT) xizstore
+  ! write(IOUT) etaxstore
+  ! write(IOUT) etaystore
+  ! write(IOUT) etazstore
+  ! write(IOUT) gammaxstore
+  ! write(IOUT) gammaystore
+  ! write(IOUT) gammazstore
+  ! write(IOUT) jacobianstore
+
+  call save_global_arrays(nspec, kappastore)
+  call save_global_arrays(nspec, mustore)
+  ! write(IOUT) kappastore
+  ! write(IOUT) mustore
 
   write(IOUT) ispec_is_acoustic
   write(IOUT) ispec_is_elastic
@@ -161,7 +234,10 @@
 
   ! this array is needed for acoustic simulations but also for elastic simulations with CPML,
   ! thus we allocate it and read it in all cases (whether the simulation is acoustic, elastic, or acoustic/elastic)
-  write(IOUT) rhostore
+
+  call save_global_arrays(nspec, rhostore)
+
+  ! write(IOUT) rhostore
 
   ! elastic
   if (ELASTIC_SIMULATION) then
@@ -170,57 +246,72 @@
       write(IOUT) rmass_ocean_load
     endif
     ! Stacey
-    write(IOUT) rho_vp
-    write(IOUT) rho_vs
+    call save_global_arrays(nspec, rho_vp)
+    call save_global_arrays(nspec, rho_vs)
+    ! write(IOUT) rho_vp
+    ! write(IOUT) rho_vs
   endif
 
   ! poroelastic
   if (POROELASTIC_SIMULATION) then
     write(IOUT) rmass_solid_poroelastic
     write(IOUT) rmass_fluid_poroelastic
-    write(IOUT) rhoarraystore
-    write(IOUT) kappaarraystore
-    write(IOUT) etastore
-    write(IOUT) tortstore
-    write(IOUT) permstore
-    write(IOUT) phistore
-    write(IOUT) rho_vpI
-    write(IOUT) rho_vpII
-    write(IOUT) rho_vsI
+
+    call save_global_arrays_with_components(nspec, rhoarraystore)
+    call save_global_arrays_with_components(nspec, kappaarraystore)
+    call save_global_arrays(nspec, etastore)
+    call save_global_arrays(nspec, tortstore)
+    call save_global_arrays_with_components(nspec, permstore)
+    call save_global_arrays(nspec, phistore)
+    call save_global_arrays(nspec, rho_vpI)
+    call save_global_arrays(nspec, rho_vpII)
+    call save_global_arrays(nspec, rho_vsI)
+
+    ! write(IOUT) rhoarraystore
+    ! write(IOUT) kappaarraystore
+    ! write(IOUT) etastore
+    ! write(IOUT) tortstore
+    ! write(IOUT) permstore
+    ! write(IOUT) phistore
+    ! write(IOUT) rho_vpI
+    ! write(IOUT) rho_vpII
+    ! write(IOUT) rho_vsI
   endif
 
+  ! @Lucas & @Congyue need to uncomment this when implementing PML
+
   ! C-PML absorbing boundary conditions
-  if (PML_CONDITIONS) then
-    write(IOUT) nspec_cpml
-    write(IOUT) CPML_width_x
-    write(IOUT) CPML_width_y
-    write(IOUT) CPML_width_z
-    write(IOUT) min_distance_between_CPML_parameter
-    if (nspec_cpml > 0) then
-      write(IOUT) CPML_regions
-      write(IOUT) CPML_to_spec
-      write(IOUT) is_CPML
-      write(IOUT) d_store_x
-      write(IOUT) d_store_y
-      write(IOUT) d_store_z
-      write(IOUT) k_store_x
-      write(IOUT) k_store_y
-      write(IOUT) k_store_z
-      write(IOUT) alpha_store_x
-      write(IOUT) alpha_store_y
-      write(IOUT) alpha_store_z
-      ! --------------------------------------------------------------------------------------------
-      ! for adjoint tomography
-      ! save the array stored the points on interface between PML and interior computational domain
-      ! --------------------------------------------------------------------------------------------
-      if ((SIMULATION_TYPE == 1 .and. SAVE_FORWARD) .or. SIMULATION_TYPE == 3) then
-        write(IOUT) nglob_interface_PML_acoustic
-        write(IOUT) nglob_interface_PML_elastic
-        if (nglob_interface_PML_acoustic > 0) write(IOUT) points_interface_PML_acoustic
-        if (nglob_interface_PML_elastic > 0)  write(IOUT) points_interface_PML_elastic
-      endif
-    endif
-  endif
+  ! if (PML_CONDITIONS) then
+  !   write(IOUT) nspec_cpml
+  !   write(IOUT) CPML_width_x
+  !   write(IOUT) CPML_width_y
+  !   write(IOUT) CPML_width_z
+  !   write(IOUT) min_distance_between_CPML_parameter
+  !   if (nspec_cpml > 0) then
+  !     write(IOUT) CPML_regions
+  !     write(IOUT) CPML_to_spec
+  !     write(IOUT) is_CPML
+  !     write(IOUT) d_store_x
+  !     write(IOUT) d_store_y
+  !     write(IOUT) d_store_z
+  !     write(IOUT) k_store_x
+  !     write(IOUT) k_store_y
+  !     write(IOUT) k_store_z
+  !     write(IOUT) alpha_store_x
+  !     write(IOUT) alpha_store_y
+  !     write(IOUT) alpha_store_z
+  !     ! --------------------------------------------------------------------------------------------
+  !     ! for adjoint tomography
+  !     ! save the array stored the points on interface between PML and interior computational domain
+  !     ! --------------------------------------------------------------------------------------------
+  !     if ((SIMULATION_TYPE == 1 .and. SAVE_FORWARD) .or. SIMULATION_TYPE == 3) then
+  !       write(IOUT) nglob_interface_PML_acoustic
+  !       write(IOUT) nglob_interface_PML_elastic
+  !       if (nglob_interface_PML_acoustic > 0) write(IOUT) points_interface_PML_acoustic
+  !       if (nglob_interface_PML_elastic > 0)  write(IOUT) points_interface_PML_elastic
+  !     endif
+  !   endif
+  ! endif
 
   ! absorbing boundary surface
   write(IOUT) num_abs_boundary_faces
@@ -332,27 +423,50 @@
   ! material properties
   ! anisotropy
   if (ELASTIC_SIMULATION .and. ANISOTROPY) then
-    write(IOUT) c11store
-    write(IOUT) c12store
-    write(IOUT) c13store
-    write(IOUT) c14store
-    write(IOUT) c15store
-    write(IOUT) c16store
-    write(IOUT) c22store
-    write(IOUT) c23store
-    write(IOUT) c24store
-    write(IOUT) c25store
-    write(IOUT) c26store
-    write(IOUT) c33store
-    write(IOUT) c34store
-    write(IOUT) c35store
-    write(IOUT) c36store
-    write(IOUT) c44store
-    write(IOUT) c45store
-    write(IOUT) c46store
-    write(IOUT) c55store
-    write(IOUT) c56store
-    write(IOUT) c66store
+
+    call save_global_arrays(nspec, c11store)
+    call save_global_arrays(nspec, c12store)
+    call save_global_arrays(nspec, c13store)
+    call save_global_arrays(nspec, c14store)
+    call save_global_arrays(nspec, c15store)
+    call save_global_arrays(nspec, c16store)
+    call save_global_arrays(nspec, c22store)
+    call save_global_arrays(nspec, c23store)
+    call save_global_arrays(nspec, c24store)
+    call save_global_arrays(nspec, c25store)
+    call save_global_arrays(nspec, c26store)
+    call save_global_arrays(nspec, c33store)
+    call save_global_arrays(nspec, c34store)
+    call save_global_arrays(nspec, c35store)
+    call save_global_arrays(nspec, c36store)
+    call save_global_arrays(nspec, c44store)
+    call save_global_arrays(nspec, c45store)
+    call save_global_arrays(nspec, c46store)
+    call save_global_arrays(nspec, c55store)
+    call save_global_arrays(nspec, c56store)
+    call save_global_arrays(nspec, c66store)
+
+    ! write(IOUT) c11store
+    ! write(IOUT) c12store
+    ! write(IOUT) c13store
+    ! write(IOUT) c14store
+    ! write(IOUT) c15store
+    ! write(IOUT) c16store
+    ! write(IOUT) c22store
+    ! write(IOUT) c23store
+    ! write(IOUT) c24store
+    ! write(IOUT) c25store
+    ! write(IOUT) c26store
+    ! write(IOUT) c33store
+    ! write(IOUT) c34store
+    ! write(IOUT) c35store
+    ! write(IOUT) c36store
+    ! write(IOUT) c44store
+    ! write(IOUT) c45store
+    ! write(IOUT) c46store
+    ! write(IOUT) c55store
+    ! write(IOUT) c56store
+    ! write(IOUT) c66store
   endif
 
   ! inner/outer elements
