@@ -16,6 +16,7 @@ std::tuple<std::vector<std::shared_ptr<specfem::sources::source> >, type_real>
 specfem::IO::read_sources(const std::string sources_file, const int nsteps,
                           const type_real user_t0, const type_real dt,
                           const specfem::simulation::type simulation_type) {
+
   return read_sources(YAML::LoadFile(sources_file), nsteps, user_t0, dt,
                       simulation_type);
 }
@@ -96,9 +97,8 @@ specfem::IO::read_sources(const YAML::Node yaml, const int nsteps,
   if (sources.size() != nsources) {
     std::ostringstream message;
     message << "Found only " << sources.size()
-            << " number of sources. Total number of sources in " << sources_file
-            << " are" << nsources
-            << " Please check if there is a error in sources file.";
+            << " number of sources. Found total number of sources in are "
+            << nsources << " Please check if there is a error in sources file.";
     throw std::runtime_error(message.str());
   }
 
