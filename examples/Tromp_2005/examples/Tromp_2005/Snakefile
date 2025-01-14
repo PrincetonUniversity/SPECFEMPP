@@ -40,11 +40,11 @@ rule forward_configuration:
                             "writer": {
                                 "wavefield": {
                                     "format": "HDF5",
-                                    "directory": "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/OUTPUT_FILES",
+                                    "directory": "/Users/ccui/Documents/SPECFEMPP/examples/Tromp_2005/examples/Tromp_2005/OUTPUT_FILES",
                                 },
                                 "seismogram": {
                                     "format": "ASCII",
-                                    "directory": "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/OUTPUT_FILES/results",
+                                    "directory": "/Users/ccui/Documents/SPECFEMPP/examples/Tromp_2005/examples/Tromp_2005/OUTPUT_FILES/results",
                                 },
                             }
                         }
@@ -56,9 +56,9 @@ rule forward_configuration:
 
             ## Add forward node to the simulation setup
         config["parameters"]["simulation-setup"].update(forward)
-        config["parameters"]["databases"]["source-file"] = "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/forward_source.yaml"
-        config["parameters"]["receivers"]["stations-file"] = "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/OUTPUT_FILES/STATIONS"
-        config["parameters"]["databases"]["mesh-database"] = "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/OUTPUT_FILES/database.bin"
+        config["parameters"]["databases"]["source-file"] = "/Users/ccui/Documents/SPECFEMPP/examples/Tromp_2005/examples/Tromp_2005/forward_source.yaml"
+        config["parameters"]["receivers"]["stations-file"] = "/Users/ccui/Documents/SPECFEMPP/examples/Tromp_2005/examples/Tromp_2005/OUTPUT_FILES/STATIONS"
+        config["parameters"]["databases"]["mesh-database"] = "/Users/ccui/Documents/SPECFEMPP/examples/Tromp_2005/examples/Tromp_2005/OUTPUT_FILES/database.bin"
 
         with open(output.config, "w") as f:
             yaml.safe_dump(config, f)
@@ -140,13 +140,13 @@ rule adjoint_configuration:
                             "writer": {
                                 "kernels": {
                                     "format": "ASCII",
-                                    "directory": "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/OUTPUT_FILES",
+                                    "directory": "/Users/ccui/Documents/SPECFEMPP/examples/Tromp_2005/examples/Tromp_2005/OUTPUT_FILES",
                                 }
                             },
                             "reader": {
                                 "wavefield": {
                                     "format": "HDF5",
-                                    "directory": "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/OUTPUT_FILES",
+                                    "directory": "/Users/ccui/Documents/SPECFEMPP/examples/Tromp_2005/examples/Tromp_2005/OUTPUT_FILES",
                                 }
                             },
                         }
@@ -158,8 +158,8 @@ rule adjoint_configuration:
 
             ## Add adjoint node to the simulation setup
         config["parameters"]["simulation-setup"].update(adjoint)
-        config["parameters"]["databases"]["source-file"] = "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/adjoint_source.yaml"
-        config["parameters"]["databases"]["mesh-database"] = "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/OUTPUT_FILES/database.bin"
+        config["parameters"]["databases"]["source-file"] = "/Users/ccui/Documents/SPECFEMPP/examples/Tromp_2005/examples/Tromp_2005/adjoint_source.yaml"
+        config["parameters"]["databases"]["mesh-database"] = "/Users/ccui/Documents/SPECFEMPP/examples/Tromp_2005/examples/Tromp_2005/OUTPUT_FILES/database.bin"
 
         with open(output.config, "w") as f:
             yaml.safe_dump(config, f)
