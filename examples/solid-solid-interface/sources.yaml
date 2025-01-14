@@ -7,7 +7,7 @@ sources:
       angle : 0.0
       vx : 0.0
       vz : 0.0
-      GaussianDer:
+      dGaussian:
         factor: 1e10
         tshift: 0.0
         f0: 2.0

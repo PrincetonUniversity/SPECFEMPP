@@ -7,23 +7,23 @@
 
 namespace specfem {
 namespace forcing_function {
-class GaussianDer : public stf {
+class dGaussian : public stf {
 
 public:
   /**
-   * @brief Contruct a GaussianDer source time function object
+   * @brief Contruct a dGaussian source time function object
    *
    * @param f0 frequency f0
    * @param tshift tshift value
    * @param factor factor to scale source time function
    * @param use_trick_for_better_pressure
    */
-  GaussianDer(const int nsteps, const type_real dt, const type_real f0,
-              const type_real tshift, const type_real factor,
-              const bool use_trick_for_better_pressure);
+  dGaussian(const int nsteps, const type_real dt, const type_real f0,
+            const type_real tshift, const type_real factor,
+            const bool use_trick_for_better_pressure);
 
-  GaussianDer(YAML::Node &GaussianDer, const int nsteps, const type_real dt,
-              const bool use_trick_for_better_pressure);
+  dGaussian(YAML::Node &dGaussian, const int nsteps, const type_real dt,
+            const bool use_trick_for_better_pressure);
 
   /**
    * @brief compute the value of stf at time t
