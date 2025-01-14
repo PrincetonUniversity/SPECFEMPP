@@ -4,7 +4,7 @@
 #include <Kokkos_Core.hpp>
 #include <cmath>
 
-specfem::forcing_function::GaussianDer::GaussianDer(
+specfem::forcing_function::dGaussian::dGaussian(
     const int nsteps, const type_real dt, const type_real f0,
     const type_real tshift, const type_real factor,
     bool use_trick_for_better_pressure)
@@ -16,24 +16,24 @@ specfem::forcing_function::GaussianDer::GaussianDer(
   this->__t0 = -1.2 * hdur + this->__tshift;
 }
 
-specfem::forcing_function::GaussianDer::GaussianDer(
-    YAML::Node &GaussianDer, const int nsteps, const type_real dt,
+specfem::forcing_function::dGaussian::dGaussian(
+    YAML::Node &dGaussian, const int nsteps, const type_real dt,
     const bool use_trick_for_better_pressure) {
-  type_real f0 = GaussianDer["f0"].as<type_real>();
-  type_real tshift = [GaussianDer]() -> type_real {
-    if (GaussianDer["tshift"]) {
-      return GaussianDer["tshift"].as<type_real>();
+  type_real f0 = dGaussian["f0"].as<type_real>();
+  type_real tshift = [dGaussian]() -> type_real {
+    if (dGaussian["tshift"]) {
+      return dGaussian["tshift"].as<type_real>();
     } else {
       return 0.0;
     }
   }();
-  type_real factor = GaussianDer["factor"].as<type_real>();
+  type_real factor = dGaussian["factor"].as<type_real>();
 
-  *this = specfem::forcing_function::GaussianDer(nsteps, dt, f0, tshift, factor,
-                                                 use_trick_for_better_pressure);
+  *this = specfem::forcing_function::dGaussian(nsteps, dt, f0, tshift, factor,
+                                               use_trick_for_better_pressure);
 }
 
-type_real specfem::forcing_function::GaussianDer::compute(type_real t) {
+type_real specfem::forcing_function::dGaussian::compute(type_real t) {
 
   type_real val;
 
@@ -46,7 +46,7 @@ type_real specfem::forcing_function::GaussianDer::compute(type_real t) {
   return val;
 }
 
-void specfem::forcing_function::GaussianDer::compute_source_time_function(
+void specfem::forcing_function::dGaussian::compute_source_time_function(
     const type_real t0, const type_real dt, const int nsteps,
     specfem::kokkos::HostView2d<type_real> source_time_function) {
 
@@ -59,9 +59,9 @@ void specfem::forcing_function::GaussianDer::compute_source_time_function(
   }
 }
 
-std::string specfem::forcing_function::GaussianDer::print() const {
+std::string specfem::forcing_function::dGaussian::print() const {
   std::stringstream ss;
-  ss << "        GaussianDer source time function:\n"
+  ss << "        dGaussian source time function:\n"
      << "          f0: " << this->__f0 << "\n"
      << "          tshift: " << this->__tshift << "\n"
      << "          factor: " << this->__factor << "\n"
