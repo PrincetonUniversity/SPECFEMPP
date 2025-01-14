@@ -69,13 +69,12 @@ Setting up the Mesh
 .. literalinclude:: Par_file
     :caption: Par_file
     :language: bash
-    :linenos:
 
 
 .. literalinclude:: topography_file.dat
     :caption: topography_file.dat
     :language: bash
-    :linenos:
+
 
 With the above input files, we can run the mesher to generate the mesh database.
 
@@ -93,7 +92,6 @@ up the runtime behaviour of the solver using the following input file.
 .. literalinclude:: forward_config.yaml
     :language: yaml
     :caption: forward_config.yaml
-    :linenos:
     :emphasize-lines: 27-36,38-43
 
 
@@ -139,7 +137,6 @@ pay attention to:
    .. literalinclude:: forward_sources.yaml
        :language: yaml
        :caption: forward_sources.yaml
-       :linenos:
 
 
 With the above input files, we can run the forward simulation.
@@ -215,7 +212,6 @@ the following changes:
    .. literalinclude:: adjoint_config.yaml
        :language: yaml
        :caption: adjoint_config.yaml
-       :linenos:
        :emphasize-lines: 27-37
 
 
@@ -251,7 +247,6 @@ kernels and plot them.
 
 .. literalinclude:: ../../../examples/Tromp_2005/plot.py
     :language: python
-    :linenos:
 
 
 .. figure:: ../../../examples/Tromp_2005/Reference_Kernels/Kernels.png

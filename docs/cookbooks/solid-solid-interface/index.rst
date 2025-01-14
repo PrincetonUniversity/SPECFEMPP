@@ -59,7 +59,7 @@ artifacts.
 
     touch specfem_config.yaml
     touch sources.yaml
-    touch topography.dat
+    touch topography_file.dat
     touch Par_File
 
 
@@ -76,7 +76,6 @@ Parameter file
 .. literalinclude:: Par_file
     :caption: Par_file
     :language: bash
-    :linenos:
     :emphasize-lines: 40-56,58-78,118-129
 
 
@@ -160,7 +159,6 @@ file
 .. literalinclude:: topography_file.dat
     :caption: topography_file.dat
     :language: bash
-    :linenos:
     :emphasize-lines: 11-13,17-19,23-25
 
 With 38 elements vertically in each layer.
@@ -191,7 +189,6 @@ We define the source location and the source time function in the source file.
 .. literalinclude:: sources.yaml
     :caption: sources.yaml
     :language: yaml
-    :linenos:
     :emphasize-lines: 4-5,10,13
 
 We define the source at the surface of the model at :math:`x=50\mathrm{km}`
@@ -207,7 +204,6 @@ To run the solver, we first need to define a configuration file
 .. literalinclude:: specfem_config.yaml
     :language: yaml
     :caption: specfem_config.yaml
-    :linenos:
     :emphasize-lines: 27-36,38-43
 
 
@@ -218,3 +214,32 @@ place, we can run the solver using the following command
 .. code:: bash
 
     specfem2d -p specfem_config.yaml
+
+
+A snapshot of the wavefield at timestep 2000 (:math:`t=10\mathrm{s}`) is shown
+below.
+
+.. figure:: wavefield2000.png
+    :width: 800
+    :alt: wavefield
+
+    Snapshot of the wavefield at timestep 2000 (:math:`t=10\mathrm{s}`).
+
+The first (P) wavefront in the upper half of the medium reaches the horizontal
+center of model after 9 seconds, which is intuitive since the P-wave velocity
+in the upper half of the model is almost :math:`6\mathrm{km}/\mathrm{s}`.
+
+The seismograms recorded at the receiver location are shown below.
+
+.. figure:: seismograms.png
+    :width: 800
+    :alt: seismograms
+
+    Seismograms recorded at the receiver location.
+
+
+And the plot can be reproduced using the following python script
+
+.. literalinclude:: plot.py
+    :language: python
+    :caption: plot.py
