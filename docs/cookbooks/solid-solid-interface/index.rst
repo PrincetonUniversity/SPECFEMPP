@@ -100,7 +100,7 @@ Parameter file
 
   .. code-block:: bash
 
-      model_number rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0
+      model_number 1 rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0
 
   Since :math:`\kappa`, :math:`\mu` and :math:`\rho` are provided by the model
   we need to convert them to the velocity parameters :math:`v_p` and :math:`v_s`.
