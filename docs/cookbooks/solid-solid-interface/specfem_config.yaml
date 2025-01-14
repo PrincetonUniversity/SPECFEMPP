@@ -34,10 +34,10 @@ parameters:
         writer:
           seismogram:
             format: ascii
-            directory: "/Users/lsawade/SPECFEMPP/examples/solid-solid-interface/OUTPUT_FILES/results"
+            directory: OUTPUT_FILES/seismograms
 
   receivers:
-    stations-file: "/Users/lsawade/SPECFEMPP/examples/solid-solid-interface/OUTPUT_FILES/STATIONS"
+    stations-file: OUTPUT_FILES/STATIONS
     angle: 0.0
     seismogram-type:
       - displacement
@@ -50,5 +50,5 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "/Users/lsawade/SPECFEMPP/examples/solid-solid-interface/OUTPUT_FILES/database.bin"
-    source-file: "/Users/lsawade/SPECFEMPP/examples/solid-solid-interface/sources.yaml"
+    mesh-database: OUTPUT_FILES/database.bin
+    source-file: sources.yaml

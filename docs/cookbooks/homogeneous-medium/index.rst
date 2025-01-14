@@ -68,7 +68,6 @@ Parameter File
     :caption: Par_file
     :language: bash
     :emphasize-lines: 10-11,123-124
-    :linenos:
 
 
 At this point, it is worthwhile to note few key parameters within the
@@ -103,7 +102,7 @@ Topography file
     :caption: topography_file.dat
     :language: bash
     :emphasize-lines: 11-13
-    :linenos:
+
 
 The topography file defines the interfaces in the mesh using points the, first
 number for interface 1 is the number of points on the interface, followed by the
@@ -142,7 +141,6 @@ used to define sources refer :ref:`source_description`.
 .. literalinclude:: single_source.yaml
     :caption: single_source.yaml
     :language: yaml
-    :linenos:
     :emphasize-lines: 4-5,10-13
 
 In this file, we define a single source at the center of the domain.
@@ -232,7 +230,6 @@ seismograms we need to read the ASCII files as ``numpy`` arrays and them convert
 them to ``obspy`` streams. The following code snippet shows how to do this.
 
 .. literalinclude:: plot_traces.py
-    :linenos:
     :language: python
 
 

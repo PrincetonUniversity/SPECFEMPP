@@ -55,7 +55,6 @@ Parameter file
 .. literalinclude:: Par_File
     :language: bash
     :emphasize-lines: 65,72-73,113-119
-    :linenos:
     :caption: Par_File
 
 - We define the acoustic and elastic velocity models in the `Velocity and
@@ -109,7 +108,6 @@ We define the topography of the domain using the following topography file
 .. literalinclude:: topography_file.dat
     :caption: topography_file.dat
     :language: bash
-    :linenos:
 
 
 
@@ -136,7 +134,6 @@ Defining the source
 We define the source location and the source time function in the source file.
 
 .. literalinclude:: single_source.yaml
-    :linenos:
     :caption: single_source.yaml
 
 
@@ -148,7 +145,6 @@ To run the solver, we first need to define a configuration file ``specfem_config
 .. literalinclude:: specfem_config.yaml
     :language: yaml
     :caption: specfem_config.yaml
-    :linenos:
 
 With the configuration file in place, we can run the solver using the following command
 
