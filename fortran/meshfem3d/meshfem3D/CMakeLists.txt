@@ -31,7 +31,6 @@ set(MESHFEM3D_MESH_MODULE
     get_MPI_cutplanes_xi.f90
     meshfem3D.F90
     get_wavefield_discontinuity.f90
-    command_line_arguments.f90
     read_mesh_parameter_file.f90
     read_value_mesh_parameters.f90
     save_databases.F90
