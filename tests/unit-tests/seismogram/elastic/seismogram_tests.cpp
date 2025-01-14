@@ -102,7 +102,7 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
 
   specfem::compute::assembly assembly(mesh, quadratures, sources, receivers,
                                       stypes, 0, 0, 0, 1,
-                                      setup.get_simulation_type());
+                                      setup.get_simulation_type(), nullptr);
 
   const auto displacement_field = assembly.fields.forward.elastic.h_field;
   const auto velocity_field = assembly.fields.forward.elastic.h_field_dot;

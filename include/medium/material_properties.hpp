@@ -23,7 +23,7 @@ struct material_properties
       const int nspec, const int n_element, const int ngllz, const int ngllx,
       const specfem::compute::mesh_to_compute_mapping &mapping,
       const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
-      const specfem::mesh::materials &materials,
+      const specfem::mesh::materials &materials, const bool &has_gll_model,
       const specfem::kokkos::HostView1d<int> property_index_mapping)
       : specfem::medium::properties_container<type, property>(n_element, ngllz,
                                                               ngllx) {
@@ -35,17 +35,19 @@ struct material_properties
 
       if ((tag.medium_tag == type) && (tag.property_tag == property)) {
         property_index_mapping(ispec) = count;
-        for (int iz = 0; iz < ngllz; ++iz) {
-          for (int ix = 0; ix < ngllx; ++ix) {
-            // Get the material at index from mesh::materials
-            auto material =
-                std::get<specfem::medium::material<type, property> >(
-                    materials[ispec_mesh]);
+        if (!has_gll_model) {
+          for (int iz = 0; iz < ngllz; ++iz) {
+            for (int ix = 0; ix < ngllx; ++ix) {
+              // Get the material at index from mesh::materials
+              auto material =
+                  std::get<specfem::medium::material<type, property> >(
+                      materials[ispec_mesh]);
 
-            // Assign the material property to the property container
-            auto point_property = material.get_properties();
-            this->assign(specfem::point::index<dimension>(count, iz, ix),
-                         point_property);
+              // Assign the material property to the property container
+              auto point_property = material.get_properties();
+              this->assign(specfem::point::index<dimension>(count, iz, ix),
+                           point_property);
+            }
           }
         }
         count++;
@@ -54,7 +56,9 @@ struct material_properties
 
     assert(count == n_element);
 
-    this->copy_to_device();
+    if (!has_gll_model) {
+      this->copy_to_device();
+    }
 
     return;
   }

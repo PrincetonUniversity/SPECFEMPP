@@ -10,7 +10,7 @@ option(BUILD_TESTS "Tests included" OFF)
 option(BUILD_EXAMPLES "Examples included" ON)
 option(ENABLE_SIMD "Enable SIMD" OFF)
 option(ENABLE_PROFILING "Enable profiling" OFF)
-option(SPECFEMPP_ENABLE_PYTHON "Enable Python binding" OFF)
+option(SPECFEMPP_BINDING_PYTHON "Enable Python binding" OFF)
 # set(CMAKE_BUILD_TYPE Release)
 set(CHUNK_SIZE 32)
 set(NUM_CHUNKS 1)
@@ -25,7 +25,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 # For external modules that need to be built suppress build output
 set(FETCHCONTENT_QUIET TRUE)
 
-if (SPECFEMPP_ENABLE_PYTHON)
+if (SPECFEMPP_BINDING_PYTHON)
     message("-- Adding -fPIC flag for Python binding.")
     if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
             set(CMAKE_CXX_FLAGS "-fp-model=precise -fPIC")
@@ -36,7 +36,7 @@ if (SPECFEMPP_ENABLE_PYTHON)
     else()
             set(CMAKE_CXX_FLAGS "-fPIC")
     endif()
-else (SPECFEMPP_ENABLE_PYTHON)
+else (SPECFEMPP_BINDING_PYTHON)
     if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
             set(CMAKE_CXX_FLAGS "-fp-model=precise")
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
@@ -44,7 +44,7 @@ else (SPECFEMPP_ENABLE_PYTHON)
             message("-- It is recommended you use IntelLLVM compiler.")
             set(CMAKE_CXX_FLAGS "-diag-disable=10441 -fp-model=precise")
     endif()
-endif (SPECFEMPP_ENABLE_PYTHON)
+endif (SPECFEMPP_BINDING_PYTHON)
 
 # Check if MacOS
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -341,7 +341,7 @@ target_link_libraries(
 
 add_library(
         read_seismogram
-        src/reader/seismogram.cpp
+        src/IO/seismogram/reader.cpp
 )
 
 target_link_libraries(
@@ -351,7 +351,8 @@ target_link_libraries(
 
 add_library(
         reader
-        src/reader/wavefield.cpp
+        src/IO/wavefield/reader.cpp
+        src/IO/property/reader.cpp
 )
 
 target_link_libraries(
@@ -535,9 +536,10 @@ target_link_libraries(
 
 add_library(
         writer
-        src/writer/seismogram.cpp
-        src/writer/wavefield.cpp
-        src/writer/kernel.cpp
+        src/IO/seismogram/writer.cpp
+        src/IO/wavefield/writer.cpp
+        src/IO/kernel/writer.cpp
+        src/IO/property/writer.cpp
 )
 
 target_link_libraries(
@@ -589,6 +591,7 @@ add_library(
         src/parameter_parser/writer/wavefield.cpp
         src/parameter_parser/writer/plot_wavefield.cpp
         src/parameter_parser/writer/kernel.cpp
+        src/parameter_parser/writer/property.cpp
 )
 
 target_link_libraries(
@@ -674,7 +677,7 @@ if (SPECFEMPP_USE_SKBUILD AND EXISTS ${SKBUILD_SCRIPTS_DIR})
     install(FILES ${CMAKE_BINARY_DIR}/xmeshfem2D DESTINATION ${SKBUILD_SCRIPTS_DIR} PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE)
 endif ()
 
-if (SPECFEMPP_ENABLE_PYTHON)
+if (SPECFEMPP_BINDING_PYTHON)
     find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
     find_package(pybind11 CONFIG REQUIRED)
     python_add_library(_core MODULE src/specfem2d.cpp WITH_SOABI)
@@ -689,6 +692,7 @@ if (SPECFEMPP_ENABLE_PYTHON)
         parameter_reader
         receiver_class
         writer
+        plotter
         reader
         domain
         medium
@@ -698,7 +702,7 @@ if (SPECFEMPP_ENABLE_PYTHON)
         ${BOOST_LIBS}
         pybind11::headers
     )
-    target_compile_definitions(_core PRIVATE SPECFEMPP_ENABLE_PYTHON)
+    target_compile_definitions(_core PRIVATE SPECFEMPP_BINDING_PYTHON)
     target_compile_definitions(_core PRIVATE VERSION_INFO=${PROJECT_VERSION})
     install(TARGETS _core DESTINATION specfempp_core)
-endif (SPECFEMPP_ENABLE_PYTHON)
+endif (SPECFEMPP_BINDING_PYTHON)

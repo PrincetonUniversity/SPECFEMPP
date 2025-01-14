@@ -2,17 +2,17 @@
 
 #include "IO/ASCII/ASCII.hpp"
 #include "IO/HDF5/HDF5.hpp"
-#include "reader/wavefield.hpp"
+#include "IO/wavefield/reader.hpp"
 
 template <typename IOLibrary>
-specfem::reader::wavefield<IOLibrary>::wavefield(
-    const std::string &output_folder,
-    const specfem::compute::assembly &assembly)
-    : output_folder(output_folder), buffer(assembly.fields.buffer),
-      boundary_values(assembly.boundary_values) {}
+specfem::IO::wavefield_reader<IOLibrary>::wavefield_reader(
+    const std::string &output_folder)
+    : output_folder(output_folder) {}
 
 template <typename IOLibrary>
-void specfem::reader::wavefield<IOLibrary>::read() {
+void specfem::IO::wavefield_reader<IOLibrary>::read(specfem::compute::assembly &assembly) {
+  auto &buffer = assembly.fields.buffer;
+  auto &boundary_values = assembly.boundary_values;
 
   typename IOLibrary::File file(output_folder + "/ForwardWavefield");
 

@@ -15,6 +15,7 @@
 #include "enumerations/display.hpp"
 #include "enumerations/interface.hpp"
 #include "mesh/mesh.hpp"
+#include "IO/reader.hpp"
 #include "receiver/interface.hpp"
 #include "source/interface.hpp"
 
@@ -65,6 +66,8 @@ struct assembly {
    * @param max_timesteps Maximum number of time steps
    * @param max_sig_step Maximum number of seismogram time steps
    * @param simulation Type of simulation (forward, adjoint, etc.)
+   * @param property_reader Reader for GLL model (skip material property
+   * assignment if exists)
    */
   assembly(
       const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
@@ -74,7 +77,8 @@ struct assembly {
           &receivers,
       const std::vector<specfem::enums::seismogram::type> &stypes,
       const type_real t0, const type_real dt, const int max_timesteps,
-      const int max_sig_step, const specfem::simulation::type simulation);
+      const int max_sig_step, const specfem::simulation::type simulation,
+      const std::shared_ptr<specfem::IO::reader> &property_reader);
 
   /**
    * @brief Maps the component of wavefield on the entire spectral element grid
