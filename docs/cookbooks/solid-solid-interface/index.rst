@@ -17,7 +17,7 @@ characteristics of the medium are shown in the figure below.
 
 The model consists of two materials, one with a slower velocity and the other
 with a faster velocity. The model is divided by a horizontal interface. The
-source and the receiver are both indicated in the figure, and located at the
+source and the receiver are both indicated in the figure and located at the
 surface of the model.
 
 Setting up the workspace
@@ -69,13 +69,13 @@ Meshing the domain
 We first start by generating a mesh for our simulation domain using ``xmeshfem2D``. To do this, we first define our simulation domain and the meshing parmeters in a parameter file.
 
 Parameter file
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 .. literalinclude:: Par_file
     :caption: Par_file
     :language: bash
     :linenos:
-    :emphasize-lines: 58-78
+    :emphasize-lines: 40-56,58-78,118-129
 
 
 - Like we did in the :ref:`homogeneous_example`, we define the elastic velocity
@@ -93,44 +93,61 @@ Parameter file
       :language: bash
 
   Then, we then define the velocity model for each material based on the
-  parameters in the figure above. We define the elastic material
+  parameters in the figure above. We define the elastic material using following
+  format
 
-  We use the conversion from :math:`\kappa`, :math:`\mu` and :math:`\rho`
-  to :math:`v_p` and :math:`v_s`:
+  .. code-block:: bash
+
+      model_number rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0
+
+  Since :math:`\kappa`, :math:`\mu` and :math:`\rho` are provided by the model
+  we need to convert them to the velocity parameters :math:`v_p` and :math:`v_s`.
 
   .. math::
 
-      v_p = \sqrt{\frac{kappa + 4/3 \mu}{rho}}
-      v_s = \sqrt{\frac{\mu}{rho}}
+      v_p = \sqrt{\frac{\kappa + 4/3 \mu}{\rho}}\qquad\qquad
+      v_s = \sqrt{\frac{\mu}{\rho}}
 
-  and add both materials using the format:
-
-  .. code-block::bash
-
-      model_number rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0``.
+  and add them to the ``Par_file``:
 
   .. literalinclude:: Par_file
+      :language: bash
       :caption: Par_file
       :start-at: 1 1
       :end-at: 2 1
       :lineno-match:
       :linenos:
 
-  As you can see, we added two material systems in the simulation domain. With
-  the properties used from the model where the faster material is model number
-  1 and the slower material is model number 2.
+  we set the quality factors :math:`Q_{\kappa}` and :math:`Q_{\mu}` to 9999 to
+  avoid attenuation in the model.
 
 - Additionally, we define stacey absorbing boundary conditions on all the edges
-  of the domain except the top surface using the ``STACEY_ABSORBING_BOUNDARY``,
+  of the domain except the top surface using the ``STACEY_ABSORBING_CONDITIONS``,
   ``absorbbottom``, ``absorbright``, ``absorbtop`` and ``absorbleft``
   parameters.
 
   .. literalinclude:: Par_file
+      :language: bash
       :caption: Par_file
-      :start-at: STACEY_ABSORBING_BOUNDARY
+      :start-at: STACEY_ABSORBING_CONDITIONS
       :end-at: absorbleft
       :lineno-match:
       :linenos:
+
+- We define a single receiver at the surface of the model at
+  :math:`x=150\mathrm{km}` and :math:`z=80\mathrm{km}` in the ``Par_file``.
+
+  .. literalinclude:: Par_file
+      :language: bash
+      :caption: Par_file
+      :start-at:  number of receiver sets
+      :end-at: stations_filename
+      :lineno-match:
+      :linenos:
+
+  We define one receiver set ``nreceiversets`` and a single receiver ``nrec``
+  located.
+
 
 Defining the topography of the domain
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -167,84 +184,32 @@ Defining the source
 
 We define the source location and the source time function in the source file.
 
-.. code-block:: yaml
-    :caption: single_source.yaml
+.. literalinclude:: sources.yaml
+    :caption: sources.yaml
+    :language: yaml
+    :linenos:
+    :emphasize-lines: 4-5,10,13
 
-    number-of-sources: 1
-    sources:
-      - force:
-          x : 1575.0
-          z : 2900.0
-          source_surf: false
-          angle : 0.0
-          vx : 0.0
-          vz : 0.0
-          Ricker:
-            factor: 1e9
-            tshift: 0.0
-            f0: 10.0
+We define the source at the surface of the model at :math:`x=50\mathrm{km}`
+and :math:`z=80\mathrm{km}`, with a first derivative of a Gaussian source time
+function with a dominant frequency of 2 Hz.
 
 Running the simulation
 ----------------------
 
-To run the solver, we first need to define a configuration file ``specfem_config.yaml``.
+To run the solver, we first need to define a configuration file
+``specfem_config.yaml``.
 
-.. code-block:: yaml
+.. literalinclude:: specfem_config.yaml
+    :language: yaml
     :caption: specfem_config.yaml
+    :linenos:
+    :emphasize-lines: 27-36,38-43
 
-    parameters:
 
-      header:
-        ## Header information is used for logging. It is good practice to give your simulations explicit names
-        title: Heterogeneous acoustic-elastic medium with 1 acoustic-elastic interface (orientation horizontal)  # name for your simulation
-        # A detailed description for your simulation
-        description: |
-          Material systems : Elastic domain (1), Acoustic domain (1)
-          Interfaces : Acoustic-elastic interface (1) (orientation horizontal with acoustic domain on top)
-          Sources : Force source (1)
-          Boundary conditions : Neumann BCs on all edges
-          Debugging comments: This tests checks coupling acoustic-elastic interface implementation.
-                              The orientation of the interface is horizontal with acoustic domain on top.
-
-      simulation-setup:
-        ## quadrature setup
-        quadrature:
-          quadrature-type: GLL4
-
-        ## Solver setup
-        solver:
-          time-marching:
-            type-of-simulation: forward
-            time-scheme:
-              type: Newmark
-              dt: 0.85e-3
-              nstep: 600
-
-        simulation-mode:
-          forward:
-            writer:
-              seismogram:
-                format: ascii
-                directory: OUTPUT_FILES/seismograms
-
-      receivers:
-        stations-file: OUTPUT_FILES/STATIONS
-        angle: 0.0
-        seismogram-type:
-          - displacement
-        nstep_between_samples: 1
-
-      ## Runtime setup
-      run-setup:
-        number-of-processors: 1
-        number-of-runs: 1
-
-      ## databases
-      databases:
-        mesh-database: OUTPUT_FILES/database.bin
-        source-file: single_source.yaml
-
-With the configuration file in place, we can run the solver using the following command
+For the ``specfem_config.yaml`` file, nothing has changed compared to the
+previous example, :ref:`homogeneous_example`. With the configuration file in
+place, we can run the solver using the following command
 
 .. code:: bash
 

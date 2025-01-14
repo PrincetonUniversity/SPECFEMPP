@@ -89,7 +89,7 @@ Parameter file
       :end-at: 2 1
 
 - We define stacey absorbing boundary conditions on all the edges of the domain
-  using the ``STACEY_ABSORBING_BOUNDARY``, ``absorbbottom``, ``absorbright``,
+  using the ``STACEY_ABSORBING_CONDITIONS``, ``absorbbottom``, ``absorbright``,
   ``absorbtop`` and ``absorbleft`` parameters.
 
   .. literalinclude:: Par_File
