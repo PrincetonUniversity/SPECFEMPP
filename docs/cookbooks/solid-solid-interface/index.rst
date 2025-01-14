@@ -66,7 +66,9 @@ artifacts.
 Meshing the domain
 ------------------
 
-We first start by generating a mesh for our simulation domain using ``xmeshfem2D``. To do this, we first define our simulation domain and the meshing parmeters in a parameter file.
+We first start by generating a mesh for our simulation domain using
+``xmeshfem2D``. To do this, we first define our simulation domain and the
+meshing parmeters in a parameter file.
 
 Parameter file
 ~~~~~~~~~~~~~~
@@ -175,9 +177,11 @@ To execute the mesher run
 
 .. note::
 
-    Make sure either your are in the build directory of SPECFEM2D kokkos or the build directory is added to your ``PATH``.
+    Make sure either your are in the build directory of SPECFEM2D kokkos or the
+    build directory is added to your ``PATH``.
 
-Note the path of the database file and a stations file generated after successfully running the mesher.
+Note the path of the database file and a stations file generated after
+successfully running the mesher.
 
 Defining the source
 ~~~~~~~~~~~~~~~~~~~
