@@ -13,9 +13,6 @@ Cookbooks are a collection of examples that demonstrate how to use the package t
     :maxdepth: 1
 
     homogeneous-medium/index.rst
-
+    solid-solid-interface/index.rst
     fluid-solid-interface/index.rst
     kernels-example-tromp-2005/index.rst
-
-
-.. cookbooks/solid-solid-interface/
