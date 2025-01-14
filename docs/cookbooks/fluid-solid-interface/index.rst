@@ -69,8 +69,9 @@ Parameter file
     :end-at: nbmodels
 
   defines the number of material systems in the simulation domain. We then
-  define the velocity model for each material system using the following format:
-  ``model_number rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0``. Such model 1 is
+  define the isotropic velocity model for each material system using the
+  following format: ``model_number 1 rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0``.
+  Such model 1 is
 
   .. literalinclude:: Par_File
       :language: bash
