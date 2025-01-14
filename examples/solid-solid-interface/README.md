@@ -1,7 +1,10 @@
-# Wave propagration through fluid-solid interface
+# Wave propagration through solid-solid interface
 
 This example is for a solid-solid simulation that is often used in Jeroen
 Tromp's Computational Seismology course at Princeton University.
+
+For a step-by-step guide on this example, please refer to the
+[documentation](https://specfem2d-kokkos.readthedocs.io/en/latest/cookbooks/dim2/solid-solid-interface/index.html).
 
 ## Running the examples
 
