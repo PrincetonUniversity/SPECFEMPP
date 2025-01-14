@@ -30,6 +30,26 @@ public:
    *
    */
   moment_tensor(){};
+
+  /**
+   * @brief Get the Mxx component of the moment tensor
+   *
+   * @return type_real x-coordinate
+   */
+  type_real get_Mxx() const { return Mxx; }
+  /**
+   * @brief Get the Mxz component of the moment tensor
+   *
+   * @return type_real z-coordinate
+   */
+  type_real get_Mxz() const { return Mxz; }
+  /**
+   * @brief Get the Mzz component of the moment tensor
+   *
+   * @return type_real z-coordinate
+   */
+  type_real get_Mzz() const { return Mzz; }
+
   /**
    * @brief Construct a new moment tensor force object
    *
