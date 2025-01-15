@@ -7,7 +7,7 @@
 #include <gtest/gtest.h>
 #include <yaml-cpp/yaml.h>
 
-TEST(read_sources, READ_SOURCES) {
+TEST(IO_TESTS, read_sources) {
   /**
    *  This test checks whether a moment tensor source is read correctly
    */
@@ -42,8 +42,8 @@ TEST(read_sources, READ_SOURCES) {
   ASSERT_EQ(source->get_tshift(), 0.0); // tshift is adjusted to be 0.0
 }
 
-int main(int argc, char *argv[]) {
-  ::testing::InitGoogleTest(&argc, argv);
-  ::testing::AddGlobalTestEnvironment(new KokkosEnvironment);
-  return RUN_ALL_TESTS();
-}
+// int main(int argc, char *argv[]) {
+//   ::testing::InitGoogleTest(&argc, argv);
+//   ::testing::AddGlobalTestEnvironment(new KokkosEnvironment);
+//   return RUN_ALL_TESTS();
+// }
