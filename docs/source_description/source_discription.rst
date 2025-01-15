@@ -60,6 +60,16 @@ Force Source Description
 
 **Description** : Definition of Ricker source :ref:`ricker_source_description`
 
+**Parameter Name** : ``sources.force.dGaussian`` [optional]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**dafault value** : None
+
+**possible values** : [YAML Node]
+
+**Description** : Definition of first derivative of a Gaussian time function :ref:`dgaussian_source_description`
+
+
 **Parameter Name** : ``sources.force.External`` [optional]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -155,6 +165,15 @@ Moment Tensor Source Description
 **possible values** : [YAML Node]
 
 **Description** : Definition of Ricker source :ref:`ricker_source_description`
+
+**Parameter Name** : ``sources.moment-tensor.dGaussian`` [optional]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**dafault value** : None
+
+**possible values** : [YAML Node]
+
+**Description** : Definition of first derivative Gaussian time function :ref:`dgaussian_source_description`
 
 **Parameter Name** : ``sources.moment-tensor.External`` [optional]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
