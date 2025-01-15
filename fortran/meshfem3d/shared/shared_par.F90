@@ -108,6 +108,8 @@ end module constants
 
   character(len=MAX_STRING_LEN) :: TOMOGRAPHY_PATH
 
+  character(len=MAX_STRING_LEN) :: Par_File
+
   ! attenuation
   ! reference frequency of seismic model
   double precision :: ATTENUATION_f0_REFERENCE
