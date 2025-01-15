@@ -207,12 +207,12 @@ add_custom_target(meshfem_mesh ALL
 )
 
 set( meshfem2D_PREPROCESSOR_OBJECTS
-  	decompose_mesh.mesh.o
+  decompose_mesh.mesh.o
 	metis_partitioning.mesh.o
 	part_unstruct.mesh.o
 	read_external_mesh_files.mesh.o
 	read_mesh_files.mesh.o
-  	scotch_partitioning.mesh.o
+  scotch_partitioning.mesh.o
 	meshfem2D.mesh.o
 )
 
