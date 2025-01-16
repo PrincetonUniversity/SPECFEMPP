@@ -45,6 +45,17 @@ specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict,
     throw std::runtime_error(message.str());
   }
 
+  // Get source info
+  if (const YAML::Node &source_node = n_databases["source-dict"]) {
+    this->sources =
+        std::make_unique<specfem::runtime_configuration::sources>(source_node);
+  } else if (const YAML::Node &source_node = n_databases["source-file"]) {
+    this->sources = std::make_unique<specfem::runtime_configuration::sources>(
+        source_node.as<std::string>());
+  } else {
+    throw std::runtime_error("Error reading specfem source configuration.");
+  }
+
   if (const YAML::Node &n_quadrature = simulation_setup["quadrature"]) {
     this->quadrature =
         std::make_unique<specfem::runtime_configuration::quadrature>(
@@ -90,6 +101,7 @@ specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict,
     this->property = nullptr;
   }
 
+  // Get receiver info
   try {
     this->receivers =
         std::make_unique<specfem::runtime_configuration::receivers>(
