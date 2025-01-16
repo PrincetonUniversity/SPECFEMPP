@@ -1,7 +1,9 @@
 Wave propagration through anistoropic zinc crystal
 ==================================================
 
-This `example <https://github.com/PrincetonUniversity/SPECFEMPP/tree/main/examples/anisotropic-crystal>`_ we simulate wave propagation through a 2-dimensional anistoropic zinc crystal.
+In this `example
+<https://github.com/PrincetonUniversity/SPECFEMPP/tree/main/examples/anisotropic-crystal>`_
+we simulate wave propagation through a 2-dimensional anistoropic zinc crystal.
 
 Setting up the workspace
 ------------------------
@@ -61,41 +63,42 @@ Parameter file
     :emphasize-lines: 59-73
 
 
-- Note the material string used to define an anisotropic velocity model.
+Note the material string used to define an anisotropic velocity model.
 
-  .. literalinclude:: Par_file
-      :language: bash
-      :start-at: # anisotopic:
-      :end-at: # anisotopic:
-      :lineno-match:
+.. literalinclude:: Par_file
+    :language: bash
+    :start-at: #   anisotropic:
+    :end-at: #   anisotropic:
+    :lineno-match:
 
-  The actual material is then numerically defined in the following lines.
+The actual material is then numerically defined in the following line.
 
-  .. literalinclude:: Par_file
-      :language: bash
-      :start-at: 1 2
-      :end-at: 1 2
-      :lineno-match:
+.. literalinclude:: Par_file
+    :language: bash
+    :start-at: 1 2
+    :end-at: 1 2
+    :lineno-match:
 
-  The material string generates an anisotopic medium with the following properties
+The material string generates an anisotopic medium with the following
+properties
 
-  - Density :math:`rho = 7100.0 \mathrm{kg}/\mathrm{m}^3`
-  - :math:`C_{11} = 16.5 \cdot 10^{10} \mathrm{Pa}`
-  - :math:`C_{13} = 5.0 \cdot 10^{10} \mathrm{Pa}`
-  - :math:`C_{15} = 0.0 \mathrm{Pa}`
-  - :math:`C_{33} = 6.2 \cdot 10^{10} \mathrm{Pa}`
-  - :math:`C_{35} = 0.0 \mathrm{Pa}`
-  - :math:`C_{55} = 3.96 \cdot 10^{10} \mathrm{Pa}`
-  - :math:`C_{12} = 0.0 \mathrm{Pa}`
-  - :math:`C_{23} = 0.0 \mathrm{Pa}`
-  - :math:`C_{25} = 0.0 \mathrm{Pa}`
+- Density :math:`rho = 7100.0 \mathrm{kg}/\mathrm{m}^3`
+- :math:`C_{11} = 16.5 \cdot 10^{10} \mathrm{Pa}`
+- :math:`C_{13} = 5.0 \cdot 10^{10} \mathrm{Pa}`
+- :math:`C_{15} = 0.0 \mathrm{Pa}`
+- :math:`C_{33} = 6.2 \cdot 10^{10} \mathrm{Pa}`
+- :math:`C_{35} = 0.0 \mathrm{Pa}`
+- :math:`C_{55} = 3.96 \cdot 10^{10} \mathrm{Pa}`
+- :math:`C_{12} = 0.0 \mathrm{Pa}`
+- :math:`C_{23} = 0.0 \mathrm{Pa}`
+- :math:`C_{25} = 0.0 \mathrm{Pa}`
 
 
 Defining the topography of the domain
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Next, as in previous examples, we define the topography of the domain in the
-``topography_file.dat`` file. This is very similar to the homogeneous_example
+``topography_file.dat`` file. This is very similar to :ref:`homogeneous_example`
 with the main difference that this model is much smaller.
 
 .. literalinclude:: topography_file.dat
@@ -152,7 +155,7 @@ Now we can run the solver using the following command.
 
 
 Visualizing the traces and wavefield
-------------------------
+------------------------------------
 
 We can plot the traces stored in the ``OUTPUT_FILES/results`` directory using
 the following python code.
