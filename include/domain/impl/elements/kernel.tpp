@@ -13,6 +13,7 @@
 #include "medium/medium.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
+#include <sstream>
 
 template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
@@ -38,8 +39,8 @@ specfem::domain::impl::kernels::element_kernel_base<
   // type
   for (int ispec = 0; ispec < nelements; ispec++) {
     const int ielement = h_element_kernel_index_mapping(ispec);
-    if ((assembly.properties.h_medium_tags(ielement) != MediumTag) &&
-        (assembly.properties.h_property_tags(ielement) != PropertyTag)) {
+    if ((assembly.element_types.get_medium_tag(ielement) != MediumTag) &&
+        (assembly.element_types.get_property_tag(ielement) != PropertyTag)) {
       throw std::runtime_error("Invalid element detected in kernel");
     }
   }
@@ -49,7 +50,12 @@ specfem::domain::impl::kernels::element_kernel_base<
     if (ispec != 0) {
       if (h_element_kernel_index_mapping(ispec) !=
           h_element_kernel_index_mapping(ispec - 1) + 1) {
-        throw std::runtime_error("Element index mapping is not contiguous");
+        std::ostringstream  error_message;
+        error_message << "Error: Element indices are not contiguous. "
+                      << "Element index: " << h_element_kernel_index_mapping(ispec)
+                      << " Element index: " << h_element_kernel_index_mapping(ispec - 1) + 1;
+
+        throw std::runtime_error(error_message.str());
       }
     }
   }

@@ -56,7 +56,7 @@ public:
       const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
       const specfem::compute::mesh &mesh,
       const specfem::compute::partial_derivatives &partial_derivatives,
-      const specfem::compute::properties &properties, const type_real t0,
+      const specfem::compute::element_types &element_types, const type_real t0,
       const type_real dt, const int nsteps);
   ///@}
 

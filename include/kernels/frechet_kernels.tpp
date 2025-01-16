@@ -24,7 +24,7 @@ void specfem::kernels::frechet_kernels<DimensionType, NGLL>::compute_material_de
   auto &partial_derivatives = assembly.partial_derivatives;
 
   const auto element_index =
-      properties.get_elements_on_device(MediumTag, PropertyTag);
+      assembly.element_types.get_elements_on_device(MediumTag, PropertyTag);
 
   const int nelements = element_index.size();
 

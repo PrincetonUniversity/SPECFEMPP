@@ -47,7 +47,7 @@ public:
    * @param properties Material properties
    */
   simulation_field(const specfem::compute::mesh &mesh,
-                   const specfem::compute::properties &properties);
+                   const specfem::compute::element_types &element_types);
   ///@}
 
   /**

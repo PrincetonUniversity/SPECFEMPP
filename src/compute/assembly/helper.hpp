@@ -42,7 +42,7 @@ public:
     const int ngllx = assembly.mesh.ngllx;
 
     const auto elements =
-        assembly.properties.get_elements_on_device(medium_tag, property_tag);
+        assembly.element_types.get_elements_on_device(medium_tag, property_tag);
 
     const int nelements = elements.extent(0);
 

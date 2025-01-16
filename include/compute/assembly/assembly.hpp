@@ -33,6 +33,8 @@ namespace compute {
  */
 struct assembly {
   specfem::compute::mesh mesh; ///< Properties of the assembled mesh
+  specfem::compute::element_types element_types; ///< Element tags for every
+                                                 ///< spectral element
   specfem::compute::partial_derivatives partial_derivatives; ///< Partial
                                                              ///< derivatives of
                                                              ///< the basis

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "compute/impl/element_types.hpp"
+#include "compute/element_types/element_types.hpp"
 #include "compute/impl/value_containers.hpp"
 #include "enumerations/medium.hpp"
 #include "medium/material_kernels.hpp"
@@ -17,8 +17,7 @@ namespace compute {
  *
  */
 struct kernels
-    : public impl::element_types,
-      public impl::value_containers<specfem::medium::material_kernels> {
+    : public impl::value_containers<specfem::medium::material_kernels> {
 public:
   /**
    * @name Constructors
@@ -42,8 +41,7 @@ public:
    * @param tags Tags for every element in spectral element mesh
    */
   kernels(const int nspec, const int ngllz, const int ngllx,
-          const specfem::compute::mesh_to_compute_mapping &mapping,
-          const specfem::mesh::tags<specfem::dimension::type::dim2> &tags);
+          const specfem::compute::element_types &element_types);
   ///@}
 
   /**
@@ -51,12 +49,10 @@ public:
    *
    */
   void copy_to_host() {
-    impl::element_types::copy_to_host();
     impl::value_containers<specfem::medium::material_kernels>::copy_to_host();
   }
 
   void copy_to_device() {
-    impl::element_types::copy_to_device();
     impl::value_containers<specfem::medium::material_kernels>::copy_to_device();
   }
 };

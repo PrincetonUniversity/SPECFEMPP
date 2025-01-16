@@ -17,7 +17,7 @@ specfem::compute::receivers::receivers(
     const std::vector<specfem::enums::seismogram::type> &stypes,
     const specfem::compute::mesh &mesh,
     const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
-    const specfem::compute::properties &properties)
+    const specfem::compute::element_types &element_types)
     : lagrange_interpolant("specfem::compute::receivers::lagrange_interpolant",
                            receivers.size(), mesh.ngllz, mesh.ngllx),
       h_lagrange_interpolant(Kokkos::create_mirror_view(lagrange_interpolant)),
@@ -27,8 +27,8 @@ specfem::compute::receivers::receivers(
           "specfem::compute::receivers::receiver_domain_index_mapping", nspec),
       h_receiver_domain_index_mapping(
           Kokkos::create_mirror_view(receiver_domain_index_mapping)),
-      impl::element_types(static_cast<impl::element_types>(properties)),
-      impl::StationIterator(receivers.size(), stypes.size()),
+      element_types(element_types), impl::StationIterator(receivers.size(),
+                                                          stypes.size()),
       impl::SeismogramIterator(receivers.size(), stypes.size(), max_sig_step,
                                dt, t0, nsteps_between_samples) {
 
@@ -123,14 +123,12 @@ specfem::compute::receivers::get_elements_on_host(
     const specfem::element::property_tag property_tag) const {
   int nreceivers = h_elements.extent(0);
 
-  int ntags = h_medium_tags.extent(0);
-
   int count = 0;
   for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver) {
     int ispec = h_elements(ireceiver);
 
-    if (h_medium_tags(ispec) == medium_tag &&
-        h_property_tags(ispec) == property_tag) {
+    if (element_types.get_medium_tag(ispec) == medium_tag &&
+        element_types.get_property_tag(ispec) == property_tag) {
       count++;
     }
   }
@@ -142,8 +140,8 @@ specfem::compute::receivers::get_elements_on_host(
   for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver) {
     int ispec = h_elements(ireceiver);
 
-    if (h_medium_tags(ispec) == medium_tag &&
-        h_property_tags(ispec) == property_tag) {
+    if (element_types.get_medium_tag(ispec) == medium_tag &&
+        element_types.get_property_tag(ispec) == property_tag) {
       elements(count) = ispec;
       count++;
     }

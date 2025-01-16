@@ -36,9 +36,10 @@ public:
   void write() override;
 
 private:
-  std::string output_folder;         ///< Path to output folder
-  specfem::compute::mesh mesh;       ///< Mesh object
-  specfem::compute::kernels kernels; ///< Kernels object
+  std::string output_folder;                     ///< Path to output folder
+  specfem::compute::mesh mesh;                   ///< Mesh object
+  specfem::compute::kernels kernels;             ///< Kernels object
+  specfem::compute::element_types element_types; ///< Element types object
 };
 } // namespace writer
 } // namespace specfem
