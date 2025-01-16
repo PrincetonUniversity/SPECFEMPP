@@ -3,7 +3,7 @@
 specfem::compute::properties::properties(
     const int nspec, const int ngllz, const int ngllx,
     const specfem::compute::element_types &element_types,
-    const specfem::mesh::materials &materials) {
+    const specfem::mesh::materials &materials, const bool has_gll_model) {
 
   this->nspec = nspec;
   this->ngllz = ngllz;
@@ -35,19 +35,20 @@ specfem::compute::properties::properties(
   acoustic_isotropic = specfem::medium::material_properties<
       specfem::element::medium_tag::acoustic,
       specfem::element::property_tag::isotropic>(
-      acoustic_elements, ngllz, ngllx, materials, h_property_index_mapping);
+      acoustic_elements, ngllz, ngllx, materials, has_gll_model,
+      h_property_index_mapping);
 
   elastic_isotropic = specfem::medium::material_properties<
       specfem::element::medium_tag::elastic,
-      specfem::element::property_tag::isotropic>(elastic_isotropic_elements,
-                                                 ngllz, ngllx, materials,
-                                                 h_property_index_mapping);
+      specfem::element::property_tag::isotropic>(
+      elastic_isotropic_elements, ngllz, ngllx, materials, has_gll_model,
+      h_property_index_mapping);
 
   elastic_anisotropic = specfem::medium::material_properties<
       specfem::element::medium_tag::elastic,
-      specfem::element::property_tag::anisotropic>(elastic_anisotropic_elements,
-                                                   ngllz, ngllx, materials,
-                                                   h_property_index_mapping);
+      specfem::element::property_tag::anisotropic>(
+      elastic_anisotropic_elements, ngllz, ngllx, materials, has_gll_model,
+      h_property_index_mapping);
 
   Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);
 

@@ -1,6 +1,7 @@
 #ifndef _COMPUTE_ASSEMBLY_HPP
 #define _COMPUTE_ASSEMBLY_HPP
 
+#include "IO/reader.hpp"
 #include "compute/boundaries/boundaries.hpp"
 #include "compute/boundary_values/boundary_values.hpp"
 #include "compute/compute_mesh.hpp"
@@ -68,6 +69,8 @@ struct assembly {
    * @param nstep_between_samples Number of time steps between output seismogram
    * samples
    * @param simulation Type of simulation (forward, adjoint, etc.)
+   * @param property_reader Reader for GLL model (skip material property
+   * assignment if exists)
    */
   assembly(
       const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
@@ -77,8 +80,9 @@ struct assembly {
           &receivers,
       const std::vector<specfem::enums::seismogram::type> &stypes,
       const type_real t0, const type_real dt, const int max_timesteps,
-      const int max_sig_step, const int nstep_between_samples,
-      const specfem::simulation::type simulation);
+      const int max_sig_step, const int nsteps_between_samples,
+      const specfem::simulation::type simulation,
+      const std::shared_ptr<specfem::IO::reader> &property_reader);
 
   /**
    * @brief Maps the component of wavefield on the entire spectral element grid

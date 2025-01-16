@@ -9,6 +9,23 @@
 namespace specfem {
 namespace kernels {
 
+namespace impl {
+/**
+ * @brief Compute the frechet derivatives for a particular material system.
+ * This function is not defined as a private method of frechet_kernels due to
+ * CUDA compatibility.
+ *
+ * @tparam MediumTag Medium tag.
+ * @tparam PropertyTag Property tag.
+ * @param dt Time interval.
+ */
+template <specfem::dimension::type DimensionType, int NGLL,
+          specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag>
+void compute_material_derivatives(const specfem::compute::assembly &assembly,
+                                  const type_real &dt);
+} // namespace impl
+
 /**
  * @brief Compute kernels used to compute Frechet derivatives.
  *
@@ -19,8 +36,7 @@ template <specfem::dimension::type DimensionType, int NGLL>
 class frechet_kernels {
 public:
   constexpr static auto dimension =
-      DimensionType;                 ///< Dimension of the problem.
-  constexpr static auto ngll = NGLL; ///< Number of GLL points.
+      DimensionType; ///< Dimension of the problem.
 
   /**
    * @brief Constructor.
@@ -39,8 +55,9 @@ public:
 #define CALL_COMPUTE_MATERIAL_DERIVATIVES(DIMENSION_TAG, MEDIUM_TAG,           \
                                           PROPERTY_TAG)                        \
   if constexpr (dimension == GET_TAG(DIMENSION_TAG)) {                         \
-    compute_material_derivatives<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)>(  \
-        dt);                                                                   \
+    impl::compute_material_derivatives<                                        \
+        DimensionType, NGLL, GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)>(      \
+        this->assembly, dt);                                                   \
   }
 
     CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
@@ -53,17 +70,6 @@ public:
 
 private:
   specfem::compute::assembly assembly; ///< Assembly object.
-
-  /**
-   * @brief Compute the frechet derivatives for a particular material system.
-   *
-   * @tparam MediumTag Medium tag.
-   * @tparam PropertyTag Property tag.
-   * @param dt Time interval.
-   */
-  template <specfem::element::medium_tag MediumTag,
-            specfem::element::property_tag PropertyTag>
-  void compute_material_derivatives(const type_real &dt);
 };
 } // namespace kernels
 } // namespace specfem

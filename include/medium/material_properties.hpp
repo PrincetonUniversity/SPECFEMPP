@@ -22,7 +22,7 @@ struct material_properties
   material_properties(
       const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
       const int ngllz, const int ngllx,
-      const specfem::mesh::materials &materials,
+      const specfem::mesh::materials &materials, const bool has_gll_model,
       const specfem::kokkos::HostView1d<int> property_index_mapping)
       : specfem::medium::properties_container<type, property>(
             elements.extent(0), ngllz, ngllx) {
@@ -32,22 +32,27 @@ struct material_properties
     for (int i = 0; i < nelement; ++i) {
       const int ispec = elements(i);
       property_index_mapping(ispec) = count;
-      for (int iz = 0; iz < ngllz; ++iz) {
-        for (int ix = 0; ix < ngllx; ++ix) {
-          // Get the material at index from mesh::materials
-          auto material = std::get<specfem::medium::material<type, property> >(
-              materials[ispec]);
+      if (!has_gll_model) {
+        for (int iz = 0; iz < ngllz; ++iz) {
+          for (int ix = 0; ix < ngllx; ++ix) {
+            // Get the material at index from mesh::materials
+            auto material =
+                std::get<specfem::medium::material<type, property> >(
+                    materials[ispec]);
 
-          // Assign the material property to the property container
-          auto point_property = material.get_properties();
-          this->assign(specfem::point::index<dimension>(count, iz, ix),
-                       point_property);
+            // Assign the material property to the property container
+            auto point_property = material.get_properties();
+            this->assign(specfem::point::index<dimension>(count, iz, ix),
+                         point_property);
+          }
         }
       }
       count++;
     }
 
-    this->copy_to_device();
+    if (!has_gll_model) {
+      this->copy_to_device();
+    }
 
     return;
   }
