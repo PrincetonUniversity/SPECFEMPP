@@ -1296,5 +1296,6 @@ docs = ["breathe", "doc8", "furo", "restructuredtext-lint", "rstcheck", "sphinx-
 
 [metadata]
 lock-version = "2.1"
+lock-version = "2.1"
 python-versions = ">=3.12,<4.0"
-content-hash = "eab453f18f64e89468baec39c83607c1004b9ab2efe3babbe74842442ad65909"
+content-hash = "36556fc0be8bee497a9a9a726c37e59b50d68c5bae927cfde82b064f7ece9d77"
