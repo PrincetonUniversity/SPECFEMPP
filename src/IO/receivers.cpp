@@ -50,6 +50,15 @@ specfem::IO::read_receivers(const std::string stations_file,
 std::vector<std::shared_ptr<specfem::receivers::receiver> >
 specfem::IO::read_receivers(const YAML::Node &stations, const type_real angle) {
 
+  // If stations file is a string then read the stations file from text format
+  try {
+    std::string stations_file = stations["stations-file"].as<std::string>();
+    return read_receivers(stations_file, angle);
+  } catch (const YAML::Exception &e) {
+    // If stations file is not a string then read the stations from the YAML
+    // node
+  }
+
   std::vector<std::shared_ptr<specfem::receivers::receiver> > receivers;
 
   // Throw error if length of stations is zero or if it is not a sequence
@@ -58,7 +67,9 @@ specfem::IO::read_receivers(const YAML::Node &stations, const type_real angle) {
       throw std::runtime_error("No receiver stations found in the YAML file");
     }
   } else {
-    throw std::runtime_error("Receiver YAML node is not a sequence");
+    throw std::runtime_error(
+        "Expected stations-file to be a YAML node sequence,\n but it is "
+        "neither a sequence nor text file");
   }
 
   try {
