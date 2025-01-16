@@ -165,7 +165,8 @@ void execute(const YAML::Node &parameter_dict, const YAML::Node &default_dict,
   specfem::compute::assembly assembly(
       mesh, quadrature, sources, receivers, setup.get_seismogram_types(),
       setup.get_t0(), dt, nsteps, max_seismogram_time_step,
-      setup.get_simulation_type(), setup.instantiate_property_reader());
+      nstep_between_samples, setup.get_simulation_type(),
+      setup.instantiate_property_reader());
   time_scheme->link_assembly(assembly);
 
   // --------------------------------------------------------------
