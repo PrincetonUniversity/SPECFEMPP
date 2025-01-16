@@ -6,9 +6,17 @@
 
 specfem::runtime_configuration::receivers::receivers(const YAML::Node &Node) {
   try {
-    *this = specfem::runtime_configuration::receivers(
-        Node["stations-file"].as<std::string>(), Node["angle"].as<type_real>(),
-        Node["nstep_between_samples"].as<int>());
+    if (const YAML::Node &n_stations = Node["stations-file"]) {
+      *this = specfem::runtime_configuration::receivers(
+          n_stations.as<std::string>(), Node["angle"].as<type_real>(),
+          Node["nstep_between_samples"].as<int>());
+    } else if (const YAML::Node &n_stations = Node["stations-dict"]) {
+      *this = specfem::runtime_configuration::receivers(
+          n_stations, Node["angle"].as<type_real>(),
+          Node["nstep_between_samples"].as<int>());
+    } else {
+      throw std::runtime_error("Error reading specfem receiver configuration.");
+    }
   } catch (YAML::ParserException &e) {
     std::ostringstream message;
 
