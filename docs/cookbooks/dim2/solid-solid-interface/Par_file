@@ -11,7 +11,7 @@ title                           = Flat solid/solid interface
 NPROC                           = 1              # number of processes
 
 # Output folder to store mesh related files
-OUTPUT_FILES                   = @CMAKE_SOURCE_DIR@/examples/solid-solid-interface/OUTPUT_FILES
+OUTPUT_FILES                   = OUTPUT_FILES
 
 #-----------------------------------------------------------
 #
@@ -26,7 +26,7 @@ PARTITIONING_TYPE               = 3              # SCOTCH = 3, ascending order (
 NGNOD                           = 9
 
 # location to store the mesh
-database_filename               = @CMAKE_SOURCE_DIR@/examples/solid-solid-interface/OUTPUT_FILES/database.bin
+database_filename               = OUTPUT_FILES/database.bin
 
 #-----------------------------------------------------------
 #
@@ -41,8 +41,8 @@ use_existing_STATIONS           = .false.
 nreceiversets                   = 1
 
 # orientation
-anglerec                        = 0.d0           # angle to rotate components at receivers
-rec_normal_to_surface           = .false.        # base anglerec normal to surface (external mesh and curve file needed)
+anglerec                        = 0.d0         # angle to rotate components at receivers
+rec_normal_to_surface           = .false.      # base anglerec normal to surface (external mesh and curve file needed)
 
 # first receiver set (repeat these 6 lines and adjust nreceiversets accordingly)
 nrec                            = 1             # number of receivers
@@ -53,7 +53,7 @@ zfin                            = 3480000.d0    # last receiver z in meters (ign
 record_at_surface_same_vertical = .false.       # receivers inside the medium or at the surface
 
 # filename to store stations file
-stations_filename              = @CMAKE_SOURCE_DIR@/examples/solid-solid-interface/OUTPUT_FILES/STATIONS
+stations_filename              = OUTPUT_FILES/STATIONS
 
 #-----------------------------------------------------------
 #
@@ -108,7 +108,7 @@ tangential_detection_curve_file = ./DATA/courbe_eros_nodes  # file containing th
 #-----------------------------------------------------------
 
 # file containing interfaces for internal mesh
-interfacesfile                  = @CMAKE_SOURCE_DIR@/examples/solid-solid-interface/topography_file.dat
+interfacesfile                  = topography_file.dat
 
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0          # abscissa of left side of the model
