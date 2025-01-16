@@ -118,9 +118,7 @@ public:
    *
    * @return std::string path to stations file
    */
-  std::string get_stations_file() const {
-    return this->receivers->get_stations_file();
-  }
+  YAML::Node get_stations() const { return this->receivers->get_stations(); }
 
   /**
    * @brief Get the angle of receivers
