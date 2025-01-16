@@ -241,10 +241,26 @@ void check_eq(const typename specfem::datatype::simd<type_real, using_simd>::dat
   const typename specfem::datatype::simd<type_real, using_simd>::datatype &p2, const int &n_simd_elements) {
   if constexpr (using_simd) {
     for (int i = 0; i < n_simd_elements; i++) {
-      EXPECT_FLOAT_EQ(p1[i], p2[i]);
+      if (p1[i] != p2[i]) {
+        std::ostringstream message;
+
+        message << "\n \t Error in function load_on_host";
+        message << "\n\t Expected: " << p1[i];
+        message << "\n\t Got: " << p2[i];
+
+        throw std::runtime_error(message.str());
+      }
     }
   } else {
-    EXPECT_FLOAT_EQ(p1, p2);
+    if (p1 != p2) {
+      std::ostringstream message;
+
+      message << "\n \t Error in function load_on_host";
+      message << "\n\t Expected: " << p1;
+      message << "\n\t Got: " << p2;
+
+      throw std::runtime_error(message.str());
+    }
   }
 }
 
@@ -261,9 +277,9 @@ void check_point_properties(const specfem::point::properties<specfem::dimension:
   check_eq<using_simd>(p1.rho, p2.rho, n_simd_elements);
   check_eq<using_simd>(p1.mu, p2.mu, n_simd_elements);
   check_eq<using_simd>(p1.lambdaplus2mu, p2.lambdaplus2mu, n_simd_elements);
-  // if constexpr (using_simd) {
-  //   check_eq<using_simd>(p1.lambda, p2.lambdaplus2mu - (static_cast<typename specfem::datatype::simd<type_real, true>::datatype>(2.0)) * p2.mu, n_simd_elements);
-  // }
+  check_eq<using_simd>(p1.lambda, p2.lambdaplus2mu - (static_cast<typename specfem::datatype::simd<type_real, using_simd>::datatype>(2.0)) * p2.mu, n_simd_elements);
+  check_eq<using_simd>(p1.rho_vp, Kokkos::sqrt(p2.rho * p2.lambdaplus2mu), n_simd_elements);
+  check_eq<using_simd>(p1.rho_vs, Kokkos::sqrt(p2.rho * p2.mu), n_simd_elements);
 }
 
 template<bool using_simd>
@@ -277,6 +293,8 @@ void check_point_properties(const specfem::point::properties<specfem::dimension:
   check_eq<using_simd>(p1.c33, p2.c33, n_simd_elements);
   check_eq<using_simd>(p1.c35, p2.c35, n_simd_elements);
   check_eq<using_simd>(p1.c55, p2.c55, n_simd_elements);
+  check_eq<using_simd>(p1.rho_vp, Kokkos::sqrt(p2.rho * p2.c33), n_simd_elements);
+  check_eq<using_simd>(p1.rho_vs, Kokkos::sqrt(p2.rho * p2.c55), n_simd_elements);
 }
 
 
@@ -286,6 +304,8 @@ void check_point_properties(const specfem::point::properties<specfem::dimension:
                                  specfem::element::property_tag::isotropic, using_simd> &p2, const int &n_simd_elements) {
   check_eq<using_simd>(p1.rho_inverse, p2.rho_inverse, n_simd_elements);
   check_eq<using_simd>(p1.kappa, p2.kappa, n_simd_elements);
+  check_eq<using_simd>(p1.kappa_inverse, (static_cast<typename specfem::datatype::simd<type_real, using_simd>::datatype>(1.0)) / p2.kappa, n_simd_elements);
+  check_eq<using_simd>(p1.rho_vpinverse, Kokkos::sqrt(p2.rho_inverse * p2.kappa_inverse), n_simd_elements);
 }
 
 
@@ -412,7 +432,7 @@ void check_compute_to_mesh(
 
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd>
-void check_store_on_host(specfem::compute::properties &properties) {
+void check_store_load_on_host(specfem::compute::properties &properties) {
 
   const int nspec = properties.nspec;
   const int ngllx = properties.ngllx;
@@ -620,11 +640,11 @@ void test_properties(
 
   // stage 3: modify properties and check store_on_host and load_on_device
 #define TEST_STORE_AND_LOAD(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)           \
-  check_store_on_host<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), false>(      \
+  check_store_load_on_host<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), false>(      \
       properties);                                                             \
   check_load_on_device<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), false>(     \
       properties);                                                             \
-  check_store_on_host<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), true>(       \
+  check_store_load_on_host<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), true>(       \
       properties);                                                             \
   check_load_on_device<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), true>(      \
       properties);
