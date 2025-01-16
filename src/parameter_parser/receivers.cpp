@@ -1,8 +1,80 @@
 #include "parameter_parser/receivers.hpp"
 #include "constants.hpp"
 #include "yaml-cpp/yaml.h"
+
+// External Includes
+#include <boost/tokenizer.hpp>
+#include <fstream>
+#include <iostream>
 #include <ostream>
 #include <string>
+#include <vector>
+
+specfem::runtime_configuration::receivers::receivers(
+    const std::string stations_file, const type_real angle,
+    const int nstep_between_samples) {
+
+  // Define basic parameters
+  this->angle = angle;
+  this->nstep_between_samples = nstep_between_samples;
+
+  // Open file stream
+  std::fstream stations;
+
+  // Define separator
+  boost::char_separator<char> sep(" ");
+
+  // Create empty sequence Node
+  this->stations_node = YAML::Load("[]");
+
+  // Open stations file
+  stations.open(stations_file, std::ios::in);
+
+  if (stations.is_open()) {
+
+    std::string line;
+
+    // Read stations file line by line
+    while (std::getline(stations, line)) {
+
+      // split every line with " " delimiter
+      boost::tokenizer<boost::char_separator<char> > tokens(line, sep);
+
+      // Create a vector to store the current station
+      std::vector<std::string> current_station;
+
+      for (const auto &t : tokens) {
+        current_station.push_back(t);
+      }
+
+      // check if the read line meets the format
+      assert(current_station.size() == 6);
+
+      // get the x and z coordinates of the station;
+      const std::string network_name = current_station[0];
+      const std::string station_name = current_station[1];
+      const std::string x = current_station[2];
+      const std::string z = current_station[3];
+
+      // Current station node
+      YAML::Node current_station_node;
+
+      // Edit node to include the current station
+      current_station_node["network"] = network_name;
+      current_station_node["station"] = station_name;
+      current_station_node["x"] = x;
+      current_station_node["z"] = z;
+
+      // Append current station to the stations node
+      this->stations_node.push_back(current_station_node);
+    }
+  } else {
+    std::ostringstream message;
+    message << "Could not open stations file: " << stations_file << "\n";
+    message << "Receivers empty.";
+    return;
+  }
+}
 
 specfem::runtime_configuration::receivers::receivers(const YAML::Node &Node) {
   try {
