@@ -7,6 +7,7 @@
 #include "source/interface.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
+#include <yaml-cpp/yaml.h>
 
 namespace specfem {
 
@@ -74,6 +75,22 @@ read_receivers(const YAML::Node &stations, const type_real angle);
 std::tuple<std::vector<std::shared_ptr<specfem::sources::source> >, type_real>
 read_sources(const std::string sources_file, const int nsteps,
              const type_real user_t0, const type_real dt,
+             const specfem::simulation::type simulation_type);
+
+/**
+ * @brief Read sources file written in .yml format
+ *
+ * Parse source specification file written in yaml format and create a vector of
+ * specfem::source::source * object
+ *
+ * @param yaml YAML node containing source information
+ * @param mpi Pointer to specfem MPI object
+ * @return std::vector<specfem::sources::source *> vector of instantiated source
+ * objects
+ */
+std::tuple<std::vector<std::shared_ptr<specfem::sources::source> >, type_real>
+read_sources(const YAML::Node yaml, const int nsteps, const type_real user_t0,
+             const type_real dt,
              const specfem::simulation::type simulation_type);
 
 } // namespace IO
