@@ -422,17 +422,17 @@ We can plot the traces stored in the ``OUTPUT_FILES/results`` directory using th
         return stream
 
 
-    stream = get_traces("OUTPUT_FILES/results")å
+    stream = get_traces("OUTPUT_FILES/results")
     stream.plot(size=(800, 1000))
 
-.. figure:: ../../examples/anisotropic-crystal/traces.png
+.. figure:: traces.png
    :alt: Traces
    :width: 800
    :align: center
 
    Traces.
 
-.. figure:: ../../examples/anisotropic-crystal/wavefield1400.png
+.. figure:: wavefield1400.png
    :alt: Wavefield
    :width: 800
    :align: center

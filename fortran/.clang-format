@@ -1,0 +1,5 @@
+# This is only used because .clang-format-ignore is not supported
+# by the current clang-format version and the newer versions are introducing
+# too many formatting updates...
+DisableFormat: true
+SortIncludes: Never  # with clang-format version < 13 use `false` here.

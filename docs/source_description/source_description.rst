@@ -16,7 +16,7 @@ Force Source Description
 **Description** : Definition of force source
 
 **Parameter Name** : ``sources.force.x``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : None
 
@@ -25,7 +25,7 @@ Force Source Description
 **Description** : X coordinate location of the force source.
 
 **Parameter Name** : ``sources.force.z``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : None
 
@@ -34,7 +34,7 @@ Force Source Description
 **Description** : Z coordinate location of the force source.
 
 **Parameter Name** : ``sources.force.angle`` [optional]
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : 0.0
 
@@ -43,7 +43,7 @@ Force Source Description
 **Description** : Angle of the force source.
 
 **Parameter Name** : ``sources.force.Dirac`` [optional]
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : None
 
@@ -52,7 +52,7 @@ Force Source Description
 **Description** : Definition of Dirac source :ref:`dirac_source_description`
 
 **Parameter Name** : ``sources.force.Ricker`` [optional]
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : None
 
@@ -60,8 +60,18 @@ Force Source Description
 
 **Description** : Definition of Ricker source :ref:`ricker_source_description`
 
+**Parameter Name** : ``sources.force.dGaussian`` [optional]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**dafault value** : None
+
+**possible values** : [YAML Node]
+
+**Description** : Definition of first derivative of a Gaussian time function :ref:`dgaussian_source_description`
+
+
 **Parameter Name** : ``sources.force.External`` [optional]
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : None
 
@@ -94,7 +104,7 @@ Moment Tensor Source Description
 **Description** : Definition of moment tensor source
 
 **Parameter Name** : ``sources.moment-tensor.x``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : None
 
@@ -103,7 +113,7 @@ Moment Tensor Source Description
 **Description** : X coordinate location of the moment tensor source.
 
 **Parameter Name** : ``sources.moment-tensor.z``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : None
 
@@ -112,7 +122,7 @@ Moment Tensor Source Description
 **Description** : Z coordinate location of the moment tensor source.
 
 **Parameter Name** : ``sources.moment-tensor.Mxx``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : None
 
@@ -121,7 +131,7 @@ Moment Tensor Source Description
 **Description** : Mxx moment tensor component.
 
 **Parameter Name** : ``sources.moment-tensor.Mzz``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : None
 
@@ -130,7 +140,7 @@ Moment Tensor Source Description
 **Description** : Mzz moment tensor component.
 
 **Parameter Name** : ``sources.moment-tensor.Mxz``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : None
 
@@ -139,7 +149,7 @@ Moment Tensor Source Description
 **Description** : Mxz moment tensor component.
 
 **Parameter Name** : ``sources.moment-tensor.Dirac`` [optional]
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : None
 
@@ -148,7 +158,7 @@ Moment Tensor Source Description
 **Description** : Definition of Dirac source :ref:`dirac_source_description`
 
 **Parameter Name** : ``sources.moment-tensor.Ricker`` [optional]
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : None
 
@@ -156,8 +166,17 @@ Moment Tensor Source Description
 
 **Description** : Definition of Ricker source :ref:`ricker_source_description`
 
+**Parameter Name** : ``sources.moment-tensor.dGaussian`` [optional]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**dafault value** : None
+
+**possible values** : [YAML Node]
+
+**Description** : Definition of first derivative Gaussian time function :ref:`dgaussian_source_description`
+
 **Parameter Name** : ``sources.moment-tensor.External`` [optional]
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : None
 
@@ -193,7 +212,7 @@ Adjoint Source Description
 **Description** : Definition of adjoint source
 
 **Parameter Name** : ``sources.adjoint-source.station_name``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : None
 
@@ -202,7 +221,7 @@ Adjoint Source Description
 **Description** : Name of the station.
 
 **Parameter Name** : ``sources.adjoint-source.network_name``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : None
 
@@ -211,7 +230,7 @@ Adjoint Source Description
 **Description** : Name of the network.
 
 **Parameter Name** : ``sources.adjoint-source.x``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : None
 
@@ -220,7 +239,7 @@ Adjoint Source Description
 **Description** : X coordinate location of the adjoint source.
 
 **Parameter Name** : ``sources.adjoint-source.z``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : None
 
@@ -229,7 +248,7 @@ Adjoint Source Description
 **Description** : Z coordinate location of the adjoint source.
 
 **Parameter Name** : ``sources.adjoint-source.angle`` [optional]
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : 0.0
 
@@ -238,7 +257,7 @@ Adjoint Source Description
 **Description** : Angle of the adjoint source.
 
 **Parameter Name** : ``sources.adjoint-source.Dirac`` [optional]
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : None
 
@@ -247,7 +266,7 @@ Adjoint Source Description
 **Description** : Definition of Dirac source :ref:`dirac_source_description`
 
 **Parameter Name** : ``sources.adjoint-source.Ricker`` [optional]
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : None
 
@@ -256,7 +275,7 @@ Adjoint Source Description
 **Description** : Definition of Ricker source :ref:`ricker_source_description`
 
 **Parameter Name** : ``sources.adjoint-source.External`` [optional]
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : None
 
