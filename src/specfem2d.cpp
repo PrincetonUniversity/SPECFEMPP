@@ -118,9 +118,9 @@ void execute(const YAML::Node &parameter_dict, const YAML::Node &default_dict,
                                 setup.get_dt(), simulation_type);
   setup.update_t0(t0); // Update t0 in case it was changed
 
-  const auto stations_filename = setup.get_stations_file();
+  const auto stations_node = setup.get_stations();
   const auto angle = setup.get_receiver_angle();
-  auto receivers = specfem::IO::read_receivers(stations_filename, angle);
+  auto receivers = specfem::IO::read_receivers(stations_node, angle);
 
   mpi->cout("Source Information:");
   mpi->cout("-------------------------------");

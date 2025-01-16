@@ -96,8 +96,8 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
   std::vector<std::shared_ptr<specfem::sources::source> > sources(0);
 
   const auto angle = setup.get_receiver_angle();
-  const auto stations_filename = setup.get_stations_file();
-  auto receivers = specfem::IO::read_receivers(stations_filename, angle);
+  const auto stations_node = setup.get_stations();
+  auto receivers = specfem::IO::read_receivers(stations_node, angle);
   const auto stypes = setup.get_seismogram_types();
 
   specfem::compute::assembly assembly(mesh, quadratures, sources, receivers,
