@@ -46,3 +46,46 @@ specfem::IO::read_receivers(const std::string stations_file,
 
   return receivers;
 }
+
+std::vector<std::shared_ptr<specfem::receivers::receiver> >
+specfem::IO::read_receivers(const YAML::Node &stations, const type_real angle) {
+
+  // If stations file is a string then read the stations file from text format
+  try {
+    std::string stations_file = stations["stations-file"].as<std::string>();
+    return read_receivers(stations_file, angle);
+  } catch (const YAML::Exception &e) {
+    // If stations file is not a string then read the stations from the YAML
+    // node
+  }
+
+  std::vector<std::shared_ptr<specfem::receivers::receiver> > receivers;
+
+  // Throw error if length of stations is zero or if it is not a sequence
+  if (stations["stations-file"].IsSequence()) {
+    if (stations["stations-file"].size() == 0) {
+      throw std::runtime_error("No receiver stations found in the YAML file");
+    }
+  } else {
+    throw std::runtime_error(
+        "Expected stations-file to be a YAML node sequence,\n but it is "
+        "neither a sequence nor text file");
+  }
+
+  try {
+    for (const auto &station : stations["stations-file"]) {
+      const std::string network_name = station["network"].as<std::string>();
+      const std::string station_name = station["station"].as<std::string>();
+      const type_real x = station["x"].as<type_real>();
+      const type_real z = station["z"].as<type_real>();
+
+      receivers.push_back(std::make_shared<specfem::receivers::receiver>(
+          network_name, station_name, x, z, angle));
+    }
+  } catch (const YAML::Exception &e) {
+    std::cerr << e.what() << std::endl;
+    throw std::runtime_error("Error reading receiver stations");
+  }
+
+  return receivers;
+}

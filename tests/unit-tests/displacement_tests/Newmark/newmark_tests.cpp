@@ -196,9 +196,9 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     // Instantiate the solver and timescheme
     auto it = setup.instantiate_timescheme();
 
-    const auto stations_filename = setup.get_stations_file();
+    const auto stations_node = setup.get_stations();
     const auto angle = setup.get_receiver_angle();
-    auto receivers = specfem::IO::read_receivers(stations_filename, angle);
+    auto receivers = specfem::IO::read_receivers(stations_node, angle);
 
     std::cout << "  Receiver information\n";
     std::cout << "------------------------------" << std::endl;
