@@ -36,12 +36,12 @@ parameters:
             format: ascii
             directory: "./OUTPUT_FILES/results"
 
-        display:
-          format: PNG
-          directory: ./OUTPUT_FILES/results
-          field: displacement
-          simulation-field: forward
-          time-interval: 100
+          display:
+            format: PNG
+            directory: ./OUTPUT_FILES/results
+            field: displacement
+            simulation-field: forward
+            time-interval: 100
 
   receivers:
     stations-file: "./OUTPUT_FILES/STATIONS"
