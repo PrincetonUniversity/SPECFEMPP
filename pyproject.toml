@@ -36,7 +36,7 @@ docs = [
 cmake.define.CMAKE_BUILD_TYPE = "Release"
 cmake.define.BUILD_TESTS = "ON"
 cmake.define.SPECFEMPP_USE_SKBUILD = "ON"
-cmake.define.SPECFEMPP_ENABLE_PYTHON = "ON"
+cmake.define.SPECFEMPP_BINDING_PYTHON = "ON"
 build-dir = "./build"
 
 [tool.poetry]

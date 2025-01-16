@@ -2,13 +2,13 @@
 #include "../../MPI_environment.hpp"
 #include "../../utilities/include/interface.hpp"
 #include "IO/interface.hpp"
+#include "IO/seismogram/reader.hpp"
 #include "compute/interface.hpp"
 #include "constants.hpp"
 #include "domain/domain.hpp"
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"
 #include "quadrature/interface.hpp"
-#include "IO/seismogram/reader.hpp"
 #include "solver/solver.hpp"
 #include "timescheme/timescheme.hpp"
 #include "yaml-cpp/yaml.h"
@@ -170,6 +170,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
                                                 __default_file__);
 
     const auto [database_file, sources_file] = setup.get_databases();
+    const auto source_node = setup.get_sources();
 
     // Set up GLL quadrature points
     const auto quadratures = setup.instantiate_quadrature();
@@ -183,7 +184,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     //    if start time is not explicitly specified then t0 is determined using
     //    source frequencies and time shift
     auto [sources, t0] = specfem::IO::read_sources(
-        sources_file, nsteps, setup.get_t0(), dt, setup.get_simulation_type());
+        source_node, nsteps, setup.get_t0(), dt, setup.get_simulation_type());
 
     for (auto &source : sources) {
       if (mpi->main_proc())

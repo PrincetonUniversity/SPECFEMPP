@@ -113,8 +113,9 @@ void execute(const YAML::Node &parameter_dict, const YAML::Node &default_dict,
   // --------------------------------------------------------------
   const int nsteps = setup.get_nsteps();
   const specfem::simulation::type simulation_type = setup.get_simulation_type();
-  auto [sources, t0] = specfem::IO::read_sources(
-      source_filename, nsteps, setup.get_t0(), setup.get_dt(), simulation_type);
+  auto [sources, t0] =
+      specfem::IO::read_sources(setup.get_sources(), nsteps, setup.get_t0(),
+                                setup.get_dt(), simulation_type);
   setup.update_t0(t0); // Update t0 in case it was changed
 
   const auto stations_filename = setup.get_stations_file();
