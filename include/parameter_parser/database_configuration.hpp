@@ -25,6 +25,14 @@ public:
                          std::string source_database)
       : fortran_database(fortran_database), source_database(source_database){};
   /**
+   * @brief Construct a new database configuration object
+   *
+   * @param fortran_database location of fortran database
+   * @param source_node location of source file
+   */
+  database_configuration(std::string fortran_database, YAML::Node source_node)
+      : fortran_database(fortran_database), source_database(""){};
+  /**
    * @brief Construct a new run setup object
    *
    * @param Node YAML node describing the run configuration

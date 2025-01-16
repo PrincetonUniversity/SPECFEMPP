@@ -1,13 +1,14 @@
 #ifndef _PARAMETER_SETUP_HPP
 #define _PARAMETER_SETUP_HPP
 
+#include "IO/reader.hpp"
 #include "database_configuration.hpp"
 #include "header.hpp"
 #include "parameter_parser/solver/interface.hpp"
 #include "quadrature.hpp"
-#include "IO/reader.hpp"
 #include "receivers.hpp"
 #include "run_setup.hpp"
+#include "sources.hpp"
 #include "specfem_setup.hpp"
 #include "time_scheme/interface.hpp"
 #include "writer/kernel.hpp"
@@ -106,6 +107,13 @@ public:
   }
 
   /**
+   * @brief Get the sources YAML object
+   *
+   * @return YAML::Node YAML node describing the sources
+   */
+  YAML::Node get_sources() const { return this->sources->get_sources(); }
+
+  /**
    * @brief Get the path to stations file
    *
    * @return std::string path to stations file
@@ -140,8 +148,7 @@ public:
    * @return specfem::IO::writer* Pointer to an instantiated writer
    object
    */
-  std::shared_ptr<specfem::IO::writer>
-  instantiate_seismogram_writer() const {
+  std::shared_ptr<specfem::IO::writer> instantiate_seismogram_writer() const {
     if (this->seismogram) {
       return this->seismogram->instantiate_seismogram_writer(
           this->time_scheme->get_dt(), this->time_scheme->get_t0(),
@@ -151,8 +158,7 @@ public:
     }
   }
 
-  std::shared_ptr<specfem::IO::writer>
-  instantiate_wavefield_writer() const {
+  std::shared_ptr<specfem::IO::writer> instantiate_wavefield_writer() const {
     if (this->wavefield) {
       return this->wavefield->instantiate_wavefield_writer();
     } else {
@@ -160,8 +166,7 @@ public:
     }
   }
 
-  std::shared_ptr<specfem::IO::reader>
-  instantiate_wavefield_reader() const {
+  std::shared_ptr<specfem::IO::reader> instantiate_wavefield_reader() const {
     if (this->wavefield) {
       return this->wavefield->instantiate_wavefield_reader();
     } else {
@@ -234,6 +239,11 @@ private:
                   ///< quadrature object
   std::unique_ptr<specfem::runtime_configuration::receivers>
       receivers; ///< Pointer to receivers object
+  std::unique_ptr<specfem::runtime_configuration::sources>
+      sources; ///< Pointer
+               ///< to
+               ///< receivers
+               ///< object
   std::unique_ptr<specfem::runtime_configuration::seismogram>
       seismogram; ///< Pointer to
                   ///< seismogram object
