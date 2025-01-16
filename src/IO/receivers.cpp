@@ -62,8 +62,8 @@ specfem::IO::read_receivers(const YAML::Node &stations, const type_real angle) {
   std::vector<std::shared_ptr<specfem::receivers::receiver> > receivers;
 
   // Throw error if length of stations is zero or if it is not a sequence
-  if (stations.IsSequence()) {
-    if (stations.size() == 0) {
+  if (stations["stations-file"].IsSequence()) {
+    if (stations["stations-file"].size() == 0) {
       throw std::runtime_error("No receiver stations found in the YAML file");
     }
   } else {
@@ -73,7 +73,7 @@ specfem::IO::read_receivers(const YAML::Node &stations, const type_real angle) {
   }
 
   try {
-    for (const auto &station : stations) {
+    for (const auto &station : stations["stations-file"]) {
       const std::string network_name = station["network"].as<std::string>();
       const std::string station_name = station["station"].as<std::string>();
       const type_real x = station["x"].as<type_real>();
