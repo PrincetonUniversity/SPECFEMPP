@@ -30,5 +30,5 @@ Parameter Description
 .. toctree::
    :maxdepth: 1
 
-   source_discription
+   source_description
    source_time_function_description
