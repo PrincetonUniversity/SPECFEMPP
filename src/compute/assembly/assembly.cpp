@@ -11,7 +11,8 @@ specfem::compute::assembly::assembly(
         &receivers,
     const std::vector<specfem::enums::seismogram::type> &stypes,
     const type_real t0, const type_real dt, const int max_timesteps,
-    const int max_sig_step, const specfem::simulation::type simulation,
+    const int max_sig_step, const int nsteps_between_samples,
+    const specfem::simulation::type simulation,
     const std::shared_ptr<specfem::IO::reader> &property_reader) {
   this->mesh = { mesh.tags, mesh.control_nodes, quadratures };
   this->partial_derivatives = { this->mesh };
