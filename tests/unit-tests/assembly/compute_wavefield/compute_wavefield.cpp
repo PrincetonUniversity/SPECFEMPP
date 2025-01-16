@@ -18,10 +18,10 @@ void test_element_wavefield(
         &wavefield,
     specfem::compute::assembly &assembly) {
 
-  const auto properties = assembly.properties;
+  const auto element_types = assembly.element_types;
 
-  const auto medium = properties.h_medium_tags(ispec);
-  const auto property = properties.h_property_tags(ispec);
+  const auto medium = element_types.get_medium_tag(ispec);
+  const auto property = element_types.get_property_tag(ispec);
 
   if ((medium == specfem::element::medium_tag::elastic) &&
       (property == specfem::element::property_tag::isotropic)) {

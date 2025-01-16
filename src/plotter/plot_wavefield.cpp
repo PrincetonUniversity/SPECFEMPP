@@ -64,7 +64,7 @@ double sigmoid(double x) { return (1 / (1 + std::exp(-100 * x)) - 0.5) * 1.5; }
 vtkSmartPointer<vtkDataSetMapper>
 map_materials_with_color(const specfem::compute::assembly &assembly) {
 
-  const auto &properties = assembly.properties;
+  const auto &element_types = assembly.element_types;
 
   const std::unordered_map<specfem::element::medium_tag, std::array<int, 3> >
       material_colors = {
@@ -104,7 +104,7 @@ map_materials_with_color(const specfem::compute::assembly &assembly) {
     }
     cells->InsertNextCell(quad);
 
-    const auto material = properties.h_medium_tags(icell);
+    const auto material = element_types.get_medium_tag(icell);
     const auto color = material_colors.at(material);
     unsigned char color_uc[3] = { static_cast<unsigned char>(color[0]),
                                   static_cast<unsigned char>(color[1]),

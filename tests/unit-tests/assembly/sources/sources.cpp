@@ -176,7 +176,7 @@ void check_assembly_source_construction(
 
     const auto lcoord = specfem::algorithms::locate_point(coord, assembly.mesh);
 
-    if (assembly.properties.h_medium_tags(lcoord.ispec) != MediumTag) {
+    if (assembly.element_types.get_medium_tag(lcoord.ispec) != MediumTag) {
       continue;
     }
 
@@ -184,7 +184,7 @@ void check_assembly_source_construction(
         "source_array", components, assembly.mesh.ngllz, assembly.mesh.ngllx);
 
     source->compute_source_array(assembly.mesh, assembly.partial_derivatives,
-                                 assembly.properties, source_array);
+                                 assembly.element_types, source_array);
     Kokkos::View<type_real **, Kokkos::DefaultExecutionSpace> stf("stf", 1,
                                                                   components);
 

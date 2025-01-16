@@ -32,46 +32,9 @@ void allocate_elements(
   constexpr auto boundary_tag = ElementType::boundary_tag;
 
   using dimension = specfem::dimension::dimension<ElementType::dimension>;
-  using medium_type =
-      specfem::element::attributes<ElementType::dimension, medium_tag>;
 
-  const int nspec = assembly.mesh.nspec;
-
-  // count number of elements in this domain
-  int nelements = 0;
-  for (int ispec = 0; ispec < nspec; ispec++) {
-    if (element_tags(ispec).medium_tag == medium_tag &&
-        element_tags(ispec).property_tag == property_tag &&
-        element_tags(ispec).boundary_tag == boundary_tag) {
-
-      // make sure acoustic free surface elements are acoustic
-      if (element_tags(ispec).boundary_tag ==
-          specfem::element::boundary_tag::acoustic_free_surface) {
-        if (element_tags(ispec).medium_tag !=
-            specfem::element::medium_tag::acoustic) {
-          throw std::runtime_error("Error: acoustic free surface boundary "
-                                   "condition found non acoustic element");
-        }
-      }
-      nelements++;
-    }
-  }
-
-  specfem::kokkos::DeviceView1d<int> ispec_domain(
-      "specfem::domain::domain::h_ispec_domain", nelements);
-  specfem::kokkos::HostMirror1d<int> h_ispec_domain =
-      Kokkos::create_mirror_view(ispec_domain);
-
-  // Get ispec for each element in this domain
-  int index = 0;
-  for (int ispec = 0; ispec < nspec; ispec++) {
-    if (element_tags(ispec).medium_tag == medium_tag &&
-        element_tags(ispec).property_tag == property_tag &&
-        element_tags(ispec).boundary_tag == boundary_tag) {
-      h_ispec_domain(index) = ispec;
-      index++;
-    }
-  }
+  const auto element_indices = assembly.element_types.get_elements_on_host(
+      medium_tag, property_tag, boundary_tag);
 
   if constexpr (wavefield_type ==
                     specfem::wavefield::simulation_field::forward ||
@@ -85,16 +48,12 @@ void allocate_elements(
               << specfem::element::to_string(medium_tag, property_tag,
                                              boundary_tag)
               << "\n"
-              // << "    - Boundary Conditions : "
-              // <<
-              // specfem::domain::impl::boundary_conditions::print_boundary_tag<
-              //        boundary_tag>()
-              << "\n"
-              << "    - Number of elements  : " << nelements << "\n\n";
+              << "    - Number of elements  : " << element_indices.extent(0)
+              << "\n\n";
   }
 
   // Create isotropic acoustic surface elements
-  elements = { assembly, h_ispec_domain };
+  elements = { assembly, element_indices };
 }
 
 template <specfem::wavefield::simulation_field WavefieldType,
@@ -121,42 +80,6 @@ void allocate_receivers(const specfem::compute::assembly &assembly,
                         specfem::domain::impl::kernels::receiver_kernel<
                             WavefieldType, DimensionType, medium_tag,
                             property_tag, NGLL> &receivers) {
-
-  // const auto medium = medium_tag;
-  // const auto property = property_tag;
-
-  // // Create isotropic sources
-  // const auto ispec_array = assembly.receivers.h_ispec_array;
-
-  // // Count the number of sources within this medium
-  // int nreceivers = 0;
-  // for (int ireceiver = 0; ireceiver < ispec_array.extent(0); ireceiver++) {
-  //   const int ispec = ispec_array(ireceiver);
-  //   if (assembly.properties.h_medium_tags(ispec) == medium &&
-  //       assembly.properties.h_property_tags(ispec) == property) {
-  //     nreceivers++;
-  //   }
-  // }
-
-  // // Save the index for sources in this domain
-  // specfem::kokkos::HostView1d<int> h_receiver_kernel_index_mapping(
-  //     "specfem::domain::domain::receiver_kernel_index_mapping", nreceivers);
-
-  // specfem::kokkos::HostMirror1d<int> h_receiver_mapping(
-  //     "specfem::domain::domain::receiver_mapping", nreceivers);
-
-  // int index = 0;
-  // for (int ireceiver = 0; ireceiver < ispec_array.extent(0); ireceiver++) {
-  //   const int ispec = ispec_array(ireceiver);
-  //   if (assembly.properties.h_medium_tags(ispec) == medium &&
-  //       assembly.properties.h_property_tags(ispec) == property) {
-  //     h_receiver_kernel_index_mapping(index) = ispec_array(ireceiver);
-  //     h_receiver_mapping(index) = ireceiver;
-  //     index++;
-  //   }
-  // }
-
-  // Allocate isotropic sources
   receivers = specfem::domain::impl::kernels::receiver_kernel<
       WavefieldType, DimensionType, medium_tag, property_tag, NGLL>(assembly);
 
@@ -170,7 +93,8 @@ specfem::domain::impl::kernels::kernels<
     WavefieldType, DimensionType, specfem::element::medium_tag::elastic,
     qp_type>::kernels(const type_real dt,
                       const specfem::compute::assembly &assembly,
-                      const qp_type &quadrature_points) : isotropic_receivers(assembly), anisotropic_receivers(assembly) {
+                      const qp_type &quadrature_points)
+    : isotropic_receivers(assembly), anisotropic_receivers(assembly) {
 
   const int nspec = assembly.mesh.nspec;
   specfem::kokkos::HostView1d<element_tag> element_tags(
@@ -179,9 +103,9 @@ specfem::domain::impl::kernels::kernels<
   // -----------------------------------------------------------
   for (int ispec = 0; ispec < nspec; ispec++) {
     element_tags(ispec) =
-        element_tag(assembly.properties.h_medium_tags(ispec),
-                    assembly.properties.h_property_tags(ispec),
-                    assembly.boundaries.boundary_tags(ispec));
+        element_tag(assembly.element_types.get_medium_tag(ispec),
+                    assembly.element_types.get_property_tag(ispec),
+                    assembly.element_types.get_boundary_tag(ispec));
   }
 
   if constexpr (WavefieldType ==
@@ -237,7 +161,8 @@ specfem::domain::impl::kernels::kernels<
     WavefieldType, DimensionType, specfem::element::medium_tag::acoustic,
     qp_type>::kernels(const type_real dt,
                       const specfem::compute::assembly &assembly,
-                      const qp_type &quadrature_points) : isotropic_receivers(assembly) {
+                      const qp_type &quadrature_points)
+    : isotropic_receivers(assembly) {
 
   const int nspec = assembly.mesh.nspec;
   specfem::kokkos::HostView1d<element_tag> element_tags(
@@ -246,9 +171,9 @@ specfem::domain::impl::kernels::kernels<
   // -----------------------------------------------------------
   for (int ispec = 0; ispec < nspec; ispec++) {
     element_tags(ispec) =
-        element_tag(assembly.properties.h_medium_tags(ispec),
-                    assembly.properties.h_property_tags(ispec),
-                    assembly.boundaries.boundary_tags(ispec));
+        element_tag(assembly.element_types.get_medium_tag(ispec),
+                    assembly.element_types.get_property_tag(ispec),
+                    assembly.element_types.get_boundary_tag(ispec));
   }
 
   if constexpr (WavefieldType ==

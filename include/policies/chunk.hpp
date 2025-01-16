@@ -220,7 +220,7 @@ public:
    */
   KOKKOS_INLINE_FUNCTION
   Kokkos::pair<int, int> get_range() const {
-    return Kokkos::make_pair(indices(0), indices(num_elements - 1));
+    return Kokkos::make_pair(indices(0), indices(num_elements - 1) + 1);
   }
 };
 } // namespace iterator

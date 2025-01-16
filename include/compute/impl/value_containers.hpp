@@ -1,20 +1,33 @@
 #pragma once
 
-#include "compute/impl/element_types.hpp"
+#include "enumerations/medium.hpp"
+#include <Kokkos_Core.hpp>
 
 namespace specfem {
 namespace compute {
 
 namespace impl {
 /**
- * @brief Values for every quadrature point in the
- * finite element mesh
+ * @brief Values for every quadrature point in the finite element mesh
  *
  */
 template <
     template <specfem::element::medium_tag, specfem::element::property_tag>
     class containers_type>
 struct value_containers {
+
+  using IndexViewType = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
+
+  int nspec; ///< Total number of spectral elements
+  int ngllz; ///< Number of quadrature points in z dimension
+  int ngllx; ///< Number of quadrature points in x dimension
+
+  IndexViewType property_index_mapping; ///< View to store property index
+                                        ///< mapping
+  IndexViewType::HostMirror h_property_index_mapping; ///< Host mirror of
+                                                      ///< property index
+                                                      ///< mapping
+
   containers_type<specfem::element::medium_tag::elastic,
                   specfem::element::property_tag::isotropic>
       elastic_isotropic; ///< Elastic isotropic material values
@@ -80,15 +93,6 @@ struct value_containers {
     acoustic_isotropic.copy_to_device();
   }
 };
-
-void compute_number_of_elements_per_medium(
-    const int nspec, const specfem::compute::mesh_to_compute_mapping &mapping,
-    const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
-    const specfem::kokkos::HostView1d<specfem::element::medium_tag>
-        &h_medium_tags,
-    const specfem::kokkos::HostView1d<specfem::element::property_tag>
-        &h_property_tags,
-    int &n_elastic_isotropic, int &n_elastic_anisotropic, int &n_acoustic);
 
 } // namespace impl
 } // namespace compute

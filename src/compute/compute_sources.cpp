@@ -17,7 +17,7 @@ template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag>
 std::vector<std::shared_ptr<specfem::sources::source> > sort_sources_per_medium(
     const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
-    const specfem::compute::properties &properties,
+    const specfem::compute::element_types &element_types,
     const specfem::compute::mesh &mesh) {
 
   std::vector<std::shared_ptr<specfem::sources::source> > sorted_sources;
@@ -28,7 +28,7 @@ std::vector<std::shared_ptr<specfem::sources::source> > sort_sources_per_medium(
     const type_real z = source->get_z();
     const specfem::point::global_coordinates<DimensionTag> coord(x, z);
     const auto lcoord = specfem::algorithms::locate_point(coord, mesh);
-    if (properties.h_medium_tags(lcoord.ispec) == MediumTag) {
+    if (element_types.get_medium_tag(lcoord.ispec) == MediumTag) {
       sorted_sources.push_back(source);
     }
   }
@@ -47,7 +47,7 @@ specfem::compute::sources::sources(
     const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
     const specfem::compute::mesh &mesh,
     const specfem::compute::partial_derivatives &partial_derivatives,
-    const specfem::compute::properties &properties, const type_real t0,
+    const specfem::compute::element_types &element_types, const type_real t0,
     const type_real dt, const int nsteps)
     : timestep(0), nspec(mesh.nspec),
       source_domain_index_mapping(
@@ -60,14 +60,14 @@ specfem::compute::sources::sources(
       h_wavefield_types(Kokkos::create_mirror_view(wavefield_types)) {
 
   for (int ispec = 0; ispec < nspec; ispec++) {
-    source_domain_index_mapping(ispec) = -1;
+    h_source_domain_index_mapping(ispec) = -1;
   }
 
 #define SORT_SOURCES_PER_MEDIUM(DIMENSION_TAG, MEDIUM_TAG)                     \
   auto CREATE_VARIABLE_NAME(source, GET_NAME(DIMENSION_TAG),                   \
                             GET_NAME(MEDIUM_TAG)) =                            \
       sort_sources_per_medium<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG)>(    \
-          sources, properties, mesh);
+          sources, element_types, mesh);
 
   CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
       SORT_SOURCES_PER_MEDIUM,
@@ -119,7 +119,7 @@ specfem::compute::sources::sources(
                                GET_NAME(MEDIUM_TAG)) =                         \
         specfem::compute::impl::source_medium<GET_TAG(DIMENSION_TAG),          \
                                               GET_TAG(MEDIUM_TAG)>(            \
-            current_sources, mesh, partial_derivatives, properties, t0, dt,    \
+            current_sources, mesh, partial_derivatives, element_types, t0, dt, \
             nsteps);                                                           \
   }
 
