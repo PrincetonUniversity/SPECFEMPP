@@ -36,6 +36,19 @@ specfem::forcing_function::stf *assign_stf(std::string forcing_type,
         });
 
     Kokkos::fence();
+  } else if (forcing_type == "dGaussian") {
+    forcing_function = (specfem::forcing_function::stf *)
+        Kokkos::kokkos_malloc<specfem::kokkos::DevMemSpace>(
+            sizeof(specfem::forcing_function::dGaussian));
+
+    Kokkos::parallel_for(
+        "specfem::sources::moment_tensor::moment_tensor::allocate_stf",
+        specfem::kokkos::DeviceRange(0, 1), KOKKOS_LAMBDA(const int &) {
+          new (forcing_function) specfem::forcing_function::dGaussian(
+              f0, tshift, factor, use_trick_for_better_pressure);
+        });
+
+    Kokkos::fence();
   } else {
     assert(false && "Unknown forcing type");
   }
@@ -87,6 +100,32 @@ assign_ricker(YAML::Node &Ricker, type_real dt,
       "specfem::sources::moment_tensor::moment_tensor::allocate_stf",
       specfem::kokkos::DeviceRange(0, 1), KOKKOS_LAMBDA(const int &) {
         new (forcing_function) specfem::forcing_function::Ricker(
+            f0, tshift, factor, use_trick_for_better_pressure);
+      });
+
+  Kokkos::fence();
+
+  return forcing_function;
+}
+
+KOKKOS_INLINE_FUNCTION
+specfem::forcing_function::stf *
+assign_gaussian_der(YAML::Node &dGaussian, type_real dt,
+                    bool use_trick_for_better_pressure) {
+
+  specfem::forcing_function::stf *forcing_function;
+  forcing_function = (specfem::forcing_function::stf *)
+      Kokkos::kokkos_malloc<specfem::kokkos::DevMemSpace>(
+          sizeof(specfem::forcing_function::dGaussian));
+
+  type_real f0 = dGaussian["f0"].as<type_real>();
+  type_real tshift = dGaussian["tshift"].as<type_real>();
+  type_real factor = dGaussian["factor"].as<type_real>();
+
+  Kokkos::parallel_for(
+      "specfem::sources::moment_tensor::moment_tensor::allocate_stf",
+      specfem::kokkos::DeviceRange(0, 1), KOKKOS_LAMBDA(const int &) {
+        new (forcing_function) specfem::forcing_function::dGaussian(
             f0, tshift, factor, use_trick_for_better_pressure);
       });
 

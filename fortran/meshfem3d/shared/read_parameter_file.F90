@@ -44,6 +44,8 @@
   ! to avoid an I/O bottleneck in the case of very large runs
   if (myrank == 0) then
 
+    call parse_command_line_arguments()
+
     ! opens file Par_file
     call open_parameter_file(ier)
 
