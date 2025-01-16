@@ -203,6 +203,7 @@ add_executable(
   assembly/sources/sources.cpp
 )
 
+
 target_link_libraries(
   assembly_tests
   reader
@@ -218,6 +219,19 @@ target_link_libraries(
   -lpthread -lm
 )
 
+add_executable(
+  IO_tests
+  IO/sources/test_read_sources.cpp
+)
+
+target_link_libraries(
+  IO_tests
+  IO
+  gtest_main
+  kokkos_environment
+  yaml-cpp
+  Boost::filesystem
+)
 
 add_executable(
   locate_point
@@ -413,6 +427,7 @@ if (NOT MPI_PARALLEL)
   gtest_discover_tests(gll_tests)
   gtest_discover_tests(lagrange_tests)
   gtest_discover_tests(fortranio_test)
+  gtest_discover_tests(IO_tests)
   gtest_discover_tests(mesh_tests)
   gtest_discover_tests(compute_partial_derivatives_tests)
   gtest_discover_tests(compute_elastic_tests)
