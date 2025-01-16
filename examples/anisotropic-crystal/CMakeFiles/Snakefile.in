@@ -122,33 +122,7 @@ rule plot_seismogram:
 
 
         stream = get_traces("OUTPUT_FILES/results")
-
-        N_traces = len(stream)
-        Amax = np.max(stream.max())
-        plt.figure(figsize=(8, 6))
-
-        ticklabels = []
-        for i, tr in enumerate(stream):
-            if i == 0:
-              label = "Simulated"
-            else:
-              label = None
-
-            ticklabels.append(f"{tr.stats.station}")
-
-            plt.plot(tr.times('matplotlib'), tr.data/Amax + i, 'k-',
-                     label=label)
-
-        ax = plt.gca()
-        ax.set_yticks(np.arange(N_traces))
-        ax.set_yticklabels(ticklabels)
-        ax.set_title(f"{tr.stats.network}")
-        ax.set_xlabel("Time [s]")
-        ax.set_ylabel("Normalized amplitude")
-        plt.legend(frameon=False)
-
-        plt.savefig(output.traces, dpi=300)
-        plt.close('all')
+        stream.plot(size=(800, 1000)).savefig(output.traces)
 
 
 rule clean:

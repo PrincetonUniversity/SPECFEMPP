@@ -1,18 +1,17 @@
-#ifndef _SPECFEM_WRITER_KERNEL_HPP
-#define _SPECFEM_WRITER_KERNEL_HPP
+#pragma once
 
 #include "compute/interface.hpp"
 #include "enumerations/interface.hpp"
-#include "writer/writer.hpp"
+#include "IO/writer.hpp"
 
 namespace specfem {
-namespace writer {
+namespace IO {
 /**
  * @brief Writer to output misfit kernel data to disk
  *
  * @tparam OutputLibrary Library to use for output (HDF5, ASCII, etc.)
  */
-template <typename OutputLibrary> class kernel : public writer {
+template <typename OutputLibrary> class kernel_writer : public writer {
 public:
   /**
    * @name Constructors
@@ -26,21 +25,16 @@ public:
    * @param output_folder Path to output location (will be an .h5 file if using
    * HDF5, and a folder if using ASCII)
    */
-  kernel(const specfem::compute::assembly &assembly,
-         const std::string output_folder);
+  kernel_writer(const std::string output_folder);
 
   /**
    * @brief write the kernel data to disk
    *
    */
-  void write() override;
+  void write(specfem::compute::assembly &assembly) override;
 
 private:
-  std::string output_folder;         ///< Path to output folder
-  specfem::compute::mesh mesh;       ///< Mesh object
-  specfem::compute::kernels kernels; ///< Kernels object
+  std::string output_folder; ///< Path to output folder
 };
-} // namespace writer
+} // namespace IO
 } // namespace specfem
-
-#endif /* _SPECFEM_WRITER_KERNEL_HPP */

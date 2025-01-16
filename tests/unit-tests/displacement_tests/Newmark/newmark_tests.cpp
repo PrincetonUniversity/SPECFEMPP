@@ -2,13 +2,13 @@
 #include "../../MPI_environment.hpp"
 #include "../../utilities/include/interface.hpp"
 #include "IO/interface.hpp"
+#include "IO/seismogram/reader.hpp"
 #include "compute/interface.hpp"
 #include "constants.hpp"
 #include "domain/domain.hpp"
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"
 #include "quadrature/interface.hpp"
-#include "reader/seismogram.hpp"
 #include "solver/solver.hpp"
 #include "timescheme/timescheme.hpp"
 #include "yaml-cpp/yaml.h"
@@ -219,11 +219,10 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
              << std::endl;
     }
 
-    const int max_sig_step = it->get_max_seismogram_step();
-    specfem::compute::assembly assembly(
-        mesh, quadratures, sources, receivers, seismogram_types, t0,
-        setup.get_dt(), nsteps, max_sig_step, it->get_nstep_between_samples(),
-        setup.get_simulation_type());
+    specfem::compute::assembly assembly(mesh, quadratures, sources, receivers,
+                                        seismogram_types, t0, setup.get_dt(),
+                                        nsteps, it->get_max_seismogram_step(),
+                                        setup.get_simulation_type(), nullptr);
 
     it->link_assembly(assembly);
 
@@ -285,69 +284,54 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
         break;
       }
 
-      const int ncomponents = filename.size();
+      type_real error_norm = 0.0;
+      type_real compute_norm = 0.0;
 
-      Kokkos::View<type_real ***, Kokkos::LayoutRight, Kokkos::HostSpace>
-          traces("traces", ncomponents, max_sig_step, 2);
-
-      for (int icomp = 0; icomp < ncomponents; icomp++) {
-        const auto trace =
-            Kokkos::subview(traces, icomp, Kokkos::ALL, Kokkos::ALL);
-        specfem::reader::seismogram reader(
-            filename[icomp], specfem::enums::seismogram::format::ascii, trace);
+      for (int i = 0; i < traces_filename.size(); ++i) {
+        Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
+            traces("traces", seismograms.h_seismogram.extent(0), 2);
+        specfem::IO::seismogram_reader reader(
+            traces_filename[i], specfem::enums::seismogram::format::ascii,
+            traces);
         reader.read();
-      }
 
-      int count = 0;
-      type_real error = 0.0;
-      type_real computed_norm = 0.0;
-      for (auto [time, value] : seismograms.get_seismogram(
-               station_name, network_name, seismogram_type)) {
-        for (int icomp = 0; icomp < ncomponents; icomp++) {
-          const auto computed_time = traces(icomp, count, 0);
+        const auto l_seismogram = Kokkos::subview(
+            seismograms.h_seismogram, Kokkos::ALL(), itype, irec, i);
 
-          if (std::abs(time - computed_time) > 1e-3) {
-            FAIL() << "--------------------------------------------------\n"
-                   << "\033[0;31m[FAILED]\033[0m Test failed\n"
-                   << " - Test name: " << Test.name << "\n"
-                   << " - Error: Times do not match\n"
-                   << " - Station: " << station_name << "\n"
-                   << " - Network: " << network_name << "\n"
-                   << " - Component: " << icomp << "\n"
-                   << " - Expected: " << time << "\n"
-                   << " - Computed: " << computed_time << "\n"
-                   << "--------------------------------------------------\n\n"
-                   << std::endl;
-          }
+        const int nsig_steps = l_seismogram.extent(0);
 
-          const auto computed_value = traces(icomp, count, 1);
-          error += std::sqrt((value[icomp] - computed_value) *
-                             (value[icomp] - computed_value));
-          computed_norm += std::sqrt(computed_value * computed_value);
+        for (int isig_step = 0; isig_step < nsig_steps; ++isig_step) {
+          const type_real time_t = traces(isig_step, 0);
+          const type_real value = traces(isig_step, 1);
+
+          const type_real computed_value = l_seismogram(isig_step);
+
+          error_norm +=
+              std::sqrt((value - computed_value) * (value - computed_value));
+          compute_norm += std::sqrt(value * value);
         }
-
-        count++;
       }
-
-      if (error / computed_norm > 1e-3 || std::isnan(error / computed_norm)) {
+      if (error_norm / compute_norm > 1e-3 ||
+          std::isnan(error_norm / compute_norm)) {
         FAIL() << "--------------------------------------------------\n"
                << "\033[0;31m[FAILED]\033[0m Test failed\n"
                << " - Test name: " << Test.name << "\n"
-               << " - Error: Norm of the error is greater than 1e-3\n"
+               << " - Error: Traces do not match\n"
                << " - Station: " << station_name << "\n"
                << " - Network: " << network_name << "\n"
-               << " - Error: " << error << "\n"
-               << " - Norm: " << computed_norm << "\n"
+               << " - Seismogram Type: " << stype_name << "\n"
+               << " - Error value: " << error_norm / compute_norm << "\n"
                << "--------------------------------------------------\n\n"
                << std::endl;
       }
     }
-
-    std::cout << "--------------------------------------------------\n"
-              << "\033[0;32m[PASSED]\033[0m Test name: " << Test.name << "\n"
-              << "--------------------------------------------------\n\n"
-              << std::endl;
   }
+
+  std::cout << "--------------------------------------------------\n"
+            << "\033[0;32m[PASSED]\033[0m Test name: " << Test.name << "\n"
+            << "--------------------------------------------------\n\n"
+            << std::endl;
+}
 }
 
 int main(int argc, char *argv[]) {

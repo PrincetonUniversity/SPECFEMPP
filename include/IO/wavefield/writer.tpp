@@ -2,16 +2,17 @@
 
 #include "compute/interface.hpp"
 #include "enumerations/interface.hpp"
-#include "writer/wavefield.hpp"
+#include "IO/wavefield/writer.hpp"
 
 template <typename OutputLibrary>
-specfem::writer::wavefield<OutputLibrary>::wavefield(
-    const specfem::compute::assembly &assembly, const std::string output_folder)
-    : output_folder(output_folder), forward(assembly.fields.forward),
-      boundary_values(assembly.boundary_values) {}
+specfem::IO::wavefield_writer<OutputLibrary>::wavefield_writer(
+    const std::string output_folder)
+    : output_folder(output_folder) {}
 
 template <typename OutputLibrary>
-void specfem::writer::wavefield<OutputLibrary>::write() {
+void specfem::IO::wavefield_writer<OutputLibrary>::write(specfem::compute::assembly &assembly) {
+  auto &forward = assembly.fields.forward;
+  auto &boundary_values = assembly.boundary_values;
 
   forward.copy_to_host();
   boundary_values.copy_to_host();

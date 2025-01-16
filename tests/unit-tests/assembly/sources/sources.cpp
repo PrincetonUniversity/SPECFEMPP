@@ -180,12 +180,12 @@ void check_assembly_source_construction(
       continue;
     }
 
-    Kokkos::View<type_real ***, Kokkos::DefaultExecutionSpace> source_array(
+    Kokkos::View<type_real ***, Kokkos::DefaultHostExecutionSpace> source_array(
         "source_array", components, assembly.mesh.ngllz, assembly.mesh.ngllx);
 
     source->compute_source_array(assembly.mesh, assembly.partial_derivatives,
                                  assembly.properties, source_array);
-    Kokkos::View<type_real **, Kokkos::DefaultExecutionSpace> stf("stf", 1,
+    Kokkos::View<type_real **, Kokkos::DefaultHostExecutionSpace> stf("stf", 1,
                                                                   components);
 
     source->compute_source_time_function(1.0, 0.0, 1, stf);

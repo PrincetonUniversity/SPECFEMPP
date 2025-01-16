@@ -1,7 +1,7 @@
 #include "../test_fixture/test_fixture.hpp"
 #include "datatypes/simd.hpp"
 #include "enumerations/dimension.hpp"
-#include "enumerations/medium.hpp"
+#include "enumerations/material_definitions.hpp"
 #include "parallel_configuration/chunk_config.hpp"
 #include "policies/chunk.hpp"
 #include "specfem_setup.hpp"
@@ -515,51 +515,22 @@ void test_kernels(specfem::compute::assembly &assembly) {
 
   auto &kernels = assembly.kernels;
 
-  check_store_and_add<specfem::element::medium_tag::elastic,
-                      specfem::element::property_tag::isotropic, false>(
+#define TEST_STORE_AND_ADD(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)            \
+  check_store_and_add<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), false>(      \
+      kernels);                                                                \
+  check_load_on_device<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), false>(     \
+      kernels);                                                                \
+  check_store_and_add<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), true>(       \
+      kernels);                                                                \
+  check_load_on_device<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), true>(      \
       kernels);
 
-  check_load_on_device<specfem::element::medium_tag::elastic,
-                       specfem::element::property_tag::isotropic, false>(
-      kernels);
+  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
+      TEST_STORE_AND_ADD,
+      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
+          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
-  check_store_and_add<specfem::element::medium_tag::elastic,
-                      specfem::element::property_tag::isotropic, true>(kernels);
-
-  check_load_on_device<specfem::element::medium_tag::elastic,
-                       specfem::element::property_tag::isotropic, true>(
-      kernels);
-
-  check_store_and_add<specfem::element::medium_tag::elastic,
-                      specfem::element::property_tag::anisotropic, false>(
-      kernels);
-
-  check_load_on_device<specfem::element::medium_tag::elastic,
-                       specfem::element::property_tag::anisotropic, false>(
-      kernels);
-
-  check_store_and_add<specfem::element::medium_tag::elastic,
-                      specfem::element::property_tag::anisotropic, true>(
-      kernels);
-
-  check_load_on_device<specfem::element::medium_tag::elastic,
-                       specfem::element::property_tag::anisotropic, true>(
-      kernels);
-
-  check_store_and_add<specfem::element::medium_tag::acoustic,
-                      specfem::element::property_tag::isotropic, false>(
-      kernels);
-
-  check_load_on_device<specfem::element::medium_tag::acoustic,
-                       specfem::element::property_tag::isotropic, false>(
-      kernels);
-
-  check_store_and_add<specfem::element::medium_tag::acoustic,
-                      specfem::element::property_tag::isotropic, true>(kernels);
-
-  check_load_on_device<specfem::element::medium_tag::acoustic,
-                       specfem::element::property_tag::isotropic, true>(
-      kernels);
+#undef TEST_STORE_AND_ADD
 }
 
 TEST_F(ASSEMBLY, kernels_device_functions) {
