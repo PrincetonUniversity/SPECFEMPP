@@ -128,8 +128,8 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
 
     // Generate compute structs to be used by the solver
     specfem::compute::assembly assembly(mesh, quadratures, sources, receivers,
-                                        stypes, 0, 0, 0, 0, 0,
-                                        setup.get_simulation_type());
+                                        stypes, 0, 0, 0, 0, 1,
+                                        setup.get_simulation_type(), nullptr);
 
     try {
 

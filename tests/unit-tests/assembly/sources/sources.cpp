@@ -180,7 +180,7 @@ void check_assembly_source_construction(
       continue;
     }
 
-    Kokkos::View<type_real ***, Kokkos::DefaultExecutionSpace> source_array(
+    Kokkos::View<type_real ***, Kokkos::DefaultHostExecutionSpace> source_array(
         "source_array", components, assembly.mesh.ngllz, assembly.mesh.ngllx);
 
     source->compute_source_array(assembly.mesh, assembly.partial_derivatives,

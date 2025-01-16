@@ -88,7 +88,8 @@ TEST(COMPUTE_TESTS, compute_elastic_properties) {
   specfem::compute::mesh compute_mesh(mesh.tags, mesh.control_nodes,
                                       quadratures);
   specfem::compute::properties compute_properties(
-      nspec, ngllz, ngllx, compute_mesh.mapping, mesh.tags, mesh.materials);
+      nspec, ngllz, ngllx, compute_mesh.mapping, mesh.tags, mesh.materials,
+      false);
 
   specfem::testing::array3d<type_real, Kokkos::LayoutRight> rho_global(
       test_config.rho_file, nspec, ngllz, ngllx);

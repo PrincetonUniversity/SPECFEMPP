@@ -1,9 +1,8 @@
-#ifndef _SPECFEM_RUNTIME_CONFIGURATION_WAVEFIELD_HPP
-#define _SPECFEM_RUNTIME_CONFIGURATION_WAVEFIELD_HPP
+#pragma once
 
-#include "compute/assembly/assembly.hpp"
-#include "reader/reader.hpp"
-#include "writer/writer.hpp"
+#include "enumerations/simulation.hpp"
+#include "IO/reader.hpp"
+#include "IO/writer.hpp"
 #include "yaml-cpp/yaml.h"
 
 namespace specfem {
@@ -45,22 +44,18 @@ public:
   /**
    * @brief Instantiate a wavefield writer object
    *
-   * @param assembly SPECFEM++ assembly object
-   * @return std::shared_ptr<specfem::writer::writer> Pointer to an instantiated
+   * @return std::shared_ptr<specfem::IO::writer> Pointer to an instantiated
    * writer object
    */
-  std::shared_ptr<specfem::writer::writer> instantiate_wavefield_writer(
-      const specfem::compute::assembly &assembly) const;
+  std::shared_ptr<specfem::IO::writer> instantiate_wavefield_writer() const;
 
   /**
    * @brief Instantiate a wavefield reader object
    *
-   * @param assembly SPECFEM++ assembly object
-   * @return std::shared_ptr<specfem::reader::reader> Pointer to an instantiated
+   * @return std::shared_ptr<specfem::IO::reader> Pointer to an instantiated
    * reader object
    */
-  std::shared_ptr<specfem::reader::reader> instantiate_wavefield_reader(
-      const specfem::compute::assembly &assembly) const;
+  std::shared_ptr<specfem::IO::reader> instantiate_wavefield_reader() const;
 
   inline specfem::simulation::type get_simulation_type() const {
     return this->simulation_type;
@@ -73,5 +68,3 @@ private:
 };
 } // namespace runtime_configuration
 } // namespace specfem
-
-#endif /* _SPECFEM_RUNTIME_CONFIGURATION_WAVEFIELD_HPP */

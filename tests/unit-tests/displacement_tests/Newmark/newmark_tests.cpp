@@ -2,13 +2,13 @@
 #include "../../MPI_environment.hpp"
 #include "../../utilities/include/interface.hpp"
 #include "IO/interface.hpp"
+#include "IO/seismogram/reader.hpp"
 #include "compute/interface.hpp"
 #include "constants.hpp"
 #include "domain/domain.hpp"
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"
 #include "quadrature/interface.hpp"
-#include "reader/seismogram.hpp"
 #include "solver/solver.hpp"
 #include "timescheme/timescheme.hpp"
 #include "yaml-cpp/yaml.h"
@@ -220,10 +220,11 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     }
 
     const int max_sig_step = it->get_max_seismogram_step();
+
     specfem::compute::assembly assembly(
         mesh, quadratures, sources, receivers, seismogram_types, t0,
         setup.get_dt(), nsteps, max_sig_step, it->get_nstep_between_samples(),
-        setup.get_simulation_type());
+        setup.get_simulation_type(), nullptr);
 
     it->link_assembly(assembly);
 
@@ -293,7 +294,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
       for (int icomp = 0; icomp < ncomponents; icomp++) {
         const auto trace =
             Kokkos::subview(traces, icomp, Kokkos::ALL, Kokkos::ALL);
-        specfem::reader::seismogram reader(
+        specfem::IO::seismogram_reader reader(
             filename[icomp], specfem::enums::seismogram::format::ascii, trace);
         reader.read();
       }
