@@ -237,8 +237,8 @@ get_point_property(
 }
 
 template <bool using_simd>
-void check_eq(typename specfem::datatype::simd<type_real, using_simd>::datatype &p1,
-  typename specfem::datatype::simd<type_real, using_simd>::datatype &p2, const int &n_simd_elements) {
+void check_eq(const typename specfem::datatype::simd<type_real, using_simd>::datatype &p1,
+  const typename specfem::datatype::simd<type_real, using_simd>::datatype &p2, const int &n_simd_elements) {
   if constexpr (using_simd) {
     for (int i = 0; i < n_simd_elements; i++) {
       EXPECT_FLOAT_EQ(p1[i], p2[i]);
@@ -250,22 +250,25 @@ void check_eq(typename specfem::datatype::simd<type_real, using_simd>::datatype 
 
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd>
-void check_point_properties(specfem::point::properties<specfem::dimension::type::dim2, MediumTag,
-                                 PropertyTag, using_simd> &p1, specfem::point::properties<specfem::dimension::type::dim2, MediumTag,
-                                 PropertyTag, using_simd> &p2);
+void check_point_properties(const specfem::point::properties<specfem::dimension::type::dim2, MediumTag,
+                                 PropertyTag, using_simd> &p1, const specfem::point::properties<specfem::dimension::type::dim2, MediumTag,
+                                 PropertyTag, using_simd> &p2, const int &n_simd_elements);
 
 template<bool using_simd>
-void check_point_properties(specfem::point::properties<specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-                                 specfem::element::property_tag::isotropic, using_simd> &p1, specfem::point::properties<specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+void check_point_properties(const specfem::point::properties<specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+                                 specfem::element::property_tag::isotropic, using_simd> &p1, const specfem::point::properties<specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
                                  specfem::element::property_tag::isotropic, using_simd> &p2, const int &n_simd_elements) {
   check_eq<using_simd>(p1.rho, p2.rho, n_simd_elements);
   check_eq<using_simd>(p1.mu, p2.mu, n_simd_elements);
   check_eq<using_simd>(p1.lambdaplus2mu, p2.lambdaplus2mu, n_simd_elements);
+  // if constexpr (using_simd) {
+  //   check_eq<using_simd>(p1.lambda, p2.lambdaplus2mu - (static_cast<typename specfem::datatype::simd<type_real, true>::datatype>(2.0)) * p2.mu, n_simd_elements);
+  // }
 }
 
 template<bool using_simd>
-void check_point_properties(specfem::point::properties<specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-                                 specfem::element::property_tag::anisotropic, using_simd> &p1, specfem::point::properties<specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+void check_point_properties(const specfem::point::properties<specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+                                 specfem::element::property_tag::anisotropic, using_simd> &p1, const specfem::point::properties<specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
                                  specfem::element::property_tag::anisotropic, using_simd> &p2, const int &n_simd_elements) {
   check_eq<using_simd>(p1.rho, p2.rho, n_simd_elements);
   check_eq<using_simd>(p1.c11, p2.c11, n_simd_elements);
@@ -278,8 +281,8 @@ void check_point_properties(specfem::point::properties<specfem::dimension::type:
 
 
 template<bool using_simd>
-void check_point_properties(specfem::point::properties<specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
-                                 specfem::element::property_tag::isotropic, using_simd> &p1, specfem::point::properties<specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
+void check_point_properties(const specfem::point::properties<specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
+                                 specfem::element::property_tag::isotropic, using_simd> &p1, const specfem::point::properties<specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
                                  specfem::element::property_tag::isotropic, using_simd> &p2, const int &n_simd_elements) {
   check_eq<using_simd>(p1.rho_inverse, p2.rho_inverse, n_simd_elements);
   check_eq<using_simd>(p1.kappa, p2.kappa, n_simd_elements);
