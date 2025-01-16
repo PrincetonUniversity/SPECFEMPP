@@ -1,38 +1,37 @@
 parameters:
+
   databases:
     mesh-database: "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/OUTPUT_FILES/database.bin"
     source-file: "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/forward_source.yaml"
+
   header:
-    description: 'Material systems : Elastic domain (1)
-
+    description: |
+      Material systems : Elastic domain (1)
       Interfaces : None
-
       Sources : Force source (1)
-
       Boundary conditions : Free surface (1)
-
       Mesh : 2D Cartesian grid (1)
-
       Receiver : Displacement seismogram (1)
-
       Output : Wavefield at the last time step (1)
-
       Output : Seismograms in ASCII format (1)
 
-      '
     title: Tromp-Tape-Liu (GJI 2005)
+
   receivers:
     angle: 0.0
     nstep_between_samples: 1
     seismogram-type:
     - displacement
     stations-file: "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/OUTPUT_FILES/STATIONS"
+
   run-setup:
     number-of-processors: 1
     number-of-runs: 1
+
   simulation-setup:
     quadrature:
       quadrature-type: GLL4
+
     simulation-mode:
       forward:
         writer:
@@ -42,6 +41,7 @@ parameters:
           wavefield:
             directory: "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/OUTPUT_FILES"
             format: HDF5
+
     solver:
       time-marching:
         time-scheme:
