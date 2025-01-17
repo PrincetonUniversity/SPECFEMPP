@@ -1,7 +1,7 @@
 #ifndef _SPECFEM_RUNTIME_CONFIGURATION_SOLVER_SOLVER_TPP_
 #define _SPECFEM_RUNTIME_CONFIGURATION_SOLVER_SOLVER_TPP_
 
-#include "kokkos_kernels/kernels.hpp"
+#include "kokkos_kernels/domain_kernels.hpp"
 #include "solver.hpp"
 #include "solver/time_marching.hpp"
 #include "timescheme/newmark.hpp"
