@@ -2,6 +2,7 @@
 #define _SPECFEM_KERNELS_IMPL_DOMAIN_KERNELS_HPP
 
 #include "compute_mass_matrix.hpp"
+#include "compute_seismogram.hpp"
 #include "divide_mass_matrix.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/material_definitions.hpp"
@@ -134,8 +135,8 @@ public:
 #define CALL_COMPUTE_SEISMOGRAMS_FUNCTION(DIMENSION_TAG, MEDIUM_TAG,           \
                                           PROPERTY_TAG)                        \
   if constexpr (dimension == GET_TAG(DIMENSION_TAG)) {                         \
-    compute_seismograms<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)>(           \
-        isig_step);                                                            \
+    impl::compute_seismograms<dimension, wavefield, ngll, GET_TAG(MEDIUM_TAG), \
+                              GET_TAG(PROPERTY_TAG)>(assembly, isig_step);     \
   }
 
     CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
@@ -179,9 +180,9 @@ private:
             specfem::element::boundary_tag BoundaryTag>
   void compute_source_interaction(const int istep);
 
-  template <specfem::element::medium_tag MediumTag,
-            specfem::element::property_tag PropertyTag>
-  void compute_seismograms(const int &isig_step);
+  // template <specfem::element::medium_tag MediumTag,
+  //           specfem::element::property_tag PropertyTag>
+  // void compute_seismograms(const int &isig_step);
 
   // template <specfem::element::medium_tag MediumTag> void
   // divide_mass_matrix();
