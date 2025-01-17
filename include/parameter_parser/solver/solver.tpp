@@ -22,7 +22,7 @@ specfem::runtime_configuration::solver::solver::instantiate(
     const auto kernels =
         specfem::kernels::kernels<specfem::wavefield::simulation_field::forward,
                                   specfem::dimension::type::dim2, NGLL>(
-            dt, assembly);
+            assembly);
     return std::make_shared<
         specfem::solver::time_marching<specfem::simulation::type::forward,
                                        specfem::dimension::type::dim2, NGLL> >(
@@ -33,10 +33,10 @@ specfem::runtime_configuration::solver::solver::instantiate(
     const auto adjoint_kernels =
         specfem::kernels::kernels<specfem::wavefield::simulation_field::adjoint,
                                   specfem::dimension::type::dim2, NGLL>(
-            dt, assembly);
+            assembly);
     const auto backward_kernels = specfem::kernels::kernels<
         specfem::wavefield::simulation_field::backward,
-        specfem::dimension::type::dim2, NGLL>(dt, assembly);
+        specfem::dimension::type::dim2, NGLL>(assembly);
     return std::make_shared<
         specfem::solver::time_marching<specfem::simulation::type::combined,
                                        specfem::dimension::type::dim2, NGLL> >(
