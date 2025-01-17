@@ -1,9 +1,9 @@
 #pragma once
 
 #include "composite_stacey_dirichlet.hpp"
-#include "domain/impl/boundary_conditions/boundary_conditions.hpp"
-#include "domain/impl/boundary_conditions/dirichlet/dirichlet.hpp"
-#include "domain/impl/boundary_conditions/stacey/stacey.hpp"
+#include "boundary_conditions/boundary_conditions.hpp"
+#include "boundary_conditions/dirichlet/dirichlet.hpp"
+#include "boundary_conditions/stacey/stacey.hpp"
 #include "enumerations/boundary.hpp"
 #include "point/boundary.hpp"
 #include <Kokkos_Core.hpp>
@@ -11,7 +11,7 @@
 template <typename PointBoundaryType, typename PointPropertyType,
           typename PointFieldType, typename PointAccelerationType>
 KOKKOS_FUNCTION void
-specfem::domain::impl::boundary_conditions::impl_apply_boundary_conditions(
+specfem::boundary_conditions::impl_apply_boundary_conditions(
     const composite_stacey_dirichlet_type &, const PointBoundaryType &boundary,
     const PointPropertyType &property, const PointFieldType &field,
     PointAccelerationType &acceleration) {
@@ -47,7 +47,7 @@ specfem::domain::impl::boundary_conditions::impl_apply_boundary_conditions(
 template <typename PointBoundaryType, typename PointPropertyType,
           typename PointMassMatrixType>
 KOKKOS_FUNCTION void
-specfem::domain::impl::boundary_conditions::impl_compute_mass_matrix_terms(
+specfem::boundary_conditions::impl_compute_mass_matrix_terms(
     const composite_stacey_dirichlet_type &, const type_real dt,
     const PointBoundaryType &boundary, const PointPropertyType &property,
     PointMassMatrixType &mass_matrix) {

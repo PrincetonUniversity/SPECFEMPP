@@ -457,18 +457,28 @@ target_link_libraries(
 )
 
 add_library(
-        domain
-        src/domain/impl/boundary_conditions/boundary_conditions.cpp
-        src/domain/impl/elements/kernel.cpp
-        src/domain/impl/kernels.cpp
-        src/domain/domain.cpp
+        boundary_conditions
+        src/boundary_conditions/boundary_conditions.cpp
 )
 
 target_link_libraries(
-        domain
+        boundary_conditions
         Kokkos::kokkos
-        enumerations
+        ${BOOST_LIBS}
 )
+
+# add_library(
+#         domain
+#         src/domain/impl/elements/kernel.cpp
+#         src/domain/impl/kernels.cpp
+#         src/domain/domain.cpp
+# )
+
+# target_link_libraries(
+#         domain
+#         Kokkos::kokkos
+#         enumerations
+# )
 
 add_library(
         medium
@@ -480,7 +490,7 @@ target_link_libraries(
         medium
         Kokkos::kokkos
         compute
-        domain
+        boundary_conditions
         enumerations
 )
 
@@ -510,7 +520,8 @@ target_link_libraries(
         kernels
         Kokkos::kokkos
         compute
-        domain
+        boundary_conditions
+        # domain
 )
 
 add_library(
@@ -535,7 +546,7 @@ target_link_libraries(
         solver
         Kokkos::kokkos
         timescheme
-        domain
+        # domain
         kernels
         medium
 )
@@ -609,7 +620,7 @@ target_link_libraries(
         writer
         reader
         kernels
-        domain
+        # domain
         medium
         solver
         ${BOOST_LIBS}
@@ -635,7 +646,7 @@ target_link_libraries(
         writer
         plotter
         reader
-        domain
+        # domain
         medium
         coupled_interface
         kernels
@@ -700,7 +711,7 @@ if (SPECFEMPP_BINDING_PYTHON)
         writer
         plotter
         reader
-        domain
+        # domain
         medium
         coupled_interface
         kernels

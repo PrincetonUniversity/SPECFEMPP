@@ -9,8 +9,7 @@
 #include <type_traits>
 
 namespace specfem {
-namespace domain {
-namespace impl {
+
 namespace boundary_conditions {
 template <typename PointBoundaryType, typename PointPropertyType,
           typename PointFieldType, typename PointAccelerationType>
@@ -78,6 +77,4 @@ compute_mass_matrix_terms(const type_real dt, const PointBoundaryType &boundary,
 }
 
 } // namespace boundary_conditions
-} // namespace impl
-} // namespace domain
 } // namespace specfem

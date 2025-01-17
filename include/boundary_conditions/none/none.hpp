@@ -5,8 +5,6 @@
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
-namespace domain {
-namespace impl {
 namespace boundary_conditions {
 
 using none_type = std::integral_constant<specfem::element::boundary_tag,
@@ -41,6 +39,4 @@ KOKKOS_INLINE_FUNCTION void impl_compute_mass_matrix_terms(
 }
 
 } // namespace boundary_conditions
-} // namespace impl
-} // namespace domain
 } // namespace specfem

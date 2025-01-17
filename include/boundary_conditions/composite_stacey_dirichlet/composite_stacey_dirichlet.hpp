@@ -5,28 +5,25 @@
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
-namespace domain {
-namespace impl {
 namespace boundary_conditions {
 
-using stacey_type =
-    std::integral_constant<specfem::element::boundary_tag,
-                           specfem::element::boundary_tag::stacey>;
+using composite_stacey_dirichlet_type = std::integral_constant<
+    specfem::element::boundary_tag,
+    specfem::element::boundary_tag::composite_stacey_dirichlet>;
 
 template <typename PointBoundaryType, typename PointPropertyType,
           typename PointFieldType, typename PointAccelerationType>
 KOKKOS_FUNCTION void impl_apply_boundary_conditions(
-    const stacey_type &, const PointBoundaryType &boundary,
+    const composite_stacey_dirichlet_type &, const PointBoundaryType &boundary,
     const PointPropertyType &property, const PointFieldType &field,
     PointAccelerationType &acceleration);
 
 template <typename PointBoundaryType, typename PointPropertyType,
           typename PointMassMatrixType>
 KOKKOS_FUNCTION void impl_compute_mass_matrix_terms(
-    const stacey_type &, const type_real dt, const PointBoundaryType &boundary,
-    const PointPropertyType &property, PointMassMatrixType &mass_matrix);
+    const composite_stacey_dirichlet_type &, const type_real dt,
+    const PointBoundaryType &boundary, const PointPropertyType &property,
+    PointMassMatrixType &mass_matrix);
 
 } // namespace boundary_conditions
-} // namespace impl
-} // namespace domain
 } // namespace specfem

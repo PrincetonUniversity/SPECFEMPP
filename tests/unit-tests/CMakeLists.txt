@@ -309,7 +309,7 @@ target_link_libraries(
   compare_arrays
   point
   algorithms
-  domain
+  # domain
   IO
   coupled_interface
   plotter
@@ -337,7 +337,8 @@ target_link_libraries(
   edge
   algorithms
   coupled_interface
-  domain
+  kernels
+  # domain
   solver
   plotter
   -lpthread -lm

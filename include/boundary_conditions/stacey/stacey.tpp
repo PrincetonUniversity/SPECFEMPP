@@ -1,7 +1,7 @@
 #pragma once
 
 #include "algorithms/dot.hpp"
-#include "domain/impl/boundary_conditions/boundary_conditions.hpp"
+#include "boundary_conditions/boundary_conditions.hpp"
 #include "enumerations/medium.hpp"
 #include "point/field.hpp"
 #include "stacey.hpp"
@@ -335,7 +335,7 @@ impl_enforce_traction(const elastic_type &, const anisotropic_type &,
 template <typename PointBoundaryType, typename PointPropertyType,
           typename PointFieldType, typename PointAccelerationType>
 KOKKOS_FUNCTION void
-specfem::domain::impl::boundary_conditions::impl_apply_boundary_conditions(
+specfem::boundary_conditions::impl_apply_boundary_conditions(
     const stacey_type &, const PointBoundaryType &boundary,
     const PointPropertyType &property, const PointFieldType &field,
     PointAccelerationType &acceleration) {
@@ -354,7 +354,7 @@ specfem::domain::impl::boundary_conditions::impl_apply_boundary_conditions(
 template <typename PointBoundaryType, typename PointPropertyType,
           typename PointMassMatrixType>
 KOKKOS_FORCEINLINE_FUNCTION void
-specfem::domain::impl::boundary_conditions::impl_compute_mass_matrix_terms(
+specfem::boundary_conditions::impl_compute_mass_matrix_terms(
     const stacey_type &, const type_real dt, const PointBoundaryType &boundary,
     const PointPropertyType &property, PointMassMatrixType &mass_matrix) {
 

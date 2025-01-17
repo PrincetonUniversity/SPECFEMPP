@@ -1,7 +1,7 @@
-#include "domain/impl/boundary_conditions/composite_stacey_dirichlet/composite_stacey_dirichlet.hpp"
-#include "domain/impl/boundary_conditions/composite_stacey_dirichlet/composite_stacey_dirichlet.tpp"
-#include "domain/impl/boundary_conditions/stacey/stacey.hpp"
-#include "domain/impl/boundary_conditions/stacey/stacey.tpp"
+#include "boundary_conditions/composite_stacey_dirichlet/composite_stacey_dirichlet.hpp"
+#include "boundary_conditions/composite_stacey_dirichlet/composite_stacey_dirichlet.tpp"
+#include "boundary_conditions/stacey/stacey.hpp"
+#include "boundary_conditions/stacey/stacey.tpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/material_definitions.hpp"
 #include "enumerations/medium.hpp"
@@ -47,7 +47,7 @@ using boundary_type =
                             BOUNDARY_TAG)                                      \
   /** Template instantiation for SIMD=false */                                 \
   template KOKKOS_FUNCTION void                                                \
-  specfem::domain::impl::boundary_conditions::impl_compute_mass_matrix_terms<  \
+  specfem::boundary_conditions::impl_compute_mass_matrix_terms<                \
       PointBoundaryType<GET_TAG(DIMENSION_TAG), GET_TAG(BOUNDARY_TAG), false>, \
       PointPropertyType<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),           \
                         GET_TAG(PROPERTY_TAG), false>,                         \
@@ -63,7 +63,7 @@ using boundary_type =
                                                                                \
   /** Template instantiation for SIMD=true */                                  \
   template KOKKOS_FUNCTION void                                                \
-  specfem::domain::impl::boundary_conditions::impl_compute_mass_matrix_terms<  \
+  specfem::boundary_conditions::impl_compute_mass_matrix_terms<                \
       PointBoundaryType<GET_TAG(DIMENSION_TAG), GET_TAG(BOUNDARY_TAG), true>,  \
       PointPropertyType<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),           \
                         GET_TAG(PROPERTY_TAG), true>,                          \
@@ -89,7 +89,7 @@ CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
                             BOUNDARY_TAG)                                      \
   /** Template instantiation for SIMD=false */                                 \
   template KOKKOS_FUNCTION void                                                \
-  specfem::domain::impl::boundary_conditions::impl_apply_boundary_conditions<  \
+  specfem::boundary_conditions::impl_apply_boundary_conditions<                \
       PointBoundaryType<GET_TAG(DIMENSION_TAG), GET_TAG(BOUNDARY_TAG), false>, \
       PointPropertyType<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),           \
                         GET_TAG(PROPERTY_TAG), false>,                         \
@@ -108,7 +108,7 @@ CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
                                                                                \
   /** Template instantiation for SIMD=true */                                  \
   template KOKKOS_FUNCTION void                                                \
-  specfem::domain::impl::boundary_conditions::impl_apply_boundary_conditions<  \
+  specfem::boundary_conditions::impl_apply_boundary_conditions<                \
       PointBoundaryType<GET_TAG(DIMENSION_TAG), GET_TAG(BOUNDARY_TAG), true>,  \
       PointPropertyType<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),           \
                         GET_TAG(PROPERTY_TAG), true>,                          \

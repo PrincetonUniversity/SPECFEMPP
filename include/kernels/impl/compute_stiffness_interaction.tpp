@@ -5,7 +5,7 @@
 #include "chunk_element/field.hpp"
 #include "compute/assembly/assembly.hpp"
 #include "datatypes/simd.hpp"
-#include "domain/impl/boundary_conditions/boundary_conditions.hpp"
+#include "boundary_conditions/boundary_conditions.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
@@ -195,7 +195,7 @@ void specfem::kernels::impl::compute_stiffness_interaction(
                 specfem::compute::load_on_device(index, boundaries,
                                                  point_boundary);
 
-                specfem::domain::impl::boundary_conditions::
+                specfem::boundary_conditions::
                     apply_boundary_conditions(point_boundary, point_property,
                                               velocity, acceleration);
 
