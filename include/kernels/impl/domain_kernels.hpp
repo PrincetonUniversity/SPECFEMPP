@@ -2,11 +2,13 @@
 #define _SPECFEM_KERNELS_IMPL_DOMAIN_KERNELS_HPP
 
 #include "compute_mass_matrix.hpp"
+#include "divide_mass_matrix.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/material_definitions.hpp"
 #include "enumerations/medium.hpp"
 #include "enumerations/simulation.hpp"
 #include "enumerations/specfem_enums.hpp"
+#include "invert_mass_matrix.hpp"
 #include "kernels.hpp"
 
 namespace specfem {
@@ -81,7 +83,8 @@ public:
 #define CALL_DIVIDE_MASS_MATRIX_FUNCTION(DIMENSION_TAG, MEDIUM_TAG)            \
   if constexpr (dimension == GET_TAG(DIMENSION_TAG) &&                         \
                 medium == GET_TAG(MEDIUM_TAG)) {                               \
-    divide_mass_matrix<GET_TAG(MEDIUM_TAG)>();                                 \
+    impl::divide_mass_matrix<dimension, wavefield, GET_TAG(MEDIUM_TAG)>(       \
+        assembly);                                                             \
   }
 
     CALL_MACRO_FOR_ALL_MEDIUM_TAGS(CALL_DIVIDE_MASS_MATRIX_FUNCTION,
@@ -113,7 +116,8 @@ public:
 
 #define CALL_INITIALIZE_FUNCTION(DIMENSION_TAG, MEDIUM_TAG)                    \
   if constexpr (dimension == GET_TAG(DIMENSION_TAG)) {                         \
-    invert_mass_matrix<GET_TAG(MEDIUM_TAG)>(dt);                               \
+    impl::invert_mass_matrix<dimension, wavefield, GET_TAG(MEDIUM_TAG)>(       \
+        assembly);                                                             \
   }
 
     CALL_MACRO_FOR_ALL_MEDIUM_TAGS(CALL_INITIALIZE_FUNCTION,
@@ -179,10 +183,11 @@ private:
             specfem::element::property_tag PropertyTag>
   void compute_seismograms(const int &isig_step);
 
-  template <specfem::element::medium_tag MediumTag> void divide_mass_matrix();
+  // template <specfem::element::medium_tag MediumTag> void
+  // divide_mass_matrix();
 
-  template <specfem::element::medium_tag MediumTag>
-  void invert_mass_matrix(const type_real &dt);
+  // template <specfem::element::medium_tag MediumTag>
+  // void invert_mass_matrix(const type_real &dt);
 
   // template <specfem::element::medium_tag MediumTag,
   //           specfem::element::property_tag PropertyTag,
