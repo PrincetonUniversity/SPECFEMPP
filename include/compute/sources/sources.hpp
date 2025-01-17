@@ -26,8 +26,21 @@ private:
 
   using WavefieldTagViewType =
       Kokkos::View<specfem::wavefield::simulation_field *,
-                   Kokkos::DefaultExecutionSpace>; ///< Underlying view type to
-                                                   ///< store wavefield tags
+                   Kokkos::DefaultExecutionSpace>; ///< Underlying view type
+                                                   ///< to store wavefield
+                                                   ///< tags
+
+  using BoundaryTagViewType =
+      Kokkos::View<specfem::element::boundary_tag *,
+                   Kokkos::DefaultExecutionSpace>; ///< Underlying view type
+                                                   ///< to store boundary
+                                                   ///< tags
+
+  using PropertyTagViewType =
+      Kokkos::View<specfem::element::property_tag *,
+                   Kokkos::DefaultExecutionSpace>; ///< Underlying view type
+                                                   ///< to store property
+                                                   ///< tags
 
 public:
   /**
@@ -71,6 +84,8 @@ public:
    */
   Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> get_elements_on_host(
       const specfem::element::medium_tag medium,
+      const specfem::element::property_tag property,
+      const specfem::element::boundary_tag boundary,
       const specfem::wavefield::simulation_field wavefield) const;
 
   /**
@@ -84,6 +99,8 @@ public:
    */
   Kokkos::View<int *, Kokkos::DefaultExecutionSpace> get_elements_on_device(
       const specfem::element::medium_tag medium,
+      const specfem::element::property_tag property,
+      const specfem::element::boundary_tag boundary,
       const specfem::wavefield::simulation_field wavefield) const;
 
   /**
@@ -111,7 +128,15 @@ private:
   WavefieldTagViewType wavefield_types; ///< Wavefield on which source is
                                         ///< applied
   WavefieldTagViewType::HostMirror h_wavefield_types; ///< Host mirror of
-                                                      ///< wavefield_type
+                                                      ///< wavefield_types
+  BoundaryTagViewType boundary_types; ///< Boundary type for every spectral
+                                      ///< element
+  BoundaryTagViewType::HostMirror h_boundary_types; ///< Host mirror of
+                                                    ///< boundary_types
+  PropertyTagViewType property_types; ///< Property type for every spectral
+                                      ///< element
+  PropertyTagViewType::HostMirror h_property_types; ///< Host mirror of
+                                                    ///< property_types
 
 #define SOURCE_MEDIUM_DECLARATION(DIMENSION_TAG, MEDIUM_TAG)                   \
   specfem::compute::impl::source_medium<GET_TAG(DIMENSION_TAG),                \
