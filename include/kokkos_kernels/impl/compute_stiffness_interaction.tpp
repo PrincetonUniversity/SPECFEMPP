@@ -1,11 +1,13 @@
 #pragma once
 
-#include "algorithms/gradient.hpp"
 #include "algorithms/divergence.hpp"
+#include "algorithms/gradient.hpp"
+#include "boundary_conditions/boundary_conditions.hpp"
 #include "chunk_element/field.hpp"
+#include "chunk_element/stress_integrand.hpp"
 #include "compute/assembly/assembly.hpp"
 #include "datatypes/simd.hpp"
-#include "boundary_conditions/boundary_conditions.hpp"
+#include "element/quadrature.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
@@ -13,14 +15,11 @@
 #include "parallel_configuration/chunk_config.hpp"
 #include "point/boundary.hpp"
 #include "point/field.hpp"
-#include "point/properties.hpp"
-#include "point/sources.hpp"
 #include "point/field_derivatives.hpp"
 #include "point/partial_derivatives.hpp"
+#include "point/properties.hpp"
+#include "point/sources.hpp"
 #include "policies/chunk.hpp"
-#include "element/quadrature.hpp"
-#include "chunk_element/field.hpp"
-#include "chunk_element/stress_integrand.hpp"
 #include <Kokkos_Core.hpp>
 
 template <specfem::dimension::type DimensionType,
@@ -195,15 +194,14 @@ void specfem::kokkos_kernels::impl::compute_stiffness_interaction(
                 specfem::compute::load_on_device(index, boundaries,
                                                  point_boundary);
 
-                specfem::boundary_conditions::
-                    apply_boundary_conditions(point_boundary, point_property,
-                                              velocity, acceleration);
+                specfem::boundary_conditions::apply_boundary_conditions(
+                    point_boundary, point_property, velocity, acceleration);
 
                 // Store forward boundary values for reconstruction during
                 // adjoint simulations. The function does nothing if the
                 // boundary tag is not stacey
-                if constexpr (wavefield ==
-                              specfem::wavefield::simulation_field::forward) {
+                if (wavefield ==
+                    specfem::wavefield::simulation_field::forward) {
                   specfem::compute::store_on_device(istep, index, acceleration,
                                                     boundary_values);
                 }
