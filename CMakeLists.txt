@@ -496,6 +496,7 @@ target_link_libraries(
 
 add_library(
         kernels
+        src/kernels/impl/compute_mass_matrix.cpp
         src/kernels/impl/compute_material_derivatives.cpp
         src/kernels/frechet_kernels.cpp
 )
@@ -504,6 +505,7 @@ target_link_libraries(
         kernels
         Kokkos::kokkos
         compute
+        domain
 )
 
 add_library(
