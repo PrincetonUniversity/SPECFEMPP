@@ -325,18 +325,6 @@ target_link_libraries(
         point
 )
 
-# add_library(
-#         utilities
-#         src/utilities/utilities.cpp
-# )
-
-# target_link_libraries(
-#         utilities
-#         jacobian
-#         Kokkos::kokkos
-#         specfem_mpi
-# )
-
 add_library(
         read_seismogram
         src/IO/seismogram/reader.cpp
@@ -467,19 +455,6 @@ target_link_libraries(
         ${BOOST_LIBS}
 )
 
-# add_library(
-#         domain
-#         src/domain/impl/elements/kernel.cpp
-#         src/domain/impl/kernels.cpp
-#         src/domain/domain.cpp
-# )
-
-# target_link_libraries(
-#         domain
-#         Kokkos::kokkos
-#         enumerations
-# )
-
 add_library(
         medium
         src/medium/compute_mass_matrix.cpp
@@ -521,7 +496,6 @@ target_link_libraries(
         Kokkos::kokkos
         compute
         boundary_conditions
-        # domain
 )
 
 add_library(
@@ -546,7 +520,6 @@ target_link_libraries(
         solver
         Kokkos::kokkos
         timescheme
-        # domain
         kokkos_kernels
         medium
 )
@@ -620,7 +593,6 @@ target_link_libraries(
         writer
         reader
         kokkos_kernels
-        # domain
         medium
         solver
         ${BOOST_LIBS}
@@ -646,7 +618,6 @@ target_link_libraries(
         writer
         plotter
         reader
-        # domain
         medium
         coupled_interface
         kokkos_kernels
@@ -711,7 +682,6 @@ if (SPECFEMPP_BINDING_PYTHON)
         writer
         plotter
         reader
-        # domain
         medium
         coupled_interface
         kokkos_kernels

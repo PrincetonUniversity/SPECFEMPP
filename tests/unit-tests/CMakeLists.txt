@@ -309,7 +309,6 @@ target_link_libraries(
   compare_arrays
   point
   algorithms
-  # domain
   IO
   coupled_interface
   plotter
@@ -338,7 +337,6 @@ target_link_libraries(
   algorithms
   coupled_interface
   kokkos_kernels
-  # domain
   solver
   plotter
   -lpthread -lm
