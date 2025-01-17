@@ -51,4 +51,4 @@ parameters:
   ## databases
   databases:
     mesh-database: "@CMAKE_SOURCE_DIR@/examples/solid-solid-interface/OUTPUT_FILES/database.bin"
-    source-file: "@CMAKE_SOURCE_DIR@/examples/solid-solid-interface/sources.yaml"
+    sources: "@CMAKE_SOURCE_DIR@/examples/solid-solid-interface/sources.yaml"

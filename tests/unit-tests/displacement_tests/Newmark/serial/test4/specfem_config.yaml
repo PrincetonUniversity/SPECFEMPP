@@ -51,7 +51,7 @@ parameters:
   ## databases
   databases:
     mesh-database: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test4/database.bin"
-    source-file: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test4/sources.yaml"
+    sources: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test4/sources.yaml"
 
   seismogram:
     seismogram-format: ascii

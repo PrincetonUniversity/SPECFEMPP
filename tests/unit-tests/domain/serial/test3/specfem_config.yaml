@@ -41,4 +41,4 @@ parameters:
 
   databases:
     mesh-database: "../../../tests/unit-tests/domain/serial/test3/database.bin"
-    source-file: "../../../tests/unit-tests/domain/serial/test3/source.yaml"
+    sources: "../../../tests/unit-tests/domain/serial/test3/source.yaml"

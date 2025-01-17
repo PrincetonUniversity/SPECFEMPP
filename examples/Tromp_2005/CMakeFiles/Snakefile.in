@@ -56,7 +56,7 @@ rule forward_configuration:
 
             ## Add forward node to the simulation setup
         config["parameters"]["simulation-setup"].update(forward)
-        config["parameters"]["databases"]["source-file"] = "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/forward_source.yaml"
+        config["parameters"]["databases"]["sources"] = "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/forward_source.yaml"
         config["parameters"]["receivers"]["stations-file"] = "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/OUTPUT_FILES/STATIONS"
         config["parameters"]["databases"]["mesh-database"] = "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/OUTPUT_FILES/database.bin"
 
@@ -158,7 +158,7 @@ rule adjoint_configuration:
 
             ## Add adjoint node to the simulation setup
         config["parameters"]["simulation-setup"].update(adjoint)
-        config["parameters"]["databases"]["source-file"] = "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/adjoint_source.yaml"
+        config["parameters"]["databases"]["sources"] = "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/adjoint_source.yaml"
         config["parameters"]["databases"]["mesh-database"] = "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/OUTPUT_FILES/database.bin"
 
         with open(output.config, "w") as f:
