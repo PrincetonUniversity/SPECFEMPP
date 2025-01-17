@@ -3,6 +3,8 @@
 
 #include "compute_mass_matrix.hpp"
 #include "compute_seismogram.hpp"
+#include "compute_source_interaction.hpp"
+#include "compute_stiffness_interaction.hpp"
 #include "divide_mass_matrix.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/material_definitions.hpp"
@@ -49,8 +51,9 @@ public:
                                  BOUNDARY_TAG)                                 \
   if constexpr (dimension == GET_TAG(DIMENSION_TAG) &&                         \
                 medium == GET_TAG(MEDIUM_TAG)) {                               \
-    compute_source_interaction<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG),     \
-                               GET_TAG(BOUNDARY_TAG)>(istep);                  \
+    impl::compute_source_interaction<                                          \
+        dimension, wavefield, ngll, GET_TAG(MEDIUM_TAG),                       \
+        GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG)>(assembly, istep);        \
   }
 
     CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
@@ -67,8 +70,9 @@ public:
                                     BOUNDARY_TAG)                              \
   if constexpr (dimension == GET_TAG(DIMENSION_TAG) &&                         \
                 medium == GET_TAG(MEDIUM_TAG)) {                               \
-    compute_stiffness_interaction<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG),  \
-                                  GET_TAG(BOUNDARY_TAG)>(istep);               \
+    impl::compute_stiffness_interaction<                                       \
+        dimension, wavefield, ngll, GET_TAG(MEDIUM_TAG),                       \
+        GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG)>(assembly, istep);        \
   }
 
     CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
@@ -170,15 +174,15 @@ private:
   //                                 qp_type>
   //     acoustic_kernels;
 
-  template <specfem::element::medium_tag MediumTag,
-            specfem::element::property_tag PropertyTag,
-            specfem::element::boundary_tag BoundaryTag>
-  void compute_stiffness_interaction(const int istep);
+  // template <specfem::element::medium_tag MediumTag,
+  //           specfem::element::property_tag PropertyTag,
+  //           specfem::element::boundary_tag BoundaryTag>
+  // void compute_stiffness_interaction(const int istep);
 
-  template <specfem::element::medium_tag MediumTag,
-            specfem::element::property_tag PropertyTag,
-            specfem::element::boundary_tag BoundaryTag>
-  void compute_source_interaction(const int istep);
+  // template <specfem::element::medium_tag MediumTag,
+  //           specfem::element::property_tag PropertyTag,
+  //           specfem::element::boundary_tag BoundaryTag>
+  // void compute_source_interaction(const int istep);
 
   // template <specfem::element::medium_tag MediumTag,
   //           specfem::element::property_tag PropertyTag>
