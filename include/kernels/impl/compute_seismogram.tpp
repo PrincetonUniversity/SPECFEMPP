@@ -1,16 +1,17 @@
 #pragma once
 
+#include "algorithms/interpolate.hpp"
+#include "chunk_element/field.hpp"
 #include "compute/assembly/assembly.hpp"
+#include "compute_seismogram.hpp"
+#include "datatypes/simd.hpp"
+#include "element/quadrature.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
-#include "datatypes/simd.hpp"
-#include "element/quadrature.hpp"
+#include "medium/compute_wavefield.hpp"
 #include "parallel_configuration/chunk_config.hpp"
 #include "policies/chunk.hpp"
-#include "chunk_element/field.hpp"
-#include "medium/compute_wavefield.hpp"
-#include "algorithms/interpolate.hpp"
 #include <Kokkos_Core.hpp>
 
 template <specfem::dimension::type DimensionType,

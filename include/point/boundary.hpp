@@ -212,10 +212,13 @@ public:
            DimensionType, UseSIMD> &boundary);
   ///@}
 
-  datatype edge_weight = 0.0; ///< Integration weight associated with the edge
-                              ///< at the quadrature point
-  NormalViewType edge_normal = { 0.0, 0.0 }; ///< Normal vector to the edge at
-                                             ///< the quadrature point
+  datatype edge_weight =
+      static_cast<type_real>(0.0); ///< Integration weight associated with the
+                                   ///< edge at the quadrature point
+  NormalViewType edge_normal = {
+    static_cast<type_real>(0.0), static_cast<type_real>(0.0)
+  }; ///< Normal vector to the edge at
+     ///< the quadrature point
 };
 
 /**
