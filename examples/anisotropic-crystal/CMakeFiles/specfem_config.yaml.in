@@ -51,4 +51,5 @@ parameters:
   ## databases
   databases:
     mesh-database: "@CMAKE_SOURCE_DIR@/examples/anisotropic-crystal/OUTPUT_FILES/database.bin"
-    sources: "@CMAKE_SOURCE_DIR@/examples/anisotropic-crystal/sources.yaml"
+
+  sources: "@CMAKE_SOURCE_DIR@/examples/anisotropic-crystal/sources.yaml"

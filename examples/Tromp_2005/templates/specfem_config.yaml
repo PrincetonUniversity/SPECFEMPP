@@ -37,4 +37,6 @@ parameters:
 
   databases:
     mesh-database: placeholder/for/path/to/database.bin
-    sources: placeholder/for/path/to/source.yaml
+
+  ## sources
+  sources: placeholder/for/path/to/source.yaml

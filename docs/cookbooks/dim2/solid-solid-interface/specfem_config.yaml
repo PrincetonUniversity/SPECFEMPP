@@ -51,4 +51,6 @@ parameters:
   ## databases
   databases:
     mesh-database: OUTPUT_FILES/database.bin
-    sources: sources.yaml
+
+  ## sources
+  sources: sources.yaml

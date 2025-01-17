@@ -46,7 +46,7 @@ specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict,
   }
 
   // Get source info
-  if (const YAML::Node &source_node = n_databases["sources"]) {
+  if (const YAML::Node &source_node = runtime_config["sources"]) {
     this->sources =
         std::make_unique<specfem::runtime_configuration::sources>(source_node);
   } else {

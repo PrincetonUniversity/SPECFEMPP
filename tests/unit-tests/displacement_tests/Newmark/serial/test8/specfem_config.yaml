@@ -46,4 +46,5 @@ parameters:
   ## databases
   databases:
     mesh-database: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test8/database.bin"
-    sources: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test8/source.yaml"
+
+  sources: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test8/source.yaml"
