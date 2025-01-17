@@ -1,10 +1,10 @@
 #pragma once
 
+#include "IO/writer.hpp"
 #include "compute/interface.hpp"
 #include "constants.hpp"
 #include "receiver/interface.hpp"
 #include "specfem_setup.hpp"
-#include "IO/writer.hpp"
 #include <vector>
 
 namespace specfem {
@@ -27,8 +27,8 @@ public:
    * sampling (seismogram sampling frequency)
    */
   seismogram_writer(const specfem::enums::seismogram::format type,
-             const std::string output_folder, const type_real dt,
-             const type_real t0, const int nstep_between_samples)
+                    const std::string output_folder, const type_real dt,
+                    const type_real t0, const int nstep_between_samples)
       : type(type), output_folder(output_folder), dt(dt), t0(t0),
         nstep_between_samples(nstep_between_samples){};
   /**

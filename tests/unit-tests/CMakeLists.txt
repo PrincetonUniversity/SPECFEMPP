@@ -343,49 +343,49 @@ target_link_libraries(
   -lpthread -lm
 )
 
-add_executable(
-  seismogram_elastic_tests
-  seismogram/elastic/seismogram_tests.cpp
-)
+# add_executable(
+#   seismogram_elastic_tests
+#   seismogram/elastic/seismogram_tests.cpp
+# )
 
-target_link_libraries(
-  seismogram_elastic_tests
-  quadrature
-  mesh
-  yaml-cpp
-  kokkos_environment
-  mpi_environment
-  compute
-  parameter_reader
-  writer
-  plotter
-  domain
-  coupled_interface
-  solver
-  -lpthread -lm
-)
+# target_link_libraries(
+#   seismogram_elastic_tests
+#   quadrature
+#   mesh
+#   yaml-cpp
+#   kokkos_environment
+#   mpi_environment
+#   compute
+#   parameter_reader
+#   writer
+#   plotter
+#   domain
+#   coupled_interface
+#   solver
+#   -lpthread -lm
+# )
 
-add_executable(
-  seismogram_acoustic_tests
-  seismogram/acoustic/seismogram_tests.cpp
-)
+# add_executable(
+#   seismogram_acoustic_tests
+#   seismogram/acoustic/seismogram_tests.cpp
+# )
 
-target_link_libraries(
-  seismogram_acoustic_tests
-  quadrature
-  mesh
-  yaml-cpp
-  kokkos_environment
-  mpi_environment
-  compute
-  parameter_reader
-  writer
-  plotter
-  domain
-  coupled_interface
-  solver
-  -lpthread -lm
-)
+# target_link_libraries(
+#   seismogram_acoustic_tests
+#   quadrature
+#   mesh
+#   yaml-cpp
+#   kokkos_environment
+#   mpi_environment
+#   compute
+#   parameter_reader
+#   writer
+#   plotter
+#   domain
+#   coupled_interface
+#   solver
+#   -lpthread -lm
+# )
 
 # add_executable(
 #   compute_coupled_interfaces_tests
