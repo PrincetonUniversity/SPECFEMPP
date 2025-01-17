@@ -4,7 +4,7 @@
 #include "IO/interface.hpp"
 #include "compute/interface.hpp"
 #include "constants.hpp"
-#include "kokkos_kernels/kernels.hpp"
+#include "kokkos_kernels/domain_kernels.hpp"
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"
 #include "quadrature/interface.hpp"
