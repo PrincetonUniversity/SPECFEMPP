@@ -1,13 +1,14 @@
 #pragma once
 
+#include "algorithms/gradient.hpp"
 #include "chunk_element/field.hpp"
 #include "compute/assembly/assembly.hpp"
+#include "compute_material_derivatives.hpp"
+#include "medium/compute_frechet_derivatives.hpp"
 #include "parallel_configuration/chunk_config.hpp"
 #include "point/field.hpp"
 #include "point/field_derivatives.hpp"
 #include "policies/chunk.hpp"
-#include "algorithms/gradient.hpp"
-#include "medium/compute_frechet_derivatives.hpp"
 #include <Kokkos_Core.hpp>
 
 template <specfem::dimension::type DimensionType, int NGLL,
@@ -63,7 +64,7 @@ void specfem::kernels::impl::compute_material_derivatives(
   using ChunkPolicy = specfem::policy::element_chunk<ParallelConfig>;
 
   int scratch_size = 2 * ChunkElementFieldType::shmem_size() +
-                    ElementQuadratureType::shmem_size();
+                     ElementQuadratureType::shmem_size();
 
   ChunkPolicy chunk_policy(element_index, NGLL, NGLL);
 
