@@ -12,13 +12,13 @@ using qp8 = specfem::enums::element::quadrature::static_quadrature_points<8>;
 // Explcit template instantiation
 
 template class specfem::solver::time_marching<
-    specfem::simulation::type::forward, specfem::dimension::type::dim2, qp5>;
+    specfem::simulation::type::forward, specfem::dimension::type::dim2, 5>;
 
 template class specfem::solver::time_marching<
-    specfem::simulation::type::forward, specfem::dimension::type::dim2, qp8>;
+    specfem::simulation::type::forward, specfem::dimension::type::dim2, 8>;
 
 template class specfem::solver::time_marching<
-    specfem::simulation::type::combined, specfem::dimension::type::dim2, qp5>;
+    specfem::simulation::type::combined, specfem::dimension::type::dim2, 5>;
 
 template class specfem::solver::time_marching<
-    specfem::simulation::type::combined, specfem::dimension::type::dim2, qp8>;
+    specfem::simulation::type::combined, specfem::dimension::type::dim2, 8>;

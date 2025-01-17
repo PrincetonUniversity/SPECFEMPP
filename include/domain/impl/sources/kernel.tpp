@@ -22,7 +22,7 @@ specfem::domain::impl::kernels::source_kernel<
     : sources(assembly.sources), properties(assembly.properties),
       field(assembly.fields.get_simulation_field<WavefieldType>()) {
 
-  this->elements = sources.get_elements_on_device(medium_tag, wavefield_tag);
+  this->elements = sources.get_elements_on_device(medium_tag, PropertyTag, specfem::element::boundary_tag::none, wavefield_tag);
   return;
 }
 

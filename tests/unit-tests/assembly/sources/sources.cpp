@@ -10,6 +10,8 @@
 
 template <specfem::dimension::type Dimension,
           specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag,
+          specfem::element::boundary_tag BoundaryTag,
           specfem::wavefield::simulation_field WavefieldType>
 void check_store(specfem::compute::assembly &assembly) {
 
@@ -17,8 +19,8 @@ void check_store(specfem::compute::assembly &assembly) {
   const int ngllz = assembly.mesh.ngllz;
   const int ngllx = assembly.mesh.ngllx;
 
-  const auto elements =
-      assembly.sources.get_elements_on_device(MediumTag, WavefieldType);
+  const auto elements = assembly.sources.get_elements_on_device(
+      MediumTag, PropertyTag, BoundaryTag, WavefieldType);
 
   const int nelements = elements.size();
 
@@ -64,6 +66,8 @@ void check_store(specfem::compute::assembly &assembly) {
 
 template <specfem::dimension::type Dimension,
           specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag,
+          specfem::element::boundary_tag BoundaryTag,
           specfem::wavefield::simulation_field WavefieldType>
 void check_load(specfem::compute::assembly &assembly) {
 
@@ -71,8 +75,8 @@ void check_load(specfem::compute::assembly &assembly) {
   const int ngllz = assembly.mesh.ngllz;
   const int ngllx = assembly.mesh.ngllx;
 
-  const auto elements =
-      sources.get_elements_on_device(MediumTag, WavefieldType);
+  const auto elements = sources.get_elements_on_device(
+      MediumTag, PropertyTag, BoundaryTag, WavefieldType);
 
   const int nelements = elements.size();
 
@@ -249,15 +253,20 @@ void test_assembly_source_construction(
 
 void test_sources(specfem::compute::assembly &assembly) {
 
-#define TEST_STORE_LOAD(Dimension, MediumTag)                                  \
-  check_store<GET_TAG(Dimension), GET_TAG(MediumTag),                          \
+#define TEST_STORE_LOAD(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, BOUNDARY_TAG) \
+  check_store<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),                     \
+              GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG),                    \
               specfem::wavefield::simulation_field::forward>(assembly);        \
-  check_load<GET_TAG(Dimension), GET_TAG(MediumTag),                           \
-             specfem::wavefield::simulation_field::forward>(assembly);
+  check_store<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),                     \
+              GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG),                    \
+              specfem::wavefield::simulation_field::forward>(assembly);
 
-  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
+  CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
       TEST_STORE_LOAD,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC))
+      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
+          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC) WHERE(
+              BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
+              BOUNDARY_TAG_STACEY, BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
 
 #undef TEST_STORE_LOAD
 }

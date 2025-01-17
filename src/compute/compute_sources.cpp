@@ -56,6 +56,10 @@ specfem::compute::sources::sources(
           Kokkos::create_mirror_view(source_domain_index_mapping)),
       medium_types("specfem::sources::medium_types", nspec),
       h_medium_types(Kokkos::create_mirror_view(medium_types)),
+      property_types("specfem::sources::property_types", nspec),
+      h_property_types(Kokkos::create_mirror_view(property_types)),
+      boundary_types("specfem::sources::boundary_types", nspec),
+      h_boundary_types(Kokkos::create_mirror_view(boundary_types)),
       wavefield_types("specfem::sources::wavefield_types", nspec),
       h_wavefield_types(Kokkos::create_mirror_view(wavefield_types)) {
 
@@ -112,7 +116,13 @@ specfem::compute::sources::sources(
             "Multiple sources are detected in the same element");              \
       }                                                                        \
       h_source_domain_index_mapping(lcoord.ispec) = isource;                   \
+      assert(element_types.get_medium_tag(lcoord.ispec) ==                     \
+             GET_TAG(MEDIUM_TAG));                                             \
       h_medium_types(lcoord.ispec) = GET_TAG(MEDIUM_TAG);                      \
+      h_property_types(lcoord.ispec) =                                         \
+          element_types.get_property_tag(lcoord.ispec);                        \
+      h_boundary_types(lcoord.ispec) =                                         \
+          element_types.get_boundary_tag(lcoord.ispec);                        \
       h_wavefield_types(lcoord.ispec) = source->get_wavefield_type();          \
     }                                                                          \
     this->CREATE_VARIABLE_NAME(source, GET_NAME(DIMENSION_TAG),                \
@@ -128,18 +138,28 @@ specfem::compute::sources::sources(
       WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC))
 
 #undef ASSIGN_MEMBERS
+
+  Kokkos::deep_copy(source_domain_index_mapping, h_source_domain_index_mapping);
+  Kokkos::deep_copy(medium_types, h_medium_types);
+  Kokkos::deep_copy(wavefield_types, h_wavefield_types);
+  Kokkos::deep_copy(property_types, h_property_types);
+  Kokkos::deep_copy(boundary_types, h_boundary_types);
 }
 
 Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
 specfem::compute::sources::get_elements_on_host(
     const specfem::element::medium_tag medium,
+    const specfem::element::property_tag property,
+    const specfem::element::boundary_tag boundary,
     const specfem::wavefield::simulation_field wavefield) const {
 
   int nsources = 0;
   for (int ispec = 0; ispec < nspec; ispec++) {
     if (h_source_domain_index_mapping(ispec) >= 0) {
-      if ((h_medium_types(ispec) == medium) &&
-          (h_wavefield_types(ispec) == wavefield)) {
+      if ((medium_types(ispec) == medium) &&
+          (property_types(ispec) == property) &&
+          (boundary_types(ispec) == boundary) &&
+          (wavefield_types(ispec) == wavefield)) {
         nsources++;
       }
     }
@@ -151,8 +171,10 @@ specfem::compute::sources::get_elements_on_host(
   int isource = 0;
   for (int ispec = 0; ispec < nspec; ispec++) {
     if (h_source_domain_index_mapping(ispec) >= 0) {
-      if ((h_medium_types(ispec) == medium) &&
-          (h_wavefield_types(ispec) == wavefield)) {
+      if ((medium_types(ispec) == medium) &&
+          (property_types(ispec) == property) &&
+          (boundary_types(ispec) == boundary) &&
+          (wavefield_types(ispec) == wavefield)) {
         indices(isource) = ispec;
         isource++;
       }
@@ -165,9 +187,11 @@ specfem::compute::sources::get_elements_on_host(
 Kokkos::View<int *, Kokkos::DefaultExecutionSpace>
 specfem::compute::sources::get_elements_on_device(
     const specfem::element::medium_tag medium,
+    const specfem::element::property_tag property,
+    const specfem::element::boundary_tag boundary,
     const specfem::wavefield::simulation_field wavefield) const {
 
-  auto h_indices = get_elements_on_host(medium, wavefield);
+  auto h_indices = get_elements_on_host(medium, property, boundary, wavefield);
 
   Kokkos::View<int *, Kokkos::DefaultExecutionSpace> indices(
       "specfem::compute::sources::get_sources_on_device", h_indices.extent(0));
