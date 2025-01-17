@@ -18,7 +18,8 @@ specfem::compute::receivers::receivers(
     const specfem::compute::mesh &mesh,
     const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
     const specfem::compute::element_types &element_types)
-    : lagrange_interpolant("specfem::compute::receivers::lagrange_interpolant",
+    : nspec(nspec),
+      lagrange_interpolant("specfem::compute::receivers::lagrange_interpolant",
                            receivers.size(), mesh.ngllz, mesh.ngllx),
       h_lagrange_interpolant(Kokkos::create_mirror_view(lagrange_interpolant)),
       elements("specfem::compute::receivers::elements", receivers.size()),

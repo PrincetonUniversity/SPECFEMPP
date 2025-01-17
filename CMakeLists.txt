@@ -500,6 +500,8 @@ add_library(
         src/kernels/impl/invert_mass_matrix.cpp
         src/kernels/impl/divide_mass_matrix.cpp
         src/kernels/impl/compute_seismogram.cpp
+        src/kernels/impl/compute_source_interaction.cpp
+        src/kernels/impl/compute_stiffness_interaction.cpp
         src/kernels/impl/compute_material_derivatives.cpp
         src/kernels/frechet_kernels.cpp
 )
