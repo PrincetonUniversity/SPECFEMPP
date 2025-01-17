@@ -5,7 +5,6 @@
 #include "enumerations/simulation.hpp"
 #include "enumerations/wavefield.hpp"
 #include "kernels/frechet_kernels.hpp"
-#include "kernels/impl/domain_kernels.tpp"
 #include "kernels/kernels.hpp"
 #include "plotter/plotter.hpp"
 #include "solver.hpp"
