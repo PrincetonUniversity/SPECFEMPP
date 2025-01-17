@@ -37,7 +37,7 @@ parameters:
             directory: "@CMAKE_SOURCE_DIR@/examples/anisotropic-crystal/OUTPUT_FILES/results"
 
   receivers:
-    stations-file: "@CMAKE_SOURCE_DIR@/examples/anisotropic-crystal/OUTPUT_FILES/STATIONS"
+    stations: "@CMAKE_SOURCE_DIR@/examples/anisotropic-crystal/OUTPUT_FILES/STATIONS"
     angle: 0.0
     seismogram-type:
       - displacement

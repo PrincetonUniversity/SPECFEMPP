@@ -16,7 +16,7 @@ Receivers section defines receiver information required to calculate seismograms
 
 **documentation** : receiver information required to calculate seismograms.
 
-**Parameter Name** : ``receivers.stations-file``
+**Parameter Name** : ``receivers.stationse``
 ******************************************************
 
 **default value** : None
@@ -35,7 +35,7 @@ Receivers section defines receiver information required to calculate seismograms
 **documentation** : Angle to rotate components at receivers
 
 **Parameter Name** : ``receivers.seismogram-type``
-******************************************************
+**************************************************
 
 **default value** : None
 
@@ -69,7 +69,7 @@ Receivers section defines receiver information required to calculate seismograms
         - displacement
 
 **Parameter Name** : ``receivers.nstep_between_samples``
-*********************************************************
+********************************************************
 
 **default value** : None
 
@@ -82,7 +82,7 @@ Receivers section defines receiver information required to calculate seismograms
     .. code-block:: yaml
 
         receivers:
-            stations-file: /path/to/stations_file
+            stations: /path/to/stations_file
             angle: 0.0
             seismogram-type:
                 - velocity
