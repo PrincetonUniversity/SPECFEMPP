@@ -36,7 +36,7 @@ parameters:
                       directory: OUTPUT_FILES/seismograms
 
   receivers:
-      stations-file: OUTPUT_FILES/STATIONS
+      stations: OUTPUT_FILES/STATIONS
       angle: 0.0
       seismogram-type:
           - displacement

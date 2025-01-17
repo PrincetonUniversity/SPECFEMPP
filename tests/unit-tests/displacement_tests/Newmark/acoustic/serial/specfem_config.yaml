@@ -28,7 +28,7 @@ parameters:
           nstep: 100
 
   receivers:
-    stations-file: "../DATA/STATIONS"
+    stations: "../DATA/STATIONS"
     angle: 0.0
     seismogram-type:
       - displacement

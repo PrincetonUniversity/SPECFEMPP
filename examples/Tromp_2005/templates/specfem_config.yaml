@@ -25,7 +25,7 @@ parameters:
           t0: 8.0
 
   receivers:
-    stations-file: placeholder/for/path/to/STATIONS
+    stations: placeholder/for/path/to/STATIONS
     angle: 0.0
     seismogram-type:
       - displacement
