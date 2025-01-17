@@ -6,8 +6,6 @@
 #include <Kokkos_SIMD.hpp>
 
 namespace specfem {
-namespace domain {
-namespace impl {
 namespace boundary_conditions {
 
 using acoustic_free_surface_type = std::integral_constant<
@@ -85,6 +83,4 @@ KOKKOS_FORCEINLINE_FUNCTION void impl_compute_mass_matrix_terms(
 };
 
 } // namespace boundary_conditions
-} // namespace impl
-} // namespace domain
 } // namespace specfem

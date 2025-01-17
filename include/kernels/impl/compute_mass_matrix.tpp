@@ -2,7 +2,7 @@
 
 #include "compute/assembly/assembly.hpp"
 #include "datatypes/simd.hpp"
-#include "domain/impl/boundary_conditions/boundary_conditions.hpp"
+#include "boundary_conditions/boundary_conditions.hpp"
 #include "element/quadrature.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
@@ -126,7 +126,7 @@ void specfem::kernels::impl::compute_mass_matrix(
                 specfem::compute::load_on_device(index, boundaries,
                                                  point_boundary);
 
-                specfem::domain::impl::boundary_conditions::
+                specfem::boundary_conditions::
                     compute_mass_matrix_terms(dt, point_boundary,
                                               point_property, mass_matrix);
 
