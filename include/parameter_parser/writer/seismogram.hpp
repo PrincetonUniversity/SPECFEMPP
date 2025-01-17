@@ -1,9 +1,9 @@
 #ifndef _PARAMETER_SEISMOGRAM_HPP
 #define _PARAMETER_SEISMOGRAM_HPP
 
+#include "IO/seismogram/writer.hpp"
 #include "receiver/interface.hpp"
 #include "specfem_setup.hpp"
-#include "IO/seismogram/writer.hpp"
 #include "yaml-cpp/yaml.h"
 #include <memory>
 #include <tuple>
