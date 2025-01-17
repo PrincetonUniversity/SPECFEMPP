@@ -6,7 +6,7 @@
 #include "enumerations/wavefield.hpp"
 
 namespace specfem {
-namespace kernels {
+namespace kokkos_kernels {
 namespace impl {
 
 template <specfem::dimension::type DimensionType,
@@ -14,8 +14,8 @@ template <specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag>
-void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
-                                   const int &istep);
-}
-} // namespace kernels
+void compute_mass_matrix(const type_real &dt,
+                         const specfem::compute::assembly &assembly);
+} // namespace impl
+} // namespace kokkos_kernels
 } // namespace specfem

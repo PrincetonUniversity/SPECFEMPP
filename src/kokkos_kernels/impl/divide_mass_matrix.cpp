@@ -1,14 +1,14 @@
-#include "kernels/impl/invert_mass_matrix.hpp"
-#include "kernels/impl/invert_mass_matrix.tpp"
+#include "kokkos_kernels/impl/divide_mass_matrix.hpp"
+#include "kokkos_kernels/impl/divide_mass_matrix.tpp"
 
 #define INSTANTIATION_MACRO(DIMENSION_TAG, MEDIUM_TAG)                         \
-  template void specfem::kernels::impl::invert_mass_matrix<                    \
+  template void specfem::kokkos_kernels::impl::divide_mass_matrix<             \
       GET_TAG(DIMENSION_TAG), specfem::wavefield::simulation_field::forward,   \
       GET_TAG(MEDIUM_TAG)>(const specfem::compute::assembly &);                \
-  template void specfem::kernels::impl::invert_mass_matrix<                    \
+  template void specfem::kokkos_kernels::impl::divide_mass_matrix<             \
       GET_TAG(DIMENSION_TAG), specfem::wavefield::simulation_field::backward,  \
       GET_TAG(MEDIUM_TAG)>(const specfem::compute::assembly &);                \
-  template void specfem::kernels::impl::invert_mass_matrix<                    \
+  template void specfem::kokkos_kernels::impl::divide_mass_matrix<             \
       GET_TAG(DIMENSION_TAG), specfem::wavefield::simulation_field::adjoint,   \
       GET_TAG(MEDIUM_TAG)>(const specfem::compute::assembly &);
 

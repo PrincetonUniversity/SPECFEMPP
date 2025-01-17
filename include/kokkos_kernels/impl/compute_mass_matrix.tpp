@@ -21,7 +21,7 @@ template <specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag>
-void specfem::kernels::impl::compute_mass_matrix(
+void specfem::kokkos_kernels::impl::compute_mass_matrix(
     const type_real &dt, const specfem::compute::assembly &assembly) {
 
   constexpr auto dimension = DimensionType;

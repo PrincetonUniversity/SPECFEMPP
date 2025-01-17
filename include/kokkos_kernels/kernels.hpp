@@ -15,16 +15,16 @@
 #include "impl/invert_mass_matrix.hpp"
 
 namespace specfem {
-namespace kernels {
+namespace kokkos_kernels {
 template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType, int NGLL>
-class kernels {
+class domain_kernels {
 public:
   constexpr static auto dimension = DimensionType;
   constexpr static auto wavefield = WavefieldType;
   constexpr static auto ngll = NGLL;
 
-  kernels(const specfem::compute::assembly &assembly)
+  domain_kernels(const specfem::compute::assembly &assembly)
       : assembly(assembly), coupling_interfaces_elastic(assembly),
         coupling_interfaces_acoustic(assembly) {}
 
@@ -151,8 +151,8 @@ public:
 private:
   specfem::compute::assembly assembly;
 #define COUPLING_INTERFACES_DECLARATION(DIMENSION_TAG, MEDIUM_TAG)             \
-  specfem::kernels::impl::interface_kernels<                                   \
-      WavefieldType, GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG)>              \
+  impl::interface_kernels<WavefieldType, GET_TAG(DIMENSION_TAG),               \
+                          GET_TAG(MEDIUM_TAG)>                                 \
       CREATE_VARIABLE_NAME(coupling_interfaces, GET_NAME(MEDIUM_TAG));
 
   CALL_MACRO_FOR_ALL_MEDIUM_TAGS(COUPLING_INTERFACES_DECLARATION,
@@ -197,7 +197,7 @@ private:
   // void compute_mass_matrix(const type_real &dt);
 };
 
-} // namespace kernels
+} // namespace kokkos_kernels
 } // namespace specfem
 
 #endif /* _SPECFEM_KERNELS_HPP */

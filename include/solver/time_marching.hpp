@@ -4,8 +4,8 @@
 #include "enumerations/dimension.hpp"
 #include "enumerations/simulation.hpp"
 #include "enumerations/wavefield.hpp"
-#include "kernels/frechet_kernels.hpp"
-#include "kernels/kernels.hpp"
+#include "kokkos_kernels/frechet_kernels.hpp"
+#include "kokkos_kernels/kernels.hpp"
 #include "plotter/plotter.hpp"
 #include "solver.hpp"
 #include "timescheme/newmark.hpp"
@@ -45,7 +45,7 @@ public:
    * @param time_scheme Time scheme
    */
   time_marching(
-      const specfem::kernels::kernels<
+      const specfem::kokkos_kernels::domain_kernels<
           specfem::wavefield::simulation_field::forward, DimensionType, NGLL>
           &kernels,
       const std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
@@ -60,9 +60,9 @@ public:
   void run() override;
 
 private:
-  specfem::kernels::kernels<specfem::wavefield::simulation_field::forward,
-                            DimensionType,
-                            NGLL>
+  specfem::kokkos_kernels::domain_kernels<
+      specfem::wavefield::simulation_field::forward, DimensionType,
+      NGLL>
       kernels; ///< Computational kernels
   std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme; ///< Time
                                                                   ///< scheme
@@ -94,10 +94,10 @@ public:
    */
   time_marching(
       const specfem::compute::assembly &assembly,
-      const specfem::kernels::kernels<
+      const specfem::kokkos_kernels::domain_kernels<
           specfem::wavefield::simulation_field::adjoint, DimensionType, NGLL>
           &adjoint_kernels,
-      const specfem::kernels::kernels<
+      const specfem::kokkos_kernels::domain_kernels<
           specfem::wavefield::simulation_field::backward, DimensionType, NGLL>
           &backward_kernels,
       const std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
@@ -114,15 +114,15 @@ public:
   void run() override;
 
 private:
-  specfem::kernels::kernels<specfem::wavefield::simulation_field::adjoint,
-                            DimensionType,
-                            NGLL>
+  specfem::kokkos_kernels::domain_kernels<
+      specfem::wavefield::simulation_field::adjoint, DimensionType,
+      NGLL>
       adjoint_kernels; ///< Adjoint computational kernels
-  specfem::kernels::kernels<specfem::wavefield::simulation_field::backward,
-                            DimensionType,
-                            NGLL>
+  specfem::kokkos_kernels::domain_kernels<
+      specfem::wavefield::simulation_field::backward, DimensionType,
+      NGLL>
       backward_kernels; ///< Backward computational kernels
-  specfem::kernels::frechet_kernels<DimensionType, NGLL>
+  specfem::kokkos_kernels::frechet_kernels<DimensionType, NGLL>
       frechet_kernels;                 ///< Misfit kernels
   specfem::compute::assembly assembly; ///< Spectral element assembly object
   std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme; ///< Time

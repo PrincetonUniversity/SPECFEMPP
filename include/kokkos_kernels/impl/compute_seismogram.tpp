@@ -18,7 +18,7 @@ template <specfem::dimension::type DimensionType,
           specfem::wavefield::simulation_field WavefieldType, int NGLL,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-void specfem::kernels::impl::compute_seismograms(
+void specfem::kokkos_kernels::impl::compute_seismograms(
     specfem::compute::assembly &assembly, const int &isig_step) {
 
   constexpr auto medium_tag = MediumTag;

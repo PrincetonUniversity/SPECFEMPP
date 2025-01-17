@@ -8,7 +8,7 @@
 #include "enumerations/simulation.hpp"
 
 namespace specfem {
-namespace kernels {
+namespace kokkos_kernels {
 namespace impl {
 template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
@@ -54,7 +54,7 @@ private:
 };
 
 } // namespace impl
-} // namespace kernels
+} // namespace kokkos_kernels
 } // namespace specfem
 
 #endif /* _SPECFEM_KERNELS_IMPL_INTERFACE_KERNELS_HPP */

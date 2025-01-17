@@ -4,7 +4,7 @@
 #include "IO/interface.hpp"
 #include "compute/interface.hpp"
 #include "constants.hpp"
-#include "kernels/kernels.hpp"
+#include "kokkos_kernels/kernels.hpp"
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"
 #include "quadrature/interface.hpp"
@@ -135,8 +135,9 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
 
       const type_real dt = setup.get_dt();
 
-      specfem::kernels::kernels<specfem::wavefield::simulation_field::forward,
-                                specfem::dimension::type::dim2, 5>
+      specfem::kokkos_kernels::domain_kernels<
+          specfem::wavefield::simulation_field::forward,
+          specfem::dimension::type::dim2, 5>
           kernels(assembly);
 
       kernels.initialize(dt);

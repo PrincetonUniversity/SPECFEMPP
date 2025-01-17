@@ -1,7 +1,7 @@
 #ifndef _SPECFEM_RUNTIME_CONFIGURATION_SOLVER_SOLVER_TPP_
 #define _SPECFEM_RUNTIME_CONFIGURATION_SOLVER_SOLVER_TPP_
 
-#include "kernels/kernels.hpp"
+#include "kokkos_kernels/kernels.hpp"
 #include "solver.hpp"
 #include "solver/time_marching.hpp"
 #include "timescheme/newmark.hpp"
@@ -20,7 +20,7 @@ specfem::runtime_configuration::solver::solver::instantiate(
     std::cout << "Instantiating Kernels \n";
     std::cout << "-------------------------------\n";
     const auto kernels =
-        specfem::kernels::kernels<specfem::wavefield::simulation_field::forward,
+        specfem::kokkos_kernels::domain_kernels<specfem::wavefield::simulation_field::forward,
                                   specfem::dimension::type::dim2, NGLL>(
             assembly);
     return std::make_shared<
@@ -31,10 +31,10 @@ specfem::runtime_configuration::solver::solver::instantiate(
     std::cout << "Instantiating Kernels \n";
     std::cout << "-------------------------------\n";
     const auto adjoint_kernels =
-        specfem::kernels::kernels<specfem::wavefield::simulation_field::adjoint,
+        specfem::kokkos_kernels::domain_kernels<specfem::wavefield::simulation_field::adjoint,
                                   specfem::dimension::type::dim2, NGLL>(
             assembly);
-    const auto backward_kernels = specfem::kernels::kernels<
+    const auto backward_kernels = specfem::kokkos_kernels::domain_kernels<
         specfem::wavefield::simulation_field::backward,
         specfem::dimension::type::dim2, NGLL>(assembly);
     return std::make_shared<
