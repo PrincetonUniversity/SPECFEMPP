@@ -20,6 +20,7 @@
 #include "point/properties.hpp"
 #include "policies/chunk.hpp"
 #include "policies/range.hpp"
+#include "domain_kernels.hpp"
 
 template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType, int NGLL>
