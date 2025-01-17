@@ -6,14 +6,14 @@
 #include "enumerations/wavefield.hpp"
 
 namespace specfem {
-namespace kernels {
+namespace kokkos_kernels {
 namespace impl {
 
 template <specfem::dimension::type DimensionType,
           specfem::wavefield::simulation_field WavefieldType,
           specfem::element::medium_tag MediumTag>
-void invert_mass_matrix(const specfem::compute::assembly &assembly);
+void divide_mass_matrix(const specfem::compute::assembly &assembly);
 }
 
-} // namespace kernels
+} // namespace kokkos_kernels
 } // namespace specfem

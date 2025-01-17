@@ -1,13 +1,7 @@
 #include "solver/time_marching.hpp"
 #include "enumerations/dimension.hpp"
-#include "enumerations/quadrature.hpp"
 #include "enumerations/simulation.hpp"
 #include "solver/time_marching.tpp"
-
-namespace {
-using qp5 = specfem::enums::element::quadrature::static_quadrature_points<5>;
-using qp8 = specfem::enums::element::quadrature::static_quadrature_points<8>;
-} // namespace
 
 // Explcit template instantiation
 

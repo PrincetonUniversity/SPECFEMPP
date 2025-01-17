@@ -9,7 +9,8 @@
 template <specfem::dimension::type DimensionType,
           specfem::wavefield::simulation_field WavefieldType,
           specfem::element::medium_tag MediumTag>
-void specfem::kernels::impl::divide_mass_matrix(const specfem::compute::assembly &assembly) {
+void specfem::kokkos_kernels::impl::invert_mass_matrix(
+    const specfem::compute::assembly &assembly) {
 
   constexpr auto medium_tag = MediumTag;
   constexpr auto wavefield = WavefieldType;
@@ -18,10 +19,8 @@ void specfem::kernels::impl::divide_mass_matrix(const specfem::compute::assembly
 
   const int nglob = field.template get_nglob<MediumTag>();
   constexpr bool using_simd = true;
-  using LoadFieldType = specfem::point::field<DimensionType, MediumTag, false,
-                                              false, true, true, using_simd>;
-  using StoreFieldType = specfem::point::field<DimensionType, MediumTag, false,
-                                               false, true, false, using_simd>;
+  using PointFieldType = specfem::point::field<DimensionType, MediumTag, false,
+                                               false, false, true, using_simd>;
 
   using ParallelConfig = specfem::parallel_config::default_range_config<
       specfem::datatype::simd<type_real, using_simd>,
@@ -38,13 +37,11 @@ void specfem::kernels::impl::divide_mass_matrix(const specfem::compute::assembly
         const auto iterator = range.range_iterator(iglob);
         const auto index = iterator(0);
 
-        LoadFieldType load_field;
+        PointFieldType load_field;
         specfem::compute::load_on_device(index.index, field, load_field);
-        StoreFieldType store_field(load_field.divide_mass_matrix());
+        PointFieldType store_field(load_field.invert_mass_matrix());
         specfem::compute::store_on_device(index.index, store_field, field);
       });
 
   Kokkos::fence();
-
-  return;
 }

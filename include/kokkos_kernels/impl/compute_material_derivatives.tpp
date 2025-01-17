@@ -14,7 +14,7 @@
 template <specfem::dimension::type DimensionType, int NGLL,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-void specfem::kernels::impl::compute_material_derivatives(
+void specfem::kokkos_kernels::impl::compute_material_derivatives(
     const specfem::compute::assembly &assembly, const type_real &dt) {
   auto &properties = assembly.properties;
   auto &kernels = assembly.kernels;

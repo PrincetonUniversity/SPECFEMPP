@@ -1,32 +1,32 @@
-#include "kernels/impl/compute_stiffness_interaction.hpp"
+#include "kokkos_kernels/impl/compute_stiffness_interaction.hpp"
 #include "enumerations/material_definitions.hpp"
-#include "kernels/impl/compute_stiffness_interaction.tpp"
+#include "kokkos_kernels/impl/compute_stiffness_interaction.tpp"
 
 #define INSTANTIATION_MACRO(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG,           \
                             BOUNDARY_TAG)                                      \
   /** instantiation for NGLL = 5     */                                        \
-  template void specfem::kernels::impl::compute_stiffness_interaction<         \
+  template void specfem::kokkos_kernels::impl::compute_stiffness_interaction<  \
       GET_TAG(DIMENSION_TAG), specfem::wavefield::simulation_field::forward,   \
       5, GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG)>(   \
       const specfem::compute::assembly &, const int &);                        \
-  template void specfem::kernels::impl::compute_stiffness_interaction<         \
+  template void specfem::kokkos_kernels::impl::compute_stiffness_interaction<  \
       GET_TAG(DIMENSION_TAG), specfem::wavefield::simulation_field::backward,  \
       5, GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG)>(   \
       const specfem::compute::assembly &, const int &);                        \
-  template void specfem::kernels::impl::compute_stiffness_interaction<         \
+  template void specfem::kokkos_kernels::impl::compute_stiffness_interaction<  \
       GET_TAG(DIMENSION_TAG), specfem::wavefield::simulation_field::adjoint,   \
       5, GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG)>(   \
       const specfem::compute::assembly &, const int &);                        \
   /** instantiation for NGLL = 8     */                                        \
-  template void specfem::kernels::impl::compute_stiffness_interaction<         \
+  template void specfem::kokkos_kernels::impl::compute_stiffness_interaction<  \
       GET_TAG(DIMENSION_TAG), specfem::wavefield::simulation_field::forward,   \
       8, GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG)>(   \
       const specfem::compute::assembly &, const int &);                        \
-  template void specfem::kernels::impl::compute_stiffness_interaction<         \
+  template void specfem::kokkos_kernels::impl::compute_stiffness_interaction<  \
       GET_TAG(DIMENSION_TAG), specfem::wavefield::simulation_field::backward,  \
       8, GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG)>(   \
       const specfem::compute::assembly &, const int &);                        \
-  template void specfem::kernels::impl::compute_stiffness_interaction<         \
+  template void specfem::kokkos_kernels::impl::compute_stiffness_interaction<  \
       GET_TAG(DIMENSION_TAG), specfem::wavefield::simulation_field::adjoint,   \
       8, GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG)>(   \
       const specfem::compute::assembly &, const int &);

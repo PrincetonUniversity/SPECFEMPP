@@ -5,7 +5,7 @@
 #include "enumerations/medium.hpp"
 
 namespace specfem {
-namespace kernels {
+namespace kokkos_kernels {
 
 namespace impl {
 /**
@@ -24,5 +24,5 @@ void compute_material_derivatives(const specfem::compute::assembly &assembly,
                                   const type_real &dt);
 } // namespace impl
 
-} // namespace kernels
+} // namespace kokkos_kernels
 } // namespace specfem

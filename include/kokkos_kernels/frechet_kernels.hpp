@@ -8,7 +8,7 @@
 #include "impl/compute_material_derivatives.hpp"
 
 namespace specfem {
-namespace kernels {
+namespace kokkos_kernels {
 
 /**
  * @brief Compute kernels used to compute Frechet derivatives.
@@ -55,7 +55,7 @@ public:
 private:
   specfem::compute::assembly assembly; ///< Assembly object.
 };
-} // namespace kernels
+} // namespace kokkos_kernels
 } // namespace specfem
 
 #endif /* _SPECFEM_KERNELS_FRECHET_KERNELS_HPP */

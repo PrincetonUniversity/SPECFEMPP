@@ -1,29 +1,29 @@
-#include "kernels/impl/compute_mass_matrix.hpp"
-#include "kernels/impl/compute_mass_matrix.tpp"
+#include "kokkos_kernels/impl/compute_mass_matrix.hpp"
+#include "kokkos_kernels/impl/compute_mass_matrix.tpp"
 
 #define INSTANTIATION_MACRO(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG,           \
                             BOUNDARY_TAG)                                      \
-  template void specfem::kernels::impl::compute_mass_matrix<                   \
+  template void specfem::kokkos_kernels::impl::compute_mass_matrix<            \
       GET_TAG(DIMENSION_TAG), specfem::wavefield::simulation_field::forward,   \
       5, GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG)>(   \
       const type_real &, const specfem::compute::assembly &);                  \
-  template void specfem::kernels::impl::compute_mass_matrix<                   \
+  template void specfem::kokkos_kernels::impl::compute_mass_matrix<            \
       GET_TAG(DIMENSION_TAG), specfem::wavefield::simulation_field::forward,   \
       8, GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG)>(   \
       const type_real &, const specfem::compute::assembly &);                  \
-  template void specfem::kernels::impl::compute_mass_matrix<                   \
+  template void specfem::kokkos_kernels::impl::compute_mass_matrix<            \
       GET_TAG(DIMENSION_TAG), specfem::wavefield::simulation_field::backward,  \
       5, GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG)>(   \
       const type_real &, const specfem::compute::assembly &);                  \
-  template void specfem::kernels::impl::compute_mass_matrix<                   \
+  template void specfem::kokkos_kernels::impl::compute_mass_matrix<            \
       GET_TAG(DIMENSION_TAG), specfem::wavefield::simulation_field::backward,  \
       8, GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG)>(   \
       const type_real &, const specfem::compute::assembly &);                  \
-  template void specfem::kernels::impl::compute_mass_matrix<                   \
+  template void specfem::kokkos_kernels::impl::compute_mass_matrix<            \
       GET_TAG(DIMENSION_TAG), specfem::wavefield::simulation_field::adjoint,   \
       5, GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG)>(   \
       const type_real &, const specfem::compute::assembly &);                  \
-  template void specfem::kernels::impl::compute_mass_matrix<                   \
+  template void specfem::kokkos_kernels::impl::compute_mass_matrix<            \
       GET_TAG(DIMENSION_TAG), specfem::wavefield::simulation_field::adjoint,   \
       8, GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG)>(   \
       const type_real &, const specfem::compute::assembly &);

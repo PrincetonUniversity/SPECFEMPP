@@ -337,7 +337,7 @@ target_link_libraries(
   edge
   algorithms
   coupled_interface
-  kernels
+  kokkos_kernels
   # domain
   solver
   plotter

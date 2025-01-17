@@ -231,7 +231,6 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     if (mpi->main_proc())
       std::cout << *it << std::endl;
 
-    specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
     std::shared_ptr<specfem::solver::solver> solver =
         setup.instantiate_solver<5>(setup.get_dt(), assembly, it, {});
 
