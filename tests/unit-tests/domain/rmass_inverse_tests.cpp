@@ -4,7 +4,6 @@
 #include "IO/interface.hpp"
 #include "compute/interface.hpp"
 #include "constants.hpp"
-#include "domain/domain.hpp"
 #include "kernels/kernels.hpp"
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"

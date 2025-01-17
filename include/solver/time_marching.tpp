@@ -1,7 +1,6 @@
 #ifndef _SPECFEM_SOLVER_TIME_MARCHING_TPP
 #define _SPECFEM_SOLVER_TIME_MARCHING_TPP
 
-#include "domain/domain.hpp"
 #include "solver.hpp"
 #include "time_marching.hpp"
 #include "timescheme/newmark.hpp"

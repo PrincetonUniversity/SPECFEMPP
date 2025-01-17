@@ -5,7 +5,6 @@
 #include "IO/seismogram/reader.hpp"
 #include "compute/interface.hpp"
 #include "constants.hpp"
-#include "domain/domain.hpp"
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"
 #include "quadrature/interface.hpp"
