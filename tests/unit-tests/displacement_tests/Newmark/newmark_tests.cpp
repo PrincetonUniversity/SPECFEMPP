@@ -169,7 +169,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     specfem::runtime_configuration::setup setup(parameter_file,
                                                 __default_file__);
 
-    const auto [database_file, sources_file] = setup.get_databases();
+    const auto database_file = setup.get_databases();
     const auto source_node = setup.get_sources();
 
     // Set up GLL quadrature points

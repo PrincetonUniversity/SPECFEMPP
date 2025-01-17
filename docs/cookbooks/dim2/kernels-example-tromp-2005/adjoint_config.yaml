@@ -49,4 +49,5 @@ parameters:
 
     databases:
         mesh-database: OUTPUT_FILES/database.bin
-        sources: adjoint_sources.yaml
+
+    sources: adjoint_sources.yaml

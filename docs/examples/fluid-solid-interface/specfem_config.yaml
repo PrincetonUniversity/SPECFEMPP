@@ -43,7 +43,7 @@ parameters:
   ## databases
   databases:
     mesh-database: "/scratch/gpfs/rk9481/specfem2d_kokkos/examples/fluid-solid-interface/OUTPUT_FILES/database.bin"
-    sources: "/scratch/gpfs/rk9481/specfem2d_kokkos/examples/fluid-solid-interface/sources.yaml"
+    source-file: "/scratch/gpfs/rk9481/specfem2d_kokkos/examples/fluid-solid-interface/sources.yaml"
 
   seismogram:
     seismogram-format: ascii

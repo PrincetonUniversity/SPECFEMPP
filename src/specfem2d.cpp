@@ -96,7 +96,7 @@ void execute(const YAML::Node &parameter_dict, const YAML::Node &default_dict,
   // --------------------------------------------------------------
   auto start_time = std::chrono::system_clock::now();
   specfem::runtime_configuration::setup setup(parameter_dict, default_dict);
-  const auto [database_filename, source_filename] = setup.get_databases();
+  const auto database_filename = setup.get_databases();
   mpi->cout(setup.print_header(start_time));
 
   // --------------------------------------------------------------

@@ -84,7 +84,7 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
 
   specfem::runtime_configuration::setup setup(parameter_file, __default_file__);
 
-  const auto [database_file, sources_file] = setup.get_databases();
+  const auto database_file = setup.get_databases();
   // mpi->cout(setup.print_header());
 
   // Set up GLL quadrature points
