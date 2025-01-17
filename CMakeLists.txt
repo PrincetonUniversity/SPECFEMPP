@@ -497,6 +497,8 @@ target_link_libraries(
 add_library(
         kernels
         src/kernels/impl/compute_mass_matrix.cpp
+        src/kernels/impl/invert_mass_matrix.cpp
+        src/kernels/impl/divide_mass_matrix.cpp
         src/kernels/impl/compute_material_derivatives.cpp
         src/kernels/frechet_kernels.cpp
 )
