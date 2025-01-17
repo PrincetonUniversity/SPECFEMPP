@@ -48,4 +48,4 @@ run-setup:
 ## databases
 databases:
   mesh-database: OUTPUT_FILES/database.bin
-  source-file: single_source.yaml
+  sources: single_source.yaml

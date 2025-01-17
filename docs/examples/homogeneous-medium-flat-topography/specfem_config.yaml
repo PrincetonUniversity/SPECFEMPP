@@ -43,4 +43,4 @@ parameters:
   ## databases
   databases:
     mesh-database: "/scratch/gpfs/rk9481/specfem2d_kokkos/examples/homogeneous-medium-flat-topography/OUTPUT_FILES/database.bin"
-    source-file: "/scratch/gpfs/rk9481/specfem2d_kokkos/examples/homogeneous-medium-flat-topography/source.yaml"
+    sources: "/scratch/gpfs/rk9481/specfem2d_kokkos/examples/homogeneous-medium-flat-topography/source.yaml"

@@ -26,7 +26,7 @@ Parameter definitions
 
 **documentation**: Location of the fortran binary database file defining the mesh
 
-**Parameter name** : ``databases.source-file``
+**Parameter name** : ``databases.sources``
 ******************************************************
 
 **default value**: None
@@ -41,4 +41,4 @@ Parameter definitions
 
         databases:
             mesh-database: /path/to/mesh_database.bin
-            source-file: /path/to/source_file.yaml
+            sources: /path/to/source_file.yaml

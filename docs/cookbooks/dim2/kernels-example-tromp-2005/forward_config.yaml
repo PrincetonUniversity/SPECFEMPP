@@ -48,4 +48,4 @@ parameters:
 
   databases:
       mesh-database: OUTPUT_FILES/database.bin
-      source-file: forward_sources.yaml
+      sources: forward_sources.yaml

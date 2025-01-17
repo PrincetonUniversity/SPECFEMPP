@@ -53,4 +53,4 @@ parameters:
   ## databases
   databases:
     mesh-database: @CMAKE_SOURCE_DIR@/examples/fluid-solid-bathymetry/OUTPUT_FILES/database.bin
-    source-file: @CMAKE_SOURCE_DIR@/examples/fluid-solid-bathymetry/line_sources.yaml
+    sources: @CMAKE_SOURCE_DIR@/examples/fluid-solid-bathymetry/line_sources.yaml

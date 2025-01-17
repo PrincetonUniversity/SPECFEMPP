@@ -46,4 +46,4 @@ parameters:
   ## databases
   databases:
     mesh-database: "../../../tests/unit-tests/seismogram/elastic/serial/database.bin"
-    source-file: "dummy-source.yaml"
+    sources: "dummy-source.yaml"
