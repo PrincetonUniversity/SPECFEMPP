@@ -287,7 +287,7 @@ void specfem::plotter::plot_wavefield::plot() {
     auto render_window = vtkSmartPointer<vtkRenderWindow>::New();
     render_window->SetOffScreenRendering(1);
     render_window->AddRenderer(renderer);
-    render_window->SetSize(1280, 1280);
+    render_window->SetSize(2560, 2560);
     render_window->SetWindowName("Wavefield");
     auto image_filter = vtkSmartPointer<vtkWindowToImageFilter>::New();
     image_filter->SetInput(render_window);
@@ -321,7 +321,7 @@ void specfem::plotter::plot_wavefield::plot() {
     auto render_window = vtkSmartPointer<vtkOpenGLRenderWindow>::New();
 #endif
     render_window->AddRenderer(renderer);
-    render_window->SetSize(1280, 1280);
+    render_window->SetSize(2560, 2560);
     render_window->SetWindowName("Wavefield");
 
     auto render_window_interactor =
