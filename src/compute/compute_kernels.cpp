@@ -15,16 +15,15 @@ specfem::compute::kernels::kernels(
   this->h_property_index_mapping =
       Kokkos::create_mirror_view(property_index_mapping);
 
-  const auto elastic_isotropic_elements = element_types.get_elements_on_device(
+  const auto elastic_isotropic_elements = element_types.get_elements_on_host(
       specfem::element::medium_tag::elastic,
       specfem::element::property_tag::isotropic);
 
-  const auto elastic_anisotropic_elements =
-      element_types.get_elements_on_device(
-          specfem::element::medium_tag::elastic,
-          specfem::element::property_tag::anisotropic);
+  const auto elastic_anisotropic_elements = element_types.get_elements_on_host(
+      specfem::element::medium_tag::elastic,
+      specfem::element::property_tag::anisotropic);
 
-  const auto acoustic_elements = element_types.get_elements_on_device(
+  const auto acoustic_elements = element_types.get_elements_on_host(
       specfem::element::medium_tag::acoustic,
       specfem::element::property_tag::isotropic);
 

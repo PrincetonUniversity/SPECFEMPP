@@ -417,8 +417,6 @@ load_on_device(const MemberType &team_member, const IteratorType &iterator,
 #ifndef NDEBUG
 
         if (index.ispec >= receivers.nspec) {
-          std::cout << "index.ispec: " << index.ispec << std::endl;
-          std::cout << "receivers.nspec: " << receivers.nspec << std::endl;
           std::string message = "Invalid element detected in kernel at " +
                                 std::string(__FILE__) + ":" +
                                 std::to_string(__LINE__);

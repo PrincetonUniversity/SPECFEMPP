@@ -34,9 +34,13 @@ void check_store(specfem::compute::assembly &assembly) {
   Kokkos::View<type_real *, Kokkos::DefaultExecutionSpace> values_to_store(
       "values_to_store", nelements);
 
+  const auto h_values_to_store = Kokkos::create_mirror_view(values_to_store);
+
   for (int i = 0; i < nelements; i++) {
-    values_to_store(i) = 1.0 + i;
+    h_values_to_store(i) = 1.0 + i;
   }
+
+  Kokkos::deep_copy(values_to_store, h_values_to_store);
 
   using PointType = specfem::point::source<Dimension, MediumTag, WavefieldType>;
 
@@ -54,8 +58,8 @@ void check_store(specfem::compute::assembly &assembly) {
         specfem::datatype::ScalarPointViewType<type_real, num_components, false>
             lagrange_interpolant;
         for (int ic = 0; ic < num_components; ic++) {
-          stf(ic) = 1.0;
-          lagrange_interpolant(ic) = 1.0;
+          stf(ic) = values_to_store(i);
+          lagrange_interpolant(ic) = values_to_store(i);
         }
         PointType point(stf, lagrange_interpolant);
         specfem::compute::store_on_device(index, point, sources);
@@ -126,7 +130,7 @@ void check_load(specfem::compute::assembly &assembly) {
         const auto &point_kernel = h_point_sources(iz, ix, i);
         for (int ic = 0; ic < num_components; ic++) {
           const auto stf = point_kernel.stf(ic);
-          const auto expected = values_to_store(i);
+          const auto expected = h_values_to_store(i);
           if (expected != stf) {
             std::ostringstream message;
             message << "Error in source computation: \n"
@@ -189,8 +193,8 @@ void check_assembly_source_construction(
 
     source->compute_source_array(assembly.mesh, assembly.partial_derivatives,
                                  assembly.element_types, source_array);
-    Kokkos::View<type_real **, Kokkos::DefaultExecutionSpace> stf("stf", 1,
-                                                                  components);
+    Kokkos::View<type_real **, Kokkos::DefaultHostExecutionSpace> stf(
+        "stf", 1, components);
 
     source->compute_source_time_function(1.0, 0.0, 1, stf);
 
@@ -198,7 +202,7 @@ void check_assembly_source_construction(
       for (int ix = 0; ix < ngllx; ix++) {
         specfem::point::index<Dimension, false> index(lcoord.ispec, iz, ix);
         PointSourceType point;
-        specfem::compute::load_on_device(index, assembly.sources, point);
+        specfem::compute::load_on_host(index, assembly.sources, point);
 
         for (int ic = 0; ic < components; ic++) {
           const auto lagrange_interpolant = point.lagrange_interpolant(ic);
