@@ -44,8 +44,8 @@ specfem::runtime_configuration::seismogram::instantiate_seismogram_writer(
 
   const auto type = [&]() {
     if (this->output_format == "seismic_unix" || this->output_format == "su") {
-      return specfem::enums::seismogram::format::seismic_unix;
       throw std::runtime_error("Seismic Unix format not implemented yet");
+      return specfem::enums::seismogram::format::seismic_unix;
     } else if (this->output_format == "ASCII" ||
                this->output_format == "ascii") {
       return specfem::enums::seismogram::format::ascii;

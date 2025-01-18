@@ -16,6 +16,10 @@ specfem::sources::source::source(YAML::Node &Node, const int nsteps,
     this->forcing_function =
         std::make_unique<specfem::forcing_function::Ricker>(Ricker, nsteps, dt,
                                                             false);
+  } else if (YAML::Node dGaussian = Node["dGaussian"]) {
+    this->forcing_function =
+        std::make_unique<specfem::forcing_function::dGaussian>(
+            dGaussian, nsteps, dt, false);
   } else if (YAML::Node external = Node["External"]) {
     this->forcing_function =
         std::make_unique<specfem::forcing_function::external>(external, nsteps,
