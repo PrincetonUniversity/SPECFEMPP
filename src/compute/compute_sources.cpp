@@ -156,10 +156,10 @@ specfem::compute::sources::get_elements_on_host(
   int nsources = 0;
   for (int ispec = 0; ispec < nspec; ispec++) {
     if (h_source_domain_index_mapping(ispec) >= 0) {
-      if ((medium_types(ispec) == medium) &&
-          (property_types(ispec) == property) &&
-          (boundary_types(ispec) == boundary) &&
-          (wavefield_types(ispec) == wavefield)) {
+      if ((h_medium_types(ispec) == medium) &&
+          (h_property_types(ispec) == property) &&
+          (h_boundary_types(ispec) == boundary) &&
+          (h_wavefield_types(ispec) == wavefield)) {
         nsources++;
       }
     }
@@ -171,10 +171,10 @@ specfem::compute::sources::get_elements_on_host(
   int isource = 0;
   for (int ispec = 0; ispec < nspec; ispec++) {
     if (h_source_domain_index_mapping(ispec) >= 0) {
-      if ((medium_types(ispec) == medium) &&
-          (property_types(ispec) == property) &&
-          (boundary_types(ispec) == boundary) &&
-          (wavefield_types(ispec) == wavefield)) {
+      if ((h_medium_types(ispec) == medium) &&
+          (h_property_types(ispec) == property) &&
+          (h_boundary_types(ispec) == boundary) &&
+          (h_wavefield_types(ispec) == wavefield)) {
         indices(isource) = ispec;
         isource++;
       }

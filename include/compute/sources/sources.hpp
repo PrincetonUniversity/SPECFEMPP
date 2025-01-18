@@ -275,7 +275,7 @@ void load_on_host(const IndexType index,
                   const specfem::compute::sources &sources,
                   PointSourceType &point_source) {
 
-  static_assert(IndexType::simd::using_simd == false,
+  static_assert(IndexType::using_simd == false,
                 "IndexType must not use SIMD when loading sources");
 
   static_assert(
