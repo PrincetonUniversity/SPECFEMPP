@@ -194,8 +194,6 @@ target_link_libraries(
 add_library(
         IO
         src/IO/fortranio/fortran_io.cpp
-        src/IO/HDF5/native_type.cpp
-        # src/IO/ASCII/native_type.cpp
         src/IO/sources.cpp
         src/IO/receivers.cpp
         src/IO/mesh.cpp
@@ -377,6 +375,7 @@ target_link_libraries(
 add_library(
         source_time_function
         src/source_time_function/dirac.cpp
+        src/source_time_function/dgaussian.cpp
         src/source_time_function/ricker.cpp
         src/source_time_function/external.cpp
 )
@@ -674,7 +673,7 @@ endif (DOXYGEN_FOUND)
 
 if (SPECFEMPP_USE_SKBUILD AND EXISTS ${SKBUILD_SCRIPTS_DIR})
     install(TARGETS specfem2d DESTINATION ${SKBUILD_SCRIPTS_DIR})
-    install(FILES ${CMAKE_BINARY_DIR}/xmeshfem2D DESTINATION ${SKBUILD_SCRIPTS_DIR} PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE)
+    install(FILES ${CMAKE_BINARY_DIR}/bin/xmeshfem2D DESTINATION ${SKBUILD_SCRIPTS_DIR} PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE)
 endif ()
 
 if (SPECFEMPP_BINDING_PYTHON)

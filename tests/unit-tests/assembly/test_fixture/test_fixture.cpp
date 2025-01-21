@@ -51,18 +51,6 @@ ASSEMBLY::ASSEMBLY() {
 
     this->assemblies.push_back(specfem::compute::assembly(
         mesh, quadrature, sources, receivers, seismogram_types, 1.0, 0.0, 1, 1,
-        specfem::simulation::type::forward, nullptr));
+        1, specfem::simulation::type::forward, nullptr));
   }
 }
-
-// Instantiate template functions
-
-template KOKKOS_FUNCTION
-    specfem::point::index<specfem::dimension::type::dim2, true>
-    get_index<true>(const int ielement, const int num_elements, const int iz,
-                    const int ix);
-
-template KOKKOS_FUNCTION
-    specfem::point::index<specfem::dimension::type::dim2, false>
-    get_index<false>(const int ielement, const int num_elements, const int iz,
-                     const int ix);

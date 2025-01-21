@@ -3,9 +3,9 @@
 #include "algorithms/dot.hpp"
 #include "algorithms/gradient.hpp"
 #include "enumerations/medium.hpp"
+#include "medium/compute_stress.hpp"
 #include "point/field_derivatives.hpp"
 #include "point/properties.hpp"
-
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -63,21 +63,25 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
 
           specfem::compute::load_on_device(index, properties, point_property);
 
-          // P_SV case
-          // sigma_xx
-          const auto sigma_xx = point_property.lambdaplus2mu * du(0, 0) +
-                                point_property.lambda * du(1, 1);
+          // // P_SV case
+          // // sigma_xx
+          // const auto sigma_xx = point_property.lambdaplus2mu * du(0, 0) +
+          //                       point_property.lambda * du(1, 1);
 
-          // sigma_zz
-          const auto sigma_zz = point_property.lambdaplus2mu * du(1, 1) +
-                                point_property.lambda * du(0, 0);
+          // // sigma_zz
+          // const auto sigma_zz = point_property.lambdaplus2mu * du(1, 1) +
+          //                       point_property.lambda * du(0, 0);
 
-          // sigma_yy
-          const auto sigma_yy =
-              point_property.lambdaplus2mu * (du(0, 0) + du(1, 1));
+          // // sigma_yy
+          // const auto sigma_yy =
+          //     point_property.lambda * (du(0, 0) + du(1, 1));
 
+          // wavefield(iterator_index.ielement, index.iz, index.ix, 0) =
+          //     -1.0 * (sigma_xx + sigma_zz + sigma_yy) / 3.0;
           wavefield(iterator_index.ielement, index.iz, index.ix, 0) =
-              -1.0 * (sigma_xx + sigma_zz + sigma_yy) / 3.0;
+              -1.0 *
+              ((point_property.lambda + (2.0 / 3.0) * point_property.mu) *
+               (du(0, 0) + du(1, 1)));
         });
 
     return;
