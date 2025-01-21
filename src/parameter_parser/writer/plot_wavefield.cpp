@@ -66,7 +66,7 @@ specfem::runtime_configuration::plot_wavefield::plot_wavefield(
   return;
 }
 
-std::shared_ptr<specfem::periodic_tasks::plotter>
+std::shared_ptr<specfem::periodic_tasks::periodic_task>
 specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
     const specfem::compute::assembly &assembly) const {
 
