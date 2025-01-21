@@ -9,80 +9,160 @@
 #include <Kokkos_Core.hpp>
 #include <vector>
 
-specfem::compute::receivers::receivers(const int nreceivers,
-                                       const int max_sig_step, const int N,
-                                       const int n_seis_types)
-    : nreceivers(nreceivers), station_names(nreceivers),
-      network_names(nreceivers),
-      receiver_array("specfem::compute::receiver::receiver_array", nreceivers,
-                     ndim, N, N),
-      h_receiver_array(Kokkos::create_mirror_view(receiver_array)),
-      ispec_array("specfem::compute::receivers::ispec_array", nreceivers),
-      h_ispec_array(Kokkos::create_mirror_view(ispec_array)),
-      cos_recs("specfem::compute::receivers::cos_recs", nreceivers),
-      h_cos_recs(Kokkos::create_mirror_view(cos_recs)),
-      sin_recs("specfem::compute::receivers::sin_recs", nreceivers),
-      h_sin_recs(Kokkos::create_mirror_view(sin_recs)),
-      seismogram("specfem::compute::receivers::seismogram", max_sig_step,
-                 n_seis_types, nreceivers, ndim),
-      h_seismogram(Kokkos::create_mirror_view(seismogram)),
-      seismogram_types("specfem::compute::receivers::seismogram_types",
-                       n_seis_types),
-      h_seismogram_types(Kokkos::create_mirror_view(seismogram_types)),
-      receiver_field("specfem::compute::receivers::receiver_field", N, N,
-                     n_seis_types, nreceivers, max_sig_step),
-      h_receiver_field(Kokkos::create_mirror_view(receiver_field)) {}
-
 specfem::compute::receivers::receivers(
-    const int max_sig_step,
+    const int nspec, const int ngllz, const int ngllx, const int max_sig_step,
+    const type_real dt, const type_real t0, const int nsteps_between_samples,
     const std::vector<std::shared_ptr<specfem::receivers::receiver> >
         &receivers,
     const std::vector<specfem::enums::seismogram::type> &stypes,
-    const specfem::compute::mesh &mesh) {
+    const specfem::compute::mesh &mesh,
+    const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
+    const specfem::compute::properties &properties)
+    : lagrange_interpolant("specfem::compute::receivers::lagrange_interpolant",
+                           receivers.size(), mesh.ngllz, mesh.ngllx),
+      h_lagrange_interpolant(Kokkos::create_mirror_view(lagrange_interpolant)),
+      elements("specfem::compute::receivers::elements", receivers.size()),
+      h_elements(Kokkos::create_mirror_view(elements)),
+      receiver_domain_index_mapping(
+          "specfem::compute::receivers::receiver_domain_index_mapping", nspec),
+      h_receiver_domain_index_mapping(
+          Kokkos::create_mirror_view(receiver_domain_index_mapping)),
+      impl::element_types(static_cast<impl::element_types>(properties)),
+      impl::StationIterator(receivers.size(), stypes.size()),
+      impl::SeismogramIterator(receivers.size(), stypes.size(), max_sig_step,
+                               dt, t0, nsteps_between_samples) {
 
-  const int nreceivers = receivers.size();
-  const int N = mesh.quadratures.gll.N;
-  const int n_seis_types = stypes.size();
-
-  *this =
-      specfem::compute::receivers(nreceivers, max_sig_step, N, n_seis_types);
-
-  for (int irec = 0; irec < nreceivers; irec++) {
-    station_names[irec] = receivers[irec]->get_station_name();
-    network_names[irec] = receivers[irec]->get_network_name();
-    auto sv_receiver_array = Kokkos::subview(
-        this->h_receiver_array, irec, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
-    receivers[irec]->compute_receiver_array(mesh, sv_receiver_array);
-
-    specfem::point::global_coordinates<specfem::dimension::type::dim2> coord = {
-      receivers[irec]->get_x(), receivers[irec]->get_z()
-    };
-    auto lcoord = specfem::algorithms::locate_point(coord, mesh);
-
-    this->h_ispec_array(irec) = lcoord.ispec;
-    const auto angle = receivers[irec]->get_angle();
-
-    this->h_cos_recs(irec) =
-        std::cos(Kokkos::numbers::pi_v<type_real> / 180 * angle);
-    this->h_sin_recs(irec) =
-        std::sin(Kokkos::numbers::pi_v<type_real> / 180 * angle);
+  for (int ispec = 0; ispec < nspec; ++ispec) {
+    h_receiver_domain_index_mapping(ispec) = -1;
   }
 
-  for (int i = 0; i < n_seis_types; i++) {
-    this->h_seismogram_types(i) = stypes[i];
+  for (int isies = 0; isies < stypes.size(); ++isies) {
+    auto seis_type = stypes[isies];
+    switch (seis_type) {
+    case specfem::enums::seismogram::type::displacement:
+      seismogram_types[isies] = specfem::wavefield::type::displacement;
+      seismogram_type_map[specfem::wavefield::type::displacement] = isies;
+      break;
+    case specfem::enums::seismogram::type::velocity:
+      seismogram_types[isies] = specfem::wavefield::type::velocity;
+      seismogram_type_map[specfem::wavefield::type::velocity] = isies;
+      break;
+    case specfem::enums::seismogram::type::acceleration:
+      seismogram_types[isies] = specfem::wavefield::type::acceleration;
+      seismogram_type_map[specfem::wavefield::type::acceleration] = isies;
+      break;
+    case specfem::enums::seismogram::type::pressure:
+      seismogram_types[isies] = specfem::wavefield::type::pressure;
+      seismogram_type_map[specfem::wavefield::type::pressure] = isies;
+      break;
+    default:
+      throw std::runtime_error("Invalid seismogram type");
+    }
   }
 
-  Kokkos::deep_copy(receiver_array, h_receiver_array);
-  Kokkos::deep_copy(ispec_array, h_ispec_array);
-  Kokkos::deep_copy(cos_recs, h_cos_recs);
-  Kokkos::deep_copy(sin_recs, h_sin_recs);
-  Kokkos::deep_copy(seismogram_types, h_seismogram_types);
+  for (int ireceiver = 0; ireceiver < receivers.size(); ++ireceiver) {
+    const auto receiver = receivers[ireceiver];
+    std::string station_name = receiver->get_station_name();
+    std::string network_name = receiver->get_network_name();
+
+    station_names[ireceiver] = station_name;
+    network_names[ireceiver] = network_name;
+    station_network_map[station_name][network_name] = ireceiver;
+    const auto gcoord =
+        specfem::point::global_coordinates<specfem::dimension::type::dim2>{
+          receiver->get_x(), receiver->get_z()
+        };
+    const auto lcoord = specfem::algorithms::locate_point(gcoord, mesh);
+
+    if (h_receiver_domain_index_mapping(lcoord.ispec) != -1) {
+      throw std::runtime_error(
+          "Multiple receivers are detected in the same element");
+    }
+
+    h_receiver_domain_index_mapping(lcoord.ispec) = ireceiver;
+    h_elements(ireceiver) = lcoord.ispec;
+
+    const auto xi = mesh.quadratures.gll.h_xi;
+    const auto gamma = mesh.quadratures.gll.h_xi;
+
+    auto [hxi_receiver, hpxi_receiver] =
+        specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
+            lcoord.xi, mesh.quadratures.gll.N, xi);
+
+    auto [hgamma_receiver, hpgamma_receiver] =
+        specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
+            lcoord.gamma, mesh.quadratures.gll.N, gamma);
+
+    for (int iz = 0; iz < mesh.ngllz; ++iz) {
+      for (int ix = 0; ix < mesh.ngllx; ++ix) {
+        type_real hlagrange = hxi_receiver(ix) * hgamma_receiver(iz);
+
+        h_lagrange_interpolant(ireceiver, iz, ix, 0) = hlagrange;
+        h_lagrange_interpolant(ireceiver, iz, ix, 1) = hlagrange;
+
+        h_sine_receiver_angle(ireceiver) = std::sin(
+            Kokkos::numbers::pi_v<type_real> / 180 * receiver->get_angle());
+
+        h_cosine_receiver_angle(ireceiver) = std::cos(
+            Kokkos::numbers::pi_v<type_real> / 180 * receiver->get_angle());
+      }
+    }
+  }
+
+  Kokkos::deep_copy(lagrange_interpolant, h_lagrange_interpolant);
+  Kokkos::deep_copy(elements, h_elements);
+  Kokkos::deep_copy(receiver_domain_index_mapping,
+                    h_receiver_domain_index_mapping);
 
   return;
-};
+}
 
-void specfem::compute::receivers::sync_seismograms() {
-  Kokkos::deep_copy(h_seismogram, seismogram);
+Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
+specfem::compute::receivers::get_elements_on_host(
+    const specfem::element::medium_tag medium_tag,
+    const specfem::element::property_tag property_tag) const {
+  int nreceivers = h_elements.extent(0);
 
-  return;
+  int ntags = h_medium_tags.extent(0);
+
+  int count = 0;
+  for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver) {
+    int ispec = h_elements(ireceiver);
+
+    if (h_medium_tags(ispec) == medium_tag &&
+        h_property_tags(ispec) == property_tag) {
+      count++;
+    }
+  }
+
+  Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements(
+      "specfem::compute::receivers::elements", count);
+
+  count = 0;
+  for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver) {
+    int ispec = h_elements(ireceiver);
+
+    if (h_medium_tags(ispec) == medium_tag &&
+        h_property_tags(ispec) == property_tag) {
+      elements(count) = ispec;
+      count++;
+    }
+  }
+
+  return elements;
+}
+
+Kokkos::View<int *, Kokkos::DefaultExecutionSpace>
+specfem::compute::receivers::get_elements_on_device(
+    const specfem::element::medium_tag medium_tag,
+    const specfem::element::property_tag property_tag) const {
+
+  const auto h_elements = get_elements_on_host(medium_tag, property_tag);
+
+  Kokkos::View<int *, Kokkos::DefaultExecutionSpace> elements(
+      "specfem::compute::receivers::elements", h_elements.extent(0));
+
+  Kokkos::deep_copy(elements, h_elements);
+
+  return elements;
 }

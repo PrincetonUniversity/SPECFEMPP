@@ -1,11 +1,11 @@
 #ifndef _PARAMETER_SETUP_HPP
 #define _PARAMETER_SETUP_HPP
 
+#include "IO/reader.hpp"
 #include "database_configuration.hpp"
 #include "header.hpp"
 #include "parameter_parser/solver/interface.hpp"
 #include "quadrature.hpp"
-#include "IO/reader.hpp"
 #include "receivers.hpp"
 #include "run_setup.hpp"
 #include "specfem_setup.hpp"
@@ -140,8 +140,7 @@ public:
    * @return specfem::IO::writer* Pointer to an instantiated writer
    object
    */
-  std::shared_ptr<specfem::IO::writer>
-  instantiate_seismogram_writer() const {
+  std::shared_ptr<specfem::IO::writer> instantiate_seismogram_writer() const {
     if (this->seismogram) {
       return this->seismogram->instantiate_seismogram_writer(
           this->time_scheme->get_dt(), this->time_scheme->get_t0(),
@@ -151,8 +150,7 @@ public:
     }
   }
 
-  std::shared_ptr<specfem::IO::writer>
-  instantiate_wavefield_writer() const {
+  std::shared_ptr<specfem::IO::writer> instantiate_wavefield_writer() const {
     if (this->wavefield) {
       return this->wavefield->instantiate_wavefield_writer();
     } else {
@@ -160,8 +158,7 @@ public:
     }
   }
 
-  std::shared_ptr<specfem::IO::reader>
-  instantiate_wavefield_reader() const {
+  std::shared_ptr<specfem::IO::reader> instantiate_wavefield_reader() const {
     if (this->wavefield) {
       return this->wavefield->instantiate_wavefield_reader();
     } else {

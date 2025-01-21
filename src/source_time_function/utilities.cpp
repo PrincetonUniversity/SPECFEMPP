@@ -13,6 +13,17 @@ type_real gaussian(const type_real t, const type_real f0) {
 }
 
 KOKKOS_INLINE_FUNCTION
+type_real d1gaussian(const type_real t, const type_real f0) {
+  // First derivative of Gaussian wavelet
+  constexpr auto pi = Kokkos::numbers::pi_v<type_real>;
+
+  type_real a = pi * pi * f0 * f0;
+  type_real d1gaussian = t * Kokkos::exp(-a * t * t);
+
+  return d1gaussian;
+}
+
+KOKKOS_INLINE_FUNCTION
 type_real d2gaussian(const type_real t, const type_real f0) {
   constexpr auto pi = Kokkos::numbers::pi_v<type_real>;
 
@@ -20,6 +31,19 @@ type_real d2gaussian(const type_real t, const type_real f0) {
   type_real d2gaussian = (1.0 - 2.0 * a * t * t) * Kokkos::exp(-a * t * t);
 
   return d2gaussian;
+}
+
+KOKKOS_INLINE_FUNCTION
+type_real d3gaussian(const type_real t, const type_real f0) {
+  // Third derivative of Gaussian wavelet
+  constexpr auto pi = Kokkos::numbers::pi_v<type_real>;
+
+  type_real a = pi * pi * f0 * f0;
+
+  type_real d3gaussian =
+      -2.0 * a * t * (3.0 - 2.0 * a * t * t) * Kokkos::exp(-a * t * t);
+
+  return d3gaussian;
 }
 
 KOKKOS_INLINE_FUNCTION
