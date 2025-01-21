@@ -9,6 +9,7 @@
 
 #else
 
+#include <algorithm>
 #include <boost/filesystem.hpp>
 #include <cmath>
 #include <vtkActor.h>
@@ -56,6 +57,15 @@ void specfem::periodic_tasks::plot_wavefield::run() {
 #else
 
 namespace {
+
+// Convert integer to string with zero leading
+std::string to_zero_lead(const int value, const int n_zero) {
+  auto old_str = std::to_string(value);
+  int n_zero_fix =
+      n_zero - std::min(n_zero, static_cast<int>(old_str.length()));
+  auto new_str = std::string(n_zero_fix, '0') + old_str;
+  return new_str;
+}
 
 // Sigmoid function centered at 0.0
 double sigmoid(double x) { return (1 / (1 + std::exp(-100 * x)) - 0.5) * 1.5; }
@@ -297,7 +307,7 @@ void specfem::periodic_tasks::plot_wavefield::run() {
     if (this->output_format == specfem::display::format::PNG) {
       const auto filename =
           this->output_folder /
-          ("wavefield" + std::to_string(this->m_istep) + ".png");
+          ("wavefield" + to_zero_lead(this->m_istep, 6) + ".png");
       auto writer = vtkSmartPointer<vtkPNGWriter>::New();
       writer->SetFileName(filename.string().c_str());
       writer->SetInputConnection(image_filter->GetOutputPort());

@@ -12,10 +12,6 @@ namespace runtime_configuration {
  */
 class sources {
 public:
-  sources(const std::string sources_file) {
-    source_node = YAML::LoadFile(sources_file);
-  };
-
   sources(const YAML::Node &Node) { source_node = Node; };
 
   /**

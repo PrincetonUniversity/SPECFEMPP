@@ -102,9 +102,7 @@ public:
    * @return std::tuple<std::string, std::string> std::tuple specifying the path
    * to mesh database and source yaml file
    */
-  std::tuple<std::string, std::string> get_databases() const {
-    return databases->get_databases();
-  }
+  std::string get_databases() const { return databases->get_databases(); }
 
   /**
    * @brief Get the sources YAML object

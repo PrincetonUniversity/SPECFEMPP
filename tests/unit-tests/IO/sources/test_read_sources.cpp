@@ -15,6 +15,9 @@ TEST(IO_TESTS, read_sources) {
   std::string sources_file =
       "../../../tests/unit-tests/IO/sources/data/single_moment_tensor.yml";
 
+  YAML::Node databases;
+  databases["sources"] = sources_file;
+
   int nsteps = 100;
   type_real t0 = 0.0;
   type_real dt = 0.01;
@@ -25,8 +28,12 @@ TEST(IO_TESTS, read_sources) {
   type_real hdur = 1.0 / f0;
   type_real t0_final = -1.2 * hdur + tshift;
 
+  std::cout << "hello" << std::endl;
+  std::cout << databases["sources"].as<std::string>() << std::endl;
   auto [sources, user_t0] = specfem::IO::read_sources(
-      sources_file, nsteps, t0, dt, specfem::simulation::type::forward);
+      databases["sources"], nsteps, t0, dt, specfem::simulation::type::forward);
+
+  std::cout << "world" << std::endl;
 
   ASSERT_EQ(sources.size(), 1);
   auto source = sources[0];

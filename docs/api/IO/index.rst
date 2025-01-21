@@ -29,12 +29,19 @@ are exposed through the following modules:
     reader/index
 
 
-Read Mesh, Sources and Receivers
---------------------------------
-
+Read Mesh
+---------
 
 .. doxygenfunction:: specfem::IO::read_mesh
 
-.. doxygenfunction:: specfem::IO::read_sources
 
-.. doxygenfunction:: specfem::IO::read_receivers
+Read Sources
+------------
+
+.. doxygenfunction:: specfem::IO::read_sources(const std::string sources_file, const int nsteps, const type_real user_t0, const type_real dt, const specfem::simulation::type simulation_type)
+
+
+Read Receivers
+--------------
+
+.. doxygenfunction:: specfem::IO::read_receivers(const std::string stations_file, const type_real angle)

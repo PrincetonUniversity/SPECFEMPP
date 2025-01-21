@@ -109,7 +109,7 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
     specfem::runtime_configuration::setup setup(parameter_file,
                                                 __default_file__);
 
-    const auto [database_file, sources_file] = setup.get_databases();
+    const auto database_file = setup.get_databases();
 
     // Set up GLL quadrature points
     auto quadratures = setup.instantiate_quadrature();
@@ -128,7 +128,7 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
 
     // Generate compute structs to be used by the solver
     specfem::compute::assembly assembly(mesh, quadratures, sources, receivers,
-                                        stypes, 0, 0, 0, 0,
+                                        stypes, 0, 0, 0, 0, 1,
                                         setup.get_simulation_type(), nullptr);
 
     try {

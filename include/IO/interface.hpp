@@ -32,13 +32,13 @@ read_mesh(const std::string filename, const specfem::MPI::MPI *mpi);
  *
  * @param stations_file Stations file describing receiver locations
  * @param angle Angle of the receivers
- * @return std::vector<specfem::receivers::receiver *> vector of instantiated
- * receiver objects
+ * @return vector of instantiated receiver objects
  */
 std::vector<std::shared_ptr<specfem::receivers::receiver> >
 read_receivers(const std::string stations_file, const type_real angle);
 
 /**
+ * @overload
  * @brief Read receivers from YAML Node
  *
  * Parse receiver stations file and create a vector of
@@ -46,17 +46,19 @@ read_receivers(const std::string stations_file, const type_real angle);
  *
  * The receivers are defined in the YAML file as
  *
- *     receivers:
- *         stations-dict:
- *             - network: "network_name"
- *               station: "station_name"
- *               x: x_coordinate
- *               z: z_coordinate
+ * @code
+ * receivers:
+ *     stations-dict:
+ *         - network: "network_name"
+ *           station: "station_name"
+ *           x: x_coordinate
+ *           z: z_coordinate
+ *         - <next station>
+ * @endcode
  *
  * @param stations YAML node containing receiver locations
  * @param angle Angle of the receivers
- * @return std::vector<specfem::receivers::receiver *> vector of instantiated
- * receiver objects
+ * @return vector of instantiated receiver objects
  */
 std::vector<std::shared_ptr<specfem::receivers::receiver> >
 read_receivers(const YAML::Node &stations, const type_real angle);
