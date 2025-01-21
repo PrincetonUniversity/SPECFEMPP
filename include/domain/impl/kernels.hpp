@@ -120,7 +120,7 @@ private:
             specfem::element::property_tag property>
   using receiver_kernel = specfem::domain::impl::kernels::receiver_kernel<
       WavefieldType, DimensionType, elastic, property,
-      quadrature_point_type>; ///< Underlying receiver kernel data structure
+      NGLL>; ///< Underlying receiver kernel data structure
 
   element_kernel<DimensionType, isotropic, none>
       isotropic_elements; ///< Stiffness kernels for isotropic elements
@@ -269,7 +269,7 @@ private:
             specfem::element::property_tag property>
   using receiver_kernel = specfem::domain::impl::kernels::receiver_kernel<
       WavefieldType, DimensionType, acoustic, property,
-      quadrature_point_type>; ///< Underlying receiver kernel data structure
+      NGLL>; ///< Underlying receiver kernel data structure
 
   element_kernel<DimensionType, isotropic, none>
       isotropic_elements; ///< Stiffness kernels for isotropic elements

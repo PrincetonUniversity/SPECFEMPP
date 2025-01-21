@@ -7,199 +7,154 @@
 #include "enumerations/interface.hpp"
 #include "kernel.hpp"
 #include "kokkos_abstractions.h"
+#include "medium/compute_wavefield.hpp"
+#include "parallel_configuration/chunk_config.hpp"
 #include "quadrature/interface.hpp"
 #include "specfem_setup.hpp"
 
 template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag, typename qp_type>
+          specfem::element::property_tag PropertyTag, int NGLL>
 specfem::domain::impl::kernels::receiver_kernel<
-    WavefieldType, DimensionType, MediumTag, PropertyTag, qp_type>::
-    receiver_kernel(
-        const specfem::compute::assembly &assembly,
-        const specfem::kokkos::HostView1d<int> h_receiver_kernel_index_mapping,
-        const specfem::kokkos::HostView1d<int> h_receiver_mapping,
-        const quadrature_points_type &quadrature_points)
-    : nreceivers(h_receiver_kernel_index_mapping.extent(0)),
-      nseismograms(assembly.receivers.seismogram_types.extent(0)),
-      h_receiver_kernel_index_mapping(h_receiver_kernel_index_mapping),
-      points(assembly.mesh.points), quadrature(assembly.mesh.quadratures),
-      partial_derivatives(assembly.partial_derivatives),
-      properties(assembly.properties), receivers(assembly.receivers),
-      field(assembly.fields.get_simulation_field<WavefieldType>()),
-      quadrature_points(quadrature_points) {
+    WavefieldType, DimensionType, MediumTag, PropertyTag,
+    NGLL>::receiver_kernel(const specfem::compute::assembly &assembly)
+    : assembly(assembly) {
 
-  // Check if the receiver element is of type being allocated
-  for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver) {
-    const int ispec = h_receiver_kernel_index_mapping(ireceiver);
-    if ((assembly.properties.h_medium_tags(ispec) !=
-         medium_tag) &&
-        (assembly.properties.h_property_tags(ispec) !=
-         property_tag)) {
-      throw std::runtime_error("Invalid element detected in kernel");
-    }
-  }
-
-  Kokkos::fence();
-
-  receiver_kernel_index_mapping = specfem::kokkos::DeviceView1d<int>(
-      "specfem::domain::impl::kernels::element_kernel::element_kernel_index_"
-      "mapping",
-      nreceivers);
-
-  receiver_mapping = specfem::kokkos::DeviceView1d<int>(
-      "specfem::domain::impl::kernels::element_kernel::source_mapping",
-      nreceivers);
-
-  Kokkos::deep_copy(receiver_kernel_index_mapping,
-                    h_receiver_kernel_index_mapping);
-  Kokkos::deep_copy(receiver_mapping, h_receiver_mapping);
-
-  receiver =
-      specfem::domain::impl::receivers::receiver<DimensionType, MediumTag,
-                                                 PropertyTag, qp_type, using_simd>();
-
-  return;
+  this->elements =
+      assembly.receivers.get_elements_on_device(MediumTag, PropertyTag);
 }
 
 template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag, typename qp_type>
+          specfem::element::property_tag PropertyTag, int NGLL>
 void specfem::domain::impl::kernels::receiver_kernel<
     WavefieldType, DimensionType, MediumTag, PropertyTag,
-    qp_type>::compute_seismograms(const int &isig_step) const {
+    NGLL>::compute_seismograms(const int &isig_step) const {
+  const int nelements = elements.extent(0);
+  constexpr int ngll = NGLL;
 
-  // Allocate scratch views for field, field_dot & field_dot_dot. Incase of
-  // acostic domains when calculating displacement, velocity and acceleration
-  // seismograms we need to compute the derivatives of the field variables. This
-  // requires summing over all lagrange derivatives at all quadrature points
-  // within the element. Scratch views speed up this computation by limiting
-  // global memory accesses.
+  if (nelements == 0)
+    return;
 
-  constexpr int NGLL = quadrature_points_type::NGLL;
-  using ElementFieldType = specfem::element::field<
-      NGLL, DimensionType, MediumTag, specfem::kokkos::DevScratchSpace,
-      Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, true, true, false, using_simd>;
+  auto receivers = assembly.receivers;
+  const auto seismogram_types = receivers.get_seismogram_types();
+
+  auto field = assembly.fields.get_simulation_field<WavefieldType>();
+  auto quadrature = assembly.mesh.quadratures;
+
+  const int nseismograms = seismogram_types.size();
+
+  constexpr bool using_simd = false;
+
+  using no_simd = specfem::datatype::simd<type_real, using_simd>;
+
+  constexpr int simd_size = no_simd::size();
+
+#ifdef KOKKOS_ENABLE_CUDA
+  constexpr int nthreads = 32;
+  constexpr int lane_size = 1;
+#else
+  constexpr int nthreads = 1;
+  constexpr int lane_size = 1;
+#endif
+
+  using ParallelConfig =
+      specfem::parallel_config::chunk_config<DimensionType, 1, 1, nthreads,
+                                             lane_size, no_simd,
+                                             Kokkos::DefaultExecutionSpace>;
+
+  using ChunkPolicy = specfem::policy::element_chunk<ParallelConfig>;
+
+  using ChunkElementFieldType = specfem::chunk_element::field<
+      ParallelConfig::chunk_size, ngll, DimensionType, MediumTag,
+      specfem::kokkos::DevScratchSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+      true, true, true, false, using_simd>;
 
   using ElementQuadratureType = specfem::element::quadrature<
-      NGLL, DimensionType, specfem::kokkos::DevScratchSpace,
+      ngll, DimensionType, specfem::kokkos::DevScratchSpace,
       Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, false>;
 
-  if (nreceivers == 0)
-    return;
+  using ViewType = specfem::datatype::ScalarChunkViewType<
+      type_real, ParallelConfig::chunk_size, ngll, 2,
+      specfem::kokkos::DevScratchSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>,
+      false>;
 
-  if (nseismograms == 0)
-    return;
+  using ResultsViewType =
+      Kokkos::View<type_real[ParallelConfig::chunk_size][2], Kokkos::LayoutLeft,
+                   specfem::kokkos::DevScratchSpace,
+                   Kokkos::MemoryTraits<Kokkos::Unmanaged> >;
 
-  int scratch_size =
-      ElementFieldType::shmem_size() + ElementQuadratureType::shmem_size();
+  int scratch_size = ChunkElementFieldType::shmem_size() +
+                     ElementQuadratureType::shmem_size() +
+                     2 * ViewType::shmem_size() + ResultsViewType::shmem_size();
 
-  Kokkos::parallel_for(
-      "specfem::domain::domain::compute_seismogram",
-      specfem::kokkos::DeviceTeam(nreceivers * nseismograms, Kokkos::AUTO, 1)
-          .set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
-      KOKKOS_CLASS_LAMBDA(
-          const specfem::kokkos::DeviceTeam::member_type &team_member) {
-        // --- Get receiver index, seismogram type, and spectral element index
-        int ngllx, ngllz;
-        quadrature_points.get_ngll(&ngllx, &ngllz);
-        const auto iseis_l = team_member.league_rank() % nseismograms;
-        const auto seismogram_type_l = receivers.seismogram_types(iseis_l);
-        const int ireceiver_l =
-            receiver_mapping(team_member.league_rank() / nseismograms);
-        const int ispec_l = receiver_kernel_index_mapping(
-            team_member.league_rank() / nseismograms);
-        // --------------------------------------------------------------------------
+  receivers.set_seismogram_step(isig_step);
 
-        // Instantiate shared views
-        // ----------------------------------------------------------------
-        ElementFieldType element_field(team_member);
-        ElementQuadratureType element_quadrature(team_member);
+  ChunkPolicy policy(elements, ngll, ngll);
 
-        // Allocate shared views
-        // ----------------------------------------------------------------
+  for (int iseis = 0; iseis < nseismograms; ++iseis) {
 
-        specfem::compute::load_on_device(team_member, quadrature,
-                                         element_quadrature);
-        specfem::compute::load_on_device(team_member, ispec_l, field,
-                                         element_field);
+    receivers.set_seismogram_type(iseis);
+    const auto wavefield_component = seismogram_types[iseis];
 
-        team_member.team_barrier();
+    Kokkos::parallel_for(
+        "specfem::domain::impl::receivers::compute_seismograms",
+        policy.set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
+        KOKKOS_LAMBDA(const typename ChunkPolicy::member_type &team_member) {
+          // Instantiate shared views
+          // ----------------------------------------------------------------
+          ChunkElementFieldType element_field(team_member);
+          ElementQuadratureType element_quadrature(team_member);
+          ViewType wavefield(team_member.team_scratch(0));
+          ViewType lagrange_interpolant(team_member.team_scratch(0));
+          ResultsViewType seismogram_components(team_member.team_scratch(0));
 
-        // Get seismogram field
-        // ----------------------------------------------------------------
+          specfem::compute::load_on_device(team_member, quadrature,
+                                           element_quadrature);
 
-        Kokkos::parallel_for(
-            quadrature_points.template TeamThreadRange<specfem::enums::axes::z,
-                                                       specfem::enums::axes::x>(
-                team_member),
-            [=](const int xz) {
-              int iz, ix;
-              sub2ind(xz, ngllx, iz, ix);
-              const specfem::point::index<DimensionType> index(ispec_l, iz, ix);
-              const auto point_partial_derivatives =
-                  [&]() {
-                    specfem::point::partial_derivatives<DimensionType, false,
-                                                        using_simd>
-                    point_partial_derivatives;
-                specfem::compute::load_on_device(index, partial_derivatives,
-                                                 point_partial_derivatives);
-                return point_partial_derivatives;
-              }();
+          for (int tile = 0; tile < ChunkPolicy::tile_size * simd_size;
+               tile += ChunkPolicy::chunk_size * simd_size) {
+            const int starting_element_index =
+                team_member.league_rank() * ChunkPolicy::tile_size * simd_size +
+                tile;
 
-              const auto point_properties =
-                  [&]() -> specfem::point::properties<DimensionType, MediumTag, PropertyTag, using_simd> {
-                specfem::point::properties<DimensionType, MediumTag, PropertyTag, using_simd>
-                    point_properties;
-                specfem::compute::load_on_device(index, properties,
-                                                 point_properties);
-                return point_properties;
-              }();
+            if (starting_element_index >= nelements) {
+              break;
+            }
 
-              auto sv_receiver_field =
-                  Kokkos::subview(receivers.receiver_field, iz, ix, iseis_l,
-                                  ireceiver_l, isig_step, Kokkos::ALL);
+            const auto iterator =
+                policy.league_iterator(starting_element_index);
 
-              receiver.get_field(iz, ix, point_partial_derivatives,
-                                 point_properties,
-                                 element_quadrature.hprime_gll, element_field, seismogram_type_l,
-                                 sv_receiver_field);
-            });
-        team_member.team_barrier();
+            specfem::compute::load_on_device(team_member, iterator, field,
+                                             element_field);
 
-        // compute seismograms components
-        //-------------------------------------------------------------------
-        const auto sv_receiver_field =
-            Kokkos::subview(receivers.receiver_field, Kokkos::ALL, Kokkos::ALL,
-                            iseis_l, ireceiver_l, isig_step, Kokkos::ALL);
+            team_member.team_barrier();
 
-        const auto polynomial = Kokkos::subview(
-            receivers.receiver_array, ireceiver_l, 0, Kokkos::ALL, Kokkos::ALL);
+            specfem::medium::compute_wavefield<MediumTag, PropertyTag>(
+                team_member, iterator, assembly, element_quadrature,
+                element_field, wavefield_component, wavefield);
 
-        const auto seismogram_components =
-            specfem::algorithms::interpolate_function(team_member, polynomial,
-                                                      sv_receiver_field);
+            specfem::compute::load_on_device(team_member, iterator, receivers,
+                                             lagrange_interpolant);
 
-        Kokkos::single(Kokkos::PerTeam(team_member), [=] {
-          if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
-            receivers.seismogram(isig_step, iseis_l, ireceiver_l, 0) =
-                receivers.cos_recs(ireceiver_l) * seismogram_components(0) +
-                receivers.sin_recs(ireceiver_l) * seismogram_components(1);
-            receivers.seismogram(isig_step, iseis_l, ireceiver_l, 1) =
-                receivers.sin_recs(ireceiver_l) * seismogram_components(0) +
-                receivers.cos_recs(ireceiver_l) * seismogram_components(1);
-          } else if (specfem::globals::simulation_wave == specfem::wave::sh) {
-            receivers.seismogram(isig_step, iseis_l, ireceiver_l, 0) =
-                receivers.cos_recs(ireceiver_l) * seismogram_components(0) +
-                receivers.sin_recs(ireceiver_l) * seismogram_components(1);
-            receivers.seismogram(isig_step, iseis_l, ireceiver_l, 0) = 0;
+            team_member.team_barrier();
+
+            specfem::algorithms::interpolate_function(
+                team_member, iterator, lagrange_interpolant, wavefield,
+                seismogram_components);
+
+            team_member.team_barrier();
+
+            specfem::compute::store_on_device(team_member, iterator,
+                                              seismogram_components, receivers);
           }
         });
 
-        return;
-      });
-}
+    Kokkos::fence();
+  }
 
+  return;
+}
 #endif /* _DOMAIN_IMPL_RECEIVERS_KERNEL_TPP */

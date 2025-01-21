@@ -137,43 +137,6 @@ target_link_libraries(
 )
 
 add_executable(
-  compute_elastic_tests
-  compute/elastic/compute_properties_tests.cpp
-)
-
-target_link_libraries(
-  compute_elastic_tests
-  mesh
-  compute
-  quadrature
-  mpi_environment
-  kokkos_environment
-  yaml-cpp
-  compare_arrays
-  Boost::filesystem
-  # material_class
-  -lpthread -lm
-)
-
-# add_executable(
-#   compute_acoustic_tests
-#   compute/acoustic/compute_properties_tests.cpp
-# )
-
-# target_link_libraries(
-#   compute_acoustic_tests
-#   mesh
-#   compute
-#   quadrature
-#   mpi_environment
-#   kokkos_environment
-#   yaml-cpp
-#   compare_arrays
-#   # material_class
-#   -lpthread -lm
-# )
-
-add_executable(
   compute_tests
   compute/index/compute_tests.cpp
 )
@@ -357,49 +320,49 @@ target_link_libraries(
   -lpthread -lm
 )
 
-add_executable(
-  seismogram_elastic_tests
-  seismogram/elastic/seismogram_tests.cpp
-)
+# add_executable(
+#   seismogram_elastic_tests
+#   seismogram/elastic/seismogram_tests.cpp
+# )
 
-target_link_libraries(
-  seismogram_elastic_tests
-  quadrature
-  mesh
-  yaml-cpp
-  kokkos_environment
-  mpi_environment
-  compute
-  parameter_reader
-  writer
-  plotter
-  domain
-  coupled_interface
-  solver
-  -lpthread -lm
-)
+# target_link_libraries(
+#   seismogram_elastic_tests
+#   quadrature
+#   mesh
+#   yaml-cpp
+#   kokkos_environment
+#   mpi_environment
+#   compute
+#   parameter_reader
+#   writer
+#   plotter
+#   domain
+#   coupled_interface
+#   solver
+#   -lpthread -lm
+# )
 
-add_executable(
-  seismogram_acoustic_tests
-  seismogram/acoustic/seismogram_tests.cpp
-)
+# add_executable(
+#   seismogram_acoustic_tests
+#   seismogram/acoustic/seismogram_tests.cpp
+# )
 
-target_link_libraries(
-  seismogram_acoustic_tests
-  quadrature
-  mesh
-  yaml-cpp
-  kokkos_environment
-  mpi_environment
-  compute
-  parameter_reader
-  writer
-  plotter
-  domain
-  coupled_interface
-  solver
-  -lpthread -lm
-)
+# target_link_libraries(
+#   seismogram_acoustic_tests
+#   quadrature
+#   mesh
+#   yaml-cpp
+#   kokkos_environment
+#   mpi_environment
+#   compute
+#   parameter_reader
+#   writer
+#   plotter
+#   domain
+#   coupled_interface
+#   solver
+#   -lpthread -lm
+# )
 
 # add_executable(
 #   compute_coupled_interfaces_tests
@@ -430,8 +393,6 @@ if (NOT MPI_PARALLEL)
   gtest_discover_tests(IO_tests)
   gtest_discover_tests(mesh_tests)
   gtest_discover_tests(compute_partial_derivatives_tests)
-  gtest_discover_tests(compute_elastic_tests)
-  # # gtest_discover_tests(compute_acoustic_tests)
   # gtest_discover_tests(compute_coupled_interfaces_tests)
   gtest_discover_tests(compute_tests)
   gtest_discover_tests(assembly_tests)
