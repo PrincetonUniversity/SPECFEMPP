@@ -373,6 +373,22 @@ private:
                               ///< stored on the host
   specfem::compute::element_types element_types; ///< Element types
 
+#define RECEIVER_INDICES_VARIABLE_NAME(DIMENSION_TAG, MEDIUM_TAG,              \
+                                       PROPERTY_TAG)                           \
+  IndexViewType CREATE_VARIABLE_NAME(elements, GET_NAME(DIMENSION_TAG),        \
+                                     GET_NAME(MEDIUM_TAG),                     \
+                                     GET_NAME(PROPERTY_TAG));                  \
+  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
+      h_elements, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),               \
+      GET_NAME(PROPERTY_TAG));
+
+  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
+      RECEIVER_INDICES_VARIABLE_NAME,
+      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
+          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
+
+#undef RECEIVER_INDICES_VARIABLE_NAME
+
   template <typename MemberType, typename IteratorType, typename ViewType>
   friend KOKKOS_FUNCTION void
   load_on_device(const MemberType &team_member, const IteratorType &iterator,
