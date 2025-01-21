@@ -153,6 +153,37 @@ private:
 
   int timestep; ///< Current time step
 
+#define SOURCE_INDICES_VARIABLES_NAME(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, \
+                                      BOUNDARY_TAG)                            \
+  IndexViewType CREATE_VARIABLE_NAME(                                          \
+      elements_forward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),         \
+      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
+  IndexViewType CREATE_VARIABLE_NAME(                                          \
+      elements_backward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),        \
+      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
+  IndexViewType CREATE_VARIABLE_NAME(                                          \
+      elements_adjoint, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),         \
+      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
+  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
+      h_elements_forward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),       \
+      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
+  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
+      h_elements_backward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),      \
+      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
+  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
+      h_elements_adjoint, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),       \
+      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));
+
+  CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
+      SOURCE_INDICES_VARIABLES_NAME,
+      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
+          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)
+              WHERE(BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
+                    BOUNDARY_TAG_STACEY,
+                    BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
+
+#undef SOURCE_INDICES_VARIABLES_NAME
+
   template <typename IndexType, typename PointSourceType>
   friend KOKKOS_INLINE_FUNCTION void
   load_on_device(const IndexType index,
