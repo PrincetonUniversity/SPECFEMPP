@@ -184,7 +184,7 @@ At this point lets focus on a few sections in this file:
 
 - Define the path to the meshfem generated database file using the
   ``mesh-database`` parameter and the path to source description file using
-  ``source-file`` parameter. Relevant parameter values:
+  ``sources`` parameter. Relevant parameter values:
 
 .. literalinclude:: specfem_config.yaml
     :caption: specfem_config.yaml

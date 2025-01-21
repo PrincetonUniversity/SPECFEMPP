@@ -53,7 +53,8 @@ TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
 
   specfem::runtime_configuration::setup setup(parameter_file, __default_file__);
 
-  const auto [database_file, sources_file] = setup.get_databases();
+  const auto database_file = setup.get_databases();
+  const auto source_node = setup.get_sources();
 
   // Set up GLL quadrature points
   auto [gllx, gllz] = setup.instantiate_quadrature();
@@ -65,7 +66,7 @@ TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
   // Read sources
   //    if start time is not explicitly specified then t0 is determined using
   //    source frequencies and time shift
-  auto [sources, t0] = specfem::IO::read_sources(sources_file, 1e-5, mpi);
+  auto [sources, t0] = specfem::IO::read_sources(source_node, 1e-5, mpi);
 
   // Generate compute structs to be used by the solver
   specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,

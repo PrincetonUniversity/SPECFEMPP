@@ -55,7 +55,8 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
 
   specfem::runtime_configuration::setup setup(parameter_file, __default_file__);
 
-  const auto [database_file, sources_file] = setup.get_databases();
+  const auto database_file = setup.get_databases();
+  const auto source_node = setup.get_sources();
   // mpi->cout(setup.print_header());
 
   // Set up GLL quadrature points
@@ -69,7 +70,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
   //    if start time is not explicitly specified then t0 is determined using
   //    source frequencies and time shift
   auto [sources, t0] =
-      specfem::IO::read_sources(sources_file, setup.get_dt(), mpi);
+      specfem::IO::read_sources(source_node, setup.get_dt(), mpi);
 
   // Generate compute structs to be used by the solver
   specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,

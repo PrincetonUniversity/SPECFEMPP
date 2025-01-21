@@ -185,9 +185,9 @@ public:
   }
 
   Iterator end() {
-    return Iterator(irec, iseis, max_sig_step - 1, dt, t0,
-                    nstep_between_samples, h_sine_receiver_angle,
-                    h_cosine_receiver_angle, h_seismogram_components);
+    return Iterator(irec, iseis, max_sig_step, dt, t0, nstep_between_samples,
+                    h_sine_receiver_angle, h_cosine_receiver_angle,
+                    h_seismogram_components);
   }
 
   /**

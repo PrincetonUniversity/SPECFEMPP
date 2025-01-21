@@ -1,9 +1,5 @@
 parameters:
 
-  databases:
-    mesh-database: "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/OUTPUT_FILES/database.bin"
-    source-file: "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/adjoint_source.yaml"
-
   header:
     description: |
       Material systems : Elastic domain (1)
@@ -18,20 +14,27 @@ parameters:
     title: Tromp-Tape-Liu (GJI 2005)
 
   receivers:
+    stations: "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/OUTPUT_FILES/STATIONS"
     angle: 0.0
     nstep_between_samples: 1
     seismogram-type:
     - displacement
-    stations-file: placeholder/for/path/to/STATIONS
 
   run-setup:
     number-of-processors: 1
     number-of-runs: 1
 
+  databases:
+    mesh-database: "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/OUTPUT_FILES/database.bin"
+
+  ## sources
+  sources: "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/adjoint_source.yaml"
+
   simulation-setup:
     quadrature:
       quadrature-type: GLL4
 
+    ## The important bit
     simulation-mode:
       combined:
         reader:
