@@ -254,34 +254,34 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
       std::vector<std::string> filename;
       switch (seismogram_type) {
       case specfem::wavefield::type::displacement:
-        filename.push_back(Test.database.traces + "/" + station_name + "." +
-                           network_name + ".BXX.semd");
-        filename.push_back(Test.database.traces + "/" + station_name + "." +
-                           network_name + ".BXZ.semd");
+        filename.push_back(Test.database.traces + "/" + network_name + "." +
+                           station_name + ".S2.BXX.semd");
+        filename.push_back(Test.database.traces + "/" + network_name + "." +
+                           station_name + ".S2.BXZ.semd");
         break;
       case specfem::wavefield::type::velocity:
-        filename.push_back(Test.database.traces + "/" + station_name + "." +
-                           network_name + ".BXX.semv");
-        filename.push_back(Test.database.traces + "/" + station_name + "." +
-                           network_name + ".BXZ.semv");
+        filename.push_back(Test.database.traces + "/" + network_name + "." +
+                           station_name + ".S2.BXX.semv");
+        filename.push_back(Test.database.traces + "/" + network_name + "." +
+                           station_name + ".S2.BXZ.semv");
         break;
       case specfem::wavefield::type::acceleration:
-        filename.push_back(Test.database.traces + "/" + station_name + "." +
-                           network_name + ".BXX.sema");
-        filename.push_back(Test.database.traces + "/" + station_name + "." +
-                           network_name + ".BXZ.sema");
+        filename.push_back(Test.database.traces + "/" + network_name + "." +
+                           station_name + ".S2.BXX.sema");
+        filename.push_back(Test.database.traces + "/" + network_name + "." +
+                           station_name + ".S2.BXZ.sema");
         break;
       case specfem::wavefield::type::pressure:
-        filename.push_back(Test.database.traces + "/" + station_name + "." +
-                           network_name + ".PRE.semp");
+        filename.push_back(Test.database.traces + "/" + network_name + "." +
+                           station_name + ".S2.PRE.semp");
         break;
       default:
         FAIL() << "--------------------------------------------------\n"
                << "\033[0;31m[FAILED]\033[0m Test failed\n"
                << " - Test name: " << Test.name << "\n"
                << " - Error: Unknown seismogram type\n"
-               << " - Station: " << station_name << "\n"
                << " - Network: " << network_name << "\n"
+               << " - Station: " << station_name << "\n"
                << "--------------------------------------------------\n\n"
                << std::endl;
         break;
@@ -313,8 +313,8 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
                    << "\033[0;31m[FAILED]\033[0m Test failed\n"
                    << " - Test name: " << Test.name << "\n"
                    << " - Error: Times do not match\n"
-                   << " - Station: " << station_name << "\n"
                    << " - Network: " << network_name << "\n"
+                   << " - Station: " << station_name << "\n"
                    << " - Component: " << icomp << "\n"
                    << " - Expected: " << time << "\n"
                    << " - Computed: " << computed_time << "\n"
