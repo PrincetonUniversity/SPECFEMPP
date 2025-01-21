@@ -19,11 +19,10 @@ public:
    * @brief Construct a new database configuration object
    *
    * @param fortran_database location of fortran database
-   * @param source_database location of source file
    */
-  database_configuration(std::string fortran_database,
-                         std::string source_database)
-      : fortran_database(fortran_database), source_database(source_database){};
+  database_configuration(std::string fortran_database)
+      : fortran_database(fortran_database){};
+
   /**
    * @brief Construct a new run setup object
    *
@@ -31,13 +30,10 @@ public:
    */
   database_configuration(const YAML::Node &Node);
 
-  std::tuple<std::string, std::string> get_databases() const {
-    return std::make_tuple(this->fortran_database, this->source_database);
-  }
+  std::string get_databases() const { return this->fortran_database; }
 
 private:
   std::string fortran_database; ///< location of fortran binary database
-  std::string source_database;  ///< location of sources file
 };
 
 } // namespace runtime_configuration

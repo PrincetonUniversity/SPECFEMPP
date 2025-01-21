@@ -8,6 +8,7 @@
 #include "quadrature.hpp"
 #include "receivers.hpp"
 #include "run_setup.hpp"
+#include "sources.hpp"
 #include "specfem_setup.hpp"
 #include "time_scheme/interface.hpp"
 #include "writer/kernel.hpp"
@@ -101,18 +102,21 @@ public:
    * @return std::tuple<std::string, std::string> std::tuple specifying the path
    * to mesh database and source yaml file
    */
-  std::tuple<std::string, std::string> get_databases() const {
-    return databases->get_databases();
-  }
+  std::string get_databases() const { return databases->get_databases(); }
+
+  /**
+   * @brief Get the sources YAML object
+   *
+   * @return YAML::Node YAML node describing the sources
+   */
+  YAML::Node get_sources() const { return this->sources->get_sources(); }
 
   /**
    * @brief Get the path to stations file
    *
    * @return std::string path to stations file
    */
-  std::string get_stations_file() const {
-    return this->receivers->get_stations_file();
-  }
+  YAML::Node get_stations() const { return this->receivers->get_stations(); }
 
   /**
    * @brief Get the angle of receivers
@@ -231,6 +235,11 @@ private:
                   ///< quadrature object
   std::unique_ptr<specfem::runtime_configuration::receivers>
       receivers; ///< Pointer to receivers object
+  std::unique_ptr<specfem::runtime_configuration::sources>
+      sources; ///< Pointer
+               ///< to
+               ///< receivers
+               ///< object
   std::unique_ptr<specfem::runtime_configuration::seismogram>
       seismogram; ///< Pointer to
                   ///< seismogram object

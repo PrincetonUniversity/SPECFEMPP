@@ -15,8 +15,8 @@ sources:
     External:
       format: ASCII
       stf:
-        X-component: adjoint_sources/S0001AA.BXX.adj
-        Z-component: adjoint_sources/S0001AA.BXZ.adj
+        X-component: adjoint_sources/S0001.AA.S2.BXX.adj
+        Z-component: adjoint_sources/S0001.AA.S2.BXZ.adj
     angle: 0.0
     network_name: S0001
     source-surf: false

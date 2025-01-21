@@ -1,9 +1,5 @@
 parameters:
 
-  databases:
-    mesh-database: "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/OUTPUT_FILES/database.bin"
-    source-file: "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/forward_source.yaml"
-
   header:
     description: |
       Material systems : Elastic domain (1)
@@ -16,13 +12,6 @@ parameters:
       Output : Seismograms in ASCII format (1)
 
     title: Tromp-Tape-Liu (GJI 2005)
-
-  receivers:
-    angle: 0.0
-    nstep_between_samples: 1
-    seismogram-type:
-    - displacement
-    stations-file: "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/OUTPUT_FILES/STATIONS"
 
   run-setup:
     number-of-processors: 1
@@ -49,3 +38,16 @@ parameters:
           nstep: 2004
           t0: 8.0
           type: Newmark
+
+  receivers:
+    angle: 0.0
+    nstep_between_samples: 1
+    seismogram-type:
+    - displacement
+    stations: "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/OUTPUT_FILES/STATIONS"
+
+
+  databases:
+    mesh-database: "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/OUTPUT_FILES/database.bin"
+
+  sources: "@CMAKE_SOURCE_DIR@/examples/Tromp_2005/forward_source.yaml"

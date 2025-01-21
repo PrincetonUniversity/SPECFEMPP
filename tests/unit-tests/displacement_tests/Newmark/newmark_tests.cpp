@@ -169,7 +169,8 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     specfem::runtime_configuration::setup setup(parameter_file,
                                                 __default_file__);
 
-    const auto [database_file, sources_file] = setup.get_databases();
+    const auto database_file = setup.get_databases();
+    const auto source_node = setup.get_sources();
 
     // Set up GLL quadrature points
     const auto quadratures = setup.instantiate_quadrature();
@@ -183,7 +184,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     //    if start time is not explicitly specified then t0 is determined using
     //    source frequencies and time shift
     auto [sources, t0] = specfem::IO::read_sources(
-        sources_file, nsteps, setup.get_t0(), dt, setup.get_simulation_type());
+        source_node, nsteps, setup.get_t0(), dt, setup.get_simulation_type());
 
     for (auto &source : sources) {
       if (mpi->main_proc())
@@ -195,9 +196,9 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     // Instantiate the solver and timescheme
     auto it = setup.instantiate_timescheme();
 
-    const auto stations_filename = setup.get_stations_file();
+    const auto stations_node = setup.get_stations();
     const auto angle = setup.get_receiver_angle();
-    auto receivers = specfem::IO::read_receivers(stations_filename, angle);
+    auto receivers = specfem::IO::read_receivers(stations_node, angle);
 
     std::cout << "  Receiver information\n";
     std::cout << "------------------------------" << std::endl;
