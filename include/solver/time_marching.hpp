@@ -6,7 +6,7 @@
 #include "enumerations/wavefield.hpp"
 #include "kernels/frechet_kernels.hpp"
 #include "kernels/kernels.hpp"
-#include "periodic_tasks/plotter.hpp"
+#include "periodic_tasks/periodic_task.hpp"
 #include "solver.hpp"
 #include "timescheme/newmark.hpp"
 #include "timescheme/timescheme.hpp"
@@ -49,9 +49,9 @@ public:
           specfem::wavefield::simulation_field::forward, DimensionType, qp_type>
           &kernels,
       const std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
-      const std::vector<std::shared_ptr<specfem::periodic_tasks::plotter> >
-          &plotters)
-      : kernels(kernels), time_scheme(time_scheme), plotters(plotters) {}
+      const std::vector<
+          std::shared_ptr<specfem::periodic_tasks::periodic_task> > &tasks)
+      : kernels(kernels), time_scheme(time_scheme), tasks(tasks) {}
 
   ///@}
 
@@ -67,9 +67,9 @@ private:
       kernels; ///< Computational kernels
   std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme; ///< Time
                                                                   ///< scheme
-  std::vector<std::shared_ptr<specfem::periodic_tasks::plotter> >
-      plotters; ///< Plotter
-                ///< objects
+  std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> >
+      tasks; ///< Periodic tasks
+             ///< objects
 };
 
 /**
@@ -102,11 +102,11 @@ public:
           specfem::wavefield::simulation_field::backward, DimensionType,
           qp_type> &backward_kernels,
       const std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
-      const std::vector<std::shared_ptr<specfem::periodic_tasks::plotter> >
-          &plotters)
+      const std::vector<
+          std::shared_ptr<specfem::periodic_tasks::periodic_task> > &tasks)
       : assembly(assembly), adjoint_kernels(adjoint_kernels),
         frechet_kernels(assembly), backward_kernels(backward_kernels),
-        time_scheme(time_scheme), plotters(plotters) {}
+        time_scheme(time_scheme), tasks(tasks) {}
   ///@}
 
   /**
@@ -130,9 +130,9 @@ private:
   specfem::compute::assembly assembly; ///< Spectral element assembly object
   std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme; ///< Time
                                                                   ///< scheme
-  std::vector<std::shared_ptr<specfem::periodic_tasks::plotter> >
-      plotters; ///< Plotter
-                ///< objects
+  std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> >
+      tasks; ///< Periodic tasks
+             ///< objects
 };
 } // namespace solver
 } // namespace specfem

@@ -13,7 +13,7 @@ std::shared_ptr<specfem::solver::solver>
 specfem::runtime_configuration::solver::solver::instantiate(const type_real dt,
     const specfem::compute::assembly &assembly,
     std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
-    const qp_type &quadrature, const std::vector<std::shared_ptr<specfem::periodic_tasks::plotter> > &plotters) const {
+    const qp_type &quadrature, const std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> > &tasks) const {
 
   if (this->simulation_type == "forward") {
     std::cout << "Instantiating Kernels \n";
@@ -24,7 +24,7 @@ specfem::runtime_configuration::solver::solver::instantiate(const type_real dt,
     return std::make_shared<
         specfem::solver::time_marching<specfem::simulation::type::forward,
                                        specfem::dimension::type::dim2, qp_type>>(
-        kernels, time_scheme, plotters);
+        kernels, time_scheme, tasks);
   } else if (this->simulation_type == "combined") {
     std::cout << "Instantiating Kernels \n";
     std::cout << "-------------------------------\n";
@@ -37,7 +37,7 @@ specfem::runtime_configuration::solver::solver::instantiate(const type_real dt,
     return std::make_shared<
         specfem::solver::time_marching<specfem::simulation::type::combined,
                                        specfem::dimension::type::dim2, qp_type>>(
-        assembly, adjoint_kernels, backward_kernels, time_scheme, plotters);
+        assembly, adjoint_kernels, backward_kernels, time_scheme, tasks);
   } else {
     throw std::runtime_error("Simulation type not recognized");
   }

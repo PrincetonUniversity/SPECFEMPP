@@ -227,13 +227,13 @@ void execute(const YAML::Node &parameter_dict, const YAML::Node &default_dict,
   // --------------------------------------------------------------
   //                   Instantiate plotter
   // --------------------------------------------------------------
-  std::vector<std::shared_ptr<specfem::periodic_tasks::plotter> > plotters;
+  std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> > tasks;
   const auto wavefield_plotter = setup.instantiate_wavefield_plotter(assembly);
-  plotters.push_back(wavefield_plotter);
+  tasks.push_back(wavefield_plotter);
 
   // #ifdef SPECFEMPP_BINDING_PYTHON
   //   const auto signal_plotter = std::make_shared<plot_signal>(100);
-  //   plotters.push_back(signal_plotter);
+  //   tasks.push_back(signal_plotter);
   // #endif
   // --------------------------------------------------------------
 
@@ -242,7 +242,7 @@ void execute(const YAML::Node &parameter_dict, const YAML::Node &default_dict,
   // --------------------------------------------------------------
   specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
   std::shared_ptr<specfem::solver::solver> solver =
-      setup.instantiate_solver(dt, assembly, time_scheme, qp5, plotters);
+      setup.instantiate_solver(dt, assembly, time_scheme, qp5, tasks);
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
