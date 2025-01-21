@@ -13,7 +13,7 @@ std::shared_ptr<specfem::solver::solver>
 specfem::runtime_configuration::solver::solver::instantiate(const type_real dt,
     const specfem::compute::assembly &assembly,
     std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
-    const qp_type &quadrature, const std::vector<std::shared_ptr<specfem::plotter::plotter> > &plotters) const {
+    const qp_type &quadrature, const std::vector<std::shared_ptr<specfem::periodic_tasks::plotter> > &plotters) const {
 
   if (this->simulation_type == "forward") {
     std::cout << "Instantiating Kernels \n";

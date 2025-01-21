@@ -1,6 +1,6 @@
 #include "parameter_parser/writer/plot_wavefield.hpp"
-#include "plotter/plot_wavefield.hpp"
-#include "plotter/plotter.hpp"
+#include "periodic_tasks/plot_wavefield.hpp"
+#include "periodic_tasks/plotter.hpp"
 #include <boost/filesystem.hpp>
 
 specfem::runtime_configuration::plot_wavefield::plot_wavefield(
@@ -66,7 +66,7 @@ specfem::runtime_configuration::plot_wavefield::plot_wavefield(
   return;
 }
 
-std::shared_ptr<specfem::plotter::plotter>
+std::shared_ptr<specfem::periodic_tasks::plotter>
 specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
     const specfem::compute::assembly &assembly) const {
 
@@ -107,7 +107,7 @@ specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
     }
   }();
 
-  return std::make_shared<specfem::plotter::plot_wavefield>(
+  return std::make_shared<specfem::periodic_tasks::plot_wavefield>(
       assembly, output_format, component, wavefield, time_interval,
       this->output_folder);
 }

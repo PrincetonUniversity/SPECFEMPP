@@ -1,5 +1,5 @@
 
-#include "plotter/plot_wavefield.hpp"
+#include "periodic_tasks/plot_wavefield.hpp"
 #include "compute/assembly/assembly.hpp"
 #include "enumerations/display.hpp"
 
@@ -44,7 +44,7 @@
 
 #ifdef NO_VTK
 
-void specfem::plotter::plot_wavefield::plot() {
+void specfem::periodic_tasks::plot_wavefield::run() {
   std::ostringstream message;
   message
       << "Display section is not enabled, since SPECFEM++ was built without "
@@ -208,7 +208,7 @@ vtkSmartPointer<vtkUnstructuredGrid> get_wavefield_on_vtk_grid(
 }
 } // namespace
 
-void specfem::plotter::plot_wavefield::plot() {
+void specfem::periodic_tasks::plot_wavefield::run() {
 
   auto colors = vtkSmartPointer<vtkNamedColors>::New();
 
