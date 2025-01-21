@@ -16,18 +16,40 @@ std::tuple<std::vector<std::shared_ptr<specfem::sources::source> >, type_real>
 specfem::IO::read_sources(const std::string sources_file, const int nsteps,
                           const type_real user_t0, const type_real dt,
                           const specfem::simulation::type simulation_type) {
-
-  return read_sources(YAML::LoadFile(sources_file), nsteps, user_t0, dt,
-                      simulation_type);
+  YAML::Node source_node = YAML::LoadFile(sources_file);
+  return read_sources(source_node, nsteps, user_t0, dt, simulation_type);
 }
 
 std::tuple<std::vector<std::shared_ptr<specfem::sources::source> >, type_real>
-specfem::IO::read_sources(const YAML::Node yaml, const int nsteps,
+specfem::IO::read_sources(const YAML::Node source_node, const int nsteps,
                           const type_real user_t0, const type_real dt,
                           const specfem::simulation::type simulation_type) {
 
   const bool user_defined_start_time =
       (std::abs(user_t0) > std::numeric_limits<type_real>::epsilon());
+
+  // Need to define it here, otherwise it will be out of scope
+  YAML::Node source_dict;
+
+  try // reading sources file as string
+  {
+    source_dict = YAML::LoadFile(source_node.as<std::string>());
+  }
+
+  // if it fails, assuming that the source-node is already a YAML source node
+  catch (YAML::Exception &e) {
+    source_dict = source_node;
+  }
+
+  // Extract source sequence from the sources node
+  YAML::Node file_sources = source_dict["sources"];
+
+  // Double check that the sources are indeed a list
+  assert(file_sources.IsSequence());
+  assert(file_sources.size() > 0);
+
+  // Now we can directly access the source_dict
+  int nsources = source_dict["number-of-sources"].as<int>();
 
   const specfem::wavefield::simulation_field source_wavefield_type =
       [&simulation_type]() -> specfem::wavefield::simulation_field {
@@ -43,9 +65,6 @@ specfem::IO::read_sources(const YAML::Node yaml, const int nsteps,
 
   // read sources file
   std::vector<std::shared_ptr<specfem::sources::source> > sources;
-  int nsources = yaml["number-of-sources"].as<int>();
-  YAML::Node Node = yaml["sources"];
-  assert(Node.IsSequence());
 
   // Note: Make sure you name the YAML node different from the name of the
   // source class Otherwise, the compiler will get confused and throw an error
@@ -53,7 +72,7 @@ specfem::IO::read_sources(const YAML::Node yaml, const int nsteps,
   // shows up on CUDA compiler
   int number_of_sources = 0;
   int number_of_adjoint_sources = 0;
-  for (auto N : Node) {
+  for (auto N : file_sources) {
     if (YAML::Node force_source = N["force"]) {
       sources.push_back(std::make_shared<specfem::sources::force>(
           force_source, nsteps, dt, source_wavefield_type));

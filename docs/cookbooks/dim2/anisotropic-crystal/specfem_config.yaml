@@ -44,7 +44,7 @@ parameters:
             time-interval: 100
 
   receivers:
-    stations-file: "./OUTPUT_FILES/STATIONS"
+    stations: "./OUTPUT_FILES/STATIONS"
     angle: 0.0
     seismogram-type:
       - displacement
@@ -58,4 +58,6 @@ parameters:
   ## databases
   databases:
     mesh-database: "./OUTPUT_FILES/database.bin"
-    source-file: "./source.yaml"
+
+  ## Sources
+  sources: "./source.yaml"

@@ -15,7 +15,7 @@ namespace runtime_configuration {
 class receivers {
 public:
   receivers(const YAML::Node &Node) : receivers_node(Node) {
-    assert(this->receivers_node["stations-file"].IsDefined());
+    assert(this->receivers_node["stations"].IsDefined());
     assert(this->receivers_node["angle"].IsDefined());
     assert(this->receivers_node["nstep_between_samples"].IsDefined());
     assert(this->receivers_node["seismogram-type"].IsDefined());

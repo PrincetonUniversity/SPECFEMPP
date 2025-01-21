@@ -36,6 +36,8 @@ ASSEMBLY::ASSEMBLY() {
 
     this->Meshes.push_back(mesh);
 
+    std::cout << sources_file << std::endl;
+
     const auto [sources, t0] = specfem::IO::read_sources(
         sources_file, 1, 0, 0, specfem::simulation::type::forward);
 
@@ -51,6 +53,6 @@ ASSEMBLY::ASSEMBLY() {
 
     this->assemblies.push_back(specfem::compute::assembly(
         mesh, quadrature, sources, receivers, seismogram_types, 1.0, 0.0, 1, 1,
-        specfem::simulation::type::forward, nullptr));
+        1, specfem::simulation::type::forward, nullptr));
   }
 }

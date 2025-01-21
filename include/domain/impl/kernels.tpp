@@ -82,9 +82,12 @@ void allocate_elements(
               << "    - dimension           : " << dimension::to_string()
               << "\n"
               << "    - Element type        : "
-              << specfem::element::to_string(medium_tag, property_tag, boundary_tag) << "\n"
+              << specfem::element::to_string(medium_tag, property_tag,
+                                             boundary_tag)
+              << "\n"
               // << "    - Boundary Conditions : "
-              // << specfem::domain::impl::boundary_conditions::print_boundary_tag<
+              // <<
+              // specfem::domain::impl::boundary_conditions::print_boundary_tag<
               //        boundary_tag>()
               << "\n"
               << "    - Number of elements  : " << nelements << "\n\n";
@@ -98,15 +101,14 @@ template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag medium_tag,
           specfem::element::property_tag property_tag, int NGLL>
-void allocate_isotropic_sources(
-    const specfem::compute::assembly &assembly,
-    specfem::domain::impl::kernels::source_kernel<WavefieldType, DimensionType,
-                                                  medium_tag, property_tag, NGLL> &isotropic_sources) {
+void allocate_isotropic_sources(const specfem::compute::assembly &assembly,
+                                specfem::domain::impl::kernels::source_kernel<
+                                    WavefieldType, DimensionType, medium_tag,
+                                    property_tag, NGLL> &isotropic_sources) {
 
   // Allocate isotropic sources
   isotropic_sources = specfem::domain::impl::kernels::source_kernel<
-      WavefieldType, DimensionType, medium_tag, property_tag, NGLL>(
-      assembly);
+      WavefieldType, DimensionType, medium_tag, property_tag, NGLL>(assembly);
 
   return;
 }
@@ -114,52 +116,49 @@ void allocate_isotropic_sources(
 template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag medium_tag,
-          specfem::element::property_tag property_tag, typename qp_type>
+          specfem::element::property_tag property_tag, int NGLL>
 void allocate_receivers(const specfem::compute::assembly &assembly,
-                        qp_type quadrature_points,
                         specfem::domain::impl::kernels::receiver_kernel<
                             WavefieldType, DimensionType, medium_tag,
-                            property_tag, qp_type> &receivers) {
+                            property_tag, NGLL> &receivers) {
 
-  const auto medium = medium_tag;
-  const auto property = property_tag;
+  // const auto medium = medium_tag;
+  // const auto property = property_tag;
 
-  // Create isotropic sources
-  const auto ispec_array = assembly.receivers.h_ispec_array;
+  // // Create isotropic sources
+  // const auto ispec_array = assembly.receivers.h_ispec_array;
 
-  // Count the number of sources within this medium
-  int nreceivers = 0;
-  for (int ireceiver = 0; ireceiver < ispec_array.extent(0); ireceiver++) {
-    const int ispec = ispec_array(ireceiver);
-    if (assembly.properties.h_medium_tags(ispec) == medium &&
-        assembly.properties.h_property_tags(ispec) == property) {
-      nreceivers++;
-    }
-  }
+  // // Count the number of sources within this medium
+  // int nreceivers = 0;
+  // for (int ireceiver = 0; ireceiver < ispec_array.extent(0); ireceiver++) {
+  //   const int ispec = ispec_array(ireceiver);
+  //   if (assembly.properties.h_medium_tags(ispec) == medium &&
+  //       assembly.properties.h_property_tags(ispec) == property) {
+  //     nreceivers++;
+  //   }
+  // }
 
-  // Save the index for sources in this domain
-  specfem::kokkos::HostView1d<int> h_receiver_kernel_index_mapping(
-      "specfem::domain::domain::receiver_kernel_index_mapping", nreceivers);
+  // // Save the index for sources in this domain
+  // specfem::kokkos::HostView1d<int> h_receiver_kernel_index_mapping(
+  //     "specfem::domain::domain::receiver_kernel_index_mapping", nreceivers);
 
-  specfem::kokkos::HostMirror1d<int> h_receiver_mapping(
-      "specfem::domain::domain::receiver_mapping", nreceivers);
+  // specfem::kokkos::HostMirror1d<int> h_receiver_mapping(
+  //     "specfem::domain::domain::receiver_mapping", nreceivers);
 
-  int index = 0;
-  for (int ireceiver = 0; ireceiver < ispec_array.extent(0); ireceiver++) {
-    const int ispec = ispec_array(ireceiver);
-    if (assembly.properties.h_medium_tags(ispec) == medium &&
-        assembly.properties.h_property_tags(ispec) == property) {
-      h_receiver_kernel_index_mapping(index) = ispec_array(ireceiver);
-      h_receiver_mapping(index) = ireceiver;
-      index++;
-    }
-  }
+  // int index = 0;
+  // for (int ireceiver = 0; ireceiver < ispec_array.extent(0); ireceiver++) {
+  //   const int ispec = ispec_array(ireceiver);
+  //   if (assembly.properties.h_medium_tags(ispec) == medium &&
+  //       assembly.properties.h_property_tags(ispec) == property) {
+  //     h_receiver_kernel_index_mapping(index) = ispec_array(ireceiver);
+  //     h_receiver_mapping(index) = ireceiver;
+  //     index++;
+  //   }
+  // }
 
   // Allocate isotropic sources
   receivers = specfem::domain::impl::kernels::receiver_kernel<
-      WavefieldType, DimensionType, medium_tag, property_tag, qp_type>(
-      assembly, h_receiver_kernel_index_mapping, h_receiver_mapping,
-      quadrature_points);
+      WavefieldType, DimensionType, medium_tag, property_tag, NGLL>(assembly);
 
   return;
 }
@@ -171,7 +170,7 @@ specfem::domain::impl::kernels::kernels<
     WavefieldType, DimensionType, specfem::element::medium_tag::elastic,
     qp_type>::kernels(const type_real dt,
                       const specfem::compute::assembly &assembly,
-                      const qp_type &quadrature_points) {
+                      const qp_type &quadrature_points) : isotropic_receivers(assembly), anisotropic_receivers(assembly) {
 
   const int nspec = assembly.mesh.nspec;
   specfem::kokkos::HostView1d<element_tag> element_tags(
@@ -225,15 +224,6 @@ specfem::domain::impl::kernels::kernels<
   // Allocate isotropic sources
 
   allocate_isotropic_sources(assembly, isotropic_sources);
-
-  // Allocate isotropic receivers
-
-  allocate_receivers(assembly, quadrature_points, isotropic_receivers);
-
-  // Allocate anisotropic receivers
-
-  allocate_receivers(assembly, quadrature_points, anisotropic_receivers);
-
   // Compute mass matrices
 
   this->compute_mass_matrix(dt);
@@ -247,7 +237,7 @@ specfem::domain::impl::kernels::kernels<
     WavefieldType, DimensionType, specfem::element::medium_tag::acoustic,
     qp_type>::kernels(const type_real dt,
                       const specfem::compute::assembly &assembly,
-                      const qp_type &quadrature_points) {
+                      const qp_type &quadrature_points) : isotropic_receivers(assembly) {
 
   const int nspec = assembly.mesh.nspec;
   specfem::kokkos::HostView1d<element_tag> element_tags(
@@ -288,11 +278,6 @@ specfem::domain::impl::kernels::kernels<
   // Allocate isotropic sources
 
   allocate_isotropic_sources(assembly, isotropic_sources);
-
-  // Allocate isotropic receivers
-
-  allocate_receivers(assembly, quadrature_points,
-                               isotropic_receivers);
 
   // Compute mass matrices
 
