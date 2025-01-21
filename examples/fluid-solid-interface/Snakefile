@@ -27,7 +27,7 @@ rule run_solver:
         database="OUTPUT_FILES/database.bin",
         stations="OUTPUT_FILES/STATIONS",
         source="sources.yaml",
-        config="forward_config.yaml",
+        config="specfem_config.yaml",
     output:
         seismograms=expand(
             "OUTPUT_FILES/results/{station_name}.{network_name}.S2.{component}.semd",
