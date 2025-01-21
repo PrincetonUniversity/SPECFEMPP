@@ -3,9 +3,6 @@ OUTPUT_FILES/*
 *.semd
 *.adj
 Par_File
-Snakefile
 *.pyc
-forward_source.yaml
 forward_config.yaml
-adjoint_source.yaml
 adjoint_config.yaml
