@@ -7,8 +7,8 @@
 #include "enumerations/interface.hpp"
 #include "kernel.hpp"
 #include "kokkos_abstractions.h"
-#include "policies/chunk.hpp"
 #include "medium/compute_source.hpp"
+#include "policies/chunk.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -50,15 +50,25 @@ void specfem::domain::impl::kernels::source_kernel<
   using simd = specfem::datatype::simd<type_real, false>;
   constexpr int simd_size = simd::size();
 
-  using ParallelConfig = specfem::parallel_config::default_chunk_config<
-      dimension, simd, Kokkos::DefaultExecutionSpace>;
+#ifdef KOKKOS_ENABLE_CUDA
+  constexpr int nthreads = 32;
+  constexpr int lane_size = 1;
+#else
+  constexpr int nthreads = 1;
+  constexpr int lane_size = 1;
+#endif
+
+  using ParallelConfig =
+      specfem::parallel_config::chunk_config<DimensionType, 1, 1, nthreads,
+                                             lane_size, simd,
+                                             Kokkos::DefaultExecutionSpace>;
 
   using ChunkPolicy = specfem::policy::element_chunk<ParallelConfig>;
 
   ChunkPolicy chunk_policy(elements, NGLL, NGLL);
 
   Kokkos::parallel_for(
-      "specfem::domain::impl::kernels::elements::compute_mass_matrix",
+      "specfem::domain::impl::kernels::elements::compute_source_interaction",
       static_cast<const typename ChunkPolicy::policy_type &>(chunk_policy),
       KOKKOS_CLASS_LAMBDA(const typename ChunkPolicy::member_type &team) {
         for (int tile = 0; tile < ChunkPolicy::tile_size * simd_size;
