@@ -34,8 +34,8 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
     }
 
     for (const auto &plotter : plotters) {
-      if (plotter && plotter->should_plot(istep)) {
-        plotter->plot();
+      if (plotter && plotter->should_run(istep)) {
+        plotter->run();
       }
     }
 
@@ -101,8 +101,8 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
     }
 
     for (const auto &plotter : plotters) {
-      if (plotter && plotter->should_plot(istep)) {
-        plotter->plot();
+      if (plotter && plotter->should_run(istep)) {
+        plotter->run();
       }
     }
 

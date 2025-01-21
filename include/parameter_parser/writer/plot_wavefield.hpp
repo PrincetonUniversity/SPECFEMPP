@@ -2,7 +2,7 @@
 
 #include "compute/assembly/assembly.hpp"
 #include "enumerations/display.hpp"
-#include "plotter/plotter.hpp"
+#include "periodic_tasks/plotter.hpp"
 #include "yaml-cpp/yaml.h"
 #include <string>
 
@@ -50,7 +50,8 @@ public:
    * @return std::shared_ptr<specfem::IO::writer> Pointer to an instantiated
    * plotter object
    */
-  std::shared_ptr<specfem::plotter::plotter> instantiate_wavefield_plotter(
+  std::shared_ptr<specfem::periodic_tasks::plotter>
+  instantiate_wavefield_plotter(
       const specfem::compute::assembly &assembly) const;
 
 private:

@@ -172,7 +172,8 @@ public:
     }
   }
 
-  std::shared_ptr<specfem::plotter::plotter> instantiate_wavefield_plotter(
+  std::shared_ptr<specfem::periodic_tasks::plotter>
+  instantiate_wavefield_plotter(
       const specfem::compute::assembly &assembly) const {
     if (this->plot_wavefield) {
       return this->plot_wavefield->instantiate_wavefield_plotter(assembly);
@@ -214,8 +215,8 @@ public:
       const type_real dt, const specfem::compute::assembly &assembly,
       std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
       const qp_type &quadrature,
-      const std::vector<std::shared_ptr<specfem::plotter::plotter> > &plotters)
-      const {
+      const std::vector<std::shared_ptr<specfem::periodic_tasks::plotter> >
+          &plotters) const {
     return this->solver->instantiate(dt, assembly, time_scheme, quadrature,
                                      plotters);
   }
