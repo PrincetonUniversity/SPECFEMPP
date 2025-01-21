@@ -52,8 +52,8 @@ rule run_simulation:
         line_sources="line_sources.yaml",
         specfem_config="specfem_config.yaml",
     output:
-        pressure_siesmograms=expand(
-            "OUTPUT_FILES/results/{station_name}{network_name}{component}.semp",
+        pressure_seismograms=expand(
+            "OUTPUT_FILES/results/{station_name}.{network_name}.S2.{component}.semp",
             station_name=[
                 "S0001",
                 "S0002",
@@ -68,8 +68,8 @@ rule run_simulation:
         runtime=40,
     shell:
         """
-            module purge
-            module load boost/1.73.0
+            # module purge
+            # module load boost/1.73.0
             mkdir -p OUTPUT_FILES/results
             mkdir -p OUTPUT_FILES/display
             echo "Hostname: $(hostname)" > output.log
@@ -78,8 +78,8 @@ rule run_simulation:
 
 rule plot_seismogram:
     input:
-        pressure_siesmograms=expand(
-            "OUTPUT_FILES/results/{station_name}{network_name}{component}.semp",
+        pressure_seismograms=expand(
+            "OUTPUT_FILES/results/{station_name}.{network_name}.S2.{component}.semp",
             station_name=[
                 "S0001",
                 "S0002",
