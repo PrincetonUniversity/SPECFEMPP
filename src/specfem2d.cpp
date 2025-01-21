@@ -25,24 +25,7 @@
 #include <pybind11/stl.h>
 #define STRINGIFY(x) #x
 #define MACRO_STRINGIFY(x) STRINGIFY(x)
-
-// /**
-//  * @brief Writer to plot the wavefield
-//  */
-// class plot_signal : public specfem::periodic_tasks::plotter {
-// public:
-//   using plotter::plotter;
-
-//   /**
-//    * @brief Plot the wavefield
-//    *
-//    */
-//   void plot() override {
-//     std::cout << "XXXXX : executed " << this->m_istep << " steps" <<
-//     std::endl;
-//   }
-// };
-
+#include "periodic_tasks/check_signal.hpp"
 #endif
 // Specfem2d driver
 
@@ -231,10 +214,11 @@ void execute(const YAML::Node &parameter_dict, const YAML::Node &default_dict,
   const auto wavefield_plotter = setup.instantiate_wavefield_plotter(assembly);
   tasks.push_back(wavefield_plotter);
 
-  // #ifdef SPECFEMPP_BINDING_PYTHON
-  //   const auto signal_plotter = std::make_shared<plot_signal>(100);
-  //   tasks.push_back(signal_plotter);
-  // #endif
+#ifdef SPECFEMPP_BINDING_PYTHON
+  const auto signal_task =
+      std::make_shared<specfem::periodic_tasks::check_signal>(10);
+  tasks.push_back(signal_task);
+#endif
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
