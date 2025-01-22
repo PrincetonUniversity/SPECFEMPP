@@ -26,8 +26,21 @@ private:
 
   using WavefieldTagViewType =
       Kokkos::View<specfem::wavefield::simulation_field *,
-                   Kokkos::DefaultExecutionSpace>; ///< Underlying view type to
-                                                   ///< store wavefield tags
+                   Kokkos::DefaultExecutionSpace>; ///< Underlying view type
+                                                   ///< to store wavefield
+                                                   ///< tags
+
+  using BoundaryTagViewType =
+      Kokkos::View<specfem::element::boundary_tag *,
+                   Kokkos::DefaultExecutionSpace>; ///< Underlying view type
+                                                   ///< to store boundary
+                                                   ///< tags
+
+  using PropertyTagViewType =
+      Kokkos::View<specfem::element::property_tag *,
+                   Kokkos::DefaultExecutionSpace>; ///< Underlying view type
+                                                   ///< to store property
+                                                   ///< tags
 
 public:
   /**
@@ -56,7 +69,7 @@ public:
       const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
       const specfem::compute::mesh &mesh,
       const specfem::compute::partial_derivatives &partial_derivatives,
-      const specfem::compute::properties &properties, const type_real t0,
+      const specfem::compute::element_types &element_types, const type_real t0,
       const type_real dt, const int nsteps);
   ///@}
 
@@ -71,6 +84,8 @@ public:
    */
   Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> get_elements_on_host(
       const specfem::element::medium_tag medium,
+      const specfem::element::property_tag property,
+      const specfem::element::boundary_tag boundary,
       const specfem::wavefield::simulation_field wavefield) const;
 
   /**
@@ -84,6 +99,8 @@ public:
    */
   Kokkos::View<int *, Kokkos::DefaultExecutionSpace> get_elements_on_device(
       const specfem::element::medium_tag medium,
+      const specfem::element::property_tag property,
+      const specfem::element::boundary_tag boundary,
       const specfem::wavefield::simulation_field wavefield) const;
 
   /**
@@ -111,7 +128,15 @@ private:
   WavefieldTagViewType wavefield_types; ///< Wavefield on which source is
                                         ///< applied
   WavefieldTagViewType::HostMirror h_wavefield_types; ///< Host mirror of
-                                                      ///< wavefield_type
+                                                      ///< wavefield_types
+  BoundaryTagViewType boundary_types; ///< Boundary type for every spectral
+                                      ///< element
+  BoundaryTagViewType::HostMirror h_boundary_types; ///< Host mirror of
+                                                    ///< boundary_types
+  PropertyTagViewType property_types; ///< Property type for every spectral
+                                      ///< element
+  PropertyTagViewType::HostMirror h_property_types; ///< Host mirror of
+                                                    ///< property_types
 
 #define SOURCE_MEDIUM_DECLARATION(DIMENSION_TAG, MEDIUM_TAG)                   \
   specfem::compute::impl::source_medium<GET_TAG(DIMENSION_TAG),                \
@@ -127,6 +152,37 @@ private:
 #undef SOURCE_MEDIUM_DECLARATION
 
   int timestep; ///< Current time step
+
+#define SOURCE_INDICES_VARIABLES_NAME(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, \
+                                      BOUNDARY_TAG)                            \
+  IndexViewType CREATE_VARIABLE_NAME(                                          \
+      elements_forward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),         \
+      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
+  IndexViewType CREATE_VARIABLE_NAME(                                          \
+      elements_backward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),        \
+      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
+  IndexViewType CREATE_VARIABLE_NAME(                                          \
+      elements_adjoint, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),         \
+      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
+  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
+      h_elements_forward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),       \
+      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
+  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
+      h_elements_backward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),      \
+      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
+  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
+      h_elements_adjoint, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),       \
+      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));
+
+  CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
+      SOURCE_INDICES_VARIABLES_NAME,
+      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
+          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)
+              WHERE(BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
+                    BOUNDARY_TAG_STACEY,
+                    BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
+
+#undef SOURCE_INDICES_VARIABLES_NAME
 
   template <typename IndexType, typename PointSourceType>
   friend KOKKOS_INLINE_FUNCTION void
@@ -250,7 +306,7 @@ void load_on_host(const IndexType index,
                   const specfem::compute::sources &sources,
                   PointSourceType &point_source) {
 
-  static_assert(IndexType::simd::using_simd == false,
+  static_assert(IndexType::using_simd == false,
                 "IndexType must not use SIMD when loading sources");
 
   static_assert(

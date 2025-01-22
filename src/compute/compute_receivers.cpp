@@ -17,8 +17,9 @@ specfem::compute::receivers::receivers(
     const std::vector<specfem::enums::seismogram::type> &stypes,
     const specfem::compute::mesh &mesh,
     const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
-    const specfem::compute::properties &properties)
-    : lagrange_interpolant("specfem::compute::receivers::lagrange_interpolant",
+    const specfem::compute::element_types &element_types)
+    : nspec(nspec),
+      lagrange_interpolant("specfem::compute::receivers::lagrange_interpolant",
                            receivers.size(), mesh.ngllz, mesh.ngllx),
       h_lagrange_interpolant(Kokkos::create_mirror_view(lagrange_interpolant)),
       elements("specfem::compute::receivers::elements", receivers.size()),
@@ -27,8 +28,8 @@ specfem::compute::receivers::receivers(
           "specfem::compute::receivers::receiver_domain_index_mapping", nspec),
       h_receiver_domain_index_mapping(
           Kokkos::create_mirror_view(receiver_domain_index_mapping)),
-      impl::element_types(static_cast<impl::element_types>(properties)),
-      impl::StationIterator(receivers.size(), stypes.size()),
+      element_types(element_types), impl::StationIterator(receivers.size(),
+                                                          stypes.size()),
       impl::SeismogramIterator(receivers.size(), stypes.size(), max_sig_step,
                                dt, t0, nsteps_between_samples) {
 
@@ -109,6 +110,79 @@ specfem::compute::receivers::receivers(
     }
   }
 
+#define COUNT_RECEIVERS_PER_MATERIAL_SYSTEM(DIMENTION_TAG, MEDIUM_TAG,         \
+                                            PROPERTY_TAG)                      \
+  int CREATE_VARIABLE_NAME(count, GET_NAME(DIMENTION_TAG),                     \
+                           GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)) = 0;  \
+  for (int ireceiver = 0; ireceiver < h_elements.extent(0); ++ireceiver) {     \
+    int ispec = h_elements(ireceiver);                                         \
+    if (element_types.get_medium_tag(ispec) == GET_TAG(MEDIUM_TAG) &&          \
+        element_types.get_property_tag(ispec) == GET_TAG(PROPERTY_TAG)) {      \
+      CREATE_VARIABLE_NAME(count, GET_NAME(DIMENTION_TAG),                     \
+                           GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG))       \
+      ++;                                                                      \
+    }                                                                          \
+  }
+
+  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
+      COUNT_RECEIVERS_PER_MATERIAL_SYSTEM,
+      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
+          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
+
+#undef COUNT_RECEIVERS_PER_MATERIAL_SYSTEM
+
+#define ALLOCATE_RECEIVERS_PER_MATERIAL_SYSTEM(DIMENTION_TAG, MEDIUM_TAG,      \
+                                               PROPERTY_TAG)                   \
+  CREATE_VARIABLE_NAME(elements, GET_NAME(DIMENTION_TAG),                      \
+                       GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)) =         \
+      IndexViewType("specfem::compute::receivers::elements",                   \
+                    CREATE_VARIABLE_NAME(count, GET_NAME(DIMENTION_TAG),       \
+                                         GET_NAME(MEDIUM_TAG),                 \
+                                         GET_NAME(PROPERTY_TAG)));             \
+  CREATE_VARIABLE_NAME(h_elements, GET_NAME(DIMENTION_TAG),                    \
+                       GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)) =         \
+      Kokkos::create_mirror_view(                                              \
+          CREATE_VARIABLE_NAME(elements, GET_NAME(DIMENTION_TAG),              \
+                               GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)));
+
+  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
+      ALLOCATE_RECEIVERS_PER_MATERIAL_SYSTEM,
+      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
+          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
+
+#undef ALLOCATE_RECEIVERS_PER_MATERIAL_SYSTEM
+
+#define ASSIGN_RECEIVERS_PER_MATERIAL_SYSTEM(DIMENTION_TAG, MEDIUM_TAG,        \
+                                             PROPERTY_TAG)                     \
+  int CREATE_VARIABLE_NAME(index, GET_NAME(DIMENTION_TAG),                     \
+                           GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)) = 0;  \
+  for (int ireceiver = 0; ireceiver < h_elements.extent(0); ++ireceiver) {     \
+    int ispec = h_elements(ireceiver);                                         \
+    if (element_types.get_medium_tag(ispec) == GET_TAG(MEDIUM_TAG) &&          \
+        element_types.get_property_tag(ispec) == GET_TAG(PROPERTY_TAG)) {      \
+      CREATE_VARIABLE_NAME(h_elements, GET_NAME(DIMENTION_TAG),                \
+                           GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG))       \
+      (CREATE_VARIABLE_NAME(index, GET_NAME(DIMENTION_TAG),                    \
+                            GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG))) =   \
+          ispec;                                                               \
+      CREATE_VARIABLE_NAME(index, GET_NAME(DIMENTION_TAG),                     \
+                           GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG))       \
+      ++;                                                                      \
+    }                                                                          \
+  }                                                                            \
+  Kokkos::deep_copy(                                                           \
+      CREATE_VARIABLE_NAME(elements, GET_NAME(DIMENTION_TAG),                  \
+                           GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)),      \
+      CREATE_VARIABLE_NAME(h_elements, GET_NAME(DIMENTION_TAG),                \
+                           GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)));
+
+  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
+      ASSIGN_RECEIVERS_PER_MATERIAL_SYSTEM,
+      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
+          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
+
+#undef ASSIGN_RECEIVERS_PER_MATERIAL_SYSTEM
+
   Kokkos::deep_copy(lagrange_interpolant, h_lagrange_interpolant);
   Kokkos::deep_copy(elements, h_elements);
   Kokkos::deep_copy(receiver_domain_index_mapping,
@@ -121,35 +195,20 @@ Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
 specfem::compute::receivers::get_elements_on_host(
     const specfem::element::medium_tag medium_tag,
     const specfem::element::property_tag property_tag) const {
-  int nreceivers = h_elements.extent(0);
 
-  int ntags = h_medium_tags.extent(0);
-
-  int count = 0;
-  for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver) {
-    int ispec = h_elements(ireceiver);
-
-    if (h_medium_tags(ispec) == medium_tag &&
-        h_property_tags(ispec) == property_tag) {
-      count++;
-    }
+#define RETURN_VALUE(DIMENTION_TAG, MEDIUM_TAG, PROPERTY_TAG)                  \
+  if (medium_tag == GET_TAG(MEDIUM_TAG) &&                                     \
+      property_tag == GET_TAG(PROPERTY_TAG)) {                                 \
+    return CREATE_VARIABLE_NAME(h_elements, GET_NAME(DIMENTION_TAG),           \
+                                GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)); \
   }
 
-  Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements(
-      "specfem::compute::receivers::elements", count);
+  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
+      RETURN_VALUE,
+      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
+          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
-  count = 0;
-  for (int ireceiver = 0; ireceiver < nreceivers; ++ireceiver) {
-    int ispec = h_elements(ireceiver);
-
-    if (h_medium_tags(ispec) == medium_tag &&
-        h_property_tags(ispec) == property_tag) {
-      elements(count) = ispec;
-      count++;
-    }
-  }
-
-  return elements;
+#undef RETURN_VALUE
 }
 
 Kokkos::View<int *, Kokkos::DefaultExecutionSpace>
@@ -157,12 +216,17 @@ specfem::compute::receivers::get_elements_on_device(
     const specfem::element::medium_tag medium_tag,
     const specfem::element::property_tag property_tag) const {
 
-  const auto h_elements = get_elements_on_host(medium_tag, property_tag);
+#define RETURN_VALUE(DIMENTION_TAG, MEDIUM_TAG, PROPERTY_TAG)                  \
+  if (medium_tag == GET_TAG(MEDIUM_TAG) &&                                     \
+      property_tag == GET_TAG(PROPERTY_TAG)) {                                 \
+    return CREATE_VARIABLE_NAME(elements, GET_NAME(DIMENTION_TAG),             \
+                                GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)); \
+  }
 
-  Kokkos::View<int *, Kokkos::DefaultExecutionSpace> elements(
-      "specfem::compute::receivers::elements", h_elements.extent(0));
+  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
+      RETURN_VALUE,
+      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
+          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
-  Kokkos::deep_copy(elements, h_elements);
-
-  return elements;
+#undef RETURN_VALUE
 }

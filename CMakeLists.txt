@@ -327,18 +327,6 @@ target_link_libraries(
         point
 )
 
-# add_library(
-#         utilities
-#         src/utilities/utilities.cpp
-# )
-
-# target_link_libraries(
-#         utilities
-#         jacobian
-#         Kokkos::kokkos
-#         specfem_mpi
-# )
-
 add_library(
         read_seismogram
         src/IO/seismogram/reader.cpp
@@ -429,8 +417,7 @@ target_link_libraries(
 add_library(
         compute
         src/compute/compute_mesh.cpp
-        src/compute/impl/element_types.cpp
-        src/compute/impl/value_containers.cpp
+        src/compute/element_types/element_types.cpp
         src/compute/compute_partial_derivatives.cpp
         src/compute/compute_properties.cpp
         src/compute/compute_kernels.cpp
@@ -460,17 +447,14 @@ target_link_libraries(
 )
 
 add_library(
-        domain
-        src/domain/impl/boundary_conditions/boundary_conditions.cpp
-        src/domain/impl/elements/kernel.cpp
-        src/domain/impl/kernels.cpp
-        src/domain/domain.cpp
+        boundary_conditions
+        src/boundary_conditions/boundary_conditions.cpp
 )
 
 target_link_libraries(
-        domain
+        boundary_conditions
         Kokkos::kokkos
-        enumerations
+        ${BOOST_LIBS}
 )
 
 add_library(
@@ -483,7 +467,7 @@ target_link_libraries(
         medium
         Kokkos::kokkos
         compute
-        domain
+        boundary_conditions
         enumerations
 )
 
@@ -498,14 +482,22 @@ target_link_libraries(
 )
 
 add_library(
-        kernels
-        src/kernels/frechet_kernels.cpp
+        kokkos_kernels
+        src/kokkos_kernels/impl/compute_mass_matrix.cpp
+        src/kokkos_kernels/impl/invert_mass_matrix.cpp
+        src/kokkos_kernels/impl/divide_mass_matrix.cpp
+        src/kokkos_kernels/impl/compute_seismogram.cpp
+        src/kokkos_kernels/impl/compute_source_interaction.cpp
+        src/kokkos_kernels/impl/compute_stiffness_interaction.cpp
+        src/kokkos_kernels/impl/compute_material_derivatives.cpp
+        src/kokkos_kernels/frechet_kernels.cpp
 )
 
 target_link_libraries(
-        kernels
+        kokkos_kernels
         Kokkos::kokkos
         compute
+        boundary_conditions
 )
 
 add_library(
@@ -530,8 +522,7 @@ target_link_libraries(
         solver
         Kokkos::kokkos
         timescheme
-        domain
-        kernels
+        kokkos_kernels
         medium
 )
 
@@ -603,8 +594,7 @@ target_link_libraries(
         yaml-cpp
         writer
         reader
-        kernels
-        domain
+        kokkos_kernels
         medium
         solver
         ${BOOST_LIBS}
@@ -630,10 +620,9 @@ target_link_libraries(
         writer
         periodic_tasks
         reader
-        domain
         medium
         coupled_interface
-        kernels
+        kokkos_kernels
         solver
         ${BOOST_LIBS}
 )
@@ -695,10 +684,9 @@ if (SPECFEMPP_BINDING_PYTHON)
         writer
         periodic_tasks
         reader
-        domain
         medium
         coupled_interface
-        kernels
+        kokkos_kernels
         solver
         ${BOOST_LIBS}
         pybind11::headers

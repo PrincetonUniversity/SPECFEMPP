@@ -1,13 +1,13 @@
 #include "../test_fixture/test_fixture.hpp"
 #include "IO/ASCII/ASCII.hpp"
+#include "IO/property/reader.hpp"
+#include "IO/property/writer.hpp"
 #include "datatypes/simd.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/material_definitions.hpp"
 #include "parallel_configuration/chunk_config.hpp"
 #include "policies/chunk.hpp"
-#include "IO/property/reader.hpp"
 #include "specfem_setup.hpp"
-#include "IO/property/writer.hpp"
 #include <gtest/gtest.h>
 
 inline void error_message_header(std::ostringstream &message,
@@ -237,8 +237,10 @@ get_point_property(
 }
 
 template <bool using_simd>
-void check_eq(const typename specfem::datatype::simd<type_real, using_simd>::datatype &p1,
-  const typename specfem::datatype::simd<type_real, using_simd>::datatype &p2, const int &n_simd_elements) {
+void check_eq(
+    const typename specfem::datatype::simd<type_real, using_simd>::datatype &p1,
+    const typename specfem::datatype::simd<type_real, using_simd>::datatype &p2,
+    const int &n_simd_elements) {
   if constexpr (using_simd) {
     for (int i = 0; i < n_simd_elements; i++) {
       if (p1[i] != p2[i]) {
@@ -266,26 +268,46 @@ void check_eq(const typename specfem::datatype::simd<type_real, using_simd>::dat
 
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd>
-void check_point_properties(const specfem::point::properties<specfem::dimension::type::dim2, MediumTag,
-                                 PropertyTag, using_simd> &p1, const specfem::point::properties<specfem::dimension::type::dim2, MediumTag,
-                                 PropertyTag, using_simd> &p2, const int &n_simd_elements);
+void check_point_properties(
+    const specfem::point::properties<specfem::dimension::type::dim2, MediumTag,
+                                     PropertyTag, using_simd> &p1,
+    const specfem::point::properties<specfem::dimension::type::dim2, MediumTag,
+                                     PropertyTag, using_simd> &p2,
+    const int &n_simd_elements);
 
-template<bool using_simd>
-void check_point_properties(const specfem::point::properties<specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-                                 specfem::element::property_tag::isotropic, using_simd> &p1, const specfem::point::properties<specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-                                 specfem::element::property_tag::isotropic, using_simd> &p2, const int &n_simd_elements) {
+template <bool using_simd>
+void check_point_properties(
+    const specfem::point::properties<
+        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+        specfem::element::property_tag::isotropic, using_simd> &p1,
+    const specfem::point::properties<
+        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+        specfem::element::property_tag::isotropic, using_simd> &p2,
+    const int &n_simd_elements) {
   check_eq<using_simd>(p1.rho, p2.rho, n_simd_elements);
   check_eq<using_simd>(p1.mu, p2.mu, n_simd_elements);
   check_eq<using_simd>(p1.lambdaplus2mu, p2.lambdaplus2mu, n_simd_elements);
-  check_eq<using_simd>(p1.lambda, p2.lambdaplus2mu - (static_cast<typename specfem::datatype::simd<type_real, using_simd>::datatype>(2.0)) * p2.mu, n_simd_elements);
-  check_eq<using_simd>(p1.rho_vp, Kokkos::sqrt(p2.rho * p2.lambdaplus2mu), n_simd_elements);
-  check_eq<using_simd>(p1.rho_vs, Kokkos::sqrt(p2.rho * p2.mu), n_simd_elements);
+  check_eq<using_simd>(p1.lambda,
+                       p2.lambdaplus2mu -
+                           (static_cast<typename specfem::datatype::simd<
+                                type_real, using_simd>::datatype>(2.0)) *
+                               p2.mu,
+                       n_simd_elements);
+  check_eq<using_simd>(p1.rho_vp, Kokkos::sqrt(p2.rho * p2.lambdaplus2mu),
+                       n_simd_elements);
+  check_eq<using_simd>(p1.rho_vs, Kokkos::sqrt(p2.rho * p2.mu),
+                       n_simd_elements);
 }
 
-template<bool using_simd>
-void check_point_properties(const specfem::point::properties<specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-                                 specfem::element::property_tag::anisotropic, using_simd> &p1, const specfem::point::properties<specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-                                 specfem::element::property_tag::anisotropic, using_simd> &p2, const int &n_simd_elements) {
+template <bool using_simd>
+void check_point_properties(
+    const specfem::point::properties<
+        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+        specfem::element::property_tag::anisotropic, using_simd> &p1,
+    const specfem::point::properties<
+        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+        specfem::element::property_tag::anisotropic, using_simd> &p2,
+    const int &n_simd_elements) {
   check_eq<using_simd>(p1.rho, p2.rho, n_simd_elements);
   check_eq<using_simd>(p1.c11, p2.c11, n_simd_elements);
   check_eq<using_simd>(p1.c13, p2.c13, n_simd_elements);
@@ -293,26 +315,40 @@ void check_point_properties(const specfem::point::properties<specfem::dimension:
   check_eq<using_simd>(p1.c33, p2.c33, n_simd_elements);
   check_eq<using_simd>(p1.c35, p2.c35, n_simd_elements);
   check_eq<using_simd>(p1.c55, p2.c55, n_simd_elements);
-  check_eq<using_simd>(p1.rho_vp, Kokkos::sqrt(p2.rho * p2.c33), n_simd_elements);
-  check_eq<using_simd>(p1.rho_vs, Kokkos::sqrt(p2.rho * p2.c55), n_simd_elements);
+  check_eq<using_simd>(p1.rho_vp, Kokkos::sqrt(p2.rho * p2.c33),
+                       n_simd_elements);
+  check_eq<using_simd>(p1.rho_vs, Kokkos::sqrt(p2.rho * p2.c55),
+                       n_simd_elements);
 }
 
-
-template<bool using_simd>
-void check_point_properties(const specfem::point::properties<specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
-                                 specfem::element::property_tag::isotropic, using_simd> &p1, const specfem::point::properties<specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
-                                 specfem::element::property_tag::isotropic, using_simd> &p2, const int &n_simd_elements) {
+template <bool using_simd>
+void check_point_properties(
+    const specfem::point::properties<
+        specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
+        specfem::element::property_tag::isotropic, using_simd> &p1,
+    const specfem::point::properties<
+        specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
+        specfem::element::property_tag::isotropic, using_simd> &p2,
+    const int &n_simd_elements) {
   check_eq<using_simd>(p1.rho_inverse, p2.rho_inverse, n_simd_elements);
   check_eq<using_simd>(p1.kappa, p2.kappa, n_simd_elements);
-  check_eq<using_simd>(p1.kappa_inverse, (static_cast<typename specfem::datatype::simd<type_real, using_simd>::datatype>(1.0)) / p2.kappa, n_simd_elements);
-  check_eq<using_simd>(p1.rho_vpinverse, Kokkos::sqrt(p2.rho_inverse * p2.kappa_inverse), n_simd_elements);
+  check_eq<using_simd>(
+      p1.kappa_inverse,
+      (static_cast<
+          typename specfem::datatype::simd<type_real, using_simd>::datatype>(
+          1.0)) /
+          p2.kappa,
+      n_simd_elements);
+  check_eq<using_simd>(p1.rho_vpinverse,
+                       Kokkos::sqrt(p2.rho_inverse * p2.kappa_inverse),
+                       n_simd_elements);
 }
-
 
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd,
           typename IndexViewType, typename ValueViewType>
 void check_to_value(const specfem::compute::properties properties,
+                    specfem::compute::element_types element_types,
                     const IndexViewType &ispecs,
                     const ValueViewType &values_to_store) {
   const int nspec = properties.nspec;
@@ -321,12 +357,9 @@ void check_to_value(const specfem::compute::properties properties,
 
   std::vector<int> elements;
 
-  const auto medium_tags = properties.h_medium_tags;
-  const auto property_tags = properties.h_property_tags;
-
   for (int ispec = 0; ispec < nspec; ispec++) {
-    if ((medium_tags(ispec) == MediumTag) &&
-        (property_tags(ispec) == PropertyTag)) {
+    if ((element_types.get_medium_tag(ispec) == MediumTag) &&
+        (element_types.get_property_tag(ispec) == PropertyTag)) {
       elements.push_back(ispec);
     }
   }
@@ -371,18 +404,16 @@ void check_compute_to_mesh(
   const auto &properties = assembly.properties;
   const auto &mapping = assembly.mesh.mapping;
   const auto &materials = mesh.materials;
+  const auto &element_types = assembly.element_types;
 
   const int nspec = properties.nspec;
   const int ngllx = properties.ngllx;
   const int ngllz = properties.ngllz;
   std::vector<int> elements;
 
-  const auto medium_tags = properties.h_medium_tags;
-  const auto property_tags = properties.h_property_tags;
-
   for (int ispec = 0; ispec < nspec; ispec++) {
-    if ((medium_tags(ispec) == MediumTag) &&
-        (property_tags(ispec) == PropertyTag)) {
+    if ((element_types.get_medium_tag(ispec) == MediumTag) &&
+        (element_types.get_property_tag(ispec) == PropertyTag)) {
       elements.push_back(ispec);
     }
   }
@@ -432,19 +463,17 @@ void check_compute_to_mesh(
 
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd>
-void check_store_load_on_host(specfem::compute::properties &properties) {
+void check_store_on_host(specfem::compute::properties &properties,
+                         specfem::compute::element_types &element_types) {
 
   const int nspec = properties.nspec;
   const int ngllx = properties.ngllx;
   const int ngllz = properties.ngllz;
   std::vector<int> elements;
 
-  const auto medium_tags = properties.h_medium_tags;
-  const auto property_tags = properties.h_property_tags;
-
   for (int ispec = 0; ispec < nspec; ispec++) {
-    if ((medium_tags(ispec) == MediumTag) &&
-        (property_tags(ispec) == PropertyTag)) {
+    if ((element_types.get_medium_tag(ispec) == MediumTag) &&
+        (element_types.get_property_tag(ispec) == PropertyTag)) {
       elements.push_back(ispec);
     }
   }
@@ -490,30 +519,29 @@ void check_store_load_on_host(specfem::compute::properties &properties) {
         PointType point_loaded;
         specfem::compute::store_on_host(index, properties, point);
         specfem::compute::load_on_host(index, properties, point_loaded);
-        check_point_properties<using_simd>(point, point_loaded, n_simd_elements);
+        check_point_properties<using_simd>(point, point_loaded,
+                                           n_simd_elements);
       }
     }
   }
 
-  check_to_value<MediumTag, PropertyTag, using_simd>(properties, ispecs_h,
-                                                     values_to_store_h);
+  check_to_value<MediumTag, PropertyTag, using_simd>(
+      properties, element_types, ispecs_h, values_to_store_h);
   properties.copy_to_device();
 }
 
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd>
-void check_load_on_device(specfem::compute::properties &properties) {
+void check_load_on_device(specfem::compute::properties &properties,
+                          specfem::compute::element_types &element_types) {
   const int nspec = properties.nspec;
   const int ngllx = properties.ngllx;
   const int ngllz = properties.ngllz;
   std::vector<int> elements;
 
-  const auto medium_tags = properties.h_medium_tags;
-  const auto property_tags = properties.h_property_tags;
-
   for (int ispec = 0; ispec < nspec; ispec++) {
-    if ((medium_tags(ispec) == MediumTag) &&
-        (property_tags(ispec) == PropertyTag)) {
+    if ((element_types.get_medium_tag(ispec) == MediumTag) &&
+        (element_types.get_property_tag(ispec) == PropertyTag)) {
       elements.push_back(ispec);
     }
   }
@@ -622,6 +650,7 @@ void test_properties(
     const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh) {
 
   auto &properties = assembly.properties;
+  auto &element_types = assembly.element_types;
 
   // stage 1: check if properties are correctly constructed from the assembly
 #define TEST_COMPUTE_TO_MESH(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)          \
@@ -640,14 +669,14 @@ void test_properties(
 
   // stage 3: modify properties and check store_on_host and load_on_device
 #define TEST_STORE_AND_LOAD(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)           \
-  check_store_load_on_host<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), false>(      \
-      properties);                                                             \
+  check_store_on_host<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), false>(      \
+      properties, element_types);                                              \
   check_load_on_device<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), false>(     \
-      properties);                                                             \
-  check_store_load_on_host<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), true>(       \
-      properties);                                                             \
+      properties, element_types);                                              \
+  check_store_on_host<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), true>(       \
+      properties, element_types);                                              \
   check_load_on_device<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), true>(      \
-      properties);
+      properties, element_types);
 
   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
       TEST_STORE_AND_LOAD,
@@ -657,7 +686,8 @@ void test_properties(
 #undef TEST_STORE_AND_LOAD
 
   // stage 4: restore properties to initial value from disk
-  specfem::IO::property_reader<specfem::IO::ASCII<specfem::IO::read> > reader(".");
+  specfem::IO::property_reader<specfem::IO::ASCII<specfem::IO::read> > reader(
+      ".");
   reader.read(assembly);
 
   // stage 5: check if properties are correctly written and read

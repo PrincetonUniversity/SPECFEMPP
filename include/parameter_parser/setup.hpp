@@ -208,7 +208,7 @@ public:
     return this->solver->get_simulation_type();
   }
 
-  template <typename qp_type>
+  template <int NGLL>
   std::shared_ptr<specfem::solver::solver> instantiate_solver(
       const type_real dt, const specfem::compute::assembly &assembly,
       std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
@@ -216,8 +216,7 @@ public:
       const std::vector<
           std::shared_ptr<specfem::periodic_tasks::periodic_task> > &tasks)
       const {
-    return this->solver->instantiate(dt, assembly, time_scheme, quadrature,
-                                     tasks);
+    return this->solver->instantiate<NGLL>(dt, assembly, time_scheme, tasks);
   }
 
   int get_nsteps() const { return this->time_scheme->get_nsteps(); }
