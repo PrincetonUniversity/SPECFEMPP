@@ -212,7 +212,6 @@ public:
   std::shared_ptr<specfem::solver::solver> instantiate_solver(
       const type_real dt, const specfem::compute::assembly &assembly,
       std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
-      const qp_type &quadrature,
       const std::vector<
           std::shared_ptr<specfem::periodic_tasks::periodic_task> > &tasks)
       const {
