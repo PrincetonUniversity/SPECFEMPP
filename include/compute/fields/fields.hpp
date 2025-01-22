@@ -34,7 +34,7 @@ struct fields {
    * @param simulation Current simulation type
    */
   fields(const specfem::compute::mesh &mesh,
-         const specfem::compute::properties &properties,
+         const specfem::compute::element_types &element_types,
          const specfem::simulation::type simulation);
   ///@}
 

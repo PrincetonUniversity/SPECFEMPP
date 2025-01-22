@@ -20,7 +20,7 @@ template class specfem::compute::boundary_value_container<
 
 specfem::compute::boundary_values::boundary_values(
     const int nstep, const specfem::compute::mesh mesh,
-    const specfem::compute::properties properties,
+    const specfem::compute::element_types element_types,
     const specfem::compute::boundaries boundaries)
-    : stacey(nstep, mesh, properties, boundaries),
-      composite_stacey_dirichlet(nstep, mesh, properties, boundaries) {}
+    : stacey(nstep, mesh, element_types, boundaries),
+      composite_stacey_dirichlet(nstep, mesh, element_types, boundaries) {}

@@ -15,6 +15,7 @@ specfem::IO::kernel_writer<OutputLibrary>::kernel_writer(const std::string outpu
 template <typename OutputLibrary>
 void specfem::IO::kernel_writer<OutputLibrary>::write(specfem::compute::assembly &assembly) {
   const auto &mesh = assembly.mesh;
+  auto &element_types = assembly.element_types;
   auto &kernels = assembly.kernels;
 
   using DomainView =
@@ -35,7 +36,7 @@ void specfem::IO::kernel_writer<OutputLibrary>::write(specfem::compute::assembly
   {
     typename OutputLibrary::Group elastic = file.createGroup("/ElasticIsotropic");
 
-    const auto element_indices = kernels.get_elements_on_host(
+    const auto element_indices = element_types.get_elements_on_host(
         specfem::element::medium_tag::elastic,
         specfem::element::property_tag::isotropic);
     n_elastic_isotropic = element_indices.size();
@@ -89,7 +90,7 @@ void specfem::IO::kernel_writer<OutputLibrary>::write(specfem::compute::assembly
   {
     typename OutputLibrary::Group elastic = file.createGroup("/ElasticAnisotropic");
 
-    const auto element_indices = kernels.get_elements_on_host(
+    const auto element_indices = element_types.get_elements_on_host(
         specfem::element::medium_tag::elastic,
         specfem::element::property_tag::anisotropic);
     n_elastic_anisotropic = element_indices.size();
@@ -146,7 +147,7 @@ void specfem::IO::kernel_writer<OutputLibrary>::write(specfem::compute::assembly
   {
     typename OutputLibrary::Group acoustic = file.createGroup("/Acoustic");
 
-    const auto element_indices = kernels.get_elements_on_host(specfem::element::medium_tag::acoustic);
+    const auto element_indices = element_types.get_elements_on_host(specfem::element::medium_tag::acoustic);
     n_acoustic = element_indices.size();
 
     DomainView x("xcoordinates_acoustic", n_acoustic, ngllz, ngllx);

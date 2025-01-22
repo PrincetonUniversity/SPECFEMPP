@@ -1,6 +1,6 @@
 #pragma once
 
-#include "compute/impl/element_types.hpp"
+#include "compute/element_types/element_types.hpp"
 #include "compute/impl/value_containers.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
@@ -23,8 +23,7 @@ namespace compute {
  *
  */
 struct properties
-    : public impl::element_types,
-      public impl::value_containers<specfem::medium::material_properties> {
+    : public impl::value_containers<specfem::medium::material_properties> {
   /**
    * @name Constructors
    */
@@ -49,10 +48,8 @@ struct properties
    * assignment if true)
    */
   properties(const int nspec, const int ngllz, const int ngllx,
-             const specfem::compute::mesh_to_compute_mapping &mapping,
-             const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
-             const specfem::mesh::materials &materials,
-             const bool &has_gll_model);
+             const specfem::compute::element_types &element_types,
+             const specfem::mesh::materials &materials, bool has_gll_model);
 
   ///@}
 
@@ -61,13 +58,11 @@ struct properties
    *
    */
   void copy_to_host() {
-    impl::element_types::copy_to_host();
     impl::value_containers<
         specfem::medium::material_properties>::copy_to_host();
   }
 
   void copy_to_device() {
-    impl::element_types::copy_to_device();
     impl::value_containers<
         specfem::medium::material_properties>::copy_to_device();
   }

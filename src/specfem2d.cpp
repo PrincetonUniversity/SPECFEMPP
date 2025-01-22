@@ -227,9 +227,8 @@ void execute(const YAML::Node &parameter_dict, const YAML::Node &default_dict,
   // --------------------------------------------------------------
   //                   Instantiate Solver
   // --------------------------------------------------------------
-  specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
   std::shared_ptr<specfem::solver::solver> solver =
-      setup.instantiate_solver(dt, assembly, time_scheme, qp5, tasks);
+      setup.instantiate_solver<5>(dt, assembly, time_scheme, tasks);
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
