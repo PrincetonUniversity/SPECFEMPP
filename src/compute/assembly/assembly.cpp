@@ -15,20 +15,18 @@ specfem::compute::assembly::assembly(
     const specfem::simulation::type simulation,
     const std::shared_ptr<specfem::IO::reader> &property_reader) {
   this->mesh = { mesh.tags, mesh.control_nodes, quadratures };
+  this->element_types = { this->mesh.nspec, this->mesh.ngllz, this->mesh.ngllx,
+                          this->mesh.mapping, mesh.tags };
   this->partial_derivatives = { this->mesh };
-  this->properties = {
-    this->mesh.nspec,          this->mesh.ngllz, this->mesh.ngllx,
-    this->mesh.mapping,        mesh.tags,        mesh.materials,
-    property_reader != nullptr
-  };
-  if (property_reader) {
-    property_reader->read(*this);
-  }
+  this->properties = { this->mesh.nspec, this->mesh.ngllz,
+                       this->mesh.ngllx, this->element_types,
+                       mesh.materials,   property_reader != nullptr };
   this->kernels = { this->mesh.nspec, this->mesh.ngllz, this->mesh.ngllx,
-                    this->mesh.mapping, mesh.tags };
-  this->sources = { sources,          this->mesh, this->partial_derivatives,
-                    this->properties, t0,         dt,
-                    max_timesteps };
+                    this->element_types };
+  this->sources = {
+    sources, this->mesh,   this->partial_derivatives, this->element_types, t0,
+    dt,      max_timesteps
+  };
   this->receivers = { this->mesh.nspec,
                       this->mesh.ngllz,
                       this->mesh.ngllz,
@@ -40,7 +38,7 @@ specfem::compute::assembly::assembly(
                       stypes,
                       this->mesh,
                       mesh.tags,
-                      this->properties };
+                      this->element_types };
   this->boundaries = { this->mesh.nspec,   this->mesh.ngllz,
                        this->mesh.ngllx,   mesh,
                        this->mesh.mapping, this->mesh.quadratures,
@@ -49,10 +47,10 @@ specfem::compute::assembly::assembly(
                                this->mesh.points,
                                this->mesh.quadratures,
                                this->partial_derivatives,
-                               this->properties,
+                               this->element_types,
                                this->mesh.mapping };
-  this->fields = { this->mesh, this->properties, simulation };
-  this->boundary_values = { max_timesteps, this->mesh, this->properties,
+  this->fields = { this->mesh, this->element_types, simulation };
+  this->boundary_values = { max_timesteps, this->mesh, this->element_types,
                             this->boundaries };
   return;
 }

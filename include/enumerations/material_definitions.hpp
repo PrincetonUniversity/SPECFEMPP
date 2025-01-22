@@ -6,7 +6,6 @@
 namespace specfem {
 namespace element {
 
-#define DIMENSION_TAG_DIM2 (0, specfem::dimension::type::dim2, dim2)
 /**
  * @name Element Tag macros
  *

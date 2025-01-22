@@ -1,6 +1,7 @@
 #pragma once
 
 #include "compute/compute_mesh.hpp"
+#include "compute/element_types/element_types.hpp"
 #include "source/source.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -71,7 +72,7 @@ public:
    * @param sources Vector of sources located within the medium
    * @param mesh Finite element mesh information
    * @param partial_derivatives Partial derivatives for every quadrature point
-   * @param properties Material properties for every quadrature point
+   * @param element_types Element types for every spectral element
    * @param t0 Initial time
    * @param dt Time step
    * @param nsteps Number of time steps
@@ -80,7 +81,7 @@ public:
       const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
       const specfem::compute::mesh &mesh,
       const specfem::compute::partial_derivatives &partial_derivatives,
-      const specfem::compute::properties &properties, const type_real t0,
+      const specfem::compute::element_types &element_types, const type_real t0,
       const type_real dt, const int nsteps);
   ///@}
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "compute/element_types/element_types.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include <Kokkos_Core.hpp>
 #include <memory>
@@ -269,8 +270,7 @@ protected:
  * @brief Struct to store information related to the receivers
  *
  */
-struct receivers : private impl::element_types,
-                   public impl::StationIterator,
+struct receivers : public impl::StationIterator,
                    public impl::SeismogramIterator {
 private:
   using IndexViewType =
@@ -316,7 +316,7 @@ public:
             const std::vector<specfem::enums::seismogram::type> &stypes,
             const specfem::compute::mesh &mesh,
             const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
-            const specfem::compute::properties &properties);
+            const specfem::compute::element_types &element_types);
 
   /**
    * @brief Get the spectral element indices in which the receivers are located
@@ -358,6 +358,7 @@ public:
   }
 
 private:
+  int nspec;              ///< Total number of spectral elements
   IndexViewType elements; ///< View to store the elements associated with the
                           ///< receivers
   IndexViewType::HostMirror h_elements; ///< Host view to store the
@@ -370,6 +371,23 @@ private:
   LagrangeInterpolantType::HostMirror
       h_lagrange_interpolant; ///< Lagrange interpolant for every receiver
                               ///< stored on the host
+  specfem::compute::element_types element_types; ///< Element types
+
+#define RECEIVER_INDICES_VARIABLE_NAME(DIMENSION_TAG, MEDIUM_TAG,              \
+                                       PROPERTY_TAG)                           \
+  IndexViewType CREATE_VARIABLE_NAME(elements, GET_NAME(DIMENSION_TAG),        \
+                                     GET_NAME(MEDIUM_TAG),                     \
+                                     GET_NAME(PROPERTY_TAG));                  \
+  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
+      h_elements, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),               \
+      GET_NAME(PROPERTY_TAG));
+
+  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
+      RECEIVER_INDICES_VARIABLE_NAME,
+      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
+          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
+
+#undef RECEIVER_INDICES_VARIABLE_NAME
 
   template <typename MemberType, typename IteratorType, typename ViewType>
   friend KOKKOS_FUNCTION void
@@ -416,14 +434,14 @@ load_on_device(const MemberType &team_member, const IteratorType &iterator,
 
         if (index.ispec >= receivers.nspec) {
           std::string message = "Invalid element detected in kernel at " +
-                                std::string(__FILE__) +
+                                std::string(__FILE__) + ":" +
                                 std::to_string(__LINE__);
           Kokkos::abort(message.c_str());
         }
 
         if (receivers.receiver_domain_index_mapping(index.ispec) == -1) {
           std::string message = "Invalid element detected in kernel at " +
-                                std::string(__FILE__) +
+                                std::string(__FILE__) + ":" +
                                 std::to_string(__LINE__);
           Kokkos::abort(message.c_str());
         }

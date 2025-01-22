@@ -3,7 +3,7 @@
 
 #include "compute/compute_mesh.hpp"
 #include "compute/compute_partial_derivatives.hpp"
-#include "compute/properties/properties.hpp"
+#include "compute/element_types/element_types.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
@@ -56,7 +56,7 @@ public:
   void compute_source_array(
       const specfem::compute::mesh &mesh,
       const specfem::compute::partial_derivatives &partial_derivatives,
-      const specfem::compute::properties &properties,
+      const specfem::compute::element_types &element_types,
       specfem::kokkos::HostView3d<type_real> source_array) override;
 
   specfem::wavefield::simulation_field get_wavefield_type() const override {

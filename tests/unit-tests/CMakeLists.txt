@@ -136,6 +136,43 @@ target_link_libraries(
   -lpthread -lm
 )
 
+# add_executable(
+#   compute_elastic_tests
+#   compute/elastic/compute_properties_tests.cpp
+# )
+
+# target_link_libraries(
+#   compute_elastic_tests
+#   mesh
+#   compute
+#   quadrature
+#   mpi_environment
+#   kokkos_environment
+#   yaml-cpp
+#   compare_arrays
+#   Boost::filesystem
+#   # material_class
+#   -lpthread -lm
+# )
+
+# add_executable(
+#   compute_acoustic_tests
+#   compute/acoustic/compute_properties_tests.cpp
+# )
+
+# target_link_libraries(
+#   compute_acoustic_tests
+#   mesh
+#   compute
+#   quadrature
+#   mpi_environment
+#   kokkos_environment
+#   yaml-cpp
+#   compare_arrays
+#   # material_class
+#   -lpthread -lm
+# )
+
 add_executable(
   compute_tests
   compute/index/compute_tests.cpp
@@ -286,7 +323,6 @@ target_link_libraries(
   compare_arrays
   point
   algorithms
-  domain
   IO
   coupled_interface
   plotter
@@ -314,7 +350,7 @@ target_link_libraries(
   edge
   algorithms
   coupled_interface
-  domain
+  kokkos_kernels
   solver
   plotter
   -lpthread -lm
@@ -393,6 +429,8 @@ if (NOT MPI_PARALLEL)
   gtest_discover_tests(IO_tests)
   gtest_discover_tests(mesh_tests)
   gtest_discover_tests(compute_partial_derivatives_tests)
+  # gtest_discover_tests(compute_elastic_tests)
+  # # gtest_discover_tests(compute_acoustic_tests)
   # gtest_discover_tests(compute_coupled_interfaces_tests)
   gtest_discover_tests(compute_tests)
   gtest_discover_tests(assembly_tests)

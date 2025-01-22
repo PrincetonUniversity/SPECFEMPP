@@ -19,23 +19,19 @@ public:
   material_kernels() = default;
 
   material_kernels(
-      const int nspec, const int n_element, const int ngllz, const int ngllx,
-      const specfem::compute::mesh_to_compute_mapping &mapping,
-      const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
+      const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
+      const int ngllz, const int ngllx,
       const specfem::kokkos::HostView1d<int> property_index_mapping)
       : specfem::medium::kernels_container<value_type, property_type>(
-            n_element, ngllz, ngllx) {
-    int count = 0;
-    for (int ispec = 0; ispec < nspec; ++ispec) {
-      const int ispec_mesh = mapping.compute_to_mesh(ispec);
-      const auto &tag = tags.tags_container(ispec_mesh);
-      if ((tag.medium_tag == type) && (tag.property_tag == property)) {
-        property_index_mapping(ispec) = count;
-        count++;
-      }
-    }
+            elements.extent(0), ngllz, ngllx) {
 
-    assert(count == n_element);
+    const int nelement = elements.extent(0);
+    int count = 0;
+    for (int i = 0; i < nelement; ++i) {
+      const int ispec = elements(i);
+      property_index_mapping(ispec) = count;
+      count++;
+    }
   }
 };
 } // namespace medium
