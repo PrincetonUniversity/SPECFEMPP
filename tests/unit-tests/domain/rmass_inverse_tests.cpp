@@ -4,7 +4,7 @@
 #include "IO/interface.hpp"
 #include "compute/interface.hpp"
 #include "constants.hpp"
-#include "domain/domain.hpp"
+#include "kokkos_kernels/domain_kernels.hpp"
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"
 #include "quadrature/interface.hpp"
@@ -133,25 +133,14 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
 
     try {
 
-      specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
-
       const type_real dt = setup.get_dt();
 
-      specfem::domain::domain<
+      specfem::kokkos_kernels::domain_kernels<
           specfem::wavefield::simulation_field::forward,
-          specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-          specfem::enums::element::quadrature::static_quadrature_points<5> >
-          elastic_domain_static(dt, assembly, qp5);
+          specfem::dimension::type::dim2, 5>
+          kernels(assembly);
 
-      specfem::domain::domain<
-          specfem::wavefield::simulation_field::forward,
-          specfem::dimension::type::dim2,
-          specfem::element::medium_tag::acoustic,
-          specfem::enums::element::quadrature::static_quadrature_points<5> >
-          acoustic_domain_static(dt, assembly, qp5);
-
-      elastic_domain_static.invert_mass_matrix();
-      acoustic_domain_static.invert_mass_matrix();
+      kernels.initialize(dt);
 
       Kokkos::deep_copy(assembly.fields.forward.elastic.h_mass_inverse,
                         assembly.fields.forward.elastic.mass_inverse);
@@ -194,7 +183,7 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
                   ispec, iz, ix);
               const int ispec_mesh =
                   assembly.mesh.mapping.compute_to_mesh(ispec);
-              if (assembly.properties.h_medium_tags(ispec) ==
+              if (assembly.element_types.get_medium_tag(ispec) ==
                   specfem::element::medium_tag::elastic) {
 
                 constexpr int components = 2;
@@ -254,7 +243,7 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
                   ispec, iz, ix);
               const int ispec_mesh =
                   assembly.mesh.mapping.compute_to_mesh(ispec);
-              if (assembly.properties.h_medium_tags(ispec) ==
+              if (assembly.element_types.get_medium_tag(ispec) ==
                   specfem::element::medium_tag::acoustic) {
 
                 constexpr int components = 1;

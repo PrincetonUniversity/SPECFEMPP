@@ -274,9 +274,9 @@ specfem::compute::mesh::mesh(
       specfem::compute::control_nodes(this->mapping, m_control_nodes);
   this->quadratures =
       specfem::compute::quadrature(m_quadratures, m_control_nodes);
-  nspec = this->control_nodes.nspec;
-  ngllx = this->quadratures.gll.N;
-  ngllz = this->quadratures.gll.N;
+  this->nspec = this->control_nodes.nspec;
+  this->ngllx = this->quadratures.gll.N;
+  this->ngllz = this->quadratures.gll.N;
 
   this->points = this->assemble();
 }

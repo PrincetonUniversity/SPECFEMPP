@@ -5,7 +5,6 @@
 #include "IO/seismogram/reader.hpp"
 #include "compute/interface.hpp"
 #include "constants.hpp"
-#include "domain/domain.hpp"
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"
 #include "quadrature/interface.hpp"
@@ -233,9 +232,8 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     if (mpi->main_proc())
       std::cout << *it << std::endl;
 
-    specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
     std::shared_ptr<specfem::solver::solver> solver =
-        setup.instantiate_solver(setup.get_dt(), assembly, it, qp5, {});
+        setup.instantiate_solver<5>(setup.get_dt(), assembly, it, {});
 
     solver->run();
 

@@ -20,41 +20,35 @@ struct material_properties
   material_properties() = default;
 
   material_properties(
-      const int nspec, const int n_element, const int ngllz, const int ngllx,
-      const specfem::compute::mesh_to_compute_mapping &mapping,
-      const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
-      const specfem::mesh::materials &materials, const bool &has_gll_model,
+      const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
+      const int ngllz, const int ngllx,
+      const specfem::mesh::materials &materials, const bool has_gll_model,
       const specfem::kokkos::HostView1d<int> property_index_mapping)
-      : specfem::medium::properties_container<type, property>(n_element, ngllz,
-                                                              ngllx) {
+      : specfem::medium::properties_container<type, property>(
+            elements.extent(0), ngllz, ngllx) {
 
+    const int nelement = elements.extent(0);
     int count = 0;
-    for (int ispec = 0; ispec < nspec; ++ispec) {
-      const int ispec_mesh = mapping.compute_to_mesh(ispec);
-      const auto &tag = tags.tags_container(ispec_mesh);
+    for (int i = 0; i < nelement; ++i) {
+      const int ispec = elements(i);
+      property_index_mapping(ispec) = count;
+      if (!has_gll_model) {
+        for (int iz = 0; iz < ngllz; ++iz) {
+          for (int ix = 0; ix < ngllx; ++ix) {
+            // Get the material at index from mesh::materials
+            auto material =
+                std::get<specfem::medium::material<type, property> >(
+                    materials[ispec]);
 
-      if ((tag.medium_tag == type) && (tag.property_tag == property)) {
-        property_index_mapping(ispec) = count;
-        if (!has_gll_model) {
-          for (int iz = 0; iz < ngllz; ++iz) {
-            for (int ix = 0; ix < ngllx; ++ix) {
-              // Get the material at index from mesh::materials
-              auto material =
-                  std::get<specfem::medium::material<type, property> >(
-                      materials[ispec_mesh]);
-
-              // Assign the material property to the property container
-              auto point_property = material.get_properties();
-              this->assign(specfem::point::index<dimension>(count, iz, ix),
-                           point_property);
-            }
+            // Assign the material property to the property container
+            auto point_property = material.get_properties();
+            this->assign(specfem::point::index<dimension>(count, iz, ix),
+                         point_property);
           }
         }
-        count++;
       }
+      count++;
     }
-
-    assert(count == n_element);
 
     if (!has_gll_model) {
       this->copy_to_device();

@@ -10,6 +10,8 @@
 
 template <specfem::dimension::type Dimension,
           specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag,
+          specfem::element::boundary_tag BoundaryTag,
           specfem::wavefield::simulation_field WavefieldType>
 void check_store(specfem::compute::assembly &assembly) {
 
@@ -17,8 +19,8 @@ void check_store(specfem::compute::assembly &assembly) {
   const int ngllz = assembly.mesh.ngllz;
   const int ngllx = assembly.mesh.ngllx;
 
-  const auto elements =
-      assembly.sources.get_elements_on_device(MediumTag, WavefieldType);
+  const auto elements = assembly.sources.get_elements_on_device(
+      MediumTag, PropertyTag, BoundaryTag, WavefieldType);
 
   const int nelements = elements.size();
 
@@ -32,9 +34,13 @@ void check_store(specfem::compute::assembly &assembly) {
   Kokkos::View<type_real *, Kokkos::DefaultExecutionSpace> values_to_store(
       "values_to_store", nelements);
 
+  const auto h_values_to_store = Kokkos::create_mirror_view(values_to_store);
+
   for (int i = 0; i < nelements; i++) {
-    values_to_store(i) = 1.0 + i;
+    h_values_to_store(i) = 1.0 + i;
   }
+
+  Kokkos::deep_copy(values_to_store, h_values_to_store);
 
   using PointType = specfem::point::source<Dimension, MediumTag, WavefieldType>;
 
@@ -52,8 +58,8 @@ void check_store(specfem::compute::assembly &assembly) {
         specfem::datatype::ScalarPointViewType<type_real, num_components, false>
             lagrange_interpolant;
         for (int ic = 0; ic < num_components; ic++) {
-          stf(ic) = 1.0;
-          lagrange_interpolant(ic) = 1.0;
+          stf(ic) = values_to_store(i);
+          lagrange_interpolant(ic) = values_to_store(i);
         }
         PointType point(stf, lagrange_interpolant);
         specfem::compute::store_on_device(index, point, sources);
@@ -64,6 +70,8 @@ void check_store(specfem::compute::assembly &assembly) {
 
 template <specfem::dimension::type Dimension,
           specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag,
+          specfem::element::boundary_tag BoundaryTag,
           specfem::wavefield::simulation_field WavefieldType>
 void check_load(specfem::compute::assembly &assembly) {
 
@@ -71,8 +79,8 @@ void check_load(specfem::compute::assembly &assembly) {
   const int ngllz = assembly.mesh.ngllz;
   const int ngllx = assembly.mesh.ngllx;
 
-  const auto elements =
-      sources.get_elements_on_device(MediumTag, WavefieldType);
+  const auto elements = sources.get_elements_on_device(
+      MediumTag, PropertyTag, BoundaryTag, WavefieldType);
 
   const int nelements = elements.size();
 
@@ -122,7 +130,7 @@ void check_load(specfem::compute::assembly &assembly) {
         const auto &point_kernel = h_point_sources(iz, ix, i);
         for (int ic = 0; ic < num_components; ic++) {
           const auto stf = point_kernel.stf(ic);
-          const auto expected = values_to_store(i);
+          const auto expected = h_values_to_store(i);
           if (expected != stf) {
             std::ostringstream message;
             message << "Error in source computation: \n"
@@ -176,7 +184,7 @@ void check_assembly_source_construction(
 
     const auto lcoord = specfem::algorithms::locate_point(coord, assembly.mesh);
 
-    if (assembly.properties.h_medium_tags(lcoord.ispec) != MediumTag) {
+    if (assembly.element_types.get_medium_tag(lcoord.ispec) != MediumTag) {
       continue;
     }
 
@@ -184,9 +192,9 @@ void check_assembly_source_construction(
         "source_array", components, assembly.mesh.ngllz, assembly.mesh.ngllx);
 
     source->compute_source_array(assembly.mesh, assembly.partial_derivatives,
-                                 assembly.properties, source_array);
-    Kokkos::View<type_real **, Kokkos::DefaultHostExecutionSpace> stf("stf", 1,
-                                                                  components);
+                                 assembly.element_types, source_array);
+    Kokkos::View<type_real **, Kokkos::DefaultHostExecutionSpace> stf(
+        "stf", 1, components);
 
     source->compute_source_time_function(1.0, 0.0, 1, stf);
 
@@ -194,7 +202,7 @@ void check_assembly_source_construction(
       for (int ix = 0; ix < ngllx; ix++) {
         specfem::point::index<Dimension, false> index(lcoord.ispec, iz, ix);
         PointSourceType point;
-        specfem::compute::load_on_device(index, assembly.sources, point);
+        specfem::compute::load_on_host(index, assembly.sources, point);
 
         for (int ic = 0; ic < components; ic++) {
           const auto lagrange_interpolant = point.lagrange_interpolant(ic);
@@ -249,15 +257,20 @@ void test_assembly_source_construction(
 
 void test_sources(specfem::compute::assembly &assembly) {
 
-#define TEST_STORE_LOAD(Dimension, MediumTag)                                  \
-  check_store<GET_TAG(Dimension), GET_TAG(MediumTag),                          \
+#define TEST_STORE_LOAD(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, BOUNDARY_TAG) \
+  check_store<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),                     \
+              GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG),                    \
               specfem::wavefield::simulation_field::forward>(assembly);        \
-  check_load<GET_TAG(Dimension), GET_TAG(MediumTag),                           \
-             specfem::wavefield::simulation_field::forward>(assembly);
+  check_store<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),                     \
+              GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG),                    \
+              specfem::wavefield::simulation_field::forward>(assembly);
 
-  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
+  CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
       TEST_STORE_LOAD,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC))
+      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
+          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC) WHERE(
+              BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
+              BOUNDARY_TAG_STACEY, BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
 
 #undef TEST_STORE_LOAD
 }
