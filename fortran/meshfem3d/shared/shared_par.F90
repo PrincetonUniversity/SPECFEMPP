@@ -215,7 +215,6 @@ end module constants
   integer :: INJECTION_TECHNIQUE_TYPE
   character(len=MAX_STRING_LEN) :: TRACTION_PATH,TRACTION_PATH_new
   character(len=MAX_STRING_LEN) :: FKMODEL_FILE
-  logical :: MESH_A_CHUNK_OF_THE_EARTH
   logical :: RECIPROCITY_AND_KH_INTEGRAL
 
   ! prescribed wavefield discontinuity on an interface

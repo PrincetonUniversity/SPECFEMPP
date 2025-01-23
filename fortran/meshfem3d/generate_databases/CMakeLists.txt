@@ -19,6 +19,7 @@ set(MESHFEM3D_GENERATE_DATABASES_MODULE
   finalize_databases.f90
   # generate_databases_par.F90
   generate_databases.f90
+  command_line_arguments.f90
   get_absorbing_boundary.F90
   get_coupling_surfaces.f90
   get_model.F90
