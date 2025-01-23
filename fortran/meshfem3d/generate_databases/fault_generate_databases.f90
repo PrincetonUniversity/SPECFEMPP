@@ -99,7 +99,8 @@ contains
 
   subroutine fault_read_input(prname)
 
-  use constants, only: MAX_STRING_LEN, IN_DATA_FILES,myrank,IIN_PAR,IIN_BIN
+  use constants, only: MAX_STRING_LEN,myrank,IIN_PAR,IIN_BIN
+  use shared_input_parameters, only: FAULT_PAR_FILE
 
   implicit none
   character(len=MAX_STRING_LEN), intent(in) :: prname
@@ -108,7 +109,7 @@ contains
 
   ! read fault input file
   nb = 0
-  open(unit=IIN_PAR,file=IN_DATA_FILES(1:len_trim(IN_DATA_FILES))//'Par_file_faults',status='old',action='read',iostat=ier)
+  open(unit=IIN_PAR,file=FAULT_PAR_FILE,status='old',action='read',iostat=ier)
   if (ier == 0) then
     read(IIN_PAR,*) nb
     if (myrank == 0) then
