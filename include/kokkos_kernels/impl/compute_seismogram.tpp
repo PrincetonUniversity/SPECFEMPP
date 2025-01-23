@@ -117,7 +117,7 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
             }
 
             const auto iterator =
-                policy.mapping_iterator(starting_element_index);
+                policy.mapped_league_iterator(starting_element_index);
 
             specfem::compute::load_on_device(team_member, iterator, field,
                                              element_field);

@@ -398,7 +398,7 @@ struct mapped_element_chunk : public element_chunk<ParallelConfig> {
       : Base(view, ngllz, ngllx), mapping(mapping) {}
 
   KOKKOS_INLINE_FUNCTION
-  mapped_iterator_type mapping_iterator(const int start_index) const {
+  mapped_iterator_type mapped_league_iterator(const int start_index) const {
     const int start = start_index;
     const int end =
         (start + Base::chunk_size * Base::simd_size > Base::elements.extent(0))
