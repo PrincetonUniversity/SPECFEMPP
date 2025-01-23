@@ -29,8 +29,8 @@ rule run_solver:
         source="sources.yaml",
         config="specfem_config.yaml",
     output:
-        siesmograms=expand(
-            "OUTPUT_FILES/results/{station_name}{network_name}{component}.semd",
+        seismograms=expand(
+            "OUTPUT_FILES/results/{network_name}.{station_name}.S2.{component}.semd",
             station_name=[
                 "S0001",
                 "S0002",
@@ -65,7 +65,7 @@ rule run_solver:
 rule plot_seismogram:
     input:
         trace_files=expand(
-            "OUTPUT_FILES/results/{station_name}{network_name}{component}.semd",
+            "OUTPUT_FILES/results/{network_name}.{station_name}.S2.{component}.semd",
             station_name=[
                 "S0001",
                 "S0002",
@@ -102,14 +102,18 @@ rule plot_seismogram:
             ## iterate over all seismograms
             for filename in files:
                 station_name = os.path.splitext(filename)[0]
-                station_name = station_name.split("/")[-1]
+                network, station, location, channel = station_name.split("/")[-1].split(".")
                 trace = np.loadtxt(filename, delimiter=" ")
                 starttime = trace[0, 0]
                 dt = trace[1, 0] - trace[0, 0]
                 traces.append(
                     obspy.Trace(
                         trace[:, 1],
-                        {"network": station_name, "starttime": starttime, "delta": dt},
+                        {"network": network,
+                         "station": station,
+                         "location": location,
+                         "channel": channel,
+                         "starttime": starttime, "delta": dt},
                     )
                 )
 

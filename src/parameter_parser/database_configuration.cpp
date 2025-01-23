@@ -6,9 +6,10 @@ specfem::runtime_configuration::database_configuration::database_configuration(
     const YAML::Node &Node) {
   try {
     *this = specfem::runtime_configuration::database_configuration(
-        Node["mesh-database"].as<std::string>(),
-        Node["source-file"].as<std::string>());
+        Node["mesh-database"].as<std::string>());
+
   } catch (YAML::ParserException &e) {
+
     std::ostringstream message;
 
     message << "Error reading database configuration. \n" << e.what();

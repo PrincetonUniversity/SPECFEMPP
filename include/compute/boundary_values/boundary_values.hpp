@@ -25,7 +25,7 @@ public:
       composite_stacey_dirichlet;
 
   boundary_values(const int nstep, const specfem::compute::mesh mesh,
-                  const specfem::compute::properties properties,
+                  const specfem::compute::element_types element_types,
                   const specfem::compute::boundaries boundaries);
 
   template <specfem::element::boundary_tag BoundaryTag>

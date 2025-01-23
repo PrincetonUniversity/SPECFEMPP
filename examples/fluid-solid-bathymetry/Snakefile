@@ -52,8 +52,8 @@ rule run_simulation:
         line_sources="line_sources.yaml",
         specfem_config="specfem_config.yaml",
     output:
-        pressure_siesmograms=expand(
-            "OUTPUT_FILES/results/{station_name}{network_name}{component}.semp",
+        pressure_seismograms=expand(
+            "OUTPUT_FILES/results/{network_name}.{station_name}.S2.{component}.semp",
             station_name=[
                 "S0001",
                 "S0002",
@@ -68,8 +68,8 @@ rule run_simulation:
         runtime=40,
     shell:
         """
-            module purge
-            module load boost/1.73.0
+            # module purge
+            # module load boost/1.73.0
             mkdir -p OUTPUT_FILES/results
             mkdir -p OUTPUT_FILES/display
             echo "Hostname: $(hostname)" > output.log
@@ -78,8 +78,8 @@ rule run_simulation:
 
 rule plot_seismogram:
     input:
-        pressure_siesmograms=expand(
-            "OUTPUT_FILES/results/{station_name}{network_name}{component}.semp",
+        pressure_seismograms=expand(
+            "OUTPUT_FILES/results/{network_name}.{station_name}.S2.{component}.semp",
             station_name=[
                 "S0001",
                 "S0002",
@@ -106,14 +106,18 @@ rule plot_seismogram:
             ## iterate over all seismograms
             for filename in files:
                 station_name = os.path.splitext(filename)[0]
-                station_name = station_name.split("/")[-1]
+                network, station, location, channel = station_name.split("/")[-1].split(".")
                 trace = np.loadtxt(filename, delimiter=" ")
                 starttime = trace[0, 0]
                 dt = trace[1, 0] - trace[0, 0]
                 traces.append(
                     obspy.Trace(
                         trace[:, 1],
-                        {"network": station_name, "starttime": starttime, "delta": dt},
+                        {"network": network,
+                         "station": station,
+                         "location": location,
+                         "channel": channel,
+                         "starttime": starttime, "delta": dt},
                     )
                 )
 

@@ -1,34 +1,32 @@
 #include "parameter_parser/receivers.hpp"
 #include "constants.hpp"
 #include "yaml-cpp/yaml.h"
+
+// External Includes
+#include <boost/tokenizer.hpp>
+#include <fstream>
+#include <iostream>
 #include <ostream>
 #include <string>
+#include <vector>
 
-specfem::runtime_configuration::receivers::receivers(const YAML::Node &Node) {
-  try {
-    *this = specfem::runtime_configuration::receivers(
-        Node["stations-file"].as<std::string>(), Node["angle"].as<type_real>(),
-        Node["nstep_between_samples"].as<int>());
-  } catch (YAML::ParserException &e) {
-    std::ostringstream message;
+std::vector<specfem::enums::seismogram::type>
+specfem::runtime_configuration::receivers::get_seismogram_types() const {
 
-    message << "Error reading specfem receiver configuration. \n" << e.what();
-
-    throw std::runtime_error(message.str());
-  }
+  std::vector<specfem::enums::seismogram::type> stypes;
 
   // Allocate seismogram types
-  assert(Node["seismogram-type"].IsSequence());
+  assert(this->receivers_node["seismogram-type"].IsSequence());
 
-  for (YAML::Node seismogram_type : Node["seismogram-type"]) {
+  for (YAML::Node seismogram_type : this->receivers_node["seismogram-type"]) {
     if (seismogram_type.as<std::string>() == "displacement") {
-      this->stypes.push_back(specfem::enums::seismogram::type::displacement);
+      stypes.push_back(specfem::enums::seismogram::type::displacement);
     } else if (seismogram_type.as<std::string>() == "velocity") {
-      this->stypes.push_back(specfem::enums::seismogram::type::velocity);
+      stypes.push_back(specfem::enums::seismogram::type::velocity);
     } else if (seismogram_type.as<std::string>() == "acceleration") {
-      this->stypes.push_back(specfem::enums::seismogram::type::acceleration);
+      stypes.push_back(specfem::enums::seismogram::type::acceleration);
     } else if (seismogram_type.as<std::string>() == "pressure") {
-      this->stypes.push_back(specfem::enums::seismogram::type::pressure);
+      stypes.push_back(specfem::enums::seismogram::type::pressure);
     } else {
       std::ostringstream message;
 
@@ -39,4 +37,5 @@ specfem::runtime_configuration::receivers::receivers(const YAML::Node &Node) {
       std::runtime_error(message.str());
     }
   }
+  return stypes;
 }

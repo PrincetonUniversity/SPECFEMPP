@@ -18,14 +18,15 @@ template class specfem::compute::simulation_field<
 template class specfem::compute::simulation_field<
     specfem::wavefield::simulation_field::buffer>;
 
-specfem::compute::fields::fields(const specfem::compute::mesh &mesh,
-                                 const specfem::compute::properties &properties,
-                                 const specfem::simulation::type simulation)
+specfem::compute::fields::fields(
+    const specfem::compute::mesh &mesh,
+    const specfem::compute::element_types &element_types,
+    const specfem::simulation::type simulation)
     : // Initialize the forward field only if the simulation type is forward
       forward([&]() -> specfem::compute::simulation_field<
                         specfem::wavefield::simulation_field::forward> {
         if (simulation == specfem::simulation::type::forward) {
-          return { mesh, properties };
+          return { mesh, element_types };
         } else if (simulation == specfem::simulation::type::combined) {
           return {};
         } else {
@@ -38,7 +39,7 @@ specfem::compute::fields::fields(const specfem::compute::mesh &mesh,
         if (simulation == specfem::simulation::type::forward) {
           return {};
         } else if (simulation == specfem::simulation::type::combined) {
-          return { mesh, properties };
+          return { mesh, element_types };
         } else {
           throw std::runtime_error("Invalid simulation type");
         }
@@ -49,7 +50,7 @@ specfem::compute::fields::fields(const specfem::compute::mesh &mesh,
         if (simulation == specfem::simulation::type::forward) {
           return {};
         } else if (simulation == specfem::simulation::type::combined) {
-          return { mesh, properties };
+          return { mesh, element_types };
         } else {
           throw std::runtime_error("Invalid simulation type");
         }
@@ -58,9 +59,9 @@ specfem::compute::fields::fields(const specfem::compute::mesh &mesh,
       buffer([&]() -> specfem::compute::simulation_field<
                        specfem::wavefield::simulation_field::buffer> {
         if (simulation == specfem::simulation::type::forward) {
-          return { mesh, properties };
+          return { mesh, element_types };
         } else if (simulation == specfem::simulation::type::combined) {
-          return { mesh, properties };
+          return { mesh, element_types };
         } else {
           throw std::runtime_error("Invalid simulation type");
         }

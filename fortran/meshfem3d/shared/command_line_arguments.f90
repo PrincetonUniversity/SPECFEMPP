@@ -20,7 +20,7 @@ end subroutine print_help_message
 subroutine parse_command_line_arguments()
 
   use constants, only: MAX_STRING_LEN, one
-  use shared_parameters, only: Par_file
+  use shared_input_parameters, only: Par_file
 
   implicit none
 
@@ -57,7 +57,7 @@ subroutine parse_command_line_arguments()
           stop
         endif
         ! get the next command line argument
-        call get_command_argument(i+1, Par_file)
+        call get_command_argument(i+1, Par_file )
         ! skip the next command line argument
         i = i + 1
       case default

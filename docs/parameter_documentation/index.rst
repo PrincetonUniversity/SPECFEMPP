@@ -10,6 +10,7 @@ The run-time behaviour of the code is controlled by YAML parameter files. The pa
 
     header
     simulation_setup
+    sources
     receivers
     run_setup
     databases

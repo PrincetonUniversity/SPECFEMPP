@@ -21,7 +21,7 @@ void generate_data(specfem::compute::assembly &assembly,
   const int ngllz = assembly.mesh.ngllz;
 
   const auto elements =
-      assembly.properties.get_elements_on_host(medium, property);
+      assembly.element_types.get_elements_on_host(medium, property);
 
   constexpr int num_components =
       specfem::element::attributes<specfem::dimension::type::dim2,

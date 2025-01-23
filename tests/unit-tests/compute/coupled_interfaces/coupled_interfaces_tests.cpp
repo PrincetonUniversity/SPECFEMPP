@@ -4,7 +4,6 @@
 #include "IO/interface.hpp"
 #include "compute/interface.hpp"
 #include "edge/interface.hpp"
-#include "material/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "point/coordinates.hpp"
 #include "quadrature/interface.hpp"

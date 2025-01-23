@@ -31,7 +31,7 @@ template <typename ViewType> int compute_nglob(const ViewType index_mapping) {
 template <specfem::wavefield::simulation_field WavefieldType>
 specfem::compute::simulation_field<WavefieldType>::simulation_field(
     const specfem::compute::mesh &mesh,
-    const specfem::compute::properties &properties) {
+    const specfem::compute::element_types &element_types) {
 
   nglob = compute_nglob(mesh.points.h_index_mapping);
 
@@ -68,11 +68,11 @@ specfem::compute::simulation_field<WavefieldType>::simulation_field(
   elastic =
       specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
                                          specfem::element::medium_tag::elastic>(
-          mesh, properties, elastic_index);
+          mesh, element_types, elastic_index);
 
   acoustic = specfem::compute::impl::field_impl<
       specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic>(
-      mesh, properties, acoustic_index);
+      mesh, element_types, acoustic_index);
 
   Kokkos::deep_copy(assembly_index_mapping, h_assembly_index_mapping);
 

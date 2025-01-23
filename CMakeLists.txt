@@ -10,7 +10,7 @@ option(BUILD_TESTS "Tests included" OFF)
 option(BUILD_EXAMPLES "Examples included" ON)
 option(ENABLE_SIMD "Enable SIMD" OFF)
 option(ENABLE_PROFILING "Enable profiling" OFF)
-option(SPECFEMPP_ENABLE_PYTHON "Enable Python binding" OFF)
+option(SPECFEMPP_BINDING_PYTHON "Enable Python binding" OFF)
 # set(CMAKE_BUILD_TYPE Release)
 set(CHUNK_SIZE 32)
 set(NUM_CHUNKS 1)
@@ -25,7 +25,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 # For external modules that need to be built suppress build output
 set(FETCHCONTENT_QUIET TRUE)
 
-if (SPECFEMPP_ENABLE_PYTHON)
+if (SPECFEMPP_BINDING_PYTHON)
     message("-- Adding -fPIC flag for Python binding.")
     if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
             set(CMAKE_CXX_FLAGS "-fp-model=precise -fPIC")
@@ -36,7 +36,7 @@ if (SPECFEMPP_ENABLE_PYTHON)
     else()
             set(CMAKE_CXX_FLAGS "-fPIC")
     endif()
-else (SPECFEMPP_ENABLE_PYTHON)
+else (SPECFEMPP_BINDING_PYTHON)
     if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
             set(CMAKE_CXX_FLAGS "-fp-model=precise")
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
@@ -44,7 +44,7 @@ else (SPECFEMPP_ENABLE_PYTHON)
             message("-- It is recommended you use IntelLLVM compiler.")
             set(CMAKE_CXX_FLAGS "-diag-disable=10441 -fp-model=precise")
     endif()
-endif (SPECFEMPP_ENABLE_PYTHON)
+endif (SPECFEMPP_BINDING_PYTHON)
 
 # Check if MacOS
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -110,8 +110,9 @@ find_package(Boost 1.73.0 COMPONENTS program_options filesystem system)
 
 if (NOT ${Boost_FOUND})
     # Add boost lib sources
-    set(BOOST_INCLUDE_LIBRARIES program_options filesystem system algorithm tokenizer)
-    set(BOOST_LIBS Boost::program_options Boost::filesystem Boost::system Boost::algorithm Boost::tokenizer)
+    set(BOOST_INCLUDE_LIBRARIES program_options filesystem system algorithm tokenizer preprocessor)
+    set(BOOST_LIBS Boost::program_options Boost::filesystem Boost::system
+                   Boost::algorithm Boost::tokenizer Boost::preprocessor)
     set(BOOST_ENABLE_CMAKE ON)
     set(BOOST_ENABLE_MPI OFF CACHE INTERNAL "Boost MPI Switch") # Assume outer variable
     set(BOOST_ENABLE_PYTHON OFF CACHE INTERNAL "Boost Python Switch") # Assume outer variable
@@ -193,8 +194,6 @@ target_link_libraries(
 add_library(
         IO
         src/IO/fortranio/fortran_io.cpp
-        src/IO/HDF5/native_type.cpp
-        # src/IO/ASCII/native_type.cpp
         src/IO/sources.cpp
         src/IO/receivers.cpp
         src/IO/mesh.cpp
@@ -217,6 +216,7 @@ if (NOT HDF5_CXX_BUILD)
         mesh
         source_class
         receiver_class
+        yaml-cpp
         ${BOOST_LIBS}
         Kokkos::kokkos)
 else()
@@ -225,8 +225,9 @@ else()
         mesh
         source_class
         receiver_class
-
         Kokkos::kokkos
+        yaml-cpp
+        ${BOOST_LIBS}
         ${HDF5_LIBRARIES}
     )
 endif()
@@ -247,6 +248,12 @@ add_library(
         enumerations
         src/enumerations/medium.cpp
 )
+
+target_link_libraries(
+        enumerations
+        ${BOOST_LIBS}
+)
+
 
 add_library(
         edge
@@ -320,21 +327,9 @@ target_link_libraries(
         point
 )
 
-# add_library(
-#         utilities
-#         src/utilities/utilities.cpp
-# )
-
-# target_link_libraries(
-#         utilities
-#         jacobian
-#         Kokkos::kokkos
-#         specfem_mpi
-# )
-
 add_library(
         read_seismogram
-        src/reader/seismogram.cpp
+        src/IO/seismogram/reader.cpp
 )
 
 target_link_libraries(
@@ -344,7 +339,8 @@ target_link_libraries(
 
 add_library(
         reader
-        src/reader/wavefield.cpp
+        src/IO/wavefield/reader.cpp
+        src/IO/property/reader.cpp
 )
 
 target_link_libraries(
@@ -421,6 +417,7 @@ target_link_libraries(
 add_library(
         compute
         src/compute/compute_mesh.cpp
+        src/compute/element_types/element_types.cpp
         src/compute/compute_partial_derivatives.cpp
         src/compute/compute_properties.cpp
         src/compute/compute_kernels.cpp
@@ -450,29 +447,27 @@ target_link_libraries(
 )
 
 add_library(
-        domain
-        src/domain/impl/boundary_conditions/none/none.cpp
-        src/domain/impl/boundary_conditions/none/print.cpp
-        src/domain/impl/boundary_conditions/dirichlet/dirichlet.cpp
-        src/domain/impl/boundary_conditions/dirichlet/print.cpp
-        src/domain/impl/boundary_conditions/stacey/stacey.cpp
-        src/domain/impl/boundary_conditions/stacey/mass_matrix.cpp
-        src/domain/impl/boundary_conditions/stacey/print.cpp
-        src/domain/impl/boundary_conditions/composite_stacey_dirichlet/composite_stacey_dirichlet.cpp
-        src/domain/impl/boundary_conditions/composite_stacey_dirichlet/mass_matrix.cpp
-        src/domain/impl/boundary_conditions/composite_stacey_dirichlet/print.cpp
-        src/domain/impl/boundary_conditions/boundary_conditions.cpp
-        src/domain/impl/elements/acoustic/acoustic2d.cpp
-        src/domain/impl/elements/elastic/elastic2d.cpp
-        src/domain/impl/elements/element.cpp
-        src/domain/impl/elements/kernel.cpp
-        src/domain/impl/kernels.cpp
-        src/domain/domain.cpp
+        boundary_conditions
+        src/boundary_conditions/boundary_conditions.cpp
 )
 
 target_link_libraries(
-        domain
+        boundary_conditions
         Kokkos::kokkos
+        ${BOOST_LIBS}
+)
+
+add_library(
+        medium
+        src/medium/compute_mass_matrix.cpp
+        src/medium/compute_stress_integrand.cpp
+)
+
+target_link_libraries(
+        medium
+        Kokkos::kokkos
+        compute
+        boundary_conditions
         enumerations
 )
 
@@ -486,42 +481,23 @@ target_link_libraries(
         compute
 )
 
-# add_library(
-#         kernels
-#         src/kernels/kernels.cpp
-# )
-
-# target_link_libraries(
-#         kernels
-#         Kokkos::kokkos
-#         compute
-#         coupled_interface
-# )
-
 add_library(
-        frechet_derivatives
-        src/frechet_derivatives/impl/element_kernel/elastic_isotropic.cpp
-        src/frechet_derivatives/impl/element_kernel/acoustic_isotropic.cpp
-        src/frechet_derivatives/impl/frechet_element.cpp
-        src/frechet_derivatives/frechet_derivatives.cpp
+        kokkos_kernels
+        src/kokkos_kernels/impl/compute_mass_matrix.cpp
+        src/kokkos_kernels/impl/invert_mass_matrix.cpp
+        src/kokkos_kernels/impl/divide_mass_matrix.cpp
+        src/kokkos_kernels/impl/compute_seismogram.cpp
+        src/kokkos_kernels/impl/compute_source_interaction.cpp
+        src/kokkos_kernels/impl/compute_stiffness_interaction.cpp
+        src/kokkos_kernels/impl/compute_material_derivatives.cpp
+        src/kokkos_kernels/frechet_kernels.cpp
 )
 
 target_link_libraries(
-        frechet_derivatives
-        Kokkos::kokkos
-        point
-)
-
-add_library(
-        kernels
-        src/kernels/frechet_kernels.cpp
-)
-
-target_link_libraries(
-        kernels
+        kokkos_kernels
         Kokkos::kokkos
         compute
-        frechet_derivatives
+        boundary_conditions
 )
 
 add_library(
@@ -546,14 +522,16 @@ target_link_libraries(
         solver
         Kokkos::kokkos
         timescheme
-        domain
+        kokkos_kernels
+        medium
 )
 
 add_library(
         writer
-        src/writer/seismogram.cpp
-        src/writer/wavefield.cpp
-        src/writer/kernel.cpp
+        src/IO/seismogram/writer.cpp
+        src/IO/wavefield/writer.cpp
+        src/IO/kernel/writer.cpp
+        src/IO/property/writer.cpp
 )
 
 target_link_libraries(
@@ -605,6 +583,7 @@ add_library(
         src/parameter_parser/writer/wavefield.cpp
         src/parameter_parser/writer/plot_wavefield.cpp
         src/parameter_parser/writer/kernel.cpp
+        src/parameter_parser/writer/property.cpp
 )
 
 target_link_libraries(
@@ -615,8 +594,8 @@ target_link_libraries(
         yaml-cpp
         writer
         reader
-        kernels
-        domain
+        kokkos_kernels
+        medium
         solver
         ${BOOST_LIBS}
 )
@@ -641,9 +620,9 @@ target_link_libraries(
         writer
         plotter
         reader
-        domain
+        medium
         coupled_interface
-        kernels
+        kokkos_kernels
         solver
         ${BOOST_LIBS}
 )
@@ -685,10 +664,10 @@ endif (DOXYGEN_FOUND)
 
 if (SPECFEMPP_USE_SKBUILD AND EXISTS ${SKBUILD_SCRIPTS_DIR})
     install(TARGETS specfem2d DESTINATION ${SKBUILD_SCRIPTS_DIR})
-    install(FILES ${CMAKE_BINARY_DIR}/xmeshfem2D DESTINATION ${SKBUILD_SCRIPTS_DIR} PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE)
+    install(FILES ${CMAKE_BINARY_DIR}/bin/xmeshfem2D DESTINATION ${SKBUILD_SCRIPTS_DIR} PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE)
 endif ()
 
-if (SPECFEMPP_ENABLE_PYTHON)
+if (SPECFEMPP_BINDING_PYTHON)
     find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
     find_package(pybind11 CONFIG REQUIRED)
     python_add_library(_core MODULE src/specfem2d.cpp WITH_SOABI)
@@ -703,15 +682,16 @@ if (SPECFEMPP_ENABLE_PYTHON)
         parameter_reader
         receiver_class
         writer
+        plotter
         reader
-        domain
+        medium
         coupled_interface
-        kernels
+        kokkos_kernels
         solver
         ${BOOST_LIBS}
         pybind11::headers
     )
-    target_compile_definitions(_core PRIVATE SPECFEMPP_ENABLE_PYTHON)
+    target_compile_definitions(_core PRIVATE SPECFEMPP_BINDING_PYTHON)
     target_compile_definitions(_core PRIVATE VERSION_INFO=${PROJECT_VERSION})
     install(TARGETS _core DESTINATION specfempp_core)
-endif (SPECFEMPP_ENABLE_PYTHON)
+endif (SPECFEMPP_BINDING_PYTHON)

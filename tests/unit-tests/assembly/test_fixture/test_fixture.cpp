@@ -32,31 +32,27 @@ ASSEMBLY::ASSEMBLY() {
   for (auto &Test : Tests) {
     const auto [database_file, sources_file, stations_file] =
         Test.get_databases();
-    specfem::mesh::mesh mesh = specfem::IO::read_mesh(database_file, mpi);
+    const auto mesh = specfem::IO::read_mesh(database_file, mpi);
+
+    this->Meshes.push_back(mesh);
+
+    std::cout << sources_file << std::endl;
 
     const auto [sources, t0] = specfem::IO::read_sources(
-        sources_file, 0, 0, 0, specfem::simulation::type::forward);
+        sources_file, 1, 0, 0, specfem::simulation::type::forward);
+
+    this->Sources.push_back(sources);
 
     const auto receivers = specfem::IO::read_receivers(stations_file, 0);
+
+    this->Stations.push_back(receivers);
 
     std::vector<specfem::enums::seismogram::type> seismogram_types = {
       specfem::enums::seismogram::type::displacement
     };
 
-    assemblies.push_back(specfem::compute::assembly(
-        mesh, quadrature, sources, receivers, seismogram_types, t0, 0, 0, 0,
-        specfem::simulation::type::forward));
+    this->assemblies.push_back(specfem::compute::assembly(
+        mesh, quadrature, sources, receivers, seismogram_types, 1.0, 0.0, 1, 1,
+        1, specfem::simulation::type::forward, nullptr));
   }
 }
-
-// Instantiate template functions
-
-template KOKKOS_FUNCTION
-    specfem::point::index<specfem::dimension::type::dim2, true>
-    get_index<true>(const int ielement, const int num_elements, const int iz,
-                    const int ix);
-
-template KOKKOS_FUNCTION
-    specfem::point::index<specfem::dimension::type::dim2, false>
-    get_index<false>(const int ielement, const int num_elements, const int iz,
-                     const int ix);
