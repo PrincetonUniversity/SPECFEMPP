@@ -44,8 +44,6 @@
   ! to avoid an I/O bottleneck in the case of very large runs
   if (myrank == 0) then
 
-    call parse_command_line_arguments()
-
     ! opens file Par_file
     call open_parameter_file(ier)
 
@@ -179,6 +177,41 @@
     if (ier /= 0) then
       some_parameters_missing_from_Par_file = .true.
       write(*,'(a)') 'TOMOGRAPHY_PATH                 = ./DATA/tomo_files/'
+      write(*,*)
+    endif
+
+    call read_value_logical(HAS_FINITE_FAULT_SOURCE, 'HAS_FINITE_FAULT_SOURCE', ier)
+    if (ier /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'HAS_FINITE_FAULT_SOURCE         = .false.'
+      write(*,*)
+    endif
+
+    call read_value_string(FAULT_PAR_FILE, 'FAULT_PAR_FILE', ier)
+    if (ier /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'FAULT_PAR_FILE                  = dummy.txt'
+      write(*,*)
+    endif
+
+    call read_value_string(FAULT_STATIONS, 'FAULT_STATIONS', ier)
+    if (ier /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'FAULT_STATIONS                  = dummy.txt'
+      write(*,*)
+    endif
+
+    call read_value_string(STRESS_FRICTION_FILE, 'STRESS_FRICTION_FILE', ier)
+    if (ier /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'STRESS_FRICTION_FILE            = dummy.txt'
+      write(*,*)
+    endif
+
+    call read_value_string(RST_HETE_FILE, 'RST_HETE_FILE', ier)
+    if (ier /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'RST_HETE_FILE                   = dummy.txt'
       write(*,*)
     endif
 
