@@ -82,7 +82,9 @@ public:
    * @return Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> View of the
    * indices of sources of the given type
    */
-  Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> get_elements_on_host(
+  std::tuple<Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>,
+             Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> >
+  get_sources_on_host(
       const specfem::element::medium_tag medium,
       const specfem::element::property_tag property,
       const specfem::element::boundary_tag boundary,
@@ -97,7 +99,9 @@ public:
    * @return Kokkos::View<int *, Kokkos::DefaultExecutionSpace> View of the
    * indices of sources of the given type
    */
-  Kokkos::View<int *, Kokkos::DefaultExecutionSpace> get_elements_on_device(
+  std::tuple<Kokkos::View<int *, Kokkos::DefaultExecutionSpace>,
+             Kokkos::View<int *, Kokkos::DefaultExecutionSpace> >
+  get_sources_on_device(
       const specfem::element::medium_tag medium,
       const specfem::element::property_tag property,
       const specfem::element::boundary_tag boundary,
@@ -114,8 +118,7 @@ public:
   void update_timestep(const int timestep) { this->timestep = timestep; }
 
 private:
-  const int nspec;                           ///< Number of spectral elements
-  const int nsources;                        ///< Number of sources
+  int nspec;                                 ///< Number of spectral elements
   IndexViewType source_domain_index_mapping; ///< Mapping for every spectral
                                              ///< element where source is
                                              ///< located to local index within
@@ -181,7 +184,25 @@ private:
       GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));   \
   IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
       h_element_indices_adjoint, GET_NAME(DIMENSION_TAG),                      \
-      GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));
+      GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));   \
+  IndexViewType CREATE_VARIABLE_NAME(                                          \
+      source_indices_forward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),   \
+      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
+  IndexViewType CREATE_VARIABLE_NAME(                                          \
+      source_indices_backward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),  \
+      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
+  IndexViewType CREATE_VARIABLE_NAME(                                          \
+      source_indices_adjoint, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),   \
+      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
+  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
+      h_source_indices_forward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG), \
+      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
+  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
+      h_source_indices_backward, GET_NAME(DIMENSION_TAG),                      \
+      GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));   \
+  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
+      h_source_indices_adjoint, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG), \
+      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));
 
   CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
       SOURCE_INDICES_VARIABLES_NAME,

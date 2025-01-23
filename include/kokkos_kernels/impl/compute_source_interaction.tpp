@@ -36,7 +36,7 @@ const auto [element_indices, sources_indices] = assembly.sources.get_sources_on_
 
 auto &sources = assembly.sources;
 
-const int nelements = element_indeces.extent(0);
+const int nelements = element_indices.extent(0);
 
 if (nelements == 0)
   return;
@@ -75,7 +75,7 @@ using ParallelConfig =
 
 using ChunkPolicy = specfem::policy::element_chunk<ParallelConfig>;
 
-ChunkPolicy chunk_policy(elements, NGLL, NGLL);
+ChunkPolicy chunk_policy(element_indices, NGLL, NGLL);
 
 Kokkos::parallel_for(
     "specfem::kernels::impl::domain_kernels::compute_source_interaction",

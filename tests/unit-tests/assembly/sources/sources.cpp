@@ -19,10 +19,11 @@ void check_store(specfem::compute::assembly &assembly) {
   const int ngllz = assembly.mesh.ngllz;
   const int ngllx = assembly.mesh.ngllx;
 
-  const auto elements = assembly.sources.get_elements_on_device(
-      MediumTag, PropertyTag, BoundaryTag, WavefieldType);
+  const auto [element_indices, source_indices] =
+      assembly.sources.get_sources_on_device(MediumTag, PropertyTag,
+                                             BoundaryTag, WavefieldType);
 
-  const int nelements = elements.size();
+  const int nelements = element_indices.size();
 
   constexpr int num_components =
       specfem::element::attributes<Dimension, MediumTag>::components();
@@ -49,7 +50,7 @@ void check_store(specfem::compute::assembly &assembly) {
       Kokkos::MDRangePolicy<Kokkos::DefaultExecutionSpace, Kokkos::Rank<3> >(
           { 0, 0, 0 }, { nelements, ngllz, ngllx }),
       KOKKOS_LAMBDA(const int &i, const int &iz, const int &ix) {
-        const int ielement = elements(i);
+        const int ielement = element_indices(i);
 
         const auto index =
             specfem::point::index<Dimension, false>(ielement, iz, ix);
@@ -79,10 +80,10 @@ void check_load(specfem::compute::assembly &assembly) {
   const int ngllz = assembly.mesh.ngllz;
   const int ngllx = assembly.mesh.ngllx;
 
-  const auto elements = sources.get_elements_on_device(
+  const auto [element_indices, source_indices] = sources.get_sources_on_device(
       MediumTag, PropertyTag, BoundaryTag, WavefieldType);
 
-  const int nelements = elements.size();
+  const int nelements = element_indices.size();
 
   constexpr int num_components =
       specfem::element::attributes<Dimension, MediumTag>::components();
@@ -110,7 +111,7 @@ void check_load(specfem::compute::assembly &assembly) {
       Kokkos::MDRangePolicy<Kokkos::DefaultExecutionSpace, Kokkos::Rank<3> >(
           { 0, 0, 0 }, { nelements, ngllz, ngllx }),
       KOKKOS_LAMBDA(const int &i, const int &iz, const int &ix) {
-        const int ielement = elements(i);
+        const int ielement = element_indices(i);
 
         const auto index =
             specfem::point::index<Dimension, false>(ielement, iz, ix);
