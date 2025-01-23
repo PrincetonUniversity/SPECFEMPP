@@ -159,6 +159,13 @@
     !-------------------------------------------------------
     ! Mesh
     !-------------------------------------------------------
+    call read_value_string(MESH_PAR_FILE, 'MESH_PAR_FILE', ier)
+    if (ier /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'MESH_PAR_FILE                   = ./DATA/meshfem3D_files/Mesh_Par_file'
+      write(*,*)
+    endif
+
     call read_value_integer(NGNOD, 'NGNOD', ier)
     if (ier /= 0) then
       some_parameters_missing_from_Par_file = .true.
@@ -170,6 +177,13 @@
     if (ier /= 0) then
       some_parameters_missing_from_Par_file = .true.
       write(*,'(a)') 'MODEL                           = default'
+      write(*,*)
+    endif
+
+    call read_value_string(COUPLED_MODEL_DIRECTORY, 'COUPLED_MODEL_DIRECTORY', ier)
+    if (ier /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'COUPLED_MODEL_DIRECTORY          = ./DATA/my_coupled_model/'
       write(*,*)
     endif
 
@@ -457,6 +471,13 @@
     if (ier /= 0) then
       some_parameters_missing_from_Par_file = .true.
       write(*,'(a)') 'USE_FORCE_POINT_SOURCE          = .false.'
+      write(*,*)
+    endif
+
+    call read_value_string(SOURCE_FILENAME, 'SOURCE_FILENAME', ier)
+    if (ier /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'SOURCE_FILENAME                 = dummy.txt'
       write(*,*)
     endif
 
@@ -1217,28 +1238,13 @@
     stop 'Error elements should have 8 or 27 control nodes, please modify NGNOD in Par_file and recompile solver'
   endif
 
-  ! get the name of the file describing the sources
-  if (USE_FORCE_POINT_SOURCE) then
-    sources_filename = IN_DATA_FILES(1:len_trim(IN_DATA_FILES))//'FORCESOLUTION'
-  else
-    sources_filename = IN_DATA_FILES(1:len_trim(IN_DATA_FILES))//'CMTSOLUTION'
-  endif
-  ! see if we are running several independent runs in parallel
-  ! if so, add the right directory for that run
-  ! (group numbers start at zero, but directory names start at run0001, thus we add one)
-  ! a negative value for "mygroup" is a convention that indicates that groups (i.e. sub-communicators, one per run) are off
-  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-    sources_filename = path_to_add(1:len_trim(path_to_add))//sources_filename(1:len_trim(sources_filename))
-  endif
-
   ! determines number of sources depending on number of lines in sources file
   if (INVERSE_FWI_FULL_PROBLEM) then
     ! sources will be set later in input_output_mod.f90 based on acquisition setting
     NSOURCES = 0
   else
     ! gets number of sources
-    call count_number_of_sources(NSOURCES,sources_filename)
+    call count_number_of_sources(NSOURCES,SOURCE_FILENAME)
   endif
 
   ! converts all string characters to lowercase
