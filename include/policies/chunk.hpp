@@ -93,7 +93,7 @@ public:
                                                                     ///< type
   ///@}
 
-private:
+protected:
   constexpr static bool using_simd = simd::using_simd;
   constexpr static int simd_size = simd::size();
 
@@ -223,6 +223,38 @@ public:
     return Kokkos::make_pair(indices(0), indices(num_elements - 1) + 1);
   }
 };
+
+template <typename ViewType, specfem::dimension::type DimensionType,
+          typename SIMD>
+class mapped_chunk;
+
+template <typename ViewType, typename SIMD>
+class mapped_chunk<ViewType, specfem::dimension::type::dim2, SIMD>
+    : public chunk<ViewType, specfem::dimension::type::dim2, SIMD> {
+  using Base = chunk<ViewType, specfem::dimension::type::dim2, SIMD>;
+
+public:
+  mapped_chunk(const ViewType &indices, const ViewType &mapping,
+               const int ngllz, const int ngllx)
+      : Base(indices, ngllz, ngllx), mapping(mapping) {}
+
+  KOKKOS_INLINE_FUNCTION
+  const int imap(const int i) const {
+#ifdef KOKKOS_ENABLE_CUDA
+    const int ielement = i % num_elements;
+    return mapping(ielement);
+#else
+    const int ix = i % Base::ngllx;
+    const int iz = (i / Base::ngllx) % Base::ngllz;
+    const int ielement = i / (Base::ngllz * Base::ngllx);
+    return mapping(ielement);
+#endif
+  }
+
+private:
+  ViewType mapping;
+};
+
 } // namespace iterator
 
 namespace policy {
@@ -237,7 +269,7 @@ template <typename ParallelConfig>
 struct element_chunk
     : public Kokkos::TeamPolicy<typename ParallelConfig::execution_space> {
 
-private:
+protected:
   using IndexViewType = Kokkos::View<
       int *,
       typename ParallelConfig::execution_space::memory_space>; ///< View
@@ -289,7 +321,7 @@ public:
       true; ///< Indicates that this is a Kokkos team policy
   ///@}
 
-private:
+protected:
   constexpr static int simd_size = simd::size();
   constexpr static bool using_simd = simd::using_simd;
 
@@ -345,10 +377,44 @@ public:
     return iterator_type(my_indices, ngllz, ngllx);
   }
 
-private:
+protected:
   IndexViewType elements; ///< View of elements
   int ngllz;              ///< Number of GLL points in the z-direction
   int ngllx;              ///< Number of GLL points in the x-direction
 };
+
+template <typename ParallelConfig>
+struct mapped_element_chunk : public element_chunk<ParallelConfig> {
+  using simd = typename ParallelConfig::simd;
+  using Base = element_chunk<ParallelConfig>;
+  using IndexViewType = typename Base::IndexViewType;
+
+  using mapped_iterator_type =
+      specfem::iterator::mapped_chunk<IndexViewType, ParallelConfig::dimension,
+                                      simd>; ///< Iterator
+
+  mapped_element_chunk(const IndexViewType &view, const IndexViewType &mapping,
+                       int ngllz, int ngllx)
+      : Base(view, ngllz, ngllx), mapping(mapping) {}
+
+  KOKKOS_INLINE_FUNCTION
+  mapped_iterator_type mapping_iterator(const int start_index) const {
+    const int start = start_index;
+    const int end =
+        (start + Base::chunk_size * Base::simd_size > Base::elements.extent(0))
+            ? Base::elements.extent(0)
+            : start + Base::chunk_size * Base::simd_size;
+    const auto elem_indices =
+        Kokkos::subview(Base::elements, Kokkos::make_pair(start, end));
+    const auto map_indices =
+        Kokkos::subview(mapping, Kokkos::make_pair(start, end));
+    return mapped_iterator_type(elem_indices, map_indices, Base::ngllz,
+                                Base::ngllx);
+  }
+
+protected:
+  IndexViewType mapping; ///< View of elements
+};
+
 } // namespace policy
 } // namespace specfem

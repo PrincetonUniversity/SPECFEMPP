@@ -329,9 +329,10 @@ public:
    * @return Kokkos::View<int *, Kokkos::DefaultExecutionSpace> View of the
    * elements indices associated with the receivers
    */
-  Kokkos::View<int *, Kokkos::DefaultExecutionSpace>
-  get_elements_on_device(const specfem::element::medium_tag medium,
-                         const specfem::element::property_tag property) const;
+  std::tuple<Kokkos::View<int *, Kokkos::DefaultExecutionSpace>,
+             Kokkos::View<int *, Kokkos::DefaultExecutionSpace> >
+  get_indices_on_device(const specfem::element::medium_tag medium,
+                        const specfem::element::property_tag property) const;
 
   /**
    * @brief Get the spectral element indices in which the receivers are located
@@ -344,9 +345,10 @@ public:
    * @return Kokkos::View<int *, Kokkos::DefaultExecutionSpace> View of the
    * elements indices associated with the receivers
    */
-  Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
-  get_elements_on_host(const specfem::element::medium_tag medium,
-                       const specfem::element::property_tag property) const;
+  std::tuple<Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>,
+             Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> >
+  get_indices_on_host(const specfem::element::medium_tag medium,
+                      const specfem::element::property_tag property) const;
 
   /**
    * @brief Get the seismogram types
@@ -364,8 +366,6 @@ private:
   IndexViewType::HostMirror h_elements; ///< Host view to store the
                                         ///< elements associated with the
                                         ///< receivers
-  IndexViewType receiver_domain_index_mapping;
-  IndexViewType::HostMirror h_receiver_domain_index_mapping;
   LagrangeInterpolantType lagrange_interpolant; ///< Lagrange interpolant for
                                                 ///< every receiver
   LagrangeInterpolantType::HostMirror
@@ -380,6 +380,12 @@ private:
                                      GET_NAME(PROPERTY_TAG));                  \
   IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
       h_elements, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),               \
+      GET_NAME(PROPERTY_TAG));                                                 \
+  IndexViewType CREATE_VARIABLE_NAME(                                          \
+      receiver_indices, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),         \
+      GET_NAME(PROPERTY_TAG));                                                 \
+  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
+      h_receiver_indices, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),       \
       GET_NAME(PROPERTY_TAG));
 
   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
@@ -439,16 +445,9 @@ load_on_device(const MemberType &team_member, const IteratorType &iterator,
           Kokkos::abort(message.c_str());
         }
 
-        if (receivers.receiver_domain_index_mapping(index.ispec) == -1) {
-          std::string message = "Invalid element detected in kernel at " +
-                                std::string(__FILE__) + ":" +
-                                std::to_string(__LINE__);
-          Kokkos::abort(message.c_str());
-        }
-
 #endif
 
-        const int irec = receivers.receiver_domain_index_mapping(index.ispec);
+        const int irec = iterator.imap(i);
 
         lagrange_interpolant(iterator_index.ielement, index.iz, index.ix, 0) =
             receivers.lagrange_interpolant(irec, index.iz, index.ix, 0);
@@ -500,16 +499,9 @@ store_on_device(const MemberType &team_member, const IteratorType &iterator,
           Kokkos::abort(message.c_str());
         }
 
-        if (receivers.receiver_domain_index_mapping(index.ispec) == -1) {
-          std::string message = "Invalid element detected in kernel at " +
-                                std::string(__FILE__) +
-                                std::to_string(__LINE__);
-          Kokkos::abort(message.c_str());
-        }
-
 #endif
 
-        const int irec = receivers.receiver_domain_index_mapping(index.ispec);
+        const int irec = iterator.imap(i);
 
         receivers.seismogram_components(isig_step, iseis, irec, 0) =
             seismogram_components(iterator_index.ielement, 0);
