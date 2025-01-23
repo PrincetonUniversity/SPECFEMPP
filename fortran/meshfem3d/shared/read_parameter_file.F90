@@ -222,10 +222,10 @@
       write(*,*)
     endif
 
-    call read_value_string(RST_HETE_FILE, 'RST_HETE_FILE', ier)
+    call read_value_string(RSF_HETE_FILE, 'RSF_HETE_FILE', ier)
     if (ier /= 0) then
       some_parameters_missing_from_Par_file = .true.
-      write(*,'(a)') 'RST_HETE_FILE                   = dummy.txt'
+      write(*,'(a)') 'RSF_HETE_FILE                   = dummy.txt'
       write(*,*)
     endif
 

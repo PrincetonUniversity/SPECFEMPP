@@ -117,7 +117,7 @@ end module constants
   character(len=MAX_STRING_LEN) :: FAULT_PAR_FILE
   character(len=MAX_STRING_LEN) :: FAULT_STATIONS
   character(len=MAX_STRING_LEN) :: STRESS_FRICTION_FILE
-  character(len=MAX_STRING_LEN) :: RST_HETE_FILE
+  character(len=MAX_STRING_LEN) :: RSF_HETE_FILE
 
   ! attenuation
   ! reference frequency of seismic model
