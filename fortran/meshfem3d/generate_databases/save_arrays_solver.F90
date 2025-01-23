@@ -86,7 +86,8 @@ module save_arrays_module
   use shared_parameters, only: ACOUSTIC_SIMULATION, ELASTIC_SIMULATION, POROELASTIC_SIMULATION, &
     APPROXIMATE_OCEAN_LOAD, SAVE_MESH_FILES, ANISOTROPY
 
-  use shared_parameters, only: COUPLE_WITH_INJECTION_TECHNIQUE,MESH_A_CHUNK_OF_THE_EARTH
+  use shared_parameters, only: COUPLE_WITH_INJECTION_TECHNIQUE
+  use generate_databases_par, only: MESH_A_CHUNK_OF_THE_EARTH
 
   ! global indices
   use generate_databases_par, only: nspec => NSPEC_AB, ibool
@@ -873,7 +874,8 @@ module save_arrays_module
 
   use constants, only: myrank,NGLLSQUARE,IMAIN,IOUT
 
-  use shared_parameters, only: COUPLE_WITH_INJECTION_TECHNIQUE,MESH_A_CHUNK_OF_THE_EARTH
+  use shared_parameters, only: COUPLE_WITH_INJECTION_TECHNIQUE
+  use generate_databases_par, only: MESH_A_CHUNK_OF_THE_EARTH
 
   ! global indices
   use generate_databases_par, only: ibool
