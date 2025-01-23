@@ -216,7 +216,7 @@ private:
 
   template <typename IndexType, typename PointSourceType>
   friend KOKKOS_INLINE_FUNCTION void
-  load_on_device(const IndexType index,
+  load_on_device(const IndexType index, const int source_index,
                  const specfem::compute::sources &sources,
                  PointSourceType &point_source);
 
@@ -252,7 +252,8 @@ private:
  */
 template <typename IndexType, typename PointSourceType>
 KOKKOS_INLINE_FUNCTION void
-load_on_device(const IndexType index, const specfem::compute::sources &sources,
+load_on_device(const IndexType index, int source_index,
+               const specfem::compute::sources &sources,
                PointSourceType &point_source) {
 
   static_assert(IndexType::using_simd == false,
@@ -296,7 +297,7 @@ load_on_device(const IndexType index, const specfem::compute::sources &sources,
 #endif
 
   IndexType lcoord = index;
-  lcoord.ispec = sources.source_domain_index_mapping(index.ispec);
+  lcoord.ispec = source_index;
 
 #define SOURCE_MEDIUM_LOAD_ON_DEVICE(DIMENSION_TAG, MEDIUM_TAG)                \
   if constexpr (GET_TAG(DIMENSION_TAG) == specfem::dimension::type::dim2) {    \
