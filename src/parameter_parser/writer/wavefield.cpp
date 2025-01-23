@@ -70,9 +70,8 @@ specfem::runtime_configuration::wavefield::instantiate_wavefield_reader()
       [&]() -> std::shared_ptr<specfem::IO::reader> {
     if (this->simulation_type == specfem::simulation::type::combined) {
       if (this->output_format == "HDF5") {
-        return std::make_shared<
-            specfem::IO::wavefield_reader<specfem::IO::HDF5<specfem::IO::read> > >(
-            this->output_folder);
+        return std::make_shared<specfem::IO::wavefield_reader<
+            specfem::IO::HDF5<specfem::IO::read> > >(this->output_folder);
       } else if (this->output_format == "ASCII") {
         return std::make_shared<specfem::IO::wavefield_reader<
             specfem::IO::ASCII<specfem::IO::read> > >(this->output_folder);
