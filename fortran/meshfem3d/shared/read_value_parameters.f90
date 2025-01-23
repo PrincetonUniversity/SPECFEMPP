@@ -157,14 +157,14 @@
   subroutine open_parameter_file(ier)
 
   use constants, only: MAX_STRING_LEN,IN_DATA_FILES
-  use shared_input_parameters, only: Par_File
+  use shared_input_parameters, only: Par_file
 
   implicit none
 
   integer :: ier
-  character(len=MAX_STRING_LEN) :: filename_main,filename_run0001
+  character(len=MAX_STRING_LEN) :: filename_main, filename_run0001
 
-  filename_main = Par_File
+  filename_main = Par_file
 
   call param_open(filename_main, len(filename_main), ier)
 

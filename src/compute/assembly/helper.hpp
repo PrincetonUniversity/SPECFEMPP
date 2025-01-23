@@ -42,7 +42,7 @@ public:
     const int ngllx = assembly.mesh.ngllx;
 
     const auto elements =
-        assembly.properties.get_elements_on_device(medium_tag, property_tag);
+        assembly.element_types.get_elements_on_device(medium_tag, property_tag);
 
     const int nelements = elements.extent(0);
 
@@ -104,9 +104,13 @@ public:
             specfem::compute::load_on_device(team, iterator, buffer, field);
             team.team_barrier();
 
+            const auto sv_wavefield =
+                Kokkos::subview(wavefield_on_entire_grid, iterator.get_range(),
+                                Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
+
             specfem::medium::compute_wavefield<MediumTag, PropertyTag>(
                 team, iterator, assembly, quadrature, field, wavefield_type,
-                wavefield_on_entire_grid);
+                sv_wavefield);
           }
         });
 

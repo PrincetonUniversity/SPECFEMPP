@@ -10,7 +10,7 @@ specfem::compute::impl::boundary_medium_container<DimensionType, MediumType,
                                             BoundaryTag>::
     boundary_medium_container(
         const int nstep, const specfem::compute::mesh mesh,
-        const specfem::compute::properties properties,
+        const specfem::compute::element_types element_types,
         const specfem::compute::boundaries boundaries,
         specfem::kokkos::HostView1d<int> property_index_mapping) {
 
@@ -20,8 +20,8 @@ specfem::compute::impl::boundary_medium_container<DimensionType, MediumType,
   const int nx = mesh.ngllx;
 
   for (int ispec = 0; ispec < nspec; ispec++) {
-    if (properties.h_element_types(ispec) == MediumType &&
-        boundaries.boundary_tags(ispec) == BoundaryTag) {
+    if (element_types.get_medium_tag(ispec) == MediumType &&
+        element_types.get_boundary_tag(ispec) == BoundaryTag) {
       property_index_mapping(ispec) = nelements;
       nelements++;
     }

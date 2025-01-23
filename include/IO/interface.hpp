@@ -7,6 +7,7 @@
 #include "source/interface.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
+#include <yaml-cpp/yaml.h>
 
 namespace specfem {
 
@@ -24,18 +25,43 @@ specfem::mesh::mesh<specfem::dimension::type::dim2>
 read_mesh(const std::string filename, const specfem::MPI::MPI *mpi);
 
 /**
- * @brief Read receiver station file
+ * @brief Read station file
  *
  * Parse receiver stations file and create a vector of
- * specfem::source::source * object
+ * specfem::receiver::receiver * object
  *
  * @param stations_file Stations file describing receiver locations
  * @param angle Angle of the receivers
- * @return std::vector<specfem::receivers::receiver *> vector of instantiated
- * receiver objects
+ * @return vector of instantiated receiver objects
  */
 std::vector<std::shared_ptr<specfem::receivers::receiver> >
 read_receivers(const std::string stations_file, const type_real angle);
+
+/**
+ * @overload
+ * @brief Read receivers from YAML Node
+ *
+ * Parse receiver stations file and create a vector of
+ * specfem::receiver::receiver * object
+ *
+ * The receivers are defined in the YAML file as
+ *
+ * @code
+ * receivers:
+ *     stations-dict:
+ *         - network: "network_name"
+ *           station: "station_name"
+ *           x: x_coordinate
+ *           z: z_coordinate
+ *         - <next station>
+ * @endcode
+ *
+ * @param stations YAML node containing receiver locations
+ * @param angle Angle of the receivers
+ * @return vector of instantiated receiver objects
+ */
+std::vector<std::shared_ptr<specfem::receivers::receiver> >
+read_receivers(const YAML::Node &stations, const type_real angle);
 
 /**
  * @brief Read sources file written in .yml format
@@ -51,6 +77,22 @@ read_receivers(const std::string stations_file, const type_real angle);
 std::tuple<std::vector<std::shared_ptr<specfem::sources::source> >, type_real>
 read_sources(const std::string sources_file, const int nsteps,
              const type_real user_t0, const type_real dt,
+             const specfem::simulation::type simulation_type);
+
+/**
+ * @brief Read sources file written in .yml format
+ *
+ * Parse source specification file written in yaml format and create a vector of
+ * specfem::source::source * object
+ *
+ * @param yaml YAML node containing source information
+ * @param mpi Pointer to specfem MPI object
+ * @return std::vector<specfem::sources::source *> vector of instantiated source
+ * objects
+ */
+std::tuple<std::vector<std::shared_ptr<specfem::sources::source> >, type_real>
+read_sources(const YAML::Node yaml, const int nsteps, const type_real user_t0,
+             const type_real dt,
              const specfem::simulation::type simulation_type);
 
 } // namespace IO

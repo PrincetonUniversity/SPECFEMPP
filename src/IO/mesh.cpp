@@ -10,7 +10,7 @@
 #include "IO/mesh/impl/fortran/read_parameters.hpp"
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "material/material.hpp"
+#include "medium/material.hpp"
 #include "mesh/tags/tags.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
@@ -198,6 +198,9 @@ specfem::IO::read_mesh(const std::string filename,
   const auto l_acoustic_isotropic =
       mesh.materials.acoustic_isotropic.material_properties;
 
+  const auto l_elastic_anisotropic =
+      mesh.materials.elastic_anisotropic.material_properties;
+
   for (const auto material : l_elastic_isotropic) {
     mpi->cout(material.print());
   }
@@ -206,7 +209,12 @@ specfem::IO::read_mesh(const std::string filename,
     mpi->cout(material.print());
   }
 
-  assert(l_elastic_isotropic.size() + l_acoustic_isotropic.size() ==
+  for (const auto material : l_elastic_anisotropic) {
+    mpi->cout(material.print());
+  }
+
+  assert(l_elastic_isotropic.size() + l_acoustic_isotropic.size() +
+             l_elastic_anisotropic.size() ==
          mesh.materials.n_materials);
 
   mesh.tags = specfem::mesh::tags<specfem::dimension::type::dim2>(

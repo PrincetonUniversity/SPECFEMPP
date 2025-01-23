@@ -197,6 +197,13 @@ public:
    */
   int get_max_seismogram_step() const { return nstep / nstep_between_samples; }
 
+  /**
+   * @brief Get the number of timesteps between seismogram samples
+   *
+   * @return int Number of timesteps between seismogram samples
+   */
+  int get_nstep_between_samples() const { return nstep_between_samples; }
+
   virtual type_real get_timestep() const = 0;
 
 private:

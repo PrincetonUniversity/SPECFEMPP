@@ -1,12 +1,14 @@
 #pragma once
 
 #include "compute/compute_mesh.hpp"
+#include "compute/element_types/element_types.hpp"
 #include "source/source.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
 namespace compute {
+namespace impl {
 /**
  * @brief Information about sources located within a medium
  *
@@ -70,7 +72,7 @@ public:
    * @param sources Vector of sources located within the medium
    * @param mesh Finite element mesh information
    * @param partial_derivatives Partial derivatives for every quadrature point
-   * @param properties Material properties for every quadrature point
+   * @param element_types Element types for every spectral element
    * @param t0 Initial time
    * @param dt Time step
    * @param nsteps Number of time steps
@@ -79,7 +81,7 @@ public:
       const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
       const specfem::compute::mesh &mesh,
       const specfem::compute::partial_derivatives &partial_derivatives,
-      const specfem::compute::properties &properties, const type_real t0,
+      const specfem::compute::element_types &element_types, const type_real t0,
       const type_real dt, const int nsteps);
   ///@}
 
@@ -92,6 +94,53 @@ public:
       h_source_time_function;   ///< Host mirror of source_time_function
   SourceArrayView source_array; ///< Lagrange interpolants for every source
   SourceArrayView::HostMirror h_source_array; ///< Host mirror of source_array
+
+  template <typename IndexType, typename PointSourceType>
+  KOKKOS_INLINE_FUNCTION void
+  load_on_device(const int timestep, const IndexType index,
+                 PointSourceType &point_source) const {
+    for (int component = 0; component < components; component++) {
+      point_source.stf(component) =
+          source_time_function(timestep, index.ispec, component);
+      point_source.lagrange_interpolant(component) =
+          source_array(index.ispec, component, index.iz, index.ix);
+    }
+  }
+
+  template <typename IndexType, typename PointSourceType>
+  KOKKOS_INLINE_FUNCTION void
+  store_on_device(const int timestep, const IndexType index,
+                  const PointSourceType &point_source) const {
+    for (int component = 0; component < components; component++) {
+      source_time_function(timestep, index.ispec, component) =
+          point_source.stf(component);
+      source_array(index.ispec, component, index.iz, index.ix) =
+          point_source.lagrange_interpolant(component);
+    }
+  }
+
+  template <typename IndexType, typename PointSourceType>
+  void load_on_host(const int timestep, const IndexType index,
+                    PointSourceType &point_source) const {
+    for (int component = 0; component < components; component++) {
+      point_source.stf(component) =
+          h_source_time_function(timestep, index.ispec, component);
+      point_source.lagrange_interpolant(component) =
+          h_source_array(index.ispec, component, index.iz, index.ix);
+    }
+  }
+
+  template <typename IndexType, typename PointSourceType>
+  void store_on_host(const int timestep, const IndexType index,
+                     const PointSourceType &point_source) const {
+    for (int component = 0; component < components; component++) {
+      h_source_time_function(timestep, index.ispec, component) =
+          point_source.stf(component);
+      h_source_array(index.ispec, component, index.iz, index.ix) =
+          point_source.lagrange_interpolant(component);
+    }
+  }
 };
+} // namespace impl
 } // namespace compute
 } // namespace specfem

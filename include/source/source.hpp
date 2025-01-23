@@ -3,7 +3,7 @@
 
 #include "compute/compute_mesh.hpp"
 #include "compute/compute_partial_derivatives.hpp"
-#include "compute/properties/properties.hpp"
+#include "compute/element_types/element_types.hpp"
 #include "constants.hpp"
 #include "enumerations/wavefield.hpp"
 #include "kokkos_abstractions.h"
@@ -71,7 +71,7 @@ public:
   virtual void compute_source_array(
       const specfem::compute::mesh &mesh,
       const specfem::compute::partial_derivatives &partial_derivatives,
-      const specfem::compute::properties &properties,
+      const specfem::compute::element_types &element_types,
       specfem::kokkos::HostView3d<type_real> source_array) = 0;
 
   void compute_source_time_function(

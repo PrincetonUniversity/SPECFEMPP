@@ -194,6 +194,14 @@ public:
   int chunk_size() const { return num_elements * ngllz * ngllx; }
 
   /**
+   * @brief Return the number of elements within this iterator.
+   *
+   * @return int Number of elements within this iterator
+   */
+  KOKKOS_FORCEINLINE_FUNCTION
+  int number_of_elements() const { return num_elements; }
+
+  /**
    * @brief Returns the index within this iterator at the i-th quadrature point.
    *
    * @param i Index of the quadrature point within this iterator.
@@ -202,6 +210,17 @@ public:
   KOKKOS_INLINE_FUNCTION
   index_type operator()(const int i) const {
     return operator()(i, std::integral_constant<bool, using_simd>());
+  }
+
+  /**
+   * @brief Get the range of spectral element indices within this iterator.
+   *
+   * @return Kokkos::pair<int, int> Range of spectral element indices within
+   * this iterator.
+   */
+  KOKKOS_INLINE_FUNCTION
+  Kokkos::pair<int, int> get_range() const {
+    return Kokkos::make_pair(indices(0), indices(num_elements - 1) + 1);
   }
 };
 } // namespace iterator

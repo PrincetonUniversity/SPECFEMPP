@@ -37,7 +37,7 @@ parameters:
             directory: "@CMAKE_SOURCE_DIR@/examples/fluid-solid-interface/OUTPUT_FILES/results"
 
   receivers:
-    stations-file: "@CMAKE_SOURCE_DIR@/examples/fluid-solid-interface/OUTPUT_FILES/STATIONS"
+    stations: "@CMAKE_SOURCE_DIR@/examples/fluid-solid-interface/OUTPUT_FILES/STATIONS"
     angle: 0.0
     seismogram-type:
       - displacement
@@ -51,4 +51,6 @@ parameters:
   ## databases
   databases:
     mesh-database: "@CMAKE_SOURCE_DIR@/examples/fluid-solid-interface/OUTPUT_FILES/database.bin"
-    source-file: "@CMAKE_SOURCE_DIR@/examples/fluid-solid-interface/sources.yaml"
+
+  ## sources
+  sources: "@CMAKE_SOURCE_DIR@/examples/fluid-solid-interface/sources.yaml"

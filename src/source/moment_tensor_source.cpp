@@ -19,14 +19,14 @@
 void specfem::sources::moment_tensor::compute_source_array(
     const specfem::compute::mesh &mesh,
     const specfem::compute::partial_derivatives &partial_derivatives,
-    const specfem::compute::properties &properties,
+    const specfem::compute::element_types &element_types,
     specfem::kokkos::HostView3d<type_real> source_array) {
 
   specfem::point::global_coordinates<specfem::dimension::type::dim2> coord(
       this->x, this->z);
   auto lcoord = specfem::algorithms::locate_point(coord, mesh);
 
-  const auto el_type = properties.h_element_types(lcoord.ispec);
+  const auto el_type = element_types.get_medium_tag(lcoord.ispec);
 
   if (el_type == specfem::element::medium_tag::acoustic) {
     throw std::runtime_error(

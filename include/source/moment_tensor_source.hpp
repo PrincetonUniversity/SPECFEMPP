@@ -3,7 +3,7 @@
 
 #include "compute/compute_mesh.hpp"
 #include "compute/compute_partial_derivatives.hpp"
-#include "compute/properties/properties.hpp"
+#include "compute/element_types/element_types.hpp"
 #include "constants.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
@@ -30,6 +30,26 @@ public:
    *
    */
   moment_tensor(){};
+
+  /**
+   * @brief Get the Mxx component of the moment tensor
+   *
+   * @return type_real x-coordinate
+   */
+  type_real get_Mxx() const { return Mxx; }
+  /**
+   * @brief Get the Mxz component of the moment tensor
+   *
+   * @return type_real z-coordinate
+   */
+  type_real get_Mxz() const { return Mxz; }
+  /**
+   * @brief Get the Mzz component of the moment tensor
+   *
+   * @return type_real z-coordinate
+   */
+  type_real get_Mzz() const { return Mzz; }
+
   /**
    * @brief Construct a new moment tensor force object
    *
@@ -51,7 +71,7 @@ public:
   void compute_source_array(
       const specfem::compute::mesh &mesh,
       const specfem::compute::partial_derivatives &partial_derivatives,
-      const specfem::compute::properties &properties,
+      const specfem::compute::element_types &element_types,
       specfem::kokkos::HostView3d<type_real> source_array) override;
 
   specfem::wavefield::simulation_field get_wavefield_type() const override {
