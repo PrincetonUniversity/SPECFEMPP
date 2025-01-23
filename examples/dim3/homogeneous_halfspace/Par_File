@@ -51,8 +51,6 @@ RATIO_BY_WHICH_TO_INCREASE_IT   = 1.4
 #
 #-----------------------------------------------------------
 
-MESH_PAR_FILE = DATA/meshfem3D_files/Mesh_Par_file
-
 # Number of nodes for 2D and 3D shape functions for hexahedra.
 # We use either 8-node mesh elements (bricks) or 27-node elements.
 # If you use our internal mesher, the only option is 8-node bricks (27-node elements are not supported).
