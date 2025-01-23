@@ -104,8 +104,15 @@
   endif
 
   ! read the parameter file (DATA/Par_file)
-  BROADCAST_AFTER_READ = .true.
-  call read_parameter_file(BROADCAST_AFTER_READ)
+  ! BROADCAST_AFTER_READ = .true.
+  ! call read_parameter_file(BROADCAST_AFTER_READ)
+
+  ! open parameter file Mesh_Par_file
+  call open_parameter_file_mesh(MESH_PAR_FILE)
+
+  call read_value_logical_mesh(IIN,IGNORE_JUNK,MESH_A_CHUNK_OF_THE_EARTH, 'MESH_A_CHUNK_OF_THE_EARTH', ier)
+
+  call close_parameter_file_mesh()
 
   ! make sure everybody is synchronized
   call synchronize_all()

@@ -64,7 +64,8 @@
 
   use constants
 
-  use shared_parameters, only: COUPLE_WITH_INJECTION_TECHNIQUE,MESH_A_CHUNK_OF_THE_EARTH
+  use shared_parameters, only: COUPLE_WITH_INJECTION_TECHNIQUE
+  use generate_databases_par, only: MESH_A_CHUNK_OF_THE_EARTH
 
   implicit none
 
@@ -185,7 +186,8 @@
 
   use constants, only: CUSTOM_REAL
 
-  use shared_parameters, only: COUPLE_WITH_INJECTION_TECHNIQUE,MESH_A_CHUNK_OF_THE_EARTH
+  use shared_parameters, only: COUPLE_WITH_INJECTION_TECHNIQUE
+  use generate_databases_par, only: MESH_A_CHUNK_OF_THE_EARTH
 
   implicit none
 
