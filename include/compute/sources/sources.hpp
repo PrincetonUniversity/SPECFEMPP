@@ -114,7 +114,8 @@ public:
   void update_timestep(const int timestep) { this->timestep = timestep; }
 
 private:
-  int nspec;                                 ///< Number of spectral elements
+  const int nspec;                           ///< Number of spectral elements
+  const int nsources;                        ///< Number of sources
   IndexViewType source_domain_index_mapping; ///< Mapping for every spectral
                                              ///< element where source is
                                              ///< located to local index within
@@ -122,7 +123,15 @@ private:
   IndexViewType::HostMirror
       h_source_domain_index_mapping; ///< Host mirror of
                                      ///< source_domain_index_mapping
-  MediumTagViewType medium_types;    ///< Medium type for every spectral element
+  IndexViewType element_indices;     ///< Mapping for every source to
+                                     ///< local index within source_medium
+  IndexViewType::HostMirror h_element_indices; ///< Host mirror of
+                                               ///< domain_source_index_mapping
+  IndexViewType source_indices;                ///< Mapping for every source to
+                                ///< local index within source_medium
+  IndexViewType::HostMirror h_source_indices; ///< Host mirror of
+                                              ///< h_source_indices
+  MediumTagViewType medium_types; ///< Medium type for every spectral element
   MediumTagViewType::HostMirror h_medium_types; ///< Host mirror of
                                                 ///< medium_types
   WavefieldTagViewType wavefield_types; ///< Wavefield on which source is
@@ -156,23 +165,23 @@ private:
 #define SOURCE_INDICES_VARIABLES_NAME(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, \
                                       BOUNDARY_TAG)                            \
   IndexViewType CREATE_VARIABLE_NAME(                                          \
-      elements_forward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),         \
+      element_indices_forward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),  \
       GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
   IndexViewType CREATE_VARIABLE_NAME(                                          \
-      elements_backward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),        \
+      element_indices_backward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG), \
       GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
   IndexViewType CREATE_VARIABLE_NAME(                                          \
-      elements_adjoint, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),         \
+      element_indices_adjoint, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),  \
       GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
   IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
-      h_elements_forward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),       \
-      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
+      h_element_indices_forward, GET_NAME(DIMENSION_TAG),                      \
+      GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));   \
   IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
-      h_elements_backward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),      \
-      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
+      h_element_indices_backward, GET_NAME(DIMENSION_TAG),                     \
+      GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));   \
   IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
-      h_elements_adjoint, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),       \
-      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));
+      h_element_indices_adjoint, GET_NAME(DIMENSION_TAG),                      \
+      GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));
 
   CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
       SOURCE_INDICES_VARIABLES_NAME,
