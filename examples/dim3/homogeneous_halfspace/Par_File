@@ -272,6 +272,28 @@ USE_TRICK_FOR_BETTER_PRESSURE   = .false.
 
 #-----------------------------------------------------------
 #
+# Fault simulations
+#
+#-----------------------------------------------------------
+
+# Define if the simulation has kinematic or dynamic faults
+HAS_FINITE_FAULT_SOURCE         = .false.
+
+# File containing parameters of the fault
+FAULT_PAR_FILE                  = dummy.txt
+
+# STATIONS in the fault plane
+FAULT_STATIONS                  = dummy.txt
+
+# Specifications for heterogeneous stresses and friction for linear slip weakening friction parameters. To activate this feature set DATA/Par_file_faults name list&RUPTURE_SWITCHES, set TPV16=.TRUE..
+STRESS_FRICTION_FILE            = dummy.txt
+
+# Heterogeneous stresses and friction input for rate and state friction. To activate this feature, in DATA/Par_file_faults name list&RUPTURE_SWITCHES, set RSF_HETE=.TRUE..
+RSF_HETE_FILE                   = dummy.txt
+
+
+#-----------------------------------------------------------
+#
 # Energy calculation
 #
 #-----------------------------------------------------------
