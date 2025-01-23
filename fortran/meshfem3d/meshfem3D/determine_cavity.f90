@@ -28,7 +28,7 @@
 
   subroutine cmm_determine_cavity(nglob)
 
-  use constants, only: MF_IN_DATA_FILES,MAX_STRING_LEN,IMAIN,HUGEVAL,TINYVAL,NDIM,myrank
+  use constants, only: MAX_STRING_LEN,IMAIN,HUGEVAL,TINYVAL,NDIM,myrank
   use constants_meshfem, only: NGLLX_M,NGLLY_M,NGLLZ_M
 
   use create_meshfem_par, only: nodes_coords,ispec_material_id,iboun,iMPIcut_xi,iMPIcut_eta
@@ -75,7 +75,7 @@
   ncavity = 0
 
   ! read cavity file
-  filename = trim(MF_IN_DATA_FILES)//trim(CAVITY_FILE)
+  filename = trim(CAVITY_FILE)
   open(111,file=filename,action='read',status='old',iostat=ier)
   if (ier /= 0) then
     cavity_file_exists = .false.
