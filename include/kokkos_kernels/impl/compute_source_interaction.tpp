@@ -31,15 +31,17 @@ constexpr auto dimension = DimensionType;
 constexpr int ngll = NGLL;
 constexpr auto wavefield = WavefieldType;
 
-const auto elements = assembly.sources.get_elements_on_device(
+const auto [element_indices, sources_indices] = assembly.sources.get_sources_on_device(
     MediumTag, PropertyTag, BoundaryTag, WavefieldType);
 
-const int nelements = elements.extent(0);
+auto &sources = assembly.sources;
 
-if (nelements == 0)
+const int nsources = sources.extent(0);
+
+if (nsources == 0)
   return;
 
-auto &sources = assembly.sources;
+// Some aliases
 const auto &properties = assembly.properties;
 const auto &boundaries = assembly.boundaries;
 const auto field = assembly.fields.get_simulation_field<wavefield>();
