@@ -36,9 +36,9 @@ const auto [element_indices, sources_indices] = assembly.sources.get_sources_on_
 
 auto &sources = assembly.sources;
 
-const int nsources = sources.extent(0);
+const int nelements = element_indeces.extent(0);
 
-if (nsources == 0)
+if (nelements == 0)
   return;
 
 // Some aliases
