@@ -4,6 +4,9 @@
 #
 #-----------------------------------------------------------
 
+MESH_A_CHUNK_OF_THE_EARTH        = .false.
+CHUNK_MESH_PAR_FILE              = dummy.txt
+
 # coordinates of mesh block in latitude/longitude and depth in km
 LATITUDE_MIN                    = 0.0
 LATITUDE_MAX                    = 134000.0
@@ -18,6 +21,11 @@ INTERFACES_FILE                 = DATA/meshfem3D_files/interfaces.txt
 
 # file that contains the cavity
 CAVITY_FILE                     = no_cavity.dat
+
+# Number of nodes for 2D and 3D shape functions for hexahedra.
+# We use either 8-node mesh elements (bricks) or 27-node elements.
+# If you use our internal mesher, the only option is 8-node bricks (27-node elements are not supported).
+NGNOD                           = 8
 
 # number of elements at the surface along edges of the mesh at the surface
 # (must be 8 * multiple of NPROC below if mesh is not regular and contains mesh doublings)
