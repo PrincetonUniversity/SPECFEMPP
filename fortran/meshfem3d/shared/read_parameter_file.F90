@@ -159,12 +159,6 @@
     !-------------------------------------------------------
     ! Mesh
     !-------------------------------------------------------
-    call read_value_string(MESH_PAR_FILE, 'MESH_PAR_FILE', ier)
-    if (ier /= 0) then
-      some_parameters_missing_from_Par_file = .true.
-      write(*,'(a)') 'MESH_PAR_FILE                   = ./DATA/meshfem3D_files/Mesh_Par_file'
-      write(*,*)
-    endif
 
     call read_value_integer(NGNOD, 'NGNOD', ier)
     if (ier /= 0) then
@@ -710,13 +704,6 @@
       write(*,*)
     endif
 
-    call read_value_logical(MESH_A_CHUNK_OF_THE_EARTH,'MESH_A_CHUNK_OF_THE_EARTH',ier)
-    if (ier /= 0) then
-      some_parameters_missing_from_Par_file = .true.
-      write(*,'(a)') 'MESH_A_CHUNK_OF_THE_EARTH       = .false.'
-      write(*,*)
-    endif
-
     call read_value_string(TRACTION_PATH, 'TRACTION_PATH', ier)
     if (ier /= 0) then
       some_parameters_missing_from_Par_file = .true.
@@ -747,13 +734,6 @@
       if (INJECTION_TECHNIQUE_TYPE /= INJECTION_TECHNIQUE_IS_DSM .and. &
          INJECTION_TECHNIQUE_TYPE /= INJECTION_TECHNIQUE_IS_AXISEM .and. &
          INJECTION_TECHNIQUE_TYPE /= INJECTION_TECHNIQUE_IS_FK) stop 'Error incorrect value of INJECTION_TECHNIQUE_TYPE read'
-
-      if ( (INJECTION_TECHNIQUE_TYPE == INJECTION_TECHNIQUE_IS_DSM ) .and. (.not. MESH_A_CHUNK_OF_THE_EARTH) ) &
-        stop 'Error, coupling with DSM only works with a Earth chunk mesh'
-
-      if (INJECTION_TECHNIQUE_TYPE == INJECTION_TECHNIQUE_IS_FK .and. MESH_A_CHUNK_OF_THE_EARTH) &
-        stop 'Error: coupling with F-K is for models with a flat surface (Earth flattening), &
-                       &thus turn MESH_A_CHUNK_OF_THE_EARTH off'
 
       if ((INJECTION_TECHNIQUE_TYPE /= INJECTION_TECHNIQUE_IS_AXISEM) .and. RECIPROCITY_AND_KH_INTEGRAL) &
         stop 'Error: the use of RECIPROCITY_AND_KH_INTEGRAL is only available for coupling with AxiSEM for now'
@@ -1448,7 +1428,6 @@
   ! coupling
   call bcast_all_singlel(COUPLE_WITH_INJECTION_TECHNIQUE)
   call bcast_all_singlei(INJECTION_TECHNIQUE_TYPE)
-  call bcast_all_singlel(MESH_A_CHUNK_OF_THE_EARTH)
   call bcast_all_string(TRACTION_PATH)
   call bcast_all_string(FKMODEL_FILE)
   call bcast_all_singlel(RECIPROCITY_AND_KH_INTEGRAL)
