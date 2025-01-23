@@ -53,14 +53,14 @@
   ! initializes
   NSOURCES = 0
 
-  if (HAS_FINITE_FAULT_SOURCE) return
-
-  open(unit=IIN_PAR,file=trim(FAULT_PAR_FILE),status='old',iostat=ier)
-  if (ier /= 0) then
-    print *,'Error opening fault file: ',trim(FAULT_PAR_FILE)
-    stop 'Error opening fault file'
+  if (HAS_FINITE_FAULT_SOURCE) then
+    open(unit=IIN_PAR,file=trim(FAULT_PAR_FILE),status='old',iostat=ier)
+    if (ier /= 0) then
+      print *,'Error opening fault file: ',trim(FAULT_PAR_FILE)
+      stop 'Error opening fault file'
+    endif
+    close(IIN_PAR)
   endif
-  close(IIN_PAR)
 
   ! checks if anything to do, finite fault simulations ignore CMT and force sources
   if (HAS_FINITE_FAULT_SOURCE) return
