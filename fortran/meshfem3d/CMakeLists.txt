@@ -8,6 +8,9 @@ project(MESHFEM3D LANGUAGES Fortran C)
 set(CMAKE_Fortran_STANDARD 95)
 set(CMAKE_Fortran_STANDARD_REQUIRED ON)
 
+unset(WITH_MPI)
+unset(WITH_SCOTCH)
+
 set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/fortran/meshfem3d/modules)
 include_directories("${CMAKE_BINARY_DIR}/fortran/meshfem3d/modules")
 
