@@ -110,6 +110,13 @@ end module constants
 
   character(len=MAX_STRING_LEN) :: Par_file
 
+  ! fault parameters
+  logical :: HAS_FINITE_FAULT_SOURCE
+  character(len=MAX_STRING_LEN) :: FAULT_PAR_FILE
+  character(len=MAX_STRING_LEN) :: FAULT_STATIONS
+  character(len=MAX_STRING_LEN) :: STRESS_FRICTION_FILE
+  character(len=MAX_STRING_LEN) :: RST_HETE_FILE
+
   ! attenuation
   ! reference frequency of seismic model
   double precision :: ATTENUATION_f0_REFERENCE
@@ -166,7 +173,6 @@ end module constants
   ! sources
   logical :: USE_FORCE_POINT_SOURCE
   logical :: USE_RICKER_TIME_FUNCTION,PRINT_SOURCE_TIME_FUNCTION
-  logical :: HAS_FINITE_FAULT_SOURCE
 
   ! external source time function
   logical :: USE_EXTERNAL_SOURCE_FILE

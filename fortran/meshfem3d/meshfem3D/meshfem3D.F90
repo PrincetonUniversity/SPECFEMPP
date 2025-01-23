@@ -60,6 +60,8 @@
   double precision :: time_start,tCPU
   character(len=3) :: str_unit
 
+  call parse_command_line_arguments()
+
   ! MPI initialization
   call init_mpi()
 
