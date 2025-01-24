@@ -7,7 +7,7 @@ void benchmark(specfem::compute::assembly &assembly,
       specfem::dimension::type::dim2, 5>(assembly);
   constexpr auto elastic = specfem::element::medium_tag::elastic;
 
-  kernels.initialize(time_scheme->get_timestep());
+  // kernels.initialize(time_scheme->get_timestep());
 
   const int nstep = time_scheme->get_max_timestep();
 
@@ -26,8 +26,8 @@ void benchmark(specfem::compute::assembly &assembly,
   std::cout << std::endl;
 }
 
-void create_assembly(const YAML::Node &parameter_dict,
-                     const YAML::Node &default_dict, specfem::MPI::MPI *mpi) {
+void run_benchmark(const YAML::Node &parameter_dict,
+                   const YAML::Node &default_dict, specfem::MPI::MPI *mpi) {
 
   // --------------------------------------------------------------
   //                    Read parameter file
@@ -51,8 +51,6 @@ void create_assembly(const YAML::Node &parameter_dict,
   //                   Instantiate Timescheme
   // --------------------------------------------------------------
   const auto time_scheme = setup.instantiate_timescheme();
-  if (mpi->main_proc())
-    std::cout << *time_scheme << std::endl;
 
   const int max_seismogram_time_step = time_scheme->get_max_seismogram_step();
 
@@ -90,11 +88,9 @@ int main(int argc, char **argv) {
   Kokkos::initialize(argc, argv);
   {
     const std::string default_file = __default_file__;
-    const std::string parameters_file = __benchmark_parameters__;
-    const YAML::Node parameter_dict = YAML::LoadFile(parameters_file);
     const YAML::Node default_dict = YAML::LoadFile(default_file);
-    std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> > tasks;
-    create_assembly(parameter_dict, default_dict, mpi);
+    run_benchmark(YAML::LoadFile(__benchmark_iso__), default_dict, mpi);
+    run_benchmark(YAML::LoadFile(__benchmark_aniso__), default_dict, mpi);
   }
   // Finalize Kokkos
   Kokkos::finalize();

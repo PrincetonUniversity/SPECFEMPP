@@ -651,7 +651,8 @@ target_link_libraries(
 
 target_compile_definitions(
         specfem2d-benchmark
-        PRIVATE __benchmark_parameters__="${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/data/specfem_config.yaml"
+        PRIVATE __benchmark_iso__="${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/data/specfem_config.yaml"
+        PRIVATE __benchmark_aniso__="${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/data_aniso/specfem_config.yaml"
 )
 
 # Include tests
