@@ -600,15 +600,13 @@ target_link_libraries(
         ${BOOST_LIBS}
 )
 
-add_executable(
-        specfem2d
-        src/specfem2d.cpp
+add_library(
+        execute
+        src/execute.cpp
 )
 
-
-
 target_link_libraries(
-        specfem2d
+        execute
         specfem_mpi
         Kokkos::kokkos
         mesh
@@ -625,6 +623,18 @@ target_link_libraries(
         kokkos_kernels
         solver
         ${BOOST_LIBS}
+)
+
+add_executable(
+        specfem2d
+        src/specfem2d.cpp
+)
+
+
+
+target_link_libraries(
+        specfem2d
+        execute
 )
 
 # Include tests
@@ -670,28 +680,13 @@ endif ()
 if (SPECFEMPP_BINDING_PYTHON)
     find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
     find_package(pybind11 CONFIG REQUIRED)
-    python_add_library(_core MODULE src/specfem2d.cpp WITH_SOABI)
+    python_add_library(_core MODULE src/python/core.cpp WITH_SOABI)
     target_link_libraries(
         _core PRIVATE
-        specfem_mpi
-        Kokkos::kokkos
-        mesh
-        quadrature
-        compute
-        source_class
-        parameter_reader
-        receiver_class
-        writer
-        periodic_tasks
-        reader
-        medium
-        coupled_interface
-        kokkos_kernels
-        solver
+        execute
         ${BOOST_LIBS}
         pybind11::headers
     )
-    target_compile_definitions(_core PRIVATE SPECFEMPP_BINDING_PYTHON)
     target_compile_definitions(_core PRIVATE VERSION_INFO=${PROJECT_VERSION})
     install(TARGETS _core DESTINATION specfempp_core)
 endif (SPECFEMPP_BINDING_PYTHON)
