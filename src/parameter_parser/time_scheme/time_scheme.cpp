@@ -33,7 +33,7 @@ specfem::runtime_configuration::time_scheme::time_scheme::instantiate(
   }
 
   // User output
-  std::cout << *it << "\n";
+  // std::cout << *it << "\n";
 
   return it;
 }
