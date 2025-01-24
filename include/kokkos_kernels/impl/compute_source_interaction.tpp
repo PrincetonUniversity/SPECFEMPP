@@ -75,11 +75,11 @@ using ParallelConfig =
 
 using ChunkPolicy = specfem::policy::mapped_element_chunk<ParallelConfig>;
 
-ChunkPolicy policy(element_indices, source_indices, NGLL, NGLL);
+ChunkPolicy mapped_policy(element_indices, source_indices, NGLL, NGLL);
 
 Kokkos::parallel_for(
     "specfem::kernels::impl::domain_kernels::compute_source_interaction",
-    static_cast<const typename ChunkPolicy::policy_type &>(policy),
+    static_cast<const typename ChunkPolicy::policy_type &>(mapped_policy),
     KOKKOS_LAMBDA(const typename ChunkPolicy::member_type &team) {
       for (int tile = 0; tile < ChunkPolicy::tile_size * simd_size;
            tile += ChunkPolicy::chunk_size * simd_size) {
@@ -92,7 +92,7 @@ Kokkos::parallel_for(
 
         // This is a mapped_chunk iterator
         const auto mapped_chunk_iterator =
-            policy.mapped_league_iterator(starting_element_index);
+            mapped_policy.mapped_league_iterator(starting_element_index);
 
         Kokkos::parallel_for(
             Kokkos::TeamThreadRange(team, mapped_chunk_iterator.chunk_size()),
@@ -100,8 +100,8 @@ Kokkos::parallel_for(
               // mapped_chunk_index_type
               const auto mapped_chunked_index = mapped_chunk_iterator(i);
 
-              // mapped_index is specfem::point::index
-              const auto mapped_index = mapped_chunked_index.index;
+              // element_index is specfem::point::index
+              const auto element_index = mapped_chunked_index.index;
 
               // need mapped_chunk_index here to get the imap=isource
               PointSourcesType point_source;
@@ -109,7 +109,7 @@ Kokkos::parallel_for(
                                                point_source);
 
               PointPropertiesType point_property;
-              specfem::compute::load_on_device(mapped_index, properties,
+              specfem::compute::load_on_device(element_index, properties,
                                                point_property);
 
               auto acceleration =
@@ -117,17 +117,17 @@ Kokkos::parallel_for(
                                                                point_property);
 
               PointBoundaryType point_boundary;
-              specfem::compute::load_on_device(mapped_index, boundaries,
+              specfem::compute::load_on_device(element_index, boundaries,
                                                point_boundary);
 
               PointVelocityType velocity;
-              specfem::compute::load_on_device(mapped_index, field, velocity);
+              specfem::compute::load_on_device(element_index, field, velocity);
 
               specfem::boundary_conditions::
                   apply_boundary_conditions(point_boundary, point_property,
                                             velocity, acceleration);
 
-              specfem::compute::atomic_add_on_device(mapped_index, acceleration,
+              specfem::compute::atomic_add_on_device(element_index, acceleration,
                                                      field);
             });
       }
