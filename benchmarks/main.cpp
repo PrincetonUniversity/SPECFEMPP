@@ -1,23 +1,20 @@
 #include "execute.hpp"
 
-void benchmark(specfem::compute::assembly &assembly,
+void benchmark(specfem::kokkos_kernels::domain_kernels<
+                   specfem::wavefield::simulation_field::forward,
+                   specfem::dimension::type::dim2, 5> &kernels,
                std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme) {
-  auto kernels = specfem::kokkos_kernels::domain_kernels<
-      specfem::wavefield::simulation_field::forward,
-      specfem::dimension::type::dim2, 5>(assembly);
   constexpr auto elastic = specfem::element::medium_tag::elastic;
-
-  // kernels.initialize(time_scheme->get_timestep());
 
   const int nstep = time_scheme->get_max_timestep();
 
   for (const auto [istep, dt] : time_scheme->iterate_forward()) {
     time_scheme->apply_predictor_phase_forward(elastic);
 
-    kernels.template update_wavefields<elastic>(istep);
+    kernels.update_wavefields<elastic>(istep);
     time_scheme->apply_corrector_phase_forward(elastic);
 
-    if ((istep + 1) % 200 == 0) {
+    if ((istep + 1) % 400 == 0) {
       std::cout << "Progress : executed " << istep + 1 << " steps of " << nstep
                 << " steps" << std::endl;
     }
@@ -43,6 +40,7 @@ void run_benchmark(const YAML::Node &parameter_dict,
   // --------------------------------------------------------------
   const auto quadrature = setup.instantiate_quadrature();
   const auto mesh = specfem::IO::read_mesh(database_filename, mpi);
+  // specfem::IO::print_mesh(mesh, mpi);
 
   // --------------------------------------------------------------
 
@@ -60,7 +58,6 @@ void run_benchmark(const YAML::Node &parameter_dict,
   // --------------------------------------------------------------
   //                   Generate Assembly
   // --------------------------------------------------------------
-  mpi->cout("Generating assembly:");
   mpi->cout("-------------------------------");
   const std::vector<std::shared_ptr<specfem::sources::source> > sources;
   const std::vector<std::shared_ptr<specfem::receivers::receiver> > receivers;
@@ -72,12 +69,17 @@ void run_benchmark(const YAML::Node &parameter_dict,
       setup.instantiate_property_reader());
   time_scheme->link_assembly(assembly);
 
+  auto kernels = specfem::kokkos_kernels::domain_kernels<
+      specfem::wavefield::simulation_field::forward,
+      specfem::dimension::type::dim2, 5>(assembly);
+  kernels.initialize(time_scheme->get_timestep());
+
   const auto solver_start_time = std::chrono::system_clock::now();
-  benchmark(assembly, time_scheme);
+  benchmark(kernels, time_scheme);
   const auto solver_end_time = std::chrono::system_clock::now();
   std::chrono::duration<double> solver_time =
       solver_end_time - solver_start_time;
-  std::cout << "Solver time: " << solver_time.count() << "s" << std::endl;
+  std::cout << "Solver time: " << solver_time.count() << "s\n" << std::endl;
 }
 
 int main(int argc, char **argv) {
@@ -88,7 +90,9 @@ int main(int argc, char **argv) {
   {
     const std::string default_file = __default_file__;
     const YAML::Node default_dict = YAML::LoadFile(default_file);
+    std::cout << "Elastic isotropic" << std::endl;
     run_benchmark(YAML::LoadFile(__benchmark_iso__), default_dict, mpi);
+    std::cout << "Elastic anisotropic" << std::endl;
     run_benchmark(YAML::LoadFile(__benchmark_aniso__), default_dict, mpi);
   }
   // Finalize Kokkos
