@@ -642,6 +642,7 @@ add_executable(
 )
 
 add_subdirectory(benchmarks/data)
+add_subdirectory(benchmarks/data_aniso)
 
 target_link_libraries(
         specfem2d-benchmark

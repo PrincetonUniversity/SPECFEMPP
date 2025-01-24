@@ -17,7 +17,7 @@ void benchmark(specfem::compute::assembly &assembly,
     kernels.template update_wavefields<elastic>(istep);
     time_scheme->apply_corrector_phase_forward(elastic);
 
-    if ((istep + 1) % 100 == 0) {
+    if ((istep + 1) % 200 == 0) {
       std::cout << "Progress : executed " << istep + 1 << " steps of " << nstep
                 << " steps" << std::endl;
     }
