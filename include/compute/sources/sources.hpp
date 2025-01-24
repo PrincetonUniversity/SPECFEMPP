@@ -250,12 +250,15 @@ private:
  * @param sources Source information for the domain
  * @param point_source Point source object to load source information into
  */
-template <typename IndexType, typename PointSourceType>
+template <typename IteratorIndexType, typename PointSourceType>
 KOKKOS_INLINE_FUNCTION void
-load_on_device(const IndexType index, const specfem::compute::sources &sources,
+load_on_device(const IteratorIndexType iterator_index,
+               const specfem::compute::sources &sources,
                PointSourceType &point_source) {
 
-  static_assert(IndexType::using_simd == false,
+  const auto index = iterator_index.index;
+
+  static_assert(index.using_simd == false,
                 "IndexType must not use SIMD when loading sources");
 
   static_assert(
@@ -265,7 +268,7 @@ load_on_device(const IndexType index, const specfem::compute::sources &sources,
   static_assert(PointSourceType::dimension == specfem::dimension::type::dim2,
                 "PointSourceType must be a 2D point source type");
 
-  static_assert(IndexType::dimension == specfem::dimension::type::dim2,
+  static_assert(index.dimension == specfem::dimension::type::dim2,
                 "IndexType must be a 2D index type");
 
   static_assert(
@@ -295,16 +298,13 @@ load_on_device(const IndexType index, const specfem::compute::sources &sources,
   }
 #endif
 
-  IndexType lcoord = index;
-  // lcoord.ispec = index.imap;
-
 #define SOURCE_MEDIUM_LOAD_ON_DEVICE(DIMENSION_TAG, MEDIUM_TAG)                \
   if constexpr (GET_TAG(DIMENSION_TAG) == specfem::dimension::type::dim2) {    \
     if constexpr (GET_TAG(MEDIUM_TAG) == PointSourceType::medium_tag) {        \
       sources                                                                  \
           .CREATE_VARIABLE_NAME(source, GET_NAME(DIMENSION_TAG),               \
                                 GET_NAME(MEDIUM_TAG))                          \
-          .load_on_device(sources.timestep, lcoord, point_source);             \
+          .load_on_device(sources.timestep, iterator_index, point_source);     \
     }                                                                          \
   }
 
@@ -412,12 +412,15 @@ void load_on_host(const IndexType index,
  * @param point_source Point source object to load source information into
  * @param sources Source information for the domain
  */
-template <typename IndexType, typename PointSourceType>
+template <typename IteratorIndexType, typename PointSourceType>
 KOKKOS_INLINE_FUNCTION void
-store_on_device(const IndexType index, const PointSourceType &point_source,
+store_on_device(const IteratorIndexType iterator_index,
+                const PointSourceType &point_source,
                 const specfem::compute::sources &sources) {
 
-  static_assert(IndexType::using_simd == false,
+  const auto index = iterator_index.index;
+
+  static_assert(index.using_simd == false,
                 "IndexType must not use SIMD when storing sources");
 
   static_assert(
@@ -427,7 +430,7 @@ store_on_device(const IndexType index, const PointSourceType &point_source,
   static_assert(PointSourceType::dimension == specfem::dimension::type::dim2,
                 "PointSourceType must be a 2D point source type");
 
-  static_assert(IndexType::dimension == specfem::dimension::type::dim2,
+  static_assert(index.dimension == specfem::dimension::type::dim2,
                 "IndexType must be a 2D index type");
 
   static_assert(
@@ -454,16 +457,13 @@ store_on_device(const IndexType index, const PointSourceType &point_source,
   }
 #endif
 
-  IndexType lcoord = index;
-  lcoord.ispec = sources.source_domain_index_mapping(index.ispec);
-
 #define SOURCE_MEDIUM_STORE_ON_DEVICE(DIMENSION_TAG, MEDIUM_TAG)               \
   if constexpr (GET_TAG(DIMENSION_TAG) == specfem::dimension::type::dim2) {    \
     if constexpr (GET_TAG(MEDIUM_TAG) == PointSourceType::medium_tag) {        \
       sources                                                                  \
           .CREATE_VARIABLE_NAME(source, GET_NAME(DIMENSION_TAG),               \
                                 GET_NAME(MEDIUM_TAG))                          \
-          .store_on_device(sources.timestep, lcoord, point_source);            \
+          .store_on_device(sources.timestep, iterator_index, point_source);    \
     }                                                                          \
   }
 

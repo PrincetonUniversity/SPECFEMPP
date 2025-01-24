@@ -90,18 +90,23 @@ Kokkos::parallel_for(
           break;
         }
 
-        const auto iterator =
+        // This is a mapped_chunk iterator
+        const auto mapped_chunk_iterator =
             policy.mapped_league_iterator(starting_element_index);
 
         Kokkos::parallel_for(
-            Kokkos::TeamThreadRange(team, iterator.chunk_size()),
+            Kokkos::TeamThreadRange(team, mapped_chunk_iterator.chunk_size()),
             [&](const int i) {
-              const auto mapped_iterator_index = iterator(i);
-              const auto mapped_index = mapped_iterator_index.index;
+              // mapped_chunk_index_type
+              const auto mapped_chunked_index = mapped_chunk_iterator(i);
 
+              // mapped_index is specfem::point::index
+              const auto mapped_index = mapped_chunked_index.index;
 
+              // need mapped_chunk_index here to get the imap=isource
               PointSourcesType point_source;
-              specfem::compute::load_on_device(mapped_iterator_index, sources, point_source);
+              specfem::compute::load_on_device(mapped_chunked_index, sources,
+                                               point_source);
 
               PointPropertiesType point_property;
               specfem::compute::load_on_device(mapped_index, properties,

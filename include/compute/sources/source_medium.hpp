@@ -95,36 +95,42 @@ public:
   SourceArrayView source_array; ///< Lagrange interpolants for every source
   SourceArrayView::HostMirror h_source_array; ///< Host mirror of source_array
 
-  template <typename IndexType, typename PointSourceType>
+  template <typename IteratorIndexType, typename PointSourceType>
   KOKKOS_INLINE_FUNCTION void
-  load_on_device(const int timestep, const IndexType index,
+  load_on_device(const int timestep, const IteratorIndexType &iterator_index,
                  PointSourceType &point_source) const {
-    // For the source it is important to remember that we are using the
-    // mapped index to access the element and source indices
-    // that means that index actually is a mapped_chunk_index
-    // and we need to use index.ispec to access the element index
-    // and index.imap to access the source index
+    /* For the source it is important to remember that we are using the
+     * mapped index to access the element and source indices
+     * that means that index actually is a mapped_chunk_index
+     * and we need to use index.ispec to access the element index
+     * and index.imap to access the source index
+     */
+    const auto index = iterator_index.index;
+    const auto isource = iterator_index.imap;
     for (int component = 0; component < components; component++) {
       point_source.stf(component) =
-          source_time_function(timestep, index.imap, component);
+          source_time_function(timestep, isource, component);
       point_source.lagrange_interpolant(component) =
-          source_array(index.imap, component, index.iz, index.ix);
+          source_array(isource, component, index.iz, index.ix);
     }
   }
 
-  template <typename IndexType, typename PointSourceType>
+  template <typename IteratorIndexType, typename PointSourceType>
   KOKKOS_INLINE_FUNCTION void
-  // For the source it is important to remember that we are using the
-  // mapped index to access the element and source indices
-  // that means that index actually is a mapped_chunk_index
-  // and we need to use index.ispec to access the element index
-  // and index.imap to access the source index
-  store_on_device(const int timestep, const IndexType index,
+  store_on_device(const int timestep, const IteratorIndexType &iterator_index,
                   const PointSourceType &point_source) const {
+    /* For the source it is important to remember that we are using the
+     * mapped index to access the element and source indices
+     * that means that index actually is a mapped_chunk_index
+     * and we need to use index.ispec to access the element index
+     * and index.imap to access the source index
+     */
+    const auto index = iterator_index.index;
+    const auto isource = iterator_index.imap;
     for (int component = 0; component < components; component++) {
-      source_time_function(timestep, index.imap, component) =
+      source_time_function(timestep, isource, component) =
           point_source.stf(component);
-      source_array(index.imap, component, index.iz, index.ix) =
+      source_array(isource, component, index.iz, index.ix) =
           point_source.lagrange_interpolant(component);
     }
   }
