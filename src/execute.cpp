@@ -48,7 +48,7 @@ void execute(
 
   const auto mesh = specfem::IO::read_mesh(database_filename, mpi);
   if (mpi->main_proc()) {
-    std::cout << mesh << std::endl;
+    specfem::IO::print_mesh(mesh, mpi);
   }
   // --------------------------------------------------------------
 

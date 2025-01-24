@@ -36,13 +36,13 @@ std::vector<specfem::mesh::materials::material_specification> read_materials(
   std::vector<specfem::mesh::materials::material_specification> index_mapping(
       numat);
 
-  message << "Material systems:\n"
-          << "------------------------------";
+  // message << "Material systems:\n"
+  //         << "------------------------------";
 
-  mpi->cout(message.str());
+  // mpi->cout(message.str());
 
-  if (mpi->get_rank() == 0)
-    std::cout << "Number of material systems = " << numat << "\n\n";
+  // if (mpi->get_rank() == 0)
+  //   std::cout << "Number of material systems = " << numat << "\n\n";
 
   // Section for elastic isotropic
   std::vector<specfem::medium::material<elastic, isotropic> >
