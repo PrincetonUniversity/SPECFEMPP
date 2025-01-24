@@ -44,7 +44,7 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "@CMAKE_SOURCE_DIR@/examples/homogeneous-medium-flat-topography/OUTPUT_FILES/database.bin"
+    mesh-database: "@CMAKE_SOURCE_DIR@/benchmarks/data/OUTPUT_FILES/database.bin"
 
   ## sources
-  sources: "@CMAKE_SOURCE_DIR@/examples/homogeneous-medium-flat-topography/source.yaml"
+  sources: "@CMAKE_SOURCE_DIR@/benchmarks/data/source.yaml"

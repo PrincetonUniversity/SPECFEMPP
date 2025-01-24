@@ -15,10 +15,12 @@ inline void update_wavefields(specfem::compute::assembly &assembly,
                                       specfem::element::boundary_tag::none>(
       assembly, istep);
 
-  impl::compute_stiffness_interaction<
-      dimension, wavefield, ngll, medium,
-      specfem::element::property_tag::anisotropic,
-      specfem::element::boundary_tag::none>(assembly, istep);
+  if constexpr (medium == specfem::element::medium_tag::elastic) {
+    impl::compute_stiffness_interaction<
+        dimension, wavefield, ngll, medium,
+        specfem::element::property_tag::anisotropic,
+        specfem::element::boundary_tag::none>(assembly, istep);
+  }
 
   impl::divide_mass_matrix<dimension, wavefield, medium>(assembly);
 }
@@ -28,18 +30,21 @@ inline void update_wavefields(specfem::compute::assembly &assembly,
 
 void benchmark(specfem::compute::assembly &assembly,
                std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme) {
+  constexpr auto acoustic = specfem::element::medium_tag::acoustic;
   constexpr auto elastic = specfem::element::medium_tag::elastic;
 
   const int nstep = time_scheme->get_max_timestep();
 
   for (const auto [istep, dt] : time_scheme->iterate_forward()) {
 
+    specfem::kokkos_kernels::update_wavefields<acoustic>(assembly, istep);
     specfem::kokkos_kernels::update_wavefields<elastic>(assembly, istep);
 
-    if ((istep + 1) % 400 == 0) {
-      std::cout << "Progress : executed " << istep + 1 << " steps of " << nstep
-                << " steps" << std::endl;
-    }
+    // if ((istep + 1) % 400 == 0) {
+    //   std::cout << "Progress : executed " << istep + 1 << " steps of " <<
+    //   nstep
+    //             << " steps" << std::endl;
+    // }
   }
 
   std::cout << std::endl;
@@ -80,7 +85,7 @@ void run_benchmark(const YAML::Node &parameter_dict,
   // --------------------------------------------------------------
   //                   Generate Assembly
   // --------------------------------------------------------------
-  mpi->cout("-------------------------------");
+  // mpi->cout("-------------------------------");
   const std::vector<std::shared_ptr<specfem::sources::source> > sources;
   const std::vector<std::shared_ptr<specfem::receivers::receiver> > receivers;
   const int nsteps = setup.get_nsteps();
@@ -96,7 +101,7 @@ void run_benchmark(const YAML::Node &parameter_dict,
   const auto solver_end_time = std::chrono::system_clock::now();
   std::chrono::duration<double> solver_time =
       solver_end_time - solver_start_time;
-  std::cout << "Solver time: " << solver_time.count() << "s\n" << std::endl;
+  std::cout << " " << solver_time.count() << "s\n" << std::endl;
 }
 
 int main(int argc, char **argv) {
@@ -107,9 +112,11 @@ int main(int argc, char **argv) {
   {
     const std::string default_file = __default_file__;
     const YAML::Node default_dict = YAML::LoadFile(default_file);
-    std::cout << "Elastic isotropic" << std::endl;
+    std::cout << "Acoustic:";
+    run_benchmark(YAML::LoadFile(__benchmark_acous__), default_dict, mpi);
+    std::cout << "Elastic isotropic:";
     run_benchmark(YAML::LoadFile(__benchmark_iso__), default_dict, mpi);
-    std::cout << "Elastic anisotropic" << std::endl;
+    std::cout << "Elastic anisotropic:";
     run_benchmark(YAML::LoadFile(__benchmark_aniso__), default_dict, mpi);
   }
   // Finalize Kokkos
