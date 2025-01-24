@@ -28,10 +28,10 @@ parameters:
         writer:
           seismogram:
             format: "ascii"
-            directory: "results"
+            directory: "@CMAKE_SOURCE_DIR@/examples/homogeneous-medium-flat-topography/OUTPUT_FILES/results"
 
   receivers:
-    stations: "OUTPUT_FILES/STATIONS"
+    stations: "@CMAKE_SOURCE_DIR@/examples/homogeneous-medium-flat-topography/OUTPUT_FILES/STATIONS"
     angle: 0.0
     seismogram-type:
       - velocity
@@ -44,7 +44,7 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "OUTPUT_FILES/database.bin"
+    mesh-database: "@CMAKE_SOURCE_DIR@/examples/homogeneous-medium-flat-topography/OUTPUT_FILES/database.bin"
 
   ## sources
-  sources: "source.yaml"
+  sources: "@CMAKE_SOURCE_DIR@/examples/homogeneous-medium-flat-topography/source.yaml"

@@ -630,11 +630,27 @@ add_executable(
         src/specfem2d.cpp
 )
 
-
-
 target_link_libraries(
         specfem2d
         execute
+)
+
+
+add_executable(
+        specfem2d-benchmark
+        benchmarks/main.cpp
+)
+
+add_subdirectory(benchmarks/data)
+
+target_link_libraries(
+        specfem2d-benchmark
+        execute
+)
+
+target_compile_definitions(
+        specfem2d-benchmark
+        PRIVATE __parameters_file__="${CMAKE_CURRENT_SOURCE_DIR}/benchmarks/data/specfem_config.yaml"
 )
 
 # Include tests
