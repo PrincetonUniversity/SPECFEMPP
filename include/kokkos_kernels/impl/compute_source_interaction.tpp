@@ -96,17 +96,15 @@ Kokkos::parallel_for(
         Kokkos::parallel_for(
             Kokkos::TeamThreadRange(team, iterator.chunk_size()),
             [&](const int i) {
-              const auto element_iterator_index = iterator(i);
-              const auto element_index = element_iterator_index.index;
-              int source_index = iterator.imap(i);
+              const auto mapped_iterator_index = iterator(i);
+              const auto mapped_index = mapped_iterator_index.index;
 
 
               PointSourcesType point_source;
-              specfem::compute::load_on_device(element_index, source_index,
-                                               sources, point_source);
+              specfem::compute::load_on_device(mapped_iterator_index, sources, point_source);
 
               PointPropertiesType point_property;
-              specfem::compute::load_on_device(element_index, properties,
+              specfem::compute::load_on_device(mapped_index, properties,
                                                point_property);
 
               auto acceleration =
@@ -114,17 +112,17 @@ Kokkos::parallel_for(
                                                                point_property);
 
               PointBoundaryType point_boundary;
-              specfem::compute::load_on_device(element_index, boundaries,
+              specfem::compute::load_on_device(mapped_index, boundaries,
                                                point_boundary);
 
               PointVelocityType velocity;
-              specfem::compute::load_on_device(element_index, field, velocity);
+              specfem::compute::load_on_device(mapped_index, field, velocity);
 
               specfem::boundary_conditions::
                   apply_boundary_conditions(point_boundary, point_property,
                                             velocity, acceleration);
 
-              specfem::compute::atomic_add_on_device(element_index, acceleration,
+              specfem::compute::atomic_add_on_device(mapped_index, acceleration,
                                                      field);
             });
       }
