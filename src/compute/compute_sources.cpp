@@ -19,17 +19,21 @@ namespace {
  * FOR ONE SOURCE, THIS WILL NOT HAVE AN IMPACT AT ALL, BUT FOR MANY SOURCES
  * THIS WILL BECOME A BOTTLENECK.
  *
- * The function runs for every material type and returns vector of sources that
- * fall into that material domain
+ * The function runs for every material type and returns a tuple of two vectors
+ * - the first vector contains the sources that fall into that material domain
+ * - the second vector contains the global indices of the sources that
  */
 template <specfem::dimension::type DimensionTag,
           specfem::element::medium_tag MediumTag>
-std::vector<std::shared_ptr<specfem::sources::source> > sort_sources_per_medium(
+std::tuple<std::vector<std::shared_ptr<specfem::sources::source> >,
+           std::vector<int> >
+sort_sources_per_medium(
     const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
     const specfem::compute::element_types &element_types,
     const specfem::compute::mesh &mesh) {
 
   std::vector<std::shared_ptr<specfem::sources::source> > sorted_sources;
+  std::vector<int> source_indices;
 
   // Loop over all sources
   for (int isource = 0; isource < sources.size(); isource++) {
@@ -47,10 +51,11 @@ std::vector<std::shared_ptr<specfem::sources::source> > sort_sources_per_medium(
     // the list of sources and indices if it is.
     if (element_types.get_medium_tag(lcoord.ispec) == MediumTag) {
       sorted_sources.push_back(source);
+      source_indices.push_back(isource);
     }
   }
 
-  return sorted_sources;
+  return std::make_tuple(sorted_sources, source_indices);
 }
 } // namespace
 
@@ -71,22 +76,14 @@ specfem::compute::sources::sources(
       h_element_indices(Kokkos::create_mirror_view(element_indices)),
       source_indices("specfem::sources::indeces", sources.size()),
       h_source_indices(Kokkos::create_mirror_view(source_indices)),
-      source_domain_index_mapping(
-          "specfem::sources::source_domain_index_mapping", nspec),
-      h_source_domain_index_mapping(
-          Kokkos::create_mirror_view(source_domain_index_mapping)),
-      medium_types("specfem::sources::medium_types", nspec),
+      medium_types("specfem::sources::medium_types", sources.size()),
       h_medium_types(Kokkos::create_mirror_view(medium_types)),
-      property_types("specfem::sources::property_types", nspec),
+      property_types("specfem::sources::property_types", sources.size()),
       h_property_types(Kokkos::create_mirror_view(property_types)),
-      boundary_types("specfem::sources::boundary_types", nspec),
+      boundary_types("specfem::sources::boundary_types", sources.size()),
       h_boundary_types(Kokkos::create_mirror_view(boundary_types)),
-      wavefield_types("specfem::sources::wavefield_types", nspec),
+      wavefield_types("specfem::sources::wavefield_types", sources.size()),
       h_wavefield_types(Kokkos::create_mirror_view(wavefield_types)) {
-
-  for (int ispec = 0; ispec < nspec; ispec++) {
-    h_source_domain_index_mapping(ispec) = -1;
-  }
 
   // THERE SHOULD BE LOCATE SOURCES HERE, AND SOURCE SHOULD BE POPULATED
   // WITH THE LOCAL COORDINATES AND THE GLOBAL ELEMENT INDEX
@@ -96,8 +93,10 @@ specfem::compute::sources::sources(
 // and a vector of indices of the sources in the original sources vector
 // named source_indices_<dim>_<medium>
 #define SORT_SOURCES_PER_MEDIUM(DIMENSION_TAG, MEDIUM_TAG)                     \
-  auto CREATE_VARIABLE_NAME(source, GET_NAME(DIMENSION_TAG),                   \
-                            GET_NAME(MEDIUM_TAG)) =                            \
+  auto [CREATE_VARIABLE_NAME(source, GET_NAME(DIMENSION_TAG),                  \
+                             GET_NAME(MEDIUM_TAG)),                            \
+        CREATE_VARIABLE_NAME(source_indices, GET_NAME(DIMENSION_TAG),          \
+                             GET_NAME(MEDIUM_TAG))] =                          \
       sort_sources_per_medium<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG)>(    \
           sources, element_types, mesh);
 
@@ -108,12 +107,17 @@ specfem::compute::sources::sources(
 #undef SORT_SOURCES_PER_MEDIUM
 
   int nsources = 0;
+  int nsource_indices = 0;
 // For a sanity check we count the number of sources and source indices
 // for each medium and dimension
 #define COUNT_SOURCES(DIMENSION_TAG, MEDIUM_TAG)                               \
   nsources += CREATE_VARIABLE_NAME(source, GET_NAME(DIMENSION_TAG),            \
                                    GET_NAME(MEDIUM_TAG))                       \
-                  .size();
+                  .size();                                                     \
+  nsource_indices +=                                                           \
+      CREATE_VARIABLE_NAME(source_indices, GET_NAME(DIMENSION_TAG),            \
+                           GET_NAME(MEDIUM_TAG))                               \
+          .size();
 
   CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
       COUNT_SOURCES,
@@ -122,6 +126,12 @@ specfem::compute::sources::sources(
 #undef COUNT_SOURCES
 
   // if the number of sources is not equal to the number of sources
+  if (nsources != sources.size()) {
+    std::cout << "nsources: " << nsources << std::endl;
+    std::cout << "sources.size(): " << sources.size() << std::endl;
+    throw std::runtime_error(
+        "Not all sources were assigned or sources are assigned multiple times");
+  }
   if (nsources != sources.size()) {
     std::cout << "nsources: " << nsources << std::endl;
     std::cout << "sources.size(): " << sources.size() << std::endl;
@@ -138,6 +148,8 @@ specfem::compute::sources::sources(
     /* Gets the sources and global indices for the current source medium */    \
     auto current_sources = CREATE_VARIABLE_NAME(                               \
         source, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG));                \
+    auto current_source_indices = CREATE_VARIABLE_NAME(                        \
+        source_indices, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG));        \
     /* Loops over the current source*/                                         \
     for (int isource = 0; isource < current_sources.size(); isource++) {       \
       const auto &source = current_sources[isource];                           \
@@ -156,15 +168,16 @@ specfem::compute::sources::sources(
        *       "Multiple sources are detected in the same element");           \
        * }                                                                     \
        */                                                                      \
-      /* source_domain index mapping will be removed */                        \
-      h_source_domain_index_mapping(ispec) = isource;                          \
+      const int global_isource = current_source_indices[isource];              \
       /* setting local source to global element mapping */                     \
-      h_element_indices(isource) = ispec;                                      \
+      h_element_indices(global_isource) = ispec;                               \
       assert(element_types.get_medium_tag(ispec) == GET_TAG(MEDIUM_TAG));      \
-      h_medium_types(ispec) = GET_TAG(MEDIUM_TAG);                             \
-      h_property_types(ispec) = element_types.get_property_tag(ispec);         \
-      h_boundary_types(ispec) = element_types.get_boundary_tag(ispec);         \
-      h_wavefield_types(ispec) = source->get_wavefield_type();                 \
+      h_medium_types(global_isource) = GET_TAG(MEDIUM_TAG);                    \
+      h_property_types(global_isource) =                                       \
+          element_types.get_property_tag(ispec);                               \
+      h_boundary_types(global_isource) =                                       \
+          element_types.get_boundary_tag(ispec);                               \
+      h_wavefield_types(global_isource) = source->get_wavefield_type();        \
     }                                                                          \
     this->CREATE_VARIABLE_NAME(source, GET_NAME(DIMENSION_TAG),                \
                                GET_NAME(MEDIUM_TAG)) =                         \
@@ -194,23 +207,23 @@ specfem::compute::sources::sources(
   /* Loop over the sources */                                                  \
   for (int isource = 0; isource < sources.size(); isource++) {                 \
     int ispec = h_element_indices(isource);                                    \
-    if ((h_medium_types(ispec) == GET_TAG(MEDIUM_TAG)) &&                      \
-        (h_property_types(ispec) == GET_TAG(PROPERTY_TAG)) &&                  \
-        (h_boundary_types(ispec) == GET_TAG(BOUNDARY_TAG))) {                  \
+    if ((h_medium_types(isource) == GET_TAG(MEDIUM_TAG)) &&                    \
+        (h_property_types(isource) == GET_TAG(PROPERTY_TAG)) &&                \
+        (h_boundary_types(isource) == GET_TAG(BOUNDARY_TAG))) {                \
       /* Count the number of sources for each wavefield type */                \
-      if (h_wavefield_types(ispec) ==                                          \
+      if (h_wavefield_types(isource) ==                                        \
           specfem::wavefield::simulation_field::forward) {                     \
         CREATE_VARIABLE_NAME(count_forward, GET_NAME(DIMENSION_TAG),           \
                              GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),     \
                              GET_NAME(BOUNDARY_TAG))                           \
         ++;                                                                    \
-      } else if (h_wavefield_types(ispec) ==                                   \
+      } else if (h_wavefield_types(isource) ==                                 \
                  specfem::wavefield::simulation_field::backward) {             \
         CREATE_VARIABLE_NAME(count_backward, GET_NAME(DIMENSION_TAG),          \
                              GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),     \
                              GET_NAME(BOUNDARY_TAG))                           \
         ++;                                                                    \
-      } else if (h_wavefield_types(ispec) ==                                   \
+      } else if (h_wavefield_types(isource) ==                                 \
                  specfem::wavefield::simulation_field::adjoint) {              \
         CREATE_VARIABLE_NAME(count_adjoint, GET_NAME(DIMENSION_TAG),           \
                              GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),     \
@@ -354,10 +367,10 @@ specfem::compute::sources::sources(
   /* Loop over all sources */                                                  \
   for (int isource = 0; isource < sources.size(); isource++) {                 \
     int ispec = h_element_indices(isource);                                    \
-    if ((h_medium_types(ispec) == GET_TAG(MEDIUM_TAG)) &&                      \
-        (h_property_types(ispec) == GET_TAG(PROPERTY_TAG)) &&                  \
-        (h_boundary_types(ispec) == GET_TAG(BOUNDARY_TAG))) {                  \
-      if (h_wavefield_types(ispec) ==                                          \
+    if ((h_medium_types(isource) == GET_TAG(MEDIUM_TAG)) &&                    \
+        (h_property_types(isource) == GET_TAG(PROPERTY_TAG)) &&                \
+        (h_boundary_types(isource) == GET_TAG(BOUNDARY_TAG))) {                \
+      if (h_wavefield_types(isource) ==                                        \
           specfem::wavefield::simulation_field::forward) {                     \
                                                                                \
         /* Assign global ispec to local forward element index array */         \

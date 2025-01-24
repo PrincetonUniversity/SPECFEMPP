@@ -20,9 +20,14 @@ void check_store(specfem::compute::assembly &assembly) {
   const int ngllz = assembly.mesh.ngllz;
   const int ngllx = assembly.mesh.ngllx;
 
+  std::cout << "Getting the element and source indices" << std::endl;
   const auto [element_indices, source_indices] =
       assembly.sources.get_sources_on_device(MediumTag, PropertyTag,
                                              BoundaryTag, WavefieldType);
+
+  std::cout << "element_indices.size() = " << element_indices.size()
+            << std::endl;
+  std::cout << "source_indices.size() = " << source_indices.size() << std::endl;
 
   const int nelements = element_indices.size();
 
@@ -187,7 +192,9 @@ void check_assembly_source_construction(
       specfem::point::source<Dimension, MediumTag,
                              specfem::wavefield::simulation_field::forward>;
 
-  for (auto &source : sources) {
+  const int nsources = sources.size();
+  for (int isource = 0; isource < nsources; isource++) {
+    const auto &source = sources[isource];
     specfem::point::global_coordinates<Dimension> coord(source->get_x(),
                                                         source->get_z());
 
@@ -206,12 +213,18 @@ void check_assembly_source_construction(
         "stf", 1, components);
 
     source->compute_source_time_function(1.0, 0.0, 1, stf);
+    using mapped_chunk_index_type =
+        specfem::iterator::impl::mapped_chunk_index_type<
+            false, specfem::dimension::type::dim2>;
 
     for (int iz = 0; iz < ngllz; iz++) {
       for (int ix = 0; ix < ngllx; ix++) {
         specfem::point::index<Dimension, false> index(lcoord.ispec, iz, ix);
+        const auto mapped_iterator_index =
+            mapped_chunk_index_type(lcoord.ispec, index, isource);
         PointSourceType point;
-        specfem::compute::load_on_host(index, assembly.sources, point);
+        specfem::compute::load_on_host(mapped_iterator_index, assembly.sources,
+                                       point);
 
         for (int ic = 0; ic < components; ic++) {
           const auto lagrange_interpolant = point.lagrange_interpolant(ic);

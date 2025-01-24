@@ -435,6 +435,7 @@ add_library(
 
 target_link_libraries(
         compute
+        enumerations
         quadrature
         mesh
         # material_class

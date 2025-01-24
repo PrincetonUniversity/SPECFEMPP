@@ -117,7 +117,7 @@ public:
 
   template <typename IteratorIndexType, typename PointSourceType>
   KOKKOS_INLINE_FUNCTION void
-  store_on_device(const int timestep, const IteratorIndexType &iterator_index,
+  store_on_device(const int timestep, const IteratorIndexType iterator_index,
                   const PointSourceType &point_source) const {
     /* For the source it is important to remember that we are using the
      * mapped index to access the element and source indices
@@ -135,24 +135,28 @@ public:
     }
   }
 
-  template <typename IndexType, typename PointSourceType>
-  void load_on_host(const int timestep, const IndexType index,
+  template <typename IteratorIndexType, typename PointSourceType>
+  void load_on_host(const int timestep, const IteratorIndexType iterator_index,
                     PointSourceType &point_source) const {
+    const auto index = iterator_index.index;
+    const auto isource = iterator_index.imap;
     for (int component = 0; component < components; component++) {
       point_source.stf(component) =
-          h_source_time_function(timestep, index.ispec, component);
+          h_source_time_function(timestep, isource, component);
       point_source.lagrange_interpolant(component) =
-          h_source_array(index.ispec, component, index.iz, index.ix);
+          h_source_array(isource, component, index.iz, index.ix);
     }
   }
 
-  template <typename IndexType, typename PointSourceType>
-  void store_on_host(const int timestep, const IndexType index,
+  template <typename IteratorIndexType, typename PointSourceType>
+  void store_on_host(const int timestep, const IteratorIndexType iterator_index,
                      const PointSourceType &point_source) const {
+    const auto index = iterator_index.index;
+    const auto isource = iterator_index.imap;
     for (int component = 0; component < components; component++) {
-      h_source_time_function(timestep, index.ispec, component) =
+      h_source_time_function(timestep, isource, component) =
           point_source.stf(component);
-      h_source_array(index.ispec, component, index.iz, index.ix) =
+      h_source_array(isource, component, index.iz, index.ix) =
           point_source.lagrange_interpolant(component);
     }
   }
