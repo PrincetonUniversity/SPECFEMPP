@@ -113,7 +113,7 @@ int main(int argc, char **argv) {
     const std::string default_file = __default_file__;
     const YAML::Node default_dict = YAML::LoadFile(default_file);
     std::cout << "Acoustic:";
-    run_benchmark(YAML::LoadFile(__benchmark_acous__), default_dict, mpi);
+    run_benchmark(YAML::LoadFile(__benchmark_acoustic__), default_dict, mpi);
     std::cout << "Elastic isotropic:";
     run_benchmark(YAML::LoadFile(__benchmark_iso__), default_dict, mpi);
     std::cout << "Elastic anisotropic:";
