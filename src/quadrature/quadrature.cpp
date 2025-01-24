@@ -10,6 +10,14 @@ specfem::quadrature::operator<<(std::ostream &out,
   return out;
 }
 
+std::ostream &
+specfem::quadrature::operator<<(std::ostream &out,
+                                const specfem::quadrature::quadratures &quad) {
+  quad.print(out);
+
+  return out;
+}
+
 void specfem::quadrature::quadrature::print(std::ostream &out) const {
   out << "Quadrature wasn't initialized properly. Base class being called";
 
