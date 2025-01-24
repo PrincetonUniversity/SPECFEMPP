@@ -10,82 +10,17 @@ inline void update_wavefields(specfem::compute::assembly &assembly,
       specfem::wavefield::simulation_field::forward;
   constexpr static auto ngll = 5;
 
-#define CALL_STIFFNESS_FORCE_UPDATE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG,   \
-                                    BOUNDARY_TAG)                              \
-  if constexpr (dimension == GET_TAG(DIMENSION_TAG) &&                         \
-                medium == GET_TAG(MEDIUM_TAG)) {                               \
-    impl::compute_stiffness_interaction<                                       \
-        dimension, wavefield, ngll, GET_TAG(MEDIUM_TAG),                       \
-        GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG)>(assembly, istep);        \
-  }
-  if constexpr (dimension == specfem::dimension::type::dim2 &&
-                medium == specfem::element::medium_tag::elastic) {
-    impl::compute_stiffness_interaction<
-        dimension, wavefield, ngll, specfem::element::medium_tag::elastic,
-        specfem::element::property_tag::isotropic,
-        specfem::element::boundary_tag::stacey>(assembly, istep);
-  }
-  if constexpr (dimension == specfem::dimension::type::dim2 &&
-                medium == specfem::element::medium_tag::elastic) {
-    impl::compute_stiffness_interaction<
-        dimension, wavefield, ngll, specfem::element::medium_tag::elastic,
-        specfem::element::property_tag::isotropic,
-        specfem::element::boundary_tag::none>(assembly, istep);
-  }
-  if constexpr (dimension == specfem::dimension::type::dim2 &&
-                medium == specfem::element::medium_tag::elastic) {
-    impl::compute_stiffness_interaction<
-        dimension, wavefield, ngll, specfem::element::medium_tag::elastic,
-        specfem::element::property_tag::anisotropic,
-        specfem::element::boundary_tag::stacey>(assembly, istep);
-  }
-  if constexpr (dimension == specfem::dimension::type::dim2 &&
-                medium == specfem::element::medium_tag::elastic) {
-    impl::compute_stiffness_interaction<
-        dimension, wavefield, ngll, specfem::element::medium_tag::elastic,
-        specfem::element::property_tag::anisotropic,
-        specfem::element::boundary_tag::none>(assembly, istep);
-  }
-  if constexpr (dimension == specfem::dimension::type::dim2 &&
-                medium == specfem::element::medium_tag::acoustic) {
-    impl::compute_stiffness_interaction<
-        dimension, wavefield, ngll, specfem::element::medium_tag::acoustic,
-        specfem::element::property_tag::isotropic,
-        specfem::element::boundary_tag::stacey>(assembly, istep);
-  }
-  if constexpr (dimension == specfem::dimension::type::dim2 &&
-                medium == specfem::element::medium_tag::acoustic) {
-    impl::compute_stiffness_interaction<
-        dimension, wavefield, ngll, specfem::element::medium_tag::acoustic,
-        specfem::element::property_tag::isotropic,
-        specfem::element::boundary_tag::none>(assembly, istep);
-  }
-  if constexpr (dimension == specfem::dimension::type::dim2 &&
-                medium == specfem::element::medium_tag::acoustic) {
-    impl::compute_stiffness_interaction<
-        dimension, wavefield, ngll, specfem::element::medium_tag::acoustic,
-        specfem::element::property_tag::isotropic,
-        specfem::element::boundary_tag::acoustic_free_surface>(assembly, istep);
-  }
-  if constexpr (dimension == specfem::dimension::type::dim2 &&
-                medium == specfem::element::medium_tag::acoustic) {
-    impl::compute_stiffness_interaction<
-        dimension, wavefield, ngll, specfem::element::medium_tag::acoustic,
-        specfem::element::property_tag::isotropic,
-        specfem::element::boundary_tag::composite_stacey_dirichlet>(assembly,
-                                                                    istep);
-  }
+  impl::compute_stiffness_interaction<dimension, wavefield, ngll, medium,
+                                      specfem::element::property_tag::isotropic,
+                                      specfem::element::boundary_tag::none>(
+      assembly, istep);
 
-  if constexpr (dimension == specfem::dimension::type::dim2 &&
-                medium == specfem::element::medium_tag::elastic) {
-    impl::divide_mass_matrix<dimension, wavefield,
-                             specfem::element::medium_tag::elastic>(assembly);
-  }
-  if constexpr (dimension == specfem::dimension::type::dim2 &&
-                medium == specfem::element::medium_tag::acoustic) {
-    impl::divide_mass_matrix<dimension, wavefield,
-                             specfem::element::medium_tag::acoustic>(assembly);
-  }
+  impl::compute_stiffness_interaction<
+      dimension, wavefield, ngll, medium,
+      specfem::element::property_tag::anisotropic,
+      specfem::element::boundary_tag::none>(assembly, istep);
+
+  impl::divide_mass_matrix<dimension, wavefield, medium>(assembly);
 }
 
 } // namespace kokkos_kernels
@@ -98,10 +33,8 @@ void benchmark(specfem::compute::assembly &assembly,
   const int nstep = time_scheme->get_max_timestep();
 
   for (const auto [istep, dt] : time_scheme->iterate_forward()) {
-    time_scheme->apply_predictor_phase_forward(elastic);
 
     specfem::kokkos_kernels::update_wavefields<elastic>(assembly, istep);
-    time_scheme->apply_corrector_phase_forward(elastic);
 
     if ((istep + 1) % 400 == 0) {
       std::cout << "Progress : executed " << istep + 1 << " steps of " << nstep
