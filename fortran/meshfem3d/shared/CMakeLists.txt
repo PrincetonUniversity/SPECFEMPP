@@ -126,4 +126,5 @@ target_link_libraries(meshfem3D_shared PRIVATE
   meshfem3D::shared_module
   meshfem3D::constants
   meshfem3D::shared_hdf5_module
+  meshfem3D::param_reader
 )
