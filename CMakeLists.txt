@@ -542,30 +542,30 @@ target_link_libraries(
 )
 
 add_library(
-        plotter
-        src/plotter/plot_wavefield.cpp
+        periodic_tasks
+        src/periodic_tasks/plot_wavefield.cpp
 )
 
 if (NOT VTK_CXX_BUILD)
         target_compile_definitions(
-                plotter
+                periodic_tasks
                 PUBLIC -DNO_VTK
         )
 
         target_link_libraries(
-                plotter
+                periodic_tasks
                 compute
         )
 else ()
         target_link_libraries(
-                plotter
+                periodic_tasks
                 compute
                 ${VTK_LIBRARIES}
                 )
 
         # Only define the __APPLE__ compile definition if it is defined
         if (__APPLE__)
-        target_compile_definitions(plotter PRIVATE __APPLE__)
+        target_compile_definitions(periodic_tasks PRIVATE __APPLE__)
         endif(__APPLE__)
 endif()
 
@@ -618,7 +618,7 @@ target_link_libraries(
         parameter_reader
         receiver_class
         writer
-        plotter
+        periodic_tasks
         reader
         medium
         coupled_interface
@@ -682,7 +682,7 @@ if (SPECFEMPP_BINDING_PYTHON)
         parameter_reader
         receiver_class
         writer
-        plotter
+        periodic_tasks
         reader
         medium
         coupled_interface

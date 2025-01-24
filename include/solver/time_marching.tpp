@@ -32,9 +32,9 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
       time_scheme->increment_seismogram_step();
     }
 
-    for (const auto &plotter : plotters) {
-      if (plotter && plotter->should_plot(istep)) {
-        plotter->plot();
+    for (const auto &task : tasks) {
+      if (task && task->should_run(istep)) {
+        task->run();
       }
     }
 
@@ -99,9 +99,9 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
       time_scheme->increment_seismogram_step();
     }
 
-    for (const auto &plotter : plotters) {
-      if (plotter && plotter->should_plot(istep)) {
-        plotter->plot();
+    for (const auto &task : tasks) {
+      if (task && task->should_run(istep)) {
+        task->run();
       }
     }
 
