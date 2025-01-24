@@ -5,6 +5,7 @@
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
 #include "point/sources.hpp"
+#include "policies/chunk.hpp"
 #include "gtest/gtest.h"
 #include <Kokkos_Core.hpp>
 
@@ -43,17 +44,23 @@ void check_store(specfem::compute::assembly &assembly) {
 
   Kokkos::deep_copy(values_to_store, h_values_to_store);
 
-  using PointType = specfem::point::source<Dimension, MediumTag, WavefieldType>;
-
+  using PointSourceType =
+      specfem::point::source<Dimension, MediumTag, WavefieldType>;
+  using mapped_chunk_index_type =
+      specfem::iterator::impl::mapped_chunk_index_type<
+          false, specfem::dimension::type::dim2>;
   Kokkos::parallel_for(
       "check_store_on_device",
       Kokkos::MDRangePolicy<Kokkos::DefaultExecutionSpace, Kokkos::Rank<3> >(
           { 0, 0, 0 }, { nelements, ngllz, ngllx }),
       KOKKOS_LAMBDA(const int &i, const int &iz, const int &ix) {
         const int ielement = element_indices(i);
+        const int isource = source_indices(i);
 
         const auto index =
             specfem::point::index<Dimension, false>(ielement, iz, ix);
+        const auto mapped_iterator_index =
+            mapped_chunk_index_type(ielement, index, isource);
         specfem::datatype::ScalarPointViewType<type_real, num_components, false>
             stf;
         specfem::datatype::ScalarPointViewType<type_real, num_components, false>
@@ -62,8 +69,9 @@ void check_store(specfem::compute::assembly &assembly) {
           stf(ic) = values_to_store(i);
           lagrange_interpolant(ic) = values_to_store(i);
         }
-        PointType point(stf, lagrange_interpolant);
-        specfem::compute::store_on_device(index, point, sources);
+        PointSourceType point(stf, lagrange_interpolant);
+        specfem::compute::store_on_device(mapped_iterator_index, point,
+                                          sources);
       });
 
   Kokkos::fence();
