@@ -69,7 +69,7 @@ endif()
 include(FetchContent)
 FetchContent_Declare(
   kokkos
-  URL https://github.com/kokkos/kokkos/archive/refs/tags/4.3.01.zip
+  URL https://github.com/kokkos/kokkos/archive/refs/tags/4.5.01.zip
   DOWNLOAD_EXTRACT_TIMESTAMP FALSE
 )
 FetchContent_MakeAvailable(kokkos)
@@ -105,7 +105,7 @@ endif()
 
 
 # Try finding boost and if not found install.
-find_package(Boost 1.73.0 COMPONENTS program_options filesystem system)
+find_package(Boost 1.85.0 COMPONENTS program_options filesystem system)
 
 
 if (NOT ${Boost_FOUND})
