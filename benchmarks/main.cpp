@@ -1,8 +1,64 @@
+#include "enumerations/dimension.hpp"
+#include "enumerations/material_definitions.hpp"
+#include "enumerations/medium.hpp"
+#include "enumerations/simulation.hpp"
+#include "enumerations/specfem_enums.hpp"
 #include "execute.hpp"
+#include "kokkos_kernels/impl/compute_mass_matrix.hpp"
+#include "kokkos_kernels/impl/compute_seismogram.hpp"
+#include "kokkos_kernels/impl/compute_source_interaction.hpp"
+#include "kokkos_kernels/impl/compute_stiffness_interaction.hpp"
+#include "kokkos_kernels/impl/divide_mass_matrix.hpp"
+#include "kokkos_kernels/impl/interface_kernels.hpp"
+#include "kokkos_kernels/impl/invert_mass_matrix.hpp"
 
-void benchmark(specfem::kokkos_kernels::domain_kernels<
-                   specfem::wavefield::simulation_field::forward,
-                   specfem::dimension::type::dim2, 5> &kernels,
+namespace specfem {
+namespace kokkos_kernels {
+template <specfem::element::medium_tag medium>
+inline void update_wavefields(specfem::compute::assembly &assembly,
+                              const int istep) {
+  constexpr static auto dimension = specfem::dimension::type::dim2;
+  constexpr static auto wavefield =
+      specfem::wavefield::simulation_field::forward;
+  constexpr static auto ngll = 5;
+
+#define CALL_STIFFNESS_FORCE_UPDATE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG,   \
+                                    BOUNDARY_TAG)                              \
+  if constexpr (dimension == GET_TAG(DIMENSION_TAG) &&                         \
+                medium == GET_TAG(MEDIUM_TAG)) {                               \
+    impl::compute_stiffness_interaction<                                       \
+        dimension, wavefield, ngll, GET_TAG(MEDIUM_TAG),                       \
+        GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG)>(assembly, istep);        \
+  }
+
+  CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
+      CALL_STIFFNESS_FORCE_UPDATE,
+      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
+          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)
+              WHERE(BOUNDARY_TAG_STACEY, BOUNDARY_TAG_NONE,
+                    BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
+                    BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
+
+#undef CALL_STIFFNESS_FORCE_UPDATE
+
+#define CALL_DIVIDE_MASS_MATRIX_FUNCTION(DIMENSION_TAG, MEDIUM_TAG)            \
+  if constexpr (dimension == GET_TAG(DIMENSION_TAG) &&                         \
+                medium == GET_TAG(MEDIUM_TAG)) {                               \
+    impl::divide_mass_matrix<dimension, wavefield, GET_TAG(MEDIUM_TAG)>(       \
+        assembly);                                                             \
+  }
+
+  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
+      CALL_DIVIDE_MASS_MATRIX_FUNCTION,
+      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC))
+
+#undef CALL_DIVIDE_MASS_MATRIX_FUNCTION
+}
+
+} // namespace kokkos_kernels
+} // namespace specfem
+
+void benchmark(specfem::compute::assembly &assembly,
                std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme) {
   constexpr auto elastic = specfem::element::medium_tag::elastic;
 
@@ -11,7 +67,7 @@ void benchmark(specfem::kokkos_kernels::domain_kernels<
   for (const auto [istep, dt] : time_scheme->iterate_forward()) {
     time_scheme->apply_predictor_phase_forward(elastic);
 
-    kernels.update_wavefields<elastic>(istep);
+    specfem::kokkos_kernels::update_wavefields<elastic>(assembly, istep);
     time_scheme->apply_corrector_phase_forward(elastic);
 
     if ((istep + 1) % 400 == 0) {
@@ -69,13 +125,8 @@ void run_benchmark(const YAML::Node &parameter_dict,
       setup.instantiate_property_reader());
   time_scheme->link_assembly(assembly);
 
-  auto kernels = specfem::kokkos_kernels::domain_kernels<
-      specfem::wavefield::simulation_field::forward,
-      specfem::dimension::type::dim2, 5>(assembly);
-  kernels.initialize(time_scheme->get_timestep());
-
   const auto solver_start_time = std::chrono::system_clock::now();
-  benchmark(kernels, time_scheme);
+  benchmark(assembly, time_scheme);
   const auto solver_end_time = std::chrono::system_clock::now();
   std::chrono::duration<double> solver_time =
       solver_end_time - solver_start_time;
