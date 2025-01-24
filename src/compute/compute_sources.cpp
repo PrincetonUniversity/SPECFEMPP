@@ -163,11 +163,6 @@ specfem::compute::sources::sources(
         throw std::runtime_error("Source is outside of the domain");           \
       }                                                                        \
       int ispec = lcoord.ispec;                                                \
-      /* if (h_source_domain_index_mapping(lcoord.ispec) >= 0) {               \
-       *  throw std::runtime_error(                                            \
-       *       "Multiple sources are detected in the same element");           \
-       * }                                                                     \
-       */                                                                      \
       const int global_isource = current_source_indices[isource];              \
       /* setting local source to global element mapping */                     \
       h_element_indices(global_isource) = ispec;                               \
@@ -206,7 +201,6 @@ specfem::compute::sources::sources(
                            GET_NAME(BOUNDARY_TAG)) = 0;                        \
   /* Loop over the sources */                                                  \
   for (int isource = 0; isource < sources.size(); isource++) {                 \
-    int ispec = h_element_indices(isource);                                    \
     if ((h_medium_types(isource) == GET_TAG(MEDIUM_TAG)) &&                    \
         (h_property_types(isource) == GET_TAG(PROPERTY_TAG)) &&                \
         (h_boundary_types(isource) == GET_TAG(BOUNDARY_TAG))) {                \
@@ -394,7 +388,7 @@ specfem::compute::sources::sources(
                              GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),     \
                              GET_NAME(BOUNDARY_TAG))                           \
         ++;                                                                    \
-      } else if (h_wavefield_types(ispec) ==                                   \
+      } else if (h_wavefield_types(isource) ==                                 \
                  specfem::wavefield::simulation_field::backward) {             \
         /* Assign global ispec to local backward element index array */        \
         /* h_element_indices_backward_<dim>_<medium>_<property> = ispec */     \
@@ -416,7 +410,7 @@ specfem::compute::sources::sources(
                              GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG),     \
                              GET_NAME(BOUNDARY_TAG))                           \
         ++;                                                                    \
-      } else if (h_wavefield_types(ispec) ==                                   \
+      } else if (h_wavefield_types(isource) ==                                 \
                  specfem::wavefield::simulation_field::adjoint) {              \
         /* Assign global ispec to local adjoint element index array */         \
         /* h_element_indices_backward_<dim>_<medium>_<property> = ispec */     \
