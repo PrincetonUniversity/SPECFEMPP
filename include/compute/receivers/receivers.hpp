@@ -447,7 +447,7 @@ load_on_device(const MemberType &team_member, const IteratorType &iterator,
 
 #endif
 
-        const int irec = iterator.imap(i);
+        const int irec = iterator_index.imap;
 
         lagrange_interpolant(iterator_index.ielement, index.iz, index.ix, 0) =
             receivers.lagrange_interpolant(irec, index.iz, index.ix, 0);
@@ -501,7 +501,7 @@ store_on_device(const MemberType &team_member, const IteratorType &iterator,
 
 #endif
 
-        const int irec = iterator.imap(i);
+        const int irec = iterator_index.imap;
 
         receivers.seismogram_components(isig_step, iseis, irec, 0) =
             seismogram_components(iterator_index.ielement, 0);
