@@ -325,7 +325,7 @@ target_link_libraries(
   algorithms
   IO
   coupled_interface
-  plotter
+  periodic_tasks
   -lpthread -lm
 )
 
@@ -352,7 +352,7 @@ target_link_libraries(
   coupled_interface
   kokkos_kernels
   solver
-  plotter
+  periodic_tasks
   -lpthread -lm
 )
 
@@ -371,7 +371,7 @@ target_link_libraries(
 #   compute
 #   parameter_reader
 #   writer
-#   plotter
+#   periodic_tasks
 #   domain
 #   coupled_interface
 #   solver
@@ -393,7 +393,7 @@ target_link_libraries(
 #   compute
 #   parameter_reader
 #   writer
-#   plotter
+#   periodic_tasks
 #   domain
 #   coupled_interface
 #   solver

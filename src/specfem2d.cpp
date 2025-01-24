@@ -25,6 +25,7 @@
 #include <pybind11/stl.h>
 #define STRINGIFY(x) #x
 #define MACRO_STRINGIFY(x) STRINGIFY(x)
+#include "periodic_tasks/check_signal.hpp"
 #endif
 // Specfem2d driver
 
@@ -212,16 +213,22 @@ void execute(const YAML::Node &parameter_dict, const YAML::Node &default_dict,
   // --------------------------------------------------------------
   //                   Instantiate plotter
   // --------------------------------------------------------------
-  std::vector<std::shared_ptr<specfem::plotter::plotter> > plotters;
+  std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> > tasks;
   const auto wavefield_plotter = setup.instantiate_wavefield_plotter(assembly);
-  plotters.push_back(wavefield_plotter);
+  tasks.push_back(wavefield_plotter);
+
+#ifdef SPECFEMPP_BINDING_PYTHON
+  const auto signal_task =
+      std::make_shared<specfem::periodic_tasks::check_signal>(10);
+  tasks.push_back(signal_task);
+#endif
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
   //                   Instantiate Solver
   // --------------------------------------------------------------
   std::shared_ptr<specfem::solver::solver> solver =
-      setup.instantiate_solver<5>(dt, assembly, time_scheme, plotters);
+      setup.instantiate_solver<5>(dt, assembly, time_scheme, tasks);
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
