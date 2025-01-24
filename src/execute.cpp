@@ -41,8 +41,15 @@ void execute(
   // --------------------------------------------------------------
   //                   Read mesh and materials
   // --------------------------------------------------------------
-  const auto quadrature = setup.instantiate_quadrature();
+  const auto quadratures = setup.instantiate_quadrature();
+  if (mpi->main_proc()) {
+    std::cout << quadratures << std::endl;
+  }
+
   const auto mesh = specfem::IO::read_mesh(database_filename, mpi);
+  if (mpi->main_proc()) {
+    specfem::IO::print_mesh(mesh, mpi);
+  }
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
@@ -101,7 +108,7 @@ void execute(
   mpi->cout("-------------------------------");
   const type_real dt = setup.get_dt();
   specfem::compute::assembly assembly(
-      mesh, quadrature, sources, receivers, setup.get_seismogram_types(),
+      mesh, quadratures, sources, receivers, setup.get_seismogram_types(),
       setup.get_t0(), dt, nsteps, max_seismogram_time_step,
       nstep_between_samples, setup.get_simulation_type(),
       setup.instantiate_property_reader());

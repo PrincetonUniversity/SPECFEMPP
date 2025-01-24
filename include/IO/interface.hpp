@@ -25,6 +25,17 @@ specfem::mesh::mesh<specfem::dimension::type::dim2>
 read_mesh(const std::string filename, const specfem::MPI::MPI *mpi);
 
 /**
+ * @brief Print the information of a mesh
+ *
+ * @param mesh Mesh object to print
+ * @param mpi pointer to MPI object to manage communication
+ * @return specfem::mesh::mesh Specfem mesh object
+ *
+ */
+void print_mesh(const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
+                const specfem::MPI::MPI *mpi);
+
+/**
  * @brief Read station file
  *
  * Parse receiver stations file and create a vector of

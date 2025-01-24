@@ -185,7 +185,27 @@ specfem::IO::read_mesh(const std::string filename,
 
   stream.close();
 
-  // Print material properties
+  const auto &l_elastic_isotropic =
+      mesh.materials.elastic_isotropic.material_properties;
+  const auto &l_acoustic_isotropic =
+      mesh.materials.acoustic_isotropic.material_properties;
+
+  const auto &l_elastic_anisotropic =
+      mesh.materials.elastic_anisotropic.material_properties;
+
+  assert(l_elastic_isotropic.size() + l_acoustic_isotropic.size() +
+             l_elastic_anisotropic.size() ==
+         mesh.materials.n_materials);
+
+  mesh.tags = specfem::mesh::tags<specfem::dimension::type::dim2>(
+      mesh.materials, mesh.boundaries);
+
+  return mesh;
+}
+
+void specfem::IO::print_mesh(
+    const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
+    const specfem::MPI::MPI *mpi) {
 
   mpi->cout("Material systems:\n"
             "------------------------------");
@@ -193,12 +213,12 @@ specfem::IO::read_mesh(const std::string filename,
   mpi->cout("Number of material systems = " +
             std::to_string(mesh.materials.n_materials) + "\n\n");
 
-  const auto l_elastic_isotropic =
+  const auto &l_elastic_isotropic =
       mesh.materials.elastic_isotropic.material_properties;
-  const auto l_acoustic_isotropic =
+  const auto &l_acoustic_isotropic =
       mesh.materials.acoustic_isotropic.material_properties;
 
-  const auto l_elastic_anisotropic =
+  const auto &l_elastic_anisotropic =
       mesh.materials.elastic_anisotropic.material_properties;
 
   for (const auto material : l_elastic_isotropic) {
@@ -212,13 +232,4 @@ specfem::IO::read_mesh(const std::string filename,
   for (const auto material : l_elastic_anisotropic) {
     mpi->cout(material.print());
   }
-
-  assert(l_elastic_isotropic.size() + l_acoustic_isotropic.size() +
-             l_elastic_anisotropic.size() ==
-         mesh.materials.n_materials);
-
-  mesh.tags = specfem::mesh::tags<specfem::dimension::type::dim2>(
-      mesh.materials, mesh.boundaries);
-
-  return mesh;
 }
