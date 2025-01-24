@@ -99,22 +99,32 @@ public:
   KOKKOS_INLINE_FUNCTION void
   load_on_device(const int timestep, const IndexType index,
                  PointSourceType &point_source) const {
+    // For the source it is important to remember that we are using the
+    // mapped index to access the element and source indices
+    // that means that index actually is a mapped_chunk_index
+    // and we need to use index.ispec to access the element index
+    // and index.imap to access the source index
     for (int component = 0; component < components; component++) {
       point_source.stf(component) =
-          source_time_function(timestep, index.ispec, component);
+          source_time_function(timestep, index.imap, component);
       point_source.lagrange_interpolant(component) =
-          source_array(index.ispec, component, index.iz, index.ix);
+          source_array(index.imap, component, index.iz, index.ix);
     }
   }
 
   template <typename IndexType, typename PointSourceType>
   KOKKOS_INLINE_FUNCTION void
+  // For the source it is important to remember that we are using the
+  // mapped index to access the element and source indices
+  // that means that index actually is a mapped_chunk_index
+  // and we need to use index.ispec to access the element index
+  // and index.imap to access the source index
   store_on_device(const int timestep, const IndexType index,
                   const PointSourceType &point_source) const {
     for (int component = 0; component < components; component++) {
-      source_time_function(timestep, index.ispec, component) =
+      source_time_function(timestep, index.imap, component) =
           point_source.stf(component);
-      source_array(index.ispec, component, index.iz, index.ix) =
+      source_array(index.imap, component, index.iz, index.ix) =
           point_source.lagrange_interpolant(component);
     }
   }
