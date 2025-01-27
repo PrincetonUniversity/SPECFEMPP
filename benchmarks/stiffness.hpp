@@ -18,8 +18,6 @@
 #include "point/properties.hpp"
 #include "point/sources.hpp"
 #include "policies/chunk.hpp"
-#include "divergence.hpp"
-#include "gradient.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -95,6 +93,20 @@ void compute_stiffness_interaction(
   using PointFieldDerivativesType =
       specfem::point::field_derivatives<dimension, medium_tag, using_simd>;
 
+  using VectorPointViewType =
+      specfem::datatype::VectorPointViewType<type_real, 2, components,
+                                             using_simd>;
+  using MemberType = const typename ChunkPolicyType::member_type;
+
+  using ScalarPointViewType =
+      specfem::datatype::ScalarPointViewType<type_real, components, using_simd>;
+
+  constexpr bool is_host_space =
+      std::is_same<typename MemberType::execution_space::memory_space,
+                   Kokkos::HostSpace>::value;
+
+  using datatype = typename simd::datatype;
+
   const auto wgll = assembly.mesh.quadratures.gll.weights;
 
   int scratch_size = ChunkElementFieldType::shmem_size() +
@@ -131,31 +143,61 @@ void compute_stiffness_interaction(
 
           team.team_barrier();
 
-          gradient(
-              team, iterator, partial_derivatives,
-              element_quadrature.hprime_gll, element_field.displacement,
-              // Compute stresses using the gradients
-              [&](const typename ChunkPolicyType::iterator_type::index_type
-                      &iterator_index,
-                  const typename PointFieldDerivativesType::ViewType &du) {
+          Kokkos::parallel_for(
+            Kokkos::TeamThreadRange(team, iterator.chunk_size()), [&](const int &i) {
+                const auto iterator_index = iterator(i);
                 const auto &index = iterator_index.index;
+                const int &ielement = iterator_index.ielement;
+                const int &ix = index.ix;
+                const int &iz = index.iz;
+                const auto &f = element_field.displacement;
+                const auto &quadrature = element_quadrature.hprime_gll;
 
-                PointPartialDerivativesType point_partial_derivatives;
+                datatype df_dxi[components] = { 0.0 };
+                datatype df_dgamma[components] = { 0.0 };
+
+                for (int l = 0; l < ngll; ++l) {
+                for (int icomponent = 0; icomponent < components; ++icomponent) {
+                    df_dxi[icomponent] +=
+                        quadrature(ix, l) * f(ielement, iz, l, icomponent);
+                    df_dgamma[icomponent] +=
+                        quadrature(iz, l) * f(ielement, l, ix, icomponent);
+                }
+                }
+
+                specfem::point::partial_derivatives<specfem::dimension::type::dim2,
+                                                    false, using_simd>
+                    point_partial_derivatives;
+
                 specfem::compute::load_on_device(index, partial_derivatives,
-                                                 point_partial_derivatives);
+                                                point_partial_derivatives);
+
+                VectorPointViewType df;
+
+                for (int icomponent = 0; icomponent < components; ++icomponent) {
+                df(0, icomponent) =
+                    point_partial_derivatives.xix * df_dxi[icomponent] +
+                    point_partial_derivatives.gammax * df_dgamma[icomponent];
+
+                df(1, icomponent) =
+                    point_partial_derivatives.xiz * df_dxi[icomponent] +
+                    point_partial_derivatives.gammaz * df_dgamma[icomponent];
+                }
+
+                PointPartialDerivativesType point_partial_derivatives2;
+                specfem::compute::load_on_device(index, partial_derivatives,
+                                                 point_partial_derivatives2);
 
                 PointPropertyType point_property;
                 specfem::compute::load_on_device(index, properties,
                                                  point_property);
 
-                PointFieldDerivativesType field_derivatives(du);
+                PointFieldDerivativesType field_derivatives(df);
 
                 const auto point_stress = specfem::medium::compute_stress(
                     point_property, field_derivatives);
 
-                const auto F = point_stress * point_partial_derivatives;
-
-                const int &ielement = iterator_index.ielement;
+                const auto F = point_stress * point_partial_derivatives2;
 
                 for (int icomponent = 0; icomponent < components;
                      ++icomponent) {
@@ -164,24 +206,53 @@ void compute_stiffness_interaction(
                                        icomponent) = F(idim, icomponent);
                   }
                 }
-              });
+          });
 
           team.team_barrier();
 
-          divergence(
-              team, iterator, partial_derivatives, wgll,
-              element_quadrature.hprime_wgll, stress_integrand.F,
-              [&, istep = istep](
-                  const typename ChunkPolicyType::iterator_type::index_type
-                      &iterator_index,
-                  const typename PointAccelerationType::ViewType &result) {
+          Kokkos::parallel_for(
+            Kokkos::TeamThreadRange(team, iterator.chunk_size()), [&](const int i) {
+                const auto iterator_index = iterator(i);
                 const auto &index = iterator_index.index;
+                const int ielement = iterator_index.ielement;
+                const int ispec = iterator_index.index.ispec;
+                const int iz = iterator_index.index.iz;
+                const int ix = iterator_index.index.ix;
+                const auto &weights = wgll;
+                const auto &hprimewgll = element_quadrature.hprime_wgll;
+                const auto &f = stress_integrand.F;
+
+                const datatype jacobian =
+                    (is_host_space) ? partial_derivatives.h_jacobian(ispec, iz, ix)
+                                    : partial_derivatives.jacobian(ispec, iz, ix);
+
+                datatype temp1l[components] = { 0.0 };
+                datatype temp2l[components] = { 0.0 };
+
+                for (int l = 0; l < ngll; ++l) {
+                    for (int icomp = 0; icomp < components; ++icomp) {
+                        temp1l[icomp] +=
+                            f(ielement, iz, l, 0, icomp) * hprimewgll(ix, l) * jacobian;
+                    }
+                    for (int icomp = 0; icomp < components; ++icomp) {
+                        temp2l[icomp] +=
+                            f(ielement, l, ix, 1, icomp) * hprimewgll(iz, l) * jacobian;
+                    }
+                }
+
+                ScalarPointViewType result;
+
+                for (int icomp = 0; icomp < components; ++icomp) {
+                    result(icomp) =
+                        weights(iz) * temp1l[icomp] + weights(ix) * temp2l[icomp];
+                }
+
                 PointAccelerationType acceleration(result);
 
                 for (int icomponent = 0; icomponent < components;
                      ++icomponent) {
-                  acceleration.acceleration(icomponent) *=
-                      static_cast<type_real>(-1.0);
+                    acceleration.acceleration(icomponent) *=
+                        static_cast<type_real>(-1.0);
                 }
 
                 PointPropertyType point_property;
@@ -209,7 +280,7 @@ void compute_stiffness_interaction(
 
                 specfem::compute::atomic_add_on_device(index, acceleration,
                                                        field);
-              });
+            });
         }
       });
 
