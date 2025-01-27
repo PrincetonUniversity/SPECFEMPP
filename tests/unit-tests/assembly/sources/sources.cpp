@@ -5,6 +5,7 @@
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
 #include "point/sources.hpp"
+#include "policies/chunk.hpp"
 #include "gtest/gtest.h"
 #include <Kokkos_Core.hpp>
 
@@ -19,10 +20,16 @@ void check_store(specfem::compute::assembly &assembly) {
   const int ngllz = assembly.mesh.ngllz;
   const int ngllx = assembly.mesh.ngllx;
 
-  const auto elements = assembly.sources.get_elements_on_device(
-      MediumTag, PropertyTag, BoundaryTag, WavefieldType);
+  std::cout << "Getting the element and source indices" << std::endl;
+  const auto [element_indices, source_indices] =
+      assembly.sources.get_sources_on_device(MediumTag, PropertyTag,
+                                             BoundaryTag, WavefieldType);
 
-  const int nelements = elements.size();
+  std::cout << "element_indices.size() = " << element_indices.size()
+            << std::endl;
+  std::cout << "source_indices.size() = " << source_indices.size() << std::endl;
+
+  const int nelements = element_indices.size();
 
   constexpr int num_components =
       specfem::element::attributes<Dimension, MediumTag>::components();
@@ -42,17 +49,23 @@ void check_store(specfem::compute::assembly &assembly) {
 
   Kokkos::deep_copy(values_to_store, h_values_to_store);
 
-  using PointType = specfem::point::source<Dimension, MediumTag, WavefieldType>;
-
+  using PointSourceType =
+      specfem::point::source<Dimension, MediumTag, WavefieldType>;
+  using mapped_chunk_index_type =
+      specfem::iterator::impl::mapped_chunk_index_type<
+          false, specfem::dimension::type::dim2>;
   Kokkos::parallel_for(
       "check_store_on_device",
       Kokkos::MDRangePolicy<Kokkos::DefaultExecutionSpace, Kokkos::Rank<3> >(
           { 0, 0, 0 }, { nelements, ngllz, ngllx }),
       KOKKOS_LAMBDA(const int &i, const int &iz, const int &ix) {
-        const int ielement = elements(i);
+        const int ielement = element_indices(i);
+        const int isource = source_indices(i);
 
         const auto index =
             specfem::point::index<Dimension, false>(ielement, iz, ix);
+        const auto mapped_iterator_index =
+            mapped_chunk_index_type(ielement, index, isource);
         specfem::datatype::ScalarPointViewType<type_real, num_components, false>
             stf;
         specfem::datatype::ScalarPointViewType<type_real, num_components, false>
@@ -61,8 +74,9 @@ void check_store(specfem::compute::assembly &assembly) {
           stf(ic) = values_to_store(i);
           lagrange_interpolant(ic) = values_to_store(i);
         }
-        PointType point(stf, lagrange_interpolant);
-        specfem::compute::store_on_device(index, point, sources);
+        PointSourceType point(stf, lagrange_interpolant);
+        specfem::compute::store_on_device(mapped_iterator_index, point,
+                                          sources);
       });
 
   Kokkos::fence();
@@ -79,10 +93,10 @@ void check_load(specfem::compute::assembly &assembly) {
   const int ngllz = assembly.mesh.ngllz;
   const int ngllx = assembly.mesh.ngllx;
 
-  const auto elements = sources.get_elements_on_device(
+  const auto [element_indices, source_indices] = sources.get_sources_on_device(
       MediumTag, PropertyTag, BoundaryTag, WavefieldType);
 
-  const int nelements = elements.size();
+  const int nelements = element_indices.size();
 
   constexpr int num_components =
       specfem::element::attributes<Dimension, MediumTag>::components();
@@ -110,7 +124,7 @@ void check_load(specfem::compute::assembly &assembly) {
       Kokkos::MDRangePolicy<Kokkos::DefaultExecutionSpace, Kokkos::Rank<3> >(
           { 0, 0, 0 }, { nelements, ngllz, ngllx }),
       KOKKOS_LAMBDA(const int &i, const int &iz, const int &ix) {
-        const int ielement = elements(i);
+        const int ielement = element_indices(i);
 
         const auto index =
             specfem::point::index<Dimension, false>(ielement, iz, ix);
@@ -178,7 +192,9 @@ void check_assembly_source_construction(
       specfem::point::source<Dimension, MediumTag,
                              specfem::wavefield::simulation_field::forward>;
 
-  for (auto &source : sources) {
+  const int nsources = sources.size();
+  for (int isource = 0; isource < nsources; isource++) {
+    const auto &source = sources[isource];
     specfem::point::global_coordinates<Dimension> coord(source->get_x(),
                                                         source->get_z());
 
@@ -197,12 +213,18 @@ void check_assembly_source_construction(
         "stf", 1, components);
 
     source->compute_source_time_function(1.0, 0.0, 1, stf);
+    using mapped_chunk_index_type =
+        specfem::iterator::impl::mapped_chunk_index_type<
+            false, specfem::dimension::type::dim2>;
 
     for (int iz = 0; iz < ngllz; iz++) {
       for (int ix = 0; ix < ngllx; ix++) {
         specfem::point::index<Dimension, false> index(lcoord.ispec, iz, ix);
+        const auto mapped_iterator_index =
+            mapped_chunk_index_type(lcoord.ispec, index, isource);
         PointSourceType point;
-        specfem::compute::load_on_host(index, assembly.sources, point);
+        specfem::compute::load_on_host(mapped_iterator_index, assembly.sources,
+                                       point);
 
         for (int ic = 0; ic < components; ic++) {
           const auto lagrange_interpolant = point.lagrange_interpolant(ic);
