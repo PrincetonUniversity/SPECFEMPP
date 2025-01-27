@@ -5,6 +5,7 @@
 #include "compute/properties/properties.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/material_definitions.hpp"
+#include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
 #include "kokkos_abstractions.h"
 #include "point/sources.hpp"
@@ -82,7 +83,9 @@ public:
    * @return Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> View of the
    * indices of sources of the given type
    */
-  Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> get_elements_on_host(
+  std::tuple<Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>,
+             Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> >
+  get_sources_on_host(
       const specfem::element::medium_tag medium,
       const specfem::element::property_tag property,
       const specfem::element::boundary_tag boundary,
@@ -97,7 +100,9 @@ public:
    * @return Kokkos::View<int *, Kokkos::DefaultExecutionSpace> View of the
    * indices of sources of the given type
    */
-  Kokkos::View<int *, Kokkos::DefaultExecutionSpace> get_elements_on_device(
+  std::tuple<Kokkos::View<int *, Kokkos::DefaultExecutionSpace>,
+             Kokkos::View<int *, Kokkos::DefaultExecutionSpace> >
+  get_sources_on_device(
       const specfem::element::medium_tag medium,
       const specfem::element::property_tag property,
       const specfem::element::boundary_tag boundary,
@@ -122,7 +127,15 @@ private:
   IndexViewType::HostMirror
       h_source_domain_index_mapping; ///< Host mirror of
                                      ///< source_domain_index_mapping
-  MediumTagViewType medium_types;    ///< Medium type for every spectral element
+  IndexViewType element_indices;     ///< Mapping for every source to
+                                     ///< local index within source_medium
+  IndexViewType::HostMirror h_element_indices; ///< Host mirror of
+                                               ///< domain_source_index_mapping
+  IndexViewType source_indices;                ///< Mapping for every source to
+                                ///< local index within source_medium
+  IndexViewType::HostMirror h_source_indices; ///< Host mirror of
+                                              ///< h_source_indices
+  MediumTagViewType medium_types; ///< Medium type for every spectral element
   MediumTagViewType::HostMirror h_medium_types; ///< Host mirror of
                                                 ///< medium_types
   WavefieldTagViewType wavefield_types; ///< Wavefield on which source is
@@ -156,22 +169,40 @@ private:
 #define SOURCE_INDICES_VARIABLES_NAME(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, \
                                       BOUNDARY_TAG)                            \
   IndexViewType CREATE_VARIABLE_NAME(                                          \
-      elements_forward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),         \
+      element_indices_forward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),  \
       GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
   IndexViewType CREATE_VARIABLE_NAME(                                          \
-      elements_backward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),        \
+      element_indices_backward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG), \
       GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
   IndexViewType CREATE_VARIABLE_NAME(                                          \
-      elements_adjoint, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),         \
+      element_indices_adjoint, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),  \
       GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
   IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
-      h_elements_forward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),       \
+      h_element_indices_forward, GET_NAME(DIMENSION_TAG),                      \
+      GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));   \
+  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
+      h_element_indices_backward, GET_NAME(DIMENSION_TAG),                     \
+      GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));   \
+  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
+      h_element_indices_adjoint, GET_NAME(DIMENSION_TAG),                      \
+      GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));   \
+  IndexViewType CREATE_VARIABLE_NAME(                                          \
+      source_indices_forward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),   \
+      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
+  IndexViewType CREATE_VARIABLE_NAME(                                          \
+      source_indices_backward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),  \
+      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
+  IndexViewType CREATE_VARIABLE_NAME(                                          \
+      source_indices_adjoint, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),   \
       GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
   IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
-      h_elements_backward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),      \
+      h_source_indices_forward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG), \
       GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
   IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
-      h_elements_adjoint, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),       \
+      h_source_indices_backward, GET_NAME(DIMENSION_TAG),                      \
+      GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));   \
+  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
+      h_source_indices_adjoint, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG), \
       GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));
 
   CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
@@ -184,24 +215,25 @@ private:
 
 #undef SOURCE_INDICES_VARIABLES_NAME
 
-  template <typename IndexType, typename PointSourceType>
+  template <typename IteratorIndexType, typename PointSourceType>
   friend KOKKOS_INLINE_FUNCTION void
-  load_on_device(const IndexType index,
+  load_on_device(const IteratorIndexType iterator_index,
                  const specfem::compute::sources &sources,
                  PointSourceType &point_source);
 
-  template <typename IndexType, typename PointSourceType>
-  friend void load_on_host(const IndexType index,
+  template <typename IteratorIndexType, typename PointSourceType>
+  friend void load_on_host(const IteratorIndexType iterator_index,
                            const specfem::compute::sources &sources,
                            PointSourceType &point_source);
 
-  template <typename IndexType, typename PointSourceType>
+  template <typename IteratorIndexType, typename PointSourceType>
   friend KOKKOS_INLINE_FUNCTION void
-  store_on_device(const IndexType index, const PointSourceType &point_source,
+  store_on_device(const IteratorIndexType iterator_index,
+                  const PointSourceType &point_source,
                   const specfem::compute::sources &sources);
 
-  template <typename IndexType, typename PointSourceType>
-  friend void store_on_host(const IndexType index,
+  template <typename IteratorIndexType, typename PointSourceType>
+  friend void store_on_host(const IteratorIndexType iterator_index,
                             const PointSourceType &point_source,
                             const specfem::compute::sources &sources);
 }; // namespace compute
@@ -220,12 +252,15 @@ private:
  * @param sources Source information for the domain
  * @param point_source Point source object to load source information into
  */
-template <typename IndexType, typename PointSourceType>
+template <typename IteratorIndexType, typename PointSourceType>
 KOKKOS_INLINE_FUNCTION void
-load_on_device(const IndexType index, const specfem::compute::sources &sources,
+load_on_device(const IteratorIndexType iterator_index,
+               const specfem::compute::sources &sources,
                PointSourceType &point_source) {
 
-  static_assert(IndexType::using_simd == false,
+  const auto index = iterator_index.index;
+
+  static_assert(index.using_simd == false,
                 "IndexType must not use SIMD when loading sources");
 
   static_assert(
@@ -235,7 +270,7 @@ load_on_device(const IndexType index, const specfem::compute::sources &sources,
   static_assert(PointSourceType::dimension == specfem::dimension::type::dim2,
                 "PointSourceType must be a 2D point source type");
 
-  static_assert(IndexType::dimension == specfem::dimension::type::dim2,
+  static_assert(index.dimension == specfem::dimension::type::dim2,
                 "IndexType must be a 2D index type");
 
   static_assert(
@@ -245,28 +280,31 @@ load_on_device(const IndexType index, const specfem::compute::sources &sources,
       "PointSourceType must be an acoustic or elastic point source");
 
 #ifndef NDEBUG
+
+  const int isource = iterator_index.imap;
+
   // Checks if the spectral element index is out of bounds
 
   if (index.ispec >= sources.nspec) {
     Kokkos::abort("Invalid spectral element index detected in source");
   }
-
-  // Checks if the spectral element has a source associated with it
-  if (sources.source_domain_index_mapping(index.ispec) < 0) {
-    Kokkos::abort("Invalid spectral element index detected in source");
-  }
-
-  if (sources.medium_types(index.ispec) != PointSourceType::medium_tag) {
+  if (sources.medium_types(isource) != PointSourceType::medium_tag) {
+    std::cout << "compute::sources::load_on_device" << std::endl;
+    std::cout << "    Medium type: "
+              << specfem::element::to_string(sources.medium_types(isource))
+              << std::endl;
+    std::cout << "    PointSourceType medium tag: "
+              << specfem::element::to_string(PointSourceType::medium_tag)
+              << std::endl;
+    std::cout << "    File: " << __FILE__ << std::endl;
+    std::cout << "    Line: " << __LINE__ << std::endl;
     Kokkos::abort("Invalid medium detected in source");
   }
 
-  if (sources.wavefield_types(index.ispec) != PointSourceType::wavefield_tag) {
+  if (sources.wavefield_types(isource) != PointSourceType::wavefield_tag) {
     Kokkos::abort("Invalid wavefield type detected in source");
   }
 #endif
-
-  IndexType lcoord = index;
-  lcoord.ispec = sources.source_domain_index_mapping(index.ispec);
 
 #define SOURCE_MEDIUM_LOAD_ON_DEVICE(DIMENSION_TAG, MEDIUM_TAG)                \
   if constexpr (GET_TAG(DIMENSION_TAG) == specfem::dimension::type::dim2) {    \
@@ -274,7 +312,7 @@ load_on_device(const IndexType index, const specfem::compute::sources &sources,
       sources                                                                  \
           .CREATE_VARIABLE_NAME(source, GET_NAME(DIMENSION_TAG),               \
                                 GET_NAME(MEDIUM_TAG))                          \
-          .load_on_device(sources.timestep, lcoord, point_source);             \
+          .load_on_device(sources.timestep, iterator_index, point_source);     \
     }                                                                          \
   }
 
@@ -301,12 +339,15 @@ load_on_device(const IndexType index, const specfem::compute::sources &sources,
  * @param sources Source information for the domain
  * @param point_source Point source object to load source information into
  */
-template <typename IndexType, typename PointSourceType>
-void load_on_host(const IndexType index,
+template <typename IteratorIndexType, typename PointSourceType>
+void load_on_host(const IteratorIndexType iterator_index,
                   const specfem::compute::sources &sources,
                   PointSourceType &point_source) {
 
-  static_assert(IndexType::using_simd == false,
+  // Get the mapping from the iterator index
+  const auto index = iterator_index.index;
+
+  static_assert(index.using_simd == false,
                 "IndexType must not use SIMD when loading sources");
 
   static_assert(
@@ -316,7 +357,7 @@ void load_on_host(const IndexType index,
   static_assert(PointSourceType::dimension == specfem::dimension::type::dim2,
                 "PointSourceType must be a 2D point source type");
 
-  static_assert(IndexType::dimension == specfem::dimension::type::dim2,
+  static_assert(index.dimension == specfem::dimension::type::dim2,
                 "IndexType must be a 2D index type");
 
   static_assert(
@@ -326,28 +367,30 @@ void load_on_host(const IndexType index,
       "PointSourceType must be an acoustic or elastic point source");
 
 #ifndef NDEBUG
+  const int isource = iterator_index.imap;
+
   // Checks if the spectral element index is out of bounds
-  if (index.ispec >= sources.nspec) {
+  if ((index.ispec < 0) || (sources.nspec <= index.ispec)) {
     Kokkos::abort("Invalid spectral element index detected in source");
   }
 
-  // Checks if the spectral element has a source associated with it
-  if (sources.h_source_domain_index_mapping(index.ispec) < 0) {
-    Kokkos::abort("Invalid spectral element index detected in source");
-  }
-
-  if (sources.h_medium_types(index.ispec) != PointSourceType::medium_tag) {
+  if (sources.h_medium_types(isource) != PointSourceType::medium_tag) {
+    std::cout << "compute::sources::load_on_host" << std::endl;
+    std::cout << "    Medium type: "
+              << specfem::element::to_string(sources.medium_types(isource))
+              << std::endl;
+    std::cout << "    PointSourceType medium tag: "
+              << specfem::element::to_string(PointSourceType::medium_tag)
+              << std::endl;
+    std::cout << "    File: " << __FILE__ << std::endl;
+    std::cout << "    Line: " << __LINE__ << std::endl;
     Kokkos::abort("Invalid medium detected in source");
   }
 
-  if (sources.h_wavefield_types(index.ispec) !=
-      PointSourceType::wavefield_tag) {
+  if (sources.h_wavefield_types(isource) != PointSourceType::wavefield_tag) {
     Kokkos::abort("Invalid wavefield type detected in source");
   }
 #endif
-
-  IndexType lcoord = index;
-  lcoord.ispec = sources.h_source_domain_index_mapping(index.ispec);
 
 #define SOURCE_MEDIUM_LOAD_ON_HOST(DIMENSION_TAG, MEDIUM_TAG)                  \
   if constexpr (GET_TAG(DIMENSION_TAG) == specfem::dimension::type::dim2) {    \
@@ -355,7 +398,7 @@ void load_on_host(const IndexType index,
       sources                                                                  \
           .CREATE_VARIABLE_NAME(source, GET_NAME(DIMENSION_TAG),               \
                                 GET_NAME(MEDIUM_TAG))                          \
-          .load_on_host(sources.timestep, lcoord, point_source);               \
+          .load_on_host(sources.timestep, iterator_index, point_source);       \
     }                                                                          \
   }
 
@@ -382,12 +425,15 @@ void load_on_host(const IndexType index,
  * @param point_source Point source object to load source information into
  * @param sources Source information for the domain
  */
-template <typename IndexType, typename PointSourceType>
+template <typename IteratorIndexType, typename PointSourceType>
 KOKKOS_INLINE_FUNCTION void
-store_on_device(const IndexType index, const PointSourceType &point_source,
+store_on_device(const IteratorIndexType iterator_index,
+                const PointSourceType &point_source,
                 const specfem::compute::sources &sources) {
 
-  static_assert(IndexType::using_simd == false,
+  const auto index = iterator_index.index;
+
+  static_assert(index.using_simd == false,
                 "IndexType must not use SIMD when storing sources");
 
   static_assert(
@@ -397,7 +443,7 @@ store_on_device(const IndexType index, const PointSourceType &point_source,
   static_assert(PointSourceType::dimension == specfem::dimension::type::dim2,
                 "PointSourceType must be a 2D point source type");
 
-  static_assert(IndexType::dimension == specfem::dimension::type::dim2,
+  static_assert(index.dimension == specfem::dimension::type::dim2,
                 "IndexType must be a 2D index type");
 
   static_assert(
@@ -407,25 +453,31 @@ store_on_device(const IndexType index, const PointSourceType &point_source,
       "PointSourceType must be an acoustic or elastic point source");
 
 #ifndef NDEBUG
-  if (index.ispec >= sources.nspec) {
+  const int isource = iterator_index.imap;
+
+  if ((index.ispec < 0) || (sources.nspec <= index.ispec)) {
     Kokkos::abort("Invalid spectral element index detected in source");
   }
 
-  if (sources.source_domain_index_mapping(index.ispec) < 0) {
-    Kokkos::abort("Invalid spectral element index detected in source");
-  }
-
-  if (sources.medium_types(index.ispec) != PointSourceType::medium_tag) {
+  if (sources.medium_types(isource) != PointSourceType::medium_tag) {
+    std::cout << "compute::sources::store_on_device" << std::endl;
+    std::cout << "    isource: " << isource << std::endl;
+    std::cout << "    ispec:   " << index.ispec << std::endl;
+    std::cout << "    Medium type: "
+              << specfem::element::to_string(sources.medium_types(isource))
+              << std::endl;
+    std::cout << "    PointSourceType medium tag: "
+              << specfem::element::to_string(PointSourceType::medium_tag)
+              << std::endl;
+    std::cout << "    File: " << __FILE__ << std::endl;
+    std::cout << "    Line: " << __LINE__ << std::endl;
     Kokkos::abort("Invalid medium detected in source");
   }
 
-  if (sources.wavefield_types(index.ispec) != PointSourceType::wavefield_tag) {
+  if (sources.wavefield_types(isource) != PointSourceType::wavefield_tag) {
     Kokkos::abort("Invalid wavefield type detected in source");
   }
 #endif
-
-  IndexType lcoord = index;
-  lcoord.ispec = sources.source_domain_index_mapping(index.ispec);
 
 #define SOURCE_MEDIUM_STORE_ON_DEVICE(DIMENSION_TAG, MEDIUM_TAG)               \
   if constexpr (GET_TAG(DIMENSION_TAG) == specfem::dimension::type::dim2) {    \
@@ -433,7 +485,7 @@ store_on_device(const IndexType index, const PointSourceType &point_source,
       sources                                                                  \
           .CREATE_VARIABLE_NAME(source, GET_NAME(DIMENSION_TAG),               \
                                 GET_NAME(MEDIUM_TAG))                          \
-          .store_on_device(sources.timestep, lcoord, point_source);            \
+          .store_on_device(sources.timestep, iterator_index, point_source);    \
     }                                                                          \
   }
 
@@ -460,11 +512,14 @@ store_on_device(const IndexType index, const PointSourceType &point_source,
  * @param point_source Point source object to load source information into
  * @param sources Source information for the domain
  */
-template <typename IndexType, typename PointSourceType>
-void store_on_host(const IndexType index, const PointSourceType &point_source,
+template <typename IteratorIndexType, typename PointSourceType>
+void store_on_host(const IteratorIndexType iterator_index,
+                   const PointSourceType &point_source,
                    const specfem::compute::sources &sources) {
 
-  static_assert(IndexType::using_simd == false,
+  const auto index = iterator_index.index;
+
+  static_assert(index.using_simd == false,
                 "IndexType must not use SIMD when storing sources");
 
   static_assert(
@@ -474,7 +529,7 @@ void store_on_host(const IndexType index, const PointSourceType &point_source,
   static_assert(PointSourceType::dimension == specfem::dimension::type::dim2,
                 "PointSourceType must be a 2D point source type");
 
-  static_assert(IndexType::dimension == specfem::dimension::type::dim2,
+  static_assert(index.dimension == specfem::dimension::type::dim2,
                 "IndexType must be a 2D index type");
 
   static_assert(
@@ -484,26 +539,31 @@ void store_on_host(const IndexType index, const PointSourceType &point_source,
       "PointSourceType must be an acoustic or elastic point source");
 
 #ifndef NDEBUG
-  if (index.ispec >= sources.nspec) {
+  const int isource = iterator_index.imap;
+
+  if ((index.ispec < 0) || (sources.nspec <= index.ispec)) {
     Kokkos::abort("Invalid spectral element index detected in source");
   }
 
-  if (sources.h_source_domain_index_mapping(index.ispec) < 0) {
-    Kokkos::abort("Invalid spectral element index detected in source");
-  }
-
-  if (sources.h_medium_types(index.ispec) != PointSourceType::medium_tag) {
+  if (sources.h_medium_types(isource) != PointSourceType::medium_tag) {
+    std::cout << "compute::sources::store_on_host" << std::endl;
+    std::cout << "    isource: " << isource << std::endl;
+    std::cout << "    ispec:   " << index.ispec << std::endl;
+    std::cout << "    Medium type: "
+              << specfem::element::to_string(sources.h_medium_types(isource))
+              << std::endl;
+    std::cout << "    PointSourceType medium tag: "
+              << specfem::element::to_string(PointSourceType::medium_tag)
+              << std::endl;
+    std::cout << "    File: " << __FILE__ << std::endl;
+    std::cout << "    Line: " << __LINE__ << std::endl;
     Kokkos::abort("Invalid medium detected in source");
   }
 
-  if (sources.h_wavefield_types(index.ispec) !=
-      PointSourceType::wavefield_tag) {
+  if (sources.h_wavefield_types(isource) != PointSourceType::wavefield_tag) {
     Kokkos::abort("Invalid wavefield type detected in source");
   }
 #endif
-
-  IndexType lcoord = index;
-  lcoord.ispec = sources.h_source_domain_index_mapping(index.ispec);
 
 #define SOURCE_MEDIUM_STORE_ON_HOST(DIMENSION_TAG, MEDIUM_TAG)                 \
   if constexpr (GET_TAG(DIMENSION_TAG) == specfem::dimension::type::dim2) {    \
@@ -511,7 +571,7 @@ void store_on_host(const IndexType index, const PointSourceType &point_source,
       sources                                                                  \
           .CREATE_VARIABLE_NAME(source, GET_NAME(DIMENSION_TAG),               \
                                 GET_NAME(MEDIUM_TAG))                          \
-          .store_on_host(sources.timestep, lcoord, point_source);              \
+          .store_on_host(sources.timestep, iterator_index, point_source);      \
     }                                                                          \
   }
 
