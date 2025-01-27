@@ -66,6 +66,7 @@ struct mapped_chunk_index_type
   using Base = chunk_index_type<UseSIMD, DimensionType>;
   int imap; ///< Index of the mapped element
 
+  KOKKOS_INLINE_FUNCTION
   mapped_chunk_index_type(const int ielement,
                           const specfem::point::index<DimensionType> index,
                           const int imap)
@@ -257,6 +258,7 @@ class mapped_chunk<ViewType, specfem::dimension::type::dim2, SIMD>
                                              Base::dimension>; ///< Index
 
 public:
+  KOKKOS_INLINE_FUNCTION
   mapped_chunk(const ViewType &indices, const ViewType &mapping,
                const int ngllz, const int ngllx)
       : Base(indices, ngllz, ngllx), mapping(mapping) {}
