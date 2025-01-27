@@ -1,7 +1,5 @@
 #pragma once
 
-#include "algorithms/divergence.hpp"
-#include "algorithms/gradient.hpp"
 #include "boundary_conditions/boundary_conditions.hpp"
 #include "chunk_element/field.hpp"
 #include "chunk_element/stress_integrand.hpp"
@@ -20,6 +18,8 @@
 #include "point/properties.hpp"
 #include "point/sources.hpp"
 #include "policies/chunk.hpp"
+#include "divergence.hpp"
+#include "gradient.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -131,7 +131,7 @@ void compute_stiffness_interaction(
 
           team.team_barrier();
 
-          specfem::algorithms::gradient(
+          gradient(
               team, iterator, partial_derivatives,
               element_quadrature.hprime_gll, element_field.displacement,
               // Compute stresses using the gradients
@@ -168,7 +168,7 @@ void compute_stiffness_interaction(
 
           team.team_barrier();
 
-          specfem::algorithms::divergence(
+          divergence(
               team, iterator, partial_derivatives, wgll,
               element_quadrature.hprime_wgll, stress_integrand.F,
               [&, istep = istep](

@@ -1,35 +1,25 @@
 #include "execute.hpp"
 #include "stiffness.hpp"
-#include "divide.hpp"
+// #include "divide.hpp"
 
 namespace specfem {
 namespace benchmarks {
-
-template <specfem::element::medium_tag medium>
-inline void update_wavefields(specfem::compute::assembly &assembly,
-                              const int istep) {
-
-  compute_stiffness_interaction<medium, specfem::element::property_tag::isotropic>(
-      assembly, istep);
-
-  if constexpr (medium == specfem::element::medium_tag::elastic) {
-    compute_stiffness_interaction<medium, specfem::element::property_tag::anisotropic>(assembly, istep);
-  }
-
-  divide_mass_matrix<dimension, wavefield, medium>(assembly);
-}
 
 void benchmark(specfem::compute::assembly &assembly,
                std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme) {
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
   constexpr auto elastic = specfem::element::medium_tag::elastic;
+  constexpr auto isotropic = specfem::element::property_tag::isotropic;
+  constexpr auto anisotropic = specfem::element::property_tag::anisotropic;
 
   const int nstep = time_scheme->get_max_timestep();
 
   for (const auto [istep, dt] : time_scheme->iterate_forward()) {
-
-    update_wavefields<acoustic>(assembly, istep);
-    update_wavefields<elastic>(assembly, istep);
+    compute_stiffness_interaction<acoustic, isotropic>(assembly, istep);
+    compute_stiffness_interaction<elastic, isotropic>(assembly, istep);
+    compute_stiffness_interaction<elastic, anisotropic>(assembly, istep);
+    // divide_mass_matrix<dimension, wavefield, acoustic>(assembly);
+    // divide_mass_matrix<dimension, wavefield, elastic>(assembly);
 
     // if ((istep + 1) % 400 == 0) {
     //   std::cout << "Progress : executed " << istep + 1 << " steps of " <<
