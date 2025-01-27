@@ -1,6 +1,6 @@
 # Wave propagation through homogeneous medium with no interfaces
 
-In this example we simulate wave propagation through a 2-dimensional homogeneous medium. For a step-by-step guide on this example, please refer to the [documentation](https://specfem2d-kokkos.readthedocs.io/en/latest/cookbooks/example_01.html).
+In this example we simulate wave propagation through a 2-dimensional homogeneous medium. For a step-by-step guide on this example, please refer to the [documentation](https://specfem2d-kokkos.readthedocs.io/en/latest/cookbooks/dim2/homogeneous-medium/index.html).
 
 ## Running the examples
 

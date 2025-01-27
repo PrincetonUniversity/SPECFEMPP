@@ -1,6 +1,6 @@
 # Wave propagration through fluid-solid interface
 
-This example creates the fluid-solid example with flat ocean bottom from [Komatitsch et. al.](https://doi.org/10.1190/1.1444758). For a step-by-step guide on this example, please refer to the [documentation](https://specfem2d-kokkos.readthedocs.io/en/latest/cookbooks/example_02.html).
+This example creates the fluid-solid example with flat ocean bottom from [Komatitsch et. al.](https://doi.org/10.1190/1.1444758). For a step-by-step guide on this example, please refer to the [documentation](https://specfem2d-kokkos.readthedocs.io/en/latest/cookbooks/dim2/fluid-solid-interface/index.html).
 
 ## Running the examples
 
