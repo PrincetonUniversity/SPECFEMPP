@@ -19,6 +19,7 @@ tests/regression-tests/*/gpu/*.yaml
 *.o
 */OUTPUT_FILES/*
 *.gnu
+benchmarks/*/Par_File
 examples/*/Par_File
 *OUTPUT_FILES*
 *.sqlite

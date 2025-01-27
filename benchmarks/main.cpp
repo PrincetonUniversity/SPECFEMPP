@@ -1,7 +1,10 @@
 #include "execute.hpp"
+#include "stiffness.hpp"
+#include "divide.hpp"
 
 namespace specfem {
-namespace kokkos_kernels {
+namespace benchmarks {
+
 template <specfem::element::medium_tag medium>
 inline void update_wavefields(specfem::compute::assembly &assembly,
                               const int istep) {
@@ -10,23 +13,20 @@ inline void update_wavefields(specfem::compute::assembly &assembly,
       specfem::wavefield::simulation_field::forward;
   constexpr static auto ngll = 5;
 
-  impl::compute_stiffness_interaction<dimension, wavefield, ngll, medium,
+  compute_stiffness_interaction<dimension, wavefield, ngll, medium,
                                       specfem::element::property_tag::isotropic,
                                       specfem::element::boundary_tag::none>(
       assembly, istep);
 
   if constexpr (medium == specfem::element::medium_tag::elastic) {
-    impl::compute_stiffness_interaction<
+    compute_stiffness_interaction<
         dimension, wavefield, ngll, medium,
         specfem::element::property_tag::anisotropic,
         specfem::element::boundary_tag::none>(assembly, istep);
   }
 
-  impl::divide_mass_matrix<dimension, wavefield, medium>(assembly);
+  divide_mass_matrix<dimension, wavefield, medium>(assembly);
 }
-
-} // namespace kokkos_kernels
-} // namespace specfem
 
 void benchmark(specfem::compute::assembly &assembly,
                std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme) {
@@ -37,8 +37,8 @@ void benchmark(specfem::compute::assembly &assembly,
 
   for (const auto [istep, dt] : time_scheme->iterate_forward()) {
 
-    specfem::kokkos_kernels::update_wavefields<acoustic>(assembly, istep);
-    specfem::kokkos_kernels::update_wavefields<elastic>(assembly, istep);
+    update_wavefields<acoustic>(assembly, istep);
+    update_wavefields<elastic>(assembly, istep);
 
     // if ((istep + 1) % 400 == 0) {
     //   std::cout << "Progress : executed " << istep + 1 << " steps of " <<
@@ -104,6 +104,9 @@ void run_benchmark(const YAML::Node &parameter_dict,
   std::cout << " " << solver_time.count() << "s\n" << std::endl;
 }
 
+} // namespace kokkos_kernels
+} // namespace specfem
+
 int main(int argc, char **argv) {
   // Initialize MPI
   specfem::MPI::MPI *mpi = new specfem::MPI::MPI(&argc, &argv);
@@ -113,11 +116,11 @@ int main(int argc, char **argv) {
     const std::string default_file = __default_file__;
     const YAML::Node default_dict = YAML::LoadFile(default_file);
     std::cout << "Acoustic:";
-    run_benchmark(YAML::LoadFile(__benchmark_acoustic__), default_dict, mpi);
+    specfem::benchmarks::run_benchmark(YAML::LoadFile(__benchmark_acoustic__), default_dict, mpi);
     std::cout << "Elastic isotropic:";
-    run_benchmark(YAML::LoadFile(__benchmark_iso__), default_dict, mpi);
+    specfem::benchmarks::run_benchmark(YAML::LoadFile(__benchmark_iso__), default_dict, mpi);
     std::cout << "Elastic anisotropic:";
-    run_benchmark(YAML::LoadFile(__benchmark_aniso__), default_dict, mpi);
+    specfem::benchmarks::run_benchmark(YAML::LoadFile(__benchmark_aniso__), default_dict, mpi);
   }
   // Finalize Kokkos
   Kokkos::finalize();
