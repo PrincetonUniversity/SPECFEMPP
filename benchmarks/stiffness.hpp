@@ -25,23 +25,21 @@
 namespace specfem {
 namespace benchmarks {
 
-template <specfem::dimension::type DimensionType,
-          specfem::wavefield::simulation_field WavefieldType, int NGLL,
-          specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag,
-          specfem::element::boundary_tag BoundaryTag>
+constexpr static auto dimension = specfem::dimension::type::dim2;
+constexpr static auto wavefield =
+    specfem::wavefield::simulation_field::forward;
+constexpr static auto ngll = 5;
+constexpr static auto boundary_tag = specfem::element::boundary_tag::none;
+
+template <specfem::element::medium_tag MediumTag, specfem::element::property_tag PropertyTag>
 void compute_stiffness_interaction(
     const specfem::compute::assembly &assembly, const int &istep) {
 
   constexpr auto medium_tag = MediumTag;
   constexpr auto property_tag = PropertyTag;
-  constexpr auto boundary_tag = BoundaryTag;
-  constexpr int ngll = NGLL;
-  constexpr auto wavefield = WavefieldType;
-  constexpr auto dimension = DimensionType;
 
   const auto elements = assembly.element_types.get_elements_on_device(
-      MediumTag, PropertyTag, BoundaryTag);
+      MediumTag, PropertyTag, boundary_tag);
 
   const int nelements = elements.extent(0);
 

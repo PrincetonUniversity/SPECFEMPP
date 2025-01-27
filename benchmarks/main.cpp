@@ -8,21 +8,12 @@ namespace benchmarks {
 template <specfem::element::medium_tag medium>
 inline void update_wavefields(specfem::compute::assembly &assembly,
                               const int istep) {
-  constexpr static auto dimension = specfem::dimension::type::dim2;
-  constexpr static auto wavefield =
-      specfem::wavefield::simulation_field::forward;
-  constexpr static auto ngll = 5;
 
-  compute_stiffness_interaction<dimension, wavefield, ngll, medium,
-                                      specfem::element::property_tag::isotropic,
-                                      specfem::element::boundary_tag::none>(
+  compute_stiffness_interaction<medium, specfem::element::property_tag::isotropic>(
       assembly, istep);
 
   if constexpr (medium == specfem::element::medium_tag::elastic) {
-    compute_stiffness_interaction<
-        dimension, wavefield, ngll, medium,
-        specfem::element::property_tag::anisotropic,
-        specfem::element::boundary_tag::none>(assembly, istep);
+    compute_stiffness_interaction<medium, specfem::element::property_tag::anisotropic>(assembly, istep);
   }
 
   divide_mass_matrix<dimension, wavefield, medium>(assembly);

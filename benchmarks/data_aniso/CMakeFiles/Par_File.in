@@ -108,7 +108,7 @@ interfacesfile                  = @CMAKE_SOURCE_DIR@/benchmarks/data_aniso/topoa
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0           # abscissa of left side of the model
 xmax                            = 0.33           # abscissa of right side of the model
-nx                              = 160             # number of elements along X
+nx                              = 1200             # number of elements along X
 
 # Stacey ABC
 STACEY_ABSORBING_CONDITIONS     = .false.
@@ -122,7 +122,7 @@ absorbleft                      = .false.
 # define the different regions of the model in the (nx,nz) spectral-element mesh
 nbregions                       = 1              # then set below the different regions and model number for each region
 # format of each line: nxmin nxmax nzmin nzmax material_number
-1 160 1   60 1
+1 1200 1   400 1
 
 #-----------------------------------------------------------
 #
