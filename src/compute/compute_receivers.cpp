@@ -176,6 +176,11 @@ specfem::compute::receivers::receivers(
       CREATE_VARIABLE_NAME(elements, GET_NAME(DIMENTION_TAG),                  \
                            GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)),      \
       CREATE_VARIABLE_NAME(h_elements, GET_NAME(DIMENTION_TAG),                \
+                           GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)));     \
+  Kokkos::deep_copy(                                                           \
+      CREATE_VARIABLE_NAME(receiver_indices, GET_NAME(DIMENTION_TAG),          \
+                           GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)),      \
+      CREATE_VARIABLE_NAME(h_receiver_indices, GET_NAME(DIMENTION_TAG),        \
                            GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)));
 
   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
