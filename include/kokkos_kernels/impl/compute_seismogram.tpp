@@ -27,12 +27,12 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
   constexpr int ngll = NGLL;
   constexpr auto dimension = DimensionType;
 
-  const auto elements =
-      assembly.receivers.get_elements_on_device(MediumTag, PropertyTag);
+  const auto [elements, receiver_indices] =
+      assembly.receivers.get_indices_on_device(MediumTag, PropertyTag);
 
-  const int nelements = elements.extent(0);
+  const int nreceivers = receiver_indices.extent(0);
 
-  if (nelements == 0)
+  if (nreceivers == 0)
     return;
 
   auto &receivers = assembly.receivers;
@@ -61,7 +61,7 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
                                              lane_size, no_simd,
                                              Kokkos::DefaultExecutionSpace>;
 
-  using ChunkPolicy = specfem::policy::element_chunk<ParallelConfig>;
+  using ChunkPolicy = specfem::policy::mapped_element_chunk<ParallelConfig>;
   using ChunkElementFieldType = specfem::chunk_element::field<
       ParallelConfig::chunk_size, ngll, DimensionType, MediumTag,
       specfem::kokkos::DevScratchSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>,
@@ -84,7 +84,7 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
 
   receivers.set_seismogram_step(isig_step);
 
-  ChunkPolicy policy(elements, ngll, ngll);
+  ChunkPolicy policy(elements, receiver_indices, ngll, ngll);
 
   for (int iseis = 0; iseis < nseismograms; ++iseis) {
 
@@ -112,12 +112,12 @@ void specfem::kokkos_kernels::impl::compute_seismograms(
                 team_member.league_rank() * ChunkPolicy::tile_size * simd_size +
                 tile;
 
-            if (starting_element_index >= nelements) {
+            if (starting_element_index >= nreceivers) {
               break;
             }
 
             const auto iterator =
-                policy.league_iterator(starting_element_index);
+                policy.mapped_league_iterator(starting_element_index);
 
             specfem::compute::load_on_device(team_member, iterator, field,
                                              element_field);
