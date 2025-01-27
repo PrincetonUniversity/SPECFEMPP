@@ -4,10 +4,28 @@
 #include "point/coordinates.hpp"
 #include <Kokkos_Core.hpp>
 #include <string>
+#include <tuple>
 #include <type_traits>
 
-// only used for specfem::chunk_edge::edge_index
-#include "chunk_edge/field.hpp"
+KOKKOS_INLINE_FUNCTION
+static std::tuple<int, int> zx_on_edge(const int igll,
+                                       const specfem::enums::edge::type edge,
+                                       const int ngll) {
+  switch (edge) {
+  case specfem::enums::edge::type::TOP:
+    return std::make_tuple(ngll - 1, igll);
+  case specfem::enums::edge::type::BOTTOM:
+    return std::make_tuple(0, igll);
+  case specfem::enums::edge::type::LEFT:
+    return std::make_tuple(igll, 0);
+  case specfem::enums::edge::type::RIGHT:
+    return std::make_tuple(igll, ngll - 1);
+  default: // none
+    throw std::runtime_error(
+        "Attempting to convert (igll, edge=none) to (iz,ix) pair.");
+    return std::make_tuple(-1, -1);
+  }
+}
 
 namespace specfem {
 namespace iterator {
@@ -21,23 +39,26 @@ namespace impl {
  * @tparam DimensionType Dimension type of the elements within this iterator.
  */
 template <bool UseSIMD, specfem::dimension::type DimensionType>
-struct chunk_index_type;
+struct chunk_edge_index_type;
 
 /**
  * @brief Template specialization when using SIMD.
  *
  */
 template <specfem::dimension::type DimensionType>
-struct chunk_index_type<true, DimensionType> {
+struct chunk_edge_index_type<true, DimensionType> {
   constexpr static auto dimension = DimensionType; ///< Dimension type
-  int ielement; ///< Element index within the iterator range
+  int ielement;                    ///< Element index within the iterator range
+  int igll;                        ///< point index along the edge
+  specfem::enums::edge::type edge; ///< Edge associated with this iteration
   specfem::point::simd_index<dimension> index; ///< SIMD index of the quadrature
                                                ///< point(s)
 
   KOKKOS_INLINE_FUNCTION
-  chunk_index_type(const int ielement,
-                   const specfem::point::simd_index<dimension> index)
-      : ielement(ielement), index(index) {}
+  chunk_edge_index_type(const int ielement, const int igll,
+                        const specfem::enums::edge::type edge,
+                        const specfem::point::simd_index<dimension> index)
+      : ielement(ielement), index(index), igll(igll), edge(edge) {}
 };
 
 /**
@@ -45,15 +66,18 @@ struct chunk_index_type<true, DimensionType> {
  *
  */
 template <specfem::dimension::type DimensionType>
-struct chunk_index_type<false, DimensionType> {
+struct chunk_edge_index_type<false, DimensionType> {
   constexpr static auto dimension = DimensionType; ///< Dimension type
-  int ielement; ///< Element index within the iterator range
+  int ielement;                    ///< Element index within the iterator range
+  int igll;                        ///< point index along the edge
+  specfem::enums::edge::type edge; ///< Edge associated with this iteration
   specfem::point::index<dimension> index; ///< Index of the quadrature point
 
   KOKKOS_INLINE_FUNCTION
-  chunk_index_type(const int ielement,
-                   const specfem::point::index<dimension> index)
-      : ielement(ielement), index(index){};
+  chunk_edge_index_type(const int ielement, const int igll,
+                        specfem::enums::edge::type edge,
+                        const specfem::point::index<dimension> index)
+      : ielement(ielement), index(index), igll(igll), edge(edge){};
 };
 } // namespace impl
 
@@ -65,16 +89,18 @@ struct chunk_index_type<false, DimensionType> {
  * @tparam DimensionType Dimension type of the elements within this iterator.
  * @tparam SIMD SIMD type to use simd operations @ref specfem::datatypes::simd
  */
-template <typename ViewType, specfem::dimension::type DimensionType,
-          typename SIMD>
-class chunk;
+template <typename ElementIndexViewType, typename EdgeTypeViewType,
+          specfem::dimension::type DimensionType, typename SIMD>
+class chunk_edge;
 
 /**
  * @brief Template specialization for 2D elements.
  *
  */
-template <typename ViewType, typename SIMD>
-class chunk<ViewType, specfem::dimension::type::dim2, SIMD> {
+template <typename ElementIndexViewType, typename EdgeTypeViewType,
+          typename SIMD>
+class chunk_edge<ElementIndexViewType, EdgeTypeViewType,
+                 specfem::dimension::type::dim2, SIMD> {
 public:
   /**
    * @name Compile-time constants
@@ -91,75 +117,73 @@ public:
    */
   ///@{
   using simd = SIMD; ///< SIMD type
-  using index_type =
-      typename impl::chunk_index_type<simd::using_simd, dimension>; ///< Index
-                                                                    ///< type
+  using index_type = typename impl::chunk_edge_index_type<simd::using_simd,
+                                                          dimension>; ///< Index
+                                                                      ///< type
   ///@}
 
 private:
   constexpr static bool using_simd = simd::using_simd;
   constexpr static int simd_size = simd::size();
 
-  ViewType indices; ///< View of indices of elements within this iterator
-  int num_elements; ///< Number of elements within this iterator
-  int ngllz;        ///< Number of GLL points in the z-direction
-  int ngllx;        ///< Number of GLL points in the x-direction
+  ElementIndexViewType indices; ///< View of ispec indices of entries within
+                                ///< this iterator
+  EdgeTypeViewType edges; ///< View of edges of entries within this iterator
+  int num_elements;       ///< Number of elements within this iterator
+  int ngll;               ///< Number of GLL points along each edge
 
   KOKKOS_INLINE_FUNCTION
-  chunk(const ViewType &indices, const int ngllz, const int ngllx,
-        std::true_type)
-      : indices(indices), num_elements(indices.extent(0) / simd_size +
-                                       (indices.extent(0) % simd_size != 0)),
-        ngllz(ngllz), ngllx(ngllx) {}
+  chunk_edge(const ElementIndexViewType &indices, const EdgeTypeViewType &edges,
+             const int ngll, std::true_type)
+      : indices(indices), edges(edges),
+        num_elements(indices.extent(0) / simd_size +
+                     (indices.extent(0) % simd_size != 0)),
+        ngll(ngll) {}
 
   KOKKOS_INLINE_FUNCTION
-  chunk(const ViewType &indices, const int ngllz, const int ngllx,
-        std::false_type)
-      : indices(indices), num_elements(indices.extent(0)), ngllz(ngllz),
-        ngllx(ngllx) {}
+  chunk_edge(const ElementIndexViewType &indices, const EdgeTypeViewType &edges,
+             const int ngll, std::false_type)
+      : indices(indices), edges(edges), num_elements(indices.extent(0)),
+        ngll(ngll) {}
 
   KOKKOS_INLINE_FUNCTION
-  impl::chunk_index_type<false, dimension> operator()(const int i,
-                                                      std::false_type) const {
+  impl::chunk_edge_index_type<false, dimension>
+  operator()(const int i, std::false_type) const {
 #ifdef KOKKOS_ENABLE_CUDA
     int ielement = i % num_elements;
-    int ispec = indices(ielement);
-    int xz = i / num_elements;
-    const int iz = xz / ngllz;
-    const int ix = xz % ngllz;
+    int igll = i / num_elements;
 #else
-    const int ix = i % ngllx;
-    const int iz = (i / ngllx) % ngllz;
-    const int ielement = i / (ngllz * ngllx);
-    int ispec = indices(ielement);
+    const int igll = i % ngll;
+    const int ielement = i / ngll;
 #endif
-    return impl::chunk_index_type<false, dimension>(
-        ielement, specfem::point::index<dimension>(ispec, iz, ix));
+    const int ispec = indices(ielement);
+    const auto edge = edges(ielement);
+    const auto [iz, ix] = zx_on_edge(igll, edge, ngll);
+    return impl::chunk_edge_index_type<false, dimension>(
+        ielement, igll, edge, specfem::point::index<dimension>(ispec, iz, ix));
   }
 
   KOKKOS_INLINE_FUNCTION
-  impl::chunk_index_type<true, dimension> operator()(const int i,
-                                                     std::true_type) const {
+  impl::chunk_edge_index_type<true, dimension>
+  operator()(const int i, std::true_type) const {
 #ifdef KOKKOS_ENABLE_CUDA
     int ielement = i % num_elements;
     int simd_elements = (simd_size + ielement > indices.extent(0))
                             ? indices.extent(0) - ielement
                             : simd_size;
-    int ispec = indices(ielement);
-    int xz = i / num_elements;
-    const int iz = xz / ngllz;
-    const int ix = xz % ngllz;
+    int igll = i / num_elements;
 #else
-    const int ix = i % ngllx;
-    const int iz = (i / ngllx) % ngllz;
-    const int ielement = i / (ngllz * ngllx);
+    const int igll = i % ngll;
+    const int ielement = i / ngll;
     int simd_elements = (simd_size + ielement > indices.extent(0))
                             ? indices.extent(0) - ielement
                             : simd_size;
-    int ispec = indices(ielement);
 #endif
-    return impl::chunk_index_type<true, dimension>(
-        ielement,
+    const int ispec = indices(ielement);
+    const auto edge = edges(ielement);
+    const auto [iz, ix] = zx_on_edge(igll, edge, ngll);
+    return impl::chunk_edge_index_type<true, dimension>(
+        ielement, igll, edge,
         specfem::point::simd_index<dimension>(ispec, simd_elements, iz, ix));
   }
 
@@ -173,18 +197,25 @@ public:
    * @brief Construct a new chunk iterator with a given view of indices.
    *
    * @param indices View of indices of elements within this iterator
-   * @param ngllz Number of GLL points in the z-direction
-   * @param ngllx Number of GLL points in the x-direction
+   * @param ngll Number of GLL points along each edge
    */
   KOKKOS_INLINE_FUNCTION
-  chunk(const ViewType &indices, int ngllz, int ngllx)
-      : chunk(indices, ngllz, ngllx,
-              std::integral_constant<bool, using_simd>()) {
+  chunk_edge(const ElementIndexViewType &indices, const EdgeTypeViewType &edges,
+             int ngll)
+      : chunk_edge(indices, edges, ngll,
+                   std::integral_constant<bool, using_simd>()) {
 #if KOKKOS_VERSION < 40100
-    static_assert(ViewType::Rank == 1, "View must be rank 1");
+    static_assert(ElementIndexViewType::Rank == 1, "View must be rank 1");
+    static_assert(EdgeTypeViewType::Rank == 1, "View must be rank 1");
 #else
-    static_assert(ViewType::rank() == 1, "View must be rank 1");
+    static_assert(ElementIndexViewType::rank() == 1, "View must be rank 1");
+    static_assert(EdgeTypeViewType::rank() == 1, "View must be rank 1");
 #endif
+    // It should be safe to assume iterator view types have same extent.
+    // if(indices.extent(0) != edges.extent(0)){
+    //   throw std::runtime_error("Attempting to create a chunk_edge policy with
+    //   unequally sized views for element index and edge type.");
+    // }
   }
   ///@}
 
@@ -194,7 +225,7 @@ public:
    * @return int Number of quadrature points within this chunk
    */
   KOKKOS_FORCEINLINE_FUNCTION
-  int chunk_size() const { return num_elements * ngllz * ngllx; }
+  int chunk_size() const { return num_elements * ngll; }
 
   /**
    * @brief Returns the index within this iterator at the i-th quadrature point.
@@ -226,8 +257,13 @@ struct chunk_edge
     : public Kokkos::TeamPolicy<typename ParallelConfig::execution_space> {
 
 private:
-  using IndexViewType = Kokkos::View<
-      specfem::chunk_edge::edge_index *,
+  using ElementIndexViewType = Kokkos::View<
+      int *,
+      typename ParallelConfig::execution_space::memory_space>; ///< View
+                                                               ///< type for
+                                                               ///< indices
+  using EdgeTypeViewType = Kokkos::View<
+      specfem::enums::edge::type *,
       typename ParallelConfig::execution_space::memory_space>; ///< View
                                                                ///< type for
                                                                ///< indices
@@ -244,7 +280,8 @@ public:
   using policy_type = Kokkos::TeamPolicy<execution_space>; ///< Policy type
   using member_type = typename policy_type::member_type;   ///< Member type
   using iterator_type =
-      specfem::iterator::chunk_edge<IndexViewType, ParallelConfig::dimension,
+      specfem::iterator::chunk_edge<ElementIndexViewType, EdgeTypeViewType,
+                                    ParallelConfig::dimension,
                                     simd>; ///< Iterator
                                            ///< type
   ///@}
@@ -282,19 +319,26 @@ public:
    * @brief Construct a new element chunk policy
    *
    * @param view View of elements to chunk
-   * @param ngllz Number of GLL points in the z-direction
-   * @param ngllx Number of GLL points in the x-direction
+   * @param ngll Number of GLL points along each edge
    */
-  chunk_edge(const IndexViewType &view, int ngllz, int ngllx)
-      : policy_type(view.extent(0) / (tile_size * simd_size) +
-                        (view.extent(0) % (tile_size * simd_size) != 0),
+  chunk_edge(const ElementIndexViewType &ispec_view,
+             const EdgeTypeViewType &edgetype_view, int ngll)
+      : policy_type(ispec_view.extent(0) / (tile_size * simd_size) +
+                        (ispec_view.extent(0) % (tile_size * simd_size) != 0),
                     num_threads, vector_lanes),
-        elements(view), ngllz(ngllz), ngllx(ngllx) {
+        elements(ispec_view), edges(edgetype_view), ngll(ngll) {
 #if KOKKOS_VERSION < 40100
-    static_assert(IndexViewType::Rank == 1, "View must be rank 1");
+    static_assert(ElementIndexViewType::Rank == 1, "View must be rank 1");
+    static_assert(EdgeTypeViewType::Rank == 1, "View must be rank 1");
 #else
-    static_assert(IndexViewType::rank() == 1, "View must be rank 1");
+    static_assert(ElementIndexViewType::rank() == 1, "View must be rank 1");
+    static_assert(EdgeTypeViewType::rank() == 1, "View must be rank 1");
 #endif
+    if (ispec_view.extent(0) != edgetype_view.extent(0)) {
+      throw std::runtime_error(
+          "Attempting to create a chunk_edge policy with unequally sized views "
+          "for element index and edge type.");
+    }
   }
   ///@}
 
@@ -315,17 +359,19 @@ public:
   KOKKOS_INLINE_FUNCTION
   iterator_type league_iterator(const int start_index) const {
     const int start = start_index;
-    const int end =
-        std::min(start + chunk_size * simd_size, elements.extent(0));
+    const int end = std::min(start + chunk_size * simd_size,
+                             static_cast<int>(elements.extent(0)));
+    // std::cout << "("<<start<<","<<end<<")"<<std::endl;
     const auto my_indices =
         Kokkos::subview(elements, Kokkos::make_pair(start, end));
-    return iterator_type(my_indices, ngllz, ngllx);
+    const auto my_edges = Kokkos::subview(edges, Kokkos::make_pair(start, end));
+    return iterator_type(my_indices, my_edges, ngll);
   }
 
 private:
-  IndexViewType elements; ///< View of elements
-  int ngllz;              ///< Number of GLL points in the z-direction
-  int ngllx;              ///< Number of GLL points in the x-direction
+  ElementIndexViewType elements; ///< View of element indices
+  EdgeTypeViewType edges;        ///< View of edge type per index
+  int ngll;                      ///< Number of GLL points along each edge
 };
 } // namespace policy
 } // namespace specfem

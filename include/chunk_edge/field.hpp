@@ -237,7 +237,7 @@ template <int NumEdges, int NGLL, specfem::dimension::type DimensionType,
           typename MemoryTraits, bool StoreDisplacement, bool StoreVelocity,
           bool StoreAcceleration, bool StoreMassMatrix, bool UseSIMD>
 struct FieldTraits
-    : public ImplFieldTraits<specfem::datatype::ScalarChunkViewType<
+    : public ImplFieldTraits<specfem::datatype::ScalarChunkEdgeViewType<
                                  type_real, NumEdges, NGLL,
                                  specfem::element::attributes<
                                      DimensionType, MediumTag>::components(),
@@ -249,9 +249,9 @@ struct FieldTraits
       specfem::element::attributes<DimensionType, MediumTag>::components();
 
   using ViewType =
-      specfem::datatype::ScalarChunkViewType<type_real, NumEdges, NGLL,
-                                             components, MemorySpace,
-                                             MemoryTraits, UseSIMD>;
+      specfem::datatype::ScalarChunkEdgeViewType<type_real, NumEdges, NGLL,
+                                                 components, MemorySpace,
+                                                 MemoryTraits, UseSIMD>;
 
   KOKKOS_FUNCTION FieldTraits(const ViewType &view)
       : ImplFieldTraits<ViewType, StoreDisplacement, StoreVelocity,
@@ -445,15 +445,6 @@ public:
         "MemorySpace is not accessible from the execution space");
   }
   ///@}
-};
-
-/**
- * @brief Index for edge field
- *
- */
-struct edge_index {
-  const int ispec;
-  const specfem::enums::edge::type edge;
 };
 
 } // namespace chunk_edge

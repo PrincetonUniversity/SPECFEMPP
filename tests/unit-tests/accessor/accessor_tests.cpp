@@ -5,38 +5,18 @@
 
 #include "chunk_edge.hpp"
 
-TEST(accessor_tests, ACCESSOR_TESTS) {
-  constexpr auto DimensionType = specfem::dimension::type::dim2;
-  constexpr int NGLL = 5;
-  constexpr bool USE_SIMD = false;
-  using SIMD = specfem::datatype::simd<type_real, USE_SIMD>;
-  using ParallelConfig = specfem::parallel_config::default_chunk_config<
-      DimensionType, SIMD, Kokkos::DefaultExecutionSpace>;
-  constexpr int CHUNK_SIZE = ParallelConfig::chunk_size;
-
-  // initialize assembly; TODO: decide if we use demo_assembly, or load from
-  // meshfem
-  _util::demo_assembly::simulation_params params =
-      _util::demo_assembly::simulation_params().use_demo_mesh(0b1000);
-  std::shared_ptr<specfem::compute::assembly> assembly = params.get_assembly();
-
-  // const int nglob = assembly->fields.forward.nglob;
+template <specfem::dimension::type DimensionType, typename FieldValFunction>
+void reset_fields(std::shared_ptr<specfem::compute::assembly> assembly,
+                  FieldValFunction &fieldval) {
 
   const auto element_type = assembly->properties.h_element_types;
 
-  const auto &simfield = assembly->fields.forward;
+  auto &simfield = assembly->fields.forward;
   const int nspec = simfield.nspec;
   const int ngllx = simfield.ngllx;
   const int ngllz = simfield.ngllz;
-  assert(ngllx == NGLL && ngllz == NGLL);
-
   const auto index_mapping = simfield.h_index_mapping;
 
-  const auto fieldval = [](int iglob, int icomp, int ideriv) {
-    return (type_real)(iglob + icomp * (1.0 / 7.0) + ideriv * (1.0 / 5.0));
-  };
-
-  //============[ manually set field values ]============
   for (int ispec = 0; ispec < nspec; ispec++) {
     switch (element_type(ispec)) {
     case specfem::element::medium_tag::acoustic: {
@@ -89,10 +69,34 @@ TEST(accessor_tests, ACCESSOR_TESTS) {
     }
     }
   }
-  //=====================================================
+  simfield.copy_to_device();
+}
 
-  // TODO actually fill out, or get rid of?
+TEST(accessor_tests, ACCESSOR_TESTS) {
+  constexpr auto DimensionType = specfem::dimension::type::dim2;
+  constexpr int NGLL = 5;
+  constexpr bool USE_SIMD = false;
+  using SIMD = specfem::datatype::simd<type_real, USE_SIMD>;
+  using ParallelConfig = specfem::parallel_config::default_chunk_config<
+      DimensionType, SIMD, Kokkos::DefaultExecutionSpace>;
+  constexpr int CHUNK_SIZE = ParallelConfig::chunk_size;
+
+  // initialize assembly; TODO: decide if we use demo_assembly, or load from
+  // meshfem
+
+  _util::demo_assembly::simulation_params params =
+      _util::demo_assembly::simulation_params().use_demo_mesh(0b1000);
+  std::shared_ptr<specfem::compute::assembly> assembly = params.get_assembly();
+  assert(assembly->fields.forward.ngllx == NGLL &&
+         assembly->fields.forward.ngllz == NGLL);
+
+  const auto fieldval = [](int iglob, int icomp, int ideriv) {
+    return (type_real)(iglob + icomp * (1.0 / 7.0) + ideriv * (1.0 / 5.0));
+  };
+  reset_fields<DimensionType>(assembly, fieldval);
+
   //============[ check pointwise accessors ]============
+  // TODO actually fill out, or get rid of?
   // TODO should we try each combination of bools?
   using PointAcoustic =
       specfem::point::field<DimensionType,
@@ -104,8 +108,8 @@ TEST(accessor_tests, ACCESSOR_TESTS) {
                             false, false, USE_SIMD>;
 
   //=====================================================
-  verify_chunk_edges<CHUNK_SIZE, NGLL, DimensionType, USE_SIMD>(assembly,
-                                                                fieldval);
+  verify_chunk_edges<CHUNK_SIZE, NGLL, DimensionType, USE_SIMD, Kokkos::Serial>(
+      assembly, fieldval);
 
   // /**
   //  *  This test checks if compute_lagrange_interpolants and

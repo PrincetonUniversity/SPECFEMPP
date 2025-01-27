@@ -280,18 +280,18 @@ void construct_demo_mesh(specfem::mesh::mesh<DimensionType> &mesh,
                                                              bdry_forcing);
   mesh.coupled_interfaces = specfem::mesh::coupled_interfaces<DimensionType>();
 
-  std::cout << ("Material systems:\n"
-                "------------------------------\n");
+  // std::cout << ("Material systems:\n"
+  //               "------------------------------\n");
 
-  std::cout << ("Number of material systems = " +
-                std::to_string(mesh.materials.n_materials) + "\n\n");
-  for (const auto material : l_elastic_isotropic) {
-    std::cout << (material.print());
-  }
+  // std::cout << ("Number of material systems = " +
+  //               std::to_string(mesh.materials.n_materials) + "\n\n");
+  // for (const auto material : l_elastic_isotropic) {
+  //   std::cout << (material.print());
+  // }
 
-  for (const auto material : l_acoustic_isotropic) {
-    std::cout << (material.print());
-  }
+  // for (const auto material : l_acoustic_isotropic) {
+  //   std::cout << (material.print());
+  // }
   assert(l_elastic_isotropic.size() + l_acoustic_isotropic.size() ==
          mesh.materials.n_materials);
   mesh.tags =
