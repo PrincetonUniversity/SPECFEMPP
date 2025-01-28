@@ -117,11 +117,8 @@ void verify_chunk_edges(std::shared_ptr<specfem::compute::assembly> assembly,
 
   //===========================================================================
   // craete a policy over all edges
-  using IspecView =
-      Kokkos::View<int *,
-                   typename ParallelConfig::execution_space::memory_space>;
-  using EdgeTypeView =
-      Kokkos::View<specfem::enums::edge::type *,
+  using EdgeIndexView =
+      Kokkos::View<specfem::edge::index<DimensionType, USE_SIMD> *,
                    typename ParallelConfig::execution_space::memory_space>;
 
   const auto element_type = assembly->properties.element_types;
@@ -131,19 +128,18 @@ void verify_chunk_edges(std::shared_ptr<specfem::compute::assembly> assembly,
   const auto index_mapping = simfield.index_mapping;
 
   const int nelements = nspec * 4;
-  IspecView ispec_view("chunk_edge test: ispec", nelements);
-  EdgeTypeView edgetype_view("chunk_edge test: edge", nelements);
+  EdgeIndexView edge_index_view("chunk_edge test: indices", nelements);
   Kokkos::parallel_for(
       "test accessor/chunk_edge.hpp: init element indices", nelements,
       KOKKOS_LAMBDA(const int i) {
-        ispec_view(i) = i / 4;
+        edge_index_view(i).ispec = i / 4;
         const specfem::enums::edge::type edge[4] = {
           specfem::enums::edge::type::RIGHT, specfem::enums::edge::type::TOP,
           specfem::enums::edge::type::LEFT, specfem::enums::edge::type::BOTTOM
         };
-        edgetype_view(i) = edge[i % 4];
+        edge_index_view(i).edge_type = edge[i % 4];
       });
-  ChunkPolicyType chunk_policy(ispec_view, edgetype_view, NGLL);
+  ChunkPolicyType chunk_policy(edge_index_view, NGLL);
 
   constexpr int simd_size = SIMD::size();
   //===========================================================================
@@ -198,9 +194,9 @@ void verify_chunk_edges(std::shared_ptr<specfem::compute::assembly> assembly,
                 hit_indices(starting_element_index + ielem, igll) = true;
 
                 const int expected_ispec =
-                    ispec_view(starting_element_index + ielem);
+                    edge_index_view(starting_element_index + ielem).ispec;
                 const auto expected_edge =
-                    edgetype_view(starting_element_index + ielem);
+                    edge_index_view(starting_element_index + ielem).edge_type;
 
                 if (expected_ispec != ispec) {
                   failcontainer(0) = access_failcond(
