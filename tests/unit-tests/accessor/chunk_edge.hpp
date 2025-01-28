@@ -180,6 +180,12 @@ void verify_chunk_edges(std::shared_ptr<specfem::compute::assembly> assembly,
           const auto iterator =
               chunk_policy.league_iterator(starting_element_index);
 
+          // these may be unsafe memory accesses. how do?
+          specfem::compute::load_on_device(team, iterator, simfield,
+                                           edge_acoustic);
+          specfem::compute::load_on_device(team, iterator, simfield,
+                                           edge_elastic);
+
           Kokkos::parallel_for(
               Kokkos::TeamThreadRange(team, iterator.chunk_size()),
               [&](const int i) {
@@ -259,67 +265,83 @@ void verify_chunk_edges(std::shared_ptr<specfem::compute::assembly> assembly,
                 }
                 int iglob = index_mapping(ispec, iz, ix);
 
-#define test_against_true(medium)                                              \
+#define test_against_true(medium, edgefield)                                   \
   {                                                                            \
     specfem::point::field<DimensionType, medium, DISPLACEMENT, VELOCITY,       \
                           ACCEL, MASS_MATRIX, USE_SIMD>                        \
         pointfield;                                                            \
-    specfem::compute::load_on_device(index, assembly->fields.forward,          \
-                                     pointfield);                              \
+    specfem::compute::load_on_device(index, simfield, pointfield);             \
     for (int icomp = 0;                                                        \
          icomp <                                                               \
          specfem::element::attributes<DimensionType, medium>::components();    \
          icomp++) {                                                            \
                                                                                \
       int failderiv = -1;                                                      \
-      type_real got;                                                           \
+      type_real got_pt;                                                        \
+      type_real got_edge;                                                      \
       if constexpr (DISPLACEMENT) {                                            \
-        if (pointfield.displacement(icomp) != fieldval(iglob, icomp, 0)) {     \
+        if (pointfield.displacement(icomp) != fieldval(iglob, icomp, 0) ||     \
+            pointfield.displacement(icomp) !=                                  \
+                edgefield.displacement(ielem, igll, icomp)) {                  \
           failderiv = 0;                                                       \
-          got = pointfield.displacement(icomp);                                \
+          got_pt = pointfield.displacement(icomp);                             \
+          got_edge = edgefield.displacement(ielem, igll, icomp);               \
         }                                                                      \
       }                                                                        \
       if constexpr (VELOCITY) {                                                \
-        if (pointfield.velocity(icomp) != fieldval(iglob, icomp, 1)) {         \
+        if (pointfield.velocity(icomp) != fieldval(iglob, icomp, 1) ||         \
+            pointfield.velocity(icomp) !=                                      \
+                edgefield.velocity(ielem, igll, icomp)) {                      \
           failderiv = 1;                                                       \
-          got = pointfield.velocity(icomp);                                    \
+          got_pt = pointfield.velocity(icomp);                                 \
+          got_edge = edgefield.velocity(ielem, igll, icomp);                   \
         }                                                                      \
       }                                                                        \
       if constexpr (ACCEL) {                                                   \
-        if (pointfield.acceleration(icomp) != fieldval(iglob, icomp, 2)) {     \
+        if (pointfield.acceleration(icomp) != fieldval(iglob, icomp, 2) ||     \
+            pointfield.acceleration(icomp) !=                                  \
+                edgefield.acceleration(ielem, igll, icomp)) {                  \
           failderiv = 2;                                                       \
-          got = pointfield.acceleration(icomp);                                \
+          got_pt = pointfield.acceleration(icomp);                             \
+          got_edge = edgefield.acceleration(ielem, igll, icomp);               \
         }                                                                      \
       }                                                                        \
       if constexpr (MASS_MATRIX) {                                             \
-        if (pointfield.mass_matrix(icomp) != fieldval(iglob, icomp, 3)) {      \
+        if (pointfield.mass_matrix(icomp) != fieldval(iglob, icomp, 3) ||      \
+            pointfield.mass_matrix(icomp) !=                                   \
+                edgefield.mass_matrix(ielem, igll, icomp)) {                   \
           failderiv = 3;                                                       \
-          got = pointfield.mass_matrix(icomp);                                 \
+          got_pt = pointfield.mass_matrix(icomp);                              \
+          got_edge = edgefield.mass_matrix(ielem, igll, icomp);                \
         }                                                                      \
       }                                                                        \
       if (failderiv != -1) {                                                   \
         failcontainer(0) = access_failcond(                                    \
-            team, ("iter index " + std::to_string(i) + ": index(" +            \
-                   std::to_string(ispec) + "," + std::to_string(iz) + "," +    \
-                   std::to_string(ix) +                                        \
-                   ") giving iglob = " + std::to_string(iglob) +               \
-                   " got a failed read at icomp = " + std::to_string(icomp) +  \
-                   " and deriv order/ trait = " + std::to_string(failderiv) +  \
-                   ". Expected " +                                             \
-                   std::to_string(fieldval(iglob, icomp, failderiv)) +         \
-                   " and got " + std::to_string(got) + ".")                    \
-                      .c_str());                                               \
+            team,                                                              \
+            ("iter index " + std::to_string(i) + ": index(" +                  \
+             std::to_string(ispec) + "," + std::to_string(iz) + "," +          \
+             std::to_string(ix) +                                              \
+             ") giving iglob = " + std::to_string(iglob) +                     \
+             " got a failed read at icomp = " + std::to_string(icomp) +        \
+             " and deriv order/ trait = " + std::to_string(failderiv) +        \
+             ". Expected " +                                                   \
+             std::to_string(fieldval(iglob, icomp, failderiv)) + " and got " + \
+             std::to_string(got_pt) + " from the point accessor and " +        \
+             std::to_string(got_edge) + " from the edge accessor.")            \
+                .c_str());                                                     \
       }                                                                        \
     }                                                                          \
   }
 
                 switch (element_type(ispec)) {
                 case specfem::element::medium_tag::acoustic: {
-                  test_against_true(specfem::element::medium_tag::acoustic);
+                  test_against_true(specfem::element::medium_tag::acoustic,
+                                    edge_acoustic);
                   break;
                 }
                 case specfem::element::medium_tag::elastic: {
-                  test_against_true(specfem::element::medium_tag::elastic);
+                  test_against_true(specfem::element::medium_tag::elastic,
+                                    edge_elastic);
                   break;
                 }
                 }

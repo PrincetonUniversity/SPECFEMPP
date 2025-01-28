@@ -2219,3 +2219,5 @@ inline void impl_load_on_host(const MemberType &team, const IteratorType &iterat
 
 } // namespace compute
 } // namespace specfem
+
+#include "data_access/chunk_edge.tpp"

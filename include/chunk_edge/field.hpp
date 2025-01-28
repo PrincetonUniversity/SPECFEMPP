@@ -356,7 +356,7 @@ public:
                                                              ///< should be
                                                              ///< stored
 
-  constexpr static bool isChunkFieldType = true;  ///< Boolean to indicate if
+  constexpr static bool isChunkFieldType = false; ///< Boolean to indicate if
                                                   ///< this is a chunk field
   constexpr static bool isPointFieldType = false; ///< Boolean to indicate if
                                                   ///< this is a point field
