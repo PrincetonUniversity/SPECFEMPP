@@ -6,7 +6,8 @@ namespace specfem {
 namespace benchmarks {
 
 void benchmark(specfem::compute::assembly &assembly,
-               std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme) {
+               std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
+               const int &flag) {
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
   constexpr auto elastic = specfem::element::medium_tag::elastic;
   constexpr auto isotropic = specfem::element::property_tag::isotropic;
@@ -14,10 +15,12 @@ void benchmark(specfem::compute::assembly &assembly,
 
   const int nstep = time_scheme->get_max_timestep();
 
+  const auto solver_start_time = std::chrono::system_clock::now();
+
   for (const auto [istep, dt] : time_scheme->iterate_forward()) {
-    compute_stiffness_interaction<acoustic, isotropic>(assembly, istep);
-    compute_stiffness_interaction<elastic, isotropic>(assembly, istep);
-    compute_stiffness_interaction<elastic, anisotropic>(assembly, istep);
+    compute_stiffness_interaction<acoustic, isotropic>(assembly, istep, flag);
+    compute_stiffness_interaction<elastic, isotropic>(assembly, istep, flag);
+    compute_stiffness_interaction<elastic, anisotropic>(assembly, istep, flag);
     // divide_mass_matrix<dimension, wavefield, acoustic>(assembly);
     // divide_mass_matrix<dimension, wavefield, elastic>(assembly);
 
@@ -28,7 +31,10 @@ void benchmark(specfem::compute::assembly &assembly,
     // }
   }
 
-  std::cout << std::endl;
+  const auto solver_end_time = std::chrono::system_clock::now();
+  std::chrono::duration<double> solver_time =
+      solver_end_time - solver_start_time;
+  std::cout << " " << solver_time.count() << "s" << std::endl;
 }
 
 void run_benchmark(const YAML::Node &parameter_dict,
@@ -77,12 +83,9 @@ void run_benchmark(const YAML::Node &parameter_dict,
       setup.instantiate_property_reader());
   time_scheme->link_assembly(assembly);
 
-  const auto solver_start_time = std::chrono::system_clock::now();
-  benchmark(assembly, time_scheme);
-  const auto solver_end_time = std::chrono::system_clock::now();
-  std::chrono::duration<double> solver_time =
-      solver_end_time - solver_start_time;
-  std::cout << " " << solver_time.count() << "s\n" << std::endl;
+  benchmark(assembly, time_scheme, 0);
+  benchmark(assembly, time_scheme, 1);
+  std::cout << std::endl;
 }
 
 } // namespace benchmarks
@@ -96,13 +99,13 @@ int main(int argc, char **argv) {
   {
     const std::string default_file = __default_file__;
     const YAML::Node default_dict = YAML::LoadFile(default_file);
-    std::cout << "Acoustic:";
+    std::cout << "Acoustic:" << std::endl;
     specfem::benchmarks::run_benchmark(YAML::LoadFile(__benchmark_iso__),
                                        default_dict, mpi);
-    std::cout << "Elastic isotropic:";
+    std::cout << "Elastic isotropic:" << std::endl;
     specfem::benchmarks::run_benchmark(YAML::LoadFile(__benchmark_eiso__),
                                        default_dict, mpi);
-    std::cout << "Elastic anisotropic:";
+    std::cout << "Elastic anisotropic:" << std::endl;
     specfem::benchmarks::run_benchmark(YAML::LoadFile(__benchmark_eani__),
                                        default_dict, mpi);
   }

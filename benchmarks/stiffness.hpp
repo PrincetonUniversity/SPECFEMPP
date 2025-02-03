@@ -24,14 +24,14 @@ namespace specfem {
 namespace benchmarks {
 
 constexpr static auto dimension = specfem::dimension::type::dim2;
-constexpr static auto wavefield =
-    specfem::wavefield::simulation_field::forward;
+constexpr static auto wavefield = specfem::wavefield::simulation_field::forward;
 constexpr static auto ngll = 5;
 constexpr static auto boundary_tag = specfem::element::boundary_tag::none;
 
-template <specfem::element::medium_tag MediumTag, specfem::element::property_tag PropertyTag>
-void compute_stiffness_interaction(
-    const specfem::compute::assembly &assembly, const int &istep) {
+template <specfem::element::medium_tag MediumTag,
+          specfem::element::property_tag PropertyTag>
+void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
+                                   const int &istep, const int &flag) {
 
   constexpr auto medium_tag = MediumTag;
   constexpr auto property_tag = PropertyTag;
@@ -144,7 +144,8 @@ void compute_stiffness_interaction(
           team.team_barrier();
 
           Kokkos::parallel_for(
-            Kokkos::TeamThreadRange(team, iterator.chunk_size()), [&](const int &i) {
+              Kokkos::TeamThreadRange(team, iterator.chunk_size()),
+              [&](const int &i) {
                 const auto iterator_index = iterator(i);
                 const auto &index = iterator_index.index;
                 const int &ielement = iterator_index.ielement;
@@ -157,31 +158,33 @@ void compute_stiffness_interaction(
                 datatype df_dgamma[components] = { 0.0 };
 
                 for (int l = 0; l < ngll; ++l) {
-                for (int icomponent = 0; icomponent < components; ++icomponent) {
+                  for (int icomponent = 0; icomponent < components;
+                       ++icomponent) {
                     df_dxi[icomponent] +=
                         quadrature(ix, l) * f(ielement, iz, l, icomponent);
                     df_dgamma[icomponent] +=
                         quadrature(iz, l) * f(ielement, l, ix, icomponent);
-                }
+                  }
                 }
 
-                specfem::point::partial_derivatives<specfem::dimension::type::dim2,
-                                                    false, using_simd>
+                specfem::point::partial_derivatives<
+                    specfem::dimension::type::dim2, false, using_simd>
                     point_partial_derivatives;
 
                 specfem::compute::load_on_device(index, partial_derivatives,
-                                                point_partial_derivatives);
+                                                 point_partial_derivatives);
 
                 VectorPointViewType df;
 
-                for (int icomponent = 0; icomponent < components; ++icomponent) {
-                df(0, icomponent) =
-                    point_partial_derivatives.xix * df_dxi[icomponent] +
-                    point_partial_derivatives.gammax * df_dgamma[icomponent];
+                for (int icomponent = 0; icomponent < components;
+                     ++icomponent) {
+                  df(0, icomponent) =
+                      point_partial_derivatives.xix * df_dxi[icomponent] +
+                      point_partial_derivatives.gammax * df_dgamma[icomponent];
 
-                df(1, icomponent) =
-                    point_partial_derivatives.xiz * df_dxi[icomponent] +
-                    point_partial_derivatives.gammaz * df_dgamma[icomponent];
+                  df(1, icomponent) =
+                      point_partial_derivatives.xiz * df_dxi[icomponent] +
+                      point_partial_derivatives.gammaz * df_dgamma[icomponent];
                 }
 
                 PointPartialDerivativesType point_partial_derivatives2;
@@ -206,12 +209,13 @@ void compute_stiffness_interaction(
                                        icomponent) = F(idim, icomponent);
                   }
                 }
-          });
+              });
 
           team.team_barrier();
 
           Kokkos::parallel_for(
-            Kokkos::TeamThreadRange(team, iterator.chunk_size()), [&](const int i) {
+              Kokkos::TeamThreadRange(team, iterator.chunk_size()),
+              [&](const int i) {
                 const auto iterator_index = iterator(i);
                 const auto &index = iterator_index.index;
                 const int ielement = iterator_index.ielement;
@@ -223,36 +227,37 @@ void compute_stiffness_interaction(
                 const auto &f = stress_integrand.F;
 
                 const datatype jacobian =
-                    (is_host_space) ? partial_derivatives.h_jacobian(ispec, iz, ix)
-                                    : partial_derivatives.jacobian(ispec, iz, ix);
+                    (is_host_space)
+                        ? partial_derivatives.h_jacobian(ispec, iz, ix)
+                        : partial_derivatives.jacobian(ispec, iz, ix);
 
                 datatype temp1l[components] = { 0.0 };
                 datatype temp2l[components] = { 0.0 };
 
                 for (int l = 0; l < ngll; ++l) {
-                    for (int icomp = 0; icomp < components; ++icomp) {
-                        temp1l[icomp] +=
-                            f(ielement, iz, l, 0, icomp) * hprimewgll(ix, l) * jacobian;
-                    }
-                    for (int icomp = 0; icomp < components; ++icomp) {
-                        temp2l[icomp] +=
-                            f(ielement, l, ix, 1, icomp) * hprimewgll(iz, l) * jacobian;
-                    }
+                  for (int icomp = 0; icomp < components; ++icomp) {
+                    temp1l[icomp] += f(ielement, iz, l, 0, icomp) *
+                                     hprimewgll(ix, l) * jacobian;
+                  }
+                  for (int icomp = 0; icomp < components; ++icomp) {
+                    temp2l[icomp] += f(ielement, l, ix, 1, icomp) *
+                                     hprimewgll(iz, l) * jacobian;
+                  }
                 }
 
                 ScalarPointViewType result;
 
                 for (int icomp = 0; icomp < components; ++icomp) {
-                    result(icomp) =
-                        weights(iz) * temp1l[icomp] + weights(ix) * temp2l[icomp];
+                  result(icomp) =
+                      weights(iz) * temp1l[icomp] + weights(ix) * temp2l[icomp];
                 }
 
                 PointAccelerationType acceleration(result);
 
                 for (int icomponent = 0; icomponent < components;
                      ++icomponent) {
-                    acceleration.acceleration(icomponent) *=
-                        static_cast<type_real>(-1.0);
+                  acceleration.acceleration(icomponent) *=
+                      static_cast<type_real>(-1.0);
                 }
 
                 PointPropertyType point_property;
@@ -269,18 +274,9 @@ void compute_stiffness_interaction(
                 specfem::boundary_conditions::apply_boundary_conditions(
                     point_boundary, point_property, velocity, acceleration);
 
-                // Store forward boundary values for reconstruction during
-                // adjoint simulations. The function does nothing if the
-                // boundary tag is not stacey
-                if (wavefield ==
-                    specfem::wavefield::simulation_field::forward) {
-                  specfem::compute::store_on_device(istep, index, acceleration,
-                                                    boundary_values);
-                }
-
                 specfem::compute::atomic_add_on_device(index, acceleration,
                                                        field);
-            });
+              });
         }
       });
 
@@ -289,5 +285,5 @@ void compute_stiffness_interaction(
   return;
 }
 
-}
-}
+} // namespace benchmarks
+} // namespace specfem
