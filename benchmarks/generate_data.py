@@ -1,8 +1,13 @@
 from os import getcwd
 from subprocess import check_call
+from sys import argv
 
 nx = 80
 nz = 60
+
+if len(argv) > 1:
+    nx = int(nx * float(argv[1]))
+    nz = int(nz * float(argv[1]))
 
 mediums = {
     "iso": "1 1 2700.d0 3000.d0 0 0 0 9999 9999 0 0 0 0 0 0",
