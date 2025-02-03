@@ -17,7 +17,7 @@ for medium in mediums:
     check_call(f"rm -rf {cwd} && mkdir {cwd}", shell=True)
 
     for file in files:
-        with open(f"data/{file}") as f:
+        with open(f"{getcwd()}/data/{file}", "r") as f:
             content = (
                 f.read()
                 .replace("${cwd}", cwd)
