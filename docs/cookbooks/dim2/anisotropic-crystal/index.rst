@@ -1,4 +1,4 @@
-Wave propagration through anistoropic zinc crystal
+Wave propagration through anisotropic zinc crystal
 ==================================================
 
 In this `example
