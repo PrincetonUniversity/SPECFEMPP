@@ -2,3 +2,5 @@ specfem_config.yaml
 Par_File
 line_sources.yaml
 __pycache__
+fluid-solid-bathymetry.gif
+output_cropped
