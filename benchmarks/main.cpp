@@ -83,8 +83,8 @@ void run_benchmark(const YAML::Node &parameter_dict,
       setup.instantiate_property_reader());
   time_scheme->link_assembly(assembly);
 
-  benchmark(assembly, time_scheme, 0);
   benchmark(assembly, time_scheme, 1);
+  benchmark(assembly, time_scheme, 0);
   std::cout << std::endl;
 }
 
