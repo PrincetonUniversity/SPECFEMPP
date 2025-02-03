@@ -260,21 +260,6 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
                       static_cast<type_real>(-1.0);
                 }
 
-                if (flag) {
-                  PointPropertyType point_property;
-                  specfem::compute::load_on_device(index, properties,
-                                                   point_property);
-
-                  PointVelocityType velocity;
-                  specfem::compute::load_on_device(index, field, velocity);
-                  PointBoundaryType point_boundary;
-                  specfem::compute::load_on_device(index, boundaries,
-                                                   point_boundary);
-
-                  specfem::boundary_conditions::apply_boundary_conditions(
-                      point_boundary, point_property, velocity, acceleration);
-                }
-
                 specfem::compute::atomic_add_on_device(index, acceleration,
                                                        field);
               });

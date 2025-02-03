@@ -85,6 +85,8 @@ void run_benchmark(const YAML::Node &parameter_dict,
 
   benchmark(assembly, time_scheme, 1);
   benchmark(assembly, time_scheme, 0);
+  benchmark(assembly, time_scheme, 1);
+  benchmark(assembly, time_scheme, 0);
   std::cout << std::endl;
 }
 
