@@ -14,7 +14,7 @@ files = "Par_file", "source.yaml", "specfem_config.yaml", "topography.dat"
 
 for medium in mediums:
     cwd = f"{getcwd()}/data_{medium}"
-    check_call(f"rm -rf {cwd} && mkdir {cwd}", shell=True)
+    check_call(f"rm -rf {cwd} && mkdir -p {cwd}/OUTPUT_FILES", shell=True)
 
     for file in files:
         with open(f"{getcwd()}/data/{file}", "r") as f:

@@ -5,13 +5,13 @@
 #-----------------------------------------------------------
 
 # title of job
-title                           = Elastic Simulation with point source
+title                           = ${title}
 
 # parameters concerning partitioning
 NPROC                           = 1              # number of processes
 
 # Output folder to store mesh related files
-OUTPUT_FILES                   = /home/ccui/SPECFEMPP/benchmarks/data/OUTPUT_FILES
+OUTPUT_FILES                   = ${cwd}/OUTPUT_FILES
 
 
 #-----------------------------------------------------------
@@ -27,7 +27,7 @@ PARTITIONING_TYPE               = 3              # SCOTCH = 3, ascending order (
 NGNOD                           = 9
 
 # location to store the mesh
-database_filename               = /home/ccui/SPECFEMPP/benchmarks/data/OUTPUT_FILES/database.bin
+database_filename               = ${cwd}/OUTPUT_FILES/database.bin
 
 #-----------------------------------------------------------
 #
@@ -62,7 +62,7 @@ zfin                            = 1900.             # last receiver z in meters 
 record_at_surface_same_vertical = .false.        # receivers inside the medium or at the surface (z values are ignored if this is set to true, they are replaced with the topography height)
 
 # filename to store stations file
-stations_filename              = /home/ccui/SPECFEMPP/benchmarks/data/OUTPUT_FILES/STATIONS
+stations_filename              = ${cwd}/OUTPUT_FILES/STATIONS
 
 #-----------------------------------------------------------
 #
@@ -123,12 +123,12 @@ tangential_detection_curve_file = ./DATA/courbe_eros_nodes  # file containing th
 #-----------------------------------------------------------
 
 # file containing interfaces for internal mesh
-interfacesfile                  = /home/ccui/SPECFEMPP/benchmarks/data/topography.dat
+interfacesfile                  = ${cwd}/topography.dat
 
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0           # abscissa of left side of the model
 xmax                            = 4000.d0        # abscissa of right side of the model
-nx                              = 1800             # number of elements along X
+nx                              = ${nx}             # number of elements along X
 
 STACEY_ABSORBING_CONDITIONS     = .false.
 
@@ -141,7 +141,7 @@ absorbleft                      = .false.
 # define the different regions of the model in the (nx,nz) spectral-element mesh
 nbregions                       = 1              # then set below the different regions and model number for each region
 # format of each line: nxmin nxmax nzmin nzmax material_number
-1 1800  1 600 1
+1 ${nx}  1 ${nz} 1
 
 #-----------------------------------------------------------
 #
