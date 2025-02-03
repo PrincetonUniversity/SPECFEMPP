@@ -116,16 +116,16 @@ Kokkos::parallel_for(
                   specfem::medium::compute_source_contribution(point_source,
                                                                point_property);
 
-              PointBoundaryType point_boundary;
-              specfem::compute::load_on_device(element_index, boundaries,
-                                               point_boundary);
+            //   PointBoundaryType point_boundary;
+            //   specfem::compute::load_on_device(element_index, boundaries,
+            //                                    point_boundary);
 
-              PointVelocityType velocity;
-              specfem::compute::load_on_device(element_index, field, velocity);
+            //   PointVelocityType velocity;
+            //   specfem::compute::load_on_device(element_index, field, velocity);
 
-              specfem::boundary_conditions::
-                  apply_boundary_conditions(point_boundary, point_property,
-                                            velocity, acceleration);
+            //   specfem::boundary_conditions::
+            //       apply_boundary_conditions(point_boundary, point_property,
+            //                                 velocity, acceleration);
 
               specfem::compute::atomic_add_on_device(element_index, acceleration,
                                                      field);
