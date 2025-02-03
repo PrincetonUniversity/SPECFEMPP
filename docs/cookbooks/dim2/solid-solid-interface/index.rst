@@ -225,6 +225,10 @@ below.
 
     Snapshot of the wavefield at timestep 2000 (:math:`t=10\mathrm{s}`).
 
+.. note::
+
+    The wavefield snapshots are currently not being generated with this setup.
+
 The first (P) wavefront in the upper half of the medium reaches the horizontal
 center of model after 9 seconds, which is intuitive since the P-wave velocity
 in the upper half of the model is almost :math:`6\mathrm{km}/\mathrm{s}`.
