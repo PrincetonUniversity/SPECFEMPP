@@ -158,7 +158,6 @@ description on parameters used to define sources refer
 .. literalinclude:: specfem_config.yaml
     :caption: specfem_config.yaml
     :language: yaml
-    :linenos:
     :emphasize-lines: 3-12,14-32,46-49
 
 
@@ -233,9 +232,16 @@ them to ``obspy`` streams. The following code snippet shows how to do this.
     :language: python
 
 
-.. figure:: ../../../../examples/homogeneous-medium-flat-topography/traces.png
+.. figure:: traces_X.svg
    :alt: Traces
    :width: 800
    :align: center
 
-   Traces.
+   Traces for the Z component seismograms
+
+.. figure:: traces_Z.svg
+   :alt: Traces
+   :width: 800
+   :align: center
+
+   Traces for the Z component seismograms
