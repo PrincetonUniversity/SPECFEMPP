@@ -6,9 +6,16 @@ import obspy
 
 def get_traces(directory):
     traces = []
-
-    files = glob.glob(directory + "/AA.S00??.S2.BX?.semd")
-    files.sort()
+    station_name = [
+        "S0010",
+        "S0020",
+        "S0030",
+        "S0040",
+        "S0050",
+    ]
+    files = []
+    for station in station_name:
+        files += glob.glob(directory + f"/??.{station}.S2.BX?.semd")
 
     ## iterate over all seismograms
     for filename in files:
@@ -37,6 +44,6 @@ def get_traces(directory):
     return stream
 
 
-stream = get_traces("OUTPUT_FILES/seismograms")
+stream = get_traces("OUTPUT_FILES/results")
 stream.select(component="X").plot(size=(1000, 750))
 stream.select(component="Z").plot(size=(1000, 750))
