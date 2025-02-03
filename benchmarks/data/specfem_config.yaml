@@ -2,10 +2,10 @@ parameters:
 
   header:
     ## Header information is used for logging. It is good practice to give your simulations explicit names
-    title: Isotropic Elastic simulation # name for your simulation
+    title: ${title} # name for your simulation
     # A detailed description for your simulation
     description: |
-      Material systems : Elastic domain (1)
+      Material systems : ${title}
       Interfaces : None
       Sources : Force source (1)
       Boundary conditions : Neumann BCs on all edges
@@ -28,10 +28,10 @@ parameters:
         writer:
           seismogram:
             format: "ascii"
-            directory: "@CMAKE_SOURCE_DIR@/benchmarks/data_iso/OUTPUT_FILES/results"
+            directory: "${cwd}/OUTPUT_FILES"
 
   receivers:
-    stations: "@CMAKE_SOURCE_DIR@/benchmarks/data_iso/OUTPUT_FILES/STATIONS"
+    stations: "${cwd}/OUTPUT_FILES/STATIONS"
     angle: 0.0
     seismogram-type:
       - velocity
@@ -44,7 +44,7 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "@CMAKE_SOURCE_DIR@/benchmarks/data_iso/OUTPUT_FILES/database.bin"
+    mesh-database: "${cwd}/OUTPUT_FILES/database.bin"
 
   ## sources
-  sources: "@CMAKE_SOURCE_DIR@/benchmarks/data_iso/source.yaml"
+  sources: "${cwd}/source.yaml"

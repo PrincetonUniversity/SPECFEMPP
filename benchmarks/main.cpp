@@ -85,7 +85,7 @@ void run_benchmark(const YAML::Node &parameter_dict,
   std::cout << " " << solver_time.count() << "s\n" << std::endl;
 }
 
-} // namespace kokkos_kernels
+} // namespace benchmarks
 } // namespace specfem
 
 int main(int argc, char **argv) {
@@ -97,11 +97,14 @@ int main(int argc, char **argv) {
     const std::string default_file = __default_file__;
     const YAML::Node default_dict = YAML::LoadFile(default_file);
     std::cout << "Acoustic:";
-    specfem::benchmarks::run_benchmark(YAML::LoadFile(__benchmark_acoustic__), default_dict, mpi);
+    specfem::benchmarks::run_benchmark(YAML::LoadFile(__benchmark_iso__),
+                                       default_dict, mpi);
     std::cout << "Elastic isotropic:";
-    specfem::benchmarks::run_benchmark(YAML::LoadFile(__benchmark_iso__), default_dict, mpi);
+    specfem::benchmarks::run_benchmark(YAML::LoadFile(__benchmark_eiso__),
+                                       default_dict, mpi);
     std::cout << "Elastic anisotropic:";
-    specfem::benchmarks::run_benchmark(YAML::LoadFile(__benchmark_aniso__), default_dict, mpi);
+    specfem::benchmarks::run_benchmark(YAML::LoadFile(__benchmark_eani__),
+                                       default_dict, mpi);
   }
   // Finalize Kokkos
   Kokkos::finalize();
