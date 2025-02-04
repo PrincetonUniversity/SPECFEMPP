@@ -20,8 +20,6 @@ void check_store(specfem::compute::assembly &assembly) {
   const int ngllz = assembly.mesh.ngllz;
   const int ngllx = assembly.mesh.ngllx;
 
-  std::cout << "Getting the element and source indices" << std::endl;
-
   // the structured binding ([element_indices, source_indices]) is not
   // supported by the intel compiler
   auto elements_and_sources = assembly.sources.get_sources_on_device(
