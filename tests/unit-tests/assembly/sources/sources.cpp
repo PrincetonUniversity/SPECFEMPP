@@ -21,14 +21,13 @@ void check_store(specfem::compute::assembly &assembly) {
   const int ngllx = assembly.mesh.ngllx;
 
   std::cout << "Getting the element and source indices" << std::endl;
-  const auto [element_indices, source_indices] =
-      assembly.sources.get_sources_on_device(MediumTag, PropertyTag,
-                                             BoundaryTag, WavefieldType);
 
-  std::cout << "element_indices.size() = " << element_indices.size()
-            << std::endl;
-  std::cout << "source_indices.size() = " << source_indices.size() << std::endl;
+  // the structured binding ([element_indices, source_indices]) is not
+  // supported by the intel compiler
+  auto elements_and_sources = assembly.sources.get_sources_on_device(
+      MediumTag, PropertyTag, BoundaryTag, WavefieldType);
 
+  const auto &element_indices = std::get<0>(elements_and_sources);
   const int nelements = element_indices.size();
 
   constexpr int num_components =
@@ -59,6 +58,9 @@ void check_store(specfem::compute::assembly &assembly) {
       Kokkos::MDRangePolicy<Kokkos::DefaultExecutionSpace, Kokkos::Rank<3> >(
           { 0, 0, 0 }, { nelements, ngllz, ngllx }),
       KOKKOS_LAMBDA(const int &i, const int &iz, const int &ix) {
+        // element indices and source indices from elements_and_sources
+        auto const &[element_indices, source_indices] = elements_and_sources;
+
         const int ielement = element_indices(i);
         const int isource = source_indices(i);
 
@@ -93,9 +95,10 @@ void check_load(specfem::compute::assembly &assembly) {
   const int ngllz = assembly.mesh.ngllz;
   const int ngllx = assembly.mesh.ngllx;
 
-  const auto [element_indices, source_indices] = sources.get_sources_on_device(
+  const auto elements_and_sources = sources.get_sources_on_device(
       MediumTag, PropertyTag, BoundaryTag, WavefieldType);
 
+  const auto &element_indices = std::get<0>(elements_and_sources);
   const int nelements = element_indices.size();
 
   constexpr int num_components =
@@ -124,6 +127,8 @@ void check_load(specfem::compute::assembly &assembly) {
       Kokkos::MDRangePolicy<Kokkos::DefaultExecutionSpace, Kokkos::Rank<3> >(
           { 0, 0, 0 }, { nelements, ngllz, ngllx }),
       KOKKOS_LAMBDA(const int &i, const int &iz, const int &ix) {
+        // element indices and source indices from elements_and_sources
+        auto const &[element_indices, source_indices] = elements_and_sources;
         const int ielement = element_indices(i);
 
         const auto index =
