@@ -219,129 +219,183 @@ vtkSmartPointer<vtkUnstructuredGrid> get_wavefield_on_vtk_grid(
 } // namespace
 
 void specfem::periodic_tasks::plot_wavefield::run() {
+  {
+    auto colors = vtkSmartPointer<vtkNamedColors>::New();
 
-  auto colors = vtkSmartPointer<vtkNamedColors>::New();
-
-  if (this->output_format != specfem::display::format::on_screen) {
-    vtkSmartPointer<vtkGraphicsFactory> graphics_factory;
-    graphics_factory->SetOffScreenOnlyMode(1);
-    graphics_factory->SetUseMesaClasses(1);
-  }
-
-  auto material_mapper = map_materials_with_color(this->assembly);
-
-  // Create an actor
-  auto material_actor = vtkSmartPointer<vtkActor>::New();
-  material_actor->SetMapper(material_mapper);
-
-  const auto unstructured_grid = get_wavefield_on_vtk_grid(
-      this->assembly, this->wavefield, this->component);
-  const int ncell = unstructured_grid->GetNumberOfCells();
-
-  double range[2];
-
-  unstructured_grid->GetPointData()->GetScalars()->GetRange(range);
-
-  // create a lookup table to map cell data to colors. The range is from
-  // range[0] to range[1]
-  vtkSmartPointer<vtkLookupTable> lut = vtkSmartPointer<vtkLookupTable>::New();
-  lut->SetNumberOfTableValues(256);
-  lut->SetRange(range[0], range[1]);
-  lut->Build();
-
-  // set color gradient from white to black
-  for (int i = 0; i < 256; ++i) {
-    double t = static_cast<double>(i) / 255.0;
-    double transparency = sigmoid(t);
-    lut->SetTableValue(i, 1.0 - t, 1.0 - t, 1.0 - t, transparency);
-  }
-
-  // Create a mapper
-  auto mapper = vtkSmartPointer<vtkDataSetMapper>::New();
-  mapper->SetInputData(unstructured_grid);
-  mapper->SetLookupTable(lut);
-  mapper->SetScalarRange(range[0], range[1]);
-  mapper->SetScalarModeToUsePointData();
-  mapper->SetColorModeToMapScalars();
-  mapper->SetScalarVisibility(1);
-
-  // Create an actor
-  auto actor = vtkSmartPointer<vtkActor>::New();
-  actor->SetMapper(mapper);
-
-  vtkSmartPointer<vtkExtractEdges> edges =
-      vtkSmartPointer<vtkExtractEdges>::New();
-  edges->SetInputData(unstructured_grid);
-  edges->Update();
-
-  vtkSmartPointer<vtkPolyDataMapper> outlineMapper =
-      vtkSmartPointer<vtkPolyDataMapper>::New();
-  outlineMapper->SetInputConnection(edges->GetOutputPort());
-  outlineMapper->ScalarVisibilityOff();
-
-  vtkSmartPointer<vtkActor> outlineActor = vtkSmartPointer<vtkActor>::New();
-  outlineActor->SetMapper(outlineMapper);
-  outlineActor->GetProperty()->SetColor(colors->GetColor3d("Black").GetData());
-  outlineActor->GetProperty()->SetLineWidth(0.5);
-
-  // Create a renderer
-  auto renderer = vtkSmartPointer<vtkRenderer>::New();
-  renderer->AddActor(material_actor);
-  // renderer->AddActor(outlineActor);
-  renderer->AddActor(actor);
-  renderer->SetBackground(colors->GetColor3d("White").GetData());
-  renderer->ResetCamera();
-
-  if (this->output_format != specfem::display::format::on_screen) {
-    // Create a render window
-    auto render_window = vtkSmartPointer<vtkRenderWindow>::New();
-    render_window->SetOffScreenRendering(1);
-    render_window->AddRenderer(renderer);
-    render_window->SetSize(2560, 2560);
-    render_window->SetWindowName("Wavefield");
-    auto image_filter = vtkSmartPointer<vtkWindowToImageFilter>::New();
-    image_filter->SetInput(render_window);
-    image_filter->Update();
-
-    // Save the plot
-    if (this->output_format == specfem::display::format::PNG) {
-      const auto filename =
-          this->output_folder /
-          ("wavefield" + to_zero_lead(this->m_istep, 6) + ".png");
-      auto writer = vtkSmartPointer<vtkPNGWriter>::New();
-      writer->SetFileName(filename.string().c_str());
-      writer->SetInputConnection(image_filter->GetOutputPort());
-      writer->Write();
-    } else if (this->output_format == specfem::display::format::JPG) {
-      const auto filename =
-          this->output_folder /
-          ("wavefield" + std::to_string(this->m_istep) + ".jpg");
-      auto writer = vtkSmartPointer<vtkJPEGWriter>::New();
-      writer->SetFileName(filename.string().c_str());
-      writer->SetInputConnection(image_filter->GetOutputPort());
-      writer->Write();
-    } else {
-      throw std::runtime_error("Unsupported output format");
+    if (this->output_format != specfem::display::format::on_screen) {
+      vtkSmartPointer<vtkGraphicsFactory> graphics_factory;
+      graphics_factory->SetOffScreenOnlyMode(1);
+      graphics_factory->SetUseMesaClasses(1);
     }
-  } else {
+
+    auto material_mapper = map_materials_with_color(this->assembly);
+
+    // Create an actor
+    auto material_actor = vtkSmartPointer<vtkActor>::New();
+    material_actor->SetMapper(material_mapper);
+
+    const auto unstructured_grid = get_wavefield_on_vtk_grid(
+        this->assembly, this->wavefield, this->component);
+    const int ncell = unstructured_grid->GetNumberOfCells();
+
+    double range[2];
+
+    unstructured_grid->GetPointData()->GetScalars()->GetRange(range);
+
+    // create a lookup table to map cell data to colors. The range is from
+    // range[0] to range[1]
+    vtkSmartPointer<vtkLookupTable> lut =
+        vtkSmartPointer<vtkLookupTable>::New();
+    lut->SetNumberOfTableValues(256);
+    lut->SetRange(range[0], range[1]);
+    lut->Build();
+
+    // set color gradient from white to black
+    for (int i = 0; i < 256; ++i) {
+      double t = static_cast<double>(i) / 255.0;
+      double transparency = sigmoid(t);
+      lut->SetTableValue(i, 1.0 - t, 1.0 - t, 1.0 - t, transparency);
+    }
+
+    // Create a mapper
+    auto mapper = vtkSmartPointer<vtkDataSetMapper>::New();
+    mapper->SetInputData(unstructured_grid);
+    mapper->SetLookupTable(lut);
+    mapper->SetScalarRange(range[0], range[1]);
+    mapper->SetScalarModeToUsePointData();
+    mapper->SetColorModeToMapScalars();
+    mapper->SetScalarVisibility(1);
+
+    // Create an actor
+    auto actor = vtkSmartPointer<vtkActor>::New();
+    actor->SetMapper(mapper);
+
+    vtkSmartPointer<vtkExtractEdges> edges =
+        vtkSmartPointer<vtkExtractEdges>::New();
+    edges->SetInputData(unstructured_grid);
+    edges->Update();
+
+    vtkSmartPointer<vtkPolyDataMapper> outlineMapper =
+        vtkSmartPointer<vtkPolyDataMapper>::New();
+    outlineMapper->SetInputConnection(edges->GetOutputPort());
+    outlineMapper->ScalarVisibilityOff();
+
+    vtkSmartPointer<vtkActor> outlineActor = vtkSmartPointer<vtkActor>::New();
+    outlineActor->SetMapper(outlineMapper);
+    outlineActor->GetProperty()->SetColor(
+        colors->GetColor3d("Black").GetData());
+    outlineActor->GetProperty()->SetLineWidth(0.5);
+
+    // Create a renderer
+    auto renderer = vtkSmartPointer<vtkRenderer>::New();
+    renderer->AddActor(material_actor);
+    // renderer->AddActor(outlineActor);
+    renderer->AddActor(actor);
+    renderer->SetBackground(colors->GetColor3d("White").GetData());
+    renderer->ResetCamera();
+
+    if (this->output_format != specfem::display::format::on_screen) {
+      // Create a render window
+      auto render_window = vtkSmartPointer<vtkRenderWindow>::New();
+      render_window->SetOffScreenRendering(1);
+      render_window->AddRenderer(renderer);
+      render_window->SetSize(2560, 2560);
+      render_window->SetWindowName("Wavefield");
+      vtkSmartPointer<vtkWindowToImageFilter> image_filter =
+          vtkSmartPointer<vtkWindowToImageFilter>::New();
+      image_filter->SetInput(render_window);
+      image_filter->Update();
+
+      vtkImageData *image = image_filter->GetOutput();
+
+      // Save the plot
+      if (this->output_format == specfem::display::format::PNG) {
+        const auto filename =
+            this->output_folder /
+            ("wavefield" + to_zero_lead(this->m_istep, 6) + ".png");
+        auto writer = vtkSmartPointer<vtkPNGWriter>::New();
+        writer->SetFileName(filename.string().c_str());
+        // writer->SetInputConnection(image_filter->GetOutputPort());
+        writer->SetInputData(image);
+        writer->Write();
+        writer->SetInputData(nullptr);
+        if (writer->GetReferenceCount() != 1) {
+          std::cout << "Writer reference count: " << writer->GetReferenceCount()
+                    << std::endl;
+          throw std::runtime_error("Writer reference count is not 1");
+        }
+
+      } else if (this->output_format == specfem::display::format::JPG) {
+        const auto filename =
+            this->output_folder /
+            ("wavefield" + std::to_string(this->m_istep) + ".jpg");
+        auto writer = vtkSmartPointer<vtkJPEGWriter>::New();
+        writer->SetFileName(filename.string().c_str());
+        writer->SetInputConnection(image_filter->GetOutputPort());
+        writer->Write();
+
+      } else {
+        throw std::runtime_error("Unsupported output format");
+      }
+
+      if (render_window->GetReferenceCount() != 1) {
+        throw std::runtime_error("Render window reference count is not 1");
+      }
+      if (image_filter->GetReferenceCount() != 1) {
+        throw std::runtime_error("Image filter reference count is not 1");
+      }
+    } else {
 // Create a render window interactor
 #ifdef __APPLE__
-    auto render_window = vtkSmartPointer<vtkCocoaRenderWindow>::New();
+      auto render_window = vtkSmartPointer<vtkCocoaRenderWindow>::New();
 #else
-    auto render_window = vtkSmartPointer<vtkOpenGLRenderWindow>::New();
+      auto render_window = vtkSmartPointer<vtkOpenGLRenderWindow>::New();
 #endif
-    render_window->AddRenderer(renderer);
-    render_window->SetSize(2560, 2560);
-    render_window->SetWindowName("Wavefield");
+      render_window->AddRenderer(renderer);
+      render_window->SetSize(2560, 2560);
+      render_window->SetWindowName("Wavefield");
 
-    auto render_window_interactor =
-        vtkSmartPointer<vtkRenderWindowInteractor>::New();
-    render_window_interactor->SetRenderWindow(render_window);
+      auto render_window_interactor =
+          vtkSmartPointer<vtkRenderWindowInteractor>::New();
+      render_window_interactor->SetRenderWindow(render_window);
 
-    // Start the event loop
-    render_window->Render();
-    render_window_interactor->Start();
+      // Start the event loop
+      render_window->Render();
+      render_window_interactor->Start();
+    }
+
+    // Check reference counters to make sure all objects are deleted
+    if (material_mapper->GetReferenceCount() != 1) {
+      throw std::runtime_error("Material mapper reference count is not 1");
+    }
+    if (material_actor->GetReferenceCount() != 1) {
+      throw std::runtime_error("Material actor reference count is not 1");
+    }
+    if (unstructured_grid->GetReferenceCount() != 1) {
+      throw std::runtime_error("Unstructured grid reference count is not 1");
+    }
+    if (mapper->GetReferenceCount() != 1) {
+      throw std::runtime_error("Mapper reference count is not 1");
+    }
+    if (actor->GetReferenceCount() != 1) {
+      throw std::runtime_error("Actor reference count is not 1");
+    }
+    if (edges->GetReferenceCount() != 1) {
+      throw std::runtime_error("Edges reference count is not 1");
+    }
+    if (outlineMapper->GetReferenceCount() != 1) {
+      throw std::runtime_error("Outline mapper reference count is not 1");
+    }
+    if (outlineActor->GetReferenceCount() != 1) {
+      throw std::runtime_error("Outline actor reference count is not 1");
+    }
+    if (renderer->GetReferenceCount() != 1) {
+      throw std::runtime_error("Renderer reference count is not 1");
+    }
+
+    if (unstructured_grid->GetReferenceCount() != 1) {
+      throw std::runtime_error("Unstructured grid reference count is not 1");
+    }
   }
-}
 
 #endif // NO_VTK
