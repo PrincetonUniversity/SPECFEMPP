@@ -163,5 +163,32 @@ load_on_device(const MemberType &team, const IteratorType &iterator,
   return;
 }
 
+template <typename PointPropertiesType, typename IndexType,
+          typename std::enable_if_t<IndexType::using_simd ==
+                                        PointPropertiesType::simd::using_simd,
+                                    int> = 0>
+KOKKOS_FORCEINLINE_FUNCTION void
+load_on_device(const IndexType &lcoord,
+               const specfem::compute::properties &properties,
+               PointPropertiesType &point_properties) {
+  const int ispec = lcoord.ispec;
+
+  IndexType l_index = lcoord;
+
+  const int index = properties.property_index_mapping(ispec);
+
+  l_index.ispec = index;
+
+  constexpr auto MediumTag = PointPropertiesType::medium_tag;
+  constexpr auto PropertyTag = PointPropertiesType::property_tag;
+  constexpr auto DimensionType = PointPropertiesType::dimension;
+
+  static_assert(DimensionType == specfem::dimension::type::dim2,
+                "Only 2D properties are supported");
+
+  properties.get_container<MediumTag, PropertyTag>().load_device_properties(
+      l_index, point_properties);
+}
+
 } // namespace benchmarks
 } // namespace specfem

@@ -126,13 +126,8 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
         ElementQuadratureType element_quadrature(team);
         ChunkStressIntegrandType stress_integrand(team);
 
-        if (flag) {
-          specfem::compute::load_on_device(team, quadrature,
-                                           element_quadrature);
-        } else {
-          specfem::benchmarks::load_on_device(team, quadrature,
-                                              element_quadrature);
-        }
+        specfem::benchmarks::load_on_device(team, quadrature,
+                                            element_quadrature);
 
         for (int tile = 0; tile < ChunkPolicyType::tile_size * simd_size;
              tile += ChunkPolicyType::chunk_size * simd_size) {
@@ -146,13 +141,8 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
 
           const auto iterator =
               chunk_policy.league_iterator(starting_element_index);
-          if (flag) {
-            specfem::compute::load_on_device(team, iterator, field,
-                                             element_field);
-          } else {
-            specfem::benchmarks::load_on_device(team, iterator, field,
-                                                element_field);
-          }
+          specfem::benchmarks::load_on_device(team, iterator, field,
+                                              element_field);
 
           team.team_barrier();
 
@@ -184,13 +174,8 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
                     specfem::dimension::type::dim2, false, using_simd>
                     point_partial_derivatives;
 
-                if (flag) {
-                  specfem::compute::load_on_device(index, partial_derivatives,
-                                                   point_partial_derivatives);
-                } else {
-                  specfem::benchmarks::load_on_device(
-                      index, partial_derivatives, point_partial_derivatives);
-                }
+                specfem::benchmarks::load_on_device(index, partial_derivatives,
+                                                    point_partial_derivatives);
 
                 VectorPointViewType df;
 
@@ -206,17 +191,12 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
                 }
 
                 PointPartialDerivativesType point_partial_derivatives2;
-                if (flag) {
-                  specfem::compute::load_on_device(index, partial_derivatives,
-                                                   point_partial_derivatives2);
-                } else {
-                  specfem::benchmarks::load_on_device(
-                      index, partial_derivatives, point_partial_derivatives2);
-                }
+                specfem::benchmarks::load_on_device(index, partial_derivatives,
+                                                    point_partial_derivatives2);
 
                 PointPropertyType point_property;
-                specfem::compute::load_on_device(index, properties,
-                                                 point_property);
+                specfem::benchmarks::load_on_device(index, properties,
+                                                    point_property);
 
                 PointFieldDerivativesType field_derivatives(df);
 
