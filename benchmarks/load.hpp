@@ -1,5 +1,6 @@
 #pragma once
 
+#include "compute/properties/interface.hpp"
 #include "element/quadrature.hpp"
 #include "kokkos_abstractions.h"
 #include "mesh/mesh.hpp"
@@ -163,6 +164,80 @@ load_on_device(const MemberType &team, const IteratorType &iterator,
   return;
 }
 
+template <
+    typename IndexType, typename PointPropertiesType, typename ContainerType,
+    typename std::enable_if_t<
+        PointPropertiesType::medium_tag == ContainerType::value_type, int> = 0>
+KOKKOS_FORCEINLINE_FUNCTION void
+load_device_properties(IndexType &index, PointPropertiesType &property,
+                       ContainerType &container) {
+
+  using simd = typename PointPropertiesType::simd;
+  using mask_type = typename simd::mask_type;
+  using tag_type = typename simd::tag_type;
+  constexpr auto MediumTag = PointPropertiesType::medium_tag;
+  constexpr auto PropertyTag = PointPropertiesType::property_tag;
+
+  const int ispec = index.ispec;
+  const int iz = index.iz;
+  const int ix = index.ix;
+
+  mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+
+  if constexpr (MediumTag == specfem::element::medium_tag::acoustic &&
+                PropertyTag == specfem::element::property_tag::isotropic) {
+    Kokkos::Experimental::where(mask, property.rho_inverse)
+        .copy_from(&container.rho_inverse(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, property.kappa)
+        .copy_from(&container.kappa(ispec, iz, ix), tag_type());
+
+    property.kappa_inverse = static_cast<type_real>(1.0) / property.kappa;
+    property.rho_vpinverse =
+        Kokkos::sqrt(property.rho_inverse * property.kappa_inverse);
+  } else if constexpr (MediumTag == specfem::element::medium_tag::elastic &&
+                       PropertyTag ==
+                           specfem::element::property_tag::isotropic) {
+    Kokkos::Experimental::where(mask, property.rho)
+        .copy_from(&container.rho(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, property.mu)
+        .copy_from(&container.mu(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, property.lambdaplus2mu)
+        .copy_from(&container.lambdaplus2mu(ispec, iz, ix), tag_type());
+
+    property.lambda = property.lambdaplus2mu - 2 * property.mu;
+    property.rho_vp = Kokkos::sqrt(property.rho * property.lambdaplus2mu);
+    property.rho_vs = Kokkos::sqrt(property.rho * property.mu);
+  } else if constexpr (MediumTag == specfem::element::medium_tag::elastic &&
+                       PropertyTag ==
+                           specfem::element::property_tag::anisotropic) {
+    Kokkos::Experimental::where(mask, property.rho)
+        .copy_from(&container.rho(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, property.c11)
+        .copy_from(&container.c11(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, property.c12)
+        .copy_from(&container.c12(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, property.c13)
+        .copy_from(&container.c13(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, property.c15)
+        .copy_from(&container.c15(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, property.c33)
+        .copy_from(&container.c33(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, property.c35)
+        .copy_from(&container.c35(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, property.c55)
+        .copy_from(&container.c55(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, property.c23)
+        .copy_from(&container.c23(ispec, iz, ix), tag_type());
+    Kokkos::Experimental::where(mask, property.c25)
+        .copy_from(&container.c25(ispec, iz, ix), tag_type());
+
+    property.rho_vp = Kokkos::sqrt(property.rho * property.c33);
+    property.rho_vs = Kokkos::sqrt(property.rho * property.c55);
+  } else {
+    static_assert("medium type not supported");
+  }
+}
+
 template <typename PointPropertiesType, typename IndexType,
           typename std::enable_if_t<IndexType::using_simd ==
                                         PointPropertiesType::simd::using_simd,
@@ -185,9 +260,8 @@ load_on_device(const IndexType &lcoord,
 
   static_assert(DimensionType == specfem::dimension::type::dim2,
                 "Only 2D properties are supported");
-
-  properties.get_container<MediumTag, PropertyTag>().load_device_properties(
-      l_index, point_properties);
+  load_device_properties(l_index, point_properties,
+                         properties.get_container<MediumTag, PropertyTag>());
 }
 
 } // namespace benchmarks

@@ -195,8 +195,13 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
                                                     point_partial_derivatives2);
 
                 PointPropertyType point_property;
-                specfem::benchmarks::load_on_device(index, properties,
-                                                    point_property);
+                if (flag) {
+                  specfem::compute::load_on_device(index, properties,
+                                                   point_property);
+                } else {
+                  specfem::benchmarks::load_on_device(index, properties,
+                                                      point_property);
+                }
 
                 PointFieldDerivativesType field_derivatives(df);
 
