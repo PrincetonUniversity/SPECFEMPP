@@ -289,15 +289,6 @@ load_on_device(const IteratorIndexType iterator_index,
     Kokkos::abort("Invalid spectral element index detected in source");
   }
   if (sources.medium_types(isource) != PointSourceType::medium_tag) {
-    std::cout << "compute::sources::load_on_device" << std::endl;
-    std::cout << "    Medium type: "
-              << specfem::element::to_string(sources.medium_types(isource))
-              << std::endl;
-    std::cout << "    PointSourceType medium tag: "
-              << specfem::element::to_string(PointSourceType::medium_tag)
-              << std::endl;
-    std::cout << "    File: " << __FILE__ << std::endl;
-    std::cout << "    Line: " << __LINE__ << std::endl;
     Kokkos::abort("Invalid medium detected in source");
   }
 
@@ -375,15 +366,6 @@ void load_on_host(const IteratorIndexType iterator_index,
   }
 
   if (sources.h_medium_types(isource) != PointSourceType::medium_tag) {
-    std::cout << "compute::sources::load_on_host" << std::endl;
-    std::cout << "    Medium type: "
-              << specfem::element::to_string(sources.medium_types(isource))
-              << std::endl;
-    std::cout << "    PointSourceType medium tag: "
-              << specfem::element::to_string(PointSourceType::medium_tag)
-              << std::endl;
-    std::cout << "    File: " << __FILE__ << std::endl;
-    std::cout << "    Line: " << __LINE__ << std::endl;
     Kokkos::abort("Invalid medium detected in source");
   }
 
@@ -460,17 +442,6 @@ store_on_device(const IteratorIndexType iterator_index,
   }
 
   if (sources.medium_types(isource) != PointSourceType::medium_tag) {
-    std::cout << "compute::sources::store_on_device" << std::endl;
-    std::cout << "    isource: " << isource << std::endl;
-    std::cout << "    ispec:   " << index.ispec << std::endl;
-    std::cout << "    Medium type: "
-              << specfem::element::to_string(sources.medium_types(isource))
-              << std::endl;
-    std::cout << "    PointSourceType medium tag: "
-              << specfem::element::to_string(PointSourceType::medium_tag)
-              << std::endl;
-    std::cout << "    File: " << __FILE__ << std::endl;
-    std::cout << "    Line: " << __LINE__ << std::endl;
     Kokkos::abort("Invalid medium detected in source");
   }
 
@@ -546,17 +517,6 @@ void store_on_host(const IteratorIndexType iterator_index,
   }
 
   if (sources.h_medium_types(isource) != PointSourceType::medium_tag) {
-    std::cout << "compute::sources::store_on_host" << std::endl;
-    std::cout << "    isource: " << isource << std::endl;
-    std::cout << "    ispec:   " << index.ispec << std::endl;
-    std::cout << "    Medium type: "
-              << specfem::element::to_string(sources.h_medium_types(isource))
-              << std::endl;
-    std::cout << "    PointSourceType medium tag: "
-              << specfem::element::to_string(PointSourceType::medium_tag)
-              << std::endl;
-    std::cout << "    File: " << __FILE__ << std::endl;
-    std::cout << "    Line: " << __LINE__ << std::endl;
     Kokkos::abort("Invalid medium detected in source");
   }
 
