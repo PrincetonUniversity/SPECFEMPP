@@ -9,6 +9,7 @@
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
+#include "load.hpp"
 #include "medium/compute_stress.hpp"
 #include "parallel_configuration/chunk_config.hpp"
 #include "point/boundary.hpp"
@@ -125,7 +126,14 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
         ElementQuadratureType element_quadrature(team);
         ChunkStressIntegrandType stress_integrand(team);
 
-        specfem::compute::load_on_device(team, quadrature, element_quadrature);
+        if (flag) {
+          specfem::compute::load_on_device(team, quadrature,
+                                           element_quadrature);
+        } else {
+          specfem::benchmarks::load_on_device(team, quadrature,
+                                              element_quadrature);
+        }
+
         for (int tile = 0; tile < ChunkPolicyType::tile_size * simd_size;
              tile += ChunkPolicyType::chunk_size * simd_size) {
           const int starting_element_index =
@@ -171,8 +179,13 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
                     specfem::dimension::type::dim2, false, using_simd>
                     point_partial_derivatives;
 
-                specfem::compute::load_on_device(index, partial_derivatives,
-                                                 point_partial_derivatives);
+                if (flag) {
+                  specfem::compute::load_on_device(index, partial_derivatives,
+                                                   point_partial_derivatives);
+                } else {
+                  specfem::benchmarks::load_on_device(
+                      index, partial_derivatives, point_partial_derivatives);
+                }
 
                 VectorPointViewType df;
 
@@ -190,6 +203,16 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
                 PointPartialDerivativesType point_partial_derivatives2;
                 specfem::compute::load_on_device(index, partial_derivatives,
                                                  point_partial_derivatives2);
+                // if (flag) {
+                //     specfem::compute::load_on_device(index,
+                //     partial_derivatives,
+                //                                      point_partial_derivatives2);
+                // }
+                // else {
+                //     specfem::benchmarks::load_on_device(index,
+                //     partial_derivatives,
+                //                                      point_partial_derivatives2);
+                // }
 
                 PointPropertyType point_property;
                 specfem::compute::load_on_device(index, properties,
