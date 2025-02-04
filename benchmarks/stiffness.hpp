@@ -146,8 +146,13 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
 
           const auto iterator =
               chunk_policy.league_iterator(starting_element_index);
-          specfem::compute::load_on_device(team, iterator, field,
-                                           element_field);
+          if (flag) {
+            specfem::compute::load_on_device(team, iterator, field,
+                                             element_field);
+          } else {
+            specfem::benchmarks::load_on_device(team, iterator, field,
+                                                element_field);
+          }
 
           team.team_barrier();
 
@@ -201,18 +206,13 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
                 }
 
                 PointPartialDerivativesType point_partial_derivatives2;
-                specfem::compute::load_on_device(index, partial_derivatives,
-                                                 point_partial_derivatives2);
-                // if (flag) {
-                //     specfem::compute::load_on_device(index,
-                //     partial_derivatives,
-                //                                      point_partial_derivatives2);
-                // }
-                // else {
-                //     specfem::benchmarks::load_on_device(index,
-                //     partial_derivatives,
-                //                                      point_partial_derivatives2);
-                // }
+                if (flag) {
+                  specfem::compute::load_on_device(index, partial_derivatives,
+                                                   point_partial_derivatives2);
+                } else {
+                  specfem::benchmarks::load_on_device(
+                      index, partial_derivatives, point_partial_derivatives2);
+                }
 
                 PointPropertyType point_property;
                 specfem::compute::load_on_device(index, properties,
