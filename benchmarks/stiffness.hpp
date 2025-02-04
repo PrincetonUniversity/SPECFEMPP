@@ -268,8 +268,13 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
                       static_cast<type_real>(-1.0);
                 }
 
-                specfem::compute::atomic_add_on_device(index, acceleration,
-                                                       field);
+                if (flag) {
+                  specfem::compute::atomic_add_on_device(index, acceleration,
+                                                         field);
+                } else {
+                  specfem::benchmarks::atomic_add_on_device(index, acceleration,
+                                                            field);
+                }
               });
         }
       });

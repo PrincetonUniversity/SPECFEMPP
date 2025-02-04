@@ -264,5 +264,86 @@ load_on_device(const IndexType &lcoord,
                          properties.get_container<MediumTag, PropertyTag>());
 }
 
+template <
+    typename WavefieldType, typename ViewType,
+    typename std::enable_if_t<
+        ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
+KOKKOS_FORCEINLINE_FUNCTION void atomic_add_on_device(
+    const specfem::point::simd_index<ViewType::dimension> &index,
+    const ViewType &point_field, const WavefieldType &field) {
+
+  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static bool StoreDisplacement = ViewType::store_displacement;
+  constexpr static bool StoreVelocity = ViewType::store_velocity;
+  constexpr static bool StoreAcceleration = ViewType::store_acceleration;
+  constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
+  constexpr static int components = ViewType::components;
+
+  int iglob[ViewType::simd::size()];
+
+  using mask_type = typename ViewType::simd::mask_type;
+
+  mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+
+  for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
+    iglob[lane] =
+        (index.mask(std::size_t(lane)))
+            ? field.assembly_index_mapping(
+                  field.index_mapping(index.ispec + lane, index.iz, index.ix),
+                  static_cast<int>(MediumType))
+            : field.nglob + 1;
+  }
+
+  const auto &curr_field =
+      [&]() -> const specfem::compute::impl::field_impl<
+                specfem::dimension::type::dim2, MediumType> & {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+      return field.elastic;
+    } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
+      return field.acoustic;
+    } else {
+      static_assert("medium type not supported");
+    }
+  }();
+
+  for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
+    if (!mask[lane]) {
+      continue;
+    }
+
+    const int iglob_l = iglob[lane];
+
+    if constexpr (StoreDisplacement) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        Kokkos::atomic_add(&curr_field.field(iglob_l, icomp),
+                           point_field.displacement(icomp)[lane]);
+      }
+    }
+
+    if constexpr (StoreVelocity) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        Kokkos::atomic_add(&curr_field.field_dot(iglob_l, icomp),
+                           point_field.velocity(icomp)[lane]);
+      }
+    }
+
+    if constexpr (StoreAcceleration) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        Kokkos::atomic_add(&curr_field.field_dot_dot(iglob_l, icomp),
+                           point_field.acceleration(icomp)[lane]);
+      }
+    }
+
+    if constexpr (StoreMassMatrix) {
+      for (int icomp = 0; icomp < components; ++icomp) {
+        Kokkos::atomic_add(&curr_field.mass_inverse(iglob_l, icomp),
+                           point_field.mass_matrix(icomp)[lane]);
+      }
+    }
+  }
+
+  return;
+}
+
 } // namespace benchmarks
 } // namespace specfem
