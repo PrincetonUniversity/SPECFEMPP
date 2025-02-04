@@ -4,7 +4,8 @@ MESHFEM_BIN = "xmeshfem2D"
 
 rule all:
     input:
-        plot="OUTPUT_FILES/results/plot.png",
+        traces_X="OUTPUT_FILES/results/traces_X.png",
+        traces_Z="OUTPUT_FILES/results/traces_Z.png",
     localrule: True
 
 
@@ -59,7 +60,8 @@ rule plot_seismogram:
             component=["BXX", "BXZ"],
         ),
     output:
-        traces="OUTPUT_FILES/results/plot.png",
+        traces_X="OUTPUT_FILES/results/traces_X.png",
+        traces_Z="OUTPUT_FILES/results/traces_Z.png"
     localrule: True
     run:
         import glob
@@ -97,7 +99,8 @@ rule plot_seismogram:
 
 
         stream = get_traces("OUTPUT_FILES/results")
-        stream.plot(size=(800, 1000)).savefig(output.traces)
+        stream.select(component='X').plot(size=(800, 1000)).savefig(output.traces_X)
+        stream.select(component='Z').plot(size=(800, 1000)).savefig(output.traces_Z)
 
 
 rule clean:
