@@ -39,9 +39,11 @@
     myrank,sizeprocs,NUMBER_OF_MATERIAL_PROPERTIES, &
     SAVE_MESH_AS_CUBIT
 
-  use constants, only: IIN,MF_IN_DATA_FILES,MAX_STRING_LEN,IMAIN, &
+  use constants, only: IIN,MAX_STRING_LEN,IMAIN, &
     IDOMAIN_ACOUSTIC,IDOMAIN_ELASTIC,IDOMAIN_POROELASTIC, &
     ILONGLAT2UTM,IGNORE_JUNK,DONT_IGNORE_JUNK
+
+  use shared_input_parameters, only: MESH_PAR_FILE
 
   implicit none
 
@@ -63,11 +65,9 @@
   logical :: found
   character(len=MAX_STRING_LEN) :: filename
 
-  ! Mesh Parameter file
-  filename = MF_IN_DATA_FILES(1:len_trim(MF_IN_DATA_FILES)) // 'Mesh_Par_file'
 
   if (myrank == 0) then
-    write(IMAIN,*) 'Reading mesh parameters from file ',trim(filename)
+    write(IMAIN,*) 'Reading mesh parameters from file ',trim(MESH_PAR_FILE)
     call flush_IMAIN()
   endif
 
@@ -75,7 +75,7 @@
   !       must match the order of appearance in the Mesh_Par_file
   !
   ! open parameter file Mesh_Par_file
-  call open_parameter_file_mesh(filename)
+  call open_parameter_file_mesh(MESH_PAR_FILE)
 
   ! user output
   if (myrank == 0) then
