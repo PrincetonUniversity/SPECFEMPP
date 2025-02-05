@@ -84,7 +84,7 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
 
   specfem::runtime_configuration::setup setup(parameter_file, __default_file__);
 
-  const auto [database_file, sources_file] = setup.get_databases();
+  const auto database_file = setup.get_databases();
   // mpi->cout(setup.print_header());
 
   // Set up GLL quadrature points
@@ -96,13 +96,13 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
   std::vector<std::shared_ptr<specfem::sources::source> > sources(0);
 
   const auto angle = setup.get_receiver_angle();
-  const auto stations_filename = setup.get_stations_file();
-  auto receivers = specfem::IO::read_receivers(stations_filename, angle);
+  const auto stations_node = setup.get_stations();
+  auto receivers = specfem::IO::read_receivers(stations_node, angle);
   const auto stypes = setup.get_seismogram_types();
 
   specfem::compute::assembly assembly(mesh, quadratures, sources, receivers,
                                       stypes, 0, 0, 0, 1,
-                                      setup.get_simulation_type());
+                                      setup.get_simulation_type(), nullptr);
 
   const auto displacement_field = assembly.fields.forward.elastic.h_field;
   const auto velocity_field = assembly.fields.forward.elastic.h_field_dot;

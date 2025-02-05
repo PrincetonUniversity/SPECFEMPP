@@ -4,7 +4,8 @@ MESHFEM_BIN = "xmeshfem2D"
 
 rule all:
     input:
-        plot="OUTPUT_FILES/results/plot.png",
+        traces_X="OUTPUT_FILES/results/traces_X.png",
+        traces_Z="OUTPUT_FILES/results/traces_Z.png",
     localrule: True
 
 
@@ -30,7 +31,7 @@ rule run_solver:
         config="specfem_config.yaml",
     output:
         siesmograms=expand(
-            "OUTPUT_FILES/results/{station_name}{network_name}{component}.semv",
+            "OUTPUT_FILES/results/{network_name}.{station_name}.S2.{component}.semv",
             station_name=["S0001", "S0002", "S0003", "S0004", "S0005", "S0006"],
             network_name=["AA"],
             component=["BXX", "BXZ"],
@@ -42,8 +43,8 @@ rule run_solver:
         runtime=10,
     shell:
         """
-            module purge
-            module load boost/1.73.0
+            # module purge
+            # module load boost/1.73.0
             mkdir -p OUTPUT_FILES/results
             echo "Hostname: $(hostname)" > output.log
             {SPECFEM_BIN} -p {input.config} >> output.log
@@ -53,13 +54,14 @@ rule run_solver:
 rule plot_seismogram:
     input:
         trace_files=expand(
-            "OUTPUT_FILES/results/{station_name}{network_name}{component}.semv",
+            "OUTPUT_FILES/results/{network_name}.{station_name}.S2.{component}.semv",
             station_name=["S0001", "S0002", "S0003", "S0004", "S0005", "S0006"],
             network_name=["AA"],
             component=["BXX", "BXZ"],
         ),
     output:
-        traces="OUTPUT_FILES/results/plot.png",
+        traces_X="OUTPUT_FILES/results/traces_X.png",
+        traces_Z="OUTPUT_FILES/results/traces_Z.png"
     localrule: True
     run:
         import glob
@@ -77,14 +79,17 @@ rule plot_seismogram:
             ## iterate over all seismograms
             for filename in files:
                 station_name = os.path.splitext(filename)[0]
-                station_name = station_name.split("/")[-1]
+                network, station, location, channel = station_name.split("/")[-1].split(".")
                 trace = np.loadtxt(filename, delimiter=" ")
                 starttime = trace[0, 0]
                 dt = trace[1, 0] - trace[0, 0]
                 traces.append(
                     obspy.Trace(
                         trace[:, 1],
-                        {"network": station_name, "starttime": starttime, "delta": dt},
+                        {"network": network,
+                         "station": station,
+                         "location": location,
+                         "channel": channel, "starttime": starttime, "delta": dt},
                     )
                 )
 
@@ -94,7 +99,8 @@ rule plot_seismogram:
 
 
         stream = get_traces("OUTPUT_FILES/results")
-        stream.plot(size=(800, 1000)).savefig(output.traces)
+        stream.select(component='X').plot(size=(800, 1000)).savefig(output.traces_X)
+        stream.select(component='Z').plot(size=(800, 1000)).savefig(output.traces_Z)
 
 
 rule clean:

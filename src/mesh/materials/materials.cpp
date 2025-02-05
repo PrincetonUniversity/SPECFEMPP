@@ -5,25 +5,41 @@
 #include <vector>
 
 std::variant<
-    specfem::material::material<specfem::element::medium_tag::elastic,
-                                specfem::element::property_tag::isotropic>,
-    specfem::material::material<specfem::element::medium_tag::acoustic,
-                                specfem::element::property_tag::isotropic> >
+    specfem::medium::material<specfem::element::medium_tag::elastic,
+                              specfem::element::property_tag::isotropic>,
+    specfem::medium::material<specfem::element::medium_tag::elastic,
+                              specfem::element::property_tag::anisotropic>,
+    specfem::medium::material<specfem::element::medium_tag::acoustic,
+                              specfem::element::property_tag::isotropic> >
 specfem::mesh::materials::operator[](const int index) const {
 
   const auto &material_specification = this->material_index_mapping(index);
 
+  // Return the material properties based on the material specification
+
+  // Return elastic isotropic
   if (material_specification.type == specfem::element::medium_tag::elastic &&
       material_specification.property ==
           specfem::element::property_tag::isotropic) {
     return this->elastic_isotropic
         .material_properties[material_specification.index];
+
+    // Return elastic anisotropic
+  } else if (material_specification.type ==
+                 specfem::element::medium_tag::elastic &&
+             material_specification.property ==
+                 specfem::element::property_tag::anisotropic) {
+    return this->elastic_anisotropic
+        .material_properties[material_specification.index];
+
+    // Return acoustic isotropic
   } else if (material_specification.type ==
                  specfem::element::medium_tag::acoustic &&
              material_specification.property ==
                  specfem::element::property_tag::isotropic) {
     return this->acoustic_isotropic
         .material_properties[material_specification.index];
+    // Throw an error if the material type is not supported
   } else {
     throw std::runtime_error("Material type not supported");
   }

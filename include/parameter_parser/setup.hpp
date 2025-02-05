@@ -1,17 +1,19 @@
 #ifndef _PARAMETER_SETUP_HPP
 #define _PARAMETER_SETUP_HPP
 
+#include "IO/reader.hpp"
 #include "database_configuration.hpp"
 #include "header.hpp"
 #include "parameter_parser/solver/interface.hpp"
 #include "quadrature.hpp"
-#include "reader/reader.hpp"
 #include "receivers.hpp"
 #include "run_setup.hpp"
+#include "sources.hpp"
 #include "specfem_setup.hpp"
 #include "time_scheme/interface.hpp"
 #include "writer/kernel.hpp"
 #include "writer/plot_wavefield.hpp"
+#include "writer/property.hpp"
 #include "writer/seismogram.hpp"
 #include "writer/wavefield.hpp"
 #include "yaml-cpp/yaml.h"
@@ -36,8 +38,17 @@ public:
    * @param parameter_file Path to a configuration YAML file
    * @param default_file Path to a YAML file to be used to instantiate default
    * parameters
+   * @param binding_python Flag to indicate if the setup is being used in a
+   * pybind environment
    */
   setup(const std::string &parameter_file, const std::string &default_file);
+  /**
+   * @brief Construct a new setup object
+   *
+   * @param parameter_dict Configuration YAML Node
+   * @param default_dict YAML Node to be used to instantiate default parameters
+   */
+  setup(const YAML::Node &parameter_dict, const YAML::Node &default_dict);
   /**
    * @brief Instantiate quadrature objects in x and z dimensions
    *
@@ -91,18 +102,21 @@ public:
    * @return std::tuple<std::string, std::string> std::tuple specifying the path
    * to mesh database and source yaml file
    */
-  std::tuple<std::string, std::string> get_databases() const {
-    return databases->get_databases();
-  }
+  std::string get_databases() const { return databases->get_databases(); }
+
+  /**
+   * @brief Get the sources YAML object
+   *
+   * @return YAML::Node YAML node describing the sources
+   */
+  YAML::Node get_sources() const { return this->sources->get_sources(); }
 
   /**
    * @brief Get the path to stations file
    *
    * @return std::string path to stations file
    */
-  std::string get_stations_file() const {
-    return this->receivers->get_stations_file();
-  }
+  YAML::Node get_stations() const { return this->receivers->get_stations(); }
 
   /**
    * @brief Get the angle of receivers
@@ -127,40 +141,37 @@ public:
    * @param receivers Pointer to specfem::compute::receivers struct
    used
    * to instantiate the writer
-   * @return specfem::writer::writer* Pointer to an instantiated writer
+   * @return specfem::IO::writer* Pointer to an instantiated writer
    object
    */
-  std::shared_ptr<specfem::writer::writer> instantiate_seismogram_writer(
-      const specfem::compute::assembly &assembly) const {
+  std::shared_ptr<specfem::IO::writer> instantiate_seismogram_writer() const {
     if (this->seismogram) {
       return this->seismogram->instantiate_seismogram_writer(
-          assembly.receivers, this->time_scheme->get_dt(),
-          this->time_scheme->get_t0(),
+          this->time_scheme->get_dt(), this->time_scheme->get_t0(),
           this->receivers->get_nstep_between_samples());
     } else {
       return nullptr;
     }
   }
 
-  std::shared_ptr<specfem::writer::writer> instantiate_wavefield_writer(
-      const specfem::compute::assembly &assembly) const {
+  std::shared_ptr<specfem::IO::writer> instantiate_wavefield_writer() const {
     if (this->wavefield) {
-      return this->wavefield->instantiate_wavefield_writer(assembly);
+      return this->wavefield->instantiate_wavefield_writer();
     } else {
       return nullptr;
     }
   }
 
-  std::shared_ptr<specfem::reader::reader> instantiate_wavefield_reader(
-      const specfem::compute::assembly &assembly) const {
+  std::shared_ptr<specfem::IO::reader> instantiate_wavefield_reader() const {
     if (this->wavefield) {
-      return this->wavefield->instantiate_wavefield_reader(assembly);
+      return this->wavefield->instantiate_wavefield_reader();
     } else {
       return nullptr;
     }
   }
 
-  std::shared_ptr<specfem::plotter::plotter> instantiate_wavefield_plotter(
+  std::shared_ptr<specfem::periodic_tasks::periodic_task>
+  instantiate_wavefield_plotter(
       const specfem::compute::assembly &assembly) const {
     if (this->plot_wavefield) {
       return this->plot_wavefield->instantiate_wavefield_plotter(assembly);
@@ -169,10 +180,25 @@ public:
     }
   }
 
-  std::shared_ptr<specfem::writer::writer>
-  instantiate_kernel_writer(const specfem::compute::assembly &assembly) const {
+  std::shared_ptr<specfem::IO::reader> instantiate_property_reader() const {
+    if (this->property) {
+      return this->property->instantiate_property_reader();
+    } else {
+      return nullptr;
+    }
+  }
+
+  std::shared_ptr<specfem::IO::writer> instantiate_property_writer() const {
+    if (this->property) {
+      return this->property->instantiate_property_writer();
+    } else {
+      return nullptr;
+    }
+  }
+
+  std::shared_ptr<specfem::IO::writer> instantiate_kernel_writer() const {
     if (this->kernel) {
-      return this->kernel->instantiate_kernel_writer(assembly);
+      return this->kernel->instantiate_kernel_writer();
     } else {
       return nullptr;
     }
@@ -182,15 +208,14 @@ public:
     return this->solver->get_simulation_type();
   }
 
-  template <typename qp_type>
+  template <int NGLL>
   std::shared_ptr<specfem::solver::solver> instantiate_solver(
       const type_real dt, const specfem::compute::assembly &assembly,
       std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
-      const qp_type &quadrature,
-      const std::vector<std::shared_ptr<specfem::plotter::plotter> > &plotters)
+      const std::vector<
+          std::shared_ptr<specfem::periodic_tasks::periodic_task> > &tasks)
       const {
-    return this->solver->instantiate(dt, assembly, time_scheme, quadrature,
-                                     plotters);
+    return this->solver->instantiate<NGLL>(dt, assembly, time_scheme, tasks);
   }
 
   int get_nsteps() const { return this->time_scheme->get_nsteps(); }
@@ -210,6 +235,11 @@ private:
                   ///< quadrature object
   std::unique_ptr<specfem::runtime_configuration::receivers>
       receivers; ///< Pointer to receivers object
+  std::unique_ptr<specfem::runtime_configuration::sources>
+      sources; ///< Pointer
+               ///< to
+               ///< receivers
+               ///< object
   std::unique_ptr<specfem::runtime_configuration::seismogram>
       seismogram; ///< Pointer to
                   ///< seismogram object
@@ -220,6 +250,7 @@ private:
       plot_wavefield; ///< Pointer to
                       ///< plot_wavefield object
   std::unique_ptr<specfem::runtime_configuration::kernel> kernel;
+  std::unique_ptr<specfem::runtime_configuration::property> property;
   std::unique_ptr<specfem::runtime_configuration::database_configuration>
       databases; ///< Get database filenames
   std::unique_ptr<specfem::runtime_configuration::solver::solver>

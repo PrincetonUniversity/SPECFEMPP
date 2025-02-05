@@ -179,7 +179,7 @@ time = 32.0 and adjoint component = 1.
 
 .. code:: bash
 
-    xadj_seismogram 27.0 32.0 S0001AA OUTPUT_FILES/seismograms/ OUTPUT_FILES/adjoint_sources/ 1
+    xadj_seismogram 27.0 32.0 AA.S0001.S2 OUTPUT_FILES/seismograms/ OUTPUT_FILES/adjoint_sources/ 1
 
 Running the adjoint simulation
 ------------------------------
@@ -245,11 +245,11 @@ Visualizing the kernels
 Lastly if the kernels are stored in ASCII format, we can use numpy to read the
 kernels and plot them.
 
-.. literalinclude:: ../../../../examples/Tromp_2005/plot.py
+.. literalinclude:: plot.py
     :language: python
 
 
-.. figure:: ../../../../examples/Tromp_2005/Reference_Kernels/Kernels.png
+.. figure:: Kernels.png
     :alt: Kernels
     :width: 800
     :align: center
