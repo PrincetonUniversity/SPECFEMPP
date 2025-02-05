@@ -18,7 +18,7 @@
 #include "point/partial_derivatives.hpp"
 #include "point/properties.hpp"
 #include "point/sources.hpp"
-#include "policies/chunk.hpp"
+#include "chunk.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -65,7 +65,7 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
   constexpr int num_dimensions =
       specfem::element::attributes<dimension, medium_tag>::dimension();
 
-  using ChunkPolicyType = specfem::policy::element_chunk<parallel_config>;
+  using ChunkPolicyType = element_chunk<parallel_config>;
   using ChunkElementFieldType = specfem::chunk_element::field<
       parallel_config::chunk_size, ngll, dimension, medium_tag,
       specfem::kokkos::DevScratchSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>,
@@ -78,16 +78,9 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
       ngll, dimension, specfem::kokkos::DevScratchSpace,
       Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, true>;
 
-  using PointBoundaryType =
-      specfem::point::boundary<boundary_tag, dimension, using_simd>;
-  using PointVelocityType =
-      specfem::point::field<dimension, medium_tag, false, true, false, false,
-                            using_simd>;
   using PointAccelerationType =
       specfem::point::field<dimension, medium_tag, false, false, true, false,
                             using_simd>;
-  using PointPartialDerivativesType =
-      specfem::point::partial_derivatives<dimension, true, using_simd>;
   using PointPropertyType =
       specfem::point::properties<dimension, medium_tag, property_tag,
                                  using_simd>;
@@ -170,8 +163,7 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
                   }
                 }
 
-                specfem::point::partial_derivatives<
-                    specfem::dimension::type::dim2, false, using_simd>
+                specfem::point::partial_derivatives<dimension, false, using_simd>
                     point_partial_derivatives;
 
                 specfem::benchmarks::load_partial_derivative(index, partial_derivatives,
@@ -190,7 +182,7 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
                       point_partial_derivatives.gammaz * df_dgamma[icomponent];
                 }
 
-                PointPartialDerivativesType point_partial_derivatives2;
+                specfem::point::partial_derivatives<dimension, true, using_simd> point_partial_derivatives2;
                 specfem::benchmarks::load_partial_derivative(index, partial_derivatives,
                                                     point_partial_derivatives2);
 
