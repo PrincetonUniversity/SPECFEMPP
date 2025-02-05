@@ -15,11 +15,11 @@ To make a change to SPECFEM++ (This development workflow is similar to the one s
 
 .. note::
 
-    It is also recommended that you run :code:`poetry install` every time you pull the develop branch. Please check :ref:`style section<style>` for more information on poetry.
+    It is also recommended that you run :code:`uv sync --extra dev` every time you pull the develop branch. Please check :ref:`style section<style>` for more information on uv.
 
 .. note::
 
-    Please also install pre-commit hooks after you've cloned repo. :code:`poetry run pre-commit install`
+    Please also install pre-commit hooks after you've cloned repo. :code:`uv run pre-commit install`
 
 - Next create a feature branch against develop branch called a feature branch. Please be explicit while naming the feature branch.
 
