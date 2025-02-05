@@ -15,7 +15,7 @@ namespace benchmarks {
 
 template <typename MemberType, typename ViewType>
 KOKKOS_FUNCTION void
-load_on_device(const MemberType &team,
+load_quadrature(const MemberType &team,
                const specfem::compute::quadrature &quadrature,
                ViewType &element_quadrature) {
 
@@ -46,7 +46,7 @@ load_on_device(const MemberType &team,
 template <typename PointPartialDerivativesType,
           typename std::enable_if_t<
               PointPartialDerivativesType::simd::using_simd, int> = 0>
-KOKKOS_FORCEINLINE_FUNCTION void load_on_device(
+KOKKOS_FORCEINLINE_FUNCTION void load_partial_derivative(
     const specfem::point::simd_index<PointPartialDerivativesType::dimension>
         &index,
     const specfem::compute::partial_derivatives &derivatives,
@@ -86,7 +86,7 @@ template <
     typename std::enable_if_t<
         ViewType::isChunkFieldType && ViewType::simd::using_simd, int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
-load_on_device(const MemberType &team, const IteratorType &iterator,
+load_wavefield(const MemberType &team, const IteratorType &iterator,
                const WavefieldType &field, ViewType &chunk_field) {
 
   constexpr static bool StoreDisplacement = ViewType::store_displacement;
@@ -164,25 +164,35 @@ load_on_device(const MemberType &team, const IteratorType &iterator,
   return;
 }
 
-template <
-    typename IndexType, typename PointPropertiesType, typename ContainerType,
-    typename std::enable_if_t<
-        PointPropertiesType::medium_tag == ContainerType::value_type, int> = 0>
+template <typename PointPropertiesType, typename IndexType,
+          typename std::enable_if_t<IndexType::using_simd ==
+                                        PointPropertiesType::simd::using_simd,
+                                    int> = 0>
 KOKKOS_FORCEINLINE_FUNCTION void
-load_device_properties(IndexType &index, PointPropertiesType &property,
-                       ContainerType &container) {
+load_point_property(const IndexType &lcoord,
+               const specfem::compute::properties &properties,
+               PointPropertiesType &property) {;
+  IndexType l_index = lcoord;
 
+  const int ispec = properties.property_index_mapping(lcoord.ispec);
+
+  l_index.ispec = ispec;
+
+  constexpr auto MediumTag = PointPropertiesType::medium_tag;
+  constexpr auto PropertyTag = PointPropertiesType::property_tag;
+  constexpr auto DimensionType = PointPropertiesType::dimension;
+
+  static_assert(DimensionType == specfem::dimension::type::dim2,
+                "Only 2D properties are supported");
   using simd = typename PointPropertiesType::simd;
   using mask_type = typename simd::mask_type;
   using tag_type = typename simd::tag_type;
-  constexpr auto MediumTag = PointPropertiesType::medium_tag;
-  constexpr auto PropertyTag = PointPropertiesType::property_tag;
 
-  const int ispec = index.ispec;
-  const int iz = index.iz;
-  const int ix = index.ix;
+  const int iz = l_index.iz;
+  const int ix = l_index.ix;
+  const auto &container = properties.get_container<MediumTag, PropertyTag>();
 
-  mask_type mask([&](std::size_t lane) { return index.mask(lane); });
+  mask_type mask([&](std::size_t lane) { return l_index.mask(lane); });
 
   if constexpr (MediumTag == specfem::element::medium_tag::acoustic &&
                 PropertyTag == specfem::element::property_tag::isotropic) {
@@ -236,32 +246,6 @@ load_device_properties(IndexType &index, PointPropertiesType &property,
   } else {
     static_assert("medium type not supported");
   }
-}
-
-template <typename PointPropertiesType, typename IndexType,
-          typename std::enable_if_t<IndexType::using_simd ==
-                                        PointPropertiesType::simd::using_simd,
-                                    int> = 0>
-KOKKOS_FORCEINLINE_FUNCTION void
-load_on_device(const IndexType &lcoord,
-               const specfem::compute::properties &properties,
-               PointPropertiesType &point_properties) {
-  const int ispec = lcoord.ispec;
-
-  IndexType l_index = lcoord;
-
-  const int index = properties.property_index_mapping(ispec);
-
-  l_index.ispec = index;
-
-  constexpr auto MediumTag = PointPropertiesType::medium_tag;
-  constexpr auto PropertyTag = PointPropertiesType::property_tag;
-  constexpr auto DimensionType = PointPropertiesType::dimension;
-
-  static_assert(DimensionType == specfem::dimension::type::dim2,
-                "Only 2D properties are supported");
-  load_device_properties(l_index, point_properties,
-                         properties.get_container<MediumTag, PropertyTag>());
 }
 
 template <
