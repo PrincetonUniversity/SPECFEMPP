@@ -100,6 +100,7 @@ end module constants
   integer :: NGNOD
 
   character(len=MAX_STRING_LEN) :: MODEL
+  character(len=MAX_STRING_LEN) :: COUPLED_MODEL_DIRECTORY
   character(len=MAX_STRING_LEN) :: SEP_MODEL_DIRECTORY
 
   ! physical parameters
@@ -109,6 +110,14 @@ end module constants
   character(len=MAX_STRING_LEN) :: TOMOGRAPHY_PATH
 
   character(len=MAX_STRING_LEN) :: Par_file
+  character(len=MAX_STRING_LEN) :: MESH_PAR_FILE
+
+  ! fault parameters
+  logical :: HAS_FINITE_FAULT_SOURCE
+  character(len=MAX_STRING_LEN) :: FAULT_PAR_FILE
+  character(len=MAX_STRING_LEN) :: FAULT_STATIONS
+  character(len=MAX_STRING_LEN) :: STRESS_FRICTION_FILE
+  character(len=MAX_STRING_LEN) :: RSF_HETE_FILE
 
   ! attenuation
   ! reference frequency of seismic model
@@ -165,8 +174,8 @@ end module constants
 
   ! sources
   logical :: USE_FORCE_POINT_SOURCE
+  character(len=MAX_STRING_LEN) :: SOURCE_FILENAME
   logical :: USE_RICKER_TIME_FUNCTION,PRINT_SOURCE_TIME_FUNCTION
-  logical :: HAS_FINITE_FAULT_SOURCE
 
   ! external source time function
   logical :: USE_EXTERNAL_SOURCE_FILE

@@ -52,6 +52,8 @@
   ! timing
   double precision, external :: wtime
 
+  call parse_command_line_arguments()
+
   ! MPI initialization
   call init_mpi()
 

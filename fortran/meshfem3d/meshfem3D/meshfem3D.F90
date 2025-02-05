@@ -60,6 +60,8 @@
   double precision :: time_start,tCPU
   character(len=3) :: str_unit
 
+  call parse_command_line_arguments()
+
   ! MPI initialization
   call init_mpi()
 
@@ -96,7 +98,7 @@
   endif
 
   if (myrank == 0) then
-    write(IMAIN,*) 'Reading parameters from ',IN_DATA_FILES(1:len_trim(IN_DATA_FILES))//'Par_file'
+    write(IMAIN,*) 'Reading parameters from ',trim(Par_file)
     write(IMAIN,*)
     call flush_IMAIN()
   endif
