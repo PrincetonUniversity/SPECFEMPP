@@ -35,7 +35,7 @@ set(MESHFEM3D_SHARED_MODULE
   merge_sort.f90
   netlib_specfun_erf.f90
   prepare_assemble_MPI.f90
-  command_line_arguments.f90
+  # command_line_arguments.f90
   read_parameter_file.F90
   read_topo_bathy_file.f90
   read_value_parameters.f90
@@ -126,4 +126,5 @@ target_link_libraries(meshfem3D_shared PRIVATE
   meshfem3D::shared_module
   meshfem3D::constants
   meshfem3D::shared_hdf5_module
+  meshfem3D::param_reader
 )
