@@ -1,24 +1,19 @@
 #pragma once
 
-#include "boundary_conditions/boundary_conditions.hpp"
-#include "chunk_element/field.hpp"
-#include "chunk_element/stress_integrand.hpp"
-#include "compute/assembly/assembly.hpp"
-#include "datatypes/simd.hpp"
-#include "element/quadrature.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
-#include "load.hpp"
-#include "medium/compute_stress.hpp"
+
+#include "chunk_element/field.hpp"
+#include "chunk_element/stress_integrand.hpp"
+
+#include "impl_load.hpp"
+#include "impl_chunk.hpp"
+#include "impl_stress.hpp"
+
+#include "compute/assembly/assembly.hpp"
+#include "datatypes/simd.hpp"
 #include "parallel_configuration/chunk_config.hpp"
-#include "point/boundary.hpp"
-#include "point/field.hpp"
-#include "point/field_derivatives.hpp"
-#include "point/partial_derivatives.hpp"
-#include "point/properties.hpp"
-#include "point/sources.hpp"
-#include "chunk.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -192,7 +187,7 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
 
                 PointFieldDerivativesType field_derivatives(df);
 
-                const auto point_stress = specfem::medium::compute_stress(
+                const auto point_stress = specfem::benchmarks::compute_stress(
                     point_property, field_derivatives);
 
                 const auto F = point_stress * point_partial_derivatives2;

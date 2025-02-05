@@ -2,6 +2,7 @@
 
 #include "enumerations/dimension.hpp"
 #include "point/coordinates.hpp"
+#include "point/field_derivatives.hpp"
 #include <Kokkos_Core.hpp>
 #include <string>
 #include <type_traits>
