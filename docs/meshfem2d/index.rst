@@ -24,6 +24,7 @@ Parameter Description
     internal_mesher
     external_mesher
     display_parameter
+    receiver_documentation
 
 .. _topography_file:
 

@@ -10,7 +10,7 @@
 #endif
 
 namespace specfem {
-namespace plotter {
+namespace periodic_tasks {
 /**
  * @brief Writer to plot the wavefield
  */
@@ -50,7 +50,7 @@ public:
    * @brief Plot the wavefield
    *
    */
-  void plot() override;
+  void run() override;
 
 private:
   const specfem::display::format output_format; ///< Output format of the plot
@@ -60,5 +60,5 @@ private:
   const boost::filesystem::path output_folder; ///< Path to output folder
   specfem::compute::assembly assembly;         ///< Assembly object
 };
-} // namespace plotter
+} // namespace periodic_tasks
 } // namespace specfem

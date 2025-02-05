@@ -31,15 +31,17 @@ constexpr auto dimension = DimensionType;
 constexpr int ngll = NGLL;
 constexpr auto wavefield = WavefieldType;
 
-const auto elements = assembly.sources.get_elements_on_device(
+const auto [element_indices, source_indices] = assembly.sources.get_sources_on_device(
     MediumTag, PropertyTag, BoundaryTag, WavefieldType);
 
-const int nelements = elements.extent(0);
+auto &sources = assembly.sources;
 
-if (nelements == 0)
+const int nsources = source_indices.extent(0);
+
+if (nsources == 0)
   return;
 
-auto &sources = assembly.sources;
+// Some aliases
 const auto &properties = assembly.properties;
 const auto &boundaries = assembly.boundaries;
 const auto field = assembly.fields.get_simulation_field<wavefield>();
@@ -71,55 +73,61 @@ using ParallelConfig =
                                            lane_size, simd,
                                            Kokkos::DefaultExecutionSpace>;
 
-using ChunkPolicy = specfem::policy::element_chunk<ParallelConfig>;
+using ChunkPolicy = specfem::policy::mapped_element_chunk<ParallelConfig>;
 
-ChunkPolicy chunk_policy(elements, NGLL, NGLL);
+ChunkPolicy mapped_policy(element_indices, source_indices, NGLL, NGLL);
 
 Kokkos::parallel_for(
     "specfem::kernels::impl::domain_kernels::compute_source_interaction",
-    static_cast<const typename ChunkPolicy::policy_type &>(chunk_policy),
+    static_cast<const typename ChunkPolicy::policy_type &>(mapped_policy),
     KOKKOS_LAMBDA(const typename ChunkPolicy::member_type &team) {
       for (int tile = 0; tile < ChunkPolicy::tile_size * simd_size;
            tile += ChunkPolicy::chunk_size * simd_size) {
         const int starting_element_index =
             team.league_rank() * ChunkPolicy::tile_size * simd_size + tile;
 
-        if (starting_element_index >= nelements) {
+        if (starting_element_index >= nsources) {
           break;
         }
 
-        const auto iterator =
-            chunk_policy.league_iterator(starting_element_index);
+        // This is a mapped_chunk iterator
+        const auto mapped_iterator =
+            mapped_policy.mapped_league_iterator(starting_element_index);
 
         Kokkos::parallel_for(
-            Kokkos::TeamThreadRange(team, iterator.chunk_size()),
+            Kokkos::TeamThreadRange(team, mapped_iterator.chunk_size()),
             [&](const int i) {
-              const auto iterator_index = iterator(i);
-              const auto index = iterator_index.index;
+              // mapped_chunk_index_type
+              const auto mapped_iterator_index = mapped_iterator(i);
 
+              // element_index is specfem::point::index
+              const auto element_index = mapped_iterator_index.index;
+
+              // need mapped_chunk_index here to get the imap=isource
               PointSourcesType point_source;
-              specfem::compute::load_on_device(index, sources, point_source);
+              specfem::compute::load_on_device(mapped_iterator_index, sources,
+                                               point_source);
 
               PointPropertiesType point_property;
-              specfem::compute::load_on_device(index, properties,
+              specfem::compute::load_on_device(element_index, properties,
                                                point_property);
 
               auto acceleration =
                   specfem::medium::compute_source_contribution(point_source,
                                                                point_property);
 
-              PointBoundaryType point_boundary;
-              specfem::compute::load_on_device(index, boundaries,
-                                               point_boundary);
+            //   PointBoundaryType point_boundary;
+            //   specfem::compute::load_on_device(element_index, boundaries,
+            //                                    point_boundary);
 
-              PointVelocityType velocity;
-              specfem::compute::load_on_device(index, field, velocity);
+            //   PointVelocityType velocity;
+            //   specfem::compute::load_on_device(element_index, field, velocity);
 
-              specfem::boundary_conditions::
-                  apply_boundary_conditions(point_boundary, point_property,
-                                            velocity, acceleration);
+            //   specfem::boundary_conditions::
+            //       apply_boundary_conditions(point_boundary, point_property,
+            //                                 velocity, acceleration);
 
-              specfem::compute::atomic_add_on_device(index, acceleration,
+              specfem::compute::atomic_add_on_device(element_index, acceleration,
                                                      field);
             });
       }
