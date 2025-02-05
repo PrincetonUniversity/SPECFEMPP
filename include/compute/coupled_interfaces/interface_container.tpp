@@ -518,7 +518,7 @@ specfem::compute::interface_container<MediumTag1, MediumTag2>::
         const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh, const specfem::compute::points &points,
         const specfem::compute::quadrature &quadratures,
         const specfem::compute::partial_derivatives &partial_derivatives,
-        const specfem::compute::properties &properties,
+        const specfem::compute::element_types &element_types,
         const specfem::compute::mesh_to_compute_mapping &mapping) {
 
   const auto interface_container =
@@ -526,7 +526,7 @@ specfem::compute::interface_container<MediumTag1, MediumTag2>::
           mesh.coupled_interfaces.get<MediumTag1, MediumTag2>());
 
   int num_interfaces = interface_container.num_interfaces;
-  const int ngll = properties.ngllx;
+  const int ngll = points.ngllx;
 
   if (num_interfaces == 0) {
     this->num_interfaces = 0;
@@ -545,10 +545,10 @@ specfem::compute::interface_container<MediumTag1, MediumTag2>::
     const int ispec1_compute = mapping.mesh_to_compute(ispec1_mesh);
     const int ispec2_compute = mapping.mesh_to_compute(ispec2_mesh);
 
-    if (!(((properties.h_element_types(ispec1_compute) == MediumTag1) &&
-           (properties.h_element_types(ispec2_compute) == MediumTag2)) ||
-          ((properties.h_element_types(ispec1_compute) == MediumTag2 &&
-            properties.h_element_types(ispec2_compute) == MediumTag1)))) {
+    if (!(((element_types.get_medium_tag(ispec1_compute) == MediumTag1) &&
+           (element_types.get_medium_tag(ispec2_compute) == MediumTag2)) ||
+          ((element_types.get_medium_tag(ispec1_compute) == MediumTag2 &&
+            element_types.get_medium_tag(ispec2_compute) == MediumTag1)))) {
 
       throw std::runtime_error(
           "Coupled Interfaces: Interface is not between the correct mediums");

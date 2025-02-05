@@ -71,3 +71,13 @@ Tests:
     databases:
       specfem_config: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test8/specfem_config.yaml"
       traces: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test8/traces"
+
+
+  - name : "SerialTest9 : Homogeneous elastic anisotropic domain"
+    description: >
+      Testing newmark time-marching solver on a homogeneous elastic anisotropic domain with no interfaces. Test is run on a single MPI process.
+    config:
+      nproc : 1
+    databases:
+      specfem_config: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test9/specfem_config.yaml"
+      traces: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test9/traces"

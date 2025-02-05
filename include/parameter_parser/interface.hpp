@@ -8,7 +8,7 @@
 #include "setup.hpp"
 // #include "solver/interface.hpp"
 #include "time_scheme/interface.hpp"
-#include "writer/seismogram.hpp"
-#include "writer/wavefield.hpp"
+#include "IO/seismogram/writer.hpp"
+#include "IO/wavefield/writer.hpp"
 
 #endif

@@ -15,14 +15,21 @@ def get_traces(directory):
     ## iterate over all seismograms
     for filename in files:
         station_name = os.path.splitext(filename)[0]
-        station_name = station_name.split("/")[-1]
+        network, station, location, channel = station_name.split(".")[:4]
         trace = np.loadtxt(filename, delimiter=" ")
         starttime = trace[0, 0]
         dt = trace[1, 0] - trace[0, 0]
         traces.append(
             obspy.Trace(
                 trace[:, 1],
-                {"network": station_name, "starttime": starttime, "delta": dt},
+                {
+                    "network": network,
+                    "station": station,
+                    "location": location,
+                    "channel": channel,
+                    "starttime": starttime,
+                    "delta": dt,
+                },
             )
         )
 
@@ -31,5 +38,5 @@ def get_traces(directory):
     return stream
 
 
-stream = get_traces("OUTPUT_FILES/results")
-stream.plot(size=(800, 1000)).savefig("OUTPUT_FILES/seismograms.png", dpi=300)
+stream = get_traces("OUTPUT_FILES/seismograms")
+stream.plot(size=(1000, 750)).savefig("OUTPUT_FILES/seismograms.png", dpi=300)

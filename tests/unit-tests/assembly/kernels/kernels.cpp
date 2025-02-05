@@ -1,7 +1,7 @@
 #include "../test_fixture/test_fixture.hpp"
 #include "datatypes/simd.hpp"
 #include "enumerations/dimension.hpp"
-#include "enumerations/medium.hpp"
+#include "enumerations/material_definitions.hpp"
 #include "parallel_configuration/chunk_config.hpp"
 #include "policies/chunk.hpp"
 #include "specfem_setup.hpp"
@@ -30,6 +30,27 @@ std::string get_error_message(
   message << "\t\trhop = " << point_kernel.rhop << "\n";
   message << "\t\talpha = " << point_kernel.alpha << "\n";
   message << "\t\tbeta = " << point_kernel.beta << "\n";
+
+  return message.str();
+}
+
+template <>
+std::string get_error_message(
+    const specfem::point::kernels<
+        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+        specfem::element::property_tag::anisotropic, false> &point_kernel,
+    const type_real value) {
+  std::ostringstream message;
+
+  message << "\n\t Expected: " << value;
+  message << "\n\t Got: \n";
+  message << "\t\trho = " << point_kernel.rho << "\n";
+  message << "\t\tc11 = " << point_kernel.c11 << "\n";
+  message << "\t\tc13 = " << point_kernel.c13 << "\n";
+  message << "\t\tc15 = " << point_kernel.c15 << "\n";
+  message << "\t\tc33 = " << point_kernel.c33 << "\n";
+  message << "\t\tc35 = " << point_kernel.c35 << "\n";
+  message << "\t\tc55 = " << point_kernel.c55 << "\n";
 
   return message.str();
 }
@@ -120,6 +141,58 @@ get_point_kernel(
 
 template <>
 specfem::point::kernels<specfem::dimension::type::dim2,
+                        specfem::element::medium_tag::elastic,
+                        specfem::element::property_tag::anisotropic, false>
+get_point_kernel(const int ispec, const int iz, const int ix,
+                 const specfem::compute::kernels &kernels) {
+
+  const auto elastic_anisotropic = kernels.elastic_anisotropic;
+
+  const int ispec_l = kernels.h_property_index_mapping(ispec);
+
+  specfem::point::kernels<specfem::dimension::type::dim2,
+                          specfem::element::medium_tag::elastic,
+                          specfem::element::property_tag::anisotropic, false>
+      point_kernel;
+
+  point_kernel.rho = elastic_anisotropic.h_rho(ispec_l, iz, ix);
+  point_kernel.c11 = elastic_anisotropic.h_c11(ispec_l, iz, ix);
+  point_kernel.c13 = elastic_anisotropic.h_c13(ispec_l, iz, ix);
+  point_kernel.c15 = elastic_anisotropic.h_c15(ispec_l, iz, ix);
+  point_kernel.c33 = elastic_anisotropic.h_c33(ispec_l, iz, ix);
+  point_kernel.c35 = elastic_anisotropic.h_c35(ispec_l, iz, ix);
+  point_kernel.c55 = elastic_anisotropic.h_c55(ispec_l, iz, ix);
+
+  return point_kernel;
+}
+
+template <>
+specfem::point::kernels<specfem::dimension::type::dim2,
+                        specfem::element::medium_tag::elastic,
+                        specfem::element::property_tag::anisotropic, false>
+get_point_kernel(
+    const int lane,
+    const specfem::point::kernels<
+        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+        specfem::element::property_tag::anisotropic, true> &point_kernel) {
+  specfem::point::kernels<specfem::dimension::type::dim2,
+                          specfem::element::medium_tag::elastic,
+                          specfem::element::property_tag::anisotropic, false>
+      point_kernel_l;
+
+  point_kernel_l.rho = point_kernel.rho[lane];
+  point_kernel_l.c11 = point_kernel.c11[lane];
+  point_kernel_l.c13 = point_kernel.c13[lane];
+  point_kernel_l.c15 = point_kernel.c15[lane];
+  point_kernel_l.c33 = point_kernel.c33[lane];
+  point_kernel_l.c35 = point_kernel.c35[lane];
+  point_kernel_l.c55 = point_kernel.c55[lane];
+
+  return point_kernel_l;
+}
+
+template <>
+specfem::point::kernels<specfem::dimension::type::dim2,
                         specfem::element::medium_tag::acoustic,
                         specfem::element::property_tag::isotropic, false>
 get_point_kernel(const int ispec, const int iz, const int ix,
@@ -167,24 +240,16 @@ get_point_kernel(
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd,
           typename IndexViewType, typename ValueViewType>
-void check_to_value(const specfem::compute::kernels kernels,
+void check_to_value(const specfem::compute::element_types &element_types,
+                    const specfem::compute::kernels kernels,
                     const IndexViewType &ispecs,
                     const ValueViewType &values_to_store) {
   const int nspec = kernels.nspec;
   const int ngllx = kernels.ngllx;
   const int ngllz = kernels.ngllz;
 
-  std::vector<int> elements;
-
-  const auto element_types = kernels.h_element_types;
-  const auto element_properties = kernels.h_element_property;
-
-  for (int ispec = 0; ispec < nspec; ispec++) {
-    if ((element_types(ispec) == MediumTag) &&
-        (element_properties(ispec) == PropertyTag)) {
-      elements.push_back(ispec);
-    }
-  }
+  const auto elements =
+      element_types.get_elements_on_host(MediumTag, PropertyTag);
 
   constexpr int simd_size =
       specfem::datatype::simd<type_real, using_simd>::size();
@@ -193,8 +258,8 @@ void check_to_value(const specfem::compute::kernels kernels,
     for (int iz = 0; iz < ngllz; iz++) {
       for (int ix = 0; ix < ngllx; ix++) {
         const int ielement = ispecs(i);
-        const int n_simd_elements = (simd_size + ielement > elements.size())
-                                        ? elements.size() - ielement
+        const int n_simd_elements = (simd_size + ielement > elements.extent(0))
+                                        ? elements.extent(0) - ielement
                                         : simd_size;
         for (int j = 0; j < n_simd_elements; j++) {
           const auto point_kernel = get_point_kernel<MediumTag, PropertyTag>(
@@ -263,27 +328,20 @@ void execute_store_or_add(specfem::compute::kernels &kernels,
 
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd>
-void check_store_and_add(specfem::compute::kernels &kernels) {
+void check_store_and_add(specfem::compute::kernels &kernels,
+                         const specfem::compute::element_types &element_types) {
 
   const int nspec = kernels.nspec;
   const int ngllx = kernels.ngllx;
   const int ngllz = kernels.ngllz;
-  std::vector<int> elements;
 
-  const auto element_types = kernels.h_element_types;
-  const auto element_properties = kernels.h_element_property;
-
-  for (int ispec = 0; ispec < nspec; ispec++) {
-    if ((element_types(ispec) == MediumTag) &&
-        (element_properties(ispec) == PropertyTag)) {
-      elements.push_back(ispec);
-    }
-  }
+  const auto elements =
+      element_types.get_elements_on_host(MediumTag, PropertyTag);
 
   // Evaluate at N evenly spaced points
   constexpr int N = 20;
 
-  if (elements.size() < N) {
+  if (elements.extent(0) < N) {
     return;
   }
 
@@ -293,15 +351,15 @@ void check_store_and_add(specfem::compute::kernels &kernels) {
   auto ispecs_h = Kokkos::create_mirror_view(ispecs);
   auto values_to_store_h = Kokkos::create_mirror_view(values_to_store);
 
-  const int element_size = elements.size();
+  const int element_size = elements.extent(0);
   const int step = element_size / N;
 
   for (int i = 0; i < N; i++) {
-    ispecs_h(i) = elements[i * step];
+    ispecs_h(i) = elements(i * step);
     values_to_store_h(i) = 10.5 + i;
   }
 
-  ispecs_h(N - 1) = elements[element_size - 5]; // check when simd is not full
+  ispecs_h(N - 1) = elements(element_size - 5); // check when simd is not full
 
   Kokkos::deep_copy(ispecs, ispecs_h);
   Kokkos::deep_copy(values_to_store, values_to_store_h);
@@ -309,8 +367,8 @@ void check_store_and_add(specfem::compute::kernels &kernels) {
   execute_store_or_add<MediumTag, PropertyTag, true, false, using_simd>(
       kernels, element_size, ispecs, values_to_store);
 
-  check_to_value<MediumTag, PropertyTag, using_simd>(kernels, ispecs_h,
-                                                     values_to_store_h);
+  check_to_value<MediumTag, PropertyTag, using_simd>(
+      element_types, kernels, ispecs_h, values_to_store_h);
 
   execute_store_or_add<MediumTag, PropertyTag, false, true, using_simd>(
       kernels, element_size, ispecs, values_to_store);
@@ -319,32 +377,26 @@ void check_store_and_add(specfem::compute::kernels &kernels) {
     values_to_store_h(i) *= 2;
   }
 
-  check_to_value<MediumTag, PropertyTag, using_simd>(kernels, ispecs_h,
-                                                     values_to_store_h);
+  check_to_value<MediumTag, PropertyTag, using_simd>(
+      element_types, kernels, ispecs_h, values_to_store_h);
 }
 
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd>
-void check_load_on_device(specfem::compute::kernels &kernels) {
+void check_load_on_device(
+    specfem::compute::kernels &kernels,
+    const specfem::compute::element_types &element_types) {
   const int nspec = kernels.nspec;
   const int ngllx = kernels.ngllx;
   const int ngllz = kernels.ngllz;
-  std::vector<int> elements;
 
-  const auto element_types = kernels.h_element_types;
-  const auto element_properties = kernels.h_element_property;
-
-  for (int ispec = 0; ispec < nspec; ispec++) {
-    if ((element_types(ispec) == MediumTag) &&
-        (element_properties(ispec) == PropertyTag)) {
-      elements.push_back(ispec);
-    }
-  }
+  const auto elements =
+      element_types.get_elements_on_host(MediumTag, PropertyTag);
 
   // Evaluate at N evenly spaced points
   constexpr int N = 20;
 
-  if (elements.size() < N) {
+  if (elements.extent(0) < N) {
     return;
   }
 
@@ -357,15 +409,15 @@ void check_load_on_device(specfem::compute::kernels &kernels) {
   auto ispecs_h = Kokkos::create_mirror_view(ispecs);
   auto values_to_store_h = Kokkos::create_mirror_view(values_to_store);
 
-  const int element_size = elements.size();
+  const int element_size = elements.extent(0);
   const int step = element_size / N;
 
   for (int i = 0; i < N; i++) {
-    ispecs_h(i) = elements[i * step];
+    ispecs_h(i) = elements(i * step);
     values_to_store_h(i) = 2 * (10.5 + i);
   }
 
-  ispecs_h(N - 1) = elements[element_size - 5]; // check when simd is not full
+  ispecs_h(N - 1) = elements(element_size - 5); // check when simd is not full
 
   Kokkos::deep_copy(ispecs, ispecs_h);
 
@@ -440,43 +492,31 @@ void check_load_on_device(specfem::compute::kernels &kernels) {
 
 void test_kernels(specfem::compute::assembly &assembly) {
 
+  const auto &element_types = assembly.element_types;
   auto &kernels = assembly.kernels;
 
-  check_store_and_add<specfem::element::medium_tag::elastic,
-                      specfem::element::property_tag::isotropic, false>(
-      kernels);
+#define TEST_STORE_AND_ADD(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)            \
+  check_store_and_add<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), false>(      \
+      kernels, element_types);                                                 \
+  check_load_on_device<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), false>(     \
+      kernels, element_types);                                                 \
+  check_store_and_add<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), true>(       \
+      kernels, element_types);                                                 \
+  check_load_on_device<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), true>(      \
+      kernels, element_types);
 
-  check_load_on_device<specfem::element::medium_tag::elastic,
-                       specfem::element::property_tag::isotropic, false>(
-      kernels);
+  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
+      TEST_STORE_AND_ADD,
+      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
+          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
-  check_store_and_add<specfem::element::medium_tag::elastic,
-                      specfem::element::property_tag::isotropic, true>(kernels);
-
-  check_load_on_device<specfem::element::medium_tag::elastic,
-                       specfem::element::property_tag::isotropic, true>(
-      kernels);
-
-  check_store_and_add<specfem::element::medium_tag::acoustic,
-                      specfem::element::property_tag::isotropic, false>(
-      kernels);
-
-  check_load_on_device<specfem::element::medium_tag::acoustic,
-                       specfem::element::property_tag::isotropic, false>(
-      kernels);
-
-  check_store_and_add<specfem::element::medium_tag::acoustic,
-                      specfem::element::property_tag::isotropic, true>(kernels);
-
-  check_load_on_device<specfem::element::medium_tag::acoustic,
-                       specfem::element::property_tag::isotropic, true>(
-      kernels);
+#undef TEST_STORE_AND_ADD
 }
 
 TEST_F(ASSEMBLY, kernels_device_functions) {
   for (auto parameters : *this) {
     const auto Test = std::get<0>(parameters);
-    auto assembly = std::get<1>(parameters);
+    specfem::compute::assembly assembly = std::get<4>(parameters);
 
     try {
       test_kernels(assembly);

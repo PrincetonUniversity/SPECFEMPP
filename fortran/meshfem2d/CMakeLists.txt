@@ -188,14 +188,14 @@ add_custom_target(compute_elements_load ALL
 )
 
 set( meshfem2D_OBJECTS
-	determine_abs_surface.mesh.o
-	determine_acoustic_surface.mesh.o
-	get_node_number.mesh.o
-	repartition_coupling.mesh.o
-	rotate_mesh.mesh.o
-	save_databases.mesh.o
-	save_gnuplot_file.mesh.o
-	save_stations_file.mesh.o
+    determine_abs_surface.mesh.o
+    determine_acoustic_surface.mesh.o
+    get_node_number.mesh.o
+    repartition_coupling.mesh.o
+    rotate_mesh.mesh.o
+    save_databases.mesh.o
+    save_gnuplot_file.mesh.o
+    save_stations_file.mesh.o
 )
 
 foreach(module_files ${meshfem2D_OBJECTS})
@@ -207,21 +207,21 @@ add_custom_target(meshfem_mesh ALL
 )
 
 set( meshfem2D_PREPROCESSOR_OBJECTS
-  	decompose_mesh.mesh.o
-	metis_partitioning.mesh.o
-	part_unstruct.mesh.o
-	read_external_mesh_files.mesh.o
-	read_mesh_files.mesh.o
-  	scotch_partitioning.mesh.o
-	meshfem2D.mesh.o
+    decompose_mesh.mesh.o
+    metis_partitioning.mesh.o
+    part_unstruct.mesh.o
+    read_external_mesh_files.mesh.o
+    read_mesh_files.mesh.o
+    scotch_partitioning.mesh.o
+    meshfem2D.mesh.o
 )
 
 foreach(module_files ${meshfem2D_PREPROCESSOR_OBJECTS})
-	build_fortran_command_preprocess(${module_files} compute_elements_load)
+    build_fortran_command_preprocess(${module_files} compute_elements_load)
 endforeach()
 
 add_custom_target(mesh_mpi ALL
-	DEPENDS ${meshfem2D_PREPROCESSOR_OBJECTS}
+    DEPENDS ${meshfem2D_PREPROCESSOR_OBJECTS}
 )
 
 set( MESHFEM_OBJECTS
@@ -232,13 +232,13 @@ set( MESHFEM_OBJECTS
 )
 
 add_custom_command(
-	OUTPUT meshfem2D
-	COMMAND ${CMAKE_Fortran_COMPILER} ${FCFLAGS_f90} -o ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/xmeshfem2D ${MESHFEM_OBJECTS} ${MESHFEM_SHARED_OBJECTS}
-	DEPENDS ${MESHFEM_OBJECTS} ${MESHFEM_SHARED_OBJECTS}
+    OUTPUT meshfem2D
+    COMMAND ${CMAKE_Fortran_COMPILER} ${FCFLAGS_f90} -o ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/xmeshfem2D ${MESHFEM_OBJECTS} ${MESHFEM_SHARED_OBJECTS}
+    DEPENDS ${MESHFEM_OBJECTS} ${MESHFEM_SHARED_OBJECTS}
 )
 
 add_custom_target(meshfem2D_exec ALL
-	DEPENDS meshfem2D
+    DEPENDS meshfem2D
 )
 
 add_custom_target(xadj_seismogram ALL

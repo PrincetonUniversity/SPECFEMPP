@@ -1,5 +1,6 @@
 #include "compute/interface.hpp"
 #include "enumerations/interface.hpp"
+#include "enumerations/material_definitions.hpp"
 #include "jacobian/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
@@ -228,89 +229,35 @@ specfem::compute::mesh_to_compute_mapping::mesh_to_compute_mapping(
 
   const int nspec = tags.nspec;
 
-  std::vector<int> elastic_isotropic_ispec;
-  std::vector<int> acoustic_isotropic_ispec;
-  std::vector<int> free_surface_ispec;
-  std::vector<int> elastic_isotropic_stacey_ispec;
-  std::vector<int> acoustic_isotropic_stacey_ispec;
-  std::vector<int> acoustic_isotropic_stacey_dirichlet_ispec;
+  constexpr auto element_types = specfem::element::element_types();
+  constexpr int total_element_types = element_types.size();
 
-  for (int ispec = 0; ispec < nspec; ispec++) {
-    const auto tag = tags.tags_container(ispec);
-    if (tag.medium_tag == specfem::element::medium_tag::elastic &&
-        tag.property_tag == specfem::element::property_tag::isotropic &&
-        tag.boundary_tag == specfem::element::boundary_tag::none) {
-      elastic_isotropic_ispec.push_back(ispec);
-    } else if (tag.medium_tag == specfem::element::medium_tag::acoustic &&
-               tag.property_tag == specfem::element::property_tag::isotropic &&
-               tag.boundary_tag == specfem::element::boundary_tag::none) {
-      acoustic_isotropic_ispec.push_back(ispec);
-    } else if (tag.medium_tag == specfem::element::medium_tag::acoustic &&
-               tag.property_tag == specfem::element::property_tag::isotropic &&
-               tag.boundary_tag ==
-                   specfem::element::boundary_tag::acoustic_free_surface) {
-      free_surface_ispec.push_back(ispec);
-    } else if (tag.medium_tag == specfem::element::medium_tag::elastic &&
-               tag.property_tag == specfem::element::property_tag::isotropic &&
-               tag.boundary_tag == specfem::element::boundary_tag::stacey) {
-      elastic_isotropic_stacey_ispec.push_back(ispec);
-    } else if (tag.medium_tag == specfem::element::medium_tag::acoustic &&
-               tag.property_tag == specfem::element::property_tag::isotropic &&
-               tag.boundary_tag == specfem::element::boundary_tag::stacey) {
-      acoustic_isotropic_stacey_ispec.push_back(ispec);
-    } else if (tag.medium_tag == specfem::element::medium_tag::acoustic &&
-               tag.property_tag == specfem::element::property_tag::isotropic &&
-               tag.boundary_tag ==
-                   specfem::element::boundary_tag::composite_stacey_dirichlet) {
-      acoustic_isotropic_stacey_dirichlet_ispec.push_back(ispec);
-    } else {
-      throw std::runtime_error("Unknown tag found in compute_to_mesh_ordering");
+  std::array<std::vector<int>, total_element_types> element_type_ispec;
+  int total_counted = 0;
+
+  for (int i = 0; i < total_element_types; i++) {
+    const auto [dimension, medium_tag, property_tag, boundary_tag] =
+        element_types[i];
+    for (int ispec = 0; ispec < nspec; ispec++) {
+      const auto tag = tags.tags_container(ispec);
+      if (tag.medium_tag == medium_tag && tag.property_tag == property_tag &&
+          tag.boundary_tag == boundary_tag) {
+        element_type_ispec[i].push_back(ispec);
+      }
     }
+    total_counted += element_type_ispec[i].size();
   }
 
-  const int total_nspecs =
-      elastic_isotropic_ispec.size() + acoustic_isotropic_ispec.size() +
-      free_surface_ispec.size() + elastic_isotropic_stacey_ispec.size() +
-      acoustic_isotropic_stacey_ispec.size() +
-      acoustic_isotropic_stacey_dirichlet_ispec.size();
-
-  assert(total_nspecs == nspec);
+  assert(total_counted == nspec);
 
   int ispec = 0;
-  for (const auto &ispecs : elastic_isotropic_ispec) {
-    compute_to_mesh(ispec) = ispecs;
-    mesh_to_compute(ispecs) = ispec;
-    ispec++;
-  }
 
-  for (const auto &ispecs : elastic_isotropic_stacey_ispec) {
-    compute_to_mesh(ispec) = ispecs;
-    mesh_to_compute(ispecs) = ispec;
-    ispec++;
-  }
-
-  for (const auto &ispecs : acoustic_isotropic_ispec) {
-    compute_to_mesh(ispec) = ispecs;
-    mesh_to_compute(ispecs) = ispec;
-    ispec++;
-  }
-
-  for (const auto &ispecs : free_surface_ispec) {
-    compute_to_mesh(ispec) = ispecs;
-    mesh_to_compute(ispecs) = ispec;
-    ispec++;
-  }
-
-  for (const auto &ispecs : acoustic_isotropic_stacey_ispec) {
-    compute_to_mesh(ispec) = ispecs;
-    mesh_to_compute(ispecs) = ispec;
-    ispec++;
-  }
-
-  for (const auto &ispecs : acoustic_isotropic_stacey_dirichlet_ispec) {
-    compute_to_mesh(ispec) = ispecs;
-    mesh_to_compute(ispecs) = ispec;
-    ispec++;
+  for (const auto &element_ispec : element_type_ispec) {
+    for (const auto &ispecs : element_ispec) {
+      compute_to_mesh(ispec) = ispecs;
+      mesh_to_compute(ispecs) = ispec;
+      ispec++;
+    }
   }
 
   assert(ispec == nspec);
@@ -327,9 +274,9 @@ specfem::compute::mesh::mesh(
       specfem::compute::control_nodes(this->mapping, m_control_nodes);
   this->quadratures =
       specfem::compute::quadrature(m_quadratures, m_control_nodes);
-  nspec = this->control_nodes.nspec;
-  ngllx = this->quadratures.gll.N;
-  ngllz = this->quadratures.gll.N;
+  this->nspec = this->control_nodes.nspec;
+  this->ngllx = this->quadratures.gll.N;
+  this->ngllz = this->quadratures.gll.N;
 
   this->points = this->assemble();
 }

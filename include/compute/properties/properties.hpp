@@ -1,12 +1,13 @@
-#ifndef _COMPUTE_PROPERTIES_HPP
-#define _COMPUTE_PROPERTIES_HPP
+#pragma once
 
+#include "compute/element_types/element_types.hpp"
+#include "compute/impl/value_containers.hpp"
 #include "enumerations/specfem_enums.hpp"
-#include "impl/material_properties.hpp"
-#include "impl/properties_container.hpp"
 #include "kokkos_abstractions.h"
 #include "macros.hpp"
-#include "material/material.hpp"
+#include "medium/material.hpp"
+#include "medium/material_properties.hpp"
+#include "medium/properties_container.hpp"
 #include "point/coordinates.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -21,42 +22,8 @@ namespace compute {
  * mesh
  *
  */
-struct properties {
-private:
-  using IndexViewType = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
-  using MediumTagViewType =
-      Kokkos::View<specfem::element::medium_tag *,
-                   Kokkos::DefaultExecutionSpace>; ///< Underlying view type to
-                                                   ///< store medium tags
-  using PropertyTagViewType =
-      Kokkos::View<specfem::element::property_tag *,
-                   Kokkos::DefaultExecutionSpace>; ///< Underlying view type to
-                                                   ///< store property tags
-
-public:
-  int nspec; ///< total number of spectral elements
-  int ngllz; ///< number of quadrature points in z dimension
-  int ngllx; ///< number of quadrature points in x dimension
-  IndexViewType property_index_mapping;
-  IndexViewType::HostMirror h_property_index_mapping;
-  MediumTagViewType element_types;      ///< Medium Tag for every spectral
-                                        ///< element
-  PropertyTagViewType element_property; ///< Property Tag for every spectral
-                                        ///< element
-  MediumTagViewType::HostMirror h_element_types;      ///< Host mirror of
-                                                      ///< @ref element_types
-  PropertyTagViewType::HostMirror h_element_property; ///< Host mirror of
-                                                      ///< @ref element_property
-
-  specfem::compute::impl::properties::material_property<
-      specfem::element::medium_tag::elastic,
-      specfem::element::property_tag::isotropic>
-      elastic_isotropic; ///< Elastic isotropic material properties
-  specfem::compute::impl::properties::material_property<
-      specfem::element::medium_tag::acoustic,
-      specfem::element::property_tag::isotropic>
-      acoustic_isotropic; ///< Acoustic isotropic material properties
-
+struct properties
+    : public impl::value_containers<specfem::medium::material_properties> {
   /**
    * @name Constructors
    */
@@ -77,59 +44,28 @@ public:
    * @param mapping Mapping of spectral element index from mesh to assembly
    * @param tags Element Tags for every spectral element
    * @param materials Material properties for every spectral element
+   * @param has_gll_model Whether a GLL model is present (skip material property
+   * assignment if true)
    */
   properties(const int nspec, const int ngllz, const int ngllx,
-             const specfem::compute::mesh_to_compute_mapping &mapping,
-             const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
-             const specfem::mesh::materials &materials);
+             const specfem::compute::element_types &element_types,
+             const specfem::mesh::materials &materials, bool has_gll_model);
 
   ///@}
 
   /**
-   * @brief Get the indices of elements of a given type as a view on the device
+   * @brief Copy misfit kernel data to host
    *
-   * @param medium Medium tag of the elements
-   * @return Kokkos::View<int *, Kokkos::LayoutLeft,
-   * Kokkos::DefaultExecutionSpace> View of the indices of elements of the given
-   * type
    */
-  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>
-  get_elements_on_device(const specfem::element::medium_tag medium) const;
+  void copy_to_host() {
+    impl::value_containers<
+        specfem::medium::material_properties>::copy_to_host();
+  }
 
-  /**
-   * @brief Get the indices of elements of a given type as a view on the device
-   *
-   * @param medium Medium tag of the elements
-   * @param property Property tag of the elements
-   * @return Kokkos::View<int *, Kokkos::LayoutLeft,
-   * Kokkos::DefaultExecutionSpace> View of the indices of elements of the given
-   * type
-   */
-  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::DefaultExecutionSpace>
-  get_elements_on_device(const specfem::element::medium_tag medium,
-                         const specfem::element::property_tag property) const;
-
-  /**
-   * @brief Get the indices of elements of a given type as a view on the host
-   *
-   * @param medium Medium tag of the elements
-   * @return Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace> View of
-   * the indices of elements of the given type
-   */
-  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace>
-  get_elements_on_host(const specfem::element::medium_tag medium) const;
-
-  /**
-   * @brief Get the indices of elements of a given type as a view on the host
-   *
-   * @param medium Medium tag of the elements
-   * @param property Property tag of the elements
-   * @return Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace> View of
-   * the indices of elements of the given type
-   */
-  Kokkos::View<int *, Kokkos::LayoutLeft, Kokkos::HostSpace>
-  get_elements_on_host(const specfem::element::medium_tag medium,
-                       const specfem::element::property_tag property) const;
+  void copy_to_device() {
+    impl::value_containers<
+        specfem::medium::material_properties>::copy_to_device();
+  }
 };
 
 /**
@@ -173,18 +109,8 @@ load_on_device(const IndexType &lcoord,
   static_assert(DimensionType == specfem::dimension::type::dim2,
                 "Only 2D properties are supported");
 
-  if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
-                (PropertyTag == specfem::element::property_tag::isotropic)) {
-    properties.elastic_isotropic.load_device_properties(l_index,
-                                                        point_properties);
-  } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
-                       (PropertyTag ==
-                        specfem::element::property_tag::isotropic)) {
-    properties.acoustic_isotropic.load_device_properties(l_index,
-                                                         point_properties);
-  } else {
-    static_assert("Material type not implemented");
-  }
+  properties.get_container<MediumTag, PropertyTag>().load_device_properties(
+      l_index, point_properties);
 }
 
 /**
@@ -223,18 +149,8 @@ void load_on_host(const IndexType &lcoord,
   static_assert(DimensionType == specfem::dimension::type::dim2,
                 "Only 2D properties are supported");
 
-  if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
-                (PropertyTag == specfem::element::property_tag::isotropic)) {
-    properties.elastic_isotropic.load_host_properties(l_index,
-                                                      point_properties);
-  } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
-                       (PropertyTag ==
-                        specfem::element::property_tag::isotropic)) {
-    properties.acoustic_isotropic.load_host_properties(l_index,
-                                                       point_properties);
-  } else {
-    static_assert("Material type not implemented");
-  }
+  properties.get_container<MediumTag, PropertyTag>().load_host_properties(
+      l_index, point_properties);
 }
 
 /**
@@ -272,18 +188,8 @@ void store_on_host(const IndexType &lcoord,
   static_assert(DimensionType == specfem::dimension::type::dim2,
                 "Only 2D properties are supported");
 
-  if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
-                (PropertyTag == specfem::element::property_tag::isotropic)) {
-    properties.elastic_isotropic.assign(l_index, point_properties);
-  } else if constexpr ((MediumTag == specfem::element::medium_tag::acoustic) &&
-                       (PropertyTag ==
-                        specfem::element::property_tag::isotropic)) {
-    properties.acoustic_isotropic.assign(l_index, point_properties);
-  } else {
-    static_assert("Material type not implemented");
-  }
+  properties.get_container<MediumTag, PropertyTag>().assign(l_index,
+                                                            point_properties);
 }
 } // namespace compute
 } // namespace specfem
-
-#endif

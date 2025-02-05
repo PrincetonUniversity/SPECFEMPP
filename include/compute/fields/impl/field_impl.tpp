@@ -2,6 +2,7 @@
 #define _COMPUTE_FIELDS_IMPL_FIELD_IMPL_TPP_
 
 #include "compute/fields/impl/field_impl.hpp"
+#include "compute/element_types/element_types.hpp"
 #include "kokkos_abstractions.h"
 #include <Kokkos_Core.hpp>
 
@@ -23,12 +24,11 @@ template <specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag>
 specfem::compute::impl::field_impl<DimensionType, MediumTag>::field_impl(
     const specfem::compute::mesh &mesh,
-    const specfem::compute::properties &properties,
+    const specfem::compute::element_types &element_types,
     Kokkos::View<int *, Kokkos::LayoutLeft, specfem::kokkos::HostMemSpace>
         assembly_index_mapping) {
 
   const auto index_mapping = mesh.points.h_index_mapping;
-  const auto element_type = properties.h_element_types;
   const int nspec = mesh.points.nspec;
   const int ngllz = mesh.points.ngllz;
   const int ngllx = mesh.points.ngllx;
@@ -39,7 +39,8 @@ specfem::compute::impl::field_impl<DimensionType, MediumTag>::field_impl(
   for (int ix = 0; ix < ngllx; ++ix) {
     for (int iz = 0; iz < ngllz; ++iz) {
       for (int ispec = 0; ispec < nspec; ++ispec) {
-        if (element_type(ispec) == MediumTag) {
+        const auto medium = element_types.get_medium_tag(ispec);
+        if (medium == MediumTag) {
           const int index = index_mapping(ispec, iz, ix); // get global index
           // increase the count only if the global index is not already counted
           /// static_cast<int>(medium::value) is the index of the medium in the

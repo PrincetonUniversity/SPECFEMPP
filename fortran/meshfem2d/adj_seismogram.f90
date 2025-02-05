@@ -211,7 +211,7 @@ program adj_seismogram
 
       do icomp = 1,NDIMr
 
-         filename = trim(synthetics_folder)//trim(station_name(irec))// compr(icomp) // '.semd'
+         filename = trim(synthetics_folder)//trim(station_name(irec))//'.'// compr(icomp) // '.semd'
          open(unit = 10, file = trim(filename),status='old',iostat=ier)
          if (ier /= 0) then
             print *,'Error opening file: ',trim(filename)
@@ -303,7 +303,7 @@ program adj_seismogram
       ! reads in all trace components
       do icomp = 1,NDIMr
 
-         filename = trim(synthetics_folder)//trim(station_name(irec))// compr(icomp) // '.semd'
+         filename = trim(synthetics_folder)//trim(station_name(irec))//'.'// compr(icomp) // '.semd'
          open(unit = 10, file = trim(filename),status='old',iostat=ier)
          if (ier /= 0) then
             print *,'Error opening file: ',trim(filename)
