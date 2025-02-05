@@ -86,6 +86,7 @@ public:
 protected:
   type_real x; ///< x-coordinate of source
   type_real z; ///< z-coordinate of source
+
   std::unique_ptr<specfem::forcing_function::stf>
       forcing_function; ///< pointer to source time function
 };

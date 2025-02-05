@@ -2,9 +2,6 @@ import glob
 import os
 import numpy as np
 import obspy
-import matplotlib
-
-matplotlib.use("agg")
 
 
 def get_traces(directory):
@@ -16,19 +13,15 @@ def get_traces(directory):
         "S0040",
         "S0050",
     ]
-    files = [
-        glob.glob(directory + f"/{stationname}*.sem*")[0]
-        for stationname in station_name
-    ]
+    files = []
+    for station in station_name:
+        files += glob.glob(directory + f"/??.{station}.S2.BX?.semd")
 
     ## iterate over all seismograms
     for filename in files:
         station_id = os.path.splitext(filename)[0]
         station_id = station_id.split("/")[-1]
-        network = station_id[5:7]
-        station = station_id[0:5]
-        location = "00"
-        component = station_id[7:10]
+        network, station, location, channel = station_id.split(".")[:4]
         trace = np.loadtxt(filename, delimiter=" ")
         starttime = trace[0, 0]
         dt = trace[1, 0] - trace[0, 0]
@@ -39,7 +32,7 @@ def get_traces(directory):
                     "network": network,
                     "station": station,
                     "location": location,
-                    "channel": component,
+                    "channel": channel,
                     "starttime": starttime,
                     "delta": dt,
                 },
@@ -52,4 +45,5 @@ def get_traces(directory):
 
 
 stream = get_traces("OUTPUT_FILES/results")
-stream.plot(size=(800, 1000))
+stream.select(component="X").plot(size=(1000, 750))
+stream.select(component="Z").plot(size=(1000, 750))

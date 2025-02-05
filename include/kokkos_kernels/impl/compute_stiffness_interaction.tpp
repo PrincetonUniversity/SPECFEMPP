@@ -104,6 +104,45 @@ void specfem::kokkos_kernels::impl::compute_stiffness_interaction(
 
   constexpr int simd_size = simd::size();
 
+  if constexpr (BoundaryTag == specfem::element::boundary_tag::stacey &&
+    WavefieldType == specfem::wavefield::simulation_field::backward) {
+
+  Kokkos::parallel_for(
+      "specfem::domain::impl::kernels::elements::compute_stiffness_"
+      "interaction",
+      static_cast<const typename ChunkPolicyType::policy_type &>(chunk_policy),
+      KOKKOS_LAMBDA(const typename ChunkPolicyType::member_type &team) {
+        for (int tile = 0; tile < ChunkPolicyType::tile_size * simd_size;
+             tile += ChunkPolicyType::chunk_size * simd_size) {
+          const int starting_element_index =
+              team.league_rank() * ChunkPolicyType::tile_size * simd_size +
+              tile;
+
+          if (starting_element_index >= nelements) {
+            break;
+          }
+
+          const auto iterator =
+              chunk_policy.league_iterator(starting_element_index);
+
+          Kokkos::parallel_for(
+              Kokkos::TeamThreadRange(team, iterator.chunk_size()),
+              [&](const int i) {
+                const auto iterator_index = iterator(i);
+                const auto index = iterator_index.index;
+
+                PointAccelerationType acceleration;
+                specfem::compute::load_on_device(
+                    istep, index, boundary_values, acceleration);
+
+                specfem::compute::atomic_add_on_device(index, acceleration,
+                         field);
+              });
+        }
+      });
+  }
+  else {
+
   Kokkos::parallel_for(
       "specfem::kernels::impl::domain_kernels::compute_stiffness_interaction",
       chunk_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
@@ -211,6 +250,7 @@ void specfem::kokkos_kernels::impl::compute_stiffness_interaction(
               });
         }
       });
+  }
 
   Kokkos::fence();
 

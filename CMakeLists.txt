@@ -69,7 +69,7 @@ endif()
 include(FetchContent)
 FetchContent_Declare(
   kokkos
-  URL https://github.com/kokkos/kokkos/archive/refs/tags/4.3.01.zip
+  URL https://github.com/kokkos/kokkos/archive/refs/tags/4.5.01.zip
   DOWNLOAD_EXTRACT_TIMESTAMP FALSE
 )
 FetchContent_MakeAvailable(kokkos)
@@ -105,7 +105,7 @@ endif()
 
 
 # Try finding boost and if not found install.
-find_package(Boost 1.73.0 COMPONENTS program_options filesystem system)
+find_package(Boost 1.85.0 COMPONENTS program_options filesystem system)
 
 
 if (NOT ${Boost_FOUND})
@@ -435,6 +435,7 @@ add_library(
 
 target_link_libraries(
         compute
+        enumerations
         quadrature
         mesh
         # material_class
@@ -542,30 +543,30 @@ target_link_libraries(
 )
 
 add_library(
-        plotter
-        src/plotter/plot_wavefield.cpp
+        periodic_tasks
+        src/periodic_tasks/plot_wavefield.cpp
 )
 
 if (NOT VTK_CXX_BUILD)
         target_compile_definitions(
-                plotter
+                periodic_tasks
                 PUBLIC -DNO_VTK
         )
 
         target_link_libraries(
-                plotter
+                periodic_tasks
                 compute
         )
 else ()
         target_link_libraries(
-                plotter
+                periodic_tasks
                 compute
                 ${VTK_LIBRARIES}
                 )
 
         # Only define the __APPLE__ compile definition if it is defined
         if (__APPLE__)
-        target_compile_definitions(plotter PRIVATE __APPLE__)
+        target_compile_definitions(periodic_tasks PRIVATE __APPLE__)
         endif(__APPLE__)
 endif()
 
@@ -600,15 +601,13 @@ target_link_libraries(
         ${BOOST_LIBS}
 )
 
-add_executable(
-        specfem2d
-        src/specfem2d.cpp
+add_library(
+        execute
+        src/execute.cpp
 )
 
-
-
 target_link_libraries(
-        specfem2d
+        execute
         specfem_mpi
         Kokkos::kokkos
         mesh
@@ -618,13 +617,25 @@ target_link_libraries(
         parameter_reader
         receiver_class
         writer
-        plotter
+        periodic_tasks
         reader
         medium
         coupled_interface
         kokkos_kernels
         solver
         ${BOOST_LIBS}
+)
+
+add_executable(
+        specfem2d
+        src/specfem2d.cpp
+)
+
+
+
+target_link_libraries(
+        specfem2d
+        execute
 )
 
 # Include tests
@@ -670,28 +681,13 @@ endif ()
 if (SPECFEMPP_BINDING_PYTHON)
     find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
     find_package(pybind11 CONFIG REQUIRED)
-    python_add_library(_core MODULE src/specfem2d.cpp WITH_SOABI)
+    python_add_library(_core MODULE src/python/core.cpp WITH_SOABI)
     target_link_libraries(
         _core PRIVATE
-        specfem_mpi
-        Kokkos::kokkos
-        mesh
-        quadrature
-        compute
-        source_class
-        parameter_reader
-        receiver_class
-        writer
-        plotter
-        reader
-        medium
-        coupled_interface
-        kokkos_kernels
-        solver
+        execute
         ${BOOST_LIBS}
         pybind11::headers
     )
-    target_compile_definitions(_core PRIVATE SPECFEMPP_BINDING_PYTHON)
     target_compile_definitions(_core PRIVATE VERSION_INFO=${PROJECT_VERSION})
     install(TARGETS _core DESTINATION specfempp_core)
 endif (SPECFEMPP_BINDING_PYTHON)

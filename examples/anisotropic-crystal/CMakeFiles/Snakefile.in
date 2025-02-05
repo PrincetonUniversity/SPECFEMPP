@@ -92,20 +92,17 @@ rule plot_seismogram:
                 "S0050",
             ]
 
-            files = [glob.glob(directory + f"/{stationname}*.sem*")[0] for stationname in station_name]
+            # Only get a selected few stations
+            files = []
+            for station in station_name:
+                globstr = directory + f"/AA.{station}.S2.BX?.semd"
+                files.extend(glob.glob(globstr))
 
             ## iterate over all seismograms
             for filename in files:
                 station_id = os.path.splitext(filename)[0]
                 station_id = station_id.split("/")[-1]
-                # -------------------------
-                # FIX ME PLEASE!!!!!!!!!!!!
-                network = station_id[5:7]
-                station = station_id[0:5]
-                location = "00"
-                component = station_id[7:10]
-                # FIX ME PLEASE!!!!!!!!!!!!
-                # -------------------------
+                network, station, location, component = station_id.split(".")[:4]
                 trace = np.loadtxt(filename, delimiter=" ")
                 starttime = trace[0, 0]
                 dt = trace[1, 0] - trace[0, 0]
@@ -121,7 +118,7 @@ rule plot_seismogram:
                     )
                 )
 
-            stream = obspy.Stream(traces)
+            stream = obspy.Stream(traces).select(component="Z")
 
             return stream
 
