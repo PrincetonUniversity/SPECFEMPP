@@ -354,7 +354,7 @@ read_forcing_boundaries(std::ifstream &stream, const int nelement_acforcing,
 }
 
 specfem::mesh::boundaries<specfem::dimension::type::dim2>
-specfem::IO::mesh::impl::fortran::read_boundaries(
+specfem::IO::mesh::impl::fortran::dim2::read_boundaries(
     std::ifstream &stream, const int nspec, const int n_absorbing,
     const int n_acoustic_surface, const int n_acforcing,
     const Kokkos::View<int **, Kokkos::HostSpace> knods,
