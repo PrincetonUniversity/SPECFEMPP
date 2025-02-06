@@ -12,6 +12,7 @@ namespace IO {
 namespace mesh {
 namespace impl {
 namespace fortran {
+namespace dim2 {
 
 /**
  * Read material properties from a fotran binary database
@@ -28,6 +29,7 @@ specfem::mesh::materials read_material_properties(
     std::ifstream &stream, const int numat, const int nspec,
     const specfem::kokkos::HostView2d<int> knods, const specfem::MPI::MPI *mpi);
 
+} // namespace dim2
 } // namespace fortran
 } // namespace impl
 } // namespace mesh

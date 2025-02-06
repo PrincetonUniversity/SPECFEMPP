@@ -12,6 +12,7 @@ namespace IO {
 namespace mesh {
 namespace impl {
 namespace fortran {
+namespace dim2 {
 
 /**
  * @brief Read fortran bindary database header.
@@ -46,6 +47,8 @@ read_coorg_elements(std::ifstream &stream, const int npgeo,
 std::tuple<int, type_real, bool>
 read_mesh_database_attenuation(std::ifstream &stream,
                                const specfem::MPI::MPI *mpi);
+
+} // namespace dim2
 } // namespace fortran
 } // namespace impl
 } // namespace mesh
