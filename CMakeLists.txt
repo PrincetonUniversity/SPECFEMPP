@@ -631,11 +631,26 @@ add_executable(
         src/specfem2d.cpp
 )
 
-
-
 target_link_libraries(
         specfem2d
         execute
+)
+
+add_executable(
+        specfem3d
+        src/specfem3d.cpp
+)
+
+target_link_libraries(
+        specfem3d
+        specfem_mpi
+        Kokkos::kokkos
+        mesh
+        parameter_reader
+        periodic_tasks
+        IO
+        ${BOOST_LIBS}
+        yaml-cpp
 )
 
 # Include tests
