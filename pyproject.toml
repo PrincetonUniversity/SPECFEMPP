@@ -4,7 +4,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "specfempp_core"
-version = "0.1.0"
+version = "0.3.0"
 description = "Kokkos implementation of SpecFEM2D code"
 readme = "README.md"
 authors = [
@@ -13,6 +13,9 @@ authors = [
   { name = "Congyue Cui", email = "ccui@princeton.edu" }
 ]
 requires-python = ">=3.12"
+
+[tool.uv]
+package = false
 
 [project.optional-dependencies]
 dev = [
