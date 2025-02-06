@@ -26,7 +26,7 @@ MESH::MESH() {
   for (auto &Test : Tests) {
     const auto [database_file, sources_file, stations_file] =
         Test.get_databases();
-    specfem::mesh::mesh mesh = specfem::IO::read_mesh(database_file, mpi);
+    specfem::mesh::mesh mesh = specfem::IO::read_2d_mesh(database_file, mpi);
 
     meshes.push_back(mesh);
   }
