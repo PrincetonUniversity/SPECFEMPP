@@ -82,7 +82,7 @@ TEST(COMPUTE_TESTS, compute_ibool) {
 
   // Read mesh generated MESHFEM
   specfem::mesh::mesh mesh =
-      specfem::IO::read_mesh(test_config.database_filename, mpi);
+      specfem::IO::read_2d_mesh(test_config.database_filename, mpi);
 
   // Setup compute structs
   specfem::compute::mesh assembly(mesh.tags, mesh.control_nodes,

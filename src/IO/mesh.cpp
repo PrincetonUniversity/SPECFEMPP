@@ -2,12 +2,12 @@
 #include "mesh/mesh.hpp"
 #include "IO/fortranio/interface.hpp"
 #include "IO/interface.hpp"
-#include "IO/mesh/impl/fortran/read_boundaries.hpp"
-#include "IO/mesh/impl/fortran/read_elements.hpp"
-#include "IO/mesh/impl/fortran/read_interfaces.hpp"
-#include "IO/mesh/impl/fortran/read_material_properties.hpp"
-#include "IO/mesh/impl/fortran/read_mesh_database.hpp"
-#include "IO/mesh/impl/fortran/read_parameters.hpp"
+#include "IO/mesh/impl/fortran/dim2/read_boundaries.hpp"
+#include "IO/mesh/impl/fortran/dim2/read_elements.hpp"
+#include "IO/mesh/impl/fortran/dim2/read_interfaces.hpp"
+#include "IO/mesh/impl/fortran/dim2/read_material_properties.hpp"
+#include "IO/mesh/impl/fortran/dim2/read_mesh_database.hpp"
+#include "IO/mesh/impl/fortran/dim2/read_parameters.hpp"
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "medium/material.hpp"
@@ -24,8 +24,8 @@
 #include <vector>
 
 specfem::mesh::mesh<specfem::dimension::type::dim2>
-specfem::IO::read_mesh(const std::string filename,
-                       const specfem::MPI::MPI *mpi) {
+specfem::IO::read_2d_mesh(const std::string filename,
+                          const specfem::MPI::MPI *mpi) {
 
   // Declaring empty mesh objects
   specfem::mesh::mesh<specfem::dimension::type::dim2> mesh;
