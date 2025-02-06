@@ -4,11 +4,9 @@
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
 
-#include "chunk_element/field.hpp"
-#include "chunk_element/stress_integrand.hpp"
-
-#include "impl_load.hpp"
 #include "impl_chunk.hpp"
+#include "impl_load.hpp"
+#include "impl_policy.hpp"
 #include "impl_stress.hpp"
 
 #include "compute/assembly/assembly.hpp"
@@ -61,11 +59,11 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
       specfem::element::attributes<dimension, medium_tag>::dimension();
 
   using ChunkPolicyType = element_chunk<parallel_config>;
-  using ChunkElementFieldType = specfem::chunk_element::field<
+  using ChunkElementFieldType = specfem::benchmarks::chunk_field<
       parallel_config::chunk_size, ngll, dimension, medium_tag,
       specfem::kokkos::DevScratchSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>,
       true, false, false, false, using_simd>;
-  using ChunkStressIntegrandType = specfem::chunk_element::stress_integrand<
+  using ChunkStressIntegrandType = specfem::benchmarks::chunk_stress_integrand<
       parallel_config::chunk_size, ngll, dimension, medium_tag,
       specfem::kokkos::DevScratchSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>,
       using_simd>;
@@ -115,7 +113,7 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
         ChunkStressIntegrandType stress_integrand(team);
 
         specfem::benchmarks::load_quadrature(team, quadrature,
-                                            element_quadrature);
+                                             element_quadrature);
 
         for (int tile = 0; tile < ChunkPolicyType::tile_size * simd_size;
              tile += ChunkPolicyType::chunk_size * simd_size) {
@@ -158,11 +156,12 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
                   }
                 }
 
-                specfem::point::partial_derivatives<dimension, false, using_simd>
+                specfem::point::partial_derivatives<dimension, false,
+                                                    using_simd>
                     point_partial_derivatives;
 
-                specfem::benchmarks::load_partial_derivative(index, partial_derivatives,
-                                                    point_partial_derivatives);
+                specfem::benchmarks::load_partial_derivative(
+                    index, partial_derivatives, point_partial_derivatives);
 
                 VectorPointViewType df;
 
@@ -177,13 +176,14 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
                       point_partial_derivatives.gammaz * df_dgamma[icomponent];
                 }
 
-                specfem::point::partial_derivatives<dimension, true, using_simd> point_partial_derivatives2;
-                specfem::benchmarks::load_partial_derivative(index, partial_derivatives,
-                                                    point_partial_derivatives2);
+                specfem::point::partial_derivatives<dimension, true, using_simd>
+                    point_partial_derivatives2;
+                specfem::benchmarks::load_partial_derivative(
+                    index, partial_derivatives, point_partial_derivatives2);
 
                 PointPropertyType point_property;
                 specfem::benchmarks::load_point_property(index, properties,
-                                                    point_property);
+                                                         point_property);
 
                 PointFieldDerivativesType field_derivatives(df);
 
@@ -251,7 +251,7 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
                 }
 
                 specfem::benchmarks::atomic_add_on_device(index, acceleration,
-                                                            field);
+                                                          field);
               });
         }
       });
