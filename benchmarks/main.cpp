@@ -5,9 +5,9 @@
 namespace specfem {
 namespace benchmarks {
 
+template <bool flag>
 void benchmark(specfem::compute::assembly &assembly,
-               std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
-               const int &flag) {
+               std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme) {
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
   constexpr auto elastic = specfem::element::medium_tag::elastic;
   constexpr auto isotropic = specfem::element::property_tag::isotropic;
@@ -18,9 +18,9 @@ void benchmark(specfem::compute::assembly &assembly,
   const auto solver_start_time = std::chrono::system_clock::now();
 
   for (const auto [istep, dt] : time_scheme->iterate_forward()) {
-    compute_stiffness_interaction<acoustic, isotropic>(assembly, istep, flag);
-    compute_stiffness_interaction<elastic, isotropic>(assembly, istep, flag);
-    compute_stiffness_interaction<elastic, anisotropic>(assembly, istep, flag);
+    compute_stiffness_interaction<acoustic, isotropic, flag>(assembly, istep);
+    compute_stiffness_interaction<elastic, isotropic, flag>(assembly, istep);
+    compute_stiffness_interaction<elastic, anisotropic, flag>(assembly, istep);
     // divide_mass_matrix<dimension, wavefield, acoustic>(assembly);
     // divide_mass_matrix<dimension, wavefield, elastic>(assembly);
 
@@ -83,10 +83,10 @@ void run_benchmark(const YAML::Node &parameter_dict,
       setup.instantiate_property_reader());
   time_scheme->link_assembly(assembly);
 
-  benchmark(assembly, time_scheme, 1);
-  benchmark(assembly, time_scheme, 0);
-  // benchmark(assembly, time_scheme, 1);
-  // benchmark(assembly, time_scheme, 0);
+  benchmark<true>(assembly, time_scheme);
+  benchmark<false>(assembly, time_scheme);
+  benchmark<true>(assembly, time_scheme);
+  benchmark<false>(assembly, time_scheme);
   std::cout << std::endl;
 }
 
