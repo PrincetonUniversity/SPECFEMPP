@@ -134,19 +134,7 @@ void compute_stiffness_interaction2(const specfem::compute::assembly &assembly,
           const auto iterator =
               chunk_policy.league_iterator(starting_element_index);
           {
-            const auto &curr_field =
-                [&]() -> const specfem::compute::impl::field_impl<
-                          specfem::dimension::type::dim2, MediumTag> & {
-              if constexpr (MediumTag ==
-                            specfem::element::medium_tag::elastic) {
-                return field.elastic;
-              } else if constexpr (MediumTag ==
-                                   specfem::element::medium_tag::acoustic) {
-                return field.acoustic;
-              } else {
-                static_assert("medium type not supported");
-              }
-            }();
+            const auto &curr_field = field.get_field<MediumTag>();
 
             Kokkos::parallel_for(
                 Kokkos::TeamThreadRange(team, iterator.chunk_size()),
