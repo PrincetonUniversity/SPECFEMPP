@@ -7,14 +7,15 @@ Pre-commit
 SPECFEM++ uses pre-commit to check style. Pre-commit can be installed inside python virtual environments. There are several methods for creating virtual environments, but I've found uv tool is great at managing python environments. Especailly in collaborative environments uv gives easy method for managing consistency of environments between all contributors via :code:`pyproject.toml` and :code:`uv.lock` files.
 
 Install uv
-~~~~~~~~~~~~~~~
+~~~~~~~~~~
 
 Download and install uv using the `official instructions <https://docs.astral.sh/uv/getting-started/installation>`_.
 
 Install SPECFEM++ development environment
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
+
     uv sync --extra dev
 
 When you run this command one of two things happen,
@@ -32,7 +33,7 @@ When you run this command one of two things happen,
     It is also recommended that you run :code:`uv sync --extra dev` every time you pull the develop branch
 
 Using your python/uv environment
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you're in the SPECFEM++ root directory with an IDE with Python support, you should have access to the uv environment directly.
 To explicitly activate the environment, you can run the following command
@@ -42,7 +43,7 @@ To explicitly activate the environment, you can run the following command
     source .venv/bin/activate
 
 Pre-commit hooks
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 Next, we install pre-commit hooks to check style. Pre-commit hooks are defined in :code:`.pre-commit-config.yaml` within SPECFEM++ root directory. More documentation on pre-commit hooks can be found `here <https://pre-commit.com/hooks.html>`_.
 
