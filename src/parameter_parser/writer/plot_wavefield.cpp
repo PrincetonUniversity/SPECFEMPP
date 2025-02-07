@@ -102,6 +102,8 @@ specfem::runtime_configuration::plot_wavefield::instantiate_wavefield_plotter(
       return specfem::wavefield::simulation_field::forward;
     } else if (this->wavefield_type == "adjoint") {
       return specfem::wavefield::simulation_field::adjoint;
+    } else if (this->wavefield_type == "backward") {
+      return specfem::wavefield::simulation_field::backward;
     } else {
       throw std::runtime_error("Unknown wavefield type in the display section");
     }

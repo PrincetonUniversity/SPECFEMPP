@@ -30,7 +30,7 @@ rule forward_simulation:
         config="forward_config.yaml",
     output:
         seismograms=expand(
-            "OUTPUT_FILES/results/{station_name}.{network_name}.S2.{component}.semd",
+            "OUTPUT_FILES/results/{network_name}.{station_name}.S2.{component}.semd",
             station_name=["S0001"],
             network_name=["AA"],
             component=["BXX", "BXZ"],
@@ -54,14 +54,14 @@ rule forward_simulation:
 rule compute_adjoint_sources:
     input:
         seismograms=expand(
-            "OUTPUT_FILES/results/{station_name}.{network_name}.S2.{component}.semd",
+            "OUTPUT_FILES/results/{network_name}.{station_name}.S2.{component}.semd",
             station_name=["S0001"],
             network_name=["AA"],
             component=["BXX", "BXZ"],
         ),
     output:
         adjoint_sources=expand(
-            "adjoint_sources/{station_name}.{network_name}.S2.{component}.adj",
+            "adjoint_sources/{network_name}.{station_name}.S2.{component}.adj",
             station_name=["S0001"],
             network_name=["AA"],
             component=["BXX", "BXZ"],
@@ -70,7 +70,7 @@ rule compute_adjoint_sources:
         """
             mkdir -p adjoint_sources
             echo "Hostname: $(hostname)" > output.log
-            {ADJ_SEISMOGRAM_BIN} 27.0 32.0 S0001.AA.S2 OUTPUT_FILES/results/ adjoint_sources/ 1
+            {ADJ_SEISMOGRAM_BIN} 27.0 32.0 AA.S0001.S2 OUTPUT_FILES/results/ adjoint_sources/ 1
         """
 
 
@@ -81,7 +81,7 @@ rule adjoint_simulation:
         source="adjoint_source.yaml",
         config="adjoint_config.yaml",
         adjoint_sources=expand(
-            "adjoint_sources/{station_name}.{network_name}.S2.{component}.adj",
+            "adjoint_sources/{network_name}.{station_name}.S2.{component}.adj",
             station_name=["S0001"],
             network_name=["AA"],
             component=["BXX", "BXZ"],

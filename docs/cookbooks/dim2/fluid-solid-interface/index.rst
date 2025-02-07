@@ -151,3 +151,31 @@ With the configuration file in place, we can run the solver using the following 
 .. code:: bash
 
     specfem2d -p specfem_config.yaml
+
+
+Visualizing the results
+-----------------------
+
+The simulation generates seismograms at the stations defined in the
+``specfem_config.yaml`` file. You can visualize the seismograms using the
+following python script.
+
+.. literalinclude:: plot.py
+    :language: python
+    :caption: plot.py
+
+
+.. figure:: seismograms_X.svg
+   :alt: X-component seismograms
+   :width: 800
+   :align: center
+
+   X-component seismograms
+
+
+.. figure:: seismograms_Z.svg
+    :alt: Z-component seismograms
+    :width: 800
+    :align: center
+
+    Z-component seismograms
