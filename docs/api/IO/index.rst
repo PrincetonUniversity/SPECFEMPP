@@ -12,9 +12,9 @@ formats for the reading of the mesh is binary, and for sources and receivers it
 is yaml.
 
 In addition to these basic read functions, there are also the two
-reader and writer classes, :cpp:class:`specfem::reader::wavefield` and
-:cpp:class:`specfem::writer::wavefield`, which support both HDF5 and ASCII I/O.
-And, to write seismograms, we can use :cpp:class:`specfem::writer::seismogram`.
+reader and writer classes, :cpp:class:`specfem::IO::wavefield_reader` and
+:cpp:class:`specfem::IO::wavefield_writer`, which support both HDF5 and ASCII I/O.
+And, to write seismograms, we can use :cpp:class:`specfem::IO::seismogram_writer`.
 Seismogram I/O is only supported in ASCII format thus far.
 
 The slightly-lower level functionality to read and write data to and from disk
@@ -29,12 +29,19 @@ are exposed through the following modules:
     reader/index
 
 
-Read Mesh, Sources and Receivers
---------------------------------
-
+Read Mesh
+---------
 
 .. doxygenfunction:: specfem::IO::read_mesh
 
-.. doxygenfunction:: specfem::IO::read_sources
 
-.. doxygenfunction:: specfem::IO::read_receivers
+Read Sources
+------------
+
+.. doxygenfunction:: specfem::IO::read_sources(const std::string sources_file, const int nsteps, const type_real user_t0, const type_real dt, const specfem::simulation::type simulation_type)
+
+
+Read Receivers
+--------------
+
+.. doxygenfunction:: specfem::IO::read_receivers(const std::string stations_file, const type_real angle)

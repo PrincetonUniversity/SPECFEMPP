@@ -58,11 +58,9 @@ void specfem::quadrature::gll::gll_utils::jacg(HostMirror1d xjac, const int np,
     }
 
     if (np - j < 0 || np - j > np - 1) {
-      char err_msg[80];
-      sprintf(err_msg,
-              "Index xjac is out of range: xjac.extent(0) == %i & np-j = %i",
-              np, np - j);
-      throw std::out_of_range(err_msg);
+      std::ostringstream oss;
+      oss << "ERROR :Index xjac is out of range: xjac.extent(0) == " << np << " & np-j =" << np - j;
+      throw std::runtime_error(oss.str());
     }
     xjac(np - j) = x;
     xlast = x;

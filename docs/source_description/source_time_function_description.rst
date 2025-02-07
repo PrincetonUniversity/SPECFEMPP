@@ -76,7 +76,7 @@ Ricker Source Time Function Description
 **Description** : Time shift for Ricker source time function
 
 **Parameter Name** : ``Ricker.f0``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : None
 
@@ -96,10 +96,10 @@ Ricker Source Time Function Description
 .. _dgaussian_source_description:
 
 Gaussian Derivative Source Time Function Description
-=======================================
+====================================================
 
 **Parameter Name** : ``dGaussian``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : None
 
@@ -108,7 +108,7 @@ Gaussian Derivative Source Time Function Description
 **Description** : Definition of first derivative of a Gaussian source time function
 
 **Parameter Name** : ``dGaussian.factor``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : None
 
@@ -117,7 +117,7 @@ Gaussian Derivative Source Time Function Description
 **Description** : Scaling factor for first derivative of a Gaussian time function
 
 **Parameter Name** : ``dGaussian.tshift``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : 0.0
 
@@ -126,7 +126,7 @@ Gaussian Derivative Source Time Function Description
 **Description** : Time shift for first derivative of a Gaussian time function
 
 **Parameter Name** : ``dGaussian.f0``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : None
 
@@ -158,7 +158,7 @@ External Source Time Function Description
 **Description** : Definition of External source time function
 
 **Parameter Name** : ``External.format``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : ASCII
 
@@ -167,7 +167,7 @@ External Source Time Function Description
 **Description** : Format of the external source time function
 
 **Parameter Name** : ``External.stf``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : None
 
@@ -176,7 +176,7 @@ External Source Time Function Description
 **Description** : Location of the external source time function files
 
 **Parameter Name** : ``External.stf.X-component`` [optional]
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : ""
 
@@ -185,7 +185,7 @@ External Source Time Function Description
 **Description** : Location of time series trace for X-component of the external source time function (if unset the source time function is set to 0)
 
 **Parameter Name** : ``External.stf.Y-component`` [optional]
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : ""
 
@@ -194,7 +194,7 @@ External Source Time Function Description
 **Description** : Location of time series trace for Y-component of the external source time function (if unset the source time function is set to 0)
 
 **Parameter Name** : ``External.stf.Z-component`` [optional]
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **dafault value** : ""
 

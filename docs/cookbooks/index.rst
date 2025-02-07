@@ -19,4 +19,5 @@ Cookbooks are a collection of examples that demonstrate how to use the package t
     dim2/homogeneous-medium/index.rst
     dim2/solid-solid-interface/index.rst
     dim2/fluid-solid-interface/index.rst
+    dim2/anisotropic-crystal/index.rst
     dim2/kernels-example-tromp-2005/index.rst

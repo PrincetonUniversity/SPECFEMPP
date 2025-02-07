@@ -1,8 +1,7 @@
-#ifndef _SPECFEM_RUNTIME_CONFIGURATION_SOLVER_SOLVER_HPP_
-#define _SPECFEM_RUNTIME_CONFIGURATION_SOLVER_SOLVER_HPP_
+#pragma once
 
 #include "compute/interface.hpp"
-#include "plotter/plotter.hpp"
+#include "periodic_tasks/periodic_task.hpp"
 #include "solver/solver.hpp"
 #include "timescheme/newmark.hpp"
 #include <memory>
@@ -43,13 +42,13 @@ public:
    * @param quadrature Quadrature points object
    * @return std::shared_ptr<specfem::solver::solver> Solver object
    */
-  template <typename qp_type>
+  template <int NGLL>
   std::shared_ptr<specfem::solver::solver>
   instantiate(const type_real dt, const specfem::compute::assembly &assembly,
               std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
-              const qp_type &quadrature,
-              const std::vector<std::shared_ptr<specfem::plotter::plotter> >
-                  &plotters) const;
+              const std::vector<
+                  std::shared_ptr<specfem::periodic_tasks::periodic_task> >
+                  &tasks) const;
 
   /**
    * @brief Get the type of the simulation (forward or combined)
@@ -73,5 +72,3 @@ private:
 } // namespace solver
 } // namespace runtime_configuration
 } // namespace specfem
-
-#endif /* _SPECFEM_RUNTIME_CONFIGURATION_SOLVER_SOLVER_HPP_ */
