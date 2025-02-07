@@ -61,9 +61,10 @@ init_assembly(const std::string &parameter_file) {
       setup.get_simulation_type(), nullptr);
 }
 
-template <specfem::dimension::type DimensionType, typename FieldValFunction>
+template <specfem::dimension::type DimensionType, typename ViewType,
+          typename FieldValFunction>
 void reset_fields(std::shared_ptr<specfem::compute::assembly> assembly,
-                  FieldValFunction &fieldval) {
+                  ViewType &view, FieldValFunction &fieldval) {
 
   const auto element_type = assembly->element_types.medium_tags;
 
@@ -88,12 +89,16 @@ void reset_fields(std::shared_ptr<specfem::compute::assembly> assembly,
                icomp++) {
             simfield.acoustic.h_field(field_iglob, icomp) =
                 fieldval(iglob, icomp, 0);
+            view(iglob, icomp, 0) = fieldval(iglob, icomp, 0);
             simfield.acoustic.h_field_dot(field_iglob, icomp) =
                 fieldval(iglob, icomp, 1);
+            view(iglob, icomp, 1) = fieldval(iglob, icomp, 1);
             simfield.acoustic.h_field_dot_dot(field_iglob, icomp) =
                 fieldval(iglob, icomp, 2);
+            view(iglob, icomp, 2) = fieldval(iglob, icomp, 2);
             simfield.acoustic.h_mass_inverse(field_iglob, icomp) =
                 fieldval(iglob, icomp, 3);
+            view(iglob, icomp, 3) = fieldval(iglob, icomp, 3);
           }
         }
       }
@@ -112,12 +117,16 @@ void reset_fields(std::shared_ptr<specfem::compute::assembly> assembly,
                icomp++) {
             simfield.elastic.h_field(field_iglob, icomp) =
                 fieldval(iglob, icomp, 0);
+            view(iglob, icomp, 0) = fieldval(iglob, icomp, 0);
             simfield.elastic.h_field_dot(field_iglob, icomp) =
                 fieldval(iglob, icomp, 1);
+            view(iglob, icomp, 1) = fieldval(iglob, icomp, 1);
             simfield.elastic.h_field_dot_dot(field_iglob, icomp) =
                 fieldval(iglob, icomp, 2);
+            view(iglob, icomp, 2) = fieldval(iglob, icomp, 2);
             simfield.elastic.h_mass_inverse(field_iglob, icomp) =
                 fieldval(iglob, icomp, 3);
+            view(iglob, icomp, 3) = fieldval(iglob, icomp, 3);
           }
         }
       }
@@ -131,6 +140,8 @@ void reset_fields(std::shared_ptr<specfem::compute::assembly> assembly,
 TEST(accessor_tests, ACCESSOR_TESTS) {
   constexpr auto DimensionType = specfem::dimension::type::dim2;
   constexpr int NGLL = 5;
+  constexpr int max_components =
+      2; // number of components to reserve in fieldval
   constexpr bool USE_SIMD = false;
   using SIMD = specfem::datatype::simd<type_real, USE_SIMD>;
   using ParallelConfig = specfem::parallel_config::default_chunk_config<
@@ -146,7 +157,15 @@ TEST(accessor_tests, ACCESSOR_TESTS) {
   const auto fieldval = [](int iglob, int icomp, int ideriv) {
     return (type_real)(iglob + icomp * (1.0 / 7.0) + ideriv * (1.0 / 5.0));
   };
-  reset_fields<DimensionType>(assembly, fieldval);
+  Kokkos::View<type_real ***,
+               typename ParallelConfig::execution_space::memory_space>
+      fieldval_ref("fieldval_ref", assembly->fields.forward.nglob,
+                   max_components, 4);
+  auto h_fieldval_ref = Kokkos::create_mirror_view(fieldval_ref);
+
+  reset_fields<DimensionType>(assembly, fieldval_ref, fieldval);
+
+  Kokkos::deep_copy(h_fieldval_ref, fieldval_ref);
 
   //============[ check pointwise accessors ]============
   // TODO actually fill out, or get rid of?
@@ -163,10 +182,10 @@ TEST(accessor_tests, ACCESSOR_TESTS) {
   //=====================================================
   verify_chunk_edges<CHUNK_SIZE, NGLL, DimensionType,
                      specfem::element::medium_tag::acoustic, USE_SIMD>(
-      assembly, fieldval);
+      assembly, fieldval_ref);
   verify_chunk_edges<CHUNK_SIZE, NGLL, DimensionType,
-                     specfem::element::medium_tag::elastic, USE_SIMD>(assembly,
-                                                                      fieldval);
+                     specfem::element::medium_tag::elastic, USE_SIMD>(
+      assembly, fieldval_ref);
 
   // /**
   //  *  This test checks if compute_lagrange_interpolants and

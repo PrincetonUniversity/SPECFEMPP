@@ -22,9 +22,7 @@ static std::tuple<int, int> zx_on_edge(const int igll,
   case specfem::enums::edge::type::RIGHT:
     return std::make_tuple(igll, ngll - 1);
   default: // none
-    throw std::runtime_error(
-        "Attempting to convert (igll, edge=none) to (iz,ix) pair.");
-    return std::make_tuple(-1, -1);
+    return std::make_tuple(0, 0);
   }
 }
 
