@@ -1,0 +1,57 @@
+parameters:
+  header:
+    ## Header information is used for logging. It is good practice to give your simulations explicit names
+    title: Isotropic Acoustic simulation # name for your simulation
+    # A detailed description for your simulation
+    description: |
+      Material systems : Acoustic domain (1)
+      Interfaces : None
+      Sources : Force source (1)
+  simulation-setup:
+    ## quadrature setup
+    quadrature:
+      quadrature-type: GLL4
+    ## Solver setup
+    solver:
+      time-marching:
+        type-of-simulation: forward
+        time-scheme:
+          type: Newmark
+          dt: 1e-3
+          nstep: 5000
+    simulation-mode:
+      forward:
+        writer:
+          seismogram:
+            directory: "."
+
+  receivers:
+    stations: "../../../tests/unit-tests/accessor/databases/fluid_solid/mesh_stations"
+    angle: 0.0
+    seismogram-type:
+      - velocity
+    nstep_between_samples: 1
+  seismogram:
+    seismogram-format: ascii
+    output-folder: "."
+  ## Runtime setup
+  run-setup:
+    number-of-processors: 1
+    number-of-runs: 1
+  ## databases
+  databases:
+    mesh-database: "../../../tests/unit-tests/accessor/databases/fluid_solid/fluid_solid_gen"
+  sources:
+    number-of-sources: 1
+    sources:
+      - force:
+          x : 0.25
+          z : 0.3
+          source_surf: false
+          angle : 0.0
+          vx : 0.0
+          vz : 0.0
+          Ricker:
+            factor: 1.0
+            tshift: 0.0
+            f0: 5.0

@@ -411,5 +411,55 @@ load_on_host(const MemberType &member, const ChunkIteratorType &iterator,
   impl_load_on_host(member, iterator, field, chunk_field);
 }
 
+/**
+ * @brief Store fields for a given chunk of edges on the device
+ *
+ * @ingroup FieldDataAccess
+ *
+ * @tparam MemberType Member type. Needs to be of @ref Kokkos::TeamPolicy
+ * @tparam ChunkIteratorType Chunk iterator type. Needs to be of @ref
+ * specfem::iterator::chunk_edge
+ * @tparam WavefieldContainer Wavefield container type. Needs to be of @ref
+ * specfem::compute::fields::simulation_field
+ * @tparam ViewType View type. Needs to be of @ref specfem::element::field
+ * @param member Team member
+ * @param iterator Chunk iterator specifying the edges
+ * @param field Wavefield container
+ * @param chunk_field Chunk field to store the field values (output)
+ */
+template <typename MemberType, typename ChunkIteratorType,
+          typename WavefieldContainer, typename ViewType,
+          typename std::enable_if_t<ViewType::isChunkEdgeFieldType, int> = 0>
+KOKKOS_FORCEINLINE_FUNCTION void
+load_on_device(const MemberType &member, const ChunkIteratorType &iterator,
+               const WavefieldContainer &field, ViewType &chunk_field) {
+  impl_load_on_device(member, iterator, field, chunk_field);
+}
+
+/**
+ * @brief Store fields for a given chunk of edges on the host
+ *
+ * @ingroup FieldDataAccess
+ *
+ * @tparam MemberType Member type. Needs to be of @ref Kokkos::TeamPolicy
+ * @tparam ChunkIteratorType Chunk iterator type. Needs to be of @ref
+ * specfem::iterator::chunk_edge
+ * @tparam WavefieldContainer Wavefield container type. Needs to be of @ref
+ * specfem::compute::fields::simulation_field
+ * @tparam ViewType View type. Needs to be of @ref specfem::element::field
+ * @param member Team member
+ * @param iterator Chunk iterator specifying the edges
+ * @param field Wavefield container
+ * @param chunk_field Chunk field to store the field values (output)
+ */
+template <typename MemberType, typename ChunkIteratorType,
+          typename WavefieldContainer, typename ViewType,
+          typename std::enable_if_t<ViewType::isChunkEdgeFieldType, int> = 0>
+inline void
+load_on_host(const MemberType &member, const ChunkIteratorType &iterator,
+             const WavefieldContainer &field, ViewType &chunk_field) {
+  impl_load_on_host(member, iterator, field, chunk_field);
+}
+
 } // namespace compute
 } // namespace specfem

@@ -1,15 +1,71 @@
 #include "../Kokkos_Environment.hpp"
 #include "../MPI_environment.hpp"
 
-#include "build_demo_assembly.hpp"
+#include "compute/interface.hpp"
+// #include "kokkos_abstractions.h"
+#include "IO/interface.hpp"
+#include "parameter_parser/interface.hpp"
 
 #include "chunk_edge.hpp"
+#include <memory>
+
+std::shared_ptr<specfem::compute::assembly>
+init_assembly(const std::string &parameter_file) {
+  specfem::runtime_configuration::setup setup(parameter_file, __default_file__);
+  specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
+
+  const auto database_file = setup.get_databases();
+  const auto source_node = setup.get_sources();
+
+  // Set up GLL quadrature points
+  const auto quadratures = setup.instantiate_quadrature();
+
+  // Read mesh generated MESHFEM
+  specfem::mesh::mesh mesh = specfem::IO::read_mesh(database_file, mpi);
+  const type_real dt = setup.get_dt();
+  const int nsteps = setup.get_nsteps();
+
+  // Read sources
+  //    if start time is not explicitly specified then t0 is determined using
+  //    source frequencies and time shift
+  auto [sources, t0] = specfem::IO::read_sources(
+      source_node, nsteps, setup.get_t0(), dt, setup.get_simulation_type());
+
+  for (auto &source : sources) {
+    if (mpi->main_proc())
+      std::cout << source->print() << std::endl;
+  }
+
+  setup.update_t0(t0);
+
+  // Instantiate the solver and timescheme
+  auto it = setup.instantiate_timescheme();
+
+  const auto stations_node = setup.get_stations();
+  const auto angle = setup.get_receiver_angle();
+  auto receivers = specfem::IO::read_receivers(stations_node, angle);
+
+  std::cout << "  Receiver information\n";
+  std::cout << "------------------------------" << std::endl;
+  for (auto &receiver : receivers) {
+    if (mpi->main_proc())
+      std::cout << receiver->print() << std::endl;
+  }
+
+  const auto seismogram_types = setup.get_seismogram_types();
+  const int max_sig_step = it->get_max_seismogram_step();
+
+  return std::make_shared<specfem::compute::assembly>(
+      mesh, quadratures, sources, receivers, seismogram_types, t0,
+      setup.get_dt(), nsteps, max_sig_step, it->get_nstep_between_samples(),
+      setup.get_simulation_type(), nullptr);
+}
 
 template <specfem::dimension::type DimensionType, typename FieldValFunction>
 void reset_fields(std::shared_ptr<specfem::compute::assembly> assembly,
                   FieldValFunction &fieldval) {
 
-  const auto element_type = assembly->properties.h_element_types;
+  const auto element_type = assembly->element_types.medium_tags;
 
   auto &simfield = assembly->fields.forward;
   const int nspec = simfield.nspec;
@@ -81,12 +137,9 @@ TEST(accessor_tests, ACCESSOR_TESTS) {
       DimensionType, SIMD, Kokkos::DefaultExecutionSpace>;
   constexpr int CHUNK_SIZE = ParallelConfig::chunk_size;
 
-  // initialize assembly; TODO: decide if we use demo_assembly, or load from
-  // meshfem
-
-  _util::demo_assembly::simulation_params params =
-      _util::demo_assembly::simulation_params().use_demo_mesh(0b1000);
-  std::shared_ptr<specfem::compute::assembly> assembly = params.get_assembly();
+  std::shared_ptr<specfem::compute::assembly> assembly =
+      init_assembly("../../../tests/unit-tests/accessor/databases/fluid_solid/"
+                    "specfem_config.yaml");
   assert(assembly->fields.forward.ngllx == NGLL &&
          assembly->fields.forward.ngllz == NGLL);
 
@@ -108,8 +161,12 @@ TEST(accessor_tests, ACCESSOR_TESTS) {
                             false, false, USE_SIMD>;
 
   //=====================================================
-  verify_chunk_edges<CHUNK_SIZE, NGLL, DimensionType, USE_SIMD, Kokkos::Serial>(
+  verify_chunk_edges<CHUNK_SIZE, NGLL, DimensionType,
+                     specfem::element::medium_tag::acoustic, USE_SIMD>(
       assembly, fieldval);
+  verify_chunk_edges<CHUNK_SIZE, NGLL, DimensionType,
+                     specfem::element::medium_tag::elastic, USE_SIMD>(assembly,
+                                                                      fieldval);
 
   // /**
   //  *  This test checks if compute_lagrange_interpolants and

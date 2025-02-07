@@ -403,7 +403,6 @@ target_link_libraries(
 add_executable(
   accessor_tests
   accessor/accessor_tests.cpp
-  accessor/build_demo_assembly.cpp
 )
 target_link_libraries(
   accessor_tests
@@ -413,6 +412,7 @@ target_link_libraries(
   mesh
   compute
   parameter_reader
+  periodic_tasks
   # material_class
   -lpthread -lm
 )
