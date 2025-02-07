@@ -1,5 +1,6 @@
 #include "execute.hpp"
 #include "stiffness.hpp"
+#include "stiffness2.hpp"
 // #include "divide.hpp"
 
 namespace specfem {
@@ -18,9 +19,16 @@ void benchmark(specfem::compute::assembly &assembly,
   const auto solver_start_time = std::chrono::system_clock::now();
 
   for (const auto [istep, dt] : time_scheme->iterate_forward()) {
-    compute_stiffness_interaction<acoustic, isotropic, flag>(assembly, istep);
-    compute_stiffness_interaction<elastic, isotropic, flag>(assembly, istep);
-    compute_stiffness_interaction<elastic, anisotropic, flag>(assembly, istep);
+    if constexpr (flag) {
+      compute_stiffness_interaction<acoustic, isotropic>(assembly, istep);
+      compute_stiffness_interaction<elastic, isotropic>(assembly, istep);
+      compute_stiffness_interaction<elastic, anisotropic>(assembly, istep);
+    } else {
+      compute_stiffness_interaction2<acoustic, isotropic>(assembly, istep);
+      compute_stiffness_interaction2<elastic, isotropic>(assembly, istep);
+      compute_stiffness_interaction2<elastic, anisotropic>(assembly, istep);
+    }
+
     // divide_mass_matrix<dimension, wavefield, acoustic>(assembly);
     // divide_mass_matrix<dimension, wavefield, elastic>(assembly);
 

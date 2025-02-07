@@ -17,15 +17,10 @@
 namespace specfem {
 namespace benchmarks {
 
-constexpr static auto dimension = specfem::dimension::type::dim2;
-constexpr static auto wavefield = specfem::wavefield::simulation_field::forward;
-constexpr static auto ngll = 5;
-constexpr static auto boundary_tag = specfem::element::boundary_tag::none;
-
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
-                                   const int &istep) {
+void compute_stiffness_interaction2(const specfem::compute::assembly &assembly,
+                                    const int &istep) {
 
   constexpr auto medium_tag = MediumTag;
   constexpr auto property_tag = PropertyTag;
@@ -114,8 +109,17 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
         ElementQuadratureType element_quadrature(team);
         ChunkStressIntegrandType stress_integrand(team);
 
-        specfem::benchmarks::load_quadrature(team, quadrature,
-                                             element_quadrature);
+        {
+          Kokkos::parallel_for(
+              Kokkos::TeamThreadRange(team, ngll * ngll), [&](const int &xz) {
+                int ix, iz;
+                sub2ind(xz, ngll, iz, ix);
+                element_quadrature.hprime_gll(iz, ix) =
+                    quadrature.gll.hprime(iz, ix);
+                element_quadrature.hprime_wgll(ix, iz) =
+                    quadrature.gll.hprime(iz, ix) * quadrature.gll.weights(iz);
+              });
+        }
 
         for (int tile = 0; tile < ChunkPolicyType::tile_size * simd_size;
              tile += ChunkPolicyType::chunk_size * simd_size) {
@@ -129,8 +133,47 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
 
           const auto iterator =
               chunk_policy.league_iterator(starting_element_index);
-          specfem::benchmarks::load_wavefield(team, iterator, field,
-                                              element_field);
+          {
+            const auto &curr_field =
+                [&]() -> const specfem::compute::impl::field_impl<
+                          specfem::dimension::type::dim2, MediumTag> & {
+              if constexpr (MediumTag ==
+                            specfem::element::medium_tag::elastic) {
+                return field.elastic;
+              } else if constexpr (MediumTag ==
+                                   specfem::element::medium_tag::acoustic) {
+                return field.acoustic;
+              } else {
+                static_assert("medium type not supported");
+              }
+            }();
+
+            Kokkos::parallel_for(
+                Kokkos::TeamThreadRange(team, iterator.chunk_size()),
+                [&](const int &i) {
+                  const auto iterator_index = iterator(i);
+                  const int ielement = iterator_index.ielement;
+                  const int ispec = iterator_index.index.ispec;
+                  const int iz = iterator_index.index.iz;
+                  const int ix = iterator_index.index.ix;
+
+                  for (int lane = 0; lane < simd::size(); ++lane) {
+                    if (!iterator_index.index.mask(lane)) {
+                      continue;
+                    }
+
+                    const int iglob = field.assembly_index_mapping(
+                        field.index_mapping(ispec + lane, iz, ix),
+                        static_cast<int>(MediumTag));
+
+                    for (int icomp = 0; icomp < components; ++icomp) {
+                      element_field.displacement(ielement, iz, ix,
+                                                 icomp)[lane] =
+                          curr_field.field(iglob, icomp);
+                    }
+                  }
+                });
+          }
 
           team.team_barrier();
 
@@ -162,8 +205,28 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
                                                     using_simd>
                     point_partial_derivatives;
 
-                specfem::benchmarks::load_partial_derivative(
-                    index, partial_derivatives, point_partial_derivatives);
+                {
+                  const int ispec = index.ispec;
+                  mask_type mask(
+                      [&](std::size_t lane) { return index.mask(lane); });
+
+                  Kokkos::Experimental::where(mask,
+                                              point_partial_derivatives.xix)
+                      .copy_from(&partial_derivatives.xix(ispec, iz, ix),
+                                 tag_type());
+                  Kokkos::Experimental::where(mask,
+                                              point_partial_derivatives.gammax)
+                      .copy_from(&partial_derivatives.gammax(ispec, iz, ix),
+                                 tag_type());
+                  Kokkos::Experimental::where(mask,
+                                              point_partial_derivatives.xiz)
+                      .copy_from(&partial_derivatives.xiz(ispec, iz, ix),
+                                 tag_type());
+                  Kokkos::Experimental::where(mask,
+                                              point_partial_derivatives.gammaz)
+                      .copy_from(&partial_derivatives.gammaz(ispec, iz, ix),
+                                 tag_type());
+                }
 
                 VectorPointViewType df;
 
@@ -180,12 +243,112 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
 
                 specfem::point::partial_derivatives<dimension, true, using_simd>
                     point_partial_derivatives2;
-                specfem::benchmarks::load_partial_derivative(
-                    index, partial_derivatives, point_partial_derivatives2);
+                {
+                  const int ispec = index.ispec;
+                  mask_type mask(
+                      [&](std::size_t lane) { return index.mask(lane); });
+
+                  Kokkos::Experimental::where(mask,
+                                              point_partial_derivatives2.xix)
+                      .copy_from(&partial_derivatives.xix(ispec, iz, ix),
+                                 tag_type());
+                  Kokkos::Experimental::where(mask,
+                                              point_partial_derivatives2.gammax)
+                      .copy_from(&partial_derivatives.gammax(ispec, iz, ix),
+                                 tag_type());
+                  Kokkos::Experimental::where(mask,
+                                              point_partial_derivatives2.xiz)
+                      .copy_from(&partial_derivatives.xiz(ispec, iz, ix),
+                                 tag_type());
+                  Kokkos::Experimental::where(mask,
+                                              point_partial_derivatives2.gammaz)
+                      .copy_from(&partial_derivatives.gammaz(ispec, iz, ix),
+                                 tag_type());
+                  Kokkos::Experimental::where(
+                      mask, point_partial_derivatives2.jacobian)
+                      .copy_from(&partial_derivatives.jacobian(ispec, iz, ix),
+                                 tag_type());
+                }
 
                 PointPropertyType point_property;
-                specfem::benchmarks::load_point_property(index, properties,
-                                                         point_property);
+                {
+                  const int ispec =
+                      properties.property_index_mapping(index.ispec);
+
+                  const auto &container =
+                      properties.get_container<MediumTag, PropertyTag>();
+
+                  mask_type mask(
+                      [&](std::size_t lane) { return index.mask(lane); });
+
+                  if constexpr (MediumTag ==
+                                    specfem::element::medium_tag::acoustic &&
+                                PropertyTag ==
+                                    specfem::element::property_tag::isotropic) {
+                    Kokkos::Experimental::where(mask,
+                                                point_property.rho_inverse)
+                        .copy_from(&container.rho_inverse(ispec, iz, ix),
+                                   tag_type());
+                    Kokkos::Experimental::where(mask, point_property.kappa)
+                        .copy_from(&container.kappa(ispec, iz, ix), tag_type());
+
+                    point_property.kappa_inverse =
+                        static_cast<type_real>(1.0) / point_property.kappa;
+                    point_property.rho_vpinverse =
+                        Kokkos::sqrt(point_property.rho_inverse *
+                                     point_property.kappa_inverse);
+                  } else if constexpr (
+                      MediumTag == specfem::element::medium_tag::elastic &&
+                      PropertyTag ==
+                          specfem::element::property_tag::isotropic) {
+                    Kokkos::Experimental::where(mask, point_property.rho)
+                        .copy_from(&container.rho(ispec, iz, ix), tag_type());
+                    Kokkos::Experimental::where(mask, point_property.mu)
+                        .copy_from(&container.mu(ispec, iz, ix), tag_type());
+                    Kokkos::Experimental::where(mask,
+                                                point_property.lambdaplus2mu)
+                        .copy_from(&container.lambdaplus2mu(ispec, iz, ix),
+                                   tag_type());
+
+                    point_property.lambda =
+                        point_property.lambdaplus2mu - 2 * point_property.mu;
+                    point_property.rho_vp = Kokkos::sqrt(
+                        point_property.rho * point_property.lambdaplus2mu);
+                    point_property.rho_vs =
+                        Kokkos::sqrt(point_property.rho * point_property.mu);
+                  } else if constexpr (
+                      MediumTag == specfem::element::medium_tag::elastic &&
+                      PropertyTag ==
+                          specfem::element::property_tag::anisotropic) {
+                    Kokkos::Experimental::where(mask, point_property.rho)
+                        .copy_from(&container.rho(ispec, iz, ix), tag_type());
+                    Kokkos::Experimental::where(mask, point_property.c11)
+                        .copy_from(&container.c11(ispec, iz, ix), tag_type());
+                    Kokkos::Experimental::where(mask, point_property.c12)
+                        .copy_from(&container.c12(ispec, iz, ix), tag_type());
+                    Kokkos::Experimental::where(mask, point_property.c13)
+                        .copy_from(&container.c13(ispec, iz, ix), tag_type());
+                    Kokkos::Experimental::where(mask, point_property.c15)
+                        .copy_from(&container.c15(ispec, iz, ix), tag_type());
+                    Kokkos::Experimental::where(mask, point_property.c33)
+                        .copy_from(&container.c33(ispec, iz, ix), tag_type());
+                    Kokkos::Experimental::where(mask, point_property.c35)
+                        .copy_from(&container.c35(ispec, iz, ix), tag_type());
+                    Kokkos::Experimental::where(mask, point_property.c55)
+                        .copy_from(&container.c55(ispec, iz, ix), tag_type());
+                    Kokkos::Experimental::where(mask, point_property.c23)
+                        .copy_from(&container.c23(ispec, iz, ix), tag_type());
+                    Kokkos::Experimental::where(mask, point_property.c25)
+                        .copy_from(&container.c25(ispec, iz, ix), tag_type());
+
+                    point_property.rho_vp =
+                        Kokkos::sqrt(point_property.rho * point_property.c33);
+                    point_property.rho_vs =
+                        Kokkos::sqrt(point_property.rho * point_property.c55);
+                  } else {
+                    static_assert("medium type not supported");
+                  }
+                }
 
                 PointFieldDerivativesType field_derivatives(df);
 
