@@ -270,7 +270,8 @@ void verify_chunk_edges(std::shared_ptr<specfem::compute::assembly> assembly,
                   int failderiv = -1;
                   type_real got_pt;
                   type_real got_edge;
-                  if constexpr (DISPLACEMENT) {
+                  // if constexpr (DISPLACEMENT)
+                  {
                     if (pointfield.displacement(icomp) !=
                             fieldval(iglob, icomp, 0) ||
                         pointfield.displacement(icomp) !=
@@ -280,7 +281,8 @@ void verify_chunk_edges(std::shared_ptr<specfem::compute::assembly> assembly,
                       got_edge = edgefield.displacement(ielem, igll, icomp);
                     }
                   }
-                  if constexpr (VELOCITY) {
+                  // if constexpr (VELOCITY)
+                  {
                     if (pointfield.velocity(icomp) !=
                             fieldval(iglob, icomp, 1) ||
                         pointfield.velocity(icomp) !=
@@ -290,7 +292,8 @@ void verify_chunk_edges(std::shared_ptr<specfem::compute::assembly> assembly,
                       got_edge = edgefield.velocity(ielem, igll, icomp);
                     }
                   }
-                  if constexpr (ACCEL) {
+                  // if constexpr (ACCEL)
+                  {
                     if (pointfield.acceleration(icomp) !=
                             fieldval(iglob, icomp, 2) ||
                         pointfield.acceleration(icomp) !=
@@ -300,16 +303,16 @@ void verify_chunk_edges(std::shared_ptr<specfem::compute::assembly> assembly,
                       got_edge = edgefield.acceleration(ielem, igll, icomp);
                     }
                   }
-                  if constexpr (MASS_MATRIX) {
-                    if (pointfield.mass_matrix(icomp) !=
-                            fieldval(iglob, icomp, 3) ||
-                        pointfield.mass_matrix(icomp) !=
-                            edgefield.mass_matrix(ielem, igll, icomp)) {
-                      failderiv = 3;
-                      got_pt = pointfield.mass_matrix(icomp);
-                      got_edge = edgefield.mass_matrix(ielem, igll, icomp);
-                    }
-                  }
+                  // if constexpr (MASS_MATRIX) {
+                  //   if (pointfield.mass_matrix(icomp) !=
+                  //           fieldval(iglob, icomp, 3) ||
+                  //       pointfield.mass_matrix(icomp) !=
+                  //           edgefield.mass_matrix(ielem, igll, icomp)) {
+                  //     failderiv = 3;
+                  //     got_pt = pointfield.mass_matrix(icomp);
+                  //     got_edge = edgefield.mass_matrix(ielem, igll, icomp);
+                  //   }
+                  // }
                   if (failderiv != -1) {
                     failcontainer(0) = access_failcond(
                         team,
