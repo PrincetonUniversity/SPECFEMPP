@@ -140,8 +140,12 @@ void reset_fields(std::shared_ptr<specfem::compute::assembly> assembly,
 TEST(accessor_tests, ACCESSOR_TESTS) {
   constexpr auto DimensionType = specfem::dimension::type::dim2;
   constexpr int NGLL = 5;
-  constexpr int max_components =
-      2; // number of components to reserve in fieldval
+  constexpr int max_components = std::max(
+      specfem::element::attributes<
+          DimensionType, specfem::element::medium_tag::elastic>::components(),
+      specfem::element::attributes<DimensionType,
+                                   specfem::element::medium_tag::acoustic>::
+          components()); // number of components to reserve in fieldval
   constexpr bool USE_SIMD = false;
   using SIMD = specfem::datatype::simd<type_real, USE_SIMD>;
   using ParallelConfig = specfem::parallel_config::default_chunk_config<
@@ -163,9 +167,9 @@ TEST(accessor_tests, ACCESSOR_TESTS) {
                    max_components, 4);
   auto h_fieldval_ref = Kokkos::create_mirror_view(fieldval_ref);
 
-  reset_fields<DimensionType>(assembly, fieldval_ref, fieldval);
+  reset_fields<DimensionType>(assembly, h_fieldval_ref, fieldval);
 
-  Kokkos::deep_copy(h_fieldval_ref, fieldval_ref);
+  Kokkos::deep_copy(fieldval_ref, h_fieldval_ref);
 
   //============[ check pointwise accessors ]============
   // TODO actually fill out, or get rid of?

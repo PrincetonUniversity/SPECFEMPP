@@ -412,6 +412,8 @@ target_link_libraries(
   mesh
   compute
   parameter_reader
+  timescheme
+  coupled_interface
   periodic_tasks
   # material_class
   -lpthread -lm

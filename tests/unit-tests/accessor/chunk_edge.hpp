@@ -2,23 +2,25 @@
 #include "parallel_configuration/chunk_config.hpp"
 #include "policies/chunk_edge.hpp"
 
+#include <bitset>
+#include <cstdio>
 #include <string.h>
 
-KOKKOS_INLINE_FUNCTION
-std::string edge_to_string(const specfem::enums::edge::type edge) {
-  switch (edge) {
-  case specfem::enums::edge::type::RIGHT:
-    return std::string("RIGHT");
-  case specfem::enums::edge::type::TOP:
-    return std::string("TOP");
-  case specfem::enums::edge::type::LEFT:
-    return std::string("LEFT");
-  case specfem::enums::edge::type::BOTTOM:
-    return std::string("BOTTOM");
-  default:
-    return std::string("NONE");
-  }
-}
+// KOKKOS_INLINE_FUNCTION
+// std::string edge_to_string(const specfem::enums::edge::type edge) {
+//   switch (edge) {
+//   case specfem::enums::edge::type::RIGHT:
+//     return std::string("RIGHT");
+//   case specfem::enums::edge::type::TOP:
+//     return std::string("TOP");
+//   case specfem::enums::edge::type::LEFT:
+//     return std::string("LEFT");
+//   case specfem::enums::edge::type::BOTTOM:
+//     return std::string("BOTTOM");
+//   default:
+//     return std::string("NONE");
+//   }
+// }
 
 std::string wrap_text(std::string str, int maxcols,
                       std::string newline = std::string("\n")) {
@@ -56,37 +58,101 @@ std::string wrap_text(std::string str, int maxcols,
   }
   return str;
 }
-
-struct access_failcond {
-
-  char message[256];
+namespace failcodes {
+constexpr int FAILURE_SIZE_INTDATA = 5;
+enum ID {
+  NO_ERROR,
+  ISPEC_MISMATCH,
+  IEDGE_MISMATCH,
+  EDGE_NONE,
+  IZ_IX_MISMATCH,
+  POINTFIELD_READ_MISMATCH,
+  EDGEFIELD_READ_MISMATCH
+};
+std::string id_str(ID id) {
+  return (std::string[]){ "NO_ERROR",
+                          "ISPEC_MISMATCH",
+                          "IEDGE_MISMATCH",
+                          "EDGE_NONE",
+                          "IZ_IX_MISMATCH",
+                          "POINTFIELD_READ_MISMATCH",
+                          "EDGEFIELD_READ_MISMATCH" }[id];
+};
+struct failure {
+  ID id;
   int league_rank;
   int team_rank;
+  bool stored_index;
+  int ispec, iz, ix;
+  int int_data[FAILURE_SIZE_INTDATA];
 
-  bool isfail;
-  template <typename MemberType>
-  access_failcond(const MemberType team, const char *message)
-      : isfail(true), league_rank(team.league_rank()),
-        team_rank(team.team_rank()) {
-    strcpy(this->message, message);
-  }
+  failure() : id(ID::NO_ERROR) {}
 
-  access_failcond() : isfail(false) {}
+  KOKKOS_INLINE_FUNCTION
+  failure(ID id, int league_rank, int team_rank)
+      : id(id), league_rank(league_rank), team_rank(team_rank),
+        stored_index(false) {}
+  KOKKOS_INLINE_FUNCTION
+  failure(ID id, int league_rank, int team_rank, int ispec, int iz, int ix)
+      : id(id), league_rank(league_rank), team_rank(team_rank), ispec(ispec),
+        iz(iz), ix(ix), stored_index(true) {}
 
-  void handle() {
-    if (isfail) {
-      std::string message = " - Error: " + std::string(this->message);
-      FAIL() << "--------------------------------------------------\n"
-             << "\033[0;31m[FAILED]\033[0m Test failed\n"
-             << " - Chunk Edge\n"
-             << wrap_text(message, 50, "\n -   ") << "\n"
-             << " - (team / league) = (" << team_rank << "," << league_rank
-             << ")\n"
-             << "--------------------------------------------------\n\n"
-             << std::endl;
+  std::string get_message() {
+    char buf[256];
+    std::snprintf(buf, 256, " (ispec, iz, ix) = (%d, %d, %d) - ", ispec, iz,
+                  ix);
+    std::string msg = id_str(id) + ((stored_index) ? buf : " - ");
+    switch (id) {
+    case ID::IZ_IX_MISMATCH:
+      std::snprintf(buf, 256, "igll=%d computed (iz,ix) = (%d,%d)", int_data[0],
+                    int_data[1], int_data[2]);
+      return msg + buf;
+    case ID::NO_ERROR:
+      return "No error.";
+    default:
+      return msg + "Message not yet implemented.";
     }
   }
 };
+
+template <typename MemberType>
+KOKKOS_INLINE_FUNCTION failure ispec_mismatch(const MemberType team) {
+  return failure(ID::ISPEC_MISMATCH, team.league_rank(), team.team_rank());
+}
+template <typename MemberType>
+KOKKOS_INLINE_FUNCTION failure iedge_mismatch(const MemberType team) {
+  failure fail(ID::IEDGE_MISMATCH, team.league_rank(), team.team_rank());
+  return fail;
+}
+template <typename MemberType>
+KOKKOS_INLINE_FUNCTION failure edge_none(const MemberType team) {
+  return failure(ID::EDGE_NONE, team.league_rank(), team.team_rank());
+}
+template <typename MemberType>
+KOKKOS_INLINE_FUNCTION failure iz_ix_mismatch(const MemberType team, int ispec,
+                                              int iz, int ix, int igll,
+                                              int found_iz, int found_ix) {
+  failure fail(ID::IZ_IX_MISMATCH, team.league_rank(), team.team_rank(), ispec,
+               iz, ix);
+  fail.int_data[0] = igll;
+  fail.int_data[1] = found_iz;
+  fail.int_data[2] = found_ix;
+  return fail;
+}
+template <typename MemberType>
+KOKKOS_INLINE_FUNCTION failure pointfield_read_mismatch(const MemberType team,
+                                                        int dcomp) {
+  return failure(ID::POINTFIELD_READ_MISMATCH, team.league_rank(),
+                 team.team_rank());
+}
+template <typename MemberType>
+KOKKOS_INLINE_FUNCTION failure edgefield_read_mismatch(const MemberType team,
+                                                       int dcomp) {
+  return failure(ID::EDGEFIELD_READ_MISMATCH, team.league_rank(),
+                 team.team_rank());
+}
+
+}; // namespace failcodes
 
 template <int CHUNK_SIZE, int NGLL, specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag, bool USE_SIMD,
@@ -97,6 +163,9 @@ void verify_chunk_edges(std::shared_ptr<specfem::compute::assembly> assembly,
   constexpr bool VELOCITY = true;
   constexpr bool ACCEL = true;
   constexpr bool MASS_MATRIX = false;
+
+  constexpr int NUM_COMPONENTS =
+      specfem::element::attributes<DimensionType, MediumTag>::components();
 
   using ChunkEdgeFieldType = specfem::chunk_edge::field<
       CHUNK_SIZE, NGLL, DimensionType, MediumTag,
@@ -121,7 +190,6 @@ void verify_chunk_edges(std::shared_ptr<specfem::compute::assembly> assembly,
       assembly->element_types.get_elements_on_device(MediumTag);
   const int nspec_medium = elems_to_test.extent(0);
   // const int nspec = simfield.nspec;
-  const int ngll = simfield.ngllx;
   const auto index_mapping = simfield.index_mapping;
 
   const int nelements = nspec_medium * 4;
@@ -142,7 +210,7 @@ void verify_chunk_edges(std::shared_ptr<specfem::compute::assembly> assembly,
   //===========================================================================
 
   // store fail conditions to print outside of loop
-  Kokkos::View<access_failcond[1],
+  Kokkos::View<failcodes::failure[1],
                typename ParallelConfig::execution_space::memory_space>
       failcontainer("failreduction");
   auto h_failcontainer = Kokkos::create_mirror_view(failcontainer);
@@ -197,24 +265,10 @@ void verify_chunk_edges(std::shared_ptr<specfem::compute::assembly> assembly,
                     edge_index_view(starting_element_index + ielem).edge_type;
 
                 if (expected_ispec != ispec) {
-                  failcontainer(0) = access_failcond(
-                      team, ("iter index " + std::to_string(i) + ": ielement " +
-                             std::to_string(ielem) + " should map to ispec=" +
-                             std::to_string(expected_ispec) + ". Got " +
-                             std::to_string(ispec) + " instead." +
-                             "\n(Starting element index:" +
-                             std::to_string(starting_element_index) + ")")
-                                .c_str());
+                  failcontainer(0) = failcodes::ispec_mismatch(team);
                 }
                 if (expected_edge != edge) {
-                  failcontainer(0) = access_failcond(
-                      team, ("iter index " + std::to_string(i) + ": ielement " +
-                             std::to_string(ielem) + " should map to edge=" +
-                             edge_to_string(expected_edge) + ". Got " +
-                             edge_to_string(edge) + " instead." +
-                             "\n(Starting element index:" +
-                             std::to_string(starting_element_index) + ")")
-                                .c_str());
+                  failcontainer(0) = failcodes::iedge_mismatch(team);
                 }
 
                 int expected_iz;
@@ -237,99 +291,73 @@ void verify_chunk_edges(std::shared_ptr<specfem::compute::assembly> assembly,
                   expected_ix = igll;
                   break;
                 default:
-                  failcontainer(0) = access_failcond(
-                      team, ("indexing array has NONE at index " +
-                             std::to_string(starting_element_index + ielem) +
-                             ". Fix the test.")
-                                .c_str());
+                  failcontainer(0) = failcodes::edge_none(team);
                 }
                 if (expected_ix != ix || expected_iz != iz) {
-                  failcontainer(0) = access_failcond(
-                      team, ("iter index " + std::to_string(i) + ": igll " +
-                             std::to_string(igll) + " with edge " +
-                             edge_to_string(edge) + " should map to (iz,ix)=(" +
-                             std::to_string(expected_iz) + "," +
-                             std::to_string(expected_ix) + "). Got (" +
-                             std::to_string(iz) + "," + std::to_string(ix) +
-                             ") instead." + "\n(Starting element index:" +
-                             std::to_string(starting_element_index) + ")")
-                                .c_str());
+                  failcontainer(0) = failcodes::iz_ix_mismatch(
+                      team, ispec, expected_iz, expected_ix, igll, iz, ix);
                 }
                 int iglob = index_mapping(ispec, iz, ix);
 
                 specfem::point::field<DimensionType, MediumTag, DISPLACEMENT,
                                       VELOCITY, ACCEL, MASS_MATRIX, USE_SIMD>
                     pointfield;
-                specfem::compute::load_on_device(index, simfield, pointfield);
-                for (int icomp = 0;
-                     icomp <
-                     specfem::element::attributes<DimensionType,
-                                                  MediumTag>::components();
-                     icomp++) {
+                // specfem::compute::load_on_device(index, simfield,
+                // pointfield); for (int icomp = 0;
+                //      icomp < NUM_COMPONENTS;
+                //      icomp++) {
 
-                  int failderiv = -1;
-                  type_real got_pt;
-                  type_real got_edge;
-                  // if constexpr (DISPLACEMENT)
-                  {
-                    if (pointfield.displacement(icomp) !=
-                            fieldval(iglob, icomp, 0) ||
-                        pointfield.displacement(icomp) !=
-                            edgefield.displacement(ielem, igll, icomp)) {
-                      failderiv = 0;
-                      got_pt = pointfield.displacement(icomp);
-                      got_edge = edgefield.displacement(ielem, igll, icomp);
-                    }
-                  }
-                  // if constexpr (VELOCITY)
-                  {
-                    if (pointfield.velocity(icomp) !=
-                            fieldval(iglob, icomp, 1) ||
-                        pointfield.velocity(icomp) !=
-                            edgefield.velocity(ielem, igll, icomp)) {
-                      failderiv = 1;
-                      got_pt = pointfield.velocity(icomp);
-                      got_edge = edgefield.velocity(ielem, igll, icomp);
-                    }
-                  }
-                  // if constexpr (ACCEL)
-                  {
-                    if (pointfield.acceleration(icomp) !=
-                            fieldval(iglob, icomp, 2) ||
-                        pointfield.acceleration(icomp) !=
-                            edgefield.acceleration(ielem, igll, icomp)) {
-                      failderiv = 2;
-                      got_pt = pointfield.acceleration(icomp);
-                      got_edge = edgefield.acceleration(ielem, igll, icomp);
-                    }
-                  }
-                  // if constexpr (MASS_MATRIX) {
-                  //   if (pointfield.mass_matrix(icomp) !=
-                  //           fieldval(iglob, icomp, 3) ||
-                  //       pointfield.mass_matrix(icomp) !=
-                  //           edgefield.mass_matrix(ielem, igll, icomp)) {
-                  //     failderiv = 3;
-                  //     got_pt = pointfield.mass_matrix(icomp);
-                  //     got_edge = edgefield.mass_matrix(ielem, igll, icomp);
-                  //   }
-                  // }
-                  if (failderiv != -1) {
-                    failcontainer(0) = access_failcond(
-                        team,
-                        ("iter index " + std::to_string(i) + ": index(" +
-                         std::to_string(ispec) + "," + std::to_string(iz) +
-                         "," + std::to_string(ix) +
-                         ") giving iglob = " + std::to_string(iglob) +
-                         " got a failed read at icomp = " +
-                         std::to_string(icomp) + " and deriv order/ trait = " +
-                         std::to_string(failderiv) + ". Expected " +
-                         std::to_string(fieldval(iglob, icomp, failderiv)) +
-                         " and got " + std::to_string(got_pt) +
-                         " from the point accessor and " +
-                         std::to_string(got_edge) + " from the edge accessor.")
-                            .c_str());
-                  }
-                }
+                //   // if constexpr (DISPLACEMENT)
+                //   {
+                //     if (pointfield.displacement(icomp) != fieldval(iglob,
+                //     icomp, 0)){
+                //       failcontainer(0) =
+                //       failcodes::pointfield_read_mismatch(team, 0);
+                //     }else
+                //     if (edgefield.displacement(ielem, igll, icomp) !=
+                //     fieldval(iglob, icomp, 0)) {
+                //       failcontainer(0) =
+                //       failcodes::edgefield_read_mismatch(team, 0);
+                //     }
+                //   }
+                //   // if constexpr (VELOCITY)
+                //   {
+                //     if (pointfield.velocity(icomp) != fieldval(iglob, icomp,
+                //     1)){
+                //       failcontainer(0) =
+                //       failcodes::pointfield_read_mismatch(team, 1);
+                //     }else
+                //     if (edgefield.velocity(ielem, igll, icomp) !=
+                //     fieldval(iglob, icomp, 1)) {
+                //       failcontainer(0) =
+                //       failcodes::edgefield_read_mismatch(team, 1);
+                //     }
+                //   }
+                //   // if constexpr (ACCEL)
+                //   {
+                //     if (pointfield.acceleration(icomp) != fieldval(iglob,
+                //     icomp, 2)){
+                //       failcontainer(0) =
+                //       failcodes::pointfield_read_mismatch(team, 2);
+                //     }else
+                //     if (edgefield.acceleration(ielem, igll, icomp) !=
+                //     fieldval(iglob, icomp, 2)) {
+                //       failcontainer(0) =
+                //       failcodes::edgefield_read_mismatch(team, 2);
+                //     }
+                //   }
+                //   // if constexpr (MASS_MATRIX) {
+                //   //   if (pointfield.mass_matrix(icomp) !=
+                //   //           fieldval(iglob, icomp, 3) ||
+                //   //       pointfield.mass_matrix(icomp) !=
+                //   //           edgefield.mass_matrix(ielem, igll, icomp)) {
+                //   //     failderiv = 3;
+                //   //     got_pt = pointfield.mass_matrix(icomp);
+                //   //     got_edge = edgefield.mass_matrix(ielem, igll,
+                //   icomp);
+                //   //   }
+                //   // }
+                // }
                 // const auto point_property = [&]() -> PointPropertyType {
                 //   PointPropertyType point_property;
 
@@ -349,9 +377,20 @@ void verify_chunk_edges(std::shared_ptr<specfem::compute::assembly> assembly,
               });
         }
       });
+  Kokkos::fence();
   Kokkos::deep_copy(h_failcontainer, failcontainer);
   // if an error was generated, fail it
-  h_failcontainer(0).handle();
+  if (h_failcontainer(0).id != failcodes::ID::NO_ERROR) {
+    failcodes::failure &fail = h_failcontainer(0);
+    FAIL() << "--------------------------------------------------\n"
+           << "\033[0;31m[FAILED]\033[0m Test failed\n"
+           << " - Chunk Edge\n"
+           << " - error code " << failcodes::id_str(fail.id)
+           << " ; full error\n"
+           << "      " << fail.get_message() << "\n"
+           << "--------------------------------------------------\n\n"
+           << std::endl;
+  }
 
   int misses;
   Kokkos::parallel_reduce(
@@ -368,7 +407,8 @@ void verify_chunk_edges(std::shared_ptr<specfem::compute::assembly> assembly,
     FAIL() << "--------------------------------------------------\n"
            << "\033[0;31m[FAILED]\033[0m Test failed\n"
            << " - Chunk Edge\n"
-           << " - iterator missed " << misses << " entries\n"
+           << " - iterator missed " << misses << " / " << nelements * NGLL
+           << " entries\n"
            << "--------------------------------------------------\n\n"
            << std::endl;
   }

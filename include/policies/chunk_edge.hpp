@@ -9,20 +9,27 @@
 #include <type_traits>
 
 KOKKOS_INLINE_FUNCTION
-static std::tuple<int, int> zx_on_edge(const int igll,
-                                       const specfem::enums::edge::type edge,
-                                       const int ngll) {
+static void zx_on_edge(int &iz, int &ix, const int igll,
+                       const specfem::enums::edge::type edge, const int ngll) {
   switch (edge) {
   case specfem::enums::edge::type::TOP:
-    return std::make_tuple(ngll - 1, igll);
+    iz = ngll - 1;
+    ix = igll;
+    break;
   case specfem::enums::edge::type::BOTTOM:
-    return std::make_tuple(0, igll);
+    iz = 0;
+    ix = igll;
+    break;
   case specfem::enums::edge::type::LEFT:
-    return std::make_tuple(igll, 0);
+    iz = igll;
+    ix = 0;
+    break;
   case specfem::enums::edge::type::RIGHT:
-    return std::make_tuple(igll, ngll - 1);
+    iz = igll;
+    ix = ngll - 1;
+    break;
   default: // none
-    return std::make_tuple(0, 0);
+    break;
   }
 }
 
@@ -126,7 +133,8 @@ private:
     const auto index = indices(ielement);
     const int ispec = index.ispec;
     const auto edge = index.edge_type;
-    const auto [iz, ix] = zx_on_edge(igll, edge, ngll);
+    int iz, ix;
+    zx_on_edge(iz, ix, igll, edge, ngll);
     return impl::chunk_edge_pointwise_index_type<false, dimension>(
         ielement, igll, edge, specfem::point::index<dimension>(ispec, iz, ix));
   }
@@ -150,7 +158,8 @@ private:
     const auto index = indices(ielement);
     const int ispec = index.ispec;
     const auto edge = index.edge_type;
-    const auto [iz, ix] = zx_on_edge(igll, edge, ngll);
+    int iz, ix;
+    zx_on_edge(iz, ix, igll, edge, ngll);
     return impl::chunk_edge_pointwise_index_type<true, dimension>(
         ielement, igll, edge,
         specfem::point::simd_index<dimension>(ispec, simd_elements, iz, ix));
@@ -311,8 +320,10 @@ public:
   KOKKOS_INLINE_FUNCTION
   iterator_type league_iterator(const int start_index) const {
     const int start = start_index;
-    const int end = std::min(start + chunk_size * simd_size,
-                             static_cast<int>(elements.extent(0)));
+#define _min(a, b) ((a > b) ? b : a)
+    const int end = _min(start + chunk_size * simd_size,
+                         static_cast<int>(elements.extent(0)));
+#undef _min
     // std::cout << "("<<start<<","<<end<<")"<<std::endl;
     const auto my_indices =
         Kokkos::subview(elements, Kokkos::make_pair(start, end));
