@@ -13,6 +13,7 @@ namespace IO {
 namespace mesh {
 namespace impl {
 namespace fortran {
+namespace dim2 {
 
 // /**
 //  * @brief Read absorbing boundaries from mesh database
@@ -70,6 +71,7 @@ read_boundaries(std::ifstream &stream, const int nspec, const int n_absorbing,
                 const Kokkos::View<int **, Kokkos::HostSpace> knods,
                 const specfem::MPI::MPI *mpi);
 
+} // namespace dim2
 } // namespace fortran
 } // namespace impl
 } // namespace mesh

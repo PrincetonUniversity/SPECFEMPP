@@ -75,7 +75,7 @@ TEST(COMPUTE_TESTS, compute_partial_derivatives) {
   specfem::quadrature::quadratures quadratures(gll);
 
   specfem::mesh::mesh mesh =
-      specfem::IO::read_mesh(test_config.database_filename, mpi);
+      specfem::IO::read_2d_mesh(test_config.database_filename, mpi);
 
   specfem::compute::mesh compute_mesh(mesh.tags, mesh.control_nodes,
                                       quadratures);

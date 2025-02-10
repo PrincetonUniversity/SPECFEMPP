@@ -10,6 +10,7 @@ namespace IO {
 namespace mesh {
 namespace impl {
 namespace fortran {
+namespace dim2 {
 
 /**
  * @brief Read tangential elements from mesh database
@@ -37,6 +38,7 @@ specfem::mesh::elements::axial_elements<specfem::dimension::type::dim2>
 read_axial_elements(std::ifstream &stream, const int nelem_on_the_axis,
                     const int nspec, const specfem::MPI::MPI *mpi);
 
+} // namespace dim2
 } // namespace fortran
 } // namespace impl
 } // namespace mesh
