@@ -73,6 +73,7 @@ specfem::IO::mesh::impl::fortran::dim3::read_mesh_parameters(
   int ngly;
   int ngllz;
   int ngllsquare;
+  int nproc;
 
   // Read parameters
   specfem::IO::fortran_read_line(stream, &ndim);
@@ -80,6 +81,7 @@ specfem::IO::mesh::impl::fortran::dim3::read_mesh_parameters(
   specfem::IO::fortran_read_line(stream, &ngly);
   specfem::IO::fortran_read_line(stream, &ngllz);
   specfem::IO::fortran_read_line(stream, &ngllsquare);
+  specfem::IO::fortran_read_line(stream, &nproc);
 
 #ifndef NDEBUG
   // Print the read parameters
@@ -88,6 +90,7 @@ specfem::IO::mesh::impl::fortran::dim3::read_mesh_parameters(
   std::cout << "ngly:................." << ngly << std::endl;
   std::cout << "ngllz:................" << ngllz << std::endl;
   std::cout << "ngllsquare:..........." << ngllsquare << std::endl;
+  std::cout << "nproc:................" << nproc << std::endl;
 #endif
 
   // Read test parameter

@@ -16,8 +16,7 @@ inline type_real function1(const type_real x, const type_real z) {
 
 TEST(ALGORITHMS, interpolate_function) {
 
-  std::string database_file =
-      "../../../tests/unit-tests/algorithms/serial/database.bin";
+  std::string database_file = "algorithms/serial/database.bin";
 
   // Read Mesh database
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();

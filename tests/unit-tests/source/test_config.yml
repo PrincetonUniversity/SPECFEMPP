@@ -1,3 +1,3 @@
-database_file: "../../../tests/unit-tests/source/serial/database.bin"
-sources_file: "../../../tests/unit-tests/source/serial/sources.yml"
-solutions_file: "../../../tests/unit-tests/source/serial/source_locations.yml"
+database_file: "source/serial/database.bin"
+sources_file: "source/serial/sources.yml"
+solutions_file: "source/serial/source_locations.yml"

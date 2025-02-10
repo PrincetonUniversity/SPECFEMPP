@@ -304,7 +304,7 @@ TEST_F(ASSEMBLY, sources) {
   for (auto parameters : *this) {
     const auto Test = std::get<0>(parameters);
     auto sources = std::get<2>(parameters);
-    specfem::compute::assembly assembly = std::get<4>(parameters);
+    specfem::compute::assembly assembly = std::get<5>(parameters);
 
     try {
       test_assembly_source_construction(sources, assembly);

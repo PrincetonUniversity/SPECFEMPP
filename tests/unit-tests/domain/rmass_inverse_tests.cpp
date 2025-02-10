@@ -91,8 +91,7 @@ std::vector<test_config::Test> parse_test_config(std::string test_config_file,
 }
 
 TEST(DOMAIN_TESTS, rmass_inverse) {
-  std::string config_filename =
-      "../../../tests/unit-tests/domain/test_config.yaml";
+  std::string config_filename = "domain/test_config.yaml";
 
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
 

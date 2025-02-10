@@ -150,7 +150,7 @@ specfem::testing::array2d<type_real, Kokkos::LayoutLeft> compact_array(
 }
 
 TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
-  std::string config_filename = "../../../tests/unit-tests/displacement_tests/"
+  std::string config_filename = "displacement_tests/"
                                 "Newmark/test_config.yaml";
 
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
