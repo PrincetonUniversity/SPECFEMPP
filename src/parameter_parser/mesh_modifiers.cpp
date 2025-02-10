@@ -81,7 +81,7 @@ void specfem::runtime_configuration::mesh_modifiers::load_subdivisions(
           std::runtime_error(message.str());
         }
       }
-      modifiers.subdivisions.insert({ materialID, std::make_pair(subz, subx) });
+      modifiers.set_subdivision(materialID,subz,subx);
     }
   }
 }

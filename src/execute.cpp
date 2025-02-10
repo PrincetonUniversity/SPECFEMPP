@@ -43,8 +43,9 @@ void execute(
   // --------------------------------------------------------------
   const auto quadrature = setup.instantiate_quadrature();
   const auto mesh_modifiers = setup.instantiate_mesh_modifiers();
-  const auto mesh =
-      specfem::IO::read_mesh(database_filename, *mesh_modifiers, mpi);
+  auto mesh =
+      specfem::IO::read_mesh(database_filename, mpi);
+  mesh_modifiers -> apply(mesh);
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------

@@ -305,6 +305,8 @@ add_library(
         src/mesh/coupled_interfaces/coupled_interfaces.cpp
         src/mesh/tags/tags.cpp
         src/mesh/mesh.cpp
+        src/mesh/modifiers/modifiers.cpp
+        src/mesh/modifiers/apply2d.cpp
 )
 
 target_link_libraries(
