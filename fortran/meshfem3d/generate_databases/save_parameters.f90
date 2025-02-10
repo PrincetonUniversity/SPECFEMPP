@@ -58,7 +58,6 @@ subroutine save_parameters()
       WRITE(IOUT) APPROXIMATE_OCEAN_LOAD
       WRITE(IOUT) USE_MESH_COLORING_GPU
 
-
       ! Write test parameter
       itest = 9998
       WRITE(IOUT) itest
@@ -79,25 +78,25 @@ subroutine save_parameters()
       WRITE(IOUT) NSPEC_PORO ! nspec_poro == nspec, if POROELASTIC_SIMULATION
       WRITE(IOUT) NGLOB_AB ! nglob
       WRITE(IOUT) NGLOB_OCEAN
-      WRITE(IOUT) NSPEC2D_BOTTOM
-      WRITE(IOUT) NSPEC2D_TOP
-      WRITE(IOUT) nspec_irregular
 
       ! Write test parameter
       WRITE(IOUT) itest
       itest = 9996
 
-      WRITE(IOUT) num_neighbors_all
-      WRITE(IOUT) nfaces_surface
+      WRITE(IOUT) NSPEC2D_BOTTOM
+      WRITE(IOUT) NSPEC2D_TOP
       WRITE(IOUT) nspec2D_xmin
-      WRITE(IOUT) nspec2D_xmin
+      WRITE(IOUT) nspec2D_xmax
       WRITE(IOUT) nspec2D_ymin
-      WRITE(IOUT) nspec2D_ymin
+      WRITE(IOUT) nspec2D_ymax
+      WRITE(IOUT) nspec_irregular
 
       ! Write test parameter
       WRITE(IOUT) itest
       itest = 9995
 
+      WRITE(IOUT) num_neighbors_all
+      WRITE(IOUT) nfaces_surface
       WRITE(IOUT) num_abs_boundary_faces
       WRITE(IOUT) num_free_surface_faces
       WRITE(IOUT) num_coupling_ac_el_faces

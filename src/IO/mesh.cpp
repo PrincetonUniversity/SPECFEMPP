@@ -240,15 +240,11 @@ specfem::IO::read_3d_mesh(const std::string filename,
   if (!stream.is_open()) {
     throw std::runtime_error("Could not open database file");
   }
-  int nspec, npgeo, nproc;
 
   try {
-    // std::tie(nspec, npgeo, nproc) =
-    //     specfem::IO::mesh::impl::fortran::dim2::read_mesh_database_header(stream,
-    //                                                                 mpi);
-    // mesh.nspec = nspec;
-    // mesh.npgeo = npgeo;
-    // mesh.nproc = nproc;
+    mesh.parameters =
+        specfem::IO::mesh::impl::fortran::dim3::read_mesh_parameters(stream,
+                                                                     mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
