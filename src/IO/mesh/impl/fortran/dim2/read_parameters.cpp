@@ -1,9 +1,9 @@
-#include "IO/mesh/impl/fortran/read_parameters.hpp"
+#include "IO/mesh/impl/fortran/dim2/read_parameters.hpp"
 #include "IO/fortranio/interface.hpp"
 #include "mesh/parameters/parameters.hpp"
 
 specfem::mesh::parameters<specfem::dimension::type::dim2>
-specfem::IO::mesh::impl::fortran::read_mesh_parameters(
+specfem::IO::mesh::impl::fortran::dim2::read_mesh_parameters(
     std::ifstream &stream, const specfem::MPI::MPI *mpi) {
   // ---------------------------------------------------------------------
   // reading mesh properties

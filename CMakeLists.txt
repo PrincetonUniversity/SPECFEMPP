@@ -197,12 +197,12 @@ add_library(
         src/IO/sources.cpp
         src/IO/receivers.cpp
         src/IO/mesh.cpp
-        src/IO/mesh/impl/fortran/read_boundaries.cpp
-        src/IO/mesh/impl/fortran/read_elements.cpp
-        src/IO/mesh/impl/fortran/read_material_properties.cpp
-        src/IO/mesh/impl/fortran/read_mesh_database.cpp
-        src/IO/mesh/impl/fortran/read_interfaces.cpp
-        src/IO/mesh/impl/fortran/read_parameters.cpp
+        src/IO/mesh/impl/fortran/dim2/read_boundaries.cpp
+        src/IO/mesh/impl/fortran/dim2/read_elements.cpp
+        src/IO/mesh/impl/fortran/dim2/read_material_properties.cpp
+        src/IO/mesh/impl/fortran/dim2/read_mesh_database.cpp
+        src/IO/mesh/impl/fortran/dim2/read_interfaces.cpp
+        src/IO/mesh/impl/fortran/dim2/read_parameters.cpp
 )
 
 if (NOT HDF5_CXX_BUILD)
@@ -631,11 +631,26 @@ add_executable(
         src/specfem2d.cpp
 )
 
-
-
 target_link_libraries(
         specfem2d
         execute
+)
+
+add_executable(
+        specfem3d
+        src/specfem3d.cpp
+)
+
+target_link_libraries(
+        specfem3d
+        specfem_mpi
+        Kokkos::kokkos
+        mesh
+        parameter_reader
+        periodic_tasks
+        IO
+        ${BOOST_LIBS}
+        yaml-cpp
 )
 
 # Include tests
