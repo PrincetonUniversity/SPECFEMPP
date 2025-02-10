@@ -9,8 +9,7 @@
 
 TEST(ALGORITHMS, locate_point) {
 
-  std::string database_file =
-      "../../../tests/unit-tests/algorithms/serial/database.bin";
+  std::string database_file = "algorithms/serial/database.bin";
 
   // Read Mesh database
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();

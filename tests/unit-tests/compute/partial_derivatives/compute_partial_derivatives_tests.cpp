@@ -66,8 +66,7 @@ TEST(COMPUTE_TESTS, compute_partial_derivatives) {
 
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
 
-  std::string config_filename =
-      "../../../tests/unit-tests/compute/partial_derivatives/test_config.yml";
+  std::string config_filename = "compute/partial_derivatives/test_config.yml";
   test_config test_config = get_test_config(config_filename, mpi);
 
   // Set up GLL quadrature points

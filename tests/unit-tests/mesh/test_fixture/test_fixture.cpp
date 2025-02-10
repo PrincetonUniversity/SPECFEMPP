@@ -17,8 +17,7 @@ void parse_test_config(const YAML::Node &yaml,
 
 MESH::MESH() {
 
-  std::string config_filename =
-      "../../../tests/unit-tests/mesh/test_config.yaml";
+  std::string config_filename = "mesh/test_config.yaml";
   parse_test_config(YAML::LoadFile(config_filename), Tests);
 
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
