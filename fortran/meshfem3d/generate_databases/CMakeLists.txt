@@ -43,6 +43,7 @@ set(MESHFEM3D_GENERATE_DATABASES_MODULE
   read_parameters.f90
   read_partition_files.f90
   save_arrays_solver.F90
+  save_parameters.f90
   setup_color_perm.f90
   setup_mesh_adjacency.f90
   setup_mesh.f90
