@@ -8,6 +8,7 @@
 #include "IO/mesh/impl/fortran/dim2/read_material_properties.hpp"
 #include "IO/mesh/impl/fortran/dim2/read_mesh_database.hpp"
 #include "IO/mesh/impl/fortran/dim2/read_parameters.hpp"
+#include "IO/mesh/impl/fortran/dim3/read_parameters.hpp"
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "medium/material.hpp"
@@ -227,7 +228,8 @@ specfem::IO::read_2d_mesh(const std::string filename,
 }
 
 specfem::mesh::mesh<specfem::dimension::type::dim3>
-specfem::IO::read_3d_mesh(const std::string filename,
+specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
+                          const std::string mesh_databases_file,
                           const specfem::MPI::MPI *mpi) {
 
   // Declaring empty mesh objects
@@ -235,10 +237,10 @@ specfem::IO::read_3d_mesh(const std::string filename,
 
   // Open the database file
   std::ifstream stream;
-  stream.open(filename);
+  stream.open(mesh_parameters_file);
 
   if (!stream.is_open()) {
-    throw std::runtime_error("Could not open database file");
+    throw std::runtime_error("Could not open mesh parameter file");
   }
 
   try {
@@ -248,6 +250,18 @@ specfem::IO::read_3d_mesh(const std::string filename,
   } catch (std::runtime_error &e) {
     throw;
   }
+
+  // Mesh Parameters are populated, closing the parameters file.
+  stream.close();
+
+  // Open the database file
+  stream.open(mesh_databases_file);
+
+  if (!stream.is_open()) {
+    throw std::runtime_error("Could not open mesh database file");
+  }
+
+  stream.close();
 
   // // Mesh class to be populated from the database file.
   // try {
