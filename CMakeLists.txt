@@ -585,6 +585,7 @@ add_library(
         src/parameter_parser/writer/plot_wavefield.cpp
         src/parameter_parser/writer/kernel.cpp
         src/parameter_parser/writer/property.cpp
+        src/parameter_parser/mesh_modifiers.cpp
 )
 
 target_link_libraries(

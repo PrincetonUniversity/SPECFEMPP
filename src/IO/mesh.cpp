@@ -11,6 +11,7 @@
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "medium/material.hpp"
+#include "mesh/modifiers/modifiers.hpp"
 #include "mesh/tags/tags.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
@@ -25,10 +26,14 @@
 
 specfem::mesh::mesh<specfem::dimension::type::dim2>
 specfem::IO::read_mesh(const std::string filename,
+                       const specfem::mesh::modifiers &modifiers,
                        const specfem::MPI::MPI *mpi) {
 
   // Declaring empty mesh objects
   specfem::mesh::mesh<specfem::dimension::type::dim2> mesh;
+
+  // TODO remove (or put somewhere else)
+  mpi->cout(modifiers.to_string());
 
   // Open the database file
   std::ifstream stream;

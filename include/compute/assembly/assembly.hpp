@@ -15,6 +15,7 @@
 #include "enumerations/display.hpp"
 #include "enumerations/interface.hpp"
 #include "mesh/mesh.hpp"
+#include "mesh/modifiers/modifiers.hpp"
 #include "receiver/interface.hpp"
 #include "source/interface.hpp"
 
@@ -83,6 +84,18 @@ struct assembly {
       const int max_sig_step, const int nsteps_between_samples,
       const specfem::simulation::type simulation,
       const std::shared_ptr<specfem::IO::reader> &property_reader);
+  assembly(
+      const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
+      const specfem::quadrature::quadratures &quadratures,
+      const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
+      const std::vector<std::shared_ptr<specfem::receivers::receiver> >
+          &receivers,
+      const std::vector<specfem::enums::seismogram::type> &stypes,
+      const type_real t0, const type_real dt, const int max_timesteps,
+      const int max_sig_step, const int nsteps_between_samples,
+      const specfem::simulation::type simulation,
+      const std::shared_ptr<specfem::IO::reader> &property_reader,
+      const specfem::mesh::modifiers &mesh_modifiers);
 
   /**
    * @brief Maps the component of wavefield on the entire spectral element grid
