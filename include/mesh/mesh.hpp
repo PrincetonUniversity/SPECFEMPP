@@ -5,6 +5,7 @@
 #include "coupled_interfaces/coupled_interfaces.hpp"
 #include "elements/axial_elements.hpp"
 #include "elements/tangential_elements.hpp"
+#include "enumerations/dimension.hpp"
 #include "enumerations/interface.hpp"
 #include "materials/materials.hpp"
 #include "mesh/tags/tags.hpp"

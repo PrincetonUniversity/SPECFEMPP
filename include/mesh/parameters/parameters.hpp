@@ -95,6 +95,13 @@ template <> struct parameters<specfem::dimension::type::dim3> {
   bool approximate_ocean_load; ///< Flag for approx. ocean load
   bool use_mesh_coloring;      ///< Flag for mesh coloring
 
+  // Integer Parameters: Dimensions and GLL layouts
+  int ndim;       ///< Number of dimensions
+  int ngllx;      ///< Number of GLL points in x
+  int nglly;      ///< Number of GLL points in y
+  int ngllz;      ///< Number of GLL points in z
+  int ngllsquare; ///< Number of GLL points in square
+
   // Integer Parameters: Elements/Nodes
   int nspec;           ///< Number of spectral elements (SEs)
   int nspec_poro;      ///< Number of poroelastic SEs
@@ -152,6 +159,8 @@ template <> struct parameters<specfem::dimension::type::dim3> {
    * @param pml_abc Flag for PML absorbing boundary c.
    * @param approximate_ocean_load Flag for approx. ocean load
    * @param use_mesh_coloring Flag for mesh coloring
+   *
+   *
    *
    * @param nspec Number of spectral elements (SEs)
    * @param nspec_poro Number of poroelastic SEs
@@ -246,7 +255,7 @@ template <> struct parameters<specfem::dimension::type::dim3> {
         num_colors_outer_acoustic(num_colors_outer_acoustic),
         num_colors_inner_elastic(num_colors_inner_elastic),
         num_colors_outer_elastic(num_colors_outer_elastic){};
-
+};
 } // namespace mesh
 } // namespace specfem
 

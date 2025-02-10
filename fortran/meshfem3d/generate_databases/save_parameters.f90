@@ -71,8 +71,8 @@ subroutine save_parameters()
       WRITE(IOUT) NGLLSQUARE
 
       ! Write test parameter
-      WRITE(IOUT) itest
       itest = 9997
+      WRITE(IOUT) itest
 
       WRITE(IOUT) NSPEC_AB ! nspec
       WRITE(IOUT) NSPEC_PORO ! nspec_poro == nspec, if POROELASTIC_SIMULATION
@@ -80,8 +80,8 @@ subroutine save_parameters()
       WRITE(IOUT) NGLOB_OCEAN
 
       ! Write test parameter
-      WRITE(IOUT) itest
       itest = 9996
+      WRITE(IOUT) itest
 
       WRITE(IOUT) NSPEC2D_BOTTOM
       WRITE(IOUT) NSPEC2D_TOP
@@ -92,8 +92,8 @@ subroutine save_parameters()
       WRITE(IOUT) nspec_irregular
 
       ! Write test parameter
-      WRITE(IOUT) itest
       itest = 9995
+      WRITE(IOUT) itest
 
       WRITE(IOUT) num_neighbors_all
       WRITE(IOUT) nfaces_surface
@@ -107,8 +107,8 @@ subroutine save_parameters()
       WRITE(IOUT) max_nibool_interfaces_ext_mesh
 
       ! Write test parameter
-      WRITE(IOUT) itest
       itest = 9994
+      WRITE(IOUT) itest
 
       WRITE(IOUT) nspec_inner_acoustic
       WRITE(IOUT) nspec_outer_acoustic
@@ -118,8 +118,8 @@ subroutine save_parameters()
       WRITE(IOUT) nspec_outer_poroelastic
 
       ! Write test parameter
-      WRITE(IOUT) itest
       itest = 9993
+      WRITE(IOUT) itest
 
       WRITE(IOUT) num_phase_ispec_acoustic
       WRITE(IOUT) num_phase_ispec_elastic
@@ -130,8 +130,8 @@ subroutine save_parameters()
       WRITE(IOUT) num_colors_outer_elastic
 
       ! Write test parameter
-      WRITE(IOUT) itest
       itest = 9992
+      WRITE(IOUT) itest
   endif
 
 end subroutine save_parameters
