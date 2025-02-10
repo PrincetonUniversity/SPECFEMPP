@@ -28,3 +28,5 @@ examples/*/Par_File
 autotuning/
 profiles
 .cache/
+test*.cpp
+test*.hpp
