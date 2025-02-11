@@ -1,5 +1,4 @@
-#ifndef _MESH_PROPERTIES_HPP
-#define _MESH_PROPERTIES_HPP
+#pragma once
 
 #include "enumerations/dimension.hpp"
 #include "specfem_mpi/interface.hpp"
@@ -207,15 +206,16 @@ template <> struct parameters<specfem::dimension::type::dim3> {
       const bool poroelastic_simulation, const bool anisotropy,
       const bool stacey_abc, const bool pml_abc,
       const bool approximate_ocean_load, const bool use_mesh_coloring,
-      const int nspec, const int nspec_poro, const int nglob,
-      const int nglob_ocean, const int nspec2D_bottom, const int nspec2D_top,
-      const int nspec2D_xmin, const int nspec2D_xmax, const int nspec2D_ymin,
-      const int nspec2D_ymax, const int nspec_irregular,
-      const int num_neighbors, const int nfaces_surface,
-      const int num_abs_boundary_faces, const int num_free_surface_faces,
-      const int num_coupling_ac_el_faces, const int num_coupling_ac_po_faces,
-      const int num_coupling_el_po_faces, const int num_coupling_po_el_faces,
-      const int num_interfaces_ext_mesh,
+      const int ndim, const int ngllx, const int nglly, const int ngllz,
+      const int ngllsquare, const int nproc, const int nspec,
+      const int nspec_poro, const int nglob, const int nglob_ocean,
+      const int nspec2D_bottom, const int nspec2D_top, const int nspec2D_xmin,
+      const int nspec2D_xmax, const int nspec2D_ymin, const int nspec2D_ymax,
+      const int nspec_irregular, const int num_neighbors,
+      const int nfaces_surface, const int num_abs_boundary_faces,
+      const int num_free_surface_faces, const int num_coupling_ac_el_faces,
+      const int num_coupling_ac_po_faces, const int num_coupling_el_po_faces,
+      const int num_coupling_po_el_faces, const int num_interfaces_ext_mesh,
       const int max_nibool_interfaces_ext_mesh, const int nspec_inner_acoustic,
       const int nspec_outer_acoustic, const int nspec_inner_elastic,
       const int nspec_outer_elastic, const int nspec_inner_poroelastic,
@@ -228,13 +228,14 @@ template <> struct parameters<specfem::dimension::type::dim3> {
         poroelastic_simulation(poroelastic_simulation), anisotropy(anisotropy),
         stacey_abc(stacey_abc), pml_abc(pml_abc),
         approximate_ocean_load(approximate_ocean_load),
-        use_mesh_coloring(use_mesh_coloring), nspec(nspec),
-        nspec_poro(nspec_poro), nglob(nglob), nglob_ocean(nglob_ocean),
-        nspec2D_bottom(nspec2D_bottom), nspec2D_top(nspec2D_top),
-        nspec2D_xmin(nspec2D_xmin), nspec2D_xmax(nspec2D_xmax),
-        nspec2D_ymin(nspec2D_ymin), nspec2D_ymax(nspec2D_ymax),
-        nspec_irregular(nspec_irregular), num_neighbors(num_neighbors),
-        nfaces_surface(nfaces_surface),
+        use_mesh_coloring(use_mesh_coloring), ndim(ndim), ngllx(ngllx),
+        nglly(nglly), ngllz(ngllz), ngllsquare(ngllsquare), nproc(nproc),
+        nspec(nspec), nspec_poro(nspec_poro), nglob(nglob),
+        nglob_ocean(nglob_ocean), nspec2D_bottom(nspec2D_bottom),
+        nspec2D_top(nspec2D_top), nspec2D_xmin(nspec2D_xmin),
+        nspec2D_xmax(nspec2D_xmax), nspec2D_ymin(nspec2D_ymin),
+        nspec2D_ymax(nspec2D_ymax), nspec_irregular(nspec_irregular),
+        num_neighbors(num_neighbors), nfaces_surface(nfaces_surface),
         num_abs_boundary_faces(num_abs_boundary_faces),
         num_free_surface_faces(num_free_surface_faces),
         num_coupling_ac_el_faces(num_coupling_ac_el_faces),
@@ -256,8 +257,8 @@ template <> struct parameters<specfem::dimension::type::dim3> {
         num_colors_outer_acoustic(num_colors_outer_acoustic),
         num_colors_inner_elastic(num_colors_inner_elastic),
         num_colors_outer_elastic(num_colors_outer_elastic){};
+
+  void print() const;
 };
 } // namespace mesh
 } // namespace specfem
-
-#endif

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.17.5)
 
-project(SPECFEMPP VERSION 0.1.0)
+project(SPECFEMPP VERSION 0.1.0 LANGUAGES CXX Fortran)
 
 set(CMAKE_CXX_STANDARD 17)
 option(HDF5_CXX_BUILD "Build HDF5 C++" ON)
@@ -11,6 +11,8 @@ option(BUILD_EXAMPLES "Examples included" ON)
 option(ENABLE_SIMD "Enable SIMD" OFF)
 option(ENABLE_PROFILING "Enable profiling" OFF)
 option(SPECFEMPP_BINDING_PYTHON "Enable Python binding" OFF)
+option(ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
+
 # set(CMAKE_BUILD_TYPE Release)
 set(CHUNK_SIZE 32)
 set(NUM_CHUNKS 1)
@@ -157,8 +159,26 @@ else()
     message(STATUS "    LIBSO: ${HDF5_CXX_LIBRARIES}")
 endif()
 
+# This is not being used.
+# configure_file(constants.hpp.in constants.hpp)
+if (ENABLE_DOUBLE_PRECISION)
+    message("-- Enabling double precision")
+    # These are used by Meshfem
+    set(CUSTOM_REAL "SIZE_DOUBLE")
+    set(CUSTOM_MPI_TYPE "MPI_DOUBLE_PRECISION")
+    # This one is used by specfempp
+    set(TYPE_REAL "double")
+else(ENABLE_DOUBLE_PRECISION)
+    message("-- Enabling single precision")
+    # These are used by Meshfem
+    set(CUSTOM_REAL "SIZE_REAL")
+    set(CUSTOM_MPI_TYPE "MPI_REAL")
+    # This one is used by specfempp
+    set(TYPE_REAL "float")
+endif(ENABLE_DOUBLE_PRECISION)
 
-configure_file(constants.hpp.in constants.hpp)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup/specfem_setup.hpp.in
+               ${CMAKE_CURRENT_SOURCE_DIR}/include/specfem_setup.hpp)
 
 include_directories(include)
 include_directories(${CMAKE_BINARY_DIR})
@@ -206,6 +226,8 @@ add_library(
         src/IO/mesh/impl/fortran/dim2/read_parameters.cpp
         # Fortran 3D part
         src/IO/mesh/impl/fortran/dim3/read_parameters.cpp
+        src/IO/mesh/impl/fortran/dim3/read_mapping.cpp
+        src/IO/mesh/impl/fortran/dim3/read_coordinates.cpp
 )
 
 if (NOT HDF5_CXX_BUILD)
@@ -307,6 +329,9 @@ add_library(
         src/mesh/coupled_interfaces/interface_container.cpp
         src/mesh/coupled_interfaces/coupled_interfaces.cpp
         src/mesh/tags/tags.cpp
+        src/mesh/parameters/parameters.cpp
+        src/mesh/mapping/mapping.cpp
+        src/mesh/coordinates/coordinates.cpp
         src/mesh/mesh.cpp
 )
 

@@ -65,8 +65,10 @@ void execute(
   const auto mesh = specfem::IO::read_3d_mesh(mesh_parameters_filename,
                                               database_filename, mpi);
   mpi->cout("Done.");
-  auto span = start_time - std::chrono::system_clock::now();
-  mpi->cout("Time to read mesh: " + std::to_string(span.count()) + " seconds");
+  std::chrono::duration<double> elapsed_seconds =
+      std::chrono::system_clock::now() - start_time;
+  mpi->cout("Time to read mesh: " + std::to_string(elapsed_seconds.count()) +
+            " seconds");
   return;
 }
 

@@ -11,6 +11,9 @@ unset(WITH_SCOTCH)
 enable_language(Fortran)
 enable_language(C)
 
+# Configure files
+add_subdirectory(setup)
+
 # Set the C compiler
 set(FCFLAGS_f90 -g -O2 -fbacktrace)
 
