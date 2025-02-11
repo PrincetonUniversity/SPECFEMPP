@@ -4,9 +4,7 @@
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
 
-#include "impl_chunk.hpp"
-#include "impl_policy.hpp"
-#include "impl_stress.hpp"
+#include "impl_load.hpp"
 
 #include "compute/assembly/assembly.hpp"
 #include "datatypes/simd.hpp"
@@ -16,15 +14,15 @@
 namespace specfem {
 namespace benchmarks {
 
-constexpr static auto dimension = specfem::dimension::type::dim2;
-constexpr static auto wavefield = specfem::wavefield::simulation_field::forward;
-constexpr static auto ngll = 5;
-constexpr static auto boundary_tag = specfem::element::boundary_tag::none;
+// constexpr static auto dimension = specfem::dimension::type::dim2;
+// constexpr static auto wavefield = specfem::wavefield::simulation_field::forward;
+// constexpr static auto ngll = 5;
+// constexpr static auto boundary_tag = specfem::element::boundary_tag::none;
 
 template <specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag, bool flag>
-void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
-                                    const int &istep) {
+          specfem::element::property_tag PropertyTag>
+void compute_stiffness_interaction2(const specfem::compute::assembly &assembly,
+                                   const int &istep) {
 
   constexpr auto medium_tag = MediumTag;
   constexpr auto property_tag = PropertyTag;
@@ -45,7 +43,7 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
   const auto boundary_values =
       assembly.boundary_values.get_container<boundary_tag>();
 
-  constexpr bool using_simd = false;
+  constexpr bool using_simd = true;
   using simd = specfem::datatype::simd<type_real, using_simd>;
   using parallel_config = specfem::parallel_config::default_chunk_config<
       dimension, simd, Kokkos::DefaultExecutionSpace>;
@@ -70,13 +68,30 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
       ngll, dimension, specfem::kokkos::DevScratchSpace,
       Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, true>;
 
+  using PointAccelerationType =
+      specfem::point::field<dimension, medium_tag, false, false, true, false,
+                            using_simd>;
+  using PointPropertyType =
+      specfem::point::properties<dimension, medium_tag, property_tag,
+                                 using_simd>;
+  using PointFieldDerivativesType =
+      specfem::point::field_derivatives<dimension, medium_tag, using_simd>;
+
+  using VectorPointViewType =
+      specfem::datatype::VectorPointViewType<type_real, 2, components,
+                                             using_simd>;
   using MemberType = const typename ChunkPolicyType::member_type;
+
+  using ScalarPointViewType =
+      specfem::datatype::ScalarPointViewType<type_real, components, using_simd>;
 
   constexpr bool is_host_space =
       std::is_same<typename MemberType::execution_space::memory_space,
                    Kokkos::HostSpace>::value;
 
   using datatype = typename simd::datatype;
+  using mask_type = typename simd::mask_type;
+  using tag_type = typename simd::tag_type;
 
   const auto wgll = assembly.mesh.quadratures.gll.weights;
 
@@ -96,17 +111,8 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
         ElementQuadratureType element_quadrature(team);
         ChunkStressIntegrandType stress_integrand(team);
 
-        {
-          Kokkos::parallel_for(
-              Kokkos::TeamThreadRange(team, ngll * ngll), [&](const int &xz) {
-                int ix, iz;
-                sub2ind(xz, ngll, iz, ix);
-                element_quadrature.hprime_gll(iz, ix) =
-                    quadrature.gll.hprime(iz, ix);
-                element_quadrature.hprime_wgll(ix, iz) =
-                    quadrature.gll.hprime(iz, ix) * quadrature.gll.weights(iz);
-              });
-        }
+        specfem::benchmarks::load_quadrature(team, quadrature,
+                                             element_quadrature);
 
         for (int tile = 0; tile < ChunkPolicyType::tile_size * simd_size;
              tile += ChunkPolicyType::chunk_size * simd_size) {
@@ -120,26 +126,8 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
 
           const auto iterator =
               chunk_policy.league_iterator(starting_element_index);
-          {
-            const auto &curr_field = field.get_field<MediumTag>();
-
-            Kokkos::parallel_for(
-                Kokkos::TeamThreadRange(team, iterator.chunk_size()), [&](const int &i) {
-                  const auto iterator_index = iterator(i);
-                  const int ielement = iterator_index.ielement;
-                  const int ispec = iterator_index.index.ispec;
-                  const int iz = iterator_index.index.iz;
-                  const int ix = iterator_index.index.ix;
-          
-                  const int iglob = field.assembly_index_mapping(
-                      field.index_mapping(ispec, iz, ix), static_cast<int>(MediumTag));
-          
-                  for (int icomp = 0; icomp < components; ++icomp) {
-                      element_field.displacement(ielement, iz, ix, icomp) =
-                          curr_field.field(iglob, icomp);
-                  }
-                });
-          }
+          specfem::benchmarks::load_wavefield(team, iterator, field,
+                                              element_field);
 
           team.team_barrier();
 
@@ -171,17 +159,10 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
                                                     using_simd>
                     point_partial_derivatives;
 
-                {
-                  const int ispec = index.ispec;
+                specfem::benchmarks::load_partial_derivative(
+                    index, partial_derivatives, point_partial_derivatives);
 
-                    point_partial_derivatives.xix = partial_derivatives.xix(ispec, iz, ix);
-                    point_partial_derivatives.gammax = partial_derivatives.gammax(ispec, iz, ix);
-                    point_partial_derivatives.xiz = partial_derivatives.xiz(ispec, iz, ix);
-                    point_partial_derivatives.gammaz = partial_derivatives.gammaz(ispec, iz, ix);
-                }
-
-                specfem::datatype::VectorPointViewType<type_real, 2, components,
-                                             using_simd> df;
+                VectorPointViewType df;
 
                 for (int icomponent = 0; icomponent < components;
                      ++icomponent) {
@@ -196,67 +177,14 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
 
                 specfem::point::partial_derivatives<dimension, true, using_simd>
                     point_partial_derivatives2;
-                {
-                  const int ispec = index.ispec;
+                specfem::benchmarks::load_partial_derivative(
+                    index, partial_derivatives, point_partial_derivatives2);
 
-                    point_partial_derivatives2.xix = partial_derivatives.xix(ispec, iz, ix);
-                    point_partial_derivatives2.gammax = partial_derivatives.gammax(ispec, iz, ix);
-                    point_partial_derivatives2.xiz = partial_derivatives.xiz(ispec, iz, ix);
-                    point_partial_derivatives2.gammaz = partial_derivatives.gammaz(ispec, iz, ix);
-                    point_partial_derivatives2.jacobian = partial_derivatives.jacobian(ispec, iz, ix);
-                }
+                PointPropertyType point_property;
+                specfem::benchmarks::load_point_property(index, properties,
+                                                         point_property);
 
-                specfem::point::properties<dimension, medium_tag, property_tag,
-                                 using_simd> point_property;
-                {
-                  const int ispec =
-                      properties.property_index_mapping(index.ispec);
-
-                  const auto &container =
-                      properties.get_container<MediumTag, PropertyTag>();
-
-                  if constexpr (MediumTag ==
-                                    specfem::element::medium_tag::acoustic &&
-                                PropertyTag ==
-                                    specfem::element::property_tag::isotropic) {
-                    point_property.rho_inverse = container.rho_inverse(ispec, iz, ix);
-                    point_property.kappa = container.kappa(ispec, iz, ix);
-                    point_property.kappa_inverse = static_cast<type_real>(1.0) / point_property.kappa;
-                    point_property.rho_vpinverse =
-                        sqrt(point_property.rho_inverse * point_property.kappa_inverse);
-                  } else if constexpr (
-                      MediumTag == specfem::element::medium_tag::elastic &&
-                      PropertyTag ==
-                          specfem::element::property_tag::isotropic) {
-                    point_property.rho = container.rho(ispec, iz, ix);
-                    point_property.mu = container.mu(ispec, iz, ix);
-                    point_property.lambdaplus2mu = container.lambdaplus2mu(ispec, iz, ix);
-                    point_property.lambda = point_property.lambdaplus2mu - 2 * point_property.mu;
-                    point_property.rho_vp = sqrt(point_property.rho * point_property.lambdaplus2mu);
-                    point_property.rho_vs = sqrt(point_property.rho * point_property.mu);
-                  } else if constexpr (
-                      MediumTag == specfem::element::medium_tag::elastic &&
-                      PropertyTag ==
-                          specfem::element::property_tag::anisotropic) {
-                        point_property.rho = container.rho(ispec, iz, ix);
-                        point_property.c11 = container.c11(ispec, iz, ix);
-                        point_property.c12 = container.c12(ispec, iz, ix);
-                        point_property.c13 = container.c13(ispec, iz, ix);
-                        point_property.c15 = container.c15(ispec, iz, ix);
-                        point_property.c33 = container.c33(ispec, iz, ix);
-                        point_property.c35 = container.c35(ispec, iz, ix);
-                        point_property.c55 = container.c55(ispec, iz, ix);
-                        point_property.c23 = container.c23(ispec, iz, ix);
-                        point_property.c25 = container.c25(ispec, iz, ix);
-
-                        point_property.rho_vp = sqrt(point_property.rho * point_property.c33);
-                        point_property.rho_vs = sqrt(point_property.rho * point_property.c55);
-                  } else {
-                    static_assert("medium type not supported");
-                  }
-                }
-
-                specfem::point::field_derivatives<dimension, medium_tag, using_simd> field_derivatives(df);
+                PointFieldDerivativesType field_derivatives(df);
 
                 const auto point_stress = specfem::benchmarks::compute_stress(
                     point_property, field_derivatives);
@@ -306,15 +234,14 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
                   }
                 }
 
-                specfem::datatype::ScalarPointViewType<type_real, components, using_simd> result;
+                ScalarPointViewType result;
 
                 for (int icomp = 0; icomp < components; ++icomp) {
                   result(icomp) =
                       weights(iz) * temp1l[icomp] + weights(ix) * temp2l[icomp];
                 }
 
-                specfem::point::field<dimension, medium_tag, false, false, true, false,
-                            using_simd> acceleration(result);
+                PointAccelerationType acceleration(result);
 
                 for (int icomponent = 0; icomponent < components;
                      ++icomponent) {
@@ -322,15 +249,8 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
                       static_cast<type_real>(-1.0);
                 }
 
-                const auto &curr_field = field.template get_field<MediumTag>();
-                const int iglob = field.assembly_index_mapping(
-                    field.index_mapping(index.ispec, iz, ix),
-                    static_cast<int>(MediumTag));
-                for (int icomp = 0; icomp < components; ++icomp) {
-                    Kokkos::atomic_add(&curr_field.field_dot_dot(iglob, icomp),
-                                        acceleration.acceleration(icomp));
-                }
-
+                specfem::benchmarks::atomic_add_on_device(index, acceleration,
+                                                          field);
               });
         }
       });
