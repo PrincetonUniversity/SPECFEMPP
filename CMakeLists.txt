@@ -178,13 +178,17 @@ else(ENABLE_DOUBLE_PRECISION)
 endif(ENABLE_DOUBLE_PRECISION)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup/specfem_setup.hpp.in
-               ${CMAKE_CURRENT_SOURCE_DIR}/include/specfem_setup.hpp)
+               ${CMAKE_BINARY_DIR}/include/specfem_setup.hpp)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup/constants.hpp.in
+               ${CMAKE_BINARY_DIR}/include/constants.hpp)
 
 include_directories(include)
-include_directories(${CMAKE_BINARY_DIR})
+include_directories(${CMAKE_BINARY_DIR}/include)
 
+# ========== MESHFEM ==============
 add_subdirectory(fortran/meshfem2d)
 add_subdirectory(fortran/meshfem3d)
+# =================================
 
 if (ENABLE_SIMD)
     message("-- Enabling SIMD")
