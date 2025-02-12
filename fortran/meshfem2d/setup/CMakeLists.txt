@@ -150,24 +150,24 @@ endif()
 
 # Generate config.h file
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
-               ${CMAKE_CURRENT_SOURCE_DIR}/../config.h @ONLY)
+               ${CMAKE_BINARY_DIR}/fortran/meshfem2d/setup/config.h @ONLY)
 
 # ===================== config.h.in END =====================
 
 # ===================== config.fh.in START ==================
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.fh.in
-               ${CMAKE_CURRENT_SOURCE_DIR}/../config.fh @ONLY)
+               ${CMAKE_BINARY_DIR}/fortran/meshfem2d/setup/config.fh @ONLY)
 # ===================== config.fh.in END ====================
 
 
 # ===================== constants.h.in START ================
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/constants.h.in
-               ${CMAKE_CURRENT_SOURCE_DIR}/../constants.h @ONLY)
+               ${CMAKE_BINARY_DIR}/fortran/meshfem2d/setup/constants.h @ONLY)
 # ===================== constants.h.in END ==================
 
 # ===================== precision.h.in START ================
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/precision.h.in
-               ${CMAKE_CURRENT_SOURCE_DIR}/../precision.h @ONLY)
+               ${CMAKE_BINARY_DIR}/fortran/meshfem2d/setup/precision.h @ONLY)
 # ===================== precision.h.in END ==================
 
 
@@ -193,7 +193,8 @@ set(GIT_COMMIT_VERSION "f8c66778e3bcff99be726113a1aca338255ed87e")
 set(GIT_DATE_VERSION "2023-03-21 19:54:51 +0100")
 
 # Configure the config.h file
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.fh.in ${CMAKE_CURRENT_SOURCE_DIR}/../version.fh @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.fh.in
+               ${CMAKE_BINARY_DIR}/fortran/meshfem2d/setup/version.fh @ONLY)
 
 
 # ===================== version.h.in START ================
