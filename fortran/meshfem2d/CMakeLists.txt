@@ -199,7 +199,7 @@ target_link_libraries(meshfem2D_mesh_mpi
 
 # Executable
 add_executable(xmeshfem2D
-    meshfem2D.f90
+    meshfem2D.F90
 )
 target_link_libraries(
     xmeshfem2D
