@@ -118,24 +118,26 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
 
           const auto iterator =
               chunk_policy.league_iterator(starting_element_index);
-          const auto &curr_field = field.get_field<MediumTag>();
+          {
+            const auto &curr_field = field.get_field<MediumTag>();
 
-          Kokkos::parallel_for(
+            Kokkos::parallel_for(
                 Kokkos::TeamThreadRange(team, iterator.chunk_size()), [&](const int &i) {
-                    const auto iterator_index = iterator(i);
-                    const int ielement = iterator_index.ielement;
-                    const int ispec = iterator_index.index.ispec;
-                    const int iz = iterator_index.index.iz;
-                    const int ix = iterator_index.index.ix;
-            
-                    const int iglob = field.assembly_index_mapping(
-                        field.index_mapping(ispec, iz, ix), static_cast<int>(MediumTag));
-            
-                    for (int icomp = 0; icomp < components; ++icomp) {
-                        element_field.displacement(ielement, iz, ix, icomp) =
-                            curr_field.field(iglob, icomp);
-                    }
+                  const auto iterator_index = iterator(i);
+                  const int ielement = iterator_index.ielement;
+                  const int ispec = iterator_index.index.ispec;
+                  const int iz = iterator_index.index.iz;
+                  const int ix = iterator_index.index.ix;
+          
+                  const int iglob = field.assembly_index_mapping(
+                      field.index_mapping(ispec, iz, ix), static_cast<int>(MediumTag));
+          
+                  for (int icomp = 0; icomp < components; ++icomp) {
+                      element_field.displacement(ielement, iz, ix, icomp) =
+                          curr_field.field(iglob, icomp);
+                  }
                 });
+          }
 
           team.team_barrier();
 
@@ -355,6 +357,7 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
                       static_cast<type_real>(-1.0);
                 }
 
+                const auto &curr_field = field.template get_field<MediumTag>();
                 const int iglob = field.assembly_index_mapping(
                     field.index_mapping(index.ispec, iz, ix),
                     static_cast<int>(MediumTag));
