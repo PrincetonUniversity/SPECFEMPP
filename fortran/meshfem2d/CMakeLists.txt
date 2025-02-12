@@ -14,22 +14,18 @@ message("--     MESHFEM2D is build without SCOTCH support")
 option(ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
 option(WITH_MPI "Build with MPI support" OFF)
 option(WITH_SCOTCH "Build with SCOTCH support" OFF)
+option(FORCE_VECTORIZATION "Force vectorization" OFF)
 
 # Set output file directories
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/modules)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/archive)
 
-message("-- CMAKE_RUNTIME_OUTPUT_DIRECTORY: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
-message("-- CMAKE_Fortran_MODULE_DIRECTORY: ${CMAKE_Fortran_MODULE_DIRECTORY}")
-message("-- CMAKE_ARCHIVE_OUTPUT_DIRECTORY: ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}")
-message("-- CMAKE_CURRENT_BINARY_DIR:       ${CMAKE_CURRENT_BINARY_DIR}")
-
 # Custom variables
 set(SETUP_DIR ${CMAKE_CURRENT_BINARY_DIR}/setup)
 
 # Set include directories
-include_directories("${CMAKE_CURRENT_BINARY_DIR}/modules")
+include_directories("${CMAKE_Fortran_MODULE_DIRECTORY}")
 include_directories(${SETUP_DIR})
 
 # Setting values dependent on options
@@ -83,24 +79,6 @@ if (__APPLE__ AND CLANG)
 endif()
 
 message("-- CFLAGS: ${CFLAGS}")
-
-
-# Set Header interfaces
-add_library(meshfem2D_constants INTERFACE ${SETUP_DIR}/constants.h)
-add_library(meshfem2D::constants ALIAS meshfem2D_constants)
-
-add_library(meshfem2D_precision INTERFACE ${SETUP_DIR}/precision.h)
-add_library(meshfem2D::precision ALIAS meshfem2D_precision)
-
-add_library(meshfem2D_version INTERFACE ${SETUP_DIR}/version.fh)
-add_library(meshfem2D::version ALIAS meshfem2D_version)
-
-add_library(meshfem2D_config INTERFACE ${SETUP_DIR}/config.h)
-add_library(meshfem2D::config ALIAS meshfem2D_config)
-
-add_library(meshfem2D_fh_config INTERFACE ${SETUP_DIR}/config.fh)
-add_library(meshfem2D::fh_config ALIAS meshfem2D_fh_config)
-
 
 # Shared Fortran Module
 add_library(meshfem2D_shared_module shared_par.f90)
@@ -196,7 +174,8 @@ add_library(meshfem2D_mesh
     save_stations_file.f90
 )
 add_library(meshfem2D::mesh ALIAS meshfem2D_mesh)
-target_link_libraries(meshfem2D_mesh PRIVATE
+target_link_libraries(meshfem2D_mesh
+  PRIVATE
   meshfem2D::shared_module
   meshfem2D::parameters)
 
@@ -211,7 +190,8 @@ add_library(meshfem2D_mesh_mpi
     meshfem2D.F90
 )
 add_library(meshfem2D::mesh_mpi ALIAS meshfem2D_mesh_mpi)
-target_link_libraries(meshfem2D_mesh_mpi PRIVATE
+target_link_libraries(meshfem2D_mesh_mpi
+  PRIVATE
   meshfem2D::shared_module
   meshfem2D::parameters
   meshfem2D::mesh
