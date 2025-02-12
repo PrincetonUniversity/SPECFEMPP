@@ -1,20 +1,44 @@
+project(meshfem2D Fortran C)
+
 cmake_minimum_required(VERSION 3.10)
-
-message("-- Building meshfem2D along with this project")
-message("--     MESHFEM2D is build without MPI support")
-message("--     MESHFEM2D is build without SCOTCH support")
-
-option(WITH_MPI "Build with MPI support" OFF)
-option(WITH_SCOTCH "Build with SCOTCH support" OFF)
 
 # Set the Fortran compiler
 enable_language(Fortran)
 enable_language(C)
 
-# Set Module directory
-set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/fortran/meshfem2d/modules)
-include_directories("${CMAKE_BINARY_DIR}/fortran/meshfem2d/modules")
+message("-- Building meshfem2D along with this project")
+message("--     MESHFEM2D is build without MPI support")
+message("--     MESHFEM2D is build without SCOTCH support")
 
+# Options
+option(ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
+option(WITH_MPI "Build with MPI support" OFF)
+option(WITH_SCOTCH "Build with SCOTCH support" OFF)
+
+# Set output file directories
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/fortran/meshfem2d/modules)
+
+# Custom variables
+set(SETUP_DIR ${CMAKE_BINARY_DIR}/fortran/meshfem2d/setup)
+
+# Set include directories
+include_directories("${CMAKE_BINARY_DIR}/fortran/meshfem2d/modules")
+include_directories(${SETUP_DIR})
+
+# Setting values dependent on options
+if (ENABLE_DOUBLE_PRECISION)
+    message("-- Enabling double precision")
+    # These are used by Meshfem
+    set(CUSTOM_REAL "SIZE_DOUBLE")
+    set(CUSTOM_MPI_TYPE "MPI_DOUBLE_PRECISION")
+
+else(ENABLE_DOUBLE_PRECISION)
+    message("-- Enabling single precision")
+    # These are used by Meshfem
+    set(CUSTOM_REAL "SIZE_REAL")
+    set(CUSTOM_MPI_TYPE "MPI_REAL")
+endif(ENABLE_DOUBLE_PRECISION)
 
 # Configure files
 add_subdirectory(setup)
@@ -55,64 +79,20 @@ endif()
 message("-- CFLAGS: ${CFLAGS}")
 
 
-## ========= MACROS =========
-# define macro wrapper on custom command
-macro(build_fortran_command module_name dependecies)
-    get_filename_component(source_file_name ${module_name} NAME_WE)
-    add_custom_command(
-        OUTPUT ${module_name}
-        COMMAND ${CMAKE_Fortran_COMPILER} ${FCFLAGS_f90} -c -o ${module_name} ${CMAKE_CURRENT_SOURCE_DIR}/${source_file_name}.f90
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${source_file_name}.f90 ${dependecies}
-    )
-endmacro()
-
-macro(build_fortran_command_preprocess module_name dependecies)
-    get_filename_component(source_file_name ${module_name} NAME_WE)
-    add_custom_command(
-        OUTPUT ${module_name}
-        COMMAND ${CMAKE_Fortran_COMPILER} ${FCFLAGS_f90} -c -o ${module_name} ${CMAKE_CURRENT_SOURCE_DIR}/${source_file_name}.F90
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${source_file_name}.F90 ${dependecies}
-    )
-endmacro()
-
-# define macro wrapper on custom command
-macro(build_cc_command module_name)
-    get_filename_component(source_file_name ${module_name} NAME_WE)
-    add_custom_command(
-        OUTPUT ${module_name}
-        COMMAND ${CMAKE_C_COMPILER} ${CFLAGS} -c -o ${module_name} ${CMAKE_CURRENT_SOURCE_DIR}/${source_file_name}.c
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${source_file_name}.c config.h
-    )
-endmacro()
-## ========= MACROS =========
-
-cmake_minimum_required(VERSION 3.10)
-project(MeshFEM Fortran C)
-
-enable_language(Fortran)
-enable_language(C)
-
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/fortran/meshfem2d/modules)
-
-include_directories("${CMAKE_BINARY_DIR}/fortran/meshfem2d/modules")
-include_directories("${CMAKE_BINARY_DIR}/fortran/meshfem2d/setup")
-
-
 # Set Header interfaces
-add_library(meshfem2D_constants INTERFACE ${CMAKE_BINARY_DIR}/fortran/meshfem2d/setup/constants.h)
+add_library(meshfem2D_constants INTERFACE ${SETUP_DIR}/constants.h)
 add_library(meshfem2D::constants ALIAS meshfem2D_constants)
 
-add_library(meshfem2D_precision INTERFACE ${CMAKE_BINARY_DIR}/fortran/meshfem2d/setup/precision.h)
+add_library(meshfem2D_precision INTERFACE ${SETUP_DIR}/precision.h)
 add_library(meshfem2D::precision ALIAS meshfem2D_precision)
 
-add_library(meshfem2D_version INTERFACE ${CMAKE_BINARY_DIR}/fortran/meshfem2d/setup/version.fh)
+add_library(meshfem2D_version INTERFACE ${SETUP_DIR}/version.fh)
 add_library(meshfem2D::version ALIAS meshfem2D_version)
 
-add_library(meshfem2D_config INTERFACE ${CMAKE_BINARY_DIR}/fortran/meshfem2d/setup/config.h)
+add_library(meshfem2D_config INTERFACE ${SETUP_DIR}/config.h)
 add_library(meshfem2D::config ALIAS meshfem2D_config)
 
-add_library(meshfem2D_fh_config INTERFACE ${CMAKE_BINARY_DIR}/fortran/meshfem2d/setup/config.fh)
+add_library(meshfem2D_fh_config INTERFACE ${SETUP_DIR}/config.fh)
 add_library(meshfem2D::fh_config ALIAS meshfem2D_fh_config)
 
 
@@ -192,7 +172,11 @@ target_link_libraries(meshfem2D_paramaters PRIVATE meshfem2D::shared_module)
 add_library(meshfem2D_compute_elements_load
     compute_elements_load_par.f90)
 add_library(meshfem2D::compute_elements_load ALIAS meshfem2D_compute_elements_load)
-target_link_libraries(meshfem2D_compute_elements_load PRIVATE meshfem2D::shared_module)
+target_link_libraries(meshfem2D_compute_elements_load
+    PRIVATE
+    meshfem2D::shared_module
+    meshfem2D::parameters
+)
 
 # MeshFEM Objects
 add_library(meshfem2D_mesh
@@ -207,7 +191,8 @@ add_library(meshfem2D_mesh
 )
 add_library(meshfem2D::mesh ALIAS meshfem2D_mesh)
 target_link_libraries(meshfem2D_mesh PRIVATE
-  meshfem2D::shared_module)
+  meshfem2D::shared_module
+  meshfem2D::parameters)
 
 # MeshFEM Preprocessor Objects
 add_library(meshfem2D_mesh_mpi

@@ -8,7 +8,14 @@ project(MESHFEM3D_SETUP LANGUAGES Fortran C)
 set(CMAKE_Fortran_STANDARD 95)
 set(CMAKE_Fortran_STANDARD_REQUIRED ON)
 
+set(SETUP_DIR ${CMAKE_BINARY_DIR}/fortran/meshfem3d/setup)
+
+# Set include directories
+include_directories(${SETUP_DIR})
+
+
 # # =============== CONFIGURATION ===============
+
 
 # # ===================== config.h.in START =====================
 
@@ -175,32 +182,32 @@ set(CMAKE_Fortran_STANDARD_REQUIRED ON)
 # # ===================== precision.h.in END ==================
 
 
-# ===================== version.fh.in START ================
+# # ===================== version.fh.in START ================
 
-# Define package information
-set(PACKAGE_NAME "SPECFEM2D")
-set(PACKAGE_VERSION "8.0.0")
-set(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
-set(PACKAGE_TARNAME "specfem2d")
-set(PACKAGE_URL "https://github.com/geodynamics/specfem2d")
-set(PACKAGE_BUGREPORT "support@specfem2d.org")
+# # Define package information
+# set(PACKAGE_NAME "SPECFEM2D")
+# set(PACKAGE_VERSION "8.0.0")
+# set(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
+# set(PACKAGE_TARNAME "specfem2d")
+# set(PACKAGE_URL "https://github.com/geodynamics/specfem2d")
+# set(PACKAGE_BUGREPORT "support@specfem2d.org")
 
-# Git-related details (can be dynamically retrieved)
-set(SPECFEM2D_GIT_BRANCH "main")  # You can use 'git rev-parse --abbrev-ref HEAD' dynamically
-set(SPECFEM2D_GIT_DATE "2024-02-11")
-set(SPECFEM2D_GIT_HASH "abcd1234")
-set(SPECFEM2D_GIT_REVISION "abcd1234")
-set(SPECFEM2D_RELEASE_VERSION 0) # Set to 1 if it's a stable release
+# # Git-related details (can be dynamically retrieved)
+# set(SPECFEM2D_GIT_BRANCH "main")  # You can use 'git rev-parse --abbrev-ref HEAD' dynamically
+# set(SPECFEM2D_GIT_DATE "2024-02-11")
+# set(SPECFEM2D_GIT_HASH "abcd1234")
+# set(SPECFEM2D_GIT_REVISION "abcd1234")
+# set(SPECFEM2D_RELEASE_VERSION 0) # Set to 1 if it's a stable release
 
-set(GIT_PACKAGE_VERSION "v8.0.0-11-gf8c66778")
-set(GIT_COMMIT_VERSION "f8c66778e3bcff99be726113a1aca338255ed87e")
-set(GIT_DATE_VERSION "2023-03-21 19:54:51 +0100")
+# set(GIT_PACKAGE_VERSION "v8.0.0-11-gf8c66778")
+# set(GIT_COMMIT_VERSION "f8c66778e3bcff99be726113a1aca338255ed87e")
+# set(GIT_DATE_VERSION "2023-03-21 19:54:51 +0100")
 
-# Configure the config.h file
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.fh.in ${CMAKE_CURRENT_SOURCE_DIR}/../version.fh @ONLY)
+# # Configure the config.h file
+# configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.fh.in ${CMAKE_CURRENT_SOURCE_DIR}/../version.fh @ONLY)
 
 
-# ===================== version.h.in START ================
+# # ===================== version.h.in START ================
 
 
 set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/fortran/meshfem3d/modules)

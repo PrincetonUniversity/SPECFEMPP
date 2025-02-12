@@ -172,17 +172,9 @@ endif()
 
 if (ENABLE_DOUBLE_PRECISION)
     message("-- Enabling double precision")
-    # These are used by Meshfem
-    set(CUSTOM_REAL "SIZE_DOUBLE")
-    set(CUSTOM_MPI_TYPE "MPI_DOUBLE_PRECISION")
-    # This one is used by specfempp
     set(TYPE_REAL "double")
 else(ENABLE_DOUBLE_PRECISION)
     message("-- Enabling single precision")
-    # These are used by Meshfem
-    set(CUSTOM_REAL "SIZE_REAL")
-    set(CUSTOM_MPI_TYPE "MPI_REAL")
-    # This one is used by specfempp
     set(TYPE_REAL "float")
 endif(ENABLE_DOUBLE_PRECISION)
 
