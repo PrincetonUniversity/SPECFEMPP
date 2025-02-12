@@ -5,6 +5,7 @@ message("-- Configuring meshfem2D headers...")
 
 enable_language(Fortran)
 
+set(SETUP_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 # ===================== config.h.in START =====================
 
@@ -13,7 +14,6 @@ include(CheckFunctionExists)
 include(CheckSymbolExists)
 include(CheckCSourceCompiles)
 include(CheckCCompilerFlag)
-# include(CheckFortranCompiler)
 include(CheckFortranCompilerFlag)
 
 # Check for headers
@@ -150,24 +150,24 @@ endif()
 
 # Generate config.h file
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
-               ${CMAKE_BINARY_DIR}/fortran/meshfem2d/setup/config.h @ONLY)
+               ${SETUP_DIR}/config.h @ONLY)
 
 # ===================== config.h.in END =====================
 
 # ===================== config.fh.in START ==================
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.fh.in
-               ${CMAKE_BINARY_DIR}/fortran/meshfem2d/setup/config.fh @ONLY)
+               ${SETUP_DIR}/config.fh @ONLY)
 # ===================== config.fh.in END ====================
 
 
 # ===================== constants.h.in START ================
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/constants.h.in
-               ${CMAKE_BINARY_DIR}/fortran/meshfem2d/setup/constants.h @ONLY)
+               ${SETUP_DIR}/constants.h @ONLY)
 # ===================== constants.h.in END ==================
 
 # ===================== precision.h.in START ================
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/precision.h.in
-               ${CMAKE_BINARY_DIR}/fortran/meshfem2d/setup/precision.h @ONLY)
+               ${SETUP_DIR}/precision.h @ONLY)
 # ===================== precision.h.in END ==================
 
 
@@ -194,7 +194,7 @@ set(GIT_DATE_VERSION "2023-03-21 19:54:51 +0100")
 
 # Configure the config.h file
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.fh.in
-               ${CMAKE_BINARY_DIR}/fortran/meshfem2d/setup/version.fh @ONLY)
+               ${SETUP_DIR}/version.fh @ONLY)
 
 
 # ===================== version.h.in START ================

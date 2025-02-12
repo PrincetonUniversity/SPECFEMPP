@@ -17,13 +17,19 @@ option(WITH_SCOTCH "Build with SCOTCH support" OFF)
 
 # Set output file directories
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/fortran/meshfem2d/modules)
+set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/modules)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/archive)
+
+message("-- CMAKE_RUNTIME_OUTPUT_DIRECTORY: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+message("-- CMAKE_Fortran_MODULE_DIRECTORY: ${CMAKE_Fortran_MODULE_DIRECTORY}")
+message("-- CMAKE_ARCHIVE_OUTPUT_DIRECTORY: ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}")
+message("-- CMAKE_CURRENT_BINARY_DIR:       ${CMAKE_CURRENT_BINARY_DIR}")
 
 # Custom variables
-set(SETUP_DIR ${CMAKE_BINARY_DIR}/fortran/meshfem2d/setup)
+set(SETUP_DIR ${CMAKE_CURRENT_BINARY_DIR}/setup)
 
 # Set include directories
-include_directories("${CMAKE_BINARY_DIR}/fortran/meshfem2d/modules")
+include_directories("${CMAKE_CURRENT_BINARY_DIR}/modules")
 include_directories(${SETUP_DIR})
 
 # Setting values dependent on options
