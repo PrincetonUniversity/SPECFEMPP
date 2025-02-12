@@ -159,8 +159,17 @@ else()
     message(STATUS "    LIBSO: ${HDF5_CXX_LIBRARIES}")
 endif()
 
-# This is not being used.
-# configure_file(constants.hpp.in constants.hpp)
+
+if (ENABLE_SIMD)
+    message("-- Enabling SIMD")
+    add_definitions(-DENABLE_SIMD)
+endif()
+
+if (ENABLE_PROFILING)
+    message("-- Enabling profiling")
+    add_definitions(-DENABLE_PROFILING)
+endif()
+
 if (ENABLE_DOUBLE_PRECISION)
     message("-- Enabling double precision")
     # These are used by Meshfem
@@ -190,15 +199,6 @@ add_subdirectory(fortran/meshfem2d)
 add_subdirectory(fortran/meshfem3d)
 # =================================
 
-if (ENABLE_SIMD)
-    message("-- Enabling SIMD")
-    add_definitions(-DENABLE_SIMD)
-endif()
-
-if (ENABLE_PROFILING)
-    message("-- Enabling profiling")
-    add_definitions(-DENABLE_PROFILING)
-endif()
 
 # Build specfem2d libraries
 add_library(
