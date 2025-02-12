@@ -191,6 +191,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup/specfem_setup.hpp.in
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup/constants.hpp.in
                ${CMAKE_BINARY_DIR}/include/constants.hpp)
 
+# Add the include directories so that the generated files can be found
 include_directories(include)
 include_directories(${CMAKE_BINARY_DIR}/include)
 
