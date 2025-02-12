@@ -155,8 +155,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
 # ===================== config.h.in END =====================
 
 # ===================== config.fh.in START ==================
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
-               ${CMAKE_CURRENT_SOURCE_DIR}/../config.h @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.fh.in
+               ${CMAKE_CURRENT_SOURCE_DIR}/../config.fh @ONLY)
 # ===================== config.fh.in END ====================
 
 
