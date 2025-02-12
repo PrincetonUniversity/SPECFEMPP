@@ -53,7 +53,7 @@
 #cmakedefine01 HAVE_UNISTD_H
 
 /* Define if xmmintrin.h exists */
-#cmakedefine HAVE_XMMINTRIN
+#cmakedefine01 HAVE_XMMINTRIN
 
 /* Define to the address where bug reports for this package should be sent. */
 #cmakedefine PACKAGE_BUGREPORT "@PACKAGE_BUGREPORT@"
@@ -89,7 +89,7 @@
 #cmakedefine SPECFEM2D_GIT_REVISION "@SPECFEM2D_GIT_REVISION@"
 
 /* Set to 0 if source is from GIT, 1 otherwise. */
-#cmakedefine SPECFEM2D_RELEASE_VERSION
+#cmakedefine SPECFEM2D_RELEASE_VERSION @SPECFEM2D_RELEASE_VERSION@
 
 /* Define SPECFEM2D version */
 #cmakedefine SPECFEM2D_VERSION "@SPECFEM2D_VERSION@"

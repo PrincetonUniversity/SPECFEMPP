@@ -4,10 +4,7 @@ cmake_minimum_required(VERSION 3.10)
 message("-- Configuring meshfem2D headers...")
 
 enable_language(Fortran)
-
-set(SETUP_DIR ${CMAKE_CURRENT_BINARY_DIR})
-
-# ===================== config.h.in START =====================
+enable_language(C)
 
 include(CheckIncludeFile)
 include(CheckFunctionExists)
@@ -23,9 +20,32 @@ foreach(header inttypes.h pthread.h scotch.h stdint.h stdio.h stdlib.h strings.h
     check_include_file(${header} HAVE_${UPPER_HEADER})
 endforeach()
 
-# -----------------------------------------------------------------------------
+
+# Define package information
+set(PACKAGE_NAME "SPECFEM2D")
+set(PACKAGE_VERSION "8.0.0")
+set(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
+set(PACKAGE_TARNAME "specfem2d")
+set(PACKAGE_URL "https://github.com/geodynamics/specfem2d")
+set(PACKAGE_BUGREPORT "support@specfem2d.org")
+
+# Git-related details (can be dynamically retrieved)
+set(SPECFEM2D_GIT_BRANCH "main")  # You can use 'git rev-parse --abbrev-ref HEAD' dynamically
+set(SPECFEM2D_GIT_DATE "2024-02-11")
+set(SPECFEM2D_GIT_HASH "abcd1234")
+set(SPECFEM2D_GIT_REVISION "abcd1234")
+set(SPECFEM2D_VERSION "${PACKAGE_VERSION}")
+set(SPECFEM2D_RELEASE_VERSION 1)
+
+set(GIT_PACKAGE_VERSION "v8.0.0-11-gf8c66778")
+set(GIT_COMMIT_VERSION "f8c66778e3bcff99be726113a1aca338255ed87e")
+set(GIT_DATE_VERSION "2023-03-21 19:54:51 +0100")
+
+
+# ====== FIGURE OUT THE FORTRAN NAME MANGLING START ===========
+
 # Write test Fortran subroutines
-file(WRITE "${CMAKE_BINARY_DIR}/test.f90" "
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/test.f90" "
 subroutine foobar()
 return
 end
@@ -71,7 +91,7 @@ foreach(TEST_CASE
    endif()
 
    # Write C test file
-   file(WRITE "${CMAKE_BINARY_DIR}/test.c" "
+   file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/test.c" "
    extern void ${NAME1}(void);
    extern void ${NAME2}(void);
    int main() {
@@ -82,10 +102,10 @@ foreach(TEST_CASE
    ")
 
    try_compile(COMPILE_SUCCESS
-       ${CMAKE_BINARY_DIR}
+       ${CMAKE_CURRENT_BINARY_DIR}
        SOURCES
-           "${CMAKE_BINARY_DIR}/test.f90"
-           "${CMAKE_BINARY_DIR}/test.c"
+           "${CMAKE_CURRENT_BINARY_DIR}/test.f90"
+           "${CMAKE_CURRENT_BINARY_DIR}/test.c"
        OUTPUT_VARIABLE COMPILE_OUTPUT
    )
 
@@ -146,55 +166,58 @@ else()
    endif()
 endif()
 
-# -----------------------------------------------------------------------------
+# ====== FIGURE OUT THE FORTRAN NAME MANGLING END =============
+
+# ===================== config.h.in START =====================
 
 # Generate config.h file
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in
-               ${SETUP_DIR}/config.h @ONLY)
+               ${CMAKE_CURRENT_BINARY_DIR}/config.h @ONLY)
 
 # ===================== config.h.in END =====================
 
 # ===================== config.fh.in START ==================
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.fh.in
-               ${SETUP_DIR}/config.fh @ONLY)
+               ${CMAKE_CURRENT_BINARY_DIR}/config.fh @ONLY)
 # ===================== config.fh.in END ====================
 
 
 # ===================== constants.h.in START ================
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/constants.h.in
-               ${SETUP_DIR}/constants.h @ONLY)
+               ${CMAKE_CURRENT_BINARY_DIR}/constants.h @ONLY)
 # ===================== constants.h.in END ==================
 
 # ===================== precision.h.in START ================
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/precision.h.in
-               ${SETUP_DIR}/precision.h @ONLY)
+               ${CMAKE_CURRENT_BINARY_DIR}/precision.h @ONLY)
 # ===================== precision.h.in END ==================
 
 
 # ===================== version.fh.in START ================
 
-# Define package information
-set(PACKAGE_NAME "SPECFEM2D")
-set(PACKAGE_VERSION "8.0.0")
-set(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
-set(PACKAGE_TARNAME "specfem2d")
-set(PACKAGE_URL "https://github.com/geodynamics/specfem2d")
-set(PACKAGE_BUGREPORT "support@specfem2d.org")
-
-# Git-related details (can be dynamically retrieved)
-set(SPECFEM2D_GIT_BRANCH "main")  # You can use 'git rev-parse --abbrev-ref HEAD' dynamically
-set(SPECFEM2D_GIT_DATE "2024-02-11")
-set(SPECFEM2D_GIT_HASH "abcd1234")
-set(SPECFEM2D_GIT_REVISION "abcd1234")
-set(SPECFEM2D_RELEASE_VERSION 0) # Set to 1 if it's a stable release
-
-set(GIT_PACKAGE_VERSION "v8.0.0-11-gf8c66778")
-set(GIT_COMMIT_VERSION "f8c66778e3bcff99be726113a1aca338255ed87e")
-set(GIT_DATE_VERSION "2023-03-21 19:54:51 +0100")
-
 # Configure the config.h file
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.fh.in
-               ${SETUP_DIR}/version.fh @ONLY)
-
+               ${CMAKE_CURRENT_BINARY_DIR}/version.fh @ONLY)
 
 # ===================== version.h.in START ================
+
+# Set Header interfaces
+add_library(meshfem2D_constants INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/constants.h)
+add_library(meshfem2D::constants ALIAS meshfem2D_constants)
+target_include_directories(meshfem2D_constants INTERFACE ${CMAKE_CURRENT_BINARY_DIR})
+
+add_library(meshfem2D_precision INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/precision.h)
+add_library(meshfem2D::precision ALIAS meshfem2D_precision)
+target_include_directories(meshfem2D_precision INTERFACE ${CMAKE_CURRENT_BINARY_DIR})
+
+add_library(meshfem2D_version INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/version.fh)
+add_library(meshfem2D::version ALIAS meshfem2D_version)
+target_include_directories(meshfem2D_version INTERFACE ${CMAKE_CURRENT_BINARY_DIR})
+
+add_library(meshfem2D_config INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+add_library(meshfem2D::config ALIAS meshfem2D_config)
+target_include_directories(meshfem2D_config INTERFACE ${CMAKE_CURRENT_BINARY_DIR})
+
+add_library(meshfem2D_fh_config INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/config.fh)
+add_library(meshfem2D::fh_config ALIAS meshfem2D_fh_config)
+target_include_directories(meshfem2D_fh_config INTERFACE ${CMAKE_CURRENT_BINARY_DIR})
