@@ -6,17 +6,6 @@ labels: ''
 assignees: ''
 ---
 
-# Bug Title
-
-A quick summary of the bug.
-
-## Setup information:
-
-- Installation instructions:
-```
-Please paste the cmake configuration command here
-```
-
 ## Expected behavior
 A clear and concise description of what you expected to happen.
 
@@ -26,6 +15,13 @@ A clear and concise description of what is happening instead.
 ## Screenshots
 
 If applicable, add screenshots to help explain your problem.
+
+## Setup information:
+
+- Installation instructions:
+```
+Please paste the cmake configuration command here
+```
 
 ## Machine information:
 
