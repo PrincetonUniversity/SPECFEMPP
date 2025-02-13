@@ -1,5 +1,3 @@
-# Title
-
 ## Description
 
 Please describe the changes/features in this pull request.
