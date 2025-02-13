@@ -1,12 +1,14 @@
-# Description
+# Title
+
+## Description
 
 Please describe the changes/features in this pull request.
 
-# Issue Number
+## Issue Number
 
 If there is an issue created for these changes, link it here
 
-# Checklist
+## Checklist
 
 Please make sure to check developer documentation on specfem docs.
 
