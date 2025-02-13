@@ -166,7 +166,7 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
                 << std::endl;
 
       if (Test.database.elastic_mass_matrix != "NULL") {
-        specfem::testing::array2d<type_real, Kokkos::LayoutRight>
+        specfem::testing::array2d<double, Kokkos::LayoutRight>
             h_mass_matrix_global(Test.database.elastic_mass_matrix, nglob, 2);
 
         specfem::testing::array3d<int, Kokkos::LayoutRight> index_mapping(
@@ -226,7 +226,7 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
       }
 
       if (Test.database.acoustic_mass_matrix != "NULL") {
-        specfem::testing::array2d<type_real, Kokkos::LayoutRight>
+        specfem::testing::array2d<double, Kokkos::LayoutRight>
             h_mass_matrix_global(Test.database.acoustic_mass_matrix, nglob, 1);
 
         specfem::testing::array3d<int, Kokkos::LayoutRight> index_mapping(

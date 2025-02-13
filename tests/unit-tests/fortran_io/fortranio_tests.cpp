@@ -16,7 +16,7 @@ TEST(iotests, fortran_io) {
   int ival;
   bool bval;
   std::string sval;
-  type_real dval;
+  double dval;
   std::vector<int> vval(100, 0);
 
   stream.open(filename);

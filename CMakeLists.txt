@@ -178,6 +178,7 @@ else(ENABLE_DOUBLE_PRECISION)
     set(TYPE_REAL "float")
 endif(ENABLE_DOUBLE_PRECISION)
 
+# Configure the setup headers
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup/specfem_setup.hpp.in
                ${CMAKE_BINARY_DIR}/include/specfem_setup.hpp)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup/constants.hpp.in

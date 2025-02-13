@@ -41,7 +41,24 @@ void specfem::IO::fortran_read_value(int *value, std::ifstream &stream,
   return;
 }
 
-void specfem::IO::fortran_read_value(type_real *value, std::ifstream &stream,
+void specfem::IO::fortran_read_value(float *value, std::ifstream &stream,
+                                     int &buffer_length) {
+
+  float *temp;
+  buffer_length -= ffloat;
+  char *ivalue = new char[ffloat];
+  if (buffer_length < 0) {
+    std::cout << "buffer_length: " << buffer_length << std::endl;
+    throw std::runtime_error("Error reading fortran file");
+  }
+  stream.read(ivalue, ffloat);
+  temp = reinterpret_cast<float *>(ivalue);
+  *value = *temp;
+  delete[] ivalue;
+  return;
+}
+
+void specfem::IO::fortran_read_value(double *value, std::ifstream &stream,
                                      int &buffer_length) {
 
   double *temp;
@@ -53,7 +70,7 @@ void specfem::IO::fortran_read_value(type_real *value, std::ifstream &stream,
   }
   stream.read(ivalue, fdouble);
   temp = reinterpret_cast<double *>(ivalue);
-  *value = static_cast<type_real>(*temp);
+  *value = *temp;
   delete[] ivalue;
   return;
 }
