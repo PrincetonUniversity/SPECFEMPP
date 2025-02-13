@@ -330,24 +330,11 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
 
   // Print Mapping parameters and the first spectral element
   mesh.mapping.print();
-  mesh.mapping.print(0);
-  mesh.mapping.print(mesh.parameters.nspec - 1);
 
   // Create the coordinates object
   mesh.coordinates = specfem::mesh::coordinates<specfem::dimension::type::dim3>(
       mesh.parameters.nspec, mesh.parameters.nglob, mesh.parameters.ngllx,
       mesh.parameters.nglly, mesh.parameters.ngllz);
-
-  std::cout << "mesh.coordinates.nspec = " << mesh.coordinates.nspec
-            << std::endl;
-  std::cout << "mesh.coordinates.nglob = " << mesh.coordinates.nglob
-            << std::endl;
-  std::cout << "mesh.coordinates.ngllx = " << mesh.coordinates.ngllx
-            << std::endl;
-  std::cout << "mesh.coordinates.nglly = " << mesh.coordinates.nglly
-            << std::endl;
-  std::cout << "mesh.coordinates.ngllz = " << mesh.coordinates.ngllz
-            << std::endl;
 
   // Reading the coordinates from the database file.
   try {
@@ -362,13 +349,6 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
 
   // Print Coordinates parameters and the first global node
   mesh.coordinates.print();
-  mesh.coordinates.print(0);
-  mesh.coordinates.print(mesh.parameters.nglob - 1);
-  // mesh.coordinates.print(
-  //   mesh.parameters.nspec - 1,
-  //   mesh.parameters.ngllx - 1,
-  //   mesh.parameters.nglly - 1,
-  //   mesh.parameters.ngllz - 1);
 
   stream.close();
 

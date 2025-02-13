@@ -2,7 +2,7 @@
 project(MESHFEM3D_SETUP LANGUAGES Fortran C)
 cmake_minimum_required(VERSION 3.10)
 
-message("-- Configuring meshfem3D headers...")
+message(STATUS "-- Configuring meshfem3D headers...")
 
 enable_language(Fortran)
 enable_language(C)
@@ -15,10 +15,10 @@ set(CMAKE_Fortran_STANDARD_REQUIRED ON)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 if (BEOWULF_CLUSTER)
-    message("-- Building for Beowulf cluster")
+    message(STATUS "-- Building for Beowulf cluster")
     set(LOCAL_PATH_IS_ALSO_GLOBAL "false")
 else()
-    message("-- Building for shared memory machine")
+    message(STATUS "-- Building for shared memory machine")
     set(LOCAL_PATH_IS_ALSO_GLOBAL "true")
 endif()
 
