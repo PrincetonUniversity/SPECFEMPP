@@ -1,7 +1,7 @@
 project(FortranTest LANGUAGES Fortran)
 cmake_minimum_required(VERSION 3.10)
 
-message("-- Configuring meshfem2D headers...")
+message(STATUS "-- Configuring meshfem2D headers...")
 
 enable_language(Fortran)
 enable_language(C)

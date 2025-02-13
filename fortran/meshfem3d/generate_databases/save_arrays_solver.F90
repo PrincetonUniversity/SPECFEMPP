@@ -190,15 +190,6 @@ module save_arrays_module
   write(IOUT) ystore_unique
   write(IOUT) zstore_unique
 
-  write(*,*) xstore_unique(0)
-  write(*,*) ystore_unique(0)
-  write(*,*) zstore_unique(0)
-
-  write(*,*) xstore_unique(nglob)
-  write(*,*) ystore_unique(nglob)
-  write(*,*) zstore_unique(nglob)
-
-
   write(IOUT) irregular_element_number
   write(IOUT) xix_regular
   write(IOUT) jacobian_regular
