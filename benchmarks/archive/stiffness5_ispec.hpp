@@ -24,8 +24,8 @@ constexpr static auto boundary_tag = specfem::element::boundary_tag::none;
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool flag>
 void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
-specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> &c_field,
-specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> &c_field_dot_dot,
+specfem::kokkos::DeviceView4d<type_real, Kokkos::LayoutLeft> &c_field,
+specfem::kokkos::DeviceView4d<type_real, Kokkos::LayoutLeft> &c_field_dot_dot,
                                     const int &istep) {
 
   constexpr auto medium_tag = MediumTag;
@@ -129,12 +129,9 @@ specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> &c_field_dot_dot,
                     const int iz = iterator_index.index.iz;
                     const int ix = iterator_index.index.ix;
             
-                    const int iglob = field.assembly_index_mapping(
-                        field.index_mapping(ispec, iz, ix), static_cast<int>(MediumTag));
-            
                     for (int icomp = 0; icomp < components; ++icomp) {
                         element_field.displacement(ielement, iz, ix, icomp) =
-                            c_field(iglob, icomp);
+                            c_field(properties.property_index_mapping(ispec), iz, ix, icomp);
                     }
                 });
 
@@ -356,11 +353,8 @@ specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> &c_field_dot_dot,
                       static_cast<type_real>(-1.0);
                 }
 
-                const int iglob = field.assembly_index_mapping(
-                    field.index_mapping(index.ispec, iz, ix),
-                    static_cast<int>(MediumTag));
                 for (int icomp = 0; icomp < components; ++icomp) {
-                    Kokkos::atomic_add(&c_field_dot_dot(iglob, icomp),
+                    Kokkos::atomic_add(&c_field_dot_dot(properties.property_index_mapping(index.ispec), iz, ix, icomp),
                                         acceleration.acceleration(icomp));
                 }
 

@@ -18,6 +18,21 @@ void benchmark(specfem::compute::assembly &assembly,
 
   const auto solver_start_time = std::chrono::system_clock::now();
 
+  const auto &field = assembly.fields.get_simulation_field<wavefield>();
+  // std::cout << ">>>>" << field.acoustic.nglob << " | " << field.elastic.nglob << std::endl;
+
+  // specfem::kokkos::DeviceView4d<type_real, Kokkos::LayoutLeft> acoustic_field("acoustic_field", field.acoustic.nglob/ngll/ngll,ngll,ngll, field.acoustic.components);
+  // specfem::kokkos::DeviceView4d<type_real, Kokkos::LayoutLeft> acoustic_field_dot_dot("acoustic_field_dot_dot", field.acoustic.nglob/ngll/ngll,ngll,ngll, field.acoustic.components);
+
+  // specfem::kokkos::DeviceView4d<type_real, Kokkos::LayoutLeft> elastic_field("elastic_field", field.elastic.nglob/ngll/ngll,ngll,ngll, field.elastic.components);
+  // specfem::kokkos::DeviceView4d<type_real, Kokkos::LayoutLeft> elastic_field_dot_dot("elastic_field_dot_dot", field.elastic.nglob/ngll/ngll,ngll,ngll, field.elastic.components);
+
+  specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> acoustic_field("acoustic_field", field.acoustic.nglob, field.acoustic.components);
+  specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> acoustic_field_dot_dot("acoustic_field_dot_dot", field.acoustic.nglob, field.acoustic.components);
+
+  specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> elastic_field("elastic_field", field.elastic.nglob, field.elastic.components);
+  specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> elastic_field_dot_dot("elastic_field_dot_dot", field.elastic.nglob, field.elastic.components);
+
   for (const auto [istep, dt] : time_scheme->iterate_forward()) {
     // compute_stiffness_interaction<acoustic, isotropic, flag>(assembly, istep);
     // compute_stiffness_interaction<elastic, isotropic, flag>(assembly, istep);
@@ -28,9 +43,9 @@ void benchmark(specfem::compute::assembly &assembly,
     // compute_stiffness_interaction2<elastic, anisotropic, flag>(assembly, istep);
 
     if constexpr (flag) {
-      compute_stiffness_interaction<acoustic, isotropic, false>(assembly, istep);
-      compute_stiffness_interaction<elastic, isotropic, false>(assembly, istep);
-      compute_stiffness_interaction<elastic, anisotropic, false>(assembly, istep);
+      compute_stiffness_interaction<acoustic, isotropic, false>(assembly, acoustic_field, acoustic_field_dot_dot, istep);
+      compute_stiffness_interaction<elastic, isotropic, false>(assembly, elastic_field, elastic_field_dot_dot, istep);
+      compute_stiffness_interaction<elastic, anisotropic, false>(assembly, elastic_field, elastic_field_dot_dot, istep);
     } else {
       compute_stiffness_interaction2<acoustic, isotropic, false>(assembly, istep);
       compute_stiffness_interaction2<elastic, isotropic, false>(assembly, istep);
