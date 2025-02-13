@@ -81,7 +81,8 @@ void specfem::runtime_configuration::mesh_modifiers::load_subdivisions(
           std::runtime_error(message.str());
         }
       }
-      modifiers.set_subdivision(materialID,subz,subx);
+      // minus 1 for zero-indexing.
+      modifiers.set_subdivision(materialID - 1, subz, subx);
     }
   }
 }
