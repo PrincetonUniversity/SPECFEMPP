@@ -58,7 +58,6 @@ subroutine save_parameters()
       WRITE(IOUT) APPROXIMATE_OCEAN_LOAD
       WRITE(IOUT) USE_MESH_COLORING_GPU
 
-
       ! Write test parameter
       itest = 9998
       WRITE(IOUT) itest
@@ -72,32 +71,32 @@ subroutine save_parameters()
       WRITE(IOUT) NGLLSQUARE
 
       ! Write test parameter
-      WRITE(IOUT) itest
       itest = 9997
+      WRITE(IOUT) itest
 
       WRITE(IOUT) NSPEC_AB ! nspec
       WRITE(IOUT) NSPEC_PORO ! nspec_poro == nspec, if POROELASTIC_SIMULATION
       WRITE(IOUT) NGLOB_AB ! nglob
       WRITE(IOUT) NGLOB_OCEAN
+
+      ! Write test parameter
+      itest = 9996
+      WRITE(IOUT) itest
+
       WRITE(IOUT) NSPEC2D_BOTTOM
       WRITE(IOUT) NSPEC2D_TOP
+      WRITE(IOUT) nspec2D_xmin
+      WRITE(IOUT) nspec2D_xmax
+      WRITE(IOUT) nspec2D_ymin
+      WRITE(IOUT) nspec2D_ymax
       WRITE(IOUT) nspec_irregular
 
       ! Write test parameter
+      itest = 9995
       WRITE(IOUT) itest
-      itest = 9996
 
       WRITE(IOUT) num_neighbors_all
       WRITE(IOUT) nfaces_surface
-      WRITE(IOUT) nspec2D_xmin
-      WRITE(IOUT) nspec2D_xmin
-      WRITE(IOUT) nspec2D_ymin
-      WRITE(IOUT) nspec2D_ymin
-
-      ! Write test parameter
-      WRITE(IOUT) itest
-      itest = 9995
-
       WRITE(IOUT) num_abs_boundary_faces
       WRITE(IOUT) num_free_surface_faces
       WRITE(IOUT) num_coupling_ac_el_faces
@@ -108,8 +107,8 @@ subroutine save_parameters()
       WRITE(IOUT) max_nibool_interfaces_ext_mesh
 
       ! Write test parameter
-      WRITE(IOUT) itest
       itest = 9994
+      WRITE(IOUT) itest
 
       WRITE(IOUT) nspec_inner_acoustic
       WRITE(IOUT) nspec_outer_acoustic
@@ -119,8 +118,8 @@ subroutine save_parameters()
       WRITE(IOUT) nspec_outer_poroelastic
 
       ! Write test parameter
-      WRITE(IOUT) itest
       itest = 9993
+      WRITE(IOUT) itest
 
       WRITE(IOUT) num_phase_ispec_acoustic
       WRITE(IOUT) num_phase_ispec_elastic
@@ -131,8 +130,8 @@ subroutine save_parameters()
       WRITE(IOUT) num_colors_outer_elastic
 
       ! Write test parameter
-      WRITE(IOUT) itest
       itest = 9992
+      WRITE(IOUT) itest
   endif
 
 end subroutine save_parameters

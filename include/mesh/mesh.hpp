@@ -5,6 +5,7 @@
 #include "coupled_interfaces/coupled_interfaces.hpp"
 #include "elements/axial_elements.hpp"
 #include "elements/tangential_elements.hpp"
+#include "enumerations/dimension.hpp"
 #include "enumerations/interface.hpp"
 #include "materials/materials.hpp"
 #include "mesh/tags/tags.hpp"
@@ -103,6 +104,9 @@ template <> struct mesh<specfem::dimension::type::dim3> {
 
   constexpr static auto dimension =
       specfem::dimension::type::dim3; ///< Dimension
+
+  // Struct to store all the mesh parameter
+  specfem::mesh::parameters<dimension> parameters;
 
   // int npgeo; ///< Total number of spectral element control nodes
   // int nspec; ///< Total number of spectral elements

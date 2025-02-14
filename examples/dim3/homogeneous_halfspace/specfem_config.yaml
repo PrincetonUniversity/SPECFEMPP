@@ -45,6 +45,7 @@ parameters:
   ## databases
   databases:
     mesh-database: "OUTPUT_FILES/DATABASES_MPI/proc000000_external_mesh.bin"
+    mesh-parameters: "OUTPUT_FILES/DATABASES_MPI/mesh_parameters.bin"
 
   ## sources
   sources: "/Users/lsawade/SPECFEMPP/examples/homogeneous-medium-flat-topography/source.yaml"
