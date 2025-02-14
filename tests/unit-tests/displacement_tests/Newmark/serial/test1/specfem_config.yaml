@@ -33,7 +33,7 @@ parameters:
             directory: "."
 
   receivers:
-    stations: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test1/STATIONS"
+    stations: "displacement_tests/Newmark/serial/test1/STATIONS"
     angle: 0.0
     seismogram-type:
       - displacement
@@ -49,6 +49,6 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test1/database.bin"
+    mesh-database: "displacement_tests/Newmark/serial/test1/database.bin"
 
-  sources: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test1/sources.yaml"
+  sources: "displacement_tests/Newmark/serial/test1/sources.yaml"

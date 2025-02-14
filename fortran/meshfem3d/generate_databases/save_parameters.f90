@@ -5,7 +5,7 @@ subroutine save_parameters()
   use shared_parameters, only: LOCAL_PATH, MAX_STRING_LEN
 
   use generate_databases_par, only: &
-    IOUT, myrank, &
+    IOUT, myrank, sizeprocs, &
     NDIM, NSPEC_AB, NGLOB_AB, &
     NGLLX, NGLLY, NGLLZ, nfaces_surface, num_neighbors_all, NGLLSQUARE, &
     nspec2D_xmin, nspec2D_xmin, nspec2D_ymin, nspec2D_ymin, &
@@ -69,6 +69,7 @@ subroutine save_parameters()
       WRITE(IOUT) NGLLY
       WRITE(IOUT) NGLLZ
       WRITE(IOUT) NGLLSQUARE
+      WRITE(IOUT) sizeprocs
 
       ! Write test parameter
       itest = 9997

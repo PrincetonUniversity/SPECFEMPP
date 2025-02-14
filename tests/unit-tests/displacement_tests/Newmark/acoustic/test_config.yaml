@@ -1,5 +1,5 @@
 Tests:
 
   serial:
-    specfem_config: "../../../tests/unit-tests/displacement_tests/Newmark/acoustic/serial/specfem_config.yaml"
-    solutions_file: "../../../tests/unit-tests/displacement_tests/Newmark/acoustic/serial/potential_acoustic_00000.bin"
+    specfem_config: "displacement_tests/Newmark/acoustic/serial/specfem_config.yaml"
+    solutions_file: "displacement_tests/Newmark/acoustic/serial/potential_acoustic_00000.bin"

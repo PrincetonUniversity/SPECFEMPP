@@ -5,9 +5,9 @@ Tests:
     config:
       nproc : 1
     databases:
-      specfem_config: "../../../tests/unit-tests/domain/serial/test1/specfem_config.yaml"
-      index_mapping: "../../../tests/unit-tests/domain/serial/test1/index_mapping.bin"
-      elastic_mass_matrix: "../../../tests/unit-tests/domain/serial/test1/rmass_inverse_elastic.bin"
+      specfem_config: "domain/serial/test1/specfem_config.yaml"
+      index_mapping: "domain/serial/test1/index_mapping.bin"
+      elastic_mass_matrix: "domain/serial/test1/rmass_inverse_elastic.bin"
 
   - name : "SerialTest2 : Homogeneous acoustic domain"
     description: >
@@ -15,9 +15,9 @@ Tests:
     config:
       nproc : 1
     databases:
-      specfem_config: "../../../tests/unit-tests/domain/serial/test2/specfem_config.yaml"
-      index_mapping: "../../../tests/unit-tests/domain/serial/test2/index_mapping.bin"
-      acoustic_mass_matrix: "../../../tests/unit-tests/domain/serial/test2/rmass_inverse_acoustic.bin"
+      specfem_config: "domain/serial/test2/specfem_config.yaml"
+      index_mapping: "domain/serial/test2/index_mapping.bin"
+      acoustic_mass_matrix: "domain/serial/test2/rmass_inverse_acoustic.bin"
 
   # - name : "SerialTest3 : Homogeneous acoustic domain (stacey BC)"
   #   description: >
@@ -25,9 +25,9 @@ Tests:
   #   config:
   #     nproc : 1
   #   databases:
-  #     specfem_config: "../../../tests/unit-tests/domain/serial/test3/specfem_config.yaml"
-  #     index_mapping: "../../../tests/unit-tests/domain/serial/test3/index_mapping.bin"
-  #     acoustic_mass_matrix: "../../../tests/unit-tests/domain/serial/test3/rmass_inverse_acoustic.bin"
+  #     specfem_config: "domain/serial/test3/specfem_config.yaml"
+  #     index_mapping: "domain/serial/test3/index_mapping.bin"
+  #     acoustic_mass_matrix: "domain/serial/test3/rmass_inverse_acoustic.bin"
 
   # - name : "SerialTest4 : Homogeneous elastic domain (stacey BC)"
   #   description: >
@@ -35,6 +35,6 @@ Tests:
   #   config:
   #     nproc : 1
   #   databases:
-  #     specfem_config: "../../../tests/unit-tests/domain/serial/test4/specfem_config.yaml"
-  #     index_mapping: "../../../tests/unit-tests/domain/serial/test4/index_mapping.bin"
-  #     elastic_mass_matrix: "../../../tests/unit-tests/domain/serial/test4/rmass_inverse_elastic.bin"
+  #     specfem_config: "domain/serial/test4/specfem_config.yaml"
+  #     index_mapping: "domain/serial/test4/index_mapping.bin"
+  #     elastic_mass_matrix: "domain/serial/test4/rmass_inverse_elastic.bin"

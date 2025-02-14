@@ -10,6 +10,12 @@
 #include "specfem_setup.hpp"
 #include <gtest/gtest.h>
 
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+#ifndef TEST_OUTPUT_DIR
+#define TEST_OUTPUT_DIR "." // Fallback in case it's not set
+#endif
+
 inline void error_message_header(std::ostringstream &message,
                                  const type_real &value, const int &mode) {
   if (mode == 0) {
@@ -647,7 +653,8 @@ void check_load_on_device(specfem::compute::properties &properties,
 
 void test_properties(
     specfem::compute::assembly &assembly,
-    const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh) {
+    const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
+    const std::string &suffix) {
 
   auto &properties = assembly.properties;
   auto &element_types = assembly.element_types;
@@ -662,9 +669,15 @@ void test_properties(
       WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
           WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
+  // stage 2 prepare file path
+  std::string output_dir = TOSTRING(TEST_OUTPUT_DIR);
+  boost::filesystem::path dir_path =
+      boost::filesystem::path(output_dir) / "property_io" / suffix;
+  boost::filesystem::create_directories(dir_path);
+
   // stage 2: write properties
   specfem::IO::property_writer<specfem::IO::ASCII<specfem::IO::write> > writer(
-      ".");
+      dir_path.string());
   writer.write(assembly);
 
   // stage 3: modify properties and check store_on_host and load_on_device
@@ -687,7 +700,7 @@ void test_properties(
 
   // stage 4: restore properties to initial value from disk
   specfem::IO::property_reader<specfem::IO::ASCII<specfem::IO::read> > reader(
-      ".");
+      dir_path.string());
   reader.read(assembly);
 
   // stage 5: check if properties are correctly written and read
@@ -706,16 +719,21 @@ void test_properties(
   // check_compute_to_mesh<specfem::element::medium_tag::acoustic,
   //                       specfem::element::property_tag::isotropic>(assembly,
   //  mesh);
+
+  // stage 6: remove directory
+  std::cout << "Removing directory: " << dir_path << std::endl;
+  boost::filesystem::remove_all(dir_path);
 }
 
 TEST_F(ASSEMBLY, properties) {
   for (auto parameters : *this) {
     auto Test = std::get<0>(parameters);
     auto mesh = std::get<1>(parameters);
-    auto assembly = std::get<4>(parameters);
+    auto suffix = std::get<4>(parameters);
+    auto assembly = std::get<5>(parameters);
 
     try {
-      test_properties(assembly, mesh);
+      test_properties(assembly, mesh, suffix);
 
       std::cout << "-------------------------------------------------------\n"
                 << "\033[0;32m[PASSED]\033[0m " << Test.name << "\n"
@@ -732,4 +750,11 @@ TEST_F(ASSEMBLY, properties) {
       ADD_FAILURE();
     }
   }
+
+  // Clear property_io directory
+  std::cout << "Removing directory: " << TOSTRING(TEST_OUTPUT_DIR) << std::endl;
+  std::string output_dir = TOSTRING(TEST_OUTPUT_DIR);
+  boost::filesystem::path output_dir_path =
+      boost::filesystem::path(output_dir) / "property_io";
+  boost::filesystem::remove_all(output_dir_path);
 }
