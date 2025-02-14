@@ -6,9 +6,10 @@ Tests:
     config:
       nproc : 1
     databases:
-      mesh : "../../../tests/unit-tests/data/mesh/simple_mesh_flat_topography/database.bin"
-      sources : "../../../tests/unit-tests/data/mesh/simple_mesh_flat_topography/sources.yaml"
-      stations : "../../../tests/unit-tests/data/mesh/simple_mesh_flat_topography/STATIONS"
+      mesh : "data/mesh/simple_mesh_flat_topography/database.bin"
+      sources : "data/mesh/simple_mesh_flat_topography/sources.yaml"
+      stations : "data/mesh/simple_mesh_flat_topography/STATIONS"
+    suffix: "flat_topo"
   # Test 2:
   - name : "Test 2: Simple mesh with curved topography"
     description: >
@@ -16,9 +17,10 @@ Tests:
     config:
       nproc : 1
     databases:
-      mesh : "../../../tests/unit-tests/data/mesh/simple_mesh_curved_topography/database.bin"
-      sources : "../../../tests/unit-tests/data/mesh/simple_mesh_curved_topography/sources.yaml"
-      stations : "../../../tests/unit-tests/data/mesh/simple_mesh_curved_topography/STATIONS"
+      mesh : "data/mesh/simple_mesh_curved_topography/database.bin"
+      sources : "data/mesh/simple_mesh_curved_topography/sources.yaml"
+      stations : "data/mesh/simple_mesh_curved_topography/STATIONS"
+    suffix: "curved_topo"
   # Test 3:
   - name : "Test 3: Simple mesh with flat ocean bottom"
     description: >
@@ -26,9 +28,10 @@ Tests:
     config:
       nproc : 1
     databases:
-      mesh : "../../../tests/unit-tests/data/mesh/fluid_solid_mesh_flat_ocean_bottom/database.bin"
-      sources : "../../../tests/unit-tests/data/mesh/fluid_solid_mesh_flat_ocean_bottom/sources.yaml"
-      stations : "../../../tests/unit-tests/data/mesh/fluid_solid_mesh_flat_ocean_bottom/STATIONS"
+      mesh : "data/mesh/fluid_solid_mesh_flat_ocean_bottom/database.bin"
+      sources : "data/mesh/fluid_solid_mesh_flat_ocean_bottom/sources.yaml"
+      stations : "data/mesh/fluid_solid_mesh_flat_ocean_bottom/STATIONS"
+    suffix: "flat_ocean_bottom"
   # Test 4:
   - name : "Test 4: Simple mesh with curved ocean bottom"
     description: >
@@ -36,9 +39,10 @@ Tests:
     config:
       nproc : 1
     databases:
-      mesh : "../../../tests/unit-tests/data/mesh/fluid_solid_mesh_curved_ocean_bottom/database.bin"
-      sources : "../../../tests/unit-tests/data/mesh/fluid_solid_mesh_curved_ocean_bottom/sources.yaml"
-      stations : "../../../tests/unit-tests/data/mesh/fluid_solid_mesh_curved_ocean_bottom/STATIONS"
+      mesh : "data/mesh/fluid_solid_mesh_curved_ocean_bottom/database.bin"
+      sources : "data/mesh/fluid_solid_mesh_curved_ocean_bottom/sources.yaml"
+      stations : "data/mesh/fluid_solid_mesh_curved_ocean_bottom/STATIONS"
+    suffix: "curved_ocean_bottom"
   # Test 5:
   - name : "Test 5: Gmesh Example"
     description: >
@@ -46,6 +50,7 @@ Tests:
     config:
       nproc : 1
     databases:
-      mesh : "../../../tests/unit-tests/data/mesh/Gmesh_Example_Stacey/database.bin"
-      sources : "../../../tests/unit-tests/data/mesh/Gmesh_Example_Stacey/sources.yaml"
-      stations : "../../../tests/unit-tests/data/mesh/Gmesh_Example_Stacey/STATIONS"
+      mesh : "data/mesh/Gmesh_Example_Stacey/database.bin"
+      sources : "data/mesh/Gmesh_Example_Stacey/sources.yaml"
+      stations : "data/mesh/Gmesh_Example_Stacey/STATIONS"
+    suffix: "gmesh_example"

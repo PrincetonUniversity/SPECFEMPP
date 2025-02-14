@@ -108,6 +108,7 @@ template <> struct mesh<specfem::dimension::type::dim3> {
   // Struct to store all the mesh parameter
   specfem::mesh::parameters<dimension> parameters;
 
+  //
   // int npgeo; ///< Total number of spectral element control nodes
   // int nspec; ///< Total number of spectral elements
   // int nproc; ///< Total number of processors
