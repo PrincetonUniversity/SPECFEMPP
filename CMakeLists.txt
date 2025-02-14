@@ -242,7 +242,6 @@ add_library(
         src/IO/mesh/impl/fortran/dim2/read_parameters.cpp
         # Fortran 3D part
         src/IO/mesh/impl/fortran/dim3/read_parameters.cpp
-        src/IO/mesh/impl/fortran/dim3/read_mapping.cpp
         src/IO/mesh/impl/fortran/dim3/read_coordinates.cpp
         src/IO/mesh/impl/fortran/dim3/read_partial_derivatives.cpp
 )
