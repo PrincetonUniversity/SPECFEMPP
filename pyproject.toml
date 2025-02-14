@@ -4,7 +4,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "specfempp_core"
-version = "0.1.0"
+version = "0.3.0"
 description = "Kokkos implementation of SpecFEM2D code"
 readme = "README.md"
 authors = [
@@ -14,14 +14,14 @@ authors = [
 ]
 requires-python = ">=3.12"
 
+[tool.uv]
+package = false
+
 [project.optional-dependencies]
 dev = [
   "pre-commit~=2.19.0",
-  "clang-format~=15.0.6",
-  "ruff>=0.6.7"
-]
-
-docs = [
+  "clang-format~=19.1.7",
+  "ruff>=0.9.1",
   "sphinx-rtd-theme~=1.3.0",
   "doc8>=0.3.6",
   "rstcheck>=6.2.4",
@@ -32,6 +32,15 @@ docs = [
   "sphinx-sitemap~=2.2.0"
 ]
 
+examples = [
+  "snakemake~=8.14.0",
+  "obspy~=1.4.0",
+  "snakemake-executor-plugin-slurm~=0.10.0",
+  "imageio~=2.36.1",
+  "jinja2>=3.1.4",
+  "PyYAML>=6.0.2"
+]
+
 [tool.scikit-build]
 cmake.define.CMAKE_BUILD_TYPE = "Release"
 cmake.define.BUILD_TESTS = "ON"
@@ -39,26 +48,3 @@ cmake.define.SPECFEMPP_USE_SKBUILD = "ON"
 cmake.define.SPECFEMPP_BINDING_PYTHON = "ON"
 build-dir = "./build"
 build.tool-args = ["-j4"]
-
-[tool.poetry]
-package-mode = false
-
-[tool.poetry.dependencies]
-python = ">=3.12,<4.0"
-pre-commit = "^2.19.0"
-clang-format = "^15.0.6"
-sphinx-rtd-theme = "^1.0.0"
-doc8 = ">=0.3.6"
-rstcheck = ">=6.2.4"
-restructuredtext-lint = ">=1.4.0"
-sphinx-copybutton = "^0.4.0"
-furo = ">=2024.8.6"
-breathe = "^4.34.0"
-sphinx-sitemap = "^2.2.0"
-ruff = ">=0.6.7"
-
-[tool.poetry.dev-dependencies]
-
-[tool.snakefmt]
-line_length = 90
-include = '\.smk$|^Snakefile|\.py|^Snakefile.in$'
