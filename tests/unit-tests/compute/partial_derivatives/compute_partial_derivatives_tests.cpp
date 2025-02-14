@@ -84,13 +84,13 @@ TEST(COMPUTE_TESTS, compute_partial_derivatives) {
   const int ngllz = compute_mesh.quadratures.gll.N;
   const int ngllx = compute_mesh.quadratures.gll.N;
 
-  specfem::testing::array3d<type_real, Kokkos::LayoutRight> xix_ref(
+  specfem::testing::array3d<double, Kokkos::LayoutRight> xix_ref(
       test_config.xix_file, nspec, ngllz, ngllx);
-  specfem::testing::array3d<type_real, Kokkos::LayoutRight> gammax_ref(
+  specfem::testing::array3d<double, Kokkos::LayoutRight> gammax_ref(
       test_config.gammax_file, nspec, ngllz, ngllx);
-  specfem::testing::array3d<type_real, Kokkos::LayoutRight> gammaz_ref(
+  specfem::testing::array3d<double, Kokkos::LayoutRight> gammaz_ref(
       test_config.gammaz_file, nspec, ngllz, ngllx);
-  specfem::testing::array3d<type_real, Kokkos::LayoutRight> jacobian_ref(
+  specfem::testing::array3d<double, Kokkos::LayoutRight> jacobian_ref(
       test_config.jacobian_file, nspec, ngllz, ngllx);
 
   for (int ix = 0; ix < ngllx; ++ix) {

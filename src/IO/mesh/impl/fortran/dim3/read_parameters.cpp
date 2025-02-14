@@ -70,7 +70,7 @@ specfem::IO::mesh::impl::fortran::dim3::read_mesh_parameters(
   // Initialize first bout of integer parameters
   int ndim;
   int ngllx;
-  int ngly;
+  int nglly;
   int ngllz;
   int ngllsquare;
   int nproc;
@@ -78,7 +78,7 @@ specfem::IO::mesh::impl::fortran::dim3::read_mesh_parameters(
   // Read parameters
   specfem::IO::fortran_read_line(stream, &ndim);
   specfem::IO::fortran_read_line(stream, &ngllx);
-  specfem::IO::fortran_read_line(stream, &ngly);
+  specfem::IO::fortran_read_line(stream, &nglly);
   specfem::IO::fortran_read_line(stream, &ngllz);
   specfem::IO::fortran_read_line(stream, &ngllsquare);
   specfem::IO::fortran_read_line(stream, &nproc);
@@ -87,7 +87,7 @@ specfem::IO::mesh::impl::fortran::dim3::read_mesh_parameters(
   // Print the read parameters
   std::cout << "ndim:................." << ndim << std::endl;
   std::cout << "ngllx:................" << ngllx << std::endl;
-  std::cout << "ngly:................." << ngly << std::endl;
+  std::cout << "ngly:................." << nglly << std::endl;
   std::cout << "ngllz:................" << ngllz << std::endl;
   std::cout << "ngllsquare:..........." << ngllsquare << std::endl;
   std::cout << "nproc:................" << nproc << std::endl;
@@ -316,6 +316,12 @@ specfem::IO::mesh::impl::fortran::dim3::read_mesh_parameters(
            pml_abc,
            approximate_ocean_load,
            use_mesh_coloring,
+           ndim,
+           ngllx,
+           nglly,
+           ngllz,
+           ngllsquare,
+           nproc,
            nspec,
            nspec_poro,
            nglob,

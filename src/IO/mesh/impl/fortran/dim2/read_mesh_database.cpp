@@ -15,7 +15,7 @@ specfem::IO::mesh::impl::fortran::dim2::read_mesh_database_header(
   // This subroutine reads header values of the database which are skipped
   std::string dummy_s;
   int dummy_i, dummy_i1, dummy_i2;
-  type_real dummy_d, dummy_d1;
+  double dummy_d, dummy_d1; // there is no type_real in the meshfem fortran code
   bool dummy_b, dummy_b1, dummy_b2, dummy_b3;
   int nspec, npgeo, nproc;
 
@@ -150,7 +150,7 @@ specfem::IO::mesh::impl::fortran::dim2::read_coorg_elements(
 
   int ipoin = 0;
 
-  type_real coorgi, coorgj;
+  double coorgi, coorgj;
   specfem::kokkos::HostView2d<type_real> coorg("specfem::mesh::coorg", ndim,
                                                npgeo);
 
@@ -161,8 +161,8 @@ specfem::IO::mesh::impl::fortran::dim2::read_coorg_elements(
     }
     // coorg stores the x,z for every control point
     // coorg([0, 2), i) = [x, z]
-    coorg(0, ipoin - 1) = coorgi;
-    coorg(1, ipoin - 1) = coorgj;
+    coorg(0, ipoin - 1) = static_cast<type_real>(coorgi);
+    coorg(1, ipoin - 1) = static_cast<type_real>(coorgj);
   }
 
   return coorg;
@@ -173,7 +173,7 @@ specfem::IO::mesh::impl::fortran::dim2::read_mesh_database_attenuation(
     std::ifstream &stream, const specfem::MPI::MPI *mpi) {
 
   int n_sls;
-  type_real attenuation_f0_reference;
+  double attenuation_f0_reference;
   bool read_velocities_at_f0;
   specfem::IO::fortran_read_line(stream, &n_sls, &attenuation_f0_reference,
                                  &read_velocities_at_f0);
@@ -184,6 +184,7 @@ specfem::IO::mesh::impl::fortran::dim2::read_mesh_database_attenuation(
   //                              "because it is used to assign some arrays");
   //   }
 
-  return std::make_tuple(n_sls, attenuation_f0_reference,
+  return std::make_tuple(n_sls,
+                         static_cast<type_real>(attenuation_f0_reference),
                          read_velocities_at_f0);
 }
