@@ -244,6 +244,7 @@ add_library(
         src/IO/mesh/impl/fortran/dim3/read_parameters.cpp
         src/IO/mesh/impl/fortran/dim3/read_mapping.cpp
         src/IO/mesh/impl/fortran/dim3/read_coordinates.cpp
+        src/IO/mesh/impl/fortran/dim3/read_partial_derivatives.cpp
 )
 
 if (NOT HDF5_CXX_BUILD)
@@ -348,6 +349,7 @@ add_library(
         src/mesh/parameters/parameters.cpp
         src/mesh/mapping/mapping.cpp
         src/mesh/coordinates/coordinates.cpp
+        src/mesh/partial_derivatives/partial_derivatives.cpp
         src/mesh/mesh.cpp
 )
 

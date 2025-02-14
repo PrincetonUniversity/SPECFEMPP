@@ -8,9 +8,7 @@
 #include "IO/mesh/impl/fortran/dim2/read_material_properties.hpp"
 #include "IO/mesh/impl/fortran/dim2/read_mesh_database.hpp"
 #include "IO/mesh/impl/fortran/dim2/read_parameters.hpp"
-#include "IO/mesh/impl/fortran/dim3/read_coordinates.hpp"
-#include "IO/mesh/impl/fortran/dim3/read_mapping.hpp"
-#include "IO/mesh/impl/fortran/dim3/read_parameters.hpp"
+#include "IO/mesh/impl/fortran/dim3/interface.hpp"
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "medium/material.hpp"
@@ -319,8 +317,8 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
 
   // Reading the mapping from the database file.
   try {
-    specfem::IO::mesh::impl::fortran::dim3::read_ibool(stream, mesh.mapping,
-                                                       mpi);
+    specfem::IO::mesh::impl::fortran::dim3::read_index_array(stream,
+                                                             mapping.ibool);
   } catch (std::runtime_error &e) {
     std::ostringstream error_message;
     error_message << "Error reading ibool from database file: " << e.what()
@@ -330,6 +328,8 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
 
   // Print Mapping parameters and the first spectral element
   mesh.mapping.print();
+  mesh.mapping.print(0);
+  mesh.mapping.print(mesh.parameters.nspec - 1);
 
   // Create the coordinates object
   mesh.coordinates = specfem::mesh::coordinates<specfem::dimension::type::dim3>(
@@ -349,6 +349,77 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
 
   // Print Coordinates parameters and the first global node
   mesh.coordinates.print();
+  mesh.coordinates.print(0);
+  mesh.coordinates.print(mesh.parameters.nglob - 1);
+
+  // Initialize the partial derivatives object
+  mesh.irregular_element_number = decltype(mesh.irregular_element_number)(
+      "irregular_element_number", mesh.parameters.nspec_irregular);
+
+  // Read Irregular elements
+  try {
+    specfem::IO::mesh::impl::fortran::dim3::read_index_array(
+        stream, mapping.irregular_element_number);
+  } catch (std::runtime_error &e) {
+    std::ostringstream error_message;
+    error_message
+        << "Error reading irregular_element_number from database file: "
+        << e.what() << "(" << __FILE__ << ":" << __LINE__ << ")";
+    throw std::runtime_error(error_message.str());
+  }
+
+  // Read the partial derivatives (only two CUSTOM_REALs)
+  try {
+    fortran_read_line(stream, &mesh.xix_regular);
+  } catch (std::runtime_error &e) {
+    std::ostringstream error_message;
+    error_message << "Error reading xix_regular from database file: "
+                  << e.what() << "(" << __FILE__ << ":" << __LINE__ << ")";
+    throw std::runtime_error(error_message.str());
+  }
+
+  // Read the partial derivatives (only two CUSTOM_REALs)
+  try {
+    fortran_read_line(stream, &mesh.jacobian_regular);
+  } catch (std::runtime_error &e) {
+    std::ostringstream error_message;
+    error_message << "Error reading jacobian_regular from database file: "
+                  << e.what() << "(" << __FILE__ << ":" << __LINE__ << ")";
+    throw std::runtime_error(error_message.str());
+  }
+
+  // Print the first and last irregular element
+  std::cout << "First irregular element: " << mesh.irregular_element_number(0)
+            << std::endl;
+  std::cout << "Last irregular element: "
+            << mesh.irregular_element_number(mesh.parameters.nspec_irregular -
+                                             1)
+            << std::endl;
+
+  // Print xix and jacobian
+  std::cout << "xix_regular: " << mesh.xix_regular << std::endl;
+  std::cout << "jacobian_regular: " << mesh.jacobian_regular << std::endl;
+
+  // Create the partial derivatives object
+  mesh.partial_derivatives =
+      specfem::mesh::partial_derivatives<specfem::dimension::type::dim3>(
+          mesh.parameters.nspec, mesh.parameters.ngllx, mesh.parameters.nglly,
+          mesh.parameters.ngllz);
+
+  // Reading the partial derivatives from the database file.
+  try {
+    specfem::IO::mesh::impl::fortran::dim3::read_partial_derivatives(
+        stream, mesh.partial_derivatives, mpi);
+  } catch (std::runtime_error &e) {
+    std::ostringstream error_message;
+    error_message << "Error reading partial derivatives from database file: "
+                  << e.what() << "(" << __FILE__ << ":" << __LINE__ << ")";
+    throw std::runtime_error(error_message.str());
+  }
+
+  // Print Partial Derivatives parameters and the first spectral element
+  mesh.partial_derivatives.print();
+  mesh.partial_derivatives.print(0, 0, 0, 0);
 
   stream.close();
 
