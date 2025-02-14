@@ -3,9 +3,10 @@
 
 #include <Kokkos_Core.hpp>
 
-using type_real = float;
+using type_real = @TYPE_REAL@;
 const static int ndim{ 2 };
-const static int fint{ 4 }, fdouble{ 8 }, fbool{ 4 }, fchar{ 512 };
+const static int fint{ 4 }, ffloat{ 4 }, fdouble{ 8 }, fbool{ 4 }, fchar{ 512 };
+constexpr static int freal = sizeof(type_real);
 const static bool use_best_location{ true };
 
 #if defined(KOKKOS_ENABLE_CUDA)

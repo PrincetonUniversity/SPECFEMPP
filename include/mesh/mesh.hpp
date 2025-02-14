@@ -8,6 +8,8 @@
 #include "enumerations/dimension.hpp"
 #include "enumerations/interface.hpp"
 #include "materials/materials.hpp"
+#include "mesh/coordinates/coordinates.hpp"
+#include "mesh/mapping/mapping.hpp"
 #include "mesh/tags/tags.hpp"
 #include "parameters/parameters.hpp"
 #include "specfem_mpi/interface.hpp"
@@ -108,6 +110,12 @@ template <> struct mesh<specfem::dimension::type::dim3> {
   // Struct to store all the mesh parameter
   specfem::mesh::parameters<dimension> parameters;
 
+  // Struct to store all the coordinates
+  specfem::mesh::coordinates<dimension> coordinates;
+
+  // Struct to store the mapping information
+  specfem::mesh::mapping<dimension> mapping;
+
   //
   // int npgeo; ///< Total number of spectral element control nodes
   // int nspec; ///< Total number of spectral elements
@@ -157,7 +165,7 @@ template <> struct mesh<specfem::dimension::type::dim3> {
    * @brief Default mesh constructor
    *
    */
-  // mesh(){};
+  mesh(){};
 
   // mesh(const int npgeo, const int nspec, const int nproc,
   //      const specfem::mesh::control_nodes<specfem::dimension::type::dim2>

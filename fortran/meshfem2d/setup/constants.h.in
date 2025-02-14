@@ -4,7 +4,7 @@
 !
 !=====================================================================
 
-! setup/constants.h.  Generated from constants.h.in by configure.
+! @configure_input@
 
 !
 ! solver in single or double precision depending on the machine (4 or 8 bytes)
@@ -20,7 +20,7 @@
 !
 ! DO CHANGE precision.h accordingly
 !
-  integer, parameter :: CUSTOM_REAL = SIZE_DOUBLE
+  integer, parameter :: CUSTOM_REAL = @CUSTOM_REAL@
 
 ! Kind of some integers (such as NSTEP). Beware, if you change this the compiler may raise an issue, many lines would have to
 ! be updated to do this properly
@@ -120,6 +120,9 @@
 
 ! for viscoacousticity
   logical, parameter :: USE_A_STRONG_FORMULATION_FOR_E1 = .false.
+
+! maximum attenuation Q-value
+  double precision, parameter :: ATTENUATION_COMP_MAXIMUM    = 9999.d0
 
 !!-----------------------------------------------------------
 !!
@@ -349,9 +352,11 @@
 ! flag to indicate an isotropic elastic/acoustic material
 ! flag to indicate an anisotropic material
 ! flag to indicate a poroelastic material
+! flag to indicate an electromagnetic material
   integer, parameter :: ISOTROPIC_MATERIAL = 1
   integer, parameter :: ANISOTROPIC_MATERIAL = 2
   integer, parameter :: POROELASTIC_MATERIAL = 3
+  integer, parameter :: ELECTROMAGNETIC_MATERIAL = 4
 
 ! file number for interface file
   integer, parameter :: IIN_INTERFACES = 15
@@ -369,11 +374,12 @@
   integer, parameter :: IEDGE4 = 4  ! left
 
 ! flag to indicate an element type
-! material domain ids (acoustic/elastic/poroelastic/gravitoacoustic)
+! material domain ids (acoustic/elastic/poroelastic/gravitoacoustic/electromagnetic)
   integer, parameter :: IDOMAIN_ACOUSTIC    = 1
   integer, parameter :: IDOMAIN_ELASTIC     = 2
   integer, parameter :: IDOMAIN_POROELASTIC = 3
   integer, parameter :: IDOMAIN_GRAVITOACOUSTIC = 4
+  integer, parameter :: IDOMAIN_ELECTROMAGNETIC = 5
 
 
 !!-----------------------------------------------------------
@@ -424,12 +430,9 @@
 !       | displ ]                 | d/dt displ ]       | veloc(t)          |
 !
 !   k1 = A U(tn)
-!   k2 = A {
-  !U(tn + dt / 2) + 1 / 2 dt k1 }
-!   k3 = A {
-  !U(tn + dt / 2) + 1 / 2 dt k2 }
-!   k4 = A {
-  !U(tn + dt) + dt k3 }
+!   k2 = A { U(tn+dt/2) + 1/2 dt k1 }
+!   k3 = A { U(tn+dt/2) + 1/2 dt k2 }
+!   k4 = A { U(tn+dt) + dt k3 }
 !
 !  U(tn + dt) = 1/6 * dt * { k1 + 2 k2 + 2 k3 + k4 }
 
