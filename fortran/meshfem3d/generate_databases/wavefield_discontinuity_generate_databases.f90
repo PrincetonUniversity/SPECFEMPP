@@ -96,7 +96,7 @@ module wavefield_discontinuity_generate_databases
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: face_jacobian2dw_wd
 
 contains
-  subroutine read_partition_files_wavefield_discontinuity()
+  subroutine read_wavefield_discontinuity()
   use constants, only: IFILE_WAVEFIELD_DISCONTINUITY, &
                        FNAME_WAVEFIELD_DISCONTINUITY_MESH
   use generate_databases_par, only: prname
@@ -110,9 +110,9 @@ contains
   read(IFILE_WAVEFIELD_DISCONTINUITY) boundary_to_ispec_wd
   read(IFILE_WAVEFIELD_DISCONTINUITY) side_wd
   close(IFILE_WAVEFIELD_DISCONTINUITY)
-  end subroutine read_partition_files_wavefield_discontinuity
+  end subroutine read_wavefield_discontinuity
 
-  subroutine save_arrays_solver_mesh_wavefield_discontinuity()
+  subroutine save_arrays_wavefield_discontinuity()
   use constants, only: IFILE_WAVEFIELD_DISCONTINUITY, &
                        FNAME_WAVEFIELD_DISCONTINUITY_DATABASE
   use generate_databases_par, only: prname
@@ -135,7 +135,7 @@ contains
   deallocate(boundary_to_ispec_wd, side_wd)
   deallocate(ispec_to_elem_wd, ibool_wd, boundary_to_iglob_wd, mass_in_wd, &
              face_ijk_wd, face_ispec_wd, face_normal_wd, face_jacobian2dw_wd)
-  end subroutine save_arrays_solver_mesh_wavefield_discontinuity
+  end subroutine save_arrays_wavefield_discontinuity
 
   subroutine setup_boundary_wavefield_discontinuity()
   use generate_databases_par, only: NDIM, NGLLX, NGLLY, NGLLZ, CUSTOM_REAL, &

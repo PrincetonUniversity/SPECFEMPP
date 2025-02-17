@@ -17,7 +17,7 @@ UTM_PROJECTION_ZONE             = 11
 SUPPRESS_UTM_PROJECTION         = .true.
 
 # file that contains the interfaces of the model / mesh
-INTERFACES_FILE                 = DATA/meshfem3D_files/interfaces.txt
+INTERFACES_FILE                 = @CMAKE_CURRENT_SOURCE_DIR@/DATA/meshfem3D_files/interfaces.txt
 
 # file that contains the cavity
 CAVITY_FILE                     = no_cavity.dat
@@ -67,7 +67,7 @@ CREATE_VTK_FILES                = .true.
 SAVE_MESH_AS_CUBIT              = .false.
 
 # path to store the databases files
-LOCAL_PATH                      = ./OUTPUT_FILES/DATABASES_MPI
+LOCAL_PATH                      = @CMAKE_CURRENT_SOURCE_DIR@/OUTPUT_FILES/DATABASES_MPI
 
 #-----------------------------------------------------------
 #

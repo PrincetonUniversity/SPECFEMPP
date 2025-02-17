@@ -1,7 +1,7 @@
 project(FortranTest LANGUAGES Fortran)
 cmake_minimum_required(VERSION 3.10)
 
-message("-- Configuring meshfem2D headers...")
+message(STATUS "-- Configuring meshfem2D headers...")
 
 enable_language(Fortran)
 enable_language(C)
@@ -44,129 +44,36 @@ set(GIT_DATE_VERSION "2023-03-21 19:54:51 +0100")
 
 # ====== FIGURE OUT THE FORTRAN NAME MANGLING START ===========
 
-# Write test Fortran subroutines
-file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/test.f90" "
-subroutine foobar()
-return
-end
-subroutine foo_bar()
-return
-end
-")
+# Find Fortran C Interface
+include(FortranCInterface)
 
-# Test combinations of case, underscore, and extra underscore
-foreach(TEST_CASE
-   "lower;no;no"      # lower case, no underscore, no extra underscore
-   "lower;no;yes"     # lower case, no underscore, extra underscore
-   "lower;yes;no"     # lower case, underscore, no extra underscore
-   "lower;yes;yes"    # lower case, underscore, extra underscore
-   "upper;no;no"      # upper case, no underscore, no extra underscore
-   "upper;no;yes"     # upper case, no underscore, extra underscore
-   "upper;yes;no"     # upper case, underscore, no extra underscore
-   "upper;yes;yes"    # upper case, underscore, extra underscore
-)
-   # Parse the test case
-   list(GET TEST_CASE 0 CASE)
-   list(GET TEST_CASE 1 HAS_UNDERSCORE)
-   list(GET TEST_CASE 2 HAS_EXTRA_UNDERSCORE)
+# Write the FC_MANGLING.h file to detect Fortran name mangling
+# We can write this for debugging the mangling.
+# FortranCInterface_HEADER(${CMAKE_CURRENT_BINARY_DIR}/FC_MANGLING.h MACRO_NAMESPACE "FC_")
 
-   # Construct names to test based on case
-   if(CASE STREQUAL "lower")
-       set(NAME1 "foobar")
-       set(NAME2 "foo_bar")
-   else()
-       set(NAME1 "FOOBAR")
-       set(NAME2 "FOO_BAR")
-   endif()
+FortranCInterface_VERIFY()
+# For regular symbols (FC_FUNC)
+set(FC_FUNC "")
 
-   # Add underscore if needed
-   if(HAS_UNDERSCORE STREQUAL "yes")
-       set(NAME1 "${NAME1}_")
-       set(NAME2 "${NAME2}_")
-   endif()
-
-   # Add extra underscore to NAME2 if needed
-   if(HAS_EXTRA_UNDERSCORE STREQUAL "yes")
-       set(NAME2 "${NAME2}_")
-   endif()
-
-   # Write C test file
-   file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/test.c" "
-   extern void ${NAME1}(void);
-   extern void ${NAME2}(void);
-   int main() {
-       ${NAME1}();
-       ${NAME2}();
-       return 0;
-   }
-   ")
-
-   try_compile(COMPILE_SUCCESS
-       ${CMAKE_CURRENT_BINARY_DIR}
-       SOURCES
-           "${CMAKE_CURRENT_BINARY_DIR}/test.f90"
-           "${CMAKE_CURRENT_BINARY_DIR}/test.c"
-       OUTPUT_VARIABLE COMPILE_OUTPUT
-   )
-
-   if(COMPILE_SUCCESS)
-       set(FC_CASE ${CASE} CACHE STRING "Fortran name case")
-       set(FC_UNDERSCORE ${HAS_UNDERSCORE} CACHE STRING "Fortran name underscore")
-       set(FC_EXTRA_UNDERSCORE ${HAS_EXTRA_UNDERSCORE} CACHE STRING "Fortran name extra underscore")
-
-       # Set the mangling description string like in the autoconf file
-       set(FC_MANGLING "${CASE} case, ${HAS_UNDERSCORE} underscore, ${HAS_EXTRA_UNDERSCORE} extra underscore"
-           CACHE STRING "Fortran name mangling scheme")
-
-       message(STATUS "Detected Fortran name mangling: ${FC_MANGLING}")
-       break()
-   endif()
-endforeach()
-
-if(NOT DEFINED FC_MANGLING)
-   message(FATAL_ERROR "Could not determine Fortran name mangling")
-endif()
-
-# Now define the FC_FUNC and FC_FUNC_ macros based on the detected scheme
-if(FC_CASE STREQUAL "lower")
-   if(FC_UNDERSCORE STREQUAL "no")
-       if(FC_EXTRA_UNDERSCORE STREQUAL "no")
-           set(FC_FUNC "name")
-           set(FC_FUNC_ "name")
-       else()
-           set(FC_FUNC "name")
-           set(FC_FUNC_ "name ## _")
-       endif()
-   else()
-       if(FC_EXTRA_UNDERSCORE STREQUAL "no")
-           set(FC_FUNC "name ## _")
-           set(FC_FUNC_ "name ## _")
-       else()
-           set(FC_FUNC "name ## _")
-           set(FC_FUNC_ "name ## __")
-       endif()
-   endif()
+# Set name or NAME based on case modifier
+if(FortranCInterface_GLOBAL_CASE STREQUAL "UPPER")
+    string(APPEND FC_FUNC "${FortranCInterface_GLOBAL_PREFIX}NAME##${FortranCInterface_GLOBAL_MIDDLE}${FortranCInterface_GLOBAL_SUFFIX}")
 else()
-   if(FC_UNDERSCORE STREQUAL "no")
-       if(FC_EXTRA_UNDERSCORE STREQUAL "no")
-           set(FC_FUNC "NAME")
-           set(FC_FUNC_ "NAME")
-       else()
-           set(FC_FUNC "NAME")
-           set(FC_FUNC_ "NAME ## _")
-       endif()
-   else()
-       if(FC_EXTRA_UNDERSCORE STREQUAL "no")
-           set(FC_FUNC "NAME ## _")
-           set(FC_FUNC_ "NAME ## _")
-       else()
-           set(FC_FUNC "NAME ## _")
-           set(FC_FUNC_ "NAME ## __")
-       endif()
-   endif()
+    string(APPEND FC_FUNC "${FortranCInterface_GLOBAL_PREFIX}name##${FortranCInterface_GLOBAL_MIDDLE}${FortranCInterface_GLOBAL_SUFFIX}")
 endif()
 
-# ====== FIGURE OUT THE FORTRAN NAME MANGLING END =============
+# For symbols with underscores (FC_FUNC_)
+set(FC_FUNC_ "")
+
+# Set name or NAME based on case modifier
+if(FortranCInterface_GLOBAL__CASE STREQUAL "UPPER")
+    string(APPEND FC_FUNC_ "${FortranCInterface_GLOBAL__PREFIX}NAME##${FortranCInterface_GLOBAL__MIDDLE}${FortranCInterface_GLOBAL__SUFFIX}")
+else()
+    string(APPEND FC_FUNC_ "${FortranCInterface_GLOBAL__PREFIX}name##${FortranCInterface_GLOBAL__MIDDLE}${FortranCInterface_GLOBAL__SUFFIX}")
+endif()
+
+message(STATUS "Generated FC_FUNC(name,NAME) ${FC_FUNC}")
+message(STATUS "Generated FC_FUNC_(name,NAME) ${FC_FUNC_}")
 
 # ===================== config.h.in START =====================
 
