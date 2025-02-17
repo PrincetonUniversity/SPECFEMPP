@@ -6,15 +6,13 @@ cmake_minimum_required(VERSION 3.10)
 enable_language(Fortran)
 enable_language(C)
 
-message("-- Building meshfem2D along with this project")
-message("--     MESHFEM2D is build without MPI support")
-message("--     MESHFEM2D is build without SCOTCH support")
-
 # Options
 option(ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
 option(WITH_MPI "Build with MPI support" OFF)
 option(WITH_SCOTCH "Build with SCOTCH support" OFF)
 option(FORCE_VECTORIZATION "Force vectorization" OFF)
+
+# Print options to the screen
 
 # Set output file directories
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -30,13 +28,13 @@ include_directories(${SETUP_DIR})
 
 # Setting values dependent on options
 if (ENABLE_DOUBLE_PRECISION)
-    message("-- Enabling double precision")
+    message(STATUS "-- Enabling double precision")
     # These are used by Meshfem
     set(CUSTOM_REAL "SIZE_DOUBLE")
     set(CUSTOM_MPI_TYPE "MPI_DOUBLE_PRECISION")
 
 else(ENABLE_DOUBLE_PRECISION)
-    message("-- Enabling single precision")
+    message(STATUS "-- Enabling single precision")
     # These are used by Meshfem
     set(CUSTOM_REAL "SIZE_REAL")
     set(CUSTOM_MPI_TYPE "MPI_REAL")
@@ -53,19 +51,19 @@ if (DEFINED ENV{CFLAGS})
     set(CFLAGS "$ENV{CFLAGS}")
 endif()
 
-message("-- CFLAGS: ${CFLAGS}")
+message(STATUS "-- CFLAGS: ${CFLAGS}")
 
 # Check if Clang
 if (CMAKE_C_COMPILER_ID MATCHES "Clang")
     set(CLANG TRUE)
-    message("-- Detected usage of clang on macOS")
+    message(STATUS "-- Detected usage of clang on macOS")
 endif()
 
 # Fix for macos and clang include files... sometimes I hate mac.
 # If we are on macOS the __APPLE__ variable is defined in the CMakeLists.txt file
 # in the main directory.
 if (__APPLE__ AND CLANG)
-    message("-- Fixing include files for macOS and Clang")
+    message(STATUS "-- Fixing include files for macOS and Clang")
     set (FCFLAGS_f90 "${FCFLAGS_f90}")
     # In the future, we can use the following line to add the flags to the compiler
     # add_compile_options($<$<COMPILE_LANGUAGE:C>:-isysroot/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk>)
@@ -78,7 +76,7 @@ if (__APPLE__ AND CLANG)
     endif()
 endif()
 
-message("-- CFLAGS: ${CFLAGS}")
+message(STATUS "-- CFLAGS: ${CFLAGS}")
 
 # Shared Fortran Module
 add_library(meshfem2D_shared_module shared_par.f90)

@@ -66,7 +66,7 @@
   use shared_parameters, only: IS_WAVEFIELD_DISCONTINUITY
   use wavefield_discontinuity_generate_databases, only: &
                                setup_boundary_wavefield_discontinuity, &
-                               read_partition_files_wavefield_discontinuity
+                               read_wavefield_discontinuity
 
   implicit none
 
@@ -343,7 +343,7 @@
       write(IMAIN,*) '  ...setting up wavefield discontinuity boundary '
       call flush_IMAIN()
     endif
-    call read_partition_files_wavefield_discontinuity()
+    call read_wavefield_discontinuity()
     call setup_boundary_wavefield_discontinuity()
   endif
 

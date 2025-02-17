@@ -125,7 +125,7 @@ module save_arrays_module
   !! setup wavefield discontinuity interface
   use shared_parameters, only: IS_WAVEFIELD_DISCONTINUITY
   use wavefield_discontinuity_generate_databases, only: &
-                              save_arrays_solver_mesh_wavefield_discontinuity
+                              save_arrays_wavefield_discontinuity
 
 
   implicit none
@@ -190,18 +190,13 @@ module save_arrays_module
   write(IOUT) ystore_unique
   write(IOUT) zstore_unique
 
-  write(*,*) xstore_unique(0)
-  write(*,*) ystore_unique(0)
-  write(*,*) zstore_unique(0)
-
-  write(*,*) xstore_unique(nglob)
-  write(*,*) ystore_unique(nglob)
-  write(*,*) zstore_unique(nglob)
-
-
   write(IOUT) irregular_element_number
   write(IOUT) xix_regular
   write(IOUT) jacobian_regular
+
+  write(*,*)  irregular_element_number(1), irregular_element_number(nspec_irregular)
+  write(*,*)  xix_regular
+  write(*,*)  jacobian_regular
 
   call save_global_arrays(nspec, xixstore)
   call save_global_arrays(nspec, xiystore)
@@ -541,7 +536,7 @@ module save_arrays_module
 
   !! setup wavefield discontinuity interface
   if (IS_WAVEFIELD_DISCONTINUITY) then
-    call save_arrays_solver_mesh_wavefield_discontinuity()
+    call save_arrays_wavefield_discontinuity()
   endif
 
   ! synchronizes processes

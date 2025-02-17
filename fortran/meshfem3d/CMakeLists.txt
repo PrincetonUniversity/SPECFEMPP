@@ -35,13 +35,13 @@ include_directories(${SETUP_DIR})
 
 # Setting values dependent on options
 if (ENABLE_DOUBLE_PRECISION)
-    message("-- Enabling double precision")
+    message(STATUS "-- Enabling double precision")
     # These are used by Meshfem
     set(CUSTOM_REAL "SIZE_DOUBLE")
     set(CUSTOM_MPI_TYPE "MPI_DOUBLE_PRECISION")
 
 else(ENABLE_DOUBLE_PRECISION)
-    message("-- Enabling single precision")
+    message(STATUS "-- Enabling single precision")
     # These are used by Meshfem
     set(CUSTOM_REAL "SIZE_REAL")
     set(CUSTOM_MPI_TYPE "MPI_REAL")
