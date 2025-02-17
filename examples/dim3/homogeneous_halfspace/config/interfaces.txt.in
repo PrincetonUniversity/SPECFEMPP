@@ -8,7 +8,7 @@
 #
 # interface number 1 (topography, top of the mesh)
  .true. 2 2 0.0 0.0 1000.0 1000.0
- DATA/meshfem3D_files/interface1.txt
+ @CMAKE_SOURCE_DIR@/examples/dim3/homogeneous_halfspace/DATA/meshfem3D_files/interface1.txt
 #
 # for each layer, we give the number of spectral elements in the vertical direction
 #
