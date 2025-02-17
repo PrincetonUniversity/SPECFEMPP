@@ -9,8 +9,7 @@
 #include <Kokkos_Core.hpp>
 
 namespace {
-template <typename ViewType>
-int compute_nglob(const ViewType index_mapping) {
+template <typename ViewType> int compute_nglob(const ViewType index_mapping) {
   const int nspec = index_mapping.extent(0);
   const int ngllz = index_mapping.extent(1);
   const int ngllx = index_mapping.extent(2);
@@ -29,10 +28,10 @@ int compute_nglob(const ViewType index_mapping) {
 }
 } // namespace
 
-template <specfem::wavefield::type WavefieldType>
+template <specfem::wavefield::simulation_field WavefieldType>
 specfem::compute::simulation_field<WavefieldType>::simulation_field(
     const specfem::compute::mesh &mesh,
-    const specfem::compute::properties &properties) {
+    const specfem::compute::element_types &element_types) {
 
   nglob = compute_nglob(mesh.points.h_index_mapping);
 
@@ -60,20 +59,20 @@ specfem::compute::simulation_field<WavefieldType>::simulation_field(
 
   auto acoustic_index =
       Kokkos::subview(h_assembly_index_mapping, Kokkos::ALL,
-                      static_cast<int>(acoustic_type::medium_tag));
+                      static_cast<int>(specfem::element::medium_tag::acoustic));
 
   auto elastic_index =
       Kokkos::subview(h_assembly_index_mapping, Kokkos::ALL,
-                      static_cast<int>(elastic_type::medium_tag));
+                      static_cast<int>(specfem::element::medium_tag::elastic));
 
   elastic =
       specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
                                          specfem::element::medium_tag::elastic>(
-          mesh, properties, elastic_index);
+          mesh, element_types, elastic_index);
 
   acoustic = specfem::compute::impl::field_impl<
       specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic>(
-      mesh, properties, acoustic_index);
+      mesh, element_types, acoustic_index);
 
   Kokkos::deep_copy(assembly_index_mapping, h_assembly_index_mapping);
 

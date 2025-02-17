@@ -10,8 +10,3 @@ The ``receiver`` class provides methods to read, store and process seismogram st
    :members:
    :undoc-members:
    :private-members:
-
-Auxiliary functions
--------------------
-
-.. doxygenfunction:: specfem::receivers::read_receivers

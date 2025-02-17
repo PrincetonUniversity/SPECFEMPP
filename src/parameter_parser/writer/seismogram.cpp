@@ -1,6 +1,6 @@
 #include "parameter_parser/writer/seismogram.hpp"
+#include "IO/seismogram/writer.hpp"
 #include "constants.hpp"
-#include "writer/interface.hpp"
 #include "yaml-cpp/yaml.h"
 #include <boost/filesystem.hpp>
 #include <string>
@@ -37,13 +37,14 @@ specfem::runtime_configuration::seismogram::seismogram(
   return;
 }
 
-std::shared_ptr<specfem::writer::writer>
+std::shared_ptr<specfem::IO::writer>
 specfem::runtime_configuration::seismogram::instantiate_seismogram_writer(
-    const specfem::compute::receivers &receivers, const type_real dt,
-    const type_real t0, const int nstep_between_samples) const {
+    const type_real dt, const type_real t0,
+    const int nstep_between_samples) const {
 
   const auto type = [&]() {
     if (this->output_format == "seismic_unix" || this->output_format == "su") {
+      throw std::runtime_error("Seismic Unix format not implemented yet");
       return specfem::enums::seismogram::format::seismic_unix;
     } else if (this->output_format == "ASCII" ||
                this->output_format == "ascii") {
@@ -53,9 +54,9 @@ specfem::runtime_configuration::seismogram::instantiate_seismogram_writer(
     }
   }();
 
-  std::shared_ptr<specfem::writer::writer> writer =
-      std::make_shared<specfem::writer::seismogram>(
-          receivers, type, this->output_folder, dt, t0, nstep_between_samples);
+  std::shared_ptr<specfem::IO::writer> writer =
+      std::make_shared<specfem::IO::seismogram_writer>(
+          type, this->output_folder, dt, t0, nstep_between_samples);
 
   return writer;
 }

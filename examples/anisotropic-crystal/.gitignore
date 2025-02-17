@@ -1,0 +1,5 @@
+Snakefile
+specfem_config.yaml
+output_cropped
+anisotropic-crystal.gif
+extras/geometry.png

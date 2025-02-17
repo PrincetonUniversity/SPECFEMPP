@@ -1,7 +1,7 @@
 #include "algorithms/locate_point.hpp"
 #include "compute/compute_mesh.hpp"
 #include "compute/compute_partial_derivatives.hpp"
-#include "compute/properties/properties.hpp"
+#include "compute/element_types/element_types.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "globals.h"
 #include "kokkos_abstractions.h"
@@ -18,7 +18,7 @@
 void specfem::sources::force::compute_source_array(
     const specfem::compute::mesh &mesh,
     const specfem::compute::partial_derivatives &partial_derivatives,
-    const specfem::compute::properties &properties,
+    const specfem::compute::element_types &element_types,
     specfem::kokkos::HostView3d<type_real> source_array) {
 
   specfem::point::global_coordinates<specfem::dimension::type::dim2> coord(
@@ -29,7 +29,7 @@ void specfem::sources::force::compute_source_array(
   const auto gamma = mesh.quadratures.gll.h_xi;
   const auto N = mesh.quadratures.gll.N;
 
-  const auto el_type = properties.h_element_types(lcoord.ispec);
+  const auto el_type = element_types.get_medium_tag(lcoord.ispec);
   const int ncomponents = source_array.extent(0);
 
   // Compute lagrange interpolants at the source location

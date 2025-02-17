@@ -2,7 +2,7 @@
 #define _COMPUTE_FIELDS_IMPL_FIELD_IMPL_HPP_
 
 #include "compute/compute_mesh.hpp"
-#include "compute/properties/interface.hpp"
+#include "compute/element_types/element_types.hpp"
 #include "kokkos_abstractions.h"
 #include <Kokkos_Core.hpp>
 
@@ -13,15 +13,14 @@ template <specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag>
 class field_impl {
 public:
-  using medium_type = specfem::medium::medium<DimensionType, MediumTag>;
-
-  constexpr static int components = medium_type::components;
+  constexpr static int components =
+      specfem::element::attributes<DimensionType, MediumTag>::components();
 
   field_impl() = default;
 
   field_impl(
       const specfem::compute::mesh &mesh,
-      const specfem::compute::properties &properties,
+      const specfem::compute::element_types &element_type,
       Kokkos::View<int *, Kokkos::LayoutLeft, specfem::kokkos::HostMemSpace>
           assembly_index_mapping);
 

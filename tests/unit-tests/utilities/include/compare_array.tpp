@@ -217,7 +217,7 @@ specfem::testing::array3d<value_type, Layout>::array3d(std::string &ref_file,
     }
   }
 
-  this->tol = this->tol * fabs(max_val + min_val) / 2;
+  this->tol = this->tol * std::abs(max_val + min_val) / 2;
 
   return;
 }

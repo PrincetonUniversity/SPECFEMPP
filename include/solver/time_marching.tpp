@@ -1,15 +1,14 @@
 #ifndef _SPECFEM_SOLVER_TIME_MARCHING_TPP
 #define _SPECFEM_SOLVER_TIME_MARCHING_TPP
 
-#include "domain/domain.hpp"
 #include "solver.hpp"
 #include "time_marching.hpp"
 #include "timescheme/newmark.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::dimension::type DimensionType, typename qp_type>
+template <specfem::dimension::type DimensionType, int NGLL>
 void specfem::solver::time_marching<specfem::simulation::type::forward,
-                                    DimensionType, qp_type>::run() {
+                                    DimensionType, NGLL>::run() {
 
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
   constexpr auto elastic = specfem::element::medium_tag::elastic;
@@ -33,6 +32,12 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
       time_scheme->increment_seismogram_step();
     }
 
+    for (const auto &task : tasks) {
+      if (task && task->should_run(istep)) {
+        task->run();
+      }
+    }
+
     if (istep % 10 == 0) {
       std::cout << "Progress : executed " << istep << " steps of " << nstep
                 << " steps" << std::endl;
@@ -44,9 +49,9 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
   return;
 }
 
-template <specfem::dimension::type DimensionType, typename qp_type>
+template <specfem::dimension::type DimensionType, int NGLL>
 void specfem::solver::time_marching<specfem::simulation::type::combined,
-                                    DimensionType, qp_type>::run() {
+                                    DimensionType, NGLL>::run() {
 
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
   constexpr auto elastic = specfem::element::medium_tag::elastic;
@@ -92,6 +97,12 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
       // compute seismogram for backward time step
       backward_kernels.compute_seismograms(time_scheme->get_seismogram_step());
       time_scheme->increment_seismogram_step();
+    }
+
+    for (const auto &task : tasks) {
+      if (task && task->should_run(istep)) {
+        task->run();
+      }
     }
 
     if (istep % 10 == 0) {

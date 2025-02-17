@@ -5,7 +5,7 @@
 #include "policies/edge.hpp"
 #include <Kokkos_Core.hpp>
 
-template <specfem::wavefield::type WavefieldType,
+template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag SelfMedium,
           specfem::element::medium_tag CoupledMedium>
@@ -24,7 +24,7 @@ specfem::coupled_interface::coupled_interface<WavefieldType, DimensionType,
   this->field = field;
 }
 
-template <specfem::wavefield::type WavefieldType,
+template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType,
           specfem::element::medium_tag SelfMedium,
           specfem::element::medium_tag CoupledMedium>

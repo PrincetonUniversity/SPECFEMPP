@@ -22,14 +22,18 @@ void create_folder_if_not_exists(const std::string &folder_name) {
 
 specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
                                              const std::string &default_file) {
-  YAML::Node parameter_yaml = YAML::LoadFile(parameter_file);
-  YAML::Node default_yaml = YAML::LoadFile(default_file);
+  *this = setup(YAML::LoadFile(parameter_file), YAML::LoadFile(default_file));
+}
 
-  const YAML::Node &runtime_config = parameter_yaml["parameters"];
-  const YAML::Node &default_config = default_yaml["default-parameters"];
+specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict,
+                                             const YAML::Node &default_dict) {
+  const YAML::Node &runtime_config = parameter_dict["parameters"];
+  const YAML::Node &default_config = default_dict["default-parameters"];
 
   const YAML::Node &simulation_setup = runtime_config["simulation-setup"];
   const YAML::Node &n_solver = simulation_setup["solver"];
+
+  const YAML::Node &n_databases = runtime_config["databases"];
 
   try {
     this->header = std::make_unique<specfem::runtime_configuration::header>(
@@ -39,6 +43,14 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
     message << "Error reading specfem parameter header. \n" << e.what();
 
     throw std::runtime_error(message.str());
+  }
+
+  // Get source info
+  if (const YAML::Node &source_node = runtime_config["sources"]) {
+    this->sources =
+        std::make_unique<specfem::runtime_configuration::sources>(source_node);
+  } else {
+    throw std::runtime_error("Error reading specfem source configuration.");
   }
 
   if (const YAML::Node &n_quadrature = simulation_setup["quadrature"]) {
@@ -57,7 +69,7 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
     this->run_setup =
         std::make_unique<specfem::runtime_configuration::run_setup>(
             n_run_setup);
-  } else if (const YAML::Node &n_run_setup = default_yaml["run-setup"]) {
+  } else if (const YAML::Node &n_run_setup = default_dict["run-setup"]) {
     this->run_setup =
         std::make_unique<specfem::runtime_configuration::run_setup>(
             n_run_setup);
@@ -67,8 +79,7 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
 
   try {
     this->databases = std::make_unique<
-        specfem::runtime_configuration::database_configuration>(
-        runtime_config["databases"]);
+        specfem::runtime_configuration::database_configuration>(n_databases);
   } catch (YAML::InvalidNode &e) {
     std::ostringstream message;
 
@@ -77,6 +88,17 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
     throw std::runtime_error(message.str());
   }
 
+  if (n_databases["writer"] && n_databases["writer"]["properties"]) {
+    this->property = std::make_unique<specfem::runtime_configuration::property>(
+        n_databases["writer"]["properties"], true);
+  } else if (n_databases["reader"] && n_databases["reader"]["properties"]) {
+    this->property = std::make_unique<specfem::runtime_configuration::property>(
+        n_databases["reader"]["properties"], false);
+  } else {
+    this->property = nullptr;
+  }
+
+  // Get receiver info
   try {
     this->receivers =
         std::make_unique<specfem::runtime_configuration::receivers>(
@@ -118,6 +140,24 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
                   n_wavefield, specfem::simulation::type::forward);
         } else {
           this->wavefield = nullptr;
+        }
+
+        if (const YAML::Node &n_plotter = n_writer["display"]) {
+          if ((n_plotter["simulation-field"] &&
+               n_plotter["simulation-field"].as<std::string>() != "forward")) {
+            std::ostringstream message;
+            message << "Error: Plotting a "
+                    << n_plotter["simulation-field"].as<std::string>()
+                    << " wavefield in forward simulation mode. \n";
+            throw std::runtime_error(message.str());
+          }
+
+          at_least_one_writer = true;
+          this->plot_wavefield =
+              std::make_unique<specfem::runtime_configuration::plot_wavefield>(
+                  n_plotter);
+        } else {
+          this->plot_wavefield = nullptr;
         }
 
         this->kernel = nullptr;
@@ -186,6 +226,21 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
 
           throw std::runtime_error(message.str());
         }
+
+        if (const YAML::Node &n_plotter = n_writer["display"]) {
+          if (n_plotter["simulation-field"] &&
+              n_plotter["simulation-field"].as<std::string>() == "forward") {
+            std::ostringstream message;
+            message << "Error: Plotting a forward wavefield in combined "
+                    << "simulation mode. \n";
+            throw std::runtime_error(message.str());
+          }
+          this->plot_wavefield =
+              std::make_unique<specfem::runtime_configuration::plot_wavefield>(
+                  n_plotter);
+        } else {
+          this->plot_wavefield = nullptr;
+        }
       }
     }
 
@@ -212,7 +267,7 @@ specfem::runtime_configuration::setup::setup(const std::string &parameter_file,
 }
 
 std::string specfem::runtime_configuration::setup::print_header(
-    const std::chrono::time_point<std::chrono::high_resolution_clock> now) {
+    const std::chrono::time_point<std::chrono::system_clock> now) {
 
   std::ostringstream message;
 

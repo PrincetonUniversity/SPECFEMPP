@@ -12,9 +12,16 @@ namespace mesh {
  * @tparam Medium1 Medium type 1
  * @tparam Medium2 Medium type 2
  */
+template <specfem::dimension::type DimensionType,
+          specfem::element::medium_tag Medium1,
+          specfem::element::medium_tag Medium2>
+struct interface_container;
+
 template <specfem::element::medium_tag Medium1,
           specfem::element::medium_tag Medium2>
-struct interface_container {
+struct interface_container<specfem::dimension::type::dim2, Medium1, Medium2> {
+  constexpr static auto dimension =
+      specfem::dimension::type::dim2;          ///< Dimension
   constexpr static auto medium1_tag = Medium1; ///< Medium 1 tag
   constexpr static auto medium2_tag = Medium2; ///< Medium 2 tag
 
@@ -29,17 +36,8 @@ struct interface_container {
    */
   interface_container(){};
 
-  /**
-   * @brief Constructor to read and assign values from fortran binary database
-   * file
-   *
-   * @param num_interfaces Number of interfaces
-   * @param stream Stream object for fortran binary file buffered to coupled
-   * interfaces section
-   * @param mpi Pointer to MPI object
-   */
-  interface_container(const int num_interfaces, std::ifstream &stream,
-                      const specfem::MPI::MPI *mpi);
+  interface_container(const int num_interfaces);
+
   ///@}
 
   int num_interfaces = 0; ///< Number of edges within this interface
@@ -60,5 +58,12 @@ struct interface_container {
   template <specfem::element::medium_tag medium>
   int get_spectral_elem_index(const int interface_index) const;
 };
+
+// template<specfem::element::medium_tag Medium1,
+//          specfem::element::medium_tag Medium2>
+// struct interface_container<specfem::dimension::type::dim3, Medium1, Medium2>
+// {
+
+// };
 } // namespace mesh
 } // namespace specfem

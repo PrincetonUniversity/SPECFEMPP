@@ -3,7 +3,7 @@
 
 #include "compute/compute_mesh.hpp"
 #include "compute/compute_partial_derivatives.hpp"
-#include "compute/properties/properties.hpp"
+#include "compute/element_types/element_types.hpp"
 #include "constants.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
@@ -30,6 +30,26 @@ public:
    *
    */
   moment_tensor(){};
+
+  /**
+   * @brief Get the Mxx component of the moment tensor
+   *
+   * @return type_real x-coordinate
+   */
+  type_real get_Mxx() const { return Mxx; }
+  /**
+   * @brief Get the Mxz component of the moment tensor
+   *
+   * @return type_real z-coordinate
+   */
+  type_real get_Mxz() const { return Mxz; }
+  /**
+   * @brief Get the Mzz component of the moment tensor
+   *
+   * @return type_real z-coordinate
+   */
+  type_real get_Mzz() const { return Mzz; }
+
   /**
    * @brief Construct a new moment tensor force object
    *
@@ -37,7 +57,7 @@ public:
    * written in .yml format
    */
   moment_tensor(YAML::Node &Node, const int nsteps, const type_real dt,
-                const specfem::wavefield::type wavefield_type)
+                const specfem::wavefield::simulation_field wavefield_type)
       : Mxx(Node["Mxx"].as<type_real>()), Mzz(Node["Mzz"].as<type_real>()),
         Mxz(Node["Mxz"].as<type_real>()),
         wavefield_type(wavefield_type), specfem::sources::source(Node, nsteps,
@@ -51,19 +71,20 @@ public:
   void compute_source_array(
       const specfem::compute::mesh &mesh,
       const specfem::compute::partial_derivatives &partial_derivatives,
-      const specfem::compute::properties &properties,
+      const specfem::compute::element_types &element_types,
       specfem::kokkos::HostView3d<type_real> source_array) override;
 
-  specfem::wavefield::type get_wavefield_type() const override {
+  specfem::wavefield::simulation_field get_wavefield_type() const override {
     return wavefield_type;
   }
 
 private:
-  type_real Mxx;                           ///< Mxx for the source
-  type_real Mxz;                           ///< Mxz for the source
-  type_real Mzz;                           ///< Mzz for the source
-  specfem::wavefield::type wavefield_type; ///< Type of wavefield on which the
-                                           ///< source acts
+  type_real Mxx;                                       ///< Mxx for the source
+  type_real Mxz;                                       ///< Mxz for the source
+  type_real Mzz;                                       ///< Mzz for the source
+  specfem::wavefield::simulation_field wavefield_type; ///< Type of wavefield on
+                                                       ///< which the source
+                                                       ///< acts
 };
 } // namespace sources
 } // namespace specfem

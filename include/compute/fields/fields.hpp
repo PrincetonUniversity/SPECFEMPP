@@ -34,7 +34,7 @@ struct fields {
    * @param simulation Current simulation type
    */
   fields(const specfem::compute::mesh &mesh,
-         const specfem::compute::properties &properties,
+         const specfem::compute::element_types &element_types,
          const specfem::simulation::type simulation);
   ///@}
 
@@ -44,16 +44,19 @@ struct fields {
    * @tparam fieldtype Field type
    * @return specfem::compute::simulation_field<fieldtype> Simulation field
    */
-  template <specfem::wavefield::type fieldtype>
+  template <specfem::wavefield::simulation_field fieldtype>
   KOKKOS_INLINE_FUNCTION specfem::compute::simulation_field<fieldtype>
   get_simulation_field() const {
-    if constexpr (fieldtype == specfem::wavefield::type::forward) {
+    if constexpr (fieldtype == specfem::wavefield::simulation_field::forward) {
       return forward;
-    } else if constexpr (fieldtype == specfem::wavefield::type::adjoint) {
+    } else if constexpr (fieldtype ==
+                         specfem::wavefield::simulation_field::adjoint) {
       return adjoint;
-    } else if constexpr (fieldtype == specfem::wavefield::type::backward) {
+    } else if constexpr (fieldtype ==
+                         specfem::wavefield::simulation_field::backward) {
       return backward;
-    } else if constexpr (fieldtype == specfem::wavefield::type::buffer) {
+    } else if constexpr (fieldtype ==
+                         specfem::wavefield::simulation_field::buffer) {
       return buffer;
     } else {
       static_assert("field type not supported");
@@ -82,14 +85,18 @@ struct fields {
     backward.copy_to_host();
   }
 
-  specfem::compute::simulation_field<specfem::wavefield::type::buffer>
+  specfem::compute::simulation_field<
+      specfem::wavefield::simulation_field::buffer>
       buffer; ///< Buffer field. Generally used for temporary storage for
               ///< adjoint fields read from disk
-  specfem::compute::simulation_field<specfem::wavefield::type::forward>
+  specfem::compute::simulation_field<
+      specfem::wavefield::simulation_field::forward>
       forward; ///< Forward field
-  specfem::compute::simulation_field<specfem::wavefield::type::adjoint>
+  specfem::compute::simulation_field<
+      specfem::wavefield::simulation_field::adjoint>
       adjoint; ///< Adjoint field
-  specfem::compute::simulation_field<specfem::wavefield::type::backward>
+  specfem::compute::simulation_field<
+      specfem::wavefield::simulation_field::backward>
       backward; ///< Backward field
 };
 

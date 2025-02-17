@@ -11,13 +11,13 @@ repos:
       - id: requirements-txt-fixer
       - id: trailing-whitespace
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: "v14.0.5"
+    rev: "v15.0.6"
     hooks:
       - id: clang-format
         types_or: [c++]
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
-    rev: v0.6.7
+    rev: v0.9.1
     hooks:
       # Run the linter.
       - id: ruff

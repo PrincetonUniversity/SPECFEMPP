@@ -1,0 +1,113 @@
+SPECFEM_BIN = "specfem2d"
+MESHFEM_BIN = "xmeshfem2D"
+
+
+rule all:
+    input:
+        plot="OUTPUT_FILES/results/plot.png",
+    localrule: True
+
+
+rule generate_mesh:
+    input:
+        "Par_File",
+    output:
+        database="OUTPUT_FILES/database.bin",
+        stations="OUTPUT_FILES/STATIONS",
+    localrule: True
+    shell:
+        """
+            mkdir -p OUTPUT_FILES
+            {MESHFEM_BIN} -p {input}
+        """
+
+
+rule run_solver:
+    input:
+        database="OUTPUT_FILES/database.bin",
+        stations="OUTPUT_FILES/STATIONS",
+        source="sources.yaml",
+        config="specfem_config.yaml",
+    output:
+        seismograms=expand(
+            "OUTPUT_FILES/results/{network_name}.{station_name}.S2.{component}.semd",
+            station_name=[
+                "S0001",
+            ],
+            network_name=["AA"],
+            component=["BXX", "BXZ"],
+        ),
+    resources:
+        nodes=1,
+        tasks=1,
+        cpus_per_task=1,
+        runtime=10,
+    shell:
+        """
+            # module purge
+            # module load boost/1.73.0
+            mkdir -p OUTPUT_FILES/results
+            echo "Hostname: $(hostname)" > output.log
+            {SPECFEM_BIN} -p {input.config} >> output.log
+        """
+
+
+rule plot_seismogram:
+    input:
+        trace_files=expand(
+            "OUTPUT_FILES/results/{network_name}.{station_name}.S2.{component}.semd",
+            station_name=[
+                "S0001",
+            ],
+            network_name=["AA"],
+            component=["BXX", "BXZ"],
+        ),
+    output:
+        traces="OUTPUT_FILES/results/plot.png",
+    localrule: True
+    run:
+        import glob
+        import os
+        import numpy as np
+        import obspy
+
+        # Set matplotlib gui off
+        import matplotlib
+        matplotlib.use("Agg")
+
+
+        def get_traces(directory):
+            traces = []
+            files = glob.glob(directory + "/*.sem*")
+            ## iterate over all seismograms
+            for filename in files:
+                station_name = os.path.splitext(filename)[0]
+                network, station, location, channel = station_name.split("/")[-1].split(".")
+                trace = np.loadtxt(filename, delimiter=" ")
+                starttime = trace[0, 0]
+                dt = trace[1, 0] - trace[0, 0]
+                traces.append(
+                    obspy.Trace(
+                        trace[:, 1],
+                        {"network": network,
+                         "station": station,
+                         "location": location,
+                         "channel": channel,
+                         "starttime": starttime, "delta": dt},
+                    )
+                )
+
+            stream = obspy.Stream(traces)
+
+            return stream
+
+
+        stream = get_traces("OUTPUT_FILES/results")
+        stream.plot(size=(800, 1000)).savefig(output.traces)
+
+
+rule clean:
+    shell:
+        """
+            rm -rf OUTPUT_FILES
+        """
