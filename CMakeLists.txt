@@ -689,14 +689,25 @@ add_executable(
 target_link_libraries(
         specfem3d
         specfem_mpi
+        IO
         Kokkos::kokkos
         mesh
+        quadrature
+        compute
+        source_class
         parameter_reader
+        receiver_class
+        writer
         periodic_tasks
-        IO
-        ${BOOST_LIBS}
+        reader
+        medium
+        coupled_interface
+        kokkos_kernels
+        solver
+        ${BOOST_LIBS}        ${BOOST_LIBS}
         yaml-cpp
 )
+
 
 # Include tests
 if (BUILD_TESTS)
