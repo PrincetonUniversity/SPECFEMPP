@@ -16,7 +16,7 @@ Receivers section defines receiver information required to calculate seismograms
 
 **documentation** : receiver information required to calculate seismograms.
 
-**Parameter Name** : ``receivers.stations-file``
+**Parameter Name** : ``receivers.stationse``
 ******************************************************
 
 **default value** : None
@@ -35,13 +35,32 @@ Receivers section defines receiver information required to calculate seismograms
 **documentation** : Angle to rotate components at receivers
 
 **Parameter Name** : ``receivers.seismogram-type``
-******************************************************
+**************************************************
 
 **default value** : None
 
 **possible values** : [YAML list]
 
 **documentation** : Type of seismograms to be written.
+
+   .. rst-class:: center-table
+
+   +-------------------+---------------------------------------+-------------------------------------+
+   |  Seismogram       | SPECFEM Par_file ``seismotype`` value | ``receivers.seismogram-type`` value |
+   +===================+=======================================+=====================================+
+   | Displacement      |                   1                   |   ``displacement``                  |
+   +-------------------+---------------------------------------+-------------------------------------+
+   | Velocity          |                   2                   |    ``velocity``                     |
+   +-------------------+---------------------------------------+-------------------------------------+
+   | Acceleration      |                   3                   |     ``acceleration``                |
+   +-------------------+---------------------------------------+-------------------------------------+
+   | Pressure          |                   4                   |      ``pressure``                   |
+   +-------------------+---------------------------------------+-------------------------------------+
+   | Displacement Curl |                   5                   |     ✘ Unsupported                   |
+   +-------------------+---------------------------------------+-------------------------------------+
+   | Fluid Potential   |                   6                   |     ✘ Unsupported                   |
+   +-------------------+---------------------------------------+-------------------------------------+
+
 
 .. code-block:: yaml
 
@@ -50,7 +69,7 @@ Receivers section defines receiver information required to calculate seismograms
         - displacement
 
 **Parameter Name** : ``receivers.nstep_between_samples``
-*********************************************************
+********************************************************
 
 **default value** : None
 
@@ -63,7 +82,7 @@ Receivers section defines receiver information required to calculate seismograms
     .. code-block:: yaml
 
         receivers:
-            stations-file: /path/to/stations_file
+            stations: /path/to/stations_file
             angle: 0.0
             seismogram-type:
                 - velocity

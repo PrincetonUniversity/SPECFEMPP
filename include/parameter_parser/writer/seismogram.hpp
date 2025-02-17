@@ -1,9 +1,9 @@
 #ifndef _PARAMETER_SEISMOGRAM_HPP
 #define _PARAMETER_SEISMOGRAM_HPP
 
+#include "IO/seismogram/writer.hpp"
 #include "receiver/interface.hpp"
 #include "specfem_setup.hpp"
-#include "writer/interface.hpp"
 #include "yaml-cpp/yaml.h"
 #include <memory>
 #include <tuple>
@@ -43,11 +43,10 @@ public:
    * to instantiate the writer
    * @param dt Time interval between timesteps
    * @param t0 Starting time of simulation
-   * @return specfem::writer::writer* Pointer to an instantiated writer object
+   * @return specfem::IO::writer* Pointer to an instantiated writer object
    */
-  std::shared_ptr<specfem::writer::writer>
-  instantiate_seismogram_writer(const specfem::compute::receivers &receivers,
-                                const type_real dt, const type_real t0,
+  std::shared_ptr<specfem::IO::writer>
+  instantiate_seismogram_writer(const type_real dt, const type_real t0,
                                 const int nsteps_between_samples) const;
 
 private:

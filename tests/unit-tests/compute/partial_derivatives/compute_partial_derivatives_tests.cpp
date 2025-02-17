@@ -1,8 +1,8 @@
 #include "../../Kokkos_Environment.hpp"
 #include "../../MPI_environment.hpp"
 #include "../../utilities/include/interface.hpp"
+#include "IO/interface.hpp"
 #include "compute/interface.hpp"
-#include "mesh/mesh.hpp"
 #include "quadrature/interface.hpp"
 #include "yaml-cpp/yaml.h"
 #include <fstream>
@@ -74,7 +74,8 @@ TEST(COMPUTE_TESTS, compute_partial_derivatives) {
   specfem::quadrature::gll::gll gll(0.0, 0.0, 5);
   specfem::quadrature::quadratures quadratures(gll);
 
-  specfem::mesh::mesh mesh(test_config.database_filename, mpi);
+  specfem::mesh::mesh mesh =
+      specfem::IO::read_mesh(test_config.database_filename, mpi);
 
   specfem::compute::mesh compute_mesh(mesh.tags, mesh.control_nodes,
                                       quadratures);

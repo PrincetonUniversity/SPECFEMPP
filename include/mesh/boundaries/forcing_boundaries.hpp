@@ -1,6 +1,7 @@
 #ifndef _FORCING_BOUNDARIES_HPP
 #define _FORCING_BOUNDARIES_HPP
 
+#include "enumerations/dimension.hpp"
 #include "kokkos_abstractions.h"
 #include "specfem_mpi/interface.hpp"
 
@@ -9,8 +10,20 @@ namespace mesh {
 /**
  * @brief Forcing boundary information
  *
+ * @tparam DimensionType Dimension type for the mesh
  */
-struct forcing_boundary {
+template <specfem::dimension::type DimensionType> struct forcing_boundary;
+
+/**
+ * @brief Forcing boundary information
+ *
+ */
+template <> struct forcing_boundary<specfem::dimension::type::dim2> {
+
+  constexpr static auto dimension =
+      specfem::dimension::type::dim2; ///< Dimension
+                                      ///< type
+
   specfem::kokkos::HostView1d<int> numacforcing;  ///< ispec value for the the
                                                   ///< element on the boundary
   specfem::kokkos::HostView1d<int> typeacforcing; ///< Defines if the acoustic

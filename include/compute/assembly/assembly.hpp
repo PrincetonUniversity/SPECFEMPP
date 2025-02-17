@@ -1,18 +1,19 @@
 #ifndef _COMPUTE_ASSEMBLY_HPP
 #define _COMPUTE_ASSEMBLY_HPP
 
+#include "IO/reader.hpp"
 #include "compute/boundaries/boundaries.hpp"
+#include "compute/boundary_values/boundary_values.hpp"
 #include "compute/compute_mesh.hpp"
 #include "compute/compute_partial_derivatives.hpp"
-#include "compute/compute_receivers.hpp"
-// #include "compute/compute_sources.hpp"
-#include "compute/boundary_values/boundary_values.hpp"
 #include "compute/coupled_interfaces/coupled_interfaces.hpp"
 #include "compute/fields/fields.hpp"
 #include "compute/kernels/kernels.hpp"
 #include "compute/properties/interface.hpp"
+#include "compute/receivers/receivers.hpp"
 #include "compute/sources/sources.hpp"
-#include "enumerations/specfem_enums.hpp"
+#include "enumerations/display.hpp"
+#include "enumerations/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "receiver/interface.hpp"
 #include "source/interface.hpp"
@@ -33,6 +34,8 @@ namespace compute {
  */
 struct assembly {
   specfem::compute::mesh mesh; ///< Properties of the assembled mesh
+  specfem::compute::element_types element_types; ///< Element tags for every
+                                                 ///< spectral element
   specfem::compute::partial_derivatives partial_derivatives; ///< Partial
                                                              ///< derivatives of
                                                              ///< the basis
@@ -62,18 +65,39 @@ struct assembly {
    * @param t0 Start time of simulation
    * @param dt Time step
    * @param max_timesteps Maximum number of time steps
-   * @param max_sig_step Maximum number of siesmogram time steps
+   * @param max_sig_step Maximum number of seismogram time steps
+   * @param nstep_between_samples Number of time steps between output seismogram
+   * samples
    * @param simulation Type of simulation (forward, adjoint, etc.)
+   * @param property_reader Reader for GLL model (skip material property
+   * assignment if exists)
    */
   assembly(
-      const specfem::mesh::mesh &mesh,
+      const specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
       const specfem::quadrature::quadratures &quadratures,
       const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
       const std::vector<std::shared_ptr<specfem::receivers::receiver> >
           &receivers,
       const std::vector<specfem::enums::seismogram::type> &stypes,
       const type_real t0, const type_real dt, const int max_timesteps,
-      const int max_sig_step, const specfem::simulation::type simulation);
+      const int max_sig_step, const int nsteps_between_samples,
+      const specfem::simulation::type simulation,
+      const std::shared_ptr<specfem::IO::reader> &property_reader);
+
+  /**
+   * @brief Maps the component of wavefield on the entire spectral element grid
+   *
+   * This field can be used to generate a plot of the wavefield
+   *
+   * @param component Component of the wavefield to map
+   * @return Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace>
+   * Wavefield mapped on the entire grid. Dimensions of the view are nspec,
+   * ngllz, ngllx
+   */
+  Kokkos::View<type_real ****, Kokkos::LayoutLeft, Kokkos::HostSpace>
+  generate_wavefield_on_entire_grid(
+      const specfem::wavefield::simulation_field wavefield,
+      const specfem::wavefield::type component);
 };
 
 } // namespace compute

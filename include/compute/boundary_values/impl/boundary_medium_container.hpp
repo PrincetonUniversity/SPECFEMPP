@@ -19,7 +19,7 @@ template <specfem::dimension::type DimensionType,
 class boundary_medium_container {
 private:
   constexpr static int components =
-      specfem::medium::medium<DimensionType, MediumTag>::components;
+      specfem::element::attributes<DimensionType, MediumTag>::components();
   constexpr static auto dimension = DimensionType;
 
 public:
@@ -39,7 +39,7 @@ public:
 
   boundary_medium_container(
       const int nstep, const specfem::compute::mesh mesh,
-      const specfem::compute::properties properties,
+      const specfem::compute::element_types element_types,
       const specfem::compute::boundaries boundaries,
       specfem::kokkos::HostView1d<int> property_index_mapping);
 

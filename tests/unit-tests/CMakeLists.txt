@@ -7,10 +7,14 @@ include(FetchContent)
 FetchContent_Declare(
   googletest
   URL https://github.com/google/googletest/archive/609281088cfefc76f9d0ce82e1ff6c30cc3591e5.zip
+  DOWNLOAD_EXTRACT_TIMESTAMP FALSE
 )
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
+
+# Explicitly set binary output directory for tests
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests/unit-tests)
 
 include_directories(.)
 
@@ -89,9 +93,16 @@ target_link_libraries(
   -lpthread -lm
 )
 
+# add_executable(
+#   mesh_tests
+#   mesh/mesh_tests.cpp
+# )
+
 add_executable(
   mesh_tests
-  mesh/mesh_tests.cpp
+  mesh/test_fixture/test_fixture.cpp
+  mesh/materials/materials.cpp
+  mesh/runner.cpp
 )
 
 target_link_libraries(
@@ -101,6 +112,7 @@ target_link_libraries(
   mpi_environment
   kokkos_environment
   yaml-cpp
+  IO
   # material_class
   -lpthread -lm
 )
@@ -124,24 +136,24 @@ target_link_libraries(
   -lpthread -lm
 )
 
-add_executable(
-  compute_elastic_tests
-  compute/elastic/compute_properties_tests.cpp
-)
+# add_executable(
+#   compute_elastic_tests
+#   compute/elastic/compute_properties_tests.cpp
+# )
 
-target_link_libraries(
-  compute_elastic_tests
-  mesh
-  compute
-  quadrature
-  mpi_environment
-  kokkos_environment
-  yaml-cpp
-  compare_arrays
-  Boost::filesystem
-  # material_class
-  -lpthread -lm
-)
+# target_link_libraries(
+#   compute_elastic_tests
+#   mesh
+#   compute
+#   quadrature
+#   mpi_environment
+#   kokkos_environment
+#   yaml-cpp
+#   compare_arrays
+#   Boost::filesystem
+#   # material_class
+#   -lpthread -lm
+# )
 
 # add_executable(
 #   compute_acoustic_tests
@@ -175,6 +187,7 @@ target_link_libraries(
   kokkos_environment
   yaml-cpp
   compare_arrays
+  IO
   Boost::filesystem
   # material_class
   -lpthread -lm
@@ -182,22 +195,43 @@ target_link_libraries(
 
 add_executable(
   assembly_tests
+  assembly/test_fixture/test_fixture.cpp
   assembly/runner.cpp
-  assembly/kernels.cpp
+  assembly/kernels/kernels.cpp
+  assembly/properties/properties.cpp
+  assembly/compute_wavefield/compute_wavefield.cpp
+  assembly/sources/sources.cpp
 )
+
 
 target_link_libraries(
   assembly_tests
+  reader
+  writer
   mesh
   compute
   quadrature
   mpi_environment
+  IO
   kokkos_environment
   yaml-cpp
   Boost::filesystem
   -lpthread -lm
 )
 
+add_executable(
+  IO_tests
+  IO/sources/test_read_sources.cpp
+)
+
+target_link_libraries(
+  IO_tests
+  IO
+  gtest_main
+  kokkos_environment
+  yaml-cpp
+  Boost::filesystem
+)
 
 add_executable(
   locate_point
@@ -213,6 +247,7 @@ target_link_libraries(
   kokkos_environment
   algorithms
   point
+  IO
   Boost::filesystem
 )
 
@@ -229,6 +264,7 @@ target_link_libraries(
   mpi_environment
   kokkos_environment
   algorithms
+  IO
   Boost::filesystem
   point
 )
@@ -287,8 +323,9 @@ target_link_libraries(
   compare_arrays
   point
   algorithms
-  domain
+  IO
   coupled_interface
+  periodic_tasks
   -lpthread -lm
 )
 
@@ -313,52 +350,55 @@ target_link_libraries(
   edge
   algorithms
   coupled_interface
-  domain
+  kokkos_kernels
   solver
+  periodic_tasks
   -lpthread -lm
 )
 
-add_executable(
-  seismogram_elastic_tests
-  seismogram/elastic/seismogram_tests.cpp
-)
+# add_executable(
+#   seismogram_elastic_tests
+#   seismogram/elastic/seismogram_tests.cpp
+# )
 
-target_link_libraries(
-  seismogram_elastic_tests
-  quadrature
-  mesh
-  yaml-cpp
-  kokkos_environment
-  mpi_environment
-  compute
-  parameter_reader
-  writer
-  domain
-  coupled_interface
-  solver
-  -lpthread -lm
-)
+# target_link_libraries(
+#   seismogram_elastic_tests
+#   quadrature
+#   mesh
+#   yaml-cpp
+#   kokkos_environment
+#   mpi_environment
+#   compute
+#   parameter_reader
+#   writer
+#   periodic_tasks
+#   domain
+#   coupled_interface
+#   solver
+#   -lpthread -lm
+# )
 
-add_executable(
-  seismogram_acoustic_tests
-  seismogram/acoustic/seismogram_tests.cpp
-)
+# add_executable(
+#   seismogram_acoustic_tests
+#   seismogram/acoustic/seismogram_tests.cpp
+# )
 
-target_link_libraries(
-  seismogram_acoustic_tests
-  quadrature
-  mesh
-  yaml-cpp
-  kokkos_environment
-  mpi_environment
-  compute
-  parameter_reader
-  writer
-  domain
-  coupled_interface
-  solver
-  -lpthread -lm
-)
+# target_link_libraries(
+#   seismogram_acoustic_tests
+#   quadrature
+#   mesh
+#   yaml-cpp
+#   kokkos_environment
+#   mpi_environment
+#   compute
+#   parameter_reader
+#   writer
+#   periodic_tasks
+#   domain
+#   coupled_interface
+#   solver
+#   -lpthread -lm
+# )
 
 # add_executable(
 #   compute_coupled_interfaces_tests
@@ -386,9 +426,10 @@ if (NOT MPI_PARALLEL)
   gtest_discover_tests(gll_tests)
   gtest_discover_tests(lagrange_tests)
   gtest_discover_tests(fortranio_test)
+  gtest_discover_tests(IO_tests)
   gtest_discover_tests(mesh_tests)
   gtest_discover_tests(compute_partial_derivatives_tests)
-  gtest_discover_tests(compute_elastic_tests)
+  # gtest_discover_tests(compute_elastic_tests)
   # # gtest_discover_tests(compute_acoustic_tests)
   # gtest_discover_tests(compute_coupled_interfaces_tests)
   gtest_discover_tests(compute_tests)

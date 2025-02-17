@@ -21,7 +21,7 @@ pipeline{
                     }
                     axis{
                         name 'HostSpace'
-                        values 'SERIAL;-DKokkos_ENABLE_SERIAL=ON -DKokkos_ENABLE_ATOMICS_BYPASS=ON;-n 1', 'OPENMP;-DKokkos_ENABLE_OPENMP=ON;-n 10'
+                        values 'SERIAL;-DKokkos_ENABLE_SERIAL=ON -DKokkos_ENABLE_ATOMICS_BYPASS=ON;-n 1', 'OPENMP;-DKokkos_ENABLE_OPENMP=ON;-n 1 -c 10'
                     }
                     axis{
                         name 'SIMD'
@@ -65,12 +65,12 @@ pipeline{
                                 steps {
                                     echo "Building ${CMAKE_HOST_FLAGS} ${SIMD_FLAGS} with ${INTEL_COMPILER_NAME}"
                                     sh """
-                                        module load boost/1.73.0
+                                        module load boost/1.85.0
                                         module load ${INTEL_MODULE}
                                         export CC=icx
                                         export CXX=icpx
-                                        cmake3 -S . -B build_cpu_${INTEL_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.GIT_COMMIT} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${SIMD_FLAGS} -D BUILD_TESTS=ON
-                                        cmake3 --build build_cpu_${INTEL_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.GIT_COMMIT}
+                                        cmake3 -S . -B build_cpu_${INTEL_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG} -DCMAKE_BUILD_TYPE=Release ${CMAKE_HOST_FLAGS} ${SIMD_FLAGS} -D BUILD_TESTS=ON -D BUILD_EXAMPLES=OFF
+                                        cmake3 --build build_cpu_${INTEL_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}
                                     """
                                     echo ' Build completed '
                                 }
@@ -79,9 +79,9 @@ pipeline{
                                 steps {
                                     echo ' Testing '
                                     sh """
-                                        module load boost/1.73.0
+                                        module load boost/1.85.0
                                         module load ${INTEL_MODULE}
-                                        cd build_cpu_${INTEL_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.GIT_COMMIT}/tests/unit-tests
+                                        cd build_cpu_${INTEL_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}/tests/unit-tests
                                         srun -N 1 -t 00:20:00 ${HOST_RUN_FLAGS} --constraint=skylake bash -c 'export OMP_PROC_BIND=spread; export OMP_THREADS=places; ctest --verbose;'
                                     """
                                     echo ' Testing completed '
@@ -91,7 +91,7 @@ pipeline{
                         post {
                             always {
                                 echo ' Cleaning '
-                                sh "rm -rf build_cpu_${INTEL_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.GIT_COMMIT}"
+                                sh "rm -rf build_cpu_${INTEL_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}"
                             }
                         }
                     }

@@ -36,7 +36,7 @@ protected:
       boost::filesystem::remove(metadata_path);
     }
 
-    std::ofstream metadata(metadata_path);
+    std::ofstream metadata(metadata_path.string());
     if (!metadata.is_open()) {
       std::ostringstream oss;
       oss << "ERROR : Could not open file " << metadata_path;
@@ -55,7 +55,7 @@ protected:
 
   template <typename value_type> void write(const value_type *data) const {
 
-    std::ofstream file(file_path);
+    std::ofstream file(file_path.string());
     if (!file.is_open()) {
       std::ostringstream oss;
       oss << "ERROR : Could not open file " << file_path;
@@ -97,7 +97,7 @@ protected:
       oss << "ERROR : Metadata file " << metadata_path << " does not exist";
       throw std::runtime_error(oss.str());
     }
-    std::ifstream metadata(metadata_path);
+    std::ifstream metadata(metadata_path.string());
     if (!metadata.is_open()) {
       std::ostringstream oss;
       oss << "ERROR : Could not open file " << metadata_path;
@@ -143,7 +143,7 @@ protected:
   }
 
   template <typename value_type> void read(value_type *data) const {
-    std::ifstream file(file_path);
+    std::ifstream file(file_path.string());
     if (!file.is_open()) {
       std::ostringstream oss;
       oss << "ERROR : Could not open file " << file_path;

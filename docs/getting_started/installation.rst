@@ -39,6 +39,14 @@ Configure the package using Cmake configuration keywords before building using c
     cmake3 -S . -B build -DKokkos_ENABLE_OPENMP=ON -DKokkos_ENABLE_CUDA=ON -DKokkos_ARCH_AMPERE80=ON
     cmake3 --build build
 
+* Apple Silicon
+
+.. code-block:: bash
+
+    cmake3 -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=ON -DENABLE_SIMD=ON -DKokkos_ARCH_NATIVE=ON -D Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION=ON -D Kokkos_ENABLE_ATOMICS_BYPASS=ON
+    cmake3 --build build
+
+
 Adding SPECFEM to PATH
 ======================
 
@@ -46,7 +54,7 @@ Finally, once compiled you could run SPECFEM++ from inside the build directory, 
 
 .. code-block:: bash
 
-    export PATH=${PATH}:<location to build directory>
+    export PATH=${PATH}:<location to SPECFEM++ build directory/bin>
 
 Testing Installation
 =====================

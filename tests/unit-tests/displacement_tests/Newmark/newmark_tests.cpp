@@ -1,13 +1,13 @@
 #include "../../Kokkos_Environment.hpp"
 #include "../../MPI_environment.hpp"
 #include "../../utilities/include/interface.hpp"
+#include "IO/interface.hpp"
+#include "IO/seismogram/reader.hpp"
 #include "compute/interface.hpp"
 #include "constants.hpp"
-#include "domain/domain.hpp"
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"
 #include "quadrature/interface.hpp"
-#include "reader/seismogram.hpp"
 #include "solver/solver.hpp"
 #include "timescheme/timescheme.hpp"
 #include "yaml-cpp/yaml.h"
@@ -168,21 +168,22 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     specfem::runtime_configuration::setup setup(parameter_file,
                                                 __default_file__);
 
-    const auto [database_file, sources_file] = setup.get_databases();
+    const auto database_file = setup.get_databases();
+    const auto source_node = setup.get_sources();
 
     // Set up GLL quadrature points
     const auto quadratures = setup.instantiate_quadrature();
 
     // Read mesh generated MESHFEM
-    specfem::mesh::mesh mesh(database_file, mpi);
+    specfem::mesh::mesh mesh = specfem::IO::read_mesh(database_file, mpi);
     const type_real dt = setup.get_dt();
     const int nsteps = setup.get_nsteps();
 
     // Read sources
     //    if start time is not explicitly specified then t0 is determined using
     //    source frequencies and time shift
-    auto [sources, t0] = specfem::sources::read_sources(
-        sources_file, nsteps, setup.get_t0(), dt, setup.get_simulation_type());
+    auto [sources, t0] = specfem::IO::read_sources(
+        source_node, nsteps, setup.get_t0(), dt, setup.get_simulation_type());
 
     for (auto &source : sources) {
       if (mpi->main_proc())
@@ -194,10 +195,9 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     // Instantiate the solver and timescheme
     auto it = setup.instantiate_timescheme();
 
-    const auto stations_filename = setup.get_stations_file();
+    const auto stations_node = setup.get_stations();
     const auto angle = setup.get_receiver_angle();
-    auto receivers =
-        specfem::receivers::read_receivers(stations_filename, angle);
+    auto receivers = specfem::IO::read_receivers(stations_node, angle);
 
     std::cout << "  Receiver information\n";
     std::cout << "------------------------------" << std::endl;
@@ -209,16 +209,6 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     const auto seismogram_types = setup.get_seismogram_types();
 
     // Check only displacement seismogram types are being computed
-    if (seismogram_types.size() != 1 ||
-        seismogram_types[0] != specfem::enums::seismogram::type::displacement) {
-      FAIL() << "--------------------------------------------------\n"
-             << "\033[0;31m[FAILED]\033[0m Test failed\n"
-             << " - Test name: " << Test.name << "\n"
-             << " - Error: Only displacement seismograms are checked\n"
-             << "          Configuration file contains other seismogram types\n"
-             << "--------------------------------------------------\n\n"
-             << std::endl;
-    }
 
     if (receivers.size() == 0) {
       FAIL() << "--------------------------------------------------\n"
@@ -229,10 +219,12 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
              << std::endl;
     }
 
-    specfem::compute::assembly assembly(mesh, quadratures, sources, receivers,
-                                        seismogram_types, t0, setup.get_dt(),
-                                        nsteps, it->get_max_seismogram_step(),
-                                        setup.get_simulation_type());
+    const int max_sig_step = it->get_max_seismogram_step();
+
+    specfem::compute::assembly assembly(
+        mesh, quadratures, sources, receivers, seismogram_types, t0,
+        setup.get_dt(), nsteps, max_sig_step, it->get_nstep_between_samples(),
+        setup.get_simulation_type(), nullptr);
 
     it->link_assembly(assembly);
 
@@ -240,9 +232,8 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     if (mpi->main_proc())
       std::cout << *it << std::endl;
 
-    specfem::enums::element::quadrature::static_quadrature_points<5> qp5;
     std::shared_ptr<specfem::solver::solver> solver =
-        setup.instantiate_solver(setup.get_dt(), assembly, it, qp5);
+        setup.instantiate_solver<5>(setup.get_dt(), assembly, it, {});
 
     solver->run();
 
@@ -255,65 +246,98 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     seismograms.sync_seismograms();
 
     // --------------------------------------------------------------
-    //                   Write Seismograms
-    // --------------------------------------------------------------
-    const auto seismogram_writer =
-        setup.instantiate_seismogram_writer(assembly);
-    if (seismogram_writer) {
-      mpi->cout("Writing seismogram files:");
-      mpi->cout("-------------------------------");
 
-      seismogram_writer->write();
-    }
-    // --------------------------------------------------------------
-
-    for (int irec = 0; irec < receivers.size(); ++irec) {
-      const auto network_name = receivers[irec]->get_network_name();
-      const auto station_name = receivers[irec]->get_station_name();
-
-      const std::vector<std::string> traces_filename = {
-        Test.database.traces + "/" + station_name + "." + network_name +
-            ".BXX.semd",
-        Test.database.traces + "/" + station_name + "." + network_name +
-            ".BXZ.semd"
-      };
-      type_real error_norm = 0.0;
-      type_real compute_norm = 0.0;
-
-      for (int i = 0; i < traces_filename.size(); ++i) {
-        Kokkos::View<type_real **, Kokkos::LayoutRight, Kokkos::HostSpace>
-            traces("traces", seismograms.h_seismogram.extent(0), 2);
-        specfem::reader::seismogram reader(
-            traces_filename[i], specfem::enums::seismogram::format::ascii,
-            traces);
-        reader.read();
-
-        const auto l_seismogram = Kokkos::subview(
-            seismograms.h_seismogram, Kokkos::ALL(), Kokkos::ALL(), irec, i);
-
-        const int nsig_steps = l_seismogram.extent(0);
-
-        for (int isig_step = 0; isig_step < nsig_steps; ++isig_step) {
-          const type_real time_t = traces(isig_step, 0);
-          const type_real value = traces(isig_step, 1);
-
-          const type_real computed_value = l_seismogram(isig_step, 0);
-
-          error_norm +=
-              std::sqrt((value - computed_value) * (value - computed_value));
-          compute_norm += std::sqrt(value * value);
-        }
-      }
-
-      if (error_norm / compute_norm > 1e-3 ||
-          std::isnan(error_norm / compute_norm)) {
+    for (auto [station_name, network_name, seismogram_type] :
+         seismograms.get_stations()) {
+      std::vector<std::string> filename;
+      switch (seismogram_type) {
+      case specfem::wavefield::type::displacement:
+        filename.push_back(Test.database.traces + "/" + network_name + "." +
+                           station_name + ".S2.BXX.semd");
+        filename.push_back(Test.database.traces + "/" + network_name + "." +
+                           station_name + ".S2.BXZ.semd");
+        break;
+      case specfem::wavefield::type::velocity:
+        filename.push_back(Test.database.traces + "/" + network_name + "." +
+                           station_name + ".S2.BXX.semv");
+        filename.push_back(Test.database.traces + "/" + network_name + "." +
+                           station_name + ".S2.BXZ.semv");
+        break;
+      case specfem::wavefield::type::acceleration:
+        filename.push_back(Test.database.traces + "/" + network_name + "." +
+                           station_name + ".S2.BXX.sema");
+        filename.push_back(Test.database.traces + "/" + network_name + "." +
+                           station_name + ".S2.BXZ.sema");
+        break;
+      case specfem::wavefield::type::pressure:
+        filename.push_back(Test.database.traces + "/" + network_name + "." +
+                           station_name + ".S2.PRE.semp");
+        break;
+      default:
         FAIL() << "--------------------------------------------------\n"
                << "\033[0;31m[FAILED]\033[0m Test failed\n"
                << " - Test name: " << Test.name << "\n"
-               << " - Error: Traces do not match\n"
+               << " - Error: Unknown seismogram type\n"
+               << " - Network: " << network_name << "\n"
+               << " - Station: " << station_name << "\n"
+               << "--------------------------------------------------\n\n"
+               << std::endl;
+        break;
+      }
+
+      const int ncomponents = filename.size();
+
+      Kokkos::View<type_real ***, Kokkos::LayoutRight, Kokkos::HostSpace>
+          traces("traces", ncomponents, max_sig_step, 2);
+
+      for (int icomp = 0; icomp < ncomponents; icomp++) {
+        const auto trace =
+            Kokkos::subview(traces, icomp, Kokkos::ALL, Kokkos::ALL);
+        specfem::IO::seismogram_reader reader(
+            filename[icomp], specfem::enums::seismogram::format::ascii, trace);
+        reader.read();
+      }
+
+      int count = 0;
+      type_real error = 0.0;
+      type_real computed_norm = 0.0;
+      for (auto [time, value] : seismograms.get_seismogram(
+               station_name, network_name, seismogram_type)) {
+        for (int icomp = 0; icomp < ncomponents; icomp++) {
+          const auto computed_time = traces(icomp, count, 0);
+
+          if (std::abs(time - computed_time) > 1e-3) {
+            FAIL() << "--------------------------------------------------\n"
+                   << "\033[0;31m[FAILED]\033[0m Test failed\n"
+                   << " - Test name: " << Test.name << "\n"
+                   << " - Error: Times do not match\n"
+                   << " - Network: " << network_name << "\n"
+                   << " - Station: " << station_name << "\n"
+                   << " - Component: " << icomp << "\n"
+                   << " - Expected: " << time << "\n"
+                   << " - Computed: " << computed_time << "\n"
+                   << "--------------------------------------------------\n\n"
+                   << std::endl;
+          }
+
+          const auto computed_value = traces(icomp, count, 1);
+          error += std::sqrt((value[icomp] - computed_value) *
+                             (value[icomp] - computed_value));
+          computed_norm += std::sqrt(computed_value * computed_value);
+        }
+
+        count++;
+      }
+
+      if (error / computed_norm > 1e-3 || std::isnan(error / computed_norm)) {
+        FAIL() << "--------------------------------------------------\n"
+               << "\033[0;31m[FAILED]\033[0m Test failed\n"
+               << " - Test name: " << Test.name << "\n"
+               << " - Error: Norm of the error is greater than 1e-3\n"
                << " - Station: " << station_name << "\n"
                << " - Network: " << network_name << "\n"
-               << " - Error value: " << error_norm / compute_norm << "\n"
+               << " - Error: " << error << "\n"
+               << " - Norm: " << computed_norm << "\n"
                << "--------------------------------------------------\n\n"
                << std::endl;
       }

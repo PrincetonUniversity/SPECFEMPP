@@ -171,7 +171,9 @@ Table below shows various features available and tested in this package on vario
       -
 
 .. note::
-    While we work towards building this package and making the code/documentation more complete, please refer relevant SPECFEM package documentations for technical details on SPECFEM theory.
+    While we work towards building this package and making the
+    code/documentation more complete, please refer relevant SPECFEM package
+    documentations for technical details on SPECFEM theory.
 
 .. raw:: html
 
