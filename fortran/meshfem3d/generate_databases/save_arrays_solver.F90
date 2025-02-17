@@ -125,7 +125,7 @@ module save_arrays_module
   !! setup wavefield discontinuity interface
   use shared_parameters, only: IS_WAVEFIELD_DISCONTINUITY
   use wavefield_discontinuity_generate_databases, only: &
-                              save_arrays_solver_mesh_wavefield_discontinuity
+                              save_arrays_wavefield_discontinuity
 
 
   implicit none
@@ -536,7 +536,7 @@ module save_arrays_module
 
   !! setup wavefield discontinuity interface
   if (IS_WAVEFIELD_DISCONTINUITY) then
-    call save_arrays_solver_mesh_wavefield_discontinuity()
+    call save_arrays_wavefield_discontinuity()
   endif
 
   ! synchronizes processes

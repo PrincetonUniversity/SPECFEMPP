@@ -317,8 +317,8 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
 
   // Reading the mapping from the database file.
   try {
-    specfem::IO::mesh::impl::fortran::dim3::read_index_array(stream,
-                                                             mapping.ibool);
+    specfem::IO::mesh::impl::fortran::dim3::read_index_array(
+        stream, mesh.mapping.ibool);
   } catch (std::runtime_error &e) {
     std::ostringstream error_message;
     error_message << "Error reading ibool from database file: " << e.what()
@@ -359,7 +359,7 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
   // Read Irregular elements
   try {
     specfem::IO::mesh::impl::fortran::dim3::read_index_array(
-        stream, mapping.irregular_element_number);
+        stream, mesh.irregular_element_number);
   } catch (std::runtime_error &e) {
     std::ostringstream error_message;
     error_message
