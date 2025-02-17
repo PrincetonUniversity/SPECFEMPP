@@ -704,7 +704,7 @@ target_link_libraries(
         coupled_interface
         kokkos_kernels
         solver
-        ${BOOST_LIBS}        ${BOOST_LIBS}
+        ${BOOST_LIBS}
         yaml-cpp
 )
 
