@@ -28,10 +28,10 @@ parameters:
         writer:
           seismogram:
             format: "ascii"
-            directory: "/Users/lsawade/SPECFEMPP/examples/homogeneous-medium-flat-topography/OUTPUT_FILES/results"
+            directory: "@CMAKE_CURRENT_SOURCE_DIR@/OUTPUT_FILES/results"
 
   receivers:
-    stations: "/Users/lsawade/SPECFEMPP/examples/homogeneous-medium-flat-topography/OUTPUT_FILES/STATIONS"
+    stations: "@CMAKE_CURRENT_SOURCE_DIR@/DATA/STATIONS"
     angle: 0.0
     seismogram-type:
       - velocity
@@ -44,8 +44,8 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "OUTPUT_FILES/DATABASES_MPI/proc000000_external_mesh.bin"
-    mesh-parameters: "OUTPUT_FILES/DATABASES_MPI/mesh_parameters.bin"
+    mesh-database: "@CMAKE_CURRENT_SOURCE_DIR@/OUTPUT_FILES/DATABASES_MPI/proc000000_external_mesh.bin"
+    mesh-parameters: "@CMAKE_CURRENT_SOURCE_DIR@/OUTPUT_FILES/DATABASES_MPI/mesh_parameters.bin"
 
   ## sources
-  sources: "/Users/lsawade/SPECFEMPP/examples/homogeneous-medium-flat-topography/source.yaml"
+  sources: "@CMAKE_CURRENT_SOURCE_DIR@/source.yaml"

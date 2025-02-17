@@ -97,11 +97,12 @@
     call flush_IMAIN()
   endif
 
-  if (myrank == 0) then
-    write(IMAIN,*) 'Reading parameters from ',trim(Par_file)
-    write(IMAIN,*)
-    call flush_IMAIN()
-  endif
+  ! no longer needed, we use mesh_par_file to read parameters
+  ! if (myrank == 0) then
+  !   write(IMAIN,*) 'Reading parameters from ',trim(MESH_PAR_FILE)
+  !   write(IMAIN,*)
+  !   call flush_IMAIN()
+  ! endif
 
   ! read the parameter file (DATA/Par_file)
   ! BROADCAST_AFTER_READ = .true.
