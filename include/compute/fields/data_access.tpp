@@ -1902,7 +1902,7 @@ template <
     typename ViewType,
     typename std::enable_if_t<
         ViewType::isChunkFieldType && !ViewType::simd::using_simd, int> = 0>
-KOKKOS_FORCEINLINE_FUNCTION void
+NOINLINE KOKKOS_FUNCTION void
 impl_load_on_device(const MemberType &team, const IteratorType &iterator,
                     const WavefieldType &field, ViewType &chunk_field) {
 
@@ -1980,7 +1980,7 @@ template <
     typename ViewType,
     typename std::enable_if_t<
         ViewType::isChunkFieldType && ViewType::simd::using_simd, int> = 0>
-KOKKOS_FORCEINLINE_FUNCTION void
+NOINLINE KOKKOS_FUNCTION void
 impl_load_on_device(const MemberType &team, const IteratorType &iterator,
                     const WavefieldType &field, ViewType &chunk_field) {
 
