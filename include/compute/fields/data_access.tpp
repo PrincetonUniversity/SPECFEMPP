@@ -1690,7 +1690,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && !ViewType::simd::using_simd, int> = 0>
-KOKKOS_FORCEINLINE_FUNCTION void impl_atomic_add_on_device(
+NOINLINE KOKKOS_FUNCTION void impl_atomic_add_on_device(
     const specfem::point::index<ViewType::dimension> &index,
     const ViewType &point_field, const WavefieldType &field) {
 
@@ -1707,7 +1707,7 @@ template <
     typename WavefieldType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isPointFieldType && ViewType::simd::using_simd, int> = 0>
-KOKKOS_FORCEINLINE_FUNCTION void impl_atomic_add_on_device(
+NOINLINE KOKKOS_FUNCTION void impl_atomic_add_on_device(
     const specfem::point::simd_index<ViewType::dimension> &index,
     const ViewType &point_field, const WavefieldType &field) {
 
