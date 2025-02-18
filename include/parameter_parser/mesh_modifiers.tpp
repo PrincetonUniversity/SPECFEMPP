@@ -1,21 +1,24 @@
+#pragma once
 #include "parameter_parser/mesh_modifiers.hpp"
 
 // #include <fstream>
 // #include <iostream>
 #include <ostream>
 
-std::shared_ptr<specfem::mesh::modifiers>
+template<specfem::dimension::type DimensionType>
+std::shared_ptr<specfem::mesh::modifiers<DimensionType>>
 specfem::runtime_configuration::mesh_modifiers::instantiate_mesh_modifiers() {
-  std::shared_ptr<specfem::mesh::modifiers> modifiers =
-      std::make_shared<specfem::mesh::modifiers>();
+  std::shared_ptr<specfem::mesh::modifiers<DimensionType>> modifiers =
+      std::make_shared<specfem::mesh::modifiers<DimensionType>>();
 
   load_subdivisions(*modifiers);
 
   return modifiers;
 }
 
+template<specfem::dimension::type DimensionType>
 void specfem::runtime_configuration::mesh_modifiers::load_subdivisions(
-    specfem::mesh::modifiers &modifiers) {
+    specfem::mesh::modifiers<DimensionType> &modifiers) {
   if (const YAML::Node &subdivisions_node =
           mesh_modifiers_node["subdivisions"]) {
     if (!subdivisions_node.IsSequence()) {
@@ -82,7 +85,7 @@ void specfem::runtime_configuration::mesh_modifiers::load_subdivisions(
         }
       }
       // minus 1 for zero-indexing.
-      modifiers.set_subdivision(materialID - 1, subz, subx);
+      modifiers.set_subdivision(materialID - 1, std::make_tuple(subx, subz));
     }
   }
 }

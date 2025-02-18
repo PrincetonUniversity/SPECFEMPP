@@ -1,19 +1,25 @@
 #include "jacobian/shape_functions.hpp"
+#include "kokkos_abstractions.h"
 #include "mesh/boundaries/acoustic_free_surface.hpp"
+#include "mesh/control_nodes/control_nodes.hpp"
+#include "mesh/elements/axial_elements.hpp"
+#include "mesh/materials/materials.hpp"
 #include "mesh/modifiers/modifiers.hpp"
 #include <stdexcept>
 #include <utility>
 #include <vector>
 
 static void subdivide_inherit_edgecond(
-    specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
-    const specfem::mesh::modifiers &modifiers, std::vector<int> &index_mapping,
+    const specfem::kokkos::HostView1d<
+        specfem::mesh::materials::material_specification> &ispec_matspec,
+    const specfem::mesh::modifiers<specfem::dimension::type::dim2> &modifiers,
+    std::vector<int> &index_mapping,
     std::vector<specfem::enums::boundaries::type> &type, const int ispec_old,
     const specfem::enums::boundaries::type edge_type,
     const int ispec_old_to_new_offset) {
   int subz, subx;
-  const auto mat = mesh.materials.material_index_mapping(ispec_old);
-  std::tie(subz, subx) = modifiers.get_subdivision(mat.database_index);
+  const auto mat = ispec_matspec(ispec_old);
+  std::tie(subx, subz) = modifiers.get_subdivision(mat.database_index);
 
   // number of subdivided elements to set
   const int nsub = (edge_type == specfem::enums::boundaries::type::TOP ||
@@ -43,19 +49,53 @@ static void subdivide_inherit_edgecond(
       throw std::runtime_error("Edge type NONE found in specfem::mesh::mesh.");
       break;
     }
-    const int ispec_new =
-        ispec_old_to_new_offset +
-        modifiers.get_subdivision(mat.database_index).second * isubz + isubx;
+    const int ispec_new = ispec_old_to_new_offset + (subx * isubz + isubx);
     index_mapping.push_back(ispec_new);
     type.push_back(edge_type);
   }
 }
-static void subdivide(specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
-                      const specfem::mesh::modifiers &modifiers) {
+
+template <specfem::element::medium_tag Medium1,
+          specfem::element::medium_tag Medium2>
+inline void subdivide_coupled_interface(
+    specfem::mesh::interface_container<specfem::dimension::type::dim2, Medium1,
+                                       Medium2> &interface,
+    const std::vector<int> &ispec_old_to_new_offsets,
+    const specfem::kokkos::HostView1d<
+        specfem::mesh::materials::material_specification>
+        &material_index_mapping_old,
+    const specfem::mesh::modifiers<specfem::dimension::type::dim2> &modifiers,
+    const specfem::mesh::control_nodes<specfem::dimension::type::dim2>
+        &control_nodes) {
+  int subz, subx;
+  for (int ielem = 0; ielem < interface.num_interfaces; ielem++) {
+    int ispec = interface.medium1_index_mapping(ielem);
+    interface.medium1_index_mapping(ispec_old_to_new_offsets[ispec]);
+    auto mat = material_index_mapping_old(ispec);
+    std::tie(subx, subz) = modifiers.get_subdivision(mat.database_index);
+    if (subz != 1 || subx != 1) {
+      throw std::runtime_error(
+          "Subdividing materials with coupled interfaces not yet supported");
+    }
+    ispec = interface.medium2_index_mapping(ielem);
+    interface.medium2_index_mapping(ispec_old_to_new_offsets[ispec]);
+    mat = material_index_mapping_old(ispec);
+    std::tie(subx, subz) = modifiers.get_subdivision(mat.database_index);
+    if (subz != 1 || subx != 1) {
+      throw std::runtime_error(
+          "Subdividing materials with coupled interfaces not yet supported");
+    }
+  }
+}
+
+static void subdivide(
+    specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
+    const specfem::mesh::modifiers<specfem::dimension::type::dim2> &modifiers) {
   constexpr auto DimensionType = specfem::dimension::type::dim2;
-  const int nspec_original = mesh.nspec;
+  const int nspec_old = mesh.nspec;
   const int ngnod = mesh.control_nodes.ngnod;
   const int ngnod_new = 9;
+  const auto material_index_mapping_old = mesh.materials.material_index_mapping;
 
   /* we will expand coords, but we don't know to what size yet; use dynamic
    * resize of vector.
@@ -68,20 +108,23 @@ static void subdivide(specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
   }
 
   // this is how we map from old ispec to new ispec
-  std::vector<int> ispec_old_to_new_offsets(nspec_original);
+  std::vector<int> ispec_old_to_new_offsets(nspec_old);
   const auto ispec_old_to_new = [&](const int ispec, const int isubz,
                                     const int isubx) {
-    const auto mat = mesh.materials.material_index_mapping(ispec);
+    const auto mat = material_index_mapping_old(ispec);
     return ispec_old_to_new_offsets[ispec] +
-           modifiers.get_subdivision(mat.database_index).second * isubz + isubx;
+           std::get<0>(modifiers.get_subdivision(mat.database_index)) * isubz +
+           isubx;
   };
 
   int nspec_new = 0; // update as we iterate
   int subz, subx;
   std::vector<int> knods_new;
-  for (int ispec = 0; ispec < nspec_original; ispec++) {
-    const auto mat = mesh.materials.material_index_mapping(ispec);
-    std::tie(subz, subx) = modifiers.get_subdivision(mat.database_index);
+  std::vector<specfem::mesh::materials::material_specification>
+      material_index_mapping_new;
+  for (int ispec = 0; ispec < nspec_old; ispec++) {
+    const auto mat = material_index_mapping_old(ispec);
+    std::tie(subx, subz) = modifiers.get_subdivision(mat.database_index);
 
     // form a matrix of node indices that will be used, making new ones where
     // necessary.
@@ -157,6 +200,7 @@ static void subdivide(specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
         knods_new.push_back(ispec_knod[inod + 1 + ispec_ngnod_x * 2]);
         knods_new.push_back(ispec_knod[inod + ispec_ngnod_x]);
         knods_new.push_back(ispec_knod[inod + 1 + ispec_ngnod_x]);
+        material_index_mapping_new.push_back(mat);
         nspec_new++;
       }
     }
@@ -164,9 +208,12 @@ static void subdivide(specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
 
   mesh.nspec = nspec_new;
 
-  // finalize control nodes struct
+  // finalize control nodes struct and materials struct
   const int npgeo_new = coord_new.size();
   mesh.npgeo = npgeo_new;
+  mesh.materials.material_index_mapping = specfem::kokkos::HostView1d<
+      specfem::mesh::materials::material_specification>(
+      "specfem::mesh::material_index_mapping", nspec_new);
 
   for (int igeo = 0; igeo < npgeo_new; igeo++) {
     std::tie(mesh.control_nodes.coord(0, igeo),
@@ -180,6 +227,8 @@ static void subdivide(specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
       mesh.control_nodes.knods(inod, ispec) =
           knods_new[ispec * ngnod_new + inod];
     }
+    mesh.materials.material_index_mapping(ispec) =
+        material_index_mapping_new[ispec];
   }
 
   // boundaries
@@ -190,8 +239,9 @@ static void subdivide(specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
     for (int ielem = 0; ielem < bdry.nelements; ielem++) {
       const int ispec = bdry.index_mapping(ielem);
       const specfem::enums::boundaries::type edge = bdry.type(ielem);
-      subdivide_inherit_edgecond(mesh, modifiers, index_mapping, type, ispec,
-                                 edge, ispec_old_to_new_offsets[ispec]);
+      subdivide_inherit_edgecond(material_index_mapping_old, modifiers,
+                                 index_mapping, type, ispec, edge,
+                                 ispec_old_to_new_offsets[ispec]);
     }
     bdry =
         specfem::mesh::absorbing_boundary<DimensionType>(index_mapping.size());
@@ -207,8 +257,9 @@ static void subdivide(specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
     for (int ielem = 0; ielem < bdry.nelem_acoustic_surface; ielem++) {
       const int ispec = bdry.index_mapping(ielem);
       const specfem::enums::boundaries::type edge = bdry.type(ielem);
-      subdivide_inherit_edgecond(mesh, modifiers, index_mapping, type, ispec,
-                                 edge, ispec_old_to_new_offsets[ispec]);
+      subdivide_inherit_edgecond(material_index_mapping_old, modifiers,
+                                 index_mapping, type, ispec, edge,
+                                 ispec_old_to_new_offsets[ispec]);
     }
     bdry = specfem::mesh::acoustic_free_surface<DimensionType>(
         index_mapping.size());
@@ -217,17 +268,59 @@ static void subdivide(specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh,
       bdry.type(ielem) = type[ielem];
     }
   }
+  // interfaces
+  // TODO we may need to rework interfaces_container. For now, error out of any
+  // subdivisions occur
+  subdivide_coupled_interface(
+      mesh.coupled_interfaces.elastic_acoustic, ispec_old_to_new_offsets,
+      material_index_mapping_old, modifiers, mesh.control_nodes);
+  subdivide_coupled_interface(
+      mesh.coupled_interfaces.acoustic_poroelastic, ispec_old_to_new_offsets,
+      material_index_mapping_old, modifiers, mesh.control_nodes);
+  subdivide_coupled_interface(
+      mesh.coupled_interfaces.elastic_poroelastic, ispec_old_to_new_offsets,
+      material_index_mapping_old, modifiers, mesh.control_nodes);
 
-  std::vector<int> afs_ispec;
-  std::vector<specfem::enums::boundaries::type> afs_edge;
+  { // axial nodes
+    auto &axi = mesh.axial_nodes;
+    auto axiflag = axi.is_on_the_axis;
+    axi = specfem::mesh::elements::axial_elements<DimensionType>(nspec_new);
+    for (int ispec = 0; ispec < nspec_old; ispec++) {
+      if (!axiflag(ispec)) {
+        continue;
+      }
+      auto mat = material_index_mapping_old(ispec);
+      std::tie(subx, subz) = modifiers.get_subdivision(mat.database_index);
+      if (subz != 1 || subx != 1) {
+        throw std::runtime_error(
+            "Subdividing elements on the axis not yet supported");
+      }
+      axi.is_on_the_axis(ispec_old_to_new_offsets[ispec]) = true;
+    }
+  }
 
   // parameters
   mesh.parameters.ngnod = ngnod_new;
   mesh.parameters.nspec = nspec_new;
+  mesh.parameters.nelemabs = mesh.boundaries.absorbing_boundary.nelements;
+  mesh.parameters.nelem_acoustic_surface =
+      mesh.boundaries.acoustic_free_surface.nelem_acoustic_surface;
+  // mesh.parameters.nelem_acforcing = 0;
+  mesh.parameters.num_fluid_solid_edges =
+      mesh.coupled_interfaces.elastic_acoustic.num_interfaces;
+  mesh.parameters.num_fluid_poro_edges =
+      mesh.coupled_interfaces.acoustic_poroelastic.num_interfaces;
+  mesh.parameters.num_solid_poro_edges =
+      mesh.coupled_interfaces.elastic_poroelastic.num_interfaces;
+  // mesh.parameters.nelem_on_the_axis = 0;
+  // mesh.parameters.nnodes_tangential_curve = 0;
+
+  mesh.tags = specfem::mesh::tags<specfem::dimension::type::dim2>(
+      mesh.materials, mesh.boundaries);
 }
 
 template <>
-void specfem::mesh::modifiers::apply(
+void specfem::mesh::modifiers<specfem::dimension::type::dim2>::apply(
     specfem::mesh::mesh<specfem::dimension::type::dim2> &mesh) const {
   subdivide(mesh, *this);
 

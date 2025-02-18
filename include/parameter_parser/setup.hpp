@@ -219,12 +219,14 @@ public:
     return this->solver->instantiate<NGLL>(dt, assembly, time_scheme, tasks);
   }
 
-  std::shared_ptr<specfem::mesh::modifiers> instantiate_mesh_modifiers() const {
+  template <specfem::dimension::type DimensionType>
+  std::shared_ptr<specfem::mesh::modifiers<DimensionType> >
+  instantiate_mesh_modifiers() const {
     if (this->mesh_modifiers) {
-      return this->mesh_modifiers->instantiate_mesh_modifiers();
+      return this->mesh_modifiers->instantiate_mesh_modifiers<DimensionType>();
     } else {
       // default modifiers object; not nullptr
-      return std::make_shared<specfem::mesh::modifiers>();
+      return std::make_shared<specfem::mesh::modifiers<DimensionType> >();
     }
   }
 
