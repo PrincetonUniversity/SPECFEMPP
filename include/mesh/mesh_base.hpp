@@ -18,6 +18,11 @@ template <specfem::dimension::type DimensionType> struct mesh;
 template <specfem::dimension::type DimensionType> struct parameters;
 
 /**
+ * @brief Struct to store materials
+ *
+ */
+template <specfem::dimension::type DimensionType> struct materials;
+/**
  * @brief Struct to store control nodes
  *
  */

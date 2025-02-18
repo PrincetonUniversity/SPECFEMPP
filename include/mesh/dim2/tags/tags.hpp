@@ -41,9 +41,10 @@ template <> struct tags<specfem::dimension::type::dim2> {
    * @param materials Material properties
    * @param boundaries Boundary information
    */
-  tags(const specfem::mesh::materials &materials,
-       const specfem::mesh::boundaries<specfem::dimension::type::dim2>
-           &boundaries);
+  tags(
+      const specfem::mesh::materials<specfem::dimension::type::dim2> &materials,
+      const specfem::mesh::boundaries<specfem::dimension::type::dim2>
+          &boundaries);
   ///@}
 };
 } // namespace mesh

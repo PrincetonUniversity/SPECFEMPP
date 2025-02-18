@@ -2,7 +2,7 @@
 #include "enumerations/dimension.hpp"
 
 specfem::mesh::tags<specfem::dimension::type::dim2>::tags(
-    const specfem::mesh::materials &materials,
+    const specfem::mesh::materials<specfem::dimension::type::dim2> &materials,
     const specfem::mesh::boundaries<specfem::dimension::type::dim2>
         &boundaries) {
 
