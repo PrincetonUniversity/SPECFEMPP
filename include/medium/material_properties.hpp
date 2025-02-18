@@ -21,7 +21,8 @@ struct material_properties
   material_properties(
       const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
       const int ngllz, const int ngllx,
-      const specfem::mesh::materials &materials, const bool has_gll_model,
+      const specfem::mesh::materials<specfem::dimension::type::dim2> &materials,
+      const bool has_gll_model,
       const specfem::kokkos::HostView1d<int> property_index_mapping)
       : specfem::medium::properties_container<type, property>(
             elements.extent(0), ngllz, ngllx) {

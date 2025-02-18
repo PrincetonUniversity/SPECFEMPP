@@ -64,8 +64,9 @@ const static std::unordered_map<std::string, MaterialVectorType>
             8100001799.8227, 8099996400.35, 8099996400.35, 0.0, 9999, 9999) }) }
     };
 
-void check_test(const specfem::mesh::materials &computed,
-                const MaterialVectorType &expected) {
+void check_test(
+    const specfem::mesh::materials<specfem::dimension::type::dim2> &computed,
+    const MaterialVectorType &expected) {
 
   if (computed.n_materials != expected.size()) {
     throw std::runtime_error("Size of materials is not the same");

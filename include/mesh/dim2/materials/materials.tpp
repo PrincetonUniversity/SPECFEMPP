@@ -9,7 +9,7 @@
 
 template <specfem::element::medium_tag type,
           specfem::element::property_tag property>
-specfem::mesh::materials::material<type, property>::material(
+          specfem::mesh::materials<specfem::dimension::type::dim2>::material<type, property>::material(
     const int n_materials,
     const std::vector<specfem::medium::material<type, property> >
         &l_materials)
