@@ -6,6 +6,20 @@
 
 namespace specfem {
 namespace parallel_config {
+
+#ifdef KOKKOS_ENABLE_CUDA
+constexpr int chunk_size = 32;
+constexpr int storage_chunk_size = chunk_size;
+#elif KOKKOS_ENABLE_OPENMP
+constexpr int chunk_size = 1;
+constexpr int simd_size = specfem::datatypes::simd<type_real, true>::size();
+constexpr int storage_chunk_size = chunk_size * simd_size;
+#else
+constexpr int chunk_size = 1;
+constexpr int simd_size = specfem::datatypes::simd<type_real, true>::size();
+constexpr int storage_chunk_size = chunk_size * simd_size;
+#endif
+
 /**
  * @brief Parallel configuration for chunk policy.
  *
@@ -48,8 +62,8 @@ struct default_chunk_config;
 #ifdef KOKKOS_ENABLE_CUDA
 template <typename SIMD>
 struct default_chunk_config<specfem::dimension::type::dim2, SIMD, Kokkos::Cuda>
-    : chunk_config<specfem::dimension::type::dim2, 32, 32, 160, 1, SIMD,
-                   Kokkos::Cuda> {};
+    : chunk_config<specfem::dimension::type::dim2, chunk_size, chunk_size, 160,
+                   1, SIMD, Kokkos::Cuda> {};
 #endif
 
 #ifdef KOKKOS_ENABLE_OPENMP

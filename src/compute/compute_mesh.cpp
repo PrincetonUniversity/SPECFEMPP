@@ -3,6 +3,7 @@
 #include "enumerations/material_definitions.hpp"
 #include "jacobian/interface.hpp"
 #include "kokkos_abstractions.h"
+#include "parallel_configuration/chunk_config.hpp"
 #include "quadrature/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -52,13 +53,7 @@ assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates) {
 
   using simd = specfem::datatype::simd<type_real, true>;
 
-#ifdef KOKKOS_ENABLE_CUDA
-  constexpr int chunk_size = 32 * simd::size();
-#elif KOKKOS_ENABLE_OPENMP
-  constexpr int chunk_size = 1;
-#else
-  constexpr int chunk_size = 1 * simd::size();
-#endif
+  constexpr int chunk_size = specfem::parallel_config::storage_chunk_size;
 
   int nchunks = nspec / chunk_size;
   int iloc = 0;

@@ -3,6 +3,7 @@
 
 #include "compute/element_types/element_types.hpp"
 #include "compute/fields/impl/field_impl.hpp"
+#include "parallel_configuration/chunk_config.hpp"
 #include "kokkos_abstractions.h"
 #include <Kokkos_Core.hpp>
 
@@ -37,14 +38,7 @@ specfem::compute::impl::field_impl<DimensionType, MediumTag>::field_impl(
   int count = 0;
   using simd = specfem::datatype::simd<type_real, true>;
 
-#ifdef KOKKOS_ENABLE_CUDA
-  constexpr int chunk_size = 32 * simd::size();
-#elif KOKKOS_ENABLE_OPENMP
-  constexpr int chunk_size = 1;
-#else
-  constexpr int chunk_size = 1 * simd::size();
-#endif
-
+  constexpr int chunk_size = specfem::parallel_config::storage_chunk_size;
   int nchunks = nspec / chunk_size;
   int iloc = 0;
   for (int ichunk = 0; ichunk < nchunks; ichunk++) {
