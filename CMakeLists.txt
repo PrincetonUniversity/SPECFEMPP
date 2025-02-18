@@ -232,8 +232,8 @@ add_library(
         src/IO/fortranio/fortran_io.cpp
         src/IO/sources.cpp
         src/IO/receivers.cpp
-        src/IO/mesh.cpp
         # Fortran 2D part
+        src/IO/mesh/impl/fortran/dim2/mesh.cpp
         src/IO/mesh/impl/fortran/dim2/read_boundaries.cpp
         src/IO/mesh/impl/fortran/dim2/read_elements.cpp
         src/IO/mesh/impl/fortran/dim2/read_material_properties.cpp
@@ -241,6 +241,7 @@ add_library(
         src/IO/mesh/impl/fortran/dim2/read_interfaces.cpp
         src/IO/mesh/impl/fortran/dim2/read_parameters.cpp
         # Fortran 3D part
+        src/IO/mesh/impl/fortran/dim3/mesh.cpp
         src/IO/mesh/impl/fortran/dim3/read_parameters.cpp
         src/IO/mesh/impl/fortran/dim3/read_coordinates.cpp
         src/IO/mesh/impl/fortran/dim3/read_partial_derivatives.cpp
@@ -335,21 +336,25 @@ endif(MPI_PARALLEL)
 
 add_library(
         mesh
-        src/mesh/boundaries/forcing_boundaries.cpp
-        src/mesh/boundaries/absorbing_boundaries.cpp
-        src/mesh/boundaries/acoustic_free_surface.cpp
-        src/mesh/elements/tangential_elements.cpp
-        src/mesh/elements/axial_elements.cpp
+        # 2-D
+        src/mesh/dim2/mesh.cpp
+        src/mesh/dim2/boundaries/forcing_boundaries.cpp
+        src/mesh/dim2/boundaries/absorbing_boundaries.cpp
+        src/mesh/dim2/boundaries/acoustic_free_surface.cpp
+        src/mesh/dim2/elements/tangential_elements.cpp
+        src/mesh/dim2/elements/axial_elements.cpp
         # src/mesh/mpi_interfaces/mpi_interfaces.cpp
-        src/mesh/materials/materials.cpp
-        src/mesh/coupled_interfaces/interface_container.cpp
-        src/mesh/coupled_interfaces/coupled_interfaces.cpp
-        src/mesh/tags/tags.cpp
-        src/mesh/parameters/parameters.cpp
-        src/mesh/mapping/mapping.cpp
-        src/mesh/coordinates/coordinates.cpp
-        src/mesh/partial_derivatives/partial_derivatives.cpp
-        src/mesh/mesh.cpp
+        src/mesh/dim2/materials/materials.cpp
+        src/mesh/dim2/coupled_interfaces/interface_container.cpp
+        src/mesh/dim2/coupled_interfaces/coupled_interfaces.cpp
+        src/mesh/dim2/tags/tags.cpp
+        # 3-D
+        src/mesh/dim3/mesh.cpp
+        src/mesh/dim3/parameters/parameters.cpp
+        src/mesh/dim3/parameters/parameters.cpp
+        src/mesh/dim3/mapping/mapping.cpp
+        src/mesh/dim3/coordinates/coordinates.cpp
+        src/mesh/dim3/partial_derivatives/partial_derivatives.cpp
 )
 
 target_link_libraries(

@@ -7,8 +7,7 @@
 #include "edge/interface.hpp"
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
-#include "mesh/coupled_interfaces/coupled_interfaces.hpp"
-#include "mesh/coupled_interfaces/interface_container.hpp"
+#include "mesh/mesh.hpp"
 #include "point/coordinates.hpp"
 
 namespace {

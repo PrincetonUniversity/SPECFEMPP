@@ -1,11 +1,7 @@
 #pragma once
 
 #include "IO/fortranio/interface.hpp"
-#include "mesh/coordinates/coordinates.hpp"
-#include "mesh/mapping/mapping.hpp"
 #include "mesh/mesh.hpp"
-#include "mesh/parameters/parameters.hpp"
-#include "mesh/partial_derivatives/partial_derivatives.hpp"
 #include "specfem_mpi/interface.hpp"
 
 namespace specfem {
