@@ -1,6 +1,7 @@
 #pragma once
 
 #include "constants.hpp"
+#include "datatypes/simd.hpp"
 #include "enumerations/dimension.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -16,10 +17,10 @@ constexpr int serial_chunk_size = 1;
 #ifdef KOKKOS_ENABLE_CUDA
 constexpr int storage_chunk_size = impl::cuda_chunk_size;
 #elif KOKKOS_ENABLE_OPENMP
-constexpr int simd_size = specfem::datatypes::simd<type_real, true>::size();
+constexpr int simd_size = specfem::datatype::simd<type_real, true>::size();
 constexpr int storage_chunk_size = impl::openmp_chunk_size * simd_size;
 #else
-constexpr int simd_size = specfem::datatypes::simd<type_real, true>::size();
+constexpr int simd_size = specfem::datatype::simd<type_real, true>::size();
 constexpr int storage_chunk_size = impl::serial_chunk_size * simd_size;
 #endif
 
