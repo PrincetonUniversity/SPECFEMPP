@@ -39,13 +39,9 @@ specfem::compute::impl::field_impl<DimensionType, MediumTag>::field_impl(
 
 #ifdef KOKKOS_ENABLE_CUDA
   constexpr int chunk_size = 32 * simd::size();
-#endif
-
-#ifdef KOKKOS_ENABLE_OPENMP
-  constexpr int chunk_size = 1 * simd::size();
-#endif
-
-#ifdef KOKKOS_ENABLE_SERIAL
+#elif KOKKOS_ENABLE_OPENMP
+  constexpr int chunk_size = 1;
+#else
   constexpr int chunk_size = 1 * simd::size();
 #endif
 
