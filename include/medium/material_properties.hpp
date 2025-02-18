@@ -3,8 +3,7 @@
 #include "compute/compute_mesh.hpp"
 #include "enumerations/interface.hpp"
 #include "medium/properties_container.hpp"
-#include "mesh/materials/materials.hpp"
-#include "mesh/tags/tags.hpp"
+#include "mesh/mesh.hpp"
 
 namespace specfem {
 namespace medium {

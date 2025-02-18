@@ -194,10 +194,6 @@ module save_arrays_module
   write(IOUT) xix_regular
   write(IOUT) jacobian_regular
 
-  write(*,*)  irregular_element_number(1), irregular_element_number(nspec_irregular)
-  write(*,*)  xix_regular
-  write(*,*)  jacobian_regular
-
   call save_global_arrays(nspec, xixstore)
   call save_global_arrays(nspec, xiystore)
   call save_global_arrays(nspec, xizstore)

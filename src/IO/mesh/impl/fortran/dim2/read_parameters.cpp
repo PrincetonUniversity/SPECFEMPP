@@ -1,6 +1,6 @@
 #include "IO/mesh/impl/fortran/dim2/read_parameters.hpp"
 #include "IO/fortranio/interface.hpp"
-#include "mesh/parameters/parameters.hpp"
+#include "mesh/mesh.hpp"
 
 specfem::mesh::parameters<specfem::dimension::type::dim2>
 specfem::IO::mesh::impl::fortran::dim2::read_mesh_parameters(

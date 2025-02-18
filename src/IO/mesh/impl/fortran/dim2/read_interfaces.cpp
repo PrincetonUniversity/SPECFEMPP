@@ -1,7 +1,6 @@
 #include "IO/mesh/impl/fortran/dim2/read_interfaces.hpp"
 #include "IO/fortranio/interface.hpp"
-#include "mesh/coupled_interfaces/coupled_interfaces.hpp"
-#include "mesh/coupled_interfaces/interface_container.hpp"
+#include "mesh/mesh.hpp"
 #include "specfem_mpi/interface.hpp"
 
 template <specfem::dimension::type DimensionType,

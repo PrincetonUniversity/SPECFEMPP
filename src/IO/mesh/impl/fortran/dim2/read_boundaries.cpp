@@ -1,6 +1,6 @@
 #include "IO/mesh/impl/fortran/dim2/read_boundaries.hpp"
 #include "IO/fortranio/interface.hpp"
-#include "mesh/boundaries/boundaries.hpp"
+#include "mesh/mesh.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "utilities/interface.hpp"
 #include <Kokkos_Core.hpp>
