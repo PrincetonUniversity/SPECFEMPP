@@ -360,12 +360,14 @@ target_link_libraries(
 add_executable(
   mesh_modifiers_tests
   mesh_modifiers/runner.cpp
+  mesh_modifiers/subdivision/test_subdivide.cpp
 )
 
 target_link_libraries(
   mesh_modifiers_tests
   quadrature
   mesh
+  IO
   # material_class
   yaml-cpp
   kokkos_environment

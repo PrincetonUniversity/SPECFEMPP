@@ -32,8 +32,7 @@ std::string specfem::mesh::modifiers<DimensionType>::to_string() const {
 template <specfem::dimension::type DimensionType>
 void specfem::mesh::modifiers<DimensionType>::set_subdivision(
     const int material, subdiv_tuple subdivs) {
-  // subdivisions.insert(std::make_pair<int,std::array<int,dim>>(0,{args...}));
-  set_subdivision(material, subdivs);
+  subdivisions.insert(std::make_pair(0, subdivs));
 }
 //===== getting modifiers =====
 template <specfem::dimension::type DimensionType>

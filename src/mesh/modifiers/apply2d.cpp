@@ -365,8 +365,7 @@ static void subdivide(
         }
         // nod does not already exist. Make it exist
         auto shape_functions = specfem::jacobian::define_shape_functions(
-            (ix * 2 - ispec_ngnod_x) / ((type_real)ispec_ngnod_x),
-            (iz * 2 - ispec_ngnod_z) / ((type_real)ispec_ngnod_z), ngnod);
+            ix / ((type_real)subx) - 1, iz / ((type_real)subz) - 1, ngnod);
 
         double xcor = 0.0;
         double zcor = 0.0;
