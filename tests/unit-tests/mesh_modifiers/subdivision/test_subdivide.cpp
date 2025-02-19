@@ -13,6 +13,7 @@ namespace mesh_modifiers {
 namespace subdivisions {
 
 // we may want to look into implementing a kd tree. Instead, just bin things
+// into a quadtree, using heap-stored nodes
 template <typename T, int num_children> struct tree_node {
   tree_node<T, num_children> *parent;
   T data;
@@ -35,6 +36,7 @@ template <typename T, int num_children> struct tree_node {
   }
 };
 
+// utility to store control nodes. contains interpolation functions
 struct elem_coords {
   type_real pts[3][3][2];
   type_real cx, cz;
@@ -134,10 +136,13 @@ struct elem_coords {
     return std::min(len, (x2 - x1) * (x2 - x1) + (z2 - z1) * (z2 - z1));
   }
 };
+
+// bins to store elements into.
 struct elem_coord_bin2D {
-  std::vector<int> indices;
-  type_real xmin, xmax, ymin, ymax, cx, cy;
-  tree_node<elem_coord_bin2D, 4> *parent;
+  std::vector<int> indices; // this will only be nonempty for leaf nodes
+  type_real xmin, xmax, ymin, ymax, cx, cy; // coordinates for bin (aabb)
+  tree_node<elem_coord_bin2D, 4> *parent;   // parent->data == *this
+
   elem_coord_bin2D() = default;
   elem_coord_bin2D(tree_node<elem_coord_bin2D, 4> &treenode, type_real xmin,
                    type_real xmax, type_real ymin, type_real ymax)
@@ -148,6 +153,7 @@ struct elem_coord_bin2D {
     tree_node<elem_coord_bin2D, 4> &parent = *treenode.parent;
     type_real cx = (parent.data.xmax + parent.data.xmin) / 2;
     type_real cy = (parent.data.ymax + parent.data.ymin) / 2;
+    // inherit aabb from quad-subdivided parent's aabb
     switch (index) {
     case 0:
       // lower left
@@ -178,19 +184,44 @@ struct elem_coord_bin2D {
       ymax = parent.data.ymax;
       break;
     }
+    this->cx = (xmin + xmax) / 2;
+    this->cy = (ymin + ymax) / 2;
   }
 
+  /**
+   * @brief Subdivides this node. every index in this node is then passed to one
+   * of the children.
+   *
+   * @param coordref - ispec -> elemdata mapping
+   */
   void subdivide(const std::vector<elem_coords> &coordref) {
-    parent->gen_children();
-    for (int i = 0; i < 4; i++) {
-      parent->children[i].data = elem_coord_bin2D(*parent, i);
+    if (!parent->leaf) {
+      // subdivide underlying tree structure
+      parent->gen_children();
+      for (int i = 0; i < 4; i++) {
+        parent->children[i].data = elem_coord_bin2D(parent->children[i], i);
+      }
     }
+
+    // insert() will properly insert each index into the correct child
     for (const int &i : indices) {
       insert(coordref, i);
     }
+    // we're moving, not copying
     indices.clear();
   }
 
+  /**
+   * @brief Inserts the ispec into the tree at this node. If we are a leaf,
+   * places into this index. Otherwise, it is inserted into the correct child.
+   *
+   * @param coordref - ispec -> elemdata mapping
+   * @param ispec - element to store
+   * @param max_storage - threshold for when a leaf is large enough to warrant
+   * subdivision.
+   * @param maxdepth - the furthest subdivision allowed before max_storage is
+   * ignored.
+   */
   void insert(const std::vector<elem_coords> &coordref, int ispec,
               int max_storage = 20, int maxdepth = 10) {
     if (parent->leaf || parent->depth >= maxdepth) {
@@ -203,7 +234,7 @@ struct elem_coord_bin2D {
       if (child.indices.size() >= max_storage) {
         child.subdivide(coordref);
       }
-      child.insert(coordref, ispec);
+      child.insert(coordref, ispec, max_storage, maxdepth);
     }
   }
 
@@ -410,6 +441,59 @@ void test_mesh_unifsubdivisions2D(
              << pt_errs[2][0] << "\n"
              << "--------------------------------------------------\n\n"
              << std::endl;
+    }
+    // this is precisely the subdivision. Ensure the material is correct
+    if (mesh.materials.material_index_mapping(ispec_near).database_index !=
+        meshcopy.materials.material_index_mapping(ispec).database_index) {
+      FAIL() << "--------------------------------------------------\n"
+             << "\033[0;31m[FAILED]\033[0m Test failed\n"
+             << " - global subdivision: " << global_subdiv_factor_x << "x"
+             << global_subdiv_factor_z << "\n"
+             << " - subdivided element (" << isubx_near << "," << isubz_near
+             << ") of element " << ispec_near << "\n"
+             << " - Incorrect material index mapping:\n"
+             << "     should be "
+             << mesh.materials.material_index_mapping(ispec_near).database_index
+             << "\n"
+             << "     found "
+             << meshcopy.materials.material_index_mapping(ispec).database_index
+             << "\n"
+             << "--------------------------------------------------\n\n"
+             << std::endl;
+    }
+    if (hits(ispec_near, isubz_near, isubx_near)) {
+      // we already hit this element; something went wrong.
+      FAIL() << "--------------------------------------------------\n"
+             << "\033[0;31m[FAILED]\033[0m Test failed\n"
+             << " - global subdivision: " << global_subdiv_factor_x << "x"
+             << global_subdiv_factor_z << "\n"
+             << " - subdivided element (" << isubx_near << "," << isubz_near
+             << ") of element " << ispec_near << "\n"
+             << " - This subelement was hit multiple times!\n"
+             << "     second ispec_new that hit: " << ispec << "\n"
+             << "--------------------------------------------------\n\n"
+             << std::endl;
+    }
+    // mark this element as hit
+    hits(ispec_near, isubz_near, isubx_near) = true;
+  }
+
+  // ensure every element was hit
+  for (int ispec = 0; ispec < mesh.nspec; ispec++) {
+    for (int isubz = 0; isubz < global_subdiv_factor_z; isubz++) {
+      for (int isubx = 0; isubx < global_subdiv_factor_x; isubx++) {
+        if (!hits(ispec, isubz, isubx)) {
+          FAIL() << "--------------------------------------------------\n"
+                 << "\033[0;31m[FAILED]\033[0m Test failed\n"
+                 << " - global subdivision: " << global_subdiv_factor_x << "x"
+                 << global_subdiv_factor_z << "\n"
+                 << " - subdivided element (" << isubx << "," << isubz
+                 << ") of element " << ispec << "\n"
+                 << " - This subelement was never hit!\n"
+                 << "--------------------------------------------------\n\n"
+                 << std::endl;
+        }
+      }
     }
   }
 }

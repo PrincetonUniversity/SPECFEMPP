@@ -10,6 +10,20 @@
 #include <utility>
 #include <vector>
 
+/**
+ * @brief Subdivides the boundary by adding to (index_mapping,type) the
+ * sub-elements along the given edge in the given ispec_old.
+ *
+ * @param ispec_matspec - reference to the original ispec->material mapping to
+ * reference
+ * @param modifiers - reference to the modifiers object (to access subx,subz)
+ * @param index_mapping - the index_mapping to append to
+ * @param type - the edge type array to append to
+ * @param ispec_old - ispec of the original element
+ * @param edge_type - edge of the original element
+ * @param ispec_old_to_new_offset - the first subelement ispec, used to compute
+ * isub -> ispec_new.
+ */
 static void subdivide_inherit_edgecond(
     const specfem::kokkos::HostView1d<
         specfem::mesh::materials::material_specification> &ispec_matspec,
@@ -59,7 +73,8 @@ static void subdivide_inherit_edgecond(
 /**
  * @brief Computes the l^2 error squared between the two edges (difference in
  * knod positions). Positive orientation is assumed, and that the two elements
- * are different. Returns <err, parity>
+ * are different. Returns <err, parity>, since parity is helpful to know, and
+ * this way, we only compute it once.
  *
  * @param knods - struct of control node indices
  * @param coord - struct of control node coords
@@ -150,6 +165,9 @@ edge_error(const Kokkos::View<int **, Kokkos::HostSpace> &knods,
   switch (ngnod) {
   case 4:
   case 9: {
+    // only compare two nodes (first and last) so that we can use same logic for
+    // 4node and 9node assuming the original mesh is conforming, this is
+    // sufficient even in the 9node case.
     int inod1[2];
     int inod2[2];
     get_firstlastnodes(inod1[0], inod1[1], edge1);
@@ -162,8 +180,10 @@ edge_error(const Kokkos::View<int **, Kokkos::HostSpace> &knods,
     for (int i = 0; i < 2; i++) {
       inod1[i] = knods(inod1[i], ispec1);
       inod2[i] = knods(inod2[i], ispec2);
-      // if control nodes are same, take the shortcut and say that error is zero
+      // if control node indices are same, take the shortcut and say that error
+      // is zero
       if (inod1[i] != inod2[i]) {
+        // otherwise, compute dist^2
         type_real tmp = coord(0, inod2[i]) - coord(0, inod1[i]);
         err2 += tmp * tmp;
         tmp = coord(1, inod2[i]) - coord(1, inod1[i]);
@@ -178,6 +198,17 @@ edge_error(const Kokkos::View<int **, Kokkos::HostSpace> &knods,
   }
 }
 
+/**
+ * @brief Takes an interface_container object, and subdivides it.
+ *
+ * @param interface - reference to the interface to subdivide
+ * @param ispec_old_to_new_offsets - mapping of the ispec_old -> ispec_new of
+ * first in subdivision
+ * @param material_index_mapping_old - ispec_old -> material
+ * @param modifiers - reference to the mesh modifiers
+ * @param knods_old - control node indices of the original mesh
+ * @param coord_old - coordinates of the original control nodes
+ */
 template <specfem::element::medium_tag Medium1,
           specfem::element::medium_tag Medium2>
 inline void subdivide_coupled_interface(
@@ -229,7 +260,7 @@ inline void subdivide_coupled_interface(
     mat = material_index_mapping_old(ispec2);
     std::tie(subx2, subz2) = modifiers.get_subdivision(mat.database_index);
 
-    // subdivisions along mating edges
+    // we want to append the corresponding subdivisions along the mating edges.
     bool horiz1 = edge1 == specfem::enums::edge::type::RIGHT ||
                   edge1 == specfem::enums::edge::type::LEFT;
     bool horiz2 = edge2 == specfem::enums::edge::type::RIGHT ||
@@ -259,10 +290,12 @@ inline void subdivide_coupled_interface(
         } else {
           isubx1 = isub;
         }
+        // if edge should be flipped, reverse the second index.
+        int isub2 = parity ? (edgesub1 - isub - 1) : isub;
         if (horiz2) {
-          isubz2 = isub;
+          isubz2 = isub2;
         } else {
-          isubx2 = isub;
+          isubx2 = isub2;
         }
         medium1_indices_new.push_back(ispec_old_to_new_offsets[ispec1] +
                                       subx1 * isubz1 + isubx1);
