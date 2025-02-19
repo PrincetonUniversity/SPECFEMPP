@@ -26,7 +26,7 @@
 
 CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(INSTANTIATION_MACRO,
                                     WHERE(DIMENSION_TAG_DIM2)
-                                        WHERE(MEDIUM_TAG_ELASTIC)
+                                        WHERE(MEDIUM_TAG_ELASTIC_SV)
                                             WHERE(PROPERTY_TAG_ISOTROPIC,
                                                   PROPERTY_TAG_ANISOTROPIC))
 
