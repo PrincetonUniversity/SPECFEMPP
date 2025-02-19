@@ -9,7 +9,7 @@
 #include <vector>
 
 // Define some constants for the material properties
-constexpr auto elastic = specfem::element::medium_tag::elastic;
+constexpr auto elastic_sv = specfem::element::medium_tag::elastic_sv;
 constexpr auto isotropic = specfem::element::property_tag::isotropic;
 constexpr auto anisotropic = specfem::element::property_tag::anisotropic;
 constexpr auto acoustic = specfem::element::medium_tag::acoustic;
@@ -23,9 +23,10 @@ struct input_holder {
 
 std::vector<specfem::mesh::materials::material_specification> read_materials(
     std::ifstream &stream, const int numat,
-    specfem::mesh::materials::material<elastic, isotropic> &elastic_isotropic,
+    specfem::mesh::materials::material<elastic_sv, isotropic>
+        &elastic_isotropic,
     specfem::mesh::materials::material<acoustic, isotropic> &acoustic_isotropic,
-    specfem::mesh::materials::material<elastic, anisotropic>
+    specfem::mesh::materials::material<elastic_sv, anisotropic>
         &elastic_anisotropic,
     const specfem::MPI::MPI *mpi) {
 
@@ -45,7 +46,7 @@ std::vector<specfem::mesh::materials::material_specification> read_materials(
     std::cout << "Number of material systems = " << numat << "\n\n";
 
   // Section for elastic isotropic
-  std::vector<specfem::medium::material<elastic, isotropic> >
+  std::vector<specfem::medium::material<elastic_sv, isotropic> >
       l_elastic_isotropic;
 
   l_elastic_isotropic.reserve(numat);
@@ -53,7 +54,7 @@ std::vector<specfem::mesh::materials::material_specification> read_materials(
   int index_elastic_isotropic = 0;
 
   // Section for elastic anisotropic
-  std::vector<specfem::medium::material<elastic, anisotropic> >
+  std::vector<specfem::medium::material<elastic_sv, anisotropic> >
       l_elastic_anisotropic;
 
   l_elastic_anisotropic.reserve(numat);
@@ -120,15 +121,16 @@ std::vector<specfem::mesh::materials::material_specification> read_materials(
         const type_real Qkappa = read_values.val5;
         const type_real Qmu = read_values.val6;
 
-        specfem::medium::material<elastic, isotropic> elastic_isotropic_holder(
-            density, cs, cp, Qkappa, Qmu, compaction_grad);
+        specfem::medium::material<elastic_sv, isotropic>
+            elastic_isotropic_holder(density, cs, cp, Qkappa, Qmu,
+                                     compaction_grad);
 
         elastic_isotropic_holder.print();
 
         l_elastic_isotropic.push_back(elastic_isotropic_holder);
 
         index_mapping[i] = specfem::mesh::materials::material_specification(
-            specfem::element::medium_tag::elastic,
+            specfem::element::medium_tag::elastic_sv,
             specfem::element::property_tag::isotropic, index_elastic_isotropic,
             read_values.n - 1);
 
@@ -150,7 +152,7 @@ std::vector<specfem::mesh::materials::material_specification> read_materials(
       const type_real Qkappa = read_values.val11;
       const type_real Qmu = read_values.val12;
 
-      specfem::medium::material<elastic, anisotropic>
+      specfem::medium::material<elastic_sv, anisotropic>
           elastic_anisotropic_holder(density, c11, c13, c15, c33, c35, c55, c12,
                                      c23, c25, Qkappa, Qmu);
 
@@ -159,7 +161,7 @@ std::vector<specfem::mesh::materials::material_specification> read_materials(
       l_elastic_anisotropic.push_back(elastic_anisotropic_holder);
 
       index_mapping[i] = specfem::mesh::materials::material_specification(
-          specfem::element::medium_tag::elastic,
+          specfem::element::medium_tag::elastic_sv,
           specfem::element::property_tag::anisotropic,
           index_elastic_anisotropic, read_values.n - 1);
 
@@ -174,11 +176,11 @@ std::vector<specfem::mesh::materials::material_specification> read_materials(
              l_elastic_anisotropic.size() ==
          numat);
 
-  elastic_isotropic = specfem::mesh::materials::material<elastic, isotropic>(
+  elastic_isotropic = specfem::mesh::materials::material<elastic_sv, isotropic>(
       l_elastic_isotropic.size(), l_elastic_isotropic);
 
   elastic_anisotropic =
-      specfem::mesh::materials::material<elastic, anisotropic>(
+      specfem::mesh::materials::material<elastic_sv, anisotropic>(
           l_elastic_anisotropic.size(), l_elastic_anisotropic);
 
   acoustic_isotropic = specfem::mesh::materials::material<acoustic, isotropic>(
@@ -240,8 +242,8 @@ specfem::IO::mesh::impl::fortran::read_material_properties(
 
   // Read material properties
   auto index_mapping = read_materials(
-      stream, numat, materials.elastic_isotropic, materials.acoustic_isotropic,
-      materials.elastic_anisotropic, mpi);
+      stream, numat, materials.elastic_sv_isotropic,
+      materials.acoustic_isotropic, materials.elastic_sv_anisotropic, mpi);
 
   // Read material indices
   read_material_indices(stream, nspec, numat, index_mapping,

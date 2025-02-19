@@ -9,10 +9,10 @@ namespace specfem {
 namespace medium {
 
 template <>
-class kernels_container<specfem::element::medium_tag::elastic,
+class kernels_container<specfem::element::medium_tag::elastic_sv,
                         specfem::element::property_tag::anisotropic> {
 public:
-  constexpr static auto value_type = specfem::element::medium_tag::elastic;
+  constexpr static auto value_type = specfem::element::medium_tag::elastic_sv;
   constexpr static auto property_type =
       specfem::element::property_tag::anisotropic;
   int nspec;

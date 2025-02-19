@@ -5,9 +5,9 @@
 #include <vector>
 
 std::variant<
-    specfem::medium::material<specfem::element::medium_tag::elastic,
+    specfem::medium::material<specfem::element::medium_tag::elastic_sv,
                               specfem::element::property_tag::isotropic>,
-    specfem::medium::material<specfem::element::medium_tag::elastic,
+    specfem::medium::material<specfem::element::medium_tag::elastic_sv,
                               specfem::element::property_tag::anisotropic>,
     specfem::medium::material<specfem::element::medium_tag::acoustic,
                               specfem::element::property_tag::isotropic> >
@@ -18,18 +18,18 @@ specfem::mesh::materials::operator[](const int index) const {
   // Return the material properties based on the material specification
 
   // Return elastic isotropic
-  if (material_specification.type == specfem::element::medium_tag::elastic &&
+  if (material_specification.type == specfem::element::medium_tag::elastic_sv &&
       material_specification.property ==
           specfem::element::property_tag::isotropic) {
-    return this->elastic_isotropic
+    return this->elastic_sv_isotropic
         .material_properties[material_specification.index];
 
     // Return elastic anisotropic
   } else if (material_specification.type ==
-                 specfem::element::medium_tag::elastic &&
+                 specfem::element::medium_tag::elastic_sv &&
              material_specification.property ==
                  specfem::element::property_tag::anisotropic) {
-    return this->elastic_anisotropic
+    return this->elastic_sv_anisotropic
         .material_properties[material_specification.index];
 
     // Return acoustic isotropic

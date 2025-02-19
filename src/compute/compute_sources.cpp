@@ -63,7 +63,7 @@ template class specfem::compute::impl::source_medium<
     specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic>;
 
 template class specfem::compute::impl::source_medium<
-    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic>;
+    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic_sv>;
 
 specfem::compute::sources::sources(
     const std::vector<std::shared_ptr<specfem::sources::source> > &sources,

@@ -25,7 +25,7 @@ template <specfem::wavefield::type component,
 class test_helper;
 
 template <specfem::wavefield::type component>
-class test_helper<component, specfem::element::medium_tag::elastic,
+class test_helper<component, specfem::element::medium_tag::elastic_sv,
                   specfem::element::property_tag::isotropic> {
 
 public:
@@ -76,7 +76,7 @@ private:
 
 template <>
 class test_helper<specfem::wavefield::type::pressure,
-                  specfem::element::medium_tag::elastic,
+                  specfem::element::medium_tag::elastic_sv,
                   specfem::element::property_tag::isotropic> {
 public:
   test_helper(const int ispec,
@@ -94,9 +94,11 @@ public:
     const int ngllz = assembly.mesh.ngllz;
     const int ngllx = assembly.mesh.ngllx;
 
-    using PointProperties = specfem::point::properties<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-        specfem::element::property_tag::isotropic, false>;
+    using PointProperties =
+        specfem::point::properties<specfem::dimension::type::dim2,
+                                   specfem::element::medium_tag::elastic_sv,
+                                   specfem::element::property_tag::isotropic,
+                                   false>;
 
     for (int iz = 0; iz < ngllz; iz++) {
       for (int ix = 0; ix < ngllx; ix++) {

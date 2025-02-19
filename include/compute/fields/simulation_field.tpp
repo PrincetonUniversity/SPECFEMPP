@@ -63,11 +63,11 @@ specfem::compute::simulation_field<WavefieldType>::simulation_field(
 
   auto elastic_index =
       Kokkos::subview(h_assembly_index_mapping, Kokkos::ALL,
-                      static_cast<int>(specfem::element::medium_tag::elastic));
+                      static_cast<int>(specfem::element::medium_tag::elastic_sv));
 
   elastic =
       specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
-                                         specfem::element::medium_tag::elastic>(
+                                         specfem::element::medium_tag::elastic_sv>(
           mesh, element_types, elastic_index);
 
   acoustic = specfem::compute::impl::field_impl<

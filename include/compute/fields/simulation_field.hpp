@@ -85,7 +85,7 @@ public:
    */
   template <specfem::element::medium_tag MediumType>
   KOKKOS_FORCEINLINE_FUNCTION int get_nglob() const {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic_sv) {
       return elastic.nglob;
     } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
       return acoustic.nglob;
@@ -107,7 +107,7 @@ public:
                specfem::kokkos::HostMemSpace>
       h_assembly_index_mapping;
   specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
-                                     specfem::element::medium_tag::elastic>
+                                     specfem::element::medium_tag::elastic_sv>
       elastic; ///< Elastic field
   specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
                                      specfem::element::medium_tag::acoustic>

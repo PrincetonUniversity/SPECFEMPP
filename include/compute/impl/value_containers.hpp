@@ -28,11 +28,11 @@ struct value_containers {
                                                       ///< property index
                                                       ///< mapping
 
-  containers_type<specfem::element::medium_tag::elastic,
+  containers_type<specfem::element::medium_tag::elastic_sv,
                   specfem::element::property_tag::isotropic>
       elastic_isotropic; ///< Elastic isotropic material values
 
-  containers_type<specfem::element::medium_tag::elastic,
+  containers_type<specfem::element::medium_tag::elastic_sv,
                   specfem::element::property_tag::anisotropic>
       elastic_anisotropic; ///< Elastic isotropic material values
 
@@ -60,10 +60,11 @@ struct value_containers {
   KOKKOS_INLINE_FUNCTION
       constexpr containers_type<MediumTag, PropertyTag> const &
       get_container() const {
-    if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
+    if constexpr ((MediumTag == specfem::element::medium_tag::elastic_sv) &&
                   (PropertyTag == specfem::element::property_tag::isotropic)) {
       return elastic_isotropic;
-    } else if constexpr ((MediumTag == specfem::element::medium_tag::elastic) &&
+    } else if constexpr ((MediumTag ==
+                          specfem::element::medium_tag::elastic_sv) &&
                          (PropertyTag ==
                           specfem::element::property_tag::anisotropic)) {
       return elastic_anisotropic;

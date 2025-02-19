@@ -37,7 +37,7 @@ void specfem::IO::kernel_writer<OutputLibrary>::write(specfem::compute::assembly
     typename OutputLibrary::Group elastic = file.createGroup("/ElasticIsotropic");
 
     const auto element_indices = element_types.get_elements_on_host(
-        specfem::element::medium_tag::elastic,
+        specfem::element::medium_tag::elastic_sv,
         specfem::element::property_tag::isotropic);
     n_elastic_isotropic = element_indices.size();
 
@@ -60,7 +60,7 @@ void specfem::IO::kernel_writer<OutputLibrary>::write(specfem::compute::assembly
           const specfem::point::index<specfem::dimension::type::dim2> index(
               ispec, iz, ix);
           specfem::point::kernels<specfem::dimension::type::dim2,
-                                  specfem::element::medium_tag::elastic,
+                                  specfem::element::medium_tag::elastic_sv,
                                   specfem::element::property_tag::isotropic,
                                   false>
               point_kernels;
@@ -91,7 +91,7 @@ void specfem::IO::kernel_writer<OutputLibrary>::write(specfem::compute::assembly
     typename OutputLibrary::Group elastic = file.createGroup("/ElasticAnisotropic");
 
     const auto element_indices = element_types.get_elements_on_host(
-        specfem::element::medium_tag::elastic,
+        specfem::element::medium_tag::elastic_sv,
         specfem::element::property_tag::anisotropic);
     n_elastic_anisotropic = element_indices.size();
 
@@ -115,7 +115,7 @@ void specfem::IO::kernel_writer<OutputLibrary>::write(specfem::compute::assembly
           const specfem::point::index<specfem::dimension::type::dim2> index(
               ispec, iz, ix);
           specfem::point::kernels<specfem::dimension::type::dim2,
-                                  specfem::element::medium_tag::elastic,
+                                  specfem::element::medium_tag::elastic_sv,
                                   specfem::element::property_tag::anisotropic,
                                   false>
               point_kernels;

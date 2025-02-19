@@ -5,16 +5,16 @@
 
 template <bool UseSIMD>
 KOKKOS_FUNCTION specfem::point::stress_integrand<
-    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic_sv,
     UseSIMD>
 specfem::medium::impl_compute_stress_integrands(
     const specfem::point::partial_derivatives<
         specfem::dimension::type::dim2, false, UseSIMD> &partial_derivatives,
     const specfem::point::properties<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic_sv,
         specfem::element::property_tag::anisotropic, UseSIMD> &properties,
     const specfem::point::field_derivatives<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic_sv,
         UseSIMD> &field_derivatives) {
 
   using datatype =

@@ -30,7 +30,7 @@ struct kernels;
  */
 template <bool UseSIMD>
 struct kernels<specfem::dimension::type::dim2,
-               specfem::element::medium_tag::elastic,
+               specfem::element::medium_tag::elastic_sv,
                specfem::element::property_tag::isotropic, UseSIMD> {
 public:
   /**
@@ -50,7 +50,7 @@ public:
    *
    */
   ///@{
-  constexpr static auto medium_tag = specfem::element::medium_tag::elastic;
+  constexpr static auto medium_tag = specfem::element::medium_tag::elastic_sv;
   constexpr static auto property_tag =
       specfem::element::property_tag::isotropic;
   constexpr static auto dimension = specfem::dimension::type::dim2;
@@ -143,7 +143,7 @@ public:
  */
 template <bool UseSIMD>
 struct kernels<specfem::dimension::type::dim2,
-               specfem::element::medium_tag::elastic,
+               specfem::element::medium_tag::elastic_sv,
                specfem::element::property_tag::anisotropic, UseSIMD> {
 public:
   /**
@@ -163,7 +163,7 @@ public:
    *
    */
   ///@{
-  constexpr static auto medium_tag = specfem::element::medium_tag::elastic;
+  constexpr static auto medium_tag = specfem::element::medium_tag::elastic_sv;
   constexpr static auto property_tag =
       specfem::element::property_tag::anisotropic;
   constexpr static auto dimension = specfem::dimension::type::dim2;
