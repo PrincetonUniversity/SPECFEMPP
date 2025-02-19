@@ -31,10 +31,9 @@ std::string get_error_message(
 
 template <>
 std::string get_error_message(
-    const specfem::point::properties<specfem::dimension::type::dim2,
-                                     specfem::element::medium_tag::elastic_sv,
-                                     specfem::element::property_tag::isotropic,
-                                     false> &point_property,
+    const specfem::point::properties<
+        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+        specfem::element::property_tag::isotropic, false> &point_property,
     const type_real value, const int mode) {
   std::ostringstream message;
 
@@ -49,8 +48,7 @@ std::string get_error_message(
 template <>
 std::string get_error_message(
     const specfem::point::properties<
-        specfem::dimension::type::dim2,
-        specfem::element::medium_tag::elastic_sv,
+        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
         specfem::element::property_tag::anisotropic, false> &point_property,
     const type_real value, const int mode) {
   std::ostringstream message;
@@ -65,6 +63,66 @@ std::string get_error_message(
   message << "\t\tc55 = " << point_property.c55 << "\n";
 
   return message.str();
+}
+
+template <>
+std::string get_error_message(
+    const specfem::point::properties<specfem::dimension::type::dim2,
+                                     specfem::element::medium_tag::elastic_sv,
+                                     specfem::element::property_tag::isotropic,
+                                     false> &point_property,
+    const type_real value, const int mode) {
+
+  return get_error_message(
+      static_cast<specfem::point::properties<
+          specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+          specfem::element::property_tag::isotropic, false> >(point_property),
+      value, mode);
+}
+
+template <>
+std::string get_error_message(
+    const specfem::point::properties<
+        specfem::dimension::type::dim2,
+        specfem::element::medium_tag::elastic_sv,
+        specfem::element::property_tag::anisotropic, false> &point_property,
+    const type_real value, const int mode) {
+
+  return get_error_message(
+      static_cast<specfem::point::properties<
+          specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+          specfem::element::property_tag::anisotropic, false> >(point_property),
+      value, mode);
+}
+
+template <>
+std::string get_error_message(
+    const specfem::point::properties<specfem::dimension::type::dim2,
+                                     specfem::element::medium_tag::elastic_sh,
+                                     specfem::element::property_tag::isotropic,
+                                     false> &point_property,
+    const type_real value, const int mode) {
+
+  return get_error_message(
+      static_cast<specfem::point::properties<
+          specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+          specfem::element::property_tag::isotropic, false> >(point_property),
+      value, mode);
+}
+
+template <>
+std::string get_error_message(
+    const specfem::point::properties<
+        specfem::dimension::type::dim2,
+        specfem::element::medium_tag::elastic_sh,
+        specfem::element::property_tag::anisotropic, false> &point_property,
+    const type_real value, const int mode) {
+
+  return get_error_message(
+      static_cast<specfem::point::properties<
+          specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+          specfem::element::property_tag::anisotropic, false> >(point_property),
+      value, mode);
 }
 
 template <>

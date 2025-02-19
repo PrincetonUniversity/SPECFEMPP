@@ -32,7 +32,8 @@ ASSEMBLY::ASSEMBLY() {
   for (auto &Test : Tests) {
     const auto [database_file, sources_file, stations_file] =
         Test.get_databases();
-    const auto mesh = specfem::IO::read_mesh(database_file, mpi);
+    const auto mesh = specfem::IO::read_mesh(
+        database_file, specfem::enums::elastic_wave::p_sv, mpi);
 
     this->Meshes.push_back(mesh);
 

@@ -27,7 +27,7 @@ struct properties;
  */
 template <bool UseSIMD>
 struct properties<specfem::dimension::type::dim2,
-                  specfem::element::medium_tag::elastic_sv,
+                  specfem::element::medium_tag::elastic,
                   specfem::element::property_tag::isotropic, UseSIMD> {
 
   /**
@@ -132,7 +132,7 @@ public:
 
 template <bool UseSIMD>
 struct properties<specfem::dimension::type::dim2,
-                  specfem::element::medium_tag::elastic_sv,
+                  specfem::element::medium_tag::elastic,
                   specfem::element::property_tag::anisotropic, UseSIMD> {
 
   /**
@@ -200,7 +200,7 @@ public:
              const value_type &c15, const value_type &c33,
              const value_type &c35, const value_type &c55,
              const value_type &c12, const value_type &c23,
-             const value_type &c25, const type_real &rho)
+             const value_type &c25, const value_type &rho)
       : properties(c11, c13, c15, c33, c35, c55, c12, c23, c25, rho,
                    std::integral_constant<bool, UseSIMD>{}) {}
 
@@ -238,6 +238,174 @@ public:
 
   KOKKOS_FUNCTION
   bool operator!=(const value_type value) { return !(*this == value); }
+};
+
+template <bool UseSIMD>
+struct properties<specfem::dimension::type::dim2,
+                  specfem::element::medium_tag::elastic_sv,
+                  specfem::element::property_tag::isotropic, UseSIMD>
+    : public properties<specfem::dimension::type::dim2,
+                        specfem::element::medium_tag::elastic,
+                        specfem::element::property_tag::isotropic, UseSIMD> {
+
+  /**
+   * @name Typedefs
+   *
+   */
+  ///@{
+  constexpr static bool is_point_properties = true;
+  using simd = specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD type
+  constexpr static auto dimension = specfem::dimension::type::dim2;
+  constexpr static auto medium_tag = specfem::element::medium_tag::elastic_sv;
+  constexpr static auto property_tag =
+      specfem::element::property_tag::isotropic;
+  using value_type =
+      typename simd::datatype; ///< Value type to store properties
+                               ///@}
+
+  KOKKOS_FUNCTION
+  properties() = default;
+
+  KOKKOS_FUNCTION
+  properties(const value_type &lambdaplus2mu, const value_type &mu,
+             const value_type &rho)
+      : properties<specfem::dimension::type::dim2,
+                   specfem::element::medium_tag::elastic,
+                   specfem::element::property_tag::isotropic, UseSIMD>(
+            lambdaplus2mu, mu, rho) {}
+
+  properties(const value_type value)
+      : properties<specfem::dimension::type::dim2,
+                   specfem::element::medium_tag::elastic,
+                   specfem::element::property_tag::isotropic, UseSIMD>(value) {}
+};
+
+template <bool UseSIMD>
+struct properties<specfem::dimension::type::dim2,
+                  specfem::element::medium_tag::elastic_sv,
+                  specfem::element::property_tag::anisotropic, UseSIMD>
+    : public properties<specfem::dimension::type::dim2,
+                        specfem::element::medium_tag::elastic,
+                        specfem::element::property_tag::anisotropic, UseSIMD> {
+
+  /**
+   * @name Typedefs
+   *
+   */
+  ///@{
+  constexpr static bool is_point_properties = true;
+  using simd = specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD type
+  constexpr static auto dimension = specfem::dimension::type::dim2;
+  constexpr static auto medium_tag = specfem::element::medium_tag::elastic_sv;
+  constexpr static auto property_tag =
+      specfem::element::property_tag::anisotropic;
+  using value_type =
+      typename simd::datatype; ///< Value type to store properties
+                               ///@}
+
+  KOKKOS_FUNCTION
+  properties() = default;
+
+  KOKKOS_FUNCTION
+  properties(const value_type &c11, const value_type &c13,
+             const value_type &c15, const value_type &c33,
+             const value_type &c35, const value_type &c55,
+             const value_type &c12, const value_type &c23,
+             const value_type &c25, const value_type &rho)
+      : properties<specfem::dimension::type::dim2,
+                   specfem::element::medium_tag::elastic,
+                   specfem::element::property_tag::anisotropic, UseSIMD>(
+            c11, c13, c15, c33, c35, c55, c12, c23, c25, rho) {}
+
+  properties(const value_type value)
+      : properties<specfem::dimension::type::dim2,
+                   specfem::element::medium_tag::elastic,
+                   specfem::element::property_tag::anisotropic, UseSIMD>(
+            value) {}
+};
+
+template <bool UseSIMD>
+struct properties<specfem::dimension::type::dim2,
+                  specfem::element::medium_tag::elastic_sh,
+                  specfem::element::property_tag::isotropic, UseSIMD>
+    : public properties<specfem::dimension::type::dim2,
+                        specfem::element::medium_tag::elastic,
+                        specfem::element::property_tag::isotropic, UseSIMD> {
+
+  /**
+   * @name Typedefs
+   *
+   */
+  ///@{
+  constexpr static bool is_point_properties = true;
+  using simd = specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD type
+  constexpr static auto dimension = specfem::dimension::type::dim2;
+  constexpr static auto medium_tag = specfem::element::medium_tag::elastic_sh;
+  constexpr static auto property_tag =
+      specfem::element::property_tag::isotropic;
+  using value_type =
+      typename simd::datatype; ///< Value type to store properties
+                               ///@}
+
+  KOKKOS_FUNCTION
+  properties() = default;
+
+  KOKKOS_FUNCTION
+  properties(const value_type &lambdaplus2mu, const value_type &mu,
+             const value_type &rho)
+      : properties<specfem::dimension::type::dim2,
+                   specfem::element::medium_tag::elastic,
+                   specfem::element::property_tag::isotropic, UseSIMD>(
+            lambdaplus2mu, mu, rho) {}
+
+  properties(const value_type value)
+      : properties<specfem::dimension::type::dim2,
+                   specfem::element::medium_tag::elastic,
+                   specfem::element::property_tag::isotropic, UseSIMD>(value) {}
+};
+
+template <bool UseSIMD>
+struct properties<specfem::dimension::type::dim2,
+                  specfem::element::medium_tag::elastic_sh,
+                  specfem::element::property_tag::anisotropic, UseSIMD>
+    : public properties<specfem::dimension::type::dim2,
+                        specfem::element::medium_tag::elastic,
+                        specfem::element::property_tag::anisotropic, UseSIMD> {
+
+  /**
+   * @name Typedefs
+   *
+   */
+  ///@{
+  constexpr static bool is_point_properties = true;
+  using simd = specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD type
+  constexpr static auto dimension = specfem::dimension::type::dim2;
+  constexpr static auto medium_tag = specfem::element::medium_tag::elastic_sh;
+  constexpr static auto property_tag =
+      specfem::element::property_tag::anisotropic;
+  using value_type =
+      typename simd::datatype; ///< Value type to store properties
+                               ///@}
+
+  KOKKOS_FUNCTION
+  properties() = default;
+
+  KOKKOS_FUNCTION
+  properties(const value_type &c11, const value_type &c13,
+             const value_type &c15, const value_type &c33,
+             const value_type &c35, const value_type &c55,
+             const value_type &c12, const value_type &c23,
+             const value_type &c25, const value_type &rho)
+      : properties<specfem::dimension::type::dim2,
+                   specfem::element::medium_tag::elastic,
+                   specfem::element::property_tag::anisotropic, UseSIMD>(
+            c11, c13, c15, c33, c35, c55, c12, c23, c25, rho) {}
+
+  properties(const value_type value)
+      : properties<specfem::dimension::type::dim2,
+                   specfem::element::medium_tag::elastic,
+                   specfem::element::property_tag::anisotropic, UseSIMD>(
+            value) {}
 };
 
 /**

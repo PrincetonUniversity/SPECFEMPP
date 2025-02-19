@@ -25,6 +25,7 @@
 
 specfem::mesh::mesh<specfem::dimension::type::dim2>
 specfem::IO::read_mesh(const std::string filename,
+                       const specfem::enums::elastic_wave wave,
                        const specfem::MPI::MPI *mpi) {
 
   // Declaring empty mesh objects
@@ -87,8 +88,8 @@ specfem::IO::read_mesh(const std::string filename,
 
   try {
     mesh.materials = specfem::IO::mesh::impl::fortran::read_material_properties(
-        stream, mesh.parameters.numat, mesh.nspec, mesh.control_nodes.knods,
-        mpi);
+        stream, mesh.parameters.numat, mesh.nspec, wave,
+        mesh.control_nodes.knods, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
