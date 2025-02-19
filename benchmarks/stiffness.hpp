@@ -5,12 +5,13 @@
 #include "enumerations/wavefield.hpp"
 
 #include "impl_chunk.hpp"
+#include "impl_point.hpp"
 #include "impl_policy.hpp"
 
-#include "point/stress.hpp"
 #include "compute/assembly/assembly.hpp"
 #include "datatypes/simd.hpp"
 #include "parallel_configuration/chunk_config.hpp"
+#include "point/stress.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -24,9 +25,7 @@ constexpr static auto boundary_tag = specfem::element::boundary_tag::none;
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool flag>
 void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
-specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> &c_field,
-specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> &c_field_dot_dot,
-                                    const int &istep) {
+                                   const int &istep) {
 
   constexpr auto medium_tag = MediumTag;
   constexpr auto property_tag = PropertyTag;
@@ -120,23 +119,28 @@ specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> &c_field_dot_dot,
 
           const auto iterator =
               chunk_policy.league_iterator(starting_element_index);
+          {
+            const auto &curr_field = field.get_field<MediumTag>();
 
-          Kokkos::parallel_for(
-                Kokkos::TeamThreadRange(team, iterator.chunk_size()), [&](const int &i) {
-                    const auto iterator_index = iterator(i);
-                    const int ielement = iterator_index.ielement;
-                    const int ispec = iterator_index.index.ispec;
-                    const int iz = iterator_index.index.iz;
-                    const int ix = iterator_index.index.ix;
-            
-                    const int iglob = field.assembly_index_mapping(
-                        field.index_mapping(ispec, iz, ix), static_cast<int>(MediumTag));
-            
-                    for (int icomp = 0; icomp < components; ++icomp) {
-                        element_field.displacement(ielement, iz, ix, icomp) =
-                            c_field(iglob, icomp);
-                    }
+            Kokkos::parallel_for(
+                Kokkos::TeamThreadRange(team, iterator.chunk_size()),
+                [&](const int &i) {
+                  const auto iterator_index = iterator(i);
+                  const int ielement = iterator_index.ielement;
+                  const int ispec = iterator_index.index.ispec;
+                  const int iz = iterator_index.index.iz;
+                  const int ix = iterator_index.index.ix;
+
+                  const int iglob = field.assembly_index_mapping(
+                      field.index_mapping(ispec, iz, ix),
+                      static_cast<int>(MediumTag));
+
+                  for (int icomp = 0; icomp < components; ++icomp) {
+                    element_field.displacement(ielement, iz, ix, icomp) =
+                        curr_field.field(iglob, icomp);
+                  }
                 });
+          }
 
           team.team_barrier();
 
@@ -171,23 +175,31 @@ specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> &c_field_dot_dot,
                 const auto gammaz = partial_derivatives.gammaz(ispec, iz, ix);
 
                 specfem::datatype::VectorPointViewType<type_real, 2, components,
-                                             using_simd> df;
+                                                       using_simd>
+                    df;
 
                 for (int icomponent = 0; icomponent < components;
                      ++icomponent) {
                   df(0, icomponent) =
-                      xix * df_dxi[icomponent] +
-                      gammax * df_dgamma[icomponent];
+                      xix * df_dxi[icomponent] + gammax * df_dgamma[icomponent];
 
                   df(1, icomponent) =
-                      xiz * df_dxi[icomponent] +
-                      gammaz * df_dgamma[icomponent];
+                      xiz * df_dxi[icomponent] + gammaz * df_dgamma[icomponent];
                 }
 
-                specfem::point::properties<dimension, medium_tag, property_tag,
-                                 using_simd> point_property;
+                auto point_property = [&]() {
+                  if constexpr (flag) {
+                    return specfem::point::properties<
+                        dimension, medium_tag, property_tag, using_simd>();
+                  } else {
+                    return specfem::benchmarks::properties<
+                        dimension, medium_tag, property_tag, using_simd>();
+                  }
+                }();
 
-                specfem::point::field_derivatives<dimension, medium_tag, using_simd> field_derivatives(df);
+                specfem::point::field_derivatives<dimension, medium_tag,
+                                                  using_simd>
+                    field_derivatives(df);
                 const auto &point_stress = [&]() {
                   const int ispec =
                       properties.property_index_mapping(index.ispec);
@@ -199,22 +211,27 @@ specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> &c_field_dot_dot,
                                     specfem::element::medium_tag::acoustic &&
                                 PropertyTag ==
                                     specfem::element::property_tag::isotropic) {
-                    point_property.rho_inverse = container.rho_inverse(ispec, iz, ix);
+                    point_property.rho_inverse =
+                        container.rho_inverse(ispec, iz, ix);
                     point_property.kappa = container.kappa(ispec, iz, ix);
-                    point_property.kappa_inverse = static_cast<type_real>(1.0) / point_property.kappa;
+                    point_property.kappa_inverse =
+                        static_cast<type_real>(1.0) / point_property.kappa;
                     point_property.rho_vpinverse =
-                        sqrt(point_property.rho_inverse * point_property.kappa_inverse);
-                    
+                        sqrt(point_property.rho_inverse *
+                             point_property.kappa_inverse);
+
                     const auto &du = field_derivatives.du;
 
-                    specfem::datatype::VectorPointViewType<type_real, 2, 1, using_simd> T;
+                    specfem::datatype::VectorPointViewType<type_real, 2, 1,
+                                                           using_simd>
+                        T;
 
                     T(0, 0) = point_property.rho_inverse * du(0, 0);
                     T(1, 0) = point_property.rho_inverse * du(1, 0);
 
                     return specfem::point::stress<
-                      specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
-                      using_simd>(T);
+                        specfem::dimension::type::dim2,
+                        specfem::element::medium_tag::acoustic, using_simd>(T);
 
                   } else if constexpr (
                       MediumTag == specfem::element::medium_tag::elastic &&
@@ -222,22 +239,31 @@ specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> &c_field_dot_dot,
                           specfem::element::property_tag::isotropic) {
                     point_property.rho = container.rho(ispec, iz, ix);
                     point_property.mu = container.mu(ispec, iz, ix);
-                    point_property.lambdaplus2mu = container.lambdaplus2mu(ispec, iz, ix);
-                    point_property.lambda = point_property.lambdaplus2mu - 2 * point_property.mu;
-                    point_property.rho_vp = sqrt(point_property.rho * point_property.lambdaplus2mu);
-                    point_property.rho_vs = sqrt(point_property.rho * point_property.mu);
+                    point_property.lambdaplus2mu =
+                        container.lambdaplus2mu(ispec, iz, ix);
+                    point_property.lambda =
+                        point_property.lambdaplus2mu - 2 * point_property.mu;
+                    point_property.rho_vp =
+                        sqrt(point_property.rho * point_property.lambdaplus2mu);
+                    point_property.rho_vs =
+                        sqrt(point_property.rho * point_property.mu);
 
                     using datatype =
-                        typename specfem::datatype::simd<type_real, using_simd>::datatype;
+                        typename specfem::datatype::simd<type_real,
+                                                         using_simd>::datatype;
                     const auto &du = field_derivatives.du;
 
                     datatype sigma_xx, sigma_zz, sigma_xz;
 
-                    sigma_xx = point_property.lambdaplus2mu * du(0, 0) + point_property.lambda * du(1, 1);
-                    sigma_zz = point_property.lambdaplus2mu * du(1, 1) + point_property.lambda * du(0, 0);
+                    sigma_xx = point_property.lambdaplus2mu * du(0, 0) +
+                               point_property.lambda * du(1, 1);
+                    sigma_zz = point_property.lambdaplus2mu * du(1, 1) +
+                               point_property.lambda * du(0, 0);
                     sigma_xz = point_property.mu * (du(0, 1) + du(1, 0));
 
-                    specfem::datatype::VectorPointViewType<type_real, 2, 2, using_simd> T;
+                    specfem::datatype::VectorPointViewType<type_real, 2, 2,
+                                                           using_simd>
+                        T;
 
                     T(0, 0) = sigma_xx;
                     T(0, 1) = sigma_xz;
@@ -245,8 +271,8 @@ specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> &c_field_dot_dot,
                     T(1, 1) = sigma_zz;
 
                     return specfem::point::stress<
-                          specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-                          using_simd>(T);
+                        specfem::dimension::type::dim2,
+                        specfem::element::medium_tag::elastic, using_simd>(T);
                   } else if constexpr (
                       MediumTag == specfem::element::medium_tag::elastic &&
                       PropertyTag ==
@@ -262,25 +288,33 @@ specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> &c_field_dot_dot,
                     point_property.c23 = container.c23(ispec, iz, ix);
                     point_property.c25 = container.c25(ispec, iz, ix);
 
-                    point_property.rho_vp = sqrt(point_property.rho * point_property.c33);
-                    point_property.rho_vs = sqrt(point_property.rho * point_property.c55);
+                    point_property.rho_vp =
+                        sqrt(point_property.rho * point_property.c33);
+                    point_property.rho_vs =
+                        sqrt(point_property.rho * point_property.c55);
 
                     using datatype =
-                        typename specfem::datatype::simd<type_real, using_simd>::datatype;
+                        typename specfem::datatype::simd<type_real,
+                                                         using_simd>::datatype;
                     const auto &du = field_derivatives.du;
 
                     datatype sigma_xx, sigma_zz, sigma_xz;
 
-                    sigma_xx = point_property.c11 * du(0, 0) + point_property.c13 * du(1, 1) +
-                                point_property.c15 * (du(1, 0) + du(0, 1));
+                    sigma_xx = point_property.c11 * du(0, 0) +
+                               point_property.c13 * du(1, 1) +
+                               point_property.c15 * (du(1, 0) + du(0, 1));
 
-                    sigma_zz = point_property.c13 * du(0, 0) + point_property.c33 * du(1, 1) +
-                                point_property.c35 * (du(1, 0) + du(0, 1));
+                    sigma_zz = point_property.c13 * du(0, 0) +
+                               point_property.c33 * du(1, 1) +
+                               point_property.c35 * (du(1, 0) + du(0, 1));
 
-                    sigma_xz = point_property.c15 * du(0, 0) + point_property.c35 * du(1, 1) +
-                                point_property.c55 * (du(1, 0) + du(0, 1));
+                    sigma_xz = point_property.c15 * du(0, 0) +
+                               point_property.c35 * du(1, 1) +
+                               point_property.c55 * (du(1, 0) + du(0, 1));
 
-                    specfem::datatype::VectorPointViewType<type_real, 2, 2, using_simd> T;
+                    specfem::datatype::VectorPointViewType<type_real, 2, 2,
+                                                           using_simd>
+                        T;
 
                     T(0, 0) = sigma_xx;
                     T(0, 1) = sigma_xz;
@@ -288,8 +322,8 @@ specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> &c_field_dot_dot,
                     T(1, 1) = sigma_zz;
 
                     return specfem::point::stress<
-                        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-                        using_simd>(T);
+                        specfem::dimension::type::dim2,
+                        specfem::element::medium_tag::elastic, using_simd>(T);
                   } else {
                     static_assert("medium type not supported");
                   }
@@ -297,12 +331,14 @@ specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> &c_field_dot_dot,
 
                 for (int icomponent = 0; icomponent < components;
                      ++icomponent) {
-                    stress_integrand.F(ielement, index.iz, index.ix, 0,
-                                        icomponent) = point_stress.T(0, icomponent) * xix +
-                         point_stress.T(1, icomponent) * xiz;
-                    stress_integrand.F(ielement, index.iz, index.ix, 1,
-                                        icomponent) = point_stress.T(0, icomponent) * gammax +
-                         point_stress.T(1, icomponent) * gammaz;
+                  stress_integrand.F(ielement, index.iz, index.ix, 0,
+                                     icomponent) =
+                      point_stress.T(0, icomponent) * xix +
+                      point_stress.T(1, icomponent) * xiz;
+                  stress_integrand.F(ielement, index.iz, index.ix, 1,
+                                     icomponent) =
+                      point_stress.T(0, icomponent) * gammax +
+                      point_stress.T(1, icomponent) * gammaz;
                 }
               });
 
@@ -340,15 +376,18 @@ specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> &c_field_dot_dot,
                   }
                 }
 
-                specfem::datatype::ScalarPointViewType<type_real, components, using_simd> result;
+                specfem::datatype::ScalarPointViewType<type_real, components,
+                                                       using_simd>
+                    result;
 
                 for (int icomp = 0; icomp < components; ++icomp) {
                   result(icomp) =
                       weights(iz) * temp1l[icomp] + weights(ix) * temp2l[icomp];
                 }
 
-                specfem::point::field<dimension, medium_tag, false, false, true, false,
-                            using_simd> acceleration(result);
+                specfem::point::field<dimension, medium_tag, false, false, true,
+                                      false, using_simd>
+                    acceleration(result);
 
                 for (int icomponent = 0; icomponent < components;
                      ++icomponent) {
@@ -356,14 +395,14 @@ specfem::kokkos::DeviceView2d<type_real, Kokkos::LayoutLeft> &c_field_dot_dot,
                       static_cast<type_real>(-1.0);
                 }
 
+                const auto &curr_field = field.template get_field<MediumTag>();
                 const int iglob = field.assembly_index_mapping(
                     field.index_mapping(index.ispec, iz, ix),
                     static_cast<int>(MediumTag));
                 for (int icomp = 0; icomp < components; ++icomp) {
-                    Kokkos::atomic_add(&c_field_dot_dot(iglob, icomp),
-                                        acceleration.acceleration(icomp));
+                  Kokkos::atomic_add(&curr_field.field_dot_dot(iglob, icomp),
+                                     acceleration.acceleration(icomp));
                 }
-
               });
         }
       });
