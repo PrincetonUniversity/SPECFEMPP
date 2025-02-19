@@ -25,7 +25,7 @@ public:
   constexpr static auto ngll = NGLL;
 
   domain_kernels(const specfem::compute::assembly &assembly)
-      : assembly(assembly), coupling_interfaces_elastic(assembly),
+      : assembly(assembly), coupling_interfaces_elastic_sv(assembly),
         coupling_interfaces_acoustic(assembly) {}
 
   template <specfem::element::medium_tag medium>
