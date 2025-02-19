@@ -31,9 +31,10 @@ std::string get_error_message(
 
 template <>
 std::string get_error_message(
-    const specfem::point::properties<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-        specfem::element::property_tag::isotropic, false> &point_property,
+    const specfem::point::properties<specfem::dimension::type::dim2,
+                                     specfem::element::medium_tag::elastic_sv,
+                                     specfem::element::property_tag::isotropic,
+                                     false> &point_property,
     const type_real value, const int mode) {
   std::ostringstream message;
 
@@ -48,7 +49,8 @@ std::string get_error_message(
 template <>
 std::string get_error_message(
     const specfem::point::properties<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+        specfem::dimension::type::dim2,
+        specfem::element::medium_tag::elastic_sv,
         specfem::element::property_tag::anisotropic, false> &point_property,
     const type_real value, const int mode) {
   std::ostringstream message;
@@ -98,7 +100,7 @@ get_point_property(
 
 template <>
 specfem::point::properties<specfem::dimension::type::dim2,
-                           specfem::element::medium_tag::elastic,
+                           specfem::element::medium_tag::elastic_sv,
                            specfem::element::property_tag::isotropic, false>
 get_point_property(const int ispec, const int iz, const int ix,
                    const specfem::compute::properties &properties) {
@@ -108,7 +110,7 @@ get_point_property(const int ispec, const int iz, const int ix,
   const int ispec_l = properties.h_property_index_mapping(ispec);
 
   specfem::point::properties<specfem::dimension::type::dim2,
-                             specfem::element::medium_tag::elastic,
+                             specfem::element::medium_tag::elastic_sv,
                              specfem::element::property_tag::isotropic, false>
       point_property;
 
@@ -122,15 +124,16 @@ get_point_property(const int ispec, const int iz, const int ix,
 
 template <>
 specfem::point::properties<specfem::dimension::type::dim2,
-                           specfem::element::medium_tag::elastic,
+                           specfem::element::medium_tag::elastic_sv,
                            specfem::element::property_tag::isotropic, false>
 get_point_property(
     const int lane,
-    const specfem::point::properties<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-        specfem::element::property_tag::isotropic, true> &point_property) {
+    const specfem::point::properties<specfem::dimension::type::dim2,
+                                     specfem::element::medium_tag::elastic_sv,
+                                     specfem::element::property_tag::isotropic,
+                                     true> &point_property) {
   specfem::point::properties<specfem::dimension::type::dim2,
-                             specfem::element::medium_tag::elastic,
+                             specfem::element::medium_tag::elastic_sv,
                              specfem::element::property_tag::isotropic, false>
       point_property_l;
 
@@ -143,7 +146,7 @@ get_point_property(
 
 template <>
 specfem::point::properties<specfem::dimension::type::dim2,
-                           specfem::element::medium_tag::elastic,
+                           specfem::element::medium_tag::elastic_sv,
                            specfem::element::property_tag::anisotropic, false>
 get_point_property(const int ispec, const int iz, const int ix,
                    const specfem::compute::properties &properties) {
@@ -153,7 +156,7 @@ get_point_property(const int ispec, const int iz, const int ix,
   const int ispec_l = properties.h_property_index_mapping(ispec);
 
   specfem::point::properties<specfem::dimension::type::dim2,
-                             specfem::element::medium_tag::elastic,
+                             specfem::element::medium_tag::elastic_sv,
                              specfem::element::property_tag::anisotropic, false>
       point_property;
 
@@ -170,15 +173,16 @@ get_point_property(const int ispec, const int iz, const int ix,
 
 template <>
 specfem::point::properties<specfem::dimension::type::dim2,
-                           specfem::element::medium_tag::elastic,
+                           specfem::element::medium_tag::elastic_sv,
                            specfem::element::property_tag::anisotropic, false>
 get_point_property(
     const int lane,
     const specfem::point::properties<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+        specfem::dimension::type::dim2,
+        specfem::element::medium_tag::elastic_sv,
         specfem::element::property_tag::anisotropic, true> &point_property) {
   specfem::point::properties<specfem::dimension::type::dim2,
-                             specfem::element::medium_tag::elastic,
+                             specfem::element::medium_tag::elastic_sv,
                              specfem::element::property_tag::anisotropic, false>
       point_property_l;
 
@@ -277,12 +281,14 @@ void check_point_properties(
 
 template <bool using_simd>
 void check_point_properties(
-    const specfem::point::properties<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-        specfem::element::property_tag::isotropic, using_simd> &p1,
-    const specfem::point::properties<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-        specfem::element::property_tag::isotropic, using_simd> &p2,
+    const specfem::point::properties<specfem::dimension::type::dim2,
+                                     specfem::element::medium_tag::elastic_sv,
+                                     specfem::element::property_tag::isotropic,
+                                     using_simd> &p1,
+    const specfem::point::properties<specfem::dimension::type::dim2,
+                                     specfem::element::medium_tag::elastic_sv,
+                                     specfem::element::property_tag::isotropic,
+                                     using_simd> &p2,
     const int &n_simd_elements) {
   check_eq<using_simd>(p1.rho, p2.rho, n_simd_elements);
   check_eq<using_simd>(p1.mu, p2.mu, n_simd_elements);
@@ -302,10 +308,12 @@ void check_point_properties(
 template <bool using_simd>
 void check_point_properties(
     const specfem::point::properties<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+        specfem::dimension::type::dim2,
+        specfem::element::medium_tag::elastic_sv,
         specfem::element::property_tag::anisotropic, using_simd> &p1,
     const specfem::point::properties<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+        specfem::dimension::type::dim2,
+        specfem::element::medium_tag::elastic_sv,
         specfem::element::property_tag::anisotropic, using_simd> &p2,
     const int &n_simd_elements) {
   check_eq<using_simd>(p1.rho, p2.rho, n_simd_elements);
@@ -697,10 +705,10 @@ void test_properties(
           WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
 #undef TEST_COMPUTE_TO_MESH
-  // check_compute_to_mesh<specfem::element::medium_tag::elastic,
+  // check_compute_to_mesh<specfem::element::medium_tag::elastic_sv,
   //                       specfem::element::property_tag::isotropic>(assembly,
   //                                                                  mesh);
-  // check_compute_to_mesh<specfem::element::medium_tag::elastic,
+  // check_compute_to_mesh<specfem::element::medium_tag::elastic_sv,
   //                       specfem::element::property_tag::anisotropic>(assembly,
   //                                                                    mesh);
   // check_compute_to_mesh<specfem::element::medium_tag::acoustic,

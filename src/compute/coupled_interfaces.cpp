@@ -337,7 +337,7 @@
 
 //     ASSERT(((ispec_elastic != ispec_acoustic) &&
 //             (h_ispec_type(ispec_elastic) ==
-//              specfem::element::medium_tag::elastic) &&
+//              specfem::element::medium_tag::elastic_sv) &&
 //             (h_ispec_type(ispec_acoustic) ==
 //              specfem::element::medium_tag::acoustic)),
 //            "Invalid interface");
@@ -409,7 +409,7 @@
 //     // element
 //     ASSERT(((ispec_elastic != ispec_poroelastic) &&
 //             (h_ispec_type(ispec_elastic) ==
-//              specfem::element::medium_tag::elastic) &&
+//              specfem::element::medium_tag::elastic_sv) &&
 //             (h_ispec_type(ispec_poroelastic) ==
 //              specfem::element::medium_tag::poroelastic)),
 //            "Invalid interface");
@@ -544,7 +544,7 @@ specfem::compute::coupled_interfaces::coupled_interfaces(
 // Explicit template instantiation
 
 template class specfem::compute::interface_container<
-    specfem::element::medium_tag::elastic,
+    specfem::element::medium_tag::elastic_sv,
     specfem::element::medium_tag::acoustic>;
 
 template class specfem::compute::interface_container<
@@ -552,36 +552,36 @@ template class specfem::compute::interface_container<
     specfem::element::medium_tag::poroelastic>;
 
 template class specfem::compute::interface_container<
-    specfem::element::medium_tag::elastic,
+    specfem::element::medium_tag::elastic_sv,
     specfem::element::medium_tag::poroelastic>;
 
 template specfem::compute::interface_container<
-    specfem::element::medium_tag::elastic,
+    specfem::element::medium_tag::elastic_sv,
     specfem::element::medium_tag::acoustic>
 specfem::compute::coupled_interfaces::get_interface_container<
-    specfem::element::medium_tag::elastic,
+    specfem::element::medium_tag::elastic_sv,
     specfem::element::medium_tag::acoustic>() const;
 
 template specfem::compute::interface_container<
     specfem::element::medium_tag::acoustic,
-    specfem::element::medium_tag::elastic>
+    specfem::element::medium_tag::elastic_sv>
 specfem::compute::coupled_interfaces::get_interface_container<
     specfem::element::medium_tag::acoustic,
-    specfem::element::medium_tag::elastic>() const;
+    specfem::element::medium_tag::elastic_sv>() const;
 
 template specfem::compute::interface_container<
-    specfem::element::medium_tag::elastic,
+    specfem::element::medium_tag::elastic_sv,
     specfem::element::medium_tag::poroelastic>
 specfem::compute::coupled_interfaces::get_interface_container<
-    specfem::element::medium_tag::elastic,
+    specfem::element::medium_tag::elastic_sv,
     specfem::element::medium_tag::poroelastic>() const;
 
 template specfem::compute::interface_container<
     specfem::element::medium_tag::poroelastic,
-    specfem::element::medium_tag::elastic>
+    specfem::element::medium_tag::elastic_sv>
 specfem::compute::coupled_interfaces::get_interface_container<
     specfem::element::medium_tag::poroelastic,
-    specfem::element::medium_tag::elastic>() const;
+    specfem::element::medium_tag::elastic_sv>() const;
 
 template specfem::compute::interface_container<
     specfem::element::medium_tag::acoustic,

@@ -9,16 +9,18 @@ namespace specfem {
 namespace medium {
 
 template <bool UseSIMD>
-KOKKOS_INLINE_FUNCTION specfem::point::stress<
-    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-    UseSIMD>
-impl_compute_stress(
-    const specfem::point::properties<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-        specfem::element::property_tag::anisotropic, UseSIMD> &properties,
-    const specfem::point::field_derivatives<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-        UseSIMD> &field_derivatives) {
+KOKKOS_INLINE_FUNCTION
+    specfem::point::stress<specfem::dimension::type::dim2,
+                           specfem::element::medium_tag::elastic_sv, UseSIMD>
+    impl_compute_stress(
+        const specfem::point::properties<
+            specfem::dimension::type::dim2,
+            specfem::element::medium_tag::elastic_sv,
+            specfem::element::property_tag::anisotropic, UseSIMD> &properties,
+        const specfem::point::field_derivatives<
+            specfem::dimension::type::dim2,
+            specfem::element::medium_tag::elastic_sv, UseSIMD>
+            &field_derivatives) {
 
   using datatype =
       typename specfem::datatype::simd<type_real, UseSIMD>::datatype;

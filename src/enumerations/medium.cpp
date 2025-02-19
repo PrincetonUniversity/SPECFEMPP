@@ -9,8 +9,8 @@ specfem::element::to_string(const specfem::element::medium_tag &medium,
   std::string boundary_string;
 
   switch (medium) {
-  case specfem::element::medium_tag::elastic:
-    medium_string = "elastic";
+  case specfem::element::medium_tag::elastic_sv:
+    medium_string = "elastic_sv";
     break;
   case specfem::element::medium_tag::acoustic:
     medium_string = "acoustic";
@@ -57,9 +57,9 @@ const std::string specfem::element::to_string(
     const specfem::element::medium_tag &medium,
     const specfem::element::property_tag &property_tag) {
 
-  if ((medium == specfem::element::medium_tag::elastic) &&
+  if ((medium == specfem::element::medium_tag::elastic_sv) &&
       (property_tag == specfem::element::property_tag::isotropic)) {
-    return "elastic isotropic";
+    return "elastic_sv isotropic";
   } else if ((medium == specfem::element::medium_tag::acoustic) &&
              (property_tag == specfem::element::property_tag::isotropic)) {
     return "acoustic isotropic";
@@ -70,7 +70,7 @@ const std::string specfem::element::to_string(
 
 const std::string
 specfem::element::to_string(const specfem::element::medium_tag &medium) {
-  if (medium == specfem::element::medium_tag::elastic) {
+  if (medium == specfem::element::medium_tag::elastic_sv) {
     return "elastic";
   } else if (medium == specfem::element::medium_tag::acoustic) {
     return "acoustic";

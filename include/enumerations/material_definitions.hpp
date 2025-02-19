@@ -15,7 +15,8 @@ namespace element {
 /// @{
 #define DIMENSION_TAG_DIM2 (0, specfem::dimension::type::dim2, dim2)
 
-#define MEDIUM_TAG_ELASTIC (0, specfem::element::medium_tag::elastic, elastic)
+#define MEDIUM_TAG_ELASTIC                                                     \
+  (0, specfem::element::medium_tag::elastic_sv, elastic)
 #define MEDIUM_TAG_ACOUSTIC                                                    \
   (1, specfem::element::medium_tag::acoustic, acoustic)
 

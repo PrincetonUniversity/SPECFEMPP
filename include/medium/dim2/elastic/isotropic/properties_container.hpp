@@ -8,11 +8,11 @@ namespace specfem {
 namespace medium {
 
 template <>
-struct properties_container<specfem::element::medium_tag::elastic,
+struct properties_container<specfem::element::medium_tag::elastic_sv,
                             specfem::element::property_tag::isotropic> {
 
   constexpr static auto dimension = specfem::dimension::type::dim2;
-  constexpr static auto value_type = specfem::element::medium_tag::elastic;
+  constexpr static auto value_type = specfem::element::medium_tag::elastic_sv;
   constexpr static auto property_type =
       specfem::element::property_tag::isotropic;
 

@@ -71,11 +71,11 @@ specfem::compute::assembly::generate_wavefield_on_entire_grid(
   const auto h_wavefield_on_entire_grid =
       Kokkos::create_mirror_view(wavefield_on_entire_grid);
 
-  get_wavefield_on_entire_grid<specfem::element::medium_tag::elastic,
+  get_wavefield_on_entire_grid<specfem::element::medium_tag::elastic_sv,
                                specfem::element::property_tag::isotropic>(
       component, *this, wavefield_on_entire_grid);
 
-  get_wavefield_on_entire_grid<specfem::element::medium_tag::elastic,
+  get_wavefield_on_entire_grid<specfem::element::medium_tag::elastic_sv,
                                specfem::element::property_tag::anisotropic>(
       component, *this, wavefield_on_entire_grid);
 

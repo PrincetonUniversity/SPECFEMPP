@@ -12,7 +12,7 @@ KOKKOS_INLINE_FUNCTION auto impl_compute_source_contribution(
     const std::integral_constant<specfem::dimension::type,
                                  specfem::dimension::type::dim2>,
     const std::integral_constant<specfem::element::medium_tag,
-                                 specfem::element::medium_tag::elastic>,
+                                 specfem::element::medium_tag::elastic_sv>,
     const std::integral_constant<specfem::element::property_tag,
                                  specfem::element::property_tag::anisotropic>,
     const PointSourcesType &point_source,

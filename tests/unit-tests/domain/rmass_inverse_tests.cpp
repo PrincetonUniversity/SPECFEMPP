@@ -184,13 +184,14 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
               const int ispec_mesh =
                   assembly.mesh.mapping.compute_to_mesh(ispec);
               if (assembly.element_types.get_medium_tag(ispec) ==
-                  specfem::element::medium_tag::elastic) {
+                  specfem::element::medium_tag::elastic_sv) {
 
                 constexpr int components = 2;
                 const auto point_field = [&]() {
-                  specfem::point::field<specfem::dimension::type::dim2,
-                                        specfem::element::medium_tag::elastic,
-                                        false, false, false, true, false>
+                  specfem::point::field<
+                      specfem::dimension::type::dim2,
+                      specfem::element::medium_tag::elastic_sv, false, false,
+                      false, true, false>
                       point_field;
                   specfem::compute::load_on_host(index, assembly.fields.forward,
                                                  point_field);

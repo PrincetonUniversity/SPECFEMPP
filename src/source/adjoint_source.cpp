@@ -39,7 +39,7 @@ void specfem::sources::adjoint_source::compute_source_array(
               "Force source requires 1 component for acoustic medium");
         }
         source_array(0, iz, ix) = hlagrange;
-      } else if ((el_type == specfem::element::medium_tag::elastic) ||
+      } else if ((el_type == specfem::element::medium_tag::elastic_sv) ||
                  (el_type == specfem::element::medium_tag::poroelastic)) {
         if (ncomponents != 2) {
           throw std::runtime_error(

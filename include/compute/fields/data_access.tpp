@@ -23,7 +23,7 @@ KOKKOS_FORCEINLINE_FUNCTION void impl_load_on_device(const int iglob,
   const auto &curr_field =
       [&]() -> const specfem::compute::impl::field_impl<
                 specfem::dimension::type::dim2, MediumType> & {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic_sv) {
       return field.elastic;
     } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
       return field.acoustic;
@@ -82,7 +82,7 @@ impl_load_on_device(const typename ViewType::simd::mask_type &mask,
   const auto &curr_field =
       [&]() -> const specfem::compute::impl::field_impl<
                 specfem::dimension::type::dim2, MediumType> & {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic_sv) {
       return field.elastic;
     } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
       return field.acoustic;
@@ -155,7 +155,7 @@ impl_load_on_device(const specfem::point::simd_assembly_index &index,
   const auto &curr_field =
       [&]() -> const specfem::compute::impl::field_impl<
                 specfem::dimension::type::dim2, MediumType> & {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic_sv) {
       return field.elastic;
     } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
       return field.acoustic;
@@ -211,7 +211,7 @@ inline void impl_load_on_host(const int iglob, const WavefieldType &field,
   const auto &curr_field =
       [&]() -> const specfem::compute::impl::field_impl<
                 specfem::dimension::type::dim2, MediumType> & {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic_sv) {
       return field.elastic;
     } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
       return field.acoustic;
@@ -269,7 +269,7 @@ inline void impl_load_on_host(const typename ViewType::simd::mask_type &mask,
   const auto &curr_field =
       [&]() -> const specfem::compute::impl::field_impl<
                 specfem::dimension::type::dim2, MediumType> & {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic_sv) {
       return field.elastic;
     } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
       return field.acoustic;
@@ -341,7 +341,7 @@ inline void impl_load_on_host(const specfem::point::simd_assembly_index &index,
   const auto &curr_field =
       [&]() -> const specfem::compute::impl::field_impl<
                 specfem::dimension::type::dim2, MediumType> & {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic_sv) {
       return field.elastic;
     } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
       return field.acoustic;
@@ -504,7 +504,7 @@ impl_store_on_device(const int iglob, const ViewType &point_field,
   const auto &curr_field =
       [&]() -> const specfem::compute::impl::field_impl<
                 specfem::dimension::type::dim2, MediumType> & {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic_sv) {
       return field.elastic;
     } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
       return field.acoustic;
@@ -550,7 +550,7 @@ impl_store_on_device(const typename ViewType::simd::mask_type &mask,
   const auto &curr_field =
       [&]() -> const specfem::compute::impl::field_impl<
                 specfem::dimension::type::dim2, MediumType> & {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic_sv) {
       return field.elastic;
     } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
       return field.acoustic;
@@ -623,7 +623,7 @@ impl_store_on_device(const specfem::point::simd_assembly_index &index,
   const auto &curr_field =
       [&]() -> const specfem::compute::impl::field_impl<
                 specfem::dimension::type::dim2, MediumType> & {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic_sv) {
       return field.elastic;
     } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
       return field.acoustic;
@@ -679,7 +679,7 @@ inline void impl_store_on_host(const int iglob, const ViewType &point_field,
   const auto &curr_field =
       [&]() -> const specfem::compute::impl::field_impl<
                 specfem::dimension::type::dim2, MediumType> & {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic_sv) {
       return field.elastic;
     } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
       return field.acoustic;
@@ -725,7 +725,7 @@ inline void impl_store_on_host(const typename ViewType::simd::mask_type &mask,
   const auto &curr_field =
       [&]() -> const specfem::compute::impl::field_impl<
                 specfem::dimension::type::dim2, MediumType> & {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic_sv) {
       return field.elastic;
     } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
       return field.acoustic;
@@ -798,7 +798,7 @@ inline void impl_store_on_host(const specfem::point::simd_assembly_index &index,
   const auto &curr_field =
       [&]() -> const specfem::compute::impl::field_impl<
                 specfem::dimension::type::dim2, MediumType> & {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic_sv) {
       return field.elastic;
     } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
       return field.acoustic;
@@ -971,7 +971,7 @@ impl_add_on_device(const int iglob, const ViewType &point_field,
   const auto &curr_field =
       [&]() -> const specfem::compute::impl::field_impl<
                 specfem::dimension::type::dim2, MediumType> & {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic_sv) {
       return field.elastic;
     } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
       return field.acoustic;
@@ -1017,7 +1017,7 @@ impl_add_on_device(const typename ViewType::simd::mask_type &mask,
   const auto &curr_field =
       [&]() -> const specfem::compute::impl::field_impl<
                 specfem::dimension::type::dim2, MediumType> & {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic_sv) {
       return field.elastic;
     } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
       return field.acoustic;
@@ -1090,7 +1090,7 @@ impl_add_on_device(const specfem::point::simd_assembly_index &index,
   const auto &curr_field =
       [&]() -> const specfem::compute::impl::field_impl<
                 specfem::dimension::type::dim2, MediumType> & {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic_sv) {
       return field.elastic;
     } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
       return field.acoustic;
@@ -1166,7 +1166,7 @@ inline void impl_add_on_host(const int iglob, const ViewType &point_field,
   const auto &curr_field =
       [&]() -> const specfem::compute::impl::field_impl<
                 specfem::dimension::type::dim2, MediumType> & {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic_sv) {
       return field.elastic;
     } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
       return field.acoustic;
@@ -1212,7 +1212,7 @@ inline void impl_add_on_host(const typename ViewType::simd::mask_type &mask,
   const auto &curr_field =
       [&]() -> const specfem::compute::impl::field_impl<
                 specfem::dimension::type::dim2, MediumType> & {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic_sv) {
       return field.elastic;
     } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
       return field.acoustic;
@@ -1284,7 +1284,7 @@ inline void impl_add_on_host(const specfem::point::simd_assembly_index &index,
   const auto &curr_field =
       [&]() -> const specfem::compute::impl::field_impl<
                 specfem::dimension::type::dim2, MediumType> & {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic_sv) {
       return field.elastic;
     } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
       return field.acoustic;
@@ -1475,7 +1475,7 @@ impl_atomic_add_on_device(const int iglob, const ViewType &point_field,
   const auto &curr_field =
       [&]() -> const specfem::compute::impl::field_impl<
                 specfem::dimension::type::dim2, MediumType> & {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic_sv) {
       return field.elastic;
     } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
       return field.acoustic;
@@ -1525,7 +1525,7 @@ impl_atomic_add_on_device(const typename ViewType::simd::mask_type &mask,
   const auto &curr_field =
       [&]() -> const specfem::compute::impl::field_impl<
                 specfem::dimension::type::dim2, MediumType> & {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic_sv) {
       return field.elastic;
     } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
       return field.acoustic;
@@ -1589,7 +1589,7 @@ inline void impl_atomic_add_on_host(const int iglob, const ViewType &point_field
   const auto &curr_field =
       [&]() -> const specfem::compute::impl::field_impl<
                 specfem::dimension::type::dim2, MediumType> & {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic_sv) {
       return field.elastic;
     } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
       return field.acoustic;
@@ -1638,7 +1638,7 @@ inline void impl_atomic_add_on_host(const typename ViewType::simd::mask_type &ma
   const auto &curr_field =
       [&]() -> const specfem::compute::impl::field_impl<
                 specfem::dimension::type::dim2, MediumType> & {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic_sv) {
       return field.elastic;
     } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
       return field.acoustic;
@@ -1796,7 +1796,7 @@ impl_load_on_device(const MemberType &team, const int ispec,
   const auto &curr_field =
       [&]() -> const specfem::compute::impl::field_impl<
                 specfem::dimension::type::dim2, MediumType> & {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic_sv) {
       return field.elastic;
     } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
       return field.acoustic;
@@ -1858,7 +1858,7 @@ inline void impl_load_on_host(const MemberType &team, const int ispec,
   const auto &curr_field =
       [&]() -> const specfem::compute::impl::field_impl<
                 specfem::dimension::type::dim2, MediumType> & {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic_sv) {
       return field.elastic;
     } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
       return field.acoustic;
@@ -1932,7 +1932,7 @@ impl_load_on_device(const MemberType &team, const IteratorType &iterator,
   const auto &curr_field =
       [&]() -> const specfem::compute::impl::field_impl<
                 specfem::dimension::type::dim2, MediumType> & {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic_sv) {
       return field.elastic;
     } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
       return field.acoustic;
@@ -2009,7 +2009,7 @@ impl_load_on_device(const MemberType &team, const IteratorType &iterator,
   const auto &curr_field =
       [&]() -> const specfem::compute::impl::field_impl<
                 specfem::dimension::type::dim2, MediumType> & {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic_sv) {
       return field.elastic;
     } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
       return field.acoustic;
@@ -2092,7 +2092,7 @@ inline void impl_load_on_host(const MemberType &team, const IteratorType &iterat
   const auto &curr_field =
       [&]() -> const specfem::compute::impl::field_impl<
                 specfem::dimension::type::dim2, MediumType> & {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic_sv) {
       return field.elastic;
     } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
       return field.acoustic;
@@ -2167,7 +2167,7 @@ inline void impl_load_on_host(const MemberType &team, const IteratorType &iterat
   const auto &curr_field =
       [&]() -> const specfem::compute::impl::field_impl<
                 specfem::dimension::type::dim2, MediumType> & {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
+    if constexpr (MediumType == specfem::element::medium_tag::elastic_sv) {
       return field.elastic;
     } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
       return field.acoustic;

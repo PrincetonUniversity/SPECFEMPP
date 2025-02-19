@@ -61,8 +61,9 @@ struct coupled_interfaces {
   specfem::compute::interface_container<medium1, medium2>
   get_interface_container() const;
 
-  specfem::compute::interface_container<specfem::element::medium_tag::elastic,
-                                        specfem::element::medium_tag::acoustic>
+  specfem::compute::interface_container<
+      specfem::element::medium_tag::elastic_sv,
+      specfem::element::medium_tag::acoustic>
       elastic_acoustic; ///< Elastic-acoustic interface
 
   specfem::compute::interface_container<
@@ -71,7 +72,7 @@ struct coupled_interfaces {
       acoustic_poroelastic; ///< Acoustic-poroelastic interface
 
   specfem::compute::interface_container<
-      specfem::element::medium_tag::elastic,
+      specfem::element::medium_tag::elastic_sv,
       specfem::element::medium_tag::poroelastic>
       elastic_poroelastic; ///< Elastic-poroelastic interface
 };

@@ -18,7 +18,7 @@ class interface_kernels;
 template <specfem::wavefield::simulation_field WavefieldType,
           specfem::dimension::type DimensionType>
 class interface_kernels<WavefieldType, DimensionType,
-                        specfem::element::medium_tag::elastic> {
+                        specfem::element::medium_tag::elastic_sv> {
 public:
   interface_kernels(const specfem::compute::assembly &assembly)
       : elastic_acoustic_interface(assembly) {}
@@ -29,7 +29,7 @@ public:
 
 private:
   specfem::coupled_interface::coupled_interface<
-      WavefieldType, DimensionType, specfem::element::medium_tag::elastic,
+      WavefieldType, DimensionType, specfem::element::medium_tag::elastic_sv,
       specfem::element::medium_tag::acoustic>
       elastic_acoustic_interface;
 };
@@ -49,7 +49,7 @@ public:
 private:
   specfem::coupled_interface::coupled_interface<
       WavefieldType, DimensionType, specfem::element::medium_tag::acoustic,
-      specfem::element::medium_tag::elastic>
+      specfem::element::medium_tag::elastic_sv>
       acoustic_elastic_interface;
 };
 
