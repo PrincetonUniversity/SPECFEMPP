@@ -33,15 +33,15 @@ struct material_properties
       const int ispec = elements(i);
       property_index_mapping(ispec) = count;
       if (!has_gll_model) {
+        // Get the material at index from mesh::materials
+        const auto material =
+            std::get<specfem::medium::material<type, property> >(
+                materials[ispec]);
+
+        // Assign the material property to the property container
+        const auto point_property = material.get_properties();
         for (int iz = 0; iz < ngllz; ++iz) {
           for (int ix = 0; ix < ngllx; ++ix) {
-            // Get the material at index from mesh::materials
-            auto material =
-                std::get<specfem::medium::material<type, property> >(
-                    materials[ispec]);
-
-            // Assign the material property to the property container
-            auto point_property = material.get_properties();
             this->assign(specfem::point::index<dimension>(count, iz, ix),
                          point_property);
           }

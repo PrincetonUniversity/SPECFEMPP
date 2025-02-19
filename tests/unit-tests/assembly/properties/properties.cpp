@@ -366,6 +366,10 @@ void check_to_value(const specfem::compute::properties properties,
 
   constexpr int simd_size =
       specfem::datatype::simd<type_real, using_simd>::size();
+  using PointType =
+      specfem::point::properties<specfem::dimension::type::dim2, MediumTag,
+                                 PropertyTag, using_simd>;
+  const int nprops = PointType::nprops;
 
   for (int i = 0; i < ispecs.extent(0); ++i) {
     for (int iz = 0; iz < ngllz; iz++) {
@@ -375,18 +379,20 @@ void check_to_value(const specfem::compute::properties properties,
                                         ? elements.size() - ielement
                                         : simd_size;
         for (int j = 0; j < n_simd_elements; j++) {
-          const auto point_property =
-              get_point_property<MediumTag, PropertyTag>(ielement + j, iz, ix,
-                                                         properties);
+          auto point_property = get_point_property<MediumTag, PropertyTag>(
+              ielement + j, iz, ix, properties);
+          point_property.compute();
           const type_real value = values_to_store(i);
-          if (point_property != value) {
-            std::ostringstream message;
+          for (int iprop = 0; iprop < nprops; iprop++) {
+            if (point_property.data[iprop] != value) {
+              std::ostringstream message;
 
-            message << "\n \t Error at ispec = " << ielement + j
-                    << ", iz = " << iz << ", ix = " << ix;
-            message << get_error_message(point_property, value);
+              message << "\n \t Error at ispec = " << ielement + j
+                      << ", iz = " << iz << ", ix = " << ix;
+              message << get_error_message(point_property, value);
 
-            throw std::runtime_error(message.str());
+              throw std::runtime_error(message.str());
+            }
           }
         }
       }
@@ -438,8 +444,9 @@ void check_compute_to_mesh(
     for (int iz = 0; iz < ngllz; iz++) {
       for (int ix = 0; ix < ngllx; ix++) {
         const int ielement = ispecs_h(i);
-        const auto point_property = get_point_property<MediumTag, PropertyTag>(
+        auto point_property = get_point_property<MediumTag, PropertyTag>(
             ielement, iz, ix, properties);
+        point_property.compute();
         const int ispec_mesh = mapping.compute_to_mesh(ielement);
         auto material =
             std::get<specfem::medium::material<MediumTag, PropertyTag> >(
@@ -503,6 +510,10 @@ void check_store_on_host(specfem::compute::properties &properties,
       specfem::point::properties<specfem::dimension::type::dim2, MediumTag,
                                  PropertyTag, using_simd>;
 
+  constexpr int nprops = PointType::nprops;
+  using value_type = typename PointType::value_type;
+  value_type data[nprops];
+
   for (int i = 0; i < N; i++) {
     for (int iz = 0; iz < ngllz; iz++) {
       for (int ix = 0; ix < ngllx; ix++) {
@@ -515,7 +526,10 @@ void check_store_on_host(specfem::compute::properties &properties,
         const auto index =
             get_index<using_simd>(ielement, n_simd_elements, iz, ix);
         const type_real value = values_to_store_h(i);
-        PointType point(value);
+        for (int iprop = 0; iprop < nprops; iprop++) {
+          data[iprop] = value;
+        }
+        PointType point(data);
         PointType point_loaded;
         specfem::compute::store_on_host(index, properties, point);
         specfem::compute::load_on_host(index, properties, point_loaded);
@@ -556,6 +570,8 @@ void check_load_on_device(specfem::compute::properties &properties,
   using PointType =
       specfem::point::properties<specfem::dimension::type::dim2, MediumTag,
                                  PropertyTag, using_simd>;
+  constexpr int nprops = PointType::nprops;
+  using value_type = typename PointType::value_type;
 
   Kokkos::View<int[N], Kokkos::DefaultExecutionSpace> ispecs("ispecs");
   Kokkos::View<type_real[N], Kokkos::DefaultExecutionSpace> values_to_store(
@@ -575,8 +591,8 @@ void check_load_on_device(specfem::compute::properties &properties,
 
   Kokkos::deep_copy(ispecs, ispecs_h);
 
-  Kokkos::View<PointType **[N], Kokkos::DefaultExecutionSpace> point_properties(
-      "point_properties", ngllz, ngllx);
+  Kokkos::View<value_type ***[N], Kokkos::DefaultExecutionSpace>
+      point_properties("point_properties", ngllz, ngllx, nprops);
   auto h_point_properties = Kokkos::create_mirror_view(point_properties);
 
   Kokkos::parallel_for(
@@ -593,7 +609,9 @@ void check_load_on_device(specfem::compute::properties &properties,
             get_index<using_simd>(ielement, n_simd_elements, iz, ix);
         PointType point;
         specfem::compute::load_on_device(index, properties, point);
-        point_properties(iz, ix, i) = point;
+        for (int iprop = 0; iprop < nprops; iprop++) {
+          point_properties(iz, ix, iprop, i) = point.data[iprop];
+        }
       });
 
   Kokkos::fence();
@@ -603,39 +621,45 @@ void check_load_on_device(specfem::compute::properties &properties,
     for (int iz = 0; iz < ngllz; iz++) {
       for (int ix = 0; ix < ngllx; ix++) {
         using simd = specfem::datatype::simd<type_real, using_simd>;
-        const auto &point_property = h_point_properties(iz, ix, i);
+        value_type data[nprops];
+        for (int iprop = 0; iprop < nprops; iprop++) {
+          data[iprop] = h_point_properties(iz, ix, iprop, i);
+        }
+        const PointType point_property = { data };
         const int ielement = ispecs_h(i);
         constexpr int simd_size = PointType::simd::size();
         const int n_simd_elements = (simd_size + ielement > element_size)
                                         ? element_size - ielement
                                         : simd_size;
         const type_real value_l = values_to_store_h(i);
-        if constexpr (using_simd) {
-          for (int lane = 0; lane < n_simd_elements; lane++) {
-            const auto point_property_l =
-                get_point_property(lane, point_property);
-            if (point_property_l != value_l) {
-              std::ostringstream message;
+        for (int lane = 0; lane < n_simd_elements; lane++) {
+          for (int iprop = 0; iprop < nprops; iprop++) {
+            if constexpr (using_simd) {
+              const auto point_property_l =
+                  get_point_property(lane, point_property);
+              if (point_property_l.data[iprop] != value_l) {
+                std::ostringstream message;
 
-              message << "\n \t Error in function load_on_device";
+                message << "\n \t Error in function load_on_device";
 
-              message << "\n \t Error at ispec = " << ielement << ", iz = " << 0
-                      << ", ix = " << 0;
-              message << get_error_message(point_property_l, value_l);
+                message << "\n \t Error at ispec = " << ielement
+                        << ", iz = " << 0 << ", ix = " << 0;
+                message << get_error_message(point_property_l, value_l);
 
-              throw std::runtime_error(message.str());
+                throw std::runtime_error(message.str());
+              }
+            } else if constexpr (!using_simd) {
+              if (point_property.data[iprop] != value_l) {
+                std::ostringstream message;
+                message << "\n \t Error in function load_on_device";
+
+                message << "\n \t Error at ispec = " << ielement
+                        << ", iz = " << 0 << ", ix = " << 0;
+                message << get_error_message(point_property, value_l);
+
+                throw std::runtime_error(message.str());
+              }
             }
-          }
-        } else if constexpr (!using_simd) {
-          if (point_property != value_l) {
-            std::ostringstream message;
-            message << "\n \t Error in function load_on_device";
-
-            message << "\n \t Error at ispec = " << ielement << ", iz = " << 0
-                    << ", ix = " << 0;
-            message << get_error_message(point_property, value_l);
-
-            throw std::runtime_error(message.str());
           }
         }
       }
