@@ -356,10 +356,10 @@ static void subdivide(
             ispec_knod[ispec_inod] = mesh.control_nodes.knods(7, ispec);
             continue;
           } else if (ix == ispec_ngnod_x - 1) {
-            ispec_knod[ispec_inod] = mesh.control_nodes.knods(8, ispec);
+            ispec_knod[ispec_inod] = mesh.control_nodes.knods(5, ispec);
             continue;
           } else if (ix == subx && ngnod == 9) {
-            ispec_knod[ispec_inod] = mesh.control_nodes.knods(5, ispec);
+            ispec_knod[ispec_inod] = mesh.control_nodes.knods(8, ispec);
             continue;
           }
         }

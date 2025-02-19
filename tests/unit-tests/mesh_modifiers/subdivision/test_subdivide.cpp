@@ -427,4 +427,6 @@ TEST(MESH_MODIFIERS, subdivision) {
 
   specfem::test::mesh_modifiers::subdivisions::test_mesh_unifsubdivisions2D(
       mesh, 2, 3);
+  specfem::test::mesh_modifiers::subdivisions::test_mesh_unifsubdivisions2D(
+      mesh, 4, 2);
 }
