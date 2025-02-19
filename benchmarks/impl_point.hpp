@@ -6,7 +6,7 @@
 namespace specfem {
 namespace benchmarks {
 
-#define PROPERTIES_CONSTRUCTOR                                                 \
+#define DEFINE_PROP_CONSTRUCTORS                                               \
   KOKKOS_FUNCTION                                                              \
   properties() = default;                                                      \
   KOKKOS_FUNCTION                                                              \
@@ -17,6 +17,10 @@ namespace benchmarks {
   KOKKOS_FUNCTION properties(Args... args) : Base(args...) {                   \
     compute();                                                                 \
   }
+
+#define DEFINE_PROP(prop, i)                                                   \
+  KOKKOS_INLINE_FUNCTION value_type prop() const { return Base::data[i]; }     \
+  KOKKOS_INLINE_FUNCTION void prop(value_type val) { Base::data[i] = val; }
 
 namespace impl {
 template <int N, int NALL, bool UseSIMD> struct impl_properties {
@@ -114,31 +118,21 @@ struct properties<specfem::dimension::type::dim2,
       typename simd::datatype; ///< Value type to store properties
   ///@}
 
-  value_type &lambdaplus2mu =
-      Base::data[0];               ///< Lame's parameter @f$ \lambda + 2\mu @f$
-  value_type &mu = Base::data[1];  ///< shear modulus @f$ \mu @f$
-  value_type &rho = Base::data[2]; ///< density @f$ \rho @f$
+  DEFINE_PROP(lambdaplus2mu, 0) ///< Lame's parameter @f$ \lambda + 2\mu @f$
+  DEFINE_PROP(mu, 1)            ///< shear modulus @f$ \mu @f$
+  DEFINE_PROP(rho, 2)           ///< density @f$ \rho @f$
 
-  value_type &rho_vp = Base::data[3]; ///< P-wave velocity @f$ \rho v_p @f$
-  value_type &rho_vs = Base::data[4]; ///< S-wave velocity @f$ \rho v_s @f$
-  value_type &lambda = Base::data[5]; ///< Lame's parameter @f$ \lambda @f$
+  DEFINE_PROP(rho_vp, 3) ///< P-wave velocity @f$ \rho v_p @f$
+  DEFINE_PROP(rho_vs, 4) ///< S-wave velocity @f$ \rho v_s @f$
+  DEFINE_PROP(lambda, 5) ///< Lame's parameter @f$ \lambda @f$
 
-  PROPERTIES_CONSTRUCTOR
-
-  // KOKKOS_FUNCTION
-  // properties(const value_type &lambdaplus2mu, const value_type &mu,
-  //            const value_type &rho) {
-  //   this->lambdaplus2mu = lambdaplus2mu;
-  //   this->mu = mu;
-  //   this->rho = rho;
-  //   compute();
-  // }
+  DEFINE_PROP_CONSTRUCTORS
 
   KOKKOS_INLINE_FUNCTION
   void compute() {
-    rho_vp = Kokkos::sqrt(rho * lambdaplus2mu);
-    rho_vs = Kokkos::sqrt(rho * mu);
-    lambda = lambdaplus2mu - (static_cast<value_type>(2.0)) * mu;
+    rho_vp(Kokkos::sqrt(rho() * lambdaplus2mu()));
+    rho_vs(Kokkos::sqrt(rho() * mu()));
+    lambda(lambdaplus2mu() - (static_cast<value_type>(2.0)) * mu());
   }
 };
 
@@ -169,46 +163,27 @@ struct properties<specfem::dimension::type::dim2,
    *
    */
   ///@{
-  value_type &c11 = Base::data[0]; ///< @f$ c_{11} @f$
-  value_type &c13 = Base::data[1]; ///< @f$ c_{13} @f$
-  value_type &c15 = Base::data[2]; ///< @f$ c_{15} @f$
-  value_type &c33 = Base::data[3]; ///< @f$ c_{33} @f$
-  value_type &c35 = Base::data[4]; ///< @f$ c_{35} @f$
-  value_type &c55 = Base::data[5]; ///< @f$ c_{55} @f$
-  value_type &c12 = Base::data[6]; ///< @f$ c_{12} @f$
-  value_type &c23 = Base::data[7]; ///< @f$ c_{23} @f$
-  value_type &c25 = Base::data[8]; ///< @f$ c_{25} @f$
+  DEFINE_PROP(c11, 0); ///< @f$ c_{11} @f$
+  DEFINE_PROP(c13, 1); ///< @f$ c_{13} @f$
+  DEFINE_PROP(c15, 2); ///< @f$ c_{15} @f$
+  DEFINE_PROP(c33, 3); ///< @f$ c_{33} @f$
+  DEFINE_PROP(c35, 4); ///< @f$ c_{35} @f$
+  DEFINE_PROP(c55, 5); ///< @f$ c_{55} @f$
+  DEFINE_PROP(c12, 6); ///< @f$ c_{12} @f$
+  DEFINE_PROP(c23, 7); ///< @f$ c_{23} @f$
+  DEFINE_PROP(c25, 8); ///< @f$ c_{25} @f$
   ///@}
 
-  value_type &rho = Base::data[9];     ///< Density @f$ \rho @f$
-  value_type &rho_vp = Base::data[10]; ///< P-wave velocity @f$ \rho v_p @f$
-  value_type &rho_vs = Base::data[11]; ///< S-wave velocity @f$ \rho v_s @f$
+  DEFINE_PROP(rho, 9);     ///< Density @f$ \rho @f$
+  DEFINE_PROP(rho_vp, 10); ///< P-wave velocity @f$ \rho v_p @f$
+  DEFINE_PROP(rho_vs, 11); ///< S-wave velocity @f$ \rho v_s @f$
 
-  PROPERTIES_CONSTRUCTOR
-
-  // KOKKOS_FUNCTION
-  // properties(const value_type &c11, const value_type &c13,
-  //            const value_type &c15, const value_type &c33,
-  //            const value_type &c35, const value_type &c55,
-  //            const value_type &c12, const value_type &c23,
-  //            const value_type &c25, const value_type &rho) {
-  //   this->c11 = c11;
-  //   this->c13 = c13;
-  //   this->c15 = c15;
-  //   this->c33 = c33;
-  //   this->c35 = c35;
-  //   this->c55 = c55;
-  //   this->c12 = c12;
-  //   this->c23 = c23;
-  //   this->c25 = c25;
-  //   this->rho = rho;
-  //   compute();
-  // }
+  DEFINE_PROP_CONSTRUCTORS
 
   KOKKOS_INLINE_FUNCTION
   void compute() {
-    rho_vp = Kokkos::sqrt(rho * c33);
-    rho_vs = Kokkos::sqrt(rho * c55);
+    rho_vp(Kokkos::sqrt(rho() * c33()));
+    rho_vs(Kokkos::sqrt(rho() * c55()));
   }
 };
 
@@ -240,30 +215,23 @@ struct properties<specfem::dimension::type::dim2,
       typename simd::datatype; ///< Value type to store properties
   ///@}
 
-  value_type &rho_inverse = Base::data[0]; ///< @f$ \frac{1}{\rho} @f$
-  value_type &kappa = Base::data[1];       ///< Bulk modulus @f$ \kappa @f$
+  DEFINE_PROP_CONSTRUCTORS
 
-  value_type &kappa_inverse =
-      Base::data[2]; ///< @f$ \frac{1}{\lambda + 2\mu} @f$
-  value_type &rho_vpinverse = Base::data[3]; ///< @f$ \frac{1}{\rho v_p} @f$
+  DEFINE_PROP(rho_inverse, 0)   ///< @f$ \frac{1}{\rho} @f$
+  DEFINE_PROP(kappa, 1)         ///< Bulk modulus @f$ \kappa @f$
+  DEFINE_PROP(kappa_inverse, 2) ///< @f$ \frac{1}{\lambda + 2\mu} @f$
+  DEFINE_PROP(rho_vpinverse, 3) ///< @f$ \frac{1}{\rho v_p} @f$
 
-  PROPERTIES_CONSTRUCTOR
-
-  // KOKKOS_FUNCTION
-  // properties(const value_type &rho_inverse, const value_type &kappa) {
-  //   this->rho_inverse = rho_inverse;
-  //   this->kappa = kappa;
-  //   compute();
-  // }
-
+private:
   KOKKOS_INLINE_FUNCTION
   void compute() {
-    kappa_inverse = (static_cast<value_type>(1.0)) / kappa;
-    rho_vpinverse = Kokkos::sqrt(rho_inverse * kappa_inverse);
+    kappa_inverse((static_cast<value_type>(1.0)) / kappa());
+    rho_vpinverse(Kokkos::sqrt(rho_inverse() * kappa_inverse()));
   }
 };
 
-#undef PROPERTIES_CONSTRUCTOR
+#undef DEFINE_PROP_CONSTRUCTORS
+#undef DEFINE_PROP
 
 } // namespace benchmarks
 } // namespace specfem

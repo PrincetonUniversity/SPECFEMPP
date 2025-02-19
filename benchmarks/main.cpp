@@ -1,4 +1,4 @@
-// #include "archive/stiffness1.hpp"
+#include "archive/stiffness1.hpp"
 #include "execute.hpp"
 #include "stiffness.hpp"
 // #include "divide.hpp"
@@ -47,26 +47,30 @@ void benchmark(specfem::compute::assembly &assembly,
   // field.elastic.nglob, field.elastic.components);
 
   for (const auto [istep, dt] : time_scheme->iterate_forward()) {
-    compute_stiffness_interaction<acoustic, isotropic, flag>(assembly, istep);
-    compute_stiffness_interaction<elastic, isotropic, flag>(assembly, istep);
-    compute_stiffness_interaction<elastic, anisotropic, flag>(assembly, istep);
+    // compute_stiffness_interaction<acoustic, isotropic, flag>(assembly,
+    // istep); compute_stiffness_interaction<elastic, isotropic, flag>(assembly,
+    // istep); compute_stiffness_interaction<elastic, anisotropic,
+    // flag>(assembly, istep);
 
     // compute_stiffness_interaction2<acoustic, isotropic, flag>(assembly,
     // istep); compute_stiffness_interaction2<elastic, isotropic,
     // flag>(assembly, istep); compute_stiffness_interaction2<elastic,
     // anisotropic, flag>(assembly, istep);
 
-    // if constexpr (flag) {
-    //   compute_stiffness_interaction<acoustic, isotropic, false>(assembly,
-    //   istep); compute_stiffness_interaction<elastic, isotropic,
-    //   false>(assembly, istep); compute_stiffness_interaction<elastic,
-    //   anisotropic, false>(assembly, istep);
-    // } else {
-    //   compute_stiffness_interaction2<acoustic, isotropic, false>(assembly,
-    //   istep); compute_stiffness_interaction2<elastic, isotropic,
-    //   false>(assembly, istep); compute_stiffness_interaction2<elastic,
-    //   anisotropic, false>(assembly, istep);
-    // }
+    if constexpr (flag) {
+      compute_stiffness_interaction<acoustic, isotropic, false>(assembly,
+                                                                istep);
+      compute_stiffness_interaction<elastic, isotropic, false>(assembly, istep);
+      compute_stiffness_interaction<elastic, anisotropic, false>(assembly,
+                                                                 istep);
+    } else {
+      compute_stiffness_interaction2<acoustic, isotropic, false>(assembly,
+                                                                 istep);
+      compute_stiffness_interaction2<elastic, isotropic, false>(assembly,
+                                                                istep);
+      compute_stiffness_interaction2<elastic, anisotropic, false>(assembly,
+                                                                  istep);
+    }
 
     // divide_mass_matrix<dimension, wavefield, acoustic>(assembly);
     // divide_mass_matrix<dimension, wavefield, elastic>(assembly);

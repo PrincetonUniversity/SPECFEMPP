@@ -187,15 +187,9 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
                       xiz * df_dxi[icomponent] + gammaz * df_dgamma[icomponent];
                 }
 
-                auto point_property = [&]() {
-                  if constexpr (flag) {
-                    return specfem::point::properties<
-                        dimension, medium_tag, property_tag, using_simd>();
-                  } else {
-                    return specfem::benchmarks::properties<
-                        dimension, medium_tag, property_tag, using_simd>();
-                  }
-                }();
+                specfem::benchmarks::properties<dimension, medium_tag,
+                                                property_tag, using_simd>
+                    point_property;
 
                 specfem::point::field_derivatives<dimension, medium_tag,
                                                   using_simd>
@@ -211,14 +205,14 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
                                     specfem::element::medium_tag::acoustic &&
                                 PropertyTag ==
                                     specfem::element::property_tag::isotropic) {
-                    point_property.rho_inverse =
-                        container.rho_inverse(ispec, iz, ix);
-                    point_property.kappa = container.kappa(ispec, iz, ix);
-                    point_property.kappa_inverse =
-                        static_cast<type_real>(1.0) / point_property.kappa;
-                    point_property.rho_vpinverse =
-                        sqrt(point_property.rho_inverse *
-                             point_property.kappa_inverse);
+                    point_property.rho_inverse(
+                        container.rho_inverse(ispec, iz, ix));
+                    point_property.kappa(container.kappa(ispec, iz, ix));
+                    point_property.kappa_inverse(static_cast<type_real>(1.0) /
+                                                 point_property.kappa());
+                    point_property.rho_vpinverse(
+                        sqrt(point_property.rho_inverse() *
+                             point_property.kappa_inverse()));
 
                     const auto &du = field_derivatives.du;
 
@@ -226,8 +220,8 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
                                                            using_simd>
                         T;
 
-                    T(0, 0) = point_property.rho_inverse * du(0, 0);
-                    T(1, 0) = point_property.rho_inverse * du(1, 0);
+                    T(0, 0) = point_property.rho_inverse() * du(0, 0);
+                    T(1, 0) = point_property.rho_inverse() * du(1, 0);
 
                     return specfem::point::stress<
                         specfem::dimension::type::dim2,
@@ -237,16 +231,16 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
                       MediumTag == specfem::element::medium_tag::elastic &&
                       PropertyTag ==
                           specfem::element::property_tag::isotropic) {
-                    point_property.rho = container.rho(ispec, iz, ix);
-                    point_property.mu = container.mu(ispec, iz, ix);
-                    point_property.lambdaplus2mu =
-                        container.lambdaplus2mu(ispec, iz, ix);
-                    point_property.lambda =
-                        point_property.lambdaplus2mu - 2 * point_property.mu;
-                    point_property.rho_vp =
-                        sqrt(point_property.rho * point_property.lambdaplus2mu);
-                    point_property.rho_vs =
-                        sqrt(point_property.rho * point_property.mu);
+                    point_property.rho(container.rho(ispec, iz, ix));
+                    point_property.mu(container.mu(ispec, iz, ix));
+                    point_property.lambdaplus2mu(
+                        container.lambdaplus2mu(ispec, iz, ix));
+                    point_property.lambda(point_property.lambdaplus2mu() -
+                                          2 * point_property.mu());
+                    point_property.rho_vp(sqrt(point_property.rho() *
+                                               point_property.lambdaplus2mu()));
+                    point_property.rho_vs(
+                        sqrt(point_property.rho() * point_property.mu()));
 
                     using datatype =
                         typename specfem::datatype::simd<type_real,
@@ -255,11 +249,11 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
 
                     datatype sigma_xx, sigma_zz, sigma_xz;
 
-                    sigma_xx = point_property.lambdaplus2mu * du(0, 0) +
-                               point_property.lambda * du(1, 1);
-                    sigma_zz = point_property.lambdaplus2mu * du(1, 1) +
-                               point_property.lambda * du(0, 0);
-                    sigma_xz = point_property.mu * (du(0, 1) + du(1, 0));
+                    sigma_xx = point_property.lambdaplus2mu() * du(0, 0) +
+                               point_property.lambda() * du(1, 1);
+                    sigma_zz = point_property.lambdaplus2mu() * du(1, 1) +
+                               point_property.lambda() * du(0, 0);
+                    sigma_xz = point_property.mu() * (du(0, 1) + du(1, 0));
 
                     specfem::datatype::VectorPointViewType<type_real, 2, 2,
                                                            using_simd>
@@ -277,21 +271,21 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
                       MediumTag == specfem::element::medium_tag::elastic &&
                       PropertyTag ==
                           specfem::element::property_tag::anisotropic) {
-                    point_property.rho = container.rho(ispec, iz, ix);
-                    point_property.c11 = container.c11(ispec, iz, ix);
-                    point_property.c12 = container.c12(ispec, iz, ix);
-                    point_property.c13 = container.c13(ispec, iz, ix);
-                    point_property.c15 = container.c15(ispec, iz, ix);
-                    point_property.c33 = container.c33(ispec, iz, ix);
-                    point_property.c35 = container.c35(ispec, iz, ix);
-                    point_property.c55 = container.c55(ispec, iz, ix);
-                    point_property.c23 = container.c23(ispec, iz, ix);
-                    point_property.c25 = container.c25(ispec, iz, ix);
+                    point_property.rho(container.rho(ispec, iz, ix));
+                    point_property.c11(container.c11(ispec, iz, ix));
+                    point_property.c12(container.c12(ispec, iz, ix));
+                    point_property.c13(container.c13(ispec, iz, ix));
+                    point_property.c15(container.c15(ispec, iz, ix));
+                    point_property.c33(container.c33(ispec, iz, ix));
+                    point_property.c35(container.c35(ispec, iz, ix));
+                    point_property.c55(container.c55(ispec, iz, ix));
+                    point_property.c23(container.c23(ispec, iz, ix));
+                    point_property.c25(container.c25(ispec, iz, ix));
 
-                    point_property.rho_vp =
-                        sqrt(point_property.rho * point_property.c33);
-                    point_property.rho_vs =
-                        sqrt(point_property.rho * point_property.c55);
+                    point_property.rho_vp(
+                        sqrt(point_property.rho() * point_property.c33()));
+                    point_property.rho_vs(
+                        sqrt(point_property.rho() * point_property.c55()));
 
                     using datatype =
                         typename specfem::datatype::simd<type_real,
@@ -300,17 +294,17 @@ void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
 
                     datatype sigma_xx, sigma_zz, sigma_xz;
 
-                    sigma_xx = point_property.c11 * du(0, 0) +
-                               point_property.c13 * du(1, 1) +
-                               point_property.c15 * (du(1, 0) + du(0, 1));
+                    sigma_xx = point_property.c11() * du(0, 0) +
+                               point_property.c13() * du(1, 1) +
+                               point_property.c15() * (du(1, 0) + du(0, 1));
 
-                    sigma_zz = point_property.c13 * du(0, 0) +
-                               point_property.c33 * du(1, 1) +
-                               point_property.c35 * (du(1, 0) + du(0, 1));
+                    sigma_zz = point_property.c13() * du(0, 0) +
+                               point_property.c33() * du(1, 1) +
+                               point_property.c35() * (du(1, 0) + du(0, 1));
 
-                    sigma_xz = point_property.c15 * du(0, 0) +
-                               point_property.c35 * du(1, 1) +
-                               point_property.c55 * (du(1, 0) + du(0, 1));
+                    sigma_xz = point_property.c15() * du(0, 0) +
+                               point_property.c35() * du(1, 1) +
+                               point_property.c55() * (du(1, 0) + du(0, 1));
 
                     specfem::datatype::VectorPointViewType<type_real, 2, 2,
                                                            using_simd>
