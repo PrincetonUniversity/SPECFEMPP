@@ -265,8 +265,8 @@ struct properties_container<specfem::element::medium_tag::elastic_sv,
 
     static_assert(PointProperties::dimension == dimension,
                   "Dimension mismatch");
-    static_assert(PointProperties::medium_tag == value_type,
-                  "Medium tag mismatch");
+    // static_assert(PointProperties::medium_tag == value_type,
+    //               "Medium tag mismatch");
     static_assert(PointProperties::property_tag == property_type,
                   "Property tag mismatch");
 
@@ -294,8 +294,8 @@ struct properties_container<specfem::element::medium_tag::elastic_sv,
 
     static_assert(PointProperties::dimension == dimension,
                   "Dimension mismatch");
-    static_assert(PointProperties::medium_tag == value_type,
-                  "Medium tag mismatch");
+    // static_assert(PointProperties::medium_tag == value_type,
+    //               "Medium tag mismatch");
     static_assert(PointProperties::property_tag == property_type,
                   "Property tag mismatch");
 

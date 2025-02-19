@@ -26,6 +26,7 @@ namespace fortran {
 
 specfem::mesh::materials read_material_properties(
     std::ifstream &stream, const int numat, const int nspec,
+    const specfem::enums::elastic_wave wave,
     const specfem::kokkos::HostView2d<int> knods, const specfem::MPI::MPI *mpi);
 
 } // namespace fortran

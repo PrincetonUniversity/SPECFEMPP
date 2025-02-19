@@ -17,13 +17,13 @@ namespace medium {
  *
  */
 template <>
-class properties<specfem::element::medium_tag::elastic_sv,
+class properties<specfem::element::medium_tag::elastic,
                  specfem::element::property_tag::isotropic> {
 public:
   constexpr static auto dimension =
       specfem::dimension::type::dim2; ///< Dimension of the material
   constexpr static auto medium_tag =
-      specfem::element::medium_tag::elastic_sv; ///< Medium tag
+      specfem::element::medium_tag::elastic; ///< Medium tag
   constexpr static auto property_tag =
       specfem::element::property_tag::isotropic; ///< Property tag
 
@@ -73,7 +73,7 @@ public:
    * @param other Material to compare with
    * @return true If the materials have the same properties
    */
-  bool operator==(const properties<specfem::element::medium_tag::elastic_sv,
+  bool operator==(const properties<specfem::element::medium_tag::elastic,
                                    specfem::element::property_tag::isotropic>
                       &other) const {
 
@@ -91,7 +91,7 @@ public:
    * @param other Material to compare with
    * @return true If the materials have different properties
    */
-  bool operator!=(const properties<specfem::element::medium_tag::elastic_sv,
+  bool operator!=(const properties<specfem::element::medium_tag::elastic,
                                    specfem::element::property_tag::isotropic>
                       &other) const {
     return !(*this == other);
@@ -140,6 +140,52 @@ private:
   type_real kappa;           ///< Bulk modulus
   type_real young;           ///< Young's modulus
   type_real poisson;         ///< Poisson's ratio
+};
+
+template <>
+class properties<specfem::element::medium_tag::elastic_sv,
+                 specfem::element::property_tag::isotropic>
+    : public properties<specfem::element::medium_tag::elastic,
+                        specfem::element::property_tag::isotropic> {
+public:
+  constexpr static auto dimension =
+      specfem::dimension::type::dim2; ///< Dimension of the material
+  constexpr static auto medium_tag =
+      specfem::element::medium_tag::elastic_sv; ///< Medium tag
+  constexpr static auto property_tag =
+      specfem::element::property_tag::isotropic; ///< Property tag
+
+  properties(const type_real &density, const type_real &cs, const type_real &cp,
+             const type_real &Qkappa, const type_real &Qmu,
+             const type_real &compaction_grad)
+      : properties<specfem::element::medium_tag::elastic,
+                   specfem::element::property_tag::isotropic>(
+            density, cs, cp, Qkappa, Qmu, compaction_grad) {}
+
+  properties() = default;
+};
+
+template <>
+class properties<specfem::element::medium_tag::elastic_sh,
+                 specfem::element::property_tag::isotropic>
+    : public properties<specfem::element::medium_tag::elastic,
+                        specfem::element::property_tag::isotropic> {
+public:
+  constexpr static auto dimension =
+      specfem::dimension::type::dim2; ///< Dimension of the material
+  constexpr static auto medium_tag =
+      specfem::element::medium_tag::elastic_sh; ///< Medium tag
+  constexpr static auto property_tag =
+      specfem::element::property_tag::isotropic; ///< Property tag
+
+  properties(const type_real &density, const type_real &cs, const type_real &cp,
+             const type_real &Qkappa, const type_real &Qmu,
+             const type_real &compaction_grad)
+      : properties<specfem::element::medium_tag::elastic,
+                   specfem::element::property_tag::isotropic>(
+            density, cs, cp, Qkappa, Qmu, compaction_grad) {}
+
+  properties() = default;
 };
 
 } // namespace medium

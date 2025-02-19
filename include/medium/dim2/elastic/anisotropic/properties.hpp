@@ -17,7 +17,7 @@ namespace medium {
  *
  */
 template <>
-class properties<specfem::element::medium_tag::elastic_sv,
+class properties<specfem::element::medium_tag::elastic,
                  specfem::element::property_tag::anisotropic> {
 public:
   constexpr static auto dimension =
@@ -77,7 +77,7 @@ public:
    * @param other Material to compare with
    * @return true If the materials have the same properties
    */
-  bool operator==(const properties<specfem::element::medium_tag::elastic_sv,
+  bool operator==(const properties<specfem::element::medium_tag::elastic,
                                    specfem::element::property_tag::anisotropic>
                       &other) const {
     return (std::abs(this->density - other.density) < 1e-6 &&
@@ -100,7 +100,7 @@ public:
    * @param other Material to compare with
    * @return true If the materials have different properties
    */
-  bool operator!=(const properties<specfem::element::medium_tag::elastic_sv,
+  bool operator!=(const properties<specfem::element::medium_tag::elastic,
                                    specfem::element::property_tag::anisotropic>
                       &other) const {
     return !(*this == other);
@@ -149,6 +149,60 @@ private:
   type_real c25;     ///< Elastic constant
   type_real Qkappa;  ///< Attenuation factor for bulk modulus
   type_real Qmu;     ///< Attenuation factor for shear modulus
+};
+
+template <>
+class properties<specfem::element::medium_tag::elastic_sv,
+                 specfem::element::property_tag::anisotropic>
+    : public properties<specfem::element::medium_tag::elastic,
+                        specfem::element::property_tag::anisotropic> {
+
+public:
+  constexpr static auto dimension =
+      specfem::dimension::type::dim2; ///< Dimension of the material
+  constexpr static auto medium_tag =
+      specfem::element::medium_tag::elastic_sv; ///< Medium tag
+  constexpr static auto property_tag =
+      specfem::element::property_tag::anisotropic; ///< Property tag
+
+  properties(const type_real &density, const type_real &c11,
+             const type_real &c13, const type_real &c15, const type_real &c33,
+             const type_real &c35, const type_real &c55, const type_real &c12,
+             const type_real &c23, const type_real &c25,
+             const type_real &Qkappa, const type_real &Qmu)
+      : properties<specfem::element::medium_tag::elastic,
+                   specfem::element::property_tag::anisotropic>(
+            density, c11, c13, c15, c33, c35, c55, c12, c23, c25, Qkappa, Qmu) {
+  }
+
+  properties() = default;
+};
+
+template <>
+class properties<specfem::element::medium_tag::elastic_sh,
+                 specfem::element::property_tag::anisotropic>
+    : public properties<specfem::element::medium_tag::elastic,
+                        specfem::element::property_tag::anisotropic> {
+
+public:
+  constexpr static auto dimension =
+      specfem::dimension::type::dim2; ///< Dimension of the material
+  constexpr static auto medium_tag =
+      specfem::element::medium_tag::elastic_sh; ///< Medium tag
+  constexpr static auto property_tag =
+      specfem::element::property_tag::anisotropic; ///< Property tag
+
+  properties(const type_real &density, const type_real &c11,
+             const type_real &c13, const type_real &c15, const type_real &c33,
+             const type_real &c35, const type_real &c55, const type_real &c12,
+             const type_real &c23, const type_real &c25,
+             const type_real &Qkappa, const type_real &Qmu)
+      : properties<specfem::element::medium_tag::elastic,
+                   specfem::element::property_tag::anisotropic>(
+            density, c11, c13, c15, c33, c35, c55, c12, c23, c25, Qkappa, Qmu) {
+  }
+
+  properties() = default;
 };
 
 } // namespace medium
