@@ -165,7 +165,7 @@ module save_arrays_module
   integer :: ier,i,itest
   character(len=MAX_STRING_LEN) :: filename
   ! Check actual size
-  integer :: reclen
+  ! integer :: reclen
 
   ! selects routine for file i/o format
   if (ADIOS_FOR_MESH) then
@@ -220,7 +220,7 @@ module save_arrays_module
   write(IOUT) ystore_unique
   write(IOUT) zstore_unique
 
-  write(*,*) "xstore reclength", reclen
+  ! write(*,*) "xstore reclength", reclen
 
   write(IOUT) irregular_element_number
   write(IOUT) xix_regular
@@ -279,10 +279,13 @@ module save_arrays_module
 
   ! this array is needed for acoustic simulations but also for elastic simulations with CPML,
   ! thus we allocate it and read it in all cases (whether the simulation is acoustic, elastic, or acoustic/elastic)
-
   call save_global_arrays(nspec, rhostore)
 
   ! write(IOUT) rhostore
+
+  ! write test value
+  itest = 9998
+  write(IOUT) itest
 
   ! elastic
   if (ELASTIC_SIMULATION) then
@@ -296,6 +299,10 @@ module save_arrays_module
     ! write(IOUT) rho_vp
     ! write(IOUT) rho_vs
   endif
+
+  ! Write a test value
+  itest = 9997
+  write(IOUT) itest
 
   ! poroelastic
   if (POROELASTIC_SIMULATION) then
@@ -322,6 +329,10 @@ module save_arrays_module
     ! write(IOUT) rho_vpII
     ! write(IOUT) rho_vsI
   endif
+
+  ! write test value
+  itest = 9996
+  write(IOUT) itest
 
   ! @Lucas & @Congyue need to uncomment this when implementing PML
 

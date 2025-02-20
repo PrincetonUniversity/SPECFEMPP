@@ -36,7 +36,8 @@ template <> struct element_types<specfem::dimension::type::dim3> {
 
   void print(const int ispec) const;
 
-  template <specfem::element::medium_tag MediumTag> void print() const;
+  template <specfem::element::medium_tag MediumTag>
+  void print(const int i) const;
 
   View1D<bool> ispec_is_elastic;     ///< Elastic spectral elements
   View1D<bool> ispec_is_acoustic;    ///< Acoustic spectral elements

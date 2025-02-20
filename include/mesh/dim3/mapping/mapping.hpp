@@ -1,6 +1,7 @@
 #pragma once
 
 #include "enumerations/dimension.hpp"
+#include "enumerations/medium.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
@@ -57,7 +58,10 @@ template <> struct mapping<specfem::dimension::type::dim3> {
 
   void print() const;
 
-  void print(int ispec) const;
+  void print(const int ispec) const;
+
+  template <specfem::element::medium_tag MediumTag>
+  void print(const int i) const;
 };
 
 } // namespace mesh
