@@ -1,6 +1,6 @@
 
-#include "mesh/materials/materials.hpp"
 #include "../test_fixture/test_fixture.hpp"
+#include "mesh/mesh.hpp"
 #include <unordered_map>
 #include <variant>
 #include <vector>

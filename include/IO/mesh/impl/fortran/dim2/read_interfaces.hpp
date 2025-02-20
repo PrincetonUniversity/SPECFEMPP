@@ -1,7 +1,6 @@
 #pragma once
 
-#include "mesh/coupled_interfaces/coupled_interfaces.hpp"
-#include "mesh/coupled_interfaces/interface_container.hpp"
+#include "mesh/mesh.hpp"
 #include "specfem_mpi/interface.hpp"
 
 namespace specfem {
