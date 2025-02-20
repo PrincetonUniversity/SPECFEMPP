@@ -1,9 +1,6 @@
 #pragma once
 
-#include "mesh/boundaries/absorbing_boundaries.hpp"
-#include "mesh/boundaries/acoustic_free_surface.hpp"
-#include "mesh/boundaries/boundaries.hpp"
-#include "mesh/boundaries/forcing_boundaries.hpp"
+#include "mesh/mesh.hpp"
 #include "specfem_mpi/interface.hpp"
 #include <fstream>
 #include <vector>

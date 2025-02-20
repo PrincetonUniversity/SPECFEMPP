@@ -2,7 +2,7 @@
 
 #include "compute/compute_mesh.hpp"
 #include "compute/properties/properties.hpp"
-#include "mesh/boundaries/acoustic_free_surface.hpp"
+#include "mesh/mesh.hpp"
 #include "point/boundary.hpp"
 #include "point/coordinates.hpp"
 #include <Kokkos_Core.hpp>

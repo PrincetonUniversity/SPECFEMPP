@@ -1,8 +1,7 @@
 #include "IO/mesh/impl/fortran/dim2/read_material_properties.hpp"
 #include "IO/fortranio/interface.hpp"
 #include "enumerations/interface.hpp"
-// #include "mesh/materials/materials.hpp"
-#include "mesh/materials/materials.tpp"
+#include "mesh/mesh.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "utilities/interface.hpp"
 #include <memory>

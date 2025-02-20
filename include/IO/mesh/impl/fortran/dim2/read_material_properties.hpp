@@ -1,6 +1,6 @@
 #pragma once
 
-#include "mesh/materials/materials.hpp"
+#include "mesh/mesh.hpp"
 #include "specfem_mpi/interface.hpp"
 #include <fstream>
 #include <iostream>
