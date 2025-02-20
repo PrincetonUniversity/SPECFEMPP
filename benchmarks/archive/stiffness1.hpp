@@ -30,8 +30,8 @@ constexpr static auto boundary_tag = specfem::element::boundary_tag::none;
 
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool flag>
-void compute_stiffness_interaction2(const specfem::compute::assembly &assembly,
-                                    const int &istep) {
+void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
+                                   const int &istep) {
 
   constexpr auto medium_tag = MediumTag;
   constexpr auto property_tag = PropertyTag;

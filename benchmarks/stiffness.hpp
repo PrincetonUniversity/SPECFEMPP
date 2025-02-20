@@ -4,6 +4,7 @@
 #include "enumerations/medium.hpp"
 #include "enumerations/wavefield.hpp"
 
+#include "assembly.hpp"
 #include "impl_chunk.hpp"
 #include "impl_point.hpp"
 #include "impl_policy.hpp"
@@ -19,8 +20,8 @@ namespace benchmarks {
 
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool flag>
-void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
-                                   const int &istep) {
+void compute_stiffness_interaction(
+    const specfem::benchmarks::assembly &assembly, const int &istep) {
 
   constexpr auto medium_tag = MediumTag;
   constexpr auto property_tag = PropertyTag;
