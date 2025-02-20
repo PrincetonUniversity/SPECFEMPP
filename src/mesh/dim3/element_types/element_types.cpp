@@ -91,7 +91,7 @@ void specfem::mesh::element_types<specfem::dimension::type::dim3>::print(
     if (i >= nporoelastic) {
       std::ostringstream message;
       message << "Error: Poroelastic element " << i
-              << " does not exist. Number "
+              << " does not exist.\nNumber "
                  " of poroelastic elements: "
               << nporoelastic << ". "
               << "(" << __FILE__ << ":" << __LINE__ << ")\n";

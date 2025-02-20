@@ -464,6 +464,102 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
     throw std::runtime_error(error_message.str());
   }
 
+  // Read number of absorbing boundaries
+  int num_abs_boundary_faces;
+  try {
+    specfem::IO::fortran_read_line(stream, &num_abs_boundary_faces);
+  } catch (std::runtime_error &e) {
+    std::ostringstream error_message;
+    error_message << "Error reading num_abs_boundary_faces from database file: "
+                  << e.what() << "(" << __FILE__ << ":" << __LINE__ << ")";
+    throw std::runtime_error(error_message.str());
+  }
+  // Print the number of absorbing boundaries
+
+  std::cout << "Number of absorbing boundaries: " << num_abs_boundary_faces
+            << std::endl;
+
+  // check_read_test_value(stream, 9992342);
+
+  // Check whether the number of boundaries faces is equal to the number of
+  // faces in the mesh parameters
+  if (num_abs_boundary_faces != mesh.parameters.num_abs_boundary_faces) {
+    std::ostringstream error_message;
+    error_message
+        << "Number of boundaries faces not equal to number of faces in mesh "
+           "parameters. "
+        << "Number of boundaries faces = " << num_abs_boundary_faces
+        << " Number of faces in mesh parameters = "
+        << mesh.parameters.num_abs_boundary_faces << "(" << __FILE__ << ":"
+        << __LINE__ << ")";
+    throw std::runtime_error(error_message.str());
+  }
+
+  // if there are absorbing boundaries create the absorbing boundary object
+  // and read the absorbing boundaries
+  if (num_abs_boundary_faces > 0) {
+    mesh.absorbing_boundary =
+        specfem::mesh::absorbing_boundary<specfem::dimension::type::dim3>(
+            mesh.parameters.nglob, mesh.parameters.num_abs_boundary_faces,
+            mesh.parameters.ngllsquare, mesh.parameters.acoustic_simulation,
+            mesh.parameters.elastic_simulation);
+
+    // Read the absorbing ispec
+    try {
+
+      std::vector<int> dummy_T(mesh.parameters.num_abs_boundary_faces, -99999);
+
+      fortran_read_line(stream, &dummy_T);
+
+      // specfem::IO::mesh::impl::fortran::dim3::read_index_array(
+      //     stream, mesh.absorbing_boundary.ispec);
+    } catch (std::runtime_error &e) {
+      std::ostringstream error_message;
+      error_message << "Error reading abs_boundary_ispec from database file: "
+                    << e.what() << "(" << __FILE__ << ":" << __LINE__ << ")";
+      throw std::runtime_error(error_message.str());
+    }
+
+    // Read the absorbing ijk
+    try {
+      specfem::IO::mesh::impl::fortran::dim3::read_index_array(
+          stream, mesh.absorbing_boundary.ijk);
+    } catch (std::runtime_error &e) {
+      std::ostringstream error_message;
+      error_message << "Error reading abs_boundary_ijk from database file: "
+                    << e.what() << "(" << __FILE__ << ":" << __LINE__ << ")";
+      throw std::runtime_error(error_message.str());
+    }
+
+    // Read the absorbing jacobian2Dw
+    try {
+      specfem::IO::mesh::impl::fortran::dim3::read_array(
+          stream, mesh.absorbing_boundary.jacobian2Dw);
+    } catch (std::runtime_error &e) {
+      std::ostringstream error_message;
+      error_message
+          << "Error reading abs_boundary_jacobian2Dw from database file: "
+          << e.what() << "(" << __FILE__ << ":" << __LINE__ << ")";
+      throw std::runtime_error(error_message.str());
+    }
+
+    // Read the absorbing normal
+    try {
+      specfem::IO::mesh::impl::fortran::dim3::read_array(
+          stream, mesh.absorbing_boundary.normal);
+    } catch (std::runtime_error &e) {
+      std::ostringstream error_message;
+      error_message << "Error reading abs_boundary_normal from database file: "
+                    << e.what() << "(" << __FILE__ << ":" << __LINE__ << ")";
+      throw std::runtime_error(error_message.str());
+    }
+
+    // Print the absorbing boundaries
+    // mesh.absorbing_boundary.print();
+    // mesh.absorbing_boundary.print(0);
+    // mesh.absorbing_boundary.print(num_abs_boundary_faces - 1);
+  }
+
   stream.close();
 
   return mesh;
