@@ -23,10 +23,15 @@
 namespace specfem {
 namespace benchmarks {
 
+constexpr static auto dimension = specfem::dimension::type::dim2;
+constexpr static auto wavefield = specfem::wavefield::simulation_field::forward;
+constexpr static auto ngll = 5;
+constexpr static auto boundary_tag = specfem::element::boundary_tag::none;
+
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool flag>
 void compute_stiffness_interaction2(const specfem::compute::assembly &assembly,
-                                   const int &istep) {
+                                    const int &istep) {
 
   constexpr auto medium_tag = MediumTag;
   constexpr auto property_tag = PropertyTag;
@@ -120,8 +125,7 @@ void compute_stiffness_interaction2(const specfem::compute::assembly &assembly,
         ElementQuadratureType element_quadrature(team);
         ChunkStressIntegrandType stress_integrand(team);
 
-        specfem::compute::load_on_device(team, quadrature,
-                                            element_quadrature);
+        specfem::compute::load_on_device(team, quadrature, element_quadrature);
 
         for (int tile = 0; tile < ChunkPolicyType::tile_size * simd_size;
              tile += ChunkPolicyType::chunk_size * simd_size) {
@@ -136,7 +140,7 @@ void compute_stiffness_interaction2(const specfem::compute::assembly &assembly,
           const auto iterator =
               chunk_policy.league_iterator(starting_element_index);
           specfem::compute::load_on_device(team, iterator, field,
-                                              element_field);
+                                           element_field);
 
           team.team_barrier();
 
@@ -169,7 +173,7 @@ void compute_stiffness_interaction2(const specfem::compute::assembly &assembly,
                     point_partial_derivatives;
 
                 specfem::compute::load_on_device(index, partial_derivatives,
-                                                    point_partial_derivatives);
+                                                 point_partial_derivatives);
 
                 VectorPointViewType df;
 
@@ -186,11 +190,11 @@ void compute_stiffness_interaction2(const specfem::compute::assembly &assembly,
 
                 PointPartialDerivativesType point_partial_derivatives2;
                 specfem::compute::load_on_device(index, partial_derivatives,
-                                                    point_partial_derivatives2);
+                                                 point_partial_derivatives2);
 
                 PointPropertyType point_property;
                 specfem::compute::load_on_device(index, properties,
-                                                point_property);
+                                                 point_property);
 
                 PointFieldDerivativesType field_derivatives(df);
 
@@ -258,7 +262,7 @@ void compute_stiffness_interaction2(const specfem::compute::assembly &assembly,
                 }
 
                 specfem::compute::atomic_add_on_device(index, acceleration,
-                                                    field);
+                                                       field);
               });
         }
       });

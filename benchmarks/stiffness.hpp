@@ -17,11 +17,6 @@
 namespace specfem {
 namespace benchmarks {
 
-constexpr static auto dimension = specfem::dimension::type::dim2;
-constexpr static auto wavefield = specfem::wavefield::simulation_field::forward;
-constexpr static auto ngll = 5;
-constexpr static auto boundary_tag = specfem::element::boundary_tag::none;
-
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool flag>
 void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
