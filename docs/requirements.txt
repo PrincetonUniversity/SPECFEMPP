@@ -1,3 +1,4 @@
+sphinx==8.0.0
 breathe
 furo
 sphinx-copybutton
