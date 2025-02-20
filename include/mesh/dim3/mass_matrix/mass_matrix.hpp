@@ -46,7 +46,6 @@ template <> struct mass_matrix<specfem::dimension::type::dim3> {
     }
   };
 
-private:
   View1D<type_real> elastic;
   View1D<type_real> acoustic;
   View1D<type_real> ocean_load;

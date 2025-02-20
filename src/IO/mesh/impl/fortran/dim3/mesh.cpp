@@ -271,7 +271,7 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
       specfem::mesh::element_types<specfem::dimension::type::dim3>(
           mesh.parameters.nspec);
 
-  // Read is_acoustic using read_array
+  // Read boolean is x array!
   try {
     specfem::IO::mesh::impl::fortran::dim3::read_array(
         stream, mesh.elements_types.ispec_is_acoustic);
@@ -286,6 +286,181 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
     std::ostringstream error_message;
     error_message << "Error reading ispec_is_acoustic from database file: "
                   << e.what() << "(" << __FILE__ << ":" << __LINE__ << ")";
+    throw std::runtime_error(error_message.str());
+  }
+
+  // Print the element types
+  mesh.elements_types.print();
+  mesh.elements_types.print(0);
+
+  // Print elements first element of each category
+  try {
+    mesh.elements_types.print<specfem::element::medium_tag::acoustic>(0);
+  } catch (std::runtime_error &e) {
+    std::cout << e.what();
+  };
+  try {
+    mesh.elements_types.print<specfem::element::medium_tag::elastic>(0);
+  } catch (std::runtime_error &e) {
+    std::cout << e.what();
+  };
+  try {
+    mesh.elements_types.print<specfem::element::medium_tag::poroelastic>(0);
+  } catch (std::runtime_error &e) {
+    std::cout << e.what();
+  };
+
+  // read test value
+  try {
+    check_read_test_value(stream, 9999);
+  } catch (std::runtime_error &e) {
+    std::ostringstream error_message;
+    error_message << "Error reading test value from database file: " << e.what()
+                  << "(" << __FILE__ << ":" << __LINE__ << ")";
+    throw std::runtime_error(error_message.str());
+  }
+
+  // Intialize the mass matrix object
+  mesh.mass_matrix = specfem::mesh::mass_matrix<specfem::dimension::type::dim3>(
+      mesh.parameters.nglob, mesh.parameters.acoustic_simulation,
+      mesh.parameters.elastic_simulation,
+      mesh.parameters.poroelastic_simulation,
+      mesh.parameters.approximate_ocean_load);
+
+  // Read the acoustic mass matrix if acoustic simulation
+  if (mesh.parameters.acoustic_simulation) {
+    try {
+      specfem::IO::mesh::impl::fortran::dim3::read_array(
+          stream, mesh.mass_matrix.acoustic);
+    } catch (std::runtime_error &e) {
+      std::ostringstream error_message;
+      error_message << "Error reading acoustic mass matrix from database file: "
+                    << e.what() << "(" << __FILE__ << ":" << __LINE__ << ")";
+      throw std::runtime_error(error_message.str());
+    }
+  }
+
+  // Read the density rho
+  try {
+    specfem::IO::mesh::impl::fortran::dim3::read_array(stream,
+                                                       mesh.materials.rho);
+  } catch (std::runtime_error &e) {
+    std::ostringstream error_message;
+    error_message << "Error reading rho from database file: " << e.what() << "("
+                  << __FILE__ << ":" << __LINE__ << ")";
+    throw std::runtime_error(error_message.str());
+  }
+
+  // Read test value 9998
+  try {
+    check_read_test_value(stream, 9998);
+  } catch (std::runtime_error &e) {
+    std::ostringstream error_message;
+    error_message << "Error reading test value from database file: " << e.what()
+                  << "(" << __FILE__ << ":" << __LINE__ << ")";
+    throw std::runtime_error(error_message.str());
+  }
+
+  // Read the elastic mass matrix if elastic simulation
+  if (mesh.parameters.elastic_simulation) {
+    try {
+      specfem::IO::mesh::impl::fortran::dim3::read_array(
+          stream, mesh.mass_matrix.elastic);
+      if (mesh.parameters.approximate_ocean_load) {
+        specfem::IO::mesh::impl::fortran::dim3::read_array(
+            stream, mesh.mass_matrix.ocean_load);
+      }
+    } catch (std::runtime_error &e) {
+      std::ostringstream error_message;
+      error_message << "Error reading elastic mass matrix from database file: "
+                    << e.what() << "(" << __FILE__ << ":" << __LINE__ << ")";
+      throw std::runtime_error(error_message.str());
+    }
+
+    // Read the stacey boundary values
+    try {
+      specfem::IO::mesh::impl::fortran::dim3::read_array(stream,
+                                                         mesh.materials.rho_vp);
+    } catch (std::runtime_error &e) {
+      std::ostringstream error_message;
+      error_message << "Error reading rho_vp from database file: " << e.what()
+                    << "(" << __FILE__ << ":" << __LINE__ << ")";
+      throw std::runtime_error(error_message.str());
+    }
+
+    // Read the stacey boundary values
+    try {
+      specfem::IO::mesh::impl::fortran::dim3::read_array(stream,
+                                                         mesh.materials.rho_vs);
+    } catch (std::runtime_error &e) {
+      std::ostringstream error_message;
+      error_message << "Error reading rho_vs from database file: " << e.what()
+                    << "(" << __FILE__ << ":" << __LINE__ << ")";
+      throw std::runtime_error(error_message.str());
+    }
+  }
+
+  // Read test value 9997
+  try {
+    check_read_test_value(stream, 9997);
+  } catch (std::runtime_error &e) {
+    std::ostringstream error_message;
+    error_message << "Error reading test value from database file: " << e.what()
+                  << "(" << __FILE__ << ":" << __LINE__ << ")";
+    throw std::runtime_error(error_message.str());
+  }
+
+  // If simulation poroelastic
+  if (mesh.parameters.poroelastic_simulation) {
+    try {
+      specfem::IO::mesh::impl::fortran::dim3::read_array(
+          stream, mesh.mass_matrix.solid_poroelastic);
+      specfem::IO::mesh::impl::fortran::dim3::read_array(
+          stream, mesh.mass_matrix.fluid_poroelastic);
+    } catch (std::runtime_error &e) {
+      std::ostringstream error_message;
+      error_message
+          << "Error reading poroelastic mass matrix from database file: "
+          << e.what() << "(" << __FILE__ << ":" << __LINE__ << ")";
+      throw std::runtime_error(error_message.str());
+    }
+
+    // read the poroelastic material properties
+    try {
+      specfem::IO::mesh::impl::fortran::dim3::read_array(
+          stream, mesh.materials.poro_rho);
+      specfem::IO::mesh::impl::fortran::dim3::read_array(
+          stream, mesh.materials.poro_kappa);
+      specfem::IO::mesh::impl::fortran::dim3::read_array(
+          stream, mesh.materials.poro_eta);
+      specfem::IO::mesh::impl::fortran::dim3::read_array(
+          stream, mesh.materials.poro_tort);
+      specfem::IO::mesh::impl::fortran::dim3::read_array(
+          stream, mesh.materials.poro_perm);
+      specfem::IO::mesh::impl::fortran::dim3::read_array(
+          stream, mesh.materials.poro_phi);
+      specfem::IO::mesh::impl::fortran::dim3::read_array(
+          stream, mesh.materials.poro_rho_vpI);
+      specfem::IO::mesh::impl::fortran::dim3::read_array(
+          stream, mesh.materials.poro_rho_vpII);
+      specfem::IO::mesh::impl::fortran::dim3::read_array(
+          stream, mesh.materials.poro_rho_vsI);
+    } catch (std::runtime_error &e) {
+      std::ostringstream error_message;
+      error_message << "Error reading poroelastic material properties from "
+                       "database file: "
+                    << e.what() << "(" << __FILE__ << ":" << __LINE__ << ")";
+      throw std::runtime_error(error_message.str());
+    }
+  }
+
+  // Read test value 9996
+  try {
+    check_read_test_value(stream, 9996);
+  } catch (std::runtime_error &e) {
+    std::ostringstream error_message;
+    error_message << "Error reading test value from database file: " << e.what()
+                  << "(" << __FILE__ << ":" << __LINE__ << ")";
     throw std::runtime_error(error_message.str());
   }
 
