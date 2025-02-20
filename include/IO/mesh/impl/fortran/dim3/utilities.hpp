@@ -57,11 +57,6 @@ void specfem::IO::mesh::impl::fortran::dim3::read_array(std::ifstream &stream,
           }
         }
       }
-      if ((ispec == 0) || (ispec == nspec - 1)) {
-        std::cout << "ispec=" << ispec
-                  << " array(ispec,0,0,0)=" << array(ispec, 0, 0, 0)
-                  << std::endl;
-      }
     }
 
   } catch (std::runtime_error &e) {
@@ -156,11 +151,6 @@ void specfem::IO::mesh::impl::fortran::dim3::read_index_array(
             counter++;
           }
         }
-      }
-      if ((ispec == 0) || (ispec == nspec - 1)) {
-        std::cout << "ispec=" << ispec
-                  << " array(ispec,0,0,0)=" << array(ispec, 0, 0, 0)
-                  << std::endl;
       }
     }
 

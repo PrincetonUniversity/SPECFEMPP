@@ -2,12 +2,6 @@
 #include "mesh/mesh.hpp"
 #include "IO/fortranio/interface.hpp"
 #include "IO/interface.hpp"
-#include "IO/mesh/impl/fortran/dim2/read_boundaries.hpp"
-#include "IO/mesh/impl/fortran/dim2/read_elements.hpp"
-#include "IO/mesh/impl/fortran/dim2/read_interfaces.hpp"
-#include "IO/mesh/impl/fortran/dim2/read_material_properties.hpp"
-#include "IO/mesh/impl/fortran/dim2/read_mesh_database.hpp"
-#include "IO/mesh/impl/fortran/dim2/read_parameters.hpp"
 #include "IO/mesh/impl/fortran/dim3/interface.hpp"
 #include "enumerations/interface.hpp"
 #include "kokkos_abstractions.h"
@@ -22,6 +16,19 @@
 #include <memory>
 #include <tuple>
 #include <vector>
+
+void check_read_test_value(std::ifstream &stream, int test_value) {
+  // Read test value that should be value
+  int value;
+  specfem::IO::fortran_read_line(stream, &value);
+  if (test_value != value) {
+    std::ostringstream error_message;
+    error_message << "Test value (" << test_value << ") != read value ("
+                  << value << "). "
+                  << "(" << __FILE__ << ":" << __LINE__ << ")";
+    throw std::runtime_error(error_message.str());
+  }
+}
 
 specfem::mesh::mesh<specfem::dimension::type::dim3>
 specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
@@ -216,6 +223,71 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
   // Print Partial Derivatives parameters and the first spectral element
   mesh.partial_derivatives.print();
   mesh.partial_derivatives.print(0, 0, 0, 0);
+
+  // Marker that should be 10000
+  try {
+    check_read_test_value(stream, 10000);
+  } catch (std::runtime_error &e) {
+    std::ostringstream error_message;
+    error_message << "Error reading test value from database file: " << e.what()
+                  << "(" << __FILE__ << ":" << __LINE__ << ")";
+    throw std::runtime_error(error_message.str());
+  }
+
+  // Create material object
+  mesh.materials = specfem::mesh::materials<specfem::dimension::type::dim3>(
+      mesh.parameters.nspec, mesh.parameters.ngllx, mesh.parameters.nglly,
+      mesh.parameters.ngllz, mesh.parameters.acoustic_simulation,
+      mesh.parameters.elastic_simulation,
+      mesh.parameters.poroelastic_simulation, mesh.parameters.anisotropy);
+
+  // Read Kappa using read_array
+  try {
+    specfem::IO::mesh::impl::fortran::dim3::read_array(stream,
+                                                       mesh.materials.kappa);
+  } catch (std::runtime_error &e) {
+    std::ostringstream error_message;
+    error_message << "Error reading kappa from database file: " << e.what()
+                  << "(" << __FILE__ << ":" << __LINE__ << ")";
+    throw std::runtime_error(error_message.str());
+  }
+
+  // Read Mu using read_array
+  try {
+    specfem::IO::mesh::impl::fortran::dim3::read_array(stream,
+                                                       mesh.materials.mu);
+  } catch (std::runtime_error &e) {
+    std::ostringstream error_message;
+    error_message << "Error reading mu from database file: " << e.what() << "("
+                  << __FILE__ << ":" << __LINE__ << ")";
+    throw std::runtime_error(error_message.str());
+  }
+
+  // Print the materials
+  mesh.materials.print();
+
+  // Initialize element types object
+  mesh.elements_types =
+      specfem::mesh::element_types<specfem::dimension::type::dim3>(
+          mesh.parameters.nspec);
+
+  // Read is_acoustic using read_array
+  try {
+    specfem::IO::mesh::impl::fortran::dim3::read_array(
+        stream, mesh.elements_types.ispec_is_acoustic);
+    specfem::IO::mesh::impl::fortran::dim3::read_array(
+        stream, mesh.elements_types.ispec_is_elastic);
+    specfem::IO::mesh::impl::fortran::dim3::read_array(
+        stream, mesh.elements_types.ispec_is_poroelastic);
+    // This one allows for ispecs =
+    // mesh.elements_types.get_elements<medium_tag>() to work
+    mesh.elements_types.set_elements();
+  } catch (std::runtime_error &e) {
+    std::ostringstream error_message;
+    error_message << "Error reading ispec_is_acoustic from database file: "
+                  << e.what() << "(" << __FILE__ << ":" << __LINE__ << ")";
+    throw std::runtime_error(error_message.str());
+  }
 
   stream.close();
 
