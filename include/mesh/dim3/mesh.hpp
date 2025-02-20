@@ -1,6 +1,9 @@
 #pragma once
 
 #include "coordinates/coordinates.hpp"
+#include "element_types/element_types.hpp"
+#include "mass_matrix/mass_matrix.hpp"
+#include "materials/materials.hpp"
 #include "mesh/dim3/mapping/mapping.hpp"
 #include "mesh/mesh_base.hpp"
 #include "parameters/parameters.hpp"
@@ -35,6 +38,15 @@ template <> struct mesh<specfem::dimension::type::dim3> {
 
   // Struct to store the partial derivatives
   specfem::mesh::partial_derivatives<dimension> partial_derivatives;
+
+  // Struct to store element_types
+  specfem::mesh::element_types<dimension> elements_types;
+
+  // Mass matrix
+  specfem::mesh::mass_matrix<dimension> mass_matrix;
+
+  // Material
+  specfem::mesh::materials<dimension> materials;
 
   /**
    * @name Constructors
