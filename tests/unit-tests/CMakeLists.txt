@@ -376,6 +376,7 @@ target_link_libraries(
   parameter_reader
   timescheme
   coupled_interface
+  periodic_tasks
   -lpthread -lm
 )
 
