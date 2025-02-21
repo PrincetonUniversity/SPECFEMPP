@@ -409,6 +409,12 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
 #endif
   }
 
+  // Read the number of free surface faces
+  int num_free_surface_faces;
+  try_read_line("num_free_surface_faces", stream, &num_free_surface_faces);
+  check_values("num_free_surface_faces", num_free_surface_faces,
+               mesh.parameters.num_free_surface_faces);
+
   // Create the free surface object
   mesh.free_surface =
       specfem::mesh::free_surface<specfem::dimension::type::dim3>(
@@ -420,6 +426,11 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
   try_read_array("free_surface_jacobian2Dw", stream,
                  mesh.free_surface.jacobian2Dw);
   try_read_array("free_surface_normal", stream, mesh.free_surface.normal);
+
+#ifndef NDEBUG
+  // Print the free surface
+  mesh.free_surface.print();
+#endif
 
   stream.close();
 

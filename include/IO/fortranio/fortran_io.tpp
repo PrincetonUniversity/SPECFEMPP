@@ -54,6 +54,7 @@ void fortran_read_line(std::ifstream &stream, Args... values) {
   } catch (const std::exception &e) {
     std::ostringstream error_message;
     error_message << "Error reading fortran line with buffer length: "
+                  << buffer_length << "\n"
                   << e.what() << "(" << __FILE__ << ":" << __LINE__ << ")";
     throw std::runtime_error(error_message.str());
   }
