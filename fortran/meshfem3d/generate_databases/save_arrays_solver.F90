@@ -448,14 +448,6 @@ module save_arrays_module
   write(IOUT) NSPEC2D_BOTTOM
   write(IOUT) NSPEC2D_TOP
 
-  write(*,*) 'nspec2D_xmin: ', nspec2D_xmin
-  write(*,*) 'nspec2D_xmax: ', nspec2D_xmax
-  write(*,*) 'nspec2D_ymin: ', nspec2D_ymin
-  write(*,*) 'nspec2D_ymax: ', nspec2D_ymax
-  write(*,*) 'NSPEC2D_BOTTOM: ', NSPEC2D_BOTTOM
-  write(*,*) 'NSPEC2D_TOP: ', NSPEC2D_TOP
-
-
   if (nspec2D_xmin > 0) write(IOUT) ibelm_xmin
   if (nspec2D_xmax > 0) write(IOUT) ibelm_xmax
   if (nspec2D_ymin > 0) write(IOUT) ibelm_ymin
@@ -487,30 +479,64 @@ module save_arrays_module
   ! acoustic-elastic coupling surface
   write(IOUT) num_coupling_ac_el_faces
   if (num_coupling_ac_el_faces > 0) then
-    write(IOUT) coupling_ac_el_ispec
-    write(IOUT) coupling_ac_el_ijk
-    write(IOUT) coupling_ac_el_jacobian2Dw
-    write(IOUT) coupling_ac_el_normal
+    ! write(IOUT) coupling_ac_el_ispec
+    ! write(IOUT) coupling_ac_el_ijk
+    ! write(IOUT) coupling_ac_el_jacobian2Dw
+    ! write(IOUT) coupling_ac_el_normal
+
+    ! Saves the arrays with num faces in the first dimension
+    call save_boundary_arrays(num_coupling_ac_el_faces, &
+                         coupling_ac_el_ispec, &
+                         coupling_ac_el_ijk, &
+                         coupling_ac_el_jacobian2Dw, &
+                         coupling_ac_el_normal)
+
   endif
 
   ! acoustic-poroelastic coupling surface
   write(IOUT) num_coupling_ac_po_faces
   if (num_coupling_ac_po_faces > 0) then
-    write(IOUT) coupling_ac_po_ispec
-    write(IOUT) coupling_ac_po_ijk
-    write(IOUT) coupling_ac_po_jacobian2Dw
-    write(IOUT) coupling_ac_po_normal
+    ! write(IOUT) coupling_ac_po_ispec
+    ! write(IOUT) coupling_ac_po_ijk
+    ! write(IOUT) coupling_ac_po_jacobian2Dw
+    ! write(IOUT) coupling_ac_po_normal
+
+    ! Saves the arrays with num faces in the first dimension
+    call save_boundary_arrays(num_coupling_ac_po_faces, &
+                         coupling_ac_po_ispec, &
+                         coupling_ac_po_ijk, &
+                         coupling_ac_po_jacobian2Dw, &
+                         coupling_ac_po_normal)
   endif
 
   ! elastic-poroelastic coupling surface
   write(IOUT) num_coupling_el_po_faces
   if (num_coupling_el_po_faces > 0) then
-    write(IOUT) coupling_el_po_ispec
-    write(IOUT) coupling_po_el_ispec
-    write(IOUT) coupling_el_po_ijk
-    write(IOUT) coupling_po_el_ijk
-    write(IOUT) coupling_el_po_jacobian2Dw
-    write(IOUT) coupling_el_po_normal
+
+    ! write(IOUT) coupling_el_po_ispec
+    ! write(IOUT) coupling_el_po_ijk
+    ! write(IOUT) coupling_el_po_jacobian2Dw
+    ! write(IOUT) coupling_el_po_normal
+
+    ! Saves the arrays with num faces in the first dimension
+    call save_boundary_arrays(num_coupling_el_po_faces, &
+                         coupling_el_po_ispec, &
+                         coupling_el_po_ijk, &
+                         coupling_el_po_jacobian2Dw, &
+                         coupling_el_po_normal)
+
+    ! write(IOUT) coupling_po_el_ispec
+    ! write(IOUT) coupling_po_el_ijk
+    ! write(IOUT) coupling_el_po_jacobian2Dw
+    ! write(IOUT) coupling_el_po_normal
+
+    ! Saves the arrays with num faces in the first dimension
+    call save_boundary_arrays(num_coupling_el_po_faces, &
+                         coupling_po_el_ispec, &
+                         coupling_po_el_ijk, &
+                         coupling_el_po_jacobian2Dw, &
+                         coupling_el_po_normal)
+
   endif
 
   ! stamp for checking i/o
