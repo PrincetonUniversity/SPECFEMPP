@@ -57,6 +57,7 @@ void fortran_read_line(std::ifstream &stream, Args... values) {
                   << e.what() << "(" << __FILE__ << ":" << __LINE__ << ")";
     throw std::runtime_error(error_message.str());
   }
+
   stream.read(reinterpret_cast<char *>(&buffer_length), fint);
   return;
 }
