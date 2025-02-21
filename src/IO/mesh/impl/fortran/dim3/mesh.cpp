@@ -69,10 +69,13 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
     throw;
   }
 
-  mesh.parameters.print();
-
   // Mesh Parameters are populated, closing the parameters file.
   stream.close();
+
+#ifndef NDEBUG
+  // Print the parameters
+  mesh.parameters.print();
+#endif
 
   // Open the database file
   stream.open(mesh_databases_file);
@@ -214,7 +217,6 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
   // Print the element types
   mesh.elements_types.print();
   mesh.elements_types.print(0);
-#endif
 
   // Print elements first element of each category
   try_print_medium_element<specfem::element::medium_tag::acoustic>(
@@ -223,6 +225,7 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
       mesh.elements_types, 0);
   try_print_medium_element<specfem::element::medium_tag::poroelastic>(
       mesh.elements_types, 0);
+#endif
 
   // Read test value 9999
   check_read_test_value(stream, 9999);
@@ -431,6 +434,102 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
   // Print the free surface
   mesh.free_surface.print();
 #endif
+
+  // Create the coupled interfaces object
+  mesh.coupled_interfaces =
+      specfem::mesh::coupled_interfaces<specfem::dimension::type::dim3>(
+          mesh.parameters.num_coupling_ac_el_faces,
+          mesh.parameters.num_coupling_ac_po_faces,
+          mesh.parameters.num_coupling_el_po_faces, mesh.parameters.ngllsquare);
+
+  // Read the num_coupling_ac_el_faces
+  int num_coupling_ac_el_faces;
+  try_read_line("num_coupling_ac_el_faces", stream, &num_coupling_ac_el_faces);
+  check_values("num_coupling_ac_el_faces", num_coupling_ac_el_faces,
+               mesh.parameters.num_coupling_ac_el_faces);
+
+  // Read the the coupling if the number is greater than 0
+  if (mesh.coupled_interfaces.acoustic_elastic) {
+    try_read_index_array(
+        "coupling_ac_el_ispec", stream,
+        mesh.coupled_interfaces.acoustic_elastic_interface.ispec);
+    try_read_index_array(
+        "coupling_ac_el_ijk", stream,
+        mesh.coupled_interfaces.acoustic_elastic_interface.ijk);
+    try_read_array(
+        "coupling_ac_el_jacobian2Dw", stream,
+        mesh.coupled_interfaces.acoustic_elastic_interface.jacobian2Dw);
+    try_read_array("coupling_ac_el_normal", stream,
+                   mesh.coupled_interfaces.acoustic_elastic_interface.normal);
+  }
+
+  // Read the num_coupling_ac_po_faces
+  int num_coupling_ac_po_faces;
+  try_read_line("num_coupling_ac_po_faces", stream, &num_coupling_ac_po_faces);
+
+  // Check the values
+  check_values("num_coupling_ac_po_faces", num_coupling_ac_po_faces,
+               mesh.parameters.num_coupling_ac_po_faces);
+
+  // Read the the coupling if the number is greater than 0
+  if (mesh.coupled_interfaces.acoustic_poroelastic) {
+    try_read_index_array(
+        "coupling_ac_po_ispec", stream,
+        mesh.coupled_interfaces.acoustic_poroelastic_interface.ispec);
+    try_read_index_array(
+        "coupling_ac_po_ijk", stream,
+        mesh.coupled_interfaces.acoustic_poroelastic_interface.ijk);
+    try_read_array(
+        "coupling_ac_po_jacobian2Dw", stream,
+        mesh.coupled_interfaces.acoustic_poroelastic_interface.jacobian2Dw);
+    try_read_array(
+        "coupling_ac_po_normal", stream,
+        mesh.coupled_interfaces.acoustic_poroelastic_interface.normal);
+  }
+
+  // Read the num_coupling_el_po_faces
+  int num_coupling_el_po_faces;
+  try_read_line("num_coupling_el_po_faces", stream, &num_coupling_el_po_faces);
+
+  // Check the values
+  check_values("num_coupling_el_po_faces", num_coupling_el_po_faces,
+               mesh.parameters.num_coupling_el_po_faces);
+
+  // Read the the coupling if the number is greater than 0
+  if (mesh.coupled_interfaces.elastic_poroelastic) {
+    try_read_index_array(
+        "coupling_el_po_ispec", stream,
+        mesh.coupled_interfaces.elastic_poroelastic_interface.ispec);
+    try_read_index_array(
+        "coupling_el_po_ijk", stream,
+        mesh.coupled_interfaces.elastic_poroelastic_interface.ijk);
+    try_read_array(
+        "coupling_el_po_jacobian2Dw", stream,
+        mesh.coupled_interfaces.elastic_poroelastic_interface.jacobian2Dw);
+    try_read_array(
+        "coupling_el_po_normal", stream,
+        mesh.coupled_interfaces.elastic_poroelastic_interface.normal);
+    try_read_index_array(
+        "coupling_po_el_ispec", stream,
+        mesh.coupled_interfaces.poroelastic_elastic_interface.ispec);
+    try_read_index_array(
+        "coupling_po_el_ijk", stream,
+        mesh.coupled_interfaces.poroelastic_elastic_interface.ijk);
+    try_read_array(
+        "coupling_po_el_jacobian2Dw", stream,
+        mesh.coupled_interfaces.poroelastic_elastic_interface.jacobian2Dw);
+    try_read_array(
+        "coupling_po_el_normal", stream,
+        mesh.coupled_interfaces.poroelastic_elastic_interface.normal);
+  }
+
+#ifndef NDEBUG
+  // Print the interfaces
+  mesh.coupled_interfaces.print();
+#endif
+
+  // Read test value 9997
+  check_read_test_value(stream, 9997);
 
   stream.close();
 
