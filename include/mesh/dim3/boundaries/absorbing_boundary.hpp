@@ -57,6 +57,19 @@ template <> struct absorbing_boundary<specfem::dimension::type::dim3> {
   bool acoustic = false;      ///< Flag for acoustic simulation
   bool elastic = false;       ///< Flag for elastic simulation
 
+  int nspec2D_xmin, nspec2D_xmax; /// Number of elements on the boundaries
+  int nspec2D_ymin, nspec2D_ymax;
+  int NSPEC2D_BOTTOM, NSPEC2D_TOP;
+
+  Kokkos::View<int *, Kokkos::HostSpace> ibelm_xmin,
+      ibelm_xmax; ///< Spectral
+                  ///< element
+                  ///< index for
+                  ///< elements on
+                  ///< the boundary
+  Kokkos::View<int *, Kokkos::HostSpace> ibelm_ymin, ibelm_ymax;
+  Kokkos::View<int *, Kokkos::HostSpace> ibelm_bottom, ibelm_top;
+
   Kokkos::View<int *, Kokkos::HostSpace> ispec; ///< Spectral element index for
                                                 ///< elements on the boundary
   Kokkos::View<int ***, Kokkos::HostSpace> ijk; ///< Which edge of the element
@@ -81,16 +94,24 @@ template <> struct absorbing_boundary<specfem::dimension::type::dim3> {
 
   absorbing_boundary(const int nglob, const int num_abs_boundary_faces,
                      const int ngllsquare, const bool acoustic,
-                     const bool elastic)
+                     const bool elastic, const int nspec2D_xmin,
+                     const int nspec2D_xmax, const int nspec2D_ymin,
+                     const int nspec2D_ymax, const int NSPEC2D_BOTTOM,
+                     const int NSPEC2D_TOP)
       : nelements(num_abs_boundary_faces), ngllsquare(ngllsquare),
         num_abs_boundary_faces(num_abs_boundary_faces), acoustic(acoustic),
-        elastic(elastic) {
+        elastic(elastic), nspec2D_xmin(nspec2D_xmin),
+        nspec2D_xmax(nspec2D_xmax), nspec2D_ymin(nspec2D_ymin),
+        nspec2D_ymax(nspec2D_ymax), NSPEC2D_BOTTOM(NSPEC2D_BOTTOM),
+        NSPEC2D_TOP(NSPEC2D_TOP) {
+
     ispec = Kokkos::View<int *, Kokkos::HostSpace>("ispec", nelements);
     ijk = Kokkos::View<int ***, Kokkos::HostSpace>("ijk", nelements, 3,
                                                    ngllsquare);
     jacobian2Dw = Kokkos::View<type_real **, Kokkos::HostSpace>(
         "jacobian2Dw", nelements, ngllsquare);
     // ndim=3
+
     normal = Kokkos::View<type_real ***, Kokkos::HostSpace>("normal", nelements,
                                                             3, ngllsquare);
 
@@ -101,8 +122,37 @@ template <> struct absorbing_boundary<specfem::dimension::type::dim3> {
       mass_acoustic =
           stacey_mass<specfem::element::medium_tag::acoustic>(nglob);
     }
+
+    // Create the boundary view elements only if the number of elements is
+    // greater than 0 on said boundary
+    if (nspec2D_xmin > 0) {
+      ibelm_xmin =
+          Kokkos::View<int *, Kokkos::HostSpace>("ibelm_xmin", nspec2D_xmin);
+    }
+    if (nspec2D_xmax > 0) {
+      ibelm_xmax =
+          Kokkos::View<int *, Kokkos::HostSpace>("ibelm_xmax", nspec2D_xmax);
+    }
+    if (nspec2D_ymin > 0) {
+      ibelm_ymin =
+          Kokkos::View<int *, Kokkos::HostSpace>("ibelm_ymin", nspec2D_ymin);
+    }
+    if (nspec2D_ymax > 0) {
+      ibelm_ymax =
+          Kokkos::View<int *, Kokkos::HostSpace>("ibelm_ymax", nspec2D_ymax);
+    }
+    if (NSPEC2D_BOTTOM > 0) {
+      ibelm_bottom = Kokkos::View<int *, Kokkos::HostSpace>("ibelm_bottom",
+                                                            NSPEC2D_BOTTOM);
+    }
+    if (NSPEC2D_TOP > 0) {
+      ibelm_top =
+          Kokkos::View<int *, Kokkos::HostSpace>("ibelm_top", NSPEC2D_TOP);
+    }
   }
   ///@}
+
+  void print() const;
 };
 
 } // namespace mesh

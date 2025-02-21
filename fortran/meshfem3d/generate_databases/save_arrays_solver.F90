@@ -437,7 +437,7 @@ module save_arrays_module
   endif
 
   ! stamp for checking i/o so far
-  itest = 9998
+  itest = 9995
   write(IOUT) itest
 
   ! boundaries
@@ -447,6 +447,14 @@ module save_arrays_module
   write(IOUT) nspec2D_ymax
   write(IOUT) NSPEC2D_BOTTOM
   write(IOUT) NSPEC2D_TOP
+
+  write(*,*) 'nspec2D_xmin: ', nspec2D_xmin
+  write(*,*) 'nspec2D_xmax: ', nspec2D_xmax
+  write(*,*) 'nspec2D_ymin: ', nspec2D_ymin
+  write(*,*) 'nspec2D_ymax: ', nspec2D_ymax
+  write(*,*) 'NSPEC2D_BOTTOM: ', NSPEC2D_BOTTOM
+  write(*,*) 'NSPEC2D_TOP: ', NSPEC2D_TOP
+
 
   if (nspec2D_xmin > 0) write(IOUT) ibelm_xmin
   if (nspec2D_xmax > 0) write(IOUT) ibelm_xmax
