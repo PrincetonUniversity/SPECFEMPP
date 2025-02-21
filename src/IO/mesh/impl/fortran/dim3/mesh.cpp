@@ -293,10 +293,6 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
   int num_abs_boundary_faces;
   try_read_line("num_abs_boundary_faces", stream, &num_abs_boundary_faces);
 
-  // Print the number of absorbing boundaries
-  std::cout << "Number of absorbing boundaries: " << num_abs_boundary_faces
-            << std::endl;
-
   // Check whether the number of boundaries faces is equal to the number of
   // faces in the mesh parameters
   check_values("num_abs_boundary_faces", num_abs_boundary_faces,
