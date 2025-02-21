@@ -1,5 +1,7 @@
+#pragma once
 #include "IO/fortranio/interface.hpp"
 #include "IO/mesh/impl/fortran/dim3/interface.hpp"
+#include "IO/mesh/impl/fortran/dim3/utilities.hpp"
 #include "enumerations/dimension.hpp"
 #include "mesh/mesh.hpp"
 #include "specfem_mpi/interface.hpp"
@@ -34,7 +36,7 @@ void specfem::IO::mesh::impl::fortran::dim3::read_array(std::ifstream &stream,
                   << e.what() << "(" << __FILE__ << ":" << __LINE__ << ")";
     throw std::runtime_error(error_message.str());
   }
-}
+};
 
 template <typename T>
 void specfem::IO::mesh::impl::fortran::dim3::read_array(std::ifstream &stream,
@@ -283,3 +285,77 @@ void specfem::IO::mesh::impl::fortran::dim3::read_index_array(
     throw std::runtime_error(error_message.str());
   }
 }
+
+namespace specfem {
+namespace IO {
+namespace mesh {
+namespace impl {
+namespace fortran {
+namespace dim3 {
+
+// Primary template for try-catch wrapper
+template <typename... Args>
+auto try_read_line(const std::string &message, Args &&...args)
+    -> decltype(specfem::IO::fortran_read_line(std::forward<Args>(args)...)) {
+  try {
+    return specfem::IO::fortran_read_line(std::forward<Args>(args)...);
+  } catch (const std::exception &e) {
+    std::ostringstream error_message;
+    error_message << "Exception caught in try_read_line(" << message
+                  << ", ...): " << e.what();
+    throw std::runtime_error(error_message.str());
+  } catch (...) {
+    std::ostringstream error_message;
+    error_message << "Unknown exception caught in " << message;
+    throw std::runtime_error(error_message.str());
+  }
+}
+
+// Primary template for try-catch wrapper
+template <typename... Args>
+auto try_read_array(const std::string &message, Args &&...args)
+    -> decltype(specfem::IO::mesh::impl::fortran::dim3::read_array(
+        std::forward<Args>(args)...)) {
+  try {
+    return specfem::IO::mesh::impl::fortran::dim3::read_array(
+        std::forward<Args>(args)...);
+  } catch (const std::exception &e) {
+    std::ostringstream error_message;
+    error_message << "Exception caught in try_read_array('" << message
+                  << "', ...): " << e.what();
+    throw std::runtime_error(error_message.str());
+  } catch (...) {
+    std::ostringstream error_message;
+    error_message << "Unknown exception caught in try_read_array('" << message
+                  << "', ...).";
+    throw std::runtime_error(error_message.str());
+  }
+}
+
+// Primary template for try-catch wrapper
+template <typename... Args>
+auto try_read_index_array(const std::string &message, Args &&...args)
+    -> decltype(specfem::IO::mesh::impl::fortran::dim3::read_index_array(
+        std::forward<Args>(args)...)) {
+  try {
+    return specfem::IO::mesh::impl::fortran::dim3::read_index_array(
+        std::forward<Args>(args)...);
+  } catch (const std::exception &e) {
+    std::ostringstream error_message;
+    error_message << "Exception caught in try_read_index('" << message
+                  << "', ...): " << e.what();
+    throw std::runtime_error(error_message.str());
+  } catch (...) {
+    std::ostringstream error_message;
+    error_message << "Unknown exception caught in try_read_index('" << message
+                  << "', ...).";
+    throw std::runtime_error(error_message.str());
+  }
+}
+
+} // namespace dim3
+} // namespace fortran
+} // namespace impl
+} // namespace mesh
+} // namespace IO
+} // namespace specfem

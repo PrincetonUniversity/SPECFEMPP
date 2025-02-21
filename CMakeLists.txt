@@ -245,6 +245,7 @@ add_library(
         src/IO/mesh/impl/fortran/dim3/read_parameters.cpp
         src/IO/mesh/impl/fortran/dim3/read_coordinates.cpp
         src/IO/mesh/impl/fortran/dim3/read_partial_derivatives.cpp
+        src/IO/mesh/impl/fortran/dim3/utilities.cpp
 )
 
 if (NOT HDF5_CXX_BUILD)
@@ -350,6 +351,8 @@ add_library(
         src/mesh/dim2/tags/tags.cpp
         # 3-D
         src/mesh/dim3/mesh.cpp
+        src/mesh/dim3/boundaries/absorbing_boundary.cpp
+        src/mesh/dim3/boundaries/free_surface.cpp
         src/mesh/dim3/element_types/element_types.cpp
         src/mesh/dim3/parameters/parameters.cpp
         src/mesh/dim3/parameters/parameters.cpp
@@ -357,6 +360,7 @@ add_library(
         src/mesh/dim3/materials/materials.cpp
         src/mesh/dim3/coordinates/coordinates.cpp
         src/mesh/dim3/partial_derivatives/partial_derivatives.cpp
+
 )
 
 target_link_libraries(
