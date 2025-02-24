@@ -29,19 +29,41 @@ are exposed through the following modules:
     reader/index
 
 
-Helper Functions to read the 2D mesh
-------------------------------------
+Input for the 2D Solver
++++++++++++++++++++++++
+
+Read the 2D Mesh
+----------------
 
 .. doxygenfunction:: specfem::IO::read_2d_mesh
 
 
+Read Sources
+------------
 
-Helper Functions to read the 3D mesh
-------------------------------------
+.. doxygenfunction:: specfem::IO::read_sources(const std::string sources_file, const int nsteps, const type_real user_t0, const type_real dt, const specfem::simulation::type simulation_type)
 
+
+Read Receivers
+--------------
+
+.. doxygenfunction:: specfem::IO::read_receivers(const std::string stations_file, const type_real angle)
+
+
+
+
+Input for the 3D Solver
++++++++++++++++++++++++
+
+
+Read the 3D Mesh
+----------------
 
 .. doxygenfunction:: specfem::IO::read_3d_mesh
 
+
+Helper functions
+''''''''''''''''
 
 **Reading any values**
 
@@ -58,16 +80,3 @@ Helper Functions to read the 3D mesh
 .. doxygenfunction:: specfem::IO::mesh::impl::fortran::dim3::try_read_index_array
 
 .. doxygenfunction:: specfem::IO::mesh::impl::fortran::dim3::read_index_array
-
-
-
-Read Sources
-------------
-
-.. doxygenfunction:: specfem::IO::read_sources(const std::string sources_file, const int nsteps, const type_real user_t0, const type_real dt, const specfem::simulation::type simulation_type)
-
-
-Read Receivers
---------------
-
-.. doxygenfunction:: specfem::IO::read_receivers(const std::string stations_file, const type_real angle)

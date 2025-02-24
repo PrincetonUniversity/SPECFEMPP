@@ -22,6 +22,13 @@ template <specfem::dimension::type DimensionType> struct parameters;
  *
  */
 template <specfem::dimension::type DimensionType> struct materials;
+
+/**
+ * @brief Struct to store coordinates
+ *
+ */
+template <specfem::dimension::type DimensionType> struct coordinates;
+
 /**
  * @brief Struct to store control nodes
  *
