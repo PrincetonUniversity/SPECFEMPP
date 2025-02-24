@@ -58,6 +58,15 @@ void read_partial_derivatives(
         &partial_derivatives,
     const specfem::MPI::MPI *mpi);
 
+/*
+ * @brief Read array from 3D mesh database
+ *
+ * @param stream Input stream
+ * @param array Array to read
+ */
+template <typename ViewType>
+void read_array(std::ifstream &stream, ViewType &array);
+
 template <typename T> using View1D = Kokkos::View<T *, Kokkos::HostSpace>;
 
 template <typename T> using View2D = Kokkos::View<T **, Kokkos::HostSpace>;
@@ -67,16 +76,6 @@ template <typename T> using View3D = Kokkos::View<T ***, Kokkos::HostSpace>;
 template <typename T> using View4D = Kokkos::View<T ****, Kokkos::HostSpace>;
 
 template <typename T> using View5D = Kokkos::View<T *****, Kokkos::HostSpace>;
-
-template <typename T> void read_array(std::ifstream &stream, View1D<T> &array);
-
-template <typename T> void read_array(std::ifstream &stream, View2D<T> &array);
-
-template <typename T> void read_array(std::ifstream &stream, View3D<T> &array);
-
-template <typename T> void read_array(std::ifstream &stream, View4D<T> &array);
-
-template <typename T> void read_array(std::ifstream &stream, View5D<T> &array);
 
 // Read index array will subtract 1 from each value when reading to account for
 // Fortran 1-based indexing
@@ -92,8 +91,32 @@ void read_index_array(std::ifstream &stream, View3D<T> &array);
 template <typename T>
 void read_index_array(std::ifstream &stream, View4D<T> &array);
 
+/*
+ * @brief Read index array from 3D mesh database, subtracts 1 from each value
+ *        to convert from Fortran to C indexing
+ *
+ * @param stream Input stream
+ * @param array Index array to read
+ */
+// template <typename ViewType>
+// void read_index_array(std::ifstream &stream, ViewType &array);
+
+/*
+ * @brief Read single test value from 3D mesh database and throw error if
+ *        value is not as expected
+ *
+ * @param stream Input stream
+ * @param test_value Test value to read
+ */
 void check_read_test_value(std::ifstream &stream, int test_value);
 
+/*
+ * @brief Check values and throw error if they are not as expected
+ *
+ * @param message Message to print if values are not as expected
+ * @param value Value to check
+ * @param expected Expected value
+ */
 void check_values(std::string message, int value, int expected);
 
 } // namespace dim3
