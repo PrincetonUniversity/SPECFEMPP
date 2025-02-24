@@ -5,10 +5,10 @@ Seismograms section defines the output seismograms format at predefined stations
 
 
 Parameter definitions
-=======================
+=====================
 
 **Parameter Name** : ``seismogram``
-------------------------------------
+-----------------------------------
 
 **default value** : NULL
 
@@ -17,7 +17,7 @@ Parameter definitions
 **documentation** : Define seismogram output configuration
 
 **Parameter Name** : ``seismogram.seismogram-format``
-******************************************************
+*****************************************************
 
 **default value** : None
 
@@ -28,7 +28,7 @@ Parameter definitions
 1. ascii - :ref:`ASCII` writes calculated seismogram values to seismogram files in string format.
 
 **Parameter Name** : ``seismogram.output-folder``
-******************************************************
+*************************************************
 
 **default value** : Current working directory
 
