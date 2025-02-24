@@ -121,7 +121,7 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
 
   specfem::domain::domain<
       specfem::wavefield::simulation_field::forward,
-      specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+      specfem::dimension::type::dim2, specfem::element::medium_tag::elastic_sv,
       specfem::enums::element::quadrature::static_quadrature_points<5> >
       elastic_domain_static(setup.get_dt(), assembly, qp5);
 

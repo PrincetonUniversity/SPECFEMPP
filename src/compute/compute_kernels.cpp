@@ -16,11 +16,11 @@ specfem::compute::kernels::kernels(
       Kokkos::create_mirror_view(property_index_mapping);
 
   const auto elastic_isotropic_elements = element_types.get_elements_on_host(
-      specfem::element::medium_tag::elastic,
+      specfem::element::medium_tag::elastic_sv,
       specfem::element::property_tag::isotropic);
 
   const auto elastic_anisotropic_elements = element_types.get_elements_on_host(
-      specfem::element::medium_tag::elastic,
+      specfem::element::medium_tag::elastic_sv,
       specfem::element::property_tag::anisotropic);
 
   const auto acoustic_elements = element_types.get_elements_on_host(
@@ -37,12 +37,12 @@ specfem::compute::kernels::kernels(
       acoustic_elements, ngllz, ngllx, h_property_index_mapping);
 
   elastic_isotropic = specfem::medium::material_kernels<
-      specfem::element::medium_tag::elastic,
+      specfem::element::medium_tag::elastic_sv,
       specfem::element::property_tag::isotropic>(
       elastic_isotropic_elements, ngllz, ngllx, h_property_index_mapping);
 
   elastic_anisotropic = specfem::medium::material_kernels<
-      specfem::element::medium_tag::elastic,
+      specfem::element::medium_tag::elastic_sv,
       specfem::element::property_tag::anisotropic>(
       elastic_anisotropic_elements, ngllz, ngllx, h_property_index_mapping);
 

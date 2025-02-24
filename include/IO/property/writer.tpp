@@ -37,7 +37,7 @@ void specfem::IO::property_writer<OutputLibrary>::write(specfem::compute::assemb
     typename OutputLibrary::Group elastic = file.createGroup("/ElasticIsotropic");
 
     const auto element_indices = element_types.get_elements_on_host(
-        specfem::element::medium_tag::elastic,
+        specfem::element::medium_tag::elastic_sv,
         specfem::element::property_tag::isotropic);
     n_elastic_isotropic = element_indices.size();
 
@@ -66,7 +66,7 @@ void specfem::IO::property_writer<OutputLibrary>::write(specfem::compute::assemb
     typename OutputLibrary::Group elastic = file.createGroup("/ElasticAnisotropic");
 
     const auto element_indices = element_types.get_elements_on_host(
-        specfem::element::medium_tag::elastic,
+        specfem::element::medium_tag::elastic_sv,
         specfem::element::property_tag::anisotropic);
     n_elastic_anisotropic = element_indices.size();
 

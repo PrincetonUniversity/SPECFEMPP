@@ -17,7 +17,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
     const std::integral_constant<specfem::dimension::type,
                                  specfem::dimension::type::dim2>,
     const std::integral_constant<specfem::element::medium_tag,
-                                 specfem::element::medium_tag::elastic>,
+                                 specfem::element::medium_tag::elastic_sv>,
     const std::integral_constant<specfem::element::property_tag,
                                  specfem::element::property_tag::anisotropic>,
     const MemberType &team, const IteratorType &iterator,
@@ -26,13 +26,12 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
     const specfem::wavefield::type wavefield_component,
     WavefieldViewType wavefield) {
 
-  using FieldDerivativesType =
-      specfem::point::field_derivatives<specfem::dimension::type::dim2,
-                                        specfem::element::medium_tag::elastic,
-                                        false>;
+  using FieldDerivativesType = specfem::point::field_derivatives<
+      specfem::dimension::type::dim2, specfem::element::medium_tag::elastic_sv,
+      false>;
 
   using PointPropertyType = specfem::point::properties<
-      specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+      specfem::dimension::type::dim2, specfem::element::medium_tag::elastic_sv,
       specfem::element::property_tag::anisotropic, false>;
 
   const auto &properties = assembly.properties;

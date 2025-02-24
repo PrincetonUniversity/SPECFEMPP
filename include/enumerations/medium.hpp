@@ -13,7 +13,7 @@ constexpr int ntypes = 2; ///< Number of element types
  * @brief Medium tag enumeration
  *
  */
-enum class medium_tag { elastic, acoustic, poroelastic };
+enum class medium_tag { elastic_sv, acoustic, poroelastic };
 
 /**
  * @brief Property tag enumeration
@@ -41,7 +41,7 @@ class attributes;
 
 template <>
 class attributes<specfem::dimension::type::dim2,
-                 specfem::element::medium_tag::elastic> {
+                 specfem::element::medium_tag::elastic_sv> {
 
 public:
   constexpr static int dimension() { return 2; }

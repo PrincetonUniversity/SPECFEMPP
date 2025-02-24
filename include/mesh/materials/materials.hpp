@@ -58,14 +58,14 @@ struct materials {
       material_index_mapping; ///< Mapping of spectral element to material
                               ///< properties
 
-  specfem::mesh::materials::material<specfem::element::medium_tag::elastic,
+  specfem::mesh::materials::material<specfem::element::medium_tag::elastic_sv,
                                      specfem::element::property_tag::isotropic>
-      elastic_isotropic; ///< Elastic isotropic material properties
+      elastic_sv_isotropic; ///< Elastic isotropic material properties
 
   specfem::mesh::materials::material<
-      specfem::element::medium_tag::elastic,
+      specfem::element::medium_tag::elastic_sv,
       specfem::element::property_tag::anisotropic>
-      elastic_anisotropic; ///< Elastic anisotropic material properties
+      elastic_sv_anisotropic; ///< Elastic anisotropic material properties
 
   specfem::mesh::materials::material<specfem::element::medium_tag::acoustic,
                                      specfem::element::property_tag::isotropic>
@@ -100,9 +100,9 @@ struct materials {
    * @return std::variant Material properties
    */
   std::variant<
-      specfem::medium::material<specfem::element::medium_tag::elastic,
+      specfem::medium::material<specfem::element::medium_tag::elastic_sv,
                                 specfem::element::property_tag::isotropic>,
-      specfem::medium::material<specfem::element::medium_tag::elastic,
+      specfem::medium::material<specfem::element::medium_tag::elastic_sv,
                                 specfem::element::property_tag::anisotropic>,
       specfem::medium::material<specfem::element::medium_tag::acoustic,
                                 specfem::element::property_tag::isotropic> >

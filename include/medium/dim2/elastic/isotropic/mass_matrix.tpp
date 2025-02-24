@@ -4,11 +4,11 @@
 
 template <bool UseSIMD, specfem::element::property_tag PropertyTag>
 KOKKOS_FUNCTION specfem::point::field<specfem::dimension::type::dim2,
-                                      specfem::element::medium_tag::elastic,
+                                      specfem::element::medium_tag::elastic_sv,
                                       false, false, false, true, UseSIMD>
 specfem::medium::impl_mass_matrix_component(
     const specfem::point::properties<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic_sv,
         PropertyTag, UseSIMD> &properties,
     const specfem::point::partial_derivatives<
         specfem::dimension::type::dim2, true, UseSIMD> &partial_derivatives) {

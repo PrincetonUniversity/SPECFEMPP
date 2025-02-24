@@ -28,18 +28,19 @@ public:
   coupled_interfaces()
       : elastic_acoustic(), acoustic_poroelastic(), elastic_poroelastic(){};
 
-  coupled_interfaces(specfem::mesh::interface_container<
-                         DimensionType, specfem::element::medium_tag::elastic,
-                         specfem::element::medium_tag::acoustic>
-                         elastic_acoustic,
-                     specfem::mesh::interface_container<
-                         DimensionType, specfem::element::medium_tag::acoustic,
-                         specfem::element::medium_tag::poroelastic>
-                         acoustic_poroelastic,
-                     specfem::mesh::interface_container<
-                         DimensionType, specfem::element::medium_tag::elastic,
-                         specfem::element::medium_tag::poroelastic>
-                         elastic_poroelastic)
+  coupled_interfaces(
+      specfem::mesh::interface_container<
+          DimensionType, specfem::element::medium_tag::elastic_sv,
+          specfem::element::medium_tag::acoustic>
+          elastic_acoustic,
+      specfem::mesh::interface_container<
+          DimensionType, specfem::element::medium_tag::acoustic,
+          specfem::element::medium_tag::poroelastic>
+          acoustic_poroelastic,
+      specfem::mesh::interface_container<
+          DimensionType, specfem::element::medium_tag::elastic_sv,
+          specfem::element::medium_tag::poroelastic>
+          elastic_poroelastic)
       : elastic_acoustic(elastic_acoustic),
         acoustic_poroelastic(acoustic_poroelastic),
         elastic_poroelastic(elastic_poroelastic){};
@@ -55,18 +56,18 @@ public:
   template <specfem::element::medium_tag Medium1,
             specfem::element::medium_tag Medium2>
   std::variant<specfem::mesh::interface_container<
-                   DimensionType, specfem::element::medium_tag::elastic,
+                   DimensionType, specfem::element::medium_tag::elastic_sv,
                    specfem::element::medium_tag::acoustic>,
                specfem::mesh::interface_container<
                    DimensionType, specfem::element::medium_tag::acoustic,
                    specfem::element::medium_tag::poroelastic>,
                specfem::mesh::interface_container<
-                   DimensionType, specfem::element::medium_tag::elastic,
+                   DimensionType, specfem::element::medium_tag::elastic_sv,
                    specfem::element::medium_tag::poroelastic> >
   get() const;
 
   specfem::mesh::interface_container<DimensionType,
-                                     specfem::element::medium_tag::elastic,
+                                     specfem::element::medium_tag::elastic_sv,
                                      specfem::element::medium_tag::acoustic>
       elastic_acoustic; ///< Elastic-acoustic interfaces
 
@@ -76,7 +77,7 @@ public:
       acoustic_poroelastic; ///< Acoustic-poroelastic interfaces
 
   specfem::mesh::interface_container<DimensionType,
-                                     specfem::element::medium_tag::elastic,
+                                     specfem::element::medium_tag::elastic_sv,
                                      specfem::element::medium_tag::poroelastic>
       elastic_poroelastic; ///< Elastic-poroelastic interfaces
 };

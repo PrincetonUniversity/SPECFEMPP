@@ -17,13 +17,13 @@ namespace medium {
  *
  */
 template <>
-class properties<specfem::element::medium_tag::elastic,
+class properties<specfem::element::medium_tag::elastic_sv,
                  specfem::element::property_tag::isotropic> {
 public:
   constexpr static auto dimension =
       specfem::dimension::type::dim2; ///< Dimension of the material
   constexpr static auto medium_tag =
-      specfem::element::medium_tag::elastic; ///< Medium tag
+      specfem::element::medium_tag::elastic_sv; ///< Medium tag
   constexpr static auto property_tag =
       specfem::element::property_tag::isotropic; ///< Property tag
 
@@ -73,7 +73,7 @@ public:
    * @param other Material to compare with
    * @return true If the materials have the same properties
    */
-  bool operator==(const properties<specfem::element::medium_tag::elastic,
+  bool operator==(const properties<specfem::element::medium_tag::elastic_sv,
                                    specfem::element::property_tag::isotropic>
                       &other) const {
 
@@ -91,7 +91,7 @@ public:
    * @param other Material to compare with
    * @return true If the materials have different properties
    */
-  bool operator!=(const properties<specfem::element::medium_tag::elastic,
+  bool operator!=(const properties<specfem::element::medium_tag::elastic_sv,
                                    specfem::element::property_tag::isotropic>
                       &other) const {
     return !(*this == other);
