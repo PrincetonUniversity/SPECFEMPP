@@ -7,7 +7,7 @@ Parameter definitions
 =====================
 
 **Parameter name** : ``databases``
--------------------------------
+----------------------------------
 
 **default value** : None
 
@@ -18,7 +18,7 @@ Parameter definitions
 .. _database-file-parameter:
 
 **Parameter name** : ``databases.mesh-database``
-******************************************************
+************************************************
 
 **default value**: None
 

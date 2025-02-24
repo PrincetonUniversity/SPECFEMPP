@@ -7,6 +7,10 @@ Receivers section defines receiver information required to calculate seismograms
 
     Please note that the ``stations_file`` is generated using SPECFEM2D mesh generator i.e. xmeshfem2d
 
+Parameter definitions
+=====================
+
+
 **Parameter Name** : ``receivers``
 ----------------------------------
 

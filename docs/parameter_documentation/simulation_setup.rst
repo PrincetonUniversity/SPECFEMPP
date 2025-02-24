@@ -4,6 +4,9 @@ Simulation Setup
 Simulation setup defines the run-time behaviour of the simulation. Below
 are the parameter definition for the ``specfem_config.yaml``
 
+Parameter definitions
++++++++++++++++++++++
+
 
 Parameter Name : ``simulation-setup``
 *************************************

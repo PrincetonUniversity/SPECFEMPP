@@ -7,7 +7,7 @@ Parameter definitions
 =====================
 
 **Parameter Name** : ``run-setup`` [optional]
------------------------------------
+---------------------------------------------
 
 **default value** : number-of-processors: 1, number-of-runs: 1
 
@@ -16,7 +16,7 @@ Parameter definitions
 **documentation** : Define run-time configuration for your simulation
 
 **Parameter Name** : ``run-setup.number-of-processors`` [optional]
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **default value** : 1
 
@@ -25,7 +25,7 @@ Parameter definitions
 **documentation** : Number of MPI processes used in the simulation. MPI version is not enabled in this version of the package. number-of-processors == 1
 
 **Parameter Name** : ``run-setup.number-of-runs`` [optional]
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **default value** : 1
 
