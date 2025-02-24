@@ -107,6 +107,15 @@ public:
     return { this->lambdaplus2mu, this->mu, this->density };
   }
 
+  /**
+   * @brief Get the material properties
+   *
+   * @return specfem::point::properties Material properties
+   */
+  inline std::array<type_real, 3> get_benchmark_properties() const {
+    return { this->lambdaplus2mu, this->mu, this->density };
+  }
+
   inline std::string print() const {
     std::ostringstream message;
 

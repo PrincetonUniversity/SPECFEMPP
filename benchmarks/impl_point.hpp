@@ -212,7 +212,6 @@ struct properties<specfem::dimension::type::dim2,
   DEFINE_PROP(kappa_inverse, 2) ///< @f$ \frac{1}{\lambda + 2\mu} @f$
   DEFINE_PROP(rho_vpinverse, 3) ///< @f$ \frac{1}{\rho v_p} @f$
 
-private:
   KOKKOS_INLINE_FUNCTION
   void compute() {
     kappa_inverse((static_cast<value_type>(1.0)) / kappa());

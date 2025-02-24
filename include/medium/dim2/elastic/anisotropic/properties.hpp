@@ -116,6 +116,15 @@ public:
     return { c11, c13, c15, c33, c35, c55, c12, c23, c25, density };
   }
 
+  /**
+   * @brief Get the material properties
+   *
+   * @return specfem::point::properties Material properties
+   */
+  inline std::array<type_real, 10> get_benchmark_properties() const {
+    return { c11, c13, c15, c33, c35, c55, c12, c23, c25, density };
+  }
+
   inline std::string print() const {
     std::ostringstream message;
 

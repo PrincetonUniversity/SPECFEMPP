@@ -38,9 +38,6 @@ void compute_stiffness_interaction(
   const auto &partial_derivatives = assembly.partial_derivatives;
   const auto &properties = assembly.properties;
   const auto field = assembly.fields.get_simulation_field<wavefield>();
-  const auto &boundaries = assembly.boundaries;
-  const auto boundary_values =
-      assembly.boundary_values.get_container<boundary_tag>();
 
   constexpr bool using_simd = false;
   using simd = specfem::datatype::simd<type_real, using_simd>;

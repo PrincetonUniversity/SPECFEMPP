@@ -86,11 +86,9 @@ void run_benchmark(const YAML::Node &parameter_dict,
       setup.instantiate_property_reader());
   time_scheme->link_assembly(assembly);
 
-  specfem::benchmarks::assembly assembly2(
-      mesh, quadrature, sources, receivers, setup.get_seismogram_types(),
-      setup.get_t0(), dt, nsteps, max_seismogram_time_step,
-      nstep_between_samples, setup.get_simulation_type(),
-      setup.instantiate_property_reader());
+  specfem::benchmarks::assembly assembly2(mesh, quadrature,
+                                          setup.get_simulation_type(),
+                                          setup.instantiate_property_reader());
 
   benchmark(assembly2, time_scheme);
   benchmark(assembly, time_scheme);

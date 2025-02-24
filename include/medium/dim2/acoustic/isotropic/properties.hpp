@@ -102,6 +102,16 @@ public:
              this->kappa };
   }
 
+  /**
+   * @brief Get the properties of the material
+   *
+   * @return specfem::point::properties Material properties
+   */
+  inline std::array<type_real, 2> get_benchmark_properties() const {
+    return { static_cast<type_real>(1.0) / static_cast<type_real>(density),
+             this->kappa };
+  }
+
   inline std::string print() const {
     std::ostringstream message;
 
