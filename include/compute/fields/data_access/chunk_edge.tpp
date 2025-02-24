@@ -38,17 +38,7 @@ impl_load_on_device(const MemberType &team, const IteratorType &iterator,
                                  typename ViewType::memory_space>::accessible,
       "Calling team must have access to the memory space of the view");
 
-  const auto &curr_field =
-      [&]() -> const specfem::compute::impl::field_impl<
-                specfem::dimension::type::dim2, MediumType> & {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
-      return field.elastic;
-    } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
-      return field.acoustic;
-    } else {
-      static_assert("medium type not supported");
-    }
-  }();
+  const auto &curr_field = field.template get_field<MediumType>();
 
   Kokkos::parallel_for(
     Kokkos::TeamThreadRange(team, iterator.chunk_size()), [&](const int &i) {
@@ -148,17 +138,7 @@ inline void impl_load_on_host(const MemberType &team, const IteratorType &iterat
                                  typename ViewType::memory_space>::accessible,
       "Calling team must have access to the memory space of the view");
 
-  const auto &curr_field =
-      [&]() -> const specfem::compute::impl::field_impl<
-                specfem::dimension::type::dim2, MediumType> & {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
-      return field.elastic;
-    } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
-      return field.acoustic;
-    } else {
-      static_assert("medium type not supported");
-    }
-  }();
+  const auto &curr_field = field.template get_field<MediumType>();
 
   Kokkos::parallel_for(
     Kokkos::TeamThreadRange(team, iterator.chunk_size()), [&](const int &i) {
