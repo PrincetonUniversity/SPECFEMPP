@@ -11,7 +11,7 @@ namespace impl {
 namespace fortran {
 namespace dim3 {
 
-/*
+/**
  * @brief Read paramters from 3D mesh database
  *
  * @param stream Input stream
@@ -22,7 +22,7 @@ namespace dim3 {
 specfem::mesh::parameters<specfem::dimension::type::dim3>
 read_mesh_parameters(std::ifstream &stream, const specfem::MPI::MPI *mpi);
 
-/*
+/**
  * @brief Read mapping from 3D mesh database
  *
  * @param stream Input stream
@@ -33,7 +33,7 @@ void read_ibool(std::ifstream &stream,
                 specfem::mesh::mapping<specfem::dimension::type::dim3> &mapping,
                 const specfem::MPI::MPI *mpi);
 
-/*
+/**
  * @brief Read coordinates from 3D mesh database
  *
  * @param stream Input stream
@@ -45,7 +45,7 @@ void read_xyz(
     specfem::mesh::coordinates<specfem::dimension::type::dim3> &coordinates,
     const specfem::MPI::MPI *mpi);
 
-/*
+/**
  * @brief Read Jacobian from 3D mesh database
  *
  * @param stream Input stream
@@ -58,24 +58,39 @@ void read_partial_derivatives(
         &partial_derivatives,
     const specfem::MPI::MPI *mpi);
 
-/*
+/**
  * @brief Read array from 3D mesh database
+ *
+ * This function is really used to read any size array from the Fortran
+ * 3D mesh database. It works with 1-5D arrays, and assumes that the first
+ * dimension is always the last dimension of the fortran array. And unwraps
+ * the rest of the dimensions (which are written in Fortran order) to the
+ * Kokkos::View.
  *
  * @param stream Input stream
  * @param array Array to read
  * @tparam ViewType Kokkos::View type
  * @throws std::runtime_error if an error occurs while reading the array
+ *
  * @code{.cpp}
  * // Example of how to use this function
  * Kokkos::View<int *, Kokkos::HostSpace> array("array", 10);
  * specfem::IO::mesh::impl::fortran::dim3::read_array(stream, array);
+ * @endcode
  */
 template <typename ViewType>
 void read_array(std::ifstream &stream, ViewType &array);
 
-/*
+/**
  * @brief Read index array from 3D mesh database, subtracts 1 from each value
  *        to convert from Fortran to C indexing
+ *
+ * This function is really used to read any size index array from the Fortran
+ * 3D mesh database. It works with 1-4D arrays, and assumes that the first
+ * dimension is always the last dimension of the fortran array. And unwraps
+ * the rest of the dimensions (which are written in Fortran order) to the
+ * Kokkos::View. It also subtracts 1 from each value to convert from Fortran
+ * to C indexing.
  *
  * @param stream Input stream
  * @param array Index array to read
@@ -91,21 +106,37 @@ void read_array(std::ifstream &stream, ViewType &array);
 template <typename ViewType>
 void read_index_array(std::ifstream &stream, ViewType &array);
 
-/*
+/**
  * @brief Read single test value from 3D mesh database and throw error if
  *        value is not as expected
  *
  * @param stream Input stream
  * @param test_value Test value to read
+ * @throws std::runtime_error if the test value is not as expected
+ * @code{.cpp}
+ * // Example of how to use this function
+ * int test_value;
+ * specfem::IO::mesh::impl::fortran::dim3::check_read_test_value(stream,
+ * test_value);
+ * @endcode
  */
 void check_read_test_value(std::ifstream &stream, int test_value);
 
-/*
+/**
  * @brief Check values and throw error if they are not as expected
  *
  * @param message Message to print if values are not as expected
  * @param value Value to check
  * @param expected Expected value
+ *
+ * @throws std::runtime_error if the value is not as expected
+ *
+ * @code{.cpp}
+ * // Example of how to use this function
+ * specfem::IO::mesh::impl::fortran::dim3::check_values("message", value,
+ * expected);
+ * @endcode
+ *
  */
 void check_values(std::string message, int value, int expected);
 

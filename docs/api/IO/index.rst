@@ -32,7 +32,7 @@ are exposed through the following modules:
 Helper Functions to read the 2D mesh
 ------------------------------------
 
-.. doxygenfunction:: specfem::fortran_IO::read_2d_mesh
+.. doxygenfunction:: specfem::IO::read_2d_mesh
 
 
 
@@ -40,12 +40,12 @@ Helper Functions to read the 3D mesh
 ------------------------------------
 
 
-.. doxygenfunction:: specfem::fortran_IO::read_3d_mesh
+.. doxygenfunction:: specfem::IO::read_3d_mesh
 
 
 **Reading any values**
 
-.. doxygenfunction:: specfem::IO::mesh::impl::fortran::dim3::try_read_value
+.. doxygenfunction:: specfem::IO::mesh::impl::fortran::dim3::try_read_line
 
 **Reading any array**
 
