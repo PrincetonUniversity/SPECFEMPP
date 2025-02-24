@@ -6,18 +6,20 @@
 #include "impl_point.hpp"
 #include "point/interface.hpp"
 #include <Kokkos_SIMD.hpp>
+#include <boost/preprocessor/slot/counter.hpp>
 
 namespace specfem {
 namespace benchmarks {
 
-#define DEFINE_CONTAINER(prop, i)                                              \
+#define DEFINE_CONTAINER(prop)                                                 \
+  constexpr static int i_##prop = __COUNTER__ - _counter;                      \
   KOKKOS_INLINE_FUNCTION type_real &prop(const int &ispec, const int &iz,      \
                                          const int &ix) const {                \
-    return Base::data(ispec, iz, ix, i);                                       \
+    return Base::data(ispec, iz, ix, i_##prop);                                \
   }                                                                            \
   KOKKOS_INLINE_FUNCTION type_real &h_##prop(const int &ispec, const int &iz,  \
                                              const int &ix) const {            \
-    return Base::h_data(ispec, iz, ix, i);                                     \
+    return Base::h_data(ispec, iz, ix, i_##prop);                              \
   }
 
 namespace impl {
@@ -127,9 +129,10 @@ struct properties_container<specfem::element::medium_tag::acoustic,
                                       specfem::element::property_tag::isotropic,
                                       2>;
   using Base::Base;
+  constexpr static int _counter = __COUNTER__;
 
-  DEFINE_CONTAINER(rho_inverse, 0)
-  DEFINE_CONTAINER(kappa, 1)
+  DEFINE_CONTAINER(rho_inverse)
+  DEFINE_CONTAINER(kappa)
 };
 
 template <>
@@ -143,10 +146,11 @@ struct properties_container<specfem::element::medium_tag::elastic,
                                       specfem::element::property_tag::isotropic,
                                       3>;
   using Base::Base;
+  constexpr static int _counter = __COUNTER__;
 
-  DEFINE_CONTAINER(lambdaplus2mu, 0)
-  DEFINE_CONTAINER(mu, 1)
-  DEFINE_CONTAINER(rho, 2)
+  DEFINE_CONTAINER(lambdaplus2mu)
+  DEFINE_CONTAINER(mu)
+  DEFINE_CONTAINER(rho)
 };
 
 template <>
@@ -159,17 +163,18 @@ struct properties_container<specfem::element::medium_tag::elastic,
       specfem::element::medium_tag::elastic,
       specfem::element::property_tag::anisotropic, 10>;
   using Base::Base;
+  constexpr static int _counter = __COUNTER__;
 
-  DEFINE_CONTAINER(c11, 0)
-  DEFINE_CONTAINER(c13, 1)
-  DEFINE_CONTAINER(c15, 2)
-  DEFINE_CONTAINER(c33, 3)
-  DEFINE_CONTAINER(c35, 4)
-  DEFINE_CONTAINER(c55, 5)
-  DEFINE_CONTAINER(c12, 6)
-  DEFINE_CONTAINER(c23, 7)
-  DEFINE_CONTAINER(c25, 8)
-  DEFINE_CONTAINER(rho, 9)
+  DEFINE_CONTAINER(c11)
+  DEFINE_CONTAINER(c13)
+  DEFINE_CONTAINER(c15)
+  DEFINE_CONTAINER(c33)
+  DEFINE_CONTAINER(c35)
+  DEFINE_CONTAINER(c55)
+  DEFINE_CONTAINER(c12)
+  DEFINE_CONTAINER(c23)
+  DEFINE_CONTAINER(c25)
+  DEFINE_CONTAINER(rho)
 };
 
 template <specfem::element::medium_tag type,
@@ -317,6 +322,9 @@ struct assembly_properties : public specfem::compute::impl::value_containers<
         specfem::benchmarks::material_properties>::copy_to_device();
   }
 };
+
+#undef DEFINE_CONTAINER_CONSTRUCTORS
+#undef DEFINE_CONTAINER
 
 } // namespace benchmarks
 } // namespace specfem

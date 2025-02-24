@@ -6,23 +6,14 @@
 namespace specfem {
 namespace benchmarks {
 
-#define DEFINE_PROP_CONSTRUCTORS                                               \
-  using simd = specfem::datatype::simd<type_real, UseSIMD>;                    \
-  using value_type = typename simd::datatype;                                  \
-  KOKKOS_FUNCTION                                                              \
-  properties() = default;                                                      \
-  KOKKOS_FUNCTION                                                              \
-  properties(const value_type *value) : Base(value) { compute(); }             \
-  template <typename... Args,                                                  \
-            typename std::enable_if_t<sizeof...(Args) == Base::nprops, int> =  \
-                0>                                                             \
-  KOKKOS_FUNCTION properties(Args... args) : Base(args...) {                   \
-    compute();                                                                 \
+#define DEFINE_PROP(prop)                                                      \
+  constexpr static int i_##prop = __COUNTER__ - _counter;                      \
+  KOKKOS_INLINE_FUNCTION value_type prop() const {                             \
+    return Base::data[i_##prop];                                               \
+  }                                                                            \
+  KOKKOS_INLINE_FUNCTION void prop(value_type val) {                           \
+    Base::data[i_##prop] = val;                                                \
   }
-
-#define DEFINE_PROP(prop, i)                                                   \
-  KOKKOS_INLINE_FUNCTION value_type prop() const { return Base::data[i]; }     \
-  KOKKOS_INLINE_FUNCTION void prop(value_type val) { Base::data[i] = val; }
 
 namespace impl {
 template <int N, int N_EX, bool UseSIMD> struct impl_properties {
@@ -115,17 +106,28 @@ struct properties<specfem::dimension::type::dim2,
   constexpr static auto medium_tag = specfem::element::medium_tag::elastic;
   constexpr static auto property_tag =
       specfem::element::property_tag::isotropic;
+
+  using simd = specfem::datatype::simd<type_real, UseSIMD>;
+  using value_type = typename simd::datatype;
+  constexpr static int _counter = __COUNTER__;
   ///@}
+  KOKKOS_FUNCTION
+  properties() = default;
+  KOKKOS_FUNCTION
+  properties(const value_type *value) : Base(value) { compute(); }
+  template <typename... Args,
+            typename std::enable_if_t<sizeof...(Args) == Base::nprops, int> = 0>
+  KOKKOS_FUNCTION properties(Args... args) : Base(args...) {
+    compute();
+  }
 
-  DEFINE_PROP_CONSTRUCTORS
+  DEFINE_PROP(lambdaplus2mu) ///< Lame's parameter @f$ \lambda + 2\mu @f$
+  DEFINE_PROP(mu)            ///< shear modulus @f$ \mu @f$
+  DEFINE_PROP(rho)           ///< density @f$ \rho @f$
 
-  DEFINE_PROP(lambdaplus2mu, 0) ///< Lame's parameter @f$ \lambda + 2\mu @f$
-  DEFINE_PROP(mu, 1)            ///< shear modulus @f$ \mu @f$
-  DEFINE_PROP(rho, 2)           ///< density @f$ \rho @f$
-
-  DEFINE_PROP(rho_vp, 3) ///< P-wave velocity @f$ \rho v_p @f$
-  DEFINE_PROP(rho_vs, 4) ///< S-wave velocity @f$ \rho v_s @f$
-  DEFINE_PROP(lambda, 5) ///< Lame's parameter @f$ \lambda @f$
+  DEFINE_PROP(rho_vp) ///< P-wave velocity @f$ \rho v_p @f$
+  DEFINE_PROP(rho_vs) ///< S-wave velocity @f$ \rho v_s @f$
+  DEFINE_PROP(lambda) ///< Lame's parameter @f$ \lambda @f$
 
   KOKKOS_INLINE_FUNCTION
   void compute() {
@@ -151,29 +153,40 @@ struct properties<specfem::dimension::type::dim2,
   constexpr static auto medium_tag = specfem::element::medium_tag::elastic;
   constexpr static auto property_tag =
       specfem::element::property_tag::anisotropic;
-  ///@}
 
-  DEFINE_PROP_CONSTRUCTORS
+  using simd = specfem::datatype::simd<type_real, UseSIMD>;
+  using value_type = typename simd::datatype;
+  constexpr static int _counter = __COUNTER__;
+  ///@}
+  KOKKOS_FUNCTION
+  properties() = default;
+  KOKKOS_FUNCTION
+  properties(const value_type *value) : Base(value) { compute(); }
+  template <typename... Args,
+            typename std::enable_if_t<sizeof...(Args) == Base::nprops, int> = 0>
+  KOKKOS_FUNCTION properties(Args... args) : Base(args...) {
+    compute();
+  }
 
   /**
    * @name Elastic constants
    *
    */
   ///@{
-  DEFINE_PROP(c11, 0) ///< @f$ c_{11} @f$
-  DEFINE_PROP(c13, 1) ///< @f$ c_{13} @f$
-  DEFINE_PROP(c15, 2) ///< @f$ c_{15} @f$
-  DEFINE_PROP(c33, 3) ///< @f$ c_{33} @f$
-  DEFINE_PROP(c35, 4) ///< @f$ c_{35} @f$
-  DEFINE_PROP(c55, 5) ///< @f$ c_{55} @f$
-  DEFINE_PROP(c12, 6) ///< @f$ c_{12} @f$
-  DEFINE_PROP(c23, 7) ///< @f$ c_{23} @f$
-  DEFINE_PROP(c25, 8) ///< @f$ c_{25} @f$
+  DEFINE_PROP(c11) ///< @f$ c_{11} @f$
+  DEFINE_PROP(c13) ///< @f$ c_{13} @f$
+  DEFINE_PROP(c15) ///< @f$ c_{15} @f$
+  DEFINE_PROP(c33) ///< @f$ c_{33} @f$
+  DEFINE_PROP(c35) ///< @f$ c_{35} @f$
+  DEFINE_PROP(c55) ///< @f$ c_{55} @f$
+  DEFINE_PROP(c12) ///< @f$ c_{12} @f$
+  DEFINE_PROP(c23) ///< @f$ c_{23} @f$
+  DEFINE_PROP(c25) ///< @f$ c_{25} @f$
   ///@}
 
-  DEFINE_PROP(rho, 9)     ///< Density @f$ \rho @f$
-  DEFINE_PROP(rho_vp, 10) ///< P-wave velocity @f$ \rho v_p @f$
-  DEFINE_PROP(rho_vs, 11) ///< S-wave velocity @f$ \rho v_s @f$
+  DEFINE_PROP(rho)    ///< Density @f$ \rho @f$
+  DEFINE_PROP(rho_vp) ///< P-wave velocity @f$ \rho v_p @f$
+  DEFINE_PROP(rho_vs) ///< S-wave velocity @f$ \rho v_s @f$
 
   KOKKOS_INLINE_FUNCTION
   void compute() {
@@ -203,14 +216,25 @@ struct properties<specfem::dimension::type::dim2,
   constexpr static auto medium_tag = specfem::element::medium_tag::acoustic;
   constexpr static auto property_tag =
       specfem::element::property_tag::isotropic;
+
+  using simd = specfem::datatype::simd<type_real, UseSIMD>;
+  using value_type = typename simd::datatype;
+  constexpr static int _counter = __COUNTER__;
   ///@}
+  KOKKOS_FUNCTION
+  properties() = default;
+  KOKKOS_FUNCTION
+  properties(const value_type *value) : Base(value) { compute(); }
+  template <typename... Args,
+            typename std::enable_if_t<sizeof...(Args) == Base::nprops, int> = 0>
+  KOKKOS_FUNCTION properties(Args... args) : Base(args...) {
+    compute();
+  }
 
-  DEFINE_PROP_CONSTRUCTORS
-
-  DEFINE_PROP(rho_inverse, 0)   ///< @f$ \frac{1}{\rho} @f$
-  DEFINE_PROP(kappa, 1)         ///< Bulk modulus @f$ \kappa @f$
-  DEFINE_PROP(kappa_inverse, 2) ///< @f$ \frac{1}{\lambda + 2\mu} @f$
-  DEFINE_PROP(rho_vpinverse, 3) ///< @f$ \frac{1}{\rho v_p} @f$
+  DEFINE_PROP(rho_inverse)   ///< @f$ \frac{1}{\rho} @f$
+  DEFINE_PROP(kappa)         ///< Bulk modulus @f$ \kappa @f$
+  DEFINE_PROP(kappa_inverse) ///< @f$ \frac{1}{\lambda + 2\mu} @f$
+  DEFINE_PROP(rho_vpinverse) ///< @f$ \frac{1}{\rho v_p} @f$
 
   KOKKOS_INLINE_FUNCTION
   void compute() {
