@@ -35,8 +35,8 @@ void specfem::IO::mesh::impl::fortran::dim3::read_partial_derivatives(
 
   // Read all elements at once
   try {
-    specfem::IO::mesh::impl::fortran::dim3::read_array<type_real>(
-        stream, partial_derivatives.xix);
+    specfem::IO::mesh::impl::fortran::dim3::read_array(stream,
+                                                       partial_derivatives.xix);
 
   } catch (std::runtime_error &e) {
     std::ostringstream error_message;
@@ -46,8 +46,8 @@ void specfem::IO::mesh::impl::fortran::dim3::read_partial_derivatives(
   }
 
   try {
-    specfem::IO::mesh::impl::fortran::dim3::read_array<type_real>(
-        stream, partial_derivatives.xiy);
+    specfem::IO::mesh::impl::fortran::dim3::read_array(stream,
+                                                       partial_derivatives.xiy);
   } catch (std::runtime_error &e) {
     std::ostringstream error_message;
     error_message << "Error reading xiy from database file:\n"
@@ -56,8 +56,8 @@ void specfem::IO::mesh::impl::fortran::dim3::read_partial_derivatives(
   }
 
   try {
-    specfem::IO::mesh::impl::fortran::dim3::read_array<type_real>(
-        stream, partial_derivatives.xiz);
+    specfem::IO::mesh::impl::fortran::dim3::read_array(stream,
+                                                       partial_derivatives.xiz);
   } catch (std::runtime_error &e) {
     std::ostringstream error_message;
     error_message << "Error reading xiz from database file:\n"
@@ -66,7 +66,7 @@ void specfem::IO::mesh::impl::fortran::dim3::read_partial_derivatives(
   }
 
   try {
-    specfem::IO::mesh::impl::fortran::dim3::read_array<type_real>(
+    specfem::IO::mesh::impl::fortran::dim3::read_array(
         stream, partial_derivatives.etax);
   } catch (std::runtime_error &e) {
     std::ostringstream error_message;
@@ -76,7 +76,7 @@ void specfem::IO::mesh::impl::fortran::dim3::read_partial_derivatives(
   }
 
   try {
-    specfem::IO::mesh::impl::fortran::dim3::read_array<type_real>(
+    specfem::IO::mesh::impl::fortran::dim3::read_array(
         stream, partial_derivatives.etay);
   } catch (std::runtime_error &e) {
     std::ostringstream error_message;
@@ -86,7 +86,7 @@ void specfem::IO::mesh::impl::fortran::dim3::read_partial_derivatives(
   }
 
   try {
-    specfem::IO::mesh::impl::fortran::dim3::read_array<type_real>(
+    specfem::IO::mesh::impl::fortran::dim3::read_array(
         stream, partial_derivatives.etaz);
   } catch (std::runtime_error &e) {
     std::ostringstream error_message;
@@ -96,7 +96,7 @@ void specfem::IO::mesh::impl::fortran::dim3::read_partial_derivatives(
   }
 
   try {
-    specfem::IO::mesh::impl::fortran::dim3::read_array<type_real>(
+    specfem::IO::mesh::impl::fortran::dim3::read_array(
         stream, partial_derivatives.gammax);
   } catch (std::runtime_error &e) {
     std::ostringstream error_message;
@@ -106,7 +106,7 @@ void specfem::IO::mesh::impl::fortran::dim3::read_partial_derivatives(
   }
 
   try {
-    specfem::IO::mesh::impl::fortran::dim3::read_array<type_real>(
+    specfem::IO::mesh::impl::fortran::dim3::read_array(
         stream, partial_derivatives.gammay);
   } catch (std::runtime_error &e) {
     std::ostringstream error_message;
@@ -116,7 +116,7 @@ void specfem::IO::mesh::impl::fortran::dim3::read_partial_derivatives(
   }
 
   try {
-    specfem::IO::mesh::impl::fortran::dim3::read_array<type_real>(
+    specfem::IO::mesh::impl::fortran::dim3::read_array(
         stream, partial_derivatives.gammaz);
   } catch (std::runtime_error &e) {
     std::ostringstream error_message;
@@ -126,7 +126,7 @@ void specfem::IO::mesh::impl::fortran::dim3::read_partial_derivatives(
   }
 
   try {
-    specfem::IO::mesh::impl::fortran::dim3::read_array<type_real>(
+    specfem::IO::mesh::impl::fortran::dim3::read_array(
         stream, partial_derivatives.jacobian);
   } catch (std::runtime_error &e) {
     std::ostringstream error_message;
