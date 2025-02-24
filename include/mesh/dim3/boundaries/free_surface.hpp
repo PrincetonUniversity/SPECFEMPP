@@ -38,6 +38,22 @@ template <> struct free_surface<specfem::dimension::type::dim3> {
    */
   free_surface(){};
 
+  /**
+   * @brief Constructor
+   *
+   * Constructor for the free_surface struct that initializes the number of
+   * the underlying arrays with the given parameters
+   *
+   * @param num_free_surface_faces Number of free surface faces
+   * @param ngllsquare Number of GLL points squared
+   *
+   * @code{.cpp}
+   * // Example of how to use this constructor
+   * specfem::mesh::free_surface<specfem::dimension::type::dim3> free_surface(
+   *    num_free_surface_faces, ngllsquare);
+   * @endcode
+   *
+   */
   free_surface(const int num_free_surface_faces, const int ngllsquare)
       : nelements(num_free_surface_faces), ngllsquare(ngllsquare),
         num_free_surface_faces(num_free_surface_faces) {
@@ -54,6 +70,17 @@ template <> struct free_surface<specfem::dimension::type::dim3> {
   }
   ///@}
 
+  /**
+   * @brief Print the free_surface struct
+   *
+   * Print the free_surface struct to the console
+   *
+   * @code{.cpp}
+   * // Example of how to use this function
+   * free_surface.print();
+   * @endcode
+   *
+   */
   void print() const;
 };
 
