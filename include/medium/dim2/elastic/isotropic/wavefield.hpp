@@ -80,7 +80,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
           //     -1.0 * (sigma_xx + sigma_zz + sigma_yy) / 3.0;
           wavefield(iterator_index.ielement, index.iz, index.ix, 0) =
               -1.0 *
-              ((point_property.lambda + (2.0 / 3.0) * point_property.mu) *
+              ((point_property.lambda() + (2.0 / 3.0) * point_property.mu()) *
                (du(0, 0) + du(1, 1)));
         });
 
