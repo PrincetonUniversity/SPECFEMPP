@@ -12,7 +12,7 @@ template class specfem::compute::impl::boundary_medium_container<
     specfem::element::boundary_tag::stacey>;
 
 template class specfem::compute::impl::boundary_medium_container<
-    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic_sv,
     specfem::element::boundary_tag::stacey>;
 
 template class specfem::compute::boundary_value_container<

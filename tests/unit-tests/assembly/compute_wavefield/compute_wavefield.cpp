@@ -23,9 +23,9 @@ void test_element_wavefield(
   const auto medium = element_types.get_medium_tag(ispec);
   const auto property = element_types.get_property_tag(ispec);
 
-  if ((medium == specfem::element::medium_tag::elastic) &&
+  if ((medium == specfem::element::medium_tag::elastic_sv) &&
       (property == specfem::element::property_tag::isotropic)) {
-    test_helper<component, specfem::element::medium_tag::elastic,
+    test_helper<component, specfem::element::medium_tag::elastic_sv,
                 specfem::element::property_tag::isotropic>
         handle(ispec, wavefield, assembly);
     handle.test();

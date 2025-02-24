@@ -198,11 +198,11 @@ void specfem::time_scheme::newmark<specfem::simulation::type::forward>::
     apply_corrector_phase_forward(const specfem::element::medium_tag tag) {
 
   constexpr auto wavefield = specfem::wavefield::simulation_field::forward;
-  constexpr auto elastic = specfem::element::medium_tag::elastic;
+  constexpr auto elastic_sv = specfem::element::medium_tag::elastic_sv;
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
 
-  if (tag == elastic) {
-    corrector_phase_impl<elastic, wavefield>(field, deltatover2);
+  if (tag == elastic_sv) {
+    corrector_phase_impl<elastic_sv, wavefield>(field, deltatover2);
   } else if (tag == acoustic) {
     corrector_phase_impl<acoustic, wavefield>(field, deltatover2);
   } else {
@@ -216,11 +216,11 @@ void specfem::time_scheme::newmark<specfem::simulation::type::forward>::
     apply_predictor_phase_forward(const specfem::element::medium_tag tag) {
 
   constexpr auto wavefield = specfem::wavefield::simulation_field::forward;
-  constexpr auto elastic = specfem::element::medium_tag::elastic;
+  constexpr auto elastic_sv = specfem::element::medium_tag::elastic_sv;
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
 
-  if (tag == elastic) {
-    predictor_phase_impl<elastic, wavefield>(field, deltat, deltatover2,
+  if (tag == elastic_sv) {
+    predictor_phase_impl<elastic_sv, wavefield>(field, deltat, deltatover2,
                                              deltasquareover2);
   } else if (tag == acoustic) {
     predictor_phase_impl<acoustic, wavefield>(field, deltat, deltatover2,
@@ -234,12 +234,12 @@ void specfem::time_scheme::newmark<specfem::simulation::type::forward>::
 void specfem::time_scheme::newmark<specfem::simulation::type::combined>::
     apply_corrector_phase_forward(const specfem::element::medium_tag tag) {
   constexpr auto wavefield = specfem::wavefield::simulation_field::adjoint;
-  constexpr auto elastic = specfem::element::medium_tag::elastic;
+  constexpr auto elastic_sv = specfem::element::medium_tag::elastic_sv;
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
 
-  if (tag == elastic) {
-    corrector_phase_impl<elastic, wavefield>(adjoint_field, deltatover2);
-  } else if (tag == acoustic) {
+  if (tag == elastic_sv) {
+    corrector_phase_impl<elastic_sv, wavefield>(adjoint_field, deltatover2);
+  } else if (tag == elastic_sv) {
     corrector_phase_impl<acoustic, wavefield>(adjoint_field, deltatover2);
   } else {
     static_assert("medium type not supported");
@@ -251,11 +251,11 @@ void specfem::time_scheme::newmark<specfem::simulation::type::combined>::
 void specfem::time_scheme::newmark<specfem::simulation::type::combined>::
     apply_corrector_phase_backward(const specfem::element::medium_tag tag) {
   constexpr auto wavefield = specfem::wavefield::simulation_field::backward;
-  constexpr auto elastic = specfem::element::medium_tag::elastic;
+  constexpr auto elastic_sv = specfem::element::medium_tag::elastic_sv;
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
 
-  if (tag == elastic) {
-    corrector_phase_impl<elastic, wavefield>(backward_field,
+  if (tag == elastic_sv) {
+    corrector_phase_impl<elastic_sv, wavefield>(backward_field,
                                              -1.0 * deltatover2);
   } else if (tag == acoustic) {
     corrector_phase_impl<acoustic, wavefield>(backward_field,
@@ -271,11 +271,11 @@ void specfem::time_scheme::newmark<specfem::simulation::type::combined>::
     apply_predictor_phase_forward(const specfem::element::medium_tag tag) {
 
   constexpr auto wavefield = specfem::wavefield::simulation_field::adjoint;
-  constexpr auto elastic = specfem::element::medium_tag::elastic;
+  constexpr auto elastic_sv = specfem::element::medium_tag::elastic_sv;
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
 
-  if (tag == elastic) {
-    predictor_phase_impl<elastic, wavefield>(adjoint_field, deltat, deltatover2,
+  if (tag == elastic_sv) {
+    predictor_phase_impl<elastic_sv, wavefield>(adjoint_field, deltat, deltatover2,
                                              deltasquareover2);
   } else if (tag == acoustic) {
     predictor_phase_impl<acoustic, wavefield>(adjoint_field, deltat,
@@ -289,11 +289,11 @@ void specfem::time_scheme::newmark<specfem::simulation::type::combined>::
 void specfem::time_scheme::newmark<specfem::simulation::type::combined>::
     apply_predictor_phase_backward(const specfem::element::medium_tag tag) {
   constexpr auto wavefield = specfem::wavefield::simulation_field::backward;
-  constexpr auto elastic = specfem::element::medium_tag::elastic;
+  constexpr auto elastic_sv = specfem::element::medium_tag::elastic_sv;
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
 
-  if (tag == elastic) {
-    predictor_phase_impl<elastic, wavefield>(
+  if (tag == elastic_sv) {
+    predictor_phase_impl<elastic_sv, wavefield>(
         backward_field, -1.0 * deltat, -1.0 * deltatover2, deltasquareover2);
   } else if (tag == acoustic) {
     predictor_phase_impl<acoustic, wavefield>(

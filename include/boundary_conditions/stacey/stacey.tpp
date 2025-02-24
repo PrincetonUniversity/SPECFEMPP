@@ -9,9 +9,9 @@
 #include <type_traits>
 
 namespace {
-using elastic_type =
+using elastic_sv_type =
     std::integral_constant<specfem::element::medium_tag,
-                           specfem::element::medium_tag::elastic>;
+                           specfem::element::medium_tag::elastic_sv>;
 
 using acoustic_type =
     std::integral_constant<specfem::element::medium_tag,
@@ -112,7 +112,7 @@ template <
     typename PointFieldType, typename ViewType,
     typename std::enable_if_t<!PointBoundaryType::simd::using_simd, int> = 0>
 KOKKOS_FUNCTION void
-impl_enforce_traction(const elastic_type &, const isotropic_type &,
+impl_enforce_traction(const elastic_sv_type &, const isotropic_type &,
                       const PointBoundaryType &boundary,
                       const PointPropertyType &property,
                       const PointFieldType &field, ViewType &traction) {
@@ -122,7 +122,7 @@ impl_enforce_traction(const elastic_type &, const isotropic_type &,
                 "Boundary tag must be stacey");
 
   static_assert(PointPropertyType::medium_tag ==
-                    specfem::element::medium_tag::elastic,
+                    specfem::element::medium_tag::elastic_sv,
                 "Medium tag must be elastic");
 
   static_assert(PointPropertyType::property_tag ==
@@ -164,7 +164,7 @@ template <
     typename PointFieldType, typename ViewType,
     typename std::enable_if_t<PointBoundaryType::simd::using_simd, int> = 0>
 KOKKOS_FUNCTION void
-impl_enforce_traction(const elastic_type &, const isotropic_type &,
+impl_enforce_traction(const elastic_sv_type &, const isotropic_type &,
                       const PointBoundaryType &boundary,
                       const PointPropertyType &property,
                       const PointFieldType &field, ViewType &traction) {
@@ -174,7 +174,7 @@ impl_enforce_traction(const elastic_type &, const isotropic_type &,
                 "Boundary tag must be stacey");
 
   static_assert(PointPropertyType::medium_tag ==
-                    specfem::element::medium_tag::elastic,
+                    specfem::element::medium_tag::elastic_sv,
                 "Medium tag must be elastic");
 
   static_assert(PointPropertyType::property_tag ==
@@ -224,7 +224,7 @@ template <
     typename PointFieldType, typename ViewType,
     typename std::enable_if_t<!PointBoundaryType::simd::using_simd, int> = 0>
 KOKKOS_FUNCTION void
-impl_enforce_traction(const elastic_type &, const anisotropic_type &,
+impl_enforce_traction(const elastic_sv_type &, const anisotropic_type &,
                       const PointBoundaryType &boundary,
                       const PointPropertyType &property,
                       const PointFieldType &field, ViewType &traction) {
@@ -234,7 +234,7 @@ impl_enforce_traction(const elastic_type &, const anisotropic_type &,
                 "Boundary tag must be stacey");
 
   static_assert(PointPropertyType::medium_tag ==
-                    specfem::element::medium_tag::elastic,
+                    specfem::element::medium_tag::elastic_sv,
                 "Medium tag must be elastic");
 
   static_assert(PointPropertyType::property_tag ==
@@ -277,7 +277,7 @@ template <
     typename PointFieldType, typename ViewType,
     typename std::enable_if_t<PointBoundaryType::simd::using_simd, int> = 0>
 KOKKOS_FUNCTION void
-impl_enforce_traction(const elastic_type &, const anisotropic_type &,
+impl_enforce_traction(const elastic_sv_type &, const anisotropic_type &,
                       const PointBoundaryType &boundary,
                       const PointPropertyType &property,
                       const PointFieldType &field, ViewType &traction) {
@@ -287,7 +287,7 @@ impl_enforce_traction(const elastic_type &, const anisotropic_type &,
                 "Boundary tag must be stacey");
 
   static_assert(PointPropertyType::medium_tag ==
-                    specfem::element::medium_tag::elastic,
+                    specfem::element::medium_tag::elastic_sv,
                 "Medium tag must be elastic");
 
   static_assert(PointPropertyType::property_tag ==

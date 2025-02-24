@@ -27,7 +27,7 @@ struct properties;
  */
 template <bool UseSIMD>
 struct properties<specfem::dimension::type::dim2,
-                  specfem::element::medium_tag::elastic,
+                  specfem::element::medium_tag::elastic_sv,
                   specfem::element::property_tag::isotropic, UseSIMD> {
 
   /**
@@ -38,7 +38,7 @@ struct properties<specfem::dimension::type::dim2,
   constexpr static bool is_point_properties = true;
   using simd = specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD type
   constexpr static auto dimension = specfem::dimension::type::dim2;
-  constexpr static auto medium_tag = specfem::element::medium_tag::elastic;
+  constexpr static auto medium_tag = specfem::element::medium_tag::elastic_sv;
   constexpr static auto property_tag =
       specfem::element::property_tag::isotropic;
   using value_type =
@@ -132,7 +132,7 @@ public:
 
 template <bool UseSIMD>
 struct properties<specfem::dimension::type::dim2,
-                  specfem::element::medium_tag::elastic,
+                  specfem::element::medium_tag::elastic_sv,
                   specfem::element::property_tag::anisotropic, UseSIMD> {
 
   /**
@@ -143,7 +143,7 @@ struct properties<specfem::dimension::type::dim2,
   constexpr static bool is_point_properties = true;
   using simd = specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD type
   constexpr static auto dimension = specfem::dimension::type::dim2;
-  constexpr static auto medium_tag = specfem::element::medium_tag::elastic;
+  constexpr static auto medium_tag = specfem::element::medium_tag::elastic_sv;
   constexpr static auto property_tag =
       specfem::element::property_tag::anisotropic;
   using value_type =
