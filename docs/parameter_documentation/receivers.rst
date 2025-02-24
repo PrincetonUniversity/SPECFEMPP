@@ -68,6 +68,7 @@ Receivers section defines receiver information required to calculate seismograms
         - velocity
         - displacement
 
+
 **Parameter Name** : ``receivers.nstep_between_samples``
 ********************************************************
 

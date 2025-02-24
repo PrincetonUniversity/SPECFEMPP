@@ -1,5 +1,5 @@
 
-.. _mesh_boundaries_absorbing_boundaries_3D:
+.. _mesh_boundaries_3D:
 
 Boundaries
 ++++++++++

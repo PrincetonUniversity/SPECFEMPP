@@ -12,3 +12,4 @@ SPECFEM++ 3D Mesh
     :maxdepth: 1
 
     boundaries/index
+    coordinates/index
