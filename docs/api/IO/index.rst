@@ -29,10 +29,36 @@ are exposed through the following modules:
     reader/index
 
 
-Read Mesh
----------
+Helper Functions to read the 2D mesh
+------------------------------------
 
-.. doxygenfunction:: specfem::IO::read_2d_mesh
+.. doxygenfunction:: specfem::fortran_IO::read_2d_mesh
+
+
+
+Helper Functions to read the 3D mesh
+------------------------------------
+
+
+.. doxygenfunction:: specfem::fortran_IO::read_3d_mesh
+
+
+**Reading any values**
+
+.. doxygenfunction:: specfem::IO::mesh::impl::fortran::dim3::try_read_value
+
+**Reading any array**
+
+.. doxygenfunction:: specfem::IO::mesh::impl::fortran::dim3::try_read_array
+
+.. doxygenfunction:: specfem::IO::mesh::impl::fortran::dim3::read_array
+
+**Reading index arrays**
+
+.. doxygenfunction:: specfem::IO::mesh::impl::fortran::dim3::try_read_index_array
+
+.. doxygenfunction:: specfem::IO::mesh::impl::fortran::dim3::read_index_array
+
 
 
 Read Sources

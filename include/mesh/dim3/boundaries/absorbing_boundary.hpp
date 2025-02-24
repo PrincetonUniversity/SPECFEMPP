@@ -9,8 +9,16 @@
 namespace specfem {
 namespace mesh {
 
+/**
+ * @brief Struct to store absorbing boundaries
+ *
+ */
 template <specfem::element::medium_tag MediumTag> struct stacey_mass {};
 
+/**
+ * @brief Struct to store absorbing boundaries for an elastic medium
+ *
+ */
 template <> struct stacey_mass<specfem::element::medium_tag::elastic> {
   int nglob;             ///< Number of GLL points
   bool acoustic = false; ///< Flag for acoustic simulation
@@ -20,9 +28,20 @@ template <> struct stacey_mass<specfem::element::medium_tag::elastic> {
   Kokkos::View<type_real *, Kokkos::HostSpace> y;
   Kokkos::View<type_real *, Kokkos::HostSpace> z;
 
-  // Default constructor
+  // Constructors
+
+  ///@{
+  /**
+   * @brief Default constructor
+   *
+   */
   stacey_mass(){};
 
+  /**
+   * @brief Constructor
+   *
+   * @param nglob Number of GLL points
+   */
   stacey_mass(const int nglob) : nglob(nglob) {
     x = Kokkos::View<type_real *, Kokkos::HostSpace>("rmass_x", nglob);
     y = Kokkos::View<type_real *, Kokkos::HostSpace>("rmass_y", nglob);
@@ -30,6 +49,10 @@ template <> struct stacey_mass<specfem::element::medium_tag::elastic> {
   }
 };
 
+/**
+ * @brief Struct to store absorbing boundaries for an acoustic medium
+ *
+ */
 template <> struct stacey_mass<specfem::element::medium_tag::acoustic> {
   int nglob;            ///< Number of GLL points
   bool acoustic = true; ///< Flag for acoustic simulation
@@ -37,14 +60,27 @@ template <> struct stacey_mass<specfem::element::medium_tag::acoustic> {
 
   Kokkos::View<type_real *, Kokkos::HostSpace> mass;
 
-  // Default constructor
+  // Constructors
+
+  /**
+   * @brief Default constructor
+   *
+   */
   stacey_mass(){};
 
+  /**
+   * @brief Constructor
+   *
+   * @param nglob Number of GLL points
+   */
   stacey_mass(const int nglob) : nglob(nglob) {
     mass = Kokkos::View<type_real *, Kokkos::HostSpace>("rmass_x", nglob);
   }
 };
 
+/**
+ * @brief Struct to store absorbing boundaries for 3D meshes
+ */
 template <> struct absorbing_boundary<specfem::dimension::type::dim3> {
 
   constexpr static auto dimension =

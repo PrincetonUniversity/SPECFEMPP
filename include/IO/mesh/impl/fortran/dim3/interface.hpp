@@ -63,6 +63,12 @@ void read_partial_derivatives(
  *
  * @param stream Input stream
  * @param array Array to read
+ * @tparam ViewType Kokkos::View type
+ * @throws std::runtime_error if an error occurs while reading the array
+ * @code{.cpp}
+ * // Example of how to use this function
+ * Kokkos::View<int *, Kokkos::HostSpace> array("array", 10);
+ * specfem::IO::mesh::impl::fortran::dim3::read_array(stream, array);
  */
 template <typename ViewType>
 void read_array(std::ifstream &stream, ViewType &array);
@@ -73,6 +79,14 @@ void read_array(std::ifstream &stream, ViewType &array);
  *
  * @param stream Input stream
  * @param array Index array to read
+ * @tparam ViewType Kokkos::View type
+ * @throws std::runtime_error if an error occurs while reading the array
+ *
+ * @code{.cpp}
+ * // Example of how to use this function
+ * Kokkos::View<int *, Kokkos::HostSpace> array("array", 10);
+ * specfem::IO::mesh::impl::fortran::dim3::read_index_array(stream, array);
+ * @endcode
  */
 template <typename ViewType>
 void read_index_array(std::ifstream &stream, ViewType &array);

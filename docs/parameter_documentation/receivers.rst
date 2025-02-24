@@ -1,5 +1,5 @@
-receivers
-##########
+Receiver
+########
 
 Receivers section defines receiver information required to calculate seismograms.
 
@@ -8,7 +8,7 @@ Receivers section defines receiver information required to calculate seismograms
     Please note that the ``stations_file`` is generated using SPECFEM2D mesh generator i.e. xmeshfem2d
 
 **Parameter Name** : ``receivers``
------------------------------------
+----------------------------------
 
 **default value** : None
 
@@ -16,8 +16,8 @@ Receivers section defines receiver information required to calculate seismograms
 
 **documentation** : receiver information required to calculate seismograms.
 
-**Parameter Name** : ``receivers.stationse``
-******************************************************
+**Parameter Name** : ``receivers.stations``
+*******************************************
 
 **default value** : None
 
@@ -26,7 +26,7 @@ Receivers section defines receiver information required to calculate seismograms
 **documentation** : Path to ``stations_file``
 
 **Parameter Name** : ``receivers.angle``
-******************************************************
+****************************************
 
 **default value** : None
 
