@@ -94,6 +94,23 @@ public:
     }
   }
 
+  /**
+   * @brief Returns the field for a given medium
+   *
+   */
+  template <specfem::element::medium_tag MediumTag>
+  KOKKOS_INLINE_FUNCTION constexpr specfem::compute::impl::field_impl<
+      specfem::dimension::type::dim2, MediumTag> const &
+  get_field() const {
+    if constexpr (MediumTag == specfem::element::medium_tag::elastic) {
+      return elastic;
+    } else if constexpr (MediumTag == specfem::element::medium_tag::acoustic) {
+      return acoustic;
+    } else {
+      static_assert("medium type not supported");
+    }
+  }
+
   int nglob = 0; ///< Number of global degrees of freedom
   int nspec;     ///< Number of spectral elements
   int ngllz;     ///< Number of quadrature points in z direction
