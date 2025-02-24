@@ -14,9 +14,26 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 import subprocess
+import sys
+import os
 
 # Doxygen
-subprocess.call("doxygen Doxyfile.in", shell=True)
+doxygen_cmd = "doxygen Doxyfile.in"  # or Doxyfile.in if that's the correct filename
+
+# Create the doxygen subdirectory if it doesn't exist
+if os.path.exists("_build/doxygen") is False:
+    os.makedirs("_build/doxygen")
+
+result = subprocess.call(doxygen_cmd, shell=True)
+if result != 0:
+    print(f"Error: Doxygen command '{doxygen_cmd}' failed with code {result}")
+    sys.exit(1)
+
+# Check if output directory exists
+if not os.path.exists("_build/doxygen/xml"):
+    print("Error: Doxygen XML output directory '_build/doxygen/xml' not found")
+    print("Please check Doxygen configuration and make sure it runs correctly")
+    sys.exit(1)
 
 # -- Project information -----------------------------------------------------
 
@@ -78,7 +95,7 @@ html_theme = "furo"
 # }
 # html_logo = ''
 github_url = "https://github.com/PrincetonUniversity/SPECFEMPP"
-html_baseurl = 'https://specfem2d-kokkos.readthedocs.io/'
+html_baseurl = "https://specfem2d-kokkos.readthedocs.io/"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -96,6 +113,6 @@ html_css_files = [
 
 # -- Breathe configuration -------------------------------------------------
 
-breathe_projects = {"SPECFEM KOKKOS IMPLEMENTATION": "_build/xml"}
+breathe_projects = {"SPECFEM KOKKOS IMPLEMENTATION": "_build/doxygen/xml"}
 breathe_default_project = "SPECFEM KOKKOS IMPLEMENTATION"
 breathe_default_members = ()

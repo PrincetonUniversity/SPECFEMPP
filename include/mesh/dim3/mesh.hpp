@@ -75,6 +75,9 @@ template <> struct mesh<specfem::dimension::type::dim3> {
    */
   mesh(){};
 
+  /**
+   * @brief Print basic parameters of the mesh if interested
+   */
   std::string print() const;
 };
 } // namespace mesh

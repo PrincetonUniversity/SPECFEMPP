@@ -293,6 +293,17 @@ namespace dim3 {
  *
  * @param message Message to print if exception is caught
  * @param args Arguments to pass to fortran_read_line
+ * @throws std::runtime_error if an error occurs while reading the line
+ *         includes the input message, so the user know which value errors
+ * @see specfem::IO::fortran_read_line
+ * @note This function is a wrapper for fortran_read_line that catches
+ * exceptions and throws a runtime_error with a more informative message
+ *
+ * @code{.cpp}
+ * // Example of how to use this function
+ * int very_specific_value;
+ * try_read_line("very_specific_value", stream, &value);
+ * @endcode
  */
 template <typename... Args>
 auto try_read_line(const std::string &message, Args &&...args)
@@ -315,6 +326,17 @@ auto try_read_line(const std::string &message, Args &&...args)
  *
  * @param message Message to print if exception is caught
  * @param args Arguments to pass to read_array
+ * @throws std::runtime_error if an error occurs while reading the array
+ *         includes the input message, so the user know which array errors
+ * @see specfem::IO::mesh::impl::fortran::dim3::read_array
+ * @note This function is a wrapper for read_array that catches exceptions
+ *       and throws a runtime_error with a more informative message
+ *
+ * @code{.cpp}
+ * // Example of how to use this function
+ * Kokkos::View<int *, Kokkos::HostSpace> specific_array("array", 10);
+ * try_read_array("specific_array", stream, array);
+ * @endcode
  */
 template <typename... Args>
 auto try_read_array(const std::string &message, Args &&...args)
@@ -340,6 +362,17 @@ auto try_read_array(const std::string &message, Args &&...args)
  *
  * @param message Message to print if exception is caught
  * @param args Arguments to pass to read_index_array
+ * @throws std::runtime_error if an error occurs while reading the array that
+ *         includes the input message, so the user know which array errors
+ * @see specfem::IO::mesh::impl::fortran::dim3::read_index_array
+ * @note This function is a wrapper for read_index_array that catches exceptions
+ *       and throws a runtime_error with a more informative message
+ *
+ * @code{.cpp}
+ * // Example of how to use this function
+ * Kokkos::View<int *, Kokkos::HostSpace> specific_array("array", 10);
+ * try_read_index_array("specific_array", stream, array);
+ * @endcode
  */
 template <typename... Args>
 auto try_read_index_array(const std::string &message, Args &&...args)
