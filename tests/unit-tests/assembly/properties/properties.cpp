@@ -38,9 +38,9 @@ std::string get_error_message(
   std::ostringstream message;
 
   error_message_header(message, value, mode);
-  message << "\t\trho = " << point_property.rho << "\n";
-  message << "\t\tmu = " << point_property.mu << "\n";
-  message << "\t\tkappa = " << point_property.lambdaplus2mu << "\n";
+  message << "\t\trho = " << point_property.rho() << "\n";
+  message << "\t\tmu = " << point_property.mu() << "\n";
+  message << "\t\tlambdaplus2mu = " << point_property.lambdaplus2mu() << "\n";
 
   return message.str();
 }
@@ -54,13 +54,13 @@ std::string get_error_message(
   std::ostringstream message;
 
   error_message_header(message, value, mode);
-  message << "\t\trho = " << point_property.rho << "\n";
-  message << "\t\tc11 = " << point_property.c11 << "\n";
-  message << "\t\tc13 = " << point_property.c13 << "\n";
-  message << "\t\tc15 = " << point_property.c15 << "\n";
-  message << "\t\tc33 = " << point_property.c33 << "\n";
-  message << "\t\tc35 = " << point_property.c35 << "\n";
-  message << "\t\tc55 = " << point_property.c55 << "\n";
+  message << "\t\trho = " << point_property.rho() << "\n";
+  message << "\t\tc11 = " << point_property.c11() << "\n";
+  message << "\t\tc13 = " << point_property.c13() << "\n";
+  message << "\t\tc15 = " << point_property.c15() << "\n";
+  message << "\t\tc33 = " << point_property.c33() << "\n";
+  message << "\t\tc35 = " << point_property.c35() << "\n";
+  message << "\t\tc55 = " << point_property.c55() << "\n";
 
   return message.str();
 }
@@ -74,8 +74,8 @@ std::string get_error_message(
   std::ostringstream message;
 
   error_message_header(message, value, mode);
-  message << "\t\trho_inverse = " << point_property.rho_inverse << "\n";
-  message << "\t\tkappa = " << point_property.kappa << "\n";
+  message << "\t\trho_inverse = " << point_property.rho_inverse() << "\n";
+  message << "\t\tkappa = " << point_property.kappa() << "\n";
 
   return message.str();
 }
@@ -112,10 +112,10 @@ get_point_property(const int ispec, const int iz, const int ix,
                              specfem::element::property_tag::isotropic, false>
       point_property;
 
-  point_property.rho = elastic_isotropic.h_rho(ispec_l, iz, ix);
-  point_property.mu = elastic_isotropic.h_mu(ispec_l, iz, ix);
-  point_property.lambdaplus2mu =
-      elastic_isotropic.h_lambdaplus2mu(ispec_l, iz, ix);
+  point_property.rho(elastic_isotropic.h_rho(ispec_l, iz, ix));
+  point_property.mu(elastic_isotropic.h_mu(ispec_l, iz, ix));
+  point_property.lambdaplus2mu(
+      elastic_isotropic.h_lambdaplus2mu(ispec_l, iz, ix));
 
   return point_property;
 }
@@ -134,9 +134,9 @@ get_point_property(
                              specfem::element::property_tag::isotropic, false>
       point_property_l;
 
-  point_property_l.rho = point_property.rho[lane];
-  point_property_l.mu = point_property.mu[lane];
-  point_property_l.lambdaplus2mu = point_property.lambdaplus2mu[lane];
+  point_property_l.rho(point_property.rho()[lane]);
+  point_property_l.mu(point_property.mu()[lane]);
+  point_property_l.lambdaplus2mu(point_property.lambdaplus2mu()[lane]);
 
   return point_property_l;
 }
@@ -157,13 +157,16 @@ get_point_property(const int ispec, const int iz, const int ix,
                              specfem::element::property_tag::anisotropic, false>
       point_property;
 
-  point_property.rho = elastic_anisotropic.h_rho(ispec_l, iz, ix);
-  point_property.c11 = elastic_anisotropic.h_c11(ispec_l, iz, ix);
-  point_property.c13 = elastic_anisotropic.h_c13(ispec_l, iz, ix);
-  point_property.c15 = elastic_anisotropic.h_c15(ispec_l, iz, ix);
-  point_property.c33 = elastic_anisotropic.h_c33(ispec_l, iz, ix);
-  point_property.c35 = elastic_anisotropic.h_c35(ispec_l, iz, ix);
-  point_property.c55 = elastic_anisotropic.h_c55(ispec_l, iz, ix);
+  point_property.rho(elastic_anisotropic.h_rho(ispec_l, iz, ix));
+  point_property.c11(elastic_anisotropic.h_c11(ispec_l, iz, ix));
+  point_property.c13(elastic_anisotropic.h_c13(ispec_l, iz, ix));
+  point_property.c15(elastic_anisotropic.h_c15(ispec_l, iz, ix));
+  point_property.c33(elastic_anisotropic.h_c33(ispec_l, iz, ix));
+  point_property.c35(elastic_anisotropic.h_c35(ispec_l, iz, ix));
+  point_property.c55(elastic_anisotropic.h_c55(ispec_l, iz, ix));
+  point_property.c12(elastic_anisotropic.h_c12(ispec_l, iz, ix));
+  point_property.c23(elastic_anisotropic.h_c23(ispec_l, iz, ix));
+  point_property.c25(elastic_anisotropic.h_c25(ispec_l, iz, ix));
 
   return point_property;
 }
@@ -182,13 +185,16 @@ get_point_property(
                              specfem::element::property_tag::anisotropic, false>
       point_property_l;
 
-  point_property_l.rho = point_property.rho[lane];
-  point_property_l.c11 = point_property.c11[lane];
-  point_property_l.c13 = point_property.c13[lane];
-  point_property_l.c15 = point_property.c15[lane];
-  point_property_l.c33 = point_property.c33[lane];
-  point_property_l.c35 = point_property.c35[lane];
-  point_property_l.c55 = point_property.c55[lane];
+  point_property_l.rho(point_property.rho()[lane]);
+  point_property_l.c11(point_property.c11()[lane]);
+  point_property_l.c13(point_property.c13()[lane]);
+  point_property_l.c15(point_property.c15()[lane]);
+  point_property_l.c33(point_property.c33()[lane]);
+  point_property_l.c35(point_property.c35()[lane]);
+  point_property_l.c55(point_property.c55()[lane]);
+  point_property_l.c12(point_property.c12()[lane]);
+  point_property_l.c23(point_property.c23()[lane]);
+  point_property_l.c25(point_property.c25()[lane]);
 
   return point_property_l;
 }
@@ -209,9 +215,8 @@ get_point_property(const int ispec, const int iz, const int ix,
                              specfem::element::property_tag::isotropic, false>
       point_property;
 
-  point_property.rho_inverse =
-      acoustic_isotropic.h_rho_inverse(ispec_l, iz, ix);
-  point_property.kappa = acoustic_isotropic.h_kappa(ispec_l, iz, ix);
+  point_property.rho_inverse(acoustic_isotropic.h_rho_inverse(ispec_l, iz, ix));
+  point_property.kappa(acoustic_isotropic.h_kappa(ispec_l, iz, ix));
 
   return point_property;
 }
@@ -230,8 +235,8 @@ get_point_property(
                              specfem::element::property_tag::isotropic, false>
       point_property_l;
 
-  point_property_l.rho_inverse = point_property.rho_inverse[lane];
-  point_property_l.kappa = point_property.kappa[lane];
+  point_property_l.rho_inverse(point_property.rho_inverse()[lane]);
+  point_property_l.kappa(point_property.kappa()[lane]);
 
   return point_property_l;
 }
@@ -240,13 +245,13 @@ template <bool using_simd>
 void check_eq(
     const typename specfem::datatype::simd<type_real, using_simd>::datatype &p1,
     const typename specfem::datatype::simd<type_real, using_simd>::datatype &p2,
-    const int &n_simd_elements) {
+    const int &n_simd_elements, const std::string &msg) {
   if constexpr (using_simd) {
     for (int i = 0; i < n_simd_elements; i++) {
       if (p1[i] != p2[i]) {
         std::ostringstream message;
 
-        message << "\n \t Error in function load_on_host";
+        message << "\n \t Error in function load_on_host (SIMD) | " << msg;
         message << "\n\t Expected: " << p1[i];
         message << "\n\t Got: " << p2[i];
 
@@ -257,7 +262,7 @@ void check_eq(
     if (p1 != p2) {
       std::ostringstream message;
 
-      message << "\n \t Error in function load_on_host";
+      message << "\n \t Error in function load_on_host | " << msg;
       message << "\n\t Expected: " << p1;
       message << "\n\t Got: " << p2;
 
@@ -284,19 +289,20 @@ void check_point_properties(
         specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
         specfem::element::property_tag::isotropic, using_simd> &p2,
     const int &n_simd_elements) {
-  check_eq<using_simd>(p1.rho, p2.rho, n_simd_elements);
-  check_eq<using_simd>(p1.mu, p2.mu, n_simd_elements);
-  check_eq<using_simd>(p1.lambdaplus2mu, p2.lambdaplus2mu, n_simd_elements);
-  check_eq<using_simd>(p1.lambda,
-                       p2.lambdaplus2mu -
+  check_eq<using_simd>(p1.rho(), p2.rho(), n_simd_elements, "rho");
+  check_eq<using_simd>(p1.mu(), p2.mu(), n_simd_elements, ".mu");
+  check_eq<using_simd>(p1.lambdaplus2mu(), p2.lambdaplus2mu(), n_simd_elements,
+                       "lambdaplus2mu");
+  check_eq<using_simd>(p1.lambda(),
+                       p2.lambdaplus2mu() -
                            (static_cast<typename specfem::datatype::simd<
                                 type_real, using_simd>::datatype>(2.0)) *
-                               p2.mu,
-                       n_simd_elements);
-  check_eq<using_simd>(p1.rho_vp, Kokkos::sqrt(p2.rho * p2.lambdaplus2mu),
-                       n_simd_elements);
-  check_eq<using_simd>(p1.rho_vs, Kokkos::sqrt(p2.rho * p2.mu),
-                       n_simd_elements);
+                               p2.mu(),
+                       n_simd_elements, "lambda");
+  check_eq<using_simd>(p1.rho_vp(), Kokkos::sqrt(p2.rho() * p2.lambdaplus2mu()),
+                       n_simd_elements, "rho_vp");
+  check_eq<using_simd>(p1.rho_vs(), Kokkos::sqrt(p2.rho() * p2.mu()),
+                       n_simd_elements, "rho_vp");
 }
 
 template <bool using_simd>
@@ -308,17 +314,17 @@ void check_point_properties(
         specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
         specfem::element::property_tag::anisotropic, using_simd> &p2,
     const int &n_simd_elements) {
-  check_eq<using_simd>(p1.rho, p2.rho, n_simd_elements);
-  check_eq<using_simd>(p1.c11, p2.c11, n_simd_elements);
-  check_eq<using_simd>(p1.c13, p2.c13, n_simd_elements);
-  check_eq<using_simd>(p1.c15, p2.c15, n_simd_elements);
-  check_eq<using_simd>(p1.c33, p2.c33, n_simd_elements);
-  check_eq<using_simd>(p1.c35, p2.c35, n_simd_elements);
-  check_eq<using_simd>(p1.c55, p2.c55, n_simd_elements);
-  check_eq<using_simd>(p1.rho_vp, Kokkos::sqrt(p2.rho * p2.c33),
-                       n_simd_elements);
-  check_eq<using_simd>(p1.rho_vs, Kokkos::sqrt(p2.rho * p2.c55),
-                       n_simd_elements);
+  check_eq<using_simd>(p1.rho(), p2.rho(), n_simd_elements, "rho");
+  check_eq<using_simd>(p1.c11(), p2.c11(), n_simd_elements, "c11");
+  check_eq<using_simd>(p1.c13(), p2.c13(), n_simd_elements, "c13");
+  check_eq<using_simd>(p1.c15(), p2.c15(), n_simd_elements, "c15");
+  check_eq<using_simd>(p1.c33(), p2.c33(), n_simd_elements, "c33");
+  check_eq<using_simd>(p1.c35(), p2.c35(), n_simd_elements, "c35");
+  check_eq<using_simd>(p1.c55(), p2.c55(), n_simd_elements, "c55");
+  check_eq<using_simd>(p1.rho_vp(), Kokkos::sqrt(p2.rho() * p2.c33()),
+                       n_simd_elements, "rho_vp");
+  check_eq<using_simd>(p1.rho_vs(), Kokkos::sqrt(p2.rho() * p2.c55()),
+                       n_simd_elements, "rho_vs");
 }
 
 template <bool using_simd>
@@ -330,18 +336,23 @@ void check_point_properties(
         specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
         specfem::element::property_tag::isotropic, using_simd> &p2,
     const int &n_simd_elements) {
-  check_eq<using_simd>(p1.rho_inverse, p2.rho_inverse, n_simd_elements);
-  check_eq<using_simd>(p1.kappa, p2.kappa, n_simd_elements);
+  check_eq<using_simd>(p1.rho_inverse(), p2.rho_inverse(), n_simd_elements,
+                       "rho_inverse");
+  check_eq<using_simd>(p1.kappa(), p2.kappa(), n_simd_elements, "kappa");
   check_eq<using_simd>(
-      p1.kappa_inverse,
+      p1.kappa_inverse(),
       (static_cast<
           typename specfem::datatype::simd<type_real, using_simd>::datatype>(
           1.0)) /
-          p2.kappa,
-      n_simd_elements);
-  check_eq<using_simd>(p1.rho_vpinverse,
-                       Kokkos::sqrt(p2.rho_inverse * p2.kappa_inverse),
-                       n_simd_elements);
+          p2.kappa(),
+      n_simd_elements, "kappa_inverse");
+  check_eq<using_simd>(
+      p1.rho_vpinverse(),
+      Kokkos::sqrt(p2.rho_inverse() *
+                   (static_cast<typename specfem::datatype::simd<
+                        type_real, using_simd>::datatype>(1.0) /
+                    p2.kappa())),
+      n_simd_elements, "rho_vpinverse");
 }
 
 template <specfem::element::medium_tag MediumTag,
@@ -364,6 +375,10 @@ void check_to_value(const specfem::compute::properties properties,
     }
   }
 
+  using PointType =
+      specfem::point::properties<specfem::dimension::type::dim2, MediumTag,
+                                 PropertyTag, using_simd>;
+
   constexpr int simd_size =
       specfem::datatype::simd<type_real, using_simd>::size();
 
@@ -379,14 +394,19 @@ void check_to_value(const specfem::compute::properties properties,
               get_point_property<MediumTag, PropertyTag>(ielement + j, iz, ix,
                                                          properties);
           const type_real value = values_to_store(i);
-          if (point_property != value) {
-            std::ostringstream message;
+          for (int l = 0; l < PointType::nprops; l++) {
+            if (point_property.data[l] != value) {
+              std::ostringstream message;
 
-            message << "\n \t Error at ispec = " << ielement + j
-                    << ", iz = " << iz << ", ix = " << ix;
-            message << get_error_message(point_property, value);
+              message << "\n \t Error in function check_to_value";
 
-            throw std::runtime_error(message.str());
+              message << "\n \t Error at ispec = " << ielement + j
+                      << ", iz = " << iz << ", ix = " << ix
+                      << ", iprop = " << l;
+              message << get_error_message(point_property, value);
+
+              throw std::runtime_error(message.str());
+            }
           }
         }
       }
@@ -410,6 +430,9 @@ void check_compute_to_mesh(
   const int ngllx = properties.ngllx;
   const int ngllz = properties.ngllz;
   std::vector<int> elements;
+
+  using PointType = specfem::point::properties<specfem::dimension::type::dim2,
+                                               MediumTag, PropertyTag, false>;
 
   for (int ispec = 0; ispec < nspec; ispec++) {
     if ((element_types.get_medium_tag(ispec) == MediumTag) &&
@@ -445,17 +468,31 @@ void check_compute_to_mesh(
             std::get<specfem::medium::material<MediumTag, PropertyTag> >(
                 materials[ispec_mesh]);
         auto value = material.get_properties();
-        if (point_property != value) {
-          std::ostringstream message;
+        for (int l = 0; l < PointType::nprops; l++) {
+          if (point_property.data[l] != value.data[l]) {
+            std::ostringstream message;
 
-          message << "\n \t Error at ispec = " << ielement << ", iz = " << iz
-                  << ", ix = " << ix;
+            message << "\n \t Error in function check_compute_to_mesh";
 
-          message << get_error_message(value, 0.0, 1);
-          message << get_error_message(point_property, 0.0, 2);
+            message << "\n \t Error at ispec = " << ielement << ", iz = " << iz
+                    << ", ix = " << ix << ", iprop = " << l;
+            message << get_error_message(value, 0.0, 1);
+            message << get_error_message(point_property, 0.0, 2);
 
-          throw std::runtime_error(message.str());
+            throw std::runtime_error(message.str());
+          }
         }
+        // if (point_property != value) {
+        //   std::ostringstream message;
+
+        //   message << "\n \t Error at ispec = " << ielement << ", iz = " << iz
+        //           << ", ix = " << ix;
+
+        //   message << get_error_message(value, 0.0, 1);
+        //   message << get_error_message(point_property, 0.0, 2);
+
+        //   throw std::runtime_error(message.str());
+        // }
       }
     }
   }
@@ -515,11 +552,14 @@ void check_store_on_host(specfem::compute::properties &properties,
         const auto index =
             get_index<using_simd>(ielement, n_simd_elements, iz, ix);
         const type_real value = values_to_store_h(i);
-        PointType point(value);
+        PointType point;
+        for (int l = 0; l < PointType::nprops; l++) {
+          point.data[l] = value;
+        }
         PointType point_loaded;
         specfem::compute::store_on_host(index, properties, point);
         specfem::compute::load_on_host(index, properties, point_loaded);
-        check_point_properties<using_simd>(point, point_loaded,
+        check_point_properties<using_simd>(point_loaded, point,
                                            n_simd_elements);
       }
     }
@@ -614,28 +654,33 @@ void check_load_on_device(specfem::compute::properties &properties,
           for (int lane = 0; lane < n_simd_elements; lane++) {
             const auto point_property_l =
                 get_point_property(lane, point_property);
-            if (point_property_l != value_l) {
-              std::ostringstream message;
+            for (int l = 0; l < PointType::nprops; l++) {
+              if (point_property_l.data[l] != value_l) {
+                std::ostringstream message;
 
-              message << "\n \t Error in function load_on_device";
+                message << "\n \t Error in function load_on_device";
 
-              message << "\n \t Error at ispec = " << ielement << ", iz = " << 0
-                      << ", ix = " << 0;
-              message << get_error_message(point_property_l, value_l);
+                message << "\n \t Error at ispec = " << ielement
+                        << ", iz = " << 0 << ", ix = " << 0
+                        << ", iprop = " << l;
+                message << get_error_message(point_property_l, value_l);
 
-              throw std::runtime_error(message.str());
+                throw std::runtime_error(message.str());
+              }
             }
           }
         } else if constexpr (!using_simd) {
-          if (point_property != value_l) {
-            std::ostringstream message;
-            message << "\n \t Error in function load_on_device";
+          for (int l = 0; l < PointType::nprops; l++) {
+            if (point_property.data[l] != value_l) {
+              std::ostringstream message;
+              message << "\n \t Error in function load_on_device";
 
-            message << "\n \t Error at ispec = " << ielement << ", iz = " << 0
-                    << ", ix = " << 0;
-            message << get_error_message(point_property, value_l);
+              message << "\n \t Error at ispec = " << ielement << ", iz = " << 0
+                      << ", ix = " << 0 << ", iprop = " << l;
+              message << get_error_message(point_property, value_l);
 
-            throw std::runtime_error(message.str());
+              throw std::runtime_error(message.str());
+            }
           }
         }
       }
