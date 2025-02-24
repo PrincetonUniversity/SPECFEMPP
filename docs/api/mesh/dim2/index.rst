@@ -1,10 +1,10 @@
 
 .. _mesh:
 
-SPECFEM++ Mesh
-==============
+SPECFEM++ 2D Mesh
+=================
 
-.. doxygenstruct:: specfem::mesh::mesh
+.. doxygenstruct:: specfem::mesh::mesh< specfem::dimension::type::dim2 >
     :members:
 
 

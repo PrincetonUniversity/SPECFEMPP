@@ -1,7 +1,6 @@
 #pragma once
 #include "IO/fortranio/interface.hpp"
 #include "IO/mesh/impl/fortran/dim3/interface.hpp"
-#include "IO/mesh/impl/fortran/dim3/utilities.hpp"
 #include "enumerations/dimension.hpp"
 #include "mesh/mesh.hpp"
 #include "specfem_mpi/interface.hpp"
