@@ -18,12 +18,20 @@ namespace IO {
  *
  * @param filename Fortran binary database filename
  * @param mpi pointer to MPI object to manage communication
- * @return specfem::mesh::mesh Specfem mesh object
+ * @return specfem::mesh::mesh Specfem mesh object for dimension type dim2
  *
  */
 specfem::mesh::mesh<specfem::dimension::type::dim2>
 read_2d_mesh(const std::string filename, const specfem::MPI::MPI *mpi);
 
+/**
+ * @brief Construct a 3D mesh object from a Fortran binary database file
+ *
+ * @param filename Fortran binary database filename
+ * @param mpi pointer to MPI object to manage communication
+ * @return specfem::mesh::mesh Specfem mesh object for dimension type dim3
+ *
+ */
 specfem::mesh::mesh<specfem::dimension::type::dim3>
 read_3d_mesh(const std::string mesh_parameters_file,
              const std::string mesh_databases_file,

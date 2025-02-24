@@ -288,14 +288,14 @@ namespace fortran {
 namespace dim3 {
 
 // Primary template for try-catch wrapper
-/*
+/**
  * @brief Try-catch wrapper for fortran_read_line
  *
  * @param message Message to print if exception is caught
  * @param args Arguments to pass to fortran_read_line
  * @throws std::runtime_error if an error occurs while reading the line
  *         includes the input message, so the user know which value errors
- * @see specfem::IO::fortran_read_line
+ * @see ::specfem::IO::fortran_read_line
  * @note This function is a wrapper for fortran_read_line that catches
  * exceptions and throws a runtime_error with a more informative message
  *
@@ -322,13 +322,14 @@ auto try_read_line(const std::string &message, Args &&...args)
   }
 }
 
-/* @brief Try-catch wrapper for read_array
+/**
+ * @brief Try-catch wrapper for read_array
  *
  * @param message Message to print if exception is caught
  * @param args Arguments to pass to read_array
  * @throws std::runtime_error if an error occurs while reading the array
  *         includes the input message, so the user know which array errors
- * @see specfem::IO::mesh::impl::fortran::dim3::read_array
+ * @see ::specfem::IO::mesh::impl::fortran::dim3::read_array
  * @note This function is a wrapper for read_array that catches exceptions
  *       and throws a runtime_error with a more informative message
  *
@@ -358,13 +359,14 @@ auto try_read_array(const std::string &message, Args &&...args)
   }
 }
 
-/* @brief Try-catch wrapper for read_index_array
+/**
+ * @brief Try-catch wrapper for read_index_array
  *
  * @param message Message to print if exception is caught
  * @param args Arguments to pass to read_index_array
  * @throws std::runtime_error if an error occurs while reading the array that
  *         includes the input message, so the user know which array errors
- * @see specfem::IO::mesh::impl::fortran::dim3::read_index_array
+ * @see ::specfem::IO::mesh::impl::fortran::dim3::read_index_array
  * @note This function is a wrapper for read_index_array that catches exceptions
  *       and throws a runtime_error with a more informative message
  *
