@@ -22,24 +22,46 @@ Parameter definitions
 .. dropdown:: ``header``
     :open:
 
+    Define header section for your simulation. This section is used for naming
+    the run. but has no impact on the simulation itself.
+
     :default value: None
 
     :possible values: [YAML Node]
 
-    :documentation: Define header section
 
     .. dropdown:: ``header.title``
 
+        Brief name for this simulation
+
         :default value: None
 
         :possible values: [string]
 
-        :documentation: Brief name for this simulation
+        .. admonition:: Example title
+
+            .. code-block:: yaml
+
+                title: Heterogeneous acoustic-elastic medium with 1 acoustic-elastic interface
 
     .. dropdown:: ``header.description``
 
+        Detailed description for this run.
+
         :default value: None
 
         :possible values: [string]
 
-        :documentation: Detailed description for this run.
+        .. admonition:: Example description
+
+            This field supports multi-line strings. Use the pipe character (|)
+            followed by a newline to start a new line.
+
+            Example:
+
+            .. code-block:: yaml
+
+                description: |
+                    This is a long description
+                    that spans multiple lines
+                    and is rendered as a single paragraph.
