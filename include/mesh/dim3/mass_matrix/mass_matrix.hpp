@@ -23,6 +23,12 @@ template <> struct mass_matrix<specfem::dimension::type::dim3> {
 
   template <typename T> using View1D = Kokkos::View<T *, Kokkos::HostSpace>;
 
+  View1D<type_real> elastic;           ///< Elastic mass matrix
+  View1D<type_real> acoustic;          ///< Acoustic mass matrix
+  View1D<type_real> ocean_load;        ///< Ocean load mass matrix
+  View1D<type_real> solid_poroelastic; ///< Solid poroelastic mass matrix
+  View1D<type_real> fluid_poroelastic; ///< Fluid poroelastic mass matrix
+
   /**
    * @name Constructors
    *
@@ -79,12 +85,7 @@ template <> struct mass_matrix<specfem::dimension::type::dim3> {
           "specfem::mesh::mass_matrix::fluid_poroelastic", nglob);
     }
   };
-
-  View1D<type_real> elastic;
-  View1D<type_real> acoustic;
-  View1D<type_real> ocean_load;
-  View1D<type_real> solid_poroelastic;
-  View1D<type_real> fluid_poroelastic;
+  ///@}
 };
 
 } // namespace mesh

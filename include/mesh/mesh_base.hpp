@@ -41,6 +41,13 @@ template <specfem::dimension::type DimensionType> struct coordinates;
 template <specfem::dimension::type DimensionType> struct mapping;
 
 /**
+ * @brief Struct to store partial derivatives
+ *
+ * @tparam DimensionType Dimension type
+ */
+template <specfem::dimension::type DimensionType> struct partial_derivatives;
+
+/**
  * @brief Struct to store control nodes
  *
  * @tparam DimensionType Dimension type

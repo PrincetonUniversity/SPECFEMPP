@@ -8,11 +8,18 @@ SPECFEM++ 3D Mesh
     :members:
 
 
+What the 3D mesh contains
+-------------------------
+
 .. toctree::
     :maxdepth: 1
 
-    boundaries/index
+    parameters/index
     coordinates/index
-    coupled_interfaces/index
-    element_types/index
     mapping/index
+    partial_derivatives/index
+    element_types/index
+    materials/index
+    mass_matrix/index
+    boundaries/index
+    coupled_interfaces/index
