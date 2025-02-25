@@ -61,8 +61,6 @@ private:
     for (int i = 0; i < nprops; i++) {
       property.data[i] = target(ispec, iz, ix, i);
     }
-
-    property.compute();
   }
   template <typename PointProperties, typename ViewType>
   KOKKOS_FORCEINLINE_FUNCTION void
@@ -90,8 +88,6 @@ private:
       Kokkos::Experimental::where(mask, property.data[i])
           .copy_from(&target(ispec, iz, ix, i), tag_type());
     }
-
-    property.compute();
   }
 
 public:
