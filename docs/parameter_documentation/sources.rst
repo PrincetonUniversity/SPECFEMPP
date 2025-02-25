@@ -23,30 +23,7 @@ Parameter definitions
 
     .. admonition:: Example sources section
 
-        The sources is a path to a YAML file.
 
-        .. code-block:: yaml
-
-            sources: path/to/sources.yaml
-
-        The sources section is a YAML node that contains the source information
-
-        .. code-block:: yaml
-
-            sources:
-              number-of-sources: 1
-              sources:
-                - force:
-                    x : 2500.0
-                    z : 2500.0
-                    source_surf: false
-                    angle : 0.0
-                    vx : 0.0
-                    vz : 0.0
-                    Ricker:
-                      factor: 1e10
-                      tshift: 0.0
-                      f0: 10.0
 
 
     .. dropdown:: ``sources.number-of-sources``
