@@ -7,31 +7,32 @@ Seismograms section defines the output seismograms format at predefined stations
 Parameter definitions
 =====================
 
-**Parameter Name** : ``seismogram``
------------------------------------
 
-**default value** : NULL
+.. dropdown:: ``seismogram``
+    :open:
 
-**possible values** : [YAML Node]
+    **default value** : NULL
 
-**documentation** : Define seismogram output configuration
+    **possible values** : [YAML Node]
 
-**Parameter Name** : ``seismogram.seismogram-format``
-*****************************************************
+    **documentation** : Define seismogram output configuration
 
-**default value** : None
 
-**possible values** : [ascii]
+    .. dropdown:: ``seismogram.seismogram-format``
 
-**documentation** : Type of seismogram format to be written.
+        **default value** : None
 
-1. ascii - :ref:`ASCII` writes calculated seismogram values to seismogram files in string format.
+        **possible values** : [ascii]
 
-**Parameter Name** : ``seismogram.output-folder``
-*************************************************
+        **documentation** : Type of seismogram format to be written.
 
-**default value** : Current working directory
+        1. ascii - :ref:`ASCII` writes calculated seismogram values to seismogram files in string format.
 
-**possible values** : [string]
 
-**documentation** : Path to output folder where the seismograms will be saved.
+    .. dropdown:: ``seismogram.output-folder``
+
+        **default value** : Current working directory
+
+        **possible values** : [string]
+
+        **documentation** : Path to output folder where the seismograms will be saved.

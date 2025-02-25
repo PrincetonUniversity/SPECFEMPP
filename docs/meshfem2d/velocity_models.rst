@@ -3,7 +3,7 @@ Velocity Models
 ================
 
 **Parameter Name**: ``nbmodels``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Description**: Number of material systems in the model.
 
