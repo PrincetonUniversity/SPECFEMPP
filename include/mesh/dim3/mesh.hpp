@@ -4,6 +4,7 @@
 #include "boundaries/boundaries.hpp"
 #include "boundaries/free_surface.hpp"
 #include "coordinates/coordinates.hpp"
+#include "coupled_interfaces/coupled_interfaces.hpp"
 #include "element_types/element_types.hpp"
 #include "mass_matrix/mass_matrix.hpp"
 #include "materials/materials.hpp"
@@ -59,6 +60,9 @@ template <> struct mesh<specfem::dimension::type::dim3> {
 
   // Struct to store the free surface
   specfem::mesh::free_surface<dimension> free_surface;
+
+  // Struct to store the coupled interfaces
+  specfem::mesh::coupled_interfaces<dimension> coupled_interfaces;
 
   /**
    * @name Constructors
