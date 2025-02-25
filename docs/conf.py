@@ -59,6 +59,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx_sitemap",
     "sphinx.ext.inheritance_diagram",
+    "sphinx_design",
     "breathe",
     "sphinx_copybutton",
 ]

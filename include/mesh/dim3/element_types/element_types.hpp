@@ -9,6 +9,10 @@
 namespace specfem {
 namespace mesh {
 
+/**
+ * @brief Struct to store element types for a 3D mesh
+ *
+ */
 template <> struct element_types<specfem::dimension::type::dim3> {
 
   constexpr static auto dimension = specfem::dimension::type::dim3;
@@ -23,6 +27,11 @@ template <> struct element_types<specfem::dimension::type::dim3> {
 
   element_types() = default;
 
+  /**
+   * @brief Construct a new element types object
+   *
+   * @param nspec
+   */
   element_types(const int nspec)
       : nspec(nspec), ispec_is_elastic("ispec_is_elastic", nspec),
         ispec_is_acoustic("ispec_is_acoustic", nspec),
