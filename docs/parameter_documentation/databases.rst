@@ -14,22 +14,30 @@ Databases section defines location of database files.
 Parameter definitions
 =====================
 
-..dropdown:: ``databases``
+
+.. dropdown:: ``databases``
     :open:
+
+    The databases section defines the location of files to be read by the
+    solver.
 
     :default value: None
 
     :possible values: [YAML Node]
 
-    :documentation: Define databases section
-
-
     .. _database-file-parameter:
 
     .. dropdown:: ``databases.mesh-database``
+        :open:
+
+        Location of the fortran binary database file defining the mesh
 
         :default value: None
 
         :possible values: [string]
 
-        :documentation: Location of the fortran binary database file defining the mesh
+        .. admonition:: Example mesh-database
+
+            .. code-block:: yaml
+
+                mesh-database: /path/to/mesh_database.bin

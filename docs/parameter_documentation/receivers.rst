@@ -30,40 +30,51 @@ Parameter definitions
 .. dropdown:: ``receivers``
     :open:
 
+    Parameter file section that contains the receiver information required to
+    calculate seismograms.
+
     :default value: None
 
     :possible values: [YAML Node]
 
-    :documentation: receiver information required to calculate seismograms.
-
 
     .. dropdown:: ``receivers.stations``
+
+        Path to ``stations_file``.
 
         :default value: None
 
         :possible values: [string]
 
-        :documentation: Path to ``stations_file``
+        .. admonition:: Example stations file
+
+            .. code-block:: yaml
+
+                stations: /path/to/stations_file
 
 
     .. dropdown:: ``receivers.angle``
+
+        Angle to rotate components at receivers
 
         :default value: None
 
         :possible values: [float]
 
-        :documentation: Angle to rotate components at receivers
+        .. admonition:: Example angle
+
+            .. code-block:: yaml
+
+                angle: 0.0
 
 
     .. dropdown:: ``receivers.seismogram-type``
 
+        Type of seismograms to be written.
+
         :default value: None
 
         :possible values: [YAML list]
-
-        :documentation: Type of seismograms to be written.
-
-
 
         .. rst-class:: center-table
 
@@ -83,19 +94,26 @@ Parameter definitions
         | Fluid Potential   |                   6                   |     ✘ Unsupported                   |
         +-------------------+---------------------------------------+-------------------------------------+
 
+        .. admonition:: Example seismogram-type
 
-        .. code-block:: yaml
+          .. code-block:: yaml
 
-            seismogram-type:
-                - velocity
-                - displacement
+              seismogram-type:
+                  - velocity
+                  - displacement
 
 
     .. dropdown:: ``receivers.nstep_between_samples``
+
+        Number of time steps between sampling the wavefield at station locations
+        for writing seismogram.
 
         :default value: None
 
         :possible values: [int]
 
-        :documentation: Number of time steps between sampling the wavefield
-                            at station locations for writing seismogram.
+        .. admonition:: Example nstep_between_samples
+
+            .. code-block:: yaml
+
+                nstep_between_samples: 1
