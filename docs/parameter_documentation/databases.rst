@@ -17,19 +17,19 @@ Parameter definitions
 ..dropdown:: ``databases``
     :open:
 
-    **default value** : None
+    :default value: None
 
-    **possible values** : [YAML Node]
+    :possible values: [YAML Node]
 
-    **documentation** : Define databases section
+    :documentation: Define databases section
 
 
     .. _database-file-parameter:
 
     .. dropdown:: ``databases.mesh-database``
 
-        **default value** : None
+        :default value: None
 
-        **possible values** : [string]
+        :possible values: [string]
 
-        **documentation** : Location of the fortran binary database file defining the mesh
+        :documentation: Location of the fortran binary database file defining the mesh

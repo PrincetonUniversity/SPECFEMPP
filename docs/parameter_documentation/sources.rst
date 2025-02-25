@@ -15,8 +15,8 @@ Parameter definitions
 .. dropdown:: ``sources``
     :open:
 
-    **default value** : None
+    :default value: None
 
-    **possible values** : [YAML Node]
+    :possible values: [YAML Node]
 
-    **documentation** : Define sources section
+    :documentation: Define sources section

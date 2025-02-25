@@ -22,24 +22,24 @@ Parameter definitions
 .. dropdown:: ``header``
     :open:
 
-    **default value** : None
+    :default value: None
 
-    **possible values** : [YAML Node]
+    :possible values: [YAML Node]
 
-    **documentation** : Define header section
+    :documentation: Define header section
 
     .. dropdown:: ``header.title``
 
-        **default value** : None
+        :default value: None
 
-        **possible values** : [string]
+        :possible values: [string]
 
-        **documentation** : Brief name for this simulation
+        :documentation: Brief name for this simulation
 
     .. dropdown:: ``header.description``
 
-        **default value** : None
+        :default value: None
 
-        **possible values** : [string]
+        :possible values: [string]
 
-        **documentation** : Detailed description for this run.
+        :documentation: Detailed description for this run.
