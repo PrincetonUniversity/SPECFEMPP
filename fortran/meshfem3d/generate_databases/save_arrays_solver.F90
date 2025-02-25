@@ -75,13 +75,41 @@ module save_arrays_module
 
   end subroutine save_global_arrays_with_components
 
+  ! subroutine that converts a logical array to an integer array and writes it
+  ! a file IOUT (see save_global_arrays)
+  subroutine save_logical_nspec_array(array)
+
+    use constants, only: IOUT
+    use generate_databases_par, only: nspec => NSPEC_AB
+
+    logical, dimension(nspec), intent(in) :: array
+
+    integer, dimension(nspec) :: array_int
+
+    integer :: i
+
+    do i = 1, nspec
+      if (array(i)) then
+        array_int(i) = 1
+      else
+        array_int(i) = 0
+      endif
+    enddo
+
+    write(IOUT) array_int
+
+  end subroutine save_logical_nspec_array
+
   end module save_arrays_module
 ! for external mesh
 
   subroutine save_arrays_solver_mesh()
 
   use constants, only: IMAIN,IOUT,myrank
-  use save_arrays_module, only: save_global_arrays, save_global_arrays_with_components
+  use save_arrays_module, only: &
+    save_global_arrays, &
+    save_global_arrays_with_components, &
+    save_logical_nspec_array
 
   use shared_parameters, only: ACOUSTIC_SIMULATION, ELASTIC_SIMULATION, POROELASTIC_SIMULATION, &
     APPROXIMATE_OCEAN_LOAD, SAVE_MESH_FILES, ANISOTROPY
@@ -136,6 +164,8 @@ module save_arrays_module
   integer :: nglob
   integer :: ier,i,itest
   character(len=MAX_STRING_LEN) :: filename
+  ! Check actual size
+  ! integer :: reclen
 
   ! selects routine for file i/o format
   if (ADIOS_FOR_MESH) then
@@ -190,6 +220,8 @@ module save_arrays_module
   write(IOUT) ystore_unique
   write(IOUT) zstore_unique
 
+  ! write(*,*) "xstore reclength", reclen
+
   write(IOUT) irregular_element_number
   write(IOUT) xix_regular
   write(IOUT) jacobian_regular
@@ -204,6 +236,10 @@ module save_arrays_module
   call save_global_arrays(nspec, gammaystore)
   call save_global_arrays(nspec, gammazstore)
   call save_global_arrays(nspec, jacobianstore)
+
+  ! write test value
+  itest = 10000
+  write(IOUT) itest
 
   ! write(IOUT) xixstore
   ! write(IOUT) xiystore
@@ -221,9 +257,16 @@ module save_arrays_module
   ! write(IOUT) kappastore
   ! write(IOUT) mustore
 
-  write(IOUT)
+
+  ! Converting the logical arrays to integer arrays and writing them as ints
+  ! call save_logical_nspec_array(ispec_is_acoustic)
+  ! call save_logical_nspec_array(ispec_is_elastic)
+  ! call save_logical_nspec_array(ispec_is_poroelastic)
+  ! inquire(iolength=reclen) xstore_unique
+  write(IOUT) ispec_is_acoustic
   write(IOUT) ispec_is_elastic
   write(IOUT) ispec_is_poroelastic
+
 
   ! stamp for checking i/o
   itest = 9999
@@ -236,10 +279,13 @@ module save_arrays_module
 
   ! this array is needed for acoustic simulations but also for elastic simulations with CPML,
   ! thus we allocate it and read it in all cases (whether the simulation is acoustic, elastic, or acoustic/elastic)
-
   call save_global_arrays(nspec, rhostore)
 
   ! write(IOUT) rhostore
+
+  ! write test value
+  itest = 9998
+  write(IOUT) itest
 
   ! elastic
   if (ELASTIC_SIMULATION) then
@@ -253,6 +299,10 @@ module save_arrays_module
     ! write(IOUT) rho_vp
     ! write(IOUT) rho_vs
   endif
+
+  ! Write a test value
+  itest = 9997
+  write(IOUT) itest
 
   ! poroelastic
   if (POROELASTIC_SIMULATION) then
@@ -279,6 +329,10 @@ module save_arrays_module
     ! write(IOUT) rho_vpII
     ! write(IOUT) rho_vsI
   endif
+
+  ! write test value
+  itest = 9996
+  write(IOUT) itest
 
   ! @Lucas & @Congyue need to uncomment this when implementing PML
 

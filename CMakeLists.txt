@@ -350,9 +350,11 @@ add_library(
         src/mesh/dim2/tags/tags.cpp
         # 3-D
         src/mesh/dim3/mesh.cpp
+        src/mesh/dim3/element_types/element_types.cpp
         src/mesh/dim3/parameters/parameters.cpp
         src/mesh/dim3/parameters/parameters.cpp
         src/mesh/dim3/mapping/mapping.cpp
+        src/mesh/dim3/materials/materials.cpp
         src/mesh/dim3/coordinates/coordinates.cpp
         src/mesh/dim3/partial_derivatives/partial_derivatives.cpp
 )

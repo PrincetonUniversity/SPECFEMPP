@@ -1,4 +1,5 @@
 #include "IO/fortranio/fortran_io.hpp"
+#include "IO/fortranio/fortran_io.tpp"
 #include <boost/algorithm/string.hpp>
 #include <fstream>
 #include <iostream>
@@ -88,5 +89,21 @@ void specfem::IO::fortran_read_value(std::string *value, std::ifstream &stream,
   stream.read(reinterpret_cast<char *>(&temp), fchar);
   value->append(temp);
   boost::algorithm::trim(*value);
+  return;
+}
+
+template <>
+void specfem::IO::fortran_read_value(std::vector<bool> *value,
+                                     std::ifstream &stream,
+                                     int &buffer_length) {
+  int nsize = value->size();
+  std::vector<bool> &rvalue = *value;
+  for (int i = 0; i < nsize; i++) {
+    // Create a temporary bool variable to hold the value
+    bool temp_bool;
+    specfem::IO::fortran_read_value(&temp_bool, stream, buffer_length);
+    // Assign the temporary value to the vector element
+    rvalue[i] = temp_bool;
+  }
   return;
 }

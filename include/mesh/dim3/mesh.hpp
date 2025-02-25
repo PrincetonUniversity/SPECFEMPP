@@ -1,6 +1,9 @@
 #pragma once
 
 #include "coordinates/coordinates.hpp"
+#include "element_types/element_types.hpp"
+#include "mass_matrix/mass_matrix.hpp"
+#include "materials/materials.hpp"
 #include "mesh/dim3/mapping/mapping.hpp"
 #include "mesh/mesh_base.hpp"
 #include "parameters/parameters.hpp"
@@ -36,45 +39,14 @@ template <> struct mesh<specfem::dimension::type::dim3> {
   // Struct to store the partial derivatives
   specfem::mesh::partial_derivatives<dimension> partial_derivatives;
 
-  //
-  // int npgeo; ///< Total number of spectral element control nodes
-  // int nspec; ///< Total number of spectral elements
-  // int nproc; ///< Total number of processors
-  // specfem::mesh::control_nodes<dimension> control_nodes; ///< Defines control
-  //                                                        ///< nodes
+  // Struct to store element_types
+  specfem::mesh::element_types<dimension> elements_types;
 
-  // specfem::mesh::parameters<dimension> parameters; ///< Struct to store
-  //                                                  ///< simulation launch
-  //                                                  ///< parameters (never
-  //                                                  used)
+  // Mass matrix
+  specfem::mesh::mass_matrix<dimension> mass_matrix;
 
-  // specfem::mesh::coupled_interfaces<dimension>
-  //     coupled_interfaces; ///< Struct to store
-  //                         ///< coupled interfaces
-
-  // specfem::mesh::boundaries<dimension> boundaries; ///< Struct to store
-  //                                                  ///< information at the
-  //                                                  ///< boundaries
-
-  // specfem::mesh::tags<dimension> tags; ///< Struct to store
-  //                                      ///< tags for every
-  //                                      ///< spectral
-  //                                      ///< element
-
-  // specfem::mesh::elements::tangential_elements<dimension>
-  //     tangential_nodes; ///< Defines
-  //                       ///< tangential
-  //                       ///< nodes
-  //                       ///< (never
-  //                       ///< used)
-
-  // specfem::mesh::elements::axial_elements<dimension> axial_nodes; ///<
-  // Defines
-  //                                                                 ///< axial
-  //                                                                 ///< nodes
-  //                                                                 ///< (never
-  //                                                                 ///< used)
-  // specfem::mesh::materials materials; ///< Defines material properties
+  // Material
+  specfem::mesh::materials<dimension> materials;
 
   /**
    * @name Constructors
@@ -86,30 +58,6 @@ template <> struct mesh<specfem::dimension::type::dim3> {
    *
    */
   mesh(){};
-
-  // mesh(const int npgeo, const int nspec, const int nproc,
-  //      const specfem::mesh::control_nodes<specfem::dimension::type::dim2>
-  //          &control_nodes,
-  //      const specfem::mesh::parameters<specfem::dimension::type::dim2>
-  //          &parameters,
-  //      const
-  //      specfem::mesh::coupled_interfaces<specfem::dimension::type::dim2>
-  //          &coupled_interfaces,
-  //      const specfem::mesh::boundaries<specfem::dimension::type::dim2>
-  //          &boundaries,
-  //      const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
-  //      const specfem::mesh::elements::tangential_elements<
-  //          specfem::dimension::type::dim2> &tangential_nodes,
-  //      const specfem::mesh::elements::axial_elements<
-  //          specfem::dimension::type::dim2> &axial_nodes,
-  //      const specfem::mesh::materials &materials)
-  //     : npgeo(npgeo), nspec(nspec), nproc(nproc),
-  //     control_nodes(control_nodes),
-  //       parameters(parameters), coupled_interfaces(coupled_interfaces),
-  //       boundaries(boundaries), tags(tags),
-  //       tangential_nodes(tangential_nodes), axial_nodes(axial_nodes),
-  //       materials(materials){};
-  ///@}
 
   std::string print() const;
 };

@@ -1,5 +1,6 @@
 #include "IO/mesh/impl/fortran/dim2/read_material_properties.hpp"
 #include "IO/fortranio/interface.hpp"
+#include "enumerations/dimension.hpp"
 #include "enumerations/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "specfem_mpi/interface.hpp"
@@ -20,20 +21,25 @@ struct input_holder {
   int n, indic;
 };
 
-std::vector<specfem::mesh::materials::material_specification> read_materials(
+std::vector<specfem::mesh::materials<
+    specfem::dimension::type::dim2>::material_specification>
+read_materials(
     std::ifstream &stream, const int numat,
-    specfem::mesh::materials::material<elastic, isotropic> &elastic_isotropic,
-    specfem::mesh::materials::material<acoustic, isotropic> &acoustic_isotropic,
-    specfem::mesh::materials::material<elastic, anisotropic>
-        &elastic_anisotropic,
+    specfem::mesh::materials<specfem::dimension::type::dim2>::material<
+        elastic, isotropic> &elastic_isotropic,
+    specfem::mesh::materials<specfem::dimension::type::dim2>::material<
+        acoustic, isotropic> &acoustic_isotropic,
+    specfem::mesh::materials<specfem::dimension::type::dim2>::material<
+        elastic, anisotropic> &elastic_anisotropic,
     const specfem::MPI::MPI *mpi) {
 
   input_holder read_values;
 
   std::ostringstream message;
 
-  std::vector<specfem::mesh::materials::material_specification> index_mapping(
-      numat);
+  std::vector<specfem::mesh::materials<
+      specfem::dimension::type::dim2>::material_specification>
+      index_mapping(numat);
 
   message << "Material systems:\n"
           << "------------------------------";
@@ -104,10 +110,11 @@ std::vector<specfem::mesh::materials::material_specification> read_materials(
 
         l_acoustic_isotropic.push_back(acoustic_isotropic_holder);
 
-        index_mapping[i] = specfem::mesh::materials::material_specification(
-            specfem::element::medium_tag::acoustic,
-            specfem::element::property_tag::isotropic, index_acoustic_isotropic,
-            read_values.n - 1);
+        index_mapping[i] = specfem::mesh::
+            materials<specfem::dimension::type::dim2>::material_specification(
+                specfem::element::medium_tag::acoustic,
+                specfem::element::property_tag::isotropic,
+                index_acoustic_isotropic, read_values.n - 1);
 
         index_acoustic_isotropic++;
 
@@ -128,10 +135,11 @@ std::vector<specfem::mesh::materials::material_specification> read_materials(
 
         l_elastic_isotropic.push_back(elastic_isotropic_holder);
 
-        index_mapping[i] = specfem::mesh::materials::material_specification(
-            specfem::element::medium_tag::elastic,
-            specfem::element::property_tag::isotropic, index_elastic_isotropic,
-            read_values.n - 1);
+        index_mapping[i] = specfem::mesh::
+            materials<specfem::dimension::type::dim2>::material_specification(
+                specfem::element::medium_tag::elastic,
+                specfem::element::property_tag::isotropic,
+                index_elastic_isotropic, read_values.n - 1);
 
         index_elastic_isotropic++;
       }
@@ -159,10 +167,11 @@ std::vector<specfem::mesh::materials::material_specification> read_materials(
 
       l_elastic_anisotropic.push_back(elastic_anisotropic_holder);
 
-      index_mapping[i] = specfem::mesh::materials::material_specification(
-          specfem::element::medium_tag::elastic,
-          specfem::element::property_tag::anisotropic,
-          index_elastic_anisotropic, read_values.n - 1);
+      index_mapping[i] = specfem::mesh::
+          materials<specfem::dimension::type::dim2>::material_specification(
+              specfem::element::medium_tag::elastic,
+              specfem::element::property_tag::anisotropic,
+              index_elastic_anisotropic, read_values.n - 1);
 
       index_elastic_anisotropic++;
 
@@ -175,25 +184,29 @@ std::vector<specfem::mesh::materials::material_specification> read_materials(
              l_elastic_anisotropic.size() ==
          numat);
 
-  elastic_isotropic = specfem::mesh::materials::material<elastic, isotropic>(
-      l_elastic_isotropic.size(), l_elastic_isotropic);
+  elastic_isotropic =
+      specfem::mesh::materials<specfem::dimension::type::dim2>::material<
+          elastic, isotropic>(l_elastic_isotropic.size(), l_elastic_isotropic);
 
   elastic_anisotropic =
-      specfem::mesh::materials::material<elastic, anisotropic>(
-          l_elastic_anisotropic.size(), l_elastic_anisotropic);
+      specfem::mesh::materials<specfem::dimension::type::dim2>::material<
+          elastic, anisotropic>(l_elastic_anisotropic.size(),
+                                l_elastic_anisotropic);
 
-  acoustic_isotropic = specfem::mesh::materials::material<acoustic, isotropic>(
-      l_acoustic_isotropic.size(), l_acoustic_isotropic);
+  acoustic_isotropic =
+      specfem::mesh::materials<specfem::dimension::type::dim2>::material<
+          acoustic, isotropic>(l_acoustic_isotropic.size(),
+                               l_acoustic_isotropic);
 
   return index_mapping;
 }
 
 void read_material_indices(
     std::ifstream &stream, const int nspec, const int numat,
-    const std::vector<specfem::mesh::materials::material_specification>
-        &index_mapping,
-    const specfem::kokkos::HostView1d<
-        specfem::mesh::materials::material_specification>
+    const std::vector<specfem::mesh::materials<
+        specfem::dimension::type::dim2>::material_specification> &index_mapping,
+    const specfem::kokkos::HostView1d<specfem::mesh::materials<
+        specfem::dimension::type::dim2>::material_specification>
         material_index_mapping,
     const specfem::kokkos::HostView2d<int> knods,
     const specfem::MPI::MPI *mpi) {
@@ -230,14 +243,15 @@ void read_material_indices(
   return;
 }
 
-specfem::mesh::materials
+specfem::mesh::materials<specfem::dimension::type::dim2>
 specfem::IO::mesh::impl::fortran::dim2::read_material_properties(
     std::ifstream &stream, const int numat, const int nspec,
     const specfem::kokkos::HostView2d<int> knods,
     const specfem::MPI::MPI *mpi) {
 
   // Create materials instances
-  specfem::mesh::materials materials(nspec, numat);
+  specfem::mesh::materials<specfem::dimension::type::dim2> materials(nspec,
+                                                                     numat);
 
   // Read material properties
   auto index_mapping = read_materials(

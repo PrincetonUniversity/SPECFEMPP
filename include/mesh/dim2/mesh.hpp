@@ -60,7 +60,8 @@ template <> struct mesh<specfem::dimension::type::dim2> {
                                                                   ///< nodes
                                                                   ///< (never
                                                                   ///< used)
-  specfem::mesh::materials materials; ///< Defines material properties
+  specfem::mesh::materials<dimension> materials; ///< Defines material
+                                                 ///< properties
 
   /**
    * @name Constructors
@@ -73,21 +74,22 @@ template <> struct mesh<specfem::dimension::type::dim2> {
    */
   mesh(){};
 
-  mesh(const int npgeo, const int nspec, const int nproc,
-       const specfem::mesh::control_nodes<specfem::dimension::type::dim2>
-           &control_nodes,
-       const specfem::mesh::parameters<specfem::dimension::type::dim2>
-           &parameters,
-       const specfem::mesh::coupled_interfaces<specfem::dimension::type::dim2>
-           &coupled_interfaces,
-       const specfem::mesh::boundaries<specfem::dimension::type::dim2>
-           &boundaries,
-       const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
-       const specfem::mesh::elements::tangential_elements<
-           specfem::dimension::type::dim2> &tangential_nodes,
-       const specfem::mesh::elements::axial_elements<
-           specfem::dimension::type::dim2> &axial_nodes,
-       const specfem::mesh::materials &materials)
+  mesh(
+      const int npgeo, const int nspec, const int nproc,
+      const specfem::mesh::control_nodes<specfem::dimension::type::dim2>
+          &control_nodes,
+      const specfem::mesh::parameters<specfem::dimension::type::dim2>
+          &parameters,
+      const specfem::mesh::coupled_interfaces<specfem::dimension::type::dim2>
+          &coupled_interfaces,
+      const specfem::mesh::boundaries<specfem::dimension::type::dim2>
+          &boundaries,
+      const specfem::mesh::tags<specfem::dimension::type::dim2> &tags,
+      const specfem::mesh::elements::tangential_elements<
+          specfem::dimension::type::dim2> &tangential_nodes,
+      const specfem::mesh::elements::axial_elements<
+          specfem::dimension::type::dim2> &axial_nodes,
+      const specfem::mesh::materials<specfem::dimension::type::dim2> &materials)
       : npgeo(npgeo), nspec(nspec), nproc(nproc), control_nodes(control_nodes),
         parameters(parameters), coupled_interfaces(coupled_interfaces),
         boundaries(boundaries), tags(tags), tangential_nodes(tangential_nodes),

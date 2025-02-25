@@ -124,4 +124,14 @@ void specfem::IO::mesh::impl::fortran::dim3::read_partial_derivatives(
                   << e.what() << "(" << __FILE__ << ":" << __LINE__ << ")";
     throw std::runtime_error(error_message.str());
   }
+
+  try {
+    specfem::IO::mesh::impl::fortran::dim3::read_array<type_real>(
+        stream, partial_derivatives.jacobian);
+  } catch (std::runtime_error &e) {
+    std::ostringstream error_message;
+    error_message << "Error reading jacobian from database file:\n"
+                  << e.what() << "(" << __FILE__ << ":" << __LINE__ << ")";
+    throw std::runtime_error(error_message.str());
+  }
 }
