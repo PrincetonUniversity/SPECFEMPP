@@ -353,6 +353,7 @@ add_library(
         src/mesh/dim3/mesh.cpp
         src/mesh/dim3/boundaries/absorbing_boundary.cpp
         src/mesh/dim3/boundaries/free_surface.cpp
+        src/mesh/dim3/coupled_interfaces/coupled_interfaces.cpp
         src/mesh/dim3/element_types/element_types.cpp
         src/mesh/dim3/parameters/parameters.cpp
         src/mesh/dim3/parameters/parameters.cpp
