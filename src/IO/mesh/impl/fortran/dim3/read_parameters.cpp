@@ -8,223 +8,185 @@ specfem::mesh::parameters<specfem::dimension::type::dim3>
 specfem::IO::mesh::impl::fortran::dim3::read_mesh_parameters(
     std::ifstream &stream, const specfem::MPI::MPI *mpi) {
 
+  // Creating aliases for Array Reading functions
+  using specfem::IO::mesh::impl::fortran::dim3::check_read_test_value;
+  using specfem::IO::mesh::impl::fortran::dim3::try_read_line;
+
   // Initialize test parameter
-  int itest = -9999;
+  check_read_test_value(stream, 9999);
 
-  // Read testparamater
-  specfem::IO::fortran_read_line(stream, &itest);
-
-  // Throw error if test parameter is not correctly read
-  if (itest != 9999) {
-    std::ostringstream error_message;
-    error_message << "Error reading mesh parameters: " << itest
-                  << " // FILE:LINE " << __FILE__ << ":" << __LINE__ << "\n";
-    throw std::runtime_error(error_message.str());
-  }
-
-  // Initialize flags
-  bool acoustic_simulation;
-  bool elastic_simulation;
-  bool poroelastic_simulation;
-  bool anisotropy;
-  bool stacey_abc;
-  bool pml_abc;
-  bool approximate_ocean_load;
-  bool use_mesh_coloring;
+  // Initialize parameters object
+  specfem::mesh::parameters<specfem::dimension::type::dim3> parameters;
 
   // Read parameters
-  specfem::IO::fortran_read_line(stream, &acoustic_simulation);
-  specfem::IO::fortran_read_line(stream, &elastic_simulation);
-  specfem::IO::fortran_read_line(stream, &poroelastic_simulation);
-  specfem::IO::fortran_read_line(stream, &anisotropy);
-  specfem::IO::fortran_read_line(stream, &stacey_abc);
-  specfem::IO::fortran_read_line(stream, &pml_abc);
-  specfem::IO::fortran_read_line(stream, &approximate_ocean_load);
-  specfem::IO::fortran_read_line(stream, &use_mesh_coloring);
+  try_read_line("parameters_acoustic_simulation", stream,
+                &parameters.acoustic_simulation);
+  try_read_line("parameters_elastic_simulation", stream,
+                &parameters.elastic_simulation);
+  try_read_line("parameters_poroelastic_simulation", stream,
+                &parameters.poroelastic_simulation);
+  try_read_line("parameters_anisotropy", stream, &parameters.anisotropy);
+  try_read_line("parameters_stacey_abc", stream, &parameters.stacey_abc);
+  try_read_line("parameters_pml_abc", stream, &parameters.pml_abc);
+  try_read_line("parameters_approximate_ocean_load", stream,
+                &parameters.approximate_ocean_load);
+  try_read_line("parameters_use_mesh_coloring", stream,
+                &parameters.use_mesh_coloring);
 
 #ifndef NDEBUG
   // Print the read parameters
-  std::cout << "acoustic_simulation:...." << acoustic_simulation << std::endl;
-  std::cout << "elastic_simulation:....." << elastic_simulation << std::endl;
-  std::cout << "poroelastic_simulation:." << poroelastic_simulation
+  std::cout << "acoustic_simulation:...." << parameters.acoustic_simulation
             << std::endl;
-  std::cout << "anisotropy:............." << anisotropy << std::endl;
-  std::cout << "stacey_abc:............." << stacey_abc << std::endl;
-  std::cout << "pml_abc:................" << pml_abc << std::endl;
-  std::cout << "approximate_ocean_load:." << approximate_ocean_load
+  std::cout << "elastic_simulation:....." << parameters.elastic_simulation
             << std::endl;
-  std::cout << "use_mesh_coloring:......" << use_mesh_coloring << std::endl;
+  std::cout << "poroelastic_simulation:." << parameters.poroelastic_simulation
+            << std::endl;
+  std::cout << "anisotropy:............." << parameters.anisotropy << std::endl;
+  std::cout << "stacey_abc:............." << parameters.stacey_abc << std::endl;
+  std::cout << "pml_abc:................" << parameters.pml_abc << std::endl;
+  std::cout << "approximate_ocean_load:." << parameters.approximate_ocean_load
+            << std::endl;
+  std::cout << "use_mesh_coloring:......" << parameters.use_mesh_coloring
+            << std::endl;
 #endif
 
   // Read test parameter
-  specfem::IO::fortran_read_line(stream, &itest);
-
-  // Throw error if test parameter is not correctly read
-  if (itest != 9998) {
-    std::ostringstream error_message;
-    error_message << "Error reading mesh parameters: " << itest
-                  << " // FILE:LINE " << __FILE__ << ":" << __LINE__ << "\n";
-    throw std::runtime_error(error_message.str());
-  };
-
-  // Initialize first bout of integer parameters
-  int ndim;
-  int ngllx;
-  int nglly;
-  int ngllz;
-  int ngllsquare;
-  int nproc;
+  check_read_test_value(stream, 9998);
 
   // Read parameters
-  specfem::IO::fortran_read_line(stream, &ndim);
-  specfem::IO::fortran_read_line(stream, &ngllx);
-  specfem::IO::fortran_read_line(stream, &nglly);
-  specfem::IO::fortran_read_line(stream, &ngllz);
-  specfem::IO::fortran_read_line(stream, &ngllsquare);
-  specfem::IO::fortran_read_line(stream, &nproc);
+  try_read_line("mesh.parameters.ndim", stream, &parameters.ndim);
+  try_read_line("mesh.parameters.ngllx", stream, &parameters.ngllx);
+  try_read_line("mesh.parameters.nglly", stream, &parameters.nglly);
+  try_read_line("mesh.parameters.ngllz", stream, &parameters.ngllz);
+  try_read_line("mesh.parameters.ngllsquare", stream, &parameters.ngllsquare);
+  try_read_line("mesh.parameters.nproc", stream, &parameters.nproc);
 
 #ifndef NDEBUG
   // Print the read parameters
-  std::cout << "ndim:................." << ndim << std::endl;
-  std::cout << "ngllx:................" << ngllx << std::endl;
-  std::cout << "ngly:................." << nglly << std::endl;
-  std::cout << "ngllz:................" << ngllz << std::endl;
-  std::cout << "ngllsquare:..........." << ngllsquare << std::endl;
-  std::cout << "nproc:................" << nproc << std::endl;
+  std::cout << "ndim:................." << parameters.ndim << std::endl;
+  std::cout << "ngllx:................" << parameters.ngllx << std::endl;
+  std::cout << "ngly:................." << parameters.nglly << std::endl;
+  std::cout << "ngllz:................" << parameters.ngllz << std::endl;
+  std::cout << "ngllsquare:..........." << parameters.ngllsquare << std::endl;
+  std::cout << "nproc:................" << parameters.nproc << std::endl;
 #endif
 
   // Read test parameter
-  specfem::IO::fortran_read_line(stream, &itest);
-
-  // Throw error if test parameter is not correctly read
-  if (itest != 9997) {
-    std::ostringstream error_message;
-    error_message << "Error reading mesh parameters: " << itest
-                  << " // FILE:LINE " << __FILE__ << ":" << __LINE__ << "\n";
-    throw std::runtime_error(error_message.str());
-  };
-
-  // Initialize second bout of integer parameters
-  int nspec;
-  int nspec_poro;
-  int nglob;
-  int nglob_ocean;
+  check_read_test_value(stream, 9997);
 
   // Read parameters
-  specfem::IO::fortran_read_line(stream, &nspec);
-  specfem::IO::fortran_read_line(stream, &nspec_poro);
-  specfem::IO::fortran_read_line(stream, &nglob);
-  specfem::IO::fortran_read_line(stream, &nglob_ocean);
+  try_read_line("mesh.parameters.nspec", stream, &parameters.nspec);
+  try_read_line("mesh.parameters.nspec_poro", stream, &parameters.nspec_poro);
+  try_read_line("mesh.parameters.nglob", stream, &parameters.nglob);
+  try_read_line("mesh.parameters.nglob_ocean", stream, &parameters.nglob_ocean);
 
 #ifndef NDEBUG
   // Print the read parameters
-  std::cout << "nspec:................." << nspec << std::endl;
-  std::cout << "nspec_poro:............" << nspec_poro << std::endl;
-  std::cout << "nglob:................." << nglob << std::endl;
-  std::cout << "nglob_ocean:............" << nglob_ocean << std::endl;
+  std::cout << "nspec:................." << parameters.nspec << std::endl;
+  std::cout << "nspec_poro:............" << parameters.nspec_poro << std::endl;
+  std::cout << "nglob:................." << parameters.nglob << std::endl;
+  std::cout << "nglob_ocean:............" << parameters.nglob_ocean
+            << std::endl;
 #endif
 
   // Read test parameter
-  specfem::IO::fortran_read_line(stream, &itest);
+  check_read_test_value(stream, 9996);
 
-  // Throw error if test parameter is not correctly read
-  if (itest != 9996) {
-    std::ostringstream error_message;
-    error_message << "Error reading mesh parameters: " << itest
-                  << " // FILE:LINE " << __FILE__ << ":" << __LINE__ << "\n";
-    throw std::runtime_error(error_message.str());
-  };
-
-  int nspec2D_bottom;
-  int nspec2D_top;
-  int nspec2D_xmin;
-  int nspec2D_xmax;
-  int nspec2D_ymin;
-  int nspec2D_ymax;
-  int nspec_irregular;
-
-  specfem::IO::fortran_read_line(stream, &nspec2D_bottom);
-  specfem::IO::fortran_read_line(stream, &nspec2D_top);
-  specfem::IO::fortran_read_line(stream, &nspec2D_xmin);
-  specfem::IO::fortran_read_line(stream, &nspec2D_xmax);
-  specfem::IO::fortran_read_line(stream, &nspec2D_ymin);
-  specfem::IO::fortran_read_line(stream, &nspec2D_ymax);
-  specfem::IO::fortran_read_line(stream, &nspec_irregular);
+  // Read parameters
+  try_read_line("mesh.parameters.nspec2D_bottom", stream,
+                &parameters.nspec2D_bottom);
+  try_read_line("mesh.parameters.nspec2D_top", stream, &parameters.nspec2D_top);
+  try_read_line("mesh.parameters.nspec2D_xmin", stream,
+                &parameters.nspec2D_xmin);
+  try_read_line("mesh.parameters.nspec2D_xmax", stream,
+                &parameters.nspec2D_xmax);
+  try_read_line("mesh.parameters.nspec2D_ymin", stream,
+                &parameters.nspec2D_ymin);
+  try_read_line("mesh.parameters.nspec2D_ymax", stream,
+                &parameters.nspec2D_ymax);
+  try_read_line("mesh.parameters.nspec_irregular", stream,
+                &parameters.nspec_irregular);
 
 #ifndef NDEBUG
-  std::cout << "nspec2D_bottom:........" << nspec2D_bottom << std::endl;
-  std::cout << "nspec2D_top:..........." << nspec2D_top << std::endl;
-  std::cout << "nspec2D_xmin:.........." << nspec2D_xmin << std::endl;
-  std::cout << "nspec2D_xmax:.........." << nspec2D_xmax << std::endl;
-  std::cout << "nspec2D_ymin:.........." << nspec2D_ymin << std::endl;
-  std::cout << "nspec2D_ymax:.........." << nspec2D_ymax << std::endl;
-  std::cout << "nspec_irregular:......." << nspec_irregular << std::endl;
+  std::cout << "nspec2D_bottom:........" << parameters.nspec2D_bottom
+            << std::endl;
+  std::cout << "nspec2D_top:..........." << parameters.nspec2D_top << std::endl;
+  std::cout << "nspec2D_xmin:.........." << parameters.nspec2D_xmin
+            << std::endl;
+  std::cout << "nspec2D_xmax:.........." << parameters.nspec2D_xmax
+            << std::endl;
+  std::cout << "nspec2D_ymin:.........." << parameters.nspec2D_ymin
+            << std::endl;
+  std::cout << "nspec2D_ymax:.........." << parameters.nspec2D_ymax
+            << std::endl;
+  std::cout << "nspec_irregular:......." << parameters.nspec_irregular
+            << std::endl;
 #endif
 
   // Read test parameter
-  specfem::IO::fortran_read_line(stream, &itest);
+  check_read_test_value(stream, 9995);
 
-  // Throw error if test parameter is not correctly read
-  if (itest != 9995) {
-    std::ostringstream error_message;
-    error_message << "Error reading mesh parameters: " << itest
-                  << " // FILE:LINE " << __FILE__ << ":" << __LINE__ << "\n";
-    throw std::runtime_error(error_message.str());
-  };
-
-  int num_neighbors;
-  int nfaces_surface;
-  int num_abs_boundary_faces;
-  int num_free_surface_faces;
-  int num_coupling_ac_el_faces;
-  int num_coupling_ac_po_faces;
-  int num_coupling_el_po_faces;
-  int num_coupling_po_el_faces;
-  int num_interfaces_ext_mesh;
-  int max_nibool_interfaces_ext_mesh;
-
-  specfem::IO::fortran_read_line(stream, &num_neighbors);
-  specfem::IO::fortran_read_line(stream, &nfaces_surface);
-  specfem::IO::fortran_read_line(stream, &num_abs_boundary_faces);
-  specfem::IO::fortran_read_line(stream, &num_free_surface_faces);
-  specfem::IO::fortran_read_line(stream, &num_coupling_ac_el_faces);
-  specfem::IO::fortran_read_line(stream, &num_coupling_ac_po_faces);
-  specfem::IO::fortran_read_line(stream, &num_coupling_el_po_faces);
-  specfem::IO::fortran_read_line(stream, &num_coupling_po_el_faces);
-  specfem::IO::fortran_read_line(stream, &num_interfaces_ext_mesh);
-  specfem::IO::fortran_read_line(stream, &max_nibool_interfaces_ext_mesh);
+  // Read parameters
+  try_read_line("mesh.parameters.num_neighbors", stream,
+                &parameters.num_neighbors);
+  try_read_line("mesh.parameters.nfaces_surface", stream,
+                &parameters.nfaces_surface);
+  try_read_line("mesh.parameters.num_abs_boundary_faces", stream,
+                &parameters.num_abs_boundary_faces);
+  try_read_line("mesh.parameters.num_free_surface_faces", stream,
+                &parameters.num_free_surface_faces);
+  try_read_line("mesh.parameters.num_coupling_ac_el_faces", stream,
+                &parameters.num_coupling_ac_el_faces);
+  try_read_line("mesh.parameters.num_coupling_ac_po_faces", stream,
+                &parameters.num_coupling_ac_po_faces);
+  try_read_line("mesh.parameters.num_coupling_el_po_faces", stream,
+                &parameters.num_coupling_el_po_faces);
+  try_read_line("mesh.parameters.num_coupling_po_el_faces", stream,
+                &parameters.num_coupling_po_el_faces);
+  try_read_line("mesh.parameters.num_interfaces_ext_mesh", stream,
+                &parameters.num_interfaces_ext_mesh);
+  try_read_line("mesh.parameters.max_nibool_interfaces_ext_mesh", stream,
+                &parameters.max_nibool_interfaces_ext_mesh);
 
 #ifndef NDEBUG
-  std::cout << "num_neighbors:.........." << num_neighbors << std::endl;
-  std::cout << "nfaces_surface:........." << nfaces_surface << std::endl;
-  std::cout << "num_abs_boundary_faces:." << num_abs_boundary_faces
+  std::cout << "num_neighbors:.........." << parameters.num_neighbors
             << std::endl;
-  std::cout << "num_free_surface_faces:." << num_free_surface_faces
+  std::cout << "nfaces_surface:........." << parameters.nfaces_surface
             << std::endl;
-  std::cout << "num_coupling_ac_el_faces:" << num_coupling_ac_el_faces
+  std::cout << "num_abs_boundary_faces:." << parameters.num_abs_boundary_faces
             << std::endl;
-  std::cout << "num_coupling_ac_po_faces:" << num_coupling_ac_po_faces
+  std::cout << "num_free_surface_faces:." << parameters.num_free_surface_faces
             << std::endl;
-  std::cout << "num_coupling_el_po_faces:" << num_coupling_el_po_faces
-            << std::endl;
-  std::cout << "num_coupling_po_el_faces:" << num_coupling_po_el_faces
-            << std::endl;
-  std::cout << "num_interfaces_ext_mesh:." << num_interfaces_ext_mesh
+  std::cout << "num_coupling_ac_el_faces:"
+            << parameters.num_coupling_ac_el_faces << std::endl;
+  std::cout << "num_coupling_ac_po_faces:"
+            << parameters.num_coupling_ac_po_faces << std::endl;
+  std::cout << "num_coupling_el_po_faces:"
+            << parameters.num_coupling_el_po_faces << std::endl;
+  std::cout << "num_coupling_po_el_faces:"
+            << parameters.num_coupling_po_el_faces << std::endl;
+  std::cout << "num_interfaces_ext_mesh:." << parameters.num_interfaces_ext_mesh
             << std::endl;
   std::cout << "max_nibool_interfaces_ext_mesh:"
-            << max_nibool_interfaces_ext_mesh << std::endl;
+            << parameters.max_nibool_interfaces_ext_mesh << std::endl;
 #endif
 
   // Read test parameter
-  specfem::IO::fortran_read_line(stream, &itest);
+  check_read_test_value(stream, 9994);
 
-  // Throw error if test parameter is not correctly read
-  if (itest != 9994) {
-    std::ostringstream error_message;
-    error_message << "Error reading mesh parameters: " << itest
-                  << " // FILE:LINE " << __FILE__ << ":" << __LINE__ << "\n";
-    throw std::runtime_error(error_message.str());
-  };
+  // Read parameters
+  try_read_line("mesh.parameters.nspec_inner_acoustic", stream,
+                &parameters.nspec_inner_acoustic);
+  try_read_line("mesh.parameters.nspec_outer_acoustic", stream,
+                &parameters.nspec_outer_acoustic);
+  try_read_line("mesh.parameters.nspec_inner_elastic", stream,
+                &parameters.nspec_inner_elastic);
+  try_read_line("mesh.parameters.nspec_outer_elastic", stream,
+                &parameters.nspec_outer_elastic);
+  try_read_line("mesh.parameters.nspec_inner_poroelastic", stream,
+                &parameters.nspec_inner_poroelastic);
+  try_read_line("mesh.parameters.nspec_outer_poroelastic", stream,
+                &parameters.nspec_outer_poroelastic);
 
   int nspec_inner_acoustic;
   int nspec_outer_acoustic;
@@ -233,127 +195,61 @@ specfem::IO::mesh::impl::fortran::dim3::read_mesh_parameters(
   int nspec_inner_poroelastic;
   int nspec_outer_poroelastic;
 
-  specfem::IO::fortran_read_line(stream, &nspec_inner_acoustic);
-  specfem::IO::fortran_read_line(stream, &nspec_outer_acoustic);
-  specfem::IO::fortran_read_line(stream, &nspec_inner_elastic);
-  specfem::IO::fortran_read_line(stream, &nspec_outer_elastic);
-  specfem::IO::fortran_read_line(stream, &nspec_inner_poroelastic);
-  specfem::IO::fortran_read_line(stream, &nspec_outer_poroelastic);
-
 #ifndef NDEBUG
-  std::cout << "nspec_inner_acoustic:..." << nspec_inner_acoustic << std::endl;
-  std::cout << "nspec_outer_acoustic:..." << nspec_outer_acoustic << std::endl;
-  std::cout << "nspec_inner_elastic:...." << nspec_inner_elastic << std::endl;
-  std::cout << "nspec_outer_elastic:...." << nspec_outer_elastic << std::endl;
-  std::cout << "nspec_inner_poroelastic:." << nspec_inner_poroelastic
+  std::cout << "nspec_inner_acoustic:..." << parameters.nspec_inner_acoustic
             << std::endl;
-  std::cout << "nspec_outer_poroelastic:." << nspec_outer_poroelastic
+  std::cout << "nspec_outer_acoustic:..." << parameters.nspec_outer_acoustic
+            << std::endl;
+  std::cout << "nspec_inner_elastic:...." << parameters.nspec_inner_elastic
+            << std::endl;
+  std::cout << "nspec_outer_elastic:...." << parameters.nspec_outer_elastic
+            << std::endl;
+  std::cout << "nspec_inner_poroelastic:." << parameters.nspec_inner_poroelastic
+            << std::endl;
+  std::cout << "nspec_outer_poroelastic:." << parameters.nspec_outer_poroelastic
             << std::endl;
 #endif
 
   // Read test parameter
-  specfem::IO::fortran_read_line(stream, &itest);
+  check_read_test_value(stream, 9993);
 
-  // Throw error if test parameter is not correctly read
-  if (itest != 9993) {
-    std::ostringstream error_message;
-    error_message << "Error reading mesh parameters: " << itest
-                  << " // FILE:LINE " << __FILE__ << ":" << __LINE__ << "\n";
-    throw std::runtime_error(error_message.str());
-  };
-
-  int num_phase_ispec_acoustic;
-  int num_phase_ispec_elastic;
-  int num_phase_ispec_poroelastic;
-  int num_colors_inner_acoustic;
-  int num_colors_outer_acoustic;
-  int num_colors_inner_elastic;
-  int num_colors_outer_elastic;
-
-  specfem::IO::fortran_read_line(stream, &num_phase_ispec_acoustic);
-  specfem::IO::fortran_read_line(stream, &num_phase_ispec_elastic);
-  specfem::IO::fortran_read_line(stream, &num_phase_ispec_poroelastic);
-  specfem::IO::fortran_read_line(stream, &num_colors_inner_acoustic);
-  specfem::IO::fortran_read_line(stream, &num_colors_outer_acoustic);
-  specfem::IO::fortran_read_line(stream, &num_colors_inner_elastic);
-  specfem::IO::fortran_read_line(stream, &num_colors_outer_elastic);
+  // Read parameters
+  try_read_line("mesh.parameters.num_phase_ispec_acoustic", stream,
+                &parameters.num_phase_ispec_acoustic);
+  try_read_line("mesh.parameters.num_phase_ispec_elastic", stream,
+                &parameters.num_phase_ispec_elastic);
+  try_read_line("mesh.parameters.num_phase_ispec_poroelastic", stream,
+                &parameters.num_phase_ispec_poroelastic);
+  try_read_line("mesh.parameters.num_colors_inner_acoustic", stream,
+                &parameters.num_colors_inner_acoustic);
+  try_read_line("mesh.parameters.num_colors_outer_acoustic", stream,
+                &parameters.num_colors_outer_acoustic);
+  try_read_line("mesh.parameters.num_colors_inner_elastic", stream,
+                &parameters.num_colors_inner_elastic);
+  try_read_line("mesh.parameters.num_colors_outer_elastic", stream,
+                &parameters.num_colors_outer_elastic);
 
 #ifndef NDEBUG
-  std::cout << "num_phase_ispec_acoustic:" << num_phase_ispec_acoustic
+  std::cout << "num_phase_ispec_acoustic:"
+            << parameters.num_phase_ispec_acoustic << std::endl;
+  std::cout << "num_phase_ispec_elastic:." << parameters.num_phase_ispec_elastic
             << std::endl;
-  std::cout << "num_phase_ispec_elastic:." << num_phase_ispec_elastic
-            << std::endl;
-  std::cout << "num_phase_ispec_poroelastic:" << num_phase_ispec_poroelastic
-            << std::endl;
-  std::cout << "num_colors_inner_acoustic:" << num_colors_inner_acoustic
-            << std::endl;
-  std::cout << "num_colors_outer_acoustic:" << num_colors_outer_acoustic
-            << std::endl;
-  std::cout << "num_colors_inner_elastic:" << num_colors_inner_elastic
-            << std::endl;
-  std::cout << "num_colors_outer_elastic:" << num_colors_outer_elastic
-            << std::endl;
+  std::cout << "num_phase_ispec_poroelastic:"
+            << parameters.num_phase_ispec_poroelastic << std::endl;
+  std::cout << "num_colors_inner_acoustic:"
+            << parameters.num_colors_inner_acoustic << std::endl;
+  std::cout << "num_colors_outer_acoustic:"
+            << parameters.num_colors_outer_acoustic << std::endl;
+  std::cout << "num_colors_inner_elastic:"
+            << parameters.num_colors_inner_elastic << std::endl;
+  std::cout << "num_colors_outer_elastic:"
+            << parameters.num_colors_outer_elastic << std::endl;
 #endif
 
-  // Read test parameter
-  specfem::IO::fortran_read_line(stream, &itest);
-
-  // Throw error if test parameter is not correctly read
-  if (itest != 9992) {
-    std::ostringstream error_message;
-    error_message << "Error reading mesh parameters: " << itest
-                  << " // FILE:LINE " << __FILE__ << ":" << __LINE__ << "\n";
-    throw std::runtime_error(error_message.str());
-  };
+  /// Read test parameter
+  check_read_test_value(stream, 9992);
 
   mpi->sync_all();
 
-  return { acoustic_simulation,
-           elastic_simulation,
-           poroelastic_simulation,
-           anisotropy,
-           stacey_abc,
-           pml_abc,
-           approximate_ocean_load,
-           use_mesh_coloring,
-           ndim,
-           ngllx,
-           nglly,
-           ngllz,
-           ngllsquare,
-           nproc,
-           nspec,
-           nspec_poro,
-           nglob,
-           nglob_ocean,
-           nspec2D_bottom,
-           nspec2D_top,
-           nspec2D_xmin,
-           nspec2D_xmax,
-           nspec2D_ymin,
-           nspec2D_ymax,
-           nspec_irregular,
-           num_neighbors,
-           nfaces_surface,
-           num_abs_boundary_faces,
-           num_free_surface_faces,
-           num_coupling_ac_el_faces,
-           num_coupling_ac_po_faces,
-           num_coupling_el_po_faces,
-           num_coupling_po_el_faces,
-           num_interfaces_ext_mesh,
-           max_nibool_interfaces_ext_mesh,
-           nspec_inner_acoustic,
-           nspec_outer_acoustic,
-           nspec_inner_elastic,
-           nspec_outer_elastic,
-           nspec_inner_poroelastic,
-           nspec_outer_poroelastic,
-           num_phase_ispec_acoustic,
-           num_phase_ispec_elastic,
-           num_phase_ispec_poroelastic,
-           num_colors_inner_acoustic,
-           num_colors_outer_acoustic,
-           num_colors_inner_elastic,
-           num_colors_outer_elastic };
+  return parameters;
 }

@@ -1,5 +1,8 @@
 #pragma once
 
+#include "boundaries/absorbing_boundary.hpp"
+#include "boundaries/boundaries.hpp"
+#include "boundaries/free_surface.hpp"
 #include "coordinates/coordinates.hpp"
 #include "element_types/element_types.hpp"
 #include "mass_matrix/mass_matrix.hpp"
@@ -47,6 +50,15 @@ template <> struct mesh<specfem::dimension::type::dim3> {
 
   // Material
   specfem::mesh::materials<dimension> materials;
+
+  // Struct to store the boundaries
+  specfem::mesh::boundaries<dimension> boundaries;
+
+  // Struct to store the absorbing boundaries
+  specfem::mesh::absorbing_boundary<dimension> absorbing_boundary;
+
+  // Struct to store the free surface
+  specfem::mesh::free_surface<dimension> free_surface;
 
   /**
    * @name Constructors

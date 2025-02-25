@@ -8,7 +8,7 @@ subroutine save_parameters()
     IOUT, myrank, sizeprocs, &
     NDIM, NSPEC_AB, NGLOB_AB, &
     NGLLX, NGLLY, NGLLZ, nfaces_surface, num_neighbors_all, NGLLSQUARE, &
-    nspec2D_xmin, nspec2D_xmin, nspec2D_ymin, nspec2D_ymin, &
+    nspec2D_xmin, nspec2D_xmax, nspec2D_ymin, nspec2D_ymax, &
     NSPEC2D_BOTTOM, NSPEC2D_TOP, &
     ACOUSTIC_SIMULATION, ELASTIC_SIMULATION, POROELASTIC_SIMULATION, &
     ANISOTROPY, &
