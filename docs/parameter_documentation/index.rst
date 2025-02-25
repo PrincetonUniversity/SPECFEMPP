@@ -1,7 +1,79 @@
+.. _parameter_documentation:
+
+SPECFEM++ Parameter Documentation
+=================================
 
 
-Parameter Documentation
-=======================
+On this page, we first show an example of a parameter file for SPECFEM++ and then
+provide detailed documentation for each parameter in the file in a collapsible
+format since a lot of the parameters are optional and only required if parent
+parameters are defined.
+
+Example parameter file
+----------------------
+
+
+.. dropdown:: ``specfem_config.yaml``
+    :open:
+
+    .. code-block:: yaml
+
+        parameters:
+
+          header:
+            ## Header information is used for logging. It is good practice to give your simulations explicit names
+            title: Isotropic Elastic simulation # name for your simulation
+            # A detailed description for your simulation
+            description: |
+              Material systems : Elastic domain (1)
+              Interfaces : None
+              Sources : Force source (1)
+              Boundary conditions : Neumann BCs on all edges
+
+          simulation-setup:
+            ## quadrature setup
+            quadrature:
+              quadrature-type: GLL4
+
+            ## Solver setup
+            solver:
+              time-marching:
+                time-scheme:
+                  type: Newmark
+                  dt: 1.1e-3
+                  nstep: 1600
+
+            simulation-mode:
+              forward:
+                writer:
+                  seismogram:
+                    format: "ascii"
+                    directory: path/to/output/folder
+
+          receivers:
+            stations: path/to/stations_file
+            angle: 0.0
+            seismogram-type:
+              - velocity
+            nstep_between_samples: 1
+
+          ## Runtime setup
+          run-setup:
+            number-of-processors: 1
+            number-of-runs: 1
+
+          ## databases
+          databases:
+            mesh-database: /path/to/mesh_database.bin
+
+          ## sources
+          sources: path/to/sources.yaml
+
+
+
+Parameter definitions
+---------------------
+
 
 .. dropdown:: ``parameters``
     :open:
@@ -563,3 +635,253 @@ Parameter Documentation
                             :default value: None
 
                             :possible values: [int]
+
+
+    .. dropdown:: ``receivers``
+
+        Parameter file section that contains the receiver information required to
+        calculate seismograms.
+
+        .. code-block:: yaml
+            :caption: Example receivers section
+
+            receivers:
+                stations: /path/to/stations_file
+                angle: 0.0
+                seismogram-type:
+                    - velocity
+                    - displacement
+                nstep_between_samples: 1
+
+        .. note::
+
+            Please note that the ``stations_file`` is generated using SPECFEM2D mesh
+            generator i.e. xmeshfem2d
+
+        .. dropdown:: ``stations``
+
+            Path to ``stations_file``.
+
+            :default value: None
+
+            :possible values: [string]
+
+            .. code-block:: yaml
+                :caption: Example
+
+                stations: /path/to/stations_file
+
+
+        .. dropdown:: ``angle``
+
+            Angle to rotate components at receivers
+
+            :default value: None
+
+            :possible values: [float]
+
+            .. code-block:: yaml
+                :caption: Example
+
+                angle: 0.0
+
+
+        .. dropdown:: ``seismogram-type``
+
+            Type of seismograms to be written.
+
+            :default value: None
+
+            :possible values: [YAML list]
+
+            .. code-block:: yaml
+                :caption: Example
+
+                seismogram-type:
+                    - velocity
+                    - displacement
+
+            .. rst-class:: center-table
+
+                +-------------------+---------------------------------------+-------------------------------------+
+                |  Seismogram       | SPECFEM Par_file ``seismotype`` value | ``receivers.seismogram-type`` value |
+                +===================+=======================================+=====================================+
+                | Displacement      |                   1                   |   ``displacement``                  |
+                +-------------------+---------------------------------------+-------------------------------------+
+                | Velocity          |                   2                   |    ``velocity``                     |
+                +-------------------+---------------------------------------+-------------------------------------+
+                | Acceleration      |                   3                   |     ``acceleration``                |
+                +-------------------+---------------------------------------+-------------------------------------+
+                | Pressure          |                   4                   |      ``pressure``                   |
+                +-------------------+---------------------------------------+-------------------------------------+
+                | Displacement Curl |                   5                   |     ✘ Unsupported                   |
+                +-------------------+---------------------------------------+-------------------------------------+
+                | Fluid Potential   |                   6                   |     ✘ Unsupported                   |
+                +-------------------+---------------------------------------+-------------------------------------+
+
+
+
+        .. dropdown:: ``nstep_between_samples``
+
+            Number of time steps between sampling the wavefield at station locations
+            for writing seismogram.
+
+            :default value: None
+
+            :possible values: [int]
+
+            .. code-block:: yaml
+                :caption: Example
+
+                nstep_between_samples: 1
+
+
+
+    .. dropdown:: ``run-setup``
+
+        Define run-time configuration for your simulation.
+
+        .. code-block:: yaml
+            :caption: Example run-setup section
+
+            run-setup:
+                number-of-processors: 1
+                number-of-runs: 1
+
+        .. dropdown:: ``number-of-processors``
+
+            Number of MPI processes used in the simulation. MPI version is not
+            enabled in this version of the package. number-of-processors == 1
+
+            :default value: 1
+
+            :possible values: [int]
+
+            .. code-block:: yaml
+                :caption: Example
+
+                number-of-processors: 1
+
+
+        .. dropdown:: ``number-of-runs``
+
+            Number of runs in this simulation. Only single run implemented in this
+            version of the package. number-of-runs == 1
+
+            :default value: 1
+
+            :possible values: [int]
+
+            .. code-block:: yaml
+                :caption: Example
+
+                number-of-runs: 1
+
+
+
+    .. dropdown:: ``databases``
+
+        The databases section defines the location of files to be read by the
+        solver.
+
+        .. code-block:: yaml
+            :caption: Example of databases section
+
+            databases:
+                mesh-database: /path/to/mesh_database.bin
+
+
+        .. _database-file-parameter:
+
+        .. dropdown:: ``mesh-database``
+            :open:
+
+            Location of the fortran binary database file defining the mesh
+
+            :default value: None
+
+            :possible values: [string]
+
+            .. code-block:: yaml
+                :caption: Example
+
+                mesh-database: /path/to/mesh_database.bin
+
+
+    .. dropdown:: ``sources``
+
+        Define sources
+
+        :default value: None
+
+        :possible values: [string, YAML Node]
+
+        .. admonition:: Example sources section
+
+            The sources is a path to a YAML file.
+
+            .. code-block:: yaml
+
+                sources: path/to/sources.yaml
+
+            The sources section is a YAML node that contains the source information
+
+            .. code-block:: yaml
+
+                sources:
+                  number-of-sources: 1
+                  sources:
+                    - force:
+                        x : 2500.0
+                        z : 2500.0
+                        source_surf: false
+                        angle : 0.0
+                        vx : 0.0
+                        vz : 0.0
+                        Ricker:
+                          factor: 1e10
+                          tshift: 0.0
+                          f0: 10.0
+
+        .. note::
+
+            The parameters below are only relevant if the sources section is
+            defined as a YAML node.
+
+        .. dropdown:: ``number-of-sources``
+
+            Number of sources in the simulation
+
+            :default value: None
+
+            :possible values: [int]
+
+            .. code-block:: yaml
+                :caption: Example
+
+                number-of-sources: 1
+
+
+        .. dropdown:: ``sources``
+
+            List of sources
+
+            :default value: None
+
+            :possible values: [YAML Node]
+
+            .. code-block:: yaml
+                :caption: Example
+
+                sources:
+                  - force:
+                      x : 2500.0
+                      z : 2500.0
+                      source_surf: false
+                      angle : 0.0
+                      vx : 0.0
+                      vz : 0.0
+                      Ricker:
+                        factor: 1e10
+                        tshift: 0.0
+                        f0: 10.0
