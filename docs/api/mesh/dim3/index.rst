@@ -8,8 +8,8 @@ SPECFEM++ 3D Mesh
     :members:
 
 
-What the 3D mesh contains
--------------------------
+What the 3D mesh struct holds
+-----------------------------
 
 .. toctree::
     :maxdepth: 1
