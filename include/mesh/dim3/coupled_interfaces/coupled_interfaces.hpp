@@ -5,6 +5,14 @@
 namespace specfem {
 namespace mesh {
 
+/**
+ * @brief Coupled interface struct that contains the information for the
+ *        coupling between two different media
+ *
+ * @tparam MediumTag1
+ * @tparam MediumTag2
+ *
+ */
 template <specfem::element::medium_tag MediumTag1,
           specfem::element::medium_tag MediumTag2>
 struct coupled_interface {
@@ -27,9 +35,30 @@ struct coupled_interface {
                                                              ///< the 2D
   Kokkos::View<type_real ***, Kokkos::HostSpace> normal; ///< Jacobian of the 2D
 
-  // Default constructor
+  /**
+   * @name Constructors
+   *
+   */
+  ///@{
+  /**
+   * @brief Default constructor
+   *
+   */
   coupled_interface(){};
 
+  /**
+   * @brief Construct a new coupled interface object
+   *
+   * @param num_coupling_interface_faces
+   * @param ngllsquare
+   *
+   * @code{.cpp}
+   * // Example of how to use this constructor
+   * specfem::mesh::coupled_interface<specfem::element::medium_tag::acoustic,
+   *                                  specfem::element::medium_tag::elastic>
+   *    coupled_interface(num_coupling_interface_faces, ngllsquare);
+   * @endcode
+   */
   coupled_interface(const int num_coupling_interface_faces,
                     const int ngllsquare)
       : nelements(num_coupling_interface_faces), ngllsquare(ngllsquare),
@@ -44,9 +73,20 @@ struct coupled_interface {
                                                             3, ngllsquare);
   };
 
+  ///@}
+
+  /**
+   * @brief Print basic information about the coupled interface
+   *
+   */
   void print() const;
 };
 
+/**
+ * @brief Coupled interfaces struct that contains the information for the
+ *        coupling between multiple different media
+ *
+ */
 template <> struct coupled_interfaces<specfem::dimension::type::dim3> {
 
   constexpr static auto dimension =
@@ -78,9 +118,32 @@ template <> struct coupled_interfaces<specfem::dimension::type::dim3> {
                     specfem::element::medium_tag::elastic>
       poroelastic_elastic_interface;
 
-  // Default constructor
+  /**
+   * @name Constructors
+   *
+   */
+  ///@{
+  /**
+   * @brief Default constructor
+   *
+   */
   coupled_interfaces(){};
 
+  /**
+   * @brief Construct a new coupled interfaces object
+   *
+   * @param num_coupling_ac_el_faces
+   * @param num_coupling_ac_po_faces
+   * @param num_coupling_el_po_faces
+   * @param ngllsquare
+   *
+   * @code{.cpp}
+   * // Example of how to use this constructor
+   * specfem::mesh::coupled_interfaces<specfem::dimension::type::dim3>
+   *    coupled_interfaces(num_coupling_ac_el_faces, num_coupling_ac_po_faces,
+   *                      num_coupling_el_po_faces, ngllsquare);
+   * @endcode
+   */
   coupled_interfaces(const int num_coupling_ac_el_faces,
                      const int num_coupling_ac_po_faces,
                      const int num_coupling_el_po_faces, const int ngllsquare)
@@ -117,7 +180,12 @@ template <> struct coupled_interfaces<specfem::dimension::type::dim3> {
       elastic_poroelastic = true;
     }
   }
+  ///@}
 
+  /**
+   * @brief Print basic information about the coupled interfaces
+   *
+   */
   void print() const;
 };
 
