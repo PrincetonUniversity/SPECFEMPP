@@ -1,3 +1,4 @@
+#pragma once
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "mesh/mesh_base.hpp"
@@ -9,8 +10,8 @@ namespace mesh {
  * @brief Coupled interface struct that contains the information for the
  *        coupling between two different media
  *
- * @tparam MediumTag1
- * @tparam MediumTag2
+ * @tparam MediumTag1 Medium tag for the first medium, e.g., elastic
+ * @tparam MediumTag2 Medium tag for the second medium, e.g., acoustic
  *
  */
 template <specfem::element::medium_tag MediumTag1,
@@ -23,17 +24,18 @@ struct coupled_interface {
   int nelements;                    ///< Number of elements on the boundary
   int ngllsquare;                   ///< Number of GLL points squared
   int num_coupling_interface_faces; ///< Number of coupling interface faces
-  int nspec2D_xmin, nspec2D_xmax;   /// Number of elements on the boundaries
-  int nspec2D_ymin, nspec2D_ymax;   /// Number of elements on the boundaries
-  int NSPEC2D_BOTTOM, NSPEC2D_TOP;  /// Number of elements on the boundaries
+  int nspec2D_xmin, nspec2D_xmax;   ///< Number of elements on the boundaries
+  int nspec2D_ymin, nspec2D_ymax;   ///< Number of elements on the boundaries
+  int NSPEC2D_BOTTOM, NSPEC2D_TOP;  ///< Number of elements on the boundaries
 
   Kokkos::View<int *, Kokkos::HostSpace> ispec; ///< Spectral element index for
                                                 ///< elements on the boundary
   Kokkos::View<int ***, Kokkos::HostSpace> ijk; ///< Which edge of the element
                                                 ///< is on the boundary
   Kokkos::View<type_real **, Kokkos::HostSpace> jacobian2Dw; ///< Jacobian of
-                                                             ///< the 2D
-  Kokkos::View<type_real ***, Kokkos::HostSpace> normal; ///< Jacobian of the 2D
+                                                             ///< the 2D face
+  Kokkos::View<type_real ***, Kokkos::HostSpace> normal; ///< Normal of the 2D
+                                                         ///< face
 
   /**
    * @name Constructors
@@ -41,7 +43,7 @@ struct coupled_interface {
    */
   ///@{
   /**
-   * @brief Default constructor
+   * @brief Default constructor initializing an empty struct
    *
    */
   coupled_interface(){};
@@ -84,8 +86,7 @@ struct coupled_interface {
 
 /**
  * @brief Coupled interfaces struct that contains the information for the
- *        coupling between multiple different media
- *
+ *        coupling between multiple different media.
  */
 template <> struct coupled_interfaces<specfem::dimension::type::dim3> {
 
@@ -124,7 +125,7 @@ template <> struct coupled_interfaces<specfem::dimension::type::dim3> {
    */
   ///@{
   /**
-   * @brief Default constructor
+   * @brief Default constructor initializing an empty struct
    *
    */
   coupled_interfaces(){};
@@ -132,10 +133,7 @@ template <> struct coupled_interfaces<specfem::dimension::type::dim3> {
   /**
    * @brief Construct a new coupled interfaces object
    *
-   * @param num_coupling_ac_el_faces
-   * @param num_coupling_ac_po_faces
-   * @param num_coupling_el_po_faces
-   * @param ngllsquare
+
    *
    * @code{.cpp}
    * // Example of how to use this constructor
@@ -179,11 +177,11 @@ template <> struct coupled_interfaces<specfem::dimension::type::dim3> {
 
       elastic_poroelastic = true;
     }
-  }
+  };
   ///@}
 
   /**
-   * @brief Print basic information about the coupled interfaces
+   * @brief Print basic information about the coupled interfaces to std::cout
    *
    */
   void print() const;

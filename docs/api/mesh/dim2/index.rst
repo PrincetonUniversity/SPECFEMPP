@@ -1,5 +1,5 @@
 
-.. _mesh:
+.. _mesh_2D:
 
 SPECFEM++ 2D Mesh
 =================

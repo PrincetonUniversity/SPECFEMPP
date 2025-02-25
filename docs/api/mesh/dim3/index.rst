@@ -1,5 +1,5 @@
 
-.. _mesh:
+.. _mesh_3D:
 
 SPECFEM++ 3D Mesh
 =================
@@ -13,3 +13,6 @@ SPECFEM++ 3D Mesh
 
     boundaries/index
     coordinates/index
+    coupled_interfaces/index
+    element_types/index
+    mapping/index
