@@ -18,25 +18,25 @@ Parameter definitions
 .. dropdown:: ``run-setup``
     :open:
 
-    **default value** : number-of-processors: 1, number-of-runs: 1
+    :default value: number-of-processors: 1, number-of-runs: 1
 
-    **possible values** : [YAML Node]
+    :possible values: [YAML Node]
 
-    **documentation** : Define run-time configuration for your simulation
+    :documentation: Define run-time configuration for your simulation
 
     .. dropdown:: ``run-setup.number-of-processors``
 
-        **default value** : 1
+        :default value: 1
 
-        **possible values** : [int]
+        :possible values: [int]
 
-        **documentation** : Number of MPI processes used in the simulation. MPI version is not enabled in this version of the package. number-of-processors == 1
+        :documentation: Number of MPI processes used in the simulation. MPI version is not enabled in this version of the package. number-of-processors == 1
 
 
     .. dropdown:: ``run-setup.number-of-runs``
 
-        **default value** : 1
+        :default value: 1
 
-        **possible values** : [int]
+        :possible values: [int]
 
-        **documentation** : Number of runs in this simulation. Only single run implemented in this version of the package. number-of-runs == 1
+        :documentation: Number of runs in this simulation. Only single run implemented in this version of the package. number-of-runs == 1

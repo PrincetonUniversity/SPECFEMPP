@@ -30,38 +30,38 @@ Parameter definitions
 .. dropdown:: ``receivers``
     :open:
 
-    **default value** : None
+    :default value: None
 
-    **possible values** : [YAML Node]
+    :possible values: [YAML Node]
 
-    **documentation** : receiver information required to calculate seismograms.
+    :documentation: receiver information required to calculate seismograms.
 
 
     .. dropdown:: ``receivers.stations``
 
-        **default value** : None
+        :default value: None
 
-        **possible values** : [string]
+        :possible values: [string]
 
-        **documentation** : Path to ``stations_file``
+        :documentation: Path to ``stations_file``
 
 
     .. dropdown:: ``receivers.angle``
 
-        **default value** : None
+        :default value: None
 
-        **possible values** : [float]
+        :possible values: [float]
 
-        **documentation** : Angle to rotate components at receivers
+        :documentation: Angle to rotate components at receivers
 
 
     .. dropdown:: ``receivers.seismogram-type``
 
-        **default value** : None
+        :default value: None
 
-        **possible values** : [YAML list]
+        :possible values: [YAML list]
 
-        **documentation** : Type of seismograms to be written.
+        :documentation: Type of seismograms to be written.
 
 
 
@@ -93,9 +93,9 @@ Parameter definitions
 
     .. dropdown:: ``receivers.nstep_between_samples``
 
-        **default value** : None
+        :default value: None
 
-        **possible values** : [int]
+        :possible values: [int]
 
-        **documentation** : Number of time steps between sampling the wavefield
+        :documentation: Number of time steps between sampling the wavefield
                             at station locations for writing seismogram.
