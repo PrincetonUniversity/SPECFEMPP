@@ -18,6 +18,11 @@ template <specfem::dimension::type DimensionType> struct mesh;
 template <specfem::dimension::type DimensionType> struct parameters;
 
 /**
+ * @brief Struct to store materials
+ *
+ */
+template <specfem::dimension::type DimensionType> struct materials;
+/**
  * @brief Struct to store control nodes
  *
  */
@@ -58,6 +63,18 @@ template <specfem::dimension::type DimensionType> struct forcing_boundary;
  *
  */
 template <specfem::dimension::type DimensionType> struct tags;
+
+/**
+ * @brief Struct to store mass_matrices
+ *
+ */
+template <specfem::dimension::type DimensionType> struct mass_matrix;
+
+/**
+ * @brief Struct to store element_types (Acoustic, lastic, Poroelastic)
+ *
+ */
+template <specfem::dimension::type DimensionType> struct element_types;
 
 namespace elements {
 

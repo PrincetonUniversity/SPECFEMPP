@@ -1,7 +1,9 @@
 #pragma once
 
+#include "enumerations/dimension.hpp"
 #include "kokkos_abstractions.h"
 #include "medium/material.hpp"
+#include "mesh/mesh_base.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
 #include <variant>
@@ -12,7 +14,10 @@ namespace mesh {
  * @brief Material properties information
  *
  */
-struct materials {
+
+template <> struct materials<specfem::dimension::type::dim2> {
+  constexpr static auto dimension =
+      specfem::dimension::type::dim2; ///< Dimension type
 
   struct material_specification {
     specfem::element::medium_tag type;       ///< Type of element
@@ -59,17 +64,19 @@ struct materials {
       material_index_mapping; ///< Mapping of spectral element to material
                               ///< properties
 
-  specfem::mesh::materials::material<specfem::element::medium_tag::elastic,
-                                     specfem::element::property_tag::isotropic>
+  specfem::mesh::materials<specfem::dimension::type::dim2>::material<
+      specfem::element::medium_tag::elastic,
+      specfem::element::property_tag::isotropic>
       elastic_isotropic; ///< Elastic isotropic material properties
 
-  specfem::mesh::materials::material<
+  specfem::mesh::materials<specfem::dimension::type::dim2>::material<
       specfem::element::medium_tag::elastic,
       specfem::element::property_tag::anisotropic>
       elastic_anisotropic; ///< Elastic anisotropic material properties
 
-  specfem::mesh::materials::material<specfem::element::medium_tag::acoustic,
-                                     specfem::element::property_tag::isotropic>
+  specfem::mesh::materials<specfem::dimension::type::dim2>::material<
+      specfem::element::medium_tag::acoustic,
+      specfem::element::property_tag::isotropic>
       acoustic_isotropic; ///< Acoustic isotropic material properties
 
   /**

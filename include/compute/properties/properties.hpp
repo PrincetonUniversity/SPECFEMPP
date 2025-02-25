@@ -2,6 +2,7 @@
 
 #include "compute/element_types/element_types.hpp"
 #include "compute/impl/value_containers.hpp"
+#include "enumerations/dimension.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
 #include "macros.hpp"
@@ -47,9 +48,11 @@ struct properties
    * @param has_gll_model Whether a GLL model is present (skip material property
    * assignment if true)
    */
-  properties(const int nspec, const int ngllz, const int ngllx,
-             const specfem::compute::element_types &element_types,
-             const specfem::mesh::materials &materials, bool has_gll_model);
+  properties(
+      const int nspec, const int ngllz, const int ngllx,
+      const specfem::compute::element_types &element_types,
+      const specfem::mesh::materials<specfem::dimension::type::dim2> &materials,
+      bool has_gll_model);
 
   ///@}
 
