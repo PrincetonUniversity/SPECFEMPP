@@ -7,20 +7,54 @@
 namespace specfem {
 namespace mesh {
 
+/**
+ * @brief Struct to store mass matrix for a 3D mesh
+ *
+ */
 template <> struct mass_matrix<specfem::dimension::type::dim3> {
 
   constexpr static auto dimension = specfem::dimension::type::dim3;
 
-  int nglob;
-  bool is_acoustic;
-  bool is_elastic;
-  bool is_poroelastic;
-  bool has_ocean_load;
+  int nglob;           ///< Number of global nodes
+  bool is_acoustic;    ///< Is acoustic
+  bool is_elastic;     ///< Is elastic
+  bool is_poroelastic; ///< Is poroelastic
+  bool has_ocean_load; ///< Has ocean load
 
   template <typename T> using View1D = Kokkos::View<T *, Kokkos::HostSpace>;
 
+  /**
+   * @name Constructors
+   *
+   */
+  ///@{
+  /**
+   * @brief Default constructor initializing an empty struct
+   *
+   */
   mass_matrix() = default;
 
+  /**
+   * @brief Construct a new mass matrix object
+   *
+   * @param nglob Number of global nodes
+   * @param is_acoustic Is acoustic
+   * @param is_elastic Is elastic
+   * @param is_poroelastic Is poroelastic
+   * @param has_ocean_load Has ocean load
+   *
+   * @code{.cpp}
+   * // Example of how to use this constructor
+   * int nglob = 10;
+   * bool is_acoustic = true;
+   * bool is_elastic = false;
+   * bool is_poroelastic = false;
+   * bool has_ocean_load = false;
+   * specfem::mesh::mass_matrix<specfem::dimension::type::dim3>
+   *   mass_matrix(nglob, is_acoustic, is_elastic, is_poroelastic,
+   * has_ocean_load);
+   * @endcode
+   */
   mass_matrix(const int nglob, const bool is_acoustic, const bool is_elastic,
               const bool is_poroelastic, const bool has_ocean_load)
       : nglob(nglob), is_acoustic(is_acoustic), is_elastic(is_elastic),

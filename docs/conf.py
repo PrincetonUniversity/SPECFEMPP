@@ -24,7 +24,12 @@ doxygen_cmd = "doxygen Doxyfile.in"  # or Doxyfile.in if that's the correct file
 if os.path.exists("_build/doxygen") is False:
     os.makedirs("_build/doxygen")
 
-result = subprocess.call(doxygen_cmd, shell=True)
+if os.environ.get("NODOXYGEN") is not None:
+    print("Skipping Doxygen build as NODOXYGEN environment variable is set")
+    result = 0
+else:
+    result = subprocess.call(doxygen_cmd, shell=True)
+
 if result != 0:
     print(f"Error: Doxygen command '{doxygen_cmd}' failed with code {result}")
     sys.exit(1)

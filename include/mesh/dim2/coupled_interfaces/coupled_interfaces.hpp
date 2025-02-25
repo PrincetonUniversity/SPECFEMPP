@@ -1,21 +1,24 @@
 #pragma once
 
+#include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"
 #include "interface_container.hpp"
+#include "mesh/mesh_base.hpp"
 #include "specfem_mpi/specfem_mpi.hpp"
 #include <fstream>
 #include <variant>
 
 namespace specfem {
 namespace mesh {
+
 /**
- * @brief Information about coupled interfaces
+ * @brief Struct to store coupled interfaces for the 2D mesh
  *
  */
-template <typename specfem::dimension::type DimensionType>
-struct coupled_interfaces {
+template <> struct coupled_interfaces<specfem::dimension::type::dim2> {
 public:
-  constexpr static auto dimension = DimensionType; ///< Dimension
+  constexpr static auto dimension =
+      specfem::dimension::type::dim2; ///< Dimension
   /**
    * @name Constructors
    *
@@ -29,15 +32,15 @@ public:
       : elastic_acoustic(), acoustic_poroelastic(), elastic_poroelastic(){};
 
   coupled_interfaces(specfem::mesh::interface_container<
-                         DimensionType, specfem::element::medium_tag::elastic,
+                         dimension, specfem::element::medium_tag::elastic,
                          specfem::element::medium_tag::acoustic>
                          elastic_acoustic,
                      specfem::mesh::interface_container<
-                         DimensionType, specfem::element::medium_tag::acoustic,
+                         dimension, specfem::element::medium_tag::acoustic,
                          specfem::element::medium_tag::poroelastic>
                          acoustic_poroelastic,
                      specfem::mesh::interface_container<
-                         DimensionType, specfem::element::medium_tag::elastic,
+                         dimension, specfem::element::medium_tag::elastic,
                          specfem::element::medium_tag::poroelastic>
                          elastic_poroelastic)
       : elastic_acoustic(elastic_acoustic),
@@ -55,27 +58,27 @@ public:
   template <specfem::element::medium_tag Medium1,
             specfem::element::medium_tag Medium2>
   std::variant<specfem::mesh::interface_container<
-                   DimensionType, specfem::element::medium_tag::elastic,
+                   dimension, specfem::element::medium_tag::elastic,
                    specfem::element::medium_tag::acoustic>,
                specfem::mesh::interface_container<
-                   DimensionType, specfem::element::medium_tag::acoustic,
+                   dimension, specfem::element::medium_tag::acoustic,
                    specfem::element::medium_tag::poroelastic>,
                specfem::mesh::interface_container<
-                   DimensionType, specfem::element::medium_tag::elastic,
+                   dimension, specfem::element::medium_tag::elastic,
                    specfem::element::medium_tag::poroelastic> >
   get() const;
 
-  specfem::mesh::interface_container<DimensionType,
+  specfem::mesh::interface_container<dimension,
                                      specfem::element::medium_tag::elastic,
                                      specfem::element::medium_tag::acoustic>
       elastic_acoustic; ///< Elastic-acoustic interfaces
 
-  specfem::mesh::interface_container<DimensionType,
+  specfem::mesh::interface_container<dimension,
                                      specfem::element::medium_tag::acoustic,
                                      specfem::element::medium_tag::poroelastic>
       acoustic_poroelastic; ///< Acoustic-poroelastic interfaces
 
-  specfem::mesh::interface_container<DimensionType,
+  specfem::mesh::interface_container<dimension,
                                      specfem::element::medium_tag::elastic,
                                      specfem::element::medium_tag::poroelastic>
       elastic_poroelastic; ///< Elastic-poroelastic interfaces

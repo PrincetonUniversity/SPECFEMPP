@@ -172,7 +172,7 @@ Defining sources
 
 Now that we have the mesh and receiver locations, we can define the sources. We will use the following source file to define the sources.
 
-.. code:: yaml
+.. code-block:: yaml
     :caption: sources.yaml
 
     number-of-sources: 1
