@@ -65,21 +65,29 @@ template <> struct parameters<specfem::dimension::type::dim3> {
   int nspec_outer_poroelastic; ///< Number of outer poroelastic SEs
 
   // Integer Parameters: coloring
-  int num_phase_ispec_acoustic;
-  int num_phase_ispec_elastic;
-  int num_phase_ispec_poroelastic;
-  int num_colors_inner_acoustic;
-  int num_colors_outer_acoustic;
-  int num_colors_inner_elastic;
-  int num_colors_outer_elastic;
+  int num_phase_ispec_acoustic;    ///< Number of phase ispec acoustic
+  int num_phase_ispec_elastic;     ///< Number of phase ispec elastic
+  int num_phase_ispec_poroelastic; ///< Number of phase ispec poroelastic
+  int num_colors_inner_acoustic;   ///< Number of colors inner acoustic
+  int num_colors_outer_acoustic;   ///< Number of colors outer acoustic
+  int num_colors_inner_elastic;    ///< Number of colors inner elastic
+  int num_colors_outer_elastic;    ///< Number of colors outer elastic
 
+  /**
+   * @name Constructors
+   *
+   */
+  ///@{
   /**
    * @brief Default constructor
    *
    */
   parameters(){};
 
-  /** Constructor
+  /**
+   *
+   * @brief Construct a new parameters object
+   *
    * @param acoustic_simulation Flag for acoustic simulation
    * @param elastic_simulation Flag for elastic simulation
    * @param poroelastic_simulation Flag for poroelastic simulation
@@ -121,13 +129,13 @@ template <> struct parameters<specfem::dimension::type::dim3> {
    * @param nspec_inner_poroelastic Number of inner poroelastic SEs
    * @param nspec_outer_poroelastic Number of outer poroelastic SEs
    *
-   * @param num_phase_ispec_acoustic
-   * @param num_phase_ispec_elastic
-   * @param num_phase_ispec_poroelastic
-   * @param num_colors_inner_acoustic
-   * @param num_colors_outer_acoustic
-   * @param num_colors_inner_elastic
-   * @param num_colors_outer_elastic
+   * @param num_phase_ispec_acoustic Number of phase ispec acoustic
+   * @param num_phase_ispec_elastic Number of phase ispec elastic
+   * @param num_phase_ispec_poroelastic Number of phase ispec poroelastic
+   * @param num_colors_inner_acoustic Number of colors inner acoustic
+   * @param num_colors_outer_acoustic Number of colors outer acoustic
+   * @param num_colors_inner_elastic Number of colors inner elastic
+   * @param num_colors_outer_elastic Number of colors outer elastic
    *
    */
   parameters(
@@ -187,6 +195,12 @@ template <> struct parameters<specfem::dimension::type::dim3> {
         num_colors_inner_elastic(num_colors_inner_elastic),
         num_colors_outer_elastic(num_colors_outer_elastic){};
 
+  ///@}
+
+  /**
+   * @brief Print basic information about the parameters
+   *
+   */
   void print() const;
 };
 
