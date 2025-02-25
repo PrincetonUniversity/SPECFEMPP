@@ -3,9 +3,6 @@
 #include "datatypes/simd.hpp"
 #include "enumerations/medium.hpp"
 
-namespace specfem {
-namespace point {
-
 #define DEFINE_PROP(prop)                                                      \
   constexpr static int i_##prop = __COUNTER__ - _counter - 1;                  \
   KOKKOS_INLINE_FUNCTION constexpr value_type prop() const {                   \
@@ -14,6 +11,9 @@ namespace point {
   KOKKOS_INLINE_FUNCTION constexpr void prop(value_type &val) {                \
     Base::data[i_##prop] = val;                                                \
   }
+
+namespace specfem {
+namespace point {
 
 namespace impl {
 template <int N, bool UseSIMD> struct impl_properties {
@@ -221,7 +221,7 @@ struct properties<specfem::dimension::type::dim2,
   }
 };
 
-#undef DEFINE_PROP
-
 } // namespace point
 } // namespace specfem
+
+#undef DEFINE_PROP
