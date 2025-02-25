@@ -53,6 +53,12 @@ template <specfem::dimension::type DimensionType> struct absorbing_boundary;
 template <specfem::dimension::type DimensionType> struct acoustic_free_surface;
 
 /**
+ * @brief Struct to store acoustic free surface boundaries
+ *
+ */
+template <specfem::dimension::type DimensionType> struct free_surface;
+
+/**
  * @brief Struct to store forcing boundaries
  *
  */

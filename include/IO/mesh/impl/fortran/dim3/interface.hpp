@@ -60,11 +60,19 @@ void read_partial_derivatives(
 
 template <typename T> using View1D = Kokkos::View<T *, Kokkos::HostSpace>;
 
+template <typename T> using View2D = Kokkos::View<T **, Kokkos::HostSpace>;
+
+template <typename T> using View3D = Kokkos::View<T ***, Kokkos::HostSpace>;
+
 template <typename T> using View4D = Kokkos::View<T ****, Kokkos::HostSpace>;
 
 template <typename T> using View5D = Kokkos::View<T *****, Kokkos::HostSpace>;
 
 template <typename T> void read_array(std::ifstream &stream, View1D<T> &array);
+
+template <typename T> void read_array(std::ifstream &stream, View2D<T> &array);
+
+template <typename T> void read_array(std::ifstream &stream, View3D<T> &array);
 
 template <typename T> void read_array(std::ifstream &stream, View4D<T> &array);
 
@@ -76,7 +84,17 @@ template <typename T>
 void read_index_array(std::ifstream &stream, View1D<T> &array);
 
 template <typename T>
+void read_index_array(std::ifstream &stream, View2D<T> &array);
+
+template <typename T>
+void read_index_array(std::ifstream &stream, View3D<T> &array);
+
+template <typename T>
 void read_index_array(std::ifstream &stream, View4D<T> &array);
+
+void check_read_test_value(std::ifstream &stream, int test_value);
+
+void check_values(std::string message, int value, int expected);
 
 } // namespace dim3
 } // namespace fortran
