@@ -270,7 +270,7 @@ template <> struct absorbing_boundary<specfem::dimension::type::dim3> {
    * @brief Print basic information on the absorbing boundary struct
    *
    */
-  void print() const;
+  std::string print() const;
 };
 
 } // namespace mesh

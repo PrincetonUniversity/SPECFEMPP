@@ -74,14 +74,14 @@ template <> struct mapping<specfem::dimension::type::dim3> {
    * @brief Print basic information about the mapping
    *
    */
-  void print() const;
+  std::string print() const;
 
   /**
    * @brief Print the mapping for the given spectral element
    *
    * @param ispec Spectral element index
    */
-  void print(const int ispec) const;
+  std::string print(const int ispec) const;
 };
 
 } // namespace mesh

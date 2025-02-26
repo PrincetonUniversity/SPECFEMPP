@@ -77,7 +77,7 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
 
 #ifndef NDEBUG
   // Print the parameters
-  mesh.parameters.print();
+  mpi->cout(mesh.parameters.print());
 #endif
 
   // Open the database file
@@ -110,9 +110,9 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
 
 #ifndef NDEBUG
   // Print Mapping parameters and the first spectral element
-  mesh.mapping.print();
-  mesh.mapping.print(0);
-  mesh.mapping.print(mesh.parameters.nspec - 1);
+  mpi->cout(mesh.mapping.print());
+  mpi->cout(mesh.mapping.print(0));
+  mpi->cout(mesh.mapping.print(mesh.parameters.nspec - 1));
 #endif
 
   // Create the coordinates object
@@ -342,9 +342,7 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
     }
 #ifndef NDEBUG
     // Print the absorbing boundaries
-    // mesh.absorbing_boundary.print();
-    // mesh.absorbing_boundary.print(0);
-    // mesh.absorbing_boundary.print(num_abs_boundary_faces - 1);
+    mpi->cout(mesh.absorbing_boundary.print());
 #endif
   }
 

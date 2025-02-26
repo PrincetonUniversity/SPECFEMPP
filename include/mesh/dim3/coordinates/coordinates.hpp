@@ -78,7 +78,7 @@ template <> struct coordinates<specfem::dimension::type::dim3> {
    * coordinates.print();
    * @endcode
    */
-  void print() const;
+  std::string print() const;
 
   /**
    * @brief Print the coordinates at a specific global node
@@ -89,7 +89,7 @@ template <> struct coordinates<specfem::dimension::type::dim3> {
    * coordinates.print(iglob);
    * @endcode
    */
-  void print(int iglob) const;
+  std::string print(int iglob) const;
 };
 
 } // namespace mesh

@@ -201,7 +201,7 @@ template <> struct parameters<specfem::dimension::type::dim3> {
    * @brief Print basic information about the parameters
    *
    */
-  void print() const;
+  std::string print() const;
 };
 
 } // namespace mesh
