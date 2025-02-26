@@ -23,7 +23,7 @@ namespace compute {
  *
  */
 struct properties
-    : public impl::value_containers<specfem::medium::material_properties> {
+    : public impl::value_containers<specfem::medium::properties_container> {
   /**
    * @name Constructors
    */
@@ -59,12 +59,12 @@ struct properties
    */
   void copy_to_host() {
     impl::value_containers<
-        specfem::medium::material_properties>::copy_to_host();
+        specfem::medium::properties_container>::copy_to_host();
   }
 
   void copy_to_device() {
     impl::value_containers<
-        specfem::medium::material_properties>::copy_to_device();
+        specfem::medium::properties_container>::copy_to_device();
   }
 };
 

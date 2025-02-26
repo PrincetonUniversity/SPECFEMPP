@@ -8,11 +8,11 @@ namespace specfem {
 namespace medium {
 
 template <>
-struct properties_container<specfem::element::medium_tag::elastic_sv,
+struct properties_container<specfem::element::medium_tag::elastic,
                             specfem::element::property_tag::isotropic> {
 
   constexpr static auto dimension = specfem::dimension::type::dim2;
-  constexpr static auto value_type = specfem::element::medium_tag::elastic_sv;
+  constexpr static auto medium_tag = specfem::element::medium_tag::elastic;
   constexpr static auto property_type =
       specfem::element::property_tag::isotropic;
 
@@ -41,19 +41,10 @@ struct properties_container<specfem::element::medium_tag::elastic_sv,
                       ngllz, ngllx),
         h_lambdaplus2mu(Kokkos::create_mirror_view(lambdaplus2mu)) {}
 
-  template <
-      typename PointProperties,
-      typename std::enable_if_t<!PointProperties::simd::using_simd, int> = 0>
-  KOKKOS_FORCEINLINE_FUNCTION void
-  load_device_properties(const specfem::point::index<dimension> &index,
-                         PointProperties &property) const {
-
-    static_assert(PointProperties::dimension == dimension,
-                  "Dimension mismatch");
-    static_assert(PointProperties::medium_tag == value_type,
-                  "Medium tag mismatch");
-    static_assert(PointProperties::property_tag == property_type,
-                  "Property tag mismatch");
+  KOKKOS_FORCEINLINE_FUNCTION void load_device_properties(
+      const specfem::point::index<dimension> &index,
+      specfem::point::properties<dimension, medium_tag, property_type, false>
+          &property) const {
 
     const int ispec = index.ispec;
     const int iz = index.iz;
@@ -67,21 +58,12 @@ struct properties_container<specfem::element::medium_tag::elastic_sv,
     property.rho_vs = sqrt(property.rho * property.mu);
   }
 
-  template <
-      typename PointProperties,
-      typename std::enable_if_t<PointProperties::simd::using_simd, int> = 0>
-  KOKKOS_FORCEINLINE_FUNCTION void
-  load_device_properties(const specfem::point::simd_index<dimension> &index,
-                         PointProperties &property) const {
+  KOKKOS_FORCEINLINE_FUNCTION void load_device_properties(
+      const specfem::point::simd_index<dimension> &index,
+      specfem::point::properties<dimension, medium_tag, property_type, true>
+          &property) const {
 
-    static_assert(PointProperties::dimension == dimension,
-                  "Dimension mismatch");
-    static_assert(PointProperties::medium_tag == value_type,
-                  "Medium tag mismatch");
-    static_assert(PointProperties::property_tag == property_type,
-                  "Property tag mismatch");
-
-    using simd = typename PointProperties::simd;
+    using simd = specfem::datatype::simd<type_real, true>;
     using mask_type = typename simd::mask_type;
     using tag_type = typename simd::tag_type;
 
@@ -103,19 +85,10 @@ struct properties_container<specfem::element::medium_tag::elastic_sv,
     property.rho_vs = Kokkos::sqrt(property.rho * property.mu);
   }
 
-  template <
-      typename PointProperties,
-      typename std::enable_if_t<!PointProperties::simd::using_simd, int> = 0>
-  inline void
-  load_host_properties(const specfem::point::index<dimension> &index,
-                       PointProperties &property) const {
-
-    static_assert(PointProperties::dimension == dimension,
-                  "Dimension mismatch");
-    static_assert(PointProperties::medium_tag == value_type,
-                  "Medium tag mismatch");
-    static_assert(PointProperties::property_tag == property_type,
-                  "Property tag mismatch");
+  inline void load_host_properties(
+      const specfem::point::index<dimension> &index,
+      specfem::point::properties<dimension, medium_tag, property_type, false>
+          &property) const {
 
     const int ispec = index.ispec;
     const int iz = index.iz;
@@ -129,21 +102,12 @@ struct properties_container<specfem::element::medium_tag::elastic_sv,
     property.rho_vs = sqrt(property.rho * property.mu);
   }
 
-  template <
-      typename PointProperties,
-      typename std::enable_if_t<PointProperties::simd::using_simd, int> = 0>
-  inline void
-  load_host_properties(const specfem::point::simd_index<dimension> &index,
-                       PointProperties &property) const {
+  inline void load_host_properties(
+      const specfem::point::simd_index<dimension> &index,
+      specfem::point::properties<dimension, medium_tag, property_type, true>
+          &property) const {
 
-    static_assert(PointProperties::dimension == dimension,
-                  "Dimension mismatch");
-    static_assert(PointProperties::medium_tag == value_type,
-                  "Medium tag mismatch");
-    static_assert(PointProperties::property_tag == property_type,
-                  "Property tag mismatch");
-
-    using simd = typename PointProperties::simd;
+    using simd = specfem::datatype::simd<type_real, true>;
     using mask_type = typename simd::mask_type;
     using tag_type = typename simd::tag_type;
 
@@ -177,18 +141,10 @@ struct properties_container<specfem::element::medium_tag::elastic_sv,
     Kokkos::deep_copy(h_lambdaplus2mu, lambdaplus2mu);
   }
 
-  template <
-      typename PointProperties,
-      typename std::enable_if_t<!PointProperties::simd::using_simd, int> = 0>
-  inline void assign(const specfem::point::index<dimension> &index,
-                     const PointProperties &property) const {
-
-    static_assert(PointProperties::dimension == dimension,
-                  "Dimension mismatch");
-    // static_assert(PointProperties::medium_tag == value_type,
-    //               "Medium tag mismatch");
-    static_assert(PointProperties::property_tag == property_type,
-                  "Property tag mismatch");
+  inline void
+  assign(const specfem::point::index<dimension> &index,
+         const specfem::point::properties<dimension, medium_tag, property_type,
+                                          false> &property) const {
 
     const int ispec = index.ispec;
     const int iz = index.iz;
@@ -199,20 +155,12 @@ struct properties_container<specfem::element::medium_tag::elastic_sv,
     h_lambdaplus2mu(ispec, iz, ix) = property.lambdaplus2mu;
   }
 
-  template <
-      typename PointProperties,
-      typename std::enable_if_t<PointProperties::simd::using_simd, int> = 0>
-  inline void assign(const specfem::point::simd_index<dimension> &index,
-                     const PointProperties &property) const {
+  inline void
+  assign(const specfem::point::simd_index<dimension> &index,
+         const specfem::point::properties<dimension, medium_tag, property_type,
+                                          true> &property) const {
 
-    static_assert(PointProperties::dimension == dimension,
-                  "Dimension mismatch");
-    // static_assert(PointProperties::medium_tag == value_type,
-    //               "Medium tag mismatch");
-    static_assert(PointProperties::property_tag == property_type,
-                  "Property tag mismatch");
-
-    using simd = typename PointProperties::simd;
+    using simd = specfem::datatype::simd<type_real, true>;
     using mask_type = typename simd::mask_type;
     using tag_type = typename simd::tag_type;
 
@@ -228,6 +176,59 @@ struct properties_container<specfem::element::medium_tag::elastic_sv,
         .copy_to(&h_mu(ispec, iz, ix), tag_type());
     Kokkos::Experimental::where(mask, property.lambdaplus2mu)
         .copy_to(&h_lambdaplus2mu(ispec, iz, ix), tag_type());
+  }
+};
+
+template <>
+struct properties_container<specfem::element::medium_tag::elastic_sv,
+                            specfem::element::property_tag::isotropic>
+    : public properties_container<specfem::element::medium_tag::elastic,
+                                  specfem::element::property_tag::isotropic> {
+
+  constexpr static auto medium_tag = specfem::element::medium_tag::elastic_sv;
+
+  properties_container() = default;
+
+  properties_container(const int nspec, const int ngllz, const int ngllx)
+      : properties_container<specfem::element::medium_tag::elastic,
+                             specfem::element::property_tag::isotropic>(
+            nspec, ngllz, ngllx){};
+
+  properties_container(
+      const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
+      const int ngllz, const int ngllx,
+      const specfem::mesh::materials &materials, const bool has_gll_model,
+      const specfem::kokkos::HostView1d<int> property_index_mapping)
+      : properties_container(elements.extent(0), ngllz, ngllx) {
+
+    impl::constructor(elements, ngllz, ngllx, materials, has_gll_model,
+                      property_index_mapping, *this);
+  }
+};
+
+template <>
+struct properties_container<specfem::element::medium_tag::elastic_sh,
+                            specfem::element::property_tag::isotropic>
+    : public properties_container<specfem::element::medium_tag::elastic,
+                                  specfem::element::property_tag::isotropic> {
+
+  constexpr static auto medium_tag = specfem::element::medium_tag::elastic_sh;
+  properties_container() = default;
+
+  properties_container(const int nspec, const int ngllz, const int ngllx)
+      : properties_container<specfem::element::medium_tag::elastic,
+                             specfem::element::property_tag::isotropic>(
+            nspec, ngllz, ngllx){};
+
+  properties_container(
+      const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
+      const int ngllz, const int ngllx,
+      const specfem::mesh::materials &materials, const bool has_gll_model,
+      const specfem::kokkos::HostView1d<int> property_index_mapping)
+      : properties_container(elements.extent(0), ngllz, ngllx) {
+
+    impl::constructor(elements, ngllz, ngllx, materials, has_gll_model,
+                      property_index_mapping, *this);
   }
 };
 

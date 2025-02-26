@@ -1,51 +1,89 @@
 Tests:
-  # Test 1:
-  - name : "Test 1: Simple mesh with flat topography"
+
+  - name : "Test 1: Simple mesh with flat topography (P_SV wave)"
     description: >
       Testing mesh reader on a simple mesh with flat topography.
     config:
       nproc : 1
+      elastic_wave: "P_SV"
     databases:
       mesh : "../../../tests/unit-tests/data/mesh/simple_mesh_flat_topography/database.bin"
       sources : "../../../tests/unit-tests/data/mesh/simple_mesh_flat_topography/sources.yaml"
       stations : "../../../tests/unit-tests/data/mesh/simple_mesh_flat_topography/STATIONS"
-  # Test 2:
-  - name : "Test 2: Simple mesh with curved topography"
+
+  - name : "Test 2: Simple mesh with flat topography (SH wave)"
+    description: >
+      Testing mesh reader on a simple mesh with flat topography.
+    config:
+      nproc : 1
+      elastic_wave: "SH"
+    databases:
+      mesh : "../../../tests/unit-tests/data/mesh/simple_mesh_flat_topography/database.bin"
+      sources : "../../../tests/unit-tests/data/mesh/simple_mesh_flat_topography/sources.yaml"
+      stations : "../../../tests/unit-tests/data/mesh/simple_mesh_flat_topography/STATIONS"
+
+  - name : "Test 3: Simple mesh with curved topography"
     description: >
       Testing mesh reader on a simple mesh with curved topography.
     config:
       nproc : 1
+      elastic_wave: "P_SV"
     databases:
       mesh : "../../../tests/unit-tests/data/mesh/simple_mesh_curved_topography/database.bin"
       sources : "../../../tests/unit-tests/data/mesh/simple_mesh_curved_topography/sources.yaml"
       stations : "../../../tests/unit-tests/data/mesh/simple_mesh_curved_topography/STATIONS"
-  # Test 3:
-  - name : "Test 3: Simple mesh with flat ocean bottom"
+
+  - name : "Test 4: Simple mesh with flat ocean bottom"
     description: >
       Testing mesh reader on a simple mesh with flat ocean bottom. Fluid-solid interface is at the ocean bottom.
     config:
       nproc : 1
+      elastic_wave: "P_SV"
     databases:
       mesh : "../../../tests/unit-tests/data/mesh/fluid_solid_mesh_flat_ocean_bottom/database.bin"
       sources : "../../../tests/unit-tests/data/mesh/fluid_solid_mesh_flat_ocean_bottom/sources.yaml"
       stations : "../../../tests/unit-tests/data/mesh/fluid_solid_mesh_flat_ocean_bottom/STATIONS"
-  # Test 4:
-  - name : "Test 4: Simple mesh with curved ocean bottom"
+
+  - name : "Test 5: Simple mesh with curved ocean bottom"
     description: >
       Testing mesh reader on a simple mesh with curved ocean bottom. Fluid-solid interface is at the ocean bottom.
     config:
       nproc : 1
+      elastic_wave: "P_SV"
     databases:
       mesh : "../../../tests/unit-tests/data/mesh/fluid_solid_mesh_curved_ocean_bottom/database.bin"
       sources : "../../../tests/unit-tests/data/mesh/fluid_solid_mesh_curved_ocean_bottom/sources.yaml"
       stations : "../../../tests/unit-tests/data/mesh/fluid_solid_mesh_curved_ocean_bottom/STATIONS"
-  # Test 5:
-  - name : "Test 5: Gmesh Example"
+
+  - name : "Test 6: Gmesh Example"
     description: >
       Testing mesh reader on a Gmesh example mesh.
     config:
       nproc : 1
+      elastic_wave: "P_SV"
     databases:
       mesh : "../../../tests/unit-tests/data/mesh/Gmesh_Example_Stacey/database.bin"
       sources : "../../../tests/unit-tests/data/mesh/Gmesh_Example_Stacey/sources.yaml"
       stations : "../../../tests/unit-tests/data/mesh/Gmesh_Example_Stacey/STATIONS"
+
+  - name : "Test 7: Homogeneous Elastic Anisotropic Material (P_SV wave)"
+    description: >
+      Testing the reading of a homogeneous elastic anisotropic material.
+    config:
+      nproc : 1
+      elastic_wave: "P_SV"
+    databases:
+      mesh : "../../../tests/unit-tests/data/mesh/homogeneous_elastic_anisotropic/database.bin"
+      sources : "../../../tests/unit-tests/data/mesh/homogeneous_elastic_anisotropic/sources.yaml"
+      stations : "../../../tests/unit-tests/data/mesh/homogeneous_elastic_anisotropic/STATIONS"
+
+  - name : "Test 8: Homogeneous Elastic Anisotropic Material (SH wave)"
+    description: >
+      Testing the reading of a homogeneous elastic anisotropic material.
+    config:
+      nproc : 1
+      elastic_wave: "SH"
+    databases:
+      mesh : "../../../tests/unit-tests/data/mesh/homogeneous_elastic_anisotropic/database.bin"
+      sources : "../../../tests/unit-tests/data/mesh/homogeneous_elastic_anisotropic/sources.yaml"
+      stations : "../../../tests/unit-tests/data/mesh/homogeneous_elastic_anisotropic/STATIONS"
