@@ -70,7 +70,7 @@ template <> struct partial_derivatives<specfem::dimension::type::dim3> {
    * @brief Print basic information on the partial derivatives
    *
    */
-  void print() const;
+  std::string print() const;
 
   /**
    * @brief Print the partial derivatives for a given spectral element and
@@ -81,7 +81,7 @@ template <> struct partial_derivatives<specfem::dimension::type::dim3> {
    * @param iglly GLL point index in y
    * @param igllz GLL point index in z
    */
-  void print(int ispec, int igllx, int iglly, int igllz) const;
+  std::string print(int ispec, int igllx, int iglly, int igllz) const;
 };
 
 } // namespace mesh

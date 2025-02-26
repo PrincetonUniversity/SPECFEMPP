@@ -184,7 +184,7 @@ template <> struct coupled_interfaces<specfem::dimension::type::dim3> {
    * @brief Print basic information about the coupled interfaces to std::cout
    *
    */
-  void print() const;
+  std::string print() const;
 };
 
 } // namespace mesh

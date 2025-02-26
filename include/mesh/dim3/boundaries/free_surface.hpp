@@ -81,7 +81,7 @@ template <> struct free_surface<specfem::dimension::type::dim3> {
    * @endcode
    *
    */
-  void print() const;
+  std::string print() const;
 };
 
 } // namespace mesh

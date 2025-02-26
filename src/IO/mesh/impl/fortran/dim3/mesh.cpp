@@ -127,9 +127,9 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
 
 #ifndef NDEBUG
   // Print Coordinates parameters and the first global node
-  mesh.coordinates.print();
-  mesh.coordinates.print(0);
-  mesh.coordinates.print(mesh.parameters.nglob - 1);
+  mpi->cout(mesh.coordinates.print());
+  mpi->cout(mesh.coordinates.print(0));
+  mpi->cout(mesh.coordinates.print(mesh.parameters.nglob - 1));
 #endif
 
   // Initialize the partial derivatives object
@@ -146,16 +146,17 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
 
 #ifndef NDEBUG
   // Print the first and last irregular element
-  std::cout << "First irregular element: " << mesh.irregular_element_number(0)
-            << std::endl;
-  std::cout << "Last irregular element: "
-            << mesh.irregular_element_number(mesh.parameters.nspec_irregular -
-                                             1)
-            << std::endl;
+  std::ostringstream message;
+  message << "First irregular element: " << mesh.irregular_element_number(0)
+          << "\n";
+  message << "Last irregular element: "
+          << mesh.irregular_element_number(mesh.parameters.nspec_irregular - 1)
+          << "\n";
 
   // Print xix and jacobian
-  std::cout << "xix_regular: " << mesh.xix_regular << std::endl;
-  std::cout << "jacobian_regular: " << mesh.jacobian_regular << std::endl;
+  message << "xix_regular: " << mesh.xix_regular << "\n";
+  message << "jacobian_regular: " << mesh.jacobian_regular << "\n";
+  mpi->cout(message.str());
 #endif
 
   // Create the partial derivatives object
@@ -178,8 +179,8 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
 
 #ifndef NDEBUG
   // Print Partial Derivatives parameters and the first spectral element
-  mesh.partial_derivatives.print();
-  mesh.partial_derivatives.print(0, 0, 0, 0);
+  mpi->cout(mesh.partial_derivatives.print());
+  mpi->cout(mesh.partial_derivatives.print(0, 0, 0, 0));
 #endif
 
   // Marker that should be 10000
@@ -197,7 +198,7 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
 
 #ifndef NDEBUG
   // Print the materials
-  mesh.materials.print();
+  mpi->cout(mesh.materials.print());
 #endif
 
   int nacoustic, nelastic, nporoelastic;
@@ -362,12 +363,14 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
 
 #ifndef NDEBUG
   // Print the number of boundaries
-  std::cout << "nspec2D_xmin: " << nspec2D_xmin << std::endl;
-  std::cout << "nspec2D_xmax: " << nspec2D_xmax << std::endl;
-  std::cout << "nspec2D_ymin: " << nspec2D_ymin << std::endl;
-  std::cout << "nspec2D_ymax: " << nspec2D_ymax << std::endl;
-  std::cout << "nspec2D_bottom: " << nspec2D_bottom << std::endl;
-  std::cout << "nspec2D_top: " << nspec2D_top << std::endl;
+  message = std::ostringstream();
+  message << "nspec2D_xmin: " << nspec2D_xmin << "\n";
+  message << "nspec2D_xmax: " << nspec2D_xmax << "\n";
+  message << "nspec2D_ymin: " << nspec2D_ymin << "\n";
+  message << "nspec2D_ymax: " << nspec2D_ymax << "\n";
+  message << "nspec2D_bottom: " << nspec2D_bottom << "\n";
+  message << "nspec2D_top: " << nspec2D_top << "\n";
+  mpi->cout(message.str());
 #endif
 
   // Check values
@@ -407,7 +410,7 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
     }
     // Print the abosrbing boundaries
 #ifndef NDEBUG
-    mesh.absorbing_boundary.print();
+    mpi->cout(mesh.absorbing_boundary.print());
 #endif
   }
 
@@ -431,7 +434,7 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
 
 #ifndef NDEBUG
   // Print the free surface
-  mesh.free_surface.print();
+  mpi->cout(mesh.free_surface.print());
 #endif
 
   // Create the coupled interfaces object
@@ -524,7 +527,7 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
 
 #ifndef NDEBUG
   // Print the interfaces
-  mesh.coupled_interfaces.print();
+  mpi->cout(mesh.coupled_interfaces.print());
 #endif
 
   // Read test value 9997
