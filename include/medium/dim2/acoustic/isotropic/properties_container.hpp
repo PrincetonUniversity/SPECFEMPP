@@ -13,11 +13,11 @@ struct properties_container<specfem::element::medium_tag::acoustic,
     : public impl::impl_properties_container<
           specfem::element::medium_tag::acoustic,
           specfem::element::property_tag::isotropic, 2> {
-  using Base =
+  using base_type =
       impl::impl_properties_container<specfem::element::medium_tag::acoustic,
                                       specfem::element::property_tag::isotropic,
                                       2>;
-  using Base::Base;
+  using base_type::base_type;
   constexpr static int _counter = __COUNTER__;
 
   DEFINE_CONTAINER(rho_inverse)
