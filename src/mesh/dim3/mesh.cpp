@@ -10,35 +10,37 @@
 #include <memory>
 #include <vector>
 
-std::string specfem::mesh::mesh<specfem::dimension::type::dim2>::print() const {
-
-  int n_elastic;
-  int n_acoustic;
-
-  Kokkos::parallel_reduce(
-      "specfem::mesh::mesh::print", specfem::kokkos::HostRange(0, this->nspec),
-      KOKKOS_CLASS_LAMBDA(const int ispec, int &n_elastic, int &n_acoustic) {
-        if (this->materials.material_index_mapping(ispec).type ==
-            specfem::element::medium_tag::elastic) {
-          n_elastic++;
-        } else if (this->materials.material_index_mapping(ispec).type ==
-                   specfem::element::medium_tag::acoustic) {
-          n_acoustic++;
-        }
-      },
-      n_elastic, n_acoustic);
+std::string specfem::mesh::mesh<specfem::dimension::type::dim3>::print() const {
 
   std::ostringstream message;
 
-  message
-      << "Spectral element information:\n"
-      << "------------------------------\n"
-      << "Total number of spectral elements : " << this->nspec << "\n"
-      << "Total number of spectral elements assigned to elastic material : "
-      << n_elastic << "\n"
-      << "Total number of spectral elements assigned to acoustic material : "
-      << n_acoustic << "\n"
-      << "Total number of geometric points : " << this->npgeo << "\n";
+  int nspec = this->parameters.nspec;
+  int nglob = this->parameters.nglob;
+  int nspec_irregular = this->parameters.nspec_irregular;
+  int ngllx = this->parameters.ngllx;
+  int nglly = this->parameters.nglly;
+  int ngllz = this->parameters.ngllz;
+
+  int nacoustic = this->elements_types.nacoustic;
+  int nelastic = this->elements_types.nelastic;
+  int nporoelastic = this->elements_types.nporoelastic;
+
+  // Print Mapping parameters
+  message << "3D Mesh information :\n"
+          << "------------------------------\n"
+          << "Total number of spectral elements: " << nspec << "\n"
+          << "Total number of global nodes: " << nglob << "\n"
+          << "Total number of irregular spectral elements: " << nspec_irregular
+          << "\n"
+          << "Total number of GLLX: " << ngllx << "\n"
+          << "Total number of GLLY: " << nglly << "\n"
+          << "Total number of GLLZ: " << ngllz << "\n"
+          << "\n"
+          << "Total number of acoustic spectral elements: " << nacoustic << "\n"
+          << "Total number of elastic spectral elements: " << nelastic << "\n"
+          << "Total number of poroelastic spectral elements: " << nporoelastic
+          << "\n"
+          << "------------------------------\n";
 
   return message.str();
 }

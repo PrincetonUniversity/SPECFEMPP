@@ -533,6 +533,9 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
   // Read test value 9997
   check_read_test_value(stream, 9997);
 
+  // Final print with basic information
+  mpi->cout(mesh.print());
+
   stream.close();
 
   return mesh;
