@@ -22,18 +22,21 @@
 #include <vector>
 
 template <specfem::element::medium_tag medium>
-void try_print_medium_element(
+std::string try_print_medium_element(
     const specfem::mesh::element_types<specfem::dimension::type::dim3>
         &elements_types,
     int index) {
+
+  std::ostringstream message;
   try {
-    elements_types.print<medium>(index);
+    message << elements_types.print<medium>(index);
   } catch (std::runtime_error &e) {
-    std::cout << e.what();
+    message << e.what();
   } catch (...) {
-    std::cout << "Unknown exception caught in try_print_medium_element"
-              << std::endl;
+    message << "Unknown exception caught in try_print_medium_element"
+            << ".\n";
   }
+  return message.str();
 }
 
 specfem::mesh::mesh<specfem::dimension::type::dim3>
@@ -197,34 +200,36 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
   mesh.materials.print();
 #endif
 
+  int nacoustic, nelastic, nporoelastic;
+
+  try_read_line("read_nacoustic", stream, &nacoustic);
+  try_read_line("read_nelastic", stream, &nelastic);
+  try_read_line("read_nporoelastic", stream, &nporoelastic);
+
   // Initialize element types object
   mesh.elements_types =
       specfem::mesh::element_types<specfem::dimension::type::dim3>(
-          mesh.parameters.nspec);
+          mesh.parameters.nspec, nacoustic, nelastic, nporoelastic);
 
-  // Read boolean is x array!
-  try_read_array("read_ispec_is_acoustic", stream,
-                 mesh.elements_types.ispec_is_acoustic);
-  try_read_array("read_ispec_is_elastic", stream,
-                 mesh.elements_types.ispec_is_elastic);
-  try_read_array("read_ispec_is_poroelastic", stream,
-                 mesh.elements_types.ispec_is_poroelastic);
+  // Reading the ispec type
+  auto ispec_type = Kokkos::View<int *, Kokkos::HostSpace>("ispec_type", nspec);
+  try_read_array("read_ispec_type", stream, ispec_type);
 
   // Compute the element arrays
-  mesh.elements_types.set_elements();
+  mesh.elements_types.set_elements(ispec_type);
 
 #ifndef NDEBUG
   // Print the element types
-  mesh.elements_types.print();
-  mesh.elements_types.print(0);
+  mpi->cout(mesh.elements_types.print());
+  mpi->cout(mesh.elements_types.print(0));
 
   // Print elements first element of each category
-  try_print_medium_element<specfem::element::medium_tag::acoustic>(
-      mesh.elements_types, 0);
-  try_print_medium_element<specfem::element::medium_tag::elastic>(
-      mesh.elements_types, 0);
-  try_print_medium_element<specfem::element::medium_tag::poroelastic>(
-      mesh.elements_types, 0);
+  mpi->cout(try_print_medium_element<specfem::element::medium_tag::acoustic>(
+      mesh.elements_types, 0));
+  mpi->cout(try_print_medium_element<specfem::element::medium_tag::elastic>(
+      mesh.elements_types, 0));
+  mpi->cout(try_print_medium_element<specfem::element::medium_tag::poroelastic>(
+      mesh.elements_types, 0));
 #endif
 
   // Read test value 9999
