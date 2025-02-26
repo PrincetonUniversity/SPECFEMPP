@@ -13,11 +13,11 @@ struct properties_container<specfem::element::medium_tag::elastic,
     : public impl::impl_properties_container<
           specfem::element::medium_tag::elastic,
           specfem::element::property_tag::isotropic, 3> {
-  using Base =
+  using base_type =
       impl::impl_properties_container<specfem::element::medium_tag::elastic,
                                       specfem::element::property_tag::isotropic,
                                       3>;
-  using Base::Base;
+  using base_type::base_type;
   constexpr static int _counter = __COUNTER__;
 
   DEFINE_CONTAINER(lambdaplus2mu)

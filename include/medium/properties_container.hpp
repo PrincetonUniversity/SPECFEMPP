@@ -6,11 +6,11 @@
   constexpr static int i_##prop = __COUNTER__ - _counter - 1;                  \
   KOKKOS_INLINE_FUNCTION type_real &prop(const int &ispec, const int &iz,      \
                                          const int &ix) const {                \
-    return Base::data(ispec, iz, ix, i_##prop);                                \
+    return base_type::data(ispec, iz, ix, i_##prop);                           \
   }                                                                            \
   KOKKOS_INLINE_FUNCTION type_real &h_##prop(const int &ispec, const int &iz,  \
                                              const int &ix) const {            \
-    return Base::h_data(ispec, iz, ix, i_##prop);                              \
+    return base_type::h_data(ispec, iz, ix, i_##prop);                         \
   }
 
 namespace specfem {

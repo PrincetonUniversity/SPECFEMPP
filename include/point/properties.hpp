@@ -6,10 +6,10 @@
 #define DEFINE_PROP(prop)                                                      \
   constexpr static int i_##prop = __COUNTER__ - _counter - 1;                  \
   KOKKOS_INLINE_FUNCTION constexpr value_type prop() const {                   \
-    return Base::data[i_##prop];                                               \
+    return base_type::data[i_##prop];                                          \
   }                                                                            \
   KOKKOS_INLINE_FUNCTION constexpr void prop(value_type &val) {                \
-    Base::data[i_##prop] = val;                                                \
+    base_type::data[i_##prop] = val;                                           \
   }
 
 namespace specfem {
@@ -109,8 +109,8 @@ struct properties<specfem::dimension::type::dim2,
   using value_type = typename simd::datatype;
   constexpr static int _counter = __COUNTER__;
   ///@}
-  using Base = impl::impl_properties<3, UseSIMD>;
-  using Base::Base;
+  using base_type = impl::impl_properties<3, UseSIMD>;
+  using base_type::base_type;
 
   DEFINE_PROP(lambdaplus2mu) ///< Lame's parameter @f$ \lambda + 2\mu @f$
   DEFINE_PROP(mu)            ///< shear modulus @f$ \mu @f$
@@ -151,8 +151,8 @@ struct properties<specfem::dimension::type::dim2,
   using value_type = typename simd::datatype;
   constexpr static int _counter = __COUNTER__;
   ///@}
-  using Base = impl::impl_properties<10, UseSIMD>;
-  using Base::Base;
+  using base_type = impl::impl_properties<10, UseSIMD>;
+  using base_type::base_type;
 
   /**
    * @name Elastic constants
@@ -204,8 +204,8 @@ struct properties<specfem::dimension::type::dim2,
   using value_type = typename simd::datatype;
   constexpr static int _counter = __COUNTER__;
   ///@}
-  using Base = impl::impl_properties<2, UseSIMD>;
-  using Base::Base;
+  using base_type = impl::impl_properties<2, UseSIMD>;
+  using base_type::base_type;
 
   DEFINE_PROP(rho_inverse) ///< @f$ \frac{1}{\rho} @f$
   DEFINE_PROP(kappa)       ///< Bulk modulus @f$ \kappa @f$
