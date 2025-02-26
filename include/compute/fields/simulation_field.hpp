@@ -172,7 +172,7 @@ template <typename IndexType, typename WavefieldContainer, typename ViewType,
 KOKKOS_FORCEINLINE_FUNCTION void load_on_device(const IndexType &index,
                                                 const WavefieldContainer &field,
                                                 ViewType &point_field) {
-  impl_load_on_device(index, field, point_field);
+  impl_load<true>(index, field, point_field);
 }
 
 /**
@@ -195,7 +195,7 @@ template <typename IndexType, typename WavefieldContainer, typename ViewType,
 inline void load_on_host(const IndexType &index,
                          const WavefieldContainer &field,
                          ViewType &point_field) {
-  impl_load_on_host(index, field, point_field);
+  impl_load<false>(index, field, point_field);
 }
 
 /**
@@ -218,7 +218,7 @@ template <typename IndexType, typename WavefieldContainer, typename ViewType,
 KOKKOS_FORCEINLINE_FUNCTION void
 store_on_device(const IndexType &index, const ViewType &point_field,
                 const WavefieldContainer &field) {
-  impl_store_on_device(index, point_field, field);
+  impl_store<true>(index, point_field, field);
 }
 
 /**
@@ -240,7 +240,7 @@ template <typename IndexType, typename WavefieldContainer, typename ViewType,
           typename std::enable_if_t<ViewType::isPointFieldType, int> = 0>
 inline void store_on_host(const IndexType &index, const ViewType &point_field,
                           const WavefieldContainer &field) {
-  impl_store_on_host(index, point_field, field);
+  impl_store<false>(index, point_field, field);
 }
 
 /**
@@ -263,7 +263,7 @@ template <typename IndexType, typename WavefieldContainer, typename ViewType,
 KOKKOS_FORCEINLINE_FUNCTION void
 add_on_device(const IndexType &index, const ViewType &point_field,
               const WavefieldContainer &field) {
-  impl_add_on_device(index, point_field, field);
+  impl_add<true>(index, point_field, field);
 }
 
 /**
@@ -285,7 +285,7 @@ template <typename IndexType, typename WavefieldContainer, typename ViewType,
           typename std::enable_if_t<ViewType::isPointFieldType, int> = 0>
 inline void add_on_host(const IndexType &index, const ViewType &point_field,
                         const WavefieldContainer &field) {
-  impl_add_on_host(index, point_field, field);
+  impl_add<false>(index, point_field, field);
 }
 
 /**
@@ -308,7 +308,7 @@ template <typename IndexType, typename WavefieldContainer, typename ViewType,
 KOKKOS_FORCEINLINE_FUNCTION void
 atomic_add_on_device(const IndexType &index, const ViewType &point_field,
                      const WavefieldContainer &field) {
-  impl_atomic_add_on_device(index, point_field, field);
+  impl_atomic_add<true>(index, point_field, field);
 }
 
 /**
@@ -331,7 +331,7 @@ template <typename IndexType, typename WavefieldContainer, typename ViewType,
 inline void atomic_add_on_host(const IndexType &index,
                                const ViewType &point_field,
                                const WavefieldContainer &field) {
-  impl_atomic_add_on_host(index, point_field, field);
+  impl_atomic_add<false>(index, point_field, field);
 }
 
 /**
@@ -353,7 +353,7 @@ template <typename MemberType, typename WavefieldContainer, typename ViewType,
 KOKKOS_FORCEINLINE_FUNCTION void
 load_on_device(const MemberType &member, const int &index,
                const WavefieldContainer &field, ViewType &element_field) {
-  impl_load_on_device(member, index, field, element_field);
+  impl_load<true>(member, index, field, element_field);
 }
 
 /**
@@ -375,7 +375,7 @@ template <typename MemberType, typename WavefieldContainer, typename ViewType,
 inline void load_on_host(const MemberType &member, const int &index,
                          const WavefieldContainer &field,
                          ViewType &element_field) {
-  impl_load_on_host(member, index, field, element_field);
+  impl_load<false>(member, index, field, element_field);
 }
 
 /**
@@ -400,7 +400,7 @@ template <typename MemberType, typename ChunkIteratorType,
 KOKKOS_FORCEINLINE_FUNCTION void
 load_on_device(const MemberType &member, const ChunkIteratorType &iterator,
                const WavefieldContainer &field, ViewType &chunk_field) {
-  impl_load_on_device(member, iterator, field, chunk_field);
+  impl_load<true>(member, iterator, field, chunk_field);
 }
 
 /**
@@ -425,7 +425,7 @@ template <typename MemberType, typename ChunkIteratorType,
 inline void
 load_on_host(const MemberType &member, const ChunkIteratorType &iterator,
              const WavefieldContainer &field, ViewType &chunk_field) {
-  impl_load_on_host(member, iterator, field, chunk_field);
+  impl_load<false>(member, iterator, field, chunk_field);
 }
 
 } // namespace compute
