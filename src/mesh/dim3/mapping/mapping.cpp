@@ -28,13 +28,22 @@ specfem::mesh::mapping<specfem::dimension::type::dim3>::print(int ispec) const {
   std::ostringstream message;
 
   message << "Mapping parameters for spectral element " << ispec << ":\n"
-          << "------------------------------\n"
+          << "--------------------------------------------------\n"
+          << "\n"
+          << " |---> igllx\n"
+          << " |\n"
+          << " V\n"
+          << "iglly\n"
+          << "\n"
           << "ibool:\n";
   for (int igllz = 0; igllz < ngllz; igllz++) {
+    message << "igllz=" << igllz << ": ";
     for (int iglly = 0; iglly < nglly; iglly++) {
+      if (iglly > 0) {
+        message << "         ";
+      }
       for (int igllx = 0; igllx < ngllx; igllx++) {
-        message << "igllx=" << igllx << ": "
-                << ibool(ispec, igllx, iglly, igllz) << " ";
+        message << ibool(ispec, igllx, iglly, igllz) << " ";
       }
       message << "\n";
     }

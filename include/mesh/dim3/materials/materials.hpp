@@ -185,7 +185,7 @@ template <> struct materials<specfem::dimension::type::dim3> {
    * @brief Print basic information about the materials
    *
    */
-  void print();
+  std::string print();
 };
 } // namespace mesh
 } // namespace specfem
