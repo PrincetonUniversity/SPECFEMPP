@@ -34,6 +34,18 @@ void read_ibool(std::ifstream &stream,
                 const specfem::MPI::MPI *mpi);
 
 /**
+ * @brief Read element types from 3D mesh database
+ *
+ * @param stream Input stream
+ * @param element_types Element types object
+ * @param mpi MPI object
+ */
+void read_element_types(
+    std::ifstream &stream,
+    specfem::mesh::element_types<specfem::dimension::type::dim3> &element_types,
+    const specfem::MPI::MPI *mpi);
+
+/**
  * @brief Read coordinates from 3D mesh database
  *
  * @param stream Input stream

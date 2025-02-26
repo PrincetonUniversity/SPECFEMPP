@@ -110,30 +110,49 @@ module save_arrays_module
 
   ! subroutine that converts a logical array to an integer array and writes it
   ! a file IOUT (see save_global_arrays)
-  subroutine save_logical_nspec_array(array)
+  subroutine save_ispec_is_arrays(nspec, ispec_is_acoustic, ispec_is_elastic, ispec_is_poroelastic)
 
     use constants, only: IOUT
-    use generate_databases_par, only: nspec => NSPEC_AB
 
-    logical, dimension(nspec), intent(in) :: array
+    implicit none
 
+    integer, intent(in) :: nspec
+    logical, dimension(nspec), intent(in) :: ispec_is_acoustic, ispec_is_elastic, ispec_is_poroelastic
+
+    ! To be written to file
     integer, dimension(nspec) :: array_int
 
     integer :: i
 
-    do i = 1, nspec
-      if (array(i)) then
-        array_int(i) = 1
-      else
-        array_int(i) = 0
-      endif
-    enddo
+    ! To be written to file
+    integer :: nspec_acoustic = 0, nspec_elastic = 0, nspec_poroelastic = 0
 
+    ! Loop over the number of element types in the array and convert the logical
+    ! values to integer values
+    do i = 1, nspec
+      array_int(i) = 0
+      if (ispec_is_acoustic(i)) then
+        array_int(i) = 0
+        nspec_acoustic = nspec_acoustic + 1
+      elseif (ispec_is_elastic(i)) then
+        array_int(i) = 1
+        nspec_elastic = nspec_elastic + 1
+      elseif (ispec_is_poroelastic(i)) then
+        array_int(i) = 2
+        nspec_poroelastic = nspec_poroelastic + 1
+      else
+        write(*,*) 'Error: ispec_is arrays are not correct'
+        stop
+      end if
+    end do
+    write(IOUT) nspec_acoustic
+    write(IOUT) nspec_elastic
+    write(IOUT) nspec_poroelastic
     write(IOUT) array_int
 
-  end subroutine save_logical_nspec_array
+  end subroutine save_ispec_is_arrays
 
-  end module save_arrays_module
+end module save_arrays_module
 ! for external mesh
 
   subroutine save_arrays_solver_mesh()
@@ -142,7 +161,7 @@ module save_arrays_module
   use save_arrays_module, only: &
     save_global_arrays, &
     save_global_arrays_with_components, &
-    save_logical_nspec_array, &
+    save_ispec_is_arrays, &
     save_boundary_arrays
 
   use shared_parameters, only: ACOUSTIC_SIMULATION, ELASTIC_SIMULATION, POROELASTIC_SIMULATION, &
@@ -274,10 +293,19 @@ module save_arrays_module
   call save_global_arrays(nspec, kappastore)
   call save_global_arrays(nspec, mustore)
 
-  ! Converting the logical arrays to integer arrays and writing them as ints
-  write(IOUT) ispec_is_acoustic
-  write(IOUT) ispec_is_elastic
-  write(IOUT) ispec_is_poroelastic
+  ! save_ispec_is_arrays writes the following:
+  ! the number of each type of element
+  !   nspec_acoustic
+  !   nspec_elastic
+  !   nspec_poroelastic
+  !
+  ! single integer array of nspec
+  ! represents the material type of each element
+  ! 0 = acoustic, 1 = elastic, 2 = poroelastic
+
+  call save_ispec_is_arrays(nspec, ispec_is_acoustic, &
+                                   ispec_is_elastic, &
+                                   ispec_is_poroelastic)
 
   ! stamp for checking i/o
   itest = 9999
