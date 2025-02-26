@@ -543,7 +543,7 @@ impl_store_on_device(const specfem::point::simd_assembly_index &index,
   if constexpr (StoreDisplacement) {
     for (int icomp = 0; icomp < components; ++icomp) {
       Kokkos::Experimental::where(mask, point_field.displacement(icomp))
-          .copy_to(&curr_field.h_field(iglob, icomp), tag_type());
+          .copy_to(&curr_field.field(iglob, icomp), tag_type());
     }
   }
 
