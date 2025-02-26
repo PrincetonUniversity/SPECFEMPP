@@ -30,11 +30,19 @@ struct value_containers {
 
   containers_type<specfem::element::medium_tag::elastic_sv,
                   specfem::element::property_tag::isotropic>
-      elastic_isotropic; ///< Elastic isotropic material values
+      elastic_sv_isotropic; ///< Elastic isotropic material values
 
   containers_type<specfem::element::medium_tag::elastic_sv,
                   specfem::element::property_tag::anisotropic>
-      elastic_anisotropic; ///< Elastic isotropic material values
+      elastic_sv_anisotropic; ///< Elastic isotropic material values
+
+  containers_type<specfem::element::medium_tag::elastic_sh,
+                  specfem::element::property_tag::isotropic>
+      elastic_sh_isotropic; ///< Elastic isotropic material values
+
+  containers_type<specfem::element::medium_tag::elastic_sh,
+                  specfem::element::property_tag::anisotropic>
+      elastic_sh_anisotropic; ///< Elastic isotropic material values
 
   containers_type<specfem::element::medium_tag::acoustic,
                   specfem::element::property_tag::isotropic>
@@ -62,17 +70,27 @@ struct value_containers {
       get_container() const {
     if constexpr ((MediumTag == specfem::element::medium_tag::elastic_sv) &&
                   (PropertyTag == specfem::element::property_tag::isotropic)) {
-      return elastic_isotropic;
+      return elastic_sv_isotropic;
     } else if constexpr ((MediumTag ==
                           specfem::element::medium_tag::elastic_sv) &&
                          (PropertyTag ==
                           specfem::element::property_tag::anisotropic)) {
-      return elastic_anisotropic;
+      return elastic_sv_anisotropic;
     } else if constexpr ((MediumTag ==
                           specfem::element::medium_tag::acoustic) &&
                          (PropertyTag ==
                           specfem::element::property_tag::isotropic)) {
       return acoustic_isotropic;
+    } else if constexpr ((MediumTag ==
+                          specfem::element::medium_tag::elastic_sh) &&
+                         (PropertyTag ==
+                          specfem::element::property_tag::isotropic)) {
+      return elastic_sh_isotropic;
+    } else if constexpr ((MediumTag ==
+                          specfem::element::medium_tag::elastic_sh) &&
+                         (PropertyTag ==
+                          specfem::element::property_tag::anisotropic)) {
+      return elastic_sh_anisotropic;
     } else {
       static_assert("Material type not implemented");
     }
@@ -83,14 +101,18 @@ struct value_containers {
    *
    */
   void copy_to_host() {
-    elastic_isotropic.copy_to_host();
-    elastic_anisotropic.copy_to_host();
+    elastic_sv_isotropic.copy_to_host();
+    elastic_sv_anisotropic.copy_to_host();
+    elastic_sh_isotropic.copy_to_host();
+    elastic_sh_anisotropic.copy_to_host();
     acoustic_isotropic.copy_to_host();
   }
 
   void copy_to_device() {
-    elastic_isotropic.copy_to_device();
-    elastic_anisotropic.copy_to_device();
+    elastic_sv_isotropic.copy_to_device();
+    elastic_sv_anisotropic.copy_to_device();
+    elastic_sh_isotropic.copy_to_device();
+    elastic_sh_anisotropic.copy_to_device();
     acoustic_isotropic.copy_to_device();
   }
 };

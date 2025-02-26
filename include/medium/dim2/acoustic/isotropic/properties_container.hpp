@@ -12,7 +12,7 @@ struct properties_container<specfem::element::medium_tag::acoustic,
                             specfem::element::property_tag::isotropic> {
 
   constexpr static auto dimension = specfem::dimension::type::dim2;
-  constexpr static auto value_type = specfem::element::medium_tag::acoustic;
+  constexpr static auto medium_tag = specfem::element::medium_tag::acoustic;
   constexpr static auto property_type =
       specfem::element::property_tag::isotropic;
 
@@ -37,6 +37,17 @@ struct properties_container<specfem::element::medium_tag::acoustic,
         kappa("specfem::compute::properties::kappa", nspec, ngllz, ngllx),
         h_kappa(Kokkos::create_mirror_view(kappa)) {}
 
+  properties_container(
+      const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
+      const int ngllz, const int ngllx,
+      const specfem::mesh::materials &materials, const bool has_gll_model,
+      const specfem::kokkos::HostView1d<int> property_index_mapping)
+      : properties_container(elements.extent(0), ngllz, ngllx) {
+
+    impl::constructor(elements, ngllz, ngllx, materials, has_gll_model,
+                      property_index_mapping, *this);
+  }
+
   template <
       typename PointProperties,
       typename std::enable_if_t<!PointProperties::simd::using_simd, int> = 0>
@@ -46,7 +57,7 @@ struct properties_container<specfem::element::medium_tag::acoustic,
 
     static_assert(PointProperties::dimension == dimension,
                   "Dimension mismatch");
-    static_assert(PointProperties::medium_tag == value_type,
+    static_assert(PointProperties::medium_tag == medium_tag,
                   "Medium tag mismatch");
     static_assert(PointProperties::property_tag == property_type,
                   "Property tag mismatch");
@@ -71,7 +82,7 @@ struct properties_container<specfem::element::medium_tag::acoustic,
 
     static_assert(PointProperties::dimension == dimension,
                   "Dimension mismatch");
-    static_assert(PointProperties::medium_tag == value_type,
+    static_assert(PointProperties::medium_tag == medium_tag,
                   "Medium tag mismatch");
     static_assert(PointProperties::property_tag == property_type,
                   "Property tag mismatch");
@@ -105,7 +116,7 @@ struct properties_container<specfem::element::medium_tag::acoustic,
 
     static_assert(PointProperties::dimension == dimension,
                   "Dimension mismatch");
-    static_assert(PointProperties::medium_tag == value_type,
+    static_assert(PointProperties::medium_tag == medium_tag,
                   "Medium tag mismatch");
     static_assert(PointProperties::property_tag == property_type,
                   "Property tag mismatch");
@@ -130,7 +141,7 @@ struct properties_container<specfem::element::medium_tag::acoustic,
 
     static_assert(PointProperties::dimension == dimension,
                   "Dimension mismatch");
-    static_assert(PointProperties::medium_tag == value_type,
+    static_assert(PointProperties::medium_tag == medium_tag,
                   "Medium tag mismatch");
     static_assert(PointProperties::property_tag == property_type,
                   "Property tag mismatch");
@@ -173,7 +184,7 @@ struct properties_container<specfem::element::medium_tag::acoustic,
 
     static_assert(PointProperties::dimension == dimension,
                   "Dimension mismatch");
-    static_assert(PointProperties::medium_tag == value_type,
+    static_assert(PointProperties::medium_tag == medium_tag,
                   "Medium tag mismatch");
     static_assert(PointProperties::property_tag == property_type,
                   "Property tag mismatch");
@@ -194,7 +205,7 @@ struct properties_container<specfem::element::medium_tag::acoustic,
 
     static_assert(PointProperties::dimension == dimension,
                   "Dimension mismatch");
-    static_assert(PointProperties::medium_tag == value_type,
+    static_assert(PointProperties::medium_tag == medium_tag,
                   "Medium tag mismatch");
     static_assert(PointProperties::property_tag == property_type,
                   "Property tag mismatch");

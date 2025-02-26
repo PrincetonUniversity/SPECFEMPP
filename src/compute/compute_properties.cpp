@@ -15,13 +15,23 @@ specfem::compute::properties::properties(
   this->h_property_index_mapping =
       Kokkos::create_mirror_view(property_index_mapping);
 
-  const auto elastic_isotropic_elements = element_types.get_elements_on_host(
+  const auto elastic_sv_isotropic_elements = element_types.get_elements_on_host(
       specfem::element::medium_tag::elastic_sv,
       specfem::element::property_tag::isotropic);
 
-  const auto elastic_anisotropic_elements = element_types.get_elements_on_host(
-      specfem::element::medium_tag::elastic_sv,
-      specfem::element::property_tag::anisotropic);
+  const auto elastic_sv_anisotropic_elements =
+      element_types.get_elements_on_host(
+          specfem::element::medium_tag::elastic_sv,
+          specfem::element::property_tag::anisotropic);
+
+  const auto elastic_sh_isotropic_elements = element_types.get_elements_on_host(
+      specfem::element::medium_tag::elastic_sh,
+      specfem::element::property_tag::isotropic);
+
+  const auto elastic_sh_anisotropic_elements =
+      element_types.get_elements_on_host(
+          specfem::element::medium_tag::elastic_sh,
+          specfem::element::property_tag::anisotropic);
 
   const auto acoustic_elements = element_types.get_elements_on_host(
       specfem::element::medium_tag::acoustic,
@@ -31,22 +41,34 @@ specfem::compute::properties::properties(
     h_property_index_mapping(ispec) = -1;
   }
 
-  acoustic_isotropic = specfem::medium::material_properties<
+  acoustic_isotropic = specfem::medium::properties_container<
       specfem::element::medium_tag::acoustic,
       specfem::element::property_tag::isotropic>(
       acoustic_elements, ngllz, ngllx, materials, has_gll_model,
       h_property_index_mapping);
 
-  elastic_isotropic = specfem::medium::material_properties<
+  elastic_sv_isotropic = specfem::medium::properties_container<
       specfem::element::medium_tag::elastic_sv,
       specfem::element::property_tag::isotropic>(
-      elastic_isotropic_elements, ngllz, ngllx, materials, has_gll_model,
+      elastic_sv_isotropic_elements, ngllz, ngllx, materials, has_gll_model,
       h_property_index_mapping);
 
-  elastic_anisotropic = specfem::medium::material_properties<
+  elastic_sv_anisotropic = specfem::medium::properties_container<
       specfem::element::medium_tag::elastic_sv,
       specfem::element::property_tag::anisotropic>(
-      elastic_anisotropic_elements, ngllz, ngllx, materials, has_gll_model,
+      elastic_sv_anisotropic_elements, ngllz, ngllx, materials, has_gll_model,
+      h_property_index_mapping);
+
+  elastic_sh_isotropic = specfem::medium::properties_container<
+      specfem::element::medium_tag::elastic_sh,
+      specfem::element::property_tag::isotropic>(
+      elastic_sh_isotropic_elements, ngllz, ngllx, materials, has_gll_model,
+      h_property_index_mapping);
+
+  elastic_sh_anisotropic = specfem::medium::properties_container<
+      specfem::element::medium_tag::elastic_sh,
+      specfem::element::property_tag::anisotropic>(
+      elastic_sh_anisotropic_elements, ngllz, ngllx, materials, has_gll_model,
       h_property_index_mapping);
 
   Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);
