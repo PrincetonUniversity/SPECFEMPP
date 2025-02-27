@@ -75,8 +75,8 @@ void specfem::IO::mesh::impl::fortran::dim3::read_array(std::ifstream &stream,
         specfem::IO::fortran_read_line(stream, &dummy_T);
         // Assign to KokkosView
         int counter = 0;
-        for (int j = 0; j < n1; j++) {
-          for (int k = 0; k < n2; k++) {
+        for (int k = 0; k < n2; k++) {
+          for (int j = 0; j < n1; j++) {
             array(i, j, k) = dummy_T[counter];
             counter++;
           }
@@ -104,9 +104,9 @@ void specfem::IO::mesh::impl::fortran::dim3::read_array(std::ifstream &stream,
         specfem::IO::fortran_read_line(stream, &dummy_T);
         // Assign to KokkosView
         int counter = 0;
-        for (int j = 0; j < n1; j++) {
+        for (int l = 0; l < n3; l++) {
           for (int k = 0; k < n2; k++) {
-            for (int l = 0; l < n3; l++) {
+            for (int j = 0; j < n1; j++) {
               array(i, j, k, l) = dummy_T[counter];
               counter++;
             }
@@ -136,10 +136,10 @@ void specfem::IO::mesh::impl::fortran::dim3::read_array(std::ifstream &stream,
         specfem::IO::fortran_read_line(stream, &dummy_T);
         // Assign to KokkosView
         int counter = 0;
-        for (int j = 0; j < n1; j++) {
-          for (int k = 0; k < n2; k++) {
-            for (int l = 0; l < n3; l++) {
-              for (int m = 0; m < n4; m++) {
+        for (int m = 0; m < n4; m++) {
+          for (int l = 0; l < n3; l++) {
+            for (int k = 0; k < n2; k++) {
+              for (int j = 0; j < n1; j++) {
                 array(i, j, k, l, m) = dummy_T[counter];
                 counter++;
               }
@@ -229,8 +229,8 @@ void specfem::IO::mesh::impl::fortran::dim3::read_index_array(
 
         // Assign to KokkosView
         int counter = 0;
-        for (int j = 0; j < n1; j++) {
-          for (int k = 0; k < n2; k++) {
+        for (int k = 0; k < n2; k++) {
+          for (int j = 0; j < n1; j++) {
             array(i, j, k) = dummy_T[counter] - 1;
             counter++;
           }
@@ -259,9 +259,9 @@ void specfem::IO::mesh::impl::fortran::dim3::read_index_array(
 
         // Assign to KokkosView
         int counter = 0;
-        for (int j = 0; j < n1; j++) {
+        for (int l = 0; l < n3; l++) {
           for (int k = 0; k < n2; k++) {
-            for (int l = 0; l < n3; l++) {
+            for (int j = 0; j < n1; j++) {
               array(i, j, k, l) = dummy_T[counter] - 1;
               counter++;
             }
