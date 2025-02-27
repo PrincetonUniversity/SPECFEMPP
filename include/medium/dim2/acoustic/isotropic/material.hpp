@@ -1,7 +1,6 @@
 #pragma once
 
 #include "enumerations/medium.hpp"
-#include "medium/impl/material.hpp"
 #include "point/properties.hpp"
 #include "specfem_setup.hpp"
 #include <exception>

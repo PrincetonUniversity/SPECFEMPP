@@ -22,7 +22,7 @@ specfem::mesh::materials::operator[](const int index) const {
       material_specification.property ==
           specfem::element::property_tag::isotropic) {
     return this->elastic_isotropic
-        .material_properties[material_specification.index];
+        .element_materials[material_specification.index];
 
     // Return elastic anisotropic
   } else if (material_specification.type ==
@@ -30,7 +30,7 @@ specfem::mesh::materials::operator[](const int index) const {
              material_specification.property ==
                  specfem::element::property_tag::anisotropic) {
     return this->elastic_anisotropic
-        .material_properties[material_specification.index];
+        .element_materials[material_specification.index];
 
     // Return acoustic isotropic
   } else if (material_specification.type ==
@@ -38,7 +38,7 @@ specfem::mesh::materials::operator[](const int index) const {
              material_specification.property ==
                  specfem::element::property_tag::isotropic) {
     return this->acoustic_isotropic
-        .material_properties[material_specification.index];
+        .element_materials[material_specification.index];
     // Throw an error if the material type is not supported
   } else {
     throw std::runtime_error("Material type not supported");
