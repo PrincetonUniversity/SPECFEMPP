@@ -1,5 +1,4 @@
 #pragma once
-#pragma once
 
 #include "stress_integrand.hpp"
 
