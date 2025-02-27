@@ -400,6 +400,25 @@ target_link_libraries(
 #   -lpthread -lm
 # )
 
+add_executable(
+  accessor_tests
+  accessor/accessor_tests.cpp
+)
+target_link_libraries(
+  accessor_tests
+  kokkos_environment
+  mpi_environment
+  quadrature
+  mesh
+  compute
+  parameter_reader
+  timescheme
+  coupled_interface
+  periodic_tasks
+  # material_class
+  -lpthread -lm
+)
+
 # add_executable(
 #   compute_coupled_interfaces_tests
 #   compute/coupled_interfaces/coupled_interfaces_tests.cpp
@@ -441,4 +460,5 @@ if (NOT MPI_PARALLEL)
   gtest_discover_tests(displacement_newmark_tests)
   # gtest_discover_tests(seismogram_elastic_tests)
   # gtest_discover_tests(seismogram_acoustic_tests)
+  gtest_discover_tests(accessor_tests)
 endif(NOT MPI_PARALLEL)
