@@ -577,6 +577,7 @@ add_library(
         src/parameter_parser/time_scheme/time_scheme.cpp
         src/parameter_parser/database_configuration.cpp
         src/parameter_parser/header.cpp
+        src/parameter_parser/elastic_wave.cpp
         src/parameter_parser/quadrature.cpp
         src/parameter_parser/receivers.cpp
         src/parameter_parser/writer/seismogram.cpp

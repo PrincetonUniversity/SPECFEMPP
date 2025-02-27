@@ -53,6 +53,15 @@ specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict,
     throw std::runtime_error("Error reading specfem source configuration.");
   }
 
+  if (const YAML::Node &n_elastic_wave = simulation_setup["elastic-wave"]) {
+    this->elastic_wave =
+        std::make_unique<specfem::runtime_configuration::elastic_wave>(
+            n_elastic_wave);
+  } else {
+    this->elastic_wave =
+        std::make_unique<specfem::runtime_configuration::elastic_wave>("P_SV");
+  }
+
   if (const YAML::Node &n_quadrature = simulation_setup["quadrature"]) {
     this->quadrature =
         std::make_unique<specfem::runtime_configuration::quadrature>(

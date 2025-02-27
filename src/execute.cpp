@@ -42,8 +42,8 @@ void execute(
   //                   Read mesh and materials
   // --------------------------------------------------------------
   const auto quadrature = setup.instantiate_quadrature();
-  const auto mesh = specfem::IO::read_mesh(
-      database_filename, specfem::enums::elastic_wave::p_sv, mpi);
+  const auto mesh = specfem::IO::read_mesh(database_filename,
+                                           setup.get_elastic_wave_type(), mpi);
   // --------------------------------------------------------------
 
   // --------------------------------------------------------------
