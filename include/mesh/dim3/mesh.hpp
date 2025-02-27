@@ -1,11 +1,14 @@
 #pragma once
 
+#include "adjacency/adjacency.hpp"
 #include "boundaries/absorbing_boundary.hpp"
 #include "boundaries/boundaries.hpp"
 #include "boundaries/free_surface.hpp"
+#include "coloring/coloring.hpp"
 #include "coordinates/coordinates.hpp"
 #include "coupled_interfaces/coupled_interfaces.hpp"
 #include "element_types/element_types.hpp"
+#include "inner_outer/inner_outer.hpp"
 #include "mass_matrix/mass_matrix.hpp"
 #include "materials/materials.hpp"
 #include "mesh/dim3/mapping/mapping.hpp"
@@ -15,6 +18,7 @@
 #include "partial_derivatives/partial_derivatives.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
+#include "surface/surface.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
@@ -78,6 +82,18 @@ template <> struct mesh<specfem::dimension::type::dim3> {
   // MPI information
   specfem::mesh::mpi<dimension> mpi; ///< MPI interfaces
 
+  // Inner outer elements
+  specfem::mesh::inner_outer<dimension> inner_outer; ///< Inner outer elements
+
+  // Coloring
+  specfem::mesh::coloring<dimension> coloring; ///< Coloring
+
+  // Surface
+  specfem::mesh::surface<dimension> surface; ///< Surface
+
+  // Adjacency
+  specfem::mesh::adjacency<dimension> adjacency; ///< Adjacency
+
   /**
    * @name Constructors
    *
@@ -106,6 +122,11 @@ template <> struct mesh<specfem::dimension::type::dim3> {
    * @param absorbing_boundary Struct to store absorbing boundaries
    * @param free_surface Struct to store free surface boundaries
    * @param coupled_interfaces Struct to store coupled interfaces
+   * @param mpi Struct to store MPI information
+   * @param inner_outer Struct to store inner outer elements
+   * @param coloring Struct to store coloring information
+   * @param adjacency Struct to store element adjacency information
+   *
    *
    * @note This constructor is usually unused, and the mesh is constructed
    *       using the @ref specfem::IO::read_3d_mesh function.
@@ -125,7 +146,12 @@ template <> struct mesh<specfem::dimension::type::dim3> {
        const specfem::mesh::boundaries<dimension> &boundaries,
        const specfem::mesh::absorbing_boundary<dimension> &absorbing_boundary,
        const specfem::mesh::free_surface<dimension> &free_surface,
-       const specfem::mesh::coupled_interfaces<dimension> &coupled_interfaces)
+       const specfem::mesh::coupled_interfaces<dimension> &coupled_interfaces,
+       const specfem::mesh::mpi<dimension> &mpi,
+       const specfem::mesh::inner_outer<dimension> &inner_outer,
+       const specfem::mesh::coloring<dimension> &coloring,
+       const specfem::mesh::surface<dimension> &surface,
+       const specfem::mesh::adjacency<dimension> &adjacency)
       : parameters(parameters), coordinates(coordinates), mapping(mapping),
         xix_regular(xix_regular), jacobian_regular(jacobian_regular),
         irregular_element_number(irregular_element_number),
@@ -133,7 +159,9 @@ template <> struct mesh<specfem::dimension::type::dim3> {
         elements_types(elements_types), mass_matrix(mass_matrix),
         materials(materials), boundaries(boundaries),
         absorbing_boundary(absorbing_boundary), free_surface(free_surface),
-        coupled_interfaces(coupled_interfaces){};
+        coupled_interfaces(coupled_interfaces), mpi(mpi),
+        inner_outer(inner_outer), coloring(coloring), surface(surface),
+        adjacency(adjacency){};
 
   ///@} // Constructors
 
