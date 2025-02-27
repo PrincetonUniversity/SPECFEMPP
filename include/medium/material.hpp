@@ -1,11 +1,10 @@
 #pragma once
 
-#include "dim2/acoustic/isotropic/properties.hpp"
-#include "dim2/elastic/anisotropic/properties.hpp"
-#include "dim2/elastic/isotropic/properties.hpp"
+#include "dim2/acoustic/isotropic/material.hpp"
+#include "dim2/elastic/anisotropic/material.hpp"
+#include "dim2/elastic/isotropic/material.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "point/properties.hpp"
-#include "properties.hpp"
 #include "specfem_setup.hpp"
 #include <ostream>
 #include <tuple>
@@ -21,7 +20,7 @@ namespace medium {
  */
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-class material : public specfem::medium::properties<MediumTag, PropertyTag> {
+class material : public specfem::medium::impl_material<MediumTag, PropertyTag> {
 public:
   constexpr static auto medium_tag = MediumTag;     ///< Medium tag
   constexpr static auto property_tag = PropertyTag; ///< Property tag
@@ -45,7 +44,7 @@ public:
    */
   template <typename... Args>
   material(Args &&...args)
-      : specfem::medium::properties<MediumTag, PropertyTag>(
+      : specfem::medium::impl_material<MediumTag, PropertyTag>(
             std::forward<Args>(args)...) {}
   ///@}
 

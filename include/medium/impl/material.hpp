@@ -12,6 +12,6 @@ namespace medium {
  */
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-class properties;
+class impl_material;
 } // namespace medium
 } // namespace specfem
