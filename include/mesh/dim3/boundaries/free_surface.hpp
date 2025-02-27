@@ -82,6 +82,21 @@ template <> struct free_surface<specfem::dimension::type::dim3> {
    *
    */
   std::string print() const;
+
+  /**
+   * @brief Print the ijk values for a given face
+   *
+   * Print the ijk values for a given face
+   *
+   * @param iface index of the face
+   *
+   * @code{.cpp}
+   * // Example of how to use this function
+   * free_surface.print_ijk(iface);
+   * @endcode
+   *
+   */
+  std::string print_ijk(const int iface) const;
 };
 
 } // namespace mesh

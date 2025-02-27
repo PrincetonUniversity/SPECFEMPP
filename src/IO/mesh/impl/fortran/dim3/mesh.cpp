@@ -130,6 +130,12 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
   mpi->cout(mesh.coordinates.print());
   mpi->cout(mesh.coordinates.print(0));
   mpi->cout(mesh.coordinates.print(mesh.parameters.nglob - 1));
+
+  // These print the coordinate array layout for the first spectral element
+  // for debugging the array layout (Fortran v. C)
+  // mpi->cout(mesh.coordinates.print(0, mesh.mapping, "x"));
+  // mpi->cout(mesh.coordinates.print(0, mesh.mapping, "y"));
+  // mpi->cout(mesh.coordinates.print(0, mesh.mapping, "z"));
 #endif
 
   // Initialize the partial derivatives object
@@ -181,6 +187,12 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
   // Print Partial Derivatives parameters and the first spectral element
   mpi->cout(mesh.partial_derivatives.print());
   mpi->cout(mesh.partial_derivatives.print(0, 0, 0, 0));
+
+  // These print the partial derivatives array layout for the first spectral
+  // element for debugging the array layout (Fortran v. C)
+  // mpi->cout(mesh.partial_derivatives.print(0, "xix"));
+  // mpi->cout(mesh.partial_derivatives.print(0, "etay"));
+  // mpi->cout(mesh.partial_derivatives.print(0, "gammaz"));
 #endif
 
   // Marker that should be 10000
@@ -344,6 +356,11 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
 #ifndef NDEBUG
     // Print the absorbing boundaries
     mpi->cout(mesh.absorbing_boundary.print());
+
+    // Print the absorbing boundaries for the first face
+    // for debugging the array layout (Fortran v. C)
+    // mpi->cout(mesh.absorbing_boundary.print_ijk(0));
+    // mpi->cout(mesh.absorbing_boundary.print_ijk(num_abs_boundary_faces - 1));
 #endif
   }
 
@@ -435,6 +452,11 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
 #ifndef NDEBUG
   // Print the free surface
   mpi->cout(mesh.free_surface.print());
+
+  // Print the free surface for the first face
+  // for debugging the array layout (Fortran v. C)
+  // mpi->cout(mesh.free_surface.print_ijk(0));
+  // mpi->cout(mesh.free_surface.print_ijk(num_free_surface_faces - 1));
 #endif
 
   // Create the coupled interfaces object
