@@ -10,18 +10,17 @@ namespace medium {
 template <>
 struct properties_container<specfem::element::medium_tag::acoustic,
                             specfem::element::property_tag::isotropic>
-    : public impl::impl_properties_container<
+    : public impl_properties_container<
           specfem::element::medium_tag::acoustic,
           specfem::element::property_tag::isotropic, 2> {
   using base_type =
-      impl::impl_properties_container<specfem::element::medium_tag::acoustic,
-                                      specfem::element::property_tag::isotropic,
-                                      2>;
+      impl_properties_container<specfem::element::medium_tag::acoustic,
+                                specfem::element::property_tag::isotropic, 2>;
   using base_type::base_type;
   constexpr static int _counter = __COUNTER__;
 
-  DEFINE_CONTAINER(rho_inverse)
-  DEFINE_CONTAINER(kappa)
+  DEFINE_MEDIUM_VIEW(rho_inverse)
+  DEFINE_MEDIUM_VIEW(kappa)
 };
 
 } // namespace medium
