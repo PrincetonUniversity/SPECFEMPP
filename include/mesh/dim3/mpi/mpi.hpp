@@ -1,6 +1,7 @@
 #pragma once
 
 #include "enumerations/dimension.hpp"
+#include "enumerations/medium.hpp"
 #include "mesh/mesh_base.hpp"
 #include <Kokkos_Core.hpp>
 

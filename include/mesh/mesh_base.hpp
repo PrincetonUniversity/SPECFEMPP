@@ -1,6 +1,7 @@
 #pragma once
 
 #include "enumerations/dimension.hpp"
+#include "enumerations/medium.hpp"
 
 namespace specfem {
 
@@ -125,7 +126,40 @@ template <specfem::dimension::type DimensionType> struct tangential_elements;
 
 } // namespace elements
 
+/**
+ * @brief Container to store mpi information
+ *
+ * @tparam DimensionType
+ */
 template <specfem::dimension::type DimensionType> struct mpi;
+
+/**
+ * @brief Struct to store the whether elements are inner or outer MPI elements.
+ *
+ * @tparam DimensionType Dimension type
+ */
+template <specfem::dimension::type DimensionType> struct inner_outer;
+
+/**
+ * @brief Struct to store the coloring of the mesh
+ *
+ * @tparam DimensionType Dimension type
+ */
+template <specfem::dimension::type DimensionType> struct coloring;
+
+/**
+ * @brief Struct to store the surface elements
+ *
+ * @tparam DimensionType Dimension type
+ */
+template <specfem::dimension::type DimensionType> struct surface;
+
+/**
+ * @brief Struct to store the adjacency information
+ *
+ * @tparam DimensionType Dimension type
+ */
+template <specfem::dimension::type DimensionType> struct adjacency;
 
 } // namespace mesh
 } // namespace specfem
