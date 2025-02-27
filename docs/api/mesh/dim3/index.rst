@@ -23,3 +23,8 @@ What the 3D mesh struct holds
     mass_matrix/index
     boundaries/index
     coupled_interfaces/index
+    coloring/index
+    inner_outer/index
+    mpi/index
+    adjacency/index
+    surface/index

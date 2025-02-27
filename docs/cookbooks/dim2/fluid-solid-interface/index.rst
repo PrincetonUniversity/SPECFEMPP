@@ -39,7 +39,7 @@ Now let's create the necessary directories to store the input files and output a
     touch specfem_config.yaml
     touch single_source.yaml
     touch topography_file.dat
-    touch Par_File
+    touch Par_file
 
 
 Meshing the domain
@@ -52,15 +52,15 @@ meshing parmeters in a parameter file.
 Parameter file
 ~~~~~~~~~~~~~~
 
-.. literalinclude:: Par_File
+.. literalinclude:: Par_file
     :language: bash
     :emphasize-lines: 65,72-73,113-119
-    :caption: Par_File
+    :caption: Par_file
 
 - We define the acoustic and elastic velocity models in the `Velocity and
   density models` section of the parameter file.
 
-  .. literalinclude:: Par_File
+  .. literalinclude:: Par_file
     :language: bash
     :lineno-match:
     :linenos:
@@ -72,7 +72,7 @@ Parameter file
   following format: ``model_number 1 rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0``.
   Such model 1 is
 
-  .. literalinclude:: Par_File
+  .. literalinclude:: Par_file
       :language: bash
       :lineno-match:
       :linenos:
@@ -81,7 +81,7 @@ Parameter file
 
   and model 2 is
 
-  .. literalinclude:: Par_File
+  .. literalinclude:: Par_file
       :language: bash
       :lineno-match:
       :linenos:
@@ -92,7 +92,7 @@ Parameter file
   using the ``STACEY_ABSORBING_CONDITIONS``, ``absorbbottom``, ``absorbright``,
   ``absorbtop`` and ``absorbleft`` parameters.
 
-  .. literalinclude:: Par_File
+  .. literalinclude:: Par_file
       :language: bash
       :lineno-match:
       :linenos:
@@ -118,7 +118,7 @@ To execute the mesher run
 
 .. code:: bash
 
-    xmeshfem2D -p Par_File
+    xmeshfem2D -p Par_file
 
 .. note::
 
