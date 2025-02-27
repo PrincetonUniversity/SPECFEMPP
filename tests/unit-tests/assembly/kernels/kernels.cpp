@@ -154,7 +154,7 @@ specfem::point::kernels<specfem::dimension::type::dim2,
 get_point_kernel(const int ispec, const int iz, const int ix,
                  const specfem::compute::kernels &kernels) {
 
-  const auto elastic_isotropic = kernels.elastic_sv_isotropic;
+  const auto elastic_isotropic = kernels.value_dim2_elastic_sv_isotropic;
 
   const int ispec_l = kernels.h_property_index_mapping(ispec);
 
@@ -180,7 +180,7 @@ specfem::point::kernels<specfem::dimension::type::dim2,
 get_point_kernel(const int ispec, const int iz, const int ix,
                  const specfem::compute::kernels &kernels) {
 
-  const auto elastic_isotropic = kernels.elastic_sh_isotropic;
+  const auto elastic_isotropic = kernels.value_dim2_elastic_sh_isotropic;
 
   const int ispec_l = kernels.h_property_index_mapping(ispec);
 
@@ -256,7 +256,7 @@ specfem::point::kernels<specfem::dimension::type::dim2,
 get_point_kernel(const int ispec, const int iz, const int ix,
                  const specfem::compute::kernels &kernels) {
 
-  const auto elastic_anisotropic = kernels.elastic_sv_anisotropic;
+  const auto elastic_anisotropic = kernels.value_dim2_elastic_sv_anisotropic;
 
   const int ispec_l = kernels.h_property_index_mapping(ispec);
 
@@ -283,7 +283,7 @@ specfem::point::kernels<specfem::dimension::type::dim2,
 get_point_kernel(const int ispec, const int iz, const int ix,
                  const specfem::compute::kernels &kernels) {
 
-  const auto elastic_anisotropic = kernels.elastic_sh_anisotropic;
+  const auto elastic_anisotropic = kernels.value_dim2_elastic_sh_anisotropic;
 
   const int ispec_l = kernels.h_property_index_mapping(ispec);
 
@@ -362,7 +362,7 @@ specfem::point::kernels<specfem::dimension::type::dim2,
 get_point_kernel(const int ispec, const int iz, const int ix,
                  const specfem::compute::kernels &kernels) {
 
-  const auto acoustic_isotropic = kernels.acoustic_isotropic;
+  const auto acoustic_isotropic = kernels.value_dim2_acoustic_isotropic;
 
   const int ispec_l = kernels.h_property_index_mapping(ispec);
 
