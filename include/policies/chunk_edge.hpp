@@ -101,7 +101,7 @@ public:
                                                                  ///< type
   ///@}
 
-private:
+protected:
   constexpr static bool using_simd = simd::using_simd;
   constexpr static int simd_size = simd::size();
 
@@ -214,10 +214,6 @@ public:
 };
 } // namespace iterator
 
-// TODO all above this is same as chunk.hpp
-// change it.
-//==============================================================
-
 namespace policy {
 
 /**
@@ -230,7 +226,7 @@ template <typename ParallelConfig>
 struct chunk_edge
     : public Kokkos::TeamPolicy<typename ParallelConfig::execution_space> {
 
-private:
+protected:
   using IndexViewType = Kokkos::View<
       specfem::edge::index<ParallelConfig::dimension,
                            ParallelConfig::simd::using_simd> *,
@@ -273,7 +269,7 @@ public:
       true; ///< Indicates that this is a Kokkos team policy
   ///@}
 
-private:
+protected:
   constexpr static int simd_size = simd::size();
   constexpr static bool using_simd = simd::using_simd;
 
@@ -330,7 +326,7 @@ public:
     return iterator_type(my_indices, ngll);
   }
 
-private:
+protected:
   IndexViewType elements; ///< View of element indices
   int ngll;               ///< Number of GLL points along each edge
 };
