@@ -20,7 +20,7 @@ namespace impl {
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, int N>
 struct impl_properties_container {
-  using view_type = typename Kokkos::View<type_real ****, Kokkos::LayoutLeft,
+  using view_type = typename Kokkos::View<type_real ***[N], Kokkos::LayoutLeft,
                                           Kokkos::DefaultExecutionSpace>;
   constexpr static auto nprops = N;
   constexpr static auto dimension = specfem::dimension::type::dim2;
@@ -32,7 +32,7 @@ struct impl_properties_container {
   int ngllx; ///< number of quadrature points in x dimension
 
   view_type data;
-  view_type::HostMirror h_data;
+  typename view_type::HostMirror h_data;
 
   impl_properties_container() = default;
 
