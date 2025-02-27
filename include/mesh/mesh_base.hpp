@@ -125,5 +125,7 @@ template <specfem::dimension::type DimensionType> struct tangential_elements;
 
 } // namespace elements
 
+template <specfem::dimension::type DimensionType> struct mpi;
+
 } // namespace mesh
 } // namespace specfem

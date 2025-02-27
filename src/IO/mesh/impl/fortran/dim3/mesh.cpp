@@ -533,6 +533,40 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
   // Read test value 9997
   check_read_test_value(stream, 9997);
 
+  // Initialize MPI information
+  int num_interfaces_ext_mesh, max_nibool_interfaces_ext_mesh;
+  try_read_line("num_interfaces_ext_mesh", stream, &num_interfaces_ext_mesh);
+  try_read_line("max_nibool_interfaces_ext_mesh", stream,
+                &max_nibool_interfaces_ext_mesh);
+
+  // Check values
+  check_values("num_interfaces_ext_mesh", num_interfaces_ext_mesh,
+               mesh.parameters.num_interfaces_ext_mesh);
+  check_values("max_nibool_interfaces_ext_mesh", max_nibool_interfaces_ext_mesh,
+               mesh.parameters.max_nibool_interfaces_ext_mesh);
+
+  // If there are interfaces initialize the mpi object and read the interface
+  // information
+  if (mesh.parameters.num_interfaces_ext_mesh > 0) {
+    mesh.mpi = specfem::mesh::mpi<specfem::dimension::type::dim3>(
+        mesh.parameters.num_interfaces_ext_mesh,
+        mesh.parameters.max_nibool_interfaces_ext_mesh);
+
+    // Read the interface information
+    try_read_index_array("mpi.neighbors", stream, mesh.mpi.neighbors);
+    try_read_index_array("mpi.nibool", stream, mesh.mpi.nibool_interfaces);
+    try_read_index_array("mpi.ibool", stream, mesh.mpi.ibool_interfaces);
+
+  }
+#ifndef NDEBUG
+  else {
+    mpi->cout("No MPI information stored in the binary file.\n");
+  }
+#endif
+
+  // Read test value 9996
+  check_read_test_value(stream, 9996);
+
   // Final print with basic information
   mpi->cout(mesh.print());
 

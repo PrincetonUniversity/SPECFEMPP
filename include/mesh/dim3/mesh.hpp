@@ -10,6 +10,7 @@
 #include "materials/materials.hpp"
 #include "mesh/dim3/mapping/mapping.hpp"
 #include "mesh/mesh_base.hpp"
+#include "mpi/mpi.hpp"
 #include "parameters/parameters.hpp"
 #include "partial_derivatives/partial_derivatives.hpp"
 #include "specfem_mpi/interface.hpp"
@@ -73,6 +74,9 @@ template <> struct mesh<specfem::dimension::type::dim3> {
   specfem::mesh::coupled_interfaces<dimension>
       coupled_interfaces; ///< Coupled
                           ///< interfaces
+
+  // MPI information
+  specfem::mesh::mpi<dimension> mpi; ///< MPI interfaces
 
   /**
    * @name Constructors
