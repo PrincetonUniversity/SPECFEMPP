@@ -28,25 +28,20 @@ struct value_containers {
                                                       ///< property index
                                                       ///< mapping
 
-  containers_type<specfem::element::medium_tag::elastic_sv,
-                  specfem::element::property_tag::isotropic>
-      elastic_sv_isotropic; ///< Elastic isotropic material values
+#define GENERATE_CONTAINER_NAME(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)       \
+  containers_type<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)>                  \
+      CREATE_VARIABLE_NAME(value, GET_NAME(DIMENSION_TAG),                     \
+                           GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG));
 
-  containers_type<specfem::element::medium_tag::elastic_sv,
-                  specfem::element::property_tag::anisotropic>
-      elastic_sv_anisotropic; ///< Elastic isotropic material values
+  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(GENERATE_CONTAINER_NAME,
+                                      WHERE(DIMENSION_TAG_DIM2)
+                                          WHERE(MEDIUM_TAG_ELASTIC_SV,
+                                                MEDIUM_TAG_ELASTIC_SH,
+                                                MEDIUM_TAG_ACOUSTIC)
+                                              WHERE(PROPERTY_TAG_ISOTROPIC,
+                                                    PROPERTY_TAG_ANISOTROPIC));
 
-  containers_type<specfem::element::medium_tag::elastic_sh,
-                  specfem::element::property_tag::isotropic>
-      elastic_sh_isotropic; ///< Elastic isotropic material values
-
-  containers_type<specfem::element::medium_tag::elastic_sh,
-                  specfem::element::property_tag::anisotropic>
-      elastic_sh_anisotropic; ///< Elastic isotropic material values
-
-  containers_type<specfem::element::medium_tag::acoustic,
-                  specfem::element::property_tag::isotropic>
-      acoustic_isotropic; ///< Acoustic isotropic material values
+#undef GENERATE_CONTAINER_NAME
 
   /**
    * @name Constructors
@@ -68,32 +63,26 @@ struct value_containers {
   KOKKOS_INLINE_FUNCTION
       constexpr containers_type<MediumTag, PropertyTag> const &
       get_container() const {
-    if constexpr ((MediumTag == specfem::element::medium_tag::elastic_sv) &&
-                  (PropertyTag == specfem::element::property_tag::isotropic)) {
-      return elastic_sv_isotropic;
-    } else if constexpr ((MediumTag ==
-                          specfem::element::medium_tag::elastic_sv) &&
-                         (PropertyTag ==
-                          specfem::element::property_tag::anisotropic)) {
-      return elastic_sv_anisotropic;
-    } else if constexpr ((MediumTag ==
-                          specfem::element::medium_tag::acoustic) &&
-                         (PropertyTag ==
-                          specfem::element::property_tag::isotropic)) {
-      return acoustic_isotropic;
-    } else if constexpr ((MediumTag ==
-                          specfem::element::medium_tag::elastic_sh) &&
-                         (PropertyTag ==
-                          specfem::element::property_tag::isotropic)) {
-      return elastic_sh_isotropic;
-    } else if constexpr ((MediumTag ==
-                          specfem::element::medium_tag::elastic_sh) &&
-                         (PropertyTag ==
-                          specfem::element::property_tag::anisotropic)) {
-      return elastic_sh_anisotropic;
-    } else {
-      static_assert("Material type not implemented");
-    }
+
+#define GET_CONTAINER(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                 \
+  if constexpr ((GET_TAG(MEDIUM_TAG) == MediumTag) &&                          \
+                (GET_TAG(PROPERTY_TAG) == PropertyTag)) {                      \
+    return CREATE_VARIABLE_NAME(value, GET_NAME(DIMENSION_TAG),                \
+                                GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)); \
+  }
+
+    CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
+        GET_CONTAINER,
+        WHERE(DIMENSION_TAG_DIM2) WHERE(
+            MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
+            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC));
+#undef GET_CONTAINER
+
+    Kokkos::abort("Invalid material type detected in value containers");
+
+    /// code path should never be reached
+
+    return {}; ///< Return empty container if no match is found
   }
 
   /**
@@ -101,19 +90,33 @@ struct value_containers {
    *
    */
   void copy_to_host() {
-    elastic_sv_isotropic.copy_to_host();
-    elastic_sv_anisotropic.copy_to_host();
-    elastic_sh_isotropic.copy_to_host();
-    elastic_sh_anisotropic.copy_to_host();
-    acoustic_isotropic.copy_to_host();
+#define COPY_TO_HOST(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                  \
+  CREATE_VARIABLE_NAME(value, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),   \
+                       GET_NAME(PROPERTY_TAG))                                 \
+      .copy_to_host();
+
+    CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
+        COPY_TO_HOST,
+        WHERE(DIMENSION_TAG_DIM2) WHERE(
+            MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
+            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC));
+
+#undef COPY_TO_HOST
   }
 
   void copy_to_device() {
-    elastic_sv_isotropic.copy_to_device();
-    elastic_sv_anisotropic.copy_to_device();
-    elastic_sh_isotropic.copy_to_device();
-    elastic_sh_anisotropic.copy_to_device();
-    acoustic_isotropic.copy_to_device();
+#define COPY_TO_DEVICE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                \
+  CREATE_VARIABLE_NAME(value, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),   \
+                       GET_NAME(PROPERTY_TAG))                                 \
+      .copy_to_device();
+
+    CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
+        COPY_TO_DEVICE,
+        WHERE(DIMENSION_TAG_DIM2) WHERE(
+            MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
+            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC));
+
+#undef COPY_TO_DEVICE
   }
 };
 

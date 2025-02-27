@@ -222,6 +222,12 @@ specfem::compute::receivers::get_indices_on_host(
           WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
 #undef RETURN_VALUE
+
+  Kokkos::abort("Invalid medium or property tag. Please check the input "
+                "parameters and try again.");
+  return std::make_tuple(
+      Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>(),
+      Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>());
 }
 
 std::tuple<Kokkos::View<int *, Kokkos::DefaultExecutionSpace>,
@@ -247,4 +253,9 @@ specfem::compute::receivers::get_indices_on_device(
           WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
 #undef RETURN_VALUE
+
+  Kokkos::abort("Invalid medium or property tag. Please check the input "
+                "parameters and try again.");
+  return std::make_tuple(Kokkos::View<int *, Kokkos::DefaultExecutionSpace>(),
+                         Kokkos::View<int *, Kokkos::DefaultExecutionSpace>());
 }
