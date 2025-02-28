@@ -151,6 +151,10 @@ std::vector<specfem::mesh::materials::material_specification> read_materials(
 
           elastic_isotropic_holder.print();
           l_elastic_sv_isotropic.push_back(elastic_isotropic_holder);
+          index_mapping[i] = specfem::mesh::materials::material_specification(
+              specfem::element::medium_tag::elastic_sv,
+              specfem::element::property_tag::isotropic,
+              index_elastic_isotropic, read_values.n - 1);
         } else {
           specfem::medium::material<elastic_sh, isotropic>
               elastic_isotropic_holder(density, cs, cp, Qkappa, Qmu,
@@ -158,11 +162,15 @@ std::vector<specfem::mesh::materials::material_specification> read_materials(
 
           elastic_isotropic_holder.print();
           l_elastic_sh_isotropic.push_back(elastic_isotropic_holder);
+          index_mapping[i] = specfem::mesh::materials::material_specification(
+              specfem::element::medium_tag::elastic_sh,
+              specfem::element::property_tag::isotropic,
+              index_elastic_isotropic, read_values.n - 1);
         }
 
-        index_mapping[i] = specfem::mesh::materials::material_specification(
-            elastic, specfem::element::property_tag::isotropic,
-            index_elastic_isotropic, read_values.n - 1);
+        // index_mapping[i] = specfem::mesh::materials::material_specification(
+        //     elastic, specfem::element::property_tag::isotropic,
+        //     index_elastic_isotropic, read_values.n - 1);
 
         index_elastic_isotropic++;
       }
@@ -190,6 +198,10 @@ std::vector<specfem::mesh::materials::material_specification> read_materials(
 
         elastic_anisotropic_holder.print();
         l_elastic_sv_anisotropic.push_back(elastic_anisotropic_holder);
+        index_mapping[i] = specfem::mesh::materials::material_specification(
+            specfem::element::medium_tag::elastic_sv,
+            specfem::element::property_tag::anisotropic,
+            index_elastic_anisotropic, read_values.n - 1);
       } else {
 
         specfem::medium::material<elastic_sh, anisotropic>
@@ -198,11 +210,15 @@ std::vector<specfem::mesh::materials::material_specification> read_materials(
 
         elastic_anisotropic_holder.print();
         l_elastic_sh_anisotropic.push_back(elastic_anisotropic_holder);
+        index_mapping[i] = specfem::mesh::materials::material_specification(
+            specfem::element::medium_tag::elastic_sh,
+            specfem::element::property_tag::anisotropic,
+            index_elastic_anisotropic, read_values.n - 1);
       }
 
-      index_mapping[i] = specfem::mesh::materials::material_specification(
-          elastic, specfem::element::property_tag::anisotropic,
-          index_elastic_anisotropic, read_values.n - 1);
+      // index_mapping[i] = specfem::mesh::materials::material_specification(
+      //     elastic, specfem::element::property_tag::anisotropic,
+      //     index_elastic_anisotropic, read_values.n - 1);
 
       index_elastic_anisotropic++;
 
