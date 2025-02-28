@@ -29,6 +29,24 @@ void test_element_wavefield(
                 specfem::element::property_tag::isotropic>
         handle(ispec, wavefield, assembly);
     handle.test();
+  } else if ((medium == specfem::element::medium_tag::elastic_sv) &&
+             (property == specfem::element::property_tag::anisotropic)) {
+    test_helper<component, specfem::element::medium_tag::elastic_sv,
+                specfem::element::property_tag::anisotropic>
+        handle(ispec, wavefield, assembly);
+    handle.test();
+  } else if ((medium == specfem::element::medium_tag::elastic_sh) &&
+             (property == specfem::element::property_tag::isotropic)) {
+    test_helper<component, specfem::element::medium_tag::elastic_sh,
+                specfem::element::property_tag::isotropic>
+        handle(ispec, wavefield, assembly);
+    handle.test();
+  } else if ((medium == specfem::element::medium_tag::elastic_sh) &&
+             (property == specfem::element::property_tag::anisotropic)) {
+    test_helper<component, specfem::element::medium_tag::elastic_sh,
+                specfem::element::property_tag::anisotropic>
+        handle(ispec, wavefield, assembly);
+    handle.test();
   } else if ((medium == specfem::element::medium_tag::acoustic) &&
              (property == specfem::element::property_tag::isotropic)) {
     test_helper<component, specfem::element::medium_tag::acoustic,
