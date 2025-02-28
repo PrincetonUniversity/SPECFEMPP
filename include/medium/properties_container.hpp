@@ -35,7 +35,7 @@ struct impl_properties_container
 
             // Assign the material property to the property container
             auto point_property = material.get_properties();
-            this->assign(
+            this->store_host_values(
                 specfem::point::index<base_type::dimension>(count, iz, ix),
                 point_property);
           }
@@ -50,6 +50,14 @@ struct impl_properties_container
 
     return;
   }
+
+  template <typename PointValues, typename IndexType>
+  KOKKOS_FORCEINLINE_FUNCTION void
+  add_device_values(const IndexType &index, PointValues &values) const = delete;
+
+  template <typename PointValues, typename IndexType>
+  KOKKOS_FORCEINLINE_FUNCTION void
+  add_host_values(const IndexType &index, PointValues &values) const = delete;
 };
 
 template <specfem::element::medium_tag type,

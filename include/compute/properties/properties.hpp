@@ -187,8 +187,8 @@ void store_on_host(const IndexType &lcoord,
   static_assert(DimensionType == specfem::dimension::type::dim2,
                 "Only 2D properties are supported");
 
-  properties.get_container<MediumTag, PropertyTag>().assign(l_index,
-                                                            point_properties);
+  properties.get_container<MediumTag, PropertyTag>().store_host_values(
+      l_index, point_properties);
 }
 } // namespace compute
 } // namespace specfem
