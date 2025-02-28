@@ -90,22 +90,9 @@ private:
     }
   }
 
-public:
-  template <typename PointValues, typename IndexType>
-  KOKKOS_FORCEINLINE_FUNCTION void
-  load_device_values(const IndexType &index, PointValues &values) const {
-    load_values<true>(index, values);
-  }
-
-  template <typename PointValues, typename IndexType>
-  KOKKOS_FORCEINLINE_FUNCTION void load_host_values(const IndexType &index,
-                                                    PointValues &values) const {
-    load_values<false>(index, values);
-  }
-
-  template <typename PointValues>
-  inline void assign(const specfem::point::index<dimension> &index,
-                     const PointValues &values) const {
+  template <bool on_device, typename PointValues>
+  inline void store_values(const specfem::point::index<dimension> &index,
+                           const PointValues &values) const {
 
     static_assert(PointValues::dimension == dimension, "Dimension mismatch");
     static_assert(PointValues::medium_tag == medium_tag, "Medium tag mismatch");
@@ -117,13 +104,17 @@ public:
     const int ix = index.ix;
 
     for (int i = 0; i < nprops; i++) {
-      h_data(ispec, iz, ix, i) = values.data[i];
+      if constexpr (on_device) {
+        data(ispec, iz, ix, i) = values.data[i];
+      } else {
+        h_data(ispec, iz, ix, i) = values.data[i];
+      }
     }
   }
 
-  template <typename PointValues>
-  inline void assign(const specfem::point::simd_index<dimension> &index,
-                     const PointValues &values) const {
+  template <bool on_device, typename PointValues>
+  inline void store_values(const specfem::point::simd_index<dimension> &index,
+                           const PointValues &values) const {
 
     static_assert(PointValues::dimension == dimension, "Dimension mismatch");
     static_assert(PointValues::medium_tag == medium_tag, "Medium tag mismatch");
@@ -142,8 +133,102 @@ public:
 
     for (int i = 0; i < nprops; i++) {
       Kokkos::Experimental::where(mask, values.data[i])
-          .copy_to(&h_data(ispec, iz, ix, i), tag_type());
+          .copy_to(on_device ? &data(ispec, iz, ix, i)
+                             : &h_data(ispec, iz, ix, i),
+                   tag_type());
     }
+  }
+
+  template <bool on_device, typename PointValues>
+  inline void add_values(const specfem::point::index<dimension> &index,
+                         const PointValues &values) const {
+
+    static_assert(PointValues::dimension == dimension, "Dimension mismatch");
+    static_assert(PointValues::medium_tag == medium_tag, "Medium tag mismatch");
+    static_assert(PointValues::property_tag == property_tag,
+                  "Property tag mismatch");
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
+    for (int i = 0; i < nprops; i++) {
+      if constexpr (on_device) {
+        data(ispec, iz, ix, i) += values.data[i];
+      } else {
+        h_data(ispec, iz, ix, i) += values.data[i];
+      }
+    }
+  }
+
+  template <bool on_device, typename PointValues>
+  inline void add_values(const specfem::point::simd_index<dimension> &index,
+                         const PointValues &values) const {
+
+    static_assert(PointValues::dimension == dimension, "Dimension mismatch");
+    static_assert(PointValues::medium_tag == medium_tag, "Medium tag mismatch");
+    static_assert(PointValues::property_tag == property_tag,
+                  "Property tag mismatch");
+
+    using simd = typename PointValues::simd;
+    using simd_type = typename simd::datatype;
+    using mask_type = typename simd::mask_type;
+    using tag_type = typename simd::tag_type;
+
+    const int ispec = index.ispec;
+    const int iz = index.iz;
+    const int ix = index.ix;
+
+    simd_type lhs;
+
+    mask_type mask([&, this](std::size_t lane) { return index.mask(lane); });
+
+    for (int i = 0; i < nprops; i++) {
+      Kokkos::Experimental::where(mask, lhs).copy_from(
+          on_device ? &data(ispec, iz, ix, i) : &h_data(ispec, iz, ix, i),
+          tag_type());
+      lhs += values.data[i];
+      Kokkos::Experimental::where(mask, lhs).copy_to(
+          on_device ? &data(ispec, iz, ix, i) : &h_data(ispec, iz, ix, i),
+          tag_type());
+    }
+  }
+
+public:
+  template <typename PointValues, typename IndexType>
+  KOKKOS_FORCEINLINE_FUNCTION void
+  load_device_values(const IndexType &index, PointValues &values) const {
+    load_values<true>(index, values);
+  }
+
+  template <typename PointValues, typename IndexType>
+  KOKKOS_FORCEINLINE_FUNCTION void load_host_values(const IndexType &index,
+                                                    PointValues &values) const {
+    load_values<false>(index, values);
+  }
+
+  template <typename PointValues, typename IndexType>
+  KOKKOS_FORCEINLINE_FUNCTION void
+  store_device_values(const IndexType &index, PointValues &values) const {
+    store_values<true>(index, values);
+  }
+
+  template <typename PointValues, typename IndexType>
+  KOKKOS_FORCEINLINE_FUNCTION void
+  store_host_values(const IndexType &index, PointValues &values) const {
+    store_values<false>(index, values);
+  }
+
+  template <typename PointValues, typename IndexType>
+  KOKKOS_FORCEINLINE_FUNCTION void
+  add_device_values(const IndexType &index, PointValues &values) const {
+    add_values<true>(index, values);
+  }
+
+  template <typename PointValues, typename IndexType>
+  KOKKOS_FORCEINLINE_FUNCTION void add_host_values(const IndexType &index,
+                                                   PointValues &values) const {
+    add_values<false>(index, values);
   }
 
   void copy_to_device() { Kokkos::deep_copy(data, h_data); }
