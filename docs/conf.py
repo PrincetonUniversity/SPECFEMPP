@@ -78,7 +78,7 @@ html_theme = "furo"
 # }
 # html_logo = ''
 github_url = "https://github.com/PrincetonUniversity/SPECFEMPP"
-# html_baseurl = ''
+html_baseurl = 'https://specfem2d-kokkos.readthedocs.io/'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
