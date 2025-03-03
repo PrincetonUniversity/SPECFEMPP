@@ -194,12 +194,12 @@ specfem::IO::read_mesh(const std::string filename,
             std::to_string(mesh.materials.n_materials) + "\n\n");
 
   const auto l_elastic_isotropic =
-      mesh.materials.elastic_isotropic.material_properties;
+      mesh.materials.elastic_isotropic.element_materials;
   const auto l_acoustic_isotropic =
-      mesh.materials.acoustic_isotropic.material_properties;
+      mesh.materials.acoustic_isotropic.element_materials;
 
   const auto l_elastic_anisotropic =
-      mesh.materials.elastic_anisotropic.material_properties;
+      mesh.materials.elastic_anisotropic.element_materials;
 
   for (const auto material : l_elastic_isotropic) {
     mpi->cout(material.print());

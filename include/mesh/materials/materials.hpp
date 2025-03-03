@@ -44,7 +44,7 @@ struct materials {
   struct material {
     int n_materials; ///< Number of elements
     std::vector<specfem::medium::material<type, property> >
-        material_properties; ///< Material properties
+        element_materials; ///< Material properties
 
     material() = default;
 
