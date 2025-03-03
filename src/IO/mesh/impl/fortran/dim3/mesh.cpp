@@ -533,6 +533,239 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
   // Read test value 9997
   check_read_test_value(stream, 9997);
 
+  // Initialize MPI information
+  int num_interfaces_ext_mesh, max_nibool_interfaces_ext_mesh;
+  try_read_line("num_interfaces_ext_mesh", stream, &num_interfaces_ext_mesh);
+  try_read_line("max_nibool_interfaces_ext_mesh", stream,
+                &max_nibool_interfaces_ext_mesh);
+
+  // Check values
+  check_values("num_interfaces_ext_mesh", num_interfaces_ext_mesh,
+               mesh.parameters.num_interfaces_ext_mesh);
+  check_values("max_nibool_interfaces_ext_mesh", max_nibool_interfaces_ext_mesh,
+               mesh.parameters.max_nibool_interfaces_ext_mesh);
+
+  // If there are interfaces initialize the mpi object and read the interface
+  // information
+  if (mesh.parameters.num_interfaces_ext_mesh > 0) {
+    mesh.mpi = specfem::mesh::mpi<specfem::dimension::type::dim3>(
+        mesh.parameters.num_interfaces_ext_mesh,
+        mesh.parameters.max_nibool_interfaces_ext_mesh);
+
+    // Read the interface information
+    try_read_index_array("mpi.neighbors", stream, mesh.mpi.neighbors);
+    try_read_index_array("mpi.nibool", stream, mesh.mpi.nibool_interfaces);
+    try_read_index_array("mpi.ibool", stream, mesh.mpi.ibool_interfaces);
+
+  }
+#ifndef NDEBUG
+  else {
+    mpi->cout("No MPI information stored in the binary file.\n");
+  }
+#endif
+
+  // Read test value 9996
+  check_read_test_value(stream, 9996);
+
+  // Read the Anisotropic parameters if the simulation is anisotropic
+  if (mesh.parameters.anisotropy) {
+    try_read_array("read_anisotropic_parameter_c11", stream,
+                   mesh.materials.c11);
+    try_read_array("read_anisotropic_parameter_c12", stream,
+                   mesh.materials.c12);
+    try_read_array("read_anisotropic_parameter_c13", stream,
+                   mesh.materials.c13);
+    try_read_array("read_anisotropic_parameter_c14", stream,
+                   mesh.materials.c14);
+    try_read_array("read_anisotropic_parameter_c15", stream,
+                   mesh.materials.c15);
+    try_read_array("read_anisotropic_parameter_c16", stream,
+                   mesh.materials.c16);
+    try_read_array("read_anisotropic_parameter_c22", stream,
+                   mesh.materials.c22);
+    try_read_array("read_anisotropic_parameter_c23", stream,
+                   mesh.materials.c23);
+    try_read_array("read_anisotropic_parameter_c24", stream,
+                   mesh.materials.c24);
+    try_read_array("read_anisotropic_parameter_c25", stream,
+                   mesh.materials.c25);
+    try_read_array("read_anisotropic_parameter_c26", stream,
+                   mesh.materials.c26);
+    try_read_array("read_anisotropic_parameter_c33", stream,
+                   mesh.materials.c33);
+    try_read_array("read_anisotropic_parameter_c34", stream,
+                   mesh.materials.c34);
+    try_read_array("read_anisotropic_parameter_c35", stream,
+                   mesh.materials.c35);
+    try_read_array("read_anisotropic_parameter_c36", stream,
+                   mesh.materials.c36);
+    try_read_array("read_anisotropic_parameter_c44", stream,
+                   mesh.materials.c44);
+    try_read_array("read_anisotropic_parameter_c45", stream,
+                   mesh.materials.c45);
+    try_read_array("read_anisotropic_parameter_c46", stream,
+                   mesh.materials.c46);
+    try_read_array("read_anisotropic_parameter_c55", stream,
+                   mesh.materials.c55);
+    try_read_array("read_anisotropic_parameter_c56", stream,
+                   mesh.materials.c56);
+    try_read_array("read_anisotropic_parameter_c66", stream,
+                   mesh.materials.c66);
+  }
+
+  // Check read test value 9995
+  check_read_test_value(stream, 9995);
+
+  // Initialize the inner outer object
+  mesh.inner_outer = specfem::mesh::inner_outer<specfem::dimension::type::dim3>(
+      mesh.parameters.nspec, mesh.parameters.acoustic_simulation,
+      mesh.parameters.elastic_simulation,
+      mesh.parameters.poroelastic_simulation);
+
+  // Read ispec_is_inner
+  try_read_array("ispec_is_inner", stream, mesh.inner_outer.ispec_is_inner);
+
+  // Read inner outer acoustic elements
+  if (mesh.parameters.acoustic_simulation) {
+    int nspec_inner, nspec_outer, num_phase_ispec;
+
+    try_read_line("nspec_inner_acoustic", stream, &nspec_inner, &nspec);
+    try_read_line("num_phase_ispec_acoustic", stream, &num_phase_ispec);
+
+    // Initialize the inner outer elements
+    mesh.inner_outer.inner_outer_acoustic = specfem::mesh::inner_outer_medium<
+        specfem::element::medium_tag::acoustic>(nspec_inner, nspec_outer,
+                                                num_phase_ispec);
+
+    if (num_phase_ispec > 0) {
+      try_read_index_array(
+          "phase_ispec_inner_acoustic", stream,
+          mesh.inner_outer.inner_outer_acoustic.phase_ispec_inner);
+    }
+  }
+
+  // Check read test value 9994
+  check_read_test_value(stream, 9994);
+
+  // Read inner outer elastic elements
+  if (mesh.parameters.elastic_simulation) {
+    int nspec_inner, nspec_outer, num_phase_ispec;
+
+    try_read_line("nspec_inner_elastic", stream, &nspec_inner, &nspec_outer);
+    try_read_line("num_phase_ispec_elastic", stream, &num_phase_ispec);
+
+    // Initialize the inner outer elements
+    mesh.inner_outer.inner_outer_elastic = specfem::mesh::inner_outer_medium<
+        specfem::element::medium_tag::elastic>(nspec_inner, nspec_outer,
+                                               num_phase_ispec);
+
+    if (num_phase_ispec > 0) {
+      try_read_index_array(
+          "phase_ispec_inner_elastic", stream,
+          mesh.inner_outer.inner_outer_elastic.phase_ispec_inner);
+    }
+  }
+
+  // Check read test value 9993
+  check_read_test_value(stream, 9993);
+
+  // Read inner outer poroelastic elements
+  if (mesh.parameters.poroelastic_simulation) {
+    int nspec_inner, nspec_outer, num_phase_ispec;
+
+    try_read_line("nspec_inner_poroelastic", stream, &nspec_inner,
+                  &nspec_outer);
+    try_read_line("num_phase_ispec_poroelastic", stream, &num_phase_ispec);
+
+    // Initialize the inner outer elements
+    mesh.inner_outer.inner_outer_poroelastic =
+        specfem::mesh::inner_outer_medium<
+            specfem::element::medium_tag::poroelastic>(nspec_inner, nspec_outer,
+                                                       num_phase_ispec);
+
+    if (num_phase_ispec > 0) {
+      try_read_index_array(
+          "phase_ispec_inner_poroelastic", stream,
+          mesh.inner_outer.inner_outer_poroelastic.phase_ispec_inner);
+    }
+  }
+
+  // Check read test value 9992
+  check_read_test_value(stream, 9992);
+
+  // Read meshcoloring values if the mesh is colored
+  if (mesh.parameters.use_mesh_coloring) {
+
+    // initialize the mesh coloring object
+    mesh.coloring = specfem::mesh::coloring<specfem::dimension::type::dim3>(
+        mesh.parameters.acoustic_simulation,
+        mesh.parameters.elastic_simulation);
+
+    if (mesh.parameters.acoustic_simulation) {
+      int num_colors_outer, num_colors_inner;
+      try_read_line("num_colors_outer_acoustic", stream, &num_colors_outer);
+      try_read_line("num_colors_inner_acoustic", stream, &num_colors_inner);
+
+      // Initialize the medium coloring object
+      mesh.coloring.coloring_acoustic = specfem::mesh::medium_coloring<
+          specfem::element::medium_tag::acoustic>(num_colors_outer,
+                                                  num_colors_inner);
+
+      // Read the inner outer elements
+      try_read_index_array("coloring_ispec_inner_acoustic", stream,
+                           mesh.coloring.coloring_acoustic.elements);
+    }
+
+    if (mesh.parameters.acoustic_simulation) {
+      int num_colors_outer, num_colors_inner;
+      try_read_line("num_colors_outer_elastic", stream, &num_colors_outer);
+      try_read_line("num_colors_inner_elastic", stream, &num_colors_inner);
+
+      // Initialize the medium coloring object
+      mesh.coloring.coloring_elastic =
+          specfem::mesh::medium_coloring<specfem::element::medium_tag::elastic>(
+              num_colors_outer, num_colors_inner);
+
+      // Read the inner outer elements
+      try_read_index_array("coloring_ispec_inner_elastic", stream,
+                           mesh.coloring.coloring_elastic.elements);
+    }
+  }
+
+  // Check read test value 9991
+  check_read_test_value(stream, 9991);
+
+  // Read the number of surface elements
+  int nfaces_surface;
+  try_read_line("nfaces_surface", stream, &nfaces_surface);
+
+  // Initialize the surface elements object
+  mesh.surface = specfem::mesh::surface<specfem::dimension::type::dim3>(
+      nfaces_surface, mesh.parameters.nspec, mesh.parameters.nglob);
+
+  // Read the surface elements
+  try_read_array("ispec_is_surface", stream, mesh.surface.ispec_is_surface);
+  try_read_array("iglob_is_surface", stream, mesh.surface.iglob_is_surface);
+
+  // Check read test value 9990
+  check_read_test_value(stream, 9990);
+
+  // Read mesh adjacenecy
+  int num_neighbors_all;
+  try_read_line("num_neighbors_all", stream, &num_neighbors_all);
+
+  // Initialize the adjacency object
+  mesh.adjacency = specfem::mesh::adjacency<specfem::dimension::type::dim3>(
+      mesh.parameters.nspec, num_neighbors_all);
+
+  // Read the adjacency information
+  try_read_index_array("neighbors_xadj", stream, mesh.adjacency.neighbors_xadj);
+  try_read_index_array("neighbors_adjncy", stream,
+                       mesh.adjacency.neighbors_adjncy);
+
+  // Check read test value 9989
+  check_read_test_value(stream, 9989);
+
   // Final print with basic information
   mpi->cout(mesh.print());
 

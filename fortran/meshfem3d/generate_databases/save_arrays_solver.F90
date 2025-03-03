@@ -52,6 +52,29 @@ module save_arrays_module
 
   end subroutine save_global_arrays
 
+  subroutine save_inner_outer_arrays(num_inner, array)
+
+    use constants, only: IOUT, CUSTOM_REAL
+
+    implicit none
+
+    integer, intent(in) :: num_inner
+    integer :: ispec
+    integer, dimension(:, :), intent(in) :: array
+
+    ! Check if the size of the array is correct
+    if (size(array, 1) /= num_inner) then
+      write(*,*) 'Error: size of the array is not correct'
+      stop
+    endif
+
+    ! Save the array element by element
+    do ispec = 1, num_inner
+      WRITE(IOUT) array(ispec, :)
+    end do
+
+  end subroutine save_inner_outer_arrays
+
   subroutine save_global_arrays_with_components(nspec, array)
 
       use constants, only: IOUT, CUSTOM_REAL
@@ -162,7 +185,8 @@ end module save_arrays_module
     save_global_arrays, &
     save_global_arrays_with_components, &
     save_ispec_is_arrays, &
-    save_boundary_arrays
+    save_boundary_arrays, &
+    save_inner_outer_arrays
 
   use shared_parameters, only: ACOUSTIC_SIMULATION, ELASTIC_SIMULATION, POROELASTIC_SIMULATION, &
     APPROXIMATE_OCEAN_LOAD, SAVE_MESH_FILES, ANISOTROPY
@@ -574,26 +598,49 @@ end module save_arrays_module
     ! write(IOUT) c66store
   endif
 
+  ! Write test value 9995
+  itest = 9995
+  write(IOUT) itest
+
   ! inner/outer elements
   write(IOUT) ispec_is_inner
 
   if (ACOUSTIC_SIMULATION) then
     write(IOUT) nspec_inner_acoustic,nspec_outer_acoustic
     write(IOUT) num_phase_ispec_acoustic
-    if (num_phase_ispec_acoustic > 0) write(IOUT) phase_ispec_inner_acoustic
+    if (num_phase_ispec_acoustic > 0) then
+      call save_inner_outer_arrays(num_phase_ispec_acoustic, phase_ispec_inner_acoustic)
+    endif
   endif
 
+  ! Write test value 9994
+  itest = 9994
+  write(IOUT) itest
+
   if (ELASTIC_SIMULATION) then
-    write(IOUT) nspec_inner_elastic,nspec_outer_elastic
+    write(IOUT) nspec_inner_elastic, nspec_outer_elastic
     write(IOUT) num_phase_ispec_elastic
-    if (num_phase_ispec_elastic > 0) write(IOUT) phase_ispec_inner_elastic
+
+    if (num_phase_ispec_elastic > 0) then
+      call save_inner_outer_arrays(num_phase_ispec_elastic, phase_ispec_inner_elastic)
+    endif
   endif
+
+  ! Write test value 9993
+  itest = 9993
+  write(IOUT) itest
 
   if (POROELASTIC_SIMULATION) then
     write(IOUT) nspec_inner_poroelastic,nspec_outer_poroelastic
     write(IOUT) num_phase_ispec_poroelastic
-    if (num_phase_ispec_poroelastic > 0) write(IOUT) phase_ispec_inner_poroelastic
+    if (num_phase_ispec_poroelastic > 0) then
+      call save_inner_outer_arrays(num_phase_ispec_poroelastic, phase_ispec_inner_poroelastic)
+    end if
   endif
+
+  ! Write test value 9992
+  itest = 9992
+  write(IOUT) itest
 
   ! mesh coloring
   if (USE_MESH_COLORING_GPU) then
@@ -607,10 +654,19 @@ end module save_arrays_module
     endif
   endif
 
+  ! Write test value 9991
+  itest = 9991
+  write(IOUT) itest
+
+
   ! surface points
   write(IOUT) nfaces_surface
   write(IOUT) ispec_is_surface_external_mesh
   write(IOUT) iglob_is_surface_external_mesh
+
+  ! Write test value 9990
+  itest = 9990
+  write(IOUT) itest
 
   ! mesh adjacency
   write(IOUT) num_neighbors_all
@@ -618,7 +674,7 @@ end module save_arrays_module
   write(IOUT) neighbors_adjncy
 
   ! stamp for checking i/o
-  itest = 9995
+  itest = 9989
   write(IOUT) itest
 
   close(IOUT)
