@@ -23,7 +23,7 @@ public:
   constexpr static auto dimension =
       specfem::dimension::type::dim2; ///< Dimension of the material
   constexpr static auto medium_tag =
-      specfem::element::medium_tag::elastic_sv; ///< Medium tag
+      specfem::element::medium_tag::elastic; ///< Medium tag
   constexpr static auto property_tag =
       specfem::element::property_tag::anisotropic; ///< Property tag
 
