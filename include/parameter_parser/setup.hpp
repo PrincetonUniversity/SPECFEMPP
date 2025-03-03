@@ -157,7 +157,8 @@ public:
   std::shared_ptr<specfem::IO::writer> instantiate_seismogram_writer() const {
     if (this->seismogram) {
       return this->seismogram->instantiate_seismogram_writer(
-          this->time_scheme->get_dt(), this->time_scheme->get_t0(),
+          this->get_elastic_wave_type(), this->time_scheme->get_dt(),
+          this->time_scheme->get_t0(),
           this->receivers->get_nstep_between_samples());
     } else {
       return nullptr;
