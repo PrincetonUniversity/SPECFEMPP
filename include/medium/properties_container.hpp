@@ -42,10 +42,10 @@ struct impl_properties_container {
         h_data(Kokkos::create_mirror_view(data)) {}
 
 private:
-  template <typename PointProperties, typename ViewType>
+  template <bool on_device, typename PointProperties>
   KOKKOS_FORCEINLINE_FUNCTION void
   load_properties(const specfem::point::index<dimension> &index,
-                  PointProperties &property, const ViewType &target) const {
+                  PointProperties &property) const {
 
     static_assert(PointProperties::dimension == dimension,
                   "Dimension mismatch");
@@ -59,13 +59,15 @@ private:
     const int ix = index.ix;
 
     for (int i = 0; i < nprops; i++) {
-      property.data[i] = target(ispec, iz, ix, i);
+      property.data[i] =
+          on_device ? data(ispec, iz, ix, i) : h_data(ispec, iz, ix, i);
     }
   }
-  template <typename PointProperties, typename ViewType>
+
+  template <bool on_device, typename PointProperties>
   KOKKOS_FORCEINLINE_FUNCTION void
   load_properties(const specfem::point::simd_index<dimension> &index,
-                  PointProperties &property, const ViewType &target) const {
+                  PointProperties &property) const {
 
     static_assert(PointProperties::dimension == dimension,
                   "Dimension mismatch");
@@ -86,7 +88,9 @@ private:
 
     for (int i = 0; i < nprops; i++) {
       Kokkos::Experimental::where(mask, property.data[i])
-          .copy_from(&target(ispec, iz, ix, i), tag_type());
+          .copy_from(on_device ? &data(ispec, iz, ix, i)
+                               : &h_data(ispec, iz, ix, i),
+                     tag_type());
     }
   }
 
@@ -95,14 +99,14 @@ public:
   KOKKOS_FORCEINLINE_FUNCTION void
   load_device_properties(const IndexType &index,
                          PointProperties &property) const {
-    load_properties(index, property, data);
+    load_properties<true>(index, property);
   }
 
   template <typename PointProperties, typename IndexType>
   KOKKOS_FORCEINLINE_FUNCTION void
   load_host_properties(const IndexType &index,
                        PointProperties &property) const {
-    load_properties(index, property, h_data);
+    load_properties<false>(index, property);
   }
 
   template <typename PointProperties>
