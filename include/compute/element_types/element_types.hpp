@@ -112,6 +112,7 @@ private:
   CALL_MACRO_FOR_ALL_MEDIUM_TAGS(MEDIUM_TAG_VARIABLES,
                                  WHERE(DIMENSION_TAG_DIM2)
                                      WHERE(MEDIUM_TAG_ELASTIC_SV,
+                                           MEDIUM_TAG_ELASTIC_SH,
                                            MEDIUM_TAG_ACOUSTIC))
 
 #undef MEDIUM_TAG_VARIABLES
@@ -128,6 +129,7 @@ private:
   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(MATERIAL_SYSTEMS_VARIABLE_NAMES,
                                       WHERE(DIMENSION_TAG_DIM2)
                                           WHERE(MEDIUM_TAG_ELASTIC_SV,
+                                                MEDIUM_TAG_ELASTIC_SH,
                                                 MEDIUM_TAG_ACOUSTIC)
                                               WHERE(PROPERTY_TAG_ISOTROPIC,
                                                     PROPERTY_TAG_ANISOTROPIC))
@@ -146,7 +148,8 @@ private:
   CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
       ELEMENT_TYPES_VARIABLE_NAMES,
       WHERE(DIMENSION_TAG_DIM2)
-          WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ACOUSTIC)
+          WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
+                MEDIUM_TAG_ACOUSTIC)
               WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)
                   WHERE(BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
                         BOUNDARY_TAG_STACEY,

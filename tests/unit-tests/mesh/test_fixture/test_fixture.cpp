@@ -26,7 +26,9 @@ MESH::MESH() {
   for (auto &Test : Tests) {
     const auto [database_file, sources_file, stations_file] =
         Test.get_databases();
-    specfem::mesh::mesh mesh = specfem::IO::read_mesh(database_file, mpi);
+
+    const auto wave = Test.get_elastic_wave();
+    specfem::mesh::mesh mesh = specfem::IO::read_mesh(database_file, wave, mpi);
 
     meshes.push_back(mesh);
   }

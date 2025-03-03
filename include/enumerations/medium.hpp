@@ -13,7 +13,13 @@ constexpr int ntypes = 3; ///< Number of element types
  * @brief Medium tag enumeration
  *
  */
-enum class medium_tag { elastic_sv, elastic_sh, acoustic, poroelastic };
+enum class medium_tag {
+  elastic_sv,
+  elastic_sh,
+  acoustic,
+  elastic,
+  poroelastic
+};
 
 /**
  * @brief Property tag enumeration

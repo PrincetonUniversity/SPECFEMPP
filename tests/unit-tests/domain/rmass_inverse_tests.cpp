@@ -117,7 +117,8 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
     std::cout << "Reading mesh file: " << database_file << std::endl;
 
     // Read mesh generated MESHFEM
-    specfem::mesh::mesh mesh = specfem::IO::read_mesh(database_file, mpi);
+    specfem::mesh::mesh mesh = specfem::IO::read_mesh(
+        database_file, specfem::enums::elastic_wave::p_sv, mpi);
 
     std::cout << "Setting up sources and receivers" << std::endl;
 
