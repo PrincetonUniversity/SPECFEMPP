@@ -142,12 +142,18 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
           kernels(assembly);
 
       kernels.initialize(dt);
+      const auto &elastic_sv_field =
+          assembly.fields.forward
+              .get_field<specfem::element::medium_tag::elastic_sv>();
+      const auto &acoustic_field =
+          assembly.fields.forward
+              .get_field<specfem::element::medium_tag::acoustic>();
 
-      Kokkos::deep_copy(assembly.fields.forward.elastic.h_mass_inverse,
-                        assembly.fields.forward.elastic.mass_inverse);
+      Kokkos::deep_copy(elastic_sv_field.h_mass_inverse,
+                        elastic_sv_field.mass_inverse);
 
-      Kokkos::deep_copy(assembly.fields.forward.acoustic.h_mass_inverse,
-                        assembly.fields.forward.acoustic.mass_inverse);
+      Kokkos::deep_copy(acoustic_field.h_mass_inverse,
+                        acoustic_field.mass_inverse);
 
       const int nglob = assembly.fields.forward.nglob;
 

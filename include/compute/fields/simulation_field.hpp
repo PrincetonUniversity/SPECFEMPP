@@ -132,13 +132,33 @@ public:
   KOKKOS_INLINE_FUNCTION constexpr specfem::compute::impl::field_impl<
       specfem::dimension::type::dim2, MediumTag> const &
   get_field() const {
-    if constexpr (MediumTag == specfem::element::medium_tag::elastic) {
-      return elastic;
-    } else if constexpr (MediumTag == specfem::element::medium_tag::acoustic) {
-      return acoustic;
-    } else {
-      static_assert("medium type not supported");
-    }
+
+#define RETURN_VALUE(DIMENSION_TAG, MEDIUM_TAG)                                \
+  if constexpr (MediumTag == GET_TAG(MEDIUM_TAG)) {                            \
+    return CREATE_VARIABLE_NAME(field, GET_NAME(DIMENSION_TAG),                \
+                                GET_NAME(MEDIUM_TAG));                         \
+  }
+
+    CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
+        RETURN_VALUE, WHERE(DIMENSION_TAG_DIM2)
+                          WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
+                                MEDIUM_TAG_ACOUSTIC))
+
+#undef RETURN_VALUE
+
+    Kokkos::abort("Medium type not supported");
+
+    /// Code path should never be reached
+    return {};
+
+    // if constexpr (MediumTag == specfem::element::medium_tag::elastic) {
+    //   return elastic;
+    // } else if constexpr (MediumTag == specfem::element::medium_tag::acoustic)
+    // {
+    //   return acoustic;
+    // } else {
+    //   static_assert("medium type not supported");
+    // }
   }
 
   int nglob = 0; ///< Number of global degrees of freedom
@@ -198,8 +218,23 @@ void deep_copy(simulation_field<WavefieldType1> &dst,
   dst.nglob = src.nglob;
   Kokkos::deep_copy(dst.assembly_index_mapping, src.assembly_index_mapping);
   Kokkos::deep_copy(dst.h_assembly_index_mapping, src.h_assembly_index_mapping);
-  specfem::compute::deep_copy(dst.elastic, src.elastic);
-  specfem::compute::deep_copy(dst.acoustic, src.acoustic);
+
+#define DEEP_COPY_MEDIUM_FIELD(DIMENSION_TAG, MEDIUM_TAG)                      \
+  specfem::compute::deep_copy(                                                 \
+      dst.CREATE_VARIABLE_NAME(field, GET_NAME(DIMENSION_TAG),                 \
+                               GET_NAME(MEDIUM_TAG)),                          \
+      src.CREATE_VARIABLE_NAME(field, GET_NAME(DIMENSION_TAG),                 \
+                               GET_NAME(MEDIUM_TAG)));
+
+  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
+      DEEP_COPY_MEDIUM_FIELD,
+      WHERE(DIMENSION_TAG_DIM2) WHERE(
+          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC))
+
+#undef DEEP_COPY_MEDIUM_FIELD
+
+  // specfem::compute::deep_copy(dst.elastic, src.elastic);
+  // specfem::compute::deep_copy(dst.acoustic, src.acoustic);
 }
 
 /**

@@ -64,6 +64,17 @@ void test_compute_wavefield(specfem::compute::assembly &assembly) {
 
   const auto ispecs = generate_data<component, type>(assembly);
 
+  /// You cannot generate a pressure field within an SH medium
+  /// ----------------------------------
+  const auto sh_ispec = assembly.element_types.get_elements_on_host(
+      specfem::element::medium_tag::elastic_sh);
+
+  if (component == specfem::wavefield::type::pressure &&
+      (sh_ispec.extent(0) != 0)) {
+    return;
+  }
+  /// ----------------------------------
+
   const auto wavefield =
       assembly.generate_wavefield_on_entire_grid(type, component);
 
