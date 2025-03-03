@@ -16,26 +16,46 @@ void specfem::IO::seismogram_writer::write(
     std::vector<std::string> filename;
     switch (seismogram_type) {
     case specfem::wavefield::type::displacement:
-      filename = { this->output_folder + "/" + network_name + "." +
-                       station_name + ".S2.BXX.semd",
-                   this->output_folder + "/" + network_name + "." +
-                       station_name + ".S2.BXZ.semd" };
+      if (wave_type == specfem::enums::elastic_wave::type::sh) {
+        filename = { this->output_folder + "/" + network_name + "." +
+                     station_name + ".S2.BXY.semd" };
+      } else if (wave_type == specfem::enums::elastic_wave::type::sv) {
+        filename = { this->output_folder + "/" + network_name + "." +
+                         station_name + ".S2.BXX.semd",
+                     this->output_folder + "/" + network_name + "." +
+                         station_name + ".S2.BXZ.semd" };
+      }
       break;
     case specfem::wavefield::type::velocity:
-      filename = { this->output_folder + "/" + network_name + "." +
-                       station_name + ".S2.BXX.semv",
-                   this->output_folder + "/" + network_name + "." +
-                       station_name + ".S2.BXZ.semv" };
+      if (wave_type == specfem::enums::elastic_wave::type::sh) {
+        filename = { this->output_folder + "/" + network_name + "." +
+                     station_name + ".S2.BXY.semv" };
+      } else if (wave_type == specfem::enums::elastic_wave::type::sv) {
+        filename = { this->output_folder + "/" + network_name + "." +
+                         station_name + ".S2.BXX.semv",
+                     this->output_folder + "/" + network_name + "." +
+                         station_name + ".S2.BXZ.semv" };
+      }
       break;
     case specfem::wavefield::type::acceleration:
-      filename = { this->output_folder + "/" + network_name + "." +
-                       station_name + ".S2.BXX.sema",
-                   this->output_folder + "/" + network_name + "." +
-                       station_name + ".S2.BXZ.sema" };
+      if (wave_type == specfem::enums::elastic_wave::type::sh) {
+        filename = { this->output_folder + "/" + network_name + "." +
+                     station_name + ".S2.BXY.sema" };
+      } else if (wave_type == specfem::enums::elastic_wave::type::sv) {
+        filename = { this->output_folder + "/" + network_name + "." +
+                         station_name + ".S2.BXX.sema",
+                     this->output_folder + "/" + network_name + "." +
+                         station_name + ".S2.BXZ.sema" };
+      }
       break;
     case specfem::wavefield::type::pressure:
-      filename = { this->output_folder + "/" + network_name + "." +
-                   station_name + ".S2.PRE.semp" };
+      if (wave_type == specfem::enums::elastic_wave::type::sh) {
+        throw std::runtime_error(
+            "Pressure seismograms are not supported for SH waves");
+      } else if (wave_type == specfem::enums::elastic_wave::type::sv) {
+        filename = { this->output_folder + "/" + network_name + "." +
+                     station_name + ".S2.PRE.semp" };
+      }
       break;
     }
 
