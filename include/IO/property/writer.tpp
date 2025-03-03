@@ -57,9 +57,7 @@ void specfem::IO::property_writer<OutputLibrary>::write(specfem::compute::assemb
     elastic.createDataset("X", x).write();
     elastic.createDataset("Z", z).write();
 
-    elastic.createDataset("rho", properties.elastic_isotropic.h_rho).write();
-    elastic.createDataset("mu", properties.elastic_isotropic.h_mu).write();
-    elastic.createDataset("lambdaplus2mu", properties.elastic_isotropic.h_lambdaplus2mu).write();
+    elastic.createDataset("data", properties.elastic_isotropic.h_data).write();
   }
 
   {
@@ -86,16 +84,7 @@ void specfem::IO::property_writer<OutputLibrary>::write(specfem::compute::assemb
     elastic.createDataset("X", x).write();
     elastic.createDataset("Z", z).write();
 
-    elastic.createDataset("rho", properties.elastic_anisotropic.h_rho).write();
-    elastic.createDataset("c11", properties.elastic_anisotropic.h_c11).write();
-    elastic.createDataset("c13", properties.elastic_anisotropic.h_c13).write();
-    elastic.createDataset("c15", properties.elastic_anisotropic.h_c15).write();
-    elastic.createDataset("c33", properties.elastic_anisotropic.h_c33).write();
-    elastic.createDataset("c35", properties.elastic_anisotropic.h_c35).write();
-    elastic.createDataset("c55", properties.elastic_anisotropic.h_c55).write();
-    elastic.createDataset("c12", properties.elastic_anisotropic.h_c12).write();
-    elastic.createDataset("c23", properties.elastic_anisotropic.h_c23).write();
-    elastic.createDataset("c25", properties.elastic_anisotropic.h_c25).write();
+    elastic.createDataset("data", properties.elastic_anisotropic.h_data).write();
   }
 
   {
@@ -120,8 +109,7 @@ void specfem::IO::property_writer<OutputLibrary>::write(specfem::compute::assemb
     acoustic.createDataset("X", x).write();
     acoustic.createDataset("Z", z).write();
 
-    acoustic.createDataset("rho_inverse", properties.acoustic_isotropic.h_rho_inverse).write();
-    acoustic.createDataset("kappa", properties.acoustic_isotropic.h_kappa).write();
+    acoustic.createDataset("data", properties.acoustic_isotropic.h_data).write();
   }
 
   assert(n_elastic_isotropic + n_elastic_anisotropic + n_acoustic == nspec);

@@ -111,7 +111,7 @@ public:
         for (int ic = 0; ic < num_components; ic++) {
           const auto computed =
               wavefield(ispec, iz, ix, ic) /
-              ((point_properties.lambdaplus2mu + point_properties.lambda) /
+              ((point_properties.lambdaplus2mu() + point_properties.lambda()) /
                2.0);
           const auto expected = 0.0;
 
@@ -174,7 +174,7 @@ public:
 
         for (int ic = 0; ic < num_components; ic++) {
           const auto computed =
-              wavefield(ispec, iz, ix, ic) / point_properties.rho_inverse;
+              wavefield(ispec, iz, ix, ic) / point_properties.rho_inverse();
           const auto expected = 0.0;
 
           if (std::abs(computed - expected) > 1.0e-4) {

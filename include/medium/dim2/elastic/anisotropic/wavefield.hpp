@@ -66,7 +66,7 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
 
           // cannot compute pressure for an anisotropic material if c12 or c23
           // are zero
-          if (point_property.c12 < 1.e-7 || point_property.c23 < 1.e-7) {
+          if (point_property.c12() < 1.e-7 || point_property.c23() < 1.e-7) {
             Kokkos::abort("C_12 or C_23 are zero, cannot compute pressure. "
                           "Check your material properties. Or, deactivate the "
                           "pressure computation.");
@@ -85,19 +85,19 @@ KOKKOS_FUNCTION void impl_compute_wavefield(
 
           // P_SV case
           // sigma_xx
-          const auto sigma_xx = point_property.c11 * du(0, 0) +
-                                point_property.c13 * du(1, 1) +
-                                point_property.c15 * (du(1, 0) + du(0, 1));
+          const auto sigma_xx = point_property.c11() * du(0, 0) +
+                                point_property.c13() * du(1, 1) +
+                                point_property.c15() * (du(1, 0) + du(0, 1));
 
           // sigma_zz
-          const auto sigma_zz = point_property.c13 * du(0, 0) +
-                                point_property.c33 * du(1, 1) +
-                                point_property.c35 * (du(1, 0) + du(0, 1));
+          const auto sigma_zz = point_property.c13() * du(0, 0) +
+                                point_property.c33() * du(1, 1) +
+                                point_property.c35() * (du(1, 0) + du(0, 1));
 
           // sigma_yy
-          const auto sigma_yy = point_property.c12 * du(0, 0) +
-                                point_property.c23 * du(1, 1) +
-                                point_property.c25 * (du(1, 0) + du(0, 1));
+          const auto sigma_yy = point_property.c12() * du(0, 0) +
+                                point_property.c23() * du(1, 1) +
+                                point_property.c25() * (du(1, 0) + du(0, 1));
 
           wavefield(iterator_index.ielement, index.iz, index.ix, 0) =
               -1.0 * (sigma_xx + sigma_zz + sigma_yy) / 3.0;
