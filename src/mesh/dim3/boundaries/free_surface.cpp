@@ -1,25 +1,33 @@
 #include "mesh/mesh.hpp"
 #include <iostream>
+#include <sstream>
 
-void specfem::mesh::free_surface<specfem::dimension::type::dim3>::print()
-    const {
+std::string
+specfem::mesh::free_surface<specfem::dimension::type::dim3>::print() const {
+
+  std::ostringstream message;
 
   // Print variables and metadata
-  std::cout << "Absorbing Boundary Metadata:" << std::endl;
-  std::cout << "================================================" << std::endl;
-  std::cout << "  nelements:.............. " << nelements << std::endl;
-  std::cout << "  ngllsquare:............. " << ngllsquare << std::endl;
-  std::cout << "  num_free_surface_faces:. " << num_free_surface_faces
-            << std::endl;
+  message << "Absorbing Boundary Metadata:"
+          << "\n";
+  message << "================================================"
+          << "\n";
+  message << "  nelements:.............. " << nelements << "\n";
+  message << "  ngllsquare:............. " << ngllsquare << "\n";
+  message << "  num_free_surface_faces:. " << num_free_surface_faces << "\n";
 
   // Print the absorbing ispec metadata
-  std::cout << "  Array sizes:" << std::endl;
-  std::cout << "  -----------------------------------------------" << std::endl;
-  std::cout << "  ispec:.................. " << ispec.extent(0) << std::endl;
-  std::cout << "  ijk:.................... " << ijk.extent(0) << " "
-            << ijk.extent(1) << " " << ijk.extent(2) << std::endl;
-  std::cout << "  jacobian2Dw:............ " << jacobian2Dw.extent(0) << " "
-            << jacobian2Dw.extent(1) << std::endl;
-  std::cout << "  normal:................. " << normal.extent(0) << " "
-            << normal.extent(1) << " " << normal.extent(2) << std::endl;
+  message << "  Array sizes:"
+          << "\n";
+  message << "  -----------------------------------------------"
+          << "\n";
+  message << "  ispec:.................. " << ispec.extent(0) << "\n";
+  message << "  ijk:.................... " << ijk.extent(0) << " "
+          << ijk.extent(1) << " " << ijk.extent(2) << "\n";
+  message << "  jacobian2Dw:............ " << jacobian2Dw.extent(0) << " "
+          << jacobian2Dw.extent(1) << "\n";
+  message << "  normal:................. " << normal.extent(0) << " "
+          << normal.extent(1) << " " << normal.extent(2) << "\n";
+
+  return message.str();
 }

@@ -1,14 +1,15 @@
 #include "mesh/dim3/element_types/element_types.hpp"
 #include "enumerations/dimension.hpp"
+#include "enumerations/medium.hpp"
 #include <iostream>
 
-void specfem::mesh::element_types<
-    specfem::dimension::type::dim3>::set_elements() {
+void specfem::mesh::element_types<specfem::dimension::type::dim3>::set_elements(
+    Kokkos::View<int *, Kokkos::HostSpace> &ispec_type_in) {
 
   // Create the vectors
-  std::vector<int> ispec_elastic;
-  std::vector<int> ispec_acoustic;
-  std::vector<int> ispec_poroelastic;
+  // std::vector<int> ispec_elastic;
+  // std::vector<int> ispec_acoustic;
+  // std::vector<int> ispec_poroelastic;
 
   // Initialize the number of elements
   this->nelastic = 0;
@@ -17,14 +18,17 @@ void specfem::mesh::element_types<
 
   // Initialize the vectors
   for (int ispec = 0; ispec < nspec; ispec++) {
-    if (ispec_is_elastic(ispec) == true) {
-      ispec_elastic.push_back(ispec);
-      this->nelastic++;
-    } else if (ispec_is_acoustic(ispec) == true) {
-      ispec_acoustic.push_back(ispec);
+    if (ispec_type_in[ispec] == 0) {
+      this->ispec_type(ispec) = specfem::element::medium_tag::acoustic;
+      this->ispec_acoustic(nacoustic) = ispec;
       this->nacoustic++;
-    } else if (ispec_is_poroelastic(ispec) == true) {
-      ispec_poroelastic.push_back(ispec);
+    } else if (ispec_type_in[ispec] == 1) {
+      this->ispec_type(ispec) = specfem::element::medium_tag::elastic;
+      this->ispec_elastic(nelastic) = ispec;
+      this->nelastic++;
+    } else if (ispec_type_in[ispec] == 2) {
+      this->ispec_type(ispec) = specfem::element::medium_tag::poroelastic;
+      this->ispec_poroelastic(nporoelastic) = ispec;
       this->nporoelastic++;
     } else {
       std::ostringstream message;
@@ -32,35 +36,46 @@ void specfem::mesh::element_types<
               << " is not assigned to any material";
       throw std::runtime_error(message.str());
     }
-
-    // Assign the vectors to the view
-    this->ispec_elastic = View1D<int>("ispec_elastic", ispec_elastic.size());
-    this->ispec_acoustic = View1D<int>("ispec_acoustic", ispec_acoustic.size());
-    this->ispec_poroelastic =
-        View1D<int>("ispec_poroelastic", ispec_poroelastic.size());
   };
 }
 
-void specfem::mesh::element_types<specfem::dimension::type::dim3>::print()
-    const {
-  std::cout << "Number of elastic elements: " << nelastic << std::endl;
-  std::cout << "Number of acoustic elements: " << nacoustic << std::endl;
-  std::cout << "Number of poroelastic elements: " << nporoelastic << std::endl;
+std::string
+specfem::mesh::element_types<specfem::dimension::type::dim3>::print() const {
+
+  std::ostringstream message;
+  message << "Number of acoustic elements: " << nacoustic << ".\n";
+  message << "Number of elastic elements: " << nelastic << ".\n";
+  message << "Number of poroelastic elements: " << nporoelastic << ".\n";
+
+  return message.str();
 }
 
-void specfem::mesh::element_types<specfem::dimension::type::dim3>::print(
+std::string specfem::mesh::element_types<specfem::dimension::type::dim3>::print(
     const int ispec) const {
-  std::cout << "Element " << ispec << " is elastic: " << ispec_is_elastic(ispec)
-            << std::endl;
-  std::cout << "Element " << ispec
-            << " is acoustic: " << ispec_is_acoustic(ispec) << std::endl;
-  std::cout << "Element " << ispec
-            << " is poroelastic: " << ispec_is_poroelastic(ispec) << std::endl;
+
+  std::ostringstream message;
+
+  if (ispec >= nspec) {
+    std::ostringstream message;
+    message << "Error: Spectral element " << ispec
+            << " does not exist.\nNumber of spectral elements is :" << nspec
+            << ". "
+            << "(" << __FILE__ << ":" << __LINE__ << ")\n";
+    throw std::runtime_error(message.str());
+  }
+
+  message << "Element " << ispec << " is ";
+  message << specfem::element::to_string(ispec_type(ispec)) << ".\n";
+
+  return message.str();
 }
 
 template <specfem::element::medium_tag MediumTag>
-void specfem::mesh::element_types<specfem::dimension::type::dim3>::print(
+std::string specfem::mesh::element_types<specfem::dimension::type::dim3>::print(
     const int i) const {
+
+  std::ostringstream message;
+
   if (MediumTag == specfem::element::medium_tag::elastic) {
     if (i >= nelastic) {
       std::ostringstream message;
@@ -71,7 +86,8 @@ void specfem::mesh::element_types<specfem::dimension::type::dim3>::print(
               << "(" << __FILE__ << ":" << __LINE__ << ")\n";
       throw std::runtime_error(message.str());
     }
-    std::cout << "Elastic element " << ispec_elastic(i) << std::endl;
+    message << "Elastic element " << i << " is global element "
+            << ispec_elastic(i) << ".\n";
   } else if (MediumTag == specfem::element::medium_tag::acoustic) {
 
     if (i >= nacoustic) {
@@ -84,7 +100,8 @@ void specfem::mesh::element_types<specfem::dimension::type::dim3>::print(
       throw std::runtime_error(message.str());
     }
 
-    std::cout << "Acoustic element " << ispec_acoustic(i) << std::endl;
+    message << "Acoustic element " << i << " is global element "
+            << ispec_acoustic(i) << ".\n";
 
   } else if (MediumTag == specfem::element::medium_tag::poroelastic) {
 
@@ -98,17 +115,20 @@ void specfem::mesh::element_types<specfem::dimension::type::dim3>::print(
       throw std::runtime_error(message.str());
     }
 
-    std::cout << "Poroelastic element " << ispec_poroelastic(i) << std::endl;
+    message << "Poroelastic element " << i << " is global element "
+            << ispec_poroelastic(i) << ".\n";
   }
+
+  return message.str();
 }
 
 // Explicit instantiations
-template void
+template std::string
 specfem::mesh::element_types<specfem::dimension::type::dim3>::print<
     specfem::element::medium_tag::elastic>(const int) const;
-template void
+template std::string
 specfem::mesh::element_types<specfem::dimension::type::dim3>::print<
     specfem::element::medium_tag::acoustic>(const int) const;
-template void
+template std::string
 specfem::mesh::element_types<specfem::dimension::type::dim3>::print<
     specfem::element::medium_tag::poroelastic>(const int) const;

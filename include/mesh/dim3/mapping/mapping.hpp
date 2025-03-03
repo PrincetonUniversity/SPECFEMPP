@@ -1,67 +1,87 @@
 #pragma once
 
 #include "enumerations/dimension.hpp"
-#include "enumerations/medium.hpp"
+#include "mesh/mesh_base.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
 namespace mesh {
 
-template <specfem::dimension::type DimensionType> struct mapping;
-
+/**
+ * @brief Struct to store mapping for a 3D mesh
+ *
+ */
 template <> struct mapping<specfem::dimension::type::dim3> {
 
-  constexpr static auto dimension = specfem::dimension::type::dim3;
+  constexpr static auto dimension =
+      specfem::dimension::type::dim3; ///< Dimension
 
   using UniqueViewInt = Kokkos::View<int *, Kokkos::HostSpace>;
   using UniqueViewBool = Kokkos::View<bool *, Kokkos::HostSpace>;
   using LocalViewInt = Kokkos::View<int ****, Kokkos::HostSpace>;
 
   // Parameters needed for ibool mapping
-  int nspec;
-  int nglob;
-  int nspec_irregular;
+  int nspec;           ///< Number of spectral elements
+  int nglob;           ///< Number of global elements
+  int nspec_irregular; ///< Number of irregular elements
 
-  int ngllx;
-  int nglly;
-  int ngllz;
+  int ngllx; ///< Number of GLL points in x direction
+  int nglly; ///< Number of GLL points in y direction
+  int ngllz; ///< Number of GLL points in z direction
 
   // I do not know currently what these are used for
-  type_real xix_regular;
-  type_real jacobian_regular;
+  type_real xix_regular;      ///< Regular xi value
+  type_real jacobian_regular; ///< Regular Jacobian value
 
   // Indices of irregular elements size nspec_irregular
-  UniqueViewInt irregular_elements;
+  UniqueViewInt irregular_elements; ///< Irregular elements
 
   // ibool size nspec, ngllx, nglly, ngllz
-  LocalViewInt ibool;
+  LocalViewInt ibool; ///< The local to global mapping
 
-  // Boolean array size nspec
-  UniqueViewBool is_acoustic;
-  UniqueViewBool is_elastic;
-  UniqueViewBool is_poroelastic;
-
-  // Constructors
+  /**
+   * @name Constructors
+   *
+   */
+  ///@{
+  /**
+   * @brief Construct a new mapping object
+   *
+   */
   mapping(){}; // Default constructor
 
-  // Constructor to initialize the mapping
+  /**
+   * @brief Construct a new mapping object
+   *
+   * @param nspec Number of spectral elements
+   * @param nglob Number of global nodes
+   * @param nspec_irregular Number of irregular elements
+   * @param ngllx Number of GLL points in x direction
+   * @param nglly Number of GLL points in y direction
+   * @param ngllz Number of GLL points in z direction
+   */
   mapping(int nspec, int nglob, int nspec_irregular, int ngllx, int nglly,
           int ngllz)
       : nspec(nspec), nglob(nglob), nspec_irregular(nspec_irregular),
         ngllx(ngllx), nglly(nglly), ngllz(ngllz), xix_regular(0.0),
         jacobian_regular(0.0),
         irregular_elements("irregular_elements", nspec_irregular),
-        ibool("ibool", nspec, ngllx, nglly, ngllz),
-        is_acoustic("is_acoustic", nspec), is_elastic("is_elastic", nspec),
-        is_poroelastic("is_poroelastic", nspec){};
+        ibool("ibool", nspec, ngllx, nglly, ngllz){};
+  ///@}
 
-  void print() const;
+  /**
+   * @brief Print basic information about the mapping
+   *
+   */
+  std::string print() const;
 
-  void print(const int ispec) const;
-
-  template <specfem::element::medium_tag MediumTag>
-  void print(const int i) const;
+  /**
+   * @brief Print the mapping for the given spectral element
+   *
+   * @param ispec Spectral element index
+   */
+  std::string print(const int ispec) const;
 };
 
 } // namespace mesh

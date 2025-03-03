@@ -172,7 +172,7 @@ Defining sources
 
 Now that we have the mesh and receiver locations, we can define the sources. We will use the following source file to define the sources.
 
-.. code:: yaml
+.. code-block:: yaml
     :caption: sources.yaml
 
     number-of-sources: 1
@@ -188,6 +188,8 @@ Now that we have the mesh and receiver locations, we can define the sources. We 
             factor: 1e10
             tshift: 0.0
             f0: 10.0
+
+
 
 Final mesh
 ----------

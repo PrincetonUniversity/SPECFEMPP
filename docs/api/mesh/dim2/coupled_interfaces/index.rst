@@ -4,7 +4,7 @@
 Coupled Interfaces
 ==================
 
-.. doxygenstruct:: specfem::mesh::coupled_interfaces
+.. doxygenstruct:: specfem::mesh::coupled_interfaces< specfem::dimension::type::dim2 >
     :members:
 
 
