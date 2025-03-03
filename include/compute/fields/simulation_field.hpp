@@ -111,6 +111,23 @@ public:
     }
   }
 
+  /**
+   * @brief Returns the assembled index given element index.
+   *
+   */
+  template <bool on_device>
+  KOKKOS_INLINE_FUNCTION constexpr int
+  get_iglob(const int &ispec, const int &iz, const int &ix,
+            const specfem::element::medium_tag MediumTag) const {
+    if constexpr (on_device) {
+      return assembly_index_mapping(index_mapping(ispec, iz, ix),
+                                    static_cast<int>(MediumTag));
+    } else {
+      return h_assembly_index_mapping(h_index_mapping(ispec, iz, ix),
+                                      static_cast<int>(MediumTag));
+    }
+  }
+
   int nglob = 0; ///< Number of global degrees of freedom
   int nspec;     ///< Number of spectral elements
   int ngllz;     ///< Number of quadrature points in z direction

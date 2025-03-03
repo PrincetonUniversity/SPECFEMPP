@@ -18,9 +18,9 @@ KOKKOS_FORCEINLINE_FUNCTION void impl_load(const int iglob,
   constexpr static bool StoreVelocity = ViewType::store_velocity;
   constexpr static bool StoreAcceleration = ViewType::store_acceleration;
   constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
-  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static auto MediumTag = ViewType::medium_tag;
 
-  const auto &curr_field = field.template get_field<MediumType>();
+  const auto &curr_field = field.template get_field<MediumTag>();
 
   if constexpr (StoreDisplacement) {
     for (int icomp = 0; icomp < ViewType::components; ++icomp) {
@@ -66,10 +66,10 @@ impl_load(const typename ViewType::simd::mask_type &mask,
   constexpr static bool StoreVelocity = ViewType::store_velocity;
   constexpr static bool StoreAcceleration = ViewType::store_acceleration;
   constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
-  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static auto MediumTag = ViewType::medium_tag;
   constexpr static int components = ViewType::components;
 
-  const auto &curr_field = field.template get_field<MediumType>();
+  const auto &curr_field = field.template get_field<MediumTag>();
 
   for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
     if (!mask[lane]) {
@@ -122,7 +122,7 @@ impl_load(const specfem::point::simd_assembly_index &index,
   constexpr static bool StoreVelocity = ViewType::store_velocity;
   constexpr static bool StoreAcceleration = ViewType::store_acceleration;
   constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
-  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static auto MediumTag = ViewType::medium_tag;
   constexpr static int components = ViewType::components;
 
   const int iglob = index.iglob;
@@ -132,7 +132,7 @@ impl_load(const specfem::point::simd_assembly_index &index,
 
   mask_type mask([&](std::size_t lane) { return index.mask(lane); });
 
-  const auto &curr_field = field.template get_field<MediumType>();
+  const auto &curr_field = field.template get_field<MediumTag>();
 
   if constexpr (StoreDisplacement) {
     for (int icomp = 0; icomp < components; ++icomp) {
@@ -172,11 +172,8 @@ template <bool on_device,
 KOKKOS_FORCEINLINE_FUNCTION void
 impl_load(const specfem::point::index<ViewType::dimension> &index,
                     const WavefieldType &field, ViewType &point_field) {
-  constexpr static auto MediumType = ViewType::medium_tag;
-  const int iglob_l = on_device ? field.index_mapping(index.ispec, index.iz, index.ix) : field.h_index_mapping(index.ispec, index.iz, index.ix);
-  const int iglob = on_device ?
-      field.assembly_index_mapping(iglob_l, static_cast<int>(MediumType)) : field.h_assembly_index_mapping(iglob_l, static_cast<int>(MediumType));
-  impl_load<on_device>(iglob, field, point_field);
+  constexpr static auto MediumTag = ViewType::medium_tag;
+  impl_load<on_device>(field.template get_iglob<on_device>(index.ispec, index.iz, index.ix, MediumTag), field, point_field);
 }
 
 template <bool on_device,
@@ -186,7 +183,7 @@ template <bool on_device,
 KOKKOS_FORCEINLINE_FUNCTION void
 impl_load(const specfem::point::assembly_index<false> &index,
                     const WavefieldType &field, ViewType &point_field) {
-  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static auto MediumTag = ViewType::medium_tag;
   const int iglob = index.iglob;
   impl_load<on_device>(iglob, field, point_field);
 }
@@ -198,7 +195,7 @@ template <bool on_device,
 KOKKOS_FORCEINLINE_FUNCTION void impl_load(
     const specfem::point::simd_index<ViewType::dimension> &index,
     const WavefieldType &field, ViewType &point_field) {
-  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static auto MediumTag = ViewType::medium_tag;
   int iglob[ViewType::simd::size()];
 
   using mask_type = typename ViewType::simd::mask_type;
@@ -206,17 +203,10 @@ KOKKOS_FORCEINLINE_FUNCTION void impl_load(
   mask_type mask([&](std::size_t lane) { return index.mask(lane); });
 
   for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
-    iglob[lane] = on_device ?
-        ((index.mask(std::size_t(lane)))
-            ? field.assembly_index_mapping(
-                  field.index_mapping(index.ispec + lane, index.iz, index.ix),
-                  static_cast<int>(MediumType))
-            : field.nglob + 1) :
-        ((index.mask(std::size_t(lane)))
-            ? field.h_assembly_index_mapping(
-                  field.h_index_mapping(index.ispec + lane, index.iz, index.ix),
-                  static_cast<int>(MediumType))
-            : field.nglob + 1);
+    iglob[lane] = index.mask(lane) ?
+        field.template get_iglob<on_device>(
+            index.ispec + lane, index.iz, index.ix, MediumTag) :
+        field.nglob + 1;
   }
 
   impl_load<on_device>(mask, iglob, field, point_field);
@@ -234,9 +224,9 @@ impl_store(const int iglob, const ViewType &point_field,
   constexpr static bool StoreVelocity = ViewType::store_velocity;
   constexpr static bool StoreAcceleration = ViewType::store_acceleration;
   constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
-  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static auto MediumTag = ViewType::medium_tag;
 
-  const auto &curr_field = field.template get_field<MediumType>();
+  const auto &curr_field = field.template get_field<MediumTag>();
 
   for (int icomp = 0; icomp < ViewType::components; ++icomp) {
     if constexpr (StoreDisplacement) {
@@ -269,10 +259,10 @@ impl_store(const typename ViewType::simd::mask_type &mask,
   constexpr static bool StoreVelocity = ViewType::store_velocity;
   constexpr static bool StoreAcceleration = ViewType::store_acceleration;
   constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
-  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static auto MediumTag = ViewType::medium_tag;
   constexpr static int components = ViewType::components;
 
-  const auto &curr_field = field.template get_field<MediumType>();
+  const auto &curr_field = field.template get_field<MediumTag>();
   for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
     if (!mask[lane]) {
       continue;
@@ -324,7 +314,7 @@ impl_store(const specfem::point::simd_assembly_index &index,
   constexpr static bool StoreVelocity = ViewType::store_velocity;
   constexpr static bool StoreAcceleration = ViewType::store_acceleration;
   constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
-  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static auto MediumTag = ViewType::medium_tag;
   constexpr static int components = ViewType::components;
 
   using mask_type = typename ViewType::simd::mask_type;
@@ -334,7 +324,7 @@ impl_store(const specfem::point::simd_assembly_index &index,
 
   mask_type mask([&](std::size_t lane) { return index.mask(lane); });
 
-  const auto &curr_field = field.template get_field<MediumType>();
+  const auto &curr_field = field.template get_field<MediumTag>();
   if constexpr (StoreDisplacement) {
     for (int icomp = 0; icomp < components; ++icomp) {
       Kokkos::Experimental::where(mask, point_field.displacement(icomp))
@@ -374,15 +364,9 @@ KOKKOS_FORCEINLINE_FUNCTION void
 impl_store(const specfem::point::index<ViewType::dimension> &index,
                      const ViewType &point_field, const WavefieldType &field) {
 
-  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static auto MediumTag = ViewType::medium_tag;
 
-  const int iglob = on_device ? field.assembly_index_mapping(
-      field.index_mapping(index.ispec, index.iz, index.ix),
-      static_cast<int>(MediumType)) : field.h_assembly_index_mapping(
-        field.h_index_mapping(index.ispec, index.iz, index.ix),
-        static_cast<int>(MediumType));
-
-  impl_store<on_device>(iglob, point_field, field);
+  impl_store<on_device>(field.template get_iglob<on_device>(index.ispec, index.iz, index.ix, MediumTag), point_field, field);
 }
 
 template <bool on_device,
@@ -393,7 +377,7 @@ KOKKOS_FORCEINLINE_FUNCTION void
 impl_store(const specfem::point::assembly_index<false> &index,
                      const ViewType &point_field, const WavefieldType &field) {
 
-  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static auto MediumTag = ViewType::medium_tag;
 
   const int iglob = index.iglob;
 
@@ -408,7 +392,7 @@ KOKKOS_FORCEINLINE_FUNCTION void impl_store(
     const specfem::point::simd_index<ViewType::dimension> &index,
     const ViewType &point_field, const WavefieldType &field) {
 
-  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static auto MediumTag = ViewType::medium_tag;
   int iglob[ViewType::simd::size()];
 
   using mask_type = typename ViewType::simd::mask_type;
@@ -416,17 +400,10 @@ KOKKOS_FORCEINLINE_FUNCTION void impl_store(
   mask_type mask([&](std::size_t lane) { return index.mask(lane); });
 
   for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
-    iglob[lane] = on_device ?
-        ((index.mask(std::size_t(lane)))
-            ? field.assembly_index_mapping(
-                  field.index_mapping(index.ispec + lane, index.iz, index.ix),
-                  static_cast<int>(MediumType))
-            : field.nglob + 1) :
-        ((index.mask(std::size_t(lane)))
-            ? field.assembly_index_mapping(
-                  field.index_mapping(index.ispec + lane, index.iz, index.ix),
-                  static_cast<int>(MediumType))
-            : field.nglob + 1);
+    iglob[lane] = index.mask(lane) ?
+        field.template get_iglob<on_device>(
+            index.ispec + lane, index.iz, index.ix, MediumTag) :
+        field.nglob + 1;
   }
 
   impl_store<on_device>(mask, iglob, point_field, field);
@@ -444,9 +421,9 @@ impl_add(const int iglob, const ViewType &point_field,
   constexpr static bool StoreVelocity = ViewType::store_velocity;
   constexpr static bool StoreAcceleration = ViewType::store_acceleration;
   constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
-  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static auto MediumTag = ViewType::medium_tag;
 
-  const auto &curr_field = field.template get_field<MediumType>();
+  const auto &curr_field = field.template get_field<MediumTag>();
   for (int icomp = 0; icomp < ViewType::components; ++icomp) {
     if constexpr (StoreDisplacement) {
       curr_field.template get_field<on_device>(iglob, icomp) += point_field.displacement(icomp);
@@ -478,10 +455,10 @@ impl_add(const typename ViewType::simd::mask_type &mask,
   constexpr static bool StoreVelocity = ViewType::store_velocity;
   constexpr static bool StoreAcceleration = ViewType::store_acceleration;
   constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
-  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static auto MediumTag = ViewType::medium_tag;
   constexpr static int components = ViewType::components;
 
-  const auto &curr_field = field.template get_field<MediumType>();
+  const auto &curr_field = field.template get_field<MediumTag>();
   for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
     if (!mask[lane]) {
       continue;
@@ -533,7 +510,7 @@ impl_add(const specfem::point::simd_assembly_index &index,
   constexpr static bool StoreVelocity = ViewType::store_velocity;
   constexpr static bool StoreAcceleration = ViewType::store_acceleration;
   constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
-  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static auto MediumTag = ViewType::medium_tag;
   constexpr static int components = ViewType::components;
 
   using mask_type = typename ViewType::simd::mask_type;
@@ -543,7 +520,7 @@ impl_add(const specfem::point::simd_assembly_index &index,
 
   mask_type mask([&](std::size_t lane) { return index.mask(lane); });
 
-  const auto &curr_field = field.template get_field<MediumType>();
+  const auto &curr_field = field.template get_field<MediumTag>();
   if constexpr (StoreDisplacement) {
     for (int icomp = 0; icomp < components; ++icomp) {
       typename ViewType::simd::datatype lhs;
@@ -603,15 +580,8 @@ KOKKOS_FORCEINLINE_FUNCTION void
 impl_add(const specfem::point::index<ViewType::dimension> &index,
                    const ViewType &point_field, const WavefieldType &field) {
 
-  constexpr static auto MediumType = ViewType::medium_tag;
-
-  const int iglob = on_device ? field.assembly_index_mapping(
-      field.index_mapping(index.ispec, index.iz, index.ix),
-      static_cast<int>(MediumType)) : field.h_assembly_index_mapping(
-        field.h_index_mapping(index.ispec, index.iz, index.ix),
-        static_cast<int>(MediumType));
-
-  impl_add<on_device>(iglob, point_field, field);
+  constexpr static auto MediumTag = ViewType::medium_tag;
+  impl_add<on_device>(field.template get_iglob<on_device>(index.ispec, index.iz, index.ix, MediumTag), point_field, field);
 }
 
 template <bool on_device,
@@ -622,7 +592,7 @@ KOKKOS_FORCEINLINE_FUNCTION void
 impl_add(const specfem::point::assembly_index<false> &index,
                    const ViewType &point_field, const WavefieldType &field) {
 
-  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static auto MediumTag = ViewType::medium_tag;
 
   const int iglob = index.iglob;
 
@@ -637,7 +607,7 @@ KOKKOS_FORCEINLINE_FUNCTION void
 impl_add(const specfem::point::simd_index<ViewType::dimension> &index,
                    const ViewType &point_field, const WavefieldType &field) {
 
-  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static auto MediumTag = ViewType::medium_tag;
   int iglob[ViewType::simd::size()];
 
   using mask_type = typename ViewType::simd::mask_type;
@@ -645,17 +615,9 @@ impl_add(const specfem::point::simd_index<ViewType::dimension> &index,
   mask_type mask([&](std::size_t lane) { return index.mask(lane); });
 
   for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
-    iglob[lane] = on_device ?
-        ((index.mask(std::size_t(lane)))
-            ? field.assembly_index_mapping(
-                  field.index_mapping(index.ispec + lane, index.iz, index.ix),
-                  static_cast<int>(MediumType))
-            : field.nglob + 1) :
-        ((index.mask(std::size_t(lane)))
-            ? field.h_assembly_index_mapping(
-                  field.h_index_mapping(index.ispec + lane, index.iz, index.ix),
-                  static_cast<int>(MediumType))
-            : field.nglob + 1);
+    iglob[lane] = index.mask(lane) ?
+      field.template get_iglob<on_device>(index.ispec + lane, index.iz, index.ix, MediumTag) :
+      field.nglob + 1;
   }
 
   impl_add<on_device>(mask, iglob, point_field, field);
@@ -673,9 +635,9 @@ impl_atomic_add(const int iglob, const ViewType &point_field,
   constexpr static bool StoreVelocity = ViewType::store_velocity;
   constexpr static bool StoreAcceleration = ViewType::store_acceleration;
   constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
-  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static auto MediumTag = ViewType::medium_tag;
 
-  const auto &curr_field = field.template get_field<MediumType>();
+  const auto &curr_field = field.template get_field<MediumTag>();
   for (int icomp = 0; icomp < ViewType::components; ++icomp) {
     if constexpr (StoreDisplacement) {
       Kokkos::atomic_add(&(curr_field.template get_field<on_device>(iglob, icomp)),
@@ -711,10 +673,10 @@ impl_atomic_add(const typename ViewType::simd::mask_type &mask,
   constexpr static bool StoreVelocity = ViewType::store_velocity;
   constexpr static bool StoreAcceleration = ViewType::store_acceleration;
   constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
-  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static auto MediumTag = ViewType::medium_tag;
   constexpr static int components = ViewType::components;
 
-  const auto &curr_field = field.template get_field<MediumType>();
+  const auto &curr_field = field.template get_field<MediumTag>();
   for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
     if (!mask[lane]) {
       continue;
@@ -762,15 +724,9 @@ KOKKOS_FORCEINLINE_FUNCTION void impl_atomic_add(
     const specfem::point::index<ViewType::dimension> &index,
     const ViewType &point_field, const WavefieldType &field) {
 
-  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static auto MediumTag = ViewType::medium_tag;
 
-  const int iglob = on_device ? field.assembly_index_mapping(
-      field.index_mapping(index.ispec, index.iz, index.ix),
-      static_cast<int>(MediumType)) : field.h_assembly_index_mapping(
-        field.h_index_mapping(index.ispec, index.iz, index.ix),
-        static_cast<int>(MediumType));
-
-  impl_atomic_add<on_device>(iglob, point_field, field);
+  impl_atomic_add<on_device>(field.template get_iglob<on_device>(index.ispec, index.iz, index.ix, MediumTag), point_field, field);
 }
 
 template <bool on_device,
@@ -781,7 +737,7 @@ KOKKOS_FORCEINLINE_FUNCTION void impl_atomic_add(
     const specfem::point::simd_index<ViewType::dimension> &index,
     const ViewType &point_field, const WavefieldType &field) {
 
-  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static auto MediumTag = ViewType::medium_tag;
   int iglob[ViewType::simd::size()];
 
   using mask_type = typename ViewType::simd::mask_type;
@@ -789,17 +745,9 @@ KOKKOS_FORCEINLINE_FUNCTION void impl_atomic_add(
   mask_type mask([&](std::size_t lane) { return index.mask(lane); });
 
   for (int lane = 0; lane < ViewType::simd::size(); ++lane) {
-    iglob[lane] = on_device ?
-        ((index.mask(std::size_t(lane)))
-            ? field.assembly_index_mapping(
-                  field.index_mapping(index.ispec + lane, index.iz, index.ix),
-                  static_cast<int>(MediumType))
-            : field.nglob + 1):
-        ((index.mask(std::size_t(lane)))
-            ? field.assembly_index_mapping(
-                  field.index_mapping(index.ispec + lane, index.iz, index.ix),
-                  static_cast<int>(MediumType))
-            : field.nglob + 1);
+    iglob[lane] = index.mask(lane) ?
+      field.template get_iglob<on_device>(index.ispec + lane, index.iz, index.ix, MediumTag) :
+      field.nglob + 1;
   }
 
   impl_atomic_add<on_device>(mask, iglob, point_field, field);
@@ -817,7 +765,7 @@ impl_load(const MemberType &team, const int ispec,
   constexpr static bool StoreVelocity = ViewType::store_velocity;
   constexpr static bool StoreAcceleration = ViewType::store_acceleration;
   constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
-  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static auto MediumTag = ViewType::medium_tag;
   constexpr static int components = ViewType::components;
 
   constexpr static int NGLL = ViewType::ngll;
@@ -831,14 +779,12 @@ impl_load(const MemberType &team, const int ispec,
       "Calling team must have a device execution space");
   }
 
-  const auto &curr_field = field.template get_field<MediumType>();
+  const auto &curr_field = field.template get_field<MediumTag>();
   Kokkos::parallel_for(
       Kokkos::TeamThreadRange(team, NGLL * NGLL), [&](const int &xz) {
         int iz, ix;
         sub2ind(xz, NGLL, iz, ix);
-        const int iglob = on_device ? field.assembly_index_mapping(
-            field.index_mapping(ispec, iz, ix), static_cast<int>(MediumType)) : field.h_assembly_index_mapping(
-              field.h_index_mapping(ispec, iz, ix), static_cast<int>(MediumType));
+        const int iglob = field.template get_iglob<on_device>(ispec, iz, ix, MediumTag);
 
         for (int icomp = 0; icomp < components; ++icomp) {
           if constexpr (StoreDisplacement) {
@@ -876,7 +822,7 @@ impl_load(const MemberType &team, const IteratorType &iterator,
   constexpr static bool StoreVelocity = ViewType::store_velocity;
   constexpr static bool StoreAcceleration = ViewType::store_acceleration;
   constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
-  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static auto MediumTag = ViewType::medium_tag;
   constexpr static int components = ViewType::components;
 
   constexpr static int NGLL = ViewType::ngll;
@@ -900,7 +846,7 @@ impl_load(const MemberType &team, const IteratorType &iterator,
                                  typename ViewType::memory_space>::accessible,
       "Calling team must have access to the memory space of the view");
 
-  const auto &curr_field = field.template get_field<MediumType>();
+  const auto &curr_field = field.template get_field<MediumTag>();
   Kokkos::parallel_for(
       Kokkos::TeamThreadRange(team, iterator.chunk_size()), [&](const int &i) {
         const auto iterator_index = iterator(i);
@@ -909,9 +855,7 @@ impl_load(const MemberType &team, const IteratorType &iterator,
         const int iz = iterator_index.index.iz;
         const int ix = iterator_index.index.ix;
 
-        const int iglob = on_device ? field.assembly_index_mapping(
-            field.index_mapping(ispec, iz, ix), static_cast<int>(MediumType)) : field.h_assembly_index_mapping(
-              field.h_index_mapping(ispec, iz, ix), static_cast<int>(MediumType));
+        const int iglob = field.template get_iglob<on_device>(ispec, iz, ix, MediumTag);
 
         for (int icomp = 0; icomp < components; ++icomp) {
           if constexpr (StoreDisplacement) {
@@ -949,7 +893,7 @@ impl_load(const MemberType &team, const IteratorType &iterator,
   constexpr static bool StoreVelocity = ViewType::store_velocity;
   constexpr static bool StoreAcceleration = ViewType::store_acceleration;
   constexpr static bool StoreMassMatrix = ViewType::store_mass_matrix;
-  constexpr static auto MediumType = ViewType::medium_tag;
+  constexpr static auto MediumTag = ViewType::medium_tag;
   constexpr static int components = ViewType::components;
 
   constexpr static int NGLL = ViewType::ngll;
@@ -972,7 +916,7 @@ impl_load(const MemberType &team, const IteratorType &iterator,
       "Calling team must have a device execution space");
   }
 
-  const auto &curr_field = field.template get_field<MediumType>();
+  const auto &curr_field = field.template get_field<MediumTag>();
   Kokkos::parallel_for(
       Kokkos::TeamThreadRange(team, iterator.chunk_size()), [&](const int &i) {
         const auto iterator_index = iterator(i);
@@ -986,11 +930,7 @@ impl_load(const MemberType &team, const IteratorType &iterator,
             continue;
           }
 
-          const int iglob = on_device ? field.assembly_index_mapping(
-              field.index_mapping(ispec + lane, iz, ix),
-              static_cast<int>(MediumType)) : field.h_assembly_index_mapping(
-                field.h_index_mapping(ispec + lane, iz, ix),
-                static_cast<int>(MediumType));
+          const int iglob = field.template get_iglob<on_device>(ispec + lane, iz, ix, MediumTag);
 
           for (int icomp = 0; icomp < components; ++icomp) {
             if constexpr (StoreDisplacement) {
