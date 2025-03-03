@@ -37,3 +37,69 @@ specfem::mesh::partial_derivatives<specfem::dimension::type::dim3>::print(
 
   return message.str();
 }
+
+std::string
+specfem::mesh::partial_derivatives<specfem::dimension::type::dim3>::print(
+    int ispec, const std::string partial_name) const {
+
+  std::ostringstream message;
+
+  int iglob;
+
+  // Create array pointer to coordinates.x y or z depending on the partial_name
+  const Kokkos::View<type_real ****, Kokkos::HostSpace> &array = [&]() {
+    if (partial_name == "xix") {
+      return this->xix;
+    } else if (partial_name == "xiy") {
+      return this->xiy;
+    } else if (partial_name == "xiz") {
+      return this->xiz;
+    } else if (partial_name == "etax") {
+      return this->etax;
+    } else if (partial_name == "etay") {
+      return this->etay;
+    } else if (partial_name == "etaz") {
+      return this->etaz;
+    } else if (partial_name == "gammax") {
+      return this->gammax;
+    } else if (partial_name == "gammay") {
+      return this->gammay;
+    } else if (partial_name == "gammaz") {
+      return this->gammaz;
+    } else if (partial_name == "jacobian") {
+      return this->jacobian;
+    } else {
+      throw std::runtime_error(
+          "Invalid partial_name. partial_name must be xix, xiy, xiz, etax, "
+          "etay, etaz, gammax, gammay, gammaz, or jacobian\n");
+    }
+  }();
+
+  message << "Mapping parameters for spectral element " << ispec << ":\n"
+          << "--------------------------------------------------\n"
+          << "\n"
+          << " |---> igllx\n"
+          << " |\n"
+          << " V\n"
+          << "iglly\n"
+          << "\n"
+          << partial_name << ":\n";
+
+  for (int igllz = 0; igllz < ngllz; igllz++) {
+    message << "igllz=" << igllz << ": ";
+
+    for (int iglly = 0; iglly < nglly; iglly++) {
+      if (iglly > 0) {
+        message << "         ";
+      }
+      for (int igllx = 0; igllx < ngllx; igllx++) {
+        message << array(ispec, igllx, iglly, igllz) << " ";
+      }
+      message << "\n";
+    };
+    message << "\n";
+  };
+  message << "------------------------------\n";
+
+  return message.str();
+}

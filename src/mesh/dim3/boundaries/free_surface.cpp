@@ -31,3 +31,30 @@ specfem::mesh::free_surface<specfem::dimension::type::dim3>::print() const {
 
   return message.str();
 }
+
+std::string
+specfem::mesh::free_surface<specfem::dimension::type::dim3>::print_ijk(
+    const int iface) const {
+  std::string name = "ijk";
+  std::ostringstream message;
+
+  // Print the absorbing boundary metadata
+  message << "Free surface ijk for face " << iface << "\n";
+  message << "===============================================\n";
+  message << ""
+          << "\n";
+  message << " ---> igll squared\n"
+          << "ijk:\n";
+
+  // Print the ijk values
+  for (int i = 0; i < 3; i++) {
+
+    message << "ijk_boundary(" << name[i] << ") = ";
+    for (int j = 0; j < ngllsquare; j++) {
+      message << ijk(iface, i, j) << " ";
+    };
+    message << "\n";
+  };
+
+  return message.str();
+};

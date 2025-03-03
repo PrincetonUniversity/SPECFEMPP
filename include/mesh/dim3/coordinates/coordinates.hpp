@@ -1,8 +1,12 @@
 #pragma once
 #include "enumerations/dimension.hpp"
+#include "mesh/dim3/mapping/mapping.hpp"
 #include "mesh/mesh_base.hpp"
 #include "specfem_setup.hpp"
+
 #include <Kokkos_Core.hpp>
+#include <iostream>
+#include <sstream>
 
 namespace specfem {
 namespace mesh {
@@ -90,6 +94,20 @@ template <> struct coordinates<specfem::dimension::type::dim3> {
    * @endcode
    */
   std::string print(int iglob) const;
+
+  /**
+   * @brief Print the coordinates at a specific spectral element
+   *
+   * @param ispec Spectral element number
+   *
+   * @code
+   * // Example of how to use this function
+   * int ispec = 10;
+   * coordinates.print(ispec);
+   * @endcode
+   */
+  std::string print(int ispec, specfem::mesh::mapping<dimension> &mapping,
+                    const std::string component) const;
 };
 
 } // namespace mesh
