@@ -30,7 +30,7 @@ struct kernels;
  */
 template <bool UseSIMD>
 struct kernels<specfem::dimension::type::dim2,
-               specfem::element::medium_tag::elastic_sv,
+               specfem::element::medium_tag::elastic,
                specfem::element::property_tag::isotropic, UseSIMD> {
 public:
   /**
@@ -50,7 +50,7 @@ public:
    *
    */
   ///@{
-  constexpr static auto medium_tag = specfem::element::medium_tag::elastic_sv;
+  constexpr static auto medium_tag = specfem::element::medium_tag::elastic;
   constexpr static auto property_tag =
       specfem::element::property_tag::isotropic;
   constexpr static auto dimension = specfem::dimension::type::dim2;
@@ -135,6 +135,120 @@ public:
 };
 // end elastic isotropic
 
+template <bool UseSIMD>
+struct kernels<specfem::dimension::type::dim2,
+               specfem::element::medium_tag::elastic_sv,
+               specfem::element::property_tag::isotropic, UseSIMD>
+    : public kernels<specfem::dimension::type::dim2,
+                     specfem::element::medium_tag::elastic,
+                     specfem::element::property_tag::isotropic, UseSIMD> {
+
+public:
+  /**
+   * @name Typedefs
+   *
+   */
+  ///@{
+  using simd =
+      typename specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD type
+  using value_type =
+      typename simd::datatype; ///< Underlying data type to store the kernels
+  ///@}
+
+  constexpr static auto medium_tag = specfem::element::medium_tag::elastic_sv;
+  /**
+   * @brief Default constructor
+   *
+   */
+  KOKKOS_FUNCTION
+  kernels() = default;
+
+  /**
+   * @brief single value constructor
+   *
+   */
+  KOKKOS_FUNCTION
+  kernels(const value_type value)
+      : kernels<specfem::dimension::type::dim2,
+                specfem::element::medium_tag::elastic,
+                specfem::element::property_tag::isotropic, UseSIMD>(value) {}
+
+  /**
+   * @brief Constructor
+   *
+   * @param rho \f$ K_{\rho} \f$
+   * @param mu \f$ K_{\mu} \f$
+   * @param kappa \f$ K_{\kappa} \f$
+   * @param rhop \f$ K_{\rho'} \f$
+   * @param alpha \f$ K_{\alpha} \f$
+   * @param beta \f$ K_{\beta} \f$
+   */
+  KOKKOS_FUNCTION
+  kernels(const value_type rho, const value_type mu, const value_type kappa,
+          const value_type rhop, const value_type alpha, const value_type beta)
+      : kernels<specfem::dimension::type::dim2,
+                specfem::element::medium_tag::elastic,
+                specfem::element::property_tag::isotropic, UseSIMD>(
+            rho, mu, kappa, rhop, alpha, beta) {}
+};
+
+template <bool UseSIMD>
+struct kernels<specfem::dimension::type::dim2,
+               specfem::element::medium_tag::elastic_sh,
+               specfem::element::property_tag::isotropic, UseSIMD>
+    : public kernels<specfem::dimension::type::dim2,
+                     specfem::element::medium_tag::elastic,
+                     specfem::element::property_tag::isotropic, UseSIMD> {
+
+public:
+  /**
+   * @name Typedefs
+   *
+   */
+  ///@{
+  using simd =
+      typename specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD type
+  using value_type =
+      typename simd::datatype; ///< Underlying data type to store the kernels
+  ///@}
+
+  constexpr static auto medium_tag = specfem::element::medium_tag::elastic_sh;
+  /**
+   * @brief Default constructor
+   *
+   */
+  KOKKOS_FUNCTION
+  kernels() = default;
+
+  /**
+   * @brief single value constructor
+   *
+   */
+  KOKKOS_FUNCTION
+  kernels(const value_type value)
+      : kernels<specfem::dimension::type::dim2,
+                specfem::element::medium_tag::elastic,
+                specfem::element::property_tag::isotropic, UseSIMD>(value) {}
+
+  /**
+   * @brief Constructor
+   *
+   * @param rho \f$ K_{\rho} \f$
+   * @param mu \f$ K_{\mu} \f$
+   * @param kappa \f$ K_{\kappa} \f$
+   * @param rhop \f$ K_{\rho'} \f$
+   * @param alpha \f$ K_{\alpha} \f$
+   * @param beta \f$ K_{\beta} \f$
+   */
+  KOKKOS_FUNCTION
+  kernels(const value_type rho, const value_type mu, const value_type kappa,
+          const value_type rhop, const value_type alpha, const value_type beta)
+      : kernels<specfem::dimension::type::dim2,
+                specfem::element::medium_tag::elastic,
+                specfem::element::property_tag::isotropic, UseSIMD>(
+            rho, mu, kappa, rhop, alpha, beta) {}
+};
+
 /**
  * @brief Template specialization for the kernels struct for 2D elastic
  * anisotropic elements
@@ -143,7 +257,7 @@ public:
  */
 template <bool UseSIMD>
 struct kernels<specfem::dimension::type::dim2,
-               specfem::element::medium_tag::elastic_sv,
+               specfem::element::medium_tag::elastic,
                specfem::element::property_tag::anisotropic, UseSIMD> {
 public:
   /**
@@ -163,7 +277,7 @@ public:
    *
    */
   ///@{
-  constexpr static auto medium_tag = specfem::element::medium_tag::elastic_sv;
+  constexpr static auto medium_tag = specfem::element::medium_tag::elastic;
   constexpr static auto property_tag =
       specfem::element::property_tag::anisotropic;
   constexpr static auto dimension = specfem::dimension::type::dim2;
@@ -247,6 +361,123 @@ public:
 
   KOKKOS_FUNCTION
   bool operator!=(const value_type value) { return !(*this == value); }
+};
+
+template <bool UseSIMD>
+struct kernels<specfem::dimension::type::dim2,
+               specfem::element::medium_tag::elastic_sv,
+               specfem::element::property_tag::anisotropic, UseSIMD>
+    : public kernels<specfem::dimension::type::dim2,
+                     specfem::element::medium_tag::elastic,
+                     specfem::element::property_tag::anisotropic, UseSIMD> {
+
+public:
+  /**
+   * @name Typedefs
+   *
+   */
+  ///@{
+  using simd =
+      typename specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD type
+  using value_type =
+      typename simd::datatype; ///< Underlying data type to store the kernels
+  ///@}
+  constexpr static auto medium_tag = specfem::element::medium_tag::elastic_sv;
+  /**
+   * @brief Default constructor
+   *
+   */
+  KOKKOS_FUNCTION
+  kernels() = default;
+
+  /**
+   * @brief single value constructor
+   *
+   */
+  KOKKOS_FUNCTION
+  kernels(const value_type value)
+      : kernels<specfem::dimension::type::dim2,
+                specfem::element::medium_tag::elastic,
+                specfem::element::property_tag::anisotropic, UseSIMD>(value) {}
+
+  /**
+   * @brief Constructor
+   *
+   * @param rho \f$ K_{\rho} \f$
+   * @param c11 \f$ K_{c_{11}} \f$
+   * @param c13 \f$ K_{c_{13}} \f$
+   * @param c15 \f$ K_{c_{15}} \f$
+   * @param c33 \f$ K_{c_{33}} \f$
+   * @param c35 \f$ K_{c_{35}} \f$
+   * @param c55 \f$ K_{c_{55}} \f$
+   */
+  KOKKOS_FUNCTION
+  kernels(const value_type rho, const value_type c11, const value_type c13,
+          const value_type c15, const value_type c33, const value_type c35,
+          const value_type c55)
+      : kernels<specfem::dimension::type::dim2,
+                specfem::element::medium_tag::elastic,
+                specfem::element::property_tag::anisotropic, UseSIMD>(
+            rho, c11, c13, c15, c33, c35, c55) {}
+};
+
+template <bool UseSIMD>
+struct kernels<specfem::dimension::type::dim2,
+               specfem::element::medium_tag::elastic_sh,
+               specfem::element::property_tag::anisotropic, UseSIMD>
+    : public kernels<specfem::dimension::type::dim2,
+                     specfem::element::medium_tag::elastic,
+                     specfem::element::property_tag::anisotropic, UseSIMD> {
+
+public:
+  /**
+   * @name Typedefs
+   *
+   */
+  ///@{
+  using simd =
+      typename specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD type
+  using value_type =
+      typename simd::datatype; ///< Underlying data type to store the kernels
+  ///@}
+
+  constexpr static auto medium_tag = specfem::element::medium_tag::elastic_sh;
+  /**
+   * @brief Default constructor
+   *
+   */
+  KOKKOS_FUNCTION
+  kernels() = default;
+
+  /**
+   * @brief single value constructor
+   *
+   */
+  KOKKOS_FUNCTION
+  kernels(const value_type value)
+      : kernels<specfem::dimension::type::dim2,
+                specfem::element::medium_tag::elastic,
+                specfem::element::property_tag::anisotropic, UseSIMD>(value) {}
+
+  /**
+   * @brief Constructor
+   *
+   * @param rho \f$ K_{\rho} \f$
+   * @param c11 \f$ K_{c_{11}} \f$
+   * @param c13 \f$ K_{c_{13}} \f$
+   * @param c15 \f$ K_{c_{15}} \f$
+   * @param c33 \f$ K_{c_{33}} \f$
+   * @param c35 \f$ K_{c_{35}} \f$
+   * @param c55 \f$ K_{c_{55}} \f$
+   */
+  KOKKOS_FUNCTION
+  kernels(const value_type rho, const value_type c11, const value_type c13,
+          const value_type c15, const value_type c33, const value_type c35,
+          const value_type c55)
+      : kernels<specfem::dimension::type::dim2,
+                specfem::element::medium_tag::elastic,
+                specfem::element::property_tag::anisotropic, UseSIMD>(
+            rho, c11, c13, c15, c33, c35, c55) {}
 };
 // end elastic anisotropic
 

@@ -1,7 +1,7 @@
 #include "source_time_function/external.hpp"
+#include "IO/seismogram/reader.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
-#include "IO/seismogram/reader.hpp"
 #include <fstream>
 #include <tuple>
 #include <vector>

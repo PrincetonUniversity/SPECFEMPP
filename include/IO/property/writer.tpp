@@ -29,22 +29,24 @@ void specfem::IO::property_writer<OutputLibrary>::write(specfem::compute::assemb
   const int ngllz = mesh.points.ngllz;
   const int ngllx = mesh.points.ngllx;
 
-  int n_elastic_isotropic;
-  int n_elastic_anisotropic;
+  int n_elastic_sv_isotropic;
+  int n_elastic_sh_isotropic;
+  int n_elastic_sv_anisotropic;
+  int n_elastic_sh_anisotropic;
   int n_acoustic;
 
   {
-    typename OutputLibrary::Group elastic = file.createGroup("/ElasticIsotropic");
+    typename OutputLibrary::Group elastic = file.createGroup("/ElasticSVIsotropic");
 
     const auto element_indices = element_types.get_elements_on_host(
         specfem::element::medium_tag::elastic_sv,
         specfem::element::property_tag::isotropic);
-    n_elastic_isotropic = element_indices.size();
+        n_elastic_sv_isotropic = element_indices.size();
 
-    DomainView x("xcoordinates_elastic_isotropic", n_elastic_isotropic, ngllz, ngllx);
-    DomainView z("zcoordinates_elastic_isotropic", n_elastic_isotropic, ngllz, ngllx);
+    DomainView x("xcoordinates_elastic_isotropic", n_elastic_sv_isotropic, ngllz, ngllx);
+    DomainView z("zcoordinates_elastic_isotropic", n_elastic_sv_isotropic, ngllz, ngllx);
 
-    for (int i = 0; i < n_elastic_isotropic; i++) {
+    for (int i = 0; i < n_elastic_sv_isotropic; i++) {
       const int ispec = element_indices(i);
       for (int iz = 0; iz < ngllz; iz++) {
         for (int ix = 0; ix < ngllx; ix++) {
@@ -57,23 +59,52 @@ void specfem::IO::property_writer<OutputLibrary>::write(specfem::compute::assemb
     elastic.createDataset("X", x).write();
     elastic.createDataset("Z", z).write();
 
-    elastic.createDataset("rho", properties.elastic_isotropic.h_rho).write();
-    elastic.createDataset("mu", properties.elastic_isotropic.h_mu).write();
-    elastic.createDataset("lambdaplus2mu", properties.elastic_isotropic.h_lambdaplus2mu).write();
+    elastic.createDataset("rho", properties.elastic_sv_isotropic.h_rho).write();
+    elastic.createDataset("mu", properties.elastic_sv_isotropic.h_mu).write();
+    elastic.createDataset("lambdaplus2mu", properties.elastic_sv_isotropic.h_lambdaplus2mu).write();
   }
 
   {
-    typename OutputLibrary::Group elastic = file.createGroup("/ElasticAnisotropic");
+    typename OutputLibrary::Group elastic = file.createGroup("/ElasticSHIsotropic");
+
+    const auto element_indices = element_types.get_elements_on_host(
+        specfem::element::medium_tag::elastic_sh,
+        specfem::element::property_tag::isotropic);
+        n_elastic_sh_isotropic = element_indices.size();
+
+    DomainView x("xcoordinates_elastic_isotropic", n_elastic_sh_isotropic, ngllz, ngllx);
+    DomainView z("zcoordinates_elastic_isotropic", n_elastic_sh_isotropic, ngllz, ngllx);
+
+    for (int i = 0; i < n_elastic_sh_isotropic; i++) {
+      const int ispec = element_indices(i);
+      for (int iz = 0; iz < ngllz; iz++) {
+        for (int ix = 0; ix < ngllx; ix++) {
+          x(i, iz, ix) = mesh.points.h_coord(0, ispec, iz, ix);
+          z(i, iz, ix) = mesh.points.h_coord(1, ispec, iz, ix);
+        }
+      }
+    }
+
+    elastic.createDataset("X", x).write();
+    elastic.createDataset("Z", z).write();
+
+    elastic.createDataset("rho", properties.elastic_sh_isotropic.h_rho).write();
+    elastic.createDataset("mu", properties.elastic_sh_isotropic.h_mu).write();
+    elastic.createDataset("lambdaplus2mu", properties.elastic_sh_isotropic.h_lambdaplus2mu).write();
+  }
+
+  {
+    typename OutputLibrary::Group elastic = file.createGroup("/ElasticSVAnisotropic");
 
     const auto element_indices = element_types.get_elements_on_host(
         specfem::element::medium_tag::elastic_sv,
         specfem::element::property_tag::anisotropic);
-    n_elastic_anisotropic = element_indices.size();
+    n_elastic_sv_anisotropic = element_indices.size();
 
-    DomainView x("xcoordinates_elastic_anisotropic", n_elastic_anisotropic, ngllz, ngllx);
-    DomainView z("zcoordinates_elastic_anisotropic", n_elastic_anisotropic, ngllz, ngllx);
+    DomainView x("xcoordinates_elastic_anisotropic", n_elastic_sv_anisotropic, ngllz, ngllx);
+    DomainView z("zcoordinates_elastic_anisotropic", n_elastic_sv_anisotropic, ngllz, ngllx);
 
-    for (int i = 0; i < n_elastic_anisotropic; i++) {
+    for (int i = 0; i < n_elastic_sv_anisotropic; i++) {
       const int ispec = element_indices(i);
       for (int iz = 0; iz < ngllz; iz++) {
         for (int ix = 0; ix < ngllx; ix++) {
@@ -86,16 +117,52 @@ void specfem::IO::property_writer<OutputLibrary>::write(specfem::compute::assemb
     elastic.createDataset("X", x).write();
     elastic.createDataset("Z", z).write();
 
-    elastic.createDataset("rho", properties.elastic_anisotropic.h_rho).write();
-    elastic.createDataset("c11", properties.elastic_anisotropic.h_c11).write();
-    elastic.createDataset("c13", properties.elastic_anisotropic.h_c13).write();
-    elastic.createDataset("c15", properties.elastic_anisotropic.h_c15).write();
-    elastic.createDataset("c33", properties.elastic_anisotropic.h_c33).write();
-    elastic.createDataset("c35", properties.elastic_anisotropic.h_c35).write();
-    elastic.createDataset("c55", properties.elastic_anisotropic.h_c55).write();
-    elastic.createDataset("c12", properties.elastic_anisotropic.h_c12).write();
-    elastic.createDataset("c23", properties.elastic_anisotropic.h_c23).write();
-    elastic.createDataset("c25", properties.elastic_anisotropic.h_c25).write();
+    elastic.createDataset("rho", properties.elastic_sv_anisotropic.h_rho).write();
+    elastic.createDataset("c11", properties.elastic_sv_anisotropic.h_c11).write();
+    elastic.createDataset("c13", properties.elastic_sv_anisotropic.h_c13).write();
+    elastic.createDataset("c15", properties.elastic_sv_anisotropic.h_c15).write();
+    elastic.createDataset("c33", properties.elastic_sv_anisotropic.h_c33).write();
+    elastic.createDataset("c35", properties.elastic_sv_anisotropic.h_c35).write();
+    elastic.createDataset("c55", properties.elastic_sv_anisotropic.h_c55).write();
+    elastic.createDataset("c12", properties.elastic_sv_anisotropic.h_c12).write();
+    elastic.createDataset("c23", properties.elastic_sv_anisotropic.h_c23).write();
+    elastic.createDataset("c25", properties.elastic_sv_anisotropic.h_c25).write();
+  }
+
+  {
+    typename OutputLibrary::Group elastic = file.createGroup("/ElasticSHAnisotropic");
+
+    const auto element_indices = element_types.get_elements_on_host(
+        specfem::element::medium_tag::elastic_sh,
+        specfem::element::property_tag::anisotropic);
+    n_elastic_sh_anisotropic = element_indices.size();
+
+    DomainView x("xcoordinates_elastic_anisotropic", n_elastic_sh_anisotropic, ngllz, ngllx);
+    DomainView z("zcoordinates_elastic_anisotropic", n_elastic_sh_anisotropic, ngllz, ngllx);
+
+    for (int i = 0; i < n_elastic_sh_anisotropic; i++) {
+      const int ispec = element_indices(i);
+      for (int iz = 0; iz < ngllz; iz++) {
+        for (int ix = 0; ix < ngllx; ix++) {
+          x(i, iz, ix) = mesh.points.h_coord(0, ispec, iz, ix);
+          z(i, iz, ix) = mesh.points.h_coord(1, ispec, iz, ix);
+        }
+      }
+    }
+
+    elastic.createDataset("X", x).write();
+    elastic.createDataset("Z", z).write();
+
+    elastic.createDataset("rho", properties.elastic_sh_anisotropic.h_rho).write();
+    elastic.createDataset("c11", properties.elastic_sh_anisotropic.h_c11).write();
+    elastic.createDataset("c13", properties.elastic_sh_anisotropic.h_c13).write();
+    elastic.createDataset("c15", properties.elastic_sh_anisotropic.h_c15).write();
+    elastic.createDataset("c33", properties.elastic_sh_anisotropic.h_c33).write();
+    elastic.createDataset("c35", properties.elastic_sh_anisotropic.h_c35).write();
+    elastic.createDataset("c55", properties.elastic_sh_anisotropic.h_c55).write();
+    elastic.createDataset("c12", properties.elastic_sh_anisotropic.h_c12).write();
+    elastic.createDataset("c23", properties.elastic_sh_anisotropic.h_c23).write();
+    elastic.createDataset("c25", properties.elastic_sh_anisotropic.h_c25).write();
   }
 
   {
@@ -124,7 +191,7 @@ void specfem::IO::property_writer<OutputLibrary>::write(specfem::compute::assemb
     acoustic.createDataset("kappa", properties.acoustic_isotropic.h_kappa).write();
   }
 
-  assert(n_elastic_isotropic + n_elastic_anisotropic + n_acoustic == nspec);
+  assert(n_elastic_sv_isotropic + n_elastic_sv_anisotropic + n_elastic_sh_isotropic + n_elastic_sh_anisotropic + n_acoustic == nspec);
 
   std::cout << "Properties written to " << output_folder << "/Properties"
             << std::endl;

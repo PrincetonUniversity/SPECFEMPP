@@ -9,10 +9,11 @@ namespace specfem {
 namespace medium {
 
 template <>
-class kernels_container<specfem::element::medium_tag::elastic_sv,
+class kernels_container<specfem::element::medium_tag::elastic,
                         specfem::element::property_tag::anisotropic> {
 public:
-  constexpr static auto value_type = specfem::element::medium_tag::elastic_sv;
+  constexpr static auto dimension = specfem::dimension::type::dim2;
+  constexpr static auto medium_tag = specfem::element::medium_tag::elastic;
   constexpr static auto property_type =
       specfem::element::property_tag::anisotropic;
   int nspec;
@@ -59,15 +60,10 @@ public:
     initialize();
   }
 
-  template <
-      typename PointKernelType,
-      typename std::enable_if_t<!PointKernelType::simd::using_simd, int> = 0>
   KOKKOS_INLINE_FUNCTION void load_device_kernels(
-      const specfem::point::index<PointKernelType::dimension> &index,
-      PointKernelType &kernels) const {
-
-    static_assert(PointKernelType::medium_tag == value_type);
-    static_assert(PointKernelType::property_tag == property_type);
+      const specfem::point::index<dimension> &index,
+      specfem::point::kernels<dimension, medium_tag, property_type, false>
+          &kernels) const {
 
     const int ispec = index.ispec;
     const int iz = index.iz;
@@ -82,19 +78,14 @@ public:
     kernels.c55 = c55(ispec, iz, ix);
   }
 
-  template <
-      typename PointKernelType,
-      typename std::enable_if_t<PointKernelType::simd::using_simd, int> = 0>
   KOKKOS_INLINE_FUNCTION void load_device_kernels(
-      const specfem::point::simd_index<PointKernelType::dimension> &index,
-      PointKernelType &kernels) const {
+      const specfem::point::simd_index<dimension> &index,
+      specfem::point::kernels<dimension, medium_tag, property_type, true>
+          &kernels) const {
 
-    static_assert(PointKernelType::medium_tag == value_type);
-    static_assert(PointKernelType::property_tag == property_type);
-
-    using simd_type = typename PointKernelType::simd::datatype;
-    using mask_type = typename PointKernelType::simd::mask_type;
-    using tag_type = typename PointKernelType::simd::tag_type;
+    using simd = specfem::datatype::simd<type_real, true>;
+    using mask_type = simd::mask_type;
+    using tag_type = simd::tag_type;
 
     mask_type mask([&](std::size_t lane) { return index.mask(lane); });
 
@@ -118,15 +109,10 @@ public:
         .copy_from(&c55(ispec, iz, ix), tag_type());
   }
 
-  template <
-      typename PointKernelType,
-      typename std::enable_if_t<!PointKernelType::simd::using_simd, int> = 0>
-  void
-  load_host_kernels(specfem::point::index<PointKernelType::dimension> &index,
-                    PointKernelType &kernels) const {
-
-    static_assert(PointKernelType::medium_tag == value_type);
-    static_assert(PointKernelType::property_tag == property_type);
+  void load_host_kernels(
+      specfem::point::index<dimension> &index,
+      specfem::point::kernels<dimension, medium_tag, property_type, false>
+          &kernels) const {
 
     const int ispec = index.ispec;
     const int iz = index.iz;
@@ -141,19 +127,14 @@ public:
     kernels.c55 = h_c55(ispec, iz, ix);
   }
 
-  template <
-      typename PointKernelType,
-      typename std::enable_if_t<PointKernelType::simd::using_simd, int> = 0>
   void load_host_kernels(
-      specfem::point::simd_index<PointKernelType::dimension> &index,
-      PointKernelType &kernels) const {
+      specfem::point::simd_index<dimension> &index,
+      specfem::point::kernels<dimension, medium_tag, property_type, true>
+          &kernels) const {
 
-    static_assert(PointKernelType::medium_tag == value_type);
-    static_assert(PointKernelType::property_tag == property_type);
-
-    using simd_type = typename PointKernelType::simd::datatype;
-    using mask_type = typename PointKernelType::simd::mask_type;
-    using tag_type = typename PointKernelType::simd::tag_type;
+    using simd = specfem::datatype::simd<type_real, true>;
+    using mask_type = typename simd::mask_type;
+    using tag_type = typename simd::tag_type;
 
     mask_type mask([&](std::size_t lane) { return index.mask(lane); });
 
@@ -177,15 +158,10 @@ public:
         .copy_from(&h_c55(ispec, iz, ix), tag_type());
   }
 
-  template <
-      typename PointKernelType,
-      typename std::enable_if_t<!PointKernelType::simd::using_simd, int> = 0>
   KOKKOS_INLINE_FUNCTION void update_kernels_on_device(
-      const specfem::point::index<PointKernelType::dimension> &index,
-      const PointKernelType &kernels) const {
-
-    static_assert(PointKernelType::medium_tag == value_type);
-    static_assert(PointKernelType::property_tag == property_type);
+      const specfem::point::index<dimension> &index,
+      const specfem::point::kernels<dimension, medium_tag, property_type, false>
+          &kernels) const {
 
     const int ispec = index.ispec;
     const int iz = index.iz;
@@ -200,19 +176,14 @@ public:
     c55(ispec, iz, ix) = kernels.c55;
   }
 
-  template <
-      typename PointKernelType,
-      typename std::enable_if_t<PointKernelType::simd::using_simd, int> = 0>
   KOKKOS_INLINE_FUNCTION void update_kernels_on_device(
-      const specfem::point::simd_index<PointKernelType::dimension> &index,
-      const PointKernelType &kernels) const {
+      const specfem::point::simd_index<dimension> &index,
+      const specfem::point::kernels<dimension, medium_tag, property_type, true>
+          &kernels) const {
 
-    static_assert(PointKernelType::medium_tag == value_type);
-    static_assert(PointKernelType::property_tag == property_type);
-
-    using simd_type = typename PointKernelType::simd::datatype;
-    using mask_type = typename PointKernelType::simd::mask_type;
-    using tag_type = typename PointKernelType::simd::tag_type;
+    using simd = specfem::datatype::simd<type_real, true>;
+    using mask_type = typename simd::mask_type;
+    using tag_type = typename simd::tag_type;
 
     mask_type mask([&](std::size_t lane) { return index.mask(lane); });
 
@@ -236,15 +207,10 @@ public:
         .copy_to(&c55(ispec, iz, ix), tag_type());
   }
 
-  template <
-      typename PointKernelType,
-      typename std::enable_if_t<!PointKernelType::simd::using_simd, int> = 0>
   void update_kernels_on_host(
-      const specfem::point::index<PointKernelType::dimension> &index,
-      const PointKernelType &kernels) const {
-
-    static_assert(PointKernelType::medium_tag == value_type);
-    static_assert(PointKernelType::property_tag == property_type);
+      const specfem::point::index<dimension> &index,
+      const specfem::point::kernels<dimension, medium_tag, property_type, false>
+          &kernels) const {
 
     const int ispec = index.ispec;
     const int iz = index.iz;
@@ -259,19 +225,14 @@ public:
     h_c55(ispec, iz, ix) = kernels.c55;
   }
 
-  template <
-      typename PointKernelType,
-      typename std::enable_if_t<PointKernelType::simd::using_simd, int> = 0>
   void update_kernels_on_host(
-      const specfem::point::simd_index<PointKernelType::dimension> &index,
-      const PointKernelType &kernels) const {
+      const specfem::point::simd_index<dimension> &index,
+      const specfem::point::kernels<dimension, medium_tag, property_type, true>
+          &kernels) const {
 
-    static_assert(PointKernelType::medium_tag == value_type);
-    static_assert(PointKernelType::property_tag == property_type);
-
-    using simd_type = typename PointKernelType::simd::datatype;
-    using mask_type = typename PointKernelType::simd::mask_type;
-    using tag_type = typename PointKernelType::simd::tag_type;
+    using simd = specfem::datatype::simd<type_real, true>;
+    using mask_type = typename simd::mask_type;
+    using tag_type = typename simd::tag_type;
 
     mask_type mask([&](std::size_t lane) { return index.mask(lane); });
 
@@ -294,15 +255,10 @@ public:
         .copy_to(&h_c55(ispec, iz, ix), tag_type());
   }
 
-  template <
-      typename PointKernelType,
-      typename std::enable_if_t<!PointKernelType::simd::using_simd, int> = 0>
   KOKKOS_INLINE_FUNCTION void add_kernels_on_device(
-      const specfem::point::index<PointKernelType::dimension> &index,
-      const PointKernelType &kernels) const {
-
-    static_assert(PointKernelType::medium_tag == value_type);
-    static_assert(PointKernelType::property_tag == property_type);
+      const specfem::point::index<dimension> &index,
+      const specfem::point::kernels<dimension, medium_tag, property_type, false>
+          &kernels) const {
 
     const int ispec = index.ispec;
     const int iz = index.iz;
@@ -317,19 +273,14 @@ public:
     c55(ispec, iz, ix) += kernels.c55;
   }
 
-  template <
-      typename PointKernelType,
-      typename std::enable_if_t<PointKernelType::simd::using_simd, int> = 0>
   KOKKOS_INLINE_FUNCTION void add_kernels_on_device(
-      const specfem::point::simd_index<PointKernelType::dimension> &index,
-      const PointKernelType &kernels) const {
+      const specfem::point::simd_index<dimension> &index,
+      const specfem::point::kernels<dimension, medium_tag, property_type, true>
+          &kernels) const {
 
-    static_assert(PointKernelType::medium_tag == value_type);
-    static_assert(PointKernelType::property_tag == property_type);
-
-    using simd_type = typename PointKernelType::simd::datatype;
-    using mask_type = typename PointKernelType::simd::mask_type;
-    using tag_type = typename PointKernelType::simd::tag_type;
+    using simd = typename specfem::datatype::simd<type_real, true>;
+    using mask_type = typename simd::mask_type;
+    using tag_type = typename simd::tag_type;
 
     mask_type mask([&](std::size_t lane) { return index.mask(lane); });
 
@@ -337,7 +288,7 @@ public:
     const int iz = index.iz;
     const int ix = index.ix;
 
-    simd_type lhs;
+    simd::datatype lhs;
 
     Kokkos::Experimental::where(mask, lhs).copy_from(&rho(ispec, iz, ix),
                                                      tag_type());
@@ -382,15 +333,10 @@ public:
                                                    tag_type());
   }
 
-  template <
-      typename PointKernelType,
-      typename std::enable_if_t<!PointKernelType::simd::using_simd, int> = 0>
   void add_kernels_on_host(
-      const specfem::point::index<PointKernelType::dimension> &index,
-      const PointKernelType &kernels) const {
-
-    static_assert(PointKernelType::medium_tag == value_type);
-    static_assert(PointKernelType::property_tag == property_type);
+      const specfem::point::index<dimension> &index,
+      const specfem::point::kernels<dimension, medium_tag, property_type, false>
+          &kernels) const {
 
     const int ispec = index.ispec;
     const int iz = index.iz;
@@ -405,19 +351,14 @@ public:
     h_c55(ispec, iz, ix) += kernels.c55;
   }
 
-  template <
-      typename PointKernelType,
-      typename std::enable_if_t<PointKernelType::simd::using_simd, int> = 0>
   void add_kernels_on_host(
-      const specfem::point::simd_index<PointKernelType::dimension> &index,
-      const PointKernelType &kernels) const {
+      const specfem::point::simd_index<dimension> &index,
+      const specfem::point::kernels<dimension, medium_tag, property_type, true>
+          &kernels) const {
 
-    static_assert(PointKernelType::medium_tag == value_type);
-    static_assert(PointKernelType::property_tag == property_type);
-
-    using simd_type = typename PointKernelType::simd::datatype;
-    using mask_type = typename PointKernelType::simd::mask_type;
-    using tag_type = typename PointKernelType::simd::tag_type;
+    using simd = specfem::datatype::simd<type_real, true>;
+    using mask_type = typename simd::mask_type;
+    using tag_type = typename simd::tag_type;
 
     mask_type mask([&](std::size_t lane) { return index.mask(lane); });
 
@@ -425,7 +366,7 @@ public:
     const int iz = index.iz;
     const int ix = index.ix;
 
-    simd_type lhs;
+    simd::datatype lhs;
 
     Kokkos::Experimental::where(mask, lhs).copy_from(&h_rho(ispec, iz, ix),
                                                      tag_type());
@@ -507,5 +448,38 @@ public:
   }
 };
 
+template <>
+class kernels_container<specfem::element::medium_tag::elastic_sv,
+                        specfem::element::property_tag::anisotropic>
+    : public kernels_container<specfem::element::medium_tag::elastic,
+                               specfem::element::property_tag::anisotropic> {
+
+public:
+  constexpr static auto medium_tag = specfem::element::medium_tag::elastic_sv;
+
+  kernels_container() = default;
+
+  kernels_container(const int nspec, const int ngllz, const int ngllx)
+      : kernels_container<specfem::element::medium_tag::elastic,
+                          specfem::element::property_tag::anisotropic>(
+            nspec, ngllz, ngllx) {}
+};
+
+template <>
+class kernels_container<specfem::element::medium_tag::elastic_sh,
+                        specfem::element::property_tag::anisotropic>
+    : public kernels_container<specfem::element::medium_tag::elastic,
+                               specfem::element::property_tag::anisotropic> {
+
+public:
+  constexpr static auto medium_tag = specfem::element::medium_tag::elastic_sh;
+
+  kernels_container() = default;
+
+  kernels_container(const int nspec, const int ngllz, const int ngllx)
+      : kernels_container<specfem::element::medium_tag::elastic,
+                          specfem::element::property_tag::anisotropic>(
+            nspec, ngllz, ngllx) {}
+};
 } // namespace medium
 } // namespace specfem

@@ -36,13 +36,23 @@ specfem::compute::kernels::kernels(
       specfem::element::property_tag::isotropic>(
       acoustic_elements, ngllz, ngllx, h_property_index_mapping);
 
-  elastic_isotropic = specfem::medium::material_kernels<
+  elastic_sv_isotropic = specfem::medium::material_kernels<
       specfem::element::medium_tag::elastic_sv,
       specfem::element::property_tag::isotropic>(
       elastic_isotropic_elements, ngllz, ngllx, h_property_index_mapping);
 
-  elastic_anisotropic = specfem::medium::material_kernels<
+  elastic_sh_isotropic = specfem::medium::material_kernels<
+      specfem::element::medium_tag::elastic_sh,
+      specfem::element::property_tag::isotropic>(
+      elastic_isotropic_elements, ngllz, ngllx, h_property_index_mapping);
+
+  elastic_sv_anisotropic = specfem::medium::material_kernels<
       specfem::element::medium_tag::elastic_sv,
+      specfem::element::property_tag::anisotropic>(
+      elastic_anisotropic_elements, ngllz, ngllx, h_property_index_mapping);
+
+  elastic_sh_anisotropic = specfem::medium::material_kernels<
+      specfem::element::medium_tag::elastic_sh,
       specfem::element::property_tag::anisotropic>(
       elastic_anisotropic_elements, ngllz, ngllx, h_property_index_mapping);
 
