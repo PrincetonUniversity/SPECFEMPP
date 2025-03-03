@@ -57,22 +57,40 @@ specfem::compute::simulation_field<WavefieldType>::simulation_field(
     }
   }
 
-  auto acoustic_index =
-      Kokkos::subview(h_assembly_index_mapping, Kokkos::ALL,
-                      static_cast<int>(specfem::element::medium_tag::acoustic));
+#define ASSIGN_FIELDS(DIMENSION_TAG, MEDIUM_TAG)                               \
+  auto CREATE_VARIABLE_NAME(index, GET_NAME(DIMENSION_TAG),                   \
+                            GET_NAME(MEDIUM_TAG)) =                            \
+      Kokkos::subview(h_assembly_index_mapping, Kokkos::ALL,                   \
+                      static_cast<int>(GET_TAG(MEDIUM_TAG)));                  \
+  this->CREATE_VARIABLE_NAME(field, GET_NAME(DIMENSION_TAG),                  \
+                             GET_NAME(MEDIUM_TAG)) =                           \
+      specfem::compute::impl::field_impl<GET_TAG(DIMENSION_TAG),               \
+                                         GET_TAG(MEDIUM_TAG)>(mesh, element_types, CREATE_VARIABLE_NAME(index, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG)));
 
-  auto elastic_index =
-      Kokkos::subview(h_assembly_index_mapping, Kokkos::ALL,
-                      static_cast<int>(specfem::element::medium_tag::elastic_sv));
+  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(ASSIGN_FIELDS,
+                                 WHERE(DIMENSION_TAG_DIM2)
+                                     WHERE(MEDIUM_TAG_ELASTIC_SV,
+                                           MEDIUM_TAG_ELASTIC_SH,
+                                           MEDIUM_TAG_ACOUSTIC))
 
-  elastic =
-      specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
-                                         specfem::element::medium_tag::elastic_sv>(
-          mesh, element_types, elastic_index);
+#undef ASSIGN_FIELDS
 
-  acoustic = specfem::compute::impl::field_impl<
-      specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic>(
-      mesh, element_types, acoustic_index);
+  // auto acoustic_index =
+  //     Kokkos::subview(h_assembly_index_mapping, Kokkos::ALL,
+  //                     static_cast<int>(specfem::element::medium_tag::acoustic));
+
+  // auto elastic_index =
+  //     Kokkos::subview(h_assembly_index_mapping, Kokkos::ALL,
+  //                     static_cast<int>(specfem::element::medium_tag::elastic_sv));
+
+  // elastic =
+  //     specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
+  //                                        specfem::element::medium_tag::elastic_sv>(
+  //         mesh, element_types, elastic_index);
+
+  // acoustic = specfem::compute::impl::field_impl<
+  //     specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic>(
+  //     mesh, element_types, acoustic_index);
 
   Kokkos::deep_copy(assembly_index_mapping, h_assembly_index_mapping);
 
