@@ -7,6 +7,10 @@
 namespace specfem {
 namespace mesh {
 
+/**
+ * @brief Struct to store materials for a 3D mesh
+ *
+ */
 template <> struct materials<specfem::dimension::type::dim3> {
 
   constexpr static auto dimension =
@@ -46,28 +50,28 @@ template <> struct materials<specfem::dimension::type::dim3> {
   View4D<type_real> poro_rho_vsI;  ///< Poroelastic rho_vsI
 
   // Anisotropic properties
-  bool anisotropic = false;
-  View4D<type_real> c11;
-  View4D<type_real> c12;
-  View4D<type_real> c13;
-  View4D<type_real> c14;
-  View4D<type_real> c15;
-  View4D<type_real> c16;
-  View4D<type_real> c22;
-  View4D<type_real> c23;
-  View4D<type_real> c24;
-  View4D<type_real> c25;
-  View4D<type_real> c26;
-  View4D<type_real> c33;
-  View4D<type_real> c34;
-  View4D<type_real> c35;
-  View4D<type_real> c36;
-  View4D<type_real> c44;
-  View4D<type_real> c45;
-  View4D<type_real> c46;
-  View4D<type_real> c55;
-  View4D<type_real> c56;
-  View4D<type_real> c66;
+  bool anisotropic = false; ///< Anisotropic simulation
+  View4D<type_real> c11;    ///< Anisotropic c11
+  View4D<type_real> c12;    ///< Anisotropic c12
+  View4D<type_real> c13;    ///< Anisotropic c13
+  View4D<type_real> c14;    ///< Anisotropic c14
+  View4D<type_real> c15;    ///< Anisotropic c15
+  View4D<type_real> c16;    ///< Anisotropic c16
+  View4D<type_real> c22;    ///< Anisotropic c22
+  View4D<type_real> c23;    ///< Anisotropic c23
+  View4D<type_real> c24;    ///< Anisotropic c24
+  View4D<type_real> c25;    ///< Anisotropic c25
+  View4D<type_real> c26;    ///< Anisotropic c26
+  View4D<type_real> c33;    ///< Anisotropic c33
+  View4D<type_real> c34;    ///< Anisotropic c34
+  View4D<type_real> c35;    ///< Anisotropic c35
+  View4D<type_real> c36;    ///< Anisotropic c36
+  View4D<type_real> c44;    ///< Anisotropic c44
+  View4D<type_real> c45;    ///< Anisotropic c45
+  View4D<type_real> c46;    ///< Anisotropic c46
+  View4D<type_real> c55;    ///< Anisotropic c55
+  View4D<type_real> c56;    ///< Anisotropic c56
+  View4D<type_real> c66;    ///< Anisotropic c66
 
   /**
    * @name Constructors
@@ -78,12 +82,19 @@ template <> struct materials<specfem::dimension::type::dim3> {
    *
    */
   materials() = default;
-  /**
-   * @brief Constructor used to allocate views
-   *
-   * @param nspec Number of nodes
-   */
 
+  /**
+   * @brief Construct a new materials object
+   *
+   * @param nspec  Number of spectral elements
+   * @param ngllx  Number of GLL points in x
+   * @param nglly  Number of GLL points in y
+   * @param ngllz  Number of GLL points in z
+   * @param acoustic  whether the simulation is acoustic
+   * @param elastic  whether the simulation is elastic
+   * @param poroelastic  whether the simulation is poroelastic
+   * @param anisotropic  whether the simulation is anisotropic
+   */
   materials(const int nspec, const int ngllx, const int nglly, const int ngllz,
             const bool acoustic, const bool elastic, const bool poroelastic,
             const bool anisotropic)
@@ -168,7 +179,13 @@ template <> struct materials<specfem::dimension::type::dim3> {
     }
   };
 
-  void print();
+  ///@}
+
+  /**
+   * @brief Print basic information about the materials
+   *
+   */
+  std::string print();
 };
 } // namespace mesh
 } // namespace specfem

@@ -30,6 +30,7 @@ void fortran_read_value(std::vector<bool> *value,
                         std::ifstream &stream,
                         int &buffer_length);
 
+
 template <typename T, typename... Args>
 void fortran_IO(std::ifstream &stream, int &buffer_length, T *value,
                 Args... values) {

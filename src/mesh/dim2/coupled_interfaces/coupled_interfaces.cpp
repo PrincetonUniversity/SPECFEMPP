@@ -1,6 +1,7 @@
 #include "mesh/dim2/coupled_interfaces/coupled_interfaces.hpp"
 #include "mesh/dim2/coupled_interfaces/interface_container.hpp"
 #include "mesh/dim2/coupled_interfaces/interface_container.tpp"
+#include "mesh/mesh_base.hpp"
 
 // specfem::mesh::coupled_interfaces::coupled_interfaces(
 //     specfem::mesh::interface_container<specfem::element::medium_tag::elastic,
@@ -15,20 +16,20 @@
 //         specfem::element::medium_tag::poroelastic>
 //         elastic_poroelastic) {}
 
-template <specfem::dimension::type DimensionType>
 template <specfem::element::medium_tag Medium1,
           specfem::element::medium_tag Medium2>
-std::variant<specfem::mesh::interface_container<
-                 DimensionType, specfem::element::medium_tag::elastic,
-                 specfem::element::medium_tag::acoustic>,
-             specfem::mesh::interface_container<
-                 DimensionType, specfem::element::medium_tag::acoustic,
-                 specfem::element::medium_tag::poroelastic>,
-             specfem::mesh::interface_container<
-                 DimensionType, specfem::element::medium_tag::elastic,
-                 specfem::element::medium_tag::poroelastic> >
-specfem::mesh::coupled_interfaces<DimensionType>::coupled_interfaces::get()
-    const {
+std::variant<
+    specfem::mesh::interface_container<specfem::dimension::type::dim2,
+                                       specfem::element::medium_tag::elastic,
+                                       specfem::element::medium_tag::acoustic>,
+    specfem::mesh::interface_container<
+        specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
+        specfem::element::medium_tag::poroelastic>,
+    specfem::mesh::interface_container<
+        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+        specfem::element::medium_tag::poroelastic> >
+specfem::mesh::coupled_interfaces<
+    specfem::dimension::type::dim2>::coupled_interfaces::get() const {
   if constexpr (Medium1 == specfem::element::medium_tag::elastic &&
                 Medium2 == specfem::element::medium_tag::acoustic) {
     return elastic_acoustic;

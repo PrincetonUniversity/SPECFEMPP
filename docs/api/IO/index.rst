@@ -29,8 +29,11 @@ are exposed through the following modules:
     reader/index
 
 
-Read Mesh
----------
+Input for the 2D Solver
++++++++++++++++++++++++
+
+Read the 2D Mesh
+----------------
 
 .. doxygenfunction:: specfem::IO::read_2d_mesh
 
@@ -45,3 +48,35 @@ Read Receivers
 --------------
 
 .. doxygenfunction:: specfem::IO::read_receivers(const std::string stations_file, const type_real angle)
+
+
+
+
+Input for the 3D Solver
++++++++++++++++++++++++
+
+
+Read the 3D Mesh
+----------------
+
+.. doxygenfunction:: specfem::IO::read_3d_mesh
+
+
+Helper functions
+''''''''''''''''
+
+**Reading any values**
+
+.. doxygenfunction:: specfem::IO::mesh::impl::fortran::dim3::try_read_line
+
+**Reading any array**
+
+.. doxygenfunction:: specfem::IO::mesh::impl::fortran::dim3::try_read_array
+
+.. doxygenfunction:: specfem::IO::mesh::impl::fortran::dim3::read_array
+
+**Reading index arrays**
+
+.. doxygenfunction:: specfem::IO::mesh::impl::fortran::dim3::try_read_index_array
+
+.. doxygenfunction:: specfem::IO::mesh::impl::fortran::dim3::read_index_array

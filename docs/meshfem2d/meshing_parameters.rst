@@ -3,7 +3,7 @@ Meshing Parameters
 ==================
 
 **Parameter Name**: ``PARTITIONING_TYPE``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. note::
 
@@ -17,7 +17,7 @@ Meshing Parameters
 **Type**: ``int``
 
 **Parameter Name**: ``NGNOD``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Description**: Number of control nodes per element.
 
@@ -25,7 +25,7 @@ Meshing Parameters
     - Supported values: ``9``
 
 **Parameter Name**: ``database_filename``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Description**: Name of the database file to store the generated mesh.
 

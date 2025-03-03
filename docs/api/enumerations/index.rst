@@ -1,4 +1,4 @@
-.. _enumerations::
+.. _enumerations:
 
 Enumerations
 ============

@@ -74,6 +74,35 @@ template <> struct mesh<specfem::dimension::type::dim2> {
    */
   mesh(){};
 
+  /**
+   * @brief Mesh constructor
+   *
+   * This constructor initializes the mesh struct with the given parameters
+   *
+   * @param npgeo Total number of spectral element control nodes
+   * @param nspec Total number of spectral elements
+   * @param nproc Total number of processors
+   * @param control_nodes Struct to store control nodes
+   * @param parameters Struct to store simulation launch parameters
+   * @param coupled_interfaces Struct to store coupled interfaces
+   * @param boundaries Struct to store information at the boundaries
+   * @param tags Struct to store tags for every spectral element
+   * @param tangential_nodes Struct to store tangential nodes
+   * @param axial_nodes Struct to store axial nodes
+   * @param materials Struct to store material properties
+   *
+   * @see ::specfem::mesh::control_nodes, ::specfem::mesh::parameters,
+   *      ::specfem::mesh::coupled_interfaces, ::specfem::mesh::boundaries,
+   *      ::specfem::mesh::tags, ::specfem::mesh::elements::tangential_elements,
+   *      ::specfem::mesh::elements::axial_elements, ::specfem::mesh::materials
+   *
+   * @code{.cpp}
+   * // Example of how to use this constructor
+   * specfem::mesh::mesh<specfem::dimension::type::dim2> mesh(
+   *    npgeo, nspec, nproc, control_nodes, parameters, coupled_interfaces,
+   *    boundaries, tags, tangential_nodes, axial_nodes, materials);
+   * @endcode
+   */
   mesh(
       const int npgeo, const int nspec, const int nproc,
       const specfem::mesh::control_nodes<specfem::dimension::type::dim2>
@@ -94,8 +123,20 @@ template <> struct mesh<specfem::dimension::type::dim2> {
         parameters(parameters), coupled_interfaces(coupled_interfaces),
         boundaries(boundaries), tags(tags), tangential_nodes(tangential_nodes),
         axial_nodes(axial_nodes), materials(materials){};
-  ///@}
+  ///@} // Constructors
 
+  /**
+   * @brief Print mesh information
+   *
+   * This function prints the mesh information
+   *
+   * @return std::string String containing the mesh information
+   *
+   * @code{.cpp}
+   * // Example of how to use this function
+   * std::string mesh_info = mesh.print();
+   * @endcode
+   */
   std::string print() const;
 };
 } // namespace mesh

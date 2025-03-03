@@ -366,6 +366,7 @@ add_library(
 
 target_link_libraries(
         mesh
+        enumerations
         Kokkos::kokkos
         specfem_mpi
         # material_class

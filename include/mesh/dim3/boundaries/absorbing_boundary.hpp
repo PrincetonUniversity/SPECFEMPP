@@ -9,8 +9,16 @@
 namespace specfem {
 namespace mesh {
 
+/**
+ * @brief Struct to store absorbing boundaries
+ *
+ */
 template <specfem::element::medium_tag MediumTag> struct stacey_mass {};
 
+/**
+ * @brief Struct to store absorbing boundaries for an elastic medium
+ *
+ */
 template <> struct stacey_mass<specfem::element::medium_tag::elastic> {
   int nglob;             ///< Number of GLL points
   bool acoustic = false; ///< Flag for acoustic simulation
@@ -20,16 +28,45 @@ template <> struct stacey_mass<specfem::element::medium_tag::elastic> {
   Kokkos::View<type_real *, Kokkos::HostSpace> y;
   Kokkos::View<type_real *, Kokkos::HostSpace> z;
 
-  // Default constructor
+  /** @name Stacey Elastic Mass struct constructors
+   *  @{
+   */
+  /**
+   * @brief Default constructor
+   *
+   */
   stacey_mass(){};
 
+  /**
+   * @brief Constructor
+   *
+   * @param nglob Number of GLL points
+   *
+   * @note The x, y, and z views are created
+   *
+   * @code{.cpp}
+   * // Example of how to use this constructor
+   * const int nglob = 10;
+   * stacey_mass<specfem::element::medium_tag::elastic> mass_matrix(nglob);
+   *
+   * // Populate the mass matrix from the binary file
+   * specfem::IO::mesh::impl::fortran::dim3::read_array(stream, mass_matrix.x);
+   * specfem::IO::mesh::impl::fortran::dim3::read_array(stream, mass_matrix.y);
+   * specfem::IO::mesh::impl::fortran::dim3::read_array(stream, mass_matrix.z);
+   * @endcode
+   */
   stacey_mass(const int nglob) : nglob(nglob) {
     x = Kokkos::View<type_real *, Kokkos::HostSpace>("rmass_x", nglob);
     y = Kokkos::View<type_real *, Kokkos::HostSpace>("rmass_y", nglob);
     z = Kokkos::View<type_real *, Kokkos::HostSpace>("rmass_z", nglob);
   }
+  /** @} */ // Stacey Elastic Mass struct constructors
 };
 
+/**
+ * @brief Struct to store absorbing boundaries for an acoustic medium
+ *
+ */
 template <> struct stacey_mass<specfem::element::medium_tag::acoustic> {
   int nglob;            ///< Number of GLL points
   bool acoustic = true; ///< Flag for acoustic simulation
@@ -37,14 +74,42 @@ template <> struct stacey_mass<specfem::element::medium_tag::acoustic> {
 
   Kokkos::View<type_real *, Kokkos::HostSpace> mass;
 
-  // Default constructor
+  /** @name Constructors
+   *  @{
+   */
+
+  /**
+   * @brief Default constructor
+   *
+   */
   stacey_mass(){};
 
+  /**
+   * @brief Constructor
+   *
+   * @param nglob Number of GLL points
+   *
+   * @note The mass view is created with the name "rmass_x"
+   *
+   * @code{.cpp}
+   * // Example of how to use this constructor
+   * const int nglob = 10;
+   * stacey_mass<specfem::element::medium_tag::acoustic> mass_matrix(nglob);
+   *
+   * // Populate the mass matrix from the binary file
+   * specfem::IO::mesh::impl::fortran::dim3::read_array(stream,
+   * mass_matrix.mass);
+   * @endcode
+   */
   stacey_mass(const int nglob) : nglob(nglob) {
     mass = Kokkos::View<type_real *, Kokkos::HostSpace>("rmass_x", nglob);
   }
+  /** @} */ // Constructors
 };
 
+/**
+ * @brief Struct to store absorbing boundaries for 3D meshes
+ */
 template <> struct absorbing_boundary<specfem::dimension::type::dim3> {
 
   constexpr static auto dimension =
@@ -81,17 +146,66 @@ template <> struct absorbing_boundary<specfem::dimension::type::dim3> {
   stacey_mass<specfem::element::medium_tag::elastic> mass_elastic;
   stacey_mass<specfem::element::medium_tag::acoustic> mass_acoustic;
 
-  /**
-   * @name Constructors
-   *
+  /** @name Constructors
+   *  @{
    */
-  ///@{
+
   /**
    * @brief Default constructor
    *
    */
   absorbing_boundary(){};
 
+  /**
+   * @brief Constructor for absorbing boundaries
+   *
+   * This struct holds views with the names "ispec", "ijk", "jacobian2Dw",
+   * and "normal" and the mass matrices are created if the medium is elastic or
+   * acoustic under the names "mass_elastic" and "mass_acoustic" respectively.
+   *
+   * @param nglob Number of GLL points
+   * @param num_abs_boundary_faces Number of boundary faces
+   * @param ngllsquare Number of GLL points squared
+   * @param acoustic Flag for acoustic simulation
+   * @param elastic Flag for elastic simulation
+   * @param nspec2D_xmin Number of elements on the x-min boundary
+   * @param nspec2D_xmax Number of elements on the x-max boundary
+   * @param nspec2D_ymin Number of elements on the y-min boundary
+   * @param nspec2D_ymax Number of elements on the y-max boundary
+   * @param NSPEC2D_BOTTOM Number of elements on the bottom boundary
+   * @param NSPEC2D_TOP Number of elements on the top boundary
+   *
+   *
+   * @code{.cpp}
+   * // Example of how to use this constructor
+   * const int nglob = 10;
+   * const int num_abs_boundary_faces = 5;
+   * const int ngllsquare = 100;
+   * const bool acoustic = true;
+   * const bool elastic = false;
+   * const int nspec2D_xmin = 10;
+   * const int nspec2D_xmax = 10;
+   * const int nspec2D_ymin = 10;
+   * const int nspec2D_ymax = 10;
+   * const int NSPEC2D_BOTTOM = 10;
+   * const int NSPEC2D_TOP = 10;
+   *
+   * absorbing_boundary<specfem::dimension::type::dim3> abs_boundary(nglob,
+   *      num_abs_boundary_faces, ngllsquare, acoustic, elastic, nspec2D_xmin,
+   *      nspec2D_xmax, nspec2D_ymin, nspec2D_ymax,
+   *      NSPEC2D_BOTTOM, NSPEC2D_TOP);
+   *
+   * // Populate the views from the binary file
+   * specfem::IO::mesh::impl::fortran::dim3::read_index_array(stream,
+   * abs_boundary.ispec);
+   * specfem::IO::mesh::impl::fortran::dim3::read_index_array(stream,
+   * abs_boundary.ijk);
+   * specfem::IO::mesh::impl::fortran::dim3::read_array(stream,
+   * abs_boundary.jacobian2Dw);
+   * specfem::IO::mesh::impl::fortran::dim3::read_array(stream,
+   * abs_boundary.normal);
+   * @endcode
+   */
   absorbing_boundary(const int nglob, const int num_abs_boundary_faces,
                      const int ngllsquare, const bool acoustic,
                      const bool elastic, const int nspec2D_xmin,
@@ -150,9 +264,13 @@ template <> struct absorbing_boundary<specfem::dimension::type::dim3> {
           Kokkos::View<int *, Kokkos::HostSpace>("ibelm_top", NSPEC2D_TOP);
     }
   }
-  ///@}
+  /** @} */ // Constructors
 
-  void print() const;
+  /**
+   * @brief Print basic information on the absorbing boundary struct
+   *
+   */
+  std::string print() const;
 };
 
 } // namespace mesh
