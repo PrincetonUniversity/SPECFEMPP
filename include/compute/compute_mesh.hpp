@@ -260,16 +260,22 @@ impl_load(const MemberType &team,
         int ix, iz;
         sub2ind(xz, NGLL, iz, ix);
         if constexpr (store_hprime_gll) {
-          element_quadrature.hprime_gll(iz, ix) =
-              on_device ? quadrature.gll.hprime(iz, ix)
-                        : quadrature.gll.h_hprime(iz, ix);
+          if constexpr (on_device) {
+            element_quadrature.hprime_gll(iz, ix) =
+                quadrature.gll.hprime(iz, ix);
+          } else {
+            element_quadrature.hprime_gll(iz, ix) =
+                quadrature.gll.h_hprime(iz, ix);
+          }
         }
         if constexpr (store_weight_times_hprime_gll) {
-          element_quadrature.hprime_wgll(ix, iz) =
-              on_device
-                  ? quadrature.gll.hprime(iz, ix) * quadrature.gll.weights(iz)
-                  : quadrature.gll.h_hprime(iz, ix) *
-                        quadrature.gll.h_weights(iz);
+          if constexpr (on_device) {
+            element_quadrature.hprime_wgll(ix, iz) =
+                quadrature.gll.hprime(iz, ix) * quadrature.gll.weights(iz);
+          } else {
+            element_quadrature.hprime_wgll(ix, iz) =
+                quadrature.gll.h_hprime(iz, ix) * quadrature.gll.h_weights(iz);
+          }
         }
       });
 }
