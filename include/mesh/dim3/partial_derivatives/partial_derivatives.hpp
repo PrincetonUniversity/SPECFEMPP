@@ -50,6 +50,8 @@ template <> struct partial_derivatives<specfem::dimension::type::dim3> {
    * @param ngllx Number of GLL points in x
    * @param nglly Number of GLL points in y
    * @param ngllz Number of GLL points in z
+   *
+   *
    */
   partial_derivatives(int nspec, int ngllx, int nglly, int ngllz)
       : nspec(nspec), ngllx(ngllx), nglly(nglly), ngllz(ngllz),
@@ -80,8 +82,21 @@ template <> struct partial_derivatives<specfem::dimension::type::dim3> {
    * @param igllx GLL point index in x
    * @param iglly GLL point index in y
    * @param igllz GLL point index in z
+   *
+   * @return std::string
    */
   std::string print(int ispec, int igllx, int iglly, int igllz) const;
+
+  /**
+   * @brief Print the partial derivatives for a given spectral element
+   *
+   * @param ispec Spectral element index
+   * @param component Component to print (xix, xiy, xiz, etax, etay, etaz,
+   *                  gammax, gammay, gammaz, jacobian)
+   *
+   * @return std::string
+   */
+  std::string print(int ispec, const std::string) const;
 };
 
 } // namespace mesh

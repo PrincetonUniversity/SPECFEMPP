@@ -117,7 +117,6 @@ template <> struct absorbing_boundary<specfem::dimension::type::dim3> {
   // const int ndim = 3; ///< Dimension
 
   int num_abs_boundary_faces; ///< Number of boundaries faces
-  int nelements;              ///< Number of elements on the boundary
   int ngllsquare;             ///< Number of GLL points squared
   bool acoustic = false;      ///< Flag for acoustic simulation
   bool elastic = false;       ///< Flag for elastic simulation
@@ -212,22 +211,22 @@ template <> struct absorbing_boundary<specfem::dimension::type::dim3> {
                      const int nspec2D_xmax, const int nspec2D_ymin,
                      const int nspec2D_ymax, const int NSPEC2D_BOTTOM,
                      const int NSPEC2D_TOP)
-      : nelements(num_abs_boundary_faces), ngllsquare(ngllsquare),
-        num_abs_boundary_faces(num_abs_boundary_faces), acoustic(acoustic),
-        elastic(elastic), nspec2D_xmin(nspec2D_xmin),
+      : ngllsquare(ngllsquare), num_abs_boundary_faces(num_abs_boundary_faces),
+        acoustic(acoustic), elastic(elastic), nspec2D_xmin(nspec2D_xmin),
         nspec2D_xmax(nspec2D_xmax), nspec2D_ymin(nspec2D_ymin),
         nspec2D_ymax(nspec2D_ymax), NSPEC2D_BOTTOM(NSPEC2D_BOTTOM),
         NSPEC2D_TOP(NSPEC2D_TOP) {
 
-    ispec = Kokkos::View<int *, Kokkos::HostSpace>("ispec", nelements);
-    ijk = Kokkos::View<int ***, Kokkos::HostSpace>("ijk", nelements, 3,
-                                                   ngllsquare);
+    ispec =
+        Kokkos::View<int *, Kokkos::HostSpace>("ispec", num_abs_boundary_faces);
+    ijk = Kokkos::View<int ***, Kokkos::HostSpace>(
+        "ijk", num_abs_boundary_faces, 3, ngllsquare);
     jacobian2Dw = Kokkos::View<type_real **, Kokkos::HostSpace>(
-        "jacobian2Dw", nelements, ngllsquare);
+        "jacobian2Dw", num_abs_boundary_faces, ngllsquare);
     // ndim=3
 
-    normal = Kokkos::View<type_real ***, Kokkos::HostSpace>("normal", nelements,
-                                                            3, ngllsquare);
+    normal = Kokkos::View<type_real ***, Kokkos::HostSpace>(
+        "normal", num_abs_boundary_faces, 3, ngllsquare);
 
     if (elastic) {
       mass_elastic = stacey_mass<specfem::element::medium_tag::elastic>(nglob);
@@ -271,6 +270,14 @@ template <> struct absorbing_boundary<specfem::dimension::type::dim3> {
    *
    */
   std::string print() const;
+
+  /**
+   * @brief Print the absorbing boundary struct
+   *
+   * @param iface index of the face.
+   *
+   */
+  std::string print_ijk(const int iface) const;
 };
 
 } // namespace mesh
