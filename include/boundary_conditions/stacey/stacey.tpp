@@ -57,7 +57,7 @@ impl_enforce_traction(const acoustic_type &, const isotropic_type &,
 
   // Apply Stacey boundary condition
   traction(0) += static_cast<type_real>(-1.0) * factor *
-                 property.rho_vpinverse * field.velocity(0);
+                 property.rho_vpinverse() * field.velocity(0);
 
   // Do nothing
   return;
@@ -101,7 +101,7 @@ impl_enforce_traction(const acoustic_type &, const isotropic_type &,
   // Apply Stacey boundary condition
   Kokkos::Experimental::where(mask, traction(0)) =
       traction(0) + static_cast<type_real>(-1.0) * factor *
-                        property.rho_vpinverse * field.velocity(0);
+                        property.rho_vpinverse() * field.velocity(0);
 
   return;
 }
@@ -146,8 +146,8 @@ impl_enforce_traction(const elastic_type &, const isotropic_type &,
 
   for (int icomp = 0; icomp < 2; ++icomp) {
     factor[icomp] = ((vn * dn(icomp) / (jacobian1d * jacobian1d)) *
-                     (property.rho_vp - property.rho_vs)) +
-                    field.velocity(icomp) * property.rho_vs;
+                     (property.rho_vp() - property.rho_vs())) +
+                    field.velocity(icomp) * property.rho_vs();
   }
 
   traction(0) += static_cast<type_real>(-1.0) * factor[0] * jacobian1d *
@@ -203,8 +203,8 @@ impl_enforce_traction(const elastic_type &, const isotropic_type &,
 
   for (int icomp = 0; icomp < 2; ++icomp) {
     factor[icomp] = ((vn * dn(icomp) / (jacobian1d * jacobian1d)) *
-                     (property.rho_vp - property.rho_vs)) +
-                    field.velocity(icomp) * property.rho_vs;
+                     (property.rho_vp() - property.rho_vs())) +
+                    field.velocity(icomp) * property.rho_vs();
   }
 
   Kokkos::Experimental::where(mask, traction(0)) =
@@ -259,8 +259,8 @@ impl_enforce_traction(const elastic_type &, const anisotropic_type &,
 
   for (int icomp = 0; icomp < 2; ++icomp) {
     factor[icomp] = ((vn * dn(icomp) / (jacobian1d * jacobian1d)) *
-                     (property.rho_vp - property.rho_vs)) +
-                    field.velocity(icomp) * property.rho_vs;
+                     (property.rho_vp() - property.rho_vs())) +
+                    field.velocity(icomp) * property.rho_vs();
   }
 
   traction(0) += static_cast<type_real>(-1.0) * factor[0] * jacobian1d *
@@ -316,8 +316,8 @@ impl_enforce_traction(const elastic_type &, const anisotropic_type &,
 
   for (int icomp = 0; icomp < 2; ++icomp) {
     factor[icomp] = ((vn * dn(icomp) / (jacobian1d * jacobian1d)) *
-                     (property.rho_vp - property.rho_vs)) +
-                    field.velocity(icomp) * property.rho_vs;
+                     (property.rho_vp() - property.rho_vs())) +
+                    field.velocity(icomp) * property.rho_vs();
   }
 
   Kokkos::Experimental::where(mask, traction(0)) =
