@@ -19,7 +19,7 @@ namespace medium {
 namespace impl {
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, int N>
-struct medium_container {
+struct medium_data {
   using view_type = typename Kokkos::View<type_real ***[N], Kokkos::LayoutLeft,
                                           Kokkos::DefaultExecutionSpace>;
   constexpr static auto nprops = N;
@@ -34,9 +34,9 @@ struct medium_container {
   view_type data;
   typename view_type::HostMirror h_data;
 
-  medium_container() = default;
+  medium_data() = default;
 
-  medium_container(const int nspec, const int ngllz, const int ngllx)
+  medium_data(const int nspec, const int ngllz, const int ngllx)
       : nspec(nspec), ngllz(ngllz), ngllx(ngllx),
         data("specfem::medium::impl::container::data", nspec, ngllz, ngllx, N),
         h_data(Kokkos::create_mirror_view(data)) {}
@@ -93,7 +93,7 @@ private:
 
     for (int i = 0; i < nprops; i++) {
       Kokkos::Experimental::where(mask, values.data[i])
-          .copy_from(&get_data(ispec, iz, ix, i), tag_type());
+          .copy_from(&get_data<on_device>(ispec, iz, ix, i), tag_type());
     }
   }
 
