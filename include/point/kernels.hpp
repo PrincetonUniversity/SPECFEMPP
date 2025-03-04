@@ -88,7 +88,7 @@ struct kernels<specfem::dimension::type::dim2,
   constexpr static auto dimension = specfem::dimension::type::dim2;
   constexpr static auto medium_tag = specfem::element::medium_tag::elastic;
   constexpr static auto property_tag =
-      specfem::element::property_tag::isotropic;
+      specfem::element::property_tag::anisotropic;
 
   constexpr static bool is_point_properties = true;
   constexpr static int _counter = __COUNTER__;
@@ -133,7 +133,7 @@ struct kernels<specfem::dimension::type::dim2,
   using value_type = typename base_type::value_type;
 
   constexpr static auto dimension = specfem::dimension::type::dim2;
-  constexpr static auto medium_tag = specfem::element::medium_tag::elastic;
+  constexpr static auto medium_tag = specfem::element::medium_tag::acoustic;
   constexpr static auto property_tag =
       specfem::element::property_tag::isotropic;
 

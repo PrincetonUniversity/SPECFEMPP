@@ -91,8 +91,9 @@ private:
   }
 
   template <bool on_device, typename PointValues>
-  inline void store_values(const specfem::point::index<dimension> &index,
-                           const PointValues &values) const {
+  KOKKOS_FORCEINLINE_FUNCTION void
+  store_values(const specfem::point::index<dimension> &index,
+               const PointValues &values) const {
 
     static_assert(PointValues::dimension == dimension, "Dimension mismatch");
     static_assert(PointValues::medium_tag == medium_tag, "Medium tag mismatch");
@@ -113,8 +114,9 @@ private:
   }
 
   template <bool on_device, typename PointValues>
-  inline void store_values(const specfem::point::simd_index<dimension> &index,
-                           const PointValues &values) const {
+  KOKKOS_FORCEINLINE_FUNCTION void
+  store_values(const specfem::point::simd_index<dimension> &index,
+               const PointValues &values) const {
 
     static_assert(PointValues::dimension == dimension, "Dimension mismatch");
     static_assert(PointValues::medium_tag == medium_tag, "Medium tag mismatch");
@@ -132,16 +134,20 @@ private:
     mask_type mask([&, this](std::size_t lane) { return index.mask(lane); });
 
     for (int i = 0; i < nprops; i++) {
-      Kokkos::Experimental::where(mask, values.data[i])
-          .copy_to(on_device ? &data(ispec, iz, ix, i)
-                             : &h_data(ispec, iz, ix, i),
-                   tag_type());
+      if constexpr (on_device) {
+        Kokkos::Experimental::where(mask, values.data[i])
+            .copy_to(&data(ispec, iz, ix, i), tag_type());
+      } else {
+        Kokkos::Experimental::where(mask, values.data[i])
+            .copy_to(&h_data(ispec, iz, ix, i), tag_type());
+      }
     }
   }
 
   template <bool on_device, typename PointValues>
-  inline void add_values(const specfem::point::index<dimension> &index,
-                         const PointValues &values) const {
+  KOKKOS_FORCEINLINE_FUNCTION void
+  add_values(const specfem::point::index<dimension> &index,
+             const PointValues &values) const {
 
     static_assert(PointValues::dimension == dimension, "Dimension mismatch");
     static_assert(PointValues::medium_tag == medium_tag, "Medium tag mismatch");
@@ -162,8 +168,9 @@ private:
   }
 
   template <bool on_device, typename PointValues>
-  inline void add_values(const specfem::point::simd_index<dimension> &index,
-                         const PointValues &values) const {
+  KOKKOS_FORCEINLINE_FUNCTION void
+  add_values(const specfem::point::simd_index<dimension> &index,
+             const PointValues &values) const {
 
     static_assert(PointValues::dimension == dimension, "Dimension mismatch");
     static_assert(PointValues::medium_tag == medium_tag, "Medium tag mismatch");
