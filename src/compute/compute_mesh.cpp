@@ -3,6 +3,7 @@
 #include "enumerations/material_definitions.hpp"
 #include "jacobian/interface.hpp"
 #include "kokkos_abstractions.h"
+#include "parallel_configuration/chunk_config.hpp"
 #include "quadrature/interface.hpp"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -50,13 +51,22 @@ assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates) {
 
   std::vector<qp> cart_cord(nspec * ngllxz);
 
-  for (int ispec = 0; ispec < nspec; ispec++) {
+  using simd = specfem::datatype::simd<type_real, true>;
+
+  constexpr int chunk_size = specfem::parallel_config::storage_chunk_size;
+
+  int nchunks = nspec / chunk_size;
+  int iloc = 0;
+  for (int ichunk = 0; ichunk < nchunks; ichunk++) {
     for (int iz = 0; iz < ngll; iz++) {
       for (int ix = 0; ix < ngll; ix++) {
-        int iloc = ix * nspec * ngll + iz * nspec + ispec;
-        cart_cord[iloc].x = global_coordinates(ispec, iz, ix, 0);
-        cart_cord[iloc].z = global_coordinates(ispec, iz, ix, 1);
-        cart_cord[iloc].iloc = iloc;
+        for (int ielement = 0; ielement < chunk_size; ielement++) {
+          int ispec = ichunk * chunk_size + ielement;
+          cart_cord[iloc].x = global_coordinates(ispec, iz, ix, 0);
+          cart_cord[iloc].z = global_coordinates(ispec, iz, ix, 1);
+          cart_cord[iloc].iloc = iloc;
+          iloc++;
+        }
       }
     }
   }
@@ -101,40 +111,44 @@ assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates) {
 
   // Assign numbering to corresponding ispec, iz, ix
   std::vector<int> iglob_counted(nglob, -1);
-  int iloc = 0;
+  iloc = 0;
   int inum = 0;
   type_real xmin = std::numeric_limits<type_real>::max();
   type_real xmax = std::numeric_limits<type_real>::min();
   type_real zmin = std::numeric_limits<type_real>::max();
   type_real zmax = std::numeric_limits<type_real>::min();
-  for (int ix = 0; ix < ngll; ix++) {
+
+  for (int ichunk = 0; ichunk < nchunks; ichunk++) {
     for (int iz = 0; iz < ngll; iz++) {
-      for (int ispec = 0; ispec < nspec; ispec++) {
-        if (iglob_counted[copy_cart_cord[iloc].iglob] == -1) {
+      for (int ix = 0; ix < ngll; ix++) {
+        for (int ielement = 0; ielement < chunk_size; ielement++) {
+          int ispec = ichunk * chunk_size + ielement;
+          if (iglob_counted[copy_cart_cord[iloc].iglob] == -1) {
 
-          const type_real x_cor = copy_cart_cord[iloc].x;
-          const type_real z_cor = copy_cart_cord[iloc].z;
-          if (xmin > x_cor)
-            xmin = x_cor;
-          if (zmin > z_cor)
-            zmin = z_cor;
-          if (xmax < x_cor)
-            xmax = x_cor;
-          if (zmax < z_cor)
-            zmax = z_cor;
+            const type_real x_cor = copy_cart_cord[iloc].x;
+            const type_real z_cor = copy_cart_cord[iloc].z;
+            if (xmin > x_cor)
+              xmin = x_cor;
+            if (zmin > z_cor)
+              zmin = z_cor;
+            if (xmax < x_cor)
+              xmax = x_cor;
+            if (zmax < z_cor)
+              zmax = z_cor;
 
-          iglob_counted[copy_cart_cord[iloc].iglob] = inum;
-          points.h_index_mapping(ispec, iz, ix) = inum;
-          points.h_coord(0, ispec, iz, ix) = x_cor;
-          points.h_coord(1, ispec, iz, ix) = z_cor;
-          inum++;
-        } else {
-          points.h_index_mapping(ispec, iz, ix) =
-              iglob_counted[copy_cart_cord[iloc].iglob];
-          points.h_coord(0, ispec, iz, ix) = copy_cart_cord[iloc].x;
-          points.h_coord(1, ispec, iz, ix) = copy_cart_cord[iloc].z;
+            iglob_counted[copy_cart_cord[iloc].iglob] = inum;
+            points.h_index_mapping(ispec, iz, ix) = inum;
+            points.h_coord(0, ispec, iz, ix) = x_cor;
+            points.h_coord(1, ispec, iz, ix) = z_cor;
+            inum++;
+          } else {
+            points.h_index_mapping(ispec, iz, ix) =
+                iglob_counted[copy_cart_cord[iloc].iglob];
+            points.h_coord(0, ispec, iz, ix) = copy_cart_cord[iloc].x;
+            points.h_coord(1, ispec, iz, ix) = copy_cart_cord[iloc].z;
+          }
+          iloc++;
         }
-        iloc++;
       }
     }
   }

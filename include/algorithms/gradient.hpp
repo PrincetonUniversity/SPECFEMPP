@@ -38,7 +38,7 @@ namespace algorithms {
 template <typename MemberType, typename IteratorType, typename ViewType,
           typename QuadratureType, typename CallbackFunctor,
           std::enable_if_t<ViewType::isChunkViewType, int> = 0>
-KOKKOS_FORCEINLINE_FUNCTION void
+NOINLINE KOKKOS_FUNCTION void
 gradient(const MemberType &team, const IteratorType &iterator,
          const specfem::compute::partial_derivatives &partial_derivatives,
          const QuadratureType &quadrature, const ViewType &f,
@@ -147,7 +147,7 @@ gradient(const MemberType &team, const IteratorType &iterator,
 template <typename MemberType, typename IteratorType, typename ViewType,
           typename QuadratureType, typename CallbackFunctor,
           std::enable_if_t<ViewType::isChunkViewType, int> = 0>
-KOKKOS_FORCEINLINE_FUNCTION void
+NOINLINE KOKKOS_FUNCTION void
 gradient(const MemberType &team, const IteratorType &iterator,
          const specfem::compute::partial_derivatives &partial_derivatives,
          const QuadratureType &quadrature, const ViewType &f, const ViewType &g,

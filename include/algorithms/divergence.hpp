@@ -41,7 +41,7 @@ namespace algorithms {
 template <typename MemberType, typename IteratorType, typename VectorFieldType,
           typename QuadratureType, typename CallableType,
           std::enable_if_t<(VectorFieldType::isChunkViewType), int> = 0>
-KOKKOS_FORCEINLINE_FUNCTION void divergence(
+NOINLINE KOKKOS_FUNCTION void divergence(
     const MemberType &team, const IteratorType &iterator,
     const specfem::compute::partial_derivatives &partial_derivatives,
     const Kokkos::View<type_real *,

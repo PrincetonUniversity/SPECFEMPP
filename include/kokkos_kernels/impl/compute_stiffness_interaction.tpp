@@ -105,151 +105,153 @@ void specfem::kokkos_kernels::impl::compute_stiffness_interaction(
   constexpr int simd_size = simd::size();
 
   if constexpr (BoundaryTag == specfem::element::boundary_tag::stacey &&
-    WavefieldType == specfem::wavefield::simulation_field::backward) {
+                WavefieldType ==
+                    specfem::wavefield::simulation_field::backward) {
 
-  Kokkos::parallel_for(
-      "specfem::domain::impl::kernels::elements::compute_stiffness_"
-      "interaction",
-      static_cast<const typename ChunkPolicyType::policy_type &>(chunk_policy),
-      KOKKOS_LAMBDA(const typename ChunkPolicyType::member_type &team) {
-        for (int tile = 0; tile < ChunkPolicyType::tile_size * simd_size;
-             tile += ChunkPolicyType::chunk_size * simd_size) {
-          const int starting_element_index =
-              team.league_rank() * ChunkPolicyType::tile_size * simd_size +
-              tile;
+    Kokkos::parallel_for(
+        "specfem::domain::impl::kernels::elements::compute_stiffness_"
+        "interaction",
+        static_cast<const typename ChunkPolicyType::policy_type &>(
+            chunk_policy),
+        KOKKOS_LAMBDA(const typename ChunkPolicyType::member_type &team) {
+          for (int tile = 0; tile < ChunkPolicyType::tile_size * simd_size;
+               tile += ChunkPolicyType::chunk_size * simd_size) {
+            const int starting_element_index =
+                team.league_rank() * ChunkPolicyType::tile_size * simd_size +
+                tile;
 
-          if (starting_element_index >= nelements) {
-            break;
+            if (starting_element_index >= nelements) {
+              break;
+            }
+
+            const auto iterator =
+                chunk_policy.league_iterator(starting_element_index);
+
+            Kokkos::parallel_for(
+                Kokkos::TeamThreadRange(team, iterator.chunk_size()),
+                [&](const int i) {
+                  const auto iterator_index = iterator(i);
+                  const auto index = iterator_index.index;
+
+                  PointAccelerationType acceleration;
+                  specfem::compute::load_on_device(
+                      istep, index, boundary_values, acceleration);
+
+                  specfem::compute::atomic_add_on_device(index, acceleration,
+                                                         field);
+                });
           }
+        });
+  } else {
 
-          const auto iterator =
-              chunk_policy.league_iterator(starting_element_index);
+    Kokkos::parallel_for(
+        "specfem::kernels::impl::domain_kernels::compute_stiffness_interaction",
+        chunk_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
+        KOKKOS_LAMBDA(const typename ChunkPolicyType::member_type &team) {
+          ChunkElementFieldType element_field(team);
+          ElementQuadratureType element_quadrature(team);
+          ChunkStressIntegrandType stress_integrand(team);
 
-          Kokkos::parallel_for(
-              Kokkos::TeamThreadRange(team, iterator.chunk_size()),
-              [&](const int i) {
-                const auto iterator_index = iterator(i);
-                const auto index = iterator_index.index;
+          specfem::compute::load_on_device(team, quadrature,
+                                           element_quadrature);
+          for (int tile = 0; tile < ChunkPolicyType::tile_size * simd_size;
+               tile += ChunkPolicyType::chunk_size * simd_size) {
+            const int starting_element_index =
+                team.league_rank() * ChunkPolicyType::tile_size * simd_size +
+                tile;
 
-                PointAccelerationType acceleration;
-                specfem::compute::load_on_device(
-                    istep, index, boundary_values, acceleration);
+            if (starting_element_index >= nelements) {
+              break;
+            }
 
-                specfem::compute::atomic_add_on_device(index, acceleration,
-                         field);
-              });
-        }
-      });
-  }
-  else {
+            const auto iterator =
+                chunk_policy.league_iterator(starting_element_index);
+            specfem::compute::load_on_device(team, iterator, field,
+                                             element_field);
 
-  Kokkos::parallel_for(
-      "specfem::kernels::impl::domain_kernels::compute_stiffness_interaction",
-      chunk_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_size)),
-      KOKKOS_LAMBDA(const typename ChunkPolicyType::member_type &team) {
-        ChunkElementFieldType element_field(team);
-        ElementQuadratureType element_quadrature(team);
-        ChunkStressIntegrandType stress_integrand(team);
+            team.team_barrier();
 
-        specfem::compute::load_on_device(team, quadrature, element_quadrature);
-        for (int tile = 0; tile < ChunkPolicyType::tile_size * simd_size;
-             tile += ChunkPolicyType::chunk_size * simd_size) {
-          const int starting_element_index =
-              team.league_rank() * ChunkPolicyType::tile_size * simd_size +
-              tile;
+            specfem::algorithms::gradient(
+                team, iterator, partial_derivatives,
+                element_quadrature.hprime_gll, element_field.displacement,
+                // Compute stresses using the gradients
+                [&](const typename ChunkPolicyType::iterator_type::index_type
+                        &iterator_index,
+                    const typename PointFieldDerivativesType::ViewType &du) {
+                  const auto &index = iterator_index.index;
 
-          if (starting_element_index >= nelements) {
-            break;
-          }
+                  PointPartialDerivativesType point_partial_derivatives;
+                  specfem::compute::load_on_device(index, partial_derivatives,
+                                                   point_partial_derivatives);
 
-          const auto iterator =
-              chunk_policy.league_iterator(starting_element_index);
-          specfem::compute::load_on_device(team, iterator, field,
-                                           element_field);
+                  PointPropertyType point_property;
+                  specfem::compute::load_on_device(index, properties,
+                                                   point_property);
 
-          team.team_barrier();
+                  PointFieldDerivativesType field_derivatives(du);
 
-          specfem::algorithms::gradient(
-              team, iterator, partial_derivatives,
-              element_quadrature.hprime_gll, element_field.displacement,
-              // Compute stresses using the gradients
-              [&](const typename ChunkPolicyType::iterator_type::index_type
-                      &iterator_index,
-                  const typename PointFieldDerivativesType::ViewType &du) {
-                const auto &index = iterator_index.index;
+                  const auto point_stress = specfem::medium::compute_stress(
+                      point_property, field_derivatives);
 
-                PointPartialDerivativesType point_partial_derivatives;
-                specfem::compute::load_on_device(index, partial_derivatives,
-                                                 point_partial_derivatives);
+                  const auto F = point_stress * point_partial_derivatives;
 
-                PointPropertyType point_property;
-                specfem::compute::load_on_device(index, properties,
-                                                 point_property);
+                  const int &ielement = iterator_index.ielement;
 
-                PointFieldDerivativesType field_derivatives(du);
-
-                const auto point_stress = specfem::medium::compute_stress(
-                    point_property, field_derivatives);
-
-                const auto F = point_stress * point_partial_derivatives;
-
-                const int &ielement = iterator_index.ielement;
-
-                for (int icomponent = 0; icomponent < components;
-                     ++icomponent) {
-                  for (int idim = 0; idim < num_dimensions; ++idim) {
-                    stress_integrand.F(ielement, index.iz, index.ix, idim,
-                                       icomponent) = F(idim, icomponent);
+                  for (int icomponent = 0; icomponent < components;
+                       ++icomponent) {
+                    for (int idim = 0; idim < num_dimensions; ++idim) {
+                      stress_integrand.F(ielement, index.iz, index.ix, idim,
+                                         icomponent) = F(idim, icomponent);
+                    }
                   }
-                }
-              });
+                });
 
-          team.team_barrier();
+            team.team_barrier();
 
-          specfem::algorithms::divergence(
-              team, iterator, partial_derivatives, wgll,
-              element_quadrature.hprime_wgll, stress_integrand.F,
-              [&, istep = istep](
-                  const typename ChunkPolicyType::iterator_type::index_type
-                      &iterator_index,
-                  const typename PointAccelerationType::ViewType &result) {
-                const auto &index = iterator_index.index;
-                PointAccelerationType acceleration(result);
+            specfem::algorithms::divergence(
+                team, iterator, partial_derivatives, wgll,
+                element_quadrature.hprime_wgll, stress_integrand.F,
+                [&, istep = istep](
+                    const typename ChunkPolicyType::iterator_type::index_type
+                        &iterator_index,
+                    const typename PointAccelerationType::ViewType &result) {
+                  const auto &index = iterator_index.index;
+                  PointAccelerationType acceleration(result);
 
-                for (int icomponent = 0; icomponent < components;
-                     ++icomponent) {
-                  acceleration.acceleration(icomponent) *=
-                      static_cast<type_real>(-1.0);
-                }
+                  for (int icomponent = 0; icomponent < components;
+                       ++icomponent) {
+                    acceleration.acceleration(icomponent) *=
+                        static_cast<type_real>(-1.0);
+                  }
 
-                PointPropertyType point_property;
-                specfem::compute::load_on_device(index, properties,
-                                                 point_property);
+                  PointPropertyType point_property;
+                  specfem::compute::load_on_device(index, properties,
+                                                   point_property);
 
-                PointVelocityType velocity;
-                specfem::compute::load_on_device(index, field, velocity);
+                  PointVelocityType velocity;
+                  specfem::compute::load_on_device(index, field, velocity);
 
-                PointBoundaryType point_boundary;
-                specfem::compute::load_on_device(index, boundaries,
-                                                 point_boundary);
+                  PointBoundaryType point_boundary;
+                  specfem::compute::load_on_device(index, boundaries,
+                                                   point_boundary);
 
-                specfem::boundary_conditions::apply_boundary_conditions(
-                    point_boundary, point_property, velocity, acceleration);
+                  specfem::boundary_conditions::apply_boundary_conditions(
+                      point_boundary, point_property, velocity, acceleration);
 
-                // Store forward boundary values for reconstruction during
-                // adjoint simulations. The function does nothing if the
-                // boundary tag is not stacey
-                if (wavefield ==
-                    specfem::wavefield::simulation_field::forward) {
-                  specfem::compute::store_on_device(istep, index, acceleration,
-                                                    boundary_values);
-                }
+                  // Store forward boundary values for reconstruction during
+                  // adjoint simulations. The function does nothing if the
+                  // boundary tag is not stacey
+                  if (wavefield ==
+                      specfem::wavefield::simulation_field::forward) {
+                    specfem::compute::store_on_device(
+                        istep, index, acceleration, boundary_values);
+                  }
 
-                specfem::compute::atomic_add_on_device(index, acceleration,
-                                                       field);
-              });
-        }
-      });
+                  specfem::compute::atomic_add_on_device(index, acceleration,
+                                                         field);
+                });
+          }
+        });
   }
 
   Kokkos::fence();
