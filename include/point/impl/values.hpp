@@ -43,7 +43,7 @@ template <int N, bool UseSIMD> struct values {
    */
   template <typename... Args,
             typename std::enable_if_t<sizeof...(Args) == N, int> = 0>
-  values(Args... args) : data{ args... } {}
+  KOKKOS_FUNCTION values(Args... args) : data{ args... } {}
 
   /**
    * @brief Equality operator
