@@ -37,10 +37,14 @@ static void subdivide_inherit_edgecond(
   std::tie(subx, subz) = modifiers.get_subdivision(mat.database_index);
 
   // number of subdivided elements to set
-  const int nsub = (edge_type == specfem::enums::boundaries::type::TOP ||
-                    edge_type == specfem::enums::boundaries::type::BOTTOM)
-                       ? subx
-                       : subz;
+  const int nsub =
+      (edge_type == specfem::enums::boundaries::type::TOP ||
+       edge_type == specfem::enums::boundaries::type::BOTTOM)
+          ? subx
+          : ((edge_type == specfem::enums::boundaries::type::LEFT ||
+              edge_type == specfem::enums::boundaries::type::RIGHT)
+                 ? subz
+                 : 1);
   for (int isub = 0; isub < nsub; isub++) {
     int isubz, isubx;
     switch (edge_type) {
@@ -60,8 +64,21 @@ static void subdivide_inherit_edgecond(
       isubz = subz - 1;
       isubx = isub;
       break;
-    default:
-      throw std::runtime_error("Edge type NONE found in specfem::mesh::mesh.");
+    case specfem::enums::boundaries::TOP_LEFT:
+      isubz = subz - 1;
+      isubx = 0;
+      break;
+    case specfem::enums::boundaries::TOP_RIGHT:
+      isubz = subz - 1;
+      isubx = subx - 1;
+      break;
+    case specfem::enums::boundaries::BOTTOM_LEFT:
+      isubz = 0;
+      isubx = 0;
+      break;
+    case specfem::enums::boundaries::BOTTOM_RIGHT:
+      isubz = 0;
+      isubx = subx - 1;
       break;
     }
     const int ispec_new = ispec_old_to_new_offset + (subx * isubz + isubx);
