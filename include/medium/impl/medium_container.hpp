@@ -42,6 +42,16 @@ struct medium_container {
         h_data(Kokkos::create_mirror_view(data)) {}
 
 private:
+  template <bool on_device>
+  KOKKOS_FORCEINLINE_FUNCTION constexpr type_real &
+  get_data(const int &ispec, const int &iz, const int &ix, const int &i) const {
+    if constexpr (on_device) {
+      return data(ispec, iz, ix, i);
+    } else {
+      return h_data(ispec, iz, ix, i);
+    }
+  }
+
   template <bool on_device, typename PointValues>
   KOKKOS_FORCEINLINE_FUNCTION void
   load_values(const specfem::point::index<dimension> &index,
@@ -57,8 +67,7 @@ private:
     const int ix = index.ix;
 
     for (int i = 0; i < nprops; i++) {
-      values.data[i] =
-          on_device ? data(ispec, iz, ix, i) : h_data(ispec, iz, ix, i);
+      values.data[i] = get_data<on_device>(ispec, iz, ix, i);
     }
   }
 
@@ -84,9 +93,7 @@ private:
 
     for (int i = 0; i < nprops; i++) {
       Kokkos::Experimental::where(mask, values.data[i])
-          .copy_from(on_device ? &data(ispec, iz, ix, i)
-                               : &h_data(ispec, iz, ix, i),
-                     tag_type());
+          .copy_from(&get_data(ispec, iz, ix, i), tag_type());
     }
   }
 
@@ -105,11 +112,7 @@ private:
     const int ix = index.ix;
 
     for (int i = 0; i < nprops; i++) {
-      if constexpr (on_device) {
-        data(ispec, iz, ix, i) = values.data[i];
-      } else {
-        h_data(ispec, iz, ix, i) = values.data[i];
-      }
+      get_data<on_device>(ispec, iz, ix, i) = values.data[i];
     }
   }
 
@@ -134,13 +137,8 @@ private:
     mask_type mask([&, this](std::size_t lane) { return index.mask(lane); });
 
     for (int i = 0; i < nprops; i++) {
-      if constexpr (on_device) {
-        Kokkos::Experimental::where(mask, values.data[i])
-            .copy_to(&data(ispec, iz, ix, i), tag_type());
-      } else {
-        Kokkos::Experimental::where(mask, values.data[i])
-            .copy_to(&h_data(ispec, iz, ix, i), tag_type());
-      }
+      Kokkos::Experimental::where(mask, values.data[i])
+          .copy_to(&get_data<on_device>(ispec, iz, ix, i), tag_type());
     }
   }
 
@@ -159,11 +157,7 @@ private:
     const int ix = index.ix;
 
     for (int i = 0; i < nprops; i++) {
-      if constexpr (on_device) {
-        data(ispec, iz, ix, i) += values.data[i];
-      } else {
-        h_data(ispec, iz, ix, i) += values.data[i];
-      }
+      get_data<on_device>(ispec, iz, ix, i) += values.data[i];
     }
   }
 
@@ -192,12 +186,10 @@ private:
 
     for (int i = 0; i < nprops; i++) {
       Kokkos::Experimental::where(mask, lhs).copy_from(
-          on_device ? &data(ispec, iz, ix, i) : &h_data(ispec, iz, ix, i),
-          tag_type());
+          &get_data<on_device>(ispec, iz, ix, i), tag_type());
       lhs += values.data[i];
       Kokkos::Experimental::where(mask, lhs).copy_to(
-          on_device ? &data(ispec, iz, ix, i) : &h_data(ispec, iz, ix, i),
-          tag_type());
+          &get_data<on_device>(ispec, iz, ix, i), tag_type());
     }
   }
 
