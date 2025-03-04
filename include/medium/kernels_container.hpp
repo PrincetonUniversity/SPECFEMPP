@@ -1,6 +1,6 @@
 #pragma once
 
-#include "impl/medium_container.hpp"
+#include "impl/medium_data.hpp"
 
 namespace specfem {
 namespace medium {
@@ -8,8 +8,8 @@ namespace medium {
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, int N>
 struct impl_kernels_container
-    : public impl::medium_container<MediumTag, PropertyTag, N> {
-  using base_type = impl::medium_container<MediumTag, PropertyTag, N>;
+    : public impl::medium_data<MediumTag, PropertyTag, N> {
+  using base_type = impl::medium_data<MediumTag, PropertyTag, N>;
   using base_type::base_type;
 
   impl_kernels_container(

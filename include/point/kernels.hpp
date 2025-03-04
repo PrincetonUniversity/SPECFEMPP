@@ -1,6 +1,6 @@
 #pragma once
 
-#include "impl/values.hpp"
+#include "impl/point_data.hpp"
 
 namespace specfem {
 namespace point {
@@ -29,14 +29,14 @@ template <bool UseSIMD>
 struct kernels<specfem::dimension::type::dim2,
                specfem::element::medium_tag::elastic,
                specfem::element::property_tag::isotropic, UseSIMD>
-    : public impl::values<6, UseSIMD> {
+    : public impl::point_data<6, UseSIMD> {
 
   /**
    * @name Typedefs
    *
    */
   ///@{
-  using base_type = impl::values<6, UseSIMD>;
+  using base_type = impl::point_data<6, UseSIMD>;
   using value_type = typename base_type::value_type;
 
   constexpr static auto dimension = specfem::dimension::type::dim2;
@@ -75,14 +75,14 @@ template <bool UseSIMD>
 struct kernels<specfem::dimension::type::dim2,
                specfem::element::medium_tag::elastic,
                specfem::element::property_tag::anisotropic, UseSIMD>
-    : public impl::values<7, UseSIMD> {
+    : public impl::point_data<7, UseSIMD> {
 
   /**
    * @name Typedefs
    *
    */
   ///@{
-  using base_type = impl::values<7, UseSIMD>;
+  using base_type = impl::point_data<7, UseSIMD>;
   using value_type = typename base_type::value_type;
 
   constexpr static auto dimension = specfem::dimension::type::dim2;
@@ -122,14 +122,14 @@ template <bool UseSIMD>
 struct kernels<specfem::dimension::type::dim2,
                specfem::element::medium_tag::acoustic,
                specfem::element::property_tag::isotropic, UseSIMD>
-    : public impl::values<4, UseSIMD> {
+    : public impl::point_data<4, UseSIMD> {
 
   /**
    * @name Typedefs
    *
    */
   ///@{
-  using base_type = impl::values<4, UseSIMD>;
+  using base_type = impl::point_data<4, UseSIMD>;
   using value_type = typename base_type::value_type;
 
   constexpr static auto dimension = specfem::dimension::type::dim2;
