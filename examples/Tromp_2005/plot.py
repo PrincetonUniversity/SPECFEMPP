@@ -7,14 +7,14 @@ from scipy.interpolate import griddata
 def load_data(directory):
     X = np.loadtxt(directory + "/ElasticIsotropic/X.txt")
     Z = np.loadtxt(directory + "/ElasticIsotropic/Z.txt")
-    data = np.loadtxt(directory + "/ElasticIsotropic/data.txt").reshape(X.shape[0], 6)
+    data = np.loadtxt(directory + "/ElasticIsotropic/data.txt").reshape(6, X.shape[0])
 
-    rho = data[:, 0]
-    mu = data[:, 1]
-    kappa = data[:, 2]
-    rhop = data[:, 3]
-    alpha = data[:, 4]
-    beta = data[:, 5]
+    rho = data[0, :]
+    mu = data[1, :]
+    kappa = data[2, :]
+    rhop = data[3, :]
+    alpha = data[4, :]
+    beta = data[5, :]
 
     return X, Z, rho, kappa, mu, rhop, alpha, beta
 
