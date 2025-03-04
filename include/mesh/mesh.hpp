@@ -27,6 +27,8 @@ template <> struct mesh<specfem::dimension::type::dim2> {
   constexpr static auto dimension =
       specfem::dimension::type::dim2; ///< Dimension
 
+  bool requires_coupled_interface_recalculation; ///< False by default; set to
+                                                 ///< true by mesh modifiers
   int npgeo; ///< Total number of spectral element control nodes
   int nspec; ///< Total number of spectral elements
   int nproc; ///< Total number of processors
@@ -93,7 +95,8 @@ template <> struct mesh<specfem::dimension::type::dim2> {
       : npgeo(npgeo), nspec(nspec), nproc(nproc), control_nodes(control_nodes),
         parameters(parameters), coupled_interfaces(coupled_interfaces),
         boundaries(boundaries), tags(tags), tangential_nodes(tangential_nodes),
-        axial_nodes(axial_nodes), materials(materials){};
+        axial_nodes(axial_nodes), materials(materials),
+        requires_coupled_interface_recalculation(false){};
   ///@}
 
   std::string print() const;

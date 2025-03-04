@@ -4,6 +4,7 @@
 #include "IO/reader.hpp"
 #include "database_configuration.hpp"
 #include "header.hpp"
+#include "mesh_modifiers.hpp"
 #include "parameter_parser/solver/interface.hpp"
 #include "quadrature.hpp"
 #include "receivers.hpp"
@@ -218,6 +219,17 @@ public:
     return this->solver->instantiate<NGLL>(dt, assembly, time_scheme, tasks);
   }
 
+  template <specfem::dimension::type DimensionType>
+  std::shared_ptr<specfem::mesh::modifiers<DimensionType> >
+  instantiate_mesh_modifiers() const {
+    if (this->mesh_modifiers) {
+      return this->mesh_modifiers->instantiate_mesh_modifiers<DimensionType>();
+    } else {
+      // default modifiers object; not nullptr
+      return std::make_shared<specfem::mesh::modifiers<DimensionType> >();
+    }
+  }
+
   int get_nsteps() const { return this->time_scheme->get_nsteps(); }
 
 private:
@@ -255,6 +267,8 @@ private:
       databases; ///< Get database filenames
   std::unique_ptr<specfem::runtime_configuration::solver::solver>
       solver; ///< Pointer to solver object
+  std::unique_ptr<specfem::runtime_configuration::mesh_modifiers>
+      mesh_modifiers; ///< Pointer to mesh modifiers container
 };
 } // namespace runtime_configuration
 } // namespace specfem

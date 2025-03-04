@@ -356,6 +356,31 @@ target_link_libraries(
   -lpthread -lm
 )
 
+
+add_executable(
+  mesh_modifiers_tests
+  mesh_modifiers/runner.cpp
+  mesh_modifiers/subdivision/test_subdivide.cpp
+)
+
+target_link_libraries(
+  mesh_modifiers_tests
+  quadrature
+  mesh
+  IO
+  # material_class
+  yaml-cpp
+  kokkos_environment
+  mpi_environment
+  compute
+  parameter_reader
+  timescheme
+  coupled_interface
+  periodic_tasks
+  -lpthread -lm
+)
+
+
 # add_executable(
 #   seismogram_elastic_tests
 #   seismogram/elastic/seismogram_tests.cpp

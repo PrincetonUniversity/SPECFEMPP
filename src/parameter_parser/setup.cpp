@@ -77,6 +77,13 @@ specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict,
     throw std::runtime_error("Error reading specfem runtime configuration.");
   }
 
+  // mesh modifiers: not required
+  if (const YAML::Node &n_mesh_modifiers = runtime_config["mesh-modifiers"]) {
+    this->mesh_modifiers =
+        std::make_unique<specfem::runtime_configuration::mesh_modifiers>(
+            n_mesh_modifiers);
+  }
+
   try {
     this->databases = std::make_unique<
         specfem::runtime_configuration::database_configuration>(n_databases);

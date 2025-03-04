@@ -14,3 +14,4 @@ The run-time behaviour of the code is controlled by YAML parameter files. The pa
     receivers
     run_setup
     databases
+    mesh_modifiers
