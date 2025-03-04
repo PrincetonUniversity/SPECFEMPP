@@ -21,9 +21,6 @@ void specfem::IO::kernel_writer<OutputLibrary>::write(specfem::compute::assembly
   using DomainView =
       Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace>;
 
-  using DomainKernelView =
-      Kokkos::View<type_real ****, Kokkos::LayoutLeft, Kokkos::HostSpace>;
-
   kernels.copy_to_host();
 
   typename OutputLibrary::File file(output_folder + "/Kernels");
@@ -47,36 +44,19 @@ void specfem::IO::kernel_writer<OutputLibrary>::write(specfem::compute::assembly
     DomainView x("xcoordinates_elastic_isotropic", n_elastic_isotropic, ngllz, ngllx);
     DomainView z("zcoordinates_elastic_isotropic", n_elastic_isotropic, ngllz, ngllx);
 
-    using PointKernelType = typename specfem::point::kernels<specfem::dimension::type::dim2,
-                            specfem::element::medium_tag::elastic,
-                            specfem::element::property_tag::isotropic,
-                            false>;
-    constexpr int nprops = PointKernelType::nprops;
-
-    DomainKernelView data("data", n_elastic_isotropic, ngllz, ngllx, nprops);
-
     for (int i = 0; i < n_elastic_isotropic; i++) {
       const int ispec = element_indices(i);
       for (int iz = 0; iz < ngllz; iz++) {
         for (int ix = 0; ix < ngllx; ix++) {
           x(i, iz, ix) = mesh.points.h_coord(0, ispec, iz, ix);
           z(i, iz, ix) = mesh.points.h_coord(1, ispec, iz, ix);
-          const specfem::point::index<specfem::dimension::type::dim2> index(
-              ispec, iz, ix);
-          PointKernelType point_kernels;
-
-          specfem::compute::load_on_host(index, kernels, point_kernels);
-
-          for (int l = 0; l < nprops; l++) {
-            data(i, iz, ix, l) = point_kernels.data[l];
-          }
         }
       }
     }
 
     elastic.createDataset("X", x).write();
     elastic.createDataset("Z", z).write();
-    elastic.createDataset("data", data).write();
+    elastic.createDataset("data", kernels.elastic_isotropic.h_data).write();
   }
 
   {
@@ -90,36 +70,19 @@ void specfem::IO::kernel_writer<OutputLibrary>::write(specfem::compute::assembly
     DomainView x("xcoordinates_elastic_anisotropic", n_elastic_anisotropic, ngllz, ngllx);
     DomainView z("zcoordinates_elastic_anisotropic", n_elastic_anisotropic, ngllz, ngllx);
 
-    using PointKernelType = typename specfem::point::kernels<specfem::dimension::type::dim2,
-                            specfem::element::medium_tag::elastic,
-                            specfem::element::property_tag::anisotropic,
-                            false>;
-    constexpr int nprops = PointKernelType::nprops;
-
-    DomainKernelView data("data", n_elastic_anisotropic, ngllz, ngllx, nprops);
-
     for (int i = 0; i < n_elastic_anisotropic; i++) {
       const int ispec = element_indices(i);
       for (int iz = 0; iz < ngllz; iz++) {
         for (int ix = 0; ix < ngllx; ix++) {
           x(i, iz, ix) = mesh.points.h_coord(0, ispec, iz, ix);
           z(i, iz, ix) = mesh.points.h_coord(1, ispec, iz, ix);
-          const specfem::point::index<specfem::dimension::type::dim2> index(
-              ispec, iz, ix);
-          PointKernelType point_kernels;
-
-          specfem::compute::load_on_host(index, kernels, point_kernels);
-
-          for (int l = 0; l < nprops; l++) {
-            data(i, iz, ix, l) = point_kernels.data[l];
-          }
         }
       }
     }
 
     elastic.createDataset("X", x).write();
     elastic.createDataset("Z", z).write();
-    elastic.createDataset("data", data).write();
+    elastic.createDataset("data", kernels.elastic_anisotropic.h_data).write();
   }
 
   {
@@ -131,36 +94,19 @@ void specfem::IO::kernel_writer<OutputLibrary>::write(specfem::compute::assembly
     DomainView x("xcoordinates_acoustic", n_acoustic, ngllz, ngllx);
     DomainView z("zcoordinates_acoustic", n_acoustic, ngllz, ngllx);
 
-    using PointKernelType = typename specfem::point::kernels<specfem::dimension::type::dim2,
-                            specfem::element::medium_tag::acoustic,
-                            specfem::element::property_tag::isotropic,
-                            false>;
-    constexpr int nprops = PointKernelType::nprops;
-
-    DomainKernelView data("data", n_acoustic, ngllz, ngllx, nprops);
-
     for (int i = 0; i < n_acoustic; i++) {
       const int ispec = element_indices(i);
       for (int iz = 0; iz < ngllz; iz++) {
         for (int ix = 0; ix < ngllx; ix++) {
           x(i, iz, ix) = mesh.points.h_coord(0, ispec, iz, ix);
           z(i, iz, ix) = mesh.points.h_coord(1, ispec, iz, ix);
-          const specfem::point::index<specfem::dimension::type::dim2> index(
-              ispec, iz, ix);
-          PointKernelType point_kernels;
-
-          specfem::compute::load_on_host(index, kernels, point_kernels);
-
-          for (int l = 0; l < nprops; l++) {
-            data(i, iz, ix, l) = point_kernels.data[l];
-          }
         }
       }
     }
 
     acoustic.createDataset("X", x).write();
     acoustic.createDataset("Z", z).write();
-    acoustic.createDataset("data", data).write();
+    acoustic.createDataset("data", kernels.acoustic_isotropic.h_data).write();
   }
 
   assert(n_elastic_isotropic + n_elastic_anisotropic + n_acoustic == nspec);

@@ -56,7 +56,6 @@ void specfem::IO::property_writer<OutputLibrary>::write(specfem::compute::assemb
 
     elastic.createDataset("X", x).write();
     elastic.createDataset("Z", z).write();
-
     elastic.createDataset("data", properties.elastic_isotropic.h_data).write();
   }
 
@@ -83,7 +82,6 @@ void specfem::IO::property_writer<OutputLibrary>::write(specfem::compute::assemb
 
     elastic.createDataset("X", x).write();
     elastic.createDataset("Z", z).write();
-
     elastic.createDataset("data", properties.elastic_anisotropic.h_data).write();
   }
 
@@ -108,7 +106,6 @@ void specfem::IO::property_writer<OutputLibrary>::write(specfem::compute::assemb
 
     acoustic.createDataset("X", x).write();
     acoustic.createDataset("Z", z).write();
-
     acoustic.createDataset("data", properties.acoustic_isotropic.h_data).write();
   }
 
