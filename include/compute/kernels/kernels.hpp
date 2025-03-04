@@ -3,7 +3,7 @@
 #include "compute/element_types/element_types.hpp"
 #include "compute/impl/value_containers.hpp"
 #include "enumerations/medium.hpp"
-#include "medium/material_kernels.hpp"
+#include "medium/kernels_container.hpp"
 #include "mesh/materials/materials.hpp"
 #include "point/coordinates.hpp"
 #include "point/kernels.hpp"
@@ -17,7 +17,7 @@ namespace compute {
  *
  */
 struct kernels
-    : public impl::value_containers<specfem::medium::material_kernels> {
+    : public impl::value_containers<specfem::medium::kernels_container> {
 public:
   /**
    * @name Constructors
@@ -49,11 +49,12 @@ public:
    *
    */
   void copy_to_host() {
-    impl::value_containers<specfem::medium::material_kernels>::copy_to_host();
+    impl::value_containers<specfem::medium::kernels_container>::copy_to_host();
   }
 
   void copy_to_device() {
-    impl::value_containers<specfem::medium::material_kernels>::copy_to_device();
+    impl::value_containers<
+        specfem::medium::kernels_container>::copy_to_device();
   }
 };
 

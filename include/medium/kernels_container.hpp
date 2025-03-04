@@ -1,6 +1,6 @@
 #pragma once
 
-#include "impl/containers.hpp"
+#include "impl/medium_container.hpp"
 
 namespace specfem {
 namespace medium {
