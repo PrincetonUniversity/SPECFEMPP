@@ -44,47 +44,19 @@ void specfem::IO::kernel_writer<OutputLibrary>::write(specfem::compute::assembly
     DomainView x("xcoordinates_elastic_isotropic", n_elastic_isotropic, ngllz, ngllx);
     DomainView z("zcoordinates_elastic_isotropic", n_elastic_isotropic, ngllz, ngllx);
 
-    DomainView rho("rho", n_elastic_isotropic, ngllz, ngllx);
-    DomainView mu("mu", n_elastic_isotropic, ngllz, ngllx);
-    DomainView kappa("kappa", n_elastic_isotropic, ngllz, ngllx);
-    DomainView rhop("rhop", n_elastic_isotropic, ngllz, ngllx);
-    DomainView alpha("alpha", n_elastic_isotropic, ngllz, ngllx);
-    DomainView beta("beta", n_elastic_isotropic, ngllz, ngllx);
-
     for (int i = 0; i < n_elastic_isotropic; i++) {
       const int ispec = element_indices(i);
       for (int iz = 0; iz < ngllz; iz++) {
         for (int ix = 0; ix < ngllx; ix++) {
           x(i, iz, ix) = mesh.points.h_coord(0, ispec, iz, ix);
           z(i, iz, ix) = mesh.points.h_coord(1, ispec, iz, ix);
-          const specfem::point::index<specfem::dimension::type::dim2> index(
-              ispec, iz, ix);
-          specfem::point::kernels<specfem::dimension::type::dim2,
-                                  specfem::element::medium_tag::elastic,
-                                  specfem::element::property_tag::isotropic,
-                                  false>
-              point_kernels;
-
-          specfem::compute::load_on_host(index, kernels, point_kernels);
-
-          rho(i, iz, ix) = point_kernels.rho;
-          mu(i, iz, ix) = point_kernels.mu;
-          kappa(i, iz, ix) = point_kernels.kappa;
-          rhop(i, iz, ix) = point_kernels.rhop;
-          alpha(i, iz, ix) = point_kernels.alpha;
-          beta(i, iz, ix) = point_kernels.beta;
         }
       }
     }
 
     elastic.createDataset("X", x).write();
     elastic.createDataset("Z", z).write();
-    elastic.createDataset("rho", rho).write();
-    elastic.createDataset("mu", mu).write();
-    elastic.createDataset("kappa", kappa).write();
-    elastic.createDataset("rhop", rhop).write();
-    elastic.createDataset("alpha", alpha).write();
-    elastic.createDataset("beta", beta).write();
+    elastic.createDataset("data", kernels.elastic_isotropic.h_data).write();
   }
 
   {
@@ -98,50 +70,19 @@ void specfem::IO::kernel_writer<OutputLibrary>::write(specfem::compute::assembly
     DomainView x("xcoordinates_elastic_anisotropic", n_elastic_anisotropic, ngllz, ngllx);
     DomainView z("zcoordinates_elastic_anisotropic", n_elastic_anisotropic, ngllz, ngllx);
 
-    DomainView rho("rho", n_elastic_anisotropic, ngllz, ngllx);
-    DomainView c11("c11", n_elastic_anisotropic, ngllz, ngllx);
-    DomainView c13("c13", n_elastic_anisotropic, ngllz, ngllx);
-    DomainView c15("c15", n_elastic_anisotropic, ngllz, ngllx);
-    DomainView c33("c33", n_elastic_anisotropic, ngllz, ngllx);
-    DomainView c35("c35", n_elastic_anisotropic, ngllz, ngllx);
-    DomainView c55("c55", n_elastic_anisotropic, ngllz, ngllx);
-
     for (int i = 0; i < n_elastic_anisotropic; i++) {
       const int ispec = element_indices(i);
       for (int iz = 0; iz < ngllz; iz++) {
         for (int ix = 0; ix < ngllx; ix++) {
           x(i, iz, ix) = mesh.points.h_coord(0, ispec, iz, ix);
           z(i, iz, ix) = mesh.points.h_coord(1, ispec, iz, ix);
-          const specfem::point::index<specfem::dimension::type::dim2> index(
-              ispec, iz, ix);
-          specfem::point::kernels<specfem::dimension::type::dim2,
-                                  specfem::element::medium_tag::elastic,
-                                  specfem::element::property_tag::anisotropic,
-                                  false>
-              point_kernels;
-
-          specfem::compute::load_on_host(index, kernels, point_kernels);
-
-          rho(i, iz, ix) = point_kernels.rho;
-          c11(i, iz, ix) = point_kernels.c11;
-          c13(i, iz, ix) = point_kernels.c13;
-          c15(i, iz, ix) = point_kernels.c15;
-          c33(i, iz, ix) = point_kernels.c33;
-          c35(i, iz, ix) = point_kernels.c35;
-          c55(i, iz, ix) = point_kernels.c55;
         }
       }
     }
 
     elastic.createDataset("X", x).write();
     elastic.createDataset("Z", z).write();
-    elastic.createDataset("rho", rho).write();
-    elastic.createDataset("c11", c11).write();
-    elastic.createDataset("c13", c13).write();
-    elastic.createDataset("c15", c15).write();
-    elastic.createDataset("c33", c33).write();
-    elastic.createDataset("c35", c35).write();
-    elastic.createDataset("c55", c55).write();
+    elastic.createDataset("data", kernels.elastic_anisotropic.h_data).write();
   }
 
   {
@@ -153,41 +94,19 @@ void specfem::IO::kernel_writer<OutputLibrary>::write(specfem::compute::assembly
     DomainView x("xcoordinates_acoustic", n_acoustic, ngllz, ngllx);
     DomainView z("zcoordinates_acoustic", n_acoustic, ngllz, ngllx);
 
-    DomainView rho("rho", n_acoustic, ngllz, ngllx);
-    DomainView kappa("kappa", n_acoustic, ngllz, ngllx);
-    DomainView rho_prime("rho_prime", n_acoustic, ngllz, ngllx);
-    DomainView alpha("alpha", n_acoustic, ngllz, ngllx);
-
     for (int i = 0; i < n_acoustic; i++) {
       const int ispec = element_indices(i);
       for (int iz = 0; iz < ngllz; iz++) {
         for (int ix = 0; ix < ngllx; ix++) {
           x(i, iz, ix) = mesh.points.h_coord(0, ispec, iz, ix);
           z(i, iz, ix) = mesh.points.h_coord(1, ispec, iz, ix);
-          const specfem::point::index<specfem::dimension::type::dim2> index(
-              ispec, iz, ix);
-          specfem::point::kernels<specfem::dimension::type::dim2,
-                                  specfem::element::medium_tag::acoustic,
-                                  specfem::element::property_tag::isotropic,
-                                  false>
-              point_kernels;
-
-          specfem::compute::load_on_host(index, kernels, point_kernels);
-
-          rho(i, iz, ix) = point_kernels.rho;
-          kappa(i, iz, ix) = point_kernels.kappa;
-          rho_prime(i, iz, ix) = point_kernels.rhop;
-          alpha(i, iz, ix) = point_kernels.alpha;
         }
       }
     }
 
     acoustic.createDataset("X", x).write();
     acoustic.createDataset("Z", z).write();
-    acoustic.createDataset("rho", rho).write();
-    acoustic.createDataset("kappa", kappa).write();
-    acoustic.createDataset("rho_prime", rho_prime).write();
-    acoustic.createDataset("alpha", alpha).write();
+    acoustic.createDataset("data", kernels.acoustic_isotropic.h_data).write();
   }
 
   assert(n_elastic_isotropic + n_elastic_anisotropic + n_acoustic == nspec);
