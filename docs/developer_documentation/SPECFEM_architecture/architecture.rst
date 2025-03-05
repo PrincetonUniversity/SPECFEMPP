@@ -1,7 +1,7 @@
 .. _architecture:
 
 SPECFEM++ Architecture
-====================
+======================
 
 SPECFEM++ is designed with portability and modularity as primary goals. The goal is develop a code that is easy to maintain and extend, while maintaining performance characteristics of original `SPECFEM2D solver <https://specfem2d.readthedocs.io>`_. This is achieved using C++ templatized classes.
 
