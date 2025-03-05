@@ -1,5 +1,5 @@
 Git development workflow
-=========================
+========================
 
 At SPECFEM++ we follow master-develop workflow. The master (main) branch is always a stable working code and is generally synced with the latest release of SPECFEM++. The develop branch is a stable code with potentially new features which haven't been released in the latest version of SPECFEM++ yet. If you are contributing to SPECFEM++ then issue your `pull request <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests>`_ against the develop branch.
 
@@ -15,11 +15,11 @@ To make a change to SPECFEM++ (This development workflow is similar to the one s
 
 .. note::
 
-    It is also recommended that you run :code:`poetry install` every time you pull the develop branch. Please check :ref:`style section<style>` for more information on poetry.
+    It is also recommended that you run :code:`uv sync --extra dev` every time you pull the develop branch. Please check :ref:`style section<style>` for more information on uv.
 
 .. note::
 
-    Please also install pre-commit hooks after you've cloned repo. :code:`poetry run pre-commit install`
+    Please also install pre-commit hooks after you've cloned repo. :code:`uv run pre-commit install`
 
 - Next create a feature branch against develop branch called a feature branch. Please be explicit while naming the feature branch.
 
