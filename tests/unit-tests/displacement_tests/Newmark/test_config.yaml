@@ -1,83 +1,92 @@
 Tests:
-  - name : "SerialTest1 : Homogeneous elastic domain"
+  # - name : "SerialTest1 : Homogeneous elastic domain"
+  #   description: >
+  #     Testing newmark time-marching solver on a homogeneous elastic domain with no interfaces. Test is run on a single MPI process.
+  #   config:
+  #     nproc : 1
+  #   databases:
+  #     specfem_config: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test1/specfem_config.yaml"
+  #     traces: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test1/traces"
+
+  # - name : "SerialTest2 : Homogeneous acoustic domain"
+  #   description: >
+  #     Testing newmark time-marching solver on a homogeneous acoustic domain with no interfaces. Test is run on a single MPI process.
+  #   config:
+  #     nproc : 1
+  #   databases:
+  #     specfem_config: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test2/specfem_config.yaml"
+  #     traces: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test2/traces"
+
+  # - name : "SerialTest3 : Acoustic-Elastic coupled domain (Test 1/2)"
+  #   description: >
+  #     Testing newmark time-marching solver on a coupled acoustic-elastic domain with 1 elastic-acoustic interface. The orientation of the interface is horizontal with acoustic domain on top. Test is run on a single MPI process.
+  #   config:
+  #     nproc : 1
+  #   databases:
+  #     specfem_config: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test3/specfem_config.yaml"
+  #     traces: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test3/traces"
+
+  # # - name : "SerialTest4 : Acoustic-Elastic coupled domain (Test 2/2)"
+  # #   description: >
+  # #     Testing newmark time-marching solver on a coupled acoustic-elastic domain with 1 elastic-acoustic interface. The orientation of the interface is horizontal with acoustic domain on bottom. Test is run on a single MPI process.
+  # #   config:
+  # #     nproc : 1
+  # #   databases:
+  # #     specfem_config: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test4/specfem_config.yaml"
+  # #     traces: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test4/traces"
+
+
+  # - name : "SerialTest5 : Homogeneous acoustic domain (dirichlet BC)"
+  #   description: >
+  #     Testing newmark time-marching solver on a homogeneous acoustic domain with no interfaces. Test is run on a single MPI process. Dirichlet boundary conditions are applied on all boundaries.
+  #   config:
+  #     nproc : 1
+  #   databases:
+  #     specfem_config: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test5/specfem_config.yaml"
+  #     traces: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test5/traces"
+
+  # - name : "SerialTest6 : Homogeneous acoustic domain (stacey BC)"
+  #   description: >
+  #     Testing newmark time-marching solver on a homogeneous acoustic domain with no interfaces. Test is run on a single MPI process. Stacey BC are applied on top/right/left/bottom boundaries.
+  #   config:
+  #     nproc : 1
+  #   databases:
+  #     specfem_config: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test6/specfem_config.yaml"
+  #     traces: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test6/traces"
+
+  # - name : "SerialTest7 : Homogeneous elastic domain (stacey BC)"
+  #   description: >
+  #     Testing newmark time-marching solver on a homogeneous elastic domain with no interfaces. Test is run on a single MPI process. Stacey BC are applied on top/right/left/bottom boundaries.
+  #   config:
+  #     nproc : 1
+  #   databases:
+  #     specfem_config: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test7/specfem_config.yaml"
+  #     traces: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test7/traces"
+
+  # - name : "SerialTest8 : Homogeneous acoustic domain (composite stacey dirichlet BC)"
+  #   description: >
+  #     Testing newmark time-marching solver on a homogeneous acoustic domain with no interfaces. Test is run on a single MPI process. Stacey BC are applied on (bottom, left, right) and Dirichlet BC are applied on tops.
+  #   config:
+  #     nproc : 1
+  #   databases:
+  #     specfem_config: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test8/specfem_config.yaml"
+  #     traces: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test8/traces"
+
+
+  # - name : "SerialTest9 : Homogeneous elastic anisotropic domain"
+  #   description: >
+  #     Testing newmark time-marching solver on a homogeneous elastic anisotropic domain with no interfaces. Test is run on a single MPI process.
+  #   config:
+  #     nproc : 1
+  #   databases:
+  #     specfem_config: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test9/specfem_config.yaml"
+  #     traces: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test9/traces"
+
+  - name : "SerialTest10 : Homogeneous elastic domain (SH-Waves)"
     description: >
       Testing newmark time-marching solver on a homogeneous elastic domain with no interfaces. Test is run on a single MPI process.
     config:
       nproc : 1
     databases:
-      specfem_config: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test1/specfem_config.yaml"
-      traces: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test1/traces"
-
-  - name : "SerialTest2 : Homogeneous acoustic domain"
-    description: >
-      Testing newmark time-marching solver on a homogeneous acoustic domain with no interfaces. Test is run on a single MPI process.
-    config:
-      nproc : 1
-    databases:
-      specfem_config: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test2/specfem_config.yaml"
-      traces: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test2/traces"
-
-  - name : "SerialTest3 : Acoustic-Elastic coupled domain (Test 1/2)"
-    description: >
-      Testing newmark time-marching solver on a coupled acoustic-elastic domain with 1 elastic-acoustic interface. The orientation of the interface is horizontal with acoustic domain on top. Test is run on a single MPI process.
-    config:
-      nproc : 1
-    databases:
-      specfem_config: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test3/specfem_config.yaml"
-      traces: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test3/traces"
-
-  # - name : "SerialTest4 : Acoustic-Elastic coupled domain (Test 2/2)"
-  #   description: >
-  #     Testing newmark time-marching solver on a coupled acoustic-elastic domain with 1 elastic-acoustic interface. The orientation of the interface is horizontal with acoustic domain on bottom. Test is run on a single MPI process.
-  #   config:
-  #     nproc : 1
-  #   databases:
-  #     specfem_config: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test4/specfem_config.yaml"
-  #     traces: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test4/traces"
-
-
-  - name : "SerialTest5 : Homogeneous acoustic domain (dirichlet BC)"
-    description: >
-      Testing newmark time-marching solver on a homogeneous acoustic domain with no interfaces. Test is run on a single MPI process. Dirichlet boundary conditions are applied on all boundaries.
-    config:
-      nproc : 1
-    databases:
-      specfem_config: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test5/specfem_config.yaml"
-      traces: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test5/traces"
-
-  - name : "SerialTest6 : Homogeneous acoustic domain (stacey BC)"
-    description: >
-      Testing newmark time-marching solver on a homogeneous acoustic domain with no interfaces. Test is run on a single MPI process. Stacey BC are applied on top/right/left/bottom boundaries.
-    config:
-      nproc : 1
-    databases:
-      specfem_config: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test6/specfem_config.yaml"
-      traces: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test6/traces"
-
-  - name : "SerialTest7 : Homogeneous elastic domain (stacey BC)"
-    description: >
-      Testing newmark time-marching solver on a homogeneous elastic domain with no interfaces. Test is run on a single MPI process. Stacey BC are applied on top/right/left/bottom boundaries.
-    config:
-      nproc : 1
-    databases:
-      specfem_config: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test7/specfem_config.yaml"
-      traces: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test7/traces"
-
-  - name : "SerialTest8 : Homogeneous acoustic domain (composite stacey dirichlet BC)"
-    description: >
-      Testing newmark time-marching solver on a homogeneous acoustic domain with no interfaces. Test is run on a single MPI process. Stacey BC are applied on (bottom, left, right) and Dirichlet BC are applied on tops.
-    config:
-      nproc : 1
-    databases:
-      specfem_config: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test8/specfem_config.yaml"
-      traces: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test8/traces"
-
-
-  - name : "SerialTest9 : Homogeneous elastic anisotropic domain"
-    description: >
-      Testing newmark time-marching solver on a homogeneous elastic anisotropic domain with no interfaces. Test is run on a single MPI process.
-    config:
-      nproc : 1
-    databases:
-      specfem_config: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test9/specfem_config.yaml"
-      traces: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test9/traces"
+      specfem_config: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test10/specfem_config.yaml"
+      traces: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test10/traces"
