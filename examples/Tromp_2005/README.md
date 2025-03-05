@@ -4,14 +4,17 @@ This example reproduces the results from Fig 9 of [Tromp et al. 2005](https://do
 
 ## Running the examples
 
-To run the examples, you first need to install poetry following these [instructions](https://python-poetry.org/docs/#installation). Once you've done so, you can install the dependencies for the examples by running the following command in the current directory:
+To run the examples, you first need to install uv following these
+[instructions](https://docs.astral.sh/uv/getting-started/installation). Once you've done
+so, you can install the dependencies for the examples by running the following
+command in the current directory:
 
 ```bash
-# verify poetry is installed
-poetry --version
+# verify uv is installed
+uv --version
 
 # install dependencies
-poetry install
+uv sync --extra examples
 
 ```
 
@@ -22,10 +25,10 @@ After installing the dependencies, you can run the examples by running the follo
 cd <example directory>
 
 # run the example
-poetry run snakemake -j 1
+uv run snakemake -j 1
 
 # or to run the example on a slurm cluster
-poetry run snakemake --executor slurm -j 1
+uv run snakemake --executor slurm -j 1
 
 ```
 
@@ -36,6 +39,6 @@ To clean up the example directory, you can run the following command in the dire
 ```bash
 
 # clean up the example
-poetry run snakemake clean
+uv run snakemake clean -j 1
 
 ```
