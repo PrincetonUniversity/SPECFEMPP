@@ -3,9 +3,9 @@ requires = ["scikit-build-core>=0.10", "pybind11"]
 build-backend = "scikit_build_core.build"
 
 [project]
-name = "specfempp_core"
+name = "specfempp"
 version = "0.3.0"
-description = "Kokkos implementation of SpecFEM2D code"
+description = "Kokkos implementation of SPECFEM2D code"
 readme = "README.md"
 authors = [
   { name = "Rohit R Kakodkar", email = "rohit_kakodkar@princeton.edu" },

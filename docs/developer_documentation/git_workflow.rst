@@ -1,5 +1,5 @@
 Git development workflow
-=========================
+========================
 
 At SPECFEM++ we follow master-develop workflow. The master (main) branch is always a stable working code and is generally synced with the latest release of SPECFEM++. The develop branch is a stable code with potentially new features which haven't been released in the latest version of SPECFEM++ yet. If you are contributing to SPECFEM++ then issue your `pull request <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests>`_ against the develop branch.
 
