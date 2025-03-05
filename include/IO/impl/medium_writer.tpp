@@ -8,10 +8,11 @@
 #include <Kokkos_Core.hpp>
 
 template <typename OutputLibrary, typename ContainerType>
-void specfem::IO::impl::medium_writer(const std::string &output_folder, const std::string &output_namespace, const specfem::compute::assembly &assembly, ContainerType &container) {
-  const auto &mesh = assembly.mesh;
-  auto &element_types = assembly.element_types;
-
+void specfem::IO::impl::write_container(
+    const std::string &output_folder, const std::string &output_namespace,
+    const specfem::compute::mesh &mesh,
+    const specfem::compute::element_types &element_types,
+    ContainerType &container) {
   using DomainView =
       Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace>;
 
@@ -28,15 +29,18 @@ void specfem::IO::impl::medium_writer(const std::string &output_folder, const st
   int n_acoustic;
 
   {
-    typename OutputLibrary::Group elastic = file.createGroup("/ElasticIsotropic");
+    typename OutputLibrary::Group elastic =
+        file.createGroup("/ElasticIsotropic");
 
     const auto element_indices = element_types.get_elements_on_host(
         specfem::element::medium_tag::elastic,
         specfem::element::property_tag::isotropic);
     n_elastic_isotropic = element_indices.size();
 
-    DomainView x("xcoordinates_elastic_isotropic", n_elastic_isotropic, ngllz, ngllx);
-    DomainView z("zcoordinates_elastic_isotropic", n_elastic_isotropic, ngllz, ngllx);
+    DomainView x("xcoordinates_elastic_isotropic", n_elastic_isotropic, ngllz,
+                 ngllx);
+    DomainView z("zcoordinates_elastic_isotropic", n_elastic_isotropic, ngllz,
+                 ngllx);
 
     for (int i = 0; i < n_elastic_isotropic; i++) {
       const int ispec = element_indices(i);
@@ -54,15 +58,18 @@ void specfem::IO::impl::medium_writer(const std::string &output_folder, const st
   }
 
   {
-    typename OutputLibrary::Group elastic = file.createGroup("/ElasticAnisotropic");
+    typename OutputLibrary::Group elastic =
+        file.createGroup("/ElasticAnisotropic");
 
     const auto element_indices = element_types.get_elements_on_host(
         specfem::element::medium_tag::elastic,
         specfem::element::property_tag::anisotropic);
     n_elastic_anisotropic = element_indices.size();
 
-    DomainView x("xcoordinates_elastic_anisotropic", n_elastic_anisotropic, ngllz, ngllx);
-    DomainView z("zcoordinates_elastic_anisotropic", n_elastic_anisotropic, ngllz, ngllx);
+    DomainView x("xcoordinates_elastic_anisotropic", n_elastic_anisotropic,
+                 ngllz, ngllx);
+    DomainView z("zcoordinates_elastic_anisotropic", n_elastic_anisotropic,
+                 ngllz, ngllx);
 
     for (int i = 0; i < n_elastic_anisotropic; i++) {
       const int ispec = element_indices(i);
@@ -82,7 +89,8 @@ void specfem::IO::impl::medium_writer(const std::string &output_folder, const st
   {
     typename OutputLibrary::Group acoustic = file.createGroup("/Acoustic");
 
-    const auto element_indices = element_types.get_elements_on_host(specfem::element::medium_tag::acoustic);
+    const auto element_indices = element_types.get_elements_on_host(
+        specfem::element::medium_tag::acoustic);
     n_acoustic = element_indices.size();
 
     DomainView x("xcoordinates_acoustic", n_acoustic, ngllz, ngllx);
@@ -105,6 +113,6 @@ void specfem::IO::impl::medium_writer(const std::string &output_folder, const st
 
   assert(n_elastic_isotropic + n_elastic_anisotropic + n_acoustic == nspec);
 
-  std::cout << output_namespace << " written to " << output_folder << "/" << output_namespace
-            << std::endl;
+  std::cout << output_namespace << " written to " << output_folder << "/"
+            << output_namespace << std::endl;
 }
