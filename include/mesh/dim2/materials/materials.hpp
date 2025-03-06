@@ -42,7 +42,7 @@ template <> struct materials<specfem::dimension::type::dim2> {
                            specfem::element::property_tag property, int index,
                            int database_index)
         : type(type), property(property), index(index),
-          database_index(database_index){};
+          database_index(database_index) {};
   };
 
   template <specfem::element::medium_tag type,
@@ -50,7 +50,7 @@ template <> struct materials<specfem::dimension::type::dim2> {
   struct material {
     int n_materials; ///< Number of elements
     std::vector<specfem::medium::material<type, property> >
-        material_properties; ///< Material properties
+        element_materials; ///< Material properties
 
     material() = default;
 
@@ -96,8 +96,8 @@ template <> struct materials<specfem::dimension::type::dim2> {
    */
   materials(const int nspec, const int numat)
       : n_materials(numat),
-        material_index_mapping("specfem::mesh::material_index_mapping",
-                               nspec){};
+        material_index_mapping("specfem::mesh::material_index_mapping", nspec) {
+        };
 
   ///@}
 

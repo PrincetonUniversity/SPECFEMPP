@@ -8,17 +8,17 @@ For a step-by-step guide on this example, please refer to the
 
 ## Running the examples
 
-To run the examples, you first need to install poetry following these
-[instructions](https://python-poetry.org/docs/#installation). Once you've done
+To run the examples, you first need to install uv following these
+[instructions](https://docs.astral.sh/uv/getting-started/installation). Once you've done
 so, you can install the dependencies for the examples by running the following
 command in the current directory:
 
 ```bash
-# verify poetry is installed
-poetry --version
+# verify uv is installed
+uv --version
 
 # install dependencies
-poetry install
+uv sync --extra examples
 
 ```
 
@@ -28,10 +28,10 @@ following command within the example directory you want to run:
 ```bash
 
 # run the example
-poetry run snakemake -j 1
+uv run snakemake -j 1
 
 # or to run the example on a slurm cluster
-poetry run snakemake --executor slurm -j 1
+uv run snakemake --executor slurm -j 1
 
 ```
 
@@ -43,6 +43,6 @@ directory of the example you want to clean up:
 ```bash
 
 # clean up the example
-poetry run snakemake clean
+uv run snakemake clean -j 1
 
 ```

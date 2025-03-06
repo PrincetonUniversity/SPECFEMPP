@@ -26,22 +26,22 @@ specfem::medium::impl_compute_stress_integrands(
     // P_SV case
     // sigma_xx
     sigma_xx =
-        properties.lambdaplus2mu * du(0, 0) + properties.lambda * du(1, 1);
+        properties.lambdaplus2mu() * du(0, 0) + properties.lambda() * du(1, 1);
 
     // sigma_zz
     sigma_zz =
-        properties.lambdaplus2mu * du(1, 1) + properties.lambda * du(0, 0);
+        properties.lambdaplus2mu() * du(1, 1) + properties.lambda() * du(0, 0);
 
     // sigma_xz
-    sigma_xz = properties.mu * (du(0, 1) + du(1, 0));
+    sigma_xz = properties.mu() * (du(0, 1) + du(1, 0));
   } else if (specfem::globals::simulation_wave == specfem::wave::sh) {
     // SH-case
     // sigma_xx
-    sigma_xx = properties.mu * du(0, 0); // would be sigma_xy in
+    sigma_xx = properties.mu() * du(0, 0); // would be sigma_xy in
                                          // CPU-version
 
     // sigma_xz
-    sigma_xz = properties.mu * du(1, 0); // sigma_zy
+    sigma_xz = properties.mu() * du(1, 0); // sigma_zy
   }
 
   specfem::datatype::VectorPointViewType<type_real, 2, 2, UseSIMD> F;

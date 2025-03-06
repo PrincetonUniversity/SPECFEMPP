@@ -30,11 +30,11 @@ impl_compute_frechet_derivatives(
   const auto rho_kl =
       (adjoint_derivatives.du(0, 0) * backward_derivatives.du(0, 0) +
        adjoint_derivatives.du(1, 0) * backward_derivatives.du(1, 0)) *
-      properties.rho_inverse * dt;
+      properties.rho_inverse() * dt;
 
   const auto kappa_kl = specfem::algorithms::dot(adjoint_field.acceleration,
                                                  backward_field.displacement) *
-                        static_cast<type_real>(1.0) / properties.kappa * dt;
+                        static_cast<type_real>(1.0) / properties.kappa() * dt;
 
   return { rho_kl, kappa_kl };
 }
