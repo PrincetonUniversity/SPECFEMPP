@@ -349,9 +349,11 @@
 ! flag to indicate an isotropic elastic/acoustic material
 ! flag to indicate an anisotropic material
 ! flag to indicate a poroelastic material
+! flag to indicate an electromagnetic material
   integer, parameter :: ISOTROPIC_MATERIAL = 1
   integer, parameter :: ANISOTROPIC_MATERIAL = 2
   integer, parameter :: POROELASTIC_MATERIAL = 3
+  integer, parameter :: ELECTROMAGNETIC_MATERIAL = 4
 
 ! file number for interface file
   integer, parameter :: IIN_INTERFACES = 15
@@ -369,11 +371,13 @@
   integer, parameter :: IEDGE4 = 4  ! left
 
 ! flag to indicate an element type
-! material domain ids (acoustic/elastic/poroelastic/gravitoacoustic)
+! material domain ids (acoustic/elastic/poroelastic/gravitoacoustic/electromagnetic)
   integer, parameter :: IDOMAIN_ACOUSTIC    = 1
   integer, parameter :: IDOMAIN_ELASTIC     = 2
   integer, parameter :: IDOMAIN_POROELASTIC = 3
   integer, parameter :: IDOMAIN_GRAVITOACOUSTIC = 4
+  integer, parameter :: IDOMAIN_ELECTROMAGNETIC = 5
+
 
 
 !!-----------------------------------------------------------
