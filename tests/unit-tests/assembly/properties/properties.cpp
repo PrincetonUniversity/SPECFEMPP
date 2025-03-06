@@ -163,7 +163,9 @@ specfem::point::properties<specfem::dimension::type::dim2,
 get_point_property(const int ispec, const int iz, const int ix,
                    const specfem::compute::properties &properties) {
 
-  const auto elastic_isotropic = properties.value_dim2_elastic_sv_isotropic;
+  const auto elastic_isotropic =
+      properties.get_container<specfem::element::medium_tag::elastic_sv,
+                               specfem::element::property_tag::isotropic>();
 
   const int ispec_l = properties.h_property_index_mapping(ispec);
 
@@ -187,7 +189,9 @@ specfem::point::properties<specfem::dimension::type::dim2,
 get_point_property(const int ispec, const int iz, const int ix,
                    const specfem::compute::properties &properties) {
 
-  const auto elastic_isotropic = properties.value_dim2_elastic_sh_isotropic;
+  const auto elastic_isotropic =
+      properties.get_container<specfem::element::medium_tag::elastic_sh,
+                               specfem::element::property_tag::isotropic>();
 
   const int ispec_l = properties.h_property_index_mapping(ispec);
 
@@ -255,7 +259,9 @@ specfem::point::properties<specfem::dimension::type::dim2,
 get_point_property(const int ispec, const int iz, const int ix,
                    const specfem::compute::properties &properties) {
 
-  const auto elastic_anisotropic = properties.value_dim2_elastic_sv_anisotropic;
+  const auto elastic_anisotropic =
+      properties.get_container<specfem::element::medium_tag::elastic_sv,
+                               specfem::element::property_tag::anisotropic>();
 
   const int ispec_l = properties.h_property_index_mapping(ispec);
 
@@ -282,7 +288,9 @@ specfem::point::properties<specfem::dimension::type::dim2,
 get_point_property(const int ispec, const int iz, const int ix,
                    const specfem::compute::properties &properties) {
 
-  const auto elastic_anisotropic = properties.value_dim2_elastic_sh_anisotropic;
+  const auto elastic_anisotropic =
+      properties.get_container<specfem::element::medium_tag::elastic_sh,
+                               specfem::element::property_tag::anisotropic>();
 
   const int ispec_l = properties.h_property_index_mapping(ispec);
 
@@ -361,7 +369,9 @@ specfem::point::properties<specfem::dimension::type::dim2,
 get_point_property(const int ispec, const int iz, const int ix,
                    const specfem::compute::properties &properties) {
 
-  const auto acoustic_isotropic = properties.value_dim2_acoustic_isotropic;
+  const auto acoustic_isotropic =
+      properties.get_container<specfem::element::medium_tag::acoustic,
+                               specfem::element::property_tag::isotropic>();
 
   const int ispec_l = properties.h_property_index_mapping(ispec);
 
