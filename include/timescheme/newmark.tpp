@@ -13,7 +13,8 @@ void corrector_phase_impl(
     const type_real deltatover2) {
 
   constexpr int components =
-      specfem::element::attributes<specfem::dimension::type::dim2, MediumTag>::components();
+      specfem::element::attributes<specfem::dimension::type::dim2,
+                                   MediumTag>::components();
   const int nglob = field.template get_nglob<MediumTag>();
   constexpr bool using_simd = true;
   using LoadFieldType =
@@ -78,7 +79,7 @@ void predictor_phase_impl(
 
   constexpr int components =
       specfem::element::attributes<specfem::dimension::type::dim2,
-                              MediumTag>::components();
+                                   MediumTag>::components();
   const int nglob = field.template get_nglob<MediumTag>();
   constexpr bool using_simd = true;
   using LoadFieldType =
@@ -198,16 +199,37 @@ void specfem::time_scheme::newmark<specfem::simulation::type::forward>::
     apply_corrector_phase_forward(const specfem::element::medium_tag tag) {
 
   constexpr auto wavefield = specfem::wavefield::simulation_field::forward;
-  constexpr auto elastic_sv = specfem::element::medium_tag::elastic_sv;
-  constexpr auto acoustic = specfem::element::medium_tag::acoustic;
 
-  if (tag == elastic_sv) {
-    corrector_phase_impl<elastic_sv, wavefield>(field, deltatover2);
-  } else if (tag == acoustic) {
-    corrector_phase_impl<acoustic, wavefield>(field, deltatover2);
-  } else {
-    static_assert("medium type not supported");
+#define APPLY_CORRECTOR_PHASE(DIMENSION_TAG, MEDIUM_TAG)                       \
+  if (tag == GET_TAG(MEDIUM_TAG)) {                                            \
+    corrector_phase_impl<GET_TAG(MEDIUM_TAG), wavefield>(field, deltatover2);  \
+    return;                                                                    \
   }
+
+  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
+      APPLY_CORRECTOR_PHASE,
+      WHERE(DIMENSION_TAG_DIM2) WHERE(
+          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC))
+
+#undef APPLY_CORRECTOR_PHASE
+
+  Kokkos::abort("Medium type not supported.");
+
+  /// Code path should never be reached
+  return;
+
+  // constexpr auto wavefield = specfem::wavefield::simulation_field::forward;
+  // constexpr auto elastic_sv = specfem::element::medium_tag::elastic_sv;
+  // constexpr auto acoustic = specfem::element::medium_tag::acoustic;
+
+  // if (tag == elastic_sv) {
+  //   corrector_phase_impl<elastic_sv, wavefield>(field, deltatover2);
+  // } else if (tag == acoustic) {
+  //   corrector_phase_impl<acoustic, wavefield>(field, deltatover2);
+
+  // } else {
+  //   static_assert("medium type not supported");
+  // }
 
   return;
 }
@@ -216,53 +238,118 @@ void specfem::time_scheme::newmark<specfem::simulation::type::forward>::
     apply_predictor_phase_forward(const specfem::element::medium_tag tag) {
 
   constexpr auto wavefield = specfem::wavefield::simulation_field::forward;
-  constexpr auto elastic_sv = specfem::element::medium_tag::elastic_sv;
-  constexpr auto acoustic = specfem::element::medium_tag::acoustic;
 
-  if (tag == elastic_sv) {
-    predictor_phase_impl<elastic_sv, wavefield>(field, deltat, deltatover2,
-                                             deltasquareover2);
-  } else if (tag == acoustic) {
-    predictor_phase_impl<acoustic, wavefield>(field, deltat, deltatover2,
-                                              deltasquareover2);
-  } else {
-    static_assert("medium type not supported");
+#define APPLY_PREDICTOR_PHASE(DIMENSION_TAG, MEDIUM_TAG)                       \
+  if (tag == GET_TAG(MEDIUM_TAG)) {                                            \
+    predictor_phase_impl<GET_TAG(MEDIUM_TAG), wavefield>(                      \
+        field, deltat, deltatover2, deltasquareover2);                         \
+    return;                                                                    \
   }
+
+  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
+      APPLY_PREDICTOR_PHASE,
+      WHERE(DIMENSION_TAG_DIM2) WHERE(
+          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC))
+
+#undef APPLY_PREDICTOR_PHASE
+
+  Kokkos::abort("Medium type not supported.");
+
+  /// Code path should never be reached
   return;
+
+  // constexpr auto wavefield = specfem::wavefield::simulation_field::forward;
+  // constexpr auto elastic_sv = specfem::element::medium_tag::elastic_sv;
+  // constexpr auto acoustic = specfem::element::medium_tag::acoustic;
+
+  // if (tag == elastic_sv) {
+  //   predictor_phase_impl<elastic_sv, wavefield>(field, deltat, deltatover2,
+  //                                               deltasquareover2);
+  // } else if (tag == acoustic) {
+  //   predictor_phase_impl<acoustic, wavefield>(field, deltat, deltatover2,
+  //                                             deltasquareover2);
+  // } else {
+  //   static_assert("medium type not supported");
+  // }
+  // return;
 }
 
 void specfem::time_scheme::newmark<specfem::simulation::type::combined>::
     apply_corrector_phase_forward(const specfem::element::medium_tag tag) {
-  constexpr auto wavefield = specfem::wavefield::simulation_field::adjoint;
-  constexpr auto elastic_sv = specfem::element::medium_tag::elastic_sv;
-  constexpr auto acoustic = specfem::element::medium_tag::acoustic;
 
-  if (tag == elastic_sv) {
-    corrector_phase_impl<elastic_sv, wavefield>(adjoint_field, deltatover2);
-  } else if (tag == elastic_sv) {
-    corrector_phase_impl<acoustic, wavefield>(adjoint_field, deltatover2);
-  } else {
-    static_assert("medium type not supported");
+  constexpr auto wavefield = specfem::wavefield::simulation_field::adjoint;
+
+#define APPLY_CORRECTOR_PHASE(DIMENSION_TAG, MEDIUM_TAG)                       \
+  if (tag == GET_TAG(MEDIUM_TAG)) {                                            \
+    corrector_phase_impl<GET_TAG(MEDIUM_TAG), wavefield>(adjoint_field,        \
+                                                         deltatover2);         \
+    return;                                                                    \
   }
+
+  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
+      APPLY_CORRECTOR_PHASE,
+      WHERE(DIMENSION_TAG_DIM2) WHERE(
+          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC))
+
+#undef APPLY_CORRECTOR_PHASE
+
+  Kokkos::abort("Medium type not supported.");
+
+  /// Code path should never be reached
+  return;
+
+  // constexpr auto wavefield = specfem::wavefield::simulation_field::adjoint;
+  // constexpr auto elastic_sv = specfem::element::medium_tag::elastic_sv;
+  // constexpr auto acoustic = specfem::element::medium_tag::acoustic;
+
+  // if (tag == elastic_sv) {
+  //   corrector_phase_impl<elastic_sv, wavefield>(adjoint_field, deltatover2);
+  // } else if (tag == elastic_sv) {
+  //   corrector_phase_impl<acoustic, wavefield>(adjoint_field, deltatover2);
+  // } else {
+  //   static_assert("medium type not supported");
+  // }
 
   return;
 }
 
 void specfem::time_scheme::newmark<specfem::simulation::type::combined>::
     apply_corrector_phase_backward(const specfem::element::medium_tag tag) {
-  constexpr auto wavefield = specfem::wavefield::simulation_field::backward;
-  constexpr auto elastic_sv = specfem::element::medium_tag::elastic_sv;
-  constexpr auto acoustic = specfem::element::medium_tag::acoustic;
 
-  if (tag == elastic_sv) {
-    corrector_phase_impl<elastic_sv, wavefield>(backward_field,
-                                             -1.0 * deltatover2);
-  } else if (tag == acoustic) {
-    corrector_phase_impl<acoustic, wavefield>(backward_field,
-                                              -1.0 * deltatover2);
-  } else {
-    static_assert("medium type not supported");
+  constexpr auto wavefield = specfem::wavefield::simulation_field::backward;
+
+#define APPLY_CORRECTOR_PHASE(DIMENSION_TAG, MEDIUM_TAG)                       \
+  if (tag == GET_TAG(MEDIUM_TAG)) {                                            \
+    corrector_phase_impl<GET_TAG(MEDIUM_TAG), wavefield>(backward_field,       \
+                                                         -1.0 * deltatover2);  \
+    return;                                                                    \
   }
+
+  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
+      APPLY_CORRECTOR_PHASE,
+      WHERE(DIMENSION_TAG_DIM2) WHERE(
+          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC))
+
+#undef APPLY_CORRECTOR_PHASE
+
+  Kokkos::abort("Medium type not supported.");
+
+  /// Code path should never be reached
+  return;
+
+  // constexpr auto wavefield = specfem::wavefield::simulation_field::backward;
+  // constexpr auto elastic_sv = specfem::element::medium_tag::elastic_sv;
+  // constexpr auto acoustic = specfem::element::medium_tag::acoustic;
+
+  // if (tag == elastic_sv) {
+  //   corrector_phase_impl<elastic_sv, wavefield>(backward_field,
+  //                                               -1.0 * deltatover2);
+  // } else if (tag == acoustic) {
+  //   corrector_phase_impl<acoustic, wavefield>(backward_field,
+  //                                             -1.0 * deltatover2);
+  // } else {
+  //   static_assert("medium type not supported");
+  // }
 
   return;
 }
@@ -271,37 +358,80 @@ void specfem::time_scheme::newmark<specfem::simulation::type::combined>::
     apply_predictor_phase_forward(const specfem::element::medium_tag tag) {
 
   constexpr auto wavefield = specfem::wavefield::simulation_field::adjoint;
-  constexpr auto elastic_sv = specfem::element::medium_tag::elastic_sv;
-  constexpr auto acoustic = specfem::element::medium_tag::acoustic;
 
-  if (tag == elastic_sv) {
-    predictor_phase_impl<elastic_sv, wavefield>(adjoint_field, deltat, deltatover2,
-                                             deltasquareover2);
-  } else if (tag == acoustic) {
-    predictor_phase_impl<acoustic, wavefield>(adjoint_field, deltat,
-                                              deltatover2, deltasquareover2);
-  } else {
-    static_assert("medium type not supported");
+#define APPLY_PREDICTOR_PHASE(DIMENSION_TAG, MEDIUM_TAG)                       \
+  if (tag == GET_TAG(MEDIUM_TAG)) {                                            \
+    predictor_phase_impl<GET_TAG(MEDIUM_TAG), wavefield>(                      \
+        adjoint_field, deltat, deltatover2, deltasquareover2);                 \
+    return;                                                                    \
   }
+
+  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
+      APPLY_PREDICTOR_PHASE,
+      WHERE(DIMENSION_TAG_DIM2) WHERE(
+          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC))
+
+#undef APPLY_PREDICTOR_PHASE
+
+  Kokkos::abort("Medium type not supported.");
+
+  /// Code path should never be reached
   return;
+
+  // constexpr auto wavefield = specfem::wavefield::simulation_field::adjoint;
+  // constexpr auto elastic_sv = specfem::element::medium_tag::elastic_sv;
+  // constexpr auto acoustic = specfem::element::medium_tag::acoustic;
+
+  // if (tag == elastic_sv) {
+  //   predictor_phase_impl<elastic_sv, wavefield>(adjoint_field, deltat,
+  //                                               deltatover2,
+  //                                               deltasquareover2);
+  // } else if (tag == acoustic) {
+  //   predictor_phase_impl<acoustic, wavefield>(adjoint_field, deltat,
+  //                                             deltatover2, deltasquareover2);
+  // } else {
+  //   static_assert("medium type not supported");
+  // }
+  // return;
 }
 
 void specfem::time_scheme::newmark<specfem::simulation::type::combined>::
     apply_predictor_phase_backward(const specfem::element::medium_tag tag) {
-  constexpr auto wavefield = specfem::wavefield::simulation_field::backward;
-  constexpr auto elastic_sv = specfem::element::medium_tag::elastic_sv;
-  constexpr auto acoustic = specfem::element::medium_tag::acoustic;
 
-  if (tag == elastic_sv) {
-    predictor_phase_impl<elastic_sv, wavefield>(
-        backward_field, -1.0 * deltat, -1.0 * deltatover2, deltasquareover2);
-  } else if (tag == acoustic) {
-    predictor_phase_impl<acoustic, wavefield>(
-        backward_field, -1.0 * deltat, -1.0 * deltatover2, deltasquareover2);
-  } else {
-    static_assert("medium type not supported");
+  constexpr auto wavefield = specfem::wavefield::simulation_field::backward;
+
+#define APPLY_PREDICTOR_PHASE(DIMENSION_TAG, MEDIUM_TAG)                       \
+  if (tag == GET_TAG(MEDIUM_TAG)) {                                            \
+    predictor_phase_impl<GET_TAG(MEDIUM_TAG), wavefield>(                      \
+        backward_field, -1.0 * deltat, -1.0 * deltatover2, deltasquareover2);  \
+    return;                                                                    \
   }
+
+  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
+      APPLY_PREDICTOR_PHASE,
+      WHERE(DIMENSION_TAG_DIM2) WHERE(
+          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC))
+
+#undef APPLY_PREDICTOR_PHASE
+
+  Kokkos::abort("Medium type not supported.");
+  /// Code path should never be reached
   return;
+
+  // constexpr auto wavefield = specfem::wavefield::simulation_field::backward;
+  // constexpr auto elastic_sv = specfem::element::medium_tag::elastic_sv;
+  // constexpr auto acoustic = specfem::element::medium_tag::acoustic;
+
+  // if (tag == elastic_sv) {
+  //   predictor_phase_impl<elastic_sv, wavefield>(
+  //       backward_field, -1.0 * deltat, -1.0 * deltatover2, deltasquareover2);
+  // } else if (tag == acoustic) {
+  //   predictor_phase_impl<acoustic, wavefield>(
+  //       backward_field, -1.0 * deltat, -1.0 * deltatover2, deltasquareover2);
+  // } else {
+  //   static_assert("medium type not supported");
+  // }
+  // return;
 }
 
 void specfem::time_scheme::newmark<specfem::simulation::type::forward>::print(

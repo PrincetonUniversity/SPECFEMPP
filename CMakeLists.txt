@@ -396,6 +396,7 @@ target_link_libraries(
         yaml-cpp
         point
         algorithms
+        enumerations
         ${BOOST_LIBS}
 )
 
