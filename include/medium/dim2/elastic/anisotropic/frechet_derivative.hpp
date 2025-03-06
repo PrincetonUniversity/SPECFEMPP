@@ -79,13 +79,13 @@ impl_compute_frechet_derivatives(
 
     // Computing the rest of the integral.
     // rho from equation 14
-    rho_kl = static_cast<type_real>(-1.0) * properties.rho * dt * rho_kl;
-    c11_kl = static_cast<type_real>(-1.0) * c11_kl * properties.c11 * dt;
-    c13_kl = static_cast<type_real>(-1.0) * c13_kl * properties.c13 * dt;
-    c15_kl = static_cast<type_real>(-1.0) * c15_kl * properties.c15 * dt;
-    c33_kl = static_cast<type_real>(-1.0) * c33_kl * properties.c33 * dt;
-    c35_kl = static_cast<type_real>(-1.0) * c35_kl * properties.c35 * dt;
-    c55_kl = static_cast<type_real>(-1.0) * c55_kl * properties.c55 * dt;
+    rho_kl = static_cast<type_real>(-1.0) * properties.rho() * dt * rho_kl;
+    c11_kl = static_cast<type_real>(-1.0) * c11_kl * properties.c11() * dt;
+    c13_kl = static_cast<type_real>(-1.0) * c13_kl * properties.c13() * dt;
+    c15_kl = static_cast<type_real>(-1.0) * c15_kl * properties.c15() * dt;
+    c33_kl = static_cast<type_real>(-1.0) * c33_kl * properties.c33() * dt;
+    c35_kl = static_cast<type_real>(-1.0) * c35_kl * properties.c35() * dt;
+    c55_kl = static_cast<type_real>(-1.0) * c55_kl * properties.c55() * dt;
 
     return { rho_kl, c11_kl, c13_kl, c15_kl, c33_kl, c35_kl, c55_kl };
 

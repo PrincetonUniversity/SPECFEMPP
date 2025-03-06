@@ -1,7 +1,6 @@
 #pragma once
 
 #include "enumerations/specfem_enums.hpp"
-#include "medium/properties.hpp"
 #include "point/properties.hpp"
 #include "specfem_setup.hpp"
 #include <exception>
@@ -17,8 +16,8 @@ namespace medium {
  *
  */
 template <>
-class properties<specfem::element::medium_tag::elastic,
-                 specfem::element::property_tag::anisotropic> {
+class impl_material<specfem::element::medium_tag::elastic,
+                    specfem::element::property_tag::anisotropic> {
 public:
   constexpr static auto dimension =
       specfem::dimension::type::dim2; ///< Dimension of the material
@@ -46,11 +45,12 @@ public:
    * @param Qkappa Attenuation factor for bulk modulus
    * @param Qmu Attenuation factor for shear modulus
    */
-  properties(const type_real &density, const type_real &c11,
-             const type_real &c13, const type_real &c15, const type_real &c33,
-             const type_real &c35, const type_real &c55, const type_real &c12,
-             const type_real &c23, const type_real &c25,
-             const type_real &Qkappa, const type_real &Qmu)
+  impl_material(const type_real &density, const type_real &c11,
+                const type_real &c13, const type_real &c15,
+                const type_real &c33, const type_real &c35,
+                const type_real &c55, const type_real &c12,
+                const type_real &c23, const type_real &c25,
+                const type_real &Qkappa, const type_real &Qmu)
       : density(density), c11(c11), c13(c13), c15(c15), c33(c33), c35(c35),
         c55(c55), c12(c12), c23(c23), c25(c25), Qkappa(Qkappa), Qmu(Qmu) {
 
@@ -67,7 +67,7 @@ public:
    * @brief Default constructor
    *
    */
-  properties() = default;
+  impl_material() = default;
 
   ///@}
 
@@ -77,9 +77,10 @@ public:
    * @param other Material to compare with
    * @return true If the materials have the same properties
    */
-  bool operator==(const properties<specfem::element::medium_tag::elastic,
-                                   specfem::element::property_tag::anisotropic>
-                      &other) const {
+  bool operator==(
+      const impl_material<specfem::element::medium_tag::elastic,
+                          specfem::element::property_tag::anisotropic> &other)
+      const {
     return (std::abs(this->density - other.density) < 1e-6 &&
             std::abs(this->c11 - other.c11) < 1e-6 &&
             std::abs(this->c13 - other.c13) < 1e-6 &&
@@ -100,9 +101,10 @@ public:
    * @param other Material to compare with
    * @return true If the materials have different properties
    */
-  bool operator!=(const properties<specfem::element::medium_tag::elastic,
-                                   specfem::element::property_tag::anisotropic>
-                      &other) const {
+  bool operator!=(
+      const impl_material<specfem::element::medium_tag::elastic,
+                          specfem::element::property_tag::anisotropic> &other)
+      const {
     return !(*this == other);
   }
 

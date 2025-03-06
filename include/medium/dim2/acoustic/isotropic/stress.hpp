@@ -26,8 +26,8 @@ impl_compute_stress(
 
   specfem::datatype::VectorPointViewType<type_real, 2, 1, UseSIMD> T;
 
-  T(0, 0) = properties.rho_inverse * du(0, 0);
-  T(1, 0) = properties.rho_inverse * du(1, 0);
+  T(0, 0) = properties.rho_inverse() * du(0, 0);
+  T(1, 0) = properties.rho_inverse() * du(1, 0);
 
   return { T };
 }

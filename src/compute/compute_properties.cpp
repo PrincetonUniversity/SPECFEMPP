@@ -31,19 +31,19 @@ specfem::compute::properties::properties(
     h_property_index_mapping(ispec) = -1;
   }
 
-  acoustic_isotropic = specfem::medium::material_properties<
+  acoustic_isotropic = specfem::medium::properties_container<
       specfem::element::medium_tag::acoustic,
       specfem::element::property_tag::isotropic>(
       acoustic_elements, ngllz, ngllx, materials, has_gll_model,
       h_property_index_mapping);
 
-  elastic_isotropic = specfem::medium::material_properties<
+  elastic_isotropic = specfem::medium::properties_container<
       specfem::element::medium_tag::elastic,
       specfem::element::property_tag::isotropic>(
       elastic_isotropic_elements, ngllz, ngllx, materials, has_gll_model,
       h_property_index_mapping);
 
-  elastic_anisotropic = specfem::medium::material_properties<
+  elastic_anisotropic = specfem::medium::properties_container<
       specfem::element::medium_tag::elastic,
       specfem::element::property_tag::anisotropic>(
       elastic_anisotropic_elements, ngllz, ngllx, materials, has_gll_model,
