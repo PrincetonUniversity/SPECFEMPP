@@ -5,6 +5,9 @@
 
 #define DEFINE_POINT_VALUE(prop)                                               \
   constexpr static int i_##prop = __COUNTER__ - _counter - 1;                  \
+  KOKKOS_INLINE_FUNCTION value_type &prop() {                                  \
+    return base_type::data[i_##prop];                                          \
+  }                                                                            \
   KOKKOS_INLINE_FUNCTION constexpr value_type prop() const {                   \
     return base_type::data[i_##prop];                                          \
   }                                                                            \
