@@ -177,7 +177,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
 
     // Read mesh generated MESHFEM
     specfem::mesh::mesh mesh = specfem::IO::read_mesh(
-        database_file, specfem::enums::elastic_wave::p_sv, mpi);
+        database_file, setup.get_elastic_wave_type(), mpi);
     const type_real dt = setup.get_dt();
     const int nsteps = setup.get_nsteps();
 
