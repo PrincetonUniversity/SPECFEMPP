@@ -118,10 +118,10 @@ get_point_property(const int ispec, const int iz, const int ix,
                              specfem::element::property_tag::isotropic, false>
       point_property;
 
-  point_property.rho(elastic_isotropic.h_rho(ispec_l, iz, ix));
-  point_property.mu(elastic_isotropic.h_mu(ispec_l, iz, ix));
-  point_property.lambdaplus2mu(
-      elastic_isotropic.h_lambdaplus2mu(ispec_l, iz, ix));
+  point_property.rho() = elastic_isotropic.h_rho(ispec_l, iz, ix);
+  point_property.mu() = elastic_isotropic.h_mu(ispec_l, iz, ix);
+  point_property.lambdaplus2mu() =
+      elastic_isotropic.h_lambdaplus2mu(ispec_l, iz, ix);
 
   return point_property;
 }
@@ -140,9 +140,9 @@ get_point_property(
                              specfem::element::property_tag::isotropic, false>
       point_property_l;
 
-  point_property_l.rho(point_property.rho()[lane]);
-  point_property_l.mu(point_property.mu()[lane]);
-  point_property_l.lambdaplus2mu(point_property.lambdaplus2mu()[lane]);
+  point_property_l.rho() = point_property.rho()[lane];
+  point_property_l.mu() = point_property.mu()[lane];
+  point_property_l.lambdaplus2mu() = point_property.lambdaplus2mu()[lane];
 
   return point_property_l;
 }
@@ -163,16 +163,16 @@ get_point_property(const int ispec, const int iz, const int ix,
                              specfem::element::property_tag::anisotropic, false>
       point_property;
 
-  point_property.rho(elastic_anisotropic.h_rho(ispec_l, iz, ix));
-  point_property.c11(elastic_anisotropic.h_c11(ispec_l, iz, ix));
-  point_property.c13(elastic_anisotropic.h_c13(ispec_l, iz, ix));
-  point_property.c15(elastic_anisotropic.h_c15(ispec_l, iz, ix));
-  point_property.c33(elastic_anisotropic.h_c33(ispec_l, iz, ix));
-  point_property.c35(elastic_anisotropic.h_c35(ispec_l, iz, ix));
-  point_property.c55(elastic_anisotropic.h_c55(ispec_l, iz, ix));
-  point_property.c12(elastic_anisotropic.h_c12(ispec_l, iz, ix));
-  point_property.c23(elastic_anisotropic.h_c23(ispec_l, iz, ix));
-  point_property.c25(elastic_anisotropic.h_c25(ispec_l, iz, ix));
+  point_property.rho() = elastic_anisotropic.h_rho(ispec_l, iz, ix);
+  point_property.c11() = elastic_anisotropic.h_c11(ispec_l, iz, ix);
+  point_property.c13() = elastic_anisotropic.h_c13(ispec_l, iz, ix);
+  point_property.c15() = elastic_anisotropic.h_c15(ispec_l, iz, ix);
+  point_property.c33() = elastic_anisotropic.h_c33(ispec_l, iz, ix);
+  point_property.c35() = elastic_anisotropic.h_c35(ispec_l, iz, ix);
+  point_property.c55() = elastic_anisotropic.h_c55(ispec_l, iz, ix);
+  point_property.c12() = elastic_anisotropic.h_c12(ispec_l, iz, ix);
+  point_property.c23() = elastic_anisotropic.h_c23(ispec_l, iz, ix);
+  point_property.c25() = elastic_anisotropic.h_c25(ispec_l, iz, ix);
 
   return point_property;
 }
@@ -191,16 +191,16 @@ get_point_property(
                              specfem::element::property_tag::anisotropic, false>
       point_property_l;
 
-  point_property_l.rho(point_property.rho()[lane]);
-  point_property_l.c11(point_property.c11()[lane]);
-  point_property_l.c13(point_property.c13()[lane]);
-  point_property_l.c15(point_property.c15()[lane]);
-  point_property_l.c33(point_property.c33()[lane]);
-  point_property_l.c35(point_property.c35()[lane]);
-  point_property_l.c55(point_property.c55()[lane]);
-  point_property_l.c12(point_property.c12()[lane]);
-  point_property_l.c23(point_property.c23()[lane]);
-  point_property_l.c25(point_property.c25()[lane]);
+  point_property_l.rho() = point_property.rho()[lane];
+  point_property_l.c11() = point_property.c11()[lane];
+  point_property_l.c13() = point_property.c13()[lane];
+  point_property_l.c15() = point_property.c15()[lane];
+  point_property_l.c33() = point_property.c33()[lane];
+  point_property_l.c35() = point_property.c35()[lane];
+  point_property_l.c55() = point_property.c55()[lane];
+  point_property_l.c12() = point_property.c12()[lane];
+  point_property_l.c23() = point_property.c23()[lane];
+  point_property_l.c25() = point_property.c25()[lane];
 
   return point_property_l;
 }
@@ -221,8 +221,9 @@ get_point_property(const int ispec, const int iz, const int ix,
                              specfem::element::property_tag::isotropic, false>
       point_property;
 
-  point_property.rho_inverse(acoustic_isotropic.h_rho_inverse(ispec_l, iz, ix));
-  point_property.kappa(acoustic_isotropic.h_kappa(ispec_l, iz, ix));
+  point_property.rho_inverse() =
+      acoustic_isotropic.h_rho_inverse(ispec_l, iz, ix);
+  point_property.kappa() = acoustic_isotropic.h_kappa(ispec_l, iz, ix);
 
   return point_property;
 }
@@ -241,8 +242,8 @@ get_point_property(
                              specfem::element::property_tag::isotropic, false>
       point_property_l;
 
-  point_property_l.rho_inverse(point_property.rho_inverse()[lane]);
-  point_property_l.kappa(point_property.kappa()[lane]);
+  point_property_l.rho_inverse() = point_property.rho_inverse()[lane];
+  point_property_l.kappa() = point_property.kappa()[lane];
 
   return point_property_l;
 }
