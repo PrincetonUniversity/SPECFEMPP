@@ -15,6 +15,15 @@ Parameter definitions
 
 **documentation** : Simulation setup parameters
 
+**Parameter Name** : ``simulation-setup.elastic_wave``
+-------------------------------------------------------
+
+**default value** : P_SV
+
+**possible values** : [P_SV, SH]
+
+**documentation** : Type of elastic wave to be simulated
+
 **Parameter Name** : ``simulation-setup.quadrature`` [optional]
 ----------------------------------------------
 

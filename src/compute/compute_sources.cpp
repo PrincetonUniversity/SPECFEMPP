@@ -566,6 +566,12 @@ specfem::compute::sources::get_sources_on_host(
               BOUNDARY_TAG_STACEY, BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
 
 #undef RETURN_VALUE
+
+  Kokkos::abort("No sources found for the given parameters. Please check the "
+                "input parameters and try again.");
+  return std::make_tuple(
+      Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>(),
+      Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>());
 }
 
 // This function is crucial for the computing the source contribution
@@ -626,4 +632,9 @@ specfem::compute::sources::get_sources_on_device(
               BOUNDARY_TAG_STACEY, BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
 
 #undef RETURN_VALUE
+
+  Kokkos::abort("No sources found for the given parameters. Please check the "
+                "input parameters and try again.");
+  return std::make_tuple(Kokkos::View<int *, Kokkos::DefaultExecutionSpace>(),
+                         Kokkos::View<int *, Kokkos::DefaultExecutionSpace>());
 }
