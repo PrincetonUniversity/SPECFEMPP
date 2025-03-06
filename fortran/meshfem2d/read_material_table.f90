@@ -31,21 +31,25 @@
 !
 !========================================================================
 
-  subroutine read_material_table()
+subroutine read_material_table()
 
 ! reads in material definitions in DATA/Par_file
 
-  use constants, only: IMAIN,TINYVAL,ISOTROPIC_MATERIAL,ANISOTROPIC_MATERIAL,POROELASTIC_MATERIAL
+   use constants, only: IMAIN,TINYVAL,ISOTROPIC_MATERIAL,ANISOTROPIC_MATERIAL,POROELASTIC_MATERIAL, &
+      ELECTROMAGNETIC_MATERIAL
 
-  use shared_parameters, only: AXISYM,nbmodels,icodemat,cp,cs, &
-                              aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12, &
-                              comp_g,QKappa,Qmu, &
-                              rho_s_read,rho_f_read, &
-                              phi_read,tortuosity_read, &
-                              permxx_read,permxz_read,permzz_read,kappa_s_read,kappa_f_read,kappa_fr_read, &
-                              eta_f_read,mu_fr_read
+   use shared_parameters, only: nbmodels,icodemat, &
+      cp,cs, &
+      aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12, &
+      QKappa,Qmu, &
+      rho_s_read,rho_f_read, &
+      phi_read,tortuosity_read, &
+      permxx_read,permxz_read,permzz_read,kappa_s_read,kappa_f_read,kappa_fr_read, &
+      eta_f_read,mu_fr_read,mu0_read,e0_read,e11_read,e33_read,sig11_read,sig33_read,&
+      Qe11_read,Qe33_read,Qs11_read,Qs33_read, &
+      comp_g
 
-  implicit none
+   implicit none
 
   ! local parameters
   integer :: imaterial,i,icodematread,number_of_materials_defined_by_tomo_file
@@ -65,73 +69,76 @@
   ! safety check
   if (nbmodels <= 0) call stop_the_code('Non-positive number of materials not allowed!')
 
-  ! allocates material tables
-  allocate(icodemat(nbmodels))
-  allocate(cp(nbmodels))
-  allocate(cs(nbmodels))
+   ! allocates and initializes material arrays
+   call initialize_material_properties()
 
-  allocate(aniso3(nbmodels))
-  allocate(aniso4(nbmodels))
-  allocate(aniso5(nbmodels))
-  allocate(aniso6(nbmodels))
-  allocate(aniso7(nbmodels))
-  allocate(aniso8(nbmodels))
-  allocate(aniso9(nbmodels))
-  allocate(aniso10(nbmodels))
-  allocate(aniso11(nbmodels))
-  allocate(aniso12(nbmodels))
+   !  ! allocates material tables
+   !  allocate(icodemat(nbmodels))
+   !  allocate(cp(nbmodels))
+   !  allocate(cs(nbmodels))
 
-  allocate(comp_g(nbmodels))
-  allocate(QKappa(nbmodels))
-  allocate(Qmu(nbmodels))
+   !  allocate(aniso3(nbmodels))
+   !  allocate(aniso4(nbmodels))
+   !  allocate(aniso5(nbmodels))
+   !  allocate(aniso6(nbmodels))
+   !  allocate(aniso7(nbmodels))
+   !  allocate(aniso8(nbmodels))
+   !  allocate(aniso9(nbmodels))
+   !  allocate(aniso10(nbmodels))
+   !  allocate(aniso11(nbmodels))
+   !  allocate(aniso12(nbmodels))
 
-  allocate(rho_s_read(nbmodels))
-  allocate(rho_f_read(nbmodels))
+   !  allocate(comp_g(nbmodels))
+   !  allocate(QKappa(nbmodels))
+   !  allocate(Qmu(nbmodels))
 
-  allocate( phi_read(nbmodels), &
-            tortuosity_read(nbmodels), &
-            permxx_read(nbmodels), &
-            permxz_read(nbmodels), &
-            permzz_read(nbmodels), &
-            kappa_s_read(nbmodels), &
-            kappa_f_read(nbmodels), &
-            kappa_fr_read(nbmodels), &
-            eta_f_read(nbmodels), &
-            mu_fr_read(nbmodels))
+   !  allocate(rho_s_read(nbmodels))
+   !  allocate(rho_f_read(nbmodels))
 
-  ! initializes material properties
-  icodemat(:) = 0
+   !  allocate( phi_read(nbmodels), &
+   !     tortuosity_read(nbmodels), &
+   !     permxx_read(nbmodels), &
+   !     permxz_read(nbmodels), &
+   !     permzz_read(nbmodels), &
+   !     kappa_s_read(nbmodels), &
+   !     kappa_f_read(nbmodels), &
+   !     kappa_fr_read(nbmodels), &
+   !     eta_f_read(nbmodels), &
+   !     mu_fr_read(nbmodels))
 
-  cp(:) = 0.d0
-  cs(:) = 0.d0
+   !  ! initializes material properties
+   !  icodemat(:) = 0
 
-  aniso3(:) = 0.d0
-  aniso4(:) = 0.d0
-  aniso5(:) = 0.d0
-  aniso6(:) = 0.d0
-  aniso7(:) = 0.d0
-  aniso8(:) = 0.d0
-  aniso9(:) = 0.d0
-  aniso10(:) = 0.d0
-  aniso11(:) = 0.d0
+   !  cp(:) = 0.d0
+   !  cs(:) = 0.d0
 
-  comp_g(:) = 0.0d0
-  QKappa(:) = 9999.d0
-  Qmu(:) = 9999.d0
+   !  aniso3(:) = 0.d0
+   !  aniso4(:) = 0.d0
+   !  aniso5(:) = 0.d0
+   !  aniso6(:) = 0.d0
+   !  aniso7(:) = 0.d0
+   !  aniso8(:) = 0.d0
+   !  aniso9(:) = 0.d0
+   !  aniso10(:) = 0.d0
+   !  aniso11(:) = 0.d0
 
-  rho_s_read(:) = 0.d0
-  rho_f_read(:) = 0.d0
+   !  comp_g(:) = 0.0d0
+   !  QKappa(:) = 9999.d0
+   !  Qmu(:) = 9999.d0
 
-  phi_read(:) = 0.d0
-  tortuosity_read(:) = 0.d0
-  permxx_read(:) = 0.d0
-  permxz_read(:) = 0.d0
-  permzz_read(:) = 0.d0
-  kappa_s_read(:) = 0.d0
-  kappa_f_read(:) = 0.d0
-  kappa_fr_read(:) = 0.d0
-  eta_f_read(:) = 0.d0
-  mu_fr_read(:) = 0.d0
+   !  rho_s_read(:) = 0.d0
+   !  rho_f_read(:) = 0.d0
+
+   !  phi_read(:) = 0.d0
+   !  tortuosity_read(:) = 0.d0
+   !  permxx_read(:) = 0.d0
+   !  permxz_read(:) = 0.d0
+   !  permzz_read(:) = 0.d0
+   !  kappa_s_read(:) = 0.d0
+   !  kappa_f_read(:) = 0.d0
+   !  kappa_fr_read(:) = 0.d0
+   !  eta_f_read(:) = 0.d0
+   !  mu_fr_read(:) = 0.d0
 
   number_of_materials_defined_by_tomo_file = 0
 
@@ -143,6 +150,7 @@
     !  anisotropic             - model_number  2 rho   c11 c13 c15 c33    c35 c55 c12 c23 c25    0 QKappa Qmu
     !  anisotropic (in AXISYM) - model_number  2 rho   c11 c13 c15 c33    c35 c55 c12 c23 c25  c22 QKappa Qmu
     !  poroelastic             - model_number  3 rhos rhof phi   c kxx    kxz kzz  Ks  Kf Kfr etaf   mufr Qmu
+    ! electromagetic           - model_number  4 mu0 e0 e11(e0) e33(e0) sig11 sig33 Qe11 Qe33 Qs11 Qs33 Qv 0 0
     !  tomo                    - model_number -1 0       0   A   0   0      0   0   0   0   0    0      0   0
 
     call read_material_parameters_p(i,icodematread, &
@@ -224,6 +232,20 @@
       if (Qmu(i) <= 0.00000001d0) &
         call stop_the_code('non-positive value of Qmu')
 
+    else if (icodemat(i) == ELECTROMAGNETIC_MATERIAL) then
+        ! electromagnetic material
+        mu0_read(i) = val0read
+        e0_read(i) = val1read
+        e11_read(i) = val2read
+        e33_read(i) = val3read
+        sig11_read(i) = val4read
+        sig33_read(i) = val5read
+        Qe11_read(i) = val6read
+        Qe33_read(i) = val7read
+        Qs11_read(i) = val8read
+        Qs33_read(i) = val9read
+        phi_read(i) = 2.d0
+
     else if (icodemat(i) <= 0) then
       ! tomographic material
       number_of_materials_defined_by_tomo_file = number_of_materials_defined_by_tomo_file + 1
@@ -252,10 +274,201 @@
 
     endif
 
-  enddo ! nbmodels
+   enddo ! nbmodels
 
+   !user output
+   call print_materials_info()
+
+   !  ! user output
+   !  write(IMAIN,*) 'Materials:'
+   !  write(IMAIN,*) '  Nb of solid, fluid or porous materials = ',nbmodels
+   !  write(IMAIN,*)
+   !  do i = 1,nbmodels
+   !     if (i == 1) write(IMAIN,*) '--------'
+   !     if (icodemat(i) == ISOTROPIC_MATERIAL) then
+   !        ! isotropic elastic/acoustic
+   !        write(IMAIN,*) 'Material #',i,' isotropic'
+   !        write(IMAIN,*) 'rho,cp,cs   = ',rho_s_read(i),cp(i),cs(i)
+   !        write(IMAIN,*) 'Qkappa, Qmu = ',QKappa(i),Qmu(i)
+   !        if (cs(i) < TINYVAL) then
+   !           write(IMAIN,*) 'Material is fluid'
+   !        else
+   !           write(IMAIN,*) 'Material is solid'
+   !        endif
+   !     else if (icodemat(i) == ANISOTROPIC_MATERIAL) then
+   !        ! anisotropic
+   !        write(IMAIN,*) 'Material #',i,' anisotropic'
+   !        write(IMAIN,*) 'rho,cp,cs    = ',rho_s_read(i),cp(i),cs(i)
+   !        if (AXISYM) then
+   !           write(IMAIN,*) 'c11,c13,c15,c33,c35,c55,c12,c23,c25,c22 = ', &
+   !              aniso3(i),aniso4(i),aniso5(i),aniso6(i),aniso7(i),aniso8(i), &
+   !              aniso9(i),aniso10(i),aniso11(i),aniso12(i)
+   !        else
+   !           write(IMAIN,*) 'c11,c13,c15,c33,c35,c55,c12,c23,c25 = ', &
+   !              aniso3(i),aniso4(i),aniso5(i),aniso6(i),aniso7(i),aniso8(i), &
+   !              aniso9(i),aniso10(i),aniso11(i)
+   !           write(IMAIN,*) 'QKappa,Qmu = ',QKappa(i),Qmu(i)
+   !        endif
+   !     else if (icodemat(i) == POROELASTIC_MATERIAL) then
+   !        ! poroelastic
+   !        write(IMAIN,*) 'Material #',i,' isotropic'
+   !        write(IMAIN,*) 'rho_s, kappa_s         = ',rho_s_read(i),kappa_s_read(i)
+   !        write(IMAIN,*) 'rho_f, kappa_f, eta_f  = ',rho_f_read(i),kappa_f_read(i),eta_f_read(i)
+   !        write(IMAIN,*) 'phi, tortuosity        = ',phi_read(i),tortuosity_read(i)
+   !        write(IMAIN,*) 'permxx, permxz, permzz = ',permxx_read(i),permxz_read(i),permzz_read(i)
+   !        write(IMAIN,*) 'kappa_fr, mu_fr, Qmu   = ',kappa_fr_read(i),mu_fr_read(i),Qmu(i)
+   !        write(IMAIN,*) 'Material is porous'
+   !     else if (icodemat(i) <= 0) then
+   !        write(IMAIN,*) 'Material #',i,' will be read in an external tomography file (TOMOGRAPHY_FILE in Par_file)'
+   !     else
+   !        call stop_the_code('Unknown material code')
+   !     endif
+   !     write(IMAIN,*) '--------'
+   !  enddo
+   !  write(IMAIN,*)
+   !  call flush_IMAIN()
+
+end subroutine read_material_table
+
+subroutine initialize_material_properties()
+  ! allocates and initializes material arrays
+    use shared_parameters, only: nbmodels, &
+                                 icodemat,comp_g
+    ! isotropy
+    use shared_parameters, only: cp,cs
+    ! anisotropy
+    use shared_parameters, only: aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12
+    ! attenuation
+    use shared_parameters, only: QKappa,Qmu
+    ! poroelasticity
+    use shared_parameters, only: rho_s_read,rho_f_read, &
+                                 phi_read,tortuosity_read, &
+                                 permxx_read,permxz_read,permzz_read, &
+                                 kappa_s_read,kappa_f_read,kappa_fr_read, &
+                                 eta_f_read,mu_fr_read
+
+    ! electromagnetic
+    use shared_parameters, only: mu0_read,e0_read,e11_read,e33_read,sig11_read,sig33_read,&
+                                 Qe11_read,Qe33_read,Qs11_read,Qs33_read
+
+    implicit none
+
+    ! safety check
+    if (nbmodels <= 0) call stop_the_code('Non-positive number of materials not allowed!')
+    ! allocates material tables
+    allocate(icodemat(nbmodels))
+    allocate(cp(nbmodels))
+    allocate(cs(nbmodels))
+    allocate(aniso3(nbmodels))
+    allocate(aniso4(nbmodels))
+    allocate(aniso5(nbmodels))
+    allocate(aniso6(nbmodels))
+    allocate(aniso7(nbmodels))
+    allocate(aniso8(nbmodels))
+    allocate(aniso9(nbmodels))
+    allocate(aniso10(nbmodels))
+    allocate(aniso11(nbmodels))
+    allocate(aniso12(nbmodels))
+    allocate(QKappa(nbmodels))
+    allocate(Qmu(nbmodels))
+    allocate(rho_s_read(nbmodels))
+    allocate(rho_f_read(nbmodels))
+    allocate(phi_read(nbmodels), &
+             tortuosity_read(nbmodels), &
+             permxx_read(nbmodels), &
+             permxz_read(nbmodels), &
+             permzz_read(nbmodels), &
+             kappa_s_read(nbmodels), &
+             kappa_f_read(nbmodels), &
+             kappa_fr_read(nbmodels), &
+             eta_f_read(nbmodels), &
+             mu_fr_read(nbmodels))
+
+    allocate( mu0_read(nbmodels),&
+              e0_read(nbmodels),&
+              e11_read(nbmodels),&
+              e33_read(nbmodels),&
+              sig11_read(nbmodels),&
+              sig33_read(nbmodels),&
+              Qe11_read(nbmodels),&
+              Qe33_read(nbmodels),&
+              Qs11_read(nbmodels),&
+              Qs33_read(nbmodels))
+
+    allocate(comp_g(nbmodels))
+
+    ! initializes material properties
+    icodemat(:) = 0
+    cp(:) = 0.d0
+    cs(:) = 0.d0
+    aniso3(:) = 0.d0
+    aniso4(:) = 0.d0
+    aniso5(:) = 0.d0
+    aniso6(:) = 0.d0
+    aniso7(:) = 0.d0
+    aniso8(:) = 0.d0
+    aniso9(:) = 0.d0
+    aniso10(:) = 0.d0
+    aniso11(:) = 0.d0
+    QKappa(:) = 9999.d0
+    Qmu(:) = 9999.d0
+    rho_s_read(:) = 0.d0
+    rho_f_read(:) = 0.d0
+    phi_read(:) = 0.d0
+    tortuosity_read(:) = 0.d0
+    permxx_read(:) = 0.d0
+    permxz_read(:) = 0.d0
+    permzz_read(:) = 0.d0
+    kappa_s_read(:) = 0.d0
+    kappa_f_read(:) = 0.d0
+    kappa_fr_read(:) = 0.d0
+    eta_f_read(:) = 0.d0
+    mu_fr_read(:) = 0.d0
+
+    mu0_read(:) = 0.d0
+    e0_read(:) = 0.d0
+    e11_read(:) = 0.d0
+    e33_read(:) = 0.d0
+    sig11_read(:) = 0.d0
+    sig33_read(:) = 0.d0
+    Qe11_read(:) = 0.d0
+    Qe33_read(:) = 0.d0
+    Qs11_read(:) = 0.d0
+    Qs33_read(:) = 0.d0
+
+    comp_g(:) = 0.0d0
+
+end subroutine initialize_material_properties
+
+subroutine print_materials_info()
+
+  use constants, only: IMAIN,TINYVAL, &
+                       ISOTROPIC_MATERIAL,ANISOTROPIC_MATERIAL,POROELASTIC_MATERIAL,ELECTROMAGNETIC_MATERIAL
+
+  use shared_parameters, only: nbmodels, &
+                               icodemat,AXISYM
+  ! isotropy
+  use shared_parameters, only: cp,cs,rho_s_read
+  ! anisotropy
+  use shared_parameters, only: aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12
+  ! attenuation
+  use shared_parameters, only: QKappa,Qmu
+  ! poroelasticity
+  use shared_parameters, only: rho_f_read, &
+                               phi_read,tortuosity_read, &
+                               permxx_read,permxz_read,permzz_read, &
+                               kappa_s_read,kappa_f_read,kappa_fr_read, &
+                               eta_f_read,mu_fr_read
+
+  ! electromagnetic
+  use shared_parameters, only: mu0_read,e0_read,e11_read,e33_read,sig11_read,sig33_read,&
+                               Qe11_read,Qe33_read,Qs11_read,Qs33_read
+
+  implicit none
+  ! local parameters
+  integer :: i
   ! user output
-  write(IMAIN,*) 'Materials:'
+  write(IMAIN,*) '  Materials:'
   write(IMAIN,*) '  Nb of solid, fluid or porous materials = ',nbmodels
   write(IMAIN,*)
   do i = 1,nbmodels
@@ -293,6 +506,15 @@
       write(IMAIN,*) 'permxx, permxz, permzz = ',permxx_read(i),permxz_read(i),permzz_read(i)
       write(IMAIN,*) 'kappa_fr, mu_fr, Qmu   = ',kappa_fr_read(i),mu_fr_read(i),Qmu(i)
       write(IMAIN,*) 'Material is porous'
+    else if (icodemat(i) == ELECTROMAGNETIC_MATERIAL) then
+      ! electromagnetic
+      write(IMAIN,*) 'Material #',i,' electromagnetic'
+      write(IMAIN,*) 'mu0, e0 (cstes vaccum)         = ',mu0_read(i),e0_read(i)
+      write(IMAIN,*) 'e11(e0), e33(e0)          = ',e11_read(i),e33_read(i)
+      write(IMAIN,*) 'sig11(e0), sig33(e0)          = ',sig11_read(i),sig33_read(i)
+      write(IMAIN,*) 'Qe11(e0), Qe33(e0)          = ',Qe11_read(i),Qe33_read(i)
+      write(IMAIN,*) 'Qs11(e0), Qs33(e0)          = ',Qs11_read(i),Qs33_read(i)
+      write(IMAIN,*) 'Material is electromagnetic'
     else if (icodemat(i) <= 0) then
       write(IMAIN,*) 'Material #',i,' will be read in an external tomography file (TOMOGRAPHY_FILE in Par_file)'
     else
@@ -302,5 +524,4 @@
   enddo
   write(IMAIN,*)
   call flush_IMAIN()
-
-  end subroutine read_material_table
+end subroutine print_materials_info
