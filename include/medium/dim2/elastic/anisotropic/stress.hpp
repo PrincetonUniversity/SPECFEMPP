@@ -28,16 +28,16 @@ impl_compute_stress(
 
   // P_SV case
   // sigma_xx
-  sigma_xx = properties.c11 * du(0, 0) + properties.c13 * du(1, 1) +
-             properties.c15 * (du(1, 0) + du(0, 1));
+  sigma_xx = properties.c11() * du(0, 0) + properties.c13() * du(1, 1) +
+             properties.c15() * (du(1, 0) + du(0, 1));
 
   // sigma_zz
-  sigma_zz = properties.c13 * du(0, 0) + properties.c33 * du(1, 1) +
-             properties.c35 * (du(1, 0) + du(0, 1));
+  sigma_zz = properties.c13() * du(0, 0) + properties.c33() * du(1, 1) +
+             properties.c35() * (du(1, 0) + du(0, 1));
 
   // sigma_xz
-  sigma_xz = properties.c15 * du(0, 0) + properties.c35 * du(1, 1) +
-             properties.c55 * (du(1, 0) + du(0, 1));
+  sigma_xz = properties.c15() * du(0, 0) + properties.c35() * du(1, 1) +
+             properties.c55() * (du(1, 0) + du(0, 1));
 
   specfem::datatype::VectorPointViewType<type_real, 2, 2, UseSIMD> T;
 

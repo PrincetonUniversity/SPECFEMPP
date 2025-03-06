@@ -3,7 +3,7 @@
 #include "compute/element_types/element_types.hpp"
 #include "compute/impl/value_containers.hpp"
 #include "enumerations/medium.hpp"
-#include "medium/material_kernels.hpp"
+#include "medium/kernels_container.hpp"
 #include "mesh/materials/materials.hpp"
 #include "point/coordinates.hpp"
 #include "point/kernels.hpp"
@@ -17,7 +17,7 @@ namespace compute {
  *
  */
 struct kernels
-    : public impl::value_containers<specfem::medium::material_kernels> {
+    : public impl::value_containers<specfem::medium::kernels_container> {
 public:
   /**
    * @name Constructors
@@ -49,11 +49,12 @@ public:
    *
    */
   void copy_to_host() {
-    impl::value_containers<specfem::medium::material_kernels>::copy_to_host();
+    impl::value_containers<specfem::medium::kernels_container>::copy_to_host();
   }
 
   void copy_to_device() {
-    impl::value_containers<specfem::medium::material_kernels>::copy_to_device();
+    impl::value_containers<
+        specfem::medium::kernels_container>::copy_to_device();
   }
 };
 
@@ -89,7 +90,7 @@ KOKKOS_FUNCTION void load_on_device(const IndexType &index,
   IndexType l_index = index;
   l_index.ispec = ispec;
 
-  kernels.get_container<MediumTag, PropertyTag>().load_device_kernels(
+  kernels.get_container<MediumTag, PropertyTag>().load_device_values(
       l_index, point_kernels);
 
   return;
@@ -122,7 +123,7 @@ void load_on_host(const IndexType &index, const kernels &kernels,
   IndexType l_index = index;
   l_index.ispec = ispec;
 
-  kernels.get_container<MediumTag, PropertyTag>().load_host_kernels(
+  kernels.get_container<MediumTag, PropertyTag>().load_host_values(
       l_index, point_kernels);
 
   return;
@@ -155,7 +156,7 @@ void store_on_host(const IndexType &index, const PointKernelType &point_kernels,
   IndexType l_index = index;
   l_index.ispec = ispec;
 
-  kernels.get_container<MediumTag, PropertyTag>().update_kernels_on_host(
+  kernels.get_container<MediumTag, PropertyTag>().store_host_values(
       l_index, point_kernels);
 
   return;
@@ -189,7 +190,7 @@ KOKKOS_FUNCTION void store_on_device(const IndexType &index,
   IndexType l_index = index;
   l_index.ispec = ispec;
 
-  kernels.get_container<MediumTag, PropertyTag>().update_kernels_on_device(
+  kernels.get_container<MediumTag, PropertyTag>().store_device_values(
       l_index, point_kernels);
 
   return;
@@ -225,7 +226,7 @@ KOKKOS_FUNCTION void add_on_device(const IndexType &index,
   IndexType l_index = index;
   l_index.ispec = ispec;
 
-  kernels.get_container<MediumTag, PropertyTag>().add_kernels_on_device(
+  kernels.get_container<MediumTag, PropertyTag>().add_device_values(
       l_index, point_kernels);
 
   return;
@@ -259,7 +260,7 @@ void add_on_host(const IndexType &index, const PointKernelType &point_kernels,
   IndexType l_index = index;
   l_index.ispec = ispec;
 
-  kernels.get_container<MediumTag, PropertyTag>().add_kernels_on_host(
+  kernels.get_container<MediumTag, PropertyTag>().add_host_values(
       l_index, point_kernels);
 
   return;

@@ -6,7 +6,6 @@
 #include "kokkos_abstractions.h"
 #include "macros.hpp"
 #include "medium/material.hpp"
-#include "medium/material_properties.hpp"
 #include "medium/properties_container.hpp"
 #include "point/coordinates.hpp"
 #include "specfem_setup.hpp"
@@ -23,7 +22,7 @@ namespace compute {
  *
  */
 struct properties
-    : public impl::value_containers<specfem::medium::material_properties> {
+    : public impl::value_containers<specfem::medium::properties_container> {
   /**
    * @name Constructors
    */
@@ -59,12 +58,12 @@ struct properties
    */
   void copy_to_host() {
     impl::value_containers<
-        specfem::medium::material_properties>::copy_to_host();
+        specfem::medium::properties_container>::copy_to_host();
   }
 
   void copy_to_device() {
     impl::value_containers<
-        specfem::medium::material_properties>::copy_to_device();
+        specfem::medium::properties_container>::copy_to_device();
   }
 };
 
@@ -109,7 +108,7 @@ load_on_device(const IndexType &lcoord,
   static_assert(DimensionType == specfem::dimension::type::dim2,
                 "Only 2D properties are supported");
 
-  properties.get_container<MediumTag, PropertyTag>().load_device_properties(
+  properties.get_container<MediumTag, PropertyTag>().load_device_values(
       l_index, point_properties);
 }
 
@@ -149,7 +148,7 @@ void load_on_host(const IndexType &lcoord,
   static_assert(DimensionType == specfem::dimension::type::dim2,
                 "Only 2D properties are supported");
 
-  properties.get_container<MediumTag, PropertyTag>().load_host_properties(
+  properties.get_container<MediumTag, PropertyTag>().load_host_values(
       l_index, point_properties);
 }
 
@@ -188,8 +187,8 @@ void store_on_host(const IndexType &lcoord,
   static_assert(DimensionType == specfem::dimension::type::dim2,
                 "Only 2D properties are supported");
 
-  properties.get_container<MediumTag, PropertyTag>().assign(l_index,
-                                                            point_properties);
+  properties.get_container<MediumTag, PropertyTag>().store_host_values(
+      l_index, point_properties);
 }
 } // namespace compute
 } // namespace specfem
