@@ -24,12 +24,12 @@ std::string get_error_message(
 
   message << "\n\t Expected: " << value;
   message << "\n\t Got: \n";
-  message << "\t\trho = " << point_kernel.rho << "\n";
-  message << "\t\tmu = " << point_kernel.mu << "\n";
-  message << "\t\tkappa = " << point_kernel.kappa << "\n";
-  message << "\t\trhop = " << point_kernel.rhop << "\n";
-  message << "\t\talpha = " << point_kernel.alpha << "\n";
-  message << "\t\tbeta = " << point_kernel.beta << "\n";
+  message << "\t\trho = " << point_kernel.rho() << "\n";
+  message << "\t\tmu = " << point_kernel.mu() << "\n";
+  message << "\t\tkappa = " << point_kernel.kappa() << "\n";
+  message << "\t\trhop = " << point_kernel.rhop() << "\n";
+  message << "\t\talpha = " << point_kernel.alpha() << "\n";
+  message << "\t\tbeta = " << point_kernel.beta() << "\n";
 
   return message.str();
 }
@@ -44,13 +44,13 @@ std::string get_error_message(
 
   message << "\n\t Expected: " << value;
   message << "\n\t Got: \n";
-  message << "\t\trho = " << point_kernel.rho << "\n";
-  message << "\t\tc11 = " << point_kernel.c11 << "\n";
-  message << "\t\tc13 = " << point_kernel.c13 << "\n";
-  message << "\t\tc15 = " << point_kernel.c15 << "\n";
-  message << "\t\tc33 = " << point_kernel.c33 << "\n";
-  message << "\t\tc35 = " << point_kernel.c35 << "\n";
-  message << "\t\tc55 = " << point_kernel.c55 << "\n";
+  message << "\t\trho = " << point_kernel.rho() << "\n";
+  message << "\t\tc11 = " << point_kernel.c11() << "\n";
+  message << "\t\tc13 = " << point_kernel.c13() << "\n";
+  message << "\t\tc15 = " << point_kernel.c15() << "\n";
+  message << "\t\tc33 = " << point_kernel.c33() << "\n";
+  message << "\t\tc35 = " << point_kernel.c35() << "\n";
+  message << "\t\tc55 = " << point_kernel.c55() << "\n";
 
   return message.str();
 }
@@ -65,10 +65,10 @@ std::string get_error_message(
 
   message << "\n\t Expected: " << value;
   message << "\n\t Got: \n";
-  message << "\t\trho = " << point_kernel.rho << "\n";
-  message << "\t\tkappa = " << point_kernel.kappa << "\n";
-  message << "\t\trhop = " << point_kernel.rhop << "\n";
-  message << "\t\talpha = " << point_kernel.alpha << "\n";
+  message << "\t\trho = " << point_kernel.rho() << "\n";
+  message << "\t\tkappa = " << point_kernel.kappa() << "\n";
+  message << "\t\trhop = " << point_kernel.rhop() << "\n";
+  message << "\t\talpha = " << point_kernel.alpha() << "\n";
 
   return message.str();
 }
@@ -105,12 +105,12 @@ get_point_kernel(const int ispec, const int iz, const int ix,
                           specfem::element::property_tag::isotropic, false>
       point_kernel;
 
-  point_kernel.rho = elastic_isotropic.h_rho(ispec_l, iz, ix);
-  point_kernel.mu = elastic_isotropic.h_mu(ispec_l, iz, ix);
-  point_kernel.kappa = elastic_isotropic.h_kappa(ispec_l, iz, ix);
-  point_kernel.rhop = elastic_isotropic.h_rhop(ispec_l, iz, ix);
-  point_kernel.alpha = elastic_isotropic.h_alpha(ispec_l, iz, ix);
-  point_kernel.beta = elastic_isotropic.h_beta(ispec_l, iz, ix);
+  point_kernel.rho(elastic_isotropic.h_rho(ispec_l, iz, ix));
+  point_kernel.mu(elastic_isotropic.h_mu(ispec_l, iz, ix));
+  point_kernel.kappa(elastic_isotropic.h_kappa(ispec_l, iz, ix));
+  point_kernel.rhop(elastic_isotropic.h_rhop(ispec_l, iz, ix));
+  point_kernel.alpha(elastic_isotropic.h_alpha(ispec_l, iz, ix));
+  point_kernel.beta(elastic_isotropic.h_beta(ispec_l, iz, ix));
 
   return point_kernel;
 }
@@ -129,12 +129,12 @@ get_point_kernel(
                           specfem::element::property_tag::isotropic, false>
       point_kernel_l;
 
-  point_kernel_l.rho = point_kernel.rho[lane];
-  point_kernel_l.mu = point_kernel.mu[lane];
-  point_kernel_l.kappa = point_kernel.kappa[lane];
-  point_kernel_l.rhop = point_kernel.rhop[lane];
-  point_kernel_l.alpha = point_kernel.alpha[lane];
-  point_kernel_l.beta = point_kernel.beta[lane];
+  point_kernel_l.rho(point_kernel.rho()[lane]);
+  point_kernel_l.mu(point_kernel.mu()[lane]);
+  point_kernel_l.kappa(point_kernel.kappa()[lane]);
+  point_kernel_l.rhop(point_kernel.rhop()[lane]);
+  point_kernel_l.alpha(point_kernel.alpha()[lane]);
+  point_kernel_l.beta(point_kernel.beta()[lane]);
 
   return point_kernel_l;
 }
@@ -155,13 +155,13 @@ get_point_kernel(const int ispec, const int iz, const int ix,
                           specfem::element::property_tag::anisotropic, false>
       point_kernel;
 
-  point_kernel.rho = elastic_anisotropic.h_rho(ispec_l, iz, ix);
-  point_kernel.c11 = elastic_anisotropic.h_c11(ispec_l, iz, ix);
-  point_kernel.c13 = elastic_anisotropic.h_c13(ispec_l, iz, ix);
-  point_kernel.c15 = elastic_anisotropic.h_c15(ispec_l, iz, ix);
-  point_kernel.c33 = elastic_anisotropic.h_c33(ispec_l, iz, ix);
-  point_kernel.c35 = elastic_anisotropic.h_c35(ispec_l, iz, ix);
-  point_kernel.c55 = elastic_anisotropic.h_c55(ispec_l, iz, ix);
+  point_kernel.rho(elastic_anisotropic.h_rho(ispec_l, iz, ix));
+  point_kernel.c11(elastic_anisotropic.h_c11(ispec_l, iz, ix));
+  point_kernel.c13(elastic_anisotropic.h_c13(ispec_l, iz, ix));
+  point_kernel.c15(elastic_anisotropic.h_c15(ispec_l, iz, ix));
+  point_kernel.c33(elastic_anisotropic.h_c33(ispec_l, iz, ix));
+  point_kernel.c35(elastic_anisotropic.h_c35(ispec_l, iz, ix));
+  point_kernel.c55(elastic_anisotropic.h_c55(ispec_l, iz, ix));
 
   return point_kernel;
 }
@@ -180,13 +180,13 @@ get_point_kernel(
                           specfem::element::property_tag::anisotropic, false>
       point_kernel_l;
 
-  point_kernel_l.rho = point_kernel.rho[lane];
-  point_kernel_l.c11 = point_kernel.c11[lane];
-  point_kernel_l.c13 = point_kernel.c13[lane];
-  point_kernel_l.c15 = point_kernel.c15[lane];
-  point_kernel_l.c33 = point_kernel.c33[lane];
-  point_kernel_l.c35 = point_kernel.c35[lane];
-  point_kernel_l.c55 = point_kernel.c55[lane];
+  point_kernel_l.rho(point_kernel.rho()[lane]);
+  point_kernel_l.c11(point_kernel.c11()[lane]);
+  point_kernel_l.c13(point_kernel.c13()[lane]);
+  point_kernel_l.c15(point_kernel.c15()[lane]);
+  point_kernel_l.c33(point_kernel.c33()[lane]);
+  point_kernel_l.c35(point_kernel.c35()[lane]);
+  point_kernel_l.c55(point_kernel.c55()[lane]);
 
   return point_kernel_l;
 }
@@ -207,10 +207,10 @@ get_point_kernel(const int ispec, const int iz, const int ix,
                           specfem::element::property_tag::isotropic, false>
       point_kernel;
 
-  point_kernel.rho = acoustic_isotropic.h_rho(ispec_l, iz, ix);
-  point_kernel.kappa = acoustic_isotropic.h_kappa(ispec_l, iz, ix);
-  point_kernel.alpha = acoustic_isotropic.h_alpha(ispec_l, iz, ix);
-  point_kernel.rhop = acoustic_isotropic.h_rho_prime(ispec_l, iz, ix);
+  point_kernel.rho(acoustic_isotropic.h_rho(ispec_l, iz, ix));
+  point_kernel.kappa(acoustic_isotropic.h_kappa(ispec_l, iz, ix));
+  point_kernel.alpha(acoustic_isotropic.h_alpha(ispec_l, iz, ix));
+  point_kernel.rhop(acoustic_isotropic.h_rhop(ispec_l, iz, ix));
 
   return point_kernel;
 }
@@ -229,10 +229,10 @@ get_point_kernel(
                           specfem::element::property_tag::isotropic, false>
       point_kernel_l;
 
-  point_kernel_l.rho = point_kernel.rho[lane];
-  point_kernel_l.kappa = point_kernel.kappa[lane];
-  point_kernel_l.alpha = point_kernel.alpha[lane];
-  point_kernel_l.rhop = point_kernel.rhop[lane];
+  point_kernel_l.rho(point_kernel.rho()[lane]);
+  point_kernel_l.kappa(point_kernel.kappa()[lane]);
+  point_kernel_l.alpha(point_kernel.alpha()[lane]);
+  point_kernel_l.rhop(point_kernel.rhop()[lane]);
 
   return point_kernel_l;
 }
@@ -254,6 +254,10 @@ void check_to_value(const specfem::compute::element_types &element_types,
   constexpr int simd_size =
       specfem::datatype::simd<type_real, using_simd>::size();
 
+  using PointType = specfem::point::kernels<specfem::dimension::type::dim2,
+                                            MediumTag, PropertyTag, using_simd>;
+  constexpr int nprops = PointType::nprops;
+
   for (int i = 0; i < ispecs.extent(0); ++i) {
     for (int iz = 0; iz < ngllz; iz++) {
       for (int ix = 0; ix < ngllx; ix++) {
@@ -265,14 +269,16 @@ void check_to_value(const specfem::compute::element_types &element_types,
           const auto point_kernel = get_point_kernel<MediumTag, PropertyTag>(
               ielement + j, iz, ix, kernels);
           const type_real value = values_to_store(i);
-          if (point_kernel != value) {
-            std::ostringstream message;
+          for (int l = 0; l < nprops; l++) {
+            if (point_kernel.data[l] != value) {
+              std::ostringstream message;
 
-            message << "\n \t Error at ispec = " << ielement + j
-                    << ", iz = " << iz << ", ix = " << ix;
-            message << get_error_message(point_kernel, value);
+              message << "\n \t Error at ispec = " << ielement + j
+                      << ", iz = " << iz << ", ix = " << ix;
+              message << get_error_message(point_kernel, value);
 
-            throw std::runtime_error(message.str());
+              throw std::runtime_error(message.str());
+            }
           }
         }
       }
@@ -313,7 +319,10 @@ void execute_store_or_add(specfem::compute::kernels &kernels,
         const auto index =
             get_index<using_simd>(ielement, n_simd_elements, iz, ix);
         const type_real value = values_to_store(i);
-        PointType point(value);
+        PointType point;
+        for (int l = 0; l < PointType::nprops; l++) {
+          point.data[l] = value;
+        }
         if constexpr (Store) {
           specfem::compute::store_on_device(index, point, kernels_l);
         } else if constexpr (Add) {
@@ -411,6 +420,7 @@ void check_load_on_device(
 
   const int element_size = elements.extent(0);
   const int step = element_size / N;
+  constexpr int nprops = PointType::nprops;
 
   for (int i = 0; i < N; i++) {
     ispecs_h(i) = elements(i * step);
@@ -459,28 +469,33 @@ void check_load_on_device(
         if constexpr (using_simd) {
           for (int lane = 0; lane < n_simd_elements; lane++) {
             const auto point_kernel_l = get_point_kernel(lane, point_kernel);
-            if (point_kernel_l != value_l) {
+            for (int l = 0; l < nprops; l++) {
+              if (point_kernel_l.data[l] != value_l) {
+                std::ostringstream message;
+
+                message << "\n \t Error in function load_on_device";
+
+                message << "\n \t Error at ispec = " << ielement
+                        << ", iz = " << 0 << ", ix = " << 0;
+                message << get_error_message(point_kernel_l, value_l);
+
+                throw std::runtime_error(message.str());
+              }
+            }
+          }
+        } else if constexpr (!using_simd) {
+          for (int l = 0; l < nprops; l++) {
+            if (point_kernel.data[l] != value_l) {
               std::ostringstream message;
 
               message << "\n \t Error in function load_on_device";
 
               message << "\n \t Error at ispec = " << ielement << ", iz = " << 0
                       << ", ix = " << 0;
-              message << get_error_message(point_kernel_l, value_l);
+              message << get_error_message(point_kernel, value_l);
 
               throw std::runtime_error(message.str());
             }
-          }
-        } else if constexpr (!using_simd) {
-          if (point_kernel != value_l) {
-            std::ostringstream message;
-            message << "\n \t Error in function load_on_device";
-
-            message << "\n \t Error at ispec = " << ielement << ", iz = " << 0
-                    << ", ix = " << 0;
-            message << get_error_message(point_kernel, value_l);
-
-            throw std::runtime_error(message.str());
           }
         }
       }

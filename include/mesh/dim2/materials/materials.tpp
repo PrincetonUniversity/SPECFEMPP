@@ -14,6 +14,6 @@ template <specfem::element::medium_tag type,
     const std::vector<specfem::medium::material<type, property> >
         &l_materials)
     : n_materials(n_materials),
-      material_properties(l_materials) {}
+    element_materials(l_materials) {}
 
 #endif /* end of include guard: _MESH_MATERIALS_TPP */

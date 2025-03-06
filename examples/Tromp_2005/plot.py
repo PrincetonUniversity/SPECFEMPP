@@ -7,12 +7,14 @@ from scipy.interpolate import griddata
 def load_data(directory):
     X = np.loadtxt(directory + "/ElasticIsotropic/X.txt")
     Z = np.loadtxt(directory + "/ElasticIsotropic/Z.txt")
-    rho = np.loadtxt(directory + "/ElasticIsotropic/rho.txt")
-    kappa = np.loadtxt(directory + "/ElasticIsotropic/kappa.txt")
-    mu = np.loadtxt(directory + "/ElasticIsotropic/mu.txt")
-    rhop = np.loadtxt(directory + "/ElasticIsotropic/rhop.txt")
-    alpha = np.loadtxt(directory + "/ElasticIsotropic/alpha.txt")
-    beta = np.loadtxt(directory + "/ElasticIsotropic/beta.txt")
+    data = np.loadtxt(directory + "/ElasticIsotropic/data.txt").reshape(6, X.shape[0])
+
+    rho = data[0, :]
+    mu = data[1, :]
+    kappa = data[2, :]
+    rhop = data[3, :]
+    alpha = data[4, :]
+    beta = data[5, :]
 
     return X, Z, rho, kappa, mu, rhop, alpha, beta
 
@@ -97,3 +99,7 @@ def plot_kernels(input_directory, output):
     plt.savefig(output, dpi=300)
 
     return
+
+
+if __name__ == "__main__":
+    plot_kernels("OUTPUT_FILES/Kernels", "Kernels_out.png")
