@@ -516,20 +516,6 @@ target_link_libraries(
         ${BOOST_LIBS}
 )
 
-add_library(
-        medium
-        src/medium/compute_mass_matrix.cpp
-        src/medium/compute_stress_integrand.cpp
-)
-
-target_link_libraries(
-        medium
-        Kokkos::kokkos
-        compute
-        boundary_conditions
-        enumerations
-)
-
 add_library(coupled_interface
         src/coupled_interface/coupled_interface.cpp
 )
@@ -582,7 +568,6 @@ target_link_libraries(
         Kokkos::kokkos
         timescheme
         kokkos_kernels
-        medium
 )
 
 add_library(
@@ -654,7 +639,6 @@ target_link_libraries(
         writer
         reader
         kokkos_kernels
-        medium
         solver
         ${BOOST_LIBS}
 )
@@ -677,7 +661,6 @@ target_link_libraries(
         writer
         periodic_tasks
         reader
-        medium
         coupled_interface
         kokkos_kernels
         solver
@@ -713,7 +696,6 @@ target_link_libraries(
         writer
         periodic_tasks
         reader
-        medium
         coupled_interface
         kokkos_kernels
         solver
