@@ -69,12 +69,22 @@ public:
   Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
   get_elements_on_host(const specfem::element::medium_tag tag) const;
 
+  int get_number_of_elements(const specfem::element::medium_tag tag) const {
+    return get_elements_on_host(tag).extent(0);
+  }
+
   Kokkos::View<int *, Kokkos::DefaultExecutionSpace>
   get_elements_on_device(const specfem::element::medium_tag tag) const;
 
   Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
   get_elements_on_host(const specfem::element::medium_tag tag,
                        const specfem::element::property_tag property) const;
+
+  int get_number_of_elements(
+      const specfem::element::medium_tag tag,
+      const specfem::element::property_tag property) const {
+    return get_elements_on_host(tag, property).extent(0);
+  }
 
   Kokkos::View<int *, Kokkos::DefaultExecutionSpace>
   get_elements_on_device(const specfem::element::medium_tag tag,
@@ -84,6 +94,13 @@ public:
   get_elements_on_host(const specfem::element::medium_tag tag,
                        const specfem::element::property_tag property,
                        const specfem::element::boundary_tag boundary) const;
+
+  int get_number_of_elements(
+      const specfem::element::medium_tag tag,
+      const specfem::element::property_tag property,
+      const specfem::element::boundary_tag boundary) const {
+    return get_elements_on_host(tag, property, boundary).extent(0);
+  }
 
   Kokkos::View<int *, Kokkos::DefaultExecutionSpace>
   get_elements_on_device(const specfem::element::medium_tag tag,

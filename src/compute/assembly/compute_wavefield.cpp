@@ -71,17 +71,32 @@ specfem::compute::assembly::generate_wavefield_on_entire_grid(
   const auto h_wavefield_on_entire_grid =
       Kokkos::create_mirror_view(wavefield_on_entire_grid);
 
-  get_wavefield_on_entire_grid<specfem::element::medium_tag::elastic_sv,
-                               specfem::element::property_tag::isotropic>(
-      component, *this, wavefield_on_entire_grid);
+#define CALL_GET_WAVEFIELD_ON_ENTIRE_GRID_FUNCTION(DIMENSION_TAG, MEDIUM_TAG,  \
+                                                   PROPERTY_TAG)               \
+  if constexpr (GET_TAG(DIMENSION_TAG) == specfem::dimension::type::dim2) {    \
+    get_wavefield_on_entire_grid<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)>(  \
+        component, *this, wavefield_on_entire_grid);                           \
+  }
 
-  get_wavefield_on_entire_grid<specfem::element::medium_tag::elastic_sv,
-                               specfem::element::property_tag::anisotropic>(
-      component, *this, wavefield_on_entire_grid);
+  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
+      CALL_GET_WAVEFIELD_ON_ENTIRE_GRID_FUNCTION,
+      WHERE(DIMENSION_TAG_DIM2) WHERE(
+          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
+          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
-  get_wavefield_on_entire_grid<specfem::element::medium_tag::acoustic,
-                               specfem::element::property_tag::isotropic>(
-      component, *this, wavefield_on_entire_grid);
+#undef CALL_GET_WAVEFIELD_ON_ENTIRE_GRID_FUNCTION
+
+  // get_wavefield_on_entire_grid<specfem::element::medium_tag::elastic_sv,
+  //                              specfem::element::property_tag::isotropic>(
+  //     component, *this, wavefield_on_entire_grid);
+
+  // get_wavefield_on_entire_grid<specfem::element::medium_tag::elastic_sv,
+  //                              specfem::element::property_tag::anisotropic>(
+  //     component, *this, wavefield_on_entire_grid);
+
+  // get_wavefield_on_entire_grid<specfem::element::medium_tag::acoustic,
+  //                              specfem::element::property_tag::isotropic>(
+  //     component, *this, wavefield_on_entire_grid);
 
   Kokkos::deep_copy(h_wavefield_on_entire_grid, wavefield_on_entire_grid);
 

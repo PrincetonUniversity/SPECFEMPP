@@ -276,12 +276,6 @@ load_on_device(const IteratorIndexType iterator_index,
   static_assert(index.dimension == specfem::dimension::type::dim2,
                 "IndexType must be a 2D index type");
 
-  static_assert(((PointSourceType::medium_tag ==
-                  specfem::element::medium_tag::acoustic) ||
-                 (PointSourceType::medium_tag ==
-                  specfem::element::medium_tag::elastic_sv)),
-                "PointSourceType must be an acoustic or elastic point source");
-
 #ifndef NDEBUG
 
   const int isource = iterator_index.imap;
@@ -355,12 +349,6 @@ void load_on_host(const IteratorIndexType iterator_index,
   static_assert(index.dimension == specfem::dimension::type::dim2,
                 "IndexType must be a 2D index type");
 
-  static_assert(((PointSourceType::medium_tag ==
-                  specfem::element::medium_tag::acoustic) ||
-                 (PointSourceType::medium_tag ==
-                  specfem::element::medium_tag::elastic_sv)),
-                "PointSourceType must be an acoustic or elastic point source");
-
 #ifndef NDEBUG
   const int isource = iterator_index.imap;
 
@@ -433,12 +421,6 @@ store_on_device(const IteratorIndexType iterator_index,
   static_assert(index.dimension == specfem::dimension::type::dim2,
                 "IndexType must be a 2D index type");
 
-  static_assert(((PointSourceType::medium_tag ==
-                  specfem::element::medium_tag::acoustic) ||
-                 (PointSourceType::medium_tag ==
-                  specfem::element::medium_tag::elastic_sv)),
-                "PointSourceType must be an acoustic or elastic point source");
-
 #ifndef NDEBUG
   const int isource = iterator_index.imap;
 
@@ -467,8 +449,8 @@ store_on_device(const IteratorIndexType iterator_index,
 
   CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
       SOURCE_MEDIUM_STORE_ON_DEVICE,
-      WHERE(DIMENSION_TAG_DIM2)
-          WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ACOUSTIC))
+      WHERE(DIMENSION_TAG_DIM2) WHERE(
+          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC))
 
 #undef SOURCE_MEDIUM_STORE_ON_DEVICE
 
@@ -509,12 +491,6 @@ void store_on_host(const IteratorIndexType iterator_index,
   static_assert(index.dimension == specfem::dimension::type::dim2,
                 "IndexType must be a 2D index type");
 
-  static_assert(((PointSourceType::medium_tag ==
-                  specfem::element::medium_tag::acoustic) ||
-                 (PointSourceType::medium_tag ==
-                  specfem::element::medium_tag::elastic_sv)),
-                "PointSourceType must be an acoustic or elastic point source");
-
 #ifndef NDEBUG
   const int isource = iterator_index.imap;
 
@@ -543,8 +519,8 @@ void store_on_host(const IteratorIndexType iterator_index,
 
   CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
       SOURCE_MEDIUM_STORE_ON_HOST,
-      WHERE(DIMENSION_TAG_DIM2)
-          WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ACOUSTIC))
+      WHERE(DIMENSION_TAG_DIM2) WHERE(
+          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC))
 
 #undef SOURCE_MEDIUM_STORE_ON_HOST
 

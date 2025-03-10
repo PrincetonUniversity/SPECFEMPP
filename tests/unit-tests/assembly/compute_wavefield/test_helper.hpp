@@ -22,11 +22,7 @@
 template <specfem::wavefield::type component,
           specfem::element::medium_tag medium,
           specfem::element::property_tag property>
-class test_helper;
-
-template <specfem::wavefield::type component>
-class test_helper<component, specfem::element::medium_tag::elastic_sv,
-                  specfem::element::property_tag::isotropic> {
+class test_helper {
 
 public:
   test_helper(const int ispec,
@@ -74,10 +70,9 @@ private:
   specfem::compute::assembly &assembly;
 };
 
-template <>
-class test_helper<specfem::wavefield::type::pressure,
-                  specfem::element::medium_tag::elastic_sv,
-                  specfem::element::property_tag::isotropic> {
+template <specfem::element::medium_tag medium,
+          specfem::element::property_tag property>
+class test_helper<specfem::wavefield::type::pressure, medium, property> {
 public:
   test_helper(const int ispec,
               const Kokkos::View<type_real ****, Kokkos::LayoutLeft,
