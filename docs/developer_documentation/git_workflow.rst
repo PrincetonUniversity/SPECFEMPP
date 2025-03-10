@@ -15,7 +15,7 @@ To make a change to SPECFEM++ (This development workflow is similar to the one s
 
 .. note::
 
-    It is also recommended that you run :code:`uv sync --extra dev` every time you pull the develop branch. Please check :ref:`style section<style>` for more information on uv.
+    It is also recommended that you run :code:`uv sync --group dev` every time you pull the develop branch. Please check :ref:`style section<style>` for more information on uv.
 
 .. note::
 

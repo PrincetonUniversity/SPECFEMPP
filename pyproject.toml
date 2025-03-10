@@ -17,7 +17,12 @@ requires-python = ">=3.12"
 [tool.uv]
 package = false
 
-[project.optional-dependencies]
+[dependency-groups]
+all = [
+  {include-group = "dev"},
+  {include-group = "examples"}
+]
+
 dev = [
   "pre-commit~=2.19.0",
   "clang-format~=19.1.7",
