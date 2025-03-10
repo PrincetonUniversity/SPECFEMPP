@@ -36,7 +36,7 @@ struct materials {
                            specfem::element::property_tag property, int index,
                            int database_index)
         : type(type), property(property), index(index),
-          database_index(database_index){};
+          database_index(database_index) {};
   };
 
   template <specfem::element::medium_tag type,
@@ -88,8 +88,8 @@ struct materials {
    */
   materials(const int nspec, const int numat)
       : n_materials(numat),
-        material_index_mapping("specfem::mesh::material_index_mapping",
-                               nspec){};
+        material_index_mapping("specfem::mesh::material_index_mapping", nspec) {
+        };
 
   ///@}
 

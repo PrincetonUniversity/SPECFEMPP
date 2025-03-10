@@ -73,7 +73,7 @@ template <> struct mesh<specfem::dimension::type::dim2> {
    * @brief Default mesh constructor
    *
    */
-  mesh(){};
+  mesh() {};
 
   mesh(const int npgeo, const int nspec, const int nproc,
        const specfem::mesh::control_nodes<specfem::dimension::type::dim2>
@@ -93,7 +93,7 @@ template <> struct mesh<specfem::dimension::type::dim2> {
       : npgeo(npgeo), nspec(nspec), nproc(nproc), control_nodes(control_nodes),
         parameters(parameters), coupled_interfaces(coupled_interfaces),
         boundaries(boundaries), tags(tags), tangential_nodes(tangential_nodes),
-        axial_nodes(axial_nodes), materials(materials){};
+        axial_nodes(axial_nodes), materials(materials) {};
   ///@}
 
   std::string print() const;

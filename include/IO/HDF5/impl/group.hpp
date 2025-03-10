@@ -76,7 +76,7 @@ public:
    * @param name Name of the group
    */
   Group(std::unique_ptr<H5::H5File> &file, const std::string &name)
-      : group(std::make_unique<H5::Group>(file->createGroup(name))){};
+      : group(std::make_unique<H5::Group>(file->createGroup(name))) {};
 
   /**
    * @brief Construct a new HDF5 Group object within an HDF5 group with the
@@ -86,7 +86,7 @@ public:
    * @param name Name of the group
    */
   Group(std::unique_ptr<H5::Group> &group, const std::string &name)
-      : group(std::make_unique<H5::Group>(group->createGroup(name))){};
+      : group(std::make_unique<H5::Group>(group->createGroup(name))) {};
   ///@}
 
   /**
@@ -141,7 +141,7 @@ public:
    * @param name Name of the group
    */
   Group(std::unique_ptr<H5::H5File> &file, const std::string &name)
-      : group(std::make_unique<H5::Group>(file->openGroup(name))){};
+      : group(std::make_unique<H5::Group>(file->openGroup(name))) {};
 
   /**
    * @brief Open an existing HDF5 Group object within an HDF5 group with the
@@ -151,7 +151,7 @@ public:
    * @param name Name of the group
    */
   Group(std::unique_ptr<H5::Group> &group, const std::string &name)
-      : group(std::make_unique<H5::Group>(group->openGroup(name))){};
+      : group(std::make_unique<H5::Group>(group->openGroup(name))) {};
   ///@}
 
   /**

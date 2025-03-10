@@ -11,9 +11,8 @@ namespace impl {
  * @brief Values for every quadrature point in the finite element mesh
  *
  */
-template <
-    template <specfem::element::medium_tag, specfem::element::property_tag>
-    class containers_type>
+template <template <specfem::element::medium_tag,
+                    specfem::element::property_tag> class containers_type>
 struct value_containers {
 
   using IndexViewType = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;

@@ -26,7 +26,7 @@ public:
    * stored
    */
   seismogram(const std::string output_format, const std::string output_folder)
-      : output_format(output_format), output_folder(output_folder){};
+      : output_format(output_format), output_folder(output_folder) {};
   /**
    * @brief Construct a new seismogram object
    *

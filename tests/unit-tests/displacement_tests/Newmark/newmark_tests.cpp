@@ -18,7 +18,7 @@
 namespace test_config {
 struct database {
 public:
-  database() : specfem_config(""), traces(""){};
+  database() : specfem_config(""), traces("") {};
   database(const YAML::Node &Node) {
     specfem_config = Node["specfem_config"].as<std::string>();
     // check if node elastic_domain_field exists
@@ -34,7 +34,7 @@ public:
 
 struct configuration {
 public:
-  configuration() : number_of_processors(0){};
+  configuration() : number_of_processors(0) {};
   configuration(const YAML::Node &Node) {
     number_of_processors = Node["nproc"].as<int>();
   }
