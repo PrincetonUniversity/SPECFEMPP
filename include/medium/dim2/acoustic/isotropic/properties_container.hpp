@@ -17,10 +17,9 @@ struct properties_container<specfem::element::medium_tag::acoustic,
       impl_properties_container<specfem::element::medium_tag::acoustic,
                                 specfem::element::property_tag::isotropic, 2>;
   using base_type::base_type;
-  constexpr static int _counter = __COUNTER__;
 
-  DEFINE_MEDIUM_VIEW(rho_inverse)
-  DEFINE_MEDIUM_VIEW(kappa)
+  DEFINE_MEDIUM_VIEW(rho_inverse, 0)
+  DEFINE_MEDIUM_VIEW(kappa, 1)
 };
 
 } // namespace medium

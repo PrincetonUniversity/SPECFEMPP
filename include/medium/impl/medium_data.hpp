@@ -1,16 +1,16 @@
 #pragma once
 
 #include "enumerations/medium.hpp"
+#include <cstddef>
 
-#define DEFINE_MEDIUM_VIEW(prop)                                               \
-  constexpr static int i_##prop = __COUNTER__ - _counter - 1;                  \
-  KOKKOS_INLINE_FUNCTION type_real &prop(const int &ispec, const int &iz,      \
-                                         const int &ix) const {                \
-    return base_type::data(ispec, iz, ix, i_##prop);                           \
+#define DEFINE_MEDIUM_VIEW(prop, index_value)                                  \
+  KOKKOS_INLINE_FUNCTION type_real prop(const int &ispec, const int &iz,       \
+                                        const int &ix) const {                 \
+    return base_type::data(ispec, iz, ix, index_value);                        \
   }                                                                            \
-  KOKKOS_INLINE_FUNCTION type_real &h_##prop(const int &ispec, const int &iz,  \
-                                             const int &ix) const {            \
-    return base_type::h_data(ispec, iz, ix, i_##prop);                         \
+  KOKKOS_INLINE_FUNCTION type_real h_##prop(const int &ispec, const int &iz,   \
+                                            const int &ix) const {             \
+    return base_type::h_data(ispec, iz, ix, index_value);                      \
   }
 
 namespace specfem {
@@ -18,9 +18,9 @@ namespace medium {
 
 namespace impl {
 template <specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag, int N>
+          specfem::element::property_tag PropertyTag, std::size_t N>
 struct medium_data {
-  using view_type = typename Kokkos::View<type_real ***[N], Kokkos::LayoutLeft,
+  using view_type = typename Kokkos::View<type_real ****, Kokkos::LayoutLeft,
                                           Kokkos::DefaultExecutionSpace>;
   constexpr static auto nprops = N;
   constexpr static auto dimension = specfem::dimension::type::dim2;
@@ -43,8 +43,9 @@ struct medium_data {
 
 private:
   template <bool on_device>
-  KOKKOS_FORCEINLINE_FUNCTION constexpr type_real &
-  get_data(const int &ispec, const int &iz, const int &ix, const int &i) const {
+  KOKKOS_INLINE_FUNCTION type_real &get_data(const int &ispec, const int &iz,
+                                             const int &ix,
+                                             const std::size_t &i) const {
     if constexpr (on_device) {
       return data(ispec, iz, ix, i);
     } else {
@@ -66,7 +67,10 @@ private:
     const int iz = index.iz;
     const int ix = index.ix;
 
-    for (int i = 0; i < nprops; i++) {
+    /// std::size_t is required to avoid intel compiler optimization issue
+    /// Intel compiler optimizes this loop incorrectly when the loop is on int
+    /// This loop is a compile time pragma unroll
+    for (std::size_t i = 0; i < nprops; i++) {
       values.data[i] = get_data<on_device>(ispec, iz, ix, i);
     }
   }
@@ -91,7 +95,10 @@ private:
 
     mask_type mask([&, this](std::size_t lane) { return index.mask(lane); });
 
-    for (int i = 0; i < nprops; i++) {
+    /// std::size_t is required to avoid intel compiler optimization issue
+    /// Intel compiler optimizes this loop incorrectly when the loop is on int
+    /// This loop is a compile time pragma unroll
+    for (std::size_t i = 0; i < nprops; i++) {
       Kokkos::Experimental::where(mask, values.data[i])
           .copy_from(&get_data<on_device>(ispec, iz, ix, i), tag_type());
     }
@@ -111,7 +118,10 @@ private:
     const int iz = index.iz;
     const int ix = index.ix;
 
-    for (int i = 0; i < nprops; i++) {
+    /// std::size_t is required to avoid intel compiler optimization issue
+    /// Intel compiler optimizes this loop incorrectly when the loop is on int
+    /// This loop is a compile time pragma unroll
+    for (std::size_t i = 0; i < nprops; i++) {
       get_data<on_device>(ispec, iz, ix, i) = values.data[i];
     }
   }
@@ -136,7 +146,10 @@ private:
 
     mask_type mask([&, this](std::size_t lane) { return index.mask(lane); });
 
-    for (int i = 0; i < nprops; i++) {
+    /// std::size_t is required to avoid intel compiler optimization issue
+    /// Intel compiler optimizes this loop incorrectly when the loop is on int
+    /// This loop is a compile time pragma unroll
+    for (std::size_t i = 0; i < nprops; i++) {
       Kokkos::Experimental::where(mask, values.data[i])
           .copy_to(&get_data<on_device>(ispec, iz, ix, i), tag_type());
     }
@@ -156,7 +169,10 @@ private:
     const int iz = index.iz;
     const int ix = index.ix;
 
-    for (int i = 0; i < nprops; i++) {
+    /// std::size_t is required to avoid intel compiler optimization issue
+    /// Intel compiler optimizes this loop incorrectly when the loop is on int
+    /// This loop is a compile time pragma unroll
+    for (std::size_t i = 0; i < nprops; i++) {
       get_data<on_device>(ispec, iz, ix, i) += values.data[i];
     }
   }
@@ -184,7 +200,10 @@ private:
 
     mask_type mask([&, this](std::size_t lane) { return index.mask(lane); });
 
-    for (int i = 0; i < nprops; i++) {
+    /// std::size_t is required to avoid intel compiler optimization issue
+    /// Intel compiler optimizes this loop incorrectly when the loop is on int
+    /// This loop is a compile time pragma unroll
+    for (std::size_t i = 0; i < nprops; i++) {
       Kokkos::Experimental::where(mask, lhs).copy_from(
           &get_data<on_device>(ispec, iz, ix, i), tag_type());
       lhs += values.data[i];
