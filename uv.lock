@@ -1457,7 +1457,26 @@ name = "specfempp-core"
 version = "0.3.0"
 source = { virtual = "." }
 
-[package.optional-dependencies]
+[package.dev-dependencies]
+all = [
+    { name = "breathe" },
+    { name = "clang-format" },
+    { name = "doc8" },
+    { name = "furo" },
+    { name = "imageio" },
+    { name = "jinja2" },
+    { name = "obspy" },
+    { name = "pre-commit" },
+    { name = "pyyaml" },
+    { name = "restructuredtext-lint" },
+    { name = "rstcheck" },
+    { name = "ruff" },
+    { name = "snakemake" },
+    { name = "snakemake-executor-plugin-slurm" },
+    { name = "sphinx-copybutton" },
+    { name = "sphinx-rtd-theme" },
+    { name = "sphinx-sitemap" },
+]
 dev = [
     { name = "breathe" },
     { name = "clang-format" },
@@ -1481,24 +1500,47 @@ examples = [
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "breathe", marker = "extra == 'dev'", specifier = "~=4.35.0" },
-    { name = "clang-format", marker = "extra == 'dev'", specifier = "~=19.1.7" },
-    { name = "doc8", marker = "extra == 'dev'", specifier = ">=0.3.6" },
-    { name = "furo", marker = "extra == 'dev'", specifier = "~=2024.8.6" },
-    { name = "imageio", marker = "extra == 'examples'", specifier = "~=2.36.1" },
-    { name = "jinja2", marker = "extra == 'examples'", specifier = ">=3.1.4" },
-    { name = "obspy", marker = "extra == 'examples'", specifier = "~=1.4.0" },
-    { name = "pre-commit", marker = "extra == 'dev'", specifier = "~=2.19.0" },
-    { name = "pyyaml", marker = "extra == 'examples'", specifier = ">=6.0.2" },
-    { name = "restructuredtext-lint", marker = "extra == 'dev'", specifier = ">=1.4.0" },
-    { name = "rstcheck", marker = "extra == 'dev'", specifier = ">=6.2.4" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.9.1" },
-    { name = "snakemake", marker = "extra == 'examples'", specifier = "~=8.29.0" },
-    { name = "snakemake-executor-plugin-slurm", marker = "extra == 'examples'", specifier = "~=0.10.0" },
-    { name = "sphinx-copybutton", marker = "extra == 'dev'", specifier = "~=0.4.0" },
-    { name = "sphinx-rtd-theme", marker = "extra == 'dev'", specifier = "~=1.3.0" },
-    { name = "sphinx-sitemap", marker = "extra == 'dev'", specifier = "~=2.2.0" },
+
+[package.metadata.requires-dev]
+all = [
+    { name = "breathe", specifier = "~=4.35.0" },
+    { name = "clang-format", specifier = "~=19.1.7" },
+    { name = "doc8", specifier = ">=0.3.6" },
+    { name = "furo", specifier = "~=2024.8.6" },
+    { name = "imageio", specifier = "~=2.36.1" },
+    { name = "jinja2", specifier = ">=3.1.4" },
+    { name = "obspy", specifier = "~=1.4.0" },
+    { name = "pre-commit", specifier = "~=2.19.0" },
+    { name = "pyyaml", specifier = ">=6.0.2" },
+    { name = "restructuredtext-lint", specifier = ">=1.4.0" },
+    { name = "rstcheck", specifier = ">=6.2.4" },
+    { name = "ruff", specifier = ">=0.9.1" },
+    { name = "snakemake", specifier = "~=8.29.0" },
+    { name = "snakemake-executor-plugin-slurm", specifier = "~=0.10.0" },
+    { name = "sphinx-copybutton", specifier = "~=0.4.0" },
+    { name = "sphinx-rtd-theme", specifier = "~=1.3.0" },
+    { name = "sphinx-sitemap", specifier = "~=2.2.0" },
+]
+dev = [
+    { name = "breathe", specifier = "~=4.35.0" },
+    { name = "clang-format", specifier = "~=19.1.7" },
+    { name = "doc8", specifier = ">=0.3.6" },
+    { name = "furo", specifier = "~=2024.8.6" },
+    { name = "pre-commit", specifier = "~=2.19.0" },
+    { name = "restructuredtext-lint", specifier = ">=1.4.0" },
+    { name = "rstcheck", specifier = ">=6.2.4" },
+    { name = "ruff", specifier = ">=0.9.1" },
+    { name = "sphinx-copybutton", specifier = "~=0.4.0" },
+    { name = "sphinx-rtd-theme", specifier = "~=1.3.0" },
+    { name = "sphinx-sitemap", specifier = "~=2.2.0" },
+]
+examples = [
+    { name = "imageio", specifier = "~=2.36.1" },
+    { name = "jinja2", specifier = ">=3.1.4" },
+    { name = "obspy", specifier = "~=1.4.0" },
+    { name = "pyyaml", specifier = ">=6.0.2" },
+    { name = "snakemake", specifier = "~=8.29.0" },
+    { name = "snakemake-executor-plugin-slurm", specifier = "~=0.10.0" },
 ]
 
 [[package]]
