@@ -17,11 +17,10 @@ struct properties_container<specfem::element::medium_tag::elastic,
       impl_properties_container<specfem::element::medium_tag::elastic,
                                 specfem::element::property_tag::isotropic, 3>;
   using base_type::base_type;
-  constexpr static int _counter = __COUNTER__;
 
-  DEFINE_MEDIUM_VIEW(lambdaplus2mu)
-  DEFINE_MEDIUM_VIEW(mu)
-  DEFINE_MEDIUM_VIEW(rho)
+  DEFINE_MEDIUM_VIEW(lambdaplus2mu, 0)
+  DEFINE_MEDIUM_VIEW(mu, 1)
+  DEFINE_MEDIUM_VIEW(rho, 2)
 };
 
 } // namespace medium
