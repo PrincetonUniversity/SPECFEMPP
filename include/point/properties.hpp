@@ -43,25 +43,25 @@ struct properties<specfem::dimension::type::dim2,
       specfem::element::property_tag::isotropic;
 
   constexpr static bool is_point_properties = true;
-  constexpr static int _counter = __COUNTER__;
   ///@}
 
   using base_type::base_type;
 
-  DEFINE_POINT_VALUE(lambdaplus2mu) ///< Lame's parameter @f$ \lambda + 2\mu @f$
-  DEFINE_POINT_VALUE(mu)            ///< shear modulus @f$ \mu @f$
-  DEFINE_POINT_VALUE(rho)           ///< density @f$ \rho @f$
+  DEFINE_POINT_VALUE(lambdaplus2mu,
+                     0)      ///< Lame's parameter @f$ \lambda + 2\mu @f$
+  DEFINE_POINT_VALUE(mu, 1)  ///< shear modulus @f$ \mu @f$
+  DEFINE_POINT_VALUE(rho, 2) ///< density @f$ \rho @f$
 
-  KOKKOS_INLINE_FUNCTION constexpr value_type rho_vp() const {
+  KOKKOS_INLINE_FUNCTION const value_type rho_vp() const {
     return Kokkos::sqrt(rho() * lambdaplus2mu()); ///< P-wave velocity @f$ \rho
                                                   ///< v_p @f$
   }
 
-  KOKKOS_INLINE_FUNCTION constexpr value_type rho_vs() const {
+  KOKKOS_INLINE_FUNCTION const value_type rho_vs() const {
     return Kokkos::sqrt(rho() * mu()); ///< S-wave velocity @f$ \rho v_s @f$
   }
 
-  KOKKOS_INLINE_FUNCTION constexpr value_type lambda() const {
+  KOKKOS_INLINE_FUNCTION const value_type lambda() const {
     return lambdaplus2mu() - (static_cast<value_type>(2.0)) *
                                  mu(); ///< Lame's parameter @f$ \lambda @f$
   }
@@ -87,7 +87,6 @@ struct properties<specfem::dimension::type::dim2,
       specfem::element::property_tag::anisotropic;
 
   constexpr static bool is_point_properties = true;
-  constexpr static int _counter = __COUNTER__;
   ///@}
 
   using base_type::base_type;
@@ -97,23 +96,23 @@ struct properties<specfem::dimension::type::dim2,
    *
    */
   ///@{
-  DEFINE_POINT_VALUE(c11) ///< @f$ c_{11} @f$
-  DEFINE_POINT_VALUE(c13) ///< @f$ c_{13} @f$
-  DEFINE_POINT_VALUE(c15) ///< @f$ c_{15} @f$
-  DEFINE_POINT_VALUE(c33) ///< @f$ c_{33} @f$
-  DEFINE_POINT_VALUE(c35) ///< @f$ c_{35} @f$
-  DEFINE_POINT_VALUE(c55) ///< @f$ c_{55} @f$
-  DEFINE_POINT_VALUE(c12) ///< @f$ c_{12} @f$
-  DEFINE_POINT_VALUE(c23) ///< @f$ c_{23} @f$
-  DEFINE_POINT_VALUE(c25) ///< @f$ c_{25} @f$
-  DEFINE_POINT_VALUE(rho) ///< Density @f$ \rho @f$
+  DEFINE_POINT_VALUE(c11, 0) ///< @f$ c_{11} @f$
+  DEFINE_POINT_VALUE(c13, 1) ///< @f$ c_{13} @f$
+  DEFINE_POINT_VALUE(c15, 2) ///< @f$ c_{15} @f$
+  DEFINE_POINT_VALUE(c33, 3) ///< @f$ c_{33} @f$
+  DEFINE_POINT_VALUE(c35, 4) ///< @f$ c_{35} @f$
+  DEFINE_POINT_VALUE(c55, 5) ///< @f$ c_{55} @f$
+  DEFINE_POINT_VALUE(c12, 6) ///< @f$ c_{12} @f$
+  DEFINE_POINT_VALUE(c23, 7) ///< @f$ c_{23} @f$
+  DEFINE_POINT_VALUE(c25, 8) ///< @f$ c_{25} @f$
+  DEFINE_POINT_VALUE(rho, 9) ///< Density @f$ \rho @f$
   ///@}
 
-  KOKKOS_INLINE_FUNCTION constexpr value_type rho_vp() const {
+  KOKKOS_INLINE_FUNCTION const value_type rho_vp() const {
     return Kokkos::sqrt(rho() * c33()); ///< P-wave velocity @f$ \rho v_p @f$
   }
 
-  KOKKOS_INLINE_FUNCTION constexpr value_type rho_vs() const {
+  KOKKOS_INLINE_FUNCTION const value_type rho_vs() const {
     return Kokkos::sqrt(rho() * c55()); ///< S-wave velocity @f$ \rho v_s @f$
   }
 };
@@ -142,20 +141,19 @@ struct properties<specfem::dimension::type::dim2,
       specfem::element::property_tag::isotropic;
 
   constexpr static bool is_point_properties = true;
-  constexpr static int _counter = __COUNTER__;
   ///@}
 
   using base_type::base_type;
 
-  DEFINE_POINT_VALUE(rho_inverse) ///< @f$ \frac{1}{\rho} @f$
-  DEFINE_POINT_VALUE(kappa)       ///< Bulk modulus @f$ \kappa @f$
+  DEFINE_POINT_VALUE(rho_inverse, 0) ///< @f$ \frac{1}{\rho} @f$
+  DEFINE_POINT_VALUE(kappa, 1)       ///< Bulk modulus @f$ \kappa @f$
 
-  KOKKOS_INLINE_FUNCTION constexpr value_type kappa_inverse() const {
+  KOKKOS_INLINE_FUNCTION const value_type kappa_inverse() const {
     return (static_cast<value_type>(1.0)) /
            kappa(); ///< @f$ \frac{1}{\lambda + 2\mu} @f$
   }
 
-  KOKKOS_INLINE_FUNCTION constexpr value_type rho_vpinverse() const {
+  KOKKOS_INLINE_FUNCTION const value_type rho_vpinverse() const {
     return Kokkos::sqrt(rho_inverse() * kappa_inverse()); ///< @f$ \frac{1}{\rho
                                                           ///< v_p} @f$
   }
