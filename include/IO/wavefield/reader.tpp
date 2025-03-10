@@ -10,23 +10,40 @@ specfem::IO::wavefield_reader<IOLibrary>::wavefield_reader(
     : output_folder(output_folder) {}
 
 template <typename IOLibrary>
-void specfem::IO::wavefield_reader<IOLibrary>::read(specfem::compute::assembly &assembly) {
+void specfem::IO::wavefield_reader<IOLibrary>::read(
+    specfem::compute::assembly &assembly) {
   auto &buffer = assembly.fields.buffer;
   auto &boundary_values = assembly.boundary_values;
 
   typename IOLibrary::File file(output_folder + "/ForwardWavefield");
 
-  typename IOLibrary::Group elastic = file.openGroup("/Elastic");
+  typename IOLibrary::Group elastic_sv = file.openGroup("/ElasticSV");
 
-  elastic.openDataset("Displacement", buffer.elastic.h_field).read();
-  elastic.openDataset("Velocity", buffer.elastic.h_field_dot).read();
-  elastic.openDataset("Acceleration", buffer.elastic.h_field_dot_dot).read();
+  const auto &elastic_sv_field =
+      buffer.get_field<specfem::element::medium_tag::elastic_sv>();
+
+  elastic_sv.openDataset("Displacement", elastic_sv_field.h_field).read();
+  elastic_sv.openDataset("Velocity", elastic_sv_field.h_field_dot).read();
+  elastic_sv.openDataset("Acceleration", elastic_sv_field.h_field_dot_dot)
+      .read();
+
+  typename IOLibrary::Group elastic_sh = file.openGroup("/ElasticSH");
+
+  const auto &elastic_sh_field =
+      buffer.get_field<specfem::element::medium_tag::elastic_sh>();
+
+  elastic_sh.openDataset("Displacement", elastic_sh_field.h_field).read();
+  elastic_sh.openDataset("Velocity", elastic_sh_field.h_field_dot).read();
+  elastic_sh.openDataset("Acceleration", elastic_sh_field.h_field_dot_dot)
+      .read();
 
   typename IOLibrary::Group acoustic = file.openGroup("/Acoustic");
+  const auto &acoustic_field =
+      buffer.get_field<specfem::element::medium_tag::acoustic>();
 
-  acoustic.openDataset("Potential", buffer.acoustic.h_field).read();
-  acoustic.openDataset("PotentialDot", buffer.acoustic.h_field_dot).read();
-  acoustic.openDataset("PotentialDotDot", buffer.acoustic.h_field_dot_dot)
+  acoustic.openDataset("Potential", acoustic_field.h_field).read();
+  acoustic.openDataset("PotentialDot", acoustic_field.h_field_dot).read();
+  acoustic.openDataset("PotentialDotDot", acoustic_field.h_field_dot_dot)
       .read();
 
   typename IOLibrary::Group boundary = file.openGroup("/Boundary");

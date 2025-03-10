@@ -37,16 +37,18 @@ public:
   /**
    * @brief Instantiate a seismogram writer object
    *
-   * @param receivers Vector of pointers to receiver objects used to instantiate
-   * the writer
-   * @param compute_receivers Pointer to specfem::compute::receivers struct used
-   * to instantiate the writer
-   * @param dt Time interval between timesteps
-   * @param t0 Starting time of simulation
-   * @return specfem::IO::writer* Pointer to an instantiated writer object
+   * @param wave_type Type of wavefield (Writes .BXY for SH waves and .BXX, .BXZ
+   * for SV waves)
+   * @param dt Time interval between subsequent timesteps
+   * @param t0 Solver start time
+   * @param nsteps_between_samples number of timesteps between seismogram
+   * sampling (seismogram sampling frequency)
+   * @return std::shared_ptr<specfem::IO::writer> Pointer to an instantiated
+   * writer object
    */
   std::shared_ptr<specfem::IO::writer>
-  instantiate_seismogram_writer(const type_real dt, const type_real t0,
+  instantiate_seismogram_writer(const specfem::enums::elastic_wave wave_type,
+                                const type_real dt, const type_real t0,
                                 const int nsteps_between_samples) const;
 
 private:
