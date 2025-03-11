@@ -13,13 +13,13 @@ public:
    *
    * @param time_interval Time interval between subsequent plots
    */
-  periodic_task(const int time_interval) : time_interval(time_interval){};
+  periodic_task(const int time_interval) : time_interval(time_interval) {};
 
   /**
    * @brief Method to plot the data
    *
    */
-  virtual void run(){};
+  virtual void run() {};
 
   /**
    * @brief Returns true if the data should be plotted at the current

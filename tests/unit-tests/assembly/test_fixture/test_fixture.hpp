@@ -24,7 +24,7 @@ KOKKOS_FUNCTION
 namespace test_configuration {
 struct database {
 public:
-  database() : mesh(""), sources(""), stations(""){};
+  database() : mesh(""), sources(""), stations("") {};
   database(const YAML::Node &Node) {
     mesh = Node["mesh"].as<std::string>();
     sources = Node["sources"].as<std::string>();

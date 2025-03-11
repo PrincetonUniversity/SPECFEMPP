@@ -43,7 +43,7 @@ template <> struct absorbing_boundary<specfem::dimension::type::dim2> {
    * @brief Default constructor
    *
    */
-  absorbing_boundary(){};
+  absorbing_boundary() {};
 
   absorbing_boundary(const int num_abs_boundaries_faces);
 

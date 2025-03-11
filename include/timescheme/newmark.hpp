@@ -77,7 +77,7 @@ public:
    * @param tag Medium tag for elements to apply the predictor phase
    */
   void apply_predictor_phase_backward(
-      const specfem::element::medium_tag tag) override{};
+      const specfem::element::medium_tag tag) override {};
 
   /**
    * @brief  Apply the corrector phase for backward simulation on fields within
@@ -86,7 +86,7 @@ public:
    * @param tag Medium tag for elements to apply the corrector phase
    */
   void apply_corrector_phase_backward(
-      const specfem::element::medium_tag tag) override{};
+      const specfem::element::medium_tag tag) override {};
 
   void link_assembly(const specfem::compute::assembly &assembly) override {
     field = assembly.fields.forward;

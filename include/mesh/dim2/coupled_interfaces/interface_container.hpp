@@ -34,7 +34,7 @@ struct interface_container<specfem::dimension::type::dim2, Medium1, Medium2> {
    * @brief Default constructor
    *
    */
-  interface_container(){};
+  interface_container() {};
 
   interface_container(const int num_interfaces);
 

@@ -22,7 +22,7 @@ template <> struct tangential_elements<specfem::dimension::type::dim2> {
 
   bool force_normal_to_surface, rec_normal_to_surface;
   specfem::kokkos::HostView1d<type_real> x, y;
-  tangential_elements(){};
+  tangential_elements() {};
   tangential_elements(const int nnodes_tangential_curve);
 };
 } // namespace elements

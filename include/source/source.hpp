@@ -29,7 +29,7 @@ public:
    * @brief Default source constructor
    *
    */
-  source(){};
+  source() {};
 
   source(YAML::Node &Node, const int nsteps, const type_real dt);
   /**

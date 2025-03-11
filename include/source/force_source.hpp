@@ -28,7 +28,7 @@ public:
    * @brief Default source constructor
    *
    */
-  force(){};
+  force() {};
   /**
    * @brief Construct a new collocated force object
    *
@@ -45,8 +45,8 @@ public:
             return 0.0;
           }
         }(Node)),
-        wavefield_type(wavefield_type), specfem::sources::source(Node, nsteps,
-                                                                 dt){};
+        wavefield_type(wavefield_type),
+        specfem::sources::source(Node, nsteps, dt) {};
   /**
    * @brief User output
    *

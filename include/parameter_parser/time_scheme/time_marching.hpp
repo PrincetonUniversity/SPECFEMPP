@@ -23,7 +23,7 @@ public:
    * @param nstep Number of time steps
    */
   time_scheme(std::string timescheme, type_real dt, type_real nstep)
-      : timescheme(timescheme), dt(dt), nstep(nstep){};
+      : timescheme(timescheme), dt(dt), nstep(nstep) {};
   /**
    * @brief Construct a new time marching object
    *

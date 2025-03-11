@@ -554,9 +554,10 @@ specfem::compute::sources::get_sources_on_host(
   CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
       RETURN_VALUE,
       WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC) WHERE(
-              BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-              BOUNDARY_TAG_STACEY, BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
+          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)
+              WHERE(BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
+                    BOUNDARY_TAG_STACEY,
+                    BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
 
 #undef RETURN_VALUE
 }
@@ -565,12 +566,12 @@ specfem::compute::sources::get_sources_on_host(
 // to the wavefield. It returns the global indices of the relevant elements
 // and the source indices for the wavefield type.
 std::tuple<Kokkos::View<int *, Kokkos::DefaultExecutionSpace>,
-           Kokkos::View<int *, Kokkos::DefaultExecutionSpace> >
-specfem::compute::sources::get_sources_on_device(
-    const specfem::element::medium_tag medium,
-    const specfem::element::property_tag property,
-    const specfem::element::boundary_tag boundary,
-    const specfem::wavefield::simulation_field wavefield) const {
+           Kokkos::View<int *, Kokkos::DefaultExecutionSpace> > specfem::
+    compute::sources::get_sources_on_device(
+        const specfem::element::medium_tag medium,
+        const specfem::element::property_tag property,
+        const specfem::element::boundary_tag boundary,
+        const specfem::wavefield::simulation_field wavefield) const {
 
 #define RETURN_VALUE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, BOUNDARY_TAG)    \
   if ((wavefield == specfem::wavefield::simulation_field::forward) &&          \

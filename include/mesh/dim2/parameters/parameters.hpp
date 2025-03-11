@@ -40,7 +40,7 @@ template <> struct parameters<specfem::dimension::type::dim2> {
    * @brief Default constructor
    *
    */
-  parameters(){};
+  parameters() {};
 
   /**
    * @brief Construct a properties object
@@ -74,7 +74,7 @@ template <> struct parameters<specfem::dimension::type::dim2> {
         num_solid_poro_edges(num_solid_poro_edges),
         nnodes_tangential_curve(nnodes_tangential_curve),
         nelem_on_the_axis(nelem_on_the_axis),
-        plot_lowerleft_corner_only(plot_lowerleft_corner_only){};
+        plot_lowerleft_corner_only(plot_lowerleft_corner_only) {};
 };
 
 } // namespace mesh

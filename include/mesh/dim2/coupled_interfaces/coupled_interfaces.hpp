@@ -29,7 +29,7 @@ public:
    *
    */
   coupled_interfaces()
-      : elastic_acoustic(), acoustic_poroelastic(), elastic_poroelastic(){};
+      : elastic_acoustic(), acoustic_poroelastic(), elastic_poroelastic() {};
 
   coupled_interfaces(specfem::mesh::interface_container<
                          dimension, specfem::element::medium_tag::elastic,
@@ -45,7 +45,7 @@ public:
                          elastic_poroelastic)
       : elastic_acoustic(elastic_acoustic),
         acoustic_poroelastic(acoustic_poroelastic),
-        elastic_poroelastic(elastic_poroelastic){};
+        elastic_poroelastic(elastic_poroelastic) {};
   ///@}
 
   /**

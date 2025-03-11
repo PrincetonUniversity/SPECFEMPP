@@ -244,16 +244,17 @@ specfem::compute::element_types::get_elements_on_host(
                                       GET_NAME(MEDIUM_TAG));                   \
   }
 
-  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
-      RETURN_VARIABLE,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC))
+  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(RETURN_VARIABLE,
+                                 WHERE(DIMENSION_TAG_DIM2)
+                                     WHERE(MEDIUM_TAG_ELASTIC,
+                                           MEDIUM_TAG_ACOUSTIC))
 
 #undef RETURN_VARIABLE
 }
 
-Kokkos::View<int *, Kokkos::DefaultExecutionSpace>
-specfem::compute::element_types::get_elements_on_device(
-    const specfem::element::medium_tag medium_tag) const {
+Kokkos::View<int *, Kokkos::DefaultExecutionSpace> specfem::compute::
+    element_types::get_elements_on_device(
+        const specfem::element::medium_tag medium_tag) const {
 
 #define RETURN_VARIABLE(DIMENSION_TAG, MEDIUM_TAG)                             \
   if (GET_TAG(MEDIUM_TAG) == medium_tag) {                                     \
@@ -261,17 +262,18 @@ specfem::compute::element_types::get_elements_on_device(
                                       GET_NAME(MEDIUM_TAG));                   \
   }
 
-  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
-      RETURN_VARIABLE,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC))
+      CALL_MACRO_FOR_ALL_MEDIUM_TAGS(RETURN_VARIABLE,
+                                     WHERE(DIMENSION_TAG_DIM2)
+                                         WHERE(MEDIUM_TAG_ELASTIC,
+                                               MEDIUM_TAG_ACOUSTIC))
 
 #undef RETURN_VARIABLE
-}
+    }
 
-Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
-specfem::compute::element_types::get_elements_on_host(
-    const specfem::element::medium_tag medium_tag,
-    const specfem::element::property_tag property_tag) const {
+Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> specfem::compute::
+    element_types::get_elements_on_host(
+        const specfem::element::medium_tag medium_tag,
+        const specfem::element::property_tag property_tag) const {
 
 #define RETURN_VARIABLE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)               \
   if (GET_TAG(MEDIUM_TAG) == medium_tag &&                                     \
@@ -281,18 +283,19 @@ specfem::compute::element_types::get_elements_on_host(
                                       GET_NAME(PROPERTY_TAG));                 \
   }
 
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      RETURN_VARIABLE,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
+      CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
+          RETURN_VARIABLE,
+          WHERE(DIMENSION_TAG_DIM2)
+              WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
+                  WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
 #undef RETURN_VARIABLE
-}
+    }
 
-Kokkos::View<int *, Kokkos::DefaultExecutionSpace>
-specfem::compute::element_types::get_elements_on_device(
-    const specfem::element::medium_tag medium_tag,
-    const specfem::element::property_tag property_tag) const {
+Kokkos::View<int *, Kokkos::DefaultExecutionSpace> specfem::compute::
+    element_types::get_elements_on_device(
+        const specfem::element::medium_tag medium_tag,
+        const specfem::element::property_tag property_tag) const {
 
 #define RETURN_VARIABLE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)               \
   if (GET_TAG(MEDIUM_TAG) == medium_tag &&                                     \
@@ -302,19 +305,20 @@ specfem::compute::element_types::get_elements_on_device(
                                       GET_NAME(PROPERTY_TAG));                 \
   }
 
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      RETURN_VARIABLE,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
+      CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
+          RETURN_VARIABLE,
+          WHERE(DIMENSION_TAG_DIM2)
+              WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
+                  WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
 #undef RETURN_VARIABLE
-}
+    }
 
-Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>
-specfem::compute::element_types::get_elements_on_host(
-    const specfem::element::medium_tag medium_tag,
-    const specfem::element::property_tag property_tag,
-    const specfem::element::boundary_tag boundary_tag) const {
+Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> specfem::compute::
+    element_types::get_elements_on_host(
+        const specfem::element::medium_tag medium_tag,
+        const specfem::element::property_tag property_tag,
+        const specfem::element::boundary_tag boundary_tag) const {
 
 #define RETURN_VARIABLE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, BOUNDARY_TAG) \
   if (GET_TAG(MEDIUM_TAG) == medium_tag &&                                     \
@@ -325,21 +329,23 @@ specfem::compute::element_types::get_elements_on_host(
         GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                       \
   }
 
-  CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
-      RETURN_VARIABLE,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC) WHERE(
-              BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-              BOUNDARY_TAG_STACEY, BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
+      CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
+          RETURN_VARIABLE,
+          WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC,
+                                          MEDIUM_TAG_ACOUSTIC)
+              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)
+                  WHERE(BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
+                        BOUNDARY_TAG_STACEY,
+                        BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
 
 #undef RETURN_VARIABLE
-}
+    }
 
-Kokkos::View<int *, Kokkos::DefaultExecutionSpace>
-specfem::compute::element_types::get_elements_on_device(
-    const specfem::element::medium_tag medium_tag,
-    const specfem::element::property_tag property_tag,
-    const specfem::element::boundary_tag boundary_tag) const {
+Kokkos::View<int *, Kokkos::DefaultExecutionSpace> specfem::compute::
+    element_types::get_elements_on_device(
+        const specfem::element::medium_tag medium_tag,
+        const specfem::element::property_tag property_tag,
+        const specfem::element::boundary_tag boundary_tag) const {
 
 #define RETURN_VARIABLE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, BOUNDARY_TAG) \
   if (GET_TAG(MEDIUM_TAG) == medium_tag &&                                     \

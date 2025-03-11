@@ -22,7 +22,7 @@ template <> struct axial_elements<specfem::dimension::type::dim2> {
 
   specfem::kokkos::HostView1d<bool> is_on_the_axis;
 
-  axial_elements(){};
+  axial_elements() {};
   axial_elements(const int nspec);
   axial_elements(std::ifstream &stream, const int nelem_on_the_axis,
                  const int nspec, const specfem::MPI::MPI *mpi);

@@ -21,11 +21,11 @@ public:
    * @param fortran_database location of fortran database
    */
   database_configuration(std::string fortran_database)
-      : fortran_database(fortran_database){};
+      : fortran_database(fortran_database) {};
 
   database_configuration(std::string fortran_database,
                          std::string mesh_parameters)
-      : fortran_database(fortran_database), mesh_parameters(mesh_parameters){};
+      : fortran_database(fortran_database), mesh_parameters(mesh_parameters) {};
 
   /**
    * @brief Construct a new run setup object

@@ -15,7 +15,7 @@ namespace IO {
 
 class seismogram_reader {
 public:
-  seismogram_reader(){};
+  seismogram_reader() {};
   seismogram_reader(const char *filename,
                     const specfem::enums::seismogram::format type,
                     specfem::kokkos::HostView2d<type_real> source_time_function)

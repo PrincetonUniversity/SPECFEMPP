@@ -29,7 +29,7 @@ public:
    * @brief Default source constructor
    *
    */
-  moment_tensor(){};
+  moment_tensor() {};
 
   /**
    * @brief Get the Mxx component of the moment tensor
@@ -59,9 +59,8 @@ public:
   moment_tensor(YAML::Node &Node, const int nsteps, const type_real dt,
                 const specfem::wavefield::simulation_field wavefield_type)
       : Mxx(Node["Mxx"].as<type_real>()), Mzz(Node["Mzz"].as<type_real>()),
-        Mxz(Node["Mxz"].as<type_real>()),
-        wavefield_type(wavefield_type), specfem::sources::source(Node, nsteps,
-                                                                 dt){};
+        Mxz(Node["Mxz"].as<type_real>()), wavefield_type(wavefield_type),
+        specfem::sources::source(Node, nsteps, dt) {};
   /**
    * @brief User output
    *
