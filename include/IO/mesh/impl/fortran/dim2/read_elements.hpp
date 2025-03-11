@@ -1,8 +1,7 @@
 #pragma once
 
 #include "enumerations/interface.hpp"
-#include "mesh/elements/axial_elements.hpp"
-#include "mesh/elements/tangential_elements.hpp"
+#include "mesh/mesh.hpp"
 #include "specfem_mpi/interface.hpp"
 
 namespace specfem {

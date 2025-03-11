@@ -23,6 +23,10 @@ public:
   database_configuration(std::string fortran_database)
       : fortran_database(fortran_database){};
 
+  database_configuration(std::string fortran_database,
+                         std::string mesh_parameters)
+      : fortran_database(fortran_database), mesh_parameters(mesh_parameters){};
+
   /**
    * @brief Construct a new run setup object
    *
@@ -32,8 +36,11 @@ public:
 
   std::string get_databases() const { return this->fortran_database; }
 
+  std::string get_mesh_parameters() const { return this->mesh_parameters; };
+
 private:
   std::string fortran_database; ///< location of fortran binary database
+  std::string mesh_parameters;  ///< location of mesh parameter file
 };
 
 } // namespace runtime_configuration

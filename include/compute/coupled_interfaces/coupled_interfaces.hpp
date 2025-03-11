@@ -6,7 +6,7 @@
 #include "compute/properties/properties.hpp"
 #include "enumerations/interface.hpp"
 #include "interface_container.hpp"
-#include "mesh/coupled_interfaces/coupled_interfaces.hpp"
+#include "mesh/mesh.hpp"
 
 namespace specfem {
 namespace compute {

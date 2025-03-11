@@ -34,7 +34,7 @@ impl_compute_frechet_derivatives(
                     specfem::globals::simulation_wave == specfem::wave::sh,
                 "Only P-SV and SH waves are supported.");
 
-  const auto kappa = properties.lambdaplus2mu - properties.mu;
+  const auto kappa = properties.lambdaplus2mu() - properties.mu();
 
   if (specfem::globals::simulation_wave == specfem::wave::p_sv) {
 
@@ -121,8 +121,8 @@ impl_compute_frechet_derivatives(
 
     // Finishing the kernels
     kappa_kl = static_cast<type_real>(-1.0) * kappa * dt * kappa_kl;
-    mu_kl = static_cast<type_real>(-2.0) * properties.mu * dt * mu_kl;
-    rho_kl = static_cast<type_real>(-1.0) * properties.rho * dt * rho_kl;
+    mu_kl = static_cast<type_real>(-2.0) * properties.mu() * dt * mu_kl;
+    rho_kl = static_cast<type_real>(-1.0) * properties.rho() * dt * rho_kl;
 
     // rho' kernel, first term in Equation 20
     const auto rhop_kl = rho_kl + kappa_kl + mu_kl;
@@ -130,14 +130,14 @@ impl_compute_frechet_derivatives(
     // beta (shear wave) kernel, second term in Equation 20
     const auto beta_kl = static_cast<type_real>(2.0) *
                          (mu_kl - static_cast<type_real>(4.0 / 3.0) *
-                                      properties.mu / kappa * kappa_kl);
+                                      properties.mu() / kappa * kappa_kl);
 
     // alpha (compressional wave) kernel, third and last term in Eq. 20
     // of Tromp et al 2005.
     const auto alpha_kl =
         static_cast<type_real>(2.0) *
         (static_cast<type_real>(1.0) +
-         static_cast<type_real>(4.0 / 3.0) * properties.mu / kappa) *
+         static_cast<type_real>(4.0 / 3.0) * properties.mu() / kappa) *
         kappa_kl;
 
     return { rho_kl, mu_kl, kappa_kl, rhop_kl, alpha_kl, beta_kl };
@@ -164,13 +164,13 @@ impl_compute_frechet_derivatives(
 
     */
     const auto mu_kl =
-        static_cast<type_real>(-2.0) * properties.mu * dt *
+        static_cast<type_real>(-2.0) * properties.mu() * dt *
         static_cast<type_real>(0.5) *
         // du#y_dx * duy_dx +
         (adjoint_derivatives.du(0, 0) * backward_derivatives.du(0, 0) +
          // du#y_dz * duy_dz
          adjoint_derivatives.du(1, 0) * backward_derivatives.du(1, 0));
-    const auto rho_kl = static_cast<type_real>(-1.0) * properties.rho * dt *
+    const auto rho_kl = static_cast<type_real>(-1.0) * properties.rho() * dt *
                         specfem::algorithms::dot(adjoint_field.acceleration,
                                                  backward_field.displacement);
     const auto kappa_kl = decltype(mu_kl)(0.0);

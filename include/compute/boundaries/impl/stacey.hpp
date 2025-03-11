@@ -2,7 +2,7 @@
 
 #include "compute/compute_mesh.hpp"
 #include "compute/compute_partial_derivatives.hpp"
-#include "mesh/boundaries/absorbing_boundaries.hpp"
+#include "mesh/mesh.hpp"
 #include "point/boundary.hpp"
 #include "point/coordinates.hpp"
 #include <Kokkos_Core.hpp>

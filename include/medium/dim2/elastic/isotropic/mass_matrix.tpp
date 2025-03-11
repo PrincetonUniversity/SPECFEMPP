@@ -15,11 +15,11 @@ specfem::medium::impl_mass_matrix_component(
 
   if constexpr (specfem::globals::simulation_wave == specfem::wave::p_sv) {
     return specfem::datatype::ScalarPointViewType<type_real, 2, UseSIMD>(
-        partial_derivatives.jacobian * properties.rho,
-        partial_derivatives.jacobian * properties.rho);
+        partial_derivatives.jacobian * properties.rho(),
+        partial_derivatives.jacobian * properties.rho());
   } else if constexpr (specfem::globals::simulation_wave == specfem::wave::sh) {
     return specfem::datatype::ScalarPointViewType<type_real, 2, UseSIMD>(
-        partial_derivatives.jacobian * properties.rho, 0);
+        partial_derivatives.jacobian * properties.rho(), 0);
   } else {
     static_assert("Unknown wave type");
     return specfem::datatype::ScalarPointViewType<type_real, 2, UseSIMD>(

@@ -1,8 +1,7 @@
 #include "IO/mesh/impl/fortran/dim2/read_elements.hpp"
 #include "IO/fortranio/interface.hpp"
 #include "enumerations/interface.hpp"
-#include "mesh/elements/axial_elements.hpp"
-#include "mesh/elements/tangential_elements.hpp"
+#include "mesh/mesh.hpp"
 #include "specfem_mpi/interface.hpp"
 
 specfem::mesh::elements::axial_elements<specfem::dimension::type::dim2>
@@ -29,7 +28,7 @@ specfem::IO::mesh::impl::fortran::dim2::read_axial_elements(
 specfem::mesh::elements::tangential_elements<specfem::dimension::type::dim2>
 specfem::IO::mesh::impl::fortran::dim2::read_tangential_elements(
     std::ifstream &stream, const int nnodes_tangential_curve) {
-  type_real xread, yread;
+  double xread, yread;
 
   auto tangential_elements = specfem::mesh::elements::tangential_elements<
       specfem::dimension::type::dim2>(nnodes_tangential_curve);
@@ -41,8 +40,8 @@ specfem::IO::mesh::impl::fortran::dim2::read_tangential_elements(
   if (nnodes_tangential_curve > 0) {
     for (int inum = 0; inum < nnodes_tangential_curve; inum++) {
       specfem::IO::fortran_read_line(stream, &xread, &yread);
-      tangential_elements.x(inum) = xread;
-      tangential_elements.y(inum) = yread;
+      tangential_elements.x(inum) = static_cast<type_real>(xread);
+      tangential_elements.y(inum) = static_cast<type_real>(yread);
     }
   } else {
     tangential_elements.force_normal_to_surface = false;

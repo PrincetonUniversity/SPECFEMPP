@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.17.5)
 
-project(SPECFEMPP VERSION 0.1.0)
+project(SPECFEMPP VERSION 0.1.0 LANGUAGES CXX Fortran)
 
 set(CMAKE_CXX_STANDARD 17)
 option(HDF5_CXX_BUILD "Build HDF5 C++" ON)
@@ -11,6 +11,8 @@ option(BUILD_EXAMPLES "Examples included" ON)
 option(ENABLE_SIMD "Enable SIMD" OFF)
 option(ENABLE_PROFILING "Enable profiling" OFF)
 option(SPECFEMPP_BINDING_PYTHON "Enable Python binding" OFF)
+option(ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
+
 # set(CMAKE_BUILD_TYPE Release)
 set(CHUNK_SIZE 32)
 set(NUM_CHUNKS 1)
@@ -26,12 +28,12 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(FETCHCONTENT_QUIET TRUE)
 
 if (SPECFEMPP_BINDING_PYTHON)
-    message("-- Adding -fPIC flag for Python binding.")
+    message(STATUS "Adding -fPIC flag for Python binding.")
     if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
             set(CMAKE_CXX_FLAGS "-fp-model=precise -fPIC")
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
-            message("-- Detected Intel classic compiler which will be deprecated soon.")
-            message("-- It is recommended you use IntelLLVM compiler.")
+            message(STATUS "Detected Intel classic compiler which will be deprecated soon.")
+            message(STATUS "It is recommended you use IntelLLVM compiler.")
             set(CMAKE_CXX_FLAGS "-diag-disable=10441 -fp-model=precise -fPIC")
     else()
             set(CMAKE_CXX_FLAGS "-fPIC")
@@ -40,8 +42,8 @@ else (SPECFEMPP_BINDING_PYTHON)
     if(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
             set(CMAKE_CXX_FLAGS "-fp-model=precise")
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
-            message("-- Detected Intel classic compiler which will be deprecated soon.")
-            message("-- It is recommended you use IntelLLVM compiler.")
+            message(STATUS "Detected Intel classic compiler which will be deprecated soon.")
+            message(STATUS "It is recommended you use IntelLLVM compiler.")
             set(CMAKE_CXX_FLAGS "-diag-disable=10441 -fp-model=precise")
     endif()
 endif (SPECFEMPP_BINDING_PYTHON)
@@ -49,15 +51,15 @@ endif (SPECFEMPP_BINDING_PYTHON)
 # Check if MacOS
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(__APPLE__ TRUE)
-    message("-- macOS detected -- setting __APPLE__ TRUE")
+    message(STATUS "macOS detected -- setting __APPLE__ TRUE")
 else(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(__APPLE__ FALSE)
-    message("-- macOS not detected -- setting __APPLE__ FALSE")
+    message(STATUS "macOS not detected -- setting __APPLE__ FALSE")
 endif()
 
 if (DEFINED Kokkos_ENABLE_CUDA)
     if (Kokkos_ENABLE_CUDA)
-        # message("Setting CUDA variables")
+        # message(STATUS "Setting CUDA variables")
         set(Kokkos_ENABLE_CUDA_LAMBDA ON CACHE BOOL "Using CUDA Lambda by default")
         set(Kokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE ON CACHE BOOL "Using CUDA Relocatable device by default")
     endif()
@@ -97,7 +99,7 @@ find_package(VTK COMPONENTS
 
 
 if (NOT VTK_FOUND)
-  message("VTK not found: ${VTK_NOT_FOUND_MESSAGE}")
+  message(STATUS "VTK not found: ${VTK_NOT_FOUND_MESSAGE}")
   set(VTK_CXX_BUILD OFF)
 else ()
   message(STATUS "    VTK:   ${VTK_LIBRARIES}")
@@ -148,33 +150,67 @@ endif()
 find_package(HDF5 COMPONENTS CXX)
 
 if (NOT ${HDF5_FOUND})
-    message("-- HDF5 not found. Building without HDF5.")
+    message(STATUS "HDF5 not found. Building without HDF5.")
     set(HDF5_CXX_BUILD OFF)
 else()
-    message("HDF5 libs/ and incs/:.")
+    message(STATUS "HDF5 libs/ and incs/:.")
     message(STATUS "    LIB:   ${HDF5_LIBRARIES}")
     message(STATUS "    INC:   ${HDF5_INCLUDE_DIRS}")
     message(STATUS "    LIBSO: ${HDF5_CXX_LIBRARIES}")
 endif()
 
 
-configure_file(constants.hpp.in constants.hpp)
-
-include_directories(include)
-include_directories(${CMAKE_BINARY_DIR})
-
-add_subdirectory(fortran/meshfem2d)
-add_subdirectory(fortran/meshfem3d)
-
 if (ENABLE_SIMD)
-    message("-- Enabling SIMD")
+    message(STATUS "Enabling SIMD")
     add_definitions(-DENABLE_SIMD)
 endif()
 
 if (ENABLE_PROFILING)
-    message("-- Enabling profiling")
+    message(STATUS "Enabling profiling")
     add_definitions(-DENABLE_PROFILING)
 endif()
+
+if (ENABLE_DOUBLE_PRECISION)
+    message(STATUS "Enabling double precision")
+    set(TYPE_REAL "double")
+else(ENABLE_DOUBLE_PRECISION)
+    message(STATUS "Enabling single precision")
+    set(TYPE_REAL "float")
+endif(ENABLE_DOUBLE_PRECISION)
+
+# Configure the setup headers
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup/specfem_setup.hpp.in
+               ${CMAKE_BINARY_DIR}/include/specfem_setup.hpp)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup/constants.hpp.in
+               ${CMAKE_BINARY_DIR}/include/constants.hpp)
+
+# Add the include directories so that the generated files can be found
+include_directories(include)
+include_directories(${CMAKE_BINARY_DIR}/include)
+
+# Set loglevel to STATUS if build type is debug
+if (CMAKE_BUILD_TYPE MATCHES Release)
+  set(SUBDIR_LOG_LEVEL NOTICE)
+else()
+  set(SUBDIR_LOG_LEVEL STATUS)
+endif()
+
+# ========== MESHFEM2D ==============
+message(STATUS "Building meshfem2D")
+set(_saved_CMAKE_MESSAGE_LOG_LEVEL ${CMAKE_MESSAGE_LOG_LEVEL})
+set(CMAKE_MESSAGE_LOG_LEVEL ${SUBDIR_LOG_LEVEL})
+add_subdirectory(fortran/meshfem2d)
+set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
+# =================================
+
+# ========== MESHFEM3D ==============
+message(STATUS "Building xmeshfem3D & xgenerate_databases")
+set(_saved_CMAKE_MESSAGE_LOG_LEVEL ${CMAKE_MESSAGE_LOG_LEVEL})
+set(CMAKE_MESSAGE_LOG_LEVEL ${SUBDIR_LOG_LEVEL})
+add_subdirectory(fortran/meshfem3d)
+set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
+# =================================
+
 
 # Build specfem2d libraries
 add_library(
@@ -196,13 +232,20 @@ add_library(
         src/IO/fortranio/fortran_io.cpp
         src/IO/sources.cpp
         src/IO/receivers.cpp
-        src/IO/mesh.cpp
+        # Fortran 2D part
+        src/IO/mesh/impl/fortran/dim2/mesh.cpp
         src/IO/mesh/impl/fortran/dim2/read_boundaries.cpp
         src/IO/mesh/impl/fortran/dim2/read_elements.cpp
         src/IO/mesh/impl/fortran/dim2/read_material_properties.cpp
         src/IO/mesh/impl/fortran/dim2/read_mesh_database.cpp
         src/IO/mesh/impl/fortran/dim2/read_interfaces.cpp
         src/IO/mesh/impl/fortran/dim2/read_parameters.cpp
+        # Fortran 3D part
+        src/IO/mesh/impl/fortran/dim3/mesh.cpp
+        src/IO/mesh/impl/fortran/dim3/read_parameters.cpp
+        src/IO/mesh/impl/fortran/dim3/read_coordinates.cpp
+        src/IO/mesh/impl/fortran/dim3/read_partial_derivatives.cpp
+        src/IO/mesh/impl/fortran/dim3/utilities.cpp
 )
 
 if (NOT HDF5_CXX_BUILD)
@@ -275,9 +318,9 @@ if (MPI_PARALLEL)
                 specfem_mpi
                 PUBLIC -DMPI_PARALLEL
         )
-        message("-- Compiling SPECFEM with MPI")
+        message(STATUS "Compiling SPECFEM with MPI")
 else()
-        message("-- Compiling SPECFEM without MPI")
+        message(STATUS "Compiling SPECFEM without MPI")
 endif(MPI_PARALLEL)
 
 # add_library(
@@ -294,21 +337,36 @@ endif(MPI_PARALLEL)
 
 add_library(
         mesh
-        src/mesh/boundaries/forcing_boundaries.cpp
-        src/mesh/boundaries/absorbing_boundaries.cpp
-        src/mesh/boundaries/acoustic_free_surface.cpp
-        src/mesh/elements/tangential_elements.cpp
-        src/mesh/elements/axial_elements.cpp
+        # 2-D
+        src/mesh/dim2/mesh.cpp
+        src/mesh/dim2/boundaries/forcing_boundaries.cpp
+        src/mesh/dim2/boundaries/absorbing_boundaries.cpp
+        src/mesh/dim2/boundaries/acoustic_free_surface.cpp
+        src/mesh/dim2/elements/tangential_elements.cpp
+        src/mesh/dim2/elements/axial_elements.cpp
         # src/mesh/mpi_interfaces/mpi_interfaces.cpp
-        src/mesh/materials/materials.cpp
-        src/mesh/coupled_interfaces/interface_container.cpp
-        src/mesh/coupled_interfaces/coupled_interfaces.cpp
-        src/mesh/tags/tags.cpp
-        src/mesh/mesh.cpp
+        src/mesh/dim2/materials/materials.cpp
+        src/mesh/dim2/coupled_interfaces/interface_container.cpp
+        src/mesh/dim2/coupled_interfaces/coupled_interfaces.cpp
+        src/mesh/dim2/tags/tags.cpp
+        # 3-D
+        src/mesh/dim3/mesh.cpp
+        src/mesh/dim3/boundaries/absorbing_boundary.cpp
+        src/mesh/dim3/boundaries/free_surface.cpp
+        src/mesh/dim3/coupled_interfaces/coupled_interfaces.cpp
+        src/mesh/dim3/element_types/element_types.cpp
+        src/mesh/dim3/parameters/parameters.cpp
+        src/mesh/dim3/parameters/parameters.cpp
+        src/mesh/dim3/mapping/mapping.cpp
+        src/mesh/dim3/materials/materials.cpp
+        src/mesh/dim3/coordinates/coordinates.cpp
+        src/mesh/dim3/partial_derivatives/partial_derivatives.cpp
+
 )
 
 target_link_libraries(
         mesh
+        enumerations
         Kokkos::kokkos
         specfem_mpi
         # material_class
@@ -458,20 +516,6 @@ target_link_libraries(
         ${BOOST_LIBS}
 )
 
-add_library(
-        medium
-        src/medium/compute_mass_matrix.cpp
-        src/medium/compute_stress_integrand.cpp
-)
-
-target_link_libraries(
-        medium
-        Kokkos::kokkos
-        compute
-        boundary_conditions
-        enumerations
-)
-
 add_library(coupled_interface
         src/coupled_interface/coupled_interface.cpp
 )
@@ -524,7 +568,6 @@ target_link_libraries(
         Kokkos::kokkos
         timescheme
         kokkos_kernels
-        medium
 )
 
 add_library(
@@ -596,7 +639,6 @@ target_link_libraries(
         writer
         reader
         kokkos_kernels
-        medium
         solver
         ${BOOST_LIBS}
 )
@@ -619,7 +661,6 @@ target_link_libraries(
         writer
         periodic_tasks
         reader
-        medium
         coupled_interface
         kokkos_kernels
         solver
@@ -644,23 +685,33 @@ add_executable(
 target_link_libraries(
         specfem3d
         specfem_mpi
+        IO
         Kokkos::kokkos
         mesh
+        quadrature
+        compute
+        source_class
         parameter_reader
+        receiver_class
+        writer
         periodic_tasks
-        IO
+        reader
+        coupled_interface
+        kokkos_kernels
+        solver
         ${BOOST_LIBS}
         yaml-cpp
 )
 
+
 # Include tests
 if (BUILD_TESTS)
-        message("-- Including tests.")
+        message(STATUS "Including tests.")
         add_subdirectory(tests/unit-tests)
 endif()
 
 if (BUILD_EXAMPLES)
-        message("-- Including examples.")
+        message(STATUS "Including examples.")
         add_subdirectory(examples)
 endif()
 
@@ -676,7 +727,7 @@ if (DOXYGEN_FOUND)
 
     # request to configure the file
     configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
-    message("Doxygen build started")
+    message(STATUS "Doxygen build started")
 
     # Note: do not put "ALL" - this builds docs together with application EVERY TIME!
     add_custom_target( docs
@@ -685,7 +736,7 @@ if (DOXYGEN_FOUND)
         COMMENT "Generating API documentation with Doxygen"
         VERBATIM )
 else (DOXYGEN_FOUND)
-  message("Doxygen need to be installed to generate the doxygen documentation")
+  message(STATUS "Doxygen need to be installed to generate the doxygen documentation")
 endif (DOXYGEN_FOUND)
 
 if (SPECFEMPP_USE_SKBUILD AND EXISTS ${SKBUILD_SCRIPTS_DIR})

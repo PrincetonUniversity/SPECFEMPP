@@ -1,6 +1,7 @@
 #include "IO/kernel/writer.hpp"
 #include "IO/ASCII/ASCII.hpp"
 #include "IO/HDF5/HDF5.hpp"
+#include "IO/impl/medium_writer.tpp"
 #include "IO/kernel/writer.tpp"
 
 // Explicit instantiation

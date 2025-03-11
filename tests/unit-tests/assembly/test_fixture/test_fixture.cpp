@@ -18,8 +18,7 @@ void parse_test_config(const YAML::Node &yaml,
 
 ASSEMBLY::ASSEMBLY() {
 
-  std::string config_filename =
-      "../../../tests/unit-tests/assembly/test_config.yaml";
+  std::string config_filename = "assembly/test_config.yaml";
   parse_test_config(YAML::LoadFile(config_filename), Tests);
 
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
@@ -35,6 +34,7 @@ ASSEMBLY::ASSEMBLY() {
     const auto mesh = specfem::IO::read_2d_mesh(database_file, mpi);
 
     this->Meshes.push_back(mesh);
+    this->suffixes.push_back(Test.suffix);
 
     std::cout << sources_file << std::endl;
 

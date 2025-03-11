@@ -66,7 +66,7 @@
   use shared_parameters, only: IS_WAVEFIELD_DISCONTINUITY
   use wavefield_discontinuity_generate_databases, only: &
                                setup_boundary_wavefield_discontinuity, &
-                               read_partition_files_wavefield_discontinuity
+                               read_wavefield_discontinuity
 
   implicit none
 
@@ -343,7 +343,7 @@
       write(IMAIN,*) '  ...setting up wavefield discontinuity boundary '
       call flush_IMAIN()
     endif
-    call read_partition_files_wavefield_discontinuity()
+    call read_wavefield_discontinuity()
     call setup_boundary_wavefield_discontinuity()
   endif
 
@@ -354,6 +354,7 @@
     write(IMAIN,*) '  ...saving mesh databases'
     call flush_IMAIN()
   endif
+  call save_parameters()
   call save_arrays_solver_mesh()
 
   ! user output
@@ -1697,7 +1698,7 @@ contains
     num_phase_ispec_acoustic = max(nspec_inner_acoustic,nspec_outer_acoustic)
     if (num_phase_ispec_acoustic < 0) stop 'error acoustic simulation: num_phase_ispec_acoustic is < zero'
 
-    allocate( phase_ispec_inner_acoustic(num_phase_ispec_acoustic,2),stat=ier)
+    allocate(phase_ispec_inner_acoustic(num_phase_ispec_acoustic,2),stat=ier)
     if (ier /= 0) call exit_MPI_without_rank('error allocating array 828')
     if (ier /= 0) stop 'error allocating array phase_ispec_inner_acoustic'
     phase_ispec_inner_acoustic(:,:) = 0
