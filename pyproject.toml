@@ -35,7 +35,7 @@ dev = [
   "furo~=2024.8.6",
   "breathe~=4.35.0",
   "sphinx-sitemap~=2.2.0",
-  "sphinx_design"
+  "sphinx_design~=0.6.1"
 ]
 
 examples = [
