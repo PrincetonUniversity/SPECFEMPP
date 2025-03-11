@@ -104,13 +104,16 @@ specfem::IO::mesh::impl::fortran::dim2::read_mesh_database_header(
   // TODO: This is a hack to skip the attenuation parameters temporarily
   //       This should be fixed in the future when the attenuation is
   //       implemented or just after the Hackathon with Christina.
+  // Store the current position in the stream so we can go back to it
+  std::streampos savedPosition = stream.tellg();
   try {
     specfem::IO::fortran_read_line(stream, &dummy_b, &dummy_b1,
                                    &dummy_d1); // ATTENUATION_PERMITTIVITY,
                                                // ATTENUATION_CONDUCTIVITY,
                                                // f0_electromagnetic
   } catch (const std::exception &e) {
-    // do nothing
+    // Go back to initial position
+    stream.seekg(savedPosition);
   };
   specfem::IO::fortran_read_line(stream, &dummy_b); // AXISYM
   specfem::IO::fortran_read_line(stream, &dummy_b); // psv
