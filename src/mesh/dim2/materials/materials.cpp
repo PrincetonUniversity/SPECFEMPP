@@ -10,6 +10,10 @@ std::variant<
     specfem::medium::material<specfem::element::medium_tag::elastic,
                               specfem::element::property_tag::anisotropic>,
     specfem::medium::material<specfem::element::medium_tag::acoustic,
+                              specfem::element::property_tag::isotropic>,
+    specfem::medium::material<specfem::element::medium_tag::electromagnetic_sv,
+                              specfem::element::property_tag::isotropic>,
+    specfem::medium::material<specfem::element::medium_tag::electromagnetic_sh,
                               specfem::element::property_tag::isotropic> >
 specfem::mesh::materials<specfem::dimension::type::dim2>::operator[](
     const int index) const {
@@ -41,6 +45,18 @@ specfem::mesh::materials<specfem::dimension::type::dim2>::operator[](
     return this->acoustic_isotropic
         .element_materials[material_specification.index];
     // Throw an error if the material type is not supported
+  } else if (material_specification.type ==
+                 specfem::element::medium_tag::electromagnetic_sv &&
+             material_specification.property ==
+                 specfem::element::property_tag::isotropic) {
+    return this->electromagnetic_sv_isotropic
+        .element_materials[material_specification.index];
+  } else if (material_specification.type ==
+                 specfem::element::medium_tag::electromagnetic_sh &&
+             material_specification.property ==
+                 specfem::element::property_tag::isotropic) {
+    return this->electromagnetic_sh_isotropic
+        .element_materials[material_specification.index];
   } else {
     throw std::runtime_error("Material type not supported");
   }

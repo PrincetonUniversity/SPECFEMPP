@@ -73,3 +73,4 @@ public:
 #include "dim2/acoustic/isotropic/material.hpp"
 #include "dim2/elastic/anisotropic/material.hpp"
 #include "dim2/elastic/isotropic/material.hpp"
+#include "dim2/electromagnetic/isotropic/material.hpp"
