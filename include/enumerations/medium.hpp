@@ -18,7 +18,7 @@ enum class medium_tag {
   acoustic,
   poroelastic,
   electromagnetic_sv,
-  electromagnetic_sh
+  // electromagnetic_sh
 };
 
 /**
