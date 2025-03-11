@@ -98,10 +98,17 @@ specfem::IO::mesh::impl::fortran::dim2::read_mesh_database_header(
                                  &dummy_b); // NO_BACKWARD_RECONSTRUCTION
   specfem::IO::fortran_read_line(stream,
                                  &dummy_b); // DRAW_SOURCES_AND_RECEIVERS
+  specfem::IO::fortran_read_line(stream, &dummy_d,
+                                 &dummy_d1); // Q0_poroelastic,freq0_poroelastic
+
+  // TODO: This is a hack to skip the attenuation parameters temporarily
+  //       This should be fixed in the future when the attenuation is
+  //       implemented or just after the Hackathon with Christina.
   try {
-    specfem::IO::fortran_read_line(
-        stream, &dummy_d,
-        &dummy_d1); // Q0_poroelastic,freq0_poroelastic
+    specfem::IO::fortran_read_line(stream, &dummy_b, &dummy_b1,
+                                   &dummy_d1); // ATTENUATION_PERMITTIVITY,
+                                               // ATTENUATION_CONDUCTIVITY,
+                                               // f0_electromagnetic
   } catch (const std::exception &e) {
     // do nothing
   };
