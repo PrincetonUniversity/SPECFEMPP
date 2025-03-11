@@ -113,15 +113,6 @@ public:
 
     Kokkos::abort("Medium type not supported");
     return 0;
-
-    // if constexpr (MediumType == specfem::element::medium_tag::elastic_sv) {
-    //   return elastic.nglob;
-    // } else if constexpr (MediumType ==
-    // specfem::element::medium_tag::acoustic) {
-    //   return acoustic.nglob;
-    // } else {
-    //   static_assert("medium type not supported");
-    // }
   }
 
   /**
@@ -150,15 +141,6 @@ public:
 
     /// Code path should never be reached
     return {};
-
-    // if constexpr (MediumTag == specfem::element::medium_tag::elastic) {
-    //   return elastic;
-    // } else if constexpr (MediumTag == specfem::element::medium_tag::acoustic)
-    // {
-    //   return acoustic;
-    // } else {
-    //   static_assert("medium type not supported");
-    // }
   }
 
   int nglob = 0; ///< Number of global degrees of freedom
@@ -187,13 +169,6 @@ public:
                                            MEDIUM_TAG_ACOUSTIC))
 
 #undef GENERATE_MEDIUM_FIELD_VARIABLE
-
-  // specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
-  //                                    specfem::element::medium_tag::elastic_sv>
-  //     elastic; ///< Elastic field
-  // specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
-  //                                    specfem::element::medium_tag::acoustic>
-  //     acoustic; ///< Acoustic field
 
 private:
   template <specfem::sync::kind sync> void sync_fields() {
@@ -232,9 +207,6 @@ void deep_copy(simulation_field<WavefieldType1> &dst,
           MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC))
 
 #undef DEEP_COPY_MEDIUM_FIELD
-
-  // specfem::compute::deep_copy(dst.elastic, src.elastic);
-  // specfem::compute::deep_copy(dst.acoustic, src.acoustic);
 }
 
 /**

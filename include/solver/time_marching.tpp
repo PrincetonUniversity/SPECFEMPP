@@ -12,6 +12,7 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
 
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
   constexpr auto elastic_sv = specfem::element::medium_tag::elastic_sv;
+  constexpr auto elastic_sh = specfem::element::medium_tag::elastic_sh;
 
   kernels.initialize(time_scheme->get_timestep());
 
@@ -20,12 +21,15 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
   for (const auto [istep, dt] : time_scheme->iterate_forward()) {
     time_scheme->apply_predictor_phase_forward(acoustic);
     time_scheme->apply_predictor_phase_forward(elastic_sv);
+    time_scheme->apply_predictor_phase_forward(elastic_sh);
 
     kernels.template update_wavefields<acoustic>(istep);
     time_scheme->apply_corrector_phase_forward(acoustic);
 
     kernels.template update_wavefields<elastic_sv>(istep);
+    kernels.template update_wavefields<elastic_sh>(istep);
     time_scheme->apply_corrector_phase_forward(elastic_sv);
+    time_scheme->apply_corrector_phase_forward(elastic_sh);
 
     if (time_scheme->compute_seismogram(istep)) {
       kernels.compute_seismograms(time_scheme->get_seismogram_step());
@@ -55,6 +59,7 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
 
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
   constexpr auto elastic_sv = specfem::element::medium_tag::elastic_sv;
+  constexpr auto elastic_sh = specfem::element::medium_tag::elastic_sh;
 
   adjoint_kernels.initialize(time_scheme->get_timestep());
   backward_kernels.initialize(time_scheme->get_timestep());
@@ -65,19 +70,24 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
     // Adjoint time step
     time_scheme->apply_predictor_phase_forward(acoustic);
     time_scheme->apply_predictor_phase_forward(elastic_sv);
+    time_scheme->apply_predictor_phase_forward(elastic_sh);
 
     adjoint_kernels.template update_wavefields<acoustic>(istep);
     time_scheme->apply_corrector_phase_forward(acoustic);
 
     adjoint_kernels.template update_wavefields<elastic_sv>(istep);
+    adjoint_kernels.template update_wavefields<elastic_sh>(istep);
     time_scheme->apply_corrector_phase_forward(elastic_sv);
+    time_scheme->apply_corrector_phase_forward(elastic_sh);
 
     // Backward time step
     time_scheme->apply_predictor_phase_backward(elastic_sv);
     time_scheme->apply_predictor_phase_backward(acoustic);
 
     backward_kernels.template update_wavefields<elastic_sv>(istep);
+    backward_kernels.template update_wavefields<elastic_sh>(istep);
     time_scheme->apply_corrector_phase_backward(elastic_sv);
+    time_scheme->apply_corrector_phase_backward(elastic_sh);
 
     backward_kernels.template update_wavefields<acoustic>(istep);
     time_scheme->apply_corrector_phase_backward(acoustic);
