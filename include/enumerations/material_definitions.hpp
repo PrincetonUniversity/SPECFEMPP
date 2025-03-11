@@ -18,7 +18,10 @@ namespace element {
 #define MEDIUM_TAG_ELASTIC (0, specfem::element::medium_tag::elastic, elastic)
 #define MEDIUM_TAG_ACOUSTIC                                                    \
   (1, specfem::element::medium_tag::acoustic, acoustic)
-
+#define MEDIUM_TAG_ELECTROMAGNETIC_SV                                          \
+  (3, specfem::element::medium_tag::electromagnetic_sv, electromagnetic_sv)
+#define MEDIUM_TAG_ELECTROMAGNETIC_SH                                          \
+  (4, specfem::element::medium_tag::electromagnetic_sh, electromagnetic_sh)
 #define PROPERTY_TAG_ISOTROPIC                                                 \
   (0, specfem::element::property_tag::isotropic, isotropic)
 #define PROPERTY_TAG_ANISOTROPIC                                               \
@@ -49,7 +52,9 @@ namespace element {
  */
 #define MEDIUM_TYPES                                                           \
   ((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC))(                                  \
-      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC))
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC))(                              \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_SV))(                    \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_SH))
 
 #define MAKE_ARRAY_ELEM(s, data, elem)                                         \
   std::make_tuple(GET_TAG(BOOST_PP_TUPLE_ELEM(0, elem)),                       \
@@ -87,7 +92,9 @@ constexpr auto medium_types() {
 #define MATERIAL_SYSTEMS                                                       \
   ((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC, PROPERTY_TAG_ISOTROPIC))(          \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC, PROPERTY_TAG_ANISOTROPIC))(     \
-      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC, PROPERTY_TAG_ISOTROPIC))
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC, PROPERTY_TAG_ISOTROPIC))(      \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_SV,                      \
+       PROPERTY_TAG_ISOTROPIC))
 
 #define MAKE_ARRAY_ELEM(s, data, elem)                                         \
   std::make_tuple(GET_TAG(BOOST_PP_TUPLE_ELEM(0, elem)),                       \
@@ -136,7 +143,11 @@ constexpr auto material_systems() {
                               BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))(       \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC, PROPERTY_TAG_ANISOTROPIC,       \
        BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC,            \
-                            PROPERTY_TAG_ANISOTROPIC, BOUNDARY_TAG_STACEY))
+                            PROPERTY_TAG_ANISOTROPIC, BOUNDARY_TAG_STACEY))(   \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_SV,                      \
+       PROPERTY_TAG_ISOTROPIC,                                                 \
+       BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_SH, \
+                            PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_NONE))
 
 #define MAKE_ARRAY_ELEM(s, data, elem)                                         \
   std::make_tuple(GET_TAG(BOOST_PP_TUPLE_ELEM(0, elem)),                       \
