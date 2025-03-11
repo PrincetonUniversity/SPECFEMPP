@@ -42,9 +42,9 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "../../../tests/unit-tests/displacement_tests/Newmark/acoustic/serial/Database00000.bin"
+    mesh-database: "displacement_tests/Newmark/acoustic/serial/Database00000.bin"
 
-  sources: "../../../tests/unit-tests/displacement_tests/Newmark/acoustic/serial/sources.yaml"
+  sources: "displacement_tests/Newmark/acoustic/serial/sources.yaml"
 
   # seismogram output
   seismogram:

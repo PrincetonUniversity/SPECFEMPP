@@ -103,6 +103,9 @@ public:
    * to mesh database and source yaml file
    */
   std::string get_databases() const { return databases->get_databases(); }
+  std::string get_mesh_parameters() const {
+    return databases->get_mesh_parameters();
+  }
 
   /**
    * @brief Get the sources YAML object

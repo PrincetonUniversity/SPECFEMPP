@@ -1,8 +1,8 @@
 #pragma once
 
+#include "IO/writer.hpp"
 #include "compute/interface.hpp"
 #include "enumerations/interface.hpp"
-#include "IO/writer.hpp"
 
 namespace specfem {
 namespace IO {
@@ -37,5 +37,5 @@ public:
 private:
   std::string output_folder; ///< Path to output folder
 };
-} // namespace writer
+} // namespace IO
 } // namespace specfem

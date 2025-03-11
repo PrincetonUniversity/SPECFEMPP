@@ -66,8 +66,7 @@ TEST(COMPUTE_TESTS, compute_partial_derivatives) {
 
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
 
-  std::string config_filename =
-      "../../../tests/unit-tests/compute/partial_derivatives/test_config.yml";
+  std::string config_filename = "compute/partial_derivatives/test_config.yml";
   test_config test_config = get_test_config(config_filename, mpi);
 
   // Set up GLL quadrature points
@@ -75,7 +74,7 @@ TEST(COMPUTE_TESTS, compute_partial_derivatives) {
   specfem::quadrature::quadratures quadratures(gll);
 
   specfem::mesh::mesh mesh =
-      specfem::IO::read_mesh(test_config.database_filename, mpi);
+      specfem::IO::read_2d_mesh(test_config.database_filename, mpi);
 
   specfem::compute::mesh compute_mesh(mesh.tags, mesh.control_nodes,
                                       quadratures);
@@ -85,13 +84,13 @@ TEST(COMPUTE_TESTS, compute_partial_derivatives) {
   const int ngllz = compute_mesh.quadratures.gll.N;
   const int ngllx = compute_mesh.quadratures.gll.N;
 
-  specfem::testing::array3d<type_real, Kokkos::LayoutRight> xix_ref(
+  specfem::testing::array3d<double, Kokkos::LayoutRight> xix_ref(
       test_config.xix_file, nspec, ngllz, ngllx);
-  specfem::testing::array3d<type_real, Kokkos::LayoutRight> gammax_ref(
+  specfem::testing::array3d<double, Kokkos::LayoutRight> gammax_ref(
       test_config.gammax_file, nspec, ngllz, ngllx);
-  specfem::testing::array3d<type_real, Kokkos::LayoutRight> gammaz_ref(
+  specfem::testing::array3d<double, Kokkos::LayoutRight> gammaz_ref(
       test_config.gammaz_file, nspec, ngllz, ngllx);
-  specfem::testing::array3d<type_real, Kokkos::LayoutRight> jacobian_ref(
+  specfem::testing::array3d<double, Kokkos::LayoutRight> jacobian_ref(
       test_config.jacobian_file, nspec, ngllz, ngllx);
 
   for (int ix = 0; ix < ngllx; ++ix) {

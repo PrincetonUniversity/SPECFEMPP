@@ -1,8 +1,8 @@
 #pragma once
 
+#include "IO/reader.hpp"
 #include "compute/interface.hpp"
 #include "enumerations/interface.hpp"
-#include "IO/reader.hpp"
 
 namespace specfem {
 namespace IO {

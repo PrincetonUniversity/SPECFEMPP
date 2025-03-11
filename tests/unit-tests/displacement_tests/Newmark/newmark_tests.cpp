@@ -150,7 +150,7 @@ specfem::testing::array2d<type_real, Kokkos::LayoutLeft> compact_array(
 }
 
 TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
-  std::string config_filename = "../../../tests/unit-tests/displacement_tests/"
+  std::string config_filename = "displacement_tests/"
                                 "Newmark/test_config.yaml";
 
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
@@ -175,7 +175,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     const auto quadratures = setup.instantiate_quadrature();
 
     // Read mesh generated MESHFEM
-    specfem::mesh::mesh mesh = specfem::IO::read_mesh(database_file, mpi);
+    specfem::mesh::mesh mesh = specfem::IO::read_2d_mesh(database_file, mpi);
     const type_real dt = setup.get_dt();
     const int nsteps = setup.get_nsteps();
 

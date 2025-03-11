@@ -91,8 +91,7 @@ std::vector<test_config::Test> parse_test_config(std::string test_config_file,
 }
 
 TEST(DOMAIN_TESTS, rmass_inverse) {
-  std::string config_filename =
-      "../../../tests/unit-tests/domain/test_config.yaml";
+  std::string config_filename = "domain/test_config.yaml";
 
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
 
@@ -117,7 +116,7 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
     std::cout << "Reading mesh file: " << database_file << std::endl;
 
     // Read mesh generated MESHFEM
-    specfem::mesh::mesh mesh = specfem::IO::read_mesh(database_file, mpi);
+    specfem::mesh::mesh mesh = specfem::IO::read_2d_mesh(database_file, mpi);
 
     std::cout << "Setting up sources and receivers" << std::endl;
 
@@ -167,7 +166,7 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
                 << std::endl;
 
       if (Test.database.elastic_mass_matrix != "NULL") {
-        specfem::testing::array2d<type_real, Kokkos::LayoutRight>
+        specfem::testing::array2d<double, Kokkos::LayoutRight>
             h_mass_matrix_global(Test.database.elastic_mass_matrix, nglob, 2);
 
         specfem::testing::array3d<int, Kokkos::LayoutRight> index_mapping(
@@ -227,7 +226,7 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
       }
 
       if (Test.database.acoustic_mass_matrix != "NULL") {
-        specfem::testing::array2d<type_real, Kokkos::LayoutRight>
+        specfem::testing::array2d<double, Kokkos::LayoutRight>
             h_mass_matrix_global(Test.database.acoustic_mass_matrix, nglob, 1);
 
         specfem::testing::array3d<int, Kokkos::LayoutRight> index_mapping(

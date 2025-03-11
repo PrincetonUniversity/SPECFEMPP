@@ -10,13 +10,13 @@
 
 TEST(iotests, fortran_io) {
 
-  std::string filename = "../../../tests/unit-tests/fortran_io/input.bin";
+  std::string filename = "fortran_io/input.bin";
   std::ifstream stream;
 
   int ival;
   bool bval;
   std::string sval;
-  type_real dval;
+  double dval;
   std::vector<int> vval(100, 0);
 
   stream.open(filename);
