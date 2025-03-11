@@ -98,8 +98,15 @@ specfem::IO::mesh::impl::fortran::dim2::read_mesh_database_header(
                                  &dummy_b); // NO_BACKWARD_RECONSTRUCTION
   specfem::IO::fortran_read_line(stream,
                                  &dummy_b); // DRAW_SOURCES_AND_RECEIVERS
-  specfem::IO::fortran_read_line(stream, &dummy_d,
-                                 &dummy_d1); // Q0_poroelastic,freq0_poroelastic
+  try {
+    specfem::IO::fortran_read_line(
+        stream, &dummy_d,
+        &dummy_d1); // Q0_poroelastic,freq0_poroelastic
+  } catch (std::exception &e) {
+    dummy_d = 0.0;
+    dummy_d1 = 0.0;
+  }
+  specfem::IO::fortran_read_line(stream, &dummy_b); // USE_Q0_MODEL
   specfem::IO::fortran_read_line(stream, &dummy_b); // AXISYM
   specfem::IO::fortran_read_line(stream, &dummy_b); // psv
   specfem::IO::fortran_read_line(stream,
