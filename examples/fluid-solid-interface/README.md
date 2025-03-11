@@ -17,7 +17,7 @@ command in the current directory:
 uv --version
 
 # install dependencies
-uv sync --extra examples
+uv sync --group examples
 
 ```
 

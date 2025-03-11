@@ -18,6 +18,12 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests/unit-tests)
 
 include_directories(.)
 
+set(TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
+# Some of the writing test need to write somewhere and we don't want that
+# to be in the source directory
+set(TEST_OUTPUT_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+
 enable_testing()
 
 add_library(
@@ -58,6 +64,7 @@ add_executable(
   gll_tests
   gll/gll_tests.cpp
 )
+
 target_link_libraries(
   gll_tests
   gtest_main
@@ -203,6 +210,7 @@ add_executable(
   assembly/sources/sources.cpp
 )
 
+target_compile_definitions(assembly_tests PRIVATE TEST_OUTPUT_DIR=${TEST_OUTPUT_DIR})
 
 target_link_libraries(
   assembly_tests
@@ -423,22 +431,22 @@ target_link_libraries(
 # Link to gtest only if MPI is enabled
 if (NOT MPI_PARALLEL)
   include(GoogleTest)
-  gtest_discover_tests(gll_tests)
-  gtest_discover_tests(lagrange_tests)
-  gtest_discover_tests(fortranio_test)
-  gtest_discover_tests(IO_tests)
-  gtest_discover_tests(mesh_tests)
-  gtest_discover_tests(compute_partial_derivatives_tests)
-  # gtest_discover_tests(compute_elastic_tests)
-  # # gtest_discover_tests(compute_acoustic_tests)
-  # gtest_discover_tests(compute_coupled_interfaces_tests)
-  gtest_discover_tests(compute_tests)
-  gtest_discover_tests(assembly_tests)
-  gtest_discover_tests(policies)
-  gtest_discover_tests(locate_point)
-  gtest_discover_tests(interpolate_function)
-  gtest_discover_tests(rmass_inverse_tests)
-  gtest_discover_tests(displacement_newmark_tests)
+  gtest_discover_tests(gll_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(lagrange_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(fortranio_test WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(IO_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(mesh_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(compute_partial_derivatives_tests WORKING_DIRECTORY ${TEST_DIR})
+  # gtest_discover_tests(compute_elastic_tests WORKING_DIRECTORY ${TEST_DIR})
+  # # gtest_discover_tests(compute_acoustic_tests WORKING_DIRECTORY ${TEST_DIR})
+  # gtest_discover_tests(compute_coupled_interfaces_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(compute_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(assembly_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(policies WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(locate_point WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(interpolate_function WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(rmass_inverse_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(displacement_newmark_tests WORKING_DIRECTORY ${TEST_DIR})
   # gtest_discover_tests(seismogram_elastic_tests)
   # gtest_discover_tests(seismogram_acoustic_tests)
 endif(NOT MPI_PARALLEL)

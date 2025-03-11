@@ -5,8 +5,8 @@ Tests:
     config:
       nproc : 1
     databases:
-      specfem_config: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test1/specfem_config.yaml"
-      traces: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test1/traces"
+      specfem_config: "displacement_tests/Newmark/serial/test1/specfem_config.yaml"
+      traces: "displacement_tests/Newmark/serial/test1/traces"
 
   - name : "SerialTest2 : Homogeneous acoustic domain"
     description: >
@@ -14,8 +14,8 @@ Tests:
     config:
       nproc : 1
     databases:
-      specfem_config: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test2/specfem_config.yaml"
-      traces: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test2/traces"
+      specfem_config: "displacement_tests/Newmark/serial/test2/specfem_config.yaml"
+      traces: "displacement_tests/Newmark/serial/test2/traces"
 
   - name : "SerialTest3 : Acoustic-Elastic coupled domain (Test 1/2)"
     description: >
@@ -23,8 +23,8 @@ Tests:
     config:
       nproc : 1
     databases:
-      specfem_config: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test3/specfem_config.yaml"
-      traces: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test3/traces"
+      specfem_config: "displacement_tests/Newmark/serial/test3/specfem_config.yaml"
+      traces: "displacement_tests/Newmark/serial/test3/traces"
 
   # - name : "SerialTest4 : Acoustic-Elastic coupled domain (Test 2/2)"
   #   description: >
@@ -32,8 +32,8 @@ Tests:
   #   config:
   #     nproc : 1
   #   databases:
-  #     specfem_config: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test4/specfem_config.yaml"
-  #     traces: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test4/traces"
+  #     specfem_config: "displacement_tests/Newmark/serial/test4/specfem_config.yaml"
+  #     traces: "displacement_tests/Newmark/serial/test4/traces"
 
 
   - name : "SerialTest5 : Homogeneous acoustic domain (dirichlet BC)"
@@ -42,8 +42,8 @@ Tests:
     config:
       nproc : 1
     databases:
-      specfem_config: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test5/specfem_config.yaml"
-      traces: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test5/traces"
+      specfem_config: "displacement_tests/Newmark/serial/test5/specfem_config.yaml"
+      traces: "displacement_tests/Newmark/serial/test5/traces"
 
   - name : "SerialTest6 : Homogeneous acoustic domain (stacey BC)"
     description: >
@@ -51,8 +51,8 @@ Tests:
     config:
       nproc : 1
     databases:
-      specfem_config: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test6/specfem_config.yaml"
-      traces: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test6/traces"
+      specfem_config: "displacement_tests/Newmark/serial/test6/specfem_config.yaml"
+      traces: "displacement_tests/Newmark/serial/test6/traces"
 
   - name : "SerialTest7 : Homogeneous elastic domain (stacey BC)"
     description: >
@@ -60,8 +60,8 @@ Tests:
     config:
       nproc : 1
     databases:
-      specfem_config: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test7/specfem_config.yaml"
-      traces: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test7/traces"
+      specfem_config: "displacement_tests/Newmark/serial/test7/specfem_config.yaml"
+      traces: "displacement_tests/Newmark/serial/test7/traces"
 
   - name : "SerialTest8 : Homogeneous acoustic domain (composite stacey dirichlet BC)"
     description: >
@@ -69,8 +69,8 @@ Tests:
     config:
       nproc : 1
     databases:
-      specfem_config: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test8/specfem_config.yaml"
-      traces: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test8/traces"
+      specfem_config: "displacement_tests/Newmark/serial/test8/specfem_config.yaml"
+      traces: "displacement_tests/Newmark/serial/test8/traces"
 
 
   - name : "SerialTest9 : Homogeneous elastic anisotropic domain"
@@ -79,5 +79,5 @@ Tests:
     config:
       nproc : 1
     databases:
-      specfem_config: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test9/specfem_config.yaml"
-      traces: "../../../tests/unit-tests/displacement_tests/Newmark/serial/test9/traces"
+      specfem_config: "displacement_tests/Newmark/serial/test9/specfem_config.yaml"
+      traces: "displacement_tests/Newmark/serial/test9/traces"

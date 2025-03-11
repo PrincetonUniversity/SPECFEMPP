@@ -1,0 +1,120 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "release",
+      "displayName": "Default Release -- SIMD enabled",
+      "binaryDir": "build/release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "BUILD_TESTS": "ON",
+        "ENABLE_SIMD": "ON",
+        "Kokkos_ARCH_NATIVE": "ON",
+        "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "ON"
+      }
+    },
+    {
+      "name": "release-nosimd",
+      "displayName": "Release -- SIMD disabled",
+      "binaryDir": "build/release-nosimd",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "BUILD_TESTS": "ON",
+        "ENABLE_SIMD": "OFF",
+        "Kokkos_ARCH_NATIVE": "OFF",
+        "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "OFF",
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF"
+      }
+    },
+    {
+      "name": "release-cuda",
+      "displayName": "Release -- CUDA enabled",
+      "binaryDir": "build/release-cuda",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_BUILD_EXAMPLES": "ON",
+        "BUILD_TESTS": "ON",
+        "ENABLE_CUDA": "ON",
+        "Kokkos_ARCH_NATIVE": "ON",
+        "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "ON",
+        "Kokkos_ARCH_AMPERE80":"ON"
+      }
+    },
+    {
+      "name": "debug",
+      "displayName": "Default Debug -- SIMD enabled",
+      "binaryDir": "build/debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "BUILD_TESTS": "ON",
+        "ENABLE_SIMD": "ON",
+        "Kokkos_ARCH_NATIVE": "ON",
+        "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "ON"
+      }
+    },
+    {
+      "name": "debug-cuda",
+      "displayName": "Debug -- CUDA enabled",
+      "binaryDir": "build/debug-cuda",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_BUILD_EXAMPLES": "ON",
+        "BUILD_TESTS": "ON",
+        "ENABLE_CUDA": "ON",
+        "ENABLE_SIMD": "ON",
+        "Kokkos_ARCH_NATIVE": "ON",
+        "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "ON",
+        "Kokkos_ARCH_AMPERE80":"ON"
+      }
+    },
+    {
+      "name": "debug-nosimd",
+      "displayName": "Debug -- SIMD disabled",
+      "binaryDir": "build/debug-nosimd",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "BUILD_TESTS": "ON",
+        "ENABLE_SIMD": "OFF",
+        "Kokkos_ARCH_NATIVE": "OFF",
+        "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "OFF",
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "release",
+      "configurePreset": "release",
+      "targets": ["all"]
+    },
+    {
+      "name": "debug",
+      "configurePreset": "debug",
+      "targets": ["all"]
+    },
+    {
+      "name": "release-cuda",
+      "configurePreset": "release-cuda",
+      "targets": ["all"]
+    },
+    {
+      "name": "debug-cuda",
+      "configurePreset": "debug-cuda",
+      "targets": ["all"]
+    },
+    {
+      "name": "release-nosimd",
+      "configurePreset": "release-nosimd",
+      "targets": ["all"]
+    },
+    {
+      "name": "debug-nosimd",
+      "configurePreset": "debug-nosimd",
+      "targets": ["all"]
+    }
+  ]
+}

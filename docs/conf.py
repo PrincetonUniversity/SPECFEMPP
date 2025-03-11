@@ -14,9 +14,31 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 import subprocess
+import sys
+import os
 
 # Doxygen
-subprocess.call("doxygen Doxyfile.in", shell=True)
+doxygen_cmd = "doxygen Doxyfile.in"  # or Doxyfile.in if that's the correct filename
+
+# Create the doxygen subdirectory if it doesn't exist
+if os.path.exists("_build/doxygen") is False:
+    os.makedirs("_build/doxygen")
+
+if os.environ.get("NODOXYGEN") is not None:
+    print("Skipping Doxygen build as NODOXYGEN environment variable is set")
+    result = 0
+else:
+    result = subprocess.call(doxygen_cmd, shell=True)
+
+if result != 0:
+    print(f"Error: Doxygen command '{doxygen_cmd}' failed with code {result}")
+    sys.exit(1)
+
+# Check if output directory exists
+if not os.path.exists("_build/doxygen/xml"):
+    print("Error: Doxygen XML output directory '_build/doxygen/xml' not found")
+    print("Please check Doxygen configuration and make sure it runs correctly")
+    sys.exit(1)
 
 # -- Project information -----------------------------------------------------
 
@@ -42,9 +64,13 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx_sitemap",
     "sphinx.ext.inheritance_diagram",
+    "sphinx_design",
     "breathe",
     "sphinx_copybutton",
 ]
+
+# Adding this to avoid the WARNING: duplicate label warning
+autosectionlabel_prefix_document = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -96,6 +122,6 @@ html_css_files = [
 
 # -- Breathe configuration -------------------------------------------------
 
-breathe_projects = {"SPECFEM KOKKOS IMPLEMENTATION": "_build/xml"}
+breathe_projects = {"SPECFEM KOKKOS IMPLEMENTATION": "_build/doxygen/xml"}
 breathe_default_project = "SPECFEM KOKKOS IMPLEMENTATION"
 breathe_default_members = ()

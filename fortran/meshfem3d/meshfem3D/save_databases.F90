@@ -44,7 +44,7 @@
     NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
     NMATERIALS,material_properties,material_properties_undef, &
     nspec_CPML,is_CPML,CPML_to_spec,CPML_regions, &
-    SAVE_MESH_AS_CUBIT
+    SAVE_MESH_AS_CUBIT, MESH_A_CHUNK_OF_THE_EARTH
 
   !! setting up wavefield discontinuity interface
   use shared_parameters, only: IS_WAVEFIELD_DISCONTINUITY
@@ -152,6 +152,9 @@
     print *,'Error opening Database file: ',prname(1:len_trim(prname))//'Database'
     stop 'error opening Database file'
   endif
+
+  write(IIN_database) MESH_A_CHUNK_OF_THE_EARTH
+  write(IIN_database) NGNOD
 
   ! global nodes
   write(IIN_database) nglob

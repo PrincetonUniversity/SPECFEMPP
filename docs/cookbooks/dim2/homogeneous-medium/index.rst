@@ -46,13 +46,13 @@ artifacts.
     touch specfem_config.yaml
     touch single_source.yaml
     touch topography_file.dat
-    touch Par_File
+    touch Par_file
 
 Generating a mesh
 -----------------
 
 To generate the mesh for the homogeneous media we need a parameter file,
-``Par_File``, a topography file, `topography_file.dat`, and the mesher
+``Par_file``, a topography file, `topography_file.dat`, and the mesher
 executible, ``xmeshfem2D``, which should have been compiled during the
 installation process.
 
@@ -76,7 +76,7 @@ At this point, it is worthwhile to note few key parameters within the
 - This version of SPECFEM++ does not support simulations running across multiple
   nodes, i.e., we have not enabled MPI. Relevant parameter value:
 
-.. literalinclude:: Par_File
+.. literalinclude:: Par_file
     :language: bash
     :linenos:
     :start-at: NPROC
@@ -86,7 +86,7 @@ At this point, it is worthwhile to note few key parameters within the
 - The path to the topography file is provided using the ``interfacesfile``
   parameter. Relevant values:
 
-.. literalinclude:: Par_File
+.. literalinclude:: Par_file
     :language: bash
     :linenos:
     :start-at: interfacesfile
@@ -124,7 +124,7 @@ To execute the mesher run
 
 .. code:: bash
 
-    xmeshfem2D -p Par_File
+    xmeshfem2D -p Par_file
 
 Check the mesher generated files in the ``OUTPUT_FILES`` directory.
 
