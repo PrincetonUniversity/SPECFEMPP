@@ -163,8 +163,7 @@ TEST(COMPUTE_TESTS, coupled_interfaces_tests) {
 
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
 
-  std::string config_filename =
-      "../../../tests/unit-tests/compute/coupled_interfaces/test_config.yaml";
+  std::string config_filename = "compute/coupled_interfaces/test_config.yaml";
 
   std::vector<test_config::Test> tests;
   parse_test_config(YAML::LoadFile(config_filename), tests);
@@ -178,7 +177,7 @@ TEST(COMPUTE_TESTS, coupled_interfaces_tests) {
 
     // Read mesh generated MESHFEM
     specfem::mesh::mesh mesh =
-        specfem::IO::read_mesh(Test.databases.mesh.database_filename, mpi);
+        specfem::IO::read_2d_mesh(Test.databases.mesh.database_filename, mpi);
 
     // Generate compute structs to be used by the solver
     specfem::compute::mesh assembly(mesh.control_nodes, quadratures);

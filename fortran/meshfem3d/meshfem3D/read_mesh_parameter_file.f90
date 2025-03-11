@@ -37,11 +37,14 @@
     USE_REGULAR_MESH,NDOUBLINGS,ner_doublings, &
     THICKNESS_OF_X_PML,THICKNESS_OF_Y_PML,THICKNESS_OF_Z_PML, &
     myrank,sizeprocs,NUMBER_OF_MATERIAL_PROPERTIES, &
-    SAVE_MESH_AS_CUBIT
+    SAVE_MESH_AS_CUBIT, MESH_A_CHUNK_OF_THE_EARTH, CHUNK_MESH_PAR_FILE
 
-  use constants, only: IIN,MF_IN_DATA_FILES,MAX_STRING_LEN,IMAIN, &
+  use constants, only: IIN,MAX_STRING_LEN,IMAIN, &
     IDOMAIN_ACOUSTIC,IDOMAIN_ELASTIC,IDOMAIN_POROELASTIC, &
     ILONGLAT2UTM,IGNORE_JUNK,DONT_IGNORE_JUNK
+
+  use shared_input_parameters, only: NGNOD, MESH_PAR_FILE
+  use shared_parameters, only: NGNOD2D
 
   implicit none
 
@@ -63,11 +66,9 @@
   logical :: found
   character(len=MAX_STRING_LEN) :: filename
 
-  ! Mesh Parameter file
-  filename = MF_IN_DATA_FILES(1:len_trim(MF_IN_DATA_FILES)) // 'Mesh_Par_file'
 
   if (myrank == 0) then
-    write(IMAIN,*) 'Reading mesh parameters from file ',trim(filename)
+    write(IMAIN,*) 'Reading mesh parameters from file ',trim(MESH_PAR_FILE)
     call flush_IMAIN()
   endif
 
@@ -75,13 +76,16 @@
   !       must match the order of appearance in the Mesh_Par_file
   !
   ! open parameter file Mesh_Par_file
-  call open_parameter_file_mesh(filename)
+  call open_parameter_file_mesh(MESH_PAR_FILE)
 
   ! user output
   if (myrank == 0) then
     write(IMAIN,*) '  input parameters...'
     call flush_IMAIN()
   endif
+
+  call read_value_logical_mesh(IIN,IGNORE_JUNK,MESH_A_CHUNK_OF_THE_EARTH, 'MESH_A_CHUNK_OF_THE_EARTH', ier)
+  call read_value_string_mesh(IIN,IGNORE_JUNK,CHUNK_MESH_PAR_FILE, 'CHUNK_MESH_PAR_FILE', ier)
 
   call read_value_dble_precision_mesh(IIN,IGNORE_JUNK,LATITUDE_MIN, 'LATITUDE_MIN', ier)
   if (ier /= 0) stop 'Error reading Mesh parameter LATITUDE_MIN'
@@ -101,6 +105,15 @@
   if (ier /= 0) stop 'Error reading Mesh parameter INTERFACES_FILE'
   call read_value_string_mesh(IIN,IGNORE_JUNK,CAVITY_FILE, 'CAVITY_FILE', ier)
   if (ier /= 0) stop 'Error reading Mesh parameter CAVITY_FILE'
+
+  call read_value_integer_mesh(IIN,IGNORE_JUNK,NGNOD, 'NGNOD', ier)
+  if (NGNOD == 8) then
+    NGNOD2D = 4
+  else if (NGNOD == 27) then
+    NGNOD2D = 9
+  else if (NGNOD /= 8 .and. NGNOD /= 27) then
+    stop 'Error elements should have 8 or 27 control nodes, please modify NGNOD in Par_file and recompile solver'
+  endif
 
   call read_value_integer_mesh(IIN,IGNORE_JUNK,NEX_XI, 'NEX_XI', ier)
   if (ier /= 0) stop 'Error reading Mesh parameter NEX_XI'

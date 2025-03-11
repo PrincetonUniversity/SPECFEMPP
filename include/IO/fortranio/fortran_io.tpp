@@ -23,6 +23,14 @@ void fortran_read_value(std::vector<T> *value,
   return;
 }
 
+
+// Template specialization for std::vector<bool>
+template <>
+void fortran_read_value(std::vector<bool> *value,
+                        std::ifstream &stream,
+                        int &buffer_length);
+
+
 template <typename T, typename... Args>
 void fortran_IO(std::ifstream &stream, int &buffer_length, T *value,
                 Args... values) {
@@ -41,7 +49,16 @@ void fortran_read_line(std::ifstream &stream, Args... values) {
   }
 
   stream.read(reinterpret_cast<char *>(&buffer_length), fint);
-  specfem::IO::fortran_IO(stream, buffer_length, values...);
+
+  try {
+    specfem::IO::fortran_IO(stream, buffer_length, values...);
+  } catch (const std::exception &e) {
+    std::ostringstream error_message;
+    error_message << "Error reading fortran line with buffer length: "
+                  << buffer_length << "\n"
+                  << e.what() << "(" << __FILE__ << ":" << __LINE__ << ")";
+    throw std::runtime_error(error_message.str());
+  }
 
   stream.read(reinterpret_cast<char *>(&buffer_length), fint);
   return;

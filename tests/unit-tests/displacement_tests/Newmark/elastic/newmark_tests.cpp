@@ -44,7 +44,7 @@ test_config parse_test_config(std::string test_configuration_file,
 // ------------------------------------- //
 
 TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
-  std::string config_filename = "../../../tests/unit-tests/displacement_tests/"
+  std::string config_filename = "displacement_tests/"
                                 "Newmark/elastic/test_config.yaml";
 
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
@@ -64,7 +64,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
 
   // Read mesh generated MESHFEM
   std::vector<specfem::medium::material *> materials;
-  specfem::mesh::mesh mesh = specfem::IO::read_mesh(database_file, mpi);
+  specfem::mesh::mesh mesh = specfem::IO::read_2d_mesh(database_file, mpi);
 
   // Read sources
   //    if start time is not explicitly specified then t0 is determined using
