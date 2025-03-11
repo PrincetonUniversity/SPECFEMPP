@@ -9,8 +9,6 @@ Get the latest version of the package:
 .. code-block:: bash
 
     git clone git@github.com:PrincetonUniversity/SPECFEMPP.git
-    git submodule init
-    git submodule update
 
 Compilation
 ============

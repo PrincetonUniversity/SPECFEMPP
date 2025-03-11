@@ -5,13 +5,6 @@ pipeline{
         }
     }
     stages{
-        stage( ' Load git modules ' ){
-            steps {
-                echo ' Getting git submodules '
-                sh 'git submodule init'
-                sh 'git submodule update'
-            }
-        }
         stage(' GNU Host Compiler Check '){
             matrix {
                 axes {
