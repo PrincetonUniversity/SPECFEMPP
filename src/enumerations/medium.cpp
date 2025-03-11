@@ -15,6 +15,12 @@ specfem::element::to_string(const specfem::element::medium_tag &medium,
   case specfem::element::medium_tag::acoustic:
     medium_string = "acoustic";
     break;
+  case specfem::element::medium_tag::electromagnetic_sv:
+    medium_string = "electromagnetic_sv";
+    break;
+  case specfem::element::medium_tag::electromagnetic_sh:
+    medium_string = "electromagnetic_sh";
+    break;
   default:
     medium_string = "unknown";
     break;
@@ -60,9 +66,18 @@ const std::string specfem::element::to_string(
   if ((medium == specfem::element::medium_tag::elastic) &&
       (property_tag == specfem::element::property_tag::isotropic)) {
     return "elastic isotropic";
+  } else if ((medium == specfem::element::medium_tag::elastic) &&
+             (property_tag == specfem::element::property_tag::anisotropic)) {
+    return "elastic anisotropic";
   } else if ((medium == specfem::element::medium_tag::acoustic) &&
              (property_tag == specfem::element::property_tag::isotropic)) {
     return "acoustic isotropic";
+  } else if ((medium == specfem::element::medium_tag::electromagnetic_sv) &&
+             (property_tag == specfem::element::property_tag::isotropic)) {
+    return "electromagnetic_sv isotropic";
+  } else if ((medium == specfem::element::medium_tag::electromagnetic_sh) &&
+             (property_tag == specfem::element::property_tag::isotropic)) {
+    return "electromagnetic_sh isotropic";
   } else {
     return "unknown";
   }
