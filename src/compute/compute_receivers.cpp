@@ -112,7 +112,8 @@ specfem::compute::receivers::receivers(
 
   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
       COUNT_RECEIVERS_PER_MATERIAL_SYSTEM,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
+      WHERE(DIMENSION_TAG_DIM2) WHERE(
+          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
           WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
 #undef COUNT_RECEIVERS_PER_MATERIAL_SYSTEM
@@ -144,7 +145,8 @@ specfem::compute::receivers::receivers(
 
   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
       ALLOCATE_RECEIVERS_PER_MATERIAL_SYSTEM,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
+      WHERE(DIMENSION_TAG_DIM2) WHERE(
+          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
           WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
 #undef ALLOCATE_RECEIVERS_PER_MATERIAL_SYSTEM
@@ -185,7 +187,8 @@ specfem::compute::receivers::receivers(
 
   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
       ASSIGN_RECEIVERS_PER_MATERIAL_SYSTEM,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
+      WHERE(DIMENSION_TAG_DIM2) WHERE(
+          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
           WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
 #undef ASSIGN_RECEIVERS_PER_MATERIAL_SYSTEM
@@ -214,10 +217,17 @@ specfem::compute::receivers::get_indices_on_host(
 
   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
       RETURN_VALUE,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
+      WHERE(DIMENSION_TAG_DIM2) WHERE(
+          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
           WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
 #undef RETURN_VALUE
+
+  Kokkos::abort("Invalid medium or property tag. Please check the input "
+                "parameters and try again.");
+  return std::make_tuple(
+      Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>(),
+      Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>());
 }
 
 std::tuple<Kokkos::View<int *, Kokkos::DefaultExecutionSpace>,
@@ -238,8 +248,14 @@ specfem::compute::receivers::get_indices_on_device(
 
   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
       RETURN_VALUE,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
+      WHERE(DIMENSION_TAG_DIM2) WHERE(
+          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
           WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
 #undef RETURN_VALUE
+
+  Kokkos::abort("Invalid medium or property tag. Please check the input "
+                "parameters and try again.");
+  return std::make_tuple(Kokkos::View<int *, Kokkos::DefaultExecutionSpace>(),
+                         Kokkos::View<int *, Kokkos::DefaultExecutionSpace>());
 }

@@ -17,39 +17,41 @@ specfem::compute::properties::properties(
   this->h_property_index_mapping =
       Kokkos::create_mirror_view(property_index_mapping);
 
-  const auto elastic_isotropic_elements = element_types.get_elements_on_host(
-      specfem::element::medium_tag::elastic,
-      specfem::element::property_tag::isotropic);
+#define GET_ELEMENTS(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                  \
+  const auto CREATE_VARIABLE_NAME(elements, GET_NAME(DIMENSION_TAG),           \
+                                  GET_NAME(MEDIUM_TAG),                        \
+                                  GET_NAME(PROPERTY_TAG)) =                    \
+      element_types.get_elements_on_host(GET_TAG(MEDIUM_TAG),                  \
+                                         GET_TAG(PROPERTY_TAG));
 
-  const auto elastic_anisotropic_elements = element_types.get_elements_on_host(
-      specfem::element::medium_tag::elastic,
-      specfem::element::property_tag::anisotropic);
+  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
+      GET_ELEMENTS,
+      WHERE(DIMENSION_TAG_DIM2) WHERE(
+          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
+          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC));
 
-  const auto acoustic_elements = element_types.get_elements_on_host(
-      specfem::element::medium_tag::acoustic,
-      specfem::element::property_tag::isotropic);
+#undef GET_ELEMENTS
 
   for (int ispec = 0; ispec < nspec; ++ispec) {
     h_property_index_mapping(ispec) = -1;
   }
 
-  acoustic_isotropic = specfem::medium::properties_container<
-      specfem::element::medium_tag::acoustic,
-      specfem::element::property_tag::isotropic>(
-      acoustic_elements, ngllz, ngllx, materials, has_gll_model,
-      h_property_index_mapping);
+#define ASSIGN_PROPERTY_CONTAINERS(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)    \
+  CREATE_VARIABLE_NAME(value, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),   \
+                       GET_NAME(PROPERTY_TAG)) =                               \
+      specfem::medium::properties_container<GET_TAG(MEDIUM_TAG),               \
+                                            GET_TAG(PROPERTY_TAG)>(            \
+          CREATE_VARIABLE_NAME(elements, GET_NAME(DIMENSION_TAG),              \
+                               GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)),  \
+          ngllz, ngllx, materials, has_gll_model, h_property_index_mapping);
 
-  elastic_isotropic = specfem::medium::properties_container<
-      specfem::element::medium_tag::elastic,
-      specfem::element::property_tag::isotropic>(
-      elastic_isotropic_elements, ngllz, ngllx, materials, has_gll_model,
-      h_property_index_mapping);
+  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
+      ASSIGN_PROPERTY_CONTAINERS,
+      WHERE(DIMENSION_TAG_DIM2) WHERE(
+          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
+          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC));
 
-  elastic_anisotropic = specfem::medium::properties_container<
-      specfem::element::medium_tag::elastic,
-      specfem::element::property_tag::anisotropic>(
-      elastic_anisotropic_elements, ngllz, ngllx, materials, has_gll_model,
-      h_property_index_mapping);
+#undef ASSIGN_PROPERTY_CONTAINERS
 
   Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);
 

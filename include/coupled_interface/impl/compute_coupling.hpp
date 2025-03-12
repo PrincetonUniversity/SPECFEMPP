@@ -10,7 +10,7 @@ namespace impl {
 
 using elastic_type =
     std::integral_constant<specfem::element::medium_tag,
-                           specfem::element::medium_tag::elastic>;
+                           specfem::element::medium_tag::elastic_sv>;
 
 using acoustic_type =
     std::integral_constant<specfem::element::medium_tag,

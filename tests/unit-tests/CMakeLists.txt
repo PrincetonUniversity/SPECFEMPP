@@ -238,6 +238,7 @@ target_link_libraries(
   gtest_main
   kokkos_environment
   yaml-cpp
+  enumerations
   Boost::filesystem
 )
 

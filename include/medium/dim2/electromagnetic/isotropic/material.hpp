@@ -2,7 +2,6 @@
 #pragma once
 
 #include "enumerations/medium.hpp"
-#include "medium/material.hpp"
 #include "point/properties.hpp"
 #include "specfem_setup.hpp"
 #include <exception>
@@ -19,8 +18,8 @@ namespace medium {
  *
  */
 template <>
-class impl_material<specfem::element::medium_tag::electromagnetic_sv,
-                    specfem::element::property_tag::isotropic> {
+class material<specfem::element::medium_tag::electromagnetic_sv,
+               specfem::element::property_tag::isotropic> {
 public:
   constexpr static auto dimension =
       specfem::dimension::type::dim2; ///< Dimension of the material
@@ -47,9 +46,9 @@ public:
    * @param Qs11 Quality factor of sig11 for attenuation
    * @param Qs33 Quality factor of sig33 for attenuation
    */
-  impl_material(type_real mu0, type_real e0, type_real e11, type_real e33,
-                type_real sig11, type_real sig33, type_real Qe11,
-                type_real Qe33, type_real Qs11, type_real Qs33)
+  material(type_real mu0, type_real e0, type_real e11, type_real e33,
+           type_real sig11, type_real sig33, type_real Qe11, type_real Qe33,
+           type_real Qs11, type_real Qs33)
       : mu0(mu0), e0(e0), e11(e11), e33(e33), sig11(sig11), sig33(sig33),
         Qe11(Qe11), Qe33(Qe33), Qs11(Qs11), Qs33(Qs33) {
           // TODO: Add checks for the material properties electromagnetic_sv
@@ -60,7 +59,7 @@ public:
    * @brief Default constructor
    *
    */
-  impl_material() = default;
+  material() = default;
 
   ///@}
 
@@ -71,9 +70,8 @@ public:
    * @return true If the materials have the same properties
    */
   bool operator==(
-      const impl_material<specfem::element::medium_tag::electromagnetic_sv,
-                          specfem::element::property_tag::isotropic> &other)
-      const {
+      const material<specfem::element::medium_tag::electromagnetic_sv,
+                     specfem::element::property_tag::isotropic> &other) const {
 
     return (std::abs(this->mu0 - other.mu0) < 1e-6 &&
             std::abs(this->e0 - other.e0) < 1e-6 &&
@@ -94,9 +92,8 @@ public:
    * @return true If the materials have different properties
    */
   bool operator!=(
-      const impl_material<specfem::element::medium_tag::electromagnetic_sv,
-                          specfem::element::property_tag::isotropic> &other)
-      const {
+      const material<specfem::element::medium_tag::electromagnetic_sv,
+                     specfem::element::property_tag::isotropic> &other) const {
     return !(*this == other);
   }
 

@@ -25,6 +25,7 @@
 
 specfem::mesh::mesh<specfem::dimension::type::dim2>
 specfem::IO::read_2d_mesh(const std::string filename,
+                          const specfem::enums::elastic_wave wave,
                           const specfem::MPI::MPI *mpi) {
 
   // Declaring empty mesh objects
@@ -89,8 +90,8 @@ specfem::IO::read_2d_mesh(const std::string filename,
   try {
     mesh.materials =
         specfem::IO::mesh::impl::fortran::dim2::read_material_properties(
-            stream, mesh.parameters.numat, mesh.nspec, mesh.control_nodes.knods,
-            mpi);
+            stream, mesh.parameters.numat, mesh.nspec, wave,
+            mesh.control_nodes.knods, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
@@ -151,20 +152,29 @@ specfem::IO::read_2d_mesh(const std::string filename,
   mpi->cout("Number of material systems = " +
             std::to_string(mesh.materials.n_materials) + "\n\n");
 
-  const auto l_elastic_isotropic =
-      mesh.materials.elastic_isotropic.element_materials;
+  // Acoustic Isotropic
   const auto l_acoustic_isotropic =
       mesh.materials.acoustic_isotropic.element_materials;
+  // Elastic Isotropic
+  const auto l_elastic_sv_isotropic =
+      mesh.materials.elastic_sv_isotropic.element_materials;
+  const auto l_elastic_sh_isotropic =
+      mesh.materials.elastic_sh_isotropic.element_materials;
 
-  const auto l_elastic_anisotropic =
-      mesh.materials.elastic_anisotropic.element_materials;
+  // Elastic Anisotropic
+  const auto l_elastic_sv_anisotropic =
+      mesh.materials.elastic_sv_anisotropic.element_materials;
+  const auto l_elastic_sh_anisotropic =
+      mesh.materials.elastic_sh_anisotropic.element_materials;
 
+  // Electromagnetic SV Isotropic
   const auto l_electromagnetic_sv_isotropic =
       mesh.materials.electromagnetic_sv_isotropic.element_materials;
 
-  int combined_mats = l_elastic_isotropic.size() + l_acoustic_isotropic.size() +
-                      l_elastic_anisotropic.size() +
-                      l_electromagnetic_sv_isotropic.size();
+  int combined_mats =
+      l_acoustic_isotropic.size() + l_elastic_sv_isotropic.size() +
+      l_elastic_sh_isotropic.size() + l_elastic_sv_anisotropic.size() +
+      l_elastic_sh_anisotropic.size() + l_electromagnetic_sv_isotropic.size();
 
   if (combined_mats != mesh.materials.n_materials) {
     std::ostringstream message;
@@ -172,32 +182,49 @@ specfem::IO::read_2d_mesh(const std::string filename,
             << __FILE__ << ":" << __LINE__ << "]\n"
             << "Total number of materials: " << mesh.materials.n_materials
             << "\n"
-            << "  elastic isotropic:............ " << l_elastic_isotropic.size()
-            << "\n"
             << "  acoustic isotropic:........... "
             << l_acoustic_isotropic.size() << "\n"
-            << "  elastic anisotropic:.......... "
-            << l_elastic_anisotropic.size() << "\n"
+            << "  elastic isotropic sv:............ "
+            << l_elastic_sv_isotropic.size() << "\n"
+            << "  elastic isotropic sh:............ "
+            << l_elastic_sh_isotropic.size() << "\n"
+            << "  elastic anisotropic sv:.......... "
+            << l_elastic_sv_anisotropic.size() << "\n"
+            << "  elastic anisotropic sh:.......... "
+            << l_elastic_sh_anisotropic.size() << "\n"
             << "  electromagnetic_sv isotropic:. "
             << l_electromagnetic_sv_isotropic.size() << "\n";
     throw std::runtime_error(message.str());
-  }
-
-  for (const auto material : l_elastic_isotropic) {
-    mpi->cout(material.print());
   }
 
   for (const auto material : l_acoustic_isotropic) {
     mpi->cout(material.print());
   }
 
-  for (const auto material : l_elastic_anisotropic) {
+  for (const auto material : l_elastic_sv_isotropic) {
+    mpi->cout(material.print());
+  }
+
+  for (const auto material : l_elastic_sh_isotropic) {
+    mpi->cout(material.print());
+  }
+
+  for (const auto material : l_elastic_sv_anisotropic) {
+    mpi->cout(material.print());
+  }
+
+  for (const auto material : l_elastic_sh_anisotropic) {
     mpi->cout(material.print());
   }
 
   for (const auto material : l_electromagnetic_sv_isotropic) {
     mpi->cout(material.print());
   }
+
+  assert(l_elastic_sv_isotropic.size() + l_acoustic_isotropic.size() +
+             l_elastic_sv_anisotropic.size() + l_elastic_sh_isotropic.size() +
+             l_elastic_sh_anisotropic.size() ==
+         mesh.materials.n_materials);
 
   mesh.tags = specfem::mesh::tags<specfem::dimension::type::dim2>(
       mesh.materials, mesh.boundaries);
