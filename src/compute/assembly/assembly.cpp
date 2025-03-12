@@ -52,5 +52,21 @@ specfem::compute::assembly::assembly(
   this->fields = { this->mesh, this->element_types, simulation };
   this->boundary_values = { max_timesteps, this->mesh, this->element_types,
                             this->boundaries };
+
+  /// Add some domain checks here for SH domains
+  const int nelastic_sh = this->element_types.get_number_of_elements(
+      specfem::element::medium_tag::elastic_sh);
+
+  const int nacoustic = this->element_types.get_number_of_elements(
+      specfem::element::medium_tag::acoustic);
+
+  if (nelastic_sh > 0 && nacoustic > 0) {
+    std::ostringstream msg;
+    msg << "Elastic SH and acoustic elements cannot be mixed in the same "
+        << "domain. We currently do not support SH and pressure wave coupling. "
+        << "Please check your MESHFEM input file.";
+
+    throw std::runtime_error(msg.str());
+  }
   return;
 }

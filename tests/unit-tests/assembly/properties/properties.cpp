@@ -73,6 +73,66 @@ std::string get_error_message(
 
 template <>
 std::string get_error_message(
+    const specfem::point::properties<specfem::dimension::type::dim2,
+                                     specfem::element::medium_tag::elastic_sv,
+                                     specfem::element::property_tag::isotropic,
+                                     false> &point_property,
+    const type_real value, const int mode) {
+
+  return get_error_message(
+      static_cast<specfem::point::properties<
+          specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+          specfem::element::property_tag::isotropic, false> >(point_property),
+      value, mode);
+}
+
+template <>
+std::string get_error_message(
+    const specfem::point::properties<
+        specfem::dimension::type::dim2,
+        specfem::element::medium_tag::elastic_sv,
+        specfem::element::property_tag::anisotropic, false> &point_property,
+    const type_real value, const int mode) {
+
+  return get_error_message(
+      static_cast<specfem::point::properties<
+          specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+          specfem::element::property_tag::anisotropic, false> >(point_property),
+      value, mode);
+}
+
+template <>
+std::string get_error_message(
+    const specfem::point::properties<specfem::dimension::type::dim2,
+                                     specfem::element::medium_tag::elastic_sh,
+                                     specfem::element::property_tag::isotropic,
+                                     false> &point_property,
+    const type_real value, const int mode) {
+
+  return get_error_message(
+      static_cast<specfem::point::properties<
+          specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+          specfem::element::property_tag::isotropic, false> >(point_property),
+      value, mode);
+}
+
+template <>
+std::string get_error_message(
+    const specfem::point::properties<
+        specfem::dimension::type::dim2,
+        specfem::element::medium_tag::elastic_sh,
+        specfem::element::property_tag::anisotropic, false> &point_property,
+    const type_real value, const int mode) {
+
+  return get_error_message(
+      static_cast<specfem::point::properties<
+          specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+          specfem::element::property_tag::anisotropic, false> >(point_property),
+      value, mode);
+}
+
+template <>
+std::string get_error_message(
     const specfem::point::properties<
         specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
         specfem::element::property_tag::isotropic, false> &point_property,
@@ -104,17 +164,19 @@ get_point_property(
 
 template <>
 specfem::point::properties<specfem::dimension::type::dim2,
-                           specfem::element::medium_tag::elastic,
+                           specfem::element::medium_tag::elastic_sv,
                            specfem::element::property_tag::isotropic, false>
 get_point_property(const int ispec, const int iz, const int ix,
                    const specfem::compute::properties &properties) {
 
-  const auto elastic_isotropic = properties.elastic_isotropic;
+  const auto elastic_isotropic =
+      properties.get_container<specfem::element::medium_tag::elastic_sv,
+                               specfem::element::property_tag::isotropic>();
 
   const int ispec_l = properties.h_property_index_mapping(ispec);
 
   specfem::point::properties<specfem::dimension::type::dim2,
-                             specfem::element::medium_tag::elastic,
+                             specfem::element::medium_tag::elastic_sv,
                              specfem::element::property_tag::isotropic, false>
       point_property;
 
@@ -128,15 +190,42 @@ get_point_property(const int ispec, const int iz, const int ix,
 
 template <>
 specfem::point::properties<specfem::dimension::type::dim2,
-                           specfem::element::medium_tag::elastic,
+                           specfem::element::medium_tag::elastic_sh,
+                           specfem::element::property_tag::isotropic, false>
+get_point_property(const int ispec, const int iz, const int ix,
+                   const specfem::compute::properties &properties) {
+
+  const auto elastic_isotropic =
+      properties.get_container<specfem::element::medium_tag::elastic_sh,
+                               specfem::element::property_tag::isotropic>();
+
+  const int ispec_l = properties.h_property_index_mapping(ispec);
+
+  specfem::point::properties<specfem::dimension::type::dim2,
+                             specfem::element::medium_tag::elastic_sh,
+                             specfem::element::property_tag::isotropic, false>
+      point_property;
+
+  point_property.rho() = elastic_isotropic.h_rho(ispec_l, iz, ix);
+  point_property.mu() = elastic_isotropic.h_mu(ispec_l, iz, ix);
+  point_property.lambdaplus2mu() =
+      elastic_isotropic.h_lambdaplus2mu(ispec_l, iz, ix);
+
+  return point_property;
+}
+
+template <>
+specfem::point::properties<specfem::dimension::type::dim2,
+                           specfem::element::medium_tag::elastic_sv,
                            specfem::element::property_tag::isotropic, false>
 get_point_property(
     const int lane,
-    const specfem::point::properties<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-        specfem::element::property_tag::isotropic, true> &point_property) {
+    const specfem::point::properties<specfem::dimension::type::dim2,
+                                     specfem::element::medium_tag::elastic_sv,
+                                     specfem::element::property_tag::isotropic,
+                                     true> &point_property) {
   specfem::point::properties<specfem::dimension::type::dim2,
-                             specfem::element::medium_tag::elastic,
+                             specfem::element::medium_tag::elastic_sv,
                              specfem::element::property_tag::isotropic, false>
       point_property_l;
 
@@ -149,17 +238,41 @@ get_point_property(
 
 template <>
 specfem::point::properties<specfem::dimension::type::dim2,
-                           specfem::element::medium_tag::elastic,
+                           specfem::element::medium_tag::elastic_sh,
+                           specfem::element::property_tag::isotropic, false>
+get_point_property(
+    const int lane,
+    const specfem::point::properties<specfem::dimension::type::dim2,
+                                     specfem::element::medium_tag::elastic_sh,
+                                     specfem::element::property_tag::isotropic,
+                                     true> &point_property) {
+  specfem::point::properties<specfem::dimension::type::dim2,
+                             specfem::element::medium_tag::elastic_sh,
+                             specfem::element::property_tag::isotropic, false>
+      point_property_l;
+
+  point_property_l.rho() = point_property.rho()[lane];
+  point_property_l.mu() = point_property.mu()[lane];
+  point_property_l.lambdaplus2mu() = point_property.lambdaplus2mu()[lane];
+
+  return point_property_l;
+}
+
+template <>
+specfem::point::properties<specfem::dimension::type::dim2,
+                           specfem::element::medium_tag::elastic_sv,
                            specfem::element::property_tag::anisotropic, false>
 get_point_property(const int ispec, const int iz, const int ix,
                    const specfem::compute::properties &properties) {
 
-  const auto elastic_anisotropic = properties.elastic_anisotropic;
+  const auto elastic_anisotropic =
+      properties.get_container<specfem::element::medium_tag::elastic_sv,
+                               specfem::element::property_tag::anisotropic>();
 
   const int ispec_l = properties.h_property_index_mapping(ispec);
 
   specfem::point::properties<specfem::dimension::type::dim2,
-                             specfem::element::medium_tag::elastic,
+                             specfem::element::medium_tag::elastic_sv,
                              specfem::element::property_tag::anisotropic, false>
       point_property;
 
@@ -179,15 +292,77 @@ get_point_property(const int ispec, const int iz, const int ix,
 
 template <>
 specfem::point::properties<specfem::dimension::type::dim2,
-                           specfem::element::medium_tag::elastic,
+                           specfem::element::medium_tag::elastic_sh,
+                           specfem::element::property_tag::anisotropic, false>
+get_point_property(const int ispec, const int iz, const int ix,
+                   const specfem::compute::properties &properties) {
+
+  const auto elastic_anisotropic =
+      properties.get_container<specfem::element::medium_tag::elastic_sh,
+                               specfem::element::property_tag::anisotropic>();
+
+  const int ispec_l = properties.h_property_index_mapping(ispec);
+
+  specfem::point::properties<specfem::dimension::type::dim2,
+                             specfem::element::medium_tag::elastic_sh,
+                             specfem::element::property_tag::anisotropic, false>
+      point_property;
+
+  point_property.rho() = elastic_anisotropic.h_rho(ispec_l, iz, ix);
+  point_property.c11() = elastic_anisotropic.h_c11(ispec_l, iz, ix);
+  point_property.c13() = elastic_anisotropic.h_c13(ispec_l, iz, ix);
+  point_property.c15() = elastic_anisotropic.h_c15(ispec_l, iz, ix);
+  point_property.c33() = elastic_anisotropic.h_c33(ispec_l, iz, ix);
+  point_property.c35() = elastic_anisotropic.h_c35(ispec_l, iz, ix);
+  point_property.c55() = elastic_anisotropic.h_c55(ispec_l, iz, ix);
+  point_property.c12() = elastic_anisotropic.h_c12(ispec_l, iz, ix);
+  point_property.c23() = elastic_anisotropic.h_c23(ispec_l, iz, ix);
+  point_property.c25() = elastic_anisotropic.h_c25(ispec_l, iz, ix);
+
+  return point_property;
+}
+
+template <>
+specfem::point::properties<specfem::dimension::type::dim2,
+                           specfem::element::medium_tag::elastic_sv,
                            specfem::element::property_tag::anisotropic, false>
 get_point_property(
     const int lane,
     const specfem::point::properties<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+        specfem::dimension::type::dim2,
+        specfem::element::medium_tag::elastic_sv,
         specfem::element::property_tag::anisotropic, true> &point_property) {
   specfem::point::properties<specfem::dimension::type::dim2,
-                             specfem::element::medium_tag::elastic,
+                             specfem::element::medium_tag::elastic_sv,
+                             specfem::element::property_tag::anisotropic, false>
+      point_property_l;
+
+  point_property_l.rho() = point_property.rho()[lane];
+  point_property_l.c11() = point_property.c11()[lane];
+  point_property_l.c13() = point_property.c13()[lane];
+  point_property_l.c15() = point_property.c15()[lane];
+  point_property_l.c33() = point_property.c33()[lane];
+  point_property_l.c35() = point_property.c35()[lane];
+  point_property_l.c55() = point_property.c55()[lane];
+  point_property_l.c12() = point_property.c12()[lane];
+  point_property_l.c23() = point_property.c23()[lane];
+  point_property_l.c25() = point_property.c25()[lane];
+
+  return point_property_l;
+}
+
+template <>
+specfem::point::properties<specfem::dimension::type::dim2,
+                           specfem::element::medium_tag::elastic_sh,
+                           specfem::element::property_tag::anisotropic, false>
+get_point_property(
+    const int lane,
+    const specfem::point::properties<
+        specfem::dimension::type::dim2,
+        specfem::element::medium_tag::elastic_sh,
+        specfem::element::property_tag::anisotropic, true> &point_property) {
+  specfem::point::properties<specfem::dimension::type::dim2,
+                             specfem::element::medium_tag::elastic_sh,
                              specfem::element::property_tag::anisotropic, false>
       point_property_l;
 
@@ -212,7 +387,9 @@ specfem::point::properties<specfem::dimension::type::dim2,
 get_point_property(const int ispec, const int iz, const int ix,
                    const specfem::compute::properties &properties) {
 
-  const auto acoustic_isotropic = properties.acoustic_isotropic;
+  const auto acoustic_isotropic =
+      properties.get_container<specfem::element::medium_tag::acoustic,
+                               specfem::element::property_tag::isotropic>();
 
   const int ispec_l = properties.h_property_index_mapping(ispec);
 
@@ -662,7 +839,7 @@ void check_load_on_device(specfem::compute::properties &properties,
             const auto point_property_l =
                 get_point_property(lane, point_property);
             for (int l = 0; l < PointType::nprops; l++) {
-              if (point_property_l.data[l] != value_l) {
+              if (std::abs(point_property_l.data[l] - value_l) > 1e-6) {
                 std::ostringstream message;
 
                 message << "\n \t Error in function load_on_device";
@@ -678,7 +855,7 @@ void check_load_on_device(specfem::compute::properties &properties,
           }
         } else if constexpr (!using_simd) {
           for (int l = 0; l < PointType::nprops; l++) {
-            if (point_property.data[l] != value_l) {
+            if (std::abs(point_property.data[l] - value_l) > 1e-6) {
               std::ostringstream message;
               message << "\n \t Error in function load_on_device";
 
@@ -712,8 +889,9 @@ void test_properties(
 
   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
       TEST_COMPUTE_TO_MESH,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
+      WHERE(DIMENSION_TAG_DIM2)
+          WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ACOUSTIC)
+              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
   // stage 2 prepare file path
   std::string output_dir = TOSTRING(TEST_OUTPUT_DIR);
@@ -739,7 +917,8 @@ void test_properties(
 
   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
       TEST_STORE_AND_LOAD,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
+      WHERE(DIMENSION_TAG_DIM2) WHERE(
+          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
           WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
 #undef TEST_STORE_AND_LOAD
@@ -752,14 +931,15 @@ void test_properties(
   // stage 5: check if properties are correctly written and read
   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
       TEST_COMPUTE_TO_MESH,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
+      WHERE(DIMENSION_TAG_DIM2) WHERE(
+          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
           WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
 #undef TEST_COMPUTE_TO_MESH
-  // check_compute_to_mesh<specfem::element::medium_tag::elastic,
+  // check_compute_to_mesh<specfem::element::medium_tag::elastic_sv,
   //                       specfem::element::property_tag::isotropic>(assembly,
   //                                                                  mesh);
-  // check_compute_to_mesh<specfem::element::medium_tag::elastic,
+  // check_compute_to_mesh<specfem::element::medium_tag::elastic_sv,
   //                       specfem::element::property_tag::anisotropic>(assembly,
   //                                                                    mesh);
   // check_compute_to_mesh<specfem::element::medium_tag::acoustic,

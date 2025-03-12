@@ -52,24 +52,32 @@ void specfem::sources::force::compute_source_array(
               "Force source requires 1 component for acoustic medium");
         }
         source_array(0, iz, ix) = hlagrange;
-      } else if ((el_type == specfem::element::medium_tag::elastic) ||
+      } else if (el_type == specfem::element::medium_tag::elastic_sh) {
+        if (ncomponents != 1) {
+          throw std::runtime_error(
+              "Force source requires 1 component for elastic SH medium");
+        }
+        source_array(0, iz, ix) = hlagrange;
+
+      } else if ((el_type == specfem::element::medium_tag::elastic_sv) ||
                  (el_type == specfem::element::medium_tag::poroelastic)) {
         if (ncomponents != 2) {
           throw std::runtime_error(
-              "Force source requires 2 components for elastic medium");
+              "Force source requires 2 components for elastic SV medium");
         }
-        if (specfem::globals::simulation_wave == specfem::wave::sh) {
-          source_array(0, iz, ix) = hlagrange;
-          source_array(1, iz, ix) = 0;
-        } else {
-          source_array(0, iz, ix) =
-              std::sin(Kokkos::numbers::pi_v<type_real> / 180 * this->angle) *
-              hlagrange;
-          source_array(1, iz, ix) =
-              -1.0 *
-              std::cos(Kokkos::numbers::pi_v<type_real> / 180 * this->angle) *
-              hlagrange;
-        }
+        source_array(0, iz, ix) =
+            std::sin(Kokkos::numbers::pi_v<type_real> / 180 * this->angle) *
+            hlagrange;
+        source_array(1, iz, ix) =
+            -1.0 *
+            std::cos(Kokkos::numbers::pi_v<type_real> / 180 * this->angle) *
+            hlagrange;
+      } else {
+        std::ostringstream message;
+        message << "Source array computation not implemented for element type: "
+                << specfem::element::to_string(el_type);
+        auto message_str = message.str();
+        Kokkos::abort(message_str.c_str());
       }
     }
   }

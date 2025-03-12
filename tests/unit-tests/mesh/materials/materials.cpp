@@ -8,26 +8,35 @@
 using MaterialVectorType = std::vector<std::variant<
     specfem::medium::material<specfem::element::medium_tag::acoustic,
                               specfem::element::property_tag::isotropic>,
-    specfem::medium::material<specfem::element::medium_tag::elastic,
+    specfem::medium::material<specfem::element::medium_tag::elastic_sv,
                               specfem::element::property_tag::isotropic>,
-    specfem::medium::material<specfem::element::medium_tag::elastic,
+    specfem::medium::material<specfem::element::medium_tag::elastic_sh,
+                              specfem::element::property_tag::isotropic>,
+    specfem::medium::material<specfem::element::medium_tag::elastic_sv,
+                              specfem::element::property_tag::anisotropic>,
+    specfem::medium::material<specfem::element::medium_tag::elastic_sh,
                               specfem::element::property_tag::anisotropic> > >;
 
 const static std::unordered_map<std::string, MaterialVectorType>
     ground_truth = {
-      { "Test 1: Simple mesh with flat topography",
+      { "Test 1: Simple mesh with flat topography (P_SV wave)",
         MaterialVectorType({ specfem::medium::material<
-            specfem::element::medium_tag::elastic,
+            specfem::element::medium_tag::elastic_sv,
             specfem::element::property_tag::isotropic>(2700.0, 1732.051, 3000.0,
                                                        9999, 9999, 0.0) }) },
-      { "Test 2: Simple mesh with curved topography",
+      { "Test 2: Simple mesh with flat topography (SH wave)",
         MaterialVectorType({ specfem::medium::material<
-            specfem::element::medium_tag::elastic,
+            specfem::element::medium_tag::elastic_sh,
             specfem::element::property_tag::isotropic>(2700.0, 1732.051, 3000.0,
                                                        9999, 9999, 0.0) }) },
-      { "Test 3: Simple mesh with flat ocean bottom",
+      { "Test 3: Simple mesh with curved topography",
         MaterialVectorType({ specfem::medium::material<
-                                 specfem::element::medium_tag::elastic,
+            specfem::element::medium_tag::elastic_sv,
+            specfem::element::property_tag::isotropic>(2700.0, 1732.051, 3000.0,
+                                                       9999, 9999, 0.0) }) },
+      { "Test 4: Simple mesh with flat ocean bottom",
+        MaterialVectorType({ specfem::medium::material<
+                                 specfem::element::medium_tag::elastic_sv,
                                  specfem::element::property_tag::isotropic>(
                                  2500.0, 1963.0, 3400.0, 9999, 9999, 0.0),
                              specfem::medium::material<
@@ -36,9 +45,9 @@ const static std::unordered_map<std::string, MaterialVectorType>
                                  1020.0, 1500, 9999, 9999, 0.0)
 
         }) },
-      { "Test 4: Simple mesh with curved ocean bottom",
+      { "Test 5: Simple mesh with curved ocean bottom",
         MaterialVectorType({ specfem::medium::material<
-                                 specfem::element::medium_tag::elastic,
+                                 specfem::element::medium_tag::elastic_sv,
                                  specfem::element::property_tag::isotropic>(
                                  2500.0, 1963.0, 3400.0, 9999, 9999, 0.0),
                              specfem::medium::material<
@@ -47,7 +56,7 @@ const static std::unordered_map<std::string, MaterialVectorType>
                                  1020.0, 1500, 9999, 9999, 0.0)
 
         }) },
-      { "Test 5: Gmesh Example",
+      { "Test 6: Gmesh Example",
         MaterialVectorType({ specfem::medium::material<
                                  specfem::element::medium_tag::acoustic,
                                  specfem::element::property_tag::isotropic>(
@@ -56,9 +65,16 @@ const static std::unordered_map<std::string, MaterialVectorType>
                                  specfem::element::medium_tag::acoustic,
                                  specfem::element::property_tag::isotropic>(
                                  1000.0, 1477.0, 10.0, 10.0, 0.0) }) },
-      { "Test 6: Homogeneous Elastic Anisotropic Material",
+      { "Test 7: Homogeneous Elastic Anisotropic Material (P_SV wave)",
         MaterialVectorType({ specfem::medium::material<
-            specfem::element::medium_tag::elastic,
+            specfem::element::medium_tag::elastic_sv,
+            specfem::element::property_tag::anisotropic>(
+            2700.0, 24299994600.5, 8099996400.35, 0.0, 24299994600.5, 0.0,
+            8100001799.8227, 8099996400.35, 8099996400.35, 0.0, 9999,
+            9999) }) },
+      { "Test 8: Homogeneous Elastic Anisotropic Material (SH wave)",
+        MaterialVectorType({ specfem::medium::material<
+            specfem::element::medium_tag::elastic_sh,
             specfem::element::property_tag::anisotropic>(
             2700.0, 24299994600.5, 8099996400.35, 0.0, 24299994600.5, 0.0,
             8100001799.8227, 8099996400.35, 8099996400.35, 0.0, 9999, 9999) }) }
@@ -100,26 +116,52 @@ void check_test(
         std::ostringstream error_message;
         throw std::runtime_error(error_message.str());
       }
-    } else if ((type == specfem::element::medium_tag::elastic) &&
+    } else if ((type == specfem::element::medium_tag::elastic_sv) &&
                (property == specfem::element::property_tag::isotropic)) {
       const auto icomputed = std::get<specfem::medium::material<
-          specfem::element::medium_tag::elastic,
+          specfem::element::medium_tag::elastic_sv,
           specfem::element::property_tag::isotropic> >(computed[ispec]);
       const auto iexpected = std::get<specfem::medium::material<
-          specfem::element::medium_tag::elastic,
+          specfem::element::medium_tag::elastic_sv,
           specfem::element::property_tag::isotropic> >(expected[imaterial]);
       if (icomputed != iexpected) {
         std::ostringstream error_message;
         error_message << "Material " << index << " is not the same";
         throw std::runtime_error(error_message.str());
       }
-    } else if ((type == specfem::element::medium_tag::elastic) &&
+    } else if ((type == specfem::element::medium_tag::elastic_sh) &&
+               (property == specfem::element::property_tag::isotropic)) {
+      const auto icomputed = std::get<specfem::medium::material<
+          specfem::element::medium_tag::elastic_sh,
+          specfem::element::property_tag::isotropic> >(computed[ispec]);
+      const auto iexpected = std::get<specfem::medium::material<
+          specfem::element::medium_tag::elastic_sh,
+          specfem::element::property_tag::isotropic> >(expected[imaterial]);
+      if (icomputed != iexpected) {
+        std::ostringstream error_message;
+        error_message << "Material " << index << " is not the same";
+        throw std::runtime_error(error_message.str());
+      }
+    } else if ((type == specfem::element::medium_tag::elastic_sv) &&
                (property == specfem::element::property_tag::anisotropic)) {
       const auto icomputed = std::get<specfem::medium::material<
-          specfem::element::medium_tag::elastic,
+          specfem::element::medium_tag::elastic_sv,
           specfem::element::property_tag::anisotropic> >(computed[ispec]);
       const auto iexpected = std::get<specfem::medium::material<
-          specfem::element::medium_tag::elastic,
+          specfem::element::medium_tag::elastic_sv,
+          specfem::element::property_tag::anisotropic> >(expected[imaterial]);
+      if (icomputed != iexpected) {
+        std::ostringstream error_message;
+        error_message << "Material " << index << " is not the same";
+        throw std::runtime_error(error_message.str());
+      }
+    } else if ((type == specfem::element::medium_tag::elastic_sh) &&
+               (property == specfem::element::property_tag::anisotropic)) {
+      const auto icomputed = std::get<specfem::medium::material<
+          specfem::element::medium_tag::elastic_sh,
+          specfem::element::property_tag::anisotropic> >(computed[ispec]);
+      const auto iexpected = std::get<specfem::medium::material<
+          specfem::element::medium_tag::elastic_sh,
           specfem::element::property_tag::anisotropic> >(expected[imaterial]);
       if (icomputed != iexpected) {
         std::ostringstream error_message;

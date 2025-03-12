@@ -22,7 +22,9 @@ namespace IO {
  *
  */
 specfem::mesh::mesh<specfem::dimension::type::dim2>
-read_2d_mesh(const std::string filename, const specfem::MPI::MPI *mpi);
+read_2d_mesh(const std::string filename,
+             const specfem::enums::elastic_wave wave,
+             const specfem::MPI::MPI *mpi);
 
 /**
  * @brief Construct a 3D mesh object from a Fortran binary database file
@@ -39,6 +41,8 @@ read_3d_mesh(const std::string mesh_parameters_file,
              const std::string mesh_databases_file,
              const specfem::MPI::MPI *mpi);
 
+specfem::mesh::mesh<specfem::dimension::type::dim3>
+read_3d_mesh(const std::string filename, const specfem::MPI::MPI *mpi);
 /**
  * @brief Read station file
  *

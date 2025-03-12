@@ -27,7 +27,7 @@ specfem::compute::boundary_value_container<DimensionType, BoundaryTag>::
       nstep, mesh, element_types, boundaries, h_property_index_mapping);
 
   elastic = specfem::compute::impl::boundary_medium_container<
-      DimensionType, specfem::element::medium_tag::elastic, BoundaryTag>(
+      DimensionType, specfem::element::medium_tag::elastic_sv, BoundaryTag>(
       nstep, mesh, element_types, boundaries, h_property_index_mapping);
 
   Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);
