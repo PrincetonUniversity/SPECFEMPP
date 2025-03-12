@@ -39,7 +39,6 @@ RUN echo "Installing SPECFEM++..." && \
     echo "========================" && \
     echo "" && \
     cd ${SOURCE} && \
-    git submodule init && git submodule update && \
     rm -rf ${BUILD} && \
     cmake -S ${SOURCE} -B ${BUILD} -D CMAKE_BUILD_TYPE=Release -D BUILD_TESTS=ON -D BUILD_EXAMPLES=ON && \
     cmake --build ${BUILD} && \
