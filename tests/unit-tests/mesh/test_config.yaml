@@ -1,6 +1,6 @@
 Tests:
-   # Test 1:
-  - name : "Test 1: Simple mesh with flat topography"
+# Simple mesh with flat topography
+  - name : "Simple mesh with flat topography"
     description: >
       Testing mesh reader on a simple mesh with flat topography.
     config:
@@ -9,8 +9,9 @@ Tests:
       mesh : "data/mesh/simple_mesh_flat_topography/database.bin"
       sources : "data/mesh/simple_mesh_flat_topography/sources.yaml"
       stations : "data/mesh/simple_mesh_flat_topography/STATIONS"
-  # Test 2:
-  - name : "Test 2: Simple mesh with curved topography"
+
+# Simple mesh with curved topography
+  - name : "Simple mesh with curved topography"
     description: >
       Testing mesh reader on a simple mesh with curved topography.
     config:
@@ -19,8 +20,9 @@ Tests:
       mesh : "data/mesh/simple_mesh_curved_topography/database.bin"
       sources : "data/mesh/simple_mesh_curved_topography/sources.yaml"
       stations : "data/mesh/simple_mesh_curved_topography/STATIONS"
-  # Test 3:
-  - name : "Test 3: Simple mesh with flat ocean bottom"
+
+# Simple mesh with flat ocean bottom
+  - name : "Simple mesh with flat ocean bottom"
     description: >
       Testing mesh reader on a simple mesh with flat ocean bottom. Fluid-solid interface is at the ocean bottom.
     config:
@@ -29,8 +31,9 @@ Tests:
       mesh : "data/mesh/fluid_solid_mesh_flat_ocean_bottom/database.bin"
       sources : "data/mesh/fluid_solid_mesh_flat_ocean_bottom/sources.yaml"
       stations : "data/mesh/fluid_solid_mesh_flat_ocean_bottom/STATIONS"
-  # Test 4:
-  - name : "Test 4: Simple mesh with curved ocean bottom"
+
+# Curved ocean bottom
+  - name : "Simple mesh with curved ocean bottom"
     description: >
       Testing mesh reader on a simple mesh with curved ocean bottom. Fluid-solid interface is at the ocean bottom.
     config:
@@ -40,8 +43,8 @@ Tests:
       sources : "data/mesh/fluid_solid_mesh_curved_ocean_bottom/sources.yaml"
       stations : "data/mesh/fluid_solid_mesh_curved_ocean_bottom/STATIONS"
 
-  # Test 5:
-  - name : "Test 5: Gmesh Example"
+# Gmesh example
+  - name : "Gmesh Example"
     description: >
       Testing mesh reader on a Gmesh example mesh.
     config:
@@ -51,9 +54,8 @@ Tests:
       sources : "data/mesh/Gmesh_Example_Stacey/sources.yaml"
       stations : "data/mesh/Gmesh_Example_Stacey/STATIONS"
 
-
-# Test 6:
-  - name : "Test 6: Homogeneous Elastic Anisotropic Material"
+# Homogeneous elastic isotropic material
+  - name : "Homogeneous Elastic Anisotropic Material"
     description: >
       Testing the reading of a homogeneous elastic anisotropic material.
     config:
