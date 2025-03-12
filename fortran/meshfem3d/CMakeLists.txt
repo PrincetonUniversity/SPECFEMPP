@@ -12,6 +12,9 @@ enable_language(C)
 set(CMAKE_Fortran_STANDARD 95)
 set(CMAKE_Fortran_STANDARD_REQUIRED ON)
 
+unset(WITH_MPI)
+unset(WITH_SCOTCH)
+
 option(ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
 option(WITH_MPI "Build with MPI support" OFF)
 option(WITH_SCOTCH "Build with SCOTCH support" OFF)
