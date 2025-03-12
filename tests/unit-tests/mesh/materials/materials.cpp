@@ -165,12 +165,12 @@ void check_test(
         error_message << "Material " << index << " is not the same ["
                       << __FILE__ << ":" << __LINE__ << "]\n"
                       << "  imaterial: " << imaterial << "\n"
-                      << "  index:     " << index << "\n";
-        << "  ispec:     " << ispec << "\n"
-        << "Computed: \n"
-        << icomputed.print() << "\n"
-        << "Expected: \n"
-        << iexpected.print() << "\n";
+                      << "  index:     " << index << "\n"
+                      << "  ispec:     " << ispec << "\n"
+                      << "Computed: \n"
+                      << icomputed.print() << "\n"
+                      << "Expected: \n"
+                      << iexpected.print() << "\n";
         throw std::runtime_error(error_message.str());
       }
     }
@@ -225,7 +225,7 @@ TEST_F(MESH, materials) {
       std::cout << "-------------------------------------------------------\n"
                 << "\033[0;31m[FAILED]\033[0m \n"
                 << "-------------------------------------------------------\n"
-                << "- Test: " << Test.name << "\n"
+                << "- Test " << Test.number << ": " << Test.name << "\n"
                 << "- Error: " << e.what() << "\n"
                 << "-------------------------------------------------------\n\n"
                 << std::endl;
