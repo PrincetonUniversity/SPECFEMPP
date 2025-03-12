@@ -7,7 +7,13 @@
 namespace specfem {
 namespace element {
 
+/// See below how this is used within assembly.
 constexpr int ntypes = 3; ///< Number of element types
+
+// TODO: Since compute fields converts these enumerations into ints, we need to
+// make sure that the order of the enumerations is such that any tag that is not
+// an element in our domain is the last. This is hack and needs to be fixed in
+// the future.
 
 /**
  * @brief Medium tag enumeration
