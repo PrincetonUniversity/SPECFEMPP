@@ -71,7 +71,11 @@ KOKKOS_FORCEINLINE_FUNCTION void divergence(
       "specfem::point::index, "
       "specfem::datatype::ScalarPointViewType<type_real, components>)");
 
+  using simd = typename IteratorType::simd;
   using datatype = typename IteratorType::simd::datatype;
+  using PointPartialDerivativesType =
+      specfem::point::partial_derivatives<specfem::dimension::type::dim2, true,
+                                          using_simd>;
 
   // Compute the integral
   Kokkos::parallel_for(
@@ -82,9 +86,13 @@ KOKKOS_FORCEINLINE_FUNCTION void divergence(
         const int iz = iterator_index.index.iz;
         const int ix = iterator_index.index.ix;
 
-        const datatype jacobian =
-            (is_host_space) ? partial_derivatives.h_jacobian(ispec, iz, ix)
-                            : partial_derivatives.jacobian(ispec, iz, ix);
+        const auto jacobian = [&]() {
+          PointPartialDerivativesType point_partial_derivatives;
+          specfem::compute::load_on_device(iterator_index.index,
+                                           partial_derivatives,
+                                           point_partial_derivatives);
+          return point_partial_derivatives.jacobian;
+        }();
 
         datatype temp1l[components] = { 0.0 };
         datatype temp2l[components] = { 0.0 };

@@ -229,9 +229,9 @@ specfem::IO::read_2d_mesh(const std::string filename,
     mpi->cout(material.print());
   }
 
-  assert((l_elastic_sv_isotropic.size() + l_elastic_sh_isotropic.size() +
-          l_acoustic_isotropic.size() + l_elastic_sv_anisotropic.size() +
-          l_elastic_sh_anisotropic.size()) == mesh.materials.n_materials);
+  assert(l_elastic_isotropic.size() + l_acoustic_isotropic.size() +
+             l_elastic_anisotropic.size() ==
+         mesh.materials.n_materials);
 
   mesh.tags = specfem::mesh::tags<specfem::dimension::type::dim2>(
       mesh.materials, mesh.boundaries);
