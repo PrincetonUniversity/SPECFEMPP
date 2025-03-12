@@ -95,27 +95,6 @@ specfem::IO::read_2d_mesh(const std::string filename,
     throw;
   }
 
-  // try {
-  //   materials = specfem::mesh::IO::fortran::read_material_properties(
-  //       stream, this->parameters.numat, mpi);
-  // } catch (std::runtime_error &e) {
-  //   throw;
-  // }
-
-  // try {
-  //   this->material_ind = specfem::mesh::material_ind(
-  //       stream, this->parameters.ngnod, this->nspec, this->parameters.numat,
-  //       this->control_nodes.knods, mpi);
-  // } catch (std::runtime_error &e) {
-  //   throw;
-  // }
-
-  // try {
-  //   this->interface = specfem::mesh::interfaces::interface(stream, mpi);
-  // } catch (std::runtime_error &e) {
-  //   throw;
-  // }
-
   int ninterfaces;
   int max_interface_size;
 
@@ -129,30 +108,6 @@ specfem::IO::read_2d_mesh(const std::string filename,
   } catch (std::runtime_error &e) {
     throw;
   }
-
-  // try {
-  //   this->boundaries.absorbing_boundary = specfem::mesh::absorbing_boundary(
-  //       stream, this->parameters.nelemabs, this->parameters.nspec, mpi);
-  // } catch (std::runtime_error &e) {
-  //   throw;
-  // }
-
-  // try {
-  //   this->boundaries.forcing_boundary = specfem::mesh::forcing_boundary(
-  //       stream, this->parameters.nelem_acforcing, this->parameters.nspec,
-  //       mpi);
-  // } catch (std::runtime_error &e) {
-  //   throw;
-  // }
-
-  // try {
-  //   this->boundaries.acoustic_free_surface =
-  //       specfem::mesh::acoustic_free_surface(
-  //           stream, this->parameters.nelem_acoustic_surface,
-  //           this->control_nodes.knods, mpi);
-  // } catch (std::runtime_error &e) {
-  //   throw;
-  // }
 
   try {
     mesh.coupled_interfaces =
