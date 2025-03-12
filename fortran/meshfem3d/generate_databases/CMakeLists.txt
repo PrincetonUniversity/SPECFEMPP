@@ -8,8 +8,8 @@ project(MESHFEM3D_MESHFEM3D LANGUAGES Fortran C)
 set(CMAKE_Fortran_STANDARD 95)
 set(CMAKE_Fortran_STANDARD_REQUIRED ON)
 
-set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/fortran/meshfem3d/modules)
-include_directories("${CMAKE_BINARY_DIR}/fortran/meshfem3d/modules")
+# set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../modules)
+# include_directories(CMAKE_Fortran_MODULE_DIRECTORY)
 
 set(MESHFEM3D_GENERATE_DATABASES_MODULE
   calc_jacobian.f90
@@ -19,6 +19,7 @@ set(MESHFEM3D_GENERATE_DATABASES_MODULE
   finalize_databases.f90
   # generate_databases_par.F90
   generate_databases.f90
+  command_line_arguments.f90
   get_absorbing_boundary.F90
   get_coupling_surfaces.f90
   get_model.F90
@@ -42,6 +43,7 @@ set(MESHFEM3D_GENERATE_DATABASES_MODULE
   read_parameters.f90
   read_partition_files.f90
   save_arrays_solver.F90
+  save_parameters.f90
   setup_color_perm.f90
   setup_mesh_adjacency.f90
   setup_mesh.f90

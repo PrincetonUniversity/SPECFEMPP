@@ -8,8 +8,11 @@ project(MESHFEM3D_SHARED LANGUAGES Fortran C)
 set(CMAKE_Fortran_STANDARD 95)
 set(CMAKE_Fortran_STANDARD_REQUIRED ON)
 
-set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/fortran/meshfem3d/modules)
-include_directories("${CMAKE_BINARY_DIR}/fortran/meshfem3d/modules")
+# set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/../modules)
+# include_directories("${CMAKE_Fortran_MODULE_DIRECTORY}")
+
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/../setup)
+
 
 set(MESHFEM3D_SHARED_MODULE
   serial.f90
@@ -35,7 +38,7 @@ set(MESHFEM3D_SHARED_MODULE
   merge_sort.f90
   netlib_specfun_erf.f90
   prepare_assemble_MPI.f90
-  command_line_arguments.f90
+  # command_line_arguments.f90
   read_parameter_file.F90
   read_topo_bathy_file.f90
   read_value_parameters.f90
@@ -48,11 +51,9 @@ set(MESHFEM3D_SHARED_MODULE
   write_VTK_data.f90
 )
 
-add_library(meshfem3D_shared_module
-    shared_par.F90
-)
+add_library(meshfem3D_shared_module shared_par.F90)
 add_library(meshfem3D::shared_module ALIAS meshfem3D_shared_module)
-target_link_libraries(meshfem3D_shared_module PRIVATE
+target_link_libraries(meshfem3D_shared_module
   meshfem3D::constants
 )
 
@@ -74,6 +75,7 @@ if (ADIOS)
   add_library(meshfem3D::adios_helpers_addons ALIAS meshfem3D_adios_helpers_addons)
   target_link_libraries(meshfem3D_adios_helpers_addons PRIVATE
     meshfem3D::config
+    meshfem3D::constants
   )
 
   list(APPEND SHARED_ADIOS_MODULES
@@ -126,4 +128,5 @@ target_link_libraries(meshfem3D_shared PRIVATE
   meshfem3D::shared_module
   meshfem3D::constants
   meshfem3D::shared_hdf5_module
+  meshfem3D::param_reader
 )

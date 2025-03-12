@@ -7,7 +7,7 @@
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
 #include "macros.hpp"
-#include "mesh/coupled_interfaces/coupled_interfaces.hpp"
+#include "mesh/mesh.hpp"
 
 // // Topological map ordering for coupled elements
 

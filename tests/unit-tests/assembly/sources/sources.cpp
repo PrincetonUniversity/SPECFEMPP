@@ -281,7 +281,7 @@ void test_assembly_source_construction(
 #undef TEST_ASSEMBLY_SOURCE_CONSTRUCTION
 }
 
-void test_sources(specfem::compute::assembly &assembly) {
+void test_sources(specfem::compute::assembly &assembly){
 
 #define TEST_STORE_LOAD(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, BOUNDARY_TAG) \
   check_store<GET_TAG(DIMENSION_TAG), GET_TAG(MEDIUM_TAG),                     \
@@ -295,9 +295,10 @@ void test_sources(specfem::compute::assembly &assembly) {
       TEST_STORE_LOAD,
       WHERE(DIMENSION_TAG_DIM2)
           WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ACOUSTIC)
-              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC) WHERE(
-                  BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-                  BOUNDARY_TAG_STACEY, BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
+              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)
+                  WHERE(BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
+                        BOUNDARY_TAG_STACEY,
+                        BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
 
 #undef TEST_STORE_LOAD
 }
@@ -306,7 +307,7 @@ TEST_F(ASSEMBLY, sources) {
   for (auto parameters : *this) {
     const auto Test = std::get<0>(parameters);
     auto sources = std::get<2>(parameters);
-    specfem::compute::assembly assembly = std::get<4>(parameters);
+    specfem::compute::assembly assembly = std::get<5>(parameters);
 
     try {
       test_assembly_source_construction(sources, assembly);

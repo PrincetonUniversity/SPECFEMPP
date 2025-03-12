@@ -1,15 +1,47 @@
+project(meshfem2D Fortran C)
+
 cmake_minimum_required(VERSION 3.10)
-
-message("-- Building meshfem2D along with this project")
-message("--     MESHFEM2D is build without MPI support")
-message("--     MESHFEM2D is build without SCOTCH support")
-
-unset(WITH_MPI)
-unset(WITH_SCOTCH)
 
 # Set the Fortran compiler
 enable_language(Fortran)
 enable_language(C)
+
+# Options
+option(ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
+option(WITH_MPI "Build with MPI support" OFF)
+option(WITH_SCOTCH "Build with SCOTCH support" OFF)
+option(FORCE_VECTORIZATION "Force vectorization" OFF)
+
+# Print options to the screen
+
+# Set output file directories
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/modules)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/archive)
+
+# Custom variables
+set(SETUP_DIR ${CMAKE_CURRENT_BINARY_DIR}/setup)
+
+# Set include directories
+include_directories("${CMAKE_Fortran_MODULE_DIRECTORY}")
+include_directories(${SETUP_DIR})
+
+# Setting values dependent on options
+if (ENABLE_DOUBLE_PRECISION)
+    message(STATUS "-- Enabling double precision")
+    # These are used by Meshfem
+    set(CUSTOM_REAL "SIZE_DOUBLE")
+    set(CUSTOM_MPI_TYPE "MPI_DOUBLE_PRECISION")
+
+else(ENABLE_DOUBLE_PRECISION)
+    message(STATUS "-- Enabling single precision")
+    # These are used by Meshfem
+    set(CUSTOM_REAL "SIZE_REAL")
+    set(CUSTOM_MPI_TYPE "MPI_REAL")
+endif(ENABLE_DOUBLE_PRECISION)
+
+# Configure files
+add_subdirectory(setup)
 
 # Set the C compiler
 set(FCFLAGS_f90 -g -O2 -fbacktrace)
@@ -19,19 +51,19 @@ if (DEFINED ENV{CFLAGS})
     set(CFLAGS "$ENV{CFLAGS}")
 endif()
 
-message("-- CFLAGS: ${CFLAGS}")
+message(STATUS "-- CFLAGS: ${CFLAGS}")
 
 # Check if Clang
 if (CMAKE_C_COMPILER_ID MATCHES "Clang")
     set(CLANG TRUE)
-    message("-- Detected usage of clang on macOS")
+    message(STATUS "-- Detected usage of clang on macOS")
 endif()
 
 # Fix for macos and clang include files... sometimes I hate mac.
 # If we are on macOS the __APPLE__ variable is defined in the CMakeLists.txt file
 # in the main directory.
 if (__APPLE__ AND CLANG)
-    message("-- Fixing include files for macOS and Clang")
+    message(STATUS "-- Fixing include files for macOS and Clang")
     set (FCFLAGS_f90 "${FCFLAGS_f90}")
     # In the future, we can use the following line to add the flags to the compiler
     # add_compile_options($<$<COMPILE_LANGUAGE:C>:-isysroot/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk>)
@@ -44,204 +76,142 @@ if (__APPLE__ AND CLANG)
     endif()
 endif()
 
-message("-- CFLAGS: ${CFLAGS}")
+message(STATUS "-- CFLAGS: ${CFLAGS}")
 
-
-## ========= MACROS =========
-# define macro wrapper on custom command
-macro(build_fortran_command module_name dependecies)
-    get_filename_component(source_file_name ${module_name} NAME_WE)
-    add_custom_command(
-        OUTPUT ${module_name}
-        COMMAND ${CMAKE_Fortran_COMPILER} ${FCFLAGS_f90} -c -o ${module_name} ${CMAKE_CURRENT_SOURCE_DIR}/${source_file_name}.f90
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${source_file_name}.f90 ${dependecies}
-    )
-endmacro()
-
-macro(build_fortran_command_preprocess module_name dependecies)
-    get_filename_component(source_file_name ${module_name} NAME_WE)
-    add_custom_command(
-        OUTPUT ${module_name}
-        COMMAND ${CMAKE_Fortran_COMPILER} ${FCFLAGS_f90} -c -o ${module_name} ${CMAKE_CURRENT_SOURCE_DIR}/${source_file_name}.F90
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${source_file_name}.F90 ${dependecies}
-    )
-endmacro()
-
-# define macro wrapper on custom command
-macro(build_cc_command module_name)
-    get_filename_component(source_file_name ${module_name} NAME_WE)
-    add_custom_command(
-        OUTPUT ${module_name}
-        COMMAND ${CMAKE_C_COMPILER} ${CFLAGS} -c -o ${module_name} ${CMAKE_CURRENT_SOURCE_DIR}/${source_file_name}.c
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${source_file_name}.c config.h
-    )
-endmacro()
-## ========= MACROS =========
-
-set (SHARED_MODULE
-    shared_par.shared_module.o
+# Shared Fortran Module
+add_library(meshfem2D_shared_module shared_par.f90)
+add_library(meshfem2D::shared_module ALIAS meshfem2D_shared_module)
+target_link_libraries(
+    meshfem2D_shared_module
+    PUBLIC
+    meshfem2D::constants
+    meshfem2D::precision
+    meshfem2D::version
+    meshfem2D::config
+    meshfem2D::fh_config
 )
 
-build_fortran_command(${SHARED_MODULE} ${CMAKE_CURRENT_SOURCE_DIR}/constants.h)
+# Utilities
+add_library(meshfem2D_mesh_utilities
+    command_line_arguments.f90
+    file_management.f90
+)
+add_library(meshfem2D::mesh_utilities ALIAS meshfem2D_mesh_utilities)
+target_link_libraries(meshfem2D_mesh_utilities PRIVATE meshfem2D::shared_module)
 
-add_custom_target(shared_module ALL
-    DEPENDS ${SHARED_MODULE}
+
+# Shared MPI Objects
+add_library(meshfem2D_shared_mpi
+    read_parameter_file.F90
+    parallel.F90
+    exit_mpi.F90
+)
+add_library(meshfem2D::shared_mpi ALIAS meshfem2D_shared_mpi)
+target_link_libraries(meshfem2D_shared_mpi
+  PRIVATE
+  meshfem2D::mesh_utilities
+  meshfem2D::shared_objects
+  )
+
+
+# Shared Objects
+add_library(meshfem2D_shared_objects
+    define_shape_functions.f90
+    gll_library.f90
+    lagrange_poly.f90
+    read_interfaces_file.f90
+    read_material_table.f90
+    read_regions.f90
+    read_source_file.f90
+    read_value_parameters.f90
+    set_color_palette.f90
+    spline_routines.f90
+    write_VTK_data.f90
+)
+add_library(meshfem2D::shared_objects ALIAS meshfem2D_shared_objects)
+target_link_libraries(meshfem2D_shared_objects
+  PRIVATE
+  meshfem2D::shared_module
+  meshfem2D::shared_mpi
+  )
+
+# C Source Compilation
+add_library(meshfem2D_cc_objects OBJECT
+    force_ftz.c
+    param_reader.c
+)
+add_library(meshfem2D::cc_objects ALIAS meshfem2D_cc_objects)
+
+
+
+# MeshFEM Shared Module
+add_library(meshfem2D_paramaters
+  meshfem2D_par.f90)
+add_library(meshfem2D::parameters ALIAS meshfem2D_paramaters)
+target_link_libraries(meshfem2D_paramaters PRIVATE meshfem2D::shared_module)
+
+# Compute Elements Load
+add_library(meshfem2D_compute_elements_load
+    compute_elements_load_par.f90)
+add_library(meshfem2D::compute_elements_load ALIAS meshfem2D_compute_elements_load)
+target_link_libraries(meshfem2D_compute_elements_load
+    PRIVATE
+    meshfem2D::shared_module
+    meshfem2D::parameters
 )
 
-set (UTILITIES
-    command_line_arguments.mesh_utilities.o
-    file_management.mesh_utilities.o
+# MeshFEM Objects
+add_library(meshfem2D_mesh
+    determine_abs_surface.f90
+    determine_acoustic_surface.f90
+    get_node_number.f90
+    repartition_coupling.f90
+    rotate_mesh.f90
+    save_databases.f90
+    save_gnuplot_file.f90
+    save_stations_file.f90
+)
+add_library(meshfem2D::mesh ALIAS meshfem2D_mesh)
+target_link_libraries(meshfem2D_mesh
+  PRIVATE
+  meshfem2D::shared_module
+  meshfem2D::parameters)
+
+# MeshFEM Preprocessor Objects
+add_library(meshfem2D_mesh_mpi
+    decompose_mesh.F90
+    metis_partitioning.F90
+    part_unstruct.F90
+    read_external_mesh_files.F90
+    read_mesh_files.F90
+    scotch_partitioning.F90
+    meshfem2D.F90
+)
+add_library(meshfem2D::mesh_mpi ALIAS meshfem2D_mesh_mpi)
+target_link_libraries(meshfem2D_mesh_mpi
+  PRIVATE
+  meshfem2D::shared_module
+  meshfem2D::parameters
+  meshfem2D::mesh
 )
 
-foreach(module_files ${UTILITIES})
-    build_fortran_command(${module_files} shared_module)
-endforeach()
-
-add_custom_target(mesh_utilities ALL
-    DEPENDS ${UTILITIES}
+# Executable
+add_executable(xmeshfem2D
+    meshfem2D.F90
 )
-
-# shared objects
-set(shared_OBJECTS
-    define_shape_functions.shared.o;
-    gll_library.shared.o;
-    lagrange_poly.shared.o;
-    read_interfaces_file.shared.o;
-    read_material_table.shared.o;
-    read_regions.shared.o;
-    read_source_file.shared.o;
-    read_value_parameters.shared.o;
-    set_color_palette.shared.o;
-    spline_routines.shared.o;
-    write_VTK_data.shared.o
-    CACHE INTERNAL "shared objects"
-)
-
-# Add a custom command to compile each object file
-foreach(module_files ${shared_OBJECTS})
-    build_fortran_command(${module_files} shared_module)
-endforeach()
-
-# Add a library target for the shared objects
-add_custom_target(shared ALL
-    DEPENDS ${shared_OBJECTS}
-)
-
-set(cc_OBJECTS
-    force_ftz.cc.o;
-    param_reader.cc.o
+target_link_libraries(
+    xmeshfem2D
+    PRIVATE
+    meshfem2D::compute_elements_load
+    meshfem2D::mesh
+    meshfem2D::mesh_mpi
+    meshfem2D::parameters
+    meshfem2D::shared_module
+    meshfem2D::shared_mpi
+    meshfem2D::mesh_utilities
+    meshfem2D::cc_objects
 )
 
 
-# Add a custom command to compile each object file
-
-foreach(module_files ${cc_OBJECTS})
-    build_cc_command(${module_files})
-endforeach()
-
-# Add a library target for the shared objects
-add_custom_target(cc ALL
-    DEPENDS ${cc_OBJECTS}
-)
-
-set(SHARED_MPI_LIBS
-    read_parameter_file.shared.o;
-    parallel.sharedmpi.o;
-    exit_mpi.shared.o
-    CACHE INTERNAL "shared MPI objects"
-)
-
-foreach(module_files ${SHARED_MPI_LIBS})
-    build_fortran_command_preprocess(${module_files} shared_module)
-endforeach()
-
-# Add a library target for the shared objects
-add_custom_target(shared_mpi ALL
-    DEPENDS ${SHARED_MPI_LIBS}
-)
-
-set(MESHFEM_SHARED_OBJECTS
-    ${SHARED_MODULE}
-    ${UTILITIES}
-    ${shared_OBJECTS}
-    ${SHARED_MPI_LIBS}
-    ${cc_OBJECTS}
-)
-
-set( MESHFEM_SHARED_MODULE
-    meshfem2D_par.mesh_module.o
-)
-
-build_fortran_command(${MESHFEM_SHARED_MODULE} shared_module)
-
-add_custom_target(mesh_module ALL
-    DEPENDS ${MESHFEM_SHARED_MODULE}
-)
-
-set (MESHFEM_COMPUTE_ELEMENTS_LOAD
-    compute_elements_load_par.mesh.o)
-
-build_fortran_command(${MESHFEM_COMPUTE_ELEMENTS_LOAD} mesh_module)
-
-add_custom_target(compute_elements_load ALL
-    DEPENDS ${MESHFEM_COMPUTE_ELEMENTS_LOAD}
-)
-
-set( meshfem2D_OBJECTS
-    determine_abs_surface.mesh.o
-    determine_acoustic_surface.mesh.o
-    get_node_number.mesh.o
-    repartition_coupling.mesh.o
-    rotate_mesh.mesh.o
-    save_databases.mesh.o
-    save_gnuplot_file.mesh.o
-    save_stations_file.mesh.o
-)
-
-foreach(module_files ${meshfem2D_OBJECTS})
-    build_fortran_command(${module_files} mesh_module)
-endforeach()
-
-add_custom_target(meshfem_mesh ALL
-    DEPENDS ${meshfem2D_OBJECTS}
-)
-
-set( meshfem2D_PREPROCESSOR_OBJECTS
-    decompose_mesh.mesh.o
-    metis_partitioning.mesh.o
-    part_unstruct.mesh.o
-    read_external_mesh_files.mesh.o
-    read_mesh_files.mesh.o
-    scotch_partitioning.mesh.o
-    meshfem2D.mesh.o
-)
-
-foreach(module_files ${meshfem2D_PREPROCESSOR_OBJECTS})
-    build_fortran_command_preprocess(${module_files} compute_elements_load)
-endforeach()
-
-add_custom_target(mesh_mpi ALL
-    DEPENDS ${meshfem2D_PREPROCESSOR_OBJECTS}
-)
-
-set( MESHFEM_OBJECTS
-    ${MESHFEM_SHARED_MODULE}
-    ${MESHFEM_COMPUTE_ELEMENTS_LOAD}
-    ${meshfem2D_OBJECTS}
-    ${meshfem2D_PREPROCESSOR_OBJECTS}
-)
-
-add_custom_command(
-    OUTPUT meshfem2D
-    COMMAND ${CMAKE_Fortran_COMPILER} ${FCFLAGS_f90} -o ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/xmeshfem2D ${MESHFEM_OBJECTS} ${MESHFEM_SHARED_OBJECTS}
-    DEPENDS ${MESHFEM_OBJECTS} ${MESHFEM_SHARED_OBJECTS}
-)
-
-add_custom_target(meshfem2D_exec ALL
-    DEPENDS meshfem2D
-)
-
-add_custom_target(xadj_seismogram ALL
-    COMMAND ${CMAKE_Fortran_COMPILER} ${FCFLAGS_f90} -o ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/xadj_seismogram ${CMAKE_CURRENT_SOURCE_DIR}/adj_seismogram.f90
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/adj_seismogram.f90
-)
+# Additional Executable
+add_executable(xadj_seismogram adj_seismogram.f90)

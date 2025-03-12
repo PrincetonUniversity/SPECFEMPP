@@ -18,7 +18,7 @@
 namespace test_config {
 struct database {
 public:
-  database() : specfem_config(""), traces(""){};
+  database() : specfem_config(""), traces("") {};
   database(const YAML::Node &Node) {
     specfem_config = Node["specfem_config"].as<std::string>();
     // check if node elastic_domain_field exists
@@ -34,7 +34,7 @@ public:
 
 struct configuration {
 public:
-  configuration() : number_of_processors(0){};
+  configuration() : number_of_processors(0) {};
   configuration(const YAML::Node &Node) {
     number_of_processors = Node["nproc"].as<int>();
   }
@@ -150,7 +150,7 @@ specfem::testing::array2d<type_real, Kokkos::LayoutLeft> compact_array(
 }
 
 TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
-  std::string config_filename = "../../../tests/unit-tests/displacement_tests/"
+  std::string config_filename = "displacement_tests/"
                                 "Newmark/test_config.yaml";
 
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
@@ -175,7 +175,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
     const auto quadratures = setup.instantiate_quadrature();
 
     // Read mesh generated MESHFEM
-    specfem::mesh::mesh mesh = specfem::IO::read_mesh(
+    specfem::mesh::mesh mesh = specfem::IO::read_2d_mesh(
         database_file, specfem::enums::elastic_wave::p_sv, mpi);
     const type_real dt = setup.get_dt();
     const int nsteps = setup.get_nsteps();

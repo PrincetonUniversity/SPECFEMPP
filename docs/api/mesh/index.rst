@@ -11,8 +11,5 @@ SPECFEM++ Mesh
 .. toctree::
     :maxdepth: 1
 
-    boundaries/index
-    control_nodes/index
-    coupled_interfaces/index
-    materials/index
-    tags/index
+    dim2/index
+    dim3/index

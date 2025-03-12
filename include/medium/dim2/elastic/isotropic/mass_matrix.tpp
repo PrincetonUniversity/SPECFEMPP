@@ -14,8 +14,8 @@ specfem::medium::impl_mass_matrix_component(
         specfem::dimension::type::dim2, true, UseSIMD> &partial_derivatives) {
 
   return specfem::datatype::ScalarPointViewType<type_real, 2, UseSIMD>(
-      partial_derivatives.jacobian * properties.rho,
-      partial_derivatives.jacobian * properties.rho);
+      partial_derivatives.jacobian * properties.rho(),
+      partial_derivatives.jacobian * properties.rho());
 }
 
 template <bool UseSIMD, specfem::element::property_tag PropertyTag>
@@ -30,5 +30,5 @@ specfem::medium::impl_mass_matrix_component(
         specfem::dimension::type::dim2, true, UseSIMD> &partial_derivatives) {
 
   return specfem::datatype::ScalarPointViewType<type_real, 1, UseSIMD>(
-      partial_derivatives.jacobian * properties.rho);
+      partial_derivatives.jacobian * properties.rho());
 }

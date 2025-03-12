@@ -12,8 +12,7 @@ TEST(IO_TESTS, read_sources) {
    *  This test checks whether a moment tensor source is read correctly
    */
 
-  std::string sources_file =
-      "../../../tests/unit-tests/IO/sources/data/single_moment_tensor.yml";
+  std::string sources_file = "IO/sources/data/single_moment_tensor.yml";
 
   YAML::Node databases;
   databases["sources"] = sources_file;

@@ -27,7 +27,7 @@ KOKKOS_INLINE_FUNCTION auto impl_compute_source_contribution(
 
   result.acceleration(0) = point_source.stf(0) *
                            point_source.lagrange_interpolant(0) /
-                           point_properties.kappa;
+                           point_properties.kappa();
 
   return result;
 }
