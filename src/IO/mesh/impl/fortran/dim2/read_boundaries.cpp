@@ -1,4 +1,4 @@
-#include "IO/mesh/impl/fortran/read_boundaries.hpp"
+#include "IO/mesh/impl/fortran/dim2/read_boundaries.hpp"
 #include "IO/fortranio/interface.hpp"
 #include "mesh/boundaries/boundaries.hpp"
 #include "specfem_mpi/interface.hpp"

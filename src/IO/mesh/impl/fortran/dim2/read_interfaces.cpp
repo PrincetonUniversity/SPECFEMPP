@@ -1,4 +1,4 @@
-#include "IO/mesh/impl/fortran/read_interfaces.hpp"
+#include "IO/mesh/impl/fortran/dim2/read_interfaces.hpp"
 #include "IO/fortranio/interface.hpp"
 #include "mesh/coupled_interfaces/coupled_interfaces.hpp"
 #include "mesh/coupled_interfaces/interface_container.hpp"

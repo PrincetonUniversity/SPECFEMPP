@@ -34,7 +34,7 @@ ASSEMBLY::ASSEMBLY() {
         Test.get_databases();
 
     const auto wave = Test.get_elastic_wave();
-    const auto mesh = specfem::IO::read_mesh(database_file, wave, mpi);
+    const auto mesh = specfem::IO::read_2d_mesh(database_file, wave, mpi);
 
     this->Meshes.push_back(mesh);
 

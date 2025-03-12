@@ -28,7 +28,8 @@ MESH::MESH() {
         Test.get_databases();
 
     const auto wave = Test.get_elastic_wave();
-    specfem::mesh::mesh mesh = specfem::IO::read_mesh(database_file, wave, mpi);
+    specfem::mesh::mesh mesh =
+        specfem::IO::read_2d_mesh(database_file, wave, mpi);
 
     meshes.push_back(mesh);
   }

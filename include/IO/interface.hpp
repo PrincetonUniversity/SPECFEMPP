@@ -22,9 +22,12 @@ namespace IO {
  *
  */
 specfem::mesh::mesh<specfem::dimension::type::dim2>
-read_mesh(const std::string filename, const specfem::enums::elastic_wave wave,
-          const specfem::MPI::MPI *mpi);
+read_2d_mesh(const std::string filename,
+             const specfem::enums::elastic_wave wave,
+             const specfem::MPI::MPI *mpi);
 
+specfem::mesh::mesh<specfem::dimension::type::dim3>
+read_3d_mesh(const std::string filename, const specfem::MPI::MPI *mpi);
 /**
  * @brief Read station file
  *
