@@ -453,6 +453,7 @@ target_link_libraries(
         source_time_function
         yaml-cpp
         point
+        enumerations
         algorithms
         ${BOOST_LIBS}
 )
