@@ -7,19 +7,13 @@
 namespace specfem {
 namespace element {
 
-constexpr int ntypes = 2; ///< Number of element types
+constexpr int ntypes = 4; ///< Number of element types
 
 /**
  * @brief Medium tag enumeration
  *
  */
-enum class medium_tag {
-  elastic,
-  acoustic,
-  poroelastic,
-  electromagnetic_sv,
-  electromagnetic_sh
-};
+enum class medium_tag { elastic, acoustic, poroelastic, electromagnetic_sv };
 
 /**
  * @brief Property tag enumeration

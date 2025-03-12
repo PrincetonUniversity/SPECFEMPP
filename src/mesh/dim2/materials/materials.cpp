@@ -12,8 +12,6 @@ std::variant<
     specfem::medium::material<specfem::element::medium_tag::acoustic,
                               specfem::element::property_tag::isotropic>,
     specfem::medium::material<specfem::element::medium_tag::electromagnetic_sv,
-                              specfem::element::property_tag::isotropic>,
-    specfem::medium::material<specfem::element::medium_tag::electromagnetic_sh,
                               specfem::element::property_tag::isotropic> >
 specfem::mesh::materials<specfem::dimension::type::dim2>::operator[](
     const int index) const {
@@ -28,37 +26,39 @@ specfem::mesh::materials<specfem::dimension::type::dim2>::operator[](
           specfem::element::property_tag::isotropic) {
     return this->elastic_isotropic
         .element_materials[material_specification.index];
-
-    // Return elastic anisotropic
-  } else if (material_specification.type ==
-                 specfem::element::medium_tag::elastic &&
-             material_specification.property ==
-                 specfem::element::property_tag::anisotropic) {
+  }
+  // Return elastic anisotropic
+  else if (material_specification.type ==
+               specfem::element::medium_tag::elastic &&
+           material_specification.property ==
+               specfem::element::property_tag::anisotropic) {
     return this->elastic_anisotropic
         .element_materials[material_specification.index];
-
-    // Return acoustic isotropic
-  } else if (material_specification.type ==
-                 specfem::element::medium_tag::acoustic &&
-             material_specification.property ==
-                 specfem::element::property_tag::isotropic) {
+  }
+  // Return acoustic isotropic
+  else if (material_specification.type ==
+               specfem::element::medium_tag::acoustic &&
+           material_specification.property ==
+               specfem::element::property_tag::isotropic) {
     return this->acoustic_isotropic
         .element_materials[material_specification.index];
-    // Throw an error if the material type is not supported
-  } else if (material_specification.type ==
-                 specfem::element::medium_tag::electromagnetic_sv &&
-             material_specification.property ==
-                 specfem::element::property_tag::isotropic) {
+
+  }
+  // Return electromagnetic_sv_isotropic
+  else if (material_specification.type ==
+               specfem::element::medium_tag::electromagnetic_sv &&
+           material_specification.property ==
+               specfem::element::property_tag::isotropic) {
     return this->electromagnetic_sv_isotropic
         .element_materials[material_specification.index];
-  } else if (material_specification.type ==
-                 specfem::element::medium_tag::electromagnetic_sh &&
-             material_specification.property ==
-                 specfem::element::property_tag::isotropic) {
-    return this->electromagnetic_sh_isotropic
-        .element_materials[material_specification.index];
-  } else {
-    throw std::runtime_error("Material type not supported");
+  }
+  // Throw an error if the material type is not supported
+  else {
+    std::ostringstream error_message;
+    error_message << "Material type at index " << index
+                  << " is not supported: [" << __FILE__ << ":" << __LINE__
+                  << "]";
+    throw std::runtime_error(error_message.str());
   }
 
   return {};

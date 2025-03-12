@@ -1,6 +1,7 @@
 
 #include "../test_fixture/test_fixture.hpp"
 #include "mesh/mesh.hpp"
+#include <cmath>
 #include <unordered_map>
 #include <variant>
 #include <vector>
@@ -11,7 +12,9 @@ using MaterialVectorType = std::vector<std::variant<
     specfem::medium::material<specfem::element::medium_tag::elastic,
                               specfem::element::property_tag::isotropic>,
     specfem::medium::material<specfem::element::medium_tag::elastic,
-                              specfem::element::property_tag::anisotropic> > >;
+                              specfem::element::property_tag::anisotropic>,
+    specfem::medium::material<specfem::element::medium_tag::electromagnetic_sv,
+                              specfem::element::property_tag::isotropic> > >;
 
 const static std::unordered_map<std::string, MaterialVectorType>
     ground_truth = {
@@ -61,7 +64,22 @@ const static std::unordered_map<std::string, MaterialVectorType>
             specfem::element::medium_tag::elastic,
             specfem::element::property_tag::anisotropic>(
             2700.0, 24299994600.5, 8099996400.35, 0.0, 24299994600.5, 0.0,
-            8100001799.8227, 8099996400.35, 8099996400.35, 0.0, 9999, 9999) }) }
+            8100001799.8227, 8099996400.35, 8099996400.35, 0.0, 9999,
+            9999) }) },
+      { "Electro-magnetic mesh example from Morency 2020",
+        MaterialVectorType(
+            { specfem::medium::material<
+                  specfem::element::medium_tag::electromagnetic_sv,
+                  specfem::element::property_tag::isotropic>(
+                  12.566 * std::pow(10, -7), 8.85 * std::pow(10, -12), 5.0, 5.0,
+                  2.0 * std::pow(10, -3), 2.0 * std::pow(10, -3), 90.0, 90.0,
+                  90.0, 90.0),
+              specfem::medium::material<
+                  specfem::element::medium_tag::electromagnetic_sv,
+                  specfem::element::property_tag::isotropic>(
+                  12.566 * std::pow(10, -7), 8.85 * std::pow(10, -12), 1.0, 1.0,
+                  0.0 * std::pow(10, -3), 0.0 * std::pow(10, -3), 90.0, 90.0,
+                  90.0, 90.0) }) }
     };
 
 void check_test(
@@ -88,6 +106,7 @@ void check_test(
     const int index = material_specification.index;
     const int imaterial = material_specification.database_index;
 
+    // Acoustic Isotropic
     if ((type == specfem::element::medium_tag::acoustic) &&
         (property == specfem::element::property_tag::isotropic)) {
       const auto icomputed = std::get<specfem::medium::material<
@@ -98,8 +117,18 @@ void check_test(
           specfem::element::property_tag::isotropic> >(expected[imaterial]);
       if (icomputed != iexpected) {
         std::ostringstream error_message;
+        error_message << "Material " << index << " is not the same ["
+                      << __FILE__ << ":" << __LINE__ << "]\n"
+                      << "  imaterial: " << imaterial << "\n"
+                      << "  ispec:     " << ispec << "\n"
+                      << "  index:     " << index << "\n"
+                      << "Computed: \n"
+                      << icomputed.print() << "\n"
+                      << "Expected: \n"
+                      << iexpected.print() << "\n";
         throw std::runtime_error(error_message.str());
       }
+      // Elastic Isoptropic
     } else if ((type == specfem::element::medium_tag::elastic) &&
                (property == specfem::element::property_tag::isotropic)) {
       const auto icomputed = std::get<specfem::medium::material<
@@ -110,11 +139,21 @@ void check_test(
           specfem::element::property_tag::isotropic> >(expected[imaterial]);
       if (icomputed != iexpected) {
         std::ostringstream error_message;
-        error_message << "Material " << index << " is not the same";
+        error_message << "Material " << index << " is not the same ["
+                      << __FILE__ << ":" << __LINE__ << "]\n"
+                      << "  ispec:     " << ispec << "\n"
+                      << "  imaterial: " << imaterial << "\n"
+                      << "  index:     " << index << "\n"
+                      << "Computed: \n"
+                      << icomputed.print() << "\n"
+                      << "Expected: \n"
+                      << iexpected.print() << "\n";
         throw std::runtime_error(error_message.str());
       }
-    } else if ((type == specfem::element::medium_tag::elastic) &&
-               (property == specfem::element::property_tag::anisotropic)) {
+    }
+    // Elastic Anisotropic
+    else if ((type == specfem::element::medium_tag::elastic) &&
+             (property == specfem::element::property_tag::anisotropic)) {
       const auto icomputed = std::get<specfem::medium::material<
           specfem::element::medium_tag::elastic,
           specfem::element::property_tag::anisotropic> >(computed[ispec]);
@@ -123,7 +162,38 @@ void check_test(
           specfem::element::property_tag::anisotropic> >(expected[imaterial]);
       if (icomputed != iexpected) {
         std::ostringstream error_message;
-        error_message << "Material " << index << " is not the same";
+        error_message << "Material " << index << " is not the same ["
+                      << __FILE__ << ":" << __LINE__ << "]\n"
+                      << "  imaterial: " << imaterial << "\n"
+                      << "  index:     " << index << "\n";
+        << "  ispec:     " << ispec << "\n"
+        << "Computed: \n"
+        << icomputed.print() << "\n"
+        << "Expected: \n"
+        << iexpected.print() << "\n";
+        throw std::runtime_error(error_message.str());
+      }
+    }
+    // Electromagnetic SV Isotropic
+    else if ((type == specfem::element::medium_tag::electromagnetic_sv) &&
+             (property == specfem::element::property_tag::isotropic)) {
+      const auto icomputed = std::get<specfem::medium::material<
+          specfem::element::medium_tag::electromagnetic_sv,
+          specfem::element::property_tag::isotropic> >(computed[ispec]);
+      const auto iexpected = std::get<specfem::medium::material<
+          specfem::element::medium_tag::electromagnetic_sv,
+          specfem::element::property_tag::isotropic> >(expected[imaterial]);
+      if (icomputed != iexpected) {
+        std::ostringstream error_message;
+        error_message << "Material " << index << " is not the same ["
+                      << __FILE__ << ":" << __LINE__ << "]\n"
+                      << "  ispec:     " << ispec << "\n"
+                      << "  imaterial: " << imaterial << "\n"
+                      << "  index:     " << index << "\n"
+                      << "Computed: \n"
+                      << icomputed.print() << "\n"
+                      << "Expected: \n"
+                      << iexpected.print() << "\n";
         throw std::runtime_error(error_message.str());
       }
     } else {
