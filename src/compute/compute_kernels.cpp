@@ -37,8 +37,8 @@ specfem::compute::kernels::kernels(
 #define ASSIGN_KERNEL_CONTAINERS(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)      \
   CREATE_VARIABLE_NAME(value, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),   \
                        GET_NAME(PROPERTY_TAG)) =                               \
-      specfem::medium::material_kernels<GET_TAG(MEDIUM_TAG),                   \
-                                        GET_TAG(PROPERTY_TAG)>(                \
+      specfem::medium::kernels_container<GET_TAG(MEDIUM_TAG),                  \
+                                         GET_TAG(PROPERTY_TAG)>(               \
           CREATE_VARIABLE_NAME(elements, GET_NAME(DIMENSION_TAG),              \
                                GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)),  \
           ngllz, ngllx, h_property_index_mapping);

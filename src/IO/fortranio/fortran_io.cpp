@@ -1,4 +1,5 @@
 #include "IO/fortranio/fortran_io.hpp"
+#include "IO/fortranio/fortran_io.tpp"
 #include <boost/algorithm/string.hpp>
 #include <fstream>
 #include <iostream>
@@ -41,7 +42,24 @@ void specfem::IO::fortran_read_value(int *value, std::ifstream &stream,
   return;
 }
 
-void specfem::IO::fortran_read_value(type_real *value, std::ifstream &stream,
+void specfem::IO::fortran_read_value(float *value, std::ifstream &stream,
+                                     int &buffer_length) {
+
+  float *temp;
+  buffer_length -= ffloat;
+  char *ivalue = new char[ffloat];
+  if (buffer_length < 0) {
+    std::cout << "buffer_length: " << buffer_length << std::endl;
+    throw std::runtime_error("Error reading fortran file");
+  }
+  stream.read(ivalue, ffloat);
+  temp = reinterpret_cast<float *>(ivalue);
+  *value = *temp;
+  delete[] ivalue;
+  return;
+}
+
+void specfem::IO::fortran_read_value(double *value, std::ifstream &stream,
                                      int &buffer_length) {
 
   double *temp;
@@ -53,7 +71,7 @@ void specfem::IO::fortran_read_value(type_real *value, std::ifstream &stream,
   }
   stream.read(ivalue, fdouble);
   temp = reinterpret_cast<double *>(ivalue);
-  *value = static_cast<type_real>(*temp);
+  *value = *temp;
   delete[] ivalue;
   return;
 }
@@ -71,5 +89,21 @@ void specfem::IO::fortran_read_value(std::string *value, std::ifstream &stream,
   stream.read(reinterpret_cast<char *>(&temp), fchar);
   value->append(temp);
   boost::algorithm::trim(*value);
+  return;
+}
+
+template <>
+void specfem::IO::fortran_read_value(std::vector<bool> *value,
+                                     std::ifstream &stream,
+                                     int &buffer_length) {
+  int nsize = value->size();
+  std::vector<bool> &rvalue = *value;
+  for (int i = 0; i < nsize; i++) {
+    // Create a temporary bool variable to hold the value
+    bool temp_bool;
+    specfem::IO::fortran_read_value(&temp_bool, stream, buffer_length);
+    // Assign the temporary value to the vector element
+    rvalue[i] = temp_bool;
+  }
   return;
 }

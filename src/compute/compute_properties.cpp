@@ -1,9 +1,11 @@
 #include "compute/properties/properties.hpp"
+#include "enumerations/dimension.hpp"
 
 specfem::compute::properties::properties(
     const int nspec, const int ngllz, const int ngllx,
     const specfem::compute::element_types &element_types,
-    const specfem::mesh::materials &materials, const bool has_gll_model) {
+    const specfem::mesh::materials<specfem::dimension::type::dim2> &materials,
+    const bool has_gll_model) {
 
   this->nspec = nspec;
   this->ngllz = ngllz;

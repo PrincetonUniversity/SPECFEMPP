@@ -17,8 +17,7 @@ void parse_test_config(const YAML::Node &yaml,
 
 MESH::MESH() {
 
-  std::string config_filename =
-      "../../../tests/unit-tests/mesh/test_config.yaml";
+  std::string config_filename = "mesh/test_config.yaml";
   parse_test_config(YAML::LoadFile(config_filename), Tests);
 
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
@@ -28,7 +27,8 @@ MESH::MESH() {
         Test.get_databases();
 
     const auto wave = Test.get_elastic_wave();
-    specfem::mesh::mesh mesh = specfem::IO::read_mesh(database_file, wave, mpi);
+    specfem::mesh::mesh mesh =
+        specfem::IO::read_2d_mesh(database_file, wave, mpi);
 
     meshes.push_back(mesh);
   }

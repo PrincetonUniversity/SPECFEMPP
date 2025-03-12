@@ -39,6 +39,7 @@
   integer :: num_cpml
   integer :: num_moho
   integer :: i,j,inode,imat,ispec,ie,dummy_node,dummy_elmnt,ier
+  integer :: ngnod_mesh
 
   ! read databases about external mesh simulation
   call create_name_database(prname,myrank,LOCAL_PATH)
@@ -51,6 +52,11 @@
     print *,'please make sure file exists'
     call exit_mpi(myrank,'Error opening database file')
   endif
+
+  read(IIN) MESH_A_CHUNK_OF_THE_EARTH
+  read(IIN) ngnod_mesh
+
+  if (ngnod_mesh /= NGNOD) stop 'Error: wrong number of nodes in database file'
 
   ! global nodes
   read(IIN) nnodes_ext_mesh

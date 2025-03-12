@@ -3,7 +3,7 @@
 #include "compute/compute_mesh.hpp"
 #include "enumerations/material_definitions.hpp"
 #include "enumerations/medium.hpp"
-#include "mesh/materials/materials.hpp"
+#include "mesh/mesh.hpp"
 #include "point/coordinates.hpp"
 #include <Kokkos_Core.hpp>
 

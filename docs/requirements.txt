@@ -1,5 +1,6 @@
-sphinx==8.0.0
 breathe
 furo
+sphinx==8.0.0
 sphinx-copybutton
 sphinx-sitemap
+sphinx_design

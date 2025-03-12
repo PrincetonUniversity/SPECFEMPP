@@ -1,5 +1,4 @@
-#ifndef _COMPUTE_FIELDS_IMPL_FIELD_IMPL_TPP_
-#define _COMPUTE_FIELDS_IMPL_FIELD_IMPL_TPP_
+#pragma once
 
 #include "compute/fields/impl/field_impl.hpp"
 #include "compute/element_types/element_types.hpp"
@@ -111,7 +110,6 @@ void specfem::compute::impl::field_impl<DimensionType, MediumTag>::sync_fields()
   }
 }
 
-#endif /* _COMPUTE_FIELDS_IMPL_FIELD_IMPL_TPP_ */
 
 // template <typename medium>
 //   KOKKOS_INLINE_FUNCTION type_real &specfem::compute::(const int &iglob,

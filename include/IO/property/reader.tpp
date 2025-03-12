@@ -18,122 +18,99 @@ void specfem::IO::property_reader<InputLibrary>::read(
     specfem::compute::assembly &assembly) {
   auto &properties = assembly.properties;
 
-  using DomainView =
-      Kokkos::View<type_real ***, Kokkos::LayoutLeft, Kokkos::HostSpace>;
-
   typename InputLibrary::File file(input_folder + "/Properties");
 
-  {
-    typename InputLibrary::Group elastic =
-        file.openGroup("/ElasticSVIsotropic");
-
-    elastic.openDataset("rho", properties.value_dim2_elastic_sv_isotropic.h_rho)
-        .read();
-    elastic.openDataset("mu", properties.value_dim2_elastic_sv_isotropic.h_mu)
-        .read();
-    elastic
-        .openDataset("lambdaplus2mu",
-                     properties.value_dim2_elastic_sv_isotropic.h_lambdaplus2mu)
-        .read();
+#define READ_PROPERTY(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                 \
+  {                                                                            \
+    const std::string name =                                                   \
+        std::string("/") + specfem::element::to_string(GET_TAG(MEDIUM_TAG),    \
+                                                       GET_TAG(PROPERTY_TAG)); \
+    typename InputLibrary::Group group = file.openGroup(name);                 \
+    group                                                                      \
+        .openDataset(                                                          \
+            "data",                                                            \
+            properties                                                         \
+                .get_container<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)>()   \
+                .h_data)                                                       \
+        .read();                                                               \
   }
 
-  {
-    typename InputLibrary::Group elastic =
-        file.openGroup("/ElasticSHIsotropic");
+  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
+      READ_PROPERTY,
+      WHERE(DIMENSION_TAG_DIM2) WHERE(
+          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
+          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC));
 
-    elastic.openDataset("rho", properties.value_dim2_elastic_sh_isotropic.h_rho)
-        .read();
-    elastic.openDataset("mu", properties.value_dim2_elastic_sh_isotropic.h_mu)
-        .read();
-    elastic
-        .openDataset("lambdaplus2mu",
-                     properties.value_dim2_elastic_sh_isotropic.h_lambdaplus2mu)
-        .read();
-  }
+#undef READ_PROPERTY
 
-  {
-    typename InputLibrary::Group elastic =
-        file.openGroup("/ElasticSVAnisotropic");
+  // {
+  //   typename InputLibrary::Group elastic =
+  //       file.openGroup("/ElasticSVIsotropic");
 
-    elastic
-        .openDataset("rho", properties.value_dim2_elastic_sv_anisotropic.h_rho)
-        .read();
-    elastic
-        .openDataset("c11", properties.value_dim2_elastic_sv_anisotropic.h_c11)
-        .read();
-    elastic
-        .openDataset("c13", properties.value_dim2_elastic_sv_anisotropic.h_c13)
-        .read();
-    elastic
-        .openDataset("c15", properties.value_dim2_elastic_sv_anisotropic.h_c15)
-        .read();
-    elastic
-        .openDataset("c33", properties.value_dim2_elastic_sv_anisotropic.h_c33)
-        .read();
-    elastic
-        .openDataset("c35", properties.value_dim2_elastic_sv_anisotropic.h_c35)
-        .read();
-    elastic
-        .openDataset("c55", properties.value_dim2_elastic_sv_anisotropic.h_c55)
-        .read();
-    elastic
-        .openDataset("c12", properties.value_dim2_elastic_sv_anisotropic.h_c12)
-        .read();
-    elastic
-        .openDataset("c23", properties.value_dim2_elastic_sv_anisotropic.h_c23)
-        .read();
-    elastic
-        .openDataset("c25", properties.value_dim2_elastic_sv_anisotropic.h_c25)
-        .read();
-  }
+  //   elastic
+  //       .openDataset(
+  //           "data",
+  //           properties
+  //               .get_container<specfem::element::medium_tag::elastic_sv,
+  //                              specfem::element::property_tag::isotropic>()
+  //               .h_data)
+  //       .read();
+  // }
 
-  {
-    typename InputLibrary::Group elastic =
-        file.openGroup("/ElasticSHAnisotropic");
+  // {
+  //   typename InputLibrary::Group elastic =
+  //       file.openGroup("/ElasticSHIsotropic");
 
-    elastic
-        .openDataset("rho", properties.value_dim2_elastic_sh_anisotropic.h_rho)
-        .read();
-    elastic
-        .openDataset("c11", properties.value_dim2_elastic_sh_anisotropic.h_c11)
-        .read();
-    elastic
-        .openDataset("c13", properties.value_dim2_elastic_sh_anisotropic.h_c13)
-        .read();
-    elastic
-        .openDataset("c15", properties.value_dim2_elastic_sh_anisotropic.h_c15)
-        .read();
-    elastic
-        .openDataset("c33", properties.value_dim2_elastic_sh_anisotropic.h_c33)
-        .read();
-    elastic
-        .openDataset("c35", properties.value_dim2_elastic_sh_anisotropic.h_c35)
-        .read();
-    elastic
-        .openDataset("c55", properties.value_dim2_elastic_sh_anisotropic.h_c55)
-        .read();
-    elastic
-        .openDataset("c12", properties.value_dim2_elastic_sh_anisotropic.h_c12)
-        .read();
-    elastic
-        .openDataset("c23", properties.value_dim2_elastic_sh_anisotropic.h_c23)
-        .read();
-    elastic
-        .openDataset("c25", properties.value_dim2_elastic_sh_anisotropic.h_c25)
-        .read();
-  }
+  //   elastic
+  //       .openDataset(
+  //           "data",
+  //           properties
+  //               .get_container<specfem::element::medium_tag::elastic_sh,
+  //                              specfem::element::property_tag::isotropic>()
+  //               .h_data)
+  //       .read();
+  // }
 
-  {
-    typename InputLibrary::Group acoustic = file.openGroup("/Acoustic");
+  // {
+  //   typename InputLibrary::Group elastic =
+  //       file.openGroup("/ElasticSVAnisotropic");
 
-    acoustic
-        .openDataset("rho_inverse",
-                     properties.value_dim2_acoustic_isotropic.h_rho_inverse)
-        .read();
-    acoustic
-        .openDataset("kappa", properties.value_dim2_acoustic_isotropic.h_kappa)
-        .read();
-  }
+  //   elastic
+  //       .openDataset(
+  //           "data",
+  //           properties
+  //               .get_container<specfem::element::medium_tag::elastic_sv,
+  //                              specfem::element::property_tag::anisotropic>()
+  //               .h_data)
+  //       .read();
+  // }
+
+  // {
+  //   typename InputLibrary::Group elastic =
+  //       file.openGroup("/ElasticSHAnisotropic");
+
+  //   elastic
+  //       .openDataset(
+  //           "data",
+  //           properties
+  //               .get_container<specfem::element::medium_tag::elastic_sh,
+  //                              specfem::element::property_tag::anisotropic>()
+  //               .h_data)
+  //       .read();
+  // }
+
+  // {
+  //   typename InputLibrary::Group acoustic = file.openGroup("/Acoustic");
+
+  //   acoustic
+  //       .openDataset(
+  //           "data",
+  //           properties
+  //               .get_container<specfem::element::medium_tag::acoustic,
+  //                              specfem::element::property_tag::isotropic>()
+  //               .h_data)
+  //       .read();
+  // }
 
   std::cout << "Properties read from " << input_folder << "/Properties"
             << std::endl;

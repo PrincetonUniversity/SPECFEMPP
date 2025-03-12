@@ -632,7 +632,9 @@
   ! we need to make sure that NUMBER_OF_SIMULTANEOUS_RUNS is read, thus read the parameter file
   myrank = 0
   BROADCAST_AFTER_READ = .false.
-  call read_parameter_file(BROADCAST_AFTER_READ)
+  ! call read_parameter_file(BROADCAST_AFTER_READ)
+
+  NUMBER_OF_SIMULTANEOUS_RUNS = 1
 
   if (NUMBER_OF_SIMULTANEOUS_RUNS <= 0) stop 'NUMBER_OF_SIMULTANEOUS_RUNS <= 0 makes no sense'
 

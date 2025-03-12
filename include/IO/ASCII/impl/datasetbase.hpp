@@ -119,6 +119,7 @@ protected:
     if (read_rank != rank) {
       std::ostringstream oss;
       oss << "Dimension of the dataset do not match the view";
+      oss << "Expected rank: " << rank << ", but got: " << read_rank;
       throw std::runtime_error(oss.str());
     }
     std::getline(metadata, line);
@@ -136,6 +137,8 @@ protected:
       if (read_dims != dims[i]) {
         std::ostringstream oss;
         oss << "Dimension of the dataset do not match the view";
+        oss << "Expected dims[" << i << "]: " << dims[i]
+            << ", but got: " << read_dims;
         throw std::runtime_error(oss.str());
       }
     }
