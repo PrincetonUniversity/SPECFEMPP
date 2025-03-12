@@ -18,9 +18,6 @@ specfem::element::to_string(const specfem::element::medium_tag &medium,
   case specfem::element::medium_tag::electromagnetic_sv:
     medium_string = "electromagnetic_sv";
     break;
-  case specfem::element::medium_tag::electromagnetic_sh:
-    medium_string = "electromagnetic_sh";
-    break;
   default:
     medium_string = "unknown";
     break;
@@ -75,9 +72,6 @@ const std::string specfem::element::to_string(
   } else if ((medium == specfem::element::medium_tag::electromagnetic_sv) &&
              (property_tag == specfem::element::property_tag::isotropic)) {
     return "electromagnetic_sv isotropic";
-  } else if ((medium == specfem::element::medium_tag::electromagnetic_sh) &&
-             (property_tag == specfem::element::property_tag::isotropic)) {
-    return "electromagnetic_sh isotropic";
   } else {
     return "unknown";
   }
