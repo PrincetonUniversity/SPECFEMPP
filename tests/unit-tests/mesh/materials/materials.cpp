@@ -15,17 +15,17 @@ using MaterialVectorType = std::vector<std::variant<
 
 const static std::unordered_map<std::string, MaterialVectorType>
     ground_truth = {
-      { "Test 1: Simple mesh with flat topography",
+      { "Simple mesh with flat topography",
         MaterialVectorType({ specfem::medium::material<
             specfem::element::medium_tag::elastic,
             specfem::element::property_tag::isotropic>(2700.0, 1732.051, 3000.0,
                                                        9999, 9999, 0.0) }) },
-      { "Test 2: Simple mesh with curved topography",
+      { "Simple mesh with curved topography",
         MaterialVectorType({ specfem::medium::material<
             specfem::element::medium_tag::elastic,
             specfem::element::property_tag::isotropic>(2700.0, 1732.051, 3000.0,
                                                        9999, 9999, 0.0) }) },
-      { "Test 3: Simple mesh with flat ocean bottom",
+      { "Simple mesh with flat ocean bottom",
         MaterialVectorType({ specfem::medium::material<
                                  specfem::element::medium_tag::elastic,
                                  specfem::element::property_tag::isotropic>(
@@ -36,7 +36,7 @@ const static std::unordered_map<std::string, MaterialVectorType>
                                  1020.0, 1500, 9999, 9999, 0.0)
 
         }) },
-      { "Test 4: Simple mesh with curved ocean bottom",
+      { "Simple mesh with curved ocean bottom",
         MaterialVectorType({ specfem::medium::material<
                                  specfem::element::medium_tag::elastic,
                                  specfem::element::property_tag::isotropic>(
@@ -47,7 +47,7 @@ const static std::unordered_map<std::string, MaterialVectorType>
                                  1020.0, 1500, 9999, 9999, 0.0)
 
         }) },
-      { "Test 5: Gmesh Example",
+      { "Gmesh Example",
         MaterialVectorType({ specfem::medium::material<
                                  specfem::element::medium_tag::acoustic,
                                  specfem::element::property_tag::isotropic>(
@@ -56,7 +56,7 @@ const static std::unordered_map<std::string, MaterialVectorType>
                                  specfem::element::medium_tag::acoustic,
                                  specfem::element::property_tag::isotropic>(
                                  1000.0, 1477.0, 10.0, 10.0, 0.0) }) },
-      { "Test 6: Homogeneous Elastic Anisotropic Material",
+      { "Homogeneous Elastic Anisotropic Material",
         MaterialVectorType({ specfem::medium::material<
             specfem::element::medium_tag::elastic,
             specfem::element::property_tag::anisotropic>(
@@ -147,7 +147,8 @@ TEST_F(MESH, materials) {
       check_test(computed, expected);
 
       std::cout << "-------------------------------------------------------\n"
-                << "\033[0;32m[PASSED]\033[0m " << Test.name << "\n"
+                << "\033[0;32m[PASSED]\033[0m Test " << Test.number << ": "
+                << Test.name << "\n"
                 << "-------------------------------------------------------\n\n"
                 << std::endl;
     } catch (std::exception &e) {
