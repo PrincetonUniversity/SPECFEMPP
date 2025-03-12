@@ -81,3 +81,12 @@ Tests:
     databases:
       specfem_config: "displacement_tests/Newmark/serial/test9/specfem_config.yaml"
       traces: "displacement_tests/Newmark/serial/test9/traces"
+
+  - name : "SerialTest10 : Homogeneous elastic isotropic domain (SH-waves)"
+    description: >
+      Testing newmark time-marching solver on a homogeneous elastic anisotropic domain with no interfaces. Test is run on a single MPI process.
+    config:
+      nproc : 1
+    databases:
+      specfem_config: "displacement_tests/Newmark/serial/test10/specfem_config.yaml"
+      traces: "displacement_tests/Newmark/serial/test10/traces"

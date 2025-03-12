@@ -227,25 +227,25 @@ public:
 
   template <typename PointValues, typename IndexType>
   KOKKOS_FORCEINLINE_FUNCTION void
-  store_device_values(const IndexType &index, PointValues &values) const {
+  store_device_values(const IndexType &index, const PointValues &values) const {
     store_values<true>(index, values);
   }
 
   template <typename PointValues, typename IndexType>
   KOKKOS_FORCEINLINE_FUNCTION void
-  store_host_values(const IndexType &index, PointValues &values) const {
+  store_host_values(const IndexType &index, const PointValues &values) const {
     store_values<false>(index, values);
   }
 
   template <typename PointValues, typename IndexType>
   KOKKOS_FORCEINLINE_FUNCTION void
-  add_device_values(const IndexType &index, PointValues &values) const {
+  add_device_values(const IndexType &index, const PointValues &values) const {
     add_values<true>(index, values);
   }
 
   template <typename PointValues, typename IndexType>
-  KOKKOS_FORCEINLINE_FUNCTION void add_host_values(const IndexType &index,
-                                                   PointValues &values) const {
+  KOKKOS_FORCEINLINE_FUNCTION void
+  add_host_values(const IndexType &index, const PointValues &values) const {
     add_values<false>(index, values);
   }
 

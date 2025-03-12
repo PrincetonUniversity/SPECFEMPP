@@ -64,17 +64,27 @@ template <> struct materials<specfem::dimension::type::dim2> {
       material_index_mapping; ///< Mapping of spectral element to material
                               ///< properties
 
-  specfem::mesh::materials<specfem::dimension::type::dim2>::material<
-      specfem::element::medium_tag::elastic,
+  specfem::mesh::materials<dimension>::material<
+      specfem::element::medium_tag::elastic_sv,
       specfem::element::property_tag::isotropic>
-      elastic_isotropic; ///< Elastic isotropic material properties
+      elastic_sv_isotropic; ///< Elastic isotropic material properties
 
-  specfem::mesh::materials<specfem::dimension::type::dim2>::material<
-      specfem::element::medium_tag::elastic,
+  specfem::mesh::materials<dimension>::material<
+      specfem::element::medium_tag::elastic_sv,
       specfem::element::property_tag::anisotropic>
-      elastic_anisotropic; ///< Elastic anisotropic material properties
+      elastic_sv_anisotropic; ///< Elastic anisotropic material properties
 
-  specfem::mesh::materials<specfem::dimension::type::dim2>::material<
+  specfem::mesh::materials<dimension>::material<
+      specfem::element::medium_tag::elastic_sh,
+      specfem::element::property_tag::isotropic>
+      elastic_sh_isotropic; ///< Elastic isotropic material properties
+
+  specfem::mesh::materials<dimension>::material<
+      specfem::element::medium_tag::elastic_sh,
+      specfem::element::property_tag::anisotropic>
+      elastic_sh_anisotropic; ///< Elastic anisotropic material properties
+
+  specfem::mesh::materials<dimension>::material<
       specfem::element::medium_tag::acoustic,
       specfem::element::property_tag::isotropic>
       acoustic_isotropic; ///< Acoustic isotropic material properties
@@ -108,9 +118,13 @@ template <> struct materials<specfem::dimension::type::dim2> {
    * @return std::variant Material properties
    */
   std::variant<
-      specfem::medium::material<specfem::element::medium_tag::elastic,
+      specfem::medium::material<specfem::element::medium_tag::elastic_sv,
                                 specfem::element::property_tag::isotropic>,
-      specfem::medium::material<specfem::element::medium_tag::elastic,
+      specfem::medium::material<specfem::element::medium_tag::elastic_sv,
+                                specfem::element::property_tag::anisotropic>,
+      specfem::medium::material<specfem::element::medium_tag::elastic_sh,
+                                specfem::element::property_tag::isotropic>,
+      specfem::medium::material<specfem::element::medium_tag::elastic_sh,
                                 specfem::element::property_tag::anisotropic>,
       specfem::medium::material<specfem::element::medium_tag::acoustic,
                                 specfem::element::property_tag::isotropic> >
