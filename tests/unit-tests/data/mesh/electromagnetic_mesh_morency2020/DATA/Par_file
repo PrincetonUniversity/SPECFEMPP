@@ -297,8 +297,8 @@ interfacesfile                  = interfaces_GPR_AIR.dat
 
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0d0            # abscissa of left side of the model
-xmax                            = 10d0           # abscissa of right side of the model
-nx                              = 300            # number of elements along X
+xmax                            = 2d0            # abscissa of right side of the model
+nx                              = 60             # number of elements along X
 
 # absorbing boundary parameters (see absorbing_conditions above)
 absorbbottom                    = .true.
@@ -307,17 +307,10 @@ absorbtop                       = .true.
 absorbleft                      = .true.
 
 # define the different regions of the model in the (nx,nz) spectral-element mesh
-nbregions                       = 9              # then set below the different regions and model number for each region
+nbregions                       = 2              # then set below the different regions and model number for each region
 # format of each line: nxmin nxmax nzmin nzmax material_number
-1 300  1 90 1
-1 180  91 150 1
-181 240 91 150 2
-241 300  91 150 1
-1 90  151 180 1
-91 120  151 180 2
-121 300  151 180 1
-1 300 181 210 1
-1 300 211 300 2
+1 60   1 30 1
+1 60  31 60 2
 
 #-----------------------------------------------------------
 #
