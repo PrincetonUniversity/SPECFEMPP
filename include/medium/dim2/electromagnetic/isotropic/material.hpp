@@ -36,16 +36,16 @@ public:
   /**
    * @brief Construct a new elastic isotropic material
    *
-   * @param mu0
-   * @param e0
-   * @param e11
-   * @param e33
-   * @param sig11
-   * @param sig33
-   * @param Qe11
-   * @param Qe33
-   * @param Qs11
-   * @param Qs33
+   * @param mu0 Magnetic permeability in henry per meter
+   * @param e0 Effective permittivity in farad per meter
+   * @param e11 e11 of effective permittivity in farad per meter
+   * @param e33 e33 of effective permittivity in farad per meter
+   * @param sig11 sig11 of effective conductivity in siemens per meter
+   * @param sig33 sig33 of effective conductivity in siemens per meter
+   * @param Qe11 Quality factor of e11 for attenuation
+   * @param Qe33 Quality factor of e33 for attenuation
+   * @param Qs11 Quality factor of sig11 for attenuation
+   * @param Qs33 Quality factor of sig33 for attenuation
    */
   impl_material(type_real mu0, type_real e0, type_real e11, type_real e33,
                 type_real sig11, type_real sig33, type_real Qe11,
@@ -168,16 +168,16 @@ public:
   /**
    * @brief Construct a new elastic isotropic material
    *
-   * @param mu0
-   * @param e0
-   * @param e11
-   * @param e33
-   * @param sig11
-   * @param sig33
-   * @param Qe11
-   * @param Qe33
-   * @param Qs11
-   * @param Qs33
+   * @param mu0 Magnetic permeability in henry per meter
+   * @param e0 Effective permittivity in farad per meter
+   * @param e11 e11 of effective permittivity in farad per meter
+   * @param e33 e33 of effective permittivity in farad per meter
+   * @param sig11 sig11 of effective conductivity in siemens per meter
+   * @param sig33 sig33 of effective conductivity in siemens per meter
+   * @param Qe11 Quality factor of e11 for attenuation
+   * @param Qe33 Quality factor of e33 for attenuation
+   * @param Qs11 Quality factor of sig11 for attenuation
+   * @param Qs33 Quality factor of sig33 for attenuation
    */
   impl_material(type_real mu0, type_real e0, type_real e11, type_real e33,
                 type_real sig11, type_real sig33, type_real Qe11,
