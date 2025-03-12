@@ -145,7 +145,7 @@ SPECFEM++ build directory to your ``PATH`` using
 
 .. code-block:: bash
 
-    export PATH=$(pwd)/build:$PATH
+    export PATH=$(pwd)/build/bin:$PATH
 
 Running the solver
 ------------------
