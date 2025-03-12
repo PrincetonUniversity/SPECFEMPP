@@ -73,8 +73,19 @@ public:
     this->nglob = rhs.nglob;
     this->assembly_index_mapping = rhs.assembly_index_mapping;
     this->h_assembly_index_mapping = rhs.h_assembly_index_mapping;
-    this->elastic = rhs.elastic;
-    this->acoustic = rhs.acoustic;
+
+#define COPY_MEDIUM_FIELD(DIMENSION_TAG, MEDIUM_TAG)                           \
+  this->CREATE_VARIABLE_NAME(field, GET_NAME(DIMENSION_TAG),                   \
+                             GET_NAME(MEDIUM_TAG)) =                           \
+      rhs.CREATE_VARIABLE_NAME(field, GET_NAME(DIMENSION_TAG),                 \
+                               GET_NAME(MEDIUM_TAG));
+
+    CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
+        COPY_MEDIUM_FIELD,
+        WHERE(DIMENSION_TAG_DIM2) WHERE(
+            MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC))
+
+#undef COPY_MEDIUM_FIELD
   }
 
   /**
@@ -85,13 +96,23 @@ public:
    */
   template <specfem::element::medium_tag MediumType>
   KOKKOS_FORCEINLINE_FUNCTION int get_nglob() const {
-    if constexpr (MediumType == specfem::element::medium_tag::elastic) {
-      return elastic.nglob;
-    } else if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
-      return acoustic.nglob;
-    } else {
-      static_assert("medium type not supported");
-    }
+
+#define RETURN_VALUE(DIMENSION_TAG, MEDIUM_TAG)                                \
+  if constexpr (MediumType == GET_TAG(MEDIUM_TAG)) {                           \
+    return CREATE_VARIABLE_NAME(field, GET_NAME(DIMENSION_TAG),                \
+                                GET_NAME(MEDIUM_TAG))                          \
+        .nglob;                                                                \
+  }
+
+    CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
+        RETURN_VALUE, WHERE(DIMENSION_TAG_DIM2)
+                          WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
+                                MEDIUM_TAG_ACOUSTIC))
+
+#undef RETURN_VALUE
+
+    Kokkos::abort("Medium type not supported");
+    return 0;
   }
 
   /**
@@ -102,13 +123,24 @@ public:
   KOKKOS_INLINE_FUNCTION constexpr specfem::compute::impl::field_impl<
       specfem::dimension::type::dim2, MediumTag> const &
   get_field() const {
-    if constexpr (MediumTag == specfem::element::medium_tag::elastic) {
-      return elastic;
-    } else if constexpr (MediumTag == specfem::element::medium_tag::acoustic) {
-      return acoustic;
-    } else {
-      static_assert("medium type not supported");
-    }
+
+#define RETURN_VALUE(DIMENSION_TAG, MEDIUM_TAG)                                \
+  if constexpr (MediumTag == GET_TAG(MEDIUM_TAG)) {                            \
+    return CREATE_VARIABLE_NAME(field, GET_NAME(DIMENSION_TAG),                \
+                                GET_NAME(MEDIUM_TAG));                         \
+  }
+
+    CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
+        RETURN_VALUE, WHERE(DIMENSION_TAG_DIM2)
+                          WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
+                                MEDIUM_TAG_ACOUSTIC))
+
+#undef RETURN_VALUE
+
+    Kokkos::abort("Medium type not supported");
+
+    /// Code path should never be reached
+    return {};
   }
 
   /**
@@ -140,17 +172,34 @@ public:
   Kokkos::View<int * [specfem::element::ntypes], Kokkos::LayoutLeft,
                specfem::kokkos::HostMemSpace>
       h_assembly_index_mapping;
-  specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
-                                     specfem::element::medium_tag::elastic>
-      elastic; ///< Elastic field
-  specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
-                                     specfem::element::medium_tag::acoustic>
-      acoustic; ///< Acoustic field
+
+#define GENERATE_MEDIUM_FIELD_VARIABLE(DIMENSION_TAG, MEDIUM_TAG)              \
+  specfem::compute::impl::field_impl<GET_TAG(DIMENSION_TAG),                   \
+                                     GET_TAG(MEDIUM_TAG)>                      \
+      CREATE_VARIABLE_NAME(field, GET_NAME(DIMENSION_TAG),                     \
+                           GET_NAME(MEDIUM_TAG));
+
+  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(GENERATE_MEDIUM_FIELD_VARIABLE,
+                                 WHERE(DIMENSION_TAG_DIM2)
+                                     WHERE(MEDIUM_TAG_ELASTIC_SV,
+                                           MEDIUM_TAG_ELASTIC_SH,
+                                           MEDIUM_TAG_ACOUSTIC))
+
+#undef GENERATE_MEDIUM_FIELD_VARIABLE
 
 private:
   template <specfem::sync::kind sync> void sync_fields() {
-    elastic.sync_fields<sync>();
-    acoustic.sync_fields<sync>();
+
+#define SYNC_MEDIUM_FIELD(DIMENSION_TAG, MEDIUM_TAG)                           \
+  CREATE_VARIABLE_NAME(field, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG))   \
+      .template sync_fields<sync>();
+
+    CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
+        SYNC_MEDIUM_FIELD,
+        WHERE(DIMENSION_TAG_DIM2) WHERE(
+            MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC))
+
+#undef SYNC_MEDIUM_FIELD
   }
 };
 
@@ -161,8 +210,20 @@ void deep_copy(simulation_field<WavefieldType1> &dst,
   dst.nglob = src.nglob;
   Kokkos::deep_copy(dst.assembly_index_mapping, src.assembly_index_mapping);
   Kokkos::deep_copy(dst.h_assembly_index_mapping, src.h_assembly_index_mapping);
-  specfem::compute::deep_copy(dst.elastic, src.elastic);
-  specfem::compute::deep_copy(dst.acoustic, src.acoustic);
+
+#define DEEP_COPY_MEDIUM_FIELD(DIMENSION_TAG, MEDIUM_TAG)                      \
+  specfem::compute::deep_copy(                                                 \
+      dst.CREATE_VARIABLE_NAME(field, GET_NAME(DIMENSION_TAG),                 \
+                               GET_NAME(MEDIUM_TAG)),                          \
+      src.CREATE_VARIABLE_NAME(field, GET_NAME(DIMENSION_TAG),                 \
+                               GET_NAME(MEDIUM_TAG)));
+
+  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
+      DEEP_COPY_MEDIUM_FIELD,
+      WHERE(DIMENSION_TAG_DIM2) WHERE(
+          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC))
+
+#undef DEEP_COPY_MEDIUM_FIELD
 }
 
 /**

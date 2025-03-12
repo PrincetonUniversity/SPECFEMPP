@@ -16,8 +16,8 @@ namespace medium {
  *
  */
 template <>
-class impl_material<specfem::element::medium_tag::elastic,
-                    specfem::element::property_tag::isotropic> {
+class material<specfem::element::medium_tag::elastic,
+               specfem::element::property_tag::isotropic> {
 public:
   constexpr static auto dimension =
       specfem::dimension::type::dim2; ///< Dimension of the material
@@ -40,9 +40,9 @@ public:
    * @param Qmu Attenuation factor for shear modulus
    * @param compaction_grad Compaction gradient
    */
-  impl_material(const type_real &density, const type_real &cs,
-                const type_real &cp, const type_real &Qkappa,
-                const type_real &Qmu, const type_real &compaction_grad)
+  material(const type_real &density, const type_real &cs, const type_real &cp,
+           const type_real &Qkappa, const type_real &Qmu,
+           const type_real &compaction_grad)
       : density(density), cs(cs), cp(cp), Qkappa(Qkappa), Qmu(Qmu),
         compaction_grad(compaction_grad), lambdaplus2mu(density * cp * cp),
         mu(density * cs * cs), lambda(lambdaplus2mu - 2.0 * mu),
@@ -62,7 +62,7 @@ public:
    * @brief Default constructor
    *
    */
-  impl_material() = default;
+  material() = default;
 
   ///@}
 
@@ -72,9 +72,9 @@ public:
    * @param other Material to compare with
    * @return true If the materials have the same properties
    */
-  bool operator==(const impl_material<specfem::element::medium_tag::elastic,
-                                      specfem::element::property_tag::isotropic>
-                      &other) const {
+  bool operator==(
+      const material<specfem::element::medium_tag::elastic,
+                     specfem::element::property_tag::isotropic> &other) const {
 
     return (std::abs(this->density - other.density) < 1e-6 &&
             std::abs(this->cp - other.cp) < 1e-6 &&
@@ -90,9 +90,9 @@ public:
    * @param other Material to compare with
    * @return true If the materials have different properties
    */
-  bool operator!=(const impl_material<specfem::element::medium_tag::elastic,
-                                      specfem::element::property_tag::isotropic>
-                      &other) const {
+  bool operator!=(
+      const material<specfem::element::medium_tag::elastic,
+                     specfem::element::property_tag::isotropic> &other) const {
     return !(*this == other);
   }
 
@@ -126,7 +126,7 @@ public:
     return message.str();
   }
 
-private:
+protected:
   type_real density;         ///< Density of the material
   type_real cs;              ///< Shear wave speed
   type_real cp;              ///< Compressional wave speed
@@ -139,6 +139,58 @@ private:
   type_real kappa;           ///< Bulk modulus
   type_real young;           ///< Young's modulus
   type_real poisson;         ///< Poisson's ratio
+};
+
+template <>
+class material<specfem::element::medium_tag::elastic_sv,
+               specfem::element::property_tag::isotropic>
+    : public material<specfem::element::medium_tag::elastic,
+                      specfem::element::property_tag::isotropic> {
+public:
+  constexpr static auto dimension =
+      specfem::dimension::type::dim2; ///< Dimension of the material
+  constexpr static auto medium_tag =
+      specfem::element::medium_tag::elastic_sv; ///< Medium tag
+  constexpr static auto property_tag =
+      specfem::element::property_tag::isotropic; ///< Property tag
+
+private:
+  using base_type = material<specfem::element::medium_tag::elastic,
+                             specfem::element::property_tag::isotropic>;
+
+public:
+  using base_type::base_type; ///< Inherit constructors from base class
+
+  inline specfem::point::properties<dimension, medium_tag, property_tag, false>
+  get_properties() const {
+    return { this->lambdaplus2mu, this->mu, this->density };
+  }
+};
+
+template <>
+class material<specfem::element::medium_tag::elastic_sh,
+               specfem::element::property_tag::isotropic>
+    : public material<specfem::element::medium_tag::elastic,
+                      specfem::element::property_tag::isotropic> {
+public:
+  constexpr static auto dimension =
+      specfem::dimension::type::dim2; ///< Dimension of the material
+  constexpr static auto medium_tag =
+      specfem::element::medium_tag::elastic_sh; ///< Medium tag
+  constexpr static auto property_tag =
+      specfem::element::property_tag::isotropic; ///< Property tag
+
+private:
+  using base_type = material<specfem::element::medium_tag::elastic,
+                             specfem::element::property_tag::isotropic>;
+
+public:
+  using base_type::base_type; ///< Inherit constructors from base class
+
+  inline specfem::point::properties<dimension, medium_tag, property_tag, false>
+  get_properties() const {
+    return { this->lambdaplus2mu, this->mu, this->density };
+  }
 };
 
 } // namespace medium

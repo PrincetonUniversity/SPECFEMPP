@@ -16,8 +16,8 @@ namespace medium {
  *
  */
 template <>
-class impl_material<specfem::element::medium_tag::acoustic,
-                    specfem::element::property_tag::isotropic> {
+class material<specfem::element::medium_tag::acoustic,
+               specfem::element::property_tag::isotropic> {
 
 public:
   constexpr static auto dimension =
@@ -40,9 +40,9 @@ public:
    * @param Qmu Attenuation factor for shear modulus
    * @param compaction_grad Compaction gradient
    */
-  impl_material(const type_real &density, const type_real &cp,
-                const type_real &Qkappa, const type_real &Qmu,
-                const type_real &compaction_grad)
+  material(const type_real &density, const type_real &cp,
+           const type_real &Qkappa, const type_real &Qmu,
+           const type_real &compaction_grad)
       : density(density), cp(cp), Qkappa(Qkappa), Qmu(Qmu),
         compaction_grad(compaction_grad), kappa(density * cp * cp) {
     if (this->Qkappa <= 0.0 || this->Qmu <= 0.0) {
@@ -58,9 +58,9 @@ public:
    * @param other Material to compare with
    * @return true If the materials have the same properties
    */
-  bool operator==(const impl_material<specfem::element::medium_tag::acoustic,
-                                      specfem::element::property_tag::isotropic>
-                      &other) const {
+  bool operator==(
+      const material<specfem::element::medium_tag::acoustic,
+                     specfem::element::property_tag::isotropic> &other) const {
 
     return (std::abs(this->density - other.density) < 1e-6 &&
             std::abs(this->cp - other.cp) < 1e-6 &&
@@ -75,9 +75,9 @@ public:
    * @param other Material to compare with
    * @return true If the materials have different properties
    */
-  bool operator!=(const impl_material<specfem::element::medium_tag::acoustic,
-                                      specfem::element::property_tag::isotropic>
-                      &other) const {
+  bool operator!=(
+      const material<specfem::element::medium_tag::acoustic,
+                     specfem::element::property_tag::isotropic> &other) const {
     return !(*this == other);
   }
 
@@ -85,10 +85,10 @@ public:
    * @brief Default constructor
    *
    */
-  impl_material() = default;
+  material() = default;
   ///@}
 
-  ~impl_material() = default;
+  ~material() = default;
 
   /**
    * @brief Get the properties of the material

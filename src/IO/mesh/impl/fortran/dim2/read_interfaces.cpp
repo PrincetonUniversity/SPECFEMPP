@@ -31,10 +31,10 @@ specfem::IO::mesh::impl::fortran::dim2::read_interfaces(
 // Explicit instantiation of the template function for the different medium
 // interfaces elastic/acoustic
 template specfem::mesh::interface_container<
-    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic_sv,
     specfem::element::medium_tag::acoustic>
 specfem::IO::mesh::impl::fortran::dim2::read_interfaces<
-    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic_sv,
     specfem::element::medium_tag::acoustic>(const int num_interfaces,
                                             std::ifstream &stream,
                                             const specfem::MPI::MPI *mpi);
@@ -51,10 +51,10 @@ specfem::IO::mesh::impl::fortran::dim2::read_interfaces<
 
 // elastic/poroelastic
 template specfem::mesh::interface_container<
-    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic_sv,
     specfem::element::medium_tag::poroelastic>
 specfem::IO::mesh::impl::fortran::dim2::read_interfaces<
-    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic_sv,
     specfem::element::medium_tag::poroelastic>(const int num_interfaces,
                                                std::ifstream &stream,
                                                const specfem::MPI::MPI *mpi);
@@ -68,7 +68,8 @@ specfem::IO::mesh::impl::fortran::dim2::read_coupled_interfaces(
 
   auto elastic_acoustic =
       specfem::IO::mesh::impl::fortran::dim2::read_interfaces<
-          specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+          specfem::dimension::type::dim2,
+          specfem::element::medium_tag::elastic_sv,
           specfem::element::medium_tag::acoustic>(
           num_interfaces_elastic_acoustic, stream, mpi);
 
@@ -81,7 +82,8 @@ specfem::IO::mesh::impl::fortran::dim2::read_coupled_interfaces(
 
   auto elastic_poroelastic =
       specfem::IO::mesh::impl::fortran::dim2::read_interfaces<
-          specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+          specfem::dimension::type::dim2,
+          specfem::element::medium_tag::elastic_sv,
           specfem::element::medium_tag::poroelastic>(
           num_interfaces_elastic_poroelastic, stream, mpi);
 

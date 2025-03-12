@@ -19,7 +19,7 @@ std::string specfem::mesh::mesh<specfem::dimension::type::dim2>::print() const {
       "specfem::mesh::mesh::print", specfem::kokkos::HostRange(0, this->nspec),
       KOKKOS_CLASS_LAMBDA(const int ispec, int &n_elastic, int &n_acoustic) {
         if (this->materials.material_index_mapping(ispec).type ==
-            specfem::element::medium_tag::elastic) {
+            specfem::element::medium_tag::elastic_sv) {
           n_elastic++;
         } else if (this->materials.material_index_mapping(ispec).type ==
                    specfem::element::medium_tag::acoustic) {
