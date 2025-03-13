@@ -15,7 +15,7 @@ namespace specfem {
 namespace point {
 
 namespace impl {
-template <int N, bool UseSIMD, typename Enable = void> struct point_data {
+template <int N, bool UseSIMD> struct point_data {
   using simd = specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD type
   using value_type = typename simd::datatype;
   constexpr static auto nprops = N;
