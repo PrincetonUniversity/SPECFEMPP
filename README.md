@@ -1,5 +1,7 @@
 # SPECFEM++
 
+I changed the `README.md`
+
 [![Documentation Status](https://readthedocs.org/projects/specfem2d-kokkos/badge/?version=latest)](https://specfem2d-kokkos.readthedocs.io/en/latest/?badge=latest)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 ![NVIDIA Build](https://jenkins.princeton.edu/buildStatus/icon?job=SpecFEM_KOKKOS%2FNVIDIA_Compiler_Checks&build=last&subject=NVIDIA%20Build)
