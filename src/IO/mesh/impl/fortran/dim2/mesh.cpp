@@ -96,27 +96,6 @@ specfem::IO::read_2d_mesh(const std::string filename,
     throw;
   }
 
-  // try {
-  //   materials = specfem::mesh::IO::fortran::read_material_properties(
-  //       stream, this->parameters.numat, mpi);
-  // } catch (std::runtime_error &e) {
-  //   throw;
-  // }
-
-  // try {
-  //   this->material_ind = specfem::mesh::material_ind(
-  //       stream, this->parameters.ngnod, this->nspec, this->parameters.numat,
-  //       this->control_nodes.knods, mpi);
-  // } catch (std::runtime_error &e) {
-  //   throw;
-  // }
-
-  // try {
-  //   this->interface = specfem::mesh::interfaces::interface(stream, mpi);
-  // } catch (std::runtime_error &e) {
-  //   throw;
-  // }
-
   int ninterfaces;
   int max_interface_size;
 
@@ -130,30 +109,6 @@ specfem::IO::read_2d_mesh(const std::string filename,
   } catch (std::runtime_error &e) {
     throw;
   }
-
-  // try {
-  //   this->boundaries.absorbing_boundary = specfem::mesh::absorbing_boundary(
-  //       stream, this->parameters.nelemabs, this->parameters.nspec, mpi);
-  // } catch (std::runtime_error &e) {
-  //   throw;
-  // }
-
-  // try {
-  //   this->boundaries.forcing_boundary = specfem::mesh::forcing_boundary(
-  //       stream, this->parameters.nelem_acforcing, this->parameters.nspec,
-  //       mpi);
-  // } catch (std::runtime_error &e) {
-  //   throw;
-  // }
-
-  // try {
-  //   this->boundaries.acoustic_free_surface =
-  //       specfem::mesh::acoustic_free_surface(
-  //           stream, this->parameters.nelem_acoustic_surface,
-  //           this->control_nodes.knods, mpi);
-  // } catch (std::runtime_error &e) {
-  //   throw;
-  // }
 
   try {
     mesh.coupled_interfaces =
@@ -197,42 +152,49 @@ specfem::IO::read_2d_mesh(const std::string filename,
   mpi->cout("Number of material systems = " +
             std::to_string(mesh.materials.n_materials) + "\n\n");
 
-  // const auto l_elastic_sv_isotropic =
-  //     mesh.materials.elastic_sv_isotropic.element_materials;
-  // const auto l_elastic_sh_isotropic =
-  //     mesh.materials.elastic_sh_isotropic.element_materials;
-  // const auto l_acoustic_isotropic =
-  //     mesh.materials.acoustic_isotropic.element_materials;
+#define PRINT_MATERIALS(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)               \
+  for (const auto material :                                                   \
+       mesh.materials                                                          \
+           .get_container<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)>()        \
+           .element_materials) {                                               \
+    mpi->cout(material.print());                                               \
+  }
 
-  // const auto l_elastic_sv_anisotropic =
-  //     mesh.materials.elastic_sv_anisotropic.element_materials;
-  // const auto l_elastic_sh_anisotropic =
-  //     mesh.materials.elastic_sh_anisotropic.element_materials;
+  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
+      PRINT_MATERIALS,
+      WHERE(DIMENSION_TAG_DIM2)
+          WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
+                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_ELECTROMAGNETIC_SV)
+              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
-  // for (const auto material : l_elastic_sv_isotropic) {
-  //   mpi->cout(material.print());
-  // }
+#undef PRINT_MATERIALS
 
-  // for (const auto material : l_elastic_sh_isotropic) {
-  //   mpi->cout(material.print());
-  // }
+  int total_materials_read = 0;
 
-  // for (const auto material : l_acoustic_isotropic) {
-  //   mpi->cout(material.print());
-  // }
+#define COMPUTE_TOTAL_MATERIALS_READ(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)  \
+  total_materials_read +=                                                      \
+      mesh.materials                                                           \
+          .get_container<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)>()         \
+          .element_materials.size();
 
-  // for (const auto material : l_elastic_sv_anisotropic) {
-  //   mpi->cout(material.print());
-  // }
+  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
+      COMPUTE_TOTAL_MATERIALS_READ,
+      WHERE(DIMENSION_TAG_DIM2)
+          WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
+                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_ELECTROMAGNETIC_SV)
+              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
-  // for (const auto material : l_elastic_sh_anisotropic) {
-  //   mpi->cout(material.print());
-  // }
+#undef COMPUTE_TOTAL_MATERIALS_READ
 
-  // assert(l_elastic_sv_isotropic.size() + l_acoustic_isotropic.size() +
-  //            l_elastic_sv_anisotropic.size() + l_elastic_sh_isotropic.size()
-  //            + l_elastic_sh_anisotropic.size() ==
-  //        mesh.materials.n_materials);
+  if (total_materials_read != mesh.materials.n_materials) {
+    std::ostringstream message;
+    message << "Total number of materials read = " << total_materials_read
+            << "\n"
+            << "Total number of materials in the database = "
+            << mesh.materials.n_materials << "\n";
+
+    throw std::runtime_error(message.str());
+  }
 
   mesh.tags = specfem::mesh::tags<specfem::dimension::type::dim2>(
       mesh.materials, mesh.boundaries);
