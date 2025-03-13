@@ -345,7 +345,6 @@ add_library(
         src/mesh/dim2/elements/tangential_elements.cpp
         src/mesh/dim2/elements/axial_elements.cpp
         # src/mesh/mpi_interfaces/mpi_interfaces.cpp
-        src/mesh/dim2/materials/materials.cpp
         src/mesh/dim2/coupled_interfaces/interface_container.cpp
         src/mesh/dim2/coupled_interfaces/coupled_interfaces.cpp
         src/mesh/dim2/tags/tags.cpp

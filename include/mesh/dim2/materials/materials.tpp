@@ -1,5 +1,4 @@
-#ifndef _MESH_MATERIALS_TPP
-#define _MESH_MATERIALS_TPP
+#pragma once
 
 #include "enumerations/specfem_enums.hpp"
 #include "medium/material.hpp"
@@ -15,5 +14,3 @@ template <specfem::element::medium_tag type,
         &l_materials)
     : n_materials(n_materials),
     element_materials(l_materials) {}
-
-#endif /* end of include guard: _MESH_MATERIALS_TPP */

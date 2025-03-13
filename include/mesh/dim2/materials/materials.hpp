@@ -71,15 +71,19 @@ template <> struct materials<specfem::dimension::type::dim2> {
       CREATE_VARIABLE_NAME(material, GET_NAME(MEDIUM_TAG),                     \
                            GET_NAME(PROPERTY_TAG));
 
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(DEFINE_MATERIAL_CONTAINER,
-                                      WHERE(DIMENSION_TAG_DIM2)
-                                          WHERE(MEDIUM_TAG_ELASTIC_SV,
-                                                MEDIUM_TAG_ELASTIC_SH,
-                                                MEDIUM_TAG_ACOUSTIC)
-                                              WHERE(PROPERTY_TAG_ISOTROPIC,
-                                                    PROPERTY_TAG_ANISOTROPIC))
+  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
+      DEFINE_MATERIAL_CONTAINER,
+      WHERE(DIMENSION_TAG_DIM2)
+          WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
+                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_ELECTROMAGNETIC_SV)
+              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
 #undef DEFINE_MATERIAL_CONTAINER
+
+  specfem::mesh::materials<specfem::dimension::type::dim2>::material<
+      specfem::element::medium_tag::electromagnetic_sv,
+      specfem::element::property_tag::isotropic>
+      electromagnetic_sv_isotropic; ///< Electromagnetic material properties SV
 
   /**
    * @name Constructors
@@ -109,13 +113,12 @@ private:
                              GET_NAME(PROPERTY_TAG)) =                         \
       specfem::medium::material<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)>;
 
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(SOURCE_MEDIUM_STORE_ON_DEVICE,
-                                      WHERE(DIMENSION_TAG_DIM2)
-                                          WHERE(MEDIUM_TAG_ELASTIC_SV,
-                                                MEDIUM_TAG_ELASTIC_SH,
-                                                MEDIUM_TAG_ACOUSTIC)
-                                              WHERE(PROPERTY_TAG_ISOTROPIC,
-                                                    PROPERTY_TAG_ANISOTROPIC))
+  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
+      SOURCE_MEDIUM_STORE_ON_DEVICE,
+      WHERE(DIMENSION_TAG_DIM2)
+          WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
+                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_ELECTROMAGNETIC_SV)
+              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
 #undef SOURCE_MEDIUM_STORE_ON_DEVICE
 
@@ -125,9 +128,9 @@ private:
 public:
 #define MAKE_VARIANT_RETURN
   std::variant<BOOST_PP_SEQ_ENUM(CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      TYPE_NAME, WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC_SV,
-                                                 MEDIUM_TAG_ELASTIC_SH,
-                                                 MEDIUM_TAG_ACOUSTIC)
+      TYPE_NAME, WHERE(DIMENSION_TAG_DIM2) WHERE(
+                     MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
+                     MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_ELECTROMAGNETIC_SV)
                      WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)))>
 
       /**
@@ -154,9 +157,10 @@ public:
 
     CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
         RETURN_VALUE,
-        WHERE(DIMENSION_TAG_DIM2) WHERE(
-            MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
-            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
+        WHERE(DIMENSION_TAG_DIM2)
+            WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
+                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_ELECTROMAGNETIC_SV)
+                WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
 #undef RETURN_VALUE
 
@@ -186,9 +190,10 @@ public:
 
     CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
         RETURN_VALUE,
-        WHERE(DIMENSION_TAG_DIM2) WHERE(
-            MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
-            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
+        WHERE(DIMENSION_TAG_DIM2)
+            WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
+                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_ELECTROMAGNETIC_SV)
+                WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
 #undef RETURN_VALUE
 
