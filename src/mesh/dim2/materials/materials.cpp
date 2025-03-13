@@ -4,68 +4,69 @@
 #include "mesh/dim2/materials/materials.tpp"
 #include <vector>
 
-std::variant<
-    specfem::medium::material<specfem::element::medium_tag::elastic_sv,
-                              specfem::element::property_tag::isotropic>,
-    specfem::medium::material<specfem::element::medium_tag::elastic_sv,
-                              specfem::element::property_tag::anisotropic>,
-    specfem::medium::material<specfem::element::medium_tag::elastic_sh,
-                              specfem::element::property_tag::isotropic>,
-    specfem::medium::material<specfem::element::medium_tag::elastic_sh,
-                              specfem::element::property_tag::anisotropic>,
-    specfem::medium::material<specfem::element::medium_tag::acoustic,
-                              specfem::element::property_tag::isotropic> >
-specfem::mesh::materials<specfem::dimension::type::dim2>::operator[](
-    const int index) const {
+// std::variant<
+//     specfem::medium::material<specfem::element::medium_tag::elastic_sv,
+//                               specfem::element::property_tag::isotropic>,
+//     specfem::medium::material<specfem::element::medium_tag::elastic_sv,
+//                               specfem::element::property_tag::anisotropic>,
+//     specfem::medium::material<specfem::element::medium_tag::elastic_sh,
+//                               specfem::element::property_tag::isotropic>,
+//     specfem::medium::material<specfem::element::medium_tag::elastic_sh,
+//                               specfem::element::property_tag::anisotropic>,
+//     specfem::medium::material<specfem::element::medium_tag::acoustic,
+//                               specfem::element::property_tag::isotropic> >
+// specfem::mesh::materials<specfem::dimension::type::dim2>::operator[](
+//     const int index) const {
 
-  const auto &material_specification = this->material_index_mapping(index);
+//   const auto &material_specification = this->material_index_mapping(index);
 
-  // Return the material properties based on the material specification
+//   // Return the material properties based on the material specification
 
-  // Return elastic isotropic
-  if (material_specification.type == specfem::element::medium_tag::elastic_sv &&
-      material_specification.property ==
-          specfem::element::property_tag::isotropic) {
-    return this->elastic_sv_isotropic
-        .element_materials[material_specification.index];
+//   // Return elastic isotropic
+//   if (material_specification.type == specfem::element::medium_tag::elastic_sv
+//   &&
+//       material_specification.property ==
+//           specfem::element::property_tag::isotropic) {
+//     return this->elastic_sv_isotropic
+//         .element_materials[material_specification.index];
 
-    // Return elastic anisotropic
-  } else if (material_specification.type ==
-                 specfem::element::medium_tag::elastic_sv &&
-             material_specification.property ==
-                 specfem::element::property_tag::anisotropic) {
-    return this->elastic_sv_anisotropic
-        .element_materials[material_specification.index];
+//     // Return elastic anisotropic
+//   } else if (material_specification.type ==
+//                  specfem::element::medium_tag::elastic_sv &&
+//              material_specification.property ==
+//                  specfem::element::property_tag::anisotropic) {
+//     return this->elastic_sv_anisotropic
+//         .element_materials[material_specification.index];
 
-  } else if (material_specification.type ==
-                 specfem::element::medium_tag::elastic_sh &&
-             material_specification.property ==
-                 specfem::element::property_tag::isotropic) {
-    return this->elastic_sh_isotropic
-        .element_materials[material_specification.index];
+//   } else if (material_specification.type ==
+//                  specfem::element::medium_tag::elastic_sh &&
+//              material_specification.property ==
+//                  specfem::element::property_tag::isotropic) {
+//     return this->elastic_sh_isotropic
+//         .element_materials[material_specification.index];
 
-    // Return elastic_sh anisotropic
-  } else if (material_specification.type ==
-                 specfem::element::medium_tag::elastic_sh &&
-             material_specification.property ==
-                 specfem::element::property_tag::anisotropic) {
-    return this->elastic_sh_anisotropic
-        .element_materials[material_specification.index];
+//     // Return elastic_sh anisotropic
+//   } else if (material_specification.type ==
+//                  specfem::element::medium_tag::elastic_sh &&
+//              material_specification.property ==
+//                  specfem::element::property_tag::anisotropic) {
+//     return this->elastic_sh_anisotropic
+//         .element_materials[material_specification.index];
 
-    // Return acoustic isotropic
-  } else if (material_specification.type ==
-                 specfem::element::medium_tag::acoustic &&
-             material_specification.property ==
-                 specfem::element::property_tag::isotropic) {
-    return this->acoustic_isotropic
-        .element_materials[material_specification.index];
-    // Throw an error if the material type is not supported
-  } else {
-    throw std::runtime_error("Material type not supported");
-  }
+//     // Return acoustic isotropic
+//   } else if (material_specification.type ==
+//                  specfem::element::medium_tag::acoustic &&
+//              material_specification.property ==
+//                  specfem::element::property_tag::isotropic) {
+//     return this->acoustic_isotropic
+//         .element_materials[material_specification.index];
+//     // Throw an error if the material type is not supported
+//   } else {
+//     throw std::runtime_error("Material type not supported");
+//   }
 
-  return {};
-}
+//   return {};
+// }
 
 // specfem::mesh::material_ind::material_ind(
 //     std::ifstream &stream, const int ngnod, const int nspec, const int numat,

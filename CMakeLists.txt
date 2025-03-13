@@ -371,6 +371,7 @@ target_link_libraries(
         specfem_mpi
         # material_class
         yaml-cpp
+        ${BOOST_LIBS}
 )
 
 add_library(
@@ -418,6 +419,7 @@ target_link_libraries(
         Kokkos::kokkos
         jacobian
         point
+        ${BOOST_LIBS}
 )
 
 add_library(
