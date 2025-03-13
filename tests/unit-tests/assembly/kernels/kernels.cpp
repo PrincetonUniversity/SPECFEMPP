@@ -16,9 +16,31 @@ std::string get_error_message(
 
 template <>
 std::string get_error_message(
-    const specfem::point::kernels<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-        specfem::element::property_tag::isotropic, false> &point_kernel,
+    const specfem::point::kernels<specfem::dimension::type::dim2,
+                                  specfem::element::medium_tag::elastic_sv,
+                                  specfem::element::property_tag::isotropic,
+                                  false> &point_kernel,
+    const type_real value) {
+  std::ostringstream message;
+
+  message << "\n\t Expected: " << value;
+  message << "\n\t Got: \n";
+  message << "\t\trho = " << point_kernel.rho() << "\n";
+  message << "\t\tmu = " << point_kernel.mu() << "\n";
+  message << "\t\tkappa = " << point_kernel.kappa() << "\n";
+  message << "\t\trhop = " << point_kernel.rhop() << "\n";
+  message << "\t\talpha = " << point_kernel.alpha() << "\n";
+  message << "\t\tbeta = " << point_kernel.beta() << "\n";
+
+  return message.str();
+}
+
+template <>
+std::string get_error_message(
+    const specfem::point::kernels<specfem::dimension::type::dim2,
+                                  specfem::element::medium_tag::elastic_sh,
+                                  specfem::element::property_tag::isotropic,
+                                  false> &point_kernel,
     const type_real value) {
   std::ostringstream message;
 
@@ -38,37 +60,8 @@ template <>
 std::string get_error_message(
     const specfem::point::kernels<specfem::dimension::type::dim2,
                                   specfem::element::medium_tag::elastic_sv,
-                                  specfem::element::property_tag::isotropic,
+                                  specfem::element::property_tag::anisotropic,
                                   false> &point_kernel,
-    const type_real value) {
-
-  return get_error_message(
-      static_cast<specfem::point::kernels<
-          specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-          specfem::element::property_tag::isotropic, false> >(point_kernel),
-      value);
-}
-
-template <>
-std::string get_error_message(
-    const specfem::point::kernels<specfem::dimension::type::dim2,
-                                  specfem::element::medium_tag::elastic_sh,
-                                  specfem::element::property_tag::isotropic,
-                                  false> &point_kernel,
-    const type_real value) {
-
-  return get_error_message(
-      static_cast<specfem::point::kernels<
-          specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-          specfem::element::property_tag::isotropic, false> >(point_kernel),
-      value);
-}
-
-template <>
-std::string get_error_message(
-    const specfem::point::kernels<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-        specfem::element::property_tag::anisotropic, false> &point_kernel,
     const type_real value) {
   std::ostringstream message;
 
@@ -88,29 +81,23 @@ std::string get_error_message(
 template <>
 std::string get_error_message(
     const specfem::point::kernels<specfem::dimension::type::dim2,
-                                  specfem::element::medium_tag::elastic_sv,
-                                  specfem::element::property_tag::anisotropic,
-                                  false> &point_kernel,
-    const type_real value) {
-  return get_error_message(
-      static_cast<specfem::point::kernels<
-          specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-          specfem::element::property_tag::anisotropic, false> >(point_kernel),
-      value);
-}
-
-template <>
-std::string get_error_message(
-    const specfem::point::kernels<specfem::dimension::type::dim2,
                                   specfem::element::medium_tag::elastic_sh,
                                   specfem::element::property_tag::anisotropic,
                                   false> &point_kernel,
     const type_real value) {
-  return get_error_message(
-      static_cast<specfem::point::kernels<
-          specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-          specfem::element::property_tag::anisotropic, false> >(point_kernel),
-      value);
+  std::ostringstream message;
+
+  message << "\n\t Expected: " << value;
+  message << "\n\t Got: \n";
+  message << "\t\trho = " << point_kernel.rho() << "\n";
+  message << "\t\tc11 = " << point_kernel.c11() << "\n";
+  message << "\t\tc13 = " << point_kernel.c13() << "\n";
+  message << "\t\tc15 = " << point_kernel.c15() << "\n";
+  message << "\t\tc33 = " << point_kernel.c33() << "\n";
+  message << "\t\tc35 = " << point_kernel.c35() << "\n";
+  message << "\t\tc55 = " << point_kernel.c55() << "\n";
+
+  return message.str();
 }
 
 template <>

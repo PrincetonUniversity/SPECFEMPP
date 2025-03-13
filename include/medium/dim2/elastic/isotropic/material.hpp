@@ -11,18 +11,23 @@
 namespace specfem {
 namespace medium {
 
+template <
+    specfem::element::medium_tag MediumTag,
+    std::enable_if_t<MediumTag == specfem::element::medium_tag::elastic_sh ||
+                     MediumTag == specfem::element::medium_tag::elastic_sv> >
+class impl_material {};
+
 /**
  * @brief Template specialization for elastic isotropic material properties
  *
  */
-template <>
-class material<specfem::element::medium_tag::elastic,
-               specfem::element::property_tag::isotropic> {
+template <specfem::element::medium_tag MediumTag>
+class material<MediumTag, specfem::element::property_tag::isotropic>
+    : impl_material<MediumTag> {
 public:
   constexpr static auto dimension =
-      specfem::dimension::type::dim2; ///< Dimension of the material
-  constexpr static auto medium_tag =
-      specfem::element::medium_tag::elastic; ///< Medium tag
+      specfem::dimension::type::dim2;           ///< Dimension of the material
+  constexpr static auto medium_tag = MediumTag; ///< Medium tag
   constexpr static auto property_tag =
       specfem::element::property_tag::isotropic; ///< Property tag
 

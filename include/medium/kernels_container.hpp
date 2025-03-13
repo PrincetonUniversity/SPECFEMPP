@@ -6,7 +6,8 @@ namespace specfem {
 namespace medium {
 
 template <specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag, int N>
+          specfem::element::property_tag PropertyTag, int N,
+          typename Enable = void>
 struct impl_kernels_container
     : public impl::medium_data<MediumTag, PropertyTag, N> {
   using base_type = impl::medium_data<MediumTag, PropertyTag, N>;

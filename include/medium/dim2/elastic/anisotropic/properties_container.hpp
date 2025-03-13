@@ -6,11 +6,15 @@
 
 namespace specfem {
 namespace medium {
-namespace impl {
+
 template <specfem::element::medium_tag MediumTag>
-struct properties_container_elastic_anisotropic
+struct properties_container<MediumTag,
+                            specfem::element::property_tag::anisotropic>
     : public impl_properties_container<
-          MediumTag, specfem::element::property_tag::anisotropic, 10> {
+          MediumTag, specfem::element::property_tag::anisotropic, 10,
+          std::enable_if_t<
+              MediumTag == specfem::element::medium_tag::elastic_sh ||
+              MediumTag == specfem::element::medium_tag::elastic_sv> > {
   using base_type = impl_properties_container<
       MediumTag, specfem::element::property_tag::anisotropic, 10>;
   using base_type::base_type;
@@ -25,27 +29,6 @@ struct properties_container_elastic_anisotropic
   DEFINE_MEDIUM_VIEW(c23, 7)
   DEFINE_MEDIUM_VIEW(c25, 8)
   DEFINE_MEDIUM_VIEW(rho, 9)
-};
-} // namespace impl
-
-template <>
-struct properties_container<specfem::element::medium_tag::elastic_sv,
-                            specfem::element::property_tag::anisotropic>
-    : public impl::properties_container_elastic_anisotropic<
-          specfem::element::medium_tag::elastic_sv> {
-  using base_type = impl::properties_container_elastic_anisotropic<
-      specfem::element::medium_tag::elastic_sv>;
-  using base_type::base_type;
-};
-
-template <>
-struct properties_container<specfem::element::medium_tag::elastic_sh,
-                            specfem::element::property_tag::anisotropic>
-    : public impl::properties_container_elastic_anisotropic<
-          specfem::element::medium_tag::elastic_sh> {
-  using base_type = impl::properties_container_elastic_anisotropic<
-      specfem::element::medium_tag::elastic_sh>;
-  using base_type::base_type;
 };
 
 } // namespace medium
