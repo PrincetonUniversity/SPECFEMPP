@@ -1,5 +1,6 @@
 #pragma once
 
+#include "element/impl/is_elastic_2d.hpp"
 #include "medium/properties_container.hpp"
 #include "point/interface.hpp"
 #include <Kokkos_SIMD.hpp>
@@ -10,10 +11,8 @@ namespace medium {
 template <specfem::element::medium_tag MediumTag>
 struct kernels_container<MediumTag, specfem::element::property_tag::isotropic>
     : public impl_kernels_container<
-          MediumTag, specfem::element::property_tag::isotropic, 6,
-          std::enable_if_t<
-              MediumTag == specfem::element::medium_tag::elastic_sh ||
-              MediumTag == specfem::element::medium_tag::elastic_sv> > {
+          MediumTag, specfem::element::property_tag::isotropic, 6>,
+      element::impl::is_elastic_2d<MediumTag> {
   using base_type =
       impl_kernels_container<MediumTag,
                              specfem::element::property_tag::isotropic, 6>;

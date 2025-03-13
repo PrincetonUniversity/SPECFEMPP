@@ -1,5 +1,6 @@
 #pragma once
 
+#include "element/impl/is_elastic_2d.hpp"
 #include "impl/point_data.hpp"
 
 namespace specfem {
@@ -26,11 +27,8 @@ struct properties;
 template <specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct properties<specfem::dimension::type::dim2, MediumTag,
                   specfem::element::property_tag::isotropic, UseSIMD>
-    : public impl::point_data<
-          3, UseSIMD,
-          std::enable_if_t<
-              MediumTag == specfem::element::medium_tag::elastic_sh ||
-              MediumTag == specfem::element::medium_tag::elastic_sv> > {
+    : public impl::point_data<3, UseSIMD>,
+      element::impl::is_elastic_2d<MediumTag> {
 
   /**
    * @name Typedefs
@@ -73,11 +71,8 @@ struct properties<specfem::dimension::type::dim2, MediumTag,
 template <specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct properties<specfem::dimension::type::dim2, MediumTag,
                   specfem::element::property_tag::anisotropic, UseSIMD>
-    : public impl::point_data<
-          10, UseSIMD,
-          std::enable_if_t<
-              MediumTag == specfem::element::medium_tag::elastic_sh ||
-              MediumTag == specfem::element::medium_tag::elastic_sv> > {
+    : public impl::point_data<10, UseSIMD>,
+      element::impl::is_elastic_2d<MediumTag> {
 
   /**
    * @name Typedefs
