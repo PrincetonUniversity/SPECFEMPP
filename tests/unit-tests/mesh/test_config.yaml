@@ -1,6 +1,6 @@
 Tests:
-
-  - name : "Test 1: Simple mesh with flat topography (P_SV wave)"
+# Simple mesh with flat topography P_SV wave
+  - name : "Simple mesh with flat topography (P_SV wave)"
     description: >
       Testing mesh reader on a simple mesh with flat topography.
     config:
@@ -11,7 +11,8 @@ Tests:
       sources : "data/mesh/simple_mesh_flat_topography/sources.yaml"
       stations : "data/mesh/simple_mesh_flat_topography/STATIONS"
 
-  - name : "Test 2: Simple mesh with flat topography (SH wave)"
+# Simple mesh with flat topography SH wave
+  - name : "Simple mesh with flat topography (SH wave)"
     description: >
       Testing mesh reader on a simple mesh with flat topography.
     config:
@@ -22,7 +23,8 @@ Tests:
       sources : "data/mesh/simple_mesh_flat_topography/sources.yaml"
       stations : "data/mesh/simple_mesh_flat_topography/STATIONS"
 
-  - name : "Test 3: Simple mesh with curved topography"
+# Simple mesh with curved topography
+  - name : "Simple mesh with curved topography"
     description: >
       Testing mesh reader on a simple mesh with curved topography.
     config:
@@ -33,7 +35,8 @@ Tests:
       sources : "data/mesh/simple_mesh_curved_topography/sources.yaml"
       stations : "data/mesh/simple_mesh_curved_topography/STATIONS"
 
-  - name : "Test 4: Simple mesh with flat ocean bottom"
+# Simple mesh with flat ocean bottom
+  - name : "Simple mesh with flat ocean bottom"
     description: >
       Testing mesh reader on a simple mesh with flat ocean bottom. Fluid-solid interface is at the ocean bottom.
     config:
@@ -44,7 +47,8 @@ Tests:
       sources : "data/mesh/fluid_solid_mesh_flat_ocean_bottom/sources.yaml"
       stations : "data/mesh/fluid_solid_mesh_flat_ocean_bottom/STATIONS"
 
-  - name : "Test 5: Simple mesh with curved ocean bottom"
+# Curved ocean bottom
+  - name : "Simple mesh with curved ocean bottom"
     description: >
       Testing mesh reader on a simple mesh with curved ocean bottom. Fluid-solid interface is at the ocean bottom.
     config:
@@ -55,7 +59,8 @@ Tests:
       sources : "data/mesh/fluid_solid_mesh_curved_ocean_bottom/sources.yaml"
       stations : "data/mesh/fluid_solid_mesh_curved_ocean_bottom/STATIONS"
 
-  - name : "Test 6: Gmesh Example"
+# Gmesh example
+  - name : "Gmesh Example"
     description: >
       Testing mesh reader on a Gmesh example mesh.
     config:
@@ -66,7 +71,8 @@ Tests:
       sources : "data/mesh/Gmesh_Example_Stacey/sources.yaml"
       stations : "data/mesh/Gmesh_Example_Stacey/STATIONS"
 
-  - name : "Test 7: Homogeneous Elastic Anisotropic Material (P_SV wave)"
+# Homogeneous elastic isotropic material P_SV wave
+  - name : "Homogeneous Elastic Anisotropic Material (P_SV wave)"
     description: >
       Testing the reading of a homogeneous elastic anisotropic material.
     config:
@@ -77,7 +83,8 @@ Tests:
       sources : "data/mesh/homogeneous_elastic_anisotropic/sources.yaml"
       stations : "data/mesh/homogeneous_elastic_anisotropic/STATIONS"
 
-  - name : "Test 8: Homogeneous Elastic Anisotropic Material (SH wave)"
+# Homogeneous elastic anisotropic material SH wave
+  - name : "Homogeneous Elastic Anisotropic Material (SH wave)"
     description: >
       Testing the reading of a homogeneous elastic anisotropic material.
     config:
@@ -87,3 +94,15 @@ Tests:
       mesh : "data/mesh/homogeneous_elastic_anisotropic/database.bin"
       sources : "data/mesh/homogeneous_elastic_anisotropic/sources.yaml"
       stations : "data/mesh/homogeneous_elastic_anisotropic/STATIONS"
+
+# Electromagnetic mesh P_SV wave
+  - name: "Electro-magnetic mesh example from Morency 2020"
+    description: >
+      Testing the reading of an electromagnetic mesh.
+    config:
+      nproc: 1
+      elastic_wave: "P_SV"
+    databases:
+      mesh: "data/mesh/electromagnetic_mesh_morency2020/database.bin"
+      sources: "data/mesh/electromagnetic_mesh_morency2020/sources.yaml"
+      stations: "data/mesh/electromagnetic_mesh_morency2020/DATA/STATIONS"
