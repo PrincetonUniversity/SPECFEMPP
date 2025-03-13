@@ -18,6 +18,9 @@ specfem::element::to_string(const specfem::element::medium_tag &medium,
   case specfem::element::medium_tag::acoustic:
     medium_string = "acoustic";
     break;
+  case specfem::element::medium_tag::electromagnetic_sv:
+    medium_string = "electromagnetic_sv";
+    break;
   default:
     medium_string = "unknown";
     break;
@@ -73,6 +76,9 @@ const std::string specfem::element::to_string(
   case specfem::element::medium_tag::acoustic:
     medium_string = "acoustic";
     break;
+  case specfem::element::medium_tag::electromagnetic_sv:
+    medium_string = "electromagnetic_sv";
+    break;
   default:
     medium_string = "unknown";
     break;
@@ -89,6 +95,7 @@ const std::string specfem::element::to_string(
     property_string = "unknown";
     break;
   }
+
   return medium_string + "_" + property_string;
 }
 
@@ -106,6 +113,9 @@ specfem::element::to_string(const specfem::element::medium_tag &medium) {
     break;
   case specfem::element::medium_tag::acoustic:
     medium_string = "acoustic";
+    break;
+  case specfem::element::medium_tag::electromagnetic_sv:
+    medium_string = "electromagnetic_sv";
     break;
   default:
     medium_string = "unknown";

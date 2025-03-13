@@ -89,6 +89,11 @@ template <> struct materials<specfem::dimension::type::dim2> {
       specfem::element::property_tag::isotropic>
       acoustic_isotropic; ///< Acoustic isotropic material properties
 
+  specfem::mesh::materials<specfem::dimension::type::dim2>::material<
+      specfem::element::medium_tag::electromagnetic_sv,
+      specfem::element::property_tag::isotropic>
+      electromagnetic_sv_isotropic; ///< Electromagnetic material properties SV
+
   /**
    * @name Constructors
    */
@@ -118,16 +123,19 @@ template <> struct materials<specfem::dimension::type::dim2> {
    * @return std::variant Material properties
    */
   std::variant<
-      specfem::medium::material<specfem::element::medium_tag::elastic_sv,
-                                specfem::element::property_tag::isotropic>,
-      specfem::medium::material<specfem::element::medium_tag::elastic_sv,
-                                specfem::element::property_tag::anisotropic>,
-      specfem::medium::material<specfem::element::medium_tag::elastic_sh,
-                                specfem::element::property_tag::isotropic>,
-      specfem::medium::material<specfem::element::medium_tag::elastic_sh,
-                                specfem::element::property_tag::anisotropic>,
       specfem::medium::material<specfem::element::medium_tag::acoustic,
-                                specfem::element::property_tag::isotropic> >
+                                specfem::element::property_tag::isotropic>,
+      specfem::medium::material<specfem::element::medium_tag::elastic_sv,
+                                specfem::element::property_tag::isotropic>,
+      specfem::medium::material<specfem::element::medium_tag::elastic_sv,
+                                specfem::element::property_tag::anisotropic>,
+      specfem::medium::material<specfem::element::medium_tag::elastic_sh,
+                                specfem::element::property_tag::isotropic>,
+      specfem::medium::material<specfem::element::medium_tag::elastic_sh,
+                                specfem::element::property_tag::anisotropic>,
+      specfem::medium::material<
+          specfem::element::medium_tag::electromagnetic_sv,
+          specfem::element::property_tag::isotropic> >
   operator[](const int index) const;
 };
 
