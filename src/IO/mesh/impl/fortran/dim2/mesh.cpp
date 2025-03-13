@@ -197,42 +197,42 @@ specfem::IO::read_2d_mesh(const std::string filename,
   mpi->cout("Number of material systems = " +
             std::to_string(mesh.materials.n_materials) + "\n\n");
 
-  const auto l_elastic_sv_isotropic =
-      mesh.materials.elastic_sv_isotropic.element_materials;
-  const auto l_elastic_sh_isotropic =
-      mesh.materials.elastic_sh_isotropic.element_materials;
-  const auto l_acoustic_isotropic =
-      mesh.materials.acoustic_isotropic.element_materials;
+  // const auto l_elastic_sv_isotropic =
+  //     mesh.materials.elastic_sv_isotropic.element_materials;
+  // const auto l_elastic_sh_isotropic =
+  //     mesh.materials.elastic_sh_isotropic.element_materials;
+  // const auto l_acoustic_isotropic =
+  //     mesh.materials.acoustic_isotropic.element_materials;
 
-  const auto l_elastic_sv_anisotropic =
-      mesh.materials.elastic_sv_anisotropic.element_materials;
-  const auto l_elastic_sh_anisotropic =
-      mesh.materials.elastic_sh_anisotropic.element_materials;
+  // const auto l_elastic_sv_anisotropic =
+  //     mesh.materials.elastic_sv_anisotropic.element_materials;
+  // const auto l_elastic_sh_anisotropic =
+  //     mesh.materials.elastic_sh_anisotropic.element_materials;
 
-  for (const auto material : l_elastic_sv_isotropic) {
-    mpi->cout(material.print());
-  }
+  // for (const auto material : l_elastic_sv_isotropic) {
+  //   mpi->cout(material.print());
+  // }
 
-  for (const auto material : l_elastic_sh_isotropic) {
-    mpi->cout(material.print());
-  }
+  // for (const auto material : l_elastic_sh_isotropic) {
+  //   mpi->cout(material.print());
+  // }
 
-  for (const auto material : l_acoustic_isotropic) {
-    mpi->cout(material.print());
-  }
+  // for (const auto material : l_acoustic_isotropic) {
+  //   mpi->cout(material.print());
+  // }
 
-  for (const auto material : l_elastic_sv_anisotropic) {
-    mpi->cout(material.print());
-  }
+  // for (const auto material : l_elastic_sv_anisotropic) {
+  //   mpi->cout(material.print());
+  // }
 
-  for (const auto material : l_elastic_sh_anisotropic) {
-    mpi->cout(material.print());
-  }
+  // for (const auto material : l_elastic_sh_anisotropic) {
+  //   mpi->cout(material.print());
+  // }
 
-  assert(l_elastic_sv_isotropic.size() + l_acoustic_isotropic.size() +
-             l_elastic_sv_anisotropic.size() + l_elastic_sh_isotropic.size() +
-             l_elastic_sh_anisotropic.size() ==
-         mesh.materials.n_materials);
+  // assert(l_elastic_sv_isotropic.size() + l_acoustic_isotropic.size() +
+  //            l_elastic_sv_anisotropic.size() + l_elastic_sh_isotropic.size()
+  //            + l_elastic_sh_anisotropic.size() ==
+  //        mesh.materials.n_materials);
 
   mesh.tags = specfem::mesh::tags<specfem::dimension::type::dim2>(
       mesh.materials, mesh.boundaries);

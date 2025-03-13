@@ -325,9 +325,18 @@ specfem::IO::mesh::impl::fortran::dim2::read_material_properties(
 
   // Read material properties
   auto index_mapping = read_materials(
-      stream, numat, wave, materials.elastic_sv_isotropic,
-      materials.elastic_sh_isotropic, materials.acoustic_isotropic,
-      materials.elastic_sv_anisotropic, materials.elastic_sh_anisotropic, mpi);
+      stream, numat, wave,
+      materials.get_container<specfem::element::medium_tag::elastic_sv,
+                              specfem::element::property_tag::isotropic>(),
+      materials.get_container<specfem::element::medium_tag::elastic_sh,
+                              specfem::element::property_tag::isotropic>(),
+      materials.get_container<specfem::element::medium_tag::acoustic,
+                              specfem::element::property_tag::isotropic>(),
+      materials.get_container<specfem::element::medium_tag::elastic_sv,
+                              specfem::element::property_tag::anisotropic>(),
+      materials.get_container<specfem::element::medium_tag::elastic_sh,
+                              specfem::element::property_tag::anisotropic>(),
+      mpi);
 
   // Read material indices
   read_material_indices(stream, nspec, numat, index_mapping,
