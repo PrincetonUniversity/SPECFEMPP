@@ -9,63 +9,67 @@
 namespace specfem {
 namespace medium {
 
-/**
- * @brief Material properties for a given medium and property
- *
- * @tparam MediumTag Medium tag for the material
- * @tparam PropertyTag Property tag for the material
- */
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
-class impl_material;
+struct material;
 
-/**
- * @brief Material properties for a given medium and property
- *
- * @tparam MediumTag Medium tag for the material
- * @tparam PropertyTag Property tag for the material
- */
-template <specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag>
-class material : public impl_material<MediumTag, PropertyTag> {
-public:
-  constexpr static auto medium_tag = MediumTag;     ///< Medium tag
-  constexpr static auto property_tag = PropertyTag; ///< Property tag
+// /**
+//  * @brief Material properties for a given medium and property
+//  *
+//  * @tparam MediumTag Medium tag for the material
+//  * @tparam PropertyTag Property tag for the material
+//  */
+// template <specfem::element::medium_tag MediumTag,
+//           specfem::element::property_tag PropertyTag>
+// class impl_material;
 
-  /**
-   * @name Constructors
-   */
-  ///@{
+// /**
+//  * @brief Material properties for a given medium and property
+//  *
+//  * @tparam MediumTag Medium tag for the material
+//  * @tparam PropertyTag Property tag for the material
+//  */
+// template <specfem::element::medium_tag MediumTag,
+//           specfem::element::property_tag PropertyTag>
+// class material : public impl_material<MediumTag, PropertyTag> {
+// public:
+//   constexpr static auto medium_tag = MediumTag;     ///< Medium tag
+//   constexpr static auto property_tag = PropertyTag; ///< Property tag
 
-  /**
-   * @brief Construct a new material object
-   *
-   */
-  material() = default;
+//   /**
+//    * @name Constructors
+//    */
+//   ///@{
 
-  /**
-   * @brief Construct a new material object
-   *
-   * @tparam Args Arguments to forward to the properties constructor
-   * @param args Properties of the material (density, wave speeds, etc.)
-   */
-  template <typename... Args>
-  material(Args &&...args)
-      : specfem::medium::impl_material<MediumTag, PropertyTag>(
-            std::forward<Args>(args)...) {}
-  ///@}
+//   /**
+//    * @brief Construct a new material object
+//    *
+//    */
+//   material() = default;
 
-  ~material() = default;
+//   /**
+//    * @brief Construct a new material object
+//    *
+//    * @tparam Args Arguments to forward to the properties constructor
+//    * @param args Properties of the material (density, wave speeds, etc.)
+//    */
+//   template <typename... Args>
+//   material(Args &&...args)
+//       : specfem::medium::impl_material<MediumTag, PropertyTag>(
+//             std::forward<Args>(args)...) {}
+//   ///@}
 
-  /**
-   * @brief Get the medium tag of the material
-   *
-   * @return constexpr specfem::element::medium_tag Medium tag
-   */
-  constexpr specfem::element::medium_tag get_type() const {
-    return medium_tag;
-  };
-};
+//   ~material() = default;
+
+//   /**
+//    * @brief Get the medium tag of the material
+//    *
+//    * @return constexpr specfem::element::medium_tag Medium tag
+//    */
+//   constexpr specfem::element::medium_tag get_type() const {
+//     return medium_tag;
+//   };
+// };
 
 } // namespace medium
 } // namespace specfem
@@ -73,3 +77,4 @@ public:
 #include "dim2/acoustic/isotropic/material.hpp"
 #include "dim2/elastic/anisotropic/material.hpp"
 #include "dim2/elastic/isotropic/material.hpp"
+#include "dim2/electromagnetic/isotropic/material.hpp"

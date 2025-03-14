@@ -78,7 +78,7 @@ map_materials_with_color(const specfem::compute::assembly &assembly) {
 
   const std::unordered_map<specfem::element::medium_tag, std::array<int, 3> >
       material_colors = {
-        { specfem::element::medium_tag::elastic, // sienna color
+        { specfem::element::medium_tag::elastic_sv, // sienna color
           { 160, 82, 45 } },
         { specfem::element::medium_tag::acoustic, // aqua color
           { 0, 255, 255 } },

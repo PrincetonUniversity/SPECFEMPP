@@ -73,8 +73,7 @@ void read_field(
 }
 
 TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
-  std::string config_filename =
-      "../../../tests/unit-tests/seismogram/elastic/test_config.yaml";
+  std::string config_filename = "seismogram/elastic/test_config.yaml";
 
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
 
@@ -91,7 +90,7 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
   const auto quadratures = setup.instantiate_quadrature();
 
   // Read mesh generated MESHFEM
-  specfem::mesh::mesh mesh = specfem::IO::read_mesh(database_file, mpi);
+  specfem::mesh::mesh mesh = specfem::IO::read_2d_mesh(database_file, mpi);
 
   std::vector<std::shared_ptr<specfem::sources::source> > sources(0);
 
@@ -121,7 +120,7 @@ TEST(SEISMOGRAM_TESTS, elastic_seismograms_test) {
 
   specfem::domain::domain<
       specfem::wavefield::simulation_field::forward,
-      specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+      specfem::dimension::type::dim2, specfem::element::medium_tag::elastic_sv,
       specfem::enums::element::quadrature::static_quadrature_points<5> >
       elastic_domain_static(setup.get_dt(), assembly, qp5);
 

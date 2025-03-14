@@ -18,12 +18,31 @@ namespace IO {
  *
  * @param filename Fortran binary database filename
  * @param mpi pointer to MPI object to manage communication
- * @return specfem::mesh::mesh Specfem mesh object
+ * @return specfem::mesh::mesh Specfem mesh object for dimension type dim2
  *
  */
 specfem::mesh::mesh<specfem::dimension::type::dim2>
-read_mesh(const std::string filename, const specfem::MPI::MPI *mpi);
+read_2d_mesh(const std::string filename,
+             const specfem::enums::elastic_wave wave,
+             const specfem::MPI::MPI *mpi);
 
+/**
+ * @brief Construct a 3D mesh object from a Fortran binary database file
+ *
+ * @param mesh_parameters_file Mesh parameters file
+ * @param mesh_databases_file Mesh databases file
+ * @param mpi pointer to MPI object to manage communication
+ * @return specfem::mesh::mesh<specfem::dimension::type::dim3>
+ *         Specfem mesh object for dimension type dim3
+ *
+ */
+specfem::mesh::mesh<specfem::dimension::type::dim3>
+read_3d_mesh(const std::string mesh_parameters_file,
+             const std::string mesh_databases_file,
+             const specfem::MPI::MPI *mpi);
+
+specfem::mesh::mesh<specfem::dimension::type::dim3>
+read_3d_mesh(const std::string filename, const specfem::MPI::MPI *mpi);
 /**
  * @brief Read station file
  *
@@ -69,8 +88,12 @@ read_receivers(const YAML::Node &stations, const type_real angle);
  * Parse source specification file written in yaml format and create a vector of
  * specfem::source::source * object
  *
- * @param sources_file Name of the yml file
- * @param mpi Pointer to specfem MPI object
+ * @param sources_file Name of the yaml file
+ * @param nsteps Number of time steps
+ * @param user_t0 User defined t0
+ * @param dt Time step
+ * @param simulation_type Type of simulation
+ *
  * @return std::vector<specfem::sources::source *> vector of instantiated source
  * objects
  */
@@ -86,7 +109,10 @@ read_sources(const std::string sources_file, const int nsteps,
  * specfem::source::source * object
  *
  * @param yaml YAML node containing source information
- * @param mpi Pointer to specfem MPI object
+ * @param nsteps Number of time steps
+ * @param user_t0 User defined t0
+ * @param dt Time step
+ * @param simulation_type Type of simulation
  * @return std::vector<specfem::sources::source *> vector of instantiated source
  * objects
  */

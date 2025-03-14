@@ -1,5 +1,4 @@
 #include "parameter_parser/receivers.hpp"
-#include "constants.hpp"
 #include "yaml-cpp/yaml.h"
 
 // External Includes

@@ -30,7 +30,7 @@ parameters:
             output-folder: "."
 
   receivers:
-    stations: "../../../tests/unit-tests/seismogram/elastic/serial/STATIONS"
+    stations: "seismogram/elastic/serial/STATIONS"
     angle: 0.0
     seismogram-type:
       - displacement
@@ -45,6 +45,6 @@ parameters:
 
   ## databases
   databases:
-    mesh-database: "../../../tests/unit-tests/seismogram/elastic/serial/database.bin"
+    mesh-database: "seismogram/elastic/serial/database.bin"
 
   sources: "dummy-source.yaml"

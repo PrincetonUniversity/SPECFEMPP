@@ -20,7 +20,7 @@ struct database {
 public:
   database()
       : specfem_config(""), elastic_mass_matrix("NULL"),
-        acoustic_mass_matrix("NULL"){};
+        acoustic_mass_matrix("NULL") {};
   database(const YAML::Node &Node) {
     specfem_config = Node["specfem_config"].as<std::string>();
     // check if node elastic_mass_matrix exists
@@ -45,7 +45,7 @@ public:
 
 struct configuration {
 public:
-  configuration() : number_of_processors(0){};
+  configuration() : number_of_processors(0) {};
   configuration(const YAML::Node &Node) {
     number_of_processors = Node["nproc"].as<int>();
   }
@@ -91,8 +91,7 @@ std::vector<test_config::Test> parse_test_config(std::string test_config_file,
 }
 
 TEST(DOMAIN_TESTS, rmass_inverse) {
-  std::string config_filename =
-      "../../../tests/unit-tests/domain/test_config.yaml";
+  std::string config_filename = "domain/test_config.yaml";
 
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
 
@@ -117,7 +116,8 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
     std::cout << "Reading mesh file: " << database_file << std::endl;
 
     // Read mesh generated MESHFEM
-    specfem::mesh::mesh mesh = specfem::IO::read_mesh(database_file, mpi);
+    specfem::mesh::mesh mesh = specfem::IO::read_2d_mesh(
+        database_file, specfem::enums::elastic_wave::p_sv, mpi);
 
     std::cout << "Setting up sources and receivers" << std::endl;
 
@@ -141,12 +141,18 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
           kernels(assembly);
 
       kernels.initialize(dt);
+      const auto &elastic_sv_field =
+          assembly.fields.forward
+              .get_field<specfem::element::medium_tag::elastic_sv>();
+      const auto &acoustic_field =
+          assembly.fields.forward
+              .get_field<specfem::element::medium_tag::acoustic>();
 
-      Kokkos::deep_copy(assembly.fields.forward.elastic.h_mass_inverse,
-                        assembly.fields.forward.elastic.mass_inverse);
+      Kokkos::deep_copy(elastic_sv_field.h_mass_inverse,
+                        elastic_sv_field.mass_inverse);
 
-      Kokkos::deep_copy(assembly.fields.forward.acoustic.h_mass_inverse,
-                        assembly.fields.forward.acoustic.mass_inverse);
+      Kokkos::deep_copy(acoustic_field.h_mass_inverse,
+                        acoustic_field.mass_inverse);
 
       const int nglob = assembly.fields.forward.nglob;
 
@@ -167,7 +173,7 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
                 << std::endl;
 
       if (Test.database.elastic_mass_matrix != "NULL") {
-        specfem::testing::array2d<type_real, Kokkos::LayoutRight>
+        specfem::testing::array2d<double, Kokkos::LayoutRight>
             h_mass_matrix_global(Test.database.elastic_mass_matrix, nglob, 2);
 
         specfem::testing::array3d<int, Kokkos::LayoutRight> index_mapping(
@@ -184,13 +190,14 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
               const int ispec_mesh =
                   assembly.mesh.mapping.compute_to_mesh(ispec);
               if (assembly.element_types.get_medium_tag(ispec) ==
-                  specfem::element::medium_tag::elastic) {
+                  specfem::element::medium_tag::elastic_sv) {
 
                 constexpr int components = 2;
                 const auto point_field = [&]() {
-                  specfem::point::field<specfem::dimension::type::dim2,
-                                        specfem::element::medium_tag::elastic,
-                                        false, false, false, true, false>
+                  specfem::point::field<
+                      specfem::dimension::type::dim2,
+                      specfem::element::medium_tag::elastic_sv, false, false,
+                      false, true, false>
                       point_field;
                   specfem::compute::load_on_host(index, assembly.fields.forward,
                                                  point_field);
@@ -227,7 +234,7 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
       }
 
       if (Test.database.acoustic_mass_matrix != "NULL") {
-        specfem::testing::array2d<type_real, Kokkos::LayoutRight>
+        specfem::testing::array2d<double, Kokkos::LayoutRight>
             h_mass_matrix_global(Test.database.acoustic_mass_matrix, nglob, 1);
 
         specfem::testing::array3d<int, Kokkos::LayoutRight> index_mapping(

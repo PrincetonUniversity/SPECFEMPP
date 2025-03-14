@@ -3,6 +3,7 @@
 
 #include "IO/reader.hpp"
 #include "database_configuration.hpp"
+#include "elastic_wave.hpp"
 #include "header.hpp"
 #include "parameter_parser/solver/interface.hpp"
 #include "quadrature.hpp"
@@ -90,6 +91,15 @@ public:
   print_header(const std::chrono::time_point<std::chrono::system_clock> now);
 
   /**
+   * @brief Get the type of the elastic wave
+   *
+   * @return specfem::enums::elastic_wave Type of the elastic wave
+   */
+  inline specfem::enums::elastic_wave get_elastic_wave_type() const {
+    return this->elastic_wave->get_elastic_wave_type();
+  }
+
+  /**
    * @brief Get delta time value
    *
    * @return type_real
@@ -103,6 +113,9 @@ public:
    * to mesh database and source yaml file
    */
   std::string get_databases() const { return databases->get_databases(); }
+  std::string get_mesh_parameters() const {
+    return databases->get_mesh_parameters();
+  }
 
   /**
    * @brief Get the sources YAML object
@@ -147,7 +160,8 @@ public:
   std::shared_ptr<specfem::IO::writer> instantiate_seismogram_writer() const {
     if (this->seismogram) {
       return this->seismogram->instantiate_seismogram_writer(
-          this->time_scheme->get_dt(), this->time_scheme->get_t0(),
+          this->get_elastic_wave_type(), this->time_scheme->get_dt(),
+          this->time_scheme->get_t0(),
           this->receivers->get_nstep_between_samples());
     } else {
       return nullptr;
@@ -224,6 +238,8 @@ private:
   std::unique_ptr<specfem::runtime_configuration::header> header; ///< Pointer
                                                                   ///< to header
                                                                   ///< object
+  std::unique_ptr<specfem::runtime_configuration::elastic_wave>
+      elastic_wave; ///< Pointer to elastic wave object
   std::unique_ptr<specfem::runtime_configuration::time_scheme::time_scheme>
       time_scheme; ///< Pointer to solver
                    ///< object

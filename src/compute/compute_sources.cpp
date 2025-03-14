@@ -63,7 +63,7 @@ template class specfem::compute::impl::source_medium<
     specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic>;
 
 template class specfem::compute::impl::source_medium<
-    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic>;
+    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic_sv>;
 
 specfem::compute::sources::sources(
     const std::vector<std::shared_ptr<specfem::sources::source> > &sources,
@@ -102,7 +102,8 @@ specfem::compute::sources::sources(
 
   CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
       SORT_SOURCES_PER_MEDIUM,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC))
+      WHERE(DIMENSION_TAG_DIM2) WHERE(
+          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC))
 
 #undef SORT_SOURCES_PER_MEDIUM
 
@@ -119,9 +120,10 @@ specfem::compute::sources::sources(
                            GET_NAME(MEDIUM_TAG))                               \
           .size();
 
-  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
-      COUNT_SOURCES,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC))
+  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(COUNT_SOURCES, WHERE(DIMENSION_TAG_DIM2)
+                                                    WHERE(MEDIUM_TAG_ELASTIC_SV,
+                                                          MEDIUM_TAG_ELASTIC_SH,
+                                                          MEDIUM_TAG_ACOUSTIC))
 
 #undef COUNT_SOURCES
 
@@ -183,8 +185,9 @@ specfem::compute::sources::sources(
   }
 
   CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
-      ASSIGN_MEMBERS,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC))
+      ASSIGN_MEMBERS, WHERE(DIMENSION_TAG_DIM2)
+                          WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
+                                MEDIUM_TAG_ACOUSTIC))
 
 #undef ASSIGN_MEMBERS
 
@@ -229,7 +232,8 @@ specfem::compute::sources::sources(
 
   CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
       COUNT_SOURCES_PER_ELEMENT_TYPE,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
+      WHERE(DIMENSION_TAG_DIM2) WHERE(
+          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
           WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC) WHERE(
               BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
               BOUNDARY_TAG_STACEY, BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
@@ -338,7 +342,8 @@ specfem::compute::sources::sources(
   // Creating the views for all the sources
   CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
       ALLOCATE_SOURCES_PER_ELEMENT_TYPE,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
+      WHERE(DIMENSION_TAG_DIM2) WHERE(
+          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
           WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC) WHERE(
               BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
               BOUNDARY_TAG_STACEY, BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
@@ -492,7 +497,8 @@ specfem::compute::sources::sources(
 
   CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
       ASSIGN_SOURCES_PER_ELEMENT_TYPE,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
+      WHERE(DIMENSION_TAG_DIM2) WHERE(
+          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
           WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC) WHERE(
               BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
               BOUNDARY_TAG_STACEY, BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
@@ -553,12 +559,19 @@ specfem::compute::sources::get_sources_on_host(
 
   CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
       RETURN_VALUE,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
+      WHERE(DIMENSION_TAG_DIM2) WHERE(
+          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
           WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC) WHERE(
               BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
               BOUNDARY_TAG_STACEY, BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
 
 #undef RETURN_VALUE
+
+  Kokkos::abort("No sources found for the given parameters. Please check the "
+                "input parameters and try again.");
+  return std::make_tuple(
+      Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>(),
+      Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace>());
 }
 
 // This function is crucial for the computing the source contribution
@@ -612,10 +625,16 @@ specfem::compute::sources::get_sources_on_device(
 
   CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
       RETURN_VALUE,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC)
+      WHERE(DIMENSION_TAG_DIM2) WHERE(
+          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
           WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC) WHERE(
               BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
               BOUNDARY_TAG_STACEY, BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
 
 #undef RETURN_VALUE
+
+  Kokkos::abort("No sources found for the given parameters. Please check the "
+                "input parameters and try again.");
+  return std::make_tuple(Kokkos::View<int *, Kokkos::DefaultExecutionSpace>(),
+                         Kokkos::View<int *, Kokkos::DefaultExecutionSpace>());
 }

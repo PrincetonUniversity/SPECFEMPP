@@ -46,13 +46,11 @@ specfem::runtime_configuration::property::instantiate_property_writer() const {
       return nullptr;
     }
     if (this->output_format == "HDF5") {
-      return std::make_shared<
-          specfem::IO::property_writer<specfem::IO::HDF5<specfem::IO::write> > >(
-          this->output_folder);
+      return std::make_shared<specfem::IO::property_writer<
+          specfem::IO::HDF5<specfem::IO::write> > >(this->output_folder);
     } else if (this->output_format == "ASCII") {
-      return std::make_shared<
-          specfem::IO::property_writer<specfem::IO::ASCII<specfem::IO::write> > >(
-          this->output_folder);
+      return std::make_shared<specfem::IO::property_writer<
+          specfem::IO::ASCII<specfem::IO::write> > >(this->output_folder);
     } else {
       throw std::runtime_error("Unknown model format");
     }
@@ -74,9 +72,8 @@ specfem::runtime_configuration::property::instantiate_property_reader() const {
           specfem::IO::property_reader<specfem::IO::HDF5<specfem::IO::read> > >(
           this->output_folder);
     } else if (this->output_format == "ASCII") {
-      return std::make_shared<
-          specfem::IO::property_reader<specfem::IO::ASCII<specfem::IO::read> > >(
-          this->output_folder);
+      return std::make_shared<specfem::IO::property_reader<
+          specfem::IO::ASCII<specfem::IO::read> > >(this->output_folder);
     } else {
       throw std::runtime_error("Unknown model format");
     }

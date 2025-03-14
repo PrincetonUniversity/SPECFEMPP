@@ -18,7 +18,7 @@
 namespace test_config {
 struct database {
 public:
-  database() : specfem_config(""), traces(""){};
+  database() : specfem_config(""), traces("") {};
   database(const YAML::Node &Node) {
     specfem_config = Node["specfem_config"].as<std::string>();
     // check if node elastic_domain_field exists
@@ -34,7 +34,7 @@ public:
 
 struct configuration {
 public:
-  configuration() : number_of_processors(0){};
+  configuration() : number_of_processors(0) {};
   configuration(const YAML::Node &Node) {
     number_of_processors = Node["nproc"].as<int>();
   }
@@ -150,7 +150,7 @@ specfem::testing::array2d<type_real, Kokkos::LayoutLeft> compact_array(
 }
 
 TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
-  std::string config_filename = "../../../tests/unit-tests/displacement_tests/"
+  std::string config_filename = "displacement_tests/"
                                 "Newmark/test_config.yaml";
 
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
@@ -170,12 +170,14 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
 
     const auto database_file = setup.get_databases();
     const auto source_node = setup.get_sources();
+    const auto elastic_wave = setup.get_elastic_wave_type();
 
     // Set up GLL quadrature points
     const auto quadratures = setup.instantiate_quadrature();
 
     // Read mesh generated MESHFEM
-    specfem::mesh::mesh mesh = specfem::IO::read_mesh(database_file, mpi);
+    specfem::mesh::mesh mesh =
+        specfem::IO::read_2d_mesh(database_file, elastic_wave, mpi);
     const type_real dt = setup.get_dt();
     const int nsteps = setup.get_nsteps();
 
@@ -252,26 +254,53 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
       std::vector<std::string> filename;
       switch (seismogram_type) {
       case specfem::wavefield::type::displacement:
-        filename.push_back(Test.database.traces + "/" + network_name + "." +
-                           station_name + ".S2.BXX.semd");
-        filename.push_back(Test.database.traces + "/" + network_name + "." +
-                           station_name + ".S2.BXZ.semd");
+        if (elastic_wave == specfem::enums::elastic_wave::sh) {
+          filename.push_back(Test.database.traces + "/" + network_name + "." +
+                             station_name + ".S2.BXY.semd");
+        } else if (elastic_wave == specfem::enums::elastic_wave::p_sv) {
+          filename.push_back(Test.database.traces + "/" + network_name + "." +
+                             station_name + ".S2.BXX.semd");
+          filename.push_back(Test.database.traces + "/" + network_name + "." +
+                             station_name + ".S2.BXZ.semd");
+        }
         break;
       case specfem::wavefield::type::velocity:
-        filename.push_back(Test.database.traces + "/" + network_name + "." +
-                           station_name + ".S2.BXX.semv");
-        filename.push_back(Test.database.traces + "/" + network_name + "." +
-                           station_name + ".S2.BXZ.semv");
+        if (elastic_wave == specfem::enums::elastic_wave::sh) {
+          filename.push_back(Test.database.traces + "/" + network_name + "." +
+                             station_name + ".S2.BXY.semv");
+        } else if (elastic_wave == specfem::enums::elastic_wave::p_sv) {
+          filename.push_back(Test.database.traces + "/" + network_name + "." +
+                             station_name + ".S2.BXX.semv");
+          filename.push_back(Test.database.traces + "/" + network_name + "." +
+                             station_name + ".S2.BXZ.semv");
+        }
         break;
       case specfem::wavefield::type::acceleration:
-        filename.push_back(Test.database.traces + "/" + network_name + "." +
-                           station_name + ".S2.BXX.sema");
-        filename.push_back(Test.database.traces + "/" + network_name + "." +
-                           station_name + ".S2.BXZ.sema");
+        if (elastic_wave == specfem::enums::elastic_wave::sh) {
+          filename.push_back(Test.database.traces + "/" + network_name + "." +
+                             station_name + ".S2.BXY.sema");
+        } else if (elastic_wave == specfem::enums::elastic_wave::p_sv) {
+          filename.push_back(Test.database.traces + "/" + network_name + "." +
+                             station_name + ".S2.BXX.sema");
+          filename.push_back(Test.database.traces + "/" + network_name + "." +
+                             station_name + ".S2.BXZ.sema");
+        }
         break;
       case specfem::wavefield::type::pressure:
-        filename.push_back(Test.database.traces + "/" + network_name + "." +
-                           station_name + ".S2.PRE.semp");
+        if (elastic_wave == specfem::enums::elastic_wave::sh) {
+          FAIL() << "--------------------------------------------------\n"
+                 << "\033[0;31m[FAILED]\033[0m Test failed\n"
+                 << " - Test name: " << Test.name << "\n"
+                 << " - Error: Pressure seismograms are not supported for SH "
+                    "waves\n"
+                 << " - Network: " << network_name << "\n"
+                 << " - Station: " << station_name << "\n"
+                 << "--------------------------------------------------\n\n"
+                 << std::endl;
+        } else if (elastic_wave == specfem::enums::elastic_wave::p_sv) {
+          filename.push_back(Test.database.traces + "/" + network_name + "." +
+                             station_name + ".S2.PRE.semp");
+        }
         break;
       default:
         FAIL() << "--------------------------------------------------\n"
