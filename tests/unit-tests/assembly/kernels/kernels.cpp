@@ -6,23 +6,7 @@
 #include "policies/chunk.hpp"
 #include "specfem_setup.hpp"
 #include <gtest/gtest.h>
-/*
 
-POROELASTIC PROPERTY NAMES
-DEFINE_POINT_VALUE(phi, 0)        ///< porosity @f$ \phi @f$
-DEFINE_POINT_VALUE(tortuosity, 1) ///< tortuosity @f$ \tau @f$
-DEFINE_POINT_VALUE(rho_s, 2)      ///< solid density @f$ \rho_s @f$
-DEFINE_POINT_VALUE(rho_f, 3)      ///< fluid density @f$ \rho_f @f$
-DEFINE_POINT_VALUE(kappa_s, 4)    ///< solid bulk modulus @f$ \kappa_s @f$
-DEFINE_POINT_VALUE(kappa_f, 5)    ///< fluid bulk modulus @f$ \kappa_f @f$
-DEFINE_POINT_VALUE(kappa_fr, 6)   ///< frame bulk modulus @f$ \kappa_{fr} @f$
-DEFINE_POINT_VALUE(mu_fr, 7)      ///< frame shear modulus @f$ \mu_{fr} @f$
-DEFINE_POINT_VALUE(eta, 8)        ///< Viscosity @f$ \eta @f$
-DEFINE_POINT_VALUE(Kxx, 9)        ///< permeability @f$ K_{xx} @f$
-DEFINE_POINT_VALUE(Kzz, 10)       ///< permeability @f$ K_{zz} @f$
-DEFINE_POINT_VALUE(Kxz, 11)       ///< permeability @f$ K_{xz} @f$
-
-*/
 // Template get_error_message
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd = false>
