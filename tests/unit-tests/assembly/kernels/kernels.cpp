@@ -6,7 +6,23 @@
 #include "policies/chunk.hpp"
 #include "specfem_setup.hpp"
 #include <gtest/gtest.h>
+/*
 
+POROELASTIC PROPERTY NAMES
+DEFINE_POINT_VALUE(phi, 0)        ///< porosity @f$ \phi @f$
+DEFINE_POINT_VALUE(tortuosity, 1) ///< tortuosity @f$ \tau @f$
+DEFINE_POINT_VALUE(rho_s, 2)      ///< solid density @f$ \rho_s @f$
+DEFINE_POINT_VALUE(rho_f, 3)      ///< fluid density @f$ \rho_f @f$
+DEFINE_POINT_VALUE(kappa_s, 4)    ///< solid bulk modulus @f$ \kappa_s @f$
+DEFINE_POINT_VALUE(kappa_f, 5)    ///< fluid bulk modulus @f$ \kappa_f @f$
+DEFINE_POINT_VALUE(kappa_fr, 6)   ///< frame bulk modulus @f$ \kappa_{fr} @f$
+DEFINE_POINT_VALUE(mu_fr, 7)      ///< frame shear modulus @f$ \mu_{fr} @f$
+DEFINE_POINT_VALUE(eta, 8)        ///< Viscosity @f$ \eta @f$
+DEFINE_POINT_VALUE(Kxx, 9)        ///< permeability @f$ K_{xx} @f$
+DEFINE_POINT_VALUE(Kzz, 10)       ///< permeability @f$ K_{zz} @f$
+DEFINE_POINT_VALUE(Kxz, 11)       ///< permeability @f$ K_{xz} @f$
+
+*/
 // Template get_error_message
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd = false>
@@ -143,7 +159,7 @@ std::string get_error_message(
 // ==================== HACKATHON TODO: UNCOMMENT TO ENABLE ==================
 //
 
-/* <--- REMOVE THIS LINE TO ENABLE THE CODE BELOW FOR EM
+/* <--- REMOVE THIS LINE TO ENABLE THE CODE BELOW FOR ELECTROMAGNETIC
 
 
 // Template get_error_message specialization: electromagnetic sv isotropic
@@ -158,21 +174,53 @@ std::string get_error_message(
 
   message << "\n\t Expected: " << value;
   message << "\n\t Got: \n";
-  message << "\n\tm0 = " << point_kernel.m0() << "\n";
-  message << "\n\te0 = " << point_kernel.e0() << "\n";
-  message << "\n\te11 = " << point_kernel.e11() << "\n";
-  message << "\n\te33 = " << point_kernel.e33() << "\n";
-  message << "\n\tsig11 = " << point_kernel.sig11() << "\n";
-  message << "\n\tsig33 = " << point_kernel.sig33() << "\n";
-  message << "\n\tQe11 = " << point_kernel.Qe11() << "\n";
-  message << "\n\tQe33 = " << point_kernel.Qe33() << "\n";
-  message << "\n\tQs11 = " << point_kernel.Qs11() << "\n";
-  message << "\n\tQs33 = " << point_kernel.Qs33() << "\n";
+  message << "\t\tm0 = " << point_kernel.m0() << "\n";
+  message << "\t\te0 = " << point_kernel.e0() << "\n";
+  message << "\t\te11 = " << point_kernel.e11() << "\n";
+  message << "\t\te33 = " << point_kernel.e33() << "\n";
+  message << "\t\tsig11 = " << point_kernel.sig11() << "\n";
+  message << "\t\tsig33 = " << point_kernel.sig33() << "\n";
+  message << "\t\tQe11 = " << point_kernel.Qe11() << "\n";
+  message << "\t\tQe33 = " << point_kernel.Qe33() << "\n";
+  message << "\t\tQs11 = " << point_kernel.Qs11() << "\n";
+  message << "\t\tQs33 = " << point_kernel.Qs33() << "\n";
 
   return message.str();
 }
 
-*/// <--- REMOVE THIS LINE TO ENABLE THE CODE ABOVE FOR EM
+*/// <--- REMOVE THIS LINE TO ENABLE THE CODE ABOVE FOR ELECTROMAGNETIC
+
+/* <--- REMOVE THIS LINE TO ENABLE THE CODE BELOW FOR POROELASTIC
+
+// Template get_error_message specialization: poroelastic isotropic
+template <>
+std::string get_error_message(
+    const specfem::point::kernels<
+        specfem::dimension::type::dim2,
+specfem::element::medium_tag::poroelastic,
+        specfem::element::property_tag::isotropic, false> &point_kernel,
+    const type_real value) {
+  std::ostringstream message;
+
+  message << "\n\t Expected: " << value;
+  message << "\n\t Got: \n";
+  message << "\t\tphi = " << point_kernel.phi() << "\n";
+  message << "\t\ttortuosity = " << point_kernel.tortuosity() << "\n";
+  message << "\t\trho_s = " << point_kernel.rho_s() << "\n";
+  message << "\t\trho_f = " << point_kernel.rho_f() << "\n";
+  message << "\t\tkappa_s = " << point_kernel.kappa_s() << "\n";
+  message << "\t\tkappa_f = " << point_kernel.kappa_f() << "\n";
+  message << "\t\tkappa_fr = " << point_kernel.kappa_fr() << "\n";
+  message << "\t\tmu_fr = " << point_kernel.mu_fr() << "\n";
+  message << "\t\teta = " << point_kernel.eta() << "\n";
+  message << "\t\tKxx = " << point_kernel.Kxx() << "\n";
+  message << "\t\tKzz = " << point_kernel.Kzz() << "\n";
+  message << "\t\tKxz = " << point_kernel.Kxz() << "\n";
+
+  return message.str();
+}
+
+*/// <--- REMOVE THIS LINE TO ENABLE THE CODE ABOVE FOR POROELASTIC
 
 //
 // ==================== HACKATHON TODO END ===================================
@@ -553,6 +601,79 @@ get_point_kernel(
 
 
 */// <--- REMOVE THIS LINE TO ENABLE THE CODE ABOVE FOR EM
+
+/* <--- REMOVE THIS LINE TO ENABLE THE CODE BELOW FOR PORO
+
+// Template get_point_kernel specialization:
+//   poroelastic isotropic (No SIMD -> No SIMD)
+template <>
+specfem::point::kernels<specfem::dimension::type::dim2,
+                        specfem::element::medium_tag::poroelastic,
+                        specfem::element::property_tag::isotropic, false>
+get_point_kernel(const int ispec, const int iz, const int ix,
+                  const specfem::compute::kernels &kernels) {
+
+    const auto poroelastic_isotropic =
+        kernels.get_container<specfem::element::medium_tag::poroelastic,
+                              specfem::element::property_tag::isotropic>();
+
+    const int ispec_l = kernels.h_property_index_mapping(ispec);
+
+    specfem::point::kernels<specfem::dimension::type::dim2,
+                            specfem::element::medium_tag::poroelastic,
+                            specfem::element::property_tag::isotropic, false>
+        point_kernel;
+
+    point_kernel.phi() = poroelastic_isotropic.h_phi(ispec_l, iz, ix);
+    point_kernel.tortuosity() = poroelastic_isotropic.h_tortuosity(ispec_l, iz,
+ix); point_kernel.rho_s() = poroelastic_isotropic.h_rho_s(ispec_l, iz, ix);
+    point_kernel.rho_f() = poroelastic_isotropic.h_rho_f(ispec_l, iz, ix);
+    point_kernel.kappa_s() = poroelastic_isotropic.h_kappa_s(ispec_l, iz, ix);
+    point_kernel.kappa_f() = poroelastic_isotropic.h_kappa_f(ispec_l, iz, ix);
+    point_kernel.kappa_fr() = poroelastic_isotropic.h_kappa_fr(ispec_l, iz, ix);
+    point_kernel.mu_fr() = poroelastic_isotropic.h_mu_fr(ispec_l, iz, ix);
+    point_kernel.eta() = poroelastic_isotropic.h_eta(ispec_l, iz, ix);
+    point_kernel.Kxx() = poroelastic_isotropic.h_Kxx(ispec_l, iz, ix);
+    point_kernel.Kzz() = poroelastic_isotropic.h_Kzz(ispec_l, iz, ix);
+    point_kernel.Kxz() = poroelastic_isotropic.h_Kxz(ispec_l, iz, ix);
+
+    return point_kernel;
+  }
+
+// Template get_point_kernel specialization:
+//   poroelastic isotropic (SIMD -> No SIMD)
+template <>
+specfem::point::kernels<specfem::dimension::type::dim2,
+                        specfem::element::medium_tag::poroelastic,
+                        specfem::element::property_tag::isotropic, false>
+get_point_kernel(
+    const int lane,
+    const specfem::point::kernels<
+        specfem::dimension::type::dim2,
+        specfem::element::medium_tag::poroelastic,
+        specfem::element::property_tag::isotropic, true> &point_kernel) {
+  specfem::point::kernels<specfem::dimension::type::dim2,
+                          specfem::element::medium_tag::poroelastic,
+                          specfem::element::property_tag::isotropic, false>
+      point_kernel_l;
+
+    point_kernel_l.phi() = point_kernel.phi()[lane];
+    point_kernel_l.tortuosity() = point_kernel.tortuosity()[lane];
+    point_kernel_l.rho_s() = point_kernel.rho_s()[lane];
+    point_kernel_l.rho_f() = point_kernel.rho_f()[lane];
+    point_kernel_l.kappa_s() = point_kernel.kappa_s()[lane];
+    point_kernel_l.kappa_f() = point_kernel.kappa_f()[lane];
+    point_kernel_l.kappa_fr() = point_kernel.kappa_fr()[lane];
+    point_kernel_l.mu_fr() = point_kernel.mu_fr()[lane];
+    point_kernel_l.eta() = point_kernel.eta()[lane];
+    point_kernel_l.Kxx() = point_kernel.Kxx()[lane];
+    point_kernel_l.Kzz() = point_kernel.Kzz()[lane];
+    point_kernel_l.Kxz() = point_kernel.Kxz()[lane];
+
+    return point_kernel_l;
+  }
+
+*/// <--- REMOVE THIS LINE TO ENABLE THE CODE ABOVE FOR PORO
 
 //
 // ==================== HACKATHON TODO END ===================================
