@@ -84,9 +84,27 @@ Tests:
 
   - name : "SerialTest10 : Homogeneous elastic isotropic domain (SH-waves)"
     description: >
-      Testing newmark time-marching solver on a homogeneous elastic anisotropic domain with no interfaces. Test is run on a single MPI process.
+      Testing newmark time-marching solver on a homogeneous elastic isotropic domain with no interfaces. Test is run on a single MPI process.
     config:
       nproc : 1
     databases:
       specfem_config: "displacement_tests/Newmark/serial/test10/specfem_config.yaml"
       traces: "displacement_tests/Newmark/serial/test10/traces"
+
+  # - name : "SerialTest11 : Acoustic-poroelastic coupled domain (P-SV waves)"
+  #   description: >
+  #     Testing newmark time-marching solver on a acoustic-poroelastic coupled domain. Test is run on a single MPI process.
+  #   config:
+  #     nproc : 1
+  #     specfem_config: "displacement_tests/Newmark/serial/test11/specfem_config.yaml"
+  #   databases:
+  #     traces: "displacement_tests/Newmark/serial/test11/traces"
+
+  # - name : "SerialTest12 : Two-layer electromagnetic domain (P-SV waves)"
+  #   description: >
+  #     Testing newmark time-marching solver on a two-layer electromagnetic domain. Test is run on a single MPI process.
+  #   config:
+  #     nproc : 1
+  #     specfem_config: "displacement_tests/Newmark/serial/test12/specfem_config.yaml"
+  #   databases:
+  #     traces: "displacement_tests/Newmark/serial/test12/traces"
