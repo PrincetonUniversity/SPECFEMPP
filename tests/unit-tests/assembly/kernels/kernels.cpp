@@ -7,38 +7,6 @@
 #include "specfem_setup.hpp"
 #include <gtest/gtest.h>
 
-/* Point kernel definitions for poro elasticity
-
-
-
-/// Primary Kernels
-DEFINE_POINT_VALUE(rhot, 0)
-DEFINE_POINT_VALUE(rhof, 1)
-DEFINE_POINT_VALUE(eta, 2)
-DEFINE_POINT_VALUE(sm, 3)
-DEFINE_POINT_VALUE(mu_fr, 4)
-DEFINE_POINT_VALUE(B, 5)
-DEFINE_POINT_VALUE(C, 6)
-DEFINE_POINT_VALUE(M, 7)
-
-/// Density Normalized Kernels
-DEFINE_POINT_VALUE(mu_frb, 8)
-DEFINE_POINT_VALUE(rhob, 9)
-DEFINE_POINT_VALUE(rhofb, 10)
-DEFINE_POINT_VALUE(phi, 11)
-
-/// wavespeed kernels
-DEFINE_POINT_VALUE(cpI, 12)
-DEFINE_POINT_VALUE(cpII, 13)
-DEFINE_POINT_VALUE(cs, 14)
-DEFINE_POINT_VALUE(rhobb, 15)
-DEFINE_POINT_VALUE(rhofbb, 16)
-DEFINE_POINT_VALUE(ratio, 17)
-DEFINE_POINT_VALUE(phib, 18)
-
-
-*/
-
 // Template get_error_message
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd = false>
