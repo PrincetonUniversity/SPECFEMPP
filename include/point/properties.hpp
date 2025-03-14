@@ -23,11 +23,11 @@ struct properties;
  *
  * @tparam UseSIMD Boolean indicating whether to use SIMD
  */
-template <bool UseSIMD>
-struct properties<specfem::dimension::type::dim2,
-                  specfem::element::medium_tag::elastic,
+template <specfem::element::medium_tag MediumTag, bool UseSIMD>
+struct properties<specfem::dimension::type::dim2, MediumTag,
                   specfem::element::property_tag::isotropic, UseSIMD>
-    : public impl::point_data<3, UseSIMD> {
+    : public impl::point_data<3, UseSIMD>,
+      specfem::element::is_elastic<MediumTag> {
 
   /**
    * @name Typedefs
@@ -38,7 +38,7 @@ struct properties<specfem::dimension::type::dim2,
   using value_type = typename base_type::value_type;
 
   constexpr static auto dimension = specfem::dimension::type::dim2;
-  constexpr static auto medium_tag = specfem::element::medium_tag::elastic;
+  constexpr static auto medium_tag = MediumTag;
   constexpr static auto property_tag =
       specfem::element::property_tag::isotropic;
 
@@ -67,11 +67,11 @@ struct properties<specfem::dimension::type::dim2,
   }
 };
 
-template <bool UseSIMD>
-struct properties<specfem::dimension::type::dim2,
-                  specfem::element::medium_tag::elastic,
+template <specfem::element::medium_tag MediumTag, bool UseSIMD>
+struct properties<specfem::dimension::type::dim2, MediumTag,
                   specfem::element::property_tag::anisotropic, UseSIMD>
-    : public impl::point_data<10, UseSIMD> {
+    : public impl::point_data<10, UseSIMD>,
+      specfem::element::is_elastic<MediumTag> {
 
   /**
    * @name Typedefs
@@ -82,7 +82,7 @@ struct properties<specfem::dimension::type::dim2,
   using value_type = typename base_type::value_type;
 
   constexpr static auto dimension = specfem::dimension::type::dim2;
-  constexpr static auto medium_tag = specfem::element::medium_tag::elastic;
+  constexpr static auto medium_tag = MediumTag;
   constexpr static auto property_tag =
       specfem::element::property_tag::anisotropic;
 
@@ -115,138 +115,6 @@ struct properties<specfem::dimension::type::dim2,
   KOKKOS_INLINE_FUNCTION const value_type rho_vs() const {
     return Kokkos::sqrt(rho() * c55()); ///< S-wave velocity @f$ \rho v_s @f$
   }
-};
-
-template <bool UseSIMD>
-struct properties<specfem::dimension::type::dim2,
-                  specfem::element::medium_tag::elastic_sv,
-                  specfem::element::property_tag::isotropic, UseSIMD>
-    : public properties<specfem::dimension::type::dim2,
-                        specfem::element::medium_tag::elastic,
-                        specfem::element::property_tag::isotropic, UseSIMD> {
-
-  /**
-   * @name Typedefs
-   *
-   */
-  ///@{
-  constexpr static bool is_point_properties = true;
-  using simd = specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD type
-  constexpr static auto dimension = specfem::dimension::type::dim2;
-  constexpr static auto medium_tag = specfem::element::medium_tag::elastic_sv;
-  constexpr static auto property_tag =
-      specfem::element::property_tag::isotropic;
-  using value_type =
-      typename simd::datatype; ///< Value type to store properties
-                               ///@}
-
-private:
-  using base_type =
-      properties<specfem::dimension::type::dim2,
-                 specfem::element::medium_tag::elastic,
-                 specfem::element::property_tag::isotropic, UseSIMD>;
-
-public:
-  using base_type::base_type;
-};
-
-template <bool UseSIMD>
-struct properties<specfem::dimension::type::dim2,
-                  specfem::element::medium_tag::elastic_sv,
-                  specfem::element::property_tag::anisotropic, UseSIMD>
-    : public properties<specfem::dimension::type::dim2,
-                        specfem::element::medium_tag::elastic,
-                        specfem::element::property_tag::anisotropic, UseSIMD> {
-
-  /**
-   * @name Typedefs
-   *
-   */
-  ///@{
-  constexpr static bool is_point_properties = true;
-  using simd = specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD type
-  constexpr static auto dimension = specfem::dimension::type::dim2;
-  constexpr static auto medium_tag = specfem::element::medium_tag::elastic_sv;
-  constexpr static auto property_tag =
-      specfem::element::property_tag::anisotropic;
-  using value_type =
-      typename simd::datatype; ///< Value type to store properties
-  ///@}
-
-private:
-  using base_type =
-      properties<specfem::dimension::type::dim2,
-                 specfem::element::medium_tag::elastic,
-                 specfem::element::property_tag::anisotropic, UseSIMD>;
-
-public:
-  using base_type::base_type;
-};
-
-template <bool UseSIMD>
-struct properties<specfem::dimension::type::dim2,
-                  specfem::element::medium_tag::elastic_sh,
-                  specfem::element::property_tag::isotropic, UseSIMD>
-    : public properties<specfem::dimension::type::dim2,
-                        specfem::element::medium_tag::elastic,
-                        specfem::element::property_tag::isotropic, UseSIMD> {
-
-  /**
-   * @name Typedefs
-   *
-   */
-  ///@{
-  constexpr static bool is_point_properties = true;
-  using simd = specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD type
-  constexpr static auto dimension = specfem::dimension::type::dim2;
-  constexpr static auto medium_tag = specfem::element::medium_tag::elastic_sh;
-  constexpr static auto property_tag =
-      specfem::element::property_tag::isotropic;
-  using value_type =
-      typename simd::datatype; ///< Value type to store properties
-                               ///@}
-
-private:
-  using base_type =
-      properties<specfem::dimension::type::dim2,
-                 specfem::element::medium_tag::elastic,
-                 specfem::element::property_tag::isotropic, UseSIMD>;
-
-public:
-  using base_type::base_type;
-};
-
-template <bool UseSIMD>
-struct properties<specfem::dimension::type::dim2,
-                  specfem::element::medium_tag::elastic_sh,
-                  specfem::element::property_tag::anisotropic, UseSIMD>
-    : public properties<specfem::dimension::type::dim2,
-                        specfem::element::medium_tag::elastic,
-                        specfem::element::property_tag::anisotropic, UseSIMD> {
-
-  /**
-   * @name Typedefs
-   *
-   */
-  ///@{
-  constexpr static bool is_point_properties = true;
-  using simd = specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD type
-  constexpr static auto dimension = specfem::dimension::type::dim2;
-  constexpr static auto medium_tag = specfem::element::medium_tag::elastic_sh;
-  constexpr static auto property_tag =
-      specfem::element::property_tag::anisotropic;
-  using value_type =
-      typename simd::datatype; ///< Value type to store properties
-  ///@}
-
-private:
-  using base_type =
-      properties<specfem::dimension::type::dim2,
-                 specfem::element::medium_tag::elastic,
-                 specfem::element::property_tag::anisotropic, UseSIMD>;
-
-public:
-  using base_type::base_type;
 };
 
 /**
