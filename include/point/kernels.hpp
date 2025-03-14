@@ -287,5 +287,91 @@ struct kernels<specfem::dimension::type::dim2,
   ///@}
 };
 
+/**
+ * @brief Template specialization for the kernels struct for 2D electromagnetic
+ * isotropic elements
+ * @tparam UseSIMD  Use SIMD instructions
+ */
+template <bool UseSIMD>
+struct kernels<specfem::dimension::type::dim2,
+               specfem::element::medium_tag::electromagnetic_sv,
+               specfem::element::property_tag::isotropic, UseSIMD>
+    : public impl::point_data<10, UseSIMD> {
+
+  /**
+   * @name Typedefs
+   *
+   */
+  ///@{
+  using base_type = impl::point_data<10, UseSIMD>;
+  using value_type = typename base_type::value_type;
+
+  constexpr static auto dimension = specfem::dimension::type::dim2;
+  constexpr static auto medium_tag =
+      specfem::element::medium_tag::electromagnetic_sv;
+  constexpr static auto property_tag =
+      specfem::element::property_tag::isotropic;
+
+  constexpr static bool is_point_properties = true;
+  ///@}
+
+  using base_type::base_type;
+
+  /**
+   * @brief Constructor
+   *
+   * @param mu0 \f$ K_{{\mu}_{0}} \f$ Magnetic permeability in henry per meter
+   * @param e0  \f$ K_{{\epsilon}_{0}} \f$ Effective permittivity in farad per
+   * meter
+   * @param e11 \f$ K_{{\epsilon}^{11}{\epsilon}_{0}} \f$ effective permittivity
+   * in farad per meter
+   * @param e33 \f$ K_{{\epsilon}^{33}{\epsilon}_{0}} \f$ effective permittivity
+   * in farad per meter
+   * @param sig11 \f$ K_{{\sigma}^{11}{\sigma}_{0}} \f$ of effective
+   * conductivity in siemens per meter
+   * @param sig33 \f$ K_{{\sigma}^{33}{\sigma}_{0}} \f$  of effective
+   * conductivity in siemens per meter
+   * @param Qe11 \f$ K_{ Q_{ \epsilon^{11} } } \f$ Quality factor of e11 for
+   * attenuation
+   * @param Qe33 \f$ K_{ Q_{ \epsilon^{33} } } \f$ Quality factor of e33 for
+   * attenuation
+   * @param Qs11 \f$ K_{ Q_{ \sigma^{11} } } \f$ Quality factor of sig11 for
+   * attenuation
+   * @param Qs33 \f$ K_{ Q_{ \sigma^{11} } } \f$ Quality factor of sig33 for
+   * attenuation
+   */
+  KOKKOS_FUNCTION
+  kernels(const value_type mu0, const value_type e0, const value_type e11,
+          const value_type e33, const value_type sig11, const value_type sig33,
+          const value_type Qe11, const value_type Qe33, const value_type Qs11,
+          const value_type Qs33)
+      : kernels(mu0, e0, e11, e33, sig11, sig33, Qe11, Qe33, Qs11, Qs33) {}
+
+  /**
+   * @name Misfit Kernels
+   *
+   */
+  ///@{
+  DEFINE_POINT_VALUE(mu0, 0)   ///< \f$ K_{{\mu}_{0}} \f$
+  DEFINE_POINT_VALUE(e0, 1)    ///< \f$ K_{{\epsilon}_{0}} \f$
+  DEFINE_POINT_VALUE(e11, 2)   ///< \f$ K_{{\epsilon}^{11}{\epsilon}_{0}} \f$
+                               ///< effective permittivity in farad per meter
+  DEFINE_POINT_VALUE(e33, 3)   ///< \f$ K_{{\epsilon}^{33}{\epsilon}_{0}} \f$
+                               ///< effective permittivity in farad per meter
+  DEFINE_POINT_VALUE(sig11, 4) ///< \f$ K_{{\sigma}^{11}{\sigma}_{0}} \f$ of
+                               ///< effective conductivity in siemens per meter
+  DEFINE_POINT_VALUE(sig33, 5) ///< \f$ K_{{\sigma}^{33}{\sigma}_{0}} \f$  of
+                               ///< effective conductivity in siemens per meter
+  DEFINE_POINT_VALUE(Qe11, 6)  ///< \f$ K_{ Q_{ \epsilon^{11} } } \f$ Quality
+                               ///< factor of e11 for attenuation
+  DEFINE_POINT_VALUE(Qe33, 7)  ///< \f$ K_{ Q_{ \epsilon^{33} } } \f$ Quality
+                               ///< factor of e33 for attenuation
+  DEFINE_POINT_VALUE(Qs11, 8)  ///< \f$ K_{ Q_{ \sigma^{11} } } \f$ Quality
+                               ///< factor of sig11 for attenuation
+  DEFINE_POINT_VALUE(Qs33, 9)  ///< \f$ K_{ Q_{ \sigma^{11} } } \f$ Quality
+                               ///< factor of sig33 for attenuation
+  ///@}
+};
+
 } // namespace point
 } // namespace specfem
