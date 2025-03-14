@@ -656,7 +656,7 @@ void check_point_properties(
 // ==================== HACKATHON TODO: UNCOMMENT TO ENABLE ==================
 //
 
-/* <--- REMOVE THIS LINE TO ENABLE THE CODE BELOW
+/* <--- REMOVE THIS LINE TO ENABLE THE CODE BELOW FOR EM
 
 // Template check_point_properties specialization: electromagnetic sv isotropic
 template <bool using_simd>
@@ -683,7 +683,7 @@ void check_point_properties(
 }
 
 
-*/// <--- REMOVE THIS LINE TO ENABLE THE CODE ABOVE
+*/// <--- REMOVE THIS LINE TO ENABLE THE CODE ABOVE FOR EM
 
 //
 // ==================== HACKATHON TODO END ===================================

@@ -7,6 +7,7 @@
 #include "specfem_setup.hpp"
 #include <gtest/gtest.h>
 
+// Template get_error_message
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd = false>
 std::string get_error_message(
@@ -14,6 +15,7 @@ std::string get_error_message(
                                   PropertyTag, false> &point_kernel,
     const type_real value);
 
+// Template get_error_message specialization: elastic isotropic (parent)
 template <>
 std::string get_error_message(
     const specfem::point::kernels<
@@ -34,6 +36,7 @@ std::string get_error_message(
   return message.str();
 }
 
+// Template get_error_message specialization: elastic p-sv isotropic (child)
 template <>
 std::string get_error_message(
     const specfem::point::kernels<specfem::dimension::type::dim2,
@@ -49,6 +52,7 @@ std::string get_error_message(
       value);
 }
 
+// Template get_error_message specialization: elastic sh isotropic (child)
 template <>
 std::string get_error_message(
     const specfem::point::kernels<specfem::dimension::type::dim2,
@@ -64,6 +68,7 @@ std::string get_error_message(
       value);
 }
 
+// Template get_error_message specialization: elastic anisotropic (parent)
 template <>
 std::string get_error_message(
     const specfem::point::kernels<
@@ -85,6 +90,7 @@ std::string get_error_message(
   return message.str();
 }
 
+// Template get_error_message specialization: elastic p-sv anisotropic (child)
 template <>
 std::string get_error_message(
     const specfem::point::kernels<specfem::dimension::type::dim2,
@@ -99,6 +105,7 @@ std::string get_error_message(
       value);
 }
 
+// Template get_error_message specialization: elastic sh anisotropic (child)
 template <>
 std::string get_error_message(
     const specfem::point::kernels<specfem::dimension::type::dim2,
@@ -113,6 +120,7 @@ std::string get_error_message(
       value);
 }
 
+// Template get_error_message specialization: acoustic isotropic
 template <>
 std::string get_error_message(
     const specfem::point::kernels<
@@ -131,6 +139,46 @@ std::string get_error_message(
   return message.str();
 }
 
+//
+// ==================== HACKATHON TODO: UNCOMMENT TO ENABLE ==================
+//
+
+/* <--- REMOVE THIS LINE TO ENABLE THE CODE BELOW FOR EM
+
+
+// Template get_error_message specialization: electromagnetic sv isotropic
+template <>
+std::string get_error_message(
+    const specfem::point::kernels<
+        specfem::dimension::type::dim2,
+        specfem::element::medium_tag::electromagnetic_sv,
+        specfem::element::property_tag::isotropic, false> &point_kernel,
+    const type_real value) {
+  std::ostringstream message;
+
+  message << "\n\t Expected: " << value;
+  message << "\n\t Got: \n";
+  message << "\n\tm0 = " << point_kernel.m0() << "\n";
+  message << "\n\te0 = " << point_kernel.e0() << "\n";
+  message << "\n\te11 = " << point_kernel.e11() << "\n";
+  message << "\n\te33 = " << point_kernel.e33() << "\n";
+  message << "\n\tsig11 = " << point_kernel.sig11() << "\n";
+  message << "\n\tsig33 = " << point_kernel.sig33() << "\n";
+  message << "\n\tQe11 = " << point_kernel.Qe11() << "\n";
+  message << "\n\tQe33 = " << point_kernel.Qe33() << "\n";
+  message << "\n\tQs11 = " << point_kernel.Qs11() << "\n";
+  message << "\n\tQs33 = " << point_kernel.Qs33() << "\n";
+
+  return message.str();
+}
+
+*/// <--- REMOVE THIS LINE TO ENABLE THE CODE ABOVE FOR EM
+
+//
+// ==================== HACKATHON TODO END ===================================
+//
+
+// Template get_point_kernel (No SIMD -> No SIMD)
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 specfem::point::kernels<specfem::dimension::type::dim2, MediumTag, PropertyTag,
@@ -138,6 +186,7 @@ specfem::point::kernels<specfem::dimension::type::dim2, MediumTag, PropertyTag,
 get_point_kernel(const int ispec, const int iz, const int ix,
                  const specfem::compute::kernels &kernels);
 
+// Template get_point_kernel (SIMD -> No SIMD)
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 specfem::point::kernels<specfem::dimension::type::dim2, MediumTag, PropertyTag,
@@ -147,6 +196,8 @@ get_point_kernel(
     const specfem::point::kernels<specfem::dimension::type::dim2, MediumTag,
                                   PropertyTag, true> &point_kernel);
 
+// Template get_point_kernel specialization:
+//  elastic p-sv isotropic (No SIMD -> No SIMD)
 template <>
 specfem::point::kernels<specfem::dimension::type::dim2,
                         specfem::element::medium_tag::elastic_sv,
@@ -175,6 +226,8 @@ get_point_kernel(const int ispec, const int iz, const int ix,
   return point_kernel;
 }
 
+// Template get_point_kernel specialization:
+//  elastic sh isotropic (No SIMD -> No SIMD)
 template <>
 specfem::point::kernels<specfem::dimension::type::dim2,
                         specfem::element::medium_tag::elastic_sh,
@@ -203,6 +256,8 @@ get_point_kernel(const int ispec, const int iz, const int ix,
   return point_kernel;
 }
 
+// Template get_point_kernel specialization:
+//   elastic p-sv isotropic (SIMD -> No SIMD)
 template <>
 specfem::point::kernels<specfem::dimension::type::dim2,
                         specfem::element::medium_tag::elastic_sv,
@@ -228,6 +283,8 @@ get_point_kernel(
   return point_kernel_l;
 }
 
+// Template get_point_kernel specialization:
+//   elastic sh isotropic (SIMD -> No SIMD)
 template <>
 specfem::point::kernels<specfem::dimension::type::dim2,
                         specfem::element::medium_tag::elastic_sh,
@@ -253,6 +310,8 @@ get_point_kernel(
   return point_kernel_l;
 }
 
+// Template get_point_kernel specialization:
+//   elastic p-sv anisotropic (No SIMD -> No SIMD)
 template <>
 specfem::point::kernels<specfem::dimension::type::dim2,
                         specfem::element::medium_tag::elastic_sv,
@@ -282,6 +341,8 @@ get_point_kernel(const int ispec, const int iz, const int ix,
   return point_kernel;
 }
 
+// Template get_point_kernel specialization:
+//   elastic sh anisotropic (No SIMD -> No SIMD)
 template <>
 specfem::point::kernels<specfem::dimension::type::dim2,
                         specfem::element::medium_tag::elastic_sh,
@@ -311,6 +372,8 @@ get_point_kernel(const int ispec, const int iz, const int ix,
   return point_kernel;
 }
 
+// Template get_point_kernel specialization:
+//   elastic p-sv anisotropic (SIMD -> No SIMD)
 template <>
 specfem::point::kernels<specfem::dimension::type::dim2,
                         specfem::element::medium_tag::elastic_sv,
@@ -337,6 +400,8 @@ get_point_kernel(
   return point_kernel_l;
 }
 
+// Template get_point_kernel specialization:
+//   elastic sh anisotropic (SIMD -> No SIMD)
 template <>
 specfem::point::kernels<specfem::dimension::type::dim2,
                         specfem::element::medium_tag::elastic_sh,
@@ -363,6 +428,8 @@ get_point_kernel(
   return point_kernel_l;
 }
 
+// Template get_point_kernel specialization:
+//   acoustic isotropic (No SIMD -> No SIMD)
 template <>
 specfem::point::kernels<specfem::dimension::type::dim2,
                         specfem::element::medium_tag::acoustic,
@@ -389,6 +456,8 @@ get_point_kernel(const int ispec, const int iz, const int ix,
   return point_kernel;
 }
 
+// Template get_point_kernel specialization:
+//   acoustic isotropic (SIMD -> No SIMD)
 template <>
 specfem::point::kernels<specfem::dimension::type::dim2,
                         specfem::element::medium_tag::acoustic,
@@ -410,6 +479,84 @@ get_point_kernel(
 
   return point_kernel_l;
 }
+
+//
+// ==================== HACKATHON TODO: UNCOMMENT TO ENABLE ==================
+//
+
+/* <--- REMOVE THIS LINE TO ENABLE THE CODE BELOW FOR EM
+
+// Template get_point_kernel specialization:
+//   electromagnetic sv isotropic (No SIMD -> No SIMD)
+template <>
+specfem::point::kernels<specfem::dimension::type::dim2,
+                        specfem::element::medium_tag::electromagnetic_sv,
+                        specfem::element::property_tag::isotropic, false>
+get_point_kernel(const int ispec, const int iz, const int ix,
+                  const specfem::compute::kernels &kernels) {
+
+    const auto electromagnetic_isotropic =
+        kernels.get_container<specfem::element::medium_tag::electromagnetic_sv,
+                              specfem::element::property_tag::isotropic>();
+
+    const int ispec_l = kernels.h_property_index_mapping(ispec);
+
+    specfem::point::kernels<specfem::dimension::type::dim2,
+                            specfem::element::medium_tag::electromagnetic_sv,
+                            specfem::element::property_tag::isotropic, false>
+        point_kernel;
+
+    point_kernel.m0() = electromagnetic_isotropic.h_m0(ispec_l, iz, ix);
+    point_kernel.e0() = electromagnetic_isotropic.h_e0(ispec_l, iz, ix);
+    point_kernel.e11() = electromagnetic_isotropic.h_e11(ispec_l, iz, ix);
+    point_kernel.e33() = electromagnetic_isotropic.h_e33(ispec_l, iz, ix);
+    point_kernel.sig11() = electromagnetic_isotropic.h_sig11(ispec_l, iz, ix);
+    point_kernel.sig33() = electromagnetic_isotropic.h_sig33(ispec_l, iz, ix);
+    point_kernel.Qe11() = electromagnetic_isotropic.h_Qe11(ispec_l, iz, ix);
+    point_kernel.Qe33() = electromagnetic_isotropic.h_Qe33(ispec_l, iz, ix);
+    point_kernel.Qs11() = electromagnetic_isotropic.h_Qs11(ispec_l, iz, ix);
+    point_kernel.Qs33() = electromagnetic_isotropic.h_Qs33(ispec_l, iz, ix);
+
+    return point_kernel;
+  }
+
+// Template get_point_kernel specialization:
+//   electromagnetic sv isotropic (SIMD -> No SIMD)
+template <>
+specfem::point::kernels<specfem::dimension::type::dim2,
+                        specfem::element::medium_tag::electromagnetic_sv,
+                        specfem::element::property_tag::isotropic, false>
+get_point_kernel(
+    const int lane,
+    const specfem::point::kernels<
+        specfem::dimension::type::dim2,
+        specfem::element::medium_tag::electromagnetic_sv,
+        specfem::element::property_tag::isotropic, true> &point_kernel) {
+  specfem::point::kernels<specfem::dimension::type::dim2,
+                          specfem::element::medium_tag::electromagnetic_sv,
+                          specfem::element::property_tag::isotropic, false>
+      point_kernel_l;
+
+    point_kernel_l.m0() = point_kernel.m0()[lane];
+    point_kernel_l.e0() = point_kernel.e0()[lane];
+    point_kernel_l.e11() = point_kernel.e11()[lane];
+    point_kernel_l.e33() = point_kernel.e33()[lane];
+    point_kernel_l.sig11() = point_kernel.sig11()[lane];
+    point_kernel_l.sig33() = point_kernel.sig33()[lane];
+    point_kernel_l.Qe11() = point_kernel.Qe11()[lane];
+    point_kernel_l.Qe33() = point_kernel.Qe33()[lane];
+    point_kernel_l.Qs11() = point_kernel.Qs11()[lane];
+    point_kernel_l.Qs33() = point_kernel.Qs33()[lane];
+
+    return point_kernel_l;
+  }
+
+
+*/// <--- REMOVE THIS LINE TO ENABLE THE CODE ABOVE FOR EM
+
+//
+// ==================== HACKATHON TODO END ===================================
+//
 
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd,
@@ -683,6 +830,10 @@ void test_kernels(specfem::compute::assembly &assembly) {
 
   const auto &element_types = assembly.element_types;
   auto &kernels = assembly.kernels;
+
+  //
+  // ==================== HACKATHON TODO: ADD MEDIUM_TAG_ELECTROMAGNETIC_SV ===
+  //
 
 #define TEST_STORE_AND_ADD(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)            \
   check_store_and_add<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), false>(      \
