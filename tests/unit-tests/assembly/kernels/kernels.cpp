@@ -832,6 +832,10 @@ void test_kernels(specfem::compute::assembly &assembly) {
   auto &kernels = assembly.kernels;
 
   //
+  // ==================== HACKATHON TODO: ADD MEDIUM_TAG_POROELASTIC ==========
+  //
+
+  //
   // ==================== HACKATHON TODO: ADD MEDIUM_TAG_ELECTROMAGNETIC_SV ===
   //
 

@@ -154,6 +154,44 @@ std::string get_error_message(
   return message.str();
 }
 
+//
+// ==================== HACKATHON TODO: UNCOMMENT TO ENABLE ==================
+//
+
+/* <--- REMOVE THIS LINE TO ENABLE THE CODE BELOW FOR EM
+
+
+
+// Template specialization: electromagnetic isotropic
+template <>
+std::string get_error_message(
+    const specfem::point::properties<
+        specfem::dimension::type::dim2,
+        specfem::element::medium_tag::electromagnetic_sv,
+        specfem::element::property_tag::isotropic, false> &point_property,
+    const type_real value, const int mode) {
+  std::ostringstream message;
+
+  error_message_header(message, value, mode);
+  message << "\n\tm0 = " << point_property.m0() << "\n";
+  message << "\n\te0 = " << point_property.e0() << "\n";
+  message << "\n\te11 = " << point_property.e11() << "\n";
+  message << "\n\te33 = " << point_property.e33() << "\n";
+  message << "\n\tsig11 = " << point_property.sig11() << "\n";
+  message << "\n\tsig33 = " << point_property.sig33() << "\n";
+  message << "\n\tQe11 = " << point_property.Qe11() << "\n";
+  message << "\n\tQe33 = " << point_property.Qe33() << "\n";
+  message << "\n\tQs11 = " << point_property.Qs11() << "\n";
+  message << "\n\tQs33 = " << point_property.Qs33() << "\n";
+  return message.str();
+}
+
+*/// <--- REMOVE THIS LINE TO ENABLE THE CODE ABOVE FOR EM
+
+//
+// ==================== HACKATHON TODO END ===================================
+//
+
 // Template get_point_property: No SIMD -> No SIMD
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
@@ -459,7 +497,7 @@ get_point_property(
 // ==================== HACKATHON TODO: UNCOMMENT TO ENABLE ==================
 //
 
-/* <--- REMOVE THIS LINE TO ENABLE THE CODE BELOW
+/* <--- REMOVE THIS LINE TO ENABLE THE CODE BELOW ELECTROMAGNETIC
 
 // Template get_point_property specialization:
 //    electromagnetic p-sv isotropic (No SIMD -> No SIMD)
@@ -527,7 +565,7 @@ get_point_property(
   return point_property_l;
 }
 
-*/// <--- REMOVE THIS LINE TO ENABLE THE CODE ABOVE
+*/// <--- REMOVE THIS LINE TO ENABLE THE CODE ABOVE FOR ELECTROMAGNETIC
 
 //
 // ==================== HACKATHON TODO END ===================================
@@ -1060,6 +1098,10 @@ void test_properties(
   writer.write(assembly);
 
   //
+  // ==================== HACKATHON TODO: ADD MEDIUM_TAG_POROELASTIC ==========
+  //
+
+  //
   // ==================== HACKATHON TODO: ADD MEDIUM_TAG_ELECTROMAGNETIC_SV ===
   //
 
@@ -1086,6 +1128,10 @@ void test_properties(
   specfem::IO::property_reader<specfem::IO::ASCII<specfem::IO::read> > reader(
       dir_path.string());
   reader.read(assembly);
+
+  //
+  // ==================== HACKATHON TODO: ADD MEDIUM_TAG_POROELASTIC ==========
+  //
 
   //
   // ==================== HACKATHON TODO: ADD MEDIUM_TAG_ELECTROMAGNETIC_SV ===
