@@ -289,7 +289,7 @@ struct kernels<specfem::dimension::type::dim2,
 
 /*
 I commented out the EM point kernel implementation because it is not yet
-implemented in 2D. Christina is actively working on the derivation and
+implemented in 2D. Chris is actively working on the derivation and
 publication of the Kernels!
 */
 
