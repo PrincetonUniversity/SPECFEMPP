@@ -291,5 +291,53 @@ struct properties<specfem::dimension::type::dim2,
   }
 };
 
+/**
+ * @brief Template specialization for 2D isotropic electromagnetic media
+ *
+ * @tparam UseSIMD Boolean indicating whether to use SIMD
+ */
+template <bool UseSIMD>
+struct properties<specfem::dimension::type::dim2,
+                  specfem::element::medium_tag::electromagnetic_sv,
+                  specfem::element::property_tag::isotropic, UseSIMD>
+    : public impl::point_data<10, UseSIMD> {
+
+  /**
+   * @name Typedefs
+   *
+   */
+  ///@{
+  using base_type = impl::point_data<10, UseSIMD>;
+  using value_type = typename base_type::value_type;
+
+  constexpr static auto dimension = specfem::dimension::type::dim2;
+  constexpr static auto medium_tag =
+      specfem::element::medium_tag::electromagnetic_sv;
+  constexpr static auto property_tag =
+      specfem::element::property_tag::isotropic;
+
+  constexpr static bool is_point_properties = true;
+  ///@}
+
+  using base_type::base_type;
+
+  /**
+   * @name Material properties
+   *
+   */
+  ///@{
+  DEFINE_POINT_VALUE(mu0, 0)   ///< Magnetic permeability @f$ \mu_0 @f$
+  DEFINE_POINT_VALUE(e0, 1)    ///< Effective permittivity @f$ \epsilon_0 @f$
+  DEFINE_POINT_VALUE(e11, 2)   ///< @f$ \epsilon^{11} \epsilon_0 @f$
+  DEFINE_POINT_VALUE(e33, 3)   ///< @f$ \epsilon^{33} \epsilon_0 @f$
+  DEFINE_POINT_VALUE(sig11, 4) ///< @f$ \sigma^{11} \sigma_0 @f$
+  DEFINE_POINT_VALUE(sig33, 5) ///< @f$ \sigma^{33} \sigma_0 @f$
+  DEFINE_POINT_VALUE(Qe11, 6)  ///< Quality factor of @f$ \epsilon^{11} @f$
+  DEFINE_POINT_VALUE(Qe33, 7)  ///< Quality factor of @f$ \epsilon^{33} @f$
+  DEFINE_POINT_VALUE(Qs11, 8)  ///< Quality factor of @f$ \sigma^{11} @f$
+  DEFINE_POINT_VALUE(Qs33, 9)  ///< Quality factor of @f$ \sigma^{33} @f$
+  ///@}
+};
+
 } // namespace point
 } // namespace specfem

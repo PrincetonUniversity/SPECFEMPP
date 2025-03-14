@@ -82,6 +82,15 @@ public:
   constexpr static int components() { return 1; }
 };
 
+template <>
+class attributes<specfem::dimension::type::dim2,
+                 specfem::element::medium_tag::electromagnetic_sv> {
+public:
+  constexpr static int dimension() { return 2; }
+
+  constexpr static int components() { return 2; }
+};
+
 const std::string to_string(const medium_tag &medium,
                             const property_tag &property_tag,
                             const boundary_tag &boundary_tag);

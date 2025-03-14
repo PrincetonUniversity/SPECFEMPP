@@ -102,13 +102,11 @@ public:
    *
    * @return specfem::point::properties Material properties
    */
-  // TODO: Add the properties for electromagnetic_sv
-  // inline specfem::point::properties<dimension, medium_tag, property_tag,
-  // false> get_properties() const {
-  //   return { this->mu0, this->e0, this->e11, this->e33, this->sig11,
-  //   this->sig33,
-  //            this->Qe11, this->Qe33, this->Qs11, this->Qs33 };
-  // }
+  inline specfem::point::properties<dimension, medium_tag, property_tag, false>
+  get_properties() const {
+    return { this->mu0,   this->e0,   this->e11,  this->e33,  this->sig11,
+             this->sig33, this->Qe11, this->Qe33, this->Qs11, this->Qs33 };
+  }
 
   inline std::string print() const {
     std::ostringstream message;

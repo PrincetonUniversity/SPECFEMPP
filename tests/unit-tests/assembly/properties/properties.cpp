@@ -28,6 +28,7 @@ inline void error_message_header(std::ostringstream &message,
   }
 }
 
+// Template get_error_message: Error message template for printing properties
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd = false>
 std::string get_error_message(
@@ -35,6 +36,7 @@ std::string get_error_message(
                                      PropertyTag, false> &point_property,
     const type_real value, const int mode = 0);
 
+// Template specialization: elastic isotropic (parent)
 template <>
 std::string get_error_message(
     const specfem::point::properties<
@@ -51,6 +53,7 @@ std::string get_error_message(
   return message.str();
 }
 
+// Template get_error_message specialization: elastic anisotropic (parent)
 template <>
 std::string get_error_message(
     const specfem::point::properties<
@@ -71,6 +74,7 @@ std::string get_error_message(
   return message.str();
 }
 
+// Template get_error_message specialization: elastic p_sv isotropic  (child)
 template <>
 std::string get_error_message(
     const specfem::point::properties<specfem::dimension::type::dim2,
@@ -86,6 +90,7 @@ std::string get_error_message(
       value, mode);
 }
 
+// Template get_error_message specialization: elastic p_sv anisotropic (child)
 template <>
 std::string get_error_message(
     const specfem::point::properties<
@@ -101,6 +106,7 @@ std::string get_error_message(
       value, mode);
 }
 
+// Template get_error_message specialization: elastic sh isotropic (child)
 template <>
 std::string get_error_message(
     const specfem::point::properties<specfem::dimension::type::dim2,
@@ -116,6 +122,7 @@ std::string get_error_message(
       value, mode);
 }
 
+// Template get_error_message specialization: elastic sh anisotropic (child)
 template <>
 std::string get_error_message(
     const specfem::point::properties<
@@ -131,6 +138,7 @@ std::string get_error_message(
       value, mode);
 }
 
+// Template get_error_message specialization: acoustic isotropic
 template <>
 std::string get_error_message(
     const specfem::point::properties<
@@ -146,6 +154,74 @@ std::string get_error_message(
   return message.str();
 }
 
+//
+// ==================== HACKATHON TODO: UNCOMMENT TO ENABLE ==================
+//
+
+/* <--- REMOVE THIS LINE TO ENABLE THE CODE BELOW FOR ELECTROMAGNETIC
+
+// Template get_error_message specialization: electromagnetic isotropic
+template <>
+std::string get_error_message(
+    const specfem::point::properties<
+        specfem::dimension::type::dim2,
+        specfem::element::medium_tag::electromagnetic_sv,
+        specfem::element::property_tag::isotropic, false> &point_property,
+    const type_real value, const int mode) {
+  std::ostringstream message;
+
+  error_message_header(message, value, mode);
+  message << "\t\tm0 = " << point_property.m0() << "\n";
+  message << "\t\te0 = " << point_property.e0() << "\n";
+  message << "\t\te11 = " << point_property.e11() << "\n";
+  message << "\t\te33 = " << point_property.e33() << "\n";
+  message << "\t\tsig11 = " << point_property.sig11() << "\n";
+  message << "\t\tsig33 = " << point_property.sig33() << "\n";
+  message << "\t\tQe11 = " << point_property.Qe11() << "\n";
+  message << "\t\tQe33 = " << point_property.Qe33() << "\n";
+  message << "\t\tQs11 = " << point_property.Qs11() << "\n";
+  message << "\t\tQs33 = " << point_property.Qs33() << "\n";
+  return message.str();
+}
+
+*/// <--- REMOVE THIS LINE TO ENABLE THE CODE ABOVE FOR ELECTROMAGNETIC
+
+/* <--- REMOVE THIS LINE TO ENABLE THE CODE BELOW FOR POROELASTIC
+
+// Template get_error_message specialization: poroelastic isotropic
+template <>
+std::string get_error_message(
+    const specfem::point::properties<
+        specfem::dimension::type::dim2,
+specfem::element::medium_tag::poroelastic,
+        specfem::element::property_tag::isotropic, false> &point_property,
+    const type_real value, const int mode) {
+  std::ostringstream message;
+
+  error_message_header(message, value, mode);
+  message << "\t\tphi = " << point_property.phi() << "\n";
+  message << "\t\ttortuosity = " << point_property.tortuosity() << "\n";
+  message << "\t\trho_s = " << point_property.rho_s() << "\n";
+  message << "\t\trho_f = " << point_property.rho_f() << "\n";
+  message << "\t\tkappa_s = " << point_property.kappa_s() << "\n";
+  message << "\t\tkappa_f = " << point_property.kappa_f() << "\n";
+  message << "\t\tkappa_fr = " << point_property.kappa_fr() << "\n";
+  message << "\t\tmu_fr = " << point_property.mu_fr() << "\n";
+  message << "\t\teta = " << point_property.eta() << "\n";
+  message << "\t\tKxx = " << point_property.Kxx() << "\n";
+  message << "\t\tKzz = " << point_property.Kzz() << "\n";
+  message << "\t\tKxz = " << point_property.Kxz() << "\n";
+
+  return message.str();
+}
+
+*/// <--- REMOVE THIS LINE TO ENABLE THE CODE ABOVE FOR POROELASTIC
+
+//
+// ==================== HACKATHON TODO END ===================================
+//
+
+// Template get_point_property: No SIMD -> No SIMD
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 specfem::point::properties<specfem::dimension::type::dim2, MediumTag,
@@ -153,6 +229,7 @@ specfem::point::properties<specfem::dimension::type::dim2, MediumTag,
 get_point_property(const int ispec, const int iz, const int ix,
                    const specfem::compute::properties &properties);
 
+// Template get_point_property: SIMD -> No SIMD
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag>
 specfem::point::properties<specfem::dimension::type::dim2, MediumTag,
@@ -162,6 +239,8 @@ get_point_property(
     const specfem::point::properties<specfem::dimension::type::dim2, MediumTag,
                                      PropertyTag, true> &point_property);
 
+// Template get_point_property specialization:
+//    elastic p-sv isotropic (No SIMD -> No SIMD)
 template <>
 specfem::point::properties<specfem::dimension::type::dim2,
                            specfem::element::medium_tag::elastic_sv,
@@ -188,6 +267,8 @@ get_point_property(const int ispec, const int iz, const int ix,
   return point_property;
 }
 
+// Template get_point_property specialization:
+//    elastic sh isotropic (No SIMD -> No SIMD)
 template <>
 specfem::point::properties<specfem::dimension::type::dim2,
                            specfem::element::medium_tag::elastic_sh,
@@ -214,6 +295,8 @@ get_point_property(const int ispec, const int iz, const int ix,
   return point_property;
 }
 
+// Template specialization:
+//    elastic p-sv isotropic (SIMD -> No SIMD)
 template <>
 specfem::point::properties<specfem::dimension::type::dim2,
                            specfem::element::medium_tag::elastic_sv,
@@ -236,6 +319,8 @@ get_point_property(
   return point_property_l;
 }
 
+// Template get_point_property specialization:
+//    elastic sh isotropic (SIMD -> No SIMD)
 template <>
 specfem::point::properties<specfem::dimension::type::dim2,
                            specfem::element::medium_tag::elastic_sh,
@@ -258,6 +343,8 @@ get_point_property(
   return point_property_l;
 }
 
+// Template get_point_property specialization:
+//    elastic p-sv anisotropic (No SIMD -> No SIMD)
 template <>
 specfem::point::properties<specfem::dimension::type::dim2,
                            specfem::element::medium_tag::elastic_sv,
@@ -290,6 +377,8 @@ get_point_property(const int ispec, const int iz, const int ix,
   return point_property;
 }
 
+// Template get_point_property specialization:
+//   elastic sh anisotropic (No SIMD -> No SIMD)
 template <>
 specfem::point::properties<specfem::dimension::type::dim2,
                            specfem::element::medium_tag::elastic_sh,
@@ -322,6 +411,8 @@ get_point_property(const int ispec, const int iz, const int ix,
   return point_property;
 }
 
+// Template get_point_property specialization:
+//    elastic p-sv anisotropic (SIMD -> No SIMD)
 template <>
 specfem::point::properties<specfem::dimension::type::dim2,
                            specfem::element::medium_tag::elastic_sv,
@@ -351,6 +442,8 @@ get_point_property(
   return point_property_l;
 }
 
+// Template get_point_property specialization:
+//    elastic sh anisotropic (SIMD -> No SIMD)
 template <>
 specfem::point::properties<specfem::dimension::type::dim2,
                            specfem::element::medium_tag::elastic_sh,
@@ -380,6 +473,8 @@ get_point_property(
   return point_property_l;
 }
 
+// Template get_point_property specialization:
+//    acoustic isotropic (No SIMD -> No SIMD)
 template <>
 specfem::point::properties<specfem::dimension::type::dim2,
                            specfem::element::medium_tag::acoustic,
@@ -405,6 +500,8 @@ get_point_property(const int ispec, const int iz, const int ix,
   return point_property;
 }
 
+// Template get_point_property specialization:
+//   acoustic isotropic (SIMD -> No SIMD)
 template <>
 specfem::point::properties<specfem::dimension::type::dim2,
                            specfem::element::medium_tag::acoustic,
@@ -424,6 +521,158 @@ get_point_property(
 
   return point_property_l;
 }
+
+//
+// ==================== HACKATHON TODO: UNCOMMENT TO ENABLE ==================
+//
+
+/* <--- REMOVE THIS LINE TO ENABLE THE CODE BELOW ELECTROMAGNETIC
+
+// Template get_point_property specialization:
+//    electromagnetic p-sv isotropic (No SIMD -> No SIMD)
+template <>
+specfem::point::properties<specfem::dimension::type::dim2,
+                           specfem::element::medium_tag::electromagnetic_sv,
+                           specfem::element::property_tag::isotropic, false>
+get_point_property(
+  const int ispec, const int iz, const int ix,
+  const specfem::compute::properties &properties) {
+
+  const auto electromagnetic_sv_isotropic =
+      properties.get_container<specfem::element::medium_tag::electromagnetic_sv,
+                               specfem::element::property_tag::isotropic>();
+
+  const int ispec_l = properties.h_property_index_mapping(ispec);
+
+  specfem::point::properties<specfem::dimension::type::dim2,
+                             specfem::element::medium_tag::electromagnetic_sv,
+                             specfem::element::property_tag::isotropic, false>
+      point_property;
+
+  point_property.mu0() = electromagnetic_sv_isotropic.h_mu0(ispec_l, iz, ix);
+  point_property.e0() = electromagnetic_sv_isotropic.h_e0(ispec_l, iz, ix);
+  point_property.e11() = electromagnetic_sv_isotropic.h_e11(ispec_l, iz, ix);
+  point_property.e33() = electromagnetic_sv_isotropic.h_e33(ispec_l, iz, ix);
+  point_property.s11() = electromagnetic_sv_isotropic.h_s11(ispec_l, iz, ix);
+  point_property.s33() = electromagnetic_sv_isotropic.h_s33(ispec_l, iz, ix);
+  point_porperty.Qe11() = electromagnetic_sv_isotropic.h_Qe11(ispec_l, iz, ix);
+  point_porperty.Qe33() = electromagnetic_sv_isotropic.h_Qe33(ispec_l, iz, ix);
+  point_porperty.Qs11() = electromagnetic_sv_isotropic.h_Qs11(ispec_l, iz, ix);
+  point_porperty.Qs33() = electromagnetic_sv_isotropic.h_Qs33(ispec_l, iz, ix);
+
+  return point_property;
+}
+
+// Template get_point_property specialization:
+//    electromagnetic p-sv isotropic (SIMD -> No SIMD)
+template <>
+specfem::point::properties<specfem::dimension::type::dim2,
+                           specfem::element::medium_tag::electromagnetic_sv,
+                           specfem::element::property_tag::isotropic, false>
+get_point_property(
+    const int lane,
+    const specfem::point::properties<
+        specfem::dimension::type::dim2,
+        specfem::element::medium_tag::electromagnetic_sv,
+        specfem::element::property_tag::isotropic, true> &point_property) {
+  specfem::point::properties<specfem::dimension::type::dim2,
+                             specfem::element::medium_tag::electromagnetic_sv,
+                             specfem::element::property_tag::isotropic, false>
+      point_property_l;
+
+  point_property_l.mu0() = point_property.mu0()[lane];
+  point_property_l.e0() = point_property.e0()[lane];
+  point_property_l.e11() = point_property.e11()[lane];
+  point_property_l.e33() = point_property.e33()[lane];
+  point_property_l.s11() = point_property.s11()[lane];
+  point_property_l.s33() = point_property.s33()[lane];
+  point_property_l.Qe11() = point_property.Qe11()[lane];
+  point_property_l.Qe33() = point_property.Qe33()[lane];
+  point_property_l.Qs11() = point_property.Qs11()[lane];
+  point_property_l.Qs33() = point_property.Qs33()[lane];
+
+  return point_property_l;
+}
+
+*/// <--- REMOVE THIS LINE TO ENABLE THE CODE ABOVE FOR ELECTROMAGNETIC
+
+/* <--- REMOVE THIS LINE TO ENABLE THE CODE BELOW FOR POROELASTIC
+
+// Template get_point_property specialization:
+//    poroelastic isotropic (No SIMD -> No SIMD)
+template <>
+specfem::point::properties<specfem::dimension::type::dim2,
+                           specfem::element::medium_tag::poroelastic,
+                           specfem::element::property_tag::isotropic, false>
+get_point_property(
+  const int ispec, const int iz, const int ix,
+  const specfem::compute::properties &properties) {
+
+  const auto poroelastic_isotropic =
+      properties.get_container<specfem::element::medium_tag::poroelastic,
+                               specfem::element::property_tag::isotropic>();
+
+  const int ispec_l = properties.h_property_index_mapping(ispec);
+
+  specfem::point::properties<specfem::dimension::type::dim2,
+                             specfem::element::medium_tag::poroelastic,
+                             specfem::element::property_tag::isotropic, false>
+      point_property;
+
+  point_property.phi() = poroelastic_isotropic.h_phi(ispec_l, iz, ix);
+  point_property.tortuosity() = poroelastic_isotropic.h_tortuosity(ispec_l, iz,
+ix); point_property.rho_s() = poroelastic_isotropic.h_rho_s(ispec_l, iz, ix);
+  point_property.rho_f() = poroelastic_isotropic.h_rho_f(ispec_l, iz, ix);
+  point_property.kappa_s() = poroelastic_isotropic.h_kappa_s(ispec_l, iz, ix);
+  point_property.kappa_f() = poroelastic_isotropic.h_kappa_f(ispec_l, iz, ix);
+  point_property.kappa_fr() = poroelastic_isotropic.h_kappa_fr(ispec_l, iz, ix);
+  point_property.mu_fr() = poroelastic_isotropic.h_mu_fr(ispec_l, iz, ix);
+  point_property.eta() = poroelastic_isotropic.h_eta(ispec_l, iz, ix);
+  point_property.Kxx() = poroelastic_isotropic.h_Kxx(ispec_l, iz, ix);
+  point_property.Kzz() = poroelastic_isotropic.h_Kzz(ispec_l, iz, ix);
+  point_property.Kxz() = poroelastic_isotropic.h_Kxz(ispec_l, iz, ix);
+
+  return point_property;
+}
+
+// Template get_point_property specialization:
+//    poroelastic isotropic (SIMD -> No SIMD)
+template <>
+specfem::point::properties<specfem::dimension::type::dim2,
+                           specfem::element::medium_tag::poroelastic,
+                           specfem::element::property_tag::isotropic, false>
+get_point_property(
+    const int lane,
+    const specfem::point::properties<
+        specfem::dimension::type::dim2,
+specfem::element::medium_tag::poroelastic,
+        specfem::element::property_tag::isotropic, true> &point_property) {
+  specfem::point::properties<specfem::dimension::type::dim2,
+                             specfem::element::medium_tag::poroelastic,
+                             specfem::element::property_tag::isotropic, false>
+      point_property_l;
+
+  point_property_l.phi() = point_property.phi()[lane];
+  point_property_l.tortuosity() = point_property.tortuosity()[lane];
+  point_property_l.rho_s() = point_property.rho_s()[lane];
+  point_property_l.rho_f() = point_property.rho_f()[lane];
+  point_property_l.kappa_s() = point_property.kappa_s()[lane];
+  point_property_l.kappa_f() = point_property.kappa_f()[lane];
+  point_property_l.kappa_fr() = point_property.kappa_fr()[lane];
+  point_property_l.mu_fr() = point_property.mu_fr()[lane];
+  point_property_l.eta() = point_property.eta()[lane];
+  point_property_l.Kxx() = point_property.Kxx()[lane];
+  point_property_l.Kzz() = point_property.Kzz()[lane];
+  point_property_l.Kxz() = point_property.Kxz()[lane];
+
+  return point_property_l;
+}
+
+*/// <--- REMOVE THIS LINE TO ENABLE THE CODE ABOVE FOR POROELASTIC
+
+//
+// ==================== HACKATHON TODO END ===================================
+//
 
 template <bool using_simd>
 void check_eq(
@@ -455,6 +704,7 @@ void check_eq(
   }
 }
 
+// Template check_point_properties
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd>
 void check_point_properties(
@@ -464,6 +714,7 @@ void check_point_properties(
                                      PropertyTag, using_simd> &p2,
     const int &n_simd_elements);
 
+// Template check_point_properties specialization: elastic isotropic
 template <bool using_simd>
 void check_point_properties(
     const specfem::point::properties<
@@ -489,6 +740,7 @@ void check_point_properties(
                        n_simd_elements, "rho_vp");
 }
 
+// Template check_point_properties specialization: elastic anisotropic
 template <bool using_simd>
 void check_point_properties(
     const specfem::point::properties<
@@ -511,6 +763,7 @@ void check_point_properties(
                        n_simd_elements, "rho_vs");
 }
 
+// Template check_point_properties specialization: acoustic isotropic
 template <bool using_simd>
 void check_point_properties(
     const specfem::point::properties<
@@ -520,6 +773,7 @@ void check_point_properties(
         specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
         specfem::element::property_tag::isotropic, using_simd> &p2,
     const int &n_simd_elements) {
+
   check_eq<using_simd>(p1.rho_inverse(), p2.rho_inverse(), n_simd_elements,
                        "rho_inverse");
   check_eq<using_simd>(p1.kappa(), p2.kappa(), n_simd_elements, "kappa");
@@ -539,6 +793,73 @@ void check_point_properties(
       n_simd_elements, "rho_vpinverse");
 }
 
+//
+// ==================== HACKATHON TODO: UNCOMMENT TO ENABLE ==================
+//
+
+/* <--- REMOVE THIS LINE TO ENABLE THE CODE BELOW FOR EM
+
+// Template check_point_properties specialization: electromagnetic sv isotropic
+template <bool using_simd>
+void check_point_properties(
+    const specfem::point::properties<
+        specfem::dimension::type::dim2,
+        specfem::element::medium_tag::electromagnetic_sv,
+        specfem::element::property_tag::isotropic, using_simd> &p1,
+    const specfem::point::properties<
+        specfem::dimension::type::dim2,
+        specfem::element::medium_tag::electromagnetic_sv,
+        specfem::element::property_tag::isotropic, using_simd> &p2,
+    const int &n_simd_elements) {
+  check_eq<using_simd>(p1.mu0(), p2.mu0(), n_simd_elements, "mu0");
+  check_eq<using_simd>(p1.e0(), p2.e0(), n_simd_elements, "e0");
+  check_eq<using_simd>(p1.e11(), p2.e11(), n_simd_elements, "e11");
+  check_eq<using_simd>(p1.e33(), p2.e33(), n_simd_elements, "e33");
+  check_eq<using_simd>(p1.s11(), p2.s11(), n_simd_elements, "s11");
+  check_eq<using_simd>(p1.s33(), p2.s33(), n_simd_elements, "s33");
+  check_eq<using_simd>(p1.Qe11(), p2.Qe11(), n_simd_elements, "Qe11");
+  check_eq<using_simd>(p1.Qe33(), p2.Qe33(), n_simd_elements, "Qe33");
+  check_eq<using_simd>(p1.Qs11(), p2.Qs11(), n_simd_elements, "Qs11");
+  check_eq<using_simd>(p1.Qs33(), p2.Qs33(), n_simd_elements, "Qs33");
+}
+
+*/// <--- REMOVE THIS LINE TO ENABLE THE CODE ABOVE FOR EM
+
+/* <--- REMOVE THIS LINE TO ENABLE THE CODE BELOW FOR POROELASTIC
+
+// Template check_point_properties specialization: poroelastic isotropic
+template <bool using_simd>
+void check_point_properties(
+    const specfem::point::properties<
+        specfem::dimension::type::dim2,
+specfem::element::medium_tag::poroelastic,
+        specfem::element::property_tag::isotropic, using_simd> &p1,
+    const specfem::point::properties<
+        specfem::dimension::type::dim2,
+specfem::element::medium_tag::poroelastic,
+        specfem::element::property_tag::isotropic, using_simd> &p2,
+    const int &n_simd_elements) {
+  check_eq<using_simd>(p1.phi(), p2.phi(), n_simd_elements, "phi");
+  check_eq<using_simd>(p1.tortuosity(), p2.tortuosity(), n_simd_elements,
+"tortuosity"); check_eq<using_simd>(p1.rho_s(), p2.rho_s(), n_simd_elements,
+"rho_s"); check_eq<using_simd>(p1.rho_f(), p2.rho_f(), n_simd_elements,
+"rho_f"); check_eq<using_simd>(p1.kappa_s(), p2.kappa_s(), n_simd_elements,
+"kappa_s"); check_eq<using_simd>(p1.kappa_f(), p2.kappa_f(), n_simd_elements,
+"kappa_f"); check_eq<using_simd>(p1.kappa_fr(), p2.kappa_fr(), n_simd_elements,
+"kappa_fr"); check_eq<using_simd>(p1.mu_fr(), p2.mu_fr(), n_simd_elements,
+"mu_fr"); check_eq<using_simd>(p1.eta(), p2.eta(), n_simd_elements, "eta");
+  check_eq<using_simd>(p1.Kxx(), p2.Kxx(), n_simd_elements, "Kxx");
+  check_eq<using_simd>(p1.Kzz(), p2.Kzz(), n_simd_elements, "Kzz");
+  check_eq<using_simd>(p1.Kxz(), p2.Kxz(), n_simd_elements, "Kxz");
+}
+
+*/// <--- REMOVE THIS LINE TO ENABLE THE CODE ABOVE FOR POROELASTIC
+
+//
+// ==================== HACKATHON TODO END ===================================
+//
+
+// Templatae check_to_value
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd,
           typename IndexViewType, typename ValueViewType>
@@ -882,6 +1203,10 @@ void test_properties(
   auto &properties = assembly.properties;
   auto &element_types = assembly.element_types;
 
+  //
+  // ==================== HACKATHON TODO: ADD MEDIUM_TAG_ELECTROMAGNETIC_SV ===
+  //
+
   // stage 1: check if properties are correctly constructed from the assembly
 #define TEST_COMPUTE_TO_MESH(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)          \
   check_compute_to_mesh<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)>(assembly,  \
@@ -903,6 +1228,14 @@ void test_properties(
   specfem::IO::property_writer<specfem::IO::ASCII<specfem::IO::write> > writer(
       dir_path.string());
   writer.write(assembly);
+
+  //
+  // ==================== HACKATHON TODO: ADD MEDIUM_TAG_POROELASTIC ==========
+  //
+
+  //
+  // ==================== HACKATHON TODO: ADD MEDIUM_TAG_ELECTROMAGNETIC_SV ===
+  //
 
   // stage 3: modify properties and check store_on_host and load_on_device
 #define TEST_STORE_AND_LOAD(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)           \
@@ -927,6 +1260,14 @@ void test_properties(
   specfem::IO::property_reader<specfem::IO::ASCII<specfem::IO::read> > reader(
       dir_path.string());
   reader.read(assembly);
+
+  //
+  // ==================== HACKATHON TODO: ADD MEDIUM_TAG_POROELASTIC ==========
+  //
+
+  //
+  // ==================== HACKATHON TODO: ADD MEDIUM_TAG_ELECTROMAGNETIC_SV ===
+  //
 
   // stage 5: check if properties are correctly written and read
   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(

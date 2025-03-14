@@ -42,25 +42,31 @@ void specfem::sources::force::compute_source_array(
 
   type_real hlagrange;
 
+  // Source array computation
   for (int iz = 0; iz < N; ++iz) {
     for (int ix = 0; ix < N; ++ix) {
       hlagrange = hxi_source(ix) * hgamma_source(iz);
 
+      // Acoustic
       if (el_type == specfem::element::medium_tag::acoustic) {
         if (ncomponents != 1) {
           throw std::runtime_error(
               "Force source requires 1 component for acoustic medium");
         }
         source_array(0, iz, ix) = hlagrange;
-      } else if (el_type == specfem::element::medium_tag::elastic_sh) {
+      }
+      // Elastic SH
+      else if (el_type == specfem::element::medium_tag::elastic_sh) {
         if (ncomponents != 1) {
           throw std::runtime_error(
               "Force source requires 1 component for elastic SH medium");
         }
         source_array(0, iz, ix) = hlagrange;
 
-      } else if ((el_type == specfem::element::medium_tag::elastic_sv) ||
-                 (el_type == specfem::element::medium_tag::poroelastic)) {
+      }
+      // Elastic P-SV, Poroelastic, or Electromagnetic P-SV
+      else if ((el_type == specfem::element::medium_tag::elastic_sv) ||
+               (el_type == specfem::element::medium_tag::poroelastic)) {
         if (ncomponents != 2) {
           throw std::runtime_error(
               "Force source requires 2 components for elastic SV medium");
