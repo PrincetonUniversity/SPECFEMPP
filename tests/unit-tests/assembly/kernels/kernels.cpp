@@ -7,6 +7,38 @@
 #include "specfem_setup.hpp"
 #include <gtest/gtest.h>
 
+/* Point kernel definitions for poro elasticity
+
+
+
+/// Primary Kernels
+DEFINE_POINT_VALUE(rhot, 0)
+DEFINE_POINT_VALUE(rhof, 1)
+DEFINE_POINT_VALUE(eta, 2)
+DEFINE_POINT_VALUE(sm, 3)
+DEFINE_POINT_VALUE(mu_fr, 4)
+DEFINE_POINT_VALUE(B, 5)
+DEFINE_POINT_VALUE(C, 6)
+DEFINE_POINT_VALUE(M, 7)
+
+/// Density Normalized Kernels
+DEFINE_POINT_VALUE(mu_frb, 8)
+DEFINE_POINT_VALUE(rhob, 9)
+DEFINE_POINT_VALUE(rhofb, 10)
+DEFINE_POINT_VALUE(phi, 11)
+
+/// wavespeed kernels
+DEFINE_POINT_VALUE(cpI, 12)
+DEFINE_POINT_VALUE(cpII, 13)
+DEFINE_POINT_VALUE(cs, 14)
+DEFINE_POINT_VALUE(rhobb, 15)
+DEFINE_POINT_VALUE(rhofbb, 16)
+DEFINE_POINT_VALUE(ratio, 17)
+DEFINE_POINT_VALUE(phib, 18)
+
+
+*/
+
 // Template get_error_message
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd = false>
@@ -143,7 +175,7 @@ std::string get_error_message(
 // ==================== HACKATHON TODO: UNCOMMENT TO ENABLE ==================
 //
 
-/* <--- REMOVE THIS LINE TO ENABLE THE CODE BELOW FOR ELECTROMAGNETIC
+/* <--- Remove this line when em kernels are implemented
 
 
 // Template get_error_message specialization: electromagnetic sv isotropic
@@ -158,16 +190,10 @@ std::string get_error_message(
 
   message << "\n\t Expected: " << value;
   message << "\n\t Got: \n";
-  message << "\t\tm0 = " << point_kernel.m0() << "\n";
-  message << "\t\te0 = " << point_kernel.e0() << "\n";
-  message << "\t\te11 = " << point_kernel.e11() << "\n";
-  message << "\t\te33 = " << point_kernel.e33() << "\n";
-  message << "\t\tsig11 = " << point_kernel.sig11() << "\n";
-  message << "\t\tsig33 = " << point_kernel.sig33() << "\n";
-  message << "\t\tQe11 = " << point_kernel.Qe11() << "\n";
-  message << "\t\tQe33 = " << point_kernel.Qe33() << "\n";
-  message << "\t\tQs11 = " << point_kernel.Qs11() << "\n";
-  message << "\t\tQs33 = " << point_kernel.Qs33() << "\n";
+
+  //
+  //  Here go the parameters for EM Kernels
+  //
 
   return message.str();
 }
@@ -188,18 +214,25 @@ specfem::element::medium_tag::poroelastic,
 
   message << "\n\t Expected: " << value;
   message << "\n\t Got: \n";
-  message << "\t\tphi = " << point_kernel.phi() << "\n";
-  message << "\t\ttortuosity = " << point_kernel.tortuosity() << "\n";
-  message << "\t\trho_s = " << point_kernel.rho_s() << "\n";
-  message << "\t\trho_f = " << point_kernel.rho_f() << "\n";
-  message << "\t\tkappa_s = " << point_kernel.kappa_s() << "\n";
-  message << "\t\tkappa_f = " << point_kernel.kappa_f() << "\n";
-  message << "\t\tkappa_fr = " << point_kernel.kappa_fr() << "\n";
-  message << "\t\tmu_fr = " << point_kernel.mu_fr() << "\n";
+  message << "\t\trhot = " << point_kernel.rhot() << "\n";
+  message << "\t\trhof = " << point_kernel.rhof() << "\n";
   message << "\t\teta = " << point_kernel.eta() << "\n";
-  message << "\t\tKxx = " << point_kernel.Kxx() << "\n";
-  message << "\t\tKzz = " << point_kernel.Kzz() << "\n";
-  message << "\t\tKxz = " << point_kernel.Kxz() << "\n";
+  message << "\t\tsm = " << point_kernel.sm() << "\n";
+  message << "\t\tmu_fr = " << point_kernel.mu_fr() << "\n";
+  message << "\t\tB = " << point_kernel.B() << "\n";
+  message << "\t\tC = " << point_kernel.C() << "\n";
+  message << "\t\tM = " << point_kernel.M() << "\n";
+  message << "\t\tmu_frb = " << point_kernel.mu_frb() << "\n";
+  message << "\t\trhob = " << point_kernel.rhob() << "\n";
+  message << "\t\trhofb = " << point_kernel.rhofb() << "\n";
+  message << "\t\tphi = " << point_kernel.phi() << "\n";
+  message << "\t\tcpI = " << point_kernel.cpI() << "\n";
+  message << "\t\tcpII = " << point_kernel.cpII() << "\n";
+  message << "\t\tcs = " << point_kernel.cs() << "\n";
+  message << "\t\trhobb = " << point_kernel.rhobb() << "\n";
+  message << "\t\trhofbb = " << point_kernel.rhofbb() << "\n";
+  message << "\t\tratio = " << point_kernel.ratio() << "\n";
+  message << "\t\tphib = " << point_kernel.phib() << "\n";
 
   return message.str();
 }
@@ -538,16 +571,11 @@ get_point_kernel(const int ispec, const int iz, const int ix,
                             specfem::element::property_tag::isotropic, false>
         point_kernel;
 
-    point_kernel.m0() = electromagnetic_isotropic.h_m0(ispec_l, iz, ix);
-    point_kernel.e0() = electromagnetic_isotropic.h_e0(ispec_l, iz, ix);
-    point_kernel.e11() = electromagnetic_isotropic.h_e11(ispec_l, iz, ix);
-    point_kernel.e33() = electromagnetic_isotropic.h_e33(ispec_l, iz, ix);
-    point_kernel.sig11() = electromagnetic_isotropic.h_sig11(ispec_l, iz, ix);
-    point_kernel.sig33() = electromagnetic_isotropic.h_sig33(ispec_l, iz, ix);
-    point_kernel.Qe11() = electromagnetic_isotropic.h_Qe11(ispec_l, iz, ix);
-    point_kernel.Qe33() = electromagnetic_isotropic.h_Qe33(ispec_l, iz, ix);
-    point_kernel.Qs11() = electromagnetic_isotropic.h_Qs11(ispec_l, iz, ix);
-    point_kernel.Qs33() = electromagnetic_isotropic.h_Qs33(ispec_l, iz, ix);
+    //
+    // Here go the parameters for EM Kernels
+    //
+    // point_kernel.<param>() = poroelastic_isotropic.h_<param>(ispec_l, iz,
+ix);
 
     return point_kernel;
   }
@@ -569,16 +597,10 @@ get_point_kernel(
                           specfem::element::property_tag::isotropic, false>
       point_kernel_l;
 
-    point_kernel_l.m0() = point_kernel.m0()[lane];
-    point_kernel_l.e0() = point_kernel.e0()[lane];
-    point_kernel_l.e11() = point_kernel.e11()[lane];
-    point_kernel_l.e33() = point_kernel.e33()[lane];
-    point_kernel_l.sig11() = point_kernel.sig11()[lane];
-    point_kernel_l.sig33() = point_kernel.sig33()[lane];
-    point_kernel_l.Qe11() = point_kernel.Qe11()[lane];
-    point_kernel_l.Qe33() = point_kernel.Qe33()[lane];
-    point_kernel_l.Qs11() = point_kernel.Qs11()[lane];
-    point_kernel_l.Qs33() = point_kernel.Qs33()[lane];
+    //
+    // Here go the parameters for EM Kernels
+    //
+    // point_kernel_l.<param>() = point_kernel.<param>()[lane];
 
     return point_kernel_l;
   }
@@ -608,18 +630,26 @@ get_point_kernel(const int ispec, const int iz, const int ix,
                             specfem::element::property_tag::isotropic, false>
         point_kernel;
 
-    point_kernel.phi() = poroelastic_isotropic.h_phi(ispec_l, iz, ix);
-    point_kernel.tortuosity() = poroelastic_isotropic.h_tortuosity(ispec_l, iz,
-ix); point_kernel.rho_s() = poroelastic_isotropic.h_rho_s(ispec_l, iz, ix);
-    point_kernel.rho_f() = poroelastic_isotropic.h_rho_f(ispec_l, iz, ix);
-    point_kernel.kappa_s() = poroelastic_isotropic.h_kappa_s(ispec_l, iz, ix);
-    point_kernel.kappa_f() = poroelastic_isotropic.h_kappa_f(ispec_l, iz, ix);
-    point_kernel.kappa_fr() = poroelastic_isotropic.h_kappa_fr(ispec_l, iz, ix);
-    point_kernel.mu_fr() = poroelastic_isotropic.h_mu_fr(ispec_l, iz, ix);
+    point_kernel.rhot() = poroelastic_isotropic.h_rhot(ispec_l, iz, ix);
+    point_kernel.rhof() = poroelastic_isotropic.h_rhof(ispec_l, iz, ix);
     point_kernel.eta() = poroelastic_isotropic.h_eta(ispec_l, iz, ix);
-    point_kernel.Kxx() = poroelastic_isotropic.h_Kxx(ispec_l, iz, ix);
-    point_kernel.Kzz() = poroelastic_isotropic.h_Kzz(ispec_l, iz, ix);
-    point_kernel.Kxz() = poroelastic_isotropic.h_Kxz(ispec_l, iz, ix);
+    point_kernel.sm() = poroelastic_isotropic.h_sm(ispec_l, iz, ix);
+    point_kernel.mu_fr() = poroelastic_isotropic.h_mu_fr(ispec_l, iz, ix);
+    point_kernel.B() = poroelastic_isotropic.h_B(ispec_l, iz, ix);
+    point_kernel.C() = poroelastic_isotropic.h_C(ispec_l, iz, ix);
+    point_kernel.M() = poroelastic_isotropic.h_M(ispec_l, iz, ix);
+    point_kernel.mu_frb() = poroelastic_isotropic.h_mu_frb(ispec_l, iz, ix);
+    point_kernel.rhob() = poroelastic_isotropic.h_rhob(ispec_l, iz, ix);
+    point_kernel.rhofb() = poroelastic_isotropic.h_rhofb(ispec_l, iz, ix);
+    point_kernel.phi() = poroelastic_isotropic.h_phi(ispec_l, iz, ix);
+    point_kernel.cpI() = poroelastic_isotropic.h_cpI(ispec_l, iz, ix);
+    point_kernel.cpII() = poroelastic_isotropic.h_cpII(ispec_l, iz, ix);
+    point_kernel.cs() = poroelastic_isotropic.h_cs(ispec_l, iz, ix);
+    point_kernel.rhobb() = poroelastic_isotropic.h_rhobb(ispec_l, iz, ix);
+    point_kernel.rhofbb() = poroelastic_isotropic.h_rhofbb(ispec_l, iz, ix);
+    point_kernel.ratio() = poroelastic_isotropic.h_ratio(ispec_l, iz, ix);
+    point_kernel.phib() = poroelastic_isotropic.h_phib(ispec_l, iz, ix);
+
 
     return point_kernel;
   }
@@ -941,7 +971,8 @@ void test_kernels(specfem::compute::assembly &assembly) {
   //
 
   //
-  // ==================== HACKATHON TODO: ADD MEDIUM_TAG_ELECTROMAGNETIC_SV ===
+  // == HACKATHON TODO: ADD MEDIUM_TAG_ELECTROMAGNETIC_SV
+  //                                           IFF EM KERNEL is implemented. ==
   //
 
 #define TEST_STORE_AND_ADD(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)            \
