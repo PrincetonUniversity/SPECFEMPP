@@ -1,6 +1,5 @@
 #pragma once
 
-#include "element/impl/is_elastic_2d.hpp"
 #include "medium/properties_container.hpp"
 #include "point/interface.hpp"
 #include <Kokkos_SIMD.hpp>
@@ -13,7 +12,7 @@ struct properties_container<MediumTag,
                             specfem::element::property_tag::anisotropic>
     : public impl_properties_container<
           MediumTag, specfem::element::property_tag::anisotropic, 10>,
-      element::impl::is_elastic_2d<MediumTag> {
+      specfem::element::is_elastic<MediumTag> {
   using base_type = impl_properties_container<
       MediumTag, specfem::element::property_tag::anisotropic, 10>;
   using base_type::base_type;

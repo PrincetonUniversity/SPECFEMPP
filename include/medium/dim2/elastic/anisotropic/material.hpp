@@ -1,6 +1,5 @@
 #pragma once
 
-#include "element/impl/is_elastic_2d.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "point/properties.hpp"
 #include "specfem_setup.hpp"
@@ -18,7 +17,7 @@ namespace medium {
  */
 template <specfem::element::medium_tag MediumTag>
 struct material<MediumTag, specfem::element::property_tag::anisotropic>
-    : element::impl::is_elastic_2d<MediumTag> {
+    : specfem::element::is_elastic<MediumTag> {
 public:
   constexpr static auto dimension =
       specfem::dimension::type::dim2;           ///< Dimension of the material
