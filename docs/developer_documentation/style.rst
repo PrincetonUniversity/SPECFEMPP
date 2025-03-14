@@ -16,7 +16,7 @@ Install SPECFEM++ development environment
 
 .. code-block:: bash
 
-    uv sync --extra dev
+    uv sync --group dev
 
 When you run this command one of two things happen,
 
@@ -30,7 +30,7 @@ When you run this command one of two things happen,
 
 .. note::
 
-    It is also recommended that you run :code:`uv sync --extra dev` every time you pull the develop branch
+    It is also recommended that you run :code:`uv sync --group dev` every time you pull the develop branch
 
 Using your python/uv environment
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

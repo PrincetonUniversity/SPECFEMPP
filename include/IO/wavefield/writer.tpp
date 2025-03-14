@@ -1,8 +1,8 @@
 #pragma once
 
+#include "IO/wavefield/writer.hpp"
 #include "compute/interface.hpp"
 #include "enumerations/interface.hpp"
-#include "IO/wavefield/writer.hpp"
 
 template <typename OutputLibrary>
 specfem::IO::wavefield_writer<OutputLibrary>::wavefield_writer(
@@ -10,7 +10,8 @@ specfem::IO::wavefield_writer<OutputLibrary>::wavefield_writer(
     : output_folder(output_folder) {}
 
 template <typename OutputLibrary>
-void specfem::IO::wavefield_writer<OutputLibrary>::write(specfem::compute::assembly &assembly) {
+void specfem::IO::wavefield_writer<OutputLibrary>::write(
+    specfem::compute::assembly &assembly) {
   auto &forward = assembly.fields.forward;
   auto &boundary_values = assembly.boundary_values;
 
@@ -19,19 +20,31 @@ void specfem::IO::wavefield_writer<OutputLibrary>::write(specfem::compute::assem
 
   typename OutputLibrary::File file(output_folder + "/ForwardWavefield");
 
-  typename OutputLibrary::Group elastic = file.createGroup("/Elastic");
+  typename OutputLibrary::Group elastic_sv = file.createGroup("/ElasticSV");
+  const auto &elastic_sv_field =
+      forward.get_field<specfem::element::medium_tag::elastic_sv>();
+  typename OutputLibrary::Group elastic_sh = file.createGroup("/ElasticSH");
+  const auto &elastic_sh_field =
+      forward.get_field<specfem::element::medium_tag::elastic_sh>();
   typename OutputLibrary::Group acoustic = file.createGroup("/Acoustic");
+  const auto &acoustic_field =
+      forward.get_field<specfem::element::medium_tag::acoustic>();
   typename OutputLibrary::Group boundary = file.createGroup("/Boundary");
   typename OutputLibrary::Group stacey = boundary.createGroup("/Stacey");
 
-  elastic.createDataset("Displacement", forward.elastic.h_field).write();
-  elastic.createDataset("Velocity", forward.elastic.h_field_dot).write();
-  elastic.createDataset("Acceleration", forward.elastic.h_field_dot_dot).write();
-
-  acoustic.createDataset("Potential", forward.acoustic.h_field).write();
-  acoustic.createDataset("PotentialDot", forward.acoustic.h_field_dot).write();
-  acoustic.createDataset("PotentialDotDot", forward.acoustic.h_field_dot_dot)
+  elastic_sv.createDataset("Displacement", elastic_sv_field.h_field).write();
+  elastic_sv.createDataset("Velocity", elastic_sv_field.h_field_dot).write();
+  elastic_sv.createDataset("Acceleration", elastic_sv_field.h_field_dot_dot)
       .write();
+
+  elastic_sh.createDataset("Displacement", elastic_sh_field.h_field).write();
+  elastic_sh.createDataset("Velocity", elastic_sh_field.h_field_dot).write();
+  elastic_sh.createDataset("Acceleration", elastic_sh_field.h_field_dot_dot)
+      .write();
+
+  acoustic.createDataset("Potential", acoustic_field.h_field).write();
+  acoustic.createDataset("PotentialDot", acoustic_field.h_field_dot).write();
+  acoustic.createDataset("PotentialDotDot", acoustic_field.h_field_dot_dot).write();
 
   stacey
       .createDataset("IndexMapping",

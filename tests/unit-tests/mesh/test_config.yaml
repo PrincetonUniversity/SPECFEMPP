@@ -1,64 +1,108 @@
 Tests:
-   # Test 1:
-  - name : "Test 1: Simple mesh with flat topography"
+# Simple mesh with flat topography P_SV wave
+  - name : "Simple mesh with flat topography (P_SV wave)"
     description: >
       Testing mesh reader on a simple mesh with flat topography.
     config:
       nproc : 1
+      elastic_wave: "P_SV"
     databases:
-      mesh : "../../../tests/unit-tests/data/mesh/simple_mesh_flat_topography/database.bin"
-      sources : "../../../tests/unit-tests/data/mesh/simple_mesh_flat_topography/sources.yaml"
-      stations : "../../../tests/unit-tests/data/mesh/simple_mesh_flat_topography/STATIONS"
-  # Test 2:
-  - name : "Test 2: Simple mesh with curved topography"
+      mesh : "data/mesh/simple_mesh_flat_topography/database.bin"
+      sources : "data/mesh/simple_mesh_flat_topography/sources.yaml"
+      stations : "data/mesh/simple_mesh_flat_topography/STATIONS"
+
+# Simple mesh with flat topography SH wave
+  - name : "Simple mesh with flat topography (SH wave)"
+    description: >
+      Testing mesh reader on a simple mesh with flat topography.
+    config:
+      nproc : 1
+      elastic_wave: "SH"
+    databases:
+      mesh : "data/mesh/simple_mesh_flat_topography/database.bin"
+      sources : "data/mesh/simple_mesh_flat_topography/sources.yaml"
+      stations : "data/mesh/simple_mesh_flat_topography/STATIONS"
+
+# Simple mesh with curved topography
+  - name : "Simple mesh with curved topography"
     description: >
       Testing mesh reader on a simple mesh with curved topography.
     config:
       nproc : 1
+      elastic_wave: "P_SV"
     databases:
-      mesh : "../../../tests/unit-tests/data/mesh/simple_mesh_curved_topography/database.bin"
-      sources : "../../../tests/unit-tests/data/mesh/simple_mesh_curved_topography/sources.yaml"
-      stations : "../../../tests/unit-tests/data/mesh/simple_mesh_curved_topography/STATIONS"
-  # Test 3:
-  - name : "Test 3: Simple mesh with flat ocean bottom"
+      mesh : "data/mesh/simple_mesh_curved_topography/database.bin"
+      sources : "data/mesh/simple_mesh_curved_topography/sources.yaml"
+      stations : "data/mesh/simple_mesh_curved_topography/STATIONS"
+
+# Simple mesh with flat ocean bottom
+  - name : "Simple mesh with flat ocean bottom"
     description: >
       Testing mesh reader on a simple mesh with flat ocean bottom. Fluid-solid interface is at the ocean bottom.
     config:
       nproc : 1
+      elastic_wave: "P_SV"
     databases:
-      mesh : "../../../tests/unit-tests/data/mesh/fluid_solid_mesh_flat_ocean_bottom/database.bin"
-      sources : "../../../tests/unit-tests/data/mesh/fluid_solid_mesh_flat_ocean_bottom/sources.yaml"
-      stations : "../../../tests/unit-tests/data/mesh/fluid_solid_mesh_flat_ocean_bottom/STATIONS"
-  # Test 4:
-  - name : "Test 4: Simple mesh with curved ocean bottom"
+      mesh : "data/mesh/fluid_solid_mesh_flat_ocean_bottom/database.bin"
+      sources : "data/mesh/fluid_solid_mesh_flat_ocean_bottom/sources.yaml"
+      stations : "data/mesh/fluid_solid_mesh_flat_ocean_bottom/STATIONS"
+
+# Curved ocean bottom
+  - name : "Simple mesh with curved ocean bottom"
     description: >
       Testing mesh reader on a simple mesh with curved ocean bottom. Fluid-solid interface is at the ocean bottom.
     config:
       nproc : 1
+      elastic_wave: "P_SV"
     databases:
-      mesh : "../../../tests/unit-tests/data/mesh/fluid_solid_mesh_curved_ocean_bottom/database.bin"
-      sources : "../../../tests/unit-tests/data/mesh/fluid_solid_mesh_curved_ocean_bottom/sources.yaml"
-      stations : "../../../tests/unit-tests/data/mesh/fluid_solid_mesh_curved_ocean_bottom/STATIONS"
+      mesh : "data/mesh/fluid_solid_mesh_curved_ocean_bottom/database.bin"
+      sources : "data/mesh/fluid_solid_mesh_curved_ocean_bottom/sources.yaml"
+      stations : "data/mesh/fluid_solid_mesh_curved_ocean_bottom/STATIONS"
 
-  # Test 5:
-  - name : "Test 5: Gmesh Example"
+# Gmesh example
+  - name : "Gmesh Example"
     description: >
       Testing mesh reader on a Gmesh example mesh.
     config:
       nproc : 1
+      elastic_wave: "P_SV"
     databases:
-      mesh : "../../../tests/unit-tests/data/mesh/Gmesh_Example_Stacey/database.bin"
-      sources : "../../../tests/unit-tests/data/mesh/Gmesh_Example_Stacey/sources.yaml"
-      stations : "../../../tests/unit-tests/data/mesh/Gmesh_Example_Stacey/STATIONS"
+      mesh : "data/mesh/Gmesh_Example_Stacey/database.bin"
+      sources : "data/mesh/Gmesh_Example_Stacey/sources.yaml"
+      stations : "data/mesh/Gmesh_Example_Stacey/STATIONS"
 
-
-# Test 6:
-  - name : "Test 6: Homogeneous Elastic Anisotropic Material"
+# Homogeneous elastic isotropic material P_SV wave
+  - name : "Homogeneous Elastic Anisotropic Material (P_SV wave)"
     description: >
       Testing the reading of a homogeneous elastic anisotropic material.
     config:
       nproc : 1
+      elastic_wave: "P_SV"
     databases:
-      mesh : "../../../tests/unit-tests/data/mesh/homogeneous_elastic_anisotropic/database.bin"
-      sources : "../../../tests/unit-tests/data/mesh/homogeneous_elastic_anisotropic/sources.yaml"
-      stations : "../../../tests/unit-tests/data/mesh/homogeneous_elastic_anisotropic/STATIONS"
+      mesh : "data/mesh/homogeneous_elastic_anisotropic/database.bin"
+      sources : "data/mesh/homogeneous_elastic_anisotropic/sources.yaml"
+      stations : "data/mesh/homogeneous_elastic_anisotropic/STATIONS"
+
+# Homogeneous elastic anisotropic material SH wave
+  - name : "Homogeneous Elastic Anisotropic Material (SH wave)"
+    description: >
+      Testing the reading of a homogeneous elastic anisotropic material.
+    config:
+      nproc : 1
+      elastic_wave: "SH"
+    databases:
+      mesh : "data/mesh/homogeneous_elastic_anisotropic/database.bin"
+      sources : "data/mesh/homogeneous_elastic_anisotropic/sources.yaml"
+      stations : "data/mesh/homogeneous_elastic_anisotropic/STATIONS"
+
+# Electromagnetic mesh P_SV wave
+  - name: "Electro-magnetic mesh example from Morency 2020"
+    description: >
+      Testing the reading of an electromagnetic mesh.
+    config:
+      nproc: 1
+      elastic_wave: "P_SV"
+    databases:
+      mesh: "data/mesh/electromagnetic_mesh_morency2020/database.bin"
+      sources: "data/mesh/electromagnetic_mesh_morency2020/sources.yaml"
+      stations: "data/mesh/electromagnetic_mesh_morency2020/DATA/STATIONS"

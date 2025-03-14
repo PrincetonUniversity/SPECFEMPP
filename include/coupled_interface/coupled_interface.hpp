@@ -16,12 +16,12 @@ class coupled_interface;
 
 template <specfem::dimension::type DimensionType>
 class coupled_interface<DimensionType, specfem::element::medium_tag::acoustic,
-                        specfem::element::medium_tag::elastic> {
+                        specfem::element::medium_tag::elastic_sv> {
 public:
   using CoupledPointFieldType =
       specfem::point::field<DimensionType,
-                            specfem::element::medium_tag::elastic, true, false,
-                            false, false, false>;
+                            specfem::element::medium_tag::elastic_sv, true,
+                            false, false, false, false>;
   using SelfPointFieldType =
       specfem::point::field<DimensionType,
                             specfem::element::medium_tag::acoustic, false,
@@ -29,7 +29,7 @@ public:
 };
 
 template <specfem::dimension::type DimensionType>
-class coupled_interface<DimensionType, specfem::element::medium_tag::elastic,
+class coupled_interface<DimensionType, specfem::element::medium_tag::elastic_sv,
                         specfem::element::medium_tag::acoustic> {
 public:
   using CoupledPointFieldType =
@@ -38,8 +38,8 @@ public:
                             false, true, false, false>;
   using SelfPointFieldType =
       specfem::point::field<DimensionType,
-                            specfem::element::medium_tag::elastic, false, false,
-                            true, false, false>;
+                            specfem::element::medium_tag::elastic_sv, false,
+                            false, true, false, false>;
 };
 
 } // namespace impl
@@ -82,8 +82,8 @@ public:
                 "Error: self_medium cannot be equal to coupled_medium");
 
   static_assert(((SelfMedium == specfem::element::medium_tag::acoustic &&
-                  CoupledMedium == specfem::element::medium_tag::elastic) ||
-                 (SelfMedium == specfem::element::medium_tag::elastic &&
+                  CoupledMedium == specfem::element::medium_tag::elastic_sv) ||
+                 (SelfMedium == specfem::element::medium_tag::elastic_sv &&
                   CoupledMedium == specfem::element::medium_tag::acoustic)),
                 "Only acoustic-elastic coupling is supported at the moment.");
 

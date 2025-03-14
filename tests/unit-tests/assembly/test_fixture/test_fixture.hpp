@@ -24,7 +24,7 @@ KOKKOS_FUNCTION
 namespace test_configuration {
 struct database {
 public:
-  database() : mesh(""), sources(""), stations(""){};
+  database() : mesh(""), sources(""), stations("") {};
   database(const YAML::Node &Node) {
     mesh = Node["mesh"].as<std::string>();
     sources = Node["sources"].as<std::string>();
@@ -40,14 +40,45 @@ public:
   std::string stations;
 };
 
+struct config {
+public:
+  config() : nproc(1), elastic_wave("P_SV") {};
+  config(const YAML::Node &Node) {
+    nproc = Node["nproc"].as<int>();
+    elastic_wave = Node["elastic_wave"].as<std::string>();
+  }
+
+  int get_nproc() { return nproc; }
+  specfem::enums::elastic_wave get_elastic_wave() {
+    if (elastic_wave == "P_SV")
+      return specfem::enums::elastic_wave::p_sv;
+    else if (elastic_wave == "SH")
+      return specfem::enums::elastic_wave::sh;
+    else
+      throw std::runtime_error("Elastic wave type not supported");
+  }
+
+private:
+  int nproc;
+  std::string elastic_wave;
+};
+
 struct Test {
 public:
   Test(const YAML::Node &Node) {
     name = Node["name"].as<std::string>();
     description = Node["description"].as<std::string>();
+    suffix = Node["suffix"].as<std::string>();
     YAML::Node databases = Node["databases"];
+    YAML::Node configuration = Node["config"];
     try {
       database = test_configuration::database(databases);
+    } catch (std::runtime_error &e) {
+      throw std::runtime_error("Error in test configuration: " + name + "\n" +
+                               e.what());
+    }
+    try {
+      config = test_configuration::config(configuration);
     } catch (std::runtime_error &e) {
       throw std::runtime_error("Error in test configuration: " + name + "\n" +
                                e.what());
@@ -59,9 +90,18 @@ public:
     return database.get_databases();
   }
 
+  int get_nproc() { return config.get_nproc(); }
+
+  specfem::enums::elastic_wave get_elastic_wave() {
+    return config.get_elastic_wave();
+  }
+  std::string get_suffix() { return suffix; }
+
   std::string name;
   std::string description;
+  std::string suffix;
   test_configuration::database database;
+  test_configuration::config config;
 };
 } // namespace test_configuration
 
@@ -77,22 +117,23 @@ protected:
         specfem::mesh::mesh<specfem::dimension::type::dim2> *p_mesh,
         std::vector<std::shared_ptr<specfem::sources::source> > *p_sources,
         std::vector<std::shared_ptr<specfem::receivers::receiver> > *p_stations,
-        specfem::compute::assembly *p_assembly)
+        std::string *p_suffixes, specfem::compute::assembly *p_assembly)
         : p_Test(p_Test), p_mesh(p_mesh), p_sources(p_sources),
-          p_stations(p_stations), p_assembly(p_assembly) {}
+          p_stations(p_stations), p_suffixes(p_suffixes),
+          p_assembly(p_assembly) {}
 
     std::tuple<test_configuration::Test,
                specfem::mesh::mesh<specfem::dimension::type::dim2>,
                std::vector<std::shared_ptr<specfem::sources::source> >,
                std::vector<std::shared_ptr<specfem::receivers::receiver> >,
-               specfem::compute::assembly>
+               std::string, specfem::compute::assembly>
     operator*() {
       std::cout << "-------------------------------------------------------\n"
                 << "\033[0;32m[RUNNING]\033[0m " << p_Test->name << "\n"
                 << "-------------------------------------------------------\n\n"
                 << std::endl;
       return std::make_tuple(*p_Test, *p_mesh, *p_sources, *p_stations,
-                             *p_assembly);
+                             *p_suffixes, *p_assembly);
     }
 
     Iterator &operator++() {
@@ -100,6 +141,7 @@ protected:
       ++p_mesh;
       ++p_sources;
       ++p_stations;
+      ++p_suffixes;
       ++p_assembly;
       return *this;
     }
@@ -113,6 +155,7 @@ protected:
     specfem::mesh::mesh<specfem::dimension::type::dim2> *p_mesh;
     std::vector<std::shared_ptr<specfem::sources::source> > *p_sources;
     std::vector<std::shared_ptr<specfem::receivers::receiver> > *p_stations;
+    std::string *p_suffixes;
     specfem::compute::assembly *p_assembly;
   };
 
@@ -120,13 +163,13 @@ protected:
 
   Iterator begin() {
     return Iterator(&Tests[0], &Meshes[0], &Sources[0], &Stations[0],
-                    &assemblies[0]);
+                    &suffixes[0], &assemblies[0]);
   }
 
   Iterator end() {
     return Iterator(&Tests[Tests.size()], &Meshes[Meshes.size()],
                     &Sources[Sources.size()], &Stations[Stations.size()],
-                    &assemblies[assemblies.size()]);
+                    &suffixes[suffixes.size()], &assemblies[assemblies.size()]);
   }
 
   std::vector<test_configuration::Test> Tests;
@@ -134,5 +177,6 @@ protected:
   std::vector<std::vector<std::shared_ptr<specfem::sources::source> > > Sources;
   std::vector<std::vector<std::shared_ptr<specfem::receivers::receiver> > >
       Stations;
+  std::vector<std::string> suffixes;
   std::vector<specfem::compute::assembly> assemblies;
 };

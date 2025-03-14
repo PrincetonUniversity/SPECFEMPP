@@ -44,8 +44,6 @@
   ! to avoid an I/O bottleneck in the case of very large runs
   if (myrank == 0) then
 
-    call parse_command_line_arguments()
-
     ! opens file Par_file
     call open_parameter_file(ier)
 
@@ -161,6 +159,7 @@
     !-------------------------------------------------------
     ! Mesh
     !-------------------------------------------------------
+
     call read_value_integer(NGNOD, 'NGNOD', ier)
     if (ier /= 0) then
       some_parameters_missing_from_Par_file = .true.
@@ -175,10 +174,52 @@
       write(*,*)
     endif
 
+    call read_value_string(COUPLED_MODEL_DIRECTORY, 'COUPLED_MODEL_DIRECTORY', ier)
+    if (ier /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'COUPLED_MODEL_DIRECTORY          = ./DATA/my_coupled_model/'
+      write(*,*)
+    endif
+
     call read_value_string(TOMOGRAPHY_PATH, 'TOMOGRAPHY_PATH', ier)
     if (ier /= 0) then
       some_parameters_missing_from_Par_file = .true.
       write(*,'(a)') 'TOMOGRAPHY_PATH                 = ./DATA/tomo_files/'
+      write(*,*)
+    endif
+
+    call read_value_logical(HAS_FINITE_FAULT_SOURCE, 'HAS_FINITE_FAULT_SOURCE', ier)
+    if (ier /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'HAS_FINITE_FAULT_SOURCE         = .false.'
+      write(*,*)
+    endif
+
+    call read_value_string(FAULT_PAR_FILE, 'FAULT_PAR_FILE', ier)
+    if (ier /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'FAULT_PAR_FILE                  = dummy.txt'
+      write(*,*)
+    endif
+
+    call read_value_string(FAULT_STATIONS, 'FAULT_STATIONS', ier)
+    if (ier /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'FAULT_STATIONS                  = dummy.txt'
+      write(*,*)
+    endif
+
+    call read_value_string(STRESS_FRICTION_FILE, 'STRESS_FRICTION_FILE', ier)
+    if (ier /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'STRESS_FRICTION_FILE            = dummy.txt'
+      write(*,*)
+    endif
+
+    call read_value_string(RSF_HETE_FILE, 'RSF_HETE_FILE', ier)
+    if (ier /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'RSF_HETE_FILE                   = dummy.txt'
       write(*,*)
     endif
 
@@ -427,6 +468,13 @@
       write(*,*)
     endif
 
+    call read_value_string(SOURCE_FILENAME, 'SOURCE_FILENAME', ier)
+    if (ier /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'SOURCE_FILENAME                 = dummy.txt'
+      write(*,*)
+    endif
+
     call read_value_logical(USE_RICKER_TIME_FUNCTION, 'USE_RICKER_TIME_FUNCTION', ier)
     if (ier /= 0) then
       some_parameters_missing_from_Par_file = .true.
@@ -656,13 +704,6 @@
       write(*,*)
     endif
 
-    call read_value_logical(MESH_A_CHUNK_OF_THE_EARTH,'MESH_A_CHUNK_OF_THE_EARTH',ier)
-    if (ier /= 0) then
-      some_parameters_missing_from_Par_file = .true.
-      write(*,'(a)') 'MESH_A_CHUNK_OF_THE_EARTH       = .false.'
-      write(*,*)
-    endif
-
     call read_value_string(TRACTION_PATH, 'TRACTION_PATH', ier)
     if (ier /= 0) then
       some_parameters_missing_from_Par_file = .true.
@@ -693,13 +734,6 @@
       if (INJECTION_TECHNIQUE_TYPE /= INJECTION_TECHNIQUE_IS_DSM .and. &
          INJECTION_TECHNIQUE_TYPE /= INJECTION_TECHNIQUE_IS_AXISEM .and. &
          INJECTION_TECHNIQUE_TYPE /= INJECTION_TECHNIQUE_IS_FK) stop 'Error incorrect value of INJECTION_TECHNIQUE_TYPE read'
-
-      if ( (INJECTION_TECHNIQUE_TYPE == INJECTION_TECHNIQUE_IS_DSM ) .and. (.not. MESH_A_CHUNK_OF_THE_EARTH) ) &
-        stop 'Error, coupling with DSM only works with a Earth chunk mesh'
-
-      if (INJECTION_TECHNIQUE_TYPE == INJECTION_TECHNIQUE_IS_FK .and. MESH_A_CHUNK_OF_THE_EARTH) &
-        stop 'Error: coupling with F-K is for models with a flat surface (Earth flattening), &
-                       &thus turn MESH_A_CHUNK_OF_THE_EARTH off'
 
       if ((INJECTION_TECHNIQUE_TYPE /= INJECTION_TECHNIQUE_IS_AXISEM) .and. RECIPROCITY_AND_KH_INTEGRAL) &
         stop 'Error: the use of RECIPROCITY_AND_KH_INTEGRAL is only available for coupling with AxiSEM for now'
@@ -1184,28 +1218,13 @@
     stop 'Error elements should have 8 or 27 control nodes, please modify NGNOD in Par_file and recompile solver'
   endif
 
-  ! get the name of the file describing the sources
-  if (USE_FORCE_POINT_SOURCE) then
-    sources_filename = IN_DATA_FILES(1:len_trim(IN_DATA_FILES))//'FORCESOLUTION'
-  else
-    sources_filename = IN_DATA_FILES(1:len_trim(IN_DATA_FILES))//'CMTSOLUTION'
-  endif
-  ! see if we are running several independent runs in parallel
-  ! if so, add the right directory for that run
-  ! (group numbers start at zero, but directory names start at run0001, thus we add one)
-  ! a negative value for "mygroup" is a convention that indicates that groups (i.e. sub-communicators, one per run) are off
-  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-    sources_filename = path_to_add(1:len_trim(path_to_add))//sources_filename(1:len_trim(sources_filename))
-  endif
-
   ! determines number of sources depending on number of lines in sources file
   if (INVERSE_FWI_FULL_PROBLEM) then
     ! sources will be set later in input_output_mod.f90 based on acquisition setting
     NSOURCES = 0
   else
     ! gets number of sources
-    call count_number_of_sources(NSOURCES,sources_filename)
+    call count_number_of_sources(NSOURCES,SOURCE_FILENAME)
   endif
 
   ! converts all string characters to lowercase
@@ -1409,7 +1428,6 @@
   ! coupling
   call bcast_all_singlel(COUPLE_WITH_INJECTION_TECHNIQUE)
   call bcast_all_singlei(INJECTION_TECHNIQUE_TYPE)
-  call bcast_all_singlel(MESH_A_CHUNK_OF_THE_EARTH)
   call bcast_all_string(TRACTION_PATH)
   call bcast_all_string(FKMODEL_FILE)
   call bcast_all_singlel(RECIPROCITY_AND_KH_INTEGRAL)

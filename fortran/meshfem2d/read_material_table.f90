@@ -35,8 +35,9 @@ subroutine read_material_table()
 
 ! reads in material definitions in DATA/Par_file
 
-   use constants, only: IMAIN,TINYVAL,ISOTROPIC_MATERIAL,ANISOTROPIC_MATERIAL,POROELASTIC_MATERIAL, &
-      ELECTROMAGNETIC_MATERIAL
+   use constants, only: IMAIN,TINYVAL,ISOTROPIC_MATERIAL,ANISOTROPIC_MATERIAL,&
+      POROELASTIC_MATERIAL
+   use constants, only: ELECTROMAGNETIC_MATERIAL
 
    use shared_parameters, only: nbmodels,icodemat, &
       cp,cs, &

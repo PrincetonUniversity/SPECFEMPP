@@ -23,5 +23,5 @@ public:
   virtual void write(specfem::compute::assembly &assembly){};
 };
 
-} // namespace writer
+} // namespace IO
 } // namespace specfem

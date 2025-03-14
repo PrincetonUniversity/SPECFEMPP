@@ -15,7 +15,7 @@ To run the examples, you first need to install uv following these [instructions]
 uv --version
 
 # install dependencies
-uv sync --extra examples
+uv sync --group examples
 
 ```
 

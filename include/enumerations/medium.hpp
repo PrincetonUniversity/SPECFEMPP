@@ -7,13 +7,26 @@
 namespace specfem {
 namespace element {
 
-constexpr int ntypes = 2; ///< Number of element types
+/// See below how this is used within assembly.
+constexpr int ntypes = 4; ///< Number of element types
+
+// TODO: Since compute fields converts these enumerations into ints, we need to
+// make sure that the order of the enumerations is such that any tag that is not
+// an element in our domain is the last. This is hack and needs to be fixed in
+// the future.
 
 /**
  * @brief Medium tag enumeration
  *
  */
-enum class medium_tag { elastic, acoustic, poroelastic };
+enum class medium_tag {
+  elastic_sv,
+  elastic_sh,
+  acoustic,
+  electromagnetic_sv,
+  elastic,
+  poroelastic
+};
 
 /**
  * @brief Property tag enumeration
@@ -41,12 +54,22 @@ class attributes;
 
 template <>
 class attributes<specfem::dimension::type::dim2,
-                 specfem::element::medium_tag::elastic> {
+                 specfem::element::medium_tag::elastic_sv> {
 
 public:
   constexpr static int dimension() { return 2; }
 
   constexpr static int components() { return 2; }
+};
+
+template <>
+class attributes<specfem::dimension::type::dim2,
+                 specfem::element::medium_tag::elastic_sh> {
+
+public:
+  constexpr static int dimension() { return 2; }
+
+  constexpr static int components() { return 1; }
 };
 
 template <>

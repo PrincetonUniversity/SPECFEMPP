@@ -15,9 +15,14 @@ namespace element {
 /// @{
 #define DIMENSION_TAG_DIM2 (0, specfem::dimension::type::dim2, dim2)
 
-#define MEDIUM_TAG_ELASTIC (0, specfem::element::medium_tag::elastic, elastic)
+#define MEDIUM_TAG_ELASTIC_SV                                                  \
+  (0, specfem::element::medium_tag::elastic_sv, elastic_sv)
+#define MEDIUM_TAG_ELASTIC_SH                                                  \
+  (1, specfem::element::medium_tag::elastic_sh, elastic_sh)
 #define MEDIUM_TAG_ACOUSTIC                                                    \
-  (1, specfem::element::medium_tag::acoustic, acoustic)
+  (2, specfem::element::medium_tag::acoustic, acoustic)
+#define MEDIUM_TAG_ELECTROMAGNETIC_SV                                          \
+  (3, specfem::element::medium_tag::electromagnetic_sv, electromagnetic_sv)
 
 #define PROPERTY_TAG_ISOTROPIC                                                 \
   (0, specfem::element::property_tag::isotropic, isotropic)
@@ -48,8 +53,10 @@ namespace element {
  *
  */
 #define MEDIUM_TYPES                                                           \
-  ((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC))(                                  \
-      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC))
+  ((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SV))(                               \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH))(                            \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC))(                              \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_SV))
 
 #define MAKE_ARRAY_ELEM(s, data, elem)                                         \
   std::make_tuple(GET_TAG(BOOST_PP_TUPLE_ELEM(0, elem)),                       \
@@ -85,9 +92,13 @@ constexpr auto medium_types() {
  *
  */
 #define MATERIAL_SYSTEMS                                                       \
-  ((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC, PROPERTY_TAG_ISOTROPIC))(          \
-      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC, PROPERTY_TAG_ANISOTROPIC))(     \
-      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC, PROPERTY_TAG_ISOTROPIC))
+  ((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SV, PROPERTY_TAG_ISOTROPIC))(       \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SV, PROPERTY_TAG_ANISOTROPIC))(  \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH, PROPERTY_TAG_ISOTROPIC))(    \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH, PROPERTY_TAG_ANISOTROPIC))(  \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC, PROPERTY_TAG_ISOTROPIC))(      \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_SV,                      \
+       PROPERTY_TAG_ISOTROPIC))
 
 #define MAKE_ARRAY_ELEM(s, data, elem)                                         \
   std::make_tuple(GET_TAG(BOOST_PP_TUPLE_ELEM(0, elem)),                       \
@@ -123,9 +134,12 @@ constexpr auto material_systems() {
  *
  */
 #define ELEMENT_TYPES                                                          \
-  ((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC, PROPERTY_TAG_ISOTROPIC,            \
-    BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC,               \
+  ((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SV, PROPERTY_TAG_ISOTROPIC,         \
+    BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SV,            \
                          PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_STACEY))(        \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH, PROPERTY_TAG_ISOTROPIC,      \
+       BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH,         \
+                            PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_STACEY))(     \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC, PROPERTY_TAG_ISOTROPIC,        \
        BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC,           \
                             PROPERTY_TAG_ISOTROPIC,                            \
@@ -134,9 +148,14 @@ constexpr auto material_systems() {
        BOUNDARY_TAG_STACEY))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC,         \
                               PROPERTY_TAG_ISOTROPIC,                          \
                               BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))(       \
-      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC, PROPERTY_TAG_ANISOTROPIC,       \
-       BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC,            \
-                            PROPERTY_TAG_ANISOTROPIC, BOUNDARY_TAG_STACEY))
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SV, PROPERTY_TAG_ANISOTROPIC,    \
+       BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SV,         \
+                            PROPERTY_TAG_ANISOTROPIC, BOUNDARY_TAG_STACEY))(   \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH, PROPERTY_TAG_ANISOTROPIC,    \
+       BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH,         \
+                            PROPERTY_TAG_ANISOTROPIC, BOUNDARY_TAG_STACEY))(   \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_SV,                      \
+       PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_NONE))
 
 #define MAKE_ARRAY_ELEM(s, data, elem)                                         \
   std::make_tuple(GET_TAG(BOOST_PP_TUPLE_ELEM(0, elem)),                       \
@@ -286,7 +305,7 @@ constexpr auto element_types() {
  * \ foo<GET_TAG(DIMENTION_TAG), GET_TAG(MEDIUM_TAG)>();
  *
  *   CALL_MACRO_FOR_ALL_MEDIUM_TAGS(CALL_FOO, WHERE(DIMENSION_TAG_DIM2)
- * WHERE(MEDIUM_TAG_ELASTIC, MEDIUM_TAG_ACOUSTIC))
+ * WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH))
  * @endcode
  *
  *
@@ -312,8 +331,8 @@ constexpr auto element_types() {
  * \ foo<GET_TAG(DIMENTION_TAG), GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)>();
  *
  *   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(CALL_FOO, WHERE(DIMENSION_TAG_DIM2)
- * WHERE(MEDIUM_TAG_ELASTIC) WHERE(PROPERTY_TAG_ISOTROPIC,
- * PROPERTY_TAG_ANISOTROPIC))
+ * WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH)
+ * WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
  * @endcode
  *
  *
@@ -340,8 +359,9 @@ constexpr auto element_types() {
  * GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG)>();
  *
  *   CALL_MACRO_FOR_ALL_ELEMENT_TYPES(CALL_FOO, WHERE(DIMENSION_TAG_DIM2)
- * WHERE(MEDIUM_TAG_ELASTIC) WHERE(PROPERTY_TAG_ISOTROPIC,
- * PROPERTY_TAG_ANISOTROPIC) WHERE(BOUNDARY_TAG_NONE, BOUNDARY_TAG_STACEY))
+ * WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH)
+ * WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)
+ * WHERE(BOUNDARY_TAG_NONE, BOUNDARY_TAG_STACEY))
  * @endcode
  *
  *

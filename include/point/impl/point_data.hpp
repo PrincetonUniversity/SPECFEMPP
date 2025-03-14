@@ -3,16 +3,12 @@
 #include "datatypes/simd.hpp"
 #include "enumerations/medium.hpp"
 
-#define DEFINE_POINT_VALUE(prop)                                               \
-  constexpr static int i_##prop = __COUNTER__ - _counter - 1;                  \
+#define DEFINE_POINT_VALUE(prop, index_value)                                  \
   KOKKOS_INLINE_FUNCTION value_type &prop() {                                  \
-    return base_type::data[i_##prop];                                          \
+    return base_type::data[index_value];                                       \
   }                                                                            \
-  KOKKOS_INLINE_FUNCTION constexpr value_type prop() const {                   \
-    return base_type::data[i_##prop];                                          \
-  }                                                                            \
-  KOKKOS_INLINE_FUNCTION constexpr void prop(value_type &val) {                \
-    base_type::data[i_##prop] = val;                                           \
+  KOKKOS_INLINE_FUNCTION const value_type prop() const {                       \
+    return base_type::data[index_value];                                       \
   }
 
 namespace specfem {
