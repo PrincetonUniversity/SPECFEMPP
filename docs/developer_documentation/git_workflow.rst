@@ -20,10 +20,12 @@ suggested by `github
   request against original repository.
 
 - Clone your fork locally and checkout to develop
+
   .. code-block:: bash
 
       git clone <git link to your fork>
       git checkout develop
+
 
   .. note::
 
@@ -31,10 +33,11 @@ suggested by `github
       you pull the develop branch. Please check :ref:`style section<style>` for
       more information on uv.
 
+
   .. note::
 
-      Please also install pre-commit hooks after you've cloned repo. :code:`uv run
-      pre-commit install` will install pre-commit hooks for you.
+      Please also install pre-commit hooks after you've cloned repo. :code:`uv
+      run pre-commit install` will install pre-commit hooks for you.
 
 - Next create a feature branch against develop branch called a feature branch.
   Please be explicit while naming the feature branch.
@@ -43,13 +46,15 @@ suggested by `github
 
       git checkout -b <name-of-the-feature-brach>
 
+
   .. note::
 
       If you are working on an open issue from the SPECFEM++, we prefer the name
-      of the branch to be `issue-<issue-number>`. For example, if you are working
-      on issue number 123, the name of the branch should be `issue-123`.
+      of the branch to be `issue-<issue-number>`. For example, if you are
+      working on issue number 123, the name of the branch should be `issue-123`.
 
-- Make your contributions inside the feature branch and then commit push them upstream.
+- Make your contributions inside the feature branch and then commit push them
+  upstream.
 
   .. code-block:: bash
 
@@ -62,7 +67,6 @@ suggested by `github
 
 - Once the pull request is approved and merged, you can delete the feature
   branch from your fork.
-
 
 - Sometimes, other developers will have made and merged changes before your pull
   request is merged, resulting in merge conflicts. This will be shown in the
