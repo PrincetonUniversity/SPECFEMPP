@@ -196,7 +196,7 @@ else()
 endif()
 
 # ========== MESHFEM2D ==============
-message(STATUS "Building meshfem2D")
+message(STATUS "Configuring meshfem2D")
 set(_saved_CMAKE_MESSAGE_LOG_LEVEL ${CMAKE_MESSAGE_LOG_LEVEL})
 set(CMAKE_MESSAGE_LOG_LEVEL ${SUBDIR_LOG_LEVEL})
 add_subdirectory(fortran/meshfem2d)
@@ -204,7 +204,7 @@ set(CMAKE_MESSAGE_LOG_LEVEL ${_saved_CMAKE_MESSAGE_LOG_LEVEL})
 # =================================
 
 # ========== MESHFEM3D ==============
-message(STATUS "Building xmeshfem3D & xgenerate_databases")
+message(STATUS "Configuring xmeshfem3D & xgenerate_databases")
 set(_saved_CMAKE_MESSAGE_LOG_LEVEL ${CMAKE_MESSAGE_LOG_LEVEL})
 set(CMAKE_MESSAGE_LOG_LEVEL ${SUBDIR_LOG_LEVEL})
 add_subdirectory(fortran/meshfem3d)
