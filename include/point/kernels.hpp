@@ -1,6 +1,6 @@
 #pragma once
-
 #include "impl/point_data.hpp"
+#include <Kokkos_Core.hpp>
 
 namespace specfem {
 namespace point {
@@ -324,7 +324,7 @@ struct kernels<specfem::dimension::type::dim2,
    */
   KOKKOS_FUNCTION
   kernels(const value_type param) : kernels(param) {
-    kokkos::abort(
+    Kokkos::abort(
         "Point Kernels not implemented for electromagnetic sv isotropic");
   }
 
