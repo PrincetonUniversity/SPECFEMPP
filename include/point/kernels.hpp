@@ -296,7 +296,7 @@ template <bool UseSIMD>
 struct kernels<specfem::dimension::type::dim2,
                specfem::element::medium_tag::electromagnetic_sv,
                specfem::element::property_tag::isotropic, UseSIMD>
-    : public impl::point_data<10, UseSIMD> {
+    : public impl::point_data<1, UseSIMD> {
 
   /**
    * @name Typedefs
