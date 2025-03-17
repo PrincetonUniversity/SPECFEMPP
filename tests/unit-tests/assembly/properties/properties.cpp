@@ -171,16 +171,11 @@ std::string get_error_message(
   std::ostringstream message;
 
   error_message_header(message, value, mode);
-  message << "\t\tm0 = " << point_property.m0() << "\n";
-  message << "\t\te0 = " << point_property.e0() << "\n";
-  message << "\t\te11 = " << point_property.e11() << "\n";
-  message << "\t\te33 = " << point_property.e33() << "\n";
+  message << "\t\tm0_inv = " << point_property.m0_inv() << "\n";
+  message << "\t\teps11 = " << point_property.eps11() << "\n";
+  message << "\t\teps33 = " << point_property.eps33() << "\n";
   message << "\t\tsig11 = " << point_property.sig11() << "\n";
   message << "\t\tsig33 = " << point_property.sig33() << "\n";
-  message << "\t\tQe11 = " << point_property.Qe11() << "\n";
-  message << "\t\tQe33 = " << point_property.Qe33() << "\n";
-  message << "\t\tQs11 = " << point_property.Qs11() << "\n";
-  message << "\t\tQs33 = " << point_property.Qs33() << "\n";
   return message.str();
 }
 
@@ -549,16 +544,12 @@ get_point_property(
                              specfem::element::property_tag::isotropic, false>
       point_property;
 
-  point_property.mu0() = electromagnetic_sv_isotropic.h_mu0(ispec_l, iz, ix);
-  point_property.e0() = electromagnetic_sv_isotropic.h_e0(ispec_l, iz, ix);
-  point_property.e11() = electromagnetic_sv_isotropic.h_e11(ispec_l, iz, ix);
-  point_property.e33() = electromagnetic_sv_isotropic.h_e33(ispec_l, iz, ix);
-  point_property.s11() = electromagnetic_sv_isotropic.h_s11(ispec_l, iz, ix);
-  point_property.s33() = electromagnetic_sv_isotropic.h_s33(ispec_l, iz, ix);
-  point_porperty.Qe11() = electromagnetic_sv_isotropic.h_Qe11(ispec_l, iz, ix);
-  point_porperty.Qe33() = electromagnetic_sv_isotropic.h_Qe33(ispec_l, iz, ix);
-  point_porperty.Qs11() = electromagnetic_sv_isotropic.h_Qs11(ispec_l, iz, ix);
-  point_porperty.Qs33() = electromagnetic_sv_isotropic.h_Qs33(ispec_l, iz, ix);
+  point_property.mu0_inv() = electromagnetic_sv_isotropic.h_mu0_inv(ispec_l, iz,
+ix); point_property.eps11() = electromagnetic_sv_isotropic.h_eps11(ispec_l, iz,
+ix); point_property.eps33() = electromagnetic_sv_isotropic.h_eps33(ispec_l, iz,
+ix); point_property.sig11() = electromagnetic_sv_isotropic.h_sig11(ispec_l, iz,
+ix); point_property.sig33() = electromagnetic_sv_isotropic.h_sig33(ispec_l, iz,
+ix);
 
   return point_property;
 }
@@ -580,16 +571,11 @@ get_point_property(
                              specfem::element::property_tag::isotropic, false>
       point_property_l;
 
-  point_property_l.mu0() = point_property.mu0()[lane];
-  point_property_l.e0() = point_property.e0()[lane];
-  point_property_l.e11() = point_property.e11()[lane];
-  point_property_l.e33() = point_property.e33()[lane];
-  point_property_l.s11() = point_property.s11()[lane];
-  point_property_l.s33() = point_property.s33()[lane];
-  point_property_l.Qe11() = point_property.Qe11()[lane];
-  point_property_l.Qe33() = point_property.Qe33()[lane];
-  point_property_l.Qs11() = point_property.Qs11()[lane];
-  point_property_l.Qs33() = point_property.Qs33()[lane];
+  point_property_l.mu0_inv() = point_property.mu0_inv()[lane];
+  point_property_l.eps11() = point_property.eps11()[lane];
+  point_property_l.eps33() = point_property.eps33()[lane];
+  point_property_l.sig11() = point_property.sig11()[lane];
+  point_property_l.sig33() = point_property.sig33()[lane];
 
   return point_property_l;
 }
@@ -811,16 +797,11 @@ void check_point_properties(
         specfem::element::medium_tag::electromagnetic_sv,
         specfem::element::property_tag::isotropic, using_simd> &p2,
     const int &n_simd_elements) {
-  check_eq<using_simd>(p1.mu0(), p2.mu0(), n_simd_elements, "mu0");
-  check_eq<using_simd>(p1.e0(), p2.e0(), n_simd_elements, "e0");
-  check_eq<using_simd>(p1.e11(), p2.e11(), n_simd_elements, "e11");
-  check_eq<using_simd>(p1.e33(), p2.e33(), n_simd_elements, "e33");
-  check_eq<using_simd>(p1.s11(), p2.s11(), n_simd_elements, "s11");
-  check_eq<using_simd>(p1.s33(), p2.s33(), n_simd_elements, "s33");
-  check_eq<using_simd>(p1.Qe11(), p2.Qe11(), n_simd_elements, "Qe11");
-  check_eq<using_simd>(p1.Qe33(), p2.Qe33(), n_simd_elements, "Qe33");
-  check_eq<using_simd>(p1.Qs11(), p2.Qs11(), n_simd_elements, "Qs11");
-  check_eq<using_simd>(p1.Qs33(), p2.Qs33(), n_simd_elements, "Qs33");
+  check_eq<using_simd>(p1.mu0_inv(), p2.mu0_inv(), n_simd_elements, "mu0_inv");
+  check_eq<using_simd>(p1.eps11(), p2.eps11(), n_simd_elements, "eps11");
+  check_eq<using_simd>(p1.eps33(), p2.eps33(), n_simd_elements, "eps33");
+  check_eq<using_simd>(p1.sig11(), p2.sig11(), n_simd_elements, "sig11");
+  check_eq<using_simd>(p1.sig33(), p2.sig33(), n_simd_elements, "sig33");
 }
 
 */// <--- REMOVE THIS LINE TO ENABLE THE CODE ABOVE FOR EM

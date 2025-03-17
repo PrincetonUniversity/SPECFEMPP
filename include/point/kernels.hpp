@@ -287,61 +287,58 @@ struct kernels<specfem::dimension::type::dim2,
   ///@}
 };
 
-/*
-I commented out the EM point kernel implementation because it is not yet
-implemented in 2D. Chris is actively working on the derivation and
-publication of the Kernels!
-*/
+/**
+ * @brief Template specialization for the kernels struct for 2D
+ *        electromagnetic isotropic elements
+ *
+ * This specialization is not implemented and throws an error upon
+ * constructions if the code tries to use it.
+ *
+ * @tparam UseSIMD  Use SIMD instructions
+ */
+template <bool UseSIMD>
+struct kernels<specfem::dimension::type::dim2,
+               specfem::element::medium_tag::electromagnetic_sv,
+               specfem::element::property_tag::isotropic, UseSIMD>
+    : public impl::point_data<10, UseSIMD> {
 
-// /**
-//  * @brief Template specialization for the kernels struct for 2D
-//  electromagnetic
-//  * isotropic elements
-//  * @tparam UseSIMD  Use SIMD instructions
-//  */
-// template <bool UseSIMD>
-// struct kernels<specfem::dimension::type::dim2,
-//                specfem::element::medium_tag::electromagnetic_sv,
-//                specfem::element::property_tag::isotropic, UseSIMD>
-//     : public impl::point_data<10, UseSIMD> {
+  /**
+   * @name Typedefs
+   *
+   */
+  ///@{
+  using base_type = impl::point_data<10, UseSIMD>;
+  using value_type = typename base_type::value_type;
 
-//   /**
-//    * @name Typedefs
-//    *
-//    */
-//   ///@{
-//   using base_type = impl::point_data<10, UseSIMD>;
-//   using value_type = typename base_type::value_type;
+  constexpr static auto dimension = specfem::dimension::type::dim2;
+  constexpr static auto medium_tag =
+      specfem::element::medium_tag::electromagnetic_sv;
+  constexpr static auto property_tag =
+      specfem::element::property_tag::isotropic;
 
-//   constexpr static auto dimension = specfem::dimension::type::dim2;
-//   constexpr static auto medium_tag =
-//       specfem::element::medium_tag::electromagnetic_sv;
-//   constexpr static auto property_tag =
-//       specfem::element::property_tag::isotropic;
+  constexpr static bool is_point_properties = true;
+  ///@}
 
-//   constexpr static bool is_point_properties = true;
-//   ///@}
+  /**
+   * @brief Constructor
+   *
+   * @param
+   */
+  KOKKOS_FUNCTION
+  kernels(const value_type param) : kernels(param) {
+    kokkos::abort(
+        "Point Kernels not implemented for electromagnetic sv isotropic");
+  }
 
-//   using base_type::base_type;
+  /**
+   * @name Misfit Kernels
+   *
+   */
+  ///@{
+  DEFINE_POINT_VALUE(param, 0) ///< \f$ K_{param} \f$
 
-//   /**
-//    * @brief Constructor
-//    *
-//    * @param param Kernel parameter
-//    */
-//   KOKKOS_FUNCTION
-//   kernels(const value_type param)
-//       : kernels(param) {}
-
-//   /**
-//    * @name Misfit Kernels
-//    *
-//    */
-//   ///@{
-//   DEFINE_POINT_VALUE( param , 0)   ///< \f$ KERNEL PARAMETER \f$
-
-//   ///@}
-// };
+  ///@}
+};
 
 } // namespace point
 } // namespace specfem

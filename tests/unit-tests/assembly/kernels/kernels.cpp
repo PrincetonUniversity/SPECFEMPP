@@ -156,12 +156,18 @@ std::string get_error_message(
     const type_real value) {
   std::ostringstream message;
 
-  message << "\n\t Expected: " << value;
-  message << "\n\t Got: \n";
-
-  //
+   //
   //  Here go the parameters for EM Kernels
   //
+
+  std::ostringstream message;
+
+  message << "EM Kernels are not implemented yet. Please implement them first.";
+          << "[" << __FILE__ << ":" << __LINE__ << "]\n";
+  std::throw std::runtime_error(message.str());
+
+  message << "\n\t Expected: " << value;
+  message << "\n\t Got: \n";
 
   return message.str();
 }
@@ -542,8 +548,10 @@ get_point_kernel(const int ispec, const int iz, const int ix,
     //
     // Here go the parameters for EM Kernels
     //
-    // point_kernel.<param>() = poroelastic_isotropic.h_<param>(ispec_l, iz,
+    // point_kernel.<param>() = electromagnetic_isotropic.h_<param>(ispec_l, iz,
 ix);
+
+    kokkos::abort("EM Kernels not implemented.");
 
     return point_kernel;
   }
@@ -569,6 +577,8 @@ get_point_kernel(
     // Here go the parameters for EM Kernels
     //
     // point_kernel_l.<param>() = point_kernel.<param>()[lane];
+
+    kokkos::abort("EM Kernels not implemented for SIMD");
 
     return point_kernel_l;
   }
