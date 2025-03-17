@@ -300,14 +300,14 @@ template <bool UseSIMD>
 struct properties<specfem::dimension::type::dim2,
                   specfem::element::medium_tag::electromagnetic_sv,
                   specfem::element::property_tag::isotropic, UseSIMD>
-    : public impl::point_data<10, UseSIMD> {
+    : public impl::point_data<5, UseSIMD> {
 
   /**
    * @name Typedefs
    *
    */
   ///@{
-  using base_type = impl::point_data<10, UseSIMD>;
+  using base_type = impl::point_data<5, UseSIMD>;
   using value_type = typename base_type::value_type;
 
   constexpr static auto dimension = specfem::dimension::type::dim2;
@@ -326,16 +326,16 @@ struct properties<specfem::dimension::type::dim2,
    *
    */
   ///@{
-  DEFINE_POINT_VALUE(mu0, 0)   ///< Magnetic permeability @f$ \mu_0 @f$
-  DEFINE_POINT_VALUE(e0, 1)    ///< Effective permittivity @f$ \epsilon_0 @f$
-  DEFINE_POINT_VALUE(e11, 2)   ///< @f$ \epsilon^{11} \epsilon_0 @f$
-  DEFINE_POINT_VALUE(e33, 3)   ///< @f$ \epsilon^{33} \epsilon_0 @f$
-  DEFINE_POINT_VALUE(sig11, 4) ///< @f$ \sigma^{11} \sigma_0 @f$
-  DEFINE_POINT_VALUE(sig33, 5) ///< @f$ \sigma^{33} \sigma_0 @f$
-  DEFINE_POINT_VALUE(Qe11, 6)  ///< Quality factor of @f$ \epsilon^{11} @f$
-  DEFINE_POINT_VALUE(Qe33, 7)  ///< Quality factor of @f$ \epsilon^{33} @f$
-  DEFINE_POINT_VALUE(Qs11, 8)  ///< Quality factor of @f$ \sigma^{11} @f$
-  DEFINE_POINT_VALUE(Qs33, 9)  ///< Quality factor of @f$ \sigma^{33} @f$
+  DEFINE_POINT_VALUE(mu0_inv,
+                     0) ///< Inverse magnetic permeability @f$ \mu_{0}^{-1} @f$
+  DEFINE_POINT_VALUE(eps11, 1) ///< @f$ \epsilon_{11} @f$ component of the
+                               ///< permittivity tensor
+  DEFINE_POINT_VALUE(eps33, 2) ///< @f$ \epsilon_{33} @f$ component of the
+                               ///< permittivity tensor
+  DEFINE_POINT_VALUE(sig11, 3) ///< @f$ \sigma_{11} @f$ component of the
+                               ///< conductivity tensor
+  DEFINE_POINT_VALUE(sig33, 4) ///< @f$ \sigma_{33} @f$ component of the
+                               ///< conductivity tensor
   ///@}
 };
 
