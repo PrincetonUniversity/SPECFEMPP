@@ -1,13 +1,13 @@
 number-of-sources: 1
 sources:
   - force:
-      x : 320.0
-      z : 580.0
+      x : 500
+      z : 300.0
       source_surf: false
       angle : 0.0
       vx : 0.0
       vz : 0.0
       Ricker:
-        f0: 15.0
-        factor: 1.e10
+        factor: 1e10
         tshift: 0.0
+        f0: 30.0

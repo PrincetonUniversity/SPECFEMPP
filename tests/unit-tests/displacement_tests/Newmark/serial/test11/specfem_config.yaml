@@ -23,7 +23,7 @@ parameters:
         type-of-simulation: forward
         time-scheme:
           type: Newmark
-          dt: 4.2e-4
+          dt: 1.0e-4
           nstep: 1000
 
     simulation-mode:
@@ -37,7 +37,7 @@ parameters:
     stations: "displacement_tests/Newmark/serial/test11/STATIONS"
     angle: 0.0
     seismogram-type:
-      - electric-field
+      - displacement
       - velocity
       - acceleration
     nstep_between_samples: 1

@@ -2,7 +2,7 @@ number-of-sources: 1
 sources:
   - force:
       x : 1.0
-      z : 0.5
+      z : 0.8
       source_surf: false
       angle : 0.0
       vx : 0.0
