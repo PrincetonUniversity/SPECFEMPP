@@ -109,6 +109,7 @@ add_executable(
   mesh_tests
   mesh/test_fixture/test_fixture.cpp
   mesh/materials/materials.cpp
+  mesh/materials/properties.cpp
   mesh/runner.cpp
 )
 
