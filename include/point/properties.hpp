@@ -291,5 +291,77 @@ struct properties<specfem::dimension::type::dim2,
   }
 };
 
+template <bool UseSIMD>
+struct properties<specfem::dimension::type::dim2,
+                  specfem::element::medium_tag::poroelastic,
+                  specfem::element::property_tag::isotropic, UseSIMD>
+    : public impl::point_data<12, UseSIMD> {
+  /**
+   * @name Typedefs
+   *
+   */
+  ///@{
+  using base_type = impl::point_data<12, UseSIMD>;
+  using value_type = typename base_type::value_type;
+
+  constexpr static auto dimension = specfem::dimension::type::dim2;
+  constexpr static auto medium_tag = specfem::element::medium_tag::poroelastic;
+  constexpr static auto property_tag =
+      specfem::element::property_tag::isotropic;
+
+  constexpr static bool is_point_properties = true;
+  ///@}
+
+  using base_type::base_type;
+
+  DEFINE_POINT_VALUE(phi, 0)        ///< porosity @f$ \phi @f$
+  DEFINE_POINT_VALUE(rho_s, 1)      ///< solid density @f$ \rho_s @f$
+  DEFINE_POINT_VALUE(rho_f, 2)      ///< fluid density @f$ \rho_f @f$
+  DEFINE_POINT_VALUE(tortuosity, 3) ///< tortuosity @f$ \tau @f$
+  DEFINE_POINT_VALUE(mu_G, 4)
+  DEFINE_POINT_VALUE(H_Biot, 5)
+  DEFINE_POINT_VALUE(C_Biot, 6)
+  DEFINE_POINT_VALUE(M_Biot, 7)
+  DEFINE_POINT_VALUE(permxx, 8)
+  DEFINE_POINT_VALUE(permxz, 9)
+  DEFINE_POINT_VALUE(permzz, 10)
+  DEFINE_POINT_VALUE(eta_f, 11) ///< Viscosity @f$ \eta @f$
+
+  /**
+   * @brief Compute Lame's parameter @f$ \lambda @f$
+   *
+   * @return Lame's parameter @f$ \lambda @f$
+   */
+  KOKKOS_INLINE_FUNCTION const value_type lambda_G() const {
+    return H_Biot() - (static_cast<value_type>(2.0)) * mu_G();
+  }
+
+  KOKKOS_INLINE_FUNCTION const value_type lambdaplus2mu() const {
+    return lambda_G() + (static_cast<value_type>(2.0)) * mu_G();
+  }
+
+  KOKKOS_INLINE_FUNCTION const value_type inverse_permxx() const {
+    const value_type determinant =
+        permxx() * permzz() - permxz() * permxz(); ///< determinant of the
+                                                   ///< permeability tensor
+    return permzz() / determinant; ///< inverse of the permeability tensor
+  }
+
+  KOKKOS_INLINE_FUNCTION const value_type inverse_permxz() const {
+    const value_type determinant =
+        permxx() * permzz() - permxz() * permxz(); ///< determinant of the
+                                                   ///< permeability tensor
+    return static_cast<value_type>(-1.0) * permxz() /
+           determinant; ///< inverse of the permeability tensor
+  }
+
+  KOKKOS_INLINE_FUNCTION const value_type inverse_permzz() const {
+    const value_type determinant =
+        permxx() * permzz() - permxz() * permxz(); ///< determinant of the
+                                                   ///< permeability tensor
+    return permxx() / determinant; ///< inverse of the permeability tensor
+  }
+};
+
 } // namespace point
 } // namespace specfem
