@@ -21,8 +21,10 @@ namespace element {
   (1, specfem::element::medium_tag::elastic_sh, elastic_sh)
 #define MEDIUM_TAG_ACOUSTIC                                                    \
   (2, specfem::element::medium_tag::acoustic, acoustic)
+#define MEDIUM_TAG_POROELASTIC                                                 \
+  (3, specfem::element::medium_tag::poroelastic, poroelastic)
 #define MEDIUM_TAG_ELECTROMAGNETIC_SV                                          \
-  (3, specfem::element::medium_tag::electromagnetic_sv, electromagnetic_sv)
+  (4, specfem::element::medium_tag::electromagnetic_sv, electromagnetic_sv)
 
 #define PROPERTY_TAG_ISOTROPIC                                                 \
   (0, specfem::element::property_tag::isotropic, isotropic)
@@ -56,6 +58,7 @@ namespace element {
   ((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SV))(                               \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH))(                            \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC))(                              \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_POROELASTIC))(                           \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_SV))
 
 #define MAKE_ARRAY_ELEM(s, data, elem)                                         \
@@ -97,6 +100,7 @@ constexpr auto medium_types() {
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH, PROPERTY_TAG_ISOTROPIC))(    \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH, PROPERTY_TAG_ANISOTROPIC))(  \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC, PROPERTY_TAG_ISOTROPIC))(      \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_POROELASTIC, PROPERTY_TAG_ISOTROPIC))(   \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_SV,                      \
        PROPERTY_TAG_ISOTROPIC))
 
@@ -154,8 +158,9 @@ constexpr auto material_systems() {
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH, PROPERTY_TAG_ANISOTROPIC,    \
        BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH,         \
                             PROPERTY_TAG_ANISOTROPIC, BOUNDARY_TAG_STACEY))(   \
-      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_SV,                      \
-       PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_NONE))
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_POROELASTIC, PROPERTY_TAG_ISOTROPIC,     \
+       BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_SV, \
+                            PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_NONE))
 
 #define MAKE_ARRAY_ELEM(s, data, elem)                                         \
   std::make_tuple(GET_TAG(BOOST_PP_TUPLE_ELEM(0, elem)),                       \
