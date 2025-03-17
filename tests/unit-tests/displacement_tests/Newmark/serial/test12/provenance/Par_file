@@ -319,10 +319,10 @@ xmax                            = 2d0            # abscissa of right side of the
 nx                              = 60             # number of elements along X
 
 # absorbing boundary parameters (see absorbing_conditions above)
-absorbbottom                    = .true.
-absorbright                     = .true.
-absorbtop                       = .true.
-absorbleft                      = .true.
+absorbbottom                    = .false.
+absorbright                     = .false.
+absorbtop                       = .false.
+absorbleft                      = .false.
 
 # define the different regions of the model in the (nx,nz) spectral-element mesh
 nbregions                       = 2              # then set below the different regions and model number for each region
