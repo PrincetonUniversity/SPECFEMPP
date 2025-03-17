@@ -1,7 +1,7 @@
 #source 1.  The components of a moment tensor source must be given in N.m, not in dyne.cm as in the DATA/CMTSOLUTION source file of the 3D version of the code.
 source_surf                     = .false.        # source inside the medium or at the surface
 xs                              = 1.0             # source location x in meters
-zs                              = 0.5           # source location z in meters
+zs                              = 0.8           # source location z in meters
 ## Source type parameters:
 #  1 = elastic force or acoustic pressure
 #  2 = moment tensor

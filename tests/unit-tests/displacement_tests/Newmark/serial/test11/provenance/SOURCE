@@ -1,7 +1,7 @@
 ## Source 1
 source_surf                     = .false.        # source inside the medium, or source automatically moved exactly at the surface by the solver
-xs                              = 320.          # source location x in meters
-zs                              = 580.          # source location z in meters (zs is ignored if source_surf is set to true, it is replaced with the topography height)
+xs                              = 500.           # source location x in meters
+zs                              = 300.           # source location z in meters (zs is ignored if source_surf is set to true, it is replaced with the topography height)
 ## Source type parameters:
 #  1 = elastic force or acoustic pressure
 #  2 = moment tensor
@@ -39,7 +39,7 @@ time_function_type              = 1
 # IMPORTANT: do NOT put quote signs around the file name, just put the file name itself otherwise the run will stop
 name_of_source_file             = YYYYYYYYYYYYYYYYYY   # Only for option 8 : file containing the source wavelet
 burst_band_width                = 0.             # Only for option 9 : band width of the burst
-f0                              = 15.0           # dominant source frequency (Hz) if not Dirac or Heaviside
+f0                              = 30.0           # dominant source frequency (Hz) if not Dirac or Heaviside
 tshift                          = 0.0            # time shift when multi sources (if one source, must be zero)
 ## Force source
 # angle of the source (for a force only); for a plane wave, this is the incidence angle; for moment tensor sources this is unused
