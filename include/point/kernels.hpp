@@ -243,11 +243,8 @@ struct kernels<specfem::dimension::type::dim2,
   constexpr static bool is_point_properties = true;
   ///@}
 
-  /**
-   * @brief Constructor
-   *
-   * @param
-   */
+  using base_type::base_type;
+
   KOKKOS_FUNCTION
   kernels(const value_type rhot, const value_type rhof, const value_type eta,
           const value_type sm, const value_type mu_fr, const value_type B,
@@ -275,7 +272,7 @@ struct kernels<specfem::dimension::type::dim2,
   DEFINE_POINT_VALUE(C, 6)
   DEFINE_POINT_VALUE(M, 7)
 
-  /// Density Normalized Kernels
+  /// Desity Normalized Kernels
   DEFINE_POINT_VALUE(mu_frb, 8)
   DEFINE_POINT_VALUE(rhob, 9)
   DEFINE_POINT_VALUE(rhofb, 10)
@@ -289,7 +286,6 @@ struct kernels<specfem::dimension::type::dim2,
   DEFINE_POINT_VALUE(rhofbb, 16)
   DEFINE_POINT_VALUE(ratio, 17)
   DEFINE_POINT_VALUE(phib, 18)
-
   ///@}
 };
 
