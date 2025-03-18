@@ -25,11 +25,11 @@ struct kernels;
  *
  * @tparam UseSIMD  Use SIMD instructions
  */
-template <bool UseSIMD>
-struct kernels<specfem::dimension::type::dim2,
-               specfem::element::medium_tag::elastic,
+template <specfem::element::medium_tag MediumTag, bool UseSIMD>
+struct kernels<specfem::dimension::type::dim2, MediumTag,
                specfem::element::property_tag::isotropic, UseSIMD>
-    : public impl::point_data<6, UseSIMD> {
+    : public impl::point_data<6, UseSIMD>,
+      specfem::element::is_elastic<MediumTag> {
 
   /**
    * @name Typedefs
@@ -40,7 +40,7 @@ struct kernels<specfem::dimension::type::dim2,
   using value_type = typename base_type::value_type;
 
   constexpr static auto dimension = specfem::dimension::type::dim2;
-  constexpr static auto medium_tag = specfem::element::medium_tag::elastic;
+  constexpr static auto medium_tag = MediumTag;
   constexpr static auto property_tag =
       specfem::element::property_tag::isotropic;
 
@@ -64,79 +64,17 @@ struct kernels<specfem::dimension::type::dim2,
 };
 // end elastic isotropic
 
-template <bool UseSIMD>
-struct kernels<specfem::dimension::type::dim2,
-               specfem::element::medium_tag::elastic_sv,
-               specfem::element::property_tag::isotropic, UseSIMD>
-    : public kernels<specfem::dimension::type::dim2,
-                     specfem::element::medium_tag::elastic,
-                     specfem::element::property_tag::isotropic, UseSIMD> {
-
-public:
-  /**
-   * @name Typedefs
-   *
-   */
-  ///@{
-  using simd =
-      typename specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD type
-  using value_type =
-      typename simd::datatype; ///< Underlying data type to store the kernels
-  ///@}
-
-  constexpr static auto medium_tag = specfem::element::medium_tag::elastic_sv;
-
-private:
-  using base_type = kernels<specfem::dimension::type::dim2,
-                            specfem::element::medium_tag::elastic,
-                            specfem::element::property_tag::isotropic, UseSIMD>;
-
-public:
-  using base_type::base_type;
-};
-
-template <bool UseSIMD>
-struct kernels<specfem::dimension::type::dim2,
-               specfem::element::medium_tag::elastic_sh,
-               specfem::element::property_tag::isotropic, UseSIMD>
-    : public kernels<specfem::dimension::type::dim2,
-                     specfem::element::medium_tag::elastic,
-                     specfem::element::property_tag::isotropic, UseSIMD> {
-
-public:
-  /**
-   * @name Typedefs
-   *
-   */
-  ///@{
-  using simd =
-      typename specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD type
-  using value_type =
-      typename simd::datatype; ///< Underlying data type to store the kernels
-  ///@}
-
-  constexpr static auto medium_tag = specfem::element::medium_tag::elastic_sh;
-
-private:
-  using base_type = kernels<specfem::dimension::type::dim2,
-                            specfem::element::medium_tag::elastic,
-                            specfem::element::property_tag::isotropic, UseSIMD>;
-
-public:
-  using base_type::base_type;
-};
-
 /**
  * @brief Template specialization for the kernels struct for 2D elastic
  * anisotropic elements
  *
  * @tparam UseSIMD  Use SIMD instructions
  */
-template <bool UseSIMD>
-struct kernels<specfem::dimension::type::dim2,
-               specfem::element::medium_tag::elastic,
+template <specfem::element::medium_tag MediumTag, bool UseSIMD>
+struct kernels<specfem::dimension::type::dim2, MediumTag,
                specfem::element::property_tag::anisotropic, UseSIMD>
-    : public impl::point_data<7, UseSIMD> {
+    : public impl::point_data<7, UseSIMD>,
+      specfem::element::is_elastic<MediumTag> {
 
   /**
    * @name Typedefs
@@ -147,7 +85,7 @@ struct kernels<specfem::dimension::type::dim2,
   using value_type = typename base_type::value_type;
 
   constexpr static auto dimension = specfem::dimension::type::dim2;
-  constexpr static auto medium_tag = specfem::element::medium_tag::elastic;
+  constexpr static auto medium_tag = MediumTag;
   constexpr static auto property_tag =
       specfem::element::property_tag::anisotropic;
 
@@ -169,69 +107,6 @@ struct kernels<specfem::dimension::type::dim2,
   DEFINE_POINT_VALUE(c35, 5) ///< \f$ K_{c_{35}} \f$
   DEFINE_POINT_VALUE(c55, 6) ///< \f$ K_{c_{55}} \f$
   ///@}
-};
-
-template <bool UseSIMD>
-struct kernels<specfem::dimension::type::dim2,
-               specfem::element::medium_tag::elastic_sv,
-               specfem::element::property_tag::anisotropic, UseSIMD>
-    : public kernels<specfem::dimension::type::dim2,
-                     specfem::element::medium_tag::elastic,
-                     specfem::element::property_tag::anisotropic, UseSIMD> {
-
-public:
-  /**
-   * @name Typedefs
-   *
-   */
-  ///@{
-  using simd =
-      typename specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD type
-  using value_type =
-      typename simd::datatype; ///< Underlying data type to store the kernels
-  ///@}
-  constexpr static auto medium_tag = specfem::element::medium_tag::elastic_sv;
-
-private:
-  using base_type =
-      kernels<specfem::dimension::type::dim2,
-              specfem::element::medium_tag::elastic,
-              specfem::element::property_tag::anisotropic, UseSIMD>;
-
-public:
-  using base_type::base_type;
-};
-
-template <bool UseSIMD>
-struct kernels<specfem::dimension::type::dim2,
-               specfem::element::medium_tag::elastic_sh,
-               specfem::element::property_tag::anisotropic, UseSIMD>
-    : public kernels<specfem::dimension::type::dim2,
-                     specfem::element::medium_tag::elastic,
-                     specfem::element::property_tag::anisotropic, UseSIMD> {
-
-public:
-  /**
-   * @name Typedefs
-   *
-   */
-  ///@{
-  using simd =
-      typename specfem::datatype::simd<type_real, UseSIMD>; ///< SIMD type
-  using value_type =
-      typename simd::datatype; ///< Underlying data type to store the kernels
-  ///@}
-
-  constexpr static auto medium_tag = specfem::element::medium_tag::elastic_sh;
-
-private:
-  using base_type =
-      kernels<specfem::dimension::type::dim2,
-              specfem::element::medium_tag::elastic,
-              specfem::element::property_tag::anisotropic, UseSIMD>;
-
-public:
-  using base_type::base_type;
 };
 // end elastic anisotropic
 
@@ -288,8 +163,12 @@ struct kernels<specfem::dimension::type::dim2,
 };
 
 /**
- * @brief Template specialization for the kernels struct for 2D electromagnetic
- * isotropic elements
+ * @brief Template specialization for the kernels struct for 2D
+ *        electromagnetic isotropic elements
+ *
+ * This specialization is not implemented and throws an error upon
+ * constructions if the code tries to use it.
+ *
  * @tparam UseSIMD  Use SIMD instructions
  */
 template <bool UseSIMD>
@@ -303,7 +182,7 @@ struct kernels<specfem::dimension::type::dim2,
    *
    */
   ///@{
-  using base_type = impl::point_data<10, UseSIMD>;
+  using base_type = impl::point_data<1, UseSIMD>;
   using value_type = typename base_type::value_type;
 
   constexpr static auto dimension = specfem::dimension::type::dim2;
@@ -315,8 +194,6 @@ struct kernels<specfem::dimension::type::dim2,
   constexpr static bool is_point_properties = true;
   ///@}
 
-  using base_type::base_type;
-
   /**
    * @brief Constructor
    *
@@ -327,6 +204,7 @@ struct kernels<specfem::dimension::type::dim2,
     Kokkos::abort(
         "Point Kernels not implemented for electromagnetic sv isotropic");
   }
+  using base_type::base_type;
 
   /**
    * @name Misfit Kernels
@@ -334,6 +212,83 @@ struct kernels<specfem::dimension::type::dim2,
    */
   ///@{
   DEFINE_POINT_VALUE(param, 0) ///< \f$ K_{param} \f$
+  ///@}
+};
+
+/**
+ * @brief Template specialization for the kernels struct for 2D poroelastic
+ * isotropic elements
+ *
+ * @tparam UseSIMD  Use SIMD instructions
+ */
+template <bool UseSIMD>
+struct kernels<specfem::dimension::type::dim2,
+               specfem::element::medium_tag::poroelastic,
+               specfem::element::property_tag::isotropic, UseSIMD>
+    : public impl::point_data<19, UseSIMD> {
+
+  /**
+   * @name Typedefs
+   *
+   */
+  ///@{
+  using base_type = impl::point_data<19, UseSIMD>;
+  using value_type = typename base_type::value_type;
+
+  constexpr static auto dimension = specfem::dimension::type::dim2;
+  constexpr static auto medium_tag = specfem::element::medium_tag::poroelastic;
+  constexpr static auto property_tag =
+      specfem::element::property_tag::isotropic;
+
+  constexpr static bool is_point_properties = true;
+  ///@}
+
+  /**
+   * @brief Constructor
+   *
+   * @param
+   */
+  KOKKOS_FUNCTION
+  kernels(const value_type rhot, const value_type rhof, const value_type eta,
+          const value_type sm, const value_type mu_fr, const value_type B,
+          const value_type C, const value_type M, const value_type cpI,
+          const value_type cpII, const value_type cs, const value_type rhobb,
+          const value_type rhofbb, const value_type ratio,
+          const value_type phib)
+      : kernels(rhot, rhof, eta, sm, mu_fr, B, C, M, mu_fr, (rhot + B + mu_fr),
+                (rhof + C + M + sm), (static_cast<value_type>(1.0) * (sm + M)),
+                cpI, cpII, cs, rhobb, rhofbb, ratio, phib) {}
+
+  /**
+   * @name Misfit Kernels
+   *
+   */
+  ///@{
+
+  /// Primary Kernels
+  DEFINE_POINT_VALUE(rhot, 0)
+  DEFINE_POINT_VALUE(rhof, 1)
+  DEFINE_POINT_VALUE(eta, 2)
+  DEFINE_POINT_VALUE(sm, 3)
+  DEFINE_POINT_VALUE(mu_fr, 4)
+  DEFINE_POINT_VALUE(B, 5)
+  DEFINE_POINT_VALUE(C, 6)
+  DEFINE_POINT_VALUE(M, 7)
+
+  /// Density Normalized Kernels
+  DEFINE_POINT_VALUE(mu_frb, 8)
+  DEFINE_POINT_VALUE(rhob, 9)
+  DEFINE_POINT_VALUE(rhofb, 10)
+  DEFINE_POINT_VALUE(phi, 11)
+
+  /// wavespeed kernels
+  DEFINE_POINT_VALUE(cpI, 12)
+  DEFINE_POINT_VALUE(cpII, 13)
+  DEFINE_POINT_VALUE(cs, 14)
+  DEFINE_POINT_VALUE(rhobb, 15)
+  DEFINE_POINT_VALUE(rhofbb, 16)
+  DEFINE_POINT_VALUE(ratio, 17)
+  DEFINE_POINT_VALUE(phib, 18)
 
   ///@}
 };
