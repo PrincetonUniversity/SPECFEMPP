@@ -48,10 +48,9 @@ void specfem::sources::adjoint_source::compute_source_array(
         }
         source_array(0, iz, ix) = hlagrange;
       }
-      // Elastic P-SV, Poroelastic, or Electromagnetic P-SV
+      // Elastic P-SV, or Poroelastic P-SV
       else if ((el_type == specfem::element::medium_tag::elastic_sv) ||
-               (el_type == specfem::element::medium_tag::poroelastic) ||
-               (el_type == specfem::element::medium_tag::electromagnetic_sv)) {
+               (el_type == specfem::element::medium_tag::poroelastic)) {
         if (ncomponents != 2) {
           throw std::runtime_error(
               "Adjoint source for elastic P-SV, poroelastic, or "

@@ -182,7 +182,7 @@ struct kernels<specfem::dimension::type::dim2,
    *
    */
   ///@{
-  using base_type = impl::point_data<10, UseSIMD>;
+  using base_type = impl::point_data<1, UseSIMD>;
   using value_type = typename base_type::value_type;
 
   constexpr static auto dimension = specfem::dimension::type::dim2;

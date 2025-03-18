@@ -66,10 +66,12 @@ void specfem::sources::force::compute_source_array(
       }
       // Elastic P-SV, Poroelastic, or Electromagnetic P-SV
       else if ((el_type == specfem::element::medium_tag::elastic_sv) ||
-               (el_type == specfem::element::medium_tag::poroelastic)) {
+               (el_type == specfem::element::medium_tag::poroelastic) ||
+               (el_type == specfem::element::medium_tag::electromagnetic_sv)) {
         if (ncomponents != 2) {
           throw std::runtime_error(
-              "Force source requires 2 components for elastic SV medium");
+              "Moment Tensor source requires 2 components for elastic, "
+              "poroelastic, or electromagnetic-sv media.");
         }
         source_array(0, iz, ix) =
             std::sin(Kokkos::numbers::pi_v<type_real> / 180 * this->angle) *
