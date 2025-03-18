@@ -35,7 +35,7 @@
 
 ! reads in material definitions in DATA/Par_file and outputs to num_material
 
-  use constants, only: IMAIN,ANISOTROPIC_MATERIAL,POROELASTIC_MATERIAL,TINYVAL,myrank
+  use constants, only: IMAIN,ANISOTROPIC_MATERIAL,POROELASTIC_MATERIAL,ELECTROMAGNETIC_MATERIAL,TINYVAL,myrank
 
   use shared_parameters, only: nbregions,nbmodels,num_material,icodemat, &
     cp,cs, &
@@ -102,12 +102,14 @@
     !  anisotropic             - model_number  2 rho   c11 c13 c15 c33    c35 c55 c12 c23 c25    0 QKappa Qmu
     !  anisotropic (in AXISYM) - model_number  2 rho   c11 c13 c15 c33    c35 c55 c12 c23 c25  c22 QKappa Qmu
     !  poroelastic             - model_number  3 rhos rhof phi   c kxx    kxz kzz  Ks  Kf Kfr etaf   mufr Qmu
+    ! electromagnetic          - model_number  4 mu0 e0 e11(e0) e33(e0) sig11 sig33 Qe11 Qe33 Qs11 Qs33 Qv 0 0
     !  tomo                    - model_number -1 0       0   A   0   0      0   0   0   0   0    0      0   0
     !
     ! in particular, icodemat(imaterial_number) can be negative for tomographic models
 
     ! determines region domain
-    if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. icodemat(imaterial_number) /= POROELASTIC_MATERIAL) then
+    if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. icodemat(imaterial_number) /= POROELASTIC_MATERIAL &
+         .and. icodemat(imaterial_number) /= ELECTROMAGNETIC_MATERIAL) then
       ! isotropic material
       vpregion = cp(imaterial_number)
       vsregion = cs(imaterial_number)
@@ -141,6 +143,10 @@
       write(IMAIN,*) 'Material # ',imaterial_number,' isotropic'
       write(IMAIN,*) 'Material is poroelastic'
 
+    else if (icodemat(imaterial_number) == ELECTROMAGNETIC_MATERIAL) then
+      ! electromagentic material
+      write(IMAIN,*) 'Material # ',imaterial_number,' electromagnetic'
+      write(IMAIN,*) 'Material is electromagnetic'
     else
       ! anisotropic material
       write(IMAIN,*) 'Material # ',imaterial_number,' anisotropic'

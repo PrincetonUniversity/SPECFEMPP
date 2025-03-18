@@ -133,6 +133,7 @@ target_link_libraries(meshfem2D_shared_objects
   PRIVATE
   meshfem2D::shared_module
   meshfem2D::shared_mpi
+  meshfem2D::constants
   )
 
 # C Source Compilation
