@@ -289,7 +289,6 @@ struct kernels<specfem::dimension::type::dim2,
   DEFINE_POINT_VALUE(rhofbb, 16)
   DEFINE_POINT_VALUE(ratio, 17)
   DEFINE_POINT_VALUE(phib, 18)
-
   ///@}
 };
 
