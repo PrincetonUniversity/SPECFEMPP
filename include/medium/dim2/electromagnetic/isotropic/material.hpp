@@ -115,7 +115,7 @@ public:
   inline std::string print() const {
     std::ostringstream message;
 
-    message << "- Elastic Material : \n"
+    message << "- Electromagnetic Material : \n"
             << "    Properties:\n"
             << "      magnetic permeability mu0: " << this->mu0 << "\n"
             << "      effective permittivity e0: " << this->e0 << "\n"

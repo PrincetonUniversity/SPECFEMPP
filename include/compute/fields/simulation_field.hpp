@@ -138,9 +138,13 @@ public:
 #undef RETURN_VALUE
 
     Kokkos::abort("Medium type not supported");
-
     /// Code path should never be reached
-    return {};
+
+    auto return_value =
+        new specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
+                                               MediumTag>();
+
+    return *return_value;
   }
 
   /**
