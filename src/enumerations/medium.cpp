@@ -21,6 +21,9 @@ specfem::element::to_string(const specfem::element::medium_tag &medium,
   case specfem::element::medium_tag::electromagnetic_sv:
     medium_string = "electromagnetic_sv";
     break;
+  case specfem::element::medium_tag::poroelastic:
+    medium_string = "poroelastic";
+    break;
   default:
     medium_string = "unknown";
     break;
@@ -79,6 +82,9 @@ const std::string specfem::element::to_string(
   case specfem::element::medium_tag::electromagnetic_sv:
     medium_string = "electromagnetic_sv";
     break;
+  case specfem::element::medium_tag::poroelastic:
+    medium_string = "poroelastic";
+    break;
   default:
     medium_string = "unknown";
     break;
@@ -116,6 +122,9 @@ specfem::element::to_string(const specfem::element::medium_tag &medium) {
     break;
   case specfem::element::medium_tag::electromagnetic_sv:
     medium_string = "electromagnetic_sv";
+    break;
+  case specfem::element::medium_tag::poroelastic:
+    medium_string = "poroelastic";
     break;
   default:
     medium_string = "unknown";

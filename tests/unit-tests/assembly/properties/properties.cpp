@@ -28,7 +28,6 @@ inline void error_message_header(std::ostringstream &message,
   }
 }
 
-// Template get_error_message: Error message template for printing properties
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd = false>
 std::string get_error_message(
@@ -36,12 +35,12 @@ std::string get_error_message(
                                      PropertyTag, false> &point_property,
     const type_real value, const int mode = 0);
 
-// Template specialization: elastic isotropic (parent)
 template <>
 std::string get_error_message(
-    const specfem::point::properties<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-        specfem::element::property_tag::isotropic, false> &point_property,
+    const specfem::point::properties<specfem::dimension::type::dim2,
+                                     specfem::element::medium_tag::elastic_sv,
+                                     specfem::element::property_tag::isotropic,
+                                     false> &point_property,
     const type_real value, const int mode) {
   std::ostringstream message;
 
@@ -53,11 +52,28 @@ std::string get_error_message(
   return message.str();
 }
 
-// Template get_error_message specialization: elastic anisotropic (parent)
+template <>
+std::string get_error_message(
+    const specfem::point::properties<specfem::dimension::type::dim2,
+                                     specfem::element::medium_tag::elastic_sh,
+                                     specfem::element::property_tag::isotropic,
+                                     false> &point_property,
+    const type_real value, const int mode) {
+  std::ostringstream message;
+
+  error_message_header(message, value, mode);
+  message << "\t\trho = " << point_property.rho() << "\n";
+  message << "\t\tmu = " << point_property.mu() << "\n";
+  message << "\t\tlambdaplus2mu = " << point_property.lambdaplus2mu() << "\n";
+
+  return message.str();
+}
+
 template <>
 std::string get_error_message(
     const specfem::point::properties<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+        specfem::dimension::type::dim2,
+        specfem::element::medium_tag::elastic_sv,
         specfem::element::property_tag::anisotropic, false> &point_property,
     const type_real value, const int mode) {
   std::ostringstream message;
@@ -74,55 +90,6 @@ std::string get_error_message(
   return message.str();
 }
 
-// Template get_error_message specialization: elastic p_sv isotropic  (child)
-template <>
-std::string get_error_message(
-    const specfem::point::properties<specfem::dimension::type::dim2,
-                                     specfem::element::medium_tag::elastic_sv,
-                                     specfem::element::property_tag::isotropic,
-                                     false> &point_property,
-    const type_real value, const int mode) {
-
-  return get_error_message(
-      static_cast<specfem::point::properties<
-          specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-          specfem::element::property_tag::isotropic, false> >(point_property),
-      value, mode);
-}
-
-// Template get_error_message specialization: elastic p_sv anisotropic (child)
-template <>
-std::string get_error_message(
-    const specfem::point::properties<
-        specfem::dimension::type::dim2,
-        specfem::element::medium_tag::elastic_sv,
-        specfem::element::property_tag::anisotropic, false> &point_property,
-    const type_real value, const int mode) {
-
-  return get_error_message(
-      static_cast<specfem::point::properties<
-          specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-          specfem::element::property_tag::anisotropic, false> >(point_property),
-      value, mode);
-}
-
-// Template get_error_message specialization: elastic sh isotropic (child)
-template <>
-std::string get_error_message(
-    const specfem::point::properties<specfem::dimension::type::dim2,
-                                     specfem::element::medium_tag::elastic_sh,
-                                     specfem::element::property_tag::isotropic,
-                                     false> &point_property,
-    const type_real value, const int mode) {
-
-  return get_error_message(
-      static_cast<specfem::point::properties<
-          specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-          specfem::element::property_tag::isotropic, false> >(point_property),
-      value, mode);
-}
-
-// Template get_error_message specialization: elastic sh anisotropic (child)
 template <>
 std::string get_error_message(
     const specfem::point::properties<
@@ -130,15 +97,20 @@ std::string get_error_message(
         specfem::element::medium_tag::elastic_sh,
         specfem::element::property_tag::anisotropic, false> &point_property,
     const type_real value, const int mode) {
+  std::ostringstream message;
 
-  return get_error_message(
-      static_cast<specfem::point::properties<
-          specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-          specfem::element::property_tag::anisotropic, false> >(point_property),
-      value, mode);
+  error_message_header(message, value, mode);
+  message << "\t\trho = " << point_property.rho() << "\n";
+  message << "\t\tc11 = " << point_property.c11() << "\n";
+  message << "\t\tc13 = " << point_property.c13() << "\n";
+  message << "\t\tc15 = " << point_property.c15() << "\n";
+  message << "\t\tc33 = " << point_property.c33() << "\n";
+  message << "\t\tc35 = " << point_property.c35() << "\n";
+  message << "\t\tc55 = " << point_property.c55() << "\n";
+
+  return message.str();
 }
 
-// Template get_error_message specialization: acoustic isotropic
 template <>
 std::string get_error_message(
     const specfem::point::properties<
@@ -690,7 +662,6 @@ void check_eq(
   }
 }
 
-// Template check_point_properties
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd>
 void check_point_properties(
@@ -700,15 +671,16 @@ void check_point_properties(
                                      PropertyTag, using_simd> &p2,
     const int &n_simd_elements);
 
-// Template check_point_properties specialization: elastic isotropic
 template <bool using_simd>
 void check_point_properties(
-    const specfem::point::properties<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-        specfem::element::property_tag::isotropic, using_simd> &p1,
-    const specfem::point::properties<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-        specfem::element::property_tag::isotropic, using_simd> &p2,
+    const specfem::point::properties<specfem::dimension::type::dim2,
+                                     specfem::element::medium_tag::elastic_sv,
+                                     specfem::element::property_tag::isotropic,
+                                     using_simd> &p1,
+    const specfem::point::properties<specfem::dimension::type::dim2,
+                                     specfem::element::medium_tag::elastic_sv,
+                                     specfem::element::property_tag::isotropic,
+                                     using_simd> &p2,
     const int &n_simd_elements) {
   check_eq<using_simd>(p1.rho(), p2.rho(), n_simd_elements, "rho");
   check_eq<using_simd>(p1.mu(), p2.mu(), n_simd_elements, ".mu");
@@ -726,14 +698,42 @@ void check_point_properties(
                        n_simd_elements, "rho_vp");
 }
 
-// Template check_point_properties specialization: elastic anisotropic
+template <bool using_simd>
+void check_point_properties(
+    const specfem::point::properties<specfem::dimension::type::dim2,
+                                     specfem::element::medium_tag::elastic_sh,
+                                     specfem::element::property_tag::isotropic,
+                                     using_simd> &p1,
+    const specfem::point::properties<specfem::dimension::type::dim2,
+                                     specfem::element::medium_tag::elastic_sh,
+                                     specfem::element::property_tag::isotropic,
+                                     using_simd> &p2,
+    const int &n_simd_elements) {
+  check_eq<using_simd>(p1.rho(), p2.rho(), n_simd_elements, "rho");
+  check_eq<using_simd>(p1.mu(), p2.mu(), n_simd_elements, ".mu");
+  check_eq<using_simd>(p1.lambdaplus2mu(), p2.lambdaplus2mu(), n_simd_elements,
+                       "lambdaplus2mu");
+  check_eq<using_simd>(p1.lambda(),
+                       p2.lambdaplus2mu() -
+                           (static_cast<typename specfem::datatype::simd<
+                                type_real, using_simd>::datatype>(2.0)) *
+                               p2.mu(),
+                       n_simd_elements, "lambda");
+  check_eq<using_simd>(p1.rho_vp(), Kokkos::sqrt(p2.rho() * p2.lambdaplus2mu()),
+                       n_simd_elements, "rho_vp");
+  check_eq<using_simd>(p1.rho_vs(), Kokkos::sqrt(p2.rho() * p2.mu()),
+                       n_simd_elements, "rho_vp");
+}
+
 template <bool using_simd>
 void check_point_properties(
     const specfem::point::properties<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+        specfem::dimension::type::dim2,
+        specfem::element::medium_tag::elastic_sv,
         specfem::element::property_tag::anisotropic, using_simd> &p1,
     const specfem::point::properties<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+        specfem::dimension::type::dim2,
+        specfem::element::medium_tag::elastic_sv,
         specfem::element::property_tag::anisotropic, using_simd> &p2,
     const int &n_simd_elements) {
   check_eq<using_simd>(p1.rho(), p2.rho(), n_simd_elements, "rho");
@@ -749,7 +749,30 @@ void check_point_properties(
                        n_simd_elements, "rho_vs");
 }
 
-// Template check_point_properties specialization: acoustic isotropic
+template <bool using_simd>
+void check_point_properties(
+    const specfem::point::properties<
+        specfem::dimension::type::dim2,
+        specfem::element::medium_tag::elastic_sh,
+        specfem::element::property_tag::anisotropic, using_simd> &p1,
+    const specfem::point::properties<
+        specfem::dimension::type::dim2,
+        specfem::element::medium_tag::elastic_sh,
+        specfem::element::property_tag::anisotropic, using_simd> &p2,
+    const int &n_simd_elements) {
+  check_eq<using_simd>(p1.rho(), p2.rho(), n_simd_elements, "rho");
+  check_eq<using_simd>(p1.c11(), p2.c11(), n_simd_elements, "c11");
+  check_eq<using_simd>(p1.c13(), p2.c13(), n_simd_elements, "c13");
+  check_eq<using_simd>(p1.c15(), p2.c15(), n_simd_elements, "c15");
+  check_eq<using_simd>(p1.c33(), p2.c33(), n_simd_elements, "c33");
+  check_eq<using_simd>(p1.c35(), p2.c35(), n_simd_elements, "c35");
+  check_eq<using_simd>(p1.c55(), p2.c55(), n_simd_elements, "c55");
+  check_eq<using_simd>(p1.rho_vp(), Kokkos::sqrt(p2.rho() * p2.c33()),
+                       n_simd_elements, "rho_vp");
+  check_eq<using_simd>(p1.rho_vs(), Kokkos::sqrt(p2.rho() * p2.c55()),
+                       n_simd_elements, "rho_vs");
+}
+
 template <bool using_simd>
 void check_point_properties(
     const specfem::point::properties<
@@ -759,7 +782,6 @@ void check_point_properties(
         specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic,
         specfem::element::property_tag::isotropic, using_simd> &p2,
     const int &n_simd_elements) {
-
   check_eq<using_simd>(p1.rho_inverse(), p2.rho_inverse(), n_simd_elements,
                        "rho_inverse");
   check_eq<using_simd>(p1.kappa(), p2.kappa(), n_simd_elements, "kappa");

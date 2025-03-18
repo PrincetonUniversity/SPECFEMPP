@@ -17,6 +17,8 @@ using MaterialVectorType = std::vector<std::variant<
                               specfem::element::property_tag::anisotropic>,
     specfem::medium::material<specfem::element::medium_tag::elastic_sh,
                               specfem::element::property_tag::anisotropic>,
+    specfem::medium::material<specfem::element::medium_tag::poroelastic,
+                              specfem::element::property_tag::isotropic>,
     specfem::medium::material<specfem::element::medium_tag::electromagnetic_sv,
                               specfem::element::property_tag::isotropic> > >;
 
@@ -83,6 +85,12 @@ const static std::unordered_map<std::string, MaterialVectorType>
             2700.0, 24299994600.5, 8099996400.35, 0.0, 24299994600.5, 0.0,
             8100001799.8227, 8099996400.35, 8099996400.35, 0.0, 9999,
             9999) }) },
+      { "Poroelastic mesh - Homogeneous isotropic material",
+        MaterialVectorType({ specfem::medium::material<
+            specfem::element::medium_tag::poroelastic,
+            specfem::element::property_tag::isotropic>(
+            2650.0, 880.0, 0.1, 2.0, 1.0e-9, 0.0, 1.0e-9, 12.2e9, 1.985e9,
+            9.6e9, 0.0, 5.1e9, 9999) }) },
       { "Electro-magnetic mesh example from Morency 2020",
         MaterialVectorType(
             { specfem::medium::material<
@@ -230,6 +238,27 @@ void check_test(
                       << "  imaterial: " << imaterial << "\n"
                       << "  index:     " << index << "\n"
                       << "  ispec:     " << ispec << "\n"
+                      << "Computed: \n"
+                      << icomputed.print() << "\n"
+                      << "Expected: \n"
+                      << iexpected.print() << "\n";
+        throw std::runtime_error(error_message.str());
+      }
+    } else if ((type == specfem::element::medium_tag::poroelastic) &&
+               (property == specfem::element::property_tag::isotropic)) {
+      const auto icomputed = std::get<specfem::medium::material<
+          specfem::element::medium_tag::poroelastic,
+          specfem::element::property_tag::isotropic> >(computed[ispec]);
+      const auto iexpected = std::get<specfem::medium::material<
+          specfem::element::medium_tag::poroelastic,
+          specfem::element::property_tag::isotropic> >(expected[imaterial]);
+      if (icomputed != iexpected) {
+        std::ostringstream error_message;
+        error_message << "Material " << index << " is not the same ["
+                      << __FILE__ << ":" << __LINE__ << "]\n"
+                      << "  ispec:     " << ispec << "\n"
+                      << "  imaterial: " << imaterial << "\n"
+                      << "  index:     " << index << "\n"
                       << "Computed: \n"
                       << icomputed.print() << "\n"
                       << "Expected: \n"

@@ -7,20 +7,29 @@
 #include "specfem_setup.hpp"
 #include <gtest/gtest.h>
 
-// Template get_error_message
+// Primary template
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd = false>
 std::string get_error_message(
     const specfem::point::kernels<specfem::dimension::type::dim2, MediumTag,
                                   PropertyTag, false> &point_kernel,
-    const type_real value);
+    const type_real value) {
+  // Either provide a default implementation or
+  static_assert(false, "This template specialization is not implemented");
+  return "";
+};
 
-// Template get_error_message specialization: elastic isotropic (parent)
-template <>
+// Specialization for elastic isotropic case
+template <specfem::element::medium_tag MediumTag, bool using_simd = false,
+          std::enable_if_t<
+              MediumTag == specfem::element::medium_tag::elastic ||
+                  MediumTag == specfem::element::medium_tag::elastic_sv ||
+                  MediumTag == specfem::element::medium_tag::elastic_sh,
+              int> = 0>
 std::string get_error_message(
-    const specfem::point::kernels<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-        specfem::element::property_tag::isotropic, false> &point_kernel,
+    const specfem::point::kernels<specfem::dimension::type::dim2, MediumTag,
+                                  specfem::element::property_tag::isotropic,
+                                  false> &point_kernel,
     const type_real value) {
   std::ostringstream message;
 
@@ -36,44 +45,40 @@ std::string get_error_message(
   return message.str();
 }
 
-// Template get_error_message specialization: elastic p-sv isotropic (child)
-template <>
-std::string get_error_message(
+// explicit template instantiation elastic isotropic (just in case)
+template std::string get_error_message(
+    const specfem::point::kernels<
+        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+        specfem::element::property_tag::isotropic, false> &point_kernel,
+    const type_real value);
+
+// explicit template instantiation p-sv elastic  isotropic
+template std::string get_error_message(
     const specfem::point::kernels<specfem::dimension::type::dim2,
                                   specfem::element::medium_tag::elastic_sv,
                                   specfem::element::property_tag::isotropic,
                                   false> &point_kernel,
-    const type_real value) {
+    const type_real value);
 
-  return get_error_message(
-      static_cast<specfem::point::kernels<
-          specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-          specfem::element::property_tag::isotropic, false> >(point_kernel),
-      value);
-}
-
-// Template get_error_message specialization: elastic sh isotropic (child)
-template <>
-std::string get_error_message(
+// explicit template instantiation sh elastic isotropic
+template std::string get_error_message(
     const specfem::point::kernels<specfem::dimension::type::dim2,
                                   specfem::element::medium_tag::elastic_sh,
                                   specfem::element::property_tag::isotropic,
                                   false> &point_kernel,
-    const type_real value) {
+    const type_real value);
 
-  return get_error_message(
-      static_cast<specfem::point::kernels<
-          specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-          specfem::element::property_tag::isotropic, false> >(point_kernel),
-      value);
-}
-
-// Template get_error_message specialization: elastic anisotropic (parent)
-template <>
+// Template get_error_message specialization: elastic anisotropic
+template <specfem::element::medium_tag MediumTag, bool using_simd = false,
+          std::enable_if_t<
+              MediumTag == specfem::element::medium_tag::elastic ||
+                  MediumTag == specfem::element::medium_tag::elastic_sv ||
+                  MediumTag == specfem::element::medium_tag::elastic_sh,
+              int> = 0>
 std::string get_error_message(
-    const specfem::point::kernels<
-        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-        specfem::element::property_tag::anisotropic, false> &point_kernel,
+    const specfem::point::kernels<specfem::dimension::type::dim2, MediumTag,
+                                  specfem::element::property_tag::anisotropic,
+                                  false> &point_kernel,
     const type_real value) {
   std::ostringstream message;
 
@@ -90,35 +95,28 @@ std::string get_error_message(
   return message.str();
 }
 
-// Template get_error_message specialization: elastic p-sv anisotropic (child)
-template <>
-std::string get_error_message(
+// explicit template instantiation elastic anisotropic (just in case)
+template std::string get_error_message(
+    const specfem::point::kernels<
+        specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
+        specfem::element::property_tag::anisotropic, false> &point_kernel,
+    const type_real value);
+
+// explicit template instantiation elastic p-sv anisotropic
+template std::string get_error_message(
     const specfem::point::kernels<specfem::dimension::type::dim2,
                                   specfem::element::medium_tag::elastic_sv,
                                   specfem::element::property_tag::anisotropic,
                                   false> &point_kernel,
-    const type_real value) {
-  return get_error_message(
-      static_cast<specfem::point::kernels<
-          specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-          specfem::element::property_tag::anisotropic, false> >(point_kernel),
-      value);
-}
+    const type_real value);
 
-// Template get_error_message specialization: elastic sh anisotropic (child)
-template <>
-std::string get_error_message(
+// explicit template instantiation elastic sh anisotropic
+template std::string get_error_message(
     const specfem::point::kernels<specfem::dimension::type::dim2,
                                   specfem::element::medium_tag::elastic_sh,
                                   specfem::element::property_tag::anisotropic,
                                   false> &point_kernel,
-    const type_real value) {
-  return get_error_message(
-      static_cast<specfem::point::kernels<
-          specfem::dimension::type::dim2, specfem::element::medium_tag::elastic,
-          specfem::element::property_tag::anisotropic, false> >(point_kernel),
-      value);
-}
+    const type_real value);
 
 // Template get_error_message specialization: acoustic isotropic
 template <>
