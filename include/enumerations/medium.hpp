@@ -8,7 +8,7 @@ namespace specfem {
 namespace element {
 
 /// See below how this is used within assembly.
-constexpr int ntypes = 4; ///< Number of element types
+constexpr int ntypes = 5; ///< Number of element types
 
 // TODO: Since compute fields converts these enumerations into ints, we need to
 // make sure that the order of the enumerations is such that any tag that is not
@@ -23,9 +23,9 @@ enum class medium_tag {
   elastic_sv,
   elastic_sh,
   acoustic,
+  poroelastic,
   electromagnetic_sv,
   elastic,
-  poroelastic
 };
 
 /**
@@ -82,6 +82,15 @@ public:
   constexpr static int components() { return 1; }
 };
 
+template <>
+class attributes<specfem::dimension::type::dim2,
+                 specfem::element::medium_tag::poroelastic> {
+public:
+  constexpr static int dimension() { return 2; }
+
+  constexpr static int components() { return 4; }
+};
+
 const std::string to_string(const medium_tag &medium,
                             const property_tag &property_tag,
                             const boundary_tag &boundary_tag);
@@ -90,6 +99,14 @@ const std::string to_string(const medium_tag &medium,
                             const property_tag &property_tag);
 
 const std::string to_string(const medium_tag &medium);
+
+// template class to enable specialization for elastic media
+template <specfem::element::medium_tag MediumTag,
+          typename std::enable_if_t<
+              MediumTag == specfem::element::medium_tag::elastic_sh ||
+                  MediumTag == specfem::element::medium_tag::elastic_sv,
+              int> = 0>
+class is_elastic {};
 
 } // namespace element
 } // namespace specfem
