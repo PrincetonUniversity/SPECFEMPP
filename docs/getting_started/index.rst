@@ -81,9 +81,10 @@ Dependencies
     increase the build time and does require an active internet connection.
 
 * Kokkos: required
-* Boost: required
+* Boost >= ``1.85.0``: required
 * YAML-CPP: required
 * HDF5: optional
+* VTK: optional
 
 Download SPECFEM++
 ------------------
@@ -144,7 +145,7 @@ SPECFEM++ build directory to your ``PATH`` using
 
 .. code-block:: bash
 
-    export PATH=$(pwd)/build:$PATH
+    export PATH=$(pwd)/build/bin:$PATH
 
 Running the solver
 ------------------
