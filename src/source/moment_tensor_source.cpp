@@ -39,9 +39,17 @@ void specfem::sources::moment_tensor::compute_source_array(
   }
 
   const int ncomponents = source_array.extent(0);
-  if (ncomponents != 2) {
-    throw std::runtime_error(
-        "Moment tensor source requires 2 components for elastic medium");
+  if (el_type == specfem::element::medium_tag::elastic_sv || el_type =
+          specfem::element::medium_tag::electromagnetic_sv) {
+    if (ncomponents != 2) {
+      throw std::runtime_error(
+          "Moment tensor source requires 2 components for elastic medium");
+    }
+  } else if (el_type == specfem::element::medium_tag::poroelastic) {
+    if (ncomponents != 4) {
+      throw std::runtime_error(
+          "Moment tensor source requires 4 components for poroelastic medium");
+    }
   }
 
   const auto xi = mesh.quadratures.gll.h_xi;
@@ -112,8 +120,13 @@ void specfem::sources::moment_tensor::compute_source_array(
       type_real dsrc_dz =
           (hpxi_source(ix) * derivatives_source.xiz) * hgamma_source(iz) +
           hxi_source(ix) * (hpgamma_source(iz) * derivatives_source.gammaz);
-      source_array(0, iz, ix) += Mxx * dsrc_dx + Mxz * dsrc_dz;
-      source_array(1, iz, ix) += Mxz * dsrc_dx + Mzz * dsrc_dz;
+      source_array(0, iz, ix) = Mxx * dsrc_dx + Mxz * dsrc_dz;
+      source_array(1, iz, ix) = Mxz * dsrc_dx + Mzz * dsrc_dz;
+
+      if (el_type == specfem::element::medium_tag::poroelastic) {
+        source_array(2, iz, ix) = source_array(0, iz, ix);
+        source_array(3, iz, ix) = source_array(1, iz, ix);
+      }
     }
   }
 }
