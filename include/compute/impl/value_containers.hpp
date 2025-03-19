@@ -27,18 +27,17 @@ struct value_containers {
                                                       ///< property index
                                                       ///< mapping
 
-#define GENERATE_CONTAINER_NAME(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)       \
-  containers_type<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)>                  \
-      CREATE_VARIABLE_NAME(value, GET_NAME(DIMENSION_TAG),                     \
-                           GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG));
+#define GENERATE_CONTAINER_NAME(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG,       \
+                                POSTFIX)                                       \
+  containers_type<MEDIUM_TAG, PROPERTY_TAG> value_##POSTFIX;
 
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(GENERATE_CONTAINER_NAME,
-                                      WHERE(DIMENSION_TAG_DIM2)
-                                          WHERE(MEDIUM_TAG_ELASTIC_SV,
-                                                MEDIUM_TAG_ELASTIC_SH,
-                                                MEDIUM_TAG_ACOUSTIC)
-                                              WHERE(PROPERTY_TAG_ISOTROPIC,
-                                                    PROPERTY_TAG_ANISOTROPIC));
+  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS2(GENERATE_CONTAINER_NAME,
+                                       WHERE(DIMENSION_TAG_DIM2)
+                                           WHERE(MEDIUM_TAG_ELASTIC_SV,
+                                                 MEDIUM_TAG_ELASTIC_SH,
+                                                 MEDIUM_TAG_ACOUSTIC)
+                                               WHERE(PROPERTY_TAG_ISOTROPIC,
+                                                     PROPERTY_TAG_ANISOTROPIC));
 
 #undef GENERATE_CONTAINER_NAME
 

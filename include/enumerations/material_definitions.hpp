@@ -282,6 +282,20 @@ constexpr auto element_types() {
    BOOST_PP_TUPLE_ELEM(1, (BOOST_PP_SEQ_ENUM(elem))),                          \
    BOOST_PP_TUPLE_ELEM(2, (BOOST_PP_SEQ_ENUM(elem))))
 
+#define ARGUMENTS_FOR_ONE_MATERIAL_SYSTEM(elem)                                \
+  (GET_TAG(BOOST_PP_TUPLE_ELEM(0, (BOOST_PP_SEQ_ENUM(elem)))),                 \
+   GET_TAG(BOOST_PP_TUPLE_ELEM(1, (BOOST_PP_SEQ_ENUM(elem)))),                 \
+   GET_TAG(BOOST_PP_TUPLE_ELEM(2, (BOOST_PP_SEQ_ENUM(elem)))),                 \
+   CREATE_VARIABLE_NAME(                                                       \
+       GET_NAME(BOOST_PP_TUPLE_ELEM(0, (BOOST_PP_SEQ_ENUM(elem)))),            \
+       GET_NAME(BOOST_PP_TUPLE_ELEM(1, (BOOST_PP_SEQ_ENUM(elem)))),            \
+       GET_NAME(BOOST_PP_TUPLE_ELEM(2, (BOOST_PP_SEQ_ENUM(elem))))))
+
+#define CALL_FOR_ONE_MATERIAL_SYSTEM2(s, MACRO, elem)                          \
+  BOOST_PP_EXPAND(BOOST_PP_IF(MAT_SYS_IN_SEQUENCE((BOOST_PP_SEQ_ENUM(elem))),  \
+                              MACRO, EMPTY_MACRO)                              \
+                      ARGUMENTS_FOR_ONE_MATERIAL_SYSTEM(elem))
+
 #define CALL_FOR_ONE_ELEMENT_TYPE(s, MACRO, elem)                              \
   BOOST_PP_IF(ELEM_IN_SEQUENCE((BOOST_PP_SEQ_ENUM(elem))), MACRO, EMPTY_MACRO) \
   (BOOST_PP_TUPLE_ELEM(0, (BOOST_PP_SEQ_ENUM(elem))),                          \
@@ -346,6 +360,9 @@ constexpr auto element_types() {
   BOOST_PP_SEQ_FOR_EACH(CALL_FOR_ONE_MATERIAL_SYSTEM, MACRO,                   \
                         BOOST_PP_SEQ_FOR_EACH_PRODUCT(CREATE_SEQ, seq))
 
+#define CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS2(MACRO, seq)                       \
+  BOOST_PP_SEQ_FOR_EACH(CALL_FOR_ONE_MATERIAL_SYSTEM2, MACRO,                  \
+                        BOOST_PP_SEQ_FOR_EACH_PRODUCT(CREATE_SEQ, seq))
 /**
  * @brief Call a macro for all element types
  *
