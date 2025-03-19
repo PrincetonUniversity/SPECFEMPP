@@ -45,43 +45,31 @@ void specfem::sources::adjoint_source::compute_source_array(
               "Adjoint source requires 1 component for elastic SH medium");
         }
         source_array(0, iz, ix) = hlagrange;
-      } else if (el_type == specfem::element::medium_tag::elastic_sv)
+      } else if (el_type == specfem::element::medium_tag::elastic_sv) {
         if (ncomponents != 2) {
           throw std::runtime_error(
               "Adjoint source requires 2 components for elastic medium");
         }
-      source_array(0, iz, ix) = hlagrange;
-      source_array(1, iz, ix) = hlagrange;
-    }
-    else if ((el_type == specfem::element::medium_tag::poroelastic)) {
-      if (ncomponents != 4) {
-        throw std::runtime_error(
-            "Force source requires 4 components for poroelastic medium");
+        source_array(0, iz, ix) = hlagrange;
+        source_array(1, iz, ix) = hlagrange;
+      } else if ((el_type == specfem::element::medium_tag::poroelastic)) {
+        if (ncomponents != 4) {
+          throw std::runtime_error(
+              "Force source requires 4 components for poroelastic medium");
+        }
+        source_array(0, iz, ix) = hlagrange;
+        source_array(1, iz, ix) = hlagrange;
+        source_array(2, iz, ix) = hlagrange;
+        source_array(3, iz, ix) = hlagrange;
+      } else {
+        std::ostringstream message;
+        message << "Source array computation not implemented for element type: "
+                << specfem::element::to_string(el_type);
+        auto message_str = message.str();
+        Kokkos::abort(message_str.c_str());
       }
-      source_array(0, iz, ix) =
-          std::sin(Kokkos::numbers::pi_v<type_real> / 180 * this->angle) *
-          hlagrange;
-      source_array(1, iz, ix) =
-          -1.0 *
-          std::cos(Kokkos::numbers::pi_v<type_real> / 180 * this->angle) *
-          hlagrange;
-      source_array(2, iz, ix) =
-          std::sin(Kokkos::numbers::pi_v<type_real> / 180 * this->angle) *
-          hlagrange;
-      source_array(3, iz, ix) =
-          -1.0 *
-          std::cos(Kokkos::numbers::pi_v<type_real> / 180 * this->angle) *
-          hlagrange;
-    }
-    else {
-      std::ostringstream message;
-      message << "Source array computation not implemented for element type: "
-              << specfem::element::to_string(el_type);
-      auto message_str = message.str();
-      Kokkos::abort(message_str.c_str());
     }
   }
-}
 }
 
 std::string specfem::sources::adjoint_source::print() const {
