@@ -13,6 +13,7 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
   constexpr auto acoustic = specfem::element::medium_tag::acoustic;
   constexpr auto elastic_sv = specfem::element::medium_tag::elastic_sv;
   constexpr auto elastic_sh = specfem::element::medium_tag::elastic_sh;
+  constexpr auto poroelastic = specfem::element::medium_tag::poroelastic;
 
   kernels.initialize(time_scheme->get_timestep());
 
@@ -22,6 +23,7 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
     time_scheme->apply_predictor_phase_forward(acoustic);
     time_scheme->apply_predictor_phase_forward(elastic_sv);
     time_scheme->apply_predictor_phase_forward(elastic_sh);
+    time_scheme->apply_predictor_phase_forward(poroelastic);
 
     kernels.template update_wavefields<acoustic>(istep);
     time_scheme->apply_corrector_phase_forward(acoustic);
@@ -30,6 +32,9 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
     kernels.template update_wavefields<elastic_sh>(istep);
     time_scheme->apply_corrector_phase_forward(elastic_sv);
     time_scheme->apply_corrector_phase_forward(elastic_sh);
+
+    kernels.template update_wavefields<poroelastic>(istep);
+    time_scheme->apply_corrector_phase_forward(poroelastic);
 
     if (time_scheme->compute_seismogram(istep)) {
       kernels.compute_seismograms(time_scheme->get_seismogram_step());

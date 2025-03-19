@@ -24,8 +24,8 @@ specfem::compute::receivers::receivers(
       h_lagrange_interpolant(Kokkos::create_mirror_view(lagrange_interpolant)),
       elements("specfem::compute::receivers::elements", receivers.size()),
       h_elements(Kokkos::create_mirror_view(elements)),
-      element_types(element_types), impl::StationIterator(receivers.size(),
-                                                          stypes.size()),
+      element_types(element_types),
+      impl::StationIterator(receivers.size(), stypes.size()),
       impl::SeismogramIterator(receivers.size(), stypes.size(), max_sig_step,
                                dt, t0, nsteps_between_samples) {
 
@@ -112,9 +112,10 @@ specfem::compute::receivers::receivers(
 
   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
       COUNT_RECEIVERS_PER_MATERIAL_SYSTEM,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(
-          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
+      WHERE(DIMENSION_TAG_DIM2)
+          WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
+                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
+              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
 #undef COUNT_RECEIVERS_PER_MATERIAL_SYSTEM
 
@@ -145,9 +146,10 @@ specfem::compute::receivers::receivers(
 
   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
       ALLOCATE_RECEIVERS_PER_MATERIAL_SYSTEM,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(
-          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
+      WHERE(DIMENSION_TAG_DIM2)
+          WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
+                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
+              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
 #undef ALLOCATE_RECEIVERS_PER_MATERIAL_SYSTEM
 
@@ -187,9 +189,10 @@ specfem::compute::receivers::receivers(
 
   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
       ASSIGN_RECEIVERS_PER_MATERIAL_SYSTEM,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(
-          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
+      WHERE(DIMENSION_TAG_DIM2)
+          WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
+                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
+              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
 #undef ASSIGN_RECEIVERS_PER_MATERIAL_SYSTEM
 
@@ -217,9 +220,10 @@ specfem::compute::receivers::get_indices_on_host(
 
   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
       RETURN_VALUE,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(
-          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
+      WHERE(DIMENSION_TAG_DIM2)
+          WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
+                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
+              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
 #undef RETURN_VALUE
 
@@ -248,9 +252,10 @@ specfem::compute::receivers::get_indices_on_device(
 
   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
       RETURN_VALUE,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(
-          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
+      WHERE(DIMENSION_TAG_DIM2)
+          WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
+                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
+              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
 #undef RETURN_VALUE
 

@@ -46,6 +46,15 @@ void specfem::IO::wavefield_reader<IOLibrary>::read(
   acoustic.openDataset("PotentialDotDot", acoustic_field.h_field_dot_dot)
       .read();
 
+  typename IOLibrary::Group poroelastic = file.openGroup("/Poroelastic");
+  const auto &poroelastic_field =
+      buffer.get_field<specfem::element::medium_tag::poroelastic>();
+
+  poroelastic.openDataset("Displacement", poroelastic_field.h_field).read();
+  poroelastic.openDataset("Velocity", poroelastic_field.h_field_dot).read();
+  poroelastic.openDataset("Acceleration", poroelastic_field.h_field_dot_dot)
+      .read();
+
   typename IOLibrary::Group boundary = file.openGroup("/Boundary");
   typename IOLibrary::Group stacey = boundary.openGroup("/Stacey");
 

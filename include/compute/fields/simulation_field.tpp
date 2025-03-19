@@ -71,7 +71,7 @@ specfem::compute::simulation_field<WavefieldType>::simulation_field(
                                  WHERE(DIMENSION_TAG_DIM2)
                                      WHERE(MEDIUM_TAG_ELASTIC_SV,
                                            MEDIUM_TAG_ELASTIC_SH,
-                                           MEDIUM_TAG_ACOUSTIC))
+                                           MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC))
 
 #undef ASSIGN_FIELDS
 

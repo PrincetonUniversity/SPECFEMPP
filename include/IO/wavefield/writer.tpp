@@ -44,7 +44,16 @@ void specfem::IO::wavefield_writer<OutputLibrary>::write(
 
   acoustic.createDataset("Potential", acoustic_field.h_field).write();
   acoustic.createDataset("PotentialDot", acoustic_field.h_field_dot).write();
-  acoustic.createDataset("PotentialDotDot", acoustic_field.h_field_dot_dot).write();
+  acoustic.createDataset("PotentialDotDot", acoustic_field.h_field_dot_dot)
+      .write();
+
+  typename OutputLibrary::Group poroelastic = file.createGroup("/Poroelastic");
+  const auto &poroelastic_field =
+      forward.get_field<specfem::element::medium_tag::poroelastic>();
+  poroelastic.createDataset("Displacement", poroelastic_field.h_field).write();
+  poroelastic.createDataset("Velocity", poroelastic_field.h_field_dot).write();
+  poroelastic.createDataset("Acceleration", poroelastic_field.h_field_dot_dot)
+      .write();
 
   stacey
       .createDataset("IndexMapping",
