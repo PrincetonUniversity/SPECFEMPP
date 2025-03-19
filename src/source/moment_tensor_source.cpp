@@ -40,7 +40,7 @@ void specfem::sources::moment_tensor::compute_source_array(
 
   const int ncomponents = source_array.extent(0);
   if ((el_type == specfem::element::medium_tag::elastic_sv) ||
-      (el_type = specfem::element::medium_tag::electromagnetic_sv)) {
+      (el_type == specfem::element::medium_tag::electromagnetic_sv)) {
     if (ncomponents != 2) {
       throw std::runtime_error(
           "Moment tensor source requires 2 components for elastic medium");
