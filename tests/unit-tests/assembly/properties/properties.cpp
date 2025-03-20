@@ -28,20 +28,25 @@ inline void error_message_header(std::ostringstream &message,
   }
 }
 
+// Primary template declaration
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, bool using_simd = false>
 std::string get_error_message(
     const specfem::point::properties<specfem::dimension::type::dim2, MediumTag,
-                                     PropertyTag, false> &point_property,
+                                     PropertyTag, using_simd> &point_property,
     const type_real value, const int mode = 0);
 
-template <>
-std::string get_error_message(
-    const specfem::point::properties<specfem::dimension::type::dim2,
-                                     specfem::element::medium_tag::elastic_sv,
+// SFINAE-enabled overload for specific conditions
+template <specfem::element::medium_tag MediumTag, bool using_simd = false>
+std::enable_if_t<(MediumTag == specfem::element::medium_tag::elastic_sv ||
+                  MediumTag == specfem::element::medium_tag::elastic_sh) &&
+                     using_simd == false,
+                 std::string>
+get_error_message(
+    const specfem::point::properties<specfem::dimension::type::dim2, MediumTag,
                                      specfem::element::property_tag::isotropic,
                                      false> &point_property,
-    const type_real value, const int mode) {
+    const type_real value, const int mode = 0) {
   std::ostringstream message;
 
   error_message_header(message, value, mode);
@@ -52,51 +57,16 @@ std::string get_error_message(
   return message.str();
 }
 
-template <>
-std::string get_error_message(
-    const specfem::point::properties<specfem::dimension::type::dim2,
-                                     specfem::element::medium_tag::elastic_sh,
-                                     specfem::element::property_tag::isotropic,
-                                     false> &point_property,
-    const type_real value, const int mode) {
-  std::ostringstream message;
-
-  error_message_header(message, value, mode);
-  message << "\t\trho = " << point_property.rho() << "\n";
-  message << "\t\tmu = " << point_property.mu() << "\n";
-  message << "\t\tlambdaplus2mu = " << point_property.lambdaplus2mu() << "\n";
-
-  return message.str();
-}
-
-template <>
-std::string get_error_message(
+template <specfem::element::medium_tag MediumTag, bool using_simd = false>
+std::enable_if_t<(MediumTag == specfem::element::medium_tag::elastic_sv ||
+                  MediumTag == specfem::element::medium_tag::elastic_sh) &&
+                     using_simd == false,
+                 std::string>
+get_error_message(
     const specfem::point::properties<
-        specfem::dimension::type::dim2,
-        specfem::element::medium_tag::elastic_sv,
+        specfem::dimension::type::dim2, MediumTag,
         specfem::element::property_tag::anisotropic, false> &point_property,
-    const type_real value, const int mode) {
-  std::ostringstream message;
-
-  error_message_header(message, value, mode);
-  message << "\t\trho = " << point_property.rho() << "\n";
-  message << "\t\tc11 = " << point_property.c11() << "\n";
-  message << "\t\tc13 = " << point_property.c13() << "\n";
-  message << "\t\tc15 = " << point_property.c15() << "\n";
-  message << "\t\tc33 = " << point_property.c33() << "\n";
-  message << "\t\tc35 = " << point_property.c35() << "\n";
-  message << "\t\tc55 = " << point_property.c55() << "\n";
-
-  return message.str();
-}
-
-template <>
-std::string get_error_message(
-    const specfem::point::properties<
-        specfem::dimension::type::dim2,
-        specfem::element::medium_tag::elastic_sh,
-        specfem::element::property_tag::anisotropic, false> &point_property,
-    const type_real value, const int mode) {
+    const type_real value, const int mode = 0) {
   std::ostringstream message;
 
   error_message_header(message, value, mode);
