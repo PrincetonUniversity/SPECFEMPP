@@ -2,6 +2,9 @@
 
 #include "datatypes/simd.hpp"
 #include "enumerations/medium.hpp"
+#include <Kokkos_Core.hpp>
+#include <string>
+#include <type_traits>
 
 #define DEFINE_POINT_VALUE(prop, index_value)                                  \
   KOKKOS_INLINE_FUNCTION value_type &prop() {                                  \
@@ -23,7 +26,7 @@ template <int N, bool UseSIMD> struct point_data {
   value_type data[N];
 
   KOKKOS_FUNCTION
-  point_data() = default;
+  point_data() {};
 
   /**
    * @brief array constructor
@@ -51,7 +54,7 @@ template <int N, bool UseSIMD> struct point_data {
   KOKKOS_FUNCTION
   bool operator==(const point_data<N, UseSIMD> &rhs) const {
     for (int i = 0; i < N; ++i) {
-      if (data[i] != rhs.data[i]) {
+      if (Kokkos::abs(data[i] - rhs.data[i]) > 1e-6 * Kokkos::abs(data[i])) {
         return false;
       }
     }
@@ -65,6 +68,30 @@ template <int N, bool UseSIMD> struct point_data {
   KOKKOS_FUNCTION
   bool operator!=(const point_data<N, UseSIMD> &rhs) const {
     return !(*this == rhs);
+  }
+
+  /**
+   * @brief Print the data
+   *
+   */
+  std::string print() const {
+    return print(std::integral_constant<bool, UseSIMD>());
+  }
+
+private:
+  std::string print(const std::integral_constant<bool, true> &) const {
+    std::ostringstream message;
+    message << "Data cannot be printed when simd is enabled";
+    return message.str();
+  }
+
+  std::string print(const std::integral_constant<bool, false> &) const {
+    std::ostringstream message;
+    message << "Data: ";
+    for (int i = 0; i < N; ++i) {
+      message << data[i] << " ";
+    }
+    return message.str();
   }
 };
 } // namespace impl
