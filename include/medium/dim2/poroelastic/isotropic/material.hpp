@@ -171,8 +171,8 @@ private:
     const type_real fac_inv = 1.0 / (D_Biot - kappa_fr); ///< Helper factor
 
     const type_real H_Biot =
-        (kappa_s - kappa_fr) * (kappa_s - kappa_fr) / (D_Biot - kappa_fr) +
-        kappa_fr + mu_fr;
+        (kappa_s - kappa_fr) * (kappa_s - kappa_fr) * fac_inv + kappa_fr +
+        4.0 / 3.0 * mu_fr;
 
     const type_real C_biot = kappa_s * (kappa_s - kappa_fr) * fac_inv;
     const type_real M_biot = kappa_s * kappa_s * fac_inv;
