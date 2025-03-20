@@ -78,79 +78,119 @@ specfem::compute::element_types::element_types(
 
 #undef ASSIGN_MEDIUM_TAG_INDICES
 
-#define COUNT_MATERIAL_SYSTEM_INDICES(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG) \
-  int CREATE_VARIABLE_NAME(count, GET_NAME(DIMENSION_TAG),                     \
-                           GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)) = 0;  \
-  for (int ispec = 0; ispec < nspec; ispec++) {                                \
-    if (medium_tags(ispec) == GET_TAG(MEDIUM_TAG) &&                           \
-        property_tags(ispec) == GET_TAG(PROPERTY_TAG)) {                       \
-      CREATE_VARIABLE_NAME(count, GET_NAME(DIMENSION_TAG),                     \
-                           GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG))       \
-      ++;                                                                      \
-    }                                                                          \
-  }
+  // #define COUNT_MATERIAL_SYSTEM_INDICES(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG) \
+//   int CREATE_VARIABLE_NAME(count, GET_NAME(DIMENSION_TAG),                     \
+//                            GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)) = 0;  \
+//   for (int ispec = 0; ispec < nspec; ispec++) {                                \
+//     if (medium_tags(ispec) == GET_TAG(MEDIUM_TAG) &&                           \
+//         property_tags(ispec) == GET_TAG(PROPERTY_TAG)) {                       \
+//       CREATE_VARIABLE_NAME(count, GET_NAME(DIMENSION_TAG),                     \
+//                            GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG))       \
+//       ++;                                                                      \
+//     }                                                                          \
+//   }
 
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      COUNT_MATERIAL_SYSTEM_INDICES,
+  //   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
+  //       COUNT_MATERIAL_SYSTEM_INDICES,
+  //       WHERE(DIMENSION_TAG_DIM2) WHERE(
+  //           MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
+  //           MEDIUM_TAG_ACOUSTIC) WHERE(PROPERTY_TAG_ISOTROPIC,
+  //           PROPERTY_TAG_ANISOTROPIC))
+
+  // #undef COUNT_MATERIAL_SYSTEM_INDICES
+
+  // #define ALLOCATE_MATERIAL_SYSTEM_VIEWS(DIMENSION_TAG, MEDIUM_TAG,              \
+//                                        PROPERTY_TAG)                           \
+//   this->CREATE_VARIABLE_NAME(elements, GET_NAME(DIMENSION_TAG),                \
+//                              GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)) =   \
+//       IndexViewType("specfem::compute::element_types::elements",               \
+//                     CREATE_VARIABLE_NAME(count, GET_NAME(DIMENSION_TAG),       \
+//                                          GET_NAME(MEDIUM_TAG),                 \
+//                                          GET_NAME(PROPERTY_TAG)));             \
+//   this->CREATE_VARIABLE_NAME(h_elements, GET_NAME(DIMENSION_TAG),              \
+//                              GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)) =   \
+//       Kokkos::create_mirror_view(this->CREATE_VARIABLE_NAME(                   \
+//           elements, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),             \
+//           GET_NAME(PROPERTY_TAG)));
+
+  //   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
+  //       ALLOCATE_MATERIAL_SYSTEM_VIEWS,
+  //       WHERE(DIMENSION_TAG_DIM2) WHERE(
+  //           MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
+  //           MEDIUM_TAG_ACOUSTIC) WHERE(PROPERTY_TAG_ISOTROPIC,
+  //           PROPERTY_TAG_ANISOTROPIC))
+
+  // #undef ALLOCATE_MATERIAL_SYSTEM_VIEWS
+
+#define DECLARE_INDEX_COUTER(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, POSTFIX) \
+  int index_##POSTFIX = 0;                                                     \
+  int count_##POSTFIX = 0;
+
+  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS2(
+      DECLARE_INDEX_COUTER,
       WHERE(DIMENSION_TAG_DIM2) WHERE(
           MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
           WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
+#undef DECLARE_INDEX_COUTER
 
-#undef COUNT_MATERIAL_SYSTEM_INDICES
+  CALL_CODE_FOR_ALL_MATERIAL_SYSTEMS(
+      CAPTURE(elements, h_elements, count, index) WHERE(DIMENSION_TAG_DIM2)
+          WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
+                MEDIUM_TAG_ACOUSTIC)
+              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
+      for (int ispec = 0; ispec < nspec; ispec++) {
+        if (medium_tags(ispec) == _medium_tag_ &&
+            property_tags(ispec) == _property_tag_) {
+          _count_++;
+        }
+      }
 
-#define ALLOCATE_MATERIAL_SYSTEM_VIEWS(DIMENSION_TAG, MEDIUM_TAG,              \
-                                       PROPERTY_TAG)                           \
-  this->CREATE_VARIABLE_NAME(elements, GET_NAME(DIMENSION_TAG),                \
-                             GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)) =   \
-      IndexViewType("specfem::compute::element_types::elements",               \
-                    CREATE_VARIABLE_NAME(count, GET_NAME(DIMENSION_TAG),       \
-                                         GET_NAME(MEDIUM_TAG),                 \
-                                         GET_NAME(PROPERTY_TAG)));             \
-  this->CREATE_VARIABLE_NAME(h_elements, GET_NAME(DIMENSION_TAG),              \
-                             GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)) =   \
-      Kokkos::create_mirror_view(this->CREATE_VARIABLE_NAME(                   \
-          elements, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),             \
-          GET_NAME(PROPERTY_TAG)));
+      _elements_ =
+          IndexViewType("specfem::compute::element_types::elements", _count_);
+      _h_elements_ = Kokkos::create_mirror_view(_elements_);
 
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      ALLOCATE_MATERIAL_SYSTEM_VIEWS,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(
-          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
+      for (int ispec = 0; ispec < nspec; ispec++) {
+        if (medium_tags(ispec) == _medium_tag_ &&
+            property_tags(ispec) == _property_tag_) {
+          _h_elements_(_index_) = ispec;
+          _index_++;
+        }
+      }
 
-#undef ALLOCATE_MATERIAL_SYSTEM_VIEWS
+      Kokkos::deep_copy(_elements_, _h_elements_);)
 
-#define ASSIGN_MATERIAL_SYSTEM_INDICES(DIMENSION_TAG, MEDIUM_TAG,              \
-                                       PROPERTY_TAG)                           \
-  int CREATE_VARIABLE_NAME(index, GET_NAME(DIMENSION_TAG),                     \
-                           GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)) = 0;  \
-  for (int ispec = 0; ispec < nspec; ispec++) {                                \
-    if (medium_tags(ispec) == GET_TAG(MEDIUM_TAG) &&                           \
-        property_tags(ispec) == GET_TAG(PROPERTY_TAG)) {                       \
-      this->CREATE_VARIABLE_NAME(h_elements, GET_NAME(DIMENSION_TAG),          \
-                                 GET_NAME(MEDIUM_TAG),                         \
-                                 GET_NAME(PROPERTY_TAG))(CREATE_VARIABLE_NAME( \
-          index, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),                \
-          GET_NAME(PROPERTY_TAG))) = ispec;                                    \
-      CREATE_VARIABLE_NAME(index, GET_NAME(DIMENSION_TAG),                     \
-                           GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG))       \
-      ++;                                                                      \
-    }                                                                          \
-  }                                                                            \
-  Kokkos::deep_copy(this->CREATE_VARIABLE_NAME(                                \
-                        elements, GET_NAME(DIMENSION_TAG),                     \
-                        GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)),         \
-                    this->CREATE_VARIABLE_NAME(                                \
-                        h_elements, GET_NAME(DIMENSION_TAG),                   \
-                        GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)));
+  // #define ASSIGN_MATERIAL_SYSTEM_INDICES(DIMENSION_TAG, MEDIUM_TAG,              \
+//                                        PROPERTY_TAG)                           \
+//   int CREATE_VARIABLE_NAME(index, GET_NAME(DIMENSION_TAG),                     \
+//                            GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)) = 0;  \
+//   for (int ispec = 0; ispec < nspec; ispec++) {                                \
+//     if (medium_tags(ispec) == GET_TAG(MEDIUM_TAG) &&                           \
+//         property_tags(ispec) == GET_TAG(PROPERTY_TAG)) {                       \
+//       this->CREATE_VARIABLE_NAME(h_elements, GET_NAME(DIMENSION_TAG),          \
+//                                  GET_NAME(MEDIUM_TAG),                         \
+//                                  GET_NAME(PROPERTY_TAG))(CREATE_VARIABLE_NAME( \
+//           index, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),                \
+//           GET_NAME(PROPERTY_TAG))) = ispec;                                    \
+//       CREATE_VARIABLE_NAME(index, GET_NAME(DIMENSION_TAG),                     \
+//                            GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG))       \
+//       ++;                                                                      \
+//     }                                                                          \
+//   }                                                                            \
+//   Kokkos::deep_copy(this->CREATE_VARIABLE_NAME(                                \
+//                         elements, GET_NAME(DIMENSION_TAG),                     \
+//                         GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)),         \
+//                     this->CREATE_VARIABLE_NAME(                                \
+//                         h_elements, GET_NAME(DIMENSION_TAG),                   \
+//                         GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)));
 
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      ASSIGN_MATERIAL_SYSTEM_INDICES,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(
-          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
+  //   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
+  //       ASSIGN_MATERIAL_SYSTEM_INDICES,
+  //       WHERE(DIMENSION_TAG_DIM2) WHERE(
+  //           MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
+  //           MEDIUM_TAG_ACOUSTIC) WHERE(PROPERTY_TAG_ISOTROPIC,
+  //           PROPERTY_TAG_ANISOTROPIC))
 
-#undef ASSIGN_MATERIAL_SYSTEM_INDICES
+  // #undef ASSIGN_MATERIAL_SYSTEM_INDICES
 
 #define COUNT_ELEMENT_TYPES_INDICES(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG,   \
                                     BOUNDARY_TAG)                              \

@@ -62,19 +62,12 @@ struct value_containers {
       constexpr containers_type<MediumTag, PropertyTag> const &
       get_container() const {
 
-#define GET_CONTAINER(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                 \
-  if constexpr ((GET_TAG(MEDIUM_TAG) == MediumTag) &&                          \
-                (GET_TAG(PROPERTY_TAG) == PropertyTag)) {                      \
-    return CREATE_VARIABLE_NAME(value, GET_NAME(DIMENSION_TAG),                \
-                                GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)); \
-  }
-
-    CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-        GET_CONTAINER,
-        WHERE(DIMENSION_TAG_DIM2) WHERE(
+    CALL_CODE_FOR_ALL_MATERIAL_SYSTEMS(
+        CAPTURE(value) WHERE(DIMENSION_TAG_DIM2) WHERE(
             MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
-            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC));
-#undef GET_CONTAINER
+            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
+        if constexpr (_medium_tag_ == MediumTag &&
+                      _property_tag_ == PropertyTag) { return _value_; });
 
     Kokkos::abort("Invalid material type detected in value containers");
 
@@ -90,33 +83,28 @@ struct value_containers {
    *
    */
   void copy_to_host() {
-#define COPY_TO_HOST(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                  \
-  CREATE_VARIABLE_NAME(value, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),   \
-                       GET_NAME(PROPERTY_TAG))                                 \
-      .copy_to_host();
-
-    CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-        COPY_TO_HOST,
-        WHERE(DIMENSION_TAG_DIM2) WHERE(
+    CALL_CODE_FOR_ALL_MATERIAL_SYSTEMS(
+        CAPTURE(value) WHERE(DIMENSION_TAG_DIM2) WHERE(
             MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
-            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC));
-
-#undef COPY_TO_HOST
+            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
+        _value_.copy_to_host(););
   }
 
   void copy_to_device() {
-#define COPY_TO_DEVICE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                \
-  CREATE_VARIABLE_NAME(value, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),   \
-                       GET_NAME(PROPERTY_TAG))                                 \
-      .copy_to_device();
-
-    CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-        COPY_TO_DEVICE,
-        WHERE(DIMENSION_TAG_DIM2) WHERE(
+    CALL_CODE_FOR_ALL_MATERIAL_SYSTEMS(
+        CAPTURE(value) WHERE(DIMENSION_TAG_DIM2) WHERE(
             MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
-            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC));
+            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
+        _value_.copy_to_device(););
+  }
 
-#undef COPY_TO_DEVICE
+  template <typename T> void print(const T &value) const {
+    std::cout << "Value: " << value << std::endl;
+  }
+
+  template <typename T, typename U>
+  void print(const T &value, const U &value2) const {
+    std::cout << "Value: " << value << value2 << std::endl;
   }
 };
 

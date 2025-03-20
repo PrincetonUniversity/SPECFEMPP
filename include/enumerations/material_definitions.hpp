@@ -268,6 +268,7 @@ constexpr auto element_types() {
  *
  */
 #define WHERE(...) (BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
+#define CAPTURE(...) (WHERE(__VA_ARGS__))
 
 #define CALL_FOR_ONE_MEDIUM_TYPE(s, MACRO, elem)                               \
   BOOST_PP_IF(MEDIUM_IN_SEQUENCE((BOOST_PP_SEQ_ENUM(elem))), MACRO,            \
@@ -390,6 +391,43 @@ constexpr auto element_types() {
  */
 #define CALL_MACRO_FOR_ALL_ELEMENT_TYPES(MACRO, seq)                           \
   BOOST_PP_SEQ_FOR_EACH(CALL_FOR_ONE_ELEMENT_TYPE, MACRO,                      \
+                        BOOST_PP_SEQ_FOR_EACH_PRODUCT(CREATE_SEQ, seq))
+
+#define _DEFINE_MEMBER_NAME_FOR_ONE_MATERIAL_SYSTEM(s, postfix, prefix)        \
+  _##prefix##_
+
+#define _DEFINE_MEMBER_VARIABLE_FOR_ONE_MATERIAL_SYSTEM(s, postfix, prefix)    \
+  prefix##_##postfix
+
+#define _WRITE_BLOCK_FOR_ONE_MATERIAL_SYSTEM(seq, DIMENSION_TAG, MEDIUM_TAG,   \
+                                             PROPERTY_TAG, CODE)               \
+  constexpr auto _dimension_tag_ = GET_TAG(DIMENSION_TAG);                     \
+  constexpr auto _medium_tag_ = GET_TAG(MEDIUM_TAG);                           \
+  constexpr auto _property_tag_ = GET_TAG(PROPERTY_TAG);                       \
+  const auto &[BOOST_PP_SEQ_ENUM(BOOST_PP_SEQ_TRANSFORM(                       \
+      _DEFINE_MEMBER_NAME_FOR_ONE_MATERIAL_SYSTEM,                             \
+      CREATE_VARIABLE_NAME(GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),      \
+                           GET_NAME(PROPERTY_TAG)),                            \
+      seq))] =                                                                 \
+      std::tie(BOOST_PP_SEQ_ENUM(BOOST_PP_SEQ_TRANSFORM(                       \
+          _DEFINE_MEMBER_VARIABLE_FOR_ONE_MATERIAL_SYSTEM,                     \
+          CREATE_VARIABLE_NAME(GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),  \
+                               GET_NAME(PROPERTY_TAG)),                        \
+          seq)));                                                              \
+  BOOST_PP_SEQ_ENUM(CODE)
+
+#define _CALL_CODE_FOR_ONE_MATERIAL_SYSTEM(s, CODE, elem)                      \
+  { BOOST_PP_IF(                                                               \
+      MAT_SYS_IN_SEQUENCE((BOOST_PP_SEQ_ENUM(BOOST_PP_SEQ_TAIL(elem)))),       \
+      _WRITE_BLOCK_FOR_ONE_MATERIAL_SYSTEM,                                    \
+      EMPTY_MACRO)(BOOST_PP_TUPLE_ELEM(0, (BOOST_PP_SEQ_ENUM(elem))),          \
+                   BOOST_PP_TUPLE_ELEM(1, (BOOST_PP_SEQ_ENUM(elem))),          \
+                   BOOST_PP_TUPLE_ELEM(2, (BOOST_PP_SEQ_ENUM(elem))),          \
+                   BOOST_PP_TUPLE_ELEM(3, (BOOST_PP_SEQ_ENUM(elem))), CODE) }
+
+#define CALL_CODE_FOR_ALL_MATERIAL_SYSTEMS(seq, ...)                           \
+  BOOST_PP_SEQ_FOR_EACH(_CALL_CODE_FOR_ONE_MATERIAL_SYSTEM,                    \
+                        BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__),                 \
                         BOOST_PP_SEQ_FOR_EACH_PRODUCT(CREATE_SEQ, seq))
 
 } // namespace element
