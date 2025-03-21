@@ -144,23 +144,13 @@ specfem::compute::receivers::get_indices_on_host(
     const specfem::element::medium_tag medium_tag,
     const specfem::element::property_tag property_tag) const {
 
-#define RETURN_VALUE(DIMENTION_TAG, MEDIUM_TAG, PROPERTY_TAG)                  \
-  if (medium_tag == GET_TAG(MEDIUM_TAG) &&                                     \
-      property_tag == GET_TAG(PROPERTY_TAG)) {                                 \
-    return std::make_tuple(                                                    \
-        CREATE_VARIABLE_NAME(h_elements, GET_NAME(DIMENTION_TAG),              \
-                             GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)),    \
-        CREATE_VARIABLE_NAME(h_receiver_indices, GET_NAME(DIMENTION_TAG),      \
-                             GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)));   \
-  }
-
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      RETURN_VALUE,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(
+  CALL_CODE_FOR_ALL_MATERIAL_SYSTEMS(
+      CAPTURE(h_elements, h_receiver_indices) WHERE(DIMENSION_TAG_DIM2) WHERE(
           MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
-
-#undef RETURN_VALUE
+          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
+      if (medium_tag == _medium_tag_ && property_tag == _property_tag_) {
+        return std::make_tuple(_h_elements_, _h_receiver_indices_);
+      })
 
   Kokkos::abort("Invalid medium or property tag. Please check the input "
                 "parameters and try again.");
@@ -175,23 +165,13 @@ specfem::compute::receivers::get_indices_on_device(
     const specfem::element::medium_tag medium_tag,
     const specfem::element::property_tag property_tag) const {
 
-#define RETURN_VALUE(DIMENTION_TAG, MEDIUM_TAG, PROPERTY_TAG)                  \
-  if (medium_tag == GET_TAG(MEDIUM_TAG) &&                                     \
-      property_tag == GET_TAG(PROPERTY_TAG)) {                                 \
-    return std::make_tuple(                                                    \
-        CREATE_VARIABLE_NAME(elements, GET_NAME(DIMENTION_TAG),                \
-                             GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)),    \
-        CREATE_VARIABLE_NAME(receiver_indices, GET_NAME(DIMENTION_TAG),        \
-                             GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)));   \
-  }
-
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      RETURN_VALUE,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(
+  CALL_CODE_FOR_ALL_MATERIAL_SYSTEMS(
+      CAPTURE(elements, receiver_indices) WHERE(DIMENSION_TAG_DIM2) WHERE(
           MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
-
-#undef RETURN_VALUE
+          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
+      if (medium_tag == _medium_tag_ && property_tag == _property_tag_) {
+        return std::make_tuple(_elements_, _receiver_indices_);
+      })
 
   Kokkos::abort("Invalid medium or property tag. Please check the input "
                 "parameters and try again.");
