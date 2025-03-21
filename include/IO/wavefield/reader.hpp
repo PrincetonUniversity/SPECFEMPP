@@ -2,7 +2,7 @@
 
 #include "compute/interface.hpp"
 // #include "enumerations/interface.hpp"
-#include "IO/reader.hpp"
+#include "io/reader.hpp"
 
 namespace specfem {
 namespace io {

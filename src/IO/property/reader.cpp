@@ -1,8 +1,8 @@
-#include "IO/property/reader.hpp"
-#include "IO/ASCII/ASCII.hpp"
-#include "IO/HDF5/HDF5.hpp"
-#include "IO/property/reader.tpp"
-#include "IO/reader.hpp"
+#include "io/property/reader.hpp"
+#include "io/ASCII/ASCII.hpp"
+#include "io/HDF5/HDF5.hpp"
+#include "io/property/reader.tpp"
+#include "io/reader.hpp"
 
 // Explicit instantiation
 template class specfem::io::property_reader<

@@ -1,9 +1,9 @@
 #include "parameter_parser/writer/wavefield.hpp"
-#include "IO/ASCII/ASCII.hpp"
-#include "IO/HDF5/HDF5.hpp"
-#include "IO/reader.hpp"
-#include "IO/wavefield/reader.hpp"
-#include "IO/wavefield/writer.hpp"
+#include "io/ASCII/ASCII.hpp"
+#include "io/HDF5/HDF5.hpp"
+#include "io/reader.hpp"
+#include "io/wavefield/reader.hpp"
+#include "io/wavefield/writer.hpp"
 #include <boost/filesystem.hpp>
 
 specfem::runtime_configuration::wavefield::wavefield(

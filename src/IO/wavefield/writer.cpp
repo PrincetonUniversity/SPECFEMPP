@@ -1,7 +1,7 @@
-#include "IO/wavefield/writer.hpp"
-#include "IO/ASCII/ASCII.hpp"
-#include "IO/HDF5/HDF5.hpp"
-#include "IO/wavefield/writer.tpp"
+#include "io/wavefield/writer.hpp"
+#include "io/ASCII/ASCII.hpp"
+#include "io/HDF5/HDF5.hpp"
+#include "io/wavefield/writer.tpp"
 
 // Explicit instantiation
 

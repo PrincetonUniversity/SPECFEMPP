@@ -1,8 +1,8 @@
 #pragma once
 
-#include "IO/ASCII/ASCII.hpp"
-#include "IO/HDF5/HDF5.hpp"
-#include "IO/wavefield/reader.hpp"
+#include "io/ASCII/ASCII.hpp"
+#include "io/HDF5/HDF5.hpp"
+#include "io/wavefield/reader.hpp"
 
 template <typename IOLibrary>
 specfem::io::wavefield_reader<IOLibrary>::wavefield_reader(

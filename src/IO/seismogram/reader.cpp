@@ -1,4 +1,4 @@
-#include "IO/seismogram/reader.hpp"
+#include "io/seismogram/reader.hpp"
 #include <fstream>
 #include <tuple>
 #include <vector>

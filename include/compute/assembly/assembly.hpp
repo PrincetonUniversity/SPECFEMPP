@@ -1,7 +1,6 @@
 #ifndef _COMPUTE_ASSEMBLY_HPP
 #define _COMPUTE_ASSEMBLY_HPP
 
-#include "IO/reader.hpp"
 #include "compute/boundaries/boundaries.hpp"
 #include "compute/boundary_values/boundary_values.hpp"
 #include "compute/compute_mesh.hpp"
@@ -14,6 +13,7 @@
 #include "compute/sources/sources.hpp"
 #include "enumerations/display.hpp"
 #include "enumerations/interface.hpp"
+#include "io/reader.hpp"
 #include "mesh/mesh.hpp"
 #include "receiver/interface.hpp"
 #include "source/interface.hpp"

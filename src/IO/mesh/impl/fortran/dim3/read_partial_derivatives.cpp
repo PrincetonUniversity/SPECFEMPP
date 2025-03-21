@@ -1,6 +1,6 @@
-#include "IO/fortranio/interface.hpp"
-#include "IO/mesh/impl/fortran/dim3/interface.hpp"
 #include "enumerations/dimension.hpp"
+#include "io/fortranio/interface.hpp"
+#include "io/mesh/impl/fortran/dim3/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "specfem_mpi/interface.hpp"
 #include <Kokkos_Core.hpp>

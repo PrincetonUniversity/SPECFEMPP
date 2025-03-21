@@ -1,6 +1,6 @@
 #pragma once
 
-#include "IO/impl/medium_writer.hpp"
+#include "io/impl/medium_writer.hpp"
 #include "compute/assembly/assembly.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/material_definitions.hpp"

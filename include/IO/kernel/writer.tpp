@@ -1,7 +1,7 @@
 #pragma once
 
-#include "IO/property/writer.hpp"
-#include "IO/impl/medium_writer.hpp"
+#include "io/property/writer.hpp"
+#include "io/impl/medium_writer.hpp"
 
 namespace specfem {
 namespace io {

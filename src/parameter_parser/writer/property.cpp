@@ -1,8 +1,8 @@
 #include "parameter_parser/writer/property.hpp"
-#include "IO/ASCII/ASCII.hpp"
-#include "IO/HDF5/HDF5.hpp"
-#include "IO/property/reader.hpp"
-#include "IO/property/writer.hpp"
+#include "io/ASCII/ASCII.hpp"
+#include "io/HDF5/HDF5.hpp"
+#include "io/property/reader.hpp"
+#include "io/property/writer.hpp"
 #include <boost/filesystem.hpp>
 
 specfem::runtime_configuration::property::property(const YAML::Node &Node,

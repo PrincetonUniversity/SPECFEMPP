@@ -1,6 +1,6 @@
 #pragma once
 
-#include "IO/fortranio/interface.hpp"
+#include "io/fortranio/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "specfem_mpi/interface.hpp"
 

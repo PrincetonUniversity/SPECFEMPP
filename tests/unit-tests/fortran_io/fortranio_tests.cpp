@@ -1,4 +1,4 @@
-#include "IO/fortranio/interface.hpp"
+#include "io/fortranio/interface.hpp"
 #include "specfem_setup.hpp"
 #include <boost/algorithm/string/trim.hpp>
 #include <fstream>

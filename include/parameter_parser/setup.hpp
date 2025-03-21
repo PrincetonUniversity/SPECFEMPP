@@ -1,10 +1,10 @@
 #ifndef _PARAMETER_SETUP_HPP
 #define _PARAMETER_SETUP_HPP
 
-#include "IO/reader.hpp"
 #include "database_configuration.hpp"
 #include "elastic_wave.hpp"
 #include "header.hpp"
+#include "io/reader.hpp"
 #include "parameter_parser/solver/interface.hpp"
 #include "quadrature.hpp"
 #include "receivers.hpp"
