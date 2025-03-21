@@ -9,7 +9,7 @@
 #include <vector>
 
 namespace specfem {
-namespace IO {
+namespace io {
 namespace mesh {
 namespace impl {
 namespace fortran {
@@ -37,5 +37,5 @@ read_material_properties(std::ifstream &stream, const int numat,
 } // namespace fortran
 } // namespace impl
 } // namespace mesh
-} // namespace IO
+} // namespace io
 } // namespace specfem

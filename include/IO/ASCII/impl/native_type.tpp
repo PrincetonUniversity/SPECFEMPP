@@ -5,7 +5,7 @@
 #include <iomanip>
 #include <string>
 
-template <> struct specfem::IO::impl::ASCII::native_type<bool> {
+template <> struct specfem::io::impl::ASCII::native_type<bool> {
   static void write(std::ostream &os, const bool &value) {
     os << value << "\n";
   }
@@ -16,7 +16,7 @@ template <> struct specfem::IO::impl::ASCII::native_type<bool> {
   }
 };
 
-template <> struct specfem::IO::impl::ASCII::native_type<unsigned short> {
+template <> struct specfem::io::impl::ASCII::native_type<unsigned short> {
   static void write(std::ostream &os, const unsigned short &value) {
     os << value << "\n";
   }
@@ -27,7 +27,7 @@ template <> struct specfem::IO::impl::ASCII::native_type<unsigned short> {
   }
 };
 
-template <> struct specfem::IO::impl::ASCII::native_type<short> {
+template <> struct specfem::io::impl::ASCII::native_type<short> {
   static void write(std::ostream &os, const short &value) {
     os << value << "\n";
   }
@@ -38,7 +38,7 @@ template <> struct specfem::IO::impl::ASCII::native_type<short> {
   }
 };
 
-template <> struct specfem::IO::impl::ASCII::native_type<int> {
+template <> struct specfem::io::impl::ASCII::native_type<int> {
   static void write(std::ofstream &os, const int &value) {
     os << value << "\n";
   }
@@ -49,7 +49,7 @@ template <> struct specfem::IO::impl::ASCII::native_type<int> {
   }
 };
 
-template <> struct specfem::IO::impl::ASCII::native_type<long> {
+template <> struct specfem::io::impl::ASCII::native_type<long> {
   static void write(std::ostream &os, const long &value) {
     os << value << "\n";
   }
@@ -60,7 +60,7 @@ template <> struct specfem::IO::impl::ASCII::native_type<long> {
   }
 };
 
-template <> struct specfem::IO::impl::ASCII::native_type<long long> {
+template <> struct specfem::io::impl::ASCII::native_type<long long> {
   static void write(std::ostream &os, const long long &value) {
     os << value << "\n";
   }
@@ -71,7 +71,7 @@ template <> struct specfem::IO::impl::ASCII::native_type<long long> {
   }
 };
 
-template <> struct specfem::IO::impl::ASCII::native_type<unsigned int> {
+template <> struct specfem::io::impl::ASCII::native_type<unsigned int> {
   static void write(std::ostream &os, const unsigned int &value) {
     os << value << "\n";
   }
@@ -82,7 +82,7 @@ template <> struct specfem::IO::impl::ASCII::native_type<unsigned int> {
   }
 };
 
-template <> struct specfem::IO::impl::ASCII::native_type<unsigned long> {
+template <> struct specfem::io::impl::ASCII::native_type<unsigned long> {
   static void write(std::ostream &os, const unsigned long &value) {
     os << value << "\n";
   }
@@ -93,7 +93,7 @@ template <> struct specfem::IO::impl::ASCII::native_type<unsigned long> {
   }
 };
 
-template <> struct specfem::IO::impl::ASCII::native_type<unsigned long long> {
+template <> struct specfem::io::impl::ASCII::native_type<unsigned long long> {
   static void write(std::ostream &os, const unsigned long long &value) {
     os << value << "\n";
   }
@@ -104,7 +104,7 @@ template <> struct specfem::IO::impl::ASCII::native_type<unsigned long long> {
   }
 };
 
-template <> struct specfem::IO::impl::ASCII::native_type<unsigned char> {
+template <> struct specfem::io::impl::ASCII::native_type<unsigned char> {
   static void write(std::ostream &os, const unsigned char &value) {
     os << value << "\n";
   }
@@ -115,7 +115,7 @@ template <> struct specfem::IO::impl::ASCII::native_type<unsigned char> {
   }
 };
 
-template <> struct specfem::IO::impl::ASCII::native_type<float> {
+template <> struct specfem::io::impl::ASCII::native_type<float> {
   static void write(std::ostream &os, const float &value) {
     os << std::setprecision(10) << std::scientific << value << "\n";
   }
@@ -126,7 +126,7 @@ template <> struct specfem::IO::impl::ASCII::native_type<float> {
   }
 };
 
-template <> struct specfem::IO::impl::ASCII::native_type<double> {
+template <> struct specfem::io::impl::ASCII::native_type<double> {
   static void write(std::ostream &os, const double &value) {
     os << std::setprecision(10) << std::scientific << value << "\n";
   }
@@ -137,7 +137,7 @@ template <> struct specfem::IO::impl::ASCII::native_type<double> {
   }
 };
 
-template <> struct specfem::IO::impl::ASCII::native_type<std::string> {
+template <> struct specfem::io::impl::ASCII::native_type<std::string> {
   static void write(std::ostream &os, const std::string &value) {
     os << value << "\n";
   }

@@ -7,7 +7,7 @@ class assembly;
 } // namespace specfem
 
 namespace specfem {
-namespace IO {
+namespace io {
 /**
  * @brief Base writer class
  *
@@ -20,8 +20,8 @@ public:
    * @param assembly Assembly object
    *
    */
-  virtual void write(specfem::compute::assembly &assembly){};
+  virtual void write(specfem::compute::assembly &assembly) {};
 };
 
-} // namespace IO
+} // namespace io
 } // namespace specfem

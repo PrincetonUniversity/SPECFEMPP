@@ -14,10 +14,10 @@ Now that we have implemented the writer and reader classes, let's instantiate th
         const auto& forward = fields.forward;
         const auto& buffer = fields.buffer;
 
-        writer<specfem::IO::HDF5<specfem::IO::write>> writer("output", forward);
+        writer<specfem::io::HDF5<specfem::io::write>> writer("output", forward);
         writer.write();
 
-        reader<specfem::IO::HDF5<specfem::IO::read>> reader("output", buffer);
+        reader<specfem::io::HDF5<specfem::io::read>> reader("output", buffer);
         reader.read();
 
         // Deep copy the buffer into the backward field
@@ -36,10 +36,10 @@ Similarly, you could instantiate the writer and reader with the ASCII library.
         const auto& forward = fields.forward;
         const auto& buffer = fields.buffer;
 
-        writer<specfem::IO::ASCII<specfem::IO::write>> writer("output", forward);
+        writer<specfem::io::ASCII<specfem::io::write>> writer("output", forward);
         writer.write();
 
-        reader<specfem::IO::ASCII<specfem::IO::read>> reader("output", buffer);
+        reader<specfem::io::ASCII<specfem::io::read>> reader("output", buffer);
         reader.read();
 
         // Deep copy the buffer into the backward field

@@ -142,7 +142,7 @@ read_materials(
   // Loop over number of materials and read material properties
   for (int i = 0; i < numat; i++) {
 
-    specfem::IO::fortran_read_line(
+    specfem::io::fortran_read_line(
         stream, &read_values.n, &read_values.indic, &read_values.val0,
         &read_values.val1, &read_values.val2, &read_values.val3,
         &read_values.val4, &read_values.val5, &read_values.val6,
@@ -430,7 +430,7 @@ void read_material_indices(
 
   for (int ispec = 0; ispec < nspec; ispec++) {
     // format: #element_id  #material_id #node_id1 #node_id2 #...
-    specfem::IO::fortran_read_line(stream, &n, &kmato_read, &knods_read,
+    specfem::io::fortran_read_line(stream, &n, &kmato_read, &knods_read,
                                    &pml_read);
 
     if (n < 1 || n > nspec) {
@@ -455,7 +455,7 @@ void read_material_indices(
 }
 
 specfem::mesh::materials<specfem::dimension::type::dim2>
-specfem::IO::mesh::impl::fortran::dim2::read_material_properties(
+specfem::io::mesh::impl::fortran::dim2::read_material_properties(
     std::ifstream &stream, const int numat, const int nspec,
     const specfem::enums::elastic_wave wave,
     const specfem::kokkos::HostView2d<int> knods,

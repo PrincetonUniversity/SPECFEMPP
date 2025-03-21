@@ -5,7 +5,7 @@
 #include "specfem_mpi/interface.hpp"
 
 namespace specfem {
-namespace IO {
+namespace io {
 namespace mesh {
 namespace impl {
 namespace fortran {
@@ -41,5 +41,5 @@ read_axial_elements(std::ifstream &stream, const int nelem_on_the_axis,
 } // namespace fortran
 } // namespace impl
 } // namespace mesh
-} // namespace IO
+} // namespace io
 } // namespace specfem

@@ -82,7 +82,7 @@ struct assembly {
       const type_real t0, const type_real dt, const int max_timesteps,
       const int max_sig_step, const int nsteps_between_samples,
       const specfem::simulation::type simulation,
-      const std::shared_ptr<specfem::IO::reader> &property_reader);
+      const std::shared_ptr<specfem::io::reader> &property_reader);
 
   /**
    * @brief Maps the component of wavefield on the entire spectral element grid

@@ -12,7 +12,7 @@
 #include <vector>
 
 std::vector<std::shared_ptr<specfem::receivers::receiver> >
-specfem::IO::read_receivers(const std::string stations_file,
+specfem::io::read_receivers(const std::string stations_file,
                             const type_real angle) {
 
   boost::char_separator<char> sep(" ");
@@ -53,7 +53,7 @@ specfem::IO::read_receivers(const std::string stations_file,
 }
 
 std::vector<std::shared_ptr<specfem::receivers::receiver> >
-specfem::IO::read_receivers(const YAML::Node &stations, const type_real angle) {
+specfem::io::read_receivers(const YAML::Node &stations, const type_real angle) {
 
   // If stations file is a string then read the stations file from text format
   try {

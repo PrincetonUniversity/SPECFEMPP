@@ -177,14 +177,14 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
 
     // Read mesh generated MESHFEM
     specfem::mesh::mesh mesh =
-        specfem::IO::read_2d_mesh(database_file, elastic_wave, mpi);
+        specfem::io::read_2d_mesh(database_file, elastic_wave, mpi);
     const type_real dt = setup.get_dt();
     const int nsteps = setup.get_nsteps();
 
     // Read sources
     //    if start time is not explicitly specified then t0 is determined using
     //    source frequencies and time shift
-    auto [sources, t0] = specfem::IO::read_sources(
+    auto [sources, t0] = specfem::io::read_sources(
         source_node, nsteps, setup.get_t0(), dt, setup.get_simulation_type());
 
     for (auto &source : sources) {
@@ -199,7 +199,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
 
     const auto stations_node = setup.get_stations();
     const auto angle = setup.get_receiver_angle();
-    auto receivers = specfem::IO::read_receivers(stations_node, angle);
+    auto receivers = specfem::io::read_receivers(stations_node, angle);
 
     std::cout << "  Receiver information\n";
     std::cout << "------------------------------" << std::endl;
@@ -322,7 +322,7 @@ TEST(DISPLACEMENT_TESTS, newmark_scheme_tests) {
       for (int icomp = 0; icomp < ncomponents; icomp++) {
         const auto trace =
             Kokkos::subview(traces, icomp, Kokkos::ALL, Kokkos::ALL);
-        specfem::IO::seismogram_reader reader(
+        specfem::io::seismogram_reader reader(
             filename[icomp], specfem::enums::seismogram::format::ascii, trace);
         reader.read();
       }

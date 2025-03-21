@@ -8,7 +8,7 @@
 #include <tuple>
 
 namespace specfem {
-namespace IO {
+namespace io {
 namespace mesh {
 namespace impl {
 namespace fortran {
@@ -52,5 +52,5 @@ read_mesh_database_attenuation(std::ifstream &stream,
 } // namespace fortran
 } // namespace impl
 } // namespace mesh
-} // namespace IO
+} // namespace io
 } // namespace specfem

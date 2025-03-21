@@ -6,7 +6,7 @@
 #include <vector>
 
 namespace specfem {
-namespace IO {
+namespace io {
 namespace mesh {
 namespace impl {
 namespace fortran {
@@ -72,5 +72,5 @@ read_boundaries(std::ifstream &stream, const int nspec, const int n_absorbing,
 } // namespace fortran
 } // namespace impl
 } // namespace mesh
-} // namespace IO
+} // namespace io
 } // namespace specfem

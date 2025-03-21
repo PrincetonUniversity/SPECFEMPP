@@ -5,12 +5,12 @@
 #include "IO/wavefield/reader.hpp"
 
 template <typename IOLibrary>
-specfem::IO::wavefield_reader<IOLibrary>::wavefield_reader(
+specfem::io::wavefield_reader<IOLibrary>::wavefield_reader(
     const std::string &output_folder)
     : output_folder(output_folder) {}
 
 template <typename IOLibrary>
-void specfem::IO::wavefield_reader<IOLibrary>::read(
+void specfem::io::wavefield_reader<IOLibrary>::read(
     specfem::compute::assembly &assembly) {
   auto &buffer = assembly.fields.buffer;
   auto &boundary_values = assembly.boundary_values;

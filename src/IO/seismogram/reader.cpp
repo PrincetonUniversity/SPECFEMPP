@@ -3,7 +3,7 @@
 #include <tuple>
 #include <vector>
 
-void specfem::IO::seismogram_reader::read() {
+void specfem::io::seismogram_reader::read() {
 
   if (type != specfem::enums::seismogram::format::ascii) {
     throw std::runtime_error("Only ASCII format is supported");

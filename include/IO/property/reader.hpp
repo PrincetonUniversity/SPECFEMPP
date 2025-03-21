@@ -5,7 +5,7 @@
 #include "enumerations/interface.hpp"
 
 namespace specfem {
-namespace IO {
+namespace io {
 /**
  * @brief Read model property
  *
@@ -38,5 +38,5 @@ private:
   std::string input_folder;                ///< Path to output folder
   specfem::compute::properties properties; ///< Properties object
 };
-} // namespace IO
+} // namespace io
 } // namespace specfem

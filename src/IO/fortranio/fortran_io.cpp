@@ -5,14 +5,14 @@
 #include <iostream>
 #include <string>
 
-void specfem::IO::fortran_IO(std::ifstream &stream, int &buffer_length) {
+void specfem::io::fortran_IO(std::ifstream &stream, int &buffer_length) {
   if (buffer_length != 0)
     throw std::runtime_error("Error reading fortran file");
 
   return;
 }
 
-void specfem::IO::fortran_read_value(bool *value, std::ifstream &stream,
+void specfem::io::fortran_read_value(bool *value, std::ifstream &stream,
                                      int &buffer_length) {
 
   buffer_length -= fbool;
@@ -28,7 +28,7 @@ void specfem::IO::fortran_read_value(bool *value, std::ifstream &stream,
   return;
 }
 
-void specfem::IO::fortran_read_value(int *value, std::ifstream &stream,
+void specfem::io::fortran_read_value(int *value, std::ifstream &stream,
                                      int &buffer_length) {
 
   buffer_length -= fint;
@@ -42,7 +42,7 @@ void specfem::IO::fortran_read_value(int *value, std::ifstream &stream,
   return;
 }
 
-void specfem::IO::fortran_read_value(float *value, std::ifstream &stream,
+void specfem::io::fortran_read_value(float *value, std::ifstream &stream,
                                      int &buffer_length) {
 
   float *temp;
@@ -59,7 +59,7 @@ void specfem::IO::fortran_read_value(float *value, std::ifstream &stream,
   return;
 }
 
-void specfem::IO::fortran_read_value(double *value, std::ifstream &stream,
+void specfem::io::fortran_read_value(double *value, std::ifstream &stream,
                                      int &buffer_length) {
 
   double *temp;
@@ -76,7 +76,7 @@ void specfem::IO::fortran_read_value(double *value, std::ifstream &stream,
   return;
 }
 
-void specfem::IO::fortran_read_value(std::string *value, std::ifstream &stream,
+void specfem::io::fortran_read_value(std::string *value, std::ifstream &stream,
                                      int &buffer_length) {
   // reading a string has few errors. There seem to unknown characters at the
   // end of the string
@@ -93,7 +93,7 @@ void specfem::IO::fortran_read_value(std::string *value, std::ifstream &stream,
 }
 
 template <>
-void specfem::IO::fortran_read_value(std::vector<bool> *value,
+void specfem::io::fortran_read_value(std::vector<bool> *value,
                                      std::ifstream &stream,
                                      int &buffer_length) {
   int nsize = value->size();
@@ -101,7 +101,7 @@ void specfem::IO::fortran_read_value(std::vector<bool> *value,
   for (int i = 0; i < nsize; i++) {
     // Create a temporary bool variable to hold the value
     bool temp_bool;
-    specfem::IO::fortran_read_value(&temp_bool, stream, buffer_length);
+    specfem::io::fortran_read_value(&temp_bool, stream, buffer_length);
     // Assign the temporary value to the vector element
     rvalue[i] = temp_bool;
   }

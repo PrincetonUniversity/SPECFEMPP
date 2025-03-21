@@ -11,14 +11,14 @@
 #include <string>
 
 namespace specfem {
-namespace IO {
+namespace io {
 namespace impl {
 namespace HDF5 {
 
 #ifndef NO_HDF5
 template <typename OpType> class DatasetBase;
 
-template <> class DatasetBase<specfem::IO::write> {
+template <> class DatasetBase<specfem::io::write> {
 protected:
   template <typename AtomType>
   DatasetBase(std::unique_ptr<H5::H5File> &file, const std::string &name,
@@ -38,7 +38,7 @@ protected:
 
   template <typename value_type> void write(const value_type *data) {
     dataset->write(data,
-                   specfem::IO::impl::HDF5::native_type<value_type>::type());
+                   specfem::io::impl::HDF5::native_type<value_type>::type());
   }
 
   void close() {
@@ -53,7 +53,7 @@ private:
   std::unique_ptr<H5::DataSpace> dataspace;
 };
 
-template <> class DatasetBase<specfem::IO::read> {
+template <> class DatasetBase<specfem::io::read> {
 protected:
   template <typename AtomType>
   DatasetBase(std::unique_ptr<H5::H5File> &file, const std::string &name,
@@ -94,7 +94,7 @@ protected:
 
   template <typename value_type> void read(value_type *data) {
     dataset->read(data,
-                  specfem::IO::impl::HDF5::native_type<value_type>::type());
+                  specfem::io::impl::HDF5::native_type<value_type>::type());
   }
 
   void close() {
@@ -111,7 +111,7 @@ private:
 #endif
 } // namespace HDF5
 } // namespace impl
-} // namespace IO
+} // namespace io
 } // namespace specfem
 
 #endif

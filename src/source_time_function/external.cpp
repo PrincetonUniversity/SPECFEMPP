@@ -132,7 +132,7 @@ void specfem::forcing_function::external::compute_source_time_function(
       continue;
 
     specfem::kokkos::HostView2d<type_real> data("external", nsteps, 2);
-    specfem::IO::seismogram_reader reader(
+    specfem::io::seismogram_reader reader(
         filename[icomp], specfem::enums::seismogram::format::ascii, data);
     reader.read();
     for (int i = 0; i < nsteps; i++) {

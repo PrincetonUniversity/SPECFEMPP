@@ -36,7 +36,7 @@ specfem::runtime_configuration::seismogram::seismogram(
   return;
 }
 
-std::shared_ptr<specfem::IO::writer>
+std::shared_ptr<specfem::io::writer>
 specfem::runtime_configuration::seismogram::instantiate_seismogram_writer(
     const specfem::enums::elastic_wave wave_type, const type_real dt,
     const type_real t0, const int nstep_between_samples) const {
@@ -53,8 +53,8 @@ specfem::runtime_configuration::seismogram::instantiate_seismogram_writer(
     }
   }();
 
-  std::shared_ptr<specfem::IO::writer> writer =
-      std::make_shared<specfem::IO::seismogram_writer>(
+  std::shared_ptr<specfem::io::writer> writer =
+      std::make_shared<specfem::io::seismogram_writer>(
           type, wave_type, this->output_folder, dt, t0, nstep_between_samples);
 
   return writer;

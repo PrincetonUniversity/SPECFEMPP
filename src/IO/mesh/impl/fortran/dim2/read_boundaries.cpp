@@ -164,7 +164,7 @@ read_absorbing_boundaries(std::ifstream &stream, int num_abs_boundary_faces,
 
   if (num_abs_boundary_faces > 0) {
     for (int inum = 0; inum < num_abs_boundary_faces; inum++) {
-      specfem::IO::fortran_read_line(stream, &numabsread, &codeabsread1,
+      specfem::io::fortran_read_line(stream, &numabsread, &codeabsread1,
                                      &codeabsread2, &codeabsread3,
                                      &codeabsread4, &typeabsread, &iedgeread);
       if (numabsread < 1 || numabsread > nspec)
@@ -284,7 +284,7 @@ read_acoustic_free_surface(std::ifstream &stream,
 
   if (nelem_acoustic_surface > 0) {
     for (int inum = 0; inum < nelem_acoustic_surface; inum++) {
-      specfem::IO::fortran_read_line(stream, &acfree_edge);
+      specfem::io::fortran_read_line(stream, &acfree_edge);
       acoustic_free_surface.index_mapping(inum) = acfree_edge[0] - 1;
       const auto control_nodes = Kokkos::subview(
           knods, Kokkos::ALL, acoustic_free_surface.index_mapping(inum));
@@ -313,7 +313,7 @@ read_forcing_boundaries(std::ifstream &stream, const int nelement_acforcing,
 
   if (nelement_acforcing > 0) {
     for (int inum = 0; inum < nelement_acforcing; inum++) {
-      specfem::IO::fortran_read_line(stream, &numacread, &codeacread1,
+      specfem::io::fortran_read_line(stream, &numacread, &codeacread1,
                                      &codeacread2, &codeacread3, &codeacread4,
                                      &typeacread, &iedgeread);
       std::vector<bool> codeacread(4, false);
@@ -354,7 +354,7 @@ read_forcing_boundaries(std::ifstream &stream, const int nelement_acforcing,
 }
 
 specfem::mesh::boundaries<specfem::dimension::type::dim2>
-specfem::IO::mesh::impl::fortran::dim2::read_boundaries(
+specfem::io::mesh::impl::fortran::dim2::read_boundaries(
     std::ifstream &stream, const int nspec, const int n_absorbing,
     const int n_acoustic_surface, const int n_acforcing,
     const Kokkos::View<int **, Kokkos::HostSpace> knods,

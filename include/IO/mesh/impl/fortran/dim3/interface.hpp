@@ -5,7 +5,7 @@
 #include "specfem_mpi/interface.hpp"
 
 namespace specfem {
-namespace IO {
+namespace io {
 namespace mesh {
 namespace impl {
 namespace fortran {
@@ -87,7 +87,7 @@ void read_partial_derivatives(
  * @code{.cpp}
  * // Example of how to use this function
  * Kokkos::View<int *, Kokkos::HostSpace> array("array", 10);
- * specfem::IO::mesh::impl::fortran::dim3::read_array(stream, array);
+ * specfem::io::mesh::impl::fortran::dim3::read_array(stream, array);
  * @endcode
  */
 template <typename ViewType>
@@ -112,7 +112,7 @@ void read_array(std::ifstream &stream, ViewType &array);
  * @code{.cpp}
  * // Example of how to use this function
  * Kokkos::View<int *, Kokkos::HostSpace> array("array", 10);
- * specfem::IO::mesh::impl::fortran::dim3::read_index_array(stream, array);
+ * specfem::io::mesh::impl::fortran::dim3::read_index_array(stream, array);
  * @endcode
  */
 template <typename ViewType>
@@ -128,7 +128,7 @@ void read_index_array(std::ifstream &stream, ViewType &array);
  * @code{.cpp}
  * // Example of how to use this function
  * int test_value;
- * specfem::IO::mesh::impl::fortran::dim3::check_read_test_value(stream,
+ * specfem::io::mesh::impl::fortran::dim3::check_read_test_value(stream,
  * test_value);
  * @endcode
  */
@@ -145,7 +145,7 @@ void check_read_test_value(std::ifstream &stream, int test_value);
  *
  * @code{.cpp}
  * // Example of how to use this function
- * specfem::IO::mesh::impl::fortran::dim3::check_values("message", value,
+ * specfem::io::mesh::impl::fortran::dim3::check_values("message", value,
  * expected);
  * @endcode
  *
@@ -156,7 +156,7 @@ void check_values(std::string message, int value, int expected);
 } // namespace fortran
 } // namespace impl
 } // namespace mesh
-} // namespace IO
+} // namespace io
 } // namespace specfem
 
 #include "IO/mesh/impl/fortran/dim3/utilities.hpp"

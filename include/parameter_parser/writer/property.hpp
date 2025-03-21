@@ -15,9 +15,9 @@ public:
 
   property(const YAML::Node &Node, const bool write_mode);
 
-  std::shared_ptr<specfem::IO::writer> instantiate_property_writer() const;
+  std::shared_ptr<specfem::io::writer> instantiate_property_writer() const;
 
-  std::shared_ptr<specfem::IO::reader> instantiate_property_reader() const;
+  std::shared_ptr<specfem::io::reader> instantiate_property_reader() const;
 
 private:
   bool write_mode;           ///< True if writing, false if reading

@@ -11,11 +11,11 @@ class external;
 } // namespace specfem
 
 namespace specfem {
-namespace IO {
+namespace io {
 
 class seismogram_reader {
 public:
-  seismogram_reader(){};
+  seismogram_reader() {};
   seismogram_reader(const char *filename,
                     const specfem::enums::seismogram::format type,
                     specfem::kokkos::HostView2d<type_real> source_time_function)
@@ -34,7 +34,7 @@ private:
   specfem::enums::seismogram::format type;
   specfem::kokkos::HostView2d<type_real> source_time_function;
 };
-} // namespace IO
+} // namespace io
 } // namespace specfem
 
 #endif /* SPECFEM_READER_SEISMOGRAM_HPP */

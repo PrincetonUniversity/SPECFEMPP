@@ -33,19 +33,19 @@ ASSEMBLY::ASSEMBLY() {
         Test.get_databases();
 
     const auto wave = Test.get_elastic_wave();
-    const auto mesh = specfem::IO::read_2d_mesh(database_file, wave, mpi);
+    const auto mesh = specfem::io::read_2d_mesh(database_file, wave, mpi);
 
     this->Meshes.push_back(mesh);
     this->suffixes.push_back(Test.suffix);
 
     std::cout << sources_file << std::endl;
 
-    const auto [sources, t0] = specfem::IO::read_sources(
+    const auto [sources, t0] = specfem::io::read_sources(
         sources_file, 1, 0, 0, specfem::simulation::type::forward);
 
     this->Sources.push_back(sources);
 
-    const auto receivers = specfem::IO::read_receivers(stations_file, 0);
+    const auto receivers = specfem::io::read_receivers(stations_file, 0);
 
     this->Stations.push_back(receivers);
 

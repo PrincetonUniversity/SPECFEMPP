@@ -4,7 +4,7 @@
 #include "IO/impl/medium_writer.hpp"
 
 namespace specfem {
-namespace IO {
+namespace io {
 
 template <typename OutputLibrary>
 property_writer<OutputLibrary>::property_writer(const std::string output_folder)
@@ -15,5 +15,5 @@ void property_writer<OutputLibrary>::write(specfem::compute::assembly &assembly)
   impl::write_container<OutputLibrary>(output_folder, "Properties", assembly.mesh, assembly.element_types, assembly.properties);
 }
 
-} // namespace IO
+} // namespace io
 } // namespace specfem

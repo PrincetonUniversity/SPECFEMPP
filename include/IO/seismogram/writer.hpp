@@ -8,7 +8,7 @@
 #include <vector>
 
 namespace specfem {
-namespace IO {
+namespace io {
 /**
  * @brief Seismogram writer class to write seismogram to a file
  *
@@ -31,7 +31,7 @@ public:
                     const std::string output_folder, const type_real dt,
                     const type_real t0, const int nstep_between_samples)
       : type(type), wave_type(wave_type), output_folder(output_folder), dt(dt),
-        t0(t0), nstep_between_samples(nstep_between_samples){};
+        t0(t0), nstep_between_samples(nstep_between_samples) {};
   /**
    * @brief Write seismograms
    *
@@ -54,5 +54,5 @@ private:
                              ///< sampling (seismogram sampling frequency)
 };
 
-} // namespace IO
+} // namespace io
 } // namespace specfem

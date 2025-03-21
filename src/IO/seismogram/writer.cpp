@@ -3,7 +3,7 @@
 #include "enumerations/specfem_enums.hpp"
 #include <fstream>
 
-void specfem::IO::seismogram_writer::write(
+void specfem::io::seismogram_writer::write(
     specfem::compute::assembly &assembly) {
   auto &receivers = assembly.receivers;
 

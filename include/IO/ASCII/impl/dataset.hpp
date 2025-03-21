@@ -7,7 +7,7 @@
 #include <string>
 
 namespace specfem {
-namespace IO {
+namespace io {
 namespace impl {
 namespace ASCII {
 
@@ -34,7 +34,7 @@ public:
   using value_type =
       typename ViewType::non_const_value_type; ///< Underlying type
   using native_type =
-      typename specfem::IO::impl::ASCII::native_type<value_type>; ///< Native
+      typename specfem::io::impl::ASCII::native_type<value_type>; ///< Native
                                                                   ///< type used
                                                                   ///< within
                                                                   ///< ASCII
@@ -77,7 +77,7 @@ private:
 };
 } // namespace ASCII
 } // namespace impl
-} // namespace IO
+} // namespace io
 } // namespace specfem
 
 #endif /* _SPECFEM_IO_ASCII_IMPL_DATASET_HPP */

@@ -1198,7 +1198,7 @@ void test_properties(
   boost::filesystem::create_directories(dir_path);
 
   // stage 2: write properties
-  specfem::IO::property_writer<specfem::IO::ASCII<specfem::IO::write> > writer(
+  specfem::io::property_writer<specfem::io::ASCII<specfem::io::write> > writer(
       dir_path.string());
   writer.write(assembly);
 
@@ -1230,7 +1230,7 @@ void test_properties(
 #undef TEST_STORE_AND_LOAD
 
   // stage 4: restore properties to initial value from disk
-  specfem::IO::property_reader<specfem::IO::ASCII<specfem::IO::read> > reader(
+  specfem::io::property_reader<specfem::io::ASCII<specfem::io::read> > reader(
       dir_path.string());
   reader.read(assembly);
 

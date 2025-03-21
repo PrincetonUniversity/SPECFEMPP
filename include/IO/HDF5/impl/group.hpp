@@ -11,7 +11,7 @@
 #include <string>
 
 namespace specfem {
-namespace IO {
+namespace io {
 namespace impl {
 namespace HDF5 {
 
@@ -23,22 +23,22 @@ public:
   }
 
   template <typename ViewType>
-  specfem::IO::impl::HDF5::Dataset<ViewType, OpType>
+  specfem::io::impl::HDF5::Dataset<ViewType, OpType>
   createDataset(const std::string &name, const ViewType data) {
     throw std::runtime_error("SPECFEM++ was not compiled with HDF5 support");
   }
 
-  specfem::IO::impl::HDF5::Group<OpType> createGroup(const std::string &name) {
+  specfem::io::impl::HDF5::Group<OpType> createGroup(const std::string &name) {
     throw std::runtime_error("SPECFEM++ was not compiled with HDF5 support");
   }
 
   template <typename ViewType>
-  specfem::IO::impl::HDF5::Dataset<ViewType, OpType>
+  specfem::io::impl::HDF5::Dataset<ViewType, OpType>
   openDataset(const std::string &name, const ViewType data) {
     throw std::runtime_error("SPECFEM++ was not compiled with HDF5 support");
   }
 
-  specfem::IO::impl::HDF5::Group<OpType> openGroup(const std::string &name) {
+  specfem::io::impl::HDF5::Group<OpType> openGroup(const std::string &name) {
     throw std::runtime_error("SPECFEM++ was not compiled with HDF5 support");
   }
 };
@@ -59,9 +59,9 @@ template <typename OpType> class Group;
 /**
  * @brief Template specialization for write operation
  */
-template <> class Group<specfem::IO::write> {
+template <> class Group<specfem::io::write> {
 public:
-  using OpType = specfem::IO::write; ///< Operation type
+  using OpType = specfem::io::write; ///< Operation type
 
   /**
    * @name Constructors
@@ -76,7 +76,7 @@ public:
    * @param name Name of the group
    */
   Group(std::unique_ptr<H5::H5File> &file, const std::string &name)
-      : group(std::make_unique<H5::Group>(file->createGroup(name))){};
+      : group(std::make_unique<H5::Group>(file->createGroup(name))) {};
 
   /**
    * @brief Construct a new HDF5 Group object within an HDF5 group with the
@@ -86,7 +86,7 @@ public:
    * @param name Name of the group
    */
   Group(std::unique_ptr<H5::Group> &group, const std::string &name)
-      : group(std::make_unique<H5::Group>(group->createGroup(name))){};
+      : group(std::make_unique<H5::Group>(group->createGroup(name))) {};
   ///@}
 
   /**
@@ -95,12 +95,12 @@ public:
    * @tparam ViewType Kokkos view type of the data
    * @param name Name of the dataset
    * @param data Data to be written
-   * @return specfem::IO::impl::HDF5::Dataset<ViewType, OpType> Dataset object
+   * @return specfem::io::impl::HDF5::Dataset<ViewType, OpType> Dataset object
    */
   template <typename ViewType>
-  specfem::IO::impl::HDF5::Dataset<ViewType, OpType>
+  specfem::io::impl::HDF5::Dataset<ViewType, OpType>
   createDataset(const std::string &name, const ViewType data) {
-    return specfem::IO::impl::HDF5::Dataset<ViewType, OpType>(group, name,
+    return specfem::io::impl::HDF5::Dataset<ViewType, OpType>(group, name,
                                                               data);
   }
 
@@ -108,10 +108,10 @@ public:
    * @brief Create a new group within the group
    *
    * @param name Name of the group
-   * @return specfem::IO::impl::HDF5::Group<OpType> Group object
+   * @return specfem::io::impl::HDF5::Group<OpType> Group object
    */
-  specfem::IO::impl::HDF5::Group<OpType> createGroup(const std::string &name) {
-    return specfem::IO::impl::HDF5::Group<OpType>(group, name);
+  specfem::io::impl::HDF5::Group<OpType> createGroup(const std::string &name) {
+    return specfem::io::impl::HDF5::Group<OpType>(group, name);
   }
 
   ~Group() { group->close(); }
@@ -123,9 +123,9 @@ private:
 /**
  * @brief Template specialization for read operation
  */
-template <> class Group<specfem::IO::read> {
+template <> class Group<specfem::io::read> {
 public:
-  using OpType = specfem::IO::read; ///< Operation type
+  using OpType = specfem::io::read; ///< Operation type
 
   /**
    * @name Constructors
@@ -141,7 +141,7 @@ public:
    * @param name Name of the group
    */
   Group(std::unique_ptr<H5::H5File> &file, const std::string &name)
-      : group(std::make_unique<H5::Group>(file->openGroup(name))){};
+      : group(std::make_unique<H5::Group>(file->openGroup(name))) {};
 
   /**
    * @brief Open an existing HDF5 Group object within an HDF5 group with the
@@ -151,7 +151,7 @@ public:
    * @param name Name of the group
    */
   Group(std::unique_ptr<H5::Group> &group, const std::string &name)
-      : group(std::make_unique<H5::Group>(group->openGroup(name))){};
+      : group(std::make_unique<H5::Group>(group->openGroup(name))) {};
   ///@}
 
   /**
@@ -160,12 +160,12 @@ public:
    * @tparam ViewType Kokkos view type of the data
    * @param name Name of the dataset
    * @param data Data to be read
-   * @return specfem::IO::impl::HDF5::Dataset<ViewType, OpType> Dataset object
+   * @return specfem::io::impl::HDF5::Dataset<ViewType, OpType> Dataset object
    */
   template <typename ViewType>
-  specfem::IO::impl::HDF5::Dataset<ViewType, OpType>
+  specfem::io::impl::HDF5::Dataset<ViewType, OpType>
   openDataset(const std::string &name, const ViewType data) {
-    return specfem::IO::impl::HDF5::Dataset<ViewType, OpType>(group, name,
+    return specfem::io::impl::HDF5::Dataset<ViewType, OpType>(group, name,
                                                               data);
   }
 
@@ -173,10 +173,10 @@ public:
    * @brief Open an existing group within the group
    *
    * @param name Name of the group
-   * @return specfem::IO::impl::HDF5::Group<OpType> Group object
+   * @return specfem::io::impl::HDF5::Group<OpType> Group object
    */
-  specfem::IO::impl::HDF5::Group<OpType> openGroup(const std::string &name) {
-    return specfem::IO::impl::HDF5::Group<OpType>(group, name);
+  specfem::io::impl::HDF5::Group<OpType> openGroup(const std::string &name) {
+    return specfem::io::impl::HDF5::Group<OpType>(group, name);
   }
 
   ~Group() { group->close(); }
@@ -189,7 +189,7 @@ private:
 
 } // namespace HDF5
 } // namespace impl
-} // namespace IO
+} // namespace io
 } // namespace specfem
 
 #endif

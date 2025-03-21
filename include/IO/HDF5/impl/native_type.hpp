@@ -8,7 +8,7 @@
 #endif
 
 namespace specfem {
-namespace IO {
+namespace io {
 namespace impl {
 namespace HDF5 {
 
@@ -24,7 +24,7 @@ template <typename T> struct native_type {};
 #endif
 } // namespace HDF5
 } // namespace impl
-} // namespace IO
+} // namespace io
 } // namespace specfem
 
 #endif

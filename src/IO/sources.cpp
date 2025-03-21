@@ -13,7 +13,7 @@
 #include <vector>
 
 std::tuple<std::vector<std::shared_ptr<specfem::sources::source> >, type_real>
-specfem::IO::read_sources(const std::string sources_file, const int nsteps,
+specfem::io::read_sources(const std::string sources_file, const int nsteps,
                           const type_real user_t0, const type_real dt,
                           const specfem::simulation::type simulation_type) {
   YAML::Node source_node = YAML::LoadFile(sources_file);
@@ -21,7 +21,7 @@ specfem::IO::read_sources(const std::string sources_file, const int nsteps,
 }
 
 std::tuple<std::vector<std::shared_ptr<specfem::sources::source> >, type_real>
-specfem::IO::read_sources(const YAML::Node source_node, const int nsteps,
+specfem::io::read_sources(const YAML::Node source_node, const int nsteps,
                           const type_real user_t0, const type_real dt,
                           const specfem::simulation::type simulation_type) {
 

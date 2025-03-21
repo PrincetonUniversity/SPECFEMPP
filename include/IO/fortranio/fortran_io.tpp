@@ -7,7 +7,7 @@
 #include <iostream>
 
 namespace specfem {
-namespace IO {
+namespace io {
 
 template <typename T>
 void fortran_read_value(std::vector<T> *value,
@@ -17,7 +17,7 @@ void fortran_read_value(std::vector<T> *value,
   std::vector<T> &rvalue = *value;
 
   for (int i = 0; i < nsize; i++) {
-    specfem::IO::fortran_read_value(&rvalue[i], stream, buffer_length);
+    specfem::io::fortran_read_value(&rvalue[i], stream, buffer_length);
   }
 
   return;
@@ -35,8 +35,8 @@ template <typename T, typename... Args>
 void fortran_IO(std::ifstream &stream, int &buffer_length, T *value,
                 Args... values) {
 
-  specfem::IO::fortran_read_value(value, stream, buffer_length);
-  specfem::IO::fortran_IO(stream, buffer_length, values...);
+  specfem::io::fortran_read_value(value, stream, buffer_length);
+  specfem::io::fortran_IO(stream, buffer_length, values...);
   return;
 }
 
@@ -51,7 +51,7 @@ void fortran_read_line(std::ifstream &stream, Args... values) {
   stream.read(reinterpret_cast<char *>(&buffer_length), fint);
 
   try {
-    specfem::IO::fortran_IO(stream, buffer_length, values...);
+    specfem::io::fortran_IO(stream, buffer_length, values...);
   } catch (const std::exception &e) {
     std::ostringstream error_message;
     error_message << "Error reading fortran line with buffer length: "

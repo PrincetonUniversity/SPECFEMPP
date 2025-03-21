@@ -20,7 +20,7 @@ TEST(ALGORITHMS, interpolate_function) {
 
   // Read Mesh database
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
-  specfem::mesh::mesh mesh = specfem::IO::read_2d_mesh(
+  specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(
       database_file, specfem::enums::elastic_wave::p_sv, mpi);
 
   constexpr int N = 5;

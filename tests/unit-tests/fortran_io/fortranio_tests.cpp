@@ -21,21 +21,21 @@ TEST(iotests, fortran_io) {
 
   stream.open(filename);
 
-  specfem::IO::fortran_read_line(stream, &ival);
+  specfem::io::fortran_read_line(stream, &ival);
   EXPECT_EQ(ival, 100);
-  specfem::IO::fortran_read_line(stream, &dval);
+  specfem::io::fortran_read_line(stream, &dval);
   EXPECT_FLOAT_EQ(dval, 100.0);
-  specfem::IO::fortran_read_line(stream, &bval);
+  specfem::io::fortran_read_line(stream, &bval);
   EXPECT_TRUE(bval);
-  specfem::IO::fortran_read_line(stream, &sval);
+  specfem::io::fortran_read_line(stream, &sval);
   EXPECT_THAT(sval.c_str(), testing::StartsWith("Test case"));
-  specfem::IO::fortran_read_line(stream, &ival, &dval);
+  specfem::io::fortran_read_line(stream, &ival, &dval);
   EXPECT_EQ(ival, 100);
   EXPECT_FLOAT_EQ(dval, 100.0);
-  specfem::IO::fortran_read_line(stream, &bval, &sval);
+  specfem::io::fortran_read_line(stream, &bval, &sval);
   EXPECT_TRUE(bval);
   EXPECT_THAT(sval.c_str(), testing::StartsWith("Test case"));
-  specfem::IO::fortran_read_line(stream, &vval);
+  specfem::io::fortran_read_line(stream, &vval);
 
   for (int i = 0; i < 100; i++) {
     EXPECT_EQ(vval[i], 10);

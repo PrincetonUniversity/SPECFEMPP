@@ -9,7 +9,7 @@
 #include <string>
 
 namespace specfem {
-namespace IO {
+namespace io {
 namespace impl {
 namespace ASCII {
 
@@ -29,9 +29,9 @@ template <typename OpType> class File;
  * @brief Template specialization for write operation
  *
  */
-template <> class File<specfem::IO::write> {
+template <> class File<specfem::io::write> {
 public:
-  using OpType = specfem::IO::write; ///< Operation type
+  using OpType = specfem::io::write; ///< Operation type
 
   /**
    * @name Constructors
@@ -76,12 +76,12 @@ public:
    * @tparam ViewType Kokkos view type of the data
    * @param name Name of the dataset
    * @param data Data to write
-   * @return specfem::IO::impl::ASCII::Dataset<ViewType, OpType> Dataset object
+   * @return specfem::io::impl::ASCII::Dataset<ViewType, OpType> Dataset object
    */
   template <typename ViewType>
-  specfem::IO::impl::ASCII::Dataset<ViewType, OpType>
+  specfem::io::impl::ASCII::Dataset<ViewType, OpType>
   createDataset(const std::string &name, const ViewType data) {
-    return specfem::IO::impl::ASCII::Dataset<ViewType, OpType>(folder_path,
+    return specfem::io::impl::ASCII::Dataset<ViewType, OpType>(folder_path,
                                                                name, data);
   }
 
@@ -89,10 +89,10 @@ public:
    * @brief Create a new group within the file
    *
    * @param name Name of the group
-   * @return specfem::IO::impl::ASCII::Group<OpType> Group object
+   * @return specfem::io::impl::ASCII::Group<OpType> Group object
    */
-  specfem::IO::impl::ASCII::Group<OpType> createGroup(const std::string &name) {
-    return specfem::IO::impl::ASCII::Group<OpType>(folder_path, name);
+  specfem::io::impl::ASCII::Group<OpType> createGroup(const std::string &name) {
+    return specfem::io::impl::ASCII::Group<OpType>(folder_path, name);
   }
 
   ~File() {}
@@ -105,9 +105,9 @@ private:
  * @brief Template specialization for read operation
  *
  */
-template <> class File<specfem::IO::read> {
+template <> class File<specfem::io::read> {
 public:
-  using OpType = specfem::IO::read; ///< Operation type
+  using OpType = specfem::io::read; ///< Operation type
 
   /**
    * @name Constructors
@@ -138,12 +138,12 @@ public:
    * @tparam ViewType Kokkos view type of the data
    * @param name Name of the dataset
    * @param data Data to be read
-   * @return specfem::IO::impl::ASCII::Dataset<ViewType, OpType> Dataset object
+   * @return specfem::io::impl::ASCII::Dataset<ViewType, OpType> Dataset object
    */
   template <typename ViewType>
-  specfem::IO::impl::ASCII::Dataset<ViewType, OpType>
+  specfem::io::impl::ASCII::Dataset<ViewType, OpType>
   openDataset(const std::string &name, const ViewType data) {
-    return specfem::IO::impl::ASCII::Dataset<ViewType, OpType>(folder_path,
+    return specfem::io::impl::ASCII::Dataset<ViewType, OpType>(folder_path,
                                                                name, data);
   }
 
@@ -151,10 +151,10 @@ public:
    * @brief Open an existing group within the file
    *
    * @param name Name of the group
-   * @return specfem::IO::impl::ASCII::Group<OpType> Group object
+   * @return specfem::io::impl::ASCII::Group<OpType> Group object
    */
-  specfem::IO::impl::ASCII::Group<OpType> openGroup(const std::string &name) {
-    return specfem::IO::impl::ASCII::Group<OpType>(folder_path, name);
+  specfem::io::impl::ASCII::Group<OpType> openGroup(const std::string &name) {
+    return specfem::io::impl::ASCII::Group<OpType>(folder_path, name);
   }
 
   ~File() {}
@@ -164,7 +164,7 @@ private:
 };
 } // namespace ASCII
 } // namespace impl
-} // namespace IO
+} // namespace io
 } // namespace specfem
 
 #endif /* _SPECFEM_IO_ASCII_IMPL_FILE_HPP */

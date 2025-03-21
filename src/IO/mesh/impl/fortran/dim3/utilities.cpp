@@ -5,7 +5,7 @@
 #include <stdexcept>
 
 // Rewrite check_read_test_value to use try_read_line
-void specfem::IO::mesh::impl::fortran::dim3::check_read_test_value(
+void specfem::io::mesh::impl::fortran::dim3::check_read_test_value(
     std::ifstream &stream, int test_value) {
   // Read test value that should be value
   int value;
@@ -19,7 +19,7 @@ void specfem::IO::mesh::impl::fortran::dim3::check_read_test_value(
   }
 }
 
-void specfem::IO::mesh::impl::fortran::dim3::check_values(std::string message,
+void specfem::io::mesh::impl::fortran::dim3::check_values(std::string message,
                                                           int value,
                                                           int expected) {
   if (value != expected) {

@@ -9,12 +9,12 @@
 #include <Kokkos_Core.hpp>
 
 template <typename InputLibrary>
-specfem::IO::property_reader<InputLibrary>::property_reader(
+specfem::io::property_reader<InputLibrary>::property_reader(
     const std::string input_folder)
     : input_folder(input_folder) {}
 
 template <typename InputLibrary>
-void specfem::IO::property_reader<InputLibrary>::read(
+void specfem::io::property_reader<InputLibrary>::read(
     specfem::compute::assembly &assembly) {
   auto &properties = assembly.properties;
 

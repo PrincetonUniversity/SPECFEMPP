@@ -11,7 +11,7 @@
 
 namespace specfem {
 
-namespace IO {
+namespace io {
 
 /**
  * @brief Construct a mesh object from a Fortran binary database file
@@ -121,5 +121,5 @@ read_sources(const YAML::Node yaml, const int nsteps, const type_real user_t0,
              const type_real dt,
              const specfem::simulation::type simulation_type);
 
-} // namespace IO
+} // namespace io
 } // namespace specfem

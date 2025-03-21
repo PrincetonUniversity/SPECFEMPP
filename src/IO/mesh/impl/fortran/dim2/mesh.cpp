@@ -24,7 +24,7 @@
 #include <vector>
 
 specfem::mesh::mesh<specfem::dimension::type::dim2>
-specfem::IO::read_2d_mesh(const std::string filename,
+specfem::io::read_2d_mesh(const std::string filename,
                           const specfem::enums::elastic_wave wave,
                           const specfem::MPI::MPI *mpi) {
 
@@ -42,7 +42,7 @@ specfem::IO::read_2d_mesh(const std::string filename,
 
   try {
     std::tie(nspec, npgeo, nproc) =
-        specfem::IO::mesh::impl::fortran::dim2::read_mesh_database_header(
+        specfem::io::mesh::impl::fortran::dim2::read_mesh_database_header(
             stream, mpi);
     mesh.nspec = nspec;
     mesh.npgeo = npgeo;
@@ -54,7 +54,7 @@ specfem::IO::read_2d_mesh(const std::string filename,
   // Mesh class to be populated from the database file.
   try {
     mesh.control_nodes.coord =
-        specfem::IO::mesh::impl::fortran::dim2::read_coorg_elements(
+        specfem::io::mesh::impl::fortran::dim2::read_coorg_elements(
             stream, mesh.npgeo, mpi);
   } catch (std::runtime_error &e) {
     throw;
@@ -62,7 +62,7 @@ specfem::IO::read_2d_mesh(const std::string filename,
 
   try {
     mesh.parameters =
-        specfem::IO::mesh::impl::fortran::dim2::read_mesh_parameters(stream,
+        specfem::io::mesh::impl::fortran::dim2::read_mesh_parameters(stream,
                                                                      mpi);
   } catch (std::runtime_error &e) {
     throw;
@@ -81,7 +81,7 @@ specfem::IO::read_2d_mesh(const std::string filename,
 
   try {
     auto [n_sls, attenuation_f0_reference, read_velocities_at_f0] =
-        specfem::IO::mesh::impl::fortran::dim2::read_mesh_database_attenuation(
+        specfem::io::mesh::impl::fortran::dim2::read_mesh_database_attenuation(
             stream, mpi);
   } catch (std::runtime_error &e) {
     throw;
@@ -89,7 +89,7 @@ specfem::IO::read_2d_mesh(const std::string filename,
 
   try {
     mesh.materials =
-        specfem::IO::mesh::impl::fortran::dim2::read_material_properties(
+        specfem::io::mesh::impl::fortran::dim2::read_material_properties(
             stream, mesh.parameters.numat, mesh.nspec, wave,
             mesh.control_nodes.knods, mpi);
   } catch (std::runtime_error &e) {
@@ -99,10 +99,10 @@ specfem::IO::read_2d_mesh(const std::string filename,
   int ninterfaces;
   int max_interface_size;
 
-  specfem::IO::fortran_read_line(stream, &ninterfaces, &max_interface_size);
+  specfem::io::fortran_read_line(stream, &ninterfaces, &max_interface_size);
 
   try {
-    mesh.boundaries = specfem::IO::mesh::impl::fortran::dim2::read_boundaries(
+    mesh.boundaries = specfem::io::mesh::impl::fortran::dim2::read_boundaries(
         stream, mesh.parameters.nspec, mesh.parameters.nelemabs,
         mesh.parameters.nelem_acoustic_surface, mesh.parameters.nelem_acforcing,
         mesh.control_nodes.knods, mpi);
@@ -112,7 +112,7 @@ specfem::IO::read_2d_mesh(const std::string filename,
 
   try {
     mesh.coupled_interfaces =
-        specfem::IO::mesh::impl::fortran::dim2::read_coupled_interfaces(
+        specfem::io::mesh::impl::fortran::dim2::read_coupled_interfaces(
             stream, mesh.parameters.num_fluid_solid_edges,
             mesh.parameters.num_fluid_poro_edges,
             mesh.parameters.num_solid_poro_edges, mpi);
@@ -122,7 +122,7 @@ specfem::IO::read_2d_mesh(const std::string filename,
 
   try {
     mesh.tangential_nodes =
-        specfem::IO::mesh::impl::fortran::dim2::read_tangential_elements(
+        specfem::io::mesh::impl::fortran::dim2::read_tangential_elements(
             stream, mesh.parameters.nnodes_tangential_curve);
   } catch (std::runtime_error &e) {
     throw;
@@ -130,7 +130,7 @@ specfem::IO::read_2d_mesh(const std::string filename,
 
   try {
     mesh.axial_nodes =
-        specfem::IO::mesh::impl::fortran::dim2::read_axial_elements(
+        specfem::io::mesh::impl::fortran::dim2::read_axial_elements(
             stream, mesh.parameters.nelem_on_the_axis, mesh.nspec, mpi);
   } catch (std::runtime_error &e) {
     throw;

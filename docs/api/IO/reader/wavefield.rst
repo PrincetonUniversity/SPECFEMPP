@@ -4,5 +4,5 @@
 Wavefield Reader
 ================
 
-.. doxygenclass:: specfem::IO::wavefield_reader
+.. doxygenclass:: specfem::io::wavefield_reader
     :members:

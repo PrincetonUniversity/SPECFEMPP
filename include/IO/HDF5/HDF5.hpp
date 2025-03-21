@@ -10,7 +10,7 @@
 #include "IO/HDF5/impl/group.hpp"
 
 namespace specfem {
-namespace IO {
+namespace io {
 /**
  * @brief HDF5 I/O wrapper
  *
@@ -18,13 +18,13 @@ namespace IO {
  */
 template <typename OpType> class HDF5 {
 public:
-  using File = specfem::IO::impl::HDF5::File<OpType>; ///< Wrapper for HDF5 file
+  using File = specfem::io::impl::HDF5::File<OpType>; ///< Wrapper for HDF5 file
   using Group =
-      specfem::IO::impl::HDF5::Group<OpType>; ///< Wrapper for HDF5 group
+      specfem::io::impl::HDF5::Group<OpType>; ///< Wrapper for HDF5 group
   template <typename ViewType>
   using Dataset =
-      specfem::IO::impl::HDF5::Dataset<ViewType, OpType>; ///< Wrapper for HDF5
+      specfem::io::impl::HDF5::Dataset<ViewType, OpType>; ///< Wrapper for HDF5
                                                           ///< dataset
 };
-} // namespace IO
+} // namespace io
 } // namespace specfem
