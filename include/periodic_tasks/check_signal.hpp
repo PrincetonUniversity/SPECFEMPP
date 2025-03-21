@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <csignal>
 #include <string>
+#include <iostream>
 
 /**
  * @brief Catch signals
@@ -18,10 +19,11 @@
  * if releasing the GIL in execute() function.
  */
 void catch_signals() {
-  auto handler = [](int code) { throw std::runtime_error("SIGNAL " + std::to_string(code)); };
+  auto handler = [](int code) { 
+    std::string message =  "SIGNAL " + std::to_string(code);
+    throw std::runtime_error(message);
+  };
   signal(SIGINT, handler);
-  signal(SIGTERM, handler);
-  signal(SIGKILL, handler);
 }
 
 namespace specfem {

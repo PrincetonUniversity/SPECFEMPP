@@ -43,11 +43,16 @@ bool _initialize(py::list py_argv) {
   return true;
 }
 
+
 bool _execute(const std::string &parameter_string,
               const std::string &default_string) {
   if (_py_mpi == NULL) {
     return false;
   }
+
+  
+  // This is the signal handler for catching signals for Python only 
+  // so that jupyter notebooks aren't killed.
   const YAML::Node parameter_dict = YAML::Load(parameter_string);
   const YAML::Node default_dict = YAML::Load(default_string);
   std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> > tasks;
