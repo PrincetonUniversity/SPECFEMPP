@@ -204,7 +204,7 @@ struct properties<specfem::dimension::type::dim2,
     return H_Biot() - (static_cast<value_type>(2.0)) * mu_G();
   }
 
-  KOKKOS_INLINE_FUNCTION const value_type lambdaplus2mu() const {
+  KOKKOS_INLINE_FUNCTION const value_type lambdaplus2mu_G() const {
     return lambda_G() + (static_cast<value_type>(2.0)) * mu_G();
   }
 
@@ -228,6 +228,11 @@ struct properties<specfem::dimension::type::dim2,
         permxx() * permzz() - permxz() * permxz(); ///< determinant of the
                                                    ///< permeability tensor
     return permxx() / determinant; ///< inverse of the permeability tensor
+  }
+
+  KOKKOS_INLINE_FUNCTION const value_type rho_bar() const {
+    return (((static_cast<type_real>(1.0) - this->phi()) * this->rho_s()) +
+            (this->phi() * this->rho_f()));
   }
 };
 

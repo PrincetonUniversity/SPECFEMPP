@@ -63,11 +63,7 @@ void specfem::sources::force::compute_source_array(
         }
         source_array(0, iz, ix) = hlagrange;
 
-      }
-      // Elastic P-SV, Poroelastic, or Electromagnetic P-SV
-      else if ((el_type == specfem::element::medium_tag::elastic_sv) ||
-               (el_type == specfem::element::medium_tag::poroelastic) ||
-               (el_type == specfem::element::medium_tag::electromagnetic_sv)) {
+      } else if ((el_type == specfem::element::medium_tag::elastic_sv)) {
         if (ncomponents != 2) {
           throw std::runtime_error(
               "Moment Tensor source requires 2 components for elastic, "
@@ -77,6 +73,25 @@ void specfem::sources::force::compute_source_array(
             std::sin(Kokkos::numbers::pi_v<type_real> / 180 * this->angle) *
             hlagrange;
         source_array(1, iz, ix) =
+            -1.0 *
+            std::cos(Kokkos::numbers::pi_v<type_real> / 180 * this->angle) *
+            hlagrange;
+      } else if ((el_type == specfem::element::medium_tag::poroelastic)) {
+        if (ncomponents != 4) {
+          throw std::runtime_error(
+              "Force source requires 4 components for poroelastic medium");
+        }
+        source_array(0, iz, ix) =
+            std::sin(Kokkos::numbers::pi_v<type_real> / 180 * this->angle) *
+            hlagrange;
+        source_array(1, iz, ix) =
+            -1.0 *
+            std::cos(Kokkos::numbers::pi_v<type_real> / 180 * this->angle) *
+            hlagrange;
+        source_array(2, iz, ix) =
+            std::sin(Kokkos::numbers::pi_v<type_real> / 180 * this->angle) *
+            hlagrange;
+        source_array(3, iz, ix) =
             -1.0 *
             std::cos(Kokkos::numbers::pi_v<type_real> / 180 * this->angle) *
             hlagrange;

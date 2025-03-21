@@ -62,11 +62,7 @@ void specfem::sources::external::compute_source_array(
               "External source requires 1 component for elastic SH medium");
         }
         source_array(0, iz, ix) = hlagrange;
-      }
-      // Elastic SV, Poroelastic, or Electromagnetic SV
-      else if ((el_type == specfem::element::medium_tag::elastic_sv) ||
-               (el_type == specfem::element::medium_tag::poroelastic) ||
-               (el_type == specfem::element::medium_tag::electromagnetic_sv)) {
+      } else if ((el_type == specfem::element::medium_tag::elastic_sv)) {
         if (ncomponents != 2) {
           throw std::runtime_error(
               "External source for elastic SV, poroelastic, or electromagnetic "
@@ -74,6 +70,15 @@ void specfem::sources::external::compute_source_array(
         }
         source_array(0, iz, ix) = hlagrange;
         source_array(1, iz, ix) = hlagrange;
+      } else if ((el_type == specfem::element::medium_tag::poroelastic)) {
+        if (ncomponents != 4) {
+          throw std::runtime_error(
+              "Force source requires 4 components for poroelastic medium");
+        }
+        source_array(0, iz, ix) = hlagrange;
+        source_array(1, iz, ix) = hlagrange;
+        source_array(2, iz, ix) = hlagrange;
+        source_array(3, iz, ix) = hlagrange;
       } else {
         std::ostringstream message;
         message << "Source array computation not implemented for element type: "

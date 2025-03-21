@@ -47,10 +47,7 @@ void specfem::sources::adjoint_source::compute_source_array(
               "Adjoint source requires 1 component for elastic SH medium");
         }
         source_array(0, iz, ix) = hlagrange;
-      }
-      // Elastic P-SV, or Poroelastic P-SV
-      else if ((el_type == specfem::element::medium_tag::elastic_sv) ||
-               (el_type == specfem::element::medium_tag::poroelastic)) {
+      } else if (el_type == specfem::element::medium_tag::elastic_sv) {
         if (ncomponents != 2) {
           throw std::runtime_error(
               "Adjoint source for elastic P-SV, poroelastic, or "
@@ -58,9 +55,16 @@ void specfem::sources::adjoint_source::compute_source_array(
         }
         source_array(0, iz, ix) = hlagrange;
         source_array(1, iz, ix) = hlagrange;
-      }
-      // Otherwise not implemented
-      else {
+      } else if ((el_type == specfem::element::medium_tag::poroelastic)) {
+        if (ncomponents != 4) {
+          throw std::runtime_error(
+              "Force source requires 4 components for poroelastic medium");
+        }
+        source_array(0, iz, ix) = hlagrange;
+        source_array(1, iz, ix) = hlagrange;
+        source_array(2, iz, ix) = hlagrange;
+        source_array(3, iz, ix) = hlagrange;
+      } else {
         std::ostringstream message;
         message << "Source array computation not implemented for element type: "
                 << specfem::element::to_string(el_type);
