@@ -28,7 +28,7 @@ template <specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag>
-void specfem::kokkos_kernels::impl::compute_stiffness_interaction(
+int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
     const specfem::compute::assembly &assembly, const int &istep) {
 
   constexpr auto medium_tag = MediumTag;
@@ -44,7 +44,7 @@ void specfem::kokkos_kernels::impl::compute_stiffness_interaction(
   const int nelements = elements.extent(0);
 
   if (nelements == 0)
-    return;
+    return 0;
 
   const auto &quadrature = assembly.mesh.quadratures;
   const auto &partial_derivatives = assembly.partial_derivatives;
@@ -273,5 +273,5 @@ void specfem::kokkos_kernels::impl::compute_stiffness_interaction(
 
   Kokkos::fence();
 
-  return;
+  return nelements;
 }
