@@ -46,7 +46,7 @@ struct coupled_interface {
    * @brief Default constructor initializing an empty struct
    *
    */
-  coupled_interface(){};
+  coupled_interface() {};
 
   /**
    * @brief Construct a new coupled interface object
@@ -128,7 +128,7 @@ template <> struct coupled_interfaces<specfem::dimension::type::dim3> {
    * @brief Default constructor initializing an empty struct
    *
    */
-  coupled_interfaces(){};
+  coupled_interfaces() {};
 
   /**
    * @brief Construct a new coupled interfaces object

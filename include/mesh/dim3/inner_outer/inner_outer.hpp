@@ -31,7 +31,7 @@ template <specfem::element::medium_tag MediumTag> struct inner_outer_medium {
    * @brief Default constructor
    *
    */
-  inner_outer_medium(){};
+  inner_outer_medium() {};
 
   /**
    * @brief Constructor
@@ -54,7 +54,7 @@ template <specfem::element::medium_tag MediumTag> struct inner_outer_medium {
                      const int num_phase_ispec)
       : nspec_inner(nspec_inner), nspec_outer(nspec_outer),
         num_phase_ispec(num_phase_ispec),
-        phase_ispec_inner("phase_ispec_inner", num_phase_ispec, 2){};
+        phase_ispec_inner("phase_ispec_inner", num_phase_ispec, 2) {};
 
   ///@}
 };
@@ -91,7 +91,7 @@ template <> struct inner_outer<specfem::dimension::type::dim3> {
    * @brief Default constructor initializing an empty struct
    *
    */
-  inner_outer(){};
+  inner_outer() {};
 
   /**
    * @brief Construct a new inner outer object
@@ -110,7 +110,7 @@ template <> struct inner_outer<specfem::dimension::type::dim3> {
   inner_outer(const int nspec, const int acoustic, const int elastic,
               const int poroelastic)
       : nspec(nspec), acoustic(acoustic), elastic(elastic),
-        poroelastic(poroelastic), ispec_is_inner("ispec_is_inner", nspec){};
+        poroelastic(poroelastic), ispec_is_inner("ispec_is_inner", nspec) {};
 };
 
 } // namespace mesh
