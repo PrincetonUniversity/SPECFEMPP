@@ -52,9 +52,12 @@ bool _execute(const std::string &parameter_string,
   const YAML::Node default_dict = YAML::Load(default_string);
   std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> > tasks;
   const auto signal_task =
-      std::make_shared<specfem::periodic_tasks::check_signal>(10);
+  std::make_shared<specfem::periodic_tasks::check_signal>(10);
   tasks.push_back(signal_task);
-  execute(parameter_dict, default_dict, tasks, _py_mpi);
+  {
+    py::gil_scoped_release release;
+    execute(parameter_dict, default_dict, tasks, _py_mpi);
+  }
   return true;
 }
 
