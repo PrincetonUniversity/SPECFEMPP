@@ -134,18 +134,17 @@ private:
 
 #undef MEDIUM_TAG_VARIABLES
 
-#define MATERIAL_SYSTEMS_VARIABLE_NAMES(DIMENSION_TAG, MEDIUM_TAG,             \
-                                        PROPERTY_TAG, POSTFIX)                 \
+#define MATERIAL_SYSTEMS_VARIABLE_NAMES(POSTFIX, ...)                          \
   IndexViewType elements_##POSTFIX;                                            \
   IndexViewType::HostMirror h_elements_##POSTFIX;
 
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS2(MATERIAL_SYSTEMS_VARIABLE_NAMES,
-                                       WHERE(DIMENSION_TAG_DIM2)
+  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS2(WHERE(DIMENSION_TAG_DIM2)
                                            WHERE(MEDIUM_TAG_ELASTIC_SV,
                                                  MEDIUM_TAG_ELASTIC_SH,
                                                  MEDIUM_TAG_ACOUSTIC)
                                                WHERE(PROPERTY_TAG_ISOTROPIC,
-                                                     PROPERTY_TAG_ANISOTROPIC))
+                                                     PROPERTY_TAG_ANISOTROPIC),
+                                       MATERIAL_SYSTEMS_VARIABLE_NAMES)
 
 #undef MATERIAL_SYSTEMS_VARIABLE_NAMES
 
