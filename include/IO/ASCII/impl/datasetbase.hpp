@@ -1,7 +1,7 @@
 #ifndef _SPECFEM_IO_ASCII_IMPL_DATASETBASE_HPP
 #define _SPECFEM_IO_ASCII_IMPL_DATASETBASE_HPP
 
-#include "IO/operators.hpp"
+#include "io/operators.hpp"
 #include "native_type.hpp"
 #include "native_type.tpp"
 #include <boost/filesystem.hpp>

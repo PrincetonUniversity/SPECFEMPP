@@ -1,7 +1,7 @@
 #include "parameter_parser/writer/kernel.hpp"
-#include "IO/ASCII/ASCII.hpp"
-#include "IO/HDF5/HDF5.hpp"
-#include "IO/kernel/writer.hpp"
+#include "io/ASCII/ASCII.hpp"
+#include "io/HDF5/HDF5.hpp"
+#include "io/kernel/writer.hpp"
 #include <boost/filesystem.hpp>
 
 specfem::runtime_configuration::kernel::kernel(

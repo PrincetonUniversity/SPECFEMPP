@@ -1,9 +1,9 @@
 // Internal Includes
 #include "mesh/mesh.hpp"
-#include "IO/fortranio/interface.hpp"
-#include "IO/interface.hpp"
-#include "IO/mesh/impl/fortran/dim3/interface.hpp"
 #include "enumerations/interface.hpp"
+#include "io/fortranio/interface.hpp"
+#include "io/interface.hpp"
+#include "io/mesh/impl/fortran/dim3/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "medium/material.hpp"
 #include "specfem_mpi/interface.hpp"

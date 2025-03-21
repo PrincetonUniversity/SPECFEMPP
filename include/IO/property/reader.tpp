@@ -1,6 +1,6 @@
 #pragma once
 
-#include "IO/property/reader.hpp"
+#include "io/property/reader.hpp"
 #include "compute/assembly/assembly.hpp"
 #include "enumerations/dimension.hpp"
 #include "enumerations/medium.hpp"

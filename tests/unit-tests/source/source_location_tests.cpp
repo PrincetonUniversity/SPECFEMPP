@@ -1,7 +1,7 @@
 #include "../Kokkos_Environment.hpp"
 #include "../MPI_environment.hpp"
-#include "IO/interface.hpp"
 #include "compute/interface.hpp"
+#include "io/interface.hpp"
 #include "medium/material.hpp"
 #include "mesh/mesh.hpp"
 #include "source/interface.hpp"

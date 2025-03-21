@@ -5,7 +5,7 @@
 #include "H5Cpp.h"
 #endif
 
-#include "IO/operators.hpp"
+#include "io/operators.hpp"
 #include "native_type.hpp"
 #include <memory>
 #include <string>

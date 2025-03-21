@@ -5,8 +5,8 @@
 #include "H5Cpp.h"
 #endif
 
-#include "IO/operators.hpp"
 #include "dataset.hpp"
+#include "io/operators.hpp"
 #include <memory>
 #include <string>
 

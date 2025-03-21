@@ -1,6 +1,6 @@
 #pragma once
 
-#include "IO/fortranio/interface.hpp"
+#include "io/fortranio/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "specfem_mpi/interface.hpp"
 
@@ -159,4 +159,4 @@ void check_values(std::string message, int value, int expected);
 } // namespace io
 } // namespace specfem
 
-#include "IO/mesh/impl/fortran/dim3/utilities.hpp"
+#include "io/mesh/impl/fortran/dim3/utilities.hpp"

@@ -1,5 +1,5 @@
 #include "test_fixture.hpp"
-#include "IO/interface.hpp"
+#include "io/interface.hpp"
 
 // ------------------------------------------------------------------------
 // Reading test config

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "IO/wavefield/writer.hpp"
+#include "io/wavefield/writer.hpp"
 #include "compute/interface.hpp"
 #include "enumerations/interface.hpp"
 

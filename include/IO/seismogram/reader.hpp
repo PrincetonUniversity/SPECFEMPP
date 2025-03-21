@@ -1,8 +1,8 @@
 #ifndef SPECFEM_READER_SEISMOGRAM_HPP
 #define SPECFEM_READER_SEISMOGRAM_HPP
 
-#include "IO/reader.hpp"
 #include "enumerations/specfem_enums.hpp"
+#include "io/reader.hpp"
 
 namespace specfem {
 namespace forcing_function {

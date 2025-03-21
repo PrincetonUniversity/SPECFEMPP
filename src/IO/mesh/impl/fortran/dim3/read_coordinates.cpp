@@ -1,4 +1,4 @@
-#include "IO/mesh/impl/fortran/dim3/interface.hpp"
+#include "io/mesh/impl/fortran/dim3/interface.hpp"
 #include "specfem_setup.hpp"
 
 void specfem::io::mesh::impl::fortran::dim3::read_xyz(

@@ -1,4 +1,4 @@
-#include "IO/seismogram/writer.hpp"
+#include "io/seismogram/writer.hpp"
 #include "compute/interface.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include <fstream>

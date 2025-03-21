@@ -1,6 +1,6 @@
 #include "compute/assembly/assembly.hpp"
-#include "IO/reader.hpp"
 #include "enumerations/interface.hpp"
+#include "io/reader.hpp"
 #include "mesh/mesh.hpp"
 
 specfem::compute::assembly::assembly(

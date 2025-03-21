@@ -1,7 +1,7 @@
 #include "../../Kokkos_Environment.hpp"
-#include "IO/interface.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "enumerations/wavefield.hpp"
+#include "io/interface.hpp"
 #include "source/interface.hpp"
 #include <Kokkos_Core.hpp>
 #include <gtest/gtest.h>

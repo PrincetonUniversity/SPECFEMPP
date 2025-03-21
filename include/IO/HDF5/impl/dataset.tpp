@@ -5,7 +5,7 @@
 #include "H5Cpp.h"
 #endif
 
-#include "IO/operators.hpp"
+#include "io/operators.hpp"
 #include "dataset.hpp"
 #include "datasetbase.hpp"
 #include "kokkos_abstractions.h"

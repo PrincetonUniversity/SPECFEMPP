@@ -1,5 +1,5 @@
 // Internal Includes
-#include "IO/interface.hpp"
+#include "io/interface.hpp"
 #include "source/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities/interface.hpp"

@@ -1,5 +1,5 @@
 #include "parameter_parser/writer/seismogram.hpp"
-#include "IO/seismogram/writer.hpp"
+#include "io/seismogram/writer.hpp"
 #include "yaml-cpp/yaml.h"
 #include <boost/filesystem.hpp>
 #include <string>

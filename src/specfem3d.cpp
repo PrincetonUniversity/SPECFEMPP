@@ -1,5 +1,5 @@
-#include "IO/interface.hpp"
 #include "enumerations/dimension.hpp"
+#include "io/interface.hpp"
 #include "parameter_parser/interface.hpp"
 #include "periodic_tasks/periodic_task.hpp"
 #include "specfem_mpi/interface.hpp"

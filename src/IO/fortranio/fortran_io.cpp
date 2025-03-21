@@ -1,5 +1,5 @@
-#include "IO/fortranio/fortran_io.hpp"
-#include "IO/fortranio/fortran_io.tpp"
+#include "io/fortranio/fortran_io.hpp"
+#include "io/fortranio/fortran_io.tpp"
 #include <boost/algorithm/string.hpp>
 #include <fstream>
 #include <iostream>

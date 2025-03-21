@@ -1,7 +1,7 @@
 #ifndef _UNIT_TESTS_COMPARE_ARRAY_TPP_
 #define _UNIT_TESTS_COMPARE_ARRAY_TPP_
 
-#include "IO/fortranio/interface.hpp"
+#include "io/fortranio/interface.hpp"
 #include "compare_array.hpp"
 #include "kokkos_abstractions.h"
 #include <Kokkos_Core.hpp>
