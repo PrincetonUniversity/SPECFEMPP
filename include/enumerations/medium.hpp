@@ -84,11 +84,21 @@ public:
 
 template <>
 class attributes<specfem::dimension::type::dim2,
+
                  specfem::element::medium_tag::poroelastic> {
 public:
   constexpr static int dimension() { return 2; }
 
   constexpr static int components() { return 4; }
+};
+
+template <>
+class attributes<specfem::dimension::type::dim2,
+                 specfem::element::medium_tag::electromagnetic_sv> {
+public:
+  constexpr static int dimension() { return 2; }
+
+  constexpr static int components() { return 2; }
 };
 
 const std::string to_string(const medium_tag &medium,
@@ -103,7 +113,8 @@ const std::string to_string(const medium_tag &medium);
 // template class to enable specialization for elastic media
 template <specfem::element::medium_tag MediumTag,
           typename std::enable_if_t<
-              MediumTag == specfem::element::medium_tag::elastic_sh ||
+              MediumTag == specfem::element::medium_tag::elastic ||
+                  MediumTag == specfem::element::medium_tag::elastic_sh ||
                   MediumTag == specfem::element::medium_tag::elastic_sv,
               int> = 0>
 class is_elastic {};
