@@ -112,7 +112,7 @@ template <specfem::dimension::type DimensionType> struct tags;
 template <specfem::dimension::type DimensionType> struct mass_matrix;
 
 /**
- * @brief Struct to store element_types (Acoustic, lastic, Poroelastic)
+ * @brief Struct to store element_types (Acoustic, Elastic, Poroelastic, etc.)
  *
  * @tparam DimensionType Dimension type
  *
