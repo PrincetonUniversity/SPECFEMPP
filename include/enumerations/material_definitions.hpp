@@ -393,14 +393,21 @@ constexpr auto element_types() {
   BOOST_PP_SEQ_FOR_EACH(CALL_FOR_ONE_ELEMENT_TYPE, MACRO,                      \
                         BOOST_PP_SEQ_FOR_EACH_PRODUCT(CREATE_SEQ, seq))
 
+#define _WRITE_BLOCK_FOR_ONE_MATERIAL_SYSTEM(DIMENSION_TAG, MEDIUM_TAG,        \
+                                             PROPERTY_TAG, CODE)               \
+  constexpr auto _dimension_tag_ = GET_TAG(DIMENSION_TAG);                     \
+  constexpr auto _medium_tag_ = GET_TAG(MEDIUM_TAG);                           \
+  constexpr auto _property_tag_ = GET_TAG(PROPERTY_TAG);                       \
+  BOOST_PP_SEQ_ENUM(CODE)
+
 #define _DEFINE_MEMBER_NAME_FOR_ONE_MATERIAL_SYSTEM(s, postfix, prefix)        \
   _##prefix##_
 
 #define _DEFINE_MEMBER_VARIABLE_FOR_ONE_MATERIAL_SYSTEM(s, postfix, prefix)    \
   prefix##_##postfix
 
-#define _WRITE_BLOCK_FOR_ONE_MATERIAL_SYSTEM(seq, DIMENSION_TAG, MEDIUM_TAG,   \
-                                             PROPERTY_TAG, CODE)               \
+#define _WRITE_BLOCK_FOR_ONE_MATERIAL_SYSTEM_WITH_CAPTURE(                     \
+    seq, DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, CODE)                        \
   constexpr auto _dimension_tag_ = GET_TAG(DIMENSION_TAG);                     \
   constexpr auto _medium_tag_ = GET_TAG(MEDIUM_TAG);                           \
   constexpr auto _property_tag_ = GET_TAG(PROPERTY_TAG);                       \
@@ -416,17 +423,55 @@ constexpr auto element_types() {
           seq)));                                                              \
   BOOST_PP_SEQ_ENUM(CODE)
 
+/**
+ * Write the code block for one material system if the material
+ * system is in the list of available combinations.
+ */
 #define _CALL_CODE_FOR_ONE_MATERIAL_SYSTEM(s, CODE, elem)                      \
+  { BOOST_PP_IF(MAT_SYS_IN_SEQUENCE((BOOST_PP_SEQ_ENUM(elem))),                \
+                _WRITE_BLOCK_FOR_ONE_MATERIAL_SYSTEM, EMPTY_MACRO)(            \
+      BOOST_PP_TUPLE_ELEM(0, (BOOST_PP_SEQ_ENUM(elem))),                       \
+      BOOST_PP_TUPLE_ELEM(1, (BOOST_PP_SEQ_ENUM(elem))),                       \
+      BOOST_PP_TUPLE_ELEM(2, (BOOST_PP_SEQ_ENUM(elem))), CODE) }
+
+/**
+ * Write the code block for one material system with capture if the material
+ * system is in the list of available combinations.
+ */
+#define _CALL_CODE_FOR_ONE_MATERIAL_SYSTEM_WITH_CAPTURE(s, CODE, elem)         \
   { BOOST_PP_IF(                                                               \
       MAT_SYS_IN_SEQUENCE((BOOST_PP_SEQ_ENUM(BOOST_PP_SEQ_TAIL(elem)))),       \
-      _WRITE_BLOCK_FOR_ONE_MATERIAL_SYSTEM,                                    \
+      _WRITE_BLOCK_FOR_ONE_MATERIAL_SYSTEM_WITH_CAPTURE,                       \
       EMPTY_MACRO)(BOOST_PP_TUPLE_ELEM(0, (BOOST_PP_SEQ_ENUM(elem))),          \
                    BOOST_PP_TUPLE_ELEM(1, (BOOST_PP_SEQ_ENUM(elem))),          \
                    BOOST_PP_TUPLE_ELEM(2, (BOOST_PP_SEQ_ENUM(elem))),          \
                    BOOST_PP_TUPLE_ELEM(3, (BOOST_PP_SEQ_ENUM(elem))), CODE) }
 
+/**
+ * Returns different macros based on whether the first element of the
+ * sequence is a list of variable names wrapped by @ref CAPTURE or not.
+ */
+#define _GET_CODE_FOR_MATERIAL_SYSTEM(seq)                                     \
+  BOOST_PP_IF(BOOST_PP_EQUAL(BOOST_PP_SEQ_SIZE(seq), 3),                       \
+              _CALL_CODE_FOR_ONE_MATERIAL_SYSTEM,                              \
+              _CALL_CODE_FOR_ONE_MATERIAL_SYSTEM_WITH_CAPTURE)
+
+/**
+ * Macro to call a code block for all material systems
+ * @param seq A sequence of material systems. Sequences can be generated using
+ * the @ref WHERE macro. Optionally the first element of the sequence can
+ * be a list of variable named to be captured by @ref CAPTURE.
+ * @param ... The code block to be executed for each material system.
+ * Three constexpr variables are defined for the dimension (_dimension_tag_),
+ * medium (_medium_tag_) and property (_property_tag_) tags respectively.
+ * Additionally, if the first element of the sequence is a list of variable
+ * names wrapped by CAPTURE(), then these variables are captured by reference
+ * and can be used in the code block (e.g. CAPTURE(value) will create a
+ * reference named _value_ where refers to value_dim2_elastic_isotropic in 2D
+ * elastic isotropic case).
+ */
 #define CALL_CODE_FOR_ALL_MATERIAL_SYSTEMS(seq, ...)                           \
-  BOOST_PP_SEQ_FOR_EACH(_CALL_CODE_FOR_ONE_MATERIAL_SYSTEM,                    \
+  BOOST_PP_SEQ_FOR_EACH(_GET_CODE_FOR_MATERIAL_SYSTEM(seq),                    \
                         BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__),                 \
                         BOOST_PP_SEQ_FOR_EACH_PRODUCT(CREATE_SEQ, seq))
 

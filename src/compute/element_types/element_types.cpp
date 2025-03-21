@@ -328,21 +328,23 @@ specfem::compute::element_types::get_elements_on_host(
     const specfem::element::medium_tag medium_tag,
     const specfem::element::property_tag property_tag) const {
 
-#define RETURN_VARIABLE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)               \
-  if (GET_TAG(MEDIUM_TAG) == medium_tag &&                                     \
-      GET_TAG(PROPERTY_TAG) == property_tag) {                                 \
-    return this->CREATE_VARIABLE_NAME(h_elements, GET_NAME(DIMENSION_TAG),     \
-                                      GET_NAME(MEDIUM_TAG),                    \
-                                      GET_NAME(PROPERTY_TAG));                 \
-  }
+  // #define RETURN_VARIABLE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)               \
+//   if (GET_TAG(MEDIUM_TAG) == medium_tag &&                                     \
+//       GET_TAG(PROPERTY_TAG) == property_tag) {                                 \
+//     return this->CREATE_VARIABLE_NAME(h_elements, GET_NAME(DIMENSION_TAG),     \
+//                                       GET_NAME(MEDIUM_TAG),                    \
+//                                       GET_NAME(PROPERTY_TAG));                 \
+//   }
 
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      RETURN_VARIABLE,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(
+  CALL_CODE_FOR_ALL_MATERIAL_SYSTEMS(
+      CAPTURE(h_elements) WHERE(DIMENSION_TAG_DIM2) WHERE(
           MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
+          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
+      if (_medium_tag_ == medium_tag && _property_tag_ == property_tag) {
+        return _h_elements_;
+      })
 
-#undef RETURN_VARIABLE
+  // #undef RETURN_VARIABLE
 
   throw std::runtime_error("Medium tag or property tag not found");
 }
@@ -352,21 +354,29 @@ specfem::compute::element_types::get_elements_on_device(
     const specfem::element::medium_tag medium_tag,
     const specfem::element::property_tag property_tag) const {
 
-#define RETURN_VARIABLE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)               \
-  if (GET_TAG(MEDIUM_TAG) == medium_tag &&                                     \
-      GET_TAG(PROPERTY_TAG) == property_tag) {                                 \
-    return this->CREATE_VARIABLE_NAME(elements, GET_NAME(DIMENSION_TAG),       \
-                                      GET_NAME(MEDIUM_TAG),                    \
-                                      GET_NAME(PROPERTY_TAG));                 \
-  }
+  // #define RETURN_VARIABLE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)               \
+//   if (GET_TAG(MEDIUM_TAG) == medium_tag &&                                     \
+//       GET_TAG(PROPERTY_TAG) == property_tag) {                                 \
+//     return this->CREATE_VARIABLE_NAME(elements, GET_NAME(DIMENSION_TAG),       \
+//                                       GET_NAME(MEDIUM_TAG),                    \
+//                                       GET_NAME(PROPERTY_TAG));                 \
+//   }
 
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      RETURN_VARIABLE,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(
+  //   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
+  //       RETURN_VARIABLE,
+  //       WHERE(DIMENSION_TAG_DIM2) WHERE(
+  //           MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
+  //           MEDIUM_TAG_ACOUSTIC) WHERE(PROPERTY_TAG_ISOTROPIC,
+  //           PROPERTY_TAG_ANISOTROPIC))
+
+  // #undef RETURN_VARIABLE
+  CALL_CODE_FOR_ALL_MATERIAL_SYSTEMS(
+      CAPTURE(elements) WHERE(DIMENSION_TAG_DIM2) WHERE(
           MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
-
-#undef RETURN_VARIABLE
+          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
+      if (_medium_tag_ == medium_tag && _property_tag_ == property_tag) {
+        return _elements_;
+      })
 
   throw std::runtime_error("Medium tag or property tag not found");
 }
