@@ -393,6 +393,9 @@ constexpr auto element_types() {
   BOOST_PP_SEQ_FOR_EACH(CALL_FOR_ONE_ELEMENT_TYPE, MACRO,                      \
                         BOOST_PP_SEQ_FOR_EACH_PRODUCT(CREATE_SEQ, seq))
 
+/**
+ * Write the code block for one material system.
+ */
 #define _WRITE_BLOCK_FOR_ONE_MATERIAL_SYSTEM(DIMENSION_TAG, MEDIUM_TAG,        \
                                              PROPERTY_TAG, CODE)               \
   constexpr auto _dimension_tag_ = GET_TAG(DIMENSION_TAG);                     \
@@ -400,12 +403,24 @@ constexpr auto element_types() {
   constexpr auto _property_tag_ = GET_TAG(PROPERTY_TAG);                       \
   BOOST_PP_SEQ_ENUM(CODE)
 
+/**
+ * @brief Macros to define the reference name of the variable to be captured,
+ * e.g. _value_.
+ */
 #define _DEFINE_MEMBER_NAME_FOR_ONE_MATERIAL_SYSTEM(s, postfix, prefix)        \
   _##prefix##_
 
+/**
+ * @brief Macros to define variable to be captured by the reference name, e.g.
+ * value_dim2_elastic_isotropic.
+ */
 #define _DEFINE_MEMBER_VARIABLE_FOR_ONE_MATERIAL_SYSTEM(s, postfix, prefix)    \
   prefix##_##postfix
 
+/**
+ * Write the code block for one material system add captured variables as
+ * reference.
+ */
 #define _WRITE_BLOCK_FOR_ONE_MATERIAL_SYSTEM_WITH_CAPTURE(                     \
     seq, DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, CODE)                        \
   constexpr auto _dimension_tag_ = GET_TAG(DIMENSION_TAG);                     \
