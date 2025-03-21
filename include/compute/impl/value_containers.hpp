@@ -5,7 +5,6 @@
 
 namespace specfem {
 namespace compute {
-
 namespace impl {
 /**
  * @brief Values for every quadrature point in the finite element mesh

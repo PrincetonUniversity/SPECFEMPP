@@ -1,5 +1,5 @@
 Installation
-###############
+############
 
 Downloading SPECFEM++
 =====================
@@ -11,7 +11,7 @@ Get the latest version of the package:
     git clone git@github.com:PrincetonUniversity/SPECFEMPP.git
 
 Compilation
-============
+===========
 
 Configure the package using Cmake configuration keywords before building using cmake. SPECFEM++ inherits several architecure specific keywords from `Kokkos <https://kokkos.github.io/kokkos-core-wiki/keywords.html>`_ Cmakelists. Several examples for compiling for different architectures are shown below
 
@@ -55,6 +55,6 @@ Finally, once compiled you could run SPECFEM++ from inside the build directory, 
     export PATH=${PATH}:<location to SPECFEM++ build directory/bin>
 
 Testing Installation
-=====================
+====================
 
 To check if the compilation is successful, compile and run the tests, then build the code with ``-DBUILD_TESTS=ON``. Then, run the test by ``cd build/tests/unit-tests  && ctest``.

@@ -36,7 +36,7 @@ void specfem::sources::adjoint_source::compute_source_array(
       if (el_type == specfem::element::medium_tag::acoustic) {
         if (ncomponents != 1) {
           throw std::runtime_error(
-              "Adjoint source requires 1 component for acoustic medium");
+              "Force source requires 1 component for acoustic medium");
         }
         source_array(0, iz, ix) = hlagrange;
       } else if (el_type == specfem::element::medium_tag::elastic_sh) {
@@ -48,7 +48,7 @@ void specfem::sources::adjoint_source::compute_source_array(
       } else if (el_type == specfem::element::medium_tag::elastic_sv) {
         if (ncomponents != 2) {
           throw std::runtime_error(
-              "Adjoint source requires 2 components for elastic medium");
+              "Force source requires 2 components for elastic medium");
         }
         source_array(0, iz, ix) = hlagrange;
         source_array(1, iz, ix) = hlagrange;
