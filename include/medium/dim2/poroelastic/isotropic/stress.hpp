@@ -39,13 +39,13 @@ KOKKOS_INLINE_FUNCTION
   const auto rho_f = properties.rho_f();
   const auto rho_bar = properties.rho_bar();
   const auto dux_dxl = du(0, 0);
-  const auto dux_dzl = du(0, 1);
-  const auto duz_dxl = du(1, 0);
+  const auto dux_dzl = du(1, 0);
+  const auto duz_dxl = du(0, 1);
   const auto duz_dzl = du(1, 1);
-  const auto dwx_dxl = du(2, 0);
-  const auto dwx_dzl = du(2, 1);
-  const auto dwz_dxl = du(3, 0);
-  const auto dwz_dzl = du(3, 1);
+  const auto dwx_dxl = du(0, 2);
+  const auto dwx_dzl = du(1, 2);
+  const auto dwz_dxl = du(0, 3);
+  const auto dwz_dzl = du(1, 3);
 
   sigma_xx = (lambdaplus2mu_G)*dux_dxl + lambda_G * duz_dzl +
              C_biot * (dwx_dxl + dwz_dzl);
@@ -57,14 +57,16 @@ KOKKOS_INLINE_FUNCTION
 
   specfem::datatype::VectorPointViewType<type_real, 2, 4, UseSIMD> T;
 
-  T(0, 0) = sigma_xx - phi / tort * sigma_p;      // Ts_xx
-  T(0, 1) = sigma_xz;                             // Ts_xz
-  T(1, 0) = sigma_xz;                             // Ts_zx
-  T(1, 1) = sigma_zz - phi / tort * sigma_p;      // Ts_zz
-  T(0, 2) = rho_f / rho_bar * sigma_xx - sigma_p; // Tf_xx
-  T(0, 3) = rho_f / rho_bar * sigma_xz;           // Tf_xz
-  T(1, 2) = rho_f / rho_bar * sigma_xz;           // Tf_zx
-  T(1, 3) = rho_f / rho_bar * sigma_zz - sigma_p; // Tf_zz
+  T(0, 0) = sigma_xx - phi / tort * sigma_p; // Ts_xx
+  T(1, 0) = sigma_xz;                        // Ts_xz
+  T(0, 1) = sigma_xz;                        // Ts_zx
+  T(1, 1) = sigma_zz - phi / tort * sigma_p; // Ts_zz
+  T(0, 2) = static_cast<type_real>(-1.0) * rho_f / rho_bar * sigma_xx +
+            sigma_p;                                                   // Tf_xx
+  T(1, 2) = static_cast<type_real>(-1.0) * rho_f / rho_bar * sigma_xz; // Tf_xz
+  T(0, 3) = static_cast<type_real>(-1.0) * rho_f / rho_bar * sigma_xz; // Tf_zx
+  T(1, 3) = static_cast<type_real>(-1.0) * rho_f / rho_bar * sigma_zz +
+            sigma_p; // Tf_zz
 
   return { T };
 }
