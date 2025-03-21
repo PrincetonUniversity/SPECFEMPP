@@ -36,7 +36,7 @@ template <> struct free_surface<specfem::dimension::type::dim3> {
    * @brief Default constructor
    *
    */
-  free_surface(){};
+  free_surface() {};
 
   /**
    * @brief Constructor

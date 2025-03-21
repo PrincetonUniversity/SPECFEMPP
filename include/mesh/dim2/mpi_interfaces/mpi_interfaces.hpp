@@ -14,7 +14,7 @@ struct interface {
   specfem::kokkos::HostView1d<int> my_neighbors;
   specfem::kokkos::HostView1d<int> my_nelmnts_neighbors;
   specfem::kokkos::HostView3d<int> my_interfaces;
-  interface(){};
+  interface() {};
   interface(const int ninterfaces, const int max_interface_size);
   interface(std::ifstream &stream, const specfem::MPI::MPI *mpi);
   ~interface() = default;

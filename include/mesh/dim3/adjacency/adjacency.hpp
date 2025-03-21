@@ -33,7 +33,7 @@ template <> struct adjacency<specfem::dimension::type::dim3> {
    * @brief Default constructor
    *
    */
-  adjacency(){};
+  adjacency() {};
 
   /**
    * @brief construct a container that tagged surface elements.
@@ -46,7 +46,7 @@ template <> struct adjacency<specfem::dimension::type::dim3> {
   adjacency(const int nspec, const int num_neighbors_all)
       : nspec(nspec), num_neighbors_all(num_neighbors_all),
         neighbors_xadj("neighbors_xadj", nspec + 1),
-        neighbors_adjncy("neighbors_adjncy", num_neighbors_all){};
+        neighbors_adjncy("neighbors_adjncy", num_neighbors_all) {};
 
   ///@}
 };

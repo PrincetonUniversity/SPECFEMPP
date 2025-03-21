@@ -32,7 +32,7 @@ public:
   receiver(const std::string network_name, const std::string station_name,
            const type_real x, const type_real z, const type_real angle)
       : network_name(network_name), station_name(station_name), x(x), z(z),
-        angle(angle){};
+        angle(angle) {};
   /**
    * @brief Compute the receiver array (lagrangians) for this station
    *
