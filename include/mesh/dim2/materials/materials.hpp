@@ -65,26 +65,20 @@ template <> struct materials<specfem::dimension::type::dim2> {
       material_index_mapping; ///< Mapping of spectral element to material
                               ///< properties
 
-#define DEFINE_MATERIAL_CONTAINER(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)     \
-  specfem::mesh::materials<GET_TAG(                                            \
-      DIMENSION_TAG)>::material<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)>    \
-      CREATE_VARIABLE_NAME(material, GET_NAME(MEDIUM_TAG),                     \
-                           GET_NAME(PROPERTY_TAG));
+#define DEFINE_MATERIAL_CONTAINER(POSTFIX, DIMENSION_TAG, MEDIUM_TAG,          \
+                                  PROPERTY_TAG)                                \
+  specfem::mesh::materials<DIMENSION_TAG>::material<MEDIUM_TAG, PROPERTY_TAG>  \
+      material_##POSTFIX;
 
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      DEFINE_MATERIAL_CONTAINER,
+  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS2(
       WHERE(DIMENSION_TAG_DIM2)
           WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
                 MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
                 MEDIUM_TAG_ELECTROMAGNETIC_SV)
-              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
+              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
+      DEFINE_MATERIAL_CONTAINER)
 
 #undef DEFINE_MATERIAL_CONTAINER
-
-  specfem::mesh::materials<specfem::dimension::type::dim2>::material<
-      specfem::element::medium_tag::electromagnetic_sv,
-      specfem::element::property_tag::isotropic>
-      electromagnetic_sv_isotropic; ///< Electromagnetic material properties SV
 
   /**
    * @name Constructors
@@ -109,32 +103,29 @@ template <> struct materials<specfem::dimension::type::dim2> {
   ///@}
 
 private:
-#define SOURCE_MEDIUM_STORE_ON_DEVICE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG) \
-  using CREATE_VARIABLE_NAME(type, GET_NAME(MEDIUM_TAG),                       \
-                             GET_NAME(PROPERTY_TAG)) =                         \
-      specfem::medium::material<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)>;
+#define SOURCE_MEDIUM_STORE_ON_DEVICE(POSTFIX, DIMENSION_TAG, MEDIUM_TAG,      \
+                                      PROPERTY_TAG)                            \
+  using type_##POSTFIX = specfem::medium::material<MEDIUM_TAG, PROPERTY_TAG>;
 
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      SOURCE_MEDIUM_STORE_ON_DEVICE,
+  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS2(
       WHERE(DIMENSION_TAG_DIM2)
           WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
                 MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
                 MEDIUM_TAG_ELECTROMAGNETIC_SV)
-              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
+              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
+      SOURCE_MEDIUM_STORE_ON_DEVICE)
 
 #undef SOURCE_MEDIUM_STORE_ON_DEVICE
 
-#define TYPE_NAME(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                     \
-  (CREATE_VARIABLE_NAME(type, GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)))
-
 public:
+#define TYPE_NAME(POSTFIX, ...) (type_##POSTFIX)
 #define MAKE_VARIANT_RETURN
-  std::variant<BOOST_PP_SEQ_ENUM(CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      TYPE_NAME,
+  std::variant<BOOST_PP_SEQ_ENUM(CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS2(
       WHERE(DIMENSION_TAG_DIM2) WHERE(
           MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
           MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_SV)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)))>
+          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
+      TYPE_NAME))>
 
       /**
        * @brief Material material at spectral element index
@@ -149,23 +140,15 @@ public:
 
     const auto &material_specification = this->material_index_mapping(index);
 
-#define RETURN_VALUE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                  \
-  if (material_specification.type == GET_TAG(MEDIUM_TAG) &&                    \
-      material_specification.property == GET_TAG(PROPERTY_TAG)) {              \
-    return this                                                                \
-        ->CREATE_VARIABLE_NAME(material, GET_NAME(MEDIUM_TAG),                 \
-                               GET_NAME(PROPERTY_TAG))                         \
-        .element_materials[material_specification.index];                      \
-  }
-
-    CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-        RETURN_VALUE,
-        WHERE(DIMENSION_TAG_DIM2) WHERE(
+    CALL_CODE_FOR_ALL_MATERIAL_SYSTEMS(
+        CAPTURE(material) WHERE(DIMENSION_TAG_DIM2) WHERE(
             MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
             MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_SV)
-            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
-
-#undef RETURN_VALUE
+            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
+        if (material_specification.type == _medium_tag_ &&
+            material_specification.property == _property_tag_) {
+          return _material_.element_materials[material_specification.index];
+        })
 
     Kokkos::abort("Invalid material type detected in material specification");
 
@@ -183,22 +166,13 @@ public:
             specfem::element::property_tag PropertyTag>
   specfem::mesh::materials<dimension>::material<MediumTag, PropertyTag> &
   get_container() {
-
-#define RETURN_VALUE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                  \
-  if constexpr (GET_TAG(MEDIUM_TAG) == MediumTag &&                            \
-                GET_TAG(PROPERTY_TAG) == PropertyTag) {                        \
-    return this->CREATE_VARIABLE_NAME(material, GET_NAME(MEDIUM_TAG),          \
-                                      GET_NAME(PROPERTY_TAG));                 \
-  }
-
-    CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-        RETURN_VALUE,
-        WHERE(DIMENSION_TAG_DIM2) WHERE(
+    CALL_CODE_FOR_ALL_MATERIAL_SYSTEMS(
+        CAPTURE(material) WHERE(DIMENSION_TAG_DIM2) WHERE(
             MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
             MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_SV)
-            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
-
-#undef RETURN_VALUE
+            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
+        if constexpr (_medium_tag_ == MediumTag &&
+                      _property_tag_ == PropertyTag) { return _material_; })
 
     Kokkos::abort("Invalid material type detected in material specification");
   }

@@ -36,21 +36,15 @@ public:
    * @param dt Time interval.
    */
   inline void compute_derivatives(const type_real &dt) {
-#define CALL_COMPUTE_MATERIAL_DERIVATIVES(DIMENSION_TAG, MEDIUM_TAG,           \
-                                          PROPERTY_TAG)                        \
-  if constexpr (dimension == GET_TAG(DIMENSION_TAG)) {                         \
-    impl::compute_material_derivatives<                                        \
-        DimensionType, NGLL, GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)>(      \
-        this->assembly, dt);                                                   \
-  }
-
-    CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-        CALL_COMPUTE_MATERIAL_DERIVATIVES,
+    CALL_CODE_FOR_ALL_MATERIAL_SYSTEMS(
         WHERE(DIMENSION_TAG_DIM2) WHERE(
             MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
-            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
-
-#undef CALL_COMPUTE_MATERIAL_DERIVATIVES
+            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
+        if constexpr (dimension == _dimension_tag_) {
+          impl::compute_material_derivatives<dimension, NGLL, _medium_tag_,
+                                             _property_tag_>(this->assembly,
+                                                             dt);
+        })
   }
 
 private:
