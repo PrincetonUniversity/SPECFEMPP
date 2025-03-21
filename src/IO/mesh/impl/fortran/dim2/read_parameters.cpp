@@ -3,7 +3,7 @@
 #include "mesh/mesh.hpp"
 
 specfem::mesh::parameters<specfem::dimension::type::dim2>
-specfem::IO::mesh::impl::fortran::dim2::read_mesh_parameters(
+specfem::io::mesh::impl::fortran::dim2::read_mesh_parameters(
     std::ifstream &stream, const specfem::MPI::MPI *mpi) {
   // ---------------------------------------------------------------------
   // reading mesh properties
@@ -23,7 +23,7 @@ specfem::IO::mesh::impl::fortran::dim2::read_mesh_parameters(
   int nelem_on_the_axis;       ///< Number of axial elements
   bool plot_lowerleft_corner_only;
 
-  specfem::IO::fortran_read_line(stream, &numat, &ngnod, &nspec, &pointsdisp,
+  specfem::io::fortran_read_line(stream, &numat, &ngnod, &nspec, &pointsdisp,
                                  &plot_lowerleft_corner_only);
 
   // ---------------------------------------------------------------------
@@ -35,7 +35,7 @@ specfem::IO::mesh::impl::fortran::dim2::read_mesh_parameters(
     throw std::runtime_error(error_message.str());
   }
 
-  specfem::IO::fortran_read_line(
+  specfem::io::fortran_read_line(
       stream, &nelemabs, &nelem_acforcing, &nelem_acoustic_surface,
       &num_fluid_solid_edges, &num_fluid_poro_edges, &num_solid_poro_edges,
       &nnodes_tangential_curve, &nelem_on_the_axis);

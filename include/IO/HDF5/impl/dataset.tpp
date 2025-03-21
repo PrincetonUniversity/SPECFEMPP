@@ -16,7 +16,7 @@
 
 #ifndef NO_HDF5
 template <typename ViewType, typename OpType>
-specfem::IO::impl::HDF5::Dataset<ViewType, OpType>::Dataset(
+specfem::io::impl::HDF5::Dataset<ViewType, OpType>::Dataset(
     std::unique_ptr<H5::H5File> &file, const std::string &name,
     const ViewType data)
     : data(data), DatasetBase<OpType>(
@@ -31,7 +31,7 @@ specfem::IO::impl::HDF5::Dataset<ViewType, OpType>::Dataset(
                       native_type::type()) {}
 
 template <typename ViewType, typename OpType>
-specfem::IO::impl::HDF5::Dataset<ViewType, OpType>::Dataset(
+specfem::io::impl::HDF5::Dataset<ViewType, OpType>::Dataset(
     std::unique_ptr<H5::Group> &group, const std::string &name,
     const ViewType data)
     : data(data), DatasetBase<OpType>(
@@ -46,7 +46,7 @@ specfem::IO::impl::HDF5::Dataset<ViewType, OpType>::Dataset(
                       native_type::type()) {}
 
 template <typename ViewType, typename OpType>
-void specfem::IO::impl::HDF5::Dataset<ViewType, OpType>::write() {
+void specfem::io::impl::HDF5::Dataset<ViewType, OpType>::write() {
   if (std::is_same_v<MemSpace, specfem::kokkos::HostMemSpace>) {
     DatasetBase<OpType>::write(data.data());
   } else if (std::is_same_v<MemSpace, specfem::kokkos::DevMemSpace>) {
@@ -60,7 +60,7 @@ void specfem::IO::impl::HDF5::Dataset<ViewType, OpType>::write() {
 }
 
 template <typename ViewType, typename OpType>
-void specfem::IO::impl::HDF5::Dataset<ViewType, OpType>::read() {
+void specfem::io::impl::HDF5::Dataset<ViewType, OpType>::read() {
   if (std::is_same_v<MemSpace, specfem::kokkos::HostMemSpace>) {
     DatasetBase<OpType>::read(data.data());
   } else if (std::is_same_v<MemSpace, specfem::kokkos::DevMemSpace>) {

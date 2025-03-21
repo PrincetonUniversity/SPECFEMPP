@@ -1,10 +1,10 @@
 #pragma once
 
 namespace specfem {
-namespace IO {
+namespace io {
 
 class write {};
 class read {};
 
-} // namespace IO
+} // namespace io
 } // namespace specfem

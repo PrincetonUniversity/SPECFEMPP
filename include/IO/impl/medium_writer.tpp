@@ -9,7 +9,7 @@
 #include <Kokkos_Core.hpp>
 
 template <typename OutputLibrary, typename ContainerType>
-void specfem::IO::impl::write_container(
+void specfem::io::impl::write_container(
     const std::string &output_folder, const std::string &output_namespace,
     const specfem::compute::mesh &mesh,
     const specfem::compute::element_types &element_types,

@@ -62,7 +62,7 @@ void execute(
   // Read mesh from the mesh database file
   mpi->cout("Reading the mesh...");
   mpi->cout("===================");
-  const auto mesh = specfem::IO::read_3d_mesh(mesh_parameters_filename,
+  const auto mesh = specfem::io::read_3d_mesh(mesh_parameters_filename,
                                               database_filename, mpi);
   mpi->cout("Done.");
   std::chrono::duration<double> elapsed_seconds =

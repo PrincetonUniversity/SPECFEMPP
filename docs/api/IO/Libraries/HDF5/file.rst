@@ -4,14 +4,14 @@
 File
 ====
 
-.. doxygenclass:: specfem::IO::impl::HDF5::File
+.. doxygenclass:: specfem::io::impl::HDF5::File
     :members:
 
 Implementation Details
 ----------------------
 
-.. doxygenclass:: specfem::IO::impl::HDF5::File< specfem::IO::write >
+.. doxygenclass:: specfem::io::impl::HDF5::File< specfem::io::write >
     :members:
 
-.. doxygenclass:: specfem::IO::impl::HDF5::File< specfem::IO::read >
+.. doxygenclass:: specfem::io::impl::HDF5::File< specfem::io::read >
     :members:

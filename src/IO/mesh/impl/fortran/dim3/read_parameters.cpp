@@ -5,12 +5,12 @@
 #include "specfem_mpi/interface.hpp"
 
 specfem::mesh::parameters<specfem::dimension::type::dim3>
-specfem::IO::mesh::impl::fortran::dim3::read_mesh_parameters(
+specfem::io::mesh::impl::fortran::dim3::read_mesh_parameters(
     std::ifstream &stream, const specfem::MPI::MPI *mpi) {
 
   // Creating aliases for Array Reading functions
-  using specfem::IO::mesh::impl::fortran::dim3::check_read_test_value;
-  using specfem::IO::mesh::impl::fortran::dim3::try_read_line;
+  using specfem::io::mesh::impl::fortran::dim3::check_read_test_value;
+  using specfem::io::mesh::impl::fortran::dim3::try_read_line;
 
   // Initialize test parameter
   check_read_test_value(stream, 9999);

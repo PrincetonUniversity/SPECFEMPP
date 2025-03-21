@@ -7,7 +7,7 @@ class assembly;
 } // namespace specfem
 
 namespace specfem {
-namespace IO {
+namespace io {
 /**
  * @brief Base reader class
  *
@@ -22,5 +22,5 @@ public:
    */
   virtual void read(specfem::compute::assembly &assembly) = 0;
 };
-} // namespace IO
+} // namespace io
 } // namespace specfem

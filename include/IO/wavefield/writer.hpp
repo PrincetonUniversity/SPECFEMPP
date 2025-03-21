@@ -5,7 +5,7 @@
 #include "enumerations/interface.hpp"
 
 namespace specfem {
-namespace IO {
+namespace io {
 
 /**
  * @brief Writer to output wavefield data to disk
@@ -41,5 +41,5 @@ public:
 private:
   std::string output_folder; ///< Path to output folder
 };
-} // namespace IO
+} // namespace io
 } // namespace specfem

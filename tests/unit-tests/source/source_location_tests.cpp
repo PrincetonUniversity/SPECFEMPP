@@ -162,11 +162,11 @@ TEST(SOURCE_LOCATION_TESTS, compute_source_locations) {
   // Read mesh for binary database for the test
   std::vector<std::shared_ptr<specfem::medium::material> > materials;
   specfem::mesh::mesh mesh =
-      specfem::IO::read_mesh(test_config.database_file, mpi);
+      specfem::io::read_mesh(test_config.database_file, mpi);
 
   // read sources file
   auto [sources, t0] =
-      specfem::IO::read_sources(test_config.sources_file, 1.0, mpi);
+      specfem::io::read_sources(test_config.sources_file, 1.0, mpi);
 
   // setup compute struct for future use
   specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,

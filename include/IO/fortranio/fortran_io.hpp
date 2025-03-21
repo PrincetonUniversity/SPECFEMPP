@@ -8,7 +8,7 @@
 #include <vector>
 
 namespace specfem {
-namespace IO {
+namespace io {
 
 void fortran_IO(std::ifstream &stream, int &buffer_length);
 void fortran_read_value(bool *value, std::ifstream &stream, int &buffer_length);
@@ -19,7 +19,7 @@ void fortran_read_value(float *value, std::ifstream &stream,
 void fortran_read_value(double *value, std::ifstream &stream,
                         int &buffer_length);
 void fortran_read_value(int *value, std::ifstream &stream, int &buffer_length);
-} // namespace IO
+} // namespace io
 } // namespace specfem
 
 #endif

@@ -6,8 +6,8 @@
 
 // Explicit instantiation
 
-template class specfem::IO::property_writer<
-    specfem::IO::HDF5<specfem::IO::write> >;
+template class specfem::io::property_writer<
+    specfem::io::HDF5<specfem::io::write> >;
 
-template class specfem::IO::property_writer<
-    specfem::IO::ASCII<specfem::IO::write> >;
+template class specfem::io::property_writer<
+    specfem::io::ASCII<specfem::io::write> >;

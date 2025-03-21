@@ -60,12 +60,12 @@ TEST(DOMAIN_TESTS, rmass_inverse_elastic_test) {
 
   // Read mesh generated MESHFEM
   std::vector<specfem::medium::material *> materials;
-  specfem::mesh::mesh mesh = specfem::IO::read_2d_mesh(database_file, mpi);
+  specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(database_file, mpi);
 
   // Read sources
   //    if start time is not explicitly specified then t0 is determined using
   //    source frequencies and time shift
-  auto [sources, t0] = specfem::IO::read_sources(source_node, 1e-5, mpi);
+  auto [sources, t0] = specfem::io::read_sources(source_node, 1e-5, mpi);
 
   // Generate compute structs to be used by the solver
   specfem::compute::compute compute(mesh.coorg, mesh.material_ind.knods, gllx,

@@ -8,7 +8,7 @@
 #include <Kokkos_Core.hpp>
 
 template <typename ViewType>
-void specfem::IO::mesh::impl::fortran::dim3::read_array(std::ifstream &stream,
+void specfem::io::mesh::impl::fortran::dim3::read_array(std::ifstream &stream,
                                                         ViewType &array) {
 
   // Get the value_type and rank of the ViewType
@@ -24,7 +24,7 @@ void specfem::IO::mesh::impl::fortran::dim3::read_array(std::ifstream &stream,
 
     try {
       // Read into dummy vector
-      specfem::IO::fortran_read_line(stream, &dummy_T);
+      specfem::io::fortran_read_line(stream, &dummy_T);
       // Assign to KokkosView
       for (int i = 0; i < n; i++) {
         array(i) = dummy_T[i];
@@ -47,7 +47,7 @@ void specfem::IO::mesh::impl::fortran::dim3::read_array(std::ifstream &stream,
       // Read into dummy vector
       // Assign to KokkosView
       for (int i = 0; i < n0; i++) {
-        specfem::IO::fortran_read_line(stream, &dummy_T);
+        specfem::io::fortran_read_line(stream, &dummy_T);
         int counter = 0;
         for (int j = 0; j < n1; j++) {
           array(i, j) = dummy_T[counter];
@@ -72,7 +72,7 @@ void specfem::IO::mesh::impl::fortran::dim3::read_array(std::ifstream &stream,
     try {
       // Read into dummy vector
       for (int i = 0; i < n0; i++) {
-        specfem::IO::fortran_read_line(stream, &dummy_T);
+        specfem::io::fortran_read_line(stream, &dummy_T);
         // Assign to KokkosView
         int counter = 0;
         for (int k = 0; k < n2; k++) {
@@ -101,7 +101,7 @@ void specfem::IO::mesh::impl::fortran::dim3::read_array(std::ifstream &stream,
     try {
       for (int i = 0; i < n0; i++) {
         // Read into dummy vector
-        specfem::IO::fortran_read_line(stream, &dummy_T);
+        specfem::io::fortran_read_line(stream, &dummy_T);
         // Assign to KokkosView
         int counter = 0;
         for (int l = 0; l < n3; l++) {
@@ -133,7 +133,7 @@ void specfem::IO::mesh::impl::fortran::dim3::read_array(std::ifstream &stream,
     try {
       for (int i = 0; i < n0; i++) {
         // Read into dummy vector
-        specfem::IO::fortran_read_line(stream, &dummy_T);
+        specfem::io::fortran_read_line(stream, &dummy_T);
         // Assign to KokkosView
         int counter = 0;
         for (int m = 0; m < n4; m++) {
@@ -159,7 +159,7 @@ void specfem::IO::mesh::impl::fortran::dim3::read_array(std::ifstream &stream,
 };
 
 template <typename ViewType>
-void specfem::IO::mesh::impl::fortran::dim3::read_index_array(
+void specfem::io::mesh::impl::fortran::dim3::read_index_array(
     std::ifstream &stream, ViewType &array) {
 
   // Get value_type and rank of the ViewType
@@ -174,7 +174,7 @@ void specfem::IO::mesh::impl::fortran::dim3::read_index_array(
 
     try {
       // Read into dummy vector
-      specfem::IO::fortran_read_line(stream, &dummy_T);
+      specfem::io::fortran_read_line(stream, &dummy_T);
 
       // Assign to KokkosView
       for (int i = 0; i < n; i++) {
@@ -198,7 +198,7 @@ void specfem::IO::mesh::impl::fortran::dim3::read_index_array(
     try {
       for (int i = 0; i < n0; i++) {
         // Read into dummy vector
-        specfem::IO::fortran_read_line(stream, &dummy_T);
+        specfem::io::fortran_read_line(stream, &dummy_T);
 
         // Assign to KokkosView
         int counter = 0;
@@ -225,7 +225,7 @@ void specfem::IO::mesh::impl::fortran::dim3::read_index_array(
     try {
       for (int i = 0; i < n0; i++) {
         // Read into dummy vector
-        specfem::IO::fortran_read_line(stream, &dummy_T);
+        specfem::io::fortran_read_line(stream, &dummy_T);
 
         // Assign to KokkosView
         int counter = 0;
@@ -255,7 +255,7 @@ void specfem::IO::mesh::impl::fortran::dim3::read_index_array(
     try {
       for (int i = 0; i < n0; i++) {
         // Read into dummy vector
-        specfem::IO::fortran_read_line(stream, &dummy_T);
+        specfem::io::fortran_read_line(stream, &dummy_T);
 
         // Assign to KokkosView
         int counter = 0;
@@ -280,7 +280,7 @@ void specfem::IO::mesh::impl::fortran::dim3::read_index_array(
 };
 
 namespace specfem {
-namespace IO {
+namespace io {
 namespace mesh {
 namespace impl {
 namespace fortran {
@@ -294,7 +294,7 @@ namespace dim3 {
  * @param args Arguments to pass to fortran_read_line
  * @throws std::runtime_error if an error occurs while reading the line
  *         includes the input message, so the user know which value errors
- * @see ::specfem::IO::fortran_read_line
+ * @see ::specfem::io::fortran_read_line
  * @note This function is a wrapper for fortran_read_line that catches
  * exceptions and throws a runtime_error with a more informative message
  *
@@ -306,9 +306,9 @@ namespace dim3 {
  */
 template <typename... Args>
 auto try_read_line(const std::string &message, Args &&...args)
-    -> decltype(specfem::IO::fortran_read_line(std::forward<Args>(args)...)) {
+    -> decltype(specfem::io::fortran_read_line(std::forward<Args>(args)...)) {
   try {
-    return specfem::IO::fortran_read_line(std::forward<Args>(args)...);
+    return specfem::io::fortran_read_line(std::forward<Args>(args)...);
   } catch (const std::exception &e) {
     std::ostringstream error_message;
     error_message << "Exception caught in try_read_line(" << message
@@ -328,7 +328,7 @@ auto try_read_line(const std::string &message, Args &&...args)
  * @param args Arguments to pass to read_array
  * @throws std::runtime_error if an error occurs while reading the array
  *         includes the input message, so the user know which array errors
- * @see ::specfem::IO::mesh::impl::fortran::dim3::read_array
+ * @see ::specfem::io::mesh::impl::fortran::dim3::read_array
  * @note This function is a wrapper for read_array that catches exceptions
  *       and throws a runtime_error with a more informative message
  *
@@ -340,10 +340,10 @@ auto try_read_line(const std::string &message, Args &&...args)
  */
 template <typename... Args>
 auto try_read_array(const std::string &message, Args &&...args)
-    -> decltype(specfem::IO::mesh::impl::fortran::dim3::read_array(
+    -> decltype(specfem::io::mesh::impl::fortran::dim3::read_array(
         std::forward<Args>(args)...)) {
   try {
-    return specfem::IO::mesh::impl::fortran::dim3::read_array(
+    return specfem::io::mesh::impl::fortran::dim3::read_array(
         std::forward<Args>(args)...);
   } catch (const std::exception &e) {
     std::ostringstream error_message;
@@ -365,7 +365,7 @@ auto try_read_array(const std::string &message, Args &&...args)
  * @param args Arguments to pass to read_index_array
  * @throws std::runtime_error if an error occurs while reading the array that
  *         includes the input message, so the user know which array errors
- * @see ::specfem::IO::mesh::impl::fortran::dim3::read_index_array
+ * @see ::specfem::io::mesh::impl::fortran::dim3::read_index_array
  * @note This function is a wrapper for read_index_array that catches exceptions
  *       and throws a runtime_error with a more informative message
  *
@@ -377,10 +377,10 @@ auto try_read_array(const std::string &message, Args &&...args)
  */
 template <typename... Args>
 auto try_read_index_array(const std::string &message, Args &&...args)
-    -> decltype(specfem::IO::mesh::impl::fortran::dim3::read_index_array(
+    -> decltype(specfem::io::mesh::impl::fortran::dim3::read_index_array(
         std::forward<Args>(args)...)) {
   try {
-    return specfem::IO::mesh::impl::fortran::dim3::read_index_array(
+    return specfem::io::mesh::impl::fortran::dim3::read_index_array(
         std::forward<Args>(args)...);
   } catch (const std::exception &e) {
     std::ostringstream error_message;
@@ -399,5 +399,5 @@ auto try_read_index_array(const std::string &message, Args &&...args)
 } // namespace fortran
 } // namespace impl
 } // namespace mesh
-} // namespace IO
+} // namespace io
 } // namespace specfem

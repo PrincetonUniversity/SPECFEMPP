@@ -7,7 +7,7 @@
 #include "impl/group.hpp"
 
 namespace specfem {
-namespace IO {
+namespace io {
 
 /**
  * @brief
@@ -23,16 +23,16 @@ namespace IO {
 template <typename OpType> class ASCII {
 public:
   using File =
-      specfem::IO::impl::ASCII::File<OpType>; ///< ASCII file implementation
+      specfem::io::impl::ASCII::File<OpType>; ///< ASCII file implementation
   using Group =
-      specfem::IO::impl::ASCII::Group<OpType>; ///< ASCII group implementation
+      specfem::io::impl::ASCII::Group<OpType>; ///< ASCII group implementation
   template <typename ViewType>
   using Dataset =
-      specfem::IO::impl::ASCII::Dataset<ViewType, OpType>; ///< ASCII dataset
+      specfem::io::impl::ASCII::Dataset<ViewType, OpType>; ///< ASCII dataset
                                                            ///< implementation
 };
 
-} // namespace IO
+} // namespace io
 } // namespace specfem
 
 #endif /* _SPECFEM_IO_ASCII_HPP */

@@ -6,11 +6,11 @@
 #include <Kokkos_Core.hpp>
 
 // temolate instationation
-// using View4D = specfem::IO::mesh::impl::fortran::dim3::View4D<type_real>;
+// using View4D = specfem::io::mesh::impl::fortran::dim3::View4D<type_real>;
 // template<> void
-// specfem::IO::mesh::impl::fortran::dim3::read_array<type_real>;
+// specfem::io::mesh::impl::fortran::dim3::read_array<type_real>;
 
-void specfem::IO::mesh::impl::fortran::dim3::read_partial_derivatives(
+void specfem::io::mesh::impl::fortran::dim3::read_partial_derivatives(
     std::ifstream &stream,
     specfem::mesh::partial_derivatives<specfem::dimension::type::dim3>
         &partial_derivatives,
@@ -35,7 +35,7 @@ void specfem::IO::mesh::impl::fortran::dim3::read_partial_derivatives(
 
   // Read all elements at once
   try {
-    specfem::IO::mesh::impl::fortran::dim3::read_array(stream,
+    specfem::io::mesh::impl::fortran::dim3::read_array(stream,
                                                        partial_derivatives.xix);
 
   } catch (std::runtime_error &e) {
@@ -46,7 +46,7 @@ void specfem::IO::mesh::impl::fortran::dim3::read_partial_derivatives(
   }
 
   try {
-    specfem::IO::mesh::impl::fortran::dim3::read_array(stream,
+    specfem::io::mesh::impl::fortran::dim3::read_array(stream,
                                                        partial_derivatives.xiy);
   } catch (std::runtime_error &e) {
     std::ostringstream error_message;
@@ -56,7 +56,7 @@ void specfem::IO::mesh::impl::fortran::dim3::read_partial_derivatives(
   }
 
   try {
-    specfem::IO::mesh::impl::fortran::dim3::read_array(stream,
+    specfem::io::mesh::impl::fortran::dim3::read_array(stream,
                                                        partial_derivatives.xiz);
   } catch (std::runtime_error &e) {
     std::ostringstream error_message;
@@ -66,7 +66,7 @@ void specfem::IO::mesh::impl::fortran::dim3::read_partial_derivatives(
   }
 
   try {
-    specfem::IO::mesh::impl::fortran::dim3::read_array(
+    specfem::io::mesh::impl::fortran::dim3::read_array(
         stream, partial_derivatives.etax);
   } catch (std::runtime_error &e) {
     std::ostringstream error_message;
@@ -76,7 +76,7 @@ void specfem::IO::mesh::impl::fortran::dim3::read_partial_derivatives(
   }
 
   try {
-    specfem::IO::mesh::impl::fortran::dim3::read_array(
+    specfem::io::mesh::impl::fortran::dim3::read_array(
         stream, partial_derivatives.etay);
   } catch (std::runtime_error &e) {
     std::ostringstream error_message;
@@ -86,7 +86,7 @@ void specfem::IO::mesh::impl::fortran::dim3::read_partial_derivatives(
   }
 
   try {
-    specfem::IO::mesh::impl::fortran::dim3::read_array(
+    specfem::io::mesh::impl::fortran::dim3::read_array(
         stream, partial_derivatives.etaz);
   } catch (std::runtime_error &e) {
     std::ostringstream error_message;
@@ -96,7 +96,7 @@ void specfem::IO::mesh::impl::fortran::dim3::read_partial_derivatives(
   }
 
   try {
-    specfem::IO::mesh::impl::fortran::dim3::read_array(
+    specfem::io::mesh::impl::fortran::dim3::read_array(
         stream, partial_derivatives.gammax);
   } catch (std::runtime_error &e) {
     std::ostringstream error_message;
@@ -106,7 +106,7 @@ void specfem::IO::mesh::impl::fortran::dim3::read_partial_derivatives(
   }
 
   try {
-    specfem::IO::mesh::impl::fortran::dim3::read_array(
+    specfem::io::mesh::impl::fortran::dim3::read_array(
         stream, partial_derivatives.gammay);
   } catch (std::runtime_error &e) {
     std::ostringstream error_message;
@@ -116,7 +116,7 @@ void specfem::IO::mesh::impl::fortran::dim3::read_partial_derivatives(
   }
 
   try {
-    specfem::IO::mesh::impl::fortran::dim3::read_array(
+    specfem::io::mesh::impl::fortran::dim3::read_array(
         stream, partial_derivatives.gammaz);
   } catch (std::runtime_error &e) {
     std::ostringstream error_message;
@@ -126,7 +126,7 @@ void specfem::IO::mesh::impl::fortran::dim3::read_partial_derivatives(
   }
 
   try {
-    specfem::IO::mesh::impl::fortran::dim3::read_array(
+    specfem::io::mesh::impl::fortran::dim3::read_array(
         stream, partial_derivatives.jacobian);
   } catch (std::runtime_error &e) {
     std::ostringstream error_message;

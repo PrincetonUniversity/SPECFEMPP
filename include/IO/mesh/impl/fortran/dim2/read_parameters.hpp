@@ -5,7 +5,7 @@
 #include "specfem_mpi/interface.hpp"
 
 namespace specfem {
-namespace IO {
+namespace io {
 namespace mesh {
 namespace impl {
 namespace fortran {
@@ -25,5 +25,5 @@ read_mesh_parameters(std::ifstream &stream, const specfem::MPI::MPI *mpi);
 } // namespace fortran
 } // namespace impl
 } // namespace mesh
-} // namespace IO
+} // namespace io
 } // namespace specfem

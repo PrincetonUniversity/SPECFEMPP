@@ -10,7 +10,7 @@
 #include <string>
 
 namespace specfem {
-namespace IO {
+namespace io {
 namespace impl {
 namespace HDF5 {
 
@@ -59,7 +59,7 @@ public:
   using value_type =
       typename ViewType::non_const_value_type; ///< Underlying type of the View
   using native_type =
-      typename specfem::IO::impl::HDF5::native_type<value_type>; ///< Native
+      typename specfem::io::impl::HDF5::native_type<value_type>; ///< Native
                                                                  ///< type used
                                                                  ///< within
                                                                  ///< HDF5
@@ -113,7 +113,7 @@ private:
 #endif
 } // namespace HDF5
 } // namespace impl
-} // namespace IO
+} // namespace io
 } // namespace specfem
 
 #endif

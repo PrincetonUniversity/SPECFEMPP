@@ -80,7 +80,7 @@ TEST(COMPUTE_TESTS, compute_ibool) {
   specfem::quadrature::quadratures quadratures(gll);
 
   // Read mesh generated MESHFEM
-  specfem::mesh::mesh mesh = specfem::IO::read_2d_mesh(
+  specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(
       test_config.database_filename, specfem::enums::elastic_wave::p_sv, mpi);
 
   // Setup compute structs

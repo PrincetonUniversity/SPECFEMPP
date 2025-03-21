@@ -29,7 +29,7 @@ TEST(IO_TESTS, read_sources) {
 
   std::cout << "hello" << std::endl;
   std::cout << databases["sources"].as<std::string>() << std::endl;
-  auto [sources, user_t0] = specfem::IO::read_sources(
+  auto [sources, user_t0] = specfem::io::read_sources(
       databases["sources"], nsteps, t0, dt, specfem::simulation::type::forward);
 
   std::cout << "world" << std::endl;

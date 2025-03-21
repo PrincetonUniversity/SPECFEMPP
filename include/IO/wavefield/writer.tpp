@@ -5,12 +5,12 @@
 #include "enumerations/interface.hpp"
 
 template <typename OutputLibrary>
-specfem::IO::wavefield_writer<OutputLibrary>::wavefield_writer(
+specfem::io::wavefield_writer<OutputLibrary>::wavefield_writer(
     const std::string output_folder)
     : output_folder(output_folder) {}
 
 template <typename OutputLibrary>
-void specfem::IO::wavefield_writer<OutputLibrary>::write(
+void specfem::io::wavefield_writer<OutputLibrary>::write(
     specfem::compute::assembly &assembly) {
   auto &forward = assembly.fields.forward;
   auto &boundary_values = assembly.boundary_values;

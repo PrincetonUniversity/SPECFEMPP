@@ -43,7 +43,7 @@ template <> struct coordinates<specfem::dimension::type::dim3> {
    * @brief Default constructor
    *
    */
-  coordinates(){}; // Default constructor
+  coordinates() {}; // Default constructor
 
   /**
    * @brief Constructor
@@ -63,15 +63,15 @@ template <> struct coordinates<specfem::dimension::type::dim3> {
    *   nspec, nglob, ngllx, nglly, ngllz);
    *
    * // Read coordinates from file
-   * specfem::IO::mesh::impl::fortran::dim3::read_array(stream, coordinates.x);
-   * specfem::IO::mesh::impl::fortran::dim3::read_array(stream, coordinates.y);
-   * specfem::IO::mesh::impl::fortran::dim3::read_array(stream, coordinates.z);
+   * specfem::io::mesh::impl::fortran::dim3::read_array(stream, coordinates.x);
+   * specfem::io::mesh::impl::fortran::dim3::read_array(stream, coordinates.y);
+   * specfem::io::mesh::impl::fortran::dim3::read_array(stream, coordinates.z);
    * @endcode
    *
    */
   coordinates(int nspec, int nglob, int ngllx, int nglly, int ngllz)
       : nspec(nspec), nglob(nglob), ngllx(ngllx), nglly(nglly), ngllz(ngllz),
-        x("x", nglob), y("y", nglob), z("z", nglob){};
+        x("x", nglob), y("y", nglob), z("z", nglob) {};
 
   ///@} // Constructors
   /**

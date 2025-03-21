@@ -5,7 +5,7 @@
 #include "IO/reader.hpp"
 
 namespace specfem {
-namespace IO {
+namespace io {
 
 /**
  * @brief Reader to read wavefield data from disk
@@ -33,5 +33,5 @@ private:
   std::string output_folder; ///< Path to output folder
 };
 
-} // namespace IO
+} // namespace io
 } // namespace specfem

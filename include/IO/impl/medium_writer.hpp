@@ -1,7 +1,7 @@
 #pragma once
 
 namespace specfem {
-namespace IO {
+namespace io {
 namespace impl {
 template <typename OutputLibrary, typename ContainerType>
 void write_container(const std::string &output_folder,
@@ -10,5 +10,5 @@ void write_container(const std::string &output_folder,
                      const specfem::compute::element_types &element_types,
                      ContainerType &container);
 } // namespace impl
-} // namespace IO
+} // namespace io
 } // namespace specfem

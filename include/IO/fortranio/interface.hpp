@@ -6,7 +6,7 @@
 #include <fstream>
 
 namespace specfem {
-namespace IO {
+namespace io {
 /**
  * @brief Read a line from fortran unformatted binary file
  *
@@ -21,16 +21,16 @@ namespace IO {
  *
  * @code{.cpp} // Example of how to use this function
  * int value1, value2;
- * specfem::IO::fortran_read_line(stream, &value1, &value2);
+ * specfem::io::fortran_read_line(stream, &value1, &value2);
  *
  * // Example of how to use this function with a vector
  * std::vector<int> values(10);
- * specfem::IO::fortran_read_line(stream, &values);
+ * specfem::io::fortran_read_line(stream, &values);
  * @endcode
  */
 template <typename... Args>
 void fortran_read_line(std::ifstream &stream, Args... values);
-} // namespace IO
+} // namespace io
 } // namespace specfem
 
 #endif

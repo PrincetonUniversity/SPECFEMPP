@@ -5,8 +5,8 @@
 #include "IO/reader.hpp"
 
 // Explicit instantiation
-template class specfem::IO::property_reader<
-    specfem::IO::HDF5<specfem::IO::read> >;
+template class specfem::io::property_reader<
+    specfem::io::HDF5<specfem::io::read> >;
 
-template class specfem::IO::property_reader<
-    specfem::IO::ASCII<specfem::IO::read> >;
+template class specfem::io::property_reader<
+    specfem::io::ASCII<specfem::io::read> >;

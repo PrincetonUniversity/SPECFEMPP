@@ -44,18 +44,18 @@ public:
   /**
    * @brief Instantiate a wavefield writer object
    *
-   * @return std::shared_ptr<specfem::IO::writer> Pointer to an instantiated
+   * @return std::shared_ptr<specfem::io::writer> Pointer to an instantiated
    * writer object
    */
-  std::shared_ptr<specfem::IO::writer> instantiate_wavefield_writer() const;
+  std::shared_ptr<specfem::io::writer> instantiate_wavefield_writer() const;
 
   /**
    * @brief Instantiate a wavefield reader object
    *
-   * @return std::shared_ptr<specfem::IO::reader> Pointer to an instantiated
+   * @return std::shared_ptr<specfem::io::reader> Pointer to an instantiated
    * reader object
    */
-  std::shared_ptr<specfem::IO::reader> instantiate_wavefield_reader() const;
+  std::shared_ptr<specfem::io::reader> instantiate_wavefield_reader() const;
 
   inline specfem::simulation::type get_simulation_type() const {
     return this->simulation_type;

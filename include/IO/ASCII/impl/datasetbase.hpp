@@ -12,13 +12,13 @@
 #include <string>
 
 namespace specfem {
-namespace IO {
+namespace io {
 namespace impl {
 namespace ASCII {
 
 template <typename OpType> class DatasetBase;
 
-template <> class DatasetBase<specfem::IO::write> {
+template <> class DatasetBase<specfem::io::write> {
 protected:
   DatasetBase(const boost::filesystem::path &folder_path,
               const std::string &name, const int rank, const int *dims)
@@ -69,7 +69,7 @@ protected:
     }
 
     for (int i = 0; i < total_elements; ++i) {
-      specfem::IO::impl::ASCII::native_type<value_type>::write(file, data[i]);
+      specfem::io::impl::ASCII::native_type<value_type>::write(file, data[i]);
     }
 
     file.close();
@@ -83,7 +83,7 @@ private:
   const int *dims;
 };
 
-template <> class DatasetBase<specfem::IO::read> {
+template <> class DatasetBase<specfem::io::read> {
 protected:
   DatasetBase(const boost::filesystem::path &folder_path,
               const std::string &name, const int rank, const int *dims)
@@ -160,7 +160,7 @@ protected:
     }
 
     for (int i = 0; i < total_elements; ++i) {
-      specfem::IO::impl::ASCII::native_type<value_type>::read(file, data[i]);
+      specfem::io::impl::ASCII::native_type<value_type>::read(file, data[i]);
     }
 
     file.close();
@@ -176,7 +176,7 @@ private:
 
 } // namespace ASCII
 } // namespace impl
-} // namespace IO
+} // namespace io
 } // namespace specfem
 
 #endif /* _SPECFEM_IO_ASCII_IMPL_DATASETBASE_HPP */

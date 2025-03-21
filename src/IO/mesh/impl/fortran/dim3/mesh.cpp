@@ -40,18 +40,18 @@ std::string try_print_medium_element(
 }
 
 specfem::mesh::mesh<specfem::dimension::type::dim3>
-specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
+specfem::io::read_3d_mesh(const std::string mesh_parameters_file,
                           const std::string mesh_databases_file,
                           const specfem::MPI::MPI *mpi) {
 
   // Creating aliases for Checking functions
-  using specfem::IO::mesh::impl::fortran::dim3::check_read_test_value;
-  using specfem::IO::mesh::impl::fortran::dim3::check_values;
+  using specfem::io::mesh::impl::fortran::dim3::check_read_test_value;
+  using specfem::io::mesh::impl::fortran::dim3::check_values;
 
   // Creating aliases for Array Reading functions
-  using specfem::IO::mesh::impl::fortran::dim3::try_read_array;
-  using specfem::IO::mesh::impl::fortran::dim3::try_read_index_array;
-  using specfem::IO::mesh::impl::fortran::dim3::try_read_line;
+  using specfem::io::mesh::impl::fortran::dim3::try_read_array;
+  using specfem::io::mesh::impl::fortran::dim3::try_read_index_array;
+  using specfem::io::mesh::impl::fortran::dim3::try_read_line;
 
   // Declaring empty mesh objects
   specfem::mesh::mesh<specfem::dimension::type::dim3> mesh;
@@ -66,7 +66,7 @@ specfem::IO::read_3d_mesh(const std::string mesh_parameters_file,
 
   try {
     mesh.parameters =
-        specfem::IO::mesh::impl::fortran::dim3::read_mesh_parameters(stream,
+        specfem::io::mesh::impl::fortran::dim3::read_mesh_parameters(stream,
                                                                      mpi);
   } catch (std::runtime_error &e) {
     throw;
