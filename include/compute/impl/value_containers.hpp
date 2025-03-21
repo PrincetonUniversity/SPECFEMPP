@@ -5,15 +5,13 @@
 
 namespace specfem {
 namespace compute {
-
 namespace impl {
 /**
  * @brief Values for every quadrature point in the finite element mesh
  *
  */
-template <
-    template <specfem::element::medium_tag, specfem::element::property_tag>
-    class containers_type>
+template <template <specfem::element::medium_tag,
+                    specfem::element::property_tag> class containers_type>
 struct value_containers {
 
   using IndexViewType = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
@@ -82,7 +80,9 @@ struct value_containers {
 
     /// code path should never be reached
 
-    return {}; ///< Return empty container if no match is found
+    auto return_value = new containers_type<MediumTag, PropertyTag>();
+
+    return *return_value;
   }
 
   /**

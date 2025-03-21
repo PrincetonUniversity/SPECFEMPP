@@ -95,14 +95,26 @@ Tests:
       sources : "data/mesh/homogeneous_elastic_anisotropic/sources.yaml"
       stations : "data/mesh/homogeneous_elastic_anisotropic/STATIONS"
 
-# Electromagnetic mesh P_SV wave
-  - name: "Electro-magnetic mesh example from Morency 2020"
+  # Poroelastic mesh
+  - name: "Poroelastic mesh - Homogeneous isotropic material"
     description: >
-      Testing the reading of an electromagnetic mesh.
+      Testing the reading of an poroelastic mesh.
     config:
       nproc: 1
       elastic_wave: "P_SV"
     databases:
-      mesh: "data/mesh/electromagnetic_mesh_morency2020/database.bin"
-      sources: "data/mesh/electromagnetic_mesh_morency2020/sources.yaml"
-      stations: "data/mesh/electromagnetic_mesh_morency2020/DATA/STATIONS"
+      mesh: "data/mesh/homogeneous_poroelastic_isotropic/database.bin"
+      sources: "data/mesh/homogeneous_poroelastic_isotropic/sources.yaml"
+      stations: "data/mesh/homogeneous_poroelastic_isotropic/DATA/STATIONS"
+
+# # Electromagnetic mesh P_SV wave
+#   - name: "Electro-magnetic mesh example from Morency 2020"
+#     description: >
+#       Testing the reading of an electromagnetic mesh.
+#     config:
+#       nproc: 1
+#       elastic_wave: "P_SV"
+#     databases:
+#       mesh: "data/mesh/electromagnetic_mesh_morency2020/database.bin"
+#       sources: "data/mesh/electromagnetic_mesh_morency2020/sources.yaml"
+#       stations: "data/mesh/electromagnetic_mesh_morency2020/DATA/STATIONS"
