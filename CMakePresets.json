@@ -38,7 +38,7 @@
         "ENABLE_CUDA": "ON",
         "Kokkos_ARCH_NATIVE": "ON",
         "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
-        "Kokkos_ENABLE_ATOMICS_BYPASS": "ON",
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
         "Kokkos_ARCH_AMPERE80":"ON"
       }
     },
@@ -67,7 +67,7 @@
         "ENABLE_SIMD": "ON",
         "Kokkos_ARCH_NATIVE": "ON",
         "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
-        "Kokkos_ENABLE_ATOMICS_BYPASS": "ON",
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
         "Kokkos_ARCH_AMPERE80":"ON"
       }
     },
