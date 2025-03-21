@@ -139,10 +139,12 @@ module shared_input_parameters
    logical :: ATTENUATION_VISCOELASTIC
    logical :: ATTENUATION_PORO_FLUID_PART
    logical :: ATTENUATION_VISCOACOUSTIC
+   logical :: ATTENUATION_PERMITTIVITY
+   logical :: ATTENUATION_CONDUCTIVITY
    double precision :: Q0_poroelastic,freq0_poroelastic
 
    integer :: N_SLS
-   double precision :: ATTENUATION_f0_REFERENCE
+   double precision :: ATTENUATION_f0_REFERENCE,f0_electromagnetic
    logical :: READ_VELOCITIES_AT_f0
    logical :: USE_SOLVOPT
 
@@ -414,6 +416,10 @@ module shared_parameters
    !       one could check if the solver arrays could be omitted and replaced with this ones in future...
    double precision, dimension(:),allocatable :: phi_read,tortuosity_read,permxx_read,permxz_read, &
       permzz_read,kappa_s_read,kappa_f_read,kappa_fr_read,eta_f_read,mu_fr_read
+
+   ! electromagnetic (EM)
+   double precision, dimension(:),allocatable :: mu0_read,e0_read,e11_read,e33_read,sig11_read,sig33_read,&
+   Qe11_read,Qe33_read,Qs11_read,Qs33_read
 
    ! mesh setup
    ! total number of elements

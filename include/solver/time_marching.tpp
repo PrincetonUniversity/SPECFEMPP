@@ -14,28 +14,40 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
   constexpr auto elastic_sv = specfem::element::medium_tag::elastic_sv;
   constexpr auto elastic_sh = specfem::element::medium_tag::elastic_sh;
 
-  kernels.initialize(time_scheme->get_timestep());
+  // Calls to compute mass matrix and invert mass matrix
+  this->kernels.initialize(time_scheme->get_timestep());
 
   const int nstep = time_scheme->get_max_timestep();
 
   for (const auto [istep, dt] : time_scheme->iterate_forward()) {
-    time_scheme->apply_predictor_phase_forward(acoustic);
-    time_scheme->apply_predictor_phase_forward(elastic_sv);
-    time_scheme->apply_predictor_phase_forward(elastic_sh);
 
-    kernels.template update_wavefields<acoustic>(istep);
-    time_scheme->apply_corrector_phase_forward(acoustic);
+    // Predictor phase forward
+    this->time_scheme->apply_predictor_phase_forward(acoustic);
+    this->time_scheme->apply_predictor_phase_forward(elastic_sv);
+    this->time_scheme->apply_predictor_phase_forward(elastic_sh);
 
-    kernels.template update_wavefields<elastic_sv>(istep);
-    kernels.template update_wavefields<elastic_sh>(istep);
-    time_scheme->apply_corrector_phase_forward(elastic_sv);
-    time_scheme->apply_corrector_phase_forward(elastic_sh);
+    // Update acoustic wavefield:
+    // coupling, source interaction, stiffness, divide by mass matrix
+    this->kernels.template update_wavefields<acoustic>(istep);
 
+    // Corrector phase forward for acoustic
+    this->time_scheme->apply_corrector_phase_forward(acoustic);
+
+    // Update wavefields for elastic wavefields:
+    // coupling, source, stiffness, divide by mass matrix
+    this->kernels.template update_wavefields<elastic_sv>(istep);
+    this->kernels.template update_wavefields<elastic_sh>(istep);
+
+    // Corrector phase forward for elastic
+    this->time_scheme->apply_corrector_phase_forward(elastic_sv);
+    this->time_scheme->apply_corrector_phase_forward(elastic_sh);
+
+    // Compute seismograms if required
     if (time_scheme->compute_seismogram(istep)) {
-      kernels.compute_seismograms(time_scheme->get_seismogram_step());
+      this->kernels.compute_seismograms(time_scheme->get_seismogram_step());
       time_scheme->increment_seismogram_step();
     }
-
+    // Run periodic tasks such as plotting, etc.
     for (const auto &task : tasks) {
       if (task && task->should_run(istep)) {
         task->run();

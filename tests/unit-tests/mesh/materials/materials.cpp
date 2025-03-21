@@ -6,19 +6,35 @@
 #include <variant>
 #include <vector>
 
-using MaterialVectorType = std::vector<std::variant<
-    specfem::medium::material<specfem::element::medium_tag::acoustic,
-                              specfem::element::property_tag::isotropic>,
-    specfem::medium::material<specfem::element::medium_tag::elastic_sv,
-                              specfem::element::property_tag::isotropic>,
-    specfem::medium::material<specfem::element::medium_tag::elastic_sh,
-                              specfem::element::property_tag::isotropic>,
-    specfem::medium::material<specfem::element::medium_tag::elastic_sv,
-                              specfem::element::property_tag::anisotropic>,
-    specfem::medium::material<specfem::element::medium_tag::elastic_sh,
-                              specfem::element::property_tag::anisotropic>,
-    specfem::medium::material<specfem::element::medium_tag::electromagnetic_sv,
-                              specfem::element::property_tag::isotropic> > >;
+#define MEDIUM_TYPE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                   \
+  using CREATE_VARIABLE_NAME(type, GET_NAME(MEDIUM_TAG),                       \
+                             GET_NAME(PROPERTY_TAG)) =                         \
+      specfem::medium::material<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)>;
+
+CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
+    MEDIUM_TYPE,
+    WHERE(DIMENSION_TAG_DIM2)
+        WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
+              MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_SV)
+            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
+
+#undef MEDIUM_TYPE
+
+#define TYPE_NAME(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                     \
+  (CREATE_VARIABLE_NAME(type, GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)))
+
+#define MAKE_VARIANT_RETURN                                                    \
+  std::variant<BOOST_PP_SEQ_ENUM(CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(          \
+      TYPE_NAME,                                                               \
+      WHERE(DIMENSION_TAG_DIM2) WHERE(                                         \
+          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,   \
+          MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_SV)               \
+          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)))>
+
+using MaterialVectorType = std::vector<MAKE_VARIANT_RETURN>; /// NOLINT
+
+#undef MAKE_VARIANT_RETURN
+#undef TYPE_NAME
 
 const static std::unordered_map<std::string, MaterialVectorType>
     ground_truth = {
@@ -83,6 +99,12 @@ const static std::unordered_map<std::string, MaterialVectorType>
             2700.0, 24299994600.5, 8099996400.35, 0.0, 24299994600.5, 0.0,
             8100001799.8227, 8099996400.35, 8099996400.35, 0.0, 9999,
             9999) }) },
+      { "Poroelastic mesh - Homogeneous isotropic material",
+        MaterialVectorType({ specfem::medium::material<
+            specfem::element::medium_tag::poroelastic,
+            specfem::element::property_tag::isotropic>(
+            2650.0, 880.0, 0.1, 2.0, 1.0e-9, 0.0, 1.0e-9, 12.2e9, 1.985e9,
+            9.6e9, 0.0, 5.1e9, 9999) }) },
       { "Electro-magnetic mesh example from Morency 2020",
         MaterialVectorType(
             { specfem::medium::material<
@@ -123,145 +145,45 @@ void check_test(
     const int index = material_specification.index;
     const int imaterial = material_specification.database_index;
 
-    // Acoustic Isotropic
-    if ((type == specfem::element::medium_tag::acoustic) &&
-        (property == specfem::element::property_tag::isotropic)) {
-      const auto icomputed = std::get<specfem::medium::material<
-          specfem::element::medium_tag::acoustic,
-          specfem::element::property_tag::isotropic> >(computed[ispec]);
-      const auto iexpected = std::get<specfem::medium::material<
-          specfem::element::medium_tag::acoustic,
-          specfem::element::property_tag::isotropic> >(expected[imaterial]);
-      if (icomputed != iexpected) {
-        std::ostringstream error_message;
-        error_message << "Material " << index << " is not the same ["
-                      << __FILE__ << ":" << __LINE__ << "]\n"
-                      << "  imaterial: " << imaterial << "\n"
-                      << "  index:     " << index << "\n"
-                      << "  ispec:     " << ispec << "\n"
-                      << "Computed: \n"
-                      << icomputed.print() << "\n"
-                      << "Expected: \n"
-                      << iexpected.print() << "\n";
-        throw std::runtime_error(error_message.str());
-      }
-    }
-    // Elastic SV Isoptropic
-    else if ((type == specfem::element::medium_tag::elastic_sv) &&
-             (property == specfem::element::property_tag::isotropic)) {
-      const auto icomputed = std::get<specfem::medium::material<
-          specfem::element::medium_tag::elastic_sv,
-          specfem::element::property_tag::isotropic> >(computed[ispec]);
-      const auto iexpected = std::get<specfem::medium::material<
-          specfem::element::medium_tag::elastic_sv,
-          specfem::element::property_tag::isotropic> >(expected[imaterial]);
-      if (icomputed != iexpected) {
-        std::ostringstream error_message;
-        error_message << "Material " << index << " is not the same ["
-                      << __FILE__ << ":" << __LINE__ << "]\n"
-                      << "  imaterial: " << imaterial << "\n"
-                      << "  index:     " << index << "\n"
-                      << "  ispec:     " << ispec << "\n"
-                      << "Computed: \n"
-                      << icomputed.print() << "\n"
-                      << "Expected: \n"
-                      << iexpected.print() << "\n";
-        throw std::runtime_error(error_message.str());
-      }
-    }
-    // Elastic SH Isoptropic
-    else if ((type == specfem::element::medium_tag::elastic_sh) &&
-             (property == specfem::element::property_tag::isotropic)) {
-      const auto icomputed = std::get<specfem::medium::material<
-          specfem::element::medium_tag::elastic_sh,
-          specfem::element::property_tag::isotropic> >(computed[ispec]);
-      const auto iexpected = std::get<specfem::medium::material<
-          specfem::element::medium_tag::elastic_sh,
-          specfem::element::property_tag::isotropic> >(expected[imaterial]);
-      if (icomputed != iexpected) {
-        std::ostringstream error_message;
-        error_message << "Material " << index << " is not the same ["
-                      << __FILE__ << ":" << __LINE__ << "]\n"
-                      << "  imaterial: " << imaterial << "\n"
-                      << "  index:     " << index << "\n"
-                      << "  ispec:     " << ispec << "\n"
-                      << "Computed: \n"
-                      << icomputed.print() << "\n"
-                      << "Expected: \n"
-                      << iexpected.print() << "\n";
-        throw std::runtime_error(error_message.str());
-      }
-    }
-    // Elastic SV Anisotropic
-    else if ((type == specfem::element::medium_tag::elastic_sv) &&
-             (property == specfem::element::property_tag::anisotropic)) {
-      const auto icomputed = std::get<specfem::medium::material<
-          specfem::element::medium_tag::elastic_sv,
-          specfem::element::property_tag::anisotropic> >(computed[ispec]);
-      const auto iexpected = std::get<specfem::medium::material<
-          specfem::element::medium_tag::elastic_sv,
-          specfem::element::property_tag::anisotropic> >(expected[imaterial]);
-      if (icomputed != iexpected) {
-        std::ostringstream error_message;
-        error_message << "Material " << index << " is not the same ["
-                      << __FILE__ << ":" << __LINE__ << "]\n"
-                      << "  imaterial: " << imaterial << "\n"
-                      << "  index:     " << index << "\n"
-                      << "  ispec:     " << ispec << "\n"
-                      << "Computed: \n"
-                      << icomputed.print() << "\n"
-                      << "Expected: \n"
-                      << iexpected.print() << "\n";
-        throw std::runtime_error(error_message.str());
-      }
-      // Elastic SH Anisotropic
-    } else if ((type == specfem::element::medium_tag::elastic_sh) &&
-               (property == specfem::element::property_tag::anisotropic)) {
-      const auto icomputed = std::get<specfem::medium::material<
-          specfem::element::medium_tag::elastic_sh,
-          specfem::element::property_tag::anisotropic> >(computed[ispec]);
-      const auto iexpected = std::get<specfem::medium::material<
-          specfem::element::medium_tag::elastic_sh,
-          specfem::element::property_tag::anisotropic> >(expected[imaterial]);
-      if (icomputed != iexpected) {
-        std::ostringstream error_message;
-        error_message << "Material " << index << " is not the same ["
-                      << __FILE__ << ":" << __LINE__ << "]\n"
-                      << "  imaterial: " << imaterial << "\n"
-                      << "  index:     " << index << "\n"
-                      << "  ispec:     " << ispec << "\n"
-                      << "Computed: \n"
-                      << icomputed.print() << "\n"
-                      << "Expected: \n"
-                      << iexpected.print() << "\n";
-        throw std::runtime_error(error_message.str());
-      }
-    }
-    // Electromagnetic SV Isotropic
-    else if ((type == specfem::element::medium_tag::electromagnetic_sv) &&
-             (property == specfem::element::property_tag::isotropic)) {
-      const auto icomputed = std::get<specfem::medium::material<
-          specfem::element::medium_tag::electromagnetic_sv,
-          specfem::element::property_tag::isotropic> >(computed[ispec]);
-      const auto iexpected = std::get<specfem::medium::material<
-          specfem::element::medium_tag::electromagnetic_sv,
-          specfem::element::property_tag::isotropic> >(expected[imaterial]);
-      if (icomputed != iexpected) {
-        std::ostringstream error_message;
-        error_message << "Material " << index << " is not the same ["
-                      << __FILE__ << ":" << __LINE__ << "]\n"
-                      << "  ispec:     " << ispec << "\n"
-                      << "  imaterial: " << imaterial << "\n"
-                      << "  index:     " << index << "\n"
-                      << "Computed: \n"
-                      << icomputed.print() << "\n"
-                      << "Expected: \n"
-                      << iexpected.print() << "\n";
-        throw std::runtime_error(error_message.str());
-      }
-    } else {
-      throw std::runtime_error("Material type not supported");
-    }
+#define CHECK_MATERIAL(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                \
+  if ((type == GET_TAG(MEDIUM_TAG)) && (property == GET_TAG(PROPERTY_TAG))) {  \
+    const auto icomputed = std::get<specfem::medium::material<                 \
+        GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)> >(computed[ispec]);        \
+    const auto iexpected = std::get<specfem::medium::material<                 \
+        GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)> >(expected[imaterial]);    \
+    if (icomputed != iexpected) {                                              \
+      std::ostringstream error_message;                                        \
+      error_message << "Material " << index << " is not the same ["            \
+                    << __FILE__ << ":" << __LINE__ << "]\n"                    \
+                    << "  imaterial: " << imaterial << "\n"                    \
+                    << "  index:     " << index << "\n"                        \
+                    << "  ispec:     " << ispec << "\n"                        \
+                    << "Computed: \n"                                          \
+                    << icomputed.print() << "\n"                               \
+                    << "Expected: \n"                                          \
+                    << iexpected.print() << "\n";                              \
+      throw std::runtime_error(error_message.str());                           \
+    }                                                                          \
+    return;                                                                    \
+  }
+
+    CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
+        CHECK_MATERIAL,
+        WHERE(DIMENSION_TAG_DIM2) WHERE(
+            MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
+            MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_SV)
+            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
+
+#undef CHECK_MATERIAL
+
+    // If we reach here, the material type is not supported
+    std::ostringstream error_message;
+    error_message << "Material type not supported [" << __FILE__ << ":"
+                  << __LINE__ << "]\n"
+                  << "  imaterial: " << imaterial << "\n"
+                  << "  index:     " << index << "\n"
+                  << "  ispec:     " << ispec << "\n";
+    throw std::runtime_error(error_message.str());
   }
 
   return;

@@ -16,6 +16,7 @@ constexpr auto elastic_sv = specfem::element::medium_tag::elastic_sv;
 constexpr auto elastic_sh = specfem::element::medium_tag::elastic_sh;
 constexpr auto electromagnetic_sv =
     specfem::element::medium_tag::electromagnetic_sv;
+constexpr auto poroelastic = specfem::element::medium_tag::poroelastic;
 constexpr auto isotropic = specfem::element::property_tag::isotropic;
 constexpr auto anisotropic = specfem::element::property_tag::anisotropic;
 
@@ -41,6 +42,8 @@ read_materials(
         elastic_sv, anisotropic> &elastic_sv_anisotropic,
     specfem::mesh::materials<specfem::dimension::type::dim2>::material<
         elastic_sh, anisotropic> &elastic_sh_anisotropic,
+    specfem::mesh::materials<specfem::dimension::type::dim2>::material<
+        poroelastic, isotropic> &poroelastic_isotropic,
     specfem::mesh::materials<specfem::dimension::type::dim2>::material<
         electromagnetic_sv, isotropic> &electromagnetic_sv_isotropic,
     const specfem::MPI::MPI *mpi) {
@@ -121,6 +124,12 @@ read_materials(
   l_elastic_sh_anisotropic.reserve(numat);
 
   int index_elastic_anisotropic = 0;
+
+  // Section for poroelastic isotropic
+  std::vector<specfem::medium::material<poroelastic, isotropic> >
+      l_poroelastic_isotropic;
+  l_poroelastic_isotropic.reserve(numat);
+  int index_poroelastic_isotropic = 0;
 
   // Section for electromagnetic isotropic
   std::vector<specfem::medium::material<electromagnetic_sv, isotropic> >
@@ -268,6 +277,34 @@ read_materials(
 
       index_elastic_anisotropic++;
 
+    } else if (read_values.indic == 3) {
+      const type_real rhos = static_cast<type_real>(read_values.val0);
+      const type_real rhof = static_cast<type_real>(read_values.val1);
+      const type_real phi = static_cast<type_real>(read_values.val2);
+      const type_real c = static_cast<type_real>(read_values.val3);
+      const type_real kxx = static_cast<type_real>(read_values.val4);
+      const type_real kxz = static_cast<type_real>(read_values.val5);
+      const type_real kzz = static_cast<type_real>(read_values.val6);
+      const type_real Ks = static_cast<type_real>(read_values.val7);
+      const type_real Kf = static_cast<type_real>(read_values.val8);
+      const type_real Kfr = static_cast<type_real>(read_values.val9);
+      const type_real etaf = static_cast<type_real>(read_values.val10);
+      const type_real mufr = static_cast<type_real>(read_values.val11);
+      const type_real Qmu = static_cast<type_real>(read_values.val12);
+
+      specfem::medium::material<poroelastic, isotropic>
+          poroelastic_isotropic_holder(rhos, rhof, phi, c, kxx, kxz, kzz, Ks,
+                                       Kf, Kfr, etaf, mufr, Qmu);
+      poroelastic_isotropic_holder.print();
+
+      l_poroelastic_isotropic.push_back(poroelastic_isotropic_holder);
+      index_mapping[i] =
+          specfem::mesh::materials<specfem::dimension::type::dim2>::
+              material_specification(specfem::element::medium_tag::poroelastic,
+                                     specfem::element::property_tag::isotropic,
+                                     index_poroelastic_isotropic,
+                                     read_values.n - 1);
+      index_poroelastic_isotropic++;
     }
     // Electromagnetic material
     else if (read_values.indic == 4) {
@@ -313,7 +350,8 @@ read_materials(
   int total_materials =
       l_acoustic_isotropic.size() + l_elastic_sv_isotropic.size() +
       l_elastic_sh_isotropic.size() + l_elastic_sv_anisotropic.size() +
-      l_elastic_sh_anisotropic.size() + l_electromagnetic_sv_isotropic.size();
+      l_elastic_sh_anisotropic.size() + l_poroelastic_isotropic.size() +
+      l_electromagnetic_sv_isotropic.size();
   if (total_materials != numat) {
     std::ostringstream message;
     message << "Total number of materials not matching the input materials ["
@@ -329,6 +367,8 @@ read_materials(
             << l_elastic_sv_anisotropic.size() << "\n"
             << "  elastic anisotropic sh:........ "
             << l_elastic_sh_anisotropic.size() << "\n"
+            << "  poroelastic isotropic:......... "
+            << l_poroelastic_isotropic.size() << "\n"
             << "  electromagnetic_sv isotropic:.. "
             << l_electromagnetic_sv_isotropic.size() << "\n";
     throw std::runtime_error(message.str());
@@ -359,6 +399,11 @@ read_materials(
       specfem::mesh::materials<specfem::dimension::type::dim2>::material<
           elastic_sh, anisotropic>(l_elastic_sh_anisotropic.size(),
                                    l_elastic_sh_anisotropic);
+
+  poroelastic_isotropic =
+      specfem::mesh::materials<specfem::dimension::type::dim2>::material<
+          poroelastic, isotropic>(l_poroelastic_isotropic.size(),
+                                  l_poroelastic_isotropic);
 
   electromagnetic_sv_isotropic =
       specfem::mesh::materials<specfem::dimension::type::dim2>::material<
@@ -427,6 +472,7 @@ specfem::IO::mesh::impl::fortran::dim2::read_material_properties(
       materials.get_container<elastic_sh, isotropic>(),
       materials.get_container<elastic_sv, anisotropic>(),
       materials.get_container<elastic_sh, anisotropic>(),
+      materials.get_container<poroelastic, isotropic>(),
       materials.get_container<electromagnetic_sv, isotropic>(), mpi);
 
   // Read material indices
