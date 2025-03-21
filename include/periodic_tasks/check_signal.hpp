@@ -40,6 +40,7 @@ class check_signal : public periodic_task {
    *
    */
   void run() override {
+    // Catch signals
     catch_signals();
   }
 };
