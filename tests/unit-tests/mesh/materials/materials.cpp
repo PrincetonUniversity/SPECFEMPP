@@ -6,30 +6,26 @@
 #include <variant>
 #include <vector>
 
-#define MEDIUM_TYPE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                   \
-  using CREATE_VARIABLE_NAME(type, GET_NAME(MEDIUM_TAG),                       \
-                             GET_NAME(PROPERTY_TAG)) =                         \
-      specfem::medium::material<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)>;
+#define MEDIUM_TYPE(POSTFIX, DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)          \
+  using type_##POSTFIX = specfem::medium::material<MEDIUM_TAG, PROPERTY_TAG>;
 
-CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-    MEDIUM_TYPE,
+CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS2(
     WHERE(DIMENSION_TAG_DIM2)
         WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
               MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_SV)
-            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
+            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
+    MEDIUM_TYPE)
 
 #undef MEDIUM_TYPE
 
-#define TYPE_NAME(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                     \
-  (CREATE_VARIABLE_NAME(type, GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)))
-
+#define TYPE_NAME(POSTFIX, ...) (type_##POSTFIX)
 #define MAKE_VARIANT_RETURN                                                    \
-  std::variant<BOOST_PP_SEQ_ENUM(CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(          \
-      TYPE_NAME,                                                               \
+  std::variant<BOOST_PP_SEQ_ENUM(CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS2(         \
       WHERE(DIMENSION_TAG_DIM2) WHERE(                                         \
           MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,   \
           MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_SV)               \
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)))>
+          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),             \
+      TYPE_NAME))>
 
 using MaterialVectorType = std::vector<MAKE_VARIANT_RETURN>; /// NOLINT
 
@@ -145,36 +141,33 @@ void check_test(
     const int index = material_specification.index;
     const int imaterial = material_specification.database_index;
 
-#define CHECK_MATERIAL(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                \
-  if ((type == GET_TAG(MEDIUM_TAG)) && (property == GET_TAG(PROPERTY_TAG))) {  \
-    const auto icomputed = std::get<specfem::medium::material<                 \
-        GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)> >(computed[ispec]);        \
-    const auto iexpected = std::get<specfem::medium::material<                 \
-        GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)> >(expected[imaterial]);    \
-    if (icomputed != iexpected) {                                              \
-      std::ostringstream error_message;                                        \
-      error_message << "Material " << index << " is not the same ["            \
-                    << __FILE__ << ":" << __LINE__ << "]\n"                    \
-                    << "  imaterial: " << imaterial << "\n"                    \
-                    << "  index:     " << index << "\n"                        \
-                    << "  ispec:     " << ispec << "\n"                        \
-                    << "Computed: \n"                                          \
-                    << icomputed.print() << "\n"                               \
-                    << "Expected: \n"                                          \
-                    << iexpected.print() << "\n";                              \
-      throw std::runtime_error(error_message.str());                           \
-    }                                                                          \
-    return;                                                                    \
-  }
-
-    CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-        CHECK_MATERIAL,
+    CALL_CODE_FOR_ALL_MATERIAL_SYSTEMS(
         WHERE(DIMENSION_TAG_DIM2) WHERE(
             MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
             MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_SV)
-            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
-
-#undef CHECK_MATERIAL
+            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
+        if ((type == _medium_tag_) && (property == _property_tag_)) {
+          const auto icomputed = std::get<
+              specfem::medium::material<_medium_tag_, _property_tag_> >(
+              computed[ispec]);
+          const auto iexpected = std::get<
+              specfem::medium::material<_medium_tag_, _property_tag_> >(
+              expected[imaterial]);
+          if (icomputed != iexpected) {
+            std::ostringstream error_message;
+            error_message << "Material " << index << " is not the same ["
+                          << __FILE__ << ":" << __LINE__ << "]\n"
+                          << "  imaterial: " << imaterial << "\n"
+                          << "  index:     " << index << "\n"
+                          << "  ispec:     " << ispec << "\n"
+                          << "Computed: \n"
+                          << icomputed.print() << "\n"
+                          << "Expected: \n"
+                          << iexpected.print() << "\n";
+            throw std::runtime_error(error_message.str());
+          }
+          return;
+        })
 
     // If we reach here, the material type is not supported
     std::ostringstream error_message;
