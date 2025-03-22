@@ -10,7 +10,7 @@
   using type_##POSTFIX = specfem::point::properties<DIMENSION_TAG, MEDIUM_TAG, \
                                                     PROPERTY_TAG, false>;
 
-CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS2(
+CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
     WHERE(DIMENSION_TAG_DIM2)
         WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
               MEDIUM_TAG_POROELASTIC)
@@ -22,7 +22,7 @@ CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS2(
 #define TYPE_NAME(POSTFIX, ...) (type_##POSTFIX)
 
 #define MAKE_VARIANT_RETURN                                                    \
-  std::variant<BOOST_PP_SEQ_ENUM(CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS2(         \
+  std::variant<BOOST_PP_SEQ_ENUM(CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(          \
       WHERE(DIMENSION_TAG_DIM2)                                                \
           WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,                  \
                 MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)                   \

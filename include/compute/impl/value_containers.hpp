@@ -31,13 +31,13 @@ struct value_containers {
                                 PROPERTY_TAG)                                  \
   containers_type<MEDIUM_TAG, PROPERTY_TAG> value_##POSTFIX;
 
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS2(WHERE(DIMENSION_TAG_DIM2)
-                                           WHERE(MEDIUM_TAG_ELASTIC_SV,
-                                                 MEDIUM_TAG_ELASTIC_SH,
-                                                 MEDIUM_TAG_ACOUSTIC)
-                                               WHERE(PROPERTY_TAG_ISOTROPIC,
-                                                     PROPERTY_TAG_ANISOTROPIC),
-                                       GENERATE_CONTAINER_NAME);
+  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(WHERE(DIMENSION_TAG_DIM2)
+                                          WHERE(MEDIUM_TAG_ELASTIC_SV,
+                                                MEDIUM_TAG_ELASTIC_SH,
+                                                MEDIUM_TAG_ACOUSTIC)
+                                              WHERE(PROPERTY_TAG_ISOTROPIC,
+                                                    PROPERTY_TAG_ANISOTROPIC),
+                                      GENERATE_CONTAINER_NAME);
 
 #undef GENERATE_CONTAINER_NAME
 

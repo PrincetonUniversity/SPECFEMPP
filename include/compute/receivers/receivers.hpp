@@ -379,13 +379,13 @@ private:
   IndexViewType receiver_indices_##POSTFIX;                                    \
   IndexViewType::HostMirror h_receiver_indices_##POSTFIX;
 
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS2(WHERE(DIMENSION_TAG_DIM2)
-                                           WHERE(MEDIUM_TAG_ELASTIC_SV,
-                                                 MEDIUM_TAG_ELASTIC_SH,
-                                                 MEDIUM_TAG_ACOUSTIC)
-                                               WHERE(PROPERTY_TAG_ISOTROPIC,
-                                                     PROPERTY_TAG_ANISOTROPIC),
-                                       RECEIVER_INDICES_VARIABLE_NAME)
+  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(WHERE(DIMENSION_TAG_DIM2)
+                                          WHERE(MEDIUM_TAG_ELASTIC_SV,
+                                                MEDIUM_TAG_ELASTIC_SH,
+                                                MEDIUM_TAG_ACOUSTIC)
+                                              WHERE(PROPERTY_TAG_ISOTROPIC,
+                                                    PROPERTY_TAG_ANISOTROPIC),
+                                      RECEIVER_INDICES_VARIABLE_NAME)
 
 #undef RECEIVER_INDICES_VARIABLE_NAME
 

@@ -357,11 +357,7 @@ constexpr auto element_types() {
  *
  *
  */
-#define CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(MACRO, seq)                        \
-  BOOST_PP_SEQ_FOR_EACH(CALL_FOR_ONE_MATERIAL_SYSTEM, MACRO,                   \
-                        BOOST_PP_SEQ_FOR_EACH_PRODUCT(CREATE_SEQ, seq))
-
-#define CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS2(seq, MACRO)                       \
+#define CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(seq, MACRO)                        \
   BOOST_PP_SEQ_FOR_EACH(CALL_FOR_ONE_MATERIAL_SYSTEM2, MACRO,                  \
                         BOOST_PP_SEQ_FOR_EACH_PRODUCT(CREATE_SEQ, seq))
 /**
