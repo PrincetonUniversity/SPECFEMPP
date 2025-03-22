@@ -97,15 +97,6 @@ struct value_containers {
             WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
         _value_.copy_to_device(););
   }
-
-  template <typename T> void print(const T &value) const {
-    std::cout << "Value: " << value << std::endl;
-  }
-
-  template <typename T, typename U>
-  void print(const T &value, const U &value2) const {
-    std::cout << "Value: " << value << value2 << std::endl;
-  }
 };
 
 } // namespace impl

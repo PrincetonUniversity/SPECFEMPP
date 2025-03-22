@@ -390,6 +390,18 @@ constexpr auto element_types() {
                         BOOST_PP_SEQ_FOR_EACH_PRODUCT(CREATE_SEQ, seq))
 
 /**
+ * @brief Macros to define the reference name of the variable to be captured,
+ * e.g. _value_.
+ */
+#define _GET_CAPTURE_REFERENCE_NAME(s, postfix, prefix) _##prefix##_
+
+/**
+ * @brief Macros to define variable to be captured by the reference name, e.g.
+ * value_dim2_elastic_isotropic.
+ */
+#define _GET_CAPTURE_VARIABLE_NAME(s, postfix, prefix) prefix##_##postfix
+
+/**
  * Write the code block for one material system.
  */
 #define _WRITE_BLOCK_FOR_ONE_MATERIAL_SYSTEM(DIMENSION_TAG, MEDIUM_TAG,        \
@@ -398,20 +410,6 @@ constexpr auto element_types() {
   constexpr auto _medium_tag_ = GET_TAG(MEDIUM_TAG);                           \
   constexpr auto _property_tag_ = GET_TAG(PROPERTY_TAG);                       \
   BOOST_PP_SEQ_ENUM(CODE)
-
-/**
- * @brief Macros to define the reference name of the variable to be captured,
- * e.g. _value_.
- */
-#define _DEFINE_MEMBER_NAME_FOR_ONE_MATERIAL_SYSTEM(s, postfix, prefix)        \
-  _##prefix##_
-
-/**
- * @brief Macros to define variable to be captured by the reference name, e.g.
- * value_dim2_elastic_isotropic.
- */
-#define _DEFINE_MEMBER_VARIABLE_FOR_ONE_MATERIAL_SYSTEM(s, postfix, prefix)    \
-  prefix##_##postfix
 
 /**
  * Write the code block for one material system add captured variables as
@@ -423,12 +421,12 @@ constexpr auto element_types() {
   constexpr auto _medium_tag_ = GET_TAG(MEDIUM_TAG);                           \
   constexpr auto _property_tag_ = GET_TAG(PROPERTY_TAG);                       \
   const auto &[BOOST_PP_SEQ_ENUM(BOOST_PP_SEQ_TRANSFORM(                       \
-      _DEFINE_MEMBER_NAME_FOR_ONE_MATERIAL_SYSTEM,                             \
+      _GET_CAPTURE_REFERENCE_NAME,                                             \
       CREATE_VARIABLE_NAME(GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),      \
                            GET_NAME(PROPERTY_TAG)),                            \
       seq))] =                                                                 \
       std::tie(BOOST_PP_SEQ_ENUM(BOOST_PP_SEQ_TRANSFORM(                       \
-          _DEFINE_MEMBER_VARIABLE_FOR_ONE_MATERIAL_SYSTEM,                     \
+          _GET_CAPTURE_VARIABLE_NAME,                                          \
           CREATE_VARIABLE_NAME(GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),  \
                                GET_NAME(PROPERTY_TAG)),                        \
           seq)));                                                              \
