@@ -250,12 +250,12 @@ struct kernels<specfem::dimension::type::dim2,
    */
   KOKKOS_FUNCTION
   kernels(const value_type rhot, const value_type rhof, const value_type eta,
-          const value_type sm, const value_type mu_fr, const value_type B,
+          const value_type sm, const value_type mu_fr, const value_type H,
           const value_type C, const value_type M, const value_type cpI,
           const value_type cpII, const value_type cs, const value_type rhobb,
           const value_type rhofbb, const value_type ratio,
           const value_type phib)
-      : kernels(rhot, rhof, eta, sm, mu_fr, B, C, M, mu_fr, (rhot + B + mu_fr),
+      : kernels(rhot, rhof, eta, sm, mu_fr, H, C, M, mu_fr, (H - rhot - mu_fr),
                 (rhof + C + M + sm), (static_cast<value_type>(1.0) * (sm + M)),
                 cpI, cpII, cs, rhobb, rhofbb, ratio, phib) {}
 
@@ -271,7 +271,7 @@ struct kernels<specfem::dimension::type::dim2,
   DEFINE_POINT_VALUE(eta, 2)
   DEFINE_POINT_VALUE(sm, 3)
   DEFINE_POINT_VALUE(mu_fr, 4)
-  DEFINE_POINT_VALUE(B, 5)
+  DEFINE_POINT_VALUE(H, 5)
   DEFINE_POINT_VALUE(C, 6)
   DEFINE_POINT_VALUE(M, 7)
 
