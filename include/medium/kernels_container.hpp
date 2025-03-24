@@ -40,3 +40,4 @@ class kernels_container;
 #include "dim2/acoustic/isotropic/kernels_container.hpp"
 #include "dim2/elastic/anisotropic/kernels_container.hpp"
 #include "dim2/elastic/isotropic/kernels_container.hpp"
+#include "dim2/poroelastic/isotropic/kernels_container.hpp"
