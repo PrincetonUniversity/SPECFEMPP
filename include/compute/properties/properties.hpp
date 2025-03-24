@@ -50,6 +50,7 @@ struct properties
   properties(
       const int nspec, const int ngllz, const int ngllx,
       const specfem::compute::element_types &element_types,
+      const specfem::compute::mesh_to_compute_mapping &mapping,
       const specfem::mesh::materials<specfem::dimension::type::dim2> &materials,
       bool has_gll_model);
 

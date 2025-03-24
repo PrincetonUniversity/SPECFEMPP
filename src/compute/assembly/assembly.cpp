@@ -18,9 +18,10 @@ specfem::compute::assembly::assembly(
   this->element_types = { this->mesh.nspec, this->mesh.ngllz, this->mesh.ngllx,
                           this->mesh.mapping, mesh.tags };
   this->partial_derivatives = { this->mesh };
-  this->properties = { this->mesh.nspec, this->mesh.ngllz,
-                       this->mesh.ngllx, this->element_types,
-                       mesh.materials,   property_reader != nullptr };
+  this->properties = { this->mesh.nspec,          this->mesh.ngllz,
+                       this->mesh.ngllx,          this->element_types,
+                       this->mesh.mapping,        mesh.materials,
+                       property_reader != nullptr };
   this->kernels = { this->mesh.nspec, this->mesh.ngllz, this->mesh.ngllx,
                     this->element_types };
   this->sources = {
