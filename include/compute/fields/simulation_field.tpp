@@ -71,7 +71,7 @@ specfem::compute::simulation_field<WavefieldType>::simulation_field(
                                  WHERE(DIMENSION_TAG_DIM2)
                                      WHERE(MEDIUM_TAG_ELASTIC_SV,
                                            MEDIUM_TAG_ELASTIC_SH,
-                                           MEDIUM_TAG_ACOUSTIC))
+                                           MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC))
 
 #undef ASSIGN_FIELDS
 
@@ -83,6 +83,10 @@ specfem::compute::simulation_field<WavefieldType>::simulation_field(
   //     Kokkos::subview(h_assembly_index_mapping, Kokkos::ALL,
   //                     static_cast<int>(specfem::element::medium_tag::elastic_sv));
 
+  // auto poroelastic_index =
+  //     Kokkos::subview(h_assembly_index_mapping, Kokkos::ALL,
+  //                     static_cast<int>(specfem::element::medium_tag::poroelastic));
+
   // elastic =
   //     specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
   //                                        specfem::element::medium_tag::elastic_sv>(
@@ -91,6 +95,11 @@ specfem::compute::simulation_field<WavefieldType>::simulation_field(
   // acoustic = specfem::compute::impl::field_impl<
   //     specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic>(
   //     mesh, element_types, acoustic_index);
+
+  // poroelastic =
+  //     specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
+  //                                        specfem::element::medium_tag::poroelastic>(
+  //         mesh, element_types, poroelastic_index);
 
   Kokkos::deep_copy(assembly_index_mapping, h_assembly_index_mapping);
 
