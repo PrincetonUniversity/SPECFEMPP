@@ -130,7 +130,7 @@ private:
                                  WHERE(DIMENSION_TAG_DIM2)
                                      WHERE(MEDIUM_TAG_ELASTIC_SV,
                                            MEDIUM_TAG_ELASTIC_SH,
-                                           MEDIUM_TAG_ACOUSTIC))
+                                           MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC))
 
 #undef MEDIUM_TAG_VARIABLES
 
@@ -147,7 +147,7 @@ private:
                                       WHERE(DIMENSION_TAG_DIM2)
                                           WHERE(MEDIUM_TAG_ELASTIC_SV,
                                                 MEDIUM_TAG_ELASTIC_SH,
-                                                MEDIUM_TAG_ACOUSTIC)
+                                                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
                                               WHERE(PROPERTY_TAG_ISOTROPIC,
                                                     PROPERTY_TAG_ANISOTROPIC))
 
@@ -167,7 +167,7 @@ private:
       WHERE(DIMENSION_TAG_DIM2)
           WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
                 MEDIUM_TAG_ACOUSTIC)
-              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)
+              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC, MEDIUM_TAG_POROELASTIC)
                   WHERE(BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
                         BOUNDARY_TAG_STACEY,
                         BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
