@@ -1,12 +1,6 @@
-## Coupling interfaces have code flow that is dependent on orientation of the interface.
-## This test is to check the code flow for horizontal acoustic-elastic interface with acoustic domain on top.
-
 parameters:
-
   header:
-    ## Header information is used for logging. It is good practice to give your simulations explicit names
     title: Heterogeneous electromagnetic medium with some blocks
-    # A detailed description for your simulation
     description: |
       Material systems : Electromagnetic (1)
       Interfaces : -- / --
@@ -15,11 +9,9 @@ parameters:
       Debugging comments: This checks the EM implementation after Morency (2020)
 
   simulation-setup:
-    ## quadrature setup
     quadrature:
       quadrature-type: GLL4
 
-    ## Solver setup
     solver:
       time-marching:
         type-of-simulation: forward
