@@ -29,6 +29,9 @@ public:
   specfem::compute::impl::boundary_medium_container<
       DimensionType, specfem::element::medium_tag::elastic_sv, BoundaryTag>
       elastic;
+  specfem::compute::impl::boundary_medium_container<
+      DimensionType, specfem::element::medium_tag::poroelastic, BoundaryTag>
+      poroelastic;
 
   boundary_value_container() = default;
 
@@ -46,6 +49,7 @@ public:
     Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);
     acoustic.sync_to_device();
     elastic.sync_to_device();
+    poroelastic.sync_to_device();
   }
 };
 
@@ -92,6 +96,9 @@ store_on_device(const int istep, const IndexType index,
   } else if constexpr (MediumTag == specfem::element::medium_tag::elastic_sv) {
     boundary_value_container.elastic.store_on_device(istep, l_index,
                                                      acceleration);
+  } else if constexpr (MediumTag == specfem::element::medium_tag::poroelastic) {
+    boundary_value_container.poroelastic.store_on_device(istep, l_index,
+                                                         acceleration);
   }
 
   return;
@@ -126,6 +133,10 @@ load_on_device(const int istep, const IndexType index,
   } else if constexpr (MediumType == specfem::element::medium_tag::elastic_sv) {
     boundary_value_container.elastic.load_on_device(istep, l_index,
                                                     acceleration);
+  } else if constexpr (MediumType ==
+                       specfem::element::medium_tag::poroelastic) {
+    boundary_value_container.poroelastic.load_on_device(istep, l_index,
+                                                        acceleration);
   }
 
   return;
