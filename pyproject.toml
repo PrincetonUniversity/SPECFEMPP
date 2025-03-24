@@ -19,8 +19,15 @@ package = false
 
 [dependency-groups]
 all = [
+  {include-group = "style"},
   {include-group = "dev"},
   {include-group = "examples"}
+]
+
+style = [
+  "pre-commit==2.19.0",
+  "clang-format==19.1.7",
+  "ruff==0.9.1",
 ]
 
 dev = [
