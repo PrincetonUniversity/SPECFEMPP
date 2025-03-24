@@ -18,19 +18,19 @@ requires-python = ">=3.12"
 package = false
 
 [dependency-groups]
-all = [
-  {include-group = "style"},
-  {include-group = "dev"},
-  {include-group = "examples"}
-]
+# all = [
+#   {include-group = "style"},
+#   {include-group = "dev"},
+#   {include-group = "examples"}
+# ]
 
-style = [
+dev = [
   "pre-commit==2.19.0",
   "clang-format==19.1.7",
   "ruff==0.9.1",
 ]
 
-dev = [
+doc = [
   "pre-commit==2.19.0",
   "clang-format==19.1.7",
   "ruff==0.9.1",

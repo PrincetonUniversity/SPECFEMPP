@@ -1,5 +1,4 @@
 version = 1
-revision = 1
 requires-python = ">=3.12"
 
 [[package]]
@@ -1459,27 +1458,12 @@ version = "0.3.0"
 source = { virtual = "." }
 
 [package.dev-dependencies]
-all = [
-    { name = "breathe" },
-    { name = "clang-format" },
-    { name = "doc8" },
-    { name = "furo" },
-    { name = "imageio" },
-    { name = "jinja2" },
-    { name = "obspy" },
-    { name = "pre-commit" },
-    { name = "pyyaml" },
-    { name = "restructuredtext-lint" },
-    { name = "rstcheck" },
-    { name = "ruff" },
-    { name = "snakemake" },
-    { name = "snakemake-executor-plugin-slurm" },
-    { name = "sphinx-copybutton" },
-    { name = "sphinx-design" },
-    { name = "sphinx-rtd-theme" },
-    { name = "sphinx-sitemap" },
-]
 dev = [
+    { name = "clang-format" },
+    { name = "pre-commit" },
+    { name = "ruff" },
+]
+doc = [
     { name = "breathe" },
     { name = "clang-format" },
     { name = "doc8" },
@@ -1505,27 +1489,12 @@ examples = [
 [package.metadata]
 
 [package.metadata.requires-dev]
-all = [
-    { name = "breathe", specifier = "~=4.35.0" },
-    { name = "clang-format", specifier = "==19.1.7" },
-    { name = "doc8", specifier = ">=0.3.6" },
-    { name = "furo", specifier = "~=2024.8.6" },
-    { name = "imageio", specifier = "~=2.36.1" },
-    { name = "jinja2", specifier = ">=3.1.4" },
-    { name = "obspy", specifier = "~=1.4.0" },
-    { name = "pre-commit", specifier = "==2.19.0" },
-    { name = "pyyaml", specifier = ">=6.0.2" },
-    { name = "restructuredtext-lint", specifier = ">=1.4.0" },
-    { name = "rstcheck", specifier = ">=6.2.4" },
-    { name = "ruff", specifier = "==0.9.1" },
-    { name = "snakemake", specifier = "~=8.29.0" },
-    { name = "snakemake-executor-plugin-slurm", specifier = "~=0.10.0" },
-    { name = "sphinx-copybutton", specifier = "~=0.4.0" },
-    { name = "sphinx-design", specifier = "~=0.6.1" },
-    { name = "sphinx-rtd-theme", specifier = "~=1.3.0" },
-    { name = "sphinx-sitemap", specifier = "~=2.2.0" },
-]
 dev = [
+    { name = "clang-format", specifier = "==19.1.7" },
+    { name = "pre-commit", specifier = "==2.19.0" },
+    { name = "ruff", specifier = "==0.9.1" },
+]
+doc = [
     { name = "breathe", specifier = "~=4.35.0" },
     { name = "clang-format", specifier = "==19.1.7" },
     { name = "doc8", specifier = ">=0.3.6" },
@@ -1627,13 +1596,13 @@ wheels = [
 
 [[package]]
 name = "sphinx-sitemap"
-version = "2.2.1"
+version = "2.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "six" },
     { name = "sphinx" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/08/6f/80e4b9fd3c0f656a0fd102555e7a11c67aad780193a378171a36adb80a3a/sphinx-sitemap-2.2.1.tar.gz", hash = "sha256:f1f2149c8013b6d68cc48e6b5bd90f088658cd4584c0220224e72ca85d07b92b", size = 6629 }
+sdist = { url = "https://files.pythonhosted.org/packages/94/d4/408579f209dfc6c95e0b31e72e67cc94de78dfb8936b1009f68b4d56d7f5/sphinx-sitemap-2.2.0.tar.gz", hash = "sha256:65adda39233cb17c0da10ba1cebaa2df73e271cdb6f8efd5cec8eef3b3cf7737", size = 6130 }
 
 [[package]]
 name = "sphinxcontrib-applehelp"
