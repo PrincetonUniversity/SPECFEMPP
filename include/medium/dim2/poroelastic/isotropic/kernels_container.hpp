@@ -23,7 +23,7 @@ struct kernels_container<specfem::element::medium_tag::poroelastic,
   DEFINE_MEDIUM_VIEW(eta, 2)
   DEFINE_MEDIUM_VIEW(sm, 3)
   DEFINE_MEDIUM_VIEW(mu_fr, 4)
-  DEFINE_MEDIUM_VIEW(H, 5)
+  DEFINE_MEDIUM_VIEW(B, 5)
   DEFINE_MEDIUM_VIEW(C, 6)
   DEFINE_MEDIUM_VIEW(M, 7)
 
