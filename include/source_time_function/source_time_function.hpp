@@ -25,13 +25,13 @@ public:
    * @brief Default constructor
    *
    */
-  stf(){};
+  stf() {};
   /**
    * @brief update the time shift value
    *
    * @param tshift new tshift value
    */
-  virtual void update_tshift(type_real tshift){};
+  virtual void update_tshift(type_real tshift) {};
   /**
    * @brief
    *

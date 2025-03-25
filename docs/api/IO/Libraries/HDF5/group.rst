@@ -4,14 +4,14 @@
 Group
 =====
 
-.. doxygenclass:: specfem::IO::impl::HDF5::Group
+.. doxygenclass:: specfem::io::impl::HDF5::Group
     :members:
 
 Implementation Details
 ----------------------
 
-.. doxygenclass:: specfem::IO::impl::HDF5::Group< specfem::IO::write >
+.. doxygenclass:: specfem::io::impl::HDF5::Group< specfem::io::write >
     :members:
 
-.. doxygenclass:: specfem::IO::impl::HDF5::Group< specfem::IO::read >
+.. doxygenclass:: specfem::io::impl::HDF5::Group< specfem::io::read >
     :members:

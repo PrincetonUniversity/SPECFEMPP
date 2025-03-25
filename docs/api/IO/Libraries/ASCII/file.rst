@@ -4,14 +4,14 @@
 File
 ====
 
-.. doxygenclass:: specfem::IO::impl::ASCII::File
+.. doxygenclass:: specfem::io::impl::ASCII::File
     :members:
 
 Implementation Details
 ----------------------
 
-.. doxygenclass:: specfem::IO::impl::ASCII::File< specfem::IO::write >
+.. doxygenclass:: specfem::io::impl::ASCII::File< specfem::io::write >
     :members:
 
-.. doxygenclass:: specfem::IO::impl::ASCII::File< specfem::IO::read >
+.. doxygenclass:: specfem::io::impl::ASCII::File< specfem::io::read >
     :members:

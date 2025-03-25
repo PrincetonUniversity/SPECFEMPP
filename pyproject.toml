@@ -66,4 +66,4 @@ cmake.define.BUILD_TESTS = "ON"
 cmake.define.SPECFEMPP_USE_SKBUILD = "ON"
 cmake.define.SPECFEMPP_BINDING_PYTHON = "ON"
 build-dir = "./build"
-build.tool-args = ["-j4"]
+build.tool-args = ["-j"]

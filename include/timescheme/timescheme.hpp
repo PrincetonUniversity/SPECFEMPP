@@ -170,16 +170,16 @@ public:
    */
   int get_seismogram_step() const { return seismogram_timestep; }
 
-  virtual void
+  virtual int
   apply_predictor_phase_forward(const specfem::element::medium_tag tag) = 0;
 
-  virtual void
+  virtual int
   apply_corrector_phase_forward(const specfem::element::medium_tag tag) = 0;
 
-  virtual void
+  virtual int
   apply_predictor_phase_backward(const specfem::element::medium_tag tag) = 0;
 
-  virtual void
+  virtual int
   apply_corrector_phase_backward(const specfem::element::medium_tag tag) = 0;
 
   virtual void link_assembly(const specfem::compute::assembly &assembly) = 0;

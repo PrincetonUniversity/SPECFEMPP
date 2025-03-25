@@ -110,7 +110,7 @@ template <> struct forcing_boundary<specfem::dimension::type::dim2> {
    * @brief Default constructor
    *
    */
-  forcing_boundary(){};
+  forcing_boundary() {};
   /**
    * @brief Constructor to allocate views
    *
