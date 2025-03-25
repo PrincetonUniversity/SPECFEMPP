@@ -98,6 +98,12 @@ struct assembly {
   generate_wavefield_on_entire_grid(
       const specfem::wavefield::simulation_field wavefield,
       const specfem::wavefield::type component);
+
+  int get_total_number_of_elements() const { return mesh.nspec; }
+
+  int get_total_degrees_of_freedom() {
+    return fields.buffer.get_total_degrees_of_freedom();
+  }
 };
 
 } // namespace compute
