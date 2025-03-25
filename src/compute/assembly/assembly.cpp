@@ -1,6 +1,6 @@
 #include "compute/assembly/assembly.hpp"
-#include "IO/reader.hpp"
 #include "enumerations/interface.hpp"
+#include "io/reader.hpp"
 #include "mesh/mesh.hpp"
 
 specfem::compute::assembly::assembly(
@@ -13,7 +13,7 @@ specfem::compute::assembly::assembly(
     const type_real t0, const type_real dt, const int max_timesteps,
     const int max_sig_step, const int nsteps_between_samples,
     const specfem::simulation::type simulation,
-    const std::shared_ptr<specfem::IO::reader> &property_reader) {
+    const std::shared_ptr<specfem::io::reader> &property_reader) {
   this->mesh = { mesh.tags, mesh.control_nodes, quadratures };
   this->element_types = { this->mesh.nspec, this->mesh.ngllz, this->mesh.ngllx,
                           this->mesh.mapping, mesh.tags };

@@ -29,7 +29,7 @@ template <specfem::element::medium_tag MediumTag> struct medium_coloring {
    * @brief Default constructor
    *
    */
-  medium_coloring(){};
+  medium_coloring() {};
 
   /**
    * @brief Constructor for the medium_coloring struct that initializes the
@@ -41,7 +41,7 @@ template <specfem::element::medium_tag MediumTag> struct medium_coloring {
    */
   medium_coloring(const int num_colors_outer, const int num_colors_inner)
       : num_colors_outer(num_colors_outer), num_colors_inner(num_colors_inner),
-        elements("elements", num_colors_outer + num_colors_inner){};
+        elements("elements", num_colors_outer + num_colors_inner) {};
 
   ///@}
 };
@@ -72,7 +72,7 @@ template <> struct coloring<specfem::dimension::type::dim3> {
    * @brief Default constructor initializing an empty struct
    *
    */
-  coloring(){};
+  coloring() {};
 
   /**
    * @brief Construct a new coloring object from the given parameters
@@ -80,7 +80,7 @@ template <> struct coloring<specfem::dimension::type::dim3> {
    */
   coloring(const bool acoustic_simulation, const bool elastic_simulation)
       : acoustic_simulation(acoustic_simulation),
-        elastic_simulation(elastic_simulation){};
+        elastic_simulation(elastic_simulation) {};
 
   ///@}
 };

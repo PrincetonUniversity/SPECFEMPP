@@ -35,7 +35,7 @@ template <> struct surface<specfem::dimension::type::dim3> {
    * @brief Default constructor
    *
    */
-  surface(){};
+  surface() {};
 
   /**
    * @brief construct a container that tagged surface elements.
@@ -44,7 +44,7 @@ template <> struct surface<specfem::dimension::type::dim3> {
   surface(const int nfaces_surface, const int nspec, const int nglob)
       : nfaces_surface(nfaces_surface), nspec(nspec), nglob(nglob),
         ispec_is_surface("ispec_is_surface", nspec),
-        iglob_is_surface("iglob_is_surface", nglob){};
+        iglob_is_surface("iglob_is_surface", nglob) {};
 
   ///@}
 };

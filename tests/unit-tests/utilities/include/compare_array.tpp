@@ -1,7 +1,7 @@
 #ifndef _UNIT_TESTS_COMPARE_ARRAY_TPP_
 #define _UNIT_TESTS_COMPARE_ARRAY_TPP_
 
-#include "IO/fortranio/interface.hpp"
+#include "io/fortranio/interface.hpp"
 #include "compare_array.hpp"
 #include "kokkos_abstractions.h"
 #include <Kokkos_Core.hpp>
@@ -110,7 +110,7 @@ specfem::testing::array1d<value_type, Layout>::array1d(std::string &ref_file,
   stream.open(ref_file);
 
   for (int i1 = 0; i1 < n1; i1++) {
-    specfem::IO::fortran_read_line(stream, &ref_value);
+    specfem::io::fortran_read_line(stream, &ref_value);
     data(i1) = ref_value;
   }
 
@@ -142,14 +142,14 @@ specfem::testing::array2d<value_type, Layout>::array2d(std::string &ref_file,
   if constexpr (std::is_same_v<Layout, Kokkos::LayoutRight>) {
     for (int i1 = 0; i1 < n1; i1++) {
       for (int i2 = 0; i2 < n2; i2++) {
-        specfem::IO::fortran_read_line(stream, &ref_value);
+        specfem::io::fortran_read_line(stream, &ref_value);
         data(i1, i2) = ref_value;
       }
     }
   } else if constexpr (std::is_same_v<Layout, Kokkos::LayoutLeft>) {
     for (int i2 = 0; i2 < n2; i2++) {
       for (int i1 = 0; i1 < n1; i1++) {
-        specfem::IO::fortran_read_line(stream, &ref_value);
+        specfem::io::fortran_read_line(stream, &ref_value);
         data(i1, i2) = ref_value;
       }
     }
@@ -187,7 +187,7 @@ specfem::testing::array3d<value_type, Layout>::array3d(std::string &ref_file,
     for (int i1 = 0; i1 < n1; i1++) {
       for (int i2 = 0; i2 < n2; i2++) {
         for (int i3 = 0; i3 < n3; i3++) {
-          specfem::IO::fortran_read_line(stream, &ref_value);
+          specfem::io::fortran_read_line(stream, &ref_value);
           data(i1, i2, i3) = ref_value;
         }
       }
@@ -196,7 +196,7 @@ specfem::testing::array3d<value_type, Layout>::array3d(std::string &ref_file,
     for (int i3 = 0; i3 < n3; i3++) {
       for (int i2 = 0; i2 < n2; i2++) {
         for (int i1 = 0; i1 < n1; i1++) {
-          specfem::IO::fortran_read_line(stream, &ref_value);
+          specfem::io::fortran_read_line(stream, &ref_value);
           data(i1, i2, i3) = ref_value;
         }
       }

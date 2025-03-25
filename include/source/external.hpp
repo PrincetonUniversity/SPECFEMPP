@@ -12,12 +12,12 @@ namespace sources {
 class external : public source {
 
 public:
-  external(){};
+  external() {};
 
   external(YAML::Node &Node, const int nsteps, const type_real dt,
            const specfem::wavefield::simulation_field wavefield_type)
-      : wavefield_type(wavefield_type), specfem::sources::source(Node, nsteps,
-                                                                 dt){};
+      : wavefield_type(wavefield_type),
+        specfem::sources::source(Node, nsteps, dt) {};
 
   void compute_source_array(
       const specfem::compute::mesh &mesh,
