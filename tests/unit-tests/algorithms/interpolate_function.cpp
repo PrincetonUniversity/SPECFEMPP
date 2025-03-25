@@ -1,9 +1,9 @@
-#include "IO/interface.hpp"
 #include "Kokkos_Environment.hpp"
 #include "MPI_environment.hpp"
 #include "algorithms/interpolate.hpp"
 #include "algorithms/locate_point.hpp"
 #include "compute/compute_mesh.hpp"
+#include "io/interface.hpp"
 #include "kokkos_abstractions.h"
 #include "mesh/mesh.hpp"
 #include "quadrature/gll/gll.hpp"
@@ -20,7 +20,7 @@ TEST(ALGORITHMS, interpolate_function) {
 
   // Read Mesh database
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
-  specfem::mesh::mesh mesh = specfem::IO::read_2d_mesh(
+  specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(
       database_file, specfem::enums::elastic_wave::p_sv, mpi);
 
   constexpr int N = 5;

@@ -36,7 +36,7 @@ template <> struct mpi<specfem::dimension::type::dim3> {
    * @brief Default constructor
    *
    */
-  mpi(){};
+  mpi() {};
 
   /**
    * @brief Constructor
@@ -60,7 +60,7 @@ template <> struct mpi<specfem::dimension::type::dim3> {
         neighbors("neighbors", num_interfaces),
         nibool_interfaces("nibool_interfaces", num_interfaces),
         ibool_interfaces("ibool_interfaces", num_interfaces,
-                         max_nibool_interfaces){};
+                         max_nibool_interfaces) {};
 };
 
 } // namespace mesh

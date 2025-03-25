@@ -9,6 +9,12 @@ contributing to SPECFEM++ then issue your `pull request
 <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests>`_
 against the `devel` branch.
 
+.. figure:: branches.png
+   :alt: Branching model
+   :width: 600px
+   :align: center
+
+
 To make a change to SPECFEM++ (This development workflow is similar to the one
 suggested by `github
 <https://docs.github.com/en/get-started/quickstart/contributing-to-projects#making-a-pull-request>`_)

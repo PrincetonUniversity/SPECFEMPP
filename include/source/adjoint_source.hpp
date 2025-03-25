@@ -11,12 +11,12 @@ namespace sources {
 class adjoint_source : public source {
 
 public:
-  adjoint_source(){};
+  adjoint_source() {};
 
   adjoint_source(YAML::Node &Node, const int nsteps, const type_real dt)
       : station_name(Node["station_name"].as<std::string>()),
         network_name(Node["network_name"].as<std::string>()),
-        specfem::sources::source(Node, nsteps, dt){};
+        specfem::sources::source(Node, nsteps, dt) {};
 
   void compute_source_array(
       const specfem::compute::mesh &mesh,

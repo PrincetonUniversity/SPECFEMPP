@@ -24,8 +24,8 @@ specfem::compute::receivers::receivers(
       h_lagrange_interpolant(Kokkos::create_mirror_view(lagrange_interpolant)),
       elements("specfem::compute::receivers::elements", receivers.size()),
       h_elements(Kokkos::create_mirror_view(elements)),
-      element_types(element_types), impl::StationIterator(receivers.size(),
-                                                          stypes.size()),
+      element_types(element_types),
+      impl::StationIterator(receivers.size(), stypes.size()),
       impl::SeismogramIterator(receivers.size(), stypes.size(), max_sig_step,
                                dt, t0, nsteps_between_samples) {
 

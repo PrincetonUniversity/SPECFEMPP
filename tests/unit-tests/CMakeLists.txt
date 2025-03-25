@@ -56,7 +56,7 @@ add_library(
 target_link_libraries(
   compare_arrays
   Kokkos::kokkos
-  IO
+  io
 )
 
 
@@ -96,7 +96,7 @@ target_link_libraries(
   fortranio_test
   gtest_main
   gmock_main
-  IO
+  io
   -lpthread -lm
 )
 
@@ -120,7 +120,7 @@ target_link_libraries(
   mpi_environment
   kokkos_environment
   yaml-cpp
-  IO
+  io
   # material_class
   -lpthread -lm
 )
@@ -195,7 +195,7 @@ target_link_libraries(
   kokkos_environment
   yaml-cpp
   compare_arrays
-  IO
+  io
   Boost::filesystem
   # material_class
   -lpthread -lm
@@ -221,7 +221,7 @@ target_link_libraries(
   compute
   quadrature
   mpi_environment
-  IO
+  io
   kokkos_environment
   yaml-cpp
   Boost::filesystem
@@ -229,13 +229,13 @@ target_link_libraries(
 )
 
 add_executable(
-  IO_tests
-  IO/sources/test_read_sources.cpp
+  io_tests
+  io/sources/test_read_sources.cpp
 )
 
 target_link_libraries(
-  IO_tests
-  IO
+  io_tests
+  io
   gtest_main
   kokkos_environment
   yaml-cpp
@@ -257,7 +257,7 @@ target_link_libraries(
   kokkos_environment
   algorithms
   point
-  IO
+  io
   Boost::filesystem
 )
 
@@ -274,7 +274,7 @@ target_link_libraries(
   mpi_environment
   kokkos_environment
   algorithms
-  IO
+  io
   Boost::filesystem
   point
 )
@@ -333,7 +333,7 @@ target_link_libraries(
   compare_arrays
   point
   algorithms
-  IO
+  io
   coupled_interface
   periodic_tasks
   -lpthread -lm
@@ -436,7 +436,7 @@ if (NOT MPI_PARALLEL)
   gtest_discover_tests(gll_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(lagrange_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(fortranio_test WORKING_DIRECTORY ${TEST_DIR})
-  gtest_discover_tests(IO_tests WORKING_DIRECTORY ${TEST_DIR})
+  gtest_discover_tests(io_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(mesh_tests WORKING_DIRECTORY ${TEST_DIR})
   gtest_discover_tests(compute_partial_derivatives_tests WORKING_DIRECTORY ${TEST_DIR})
   # gtest_discover_tests(compute_elastic_tests WORKING_DIRECTORY ${TEST_DIR})

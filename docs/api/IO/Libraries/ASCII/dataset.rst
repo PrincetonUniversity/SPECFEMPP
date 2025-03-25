@@ -4,5 +4,5 @@
 Dataset
 =======
 
-.. doxygenclass:: specfem::IO::impl::ASCII::Dataset
+.. doxygenclass:: specfem::io::impl::ASCII::Dataset
     :members:

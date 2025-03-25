@@ -2,7 +2,7 @@
 #define _MESH_COUPLED_INTERFACES_IMPL_INTERFACE_CONTAINER_TPP_
 
 #include "enumerations/specfem_enums.hpp"
-#include "IO/fortranio/interface.hpp"
+#include "io/fortranio/interface.hpp"
 #include "interface_container.hpp"
 #include "specfem_mpi/interface.hpp"
 
