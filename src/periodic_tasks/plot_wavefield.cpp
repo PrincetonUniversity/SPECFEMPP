@@ -22,11 +22,6 @@
 #include <vtkJPEGWriter.h>
 #include <vtkLookupTable.h>
 #include <vtkNamedColors.h>
-#ifdef __APPLE__
-#include <vtkCocoaRenderWindow.h>
-#else
-#include <vtkOpenGLRenderWindow.h>
-#endif
 #include <vtkPNGWriter.h>
 #include <vtkPointData.h>
 #include <vtkPoints.h>
@@ -78,10 +73,16 @@ map_materials_with_color(const specfem::compute::assembly &assembly) {
 
   const std::unordered_map<specfem::element::medium_tag, std::array<int, 3> >
       material_colors = {
-        { specfem::element::medium_tag::elastic_sv, // sienna color
-          { 160, 82, 45 } },
         { specfem::element::medium_tag::acoustic, // aqua color
           { 0, 255, 255 } },
+        { specfem::element::medium_tag::elastic_sv, // sienna color
+          { 160, 82, 45 } },
+        { specfem::element::medium_tag::elastic_sh, // sienna color
+          { 160, 82, 45 } },
+        { specfem::element::medium_tag::poroelastic, // off navy color
+          { 40, 40, 128 } },
+        { specfem::element::medium_tag::electromagnetic_sv, // dark gray color
+          { 169, 169, 169 } },
       };
 
   const auto &coordinates = assembly.mesh.points.h_coord;
@@ -324,12 +325,8 @@ void specfem::periodic_tasks::plot_wavefield::run() {
       throw std::runtime_error("Unsupported output format");
     }
   } else {
-// Create a render window interactor
-#ifdef __APPLE__
-    auto render_window = vtkSmartPointer<vtkCocoaRenderWindow>::New();
-#else
-    auto render_window = vtkSmartPointer<vtkOpenGLRenderWindow>::New();
-#endif
+    // Create a render window interactor
+    auto render_window = vtkSmartPointer<vtkRenderWindow>::New();
     render_window->AddRenderer(renderer);
     render_window->SetSize(2560, 2560);
     render_window->SetWindowName("Wavefield");

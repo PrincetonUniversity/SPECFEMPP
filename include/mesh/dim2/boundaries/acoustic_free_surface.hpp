@@ -31,7 +31,7 @@ template <> struct acoustic_free_surface<specfem::dimension::type::dim2> {
    * @brief Default constructor
    *
    */
-  acoustic_free_surface(){};
+  acoustic_free_surface() {};
 
   acoustic_free_surface(const int nelem_acoustic_surface);
 

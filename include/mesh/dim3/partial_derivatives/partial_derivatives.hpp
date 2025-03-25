@@ -41,7 +41,7 @@ template <> struct partial_derivatives<specfem::dimension::type::dim3> {
    * @brief Default constructor
    *
    */
-  partial_derivatives(){}; // Default constructor
+  partial_derivatives() {}; // Default constructor
 
   /**
    * @brief Construct a new partial derivatives object
@@ -64,7 +64,7 @@ template <> struct partial_derivatives<specfem::dimension::type::dim3> {
         gammax("gammax", nspec, ngllx, nglly, ngllz),
         gammay("gammay", nspec, ngllx, nglly, ngllz),
         gammaz("gammaz", nspec, ngllx, nglly, ngllz),
-        jacobian("jacobian", nspec, ngllx, nglly, ngllz){};
+        jacobian("jacobian", nspec, ngllx, nglly, ngllz) {};
 
   ///@}
 
