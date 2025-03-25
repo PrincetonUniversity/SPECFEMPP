@@ -13,7 +13,7 @@
 CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
     WHERE(DIMENSION_TAG_DIM2)
         WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-              MEDIUM_TAG_POROELASTIC)
+              MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_SV)
             WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
     MEDIUM_TYPE)
 
@@ -23,10 +23,10 @@ CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
 
 #define MAKE_VARIANT_RETURN                                                    \
   std::variant<BOOST_PP_SEQ_ENUM(CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(          \
-      WHERE(DIMENSION_TAG_DIM2)                                                \
-          WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,                  \
-                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)                   \
-              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),         \
+      WHERE(DIMENSION_TAG_DIM2) WHERE(                                         \
+          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,   \
+          MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_SV)               \
+          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),             \
       TYPE_NAME))>
 
 using MaterialVectorType = std::vector<MAKE_VARIANT_RETURN>; /// NOLINT
@@ -136,22 +136,25 @@ const static std::unordered_map<std::string, MaterialVectorType>
             static_cast<type_real>(16764590059.75),
             static_cast<type_real>(1.0e-9), static_cast<type_real>(0.0),
             static_cast<type_real>(1.0e-9), static_cast<type_real>(0.0)) }) },
-      // { "Electro-magnetic mesh example from Morency 2020",
-      //   MaterialVectorType(
-      //       { specfem::point::properties<
-      //             dimension,
-      //             specfem::element::medium_tag::electromagnetic_sv,
-      //             specfem::element::property_tag::isotropic, false>(
-      //             12.566 * std::pow(10, -7), 8.85 * std::pow(10,
-      //             -12), 5.0, 5.0, 2.0 * std::pow(10, -3), 2.0 * std::pow(10,
-      //             -3), 90.0, 90.0, 90.0, 90.0),
-      //         specfem::point::properties<
-      //             dimension,
-      //             specfem::element::medium_tag::electromagnetic_sv,
-      //             specfem::element::property_tag::isotropic, false>(
-      //             12.566 * std::pow(10, -7), 8.85 * std::pow(10,
-      //             -12), 1.0, 1.0, 0.0 * std::pow(10, -3), 0.0 * std::pow(10,
-      //             -3), 90.0, 90.0, 90.0, 90.0) }) }
+      { "Electro-magnetic mesh example from Morency 2020",
+        MaterialVectorType({
+            specfem::point::properties<
+                dimension, specfem::element::medium_tag::electromagnetic_sv,
+                specfem::element::property_tag::isotropic, false>(
+                static_cast<type_real>(1.0 / (12.566 * 1e-7)), // mu0_inv
+                static_cast<type_real>(5.0 * 8.85 * 1e-12),    // e0_e11
+                static_cast<type_real>(5.0 * 8.85 * 1e-12),    // e0_e33
+                static_cast<type_real>(2.0 * 1e-3),            // sig11
+                static_cast<type_real>(2.0 * 1e-3)),           // sig33
+            specfem::point::properties<
+                dimension, specfem::element::medium_tag::electromagnetic_sv,
+                specfem::element::property_tag::isotropic, false>(
+                static_cast<type_real>(1.0 / (12.566 * 1e-7)), // mu0_inv
+                static_cast<type_real>(1.0 * 8.85 * 1e-12),    // e0_e11
+                static_cast<type_real>(1.0 * 8.85 * 1e-12),    // e0_e33
+                static_cast<type_real>(0.0 * 1e-3),            // sig11
+                static_cast<type_real>(0.0 * 1e-3))            // sig33
+        }) },
     };
 
 void check_test(
@@ -179,10 +182,10 @@ void check_test(
     const int imaterial = material_specification.database_index;
 
     CALL_CODE_FOR_ALL_MATERIAL_SYSTEMS(
-        WHERE(DIMENSION_TAG_DIM2)
-            WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
-                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
-                WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
+        WHERE(DIMENSION_TAG_DIM2) WHERE(
+            MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
+            MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_SV)
+            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
         if ((type == _medium_tag_) && (property == _property_tag_)) {
           const auto icomputed =
               std::get<

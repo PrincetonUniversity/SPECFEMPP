@@ -204,7 +204,7 @@ struct properties<specfem::dimension::type::dim2,
     return H_Biot() - (static_cast<value_type>(2.0)) * mu_G();
   }
 
-  KOKKOS_INLINE_FUNCTION const value_type lambdaplus2mu() const {
+  KOKKOS_INLINE_FUNCTION const value_type lambdaplus2mu_G() const {
     return lambda_G() + (static_cast<value_type>(2.0)) * mu_G();
   }
 
@@ -229,6 +229,59 @@ struct properties<specfem::dimension::type::dim2,
                                                    ///< permeability tensor
     return permxx() / determinant; ///< inverse of the permeability tensor
   }
+
+  KOKKOS_INLINE_FUNCTION const value_type rho_bar() const {
+    return (((static_cast<type_real>(1.0) - this->phi()) * this->rho_s()) +
+            (this->phi() * this->rho_f()));
+  }
+};
+
+/**
+ * @brief Template specialization for 2D isotropic electromagnetic media
+ *
+ * @tparam UseSIMD Boolean indicating whether to use SIMD
+ */
+template <bool UseSIMD>
+struct properties<specfem::dimension::type::dim2,
+                  specfem::element::medium_tag::electromagnetic_sv,
+                  specfem::element::property_tag::isotropic, UseSIMD>
+    : public impl::point_data<5, UseSIMD> {
+
+  /**
+   * @name Typedefs
+   *
+   */
+  ///@{
+  using base_type = impl::point_data<5, UseSIMD>;
+  using value_type = typename base_type::value_type;
+
+  constexpr static auto dimension = specfem::dimension::type::dim2;
+  constexpr static auto medium_tag =
+      specfem::element::medium_tag::electromagnetic_sv;
+  constexpr static auto property_tag =
+      specfem::element::property_tag::isotropic;
+
+  constexpr static bool is_point_properties = true;
+  ///@}
+
+  using base_type::base_type;
+
+  /**
+   * @name Material properties
+   *
+   */
+  ///@{
+  DEFINE_POINT_VALUE(mu0_inv,
+                     0) ///< Inverse magnetic permeability @f$ \mu_{0}^{-1} @f$
+  DEFINE_POINT_VALUE(eps11, 1) ///< @f$ \epsilon_{11} @f$ component of the
+                               ///< permittivity tensor
+  DEFINE_POINT_VALUE(eps33, 2) ///< @f$ \epsilon_{33} @f$ component of the
+                               ///< permittivity tensor
+  DEFINE_POINT_VALUE(sig11, 3) ///< @f$ \sigma_{11} @f$ component of the
+                               ///< conductivity tensor
+  DEFINE_POINT_VALUE(sig33, 4) ///< @f$ \sigma_{33} @f$ component of the
+                               ///< conductivity tensor
+  ///@}
 };
 
 } // namespace point

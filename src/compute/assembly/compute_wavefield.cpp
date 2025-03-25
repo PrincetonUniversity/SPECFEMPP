@@ -38,6 +38,7 @@ specfem::compute::assembly::generate_wavefield_on_entire_grid(
     const specfem::wavefield::simulation_field wavefield,
     const specfem::wavefield::type component) {
 
+  // Check which type of wavefield component is requested
   const int ncomponents = [&]() -> int {
     if (component == specfem::wavefield::type::displacement) {
       return 2;
@@ -63,14 +64,17 @@ specfem::compute::assembly::generate_wavefield_on_entire_grid(
     throw std::runtime_error("Wavefield type not supported");
   }
 
+  // Creates a view to store the wavefield on the entire grid
   Kokkos::View<type_real ****, Kokkos::LayoutLeft,
                Kokkos::DefaultExecutionSpace>
       wavefield_on_entire_grid("wavefield_on_entire_grid", this->mesh.nspec,
                                this->mesh.ngllz, this->mesh.ngllx, ncomponents);
 
+  // Create host mirror for the wavefield on the entire grid
   const auto h_wavefield_on_entire_grid =
       Kokkos::create_mirror_view(wavefield_on_entire_grid);
 
+  // Call the get_wavefield_on_entire_grid function for each material system
   CALL_CODE_FOR_ALL_MATERIAL_SYSTEMS(
       WHERE(DIMENSION_TAG_DIM2) WHERE(
           MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
@@ -92,6 +96,7 @@ specfem::compute::assembly::generate_wavefield_on_entire_grid(
   //                              specfem::element::property_tag::isotropic>(
   //     component, *this, wavefield_on_entire_grid);
 
+  // Copy the wavefield on the entire grid to the host
   Kokkos::deep_copy(h_wavefield_on_entire_grid, wavefield_on_entire_grid);
 
   return h_wavefield_on_entire_grid;
