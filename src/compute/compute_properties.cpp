@@ -4,6 +4,7 @@
 specfem::compute::properties::properties(
     const int nspec, const int ngllz, const int ngllx,
     const specfem::compute::element_types &element_types,
+    const specfem::compute::mesh_to_compute_mapping &mapping,
     const specfem::mesh::materials<specfem::dimension::type::dim2> &materials,
     const bool has_gll_model) {
 
@@ -28,7 +29,7 @@ specfem::compute::properties::properties(
       _value_ =
           specfem::medium::properties_container<_medium_tag_, _property_tag_>(
               element_types.get_elements_on_host(_medium_tag_, _property_tag_),
-              ngllz, ngllx, materials, has_gll_model,
+              mapping, ngllz, ngllx, materials, has_gll_model,
               h_property_index_mapping););
 
   Kokkos::deep_copy(property_index_mapping, h_property_index_mapping);

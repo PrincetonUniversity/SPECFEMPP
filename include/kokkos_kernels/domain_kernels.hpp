@@ -29,7 +29,9 @@ public:
         coupling_interfaces_acoustic(assembly) {}
 
   template <specfem::element::medium_tag medium>
-  inline void update_wavefields(const int istep) {
+  inline int update_wavefields(const int istep) {
+
+    int elements_updated = 0;
 
 #define CALL_COUPLING_INTERFACES_FUNCTION(DIMENSION_TAG, MEDIUM_TAG)           \
   if constexpr (dimension == GET_TAG(DIMENSION_TAG) &&                         \
@@ -69,7 +71,7 @@ public:
                                     BOUNDARY_TAG)                              \
   if constexpr (dimension == GET_TAG(DIMENSION_TAG) &&                         \
                 medium == GET_TAG(MEDIUM_TAG)) {                               \
-    impl::compute_stiffness_interaction<                                       \
+    elements_updated += impl::compute_stiffness_interaction<                   \
         dimension, wavefield, ngll, GET_TAG(MEDIUM_TAG),                       \
         GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG)>(assembly, istep);        \
   }
@@ -98,6 +100,8 @@ public:
             MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC))
 
 #undef CALL_DIVIDE_MASS_MATRIX_FUNCTION
+
+    return elements_updated;
   }
 
   void initialize(const type_real &dt) {

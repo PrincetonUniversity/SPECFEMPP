@@ -1,4 +1,4 @@
-#include "IO/fortranio/interface.hpp"
+#include "io/fortranio/interface.hpp"
 #include "mesh/dim2/boundaries/boundaries.hpp"
 #include "specfem_mpi/interface.hpp"
 #include <Kokkos_Core.hpp>

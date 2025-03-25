@@ -191,6 +191,8 @@ public:
 
 #undef GENERATE_MEDIUM_FIELD_VARIABLE
 
+  int get_total_degrees_of_freedom();
+
 private:
   template <specfem::sync::kind sync> void sync_fields() {
 
@@ -205,6 +207,8 @@ private:
 
 #undef SYNC_MEDIUM_FIELD
   }
+
+  int total_degrees_of_freedom = 0; ///< Total number of degrees of freedom
 };
 
 template <specfem::wavefield::simulation_field WavefieldType1,

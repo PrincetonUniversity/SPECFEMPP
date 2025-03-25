@@ -4,5 +4,5 @@
 Dataset
 =======
 
-.. doxygenclass:: specfem::IO::impl::HDF5::Dataset
+.. doxygenclass:: specfem::io::impl::HDF5::Dataset
     :members:

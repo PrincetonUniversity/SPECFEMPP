@@ -228,34 +228,34 @@ target_link_libraries(
 )
 
 add_library(
-        IO
-        src/IO/fortranio/fortran_io.cpp
-        src/IO/sources.cpp
-        src/IO/receivers.cpp
+        io
+        src/io/fortranio/fortran_io.cpp
+        src/io/sources.cpp
+        src/io/receivers.cpp
         # Fortran 2D part
-        src/IO/mesh/impl/fortran/dim2/mesh.cpp
-        src/IO/mesh/impl/fortran/dim2/read_boundaries.cpp
-        src/IO/mesh/impl/fortran/dim2/read_elements.cpp
-        src/IO/mesh/impl/fortran/dim2/read_material_properties.cpp
-        src/IO/mesh/impl/fortran/dim2/read_mesh_database.cpp
-        src/IO/mesh/impl/fortran/dim2/read_interfaces.cpp
-        src/IO/mesh/impl/fortran/dim2/read_parameters.cpp
+        src/io/mesh/impl/fortran/dim2/mesh.cpp
+        src/io/mesh/impl/fortran/dim2/read_boundaries.cpp
+        src/io/mesh/impl/fortran/dim2/read_elements.cpp
+        src/io/mesh/impl/fortran/dim2/read_material_properties.cpp
+        src/io/mesh/impl/fortran/dim2/read_mesh_database.cpp
+        src/io/mesh/impl/fortran/dim2/read_interfaces.cpp
+        src/io/mesh/impl/fortran/dim2/read_parameters.cpp
         # Fortran 3D part
-        src/IO/mesh/impl/fortran/dim3/mesh.cpp
-        src/IO/mesh/impl/fortran/dim3/read_parameters.cpp
-        src/IO/mesh/impl/fortran/dim3/read_coordinates.cpp
-        src/IO/mesh/impl/fortran/dim3/read_partial_derivatives.cpp
-        src/IO/mesh/impl/fortran/dim3/utilities.cpp
+        src/io/mesh/impl/fortran/dim3/mesh.cpp
+        src/io/mesh/impl/fortran/dim3/read_parameters.cpp
+        src/io/mesh/impl/fortran/dim3/read_coordinates.cpp
+        src/io/mesh/impl/fortran/dim3/read_partial_derivatives.cpp
+        src/io/mesh/impl/fortran/dim3/utilities.cpp
 )
 
 if (NOT HDF5_CXX_BUILD)
     target_compile_definitions(
-        IO
+        io
         PUBLIC -DNO_HDF5
     )
 
     target_link_libraries(
-        IO
+        io
         mesh
         source_class
         receiver_class
@@ -264,7 +264,7 @@ if (NOT HDF5_CXX_BUILD)
         Kokkos::kokkos)
 else()
     target_link_libraries(
-        IO
+        io
         mesh
         source_class
         receiver_class
@@ -387,7 +387,7 @@ target_link_libraries(
 
 add_library(
         read_seismogram
-        src/IO/seismogram/reader.cpp
+        src/io/seismogram/reader.cpp
 )
 
 target_link_libraries(
@@ -397,14 +397,14 @@ target_link_libraries(
 
 add_library(
         reader
-        src/IO/wavefield/reader.cpp
-        src/IO/property/reader.cpp
+        src/io/wavefield/reader.cpp
+        src/io/property/reader.cpp
 )
 
 target_link_libraries(
         reader
         compute
-        IO
+        io
         read_seismogram
 )
 
@@ -574,17 +574,17 @@ target_link_libraries(
 
 add_library(
         writer
-        src/IO/seismogram/writer.cpp
-        src/IO/wavefield/writer.cpp
-        src/IO/kernel/writer.cpp
-        src/IO/property/writer.cpp
+        src/io/seismogram/writer.cpp
+        src/io/wavefield/writer.cpp
+        src/io/kernel/writer.cpp
+        src/io/property/writer.cpp
 )
 
 target_link_libraries(
         writer
         compute
         receiver_class
-        IO
+        io
 )
 
 add_library(
@@ -688,7 +688,7 @@ add_executable(
 target_link_libraries(
         specfem3d
         specfem_mpi
-        IO
+        io
         Kokkos::kokkos
         mesh
         quadrature
