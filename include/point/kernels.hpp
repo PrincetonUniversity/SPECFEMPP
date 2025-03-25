@@ -243,6 +243,7 @@ struct kernels<specfem::dimension::type::dim2,
   constexpr static bool is_point_properties = true;
   ///@}
 
+  using base_type::base_type;
   /**
    * @brief Constructor
    *
