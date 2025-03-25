@@ -1,0 +1,46 @@
+parameters:
+  header:
+    title: Heterogeneous electromagnetic medium with some blocks
+    description: |
+      Material systems : Electromagnetic (1)
+      Interfaces : -- / --
+      Sources : Force source (1)
+      Boundary conditions : Neumann BCs on all edges
+      Debugging comments: This checks the EM implementation after Morency (2020)
+
+  simulation-setup:
+    quadrature:
+      quadrature-type: GLL4
+
+    solver:
+      time-marching:
+        type-of-simulation: forward
+        time-scheme:
+          type: Newmark
+          dt: 4.e-12
+          nstep: 4000
+
+    simulation-mode:
+      forward:
+        writer:
+          seismogram:
+            format: ascii
+            directory: "@CMAKE_CURRENT_SOURCE_DIR@/OUTPUT_FILES/results"
+
+  receivers:
+    stations: "@CMAKE_CURRENT_SOURCE_DIR@/OUTPUT_FILES/STATIONS"
+    angle: 0.0
+    seismogram-type:
+      - displacement
+    nstep_between_samples: 1
+
+  ## Runtime setup
+  run-setup:
+    number-of-processors: 1
+    number-of-runs: 1
+
+  ## databases
+  databases:
+    mesh-database: "@CMAKE_CURRENT_SOURCE_DIR@/OUTPUT_FILES/database.bin"
+
+  sources: "@CMAKE_CURRENT_SOURCE_DIR@/sources.yaml"
