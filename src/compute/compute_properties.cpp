@@ -4,6 +4,7 @@
 specfem::compute::properties::properties(
     const int nspec, const int ngllz, const int ngllx,
     const specfem::compute::element_types &element_types,
+    const specfem::compute::mesh_to_compute_mapping &mapping,
     const specfem::mesh::materials<specfem::dimension::type::dim2> &materials,
     const bool has_gll_model) {
 
@@ -43,7 +44,8 @@ specfem::compute::properties::properties(
                                             GET_TAG(PROPERTY_TAG)>(            \
           CREATE_VARIABLE_NAME(elements, GET_NAME(DIMENSION_TAG),              \
                                GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)),  \
-          ngllz, ngllx, materials, has_gll_model, h_property_index_mapping);
+          mapping, ngllz, ngllx, materials, has_gll_model,                     \
+          h_property_index_mapping);
 
   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
       ASSIGN_PROPERTY_CONTAINERS,
