@@ -1,10 +1,10 @@
 #ifndef _PARAMETER_SETUP_HPP
 #define _PARAMETER_SETUP_HPP
 
-#include "IO/reader.hpp"
 #include "database_configuration.hpp"
 #include "elastic_wave.hpp"
 #include "header.hpp"
+#include "io/reader.hpp"
 #include "parameter_parser/solver/interface.hpp"
 #include "quadrature.hpp"
 #include "receivers.hpp"
@@ -154,10 +154,10 @@ public:
    * @param receivers Pointer to specfem::compute::receivers struct
    used
    * to instantiate the writer
-   * @return specfem::IO::writer* Pointer to an instantiated writer
+   * @return specfem::io::writer* Pointer to an instantiated writer
    object
    */
-  std::shared_ptr<specfem::IO::writer> instantiate_seismogram_writer() const {
+  std::shared_ptr<specfem::io::writer> instantiate_seismogram_writer() const {
     if (this->seismogram) {
       return this->seismogram->instantiate_seismogram_writer(
           this->get_elastic_wave_type(), this->time_scheme->get_dt(),
@@ -168,7 +168,7 @@ public:
     }
   }
 
-  std::shared_ptr<specfem::IO::writer> instantiate_wavefield_writer() const {
+  std::shared_ptr<specfem::io::writer> instantiate_wavefield_writer() const {
     if (this->wavefield) {
       return this->wavefield->instantiate_wavefield_writer();
     } else {
@@ -176,7 +176,7 @@ public:
     }
   }
 
-  std::shared_ptr<specfem::IO::reader> instantiate_wavefield_reader() const {
+  std::shared_ptr<specfem::io::reader> instantiate_wavefield_reader() const {
     if (this->wavefield) {
       return this->wavefield->instantiate_wavefield_reader();
     } else {
@@ -194,7 +194,7 @@ public:
     }
   }
 
-  std::shared_ptr<specfem::IO::reader> instantiate_property_reader() const {
+  std::shared_ptr<specfem::io::reader> instantiate_property_reader() const {
     if (this->property) {
       return this->property->instantiate_property_reader();
     } else {
@@ -202,7 +202,7 @@ public:
     }
   }
 
-  std::shared_ptr<specfem::IO::writer> instantiate_property_writer() const {
+  std::shared_ptr<specfem::io::writer> instantiate_property_writer() const {
     if (this->property) {
       return this->property->instantiate_property_writer();
     } else {
@@ -210,7 +210,7 @@ public:
     }
   }
 
-  std::shared_ptr<specfem::IO::writer> instantiate_kernel_writer() const {
+  std::shared_ptr<specfem::io::writer> instantiate_kernel_writer() const {
     if (this->kernel) {
       return this->kernel->instantiate_kernel_writer();
     } else {

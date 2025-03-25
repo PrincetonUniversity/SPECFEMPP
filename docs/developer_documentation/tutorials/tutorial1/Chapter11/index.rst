@@ -29,7 +29,7 @@ Finally, we have all the components that we need to put together to create a com
         specfem::mesh::mesh mesh("OUTPUT_FILES/database.bin", mpi);
 
         // Read the sources
-        const auto sources = specfem::IO::sources::read_sources(
+        const auto sources = specfem::io::sources::read_sources(
                                         "OUTPUT_FILES/sources.yaml",
                                         simulation_params.nsteps,
                                         simulation_params.t0,

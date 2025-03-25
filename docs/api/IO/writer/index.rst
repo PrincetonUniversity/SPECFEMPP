@@ -4,7 +4,7 @@ Writer
 
 The ``writer`` class provides interfaces to write simulation data as output files.
 
-.. doxygenclass:: specfem::IO::writer
+.. doxygenclass:: specfem::io::writer
    :members:
 
 Types of writers

@@ -50,7 +50,7 @@ struct chunk_index_type<false, DimensionType> {
   KOKKOS_INLINE_FUNCTION
   chunk_index_type(const int ielement,
                    const specfem::point::index<dimension> index)
-      : ielement(ielement), index(index){};
+      : ielement(ielement), index(index) {};
 };
 
 /**

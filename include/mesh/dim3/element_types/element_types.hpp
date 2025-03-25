@@ -58,7 +58,7 @@ template <> struct element_types<specfem::dimension::type::dim3> {
         ispec_acoustic("mesh.element_types.ispec_acoustic", nacoustic),
         ispec_elastic("mesh.element_types.ispec_elastic", nelastic),
         ispec_poroelastic("mesh.element_types.ispec_poroelastic",
-                          nporoelastic){};
+                          nporoelastic) {};
 
   ///@}
 

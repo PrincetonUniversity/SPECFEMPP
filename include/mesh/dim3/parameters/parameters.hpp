@@ -82,7 +82,7 @@ template <> struct parameters<specfem::dimension::type::dim3> {
    * @brief Default constructor
    *
    */
-  parameters(){};
+  parameters() {};
 
   /**
    *
@@ -193,7 +193,7 @@ template <> struct parameters<specfem::dimension::type::dim3> {
         num_colors_inner_acoustic(num_colors_inner_acoustic),
         num_colors_outer_acoustic(num_colors_outer_acoustic),
         num_colors_inner_elastic(num_colors_inner_elastic),
-        num_colors_outer_elastic(num_colors_outer_elastic){};
+        num_colors_outer_elastic(num_colors_outer_elastic) {};
 
   ///@}
 

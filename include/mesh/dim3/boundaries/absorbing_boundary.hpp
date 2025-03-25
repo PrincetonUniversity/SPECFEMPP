@@ -35,7 +35,7 @@ template <> struct stacey_mass<specfem::element::medium_tag::elastic> {
    * @brief Default constructor
    *
    */
-  stacey_mass(){};
+  stacey_mass() {};
 
   /**
    * @brief Constructor
@@ -50,9 +50,9 @@ template <> struct stacey_mass<specfem::element::medium_tag::elastic> {
    * stacey_mass<specfem::element::medium_tag::elastic> mass_matrix(nglob);
    *
    * // Populate the mass matrix from the binary file
-   * specfem::IO::mesh::impl::fortran::dim3::read_array(stream, mass_matrix.x);
-   * specfem::IO::mesh::impl::fortran::dim3::read_array(stream, mass_matrix.y);
-   * specfem::IO::mesh::impl::fortran::dim3::read_array(stream, mass_matrix.z);
+   * specfem::io::mesh::impl::fortran::dim3::read_array(stream, mass_matrix.x);
+   * specfem::io::mesh::impl::fortran::dim3::read_array(stream, mass_matrix.y);
+   * specfem::io::mesh::impl::fortran::dim3::read_array(stream, mass_matrix.z);
    * @endcode
    */
   stacey_mass(const int nglob) : nglob(nglob) {
@@ -82,7 +82,7 @@ template <> struct stacey_mass<specfem::element::medium_tag::acoustic> {
    * @brief Default constructor
    *
    */
-  stacey_mass(){};
+  stacey_mass() {};
 
   /**
    * @brief Constructor
@@ -97,7 +97,7 @@ template <> struct stacey_mass<specfem::element::medium_tag::acoustic> {
    * stacey_mass<specfem::element::medium_tag::acoustic> mass_matrix(nglob);
    *
    * // Populate the mass matrix from the binary file
-   * specfem::IO::mesh::impl::fortran::dim3::read_array(stream,
+   * specfem::io::mesh::impl::fortran::dim3::read_array(stream,
    * mass_matrix.mass);
    * @endcode
    */
@@ -153,7 +153,7 @@ template <> struct absorbing_boundary<specfem::dimension::type::dim3> {
    * @brief Default constructor
    *
    */
-  absorbing_boundary(){};
+  absorbing_boundary() {};
 
   /**
    * @brief Constructor for absorbing boundaries
@@ -195,13 +195,13 @@ template <> struct absorbing_boundary<specfem::dimension::type::dim3> {
    *      NSPEC2D_BOTTOM, NSPEC2D_TOP);
    *
    * // Populate the views from the binary file
-   * specfem::IO::mesh::impl::fortran::dim3::read_index_array(stream,
+   * specfem::io::mesh::impl::fortran::dim3::read_index_array(stream,
    * abs_boundary.ispec);
-   * specfem::IO::mesh::impl::fortran::dim3::read_index_array(stream,
+   * specfem::io::mesh::impl::fortran::dim3::read_index_array(stream,
    * abs_boundary.ijk);
-   * specfem::IO::mesh::impl::fortran::dim3::read_array(stream,
+   * specfem::io::mesh::impl::fortran::dim3::read_array(stream,
    * abs_boundary.jacobian2Dw);
-   * specfem::IO::mesh::impl::fortran::dim3::read_array(stream,
+   * specfem::io::mesh::impl::fortran::dim3::read_array(stream,
    * abs_boundary.normal);
    * @endcode
    */

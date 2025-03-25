@@ -1,9 +1,9 @@
 #include "../../Kokkos_Environment.hpp"
 #include "../../MPI_environment.hpp"
 #include "../../utilities/include/interface.hpp"
-#include "IO/interface.hpp"
 #include "compute/interface.hpp"
 #include "edge/interface.hpp"
+#include "io/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "point/coordinates.hpp"
 #include "quadrature/interface.hpp"
@@ -177,7 +177,7 @@ TEST(COMPUTE_TESTS, coupled_interfaces_tests) {
 
     // Read mesh generated MESHFEM
     specfem::mesh::mesh mesh =
-        specfem::IO::read_2d_mesh(Test.databases.mesh.database_filename, mpi);
+        specfem::io::read_2d_mesh(Test.databases.mesh.database_filename, mpi);
 
     // Generate compute structs to be used by the solver
     specfem::compute::mesh assembly(mesh.control_nodes, quadratures);
