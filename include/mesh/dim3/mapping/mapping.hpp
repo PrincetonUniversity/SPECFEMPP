@@ -49,7 +49,7 @@ template <> struct mapping<specfem::dimension::type::dim3> {
    * @brief Construct a new mapping object
    *
    */
-  mapping(){}; // Default constructor
+  mapping() {}; // Default constructor
 
   /**
    * @brief Construct a new mapping object
@@ -67,7 +67,7 @@ template <> struct mapping<specfem::dimension::type::dim3> {
         ngllx(ngllx), nglly(nglly), ngllz(ngllz), xix_regular(0.0),
         jacobian_regular(0.0),
         irregular_elements("irregular_elements", nspec_irregular),
-        ibool("ibool", nspec, ngllx, nglly, ngllz){};
+        ibool("ibool", nspec, ngllx, nglly, ngllz) {};
   ///@}
 
   /**

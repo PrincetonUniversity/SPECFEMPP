@@ -1,6 +1,6 @@
 #include "source_time_function/external.hpp"
-#include "IO/seismogram/reader.hpp"
 #include "enumerations/specfem_enums.hpp"
+#include "io/seismogram/reader.hpp"
 #include "kokkos_abstractions.h"
 #include <fstream>
 #include <tuple>
@@ -132,7 +132,7 @@ void specfem::forcing_function::external::compute_source_time_function(
       continue;
 
     specfem::kokkos::HostView2d<type_real> data("external", nsteps, 2);
-    specfem::IO::seismogram_reader reader(
+    specfem::io::seismogram_reader reader(
         filename[icomp], specfem::enums::seismogram::format::ascii, data);
     reader.read();
     for (int i = 0; i < nsteps; i++) {

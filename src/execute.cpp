@@ -42,7 +42,7 @@ void execute(
   //                   Read mesh and materials
   // --------------------------------------------------------------
   const auto quadrature = setup.instantiate_quadrature();
-  const auto mesh = specfem::IO::read_2d_mesh(
+  const auto mesh = specfem::io::read_2d_mesh(
       database_filename, setup.get_elastic_wave_type(), mpi);
   // --------------------------------------------------------------
 
@@ -52,13 +52,13 @@ void execute(
   const int nsteps = setup.get_nsteps();
   const specfem::simulation::type simulation_type = setup.get_simulation_type();
   auto [sources, t0] =
-      specfem::IO::read_sources(setup.get_sources(), nsteps, setup.get_t0(),
+      specfem::io::read_sources(setup.get_sources(), nsteps, setup.get_t0(),
                                 setup.get_dt(), simulation_type);
   setup.update_t0(t0); // Update t0 in case it was changed
 
   const auto stations_node = setup.get_stations();
   const auto angle = setup.get_receiver_angle();
-  auto receivers = specfem::IO::read_receivers(stations_node, angle);
+  auto receivers = specfem::io::read_receivers(stations_node, angle);
 
   mpi->cout("Source Information:");
   mpi->cout("-------------------------------");

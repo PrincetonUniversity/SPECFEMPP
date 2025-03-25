@@ -4,7 +4,7 @@ Reader
 
 The ``reader`` class provides interfaces to read simulation data as output files.
 
-.. doxygenclass:: specfem::IO::writer
+.. doxygenclass:: specfem::io::writer
 
 Types of readers
 ----------------

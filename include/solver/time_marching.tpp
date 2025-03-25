@@ -19,28 +19,39 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
 
   const int nstep = time_scheme->get_max_timestep();
 
+  const int total_dof_to_be_updated =
+      2 * assembly.get_total_degrees_of_freedom();
+
+  const int total_elements_to_be_updated = assembly.get_total_number_of_elements();
+
   for (const auto [istep, dt] : time_scheme->iterate_forward()) {
+    int dofs_updated = 0;
+    int elements_updated = 0;
 
     // Predictor phase forward
-    this->time_scheme->apply_predictor_phase_forward(acoustic);
-    this->time_scheme->apply_predictor_phase_forward(elastic_sv);
-    this->time_scheme->apply_predictor_phase_forward(elastic_sh);
+    dofs_updated += this->time_scheme->apply_predictor_phase_forward(acoustic);
+    dofs_updated +=
+        this->time_scheme->apply_predictor_phase_forward(elastic_sv);
+    dofs_updated +=
+        this->time_scheme->apply_predictor_phase_forward(elastic_sh);
 
     // Update acoustic wavefield:
     // coupling, source interaction, stiffness, divide by mass matrix
-    this->kernels.template update_wavefields<acoustic>(istep);
+    elements_updated += this->kernels.template update_wavefields<acoustic>(istep);
 
     // Corrector phase forward for acoustic
-    this->time_scheme->apply_corrector_phase_forward(acoustic);
+    dofs_updated += this->time_scheme->apply_corrector_phase_forward(acoustic);
 
     // Update wavefields for elastic wavefields:
     // coupling, source, stiffness, divide by mass matrix
-    this->kernels.template update_wavefields<elastic_sv>(istep);
-    this->kernels.template update_wavefields<elastic_sh>(istep);
+    elements_updated += this->kernels.template update_wavefields<elastic_sv>(istep);
+    elements_updated += this->kernels.template update_wavefields<elastic_sh>(istep);
 
     // Corrector phase forward for elastic
-    this->time_scheme->apply_corrector_phase_forward(elastic_sv);
-    this->time_scheme->apply_corrector_phase_forward(elastic_sh);
+    dofs_updated +=
+        this->time_scheme->apply_corrector_phase_forward(elastic_sv);
+    dofs_updated +=
+        this->time_scheme->apply_corrector_phase_forward(elastic_sh);
 
     // Compute seismograms if required
     if (time_scheme->compute_seismogram(istep)) {
@@ -57,6 +68,25 @@ void specfem::solver::time_marching<specfem::simulation::type::forward,
     if (istep % 10 == 0) {
       std::cout << "Progress : executed " << istep << " steps of " << nstep
                 << " steps" << std::endl;
+    }
+    if (dofs_updated != total_dof_to_be_updated) {
+      std::ostringstream message;
+      message << "The time loop has not updated all the degrees of freedom. "
+              << "Only " << dofs_updated << " out of "
+              << total_dof_to_be_updated
+              << " degrees of freedom have been updated.";
+
+      throw std::runtime_error(message.str());
+    }
+
+    if (elements_updated != total_elements_to_be_updated) {
+      std::ostringstream message;
+      message << "The time loop has not updated all the elements. "
+              << "Only " << elements_updated << " out of "
+              << total_elements_to_be_updated
+              << " elements have been updated.";
+
+      throw std::runtime_error(message.str());
     }
   }
 
@@ -78,31 +108,38 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
 
   const int nstep = time_scheme->get_max_timestep();
 
+  const int total_dof_to_be_updated =
+      4 * assembly.get_total_degrees_of_freedom();
+
+  const int total_elements_to_be_updated = 2 * assembly.get_total_number_of_elements();
+
   for (const auto [istep, dt] : time_scheme->iterate_backward()) {
+    int dofs_updated = 0;
+    int elements_updated = 0;
     // Adjoint time step
-    time_scheme->apply_predictor_phase_forward(acoustic);
-    time_scheme->apply_predictor_phase_forward(elastic_sv);
-    time_scheme->apply_predictor_phase_forward(elastic_sh);
+    dofs_updated += time_scheme->apply_predictor_phase_forward(acoustic);
+    dofs_updated += time_scheme->apply_predictor_phase_forward(elastic_sv);
+    dofs_updated += time_scheme->apply_predictor_phase_forward(elastic_sh);
 
-    adjoint_kernels.template update_wavefields<acoustic>(istep);
-    time_scheme->apply_corrector_phase_forward(acoustic);
+    elements_updated += adjoint_kernels.template update_wavefields<acoustic>(istep);
+    dofs_updated += time_scheme->apply_corrector_phase_forward(acoustic);
 
-    adjoint_kernels.template update_wavefields<elastic_sv>(istep);
-    adjoint_kernels.template update_wavefields<elastic_sh>(istep);
-    time_scheme->apply_corrector_phase_forward(elastic_sv);
-    time_scheme->apply_corrector_phase_forward(elastic_sh);
+    elements_updated += adjoint_kernels.template update_wavefields<elastic_sv>(istep);
+    elements_updated += adjoint_kernels.template update_wavefields<elastic_sh>(istep);
+    dofs_updated += time_scheme->apply_corrector_phase_forward(elastic_sv);
+    dofs_updated += time_scheme->apply_corrector_phase_forward(elastic_sh);
 
     // Backward time step
-    time_scheme->apply_predictor_phase_backward(elastic_sv);
-    time_scheme->apply_predictor_phase_backward(acoustic);
+    dofs_updated += time_scheme->apply_predictor_phase_backward(elastic_sv);
+    dofs_updated += time_scheme->apply_predictor_phase_backward(acoustic);
 
-    backward_kernels.template update_wavefields<elastic_sv>(istep);
-    backward_kernels.template update_wavefields<elastic_sh>(istep);
-    time_scheme->apply_corrector_phase_backward(elastic_sv);
-    time_scheme->apply_corrector_phase_backward(elastic_sh);
+    elements_updated += backward_kernels.template update_wavefields<elastic_sv>(istep);
+    elements_updated += backward_kernels.template update_wavefields<elastic_sh>(istep);
+    dofs_updated += time_scheme->apply_corrector_phase_backward(elastic_sv);
+    dofs_updated += time_scheme->apply_corrector_phase_backward(elastic_sh);
 
-    backward_kernels.template update_wavefields<acoustic>(istep);
-    time_scheme->apply_corrector_phase_backward(acoustic);
+    elements_updated += backward_kernels.template update_wavefields<acoustic>(istep);
+    dofs_updated += time_scheme->apply_corrector_phase_backward(acoustic);
 
     // Copy read wavefield buffer to the backward wavefield
     // We need to do this after the first backward step to align
@@ -130,6 +167,26 @@ void specfem::solver::time_marching<specfem::simulation::type::combined,
     if (istep % 10 == 0) {
       std::cout << "Progress : executed " << istep << " steps of " << nstep
                 << " steps" << std::endl;
+    }
+
+    if (dofs_updated != total_dof_to_be_updated) {
+      std::ostringstream message;
+      message << "The time loop has not updated all the degrees of freedom. "
+              << "Only " << dofs_updated << " out of "
+              << total_dof_to_be_updated
+              << " degrees of freedom have been updated.";
+
+      throw std::runtime_error(message.str());
+    }
+
+    if (elements_updated != total_elements_to_be_updated) {
+      std::ostringstream message;
+      message << "The time loop has not updated all the elements. "
+              << "Only " << elements_updated << " out of "
+              << total_elements_to_be_updated
+              << " elements have been updated.";
+
+      throw std::runtime_error(message.str());
     }
   }
 

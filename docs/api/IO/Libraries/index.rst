@@ -31,8 +31,8 @@ The snippet below shows how to use these modules to write and read a Kokkos::Vie
 
     int main() {
         Kokkos::View<type_real> data("data", 10);
-        write<specfem::IO::HDF5<specfem::IO::write>>(data);
-        const auto data_read = read<specfem::IO::HDF5<specfem::IO::read>>();
+        write<specfem::io::HDF5<specfem::io::write>>(data);
+        const auto data_read = read<specfem::io::HDF5<specfem::io::read>>();
         return 0;
     }
 

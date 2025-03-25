@@ -1,7 +1,7 @@
 #ifndef _PARAMETER_SEISMOGRAM_HPP
 #define _PARAMETER_SEISMOGRAM_HPP
 
-#include "IO/seismogram/writer.hpp"
+#include "io/seismogram/writer.hpp"
 #include "receiver/interface.hpp"
 #include "specfem_setup.hpp"
 #include "yaml-cpp/yaml.h"
@@ -26,7 +26,7 @@ public:
    * stored
    */
   seismogram(const std::string output_format, const std::string output_folder)
-      : output_format(output_format), output_folder(output_folder){};
+      : output_format(output_format), output_folder(output_folder) {};
   /**
    * @brief Construct a new seismogram object
    *
@@ -43,10 +43,10 @@ public:
    * @param t0 Solver start time
    * @param nsteps_between_samples number of timesteps between seismogram
    * sampling (seismogram sampling frequency)
-   * @return std::shared_ptr<specfem::IO::writer> Pointer to an instantiated
+   * @return std::shared_ptr<specfem::io::writer> Pointer to an instantiated
    * writer object
    */
-  std::shared_ptr<specfem::IO::writer>
+  std::shared_ptr<specfem::io::writer>
   instantiate_seismogram_writer(const specfem::enums::elastic_wave wave_type,
                                 const type_real dt, const type_real t0,
                                 const int nsteps_between_samples) const;

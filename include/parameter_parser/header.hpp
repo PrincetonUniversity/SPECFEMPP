@@ -23,7 +23,7 @@ public:
    * @param description Description of the simulation
    */
   header(std::string title, std::string description)
-      : title(title), description(description){};
+      : title(title), description(description) {};
   /**
    * @brief Construct a new header object using YAML node
    *

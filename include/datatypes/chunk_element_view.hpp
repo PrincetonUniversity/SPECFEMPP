@@ -88,8 +88,8 @@ struct ScalarChunkViewType
    * @param scratch_memory_space Memory space of the view
    */
   template <typename ScratchMemorySpace>
-  KOKKOS_FUNCTION ScalarChunkViewType(
-      const ScratchMemorySpace &scratch_memory_space)
+  KOKKOS_FUNCTION
+  ScalarChunkViewType(const ScratchMemorySpace &scratch_memory_space)
       : Kokkos::View<value_type[NumberOfElements][NumberOfGLLPoints]
                                [NumberOfGLLPoints][Components],
                      MemorySpace, MemoryTraits>(scratch_memory_space) {}
@@ -188,8 +188,8 @@ struct VectorChunkViewType
             typename std::enable_if<
                 std::is_same<MemorySpace, ScratchMemorySpace>::value,
                 bool>::type = true>
-  KOKKOS_FUNCTION VectorChunkViewType(
-      const ScratchMemorySpace &scratch_memory_space)
+  KOKKOS_FUNCTION
+  VectorChunkViewType(const ScratchMemorySpace &scratch_memory_space)
       : Kokkos::View<
             value_type[NumberOfElements][NumberOfGLLPoints][NumberOfGLLPoints]
                       [NumberOfDimensions][Components],

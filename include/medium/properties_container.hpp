@@ -14,7 +14,8 @@ struct impl_properties_container
 
   impl_properties_container(
       const Kokkos::View<int *, Kokkos::DefaultHostExecutionSpace> elements,
-      const int ngllz, const int ngllx,
+      const specfem::compute::mesh_to_compute_mapping &mapping, const int ngllz,
+      const int ngllx,
       const specfem::mesh::materials<specfem::dimension::type::dim2> &materials,
       const bool has_gll_model,
       const specfem::kokkos::HostView1d<int> property_index_mapping)
@@ -24,6 +25,7 @@ struct impl_properties_container
     int count = 0;
     for (int i = 0; i < nelement; ++i) {
       const int ispec = elements(i);
+      const int mesh_ispec = mapping.compute_to_mesh(ispec);
       property_index_mapping(ispec) = count;
       if (!has_gll_model) {
         for (int iz = 0; iz < ngllz; ++iz) {
@@ -32,7 +34,7 @@ struct impl_properties_container
             auto material =
                 std::get<specfem::medium::material<base_type::medium_tag,
                                                    base_type::property_tag> >(
-                    materials[ispec]);
+                    materials[mesh_ispec]);
 
             // Assign the material property to the property container
             auto point_property = material.get_properties();

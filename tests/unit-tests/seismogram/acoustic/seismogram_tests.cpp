@@ -1,11 +1,11 @@
 #include "../../Kokkos_Environment.hpp"
 #include "../../MPI_environment.hpp"
 // #include "../../utilities/include/compare_array.h"
-#include "IO/fortranio/interface.hpp"
-#include "IO/interface.hpp"
 #include "compute/interface.hpp"
 #include "constants.hpp"
 #include "domain/domain.hpp"
+#include "io/fortranio/interface.hpp"
+#include "io/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "parameter_parser/interface.hpp"
 #include "quadrature/interface.hpp"
@@ -62,7 +62,7 @@ void read_field(
   type_real ref_value;
   for (int i1 = 0; i1 < n1; i1++) {
     for (int i2 = 0; i2 < n2; i2++) {
-      specfem::IO::fortran_read_line(stream, &ref_value);
+      specfem::io::fortran_read_line(stream, &ref_value);
       field(i1, i2) = ref_value;
     }
   }
@@ -90,13 +90,13 @@ TEST(SEISMOGRAM_TESTS, acoustic_seismograms_test) {
   const auto quadratures = setup.instantiate_quadrature();
 
   // Read mesh generated MESHFEM
-  specfem::mesh::mesh mesh = specfem::IO::read_2d_mesh(database_file, mpi);
+  specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(database_file, mpi);
 
   std::vector<std::shared_ptr<specfem::sources::source> > sources(0);
 
   const auto angle = setup.get_receiver_angle();
   const auto stations_node = setup.get_stations();
-  auto receivers = specfem::IO::read_receivers(stations_node, angle);
+  auto receivers = specfem::io::read_receivers(stations_node, angle);
   const auto stypes = setup.get_seismogram_types();
 
   specfem::compute::assembly assembly(mesh, quadratures, sources, receivers,
