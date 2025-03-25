@@ -137,17 +137,17 @@ specfem::element::medium_tag::poroelastic,
 
   error_message_header(message, value, mode);
   message << "\t\tphi = " << point_property.phi() << "\n";
-  message << "\t\ttortuosity = " << point_property.tortuosity() << "\n";
   message << "\t\trho_s = " << point_property.rho_s() << "\n";
   message << "\t\trho_f = " << point_property.rho_f() << "\n";
-  message << "\t\tkappa_s = " << point_property.kappa_s() << "\n";
-  message << "\t\tkappa_f = " << point_property.kappa_f() << "\n";
-  message << "\t\tkappa_fr = " << point_property.kappa_fr() << "\n";
-  message << "\t\tmu_fr = " << point_property.mu_fr() << "\n";
-  message << "\t\teta = " << point_property.eta() << "\n";
-  message << "\t\tKxx = " << point_property.Kxx() << "\n";
-  message << "\t\tKzz = " << point_property.Kzz() << "\n";
-  message << "\t\tKxz = " << point_property.Kxz() << "\n";
+  message << "\t\ttortuosity = " << point_property.tortuosity() << "\n";
+  message << "\t\tmu_G = " << point_property.mu_G() << "\n";
+  message << "\t\tH_Biot = " << point_property.H_Biot() << "\n";
+  message << "\t\tC_Biot = " << point_property.C_Biot() << "\n";
+  message << "\t\tM_Biot = " << point_property.M_Biot() << "\n";
+  message << "\t\tKxx = " << point_property.permxx() << "\n";
+  message << "\t\tKzz = " << point_property.permzz() << "\n";
+  message << "\t\tKxz = " << point_property.premxz() << "\n";
+  message << "\t\teta = " << point_property.eta_f() << "\n";
 
   return message.str();
 }
@@ -548,17 +548,17 @@ get_point_property(
       point_property;
 
   point_property.phi() = poroelastic_isotropic.h_phi(ispec_l, iz, ix);
-  point_property.tortuosity() = poroelastic_isotropic.h_tortuosity(ispec_l, iz,
-ix); point_property.rho_s() = poroelastic_isotropic.h_rho_s(ispec_l, iz, ix);
+  point_property.rho_s() = poroelastic_isotropic.h_rho_s(ispec_l, iz, ix);
   point_property.rho_f() = poroelastic_isotropic.h_rho_f(ispec_l, iz, ix);
-  point_property.kappa_s() = poroelastic_isotropic.h_kappa_s(ispec_l, iz, ix);
-  point_property.kappa_f() = poroelastic_isotropic.h_kappa_f(ispec_l, iz, ix);
-  point_property.kappa_fr() = poroelastic_isotropic.h_kappa_fr(ispec_l, iz, ix);
-  point_property.mu_fr() = poroelastic_isotropic.h_mu_fr(ispec_l, iz, ix);
-  point_property.eta() = poroelastic_isotropic.h_eta(ispec_l, iz, ix);
-  point_property.Kxx() = poroelastic_isotropic.h_Kxx(ispec_l, iz, ix);
-  point_property.Kzz() = poroelastic_isotropic.h_Kzz(ispec_l, iz, ix);
-  point_property.Kxz() = poroelastic_isotropic.h_Kxz(ispec_l, iz, ix);
+  point_property.tortuosity() = poroelastic_isotropic.h_tortuosity(ispec_l, iz,
+ix); point_property.mu_G() = poroelastic_isotropic.h_mu_G(ispec_l, iz, ix);
+  point_property.H_Biot() = poroelastic_isotropic.h_H_Biot(ispec_l, iz, ix);
+  point_property.C_Biot() = poroelastic_isotropic.h_C_Biot(ispec_l, iz, ix);
+  point_property.M_Biot() = poroelastic_isotropic.h_M_Biot(ispec_l, iz, ix);
+  point_property.permxx() = poroelastic_isotropic.h_permxx(ispec_l, iz, ix);
+  point_property.permzz() = poroelastic_isotropic.h_permzz(ispec_l, iz, ix);
+  point_property.permxz() = poroelastic_isotropic.h_permxz(ispec_l, iz, ix);
+  point_property.eta_f() = poroelastic_isotropic.h_eta_f(ispec_l, iz, ix);
 
   return point_property;
 }
@@ -581,17 +581,17 @@ specfem::element::medium_tag::poroelastic,
       point_property_l;
 
   point_property_l.phi() = point_property.phi()[lane];
-  point_property_l.tortuosity() = point_property.tortuosity()[lane];
   point_property_l.rho_s() = point_property.rho_s()[lane];
   point_property_l.rho_f() = point_property.rho_f()[lane];
-  point_property_l.kappa_s() = point_property.kappa_s()[lane];
-  point_property_l.kappa_f() = point_property.kappa_f()[lane];
-  point_property_l.kappa_fr() = point_property.kappa_fr()[lane];
-  point_property_l.mu_fr() = point_property.mu_fr()[lane];
-  point_property_l.eta() = point_property.eta()[lane];
-  point_property_l.Kxx() = point_property.Kxx()[lane];
-  point_property_l.Kzz() = point_property.Kzz()[lane];
-  point_property_l.Kxz() = point_property.Kxz()[lane];
+  point_property_l.tortuosity() = point_property.tortuosity()[lane];
+  point_property_l.mu_G() = point_property.mu_G()[lane];
+  point_property_l.H_Biot() = point_property.H_Biot()[lane];
+  point_property_l.C_biot() = point_property.C_biot()[lane];
+  point_property_l.M_biot() = point_property.M_biot()[lane];
+  point_property_l.Kxx() = point_property.permxx()[lane];
+  point_property_l.Kzz() = point_property.permzz()[lane];
+  point_property_l.Kxz() = point_property.permxz()[lane];
+  point_property_l.eta_f() = point_property.eta_f()[lane];
 
   return point_property_l;
 }
