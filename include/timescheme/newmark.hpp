@@ -57,8 +57,10 @@ public:
    * the elements within a medium.
    *
    * @param tag Medium tag for elements to apply the predictor phase
+   * @return int Returns the number of degrees of freedom updated within the
+   * medium
    */
-  void apply_predictor_phase_forward(
+  int apply_predictor_phase_forward(
       const specfem::element::medium_tag tag) override;
 
   /**
@@ -66,8 +68,10 @@ public:
    * the elements within a medium.
    *
    * @param tag Medium tag for elements to apply the corrector phase
+   * @return int Returns the number of degrees of freedom updated within the
+   * medium
    */
-  void apply_corrector_phase_forward(
+  int apply_corrector_phase_forward(
       const specfem::element::medium_tag tag) override;
 
   /**
@@ -75,18 +79,27 @@ public:
    * the elements within a medium. (Empty implementation)
    *
    * @param tag Medium tag for elements to apply the predictor phase
+   * @return int Returns the number of degrees of freedom updated within the
+   * medium
    */
-  void apply_predictor_phase_backward(
-      const specfem::element::medium_tag tag) override {};
+  int apply_predictor_phase_backward(
+      const specfem::element::medium_tag tag) override {
+    return 0;
+  };
+
 
   /**
    * @brief  Apply the corrector phase for backward simulation on fields within
    * the elements within a medium. (Empty implementation)
    *
    * @param tag Medium tag for elements to apply the corrector phase
+   * @return int Returns the number of degrees of freedom updated within the
+   * medium
    */
-  void apply_corrector_phase_backward(
-      const specfem::element::medium_tag tag) override {};
+  int apply_corrector_phase_backward(
+      const specfem::element::medium_tag tag) override {
+    return 0;
+  };
 
   void link_assembly(const specfem::compute::assembly &assembly) override {
     field = assembly.fields.forward;
@@ -159,8 +172,10 @@ public:
    * the elements within a medium.
    *
    * @param tag Medium tag for elements to apply the predictor phase
+   * @return int Returns the number of degrees of freedom updated within the
+   * medium
    */
-  void apply_predictor_phase_forward(
+  int apply_predictor_phase_forward(
       const specfem::element::medium_tag tag) override;
 
   /**
@@ -168,8 +183,10 @@ public:
    * the elements within a medium.
    *
    * @param tag Medium tag for elements to apply the corrector phase
+   * @return int Returns the number of degrees of freedom updated within the
+   * medium
    */
-  void apply_corrector_phase_forward(
+  int apply_corrector_phase_forward(
       const specfem::element::medium_tag tag) override;
 
   /**
@@ -177,8 +194,10 @@ public:
    * the elements within a medium.
    *
    * @param tag  Medium tag for elements to apply the predictor phase
+   * @return int Returns the number of degrees of freedom updated within the
+   * medium
    */
-  void apply_predictor_phase_backward(
+  int apply_predictor_phase_backward(
       const specfem::element::medium_tag tag) override;
 
   /**
@@ -186,8 +205,10 @@ public:
    * the elements within a medium.
    *
    * @param tag  Medium tag for elements to apply the corrector phase
+   * @return int Returns the number of degrees of freedom updated within the
+   * medium
    */
-  void apply_corrector_phase_backward(
+  int apply_corrector_phase_backward(
       const specfem::element::medium_tag tag) override;
 
   void link_assembly(const specfem::compute::assembly &assembly) override {
