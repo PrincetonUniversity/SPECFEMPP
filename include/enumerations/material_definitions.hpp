@@ -1,5 +1,6 @@
 #pragma once
 
+#include "impl/seq_semicolon.hpp"
 #include "medium.hpp"
 #include <boost/preprocessor.hpp>
 
@@ -402,6 +403,13 @@ constexpr auto element_types() {
 #define _GET_CAPTURE_VARIABLE_NAME(s, postfix, prefix) prefix##_##postfix
 
 /**
+ * @brief Macros to define the declaration of the variable to be captured, e.g.
+ * auto &_value_ = _value_dim2_elastic_isotropic_.
+ */
+#define _GET_CAPTURE_DECLARATION(s, postfix, prefix)                           \
+  auto &_##prefix##_ = prefix##_##postfix;
+
+/**
  * Write the code block for one material system.
  */
 #define _WRITE_BLOCK_FOR_ONE_MATERIAL_SYSTEM(DIMENSION_TAG, MEDIUM_TAG,        \
@@ -420,16 +428,11 @@ constexpr auto element_types() {
   constexpr auto _dimension_tag_ = GET_TAG(DIMENSION_TAG);                     \
   constexpr auto _medium_tag_ = GET_TAG(MEDIUM_TAG);                           \
   constexpr auto _property_tag_ = GET_TAG(PROPERTY_TAG);                       \
-  const auto &[BOOST_PP_SEQ_ENUM(BOOST_PP_SEQ_TRANSFORM(                       \
-      _GET_CAPTURE_REFERENCE_NAME,                                             \
+  _SEQ_SEMICOLON(BOOST_PP_SEQ_TRANSFORM(                                       \
+      _GET_CAPTURE_DECLARATION,                                                \
       CREATE_VARIABLE_NAME(GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),      \
                            GET_NAME(PROPERTY_TAG)),                            \
-      seq))] =                                                                 \
-      std::tie(BOOST_PP_SEQ_ENUM(BOOST_PP_SEQ_TRANSFORM(                       \
-          _GET_CAPTURE_VARIABLE_NAME,                                          \
-          CREATE_VARIABLE_NAME(GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),  \
-                               GET_NAME(PROPERTY_TAG)),                        \
-          seq)));                                                              \
+      seq))                                                                    \
   BOOST_PP_SEQ_ENUM(CODE)
 
 /**
