@@ -91,14 +91,14 @@ Tests:
       specfem_config: "displacement_tests/Newmark/serial/test10/specfem_config.yaml"
       traces: "displacement_tests/Newmark/serial/test10/traces"
 
-  # - name : "SerialTest11 : Poroelastic coupled domain (P-SV waves)"
-  #   description: >
-  #     Testing newmark time-marching solver on a poroelastic coupled domain. Test is run on a single MPI process.
-  #   config:
-  #     nproc : 1
-  #   databases:
-  #     specfem_config: "displacement_tests/Newmark/serial/test11/specfem_config.yaml"
-  #     traces: "displacement_tests/Newmark/serial/test11/traces"
+  - name : "SerialTest11 : Poroelastic coupled domain (P-SV waves)"
+    description: >
+      Testing newmark time-marching solver on a poroelastic coupled domain. Test is run on a single MPI process.
+    config:
+      nproc : 1
+    databases:
+      specfem_config: "displacement_tests/Newmark/serial/test11/specfem_config.yaml"
+      traces: "displacement_tests/Newmark/serial/test11/traces"
 
   # - name : "SerialTest12 : Two-layer electromagnetic domain (P-SV waves)"
   #   description: >
