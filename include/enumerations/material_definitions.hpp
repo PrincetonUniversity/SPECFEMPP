@@ -465,8 +465,10 @@ constexpr auto element_types() {
  */
 #define _GET_CODE_FOR_MATERIAL_SYSTEM(seq)                                     \
   BOOST_PP_IF(BOOST_PP_EQUAL(BOOST_PP_SEQ_SIZE(seq), 3),                       \
-              _CALL_CODE_FOR_ONE_MATERIAL_SYSTEM,                              \
-              _CALL_CODE_FOR_ONE_MATERIAL_SYSTEM_WITH_CAPTURE)
+              _CALL_CODE_FOR_ONE_MATERIAL_SYSTEM, BOOST_PP_EMPTY())            \
+  BOOST_PP_IF(BOOST_PP_EQUAL(BOOST_PP_SEQ_SIZE(seq), 4),                       \
+              _CALL_CODE_FOR_ONE_MATERIAL_SYSTEM_WITH_CAPTURE,                 \
+              BOOST_PP_EMPTY())
 
 /**
  * Macro to call a code block for all material systems
