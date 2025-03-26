@@ -27,7 +27,7 @@ KOKKOS_INLINE_FUNCTION
       typename specfem::datatype::simd<type_real, UseSIMD>::datatype;
   const auto &du = field_derivatives.du;
 
-  datatype sigma_xx, sigma_zz, sigma_xz, sigmap, lambda_G, lambdaplus2mu_G;
+  datatype sigma_xx, sigma_zz, sigma_xz, sigmap;
 
   // Poroelastic case
   //  sigma_xx = lambdalplus2mul_G*dux_dxl + lambdal_G*duz_dzl + C_biot*(dwx_dxl
@@ -35,18 +35,14 @@ KOKKOS_INLINE_FUNCTION
   //  lambdalplus2mul_G*duz_dzl + lambdal_G*dux_dxl + C_biot*(dwx_dxl + dwz_dzl)
   //  sigmap = C_biot*(dux_dxl + duz_dzl) + M_biot*(dwx_dxl + dwz_dzl)
 
-  // lambda_G
-  lambda_G = properties.H_Biot() - 2 * properties.mu_G();
-
-  // lambdaplus2mu_G
-  lambdaplus2mu_G = lambda_G + 2 * properties.mu_G();
-
   // sigma_xx
-  sigma_xx = lambdaplus2mu_G * du(0, 0) + lambda_G * du(1, 1) +
+  sigma_xx = properties.lambdaplus2mu_G() * du(0, 0) +
+             properties.lambda_G() * du(1, 1) +
              properties.C_Biot() * (du(0, 2) + du(1, 3));
 
   // sigma_zz
-  sigma_zz = lambdaplus2mu_G * du(1, 1) + lambda_G * du(0, 0) +
+  sigma_zz = properties.lambdaplus2mu_G() * du(1, 1) +
+             properties.lambda_G() * du(0, 0) +
              properties.C_Biot() * (du(0, 2) + du(1, 3));
 
   // sigma_xz
@@ -56,16 +52,20 @@ KOKKOS_INLINE_FUNCTION
   sigmap = properties.C_Biot() * (du(0, 0) + du(1, 1)) +
            properties.M_Biot() * (du(0, 2) + du(1, 3));
 
-  specfem::datatype::VectorPointViewType<type_real, 2, 2, UseSIMD> T;
-  specfem::datatype::ScalarPointViewType<type_real, 1, UseSIMD> P;
+  specfem::datatype::VectorPointViewType<type_real, 2, 4, UseSIMD> T;
 
-  T(0, 0) = sigma_xx;
+  T(0, 0) = sigma_xx - properties.phi() / properties.tortuosity() * sigmap;
   T(0, 1) = sigma_xz;
   T(1, 0) = sigma_xz;
-  T(1, 1) = sigma_zz;
-  P = sigmap;
+  T(1, 1) = sigma_zz - properties.phi() / properties.tortuosity() * sigmap;
+  T(0, 2) = sigmap - properties.rho_f() / properties.rho_bar() * sigma_xx;
+  T(0, 3) = static_cast<type_real>(-1.0) * properties.rho_f() /
+            properties.rho_bar() * sigma_xz;
+  T(1, 2) = static_cast<type_real>(-1.0) * properties.rho_f() /
+            properties.rho_bar() * sigma_xz;
+  T(1, 3) = sigmap - properties.rho_f() / properties.rho_bar() * sigma_zz;
 
-  return { T, P };
+  return { T };
 }
 
 } // namespace medium
