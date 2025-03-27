@@ -4,6 +4,7 @@
 #define STRINGIFY(x) #x
 #define MACRO_STRINGIFY(x) STRINGIFY(x)
 #include "periodic_tasks/check_signal.hpp"
+// #include <signal.h>
 
 namespace py = pybind11;
 
@@ -50,7 +51,6 @@ bool _execute(const std::string &parameter_string,
     return false;
   }
 
-  
   // This is the signal handler for catching signals for Python only 
   // so that jupyter notebooks aren't killed.
   const YAML::Node parameter_dict = YAML::Load(parameter_string);
