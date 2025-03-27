@@ -54,7 +54,7 @@ bool _execute(const std::string &parameter_string,
   const YAML::Node default_dict = YAML::Load(default_string);
   std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> > tasks;
   const auto signal_task =
-  std::make_shared<specfem::periodic_tasks::check_signal>(10);
+      std::make_shared<specfem::periodic_tasks::check_signal>(10);
   tasks.push_back(signal_task);
   // Releasing the GIL in a scoped section
   // is needed for long running tasks, such as a
