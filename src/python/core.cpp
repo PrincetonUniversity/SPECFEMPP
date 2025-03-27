@@ -43,7 +43,6 @@ bool _initialize(py::list py_argv) {
   return true;
 }
 
-
 bool _execute(const std::string &parameter_string,
               const std::string &default_string) {
   if (_py_mpi == NULL) {
@@ -79,7 +78,7 @@ bool _finalize() {
 }
 
 PYBIND11_MODULE(_core, m) {
-    m.doc() = R"pbdoc(
+  m.doc() = R"pbdoc(
         SPECfem++ core module
         -----------------------
 
@@ -91,23 +90,23 @@ PYBIND11_MODULE(_core, m) {
            _run
     )pbdoc";
 
-    m.def("_initialize", &_initialize, R"pbdoc(
+  m.def("_initialize", &_initialize, R"pbdoc(
         Initialize SPECFEM++.
     )pbdoc");
 
-    m.def("_execute", &_execute, R"pbdoc(
+  m.def("_execute", &_execute, R"pbdoc(
         Execute the main SPECFEM++ workflow.
     )pbdoc");
 
-    m.def("_finalize", &_finalize, R"pbdoc(
+  m.def("_finalize", &_finalize, R"pbdoc(
         Finalize SPECFEM++.
     )pbdoc");
 
-    m.attr("_default_file_path") = __default_file__;
+  m.attr("_default_file_path") = __default_file__;
 
 #ifdef VERSION_INFO
-    m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
+  m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
 #else
-    m.attr("__version__") = "dev";
+  m.attr("__version__") = "dev";
 #endif
 }
