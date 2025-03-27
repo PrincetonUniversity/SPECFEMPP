@@ -4,6 +4,7 @@
 #include <csignal>
 #include <string>
 #include <iostream>
+#include <Kokkos_Core.hpp>
 
 /**
  * @brief Catch signals
@@ -33,7 +34,7 @@ namespace periodic_tasks {
  *
  */
 class check_signal : public periodic_task {
-  using periodic_task::periodic_task;
+  using periodic_task::periodic_task; 
 
   /**
    * @brief Plot the wavefield
