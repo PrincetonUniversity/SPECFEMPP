@@ -4,7 +4,6 @@
 #define STRINGIFY(x) #x
 #define MACRO_STRINGIFY(x) STRINGIFY(x)
 #include "periodic_tasks/check_signal.hpp"
-// #include <signal.h>
 
 namespace py = pybind11;
 
@@ -51,14 +50,15 @@ bool _execute(const std::string &parameter_string,
     return false;
   }
 
-  // This is the signal handler for catching signals for Python only 
-  // so that jupyter notebooks aren't killed.
   const YAML::Node parameter_dict = YAML::Load(parameter_string);
   const YAML::Node default_dict = YAML::Load(default_string);
   std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> > tasks;
   const auto signal_task =
   std::make_shared<specfem::periodic_tasks::check_signal>(10);
   tasks.push_back(signal_task);
+  // Releasing the GIL in a scoped section
+  // is needed for long running tasks, such as a
+  // simulation.
   {
     py::gil_scoped_release release;
     execute(parameter_dict, default_dict, tasks, _py_mpi);
