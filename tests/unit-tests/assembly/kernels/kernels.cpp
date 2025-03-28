@@ -17,7 +17,7 @@ std::string get_error_message(
 
 // Specialization for elastic isotropic case
 template <specfem::element::medium_tag MediumTag, bool using_simd = false>
-std::enable_if_t<(MediumTag == specfem::element::medium_tag::elastic_sv ||
+std::enable_if_t<(MediumTag == specfem::element::medium_tag::elastic_psv ||
                   MediumTag == specfem::element::medium_tag::elastic_sh) &&
                      using_simd == false,
                  std::string>
@@ -42,7 +42,7 @@ get_error_message(
 
 // Specialization for elastic anisotropic case
 template <specfem::element::medium_tag MediumTag, bool using_simd = false>
-std::enable_if_t<(MediumTag == specfem::element::medium_tag::elastic_sv ||
+std::enable_if_t<(MediumTag == specfem::element::medium_tag::elastic_psv ||
                   MediumTag == specfem::element::medium_tag::elastic_sh) &&
                      using_simd == false,
                  std::string>
@@ -186,19 +186,19 @@ get_point_kernel(
 //  elastic p-sv isotropic (No SIMD -> No SIMD)
 template <>
 specfem::point::kernels<specfem::dimension::type::dim2,
-                        specfem::element::medium_tag::elastic_sv,
+                        specfem::element::medium_tag::elastic_psv,
                         specfem::element::property_tag::isotropic, false>
 get_point_kernel(const int ispec, const int iz, const int ix,
                  const specfem::compute::kernels &kernels) {
 
   const auto elastic_isotropic =
-      kernels.get_container<specfem::element::medium_tag::elastic_sv,
+      kernels.get_container<specfem::element::medium_tag::elastic_psv,
                             specfem::element::property_tag::isotropic>();
 
   const int ispec_l = kernels.h_property_index_mapping(ispec);
 
   specfem::point::kernels<specfem::dimension::type::dim2,
-                          specfem::element::medium_tag::elastic_sv,
+                          specfem::element::medium_tag::elastic_psv,
                           specfem::element::property_tag::isotropic, false>
       point_kernel;
 
@@ -246,16 +246,16 @@ get_point_kernel(const int ispec, const int iz, const int ix,
 //   elastic p-sv isotropic (SIMD -> No SIMD)
 template <>
 specfem::point::kernels<specfem::dimension::type::dim2,
-                        specfem::element::medium_tag::elastic_sv,
+                        specfem::element::medium_tag::elastic_psv,
                         specfem::element::property_tag::isotropic, false>
 get_point_kernel(
     const int lane,
     const specfem::point::kernels<specfem::dimension::type::dim2,
-                                  specfem::element::medium_tag::elastic_sv,
+                                  specfem::element::medium_tag::elastic_psv,
                                   specfem::element::property_tag::isotropic,
                                   true> &point_kernel) {
   specfem::point::kernels<specfem::dimension::type::dim2,
-                          specfem::element::medium_tag::elastic_sv,
+                          specfem::element::medium_tag::elastic_psv,
                           specfem::element::property_tag::isotropic, false>
       point_kernel_l;
 
@@ -300,19 +300,19 @@ get_point_kernel(
 //   elastic p-sv anisotropic (No SIMD -> No SIMD)
 template <>
 specfem::point::kernels<specfem::dimension::type::dim2,
-                        specfem::element::medium_tag::elastic_sv,
+                        specfem::element::medium_tag::elastic_psv,
                         specfem::element::property_tag::anisotropic, false>
 get_point_kernel(const int ispec, const int iz, const int ix,
                  const specfem::compute::kernels &kernels) {
 
   const auto elastic_anisotropic =
-      kernels.get_container<specfem::element::medium_tag::elastic_sv,
+      kernels.get_container<specfem::element::medium_tag::elastic_psv,
                             specfem::element::property_tag::anisotropic>();
 
   const int ispec_l = kernels.h_property_index_mapping(ispec);
 
   specfem::point::kernels<specfem::dimension::type::dim2,
-                          specfem::element::medium_tag::elastic_sv,
+                          specfem::element::medium_tag::elastic_psv,
                           specfem::element::property_tag::anisotropic, false>
       point_kernel;
 
@@ -362,16 +362,16 @@ get_point_kernel(const int ispec, const int iz, const int ix,
 //   elastic p-sv anisotropic (SIMD -> No SIMD)
 template <>
 specfem::point::kernels<specfem::dimension::type::dim2,
-                        specfem::element::medium_tag::elastic_sv,
+                        specfem::element::medium_tag::elastic_psv,
                         specfem::element::property_tag::anisotropic, false>
 get_point_kernel(
     const int lane,
     const specfem::point::kernels<specfem::dimension::type::dim2,
-                                  specfem::element::medium_tag::elastic_sv,
+                                  specfem::element::medium_tag::elastic_psv,
                                   specfem::element::property_tag::anisotropic,
                                   true> &point_kernel) {
   specfem::point::kernels<specfem::dimension::type::dim2,
-                          specfem::element::medium_tag::elastic_sv,
+                          specfem::element::medium_tag::elastic_psv,
                           specfem::element::property_tag::anisotropic, false>
       point_kernel_l;
 
@@ -913,7 +913,7 @@ void test_kernels(specfem::compute::assembly &assembly) {
   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
       TEST_STORE_AND_ADD,
       WHERE(DIMENSION_TAG_DIM2) WHERE(
-          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
+          MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
           WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
 #undef TEST_STORE_AND_ADD

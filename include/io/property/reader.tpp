@@ -38,7 +38,7 @@ void specfem::io::property_reader<InputLibrary>::read(
   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
       READ_PROPERTY,
       WHERE(DIMENSION_TAG_DIM2) WHERE(
-          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
+          MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC)
           WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC));
 
 #undef READ_PROPERTY
@@ -51,7 +51,7 @@ void specfem::io::property_reader<InputLibrary>::read(
   //       .openDataset(
   //           "data",
   //           properties
-  //               .get_container<specfem::element::medium_tag::elastic_sv,
+  //               .get_container<specfem::element::medium_tag::elastic_psv,
   //                              specfem::element::property_tag::isotropic>()
   //               .h_data)
   //       .read();
@@ -79,7 +79,7 @@ void specfem::io::property_reader<InputLibrary>::read(
   //       .openDataset(
   //           "data",
   //           properties
-  //               .get_container<specfem::element::medium_tag::elastic_sv,
+  //               .get_container<specfem::element::medium_tag::elastic_psv,
   //                              specfem::element::property_tag::anisotropic>()
   //               .h_data)
   //       .read();

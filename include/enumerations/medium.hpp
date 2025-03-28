@@ -20,7 +20,7 @@ constexpr int ntypes = 5; ///< Number of element types
  *
  */
 enum class medium_tag {
-  elastic_sv,
+  elastic_psv,
   elastic_sh,
   acoustic,
   poroelastic,
@@ -54,7 +54,7 @@ class attributes;
 
 template <>
 class attributes<specfem::dimension::type::dim2,
-                 specfem::element::medium_tag::elastic_sv> {
+                 specfem::element::medium_tag::elastic_psv> {
 
 public:
   constexpr static int dimension() { return 2; }
@@ -115,7 +115,7 @@ template <specfem::element::medium_tag MediumTag,
           typename std::enable_if_t<
               MediumTag == specfem::element::medium_tag::elastic ||
                   MediumTag == specfem::element::medium_tag::elastic_sh ||
-                  MediumTag == specfem::element::medium_tag::elastic_sv,
+                  MediumTag == specfem::element::medium_tag::elastic_psv,
               int> = 0>
 class is_elastic {};
 

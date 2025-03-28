@@ -75,7 +75,7 @@ map_materials_with_color(const specfem::compute::assembly &assembly) {
       material_colors = {
         { specfem::element::medium_tag::acoustic, // aqua color
           { 0, 255, 255 } },
-        { specfem::element::medium_tag::elastic_sv, // sienna color
+        { specfem::element::medium_tag::elastic_psv, // sienna color
           { 160, 82, 45 } },
         { specfem::element::medium_tag::elastic_sh, // sienna color
           { 160, 82, 45 } },
