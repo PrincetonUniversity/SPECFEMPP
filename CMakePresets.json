@@ -52,8 +52,8 @@
         "Kokkos_ARCH_NATIVE": "ON",
         "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "OFF",
         "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
-        "Kokkos_ENABLE_DEBUG": "ON", // Enable debug mode for Kokkos
-        "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK": "ON" // Enable bounds checking
+        "Kokkos_ENABLE_DEBUG": "ON",
+        "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK": "ON"
       }
     },
     {
@@ -69,8 +69,8 @@
         "Kokkos_ARCH_NATIVE": "ON",
         "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "OFF",
         "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
-        "Kokkos_ENABLE_DEBUG": "ON", // Enable debug mode for Kokkos
-        "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK": "ON" // Enable bounds checking
+        "Kokkos_ENABLE_DEBUG": "ON",
+        "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK": "ON"
       }
     },
     {
@@ -84,8 +84,8 @@
         "Kokkos_ARCH_NATIVE": "OFF",
         "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "OFF",
         "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
-        "Kokkos_ENABLE_DEBUG": "ON", // Enable debug mode for Kokkos
-        "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK": "ON" // Enable bounds checking
+        "Kokkos_ENABLE_DEBUG": "ON",
+        "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK": "ON"
       }
     }
   ],
