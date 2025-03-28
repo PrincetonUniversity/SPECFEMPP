@@ -23,8 +23,8 @@
         "BUILD_TESTS": "ON",
         "ENABLE_SIMD": "OFF",
         "Kokkos_ARCH_NATIVE": "OFF",
-        "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "OFF",
-        "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF"
+        "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "ON"
       }
     },
     {
@@ -35,11 +35,10 @@
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_BUILD_EXAMPLES": "ON",
         "BUILD_TESTS": "ON",
-        "ENABLE_CUDA": "ON",
+        "Kokkos_ENABLE_CUDA": "ON",
         "Kokkos_ARCH_NATIVE": "ON",
         "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
-        "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
-        "Kokkos_ARCH_AMPERE80":"ON"
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF"
       }
     },
     {
@@ -51,8 +50,10 @@
         "BUILD_TESTS": "ON",
         "ENABLE_SIMD": "ON",
         "Kokkos_ARCH_NATIVE": "ON",
-        "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
-        "Kokkos_ENABLE_ATOMICS_BYPASS": "ON"
+        "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "OFF",
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
+        "Kokkos_ENABLE_DEBUG": "ON", // Enable debug mode for Kokkos
+        "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK": "ON" // Enable bounds checking
       }
     },
     {
@@ -63,12 +64,13 @@
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_BUILD_EXAMPLES": "ON",
         "BUILD_TESTS": "ON",
-        "ENABLE_CUDA": "ON",
         "ENABLE_SIMD": "ON",
+        "Kokkos_ENABLE_CUDA": "ON",
         "Kokkos_ARCH_NATIVE": "ON",
-        "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "ON",
+        "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "OFF",
         "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
-        "Kokkos_ARCH_AMPERE80":"ON"
+        "Kokkos_ENABLE_DEBUG": "ON", // Enable debug mode for Kokkos
+        "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK": "ON" // Enable bounds checking
       }
     },
     {
@@ -81,7 +83,9 @@
         "ENABLE_SIMD": "OFF",
         "Kokkos_ARCH_NATIVE": "OFF",
         "Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION": "OFF",
-        "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF"
+        "Kokkos_ENABLE_ATOMICS_BYPASS": "OFF",
+        "Kokkos_ENABLE_DEBUG": "ON", // Enable debug mode for Kokkos
+        "Kokkos_ENABLE_DEBUG_BOUNDS_CHECK": "ON" // Enable bounds checking
       }
     }
   ],
@@ -89,32 +93,44 @@
     {
       "name": "release",
       "configurePreset": "release",
-      "targets": ["all"]
+      "targets": [
+        "all"
+      ]
     },
     {
       "name": "debug",
       "configurePreset": "debug",
-      "targets": ["all"]
+      "targets": [
+        "all"
+      ]
     },
     {
       "name": "release-cuda",
       "configurePreset": "release-cuda",
-      "targets": ["all"]
+      "targets": [
+        "all"
+      ]
     },
     {
       "name": "debug-cuda",
       "configurePreset": "debug-cuda",
-      "targets": ["all"]
+      "targets": [
+        "all"
+      ]
     },
     {
       "name": "release-nosimd",
       "configurePreset": "release-nosimd",
-      "targets": ["all"]
+      "targets": [
+        "all"
+      ]
     },
     {
       "name": "debug-nosimd",
       "configurePreset": "debug-nosimd",
-      "targets": ["all"]
+      "targets": [
+        "all"
+      ]
     }
   ]
 }
