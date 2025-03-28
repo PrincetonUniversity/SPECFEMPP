@@ -173,7 +173,7 @@ struct kernels<specfem::dimension::type::dim2,
  */
 template <bool UseSIMD>
 struct kernels<specfem::dimension::type::dim2,
-               specfem::element::medium_tag::electromagnetic_sv,
+               specfem::element::medium_tag::electromagnetic_te,
                specfem::element::property_tag::isotropic, UseSIMD>
     : public impl::point_data<1, UseSIMD> {
 
@@ -187,7 +187,7 @@ struct kernels<specfem::dimension::type::dim2,
 
   constexpr static auto dimension = specfem::dimension::type::dim2;
   constexpr static auto medium_tag =
-      specfem::element::medium_tag::electromagnetic_sv;
+      specfem::element::medium_tag::electromagnetic_te;
   constexpr static auto property_tag =
       specfem::element::property_tag::isotropic;
 
@@ -202,7 +202,7 @@ struct kernels<specfem::dimension::type::dim2,
   KOKKOS_FUNCTION
   kernels(const value_type param) : kernels(param) {
     Kokkos::abort(
-        "Point Kernels not implemented for electromagnetic sv isotropic");
+        "Point Kernels not implemented for electromagnetic te isotropic");
   }
   using base_type::base_type;
 

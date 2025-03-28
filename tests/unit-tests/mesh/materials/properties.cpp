@@ -17,7 +17,7 @@ CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
     WHERE(DIMENSION_TAG_DIM2)
         WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
               MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
-              MEDIUM_TAG_ELECTROMAGNETIC_SV)
+              MEDIUM_TAG_ELECTROMAGNETIC_TE)
             WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
 #undef MEDIUM_TYPE
@@ -30,7 +30,7 @@ CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
       TYPE_NAME,                                                               \
       WHERE(DIMENSION_TAG_DIM2) WHERE(                                         \
           MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,  \
-          MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_SV)               \
+          MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_TE)               \
           WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)))>
 
 using MaterialVectorType = std::vector<MAKE_VARIANT_RETURN>; /// NOLINT
@@ -143,7 +143,7 @@ const static std::unordered_map<std::string, MaterialVectorType>
       { "Electro-magnetic mesh example from Morency 2020",
         MaterialVectorType({
             specfem::point::properties<
-                dimension, specfem::element::medium_tag::electromagnetic_sv,
+                dimension, specfem::element::medium_tag::electromagnetic_te,
                 specfem::element::property_tag::isotropic, false>(
                 static_cast<type_real>(1.0 / (12.566 * 1e-7)), // mu0_inv
                 static_cast<type_real>(5.0 * 8.85 * 1e-12),    // e0_e11
@@ -151,7 +151,7 @@ const static std::unordered_map<std::string, MaterialVectorType>
                 static_cast<type_real>(2.0 * 1e-3),            // sig11
                 static_cast<type_real>(2.0 * 1e-3)),           // sig33
             specfem::point::properties<
-                dimension, specfem::element::medium_tag::electromagnetic_sv,
+                dimension, specfem::element::medium_tag::electromagnetic_te,
                 specfem::element::property_tag::isotropic, false>(
                 static_cast<type_real>(1.0 / (12.566 * 1e-7)), // mu0_inv
                 static_cast<type_real>(1.0 * 8.85 * 1e-12),    // e0_e11
@@ -214,7 +214,7 @@ void check_test(
         CHECK_MATERIAL,
         WHERE(DIMENSION_TAG_DIM2) WHERE(
             MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-            MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_SV)
+            MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_TE)
             WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
 #undef CHECK_MATERIAL

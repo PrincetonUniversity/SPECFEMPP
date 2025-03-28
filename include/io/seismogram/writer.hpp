@@ -49,7 +49,7 @@ private:
   type_real t0;              ///< Solver start time
   specfem::enums::elastic_wave wave_type; ///< Type of wavefield (Writes
                                           ///< .BXY for SH waves and .BXX,
-                                          ///< .BXZ for SV waves)
+                                          ///< .BXZ for P-SV waves)
   int nstep_between_samples; ///< number of timesteps between seismogram
                              ///< sampling (seismogram sampling frequency)
 };

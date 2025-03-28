@@ -243,7 +243,7 @@ struct properties<specfem::dimension::type::dim2,
  */
 template <bool UseSIMD>
 struct properties<specfem::dimension::type::dim2,
-                  specfem::element::medium_tag::electromagnetic_sv,
+                  specfem::element::medium_tag::electromagnetic_te,
                   specfem::element::property_tag::isotropic, UseSIMD>
     : public impl::point_data<5, UseSIMD> {
 
@@ -257,7 +257,7 @@ struct properties<specfem::dimension::type::dim2,
 
   constexpr static auto dimension = specfem::dimension::type::dim2;
   constexpr static auto medium_tag =
-      specfem::element::medium_tag::electromagnetic_sv;
+      specfem::element::medium_tag::electromagnetic_te;
   constexpr static auto property_tag =
       specfem::element::property_tag::isotropic;
 
