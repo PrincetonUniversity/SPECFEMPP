@@ -390,7 +390,7 @@ private:
 
   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(RECEIVER_INDICES_VARIABLE_NAME,
                                       WHERE(DIMENSION_TAG_DIM2)
-                                          WHERE(MEDIUM_TAG_ELASTIC_SV,
+                                          WHERE(MEDIUM_TAG_ELASTIC_PSV,
                                                 MEDIUM_TAG_ELASTIC_SH,
                                                 MEDIUM_TAG_ACOUSTIC)
                                               WHERE(PROPERTY_TAG_ISOTROPIC,
