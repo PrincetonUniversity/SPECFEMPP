@@ -21,6 +21,10 @@ using acoustic_type =
     std::integral_constant<specfem::element::medium_tag,
                            specfem::element::medium_tag::acoustic>;
 
+using poroelastic_type =
+    std::integral_constant<specfem::element::medium_tag,
+                           specfem::element::medium_tag::poroelastic>;
+
 using isotropic_type =
     std::integral_constant<specfem::element::property_tag,
                            specfem::element::property_tag::isotropic>;
@@ -165,7 +169,7 @@ impl_base_elastic_sh_traction(const PointBoundaryType &boundary,
   return;
 }
 
-// Elastic Isotropic Stacey Boundary Conditions not using SIMD types
+// Acoustic Isotropic Stacey Boundary Conditions not using SIMD types
 template <
     typename PointBoundaryType, typename PointPropertyType,
     typename PointFieldType, typename ViewType,
@@ -203,7 +207,7 @@ impl_enforce_traction(const acoustic_type &, const isotropic_type &,
   return;
 }
 
-// Elastic Isotropic Stacey Boundary Conditions using SIMD types
+// Acoustic Isotropic Stacey Boundary Conditions using SIMD types
 template <
     typename PointBoundaryType, typename PointPropertyType,
     typename PointFieldType, typename ViewType,
@@ -244,6 +248,57 @@ impl_enforce_traction(const acoustic_type &, const isotropic_type &,
                         property.rho_vpinverse() * field.velocity(0);
 
   return;
+}
+
+// Poroelastic Stacey Boundary Conditions not using SIMD types
+template <
+    typename PointBoundaryType, typename PointPropertyType,
+    typename PointFieldType, typename ViewType,
+    typename std::enable_if_t<!PointBoundaryType::simd::using_simd, int> = 0>
+KOKKOS_FUNCTION void
+impl_enforce_traction(const poroelastic_type &, const isotropic_type &,
+                      const PointBoundaryType &boundary,
+                      const PointPropertyType &property,
+                      const PointFieldType &field, ViewType &traction) {
+
+  static_assert(PointBoundaryType::boundary_tag ==
+                    specfem::element::boundary_tag::stacey,
+                "Boundary tag must be stacey");
+
+  static_assert(PointPropertyType::medium_tag ==
+                    specfem::element::medium_tag::poroelastic,
+                "Medium tag must be poroelastic");
+
+  static_assert(PointPropertyType::property_tag ==
+                    specfem::element::property_tag::isotropic,
+                "Property tag must be isotropic");
+
+  constexpr static auto tag = PointBoundaryType::boundary_tag;
+
+  if (boundary.tag != tag)
+    return;
+
+  const auto &dn = boundary.edge_normal;
+
+  const auto jacobian1d = dn.l2_norm();
+
+  const auto vn = field.velocity(0) * dn(0) + field.velocity(1) * dn(1);
+  const auto vnf = field.velocity(1) * dn(0) + field.velocity(2) * dn(1);
+
+  const auto tsx =
+      property.rho_vpI() * vn * dn(0) + property.rho_vs() * (field.velocity(0) - vn * nx);
+  const auto tsz =
+  property.rho_vpI() * vn * dn(1) + property.rho_vs() * (field.velocity(1) - vn * nz);
+
+  const auto tfx =
+  property.rho_vpII() * vnf * dn(0) - property.rho_vs() * (field.velocity(2) - vn * dn(0));
+  const auto tfz =
+  property.rho_vpII() * vnf * dn(1) - property.rho_vs() * (field.velocity(3) - vn * dn(1));
+
+  traction(0) +=
+      static_cast<type_real>(-1.0) * tx * jacobian1d * boundary.edge_weight;
+  traction(1) +=
+      static_cast<type_real>(-1.0) * tz * jacobian1d * boundary.edge_weight;
 }
 
 // Elastic Isotropic Stacey Boundary Conditions not using SIMD types
