@@ -7,7 +7,7 @@
 #include <regex>
 #include <string>
 
-namespace IO {
+namespace io {
 class param_file {
 
   /**
@@ -104,4 +104,4 @@ void read_parameters_file(std::string param_file, specfem::parameters &param);
 void read_sources_file(std::string source_file,
                        std::vector<specfem::sources::source> &sources,
                        int nsources);
-} // namespace IO
+} // namespace io

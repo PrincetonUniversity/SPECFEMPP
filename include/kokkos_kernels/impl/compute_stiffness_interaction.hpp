@@ -14,8 +14,8 @@ template <specfem::dimension::type DimensionType,
           specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag,
           specfem::element::boundary_tag BoundaryTag>
-void compute_stiffness_interaction(const specfem::compute::assembly &assembly,
-                                   const int &istep);
+int compute_stiffness_interaction(const specfem::compute::assembly &assembly,
+                                  const int &istep);
 }
 } // namespace kokkos_kernels
 } // namespace specfem

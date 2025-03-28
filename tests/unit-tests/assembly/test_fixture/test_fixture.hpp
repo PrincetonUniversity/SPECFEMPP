@@ -1,9 +1,9 @@
 #pragma once
 
 #include "../../MPI_environment.hpp"
-#include "IO/interface.hpp"
 #include "compute/assembly/assembly.hpp"
 #include "enumerations/specfem_enums.hpp"
+#include "io/interface.hpp"
 #include "mesh/mesh.hpp"
 #include "quadrature/quadratures.hpp"
 #include "receiver/receiver.hpp"

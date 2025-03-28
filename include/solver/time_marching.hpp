@@ -50,8 +50,10 @@ public:
           &kernels,
       const std::shared_ptr<specfem::time_scheme::time_scheme> time_scheme,
       const std::vector<
-          std::shared_ptr<specfem::periodic_tasks::periodic_task> > &tasks)
-      : kernels(kernels), time_scheme(time_scheme), tasks(tasks) {}
+          std::shared_ptr<specfem::periodic_tasks::periodic_task> > &tasks,
+      specfem::compute::assembly assembly)
+      : kernels(kernels), time_scheme(time_scheme), tasks(tasks),
+        assembly(assembly) {}
 
   ///@}
 
@@ -69,7 +71,8 @@ private:
                                                                   ///< scheme
   std::vector<std::shared_ptr<specfem::periodic_tasks::periodic_task> >
       tasks; ///< Periodic tasks
-             ///< objects
+  ///< objects
+  specfem::compute::assembly assembly; ///< Spectral element assembly object
 };
 
 /**

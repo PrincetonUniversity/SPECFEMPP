@@ -6,7 +6,7 @@ ASCII
 
 ASCII implemetation for SPECFEM++.
 
-.. doxygenclass:: specfem::IO::ASCII
+.. doxygenclass:: specfem::io::ASCII
     :members:
 
 Implementation Details

@@ -103,7 +103,7 @@ template <> struct mesh<specfem::dimension::type::dim3> {
    * @brief Default mesh constructor
    *
    */
-  mesh(){};
+  mesh() {};
 
   /**
    * @brief Constructor
@@ -129,9 +129,9 @@ template <> struct mesh<specfem::dimension::type::dim3> {
    *
    *
    * @note This constructor is usually unused, and the mesh is constructed
-   *       using the @ref specfem::IO::read_3d_mesh function.
+   *       using the @ref specfem::io::read_3d_mesh function.
    *
-   * @see  specfem::IO::read_3d_mesh
+   * @see  specfem::io::read_3d_mesh
    *
    */
   mesh(const specfem::mesh::parameters<dimension> &parameters,
@@ -161,7 +161,7 @@ template <> struct mesh<specfem::dimension::type::dim3> {
         absorbing_boundary(absorbing_boundary), free_surface(free_surface),
         coupled_interfaces(coupled_interfaces), mpi(mpi),
         inner_outer(inner_outer), coloring(coloring), surface(surface),
-        adjacency(adjacency){};
+        adjacency(adjacency) {};
 
   ///@} // Constructors
 

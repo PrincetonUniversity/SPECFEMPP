@@ -29,7 +29,7 @@ public:
    *
    */
   KOKKOS_INLINE_FUNCTION
-  boundary_tag_container(){};
+  boundary_tag_container() {};
 
   /**
    * @brief Construct a new boundary tag container object
