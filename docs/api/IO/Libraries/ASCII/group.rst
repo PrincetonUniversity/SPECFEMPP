@@ -4,14 +4,14 @@
 Group
 =====
 
-.. doxygenclass:: specfem::IO::impl::ASCII::Group
+.. doxygenclass:: specfem::io::impl::ASCII::Group
     :members:
 
 Implementation Details
 ----------------------
 
-.. doxygenclass:: specfem::IO::impl::ASCII::Group< specfem::IO::write >
+.. doxygenclass:: specfem::io::impl::ASCII::Group< specfem::io::write >
     :members:
 
-.. doxygenclass:: specfem::IO::impl::ASCII::Group< specfem::IO::read >
+.. doxygenclass:: specfem::io::impl::ASCII::Group< specfem::io::read >
     :members:

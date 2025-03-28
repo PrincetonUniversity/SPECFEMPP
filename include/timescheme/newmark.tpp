@@ -8,7 +8,7 @@
 namespace {
 template <specfem::element::medium_tag MediumTag,
           specfem::wavefield::simulation_field WavefieldType>
-void corrector_phase_impl(
+int corrector_phase_impl(
     const specfem::compute::simulation_field<WavefieldType> &field,
     const type_real deltatover2) {
 
@@ -51,12 +51,13 @@ void corrector_phase_impl(
         specfem::compute::add_on_device(index.index, add, field);
       });
 
-  return;
+  return nglob * specfem::element::attributes<specfem::dimension::type::dim2,
+                                              MediumTag>::components();
 }
 
 template <specfem::element::medium_tag MediumTag,
           specfem::wavefield::simulation_field WavefieldType>
-void predictor_phase_impl(
+int predictor_phase_impl(
     const specfem::compute::simulation_field<WavefieldType> &field,
     const type_real deltat, const type_real deltatover2,
     const type_real deltasquareover2) {
@@ -110,19 +111,20 @@ void predictor_phase_impl(
         specfem::compute::store_on_device(index.index, store, field);
       });
 
-  return;
+  return nglob * specfem::element::attributes<specfem::dimension::type::dim2,
+                                              MediumTag>::components();
 }
 } // namespace
 
-void specfem::time_scheme::newmark<specfem::simulation::type::forward>::
+int specfem::time_scheme::newmark<specfem::simulation::type::forward>::
     apply_corrector_phase_forward(const specfem::element::medium_tag tag) {
 
   constexpr auto wavefield = specfem::wavefield::simulation_field::forward;
 
 #define APPLY_CORRECTOR_PHASE(DIMENSION_TAG, MEDIUM_TAG)                       \
   if (tag == GET_TAG(MEDIUM_TAG)) {                                            \
-    corrector_phase_impl<GET_TAG(MEDIUM_TAG), wavefield>(field, deltatover2);  \
-    return;                                                                    \
+    return corrector_phase_impl<GET_TAG(MEDIUM_TAG), wavefield>(field,         \
+                                                                deltatover2);  \
   }
 
   CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
@@ -135,19 +137,18 @@ void specfem::time_scheme::newmark<specfem::simulation::type::forward>::
   Kokkos::abort("Medium type not supported.");
 
   /// Code path should never be reached
-  return;
+  return 0;
 }
 
-void specfem::time_scheme::newmark<specfem::simulation::type::forward>::
+int specfem::time_scheme::newmark<specfem::simulation::type::forward>::
     apply_predictor_phase_forward(const specfem::element::medium_tag tag) {
 
   constexpr auto wavefield = specfem::wavefield::simulation_field::forward;
 
 #define APPLY_PREDICTOR_PHASE(DIMENSION_TAG, MEDIUM_TAG)                       \
   if (tag == GET_TAG(MEDIUM_TAG)) {                                            \
-    predictor_phase_impl<GET_TAG(MEDIUM_TAG), wavefield>(                      \
+    return predictor_phase_impl<GET_TAG(MEDIUM_TAG), wavefield>(               \
         field, deltat, deltatover2, deltasquareover2);                         \
-    return;                                                                    \
   }
 
   CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
@@ -160,19 +161,18 @@ void specfem::time_scheme::newmark<specfem::simulation::type::forward>::
   Kokkos::abort("Medium type not supported.");
 
   /// Code path should never be reached
-  return;
+  return 0;
 }
 
-void specfem::time_scheme::newmark<specfem::simulation::type::combined>::
+int specfem::time_scheme::newmark<specfem::simulation::type::combined>::
     apply_corrector_phase_forward(const specfem::element::medium_tag tag) {
 
   constexpr auto wavefield = specfem::wavefield::simulation_field::adjoint;
 
 #define APPLY_CORRECTOR_PHASE(DIMENSION_TAG, MEDIUM_TAG)                       \
   if (tag == GET_TAG(MEDIUM_TAG)) {                                            \
-    corrector_phase_impl<GET_TAG(MEDIUM_TAG), wavefield>(adjoint_field,        \
-                                                         deltatover2);         \
-    return;                                                                    \
+    return corrector_phase_impl<GET_TAG(MEDIUM_TAG), wavefield>(adjoint_field, \
+                                                                deltatover2);  \
   }
 
   CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
@@ -185,19 +185,18 @@ void specfem::time_scheme::newmark<specfem::simulation::type::combined>::
   Kokkos::abort("Medium type not supported.");
 
   /// Code path should never be reached
-  return;
+  return 0;
 }
 
-void specfem::time_scheme::newmark<specfem::simulation::type::combined>::
+int specfem::time_scheme::newmark<specfem::simulation::type::combined>::
     apply_corrector_phase_backward(const specfem::element::medium_tag tag) {
 
   constexpr auto wavefield = specfem::wavefield::simulation_field::backward;
 
 #define APPLY_CORRECTOR_PHASE(DIMENSION_TAG, MEDIUM_TAG)                       \
   if (tag == GET_TAG(MEDIUM_TAG)) {                                            \
-    corrector_phase_impl<GET_TAG(MEDIUM_TAG), wavefield>(backward_field,       \
-                                                         -1.0 * deltatover2);  \
-    return;                                                                    \
+    return corrector_phase_impl<GET_TAG(MEDIUM_TAG), wavefield>(               \
+        backward_field, -1.0 * deltatover2);                                   \
   }
 
   CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
@@ -210,19 +209,18 @@ void specfem::time_scheme::newmark<specfem::simulation::type::combined>::
   Kokkos::abort("Medium type not supported.");
 
   /// Code path should never be reached
-  return;
+  return 0;
 }
 
-void specfem::time_scheme::newmark<specfem::simulation::type::combined>::
+int specfem::time_scheme::newmark<specfem::simulation::type::combined>::
     apply_predictor_phase_forward(const specfem::element::medium_tag tag) {
 
   constexpr auto wavefield = specfem::wavefield::simulation_field::adjoint;
 
 #define APPLY_PREDICTOR_PHASE(DIMENSION_TAG, MEDIUM_TAG)                       \
   if (tag == GET_TAG(MEDIUM_TAG)) {                                            \
-    predictor_phase_impl<GET_TAG(MEDIUM_TAG), wavefield>(                      \
+    return predictor_phase_impl<GET_TAG(MEDIUM_TAG), wavefield>(               \
         adjoint_field, deltat, deltatover2, deltasquareover2);                 \
-    return;                                                                    \
   }
 
   CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
@@ -235,19 +233,18 @@ void specfem::time_scheme::newmark<specfem::simulation::type::combined>::
   Kokkos::abort("Medium type not supported.");
 
   /// Code path should never be reached
-  return;
+  return 0;
 }
 
-void specfem::time_scheme::newmark<specfem::simulation::type::combined>::
+int specfem::time_scheme::newmark<specfem::simulation::type::combined>::
     apply_predictor_phase_backward(const specfem::element::medium_tag tag) {
 
   constexpr auto wavefield = specfem::wavefield::simulation_field::backward;
 
 #define APPLY_PREDICTOR_PHASE(DIMENSION_TAG, MEDIUM_TAG)                       \
   if (tag == GET_TAG(MEDIUM_TAG)) {                                            \
-    predictor_phase_impl<GET_TAG(MEDIUM_TAG), wavefield>(                      \
+    return predictor_phase_impl<GET_TAG(MEDIUM_TAG), wavefield>(               \
         backward_field, -1.0 * deltat, -1.0 * deltatover2, deltasquareover2);  \
-    return;                                                                    \
   }
 
   CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
@@ -259,8 +256,7 @@ void specfem::time_scheme::newmark<specfem::simulation::type::combined>::
 
   Kokkos::abort("Medium type not supported.");
   /// Code path should never be reached
-  return;
-
+  return 0;
 }
 
 void specfem::time_scheme::newmark<specfem::simulation::type::forward>::print(

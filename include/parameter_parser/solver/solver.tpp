@@ -26,7 +26,7 @@ specfem::runtime_configuration::solver::solver::instantiate(
     return std::make_shared<
         specfem::solver::time_marching<specfem::simulation::type::forward,
                                        specfem::dimension::type::dim2, NGLL> >(
-        kernels, time_scheme, tasks);
+        kernels, time_scheme, tasks, assembly);
   } else if (this->simulation_type == "combined") {
     std::cout << "Instantiating Kernels \n";
     std::cout << "-------------------------------\n";

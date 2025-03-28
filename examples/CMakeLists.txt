@@ -7,6 +7,7 @@ add_subdirectory(fluid-solid-interface)
 add_subdirectory(fluid-solid-bathymetry)
 add_subdirectory(solid-solid-interface)
 add_subdirectory(Tromp_2005)
+add_subdirectory(poroelastic-semi-infinite)
 
 # 3D
 add_subdirectory(dim3/homogeneous_halfspace)

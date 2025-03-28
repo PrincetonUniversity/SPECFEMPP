@@ -47,7 +47,7 @@ public:
    * @brief Instantiate a wavefield plotter object
    *
    * @param assembly SPECFEM++ assembly object
-   * @return std::shared_ptr<specfem::IO::writer> Pointer to an instantiated
+   * @return std::shared_ptr<specfem::io::writer> Pointer to an instantiated
    * plotter object
    */
   std::shared_ptr<specfem::periodic_tasks::periodic_task>
