@@ -599,6 +599,7 @@ target_link_libraries(
 add_library(
         periodic_tasks
         src/periodic_tasks/plot_wavefield.cpp
+        src/periodic_tasks/check_signal.cpp
 )
 
 if (NOT VTK_CXX_BUILD)
@@ -763,6 +764,7 @@ if (SPECFEMPP_BINDING_PYTHON)
     target_link_libraries(
         _core PRIVATE
         execute
+        periodic_tasks
         ${BOOST_LIBS}
         pybind11::headers
     )
