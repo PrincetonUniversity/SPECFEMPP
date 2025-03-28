@@ -285,15 +285,15 @@ impl_enforce_traction(const poroelastic_type &, const isotropic_type &,
   const auto vn = field.velocity(0) * dn(0) + field.velocity(1) * dn(1);
   const auto vnf = field.velocity(1) * dn(0) + field.velocity(2) * dn(1);
 
-  const auto tsx =
-      property.rho_vpI() * vn * dn(0) + property.rho_vs() * (field.velocity(0) - vn * nx);
-  const auto tsz =
-  property.rho_vpI() * vn * dn(1) + property.rho_vs() * (field.velocity(1) - vn * nz);
+  const auto tsx = property.rho_vpI() * vn * dn(0) +
+                   property.rho_vs() * (field.velocity(0) - vn * nx);
+  const auto tsz = property.rho_vpI() * vn * dn(1) +
+                   property.rho_vs() * (field.velocity(1) - vn * nz);
 
-  const auto tfx =
-  property.rho_vpII() * vnf * dn(0) - property.rho_vs() * (field.velocity(2) - vn * dn(0));
-  const auto tfz =
-  property.rho_vpII() * vnf * dn(1) - property.rho_vs() * (field.velocity(3) - vn * dn(1));
+  const auto tfx = property.rho_vpII() * vnf * dn(0) -
+                   property.rho_vs() * (field.velocity(2) - vn * dn(0));
+  const auto tfz = property.rho_vpII() * vnf * dn(1) -
+                   property.rho_vs() * (field.velocity(3) - vn * dn(1));
 
   traction(0) +=
       static_cast<type_real>(-1.0) * tx * jacobian1d * boundary.edge_weight;
