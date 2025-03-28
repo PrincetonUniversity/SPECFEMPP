@@ -38,7 +38,7 @@ public:
    * @brief Instantiate a seismogram writer object
    *
    * @param wave_type Type of wavefield (Writes .BXY for SH waves and .BXX, .BXZ
-   * for SV waves)
+   * for P-SV waves)
    * @param dt Time interval between subsequent timesteps
    * @param t0 Solver start time
    * @param nsteps_between_samples number of timesteps between seismogram

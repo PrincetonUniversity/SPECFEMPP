@@ -24,7 +24,7 @@ enum class medium_tag {
   elastic_sh,
   acoustic,
   poroelastic,
-  electromagnetic_sv,
+  electromagnetic_te,
   elastic,
 };
 
@@ -94,7 +94,7 @@ public:
 
 template <>
 class attributes<specfem::dimension::type::dim2,
-                 specfem::element::medium_tag::electromagnetic_sv> {
+                 specfem::element::medium_tag::electromagnetic_te> {
 public:
   constexpr static int dimension() { return 2; }
 
