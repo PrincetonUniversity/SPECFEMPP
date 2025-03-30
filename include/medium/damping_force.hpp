@@ -3,6 +3,7 @@
 #include "medium/dim2/acoustic/isotropic/damping.hpp"
 #include "medium/dim2/elastic/anisotropic/damping.hpp"
 #include "medium/dim2/elastic/isotropic/damping.hpp"
+#include "medium/dim2/poroelastic/isotropic/damping.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
