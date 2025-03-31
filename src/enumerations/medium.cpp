@@ -9,8 +9,8 @@ specfem::element::to_string(const specfem::element::medium_tag &medium,
   std::string boundary_string;
 
   switch (medium) {
-  case specfem::element::medium_tag::elastic_sv:
-    medium_string = "elastic_sv";
+  case specfem::element::medium_tag::elastic_psv:
+    medium_string = "elastic_psv";
     break;
   case specfem::element::medium_tag::elastic_sh:
     medium_string = "elastic_sh";
@@ -70,8 +70,8 @@ const std::string specfem::element::to_string(
   std::string property_string;
 
   switch (medium) {
-  case specfem::element::medium_tag::elastic_sv:
-    medium_string = "elastic_sv";
+  case specfem::element::medium_tag::elastic_psv:
+    medium_string = "elastic_psv";
     break;
   case specfem::element::medium_tag::elastic_sh:
     medium_string = "elastic_sh";
@@ -111,8 +111,8 @@ specfem::element::to_string(const specfem::element::medium_tag &medium) {
   std::string medium_string;
 
   switch (medium) {
-  case specfem::element::medium_tag::elastic_sv:
-    medium_string = "elastic_sv";
+  case specfem::element::medium_tag::elastic_psv:
+    medium_string = "elastic_psv";
     break;
   case specfem::element::medium_tag::elastic_sh:
     medium_string = "elastic_sh";

@@ -117,7 +117,7 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
 
     // Read mesh generated MESHFEM
     specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(
-        database_file, specfem::enums::elastic_wave::p_sv, mpi);
+        database_file, specfem::enums::elastic_wave::psv, mpi);
 
     std::cout << "Setting up sources and receivers" << std::endl;
 
@@ -141,15 +141,15 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
           kernels(assembly);
 
       kernels.initialize(dt);
-      const auto &elastic_sv_field =
+      const auto &elastic_psv_field =
           assembly.fields.forward
-              .get_field<specfem::element::medium_tag::elastic_sv>();
+              .get_field<specfem::element::medium_tag::elastic_psv>();
       const auto &acoustic_field =
           assembly.fields.forward
               .get_field<specfem::element::medium_tag::acoustic>();
 
-      Kokkos::deep_copy(elastic_sv_field.h_mass_inverse,
-                        elastic_sv_field.mass_inverse);
+      Kokkos::deep_copy(elastic_psv_field.h_mass_inverse,
+                        elastic_psv_field.mass_inverse);
 
       Kokkos::deep_copy(acoustic_field.h_mass_inverse,
                         acoustic_field.mass_inverse);
@@ -190,13 +190,13 @@ TEST(DOMAIN_TESTS, rmass_inverse) {
               const int ispec_mesh =
                   assembly.mesh.mapping.compute_to_mesh(ispec);
               if (assembly.element_types.get_medium_tag(ispec) ==
-                  specfem::element::medium_tag::elastic_sv) {
+                  specfem::element::medium_tag::elastic_psv) {
 
                 constexpr int components = 2;
                 const auto point_field = [&]() {
                   specfem::point::field<
                       specfem::dimension::type::dim2,
-                      specfem::element::medium_tag::elastic_sv, false, false,
+                      specfem::element::medium_tag::elastic_psv, false, false,
                       false, true, false>
                       point_field;
                   specfem::compute::load_on_host(index, assembly.fields.forward,
