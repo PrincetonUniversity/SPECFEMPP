@@ -85,24 +85,33 @@ FetchContent_MakeAvailable(yaml)
 
 include_directories(BEFORE SYSTEM ${yaml_BINARY_DIR} ${yaml_SOURCE_DIR}/include)
 
-find_package(VTK COMPONENTS
-  CommonColor
-  CommonCore
-  FiltersSources
-  InteractionStyle
-  RenderingContextOpenGL2
-  RenderingCore
-  RenderingFreeType
-  RenderingGL2PSOpenGL2
-  RenderingOpenGL2
-)
 
+if (VTK_CXX_BUILD)
 
-if (NOT VTK_FOUND)
-  message(STATUS "VTK not found: ${VTK_NOT_FOUND_MESSAGE}")
-  set(VTK_CXX_BUILD OFF)
+    find_package(VTK COMPONENTS
+        CommonColor
+        CommonCore
+        FiltersSources
+        InteractionStyle
+        RenderingContextOpenGL2
+        RenderingCore
+        RenderingFreeType
+        RenderingGL2PSOpenGL2
+        RenderingOpenGL2
+    )
+
+    if (VTK_FOUND)
+        message(STATUS "VTK libs/ and incs/:")
+        message(STATUS "    LIB:   ${VTK_LIBRARY_DIRS}")
+        message(STATUS "    INC:   ${VTK_INCLUDE_DIRS}")
+        message(STATUS "    LIBSO: ${VTK_LIBRARIES}")
+    else(NOT VTK_FOUND)
+        message(STATUS "VTK not found. Building without VTK.")
+        set(VTK_CXX_BUILD OFF)
+    endif()
 else ()
-  message(STATUS "    VTK:   ${VTK_LIBRARIES}")
+    set(VTK_FOUND OFF)
+    message(STATUS "Building without VTK.")
 endif()
 
 
@@ -590,6 +599,7 @@ target_link_libraries(
 add_library(
         periodic_tasks
         src/periodic_tasks/plot_wavefield.cpp
+        src/periodic_tasks/check_signal.cpp
 )
 
 if (NOT VTK_CXX_BUILD)
@@ -754,6 +764,7 @@ if (SPECFEMPP_BINDING_PYTHON)
     target_link_libraries(
         _core PRIVATE
         execute
+        periodic_tasks
         ${BOOST_LIBS}
         pybind11::headers
     )
