@@ -50,7 +50,7 @@ read_materials(
 
   // Define the elastic medium tag based on input elastic wave type
   const specfem::element::medium_tag elastic = [wave]() {
-    if (wave == specfem::enums::elastic_wave::p_sv) {
+    if (wave == specfem::enums::elastic_wave::psv) {
       return specfem::element::medium_tag::elastic_psv;
     } else if (wave == specfem::enums::elastic_wave::sh) {
       return specfem::element::medium_tag::elastic_sh;
@@ -62,20 +62,17 @@ read_materials(
     }
   }();
 
-  // TODO: Define the electromagnetic medium tag based on input elastic wave
-  // type const specfem::element::medium_tag electromagnetic = [wave]() {
-  //   if (wave == specfem::enums::elastic_wave::p_sv) {
-  //     return specfem::element::medium_tag::electromagnetic_te;
-  //   } else {
-  //     std::ostringstream message;
-  //     message
-  //         << "Elastic wave type not supported for electromagnetic material ["
-  //         << __FILE__ << ":" << __LINE__ << "]\n";
-  //     throw std::runtime_error(message.str());
-  //   }
-  // }();
-  const specfem::element::medium_tag electromagnetic =
-      specfem::element::medium_tag::electromagnetic_te;
+  const specfem::element::medium_tag electromagnetic = [wave]() {
+    if (wave == specfem::enums::electromagnetic_wave::te) {
+      return specfem::element::medium_tag::electromagnetic_te;
+    } else {
+      std::ostringstream message;
+      message
+          << "Elastic wave type not supported for electromagnetic material ["
+          << __FILE__ << ":" << __LINE__ << "]\n";
+      throw std::runtime_error(message.str());
+    }
+  }();
 
   input_holder read_values;
 
@@ -194,7 +191,7 @@ read_materials(
         const type_real Qkappa = static_cast<type_real>(read_values.val5);
         const type_real Qmu = static_cast<type_real>(read_values.val6);
 
-        if (wave == specfem::enums::elastic_wave::p_sv) {
+        if (wave == specfem::enums::elastic_wave::psv) {
           specfem::medium::material<elastic_psv, isotropic>
               elastic_isotropic_holder(density, cs, cp, Qkappa, Qmu,
                                        compaction_grad);
@@ -243,7 +240,7 @@ read_materials(
       const type_real Qkappa = static_cast<type_real>(read_values.val11);
       const type_real Qmu = static_cast<type_real>(read_values.val12);
 
-      if (wave == specfem::enums::elastic_wave::p_sv) {
+      if (wave == specfem::enums::elastic_wave::psv) {
 
         specfem::medium::material<elastic_psv, anisotropic>
             elastic_anisotropic_holder(density, c11, c13, c15, c33, c35, c55,
@@ -320,7 +317,7 @@ read_materials(
       const type_real Qs11 = static_cast<type_real>(read_values.val8);
       const type_real Qs33 = static_cast<type_real>(read_values.val9);
 
-      if (wave == specfem::enums::elastic_wave::p_sv) {
+      if (wave == specfem::enums::elastic_wave::psv) {
         specfem::medium::material<electromagnetic_te, isotropic>
             electromagnetic_te_isotropic_holder(mu0, e0, e11, e33, sig11, sig33,
                                                 Qe11, Qe33, Qs11, Qs33);
