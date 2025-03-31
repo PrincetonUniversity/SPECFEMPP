@@ -24,7 +24,7 @@
 #include <vector>
 
 specfem::mesh::mesh<specfem::dimension::type::dim2> specfem::io::read_2d_mesh(
-    const std::string filename, const specfem::enums::elastic_wave wave,
+    const std::string filename, const specfem::enums::elastic_wave elastic_wave,
     const specfem::enums::electromagnetic_wave electromagnetic_wave,
     const specfem::MPI::MPI *mpi) {
 
@@ -90,8 +90,8 @@ specfem::mesh::mesh<specfem::dimension::type::dim2> specfem::io::read_2d_mesh(
   try {
     mesh.materials =
         specfem::io::mesh::impl::fortran::dim2::read_material_properties(
-            stream, mesh.parameters.numat, mesh.nspec, wave,
-            mesh.control_nodes.knods, mpi);
+            stream, mesh.parameters.numat, mesh.nspec, elastic_wave,
+            electromagnetic_wave, mesh.control_nodes.knods, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
