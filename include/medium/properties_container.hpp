@@ -64,7 +64,7 @@ struct impl_properties_container
 };
 
 template <specfem::element::medium_tag type,
-          specfem::element::property_tag property>
+          specfem::element::property_tag property, typename Enable = void>
 struct properties_container {
   static_assert("Material type not implemented");
 };
