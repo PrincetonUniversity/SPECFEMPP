@@ -43,7 +43,7 @@ public:
   int get_nproc() { return nproc; }
   specfem::enums::elastic_wave get_elastic_wave() {
     if (elastic_wave == "P_SV")
-      return specfem::enums::elastic_wave::p_sv;
+      return specfem::enums::elastic_wave::psv;
     else if (elastic_wave == "SH")
       return specfem::enums::elastic_wave::sh;
     else
