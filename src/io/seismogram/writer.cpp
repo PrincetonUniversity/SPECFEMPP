@@ -20,7 +20,7 @@ void specfem::io::seismogram_writer::write(
       if (wave_type == specfem::enums::elastic_wave::sh) {
         filename = { this->output_folder + "/" + network_name + "." +
                      station_name + ".S2.BXY.semd" };
-      } else if (wave_type == specfem::enums::elastic_wave::p_sv) {
+      } else if (wave_type == specfem::enums::elastic_wave::psv) {
         filename = { this->output_folder + "/" + network_name + "." +
                          station_name + ".S2.BXX.semd",
                      this->output_folder + "/" + network_name + "." +
@@ -31,7 +31,7 @@ void specfem::io::seismogram_writer::write(
       if (wave_type == specfem::enums::elastic_wave::sh) {
         filename = { this->output_folder + "/" + network_name + "." +
                      station_name + ".S2.BXY.semv" };
-      } else if (wave_type == specfem::enums::elastic_wave::p_sv) {
+      } else if (wave_type == specfem::enums::elastic_wave::psv) {
         filename = { this->output_folder + "/" + network_name + "." +
                          station_name + ".S2.BXX.semv",
                      this->output_folder + "/" + network_name + "." +
@@ -42,7 +42,7 @@ void specfem::io::seismogram_writer::write(
       if (wave_type == specfem::enums::elastic_wave::sh) {
         filename = { this->output_folder + "/" + network_name + "." +
                      station_name + ".S2.BXY.sema" };
-      } else if (wave_type == specfem::enums::elastic_wave::p_sv) {
+      } else if (wave_type == specfem::enums::elastic_wave::psv) {
         filename = { this->output_folder + "/" + network_name + "." +
                          station_name + ".S2.BXX.sema",
                      this->output_folder + "/" + network_name + "." +
@@ -53,7 +53,7 @@ void specfem::io::seismogram_writer::write(
       if (wave_type == specfem::enums::elastic_wave::sh) {
         throw std::runtime_error(
             "Pressure seismograms are not supported for SH waves");
-      } else if (wave_type == specfem::enums::elastic_wave::p_sv) {
+      } else if (wave_type == specfem::enums::elastic_wave::psv) {
         filename = { this->output_folder + "/" + network_name + "." +
                      station_name + ".S2.PRE.semp" };
       }
