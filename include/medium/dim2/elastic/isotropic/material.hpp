@@ -16,8 +16,9 @@ namespace medium {
  *
  */
 template <specfem::element::medium_tag MediumTag>
-struct material<MediumTag, specfem::element::property_tag::isotropic>
-    : specfem::element::is_elastic<MediumTag> {
+struct material<
+    MediumTag, specfem::element::property_tag::isotropic,
+    std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> > {
 public:
   constexpr static auto dimension =
       specfem::dimension::type::dim2;           ///< Dimension of the material

@@ -17,14 +17,14 @@ namespace medium {
  * properties
  *
  */
-template <>
-class material<specfem::element::medium_tag::electromagnetic_te,
-               specfem::element::property_tag::isotropic> {
+template <specfem::element::medium_tag MediumTag>
+class material<
+    MediumTag, specfem::element::property_tag::isotropic,
+    std::enable_if_t<specfem::element::is_electromagnetic<MediumTag>::value> > {
 public:
   constexpr static auto dimension =
-      specfem::dimension::type::dim2; ///< Dimension of the material
-  constexpr static auto medium_tag =
-      specfem::element::medium_tag::electromagnetic_te; ///< Medium tag
+      specfem::dimension::type::dim2;           ///< Dimension of the material
+  constexpr static auto medium_tag = MediumTag; ///< Medium tag
   constexpr static auto property_tag =
       specfem::element::property_tag::isotropic; ///< Property tag
 
@@ -74,8 +74,8 @@ public:
    * @return true If the materials have the same properties
    */
   bool operator==(
-      const material<specfem::element::medium_tag::electromagnetic_te,
-                     specfem::element::property_tag::isotropic> &other) const {
+      const material<MediumTag, specfem::element::property_tag::isotropic>
+          &other) const {
 
     return (std::abs(this->mu0 - other.mu0) < 1e-6 &&
             std::abs(this->e0 - other.e0) < 1e-6 &&
