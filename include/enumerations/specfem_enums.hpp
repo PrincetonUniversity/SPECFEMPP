@@ -10,7 +10,7 @@ namespace specfem {
  */
 namespace enums {
 
-enum class elastic_wave { p_sv, sh };
+enum class elastic_wave { psv, sh };
 
 /**
  * @brief Cartesian axes enumeration

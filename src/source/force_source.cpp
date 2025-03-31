@@ -63,7 +63,7 @@ void specfem::sources::force::compute_source_array(
         }
         source_array(0, iz, ix) = hlagrange;
 
-      } else if ((el_type == specfem::element::medium_tag::elastic_sv)) {
+      } else if ((el_type == specfem::element::medium_tag::elastic_psv)) {
         if (ncomponents != 2) {
           throw std::runtime_error(
               "Moment Tensor source requires 2 components for elastic, "

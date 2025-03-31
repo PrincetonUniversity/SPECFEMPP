@@ -72,7 +72,7 @@ specfem::compute::simulation_field<WavefieldType>::simulation_field(
                                GET_NAME(MEDIUM_TAG)));
 
   CALL_MACRO_FOR_ALL_MEDIUM_TAGS(ASSIGN_FIELDS, WHERE(DIMENSION_TAG_DIM2)
-                                                    WHERE(MEDIUM_TAG_ELASTIC_SV,
+                                                    WHERE(MEDIUM_TAG_ELASTIC_PSV,
                                                           MEDIUM_TAG_ELASTIC_SH,
                                                           MEDIUM_TAG_ACOUSTIC))
 
@@ -84,11 +84,11 @@ specfem::compute::simulation_field<WavefieldType>::simulation_field(
 
   // auto elastic_index =
   //     Kokkos::subview(h_assembly_index_mapping, Kokkos::ALL,
-  //                     static_cast<int>(specfem::element::medium_tag::elastic_sv));
+  //                     static_cast<int>(specfem::element::medium_tag::elastic_psv));
 
   // elastic =
   //     specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
-  //                                        specfem::element::medium_tag::elastic_sv>(
+  //                                        specfem::element::medium_tag::elastic_psv>(
   //         mesh, element_types, elastic_index);
 
   // acoustic = specfem::compute::impl::field_impl<
@@ -116,7 +116,7 @@ int specfem::compute::simulation_field<
                                    GET_TAG(MEDIUM_TAG)>::components();
 
   CALL_MACRO_FOR_ALL_MEDIUM_TAGS(GET_DOF, WHERE(DIMENSION_TAG_DIM2)
-                                               WHERE(MEDIUM_TAG_ELASTIC_SV,
+                                               WHERE(MEDIUM_TAG_ELASTIC_PSV,
                                                      MEDIUM_TAG_ELASTIC_SH,
                                                      MEDIUM_TAG_ACOUSTIC))
 

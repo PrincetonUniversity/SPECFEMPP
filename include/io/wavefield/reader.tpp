@@ -17,14 +17,14 @@ void specfem::io::wavefield_reader<IOLibrary>::read(
 
   typename IOLibrary::File file(output_folder + "/ForwardWavefield");
 
-  typename IOLibrary::Group elastic_sv = file.openGroup("/ElasticSV");
+  typename IOLibrary::Group elastic_psv = file.openGroup("/ElasticSV");
 
-  const auto &elastic_sv_field =
-      buffer.get_field<specfem::element::medium_tag::elastic_sv>();
+  const auto &elastic_psv_field =
+      buffer.get_field<specfem::element::medium_tag::elastic_psv>();
 
-  elastic_sv.openDataset("Displacement", elastic_sv_field.h_field).read();
-  elastic_sv.openDataset("Velocity", elastic_sv_field.h_field_dot).read();
-  elastic_sv.openDataset("Acceleration", elastic_sv_field.h_field_dot_dot)
+  elastic_psv.openDataset("Displacement", elastic_psv_field.h_field).read();
+  elastic_psv.openDataset("Velocity", elastic_psv_field.h_field_dot).read();
+  elastic_psv.openDataset("Acceleration", elastic_psv_field.h_field_dot_dot)
       .read();
 
   typename IOLibrary::Group elastic_sh = file.openGroup("/ElasticSH");
