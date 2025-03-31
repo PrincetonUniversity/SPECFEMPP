@@ -212,6 +212,50 @@ private:
     }
   }
 
+  template <typename GlobalReducer, typename LocalReducer, typename PointValues,
+            typename WorkItems>
+  void reduce(const WorkItems work_items, PointValues &values,
+              const LocalReducer &reducer) const {
+
+    static_assert(PointValues::dimension == dimension, "Dimension mismatch");
+    static_assert(PointValues::medium_tag == medium_tag, "Medium tag mismatch");
+    static_assert(PointValues::property_tag == property_tag,
+                  "Property tag mismatch");
+
+    constexpr bool on_device =
+        std::is_same<typename WorkItems::execution_space,
+                     Kokkos::DefaultExecutionSpace>::value;
+
+    using policy_type = Kokkos::MDRangePolicy<
+        typename WorkItems::execution_space,
+        Kokkos::Rank<3, Kokkos::Iterate::Left> >; // Use the execution
+                                                  // space of the work
+                                                  // items
+
+    const int nwork_items =
+        work_items.extent(0); // Number of work items to be used for reduction
+
+    for (std::size_t i = 0; i < nprops; i++) {
+      // Reduce the values in the container
+
+      Kokkos::parallel_reduce(
+          "reduce_medium_data",
+          policy_type({ 0, 0, 0 }, { nwork_items, ngllz, ngllx }),
+          KOKKOS_LAMBDA(const int i, const int iz, const int ix,
+                        type_real &lvalue) {
+            const int ispec =
+                work_items(i); // Get the ispec from the work items
+            // Access the data based on the device or host
+            type_real value = get_data<on_device>(ispec, iz, ix, i);
+            // Perform Local reduction
+            lvalue = reducer(value, lvalue);
+          },
+          GlobalReducer(values.data[i]));
+    }
+
+    return;
+  }
+
 public:
   template <typename PointValues, typename IndexType>
   KOKKOS_FORCEINLINE_FUNCTION void
@@ -247,6 +291,18 @@ public:
   KOKKOS_FORCEINLINE_FUNCTION void
   add_host_values(const IndexType &index, const PointValues &values) const {
     add_values<false>(index, values);
+  }
+
+  template <typename WorkItems, typename PointValues>
+  void max(const WorkItems &work_items, PointValues &values) const {
+    // Reduce the values on device
+    reduce<Kokkos::Max<type_real> >(work_items, values,
+                                    [&](type_real value, type_real lvalue) {
+                                      // Local reducer for max
+                                      return (value > lvalue) ? value : lvalue;
+                                    });
+
+    return;
   }
 
   void copy_to_device() { Kokkos::deep_copy(data, h_data); }

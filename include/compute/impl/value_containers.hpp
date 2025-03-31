@@ -26,6 +26,18 @@ struct value_containers {
                                                       ///< property index
                                                       ///< mapping
 
+  template <bool on_device>
+  KOKKOS_INLINE_FUNCTION constexpr
+      typename std::conditional<on_device, IndexViewType,
+                                IndexViewType::HostMirror>::type
+      get_property_index_mapping() const {
+    if constexpr (on_device) {
+      return property_index_mapping;
+    } else {
+      return h_property_index_mapping;
+    }
+  }
+
 #define GENERATE_CONTAINER_NAME(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)       \
   containers_type<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)>                  \
       CREATE_VARIABLE_NAME(value, GET_NAME(DIMENSION_TAG),                     \
