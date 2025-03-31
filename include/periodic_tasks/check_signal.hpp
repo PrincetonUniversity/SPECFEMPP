@@ -1,7 +1,10 @@
 #pragma once
 #include "periodic_task.hpp"
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
+#include <stdexcept>
+#include <csignal>
+#include <string>
+#include <iostream>
+#include <Kokkos_Core.hpp>
 
 namespace specfem {
 namespace periodic_tasks {
@@ -10,17 +13,13 @@ namespace periodic_tasks {
  *
  */
 class check_signal : public periodic_task {
-  using periodic_task::periodic_task;
+  using periodic_task::periodic_task; 
 
   /**
-   * @brief Plot the wavefield
+   * @brief Check for keyboard interrupt and more, when running from Python
    *
    */
-  void run() override {
-    if (PyErr_CheckSignals() != 0) {
-      throw pybind11::error_already_set();
-    }
-  }
+  void run() override;  
 };
 
 } // namespace periodic_tasks
