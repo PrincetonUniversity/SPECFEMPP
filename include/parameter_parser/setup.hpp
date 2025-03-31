@@ -108,7 +108,7 @@ public:
    */
   inline specfem::enums::electromagnetic_wave
   get_electromagnetic_wave_type() const {
-    return this->elastic_wave->get_electromagnetic_wave_type();
+    return this->electromagnetic_wave->get_electromagnetic_wave_type();
   }
 
   /**

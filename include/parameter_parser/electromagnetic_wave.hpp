@@ -32,9 +32,7 @@ public:
   inline specfem::enums::electromagnetic_wave
   get_electromagnetic_wave_type() const {
     if (this->electromagnetic_wave_type == "TE") {
-      return specfem::enums::electromagnetic_wave::psv;
-    } else if (this->electromagnetic_wave_type == "TM") {
-      return specfem::enums::electromagnetic_wave::sh;
+      return specfem::enums::electromagnetic_wave::te;
     } else {
       throw std::runtime_error("Invalid electromagnetic wave type: " +
                                this->electromagnetic_wave_type);

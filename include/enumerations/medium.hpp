@@ -25,6 +25,7 @@ enum class medium_tag {
   acoustic,
   poroelastic,
   electromagnetic_te,
+  electromagnetic,
   elastic,
 };
 
@@ -111,13 +112,18 @@ const std::string to_string(const medium_tag &medium,
 const std::string to_string(const medium_tag &medium);
 
 // template class to enable specialization for elastic media
-template <specfem::element::medium_tag MediumTag,
-          typename std::enable_if_t<
-              MediumTag == specfem::element::medium_tag::elastic ||
-                  MediumTag == specfem::element::medium_tag::elastic_sh ||
-                  MediumTag == specfem::element::medium_tag::elastic_psv,
-              int> = 0>
-class is_elastic {};
+template <specfem::element::medium_tag MediumTag>
+using is_elastic = typename std::conditional_t<
+    (MediumTag == specfem::element::medium_tag::elastic ||
+     MediumTag == specfem::element::medium_tag::elastic_psv ||
+     MediumTag == specfem::element::medium_tag::elastic_sh),
+    std::true_type, std::false_type>::type;
+
+template <specfem::element::medium_tag MediumTag>
+using is_electromagnetic = typename std::conditional_t<
+    (MediumTag == specfem::element::medium_tag::electromagnetic ||
+     MediumTag == specfem::element::medium_tag::electromagnetic_te),
+    std::true_type, std::false_type>::type;
 
 } // namespace element
 } // namespace specfem

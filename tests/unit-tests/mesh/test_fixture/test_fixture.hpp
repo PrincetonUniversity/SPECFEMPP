@@ -38,7 +38,12 @@ public:
   config(const YAML::Node &Node) {
     nproc = Node["nproc"].as<int>();
     elastic_wave = Node["elastic_wave"].as<std::string>();
-    electromagnetic_wave = Node["electromagnetic_wave"].as<std::string>();
+
+    if (Node["electromagnetic_wave"].IsDefined())
+      electromagnetic_wave = Node["electromagnetic_wave"].as<std::string>();
+    else
+      // Default to TE if not defined
+      electromagnetic_wave = "TE";
   }
 
   int get_nproc() { return nproc; }
@@ -63,6 +68,7 @@ public:
 private:
   int nproc;
   std::string elastic_wave;
+  std::string electromagnetic_wave;
 };
 
 struct Test {

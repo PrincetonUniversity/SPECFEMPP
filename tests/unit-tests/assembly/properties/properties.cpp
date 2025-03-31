@@ -38,8 +38,7 @@ std::string get_error_message(
 
 // SFINAE-enabled overload for specific conditions
 template <specfem::element::medium_tag MediumTag, bool using_simd = false>
-std::enable_if_t<(MediumTag == specfem::element::medium_tag::elastic_psv ||
-                  MediumTag == specfem::element::medium_tag::elastic_sh) &&
+std::enable_if_t<specfem::element::is_elastic<MediumTag>::value &&
                      using_simd == false,
                  std::string>
 get_error_message(
@@ -58,8 +57,7 @@ get_error_message(
 }
 
 template <specfem::element::medium_tag MediumTag, bool using_simd = false>
-std::enable_if_t<(MediumTag == specfem::element::medium_tag::elastic_psv ||
-                  MediumTag == specfem::element::medium_tag::elastic_sh) &&
+std::enable_if_t<specfem::element::is_elastic<MediumTag>::value &&
                      using_simd == false,
                  std::string>
 get_error_message(
@@ -103,11 +101,10 @@ std::string get_error_message(
 /* <--- REMOVE THIS LINE TO ENABLE THE CODE BELOW FOR ELECTROMAGNETIC
 
 // Template get_error_message specialization: electromagnetic isotropic
-template <>
-std::string get_error_message(
-    const specfem::point::properties<
-        specfem::dimension::type::dim2,
-        specfem::element::medium_tag::electromagnetic_te,
+template <specfem::element::medium_tag MediumTag, bool using_simd = false>
+          std::enable_if_t<specfem::element::is_electromagnetic<MediumTag>::value
+&& using_simd == false, std::string> get_error_message( const
+specfem::point::properties< specfem::dimension::type::dim2, MediumTag,
         specfem::element::property_tag::isotropic, false> &point_property,
     const type_real value, const int mode) {
   std::ostringstream message;
