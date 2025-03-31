@@ -53,6 +53,7 @@ specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict,
     throw std::runtime_error("Error reading specfem source configuration.");
   }
 
+  // Get Elastic Wave type Default is P_SV
   if (const YAML::Node &n_elastic_wave = simulation_setup["elastic-wave"]) {
     this->elastic_wave =
         std::make_unique<specfem::runtime_configuration::elastic_wave>(
@@ -60,6 +61,18 @@ specfem::runtime_configuration::setup::setup(const YAML::Node &parameter_dict,
   } else {
     this->elastic_wave =
         std::make_unique<specfem::runtime_configuration::elastic_wave>("P_SV");
+  }
+
+  // Get Electromagnetic Wave type Default is TE
+  if (const YAML::Node &n_electromagnetic_wave =
+          simulation_setup["electromagnetic-wave"]) {
+    this->electromagnetic_wave =
+        std::make_unique<specfem::runtime_configuration::electromagnetic_wave>(
+            n_electromagnetic_wave);
+  } else {
+    this->electromagnetic_wave =
+        std::make_unique<specfem::runtime_configuration::electromagnetic_wave>(
+            "TE");
   }
 
   if (const YAML::Node &n_quadrature = simulation_setup["quadrature"]) {

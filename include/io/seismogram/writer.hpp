@@ -26,10 +26,12 @@ public:
    * @param nstep_between_samples number of timesteps between seismogram
    * sampling (seismogram sampling frequency)
    */
-  seismogram_writer(const specfem::enums::seismogram::format type,
-                    const specfem::enums::elastic_wave wave_type,
-                    const std::string output_folder, const type_real dt,
-                    const type_real t0, const int nstep_between_samples)
+  seismogram_writer(
+      const specfem::enums::seismogram::format type,
+      const specfem::enums::elastic_wave wave_type,
+      const specfem::enums::electromagnetic_wave electromagnetic_wave,
+      const std::string output_folder, const type_real dt, const type_real t0,
+      const int nstep_between_samples)
       : type(type), wave_type(wave_type), output_folder(output_folder), dt(dt),
         t0(t0), nstep_between_samples(nstep_between_samples) {};
   /**
@@ -50,6 +52,10 @@ private:
   specfem::enums::elastic_wave wave_type; ///< Type of wavefield (Writes
                                           ///< .BXY for SH waves and .BXX,
                                           ///< .BXZ for P-SV waves)
+  specfem::enums::electromagnetic_wave
+      electromagnetic_wave;  ///< Type of
+                             ///< electromagnetic
+                             ///< wavefield
   int nstep_between_samples; ///< number of timesteps between seismogram
                              ///< sampling (seismogram sampling frequency)
 };

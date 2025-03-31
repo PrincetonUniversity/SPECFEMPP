@@ -32,6 +32,7 @@ std::vector<specfem::mesh::materials<
 read_materials(
     std::ifstream &stream, const int numat,
     const specfem::enums::elastic_wave wave,
+    const specfem::enums::electromagnetic_wave electromagnetic_wave,
     specfem::mesh::materials<specfem::dimension::type::dim2>::material<
         acoustic, isotropic> &acoustic_isotropic,
     specfem::mesh::materials<specfem::dimension::type::dim2>::material<
