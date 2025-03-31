@@ -38,8 +38,10 @@ specfem::runtime_configuration::seismogram::seismogram(
 
 std::shared_ptr<specfem::io::writer>
 specfem::runtime_configuration::seismogram::instantiate_seismogram_writer(
-    const specfem::enums::elastic_wave wave_type, const type_real dt,
-    const type_real t0, const int nstep_between_samples) const {
+    const specfem::enums::elastic_wave wave_type,
+    const specfem::enums::electromagnetic_wave electromagnetic_wave,
+    const type_real dt, const type_real t0,
+    const int nstep_between_samples) const {
 
   const auto type = [&]() {
     if (this->output_format == "seismic_unix" || this->output_format == "su") {

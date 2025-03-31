@@ -42,13 +42,15 @@ public:
 
 struct config {
 public:
-  config() : nproc(1), elastic_wave("P_SV") {};
+  config() : nproc(1), elastic_wave("P_SV"), electromagentic_wave("TE") {};
   config(const YAML::Node &Node) {
     nproc = Node["nproc"].as<int>();
     elastic_wave = Node["elastic_wave"].as<std::string>();
+    electromagentic_wave = Node["electromagnetic_wave"].as<std::string>();
   }
 
   int get_nproc() { return nproc; }
+
   specfem::enums::elastic_wave get_elastic_wave() {
     if (elastic_wave == "P_SV")
       return specfem::enums::elastic_wave::psv;
@@ -58,9 +60,19 @@ public:
       throw std::runtime_error("Elastic wave type not supported");
   }
 
+  specfem::enums::electromagnetic_wave get_electromagnetic_wave() {
+    if (electromagentic_wave == "TE")
+      return specfem::enums::electromagnetic_wave::te;
+    else if (electromagentic_wave == "TM")
+      return specfem::enums::electromagnetic_wave::tm;
+    else
+      throw std::runtime_error("Electromagnetic wave type not supported");
+  }
+
 private:
   int nproc;
   std::string elastic_wave;
+  std::string electromagentic_wave;
 };
 
 struct Test {
@@ -95,6 +107,11 @@ public:
   specfem::enums::elastic_wave get_elastic_wave() {
     return config.get_elastic_wave();
   }
+
+  specfem::enums::electromagnetic_wave get_electromagnetic_wave() {
+    return config.get_electromagnetic_wave();
+  }
+
   std::string get_suffix() { return suffix; }
 
   std::string name;

@@ -24,6 +24,7 @@ namespace io {
 specfem::mesh::mesh<specfem::dimension::type::dim2>
 read_2d_mesh(const std::string filename,
              const specfem::enums::elastic_wave wave,
+             const specfem::enums::electromagnetic_wave electromagnetic_wave,
              const specfem::MPI::MPI *mpi);
 
 /**

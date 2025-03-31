@@ -14,7 +14,8 @@ TEST(ALGORITHMS, locate_point) {
   // Read Mesh database
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
   specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(
-      database_file, specfem::enums::elastic_wave::psv, mpi);
+      database_file, specfem::enums::elastic_wave::psv,
+      specfem::enums::electromagnetic_wave::te, mpi);
 
   // Quadratures
   specfem::quadrature::gll::gll gll(0.0, 0.0, 5);

@@ -23,10 +23,10 @@
 #include <tuple>
 #include <vector>
 
-specfem::mesh::mesh<specfem::dimension::type::dim2>
-specfem::io::read_2d_mesh(const std::string filename,
-                          const specfem::enums::elastic_wave wave,
-                          const specfem::MPI::MPI *mpi) {
+specfem::mesh::mesh<specfem::dimension::type::dim2> specfem::io::read_2d_mesh(
+    const std::string filename, const specfem::enums::elastic_wave wave,
+    const specfem::enums::electromagnetic_wave electromagnetic_wave,
+    const specfem::MPI::MPI *mpi) {
 
   // Declaring empty mesh objects
   specfem::mesh::mesh<specfem::dimension::type::dim2> mesh;

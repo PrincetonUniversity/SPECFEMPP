@@ -81,7 +81,8 @@ TEST(COMPUTE_TESTS, compute_ibool) {
 
   // Read mesh generated MESHFEM
   specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(
-      test_config.database_filename, specfem::enums::elastic_wave::psv, mpi);
+      test_config.database_filename, specfem::enums::elastic_wave::psv,
+      specfem::enums::electromagnetic_wave::te, mpi);
 
   // Setup compute structs
   specfem::compute::mesh assembly(mesh.tags, mesh.control_nodes,
