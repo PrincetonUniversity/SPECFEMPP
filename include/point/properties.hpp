@@ -103,13 +103,14 @@ struct properties<
                      0)      ///< Lame's parameter @f$ \lambda + 2\mu @f$
   DEFINE_POINT_VALUE(mu, 1)  ///< shear modulus @f$ \mu @f$
   DEFINE_POINT_VALUE(rho, 2) ///< density @f$ \rho @f$
+  DEFINE_POINT_VALUE(nu, 3)  ///< symmetry breaking modulus @f$ \nu @f$
 
-  // Additional elastic properties for spin media
-  DEFINE_POINT_VALUE(nu, 3) ///< symmetry breaking modulus @f$ \nu @f$
-  DEFINE_POINT_VALUE(lambdaplus2mu_c, 4) ///< bulk modulus @f$ \kappa @f$
-  DEFINE_POINT_VALUE(mu_c, 5)            ///< shear modulus @f$ \mu @f$
-  DEFINE_POINT_VALUE(j_c, 6)             ///< density @f$ \rho @f$
-  DEFINE_POINT_VALUE(nu_c, 7) ///< symmetry breaking modulus @f$ \nu @f$
+  // Additional elastic properties for spin media _c for _couple
+  DEFINE_POINT_VALUE(lambdaplus2mu_c,
+                     4)       ///< bulk modulus @f$ \lambda_c + 2\mu @f$
+  DEFINE_POINT_VALUE(mu_c, 5) ///< shear modulus @f$ \mu_c @f$
+  DEFINE_POINT_VALUE(j, 6)    ///< density @f$ j @f$
+  DEFINE_POINT_VALUE(nu_c, 7) ///< symmetry breaking modulus @f$ \nu_c @f$
 
   KOKKOS_INLINE_FUNCTION const value_type rho_vp() const {
     return Kokkos::sqrt(rho() * lambdaplus2mu()); ///< @f$ \rho v_p @f$
