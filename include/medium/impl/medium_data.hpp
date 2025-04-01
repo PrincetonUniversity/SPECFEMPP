@@ -20,7 +20,7 @@ namespace impl {
 template <specfem::element::medium_tag MediumTag,
           specfem::element::property_tag PropertyTag, std::size_t N>
 struct medium_data {
-  using view_type = typename Kokkos::View<type_real ****, Kokkos::LayoutRight,
+  using view_type = typename Kokkos::View<type_real ****, Kokkos::LayoutLeft,
                                           Kokkos::DefaultExecutionSpace>;
   constexpr static auto nprops = N;
   constexpr static auto dimension = specfem::dimension::type::dim2;
