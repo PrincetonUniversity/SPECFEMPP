@@ -1,7 +1,7 @@
 #pragma once
 
-#include "compute/fields/impl/field_impl.hpp"
 #include "compute/element_types/element_types.hpp"
+#include "compute/fields/impl/field_impl.hpp"
 #include "kokkos_abstractions.h"
 #include <Kokkos_Core.hpp>
 
@@ -35,9 +35,9 @@ specfem::compute::impl::field_impl<DimensionType, MediumTag>::field_impl(
   // Count the total number of distinct global indices for the medium
   int count = 0;
 
-  for (int ispec = 0; ispec < nspec; ++ispec) {
+  for (int ix = 0; ix < ngllx; ++ix) {
     for (int iz = 0; iz < ngllz; ++iz) {
-      for (int ix = 0; ix < ngllx; ++ix) {
+      for (int ispec = 0; ispec < nspec; ++ispec) {
         const auto medium = element_types.get_medium_tag(ispec);
         if (medium == MediumTag) {
           const int index = index_mapping(ispec, iz, ix); // get global index
@@ -109,7 +109,6 @@ void specfem::compute::impl::field_impl<DimensionType, MediumTag>::sync_fields()
     Kokkos::deep_copy(field_dot_dot, h_field_dot_dot);
   }
 }
-
 
 // template <typename medium>
 //   KOKKOS_INLINE_FUNCTION type_real &specfem::compute::(const int &iglob,
