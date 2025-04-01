@@ -19,12 +19,14 @@ namespace element {
   (0, specfem::element::medium_tag::elastic_psv, elastic_psv)
 #define MEDIUM_TAG_ELASTIC_SH                                                  \
   (1, specfem::element::medium_tag::elastic_sh, elastic_sh)
+#define MEDIUM_TAG_ELASTIC_PSV_T                                               \
+  (2, specfem::element::medium_tag::elastic_psv_t, elastic_psv_t)
 #define MEDIUM_TAG_ACOUSTIC                                                    \
-  (2, specfem::element::medium_tag::acoustic, acoustic)
+  (3, specfem::element::medium_tag::acoustic, acoustic)
 #define MEDIUM_TAG_POROELASTIC                                                 \
-  (3, specfem::element::medium_tag::poroelastic, poroelastic)
+  (4, specfem::element::medium_tag::poroelastic, poroelastic)
 #define MEDIUM_TAG_ELECTROMAGNETIC_TE                                          \
-  (4, specfem::element::medium_tag::electromagnetic_te, electromagnetic_te)
+  (5, specfem::element::medium_tag::electromagnetic_te, electromagnetic_te)
 
 #define PROPERTY_TAG_ISOTROPIC                                                 \
   (0, specfem::element::property_tag::isotropic, isotropic)
@@ -57,6 +59,7 @@ namespace element {
 #define MEDIUM_TYPES                                                           \
   ((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV))(                              \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH))(                            \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV_T))(                         \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC))(                              \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_POROELASTIC))(                           \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_TE))
@@ -99,6 +102,7 @@ constexpr auto medium_types() {
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV, PROPERTY_TAG_ANISOTROPIC))( \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH, PROPERTY_TAG_ISOTROPIC))(    \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH, PROPERTY_TAG_ANISOTROPIC))(  \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV_T, PROPERTY_TAG_ISOTROPIC))( \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC, PROPERTY_TAG_ISOTROPIC))(      \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_POROELASTIC, PROPERTY_TAG_ISOTROPIC))(   \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_TE,                      \
@@ -144,10 +148,11 @@ constexpr auto material_systems() {
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH, PROPERTY_TAG_ISOTROPIC,      \
        BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH,         \
                             PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_STACEY))(     \
-      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC, PROPERTY_TAG_ISOTROPIC,        \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV_T, PROPERTY_TAG_ISOTROPIC,   \
        BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC,           \
-                            PROPERTY_TAG_ISOTROPIC,                            \
-                            BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE))(              \
+                            PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_NONE))(       \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC, PROPERTY_TAG_ISOTROPIC,        \
+       BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE))(                                   \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC, PROPERTY_TAG_ISOTROPIC,        \
        BOUNDARY_TAG_STACEY))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC,         \
                               PROPERTY_TAG_ISOTROPIC,                          \
