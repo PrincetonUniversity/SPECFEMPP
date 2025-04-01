@@ -13,6 +13,10 @@ option(ENABLE_PROFILING "Enable profiling" OFF)
 option(SPECFEMPP_BINDING_PYTHON "Enable Python binding" OFF)
 option(ENABLE_DOUBLE_PRECISION "Enable double precision" OFF)
 
+# To fix the CMake policy warning for yaml-cpp and google test
+# This should be removed once both packages are updated (Today: April 4, 2025)
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
+
 # set(CMAKE_BUILD_TYPE Release)
 set(CHUNK_SIZE 32)
 set(NUM_CHUNKS 1)
@@ -76,6 +80,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(kokkos)
 
+# Install yaml content
 FetchContent_Declare(
         yaml
         URL https://github.com/jbeder/yaml-cpp/archive/refs/tags/0.8.0.tar.gz
