@@ -441,7 +441,9 @@ end subroutine save_databases_attenuation
 
 subroutine save_databases_materials()
 
-   use constants, only: IOUT,ISOTROPIC_MATERIAL,ANISOTROPIC_MATERIAL,POROELASTIC_MATERIAL,ELECTROMAGNETIC_MATERIAL
+   use constants, only: IOUT,ISOTROPIC_MATERIAL,ANISOTROPIC_MATERIAL, &
+                        POROELASTIC_MATERIAL,ELECTROMAGNETIC_MATERIAL, &
+                        ISOTROPIC_SPIN_MATERIAL
    use part_unstruct_par
    use shared_parameters
 
@@ -517,6 +519,22 @@ subroutine save_databases_materials()
          !write(IOUT) i,icodemat(i),rho_s_read(i),rho_f_read(i),phi_read(i),tortuosity_read(i), &
          !            permxx_read(i),permxz_read(i),permzz_read(i),kappa_s_read(i), &
          !            kappa_f_read(i),kappa_fr_read(i),eta_f_read(i),mu_fr_read(i),Qmu(i)
+
+      else if (indic == ISOTROPIC_SPIN_MATERIAL) then
+         ! isotropic elastic/acoustic with spin
+         val0 = rho_s(i)
+         val1 = kappa_s(i)
+         val2 = mu_s(i)
+         val3 = nu_s(i)
+         val4 = j_sc(i)
+         val5 = kappa_sc(i)
+         val6 = mu_sc(i)
+         val7 = nu_sc(i)
+         val8 = 0.d0
+         val9 = 0.d0
+         val10 = 0.d0
+         val11 = 0.d0
+         val12 = 0.d0
 
       else if (indic == ELECTROMAGNETIC_MATERIAL) then
          ! electromagnetic
