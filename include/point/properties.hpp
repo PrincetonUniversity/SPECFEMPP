@@ -107,7 +107,7 @@ struct properties<
 
   // Additional elastic properties for spin media _c for _couple
   DEFINE_POINT_VALUE(lambdaplus2mu_c,
-                     4)       ///< bulk modulus @f$ \lambda_c + 2\mu @f$
+                     4)       ///< bulk modulus @f$ \lambda_c + 2\mu_c @f$
   DEFINE_POINT_VALUE(mu_c, 5) ///< shear modulus @f$ \mu_c @f$
   DEFINE_POINT_VALUE(j, 6)    ///< density @f$ j @f$
   DEFINE_POINT_VALUE(nu_c, 7) ///< symmetry breaking modulus @f$ \nu_c @f$
