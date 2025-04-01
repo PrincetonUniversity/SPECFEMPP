@@ -53,7 +53,7 @@ assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates) {
   for (int ispec = 0; ispec < nspec; ispec++) {
     for (int iz = 0; iz < ngll; iz++) {
       for (int ix = 0; ix < ngll; ix++) {
-        int iloc = ix * nspec * ngll + iz * nspec + ispec;
+        int iloc = ispec * (ngllxz) + iz * ngll + ix;
         cart_cord[iloc].x = global_coordinates(ispec, iz, ix, 0);
         cart_cord[iloc].z = global_coordinates(ispec, iz, ix, 1);
         cart_cord[iloc].iloc = iloc;
@@ -107,9 +107,9 @@ assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates) {
   type_real xmax = std::numeric_limits<type_real>::min();
   type_real zmin = std::numeric_limits<type_real>::max();
   type_real zmax = std::numeric_limits<type_real>::min();
-  for (int ix = 0; ix < ngll; ix++) {
+  for (int ispec = 0; ispec < nspec; ispec++) {
     for (int iz = 0; iz < ngll; iz++) {
-      for (int ispec = 0; ispec < nspec; ispec++) {
+      for (int ix = 0; ix < ngll; ix++) {
         if (iglob_counted[copy_cart_cord[iloc].iglob] == -1) {
 
           const type_real x_cor = copy_cart_cord[iloc].x;
