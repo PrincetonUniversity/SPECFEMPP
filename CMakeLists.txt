@@ -634,6 +634,7 @@ add_library(
         src/parameter_parser/header.cpp
         src/parameter_parser/quadrature.cpp
         src/parameter_parser/elastic_wave.cpp
+        src/parameter_parser/electromagnetic_wave.cpp
         src/parameter_parser/receivers.cpp
         src/parameter_parser/writer/seismogram.cpp
         src/parameter_parser/setup.cpp

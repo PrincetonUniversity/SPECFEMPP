@@ -81,7 +81,7 @@ map_materials_with_color(const specfem::compute::assembly &assembly) {
           { 160, 82, 45 } },
         { specfem::element::medium_tag::poroelastic, // off navy color
           { 40, 40, 128 } },
-        { specfem::element::medium_tag::electromagnetic_sv, // dark gray color
+        { specfem::element::medium_tag::electromagnetic_te, // dark gray color
           { 169, 169, 169 } },
       };
 

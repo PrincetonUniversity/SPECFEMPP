@@ -38,8 +38,7 @@ std::string get_error_message(
 
 // SFINAE-enabled overload for specific conditions
 template <specfem::element::medium_tag MediumTag, bool using_simd = false>
-std::enable_if_t<(MediumTag == specfem::element::medium_tag::elastic_psv ||
-                  MediumTag == specfem::element::medium_tag::elastic_sh) &&
+std::enable_if_t<specfem::element::is_elastic<MediumTag>::value &&
                      using_simd == false,
                  std::string>
 get_error_message(
@@ -58,8 +57,7 @@ get_error_message(
 }
 
 template <specfem::element::medium_tag MediumTag, bool using_simd = false>
-std::enable_if_t<(MediumTag == specfem::element::medium_tag::elastic_psv ||
-                  MediumTag == specfem::element::medium_tag::elastic_sh) &&
+std::enable_if_t<specfem::element::is_elastic<MediumTag>::value &&
                      using_simd == false,
                  std::string>
 get_error_message(
@@ -103,11 +101,10 @@ std::string get_error_message(
 /* <--- REMOVE THIS LINE TO ENABLE THE CODE BELOW FOR ELECTROMAGNETIC
 
 // Template get_error_message specialization: electromagnetic isotropic
-template <>
-std::string get_error_message(
-    const specfem::point::properties<
-        specfem::dimension::type::dim2,
-        specfem::element::medium_tag::electromagnetic_sv,
+template <specfem::element::medium_tag MediumTag, bool using_simd = false>
+          std::enable_if_t<specfem::element::is_electromagnetic<MediumTag>::value
+&& using_simd == false, std::string> get_error_message( const
+specfem::point::properties< specfem::dimension::type::dim2, MediumTag,
         specfem::element::property_tag::isotropic, false> &point_property,
     const type_real value, const int mode) {
   std::ostringstream message;
@@ -469,28 +466,28 @@ get_point_property(
 //    electromagnetic p-sv isotropic (No SIMD -> No SIMD)
 template <>
 specfem::point::properties<specfem::dimension::type::dim2,
-                           specfem::element::medium_tag::electromagnetic_sv,
+                           specfem::element::medium_tag::electromagnetic_te,
                            specfem::element::property_tag::isotropic, false>
 get_point_property(
   const int ispec, const int iz, const int ix,
   const specfem::compute::properties &properties) {
 
-  const auto electromagnetic_sv_isotropic =
-      properties.get_container<specfem::element::medium_tag::electromagnetic_sv,
+  const auto electromagnetic_te_isotropic =
+      properties.get_container<specfem::element::medium_tag::electromagnetic_te,
                                specfem::element::property_tag::isotropic>();
 
   const int ispec_l = properties.h_property_index_mapping(ispec);
 
   specfem::point::properties<specfem::dimension::type::dim2,
-                             specfem::element::medium_tag::electromagnetic_sv,
+                             specfem::element::medium_tag::electromagnetic_te,
                              specfem::element::property_tag::isotropic, false>
       point_property;
 
-  point_property.mu0_inv() = electromagnetic_sv_isotropic.h_mu0_inv(ispec_l, iz,
-ix); point_property.eps11() = electromagnetic_sv_isotropic.h_eps11(ispec_l, iz,
-ix); point_property.eps33() = electromagnetic_sv_isotropic.h_eps33(ispec_l, iz,
-ix); point_property.sig11() = electromagnetic_sv_isotropic.h_sig11(ispec_l, iz,
-ix); point_property.sig33() = electromagnetic_sv_isotropic.h_sig33(ispec_l, iz,
+  point_property.mu0_inv() = electromagnetic_te_isotropic.h_mu0_inv(ispec_l, iz,
+ix); point_property.eps11() = electromagnetic_te_isotropic.h_eps11(ispec_l, iz,
+ix); point_property.eps33() = electromagnetic_te_isotropic.h_eps33(ispec_l, iz,
+ix); point_property.sig11() = electromagnetic_te_isotropic.h_sig11(ispec_l, iz,
+ix); point_property.sig33() = electromagnetic_te_isotropic.h_sig33(ispec_l, iz,
 ix);
 
   return point_property;
@@ -500,16 +497,16 @@ ix);
 //    electromagnetic p-sv isotropic (SIMD -> No SIMD)
 template <>
 specfem::point::properties<specfem::dimension::type::dim2,
-                           specfem::element::medium_tag::electromagnetic_sv,
+                           specfem::element::medium_tag::electromagnetic_te,
                            specfem::element::property_tag::isotropic, false>
 get_point_property(
     const int lane,
     const specfem::point::properties<
         specfem::dimension::type::dim2,
-        specfem::element::medium_tag::electromagnetic_sv,
+        specfem::element::medium_tag::electromagnetic_te,
         specfem::element::property_tag::isotropic, true> &point_property) {
   specfem::point::properties<specfem::dimension::type::dim2,
-                             specfem::element::medium_tag::electromagnetic_sv,
+                             specfem::element::medium_tag::electromagnetic_te,
                              specfem::element::property_tag::isotropic, false>
       point_property_l;
 
@@ -777,16 +774,16 @@ void check_point_properties(
 
 /* <--- REMOVE THIS LINE TO ENABLE THE CODE BELOW FOR EM
 
-// Template check_point_properties specialization: electromagnetic sv isotropic
+// Template check_point_properties specialization: electromagnetic te isotropic
 template <bool using_simd>
 void check_point_properties(
     const specfem::point::properties<
         specfem::dimension::type::dim2,
-        specfem::element::medium_tag::electromagnetic_sv,
+        specfem::element::medium_tag::electromagnetic_te,
         specfem::element::property_tag::isotropic, using_simd> &p1,
     const specfem::point::properties<
         specfem::dimension::type::dim2,
-        specfem::element::medium_tag::electromagnetic_sv,
+        specfem::element::medium_tag::electromagnetic_te,
         specfem::element::property_tag::isotropic, using_simd> &p2,
     const int &n_simd_elements) {
   check_eq<using_simd>(p1.mu0_inv(), p2.mu0_inv(), n_simd_elements, "mu0_inv");
@@ -1177,7 +1174,7 @@ void test_properties(
   auto &element_types = assembly.element_types;
 
   //
-  // ==================== HACKATHON TODO: ADD MEDIUM_TAG_ELECTROMAGNETIC_SV ===
+  // ==================== HACKATHON TODO: ADD MEDIUM_TAG_ELECTROMAGNETIC_TE ===
   //
 
   // stage 1: check if properties are correctly constructed from the assembly
@@ -1207,7 +1204,7 @@ void test_properties(
   //
 
   //
-  // ==================== HACKATHON TODO: ADD MEDIUM_TAG_ELECTROMAGNETIC_SV ===
+  // ==================== HACKATHON TODO: ADD MEDIUM_TAG_ELECTROMAGNETIC_TE ===
   //
 
   // stage 3: modify properties and check store_on_host and load_on_device
@@ -1239,7 +1236,7 @@ void test_properties(
   //
 
   //
-  // ==================== HACKATHON TODO: ADD MEDIUM_TAG_ELECTROMAGNETIC_SV ===
+  // ==================== HACKATHON TODO: ADD MEDIUM_TAG_ELECTROMAGNETIC_TE ===
   //
 
   // stage 5: check if properties are correctly written and read
