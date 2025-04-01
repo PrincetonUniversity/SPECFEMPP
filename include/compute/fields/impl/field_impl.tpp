@@ -35,9 +35,9 @@ specfem::compute::impl::field_impl<DimensionType, MediumTag>::field_impl(
   // Count the total number of distinct global indices for the medium
   int count = 0;
 
-  for (int ix = 0; ix < ngllx; ++ix) {
+  for (int ispec = 0; ispec < nspec; ++ispec) {
     for (int iz = 0; iz < ngllz; ++iz) {
-      for (int ispec = 0; ispec < nspec; ++ispec) {
+      for (int ix = 0; ix < ngllx; ++ix) {
         const auto medium = element_types.get_medium_tag(ispec);
         if (medium == MediumTag) {
           const int index = index_mapping(ispec, iz, ix); // get global index
