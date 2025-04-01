@@ -55,12 +55,68 @@ struct properties<
   DEFINE_POINT_VALUE(rho, 2) ///< density @f$ \rho @f$
 
   KOKKOS_INLINE_FUNCTION const value_type rho_vp() const {
-    return Kokkos::sqrt(rho() * lambdaplus2mu()); ///< P-wave velocity @f$ \rho
-                                                  ///< v_p @f$
+    return Kokkos::sqrt(rho() * lambdaplus2mu()); ///< @f$ \rho v_p @f$
   }
 
   KOKKOS_INLINE_FUNCTION const value_type rho_vs() const {
-    return Kokkos::sqrt(rho() * mu()); ///< S-wave velocity @f$ \rho v_s @f$
+    return Kokkos::sqrt(rho() * mu()); ///< @f$ \rho v_s @f$
+  }
+
+  KOKKOS_INLINE_FUNCTION const value_type lambda() const {
+    return lambdaplus2mu() - (static_cast<value_type>(2.0)) *
+                                 mu(); ///< Lame's parameter @f$ \lambda @f$
+  }
+};
+
+/**
+ * @brief Template specialization for 2D isotropic elastic spin media
+ *
+ * @tparam UseSIMD Boolean indicating whether to use SIMD
+ */
+template <specfem::element::medium_tag MediumTag, bool UseSIMD>
+struct properties<
+    specfem::dimension::type::dim2, MediumTag,
+    specfem::element::property_tag::isotropic, UseSIMD,
+    std::enable_if_t<specfem::element::is_elastic_spin<MediumTag>::value> >
+    : public impl::point_data<6, UseSIMD> {
+
+  /**
+   * @name Typedefs
+   *
+   */
+  ///@{
+  using base_type = impl::point_data<3, UseSIMD>;
+  using value_type = typename base_type::value_type;
+
+  constexpr static auto dimension = specfem::dimension::type::dim2;
+  constexpr static auto medium_tag = MediumTag;
+  constexpr static auto property_tag =
+      specfem::element::property_tag::isotropic;
+
+  constexpr static bool is_point_properties = true;
+  ///@}
+
+  using base_type::base_type;
+
+  // Normal elastic properties
+  DEFINE_POINT_VALUE(lambdaplus2mu,
+                     0)      ///< Lame's parameter @f$ \lambda + 2\mu @f$
+  DEFINE_POINT_VALUE(mu, 1)  ///< shear modulus @f$ \mu @f$
+  DEFINE_POINT_VALUE(rho, 2) ///< density @f$ \rho @f$
+
+  // Additional elastic properties for spin media
+  DEFINE_POINT_VALUE(nu, 3) ///< symmetry breaking modulus @f$ \nu @f$
+  DEFINE_POINT_VALUE(lambdaplus2mu_c, 4) ///< bulk modulus @f$ \kappa @f$
+  DEFINE_POINT_VALUE(mu_c, 5)            ///< shear modulus @f$ \mu @f$
+  DEFINE_POINT_VALUE(j_c, 6)             ///< density @f$ \rho @f$
+  DEFINE_POINT_VALUE(nu_c, 7) ///< symmetry breaking modulus @f$ \nu @f$
+
+  KOKKOS_INLINE_FUNCTION const value_type rho_vp() const {
+    return Kokkos::sqrt(rho() * lambdaplus2mu()); ///< @f$ \rho v_p @f$
+  }
+
+  KOKKOS_INLINE_FUNCTION const value_type rho_vs() const {
+    return Kokkos::sqrt(rho() * mu()); ///< @f$ \rho v_s @f$
   }
 
   KOKKOS_INLINE_FUNCTION const value_type lambda() const {
