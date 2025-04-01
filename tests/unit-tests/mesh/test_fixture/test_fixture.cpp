@@ -26,9 +26,10 @@ MESH::MESH() {
     const auto [database_file, sources_file, stations_file] =
         Test.get_databases();
 
-    const auto wave = Test.get_elastic_wave();
-    specfem::mesh::mesh mesh =
-        specfem::io::read_2d_mesh(database_file, wave, mpi);
+    const auto elastic_wave = Test.get_elastic_wave();
+    const auto electromagnetic_wave = Test.get_electromagnetic_wave();
+    specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(
+        database_file, elastic_wave, electromagnetic_wave, mpi);
 
     meshes.push_back(mesh);
   }

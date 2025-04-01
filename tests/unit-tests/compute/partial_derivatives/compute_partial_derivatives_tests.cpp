@@ -74,7 +74,8 @@ TEST(COMPUTE_TESTS, compute_partial_derivatives) {
   specfem::quadrature::quadratures quadratures(gll);
 
   specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(
-      test_config.database_filename, specfem::enums::elastic_wave::psv, mpi);
+      test_config.database_filename, specfem::enums::elastic_wave::psv,
+      specfem::enums::electromagnetic_wave::te, mpi);
 
   specfem::compute::mesh compute_mesh(mesh.tags, mesh.control_nodes,
                                       quadratures);

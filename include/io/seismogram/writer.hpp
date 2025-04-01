@@ -26,12 +26,16 @@ public:
    * @param nstep_between_samples number of timesteps between seismogram
    * sampling (seismogram sampling frequency)
    */
-  seismogram_writer(const specfem::enums::seismogram::format type,
-                    const specfem::enums::elastic_wave wave_type,
-                    const std::string output_folder, const type_real dt,
-                    const type_real t0, const int nstep_between_samples)
-      : type(type), wave_type(wave_type), output_folder(output_folder), dt(dt),
-        t0(t0), nstep_between_samples(nstep_between_samples) {};
+  seismogram_writer(
+      const specfem::enums::seismogram::format type,
+      const specfem::enums::elastic_wave elastic_wave,
+      const specfem::enums::electromagnetic_wave electromagnetic_wave,
+      const std::string output_folder, const type_real dt, const type_real t0,
+      const int nstep_between_samples)
+      : type(type), elastic_wave(elastic_wave),
+        electromagnetic_wave(electromagnetic_wave),
+        output_folder(output_folder), dt(dt), t0(t0),
+        nstep_between_samples(nstep_between_samples) {};
   /**
    * @brief Write seismograms
    *
@@ -47,9 +51,13 @@ private:
                              ///< stored
   type_real dt;              ///< Time interval between subsequent timesteps
   type_real t0;              ///< Solver start time
-  specfem::enums::elastic_wave wave_type; ///< Type of wavefield (Writes
-                                          ///< .BXY for SH waves and .BXX,
-                                          ///< .BXZ for SV waves)
+  specfem::enums::elastic_wave elastic_wave; ///< Type of wavefield (Writes
+                                             ///< .BXY for SH waves and .BXX,
+                                             ///< .BXZ for P-SV waves)
+  specfem::enums::electromagnetic_wave
+      electromagnetic_wave;  ///< Type of
+                             ///< electromagnetic
+                             ///< wavefield
   int nstep_between_samples; ///< number of timesteps between seismogram
                              ///< sampling (seismogram sampling frequency)
 };

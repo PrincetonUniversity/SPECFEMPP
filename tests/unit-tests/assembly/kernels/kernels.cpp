@@ -93,12 +93,12 @@ std::string get_error_message(
 /* <--- Remove this line when em kernels are implemented
 
 
-// Template get_error_message specialization: electromagnetic sv isotropic
+// Template get_error_message specialization: electromagnetic te isotropic
 template <>
 std::string get_error_message(
     const specfem::point::kernels<
         specfem::dimension::type::dim2,
-        specfem::element::medium_tag::electromagnetic_sv,
+        specfem::element::medium_tag::electromagnetic_te,
         specfem::element::property_tag::isotropic, false> &point_kernel,
     const type_real value) {
   std::ostringstream message;
@@ -473,22 +473,22 @@ get_point_kernel(
 /* <--- REMOVE THIS LINE TO ENABLE THE CODE BELOW FOR EM
 
 // Template get_point_kernel specialization:
-//   electromagnetic sv isotropic (No SIMD -> No SIMD)
+//   electromagnetic te isotropic (No SIMD -> No SIMD)
 template <>
 specfem::point::kernels<specfem::dimension::type::dim2,
-                        specfem::element::medium_tag::electromagnetic_sv,
+                        specfem::element::medium_tag::electromagnetic_te,
                         specfem::element::property_tag::isotropic, false>
 get_point_kernel(const int ispec, const int iz, const int ix,
                   const specfem::compute::kernels &kernels) {
 
     const auto electromagnetic_isotropic =
-        kernels.get_container<specfem::element::medium_tag::electromagnetic_sv,
+        kernels.get_container<specfem::element::medium_tag::electromagnetic_te,
                               specfem::element::property_tag::isotropic>();
 
     const int ispec_l = kernels.h_property_index_mapping(ispec);
 
     specfem::point::kernels<specfem::dimension::type::dim2,
-                            specfem::element::medium_tag::electromagnetic_sv,
+                            specfem::element::medium_tag::electromagnetic_te,
                             specfem::element::property_tag::isotropic, false>
         point_kernel;
 
@@ -504,19 +504,19 @@ ix);
   }
 
 // Template get_point_kernel specialization:
-//   electromagnetic sv isotropic (SIMD -> No SIMD)
+//   electromagnetic te isotropic (SIMD -> No SIMD)
 template <>
 specfem::point::kernels<specfem::dimension::type::dim2,
-                        specfem::element::medium_tag::electromagnetic_sv,
+                        specfem::element::medium_tag::electromagnetic_te,
                         specfem::element::property_tag::isotropic, false>
 get_point_kernel(
     const int lane,
     const specfem::point::kernels<
         specfem::dimension::type::dim2,
-        specfem::element::medium_tag::electromagnetic_sv,
+        specfem::element::medium_tag::electromagnetic_te,
         specfem::element::property_tag::isotropic, true> &point_kernel) {
   specfem::point::kernels<specfem::dimension::type::dim2,
-                          specfem::element::medium_tag::electromagnetic_sv,
+                          specfem::element::medium_tag::electromagnetic_te,
                           specfem::element::property_tag::isotropic, false>
       point_kernel_l;
 
@@ -896,7 +896,7 @@ void test_kernels(specfem::compute::assembly &assembly) {
   //
 
   //
-  // == HACKATHON TODO: ADD MEDIUM_TAG_ELECTROMAGNETIC_SV
+  // == HACKATHON TODO: ADD MEDIUM_TAG_ELECTROMAGNETIC_TE
   //                                           IFF EM KERNEL is implemented. ==
   //
 

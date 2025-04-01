@@ -16,7 +16,7 @@ CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
     WHERE(DIMENSION_TAG_DIM2)
         WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
               MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
-              MEDIUM_TAG_ELECTROMAGNETIC_SV)
+              MEDIUM_TAG_ELECTROMAGNETIC_TE)
             WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
 #undef MEDIUM_TYPE
@@ -29,7 +29,7 @@ CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
       TYPE_NAME,                                                               \
       WHERE(DIMENSION_TAG_DIM2) WHERE(                                         \
           MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,  \
-          MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_SV)               \
+          MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_TE)               \
           WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)))>
 
 using MaterialVectorType = std::vector<MAKE_VARIANT_RETURN>; /// NOLINT
@@ -109,13 +109,13 @@ const static std::unordered_map<std::string, MaterialVectorType>
       { "Electro-magnetic mesh example from Morency 2020",
         MaterialVectorType(
             { specfem::medium::material<
-                  specfem::element::medium_tag::electromagnetic_sv,
+                  specfem::element::medium_tag::electromagnetic_te,
                   specfem::element::property_tag::isotropic>(
                   12.566 * std::pow(10, -7), 8.85 * std::pow(10, -12), 5.0, 5.0,
                   2.0 * std::pow(10, -3), 2.0 * std::pow(10, -3), 90.0, 90.0,
                   90.0, 90.0),
               specfem::medium::material<
-                  specfem::element::medium_tag::electromagnetic_sv,
+                  specfem::element::medium_tag::electromagnetic_te,
                   specfem::element::property_tag::isotropic>(
                   12.566 * std::pow(10, -7), 8.85 * std::pow(10, -12), 1.0, 1.0,
                   0.0 * std::pow(10, -3), 0.0 * std::pow(10, -3), 90.0, 90.0,
@@ -172,7 +172,7 @@ void check_test(
         CHECK_MATERIAL,
         WHERE(DIMENSION_TAG_DIM2) WHERE(
             MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-            MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_SV)
+            MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_TE)
             WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
 #undef CHECK_MATERIAL
