@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../simd.hpp"
 #include <Kokkos_Core.hpp>
 #include <mdspan/mdspan.hpp>
 
@@ -26,6 +25,8 @@ private:
 
 public:
   using value_type = T;
+
+  KOKKOS_INLINE_FUNCTION
   RegisterArray(const value_type value) {
 
     for (std::size_t i = 0; i < size; ++i) {
@@ -35,8 +36,10 @@ public:
 
   template <typename... Args,
             typename std::enable_if<sizeof...(Args) == size, bool>::type = true>
-  RegisterArray(const Args &...args) : m_value{ args... } {}
+  KOKKOS_INLINE_FUNCTION RegisterArray(const Args &...args)
+      : m_value{ args... } {}
 
+  KOKKOS_INLINE_FUNCTION
   RegisterArray(const RegisterArray &other) {
 
     for (std::size_t i = 0; i < size; ++i) {
@@ -44,6 +47,7 @@ public:
     }
   }
 
+  KOKKOS_INLINE_FUNCTION
   RegisterArray() {
     for (std::size_t i = 0; i < size; ++i) {
       m_value[i] = 0.0;
@@ -57,15 +61,18 @@ public:
   }
 
   template <typename... IndexType>
-  value_type &operator()(const IndexType &...i) {
+  KOKKOS_INLINE_FUNCTION constexpr value_type &
+  operator()(const IndexType &...i) {
     return m_value[mapping()(i...)];
   }
 
   template <typename... IndexType>
-  const value_type &operator()(const IndexType &...i) const {
+  KOKKOS_INLINE_FUNCTION constexpr const value_type &
+  operator()(const IndexType &...i) const {
     return m_value[mapping()(i...)];
   }
 
+  KOKKOS_INLINE_FUNCTION
   T l2_norm() const {
     return l2_norm(std::integral_constant<bool, rank == 1>());
   }
@@ -73,6 +80,7 @@ public:
 private:
   T m_value[size]; ///< Data array
 
+  KOKKOS_INLINE_FUNCTION
   T l2_norm(const std::true_type &) const {
     T norm = 0.0;
     for (std::size_t i = 0; i < size; ++i) {
@@ -81,6 +89,7 @@ private:
     return Kokkos::sqrt(norm);
   }
 
+  KOKKOS_INLINE_FUNCTION
   T l2_norm(const std::false_type &) const {
     static_assert(rank == 1, "l2_norm is only implemented for 1-D arrays");
     return 0.0;
