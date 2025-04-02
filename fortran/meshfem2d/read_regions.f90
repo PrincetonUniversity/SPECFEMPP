@@ -35,12 +35,15 @@
 
 ! reads in material definitions in DATA/Par_file and outputs to num_material
 
-  use constants, only: IMAIN,ANISOTROPIC_MATERIAL,POROELASTIC_MATERIAL,ELECTROMAGNETIC_MATERIAL,TINYVAL,myrank
+  use constants, only: IMAIN,ANISOTROPIC_MATERIAL,POROELASTIC_MATERIAL, &
+                       ELECTROMAGNETIC_MATERIAL,ISOTROPIC_SPIN_MATERIAL, &
+                       TINYVAL,myrank
 
   use shared_parameters, only: nbregions,nbmodels,num_material,icodemat, &
     cp,cs, &
     rho_s_read,QKappa,Qmu, &
     aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11, &
+    rho_s ,kappa_s ,mu_s, nu_s, j_sc, kappa_sc, mu_sc, nu_sc, &
     nelmnts,nxread,nzread
 
   implicit none
@@ -109,7 +112,8 @@
 
     ! determines region domain
     if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. icodemat(imaterial_number) /= POROELASTIC_MATERIAL &
-         .and. icodemat(imaterial_number) /= ELECTROMAGNETIC_MATERIAL) then
+         .and. icodemat(imaterial_number) /= ELECTROMAGNETIC_MATERIAL .and. &
+         icodemat(imaterial_number) /= ISOTROPIC_SPIN_MATERIAL) then
       ! isotropic material
       vpregion = cp(imaterial_number)
       vsregion = cs(imaterial_number)
@@ -147,6 +151,11 @@
       ! electromagentic material
       write(IMAIN,*) 'Material # ',imaterial_number,' electromagnetic'
       write(IMAIN,*) 'Material is electromagnetic'
+
+    else if (icodemat(imaterial_number) == ISOTROPIC_SPIN_MATERIAL) then
+      ! isotropic spin material
+      write(IMAIN,*) 'Material # ',imaterial_number,' isotropic spin'
+      write(IMAIN,*) 'Material is Cosserat medium'
     else
       ! anisotropic material
       write(IMAIN,*) 'Material # ',imaterial_number,' anisotropic'

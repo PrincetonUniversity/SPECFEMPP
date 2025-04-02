@@ -52,7 +52,7 @@ public:
            type_real j, type_real kappa_c, type_real mu_c, type_real nu_c)
       : rho(rho), kappa(kappa), mu(mu), nu(nu), j(j), kappa_c(kappa_c),
         mu_c(mu_c), nu_c(nu_c) {
-          // TODO: Add checks for the material properties electromagnetic_te
+          // TODO: Add checks for the material properties elastin spin
           // Currently, we there aren't any checks for the material properties
           // but we can add them here
         };
@@ -91,7 +91,7 @@ public:
    * @return true If the materials have different properties
    */
   bool operator!=(
-      const material<specfem::element::medium_tag::electromagnetic_te,
+      const material<specfem::element::medium_tag::elastic_psv_t,
                      specfem::element::property_tag::isotropic> &other) const {
     return !(*this == other);
   }
