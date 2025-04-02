@@ -107,6 +107,18 @@ Tests:
       sources: "data/mesh/homogeneous_poroelastic_isotropic/sources.yaml"
       stations: "data/mesh/homogeneous_poroelastic_isotropic/DATA/STATIONS"
 
+  # Elastic Spin mesh
+  - name: "Elastic Spin mesh - Homogeneous isotropic material"
+    description: >
+      Testing the reading of an elastic spin mesh.
+    config:
+      nproc: 1
+      elastic_wave: "P_SV"
+    databases:
+      mesh: "data/mesh/cosserat_isotropic_homogeneous/database.bin"
+      sources: "data/mesh/cosserat_isotropic_homogeneous/sources.yaml"
+      stations: "data/mesh/cosserat_isotropic_homogeneous/DATA/STATIONS"
+
 # # Electromagnetic mesh P_SV wave
 #   - name: "Electro-magnetic mesh example from Morency 2020"
 #     description: >
