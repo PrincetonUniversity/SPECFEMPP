@@ -3,6 +3,7 @@
 #include "compute/element_types/element_types.hpp"
 #include "compute/fields/impl/field_impl.hpp"
 #include "kokkos_abstractions.h"
+#include "parallel_configuration/chunk_config.hpp"
 #include <Kokkos_Core.hpp>
 
 template <specfem::dimension::type DimensionType,
@@ -35,18 +36,25 @@ specfem::compute::impl::field_impl<DimensionType, MediumTag>::field_impl(
   // Count the total number of distinct global indices for the medium
   int count = 0;
 
-  for (int ix = 0; ix < ngllx; ++ix) {
-    for (int iz = 0; iz < ngllz; ++iz) {
-      for (int ispec = 0; ispec < nspec; ++ispec) {
-        const auto medium = element_types.get_medium_tag(ispec);
-        if (medium == MediumTag) {
-          const int index = index_mapping(ispec, iz, ix); // get global index
-          // increase the count only if the global index is not already counted
-          /// static_cast<int>(medium::value) is the index of the medium in the
-          /// enum class
-          if (assembly_index_mapping(index) == -1) {
-            assembly_index_mapping(index) = count;
-            count++;
+  constexpr int chunk_size = specfem::parallel_config::storage_chunk_size;
+  int nchunks = nspec / chunk_size + (nspec % chunk_size != 0);
+  int iloc = 0;
+  for (int ichunk = 0; ichunk < nchunks; ichunk++) {
+    for (int ix = 0; ix < ngllx; ix++) {
+      for (int iz = 0; iz < ngllz; iz++) {
+        for (int ielement = 0; ielement < chunk_size; ielement++) {
+          int ispec = ichunk * chunk_size + ielement;
+          const auto medium = element_types.get_medium_tag(ispec);
+          if (medium == MediumTag) {
+            const int index = index_mapping(ispec, iz, ix); // get global index
+            // increase the count only if the global index is not already
+            // counted
+            /// static_cast<int>(medium::value) is the index of the medium in
+            /// the enum class
+            if (assembly_index_mapping(index) == -1) {
+              assembly_index_mapping(index) = count;
+              count++;
+            }
           }
         }
       }
