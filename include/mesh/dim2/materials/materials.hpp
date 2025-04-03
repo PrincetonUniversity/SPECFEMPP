@@ -76,15 +76,15 @@ template <> struct materials<specfem::dimension::type::dim2> {
       WHERE(DIMENSION_TAG_DIM2)
           WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                 MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
-                MEDIUM_TAG_ELECTROMAGNETIC_SV)
+                MEDIUM_TAG_ELECTROMAGNETIC_TE)
               WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
 #undef DEFINE_MATERIAL_CONTAINER
 
   specfem::mesh::materials<specfem::dimension::type::dim2>::material<
-      specfem::element::medium_tag::electromagnetic_sv,
+      specfem::element::medium_tag::electromagnetic_te,
       specfem::element::property_tag::isotropic>
-      electromagnetic_sv_isotropic; ///< Electromagnetic material properties SV
+      electromagnetic_te_isotropic; ///< Electromagnetic material propertie TE
 
   /**
    * @name Constructors
@@ -119,7 +119,7 @@ private:
       WHERE(DIMENSION_TAG_DIM2)
           WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                 MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
-                MEDIUM_TAG_ELECTROMAGNETIC_SV)
+                MEDIUM_TAG_ELECTROMAGNETIC_TE)
               WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
 #undef SOURCE_MEDIUM_STORE_ON_DEVICE
@@ -133,7 +133,7 @@ public:
       TYPE_NAME,
       WHERE(DIMENSION_TAG_DIM2) WHERE(
           MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-          MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_SV)
+          MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_TE)
           WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)))>
 
       /**
@@ -146,7 +146,6 @@ public:
 
 #undef MAKE_VARIANT_RETURN
 #undef TYPE_NAME
-
     const auto &material_specification = this->material_index_mapping(index);
 
 #define RETURN_VALUE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                  \
@@ -162,7 +161,7 @@ public:
         RETURN_VALUE,
         WHERE(DIMENSION_TAG_DIM2) WHERE(
             MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-            MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_SV)
+            MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_TE)
             WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
 #undef RETURN_VALUE
@@ -190,12 +189,11 @@ public:
     return this->CREATE_VARIABLE_NAME(material, GET_NAME(MEDIUM_TAG),          \
                                       GET_NAME(PROPERTY_TAG));                 \
   }
-
     CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
         RETURN_VALUE,
         WHERE(DIMENSION_TAG_DIM2) WHERE(
             MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-            MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_SV)
+            MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_TE)
             WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
 #undef RETURN_VALUE

@@ -3,6 +3,7 @@
 
 #include "database_configuration.hpp"
 #include "elastic_wave.hpp"
+#include "electromagnetic_wave.hpp"
 #include "header.hpp"
 #include "io/reader.hpp"
 #include "parameter_parser/solver/interface.hpp"
@@ -100,6 +101,17 @@ public:
   }
 
   /**
+   * @brief Get the type of the electromagnetic wave
+   *
+   * @return specfem::enums::electromagnetic_wave Type of the electromagnetic
+   * wave
+   */
+  inline specfem::enums::electromagnetic_wave
+  get_electromagnetic_wave_type() const {
+    return this->electromagnetic_wave->get_electromagnetic_wave_type();
+  }
+
+  /**
    * @brief Get delta time value
    *
    * @return type_real
@@ -160,8 +172,8 @@ public:
   std::shared_ptr<specfem::io::writer> instantiate_seismogram_writer() const {
     if (this->seismogram) {
       return this->seismogram->instantiate_seismogram_writer(
-          this->get_elastic_wave_type(), this->time_scheme->get_dt(),
-          this->time_scheme->get_t0(),
+          this->get_elastic_wave_type(), this->get_electromagnetic_wave_type(),
+          this->time_scheme->get_dt(), this->time_scheme->get_t0(),
           this->receivers->get_nstep_between_samples());
     } else {
       return nullptr;
@@ -240,6 +252,8 @@ private:
                                                                   ///< object
   std::unique_ptr<specfem::runtime_configuration::elastic_wave>
       elastic_wave; ///< Pointer to elastic wave object
+  std::unique_ptr<specfem::runtime_configuration::electromagnetic_wave>
+      electromagnetic_wave; ///< Pointer to electromagnetic wave object
   std::unique_ptr<specfem::runtime_configuration::time_scheme::time_scheme>
       time_scheme; ///< Pointer to solver
                    ///< object
