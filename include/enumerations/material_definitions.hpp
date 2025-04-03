@@ -32,6 +32,8 @@ namespace element {
   (0, specfem::element::property_tag::isotropic, isotropic)
 #define PROPERTY_TAG_ANISOTROPIC                                               \
   (1, specfem::element::property_tag::anisotropic, anisotropic)
+#define PROPERTY_TAG_ISOTROPIC_COSSERAT                                        \
+  (2, specfem::element::property_tag::isotropic_cosserat, isotropic)
 
 #define BOUNDARY_TAG_NONE (0, specfem::element::boundary_tag::none, none)
 #define BOUNDARY_TAG_STACEY (1, specfem::element::boundary_tag::stacey, stacey)
@@ -102,7 +104,8 @@ constexpr auto medium_types() {
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV, PROPERTY_TAG_ANISOTROPIC))( \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH, PROPERTY_TAG_ISOTROPIC))(    \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH, PROPERTY_TAG_ANISOTROPIC))(  \
-      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV_T, PROPERTY_TAG_ISOTROPIC))( \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV_T,                           \
+       PROPERTY_TAG_ISOTROPIC_COSSERAT))(                                      \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC, PROPERTY_TAG_ISOTROPIC))(      \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_POROELASTIC, PROPERTY_TAG_ISOTROPIC))(   \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_TE,                      \
@@ -148,7 +151,8 @@ constexpr auto material_systems() {
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH, PROPERTY_TAG_ISOTROPIC,      \
        BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH,         \
                             PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_STACEY))(     \
-      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV_T, PROPERTY_TAG_ISOTROPIC,   \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV_T,                           \
+       PROPERTY_TAG_ISOTROPIC_COSSERAT,                                        \
        BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC,           \
                             PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_NONE))(       \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC, PROPERTY_TAG_ISOTROPIC,        \
