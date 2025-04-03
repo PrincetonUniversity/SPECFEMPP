@@ -15,8 +15,9 @@
 CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
     MEDIUM_TYPE,
     WHERE(DIMENSION_TAG_DIM2)
-        WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-              MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_SV)
+        WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+              MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
+              MEDIUM_TAG_ELECTROMAGNETIC_TE)
             WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
 #undef MEDIUM_TYPE
@@ -28,8 +29,8 @@ CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
   std::variant<BOOST_PP_SEQ_ENUM(CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(          \
       TYPE_NAME,                                                               \
       WHERE(DIMENSION_TAG_DIM2) WHERE(                                         \
-          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,   \
-          MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_SV)               \
+          MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,  \
+          MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_TE)               \
           WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)))>
 
 using MaterialVectorType = std::vector<MAKE_VARIANT_RETURN>; /// NOLINT
@@ -43,7 +44,7 @@ const static std::unordered_map<std::string, MaterialVectorType>
     ground_truth = {
       { "Simple mesh with flat topography (P_SV wave)",
         MaterialVectorType({ specfem::point::properties<
-            dimension, specfem::element::medium_tag::elastic_sv,
+            dimension, specfem::element::medium_tag::elastic_psv,
             specfem::element::property_tag::isotropic, false>(
             static_cast<type_real>(24300000000.0),
             static_cast<type_real>(8100001799.82),
@@ -57,7 +58,7 @@ const static std::unordered_map<std::string, MaterialVectorType>
             static_cast<type_real>(2700.0)) }) },
       { "Simple mesh with curved topography",
         MaterialVectorType({ specfem::point::properties<
-            dimension, specfem::element::medium_tag::elastic_sv,
+            dimension, specfem::element::medium_tag::elastic_psv,
             specfem::element::property_tag::isotropic, false>(
             static_cast<type_real>(24300000000.0),
             static_cast<type_real>(8100001799.82),
@@ -65,7 +66,7 @@ const static std::unordered_map<std::string, MaterialVectorType>
       { "Simple mesh with flat ocean bottom",
         MaterialVectorType(
             { specfem::point::properties<
-                  dimension, specfem::element::medium_tag::elastic_sv,
+                  dimension, specfem::element::medium_tag::elastic_psv,
                   specfem::element::property_tag::isotropic, false>(
                   static_cast<type_real>(28900000000.0),
                   static_cast<type_real>(9633422500.0),
@@ -80,7 +81,7 @@ const static std::unordered_map<std::string, MaterialVectorType>
       { "Simple mesh with curved ocean bottom",
         MaterialVectorType(
             { specfem::point::properties<
-                  dimension, specfem::element::medium_tag::elastic_sv,
+                  dimension, specfem::element::medium_tag::elastic_psv,
                   specfem::element::property_tag::isotropic, false>(
                   static_cast<type_real>(28900000000.0),
                   static_cast<type_real>(9633422500.0),
@@ -107,7 +108,7 @@ const static std::unordered_map<std::string, MaterialVectorType>
 
       { "Homogeneous Elastic Anisotropic Material (P_SV wave)",
         MaterialVectorType({ specfem::point::properties<
-            dimension, specfem::element::medium_tag::elastic_sv,
+            dimension, specfem::element::medium_tag::elastic_psv,
             specfem::element::property_tag::anisotropic, false>(
             static_cast<type_real>(24299994600.5),
             static_cast<type_real>(8099996400.35), static_cast<type_real>(0.0),
@@ -142,7 +143,7 @@ const static std::unordered_map<std::string, MaterialVectorType>
       { "Electro-magnetic mesh example from Morency 2020",
         MaterialVectorType({
             specfem::point::properties<
-                dimension, specfem::element::medium_tag::electromagnetic_sv,
+                dimension, specfem::element::medium_tag::electromagnetic_te,
                 specfem::element::property_tag::isotropic, false>(
                 static_cast<type_real>(1.0 / (12.566 * 1e-7)), // mu0_inv
                 static_cast<type_real>(5.0 * 8.85 * 1e-12),    // e0_e11
@@ -150,7 +151,7 @@ const static std::unordered_map<std::string, MaterialVectorType>
                 static_cast<type_real>(2.0 * 1e-3),            // sig11
                 static_cast<type_real>(2.0 * 1e-3)),           // sig33
             specfem::point::properties<
-                dimension, specfem::element::medium_tag::electromagnetic_sv,
+                dimension, specfem::element::medium_tag::electromagnetic_te,
                 specfem::element::property_tag::isotropic, false>(
                 static_cast<type_real>(1.0 / (12.566 * 1e-7)), // mu0_inv
                 static_cast<type_real>(1.0 * 8.85 * 1e-12),    // e0_e11
@@ -212,8 +213,8 @@ void check_test(
     CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
         CHECK_MATERIAL,
         WHERE(DIMENSION_TAG_DIM2) WHERE(
-            MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-            MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_SV)
+            MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
+            MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_TE)
             WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
 #undef CHECK_MATERIAL

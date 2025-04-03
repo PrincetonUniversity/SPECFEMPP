@@ -5,9 +5,9 @@ from scipy.interpolate import griddata
 
 # Load the kernels
 def load_data(directory):
-    X = np.loadtxt(directory + "/elastic_sv_isotropic/X.txt")
-    Z = np.loadtxt(directory + "/elastic_sv_isotropic/Z.txt")
-    data = np.loadtxt(directory + "/elastic_sv_isotropic/data.txt").reshape(
+    X = np.loadtxt(directory + "/elastic_psv_isotropic/X.txt")
+    Z = np.loadtxt(directory + "/elastic_psv_isotropic/Z.txt")
+    data = np.loadtxt(directory + "/elastic_psv_isotropic/data.txt").reshape(
         6, X.shape[0]
     )
 

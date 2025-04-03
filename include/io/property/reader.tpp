@@ -51,7 +51,7 @@ void specfem::io::property_reader<InputLibrary>::read(
   //       .openDataset(
   //           "data",
   //           properties
-  //               .get_container<specfem::element::medium_tag::elastic_sv,
+  //               .get_container<specfem::element::medium_tag::elastic_psv,
   //                              specfem::element::property_tag::isotropic>()
   //               .h_data)
   //       .read();
@@ -79,7 +79,7 @@ void specfem::io::property_reader<InputLibrary>::read(
   //       .openDataset(
   //           "data",
   //           properties
-  //               .get_container<specfem::element::medium_tag::elastic_sv,
+  //               .get_container<specfem::element::medium_tag::elastic_psv,
   //                              specfem::element::property_tag::anisotropic>()
   //               .h_data)
   //       .read();

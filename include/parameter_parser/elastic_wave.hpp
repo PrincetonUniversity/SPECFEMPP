@@ -30,7 +30,7 @@ public:
    */
   inline specfem::enums::elastic_wave get_elastic_wave_type() const {
     if (this->elastic_wave_type == "P_SV") {
-      return specfem::enums::elastic_wave::p_sv;
+      return specfem::enums::elastic_wave::psv;
     } else if (this->elastic_wave_type == "SH") {
       return specfem::enums::elastic_wave::sh;
     } else {

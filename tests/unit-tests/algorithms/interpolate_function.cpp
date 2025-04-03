@@ -18,10 +18,13 @@ TEST(ALGORITHMS, interpolate_function) {
 
   std::string database_file = "algorithms/serial/database.bin";
 
-  // Read Mesh database
+  // Initialize MPI
   specfem::MPI::MPI *mpi = MPIEnvironment::get_mpi();
+
+  // Read Mesh database
   specfem::mesh::mesh mesh = specfem::io::read_2d_mesh(
-      database_file, specfem::enums::elastic_wave::p_sv, mpi);
+      database_file, specfem::enums::elastic_wave::psv,
+      specfem::enums::electromagnetic_wave::te, mpi);
 
   constexpr int N = 5;
 

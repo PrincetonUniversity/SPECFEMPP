@@ -63,7 +63,7 @@ template class specfem::compute::impl::source_medium<
     specfem::dimension::type::dim2, specfem::element::medium_tag::acoustic>;
 
 template class specfem::compute::impl::source_medium<
-    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic_sv>;
+    specfem::dimension::type::dim2, specfem::element::medium_tag::elastic_psv>;
 
 template class specfem::compute::impl::source_medium<
     specfem::dimension::type::dim2, specfem::element::medium_tag::poroelastic>;
@@ -104,9 +104,10 @@ specfem::compute::sources::sources(
           sources, element_types, mesh);
 
   CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
-      SORT_SOURCES_PER_MEDIUM, WHERE(DIMENSION_TAG_DIM2) WHERE(
-                                   MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
-                                   MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC))
+      SORT_SOURCES_PER_MEDIUM,
+      WHERE(DIMENSION_TAG_DIM2)
+          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC))
 
 #undef SORT_SOURCES_PER_MEDIUM
 
@@ -125,7 +126,7 @@ specfem::compute::sources::sources(
 
   CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
       COUNT_SOURCES, WHERE(DIMENSION_TAG_DIM2)
-                         WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
+                         WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC))
 
 #undef COUNT_SOURCES
@@ -189,7 +190,7 @@ specfem::compute::sources::sources(
 
   CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
       ASSIGN_MEMBERS, WHERE(DIMENSION_TAG_DIM2)
-                          WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
+                          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                                 MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC))
 
 #undef ASSIGN_MEMBERS
@@ -236,7 +237,7 @@ specfem::compute::sources::sources(
   CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
       COUNT_SOURCES_PER_ELEMENT_TYPE,
       WHERE(DIMENSION_TAG_DIM2)
-          WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
+          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                 MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
               WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC) WHERE(
                   BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
@@ -347,7 +348,7 @@ specfem::compute::sources::sources(
   CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
       ALLOCATE_SOURCES_PER_ELEMENT_TYPE,
       WHERE(DIMENSION_TAG_DIM2)
-          WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
+          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                 MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
               WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC) WHERE(
                   BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
@@ -503,7 +504,7 @@ specfem::compute::sources::sources(
   CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
       ASSIGN_SOURCES_PER_ELEMENT_TYPE,
       WHERE(DIMENSION_TAG_DIM2)
-          WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
+          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                 MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
               WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC) WHERE(
                   BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
@@ -566,7 +567,7 @@ specfem::compute::sources::get_sources_on_host(
   CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
       RETURN_VALUE,
       WHERE(DIMENSION_TAG_DIM2)
-          WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
+          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                 MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
               WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC) WHERE(
                   BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
@@ -633,7 +634,7 @@ specfem::compute::sources::get_sources_on_device(
   CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
       RETURN_VALUE,
       WHERE(DIMENSION_TAG_DIM2)
-          WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
+          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                 MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
               WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC) WHERE(
                   BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,

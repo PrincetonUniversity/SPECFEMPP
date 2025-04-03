@@ -29,7 +29,7 @@ struct impl_kernels_container
 };
 
 template <specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag>
+          specfem::element::property_tag PropertyTag, typename Enable = void>
 class kernels_container;
 
 } // namespace medium

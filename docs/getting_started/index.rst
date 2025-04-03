@@ -101,7 +101,7 @@ Build recipes
 -------------
 
 SPECFEM++ inherits several architecure specific cmake configuration keywords
-from `Kokkos <https://kokkos.github.io/kokkos-core-wiki/keywords.html>`_.
+from `Kokkos <https://kokkos.org/kokkos-core-wiki/get-started/configuration-guide.html>`_.
 Below are the recommended build recipes for different architectures:
 
 * CPU Serial version
@@ -133,7 +133,7 @@ Below are the recommended build recipes for different architectures:
     Specify the architecture flag ``-D Kokkos_ARCH_<architecture>`` based on
     the GPU architecture you are using. For example, for NVIDIA Ampere
     architecture, use ``-D Kokkos_ARCH_AMPERE80=ON``. See
-    `Kokkos documentation <https://kokkos.org/kokkos-core-wiki/keywords.html>`_
+    `Kokkos documentation <https://kokkos.org/kokkos-core-wiki/get-started/configuration-guide.html#gpu-architectures>`_
     for more information.
 
 Adding SPECFEM to PATH
