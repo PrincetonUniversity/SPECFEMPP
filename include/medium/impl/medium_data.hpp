@@ -235,7 +235,7 @@ private:
     const int nwork_items =
         work_items.extent(0); // Number of work items to be used for reduction
 
-    for (std::size_t i = 0; i < nprops; i++) {
+    for (std::size_t iprop = 0; iprop < nprops; ++iprop) {
       // Reduce the values in the container
 
       Kokkos::parallel_reduce(
@@ -250,7 +250,7 @@ private:
             // Perform Local reduction
             lvalue = reducer(value, lvalue);
           },
-          GlobalReducer(values.data[i]));
+          GlobalReducer(values.data[iprop]));
     }
 
     return;
