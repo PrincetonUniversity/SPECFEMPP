@@ -75,16 +75,16 @@ endif()
 include(FetchContent)
 FetchContent_Declare(
   kokkos
-  URL https://github.com/kokkos/kokkos/archive/refs/tags/4.5.01.zip
   DOWNLOAD_EXTRACT_TIMESTAMP FALSE
+  URL https://github.com/kokkos/kokkos/archive/refs/tags/4.5.01.zip
 )
 FetchContent_MakeAvailable(kokkos)
 
 # Install yaml content
 FetchContent_Declare(
         yaml
-        URL https://github.com/jbeder/yaml-cpp/archive/refs/tags/0.8.0.tar.gz
         DOWNLOAD_EXTRACT_TIMESTAMP FALSE
+        URL https://github.com/jbeder/yaml-cpp/archive/refs/tags/0.8.0.tar.gz
 )
 FetchContent_MakeAvailable(yaml)
 
@@ -519,6 +519,12 @@ target_link_libraries(
         edge
         receiver_class
         Kokkos::kokkos
+)
+
+target_include_directories(
+        compute
+        INTERFACE
+        ${HDF5_INCLUDE_DIRS}
 )
 
 add_library(

@@ -4,7 +4,6 @@
 #include "compute/fields/impl/field_impl.tpp"
 #include "compute/fields/simulation_field.hpp"
 #include "enumerations/specfem_enums.hpp"
-#include "enumerations/material_definitions.hpp"
 #include "kokkos_abstractions.h"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -71,30 +70,12 @@ specfem::compute::simulation_field<WavefieldType>::simulation_field(
           CREATE_VARIABLE_NAME(index, GET_NAME(DIMENSION_TAG),                 \
                                GET_NAME(MEDIUM_TAG)));
 
-  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(ASSIGN_FIELDS, WHERE(DIMENSION_TAG_DIM2)
-                                                    WHERE(MEDIUM_TAG_ELASTIC_PSV,
-                                                          MEDIUM_TAG_ELASTIC_SH,
-                                                          MEDIUM_TAG_ACOUSTIC))
+  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
+      ASSIGN_FIELDS, WHERE(DIMENSION_TAG_DIM2)
+                         WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                               MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC))
 
 #undef ASSIGN_FIELDS
-
-  // auto acoustic_index =
-  //     Kokkos::subview(h_assembly_index_mapping, Kokkos::ALL,
-  //                     static_cast<int>(specfem::element::medium_tag::acoustic));
-
-  // auto elastic_index =
-  //     Kokkos::subview(h_assembly_index_mapping, Kokkos::ALL,
-  //                     static_cast<int>(specfem::element::medium_tag::elastic_psv));
-
-  // elastic =
-  //     specfem::compute::impl::field_impl<specfem::dimension::type::dim2,
-  //                                        specfem::element::medium_tag::elastic_psv>(
-  //         mesh, element_types, elastic_index);
-
-  // acoustic = specfem::compute::impl::field_impl<
-  //     specfem::dimension::type::dim2,
-  //     specfem::element::medium_tag::acoustic>( mesh, element_types,
-  //     acoustic_index);
 
   Kokkos::deep_copy(assembly_index_mapping, h_assembly_index_mapping);
 
@@ -102,25 +83,24 @@ specfem::compute::simulation_field<WavefieldType>::simulation_field(
 }
 
 template <specfem::wavefield::simulation_field WavefieldType>
-int specfem::compute::simulation_field<
-    WavefieldType>::get_total_degrees_of_freedom() {
-
+int specfem::compute::simulation_field<WavefieldType>::get_total_degrees_of_freedom() {
   if (total_degrees_of_freedom != 0) {
     return total_degrees_of_freedom;
   }
 
-#define GET_DOF(DIMENSION_TAG, MEDIUM_TAG)                                     \
-  total_degrees_of_freedom +=                                                  \
-      this->get_nglob<GET_TAG(MEDIUM_TAG)>() *                                 \
-      specfem::element::attributes<GET_TAG(DIMENSION_TAG),                     \
-                                   GET_TAG(MEDIUM_TAG)>::components();
+#define COMPUTE_TOTAL_DEGREES_OF_FREEDOM(DIMENSION_TAG, MEDIUM_TAG)             \
+  total_degrees_of_freedom += this->get_nglob<GET_TAG(MEDIUM_TAG)>() *         \
+                             specfem::element::attributes<GET_TAG(DIMENSION_TAG),    \
+                                                 GET_TAG(MEDIUM_TAG)>::components();
 
-  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(GET_DOF, WHERE(DIMENSION_TAG_DIM2)
-                                               WHERE(MEDIUM_TAG_ELASTIC_PSV,
-                                                     MEDIUM_TAG_ELASTIC_SH,
-                                                     MEDIUM_TAG_ACOUSTIC))
+  CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
+      COMPUTE_TOTAL_DEGREES_OF_FREEDOM, WHERE(DIMENSION_TAG_DIM2)
+                                            WHERE(MEDIUM_TAG_ELASTIC_PSV,
+                                                  MEDIUM_TAG_ELASTIC_SH,
+                                                  MEDIUM_TAG_ACOUSTIC,
+                                                  MEDIUM_TAG_POROELASTIC))
 
-#undef GET_DOF
+#undef COMPUTE_TOTAL_DEGREES_OF_FREEDOM
 
   return total_degrees_of_freedom;
-}
+} // namespace specfem::compute::simulation_field

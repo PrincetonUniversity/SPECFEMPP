@@ -47,7 +47,7 @@ void specfem::kokkos_kernels::impl::compute_material_derivatives(
       Kokkos::MemoryTraits<Kokkos::Unmanaged>, true, false>;
 
   using AdjointPointFieldType =
-      specfem::point::field<DimensionType, MediumTag, false, false, true, false,
+      specfem::point::field<DimensionType, MediumTag, false, true, true, false,
                             using_simd>;
 
   using BackwardPointFieldType =
