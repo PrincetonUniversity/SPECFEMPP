@@ -17,7 +17,8 @@ CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
         WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
               MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
               MEDIUM_TAG_ELECTROMAGNETIC_TE, MEDIUM_TAG_ELASTIC_PSV_T)
-            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
+            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC,
+                  PROPERTY_TAG_ISOTROPIC_COSSERAT))
 
 #undef MEDIUM_TYPE
 
@@ -26,12 +27,12 @@ CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
 
 #define MAKE_VARIANT_RETURN                                                    \
   std::variant<BOOST_PP_SEQ_ENUM(CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(          \
-      TYPE_NAME,                                                               \
-      WHERE(DIMENSION_TAG_DIM2)                                                \
-          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,                 \
-                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,                   \
-                MEDIUM_TAG_ELECTROMAGNETIC_TE, MEDIUM_TAG_ELASTIC_PSV_T)       \
-              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)))>
+      TYPE_NAME, WHERE(DIMENSION_TAG_DIM2) WHERE(                              \
+                     MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,            \
+                     MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,              \
+                     MEDIUM_TAG_ELECTROMAGNETIC_TE, MEDIUM_TAG_ELASTIC_PSV_T)  \
+                     WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC,   \
+                           PROPERTY_TAG_ISOTROPIC_COSSERAT)))>
 
 using MaterialVectorType = std::vector<MAKE_VARIANT_RETURN>; /// NOLINT
 
@@ -121,10 +122,10 @@ const static std::unordered_map<std::string, MaterialVectorType>
                   12.566 * std::pow(10, -7), 8.85 * std::pow(10, -12), 1.0, 1.0,
                   0.0 * std::pow(10, -3), 0.0 * std::pow(10, -3), 90.0, 90.0,
                   90.0, 90.0) }) },
-      { "Elastic Spin mesh - Homogeneous isotropic material",
+      { "Elastic Isotropic Cosserat Medium - Homogeneous",
         MaterialVectorType({ specfem::medium::material<
             specfem::element::medium_tag::elastic_psv_t,
-            specfem::element::property_tag::isotropic>(
+            specfem::element::property_tag::isotropic_cosserat>(
             1.0e5, 22.667 * 1e9, 4e9, 2e9, 1e4, 1e8, 1.936 * 1e8,
             3.0464 * 1e9) }) }
     };
@@ -181,7 +182,8 @@ void check_test(
             WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                   MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
                   MEDIUM_TAG_ELECTROMAGNETIC_TE, MEDIUM_TAG_ELASTIC_PSV_T)
-                WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
+                WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC,
+                      PROPERTY_TAG_ISOTROPIC_COSSERAT))
 
 #undef CHECK_MATERIAL
 
