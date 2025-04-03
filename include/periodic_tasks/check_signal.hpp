@@ -13,7 +13,7 @@ namespace periodic_tasks {
  *
  */
 class check_signal : public periodic_task {
-  using periodic_task::periodic_task;
+  using periodic_task::periodic_task; 
 
   /**
    * @brief Check for keyboard interrupt and more, when running from Python
