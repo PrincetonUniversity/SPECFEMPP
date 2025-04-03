@@ -108,9 +108,9 @@ Tests:
       stations: "data/mesh/homogeneous_poroelastic_isotropic/DATA/STATIONS"
 
   # Elastic Spin mesh
-  - name: "Elastic Spin mesh - Homogeneous isotropic material"
+  - name: "Elastic Isotropic Cosserat Medium - Homogeneous"
     description: >
-      Testing the reading of an elastic spin mesh.
+      Testing the reading of an mesh with elastic spin.
     config:
       nproc: 1
       elastic_wave: "P_SV"

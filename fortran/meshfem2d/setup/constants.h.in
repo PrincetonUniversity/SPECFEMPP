@@ -357,7 +357,7 @@
   integer, parameter :: ANISOTROPIC_MATERIAL = 2
   integer, parameter :: POROELASTIC_MATERIAL = 3
   integer, parameter :: ELECTROMAGNETIC_MATERIAL = 4
-  integer, parameter :: ISOTROPIC_SPIN_MATERIAL = 5
+  integer, parameter :: ISOTROPIC_COSSERAT_MATERIAL = 5
 
 ! file number for interface file
   integer, parameter :: IIN_INTERFACES = 15

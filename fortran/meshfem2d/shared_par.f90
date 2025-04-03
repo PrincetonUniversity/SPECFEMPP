@@ -413,7 +413,7 @@ module shared_parameters
 
    ! elastic spin medium _s for spin, _sc for spin-couple moduli
    double precision, dimension(:),allocatable :: rho_s, kappa_s, mu_s, nu_s, &
-      j_sc, kappa_sc, mu_sc,  nu_sc
+      j_sc, lambda_sc, mu_sc,  nu_sc
 
    ! poroelastic
    ! note: adds ending _read to indicate these are readin values and to distinguish from solver arrays

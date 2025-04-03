@@ -36,7 +36,7 @@ subroutine read_material_table()
 ! reads in material definitions in DATA/Par_file
 
    use constants, only: IMAIN,TINYVAL,ISOTROPIC_MATERIAL,ANISOTROPIC_MATERIAL,&
-      POROELASTIC_MATERIAL, ISOTROPIC_SPIN_MATERIAL, ELECTROMAGNETIC_MATERIAL
+      POROELASTIC_MATERIAL, ISOTROPIC_COSSERAT_MATERIAL, ELECTROMAGNETIC_MATERIAL
 
    use shared_parameters, only: nbmodels,icodemat, &
       cp,cs, &
@@ -47,7 +47,7 @@ subroutine read_material_table()
       permxx_read,permxz_read,permzz_read,kappa_s_read,kappa_f_read,kappa_fr_read, &
       eta_f_read,mu_fr_read,mu0_read,e0_read,e11_read,e33_read,sig11_read,sig33_read,&
       Qe11_read,Qe33_read,Qs11_read,Qs33_read, &
-      rho_s,kappa_s,mu_s,nu_s,j_sc,kappa_sc,mu_sc,nu_sc, &
+      rho_s,kappa_s,mu_s,nu_s,j_sc,lambda_sc,mu_sc,nu_sc, &
       comp_g
 
    implicit none
@@ -208,14 +208,14 @@ subroutine read_material_table()
       if (val11read > 0.1) QKappa(i) = val11read
       if (val12read > 0.1) Qmu(i) = val12read
 
-    else if (icodemat(i) == ISOTROPIC_SPIN_MATERIAL) then
+    else if (icodemat(i) == ISOTROPIC_COSSERAT_MATERIAL) then
       ! elastic spin materials
       rho_s(i) = val0read
       kappa_s(i) = val1read
       mu_s(i) = val2read
       nu_s(i) = val3read
       j_sc(i) = val4read
-      kappa_sc(i) = val5read
+      lambda_sc(i) = val5read
       mu_sc(i) = val6read
       nu_sc(i) = val7read
 
@@ -352,7 +352,7 @@ subroutine initialize_material_properties()
     ! anisotropy
     use shared_parameters, only: aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12
     ! elastic spin
-    use shared_parameters, only: rho_s, kappa_s, mu_s, nu_s, j_sc, kappa_sc, &
+    use shared_parameters, only: rho_s, kappa_s, mu_s, nu_s, j_sc, lambda_sc, &
                                  mu_sc,  nu_sc
     ! attenuation
     use shared_parameters, only: QKappa,Qmu
@@ -417,7 +417,7 @@ subroutine initialize_material_properties()
              mu_s(nbmodels), &
              nu_s(nbmodels), &
              j_sc(nbmodels), &
-             kappa_sc(nbmodels), &
+             lambda_sc(nbmodels), &
              mu_sc(nbmodels), &
              nu_sc(nbmodels))
 
@@ -467,7 +467,7 @@ subroutine initialize_material_properties()
     mu_s(:) = 0.d0
     nu_s(:) = 0.d0
     j_sc(:) = 0.d0
-    kappa_sc(:) = 0.d0
+    lambda_sc(:) = 0.d0
     mu_sc(:) = 0.d0
     nu_sc(:) = 0.d0
 
@@ -480,7 +480,7 @@ subroutine print_materials_info()
   use constants, only: IMAIN,TINYVAL, &
                        ISOTROPIC_MATERIAL,ANISOTROPIC_MATERIAL,&
                        POROELASTIC_MATERIAL,ELECTROMAGNETIC_MATERIAL,&
-                       ISOTROPIC_SPIN_MATERIAL
+                       ISOTROPIC_COSSERAT_MATERIAL
 
   use shared_parameters, only: nbmodels, &
                                icodemat,AXISYM
@@ -491,7 +491,7 @@ subroutine print_materials_info()
   ! attenuation
   use shared_parameters, only: QKappa,Qmu
   ! elastic spin materials
-  use shared_parameters, only: rho_s,kappa_s,mu_s,nu_s,j_sc,kappa_sc,mu_sc,nu_sc
+  use shared_parameters, only: rho_s,kappa_s,mu_s,nu_s,j_sc,lambda_sc,mu_sc,nu_sc
   ! poroelasticity
   use shared_parameters, only: rho_f_read, &
                                phi_read,tortuosity_read, &
@@ -554,11 +554,11 @@ subroutine print_materials_info()
       write(IMAIN,*) 'Qe11(e0), Qe33(e0)          = ',Qe11_read(i),Qe33_read(i)
       write(IMAIN,*) 'Qs11(e0), Qs33(e0)          = ',Qs11_read(i),Qs33_read(i)
       write(IMAIN,*) 'Material is electromagnetic'
-    else if (icodemat(i) == ISOTROPIC_SPIN_MATERIAL) then
+    else if (icodemat(i) == ISOTROPIC_COSSERAT_MATERIAL) then
       ! elastic spin
-      write(IMAIN,*) 'Material #',i,' elastic spin'
+      write(IMAIN,*) 'Material #',i,' isotropic cosserat'
       write(IMAIN,*) 'rho, kappa, mu, nu = ',rho_s(i),kappa_s(i),mu_s(i),nu_s(i)
-      write(IMAIN,*) 'j, kappa_c, mu_c, nu_c = ',j_sc(i),kappa_sc(i),mu_sc(i),nu_sc(i)
+      write(IMAIN,*) 'j, kappa_c, mu_c, nu_c = ',j_sc(i),lambda_sc(i),mu_sc(i),nu_sc(i)
     else if (icodemat(i) == 0) then
       ! tomographic material
       write(IMAIN,*) 'Material #',i,' will be read in an external tomography file (TOMOGRAPHY_FILE in Par_file)'

@@ -69,7 +69,7 @@ struct properties<
 };
 
 /**
- * @brief Template specialization for 2D isotropic elastic spin media
+ * @brief Template specialization for 2D elastic isotropic cosserat media
  *
  * @tparam UseSIMD Boolean indicating whether to use SIMD
  */
@@ -78,14 +78,14 @@ struct properties<
     specfem::dimension::type::dim2, MediumTag,
     specfem::element::property_tag::isotropic_cosserat, UseSIMD,
     std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >
-    : public impl::point_data<6, UseSIMD> {
+    : public impl::point_data<8, UseSIMD> {
 
   /**
    * @name Typedefs
    *
    */
   ///@{
-  using base_type = impl::point_data<3, UseSIMD>;
+  using base_type = impl::point_data<8, UseSIMD>;
   using value_type = typename base_type::value_type;
 
   constexpr static auto dimension = specfem::dimension::type::dim2;
