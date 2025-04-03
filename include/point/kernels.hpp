@@ -125,8 +125,8 @@ struct kernels<
 template <specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct kernels<
     specfem::dimension::type::dim2, MediumTag,
-    specfem::element::property_tag::isotropic, UseSIMD,
-    std::enable_if_t<specfem::element::is_elastic_spin<MediumTag>::value> >
+    specfem::element::property_tag::isotropic_cosserat, UseSIMD,
+    std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >
     : public impl::point_data<1, UseSIMD> {
 
   /**
@@ -152,7 +152,8 @@ struct kernels<
    */
   KOKKOS_FUNCTION
   kernels(const value_type param) : kernels(param) {
-    Kokkos::abort("Point Kernels not implemented for elastic spin");
+    Kokkos::abort(
+        "Point Kernels not implemented for elastic isotropic_cosserat");
   }
   using base_type::base_type;
 

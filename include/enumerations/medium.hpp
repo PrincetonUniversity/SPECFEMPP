@@ -51,7 +51,7 @@ enum class medium_tag {
  * @brief Property tag enumeration
  *
  */
-enum class property_tag { isotropic, anisotropic };
+enum class property_tag { isotropic, anisotropic, isotropic_cosserat };
 
 /**
  * @brief Boundary tag enumeration
@@ -148,7 +148,8 @@ template <specfem::element::medium_tag MediumTag>
 using is_elastic = typename std::conditional_t<
     (MediumTag == specfem::element::medium_tag::elastic ||
      MediumTag == specfem::element::medium_tag::elastic_psv ||
-     MediumTag == specfem::element::medium_tag::elastic_sh),
+     MediumTag == specfem::element::medium_tag::elastic_sh ||
+     MediumTag == specfem::element::medium_tag::elastic_psv_t),
     std::true_type, std::false_type>::type;
 
 template <specfem::element::medium_tag MediumTag>
@@ -157,10 +158,5 @@ using is_electromagnetic = typename std::conditional_t<
      MediumTag == specfem::element::medium_tag::electromagnetic_te),
     std::true_type, std::false_type>::type;
 
-template <specfem::element::medium_tag MediumTag>
-using is_elastic_spin = typename std::conditional_t<
-    (MediumTag == specfem::element::medium_tag::elastic_spin ||
-     MediumTag == specfem::element::medium_tag::elastic_psv_t),
-    std::true_type, std::false_type>::type;
 } // namespace element
 } // namespace specfem
