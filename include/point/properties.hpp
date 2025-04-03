@@ -100,7 +100,7 @@ struct properties<
 
   // Normal elastic properties
   DEFINE_POINT_VALUE(rho, 0)   ///< density @f$ \rho @f$
-  DEFINE_POINT_VALUE(kappa, 1) ///< Bulk Modules @f$ \lambda + 2\mu @f$
+  DEFINE_POINT_VALUE(kappa, 1) ///< Bulk Modulus @f$ \lambda + 2\mu @f$
   DEFINE_POINT_VALUE(mu, 2)    ///< shear modulus @f$ \mu @f$
   DEFINE_POINT_VALUE(nu, 3)    ///< symmetry breaking modulus @f$ \nu @f$
 
