@@ -33,7 +33,7 @@ namespace element {
 #define PROPERTY_TAG_ANISOTROPIC                                               \
   (1, specfem::element::property_tag::anisotropic, anisotropic)
 #define PROPERTY_TAG_ISOTROPIC_COSSERAT                                        \
-  (2, specfem::element::property_tag::isotropic_cosserat, isotropic)
+  (2, specfem::element::property_tag::isotropic_cosserat, isotropic_cosserat)
 
 #define BOUNDARY_TAG_NONE (0, specfem::element::boundary_tag::none, none)
 #define BOUNDARY_TAG_STACEY (1, specfem::element::boundary_tag::stacey, stacey)
