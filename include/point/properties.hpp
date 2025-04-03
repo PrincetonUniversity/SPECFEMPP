@@ -237,6 +237,47 @@ struct properties<specfem::dimension::type::dim2,
     return (((static_cast<type_real>(1.0) - this->phi()) * this->rho_s()) +
             (this->phi() * this->rho_f()));
   }
+
+  KOKKOS_INLINE_FUNCTION const value_type vpI() const {
+    ///< Helper variable for readability
+    const auto phi_over_tort = this->phi() / this->tortuosity();
+    const auto afactor = rho_bar() - phi_over_tort * rho_f();
+    const auto bfactor =
+        this->H_Biot() + phi_over_tort * rho_bar() / rho_f() * this->M_Biot() -
+        static_cast<value_type>(2.0) * phi_over_tort * this->C_Biot();
+    const auto cfactor =
+        phi_over_tort / rho_f() *
+        (this->H_Biot() * this->M_Biot() - this->C_Biot() * this->C_Biot());
+
+    return Kokkos::sqrt(bfactor + Kokkos::sqrt(bfactor * bfactor -
+                                               static_cast<type_real>(4.0) *
+                                                   afactor * cfactor)) /
+           (static_cast<type_real>(2.0) * afactor);
+  }
+
+  KOKKOS_INLINE_FUNCTION const value_type vpII() const {
+    ///< Helper variable for readability
+    const auto phi_over_tort = this->phi() / this->tortuosity();
+    const auto afactor = rho_bar() - phi_over_tort * rho_f();
+    const auto bfactor =
+        this->H_Biot() + phi_over_tort * rho_bar() / rho_f() * this->M_Biot() -
+        static_cast<value_type>(2.0) * phi_over_tort * this->C_Biot();
+    const auto cfactor =
+        phi_over_tort / rho_f() *
+        (this->H_Biot() * this->M_Biot() - this->C_Biot() * this->C_Biot());
+
+    return Kokkos::sqrt(bfactor - Kokkos::sqrt(bfactor * bfactor -
+                                               static_cast<type_real>(4.0) *
+                                                   afactor * cfactor)) /
+           (static_cast<type_real>(2.0) * afactor);
+  }
+
+  KOKKOS_INLINE_FUNCTION const value_type vs() const {
+    ///< Helper variable for readability
+    const auto phi_over_tort = this->phi() / this->tortuosity();
+    const auto afactor = rho_bar() - phi_over_tort * rho_f();
+    return Kokkos::sqrt(mu_G() / afactor);
+  }
 };
 
 /**
