@@ -3,8 +3,7 @@
 #include "macros_impl/element_types.hpp"
 #include "macros_impl/material_systems.hpp"
 #include "macros_impl/medium_tags.hpp"
-#include "macros_impl/utils.hpp"
-#include "medium.hpp"
+
 #include <boost/preprocessor.hpp>
 
 /**
@@ -105,6 +104,30 @@
 #define WHERE(...) (BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
 
 /**
+ * @brief Filter sequence for different tags.
+ *
+ * This macro is to be only used in conjunction with @ref
+ * CALL_MACRO_FOR_ALL_ELEMENT_TYPES or @ref CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS.
+ *
+ */
+#define _WHERE(s, data, elem) BOOST_PP_EXPAND(BOOST_PP_VARIADIC_TO_SEQ elem)
+#define WHERE2(...)                                                            \
+  BOOST_PP_SEQ_TRANSFORM(_WHERE, _, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
+
+/**
+ * @brief Macro to declare variables
+ * This macro is to be only used in conjunction with @ref
+ * @ref FOR_EACH_MEDIUM_TAG or @ref FOR_EACH_MATERIAL_SYSTEMS or @ref
+ * FOR_EACH_ELEMENT_TYPE.
+ */
+#define DECLARE(...) _PAIRWISE_GROUP(BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
+
+/**
+ * @brief Macro to declare type in DECLARE
+ */
+#define TYPE(...) BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__),
+
+/**
  * @brief Call a macro for all medium types
  *
  * Invoking CALL_MACRO_FOR_ALL_MEDIUM_TAGS(MACRO, seq) will call MACRO for all
@@ -184,6 +207,23 @@
  */
 #define CALL_MACRO_FOR_ALL_ELEMENT_TYPES(MACRO, seq)                           \
   BOOST_PP_SEQ_FOR_EACH(_CALL_FOR_ONE_ELEMENT_TYPE, MACRO,                     \
+                        BOOST_PP_SEQ_FOR_EACH_PRODUCT(_CREATE_SEQ, seq))
+
+/**
+ * @brief Declare variables or run code for all material systems
+ * listed in macro sequence @ref MATERIAL_SYSTEMS.
+ * @param seq A sequence filter for material systems.
+ * @param ... To declare variabled, use DECLARE() as the first argument,
+ * e.g. DECLARE(Type(IndexViewType) elements,
+ *  Type(IndexViewType::HostMirror) h_elements,
+ *  properties<_medium_tag_, _property_tag_> value)
+ * To capture existing variables as reference in the code block, add a tuple as
+ * argument, e.g. (value, elements, h_elements). The last argument is the code
+ * block to be executed.
+ */
+#define FOR_EACH_MATERIAL_SYSTEM(seq, ...)                                     \
+  BOOST_PP_SEQ_FOR_EACH(_FOR_ONE_MATERIAL_SYSTEM,                              \
+                        BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__),                 \
                         BOOST_PP_SEQ_FOR_EACH_PRODUCT(_CREATE_SEQ, seq))
 
 namespace specfem {
