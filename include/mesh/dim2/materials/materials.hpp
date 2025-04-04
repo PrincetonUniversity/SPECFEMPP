@@ -68,9 +68,9 @@ template <> struct materials<specfem::dimension::type::dim2> {
   FOR_EACH_MATERIAL_SYSTEM(
       WHERE2((DIMENSION_TAG_DIM2),
              (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-              MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
-             (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC,
-              MEDIUM_TAG_ELECTROMAGNETIC_TE)),
+              MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
+              MEDIUM_TAG_ELECTROMAGNETIC_TE),
+             (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
       DECLARE(((specfem::mesh::materials)((_DIMENSION_TAG_))(::material)(
                    (_MEDIUM_TAG_, _PROPERTY_TAG_)),
                material)))
