@@ -122,6 +122,11 @@
 #define DECLARE(...) BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)
 
 /**
+ * @brief Capture existing variables as reference in the code block.
+ */
+#define CAPTURE(...) BOOST_PP_VARIADIC_TO_LIST(__VA_ARGS__),
+
+/**
  * @brief Filter sequence for different tags.
  *
  * This macro is to be only used in conjunction with @ref
