@@ -114,6 +114,21 @@ struct kernels<
 // end elastic anisotropic
 
 /**
+ * @brief Template specialization for the kernels struct for 2D
+ *        elastic isotropic spin elements
+ *
+ * This specialization is not implemented and should throw an error upon
+ * compilation should the code try to use it.
+ *
+ * @tparam UseSIMD  Use SIMD instructions
+ */
+template <specfem::element::medium_tag MediumTag, bool UseSIMD>
+struct kernels<
+    specfem::dimension::type::dim2, MediumTag,
+    specfem::element::property_tag::isotropic_cosserat, UseSIMD,
+    std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >;
+
+/**
  * @brief Template specialization for the kernels struct for 2D acoustic
  * isotropic elements
  *
@@ -169,8 +184,8 @@ struct kernels<specfem::dimension::type::dim2,
  * @brief Template specialization for the kernels struct for 2D
  *        electromagnetic isotropic elements
  *
- * This specialization is not implemented and throws an error upon
- * constructions if the code tries to use it.
+ * This specialization is not implemented and should throw an error upon
+ * compilation should the code try to use it.
  *
  * @tparam UseSIMD  Use SIMD instructions
  */
@@ -178,45 +193,7 @@ template <specfem::element::medium_tag MediumTag, bool UseSIMD>
 struct kernels<
     specfem::dimension::type::dim2, MediumTag,
     specfem::element::property_tag::isotropic, UseSIMD,
-    std::enable_if_t<specfem::element::is_electromagnetic<MediumTag>::value> >
-    : public impl::point_data<1, UseSIMD> {
-
-  /**
-   * @name Typedefs
-   *
-   */
-  ///@{
-  using base_type = impl::point_data<1, UseSIMD>;
-  using value_type = typename base_type::value_type;
-
-  constexpr static auto dimension = specfem::dimension::type::dim2;
-  constexpr static auto medium_tag = MediumTag;
-  constexpr static auto property_tag =
-      specfem::element::property_tag::isotropic;
-
-  constexpr static bool is_point_properties = true;
-  ///@}
-
-  /**
-   * @brief Constructor
-   *
-   * @param
-   */
-  KOKKOS_FUNCTION
-  kernels(const value_type param) : kernels(param) {
-    Kokkos::abort(
-        "Point Kernels not implemented for electromagnetic te isotropic");
-  }
-  using base_type::base_type;
-
-  /**
-   * @name Misfit Kernels
-   *
-   */
-  ///@{
-  DEFINE_POINT_VALUE(param, 0) ///< \f$ K_{param} \f$
-  ///@}
-};
+    std::enable_if_t<specfem::element::is_electromagnetic<MediumTag>::value> >;
 
 /**
  * @brief Template specialization for the kernels struct for 2D poroelastic
