@@ -153,6 +153,14 @@ private:
 
 #undef MATERIAL_SYSTEMS_VARIABLE_NAMES
 
+  FOR_EACH_MATERIAL_SYSTEM(
+      WHERE2((DIMENSION_TAG_DIM2),
+             (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+              MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
+             (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+      DECLARE((IndexViewType, elements2),
+              (IndexViewType::HostMirror, h_elements2)))
+
 #define ELEMENT_TYPES_VARIABLE_NAMES(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG,  \
                                      BOUNDARY_TAG)                             \
   IndexViewType CREATE_VARIABLE_NAME(                                          \
