@@ -97,19 +97,19 @@ specfem::compute::element_types::element_types(
           }
         }
 
-        elements =
+        _elements_ =
             IndexViewType("specfem::compute::element_types::elements", count);
-        h_elements = Kokkos::create_mirror_view(elements);
+        _h_elements_ = Kokkos::create_mirror_view(_elements_);
 
         for (int ispec = 0; ispec < nspec; ispec++) {
           if (medium_tags(ispec) == _medium_tag_ &&
               property_tags(ispec) == _property_tag_) {
-            h_elements(index) = ispec;
+            _h_elements_(index) = ispec;
             index++;
           }
         }
 
-        Kokkos::deep_copy(elements, h_elements);
+        Kokkos::deep_copy(_elements_, _h_elements_);
       })
 
 #define COUNT_ELEMENT_TYPES_INDICES(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG,   \
@@ -258,7 +258,7 @@ specfem::compute::element_types::get_elements_on_host(
              (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
       CAPTURE(h_elements) {
         if (_medium_tag_ == medium_tag && _property_tag_ == property_tag) {
-          return h_elements;
+          return _h_elements_;
         }
       })
 
@@ -277,7 +277,7 @@ specfem::compute::element_types::get_elements_on_device(
              (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
       CAPTURE(elements) {
         if (_medium_tag_ == medium_tag && _property_tag_ == property_tag) {
-          return elements;
+          return _elements_;
         }
       })
 

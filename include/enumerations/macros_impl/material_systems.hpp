@@ -33,7 +33,8 @@
  */
 #define _WRITE_CAPTURE_FOR_MATERIAL_SYSTEM(data, elem)                         \
   BOOST_PP_IF(BOOST_PP_IS_EMPTY(elem), BOOST_PP_EMPTY(),                       \
-              auto &elem = _VAR_NAME_FOR_MATERIAL_SYSTEM(data, elem);)
+              auto &BOOST_PP_SEQ_CAT((_)(elem)(_)) =                           \
+                  _VAR_NAME_FOR_MATERIAL_SYSTEM(data, elem);)
 
 /**
  * @brief Create a code block and write the code for all material systems in the

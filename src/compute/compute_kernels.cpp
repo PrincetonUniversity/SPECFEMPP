@@ -25,7 +25,7 @@ specfem::compute::kernels::kernels(
               MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
              (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
       CAPTURE(value) {
-        value =
+        _value_ =
             specfem::medium::kernels_container<_medium_tag_, _property_tag_>(
                 element_types.get_elements_on_host(_medium_tag_,
                                                    _property_tag_),

@@ -63,7 +63,7 @@ struct value_containers {
         CAPTURE(value) {
           if constexpr (_medium_tag_ == MediumTag &&
                         _property_tag_ == PropertyTag) {
-            return value;
+            return _value_;
           }
         })
 
@@ -86,7 +86,7 @@ struct value_containers {
                (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                 MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
                (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
-        CAPTURE(value) { value.copy_to_host(); })
+        CAPTURE(value) { _value_.copy_to_host(); })
   }
 
   void copy_to_device() {
@@ -95,7 +95,7 @@ struct value_containers {
                (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                 MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
                (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
-        CAPTURE(value) { value.copy_to_device(); })
+        CAPTURE(value) { _value_.copy_to_device(); })
   }
 };
 
