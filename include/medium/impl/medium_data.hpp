@@ -317,11 +317,12 @@ public:
       values.data[i] = Kokkos::reduction_identity<type_real>::max();
     }
     // Reduce the values on device
-    reduce<Kokkos::Max<type_real> >(*this, work_items, values,
-                                    [&](type_real value, type_real lvalue) {
-                                      // Local reducer for max
-                                      return (value > lvalue) ? value : lvalue;
-                                    });
+    reduce<Kokkos::Max<type_real> >(
+        *this, work_items, values,
+        KOKKOS_LAMBDA(type_real value, type_real lvalue) {
+          // Local reducer for max
+          return (value > lvalue) ? value : lvalue;
+        });
 
     return;
   }
