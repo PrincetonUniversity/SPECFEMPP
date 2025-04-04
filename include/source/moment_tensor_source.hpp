@@ -1,5 +1,4 @@
-#ifndef _MOMENT_TENSOR_SOURCE_HPP
-#define _MOMENT_TENSOR_SOURCE_HPP
+#pragma
 
 #include "compute/compute_mesh.hpp"
 #include "compute/compute_partial_derivatives.hpp"
@@ -75,6 +74,17 @@ public:
 
   specfem::wavefield::simulation_field get_wavefield_type() const override {
     return wavefield_type;
+  }
+
+  bool operator==(const moment_tensor &other) const {
+    return (this->x == other.x && this->z == other.z &&
+                this->Mxx == other.Mxx && this->Mxz == other.Mxz &&
+                this->Mzz == other.Mzz,
+            this->forcing_function == other.forcing_function);
+  }
+
+  bool operator!=(const moment_tensor &other) const {
+    return !(*this == other);
   }
 
 private:
