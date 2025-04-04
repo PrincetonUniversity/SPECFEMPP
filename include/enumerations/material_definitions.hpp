@@ -1,10 +1,11 @@
 #pragma once
 
+#include "macros_impl/element_types.hpp"
+#include "macros_impl/material_systems.hpp"
+#include "macros_impl/medium_tags.hpp"
+#include "macros_impl/utils.hpp"
 #include "medium.hpp"
 #include <boost/preprocessor.hpp>
-
-namespace specfem {
-namespace element {
 
 /**
  * @name Element Tag macros
@@ -44,56 +45,17 @@ namespace element {
   (3, specfem::element::boundary_tag::composite_stacey_dirichlet,              \
    composite_stacey_dirichlet)
 
-#define GET_ID(elem) BOOST_PP_TUPLE_ELEM(0, elem)
-#define GET_TAG(elem) BOOST_PP_TUPLE_ELEM(1, elem)
-#define GET_NAME(elem) BOOST_PP_TUPLE_ELEM(2, elem)
-
-#define ADD_UNDERSCORE(s, data, elem) BOOST_PP_CAT(_, elem)
-
-#define CREATE_VARIABLE_NAME(prefix, ...)                                      \
-  BOOST_PP_SEQ_CAT((prefix)BOOST_PP_SEQ_TRANSFORM(                             \
-      ADD_UNDERSCORE, _, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)))
-
 /**
  * @brief Macro to generate a list of medium types
  *
  */
-#define MEDIUM_TYPES                                                           \
+#define MEDIUM_TAGS                                                            \
   ((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV))(                              \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH))(                            \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_PSV_T))(                         \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ACOUSTIC))(                              \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_POROELASTIC))(                           \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_TE))
-
-#define MAKE_ARRAY_ELEM(s, data, elem)                                         \
-  std::make_tuple(GET_TAG(BOOST_PP_TUPLE_ELEM(0, elem)),                       \
-                  GET_TAG(BOOST_PP_TUPLE_ELEM(1, elem)))
-
-#define MAKE_CONSTEXPR_ARRAY(seq)                                              \
-  BOOST_PP_SEQ_ENUM(BOOST_PP_SEQ_TRANSFORM(MAKE_ARRAY_ELEM, _, seq))
-
-/**
- * @brief A constexpr function to generate a list of medium types within the
- * simulation.
- *
- * This macro uses @ref MEDIUM_TYPES to generate a list of medium types
- * automatically.
- *
- * @return constexpr auto list of medium types
- */
-constexpr auto medium_types() {
-  // Use boost preprocessor library to generate a list of medium
-  // types
-  constexpr int total_medium_types = BOOST_PP_SEQ_SIZE(MEDIUM_TYPES);
-  constexpr std::array<std::tuple<specfem::dimension::type, medium_tag>,
-                       total_medium_types>
-      medium_types{ MAKE_CONSTEXPR_ARRAY(MEDIUM_TYPES) };
-
-  return medium_types;
-}
-
-#undef MAKE_ARRAY_ELEM
 
 /**
  * @brief Macro to generate a list of material systems
@@ -110,35 +72,6 @@ constexpr auto medium_types() {
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_POROELASTIC, PROPERTY_TAG_ISOTROPIC))(   \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_TE,                      \
        PROPERTY_TAG_ISOTROPIC))
-
-#define MAKE_ARRAY_ELEM(s, data, elem)                                         \
-  std::make_tuple(GET_TAG(BOOST_PP_TUPLE_ELEM(0, elem)),                       \
-                  GET_TAG(BOOST_PP_TUPLE_ELEM(1, elem)),                       \
-                  GET_TAG(BOOST_PP_TUPLE_ELEM(2, elem)))
-
-/**
- * @brief A constexpr function to generate a list of material systems within the
- * simulation
- *
- * This macro uses @ref MATERIAL_SYSTEMS to generate a list of material systems
- * automatically.
- *
- * @return constexpr auto list of material systems
- */
-constexpr auto material_systems() {
-  // Use boost preprocessor library to generate a list of
-  // material systems
-  constexpr int total_material_systems = BOOST_PP_SEQ_SIZE(MATERIAL_SYSTEMS);
-  constexpr std::array<
-      std::tuple<specfem::dimension::type, specfem::element::medium_tag,
-                 specfem::element::property_tag>,
-      total_material_systems>
-      material_systems{ MAKE_CONSTEXPR_ARRAY(MATERIAL_SYSTEMS) };
-
-  return material_systems;
-}
-
-#undef MAKE_ARRAY_ELEM
 
 /**
  * @brief Macro to generate a list of element types
@@ -168,106 +101,10 @@ constexpr auto material_systems() {
        BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELASTIC_SH,         \
                             PROPERTY_TAG_ANISOTROPIC, BOUNDARY_TAG_STACEY))(   \
       (DIMENSION_TAG_DIM2, MEDIUM_TAG_POROELASTIC, PROPERTY_TAG_ISOTROPIC,     \
-       BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_TE, \
-                            PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_NONE))
-
-#define MAKE_ARRAY_ELEM(s, data, elem)                                         \
-  std::make_tuple(GET_TAG(BOOST_PP_TUPLE_ELEM(0, elem)),                       \
-                  GET_TAG(BOOST_PP_TUPLE_ELEM(1, elem)),                       \
-                  GET_TAG(BOOST_PP_TUPLE_ELEM(2, elem)),                       \
-                  GET_TAG(BOOST_PP_TUPLE_ELEM(3, elem)))
-
-/**
- * @brief A constexpr function to generate a list of element types within the
- * simulation
- *
- * This macro uses @ref ELEMENT_TYPES to generate a list of element types
- * automatically.
- *
- * @return constexpr auto list of element types
- */
-constexpr auto element_types() {
-  // Use boost preprocessor library to generate a list of
-  // material systems
-  constexpr int total_element_types = BOOST_PP_SEQ_SIZE(ELEMENT_TYPES);
-  constexpr std::array<
-      std::tuple<specfem::dimension::type, specfem::element::medium_tag,
-                 specfem::element::property_tag,
-                 specfem::element::boundary_tag>,
-      total_element_types>
-      material_systems{ MAKE_CONSTEXPR_ARRAY(ELEMENT_TYPES) };
-
-  return material_systems;
-}
-
-#undef MAKE_CONSTEXPR_ARRAY
-#undef MAKE_ARRAY_ELEM
-
-// Touch the following code at your own risk
-
-#define MEDIUM_IN_TUPLE(s, elem, tuple)                                        \
-  BOOST_PP_IF(                                                                 \
-      BOOST_PP_EQUAL(BOOST_PP_TUPLE_SIZE(tuple), 2),                           \
-      BOOST_PP_IF(                                                             \
-          BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(0, tuple)),                \
-                         GET_ID(BOOST_PP_TUPLE_ELEM(0, elem))),                \
-          BOOST_PP_IF(BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(1, tuple)),    \
-                                     GET_ID(BOOST_PP_TUPLE_ELEM(1, elem))),    \
-                      1, 0),                                                   \
-          0),                                                                  \
-      0)
-
-#define MAT_SYS_IN_TUPLE(s, elem, tuple)                                       \
-  BOOST_PP_IF(                                                                 \
-      BOOST_PP_EQUAL(BOOST_PP_TUPLE_SIZE(tuple), 3),                           \
-      BOOST_PP_IF(                                                             \
-          BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(0, tuple)),                \
-                         GET_ID(BOOST_PP_TUPLE_ELEM(0, elem))),                \
-          BOOST_PP_IF(BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(1, tuple)),    \
-                                     GET_ID(BOOST_PP_TUPLE_ELEM(1, elem))),    \
-                      BOOST_PP_IF(BOOST_PP_EQUAL(                              \
-                                      GET_ID(BOOST_PP_TUPLE_ELEM(2, tuple)),   \
-                                      GET_ID(BOOST_PP_TUPLE_ELEM(2, elem))),   \
-                                  1, 0),                                       \
-                      0),                                                      \
-          0),                                                                  \
-      0)
-
-#define ELEM_IN_TUPLE(s, elem, tuple)                                          \
-  BOOST_PP_IF(                                                                 \
-      BOOST_PP_EQUAL(BOOST_PP_TUPLE_SIZE(tuple), 4),                           \
-      BOOST_PP_IF(                                                             \
-          BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(0, tuple)),                \
-                         GET_ID(BOOST_PP_TUPLE_ELEM(0, elem))),                \
-          BOOST_PP_IF(                                                         \
-              BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(1, tuple)),            \
-                             GET_ID(BOOST_PP_TUPLE_ELEM(1, elem))),            \
-              BOOST_PP_IF(                                                     \
-                  BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(2, tuple)),        \
-                                 GET_ID(BOOST_PP_TUPLE_ELEM(2, elem))),        \
-                  BOOST_PP_IF(                                                 \
-                      BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(3, tuple)),    \
-                                     GET_ID(BOOST_PP_TUPLE_ELEM(3, elem))),    \
-                      1, 0),                                                   \
-                  0),                                                          \
-              0),                                                              \
-          0),                                                                  \
-      0)
-
-#define OP_OR(s, state, elem) BOOST_PP_OR(state, elem)
-
-#define MEDIUM_IN_SEQUENCE(elem)                                               \
-  BOOST_PP_SEQ_FOLD_LEFT(                                                      \
-      OP_OR, 0, BOOST_PP_SEQ_TRANSFORM(MEDIUM_IN_TUPLE, elem, MEDIUM_TYPES))
-
-#define MAT_SYS_IN_SEQUENCE(elem)                                              \
-  BOOST_PP_SEQ_FOLD_LEFT(                                                      \
-      OP_OR, 0,                                                                \
-      BOOST_PP_SEQ_TRANSFORM(MAT_SYS_IN_TUPLE, elem, MATERIAL_SYSTEMS))
-
-#define ELEM_IN_SEQUENCE(elem)                                                 \
-  BOOST_PP_SEQ_FOLD_LEFT(                                                      \
-      OP_OR, 0, BOOST_PP_SEQ_TRANSFORM(ELEM_IN_TUPLE, elem, ELEMENT_TYPES))
+       BOUNDARY_TAG_NONE))((DIMENSION_TAG_DIM2, MEDIUM_TAG_POROELASTIC,        \
+                            PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_STACEY))(     \
+      (DIMENSION_TAG_DIM2, MEDIUM_TAG_ELECTROMAGNETIC_TE,                      \
+       PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_NONE))
 
 /**
  * @brief Filter sequence for different tags.
@@ -278,35 +115,11 @@ constexpr auto element_types() {
  */
 #define WHERE(...) (BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
 
-#define CALL_FOR_ONE_MEDIUM_TYPE(s, MACRO, elem)                               \
-  BOOST_PP_IF(MEDIUM_IN_SEQUENCE((BOOST_PP_SEQ_ENUM(elem))), MACRO,            \
-              EMPTY_MACRO)                                                     \
-  (BOOST_PP_TUPLE_ELEM(0, (BOOST_PP_SEQ_ENUM(elem))),                          \
-   BOOST_PP_TUPLE_ELEM(1, (BOOST_PP_SEQ_ENUM(elem))))
-
-#define CALL_FOR_ONE_MATERIAL_SYSTEM(s, MACRO, elem)                           \
-  BOOST_PP_IF(MAT_SYS_IN_SEQUENCE((BOOST_PP_SEQ_ENUM(elem))), MACRO,           \
-              EMPTY_MACRO)                                                     \
-  (BOOST_PP_TUPLE_ELEM(0, (BOOST_PP_SEQ_ENUM(elem))),                          \
-   BOOST_PP_TUPLE_ELEM(1, (BOOST_PP_SEQ_ENUM(elem))),                          \
-   BOOST_PP_TUPLE_ELEM(2, (BOOST_PP_SEQ_ENUM(elem))))
-
-#define CALL_FOR_ONE_ELEMENT_TYPE(s, MACRO, elem)                              \
-  BOOST_PP_IF(ELEM_IN_SEQUENCE((BOOST_PP_SEQ_ENUM(elem))), MACRO, EMPTY_MACRO) \
-  (BOOST_PP_TUPLE_ELEM(0, (BOOST_PP_SEQ_ENUM(elem))),                          \
-   BOOST_PP_TUPLE_ELEM(1, (BOOST_PP_SEQ_ENUM(elem))),                          \
-   BOOST_PP_TUPLE_ELEM(2, (BOOST_PP_SEQ_ENUM(elem))),                          \
-   BOOST_PP_TUPLE_ELEM(3, (BOOST_PP_SEQ_ENUM(elem))))
-
-#define EMPTY_MACRO(...)
-
-#define CREATE_SEQ(r, elem) (elem)
-
 /**
  * @brief Call a macro for all medium types
  *
  * Invoking CALL_MACRO_FOR_ALL_MEDIUM_TAGS(MACRO, seq) will call MACRO for all
- * medium types listed in macro sequence @ref MEDIUM_TYPES.
+ * medium types listed in macro sequence @ref MEDIUM_TAGS.
  *
  * @param MACRO The macro to be called. MACRO must have the following signature:
  * MACRO(DIMENSION_TAG, MEDIUM_TAG)
@@ -325,8 +138,8 @@ constexpr auto element_types() {
  *
  */
 #define CALL_MACRO_FOR_ALL_MEDIUM_TAGS(MACRO, seq)                             \
-  BOOST_PP_SEQ_FOR_EACH(CALL_FOR_ONE_MEDIUM_TYPE, MACRO,                       \
-                        BOOST_PP_SEQ_FOR_EACH_PRODUCT(CREATE_SEQ, seq))
+  BOOST_PP_SEQ_FOR_EACH(_CALL_FOR_ONE_MEDIUM_TAG, MACRO,                       \
+                        BOOST_PP_SEQ_FOR_EACH_PRODUCT(_CREATE_SEQ, seq))
 
 /**
  * @brief Call a macro for all element types
@@ -352,8 +165,8 @@ constexpr auto element_types() {
  *
  */
 #define CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(MACRO, seq)                        \
-  BOOST_PP_SEQ_FOR_EACH(CALL_FOR_ONE_MATERIAL_SYSTEM, MACRO,                   \
-                        BOOST_PP_SEQ_FOR_EACH_PRODUCT(CREATE_SEQ, seq))
+  BOOST_PP_SEQ_FOR_EACH(_CALL_FOR_ONE_MATERIAL_SYSTEM, MACRO,                  \
+                        BOOST_PP_SEQ_FOR_EACH_PRODUCT(_CREATE_SEQ, seq))
 
 /**
  * @brief Call a macro for all element types
@@ -381,8 +194,79 @@ constexpr auto element_types() {
  *
  */
 #define CALL_MACRO_FOR_ALL_ELEMENT_TYPES(MACRO, seq)                           \
-  BOOST_PP_SEQ_FOR_EACH(CALL_FOR_ONE_ELEMENT_TYPE, MACRO,                      \
-                        BOOST_PP_SEQ_FOR_EACH_PRODUCT(CREATE_SEQ, seq))
+  BOOST_PP_SEQ_FOR_EACH(_CALL_FOR_ONE_ELEMENT_TYPE, MACRO,                     \
+                        BOOST_PP_SEQ_FOR_EACH_PRODUCT(_CREATE_SEQ, seq))
+
+namespace specfem {
+namespace element {
+
+/**
+ * @brief A constexpr function to generate a list of medium types within the
+ * simulation.
+ *
+ * This macro uses @ref MEDIUM_TAGS to generate a list of medium types
+ * automatically.
+ *
+ * @return constexpr auto list of medium types
+ */
+constexpr auto medium_types() {
+  // Use boost preprocessor library to generate a list of medium
+  // types
+  constexpr int total_medium_types = BOOST_PP_SEQ_SIZE(MEDIUM_TAGS);
+  constexpr std::array<std::tuple<specfem::dimension::type, medium_tag>,
+                       total_medium_types>
+      medium_types{ _MAKE_CONSTEXPR_ARRAY(MEDIUM_TAGS,
+                                          _MAKE_ARRAY_ELEM_MEDIUM) };
+
+  return medium_types;
+}
+
+/**
+ * @brief A constexpr function to generate a list of material systems within the
+ * simulation
+ *
+ * This macro uses @ref MATERIAL_SYSTEMS to generate a list of material systems
+ * automatically.
+ *
+ * @return constexpr auto list of material systems
+ */
+constexpr auto material_systems() {
+  // Use boost preprocessor library to generate a list of
+  // material systems
+  constexpr int total_material_systems = BOOST_PP_SEQ_SIZE(MATERIAL_SYSTEMS);
+  constexpr std::array<
+      std::tuple<specfem::dimension::type, specfem::element::medium_tag,
+                 specfem::element::property_tag>,
+      total_material_systems>
+      material_systems{ _MAKE_CONSTEXPR_ARRAY(MATERIAL_SYSTEMS,
+                                              _MAKE_ARRAY_ELEM_MAT_SYS) };
+
+  return material_systems;
+}
+
+/**
+ * @brief A constexpr function to generate a list of element types within the
+ * simulation
+ *
+ * This macro uses @ref ELEMENT_TYPES to generate a list of element types
+ * automatically.
+ *
+ * @return constexpr auto list of element types
+ */
+constexpr auto element_types() {
+  // Use boost preprocessor library to generate a list of
+  // material systems
+  constexpr int total_element_types = BOOST_PP_SEQ_SIZE(ELEMENT_TYPES);
+  constexpr std::array<
+      std::tuple<specfem::dimension::type, specfem::element::medium_tag,
+                 specfem::element::property_tag,
+                 specfem::element::boundary_tag>,
+      total_element_types>
+      material_systems{ _MAKE_CONSTEXPR_ARRAY(ELEMENT_TYPES,
+                                              _MAKE_ARRAY_ELEM_ELEM) };
+
+  return material_systems;
+}
 
 } // namespace element
 } // namespace specfem

@@ -146,7 +146,6 @@ public:
 
 #undef MAKE_VARIANT_RETURN
 #undef TYPE_NAME
-
     const auto &material_specification = this->material_index_mapping(index);
 
 #define RETURN_VALUE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                  \
@@ -190,7 +189,6 @@ public:
     return this->CREATE_VARIABLE_NAME(material, GET_NAME(MEDIUM_TAG),          \
                                       GET_NAME(PROPERTY_TAG));                 \
   }
-
     CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
         RETURN_VALUE,
         WHERE(DIMENSION_TAG_DIM2) WHERE(

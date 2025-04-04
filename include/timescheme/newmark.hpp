@@ -87,7 +87,6 @@ public:
     return 0;
   };
 
-
   /**
    * @brief  Apply the corrector phase for backward simulation on fields within
    * the elements within a medium. (Empty implementation)

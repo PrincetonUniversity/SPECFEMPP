@@ -223,6 +223,7 @@ struct kernels<specfem::dimension::type::dim2,
   constexpr static bool is_point_properties = true;
   ///@}
 
+  using base_type::base_type;
   /**
    * @brief Constructor
    *
@@ -236,7 +237,7 @@ struct kernels<specfem::dimension::type::dim2,
           const value_type rhofbb, const value_type ratio,
           const value_type phib)
       : kernels(rhot, rhof, eta, sm, mu_fr, B, C, M, mu_fr, (rhot + B + mu_fr),
-                (rhof + C + M + sm), (static_cast<value_type>(1.0) * (sm + M)),
+                (rhof + C + M + sm), (static_cast<value_type>(-1.0) * (sm + M)),
                 cpI, cpII, cs, rhobb, rhofbb, ratio, phib) {}
 
   /**

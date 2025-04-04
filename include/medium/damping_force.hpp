@@ -1,16 +1,13 @@
 #pragma once
 
+#include "medium/dim2/acoustic/isotropic/damping.hpp"
+#include "medium/dim2/elastic/anisotropic/damping.hpp"
+#include "medium/dim2/elastic/isotropic/damping.hpp"
+#include "medium/dim2/poroelastic/isotropic/damping.hpp"
 #include <Kokkos_Core.hpp>
 
 namespace specfem {
 namespace medium {
-
-// base implemetation when no damping is present in the medium
-template <typename T, typename PointPropertiesType, typename PointVelocityType,
-          typename PointAccelerationType>
-KOKKOS_INLINE_FUNCTION void impl_compute_damping_force(
-    const T factor, const PointPropertiesType &point_properties,
-    const PointVelocityType &velocity, PointAccelerationType &acceleration) {}
 
 /**
  * @defgroup MediumPhysics
@@ -37,6 +34,9 @@ template <typename T, typename PointPropertiesType, typename PointVelocityType,
 KOKKOS_INLINE_FUNCTION void compute_damping_force(
     const T factor, const PointPropertiesType &point_properties,
     const PointVelocityType &velocity, PointAccelerationType &acceleration) {
+
+  constexpr auto MediumTag = PointPropertiesType::medium_tag;
+  constexpr auto PropertyTag = PointPropertiesType::property_tag;
 
   static_assert(std::is_same_v<T, typename PointPropertiesType::simd::datatype>,
                 "factor must have the same SIMD type as point_properties");
@@ -80,7 +80,17 @@ KOKKOS_INLINE_FUNCTION void compute_damping_force(
           PointAccelerationType::simd::using_simd,
       "point_properties and acceleration have different SIMD settings");
 
-  impl_compute_damping_force(factor, point_properties, velocity, acceleration);
+  using dimension_dispatch =
+      std::integral_constant<specfem::dimension::type,
+                             specfem::dimension::type::dim2>;
+  using medium_dispatch =
+      std::integral_constant<specfem::element::medium_tag, MediumTag>;
+  using property_dispatch =
+      std::integral_constant<specfem::element::property_tag, PropertyTag>;
+
+  impl_compute_damping_force(dimension_dispatch(), medium_dispatch(),
+                             property_dispatch(), factor, point_properties,
+                             velocity, acceleration);
 }
 
 } // namespace medium
