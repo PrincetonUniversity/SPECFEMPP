@@ -35,9 +35,21 @@ public:
     return ss.str();
   }
 
-  type_real get_t0() const override { return this->__t0; }
+  specfem::enums::seismogram::format get_type() const { return type; }
+  type_real get_t0() const { return __t0; }
+  type_real get_dt() const { return __dt; }
+  int get_nsteps() { return __nsteps; }
+  int get_ncomponents() const { return ncomponents; }
 
-  type_real get_tshift() const override { return 0.0; }
+  bool operator==(const specfem::forcing_function::stf &other) const override {
+
+    return __t0 == other.get_t0() && __dt == other.get_dt() &&
+           __nsteps == other.get_nsteps() && type == other.get_type() &&
+           ncomponents == other.get_ncomponents() &&
+           x_component == other.get_x_component() &&
+           y_component == other.get_y_component() &&
+           z_component == other.get_z_component();
+  }
 
 private:
   int __nsteps;

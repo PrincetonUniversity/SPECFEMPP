@@ -7,6 +7,16 @@
 #include <gtest/gtest.h>
 #include <yaml-cpp/yaml.h>
 
+using SourceVectorType =
+    std::vector<std::shared_ptr<specfem::sources::source> >;
+
+const static std::unordered_map<std::string, SourceVectorType> = {
+  { "Single Moment Tensor", std::make_shared<specfem::sources::moment_tensor>(
+                                databases["Single Moment Tensor"]) },
+
+  { "Single Cosserat Force", { specfem::sources::force() } }
+};
+
 TEST(IO_TESTS, read_sources) {
   /**
    *  This test checks whether a moment tensor source is read correctly

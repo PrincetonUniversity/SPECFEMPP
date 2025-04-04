@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _FORCE_SOURCE_HPP
+#define _FORCE_SOURCE_HPP
 
 #include "compute/compute_mesh.hpp"
 #include "compute/compute_partial_derivatives.hpp"
@@ -20,7 +21,7 @@ namespace sources {
  * @brief Collocated force source
  *
  */
-class force : public source {
+class cosserat_force : public source {
 
 public:
   /**
@@ -44,6 +45,7 @@ public:
             return 0.0;
           }
         }(Node)),
+        f(Node["f"].as<type_real>()), fc(Node["fc"].as<type_real>()),
         wavefield_type(wavefield_type),
         specfem::sources::source(Node, nsteps, dt) {};
   /**
@@ -62,11 +64,25 @@ public:
     return wavefield_type;
   }
 
+  bool operator==(const specfem::sources::source &other) const override {
+    const auto &other_source = dynamic_cast<const cosserat_force &>(other);
+    return (this->angle == other_source.angle) && (this->f == other_source.f) &&
+           (this->fc == other_source.fc);
+  }
+
+  bool operator!=(const specfem::sources::source &other) const override {
+    return !(*this == other);
+  }
+
 private:
-  type_real angle; ///< Angle of force source
+  type_real angle; ///< Angle of the elastic force source
+  type_real f;     ///< Factor to scale the elastic force
+  type_real fc;    ///< Factor to scale the rotational force
   specfem::wavefield::simulation_field wavefield_type; ///< Type of wavefield on
                                                        ///< which the source
                                                        ///< acts
 };
 } // namespace sources
 } // namespace specfem
+
+#endif

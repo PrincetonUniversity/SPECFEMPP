@@ -31,6 +31,14 @@ public:
    */
   source() {};
 
+  /**
+   * @brief
+   *
+   */
+  source(type_real x, type_real y,
+         std::unique_ptr<specfem::forcing_function::stf> forcing_function)
+      : x(x), z(y), forcing_function(std::move(forcing_function)) {};
+
   source(YAML::Node &Node, const int nsteps, const type_real dt);
   /**
    * @brief Get the x coordinate of the source

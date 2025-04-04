@@ -55,6 +55,19 @@ public:
       const type_real t0, const type_real dt, const int nsteps,
       specfem::kokkos::HostView2d<type_real> source_time_function) override;
 
+  bool operator==(const specfem::forcing_function::stf &other) const override {
+    const auto *other_ricker = dynamic_cast<const Ricker *>(&other);
+    if (other_ricker == nullptr) {
+      return false;
+    }
+    return this->__f0 == other_ricker->__f0 &&
+           this->__tshift == other_ricker->__tshift &&
+           this->__factor == other_ricker->__factor;
+  }
+  bool operator!=(const specfem::forcing_function::stf &other) const override {
+    return !(*this == other);
+  }
+
 private:
   int __nsteps;
   type_real __f0;     ///< frequence f0
