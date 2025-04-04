@@ -69,7 +69,8 @@ template <> struct materials<specfem::dimension::type::dim2> {
       WHERE2((DIMENSION_TAG_DIM2),
              (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
               MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
-             (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+             (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC,
+              MEDIUM_TAG_ELECTROMAGNETIC_TE)),
       DECLARE(((specfem::mesh::materials)((_DIMENSION_TAG_))(::material)(
                    (_MEDIUM_TAG_, _PROPERTY_TAG_)),
                material)))
@@ -141,34 +142,16 @@ public:
 #undef TYPE_NAME
     const auto &material_specification = this->material_index_mapping(index);
 
-    // #define RETURN_VALUE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                  \
-//   if (material_specification.type == GET_TAG(MEDIUM_TAG) &&                    \
-//       material_specification.property == GET_TAG(PROPERTY_TAG)) {              \
-//     return this                                                                \
-//         ->CREATE_VARIABLE_NAME(material, GET_NAME(MEDIUM_TAG),                 \
-//                                GET_NAME(PROPERTY_TAG))                         \
-//         .element_materials[material_specification.index];                      \
-//   }
-
-    //     CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-    //         RETURN_VALUE,
-    //         WHERE(DIMENSION_TAG_DIM2) WHERE(
-    //             MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-    //             MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
-    //             MEDIUM_TAG_ELECTROMAGNETIC_TE) WHERE(PROPERTY_TAG_ISOTROPIC,
-    //             PROPERTY_TAG_ANISOTROPIC))
-
-    // #undef RETURN_VALUE
-
     FOR_EACH_MATERIAL_SYSTEM(
         WHERE2((DIMENSION_TAG_DIM2),
                (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
+                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
+                MEDIUM_TAG_ELECTROMAGNETIC_TE),
                (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
         CAPTURE(material) {
           if (material_specification.type == _medium_tag_ &&
               material_specification.property == _property_tag_) {
-            return material.element_materials[material_specification.index];
+            return _material_.element_materials[material_specification.index];
           }
         })
 
@@ -192,12 +175,13 @@ public:
     FOR_EACH_MATERIAL_SYSTEM(
         WHERE2((DIMENSION_TAG_DIM2),
                (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
+                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
+                MEDIUM_TAG_ELECTROMAGNETIC_TE),
                (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
         CAPTURE(material) {
           if constexpr (_medium_tag_ == MediumTag &&
                         _property_tag_ == PropertyTag) {
-            return material;
+            return _material_;
           }
         })
 
