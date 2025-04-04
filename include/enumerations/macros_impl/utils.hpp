@@ -74,15 +74,14 @@
 #define _GET_CAPTURE_SEQ(seq, code)                                            \
   BOOST_PP_IF(BOOST_PP_SEQ_SIZE(seq), BOOST_PP_SEQ_TRANSFORM,                  \
               _EMPTY_MACRO)(_GET_CAPTURE_FROM_DECLARE, _, seq)                 \
-      BOOST_PP_IF(BOOST_VMD_IS_TUPLE(BOOST_PP_SEQ_HEAD(code)),                 \
-                  BOOST_PP_TUPLE_TO_SEQ,                                       \
-                  _EMPTY_MACRO)(BOOST_PP_SEQ_HEAD(code))
+      BOOST_PP_IF(BOOST_VMD_IS_LIST(BOOST_PP_SEQ_HEAD(code)),                  \
+                  BOOST_PP_LIST_TO_SEQ, _EMPTY_MACRO)(BOOST_PP_SEQ_HEAD(code))
 
 /**
  * @brief Remove possible CAPTURE(...) at the begining of the code.
  */
 #define _REMOVE_CAPTURE_FROM_CODE(code)                                        \
-  BOOST_PP_IF(BOOST_VMD_IS_TUPLE(BOOST_PP_SEQ_HEAD(code)), BOOST_PP_SEQ_TAIL,  \
+  BOOST_PP_IF(BOOST_VMD_IS_LIST(BOOST_PP_SEQ_HEAD(code)), BOOST_PP_SEQ_TAIL,   \
               _REFLECT)(code)
 
 /**
