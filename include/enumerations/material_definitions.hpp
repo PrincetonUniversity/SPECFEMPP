@@ -124,7 +124,7 @@
 /**
  * @brief Capture existing variables as reference in the code block.
  */
-#define CAPTURE(...) BOOST_PP_VARIADIC_TO_LIST(__VA_ARGS__),
+#define CAPTURE(...) BOOST_PP_VARIADIC_TO_TUPLE(BOOST_PP_EMPTY(), __VA_ARGS__),
 
 /**
  * @brief Filter sequence for different tags.
