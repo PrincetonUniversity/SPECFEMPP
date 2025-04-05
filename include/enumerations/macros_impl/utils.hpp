@@ -28,9 +28,9 @@
 
 #define _REFLECT_1(_, elem) elem
 
-#define _REFLECT_2(_, __, elem) elem
-
 #define _EMPTY_SEQ(...) ()
+
+#define _TRANSFORM_INSTANTIATE(s, data, elem) (elem, )
 
 /**
  * @brief Replace tags _DIMENSION_TAG_, _MEDIUM_TAG_, _PROPERTY_TAG_,
