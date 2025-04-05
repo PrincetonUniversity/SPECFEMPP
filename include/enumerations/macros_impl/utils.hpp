@@ -30,7 +30,7 @@
 
 #define _REFLECT_2(_, __, elem) elem
 
-#define _EMPTY_SEQ(code) ()
+#define _EMPTY_SEQ(...) ()
 
 /**
  * @brief Replace tags _DIMENSION_TAG_, _MEDIUM_TAG_, _PROPERTY_TAG_,
@@ -61,9 +61,7 @@
 /**
  * @brief Create a sequence of list of variables to be captured from DECLARE()
  */
-#define _GET_CAPTURE_FROM_DECLARE(s, data, elem)                               \
-  BOOST_PP_IF(BOOST_PP_IS_EMPTY(elem), _EMPTY_MACRO,                           \
-              BOOST_PP_TUPLE_ELEM)(1, elem)
+#define _GET_CAPTURE_FROM_DECLARE(s, data, elem) BOOST_PP_TUPLE_ELEM(1, elem)
 
 /**
  * @brief Create a sequence of list of variables to be captured from both

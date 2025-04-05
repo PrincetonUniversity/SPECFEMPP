@@ -22,10 +22,13 @@
  * property<elastic, isotropic> value_dim2_elastic_isotropic;
  */
 #define _WRITE_DECLARE_FOR_MATERIAL_SYSTEM(data, elem)                         \
-  BOOST_PP_IF(BOOST_VMD_IS_SEQ(BOOST_PP_TUPLE_ELEM(0, elem)), _EXPAND_SEQ2,    \
-              _REFLECT_2)                                                      \
-  (_DECLARE_TYPE, data, BOOST_PP_TUPLE_ELEM(0, elem))                          \
-      _VAR_NAME_FOR_MATERIAL_SYSTEM(data, BOOST_PP_TUPLE_ELEM(1, elem));
+  BOOST_PP_IF(BOOST_VMD_IS_TUPLE(BOOST_PP_TUPLE_ELEM(0, elem)), _EXPAND_SEQ2,  \
+              _EMPTY_MACRO)                                                    \
+  (_DECLARE_TYPE, data, BOOST_PP_TUPLE_TO_SEQ(BOOST_PP_TUPLE_ELEM(0, elem)))   \
+      BOOST_PP_IF(                                                             \
+          BOOST_PP_NOT(BOOST_VMD_IS_TUPLE(BOOST_PP_TUPLE_ELEM(0, elem))),      \
+          BOOST_PP_TUPLE_ELEM(0, elem), BOOST_PP_EMPTY())                      \
+          _VAR_NAME_FOR_MATERIAL_SYSTEM(data, BOOST_PP_TUPLE_ELEM(1, elem));
 
 /**
  * @brief Create a reference to the variable to be captured inside the code

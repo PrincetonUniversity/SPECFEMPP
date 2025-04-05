@@ -32,7 +32,7 @@ struct value_containers {
              (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
               MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
              (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
-      DECLARE(((containers_type)((_MEDIUM_TAG_, _PROPERTY_TAG_)), value)))
+      DECLARE(((containers_type, (_MEDIUM_TAG_, _PROPERTY_TAG_)), value)))
 
   /**
    * @name Constructors
