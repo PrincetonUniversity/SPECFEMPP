@@ -71,8 +71,8 @@ template <> struct materials<specfem::dimension::type::dim2> {
               MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
               MEDIUM_TAG_ELECTROMAGNETIC_TE),
              (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
-      DECLARE(((specfem::mesh::materials)((_DIMENSION_TAG_))(::material)(
-                   (_MEDIUM_TAG_, _PROPERTY_TAG_)),
+      DECLARE(((specfem::mesh::materials, (_DIMENSION_TAG_), ::material,
+                (_MEDIUM_TAG_, _PROPERTY_TAG_)),
                material)))
 
   specfem::mesh::materials<specfem::dimension::type::dim2>::material<
