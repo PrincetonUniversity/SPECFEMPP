@@ -112,7 +112,7 @@
 #define WHERE(...) (BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
 
 /**
- * @brief Declare type or instantiate templates for each tag.
+ * @brief Declare for each tag.
  *
  * This macro is to be only used in conjunction with @ref
  * FOR_EACH_MEDIUM_TAG or @ref FOR_EACH_MATERIAL_SYSTEM or @ref
@@ -120,6 +120,17 @@
  *
  */
 #define DECLARE(...) BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)
+/**
+ * @brief Instantiate templates for each tag.
+ *
+ * This macro is to be only used in conjunction with @ref
+ * FOR_EACH_MEDIUM_TAG or @ref FOR_EACH_MATERIAL_SYSTEM or @ref
+ * FOR_EACH_ELEMENT_TYPE.
+ *
+ */
+#define INSTANTIATE(...)                                                       \
+  BOOST_PP_SEQ_TRANSFORM(_TRANSFORM_INSTANTIATE, _,                            \
+                         BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
 
 /**
  * @brief Capture existing variables as reference in the code block.

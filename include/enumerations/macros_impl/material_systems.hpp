@@ -6,20 +6,22 @@
  * @brief Obtain Name of the variable to be declared from type declaration
  * tuple.
  * @param data dimension_tag, medium_tag, property_tag
- * @param elem type tuple, e.g. ((property) ((_MEDIUM_TAG_, _PROPERTY_TAG_)),
+ * @param elem type tuple, e.g. ((property, (_MEDIUM_TAG_, _PROPERTY_TAG_)),
  * value), which expands to value_dim2_elastic_isotropic
  */
 #define _VAR_NAME_FOR_MATERIAL_SYSTEM(data, elem)                              \
   BOOST_PP_SEQ_CAT((elem)(_)(GET_NAME(BOOST_PP_TUPLE_ELEM(0, data)))(          \
       _)(GET_NAME(BOOST_PP_TUPLE_ELEM(1, data)))(                              \
-      _)(GET_NAME(BOOST_PP_TUPLE_ELEM(2, data))))
+      _)(GET_NAME(BOOST_PP_TUPLE_ELEM(2, data))));
 
 /**
- * @brief Declare a variable based on the type declaration tuple.
+ * @brief Declare a variable or instiante a template based on the type
+ * declaration tuple.
  * @param data dimension_tag, medium_tag, property_tag
- * @param elem type tuple, e.g. ((property) ((_MEDIUM_TAG_, _PROPERTY_TAG_)),
+ * @param elem type tuple, e.g. ((property, (_MEDIUM_TAG_, _PROPERTY_TAG_)),
  * value), For input data (dim2, elastic, isotropic), this expands to
- * property<elastic, isotropic> value_dim2_elastic_isotropic;
+ * property<elastic, isotropic> value_dim2_elastic_isotropic; Variable name is
+ * ignored is second element of the tuple is empty.
  */
 #define _WRITE_DECLARE_FOR_MATERIAL_SYSTEM(data, elem)                         \
   BOOST_PP_IF(BOOST_VMD_IS_TUPLE(BOOST_PP_TUPLE_ELEM(0, elem)), _EXPAND_SEQ2,  \
@@ -28,7 +30,9 @@
       BOOST_PP_IF(                                                             \
           BOOST_PP_NOT(BOOST_VMD_IS_TUPLE(BOOST_PP_TUPLE_ELEM(0, elem))),      \
           BOOST_PP_TUPLE_ELEM(0, elem), BOOST_PP_EMPTY())                      \
-          _VAR_NAME_FOR_MATERIAL_SYSTEM(data, BOOST_PP_TUPLE_ELEM(1, elem));
+          BOOST_PP_IF(BOOST_PP_IS_EMPTY(BOOST_PP_TUPLE_ELEM(1, elem)),         \
+                      _EMPTY_MACRO, _VAR_NAME_FOR_MATERIAL_SYSTEM)(            \
+              data, BOOST_PP_TUPLE_ELEM(1, elem))
 
 /**
  * @brief Create a reference to the variable to be captured inside the code
@@ -37,7 +41,7 @@
 #define _WRITE_CAPTURE_FOR_MATERIAL_SYSTEM(data, elem)                         \
   BOOST_PP_IF(BOOST_PP_IS_EMPTY(elem), BOOST_PP_EMPTY(),                       \
               auto &BOOST_PP_SEQ_CAT((_)(elem)(_)) =                           \
-                  _VAR_NAME_FOR_MATERIAL_SYSTEM(data, elem);)
+                  _VAR_NAME_FOR_MATERIAL_SYSTEM(data, elem))
 
 /**
  * @brief Create a code block and write the code for all material systems in the
