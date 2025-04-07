@@ -69,7 +69,7 @@ struct properties<
 };
 
 /**
- * @brief Template specialization for 2D isotropic elastic spin media
+ * @brief Template specialization for 2D elastic isotropic cosserat media
  *
  * @tparam UseSIMD Boolean indicating whether to use SIMD
  */
