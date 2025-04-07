@@ -17,8 +17,9 @@ CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
     WHERE(DIMENSION_TAG_DIM2)
         WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
               MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
-              MEDIUM_TAG_ELECTROMAGNETIC_TE)
-            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
+              MEDIUM_TAG_ELECTROMAGNETIC_TE, MEDIUM_TAG_ELASTIC_PSV_T)
+            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC,
+                  PROPERTY_TAG_ISOTROPIC_COSSERAT))
 
 #undef MEDIUM_TYPE
 
@@ -27,11 +28,12 @@ CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
 
 #define MAKE_VARIANT_RETURN                                                    \
   std::variant<BOOST_PP_SEQ_ENUM(CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(          \
-      TYPE_NAME,                                                               \
-      WHERE(DIMENSION_TAG_DIM2) WHERE(                                         \
-          MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,  \
-          MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_TE)               \
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)))>
+      TYPE_NAME, WHERE(DIMENSION_TAG_DIM2) WHERE(                              \
+                     MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,            \
+                     MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,              \
+                     MEDIUM_TAG_ELECTROMAGNETIC_TE, MEDIUM_TAG_ELASTIC_PSV_T)  \
+                     WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC,   \
+                           PROPERTY_TAG_ISOTROPIC_COSSERAT)))>
 
 using MaterialVectorType = std::vector<MAKE_VARIANT_RETURN>; /// NOLINT
 
@@ -159,6 +161,15 @@ const static std::unordered_map<std::string, MaterialVectorType>
                 static_cast<type_real>(0.0 * 1e-3),            // sig11
                 static_cast<type_real>(0.0 * 1e-3))            // sig33
         }) },
+      { "Elastic Isotropic Cosserat Medium - Homogeneous",
+        MaterialVectorType({ specfem::point::properties<
+            dimension, specfem::element::medium_tag::elastic_psv_t,
+            specfem::element::property_tag::isotropic_cosserat, false>(
+            static_cast<type_real>(1e5), static_cast<type_real>(22.667 * 1e9),
+            static_cast<type_real>(4.0e9), static_cast<type_real>(2.0e9),
+            static_cast<type_real>(1e4), static_cast<type_real>(1e8),
+            static_cast<type_real>(1.936 * 1e8),
+            static_cast<type_real>(3.0464 * 1e9)) }) }
     };
 
 void check_test(
@@ -212,10 +223,12 @@ void check_test(
 
     CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
         CHECK_MATERIAL,
-        WHERE(DIMENSION_TAG_DIM2) WHERE(
-            MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-            MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_TE)
-            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
+        WHERE(DIMENSION_TAG_DIM2)
+            WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
+                  MEDIUM_TAG_ELECTROMAGNETIC_TE, MEDIUM_TAG_ELASTIC_PSV_T)
+                WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC,
+                      PROPERTY_TAG_ISOTROPIC_COSSERAT))
 
 #undef CHECK_MATERIAL
 

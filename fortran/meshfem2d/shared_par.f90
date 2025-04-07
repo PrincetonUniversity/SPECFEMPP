@@ -411,6 +411,10 @@ module shared_parameters
    double precision, dimension(:),allocatable :: cp,cs, &
       aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12,comp_g,QKappa,Qmu
 
+   ! elastic spin medium _s for spin, _sc for spin-couple moduli
+   double precision, dimension(:),allocatable :: rho_s, kappa_s, mu_s, nu_s, &
+      j_sc, lambda_sc, mu_sc,  nu_sc
+
    ! poroelastic
    ! note: adds ending _read to indicate these are readin values and to distinguish from solver arrays
    !       one could check if the solver arrays could be omitted and replaced with this ones in future...
