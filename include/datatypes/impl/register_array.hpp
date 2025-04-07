@@ -18,7 +18,7 @@ template <typename Extents> constexpr size_t compute_size() {
 }
 
 template <typename Extents, typename... IndexType>
-constexpr bool check_bounds(const IndexType &...i) {
+KOKKOS_INLINE_FUNCTION constexpr bool check_bounds(const IndexType &...i) {
   std::size_t index = 0;
   return ((i >= 0 && i < Extents::static_extent(index++)) && ...);
 }
