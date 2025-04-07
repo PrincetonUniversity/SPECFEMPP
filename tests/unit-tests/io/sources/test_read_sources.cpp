@@ -105,9 +105,3 @@ TEST(IO_TESTS, read_sources) {
               << std::endl;
   }
 }
-
-// int main(int argc, char *argv[]) {
-//   ::testing::InitGoogleTest(&argc, argv);
-//   ::testing::AddGlobalTestEnvironment(new KokkosEnvironment);
-//   return RUN_ALL_TESTS();
-// }
