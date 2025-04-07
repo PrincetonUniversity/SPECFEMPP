@@ -3,9 +3,7 @@
 #include "enumerations/interface.hpp"
 #include "expand_seq.hpp"
 #include <boost/preprocessor.hpp>
-#include <boost/vmd/is_list.hpp>
-#include <boost/vmd/is_seq.hpp>
-#include <boost/vmd/is_tuple.hpp>
+#include <boost/vmd/vmd.hpp>
 
 #define GET_ID(elem) BOOST_PP_TUPLE_ELEM(0, elem)
 #define GET_TAG(elem) BOOST_PP_TUPLE_ELEM(1, elem)
