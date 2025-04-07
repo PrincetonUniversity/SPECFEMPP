@@ -163,8 +163,6 @@ public:
 
     Kokkos::abort("Invalid material type detected in material specification");
   }
-
-  // #undef MAKE_VARIANT_RETURN
 };
 
 } // namespace mesh
