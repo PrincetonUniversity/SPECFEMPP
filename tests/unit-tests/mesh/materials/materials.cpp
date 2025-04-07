@@ -141,8 +141,8 @@ void check_test(
   for (int ispec = 0; ispec < nspec; ispec++) {
     const auto material_specification = computed.material_index_mapping(ispec);
 
-    const auto type = material_specification.type;
-    const auto property = material_specification.property;
+    const auto medium_tag = material_specification.type;
+    const auto property_tag = material_specification.property;
     const int index = material_specification.index;
     const int imaterial = material_specification.database_index;
 
@@ -153,10 +153,10 @@ void check_test(
               MEDIUM_TAG_ELECTROMAGNETIC_TE),
              (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
         {
-          if ((type == _medium_tag_) && (property == _property_tag_)) {
-            const auto icomputed = std::get<
-                specfem::medium::material<_medium_tag_, _property_tag_> >(
-                computed[ispec]);
+          if ((medium_tag == _medium_tag_) &&
+              (property_tag == _property_tag_)) {
+            const auto icomputed =
+                computed.get_material<_medium_tag_, _property_tag_>(ispec);
             const auto iexpected = std::get<
                 specfem::medium::material<_medium_tag_, _property_tag_> >(
                 expected[imaterial]);

@@ -929,8 +929,7 @@ void check_compute_to_mesh(
             ielement, iz, ix, properties);
         const int ispec_mesh = mapping.compute_to_mesh(ielement);
         auto material =
-            std::get<specfem::medium::material<MediumTag, PropertyTag> >(
-                materials[ispec_mesh]);
+            materials.get_material<MediumTag, PropertyTag>(ispec_mesh);
         auto value = material.get_properties();
         for (int l = 0; l < PointType::nprops; l++) {
           if (point_property.data[l] != value.data[l]) {

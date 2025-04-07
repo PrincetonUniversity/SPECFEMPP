@@ -102,43 +102,20 @@ template <> struct materials<specfem::dimension::type::dim2> {
   ///@}
 
 private:
-#define SOURCE_MEDIUM_STORE_ON_DEVICE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG) \
-  using CREATE_VARIABLE_NAME(type, GET_NAME(MEDIUM_TAG),                       \
-                             GET_NAME(PROPERTY_TAG)) =                         \
-      specfem::medium::material<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)>;
-
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      SOURCE_MEDIUM_STORE_ON_DEVICE,
-      WHERE(DIMENSION_TAG_DIM2)
-          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
-                MEDIUM_TAG_ELECTROMAGNETIC_TE)
-              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
-
-#undef SOURCE_MEDIUM_STORE_ON_DEVICE
-
 #define TYPE_NAME(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                     \
   (CREATE_VARIABLE_NAME(type, GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)))
 
 public:
-#define MAKE_VARIANT_RETURN
-  std::variant<BOOST_PP_SEQ_ENUM(CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      TYPE_NAME,
-      WHERE(DIMENSION_TAG_DIM2) WHERE(
-          MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-          MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_TE)
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)))>
-
-      /**
-       * @brief Material material at spectral element index
-       *
-       * @param index Spectral element index
-       * @return std::variant Material properties
-       */
-      MAKE_VARIANT_RETURN operator[](const int index) const {
-
-#undef MAKE_VARIANT_RETURN
-#undef TYPE_NAME
+  template <specfem::element::medium_tag MediumTag,
+            specfem::element::property_tag PropertyTag>
+  /**
+   * @brief Material material at spectral element index
+   *
+   * @param index Spectral element index
+   * @return std::variant Material properties
+   */
+  specfem::medium::material<MediumTag, PropertyTag>
+  get_material(const int index) const {
     const auto &material_specification = this->material_index_mapping(index);
 
     FOR_EACH_MATERIAL_SYSTEM(
@@ -148,8 +125,8 @@ public:
               MEDIUM_TAG_ELECTROMAGNETIC_TE),
              (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
         CAPTURE(material) {
-          if (material_specification.type == _medium_tag_ &&
-              material_specification.property == _property_tag_) {
+          if constexpr (MediumTag == _medium_tag_ &&
+                        PropertyTag == _property_tag_) {
             return _material_.element_materials[material_specification.index];
           }
         })
