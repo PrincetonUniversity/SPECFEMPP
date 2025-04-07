@@ -2,6 +2,7 @@
 
 #include <Kokkos_Core.hpp>
 #include <mdspan/mdspan.hpp>
+#include <sstream>
 
 namespace specfem {
 namespace datatype {
@@ -14,6 +15,12 @@ template <typename Extents> constexpr size_t compute_size() {
     size *= Extents::static_extent(i);
   }
   return size;
+}
+
+template <typename Extents, typename... IndexType>
+constexpr bool check_bounds(const IndexType &...i) {
+  std::size_t index = 0;
+  return ((i >= 0 && i < Extents::static_extent(index++)) && ...);
 }
 
 template <typename T, typename Extents, typename Layout> class RegisterArray {
@@ -63,12 +70,26 @@ public:
   template <typename... IndexType>
   KOKKOS_INLINE_FUNCTION constexpr value_type &
   operator()(const IndexType &...i) {
+#ifndef NDEBUG
+    // check if the indices are within bounds
+    if (!check_bounds<Extents>(i...)) {
+      // Abort the program with an error message
+      Kokkos::abort("Index out of bounds");
+    }
+#endif
     return m_value[mapping()(i...)];
   }
 
   template <typename... IndexType>
   KOKKOS_INLINE_FUNCTION constexpr const value_type &
   operator()(const IndexType &...i) const {
+#ifndef NDEBUG
+    // check if the indices are within bounds
+    if (!check_bounds<Extents>(i...)) {
+      // Abort the program with an error message
+      Kokkos::abort("Index out of bounds");
+    }
+#endif
     return m_value[mapping()(i...)];
   }
 
