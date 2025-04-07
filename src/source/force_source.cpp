@@ -11,7 +11,7 @@
 #include "source_time_function/interface.hpp"
 #include "specfem_mpi/interface.hpp"
 #include "specfem_setup.hpp"
-// #include "utilities.cpp"
+#include "utilities/interface.hpp"
 #include "yaml-cpp/yaml.h"
 #include <cmath>
 
@@ -117,4 +117,32 @@ std::string specfem::sources::force::print() const {
           << this->forcing_function->print() << "\n";
 
   return message.str();
+}
+
+bool almost_equal(const type_real a, const type_real b,
+                  const type_real epsilon = 1e-6) {
+  return std::abs(a - b) < epsilon;
+}
+
+bool specfem::sources::force::operator==(
+    const specfem::sources::source &other) const {
+
+  // Try casting the other source to a force source
+  const auto *other_source =
+      dynamic_cast<const specfem::sources::force *>(&other);
+
+  // Check if cast was successful
+  if (other_source == nullptr) {
+    std::cout << "Other source is not a force object" << std::endl;
+    return false;
+  }
+
+  return specfem::utilities::almost_equal(this->x, other_source->x) &&
+         specfem::utilities::almost_equal(this->z, other_source->z) &&
+         specfem::utilities::almost_equal(this->angle, other_source->angle) &&
+         *this->forcing_function == *other_source->forcing_function;
+}
+bool specfem::sources::force::operator!=(
+    const specfem::sources::source &other) const {
+  return !(*this == other);
 }

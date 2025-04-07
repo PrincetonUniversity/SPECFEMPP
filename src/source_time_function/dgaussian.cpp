@@ -1,6 +1,7 @@
 #include "source_time_function/interface.hpp"
 #include "specfem_setup.hpp"
 #include "utilities.cpp"
+#include "utilities/interface.hpp"
 #include <Kokkos_Core.hpp>
 #include <cmath>
 
@@ -70,4 +71,35 @@ std::string specfem::forcing_function::dGaussian::print() const {
      << this->__use_trick_for_better_pressure << "\n";
 
   return ss.str();
+}
+
+bool specfem::forcing_function::dGaussian::operator==(
+    const specfem::forcing_function::stf &other) const {
+
+  // First check base class equality
+  if (!specfem::forcing_function::stf::operator==(other))
+    return false;
+
+  // Then check if the other object is a dGaussian
+  auto other_dgaussian =
+      dynamic_cast<const specfem::forcing_function::dGaussian *>(&other);
+  if (!other_dgaussian)
+    return false;
+
+  return (
+      specfem::utilities::almost_equal(this->__t0, other_dgaussian->get_t0()) &&
+      specfem::utilities::almost_equal(this->__dt, other_dgaussian->get_dt()) &&
+      specfem::utilities::almost_equal(this->__f0, other_dgaussian->get_f0()) &&
+      this->__nsteps == other_dgaussian->get_nsteps() &&
+      specfem::utilities::almost_equal(this->__tshift,
+                                       other_dgaussian->get_tshift()) &&
+      specfem::utilities::almost_equal(this->__factor,
+                                       other_dgaussian->get_factor()) &&
+      this->__use_trick_for_better_pressure ==
+          other_dgaussian->get_use_trick_for_better_pressure());
+}
+
+bool specfem::forcing_function::dGaussian::operator!=(
+    const specfem::forcing_function::stf &other) const {
+  return !(*this == other);
 }

@@ -141,3 +141,30 @@ void specfem::forcing_function::external::compute_source_time_function(
   }
   return;
 }
+
+bool specfem::forcing_function::external::operator==(
+    const specfem::forcing_function::stf &other) const {
+  // First check base class equality
+  if (!specfem::forcing_function::stf::operator==(other))
+    return false;
+
+  // Then check if the other object is a dGaussian
+  auto other_external =
+      dynamic_cast<const specfem::forcing_function::external *>(&other);
+  if (!other_external)
+    return false;
+
+  return (this->x_component == other_external->x_component &&
+          this->y_component == other_external->y_component &&
+          this->z_component == other_external->z_component &&
+          this->__t0 == other_external->__t0 &&
+          this->__dt == other_external->__dt &&
+          this->type == other_external->type &&
+          this->ncomponents == other_external->ncomponents &&
+          this->__nsteps == other_external->__nsteps);
+};
+
+bool specfem::forcing_function::external::operator!=(
+    const specfem::forcing_function::stf &other) const {
+  return !(*this == other);
+}
