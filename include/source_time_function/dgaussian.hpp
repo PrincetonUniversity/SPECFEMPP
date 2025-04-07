@@ -61,17 +61,8 @@ public:
     return this->__use_trick_for_better_pressure;
   }
 
-  bool operator==(const specfem::forcing_function::stf &other) const override {
-    return this->__nsteps == other.get_nsteps() &&
-           this->__f0 == other.get_f0() &&
-           this->__tshift == other.get_tshift() &&
-           this->__factor == other.get_factor() &&
-           this->__use_trick_for_better_pressure ==
-               other.get_use_trick_for_better_pressure();
-  }
-  bool operator!=(const specfem::forcing_function::stf &other) const override {
-    return !(*this == other);
-  }
+  bool operator==(const specfem::forcing_function::stf &other) const override;
+  bool operator!=(const specfem::forcing_function::stf &other) const override;
 
 private:
   int __nsteps;

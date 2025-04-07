@@ -1,5 +1,4 @@
-#ifndef _FORCE_SOURCE_HPP
-#define _FORCE_SOURCE_HPP
+#pragma once
 
 #include "compute/compute_mesh.hpp"
 #include "compute/compute_partial_derivatives.hpp"
@@ -28,16 +27,16 @@ public:
    * @brief Default source constructor
    *
    */
-  force() {};
+  cosserat_force() {};
   /**
    * @brief Construct a new collocated force object
    *
-   * @param force_source A YAML node defining force source
+   * @param cosserat_source A YAML node defining cosserat force source
    * @param dt Time increment in the simulation. Used to calculate dominant
    * frequecy of Dirac source.
    */
-  force(YAML::Node &Node, const int nsteps, const type_real dt,
-        const specfem::wavefield::simulation_field wavefield_type)
+  cosserat_force(YAML::Node &Node, const int nsteps, const type_real dt,
+                 const specfem::wavefield::simulation_field wavefield_type)
       : angle([](YAML::Node &Node) -> type_real {
           if (Node["angle"]) {
             return Node["angle"].as<type_real>();
@@ -48,6 +47,19 @@ public:
         f(Node["f"].as<type_real>()), fc(Node["fc"].as<type_real>()),
         wavefield_type(wavefield_type),
         specfem::sources::source(Node, nsteps, dt) {};
+
+  type_real get_angle() const { return angle; }
+  type_real get_f() const { return f; }
+  type_real get_fc() const { return fc; }
+  /**
+   * @brief Construct a new collocated force object
+   */
+  cosserat_force(
+      type_real x, type_real z, type_real f, type_real fc, type_real angle,
+      std::unique_ptr<specfem::forcing_function::stf> forcing_function,
+      const specfem::wavefield::simulation_field wavefield_type)
+      : f(f), fc(fc), angle(angle), wavefield_type(wavefield_type),
+        specfem::sources::source(x, z, std::move(forcing_function)) {};
   /**
    * @brief User output
    *
@@ -64,15 +76,8 @@ public:
     return wavefield_type;
   }
 
-  bool operator==(const specfem::sources::source &other) const override {
-    const auto &other_source = dynamic_cast<const cosserat_force &>(other);
-    return (this->angle == other_source.angle) && (this->f == other_source.f) &&
-           (this->fc == other_source.fc);
-  }
-
-  bool operator!=(const specfem::sources::source &other) const override {
-    return !(*this == other);
-  }
+  bool operator==(const specfem::sources::source &other) const override;
+  bool operator!=(const specfem::sources::source &other) const override;
 
 private:
   type_real angle; ///< Angle of the elastic force source
@@ -82,7 +87,6 @@ private:
                                                        ///< which the source
                                                        ///< acts
 };
+
 } // namespace sources
 } // namespace specfem
-
-#endif

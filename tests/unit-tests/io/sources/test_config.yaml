@@ -1,5 +1,7 @@
 Tests:
+  - name : "Single Force"
+    sources: io/sources/data/single_force.yaml
   - name : "Single Moment Tensor"
-    sources: io/sources/data/single_moment_tensor.yml
-  - name : "Single Cosserate Force"
-    sources: io/sources/data/single_cosserat_tensor.yaml
+    sources: io/sources/data/single_moment_tensor.yaml
+  - name : "Single Cosserat Force"
+    sources: io/sources/data/single_cosserat_force.yaml
