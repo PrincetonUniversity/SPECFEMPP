@@ -37,10 +37,10 @@ public:
    */
   inline void compute_derivatives(const type_real &dt) {
     FOR_EACH_MATERIAL_SYSTEM(
-        WHERE2((DIMENSION_TAG_DIM2),
-               (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
-               (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+        FROM((DIMENSION_TAG_DIM2),
+             (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+              MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
+             (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
         {
           if constexpr (dimension == _dimension_tag_) {
             impl::compute_material_derivatives<dimension, NGLL, _medium_tag_,
