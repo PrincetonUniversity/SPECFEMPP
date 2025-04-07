@@ -145,7 +145,7 @@
  * FOR_EACH_ELEMENT_TYPE.
  *
  */
-#define FROM(...)                                                              \
+#define IN(...)                                                                \
   BOOST_PP_SEQ_TRANSFORM(_EXPAND_VARIADIC, _,                                  \
                          BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
 

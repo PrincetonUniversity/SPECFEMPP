@@ -66,10 +66,10 @@ template <> struct materials<specfem::dimension::type::dim2> {
                               ///< properties
 
   FOR_EACH_MATERIAL_SYSTEM(
-      FROM((DIMENSION_TAG_DIM2),
-           (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-            MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_TE),
-           (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+      IN((DIMENSION_TAG_DIM2),
+         (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
+          MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_TE),
+         (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
       DECLARE(((specfem::mesh::materials, (_DIMENSION_TAG_), ::material,
                 (_MEDIUM_TAG_, _PROPERTY_TAG_)),
                material)))
@@ -119,11 +119,10 @@ public:
     const auto &material_specification = this->material_index_mapping(index);
 
     FOR_EACH_MATERIAL_SYSTEM(
-        FROM((DIMENSION_TAG_DIM2),
-             (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-              MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
-              MEDIUM_TAG_ELECTROMAGNETIC_TE),
-             (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+        IN((DIMENSION_TAG_DIM2),
+           (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
+            MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_TE),
+           (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
         CAPTURE(material) {
           if constexpr (MediumTag == _medium_tag_ &&
                         PropertyTag == _property_tag_) {
@@ -149,11 +148,10 @@ public:
   get_container() {
 
     FOR_EACH_MATERIAL_SYSTEM(
-        FROM((DIMENSION_TAG_DIM2),
-             (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-              MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
-              MEDIUM_TAG_ELECTROMAGNETIC_TE),
-             (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+        IN((DIMENSION_TAG_DIM2),
+           (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
+            MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_TE),
+           (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
         CAPTURE(material) {
           if constexpr (_medium_tag_ == MediumTag &&
                         _property_tag_ == PropertyTag) {
