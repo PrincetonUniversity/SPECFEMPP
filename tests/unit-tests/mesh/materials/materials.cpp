@@ -32,7 +32,7 @@ CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
           MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_TE)               \
           WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)))>
 
-using MaterialVectorType = std::vector<MAKE_VARIANT_RETURN>; /// NOLINT
+using MaterialVectorType = std::vector<std::any>; /// NOLINT
 
 #undef MAKE_VARIANT_RETURN
 #undef TYPE_NAME
@@ -122,7 +122,7 @@ const static std::unordered_map<std::string, MaterialVectorType>
                   90.0, 90.0) }) }
     };
 
-void check_test(
+void check_material(
     const specfem::mesh::materials<specfem::dimension::type::dim2> &computed,
     const MaterialVectorType &expected) {
 
@@ -157,7 +157,7 @@ void check_test(
               (property_tag == _property_tag_)) {
             const auto icomputed =
                 computed.get_material<_medium_tag_, _property_tag_>(ispec);
-            const auto iexpected = std::get<
+            const auto iexpected = std::any_cast<
                 specfem::medium::material<_medium_tag_, _property_tag_> >(
                 expected[imaterial]);
             if (icomputed != iexpected) {
@@ -200,7 +200,7 @@ TEST_F(MESH, materials) {
       const auto computed = mesh.materials;
       const auto expected = ground_truth.at(Test.name);
 
-      check_test(computed, expected);
+      check_material(computed, expected);
 
       std::cout << "-------------------------------------------------------\n"
                 << "\033[0;32m[PASSED]\033[0m Test " << Test.number << ": "
