@@ -140,8 +140,9 @@
 /**
  * @brief Filter sequence for different tags.
  *
- * This macro is to be only used in conjunction with @ref
- * CALL_MACRO_FOR_ALL_ELEMENT_TYPES or @ref CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS.
+ * This macro is to be only used in conjunction with
+ * @ref FOR_EACH_MEDIUM_TAG or @ref FOR_EACH_MATERIAL_SYSTEM or @ref
+ * FOR_EACH_ELEMENT_TYPE.
  *
  */
 #define FROM(...)                                                              \
