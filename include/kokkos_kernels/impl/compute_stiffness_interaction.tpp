@@ -201,8 +201,9 @@ int specfem::kokkos_kernels::impl::compute_stiffness_interaction(
                   for (int icomponent = 0; icomponent < components;
                        ++icomponent) {
                     for (int idim = 0; idim < num_dimensions; ++idim) {
-                      stress_integrand.F(ielement, index.iz, index.ix, idim,
-                                         icomponent) = F(idim, icomponent);
+                      stress_integrand.F(ielement, index.iz, index.ix,
+                                         icomponent, idim) =
+                          F(idim, icomponent);
                     }
                   }
                 });
