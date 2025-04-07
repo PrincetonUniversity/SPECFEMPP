@@ -6,36 +6,7 @@
 #include <variant>
 #include <vector>
 
-#define MEDIUM_TYPE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                   \
-  using CREATE_VARIABLE_NAME(type, GET_NAME(MEDIUM_TAG),                       \
-                             GET_NAME(PROPERTY_TAG)) =                         \
-      specfem::medium::material<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)>;
-
-CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-    MEDIUM_TYPE,
-    WHERE(DIMENSION_TAG_DIM2)
-        WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-              MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
-              MEDIUM_TAG_ELECTROMAGNETIC_TE)
-            WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
-
-#undef MEDIUM_TYPE
-
-#define TYPE_NAME(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                     \
-  (CREATE_VARIABLE_NAME(type, GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)))
-
-#define MAKE_VARIANT_RETURN                                                    \
-  std::variant<BOOST_PP_SEQ_ENUM(CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(          \
-      TYPE_NAME,                                                               \
-      WHERE(DIMENSION_TAG_DIM2) WHERE(                                         \
-          MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,  \
-          MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_TE)               \
-          WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)))>
-
 using MaterialVectorType = std::vector<std::any>; /// NOLINT
-
-#undef MAKE_VARIANT_RETURN
-#undef TYPE_NAME
 
 const static std::unordered_map<std::string, MaterialVectorType>
     ground_truth = {
