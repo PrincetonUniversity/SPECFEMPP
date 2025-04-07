@@ -20,10 +20,10 @@ specfem::compute::kernels::kernels(
   }
 
   FOR_EACH_MATERIAL_SYSTEM(
-      WHERE2((DIMENSION_TAG_DIM2),
-             (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-              MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
-             (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+      FROM((DIMENSION_TAG_DIM2),
+           (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
+            MEDIUM_TAG_POROELASTIC),
+           (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
       CAPTURE(value) {
         _value_ =
             specfem::medium::kernels_container<_medium_tag_, _property_tag_>(

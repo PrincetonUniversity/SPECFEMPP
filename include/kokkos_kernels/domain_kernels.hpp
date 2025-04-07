@@ -149,10 +149,10 @@ public:
   inline void compute_seismograms(const int &isig_step) {
 
     FOR_EACH_MATERIAL_SYSTEM(
-        WHERE2((DIMENSION_TAG_DIM2),
-               (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
-               (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+        FROM((DIMENSION_TAG_DIM2),
+             (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+              MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
+             (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
         {
           if constexpr (dimension == _dimension_tag_) {
             impl::compute_seismograms<dimension, wavefield, ngll, _medium_tag_,
