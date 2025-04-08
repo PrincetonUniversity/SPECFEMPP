@@ -1,6 +1,14 @@
 name: Unittests
 
-on: [push,pull_request]
+on:
+  push:
+    branches:
+      - main
+      - devel
+  pull_request:
+    branches:
+      - '*' # All branches
+
 
 jobs:
   build-and-test:
