@@ -42,6 +42,15 @@ void specfem::sources::external::compute_source_array(
 
   type_real hlagrange;
 
+  if (el_type == specfem::element::medium_tag::elastic_psv_t) {
+    throw std::runtime_error(
+        "External source not implemented for elastic psv_t medium");
+  }
+  if (el_type == specfem::element::medium_tag::electromagnetic_te) {
+    throw std::runtime_error(
+        "External source not implemented for electromagnetic_te medium");
+  }
+
   // Source array computation
   for (int iz = 0; iz < N; ++iz) {
     for (int ix = 0; ix < N; ++ix) {
