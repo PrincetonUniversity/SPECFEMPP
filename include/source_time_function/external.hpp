@@ -1,6 +1,4 @@
-#ifndef SPECFEM_FORCING_FUNCTION_EXTERNAL_HPP
-#define SPECFEM_FORCING_FUNCTION_EXTERNAL_HPP
-
+#pragma once
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
 #include "source_time_function/source_time_function.hpp"
@@ -35,9 +33,18 @@ public:
     return ss.str();
   }
 
-  type_real get_t0() const override { return this->__t0; }
+  specfem::enums::seismogram::format get_type() const { return type; }
+  type_real get_t0() const override { return __t0; }
+  type_real get_dt() const { return __dt; }
+  int get_nsteps() { return __nsteps; }
+  int get_ncomponents() const { return ncomponents; }
+  std::string get_x_component() const { return x_component; }
+  std::string get_y_component() const { return y_component; }
+  std::string get_z_component() const { return z_component; }
+  specfem::enums::seismogram::format get_format() const { return type; }
 
-  type_real get_tshift() const override { return 0.0; }
+  bool operator==(const specfem::forcing_function::stf &other) const override;
+  bool operator!=(const specfem::forcing_function::stf &other) const override;
 
 private:
   int __nsteps;
@@ -51,5 +58,3 @@ private:
 };
 } // namespace forcing_function
 } // namespace specfem
-
-#endif /* SPECFEM_FORCING_FUNCTION_EXTERNAL_HPP */

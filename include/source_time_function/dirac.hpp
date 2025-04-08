@@ -56,6 +56,18 @@ public:
       const type_real t0, const type_real dt, const int nsteps,
       specfem::kokkos::HostView2d<type_real> source_time_function) override;
 
+  type_real get_dt() const { return this->__dt; }
+  type_real get_factor() const { return this->__factor; }
+  type_real get_f0() const { return this->__f0; }
+  int get_nsteps() const { return this->__nsteps; }
+  bool get_use_trick_for_better_pressure() const {
+    return this->__use_trick_for_better_pressure;
+  }
+  int get_ncomponents() const { return 1; }
+
+  bool operator==(const specfem::forcing_function::stf &other) const override;
+  bool operator!=(const specfem::forcing_function::stf &other) const override;
+
 private:
   int __nsteps;
   type_real __f0;     ///< frequence f0
