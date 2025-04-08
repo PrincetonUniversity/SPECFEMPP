@@ -30,7 +30,7 @@ rule run_solver:
         source="source.yaml",
         config="specfem_config.yaml",
     output:
-        siesmograms=expand(
+        seismograms=expand(
             "OUTPUT_FILES/results/{network_name}.{station_name}.S2.{component}.semd",
             station_name=["S0001"],
             network_name=["AA"],
