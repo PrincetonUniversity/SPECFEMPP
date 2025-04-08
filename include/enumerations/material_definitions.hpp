@@ -1,7 +1,7 @@
 #pragma once
 
+#include "macros_impl/array.hpp"
 #include "macros_impl/element_types.hpp"
-#include "macros_impl/material_systems.hpp"
 #include "macros_impl/medium_tags.hpp"
 
 /**
@@ -162,7 +162,7 @@
  * code block to be executed.
  */
 #define FOR_EACH_MATERIAL_SYSTEM(seq, ...)                                     \
-  BOOST_PP_SEQ_FOR_EACH(_FOR_ONE_MATERIAL_SYSTEM,                              \
+  BOOST_PP_SEQ_FOR_EACH(_FOR_ONE_TAG_SEQ,                                      \
                         BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__),                 \
                         BOOST_PP_SEQ_FOR_EACH_PRODUCT(_CREATE_SEQ, seq))
 

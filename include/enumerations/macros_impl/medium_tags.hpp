@@ -3,13 +3,6 @@
 #include "utils.hpp"
 
 /**
- * @brief Sequence transformation function for _MAKE_CONSTEXPR_ARRAY.
- */
-#define _MAKE_ARRAY_ELEM_MEDIUM(s, data, elem)                                 \
-  std::make_tuple(GET_TAG(BOOST_PP_TUPLE_ELEM(0, elem)),                       \
-                  GET_TAG(BOOST_PP_TUPLE_ELEM(1, elem)))
-
-/**
  * @brief Call a macro for a specific medium tag if it is in the list of
  * available medium tags defined by macro MEDIUM_TAGS.
  */

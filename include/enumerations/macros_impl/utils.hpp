@@ -30,6 +30,14 @@
 
 #define _TRANSFORM_INSTANTIATE(s, data, elem) (elem, )
 
+#define _OP_OR(s, state, elem) BOOST_PP_OR(state, elem)
+
+#define _SEQ_FOR_TAGS_2 MEDIUM_TAGS
+
+#define _SEQ_FOR_TAGS_3 MATERIAL_SYSTEMS
+
+#define _SEQ_FOR_TAGS_4 ELEMENT_TYPES
+
 /**
  * @brief Declare a variable or instantiante a template based on the type
  * declaration tuple.
@@ -173,11 +181,82 @@
   (data, BOOST_PP_SEQ_HEAD(code), _REMOVE_DECLARE_FROM_CODE(code))
 
 /**
- * @brief Macro to create a constexpr array from a sequence
- * Used by medium_types(), material_systems() and element_types()
+ * @brief Check if the first element of the sequence is a list of variable
+ * names. If it is, then write both variable declaration and code block. If it
+ * is not, then write only the code block.
  */
-#define _MAKE_CONSTEXPR_ARRAY(seq, macro)                                      \
-  BOOST_PP_SEQ_ENUM(BOOST_PP_SEQ_TRANSFORM(macro, _, seq))
+#define _CHECK_DECLARE(data, code)                                             \
+  BOOST_PP_IF(BOOST_VMD_IS_SEQ(BOOST_PP_SEQ_HEAD(code)),                       \
+              _WRITE_DECLARE_AND_BLOCK, _WRITE_BLOCK)(data, (), code)
 
-// touch the following code at your own risk
-#define _OP_OR(s, state, elem) BOOST_PP_OR(state, elem)
+/**
+ * @brief Compare each item in the sequence for a sequence pair of length 2, 3
+ * and 4.
+ */
+#define _IN_TUPLE_2(s, elem, tuple)                                            \
+  BOOST_PP_IF(                                                                 \
+      BOOST_PP_EQUAL(BOOST_PP_TUPLE_SIZE(tuple), 2),                           \
+      BOOST_PP_IF(                                                             \
+          BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(0, tuple)),                \
+                         GET_ID(BOOST_PP_TUPLE_ELEM(0, elem))),                \
+          BOOST_PP_IF(BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(1, tuple)),    \
+                                     GET_ID(BOOST_PP_TUPLE_ELEM(1, elem))),    \
+                      1, 0),                                                   \
+          0),                                                                  \
+      0)
+
+#define _IN_TUPLE_3(s, elem, tuple)                                            \
+  BOOST_PP_IF(                                                                 \
+      BOOST_PP_EQUAL(BOOST_PP_TUPLE_SIZE(tuple), 3),                           \
+      BOOST_PP_IF(                                                             \
+          BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(0, tuple)),                \
+                         GET_ID(BOOST_PP_TUPLE_ELEM(0, elem))),                \
+          BOOST_PP_IF(BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(1, tuple)),    \
+                                     GET_ID(BOOST_PP_TUPLE_ELEM(1, elem))),    \
+                      BOOST_PP_IF(BOOST_PP_EQUAL(                              \
+                                      GET_ID(BOOST_PP_TUPLE_ELEM(2, tuple)),   \
+                                      GET_ID(BOOST_PP_TUPLE_ELEM(2, elem))),   \
+                                  1, 0),                                       \
+                      0),                                                      \
+          0),                                                                  \
+      0)
+
+#define _IN_TUPLE_4(s, elem, tuple)                                            \
+  BOOST_PP_IF(                                                                 \
+      BOOST_PP_EQUAL(BOOST_PP_TUPLE_SIZE(tuple), 4),                           \
+      BOOST_PP_IF(                                                             \
+          BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(0, tuple)),                \
+                         GET_ID(BOOST_PP_TUPLE_ELEM(0, elem))),                \
+          BOOST_PP_IF(                                                         \
+              BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(1, tuple)),            \
+                             GET_ID(BOOST_PP_TUPLE_ELEM(1, elem))),            \
+              BOOST_PP_IF(                                                     \
+                  BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(2, tuple)),        \
+                                 GET_ID(BOOST_PP_TUPLE_ELEM(2, elem))),        \
+                  BOOST_PP_IF(                                                 \
+                      BOOST_PP_EQUAL(GET_ID(BOOST_PP_TUPLE_ELEM(3, tuple)),    \
+                                     GET_ID(BOOST_PP_TUPLE_ELEM(3, elem))),    \
+                      1, 0),                                                   \
+                  0),                                                          \
+              0),                                                              \
+          0),                                                                  \
+      0)
+
+/**
+ * @brief Check if a given tag sequence is in the list of available tag
+ * sequences.
+ */
+#define _IN_SEQUENCE(n, elem)                                                  \
+  BOOST_PP_SEQ_FOLD_LEFT(                                                      \
+      _OP_OR, 0,                                                               \
+      BOOST_PP_SEQ_TRANSFORM(BOOST_PP_CAT(_IN_TUPLE_, n), elem,                \
+                             BOOST_PP_CAT(_SEQ_FOR_TAGS_, n)))
+
+/**
+ * Check if a given tag sequence is in the list of available tag sequences,
+ * write declaration and code block for the sequence if it is in the list.
+ */
+#define _FOR_ONE_TAG_SEQ(s, code, elem)                                        \
+  BOOST_PP_IF(                                                                 \
+      _IN_SEQUENCE(BOOST_PP_SEQ_SIZE(elem), BOOST_PP_SEQ_TO_TUPLE(elem)),      \
+      _CHECK_DECLARE, _EMPTY_MACRO)(BOOST_PP_SEQ_TO_TUPLE(elem), code)

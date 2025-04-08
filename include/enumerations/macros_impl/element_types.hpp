@@ -3,15 +3,6 @@
 #include "utils.hpp"
 
 /**
- * @brief Sequence transformation function for _MAKE_CONSTEXPR_ARRAY.
- */
-#define _MAKE_ARRAY_ELEM_ELEM(s, data, elem)                                   \
-  std::make_tuple(GET_TAG(BOOST_PP_TUPLE_ELEM(0, elem)),                       \
-                  GET_TAG(BOOST_PP_TUPLE_ELEM(1, elem)),                       \
-                  GET_TAG(BOOST_PP_TUPLE_ELEM(2, elem)),                       \
-                  GET_TAG(BOOST_PP_TUPLE_ELEM(3, elem)))
-
-/**
  * @brief Call a macro for a specific element type if it is in the list of
  * available element types defined by macro ELEMENT_TYPES.
  */
