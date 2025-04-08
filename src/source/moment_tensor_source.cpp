@@ -172,7 +172,7 @@ bool specfem::sources::moment_tensor::operator==(
   }
 
   return internal &&
-         (*this->forcing_function == *other_source->forcing_function);
+         (*(this->forcing_function) == *(other_source->forcing_function));
 }
 bool specfem::sources::moment_tensor::operator!=(
     const specfem::sources::source &other) const {
