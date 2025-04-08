@@ -163,10 +163,10 @@ private:
 public:
   SeismogramIterator() = default;
 
-  SeismogramIterator(const int nreceivers, const int nsiesmograms,
+  SeismogramIterator(const int nreceivers, const int nseismograms,
                      const int max_sig_step, type_real dt, type_real t0,
                      int nstep_between_samples)
-      : nreceivers(nreceivers), nsiesmograms(nsiesmograms), dt(dt), t0(t0),
+      : nreceivers(nreceivers), nseismograms(nseismograms), dt(dt), t0(t0),
         nstep_between_samples(nstep_between_samples),
         max_sig_step(max_sig_step),
         h_sine_receiver_angle(
@@ -175,7 +175,7 @@ public:
             "specfem::compute::receivers::cosine_receiver_angle", nreceivers),
         seismogram_components(
             "specfem::compute::receivers::seismogram_components", max_sig_step,
-            nsiesmograms, nreceivers, 2),
+            nseismograms, nreceivers, 2),
         h_seismogram_components(
             Kokkos::create_mirror_view(seismogram_components)) {}
 
@@ -245,7 +245,7 @@ public:
 
 private:
   int nreceivers;
-  int nsiesmograms;
+  int nseismograms;
   int irec;
   int iseis;
   int nstep_between_samples;
