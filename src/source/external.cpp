@@ -42,15 +42,6 @@ void specfem::sources::external::compute_source_array(
 
   type_real hlagrange;
 
-  if (el_type == specfem::element::medium_tag::elastic_psv_t) {
-    throw std::runtime_error(
-        "External source not implemented for elastic psv_t medium");
-  }
-  if (el_type == specfem::element::medium_tag::electromagnetic_te) {
-    throw std::runtime_error(
-        "External source not implemented for electromagnetic_te medium");
-  }
-
   // Source array computation
   for (int iz = 0; iz < N; ++iz) {
     for (int ix = 0; ix < N; ++ix) {
@@ -88,6 +79,22 @@ void specfem::sources::external::compute_source_array(
         source_array(1, iz, ix) = hlagrange;
         source_array(2, iz, ix) = hlagrange;
         source_array(3, iz, ix) = hlagrange;
+      } else if (el_type == specfem::element::medium_tag::electromagnetic_te) {
+        if (ncomponents != 2) {
+          throw std::runtime_error(
+              "External source requires 2 components for electromagnetic "
+              "TE medium");
+        }
+        source_array(0, iz, ix) = hlagrange;
+        source_array(1, iz, ix) = hlagrange;
+      } else if (el_type == specfem::element::medium_tag::elastic_psv_t) {
+        if (ncomponents != 3) {
+          throw std::runtime_error(
+              "External source requires 3 components for elastic psv_t medium");
+        }
+        source_array(0, iz, ix) = hlagrange;
+        source_array(1, iz, ix) = hlagrange;
+        source_array(2, iz, ix) = hlagrange;
       } else {
         std::ostringstream message;
         message << "Source array computation not implemented for element type: "
