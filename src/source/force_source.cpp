@@ -140,7 +140,7 @@ bool specfem::sources::force::operator==(
   return specfem::utilities::almost_equal(this->x, other_source->x) &&
          specfem::utilities::almost_equal(this->z, other_source->z) &&
          specfem::utilities::almost_equal(this->angle, other_source->angle) &&
-         *this->forcing_function == *other_source->forcing_function;
+         *(this->forcing_function) == *(other_source->forcing_function);
 }
 bool specfem::sources::force::operator!=(
     const specfem::sources::source &other) const {

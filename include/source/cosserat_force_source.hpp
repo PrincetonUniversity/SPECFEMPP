@@ -29,7 +29,7 @@ public:
    */
   cosserat_force() {};
   /**
-   * @brief Construct a new collocated force object
+   * @brief Construct a new cosserat force object
    *
    * @param cosserat_source A YAML node defining cosserat force source
    * @param dt Time increment in the simulation. Used to calculate dominant
@@ -52,7 +52,15 @@ public:
   type_real get_f() const { return f; }
   type_real get_fc() const { return fc; }
   /**
-   * @brief Construct a new collocated force object
+   * @brief Construct a new cosserat force object
+   *
+   * @param x x-coordinate of source
+   * @param z z-coordinate of source
+   * @param f Factor to scale the elastic force
+   * @param fc Factor to scale the rotational force
+   * @param angle Angle of the elastic force source
+   * @param forcing_function Pointer to source time function
+   * @param wavefield_type Type of wavefield on which the source acts
    */
   cosserat_force(
       type_real x, type_real z, type_real f, type_real fc, type_real angle,

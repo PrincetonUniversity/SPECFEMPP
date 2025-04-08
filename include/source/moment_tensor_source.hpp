@@ -64,6 +64,14 @@ public:
   /**
    * @brief Costruct new moment tensor source using forcing function
    *
+   * @param x x-coordinate of source
+   * @param z z-coordinate of source
+   * @param Mxx Mxx component of moment tensor
+   * @param Mzz Mzz component of moment tensor
+   * @param Mxz Mxz component of moment tensor
+   * @param forcing_function pointer to source time function
+   * @param wavefield_type type of wavefield
+   *
    */
   moment_tensor(
       type_real x, type_real z, const type_real Mxx, const type_real Mzz,

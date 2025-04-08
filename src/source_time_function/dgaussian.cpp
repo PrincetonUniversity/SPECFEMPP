@@ -83,6 +83,8 @@ bool specfem::forcing_function::dGaussian::operator==(
   // Then check if the other object is a dGaussian
   auto other_dgaussian =
       dynamic_cast<const specfem::forcing_function::dGaussian *>(&other);
+
+  // Check if cast was successful
   if (!other_dgaussian)
     return false;
 
@@ -101,5 +103,5 @@ bool specfem::forcing_function::dGaussian::operator==(
 
 bool specfem::forcing_function::dGaussian::operator!=(
     const specfem::forcing_function::stf &other) const {
-  return !(*this == other);
+  return !(*(this) == other);
 }

@@ -82,6 +82,7 @@ bool specfem::forcing_function::Ricker::operator==(
   // Then check if the other object is a dGaussian
   auto other_ricker =
       dynamic_cast<const specfem::forcing_function::Ricker *>(&other);
+
   if (!other_ricker)
     return false;
 
