@@ -1,5 +1,4 @@
-#ifndef _FORCE_SOURCE_HPP
-#define _FORCE_SOURCE_HPP
+#pragma once
 
 #include "compute/compute_mesh.hpp"
 #include "compute/compute_partial_derivatives.hpp"
@@ -47,11 +46,34 @@ public:
         }(Node)),
         wavefield_type(wavefield_type),
         specfem::sources::source(Node, nsteps, dt) {};
+
+  /**
+   * @brief Construct a new collocated force object
+   *
+   * @param x x-coordinate of source
+   * @param y z-coordinate of source
+   * @param angle angle of force source
+   * @param forcing_function pointer to source time function
+   * @param wavefield_type type of wavefield
+   */
+  force(type_real x, type_real z, type_real angle,
+        std::unique_ptr<specfem::forcing_function::stf> forcing_function,
+        const specfem::wavefield::simulation_field wavefield_type)
+      : angle(angle), wavefield_type(wavefield_type),
+        specfem::sources::source(x, z, std::move(forcing_function)) {};
+
   /**
    * @brief User output
    *
    */
   std::string print() const override;
+
+  /**
+   * @brief Get the angle of the force source
+   *
+   * @return type_real angle of force source
+   */
+  type_real get_angle() const { return angle; }
 
   void compute_source_array(
       const specfem::compute::mesh &mesh,
@@ -63,6 +85,13 @@ public:
     return wavefield_type;
   }
 
+  /**
+   * @brief Get the forcing function
+   *
+   */
+  bool operator==(const specfem::sources::source &other) const override;
+  bool operator!=(const specfem::sources::source &other) const override;
+
 private:
   type_real angle; ///< Angle of force source
   specfem::wavefield::simulation_field wavefield_type; ///< Type of wavefield on
@@ -71,5 +100,3 @@ private:
 };
 } // namespace sources
 } // namespace specfem
-
-#endif

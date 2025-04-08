@@ -3,7 +3,6 @@
 #include "compute/compute_mesh.hpp"
 #include "compute/compute_partial_derivatives.hpp"
 #include "compute/element_types/element_types.hpp"
-#include "constants.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
 #include "quadrature/interface.hpp"
@@ -18,69 +17,57 @@
 namespace specfem {
 namespace sources {
 /**
- * @brief Moment-tensor source
+ * @brief Collocated force source
  *
  */
-class moment_tensor : public source {
+class cosserat_force : public source {
 
 public:
   /**
    * @brief Default source constructor
    *
    */
-  moment_tensor() {};
-
+  cosserat_force() {};
   /**
-   * @brief Get the Mxx component of the moment tensor
+   * @brief Construct a new cosserat force object
    *
-   * @return type_real x-coordinate
+   * @param cosserat_source A YAML node defining cosserat force source
+   * @param dt Time increment in the simulation. Used to calculate dominant
+   * frequecy of Dirac source.
    */
-  type_real get_Mxx() const { return Mxx; }
-  /**
-   * @brief Get the Mxz component of the moment tensor
-   *
-   * @return type_real z-coordinate
-   */
-  type_real get_Mxz() const { return Mxz; }
-  /**
-   * @brief Get the Mzz component of the moment tensor
-   *
-   * @return type_real z-coordinate
-   */
-  type_real get_Mzz() const { return Mzz; }
-
-  /**
-   * @brief Construct a new moment tensor force object
-   *
-   * @param moment_tensor a moment_tensor data holder read from source file
-   * written in .yml format
-   */
-  moment_tensor(YAML::Node &Node, const int nsteps, const type_real dt,
-                const specfem::wavefield::simulation_field wavefield_type)
-      : Mxx(Node["Mxx"].as<type_real>()), Mzz(Node["Mzz"].as<type_real>()),
-        Mxz(Node["Mxz"].as<type_real>()), wavefield_type(wavefield_type),
+  cosserat_force(YAML::Node &Node, const int nsteps, const type_real dt,
+                 const specfem::wavefield::simulation_field wavefield_type)
+      : angle([](YAML::Node &Node) -> type_real {
+          if (Node["angle"]) {
+            return Node["angle"].as<type_real>();
+          } else {
+            return 0.0;
+          }
+        }(Node)),
+        f(Node["f"].as<type_real>()), fc(Node["fc"].as<type_real>()),
+        wavefield_type(wavefield_type),
         specfem::sources::source(Node, nsteps, dt) {};
 
+  type_real get_angle() const { return angle; }
+  type_real get_f() const { return f; }
+  type_real get_fc() const { return fc; }
   /**
-   * @brief Costruct new moment tensor source using forcing function
+   * @brief Construct a new cosserat force object
    *
    * @param x x-coordinate of source
    * @param z z-coordinate of source
-   * @param Mxx Mxx component of moment tensor
-   * @param Mzz Mzz component of moment tensor
-   * @param Mxz Mxz component of moment tensor
-   * @param forcing_function pointer to source time function
-   * @param wavefield_type type of wavefield
-   *
+   * @param f Factor to scale the elastic force
+   * @param fc Factor to scale the rotational force
+   * @param angle Angle of the elastic force source
+   * @param forcing_function Pointer to source time function
+   * @param wavefield_type Type of wavefield on which the source acts
    */
-  moment_tensor(
-      type_real x, type_real z, const type_real Mxx, const type_real Mzz,
-      const type_real Mxz,
+  cosserat_force(
+      type_real x, type_real z, type_real f, type_real fc, type_real angle,
       std::unique_ptr<specfem::forcing_function::stf> forcing_function,
       const specfem::wavefield::simulation_field wavefield_type)
-      : Mxx(Mxx), Mzz(Mzz), Mxz(Mxz), wavefield_type(wavefield_type),
+      : f(f), fc(fc), angle(angle), wavefield_type(wavefield_type),
         specfem::sources::source(x, z, std::move(forcing_function)) {};
-
   /**
    * @brief User output
    *
@@ -101,12 +88,13 @@ public:
   bool operator!=(const specfem::sources::source &other) const override;
 
 private:
-  type_real Mxx;                                       ///< Mxx for the source
-  type_real Mxz;                                       ///< Mxz for the source
-  type_real Mzz;                                       ///< Mzz for the source
+  type_real angle; ///< Angle of the elastic force source
+  type_real f;     ///< Factor to scale the elastic force
+  type_real fc;    ///< Factor to scale the rotational force
   specfem::wavefield::simulation_field wavefield_type; ///< Type of wavefield on
                                                        ///< which the source
                                                        ///< acts
 };
+
 } // namespace sources
 } // namespace specfem
