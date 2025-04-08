@@ -64,6 +64,22 @@ void specfem::sources::adjoint_source::compute_source_array(
         source_array(1, iz, ix) = hlagrange;
         source_array(2, iz, ix) = hlagrange;
         source_array(3, iz, ix) = hlagrange;
+      } else if (el_type == specfem::element::medium_tag::elastic_psv_t) {
+        if (ncomponents != 3) {
+          throw std::runtime_error(
+              "Adjoint source requires 3 components for elastic psv_t medium");
+        }
+        source_array(0, iz, ix) = hlagrange;
+        source_array(1, iz, ix) = hlagrange;
+        source_array(2, iz, ix) = static_cast<type_real>(0.0);
+      } else if (el_type == specfem::element::medium_tag::electromagnetic_te) {
+        if (ncomponents != 2) {
+          throw std::runtime_error(
+              "Adjoint source requires 2 components for electromagnetic "
+              "TE medium");
+        }
+        source_array(0, iz, ix) = hlagrange;
+        source_array(1, iz, ix) = hlagrange;
       } else {
         std::ostringstream message;
         message << "Source array computation not implemented for element type: "
