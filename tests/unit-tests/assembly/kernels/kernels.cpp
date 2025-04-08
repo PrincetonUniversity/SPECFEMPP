@@ -899,21 +899,20 @@ void test_kernels(specfem::compute::assembly &assembly) {
   //                                           IFF EM KERNEL is implemented. ==
   //
 
-  FOR_EACH_MATERIAL_SYSTEM(
-      IN((DIMENSION_TAG_DIM2),
-         (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-          MEDIUM_TAG_POROELASTIC),
-         (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
-      {
-        check_store_and_add<_medium_tag_, _property_tag_, false>(kernels,
-                                                                 element_types);
-        check_load_on_device<_medium_tag_, _property_tag_, false>(
-            kernels, element_types);
-        check_store_and_add<_medium_tag_, _property_tag_, true>(kernels,
-                                                                element_types);
-        check_load_on_device<_medium_tag_, _property_tag_, true>(kernels,
-                                                                 element_types);
-      })
+  FOR_EACH(IN_PRODUCT((DIMENSION_TAG_DIM2),
+                      (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                       MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
+                      (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+           {
+             check_store_and_add<_medium_tag_, _property_tag_, false>(
+                 kernels, element_types);
+             check_load_on_device<_medium_tag_, _property_tag_, false>(
+                 kernels, element_types);
+             check_store_and_add<_medium_tag_, _property_tag_, true>(
+                 kernels, element_types);
+             check_load_on_device<_medium_tag_, _property_tag_, true>(
+                 kernels, element_types);
+           })
 }
 
 TEST_F(ASSEMBLY, kernels_device_functions) {
