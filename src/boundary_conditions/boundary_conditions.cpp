@@ -87,6 +87,39 @@ CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
 
 #undef INSTANTIATION_MACRO
 
+//   FOR_EACH(
+//         IN_PRODUCT((DIMENSION_TAG_DIM2),
+//                    (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+//                     MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
+//                    (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
+//                    (BOUNDARY_TAG_STACEY,
+//                    BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET)),
+//         INSTANTIATE(
+
+//          /** Template instantiation for SIMD=false */                                 \
+//         (template KOKKOS_FUNCTION void
+//             specfem::boundary_conditions::impl_compute_mass_matrix_terms, (
+//                 PointBoundaryType<GET_TAG(DIMENSION_TAG),
+//                 GET_TAG(BOUNDARY_TAG), false),
+//                 PointPropertyType<GET_TAG(DIMENSION_TAG),
+//                 GET_TAG(MEDIUM_TAG),
+//                                 GET_TAG(PROPERTY_TAG), false>,
+//                 PointMassMatrixType<GET_TAG(DIMENSION_TAG),
+//                 GET_TAG(MEDIUM_TAG),
+//                                     false>>(
+//                 const boundary_type<GET_TAG(BOUNDARY_TAG)> &, const type_real
+//                 dt, const PointBoundaryType<GET_TAG(DIMENSION_TAG),
+//                 GET_TAG(BOUNDARY_TAG),
+//                                         false> &,
+//                 const PointPropertyType<GET_TAG(DIMENSION_TAG),
+//                 GET_TAG(MEDIUM_TAG),
+//                                         GET_TAG(PROPERTY_TAG), false> &,
+//                 PointMassMatrixType<GET_TAG(DIMENSION_TAG),
+//                 GET_TAG(MEDIUM_TAG), false>
+//                     &);)
+
+//         ))
+
 #define INSTANTIATION_MACRO(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG,           \
                             BOUNDARY_TAG)                                      \
   /** Template instantiation for SIMD=false */                                 \

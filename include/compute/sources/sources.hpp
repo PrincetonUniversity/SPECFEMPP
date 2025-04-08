@@ -168,56 +168,25 @@ private:
 
   int timestep; ///< Current time step
 
-#define SOURCE_INDICES_VARIABLES_NAME(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG, \
-                                      BOUNDARY_TAG)                            \
-  IndexViewType CREATE_VARIABLE_NAME(                                          \
-      element_indices_forward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),  \
-      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
-  IndexViewType CREATE_VARIABLE_NAME(                                          \
-      element_indices_backward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG), \
-      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
-  IndexViewType CREATE_VARIABLE_NAME(                                          \
-      element_indices_adjoint, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),  \
-      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
-  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
-      h_element_indices_forward, GET_NAME(DIMENSION_TAG),                      \
-      GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));   \
-  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
-      h_element_indices_backward, GET_NAME(DIMENSION_TAG),                     \
-      GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));   \
-  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
-      h_element_indices_adjoint, GET_NAME(DIMENSION_TAG),                      \
-      GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));   \
-  IndexViewType CREATE_VARIABLE_NAME(                                          \
-      source_indices_forward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),   \
-      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
-  IndexViewType CREATE_VARIABLE_NAME(                                          \
-      source_indices_backward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),  \
-      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
-  IndexViewType CREATE_VARIABLE_NAME(                                          \
-      source_indices_adjoint, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),   \
-      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
-  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
-      h_source_indices_forward, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG), \
-      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));                         \
-  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
-      h_source_indices_backward, GET_NAME(DIMENSION_TAG),                      \
-      GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));   \
-  IndexViewType::HostMirror CREATE_VARIABLE_NAME(                              \
-      h_source_indices_adjoint, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG), \
-      GET_NAME(PROPERTY_TAG), GET_NAME(BOUNDARY_TAG));
-
-  CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
-      SOURCE_INDICES_VARIABLES_NAME,
-      WHERE(DIMENSION_TAG_DIM2)
-          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
-              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)
-                  WHERE(BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-                        BOUNDARY_TAG_STACEY,
-                        BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
-
-#undef SOURCE_INDICES_VARIABLES_NAME
+  FOR_EACH(IN_PRODUCT((DIMENSION_TAG_DIM2),
+                      (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                       MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
+                      (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
+                      (BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
+                       BOUNDARY_TAG_STACEY,
+                       BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET)),
+           DECLARE((IndexViewType, element_indices_forward),
+                   (IndexViewType::HostMirror, h_element_indices_forward),
+                   (IndexViewType, element_indices_backward),
+                   (IndexViewType::HostMirror, h_element_indices_backward),
+                   (IndexViewType, element_indices_adjoint),
+                   (IndexViewType::HostMirror, h_element_indices_adjoint),
+                   (IndexViewType, source_indices_forward),
+                   (IndexViewType::HostMirror, h_source_indices_forward),
+                   (IndexViewType, source_indices_backward),
+                   (IndexViewType::HostMirror, h_source_indices_backward),
+                   (IndexViewType, source_indices_adjoint),
+                   (IndexViewType::HostMirror, h_source_indices_adjoint)))
 
   template <typename IteratorIndexType, typename PointSourceType>
   friend KOKKOS_INLINE_FUNCTION void
