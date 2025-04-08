@@ -96,27 +96,27 @@ Tests:
       stations : "data/mesh/homogeneous_elastic_anisotropic/STATIONS"
     suffix: "homogeneous_elastic_anisotropic_SH"
 
-  # - name : "Test 9: Homogeneous Poroelastic Isotropic Material (P_SV wave)"
-  #   description: >
-  #     Testing the reading of a homogeneous poroelastic isotropic material.
-  #   config:
-  #     nproc : 1
-  #     elastic_wave: "P_SV"
-  #   databases:
-  #     mesh : "data/mesh/homogeneous_poroelastic_isotropic/database.bin"
-  #     sources : "data/mesh/homogeneous_poroelastic_isotropic/sources.yaml"
-  #     stations : "data/mesh/homogeneous_poroelastic_isotropic/STATIONS"
-  #   suffix: "homogeneous_poroelastic_isotropic_P_SV"
+  - name : "Test 9: Homogeneous Poroelastic Isotropic Material (P_SV wave)"
+    description: >
+      Testing the reading of a homogeneous poroelastic isotropic material.
+    config:
+      nproc : 1
+      elastic_wave: "P_SV"
+    databases:
+      mesh : "data/mesh/homogeneous_poroelastic_isotropic/database.bin"
+      sources : "data/mesh/homogeneous_poroelastic_isotropic/sources.yaml"
+      stations : "data/mesh/homogeneous_poroelastic_isotropic/STATIONS"
+    suffix: "homogeneous_poroelastic_isotropic_P_SV"
 
   # THE STATIONS AND SOURCE FILES FOR THIS HAVE NOT BEEN CHECKED/TESTED
-  # - name : "Test 10: Cosserat Isotropic Homogeneous Material (P_SV wave)"
-  #   description: >
-  #     Testing the reading of a homogeneous elastic isotropic cosserat material.
-  #   config:
-  #     nproc : 1
-  #     elastic_wave: "P_SV"
-  #   databases:
-  #     mesh : "data/mesh/cosserat_isotropic_homogeneous/database.bin"
-  #     sources : "data/mesh/cosserat_isotropic_homogeneous/sources.yaml"
-  #     stations : "data/mesh/cosserat_isotropic_homogeneous/STATIONS"
-  #   suffix: "cosserat_isotropic_homogeneous"
+  - name : "Test 10: Cosserat Isotropic Homogeneous Material (P_SV wave)"
+    description: >
+      Testing the reading of a homogeneous elastic isotropic cosserat material.
+    config:
+      nproc : 1
+      elastic_wave: "P_SV"
+    databases:
+      mesh : "data/mesh/cosserat_isotropic_homogeneous/database.bin"
+      sources : "data/mesh/cosserat_isotropic_homogeneous/sources.yaml"
+      stations : "data/mesh/cosserat_isotropic_homogeneous/STATIONS"
+    suffix: "cosserat_isotropic_homogeneous"
