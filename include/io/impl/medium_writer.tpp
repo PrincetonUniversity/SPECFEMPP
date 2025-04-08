@@ -27,8 +27,8 @@ void specfem::io::impl::write_container(
 
   int n_written = 0;
 
-  FOR_EACH_MATERIAL_SYSTEM(
-        IN((DIMENSION_TAG_DIM2),
+  FOR_EACH(
+        IN_PRODUCT((DIMENSION_TAG_DIM2),
                (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                 MEDIUM_TAG_ACOUSTIC),
                (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)), {

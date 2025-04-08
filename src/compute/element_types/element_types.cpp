@@ -81,11 +81,11 @@ specfem::compute::element_types::element_types(
 
 #undef ASSIGN_MEDIUM_TAG_INDICES
 
-  FOR_EACH_MATERIAL_SYSTEM(
-      IN((DIMENSION_TAG_DIM2),
-         (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-          MEDIUM_TAG_POROELASTIC),
-         (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+  FOR_EACH(
+      IN_PRODUCT((DIMENSION_TAG_DIM2),
+                 (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
+                 (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
       CAPTURE(elements, h_elements) {
         int count = 0;
         int index = 0;
@@ -251,11 +251,11 @@ specfem::compute::element_types::get_elements_on_host(
     const specfem::element::medium_tag medium_tag,
     const specfem::element::property_tag property_tag) const {
 
-  FOR_EACH_MATERIAL_SYSTEM(
-      IN((DIMENSION_TAG_DIM2),
-         (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-          MEDIUM_TAG_POROELASTIC),
-         (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+  FOR_EACH(
+      IN_PRODUCT((DIMENSION_TAG_DIM2),
+                 (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
+                 (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
       CAPTURE(h_elements) {
         if (_medium_tag_ == medium_tag && _property_tag_ == property_tag) {
           return _h_elements_;
@@ -270,11 +270,11 @@ specfem::compute::element_types::get_elements_on_device(
     const specfem::element::medium_tag medium_tag,
     const specfem::element::property_tag property_tag) const {
 
-  FOR_EACH_MATERIAL_SYSTEM(
-      IN((DIMENSION_TAG_DIM2),
-         (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-          MEDIUM_TAG_POROELASTIC),
-         (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+  FOR_EACH(
+      IN_PRODUCT((DIMENSION_TAG_DIM2),
+                 (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
+                 (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
       CAPTURE(elements) {
         if (_medium_tag_ == medium_tag && _property_tag_ == property_tag) {
           return _elements_;

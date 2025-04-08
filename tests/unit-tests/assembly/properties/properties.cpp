@@ -1166,11 +1166,11 @@ void test_properties(
   //
 
   // stage 1: check if properties are correctly constructed from the assembly
-  FOR_EACH_MATERIAL_SYSTEM(
-      IN((DIMENSION_TAG_DIM2),
-         (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-          MEDIUM_TAG_POROELASTIC),
-         (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+  FOR_EACH(
+      IN_PRODUCT((DIMENSION_TAG_DIM2),
+                 (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
+                 (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
       { check_compute_to_mesh<_medium_tag_, _property_tag_>(assembly, mesh); })
 
   // stage 2 prepare file path
@@ -1193,21 +1193,20 @@ void test_properties(
   //
 
   // stage 3: modify properties and check store_on_host and load_on_device
-  FOR_EACH_MATERIAL_SYSTEM(
-      IN((DIMENSION_TAG_DIM2),
-         (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-          MEDIUM_TAG_POROELASTIC),
-         (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
-      {
-        check_store_on_host<_medium_tag_, _property_tag_, false>(properties,
-                                                                 element_types);
-        check_load_on_device<_medium_tag_, _property_tag_, false>(
-            properties, element_types);
-        check_store_on_host<_medium_tag_, _property_tag_, true>(properties,
-                                                                element_types);
-        check_load_on_device<_medium_tag_, _property_tag_, true>(properties,
-                                                                 element_types);
-      })
+  FOR_EACH(IN_PRODUCT((DIMENSION_TAG_DIM2),
+                      (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                       MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
+                      (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+           {
+             check_store_on_host<_medium_tag_, _property_tag_, false>(
+                 properties, element_types);
+             check_load_on_device<_medium_tag_, _property_tag_, false>(
+                 properties, element_types);
+             check_store_on_host<_medium_tag_, _property_tag_, true>(
+                 properties, element_types);
+             check_load_on_device<_medium_tag_, _property_tag_, true>(
+                 properties, element_types);
+           })
 
   // stage 4: restore properties to initial value from disk
   specfem::io::property_reader<specfem::io::ASCII<specfem::io::read> > reader(
@@ -1223,11 +1222,11 @@ void test_properties(
   //
 
   // stage 5: check if properties are correctly written and read
-  FOR_EACH_MATERIAL_SYSTEM(
-      IN((DIMENSION_TAG_DIM2),
-         (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-          MEDIUM_TAG_POROELASTIC),
-         (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+  FOR_EACH(
+      IN_PRODUCT((DIMENSION_TAG_DIM2),
+                 (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
+                 (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
       { check_compute_to_mesh<_medium_tag_, _property_tag_>(assembly, mesh); })
 
   // check_compute_to_mesh<specfem::element::medium_tag::elastic_psv,

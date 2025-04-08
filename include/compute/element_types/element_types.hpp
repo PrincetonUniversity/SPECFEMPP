@@ -135,13 +135,12 @@ private:
 
 #undef MEDIUM_TAG_VARIABLES
 
-  FOR_EACH_MATERIAL_SYSTEM(IN((DIMENSION_TAG_DIM2),
-                              (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                               MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
-                              (PROPERTY_TAG_ISOTROPIC,
-                               PROPERTY_TAG_ANISOTROPIC)),
-                           DECLARE((IndexViewType, elements),
-                                   (IndexViewType::HostMirror, h_elements)))
+  FOR_EACH(IN_PRODUCT((DIMENSION_TAG_DIM2),
+                      (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                       MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
+                      (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+           DECLARE((IndexViewType, elements),
+                   (IndexViewType::HostMirror, h_elements)))
 
 #define ELEMENT_TYPES_VARIABLE_NAMES(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG,  \
                                      BOUNDARY_TAG)                             \

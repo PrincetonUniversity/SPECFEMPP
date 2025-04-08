@@ -373,15 +373,14 @@ private:
                               ///< stored on the host
   specfem::compute::element_types element_types; ///< Element types
 
-  FOR_EACH_MATERIAL_SYSTEM(
-      IN((DIMENSION_TAG_DIM2),
-         (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-          MEDIUM_TAG_POROELASTIC),
-         (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
-      DECLARE((IndexViewType, receiver_indices),
-              (IndexViewType::HostMirror, h_receiver_indices),
-              (IndexViewType, elements),
-              (IndexViewType::HostMirror, h_elements)))
+  FOR_EACH(IN_PRODUCT((DIMENSION_TAG_DIM2),
+                      (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                       MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
+                      (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+           DECLARE((IndexViewType, receiver_indices),
+                   (IndexViewType::HostMirror, h_receiver_indices),
+                   (IndexViewType, elements),
+                   (IndexViewType::HostMirror, h_elements)))
 
   template <typename MemberType, typename IteratorType, typename ViewType>
   friend KOKKOS_FUNCTION void
