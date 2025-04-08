@@ -144,7 +144,7 @@
  * CALL_MACRO_FOR_ALL_ELEMENT_TYPES or @ref CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS.
  *
  */
-#define FROM(...)                                                              \
+#define IN(...)                                                                \
   BOOST_PP_SEQ_TRANSFORM(_EXPAND_VARIADIC, _,                                  \
                          BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
 
