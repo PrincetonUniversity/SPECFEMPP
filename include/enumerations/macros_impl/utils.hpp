@@ -82,8 +82,8 @@
 #define _TRANSFORM_TAG_DATA(s, data, elem) BOOST_PP_CAT(_, GET_NAME(elem))
 
 #define _VAR_NAME_FROM_TAGS(data, elem)                                        \
-  BOOST_PP_SEQ_CAT((elem)(_)BOOST_PP_SEQ_TRANSFORM(                            \
-      _TRANSFORM_TAG_DATA, _, BOOST_PP_TUPLE_TO_SEQ(data)));
+  BOOST_PP_SEQ_CAT((elem)BOOST_PP_SEQ_TRANSFORM(_TRANSFORM_TAG_DATA, _,        \
+                                                BOOST_PP_TUPLE_TO_SEQ(data)));
 
 /**
  * @brief Replace tags _DIMENSION_TAG_, _MEDIUM_TAG_, _PROPERTY_TAG_,

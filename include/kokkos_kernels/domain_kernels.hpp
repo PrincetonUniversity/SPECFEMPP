@@ -47,47 +47,38 @@ public:
 
 #undef CALL_COUPLING_INTERFACES_FUNCTION
 
-#define CALL_SOURCE_FORCE_UPDATE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG,      \
-                                 BOUNDARY_TAG)                                 \
-  if constexpr (dimension == GET_TAG(DIMENSION_TAG) &&                         \
-                medium == GET_TAG(MEDIUM_TAG)) {                               \
-    impl::compute_source_interaction<                                          \
-        dimension, wavefield, ngll, GET_TAG(MEDIUM_TAG),                       \
-        GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG)>(assembly, istep);        \
-  }
+    FOR_EACH(IN_PRODUCT((DIMENSION_TAG_DIM2),
+                        (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                         MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
+                        (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
+                        (BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
+                         BOUNDARY_TAG_STACEY,
+                         BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET)),
+             {
+               if constexpr (dimension == _dimension_tag_ &&
+                             medium == _medium_tag_) {
+                 impl::compute_source_interaction<dimension, wavefield, ngll,
+                                                  _medium_tag_, _property_tag_,
+                                                  _boundary_tag_>(assembly,
+                                                                  istep);
+               }
+             })
 
-    CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
-        CALL_SOURCE_FORCE_UPDATE,
-        WHERE(DIMENSION_TAG_DIM2)
-            WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
-                WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)
-                    WHERE(BOUNDARY_TAG_STACEY, BOUNDARY_TAG_NONE,
-                          BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-                          BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
-
-#undef CALL_SOURCE_FORCE_UPDATE
-
-#define CALL_STIFFNESS_FORCE_UPDATE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG,   \
-                                    BOUNDARY_TAG)                              \
-  if constexpr (dimension == GET_TAG(DIMENSION_TAG) &&                         \
-                medium == GET_TAG(MEDIUM_TAG)) {                               \
-    elements_updated += impl::compute_stiffness_interaction<                   \
-        dimension, wavefield, ngll, GET_TAG(MEDIUM_TAG),                       \
-        GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG)>(assembly, istep);        \
-  }
-
-    CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
-        CALL_STIFFNESS_FORCE_UPDATE,
-        WHERE(DIMENSION_TAG_DIM2)
-            WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
-                WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)
-                    WHERE(BOUNDARY_TAG_STACEY, BOUNDARY_TAG_NONE,
-                          BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-                          BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
-
-#undef CALL_STIFFNESS_FORCE_UPDATE
+    FOR_EACH(IN_PRODUCT((DIMENSION_TAG_DIM2),
+                        (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                         MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
+                        (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
+                        (BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
+                         BOUNDARY_TAG_STACEY,
+                         BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET)),
+             {
+               if constexpr (dimension == _dimension_tag_ &&
+                             medium == _medium_tag_) {
+                 elements_updated += impl::compute_stiffness_interaction<
+                     dimension, wavefield, ngll, _medium_tag_, _property_tag_,
+                     _boundary_tag_>(assembly, istep);
+               }
+             })
 
 #define CALL_DIVIDE_MASS_MATRIX_FUNCTION(DIMENSION_TAG, MEDIUM_TAG)            \
   if constexpr (dimension == GET_TAG(DIMENSION_TAG) &&                         \
@@ -109,25 +100,21 @@ public:
 
   void initialize(const type_real &dt) {
 
-#define CALL_COMPUTE_MASS_MATRIX_FUNCTION(DIMENSION_TAG, MEDIUM_TAG,           \
-                                          PROPERTY_TAG, BOUNDARY_TAG)          \
-  if constexpr (dimension == GET_TAG(DIMENSION_TAG)) {                         \
-    impl::compute_mass_matrix<dimension, wavefield, ngll, GET_TAG(MEDIUM_TAG), \
-                              GET_TAG(PROPERTY_TAG), GET_TAG(BOUNDARY_TAG)>(   \
-        dt, assembly);                                                         \
-  }
-
-    CALL_MACRO_FOR_ALL_ELEMENT_TYPES(
-        CALL_COMPUTE_MASS_MATRIX_FUNCTION,
-        WHERE(DIMENSION_TAG_DIM2)
-            WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
-                WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)
-                    WHERE(BOUNDARY_TAG_STACEY, BOUNDARY_TAG_NONE,
-                          BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
-                          BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET))
-
-#undef CALL_COMPUTE_MASS_MATRIX_FUNCTION
+    FOR_EACH(
+        IN_PRODUCT((DIMENSION_TAG_DIM2),
+                   (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
+                    MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC),
+                   (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC),
+                   (BOUNDARY_TAG_NONE, BOUNDARY_TAG_ACOUSTIC_FREE_SURFACE,
+                    BOUNDARY_TAG_STACEY,
+                    BOUNDARY_TAG_COMPOSITE_STACEY_DIRICHLET)),
+        {
+          if constexpr (dimension == _dimension_tag_) {
+            impl::compute_mass_matrix<dimension, wavefield, ngll, _medium_tag_,
+                                      _property_tag_, _boundary_tag_>(dt,
+                                                                      assembly);
+          }
+        })
 
 #define CALL_INITIALIZE_FUNCTION(DIMENSION_TAG, MEDIUM_TAG)                    \
   if constexpr (dimension == GET_TAG(DIMENSION_TAG)) {                         \
