@@ -1,6 +1,4 @@
-#ifndef _SOURCE_TIME_FUNCTION_HPP
-#define _SOURCE_TIME_FUNCTION_HPP
-
+#pragma once
 #include "kokkos_abstractions.h"
 #include "specfem_setup.hpp"
 #include <Kokkos_Core.hpp>
@@ -42,6 +40,14 @@ public:
 
   virtual std::string print() const = 0;
 
+  virtual bool operator==(const stf &other) const {
+    // Base implementation might just check type identity
+    return typeid(*this) == typeid(other);
+  }
+  virtual bool operator!=(const specfem::forcing_function::stf &other) const {
+    return !(*this == other);
+  }
+
   // virtual void print(std::ostream &out) const;
 
   virtual ~stf() = default;
@@ -50,8 +56,5 @@ public:
       const type_real t0, const type_real dt, const int nsteps,
       specfem::kokkos::HostView2d<type_real> source_time_function) = 0;
 };
-
 } // namespace forcing_function
 } // namespace specfem
-
-#endif
