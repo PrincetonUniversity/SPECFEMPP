@@ -50,6 +50,17 @@ void specfem::sources::moment_tensor::compute_source_array(
       throw std::runtime_error(
           "Moment tensor source requires 4 components for poroelastic medium");
     }
+  } else if (el_type == specfem::element::medium_tag::elastic_psv_t) {
+    if (ncomponents != 3) {
+      throw std::runtime_error("Moment tensor source requires 3 components for "
+                               "elastic psv_t medium");
+    }
+  } else {
+    std::ostringstream message;
+    message << "Moment tensor source not implemented for element type: "
+            << specfem::element::to_string(el_type);
+    auto message_str = message.str();
+    Kokkos::abort(message_str.c_str());
   }
 
   const auto xi = mesh.quadratures.gll.h_xi;
@@ -126,6 +137,8 @@ void specfem::sources::moment_tensor::compute_source_array(
       if (el_type == specfem::element::medium_tag::poroelastic) {
         source_array(2, iz, ix) = source_array(0, iz, ix);
         source_array(3, iz, ix) = source_array(1, iz, ix);
+      } else if (el_type == specfem::element::medium_tag::elastic_psv_t) {
+        source_array(2, iz, ix) = static_cast<type_real>(0.0);
       }
     }
   }
@@ -142,7 +155,6 @@ std::string specfem::sources::moment_tensor::print() const {
           << this->Mxz << "\n"
           << "    Source Time Function: \n"
           << this->forcing_function->print() << "\n";
-  // out << *(this->forcing_function);
 
   return message.str();
 }

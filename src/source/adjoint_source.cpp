@@ -27,6 +27,16 @@ void specfem::sources::adjoint_source::compute_source_array(
       specfem::quadrature::gll::Lagrange::compute_lagrange_interpolants(
           lcoord.gamma, N, gamma);
 
+  if (el_type == specfem::element::medium_tag::elastic_psv_t) {
+    throw std::runtime_error(
+        "Adjoint source not implemented for elastic psv_t medium");
+  }
+
+  if (el_type == specfem::element::medium_tag::electromagnetic_te) {
+    throw std::runtime_error(
+        "Adjoint source not implemented for electromagnetic_te medium");
+  }
+
   type_real hlagrange;
 
   for (int iz = 0; iz < N; ++iz) {
