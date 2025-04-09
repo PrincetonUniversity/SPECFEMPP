@@ -1,6 +1,8 @@
 #pragma once
 
+#include "domain_view.hpp"
 #include "enumerations/medium.hpp"
+#include "parallel_configuration/chunk_config.hpp"
 #include <cstddef>
 
 #define DEFINE_MEDIUM_VIEW(prop, index_value)                                  \

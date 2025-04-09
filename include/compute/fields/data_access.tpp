@@ -2,6 +2,7 @@
 
 #include "point/assembly_index.hpp"
 #include "point/coordinates.hpp"
+#include <cstddef>
 
 namespace specfem {
 namespace compute {
@@ -934,7 +935,7 @@ template <
     typename IteratorType, typename ViewType,
     typename std::enable_if_t<
         ViewType::isChunkFieldType && ViewType::simd::using_simd, int> = 0>
-KOKKOS_FORCEINLINE_FUNCTION void
+NOINLINE KOKKOS_FUNCTION void
 impl_load(const MemberType &team, const IteratorType &iterator,
           const WavefieldType &field, ViewType &chunk_field) {
 
@@ -975,14 +976,16 @@ impl_load(const MemberType &team, const IteratorType &iterator,
         const int iz = iterator_index.index.iz;
         const int ix = iterator_index.index.ix;
 
-        for (int lane = 0; lane < IteratorType::simd::size(); ++lane) {
+        for (std::size_t lane = 0; lane < IteratorType::simd::size(); ++lane) {
           if (!iterator_index.index.mask(lane)) {
             continue;
           }
 
-          const int iglob = field.template get_iglob<on_device>(ispec + lane, iz, ix, MediumTag);
+          const int iglob = field.template get_iglob<on_device>(
+              ispec + lane, iz, ix, MediumTag);
 
-          for (int icomp = 0; icomp < components; ++icomp) {
+          for (std::size_t icomp = 0; icomp < components; ++icomp) {
+
             if constexpr (StoreDisplacement) {
               chunk_field.displacement(ielement, iz, ix, icomp)[lane] =
                   curr_field.template get_field<on_device>(iglob, icomp);
@@ -993,7 +996,8 @@ impl_load(const MemberType &team, const IteratorType &iterator,
             }
             if constexpr (StoreAcceleration) {
               chunk_field.acceleration(ielement, iz, ix, icomp)[lane] =
-                  curr_field.template get_field_dot_dot<on_device>(iglob, icomp);
+                  curr_field.template get_field_dot_dot<on_device>(iglob,
+                                                                   icomp);
             }
             if constexpr (StoreMassMatrix) {
               chunk_field.mass_matrix(ielement, iz, ix, icomp)[lane] =
