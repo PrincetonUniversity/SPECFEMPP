@@ -1,9 +1,11 @@
 #ifndef _COMPUTE_PARTIAL_DERIVATIVES_HPP
 #define _COMPUTE_PARTIAL_DERIVATIVES_HPP
 
+#include "domain_view.hpp"
 #include "enumerations/specfem_enums.hpp"
 #include "kokkos_abstractions.h"
 #include "macros.hpp"
+#include "parallel_configuration/chunk_config.hpp"
 #include "point/interface.hpp"
 #include "quadrature/interface.hpp"
 #include "specfem_setup.hpp"
@@ -18,11 +20,10 @@ namespace compute {
 struct partial_derivatives {
 
 private:
-  using ViewType =
-      typename Kokkos::View<type_real ***, Kokkos::LayoutLeft,
-                            Kokkos::DefaultExecutionSpace>; ///< Underlying view
-                                                            ///< type used to
-                                                            ///< store data
+  using extents = Kokkos::dextents<size_t, 3>;
+  using ViewType = specfem::kokkos::domain_view2D<
+      type_real, extents, specfem::parallel_config::storage_chunk_size,
+      Kokkos::DefaultExecutionSpace::memory_space>;
 
 public:
   int nspec; ///< Number of spectral elements

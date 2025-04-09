@@ -17,11 +17,11 @@ specfem::compute::partial_derivatives::partial_derivatives(const int nspec,
              ngllx),
       jacobian("specfem::compute::partial_derivatives::jacobian", nspec, ngllz,
                ngllx),
-      h_xix(Kokkos::create_mirror_view(xix)),
-      h_xiz(Kokkos::create_mirror_view(xiz)),
-      h_gammax(Kokkos::create_mirror_view(gammax)),
-      h_gammaz(Kokkos::create_mirror_view(gammaz)),
-      h_jacobian(Kokkos::create_mirror_view(jacobian)) {
+      h_xix(specfem::kokkos::create_mirror_view(xix)),
+      h_xiz(specfem::kokkos::create_mirror_view(xiz)),
+      h_gammax(specfem::kokkos::create_mirror_view(gammax)),
+      h_gammaz(specfem::kokkos::create_mirror_view(gammaz)),
+      h_jacobian(specfem::kokkos::create_mirror_view(jacobian)) {
   return;
 };
 
@@ -37,11 +37,11 @@ specfem::compute::partial_derivatives::partial_derivatives(
              ngllx),
       jacobian("specfem::compute::partial_derivatives::jacobian", nspec, ngllz,
                ngllx),
-      h_xix(Kokkos::create_mirror_view(xix)),
-      h_xiz(Kokkos::create_mirror_view(xiz)),
-      h_gammax(Kokkos::create_mirror_view(gammax)),
-      h_gammaz(Kokkos::create_mirror_view(gammaz)),
-      h_jacobian(Kokkos::create_mirror_view(jacobian)) {
+      h_xix(specfem::kokkos::create_mirror_view(xix)),
+      h_xiz(specfem::kokkos::create_mirror_view(xiz)),
+      h_gammax(specfem::kokkos::create_mirror_view(gammax)),
+      h_gammaz(specfem::kokkos::create_mirror_view(gammaz)),
+      h_jacobian(specfem::kokkos::create_mirror_view(jacobian)) {
 
   const int ngnod = mesh.control_nodes.ngnod;
   const int ngllxz = ngllz * ngllx;
