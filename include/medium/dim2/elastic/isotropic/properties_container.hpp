@@ -8,11 +8,11 @@ namespace specfem {
 namespace medium {
 
 template <specfem::element::medium_tag MediumTag>
-struct properties_container<MediumTag,
-                            specfem::element::property_tag::isotropic>
+struct properties_container<
+    MediumTag, specfem::element::property_tag::isotropic,
+    std::enable_if_t<specfem::element::is_elastic<MediumTag>::value> >
     : public impl_properties_container<
-          MediumTag, specfem::element::property_tag::isotropic, 3>,
-      specfem::element::is_elastic<MediumTag> {
+          MediumTag, specfem::element::property_tag::isotropic, 3> {
   using base_type =
       impl_properties_container<MediumTag,
                                 specfem::element::property_tag::isotropic, 3>;

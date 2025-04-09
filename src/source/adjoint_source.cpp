@@ -47,7 +47,7 @@ void specfem::sources::adjoint_source::compute_source_array(
               "Adjoint source requires 1 component for elastic SH medium");
         }
         source_array(0, iz, ix) = hlagrange;
-      } else if (el_type == specfem::element::medium_tag::elastic_sv) {
+      } else if (el_type == specfem::element::medium_tag::elastic_psv) {
         if (ncomponents != 2) {
           throw std::runtime_error(
               "Adjoint source for elastic P-SV, poroelastic, or "

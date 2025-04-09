@@ -23,15 +23,15 @@ void test_element_wavefield(
   const auto medium = element_types.get_medium_tag(ispec);
   const auto property = element_types.get_property_tag(ispec);
 
-  if ((medium == specfem::element::medium_tag::elastic_sv) &&
+  if ((medium == specfem::element::medium_tag::elastic_psv) &&
       (property == specfem::element::property_tag::isotropic)) {
-    test_helper<component, specfem::element::medium_tag::elastic_sv,
+    test_helper<component, specfem::element::medium_tag::elastic_psv,
                 specfem::element::property_tag::isotropic>
         handle(ispec, wavefield, assembly);
     handle.test();
-  } else if ((medium == specfem::element::medium_tag::elastic_sv) &&
+  } else if ((medium == specfem::element::medium_tag::elastic_psv) &&
              (property == specfem::element::property_tag::anisotropic)) {
-    test_helper<component, specfem::element::medium_tag::elastic_sv,
+    test_helper<component, specfem::element::medium_tag::elastic_psv,
                 specfem::element::property_tag::anisotropic>
         handle(ispec, wavefield, assembly);
     handle.test();

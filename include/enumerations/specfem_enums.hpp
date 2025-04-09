@@ -10,7 +10,16 @@ namespace specfem {
  */
 namespace enums {
 
-enum class elastic_wave { p_sv, sh };
+// Two types of elastic waves are possible in 2-D: PSV and SH
+// PSV: P-SV wave (compressional and vertically polarized shear)
+// SH: S-H wave (shear wave with horizontal polarization)
+enum class elastic_wave { psv, sh };
+
+// Two types of perdincularly polarized modes are possible for electromagnetic
+// waves:
+// TE: Transverse Electric mode
+// TM: Transverse Magnetic mode
+enum class electromagnetic_wave { te, tm };
 
 /**
  * @brief Cartesian axes enumeration

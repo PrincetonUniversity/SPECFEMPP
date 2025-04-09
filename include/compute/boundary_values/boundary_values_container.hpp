@@ -27,7 +27,7 @@ public:
       DimensionType, specfem::element::medium_tag::acoustic, BoundaryTag>
       acoustic;
   specfem::compute::impl::boundary_medium_container<
-      DimensionType, specfem::element::medium_tag::elastic_sv, BoundaryTag>
+      DimensionType, specfem::element::medium_tag::elastic_psv, BoundaryTag>
       elastic;
   specfem::compute::impl::boundary_medium_container<
       DimensionType, specfem::element::medium_tag::poroelastic, BoundaryTag>
@@ -93,7 +93,7 @@ store_on_device(const int istep, const IndexType index,
   if constexpr (MediumTag == specfem::element::medium_tag::acoustic) {
     boundary_value_container.acoustic.store_on_device(istep, l_index,
                                                       acceleration);
-  } else if constexpr (MediumTag == specfem::element::medium_tag::elastic_sv) {
+  } else if constexpr (MediumTag == specfem::element::medium_tag::elastic_psv) {
     boundary_value_container.elastic.store_on_device(istep, l_index,
                                                      acceleration);
   } else if constexpr (MediumTag == specfem::element::medium_tag::poroelastic) {
@@ -130,7 +130,8 @@ load_on_device(const int istep, const IndexType index,
   if constexpr (MediumType == specfem::element::medium_tag::acoustic) {
     boundary_value_container.acoustic.load_on_device(istep, l_index,
                                                      acceleration);
-  } else if constexpr (MediumType == specfem::element::medium_tag::elastic_sv) {
+  } else if constexpr (MediumType ==
+                       specfem::element::medium_tag::elastic_psv) {
     boundary_value_container.elastic.load_on_device(istep, l_index,
                                                     acceleration);
   } else if constexpr (MediumType ==

@@ -23,10 +23,10 @@
 #include <tuple>
 #include <vector>
 
-specfem::mesh::mesh<specfem::dimension::type::dim2>
-specfem::io::read_2d_mesh(const std::string filename,
-                          const specfem::enums::elastic_wave wave,
-                          const specfem::MPI::MPI *mpi) {
+specfem::mesh::mesh<specfem::dimension::type::dim2> specfem::io::read_2d_mesh(
+    const std::string filename, const specfem::enums::elastic_wave elastic_wave,
+    const specfem::enums::electromagnetic_wave electromagnetic_wave,
+    const specfem::MPI::MPI *mpi) {
 
   // Declaring empty mesh objects
   specfem::mesh::mesh<specfem::dimension::type::dim2> mesh;
@@ -90,8 +90,8 @@ specfem::io::read_2d_mesh(const std::string filename,
   try {
     mesh.materials =
         specfem::io::mesh::impl::fortran::dim2::read_material_properties(
-            stream, mesh.parameters.numat, mesh.nspec, wave,
-            mesh.control_nodes.knods, mpi);
+            stream, mesh.parameters.numat, mesh.nspec, elastic_wave,
+            electromagnetic_wave, mesh.control_nodes.knods, mpi);
   } catch (std::runtime_error &e) {
     throw;
   }
@@ -163,8 +163,8 @@ specfem::io::read_2d_mesh(const std::string filename,
   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
       PRINT_MATERIALS,
       WHERE(DIMENSION_TAG_DIM2) WHERE(
-          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-          MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_SV)
+          MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
+          MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_TE)
           WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
 #undef PRINT_MATERIALS
@@ -180,8 +180,8 @@ specfem::io::read_2d_mesh(const std::string filename,
   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
       COMPUTE_TOTAL_MATERIALS_READ,
       WHERE(DIMENSION_TAG_DIM2) WHERE(
-          MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
-          MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_SV)
+          MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
+          MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELECTROMAGNETIC_TE)
           WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
 
 #undef COMPUTE_TOTAL_MATERIALS_READ

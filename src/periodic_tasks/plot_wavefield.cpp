@@ -75,13 +75,13 @@ map_materials_with_color(const specfem::compute::assembly &assembly) {
       material_colors = {
         { specfem::element::medium_tag::acoustic, // aqua color
           { 0, 255, 255 } },
-        { specfem::element::medium_tag::elastic_sv, // sienna color
+        { specfem::element::medium_tag::elastic_psv, // sienna color
           { 160, 82, 45 } },
         { specfem::element::medium_tag::elastic_sh, // sienna color
           { 160, 82, 45 } },
         { specfem::element::medium_tag::poroelastic, // off navy color
           { 40, 40, 128 } },
-        { specfem::element::medium_tag::electromagnetic_sv, // dark gray color
+        { specfem::element::medium_tag::electromagnetic_te, // dark gray color
           { 169, 169, 169 } },
       };
 
