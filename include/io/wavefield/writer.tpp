@@ -20,12 +20,15 @@ void specfem::io::wavefield_writer<OutputLibrary>::write(
 
   typename OutputLibrary::File file(output_folder + "/ForwardWavefield");
 
-  typename OutputLibrary::Group elastic_psv = file.createGroup("/ElasticSV");
+  typename OutputLibrary::Group elastic_psv = file.createGroup("/ElasticPSV");
   const auto &elastic_psv_field =
       forward.get_field<specfem::element::medium_tag::elastic_psv>();
   typename OutputLibrary::Group elastic_sh = file.createGroup("/ElasticSH");
   const auto &elastic_sh_field =
       forward.get_field<specfem::element::medium_tag::elastic_sh>();
+  typename OutputLibrary::Group elastic_psv_t = file.createGroup("/ElasticPSVT");
+  const auto &elastic_psv_t_field =
+      forward.get_field<specfem::element::medium_tag::elastic_psv_t>();
   typename OutputLibrary::Group acoustic = file.createGroup("/Acoustic");
   const auto &acoustic_field =
       forward.get_field<specfem::element::medium_tag::acoustic>();
@@ -43,6 +46,13 @@ void specfem::io::wavefield_writer<OutputLibrary>::write(
   elastic_sh.createDataset("Displacement", elastic_sh_field.h_field).write();
   elastic_sh.createDataset("Velocity", elastic_sh_field.h_field_dot).write();
   elastic_sh.createDataset("Acceleration", elastic_sh_field.h_field_dot_dot)
+      .write();
+
+  elastic_psv_t.createDataset("Displacement", elastic_psv_t_field.h_field)
+      .write();
+  elastic_psv_t.createDataset("Velocity", elastic_psv_t_field.h_field_dot)
+      .write();
+  elastic_psv_t.createDataset("Acceleration", elastic_psv_t_field.h_field_dot_dot)
       .write();
 
   acoustic.createDataset("Potential", acoustic_field.h_field).write();

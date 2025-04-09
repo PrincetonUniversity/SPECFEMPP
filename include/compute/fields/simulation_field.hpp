@@ -81,9 +81,10 @@ public:
                                GET_NAME(MEDIUM_TAG));
 
     CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
-        COPY_MEDIUM_FIELD, WHERE(DIMENSION_TAG_DIM2) WHERE(
-                               MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                               MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC))
+        COPY_MEDIUM_FIELD,
+        WHERE(DIMENSION_TAG_DIM2) WHERE(
+            MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
+            MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELASTIC_PSV_T))
 
 #undef COPY_MEDIUM_FIELD
   }
@@ -107,7 +108,8 @@ public:
     CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
         RETURN_VALUE, WHERE(DIMENSION_TAG_DIM2)
                           WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC))
+                                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
+                                MEDIUM_TAG_ELASTIC_PSV_T))
 
 #undef RETURN_VALUE
 
@@ -133,7 +135,8 @@ public:
     CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
         RETURN_VALUE, WHERE(DIMENSION_TAG_DIM2)
                           WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC))
+                                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC,
+                                MEDIUM_TAG_ELASTIC_PSV_T))
 
 #undef RETURN_VALUE
 
@@ -188,7 +191,8 @@ public:
                                      WHERE(MEDIUM_TAG_ELASTIC_PSV,
                                            MEDIUM_TAG_ELASTIC_SH,
                                            MEDIUM_TAG_ACOUSTIC,
-                                           MEDIUM_TAG_POROELASTIC))
+                                           MEDIUM_TAG_POROELASTIC,
+                                           MEDIUM_TAG_ELASTIC_PSV_T))
 
 #undef GENERATE_MEDIUM_FIELD_VARIABLE
 
@@ -202,9 +206,10 @@ private:
       .template sync_fields<sync>();
 
     CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
-        SYNC_MEDIUM_FIELD, WHERE(DIMENSION_TAG_DIM2) WHERE(
-                               MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                               MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC))
+        SYNC_MEDIUM_FIELD,
+        WHERE(DIMENSION_TAG_DIM2) WHERE(
+            MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
+            MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELASTIC_PSV_T))
 
 #undef SYNC_MEDIUM_FIELD
   }
@@ -228,9 +233,10 @@ void deep_copy(simulation_field<WavefieldType1> &dst,
                                GET_NAME(MEDIUM_TAG)));
 
   CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
-      DEEP_COPY_MEDIUM_FIELD, WHERE(DIMENSION_TAG_DIM2) WHERE(
-                                  MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC))
+      DEEP_COPY_MEDIUM_FIELD,
+      WHERE(DIMENSION_TAG_DIM2) WHERE(
+          MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
+          MEDIUM_TAG_POROELASTIC, MEDIUM_TAG_ELASTIC_PSV_T))
 
 #undef DEEP_COPY_MEDIUM_FIELD
 }

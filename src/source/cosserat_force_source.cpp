@@ -43,8 +43,14 @@ void specfem::sources::cosserat_force::compute_source_array(
   type_real hlagrange;
 
   if (el_type != specfem::element::medium_tag::elastic_psv_t) {
-    throw std::runtime_error(
-        "Cosserat force only implemented for elastic psv_t medium");
+    std::ostringstream message;
+    message << "Source array computation not implemented for element type: "
+            << specfem::element::to_string(el_type) << "\n\texpected: "
+            << specfem::element::to_string(
+                   specfem::element::medium_tag::elastic_psv_t)
+            << " [" << __FILE__ << ":" << __LINE__ << "]";
+    auto message_str = message.str();
+    throw std::runtime_error(message_str);
   }
 
   if (ncomponents != 3) {
@@ -57,24 +63,15 @@ void specfem::sources::cosserat_force::compute_source_array(
     for (int ix = 0; ix < N; ++ix) {
       hlagrange = hxi_source(ix) * hgamma_source(iz);
 
-      // Elastic P-SV-T
-      if (el_type != specfem::element::medium_tag::elastic_psv_t) {
-        source_array(0, iz, ix) =
-            f * std::sin(Kokkos::numbers::pi_v<type_real> / 180 * this->angle) *
-            hlagrange;
-        source_array(1, iz, ix) =
-            -1.0 * f *
-            std::cos(Kokkos::numbers::pi_v<type_real> / 180 * this->angle) *
-            hlagrange;
+      source_array(0, iz, ix) =
+          f * std::sin(Kokkos::numbers::pi_v<type_real> / 180 * this->angle) *
+          hlagrange;
+      source_array(1, iz, ix) =
+          -1.0 * f *
+          std::cos(Kokkos::numbers::pi_v<type_real> / 180 * this->angle) *
+          hlagrange;
 
-        source_array(2, iz, ix) = fc * hlagrange;
-      } else {
-        std::ostringstream message;
-        message << "Source array computation not implemented for element type: "
-                << specfem::element::to_string(el_type);
-        auto message_str = message.str();
-        Kokkos::abort(message_str.c_str());
-      }
+      source_array(2, iz, ix) = fc * hlagrange;
     }
   }
 }

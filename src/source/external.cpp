@@ -98,7 +98,8 @@ void specfem::sources::external::compute_source_array(
       } else {
         std::ostringstream message;
         message << "Source array computation not implemented for element type: "
-                << specfem::element::to_string(el_type);
+                << specfem::element::to_string(el_type) << " [" << __FILE__
+                << ":" << __LINE__ << "]";
         auto message_str = message.str();
         Kokkos::abort(message_str.c_str());
       }

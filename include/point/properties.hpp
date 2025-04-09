@@ -91,7 +91,7 @@ struct properties<
   constexpr static auto dimension = specfem::dimension::type::dim2;
   constexpr static auto medium_tag = MediumTag;
   constexpr static auto property_tag =
-      specfem::element::property_tag::isotropic;
+      specfem::element::property_tag::isotropic_cosserat;
 
   constexpr static bool is_point_properties = true;
   ///@}
