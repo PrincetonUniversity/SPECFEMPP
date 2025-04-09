@@ -13,7 +13,7 @@ KOKKOS_FUNCTION void impl_compute_damping_force(
     const std::integral_constant<specfem::dimension::type,
                                  specfem::dimension::type::dim2>,
     const std::integral_constant<specfem::element::medium_tag,
-                                 specfem::element::medium_tag::elastic_sv>,
+                                 specfem::element::medium_tag::elastic_psv>,
     const std::integral_constant<specfem::element::property_tag,
                                  specfem::element::property_tag::isotropic>,
     const T factor, const PointPropertiesType &point_properties,

@@ -10,7 +10,7 @@ namespace specfem {
 namespace medium {
 
 template <specfem::element::medium_tag MediumTag,
-          specfem::element::property_tag PropertyTag>
+          specfem::element::property_tag PropertyTag, typename Enable = void>
 struct material;
 
 // /**

@@ -10,8 +10,9 @@ namespace impl {
  * @brief Values for every quadrature point in the finite element mesh
  *
  */
-template <template <specfem::element::medium_tag,
-                    specfem::element::property_tag> class containers_type>
+template <
+    template <specfem::element::medium_tag, specfem::element::property_tag,
+              typename Enable = void> class containers_type>
 struct value_containers {
 
   using IndexViewType = Kokkos::View<int *, Kokkos::DefaultExecutionSpace>;
@@ -46,7 +47,7 @@ struct value_containers {
   CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
       GENERATE_CONTAINER_NAME,
       WHERE(DIMENSION_TAG_DIM2)
-          WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
+          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                 MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
               WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC));
 
@@ -83,7 +84,7 @@ struct value_containers {
     CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
         GET_CONTAINER,
         WHERE(DIMENSION_TAG_DIM2)
-            WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
+            WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                   MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
                 WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC));
 #undef GET_CONTAINER
@@ -110,7 +111,7 @@ struct value_containers {
     CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
         COPY_TO_HOST,
         WHERE(DIMENSION_TAG_DIM2)
-            WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
+            WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                   MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
                 WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC));
 
@@ -126,7 +127,7 @@ struct value_containers {
     CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
         COPY_TO_DEVICE,
         WHERE(DIMENSION_TAG_DIM2)
-            WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
+            WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                   MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
                 WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC));
 

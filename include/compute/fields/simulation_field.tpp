@@ -72,7 +72,7 @@ specfem::compute::simulation_field<WavefieldType>::simulation_field(
 
   CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
       ASSIGN_FIELDS, WHERE(DIMENSION_TAG_DIM2)
-                         WHERE(MEDIUM_TAG_ELASTIC_SV, MEDIUM_TAG_ELASTIC_SH,
+                         WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
                                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC))
 
 #undef ASSIGN_FIELDS
@@ -95,7 +95,7 @@ int specfem::compute::simulation_field<WavefieldType>::get_total_degrees_of_free
 
   CALL_MACRO_FOR_ALL_MEDIUM_TAGS(
       COMPUTE_TOTAL_DEGREES_OF_FREEDOM, WHERE(DIMENSION_TAG_DIM2)
-                                            WHERE(MEDIUM_TAG_ELASTIC_SV,
+                                            WHERE(MEDIUM_TAG_ELASTIC_PSV,
                                                   MEDIUM_TAG_ELASTIC_SH,
                                                   MEDIUM_TAG_ACOUSTIC,
                                                   MEDIUM_TAG_POROELASTIC))
