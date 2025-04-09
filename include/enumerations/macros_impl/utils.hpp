@@ -57,9 +57,10 @@
       BOOST_PP_IF(                                                             \
           BOOST_PP_NOT(BOOST_VMD_IS_TUPLE(BOOST_PP_TUPLE_ELEM(0, elem))),      \
           BOOST_PP_TUPLE_ELEM(0, elem), BOOST_PP_EMPTY())                      \
-          BOOST_PP_IF(BOOST_PP_IS_EMPTY(BOOST_PP_TUPLE_ELEM(1, elem)),         \
-                      _EMPTY_MACRO,                                            \
-                      _VAR_NAME_FROM_TAGS)(data, BOOST_PP_TUPLE_ELEM(1, elem))
+          BOOST_PP_IF(                                                         \
+              BOOST_PP_IS_EMPTY(BOOST_PP_TUPLE_ELEM(1, elem)),                 \
+              BOOST_PP_EMPTY(),                                                \
+              _VAR_NAME_FROM_TAGS(data, BOOST_PP_TUPLE_ELEM(1, elem));)
 
 /**
  * @brief Create a reference to the variable to be captured inside the code
@@ -68,7 +69,7 @@
 #define _WRITE_CAPTURE(data, elem)                                             \
   BOOST_PP_IF(BOOST_PP_IS_EMPTY(elem), BOOST_PP_EMPTY(),                       \
               auto &BOOST_PP_SEQ_CAT((_)(elem)(_)) =                           \
-                  _VAR_NAME_FROM_TAGS(data, elem))
+                  _VAR_NAME_FROM_TAGS(data, elem);)
 
 /**
  * @brief Obtain Name of the variable to be declared from type declaration
@@ -83,7 +84,7 @@
 
 #define _VAR_NAME_FROM_TAGS(data, elem)                                        \
   BOOST_PP_SEQ_CAT((elem)BOOST_PP_SEQ_TRANSFORM(_TRANSFORM_TAG_DATA, _,        \
-                                                BOOST_PP_TUPLE_TO_SEQ(data)));
+                                                BOOST_PP_TUPLE_TO_SEQ(data)))
 
 /**
  * @brief Replace tags _DIMENSION_TAG_, _MEDIUM_TAG_, _PROPERTY_TAG_,
