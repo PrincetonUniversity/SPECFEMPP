@@ -17,7 +17,7 @@ void specfem::io::wavefield_reader<IOLibrary>::read(
 
   typename IOLibrary::File file(output_folder + "/ForwardWavefield");
 
-  typename IOLibrary::Group elastic_psv = file.openGroup("/ElasticSV");
+  typename IOLibrary::Group elastic_psv = file.openGroup("/ElasticPSV");
 
   const auto &elastic_psv_field =
       buffer.get_field<specfem::element::medium_tag::elastic_psv>();
@@ -35,6 +35,15 @@ void specfem::io::wavefield_reader<IOLibrary>::read(
   elastic_sh.openDataset("Displacement", elastic_sh_field.h_field).read();
   elastic_sh.openDataset("Velocity", elastic_sh_field.h_field_dot).read();
   elastic_sh.openDataset("Acceleration", elastic_sh_field.h_field_dot_dot)
+      .read();
+
+  typename IOLibrary::Group elastic_psv_t = file.openGroup("/ElasticPSVT");
+  const auto &elastic_psv_t_field =
+      buffer.get_field<specfem::element::medium_tag::elastic_psv_t>();
+
+  elastic_psv_t.openDataset("Displacement", elastic_psv_t_field.h_field).read();
+  elastic_psv_t.openDataset("Velocity", elastic_psv_t_field.h_field_dot).read();
+  elastic_psv_t.openDataset("Acceleration", elastic_psv_t_field.h_field_dot_dot)
       .read();
 
   typename IOLibrary::Group acoustic = file.openGroup("/Acoustic");
