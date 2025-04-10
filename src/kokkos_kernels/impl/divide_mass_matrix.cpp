@@ -17,6 +17,7 @@ CALL_MACRO_FOR_ALL_MEDIUM_TAGS(INSTANTIATION_MACRO,
                                    WHERE(MEDIUM_TAG_ELASTIC_PSV,
                                          MEDIUM_TAG_ELASTIC_SH,
                                          MEDIUM_TAG_ACOUSTIC,
-                                         MEDIUM_TAG_POROELASTIC))
+                                         MEDIUM_TAG_POROELASTIC,
+                                         MEDIUM_TAG_ELASTIC_PSV_T))
 
 #undef INSTANTIATION_MACRO

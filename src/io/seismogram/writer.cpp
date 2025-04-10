@@ -58,6 +58,20 @@ void specfem::io::seismogram_writer::write(
                      station_name + ".S2.PRE.semp" };
       }
       break;
+    case specfem::wavefield::type::rotation:
+      if (this->elastic_wave == specfem::enums::elastic_wave::psv) {
+        filename = { this->output_folder + "/" + network_name + "." +
+                     station_name + ".S2.BXT.semr" };
+      } else if (this->elastic_wave == specfem::enums::elastic_wave::sh) {
+        // NEEDS TO BE UPDATED WHEN IMPLEMENTING SH_LV (what is L? what is V?)
+        filename = { this->output_folder + "/" + network_name + "." +
+                         station_name + ".S2.BXV.semr",
+                     this->output_folder + "/" + network_name + "." +
+                         station_name + ".S2.BXL.semr" };
+        throw std::runtime_error(
+            "Rotation seismograms are not supported for SH waves");
+      }
+      break;
     }
 
     const int ncomponents = filename.size();

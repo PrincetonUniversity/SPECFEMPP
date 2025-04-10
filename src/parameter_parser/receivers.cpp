@@ -26,6 +26,8 @@ specfem::runtime_configuration::receivers::get_seismogram_types() const {
       stypes.push_back(specfem::enums::seismogram::type::acceleration);
     } else if (seismogram_type.as<std::string>() == "pressure") {
       stypes.push_back(specfem::enums::seismogram::type::pressure);
+    } else if (seismogram_type.as<std::string>() == "rotation") {
+      stypes.push_back(specfem::enums::seismogram::type::rotation);
     } else {
       std::ostringstream message;
 
