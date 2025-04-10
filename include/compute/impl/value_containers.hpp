@@ -27,6 +27,18 @@ struct value_containers {
                                                       ///< property index
                                                       ///< mapping
 
+  template <bool on_device>
+  KOKKOS_INLINE_FUNCTION constexpr
+      typename std::conditional<on_device, IndexViewType,
+                                IndexViewType::HostMirror>::type
+      get_property_index_mapping() const {
+    if constexpr (on_device) {
+      return property_index_mapping;
+    } else {
+      return h_property_index_mapping;
+    }
+  }
+
   FOR_EACH_MATERIAL_SYSTEM(
       IN((DIMENSION_TAG_DIM2),
          (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
