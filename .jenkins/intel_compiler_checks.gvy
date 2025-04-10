@@ -10,7 +10,7 @@ pipeline{
                 axes {
                     axis{
                         name 'IntelCompiler'
-                        values 'ICC2022;intel/2022.2.0', 'ICC2024;intel/2024.0.2'
+                        values 'ICC2024;intel/2024.2'
                     }
                     axis{
                         name 'HostSpace'
@@ -75,7 +75,7 @@ pipeline{
                                         module load boost/1.85.0
                                         module load ${INTEL_MODULE}
                                         cd build_cpu_${INTEL_COMPILER_NAME}_${CMAKE_HOST_NAME}_${SIMD_NAME}_${env.BUILD_TAG}/tests/unit-tests
-                                        srun -N 1 -t 00:20:00 ${HOST_RUN_FLAGS} --constraint=skylake bash -c 'export OMP_PROC_BIND=spread; export OMP_THREADS=places; ctest --verbose;'
+                                        srun -N 1 -t 00:20:00 ${HOST_RUN_FLAGS} --constraint="intel|cascade" bash -c 'export OMP_PROC_BIND=spread; export OMP_THREADS=places; ctest --verbose;'
                                     """
                                     echo ' Testing completed '
                                 }
