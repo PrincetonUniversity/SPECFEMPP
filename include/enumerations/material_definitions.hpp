@@ -3,9 +3,6 @@
 #include "macros_impl/element_types.hpp"
 #include "macros_impl/material_systems.hpp"
 #include "macros_impl/medium_tags.hpp"
-#include "macros_impl/utils.hpp"
-#include "medium.hpp"
-#include <boost/preprocessor.hpp>
 
 /**
  * @name Element Tag macros
@@ -98,6 +95,14 @@
        PROPERTY_TAG_ISOTROPIC, BOUNDARY_TAG_NONE))
 
 /**
+ * @brief Tag getters for tokens inside DECLARE(...)
+ */
+#define _DIMENSION_TAG_ BOOST_PP_SEQ_TO_LIST((0))
+#define _MEDIUM_TAG_ BOOST_PP_SEQ_TO_LIST((1))
+#define _PROPERTY_TAG_ BOOST_PP_SEQ_TO_LIST((2))
+#define _BOUNDARY_TAG_ BOOST_PP_SEQ_TO_LIST((3))
+
+/**
  * @brief Filter sequence for different tags.
  *
  * This macro is to be only used in conjunction with @ref
@@ -105,6 +110,60 @@
  *
  */
 #define WHERE(...) (BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
+
+/**
+ * @brief Declare for each tag.
+ *
+ * This macro is to be only used in conjunction with @ref
+ * FOR_EACH_MEDIUM_TAG or @ref FOR_EACH_MATERIAL_SYSTEM or @ref
+ * FOR_EACH_ELEMENT_TYPE.
+ *
+ */
+#define DECLARE(...) BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)
+/**
+ * @brief Instantiate templates for each tag.
+ *
+ * This macro is to be only used in conjunction with @ref
+ * FOR_EACH_MEDIUM_TAG or @ref FOR_EACH_MATERIAL_SYSTEM or @ref
+ * FOR_EACH_ELEMENT_TYPE.
+ *
+ */
+#define INSTANTIATE(...)                                                       \
+  BOOST_PP_SEQ_TRANSFORM(_TRANSFORM_INSTANTIATE, _,                            \
+                         BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
+
+/**
+ * @brief Capture existing variables as reference in the code block.
+ */
+#define CAPTURE(...) BOOST_PP_VARIADIC_TO_TUPLE(BOOST_PP_EMPTY(), __VA_ARGS__),
+
+/**
+ * @brief Filter sequence for different tags.
+ *
+ * This macro is to be only used in conjunction with @ref
+ * CALL_MACRO_FOR_ALL_ELEMENT_TYPES or @ref CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS.
+ *
+ */
+#define IN(...)                                                                \
+  BOOST_PP_SEQ_TRANSFORM(_EXPAND_VARIADIC, _,                                  \
+                         BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
+
+/**
+ * @brief Declare variables or run code for all material systems
+ * listed in macro sequence @ref MATERIAL_SYSTEMS.
+ * @param seq A sequence filter for material systems.
+ * @param ... To declare variabled, use DECLARE() as the first argument,
+ * e.g. DECLARE((IndexViewType, elements),
+ *  (IndexViewType::HostMirror, h_elements),
+ *  ((properties)((_MEDIUM_TAG_, _PROPERTY_TAG_)), value))
+ * To capture existing variables as reference in the code block, add a tuple as
+ * argument, e.g. CAPTURE(value, elements, h_elements). The last argument is the
+ * code block to be executed.
+ */
+#define FOR_EACH_MATERIAL_SYSTEM(seq, ...)                                     \
+  BOOST_PP_SEQ_FOR_EACH(_FOR_ONE_MATERIAL_SYSTEM,                              \
+                        BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__),                 \
+                        BOOST_PP_SEQ_FOR_EACH_PRODUCT(_CREATE_SEQ, seq))
 
 /**
  * @brief Call a macro for all medium types

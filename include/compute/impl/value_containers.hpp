@@ -39,19 +39,12 @@ struct value_containers {
     }
   }
 
-#define GENERATE_CONTAINER_NAME(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)       \
-  containers_type<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)>                  \
-      CREATE_VARIABLE_NAME(value, GET_NAME(DIMENSION_TAG),                     \
-                           GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG));
-
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      GENERATE_CONTAINER_NAME,
-      WHERE(DIMENSION_TAG_DIM2)
-          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
-              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC));
-
-#undef GENERATE_CONTAINER_NAME
+  FOR_EACH_MATERIAL_SYSTEM(
+      IN((DIMENSION_TAG_DIM2),
+         (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
+          MEDIUM_TAG_POROELASTIC),
+         (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+      DECLARE(((containers_type, (_MEDIUM_TAG_, _PROPERTY_TAG_)), value)))
 
   /**
    * @name Constructors
@@ -74,20 +67,17 @@ struct value_containers {
       constexpr containers_type<MediumTag, PropertyTag> const &
       get_container() const {
 
-#define GET_CONTAINER(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                 \
-  if constexpr ((GET_TAG(MEDIUM_TAG) == MediumTag) &&                          \
-                (GET_TAG(PROPERTY_TAG) == PropertyTag)) {                      \
-    return CREATE_VARIABLE_NAME(value, GET_NAME(DIMENSION_TAG),                \
-                                GET_NAME(MEDIUM_TAG), GET_NAME(PROPERTY_TAG)); \
-  }
-
-    CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-        GET_CONTAINER,
-        WHERE(DIMENSION_TAG_DIM2)
-            WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
-                WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC));
-#undef GET_CONTAINER
+    FOR_EACH_MATERIAL_SYSTEM(
+        IN((DIMENSION_TAG_DIM2),
+           (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
+            MEDIUM_TAG_POROELASTIC),
+           (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+        CAPTURE(value) {
+          if constexpr (_medium_tag_ == MediumTag &&
+                        _property_tag_ == PropertyTag) {
+            return _value_;
+          }
+        })
 
     Kokkos::abort("Invalid material type detected in value containers");
 
@@ -103,35 +93,21 @@ struct value_containers {
    *
    */
   void copy_to_host() {
-#define COPY_TO_HOST(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                  \
-  CREATE_VARIABLE_NAME(value, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),   \
-                       GET_NAME(PROPERTY_TAG))                                 \
-      .copy_to_host();
-
-    CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-        COPY_TO_HOST,
-        WHERE(DIMENSION_TAG_DIM2)
-            WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
-                WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC));
-
-#undef COPY_TO_HOST
+    FOR_EACH_MATERIAL_SYSTEM(
+        IN((DIMENSION_TAG_DIM2),
+           (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
+            MEDIUM_TAG_POROELASTIC),
+           (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+        CAPTURE(value) { _value_.copy_to_host(); })
   }
 
   void copy_to_device() {
-#define COPY_TO_DEVICE(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)                \
-  CREATE_VARIABLE_NAME(value, GET_NAME(DIMENSION_TAG), GET_NAME(MEDIUM_TAG),   \
-                       GET_NAME(PROPERTY_TAG))                                 \
-      .copy_to_device();
-
-    CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-        COPY_TO_DEVICE,
-        WHERE(DIMENSION_TAG_DIM2)
-            WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                  MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
-                WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC));
-
-#undef COPY_TO_DEVICE
+    FOR_EACH_MATERIAL_SYSTEM(
+        IN((DIMENSION_TAG_DIM2),
+           (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
+            MEDIUM_TAG_POROELASTIC),
+           (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+        CAPTURE(value) { _value_.copy_to_device(); })
   }
 };
 

@@ -1167,15 +1167,12 @@ void test_properties(
   //
 
   // stage 1: check if properties are correctly constructed from the assembly
-#define TEST_COMPUTE_TO_MESH(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)          \
-  check_compute_to_mesh<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG)>(assembly,  \
-                                                                    mesh);
-
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      TEST_COMPUTE_TO_MESH,
-      WHERE(DIMENSION_TAG_DIM2)
-          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ACOUSTIC)
-              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
+  FOR_EACH_MATERIAL_SYSTEM(
+      IN((DIMENSION_TAG_DIM2),
+         (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
+          MEDIUM_TAG_POROELASTIC),
+         (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+      { check_compute_to_mesh<_medium_tag_, _property_tag_>(assembly, mesh); })
 
   // stage 2 prepare file path
   std::string output_dir = TOSTRING(TEST_OUTPUT_DIR);
@@ -1197,24 +1194,21 @@ void test_properties(
   //
 
   // stage 3: modify properties and check store_on_host and load_on_device
-#define TEST_STORE_AND_LOAD(DIMENSION_TAG, MEDIUM_TAG, PROPERTY_TAG)           \
-  check_store_on_host<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), false>(      \
-      properties, element_types);                                              \
-  check_load_on_device<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), false>(     \
-      properties, element_types);                                              \
-  check_store_on_host<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), true>(       \
-      properties, element_types);                                              \
-  check_load_on_device<GET_TAG(MEDIUM_TAG), GET_TAG(PROPERTY_TAG), true>(      \
-      properties, element_types);
-
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      TEST_STORE_AND_LOAD,
-      WHERE(DIMENSION_TAG_DIM2)
-          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
-              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
-
-#undef TEST_STORE_AND_LOAD
+  FOR_EACH_MATERIAL_SYSTEM(
+      IN((DIMENSION_TAG_DIM2),
+         (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
+          MEDIUM_TAG_POROELASTIC),
+         (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+      {
+        check_store_on_host<_medium_tag_, _property_tag_, false>(properties,
+                                                                 element_types);
+        check_load_on_device<_medium_tag_, _property_tag_, false>(
+            properties, element_types);
+        check_store_on_host<_medium_tag_, _property_tag_, true>(properties,
+                                                                element_types);
+        check_load_on_device<_medium_tag_, _property_tag_, true>(properties,
+                                                                 element_types);
+      })
 
   // stage 4: restore properties to initial value from disk
   specfem::io::property_reader<specfem::io::ASCII<specfem::io::read> > reader(
@@ -1230,14 +1224,13 @@ void test_properties(
   //
 
   // stage 5: check if properties are correctly written and read
-  CALL_MACRO_FOR_ALL_MATERIAL_SYSTEMS(
-      TEST_COMPUTE_TO_MESH,
-      WHERE(DIMENSION_TAG_DIM2)
-          WHERE(MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH,
-                MEDIUM_TAG_ACOUSTIC, MEDIUM_TAG_POROELASTIC)
-              WHERE(PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC))
+  FOR_EACH_MATERIAL_SYSTEM(
+      IN((DIMENSION_TAG_DIM2),
+         (MEDIUM_TAG_ELASTIC_PSV, MEDIUM_TAG_ELASTIC_SH, MEDIUM_TAG_ACOUSTIC,
+          MEDIUM_TAG_POROELASTIC),
+         (PROPERTY_TAG_ISOTROPIC, PROPERTY_TAG_ANISOTROPIC)),
+      { check_compute_to_mesh<_medium_tag_, _property_tag_>(assembly, mesh); })
 
-#undef TEST_COMPUTE_TO_MESH
   // check_compute_to_mesh<specfem::element::medium_tag::elastic_psv,
   //                       specfem::element::property_tag::isotropic>(assembly,
   //                                                                  mesh);
