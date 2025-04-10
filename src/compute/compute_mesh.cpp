@@ -55,11 +55,13 @@ assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates) {
 
   int nchunks = nspec / chunk_size;
   int iloc = 0;
-  for (int ichunk = 0; ichunk < nchunks; ichunk++) {
+  for (int ichunk = 0; ichunk < nspec; ichunk += chunk_size) {
     for (int iz = 0; iz < ngll; iz++) {
       for (int ix = 0; ix < ngll; ix++) {
         for (int ielement = 0; ielement < chunk_size; ielement++) {
-          int ispec = ichunk * chunk_size + ielement;
+          int ispec = ichunk + ielement;
+          if (ispec >= nspec)
+            break;
           cart_cord[iloc].x = global_coordinates(ispec, iz, ix, 0);
           cart_cord[iloc].z = global_coordinates(ispec, iz, ix, 1);
           cart_cord[iloc].iloc = iloc;
@@ -116,11 +118,13 @@ assign_numbering(specfem::kokkos::HostView4d<double> global_coordinates) {
   type_real zmin = std::numeric_limits<type_real>::max();
   type_real zmax = std::numeric_limits<type_real>::min();
 
-  for (int ichunk = 0; ichunk < nchunks; ichunk++) {
+  for (int ichunk = 0; ichunk < nspec; ichunk += chunk_size) {
     for (int iz = 0; iz < ngll; iz++) {
       for (int ix = 0; ix < ngll; ix++) {
         for (int ielement = 0; ielement < chunk_size; ielement++) {
-          int ispec = ichunk * chunk_size + ielement;
+          int ispec = ichunk + ielement;
+          if (ispec >= nspec)
+            break;
           if (iglob_counted[copy_cart_cord[iloc].iglob] == -1) {
 
             const type_real x_cor = copy_cart_cord[iloc].x;

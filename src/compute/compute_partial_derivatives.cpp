@@ -91,19 +91,19 @@ specfem::compute::partial_derivatives::partial_derivatives(
             });
       });
 
-  Kokkos::deep_copy(xix, h_xix);
-  Kokkos::deep_copy(xiz, h_xiz);
-  Kokkos::deep_copy(gammax, h_gammax);
-  Kokkos::deep_copy(gammaz, h_gammaz);
-  Kokkos::deep_copy(jacobian, h_jacobian);
+  specfem::kokkos::deep_copy(xix, h_xix);
+  specfem::kokkos::deep_copy(xiz, h_xiz);
+  specfem::kokkos::deep_copy(gammax, h_gammax);
+  specfem::kokkos::deep_copy(gammaz, h_gammaz);
+  specfem::kokkos::deep_copy(jacobian, h_jacobian);
 
   return;
 }
 
 void specfem::compute::partial_derivatives::sync_views() {
-  Kokkos::deep_copy(xix, h_xix);
-  Kokkos::deep_copy(xiz, h_xiz);
-  Kokkos::deep_copy(gammax, h_gammax);
-  Kokkos::deep_copy(gammaz, h_gammaz);
-  Kokkos::deep_copy(jacobian, h_jacobian);
+  specfem::kokkos::deep_copy(xix, h_xix);
+  specfem::kokkos::deep_copy(xiz, h_xiz);
+  specfem::kokkos::deep_copy(gammax, h_gammax);
+  specfem::kokkos::deep_copy(gammaz, h_gammaz);
+  specfem::kokkos::deep_copy(jacobian, h_jacobian);
 }
