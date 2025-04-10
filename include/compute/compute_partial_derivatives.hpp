@@ -20,10 +20,8 @@ namespace compute {
 struct partial_derivatives {
 
 private:
-  using extents = Kokkos::dextents<size_t, 3>;
-  using ViewType = specfem::kokkos::domain_view2D<
-      type_real, extents, specfem::parallel_config::storage_chunk_size,
-      Kokkos::DefaultExecutionSpace::memory_space>;
+  using ViewType = specfem::kokkos::DomainView2d<
+      type_real, 3, Kokkos::DefaultExecutionSpace::memory_space>;
 
 public:
   int nspec; ///< Number of spectral elements

@@ -39,11 +39,13 @@ specfem::compute::impl::field_impl<DimensionType, MediumTag>::field_impl(
   constexpr int chunk_size = specfem::parallel_config::storage_chunk_size;
   int nchunks = nspec / chunk_size + (nspec % chunk_size != 0);
   int iloc = 0;
-  for (int ichunk = 0; ichunk < nchunks; ichunk++) {
+  for (int ichunk = 0; ichunk < nspec; ichunk += chunk_size) {
     for (int ix = 0; ix < ngllx; ix++) {
       for (int iz = 0; iz < ngllz; iz++) {
         for (int ielement = 0; ielement < chunk_size; ielement++) {
-          int ispec = ichunk * chunk_size + ielement;
+          int ispec = ichunk + ielement;
+          if (ispec >= nspec)
+            break;
           const auto medium = element_types.get_medium_tag(ispec);
           if (medium == MediumTag) {
             const int index = index_mapping(ispec, iz, ix); // get global index

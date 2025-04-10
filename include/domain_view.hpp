@@ -1,6 +1,8 @@
 #pragma once
 
+#include "parallel_configuration/chunk_config.hpp"
 #include <Kokkos_Core.hpp>
+#include <cstddef>
 #include <mdspan/mdspan.hpp>
 #include <tuple>
 
@@ -9,7 +11,7 @@ namespace kokkos {
 
 namespace impl {
 template <int ElementChunkSize, typename Extents>
-constexpr std::size_t tile_size(const Extents &extents) {
+constexpr std::size_t chunk_size(const Extents &extents) {
   std::size_t size = ElementChunkSize;
   for (std::size_t i = 1; i < Extents::rank(); ++i) {
     size *= extents.extent(i);
@@ -26,12 +28,34 @@ constexpr std::size_t number_of_tiles(const Extents &extents, std::size_t dim) {
   return 1;
 }
 
-template <int ElementChunkSize>
-constexpr std::size_t tile_size(const std::size_t &dim) {
+template <int ElementChunkSize, typename Extents>
+constexpr std::size_t fwd_prod_of_tiles(const Extents &extents,
+                                        const std::size_t idim) {
+  std::size_t prod = 1;
+  for (std::size_t i = 0; i < idim; ++i) {
+    prod *= impl::number_of_tiles<ElementChunkSize>(extents, i);
+  }
+
+  return prod;
+}
+
+template <int ElementChunkSize, typename Extents>
+constexpr std::size_t tile_size(const Extents &extents,
+                                const std::size_t &dim) {
   if (dim == 0)
     return ElementChunkSize;
 
-  return 1; // For other dimensions, tile size is 1 (no tiling)
+  return extents.extent(dim);
+}
+
+template <int ElementChunkSize, typename Extents>
+constexpr std::size_t fwd_prod_of_tile_size(const Extents &extents,
+                                            const std::size_t idim) {
+  std::size_t prod = 1;
+  for (std::size_t i = 0; i < idim; ++i) {
+    prod *= tile_size<ElementChunkSize>(extents, i);
+  }
+  return prod;
 }
 } // namespace impl
 
@@ -43,14 +67,17 @@ public:
     using rank_type = typename extents_type::rank_type;
     using size_type = typename extents_type::size_type;
     using layout_type = mapping;
-    constexpr int tile_size = ElementChunkSize;
 
     mapping() noexcept = default;
     mapping &operator=(const mapping &) noexcept = default;
 
-    mapping(const mapping &other) noexcept : extents_(other.extents_) {}
+    mapping(const mapping &other) noexcept
+        : extents_(other.extents_),
+          chunk_size(impl::chunk_size<ElementChunkSize>(other.extents_)) {}
 
-    mapping(const extents_type &extents) : extents_(extents) {}
+    mapping(const extents_type &extents) noexcept
+        : extents_(extents),
+          chunk_size(impl::chunk_size<ElementChunkSize>(extents)) {}
 
     MDSPAN_TEMPLATE_REQUIRES(
         class OtherExtents,
@@ -65,17 +92,17 @@ public:
 
     constexpr const extents_type &extents() const { return extents_; }
 
-    constexpr size_type required_span_size() const {
-      size_type total_size = impl::tile_size<ElementChunkSize>(extents_);
-      for (std::size_t i = 0; i < rank_type::value; ++i) {
+    constexpr size_type required_span_size() const noexcept {
+      size_type total_size = chunk_size;
+      for (std::size_t i = 0; i < extents_type::rank(); ++i) {
         total_size *= impl::number_of_tiles<ElementChunkSize>(extents_, i);
       }
       return total_size;
     }
 
     template <typename... IndexType>
-    constexpr size_type operator()(IndexType... indices) const {
-      static_assert(sizeof...(indices) == rank_type::value,
+    constexpr size_type operator()(IndexType... indices) const noexcept {
+      static_assert(sizeof...(indices) == extents_type::rank(),
                     "Number of indices must match the rank of extents.");
       return tile_offset(indices...) + offset_in_tile(indices...);
     }
@@ -83,25 +110,20 @@ public:
     // Mapping is always unique
     static constexpr bool is_always_unique() noexcept { return true; }
 
-    static constexpr bool is_exhaustive() noexcept {
-      // Only exhaustive if extents fit exactly into tile sizes...
-      for (std::size_t i = 0; i < rank_type::value; ++i) {
-        const int tile_count =
-            impl::number_of_tiles_along_dimension<ElementChunkSize>(extents_,
-                                                                    i);
-        if ((extents_.extent(i) % tile_count) != 0) {
+    constexpr bool is_exhaustive() noexcept {
+      // Only exhaustive if tiles fit exactly into extents
+      for (std::size_t i = 0; i < extents_type::rank(); ++i) {
+        const int tile_size = impl::tile_size<ElementChunkSize>(extents_, i);
+        if ((extents_.extent(i) % tile_size) != 0) {
           return false;
         }
       }
       return true;
     }
 
-    static constexpr bool is_always_exhaustive() noexcept {
-      return false; // Not always exhaustive if extents_.extent(i) % tile_size
-                    // != 0
-    }
+    static constexpr bool is_always_exhaustive() noexcept { return false; }
 
-    static constexpr bool is_strided() noexcept { return false; }
+    constexpr bool is_strided() noexcept { return false; }
 
     static constexpr bool is_unique() noexcept { return true; }
 
@@ -113,39 +135,53 @@ public:
 
   private:
     extents_type extents_; ///< Extents of the view
+    size_type chunk_size;
 
     template <typename... IndexType>
-    constexpr size_type tile_offset(IndexType... indices) const {
-      static_assert(sizeof...(indices) == rank_type::value,
+    constexpr size_type tile_offset(IndexType... indices) const noexcept {
+      static_assert(sizeof...(indices) == extents_type::rank(),
                     "Number of indices must match the rank of extents.");
+
       size_type index_array[] = { static_cast<size_type>(indices)... };
-      size_type tile_factor = 1;
-      size_type tile_offset =
-          index_array[0] / impl::tile_size<ElementChunkSize>(0);
-      for (std::size_t i = 1; i < rank_type::value; ++i) {
-        size_type t_start =
-            (index_array[i] / impl::tile_size<ElementChunkSize>(i));
-        tile_factor *= impl::number_of_tiles<ElementChunkSize>(extents_, i - 1);
-        tile_offset += t_start * tile_factor;
+
+      size_type t_index[extents_type::rank()];
+
+      for (std::size_t i = 0; i < extents_type::rank(); ++i) {
+        t_index[i] =
+            index_array[i] / impl::tile_size<ElementChunkSize>(extents_, i);
       }
 
-      return tile_offset;
+      size_type offset = t_index[0];
+
+      // Hardcoded tiles with Layout left
+      for (std::size_t i = 1; i < extents_type::rank(); ++i) {
+        offset +=
+            t_index[i] * impl::fwd_prod_of_tiles<ElementChunkSize>(extents_, i);
+      }
+
+      return offset * chunk_size;
     } // tile_offset
 
     template <typename... IndexType>
-    constexpr size_type offset_in_tile(IndexType... indices) const {
-      static_assert(sizeof...(indices) == rank_type::value,
+    constexpr size_type offset_in_tile(IndexType... indices) const noexcept {
+      static_assert(sizeof...(indices) == extents_type::rank(),
                     "Number of indices must match the rank of extents.");
+
       size_type index_array[] = { static_cast<size_type>(indices)... };
-      size_type offset =
-          index_array[0] % impl::tile_along_dimension(extents_, tiles_, 0);
-      size_type tile_factor = 1;
-      for (std::size_t i = 1; i < rank_type::value; ++i) {
-        tile_factor *=
-            impl::number_of_tiles_along_dimension<tile_size>(extents_, i);
-        std::size_t t_index =
-            index_array[i] % impl::tile_along_dimension(extents_, tiles_, i);
-        offset += t_index * tile_factor;
+
+      size_type t_index[extents_type::rank()];
+
+      for (std::size_t i = 0; i < extents_type::rank(); ++i) {
+        t_index[i] =
+            index_array[i] % impl::tile_size<ElementChunkSize>(extents_, i);
+      }
+
+      size_type offset = t_index[0];
+
+      // Hardcoded Layout left within tiles
+      for (std::size_t i = 1; i < extents_type::rank(); ++i) {
+        offset += t_index[i] *
+                  impl::fwd_prod_of_tile_size<ElementChunkSize>(extents_, i);
       }
 
       return offset;
@@ -156,39 +192,93 @@ public:
 template <typename T, typename Extents, typename Layout, typename MemorySpace>
 class View : public Kokkos::View<T *, MemorySpace> {
 
-private:
-  using mapping = typename Layout::template mapping<Extents>;
+public:
+  using value_type = T;
+  using extents_type = Extents;
+  using layout_type = Layout;
+  using memory_space = MemorySpace;
+  using mapping_type = typename Layout::template mapping<Extents>;
   using base_type = Kokkos::View<T *, MemorySpace>;
 
-  using base_type::base_type; // Inherit constructors from Kokkos::View
+  template <typename mapping_type>
+  View(const std::string &label, const mapping_type mapping)
+      : _mapping(mapping), base_type(label, mapping.required_span_size()) {}
 
   template <typename... IndexType>
   View(const std::string &label, const IndexType &...indices)
-      : base_type(label, mapping(Extents{ indices... })) {
-    static_assert(sizeof...(IndexType) == Extents::rank(),
-                  "Number of indices must match the rank of extents.");
-  }
+      : View(label, mapping_type(Extents{ indices... })) {}
 
-  using MirrorView = typename View<T, Extents, Layout,
-                                   typename Kokkos::HostSpace::memory_space>;
+  View(const View &other) : base_type(other), _mapping(other._mapping) {}
+
+  View() = default;
+
+  using HostMirror =
+      View<T, Extents, Layout, typename Kokkos::HostSpace::memory_space>;
 
 public:
-  template <typename... IndexType>
-  constexpr T operator()(IndexType... indices) const {
-    return static_cast<const view_type &>(*this)(_mapping(indices...));
+  template <typename... IndexType,
+            std::enable_if_t<sizeof...(IndexType) == Extents::rank(), int> = 0>
+  KOKKOS_INLINE_FUNCTION T &operator()(IndexType... indices) const {
+    return static_cast<const base_type &>(*this)(_mapping(indices...));
   }
 
+  template <typename... IndexType,
+            std::enable_if_t<sizeof...(IndexType) == Extents::rank(), int> = 0>
+  KOKKOS_INLINE_FUNCTION T &operator()(IndexType... indices) {
+    return static_cast<base_type &>(*this)(_mapping(indices...));
+  }
+
+  KOKKOS_INLINE_FUNCTION T &operator[](const std::size_t index) const {
+    return static_cast<const base_type &>(*this)[index];
+  }
+
+  KOKKOS_INLINE_FUNCTION T &operator[](const std::size_t index) {
+    return static_cast<base_type &>(*this)[index];
+  }
+
+  base_type get_base_view() const {
+    return static_cast<const base_type &>(*this);
+  }
+
+  mapping_type get_mapping() const { return _mapping; }
+
 private:
-  mapping _mapping;
+  mapping_type _mapping;
 };
 
-using chunked_tiled_layout2d =
-    Kokkos::extents<3, specfem::parallel_configuration::storage_chunk_size, 5,
-                    5>;
+template <std::size_t Rank>
+using chunked_tiled_layout2d = Kokkos::dextents<std::size_t, Rank>;
 
-template <typename T, typename Extents, typename MemorySpace>
+template <typename T, std::size_t Rank, typename MemorySpace>
 using DomainView2d =
-    View<T, Extents, DomainViewMapping2D<chunked_tiled_layout2d>, MemorySpace>;
+    View<T, chunked_tiled_layout2d<Rank>,
+         DomainViewMapping2D<specfem::parallel_config::storage_chunk_size>,
+         MemorySpace>;
+
+template <typename ViewType>
+specfem::kokkos::View<typename ViewType::value_type,
+                      typename ViewType::extents_type,
+                      typename ViewType::layout_type, Kokkos::HostSpace>
+create_mirror_view(const ViewType &view) {
+  if constexpr (std::is_same_v<typename ViewType::memory_space,
+                               Kokkos::HostSpace>) {
+    return view;
+  } else if constexpr (std::is_same_v<
+                           typename ViewType::memory_space,
+                           Kokkos::DefaultExecutionSpace::memory_space>) {
+    return specfem::kokkos::View<
+        typename ViewType::value_type, typename ViewType::extents_type,
+        typename ViewType::layout_type, Kokkos::HostSpace>("mirror",
+                                                           view.get_mapping());
+  } else {
+    Kokkos::abort("Unsupported memory space for create_mirror_view");
+  }
+}
+
+template <typename SrcViewType, typename DstViewType>
+void deep_copy(const DstViewType &dst, const SrcViewType &src) {
+  Kokkos::deep_copy(dst.get_base_view(), src.get_base_view());
+}
 
 // template <int TileSize> struct DomainViewMapping2D {
 // public:
