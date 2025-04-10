@@ -194,5 +194,45 @@ void store_on_host(const IndexType &lcoord,
   properties.get_container<MediumTag, PropertyTag>().store_host_values(
       l_index, point_properties);
 }
+
+template <typename IndexViewType, typename PointPropertiesType>
+void max(const IndexViewType &ispecs,
+         const specfem::compute::properties &properties,
+         PointPropertiesType &point_properties) {
+
+  constexpr auto MediumTag = PointPropertiesType::medium_tag;
+  constexpr auto PropertyTag = PointPropertiesType::property_tag;
+
+  constexpr bool on_device =
+      std::is_same<typename IndexViewType::execution_space,
+                   Kokkos::DefaultExecutionSpace>::value;
+
+  static_assert(PointPropertiesType::dimension ==
+                    specfem::dimension::type::dim2,
+                "Only 2D properties are supported");
+
+  IndexViewType local_ispecs("local_ispecs", ispecs.extent(0));
+
+  const auto index_mapping = properties.get_property_index_mapping<on_device>();
+
+  Kokkos::parallel_for(
+      "local_work_items",
+      Kokkos::RangePolicy<typename IndexViewType::execution_space>(
+          0, ispecs.extent(0)),
+      KOKKOS_LAMBDA(const int i) {
+        local_ispecs(i) =
+            index_mapping(ispecs(i)); // Map the ispec to the property index
+      });
+
+  Kokkos::fence(); // Ensure the above parallel for is complete before
+                   // proceeding
+
+  properties.get_container<MediumTag, PropertyTag>().max(local_ispecs,
+                                                         point_properties);
+
+  // Note: The above call to max will perform the reduction on the device
+
+  return;
+}
 } // namespace compute
 } // namespace specfem
