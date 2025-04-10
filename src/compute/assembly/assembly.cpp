@@ -61,6 +61,7 @@ specfem::compute::assembly::assembly(
   const int nacoustic = this->element_types.get_number_of_elements(
       specfem::element::medium_tag::acoustic);
 
+  // Checks
   if (nelastic_sh > 0 && nacoustic > 0) {
     std::ostringstream msg;
     msg << "Elastic SH and acoustic elements cannot be mixed in the same "
@@ -69,5 +70,28 @@ specfem::compute::assembly::assembly(
 
     throw std::runtime_error(msg.str());
   }
+
+  const auto pe_stacey_elements = this->element_types.get_elements_on_device(
+      specfem::element::medium_tag::poroelastic,
+      specfem::element::property_tag::isotropic,
+      specfem::element::boundary_tag::stacey);
+
+  specfem::point::properties<specfem::dimension::type::dim2,
+                             specfem::element::medium_tag::poroelastic,
+                             specfem::element::property_tag::isotropic, false>
+      point_values;
+
+  specfem::compute::max(pe_stacey_elements, this->properties, point_values);
+
+  if ((pe_stacey_elements.extent(0) > 0) &&
+      std::abs(point_values.eta_f()) > 1e-6) {
+    std::ostringstream msg;
+    msg << "Warning: The poroelastic model with Stacey BCs can be numerically "
+           "error prone. Please make sure there are no spurious reflections "
+           "off the boundary";
+
+    std::cerr << msg.str();
+  }
+
   return;
 }
