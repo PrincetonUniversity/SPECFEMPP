@@ -10,7 +10,7 @@ pipeline{
                 axes {
                     axis{
                         name 'CUDACompiler'
-                        values 'CUDA117;cudatoolkit/11.7', 'CUDA126;cudatoolkit/12.6'
+                        values 'CUDA117;cudatoolkit/11.8', 'CUDA126;cudatoolkit/12.8'
                     }
                     axis{
                         name 'HostSpace'
